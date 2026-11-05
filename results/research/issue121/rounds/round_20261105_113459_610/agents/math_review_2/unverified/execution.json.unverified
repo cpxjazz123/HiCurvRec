@@ -1,12 +1,12 @@
 {
  "task_id": "math_review_2",
  "backend": "openai-agents-sdk",
- "verified": true,
- "finished_utc_epoch": 1793846609.3771808,
- "elapsed_s": 133.559,
+ "verified": false,
+ "finished_utc_epoch": 1793851024.7290134,
+ "elapsed_s": 300.008,
  "model": "deepseek/deepseek-v4.1-flash",
  "role": "review_math",
- "boundary_sha256": "c4cf32690c94d0e1cdd38eda128a758181ad0b5b0f574d584b5a7797ec1fff7d",
+ "boundary_sha256": "d72999cd2d0f3866f896f8e9ad33f75c3bbd3a02f9385a934ecbd36453dc0236",
  "read_allowlist": [
   "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md"
  ],
@@ -15,11 +15,11 @@
   "version": "poincare-contract/v1",
   "sha256": "bdc89757b8e88bb115cb2d871a8da0591fdaa8574bebe50e26baaef9440cdad4"
  },
- "failure": "",
+ "failure": "TIMEOUT: the agent did not finish within 300 seconds; what it saved is what it delivered",
  "refusals": [],
  "structured_output": true,
  "structured_output_fallback": false,
- "timed_out": false,
+ "timed_out": true,
  "budget_seconds": 300.0,
  "failure_trace": "",
  "progress_file": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261105_113459_610/agents/math_review_2/progress.jsonl",

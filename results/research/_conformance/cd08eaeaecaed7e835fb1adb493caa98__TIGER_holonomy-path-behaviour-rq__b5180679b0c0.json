@@ -1,0 +1,49 @@
+{
+  "admissible": false,
+  "checks": [
+    {
+      "detail": "every module-level name the trainer reads is bound",
+      "name": "names",
+      "status": "PASS"
+    },
+    {
+      "detail": "every collective call is reached by every rank",
+      "name": "collectives",
+      "status": "PASS"
+    },
+    {
+      "detail": "the frozen constants match and the launcher is the framework's",
+      "name": "constants",
+      "status": "PASS"
+    },
+    {
+      "detail": "the candidate uses the canonical geometry module and defines no other",
+      "name": "geometry_contract",
+      "status": "PASS"
+    },
+    {
+      "detail": "one epoch runs and exports the identifier",
+      "name": "entry",
+      "status": "PASS"
+    },
+    {
+      "detail": "24587 unique identifiers of 4 tokens",
+      "name": "identifier",
+      "status": "PASS"
+    },
+    {
+      "detail": "the four ranks finish and the rank-0 evaluation does not wait",
+      "name": "four_rank",
+      "status": "PASS"
+    },
+    {
+      "detail": "the coupling surface: the coupling surface could not be called: The size of tensor a (8) must match the size of tensor b (2) at non-singleton dimension 0",
+      "name": "reference_agreement",
+      "status": "FAIL"
+    }
+  ],
+  "checks_fingerprint": "b5180679b0c0",
+  "digest": "cd08eaeaecaed7e835fb1adb493caa982c025b964d68e2aa0a8d89146de42cd3",
+  "passed": true,
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_holonomy-path-behaviour-rq"
+}

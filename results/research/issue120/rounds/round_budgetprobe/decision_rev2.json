@@ -1,0 +1,352 @@
+{
+  "decision_at": 1793805186.2845511,
+  "decision_hash": "c0c44aa726e7848d9f3643344df547386e0be5994121fad7ec7e0ab06b2d8ad6",
+  "evidence": {
+    "STATECELL-MARGIN-RQ": {
+      "bundle_sha256": "3f0b0e98e5eaa49dc02978e7731a7ea33a6c2306fdd8e58febcd4c42e1fa9639",
+      "literature_sha256": "9e71e77ec4158b2b08a9226df38d86a28e2121329b1c9f42cba5397734e042b4",
+      "math_sha256": "26a7acb05f016fef633005f30b1919e3c73fa6aa3c39088912c0cefdd054fab5",
+      "probe_sha256": "3acafac80881b6909f2fefcba8f848433cd78c94423f55d87bf7edb0f38746fd"
+    },
+    "SUCCFRAME-MOEB-RQ": {
+      "bundle_sha256": "7c4d9919976eaa7cb654332d76e15fc60aad2593f71e309e7ad81e991649adf7",
+      "literature_sha256": "debdc69b679b9a5080ca20c7274dd6e6d333e8068937ef20937c8146a39e59d9",
+      "math_sha256": "9b33b670165fde359e0b230911a0f75ef85eb14534ccda88363501b29fcd7398",
+      "probe_sha256": "1acbcc199eda7a911aba16816a82435648a12f920a3cd6ae74eeb7503c4c221d"
+    },
+    "beh-aniso-poincare-rq": {
+      "bundle_sha256": "e73b8eb1c7c940d1c67a64fa9fe1ef1eb1a7670ce231d265caed524e7be7c646",
+      "literature_sha256": "a38087b92191ebe4ee29de1a2f1f178c8e3e03db810726c4007692f594da8ce7",
+      "math_sha256": "c624868b7b40e1fc77dcaae85917c92eb5ad8f17768598495e6d4517978407af",
+      "probe_sha256": "7ab329bc793ea06254093178c9863c065f4a732139f3b257d096d796e8ee39dd"
+    },
+    "succframe-warp-rq": {
+      "bundle_sha256": "b446d876c2868ce331c184259280eb100e9dc3569ed308d2b1a8833756c59823",
+      "literature_sha256": "b78345999603d1aba97353733ef419233d394c61339fa744c02f667dc22ce5cc",
+      "math_sha256": "856ee61602bcb540e5de9e32a52820c847255b3c43fc73464912600543a4bba0",
+      "probe_sha256": "e6c4c252f031d457f9023be9ace36bb53a067b311ea92e2c0c1e56d5af4332e2"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "succframe-warp-rq",
+        "mean_rank": 3.0,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 4,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Best-specified successor-metric idea (determinant-one W_i from the measured successor second moment, alpha_i from the eigenvalue share, s_i clipped to [1/sqrt d, sqrt d], identity frame when",
+          "scoring_2": "It is the family the observed evidence has already disfavoured: per-item geometric re-weighting of the assignment distance resembles tangent_successor_residual (0.05500) and successor_geodesic_coarse (0.05500), both below the flat Euclidean controls 0.062-0.064 in E6; it also leaves the shared codebooks solving an objective that is inconsistent under per-item metrics while recomputing W_i from a drifting encoder every epoch (non-stationary metric, acknowledged as a codebook-settling risk), carries the highest cost (+10-20% per epoch), and needs semi-arbitrary constants (0.8 successor mass, exp(0.5*alpha), sqrt(d) clip) plus a second post-hoc identity-frame code path.\nOBJECTION: To the top-ranked STATECELL-MARGIN-RQ: its whole gain routes through raising successor prefix co-location, and E11 shows the existing SIDs' same-first-prefix rate is only 0.0907 against a permuted null of 0.067, while E6 shows the closest realised analogue of forcing that co-location (l1_br, depth-1/2/3 prefix alive 1.000/1.000/1.000) produced the worst recall in the bundle (0.04671) because exact-SID survival collapsed to 0.068; the derived tau_l cap and the 1/sqrt(1+c_j) discount are the only things standing between this mechanism and that failure, and a single run cannot prove the cap is tight enough - so even if it is the best-posed mechanism here, the most likely single-run outcome is a shift inside the 0.062-0.064 band already occupied by the flat controls rather than the >0.065 target.",
+          "scoring_3": "It is the only true metric warp (determinant-one W_i from the successor second moment applied to the chord at every level, codewords untouched), but the eigenvalue clip [1/sqrt(d), sqrt(d)] allows a 32x anisotropy at d=32 that E5's concentration (top-1 mass 0.4375, alpha_i near maximal for its 4895 items) will push to its bound, the reconstruction loss itself becomes the warped distance, and the per-epoch frame refresh makes the metric non-stationary; the nearest prior curved behaviour variants in E6 (successor_geodesic_coarse 0.05500, v2 0.05463, tangent_successor_residual 0.05500) all landed below the Euclidean controls 0.06207/0.06233 and far below the 0.065 target."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 9
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "beh-aniso-poincare-rq",
+        "mean_rank": 3.3333,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 3,
+          "scoring_3": 4
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Fails minimal specification where the mechanism lives: the SPECIFICATION says only 'obtain beta_i in [0,1] and unit tangent direction u_i' and bundle item E2 is truncated before the defining equation, so the successor concentration setting the whole gauge is undefined; it also concedes its stretch is bounded at sqrt(2) ('codes may barely move'), which against E6's best arm of 0.06207 makes a no-op short of 0.065 the likely single-run outcome, and the cohort evidence it leans on (E9: 0.9291 vs 0.8871) is the weakest signal in the bundle; its gauge inside assignment plus tangent Frechet codebook update is at least a genuine coupling.",
+          "scoring_2": "Low-harm design (no new parameters, ~5% wall clock, stretch bounded by sqrt(2) so it cannot blow up level-1 capacity, which E8 shows is tight at 0.0822 of canonical pairs at K=256), but bundle e73b8eb1c7c940d1 never gives the formula for beta_i in its specification, its magnitude bound makes a no-op the most likely outcome against a thin successor/prefix signal (E11 0.0907 vs null 0.067), and its tangent Frechet codebook update adds a collapse path the evidence gives no reason to risk.",
+          "scoring_3": "The gauge is capped at stretch sqrt(2) and beta_i falls to 0 for items with no successors, exactly the tail items, so the reachable effect sits below the gap that E6's best observed arms (0.06207-0.06363) leave to the 0.065 target, and E11 (0.0907 vs null 0.067) offers little headroom; it also replaces the codebook update with a tangent Frechet mean of assigned residuals, an untested second change, its geometry-off c->0 flat limit is not a clean switch, and its beta_i / transported uhat_l definition is the least determinate specification of the four, so even a null result would not localise the cause.\nOBJECTION: The frozen evidence argues against the whole family before any arm is trained: in E6 every behaviour-plus-hyperbolic variant (successor_entropy 0.05122, successor_geodesic_coarse 0.05500, successor_geodesic_coarse_v2 0.05463, tangent_successor_residual 0.05500, and l1_br 0.04671 whose gold-prefix survival is 1.000/1.000/1.000/0.068 with T1-T3 NLL 0.00 per E7) scores below the Euclidean-adjacent controls (l1_br_euclid 0.06207, l1_only 0.06233, resample 0.06363) and nothing observed reaches 0.065, while the successor-prefix co-location headroom the mechanisms rely on is small (E11 0.0907 vs permuted null 0.067; E8 K=256 at 0.0822 vs 0.0129). With one run, no ablation and no seed repetition, none of the four can separate a recall gain caused by the coupling from one caused by its unavoidable side changes (warped/additional loss geometry in succframe-warp-rq and SUCCFRAME-MOEB-RQ, codebook-update replacement in beh-aniso-poincare-rq, stale-successor cache in STATECELL-MARGIN-RQ), and a sub-0.065 result will be indistinguishable from seed noise the programme is not allowed to measure — so the winner should be read as a bounded, damage-limited bet (STATECELL-MARGIN-RQ), not as a demonstrated improvement."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 10
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 2,
+        "idea_id": "STATECELL-MARGIN-RQ",
+        "mean_rank": 2.0,
+        "per_reviewer_position": {
+          "scoring_1": 4,
+          "scoring_2": 1,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Cleanest specification of the four (derived tau_l = median nearest-code squared distance, popularity-discounted p_ij, curvature from the 99th percentile encoder norm, no tuned constant), but its core lever — shifting level-1 cells toward where the item's successors sit — is the lever E6 already falsified on this data (l1_br, a level-1 behaviour boost, gave recall@10 0.04671 and gold depth-4 alive 0.068) and E8 shows no room for it at K=256 (only 0.0822 of canonical pairs share a cluster; E11 same-first-prefix 0.0907 vs null 0.067), so in one run the capped margin mostly risks reconstruction damage and early beam loss; the stale detached code cache adds oscillation the no-ablation policy cannot diagnose.\nOBJECTION: My first place is not a claim that the successor frame will work: the bundle's own history is that successor-structured SIDs scored below the plain Euclidean arm every time they were tried. I rank SUCCFRAME-MOEB-RQ first only because it is the sole proposal that confines the successor lever to the depth where E6/E7 show prefixes actually die and because a frozen anchor avoids the non-stationary metric both rival successor schemes introduce; its own single-run falsifier is tail sparsity — E5 bin 1 has support 2.8, so most anchors sit near the origin and any gain will concentrate in the head.",
+          "scoring_2": "Only proposal whose behaviour term is popularity-discounted (w_ij=c_ij/sqrt(1+c_j), bundle 3f0b0e98e5eaa49d E2) and hard-capped at one quantization unit by a DERIVED tau_l = median nearest-code squared distance, so it is engineered against both failure modes the observed evidence shows (E6: l1_br's forced prefix co-location 1.000/1.000/1.000 gives only 0.04671 recall because exact-SID survival at depth 4 falls to 0.068; E6: aggressive behaviour variants successor_entropy 0.05122, successor_geodesic_coarse 0.05500, tangent_successor_residual 0.05500 all sit below the flat controls l1_only 0.06233 / resample 0.06363), while acting on the one quantity that converts (E11 same_first_prefix_rate 0.0907 vs permuted null 0.067, E9 positive cohort-share 0.9291 vs 0.8871); real coupling, derived constants only, 5-15% cost, switchable and falsifiable in one run.",
+          "scoring_3": "Bounded margin capped at tau_l = median nearest-code squared distance (one quantization unit) on an explicit Poincare geodesic cost, with c derived from the 99th-percentile encoder norm and tau_l derived at level init, so no constant is swept; this matches the small headroom measured in E11 (same_first_prefix_rate 0.0907 vs permuted null 0.067) and E8 (K=256 behavioural-neighbour cluster share 0.0822 vs negative 0.0129), and its cap is the direct safeguard against the collapse pattern in E6/E7 (l1_br recall@10 0.04671 with T1/T2/T3/T4 NLL 0.00/0.00/0.00/9.03 and gold prefix alive 1.000/1.000/1.000/0.068)."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 6
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "SUCCFRAME-MOEB-RQ",
+        "mean_rank": 1.6667,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 2,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Only proposal aimed at the observed failure: E6/E7 show level-1 is already solved (gold prefix alive 1.000, T1 NLL 0.00 for the best Euclidean arm l1_br_euclid 0.06207) while depth-2/3 prefix survival collapses (0.829/0.161/0.085) with T2/T3 NLL 3.22/4.36, and its frozen per-item anchor enters the Mobius recursion only after the level-1 argmin, so level-1 stays content-driven and levels 2-3 are re-expressed relative to the train-only successor region; anchors frozen pre-Stage-2 (no per-epoch non-stationarity), constants are documented defaults (c=1, tau=atanh0.5, rho=0.5) with behaviour-off and geometry-off switches, and <1% step cost fits the single frozen-budget run.",
+          "scoring_2": "Best-specified and cleanest coupling in bundle 7c4d9919976eaa7c (exact Mobius isometry recursion with an exact inverse decode, frozen train-only SVD anchor, <1% per-step cost, no non-stationary feature table), but it re-expresses level-2/3 codes as offsets from a behaviour anchor - directly attacking the depth-4 identity resolution that E6 shows is the binding constraint (gold prefix alive 0.085 at depth 4 for the best variants) - and its own acknowledged risk is that swapping the squared-Euclidean reconstruction loss for geodesic loss is a confound a single non-ablated run cannot separate.",
+          "scoring_3": "The Mobius-isometry recursion is exactly invertible, so the frozen successor anchor moves where prefix refinement is spent without adding reconstruction error beyond quantization itself, and it is the cheapest (+2-10% wall clock, anchors 24556xLxd, one precomputed SVD) with stationary anchors; but it swaps the baseline squared-Euclidean reconstruction loss for a geodesic one, and E6 shows l1_br 0.04671 against l1_br_euclid 0.06207 at identical beam settings, so the curved-loss route has a negative record, while E5 (top-1 mass 0.4375 in bin 1) and E10 (mean out-degree 5.45) warn that row-normalised SVD anchors are popularity-driven and near-origin for the sparse tail."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 5
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "b446d876c2868ce331c184259280eb100e9dc3569ed308d2b1a8833756c59823",
+      "idea_id": "succframe-warp-rq",
+      "proposal_sha256": "bc054cfc320e194647eca6a003ac0c71b2f4de948654e7b626871b4befcfc3f8"
+    },
+    {
+      "evidence_sha256": "e73b8eb1c7c940d1c67a64fa9fe1ef1eb1a7670ce231d265caed524e7be7c646",
+      "idea_id": "beh-aniso-poincare-rq",
+      "proposal_sha256": "141ccc79146c58ef671b4dbac78deb4b0567156e5223755bcb9bebd4f843d57f"
+    },
+    {
+      "evidence_sha256": "3f0b0e98e5eaa49dc02978e7731a7ea33a6c2306fdd8e58febcd4c42e1fa9639",
+      "idea_id": "STATECELL-MARGIN-RQ",
+      "proposal_sha256": "2d73fb927c9294ef2fb030daa9c1db3520f9ec4c74d5ced1225adbb0b220d32c"
+    },
+    {
+      "evidence_sha256": "7c4d9919976eaa7cb654332d76e15fc60aad2593f71e309e7ad81e991649adf7",
+      "idea_id": "SUCCFRAME-MOEB-RQ",
+      "proposal_sha256": "3c61ee5d76a660b803f40fb704f3ecd2a54fb0ab23088c4cd1433739329a369f"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "SUCCFRAME-MOEB-RQ",
+          "position": 1,
+          "reason": "Only proposal aimed at the observed failure: E6/E7 show level-1 is already solved (gold prefix alive 1.000, T1 NLL 0.00 for the best Euclidean arm l1_br_euclid 0.06207) while depth-2/3 prefix survival collapses (0.829/0.161/0.085) with T2/T3 NLL 3.22/4.36, and its frozen per-item anchor enters the Mobius recursion only after the level-1 argmin, so level-1 stays content-driven and levels 2-3 are re-expressed relative to the train-only successor region; anchors frozen pre-Stage-2 (no per-epoch non-stationarity), constants are documented defaults (c=1, tau=atanh0.5, rho=0.5) with behaviour-off and geometry-off switches, and <1% step cost fits the single frozen-budget run."
+        },
+        {
+          "idea_id": "succframe-warp-rq",
+          "position": 2,
+          "reason": "Best-specified successor-metric idea (determinant-one W_i from the measured successor second moment, alpha_i from the eigenvalue share, s_i clipped to [1/sqrt d, sqrt d], identity frame when"
+        },
+        {
+          "idea_id": "beh-aniso-poincare-rq",
+          "position": 3,
+          "reason": "Fails minimal specification where the mechanism lives: the SPECIFICATION says only 'obtain beta_i in [0,1] and unit tangent direction u_i' and bundle item E2 is truncated before the defining equation, so the successor concentration setting the whole gauge is undefined; it also concedes its stretch is bounded at sqrt(2) ('codes may barely move'), which against E6's best arm of 0.06207 makes a no-op short of 0.065 the likely single-run outcome, and the cohort evidence it leans on (E9: 0.9291 vs 0.8871) is the weakest signal in the bundle; its gauge inside assignment plus tangent Frechet codebook update is at least a genuine coupling."
+        },
+        {
+          "idea_id": "STATECELL-MARGIN-RQ",
+          "position": 4,
+          "reason": "Cleanest specification of the four (derived tau_l = median nearest-code squared distance, popularity-discounted p_ij, curvature from the 99th percentile encoder norm, no tuned constant), but its core lever — shifting level-1 cells toward where the item's successors sit — is the lever E6 already falsified on this data (l1_br, a level-1 behaviour boost, gave recall@10 0.04671 and gold depth-4 alive 0.068) and E8 shows no room for it at K=256 (only 0.0822 of canonical pairs share a cluster; E11 same-first-prefix 0.0907 vs null 0.067), so in one run the capped margin mostly risks reconstruction damage and early beam loss; the stale detached code cache adds oscillation the no-ablation policy cannot diagnose.\nOBJECTION: My first place is not a claim that the successor frame will work: the bundle's own history is that successor-structured SIDs scored below the plain Euclidean arm every time they were tried. I rank SUCCFRAME-MOEB-RQ first only because it is the sole proposal that confines the successor lever to the depth where E6/E7 show prefixes actually die and because a frozen anchor avoids the non-stationary metric both rival successor schemes introduce; its own single-run falsifier is tail sparsity — E5 bin 1 has support 2.8, so most anchors sit near the origin and any gain will concentrate in the head."
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "STATECELL-MARGIN-RQ",
+          "position": 1,
+          "reason": "Only proposal whose behaviour term is popularity-discounted (w_ij=c_ij/sqrt(1+c_j), bundle 3f0b0e98e5eaa49d E2) and hard-capped at one quantization unit by a DERIVED tau_l = median nearest-code squared distance, so it is engineered against both failure modes the observed evidence shows (E6: l1_br's forced prefix co-location 1.000/1.000/1.000 gives only 0.04671 recall because exact-SID survival at depth 4 falls to 0.068; E6: aggressive behaviour variants successor_entropy 0.05122, successor_geodesic_coarse 0.05500, tangent_successor_residual 0.05500 all sit below the flat controls l1_only 0.06233 / resample 0.06363), while acting on the one quantity that converts (E11 same_first_prefix_rate 0.0907 vs permuted null 0.067, E9 positive cohort-share 0.9291 vs 0.8871); real coupling, derived constants only, 5-15% cost, switchable and falsifiable in one run."
+        },
+        {
+          "idea_id": "SUCCFRAME-MOEB-RQ",
+          "position": 2,
+          "reason": "Best-specified and cleanest coupling in bundle 7c4d9919976eaa7c (exact Mobius isometry recursion with an exact inverse decode, frozen train-only SVD anchor, <1% per-step cost, no non-stationary feature table), but it re-expresses level-2/3 codes as offsets from a behaviour anchor - directly attacking the depth-4 identity resolution that E6 shows is the binding constraint (gold prefix alive 0.085 at depth 4 for the best variants) - and its own acknowledged risk is that swapping the squared-Euclidean reconstruction loss for geodesic loss is a confound a single non-ablated run cannot separate."
+        },
+        {
+          "idea_id": "beh-aniso-poincare-rq",
+          "position": 3,
+          "reason": "Low-harm design (no new parameters, ~5% wall clock, stretch bounded by sqrt(2) so it cannot blow up level-1 capacity, which E8 shows is tight at 0.0822 of canonical pairs at K=256), but bundle e73b8eb1c7c940d1 never gives the formula for beta_i in its specification, its magnitude bound makes a no-op the most likely outcome against a thin successor/prefix signal (E11 0.0907 vs null 0.067), and its tangent Frechet codebook update adds a collapse path the evidence gives no reason to risk."
+        },
+        {
+          "idea_id": "succframe-warp-rq",
+          "position": 4,
+          "reason": "It is the family the observed evidence has already disfavoured: per-item geometric re-weighting of the assignment distance resembles tangent_successor_residual (0.05500) and successor_geodesic_coarse (0.05500), both below the flat Euclidean controls 0.062-0.064 in E6; it also leaves the shared codebooks solving an objective that is inconsistent under per-item metrics while recomputing W_i from a drifting encoder every epoch (non-stationary metric, acknowledged as a codebook-settling risk), carries the highest cost (+10-20% per epoch), and needs semi-arbitrary constants (0.8 successor mass, exp(0.5*alpha), sqrt(d) clip) plus a second post-hoc identity-frame code path.\nOBJECTION: To the top-ranked STATECELL-MARGIN-RQ: its whole gain routes through raising successor prefix co-location, and E11 shows the existing SIDs' same-first-prefix rate is only 0.0907 against a permuted null of 0.067, while E6 shows the closest realised analogue of forcing that co-location (l1_br, depth-1/2/3 prefix alive 1.000/1.000/1.000) produced the worst recall in the bundle (0.04671) because exact-SID survival collapsed to 0.068; the derived tau_l cap and the 1/sqrt(1+c_j) discount are the only things standing between this mechanism and that failure, and a single run cannot prove the cap is tight enough - so even if it is the best-posed mechanism here, the most likely single-run outcome is a shift inside the 0.062-0.064 band already occupied by the flat controls rather than the >0.065 target."
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "STATECELL-MARGIN-RQ",
+          "position": 1,
+          "reason": "Bounded margin capped at tau_l = median nearest-code squared distance (one quantization unit) on an explicit Poincare geodesic cost, with c derived from the 99th-percentile encoder norm and tau_l derived at level init, so no constant is swept; this matches the small headroom measured in E11 (same_first_prefix_rate 0.0907 vs permuted null 0.067) and E8 (K=256 behavioural-neighbour cluster share 0.0822 vs negative 0.0129), and its cap is the direct safeguard against the collapse pattern in E6/E7 (l1_br recall@10 0.04671 with T1/T2/T3/T4 NLL 0.00/0.00/0.00/9.03 and gold prefix alive 1.000/1.000/1.000/0.068)."
+        },
+        {
+          "idea_id": "SUCCFRAME-MOEB-RQ",
+          "position": 2,
+          "reason": "The Mobius-isometry recursion is exactly invertible, so the frozen successor anchor moves where prefix refinement is spent without adding reconstruction error beyond quantization itself, and it is the cheapest (+2-10% wall clock, anchors 24556xLxd, one precomputed SVD) with stationary anchors; but it swaps the baseline squared-Euclidean reconstruction loss for a geodesic one, and E6 shows l1_br 0.04671 against l1_br_euclid 0.06207 at identical beam settings, so the curved-loss route has a negative record, while E5 (top-1 mass 0.4375 in bin 1) and E10 (mean out-degree 5.45) warn that row-normalised SVD anchors are popularity-driven and near-origin for the sparse tail."
+        },
+        {
+          "idea_id": "succframe-warp-rq",
+          "position": 3,
+          "reason": "It is the only true metric warp (determinant-one W_i from the successor second moment applied to the chord at every level, codewords untouched), but the eigenvalue clip [1/sqrt(d), sqrt(d)] allows a 32x anisotropy at d=32 that E5's concentration (top-1 mass 0.4375, alpha_i near maximal for its 4895 items) will push to its bound, the reconstruction loss itself becomes the warped distance, and the per-epoch frame refresh makes the metric non-stationary; the nearest prior curved behaviour variants in E6 (successor_geodesic_coarse 0.05500, v2 0.05463, tangent_successor_residual 0.05500) all landed below the Euclidean controls 0.06207/0.06233 and far below the 0.065 target."
+        },
+        {
+          "idea_id": "beh-aniso-poincare-rq",
+          "position": 4,
+          "reason": "The gauge is capped at stretch sqrt(2) and beta_i falls to 0 for items with no successors, exactly the tail items, so the reachable effect sits below the gap that E6's best observed arms (0.06207-0.06363) leave to the 0.065 target, and E11 (0.0907 vs null 0.067) offers little headroom; it also replaces the codebook update with a tangent Frechet mean of assigned residuals, an untested second change, its geometry-off c->0 flat limit is not a clean switch, and its beta_i / transported uhat_l definition is the least determinate specification of the four, so even a null result would not localise the cause.\nOBJECTION: The frozen evidence argues against the whole family before any arm is trained: in E6 every behaviour-plus-hyperbolic variant (successor_entropy 0.05122, successor_geodesic_coarse 0.05500, successor_geodesic_coarse_v2 0.05463, tangent_successor_residual 0.05500, and l1_br 0.04671 whose gold-prefix survival is 1.000/1.000/1.000/0.068 with T1-T3 NLL 0.00 per E7) scores below the Euclidean-adjacent controls (l1_br_euclid 0.06207, l1_only 0.06233, resample 0.06363) and nothing observed reaches 0.065, while the successor-prefix co-location headroom the mechanisms rely on is small (E11 0.0907 vs permuted null 0.067; E8 K=256 at 0.0822 vs 0.0129). With one run, no ablation and no seed repetition, none of the four can separate a recall gain caused by the coupling from one caused by its unavoidable side changes (warped/additional loss geometry in succframe-warp-rq and SUCCFRAME-MOEB-RQ, codebook-update replacement in beh-aniso-poincare-rq, stale-successor cache in STATECELL-MARGIN-RQ), and a sub-0.065 result will be indistinguishable from seed noise the programme is not allowed to measure — so the winner should be read as a bounded, damage-limited bet (STATECELL-MARGIN-RQ), not as a demonstrated improvement."
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "revision": 2,
+  "round_id": "round_budgetprobe",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "STATECELL-MARGIN-RQ": {
+        "first_places": 2,
+        "mean_rank": 2.0,
+        "total_rank": 6
+      },
+      "SUCCFRAME-MOEB-RQ": {
+        "first_places": 1,
+        "mean_rank": 1.6667,
+        "total_rank": 5
+      },
+      "beh-aniso-poincare-rq": {
+        "first_places": 0,
+        "mean_rank": 3.3333,
+        "total_rank": 10
+      },
+      "succframe-warp-rq": {
+        "first_places": 0,
+        "mean_rank": 3.0,
+        "total_rank": 9
+      }
+    },
+    "backups": [
+      {
+        "first_places": 2,
+        "idea_id": "STATECELL-MARGIN-RQ",
+        "mean_rank": 2.0,
+        "status": "BACKUP",
+        "total_rank": 6
+      },
+      {
+        "first_places": 0,
+        "idea_id": "succframe-warp-rq",
+        "mean_rank": 3.0,
+        "status": "BACKUP",
+        "total_rank": 9
+      },
+      {
+        "first_places": 0,
+        "idea_id": "beh-aniso-poincare-rq",
+        "mean_rank": 3.3333,
+        "status": "BACKUP",
+        "total_rank": 10
+      }
+    ],
+    "disagreement": {
+      "STATECELL-MARGIN-RQ": 3,
+      "SUCCFRAME-MOEB-RQ": 1,
+      "beh-aniso-poincare-rq": 1,
+      "succframe-warp-rq": 2
+    },
+    "rejected": [
+      {
+        "idea_id": "STATECELL-MARGIN-RQ",
+        "mean_rank": 2.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 6
+      },
+      {
+        "idea_id": "succframe-warp-rq",
+        "mean_rank": 3.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 9
+      },
+      {
+        "idea_id": "beh-aniso-poincare-rq",
+        "mean_rank": 3.3333,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 10
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 1,
+        "idea_id": "SUCCFRAME-MOEB-RQ",
+        "mean_rank": 1.6667,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 5
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  },
+  "supersedes_decision_hash": "3a00a9aa9e50d861f59cdd2750a456d3a9a2274ec85d42a2135131bf40000516"
+}

@@ -1,0 +1,61 @@
+{
+  "admissible": true,
+  "checks": [
+    {
+      "detail": "every module-level name the trainer reads is bound",
+      "name": "names",
+      "status": "PASS"
+    },
+    {
+      "detail": "every collective call is reached by every rank",
+      "name": "collectives",
+      "status": "PASS"
+    },
+    {
+      "detail": "the frozen constants match and the launcher is the framework's",
+      "name": "constants",
+      "status": "PASS"
+    },
+    {
+      "detail": "the candidate uses the canonical geometry module and defines no other",
+      "name": "geometry_contract",
+      "status": "PASS"
+    },
+    {
+      "detail": "one epoch runs and exports the identifier",
+      "name": "entry",
+      "status": "PASS"
+    },
+    {
+      "detail": "24587 unique identifiers of 4 tokens",
+      "name": "identifier",
+      "status": "PASS"
+    },
+    {
+      "detail": "the four ranks finish and the rank-0 evaluation does not wait",
+      "name": "four_rank",
+      "status": "PASS"
+    },
+    {
+      "coupling": {
+        "behaviour_argument": "demand",
+        "control_argument": "residual",
+        "max_abs_difference": 0.1516847554320434,
+        "reason": "the behaviour moves the computation",
+        "status": "PASS"
+      },
+      "detail": "distance: values 1.3e-12, gradients 2.1e-12, gradcheck True/True; the behaviour moves the computation (0.1516847554320434)",
+      "name": "reference_agreement",
+      "status": "PASS"
+    },
+    {
+      "detail": "8 of 8 encoder tensors received a gradient",
+      "name": "encoder_gradient",
+      "status": "PASS"
+    }
+  ],
+  "checks_fingerprint": "20bfdb6dafc0",
+  "digest": "95b49ee4afbefb6a7a37bfbfe17df72f08cd8fd5c398af181fb35f51fa80877c",
+  "passed": true,
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq"
+}

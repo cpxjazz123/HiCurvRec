@@ -1,0 +1,95 @@
+{
+ "calls": [
+  {
+   "name": "cell_score",
+   "callable": "model.geocap:score_with_demand",
+   "symbols": [
+    "r0",
+    "r1",
+    "a0",
+    "a1",
+    "demand",
+    "h",
+    "A0"
+   ],
+   "args": [
+    {
+     "name": "residual",
+     "width": 2,
+     "radius": 0.5
+    },
+    {
+     "name": "codeword",
+     "width": 2,
+     "radius": 0.5
+    },
+    {
+     "name": "demand",
+     "scalar": 1.0
+    },
+    {
+     "name": "base_radius",
+     "scalar": 0.2
+    },
+    {
+     "name": "base_area",
+     "scalar": 0.13
+    }
+   ],
+   "statements": [
+    "x2 = r0**2 + r1**2",
+    "y2 = a0**2 + a1**2",
+    "ra = r0*a0 + r1*a1",
+    "s = 1 - 2*ra + y2",
+    "t = 1 - x2",
+    "den = 1 - 2*ra + x2*y2",
+    "m0 = (s*(-r0) + t*a0)/den",
+    "m1 = (s*(-r1) + t*a1)/den",
+    "norm = sqrt(m0**2 + m1**2)",
+    "dc = 2*atanh(norm)",
+    "rho = acosh(1 + A0*demand/(2*pi))",
+    "score = dc - (rho - h)"
+   ],
+   "output": "score",
+   "rtol": 1e-05,
+   "atol": 1e-07,
+   "tolerance_note": "the two sides reach the same distance by different algebra - the code through the framework's M\u00f6bius form, the reference through SymPy's atanh - and their double-precision values differ by about 3e-7 on a score of order 0.1; the declared tolerance is the relative 1e-5 that difference needs"
+  }
+ ],
+ "coupling": {
+  "callable": "model.geocap:score_with_demand",
+  "behaviour_argument": "demand",
+  "args": [
+   {
+    "name": "residual",
+    "width": 2
+   },
+   {
+    "name": "codeword",
+    "width": 2
+   },
+   {
+    "name": "demand",
+    "scalar": 1.0
+   },
+   {
+    "name": "base_radius",
+    "scalar": 0.2
+   },
+   {
+    "name": "base_area",
+    "scalar": 0.13
+   }
+  ]
+ },
+ "excluded": [
+  {
+   "surface": "the argmin of the assignment",
+   "reason": "an argmin is not differentiable"
+  },
+  {
+   "surface": "the behaviour salience and the demand EMA",
+   "reason": "train-only statistics, frozen and detached: they have no gradient and are not a function of the batch"
+  }
+ ]
+}

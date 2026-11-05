@@ -662,6 +662,12 @@ results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_stdout.log
 !results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/logs/
 !results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/logs/**
 
+# The conformance scratch of the admission runs: the one-epoch exports and the
+# probe reports of the CHECKS, regenerable by rerunning the checks, and three
+# copies of the same 24587-row identifier file. The reports under
+# results/research/_conformance/ are the evidence and stay.
+results/stage2_RQ-VAE/_conformance/
+
 results/**/*.pth
 results/**/*.pt
 results/**/*.npy

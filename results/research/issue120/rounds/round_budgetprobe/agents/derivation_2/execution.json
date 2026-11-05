@@ -1,0 +1,27 @@
+{
+ "task_id": "derivation_2",
+ "backend": "openai-agents-sdk",
+ "verified": true,
+ "finished_utc_epoch": 1793806294.9184482,
+ "elapsed_s": 239.121,
+ "model": "deepseek/deepseek-v4.1-flash",
+ "role": "derive",
+ "boundary_sha256": "26141a18bff684a732ba60eeaf6b6be01820fc7df051b7bf86edb6e73319006a",
+ "read_allowlist": [
+  "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md"
+ ],
+ "geometry_contract": {
+  "path": "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md",
+  "version": "poincare-contract/v1",
+  "sha256": "bdc89757b8e88bb115cb2d871a8da0591fdaa8574bebe50e26baaef9440cdad4"
+ },
+ "failure": "",
+ "refusals": [],
+ "structured_output": true,
+ "structured_output_fallback": false,
+ "timed_out": false,
+ "budget_seconds": 300.0,
+ "failure_trace": "",
+ "progress_file": "/fs04/ar57/wenyu/GeneRec/results/research/issue120/rounds/round_budgetprobe/agents/derivation_2/progress.jsonl",
+ "answer": "/fs04/ar57/wenyu/GeneRec/results/research/issue120/rounds/round_budgetprobe/agents/derivation_2/derivation.json"
+}
