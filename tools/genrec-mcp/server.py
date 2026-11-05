@@ -3208,6 +3208,18 @@ def _round_jobs(directory: Path) -> dict:
 
 
 
+def _changed_files(changes) -> list:
+    """The changed files of an implementation, as a list of names.
+
+    The tool's schema carries them as one string: a comma separated list is
+    split, and a list is taken as it is. A plain string would otherwise become
+    a list of single characters, and the registry would record 158 letters
+    instead of the files that changed.
+    """
+    if isinstance(changes, str):
+        return [item.strip() for item in changes.split(",") if item.strip()]
+    return [str(item).strip() for item in (changes or []) if str(item).strip()]
+
 def tool_research_round_register_implementation(round_id: str, idea_id: str,
                                                changes: list, notes: str = "",
                                                smoke: str = "",
@@ -3222,10 +3234,11 @@ def tool_research_round_register_implementation(round_id: str, idea_id: str,
 
     directory = _round_directory(round_id)
     state = round_pipeline_state(directory)
+    changed_files = _changed_files(changes)
     try:
         state = round_pipeline.register_implementation(
             state, idea_id,
-            {"changed_files": list(changes or []), "notes": notes,
+            {"changed_files": changed_files, "notes": notes,
              "smoke": {"result": smoke} if smoke else {},
              "source_digest": source_digest})
     except Exception as exc:                               # noqa: BLE001

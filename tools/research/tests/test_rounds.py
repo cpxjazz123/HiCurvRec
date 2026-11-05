@@ -840,3 +840,27 @@ class ScorerSchemaTests(unittest.TestCase):
         self.assertIn("exactly once", prompt)
 
 
+
+
+class RegistrationRecordTests(unittest.TestCase):
+    """What the registration records is what the main agent wrote."""
+
+    def test_the_changed_files_are_a_list_of_names(self):
+        """The tool's schema carries the files as one string.
+
+        A plain string would otherwise become a list of single characters, and
+        the registry would record the letters of the file names instead of the
+        files.
+        """
+        import importlib.util
+
+        repo = Path(__file__).resolve().parents[3]
+        spec = importlib.util.spec_from_file_location(
+            "genrec_server", repo / "tools" / "genrec-mcp" / "server.py")
+        server = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(server)
+        self.assertEqual(server._changed_files("a.py, b.py"),
+                         ["a.py", "b.py"])
+        self.assertEqual(server._changed_files(["a.py", "b.py"]),
+                         ["a.py", "b.py"])
+        self.assertEqual(server._changed_files(""), [])

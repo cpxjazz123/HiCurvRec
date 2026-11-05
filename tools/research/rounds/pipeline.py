@@ -416,6 +416,7 @@ def register_implementation(state: dict, implementation_id: str, report: dict) -
     if record.get("source_digest"):
         record["revision"] = int(record.get("revision", 0)) + 1
     record["changed_files"] = list(report.get("changed_files", []))
+    record["notes"] = str(report.get("notes") or "")
     record["deviations"] = list(report.get("deviations", []))
     record["assumptions"] = list(report.get("assumptions", []))
     record["smoke"] = report.get("smoke", {})
