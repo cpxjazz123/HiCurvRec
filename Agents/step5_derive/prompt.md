@@ -3,10 +3,33 @@
 Source: `tools/research/rounds/step5_derivation.py` -> `_derivation_prompt()`
 
 ```python
-def _derivation_prompt(idea: dict) -> str:
+def _derivation_prompt(idea: dict, spec: dict = None) -> str:
     """One specification, no other derivation, and no way to ask for one."""
     instance = DERIVATION_INSTANCE
-    args, symbols = derivation_signature()
+    args, symbols = derivation_signature(spec)
+    surface = (spec or {}).get("continuous_surface") or {}
+    if surface:
+        return (
+            "Derive the formula of this mechanism from the specification alone.\n\n"
+            "TITLE: " + str(idea.get("title")) + "\n"
+            "MECHANISM: " + str(idea.get("mechanism")) + "\n"
+            "SPECIFICATION: " + str(idea.get("specification")) + "\n"
+            "SPEC EQUATIONS: " + str(idea.get("spec_equations")) + "\n\n"
+            "THE FROZEN SURFACE you must restate:\n"
+            + json.dumps(surface, indent=1, ensure_ascii=False) + "\n\n"
+            "FIXED INSTANTIATION - every derivation must use exactly this, or the "
+            "two cannot be compared:\n"
+            "  * the arguments, in this exact order:\n" + argument_lines(args) + "\n"
+            "  * the free symbols, in this exact order: " + ", ".join(symbols) + "\n"
+            "  * the output is the surface's output: '" + str(surface.get("output")) + "'.\n"
+            "  * a switch or a table the surface needs is carried as an extra "
+            "argument placed AFTER the listed ones, and must be named in `args` "
+            "and `symbols` in the same order.\n"
+            "  Symbols follow the arguments: a width-w argument consumes w symbols "
+            "in column order.\n\n"
+            "Turn the surface into SymPy statements and into a complete torch module "
+            "defining compute(**kwargs), as the answer format requires. The "
+            "statements and the module must compute the SAME formula.")
     argument_lines = "\n".join(
         "      %s: %s" % (spec["name"],
                          ("a scalar" if spec.get("scalar") is not None

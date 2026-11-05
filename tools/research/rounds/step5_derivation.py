@@ -81,13 +81,24 @@ DERIVATION_INSTANCE = {"latent_width": 2, "levels": 2, "codes": 2,
                        "output": "loss"}
 
 
-def derivation_signature() -> tuple:
-    """The arguments and the symbols of the fixed instance.
+def derivation_signature(spec: dict = None) -> tuple:
+    """The arguments and the symbols of the derivation's instance.
 
     The framework owns them: the agents fill the statements, the output name
     and the code. An agent that invents its own arguments produces a different
     function, and the comparison of two such answers says nothing.
+
+    When the round has a frozen specification, the instance is ITS surface: the
+    arguments and the symbols the specification declares. A mechanism that
+    changes an assignment rather than a loss has no 'the quantity the mechanism
+    adds to the objective', and the fixed loss-shaped instance would refuse
+    every derivation of it.
     """
+    surface = (spec or {}).get("continuous_surface") or {}
+    arguments = surface.get("args") or []
+    symbols = surface.get("symbols") or []
+    if arguments and symbols:
+        return list(arguments), list(symbols)
     instance = DERIVATION_INSTANCE
     width = int(instance["latent_width"])
     args = [{"name": instance["latent_name"], "width": width, "radius": 0.4}]
@@ -113,8 +124,23 @@ def _instance_codebook_width() -> int:
     return int(instance["levels"]) * int(instance["codes"]) * int(instance["latent_width"])
 
 
-def _instance_problems(payload: dict) -> list:
-    """Where a derivation departs from the fixed instance."""
+def _instance_problems(payload: dict, spec: dict = None) -> list:
+    """Where a derivation departs from the instance it had to use."""
+    surface = (spec or {}).get("continuous_surface") or {}
+    arguments_expected = surface.get("args") or []
+    symbols_expected = surface.get("symbols") or []
+    if arguments_expected and symbols_expected:
+        problems = []
+        arguments = [str(entry.get("name")) for entry in payload.get("args") or []]
+        symbols = [str(entry) for entry in payload.get("symbols") or []]
+        if arguments != [str(entry.get("name")) for entry in arguments_expected]:
+            problems.append("the arguments are %s, the frozen specification's are %s"
+                            % (arguments,
+                               [str(entry.get("name")) for entry in arguments_expected]))
+        if symbols != list(symbols_expected):
+            problems.append("the symbols are %s, the frozen specification's are %s"
+                            % (symbols, list(symbols_expected)))
+        return problems
     instance = DERIVATION_INSTANCE
     problems = []
     arguments = payload.get("args") or []
@@ -194,10 +220,44 @@ def _code_accepts(payload: dict, args: list) -> bool:
     return False
 
 
-def _derivation_prompt(idea: dict) -> str:
+def argument_lines(args: list) -> str:
+    """The argument list as the prompt shows it."""
+    lines = []
+    for spec in args:
+        if spec.get("scalar") is not None:
+            lines.append("      %s: a scalar" % spec.get("name"))
+        else:
+            lines.append("      %s: a vector of %d components"
+                         % (spec.get("name"), int(spec.get("width") or 1)))
+    return "\n".join(lines)
+
+def _derivation_prompt(idea: dict, spec: dict = None) -> str:
     """One specification, no other derivation, and no way to ask for one."""
     instance = DERIVATION_INSTANCE
-    args, symbols = derivation_signature()
+    args, symbols = derivation_signature(spec)
+    surface = (spec or {}).get("continuous_surface") or {}
+    if surface:
+        return (
+            "Derive the formula of this mechanism from the specification alone.\n\n"
+            "TITLE: " + str(idea.get("title")) + "\n"
+            "MECHANISM: " + str(idea.get("mechanism")) + "\n"
+            "SPECIFICATION: " + str(idea.get("specification")) + "\n"
+            "SPEC EQUATIONS: " + str(idea.get("spec_equations")) + "\n\n"
+            "THE FROZEN SURFACE you must restate:\n"
+            + json.dumps(surface, indent=1, ensure_ascii=False) + "\n\n"
+            "FIXED INSTANTIATION - every derivation must use exactly this, or the "
+            "two cannot be compared:\n"
+            "  * the arguments, in this exact order:\n" + argument_lines(args) + "\n"
+            "  * the free symbols, in this exact order: " + ", ".join(symbols) + "\n"
+            "  * the output is the surface's output: '" + str(surface.get("output")) + "'.\n"
+            "  * a switch or a table the surface needs is carried as an extra "
+            "argument placed AFTER the listed ones, and must be named in `args` "
+            "and `symbols` in the same order.\n"
+            "  Symbols follow the arguments: a width-w argument consumes w symbols "
+            "in column order.\n\n"
+            "Turn the surface into SymPy statements and into a complete torch module "
+            "defining compute(**kwargs), as the answer format requires. The "
+            "statements and the module must compute the SAME formula.")
     argument_lines = "\n".join(
         "      %s: %s" % (spec["name"],
                          ("a scalar" if spec.get("scalar") is not None
@@ -245,7 +305,7 @@ def _derivation_prompt(idea: dict) -> str:
         "module defining compute(**kwargs), as the answer format requires.")
 
 
-def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
+def run_derivations(directory: Path, ideas: list, *, log=print, spec: dict = None) -> list:
     """Three independent derivations of the one selected mechanism."""
     from ..agents import runtime as agent_runtime
 
@@ -261,9 +321,9 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
                 archive.mkdir(parents=True, exist_ok=True)
                 stale.replace(archive / "derivation.json")
 
-        def derive(task_id, _idea=idea):
+        def derive(task_id, _idea=idea, _spec=spec):
             return _run_agent(
-                directory, task_id, _derivation_prompt(_idea), "derivation.json",
+                directory, task_id, _derivation_prompt(_idea, _spec), "derivation.json",
                 _parse_derivation, role="derive", read_paths=[],
                 allowed_roots=_round_roots(directory))
 
@@ -287,7 +347,7 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
                            "symbols", "args")
                        if outcome.get(key)}
             if payload.get("statements") and not payload.get("args"):
-                args, symbols = derivation_signature()
+                args, symbols = derivation_signature(spec)
                 payload["args"] = args
                 payload["symbols"] = symbols
             if payload.get("statements") and payload.get("code"):
@@ -301,7 +361,7 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
         args, symbols = derivation_signature()
         for answer in list(delivered):
             payload = answer.get("payload") or {}
-            problems = _instance_problems(payload) if payload else ["no payload"]
+            problems = _instance_problems(payload, spec) if payload else ["no payload"]
             if not problems and not _code_accepts(payload, args):
                 problems = ["the code cannot be called with the round's arguments"]
             if not problems:
@@ -327,7 +387,7 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
                            "symbols", "args")
                        if outcome.get(key)}
             if payload.get("statements") and not payload.get("args"):
-                args, symbols = derivation_signature()
+                args, symbols = derivation_signature(spec)
                 payload["args"] = args
                 payload["symbols"] = symbols
             answer["payload"] = payload
@@ -397,14 +457,16 @@ def phase_derivation(root: Path, round_id: str, *, log=print) -> dict:
         return {"phase": "derivation", "ran": False,
                 "reason": "the derivations are on disk",
                 "status": (state.get("differential") or {}).get("status")}
-    answers = run_derivations(directory, selected, log=log)
+    frozen = state.get("math_spec") or {}
+    answers = run_derivations(directory, selected, log=log,
+                              spec=frozen.get("spec") or {})
     implementations = [{"name": "%s_%d" % (answer["idea_id"], answer["index"]),
                         **(answer.get("payload") or {})}
                        for answer in answers if answer.get("payload")]
     mismatched = []
     comparable = []
     for implementation in implementations:
-        problems = _instance_problems(implementation)
+        problems = _instance_problems(implementation, frozen.get("spec") or {})
         if problems:
             implementation["instance_problems"] = problems
             mismatched.append({"name": implementation["name"],
