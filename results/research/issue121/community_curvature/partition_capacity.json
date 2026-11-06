@@ -1,0 +1,47 @@
+{
+  "file": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+  "measurements": {
+    "curvature_community_64": {
+      "positives_share": 0.04090436098760761,
+      "negatives_share": 0.016914199224292877,
+      "ratio": 2.41834451901566,
+      "positive_lift": 2.5871267873084354,
+      "chance": 0.015810729179671634
+    },
+    "transition_kmeans_64": {
+      "positives_share": 0.21838993472708354,
+      "negatives_share": 0.1427111909942295,
+      "ratio": 1.5302929868752486,
+      "positive_lift": 1.080347095627155,
+      "chance": 0.20214793524326127
+    },
+    "transition_kmeans_256": {
+      "positives_share": 0.2292876738246145,
+      "negatives_share": 0.16021190048245199,
+      "ratio": 1.4311525743977327,
+      "positive_lift": 0.8489585619377815,
+      "chance": 0.2700811136190868
+    },
+    "transition_kmeans_1024": {
+      "positives_share": 0.2476019298079652,
+      "negatives_share": 0.1865481033014852,
+      "ratio": 1.3272819472616633,
+      "positive_lift": 0.8406255468016327,
+      "chance": 0.29454485501901273
+    },
+    "l1_codes_frozen_baseline": {
+      "positives_share": 0.08638728597105289,
+      "negatives_share": 0.01401948727651121,
+      "ratio": 6.161943319838056,
+      "positive_lift": 7.367366358842912,
+      "chance": 0.011725667187347598
+    },
+    "l1_codes_resample_reference": {
+      "positives_share": 0.07944376123356352,
+      "negatives_share": 0.004956957714501939,
+      "ratio": 16.026717557251906,
+      "positive_lift": 17.046521896720016,
+      "chance": 0.004660408833830764
+    }
+  }
+}

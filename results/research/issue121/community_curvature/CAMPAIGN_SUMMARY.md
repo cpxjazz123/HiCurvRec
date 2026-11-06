@@ -2,16 +2,21 @@
 
 ## The table
 
-| arm | L1 Hard ER | L2 prefixes | L3 collision | L1 positive hit | **test_R@10** |
-|---|---|---|---|---|---|
-| curriculum-behaviour-rq | 6.68 | 7439 | 0.2600 | 0.0831 | 0.05481 |
-| **TIGER_RQ-VAE (frozen baseline)** | 6.47 | 7414 | 0.2745 | 0.0864 | **0.05554** |
-| community-l1-rq (attraction, cost term) | 5.49 | 6280 | 0.3259 | **0.0989** | 0.05263 |
-| community-repulse-l1-rq (repulsion, cost term) | 5.23 | 6318 | 0.3340 | **0.0996** | 0.05423 |
-| curvature-embedding-rq (Plan A) | 4.26 | 14021 | 0.0201 | 0.0357 | 0.04897 |
-| community-pairs-guarded-rq (contrast + guard) | 3.03 | 6575 | 0.2686 | 0.0412 | 0.04328 |
-| *reference*: resample (the campaign's best) | 16.39 | 16145 | — | — | **0.06374** |
-| the threshold the programme aims at | | | | | 0.065 |
+| arm | L1 Hard ER (= pos/neg) | L2 prefixes | L3 collision | **test_R@10** |
+|---|---|---|---|---|
+| *reference*: resample (the campaign's best) | **16.39** | 16145 | — | **0.06374** |
+| curriculum-behaviour-rq | 6.68 | 7439 | 0.2600 | 0.05481 |
+| **TIGER_RQ-VAE (frozen baseline)** | 6.47 | 7414 | 0.2745 | **0.05554** |
+| community-l1-rq (attraction, cost term) | 5.49 | 6280 | 0.3259 | 0.05263 |
+| community-repulse-l1-rq (repulsion, cost term) | 5.23 | 6318 | 0.3340 | 0.05423 |
+| curvature-embedding-rq (Plan A) | 4.26 | 14021 | 0.0201 | 0.04897 |
+| community-pairs-guarded-rq (contrast + guard) | 3.03 | 6575 | 0.2686 | 0.04328 |
+| the threshold the programme aims at | | | | 0.065 |
+
+The error rate is a ratio (`positives x expected negatives / negatives`), so a
+**higher** rate means the identifier discriminates behaviour pairs better, and
+the recall follows it. See `WHY_IT_FAILED.md` for the measurement that explains
+the ordering and closes the mechanism.
 
 Six arms of this campaign, one outcome: **no arm that used the community
 information beat the frozen baseline's recall**, and the gap is 0.0013 to 0.0123
