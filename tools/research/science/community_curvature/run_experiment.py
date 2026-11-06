@@ -1,0 +1,278 @@
+"""Run experiment 1: does a mixed free + hyperbolic encoder learn better communities?
+
+Two models of the same capacity are trained once each on the train split's AF3
+curvature ranking pairs, and both are measured on an independent sample: the
+ranking pairs of the **validation** split's behaviour graph, which is built from
+held-out interactions and never seen during training.
+
+    model A (control)  frozen 768 -> free 128          -> 64 centres
+    model B (experiment) frozen 768 -> free 64 + hyperbolic 64 -> 64 centres
+
+The judgement is the validation curvature separation: if the mixed geometry does
+not separate high-AF3 from low-AF3 pairs better than the Euclidean control on
+data the model never saw, the mechanism is refuted and nothing is carried into
+the RQ-VAE.
+
+Run (no arguments):
+
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 \
+        tools/research/science/community_curvature/run_experiment.py
+"""
+from __future__ import annotations
+
+import json
+import platform
+import sys
+import time
+from pathlib import Path
+
+import numpy as np
+import torch
+
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+
+from tools.research.science.community_curvature import data, metrics, model  # noqa: E402
+
+OUT = data.REPO / "results" / "research" / "issue121" / "community_curvature"
+
+SEED = 42
+N_COMMUNITIES = 64
+EPOCHS = 60
+ANCHOR_BATCH = 1024
+ITEM_BATCH = 4096
+LEARNING_RATE = 1e-3
+FREE_DIM_CONTROL = 128
+FREE_DIM_EXPERIMENT = 64
+HYPER_DIM_EXPERIMENT = 64
+CURVATURE = 1.0
+PERMUTATIONS = 20000
+
+
+def set_seed(seed: int) -> None:
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+
+def item_ids(graph: data.Graph, positions: np.ndarray) -> np.ndarray:
+    """Graph positions -> item ids."""
+    return np.asarray(graph.nodes, dtype=np.int64)[positions]
+
+
+def soft_assignment(net: model.CommunityModel, embeddings: np.ndarray,
+                    device: torch.device, batch: int = 8192) -> np.ndarray:
+    """The soft community distribution of every item, in one pass."""
+    out = np.empty((embeddings.shape[0], net.n_communities), dtype=np.float32)
+    with torch.no_grad():
+        for start in range(0, embeddings.shape[0], batch):
+            chunk = torch.from_numpy(embeddings[start:start + batch]).to(device)
+            out[start:start + batch] = net.assignment(chunk).cpu().numpy()
+    return out
+
+
+def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.ndarray,
+          high_items: np.ndarray, low_items: np.ndarray, device: torch.device,
+          seed: int = SEED) -> dict:
+    """Train once: the curvature ranking loss plus the usage constraint."""
+    rng = np.random.default_rng(seed)
+    optimiser = torch.optim.Adam(net.parameters(), lr=LEARNING_RATE)
+    margin = model.margin_for(net.n_communities)
+    n_anchors = anchor_items.size
+    steps_per_epoch = max(1, n_anchors // ANCHOR_BATCH)
+    history = []
+    net.train()
+    for epoch in range(EPOCHS):
+        order = rng.permutation(n_anchors)
+        totals = {"loss": 0.0, "ranking": 0.0, "usage": 0.0, "s_high": 0.0, "s_low": 0.0}
+        for step in range(steps_per_epoch):
+            index = order[step * ANCHOR_BATCH:(step + 1) * ANCHOR_BATCH]
+            batch_anchor = torch.from_numpy(embeddings[anchor_items[index]]).to(device)
+            batch_high = torch.from_numpy(embeddings[high_items[index]]).to(device)
+            batch_low = torch.from_numpy(embeddings[low_items[index]]).to(device)
+            pi_anchor = net.assignment(batch_anchor)
+            pi_high = net.assignment(batch_high)
+            pi_low = net.assignment(batch_low)
+
+            sample = rng.integers(0, embeddings.shape[0], size=ITEM_BATCH)
+            pi_items = net.assignment(torch.from_numpy(embeddings[sample]).to(device))
+
+            ranking = model.ranking_loss(pi_anchor, pi_high, pi_low, margin)
+            usage = model.usage_loss(pi_items.mean(dim=0), net.n_communities)
+            loss = ranking + usage
+            optimiser.zero_grad(set_to_none=True)
+            loss.backward()
+            optimiser.step()
+
+            totals["loss"] += float(loss.detach())
+            totals["ranking"] += float(ranking.detach())
+            totals["usage"] += float(usage.detach())
+            totals["s_high"] += float(model.overlap(pi_anchor, pi_high).mean().detach())
+            totals["s_low"] += float(model.overlap(pi_anchor, pi_low).mean().detach())
+        count = max(1, steps_per_epoch)
+        history.append({key: value / count for key, value in totals.items()})
+    net.eval()
+    return {"epochs": EPOCHS, "steps_per_epoch": steps_per_epoch, "margin": margin,
+            "history": history}
+
+
+def evaluate(net: model.CommunityModel, name: str, embeddings: np.ndarray,
+             graphs: dict, curvatures: dict, pair_sets: dict, device: torch.device,
+             seed: int = SEED) -> dict:
+    """Every measurement of one trained model."""
+    pi = soft_assignment(net, embeddings, device)
+    report = {"model": name,
+              "free_dim": net.free_dim, "hyper_dim": net.hyper_dim,
+              "n_communities": net.n_communities,
+              "contract_sha256": net.contract_sha256}
+    for split in ("train", "valid"):
+        pairs = pair_sets[split]
+        report[f"separation_{split}"] = metrics.separation(pi, pairs, seed=seed)
+    report["occupancy"] = metrics.occupancy(pi)
+    for split in ("train", "valid"):
+        graph = graphs[split]
+        labels = pi[graph.nodes].argmax(axis=1).astype(np.int64)
+        report[f"curvature_gap_{split}"] = metrics.curvature_gap(graph, curvatures[split],
+                                                                  labels)
+        report[f"community_transitivity_{split}"] = metrics.community_transitivity(graph, labels)
+        report[f"group_transitivity_{split}"] = metrics.group_transitivity(
+            graph, labels, net.n_communities)
+    return report
+
+
+def paired_comparison(pi_control: np.ndarray, pi_experiment: np.ndarray, pairs,
+                       seed: int = SEED) -> dict:
+    """The paired difference of the validation separation, B - A, over the anchors."""
+    def differences(pi):
+        anchor = pi[pairs.anchor]
+        return ((anchor * pi[pairs.high]).sum(axis=1)
+                - (anchor * pi[pairs.low]).sum(axis=1))
+    control = differences(pi_control)
+    experiment = differences(pi_experiment)
+    delta = experiment - control
+    rng = np.random.default_rng(seed)
+    n = delta.size
+    draws = rng.integers(0, n, size=(5000, n))
+    means = delta[draws].mean(axis=1)
+    signs = rng.integers(0, 2, size=(PERMUTATIONS, n)).astype(bool)
+    null = np.where(signs, delta, -delta).mean(axis=1)
+    return {
+        "anchors": int(n),
+        "control_mean": float(control.mean()),
+        "experiment_mean": float(experiment.mean()),
+        "difference": float(delta.mean()),
+        "ci_low": float(np.quantile(means, 0.025)),
+        "ci_high": float(np.quantile(means, 0.975)),
+        "permutation_p": float((np.abs(null) >= abs(delta.mean())).mean()),
+        "permutations": PERMUTATIONS,
+        "anchors_improved": int((delta > 0).sum()),
+    }
+
+
+def main() -> int:
+    OUT.mkdir(parents=True, exist_ok=True)
+    set_seed(SEED)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    started = time.time()
+
+    print("[data] embeddings", flush=True)
+    embeddings = data.load_embeddings()
+    graphs, curvatures, pair_sets = {}, {}, {}
+    for split in ("train", "valid"):
+        print(f"[data] {split} graph", flush=True)
+        graphs[split] = data.build_graph(split)
+        curvatures[split] = data.curvature_of(graphs[split])
+        pairs = data.ranking_pairs(graphs[split], curvatures[split])
+        pair_sets[split] = data.RankingPairs(
+            anchor=item_ids(graphs[split], pairs.anchor),
+            high=item_ids(graphs[split], pairs.high),
+            low=item_ids(graphs[split], pairs.low),
+            af3_high=pairs.af3_high, af3_low=pairs.af3_low)
+        print(f"[data] {split}: nodes={graphs[split].n_nodes} "
+              f"edges={graphs[split].edges[0].size} ranking_pairs={len(pairs)}", flush=True)
+
+    random_left, random_right = data.random_pairs(graphs["train"], 200000, SEED)
+
+    specifications = [
+        ("A_free_128", dict(free_dim=FREE_DIM_CONTROL, hyper_dim=0)),
+        ("B_free_64_hyper_64", dict(free_dim=FREE_DIM_EXPERIMENT,
+                                    hyper_dim=HYPER_DIM_EXPERIMENT)),
+    ]
+    assignments, reports = {}, {}
+    for name, spec in specifications:
+        print(f"[train] {name}", flush=True)
+        set_seed(SEED)
+        net = model.CommunityModel(input_dim=embeddings.shape[1], n_communities=N_COMMUNITIES,
+                                   curvature=CURVATURE, seed=SEED, **spec).to(device)
+        training = train(net, embeddings, pair_sets["train"].anchor, pair_sets["train"].high,
+                         pair_sets["train"].low, device)
+        report = evaluate(net, name, embeddings, graphs, curvatures, pair_sets, device)
+        report["training"] = {"epochs": training["epochs"], "margin": training["margin"],
+                               "first_epoch": training["history"][0],
+                               "last_epoch": training["history"][-1]}
+        reports[name] = report
+        assignments[name] = soft_assignment(net, embeddings, device)
+        np.save(OUT / f"pi_{name}.npy", assignments[name])
+
+    # the scale of a random pair's overlap, the null the separation is read against
+    # the graph positions are item ids before they can index the assignment
+    random_left = item_ids(graphs["train"], random_left)
+    random_right = item_ids(graphs["train"], random_right)
+    control_pi = assignments["A_free_128"]
+    null_overlap = float((control_pi[random_left] * control_pi[random_right]).sum(axis=1).mean())
+
+    comparison = paired_comparison(assignments["A_free_128"],
+                                    assignments["B_free_64_hyper_64"], pair_sets["valid"])
+    nulls = {split: metrics.null_measurements(graphs[split], curvatures[split],
+                                               N_COMMUNITIES, seed=SEED)
+             for split in ("train", "valid")}
+
+    payload = {
+        "experiment": "curvature-guided soft community learning",
+        "question": ("does a mixed free + hyperbolic encoder learn item communities that "
+                     "agree with the AF3 curvature of the behaviour graph better than a "
+                     "pure Euclidean encoder of the same capacity?"),
+        "protocol": {
+            "seed": SEED, "communities": N_COMMUNITIES, "epochs": EPOCHS,
+            "anchor_batch": ANCHOR_BATCH, "item_batch": ITEM_BATCH,
+            "learning_rate": LEARNING_RATE, "curvature": CURVATURE,
+            "margin": model.margin_for(N_COMMUNITIES),
+            "margin_derivation": "1/K: the overlap a uniform soft assignment gives any pair",
+            "usage_weight": 1.0,
+            "usage_derivation": "1 - H(usage)/log K is dimensionless and bounded by 1, "
+                                "the same order as the ranking hinge",
+            "distance_combination": "per-item standardised branch distances, equal weights",
+            "device": str(device), "python": platform.python_version(),
+            "torch": torch.__version__,
+        },
+        "data": {
+            "embeddings": str(data.EMBEDDINGS),
+            "embedding_shape": list(embeddings.shape),
+            "train": {"nodes": graphs["train"].n_nodes,
+                      "edges": int(graphs["train"].edges[0].size),
+                      "ranking_pairs": len(pair_sets["train"]),
+                      "af3_high_mean": float(pair_sets["train"].af3_high.mean()),
+                      "af3_low_mean": float(pair_sets["train"].af3_low.mean())},
+            "valid": {"nodes": graphs["valid"].n_nodes,
+                      "edges": int(graphs["valid"].edges[0].size),
+                      "ranking_pairs": len(pair_sets["valid"]),
+                      "af3_high_mean": float(pair_sets["valid"].af3_high.mean()),
+                      "af3_low_mean": float(pair_sets["valid"].af3_low.mean())},
+            "random_pair_overlap": null_overlap,
+        },
+        "models": reports,
+        "comparison_valid": comparison,
+        "null_models": nulls,
+        "wall_time_s": time.time() - started,
+    }
+    (OUT / "report.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"comparison_valid": comparison,
+                      "separations": {name: {"train": reports[name]["separation_train"],
+                                             "valid": reports[name]["separation_valid"]}
+                                      for name in reports}}, indent=2), flush=True)
+    print(f"[done] {OUT / 'report.json'}", flush=True)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
