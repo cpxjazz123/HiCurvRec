@@ -1,0 +1,54 @@
+{
+  "arm": "TIGER_curvature-stratum-sinkhorn-v1",
+  "items": 24587,
+  "levels": {
+    "L1": {
+      "input_mean_pairwise_distance": 0.035823931122003355,
+      "input_effective_rank": 6.578969399562267,
+      "input_mean_norm": 0.05635083011527929,
+      "codebook_mean_pairwise_distance": 0.07693447753458264,
+      "codebook_effective_rank": 7.153259171407471,
+      "codebook_used_codes": 256,
+      "codebook_max_share": 0.005409362725913525,
+      "codebook_entropy_bits": 7.980405603855131,
+      "chosen_quantisation_error": 0.037578551101437825,
+      "nearest_code_error": 0.023511750630021044,
+      "groups": 256,
+      "effective_next_codes_median": 1.3025879714602713,
+      "effective_next_codes_min": 1.0,
+      "effective_next_codes_max": 4.0388027196128995,
+      "conditional_entropy_next_given_this_bits": 0.4926506434438502,
+      "conditional_effective_next_codes": 1.4070276145762433
+    },
+    "L2": {
+      "input_mean_pairwise_distance": 0.053745638652079694,
+      "input_effective_rank": 7.565137139254458,
+      "input_mean_norm": 0.037578551101437825,
+      "codebook_mean_pairwise_distance": 0.10405513109391767,
+      "codebook_effective_rank": 15.307369180299938,
+      "codebook_used_codes": 68,
+      "codebook_max_share": 0.38166511058807373,
+      "codebook_entropy_bits": 3.7504009801433567,
+      "chosen_quantisation_error": 0.0212124689847389,
+      "nearest_code_error": 0.0212124689847389,
+      "groups": 68,
+      "effective_next_codes_median": 14.17908947969223,
+      "effective_next_codes_min": 1.0,
+      "effective_next_codes_max": 100.9815354177329,
+      "conditional_entropy_next_given_this_bits": 5.676442073461101,
+      "conditional_effective_next_codes": 51.14219134319058
+    },
+    "L3": {
+      "input_mean_pairwise_distance": 0.029368446172163613,
+      "input_effective_rank": 11.475258292440955,
+      "input_mean_norm": 0.0212124689847389,
+      "codebook_mean_pairwise_distance": 0.023431863862498063,
+      "codebook_effective_rank": 9.265922364788748,
+      "codebook_used_codes": 244,
+      "codebook_max_share": 0.02899906411767006,
+      "codebook_entropy_bits": 7.259762144074762,
+      "chosen_quantisation_error": 0.015576692200609211,
+      "nearest_code_error": 0.015576692200609211
+    }
+  }
+}

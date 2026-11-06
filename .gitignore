@@ -662,6 +662,17 @@ results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_stdout.log
 !results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/logs/
 !results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/logs/**
 
+# The collapse's timeline: the weight snapshots and the per-layer diagnosis of the
+# diagnostic re-run of the collapsed arm (a separate tree; the arm's own results
+# are untouched). The snapshots stay out - the rules below win - and the
+# diagnosis JSONs travel, they are the evidence.
+!results/stage2_RQ-VAE/_diag_collapse_timeline/
+!results/stage2_RQ-VAE/_diag_collapse_timeline/diagnosis_epoch_*.json
+!results/stage2_RQ-VAE/_diag_collapse_timeline/logs/
+!results/stage2_RQ-VAE/_diag_collapse_timeline/logs/training_metrics.jsonl
+results/stage2_RQ-VAE/_diag_collapse_timeline/**/*.pth
+results/stage2_RQ-VAE/_diag_collapse_timeline/**/*.npy
+
 # The stage-3 result of the curvature-aware embedding arm: the test record and
 # the metrics stream are the comparison's evidence; the checkpoints stay out.
 !results/stage3_T5Train/TIGER_curvature-embedding-rq/
