@@ -95,11 +95,58 @@ def sinkhorn_plan(distances: torch.Tensor, epsilon: float = 0.003,
     return q * batch_size
 
 
+class CurvatureGraphConvolution(nn.Module):
+    """One curvature-aware propagation over the behaviour graph.
+
+    The edge weights are fixed, because the curvature of an edge is a property
+    of the graph and not of the model. The AF3 curvature of the edge is
+    standardised over the graph's edges and turned into a multiplicative
+    weight on the GCN's symmetric normalisation,
+
+        alpha_ij  ~  exp(z_ij) / sqrt(deg_i * deg_j)
+
+    and the row is normalised, so every node's message is a weighted average of
+    its neighbours and the degree of a node cannot blow the message up. The
+    curvature enters monotonically: the higher the AF3 curvature of an edge,
+    the more of the neighbour it carries.
+
+    With ``curvature_aware=False`` the curvature factor is dropped and the
+    aggregator is the plain GCN mean, which is the control for the curvature
+    weighting: it tells whether the curvature is what helps or merely the
+    neighbourhood.
+    """
+
+    def __init__(self, rows: np.ndarray, cols: np.ndarray, z: np.ndarray,
+                 degrees: np.ndarray, curvature_aware: bool = True):
+        super().__init__()
+        if rows.size == 0:
+            raise ValueError("the graph has no edges")
+        factor = np.exp(z) if curvature_aware else np.ones_like(z)
+        normalisation = 1.0 / np.sqrt(np.maximum(degrees[rows], 1.0)
+                                     * np.maximum(degrees[cols], 1.0))
+        alpha = factor * normalisation
+        totals = np.zeros(degrees.size, dtype=np.float64)
+        np.add.at(totals, rows, alpha)
+        alpha = alpha / np.maximum(totals[rows], 1e-12)
+        indices = torch.from_numpy(np.stack([rows, cols]).astype(np.int64))
+        values = torch.from_numpy(alpha.astype(np.float32))
+        # a buffer, so the module's .to(device) carries the sparse adjacency
+        # with it; a plain attribute would stay on the CPU
+        self.register_buffer("adjacency", torch.sparse_coo_tensor(
+            indices, values, (int(degrees.size), int(degrees.size))).coalesce())
+        self.curvature_aware = bool(curvature_aware)
+
+    def forward(self, h: torch.Tensor) -> torch.Tensor:
+        """The message every node receives: a weighted average of its neighbours."""
+        return torch.sparse.mm(self.adjacency, h)
+
+
 class CommunityModel(nn.Module):
     """Soft community assignment over K communities from a frozen embedding."""
 
     def __init__(self, input_dim: int = 768, free_dim: int = 128, hyper_dim: int = 0,
-                 n_communities: int = 64, curvature: float = 1.0, seed: int = 42):
+                 n_communities: int = 64, curvature: float = 1.0, seed: int = 42,
+                 graph: CurvatureGraphConvolution | None = None):
         super().__init__()
         if free_dim <= 0:
             raise ValueError("the free branch needs a positive width")
@@ -126,12 +173,37 @@ class CommunityModel(nn.Module):
         # once from the first batch and then frozen, so the terms mean
         # "as close as the model started" and "as far apart as the centres
         # started".
+        self.graph = graph
+        if graph is not None:
+            # the propagation mixes the neighbourhood into the representation;
+            # the strength is a learnable scalar, so the model can turn the
+            # neighbour information off if it does not help
+            self.gamma_free = nn.Parameter(torch.tensor(1.0))
+            self.gamma_hyper = nn.Parameter(torch.tensor(1.0))
         self.register_buffer("scale_free", torch.tensor(1.0))
         self.register_buffer("scale_hyper", torch.tensor(1.0))
         self.register_buffer("separation_threshold", torch.tensor(0.0))
         self.register_buffer("scales_frozen", torch.tensor(0.0))
 
     # ------------------------------------------------------------------ branches
+    def represent(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor | None]:
+        """The representation of every item, after the graph propagation.
+
+        The propagation runs over every item, because a neighbour of a batch
+        item need not be in the batch. The hyperbolic branch is propagated in
+        the tangent space and mapped into the ball afterwards, so the geometry
+        is applied to the propagated representation.
+        """
+        free = self.free_projection(x)
+        if self.graph is not None:
+            free = free + self.gamma_free * self.graph(free)
+        if self.hyper_dim <= 0:
+            return free, None
+        tangent = self.hyper_projection(x)
+        if self.graph is not None:
+            tangent = tangent + self.gamma_hyper * self.graph(tangent)
+        return free, self.contract.expmap0(tangent, self.curvature)
+
     def free_branch(self, x: torch.Tensor) -> torch.Tensor:
         """The item's coordinates in the free space."""
         return self.free_projection(x)
@@ -155,31 +227,31 @@ class CommunityModel(nn.Module):
         return free, self.contract.expmap0(self.hyper_centres, self.curvature)
 
     # ------------------------------------------------------------------ distances
-    def distances(self, x: torch.Tensor) -> torch.Tensor:
+    def distances(self, free_items: torch.Tensor,
+                  ball_items: torch.Tensor | None = None) -> torch.Tensor:
         """The combined distance of every item to every community centre.
 
         Each branch's row is standardised per item (zero mean, unit spread over
         the centres) and the branches are averaged with equal weight.
         """
-        free_items = self.free_branch(x).double()
         free_centres, hyper_centres = self.centres()
         # the matrix-multiplication mode of cdist cancels the squares of large
         # norms away, which would make the scale of a branch visible in its
         # standardised distances; the exact pairwise mode does not
-        d_free = torch.cdist(free_items, free_centres.double(),
+        d_free = torch.cdist(free_items.double(), free_centres.double(),
                              compute_mode="donot_use_mm_for_euclid_dist")
         parts = [_standardise(d_free)]
-        if self.hyper_dim > 0:
-            ball_items = self.hyperbolic_branch(x).double()
+        if ball_items is not None:
             # the contract's distance is elementwise, so the pair grid is built here
-            d_hyper = self.contract.distance(ball_items[:, None, :],
+            d_hyper = self.contract.distance(ball_items.double()[:, None, :],
                                              hyper_centres.double()[None, :, :],
                                              self.curvature)
             parts.append(_standardise(d_hyper))
         combined = torch.stack(parts, dim=0).mean(dim=0)
         return combined
 
-    def assignment(self, x: torch.Tensor) -> torch.Tensor:
+    def assignment(self, free_items: torch.Tensor,
+                   ball_items: torch.Tensor | None = None) -> torch.Tensor:
         """The soft community distribution of every item.
 
         The assignment is the baseline's plan on the centred cost, so the
@@ -187,24 +259,25 @@ class CommunityModel(nn.Module):
         agree, which is what lets the usage constraint see the hard partition
         instead of a flat distribution that hides a collapse.
         """
-        return sinkhorn_plan(centre_range(self.distances(x)))
+        return sinkhorn_plan(centre_range(self.distances(free_items, ball_items)))
 
     # ------------------------------------------------------- node-to-cluster
-    def branch_distances(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor | None]:
+    def branch_distances(self, free_items: torch.Tensor,
+                         ball_items: torch.Tensor | None = None
+                         ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """The raw distance of every item to every centre, per branch."""
-        free_items = self.free_branch(x).double()
         free_centres, hyper_centres = self.centres()
-        d_free = torch.cdist(free_items, free_centres.double(),
+        d_free = torch.cdist(free_items.double(), free_centres.double(),
                              compute_mode="donot_use_mm_for_euclid_dist")
-        if self.hyper_dim <= 0:
+        if ball_items is None:
             return d_free, None
-        ball_items = self.hyperbolic_branch(x).double()
-        d_hyper = self.contract.distance(ball_items[:, None, :],
+        d_hyper = self.contract.distance(ball_items.double()[:, None, :],
                                          hyper_centres.double()[None, :, :],
                                          self.curvature)
         return d_free, d_hyper
 
-    def absolute_distances(self, x: torch.Tensor) -> torch.Tensor:
+    def absolute_distances(self, free_items: torch.Tensor,
+                           ball_items: torch.Tensor | None = None) -> torch.Tensor:
         """The distance of every item to every centre, in the frozen scale units.
 
         The standardised distances of ``distances`` cannot carry a node-to-
@@ -212,7 +285,7 @@ class CommunityModel(nn.Module):
         would never ask an item to move closer in absolute terms. Here each
         branch is divided by the scale it had when the scales were frozen.
         """
-        d_free, d_hyper = self.branch_distances(x)
+        d_free, d_hyper = self.branch_distances(free_items, ball_items)
         parts = [d_free / self.scale_free]
         if d_hyper is not None:
             parts.append(d_hyper / self.scale_hyper)
@@ -230,9 +303,11 @@ class CommunityModel(nn.Module):
                                        self.curvature) / self.scale_hyper
         return (free + hyper) / 2.0
 
-    def assignment_and_absolute(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def assignment_and_absolute(self, free_items: torch.Tensor,
+                                 ball_items: torch.Tensor | None = None
+                                 ) -> tuple[torch.Tensor, torch.Tensor]:
         """The soft assignment and the absolute distance, from one forward pass."""
-        d_free, d_hyper = self.branch_distances(x)
+        d_free, d_hyper = self.branch_distances(free_items, ball_items)
         standardised = [_standardise(d_free)]
         absolute = [d_free / self.scale_free]
         if d_hyper is not None:
@@ -242,7 +317,8 @@ class CommunityModel(nn.Module):
         return pi, torch.stack(absolute, dim=0).mean(dim=0)
 
     @torch.no_grad()
-    def freeze_scales(self, x: torch.Tensor) -> dict:
+    def freeze_scales(self, free_items: torch.Tensor,
+                      ball_items: torch.Tensor | None = None) -> dict:
         """Read the branch scales and the separation threshold from one batch.
 
         The threshold is the mean distance from a centre to its nearest
@@ -253,7 +329,7 @@ class CommunityModel(nn.Module):
             return {"scale_free": float(self.scale_free),
                     "scale_hyper": float(self.scale_hyper),
                     "separation_threshold": float(self.separation_threshold)}
-        d_free, d_hyper = self.branch_distances(x)
+        d_free, d_hyper = self.branch_distances(free_items, ball_items)
         self.scale_free = d_free.mean().clamp_min(1e-8)
         if d_hyper is not None:
             self.scale_hyper = d_hyper.mean().clamp_min(1e-8)

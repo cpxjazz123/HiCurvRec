@@ -60,14 +60,37 @@ def item_ids(graph: data.Graph, positions: np.ndarray) -> np.ndarray:
     return np.asarray(graph.nodes, dtype=np.int64)[positions]
 
 
+def curvature_graph(graph: data.Graph, curvature: dict, n_items: int,
+                    curvature_aware: bool = True) -> model.CurvatureGraphConvolution:
+    """The propagation weights of the behaviour graph, in the item id space.
+
+    The AF3 curvature of every edge is standardised over the graph's edges, so
+    the weight says how much higher than average this edge's curvature is, and
+    the propagation mixes the neighbours into the representation. The control
+    drops the curvature factor and keeps the plain GCN mean.
+    """
+    rows = item_ids(graph, graph.edges[0])
+    cols = item_ids(graph, graph.edges[1])
+    values = np.asarray(curvature["af3"], dtype=np.float64)
+    spread = float(values.std())
+    z = (values - float(values.mean())) / (spread if spread > 0 else 1.0)
+    degrees = np.zeros(n_items, dtype=np.float64)
+    np.add.at(degrees, rows, 1.0)
+    return model.CurvatureGraphConvolution(rows, cols, z, degrees,
+                                           curvature_aware=curvature_aware)
+
+
 def soft_assignment(net: model.CommunityModel, embeddings: np.ndarray,
                     device: torch.device, batch: int = 8192) -> np.ndarray:
     """The soft community distribution of every item, in one pass."""
     out = np.empty((embeddings.shape[0], net.n_communities), dtype=np.float32)
+    every_item = torch.from_numpy(embeddings).to(device)
     with torch.no_grad():
+        free_all, ball_all = net.represent(every_item)
         for start in range(0, embeddings.shape[0], batch):
-            chunk = torch.from_numpy(embeddings[start:start + batch]).to(device)
-            out[start:start + batch] = net.assignment(chunk).cpu().numpy()
+            rows = torch.arange(start, min(start + batch, embeddings.shape[0]), device=device)
+            out[start:start + batch] = net.assignment(
+                free_all[rows], ball_all[rows] if ball_all is not None else None).cpu().numpy()
     return out
 
 
@@ -84,10 +107,15 @@ def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.nd
     rng = np.random.default_rng(seed)
     optimiser = torch.optim.Adam(net.parameters(), lr=LEARNING_RATE)
     margin = model.margin_for(net.n_communities)
+    # the representations are computed for every item, because the propagation
+    # mixes in neighbours that need not be in the batch
+    every_item = torch.from_numpy(embeddings).to(device)
     scales = None
     if node_to_cluster:
         sample = rng.integers(0, embeddings.shape[0], size=ITEM_BATCH)
-        scales = net.freeze_scales(torch.from_numpy(embeddings[sample]).to(device))
+        free_all, ball_all = net.represent(every_item)
+        scales = net.freeze_scales(free_all[sample],
+                                   ball_all[sample] if ball_all is not None else None)
     # Every weight is derived and the same for every model, so the arms stay
     # comparable: the ranking hinge lives on the scale of its margin (1/K), the
     # commitment on the scale of the frozen branch distances, the usage term is
@@ -106,19 +134,26 @@ def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.nd
                   "separation": 0.0, "s_high": 0.0, "s_low": 0.0}
         for step in range(steps_per_epoch):
             index = order[step * ANCHOR_BATCH:(step + 1) * ANCHOR_BATCH]
-            batch_anchor = torch.from_numpy(embeddings[anchor_items[index]]).to(device)
-            batch_high = torch.from_numpy(embeddings[high_items[index]]).to(device)
-            batch_low = torch.from_numpy(embeddings[low_items[index]]).to(device)
-            pi_anchor = net.assignment(batch_anchor)
-            pi_high = net.assignment(batch_high)
-            pi_low = net.assignment(batch_low)
+            free_all, ball_all = net.represent(every_item)
+            rows_anchor = torch.from_numpy(anchor_items[index]).to(device)
+            rows_high = torch.from_numpy(high_items[index]).to(device)
+            rows_low = torch.from_numpy(low_items[index]).to(device)
+            pi_anchor = net.assignment(free_all[rows_anchor],
+                                       ball_all[rows_anchor] if ball_all is not None else None)
+            pi_high = net.assignment(free_all[rows_high],
+                                     ball_all[rows_high] if ball_all is not None else None)
+            pi_low = net.assignment(free_all[rows_low],
+                                    ball_all[rows_low] if ball_all is not None else None)
 
-            sample = rng.integers(0, embeddings.shape[0], size=ITEM_BATCH)
-            batch_items = torch.from_numpy(embeddings[sample]).to(device)
+            sample = torch.from_numpy(
+                rng.integers(0, embeddings.shape[0], size=ITEM_BATCH)).to(device)
             if node_to_cluster:
-                pi_items, absolute_items = net.assignment_and_absolute(batch_items)
+                pi_items, absolute_items = net.assignment_and_absolute(
+                    free_all[sample], ball_all[sample] if ball_all is not None else None)
             else:
-                pi_items, absolute_items = net.assignment(batch_items), None
+                pi_items = net.assignment(free_all[sample],
+                                          ball_all[sample] if ball_all is not None else None)
+                absolute_items = None
 
             ranking = model.ranking_loss(pi_anchor, pi_high, pi_low, margin)
             usage = model.usage_loss(pi_items.mean(dim=0), net.n_communities)
@@ -227,6 +262,9 @@ def main() -> int:
 
     random_left, random_right = data.random_pairs(graphs["train"], 200000, SEED)
 
+    # the propagation weights of the train graph: the curvature-aware one and
+    # the plain GCN mean, which is the control for the curvature weighting
+    curv_graph = curvature_graph_for = None
     specifications = [
         ("A_free_128", dict(free_dim=FREE_DIM_CONTROL, hyper_dim=0)),
         ("B_free_64_hyper_64", dict(free_dim=FREE_DIM_EXPERIMENT,
@@ -234,15 +272,27 @@ def main() -> int:
         ("C_free_64_hyper_64_ntc", dict(free_dim=FREE_DIM_EXPERIMENT,
                                         hyper_dim=HYPER_DIM_EXPERIMENT,
                                         node_to_cluster=True)),
+        ("D_free_64_hyper_64_gcn", dict(free_dim=FREE_DIM_EXPERIMENT,
+                                        hyper_dim=HYPER_DIM_EXPERIMENT,
+                                        graph="plain")),
+        ("E_free_64_hyper_64_curvgcn", dict(free_dim=FREE_DIM_EXPERIMENT,
+                                             hyper_dim=HYPER_DIM_EXPERIMENT,
+                                             graph="curvature")),
     ]
+    plain_graph = curvature_graph_for = curvature_graph(
+        graphs["train"], curvatures["train"], embeddings.shape[0], curvature_aware=False)
+    curvature_graph_for = curvature_graph(
+        graphs["train"], curvatures["train"], embeddings.shape[0], curvature_aware=True)
     assignments, reports = {}, {}
     for name, spec in specifications:
         print(f"[train] {name}", flush=True)
         set_seed(SEED)
         spec = dict(spec)
         node_to_cluster = bool(spec.pop("node_to_cluster", False))
+        graph_kind = spec.pop("graph", None)
+        graph = {"plain": plain_graph, "curvature": curvature_graph_for}.get(graph_kind)
         net = model.CommunityModel(input_dim=embeddings.shape[1], n_communities=N_COMMUNITIES,
-                                   curvature=CURVATURE, seed=SEED, **spec).to(device)
+                                   curvature=CURVATURE, seed=SEED, graph=graph, **spec).to(device)
         training = train(net, embeddings, pair_sets["train"].anchor, pair_sets["train"].high,
                          pair_sets["train"].low, device,
                          node_to_cluster=node_to_cluster)
@@ -269,6 +319,15 @@ def main() -> int:
                                              pair_sets["valid"]),
         "C_minus_B_valid": paired_comparison(assignments["B_free_64_hyper_64"],
                                              assignments["C_free_64_hyper_64_ntc"],
+                                             pair_sets["valid"]),
+        "D_minus_B_valid": paired_comparison(assignments["B_free_64_hyper_64"],
+                                             assignments["D_free_64_hyper_64_gcn"],
+                                             pair_sets["valid"]),
+        "E_minus_B_valid": paired_comparison(assignments["B_free_64_hyper_64"],
+                                             assignments["E_free_64_hyper_64_curvgcn"],
+                                             pair_sets["valid"]),
+        "E_minus_D_valid": paired_comparison(assignments["D_free_64_hyper_64_gcn"],
+                                             assignments["E_free_64_hyper_64_curvgcn"],
                                              pair_sets["valid"]),
     }
     # the hard communities, the thing the node-to-cluster terms are judged on

@@ -38,7 +38,8 @@ def test_assignment_is_a_distribution():
     net = model.CommunityModel(input_dim=16, free_dim=8, hyper_dim=0, n_communities=5,
                                seed=1)
     x = torch.randn(7, 16)
-    pi = net.assignment(x)
+    free, ball = net.represent(x)
+    pi = net.assignment(free, ball)
     assert pi.shape == (7, 5)
     assert torch.allclose(pi.sum(dim=1), torch.ones(7, dtype=pi.dtype), atol=1e-6)
     assert bool((pi >= 0).all())
@@ -49,11 +50,13 @@ def test_branch_scale_cannot_change_the_assignment():
     net = model.CommunityModel(input_dim=16, free_dim=8, hyper_dim=0, n_communities=5,
                                seed=1)
     x = torch.randn(6, 16)
-    before = net.assignment(x)
+    free, ball = net.represent(x)
+    before = net.assignment(free, ball)
     with torch.no_grad():
         net.free_projection.weight.mul_(1000.0)
         net.free_centres.mul_(1000.0)
-    after = net.assignment(x)
+    free, ball = net.represent(x)
+    after = net.assignment(free, ball)
     assert torch.allclose(before, after, atol=1e-5)
 
 
@@ -77,14 +80,15 @@ def test_combined_distance_averages_the_two_branches():
     net = model.CommunityModel(input_dim=16, free_dim=8, hyper_dim=8, n_communities=5,
                                curvature=1.0, seed=1)
     x = torch.randn(4, 16)
-    free = model._standardise(torch.cdist(net.free_branch(x).double(),
+    free_items, ball_items = net.represent(x)
+    free = model._standardise(torch.cdist(free_items.double(),
                                            net.free_centres.double()))
-    ball = net.hyperbolic_branch(x).double()
+    ball = ball_items.double()
     centres = net.centres()[1].double()
     hyper = model._standardise(net.contract.distance(ball[:, None, :], centres[None, :, :],
                                                      1.0))
     expected = (free + hyper) / 2.0
-    assert torch.allclose(net.distances(x), expected, atol=1e-6)
+    assert torch.allclose(net.distances(free_items, ball_items), expected, atol=1e-6)
 
 
 # ------------------------------------------------------------------------ losses
@@ -259,8 +263,10 @@ def test_the_scales_are_read_once_and_then_frozen():
     net = model.CommunityModel(input_dim=16, free_dim=8, hyper_dim=8, n_communities=5,
                                curvature=1.0, seed=1)
     x = torch.randn(32, 16)
-    first = net.freeze_scales(x)
-    second = net.freeze_scales(x * 100.0)
+    free, ball = net.represent(x)
+    first = net.freeze_scales(free, ball)
+    free, ball = net.represent(x * 100.0)
+    second = net.freeze_scales(free, ball)
     assert first == second
     assert float(net.scales_frozen) == 1.0
     assert first["scale_free"] > 0 and first["scale_hyper"] > 0
@@ -272,22 +278,32 @@ def test_absolute_distances_are_in_the_frozen_scale_units():
     net = model.CommunityModel(input_dim=16, free_dim=8, hyper_dim=8, n_communities=5,
                                curvature=1.0, seed=1)
     x = torch.randn(64, 16)
-    net.freeze_scales(x)
-    absolute = net.absolute_distances(x)
+    free, ball = net.represent(x)
+    net.freeze_scales(free, ball)
+    absolute = net.absolute_distances(free, ball)
     assert float(absolute.mean()) == pytest.approx(1.0, rel=0.05)
 
 
 def test_the_standardised_assignment_ignores_the_absolute_scale():
-    """The assignment is scale-free, which is why the commitment term needs the absolute one."""
+    """The distances are scale-free, which is why the commitment term needs the absolute one.
+
+    The comparison is on the standardised distances rather than on the plan:
+    the plan is nearly a decision (the baseline's epsilon on a centred cost),
+    so a one-ulp difference can flip a near tie, while the distances it is
+    computed from are exactly scale-free.
+    """
     net = model.CommunityModel(input_dim=16, free_dim=8, hyper_dim=0, n_communities=5,
                                seed=1)
     x = torch.randn(9, 16)
-    net.freeze_scales(x)
-    pi = net.assignment(x)
+    free, ball = net.represent(x)
+    net.freeze_scales(free, ball)
+    before = net.distances(free, ball)
     with torch.no_grad():
         net.free_projection.weight.mul_(50.0)
         net.free_centres.mul_(50.0)
-    assert torch.allclose(pi, net.assignment(x), atol=1e-6)
+    free, ball = net.represent(x)
+    after = net.distances(free, ball)
+    assert torch.allclose(before, after, atol=1e-9)
 
 
 def test_the_plan_is_the_baseline_quantizers_own_rule():
@@ -334,3 +350,93 @@ def test_the_hard_partition_balance_is_reported():
     assert result["largest_usage_share"] == pytest.approx(0.9)
     # the effective number of communities is exp(H) of the hard shares
     assert result["hard_effective_communities"] == pytest.approx(1.3841, rel=1e-3)
+
+
+# ------------------------------------------------- curvature-aware propagation
+def _tiny_graph():
+    """A path 0-1-2 with the degrees and the standardised curvatures."""
+    rows = np.array([0, 1])
+    cols = np.array([1, 2])
+    z = np.array([1.0, -1.0])
+    degrees = np.array([1.0, 2.0, 1.0])
+    return rows, cols, z, degrees
+
+
+def test_the_propagation_rows_are_a_weighted_average():
+    rows, cols, z, degrees = _tiny_graph()
+    conv = model.CurvatureGraphConvolution(rows, cols, z, degrees)
+    h = torch.arange(9, dtype=torch.float32).reshape(3, 3)
+    message = conv(h)
+    assert message.shape == h.shape
+    # every message is a convex combination of the neighbours
+    assert bool((message <= h.max() + 1e-6).all())
+    assert bool((message >= h.min() - 1e-6).all())
+    totals = torch.zeros(3)
+    totals.index_add_(0, torch.from_numpy(rows), conv.adjacency.values())
+    # the path's last node has no outgoing edge, so it receives no message
+    assert totals[0] == pytest.approx(1.0, abs=1e-6)
+    assert totals[1] == pytest.approx(1.0, abs=1e-6)
+    assert totals[2] == pytest.approx(0.0, abs=1e-6)
+
+
+def test_the_higher_curvature_edge_carries_more_of_the_neighbour():
+    """Two neighbours of the same node, one with a higher AF3 curvature."""
+    rows = np.array([0, 0])
+    cols = np.array([1, 2])
+    z = np.array([2.0, -2.0])
+    degrees = np.array([2.0, 1.0, 1.0])
+    conv = model.CurvatureGraphConvolution(rows, cols, z, degrees)
+    values = conv.adjacency.values().tolist()
+    assert values[0] > values[1]
+
+
+def test_the_plain_control_is_the_gcn_mean():
+    """Without the curvature factor the aggregator is the GCN's symmetric mean."""
+    rows = np.array([0, 0])
+    cols = np.array([1, 2])
+    z = np.array([2.0, -2.0])
+    degrees = np.array([2.0, 1.0, 1.0])
+    conv = model.CurvatureGraphConvolution(rows, cols, z, degrees, curvature_aware=False)
+    values = conv.adjacency.values().tolist()
+    assert values[0] == pytest.approx(0.5, rel=1e-5)
+    assert values[1] == pytest.approx(0.5, rel=1e-5)
+
+
+def test_the_propagation_reaches_the_neighbour():
+    """A node's representation must change when one of its neighbours changes."""
+    rows, cols, z, degrees = _tiny_graph()
+    conv = model.CurvatureGraphConvolution(rows, cols, z, degrees)
+    net = model.CommunityModel(input_dim=6, free_dim=4, hyper_dim=0, n_communities=3,
+                               seed=1, graph=conv)
+    x = torch.randn(3, 6)
+    before = net.represent(x)[0]
+    changed = x.clone()
+    changed[2] = changed[2] + 5.0
+    after = net.represent(changed)[0]
+    assert not torch.allclose(before[1], after[1], atol=1e-6)
+
+
+def test_the_graph_arm_has_learnable_propagation_strengths():
+    rows, cols, z, degrees = _tiny_graph()
+    conv = model.CurvatureGraphConvolution(rows, cols, z, degrees)
+    net = model.CommunityModel(input_dim=6, free_dim=4, hyper_dim=4, n_communities=3,
+                               curvature=1.0, seed=1, graph=conv)
+    assert net.gamma_free.requires_grad and net.gamma_hyper.requires_grad
+    assert float(net.gamma_free) == 1.0
+
+
+def test_the_sparse_adjacency_travels_with_the_module():
+    """The adjacency must be a buffer: as a plain attribute it stayed on the CPU
+    while the representations moved to the GPU, and the propagation died."""
+    rows, cols, z, degrees = _tiny_graph()
+    conv = model.CurvatureGraphConvolution(rows, cols, z, degrees)
+    assert "adjacency" in dict(conv.named_buffers())
+    net = model.CommunityModel(input_dim=6, free_dim=4, hyper_dim=0, n_communities=3,
+                               seed=1, graph=conv)
+    # the adjacency lives on the submodule, and it is a buffer there: a plain
+    # attribute would not be carried by .to(device)
+    assert "adjacency" in dict(net.graph.named_buffers())
+    net = net.to(torch.device("cpu"))
+    assert net.graph.adjacency.device.type == "cpu"
+    free, _ = net.represent(torch.randn(3, 6))
+    assert free.shape == (3, 4)

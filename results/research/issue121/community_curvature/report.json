@@ -38,7 +38,7 @@
       "af3_high_mean": -34.30084245655448,
       "af3_low_mean": -926.8770908794921
     },
-    "random_pair_overlap": 0.015680348500609398
+    "random_pair_overlap": 0.015662655234336853
   },
   "models": {
     "A_free_128": {
@@ -49,54 +49,54 @@
       "contract_sha256": null,
       "separation_train": {
         "pairs": 24505,
-        "s_high": 0.05354716628789902,
-        "s_low": 0.010259094648063183,
-        "separation": 0.04328807443380356,
-        "ci_low": 0.04208297282457352,
-        "ci_high": 0.04446261022239924,
+        "s_high": 0.053332578390836716,
+        "s_low": 0.010379958897829056,
+        "separation": 0.04295261949300766,
+        "ci_low": 0.04164625648409128,
+        "ci_high": 0.044328353647142646,
         "bootstrap_replicates": 2000
       },
       "separation_valid": {
         "pairs": 24571,
-        "s_high": 0.05174470692873001,
-        "s_low": 0.011086119338870049,
-        "separation": 0.04065858945250511,
-        "ci_low": 0.03941464675590396,
-        "ci_high": 0.04200370386242867,
+        "s_high": 0.05120639130473137,
+        "s_low": 0.011287393979728222,
+        "separation": 0.03991899639368057,
+        "ci_low": 0.03856851924210787,
+        "ci_high": 0.04135698704048991,
         "bootstrap_replicates": 2000
       },
       "occupancy": {
         "n_communities": 64,
         "used_communities": 64,
-        "effective_communities": 63.99752885526783,
+        "effective_communities": 63.996826981921444,
         "communities_above_1pct": 64,
         "communities_above_5pct": 0,
-        "largest_usage_share": 0.018587058201488593,
-        "top5_usage_share": 0.07812479138374329,
-        "usage_entropy": 4.158844470977783,
-        "hard_effective_communities": 63.652303482053625,
-        "hard_entropy": 4.153435514168747
+        "largest_usage_share": 0.01866840200105747,
+        "top5_usage_share": 0.07812471687793732,
+        "usage_entropy": 4.1588335037231445,
+        "hard_effective_communities": 63.70779310368464,
+        "hard_entropy": 4.154306895812287
       },
       "curvature_gap_train": {
         "edges_total": 315391,
         "edges_unlabelled": 0,
         "edges_eligible": 315391,
-        "edges_within": 13306,
-        "edges_cross": 302085,
+        "edges_within": 12420,
+        "edges_cross": 302971,
         "status": "DEFINED",
-        "within_mean": -143.5954456636104,
-        "cross_mean": -254.73982819405134,
-        "gap": 111.14438253044094,
-        "within_median": -76.0,
+        "within_mean": -146.2696457326892,
+        "cross_mean": -254.3051744226345,
+        "gap": 108.0355286899453,
+        "within_median": -77.0,
         "cross_median": -131.0,
         "within_negative_fraction": 1.0,
-        "cross_negative_fraction": 0.9999966896734362,
+        "cross_negative_fraction": 0.9999966993540635,
         "within_triangles_mean": null
       },
       "community_transitivity_train": {
         "eligible_communities": 64,
-        "mean": 0.06667296204062753,
-        "edge_weighted_mean": 0.07596554060594328
+        "mean": 0.06430641825211554,
+        "edge_weighted_mean": 0.08188140818814083
       },
       "group_transitivity_train": {
         "quotient_edges": 2016,
@@ -108,13 +108,13 @@
         "edges_total": 366168,
         "edges_unlabelled": 0,
         "edges_eligible": 366168,
-        "edges_within": 15381,
-        "edges_cross": 350787,
+        "edges_within": 14372,
+        "edges_cross": 351796,
         "status": "DEFINED",
-        "within_mean": -165.29269878421428,
-        "cross_mean": -287.1688489026104,
-        "gap": 121.87615011839614,
-        "within_median": -89.0,
+        "within_mean": -168.58787920957417,
+        "cross_mean": -286.68467236693994,
+        "gap": 118.09679315736577,
+        "within_median": -90.0,
         "cross_median": -150.0,
         "within_negative_fraction": 1.0,
         "cross_negative_fraction": 1.0,
@@ -122,8 +122,8 @@
       },
       "community_transitivity_valid": {
         "eligible_communities": 64,
-        "mean": 0.07095421037333495,
-        "edge_weighted_mean": 0.08086194302410518
+        "mean": 0.06866437199261768,
+        "edge_weighted_mean": 0.08694636600485131
       },
       "group_transitivity_valid": {
         "quotient_edges": 2016,
@@ -140,22 +140,22 @@
           "usage": 1.0
         },
         "first_epoch": {
-          "loss": 2.551822633778626,
-          "ranking": 0.03986807685523664,
-          "usage": 0.00026571504348121106,
+          "loss": 2.637490238619472,
+          "ranking": 0.041205197500986876,
+          "usage": 0.00035759855631289434,
           "commitment": 0.0,
           "separation": 0.0,
-          "s_high": 0.06361723505810614,
-          "s_low": 0.029194580195082608
+          "s_high": 0.06472215331003156,
+          "s_low": 0.03077611501268903
         },
         "last_epoch": {
-          "loss": 0.39484901855597754,
-          "ranking": 0.006169515870020442,
-          "usage": 2.8746691693726234e-09,
+          "loss": 0.4392414856817521,
+          "ranking": 0.006863148170157387,
+          "usage": 2.791679298358682e-09,
           "commitment": 0.0,
           "separation": 0.0,
-          "s_high": 0.056738019319442785,
-          "s_low": 0.0069417879325271254
+          "s_high": 0.056493797392954875,
+          "s_low": 0.006688112466297069
         }
       }
     },
@@ -167,54 +167,54 @@
       "contract_sha256": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
       "separation_train": {
         "pairs": 24505,
-        "s_high": 0.06533752381801605,
-        "s_low": 0.011264207772910595,
-        "separation": 0.05407331883907318,
-        "ci_low": 0.052289330121129754,
-        "ci_high": 0.055865292251110074,
+        "s_high": 0.06559024751186371,
+        "s_low": 0.010761921294033527,
+        "separation": 0.054828327149152756,
+        "ci_low": 0.05311661260202527,
+        "ci_high": 0.056569814775139095,
         "bootstrap_replicates": 2000
       },
       "separation_valid": {
         "pairs": 24571,
-        "s_high": 0.06356532871723175,
-        "s_low": 0.01203362550586462,
-        "separation": 0.051531702280044556,
-        "ci_low": 0.049769623298197986,
-        "ci_high": 0.053418029285967346,
+        "s_high": 0.06326043605804443,
+        "s_low": 0.01154317520558834,
+        "separation": 0.05171726271510124,
+        "ci_low": 0.04991475511342287,
+        "ci_high": 0.053724298439919944,
         "bootstrap_replicates": 2000
       },
       "occupancy": {
         "n_communities": 64,
         "used_communities": 64,
-        "effective_communities": 63.99603356914682,
+        "effective_communities": 63.99578944411818,
         "communities_above_1pct": 64,
         "communities_above_5pct": 0,
-        "largest_usage_share": 0.018221011103428643,
-        "top5_usage_share": 0.07812421768903732,
-        "usage_entropy": 4.158821105957031,
-        "hard_effective_communities": 63.76834056781773,
-        "hard_entropy": 4.155256837843667
+        "largest_usage_share": 0.01752958880709318,
+        "top5_usage_share": 0.07812395691871643,
+        "usage_entropy": 4.158817291259766,
+        "hard_effective_communities": 63.881613410645855,
+        "hard_entropy": 4.157031579925887
       },
       "curvature_gap_train": {
         "edges_total": 315391,
         "edges_unlabelled": 0,
         "edges_eligible": 315391,
-        "edges_within": 13969,
-        "edges_cross": 301422,
+        "edges_within": 13591,
+        "edges_cross": 301800,
         "status": "DEFINED",
-        "within_mean": -145.72868494523587,
-        "cross_mean": -254.8854363649634,
-        "gap": 109.15675141972753,
-        "within_median": -76.0,
-        "cross_median": -131.0,
+        "within_mean": -141.71929953645795,
+        "cross_mean": -254.92927435387674,
+        "gap": 113.20997481741878,
+        "within_median": -73.0,
+        "cross_median": -132.0,
         "within_negative_fraction": 1.0,
-        "cross_negative_fraction": 0.999996682392128,
+        "cross_negative_fraction": 0.9999966865473824,
         "within_triangles_mean": null
       },
       "community_transitivity_train": {
         "eligible_communities": 64,
-        "mean": 0.07257317540203992,
-        "edge_weighted_mean": 0.08160457239627435
+        "mean": 0.06542425717598703,
+        "edge_weighted_mean": 0.07382495783463047
       },
       "group_transitivity_train": {
         "quotient_edges": 2016,
@@ -226,22 +226,22 @@
         "edges_total": 366168,
         "edges_unlabelled": 0,
         "edges_eligible": 366168,
-        "edges_within": 16158,
-        "edges_cross": 350010,
+        "edges_within": 15705,
+        "edges_cross": 350463,
         "status": "DEFINED",
-        "within_mean": -166.82021289763586,
-        "cross_mean": -287.36888946030115,
-        "gap": 120.54867656266529,
-        "within_median": -89.0,
-        "cross_median": -150.0,
+        "within_mean": -162.87386182744348,
+        "cross_mean": -287.3899156259006,
+        "gap": 124.51605379845711,
+        "within_median": -84.0,
+        "cross_median": -151.0,
         "within_negative_fraction": 1.0,
         "cross_negative_fraction": 1.0,
         "within_triangles_mean": null
       },
       "community_transitivity_valid": {
         "eligible_communities": 64,
-        "mean": 0.07716183162522042,
-        "edge_weighted_mean": 0.08825415486560145
+        "mean": 0.066074618351716,
+        "edge_weighted_mean": 0.07713995193196524
       },
       "group_transitivity_valid": {
         "quotient_edges": 2016,
@@ -258,22 +258,22 @@
           "usage": 1.0
         },
         "first_epoch": {
-          "loss": 2.754749655725215,
-          "ranking": 0.04302771356963674,
-          "usage": 0.0009759872684641127,
+          "loss": 2.7265760965064807,
+          "ranking": 0.042586785162837246,
+          "usage": 0.0010218460848968071,
           "commitment": 0.0,
           "separation": 0.0,
-          "s_high": 0.06776078861816406,
-          "s_low": 0.03270235498509687
+          "s_high": 0.06786651091760225,
+          "s_low": 0.03233543225560819
         },
         "last_epoch": {
-          "loss": 0.5409762677746709,
-          "ranking": 0.008452754141034738,
-          "usage": 2.7484478075077436e-09,
+          "loss": 0.5746900088780944,
+          "ranking": 0.008979531345774634,
+          "usage": 2.748517669498332e-09,
           "commitment": 0.0,
           "separation": 0.0,
-          "s_high": 0.07052451899129772,
-          "s_low": 0.005663266315251809
+          "s_high": 0.06926475258278882,
+          "s_low": 0.005313897207556575
         }
       }
     },
@@ -285,54 +285,54 @@
       "contract_sha256": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
       "separation_train": {
         "pairs": 24505,
-        "s_high": 0.07404483109712601,
-        "s_low": 0.013250630348920822,
-        "separation": 0.06079420447349548,
-        "ci_low": 0.05755536397919059,
-        "ci_high": 0.06390915289521218,
+        "s_high": 0.07399558275938034,
+        "s_low": 0.013926412910223007,
+        "separation": 0.06006916984915733,
+        "ci_low": 0.05663567343726754,
+        "ci_high": 0.06342994477599859,
         "bootstrap_replicates": 2000
       },
       "separation_valid": {
         "pairs": 24571,
-        "s_high": 0.07280578464269638,
-        "s_low": 0.013917899690568447,
-        "separation": 0.05888788774609566,
-        "ci_low": 0.05584173984825611,
-        "ci_high": 0.06220373706892132,
+        "s_high": 0.07553104311227798,
+        "s_low": 0.01562683656811714,
+        "separation": 0.05990420654416084,
+        "ci_low": 0.05665585985407233,
+        "ci_high": 0.06345895193517208,
         "bootstrap_replicates": 2000
       },
       "occupancy": {
         "n_communities": 64,
         "used_communities": 64,
-        "effective_communities": 62.7505179380222,
-        "communities_above_1pct": 58,
+        "effective_communities": 62.691569817722154,
+        "communities_above_1pct": 60,
         "communities_above_5pct": 0,
-        "largest_usage_share": 0.017692276406230934,
-        "top5_usage_share": 0.08710762113332748,
-        "usage_entropy": 4.139166831970215,
-        "hard_effective_communities": 62.73955821703202,
-        "hard_entropy": 4.1389921612495675
+        "largest_usage_share": 0.017732948306015375,
+        "top5_usage_share": 0.08714645355939865,
+        "usage_entropy": 4.1382269859313965,
+        "hard_effective_communities": 62.6896618542357,
+        "hard_entropy": 4.138196551336662
       },
       "curvature_gap_train": {
         "edges_total": 315391,
         "edges_unlabelled": 0,
         "edges_eligible": 315391,
-        "edges_within": 14063,
-        "edges_cross": 301328,
+        "edges_within": 14105,
+        "edges_cross": 301286,
         "status": "DEFINED",
-        "within_mean": -148.9068477565242,
-        "cross_mean": -254.77116298518558,
-        "gap": 105.86431522866138,
-        "within_median": -76.0,
-        "cross_median": -132.0,
+        "within_mean": -155.28309110244595,
+        "cross_mean": -254.48741063308617,
+        "gap": 99.20431953064022,
+        "within_median": -82.0,
+        "cross_median": -131.0,
         "within_negative_fraction": 1.0,
-        "cross_negative_fraction": 0.9999966813571921,
+        "cross_negative_fraction": 0.9999966808945653,
         "within_triangles_mean": null
       },
       "community_transitivity_train": {
         "eligible_communities": 64,
-        "mean": 0.069412785390189,
-        "edge_weighted_mean": 0.09018161911508984
+        "mean": 0.06360364264559498,
+        "edge_weighted_mean": 0.0888914826919229
       },
       "group_transitivity_train": {
         "quotient_edges": 2016,
@@ -344,13 +344,13 @@
         "edges_total": 366168,
         "edges_unlabelled": 0,
         "edges_eligible": 366168,
-        "edges_within": 16261,
-        "edges_cross": 349907,
+        "edges_within": 16424,
+        "edges_cross": 349744,
         "status": "DEFINED",
-        "within_mean": -171.03911198573275,
-        "cross_mean": -287.2083124944628,
-        "gap": 116.16920050873006,
-        "within_median": -88.0,
+        "within_mean": -177.16664637116415,
+        "cross_mean": -286.9747043551855,
+        "gap": 109.80805798402136,
+        "within_median": -95.0,
         "cross_median": -150.0,
         "within_negative_fraction": 1.0,
         "cross_negative_fraction": 1.0,
@@ -358,8 +358,8 @@
       },
       "community_transitivity_valid": {
         "eligible_communities": 64,
-        "mean": 0.07054778097800665,
-        "edge_weighted_mean": 0.09777109091570914
+        "mean": 0.0719818557693872,
+        "edge_weighted_mean": 0.09373144666534731
       },
       "group_transitivity_valid": {
         "quotient_edges": 2016,
@@ -371,33 +371,269 @@
         "epochs": 60,
         "margin": 0.015625,
         "scales": {
-          "scale_free": 0.126395131975857,
-          "scale_hyper": 0.24647080669588245,
-          "separation_threshold": 0.7910909837559554
+          "scale_free": 0.12639513189692064,
+          "scale_hyper": 0.24647080673645816,
+          "separation_threshold": 0.7910909839348021
         },
         "weights": {
           "ranking": 64.0,
           "usage": 1.0,
           "commitment": 1.0,
-          "separation": 1.264077104320141
+          "separation": 1.2640771040343637
         },
         "first_epoch": {
-          "loss": 3.817535782801124,
-          "ranking": 0.04443033694250905,
-          "usage": 0.001224991145969016,
-          "commitment": 0.9639072684126405,
-          "separation": 0.007010615801558308,
-          "s_high": 0.06877885141200082,
-          "s_low": 0.03396446289172224
+          "loss": 3.826965520175896,
+          "ranking": 0.04455745961024789,
+          "usage": 0.0013137669638480871,
+          "commitment": 0.9654600433304239,
+          "separation": 0.0067355818712214995,
+          "s_high": 0.06880720816243023,
+          "s_low": 0.03404929587222516
         },
         "last_epoch": {
-          "loss": 2.103549805241915,
-          "ranking": 0.018145836108484616,
-          "usage": 0.007130810545343031,
-          "commitment": 0.935058525597318,
-          "separation": 2.1326354338882087e-05,
-          "s_high": 0.07741355493397566,
-          "s_low": 0.006472206775019643
+          "loss": 2.3358085159306254,
+          "ranking": 0.020051726162577405,
+          "usage": 0.006110611884530973,
+          "commitment": 1.0463874296411404,
+          "separation": 0.0,
+          "s_high": 0.07772637249723811,
+          "s_low": 0.008463803765662003
+        }
+      }
+    },
+    "D_free_64_hyper_64_gcn": {
+      "model": "D_free_64_hyper_64_gcn",
+      "free_dim": 64,
+      "hyper_dim": 64,
+      "n_communities": 64,
+      "contract_sha256": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "separation_train": {
+        "pairs": 24505,
+        "s_high": 0.08975493907928467,
+        "s_low": 0.016822217032313347,
+        "separation": 0.07293272018432617,
+        "ci_low": 0.0711870213970542,
+        "ci_high": 0.07468975260853768,
+        "bootstrap_replicates": 2000
+      },
+      "separation_valid": {
+        "pairs": 24571,
+        "s_high": 0.08279940485954285,
+        "s_low": 0.01677446812391281,
+        "separation": 0.06602494418621063,
+        "ci_low": 0.0643290275707841,
+        "ci_high": 0.06786419209092856,
+        "bootstrap_replicates": 2000
+      },
+      "occupancy": {
+        "n_communities": 64,
+        "used_communities": 64,
+        "effective_communities": 63.99673543379159,
+        "communities_above_1pct": 64,
+        "communities_above_5pct": 0,
+        "largest_usage_share": 0.018912433399764103,
+        "top5_usage_share": 0.07812444865703583,
+        "usage_entropy": 4.15883207321167,
+        "hard_effective_communities": 63.73204189545081,
+        "hard_entropy": 4.1546874485971985
+      },
+      "curvature_gap_train": {
+        "edges_total": 315391,
+        "edges_unlabelled": 0,
+        "edges_eligible": 315391,
+        "edges_within": 17430,
+        "edges_cross": 297961,
+        "status": "DEFINED",
+        "within_mean": -132.25025817555937,
+        "cross_mean": -256.9418145327744,
+        "gap": 124.69155635721503,
+        "within_median": -68.0,
+        "cross_median": -133.0,
+        "within_negative_fraction": 1.0,
+        "cross_negative_fraction": 0.9999966438560751,
+        "within_triangles_mean": null
+      },
+      "community_transitivity_train": {
+        "eligible_communities": 64,
+        "mean": 0.061533466057184474,
+        "edge_weighted_mean": 0.07766296581290535
+      },
+      "group_transitivity_train": {
+        "quotient_edges": 2016,
+        "triangles": 41664,
+        "wedges": 124992,
+        "transitivity": 1.0
+      },
+      "curvature_gap_valid": {
+        "edges_total": 366168,
+        "edges_unlabelled": 0,
+        "edges_eligible": 366168,
+        "edges_within": 19721,
+        "edges_cross": 346447,
+        "status": "DEFINED",
+        "within_mean": -154.77237462603316,
+        "cross_mean": -289.2944663974576,
+        "gap": 134.52209177142444,
+        "within_median": -80.0,
+        "cross_median": -152.0,
+        "within_negative_fraction": 1.0,
+        "cross_negative_fraction": 1.0,
+        "within_triangles_mean": null
+      },
+      "community_transitivity_valid": {
+        "eligible_communities": 64,
+        "mean": 0.06524211660822338,
+        "edge_weighted_mean": 0.08181731188397784
+      },
+      "group_transitivity_valid": {
+        "quotient_edges": 2016,
+        "triangles": 41664,
+        "wedges": 124992,
+        "transitivity": 1.0
+      },
+      "training": {
+        "epochs": 60,
+        "margin": 0.015625,
+        "scales": null,
+        "weights": {
+          "ranking": 64.0,
+          "usage": 1.0
+        },
+        "first_epoch": {
+          "loss": 3.185188679673227,
+          "ranking": 0.0497659983228425,
+          "usage": 0.00016478701130836926,
+          "commitment": 0.0,
+          "separation": 0.0,
+          "s_high": 0.11485239925132011,
+          "s_low": 0.04519635591012583
+        },
+        "last_epoch": {
+          "loss": 0.2656794802621498,
+          "ranking": 0.004151241836161165,
+          "usage": 2.747835297465058e-09,
+          "commitment": 0.0,
+          "separation": 0.0,
+          "s_high": 0.09616591381973852,
+          "s_low": 0.012545916660599257
+        }
+      }
+    },
+    "E_free_64_hyper_64_curvgcn": {
+      "model": "E_free_64_hyper_64_curvgcn",
+      "free_dim": 64,
+      "hyper_dim": 64,
+      "n_communities": 64,
+      "contract_sha256": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "separation_train": {
+        "pairs": 24505,
+        "s_high": 0.08498251438140869,
+        "s_low": 0.01614225097000599,
+        "separation": 0.06884025037288666,
+        "ci_low": 0.06732413154095411,
+        "ci_high": 0.07034463323652744,
+        "bootstrap_replicates": 2000
+      },
+      "separation_valid": {
+        "pairs": 24571,
+        "s_high": 0.0769268199801445,
+        "s_low": 0.01608460582792759,
+        "separation": 0.06084221228957176,
+        "ci_low": 0.059299181401729587,
+        "ci_high": 0.062461909558624025,
+        "bootstrap_replicates": 2000
+      },
+      "occupancy": {
+        "n_communities": 64,
+        "used_communities": 64,
+        "effective_communities": 63.99762040453268,
+        "communities_above_1pct": 64,
+        "communities_above_5pct": 0,
+        "largest_usage_share": 0.020295277992435027,
+        "top5_usage_share": 0.07812460511922836,
+        "usage_entropy": 4.158845901489258,
+        "hard_effective_communities": 63.62529741458736,
+        "hard_entropy": 4.153011149352293
+      },
+      "curvature_gap_train": {
+        "edges_total": 315391,
+        "edges_unlabelled": 0,
+        "edges_eligible": 315391,
+        "edges_within": 17152,
+        "edges_cross": 298239,
+        "status": "DEFINED",
+        "within_mean": -123.13642723880596,
+        "cross_mean": -257.34972957929716,
+        "gap": 134.2133023404912,
+        "within_median": -62.0,
+        "cross_median": -134.0,
+        "within_negative_fraction": 1.0,
+        "cross_negative_fraction": 0.9999966469844654,
+        "within_triangles_mean": null
+      },
+      "community_transitivity_train": {
+        "eligible_communities": 64,
+        "mean": 0.06099988498791953,
+        "edge_weighted_mean": 0.0768364092229081
+      },
+      "group_transitivity_train": {
+        "quotient_edges": 2016,
+        "triangles": 41664,
+        "wedges": 124992,
+        "transitivity": 1.0
+      },
+      "curvature_gap_valid": {
+        "edges_total": 366168,
+        "edges_unlabelled": 0,
+        "edges_eligible": 366168,
+        "edges_within": 19163,
+        "edges_cross": 347005,
+        "status": "DEFINED",
+        "within_mean": -144.5373897615196,
+        "cross_mean": -289.6433653693751,
+        "gap": 145.1059756078555,
+        "within_median": -74.0,
+        "cross_median": -152.0,
+        "within_negative_fraction": 1.0,
+        "cross_negative_fraction": 1.0,
+        "within_triangles_mean": null
+      },
+      "community_transitivity_valid": {
+        "eligible_communities": 64,
+        "mean": 0.06375594085003321,
+        "edge_weighted_mean": 0.08063854388124278
+      },
+      "group_transitivity_valid": {
+        "quotient_edges": 2016,
+        "triangles": 41664,
+        "wedges": 124992,
+        "transitivity": 1.0
+      },
+      "training": {
+        "epochs": 60,
+        "margin": 0.015625,
+        "scales": null,
+        "weights": {
+          "ranking": 64.0,
+          "usage": 1.0
+        },
+        "first_epoch": {
+          "loss": 3.0388359784904013,
+          "ranking": 0.04748045340343599,
+          "usage": 8.69606704974336e-05,
+          "commitment": 0.0,
+          "separation": 0.0,
+          "s_high": 0.11846149816267419,
+          "s_low": 0.04287179288228694
+        },
+        "last_epoch": {
+          "loss": 0.1863584396172526,
+          "ranking": 0.002911850576084646,
+          "usage": 2.747835307119171e-09,
+          "commitment": 0.0,
+          "separation": 0.0,
+          "s_high": 0.09144634697676386,
+          "s_low": 0.013313331020422923
         }
       }
     }
@@ -405,116 +641,209 @@
   "comparisons": {
     "B_minus_A_valid": {
       "anchors": 24571,
-      "control_mean": 0.04065858945250511,
-      "experiment_mean": 0.051531702280044556,
-      "difference": 0.010873114690184593,
-      "ci_low": 0.009037614450789988,
-      "ci_high": 0.012735707685351372,
+      "control_mean": 0.03991899639368057,
+      "experiment_mean": 0.05171726271510124,
+      "difference": 0.01179826632142067,
+      "ci_low": 0.009790514642372728,
+      "ci_high": 0.013854896719567477,
       "permutation_p": 0.0,
       "permutations": 20000,
-      "anchors_improved": 11271
+      "anchors_improved": 11342
     },
     "C_minus_B_valid": {
       "anchors": 24571,
-      "control_mean": 0.051531702280044556,
-      "experiment_mean": 0.05888788774609566,
-      "difference": 0.007356188725680113,
-      "ci_low": 0.004011006688233465,
-      "ci_high": 0.010609594406560062,
+      "control_mean": 0.05171726271510124,
+      "experiment_mean": 0.05990420654416084,
+      "difference": 0.00818694569170475,
+      "ci_low": 0.004736160743050277,
+      "ci_high": 0.011559998360462485,
       "permutation_p": 0.0,
       "permutations": 20000,
-      "anchors_improved": 8576
+      "anchors_improved": 8845
+    },
+    "D_minus_B_valid": {
+      "anchors": 24571,
+      "control_mean": 0.05171726271510124,
+      "experiment_mean": 0.06602494418621063,
+      "difference": 0.014307675883173943,
+      "ci_low": 0.012117404257878661,
+      "ci_high": 0.01646918384358287,
+      "permutation_p": 0.0,
+      "permutations": 20000,
+      "anchors_improved": 14795
+    },
+    "E_minus_B_valid": {
+      "anchors": 24571,
+      "control_mean": 0.05171726271510124,
+      "experiment_mean": 0.06084221601486206,
+      "difference": 0.009124950505793095,
+      "ci_low": 0.007014283118769527,
+      "ci_high": 0.011344096274115143,
+      "permutation_p": 0.0,
+      "permutations": 20000,
+      "anchors_improved": 15321
+    },
+    "E_minus_D_valid": {
+      "anchors": 24571,
+      "control_mean": 0.06602494418621063,
+      "experiment_mean": 0.06084221601486206,
+      "difference": -0.005182725843042135,
+      "ci_low": -0.007055643969215453,
+      "ci_high": -0.0032707909413147718,
+      "permutation_p": 0.0,
+      "permutations": 20000,
+      "anchors_improved": 12617
     }
   },
   "hard_community": {
     "A_free_128": {
       "train": {
-        "af3_gap": 111.14438253044094,
-        "af3_within_mean": -143.5954456636104,
-        "af3_cross_mean": -254.73982819405134,
-        "community_transitivity": 0.06667296204062753,
-        "community_transitivity_edge_weighted": 0.07596554060594328,
+        "af3_gap": 108.0355286899453,
+        "af3_within_mean": -146.2696457326892,
+        "af3_cross_mean": -254.3051744226345,
+        "community_transitivity": 0.06430641825211554,
+        "community_transitivity_edge_weighted": 0.08188140818814083,
         "group_transitivity": 1.0
       },
       "valid": {
-        "af3_gap": 121.87615011839614,
-        "af3_within_mean": -165.29269878421428,
-        "af3_cross_mean": -287.1688489026104,
-        "community_transitivity": 0.07095421037333495,
-        "community_transitivity_edge_weighted": 0.08086194302410518,
+        "af3_gap": 118.09679315736577,
+        "af3_within_mean": -168.58787920957417,
+        "af3_cross_mean": -286.68467236693994,
+        "community_transitivity": 0.06866437199261768,
+        "community_transitivity_edge_weighted": 0.08694636600485131,
         "group_transitivity": 1.0
       },
       "occupancy": {
         "n_communities": 64,
         "used_communities": 64,
-        "effective_communities": 63.99752885526783,
+        "effective_communities": 63.996826981921444,
         "communities_above_1pct": 64,
         "communities_above_5pct": 0,
-        "largest_usage_share": 0.018587058201488593,
-        "top5_usage_share": 0.07812479138374329,
-        "usage_entropy": 4.158844470977783,
-        "hard_effective_communities": 63.652303482053625,
-        "hard_entropy": 4.153435514168747
+        "largest_usage_share": 0.01866840200105747,
+        "top5_usage_share": 0.07812471687793732,
+        "usage_entropy": 4.1588335037231445,
+        "hard_effective_communities": 63.70779310368464,
+        "hard_entropy": 4.154306895812287
       }
     },
     "B_free_64_hyper_64": {
       "train": {
-        "af3_gap": 109.15675141972753,
-        "af3_within_mean": -145.72868494523587,
-        "af3_cross_mean": -254.8854363649634,
-        "community_transitivity": 0.07257317540203992,
-        "community_transitivity_edge_weighted": 0.08160457239627435,
+        "af3_gap": 113.20997481741878,
+        "af3_within_mean": -141.71929953645795,
+        "af3_cross_mean": -254.92927435387674,
+        "community_transitivity": 0.06542425717598703,
+        "community_transitivity_edge_weighted": 0.07382495783463047,
         "group_transitivity": 1.0
       },
       "valid": {
-        "af3_gap": 120.54867656266529,
-        "af3_within_mean": -166.82021289763586,
-        "af3_cross_mean": -287.36888946030115,
-        "community_transitivity": 0.07716183162522042,
-        "community_transitivity_edge_weighted": 0.08825415486560145,
+        "af3_gap": 124.51605379845711,
+        "af3_within_mean": -162.87386182744348,
+        "af3_cross_mean": -287.3899156259006,
+        "community_transitivity": 0.066074618351716,
+        "community_transitivity_edge_weighted": 0.07713995193196524,
         "group_transitivity": 1.0
       },
       "occupancy": {
         "n_communities": 64,
         "used_communities": 64,
-        "effective_communities": 63.99603356914682,
+        "effective_communities": 63.99578944411818,
         "communities_above_1pct": 64,
         "communities_above_5pct": 0,
-        "largest_usage_share": 0.018221011103428643,
-        "top5_usage_share": 0.07812421768903732,
-        "usage_entropy": 4.158821105957031,
-        "hard_effective_communities": 63.76834056781773,
-        "hard_entropy": 4.155256837843667
+        "largest_usage_share": 0.01752958880709318,
+        "top5_usage_share": 0.07812395691871643,
+        "usage_entropy": 4.158817291259766,
+        "hard_effective_communities": 63.881613410645855,
+        "hard_entropy": 4.157031579925887
       }
     },
     "C_free_64_hyper_64_ntc": {
       "train": {
-        "af3_gap": 105.86431522866138,
-        "af3_within_mean": -148.9068477565242,
-        "af3_cross_mean": -254.77116298518558,
-        "community_transitivity": 0.069412785390189,
-        "community_transitivity_edge_weighted": 0.09018161911508984,
+        "af3_gap": 99.20431953064022,
+        "af3_within_mean": -155.28309110244595,
+        "af3_cross_mean": -254.48741063308617,
+        "community_transitivity": 0.06360364264559498,
+        "community_transitivity_edge_weighted": 0.0888914826919229,
         "group_transitivity": 1.0
       },
       "valid": {
-        "af3_gap": 116.16920050873006,
-        "af3_within_mean": -171.03911198573275,
-        "af3_cross_mean": -287.2083124944628,
-        "community_transitivity": 0.07054778097800665,
-        "community_transitivity_edge_weighted": 0.09777109091570914,
+        "af3_gap": 109.80805798402136,
+        "af3_within_mean": -177.16664637116415,
+        "af3_cross_mean": -286.9747043551855,
+        "community_transitivity": 0.0719818557693872,
+        "community_transitivity_edge_weighted": 0.09373144666534731,
         "group_transitivity": 1.0
       },
       "occupancy": {
         "n_communities": 64,
         "used_communities": 64,
-        "effective_communities": 62.7505179380222,
-        "communities_above_1pct": 58,
+        "effective_communities": 62.691569817722154,
+        "communities_above_1pct": 60,
         "communities_above_5pct": 0,
-        "largest_usage_share": 0.017692276406230934,
-        "top5_usage_share": 0.08710762113332748,
-        "usage_entropy": 4.139166831970215,
-        "hard_effective_communities": 62.73955821703202,
-        "hard_entropy": 4.1389921612495675
+        "largest_usage_share": 0.017732948306015375,
+        "top5_usage_share": 0.08714645355939865,
+        "usage_entropy": 4.1382269859313965,
+        "hard_effective_communities": 62.6896618542357,
+        "hard_entropy": 4.138196551336662
+      }
+    },
+    "D_free_64_hyper_64_gcn": {
+      "train": {
+        "af3_gap": 124.69155635721503,
+        "af3_within_mean": -132.25025817555937,
+        "af3_cross_mean": -256.9418145327744,
+        "community_transitivity": 0.061533466057184474,
+        "community_transitivity_edge_weighted": 0.07766296581290535,
+        "group_transitivity": 1.0
+      },
+      "valid": {
+        "af3_gap": 134.52209177142444,
+        "af3_within_mean": -154.77237462603316,
+        "af3_cross_mean": -289.2944663974576,
+        "community_transitivity": 0.06524211660822338,
+        "community_transitivity_edge_weighted": 0.08181731188397784,
+        "group_transitivity": 1.0
+      },
+      "occupancy": {
+        "n_communities": 64,
+        "used_communities": 64,
+        "effective_communities": 63.99673543379159,
+        "communities_above_1pct": 64,
+        "communities_above_5pct": 0,
+        "largest_usage_share": 0.018912433399764103,
+        "top5_usage_share": 0.07812444865703583,
+        "usage_entropy": 4.15883207321167,
+        "hard_effective_communities": 63.73204189545081,
+        "hard_entropy": 4.1546874485971985
+      }
+    },
+    "E_free_64_hyper_64_curvgcn": {
+      "train": {
+        "af3_gap": 134.2133023404912,
+        "af3_within_mean": -123.13642723880596,
+        "af3_cross_mean": -257.34972957929716,
+        "community_transitivity": 0.06099988498791953,
+        "community_transitivity_edge_weighted": 0.0768364092229081,
+        "group_transitivity": 1.0
+      },
+      "valid": {
+        "af3_gap": 145.1059756078555,
+        "af3_within_mean": -144.5373897615196,
+        "af3_cross_mean": -289.6433653693751,
+        "community_transitivity": 0.06375594085003321,
+        "community_transitivity_edge_weighted": 0.08063854388124278,
+        "group_transitivity": 1.0
+      },
+      "occupancy": {
+        "n_communities": 64,
+        "used_communities": 64,
+        "effective_communities": 63.99762040453268,
+        "communities_above_1pct": 64,
+        "communities_above_5pct": 0,
+        "largest_usage_share": 0.020295277992435027,
+        "top5_usage_share": 0.07812460511922836,
+        "usage_entropy": 4.158845901489258,
+        "hard_effective_communities": 63.62529741458736,
+        "hard_entropy": 4.153011149352293
       }
     }
   },
@@ -554,5 +883,5 @@
       }
     }
   },
-  "wall_time_s": 328.8386745452881
+  "wall_time_s": 530.0143373012543
 }

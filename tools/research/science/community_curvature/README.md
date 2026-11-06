@@ -149,6 +149,13 @@ Two reports, both in `results/research/issue121/community_curvature/`:
   improve the hard communities' AF3 gap (116.17 against 120.55) or their
   cohesion (0.0705 against 0.0772). `attempts.json` records the four
   configurations that got there, and why the first three were not readable.
+* `REPORT_frgcn.md` — the curvature-aware graph convolution: the neighbourhood
+  raises the hard AF3 gap from 124.52 (no graph) to 134.52 (a plain GCN
+  propagation) to **145.11** (curvature-aware), and the curvature ranking loss
+  drops from 0.00898 to 0.00291; the hard cohesion does not move (0.0661 →
+  0.0652 → 0.0638), so the mechanism passes on the gap and fails on the
+  cohesion. The plain GCN arm is the control that separates "a graph helps"
+  from "the curvature weighting helps".
 
 The final protocol assigns items with **the RQ-VAE's own rule** — the balanced
 Sinkhorn plan on the centred cost, run to convergence — because a softmax
