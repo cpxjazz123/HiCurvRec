@@ -278,6 +278,10 @@ def main() -> int:
         ("E_free_64_hyper_64_curvgcn", dict(free_dim=FREE_DIM_EXPERIMENT,
                                              hyper_dim=HYPER_DIM_EXPERIMENT,
                                              graph="curvature")),
+        ("F_free_64_hyper_64_learncurv", dict(free_dim=FREE_DIM_EXPERIMENT,
+                                                hyper_dim=HYPER_DIM_EXPERIMENT,
+                                                graph="curvature",
+                                                learn_curvature=True)),
     ]
     plain_graph = curvature_graph_for = curvature_graph(
         graphs["train"], curvatures["train"], embeddings.shape[0], curvature_aware=False)
@@ -290,9 +294,11 @@ def main() -> int:
         spec = dict(spec)
         node_to_cluster = bool(spec.pop("node_to_cluster", False))
         graph_kind = spec.pop("graph", None)
+        learn_curvature = bool(spec.pop("learn_curvature", False))
         graph = {"plain": plain_graph, "curvature": curvature_graph_for}.get(graph_kind)
         net = model.CommunityModel(input_dim=embeddings.shape[1], n_communities=N_COMMUNITIES,
-                                   curvature=CURVATURE, seed=SEED, graph=graph, **spec).to(device)
+                                   curvature=CURVATURE, seed=SEED, graph=graph,
+                                   learn_curvature=learn_curvature, **spec).to(device)
         training = train(net, embeddings, pair_sets["train"].anchor, pair_sets["train"].high,
                          pair_sets["train"].low, device,
                          node_to_cluster=node_to_cluster)
@@ -300,6 +306,8 @@ def main() -> int:
         report["training"] = {"epochs": training["epochs"], "margin": training["margin"],
                                "scales": training["scales"],
                                "weights": training["weights"],
+                               "learned_curvature": (float(net.curvature_value.detach())
+                                                     if net.learn_curvature else None),
                                "first_epoch": training["history"][0],
                                "last_epoch": training["history"][-1]}
         reports[name] = report

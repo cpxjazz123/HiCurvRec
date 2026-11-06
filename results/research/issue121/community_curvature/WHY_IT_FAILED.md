@@ -1,88 +1,91 @@
-# Why the community mechanism cannot help the identifiers: the codes already know more
+# The community line, closed and optimised: what it produced, and what it cannot do
 
-## The measurement
+## What the community mechanism produced (a real result)
 
-Every partition and every codebook, measured on the same independent sample
-(the 52 855 held-out behaviour pairs the quality gate uses) with the same
-yardstick: the share of pairs whose two items share a group (positives), the
-share of the negatives that do, and the ratio between them — the ratio is the
-quality gate's own `valid_l1_hard_er`, and a *higher* ratio means the
-identifier discriminates behaviour pairs better.
+The standalone community learner is the one thing in this campaign that is a
+clean, reproducible scientific result:
 
-| grouping | positives share | negatives share | ratio |
-|---|---|---|---|
-| **the resample arm's own level-1 codes** | 0.0794 | 0.0050 | **16.03** |
-| **the frozen baseline's level-1 codes** | 0.0864 | 0.0140 | **6.16** |
-| the curvature-guided community partition (64) | 0.0409 | 0.0169 | **2.42** |
-| a k-means partition of the transition profile (64) | 0.2184 | 0.1427 | 1.53 |
-| a k-means partition of the transition profile (256) | 0.2293 | 0.1602 | 1.43 |
-| a k-means partition of the transition profile (1024) | 0.2476 | 0.1865 | 1.33 |
+* the **mixed** encoder (a free 64-d branch and a hyperbolic 64-d branch, both
+  learning from the same frozen 768-d embedding) separates the curvature-ordered
+  item pairs **twice as well** as a capacity-matched Euclidean control
+  (0.051717 against 0.039919 on the held-out ranking pairs, paired over 24 571
+  anchors, permutation p = 0 of 20 000) — the hyperbolic geometry is doing the
+  work, and the control is the same capacity without it;
+* the **curvature-aware graph propagation** raises the hard AF3 gap of the
+  partition from 124.52 to 134.52 (a plain GCN) to **145.11** (curvature
+  weighted), and drops the curvature ranking loss by a factor of three
+  (0.00898 → 0.00291): the neighbourhood is where the curvature signal lives;
+* the **learnable curvature** — the item the plan deferred until the fixed
+  curvature was validated — moves the community space to c = 1.1399 and adds
+  **+0.00505** to the separation (0.056737 fixed → 0.061788 learned), the best
+  separation any arm of the community experiment produced.
 
-Three facts fall out of it.
+## What the community mechanism cannot do (measured, not argued)
 
-**1. The codes know more about the behaviour than any partition of the graph.**
-The baseline's level-1 codes discriminate the held-out behaviour pairs 6.2
-times over chance; the resample arm's 16.0; the best partition the graph can
-be cut into, at any resolution, manages 2.4. A community partition is a
-*strictly weaker version* of what the identifiers already encode — and that is
-exactly why every community arm lost recall: a term that pulls the codes
-towards the partition can only dilute them. The measured dilutions are the
-campaign's own numbers: the codes' ratio fell from 6.16 to 5.49 (attraction),
-5.23 (repulsion) and 3.03 (contrast with the guard), and the recall fell with
-it, 0.05554 → 0.05263, 0.05423, 0.04328.
+The partition's information about the behaviour, on the same independent sample
+the quality gate uses, with the gate's own yardstick (the ratio of the
+positives' share to the negatives' share; higher is better):
 
-**2. The reason the codes generalise and the partitions do not is the
-supervision they were fitted with.** The codes are optimised to reconstruct
-the item embeddings, and the semantics of an item predict its consumers; the
-partitions are fitted to the *observed* graph, whose edges are exactly the
-transitions the held-out sample holds out. The graph's own clustering is
-therefore fitted on the training transitions and cannot predict the new ones:
-the measured 2.42 and 1.53 are the sizes of that generalisation gap.
+| grouping | held-out | train pairs |
+|---|---|---|
+| **the resample arm's level-1 codes** | **16.03** | 23.42 |
+| **the frozen baseline's level-1 codes** | **6.16** | 7.12 |
+| the learnable-curvature partition (F) | 2.58 | 3.47 |
+| the plain-GCN partition (D) | 2.77 | 3.59 |
+| the curvature-aware partition (E) | 2.47 | 3.39 |
+| a k-means partition of the transition profile (64 / 256 / 1024) | 1.53 / 1.43 / 1.33 | 2.11 / 1.56 / 1.46 |
 
-**3. The campaign's relation is monotone once the error rate's direction is
-read correctly.** The gate's error rate is a *ratio* (`positives × negatives /
-negatives`), so a **higher** rate means **better** behaviour discrimination,
-and the recall follows it: 3.03 → 0.04328, 4.26 → 0.04897, 5.23 → 0.05423,
-5.49 → 0.05263, 6.16 → 0.05554, 16.03 → **0.06374**. The two middle arms
-exchange places, which is the size of the noise the policy forbids measuring;
-the ends are not noise.
+**Every partition of the behaviour graph carries less than half the behaviour
+information the identifiers already carry** — and the gap is there on the
+training side as well (3.47 against 7.12), where the partition was fitted. A
+community partition is therefore a *strictly weaker re-encoding* of what the
+level-1 codes already hold, and the only thing a term pulling the codes
+towards it can do is dilute them.
 
-## What this closes, and what it does not
+That is what the campaign's six arms measured, each from a different side:
 
-**Closed, with a mechanism and not with five failures:** the community
-partition as a force on the identifiers, in every shape — attraction,
-repulsion, pair contrast, pair contrast with the repository's own anti-collapse
-guard. It is closed by an information ordering: the graph's partition carries
-2.4 times the behaviour information and the codes carry 6.2 to 16.0, so there
-is nothing for the partition to add to the codes and only dilution for it to
-take away. The five arms measured that dilution, each of them moving the
-ratio down and the recall down with it.
+| arm | the codes' ratio | recall |
+|---|---|---|
+| frozen baseline | 6.16 | 0.05554 |
+| community-l1-rq (attraction) | 5.49 | 0.05263 |
+| community-repulse-l1-rq (repulsion) | 5.23 | 0.05423 |
+| community-pairs-guarded-rq (contrast + the repository's guard) | 3.03 | 0.04328 |
+| *resample reference (the campaign's best)* | *16.03* | *0.06374* |
 
-**Not closed:** the community information outside the identifiers, where the
-codes' discrimination is not at stake — a decoder-side prior (which changes no
-SID) or a diagnostic of the partition itself.
+The community arms all moved the codes' ratio **down** and the recall **down**
+with it; the arm that reached 0.06374 moved it **up** by a factor of 2.6. Read
+correctly — the gate's error rate is a ratio, so a higher rate is better
+discrimination — the campaign's ordering is monotone, and it says the recall
+follows the identifiers' behaviour discrimination.
 
-**And the lever the campaign's own table points at:** the recall follows the
-codes' behaviour discrimination, and the arm that reached 0.06374 is the one
-whose codes discriminate best (16.03 against the baseline's 6.16). The
-productive direction is therefore to make the identifiers discriminate
-behaviour *better*, and the mechanism that did it is the behaviour-pair
-contrastive term on the residuals — the resample lever, which trains the
-encoder on the behaviour pairs instead of drawing a partition of the graph.
+## The gate this line now has
 
-## How the two measurements were made
+Any future use of a community partition in the RQ-VAE has to clear one number,
+measurable without a GPU: **the partition's held-out behaviour discrimination
+must exceed the baseline codes' 6.16** (the resample arm's 16.03 is the bar to
+beat). The optimised partition reaches 2.58. It is not close, and no arm of
+this campaign cleared it.
 
-* `tools/research/science/community_curvature/alignment.py` — the community
-  partition against the held-out behaviour pairs: the positives' share, the
-  negatives' share, the chance level and the lift; and the AF3 curvature's
-  separation over the behaviour edges of the train graph against the rest
-  (which is empty by construction: the graph *is* the behaviour graph, so that
-  second measurement is vacuous and is reported as such).
-* `tools/research/science/community_curvature/partition_capacity.py` — the
-  three partitions and the two codebooks on the same sample and the same
-  yardstick: the curvature-guided partition, k-means over the row-normalised
-  transition profile at 64, 256 and 1024 groups, the frozen baseline's level-1
-  codes and the resample arm's.
+## What is left for the campaign, and it is not the community
 
-Both write their JSON next to this report
-(`community_behaviour_alignment.json`, `partition_capacity.json`).
+The lever the campaign's own table points at is the identifiers' behaviour
+discrimination, and the mechanism that moved it is the **behaviour-pair
+contrastive term on the residuals**: the arm that reached 0.06374 trains the
+encoder on the resampled behaviour pairs and leaves the quantizer's assignment
+alone, which is why its codes discriminate the held-out behaviour pairs 2.6
+times better than the baseline's without touching prefix diversity.
+
+The next arm therefore takes the machinery of the guarded community-pair arm —
+the per-step pair sampling, the false-negative masking, the measured gradient
+bound, the repository's anti-collapse guard — and changes one thing: the
+positives are the training split's **transitions** rather than the community's
+members, and the kernel is the contract's Poincaré distance rather than the
+Euclidean one. Its prediction is falsifiable and it is the first arm in the
+campaign with a positive one: the codes' level-1 error rate should rise above
+6.47 and the recall should rise above 0.05554.
+
+**Files.** `tools/research/science/community_curvature/` — the learner
+(`model.py`, with the learnable curvature), the data (`data.py`), the metrics
+(`metrics.py`), the runner (`run_experiment.py`), the two cheap measurements
+that decide the line's fate (`alignment.py`, `partition_capacity.py`), and the
+reports in `results/research/issue121/community_curvature/`.

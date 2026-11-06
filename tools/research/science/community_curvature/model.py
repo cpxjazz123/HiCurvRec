@@ -146,7 +146,8 @@ class CommunityModel(nn.Module):
 
     def __init__(self, input_dim: int = 768, free_dim: int = 128, hyper_dim: int = 0,
                  n_communities: int = 64, curvature: float = 1.0, seed: int = 42,
-                 graph: CurvatureGraphConvolution | None = None):
+                 graph: CurvatureGraphConvolution | None = None,
+                 learn_curvature: bool = False):
         super().__init__()
         if free_dim <= 0:
             raise ValueError("the free branch needs a positive width")
@@ -155,6 +156,14 @@ class CommunityModel(nn.Module):
         self.n_communities = int(n_communities)
         self.curvature = float(curvature)
         generator = torch.Generator().manual_seed(int(seed))
+        # The curvature of the community space can be learned. It is
+        # parameterised as exp(raw) so that it stays positive and starts at the
+        # fixed value the earlier rounds used (raw = 0 gives c = 1): a model with
+        # learn_curvature=False is then exactly the fixed-curvature model, and
+        # the two are comparable without a sweep.
+        self.learn_curvature = bool(learn_curvature)
+        self.raw_curvature = nn.Parameter(torch.tensor(0.0),
+                                          requires_grad=self.learn_curvature)
 
         self.free_projection = nn.Linear(input_dim, self.free_dim, bias=False)
         self.free_centres = nn.Parameter(torch.randn(self.n_communities, self.free_dim,
@@ -185,6 +194,13 @@ class CommunityModel(nn.Module):
         self.register_buffer("separation_threshold", torch.tensor(0.0))
         self.register_buffer("scales_frozen", torch.tensor(0.0))
 
+    @property
+    def curvature_value(self) -> torch.Tensor:
+        """The curvature of the community ball, fixed or learned."""
+        if not self.learn_curvature:
+            return torch.tensor(self.curvature)
+        return torch.exp(self.raw_curvature)
+
     # ------------------------------------------------------------------ branches
     def represent(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor | None]:
         """The representation of every item, after the graph propagation.
@@ -202,7 +218,7 @@ class CommunityModel(nn.Module):
         tangent = self.hyper_projection(x)
         if self.graph is not None:
             tangent = tangent + self.gamma_hyper * self.graph(tangent)
-        return free, self.contract.expmap0(tangent, self.curvature)
+        return free, self.contract.expmap0(tangent, self.curvature_value)
 
     def free_branch(self, x: torch.Tensor) -> torch.Tensor:
         """The item's coordinates in the free space."""
@@ -213,18 +229,20 @@ class CommunityModel(nn.Module):
         if self.hyper_dim <= 0:
             raise RuntimeError("this model has no hyperbolic branch")
         tangent = self.hyper_projection(x)
-        return self.contract.expmap0(tangent, self.curvature)
+        return self.contract.expmap0(tangent, self.curvature_value)
 
     def ball_limit(self) -> float:
         """The radius the contract keeps every ball point inside."""
-        return float((1.0 - self.contract.BALL_EPS) / np.sqrt(self.curvature))
+        curvature = self.curvature_value
+        return float((1.0 - self.contract.BALL_EPS)
+                     / float(torch.sqrt(curvature.detach())))
 
     def centres(self) -> tuple[torch.Tensor, torch.Tensor | None]:
         """The community centres: free coordinates and, if present, ball points."""
         free = self.free_centres
         if self.hyper_dim <= 0:
             return free, None
-        return free, self.contract.expmap0(self.hyper_centres, self.curvature)
+        return free, self.contract.expmap0(self.hyper_centres, self.curvature_value)
 
     # ------------------------------------------------------------------ distances
     def distances(self, free_items: torch.Tensor,
@@ -245,7 +263,7 @@ class CommunityModel(nn.Module):
             # the contract's distance is elementwise, so the pair grid is built here
             d_hyper = self.contract.distance(ball_items.double()[:, None, :],
                                              hyper_centres.double()[None, :, :],
-                                             self.curvature)
+                                             self.curvature_value)
             parts.append(_standardise(d_hyper))
         combined = torch.stack(parts, dim=0).mean(dim=0)
         return combined
@@ -273,7 +291,7 @@ class CommunityModel(nn.Module):
             return d_free, None
         d_hyper = self.contract.distance(ball_items.double()[:, None, :],
                                          hyper_centres.double()[None, :, :],
-                                         self.curvature)
+                                         self.curvature_value)
         return d_free, d_hyper
 
     def absolute_distances(self, free_items: torch.Tensor,
@@ -300,7 +318,7 @@ class CommunityModel(nn.Module):
             return free
         hyper = self.contract.distance(hyper_centres.double()[:, None, :],
                                        hyper_centres.double()[None, :, :],
-                                       self.curvature) / self.scale_hyper
+                                       self.curvature_value) / self.scale_hyper
         return (free + hyper) / 2.0
 
     def assignment_and_absolute(self, free_items: torch.Tensor,

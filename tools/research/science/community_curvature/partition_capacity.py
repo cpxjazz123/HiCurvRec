@@ -64,7 +64,7 @@ def discrimination(labels: np.ndarray, anchors: np.ndarray, positives: np.ndarra
             return float("nan")
         return float((labels[left[keep]] == labels[right[keep]]).mean())
     positive = share(anchors, positives)
-    negative = share(anchors, negatives[:, 0])
+    negative = share(anchors, negatives[:, 0] if negatives.ndim > 1 else negatives)
     sizes = np.bincount(labels[labels >= 0]).astype(float)
     chance = float(((sizes / sizes.sum()) ** 2).sum())
     return {
@@ -92,11 +92,23 @@ def transition_profile(graph: data.Graph):
 
 
 def main() -> int:
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--extra-partition", action="append", default=[],
+                        help="a saved soft assignment (.npy) to measure as well")
+    arguments = parser.parse_args()
+
     anchors, positives, negatives = load_pairs(PAIRS)
     results = {}
 
+    kept = {}
+
+    def labels_of(name: str) -> np.ndarray:
+        return kept[name]
+
     # 1. the curvature-guided partition the campaign learned
     labels = np.load(COMMUNITIES).argmax(axis=1)
+    kept["curvature_community_64"] = labels
     results["curvature_community_64"] = discrimination(labels, anchors, positives, negatives)
 
     # 2. a partition built directly from the transition structure
@@ -108,6 +120,7 @@ def main() -> int:
                                      batch_size=4096).fit_predict(profile)
         labels = np.full(data.load_embeddings().shape[0], -1, dtype=np.int64)
         labels[rows] = assignment
+        kept[f"transition_kmeans_{k}"] = labels
         results[f"transition_kmeans_{k}"] = discrimination(labels, anchors, positives, negatives)
 
     # 3. the identifiers' own level-1 codes: the bar to clear
@@ -126,8 +139,44 @@ def main() -> int:
         codes = np.zeros(len(table), dtype=np.int64)
         for position, item in enumerate(table):
             codes[position] = ranking[values[position]]
+        kept[f"l1_codes_{name.replace(' ', '_')}"] = codes
         results[f"l1_codes_{name.replace(' ', '_')}"] = discrimination(
             codes, anchors, positives, negatives)
+
+    # 3b. any extra partition the caller wants measured (a new arm's output)
+    for path in arguments.extra_partition:
+        name = Path(path).stem
+        extra = np.load(path).argmax(axis=1)
+        kept[name] = extra
+        results[name] = discrimination(extra, anchors, positives, negatives)
+
+    # 4. the same yardstick on the TRAINING pairs: the partition is fitted on
+    # the train graph, so its discrimination there is the one that would matter
+    # if it were used to choose what the encoder is contrasted on
+    import pandas as pd
+    frame = pd.read_parquet(data.TRAIN_PARQUET, columns=["history", "target"])
+    train_edges = set()
+    for history, target in zip(frame["history"].tolist(), frame["target"].tolist()):
+        values = [int(item) for item in history]
+        if target is not None:
+            values.append(int(target))
+        for first, second in zip(values[:-1], values[1:]):
+            if first != second:
+                train_edges.add((min(first, second), max(first, second)))
+    edges = np.asarray(sorted(train_edges), dtype=np.int64)
+    train_anchors, train_positives = edges[:, 0], edges[:, 1]
+    rng = np.random.default_rng(42)
+    train_negatives = rng.integers(0, labels.size, size=train_anchors.size)
+    keep = train_negatives != train_anchors
+    train_anchors, train_positives = train_anchors[keep], train_positives[keep]
+    train_negatives = train_negatives[keep]
+    for name in list(kept):
+        results["train_pairs__" + name] = discrimination(
+            labels_of(name), train_anchors, train_positives, train_negatives)
+    for name in ("l1_codes_frozen_baseline", "l1_codes_resample_reference"):
+        if name in results:
+            results["train_pairs__" + name] = discrimination(
+                labels_of(name), train_anchors, train_positives, train_negatives)
 
     payload = {"file": str(PAIRS), "measurements": results}
     OUT.mkdir(parents=True, exist_ok=True)
