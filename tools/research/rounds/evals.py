@@ -168,12 +168,22 @@ def _behaviour_off_arithmetic(spec: dict) -> list:
             "the behaviour-off arm claims b_k = 0: with m_i = 1 the demand is a "
             "constant, so b_k = log 2 and log(1 + b_k) = 0.5267, not 0. The arm "
             "must be justified by the offset being k-independent")
+    # The justification must be the RIGHT one for the mechanism's own shape.
+    # An additive offset is justified by its being the same at every codeword:
+    # a term that does not vary with the codeword cannot move an argmin.  A
+    # mechanism whose behaviour DISPLACES the codeword instead (the behaviour
+    # field moves the code inside the ball) is justified by the displacement
+    # vanishing identically, and that is a different argument - not a weaker
+    # one.  Round 20261106_135314 found the eval refusing the displacement's
+    # justification because it only knew the additive shape.
     if not re.search(r"k-independent|codeword-independent|constant across|"
-                     r"the same for every codeword|independent of the codeword", text):
+                     r"the same for every codeword|independent of the codeword|"
+                     r"vanishes identically|the displacement is zero|"
+                     r"displacement vanishes", text):
         problems.append(
-            "the behaviour-off arm does not say that an offset which is the same "
-            "at every codeword cannot change the argmin, which is the only "
-            "correct justification")
+            "the behaviour-off arm does not say why the behaviour cannot move the "
+            "assignment: an additive offset must say it is the same at every "
+            "codeword, and a displacement must say it vanishes identically")
     return problems
 
 
@@ -342,7 +352,13 @@ def _surface_defines_what_it_uses(spec: dict) -> list:
               "BEHAVIOUR_OFF", "GEOMETRY_OFF", "m_i", "b_raw", "ms_sum", "ms_count",
               "rho_i", "s_k", "beta", "tau", "sk_iters", "sk_epsilon", "K", "iters",
               "epsilon", "BASELINE_SINKHORN", "a_k", "alpha_k", "K1", "B",
-              "center", "centre"}
+              "center", "centre",
+              # round 20261106_135314: the behaviour-directed code drift's own
+              # inputs - the frozen lift scale, the per-epoch snapshot of the
+              # training items' ball points, the successor edges and their
+              # counts - and the item's own ball point.
+              "q_l", "V", "V_l", "snapshot", "scale", "w_is", "W_i", "u_i",
+              "edge_item", "edge_successor", "edge_weight"}
     for line in code:
         stripped = line.split("#", 1)[0].strip()
         if not stripped or stripped.startswith("def "):
@@ -711,6 +727,37 @@ def _the_surface_exercises_the_curvature_it_declares(spec: dict) -> list:
     return problems
 
 
+def _the_distance_states_its_domain(spec: dict) -> list:
+    """The distance's arguments lie inside the ball, and the specification says so.
+
+    The Mobius addition is only defined inside the ball, so a specification that
+    states no domain lets an implementation call it on a point the lift could
+    have pushed onto the boundary.  Round 20261106_135314 found the domain
+    justified by the item point and the code point being lifted - but the
+    DISPLACED code is a Mobius SUM of two interior points, not a lift, and the
+    domain has to say so.
+    """
+    computations = {str(entry.get("name")): entry
+                    for entry in spec.get("computations") or []}
+    distance = computations.get("distance")
+    if not distance:
+        return ["the specification states no distance computation"]
+    domain = str(distance.get("domain") or "").strip()
+    if not domain:
+        return ["the distance states no domain: MOBIUS(-x, y) is only defined "
+                "inside the ball, so the specification must say where DIST is defined"]
+    lowered = domain.lower()
+    problems = []
+    if "ball" not in lowered and "c||x||^2 < 1" not in domain:
+        problems.append("the distance's domain never mentions the ball")
+    if "lift" not in lowered and "lifted" not in lowered:
+        problems.append("the domain does not say that the arguments are lifted")
+    if "mobius" not in lowered and "sum" not in lowered:
+        problems.append("the domain does not say what happens to the DISPLACED "
+                        "code: it is a Mobius sum of two interior points, not a lift")
+    return problems
+
+
 def _the_graph_drops_self_pairs(spec: dict) -> list:
     """The behaviour graph must not count an item as its own neighbour."""
     problems = []
@@ -951,6 +998,10 @@ EVALS = (
          "round 20261106_020541: the reviewers found that re-measuring beta in the "
          "c = 0 arm would make the control differ in the amplitude too",
          _geometry_arm_keeps_the_measured_scale),
+    Eval("the-distance-states-its-domain", "the distance says where it is defined",
+         "round 20261106_135314: the domain was justified by the lift alone, and the "
+         "displaced code is a Mobius sum of two interior points rather than a lift",
+         _the_distance_states_its_domain),
     Eval("assignment-keeps-the-balancing", "the baseline's balanced assignment stays",
          "round 20261105_144909: the specification replaced the Sinkhorn-balanced "
          "assignment with a plain argmin and the level-1 codebook collapsed "

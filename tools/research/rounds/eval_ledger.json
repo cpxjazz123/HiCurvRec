@@ -796,6 +796,96 @@
    "decision": "eval",
    "eval_id": "the-specification-does-not-change-the-idea",
    "source": "the numerical guard has its value"
+  },
+  {
+   "pattern": "Distance normalization|distance normalisation|the factor 2|prefactor.*artanh|\\(2/sqrt\\(c\\)\\)",
+   "decision": "eval",
+   "eval_id": "the-specification-does-not-change-the-idea",
+   "source": "round 20261106_135314: the behaviour-directed code drift's review: the idea's informal metric factor was amended, in the round's record, to the framework's canonical factor 2"
+  },
+  {
+   "pattern": "Magnitude/direction mismatch|Riemannian norm|coordinate norm|lambda_\\{v_i\\}",
+   "decision": "eval",
+   "eval_id": "the-specification-is-internally-consistent",
+   "source": "round 20261106_135314: the behaviour-directed code drift's review: the magnitude and the direction must use the same norm"
+  },
+  {
+   "pattern": "GEOM=euclid does not keep|does not keep the behaviour field|the two arms differ in the METRIC only|switch_geometry",
+   "decision": "eval",
+   "eval_id": "geometry-arm-keeps-the-measured-scale",
+   "source": "round 20261106_135314: the behaviour-directed code drift's review: the Euclidean arm keeps the field the curved operators computed"
+  },
+  {
+   "pattern": "Level-1 baseline loss omitted|the level-1 terms are|loss_total.*level",
+   "decision": "eval",
+   "eval_id": "the-specification-is-internally-consistent",
+   "source": "round 20261106_135314: the behaviour-directed code drift's review: the baseline's level-1 loss terms must stay in the loss"
+  },
+  {
+   "pattern": "undefined at c=0|continuous surface undefined|c = 0 in the surface",
+   "decision": "eval",
+   "eval_id": "curvature-zero-branch",
+   "source": "round 20261106_135314: the behaviour-directed code drift's review: the surface must have its c = 0 branch"
+  },
+  {
+   "pattern": "Log map clip|logarithm is written|atanhc\\(|log_x",
+   "decision": "eval",
+   "eval_id": "distance-clamp",
+   "source": "round 20261106_135314: the behaviour-directed code drift's review: the logarithm needs the artanh clip and the zero limit"
+  },
+  {
+   "pattern": "Gradient path|gradient carrier|no gradient carrier|withdrawn",
+   "decision": "eval",
+   "eval_id": "the-specification-is-internally-consistent",
+   "source": "round 20261106_135314: the behaviour-directed code drift's review: the mechanism's own sentences must agree with its gradient rules"
+  },
+  {
+   "pattern": "quantised_value|one_hot\\(k_l\\(i\\)\\)|the selector",
+   "decision": "eval",
+   "eval_id": "the-mechanisms-list-agrees-with-its-computations",
+   "source": "round 20261106_135314: the behaviour-directed code drift's review: the selector is not the codeword; the quantised vector is"
+  },
+  {
+   "pattern": "distance\\.domain|the domain justifies|interiority",
+   "decision": "eval",
+   "eval_id": "the-distance-states-its-domain",
+   "source": "round 20261106_135314: the behaviour-directed code drift's review: the domain must cover the displaced code too"
+  },
+  {
+   "pattern": "successor_snapshot|snapshot residual|r_\\{s,3\\}",
+   "decision": "eval",
+   "eval_id": "the-specification-is-internally-consistent",
+   "source": "round 20261106_135314: the behaviour-directed code drift's review: the level-3 residual subtracts both earlier levels"
+  },
+  {
+   "pattern": "mechanism: the sentence|contradicts the specification's own",
+   "decision": "eval",
+   "eval_id": "the-specification-is-internally-consistent",
+   "source": "round 20261106_135314: the behaviour-directed code drift's review: the mechanism's prose must agree with the computations"
+  },
+  {
+   "pattern": "sinkhorn_plan|plan's temperature|centres its distances|does not, and the",
+   "decision": "eval",
+   "eval_id": "the-surface-does-not-bind-its-own-temperature",
+   "source": "round 20261106_135314: the behaviour-directed code drift's review: the plan's temperature is the cost's own scale, and that is declared"
+  },
+  {
+   "pattern": "behaviour-off arm|vanishes identically|BEHAV=off does not",
+   "decision": "eval",
+   "eval_id": "behaviour-off-arithmetic",
+   "source": "round 20261106_135314: the behaviour-directed code drift's review: the off arm must justify itself in its own shape"
+  },
+  {
+   "pattern": "came with no test|a finding must be answered with a test",
+   "decision": "not-decidable",
+   "note": "A finding that arrives without a test is a defect in the REVIEWER'S ANSWER, not in the specification: the framework refuses such a review outright, and there is nothing on the specification to check. The substantive findings of the same review are decided by the evals above.",
+   "source": "round 20261106_135314: the behaviour-directed code drift's review: the reviewers answered without the tests the protocol asks for"
+  },
+  {
+   "pattern": "mechanism vs computations|displaced_code and gradient_rules|the displacement's parameters",
+   "decision": "eval",
+   "eval_id": "the-specification-is-internally-consistent",
+   "source": "round 20261106_135314: the mechanism's sentence claimed a gradient path to the behaviour field's parameters, which the field's own detachment denies"
   }
  ]
 }
