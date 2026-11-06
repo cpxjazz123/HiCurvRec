@@ -259,6 +259,15 @@ papers/grid_paper.txt
 !stage2_RQ-VAE/TIGER_community-pairs-rq/logs/
 !stage2_RQ-VAE/TIGER_community-pairs-rq/logs/training_metrics.jsonl
 
+# The bounded community-pair arm (issue 121): the metrics stream is the evidence
+# that bounding the grouping force by the encoder gradient cuts the collapse
+# (0.42-0.58 -> 0.38-0.49) without removing it, against the 0.35 gate.
+!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/
+!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/model/
+!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/tests/
+!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/logs/
+!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/logs/training_metrics.jsonl
+
 results/**/*.pth
 results/**/*.parquet
 results/stage1_GeneEmbedding/*.npy

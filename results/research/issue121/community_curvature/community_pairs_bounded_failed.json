@@ -1,0 +1,100 @@
+{
+  "arm": "TIGER_community-pairs-bounded-rq",
+  "status": "STOPPED_COLLISION_GATE",
+  "mechanism": "the community-pair contrast of the previous arm, bounded per step so its encoder-gradient norm never exceeds the reconstruction's",
+  "epochs_completed": 721,
+  "budget": 3000,
+  "learned_collision_median": 0.4378330011794851,
+  "learned_collision_min": 0.3804042786838573,
+  "learned_collision_last": 0.48598853052426083,
+  "unique_sids_last": 12638,
+  "gate": 0.35,
+  "why": "the gradient bound cut the collapse from 0.42-0.58 to 0.38-0.46 but did not remove it: the collision oscillated between 0.40 and 0.46 for six hundred epochs with no downward trend, against the baseline family's 0.11-0.20. The magnitude of the grouping force is not the lever; its direction is",
+  "comparison": {
+    "baseline_family_collision_range": [
+      0.11,
+      0.2
+    ],
+    "cost_term_arm_collision": 0.3259,
+    "unbounded_contrast_collision_range": [
+      0.42,
+      0.58
+    ],
+    "bounded_contrast_collision_range": [
+      0.38,
+      0.46
+    ]
+  },
+  "trajectory": [
+    {
+      "epoch": 50,
+      "collision": 0.44519461504046853,
+      "unique": 13641
+    },
+    {
+      "epoch": 100,
+      "collision": 0.47313621019237806,
+      "unique": 12954
+    },
+    {
+      "epoch": 150,
+      "collision": 0.4688249888152276,
+      "unique": 13060
+    },
+    {
+      "epoch": 200,
+      "collision": 0.39374466181315326,
+      "unique": 14906
+    },
+    {
+      "epoch": 250,
+      "collision": 0.3804042786838573,
+      "unique": 15234
+    },
+    {
+      "epoch": 300,
+      "collision": 0.3938666775125066,
+      "unique": 14903
+    },
+    {
+      "epoch": 350,
+      "collision": 0.4069223573433115,
+      "unique": 14582
+    },
+    {
+      "epoch": 400,
+      "collision": 0.45564729328506937,
+      "unique": 13384
+    },
+    {
+      "epoch": 450,
+      "collision": 0.40403465245861636,
+      "unique": 14653
+    },
+    {
+      "epoch": 500,
+      "collision": 0.4378330011794851,
+      "unique": 13822
+    },
+    {
+      "epoch": 550,
+      "collision": 0.4378330011794851,
+      "unique": 13822
+    },
+    {
+      "epoch": 600,
+      "collision": 0.4285191361288486,
+      "unique": 14051
+    },
+    {
+      "epoch": 650,
+      "collision": 0.44340505144995324,
+      "unique": 13685
+    },
+    {
+      "epoch": 700,
+      "collision": 0.48598853052426083,
+      "unique": 12638
+    }
+  ]
+}
