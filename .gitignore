@@ -331,6 +331,27 @@ papers/grid_paper.txt
 !results/stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/logs/
 !results/stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/logs/**
 
+# The community arm with the baseline's balanced plan at level 1 (issue 121):
+# every level-1 code receives a balanced share, and the community term repels
+# inside that balance. Its identifiers, both metrics streams and its layer
+# record travel.
+!stage2_RQ-VAE/TIGER_community-balance-l1-rq/
+!stage2_RQ-VAE/TIGER_community-balance-l1-rq/model/
+!stage2_RQ-VAE/TIGER_community-balance-l1-rq/tests/
+!stage2_RQ-VAE/TIGER_community-balance-l1-rq/logs/
+!stage2_RQ-VAE/TIGER_community-balance-l1-rq/logs/training_metrics.jsonl
+!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/
+!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/model/
+!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/tests/
+!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/logs/
+!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/logs/training_metrics.jsonl
+!results/stage2_RQ-VAE/TIGER_community-balance-l1-rq/
+!results/stage2_RQ-VAE/TIGER_community-balance-l1-rq/logs/
+!results/stage2_RQ-VAE/TIGER_community-balance-l1-rq/logs/**
+!results/stage2_RQ-VAE/TIGER_community-balance-repulse-rq/
+!results/stage2_RQ-VAE/TIGER_community-balance-repulse-rq/logs/
+!results/stage2_RQ-VAE/TIGER_community-balance-repulse-rq/logs/**
+
 results/**/*.pth
 results/**/*.parquet
 results/stage1_GeneEmbedding/*.npy

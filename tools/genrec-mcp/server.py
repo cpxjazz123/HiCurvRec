@@ -1202,8 +1202,25 @@ else:
     radius = None
     if table is not None and int(getattr(table, "numel", lambda: 0)()) > 0:
         radius = table[batch_ids]
-    reconstructed, quant_loss, _unused_codes, _tokens, reference = probe_model(
-        batch, batch_ids, radius=radius)
+    # Only a tree that carries a radius table takes the keyword: passing it
+    # unconditionally breaks every candidate whose forward is (x, item_ids), and
+    # the failure is the probe's, not the tree's.
+    if radius is None:
+        probed = probe_model(batch, batch_ids)
+    else:
+        probed = probe_model(batch, batch_ids, radius=radius)
+    # The forward's return shape is the tree's, not the probe's: the frozen
+    # baseline returns (reconstructed, quant_loss, unused, tokens) and a
+    # behaviour tree may return a fifth value (the reference the reconstruction
+    # is scored against). A probe that demands five breaks every four-tuple
+    # tree -- and only on a SECOND dispatch, because the checkpoint probe is
+    # skipped while the result directory is fresh.
+    outputs = tuple(probed) if isinstance(probed, (tuple, list)) else (probed,)
+    if len(outputs) >= 5:
+        reconstructed, quant_loss, _unused_codes, _tokens, reference = outputs[:5]
+    else:
+        reconstructed, quant_loss, _unused_codes, _tokens = outputs[:4]
+        reference = batch
     total, recon_only = probe_model.compute_loss(reference, reconstructed, quant_loss)
     parameters = [p for p in probe_model.parameters() if p.requires_grad]
 
