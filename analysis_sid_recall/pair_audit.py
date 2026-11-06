@@ -82,15 +82,84 @@ def first_tracked(paths: list[str]) -> tuple[str, dict, dict] | None:
     return path, intro, last
 
 
+def repository_paths(row: dict) -> list[str]:
+    """The row's SID paths that are real repository paths, not the collected copies.
+
+    ``collect.py`` records both: where the table lives in the repository and the
+    copy it writes under ``analysis_sid_recall/sids/``. The copy proves the
+    content was gathered, never where it lived, and its flattened filename even
+    contains ``stage2_RQ-VAE``, so a plain substring match can select it.
+    """
+    paths = [part.strip() for part in row["sid_paths"].split("|") if part.strip()]
+    return [path for path in paths if not path.startswith(COLLECTED)]
+
+
+def git_tracks(path: str) -> bool:
+    return subprocess.run(["git", "-C", str(REPO), "ls-files", "--error-unmatch", path],
+                          capture_output=True).returncode == 0
+
+
+def audit_rows(base: Path, live: Path, is_tracked=git_tracks) -> tuple[list[dict], int]:
+    """The archived full table, plus every live pair that carries its own evidence.
+
+    The archive is the only surviving record of the paths that the 2026 history
+    rewrite removed -- 147 of its rows can no longer be resolved in the current
+    history -- so it is never replaced by a fresh collection. A live row is
+    appended only when it is absent from the archive and names a repository path
+    that git actually tracks; that is the same evidence the archived rows carry,
+    and it is what keeps a newly published arm from going unaudited.
+    """
+    with base.open() as handle:
+        archived = list(csv.DictReader(handle)) if base.is_file() else []
+    if not live.is_file():
+        return archived, 0
+    seen = {row["sid_sha256"] for row in archived}
+    appended = []
+    with live.open() as handle:
+        live_rows = list(csv.DictReader(handle))
+    for row in live_rows:
+        if row["sid_sha256"] in seen:
+            continue
+        real = repository_paths(row)
+        if not real or not all(is_tracked(path) for path in real):
+            continue
+        seen.add(row["sid_sha256"])
+        appended.append(row)
+    return archived + appended, len(appended)
+
+
+def full_snapshot() -> Path:
+    """The archived full table, never the pruned live one.
+
+    The live ``sid_recall.csv`` is pruned, and auditing it would only confirm
+    its own selection. The archive keeps one snapshot per collection round;
+    the largest one is the base, and ``audit_rows`` appends the live pairs that
+    carry their own tracked paths on top of it.
+    """
+    snapshots = []
+    for path in (OUT / "archive").glob("sid_recall_full_*.csv"):
+        try:
+            with path.open() as handle:
+                count = sum(1 for _ in csv.DictReader(handle))
+        except (OSError, csv.Error):
+            continue
+        snapshots.append((count, path.name, path))
+    if not snapshots:
+        return OUT / "sid_recall.csv"
+    return max(snapshots)[2]
+
+
 def main() -> int:
     # audit the FULL table, not the admitted subset: the live sid_recall.csv is
     # already pruned, and auditing it would only confirm its own selection
-    full = OUT / "archive" / "sid_recall_full_182.csv"
-    rows = list(csv.DictReader((full if full.is_file() else OUT / "sid_recall.csv").open()))
+    full = full_snapshot()
+    rows, appended = audit_rows(full, OUT / "sid_recall.csv")
+    print("auditing: %s (%d rows) + %d newly published pairs" % (full.name, len(rows) - appended, appended))
     audit = []
     for row in rows:
         paths = [part.strip() for part in row["sid_paths"].split("|") if part.strip()]
-        stage2 = next((part for part in paths if "stage2_RQ-VAE/" in part), paths[0])
+        stage2 = next((part for part in repository_paths(row) if "stage2_RQ-VAE/" in part),
+                      paths[0])
         stage2_rel = stage2.split("results/stage2_RQ-VAE/", 1)[-1]
         stage2_rel = stage2_rel.rsplit("/item_sids", 1)[0]
         variant = row["variant"]

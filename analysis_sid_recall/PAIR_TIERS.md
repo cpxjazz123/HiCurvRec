@@ -1,10 +1,10 @@
 # What each pair tier contains
 
-182 audited pairs. `_iterNN` is folded into its parent series.
+190 audited pairs. `_iterNN` is folded into its parent series.
 
 ## A_name_only
 
-110 pairs, 34 series; the largest series is 69% of the tier; recalls [0.0306, 0.0637].
+118 pairs, 42 series; the largest series is 64% of the tier; recalls [0.0306, 0.0637].
 
 | series | pairs |
 |---|---|
@@ -26,12 +26,13 @@
 
 ## A2_name_and_commit
 
-73 pairs, 2 series; the largest series is 99% of the tier; recalls [0.0423, 0.0634].
+74 pairs, 3 series; the largest series is 97% of the tier; recalls [0.0423, 0.0634].
 
 | series | pairs |
 |---|---|
 | `curvature_RQ-VAE` | 72 |
 | `r4_08` | 1 |
+| `TIGER_curriculum-behaviour-rq` | 1 |
 
 | feature | n | Spearman | p | 95% CI |
 |---|---|---|---|---|
@@ -42,7 +43,7 @@
 
 ## B_name_and_code_path
 
-110 pairs, 34 series; the largest series is 69% of the tier; recalls [0.0306, 0.0637].
+118 pairs, 42 series; the largest series is 64% of the tier; recalls [0.0306, 0.0637].
 
 | series | pairs |
 |---|---|
@@ -64,7 +65,7 @@
 
 ## C_code_path_only
 
-178 pairs, 40 series; the largest series is 58% of the tier; recalls [0.0306, 0.0643].
+186 pairs, 48 series; the largest series is 55% of the tier; recalls [0.0306, 0.0643].
 
 | series | pairs |
 |---|---|

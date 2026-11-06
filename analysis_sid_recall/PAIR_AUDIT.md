@@ -1,19 +1,19 @@
 # (SID, recall) pair audit
 
-182 pairs. SID path tracked in git: 182; recall file tracked: 164; same introduction commit: 86; stage-2/stage-3 name equal: 110; the run's own code_path matches the SID path: 178.
+190 pairs. SID path tracked in git: 190; recall file tracked: 166; same introduction commit: 87; stage-2/stage-3 name equal: 118; the run's own code_path matches the SID path: 186.
 
 ## Verdicts
 
 | verdict | pairs |
 |---|---|
-| VERIFIED | 110 |
+| VERIFIED | 118 |
 | REJECTED_NAME | 72 |
 
 ## Name classes
 
 | class | pairs |
 |---|---|
-| EXACT | 100 |
+| EXACT | 108 |
 | NONE | 72 |
 | FLATTENED | 10 |
 
@@ -59,4 +59,4 @@
 * `curvature_RQ-VAE_iter40`
 * `curvature_RQ-VAE_iter19`
 * `curvature_RQ-VAE_iter101`
-* ... and 70 more (see the CSV)
+* ... and 78 more (see the CSV)

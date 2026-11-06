@@ -122,6 +122,34 @@ def structure(payload: bytes) -> dict:
     }
 
 
+def archived_paths() -> dict[str, list[str]]:
+    """Repository paths that only the archived full tables still name.
+
+    The 2026 history rewrite removed the original tables of many arms, so a
+    fresh scan finds nothing but the copies under ``analysis_sid_recall/sids/``
+    for them. Those copies prove the content was gathered, never where it lived,
+    and a pair audit or a reader needs the second. The archives are the only
+    surviving record, so they are folded back in on every collection.
+    """
+    known: dict[str, list[str]] = {}
+    archive = OUT / "archive"
+    for path in sorted(archive.glob("sid_recall_full_*.csv")):
+        try:
+            with path.open() as handle:
+                rows = list(csv.DictReader(handle))
+        except (OSError, csv.Error):
+            continue
+        for row in rows:
+            paths = [part.strip() for part in row.get("sid_paths", "").split("|") if part.strip()]
+            if not paths:
+                continue
+            merged = known.setdefault(row["sid_sha256"], [])
+            for part in paths:
+                if part not in merged:
+                    merged.append(part)
+    return known
+
+
 def collect_sid_blobs() -> dict:
     """Every distinct SID content in the history, with the paths it was stored at."""
     listing = git("rev-list", "--all", "--objects")
@@ -613,11 +641,14 @@ def main() -> int:
                   "test_recall@5", "test_recall@10", "test_ndcg@5", "test_ndcg@10", "n_eval"]
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
+        archived = archived_paths()
         for pair in sorted(pairs, key=lambda item: -(item.get("test_recall@10") or 0)):
             writer.writerow({
                 "sid_sha256": pair["sid_sha256"],
                 "sid_file": names.get(pair["sid_sha256"], ""),
-                "sid_paths": " | ".join(pair["sid_paths"]), "variant": pair["variant"],
+                "sid_paths": " | ".join(dict.fromkeys(
+                    pair["sid_paths"] + archived.get(pair["sid_sha256"], []))),
+                "variant": pair["variant"],
                 "run_dir": pair["run_dir"], "code_path": pair["code_path"],
                 "sid_resolution": pair.get("sid_resolution", ""),
                 "pair_confidence": pair.get("pair_confidence", ""),

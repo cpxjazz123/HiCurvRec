@@ -111,8 +111,13 @@ def main() -> int:
 
     # the sensitivity tables, so a cross-mechanism analysis is runnable without
     # re-admitting anything into the default table
-    full = {row["sid_sha256"]: row for row in
-            csv.DictReader((OUT / "archive" / "sid_recall_full_182.csv").open())}
+    # the same base the audit was run against: the archived full table as it
+    # stands, never a frozen 182-row slice, or a newly published pair would be
+    # in the audit and missing from its own sensitivity set
+    from analysis_sid_recall.pair_audit import full_snapshot
+
+    with full_snapshot().open() as handle:
+        full = {row["sid_sha256"]: row for row in csv.DictReader(handle)}
     tiers_dir = OUT / "tiers"
     tiers_dir.mkdir(exist_ok=True)
     fields = list(next(iter(full.values())).keys())
