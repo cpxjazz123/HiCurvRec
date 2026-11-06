@@ -711,6 +711,28 @@ results/stage3_T5Train/TIGER_curvature-embedding-rq/**/*.npy
 # results/research/_conformance/ are the evidence and stay.
 results/stage2_RQ-VAE/_conformance/
 
+# The three-stage curriculum arm: the geometry first, the behaviour ramped in,
+# then both. The candidate tree travels (the mechanism, its tests and its
+# continuous-surface contract) together with its identifiers, both metrics
+# streams and its layer record, because together they are the evidence of a
+# negative result: every SID level came out at the frozen baseline's level and
+# the Stage 3 recall did not follow. Its checkpoints and arrays stay out -- the
+# rules immediately below win.
+!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/
+!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/model/
+!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/tests/
+!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/logs/
+!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/logs/training_metrics.jsonl
+!results/stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/
+!results/stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/logs/
+!results/stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/logs/**
+!results/stage3_T5Train/TIGER_curriculum-behaviour-rq/
+!results/stage3_T5Train/TIGER_curriculum-behaviour-rq/logs/
+!results/stage3_T5Train/TIGER_curriculum-behaviour-rq/logs/**
+# Runtime scratch the broad re-inclusion above would otherwise pull in.
+**/logs/_ddp_sync/
+**/logs/tensorboard/
+
 results/**/*.pth
 results/**/*.pt
 results/**/*.npy
