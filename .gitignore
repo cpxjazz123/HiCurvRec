@@ -662,6 +662,16 @@ results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_stdout.log
 !results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/logs/
 !results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/logs/**
 
+# The stage-3 result of the curvature-aware embedding arm: the test record and
+# the metrics stream are the comparison's evidence; the checkpoints stay out.
+!results/stage3_T5Train/TIGER_curvature-embedding-rq/
+!results/stage3_T5Train/TIGER_curvature-embedding-rq/logs/
+!results/stage3_T5Train/TIGER_curvature-embedding-rq/logs/**
+!results/stage3_T5Train/TIGER_curvature-embedding-rq/logs/**/test_final.json
+results/stage3_T5Train/TIGER_curvature-embedding-rq/logs/_ddp_sync/
+results/stage3_T5Train/TIGER_curvature-embedding-rq/**/*.pth
+results/stage3_T5Train/TIGER_curvature-embedding-rq/**/*.npy
+
 # The curvature-aware embedding arm (Plan A, TIGER_curvature-embedding-rq): the
 # quantizer is the frozen baseline's and the work happened upstream, in the
 # embedding. Its identifiers, its metrics stream and its layer record are the
