@@ -229,6 +229,26 @@ papers/grid_paper.txt
 # because git's whitelist (`!pattern`) is shadowed by a parent directory ignore; instead
 # we ignore by extension/path under results/ and never ignore a bare file.
 # 大文件不推 (.pth / .parquet / *.npy inputs / *_launcher.log); 小产物需要推送.
+# The community-guided level-1 arm (issue 121): the identifiers, the layer
+# record and the Stage 3 result are the evidence of a negative result -- the
+# coarse level improved (Hard ER 6.47 -> 5.49, positive hit 0.0864 -> 0.0989)
+# and the final recall did not (0.05263 against the baseline's 0.05554). The
+# checkpoints and arrays stay out; the small records travel.
+!stage2_RQ-VAE/TIGER_community-l1-rq/
+!stage2_RQ-VAE/TIGER_community-l1-rq/model/
+!stage2_RQ-VAE/TIGER_community-l1-rq/tests/
+!stage2_RQ-VAE/TIGER_community-l1-rq/logs/
+!stage2_RQ-VAE/TIGER_community-l1-rq/logs/training_metrics.jsonl
+!results/stage2_RQ-VAE/TIGER_community-l1-rq/
+!results/stage2_RQ-VAE/TIGER_community-l1-rq/logs/
+!results/stage2_RQ-VAE/TIGER_community-l1-rq/logs/**
+!results/stage3_T5Train/TIGER_community-l1-rq/
+!results/stage3_T5Train/TIGER_community-l1-rq/logs/
+!results/stage3_T5Train/TIGER_community-l1-rq/logs/**
+# Runtime scratch the broad re-inclusion above would otherwise pull in.
+**/logs/_ddp_sync/
+**/logs/tensorboard/
+
 results/**/*.pth
 results/**/*.parquet
 results/stage1_GeneEmbedding/*.npy
