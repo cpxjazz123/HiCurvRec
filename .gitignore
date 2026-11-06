@@ -268,6 +268,18 @@ papers/grid_paper.txt
 !stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/logs/
 !stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/logs/training_metrics.jsonl
 
+# The guarded community-pair arm (issue 121): the community contrast with the
+# repository's own anti-collapse guard. Its identifiers, both metrics streams and
+# its layer record travel; the checkpoints and arrays stay out.
+!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/
+!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/model/
+!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/tests/
+!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/logs/
+!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/logs/training_metrics.jsonl
+!results/stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/
+!results/stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/logs/
+!results/stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/logs/**
+
 results/**/*.pth
 results/**/*.parquet
 results/stage1_GeneEmbedding/*.npy
