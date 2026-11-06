@@ -282,6 +282,15 @@ def main() -> int:
                                                 hyper_dim=HYPER_DIM_EXPERIMENT,
                                                 graph="curvature",
                                                 learn_curvature=True)),
+        # The resolution question: the gate for any use of a partition in the
+        # identifiers is that it must discriminate the held-out behaviour pairs
+        # better than the codes do (6.16), and a finer partition has more
+        # behaviour information per community but also mixes more negatives.
+        ("G_free_64_hyper_64_learncurv_k1024", dict(free_dim=FREE_DIM_EXPERIMENT,
+                                                     hyper_dim=HYPER_DIM_EXPERIMENT,
+                                                     graph="curvature",
+                                                     learn_curvature=True,
+                                                     n_communities=1024)),
     ]
     plain_graph = curvature_graph_for = curvature_graph(
         graphs["train"], curvatures["train"], embeddings.shape[0], curvature_aware=False)
@@ -296,7 +305,8 @@ def main() -> int:
         graph_kind = spec.pop("graph", None)
         learn_curvature = bool(spec.pop("learn_curvature", False))
         graph = {"plain": plain_graph, "curvature": curvature_graph_for}.get(graph_kind)
-        net = model.CommunityModel(input_dim=embeddings.shape[1], n_communities=N_COMMUNITIES,
+        spec.setdefault("n_communities", N_COMMUNITIES)
+        net = model.CommunityModel(input_dim=embeddings.shape[1],
                                    curvature=CURVATURE, seed=SEED, graph=graph,
                                    learn_curvature=learn_curvature, **spec).to(device)
         training = train(net, embeddings, pair_sets["train"].anchor, pair_sets["train"].high,
