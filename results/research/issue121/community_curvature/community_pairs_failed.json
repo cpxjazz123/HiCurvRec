@@ -1,0 +1,152 @@
+{
+  "arm": "TIGER_community-pairs-rq",
+  "status": "STOPPED_COLLISION_GATE",
+  "epochs_completed": 1349,
+  "budget": 3000,
+  "learned_collision_first": 0.45861634196933343,
+  "learned_collision_last": 0.4912758774962378,
+  "learned_collision_median": 0.4800300972058405,
+  "learned_collision_min": 0.4199780371741164,
+  "unique_sids_last": 12508,
+  "unique_sids_total": 24587,
+  "gate": 0.35,
+  "why": "the community contrast homogenised the encoder's latents, so the quantiser reused codes and the three-level collision sat at 0.45-0.58 from the fiftieth epoch on, never recovering; the owner's gate refuses anything above 0.35, so the remaining budget could not have changed the verdict",
+  "reference": {
+    "baseline_learned_collision": 0.2064,
+    "community_l1_learned_collision": 0.2064,
+    "community_l1_stage3_recall@10": 0.05263,
+    "baseline_stage3_recall@10": 0.05554
+  },
+  "trajectory": [
+    {
+      "epoch": 50,
+      "collision": 0.45861634196933343,
+      "unique": 13311
+    },
+    {
+      "epoch": 100,
+      "collision": 0.5432138935209664,
+      "unique": 11231
+    },
+    {
+      "epoch": 150,
+      "collision": 0.4791963232602595,
+      "unique": 12805
+    },
+    {
+      "epoch": 200,
+      "collision": 0.5099036075975109,
+      "unique": 12050
+    },
+    {
+      "epoch": 250,
+      "collision": 0.5419937365274332,
+      "unique": 11261
+    },
+    {
+      "epoch": 300,
+      "collision": 0.4199780371741164,
+      "unique": 14261
+    },
+    {
+      "epoch": 350,
+      "collision": 0.44519461504046853,
+      "unique": 13641
+    },
+    {
+      "epoch": 400,
+      "collision": 0.509171513401391,
+      "unique": 12068
+    },
+    {
+      "epoch": 450,
+      "collision": 0.498515475657868,
+      "unique": 12330
+    },
+    {
+      "epoch": 500,
+      "collision": 0.45288160409972755,
+      "unique": 13452
+    },
+    {
+      "epoch": 550,
+      "collision": 0.45011591491438563,
+      "unique": 13520
+    },
+    {
+      "epoch": 600,
+      "collision": 0.454508480091105,
+      "unique": 13412
+    },
+    {
+      "epoch": 650,
+      "collision": 0.4593891080652377,
+      "unique": 13292
+    },
+    {
+      "epoch": 700,
+      "collision": 0.45959246756415995,
+      "unique": 13287
+    },
+    {
+      "epoch": 750,
+      "collision": 0.4606906088583398,
+      "unique": 13260
+    },
+    {
+      "epoch": 800,
+      "collision": 0.46544922113311915,
+      "unique": 13143
+    },
+    {
+      "epoch": 850,
+      "collision": 0.5046976044251027,
+      "unique": 12178
+    },
+    {
+      "epoch": 900,
+      "collision": 0.46939439541220973,
+      "unique": 13046
+    },
+    {
+      "epoch": 950,
+      "collision": 0.4808638711514215,
+      "unique": 12764
+    },
+    {
+      "epoch": 1000,
+      "collision": 0.4763899621751332,
+      "unique": 12874
+    },
+    {
+      "epoch": 1050,
+      "collision": 0.5822589173140278,
+      "unique": 10271
+    },
+    {
+      "epoch": 1100,
+      "collision": 0.507219262211738,
+      "unique": 12116
+    },
+    {
+      "epoch": 1150,
+      "collision": 0.4992475698539879,
+      "unique": 12312
+    },
+    {
+      "epoch": 1200,
+      "collision": 0.5083987473054866,
+      "unique": 12087
+    },
+    {
+      "epoch": 1250,
+      "collision": 0.5343067474681742,
+      "unique": 11450
+    },
+    {
+      "epoch": 1300,
+      "collision": 0.4912758774962378,
+      "unique": 12508
+    }
+  ]
+}

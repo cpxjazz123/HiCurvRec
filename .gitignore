@@ -249,6 +249,16 @@ papers/grid_paper.txt
 **/logs/_ddp_sync/
 **/logs/tensorboard/
 
+# The community-pair arm (issue 121): a stopped negative result. Its metrics
+# stream is the evidence that the contrastive shape collapses the code space
+# from the fiftieth epoch (collision 0.42-0.58 against the 0.35 gate), so the
+# records travel and no checkpoint does.
+!stage2_RQ-VAE/TIGER_community-pairs-rq/
+!stage2_RQ-VAE/TIGER_community-pairs-rq/model/
+!stage2_RQ-VAE/TIGER_community-pairs-rq/tests/
+!stage2_RQ-VAE/TIGER_community-pairs-rq/logs/
+!stage2_RQ-VAE/TIGER_community-pairs-rq/logs/training_metrics.jsonl
+
 results/**/*.pth
 results/**/*.parquet
 results/stage1_GeneEmbedding/*.npy
