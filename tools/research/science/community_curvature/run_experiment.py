@@ -55,6 +55,29 @@ def set_seed(seed: int) -> None:
     torch.cuda.manual_seed_all(seed)
 
 
+def local_curvature(graph: data.Graph, curvature: dict) -> np.ndarray:
+    """The mean AF3 curvature of every item's incident edges, standardised.
+
+    It is the target the curvature head predicts: the local curvature of an item
+    is a property of the behaviour graph, and a representation that can predict
+    it has encoded the local structure the partition follows.
+    """
+    rows = np.asarray(graph.nodes, dtype=np.int64)
+    values = np.asarray(curvature["af3"], dtype=np.float64)
+    totals = np.zeros(rows.size, dtype=np.float64)
+    counts = np.zeros(rows.size, dtype=np.float64)
+    np.add.at(totals, graph.edges[0], values)
+    np.add.at(counts, graph.edges[0], 1.0)
+    np.add.at(totals, graph.edges[1], values)
+    np.add.at(counts, graph.edges[1], 1.0)
+    means = totals / np.maximum(counts, 1.0)
+    spread = float(means.std()) if means.size else 0.0
+    standardised = (means - float(means.mean())) / (spread if spread > 0 else 1.0)
+    out = np.zeros(int(rows.max()) + 1, dtype=np.float32)
+    out[rows] = standardised
+    return out
+
+
 def item_ids(graph: data.Graph, positions: np.ndarray) -> np.ndarray:
     """Graph positions -> item ids."""
     return np.asarray(graph.nodes, dtype=np.int64)[positions]
@@ -96,7 +119,8 @@ def soft_assignment(net: model.CommunityModel, embeddings: np.ndarray,
 
 def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.ndarray,
           high_items: np.ndarray, low_items: np.ndarray, device: torch.device,
-          seed: int = SEED, node_to_cluster: bool = False) -> dict:
+          seed: int = SEED, node_to_cluster: bool = False,
+          curvature_target: np.ndarray | None = None) -> dict:
     """Train once: the curvature ranking loss plus the usage constraint.
 
     With ``node_to_cluster`` the model additionally keeps every item close to
@@ -121,6 +145,10 @@ def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.nd
     # commitment on the scale of the frozen branch distances, the usage term is
     # bounded by one, and the separation hinge on the scale of the threshold.
     weights = {"ranking": 1.0 / margin, "usage": 1.0}
+    curvature_loss = None
+    if curvature_target is not None:
+        curvature_loss = torch.nn.MSELoss()
+        target = torch.from_numpy(curvature_target).to(device)
     if node_to_cluster:
         weights["commitment"] = 1.0
         weights["separation"] = 1.0 / max(float(scales["separation_threshold"]), 1e-8)
@@ -131,7 +159,7 @@ def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.nd
     for epoch in range(EPOCHS):
         order = rng.permutation(n_anchors)
         totals = {"loss": 0.0, "ranking": 0.0, "usage": 0.0, "commitment": 0.0,
-                  "separation": 0.0, "s_high": 0.0, "s_low": 0.0}
+                  "separation": 0.0, "consistency": 0.0, "s_high": 0.0, "s_low": 0.0}
         for step in range(steps_per_epoch):
             index = order[step * ANCHOR_BATCH:(step + 1) * ANCHOR_BATCH]
             free_all, ball_all = net.represent(every_item)
@@ -157,6 +185,16 @@ def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.nd
 
             ranking = model.ranking_loss(pi_anchor, pi_high, pi_low, margin)
             usage = model.usage_loss(pi_items.mean(dim=0), net.n_communities)
+            consistency = torch.zeros((), device=device)
+            if curvature_loss is not None:
+                # the head reads the item's community point and predicts its
+                # local curvature; the loss makes the two agree
+                sample_items = torch.from_numpy(
+                    rng.integers(0, embeddings.shape[0], size=ITEM_BATCH)).to(device)
+                _, ball_sample = net.represent(
+                    torch.from_numpy(embeddings).to(device))
+                predicted = net.curvature_head(ball_sample[sample_items])
+                consistency = curvature_loss(predicted, target[sample_items])
             commitment = separation = torch.zeros((), device=device)
             if node_to_cluster:
                 commitment = model.commitment_loss(pi_items, absolute_items)
@@ -166,6 +204,8 @@ def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.nd
             if node_to_cluster:
                 terms["commitment"] = commitment
                 terms["separation"] = separation
+            terms["consistency"] = consistency
+            weights["consistency"] = 1.0
             loss = sum(weights[name] * value for name, value in terms.items())
             optimiser.zero_grad(set_to_none=True)
             loss.backward()
@@ -175,6 +215,7 @@ def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.nd
             totals["ranking"] += float(ranking.detach())
             totals["usage"] += float(usage.detach())
             totals["commitment"] += float(commitment.detach())
+            totals["consistency"] += float(consistency.detach())
             totals["separation"] += float(separation.detach())
             totals["s_high"] += float(model.overlap(pi_anchor, pi_high).mean().detach())
             totals["s_low"] += float(model.overlap(pi_anchor, pi_low).mean().detach())
@@ -260,6 +301,8 @@ def main() -> int:
         print(f"[data] {split}: nodes={graphs[split].n_nodes} "
               f"edges={graphs[split].edges[0].size} ranking_pairs={len(pairs)}", flush=True)
 
+    # the local curvature target of the consistency arm
+    curvature_target = local_curvature(graphs["train"], curvatures["train"])
     random_left, random_right = data.random_pairs(graphs["train"], 200000, SEED)
 
     # the propagation weights of the train graph: the curvature-aware one and
@@ -291,6 +334,16 @@ def main() -> int:
                                                      graph="curvature",
                                                      learn_curvature=True,
                                                      n_communities=1024)),
+        # The plan's last deferred item: an MLP head that predicts an item's
+        # local AF3 curvature from its community point. A representation that can
+        # predict the curvature has encoded the local graph structure the
+        # partition is supposed to follow, so the curvature ordering the model
+        # optimises should get better, not worse.
+        ("H_free_64_hyper_64_learncurv_consistency", dict(free_dim=FREE_DIM_EXPERIMENT,
+                                                          hyper_dim=HYPER_DIM_EXPERIMENT,
+                                                          graph="curvature",
+                                                          learn_curvature=True,
+                                                          curvature_head=True)),
     ]
     plain_graph = curvature_graph_for = curvature_graph(
         graphs["train"], curvatures["train"], embeddings.shape[0], curvature_aware=False)
@@ -306,9 +359,11 @@ def main() -> int:
         learn_curvature = bool(spec.pop("learn_curvature", False))
         graph = {"plain": plain_graph, "curvature": curvature_graph_for}.get(graph_kind)
         spec.setdefault("n_communities", N_COMMUNITIES)
+        use_consistency = bool(spec.pop("curvature_head", False))
         net = model.CommunityModel(input_dim=embeddings.shape[1],
                                    curvature=CURVATURE, seed=SEED, graph=graph,
-                                   learn_curvature=learn_curvature, **spec).to(device)
+                                   learn_curvature=learn_curvature,
+                                   curvature_head=use_consistency, **spec).to(device)
         training = train(net, embeddings, pair_sets["train"].anchor, pair_sets["train"].high,
                          pair_sets["train"].low, device,
                          node_to_cluster=node_to_cluster)

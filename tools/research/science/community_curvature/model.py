@@ -141,13 +141,31 @@ class CurvatureGraphConvolution(nn.Module):
         return torch.sparse.mm(self.adjacency, h)
 
 
+class CurvatureHead(nn.Module):
+    """An MLP that reads an item's community point and predicts its local curvature.
+
+    The target is the mean AF3 curvature of the item's incident edges, which is
+    a property of the behaviour graph. If a representation can predict it, the
+    representation has encoded the local graph structure the partition is
+    supposed to follow.
+    """
+
+    def __init__(self, width: int, hidden: int = 64):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(width, hidden), nn.ReLU(), nn.Linear(hidden, 1))
+
+    def forward(self, ball_point: torch.Tensor) -> torch.Tensor:
+        return self.net(ball_point).squeeze(-1)
+
+
 class CommunityModel(nn.Module):
     """Soft community assignment over K communities from a frozen embedding."""
 
     def __init__(self, input_dim: int = 768, free_dim: int = 128, hyper_dim: int = 0,
                  n_communities: int = 64, curvature: float = 1.0, seed: int = 42,
                  graph: CurvatureGraphConvolution | None = None,
-                 learn_curvature: bool = False):
+                 learn_curvature: bool = False, curvature_head: bool = False):
         super().__init__()
         if free_dim <= 0:
             raise ValueError("the free branch needs a positive width")
@@ -183,6 +201,12 @@ class CommunityModel(nn.Module):
         # "as close as the model started" and "as far apart as the centres
         # started".
         self.graph = graph
+        self.curvature_head = None
+        if curvature_head:
+            if self.hyper_dim <= 0:
+                raise ValueError("the curvature head reads the ball point; the model "
+                                 "needs a hyperbolic branch")
+            self.curvature_head = CurvatureHead(self.hyper_dim)
         if graph is not None:
             # the propagation mixes the neighbourhood into the representation;
             # the strength is a learnable scalar, so the model can turn the

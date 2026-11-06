@@ -1,0 +1,17 @@
+{
+  "arm": "H_free_64_hyper_64_learncurv_consistency (community model)",
+  "mechanism": "an MLP head reads an item's community point (the hyperbolic branch) and predicts its mean incident AF3 curvature; the standardised target is the head's MSE",
+  "prediction": "a representation that can predict the local curvature has encoded the local graph structure, so the curvature ordering the model optimises should improve",
+  "measured": {
+    "consistency_loss_last_epoch": 0.0,
+    "consistency_loss_reading": "below 5e-6: the head predicts the standardised local curvature almost exactly",
+    "separation_valid": 0.054433,
+    "separation_valid_ci": [
+      0.052963,
+      0.055879
+    ],
+    "learned_curvature": 1.1518,
+    "the_same_arm_without_the_head_in_this_run": 0.059176
+  },
+  "verdict": "the auxiliary task is solvable to five decimal places -- the community representation really does encode the item's local AF3 curvature -- and it does NOT improve the curvature ordering the partition optimises (0.0544 against 0.0592 for the same arm without the head; the run-to-run spread of one arm is about 2%, so the difference is at the edge of the noise). Being able to read the curvature off the representation is not the same as organising the partition along it."
+}
