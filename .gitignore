@@ -352,6 +352,13 @@ papers/grid_paper.txt
 !results/stage2_RQ-VAE/TIGER_community-balance-repulse-rq/logs/
 !results/stage2_RQ-VAE/TIGER_community-balance-repulse-rq/logs/**
 
+# The Stage 3 result of the balanced-plan repulsion arm (issue 121): every SID
+# diagnostic improved and the recall fell, which is the campaign's cleanest test
+# that the cross-sectional correlation does not transfer to a new arm.
+!results/stage3_T5Train/TIGER_community-balance-repulse-rq/
+!results/stage3_T5Train/TIGER_community-balance-repulse-rq/logs/
+!results/stage3_T5Train/TIGER_community-balance-repulse-rq/logs/**
+
 results/**/*.pth
 results/**/*.parquet
 results/stage1_GeneEmbedding/*.npy

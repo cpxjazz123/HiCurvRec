@@ -1,0 +1,27 @@
+{
+  "arm": "TIGER_community-balance-repulse-rq",
+  "stage2": {
+    "l1_hard_er": 8.2225,
+    "l2_prefixes": 8575,
+    "l3_triples": 21345,
+    "l3_collision": 0.1815,
+    "l1_positive_hit": 0.0365,
+    "l1_negative_hit": 0.0044,
+    "exported_sid": "results/stage2_RQ-VAE/TIGER_community-balance-repulse-rq/item_sids.json"
+  },
+  "stage3": {
+    "test_recall@10": 0.05315,
+    "test_recall@5": 0.03531,
+    "test_ndcg@10": 0.02927
+  },
+  "baseline": {
+    "l1_hard_er": 6.16,
+    "l2_prefixes": 7414,
+    "l3_collision": 0.2745,
+    "l1_positive_hit": 0.0864,
+    "l1_negative_hit": 0.0134,
+    "test_recall@10": 0.05554
+  },
+  "verdict": "every SID diagnostic improved and the recall fell. The level-2 prefixes rose 16% (8575 against 7414), the three-level collision fell (0.1815 against 0.2745) and the level-1 discrimination rose (8.22 against 6.16) -- and test_recall@10 is 0.05315 against the baseline's 0.05554. The 47-arm cross-sectional correlation of 0.728 does not transfer to a new arm.",
+  "why": "the ratio is composed of two numbers and only one of them moved. The balanced plan cut the DENOMINATOR (the negatives' level-1 share fell to 0.0044 against the baseline's 0.0134) but it also cut the NUMERATOR (the behaviour positives' share fell to 0.0365 against 0.0864), because spreading the codes by usage is not the same as keeping the behaviour partners together. The resample family has a numerator close to the baseline's (0.0794) with a denominator of 0.0050: it gets the uniform usage WITHOUT its cost, which its behaviour-trained encoder provides and a plan cannot."
+}
