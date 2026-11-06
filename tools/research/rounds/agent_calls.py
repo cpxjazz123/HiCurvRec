@@ -326,24 +326,26 @@ def _run_agents_concurrently(tasks: list, worker, *, max_workers: int = 0) -> li
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = [(task, pool.submit(worker, *task)) for task in tasks]
         results: list = []
+        delivered: list = []
         failures: list = []
         for task, future in futures:
             try:
-                results.append(future.result())
+                result = future.result()
             except Exception as exc:                   # noqa: BLE001
                 failures.append({"task": str(task[0]) if task else "",
                                  "error": str(exc)[:400],
                                  "failure_class": getattr(exc, "failure_class", "unknown")})
+                continue
+            results.append(result)
+            # The answer keeps the task it belongs to: a caller that compares
+            # two answers must not attribute the second answer to the first
+            # task when the first one failed.
+            delivered.append({"task": str(task[0]) if task else "",
+                              "result": result})
     if failures:
         classes = {entry["failure_class"] for entry in failures}
         summary = "; ".join(str(entry["task"]) + " (" + entry["failure_class"] + ")"
                             for entry in failures)
-        # The results keep the task they belong to: a caller that compares two
-        # answers must not attribute the second answer to the first task when
-        # the first one failed.
-        delivered = [{"task": str(task[0]) if task else "",
-                      "result": result}
-                     for (task, _future), result in zip(futures, results)]
         raise AgentPhaseIncomplete(summary, results=results, failures=failures,
                                    classes=classes, delivered=delivered)
     return results

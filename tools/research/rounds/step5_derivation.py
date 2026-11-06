@@ -331,6 +331,27 @@ def _derivation_prompt(idea: dict, spec: dict = None) -> str:
         "module defining compute(**kwargs), as the answer format requires.")
 
 
+def archive_previous_workspace(directory: Path, index: int) -> Path:
+    """Move a derivation's earlier workspace out of the round.
+
+    The workspace of a derivation holds its own earlier answer: in
+    `previous/`, in `unverified/`, and in the answer file itself. An agent
+    reads its own workspace, so a derivation that copies what is there is no
+    longer independent. The whole workspace moves OUTSIDE the round, where no
+    agent may read it.
+    """
+    workspace = directory / "agents" / ("derivation_%d" % index)
+    archive = (directory.parent.parent / "superseded" / directory.name /
+               ("derivation_%d" % index) / str(int(time.time())))
+    if not workspace.is_dir():
+        return archive
+    if archive.exists():
+        shutil.rmtree(archive, ignore_errors=True)
+    archive.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(workspace), str(archive))
+    return archive
+
+
 def run_derivations(directory: Path, ideas: list, *, log=print, spec: dict = None) -> list:
     """Three independent derivations of the one selected mechanism."""
     from ..agents import runtime as agent_runtime
@@ -341,18 +362,7 @@ def run_derivations(directory: Path, ideas: list, *, log=print, spec: dict = Non
         # Its old answer must not be read as this pass's delivery when the new
         # agent times out: it is moved aside before the agents start.
         for index in range(1, 4):
-            # The workspace of a derivation holds its own earlier answer: in
-            # `previous/`, in `unverified/`, and in the answer file itself. An
-            # agent reads its own workspace, so a derivation that copies what
-            # is there is no longer independent. The whole workspace moves
-            # OUTSIDE the round, where no agent may read it.
-            workspace = directory / "agents" / ("derivation_%d" % index)
-            if workspace.is_dir():
-                archive = (directory.parent.parent / "superseded" / directory.name /
-                           ("derivation_%d" % index) / str(int(time.time())))
-                if archive.exists():
-                    shutil.rmtree(archive, ignore_errors=True)
-                shutil.move(str(workspace), str(archive))
+            archive_previous_workspace(directory, index)
 
         def derive(task_id, _idea=idea, _spec=spec):
             return _run_agent(
@@ -393,38 +403,46 @@ def run_derivations(directory: Path, ideas: list, *, log=print, spec: dict = Non
                                "ok" if payload.get("statements") else "no readable answer"))
         args, symbols = derivation_signature(spec)
         for answer in list(delivered):
-            payload = answer.get("payload") or {}
-            problems = _instance_problems(payload, spec) if payload else ["no payload"]
-            if not problems and not _code_accepts(payload, args):
-                problems = ["the code cannot be called with the round's arguments"]
-            if not problems:
-                continue
-            index = int(answer["index"])
-            log("%s derivation %d: the instance does not match (%s); asking again"
-                % (idea["idea_id"], index, "; ".join(problems)))
-            retry_id = "derivation_%d" % index
-            correction = (_derivation_prompt(idea, spec) +
-                          "\n\nYOUR PREVIOUS DERIVATION DID NOT FIT THE INSTANCE: " +
-                          "; ".join(problems) +
-                          ". Use exactly the arguments listed in the FIXED INSTANCE "
-                          "block above and nothing else, and your code must define "
-                          "compute with exactly these parameter names, in this order: "
-                          + ", ".join(spec["name"] for spec in args) +
-                          ". Your statements must use exactly these symbols: " +
-                          ", ".join(symbols) + ".")
-            outcome = _run_agent(directory, retry_id, correction, "derivation.json",
-                                 _parse_derivation, role="derive", read_paths=[],
-                                 allowed_roots=_round_roots(directory))
-            payload = {key: outcome.get(key) for key
-                       in ("statements", "output", "code", "excluded",
-                           "symbols", "args")
-                       if outcome.get(key)}
-            if payload.get("statements") and not payload.get("args"):
-                args, symbols = derivation_signature(spec)
-                payload["args"] = args
-                payload["symbols"] = symbols
-            answer["payload"] = payload
-            answer["revision"] = True
+            # A derivation that does not fit the instance is asked again, at
+            # most twice: the instance is a formatting contract, and an agent
+            # that keeps declaring a vector as a scalar has not read it.
+            for attempt in range(1, 3):
+                payload = answer.get("payload") or {}
+                problems = _instance_problems(payload, spec) if payload else ["no payload"]
+                if not problems and not _code_accepts(payload, args):
+                    problems = ["the code cannot be called with the round's arguments"]
+                if not problems:
+                    break
+                index = int(answer["index"])
+                log("%s derivation %d: the instance does not match (%s); asking again "
+                    "(attempt %d)" % (idea["idea_id"], index, "; ".join(problems),
+                                      attempt))
+                correction = (_derivation_prompt(idea, spec) +
+                              "\n\nYOUR PREVIOUS DERIVATION DID NOT FIT THE INSTANCE: " +
+                              "; ".join(problems) +
+                              ". Declare the arguments EXACTLY as this, as a JSON "
+                              "array, and nothing else:\n"
+                              + json.dumps(args, indent=1) +
+                              "\nYour code must define compute with exactly these "
+                              "parameter names, in this order: "
+                              + ", ".join(entry["name"] for entry in args) +
+                              ". A vector argument is a VECTOR: declare it with a "
+                              "width and no scalar. A scalar argument is declared "
+                              "with a scalar and no width. Your statements must use "
+                              "exactly these symbols: " + ", ".join(symbols) + ".")
+                outcome = _run_agent(directory, "derivation_%d" % index,
+                                     correction, "derivation.json",
+                                     _parse_derivation, role="derive", read_paths=[],
+                                     allowed_roots=_round_roots(directory))
+                payload = {key: outcome.get(key) for key
+                           in ("statements", "output", "code", "excluded",
+                               "symbols", "args")
+                           if outcome.get(key)}
+                if payload.get("statements") and not payload.get("args"):
+                    payload["args"] = args
+                    payload["symbols"] = symbols
+                answer["payload"] = payload
+                answer["revision"] = attempt
         if missing and len(delivered) < 2:
             # A derivation that delivered nothing is asked once more - but only
             # when the round would otherwise have fewer than two. Waiting for a
@@ -512,6 +530,16 @@ def phase_derivation(root: Path, round_id: str, *, log=print) -> dict:
                if len(implementations) >= 2
                else {"status": "NOT_APPLICABLE",
                      "reason": "fewer than two derivations answered"})
+    if mismatched and verdict.get("status") == "AGREE":
+        # An incomparable derivation is never an agreement. The verdict keeps
+        # the comparison it made and says what it did not cover.
+        verdict = dict(verdict)
+        verdict["status"] = "LIMITED"
+        verdict["reason"] = ("%d of %d derivations could be compared: %s"
+                             % (len(implementations),
+                                len(implementations) + len(mismatched),
+                                "; ".join(str(entry.get("reason"))[:120]
+                                          for entry in mismatched)))
     state["derivation_instance"] = dict(DERIVATION_INSTANCE)
     state["derivations"] = [{"idea_id": answer["idea_id"],
                              "index": answer["index"],
