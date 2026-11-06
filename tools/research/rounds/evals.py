@@ -409,7 +409,11 @@ def _surface_applies_the_lift(spec: dict) -> list:
         return ["the surface never applies the lift"]
     if "u = lift(r" not in code.replace(" ", " ") and "lift(r," not in code:
         problems.append("the surface never lifts the residual")
-    if "lift(a," not in code and "lift(a," not in code.replace(" ", ""):
+    # The codebook's variable need not be called "a": a listing that scales the
+    # codebook rows before the lift (the scale is frozen per level, so the rows
+    # are scaled first) names them something else.  The check is that the
+    # codebook is lifted at all.
+    if not re.search(r"lift\(\s*a[_A-Za-z0-9]*\s*,", code):
         problems.append("the surface never lifts the codebook")
     return problems
 
