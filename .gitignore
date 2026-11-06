@@ -280,6 +280,13 @@ papers/grid_paper.txt
 !results/stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/logs/
 !results/stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/logs/**
 
+# The Stage 3 result of the guarded community-pair arm: the worst recall of the
+# campaign next to the best level-1 error rate, which is the campaign's clearest
+# finding. The records travel; the checkpoints stay out.
+!results/stage3_T5Train/TIGER_community-pairs-guarded-rq/
+!results/stage3_T5Train/TIGER_community-pairs-guarded-rq/logs/
+!results/stage3_T5Train/TIGER_community-pairs-guarded-rq/logs/**
+
 results/**/*.pth
 results/**/*.parquet
 results/stage1_GeneEmbedding/*.npy
