@@ -1,0 +1,26 @@
+{
+  "arm": "TIGER_behaviour-pairs-curved-rq",
+  "status": "REFUSED_BY_THE_COLLISION_GATE",
+  "epochs": 3000,
+  "learned_collision": 0.28384918859559927,
+  "exported_layer_collision": 0.4116,
+  "gate": 0.35,
+  "prediction": "the level-1 hard error rate should rise above the baseline's 6.47 and the recall above 0.05554",
+  "prediction_outcome": "FAILED at the SID level: the level-1 hard error rate is 3.9826, below the baseline's 6.47, so by the campaign's own monotone relation the recall was expected below the baseline's",
+  "measured": {
+    "l1_hard_er": 3.9826,
+    "l1_positive_hit": 0.1701,
+    "l1_negative_hit": 0.0427,
+    "l2_prefixes": 4110,
+    "l3_triples": 17608,
+    "l3_collision": 0.4116,
+    "baseline_l2_prefixes": 7414,
+    "baseline_l3_collision": 0.2745
+  },
+  "why": "the contrast acted on the encoder's output, which is exactly what the level-1 code quantises: it made the code predict the behaviour partners much better (positive hit 0.0864 -> 0.1701) and, in spending the code space on that structure, stopped it from separating the behaviour negatives (0.0134 -> 0.0427). The level-2 prefixes fell from 7414 to 4110 and the exported collision reached 0.4116, so the owner's 35% gate refused the arm and no Stage 3 was run.",
+  "two_defects_found_and_fixed_before_the_run_that_finished": [
+    "the unlabelled-positive mask was a python loop over every successor of every anchor (four epochs per second instead of fourteen); it is a sparse slice now",
+    "the lift scale was the 95th percentile of the latents' norms, which pushed the lifted points onto the ball's boundary and saturated the contract's distance; the median keeps them inside. With the percentile the arm collapsed outright: collision 1.000 with three unique identifiers. The behaviour-sample arm's own ramp (the term joins over the second half of the budget) was added at the same time."
+  ],
+  "next": "act on the later levels' residuals and leave the level-1 code to the reconstruction: the encoder's output is what the level-1 code quantises, so a contrast there spends the code space on the behaviour structure. The behaviour-sample arm's own level-specific arms (resample_l1only / l2only / l3only) document the shape."
+}

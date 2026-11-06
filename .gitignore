@@ -305,6 +305,19 @@ papers/grid_paper.txt
 !results/stage3_T5Train/TIGER_community-repulse-l1-rq/logs/
 !results/stage3_T5Train/TIGER_community-repulse-l1-rq/logs/**
 
+# The behaviour-pair arm with the curved kernel (issue 121): refused by the
+# owner's collision gate, and its metrics stream is the evidence of why -- the
+# contrast on the encoder's output spends the code space on the behaviour
+# structure. The tree and the records travel; the checkpoints stay out.
+!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/model/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/tests/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/logs/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/logs/training_metrics.jsonl
+!results/stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/
+!results/stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/logs/
+!results/stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/logs/**
+
 results/**/*.pth
 results/**/*.parquet
 results/stage1_GeneEmbedding/*.npy
