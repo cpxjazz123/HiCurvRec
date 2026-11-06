@@ -34,6 +34,12 @@ from . import probes as probes_module
 from . import scoring as scoring_module
 from . import spec_tests as spec_tests_module
 from . import specification as specification_module
+from .step2_ideation import phase_ideation
+from .step3_probe import phase_probe
+from .step4_scoring import phase_scoring
+from .step5_coding import phase_coding
+from .step5_derivation import phase_derivation
+from .step5_formulation import phase_formulation
 
 
 from .agent_calls import (  # noqa: F401  (the shared call)

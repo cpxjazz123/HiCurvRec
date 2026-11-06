@@ -199,5 +199,18 @@ class ALayoutMismatchIsNotAContradiction(unittest.TestCase):
         self.assertEqual(report["status"], "AGREE", report.get("reason"))
 
 
+class TheImplementationPhaseNamesWhatItCalls(unittest.TestCase):
+    def test_the_phase_calls_resolve(self):
+        from tools.research.rounds import step6_implementation
+
+        for name in ("phase_formulation", "phase_coding", "phase_derivation"):
+            self.assertTrue(callable(getattr(step6_implementation, name)), name)
+
+    def test_the_module_imports_without_a_round(self):
+        import importlib
+
+        importlib.reload(importlib.import_module("tools.research.rounds.step6_implementation"))
+
+
 if __name__ == "__main__":
     unittest.main()

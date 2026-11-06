@@ -2855,53 +2855,6 @@ def main() -> None:
 # --------------------------------------------------------------------------
 # Issue #120: multi-agent research rounds
 # --------------------------------------------------------------------------
-ROUND_WORKER_TEMPLATE = '''"""Detached round worker: run the agent stages of one round.
-
-Started by genrec-mcp's research_round_start so the tool call returns
-immediately. The worker runs the ideation, scoring, implementation and
-verification agents and writes the round state; it never trains anything.
-"""
-import importlib.util
-import json
-import sys
-
-_spec = importlib.util.spec_from_file_location("genrec_server", {server!r})
-server = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(server)
-sys.exit(server.round_worker_main(json.loads(sys.argv[1])))
-'''
-
-
-def round_worker_main(spec: dict) -> int:
-    """Advance one round through its agent stages."""
-    if str(REPO) not in sys.path:
-        sys.path.insert(0, str(REPO))
-    from tools.research.rounds import pipeline as round_pipeline
-    from tools.research.rounds import worker as round_worker
-
-    round_id = spec["round_id"]
-    directory = round_pipeline.find_round_directory(REPO, round_id)
-    try:
-        summary = round_worker.advance(REPO, round_id)
-    except Exception as exc:                               # noqa: BLE001
-        state = round_pipeline.load_state(directory)
-        round_pipeline.record_event(state, "round_failed", error=str(exc))
-        round_pipeline.save_state(directory, state)
-        return 1
-    state = round_pipeline.load_state(directory)
-    state["worker_summary"] = summary
-    round_pipeline.save_state(directory, state)
-    return 0
-
-
-def write_round_worker() -> Path:
-    HARNESS_DIR.mkdir(parents=True, exist_ok=True)
-    worker = HARNESS_DIR / "round_worker.py"
-    worker.write_text(ROUND_WORKER_TEMPLATE.format(server=str(Path(__file__).resolve())),
-                      encoding="utf-8")
-    return worker
-
-
 def tool_research_metric_start(agents: int = 5) -> dict:
     """Start a METRIC round: hyperbolic SID metrics judged on the 97 confirmed pairs.
 
@@ -3036,11 +2989,10 @@ def tool_research_round_start(objective: str = "", issue: str = "issue121",
         return {"started": True, "round_id": round_id, "directory": str(directory),
                 "worker_pid": None, "worker_log": None, "gpu_launched": False,
                 "next": "research_round_ideate"}
-    worker = write_round_worker()
     log = HARNESS_DIR / ("round_" + round_id + ".log")
     with log.open("wb") as sink:
         process = subprocess.Popen(
-            [sys.executable, str(worker), json.dumps({"round_id": round_id})],
+            _agent_runner_command(round_id),
             cwd=str(REPO),
             stdout=sink,
             stderr=subprocess.STDOUT,
@@ -3443,12 +3395,11 @@ def tool_research_round_run_detached(round_id: str) -> dict:
         lock.acquire(owner="mcp:detached")
     except round_lock.RoundBusy as exc:
         return {"round_id": round_id, "ran": False, "reason": str(exc)}
-    worker = write_round_worker()
     log = HARNESS_DIR / ("round_" + round_id + ".log")
     try:
         with log.open("wb") as sink:
             process = subprocess.Popen(
-                [sys.executable, str(worker), json.dumps({"round_id": round_id})],
+                _agent_runner_command(round_id),
                 cwd=str(REPO),
                 stdout=sink,
                 stderr=subprocess.STDOUT,
@@ -3463,6 +3414,28 @@ def tool_research_round_run_detached(round_id: str) -> dict:
     round_pipeline.save_state(directory, state)
     return {"round_id": round_id, "worker_pid": process.pid, "worker_log": str(log),
             "worker_alive": True, "next": "research_round_status"}
+
+
+def _agent_runner_command(round_id: str, phases: str = "") -> list:
+    """The command that runs a round's agent phases where the Agents SDK lives.
+
+    The MCP server is a stdlib-only python3, and a phase that creates agents
+    needs the OpenAI Agents SDK and pydantic: run inside the server, every agent
+    dies on the import (``from agents import Agent`` -> ModuleNotFoundError) and
+    the round records five failures with no answer.  The phases therefore run in
+    the interpreter the settings name, through the round runner, and the phase's
+    own code stays the single implementation of the phase.
+    """
+    from tools.research import settings as research_settings
+
+    runner = getattr(research_settings, "AGENT_RUNNER_PYTHON", "")
+    if not runner or not Path(runner).exists():
+        raise RuntimeError("the agent runner interpreter is missing: " + str(runner))
+    command = [runner, "-m", "tools.research.agent_flow.run",
+               "--round", round_id, "--repo", str(REPO)]
+    if phases:
+        command += ["--phases", phases]
+    return command
 
 
 def tool_research_round_status(round_id: str) -> dict:
