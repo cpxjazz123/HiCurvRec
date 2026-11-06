@@ -1,0 +1,109 @@
+{
+  "mechanism": "the training split's transitions supervise the encoder: every step an item is contrasted with one of its successors, scored by the contract's Poincare distance, and the items the behaviour also links are excluded from the negatives",
+  "calls": [
+    {
+      "name": "the behaviour contrast's curved kernel",
+      "callable": "model.behaviour_pairs:pair_distance",
+      "note": "The score of one pair: the contract's Poincare distance between the two latents lifted into the ball at the frozen scale, over the measured temperature. The behaviour signal is the pair itself -- a successor of the anchor from the training split -- and the curve is the metric the pair is scored with.",
+      "symbols": [
+        "x0",
+        "x1",
+        "p0",
+        "p1",
+        "c"
+      ],
+      "args": [
+        {
+          "name": "source",
+          "width": 2,
+          "radius": 0.4
+        },
+        {
+          "name": "positive",
+          "width": 2,
+          "radius": 0.4
+        },
+        {
+          "name": "c",
+          "scalar": 1.0
+        }
+      ],
+      "statements": [
+        "xn = x0**2 + x1**2",
+        "xnorm = sqrt(xn)",
+        "xh = tanh(sqrt(c)*xnorm)/(sqrt(c)*xnorm)",
+        "xl0 = xh*x0",
+        "xl1 = xh*x1",
+        "pn = p0**2 + p1**2",
+        "pnorm = sqrt(pn)",
+        "ph = tanh(sqrt(c)*pnorm)/(sqrt(c)*pnorm)",
+        "pl0 = ph*p0",
+        "pl1 = ph*p1",
+        "ax = -xl0",
+        "ay = -xl1",
+        "an = ax**2 + ay**2",
+        "au = ax*pl0 + ay*pl1",
+        "un = pl0**2 + pl1**2",
+        "wn = (1 + 2*c*au + c*un)*ax + (1 - c*an)*pl0",
+        "wd = 1 + 2*c*au + c**2*an*un",
+        "w0 = wn/wd",
+        "wn1 = (1 + 2*c*au + c*un)*ay + (1 - c*an)*pl1",
+        "w1 = wn1/wd",
+        "nw = sqrt(w0**2 + w1**2)",
+        "arg = Min(sqrt(c)*nw, 1 - 10**-7)",
+        "D = 2*atanh(arg)/sqrt(c)"
+      ],
+      "output": "D"
+    }
+  ],
+  "coupling": {
+    "callable": "model.behaviour_pairs:pair_distance",
+    "behaviour_arguments": [
+      "positive"
+    ],
+    "control_argument": "c",
+    "note": "The behaviour signal is the training split's transitions: they decide which item is the drawn positive and which candidates are excluded as unlabelled positives. The curve is the contract's Poincare distance the pair is scored with. Both reach the same loss -- the contrastive cross-entropy over the step's candidates -- so removing the behaviour leaves a loss with no pairs and removing the curve leaves the Euclidean distance over the same pairs: the two are coupled on one path. The quantizer's assignment rule is untouched; only the encoder's representation is supervised.",
+    "args": [
+      {
+        "name": "source",
+        "width": 2,
+        "radius": 0.4
+      },
+      {
+        "name": "positive",
+        "width": 2,
+        "radius": 0.4
+      },
+      {
+        "name": "c",
+        "scalar": 1.0
+      }
+    ]
+  },
+  "excluded": [
+    {
+      "surface": "the pair sampler",
+      "reason": "a discrete draw over the training split's transitions, redrawn every step; it selects the pairs and is not differentiable"
+    },
+    {
+      "surface": "the unlabelled-positive mask",
+      "reason": "a boolean over the step's candidates; it removes the behaviour's other successors from the softmax denominator"
+    },
+    {
+      "surface": "the cross-entropy reduction",
+      "reason": "a reduction over the step's rows, not a per-pair function; the coupling check exercises the kernel"
+    },
+    {
+      "surface": "the measured temperature, lift scale and weight",
+      "reason": "three scalars read once from the data at the first step; they carry no gradient"
+    },
+    {
+      "surface": "the anti-collapse diversity term",
+      "reason": "the repository's own guard on the codebook's usage, copied verbatim; it is a safeguard against the quantiser reusing codes, not the behaviour signal"
+    },
+    {
+      "surface": "the lift scale",
+      "reason": "a frozen constant of the run (the 95th percentile of the latents' norms); the declared surface is the distance at the unit scale"
+    }
+  ]
+}

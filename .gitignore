@@ -318,6 +318,19 @@ papers/grid_paper.txt
 !results/stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/logs/
 !results/stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/logs/**
 
+# The behaviour-pair arm aimed at the later levels' residuals (issue 121):
+# refused by the owner's collision gate (0.4490), and its record is the evidence
+# that moving the contrast off the encoder's output does not protect the code
+# space.
+!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/model/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/tests/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/logs/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/logs/training_metrics.jsonl
+!results/stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/
+!results/stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/logs/
+!results/stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/logs/**
+
 results/**/*.pth
 results/**/*.parquet
 results/stage1_GeneEmbedding/*.npy
