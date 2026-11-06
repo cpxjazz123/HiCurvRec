@@ -131,12 +131,26 @@ def _instance_problems(payload: dict, spec: dict = None) -> list:
     symbols_expected = surface.get("symbols") or []
     if arguments_expected and symbols_expected:
         problems = []
-        arguments = [str(entry.get("name")) for entry in payload.get("args") or []]
+        arguments = payload.get("args") or []
         symbols = [str(entry) for entry in payload.get("symbols") or []]
-        if arguments != [str(entry.get("name")) for entry in arguments_expected]:
+        if [str(entry.get("name")) for entry in arguments] != [
+                str(entry.get("name")) for entry in arguments_expected]:
             problems.append("the arguments are %s, the frozen specification's are %s"
-                            % (arguments,
+                            % ([str(entry.get("name")) for entry in arguments],
                                [str(entry.get("name")) for entry in arguments_expected]))
+        else:
+            # The names agree; the LAYOUT has to agree too. A vector argument
+            # declared as a scalar makes the two derivations functions of
+            # different things, and the comparison cannot decide them.
+            declared = [(entry.get("scalar") is not None,
+                         int(entry.get("width") or 1))
+                        for entry in arguments]
+            expected = [(entry.get("scalar") is not None,
+                         int(entry.get("width") or 1))
+                        for entry in arguments_expected]
+            if declared != expected:
+                problems.append("the arguments' widths are %s, the frozen "
+                                "specification's are %s" % (declared, expected))
         if symbols != list(symbols_expected):
             problems.append("the symbols are %s, the frozen specification's are %s"
                             % (symbols, list(symbols_expected)))
@@ -255,6 +269,18 @@ def _derivation_prompt(idea: dict, spec: dict = None) -> str:
             "and `symbols` in the same order.\n"
             "  Symbols follow the arguments: a width-w argument consumes w symbols "
             "in column order.\n\n"
+            "THE RUNTIME CONTRACT - your code is called with exactly this, so "
+            "your code must be written for it:\n"
+            "  * a vector argument arrives as a float64 torch tensor of shape "
+            "(N, width): N rows of 'width' components.\n"
+            "  * a scalar argument arrives as a PYTHON FLOAT, not a tensor. Write "
+            "math.sqrt(c) or float(c), never torch.sqrt(c) on a bare float.\n"
+            "  * the output is a float64 torch tensor of shape (N,): one value "
+            "per row.\n"
+            "  * compute in double precision: do not cast the inputs to float32, "
+            "and do not change the dtype of what arrives.\n"
+            "  * your code must not read the inputs' shape beyond the width, and "
+            "must not branch on the value of a scalar argument.\n\n"
             "Turn the surface into SymPy statements and into a complete torch module "
             "defining compute(**kwargs), as the answer format requires. The "
             "statements and the module must compute the SAME formula.")

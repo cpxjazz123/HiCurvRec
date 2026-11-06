@@ -462,6 +462,17 @@ def compare(payload: dict, *, seed: int = 17) -> dict:
             entry = {"left": left.get("name"), "right": right.get("name")}
             symbolic = symbolic_difference(left, right)
             entry["symbolic"] = symbolic
+            if symbolic.get("layout_mismatch"):
+                # The two derivations do not declare the same inputs: they are
+                # INCOMPARABLE, not in contradiction. A contradiction says the
+                # two say different things about the same function; this says
+                # they are about different functions.
+                entry["status"] = "FAIL"
+                entry["kind"] = "incomparable"
+                entry["reason"] = str(symbolic.get("reason"))
+                failures.append(entry)
+                pairs.append(entry)
+                continue
             if symbolic["equivalent"] is None:
                 # The symbolic comparison did not decide. That is not a
                 # disagreement: the values, the gradients and gradcheck on the
@@ -474,12 +485,6 @@ def compare(payload: dict, *, seed: int = 17) -> dict:
                 entry["reason"] = ("the two derivations are not the same function: " +
                                    str(symbolic.get("reason") or
                                        ("the difference is " + str(symbolic.get("residual")))))
-                failures.append(entry)
-                pairs.append(entry)
-                continue
-            if symbolic.get("layout_mismatch"):
-                entry["status"] = "FAIL"
-                entry["kind"] = "incomparable"
                 failures.append(entry)
                 pairs.append(entry)
                 continue
