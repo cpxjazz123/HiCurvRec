@@ -662,6 +662,16 @@ results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_stdout.log
 !results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/logs/
 !results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/logs/**
 
+# The curvature-aware embedding arm (Plan A, TIGER_curvature-embedding-rq): the
+# quantizer is the frozen baseline's and the work happened upstream, in the
+# embedding. Its identifiers, its metrics stream and its layer record are the
+# evidence of the comparison; the checkpoints and the embedding matrix stay out
+# (the rules below win).
+!stage2_RQ-VAE/TIGER_curvature-embedding-rq/logs/
+!stage2_RQ-VAE/TIGER_curvature-embedding-rq/logs/training_metrics.jsonl
+!results/stage2_RQ-VAE/TIGER_curvature-embedding-rq/logs/
+!results/stage2_RQ-VAE/TIGER_curvature-embedding-rq/logs/**
+
 # The behaviour-stratified level-1 arm (round_20261106_020541_888, issue 121).
 # Its identifiers, its metrics stream and its layer record are the evidence of a
 # negative result: the coarse level improved and the identifier collapsed, and

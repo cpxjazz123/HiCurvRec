@@ -1,0 +1,101 @@
+{
+  "mechanism": "a curvature-aware refinement of the frozen embeddings, upstream of the quantizer",
+  "calls": [
+    {
+      "name": "the curvature's gate",
+      "callable": "model.embedding_stage:gate_value",
+      "note": "The gate is where the behaviour graph's local geometry enters the refinement: softplus(-(a*kappa + b)) multiplies the learned residual, so a tree-like neighbourhood opens the gate wider. The statements are the candidate's own.",
+      "symbols": [
+        "kappa0",
+        "a",
+        "b"
+      ],
+      "args": [
+        {
+          "name": "kappa",
+          "width": 1,
+          "radius": 0.4
+        },
+        {
+          "name": "a",
+          "scalar": 1.0
+        },
+        {
+          "name": "b",
+          "scalar": 0.0
+        }
+      ],
+      "statements": [
+        "k = kappa0",
+        "g = log(1 + exp(-(a*k + b)))"
+      ],
+      "output": "g"
+    },
+    {
+      "name": "the anchor's relative error",
+      "callable": "model.embedding_stage:anchor_value",
+      "note": "How far the refinement moved an item, relative to where the item was: the term that keeps the semantics Stage 1 found.",
+      "symbols": [
+        "z0",
+        "z1",
+        "x0",
+        "x1"
+      ],
+      "args": [
+        {
+          "name": "z",
+          "width": 2,
+          "radius": 0.4
+        },
+        {
+          "name": "x",
+          "width": 2,
+          "radius": 0.4
+        }
+      ],
+      "statements": [
+        "num = (z0 - x0)**2 + (z1 - x1)**2",
+        "den = x0**2 + x1**2",
+        "r = num/den"
+      ],
+      "output": "r"
+    }
+  ],
+  "coupling": {
+    "callable": "model.embedding_stage:gate_value",
+    "behaviour_arguments": [
+      "kappa"
+    ],
+    "control_argument": "a",
+    "note": "The curvature is the behaviour graph's own local geometry - the train-only successor graph's Ollivier-Ricci estimate - and it enters the refinement through the gate: moving the curvature moves the computation, and with it the embedding the quantizer is given.",
+    "args": [
+      {
+        "name": "kappa",
+        "width": 1,
+        "radius": 0.4
+      },
+      {
+        "name": "a",
+        "scalar": 1.0
+      },
+      {
+        "name": "b",
+        "scalar": 0.0
+      }
+    ]
+  },
+  "excluded": [
+    {
+      "surface": "the refinement network's own weights",
+      "reason": "they are learned parameters; the surfaces the framework compares are the parameter-free parts of the mechanism"
+    },
+    {
+      "surface": "the behaviour graph and the curvature statistic",
+      "reason": "they are computed once from the training split and are not differentiable functions of the batch"
+    },
+    {
+      "surface": "the InfoNCE's logits and the uniformity's pairwise distances",
+      "reason": "they are batch-level reductions over the training edges; the per-item surfaces above are the ones the framework rebuilds"
+    }
+  ]
+}

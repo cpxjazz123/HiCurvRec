@@ -22,6 +22,9 @@ import struct
 import sys
 import zipfile
 
+#: The repository root: where the arms' source trees live.
+REPOSITORY = Path(__file__).resolve().parents[2]
+
 #: No promotion floor exists any more. The frozen Resample numbers stay only as
 #: the reference values the diagnostics are compared against.
 FROZEN_BASELINE_L2_PREFIXES = 16145  # Verified reference for the diagnostic report
@@ -190,25 +193,54 @@ def three_level_collision(sid: dict) -> float | None:
 
 
 def learned_collision(result_dir) -> float | None:
-    """The final collision the trainer itself measured, from its metrics stream."""
-    path = Path(result_dir) / "logs" / "training_metrics.jsonl"
-    if not path.is_file():
-        return None
-    value = None
-    try:
-        for line in path.read_text(encoding="utf-8").splitlines():
-            try:
-                record = json.loads(line)
-            except ValueError:
-                continue
-            if record.get("event") == "train" and record.get("collision") is not None:
-                value = float(record["collision"])
-    except OSError:
-        return None
-    return value
+    """The final collision the trainer itself measured, from its metrics stream.
+
+    The metrics live in the run's own logs, and the repository carries two
+    layouts: the older arms write them into the result directory's logs and the
+    current trainer into the TREE's logs (the tree is the arm's source
+    directory under stage2_RQ-VAE/).  Both are the run's own stream, so both are
+    read; looking at one of them only made the gate fail closed for every arm
+    trained with the other.
+    """
+    result_dir = Path(result_dir)
+    candidates = [
+        result_dir / "logs" / "training_metrics.jsonl",
+        REPOSITORY / "stage2_RQ-VAE" / result_dir.name / "logs" / "training_metrics.jsonl",
+    ]
+    for path in candidates:
+        if not path.is_file():
+            continue
+        value = None
+        try:
+            for line in path.read_text(encoding="utf-8").splitlines():
+                try:
+                    record = json.loads(line)
+                except ValueError:
+                    continue
+                if record.get("event") == "train" and record.get("collision") is not None:
+                    value = float(record["collision"])
+        except OSError:
+            continue
+        if value is not None:
+            return value
+    return None
 
 
-def collision_gate(candidate: dict, learned: float | None = None) -> str | None:
+def exported_raw_collision(sid) -> float:
+    """The collision the TRAINER measures: one minus the distinct triplets.
+
+    The gate's own three_level_collision is item-weighted (the share of items
+    that share their triplet with another item) while the trainer logs the share
+    of distinct triplets.  Comparing the two as if they were the same measure
+    refused arms whose SID was never touched, so the learned check compares the
+    trainer's measure with the SAME measure computed on the exported table.
+    """
+    triples = {tuple(value[:3]) for value in sid.values()}
+    return 1.0 - (len(triples) / max(len(sid), 1))
+
+
+def collision_gate(candidate: dict, learned: float | None = None,
+                   exported_raw: float | None = None) -> str | None:
     """The single quality rule: the LEARNED L3 collision must not exceed the gate."""
     collision = candidate.get("l3_collision")
     if collision is None:
@@ -224,7 +256,10 @@ def collision_gate(candidate: dict, learned: float | None = None) -> str | None:
         return ("the learned three-level collision %.6f exceeds the %.2f gate; the "
                 "collision must come from Stage2 training, not from an export step"
                 % (float(learned), L3_COLLISION_MAX))
-    if abs(float(learned) - float(collision)) > LEARNED_COLLISION_TOLERANCE:
+    if exported_raw is None:
+        return ("the exported identifier's own collision could not be measured, "
+                "so the collision gate fails closed")
+    if abs(float(learned) - float(exported_raw)) > LEARNED_COLLISION_TOLERANCE:
         return ("the exported SID reports collision %.6f while the training log "
                 "measured %.6f; export-time post-processing is not allowed"
                 % (float(collision), float(learned)))
@@ -284,7 +319,8 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path,
         except (QualityGateError, OSError, TypeError, ValueError, KeyError) as exc:
             reference_status["diagnostics"] = str(exc)
         collision_refusal = collision_gate(
-            candidate, learned_collision(Path(sid_path).parent))
+            candidate, learned_collision(Path(sid_path).parent),
+            exported_raw_collision(sid) if sid else None)
         if collision_refusal is not None and enforce_collision:
             failures.append(collision_refusal)
         evidence.update({
