@@ -662,6 +662,18 @@ results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_stdout.log
 !results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/logs/
 !results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/logs/**
 
+# The behaviour-stratified level-1 arm (round_20261106_020541_888, issue 121).
+# Its identifiers, its metrics stream and its layer record are the evidence of a
+# negative result: the coarse level improved and the identifier collapsed, and
+# the owner's learned three-level-collision gate refused the Stage 3 launch. The
+# checkpoints and arrays stay out (the rules below win), so the SID and the
+# measurements travel without the weights. The generic `logs/` rule above would
+# otherwise drop both metrics streams.
+!stage2_RQ-VAE/TIGER_curvature-stratum-sinkhorn-v1/logs/
+!stage2_RQ-VAE/TIGER_curvature-stratum-sinkhorn-v1/logs/training_metrics.jsonl
+!results/stage2_RQ-VAE/TIGER_curvature-stratum-sinkhorn-v1/logs/
+!results/stage2_RQ-VAE/TIGER_curvature-stratum-sinkhorn-v1/logs/**
+
 # The conformance scratch of the admission runs: the one-epoch exports and the
 # probe reports of the CHECKS, regenerable by rerunning the checks, and three
 # copies of the same 24587-row identifier file. The reports under

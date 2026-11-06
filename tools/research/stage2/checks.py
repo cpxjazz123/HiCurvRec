@@ -13,11 +13,15 @@ pass: the admission treats it as missing evidence.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 from . import contract
+
+#: The suffix ``_admission_tree`` appends to a promoted copy's name.
+_DIGEST_SUFFIX = re.compile(r"_[0-9a-f]{10}$")
 
 
 def _scratch_dir(tree: Path) -> Path:
@@ -33,6 +37,14 @@ def _scratch_dir(tree: Path) -> Path:
     name = Path(tree).name
     if name.startswith("_admission_"):
         name = name[len("_admission_"):]
+        # ``_admission_tree`` appends the digest of the source path so that two
+        # trees of the same name cannot delete each other's copy.  That suffix is
+        # not part of the tree's name, and the identifier check resolves the
+        # scratch directory from the ORIGINAL tree: without removing the digest
+        # the entry check writes into a sibling directory and the identifier
+        # check reports NOT_RUN ("the entry check did not produce an identifier")
+        # on a tree that exported one.
+        name = _DIGEST_SUFFIX.sub("", name)
     scratch = root.joinpath("results", "stage2_RQ-VAE", "_conformance", name)
     scratch.mkdir(parents=True, exist_ok=True)
     return scratch
