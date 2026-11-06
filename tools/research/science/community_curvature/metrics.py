@@ -52,6 +52,8 @@ def occupancy(pi: np.ndarray) -> dict:
     share = counts / max(labels.size, 1)
     usage = pi.mean(axis=0)
     order = np.sort(usage)[::-1]
+    hard = share[share > 0]
+    hard_entropy = _entropy(hard)
     return {
         "n_communities": int(pi.shape[1]),
         "used_communities": int((usage > 0).sum()),
@@ -61,6 +63,8 @@ def occupancy(pi: np.ndarray) -> dict:
         "largest_usage_share": float(share.max()),
         "top5_usage_share": float(order[:5].sum()),
         "usage_entropy": _entropy(usage),
+        "hard_effective_communities": float(np.exp(hard_entropy)),
+        "hard_entropy": hard_entropy,
     }
 
 

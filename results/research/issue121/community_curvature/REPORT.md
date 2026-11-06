@@ -1,5 +1,17 @@
 # Experiment 1 — curvature-guided soft community learning
 
+> **Protocol note.** This report describes the **first** protocol, in which the
+> soft assignment was a softmax over the standardised cost. That protocol's
+> hard partitions were balanced (the largest hard community held 7.19% and
+> 3.73% of the items), so the comparison below stands; but the size of the
+> effect depends on how flat the assignment is. Under the final protocol — the
+> RQ-VAE's own balanced plan on the centred cost — the same comparison reads
+> **0.051532 against 0.040659** (a paired difference of +0.010873, p = 0 of
+> 20 000, 11 271 of 24 571 anchors improved), and the hard communities' AF3 gap
+> and cohesion are essentially unchanged. The final protocol, the node-to-
+> cluster arm and the four attempts that produced it are in
+> `REPORT_ntc.md` and `attempts.json`.
+
 **Question.** Without touching the RQ-VAE quantizer, can a mixed free +
 hyperbolic encoder learn item communities that agree with the AF3 curvature of
 the behaviour graph better than a pure Euclidean encoder of the same capacity?

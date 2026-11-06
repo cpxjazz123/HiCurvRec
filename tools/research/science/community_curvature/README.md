@@ -19,7 +19,7 @@ its own, on data it never saw, and only a positive answer earns the next step
 | free space | 128-d learnable projection | 64-d learnable projection |
 | hyperbolic space | none | 64-d learnable projection → Poincaré ball, c = 1 fixed |
 | community centres | 64 learnable | 64 learnable per branch |
-| assignment | soft, over the 64 communities | soft, over the 64 communities |
+| assignment | the baseline's balanced plan on the centred cost | the same |
 | RQ-VAE / SID / Stage 3 | untouched | untouched |
 
 Both branches receive the **same** frozen input and learn their own
@@ -76,8 +76,27 @@ curvature.
 | curvature c | 1.0 | fixed in this round on purpose |
 | margin m | 1/K | under a uniform soft assignment every pair shares S = 1/K, so requiring S_AB − S_AC ≥ 1/K asks the high-curvature pair to beat chance |
 | temperature | implicit | each branch's distance row is standardised per item (zero mean, unit spread) and the branches are averaged with equal weight, so no temperature or branch weight had to be chosen |
-| usage weight | 1 | the usage term is `1 − H(usage)/log K`, dimensionless and bounded by 1 — the same order as the hinge |
+| ranking weight | 1/margin = K | the hinge lives on the scale of its margin, so it is divided by that margin to become O(1) |
+| usage weight | 1 | the usage term is `1 − H(usage)/log K`, dimensionless and bounded by 1 |
+| commitment weight | 1 | the commitment lives on the scale of the frozen branch distances |
+| separation weight | 1/threshold | the hinge lives on the scale of the threshold it is measured against |
+| Sinkhorn iterations | 100 | a solver setting, not a tuned quantity: with a near-decision cost, five iterations leave the plan's columns unbalanced by tens of percent, and an unbalanced plan lets a node-to-cluster term fold the batch onto one community |
 | epochs / batch / lr | 60 / 1024 / 1e-3 | training budget defaults, not swept |
+
+### The node-to-cluster terms (optional, the third arm)
+
+The third arm adds two terms on top of the same losses:
+
+* **commitment** — `sum_k pi_ik * d(i, k)`, the distance an item keeps to the
+  centre its soft assignment leans towards. It needs an **absolute** distance:
+  the standardised distance of the assignment cannot carry it, because
+  standardising per item rescales the row and the term would never ask an
+  item to move closer. The absolute distance is measured in units of the
+  branch's scale at initialisation, frozen once from the first batch.
+* **separation** — every centre keeps at least the distance to its nearest
+  neighbour that the centres had at initialisation. The hinge is zero once
+  they are that far apart, so the term cannot be won by pushing the centres to
+  infinity.
 
 ### The anti-collapse constraint
 
@@ -108,27 +127,35 @@ having to pick a weight by trying values.
 | AF3 curvature gap | within-community minus cross-community edge curvature, with the frozen `af3.gap_metrics` |
 | group transitivity | the transitivity of the community quotient graph |
 | random-label null | the same measurements on random assignments, so every number has the bar it must clear |
+| hard partition balance | the largest hard community's share and the effective number of hard communities — the guard that says whether the hard metrics mean anything |
 
 The judgement is the **validation** separation: if the mixed geometry does not
 separate high-AF3 from low-AF3 pairs better than the Euclidean control on
 held-out interactions, the mechanism is refuted and nothing is carried into the
 RQ-VAE.
 
-## Result (2026-11-06)
+## Results
 
-The mixed geometry **passes** the experiment's own judgement metric: the
-validation curvature separation is 0.015825 against the Euclidean control's
-0.007448 (2.13x, disjoint bootstrap intervals, paired permutation p = 0 of
-20 000, 18 426 of 24 571 anchors improved), the validation separation is even
-marginally above the training one (so it is not memorisation), and there is no
-collapse (64/64 communities used, largest community 3.73% of the items against
-the control's 7.19%).
+Two reports, both in `results/research/issue121/community_curvature/`:
 
-It is a narrow win, and the report says so: the AF3 curvature gap and the
-community transitivity are ties, and the group transitivity is saturated at
-K = 64 (a random assignment reads 1.0 as well), so only the ordering of the
-community overlap separates the two models. The full numbers are in
-`results/research/issue121/community_curvature/REPORT.md`.
+* `REPORT.md` — the first experiment: the mixed geometry separates the
+  curvature-ordered pairs better than the Euclidean control. Under the
+  protocol of that run the separation was 0.015825 against 0.007448; under the
+  final protocol (below) the same comparison reads 0.051532 against 0.040659.
+  The direction is stable, the size is protocol-dependent, and the report says
+  which numbers belong to which protocol.
+* `REPORT_ntc.md` — the node-to-cluster enhancement: it improves the soft
+  separation by 14% (p = 0) with a balanced partition, and it does **not**
+  improve the hard communities' AF3 gap (116.17 against 120.55) or their
+  cohesion (0.0705 against 0.0772). `attempts.json` records the four
+  configurations that got there, and why the first three were not readable.
+
+The final protocol assigns items with **the RQ-VAE's own rule** — the balanced
+Sinkhorn plan on the centred cost, run to convergence — because a softmax
+over a standardised cost is too flat to see a collapse: the soft usage can
+look uniform while the hard partition has folded onto one community. The test
+suite asserts that this module's plan and the baseline quantizer's plan are the
+same algorithm.
 
 ## Run
 

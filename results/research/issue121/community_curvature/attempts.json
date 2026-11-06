@@ -1,0 +1,59 @@
+{
+  "note": "The node-to-cluster enhancement was implemented and run four times. Each configuration is recorded with what it revealed; the last one is the report's basis.",
+  "attempts": [
+    {
+      "id": 1,
+      "assignment": "softmax over the standardised cost",
+      "weights": "1 for every term",
+      "outcome": "the commitment term decided the model: its value was 0.55 against the ranking hinge's 0.0156, the ranking was never optimised (its loss stayed at its initial 0.0156), and the hard partition collapsed -- 87.4% of the items on one community, the separation back to zero.",
+      "archived": "attempt_1_unbalanced.json"
+    },
+    {
+      "id": 2,
+      "assignment": "softmax over the standardised cost",
+      "weights": "per-model gradient-norm balancing",
+      "outcome": "the ranking signal was rescued (the separation rose) but the soft usage constraint could not see the hard partition: every model put 82% to 99.7% of its items on one community while its soft usage stayed uniform, and the AF3 gap and the transitivity inflated for that reason alone.",
+      "archived": null
+    },
+    {
+      "id": 3,
+      "assignment": "the baseline's balanced plan, five iterations",
+      "weights": "derived: ranking 1/margin, usage 1, commitment 1, separation 1/threshold",
+      "outcome": "the node-to-cluster terms raised the separation hugely (+0.167 over the model without them, p = 0) and again folded 54.7% of the items into one community: on a near-decision cost five iterations leave the plan's columns unbalanced by tens of percent.",
+      "archived": null
+    },
+    {
+      "id": 4,
+      "assignment": "the baseline's balanced plan, one hundred iterations",
+      "weights": "derived: ranking 1/margin, usage 1, commitment 1, separation 1/threshold",
+      "outcome": "the hard partition is balanced for every model (largest community 1.77% to 1.86%, 62.7 to 63.8 effective communities out of 64), so the hard metrics are trustworthy -- and the node-to-cluster terms improve the soft separation by 14% (p = 0) while leaving the AF3 gap and the cohesion slightly lower.",
+      "archived": "report.json"
+    }
+  ],
+  "final": {
+    "A_free_128": {
+      "separation_valid": 0.04065858945250511,
+      "af3_gap_train": 111.14438253044094,
+      "af3_gap_valid": 121.87615011839614,
+      "community_transitivity_valid": 0.07095421037333495,
+      "hard_largest_share": 0.018587058201488593,
+      "hard_effective_communities": 63.652303482053625
+    },
+    "B_free_64_hyper_64": {
+      "separation_valid": 0.051531702280044556,
+      "af3_gap_train": 109.15675141972753,
+      "af3_gap_valid": 120.54867656266529,
+      "community_transitivity_valid": 0.07716183162522042,
+      "hard_largest_share": 0.018221011103428643,
+      "hard_effective_communities": 63.76834056781773
+    },
+    "C_free_64_hyper_64_ntc": {
+      "separation_valid": 0.05888788774609566,
+      "af3_gap_train": 105.86431522866138,
+      "af3_gap_valid": 116.16920050873006,
+      "community_transitivity_valid": 0.07054778097800665,
+      "hard_largest_share": 0.017692276406230934,
+      "hard_effective_communities": 62.73955821703202
+    }
+  }
+}

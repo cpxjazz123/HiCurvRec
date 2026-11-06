@@ -16,7 +16,7 @@ import pytest
 import scipy.sparse as sp
 import torch
 
-REPO = Path(__file__).resolve().parents[2]
+REPO = Path(__file__).resolve().parents[3]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
@@ -229,3 +229,108 @@ def test_curvature_gap_is_positive_when_the_communities_hold_the_triangles():
     assert gap["status"] == "DEFINED"
     assert gap["within_mean"] > gap["cross_mean"]
     assert gap["gap"] > 0
+
+
+# ------------------------------------------------- node-to-cluster mechanisms
+def test_commitment_loss_is_the_expected_distance_to_the_own_centre():
+    pi = torch.tensor([[0.7, 0.3]])
+    absolute = torch.tensor([[1.0, 4.0]])
+    assert float(model.commitment_loss(pi, absolute)) == pytest.approx(0.7 * 1.0 + 0.3 * 4.0)
+
+
+def test_commitment_loss_rewards_moving_the_item_closer():
+    pi = torch.tensor([[1.0, 0.0]])
+    near = torch.tensor([[0.5, 3.0]])
+    far = torch.tensor([[2.5, 3.0]])
+    assert float(model.commitment_loss(pi, near)) < float(model.commitment_loss(pi, far))
+
+
+def test_separation_loss_is_zero_once_the_centres_are_far_enough():
+    centres = torch.tensor([[0.0, 10.0], [10.0, 0.0]])
+    assert float(model.separation_loss(centres, threshold=1.0)) == 0.0
+
+
+def test_separation_loss_pushes_two_folded_centres_apart():
+    centres = torch.tensor([[0.0, 0.2], [0.2, 0.0]])
+    assert float(model.separation_loss(centres, threshold=1.0)) == pytest.approx(0.8)
+
+
+def test_the_scales_are_read_once_and_then_frozen():
+    net = model.CommunityModel(input_dim=16, free_dim=8, hyper_dim=8, n_communities=5,
+                               curvature=1.0, seed=1)
+    x = torch.randn(32, 16)
+    first = net.freeze_scales(x)
+    second = net.freeze_scales(x * 100.0)
+    assert first == second
+    assert float(net.scales_frozen) == 1.0
+    assert first["scale_free"] > 0 and first["scale_hyper"] > 0
+    assert first["separation_threshold"] >= 0.0
+
+
+def test_absolute_distances_are_in_the_frozen_scale_units():
+    """After the scales are frozen, the mean absolute distance is one by definition."""
+    net = model.CommunityModel(input_dim=16, free_dim=8, hyper_dim=8, n_communities=5,
+                               curvature=1.0, seed=1)
+    x = torch.randn(64, 16)
+    net.freeze_scales(x)
+    absolute = net.absolute_distances(x)
+    assert float(absolute.mean()) == pytest.approx(1.0, rel=0.05)
+
+
+def test_the_standardised_assignment_ignores_the_absolute_scale():
+    """The assignment is scale-free, which is why the commitment term needs the absolute one."""
+    net = model.CommunityModel(input_dim=16, free_dim=8, hyper_dim=0, n_communities=5,
+                               seed=1)
+    x = torch.randn(9, 16)
+    net.freeze_scales(x)
+    pi = net.assignment(x)
+    with torch.no_grad():
+        net.free_projection.weight.mul_(50.0)
+        net.free_centres.mul_(50.0)
+    assert torch.allclose(pi, net.assignment(x), atol=1e-6)
+
+
+def test_the_plan_is_the_baseline_quantizers_own_rule():
+    """The community assignment must be the rule the RQ-VAE assigns its codes with."""
+    import importlib.util
+
+    path = REPO / "stage2_RQ-VAE" / "TIGER_RQ-VAE" / "model" / "layers.py"
+    spec = importlib.util.spec_from_file_location("baseline_layers_for_test", path)
+    baseline = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(baseline)
+
+    torch.manual_seed(3)
+    distances = torch.rand(32, 8, dtype=torch.float64) * 4.0
+    mine = model.sinkhorn_plan(distances)
+    theirs = baseline.VQLayer.sinkhorn(object.__new__(baseline.VQLayer), distances,
+                                        0.003, 100)
+    assert torch.allclose(mine, theirs, atol=1e-12)
+
+
+def test_the_plan_rows_are_distributions():
+    torch.manual_seed(4)
+    distances = torch.rand(64, 8, dtype=torch.float64)
+    plan = model.sinkhorn_plan(model.centre_range(distances))
+    assert torch.allclose(plan.sum(dim=1), torch.ones(64, dtype=plan.dtype), atol=1e-6)
+    # the plan is close to a decision, so the soft usage and the hard usage
+    # agree: that is what lets the usage term see the hard partition
+    labels = plan.argmax(dim=1)
+    counts = torch.bincount(labels, minlength=8).double()
+    assert float((counts / counts.sum()).std()) < 0.15
+
+
+def test_the_centring_maps_the_cost_onto_minus_one_to_one():
+    distances = torch.tensor([[0.0, 2.0], [4.0, 6.0]], dtype=torch.float64)
+    centred = model.centre_range(distances)
+    assert float(centred.min()) == pytest.approx(-1.0, abs=1e-4)
+    assert float(centred.max()) == pytest.approx(1.0, abs=1e-4)
+
+
+def test_the_hard_partition_balance_is_reported():
+    pi = np.zeros((100, 4), dtype=np.float32)
+    pi[:90, 0] = 1.0
+    pi[90:, 1] = 1.0
+    result = metrics.occupancy(pi)
+    assert result["largest_usage_share"] == pytest.approx(0.9)
+    # the effective number of communities is exp(H) of the hard shares
+    assert result["hard_effective_communities"] == pytest.approx(1.3841, rel=1e-3)

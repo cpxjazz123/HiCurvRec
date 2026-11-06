@@ -47,6 +47,54 @@ def load_contract():
     return module, digest
 
 
+def centre_range(distances: torch.Tensor) -> torch.Tensor:
+    """The baseline's cost centring: the matrix is mapped onto [-1, 1].
+
+    It is the centring of ``Quantizer.center_distance`` in the Stage-2
+    baseline, which is the cost the baseline's Sinkhorn plan is computed on.
+    """
+    maximum = distances.max()
+    minimum = distances.min()
+    middle = (maximum + minimum) / 2
+    amplitude = maximum - middle + 1e-5
+    if not bool(amplitude > 0):
+        raise ValueError("the cost matrix is constant; it cannot be centred")
+    return (distances - middle) / amplitude
+
+
+def sinkhorn_plan(distances: torch.Tensor, epsilon: float = 0.003,
+                  iterations: int = 100) -> torch.Tensor:
+    """The baseline's balanced assignment plan, on a centred cost.
+
+    This is ``Quantizer.sinkhorn`` of the Stage-2 baseline: the plan's rows sum
+    to one, so a row is a soft community distribution, and the column
+    normalisation pulls the plan towards a balanced use of the communities
+    (with five iterations on a near-decision cost the balance is approximate,
+    not exact -- the baseline's own rule behaves the same way). The RQ-VAE
+    quantizer assigns its codes with exactly this rule, and the test suite
+    asserts the two implementations agree on the values.
+
+    The iteration count differs from the baseline's five, and deliberately so:
+    with a near-decision cost five iterations leave the columns of the plan
+    unbalanced by tens of percent, and an unbalanced plan is exactly what lets
+    a node-to-cluster term fold the whole batch onto one community. Running
+    the iteration to convergence makes the column balance real; the cost is a
+    solver setting, not a tuned quantity.
+    """
+    q = torch.exp(-distances / epsilon)
+    batch_size, codebook_size = q.shape
+    q = q / q.sum(-1, keepdim=True).sum(-2, keepdim=True)
+    for _ in range(iterations):
+        # the same normalisation as the baseline, written out of place: the
+        # baseline's version runs under no_grad because its plan is a decision,
+        # while here the plan has to carry the gradient of the losses
+        q = q / q.sum(0, keepdim=True)
+        q = q / codebook_size
+        q = q / q.sum(1, keepdim=True)
+        q = q / batch_size
+    return q * batch_size
+
+
 class CommunityModel(nn.Module):
     """Soft community assignment over K communities from a frozen embedding."""
 
@@ -71,6 +119,17 @@ class CommunityModel(nn.Module):
                                                           generator=generator) * 0.01)
         else:
             self.contract, self.contract_sha256 = None, None
+
+        # The node-to-cluster terms need an ABSOLUTE distance, and the only
+        # absolute scale in the model is arbitrary (the projection's scale and
+        # the centres' spread are both free parameters). The scales are read
+        # once from the first batch and then frozen, so the terms mean
+        # "as close as the model started" and "as far apart as the centres
+        # started".
+        self.register_buffer("scale_free", torch.tensor(1.0))
+        self.register_buffer("scale_hyper", torch.tensor(1.0))
+        self.register_buffer("separation_threshold", torch.tensor(0.0))
+        self.register_buffer("scales_frozen", torch.tensor(0.0))
 
     # ------------------------------------------------------------------ branches
     def free_branch(self, x: torch.Tensor) -> torch.Tensor:
@@ -121,8 +180,91 @@ class CommunityModel(nn.Module):
         return combined
 
     def assignment(self, x: torch.Tensor) -> torch.Tensor:
-        """The soft community distribution of every item."""
-        return torch.softmax(-self.distances(x), dim=1)
+        """The soft community distribution of every item.
+
+        The assignment is the baseline's plan on the centred cost, so the
+        distribution is nearly a decision: the soft usage and the hard usage
+        agree, which is what lets the usage constraint see the hard partition
+        instead of a flat distribution that hides a collapse.
+        """
+        return sinkhorn_plan(centre_range(self.distances(x)))
+
+    # ------------------------------------------------------- node-to-cluster
+    def branch_distances(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor | None]:
+        """The raw distance of every item to every centre, per branch."""
+        free_items = self.free_branch(x).double()
+        free_centres, hyper_centres = self.centres()
+        d_free = torch.cdist(free_items, free_centres.double(),
+                             compute_mode="donot_use_mm_for_euclid_dist")
+        if self.hyper_dim <= 0:
+            return d_free, None
+        ball_items = self.hyperbolic_branch(x).double()
+        d_hyper = self.contract.distance(ball_items[:, None, :],
+                                         hyper_centres.double()[None, :, :],
+                                         self.curvature)
+        return d_free, d_hyper
+
+    def absolute_distances(self, x: torch.Tensor) -> torch.Tensor:
+        """The distance of every item to every centre, in the frozen scale units.
+
+        The standardised distances of ``distances`` cannot carry a node-to-
+        cluster term: standardising per item rescales the row, so the term
+        would never ask an item to move closer in absolute terms. Here each
+        branch is divided by the scale it had when the scales were frozen.
+        """
+        d_free, d_hyper = self.branch_distances(x)
+        parts = [d_free / self.scale_free]
+        if d_hyper is not None:
+            parts.append(d_hyper / self.scale_hyper)
+        return torch.stack(parts, dim=0).mean(dim=0)
+
+    def centre_distances(self) -> torch.Tensor:
+        """The distance between every pair of community centres."""
+        free_centres, hyper_centres = self.centres()
+        free = torch.cdist(free_centres.double(), free_centres.double(),
+                           compute_mode="donot_use_mm_for_euclid_dist") / self.scale_free
+        if self.hyper_dim <= 0:
+            return free
+        hyper = self.contract.distance(hyper_centres.double()[:, None, :],
+                                       hyper_centres.double()[None, :, :],
+                                       self.curvature) / self.scale_hyper
+        return (free + hyper) / 2.0
+
+    def assignment_and_absolute(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """The soft assignment and the absolute distance, from one forward pass."""
+        d_free, d_hyper = self.branch_distances(x)
+        standardised = [_standardise(d_free)]
+        absolute = [d_free / self.scale_free]
+        if d_hyper is not None:
+            standardised.append(_standardise(d_hyper))
+            absolute.append(d_hyper / self.scale_hyper)
+        pi = sinkhorn_plan(centre_range(torch.stack(standardised, dim=0).mean(dim=0)))
+        return pi, torch.stack(absolute, dim=0).mean(dim=0)
+
+    @torch.no_grad()
+    def freeze_scales(self, x: torch.Tensor) -> dict:
+        """Read the branch scales and the separation threshold from one batch.
+
+        The threshold is the mean distance from a centre to its nearest
+        neighbour at that moment: the centres are asked to stay at least that
+        far apart, and no further, so the term cannot run away.
+        """
+        if float(self.scales_frozen) == 1.0:
+            return {"scale_free": float(self.scale_free),
+                    "scale_hyper": float(self.scale_hyper),
+                    "separation_threshold": float(self.separation_threshold)}
+        d_free, d_hyper = self.branch_distances(x)
+        self.scale_free = d_free.mean().clamp_min(1e-8)
+        if d_hyper is not None:
+            self.scale_hyper = d_hyper.mean().clamp_min(1e-8)
+        centres = self.centre_distances()
+        eye = torch.eye(centres.shape[0], dtype=centres.dtype, device=centres.device)
+        nearest = (centres + eye * 1e9).min(dim=1).values
+        self.separation_threshold = nearest.mean()
+        self.scales_frozen = torch.tensor(1.0)
+        return {"scale_free": float(self.scale_free),
+                "scale_hyper": float(self.scale_hyper),
+                "separation_threshold": float(self.separation_threshold)}
 
 
 def _standardise(rows: torch.Tensor, eps: float = 1e-8) -> torch.Tensor:
@@ -162,6 +304,30 @@ def usage_loss(pi_mean: torch.Tensor, n_communities: int) -> torch.Tensor:
     usage = pi_mean.clamp_min(1e-12)
     entropy = -(usage * usage.log()).sum()
     return 1.0 - entropy / float(torch.log(torch.tensor(float(n_communities))))
+
+
+def commitment_loss(pi: torch.Tensor, absolute: torch.Tensor) -> torch.Tensor:
+    """The node-to-cluster term: the distance an item keeps to the centre it leans on.
+
+    ``sum_k pi_ik * d(i, k)`` is the expected distance to the community the
+    item's soft assignment leans towards, so minimising it moves the item
+    towards its own centre instead of only ranking the centres against each
+    other.
+    """
+    return (pi * absolute).sum(dim=1).mean()
+
+
+def separation_loss(centre_distances: torch.Tensor, threshold: float) -> torch.Tensor:
+    """The distinctness term: every centre keeps at least ``threshold`` from its nearest neighbour.
+
+    The hinge is zero once the centres are far enough apart, so the term
+    cannot be won by pushing the centres to infinity; it only prevents the
+    communities from folding into one another.
+    """
+    size = centre_distances.shape[0]
+    eye = torch.eye(size, dtype=centre_distances.dtype, device=centre_distances.device)
+    nearest = (centre_distances + eye * 1e9).min(dim=1).values
+    return torch.clamp(threshold - nearest, min=0.0).mean()
 
 
 def margin_for(n_communities: int) -> float:

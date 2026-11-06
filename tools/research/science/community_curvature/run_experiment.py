@@ -73,18 +73,37 @@ def soft_assignment(net: model.CommunityModel, embeddings: np.ndarray,
 
 def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.ndarray,
           high_items: np.ndarray, low_items: np.ndarray, device: torch.device,
-          seed: int = SEED) -> dict:
-    """Train once: the curvature ranking loss plus the usage constraint."""
+          seed: int = SEED, node_to_cluster: bool = False) -> dict:
+    """Train once: the curvature ranking loss plus the usage constraint.
+
+    With ``node_to_cluster`` the model additionally keeps every item close to
+    the centre it leans towards and every centre at least as far from its
+    nearest neighbour as the centres started. Both extra terms are zero at
+    initialisation and dimensionless, so they carry a weight of one.
+    """
     rng = np.random.default_rng(seed)
     optimiser = torch.optim.Adam(net.parameters(), lr=LEARNING_RATE)
     margin = model.margin_for(net.n_communities)
+    scales = None
+    if node_to_cluster:
+        sample = rng.integers(0, embeddings.shape[0], size=ITEM_BATCH)
+        scales = net.freeze_scales(torch.from_numpy(embeddings[sample]).to(device))
+    # Every weight is derived and the same for every model, so the arms stay
+    # comparable: the ranking hinge lives on the scale of its margin (1/K), the
+    # commitment on the scale of the frozen branch distances, the usage term is
+    # bounded by one, and the separation hinge on the scale of the threshold.
+    weights = {"ranking": 1.0 / margin, "usage": 1.0}
+    if node_to_cluster:
+        weights["commitment"] = 1.0
+        weights["separation"] = 1.0 / max(float(scales["separation_threshold"]), 1e-8)
     n_anchors = anchor_items.size
     steps_per_epoch = max(1, n_anchors // ANCHOR_BATCH)
     history = []
     net.train()
     for epoch in range(EPOCHS):
         order = rng.permutation(n_anchors)
-        totals = {"loss": 0.0, "ranking": 0.0, "usage": 0.0, "s_high": 0.0, "s_low": 0.0}
+        totals = {"loss": 0.0, "ranking": 0.0, "usage": 0.0, "commitment": 0.0,
+                  "separation": 0.0, "s_high": 0.0, "s_low": 0.0}
         for step in range(steps_per_epoch):
             index = order[step * ANCHOR_BATCH:(step + 1) * ANCHOR_BATCH]
             batch_anchor = torch.from_numpy(embeddings[anchor_items[index]]).to(device)
@@ -95,11 +114,24 @@ def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.nd
             pi_low = net.assignment(batch_low)
 
             sample = rng.integers(0, embeddings.shape[0], size=ITEM_BATCH)
-            pi_items = net.assignment(torch.from_numpy(embeddings[sample]).to(device))
+            batch_items = torch.from_numpy(embeddings[sample]).to(device)
+            if node_to_cluster:
+                pi_items, absolute_items = net.assignment_and_absolute(batch_items)
+            else:
+                pi_items, absolute_items = net.assignment(batch_items), None
 
             ranking = model.ranking_loss(pi_anchor, pi_high, pi_low, margin)
             usage = model.usage_loss(pi_items.mean(dim=0), net.n_communities)
-            loss = ranking + usage
+            commitment = separation = torch.zeros((), device=device)
+            if node_to_cluster:
+                commitment = model.commitment_loss(pi_items, absolute_items)
+                separation = model.separation_loss(
+                    net.centre_distances(), float(net.separation_threshold))
+            terms = {"ranking": ranking, "usage": usage}
+            if node_to_cluster:
+                terms["commitment"] = commitment
+                terms["separation"] = separation
+            loss = sum(weights[name] * value for name, value in terms.items())
             optimiser.zero_grad(set_to_none=True)
             loss.backward()
             optimiser.step()
@@ -107,13 +139,15 @@ def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.nd
             totals["loss"] += float(loss.detach())
             totals["ranking"] += float(ranking.detach())
             totals["usage"] += float(usage.detach())
+            totals["commitment"] += float(commitment.detach())
+            totals["separation"] += float(separation.detach())
             totals["s_high"] += float(model.overlap(pi_anchor, pi_high).mean().detach())
             totals["s_low"] += float(model.overlap(pi_anchor, pi_low).mean().detach())
         count = max(1, steps_per_epoch)
         history.append({key: value / count for key, value in totals.items()})
     net.eval()
     return {"epochs": EPOCHS, "steps_per_epoch": steps_per_epoch, "margin": margin,
-            "history": history}
+            "scales": scales, "weights": weights, "history": history}
 
 
 def evaluate(net: model.CommunityModel, name: str, embeddings: np.ndarray,
@@ -197,17 +231,25 @@ def main() -> int:
         ("A_free_128", dict(free_dim=FREE_DIM_CONTROL, hyper_dim=0)),
         ("B_free_64_hyper_64", dict(free_dim=FREE_DIM_EXPERIMENT,
                                     hyper_dim=HYPER_DIM_EXPERIMENT)),
+        ("C_free_64_hyper_64_ntc", dict(free_dim=FREE_DIM_EXPERIMENT,
+                                        hyper_dim=HYPER_DIM_EXPERIMENT,
+                                        node_to_cluster=True)),
     ]
     assignments, reports = {}, {}
     for name, spec in specifications:
         print(f"[train] {name}", flush=True)
         set_seed(SEED)
+        spec = dict(spec)
+        node_to_cluster = bool(spec.pop("node_to_cluster", False))
         net = model.CommunityModel(input_dim=embeddings.shape[1], n_communities=N_COMMUNITIES,
                                    curvature=CURVATURE, seed=SEED, **spec).to(device)
         training = train(net, embeddings, pair_sets["train"].anchor, pair_sets["train"].high,
-                         pair_sets["train"].low, device)
+                         pair_sets["train"].low, device,
+                         node_to_cluster=node_to_cluster)
         report = evaluate(net, name, embeddings, graphs, curvatures, pair_sets, device)
         report["training"] = {"epochs": training["epochs"], "margin": training["margin"],
+                               "scales": training["scales"],
+                               "weights": training["weights"],
                                "first_epoch": training["history"][0],
                                "last_epoch": training["history"][-1]}
         reports[name] = report
@@ -221,8 +263,30 @@ def main() -> int:
     control_pi = assignments["A_free_128"]
     null_overlap = float((control_pi[random_left] * control_pi[random_right]).sum(axis=1).mean())
 
-    comparison = paired_comparison(assignments["A_free_128"],
-                                    assignments["B_free_64_hyper_64"], pair_sets["valid"])
+    comparisons = {
+        "B_minus_A_valid": paired_comparison(assignments["A_free_128"],
+                                             assignments["B_free_64_hyper_64"],
+                                             pair_sets["valid"]),
+        "C_minus_B_valid": paired_comparison(assignments["B_free_64_hyper_64"],
+                                             assignments["C_free_64_hyper_64_ntc"],
+                                             pair_sets["valid"]),
+    }
+    # the hard communities, the thing the node-to-cluster terms are judged on
+    hard_community = {}
+    for name, report in reports.items():
+        hard_community[name] = {
+            split: {
+                "af3_gap": report[f"curvature_gap_{split}"]["gap"],
+                "af3_within_mean": report[f"curvature_gap_{split}"]["within_mean"],
+                "af3_cross_mean": report[f"curvature_gap_{split}"]["cross_mean"],
+                "community_transitivity": report[f"community_transitivity_{split}"]["mean"],
+                "community_transitivity_edge_weighted":
+                    report[f"community_transitivity_{split}"]["edge_weighted_mean"],
+                "group_transitivity": report[f"group_transitivity_{split}"]["transitivity"],
+            }
+            for split in ("train", "valid")
+        }
+        hard_community[name]["occupancy"] = report["occupancy"]
     nulls = {split: metrics.null_measurements(graphs[split], curvatures[split],
                                                N_COMMUNITIES, seed=SEED)
              for split in ("train", "valid")}
@@ -261,12 +325,14 @@ def main() -> int:
             "random_pair_overlap": null_overlap,
         },
         "models": reports,
-        "comparison_valid": comparison,
+        "comparisons": comparisons,
+        "hard_community": hard_community,
         "null_models": nulls,
         "wall_time_s": time.time() - started,
     }
     (OUT / "report.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"comparison_valid": comparison,
+    print(json.dumps({"comparisons": comparisons,
+                      "hard_community": hard_community,
                       "separations": {name: {"train": reports[name]["separation_train"],
                                              "valid": reports[name]["separation_valid"]}
                                       for name in reports}}, indent=2), flush=True)
