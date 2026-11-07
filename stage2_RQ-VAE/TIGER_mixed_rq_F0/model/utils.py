@@ -378,4 +378,3 @@ def get_local_time():
 def delete_file(filename):
     if os.path.exists(filename):
         os.remove(filename)
-
