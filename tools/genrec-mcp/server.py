@@ -42,6 +42,11 @@ STAGE2_REQUIRED_ARTIFACTS = ("rqvae_best.pth", "sids_for_hgrec.npy", "item_sids.
 # One real epoch on the tree's own data with the ramps active: long enough to see
 # every active loss term reach an optimizer step, short enough to fail fast.
 STAGE2_SMOKE_TIMEOUT_S = 3600
+#: How long the four ranks have to prove themselves after the launch. The
+#: trainer writes its metrics file when the run starts, so the file's existence
+#: is the signal that the ranks are alive and past the point where a fork can
+#: deadlock.
+STAGE2_LIVENESS_TIMEOUT_S = 420
 
 STATE_DIR = Path(os.path.expanduser("~/.cache/genrec-mcp"))
 # Generated per-launch Stage3 entrypoints live outside the repository: the run's
@@ -1628,6 +1633,25 @@ def write_stage2_worker() -> Path:
     return worker
 
 
+def _wait_for_the_ranks(tree: Path, timeout: int) -> bool:
+    """Whether the four ranks proved themselves within the timeout.
+
+    The trainer writes its metrics file when the run starts, so the file's
+    existence says the ranks are alive and past the point where a fork from a
+    torch-importing process can deadlock. The file is looked for where the
+    trainers actually write it: the tree's own log directory, which is where the
+    frozen baseline writes it and where the status tool reads it.
+    """
+    metrics = tree / "logs" / "training_metrics.jsonl"
+    deadline = time.monotonic() + timeout
+    while True:
+        if metrics.exists():
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(5)
+
+
 def stage2_worker_main(tree_arg: str, spec: dict) -> int:
     """Smoke, then launch. Returns 0 when training was started, 1 otherwise."""
     tree = Path(tree_arg)
@@ -1716,14 +1740,20 @@ def stage2_worker_main(tree_arg: str, spec: dict) -> int:
             },
         )
         return 1
-    cmd = [spec["python"], str(entry)]
+    cmd = [
+        sys.executable, "-m", "tools.research.stage2.bootstrap",
+        "--entry", str(entry),
+        "--result-dir", str(result_dir),
+        "--python", str(spec["python"]),
+        "--visible-devices", ",".join(str(x) for x in (gpu_probe.get("visible") or [])),
+    ]
     # The arm's log directory does not exist yet for a fresh tree, and the run
     # log is opened before the trainer can create it.
     Path(logs["run_log"]).parent.mkdir(parents=True, exist_ok=True)
     with Path(logs["run_log"]).open("wb") as sink:
         child = subprocess.Popen(
             cmd,
-            cwd=str(tree),
+            cwd=str(REPO),
             stdout=sink,
             stderr=subprocess.STDOUT,
             stdin=subprocess.DEVNULL,
@@ -1737,7 +1767,7 @@ def stage2_worker_main(tree_arg: str, spec: dict) -> int:
             "pid": child.pid,
             "launched_at": time.time(),
             "cmd": " ".join(cmd),
-            "cwd": str(tree),
+            "cwd": str(REPO),
             "tree": str(tree),
             "arm": spec.get("arm"),
             "result_dir": str(result_dir),
@@ -1747,6 +1777,41 @@ def stage2_worker_main(tree_arg: str, spec: dict) -> int:
             **logs,
         },
     )
+    # A job that never starts used to look alive: an empty log, no GPU use, and
+    # a status that only turned into "exited_incomplete" much later. The ranks
+    # have to prove themselves here, or the launch is refused with the log that
+    # says why.
+    if not _wait_for_the_ranks(tree, STAGE2_LIVENESS_TIMEOUT_S):
+        try:
+            os.killpg(os.getpgid(child.pid), signal.SIGKILL)
+        except (OSError, ProcessLookupError):
+            child.kill()
+        try:
+            child.wait(timeout=30)
+        except subprocess.TimeoutExpired:
+            pass
+        save_state(
+            state_key,
+            {
+                "status": "refused",
+                "refused": "the four ranks did not start within "
+                           + str(STAGE2_LIVENESS_TIMEOUT_S)
+                           + " s; the launch log is "
+                           + _tail_text(tree / "logs" / "train_migrated.log", 2000),
+                "pid": child.pid,
+                "launched_at": time.time(),
+                "cmd": " ".join(cmd),
+                "cwd": str(REPO),
+                "tree": str(tree),
+                "arm": spec.get("arm"),
+                "result_dir": str(result_dir),
+                "smoke": smoke_detail,
+                "archived_artifacts": spec.get("archived_artifacts"),
+                "gpu_probe": gpu_probe,
+                **logs,
+            },
+        )
+        return 1
     return 0
 
 

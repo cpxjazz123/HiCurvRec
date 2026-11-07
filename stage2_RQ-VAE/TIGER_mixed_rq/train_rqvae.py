@@ -56,7 +56,7 @@ def _repository_root() -> Path:
 
 REPO_ROOT = _repository_root()
 # The arm name is this tree's promoted name; a candidate copy changes only this line.
-ARM_NAME = "TIGER_mixed_rq"
+ARM_NAME = "TIGER_mixed_rq_F0"
 # === Issue #139: the arm of this tree ===
 # F0: mixed space, weight fixed at 1/2. G: one global weight per level, chosen
 # by the outer loop. L: one weight per prefix. E: the same local loop with the
@@ -71,6 +71,8 @@ OUTER_LOOP_EPOCHS = (1500, 2000, 2500, 3000)
 #: name; the budget is never met by shrinking the support or skipping the
 #: cross-prefix terms, only by processing fewer prefixes and saying which.
 OUTER_LOOP_SECONDS = 150.0
+#: The epoch at which the reference arm freezes the shared readout.
+READOUT_EPOCH = 1500 if ARM_VARIANT == "F0" else 0
 #: The frozen readout, shared by the outer-loop arms. Written once by F0 at its
 #: 1500th epoch from the complete hard-SID readout of the training items.
 READOUT_FILE = REPO_ROOT / "results" / "research" / "issue139" / "readout.json"
@@ -78,7 +80,7 @@ READOUT_FILE = REPO_ROOT / "results" / "research" / "issue139" / "readout.json"
 AF3_CACHE = (REPO_ROOT / "results" / "research" / "issue121" / "community_curvature"
              / "train_edge_af3.npz")
 AUX_AF3 = ARM_VARIANT == "A"
-RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / (ARM_NAME + "_" + ARM_VARIANT)
+RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
 TRAIN_FILE     = REPO_ROOT / "results" / "stage0_build_parquet" / "train.parquet"
@@ -509,6 +511,19 @@ def main() -> None:
         cur_lr = optimizer.param_groups[0]["lr"]
 
         # === Issue #139: the scheduled outer-loop round ===
+        if READOUT_EPOCH and epoch == READOUT_EPOCH and rank == 0:
+            # The reference arm freezes the shared readout: the temperature and
+            # the intercept every outer-loop arm then uses, calibrated once on
+            # the complete hard-SID readout of the training items.
+            if not hasattr(raw_module, "_structure_bundle"):
+                raw_module._structure_bundle = _frozen_structure()
+            readout_parameters = _readout_parameters(
+                raw_module, train_embeddings, raw_module._structure_bundle[1], device)
+            READOUT_FILE.parent.mkdir(parents=True, exist_ok=True)
+            READOUT_FILE.write_text(json.dumps(readout_parameters, indent=2))
+            print(f"[readout] tau={readout_parameters['tau']:.6f} "
+                  f"intercept={readout_parameters['intercept']:.6f} "
+                  f"density={readout_parameters['density']:.6f}", flush=True)
         if OUTER_LOOP and epoch in OUTER_LOOP_EPOCHS:
             model.eval()
             if rank == 0:
