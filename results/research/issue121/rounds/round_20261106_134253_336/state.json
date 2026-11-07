@@ -1,0 +1,39 @@
+{
+  "_directory": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261106_134253_336",
+  "blocked": [],
+  "created_at": 1793932973.3379698,
+  "duplicates": [],
+  "events": [
+    {
+      "at": 1793932973.3379726,
+      "event": "round_created"
+    },
+    {
+      "at": 1793932973.3742728,
+      "event": "round_worker_started",
+      "pid": 428576
+    },
+    {
+      "at": 1793932973.525704,
+      "error": "name 'phase_ideation' is not defined",
+      "event": "round_failed"
+    }
+  ],
+  "ideas": [],
+  "ideas_rejected": [],
+  "implementations": [],
+  "issue": "issue121",
+  "matrix": null,
+  "objective": "Discover new mechanisms in which TRAINING-ONLY user behaviour and HYPERBOLIC geometry are computationally coupled to improve the RQ-VAE Semantic IDs used by a generative next-item recommender, with the real target of Stage3 test Recall@10 above 0.065.\n\n本轮只做一个**机制**, 目标是**用曲率与行为的耦合去保护 SID 的细层分辨率**, 而不是重划粗层. 依据是上一轮的真实证据 (round_20261106_020541_888, 机制 curvature-stratum-sinkhorn-v1, 已跑满 3000 epoch 冻结预算, 四卡配方, 一次训练):\n\n- 那一轮把**训练期行为凝聚秩**偏置到**第一层**的代价上 (代价 = 双曲测地距离 - beta*R_c*(1-|rho_i - s_k|), 分配仍是基线的 Sinkhorn 均衡计划), 于是第一层**变好了**: L1 Hard ER 从 16.39 降到 6.36, 256 个码全部使用 (最大 0.54%);\n- 但**标识符在第二层塌缩**: 不同的 L2 前缀只有 955 个 (冻结基线 TIGER_RQ-VAE 是 7414, Resample 参考臂是 16145), 三级碰撞 (按物品加权) 0.771 (参考 0.065, 基线 0.275), 被 owner 2026-11-03 的 35% 碰撞闸门拒绝, 因此**没有 Stage3, 没有 test_R@10**;\n- 结论: **粗层可以按行为重划, 但粗层的重划会吃掉细层的分辨率**. 所以本轮的机制必须**在细层 (残差/第二第三层) 或在排序而非重划的位置**上做行为与曲率的耦合, 并且**必须说明它如何避免上一轮的塌缩** (可用: 保留每层码字的空间自由度, 只用曲率做排序/温度/残差方向而不做归属, 或把耦合放在残差的度量上).\n\n硬约束 (与 CLAUDE.md 19/19c0/19c1/19g 一致): 一轮只产出一个机制, 三个评分者**排序**不打分 (rubric rank-2026-10-v1, max_selected=1), 行为信号只用训练划分, 几何只用框架的 model/poincare_contract, 耦合必须落在**同一条连通计算通路**上 (去掉任一侧核心计算即改变), 分配规则仍是基线的 Sinkhorn 均衡计划 (机制只改代价), 不做消融臂/调参/多种子, 正式训练 3000 epoch 四卡只跑一次, 最终由 Stage3 test_R@10 > 0.065 裁决.",
+  "probe_state": "PROBE_PENDING",
+  "round_id": "round_20261106_134253_336",
+  "schema": 1,
+  "scores": {},
+  "selection": null,
+  "stage2_jobs": [],
+  "stage3_jobs": [],
+  "step": "ideation",
+  "updated_at": 1793932973.5257177,
+  "worker_log": "/tmp/genrec-mcp/round_round_20261106_134253_336.log",
+  "worker_pid": 428576
+}

@@ -1,0 +1,264 @@
+{
+  "elapsed_seconds": 2.953,
+  "idea_id": "CURV_COH_PREFIX_SINKHORN",
+  "limits": {
+    "papers": 15,
+    "queries": 3
+  },
+  "note": "a match is only a collision when the retrieved record itself concerns the mechanism; no result is never read as novelty",
+  "paper_count": 15,
+  "papers": [
+    {
+      "abstract": "",
+      "authors": [
+        "Shang-Yu Chen",
+        "Peng-Fei Fang",
+        "Mehrtash Harandi",
+        "T. Le",
+        "Jian-Fei Cai",
+        "Dinh Q. Phung"
+      ],
+      "doi": "10.1016/j.cviu.2025.104392",
+      "match": "same_operator_or_path",
+      "source": "semantic_scholar",
+      "source_id": 278850136,
+      "title": "HVQ-VAE: Variational auto-encoder with hyperbolic vector quantization",
+      "url": "https://www.semanticscholar.org/paper/0ff046dafbbd095838f20b21b93e4d6d2edbb87d",
+      "year": 2025
+    },
+    {
+      "abstract": "The success of models operating on tokenized data has heightened the need for effective tokenization methods, particularly in vision and auditory tasks where inputs are naturally continuous. A common solution is to employ Vector Quantization (VQ) within VQ Variational Autoencoders (VQVAEs), transforming inputs into discrete tokens by clustering embeddings in Euclidean space. However, Euclidean embeddings not only suffer from inefficient packing and limited separation - due to their polynomial volume growth - but are also prone to codebook collapse, where only a small subset of codebook vectors are effectively utilized. To address these limitations, we introduce HyperVQ, a novel approach that formulates VQ as a hyperbolic Multinomial Logistic Regression (MLR) problem, leveraging the exponential volume growth in hyperbolic space to mitigate collapse and improve cluster separability. Additionally, HyperVQ represents codebook vectors as geometric representatives of hyperbolic decision hyperplanes, encouraging disentangled and robust latent representations. Our experiments demonstrate that HyperVQ matches traditional VQ in generative and reconstruction tasks, while surpassing it in disc",
+      "authors": [
+        "Nabarun Goswami",
+        "Yusuke Mukuta",
+        "Tatsuya Harada"
+      ],
+      "doi": "10.48550/arXiv.2403.13015",
+      "match": "same_operator_or_path",
+      "source": "semantic_scholar",
+      "source_id": 268537184,
+      "title": "HyperVQ: MLR-based Vector Quantization in Hyperbolic Space",
+      "url": "https://www.semanticscholar.org/paper/61613785fe09423e8df112ea726bb1195bc2575c",
+      "year": 2024
+    },
+    {
+      "abstract": "Abstract: Based on the formal equivalence between the non-relativistic Schrödinger equation and the relativistic Klein-Gordon equation and using the proper quantization rule as well as the Riccati equation solution, exact solutions are established for a set of interaction potentials (second Rosen-Morse, Pöschl-Teller, second Pöschl-Teller, Scarf II, and Eckart hyperbolic type potentials). The calculations are elaborated in the case of equal scalar and vector potentials. The general case of unequal scalar-vector potentials is detailed for the case of harmonic potential class.\nKeywords: Proper quantization rule, Exact solutions, Klein-Gordon equation, Riccati equation.\nPACS number: 03.65.Ge; 03.65.Fd; 03.65.Bz; 03.65.−w.",
+      "authors": [],
+      "doi": "10.47011/17.5.1",
+      "match": "not_established",
+      "source": "semantic_scholar",
+      "source_id": 276298691,
+      "title": "A Proper Quantization Rule for Solving the Klein-Gordon Equation with Equal and Unequal Scalar and Vector Interaction Potentials",
+      "url": "https://www.semanticscholar.org/paper/370a0bad5ac37b8d9ea0abacfe3fbeb71ac78c7d",
+      "year": 2024
+    },
+    {
+      "abstract": "In this paper, two semi-supervised appearance based loop closure detection technique, HGCN-FABMAP and HGCN-BoW are introduced. Furthermore an extension to the current state of the art localization SLAM algorithm, ORB-SLAM, is presented. The proposed HGCN-FABMAP method is implemented in an off-line manner incorporating Bayesian probabilistic schema for loop detection decision making. Specifically, we let a Hyperbolic Graph Convolutional Neural Network (HGCN) to operate over the SURF features graph space, and perform vector quantization part of the SLAM procedure. This part previously was performed in an unsupervised manner using algorithms like HKmeans, kmeans++,..etc. The main Advantage of using HGCN, is that it scales linearly in number of graph edges. Experimental results shows that HGCN-FABMAP algorithm needs far more cluster centroids than HGCN-ORB, otherwise it fails to detect loop closures. Therefore we consider HGCN-ORB to be more efficient in terms of memory consumption, also we conclude the superiority of HGCN-BoW and HGCN-FABMAP with respect to other algorithms.",
+      "authors": [
+        "Amir Zarringhalam",
+        "S. S. Ghidary",
+        "A. Mohades",
+        "S. Sadegh-Zadeh"
+      ],
+      "doi": "10.48550/arXiv.2207.06738",
+      "match": "related_but_different",
+      "source": "semantic_scholar",
+      "source_id": 250526114,
+      "title": "Semi-supervised Vector-Quantization in Visual SLAM using HGCN",
+      "url": "https://www.semanticscholar.org/paper/a39f38bc60b9426625066201ffa95abac62abe04",
+      "year": 2022
+    },
+    {
+      "abstract": "Nonlinearity is crucial to the performance of a deep (neural) network (DN). To date there has been little progress understanding the menagerie of available nonlinearities, but recently progress has been made on understanding the r\\^ole played by piecewise affine and convex nonlinearities like the ReLU and absolute value activation functions and max-pooling. In particular, DN layers constructed from these operations can be interpreted as {\\em max-affine spline operators} (MASOs) that have an elegant link to vector quantization (VQ) and $K$-means. While this is good theoretical progress, the entire MASO approach is predicated on the requirement that the nonlinearities be piecewise affine and convex, which precludes important activation functions like the sigmoid, hyperbolic tangent, and softmax. {\\em This paper extends the MASO framework to these and an infinitely large class of new nonlinearities by linking deterministic MASOs with probabilistic Gaussian Mixture Models (GMMs).} We show that, under a GMM, piecewise affine, convex nonlinearities like ReLU, absolute value, and max-pooling can be interpreted as solutions to certain natural \"hard\" VQ inference problems, while sigmoid, hy",
+      "authors": [
+        "Randall Balestriero",
+        "Richard Baraniuk"
+      ],
+      "doi": "10.48550/arXiv.1810.09274",
+      "match": "same_operator_or_path",
+      "source": "semantic_scholar",
+      "source_id": 53047182,
+      "title": "From Hard to Soft: Understanding Deep Network Nonlinearities via Vector Quantization and Statistical Inference",
+      "url": "https://www.semanticscholar.org/paper/c630f37bf7d5ab6979216ca426e4620f104fba89",
+      "year": 2018
+    },
+    {
+      "abstract": "",
+      "authors": [
+        "Yi-Bo Huang",
+        "Xiaoli Yan",
+        "Zhiling Hu",
+        "Zhi-Yong Li",
+        "Qiuyu Zhang"
+      ],
+      "doi": "10.1007/s00034-025-03228-0",
+      "match": "not_established",
+      "source": "semantic_scholar",
+      "source_id": 280141729,
+      "title": "Quantized Exponential Hyperbolic Sine Robust Adaptive Filtering Algorithm",
+      "url": "https://www.semanticscholar.org/paper/c17f19a4115e736e929568396ed9a008fe2ba301",
+      "year": 2025
+    },
+    {
+      "abstract": "We theoretically study the infrared reflectivity and transmissivity of a high-temperature layered superconductor slab. Both infrared spectra exhibit very narrow Fabry–Perot resonances associated with the quantization of the wave vector of the TM electromagnetic modes. The resonances are observed in a pass band where the refractive index of the layered superconductor is negative. The pass band of negative dispersion is above the Josephson plasma frequency which appears in the expression for the effective permittivity component, corresponding to the direction perpendicular to the layers. It was found that the Fabry–Perot resonances undergo a blue shift as the slab thickness or the angle of incidence are increased. Moreover, the quantized electromagnetic modes turn out to be quasi-longitudinal because of the strong anisotropy of the infrared dielectric response of the layered superconductor.",
+      "authors": [
+        "S. Cortés-López",
+        "F. Pérez-Rodríguez"
+      ],
+      "doi": "10.12693/APHYSPOLA.130.641",
+      "match": "not_established",
+      "source": "semantic_scholar",
+      "source_id": 126041832,
+      "title": "Quantization of Electromagnetic Modes in a Hyperbolic Negative-Index Layered Superconductor Slab",
+      "url": "https://www.semanticscholar.org/paper/663b44487745f249433e9fc85d7be2b07a217823",
+      "year": 2016
+    },
+    {
+      "abstract": "The proposed algorithm in this paper is the quantized minimum kernel risk hyperbolic secant adaptive filtering algorithm, which offers a simplified approach to enhancing the performance and stability of kernel adaptive filtering in non-Gaussian noise environments. The algorithm features a newly developed minimum kernel risk hyperbolic secant cost function, which harnesses the hyperbolic secant function’s strengths to diminish outlier impacts and expedite convergence. In addition, its convex kernel risk-sensitive loss surface facilitates swift and accurate filtering via gradient-based methods, thus ensuring outlier robustness. This method could effectively manage network size and reduce computational complexity by incorporating vector quantization for inputting spatial data. Simulation tests in Mackey–Glass time series prediction and nonlinear system identification have indicated that the minimum kernel hyperbolic secant adaptive filtering algorithm and its quantized variant excel in terms of convergence speed, robustness, and computational efficiency.",
+      "authors": [
+        "Yi-Bo Huang",
+        "Zhi-ling Hu",
+        "Yuan-Lian Huo",
+        "Yong-Feng Qi",
+        "Jie Liu",
+        "Zhi-Yong Li"
+      ],
+      "doi": "10.1007/s11760-024-03072-w",
+      "match": "related_but_different",
+      "source": "semantic_scholar",
+      "source_id": 268517161,
+      "title": "A quantized minimum kernel risk hyperbolic secant adaptive filtering algorithm",
+      "url": "https://www.semanticscholar.org/paper/5d0a2d673c04adfe5f70993cabe2744fa4fecffe",
+      "year": 2024
+    },
+    {
+      "abstract": "We present hyperbolix, an open-source library for hyperbolic deep learning in JAX, built on Flax NNX. To our knowledge, it is the first comprehensive, general-purpose hyperbolic deep learning library in JAX. It includes six manifolds with a common interface: Euclidean space, the Poincar\\'e ball, the hyperboloid, the $\\kappa$-stereographic model, mixed-curvature product spaces, and the proper velocity space. We implement layer families that cover linear layers, convolutions, attention, normalization, positional encoding, regression, and vector quantization. These building blocks span methods ranging from Ganea's original hyperbolic neural networks to recent fully hyperbolic architectures such as Hypformer and Lorentzian ResNet. Additionally, hyperbolix contains Riemannian optimizers implemented as optax transformations, wrapped distributions, and hyperbolic dimensionality-reduction techniques. Its API uses idiomatic JAX: Manifolds are stateless, with curvature being passed at call time, while manifold operations act on single points, with vmap enabling batch operations. The precision of every checked operation is tested against a closed-form NumPy/SciPy transcription from the source",
+      "authors": [
+        "Timo Klein",
+        "Thomas Lang",
+        "Yllka Velaj",
+        "Sebastian Tschiatschek"
+      ],
+      "doi": null,
+      "match": "related_but_different",
+      "source": "semantic_scholar",
+      "source_id": 292267912,
+      "title": "hyperbolix: Hyperbolic Deep Learning in JAX",
+      "url": "https://www.semanticscholar.org/paper/7daf3287c3f29f647d43eb6c27a4a660855ef4f7",
+      "year": 2026
+    },
+    {
+      "abstract": "Residual Vector Quantization turns continuous representations into discrete, multi-level token sequences. Yet most methods operate in Euclidean space, despite the coarse-to-fine structure of the resulting codes and the latent hierarchies present in many data domains. Hyperbolic geometry offers a natural alternative for hierarchical representations, but naive hyperbolic extensions introduce geometric inconsistencies: non-associative hyperbolic addition prevents consistent residual aggregation, while standard straight-through gradient estimation ignores the geometry of the latent space. We propose a geometry-aware hyperbolic residual quantization that addresses these issues in both the forward and backward passes. In the forward pass, Hyperbolic Residual Aggregation restores the telescoping behavior of residual quantization on the Poincare ball. In the backward pass, a discounted Hyperbolic Straight-Through Estimator routes the reconstruction gradient through the quantizer as a single geometric block, avoiding unstable recursive gradient transport across residual stages. Evaluations on hierarchical prediction, recommendation, image tokenization, and neural audio coding tasks show tha",
+      "authors": [
+        "Alessio Colombo",
+        "M. Ayoughi"
+      ],
+      "doi": null,
+      "match": "related_but_different",
+      "source": "semantic_scholar",
+      "source_id": 292227172,
+      "title": "Geometry-Aware Hyperbolic Residual-Quantized Variational Autoencoders",
+      "url": "https://www.semanticscholar.org/paper/7eb46a6b10c4256524864997a2f092380506b35c",
+      "year": 2026
+    },
+    {
+      "abstract": "Singular interactions can reshape quantum spectra by changing admissible wavefunction domains. In this study, we investigate this mechanism in the Klein--Gordon equation for a non-central Schi\\\"oberg-type hyperbolic potential with double ring-shaped angular barriers. Equal scalar and vector couplings separate the radial and angular dynamics. We solve the angular equation exactly on each hemisphere with principal boundary conditions and treat the radial equation with the Greene--Aldrich approximation, obtaining Jacobi-polynomial wavefunctions and an implicit relativistic quantization condition. With this boundary realization, the equatorial inverse-square singularity splits configuration space into reflection-related sectors with identical angular spectra. Reducing the barrier to zero while retaining the equatorial wall selects the odd-reflection spectral branch of the regular full-domain problem; a single hemisphere has no intrinsic parity. The nonrelativistic limit recovers the corresponding Schr{\\\"o}dinger formulation. State-resolved nonrelativistic and relativistic benchmarks quantify the centrifugal error. In a dimensionless relativistic example, the relative error in the remai",
+      "authors": [
+        "S. Nagiyev",
+        "V. Badalov"
+      ],
+      "doi": null,
+      "match": "not_established",
+      "source": "semantic_scholar",
+      "source_id": 290362579,
+      "title": "Relativistic bound-state solutions for a non-central Schi{\\\"o}berg-type hyperbolic potential with double ring-shaped angular terms",
+      "url": "https://www.semanticscholar.org/paper/1fdf797b3af81a1380e4cbc3bb7980ca115fc823",
+      "year": 2026
+    },
+    {
+      "abstract": "In the last few decades, the kernel method has been successfully applied in the field of adaptive filtering to solve nonlinear problems. Mercer kernel is used to map data from input space to reproducing kernel Hilbert space (RKHS) by kernel adaptive filter(KAF). In regenerated kernel Hilbert Spaces, the inner product can be easily calculated by computing the so-called kernel trick. Kernel adaptive filtering algorithm is superior to common adaptive filtering algorithm in solving nonlinear problems and nonlinear channel equalization. For nonlinear problems, a robust kernel least inverse hyperbolic sine(KLIHS) algorithm is proposed by combining the kernel method with the inverse of hyperbolic sine function.The main disadvantage of KAF is that the radial-basis function (RBF) network grows with every new data sample, which in creases the computational-complexity and requires more memory. The vector quantization (VQ) has been proposed to address this problem and has been successfully applied to the current kernel adaptive filtering algorithm. The main idea of the VQ method is to compress the input space through quantization to curb the network-size growth.In this paper, vector quantizati",
+      "authors": [
+        "Yuan-Lian Huo",
+        "Li-Hua Tuo",
+        "Yong-Feng Qi",
+        "Yin Zhang"
+      ],
+      "doi": "10.7498/aps.71.20221065",
+      "match": "related_but_different",
+      "source": "semantic_scholar",
+      "source_id": 251530662,
+      "title": "Quantized kernel least inverse hyperbolic sine adaptive filtering algorithm",
+      "url": "https://www.semanticscholar.org/paper/8f094e9baf420bdac89c04aec595fa3835c17c15",
+      "year": 2022
+    },
+    {
+      "abstract": "",
+      "authors": [
+        "E. Furlani"
+      ],
+      "doi": "10.1063/1.532718",
+      "match": "not_established",
+      "source": "semantic_scholar",
+      "source_id": 120811147,
+      "title": "Quantization of massive vector fields in curved space-time",
+      "url": "https://www.semanticscholar.org/paper/d81da4245ec6fcaa6f335fbd7d0db27939d0a1ed",
+      "year": 1999
+    },
+    {
+      "abstract": "The goal of quantization is to find the best approximation of a probability distribution by a discrete measure with finite support. When dealing with empirical distributions, this boils down to finding the best summary of the data by a smaller number of points, and automatically yields a k-means-type clustering. In this paper, we introduce Competitive Learning Riemannian Quantization (CLRQ), an online quantization algorithm that applies when the data does not belong to a vector space, but rather a Riemannian manifold. It can be seen as a density approximation procedure as well as a clustering method. Compared to many clustering algorihtms, it requires few distance computations, which is particularly computationally advantageous in the manifold setting. We prove its convergence and show simulated examples on the sphere and the hyperbolic plane. We also provide an application to real data by using CLRQ to create summaries of images of covariance matrices estimated from air traffic images. These summaries are representative of the air traffic complexity and yield clusterings of the airspaces into zones that are homogeneous with respect to that criterion. They can then be compared usin",
+      "authors": [
+        "Alice le Brigant",
+        "S. Puechmorel"
+      ],
+      "doi": "10.1016/J.JMVA.2019.05.008",
+      "match": "not_established",
+      "source": "semantic_scholar",
+      "source_id": 182809064,
+      "title": "Quantization and clustering on Riemannian manifolds with an application to air traffic analysis",
+      "url": "https://www.semanticscholar.org/paper/87ffa8794a971514d1ccd57e8c724cf94ab1a0ac",
+      "year": 2019
+    },
+    {
+      "abstract": "",
+      "authors": [
+        "A. Bytsenko",
+        "M. Guimarães",
+        "J. Helayël-Neto"
+      ],
+      "doi": "10.1142/9789812704030_0302",
+      "match": "not_established",
+      "source": "semantic_scholar",
+      "source_id": 120283394,
+      "title": "FORMS ON VECTOR BUNDLES OVER THREE-DIMENSIONAL HYPERBOLIC SPACES AND BLACK HOLE GEOMETRY",
+      "url": "https://www.semanticscholar.org/paper/2772efe25472ba1e131c235248c16c6fd98576b6",
+      "year": 2006
+    }
+  ],
+  "queries": [
+    {
+      "query": "hyperbolic vector quantization",
+      "reason": null,
+      "results": 15,
+      "source": "semantic_scholar",
+      "status": "OK"
+    },
+    {
+      "query": "user behavior conditioned codebook learning",
+      "reason": "HTTPError: HTTP Error 429: Too Many Requests",
+      "results": 0,
+      "source": "openalex",
+      "status": "NOT_CHECKED"
+    },
+    {
+      "query": "adaptive curvature recommender semantic ID",
+      "reason": "HTTPError: HTTP Error 429: Too Many Requests",
+      "results": 0,
+      "source": "openalex",
+      "status": "NOT_CHECKED"
+    }
+  ],
+  "retrieved_at": 1793892830.2405577,
+  "schema": 1,
+  "sha256": "47d61f7064086997b75942181afdab563f10b975cb054ab5f4126f4643ac23a7",
+  "status": "NOT_CHECKED"
+}

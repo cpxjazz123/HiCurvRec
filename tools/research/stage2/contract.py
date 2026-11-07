@@ -135,6 +135,14 @@ def launch_env(extra: dict | None = None) -> dict:
     env = dict(os.environ)
     for key in ("OMP_NUM_THREADS", "MKL_NUM_THREADS"):
         env.setdefault(key, "4")
+    # Determinism on the GPU. torch.use_deterministic_algorithms is already on
+    # in the trainers, but it cannot make a cuBLAS GEMM deterministic without
+    # this workspace configuration, and it says so in a warning on every run.
+    # The consequence was measured: the arms without a sparse propagation
+    # reproduce their numbers to the last digit across runs, while the arms with
+    # one drift by several percent, which is larger than the differences
+    # between the arms and therefore hides every real effect.
+    env.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
     env.pop(SINGLE_GPU_ENV, None)
     if extra:
         env.update(extra)

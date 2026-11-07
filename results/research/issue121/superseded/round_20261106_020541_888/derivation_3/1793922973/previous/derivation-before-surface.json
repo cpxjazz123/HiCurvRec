@@ -1,0 +1,64 @@
+{
+ "symbols": [
+  "z0",
+  "z1",
+  "theta1_1_0",
+  "theta1_1_1",
+  "theta1_2_0",
+  "theta1_2_1",
+  "theta2_1_0",
+  "theta2_1_1",
+  "theta2_2_0",
+  "theta2_2_1",
+  "s",
+  "v_pi1_0",
+  "v_pi1_1",
+  "v_pi2_0",
+  "v_pi2_1"
+ ],
+ "args": [
+  {
+   "name": "z",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  }
+ ],
+ "statements": [
+  "nz = sqrt(z0**2 + z1**2)",
+  "kz = tanh(nz)/nz",
+  "x0 = kz*z0",
+  "x1 = kz*z1",
+  "n11 = sqrt(theta1_1_0**2 + theta1_1_1**2)",
+  "k11 = tanh(n11)/n11",
+  "y10 = k11*theta1_1_0",
+  "y11 = k11*theta1_1_1",
+  "n12 = sqrt(theta1_2_0**2 + theta1_2_1**2)",
+  "k12 = tanh(n12)/n12",
+  "y20 = k12*theta1_2_0",
+  "y21 = k12*theta1_2_1",
+  "nx = x0**2 + x1**2",
+  "ny1 = y10**2 + y11**2",
+  "ny2 = y20**2 + y21**2",
+  "a1 = 1 + 2*((x0 - y10)**2 + (x1 - y11)**2)/((1 - nx)*(1 - ny1))",
+  "d1 = log(a1 + sqrt(a1**2 - 1))",
+  "a2 = 1 + 2*((x0 - y20)**2 + (x1 - y21)**2)/((1 - nx)*(1 - ny2))",
+  "d2 = log(a2 + sqrt(a2**2 - 1))",
+  "C0 = d1 - (1 - Abs(s - v_pi1_0))",
+  "C1 = d2 - (1 - Abs(s - v_pi1_1))",
+  "p0 = exp(-C0)/(exp(-C0) + exp(-C1))",
+  "p1 = exp(-C1)/(exp(-C0) + exp(-C1))",
+  "loss = p0*C0 + p1*C1 + p0*log(p0) + p1*log(p1)"
+ ],
+ "output": "loss",
+ "code": "import torch\n\n\ndef _as_tensor(a):\n    if torch.is_tensor(a):\n        return a\n    return torch.as_tensor(a, dtype=torch.get_default_dtype())\n\n\ndef _exp0(v, eps=1e-12):\n    # Poincare-ball exponential map at the origin, curvature c = 1, R_c = 1:\n    # exp_0(v) = tanh(||v||)/||v|| * v  (limit 1 as ||v|| -> 0)\n    n = v.norm(dim=-1, keepdim=True)\n    safe = n.clamp_min(eps)\n    scale = torch.where(n > eps, torch.tanh(safe) / safe, torch.ones_like(n))\n    return scale * v\n\n\ndef _hyp_dist(x, y, eps=1e-7):\n    # curvature c = 1: d(x,y) = arcosh(1 + 2||x-y||^2 / ((1-||x||^2)(1-||y||^2)))\n    nx = (x * x).sum(-1)\n    ny = (y * y).sum(-1)\n    sq = ((x - y) ** 2).sum(-1)\n    a = 1.0 + 2.0 * sq / ((1.0 - nx) * (1.0 - ny))\n    a = a.clamp(min=1.0 + eps)\n    return torch.log(a + torch.sqrt(a * a - 1.0))\n\n\ndef compute(z, theta_1_1, theta_1_2, theta_2_1, theta_2_2, s, v_pi_1, v_pi_2):\n    # z: encoder vector, width 2 (a single item (2,) or a batch (B,2))\n    # theta_1_*: raw level-1 codewords q_1, q_2 (width 2)\n    # theta_2_*, v_pi_2: level-2 Euclidean codes / level-2 strata, untouched ->\n    # accepted for the fixed signature and excluded from the changed quantity\n    z = torch.atleast_2d(_as_tensor(z))\n    q1 = _as_tensor(theta_1_1).reshape(1, 2)\n    q2 = _as_tensor(theta_1_2).reshape(1, 2)\n    _unused = (_as_tensor(theta_2_1), _as_tensor(theta_2_2), _as_tensor(v_pi_2))\n\n    x = _exp0(z)\n    y1 = _exp0(q1)\n    y2 = _exp0(q2)\n\n    d1 = _hyp_dist(x, y1)\n    d2 = _hyp_dist(x, y2)\n\n    # s: frozen per-item cohesion rank rho_i on the [0,1] stratum scale\n    # v_pi_1: width-2 codeword stratum table s_k = sigmoid(a_k), k = 1, 2\n    # beta/R_c absorbed as 1, R_c = 1 -> offset (1 - |rho_i - s_k|)*R_c\n    rho = _as_tensor(s).reshape(-1)\n    sig = _as_tensor(v_pi_1).reshape(-1)\n\n    C0 = d1 - (1.0 - (rho - sig[0]).abs())\n    C1 = d2 - (1.0 - (rho - sig[1]).abs())\n    C = torch.stack([C0, C1], dim=-1)\n\n    # tau = 1: sum_k p_k C_k + tau * sum_k p_k log p_k = -tau logsumexp(-C/tau)\n    loss = -torch.logsumexp(-C, dim=-1)\n    return loss.reshape(-1)\n",
+ "excluded": [
+  "the hard level-1 index (argmax over the balanced Sinkhorn plan) and the straight-through selector p_i = one_hot(k1_i) + P_i - stop_grad(P_i): the argmax is piecewise constant with zero gradient almost everywhere, so only the entropic row objective is kept",
+  "the Sinkhorn column balancing (column sums B/K) and its dual potentials: they couple the rows of the batch, so the per-item output is the row-level balanced assignment cost at the baseline temperature tau = 1, i.e. -tau*logsumexp(-C/tau) = sum_k p_k C_k + tau*sum_k p_k log p_k",
+  "the graph preprocessing that produces rho (sparse adjacency A of adjacent sequence pairs, top-D neighbourhoods with ascending-id tie-break, sim_ij = |N(i) cap N(j)|/sqrt(deg_i deg_j), coh_i, mid-rank over P with denominator |P|-1, 0.5 fallback): it runs once on the train split outside the graph, and the frozen per-item rank is supplied as the scalar s",
+  "the frozen margin m: beta = m/R_c is one global frozen scalar and only rescales the offset, so beta/R_c is absorbed as 1 and the offset enters the cost as (1 - |s - s_k|)*R_c with R_c = 1",
+  "the codeword stratum logits a_k and their sigmoid: the two level-1 strata s_k = sigmoid(a_k) are supplied as the frozen width-2 table v_pi_1, so the gradient path into a_k is not carried here",
+  "levels 2 and 3: they stay Euclidean and untouched, so theta_2_1, theta_2_2 and the level-2 stratum table v_pi_2 are accepted by the signature but do not enter the quantity the mechanism changes",
+  "the raw-codeword reconstruction and residual recursion, the encoder, and all data: excluded, the output is only the level-1 row objective that the cohesion offset modifies"
+ ]
+}

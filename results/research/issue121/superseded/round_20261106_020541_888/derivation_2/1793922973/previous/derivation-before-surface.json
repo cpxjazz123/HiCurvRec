@@ -1,0 +1,64 @@
+{
+ "symbols": [
+  "z0",
+  "z1",
+  "theta1_1_0",
+  "theta1_1_1",
+  "theta1_2_0",
+  "theta1_2_1",
+  "theta2_1_0",
+  "theta2_1_1",
+  "theta2_2_0",
+  "theta2_2_1",
+  "s",
+  "v_pi1_0",
+  "v_pi1_1",
+  "v_pi2_0",
+  "v_pi2_1"
+ ],
+ "args": [
+  {
+   "name": "z",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  }
+ ],
+ "statements": [
+  "nz = sqrt(z0**2 + z1**2 + 1e-12)",
+  "xz0 = tanh(nz)*z0/nz",
+  "xz1 = tanh(nz)*z1/nz",
+  "nt11 = sqrt(theta1_1_0**2 + theta1_1_1**2 + 1e-12)",
+  "y110 = tanh(nt11)*theta1_1_0/nt11",
+  "y111 = tanh(nt11)*theta1_1_1/nt11",
+  "nt12 = sqrt(theta1_2_0**2 + theta1_2_1**2 + 1e-12)",
+  "y120 = tanh(nt12)*theta1_2_0/nt12",
+  "y121 = tanh(nt12)*theta1_2_1/nt12",
+  "den1 = (1 - (xz0**2 + xz1**2))*(1 - (y110**2 + y111**2))",
+  "d1 = acosh(1 + 2*((xz0-y110)**2 + (xz1-y111)**2)/den1)",
+  "den2 = (1 - (xz0**2 + xz1**2))*(1 - (y120**2 + y121**2))",
+  "d2 = acosh(1 + 2*((xz0-y120)**2 + (xz1-y121)**2)/den2)",
+  "sk0 = 1/(1+exp(-v_pi1_0))",
+  "sk1 = 1/(1+exp(-v_pi1_1))",
+  "rho = 0.5",
+  "C1 = d1 - s*(1 - Abs(rho - sk0))",
+  "C2 = d2 - s*(1 - Abs(rho - sk1))",
+  "qa0 = Piecewise((theta1_1_0, C1 <= C2), (theta1_2_0, True))",
+  "qa1 = Piecewise((theta1_1_1, C1 <= C2), (theta1_2_1, True))",
+  "r0 = z0 - qa0",
+  "r1 = z1 - qa1",
+  "e21 = (r0 - theta2_1_0)**2 + (r1 - theta2_1_1)**2",
+  "e22 = (r0 - theta2_2_0)**2 + (r1 - theta2_2_1)**2",
+  "qb0 = Piecewise((theta2_1_0, e21 <= e22), (theta2_2_0, True))",
+  "qb1 = Piecewise((theta2_1_1, e21 <= e22), (theta2_2_1, True))",
+  "loss = (z0 - qa0 - qb0)**2 + (z1 - qa1 - qb1)**2"
+ ],
+ "output": "loss",
+ "code": "import torch\nimport torch.nn.functional as F\n\ndef compute(z, theta_1_1, theta_1_2, theta_2_1, theta_2_2, s, v_pi_1, v_pi_2):\n    z = torch.as_tensor(z, dtype=torch.float32)\n    if z.dim() == 1:\n        z = z.unsqueeze(0)\n    B = z.shape[0]\n    device = z.device\n\n    def rowvec(v):\n        v = torch.as_tensor(v, dtype=torch.float32, device=device)\n        if v.dim() == 1:\n            v = v.unsqueeze(0)\n        if v.shape[0] == 1 and B != 1:\n            v = v.expand(B, -1)\n        return v\n\n    q11 = rowvec(theta_1_1)\n    q12 = rowvec(theta_1_2)\n    q21 = rowvec(theta_2_1)\n    q22 = rowvec(theta_2_2)\n    a = rowvec(v_pi_1)\n    _ = v_pi_2\n    s = torch.as_tensor(s, dtype=torch.float32, device=device)\n    eps = 1e-12\n\n    def expmap0(u):\n        n = torch.sqrt(torch.sum(u * u, dim=1, keepdim=True) + eps)\n        return torch.tanh(n) * u / n\n\n    def hdist(x, y):\n        nx2 = torch.sum(x * x, dim=1)\n        ny2 = torch.sum(y * y, dim=1)\n        d2 = torch.sum((x - y) ** 2, dim=1)\n        den = (1.0 - nx2) * (1.0 - ny2)\n        arg = 1.0 + 2.0 * d2 / den.clamp_min(eps)\n        return torch.acosh(arg.clamp_min(1.0))\n\n    x = expmap0(z)\n    y11 = expmap0(q11)\n    y12 = expmap0(q12)\n    d1 = hdist(x, y11)\n    d2 = hdist(x, y12)\n\n    sk = torch.sigmoid(a)\n    rho = torch.tensor(0.5, dtype=torch.float32, device=device)\n    C1 = d1 - s * (1.0 - torch.abs(rho - sk[:, 0]))\n    C2 = d2 - s * (1.0 - torch.abs(rho - sk[:, 1]))\n    C = torch.stack([C1, C2], dim=1)\n\n    k1 = torch.argmin(C, dim=1)\n    P = torch.softmax(-C, dim=1)\n    sel = F.one_hot(k1, num_classes=2).to(z.dtype) + P - P.detach()\n    q1 = sel[:, 0:1] * q11 + sel[:, 1:2] * q12\n\n    r = z - q1\n    e21 = torch.sum((r - q21) ** 2, dim=1)\n    e22 = torch.sum((r - q22) ** 2, dim=1)\n    k2 = torch.where(e21 <= e22, torch.zeros_like(e21, dtype=torch.long), torch.ones_like(e21, dtype=torch.long))\n    q2 = torch.where(k2[:, None] == 0, q21, q22)\n\n    return torch.sum((z - q1 - q2) ** 2, dim=1)\n",
+ "excluded": [
+  "the train-only graph preprocessor and cached per-item cohesion rank rho: the isolated fixed instance has no train graph, so the specification's edge-less value rho=0.5 is used",
+  "the cross-row balanced Sinkhorn column coupling: the per-row derivation uses argmin of the level-1 cost, which is the row-wise argmax of the softmax plan; the code's STE selector has the same forward hard selection and carries gradients into the encoder, codewords and stratum logits",
+  "v_pi_2 is the level-2 table and is inert because levels 2 and 3 stay Euclidean and untouched",
+  "the frozen median m and beta calibration are absorbed into s, which carries the frozen beta scale directly"
+ ]
+}

@@ -26,8 +26,14 @@ import sys
 import time
 from pathlib import Path
 
+import os
 import numpy as np
 import torch
+
+# The cuBLAS GEMMs are not deterministic on CUDA without this, and the arms with
+# a sparse propagation drift by several percent between runs -- more than the
+# differences between the arms, which hides every real effect.
+os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
@@ -120,7 +126,8 @@ def soft_assignment(net: model.CommunityModel, embeddings: np.ndarray,
 def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.ndarray,
           high_items: np.ndarray, low_items: np.ndarray, device: torch.device,
           seed: int = SEED, node_to_cluster: bool = False,
-          curvature_target: np.ndarray | None = None) -> dict:
+          curvature_target: np.ndarray | None = None,
+          cross_space: bool = False) -> dict:
     """Train once: the curvature ranking loss plus the usage constraint.
 
     With ``node_to_cluster`` the model additionally keeps every item close to
@@ -159,7 +166,8 @@ def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.nd
     for epoch in range(EPOCHS):
         order = rng.permutation(n_anchors)
         totals = {"loss": 0.0, "ranking": 0.0, "usage": 0.0, "commitment": 0.0,
-                  "separation": 0.0, "consistency": 0.0, "s_high": 0.0, "s_low": 0.0}
+                  "separation": 0.0, "consistency": 0.0, "cross_space": 0.0,
+                  "s_high": 0.0, "s_low": 0.0}
         for step in range(steps_per_epoch):
             index = order[step * ANCHOR_BATCH:(step + 1) * ANCHOR_BATCH]
             free_all, ball_all = net.represent(every_item)
@@ -186,6 +194,10 @@ def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.nd
             ranking = model.ranking_loss(pi_anchor, pi_high, pi_low, margin)
             usage = model.usage_loss(pi_items.mean(dim=0), net.n_communities)
             consistency = torch.zeros((), device=device)
+            cross = torch.zeros((), device=device)
+            if cross_space:
+                free_logit, ball_logit = net.branch_logits(free_all, ball_all)
+                cross = model.cross_space_divergence(free_logit, ball_logit)
             if curvature_loss is not None:
                 # the head reads the item's community point and predicts its
                 # local curvature; the loss makes the two agree
@@ -206,6 +218,8 @@ def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.nd
                 terms["separation"] = separation
             terms["consistency"] = consistency
             weights["consistency"] = 1.0
+            terms["cross_space"] = cross
+            weights["cross_space"] = 1.0
             loss = sum(weights[name] * value for name, value in terms.items())
             optimiser.zero_grad(set_to_none=True)
             loss.backward()
@@ -216,6 +230,7 @@ def train(net: model.CommunityModel, embeddings: np.ndarray, anchor_items: np.nd
             totals["usage"] += float(usage.detach())
             totals["commitment"] += float(commitment.detach())
             totals["consistency"] += float(consistency.detach())
+            totals["cross_space"] += float(cross.detach())
             totals["separation"] += float(separation.detach())
             totals["s_high"] += float(model.overlap(pi_anchor, pi_high).mean().detach())
             totals["s_low"] += float(model.overlap(pi_anchor, pi_low).mean().detach())
@@ -344,6 +359,15 @@ def main() -> int:
                                                           graph="curvature",
                                                           learn_curvature=True,
                                                           curvature_head=True)),
+        # The plan's last missing ingredient: the cross-space contrast. The free
+        # branch and the hyperbolic branch each score every community; the
+        # symmetric Jensen-Shannon divergence between the two views is zero when
+        # they agree, and the two subspaces then describe the same partition.
+        ("I_free_64_hyper_64_crossspace", dict(free_dim=FREE_DIM_EXPERIMENT,
+                                               hyper_dim=HYPER_DIM_EXPERIMENT,
+                                               graph="curvature",
+                                               learn_curvature=True,
+                                               cross_space=True)),
     ]
     plain_graph = curvature_graph_for = curvature_graph(
         graphs["train"], curvatures["train"], embeddings.shape[0], curvature_aware=False)
@@ -360,6 +384,7 @@ def main() -> int:
         graph = {"plain": plain_graph, "curvature": curvature_graph_for}.get(graph_kind)
         spec.setdefault("n_communities", N_COMMUNITIES)
         use_consistency = bool(spec.pop("curvature_head", False))
+        use_cross_space = bool(spec.pop("cross_space", False))
         net = model.CommunityModel(input_dim=embeddings.shape[1],
                                    curvature=CURVATURE, seed=SEED, graph=graph,
                                    learn_curvature=learn_curvature,

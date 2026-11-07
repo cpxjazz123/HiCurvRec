@@ -1,0 +1,286 @@
+{
+  "elapsed_seconds": 3.479,
+  "idea_id": "curvature-stratum-sinkhorn-v1",
+  "limits": {
+    "papers": 15,
+    "queries": 3
+  },
+  "note": "a match is only a collision when the retrieved record itself concerns the mechanism; no result is never read as novelty",
+  "paper_count": 15,
+  "papers": [
+    {
+      "abstract": "Graph embedding based retrieval has become one of the most popular techniques in the information retrieval community and search engine industry. The classical paradigm mainly relies on the flat Euclidean geometry. In recent years, hyperbolic (negative curvature) and spherical (positive curvature) representation methods have shown their superiority to capture hierarchical and cyclic data structures respectively. However, in industrial scenarios such as e-commerce sponsored search platforms, the large-scale heterogeneous query-item-advertisement interaction graphs often have multiple structures coexisting. Existing methods either only consider a single geometry space, or combine several spaces manually, which are incapable and inflexible to model the complexity and heterogeneity in the real scenario. To tackle this challenge, we present a web-scale Adaptive Mixed-Curvature ADvertisement retrieval system (AM-CAD) to automatically capture the complex and heterogeneous graph structures in non-Euclidean spaces. Specifically, entities are represented in adaptive mixed-curvature spaces, where the types and curvatures of the subspaces are trained to be optimal combinations. Besides, an atte",
+      "authors": [
+        "Zhirong Xu",
+        "Shiyang Wen",
+        "Junshan Wang",
+        "Guojun Liu",
+        "Liang Wang",
+        "Zhi Chun Yang",
+        "Lei Ding",
+        "Yan Zhang"
+      ],
+      "cited_by": 7,
+      "doi": "https://doi.org/10.1109/icde53745.2022.00323",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4221139626",
+      "title": "AMCAD: Adaptive Mixed-Curvature Representation based Advertisement Retrieval System",
+      "url": "https://doi.org/10.1109/icde53745.2022.00323",
+      "year": 2022
+    },
+    {
+      "abstract": "Semantic IDs represent items as shared discrete token sequences and have become a practical tool for recommendation and retrieval. Yet it remains difficult to tell why a tokenizer fails: poor quality may come from codebook underutilization, unstable decision boundaries, or geometric distortion of the embedding space. This paper develops a quantitative framework for diagnosing these failures through expected codeword overlap and effective codebook capacity. The former measures expected codeword confusion under retrieval-time perturbation, while the latter converts that confusion into an effective number of usable, well-separated codes. The framework links semantic boundary confusion to both code usage imbalance and Euclidean geometric constraints. As a proof of concept, we present Decoupled Residual Quantization (DRQ), which separates continuous geometry reconstruction from discrete distribution matching. Experiments on a large-scale industrial dataset show that Semantic ID quality is multi-objective: symbolic robustness, reconstruction fidelity, and behavior-aware soft matching each stress different aspects of a tokenizer. These downstream observations are based on one proprietary ",
+      "authors": [
+        "Xuesi Wang",
+        "Junjie Wang",
+        "Ziliang Wang",
+        "Weijie Bian",
+        "Guanxing Zhang"
+      ],
+      "cited_by": 1,
+      "doi": "https://doi.org/10.48550/arxiv.2606.01844",
+      "match": "related_but_different",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W7163253976",
+      "title": "Decoupled Residual Quantization for Robust Semantic IDs in Recommendation",
+      "url": "https://doi.org/10.48550/arxiv.2606.01844",
+      "year": 2026
+    },
+    {
+      "abstract": "Our languages are in constant flux driven by external factors such as cultural, societal and technological changes, as well as by only partially understood internal motivations. Words acquire new meanings and lose old senses, new words are coined or borrowed from other languages and obsolete words slide into obscurity. Understanding the characteristics of shifts in the meaning and in the use of words is useful for those who work with the content of historical texts, the interested general public, but also in and of itself. The findings from automatic lexical semantic change detection, and the models of diachronic conceptual change are currently being incorporated in approaches for measuring document across-time similarity, information retrieval from long-term document archives, the design of OCR algorithms, and so on. In recent years we have seen a surge in interest in the academic community in computational methods and tools supporting inquiry into diachronic conceptual change and lexical replacement. This article is an extract of a survey of recent computational techniques to tackle lexical semantic change currently under review. In this article we focus on diachronic conceptual ",
+      "authors": [
+        "Nina Tahmasebi",
+        "Lars Borin",
+        "Adam Jatowt"
+      ],
+      "cited_by": 102,
+      "doi": "https://doi.org/10.48550/arxiv.1811.06278",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W2921267133",
+      "title": "Survey of Computational Approaches to Lexical Semantic Change",
+      "url": "https://doi.org/10.48550/arxiv.1811.06278",
+      "year": 2018
+    },
+    {
+      "abstract": "The fundamental role of the scale invariance of the local curvatureof the nickel crystal lattice at all structural-scale levels of deformation is shown.",
+      "authors": [
+        "S. V. Korotkevich"
+      ],
+      "cited_by": 0,
+      "doi": "https://doi.org/10.34660/inf.2022.65.80.136",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4405277000",
+      "title": "MULTISCALING OF LATTICE CURVATURE OF THE NICKEL",
+      "url": "https://doi.org/10.34660/inf.2022.65.80.136",
+      "year": 2024
+    },
+    {
+      "abstract": "Novelty alone is not sufficient for innovation. For new ideas and products to thrive, they must find their place within the existing societal fabric, such as institutions, conventions, and infrastructures that have been built over time. Past successes create inertia, favoring conservative advances. Here, we develop a quantitative framework to map the contours of the adjacent possible in the presence of the power of typicality. Typical assemblies, frequently combined building blocks in past innovations, compress and curve the space of possibilities toward what is imaginable, accessible, and implementable, much like gravitational forces on new ideas and actions. We demonstrate that these curvatures in the space of possibilities are not just abstract constructs but empirically measurable through two complementary studies. We first show that Edison's inventions are primarily located in areas of high curvature, aligning with his strategy of building upon institutionalized domains. In contrast, Tesla's inventions are mainly found in low-curvature areas, indicating his propensity for exploring new territories and pushing innovation boundaries. Further analysis of the entire U.S. patent da",
+      "authors": [
+        "Seolmin Yang",
+        "Hyejin Youn"
+      ],
+      "cited_by": 1,
+      "doi": "https://doi.org/10.48550/arxiv.2311.16360",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4389157497",
+      "title": "Geometrics of the Adjacent Possible: Harvesting Values at the Curvature",
+      "url": "https://doi.org/10.48550/arxiv.2311.16360",
+      "year": 2023
+    },
+    {
+      "abstract": "Mixed-curvature representation learning seeks to capture rich geometric structures that cannot be adequately modeled by a single curvature regime. Existing approaches largely rely on product manifolds, which require manually specifying how different curvature spaces are combined and separate their curvature contributions across factors. We introduce the $\\mathbb{SL}(n)$ space, a representation geometry defined by the simple $\\det(A)=1$ constraint and a left invariant Schatten-$p$ Finsler structure. Despite this minimal construction, $\\mathbb{SL}(n)$ exhibits pointwise negative, zero, and positive flag curvature around a common flagpole, while its mixed-curvature and curvature-coupling capacities are asymptotically maximal relative to the intrinsic geometric upper bound. Beyond geometry, its noncommutative group structure provides inherent order sensitivity, and its non-nilpotent Lie algebra admits nonzero nested Lie brackets at arbitrary depth, enabling deep order-aware composition. Empirically, $\\mathbb{SL}(n)$ consistently outperforms a broad range of representation manifold baselines across graph benchmarks at different scales. It reduces average distortion over the strongest ba",
+      "authors": [
+        "Xingrun Li",
+        "Yusuke Mukuta",
+        "Xin Yang",
+        "Yinyu Ye Y",
+        "Tatsuya Harada"
+      ],
+      "cited_by": 0,
+      "doi": "https://doi.org/10.48550/arxiv.2609.15083",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W7213256072",
+      "title": "$\\mathbb{SL}(n)$ Representation Learning: An Intrinsic Mixed-Curvature Space with Higher Curvature Capacities and Deeper Order-Aware Composition",
+      "url": "https://doi.org/10.48550/arxiv.2609.15083",
+      "year": 2026
+    },
+    {
+      "abstract": "Recently, deformable convolution networks have shown the superior performance in object detection due to its ability to adapt to the geometric variations of object. These methods learn the offset fields under the supervision of localization and recognition. Nevertheless, the spatial support of these networks may be inexact because the offsets are learned implicitly via extra convolutional layer. In this work, we present curvature-driven deformable convolutional networks (C-DCNets) that adopt explicit geometric property of the preceding feature maps to enhance the deformability of convolution operation and make the networks easier to focus on pertinent image region. To be consistent with postprocessing technology of object detection, we multiply the class prediction probability by the similarity of predicted boxes and ground truth boxes as the final class prediction probability and substitute it into the binary cross entropy loss function. The obtained loss function correlates the bounding box regression and classification. Experimental results on PASCAL VOC and COCO data set show that C-DCNets-based YOLOv4 with the proposed loss function outperforms state-of-the-art algorithms.",
+      "authors": [
+        "Xiaodong Gu",
+        "Ying Fu"
+      ],
+      "cited_by": 4,
+      "doi": "https://doi.org/10.1155/2022/7556022",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4210523445",
+      "title": "Curvature-Driven Deformable Convolutional Networks for End-To-End Object Detection",
+      "url": "https://doi.org/10.1155/2022/7556022",
+      "year": 2022
+    },
+    {
+      "abstract": "Classifier-Free Guidance (CFG) is a cornerstone of modern text-to-image models, yet its reliance on a semantically vacuous null prompt ($\\varnothing$) generates a guidance signal prone to geometric entanglement. This is a key factor limiting its precision, leading to well-documented failures in complex compositional tasks. We propose Condition-Degradation Guidance (CDG), a novel paradigm that replaces the null prompt with a strategically degraded condition, $\\boldsymbol{c}_{\\text{deg}}$. This reframes guidance from a coarse \"good vs. null\" contrast to a more refined \"good vs. almost good\" discrimination, thereby compelling the model to capture fine-grained semantic distinctions. We find that tokens in transformer text encoders split into two functional roles: content tokens encoding object semantics, and context-aggregating tokens capturing global context. By selectively degrading only the former, CDG constructs $\\boldsymbol{c}_{\\text{deg}}$ without external models or training. Validated across diverse architectures including Stable Diffusion 3, FLUX, and Qwen-Image, CDG markedly improves compositional accuracy and text-image alignment. As a lightweight, plug-and-play module, it ac",
+      "authors": [
+        "Shilong Han",
+        "Yuming Zhang",
+        "Hongxia Wang"
+      ],
+      "cited_by": 0,
+      "doi": "https://doi.org/10.48550/arxiv.2603.10780",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W7135101097",
+      "title": "Guiding Diffusion Models with Semantically Degraded Conditions",
+      "url": "https://doi.org/10.48550/arxiv.2603.10780",
+      "year": 2026
+    },
+    {
+      "abstract": "Several first order stochastic optimization methods commonly used in the Euclidean domain such as stochastic gradient descent (SGD), accelerated gradient descent or variance reduced methods have already been adapted to certain Riemannian settings. However, some of the most popular of these optimization tools - namely Adam , Adagrad and the more recent Amsgrad - remain to be generalized to Riemannian manifolds. We discuss the difficulty of generalizing such adaptive schemes to the most agnostic Riemannian setting, and then provide algorithms and convergence proofs for geodesically convex objectives in the particular case of a product of Riemannian manifolds, in which adaptivity is implemented across manifolds in the cartesian product. Our generalization is tight in the sense that choosing the Euclidean space as Riemannian manifold yields the same algorithms and regret bounds as those that were already known for the standard algorithms. Experimentally, we show faster convergence and to a lower train loss value for Riemannian adaptive methods over their corresponding baselines on the realistic task of embedding the WordNet taxonomy in the Poincare ball.",
+      "authors": [
+        "Gary Bécigneul",
+        "Octavian-Eugen Ganea"
+      ],
+      "cited_by": 169,
+      "doi": "https://doi.org/10.48550/arxiv.1810.00760",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W2894101493",
+      "title": "Riemannian Adaptive Optimization Methods",
+      "url": "https://doi.org/10.48550/arxiv.1810.00760",
+      "year": 2018
+    },
+    {
+      "abstract": "Recommender systems have become an essential component of many online platforms, providing personalized recommendations to users. A crucial aspect is embedding techniques that convert the high-dimensional discrete features, such as user and item IDs, into low-dimensional continuous vectors, which can enhance the recommendation performance. Embedding techniques have revolutionized the capture of complex entity relationships, generating significant research interest. This survey presents a comprehensive analysis of recent advances in recommender system embedding techniques. We examine centralized embedding approaches across matrix, sequential, and graph structures. In matrix-based scenarios, collaborative filtering generates embeddings that effectively model user-item preferences, particularly in sparse data environments. For sequential data, we explore various approaches including recurrent neural networks and self-supervised methods such as contrastive and generative learning. In graph-structured contexts, we analyze techniques like node2vec that leverage network relationships, along with applicable self-supervised methods. Our survey addresses critical scalability challenges in em",
+      "authors": [
+        "Maolin Wang",
+        "Xinjian Zhao",
+        "Wanyu Wang",
+        "Sheng Zhang",
+        "Yau Y Lim",
+        "Bowen Yu",
+        "B. L. Wang",
+        "Shucheng Zhou"
+      ],
+      "cited_by": 44,
+      "doi": "https://doi.org/10.1145/3812652",
+      "match": "related_but_different",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W7160492073",
+      "title": "Embedding in Recommender Systems: A Survey",
+      "url": "https://doi.org/10.1145/3812652",
+      "year": 2026
+    },
+    {
+      "abstract": "A growing number of applications require dictionaries of words belonging to semantic classes present in specialized domains. Manually constructed knowledge bases often do not provide sufficient coverage of specialized vocabulary and require substantial effort to build and keep up-to-date. In this thesis, we propose a semi-supervised approach to the construction of domain-specific semantic lexicons based on the distributional similarity hypothesis. Our method starts with a small set of seed words representing the target class and an unannotated text corpus. It locates instances of seed words in the text and generates lexical patterns from their contexts; these patterns in turn extract more words/phrases that belong to the semantic category in an iterative manner. This bootstrapping process can be continued until the output lexicon reaches the desired size. \\nWe explore employing techniques such as learning lexicons for multiple semantic classes at the same time and using feedback from competing lexicons to increase the learning precision. Evaluated for extraction of dish names and subjective adjectives from a corpus of restaurant reviews, our approach demonstrates great flexibility ",
+      "authors": [
+        "Mohamad Hasan Ahmadi"
+      ],
+      "cited_by": 2,
+      "doi": null,
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W2735420135",
+      "title": "A Semi-Supervised Approach to the Construction of Semantic Lexicons",
+      "url": "https://openalex.org/W2735420135",
+      "year": 2012
+    },
+    {
+      "abstract": "Recently, graph-aware Large Language Models (LLMs) have shown promising capabilities in jointly modeling graph-structured data and textual information. Existing approaches typically employ a graph encoder and a frozen LLM to obtain node representations from graph and textual views, followed by node-level alignment to bridge the two modalities. However, such alignment mechanisms primarily focus on node information while overlooking edge-level structures, leading to suboptimal information propagation across views. In this work, we conduct a comprehensive theoretical analysis to uncover why node-level alignment is insufficient for aligning textual and graph representations. Specifically, we prove theoretically for the first time that neglecting edge information leads to suboptimal solutions and negatively curved edges induce bottlenecked information flow, giving rise to the over-squashing phenomenon between graph and textual views. To address the two challenges, we innovatively proposed a CureLLM framework of Curvature-enhanced Graph Representations for Large Language Model whose goal is to inject the signals of edge information into the existing LLMs. Specifically, CureLLM first intr",
+      "authors": [
+        "Zhenghong Lin",
+        "Zhibin Shi",
+        "Hongyang Dong",
+        "Xinjie Ye",
+        "Yuhong Chen",
+        "Shiping Wang"
+      ],
+      "cited_by": 0,
+      "doi": "https://doi.org/10.48550/arxiv.2606.06073",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W7163676700",
+      "title": "Edge-Aware Curvature Modeling for Graph Understanding in Large Language Models",
+      "url": "https://doi.org/10.48550/arxiv.2606.06073",
+      "year": 2026
+    },
+    {
+      "abstract": "The localization of peripheral proteins to specific sites of cell membranes is a pivotal step in many cellular processes. Many such processes involve dynamic changes in membrane structure and particularly membrane curvature. Although certain proteins have been implicated in these processes, many questions remain as to the mechanisms underlying their involvement. A major goal toward this end is to elucidate mechanisms by which they generate and sense membrane curvature. The membrane curvature sensing and generation properties of the peripherally binding endocytic accessory protein endophilin are believed to depend on its dimeric structure. We therefore first study endophilin dimerization kinetics and equilibria in solution, employing Förster resonance energy transfer techniques. Mechanistic insights into the association of endophilin N-BAR with membranes are obtained from kinetic studies by stopped-flow rapid mixing techniques. We incorporate our findings into a kinetic scheme for endophilin N-BAR membrane binding that highlights contributions from membrane-mediated protein oligomerization, and obtain kinetic parameters of the model through comparison to experimental data. Secondly,",
+      "authors": [
+        "Benjamin R. Capraro"
+      ],
+      "cited_by": 0,
+      "doi": null,
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W32599912",
+      "title": "Membrane binding kinetics and curvature partitioning of peripheral proteins",
+      "url": "https://openalex.org/W32599912",
+      "year": 2013
+    },
+    {
+      "abstract": "The mouse is a pervasive input device used for a wide range of interactive applications. However, computational modelling of mouse behaviour typically requires time-consuming design and extraction of handcrafted features, or approaches that are application-specific. We instead propose Mouse2Vec – a novel self-supervised method designed to learn semantic representations of mouse behaviour that are reusable across users and applications. Mouse2Vec uses a Transformer-based encoder-decoder architecture, which is specifically geared for mouse data: During pretraining, the encoder learns an embedding of input mouse trajectories while the decoder reconstructs the input and simultaneously detects mouse click events. We show that the representations learned by our method can identify interpretable mouse behaviour clusters and retrieve similar mouse trajectories. We also demonstrate on three sample downstream tasks that the representations can be practically used to augment mouse data for training supervised methods and serve as an effective feature extractor.",
+      "authors": [
+        "Guanhua Zhang",
+        "Zhiming Hu",
+        "Mihai Bâce",
+        "Andreas Bulling"
+      ],
+      "cited_by": 5,
+      "doi": "https://doi.org/10.1145/3613904.3642141",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4396832165",
+      "title": "Mouse2Vec: Learning Reusable Semantic Representations of Mouse Behaviour",
+      "url": "https://doi.org/10.1145/3613904.3642141",
+      "year": 2024
+    },
+    {
+      "abstract": "People have complex thoughts, and they often express their thoughts with complex sentences using natural languages. This complexity may facilitate efficient communications among the audience with the same knowledge base. But on the other hand, for a different or new audience this composition becomes cumbersome to understand and analyze. Analysis of such compositions using syntactic or semantic measures is a challenging job and defines the base step for natural language processing. In this dissertation I explore and propose a number of new techniques to analyze and visualize the syntactic and semantic patterns of unstructured English texts. The syntactic analysis is done through a proposed visualization technique which categorizes and compares different English compositions based on their different reading complexity metrics. For the semantic analysis I use Latent Semantic Analysis (LSA) to analyze the hidden patterns in complex compositions. I have used this technique to analyze comments from a social visualization web site for detecting the irrelevant ones (e.g., spam). The patterns of collaborations are also studied through statistical analysis. Word sense disambiguation is used ",
+      "authors": [
+        "Saurav Karmakar"
+      ],
+      "cited_by": 3,
+      "doi": "https://doi.org/10.57709/2292261",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W186283979",
+      "title": "Syntactic and Semantic Analysis and Visualization of Unstructured English Texts",
+      "url": "https://doi.org/10.57709/2292261",
+      "year": 2022
+    }
+  ],
+  "queries": [
+    {
+      "query": "hyperbolic vector quantization",
+      "reason": "HTTPError: HTTP Error 429: Too Many Requests",
+      "results": 0,
+      "source": "openalex",
+      "status": "NOT_CHECKED"
+    },
+    {
+      "query": "user behavior conditioned codebook learning",
+      "reason": "HTTPError: HTTP Error 429: Too Many Requests",
+      "results": 0,
+      "source": "openalex",
+      "status": "NOT_CHECKED"
+    },
+    {
+      "query": "adaptive curvature recommender semantic ID",
+      "reason": null,
+      "results": 15,
+      "source": "openalex",
+      "status": "OK"
+    }
+  ],
+  "retrieved_at": 1793892830.760414,
+  "schema": 1,
+  "sha256": "c77a1ac4fba7ea2031aa8cb6e3d8dee2829fbb2ce6ed6ee8616b4c005a6904a6",
+  "status": "NOT_CHECKED"
+}

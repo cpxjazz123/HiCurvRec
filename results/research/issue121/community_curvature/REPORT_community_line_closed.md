@@ -1,5 +1,14 @@
 # The community line, closed on measurements
 
+> **Correction (2026-11-07).** The AF3 gap ordering reported here was a
+> property of an earlier version of the shared model, not of the mechanism. A
+> reproducible re-run of the whole arm table gives 139.47 for the plain GCN
+> propagation against 134.54 for the curvature-aware one, so the curvature-aware
+> propagation does **not** raise the gap here, and the curvature does not earn
+> its place inside the community model. The arm table of a single run remains a
+> valid comparison. See `REPORT_community_transition.md`.
+
+
 ## The claim, and the measurement that settles it
 
 The community mechanism was to learn a behaviour-aware partition of the

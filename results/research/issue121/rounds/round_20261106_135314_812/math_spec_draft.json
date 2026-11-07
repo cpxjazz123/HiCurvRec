@@ -1,0 +1,405 @@
+{
+ "mechanism": "For each fine level l in {2,3} (level 1 is untouched) the baseline residual r_{i,l} = z_i - sum_{j<l} E_{k_j(i)} is mapped into the Poincare ball B_c^d with the fixed curvature c = 1 by the frozen-scale origin exponential v_i = exp_0^c(r_{i,l}/q_l), and every codebook row by the same map u_k = exp_0^c(E_k/q_l). The train-split directed successor multiset of item i, read from a per-epoch detached ball-point snapshot V_l, gives a tangent behaviour vector t_i = sum_s (w_is/W_i) log_{v_i}^c(V_l[s]) at v_i; its COORDINATE unit direction n_i = t_i/max(||t_i||_2, 1e-12) and its COORDINATE magnitude M_i = ||t_i||_2 fix an arc length m_i = min(M_i, 0.5*min_k d_c(v_i,u_k)), both identically 0 when BEHAV=off. Every code is then displaced inside the ball along the item's direction, q_{i,k} = u_k (+) exp_0^c((m_i/2) n_i), a Mobius translation whose origin distance is exactly m_i (the contract's identity d_c(0, exp_0^c(v)) = 2||v|| gives d_c(0, Delta_i) = m_i for the coordinate unit n_i), and the cost C[i,k] = d_c(v_i, q_{i,k}) is the exact Poincare distance from the item point to the displaced code. C is fed into the baseline's Sinkhorn - the same epsilon and the same marginals - applied to the cost matrix ITSELF (the baseline's own level-3 rule first rescales its distances to [-1,1], and the mechanism does not, so the plan runs at the cost's own scale: a declared difference), the plan P is kept (no argmin of C replaces it), and the straight-through estimator x_q = P + (one_hot(k_l(i)) - P).detach() feeds the decoder the chosen RAW codeword - the forward value is exactly the baseline's - while the reconstruction's gradient reaches the cost and, through it, the fine levels' CODEBOOK rows u_k - the behaviour field and the displacement are detached, and the fine levels' item points are constants (the residual chain is a value chain), so the encoder's reconstruction gradient is the baseline's own. The behaviour enters only as a detached, once-per-epoch field; the Euclidean arm is the contract's c -> 0 limit of the same computation with the SAME behaviour field. The geometry is the contract's operator family verbatim, with the artanh clip and the tanhc/atanhc limits of the numerical contract.",
+ "computations": [
+  {
+   "name": "level_residual",
+   "definition": "r_{i,l} = z_i - sum_{j=1}^{l-1} E_{k_j(i)}, l in {2,3}; z_i is the encoder latent of item i and k_j(i) the baseline assignment at level j",
+   "inputs": [
+    "z (B x d)",
+    "E_{k_j(i)} for j < l (B x d)"
+   ],
+   "output": "r_l (B x d)",
+   "note": "The baseline residual, reused unchanged; the k_j(i) are integer constants. Level 1 is not touched by the mechanism. At the fine levels the residual is a VALUE chain (see the gradient rules), so the fine levels' item points are constants and the mechanism's gradient reaches the codebook, not the encoder.",
+   "differentiable": true
+  },
+  {
+   "name": "scale_q_l",
+   "definition": "q_l = percentile_95({ ||r_{i,l}||_2 : i in the training split }), evaluated once at epoch 0 and frozen as a buffer",
+   "inputs": [
+    "training-split level-l residuals of epoch 0"
+   ],
+   "output": "q_l (scalar per level)",
+   "note": "One frozen scalar per level; no gradient, no update, no test-split data. It is the scale the lift is normalised by.",
+   "differentiable": false
+  },
+  {
+   "name": "ball_lift",
+   "definition": "v_i = exp_0^c(r_{i,l}/q_l) = tanhc(sqrt(c)||r_{i,l}/q_l||) * (r_{i,l}/q_l), with tanhc(a) = tanh(a)/a and tanhc(0) = 1",
+   "inputs": [
+    "r_l (B x d)",
+    "q_l",
+    "c"
+   ],
+   "output": "v_l (B x d) inside B_c^d",
+   "note": "The contract's origin exponential with the explicit zero-norm limit; no 1e-12 guard stands in for the limit. The lift is what makes the arguments of the distance lie inside the ball.",
+   "differentiable": true
+  },
+  {
+   "name": "code_lift",
+   "definition": "u_k = exp_0^c(E_k/q_l) = tanhc(sqrt(c)||E_k/q_l||) * (E_k/q_l)",
+   "inputs": [
+    "E (256 x d) codebook rows",
+    "q_l",
+    "c"
+   ],
+   "output": "u_l (256 x d) inside B_c^d",
+   "note": "The same map applied to the codebook; this is the only route by which the codebook rows see the displaced cost.",
+   "differentiable": true
+  },
+  {
+   "name": "successor_snapshot",
+   "definition": "V_l[s] = no_grad( exp_0^c(r_{s,l}/q_l) ) for every training item s, computed at the START of each epoch, before that epoch's first update, from the epoch-start encoder and the epoch-start assignments (for l = 3 the residual subtracts BOTH earlier levels, r_{s,3} = z_s - E_{k_1(s)} - E_{k_2(s)}, with k_1(s) and k_2(s) the epoch-start indices of the two earlier levels)",
+   "inputs": [
+    "training-split z_s and r_{s,l} at epoch start",
+    "q_l",
+    "c"
+   ],
+   "output": "V_l (N_train x d), detached table",
+   "note": "A detached per-epoch constant; the field refreshes once per epoch and never carries gradient. Every training item receives an assignment at every level, so V_l is defined for all of them.",
+   "differentiable": false
+  },
+  {
+   "name": "behaviour_tangent",
+   "definition": "t_i = (1/W_i) * sum_s w_is * log_{v_i}^c(V_l[s]), where W_i = sum_s w_is and log_x^c(y) is the CONTRACT's logarithm: w = (-x)(+)_c y, log_x^c(y) = (2/(sqrt(c)*lambda_x^c)) * artanh(min(sqrt(c)||w||, 1 - 1e-5)) * w/max(||w||, 1e-12), with lambda_x^c = 2/(1 - c||x||^2) and the explicit zero limit artanh(0) = 0",
+   "inputs": [
+    "v_l (B x d)",
+    "V_l (N_train x d)",
+    "sparse successor rows S_i = {(s, w_is)}",
+    "c"
+   ],
+   "output": "t_i (B x d) tangent vector at v_i",
+   "note": "The behaviour entry point, with the contract's normalisation by ||w|| and the same artanh clip as the distance. An item with an empty successor row (W_i = 0) is DEFINED to have t_i = 0: the division by W_i is never evaluated for it and the cold item falls back to the plain distance. The field is detached immediately.",
+   "differentiable": false
+  },
+  {
+   "name": "behaviour_direction",
+   "definition": "n_i = t_i / max(||t_i||_2, 1e-12) - the COORDINATE unit vector, so ||n_i||_2 = 1 and n_i = 0 iff t_i = 0",
+   "inputs": [
+    "t_i (B x d)"
+   ],
+   "output": "n_i (B x d), coordinate unit or zero",
+   "note": "Detached. The magnitude below uses the SAME coordinate norm, so the pair (M_i, n_i) is the idea's pair and d_c(0, Delta_i) = m_i holds exactly with the contract's factor 2.",
+   "differentiable": false
+  },
+  {
+   "name": "behaviour_magnitude",
+   "definition": "M_i = ||t_i||_2 - the COORDINATE norm of the stored tangent vector, the idea's magnitude",
+   "inputs": [
+    "t_i (B x d)"
+   ],
+   "output": "M_i (B,)",
+   "note": "The idea's raw magnitude, NOT the Riemannian norm lambda_{v_i}||t_i||: the direction above is the coordinate unit, so the two must use the same norm, and the contract's identity d_c(0, exp_0^c(v)) = 2||v|| then gives d_c(0, Delta_i) = m_i exactly. The whole field is detached.",
+   "differentiable": false
+  },
+  {
+   "name": "nearest_code_distance",
+   "definition": "d_nn_i = min_{k in [K]} d_c(v_i, u_k) with d_c(x,y) = (2/sqrt(c)) * artanh(min(sqrt(c)||(-x)(+)_c y||, 1 - 1e-5))",
+   "inputs": [
+    "v_l (B x d)",
+    "u_l (K x d)",
+    "c"
+   ],
+   "output": "d_nn_i (B,)",
+   "note": "DETACHED: it is a scale cap, not a gradient path, so it carries no gradient into the encoder or the codebook. It equals the BEHAV=off cost row minimum.",
+   "differentiable": false
+  },
+  {
+   "name": "arc_length",
+   "definition": "m_i = min(M_i, 0.5 * d_nn_i); BEHAV=off sets m_i = 0. BOTH terms are detached",
+   "inputs": [
+    "M_i (B,)",
+    "d_nn_i (B,)"
+   ],
+   "output": "m_i (B,)",
+   "note": "The cap is scale-relative: it keeps the displacement shorter than half the distance to the nearest code. No gradient path runs through m_i.",
+   "differentiable": false
+  },
+  {
+   "name": "displacement",
+   "definition": "Delta_i = exp_0^c((m_i/2) n_i) = (1/sqrt(c))*tanh(sqrt(c)*m_i/2)*n_i, which satisfies d_c(0, Delta_i) = 2*||(m_i/2) n_i||_2 = m_i by the contract's identity",
+   "inputs": [
+    "m_i (B,)",
+    "n_i (B x d)",
+    "c"
+   ],
+   "output": "Delta_i (B x d) inside B_c^d",
+   "note": "A constant per item: m_i and n_i are detached, so no gradient reaches the behaviour field. With the framework's factor 2 the half-factor (m_i/2) makes d_c(0, Delta_i) = 2||(m_i/2) n_i||_2 = m_i EXACTLY, which is the identity the idea wanted; under the idea's informal factor 1 the same half-factor would have given m_i/2, which is why the metric's factor is amended together with it.",
+   "differentiable": false
+  },
+  {
+   "name": "displaced_code",
+   "definition": "q_{i,k} = u_k (+)_c Delta_i, with x(+)y = [(1+2c<x,y>+c||y||^2)x + (1-c||x||^2)y] / [1+2c<x,y>+c^2||x||^2||y||^2]",
+   "inputs": [
+    "u_l (K x d)",
+    "Delta_i (B x d)",
+    "c"
+   ],
+   "output": "q (B x 256 x d) inside B_c^d",
+   "note": "Differentiable in u_k; Delta_i is a constant, so no gradient to the behaviour field. BEHAV=off gives q_{i,k} = u_k.",
+   "differentiable": true
+  },
+  {
+   "name": "distance",
+   "definition": "C[i,k] = d_c(v_i, q_{i,k}) = (2/sqrt(c)) * artanh( min(sqrt(c)||(-v_i)(+)_c q_{i,k}||, 1 - 1e-5) )",
+   "inputs": [
+    "v_l (B x d)",
+    "q (B x 256 x d)",
+    "c"
+   ],
+   "output": "C (B x 256)",
+   "domain": "the arguments lie inside the ball B_c^d (c||x||^2 < 1) by construction: the item point v_i is the LIFTED image of the residual and the code point u_k is the LIFTED image of the codebook row, and the displaced point q_{i,k} = u_k (+) Delta_i is the Mobius sum of two interior points (the ball is closed under the Mobius addition), so the distance is evaluated on interior arguments only",
+   "note": "The framework's metric with its factor 2 (see conventions.distance). The clip saturates and zeroes the gradient when a point sits on the boundary.",
+   "differentiable": true
+  },
+  {
+   "name": "sinkhorn_plan",
+   "definition": "P = argmin_{P in U(a,b)} <P,C> + epsilon * sum_{i,k} P_{ik}(log P_{ik} - 1), with a_i = 1/B uniform item marginal and b the baseline balanced code marginal, solved by the baseline iteration; the plan is computed on the log scale, which is the same arithmetic with the plan kept differentiable and no underflow to NaN",
+   "inputs": [
+    "C (B x 256)",
+    "epsilon",
+    "marginals"
+   ],
+   "output": "P (B x 256), the balanced plan",
+   "note": "The baseline's Sinkhorn applied to C ITSELF: the same epsilon, the same marginals, the same iteration and the same extraction, and the mechanism replaces the cost matrix only. The baseline's own level-3 rule first rescales its distances to [-1,1] - a global scale, and the plan is invariant only to per-row and per-column ADDITIVE constants - so the mechanism's plan runs at a different temperature from the baseline's. That difference is declared here and is the only one between the two rules.",
+   "differentiable": true
+  },
+  {
+   "name": "assignment",
+   "definition": "k_l(i) = the baseline's plan extraction applied to P (the row rule of the baseline's own quantizer)",
+   "inputs": [
+    "P (B x 256)"
+   ],
+   "output": "k_l(i) (B,)",
+   "note": "Discrete, no gradient: the assignment is a decision, exactly as in the baseline - the baseline's own Sinkhorn cost carries no gradient either. The mechanism's effect is therefore the ASSIGNMENT, and the baseline's losses then train the encoder and the codebooks on that assignment.",
+   "differentiable": false
+  },
+  {
+   "name": "quantised_value",
+   "definition": "e_l = r + (a_k - r).detach(), the BASELINE's straight-through estimator over the chosen RAW codeword a_k = a[k_l]: the forward value is exactly the chosen raw codeword and the backward is the identity on the residual, so the encoder trains exactly as it does in the baseline",
+   "inputs": [
+    "P (B x 256)",
+    "k_l(i) (B,)"
+   ],
+   "output": "e_l (B x d)",
+   "note": "The mechanism changes WHICH code an item is given, not how the chosen code is reconstructed: the estimator is the baseline's, so the encoder's reconstruction gradient is the baseline's identity path, unchanged.",
+   "differentiable": true,
+   "outputs": []
+  },
+  {
+   "name": "reconstruction",
+   "definition": "the decoder receives the sum over l of the per-level x_q, each of which is the chosen raw codeword at its level",
+   "inputs": [
+    "x_q per level"
+   ],
+   "output": "the reconstruction",
+   "note": "The chosen raw codeword is what is reconstructed; the displacement only re-weights the assignment and carries the gradient.",
+   "differentiable": true
+  },
+  {
+   "name": "loss_total",
+   "definition": "L = the baseline's RQ-VAE loss over ALL THREE levels: reconstruction + sum over l in {1,2,3} of (commitment ||r_{i,l} - sg(E_{k_l(i)})||^2 + codebook ||sg(r_{i,l}) - E_{k_l(i)}||^2)",
+   "inputs": [
+    "the assigned codes",
+    "the residuals"
+   ],
+   "output": "L",
+   "note": "The level-1 terms are INCLUDED: level 1 is untouched by the mechanism and the baseline is executed verbatim, so its commitment and codebook terms must stay in the loss. No extra term is added; the mechanism's gradient reaches the cost through the plan's straight-through estimator.",
+   "differentiable": true
+  },
+  {
+   "name": "switch_behaviour",
+   "definition": "BEHAV=off sets t_i = 0 for every item, hence n_i = 0, M_i = 0, m_i = 0, Delta_i = 0, q_{i,k} = u_k and C[i,k] = d_c(v_i, u_k)",
+   "inputs": [
+    "the behaviour field"
+   ],
+   "output": "the plain-distance cost",
+   "note": "A pure branch, no gradient of its own. The arm is unit-checked and not trained.",
+   "differentiable": false
+  },
+  {
+   "name": "switch_geometry",
+   "definition": "GEOM=euclid sets c := 0 for the COST's GEOMETRY: the lift becomes the LINEAR map v = r/q_l, Mobius addition becomes vector addition and the distance becomes d_0(x,y) = 2||x-y||. The behaviour field t_i, n_i, M_i and m_i is computed with the CURVED operators (c = 1) in BOTH arms, so the Euclidean arm displaces the codes exactly as the curved arm does: the two arms differ in the GEOMETRY the cost is measured in - the lift, the addition and the distance - and in nothing else.",
+   "inputs": [
+    "c"
+   ],
+   "output": "the Euclidean-limit cost",
+   "note": "A matched control, not a re-derivation: the field is frozen under c = 1, so switching the geometry does not change what the behaviour says. The arm is unit-checked and not trained.",
+   "differentiable": true
+  }
+ ],
+ "inputs": [
+  "r_{i,l}, the residual entering level l (B x d), l in {2,3}",
+  "E_k, the level-l codebook rows (256 x d), the baseline's own, learned",
+  "S_i, the item's directed successor multiset in the training split with counts w_is, frozen",
+  "V_l, the per-epoch detached snapshot of the training items' ball points at level l",
+  "q_l, the frozen lift scale of level l, and c = 1"
+ ],
+ "outputs": [
+  "k_l(i), the level-l codeword index of every item in the batch",
+  "C[i,k], the level-l cost matrix (the distance to the displaced code)",
+  "P, the balanced plan the index is taken from",
+  "the diagnostics: the offset of the displacement, the per-code usage of the fine levels, the number of distinct level-2 prefixes and the three-level collision"
+ ],
+ "parameters": [
+  "c = 1.0 (curvature, kappa = -1), fixed",
+  "q_2, q_3 (frozen 95th-percentile lift scales, measured at epoch 0)",
+  "K = 256 codebook rows, d = 32 latent width, levels l in {2,3} only",
+  "clamp coefficient 0.5 in m_i = min(M_i, 0.5*d_nn_i)",
+  "direction guard 1e-12 in n_i = t_i/max(||t_i||, 1e-12)",
+  "artanh clip 1-1e-5, and the tanhc/atanhc zero limits",
+  "percentile 95 for q_l",
+  "the baseline's Sinkhorn epsilon, marginals and plan extraction",
+  "the baseline's RQ-VAE loss weights and the baseline's optimiser"
+ ],
+ "switches": [
+  "BEHAV: off sets t_i = 0 for every item, hence n_i = 0, M_i = 0, m_i = 0 and the displacement demand_i vanishes identically, so q_{i,k} = u_k and C[i,k] = the plain metric d_c(v_i, u_k); the balanced Sinkhorn plan, the curvature and the geometry are unchanged. The arm is unit-checked and not trained.",
+  "GEOM: euclid sets the curvature to c = 0 for the cost's geometry: the lift becomes the LINEAR map v = r/q_l, Mobius addition becomes vector addition and the distance becomes d_0(x,y) = 2||x - y||. The behaviour field t_i, n_i, M_i and m_i is computed with the CURVED operators (c = 1) in BOTH arms, so the Euclidean arm displaces the codes exactly as the curved arm does: the two arms differ in the GEOMETRY the cost is measured in - the lift, the addition and the distance - and in nothing else. The arm is unit-checked and not trained."
+ ],
+ "excluded": [
+  "the assignment k_l(i) = plan_to_index(P): a discrete decision with no gradient, exactly as in the baseline",
+  "the per-epoch successor snapshot V_l and the successor rows S_i: detached data computed from the training split, not differentiable functions of the batch",
+  "the behaviour field's own parameters: the field is detached, so nothing trains it; the mechanism's effect on the encoder and the codebooks runs through the plan's straight-through estimator",
+  "any use of validation, test or future behaviour: the successor rows and the snapshot come from the training split only",
+  "replacing the baseline's balanced assignment with a plain argmin over C",
+  "any sweep, ablation training run or seed repetition"
+ ],
+ "continuous_surface": {
+  "name": "poincare_displaced_cost_2d",
+  "callable": "displaced_distance(x, u, p, c)",
+  "symbols": [
+   "x0",
+   "x1",
+   "u0",
+   "u1",
+   "p0",
+   "p1",
+   "c"
+  ],
+  "args": [
+   {
+    "name": "x",
+    "width": 2,
+    "radius": 0.4
+   },
+   {
+    "name": "u",
+    "width": 2,
+    "radius": 0.4
+   },
+   {
+    "name": "p",
+    "width": 2,
+    "radius": 0.4
+   },
+   {
+    "name": "c",
+    "scalar": 1.0
+   }
+  ],
+  "statements": [
+   "ux = u0**2 + u1**2",
+   "px = p0**2 + p1**2",
+   "up = u0*p0 + u1*p1",
+   "q_den = 1 + 2*c*up + c**2*ux*px",
+   "q0 = ((1 + 2*c*up + c*px)*u0 + (1 - c*ux)*p0)/q_den",
+   "q1 = ((1 + 2*c*up + c*px)*u1 + (1 - c*ux)*p1)/q_den",
+   "a0 = -x0",
+   "a1 = -x1",
+   "xx = x0**2 + x1**2",
+   "aq = a0*q0 + a1*q1",
+   "qq = q0**2 + q1**2",
+   "w_den = 1 + 2*c*aq + c**2*xx*qq",
+   "w0 = ((1 + 2*c*aq + c*qq)*a0 + (1 - c*xx)*q0)/w_den",
+   "w1 = ((1 + 2*c*aq + c*qq)*a1 + (1 - c*xx)*q1)/w_den",
+   "nw = sqrt(w0**2 + w1**2)",
+   "C = 2*atanh(Min(sqrt(c)*nw, 1 - 10**-5))/sqrt(c)"
+  ],
+  "output": "C",
+  "note": "The continuous surface is the DISPLACED distance: the item's ball point x, the code's ball point u, the behaviour displacement p (the trainer builds it per item) and the curvature c. q = u (+) p is the Mobius translation of the code and C = d_c(x, q) is the framework's metric - the factor 2 included - from the item to the displaced code. The argument order is x, u, p, c so the reference builder maps the symbols x0,x1 / u0,u1 / p0,p1 / c in that order; p is broadcastable to x's shape (the comparison harness passes a scalar displacement, which is broadcast to every coordinate). The c = 0 branch is the contract's limit and is stated in the executable.",
+  "executable_statements": [
+   "eps = 1e-12",
+   "def _norm(v): return torch.sqrt(torch.clamp((v * v).sum(-1), min=0.0))",
+   "def lift(v, c): return v if c == 0.0 else v * tanhc(math.sqrt(c) * _norm(v)).unsqueeze(-1)",
+   "def tanhc(a): return torch.where(a > 0.0, torch.tanh(a) / torch.clamp(a, min=eps), torch.ones_like(a))",
+   "def mobius(x, y, c): return ((1 + 2 * c * (x * y).sum(-1, keepdim=True) + c * (y * y).sum(-1, keepdim=True)) * x + (1 - c * (x * x).sum(-1, keepdim=True)) * y) / (1 + 2 * c * (x * y).sum(-1, keepdim=True) + c * c * (x * x).sum(-1, keepdim=True) * (y * y).sum(-1, keepdim=True) + eps)",
+   "def dist(x, y, c): return 2.0 * _norm(x - y) if c == 0.0 else (2.0 / math.sqrt(c)) * torch.atanh(torch.clamp(math.sqrt(c) * _norm(mobius(-x, y, c)), max=1.0 - 1e-5))",
+   "def log_at(x, y, c): return (2.0 / (math.sqrt(c) * (2.0 / (1.0 - c * (x * x).sum(-1, keepdim=True) + eps)))) * torch.atanh(torch.clamp(math.sqrt(c) * _norm(mobius(-x, y, c)), max=1.0 - 1e-5)) * mobius(-x, y, c) / (_norm(mobius(-x, y, c)) + eps)",
+   "def displaced_distance(x, u, p, c): return 2.0 * _norm(x - (u + p)) if c == 0.0 else dist(x, mobius(u, p, c), c)",
+   "r_scaled = r / q_l",
+   "a_scaled = a / q_l",
+   "c_field = 1.0",
+   "u = lift(r_scaled, c)",
+   "b = lift(a_scaled, c)",
+   "u_field = lift(r_scaled, c_field)",
+   "b_field = lift(a_scaled, c_field)",
+   "u_detached = u_field.detach()",
+   "t_i = torch.zeros_like(u_detached)",
+   "t_i = t_i.index_add(0, edge_item, (w_is / W_i)[:, None] * log_at(u_detached[edge_item], V[edge_successor], c_field))",
+   "n_i = t_i / torch.clamp(t_i.norm(dim=-1, keepdim=True), min=1e-12)",
+   "M_i = t_i.norm(dim=-1)",
+   "d_nn_i = dist(u_detached, b_field, c_field).min(dim=-1).values.detach()",
+   "m_i = torch.minimum(M_i.detach(), 0.5 * d_nn_i)",
+   "demand_i = (torch.tanh(math.sqrt(c_field) * m_i / 2.0) / math.sqrt(c_field))[:, None] * n_i",
+   "b_k = b",
+   "q_ik = mobius(b_k, demand_i, c)",
+   "C_ik = dist(u, q_ik, c)",
+   "P_ik = sinkhorn(C_ik, sk_epsilon, sk_iters)",
+   "k_l = torch.argmax(P_ik, dim=-1)",
+   "a_k = a[k_l]",
+   "e_l = r + (a_k - r).detach()",
+   "r_next = r - e_l",
+   "sinkhorn = BASELINE_SINKHORN"
+  ]
+ },
+ "incomplete": null,
+ "missing": [],
+ "dimensions": {
+  "d": 32,
+  "K": 256,
+  "levels": 3,
+  "fine_levels": [
+   2,
+   3
+  ],
+  "batch": 1024,
+  "training_items": 24556,
+  "codebook_rows": 256
+ },
+ "gradient_rules": [
+  {
+   "operator": "the assignment k_l(i) = plan_to_index(P)",
+   "rule": "the index is discrete and carries no gradient, exactly as in the baseline: the baseline's own Sinkhorn cost carries none either. The mechanism changes WHICH code an item is given, and the baseline's losses then train the encoder and the codebooks on that assignment."
+  },
+  {
+   "operator": "the cost C[i,k] and the plan P",
+   "rule": "no gradient: they are DECISION variables. The mechanism is a change of the assignment rule's cost, not a change of the estimator, so the reconstruction's gradient path is the baseline's own and the encoder trains exactly as it does without the mechanism."
+  },
+  {
+   "operator": "the behaviour field (t_i, n_i, M_i, m_i, demand_i)",
+   "rule": "no gradient: the field is a DETACHED per-epoch constant computed from the training split, and the cap d_nn_i is detached as well. Every quantity of the field is computed under the detachment."
+  },
+  {
+   "operator": "the frozen quantities (c, q_l, the snapshot V_l, the successor rows S_i)",
+   "rule": "no gradient: c = 1 and q_l are constants, V_l and S_i are frozen data"
+  },
+  {
+   "operator": "the residual chain",
+   "rule": "the residual is the BASELINE's: r_next = r - e_l, with no detach. The baseline's straight-through estimator over the chosen codeword already makes the encoder's reconstruction gradient the identity path, and the mechanism does not touch it."
+  }
+ ],
+ "training_integration": {
+  "loss": "the baseline's RQ-VAE loss over all three levels, unchanged; no new term",
+  "optimizer": "the baseline's optimiser, unchanged, over the model's parameters; no new parameter group and no new hyperparameter",
+  "epochs": "3000 epochs on four cards, the frozen budget; one run, no ablation arm, no sweep and no seed repetition",
+  "reconstruction": "the chosen RAW, UNLIFTED codeword at every level, at its baseline position: lifting it would move both the reconstruction point and the residual recursion, and the mechanism does not own either"
+ },
+ "conventions": {
+  "curvature": "the ball is of curvature kappa = -c with c = 1 fixed; the ball radius is R_c = 1/sqrt(c) = 1",
+  "distance": "d_c(x,y) = (2/sqrt(c)) artanh(sqrt(c)||(-x)(+)y||), with (+) the canonical Mobius sum; at c = 0 the limit is 2||x-y||, and the factor 2 is the metric's normalisation. The idea wrote the informal (1/sqrt(c)) form; the round's RECORDED idea correction amends it to the framework's canonical factor 2, because with the baseline's epsilon fixed the factor doubles the cost and therefore halves the effective entropic temperature of the plan, and the mechanism takes a PLAN rather than an argmin - the factor is a modelling choice here, not a harmless normalisation. The correction is in the round's event log, and this specification states it rather than making the change silently.",
+  "exponential_map": "exp_0^c(v) = tanh(sqrt(c)||v||) v / (sqrt(c)||v||), with the explicit zero limit at v = 0",
+  "logarithm": "log_x^c(y) = (2/(sqrt(c)*lambda_x^c)) artanh(min(sqrt(c)||(-x)(+)y||, 1 - 1e-5)) (-x)(+)y / max(||(-x)(+)y||, 1e-12), with the artanh clip and the explicit zero limit",
+  "tangent_norm": "the behaviour field uses the COORDINATE norm ||t||_2 for both the magnitude and the direction (the idea's pair); the contract's Riemannian norm lambda_x||v|| is NOT used here, and the displacement's identity d_c(0, Delta_i) = m_i is checked with it",
+  "lift": "the item and the codebook are LIFTED into the ball by the frozen-scale origin exponential, which is what makes the distance's arguments lie inside the ball",
+  "plan": "the baseline's Sinkhorn applied to the cost matrix itself, with the baseline's epsilon and marginals; no centring, so the plan's temperature is the cost's own scale"
+ }
+}

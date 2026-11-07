@@ -1,0 +1,63 @@
+{
+ "symbols": [
+  "z0",
+  "z1",
+  "theta1_1_0",
+  "theta1_1_1",
+  "theta1_2_0",
+  "theta1_2_1",
+  "theta2_1_0",
+  "theta2_1_1",
+  "theta2_2_0",
+  "theta2_2_1",
+  "s",
+  "v_pi1_0",
+  "v_pi1_1",
+  "v_pi2_0",
+  "v_pi2_1"
+ ],
+ "args": [
+  {
+   "name": "z",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.0
+  }
+ ],
+ "statements": [
+  "nz = sqrt(z0**2 + z1**2 + 1e-12)",
+  "x0 = tanh(nz)*z0/nz",
+  "x1 = tanh(nz)*z1/nz",
+  "n11 = sqrt(theta1_1_0**2 + theta1_1_1**2 + 1e-12)",
+  "y11_0 = tanh(n11)*theta1_1_0/n11",
+  "y11_1 = tanh(n11)*theta1_1_1/n11",
+  "n12 = sqrt(theta1_2_0**2 + theta1_2_1**2 + 1e-12)",
+  "y12_0 = tanh(n12)*theta1_2_0/n12",
+  "y12_1 = tanh(n12)*theta1_2_1/n12",
+  "d1 = acosh(1 + 2*((x0-y11_0)**2 + (x1-y11_1)**2)/((1-(x0**2+x1**2))*(1-(y11_0**2+y11_1**2)) + 1e-12))",
+  "d2 = acosh(1 + 2*((x0-y12_0)**2 + (x1-y12_1)**2)/((1-(x0**2+x1**2))*(1-(y12_0**2+y12_1**2)) + 1e-12))",
+  "rho = 0.5",
+  "sk1 = 1/(1 + exp(-v_pi1_0))",
+  "sk2 = 1/(1 + exp(-v_pi1_1))",
+  "c1 = d1 - s*(1 - Abs(rho - sk1))",
+  "c2 = d2 - s*(1 - Abs(rho - sk2))",
+  "r10 = z0 - theta1_1_0",
+  "r11 = z1 - theta1_1_1",
+  "r20 = z0 - theta1_2_0",
+  "r21 = z1 - theta1_2_1",
+  "e11 = (r10 - theta2_1_0)**2 + (r11 - theta2_1_1)**2",
+  "e12 = (r10 - theta2_2_0)**2 + (r11 - theta2_2_1)**2",
+  "e21 = (r20 - theta2_1_0)**2 + (r21 - theta2_1_1)**2",
+  "e22 = (r20 - theta2_2_0)**2 + (r21 - theta2_2_1)**2",
+  "l1 = Piecewise((e11, e11 <= e12), (e12, True))",
+  "l2 = Piecewise((e21, e21 <= e22), (e22, True))",
+  "loss = Piecewise((l1, c1 <= c2), (l2, True))"
+ ],
+ "output": "loss",
+ "code": "import torch\n\ndef compute(z, theta_1_1, theta_1_2, theta_2_1, theta_2_2, s, v_pi_1, v_pi_2):\n    if not torch.is_tensor(z):\n        z = torch.tensor(z, dtype=torch.float32)\n    else:\n        z = z.float()\n    if z.dim() == 1:\n        z = z.unsqueeze(0)\n    dtype = z.dtype\n    device = z.device\n\n    def vec(v):\n        v = torch.as_tensor(v, dtype=dtype, device=device)\n        return v.reshape(1, -1)\n\n    def scal(v):\n        return torch.as_tensor(v, dtype=dtype, device=device)\n\n    def expmap(v):\n        n = torch.sqrt((v * v).sum(dim=-1, keepdim=True) + 1e-12)\n        return torch.tanh(n) * v / n\n\n    def hyp(x, y):\n        nx = (x * x).sum(dim=-1, keepdim=True)\n        ny = (y * y).sum(dim=-1, keepdim=True)\n        diff = ((x - y) ** 2).sum(dim=-1, keepdim=True)\n        arg = 1.0 + 2.0 * diff / ((1.0 - nx) * (1.0 - ny) + 1e-12)\n        return torch.acosh(arg)\n\n    x = expmap(z)\n    q11 = vec(theta_1_1)\n    q12 = vec(theta_1_2)\n    q21 = vec(theta_2_1)\n    q22 = vec(theta_2_2)\n    y11 = expmap(q11)\n    y12 = expmap(q12)\n    d1 = hyp(x, y11)\n    d2 = hyp(x, y12)\n\n    vp1 = torch.as_tensor(v_pi_1, dtype=dtype, device=device).reshape(-1)\n    sk1 = torch.sigmoid(vp1[0])\n    sk2 = torch.sigmoid(vp1[1])\n    rho = torch.full_like(d1, 0.5)\n    beta = scal(s)\n    c1 = d1 - beta * (1.0 - torch.abs(rho - sk1))\n    c2 = d2 - beta * (1.0 - torch.abs(rho - sk2))\n\n    r1 = z - q11\n    r2 = z - q12\n    e11 = ((r1 - q21) ** 2).sum(dim=-1, keepdim=True)\n    e12 = ((r1 - q22) ** 2).sum(dim=-1, keepdim=True)\n    e21 = ((r2 - q21) ** 2).sum(dim=-1, keepdim=True)\n    e22 = ((r2 - q22) ** 2).sum(dim=-1, keepdim=True)\n    l1 = torch.where(e11 <= e12, e11, e12)\n    l2 = torch.where(e21 <= e22, e21, e22)\n    loss = torch.where(c1 <= c2, l1, l2)\n    return loss.reshape(-1)\n",
+ "excluded": [
+  "the train-only graph preprocessing (A, D, N(i), sim, coh, rho) is frozen and is not differentiated; the minimal instance has no train edge, so rho uses the specified default 0.5",
+  "Sinkhorn iterations, column-sum balance, tau, the balanced-plan argmax and the straight-through selector are excluded; the hard level-1 code is the lower modified cost",
+  "v_pi_2 is the untouched level-2 stratum table; levels 2 and 3 stay Euclidean, and level 2 uses raw-codeword Euclidean residual selection"
+ ]
+}

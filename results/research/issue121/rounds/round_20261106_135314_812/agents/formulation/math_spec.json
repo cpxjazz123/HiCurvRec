@@ -1,0 +1,336 @@
+{
+ "mechanism": "For each fine level l in {2,3} (level 1 is untouched) the baseline residual r_{i,l} = z_i - sum_{j<l} E_{k_j(i)} is mapped into the Poincare ball B_c^d with fixed curvature c = 1 by the frozen-scale origin exponential v_i = exp_0^c(r_{i,l}/q_l) = tanhc(sqrt(c)||r||/q_l)(r/q_l), and every codebook row by the same map u_k = exp_0^c(E_k/q_l). The train-split directed successor multiset of item i, read from a per-epoch detached ball-point snapshot V_l, gives a tangent behaviour vector t_i = sum_s (w_is/W_i) log_{v_i}^c(V_l[s]) at v_i; its unit direction n_i and its length M_i fix an arc length m_i = min(M_i, 0.5*min_k d_c(v_i,u_k)), identically 0 when BEHAV=off. Every code is then displaced inside the ball along the item's direction, q_{i,k} = u_k (+) exp_0^c((m_i/2) n_i), a Mobius translation by a ball element whose origin distance is exactly m_i, and the cost C[i,k] = d_c(v_i, q_{i,k}) is the exact Poincare distance from the item point to the displaced code. C is fed unchanged into the baseline entropy-regularised Sinkhorn with the baseline epsilon, uniform item marginal and balanced code marginal; the plan P is kept (no argmin of C replaces it), the baseline plan extraction turns P into indices, the decoder is fed the chosen raw codeword through the baseline straight-through estimator, and the baseline RQ-VAE loss trains encoder and codebook. Behaviour enters only as a detached, once-per-epoch field; c = 0 is the contract's Euclidean limit branch. The geometry is the contract's operator family verbatim: d_c(x,y) = (2/sqrt(c))*artanh(clip(sqrt(c)||(-x)(+)y||, 0, 1-1e-5)), exp_0^c, log_x^c, and Mobius addition, with the artanh clip and tanhc/atanhc limits of the numerical contract.",
+ "computations": [
+  {
+   "name": "level_residual",
+   "definition": "r_{i,l} = z_i - sum_{j=1}^{l-1} E_{k_j(i)}, l in {2,3}; z_i is the encoder latent of item i and k_j(i) the baseline assignment at level j",
+   "inputs": [
+    "z (B x d)",
+    "E_{k_j(i)} for j < l (B x d)"
+   ],
+   "output": "r_l (B x d)",
+   "differentiable": true,
+   "note": "Baseline residual reused unchanged; k_j(i) are integer constants, so the gradient reaches z_i and the coarse rows E_{k_j}. Level 1 is not touched by the mechanism."
+  },
+  {
+   "name": "scale_q_l",
+   "definition": "q_l = percentile_95({ ||r_{i,l}||_2 : i in the training split }), evaluated once at epoch 0 and frozen as a buffer",
+   "inputs": [
+    "training-split level-l residuals of epoch 0"
+   ],
+   "output": "q_l (scalar per level)",
+   "differentiable": false,
+   "note": "One frozen scalar per level; no gradient, no update, no test-split data."
+  },
+  {
+   "name": "ball_lift",
+   "definition": "v_i = exp_0^c(r_{i,l}/q_l) = tanhc(sqrt(c)||r_{i,l}||/q_l) * (r_{i,l}/q_l), with tanhc(a) = tanh(a)/a and tanhc(0) = 1",
+   "inputs": [
+    "r_l (B x d)",
+    "q_l",
+    "c"
+   ],
+   "output": "v_l (B x d) inside B_c^d",
+   "differentiable": true,
+   "note": "Identical to the spec's (1/sqrt(c))*tanh(sqrt(c)||r||/q_l)*r/||r||; the tanhc form is the contract's explicit zero-norm limit, no 1e-12 guard."
+  },
+  {
+   "name": "code_lift",
+   "definition": "u_k = exp_0^c(E_k/q_l) = tanhc(sqrt(c)||E_k||/q_l) * (E_k/q_l)",
+   "inputs": [
+    "E (256 x d) codebook rows",
+    "q_l",
+    "c"
+   ],
+   "output": "u_l (256 x d) inside B_c^d",
+   "differentiable": true,
+   "note": "Same map as the item lift, applied to the codebook; this is the only route by which codebook rows see the displaced cost."
+  },
+  {
+   "name": "successor_snapshot",
+   "definition": "V_l[s] = no_grad( exp_0^c(r_{s,l}/q_l) ) for every training item s, computed once per epoch from the epoch-start encoder and epoch-start assignments",
+   "inputs": [
+    "training-split z_s and r_{s,l} at epoch start",
+    "q_l",
+    "c"
+   ],
+   "output": "V_l (N_train x d), detached table",
+   "differentiable": false,
+   "note": "Detached per-epoch constant; the behaviour field refreshes once per epoch and never carries gradient (see missing item on which level-l residual defines V_l at level 3)."
+  },
+  {
+   "name": "behaviour_tangent",
+   "definition": "t_i = (1/W_i) * sum_s w_is * log_{v_i}^c(V_l[s]), where W_i = sum_s w_is and log_x^c(y) = (2/(sqrt(c)*lambda_x^c)) * atanhc(sqrt(c)||w||) * w with w = (-x)(+)_c y and lambda_x^c = 2/(1-c||x||^2)",
+   "inputs": [
+    "v_l (B x d)",
+    "V_l (N_train x d)",
+    "sparse successor rows S_i = {(s, w_is)}",
+    "c"
+   ],
+   "output": "t_i (B x d) tangent vector at v_i",
+   "differentiable": false,
+   "note": "The behaviour entry point. Detached immediately, so it is a per-epoch constant; W_i > 0 assumed (empty successor rows are a missing definition)."
+  },
+  {
+   "name": "behaviour_direction",
+   "definition": "n_i = t_i / max(||t_i||, 1e-12), so n_i = 0 iff t_i = 0",
+   "inputs": [
+    "t_i (B x d)"
+   ],
+   "output": "n_i (B x d), unit or zero",
+   "differentiable": false,
+   "note": "Detached. The 1e-12 is inside max, i.e. a direction guard, not a stand-in for a zero-norm limit of the geometry."
+  },
+  {
+   "name": "behaviour_magnitude",
+   "definition": "M_i = ||t_i||_2",
+   "inputs": [
+    "t_i (B x d)"
+   ],
+   "output": "M_i (B,)",
+   "differentiable": false,
+   "note": "Which norm (Euclidean coordinate norm of the tangent vector, or the Riemannian lambda_{v_i}||t_i|| of contract section 3) is not stated - see missing."
+  },
+  {
+   "name": "nearest_code_distance",
+   "definition": "d_nn_i = min_{k in [K]} d_c(v_i, u_k) with d_c(x,y) = (2/sqrt(c))*artanh(clip(sqrt(c)||(-x)(+)_c y||, 0, 1-1e-5))",
+   "inputs": [
+    "v_l (B x d)",
+    "u_l (K x d)",
+    "c"
+   ],
+   "output": "d_nn_i (B,)",
+   "differentiable": true,
+   "note": "Subgradient only through the argmin row; equals the BEHAV=off cost row minimum."
+  },
+  {
+   "name": "arc_length",
+   "definition": "m_i = min(M_i, 0.5 * d_nn_i); BEHAV=off sets m_i = 0",
+   "inputs": [
+    "M_i (B,)",
+    "d_nn_i (B,)"
+   ],
+   "output": "m_i (B,)",
+   "differentiable": true,
+   "note": "First branch is constant (detached M_i); whether the 0.5*d_nn_i branch is detached is not stated - see missing."
+  },
+  {
+   "name": "displacement",
+   "definition": "Delta_i = exp_0^c((m_i/2) n_i) = (1/sqrt(c))*tanh(sqrt(c)*m_i/2)*n_i, which satisfies d_c(0, Delta_i) = 2*||(m_i/2)n_i|| = m_i by contract identity 4",
+   "inputs": [
+    "m_i (B,)",
+    "n_i (B x d)",
+    "c"
+   ],
+   "output": "Delta_i (B x d) inside B_c^d",
+   "differentiable": false,
+   "note": "Constant per item: m_i and n_i are detached. The half factor is the contract's tangent normalisation, so the translation's origin distance equals m_i exactly."
+  },
+  {
+   "name": "displaced_code",
+   "definition": "q_{i,k} = u_k (+)_c Delta_i, with x(+)y = [(1+2c<x,y>+c||y||^2)x + (1-c||x||^2)y] / [1+2c<x,y>+c^2||x||^2||y||^2]",
+   "inputs": [
+    "u_l (K x d)",
+    "Delta_i (B x d)",
+    "c"
+   ],
+   "output": "q (B x 256 x d) inside B_c^d",
+   "differentiable": true,
+   "note": "Differentiable in u_k; Delta_i is a constant, so no gradient to the behaviour field. BEHAV=off gives Delta_i = 0 and q_{i,k} = u_k."
+  },
+  {
+   "name": "poincare_cost",
+   "definition": "C[i,k] = d_c(v_i, q_{i,k}) = (2/sqrt(c)) * artanh( min(sqrt(c)||(-v_i)(+)_c q_{i,k}||, 1-1e-5) )",
+   "inputs": [
+    "v_l (B x d)",
+    "q (B x 256 x d)",
+    "c"
+   ],
+   "output": "C (B x 256)",
+   "differentiable": true,
+   "note": "The metric. Contract form with the factor 2; the clip saturates and zeroes the gradient when a point sits on the boundary."
+  },
+  {
+   "name": "sinkhorn_plan",
+   "definition": "P = argmin_{P in U(a,b)} <P,C> + epsilon * sum_{i,k} P_{ik}(log P_{ik} - 1), with a_i = 1/B uniform item marginal and b the baseline balanced code marginal, solved by the baseline iteration, plan returned",
+   "inputs": [
+    "C (B x 256)",
+    "epsilon (baseline)",
+    "a (B,)",
+    "b (256,)"
+   ],
+   "output": "P (B x 256) transport plan",
+   "differentiable": true,
+   "note": "Same epsilon, same marginals, same extraction as the baseline; no argmin of C is substituted for the plan."
+  },
+  {
+   "name": "assignment",
+   "definition": "k_l(i) = baseline_plan_to_index(P)[i] (the baseline row rule applied to the plan)",
+   "inputs": [
+    "P (B x 256)"
+   ],
+   "output": "k_l (B,) integer code indices",
+   "differentiable": false,
+   "note": "Discrete, no gradient, no straight-through: the assignment is a decision, exactly as in the baseline."
+  },
+  {
+   "name": "reconstruction",
+   "definition": "y_i^{(l)} = z_i^{(l)} + (E_{k_l(i)} - z_i^{(l)}).detach(); the decoder receives the sum of the per-level straight-through codewords and never the displaced q_{i,k} nor u_k",
+   "inputs": [
+    "z^{(l)} (B x d)",
+    "E_{k_l(i)} (B x d)"
+   ],
+   "output": "decoder input (B x d), reconstruction x_hat (B x D_out)",
+   "differentiable": true,
+   "note": "The chosen raw codeword is what is reconstructed; the displacement only re-weights the assignment."
+  },
+  {
+   "name": "loss_total",
+   "definition": "L = L_RQVAE(assigned codes) per the baseline definition, i.e. reconstruction + commitment ||r_{i,l} - sg(E_{k_l(i)})||^2 + codebook ||sg(r_{i,l}) - E_{k_l(i)}||^2 over l in {2,3}, plus whatever plan term the baseline already has",
+   "inputs": [
+    "x, x_hat",
+    "r_l",
+    "E_{k_l(i)}"
+   ],
+   "output": "scalar",
+   "differentiable": true,
+   "note": "No term in C or in q_{i,k} is defined, so the gradient statement 'through v_i and u_k only' has no carrier - see missing."
+  },
+  {
+   "name": "switch_behaviour",
+   "definition": "BEHAV=off sets t_i = 0 for every item, hence n_i = 0, M_i = 0, m_i = 0, Delta_i = 0, q_{i,k} = u_k and C[i,k] = d_c(v_i, u_k); BEHAV=on uses the tangent field",
+   "inputs": [
+    "BEHAV flag",
+    "t_i"
+   ],
+   "output": "C (B x 256)",
+   "differentiable": false,
+   "note": "Pure branch, no gradient. The arm is unit-checked and not trained."
+  },
+  {
+   "name": "switch_geometry",
+   "definition": "GEOM=euclid sets c := 0, selecting the contract's Euclidean limit: (+) becomes +, exp_0^0(v) = v, log_x^0(y) = y - x, d_0(x,y) = 2||x-y||; GEOM=poincare keeps c = 1",
+   "inputs": [
+    "GEOM flag",
+    "c"
+   ],
+   "output": "the operator family used by every computation above",
+   "differentiable": false,
+   "note": "Branch selection. The spec's flat form C = ||(v_i-u_k) - m_i n_i||_2 is not the c->0 limit of the stated branch and its lift has no stated limit - see missing."
+  }
+ ],
+ "inputs": [
+  "r_{i,l}: level-l residuals of the batch (B x d)",
+  "E_l: level-l codebook rows (256 x d)",
+  "S_i = {(s, w_is)}: frozen training-split directed successor rows with counts",
+  "V_l: per-epoch detached successor ball-point snapshot (N_train x d)",
+  "c = 1.0 fixed curvature",
+  "q_l: frozen per-level lift scale",
+  "baseline Sinkhorn configuration (epsilon, uniform item marginal, balanced code marginal, plan extraction)",
+  "baseline RQ-VAE loss terms and optimizer configuration"
+ ],
+ "outputs": [
+  "C: B x 256 cost matrix of Poincare distances to the behaviour-displaced codes",
+  "P: B x 256 balanced Sinkhorn plan",
+  "k_l: B level-l code indices",
+  "intermediates for the switches: v_l, u_l, t_i, n_i, M_i, d_nn_i, m_i, Delta_i, q (B x 256 x d)"
+ ],
+ "parameters": [
+  "c = 1.0 (curvature, K = -1)",
+  "q_2, q_3 (frozen 95th-percentile lift scales)",
+  "K = 256 codebook rows",
+  "d = 32 latent width",
+  "levels l in {2,3} only",
+  "clamp coefficient 0.5 in m_i = min(M_i, 0.5*d_nn_i)",
+  "direction guard 1e-12 in n_i",
+  "artanh clip 1-1e-5",
+  "percentile 95 for q_l",
+  "baseline Sinkhorn epsilon, marginals and plan extraction (values taken from the baseline, not restated)",
+  "baseline RQ-VAE loss weights",
+  "AdamW with the baseline schedule"
+ ],
+ "switches": [
+  "BEHAV: off sets t_i = 0 for every item, hence n_i = 0, M_i = 0, m_i = 0, Delta_i = 0, q_{i,k} = u_k and C[i,k] = d_c(v_i, u_k); the balanced Sinkhorn plan and the curvature are unchanged. The arm is unit-checked and not trained.",
+  "GEOM: euclid sets c := 0 and switches every operator to the contract's Euclidean limit ((+) -> +, exp_0^0(v) = v, log_x^0(y) = y-x, d_0(x,y) = 2||x-y||) with the same behaviour field; poincare keeps c = 1. The arm is unit-checked and not trained, and its stated flat cost does not match this limit (see missing)."
+ ],
+ "excluded": [
+  "Level 1: no cost, no drift, the baseline is executed verbatim",
+  "Any signal from outside the training split: no user ids, no timestamps, no popularity, no test-split successors",
+  "Any pruning or top-K on the successor rows: all successors with their counts are kept",
+  "Any learned per-item weights or attention over successors: fixed counts only",
+  "Any Fréchet mean or barycentre: the successor aggregation is a weighted mean of tangent vectors at a single base point v_i",
+  "Any straight-through estimator inside the transport path: the assignment is a genuine discrete decision",
+  "Any change to the Sinkhorn epsilon, the uniform item marginal, the balanced code marginal or the plan extraction",
+  "Any reimplementation of exp/log/distance/projection outside the geometry contract module",
+  "Training of the BEHAV=off and GEOM=euclid ablation arms"
+ ],
+ "continuous_surface": {
+  "name": "poincare_displaced_cost_2d",
+  "callable": "geo_drift.ops:poincare_displaced_cost",
+  "symbols": [
+   "x0",
+   "x1",
+   "u0",
+   "u1",
+   "p0",
+   "p1",
+   "c"
+  ],
+  "args": [
+   {
+    "name": "x",
+    "width": 2,
+    "radius": 2.0,
+    "scalar": 2.0
+   },
+   {
+    "name": "u",
+    "width": 2,
+    "radius": 2.0,
+    "scalar": 2.0
+   },
+   {
+    "name": "p",
+    "width": 2,
+    "radius": 2.0,
+    "scalar": 2.0
+   },
+   {
+    "name": "c",
+    "width": 1,
+    "radius": 1.0,
+    "scalar": 1.0
+   }
+  ],
+  "statements": [
+   "ux = u0**2 + u1**2",
+   "px = p0**2 + p1**2",
+   "up = u0*p0 + u1*p1",
+   "q_den = 1 + 2*c*up + c**2*ux*px",
+   "q0 = ((1 + 2*c*up + c*px)*u0 + (1 - c*ux)*p0)/q_den",
+   "q1 = ((1 + 2*c*up + c*px)*u1 + (1 - c*ux)*p1)/q_den",
+   "a0 = -p0",
+   "a1 = -x1",
+   "xx = x0**2 + x1**2",
+   "aq = a0*q0 + a1*q1",
+   "qq = q0**2 + q1**2",
+   "w_den = 1 + 2*c*aq + c**2*xx*qq",
+   "w0 = ((1 + 2*c*aq + c*qq)*a0 + (1 - c*xx)*q0)/w_den",
+   "w1 = ((1 + 2*c*aq + c*qq)*a1 + (1 - c*xx)*q1)/w_den",
+   "nw = sqrt(w0**2 + w1**2)",
+   "arg = Min(sqrt(c)*nw, 1 - 10**-5)",
+   "C = 2*atanh(arg)/sqrt(c)"
+  ],
+  "output": "C",
+  "note": "a0 = -x0 (the point (-x) enters the Mobius difference); p is the detached displacement Delta_i = (1/sqrt(c))*tanh(sqrt(c)*m_i/2)*n_i supplied as a constant."
+ },
+ "incomplete": "SPECIFICATION_INCOMPLETE",
+ "missing": [
+  "The norm in M_i = ||t_i||: Euclidean coordinate norm of the stored tangent vector, or the Riemannian norm lambda_{v_i}||t_i|| that contract section 3 requires for tangent norms. m_i, Delta_i and hence the displacement length differ by the factor lambda_{v_i} = 2/(1-c||v_i||^2) between the two readings.",
+  "The GEOM=euclid branch: the c->0 limit of the lift is v = r/q_l (a linear map, not the 'bounded Euclidean radial map' the spec claims; ||v|| can exceed 1), the limit of the displacement is (m_i/2) n_i, and the contract fixes d_0(x,y) = 2||x-y|| - whereas the spec states C[i,k] = ||(v_i-u_k) - m_i n_i||_2, which differs by a factor 2 in the displacement and a factor 2 in the metric and leaves the lift's limit unstated. Which convention governs the flat branch is undefined.",
+  "Whether the cost C, or the plan P, enters the total loss, and with what coefficient and functional form. With loss = baseline RQ-VAE loss on the assigned codes and the decoder fed the chosen raw codeword, the plan is converted to an index with no gradient, so C carries no gradient at all and the stated 'gradients flow through v_i and u_k only' has no carrier.",
+  "The content of the per-epoch snapshot at level 3: which level-2 codes define r_{s,3} for the snapshot (the epoch-start assignment or the current batch's), and whether the snapshot is taken before the epoch's first update or refreshed during the epoch. Also how V_l is defined for training items that receive no level-2 assignment.",
+  "Items i with an empty successor row (W_i = 0): no rule is given for t_i, which is a division by W_i in the stated formula.",
+  "Whether the 0.5*d_nn_i term inside m_i is detached: only t_i and n_i are declared detached, but d_nn_i is built from the live v_i and u_k, so the clamp could carry gradient into the encoder and codebook."
+ ]
+}

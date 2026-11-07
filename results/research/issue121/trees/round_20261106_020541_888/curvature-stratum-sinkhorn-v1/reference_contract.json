@@ -1,0 +1,98 @@
+{
+  "mechanism": "behaviour-curvature-stratified level-1 assignment",
+  "calls": [
+    {
+      "name": "level-1 distance",
+      "callable": "model.poincare_contract:distance",
+      "note": "The frozen continuous surface: the geodesic distance of the c = 1 ball between the lifted residual and the lifted codeword. The statements are the frozen specification's, verbatim; the argument names follow the callable's own signature.",
+      "symbols": [
+        "x0",
+        "x1",
+        "y0",
+        "y1",
+        "c"
+      ],
+      "args": [
+        {
+          "name": "x",
+          "width": 2,
+          "radius": 0.4
+        },
+        {
+          "name": "y",
+          "width": 2,
+          "radius": 0.4
+        },
+        {
+          "name": "c",
+          "scalar": 1.0
+        }
+      ],
+      "statements": [
+        "xy = -(x0*y0 + x1*y1)",
+        "xn = x0**2 + x1**2",
+        "yn = y0**2 + y1**2",
+        "num0 = (1 + 2*c*xy + c*yn)*(-x0) + (1 - c*xn)*y0",
+        "num1 = (1 + 2*c*xy + c*yn)*(-x1) + (1 - c*xn)*y1",
+        "den = 1 + 2*c*xy + c**2*xn*yn + 1e-12",
+        "mx0 = num0/den",
+        "mx1 = num1/den",
+        "mn = mx0**2 + mx1**2",
+        "d = 2/sqrt(c)*atanh(Min(sqrt(c)*sqrt(mn), 1 - 1e-6))"
+      ],
+      "output": "d"
+    }
+  ],
+  "coupling": {
+    "callable": "model.stratum:level1_cost",
+    "behaviour_arguments": [
+      "rank"
+    ],
+    "control_argument": "stratum",
+    "note": "The behaviour enters the cost the assignment is taken over: the offset beta*R_c*(1 - |rho_i - s_k|) is subtracted from the distance, and moving rho_i moves the cost. A row scalar alone could not change an argmin; this term varies over the codewords, which is why it can.",
+    "args": [
+      {
+        "name": "residual",
+        "width": 32
+      },
+      {
+        "name": "codebook",
+        "width": 32
+      },
+      {
+        "name": "curvature",
+        "scalar": 1.0
+      },
+      {
+        "name": "rank",
+        "width": 1
+      },
+      {
+        "name": "stratum",
+        "width": 1
+      },
+      {
+        "name": "beta",
+        "scalar": 0.5
+      }
+    ]
+  },
+  "excluded": [
+    {
+      "surface": "the level-1 index k1 = argmax_k P_ik",
+      "reason": "an argmax is discrete and carries no gradient"
+    },
+    {
+      "surface": "the straight-through estimator one_hot(k1) + P - P.detach()",
+      "reason": "its backward is the identity on P by construction, not the derivative of its forward value"
+    },
+    {
+      "surface": "the cohesion statistic and its mid-rank",
+      "reason": "rho_i is a frozen buffer computed from the training split once before training; it is not a differentiable function of any input"
+    },
+    {
+      "surface": "beta",
+      "reason": "measured once from the epoch-0 chosen distances and frozen; a constant of the run, not of the graph"
+    }
+  ]
+}

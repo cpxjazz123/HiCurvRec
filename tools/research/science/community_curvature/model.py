@@ -292,6 +292,24 @@ class CommunityModel(nn.Module):
         combined = torch.stack(parts, dim=0).mean(dim=0)
         return combined
 
+    def branch_logits(self, free_items: torch.Tensor,
+                      ball_items: torch.Tensor | None = None):
+        """Each branch's own score of every community, before they are combined.
+
+        The combined distance standardises each branch and averages them; these
+        are the branch's own logits, which is what the cross-space consistency
+        term compares.
+        """
+        free_centres, hyper_centres = self.centres()
+        d_free = torch.cdist(free_items.double(), free_centres.double(),
+                             compute_mode="donot_use_mm_for_euclid_dist")
+        if ball_items is None:
+            return -d_free, None
+        d_ball = self.contract.distance(ball_items.double()[:, None, :],
+                                       hyper_centres.double()[None, :, :],
+                                       self.curvature_value)
+        return -d_free, -d_ball
+
     def assignment(self, free_items: torch.Tensor,
                    ball_items: torch.Tensor | None = None) -> torch.Tensor:
         """The soft community distribution of every item.
@@ -383,6 +401,22 @@ class CommunityModel(nn.Module):
         return {"scale_free": float(self.scale_free),
                 "scale_hyper": float(self.scale_hyper),
                 "separation_threshold": float(self.separation_threshold)}
+
+
+def cross_space_divergence(free_logit: torch.Tensor, ball_logit: torch.Tensor) -> torch.Tensor:
+    """How much the two subspaces disagree about an item's community.
+
+    The free branch and the hyperbolic branch each give a distribution over the
+    communities; the symmetric Jensen-Shannon divergence between the two rows is
+    zero when they agree and maximal when they are disjoint. It is the
+    cross-space consistency the plan listed as missing.
+    """
+    free = torch.softmax(free_logit, dim=1)
+    ball = torch.softmax(ball_logit, dim=1)
+    mixture = 0.5 * (free + ball)
+    left = 0.5 * (free * (free.clamp_min(1e-12).log() - mixture.clamp_min(1e-12).log())).sum(dim=1)
+    right = 0.5 * (ball * (ball.clamp_min(1e-12).log() - mixture.clamp_min(1e-12).log())).sum(dim=1)
+    return (left + right).mean()
 
 
 def _standardise(rows: torch.Tensor, eps: float = 1e-8) -> torch.Tensor:

@@ -1,0 +1,350 @@
+{
+  "decision_at": 1793934821.7535074,
+  "decision_hash": "104c80f6141477832641aa085a0ffc45f00c53a02528b32616ffd29ac7b201a3",
+  "evidence": {
+    "bgcd-fine-v1": {
+      "bundle_sha256": "65930410bd2f75d81b8aa5d278059a291da7f806f567052b1acc272ed645631f",
+      "literature_sha256": "6a48138c53301b6aef52c621250816bc90f40e449f14de06a584bddf6c1fad6f",
+      "math_sha256": "0b410de321a13d853f80568b182631003627d33349bf5d279b4537668e1b3c12",
+      "probe_sha256": "4a701722ab21f14f890f3707b5f511ca359a45eb9da48543e99e5fcca1a5be4a"
+    },
+    "fine-residual-behaviour-geodesic-transport-v1": {
+      "bundle_sha256": "442c7bd52814c269268641ca61b378464abffa226409cb5c506e301b5b89b51f",
+      "literature_sha256": "a8f469b90d33f6be07643858f10325da791fa93a8fb5db908fc9dada3071ed5c",
+      "math_sha256": "a47ef116512b559a6987d034d93d3acdd93e7946ec595e78a834116a82861762",
+      "probe_sha256": "7a952137dd59b0b87d3f8116778925bd1aad760b5b2628e81166bd2041836873"
+    },
+    "poincare_residual_direction_sinkhorn_v1": {
+      "bundle_sha256": "adeb64486765c2fd91102007d293c9f5642ebe0c3f5b854df7219fefadfee543",
+      "literature_sha256": "440658bdb3be84df60e48aaf823f041cb2d14b9a852f232a3c71d07d3f770d4b",
+      "math_sha256": "87bb97b8a408e2b375ab94d15ab57a181a1e76565c7ee991ce2bf682275a33dd",
+      "probe_sha256": "c2b67e0dbe53af2a5228e38bd33609f2fe2eac808541ad418e5959fc0c992502"
+    },
+    "successor-anchor-l2-poincare-sinkhorn-v1": {
+      "bundle_sha256": "6f9f3944ba78d62bf8d657c58af4a225085ce9f19b784741017c49edc6f29344",
+      "literature_sha256": "3179bac8e04cae1e195e9767f3827b1072ced003be032798b6c782a924d81841",
+      "math_sha256": "fd19561d51db9ac9d3be4f1c4292e26479721916397f2ea63724972b4802b9f0",
+      "probe_sha256": "ec3a181cb97d8db1d90805d3ff8b8bde9506fc65a7e4f469eab35cce10ef2107"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "successor-anchor-l2-poincare-sinkhorn-v1",
+        "mean_rank": 3.6667,
+        "per_reviewer_position": {
+          "scoring_1": 4,
+          "scoring_2": 4,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "The equation contradicts the claimed mechanism: C2 = d2_r/a_i - beta_i*d2_b/m_i makes the cost lowest for codes FAR from the successor anchor b_i, so the assigned L2 token encodes where the item does not lead, against its own motivation and hypothesis (i) that MI(level-2 code; successor coarse group) rises; the anchor is also averaged through only the 256 L1 code embeddings, thinning exactly the behaviour signal E6 already measures as near-null (0.0907 vs 0.067), it leaves L3 at baseline, and it gives no ball lift or clamp (E7/E9), leaving only the common E12/E14 caveats as support.\nOBJECTION: Every placement is grounded in specification quality, not in measured coupling: the four bundles share the same frozen diagnostics, E11 (geometry operator valid) and E13 (geometry dependency) PASS but E12 behavior_dependency FAILs for the generic proxy and E14 reports the candidate joint path not run, so none of the four has demonstrated that training-only behaviour actually moves an assignment inside the baseline Sinkhorn plan; the 955-prefix / 7414-prefix / 0.771-collision figures that all four motivations rest on appear in the proposals, not as an OBSERVED bundle entry, and E5's coverage is over sampled users with hub-heavy degree structure, so the ranking is an ordering of how safely each design could be implemented and refuted in the single frozen run, and could be overturned by the one Stage 3 test_recall@10 measurement.",
+          "scoring_2": "C2 = d2_r/a_i - beta_i*d2_b/m_i minimises two squared distances, i.e. it is an ATTRACTOR to the successor anchor - precisely the cohesion mechanism that ate fine resolution and produced the measured 955 L2 prefixes and 0.771 collision; its own hypothesis that prefixes stay >=7414 is in tension with the attractive form, the claim that equal median-normalised weighting is a 'neutral default' is asserted not derived, and it acts only at L2; it keeps the balanced plan so it stays in scope, but it is last on failure-mode risk.\nOBJECTION: No proposal is out of scope on criterion 6: all four keep the baseline balanced Sinkhorn assignment (successor-anchor 'no argmin anywhere, P2=baseline Sinkhorn(C2)', poincare-residual takes the plan's argmax column, fine-residual takes the index from the plan exactly as baseline, bgcd states no argmin replaces the plan), so the balanced level assignment with even codebook usage is preserved. The binding reservation is shared and unverified across all four: every bundle carries the identical E12 FAIL (the generic positive-row-scalar and codeword-independent-offset manipulations leave the argmin unchanged) and E14 joint_path_dependency CANDIDATE_PATH_NOT_RUN, so none of the four has demonstrated the coupling it claims, and no bundle contains any Stage3 Recall observation. My ordering is therefore grounded only on structural anti-collapse design relative to the measured round_20261105 fine-level failure (955 L2 prefixes, 0.771 weighted 3-level collision against the 0.065 reference) and on whether the constants are derived or asserted, not on any measured test_recall@10; single-seed noise is part of the uncertainty for whichever proposal is selected.",
+          "scoring_3": "Cheapest design and the only one leaving L3 byte-identical with a derived beta_i/median-normalisation argument, but the term is subtractive -beta_i*d^2(b_i,c_k)^2/m_i, an attractive cohesion bias, the same sign as the reward that produced the rejected round's 955 L2 prefixes and 0.771 collision, and its risks concede a dominant successor coarse code can concentrate a group; [E6] (same_first_prefix_rate 0.0907 vs permuted null 0.067) shows the baseline prefix carries almost no successor information, and [E12] FAIL is most damaging for a codeword-dependent additive offset rather than a moved point."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 11
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "fine-residual-behaviour-geodesic-transport-v1",
+        "mean_rank": 2.0,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 2,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Cheapest and most sign-consistent coupling (item transported along its transition direction so the L2 token names where the item leads), L1 byte-identical, constants derived from batch statistics (median residual norm rho_l, mean behaviour strength sbar) and an explicit Euclidean comparison (E10); placed third because the Mobius sum is applied to the unlifted residual r with no ball-norm clamp (E11's domain guard was validated only on a test vector, and the proposal's own risk list flags boundary blow-up), the transport length reaches a full median residual norm so many L2 assignments move at once, and its own risk concedes an isometry may merely permute codewords — unseparable in one run against E6's weak 0.0907-vs-0.067 signal.",
+          "scoring_2": "L1 untouched, baseline Sinkhorn and baseline temperature kept, translation bounded by measured rho_l and sbar, and an isometry is a bijection so it structurally cannot merge two residuals (targets the same measured fine-level collapse); its prior-work labels are related_but_different to HVQ-VAE/HyperVQ (E17-E19), the most differentiated of the four; placed below #1 because c=1 is a fixed contract default rather than a measured curvature and its own risk list concedes the translation may only permute codewords.",
+          "scoring_3": "Only bundle with differentiated prior art ([E17]-[E19] related_but_different, versus same_operator_or_path for the other three) and the only operator that structurally excludes the documented failure: a Mobius/exp-map transport is an isometry and a bijection on the c=1 ball of [E11], so it cannot merge two distinct fine residuals onto one codeword the way the rejected cohesion arm did; keeps L1 baseline, acts on both L2 and L3 with a derived length (rho_l * tanh(s_i/sbar), no swept constant) at +3-5% cost, and its own main doubt (isometry may permute codes without adding next-item information) is precisely what the mandated switches exist to expose."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 6
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "poincare_residual_direction_sinkhorn_v1",
+        "mean_rank": 2.3333,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 1,
+          "scoring_3": 4
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Poincare cost with per-level curvature kappa_l=-1/R_l^2 derived from the measured median residual norm (E7/E9) enters the baseline Sinkhorn cost at levels 2-3 with L1 bit-identical; the tanh radial lift keeps",
+          "scoring_2": "L1 cost is bit-identical to the frozen baseline so the 241/256 L1 usage and Hard ER 16.39 are inherited, and the behaviour enters only the L2/L3 Sinkhorn cost matrix (E7/E8/E9); curvature kappa_l=-1/R_l^2 is derived from the measured per-level residual median and the temperature is scaled by measured mean(C)/mean(C_euclid) (E10), satisfying the derived-constant rule; the behaviour is a tangential rotation that leaves the radial coordinate a_i untouched, so it structurally cannot pull distinct residuals onto one code - the direct answer to the measured 955 L2 prefixes / 0.771 weighted 3-level collision - while the baseline balanced plan is retained.",
+          "scoring_3": "Largest scope hazard: besides the curved cost it rescales the Sinkhorn temperature eps_l = eps_base*mean(C^l)/mean(C^l_euclid), changing the baseline solver's entropy rather than only the cost matrix, and its own risks concede the plan can become nearly hard and destabilise codebook updates - the collapse-adjacent regime the contract protects; it only rotates the residual direction with tanh radial compression that loses resolution among the small residuals where fine codes live, and its bundle repeats the same [E12] FAIL / [E14] CANDIDATE_PATH_NOT_RUN with same_operator_or_path prior art, so nothing in the evidence offsets that hazard.\nOBJECTION: All four bundles carry the same two unresolved gates - [E14] CANDIDATE_PATH_NOT_RUN (no candidate tree has exercised the joint quantizer path) and [E12] FAIL behaviour_dependency, where even a codeword-dependent weight moved no top-1 index in the generic proxy - while [E13] shows a matched Euclidean intervention moving only 1 of the top-1 indices and [E6] puts the frozen baseline's prefix successor rate at 0.0907 against a permuted null of 0.067; with one run, no ablation and one seed, an effect of that order is hard to separate from seed noise, so this ranking is a judgement about which mechanism has the strongest structural safeguard against the documented rejection mode (fine-level prefix collapse under cohesion-style attraction), not a claim that any proposal has demonstrated a behaviour or geometry dependency."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 7
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "bgcd-fine-v1",
+        "mean_rank": 2.0,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 3,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Only candidate whose ball domain is guaranteed by derived safeguards: frozen per-level 95th-percentile residual scale q_l, tanh lift, artanh clamp, and a displacement clipped to 0.5*min_k d_P(v_i,u_k) (E7/E9), so the E11 geometry pass is not undone by out-of-ball residuals; L1 untouched at baseline (E2/E3 train-only successors, E5 mean out-degree 5.4526 supports the successor table), cost matrix only inside the baseline Sinkhorn, +5-7% wall clock; it is the only one that structurally bounds the previous 955-prefix / 0.771-collision collapse instead of re-risking it, and its residual gap is only the common E12 proxy caveat and E14 unexercised path.",
+          "scoring_2": "Repulsive geodesic displacement of the fine code points with derived m_i=min(M_i,0.5*min_k d_P) cap and L1 untouched, so it also targets the measured 955-prefix / 0.771-collision failure while keeping the baseline plan; but a per-(i,k) code displacement makes the cost no longer a distance, it needs a full extra encoder forward pass per epoch (+5-7% per its own cost note) and the min-over-codes cap adds an ill-conditioning route for Sinkhorn - defensible but heavier and less clean than #1/#2.",
+          "scoring_3": "Same curved-transport family on the code side, with the strongest derived safety constant in the field (m_i <= 0.5*min_k d_P plus arctanh clamp) and a proper Log_{v_i} tangent behaviour rather than a Euclidean embedding difference; second not first because it is the dearest (extra forward-only epoch pass, self-declared +5-7% wall clock), its behaviour field is fully detached so it never shapes gradients through the behaviour term, gyro-asymmetry makes the effect less predictable than residual transport, and [E5] mean_outgoing_degree 5.45 keeps successor hub noise a live risk."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 6
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "6f9f3944ba78d62bf8d657c58af4a225085ce9f19b784741017c49edc6f29344",
+      "idea_id": "successor-anchor-l2-poincare-sinkhorn-v1",
+      "proposal_sha256": "854b79c5b2c35780692781424c9e6da28a24ebb52c10bc297cf980eb20362bfa"
+    },
+    {
+      "evidence_sha256": "442c7bd52814c269268641ca61b378464abffa226409cb5c506e301b5b89b51f",
+      "idea_id": "fine-residual-behaviour-geodesic-transport-v1",
+      "proposal_sha256": "9ed80a344a6dab49df0c0d08b0c5c4b3f91275d0a67aa411f2c498d74c053d6f"
+    },
+    {
+      "evidence_sha256": "adeb64486765c2fd91102007d293c9f5642ebe0c3f5b854df7219fefadfee543",
+      "idea_id": "poincare_residual_direction_sinkhorn_v1",
+      "proposal_sha256": "6c2b66cb96351e35ce24ad7de74fd3e2db1d4ab578c6f5dd27351bc9b4107408"
+    },
+    {
+      "evidence_sha256": "65930410bd2f75d81b8aa5d278059a291da7f806f567052b1acc272ed645631f",
+      "idea_id": "bgcd-fine-v1",
+      "proposal_sha256": "16f5ed8cdb886873d3be11b10efb184f201db09e11a12401b5e37535290d432f"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "bgcd-fine-v1",
+          "position": 1,
+          "reason": "Only candidate whose ball domain is guaranteed by derived safeguards: frozen per-level 95th-percentile residual scale q_l, tanh lift, artanh clamp, and a displacement clipped to 0.5*min_k d_P(v_i,u_k) (E7/E9), so the E11 geometry pass is not undone by out-of-ball residuals; L1 untouched at baseline (E2/E3 train-only successors, E5 mean out-degree 5.4526 supports the successor table), cost matrix only inside the baseline Sinkhorn, +5-7% wall clock; it is the only one that structurally bounds the previous 955-prefix / 0.771-collision collapse instead of re-risking it, and its residual gap is only the common E12 proxy caveat and E14 unexercised path."
+        },
+        {
+          "idea_id": "poincare_residual_direction_sinkhorn_v1",
+          "position": 2,
+          "reason": "Poincare cost with per-level curvature kappa_l=-1/R_l^2 derived from the measured median residual norm (E7/E9) enters the baseline Sinkhorn cost at levels 2-3 with L1 bit-identical; the tanh radial lift keeps"
+        },
+        {
+          "idea_id": "fine-residual-behaviour-geodesic-transport-v1",
+          "position": 3,
+          "reason": "Cheapest and most sign-consistent coupling (item transported along its transition direction so the L2 token names where the item leads), L1 byte-identical, constants derived from batch statistics (median residual norm rho_l, mean behaviour strength sbar) and an explicit Euclidean comparison (E10); placed third because the Mobius sum is applied to the unlifted residual r with no ball-norm clamp (E11's domain guard was validated only on a test vector, and the proposal's own risk list flags boundary blow-up), the transport length reaches a full median residual norm so many L2 assignments move at once, and its own risk concedes an isometry may merely permute codewords — unseparable in one run against E6's weak 0.0907-vs-0.067 signal."
+        },
+        {
+          "idea_id": "successor-anchor-l2-poincare-sinkhorn-v1",
+          "position": 4,
+          "reason": "The equation contradicts the claimed mechanism: C2 = d2_r/a_i - beta_i*d2_b/m_i makes the cost lowest for codes FAR from the successor anchor b_i, so the assigned L2 token encodes where the item does not lead, against its own motivation and hypothesis (i) that MI(level-2 code; successor coarse group) rises; the anchor is also averaged through only the 256 L1 code embeddings, thinning exactly the behaviour signal E6 already measures as near-null (0.0907 vs 0.067), it leaves L3 at baseline, and it gives no ball lift or clamp (E7/E9), leaving only the common E12/E14 caveats as support.\nOBJECTION: Every placement is grounded in specification quality, not in measured coupling: the four bundles share the same frozen diagnostics, E11 (geometry operator valid) and E13 (geometry dependency) PASS but E12 behavior_dependency FAILs for the generic proxy and E14 reports the candidate joint path not run, so none of the four has demonstrated that training-only behaviour actually moves an assignment inside the baseline Sinkhorn plan; the 955-prefix / 7414-prefix / 0.771-collision figures that all four motivations rest on appear in the proposals, not as an OBSERVED bundle entry, and E5's coverage is over sampled users with hub-heavy degree structure, so the ranking is an ordering of how safely each design could be implemented and refuted in the single frozen run, and could be overturned by the one Stage 3 test_recall@10 measurement."
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "poincare_residual_direction_sinkhorn_v1",
+          "position": 1,
+          "reason": "L1 cost is bit-identical to the frozen baseline so the 241/256 L1 usage and Hard ER 16.39 are inherited, and the behaviour enters only the L2/L3 Sinkhorn cost matrix (E7/E8/E9); curvature kappa_l=-1/R_l^2 is derived from the measured per-level residual median and the temperature is scaled by measured mean(C)/mean(C_euclid) (E10), satisfying the derived-constant rule; the behaviour is a tangential rotation that leaves the radial coordinate a_i untouched, so it structurally cannot pull distinct residuals onto one code - the direct answer to the measured 955 L2 prefixes / 0.771 weighted 3-level collision - while the baseline balanced plan is retained."
+        },
+        {
+          "idea_id": "fine-residual-behaviour-geodesic-transport-v1",
+          "position": 2,
+          "reason": "L1 untouched, baseline Sinkhorn and baseline temperature kept, translation bounded by measured rho_l and sbar, and an isometry is a bijection so it structurally cannot merge two residuals (targets the same measured fine-level collapse); its prior-work labels are related_but_different to HVQ-VAE/HyperVQ (E17-E19), the most differentiated of the four; placed below #1 because c=1 is a fixed contract default rather than a measured curvature and its own risk list concedes the translation may only permute codewords."
+        },
+        {
+          "idea_id": "bgcd-fine-v1",
+          "position": 3,
+          "reason": "Repulsive geodesic displacement of the fine code points with derived m_i=min(M_i,0.5*min_k d_P) cap and L1 untouched, so it also targets the measured 955-prefix / 0.771-collision failure while keeping the baseline plan; but a per-(i,k) code displacement makes the cost no longer a distance, it needs a full extra encoder forward pass per epoch (+5-7% per its own cost note) and the min-over-codes cap adds an ill-conditioning route for Sinkhorn - defensible but heavier and less clean than #1/#2."
+        },
+        {
+          "idea_id": "successor-anchor-l2-poincare-sinkhorn-v1",
+          "position": 4,
+          "reason": "C2 = d2_r/a_i - beta_i*d2_b/m_i minimises two squared distances, i.e. it is an ATTRACTOR to the successor anchor - precisely the cohesion mechanism that ate fine resolution and produced the measured 955 L2 prefixes and 0.771 collision; its own hypothesis that prefixes stay >=7414 is in tension with the attractive form, the claim that equal median-normalised weighting is a 'neutral default' is asserted not derived, and it acts only at L2; it keeps the balanced plan so it stays in scope, but it is last on failure-mode risk.\nOBJECTION: No proposal is out of scope on criterion 6: all four keep the baseline balanced Sinkhorn assignment (successor-anchor 'no argmin anywhere, P2=baseline Sinkhorn(C2)', poincare-residual takes the plan's argmax column, fine-residual takes the index from the plan exactly as baseline, bgcd states no argmin replaces the plan), so the balanced level assignment with even codebook usage is preserved. The binding reservation is shared and unverified across all four: every bundle carries the identical E12 FAIL (the generic positive-row-scalar and codeword-independent-offset manipulations leave the argmin unchanged) and E14 joint_path_dependency CANDIDATE_PATH_NOT_RUN, so none of the four has demonstrated the coupling it claims, and no bundle contains any Stage3 Recall observation. My ordering is therefore grounded only on structural anti-collapse design relative to the measured round_20261105 fine-level failure (955 L2 prefixes, 0.771 weighted 3-level collision against the 0.065 reference) and on whether the constants are derived or asserted, not on any measured test_recall@10; single-seed noise is part of the uncertainty for whichever proposal is selected."
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "fine-residual-behaviour-geodesic-transport-v1",
+          "position": 1,
+          "reason": "Only bundle with differentiated prior art ([E17]-[E19] related_but_different, versus same_operator_or_path for the other three) and the only operator that structurally excludes the documented failure: a Mobius/exp-map transport is an isometry and a bijection on the c=1 ball of [E11], so it cannot merge two distinct fine residuals onto one codeword the way the rejected cohesion arm did; keeps L1 baseline, acts on both L2 and L3 with a derived length (rho_l * tanh(s_i/sbar), no swept constant) at +3-5% cost, and its own main doubt (isometry may permute codes without adding next-item information) is precisely what the mandated switches exist to expose."
+        },
+        {
+          "idea_id": "bgcd-fine-v1",
+          "position": 2,
+          "reason": "Same curved-transport family on the code side, with the strongest derived safety constant in the field (m_i <= 0.5*min_k d_P plus arctanh clamp) and a proper Log_{v_i} tangent behaviour rather than a Euclidean embedding difference; second not first because it is the dearest (extra forward-only epoch pass, self-declared +5-7% wall clock), its behaviour field is fully detached so it never shapes gradients through the behaviour term, gyro-asymmetry makes the effect less predictable than residual transport, and [E5] mean_outgoing_degree 5.45 keeps successor hub noise a live risk."
+        },
+        {
+          "idea_id": "successor-anchor-l2-poincare-sinkhorn-v1",
+          "position": 3,
+          "reason": "Cheapest design and the only one leaving L3 byte-identical with a derived beta_i/median-normalisation argument, but the term is subtractive -beta_i*d^2(b_i,c_k)^2/m_i, an attractive cohesion bias, the same sign as the reward that produced the rejected round's 955 L2 prefixes and 0.771 collision, and its risks concede a dominant successor coarse code can concentrate a group; [E6] (same_first_prefix_rate 0.0907 vs permuted null 0.067) shows the baseline prefix carries almost no successor information, and [E12] FAIL is most damaging for a codeword-dependent additive offset rather than a moved point."
+        },
+        {
+          "idea_id": "poincare_residual_direction_sinkhorn_v1",
+          "position": 4,
+          "reason": "Largest scope hazard: besides the curved cost it rescales the Sinkhorn temperature eps_l = eps_base*mean(C^l)/mean(C^l_euclid), changing the baseline solver's entropy rather than only the cost matrix, and its own risks concede the plan can become nearly hard and destabilise codebook updates - the collapse-adjacent regime the contract protects; it only rotates the residual direction with tanh radial compression that loses resolution among the small residuals where fine codes live, and its bundle repeats the same [E12] FAIL / [E14] CANDIDATE_PATH_NOT_RUN with same_operator_or_path prior art, so nothing in the evidence offsets that hazard.\nOBJECTION: All four bundles carry the same two unresolved gates - [E14] CANDIDATE_PATH_NOT_RUN (no candidate tree has exercised the joint quantizer path) and [E12] FAIL behaviour_dependency, where even a codeword-dependent weight moved no top-1 index in the generic proxy - while [E13] shows a matched Euclidean intervention moving only 1 of the top-1 indices and [E6] puts the frozen baseline's prefix successor rate at 0.0907 against a permuted null of 0.067; with one run, no ablation and one seed, an effect of that order is hard to separate from seed noise, so this ranking is a judgement about which mechanism has the strongest structural safeguard against the documented rejection mode (fine-level prefix collapse under cohesion-style attraction), not a claim that any proposal has demonstrated a behaviour or geometry dependency."
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "round_id": "round_20261106_135314_812",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "bgcd-fine-v1": {
+        "first_places": 1,
+        "mean_rank": 2.0,
+        "total_rank": 6
+      },
+      "fine-residual-behaviour-geodesic-transport-v1": {
+        "first_places": 1,
+        "mean_rank": 2.0,
+        "total_rank": 6
+      },
+      "poincare_residual_direction_sinkhorn_v1": {
+        "first_places": 1,
+        "mean_rank": 2.3333,
+        "total_rank": 7
+      },
+      "successor-anchor-l2-poincare-sinkhorn-v1": {
+        "first_places": 0,
+        "mean_rank": 3.6667,
+        "total_rank": 11
+      }
+    },
+    "backups": [
+      {
+        "first_places": 1,
+        "idea_id": "fine-residual-behaviour-geodesic-transport-v1",
+        "mean_rank": 2.0,
+        "status": "BACKUP",
+        "total_rank": 6
+      },
+      {
+        "first_places": 1,
+        "idea_id": "poincare_residual_direction_sinkhorn_v1",
+        "mean_rank": 2.3333,
+        "status": "BACKUP",
+        "total_rank": 7
+      },
+      {
+        "first_places": 0,
+        "idea_id": "successor-anchor-l2-poincare-sinkhorn-v1",
+        "mean_rank": 3.6667,
+        "status": "BACKUP",
+        "total_rank": 11
+      }
+    ],
+    "disagreement": {
+      "bgcd-fine-v1": 2,
+      "fine-residual-behaviour-geodesic-transport-v1": 2,
+      "poincare_residual_direction_sinkhorn_v1": 3,
+      "successor-anchor-l2-poincare-sinkhorn-v1": 1
+    },
+    "rejected": [
+      {
+        "idea_id": "fine-residual-behaviour-geodesic-transport-v1",
+        "mean_rank": 2.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 6
+      },
+      {
+        "idea_id": "poincare_residual_direction_sinkhorn_v1",
+        "mean_rank": 2.3333,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 7
+      },
+      {
+        "idea_id": "successor-anchor-l2-poincare-sinkhorn-v1",
+        "mean_rank": 3.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 11
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 1,
+        "idea_id": "bgcd-fine-v1",
+        "mean_rank": 2.0,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 6
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  }
+}

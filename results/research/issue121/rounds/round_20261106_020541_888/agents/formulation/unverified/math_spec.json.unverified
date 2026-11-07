@@ -1,0 +1,377 @@
+{
+ "mechanism": "A one-off, train-split-only preprocessing pass builds a sparse symmetric adjacency A of adjacent-pair co-occurrences over the 24556 Stage-2 training items, truncates each item to its D = ceil(mean degree) highest-count neighbours, measures truncated neighbourhood overlap sim_ij = |N(i) cap N(j)|/sqrt(deg_i deg_j), averages it into a local cohesion coh_i, and turns coh into a mid-rank empirical-CDF statistic rho_i in the idea's fixed population (counts over items with an edge, denominator n_train - 1, 0.5 for isolated items), cached as float32 [24556] and frozen for the whole run. In Stage 2, level 1 only, the encoder outputs u_i and the K=256 raw codewords q_k are lifted to the Poincare ball with c=1 (R_c = 1), the ball distance d_c(exp_0(u_i), exp_0(q_k)) is offset by O_ik = beta*(1 - |rho_i - s_k|)*R_c where s_k = sigmoid(a_k) with a_k initialised at logit((k+0.5)/K), and beta = m/R_c with m the batch median of d_c(x_i, y_{k1(i)}) measured once at epoch 0 step 0 with beta = 0 and then frozen. C_ik = d_c - O_ik is fed unchanged into the baseline's balanced Sinkhorn (same tau, same iteration count, row sums 1, column sums B/K); the hard level-1 index is the baseline argmax k1_i = argmax_k P_ik, the selector is the baseline STE p_i = one_hot(k1_i) + P_i - stop_grad(P_i), and the reconstruction input is e1_i = sum_k p_ik q_k, whose forward value is the raw codeword q_{k1_i} and whose backward is dL/dP_ik = <dL/de1_i, q_k>, so the reconstruction gradient reaches P and from P reaches C, the encoder through d_c, the raw codewords through d_c, and the strata a_k through the offset (the a_k path is conditional: if the baseline detaches P, a_k stays at its quantile initialisation, the documented fallback). Reconstruction and the residual r2 = u - e1 use the raw codewords q_k, never y_k; levels 2 and 3 stay Euclidean and untouched.",
+ "computations": [
+  {
+   "name": "behaviour_entry_point (rho preprocessing)",
+   "definition": "one pass on the Stage-2 train split: A = sym_sparse(counts of adjacent pairs (i_t, i_{t+1}) over every train sequence); run adjacency_counts -> mean_degree_D -> neighbour_truncation -> neighbourhood_overlap -> cohesion -> cohesion_rank; return rho",
+   "inputs": [
+    "Stage-2 train interaction sequences (24556 distinct items)"
+   ],
+   "output": "rho, float32 [24556]",
+   "differentiable": false,
+   "note": "CPU, minutes, once; cached and frozen for the whole 3000-epoch run; nothing is recomputed from the model; no gradient"
+  },
+  {
+   "name": "adjacency_counts",
+   "definition": "A_ij = A_ji = #{t, seq : {i_t, i_{t+1}} = {i, j}}, one count per occurrence, sparse, symmetric, no self-loop (i_t != i_{t+1})",
+   "inputs": [
+    "train sequences"
+   ],
+   "output": "A, scipy sparse [24556, 24556]",
+   "differentiable": false,
+   "note": "undirected; the pair is added once per occurrence"
+  },
+  {
+   "name": "degree",
+   "definition": "deg_i = sum_j A_ij",
+   "inputs": [
+    "A"
+   ],
+   "output": "deg, int/float [24556]",
+   "differentiable": false,
+   "note": "deg_i = 0 marks an item with no train edge"
+  },
+  {
+   "name": "mean_degree_D",
+   "definition": "D = ceil( (1/n_train) * sum_{i=1}^{n_train} deg_i ), n_train = 24556",
+   "inputs": [
+    "deg",
+    "n_train"
+   ],
+   "output": "D, integer scalar",
+   "differentiable": false,
+   "note": "data-derived, fixed once, never tuned"
+  },
+  {
+   "name": "neighbour_truncation",
+   "definition": "N(i) = the D highest-count neighbours of i by A[i,:], ties broken by ascending item id; |N(i)| = min(D, deg_i)",
+   "inputs": [
+    "A",
+    "D"
+   ],
+   "output": "N(i), integer [24556, D] (padded where deg_i < D)",
+   "differentiable": false,
+   "note": "deterministic tie-break on item id; this set defines the truncated graph used by sim and coh"
+  },
+  {
+   "name": "neighbourhood_overlap",
+   "definition": "sim_ij = |N(i) cap N(j)| / sqrt(deg_i * deg_j), defined for deg_i > 0 and deg_j > 0; sim_ij in [0, 1]",
+   "inputs": [
+    "N",
+    "deg"
+   ],
+   "output": "sim, sparse [24556, 24556] (float64)",
+   "differentiable": false,
+   "note": "the normaliser uses the FULL degrees deg_i, deg_j of A, not |N(i)|, so sim_ij in [0,1]"
+  },
+  {
+   "name": "cohesion",
+   "definition": "coh_i = (1/deg_i) * sum_{j in N(i)} sim_ij, for deg_i > 0; coh_i in [0, 1]",
+   "inputs": [
+    "sim",
+    "N",
+    "deg"
+   ],
+   "output": "coh, float64 [24556] (undefined / unused for deg_i = 0)",
+   "differentiable": false,
+   "note": "bounded local-clustering proxy; no gradient, no model involvement"
+  },
+  {
+   "name": "cohesion_rank",
+   "definition": "S = { j : deg_j > 0 }; b_i = #{ j in S : coh_j < coh_i }; t_i = #{ j in S : coh_j = coh_i, j < i }; rho_i = (b_i + 0.5*t_i) / (n_train - 1) with n_train = 24556; rho_i = 0.5 if deg_i = 0",
+   "inputs": [
+    "coh",
+    "deg",
+    "n_train = 24556"
+   ],
+   "output": "rho, float32 [24556]",
+   "differentiable": false,
+   "note": "population and denominator are the idea's: both counts range over S only, the normaliser is n_train - 1 = 24555; the achievable range is therefore [0, (n_pos - 1)/(n_train - 1)] subset of [0,1], not the closed [0,1]; mid-rank (ties counted with weight 0.5, ordered by ascending id) gives the uniform marginal over S; isolated items are excluded from the counts but counted in the denominator via n_train, and receive exactly 0.5"
+  },
+  {
+   "name": "stratum_probability",
+   "definition": "a_k initialised a_k = logit((k + 0.5)/K) = log(((k+0.5)/K)/(1 - (k+0.5)/K)); s_k = sigmoid(a_k) = 1/(1 + exp(-a_k)), k = 0..K-1, K = 256, strictly increasing in a_k, s_k in (0,1)",
+   "inputs": [
+    "a [256] trainable"
+   ],
+   "output": "s, float32 [256]",
+   "differentiable": true,
+   "note": "ds_k/da_k = s_k*(1 - s_k) > 0; the strata are a probability grid, one scalar per code, level 1 only"
+  },
+  {
+   "name": "exp0_lift",
+   "definition": "x_i = exp_0^c(u_i) = tanh(sqrt(c)||u_i||) * u_i / (sqrt(c)||u_i||), exp_0^c(0) = 0; y_k = exp_0^c(q_k) likewise; c = 1, implemented with tanhc(x) = tanh(x)/x, tanhc(0) = 1 (no 1e-12 guard), output projected to r_max = (1-eps)/sqrt(c)",
+   "inputs": [
+    "u [B,64]",
+    "q [256,64]",
+    "c = 1"
+   ],
+   "output": "x [B,64], y [256,64] inside the ball",
+   "differentiable": true,
+   "note": "contract operator exp_0^c, verbatim; R_c = 1/sqrt(c) = 1 at c = 1; the lift is applied per level-1 step, the codewords are re-lifted from the raw q every step"
+  },
+  {
+   "name": "poincare_distance",
+   "definition": "d_c(x,y) = (2/sqrt(c)) * artanh( sqrt(c) * ||(-x) (+) y|| ), with ||(-x)(+)y||^2 = ||x-y||^2 / (1 - 2c<x,y> + c^2||x||^2||y||^2) and the artanh argument clipped to 1-eps; c = 1",
+   "inputs": [
+    "x [B,64]",
+    "y [256,64]",
+    "c = 1"
+   ],
+   "output": "d_c, float32 [B,256] (float64 for reductions)",
+   "differentiable": true,
+   "note": "contract metric, written in closed form; the metric is the cost's only geometric term; no reimplementation without GEOMETRY_CONTRACT_DEVIATION"
+  },
+  {
+   "name": "behaviour_offset",
+   "definition": "O_ik = beta * (1 - |rho_i - s_k|) * R_c, R_c = 1/sqrt(c) = 1, beta frozen scalar, 1 - |rho_i - s_k| in [0,1]",
+   "inputs": [
+    "rho [B]",
+    "s [256]",
+    "beta",
+    "R_c = 1"
+   ],
+   "output": "O, float32 [B,256]",
+   "differentiable": true,
+   "note": "the ONLY place the behaviour signal enters; differentiable in a_k: dO_ik/da_k = +beta*R_c*s_k*(1 - s_k)*sign(rho_i - s_k) (PLUS sign: d/ds_k (1 - |rho_i - s_k|) = +sign(rho_i - s_k) and ds_k/da_k = s_k(1-s_k) > 0). rho_i is a constant, dO/drho_i = -beta*R_c*sign(rho_i - s_k), frozen, no parameter"
+  },
+  {
+   "name": "level1_cost",
+   "definition": "C_ik = d_c(x_i, y_k) - O_ik = d_c(exp_0^c(u_i), exp_0^c(q_k)) - beta*(1 - |rho_i - s_k|)*R_c",
+   "inputs": [
+    "d_c [B,256]",
+    "O [B,256]"
+   ],
+   "output": "C, float32 [B,256]",
+   "differentiable": true,
+   "note": "single cost entry where curvature and behaviour meet; dC/da_k = -dO/da_k = -beta*R_c*s_k*(1-s_k)*sign(rho_i - s_k) (the minus belongs to dC/da_k, not to dO/da_k); dC/du_i = dd_c/du_i, dC/dq_k = dd_c/dq_k"
+  },
+  {
+   "name": "beta_calibration",
+   "definition": "at epoch 0, step 0, with beta = 0 in C (so k1 is the pure-hyperbolic assignment): m = median over the batch {i=1..B} of d_c(x_i, y_{k1(i)}); beta = m / R_c = m; beta is written once and FROZEN for the whole run",
+   "inputs": [
+    "d_c at epoch 0 step 0",
+    "k1 at epoch 0 step 0",
+    "R_c = 1"
+   ],
+   "output": "beta, float64 scalar frozen",
+   "differentiable": false,
+   "note": "measured once, never recomputed; it makes the offset commensurate with a typical level-1 distance, so O_ik/R_c <= beta"
+  },
+  {
+   "name": "sinkhorn_kernel",
+   "definition": "Ktilde_ik = exp(-C_ik / tau), tau inherited unchanged from the baseline",
+   "inputs": [
+    "C [B,256]",
+    "tau"
+   ],
+   "output": "Ktilde [B,256]",
+   "differentiable": true,
+   "note": "dKtilde/dC_ik = -Ktilde_ik/tau; identical formula and tau to the baseline"
+  },
+  {
+   "name": "sinkhorn_plan",
+   "definition": "P = diag(u) Ktilde diag(v) with (u, v) the baseline's Sinkhorn fixed point: sum_k P_ik = 1 for all i, sum_i P_ik = B/K for all k; same tau, same iteration count, same log-domain implementation as the baseline",
+   "inputs": [
+    "Ktilde [B,256]",
+    "row sums 1",
+    "col sums B/K = 1023/256"
+   ],
+   "output": "P, float32 [B,256]",
+   "differentiable": true,
+   "note": "BALANCED level-1 assignment, unchanged; the mechanism only changes its input C. Whether the backward unrolls through the Sinkhorn iterations is the baseline's property, not this mechanism's: the a_k path is conditional on it (see gradient_rules)"
+  },
+  {
+   "name": "hard_assignment",
+   "definition": "k1_i = argmax_k P_ik, ties broken by the baseline's rule (lowest k)",
+   "inputs": [
+    "P [B,256]"
+   ],
+   "output": "k1, int64 [B]",
+   "differentiable": false,
+   "note": "argmax: no gradient at all; it decides the level-1 token only"
+  },
+  {
+   "name": "straight_through_selector",
+   "definition": "p_i = one_hot(k1_i) + P_i - stop_grad(P_i), p [B,256], sum_k p_ik = 1",
+   "inputs": [
+    "k1 [B]",
+    "P [B,256]"
+   ],
+   "output": "p, float32 [B,256]",
+   "differentiable": true,
+   "note": "baseline STE: forward value one_hot(k1_i), backward dL/dP = dL/dp exactly (identity in the backward); the one_hot term carries no gradient"
+  },
+  {
+   "name": "level1_reconstruction_and_residual",
+   "definition": "e1_i = sum_k p_ik q_k (raw codewords q, never y_k); r2_i = u_i - e1_i; levels 2 and 3 Euclidean and unchanged",
+   "inputs": [
+    "p [B,256]",
+    "q [256,64] raw",
+    "u [B,64]"
+   ],
+   "output": "e1 [B,64], r2 [B,64]",
+   "differentiable": true,
+   "note": "forward value equals q_{k1_i} exactly because p_i is one-hot in the forward pass, but the gradient path is NOT a gather: dL/dP_ik = <dL/de1_i, q_k> and dL/dq_k = sum_i p_ik * dL/de1_i, which is what carries the reconstruction loss into P -> C -> d_c and into a_k"
+  },
+  {
+   "name": "offset_gradient",
+   "definition": "dO_ik/da_k = +beta * R_c * s_k * (1 - s_k) * sign(rho_i - s_k); dC_ik/da_k = -dO_ik/da_k; aggregated dL/da_k = sum_i (dL/dC_ik) * dC_ik/da_k",
+   "inputs": [
+    "beta",
+    "R_c = 1",
+    "s [256]",
+    "rho [B]",
+    "dL/dC [B,256]"
+   ],
+   "output": "dL/da [256] (conditional, see note)",
+   "differentiable": true,
+   "note": "the plus sign is the derivative of O; the minus appears only in dC/da_k because C = d_c - O. The whole path is conditional: a_k is differentiated only through P -> C -> |rho_i - s_k|; if the baseline detaches P (P carries no grad_fn into C), a.grad is None and a_k stays at its quantile initialisation logit((k+0.5)/K) - the idea's documented fallback, mechanism unchanged"
+  },
+  {
+   "name": "encoder_and_codebook_gradient_path",
+   "definition": "dL/dP_ik = <dL/de1_i, q_k>; dL/dC = -(1/tau) * Ktilde * (dL/dKtilde); dL/du_i = sum_k (dL/dC_ik) * dd_c(x_i,y_k)/du_i * d exp_0^c/du_i; dL/dq_k = [reconstruction term sum_i p_ik dL/de1_i] + sum_i (dL/dC_ik) * dd_c/dy_k * d exp_0^c/dq_k",
+   "inputs": [
+    "dL/de1",
+    "p",
+    "q",
+    "Ktilde",
+    "d_c"
+   ],
+   "output": "gradients on u, q, a",
+   "differentiable": true,
+   "note": "single connected pathway: reconstruction -> STE plan -> cost -> {encoder via d_c, raw codewords via d_c, strata via the offset}; rho has no gradient and is never differentiated"
+  },
+  {
+   "name": "switch_behaviour_off",
+   "definition": "O_ik := 0 for all i,k, i.e. C_ik = d_c(x_i, y_k) only; the Poincare distance, the strata a_k (still initialised at logit((k+0.5)/K)) and the balanced Sinkhorn plan are all still computed",
+   "inputs": [
+    "flag behaviour_off"
+   ],
+   "output": "C [B,256] without the offset",
+   "differentiable": true,
+   "note": "plain hyperbolic-cost balanced quantization with no behaviour information; exactly the arithmetic of setting beta = 0, but beta is untouched (frozen) so the two arms differ only in this term"
+  },
+  {
+   "name": "switch_geometry_off",
+   "definition": "c := 0: x_i = u_i, y_k = q_k (no exp lift), C_ik = 2*||u_i - q_k|| - beta*(1 - |rho_i - s_k|)*R_c with R_c fixed at the constant 1 (NOT 1/sqrt(c), which diverges at c = 0) and beta inherited frozen from the c = 1, epoch-0, step-0 calibration; a_k still initialised at logit((k+0.5)/K) and used through s_k = sigmoid(a_k)",
+   "inputs": [
+    "flag geometry_off",
+    "u",
+    "q",
+    "rho",
+    "a",
+    "frozen beta",
+    "R_c = 1 constant"
+   ],
+   "output": "C [B,256] Euclidean",
+   "differentiable": true,
+   "note": "the c -> 0 limit of d_c is 2||x - y|| (contract section 1); R_c is a fixed scale constant 1 in this branch so beta = m/R_c is finite and identical to the c = 1 arm; no re-calibration is performed at c = 0"
+  }
+ ],
+ "inputs": [
+  "Stage-2 train interaction sequences (behaviour entry point, 24556 items)",
+  "encoder output u, float32 [B,64]",
+  "raw level-1 codebook q, float32 [256,64]",
+  "cached cohesion rank rho, float32 [B] (slice of the frozen [24556] cache)",
+  "stratum logits a, float32 [256] (trainable parameter, level 1 only)",
+  "frozen scalar beta",
+  "constants c = 1, R_c = 1, tau and the Sinkhorn iteration count inherited from the baseline"
+ ],
+ "outputs": [
+  "rho, float32 [24556] (preprocessing output, frozen)",
+  "cost matrix C, float32 [B,256]",
+  "balanced plan P, float32 [B,256] from the baseline Sinkhorn",
+  "hard level-1 index k1, int64 [B]",
+  "straight-through selector p, float32 [B,256] (sum_k p_ik = 1)",
+  "level-1 reconstruction input e1 = sum_k p_ik q_k, float32 [B,64] (forward value q_{k1_i})",
+  "residual r2 = u - e1, float32 [B,64], passed to level 2",
+  "gradients on a, q and u (conditional for a)"
+ ],
+ "parameters": [
+  "a_k, k = 0..255: the only new trainable parameters, initialised logit((k+0.5)/256), level 1 only",
+  "beta: frozen scalar, not trained, = median_i d_c(x_i, y_{k1(i)}) measured once at epoch 0 step 0 with beta = 0, divided by R_c",
+  "rho_i: frozen buffer [24556], not a parameter, no gradient",
+  "c = 1 and R_c = 1: fixed constants, not trained",
+  "q: the baseline codebook, trained exactly as in the baseline",
+  "tau and the Sinkhorn iteration count: inherited unchanged from the baseline, not tuned"
+ ],
+ "switches": [],
+ "excluded": [
+  "Levels 2 and 3: they stay Euclidean and untouched, so no hyperbolic operator, no rho and no offset appears at those levels - the mechanism is level-1 only by construction.",
+  "The Fréchet mean, log map and barycentres: not used anywhere in this mechanism, so no solver initialisation/iteration/tolerance has to be stated.",
+  "Any gradient or training signal for rho: it is a frozen train-split statistic of the interaction graph, computed once and never recomputed from the model.",
+  "Re-defining the geometry: the contract's exp/log/distance/projection are used verbatim; no candidate-local metric, no unit-ball clamp, no 1e-12 guards (tanhc/atanhc limits are used).",
+  "Tuning of tau, the Sinkhorn iteration count, beta or D: all inherited or frozen, none is a hyper-parameter of this round.",
+  "Training of the behaviour_off or geometry_off arms: both exist in code, neither is trained this round; the geometry_off arm is cited from its own directory when it runs.",
+  "The Stage-3 re-ranking/generation behaviour: only the frozen SID table is exported; nothing downstream is part of this mechanism."
+ ],
+ "continuous_surface": {
+  "name": "level-1 stratified hyperbolic cost (one item, one code)",
+  "callable": "research.sid_level1_cost:stratified_curved_cost",
+  "symbols": [
+   "c",
+   "Rc",
+   "beta",
+   "rho",
+   "a",
+   "u[0..63]",
+   "q[0..63]"
+  ],
+  "args": [
+   {
+    "name": "u",
+    "width": 64,
+    "radius": 64.0,
+    "scalar": 1.0
+   },
+   {
+    "name": "q",
+    "width": 64,
+    "radius": 64.0,
+    "scalar": 1.0
+   },
+   {
+    "name": "a",
+    "width": 1,
+    "radius": 1.0,
+    "scalar": 1.0
+   },
+   {
+    "name": "rho",
+    "width": 1,
+    "radius": 1.0,
+    "scalar": 1.0
+   },
+   {
+    "name": "beta",
+    "width": 1,
+    "radius": 1.0,
+    "scalar": 1.0
+   }
+  ],
+  "statements": [
+   "c = Integer(1)",
+   "Rc = Integer(1)",
+   "n_u = sqrt(Sum(u[i]**2, (i, 0, 63)))",
+   "n_q = sqrt(Sum(q[i]**2, (i, 0, 63)))",
+   "tanhc_u = Piecewise((Integer(1), Eq(n_u, 0)), (tanh(sqrt(c)*n_u)/(sqrt(c)*n_u), True))",
+   "tanhc_q = Piecewise((Integer(1), Eq(n_q, 0)), (tanh(sqrt(c)*n_q)/(sqrt(c)*n_q), True))",
+   "x = tanhc_u*u",
+   "y = tanhc_q*q",
+   "nx = sqrt(Sum(x[i]**2, (i, 0, 63)))",
+   "ny = sqrt(Sum(y[i]**2, (i, 0, 63)))",
+   "ip = Sum(x[i]*y[i], (i, 0, 63))",
+   "den = 1 - 2*c*ip + c**2*nx**2*ny**2",
+   "z = sqrt(Min(Max((nx**2 - 2*ip + ny**2)/den, 0), (1 - eps)**2/c))",
+   "d = (2/sqrt(c))*atanh(sqrt(c)*z)",
+   "s = 1/(1 + exp(-a))",
+   "O = beta*(1 - Abs(rho - s))*Rc",
+   "C = d - O"
+  ],
+  "output": "C",
+  "note": "n/a"
+ },
+ "incomplete": "",
+ "missing": []
+}

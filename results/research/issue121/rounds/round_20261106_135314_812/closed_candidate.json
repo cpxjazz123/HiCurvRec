@@ -1,0 +1,49 @@
+{
+  "round_id": "round_20261106_135314_812",
+  "idea_id": "bgcd-fine-v1",
+  "status": "CLOSED_DEFECTIVE_SPECIFICATION",
+  "closed_at": "2026-11-06T22:41:00+08:00",
+  "trained": false,
+  "stage2_jobs": 0,
+  "stage3_jobs": 0,
+  "implementations": 0,
+  "reason": "The frozen mathematical specification of the selected idea is not a faithful, complete and unambiguous formulation of it, so it cannot be implemented without inventing definitions the proposal never made. The specification itself returns SPECIFICATION_INCOMPLETE, and both independent math reviewers returned REVISE.",
+  "findings": [
+    {
+      "id": "NORM_CONVENTION_UNDEFINED",
+      "source": "math_spec.json:missing[0]",
+      "detail": "M_i = ||t_i|| is left open between the Euclidean coordinate norm of the stored tangent vector and the Riemannian tangent norm lambda_{v_i}||t_i|| that the geometry contract requires. m_i, Delta_i and therefore the displacement length differ by the factor lambda_{v_i} = 2/(1-c||v_i||^2) between the two readings, so the mechanism's strength is undefined.",
+      "note": "The round's own idea_correction events contradict each other on this point: at 1793935514 the coupling_equation was corrected to the Riemannian norm, and at 1793936233 it was corrected back to the coordinate magnitude."
+    },
+    {
+      "id": "EUCLID_BRANCH_UNDEFINED",
+      "source": "math_spec.json:missing[1]",
+      "detail": "The GEOM=euclid branch does not state the c->0 limit of the lift (the linear map v = r/q_l, whose ||v|| may exceed 1), and the stated flat cost C[i,k] = ||(v_i-u_k) - m_i n_i||_2 differs from the contract's metric d_0(x,y) = 2||x-y|| by a factor 2 in the metric and by a factor 2 in the displacement. Which convention governs is unstated, so the switch has no defined behaviour."
+    },
+    {
+      "id": "GRADIENT_RULES_CONTRADICT_THE_IDEA",
+      "source": "agents/math_review_1/math_review.json (verdict REVISE)",
+      "detail": "The specification's gradient rules contradict the idea and the specification's own mechanism: the entry for the cost C[i,k] and the plan P declares them decision variables with no gradient, while the idea requires gradients to flow only through v_i and u_k and the mechanism states that the reconstruction's gradient reaches the fine levels' codebook rows u_k through the cost. math_review_2 recorded the same class of correction and states the specification must be corrected before it can be a faithful, complete and unambiguous formulation."
+    },
+    {
+      "id": "FROZEN_SURFACE_TRANSCRIPTION_ERROR",
+      "source": "math_spec.json:continuous_surface.statements[8]",
+      "detail": "Statement 8 sets a0 = -p0 while the surface computes the second Mobius addition as (-x) (+) q, so a0 must be -x0. As written the surface does not compute d_c(v_i, q_{i,k}), which is its declared output."
+    }
+  ],
+  "evidence": [
+    "agents/formulation/math_spec.json (incomplete = SPECIFICATION_INCOMPLETE, missing = [norm convention, GEOM=euclid branch])",
+    "agents/formulation/progress.jsonl",
+    "agents/math_review_1/math_review.json (verdict REVISE)",
+    "agents/math_review_1/progress.jsonl",
+    "agents/math_review_2/progress.jsonl (verdict REVISE; the review was cut short with the round worker and its verdict was never written to math_review.json)",
+    "state.json events: the eight idea_correction events on bgcd-fine-v1"
+  ],
+  "backups_left_unselected": [
+    "fine-residual-behaviour-geodesic-transport-v1",
+    "poincare_residual_direction_sinkhorn_v1",
+    "successor-anchor-l2-poincare-sinkhorn-v1"
+  ],
+  "resume_condition": "A candidate may be reopened only as a new proposal whose specification resolves the norm convention, fixes the Euclid branch to the contract's limits, makes the gradient rules agree with the coupling path, and whose frozen surface computes the declared output. The three backups above are the nearest candidates and inherit the same missing definitions, so they are not a substitute without the same corrections.",
+  "note": "The framework's close_proposal tool addresses a candidate that has an implementation; this candidate had none, so the closure is recorded here with the evidence on disk and no training followed."
+}

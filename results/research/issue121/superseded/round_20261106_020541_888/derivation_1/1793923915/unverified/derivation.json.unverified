@@ -1,0 +1,35 @@
+{
+ "symbols": [
+  "x0",
+  "x1",
+  "y0",
+  "y1",
+  "c"
+ ],
+ "args": [
+  {
+   "name": "x",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 1.0
+  }
+ ],
+ "statements": [
+  "xy = -(x0*y0 + x1*y1)",
+  "xn = x0**2 + x1**2",
+  "yn = y0**2 + y1**2",
+  "num0 = (1 + 2*c*xy + c*yn)*(-x0) + (1 - c*xn)*y0",
+  "num1 = (1 + 2*c*xy + c*yn)*(-x1) + (1 - c*xn)*y1",
+  "den = 1 + 2*c*xy + c**2*xn*yn + 1e-12",
+  "mx0 = num0/den",
+  "mx1 = num1/den",
+  "mn = mx0**2 + mx1**2",
+  "d = 2/sqrt(c)*atanh(Min(sqrt(c)*sqrt(mn), 1 - 1e-6))"
+ ],
+ "output": "d",
+ "code": "import math\nimport torch\n\n\ndef compute(x, y, curvature):\n    c = float(curvature)\n    eps = 1e-12\n\n    x0 = x[:, 0]\n    x1 = x[:, 1]\n    y0 = y[:, 0]\n    y1 = y[:, 1]\n\n    xy = -(x0 * y0 + x1 * y1)\n    xn = x0 ** 2 + x1 ** 2\n    yn = y0 ** 2 + y1 ** 2\n\n    num0 = (1.0 + 2.0 * c * xy + c * yn) * (-x0) + (1.0 - c * xn) * y0\n    num1 = (1.0 + 2.0 * c * xy + c * yn) * (-x1) + (1.0 - c * xn) * y1\n    den = 1.0 + 2.0 * c * xy + c ** 2 * xn * yn + eps\n\n    mx0 = num0 / den\n    mx1 = num1 / den\n    mn = mx0 ** 2 + mx1 ** 2\n\n    inner = math.sqrt(c) * torch.sqrt(torch.clamp(mn, min=0.0))\n    inner = torch.clamp(inner, max=1.0 - 1e-6)\n\n    return (2.0 / math.sqrt(c)) * torch.atanh(inner)",
+ "excluded": [
+  "the lift to the c-ball and the graph-derived stratum/offset/plan/assignment: the frozen surface is the distance alone, applied to points already supplied in the ball",
+  "the c = 0 branch: the declared curvature is the fixed c = 1 used by the specification"
+ ]
+}

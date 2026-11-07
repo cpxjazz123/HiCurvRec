@@ -1,0 +1,214 @@
+{
+ "mechanism": "The level-1 codewords START ordered by a train-only behaviour cohesion rank: each codeword's stratum is initialised at the quantile of the behaviour rank, and the strata are then trained like any other parameter. Each item gets a bounded cohesion rank rho_i in [0,1] from the training split's undirected co-occurrence graph (how tightly its neighbourhood closes into triangles, mid-ranked). Each level-1 codeword k has a stratum s_k = sigmoid(alpha_k) with a trainable alpha_k, initialised at its quantile alpha_k = logit((k + 0.5)/K). The level-1 cost of an item at a codeword is the Poincare distance minus a bounded offset beta*R_c*(1 - |rho_i - s_k|), so an item is cheaper at the codewords whose stratum is close to its own rank. The codeword is chosen by the BASELINE's balanced assignment (a Sinkhorn plan over the cost matrix, then the plan's argmax), never by a plain argmin over the cost: removing the balancing is what collapsed the codebook in round_20261105_144909_130 (42 of 256 level-1 codes, L3 collision 0.703). Levels 2 and 3, the residual recursion, the reconstruction and the loss are the baseline's, unchanged, and the reconstruction uses the UNLIFTED codeword; the mechanism changes TWO things at level 1, and both are declared in the computations: (1) the COST the baseline's balanced assignment balances - the geodesic distance minus the behaviour offset; (2) the PARAMETERS of that cost - the trainable stratum scalars alpha_k. The ESTIMATOR is the framework's canonical straight-through, applied to the plan the balanced assignment produces: x_q = P + (one_hot(k1) - P).detach(). Its forward value is the hard codeword, exactly as the baseline's, and its gradient path runs through the plan - which is a consequence of the plan being differentiable, not a third change. The levels, the residual recursion, the reconstruction, the loss and the optimiser are the baseline's.",
+ "computations": [
+  {
+   "name": "cohesion statistic",
+   "inputs": [
+    "the training split's user sequences (history -> target)"
+   ],
+   "output": "coh_i in [0,1] for every training item with deg_i > 0; undefined for the items with no training edge",
+   "definition": "From the TRAINING split only: the undirected co-occurrence count matrix A, A_ij = the number of times i and j are adjacent in a training sequence, i != j (self-adjacencies are dropped, so the diagonal is 0). deg_i = the number of distinct training neighbours of i. N(i) = the D highest-count neighbours of i, D = ceil(mean over ALL n_train training items of deg_i, the items with no training edge counted at degree 0, ties by the smaller item id. sim_ij = |N(i) cap N(j)| / sqrt(deg_i * deg_j), in [0,1]. coh_i = (1/deg_i) * sum over j in N(i) of sim_ij, the idea's formula: the sum runs over the TRUNCATED neighbourhood while the normaliser is the FULL degree, so an item with deg_i > D scores lower than the same overlap would score at deg_i <= D. That is the idea's scaling and the specification keeps it. The consequence is stated rather than smoothed over: coh_i carries an item-dependent factor of order deg_i^(-3/2), so the ranking the mechanism uses orders the items by the idea's statistic AS DEFINED - a mixture of the local closure and the degree - and not by the overlap alone. The rank is what enters the cost, and the magnitude never does. coh_i is in [0,1] and is DEFINED for deg_i > 0 only; an item with no training edge has no neighbourhood, no sim and no cohesion, and the rank computation gives it its value.",
+   "note": "defined for the items with at least one training edge; its scale is the idea's, and the ranking inherits it"
+  },
+  {
+   "name": "cohesion rank",
+   "inputs": [
+    "coh_i for every item with at least one training edge"
+   ],
+   "output": "rho_i in [0,1] for the items with an edge (the top reaches 1 only when the top cohesion is unique), and 0.5 for the items without one",
+   "definition": "Let P = the training items with deg_j > 0 and n_train = the number of training items. For i in P: rho_i = ( #{j in P : coh_j < coh_i} + 0.5 * #{j in P : coh_j = coh_i and j < i} ) / (|P| - 1). The two counts are the idea's, verbatim: the tie term counts only the tied items with a SMALLER index, so tied items receive DIFFERENT ranks. The DENOMINATOR is |P| - 1: the idea was amended in this round (the amendment is in the round's event log and in the idea's own text, which the reviewers read), because the original denominator mixed two populations: the counts run over the items that have a cohesion while the denominator counts every training item, so the rank's support would be [0, (|P|-1)/(n_train-1)] while the codeword strata s_k = sigmoid(alpha_k) span the whole of (0,1) - the two would be on different scales and the top of the codeword ordering could never be the offset's best match. Dividing by |P| - 1 puts the ranked items on the strata's scale, and the idea's range is amended with it: the smallest item's mid-rank is 0, so the rank's range is [0,1] (the codeword strata, being sigmoids, lie in the open interval). The top end is reached only when the top cohesion is unique: with g items tied at the top, the largest rank is (|P| - 1 - 0.5*(g - 1))/(|P| - 1), which is below 1. The strata s_k = sigmoid(alpha_k) lie strictly inside the unit interval, so an item at the very top or the very bottom of the rank has no stratum exactly at its rank and takes the nearest one - a stated boundary effect, not a gap in the mechanism. An item outside P - one with no training edge - has no cohesion and gets rho_i = 0.5, exactly as the idea states; it takes no part in the counts. (If |P| = 1 the denominator is 0 and every item of P takes rho = 0.5.)",
+   "note": "the counts are the idea's; the denominator is a declared repair"
+  },
+  {
+   "name": "code stratum",
+   "inputs": [
+    "the number of level-1 codewords K1"
+   ],
+   "output": "s_k = sigmoid(alpha_k) in (0,1) for every level-1 codeword",
+   "definition": "s_k = sigmoid(alpha_k) for k = 0..K1-1, with the trainable parameter alpha_k initialised at its quantile, alpha_k = logit((k + 0.5)/K1) (K1 = 256). The strata are a trainable PARAMETER PER CODEWORD, as the idea defines them. Their INITIALISATION is the quantile order of the cohesion rank, so at the start of training the codewords are ordered by behaviour cohesion; the order is a starting point and not a maintained invariant - nothing in the definition, the gradient rules or the training integration keeps alpha_k increasing, and the mechanism reports the per-code mean cohesion rank as a diagnostic so that the drift is measured rather than assumed. The gradient REACHES them: the idea's straight-through estimator p_i = one_hot(k1_i) + P_i - stop_grad(P_i) keeps P in the differentiable path, P depends on C, C depends on |rho_i - s_k| and s_k = sigmoid(alpha_k), so the reconstruction's gradient trains alpha_k.",
+   "note": "trainable through P, as the idea's STE requires; the quantile order is the initialisation, not an invariant"
+  },
+  {
+   "name": "distance",
+   "inputs": [
+    "the level-1 residual r",
+    "the level-1 codebook a",
+    "the curvature c"
+   ],
+   "output": "D_ik (B, K1), the distance of every item to every level-1 codeword",
+   "domain": "c = 1 for the curved arm; both arguments are lifted, so c||x||^2 < 1 and c||y||^2 < 1, which is where MOBIUS is defined; at c = 0 the model is the Euclidean one and DIST(x,y) = 2||x - y||",
+   "definition": "The curvature is FIXED at c = 1 (the idea's value), so the ball radius is R_c = 1/sqrt(c) = 1 and the cost is expressed in ball units. LIFT(v) = tanh(sqrt(c)||v||) v / (sqrt(c)||v|| + eps) with eps = 1e-12 and LIFT(0) = 0; MOBIUS substitutes X = -x, so the 2c<.,.> terms are NEGATED: (-x)(+)y = ((1 - 2c<x,y> + c||y||^2)(-x) + (1 - c||x||^2)y) / (1 - 2c<x,y> + c^2||x||^2||y||^2 + eps); DIST(x,y) = (2/sqrt(c)) artanh(min(sqrt(c)||(-x)(+)y||, 1 - 1e-6)). At c = 0 the lift is the identity and DIST(x,y) = 2||x - y||. The sign is the one the reviewers caught in the formula agent's draft: with +2c<.,.> the surface returns 0 at y = -x and its c -> 0 limit is 2||x + y||.",
+   "note": "the 2c<.,.> terms are negated because the distance substitutes X = -x into the ball sum: the negated form is the one with d_c(x, x) = 0 and the c -> 0 limit 2||x - y||"
+  },
+  {
+   "name": "cost matrix",
+   "inputs": [
+    "D_k (B, K1)",
+    "rho_i (B,)",
+    "s_k (K1,)",
+    "beta (scalar)",
+    "R_c"
+   ],
+   "output": "C_ik (B, K1)",
+   "definition": "O_ik = beta * R_c * (1 - |rho_i - s_k|) with R_c = 1, in [0, beta]; C_ik = D_k - O_ik. beta = m / R_c with m = the MEDIAN of D_{i,k1(i)} - the distance to the codeword the assignment CHOSE - over the POOLED step-0 batch: every rank contributes the 1023 distances of its own first batch, the ranks all-gather them once, and the median is taken over the pooled 4092 distances, so m is a single global quantile and not a mean of medians. It is measured in a pass with O = 0 (the idea's beta = 0 pass), divided by R_c = 1, and FROZEN. beta is measured ONCE, in the curved configuration (c = 1), and the frozen value is CARRIED into the c = 0 arm, so the two arms differ in the distance and in nothing else. The population is stated because the ranks have different batches: the pooled batch is the union of the four ranks' first batches, so no rank's batch stands for the others'. The offset's scale is therefore the measured level-1 distance scale: no constant is tuned.",
+   "note": "the geodesic term and the behaviour term meet in ONE entry"
+  },
+  {
+   "name": "balanced assignment",
+   "inputs": [
+    "C_ik (B, K1)"
+   ],
+   "output": "P_ik (B, K1), the transport plan; k1 (B,)",
+   "definition": "The mechanism's cost is fed to the BASELINE's Sinkhorn unchanged: the baseline's sinkhorn takes a distance-like matrix and exponentiates it itself, Ktilde_ik = exp(-C_ik / epsilon), with epsilon = its own sk_epsilon and its own sk_iters iterations, and it targets the same marginals as the baseline: row sums 1 per item and column sums B/K1 per codeword (the idea's 'row_sum=1, col_sum=B/K'). The idea writes Ktilde = exp(-C/tau) with tau = the baseline's temperature: that IS the baseline's internal exponentiation step, so the cost is exponentiated ONCE - the specification hands C to the baseline's sinkhorn and does not exponentiate it again. Nothing is centred, nothing is rescaled and no constant is introduced: the mechanism only changes the cost that the baseline's balanced assignment balances. P = Sinkhorn(C, sk_epsilon, sk_iters); k1 = argmax_k P_ik, ties to the smallest k - the baseline's rule (its _indices).",
+   "note": "the cost goes into the baseline's sinkhorn, once"
+  },
+  {
+   "name": "level-1 reconstruction and residual",
+   "inputs": [
+    "the chosen codeword a_{k1}",
+    "the residual r"
+   ],
+   "output": "the reconstruction of level 1 and r_next",
+   "definition": "The idea's straight-through estimator through the PLAN: p_i = one_hot(k1_i) + P_i - stop_grad(P_i), so the forward value of the quantised level-1 vector is e1 = sum_k p_ik a_k = a_{k1} exactly, while the gradient flows through the P term into the stratum parameters (through C and |rho_i - s_k|), into the codewords and into the encoder (through d_c). r_next = r - q_i, whose forward value is r - a_{k1}. The reconstruction uses q_i at the baseline position, the commitment term and the optimiser are the baseline's. There is NO deviation from the framework's canonical straight-through: the estimator above IS x_q = x + (x_q - x).detach() with x = P, the plan, and x_q = one_hot(k1). The gradient reaches alpha_k through P precisely because the plan is kept differentiable, which this specification requires; The lifted codebook is written q_lift in the executable listing, because q_k is the RAW codeword the idea uses for the reconstruction and the residual recursion; the forward value of e1 is exactly that raw codeword.",
+   "note": "the plan is differentiable in the STE: it is the gradient path"
+  },
+  {
+   "name": "objective",
+   "inputs": [
+    "the baseline reconstruction and commitment terms"
+   ],
+   "output": "the scalar loss the baseline optimiser minimises",
+   "definition": "loss = baseline_recon + baseline_commit, unchanged. The mechanism has no term of its own: it changes which codeword the balanced assignment picks, and the baseline objective then trains a different quantisation.",
+   "note": "no auxiliary loss, no new optimiser"
+  }
+ ],
+ "inputs": [
+  "r, the residual entering level 1 (B, D) - the baseline's encoder output",
+  "the level-1 codebook a (K1, D), the baseline's, learned",
+  "rho_i (B,), the cohesion rank of the batch's items, gathered from the frozen buffer",
+  "s_k = sigmoid(alpha_k) (K1,), the TRAINABLE code stratum",
+  "beta, measured once at epoch 0 and frozen"
+ ],
+ "outputs": [
+  "k1 (B,), the level-1 codeword index",
+  "the diagnostics: the offset O_ik, the plan P_ik, the per-code rank mean",
+  "the frozen level-1 index table k1 for every item, exported for Stage 3",
+  "the diagnostic: the per-codeword mean cohesion rank of the items assigned to it"
+ ],
+ "parameters": [
+  "c = 1, the fixed curvature of the idea (R_c = 1/sqrt(c) = 1)",
+  "alpha_k, the trainable stratum parameters, initialised at logit((k + 0.5)/K1)",
+  "beta = the median level-1 distance at epoch 0, measured once and frozen",
+  "rho_i, the per-item cohesion rank, a frozen buffer (not a parameter)",
+  "sk_epsilon and sk_iters, the baseline's plan parameters, unchanged",
+  "the rho buffer: float32, length n_train = 24556, indexed by the GLOBAL item id of every Stage-2 training item, cached once before training and never recomputed; the trainer gathers rho_i by the item's global id"
+ ],
+ "dimensions": {
+  "r": "B x D",
+  "a": "K1 x D",
+  "u": "B x D",
+  "q": "K1 x D",
+  "D_k": "B x K1",
+  "O_ik": "B x K1",
+  "C_ik": "B x K1",
+  "P_ik": "B x K1",
+  "k1": "B",
+  "rho_i": "B, the gathered ranks of the batch's items",
+  "s_k": "K1, the stratum, sigmoid(alpha_k)",
+  "beta": "scalar",
+  "c": "scalar",
+  "alpha_k": "K1, the trainable stratum scalars"
+ },
+ "gradient_rules": [
+  {
+   "operator": "the assignment k1 = argmax_k P_ik",
+   "rule": "the index is discrete and carries no gradient; the straight-through estimator x_q = P + (one_hot(k1) - P).detach() is what carries the reconstruction's gradient."
+  },
+  {
+   "operator": "the stratum parameters alpha_k",
+   "rule": "TRAINED, and the rule is unconditional: the plan is differentiable because the estimator x_q = P + (one_hot(k1) - P).detach() keeps P in the differentiable path, P depends on C, C depends on |rho_i - s_k| and s_k = sigmoid(alpha_k), so the reconstruction's gradient reaches alpha_k."
+  },
+  {
+   "operator": "the mechanism's frozen quantities (c, R_c, beta, rho_i)",
+   "rule": "no gradient: c = 1 and R_c = 1 are constants, beta and rho_i are frozen buffers."
+  }
+ ],
+ "training_integration": {
+  "loss": "baseline_recon + baseline_commit, unchanged; no new term. Training: epochs 0..2999 (3000 epochs) with the baseline's optimiser, learning rate, batch (1023 per rank) and seed, unchanged. At the end of training the FROZEN level-1 index table - k1 for every item, from the final model's own assignment - is exported for Stage 3, together with the full three-level identifier table.",
+  "reconstruction": "the chosen codeword at its baseline position: a_{k1} UNLIFTED, consistent with r_next = r - a_{k1}",
+  "optimizer": "the baseline's optimiser, unchanged, over the model's parameters - which now include the mechanism's 256 stratum scalars alpha_k, trained through the plan's gradient path as the gradient rules state. No new optimiser, no new hyperparameter, no separate parameter group."
+ },
+ "switches": [
+  "BEHAVIOUR_OFF (present in code, never trained): the offset is set to exactly 0, so C_ik = D_k and the level-1 assignment is the baseline's balanced assignment over the plain geodesic distance - the arm keeps the curvature and the balancing and loses the behaviour information. (The mechanism's offset is not k-independent in general: it is beta*R_c*(1 - |rho_i - s_k|), which varies over the codewords; in this arm it is identically zero.) The code path exists and is correct, and no such arm is trained this round.",
+  "GEOMETRY_OFF (present in code, never trained): c = 0, so LIFT is the identity and DIST(x,y) = 2||x - y||. The offset keeps the FROZEN constants of the curved arm: R_c = 1 (the c = 1 ball radius) and the beta measured once in the curved configuration - the c = 0 arm does NOT re-measure beta, so the two arms differ in the DISTANCE and in nothing else. This is the matched Euclidean control; per the programme policy it is a separate arm in its own round, not an ablation of this one."
+ ],
+ "excluded": [
+  "any use of validation, test or future behaviour in rho_i",
+  "replacing the baseline's balanced assignment with a plain argmin (CLAUDE.md 19h)",
+  "any sweep, ablation training run or seed repetition"
+ ],
+ "continuous_surface": {
+  "callable": "distance(x, y, curvature)",
+  "args": [
+   {
+    "name": "x",
+    "width": 2,
+    "radius": 0.4
+   },
+   {
+    "name": "y",
+    "width": 2,
+    "radius": 0.4
+   },
+   {
+    "name": "curvature",
+    "scalar": 1.0
+   }
+  ],
+  "symbols": [
+   "x0",
+   "x1",
+   "y0",
+   "y1",
+   "c"
+  ],
+  "statements": [
+   "xy = -(x0*y0 + x1*y1)",
+   "xn = x0**2 + x1**2",
+   "yn = y0**2 + y1**2",
+   "num0 = (1 + 2*c*xy + c*yn)*(-x0) + (1 - c*xn)*y0",
+   "num1 = (1 + 2*c*xy + c*yn)*(-x1) + (1 - c*xn)*y1",
+   "den = 1 + 2*c*xy + c**2*xn*yn + 1e-12",
+   "mx0 = num0/den",
+   "mx1 = num1/den",
+   "mn = mx0**2 + mx1**2",
+   "d = 2/sqrt(c)*atanh(Min(sqrt(c)*sqrt(mn), 1 - 1e-6))"
+  ],
+  "output": "d",
+  "executable_statements": [
+   "eps = 1e-12",
+   "c = 1.0",
+   "def _norm(v): return torch.sqrt(torch.clamp((v * v).sum(-1), min=0.0))",
+   "R_c = 1.0                              # FROZEN: the c = 1 ball radius, never recomputed",
+   "def lift(v, c): return v if c == 0.0 else v * (torch.tanh(math.sqrt(c) * _norm(v)) / (math.sqrt(c) * _norm(v) + eps)).unsqueeze(-1)",
+   "def mobius(x, y, c): return ((1 + 2 * c * (x * y).sum(-1, keepdim=True) + c * (y * y).sum(-1, keepdim=True)) * x + (1 - c * (x * x).sum(-1, keepdim=True)) * y) / (1 + 2 * c * (x * y).sum(-1, keepdim=True) + c * c * (x * x).sum(-1, keepdim=True) * (y * y).sum(-1, keepdim=True) + eps)",
+   "def dist(x, y, c): return 2.0 * _norm(x - y) if c == 0.0 else (2.0 / math.sqrt(c)) * torch.atanh(torch.clamp(math.sqrt(c) * _norm(mobius(-x, y, c)), max=1.0 - 1e-6))",
+   "s_k = torch.sigmoid(alpha_k)                                 # the trainable code stratum",
+   "u = lift(r, c)",
+   "q_lift = lift(a, c)",
+   "D_k = dist(u[:, None, :], q_lift[None, :, :], c)",
+   "O_ik = beta * R_c * (1.0 - torch.abs(rho_i[:, None] - s_k[None, :]))   # the behaviour offset, in [0, beta*R_c]",
+   "C_ik = D_k - O_ik",
+   "P_ik = sinkhorn(C_ik, sk_epsilon, sk_iters)   # the baseline's plan: it exponentiates C itself",
+   "k1 = torch.argmax(P_ik, dim=-1)",
+   "p_i = torch.nn.functional.one_hot(k1, K1).float()",
+   "p_i = p_i + P_ik - P_ik.detach()            # the idea's STE through the plan",
+   "e1 = p_i @ a                               # forward value: a[k1] exactly",
+   "r_next = r - e1",
+   "sinkhorn = BASELINE_SINKHORN   # the BASELINE's Sinkhorn plan (its _indices), imported unchanged"
+  ],
+  "note": "The statements are the DISTANCE in SymPy, with the 2c<.,.> terms negated because the distance substitutes X = -x. The declared curvature argument is the idea's fixed c = 1 (R_c = 1), which is the value the executable pins, so the symbolic surface and the executable are exercised at the same curvature. The executable_statements are the surface as the trainer runs it, with the stratum, the offset, the plan and the assignment."
+ },
+ "incomplete": [],
+ "missing": []
+}

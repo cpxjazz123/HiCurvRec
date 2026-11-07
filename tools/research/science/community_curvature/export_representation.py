@@ -21,8 +21,14 @@ import json
 import sys
 from pathlib import Path
 
+import os
 import numpy as np
 import torch
+
+# The cuBLAS GEMMs are not deterministic on CUDA without this, and the arms with
+# a sparse propagation drift by several percent between runs -- more than the
+# differences between the arms, which hides every real effect.
+os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
