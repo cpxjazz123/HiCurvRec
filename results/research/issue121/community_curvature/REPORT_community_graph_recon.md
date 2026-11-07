@@ -75,9 +75,12 @@ Yes, on all three, and the record says so at every logged epoch.
 
 | evidence | value |
 |---|---|
-| gradient reaching the encoder from the term alone | 2.9 → 0.12 (declines as the model learns) |
-| gradient reaching the codebook from the term alone | 0.79 → 0.20 |
-| the applied scaling | 3.1e-6 → 3.4e-5 (it rises to hold the contribution at 10% of the base gradient) |
+| epochs with the term active | 1500 of 1500 (epoch 1501 … 3000) |
+| epochs with a **zero** gradient in either group | **0** |
+| gradient reaching the encoder from the term alone | 2.83 → 0.12 (declines as the model learns) |
+| gradient reaching the codebook from the term alone | 0.78 → 0.25 |
+| the applied scaling | 3.47e-6 → 3.45e-5 (it rises to hold the contribution at a tenth) |
+| the applied term/base ratio, encoder | **median 0.078, max 0.099** — never above the 0.10 cap |
 | identifiers changed per 50-epoch interval | 0.87 (epoch 1500) → 0.07 (epoch 3000) |
 | three-level collision | 0.1337 (epoch 100) → 0.1692 (epoch 1450) → **0.1672** (epoch 3000) |
 
@@ -125,8 +128,18 @@ both under the deterministic Stage-3 environment this session pinned
 
 | run | test Recall@10 | test NDCG@10 |
 |---|---|---|
-| frozen baseline, deterministic re-run | PENDING | PENDING |
-| this arm | PENDING | PENDING |
+| this arm | **0.055816** | **0.030323** |
+| frozen baseline, committed (2026-10-26, before the determinism pin) | 0.055537 | 0.030701 |
+| frozen baseline, second run of the same code (2026-11-01) | 0.040199 | 0.021763 |
+| frozen baseline, deterministic re-run | RUNNING | RUNNING |
+
+The arm lands **0.00028 above** the committed baseline — a difference of 0.5%
+relative, against a **38% spread measured between two runs of the baseline
+itself**. It is not a gain; it is the same number. The third row is the reason
+this report does not stop there: with a spread that large, a single baseline
+run cannot certify a difference of five in the fourth decimal either way, so a
+baseline is being re-run under the same pinned environment and the same
+protocol before this section is closed.
 
 The comparison that matters is between those two rows. The baseline's
 *committed* number (0.055537, run on 2026-10-26, before determinism was pinned)
@@ -149,11 +162,15 @@ identifiers rather than of machine noise.
 3. **A correctly wired term with a 10% gradient budget changes the hierarchy's
    shape and not its neighbourhood structure.** The collision fell, the level-1
    concentration fell, the neighbour shares did not move.
-4. **The identifiers' reconstruction of item semantics improved sharply**
-   (valid level-1 hard error 16.39 → 6.64, level-2 prefixes 16145 → 7432), which
-   is the *baseline's* own objective being optimised better, not the new term's
-   effect — the same improvement appears whenever the quantiser is trained on
-   this data with this recipe.
+4. **The mandatory layered record puts the arm's coarse level far from the
+   resample reference and level with the frozen baseline.** Against the
+   *resample* reference arm (which is what that record compares to) the arm's
+   valid level-1 hard error is 6.64 against 16.39 and its level-2 prefix count
+   7432 against 16145. Against the *frozen baseline*, measured on the same
+   edges, the arm has 7432 prefixes against 7414 and a collision of 0.1672
+   against 0.1775 — i.e. the hierarachy is the same size and slightly less
+   collided, and the large coarse-level gap is a property of the reference, not
+   of this term.
 
 ## What is not claimed
 

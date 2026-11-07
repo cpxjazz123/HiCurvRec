@@ -90,3 +90,73 @@ encoder is contrasted on, the lever that demonstrably moved the recall once).
 forbids measuring. The findings that survive that limit are the extremes: the
 best-ER arm is the worst-recall arm, the worst-ER arm is the best-recall arm,
 and no arm beat the baseline.
+
+## 2026-11-07 — the graph reconstruction round, and the finding that outranks it
+
+**The determinism finding.** Two runs of the frozen baseline's Stage 3 — the
+same code, the same seed, the same data — ended at `test_R@10` **0.055537** and
+**0.040199**, a 38% relative spread. The Stage-3 trainer pins no deterministic
+algorithm and the cuBLAS workspace was unset. Both launch paths now pin
+`CUBLAS_WORKSPACE_CONFIG=:4096:8`, each with a regression test. Until that fix,
+every Stage-3 comparison in this campaign was comparing noise to noise; the
+committed baseline number is no longer a usable reference and the comparison is
+made against a fresh run under the pinned environment.
+
+**The community transition, which the campaign had never measured.** The
+campaign had only ever asked whether the next item is in the *same* community,
+and measured that at chance. On the independent validation split, with the
+transition fitted on the train split:
+
+| predictor of the next community | NLL | hit@1 | hit@10 |
+|---|---|---|---|
+| global community frequencies | 4.1531 | 0.0196 | 0.1878 |
+| community transition (current → next) | **4.0440** | **0.0459** | **0.3029** |
+| the same, with the targets shuffled (control) | 4.2663 | 0.0156 | 0.1739 |
+| transition along the whole prefix | 5.6058 | **0.0548** | **0.3422** |
+| the identifiers' own community-level prediction | 19.4011 | 0.0464 | 0.1945 |
+| the transition conditioned on the identifiers too | 11.9671 | 0.0522 | 0.2847 |
+
+The transition carries real information (it beats the global baseline on every
+metric and the shuffled control is *worse* than the global baseline, so the
+signal is the relation between communities and not their sizes), and it carries
+information the identifiers do not: the identifiers' own community-level
+prediction reaches hit@10 0.1945 against the transition's 0.3422, and
+conditioning the transition on the identifiers does not improve it.
+
+The earlier "chance level" reading was a measurement artefact: it compared the
+target against the *modal community of the whole prefix*, not the last item's
+community. Against the last item's community the rate is 0.0452, 2.9× the base
+rate.
+
+**The correction to the model side.** A reproducible re-run of the whole arm
+table gives 139.47 for the plain GCN propagation against 134.54 for the
+curvature-aware one, so the curvature-aware propagation does **not** raise the
+AF3 gap here and the earlier 145.11 was a property of an earlier version of the
+shared model. The mixed geometry remains the one robust modelling gain
+(A → B: +30% on the separation, and the propagation arms another +25% over B);
+the AF3 curvature does not earn its place inside the community model.
+
+**The graph reconstruction arm.** `TIGER_community_graph_recon` adds one loss:
+the quantised representation must predict the behaviour neighbourhood weighted
+by the community geometry, on the sum of the three codewords, with the
+encoder path through the straight-through estimator and the codebook path
+through the undetached codewords, ramped in at epoch 1500 and capped at 10% of
+the base gradient. Ten of ten machine checks passed; the run took 600.8 s for
+3000 epochs. The three questions the experiment asked:
+
+* does the community weight move the target? **By 0.2% of its entropy**
+  (target 2.3865 nats against uniform 2.3919). The specified bound `1 + s` with
+  `s ≤ 1` is what makes it inert.
+* does the term reach the parameters and the identifiers? **Yes on both**: the
+  term's own gradient is non-zero for the encoder and the codebook at every
+  logged epoch, the applied scale rises 3.1e-6 → 3.4e-5 to hold the
+  contribution at a tenth, and the identifiers never freeze.
+* are the behaviour neighbours better preserved? **No**: the level-1 share is
+  0.0821 against the baseline's 0.0833 and the level-3 enrichment is worse. The
+  hierarchy's *shape* improved (collision 0.1775 → 0.1672, largest level-1 code
+  3.49% → 2.62%) with the prefix count unchanged.
+
+The lesson for the next design is the first bullet: a community weight bounded
+in `[1, 2]` over eleven neighbours cannot express a preference strong enough to
+reshapes the identifiers, and the number to design against is the target's KL
+from uniform, not the community model's separation.
