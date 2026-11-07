@@ -98,8 +98,9 @@ training edges, with the same number of random pairs as the null:
 
 | arm | L1 share | L2 share | L3 share | L2 prefixes | L3 combos | L3 collision | largest L1 code |
 |---|---|---|---|---|---|---|---|
-| frozen baseline | 0.0833 | 0.0088 | 0.0019 | 7414 | 20223 | 0.1775 | 3.49% |
-| this arm | 0.0821 | 0.0082 | 0.0017 | 7432 | 20476 | **0.1672** | **2.62%** |
+| frozen baseline (committed SID) | 0.0833 | 0.0088 | 0.0019 | 7414 | 20223 | 0.1775 | 3.49% |
+| **frozen baseline (deterministic re-run)** | 0.0813 | 0.0080 | 0.0017 | 7408 | 20593 | **0.1624** | 2.39% |
+| this arm | 0.0821 | 0.0082 | 0.0017 | 7432 | 20476 | 0.1672 | 2.62% |
 
 Against the random-pair null:
 
@@ -108,12 +109,30 @@ Against the random-pair null:
 | frozen baseline | 7.34× | 17.75× | 25.70× |
 | this arm | 7.65× | 18.19× | 21.92× |
 
-**The neighbours are not better preserved.** The absolute shares are a shade
-lower at every depth (0.0821 against 0.0833 at level 1), and the L3 enrichment
-is worse. What did improve is the *shape* of the hierarchy: the three-level
-collision fell from 0.1775 to 0.1672 and the largest level-1 code's share from
-3.49% to 2.62%, while the number of level-2 prefixes stayed the same. The
-hierarchy did not degrade — it spread out slightly.
+**The neighbours are not better preserved, and neither is the hierarchy — the
+apparent improvement is the baseline's own run-to-run spread.** The arm's shares
+are a shade lower than the committed baseline's at every depth (0.0821 against
+0.0833 at level 1). The three-level collision looked better (0.1672 against
+0.1775), until the baseline was re-run: **the same frozen code, the same seed,
+the same data, run deterministically, produced 0.1624** — better than the arm.
+The re-run also moved the level-1 share (0.0833 → 0.0813) and the largest code's
+share (3.49% → 2.39%).
+
+So on every structural metric the arm sits **inside the baseline's own
+run-to-run range**, in the middle of it:
+
+| metric | baseline run A | this arm | baseline run B |
+|---|---|---|---|
+| L1 neighbour share | 0.0833 | 0.0821 | 0.0813 |
+| L3 collision | 0.1775 | 0.1672 | 0.1624 |
+| largest L1 code | 3.49% | 2.62% | 2.39% |
+| level-2 prefixes | 7414 | 7432 | 7408 |
+
+That the *baseline* moves this much between runs also settles a methodological
+point for the whole campaign: the SID-level structural metrics have a
+run-to-run spread as large as the effects the campaign has been attributing to
+mechanisms. Any claim of the form "the collision fell from X to Y" needs at
+least two baseline runs before it means anything.
 
 Read together with question 1, this is consistent: a term whose community
 weight is nearly inert cannot be expected to reshape the identifiers toward the
