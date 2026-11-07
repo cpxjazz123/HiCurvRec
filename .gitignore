@@ -883,3 +883,14 @@ stage1_GeneEmbedding/output/*.npy
 !stage2_RQ-VAE/TIGER_community_graph_recon/logs/training_metrics.jsonl
 !results/stage2_RQ-VAE/TIGER_community_graph_recon/logs/
 !results/stage2_RQ-VAE/TIGER_community_graph_recon/logs/**
+
+# The deterministic baseline reference: the Stage-2 re-run of the FROZEN
+# trainer whose Stage-3 number this round's arm is compared against, and its
+# test record. Without it the comparison in
+# results/research/issue121/community_curvature/REPORT_community_graph_recon.md
+# cannot be checked. Checkpoints and arrays stay out.
+!results/stage2_RQ-VAE/_reference_baseline_deterministic/logs/
+!results/stage2_RQ-VAE/_reference_baseline_deterministic/logs/training_metrics.jsonl
+!results/stage3_T5Train/_reference_baseline_deterministic/
+!results/stage3_T5Train/_reference_baseline_deterministic/logs/
+!results/stage3_T5Train/_reference_baseline_deterministic/logs/**
