@@ -1,0 +1,209 @@
+{
+  "mechanism": "the quantised representation of an item predicts the distribution of its behaviour neighbours, weighted by the frozen community model's mixed-space affinity; the term acts on the sum of the three codewords and reaches the encoder through the straight-through estimator and the codebook through the undetached codewords",
+  "calls": [
+    {
+      "name": "the community affinity of one behaviour edge",
+      "callable": "model.community_graph:affinity_of_edge",
+      "note": "The observed edge keeps a weight of 1 + s with s in (0, 1]: the exponential of the negative half of the two branches' squared distances, each divided by the median squared distance of its own training edges. The hyperbolic branch uses the framework's canonical Poincare distance at the teacher's curvature, the same operator the community model itself was trained with.",
+      "symbols": [
+        "x0",
+        "x1",
+        "y0",
+        "y1",
+        "p0",
+        "p1",
+        "q0",
+        "q1",
+        "curvature",
+        "free_scale",
+        "ball_scale"
+      ],
+      "args": [
+        {
+          "name": "free_left",
+          "width": 2,
+          "radius": 0.4,
+          "sampler": "linear"
+        },
+        {
+          "name": "free_right",
+          "width": 2,
+          "radius": 0.4,
+          "sampler": "linear"
+        },
+        {
+          "name": "ball_left",
+          "width": 2,
+          "radius": 0.4
+        },
+        {
+          "name": "ball_right",
+          "width": 2,
+          "radius": 0.4
+        },
+        {
+          "name": "curvature",
+          "scalar": 1.0
+        },
+        {
+          "name": "free_scale",
+          "scalar": 0.25
+        },
+        {
+          "name": "ball_scale",
+          "scalar": 0.25
+        }
+      ],
+      "statements": [
+        "xe = (x0 - y0)**2 + (x1 - y1)**2",
+        "ax = -p0",
+        "ay = -p1",
+        "an = ax**2 + ay**2",
+        "au = ax*q0 + ay*q1",
+        "qn = q0**2 + q1**2",
+        "wn = (1 + 2*curvature*au + curvature*qn)*ax + (1 - curvature*an)*q0",
+        "wd = 1 + 2*curvature*au + curvature**2*an*qn",
+        "w0 = wn/wd",
+        "wn1 = (1 + 2*curvature*au + curvature*qn)*ay + (1 - curvature*an)*q1",
+        "w1 = wn1/wd",
+        "nw = sqrt(w0**2 + w1**2)",
+        "arg = Min(sqrt(curvature)*nw, 1 - 10**-7)",
+        "D = 2*atanh(arg)/sqrt(curvature)",
+        "s = exp(-0.5*(xe/free_scale + D**2/ball_scale))"
+      ],
+      "output": "s",
+      "rtol": 1e-05,
+      "atol": 1e-07
+    },
+    {
+      "name": "one anchor's cross-entropy against two candidates",
+      "callable": "model.community_graph:cgq_pair_loss",
+      "note": "The target is the behaviour weight renormalised across the candidate set; the declared weight is 1 + s with s in (0, 1], so the argument is the affinity and the weight is strictly positive by construction. The prediction is the cosine softmax over the same set; the term is their cross-entropy. The behaviour weight enters the TARGET, which is the same path the gradient takes into the encoder and the codebook.",
+      "symbols": [
+        "a0",
+        "a1",
+        "b0",
+        "b1",
+        "c0",
+        "c1",
+        "offset_a",
+        "offset_b",
+        "temperature"
+      ],
+      "args": [
+        {
+          "name": "anchor",
+          "width": 2,
+          "radius": 0.5,
+          "sampler": "linear"
+        },
+        {
+          "name": "candidate_a",
+          "width": 2,
+          "radius": 0.5,
+          "sampler": "linear"
+        },
+        {
+          "name": "candidate_b",
+          "width": 2,
+          "radius": 0.5,
+          "sampler": "linear"
+        },
+        {
+          "name": "offset_a",
+          "width": 1,
+          "radius": 1.0,
+          "sampler": "linear"
+        },
+        {
+          "name": "offset_b",
+          "width": 1,
+          "radius": 1.0,
+          "sampler": "linear"
+        },
+        {
+          "name": "temperature",
+          "scalar": 0.2
+        }
+      ],
+      "statements": [
+        "la = (a0*b0 + a1*b1)/(sqrt(a0**2 + a1**2)*sqrt(b0**2 + b1**2)*temperature)",
+        "lb = (a0*c0 + a1*c1)/(sqrt(a0**2 + a1**2)*sqrt(c0**2 + c1**2)*temperature)",
+        "wa = 1 + offset_a",
+        "wb = 1 + offset_b",
+        "total = wa + wb",
+        "ta = wa/total",
+        "tb = wb/total",
+        "pa = exp(la)/(exp(la) + exp(lb))",
+        "pb = exp(lb)/(exp(la) + exp(lb))",
+        "L = -(ta*log(pa) + tb*log(pb))"
+      ],
+      "output": "L",
+      "rtol": 1e-05,
+      "atol": 1e-07
+    }
+  ],
+  "coupling": {
+    "callable": "model.community_graph:cgq_pair_loss",
+    "behaviour_arguments": [
+      "offset_a",
+      "offset_b"
+    ],
+    "control_argument": "temperature",
+    "note": "The behaviour signal is the training split's co-occurrence graph, re-weighted by the frozen community model's mixed-space affinity; the curve is that affinity's contract Poincare distance. The behaviour enters the TARGET of the loss, on the same connected path the gradient takes into the encoder and the codebook: setting the observed edges to zero leaves no target mass at all, and removing the affinity leaves the uniform target over the same neighbours.",
+    "args": [
+      {
+        "name": "anchor",
+        "width": 2,
+        "radius": 0.5,
+        "sampler": "linear"
+      },
+      {
+        "name": "candidate_a",
+        "width": 2,
+        "radius": 0.5,
+        "sampler": "linear"
+      },
+      {
+        "name": "candidate_b",
+        "width": 2,
+        "radius": 0.5,
+        "sampler": "linear"
+      },
+      {
+        "name": "offset_a",
+        "width": 1,
+        "radius": 1.0,
+        "sampler": "linear"
+      },
+      {
+        "name": "offset_b",
+        "width": 1,
+        "radius": 1.0,
+        "sampler": "linear"
+      },
+      {
+        "name": "temperature",
+        "scalar": 0.2
+      }
+    ]
+  },
+  "excluded": [
+    {
+      "surface": "the level assignment of the three codes",
+      "reason": "the baseline's balanced assignment decides the indices; it is discrete and unchanged, and the mechanism only consumes the codewords it chose"
+    },
+    {
+      "surface": "the candidate set's membership and its padding",
+      "reason": "a discrete index selection built once from the training graph; the mask, not a differentiable quantity, decides which positions are real"
+    },
+    {
+      "surface": "the median scales m_E and m_H",
+      "reason": "measured constants read once from the training edges; they carry no gradient"
+    },
+    {
+      "surface": "the gradient budget's scale",
+      "reason": "a read-only statistic of the step's gradient norms, measured with autograd.grad and never differentiated through"
+    }
+  ]
+}

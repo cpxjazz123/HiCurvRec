@@ -62,10 +62,18 @@ def main() -> int:
     every_item = torch.from_numpy(embeddings).to(device)
     with torch.no_grad():
         free, ball = net.represent(every_item)
+        # The hard community of every item. A Stage-2 arm that needs a
+        # candidate set of "same community" and "other community" items reads
+        # it from here: deriving it anywhere else would be a second copy of the
+        # teacher's own partition, and the two copies could disagree.
+        plan = net.assignment(free, ball)
+        community = plan.argmax(dim=-1).to(torch.int64)
     payload = {
         "free": free.cpu().numpy().astype(np.float32),
         "ball": ball.cpu().numpy().astype(np.float32),
         "curvature": float(CURVATURE),
+        "community": community.cpu().numpy().astype(np.int64),
+        "n_communities": int(plan.shape[1]),
         "seed": SEED,
         "arm": "E_free_64_hyper_64_curvgcn",
         "n_items": int(embeddings.shape[0]),
@@ -75,6 +83,8 @@ def main() -> int:
     print(json.dumps({"written": str(ITEM_REPRESENTATION),
                       "free_shape": list(payload["free"].shape),
                       "ball_shape": list(payload["ball"].shape),
+                      "community_shape": list(payload["community"].shape),
+                      "communities_used": int(len(np.unique(payload["community"]))),
                       "ball_norm_max": float(np.linalg.norm(payload["ball"], axis=1).max())},
                      indent=2))
     return 0

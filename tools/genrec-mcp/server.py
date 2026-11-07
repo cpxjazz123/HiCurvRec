@@ -511,6 +511,15 @@ def stage3_child_env(cwd: Path, layout: dict) -> dict:
     """
     env = logical_env(cwd)
     env["GENREC_STAGE3_MODE"] = str(layout.get("mode") or "none")
+    # A Stage-3 run has to be reproducible: the same arm, the same seed and the
+    # same code must give the same test number. torch.use_deterministic_algorithms
+    # is on in the trainer, but a cuBLAS GEMM is not deterministic on CUDA
+    # without this workspace configuration, and torch says so in a warning on
+    # every run. Measured consequence: two runs of the frozen baseline, the same
+    # code and the same seed, ended at test_R@10 0.0555 and 0.0402 -- a spread
+    # of 38% relative, larger than every difference the mechanism campaigns have
+    # been reporting.
+    env.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
     if layout.get("mode") == "single-gpu":
         env["GENREC_SINGLE_GPU"] = "1"
     else:

@@ -870,3 +870,16 @@ stage2_RQ-VAE/**/*.pth
 stage2_RQ-VAE/**/*.npy
 results/research/**/*.npz
 stage1_GeneEmbedding/output/*.npy
+
+# The community-guided graph reconstruction arm (issue 121). Its identifiers,
+# its metrics stream and its layer record are the evidence for the three
+# questions the experiment asked: whether the community weight moves the target
+# (it moves it by 0.2% of its entropy), whether the term reaches the encoder
+# and the codebook (both gradient paths are non-zero at every logged epoch),
+# and whether the exported hierarchy changed (collision 0.1775 -> 0.1672, the
+# neighbour shares did not move). The checkpoints and arrays stay out: the two
+# rules at the end of the file win.
+!stage2_RQ-VAE/TIGER_community_graph_recon/logs/
+!stage2_RQ-VAE/TIGER_community_graph_recon/logs/training_metrics.jsonl
+!results/stage2_RQ-VAE/TIGER_community_graph_recon/logs/
+!results/stage2_RQ-VAE/TIGER_community_graph_recon/logs/**
