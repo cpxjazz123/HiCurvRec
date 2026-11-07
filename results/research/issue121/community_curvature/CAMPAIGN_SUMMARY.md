@@ -93,9 +93,11 @@ and no arm beat the baseline.
 
 ## 2026-11-07 — the graph reconstruction round, and the finding that outranks it
 
-**The determinism finding.** Two runs of the frozen baseline's Stage 3 — the
-same code, the same seed, the same data — ended at `test_R@10` **0.055537** and
-**0.040199**, a 38% relative spread. The Stage-3 trainer pins no deterministic
+**The determinism finding.** Two runs of the frozen baseline's Stage 3 on the
+same code state (2026-11-01 and 2026-11-07, both after the 2026-10-29 shard fix)
+ended at `test_R@10` **0.040199** and **0.056216**, a 40% relative spread; a
+third run on the earlier code gave 0.055537. Two of the three agree to 0.0007,
+so the honest picture is a reproducible typical run and an outlier. The Stage-3 trainer pins no deterministic
 algorithm and the cuBLAS workspace was unset. Both launch paths now pin
 `CUBLAS_WORKSPACE_CONFIG=:4096:8`, each with a regression test. Until that fix,
 every Stage-3 comparison in this campaign was comparing noise to noise; the
@@ -161,6 +163,13 @@ the base gradient. Ten of ten machine checks passed; the run took 600.8 s for
   as large as the effects the campaign has been attributing to mechanisms**, so
   "the collision fell from X to Y" needs at least two baseline runs before it
   means anything.
+
+**The recall answered the arm.** Stage 3 under the frozen protocol put this arm
+at **0.055816** against a fresh deterministic baseline run at **0.056216** —
+0.0004 below it, three orders of magnitude inside the spread that the same
+code shows between its own runs. The mechanism changed the quantiser's loss,
+the codebook and the identifiers measurably, and it did not change
+recommendation quality outside the noise.
 
 The lesson for the next design is the first bullet: a community weight bounded
 in `[1, 2]` over eleven neighbours cannot express a preference strong enough to

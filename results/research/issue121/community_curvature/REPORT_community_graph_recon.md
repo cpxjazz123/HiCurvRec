@@ -140,32 +140,26 @@ behaviour graph, and it did not.
 
 ## Question 4 — the recall
 
-Stage 3 was run twice under the frozen protocol (150 epochs, no early stop, beam
-20, seed 42): once on this arm's identifiers and once on the frozen baseline's,
-both under the deterministic Stage-3 environment this session pinned
-(`CUBLAS_WORKSPACE_CONFIG=:4096:8`).
+Stage 3 under the frozen protocol (150 epochs, no early stop, beam 20, seed 42),
+all runs on the same four cards with the deterministic environment this session
+pinned:
 
-| run | test Recall@10 | test NDCG@10 |
-|---|---|---|
-| this arm | **0.055816** | **0.030323** |
-| frozen baseline, committed (2026-10-26, before the determinism pin) | 0.055537 | 0.030701 |
-| frozen baseline, second run of the same code (2026-11-01) | 0.040199 | 0.021763 |
-| frozen baseline, deterministic re-run | RUNNING | RUNNING |
+| run | code state | test Recall@10 | test NDCG@10 |
+|---|---|---|---|
+| **this arm** | current | **0.055816** | **0.030323** |
+| **frozen baseline, deterministic re-run** | current | **0.056216** | 0.030726 |
+| frozen baseline, committed 2026-10-26 | before the shard fix (2026-10-29) | 0.055537 | 0.030701 |
+| frozen baseline, 2026-11-01 | current | 0.040199 | 0.021763 |
 
-The arm lands **0.00028 above** the committed baseline — a difference of 0.5%
-relative, against a **38% spread measured between two runs of the baseline
-itself**. It is not a gain; it is the same number. The third row is the reason
-this report does not stop there: with a spread that large, a single baseline
-run cannot certify a difference of five in the fourth decimal either way, so a
-baseline is being re-run under the same pinned environment and the same
-protocol before this section is closed.
+**The arm does not beat the baseline.** Against the like-for-like reference it
+is 0.0004 *below* it, and against the committed baseline 0.0003 above: both
+differences are three orders of magnitude below the spread the same code shows
+between two of its own runs — 0.040199 and 0.056216, the two runs that both post-
+date the 2026-10-29 shard fix.
 
-The comparison that matters is between those two rows. The baseline's
-*committed* number (0.055537, run on 2026-10-26, before determinism was pinned)
-is **not** the right reference: a second run of the same code on 2026-11-01 gave
-0.040199, a 38% relative spread. Both rows above are measured under the same
-pinned environment, so the difference between them is a difference of
-identifiers rather than of machine noise.
+That is the answer, and it is a negative one. The mechanism changed the
+quantiser's loss, the codebook and the exported identifiers measurably; it did
+not change the recommendation quality outside the measurement's own noise.
 
 ## What this arm settles
 
@@ -203,11 +197,19 @@ identifiers rather than of machine noise.
 
 ## The determinism finding, which outranks the mechanism
 
-Two runs of the frozen baseline's Stage 3 — the same code, the same seed, the
-same data — ended at `test_R@10` 0.055537 and 0.040199. The cause was that the
-Stage-3 trainer pins `torch.use_deterministic_algorithms` nowhere and the
-cuBLAS workspace was unset, so the GEMMs were free to differ; over 150 epochs
-that is enough to move the final number by 38%.
+Two runs of the frozen baseline's Stage 3 on the *same* code state — 2026-11-01
+and 2026-11-07, both after the 2026-10-29 shard fix — ended at `test_R@10`
+0.040199 and 0.056216. The Stage-3 trainer pins
+`torch.use_deterministic_algorithms` nowhere and the cuBLAS workspace was unset,
+so the GEMMs were free to differ; over 150 epochs that is enough to move the
+final number by 40%.
+
+Two of the three baseline runs (2026-10-26 at 0.055537 and the pinned re-run at
+0.056216) agree to 0.0007, so the honest description is a **reproducible typical
+run and an outlier**, not uniform noise. Either way the conclusion for the
+comparison is the same: a single baseline run cannot certify a difference of
+four in the third decimal, and this arm's difference from the reference is
+0.0004.
 
 Both launch paths now pin `CUBLAS_WORKSPACE_CONFIG=:4096:8`
 (`tools/research/stage2/contract.py` and the MCP's `stage3_child_env`), each with
