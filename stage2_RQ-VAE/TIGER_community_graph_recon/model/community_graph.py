@@ -98,15 +98,33 @@ def edge_weight_ball(edges: torch.Tensor, ball: torch.Tensor, curvature: float) 
     return distance.pow(2)
 
 
+#: How the community affinity becomes an edge weight.
+#:
+#: ``"one_plus_s"`` maps ``s`` into ``[1, 2]``. Over a typical anchor's eleven
+#: neighbours that compresses the target to within 0.2% of uniform, which is the
+#: finding of the first run of this arm.
+#:
+#: ``"affinity"`` uses ``s`` itself, so two neighbours the community model calls
+#: 0.9 and 0.1 get 90% and 10% of the target instead of 63% and 37%. It is the
+#: same geometry, the same edges and the same loss; only the mapping from
+#: affinity to weight changes.
+WEIGHT_MODES = ("one_plus_s", "affinity")
+
+
 def affinity_weights(free: torch.Tensor, ball: torch.Tensor, edges: torch.Tensor,
-                     curvature: float = 1.0) -> torch.Tensor:
-    """The community's weight on each edge: ``1 + s``, with ``s`` in ``(0, 1]``.
+                     curvature: float = 1.0,
+                     mode: str = "one_plus_s") -> torch.Tensor:
+    """The community's weight on each edge, under the requested mapping.
 
     The two branches are divided by the median squared distance over the
     training edges of that branch, so they enter on a comparable scale, and the
-    affinity is the exponential of the negative half of their sum. A weight is
-    therefore in ``[1, 2]`` on an observed edge.
+    affinity ``s`` is the exponential of the negative half of their sum, in
+    ``(0, 1]``. ``mode`` decides how ``s`` becomes the weight: ``one_plus_s``
+    keeps it in ``[1, 2]``, ``affinity`` uses it directly and lets the target
+    carry the full spread of the geometry. A non-edge is zero either way.
     """
+    if mode not in WEIGHT_MODES:
+        raise ValueError("unknown weight mode: " + str(mode))
     if edges.shape[1] == 0:
         return torch.zeros((0,), dtype=torch.float32)
     # an edge whose endpoint is not an item carries no weight; the graph
@@ -124,7 +142,10 @@ def affinity_weights(free: torch.Tensor, ball: torch.Tensor, edges: torch.Tensor
     ball_scale = ball_squared.median().clamp_min(1e-12)
     exponent = -0.5 * (free_squared / free_scale + ball_squared / ball_scale)
     affinity = torch.exp(exponent).clamp(max=1.0)
-    weights = (1.0 + affinity).float()
+    if mode == "one_plus_s":
+        weights = (1.0 + affinity).float()
+    else:
+        weights = affinity.float()
     return weights * valid.to(weights.dtype)
 
 

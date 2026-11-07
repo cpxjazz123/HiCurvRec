@@ -894,3 +894,11 @@ stage1_GeneEmbedding/output/*.npy
 !results/stage3_T5Train/_reference_baseline_deterministic/
 !results/stage3_T5Train/_reference_baseline_deterministic/logs/
 !results/stage3_T5Train/_reference_baseline_deterministic/logs/**
+
+# The controlled weight-mapping experiment: the same arm with the community
+# affinity used directly as the edge weight instead of 1 + s. Its identifiers,
+# metrics stream and layer record are the evidence that the target's spread
+# became 35x larger, that the representation learned the ordering, and that the
+# held-out behaviour did not improve while unrelated pairs contracted.
+!results/stage2_RQ-VAE/_ablation_affinity_weights/logs/
+!results/stage2_RQ-VAE/_ablation_affinity_weights/logs/**

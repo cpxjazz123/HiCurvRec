@@ -260,3 +260,95 @@ baseline's own identifiers differ between runs on every structural metric this
 report uses, so a single baseline run cannot certify a change of the size these
 arms produce. The measurement is cheap — 269 s for Stage 2, 40 minutes for
 Stage 3 — and it is the difference between a measurement and a coincidence.
+
+## The controlled experiment: the same arm, one constant, and the three questions in order
+
+The first run answered question 1 with "the weight compression makes the target
+almost uniform". That claim is testable on its own: keep the quantiser, the
+loss, the temperature, the candidate sets, the 10% gradient budget, the 3000
+epochs and the seed **all identical**, and change only the mapping from the
+community affinity to the edge weight.
+
+* `one_plus_s` (the first run): `w = 1 + s`, so weights live in `[1, 2]`.
+* `affinity` (this run): `w = s`, so two neighbours the community model scores
+  0.9 and 0.1 get 90% and 10% of the target instead of 63% and 37%.
+
+The run went to its own directory (`_ablation_affinity_weights`), took 554.7 s
+and ended with a three-level collision of 0.1670.
+
+### 1. Does the target express the relation strengths? — Yes, 35× more.
+
+| mapping | mean KL from uniform | target entropy | uniform entropy | effective support | max/min target |
+|---|---|---|---|---|---|
+| `1 + s` | **0.0080 nats** | 2.7069 | 2.7149 | 25.3 | 1.51 |
+| `s` | **0.2823 nats** | 2.4326 | 2.7149 | 19.3 | 4.8e6 |
+
+The compression was real and it is now gone. Note the long left tail under
+`s` (max/min 4.8e6): a weak-but-observed edge keeps essentially no target mass,
+so this mapping does not merely reweight the neighbourhood, it reshapes its
+support. That is the intended effect and it should be stated as such.
+
+### 2. Does the quantised representation learn that ordering? — Yes.
+
+Measured on each checkpoint: `q_i` is the sum of the three codewords at the
+assignment the export uses, and for every anchor's pair of neighbours the
+question is whether the one the community model scores higher has the higher
+cosine similarity. The control is the same measurement with the affinities
+shuffled.
+
+| checkpoint | concordance with the affinity | shuffled control | valid-pair AUC | unrelated-pair cos |
+|---|---|---|---|---|
+| frozen baseline | 0.6647 | 0.4966 | 0.6836 | 0.4980 |
+| baseline re-run | 0.6578 | 0.5001 | 0.6838 | 0.4690 |
+| weights `1 + s` | 0.6924 | 0.5016 | 0.6976 | **0.7355** |
+| weights `s` | **0.7082** | 0.5003 | 0.6802 | 0.6417 |
+
+The ordering is learned, the shuffled control sits at chance, and the wider
+mapping is better at it than the compressed one (+0.016). The reconstruction
+loss is unchanged by either mapping (6.68e-05 for all three trained arms), so
+this is not bought with reconstruction quality.
+
+### 3. Does it help the real behaviour? — No, and it costs a contraction.
+
+The same table answers this: on the held-out validation interactions — which
+the arm never trained on — the quantised space's ability to rank a real
+behaviour pair above a random one barely moves (0.6836 → 0.6976 for `1 + s`,
+0.6802 for `s`), while **the similarity of unrelated pairs rises by +0.24
+(`1 + s`) and +0.14 (`s`)**. That is the collapse the earlier behaviour arms
+hit: everything gets closer, so the positive-negative gap shrinks (0.128 →
+0.079 and 0.098) even though the positives do move closer.
+
+### The decisive number: the supervision is weaker than what the student already had
+
+The community affinity itself, measured on the same held-out pairs with the
+metric the arm uses (the two branches divided by their training-edge medians):
+
+| signal | AUC over held-out pairs vs random pairs |
+|---|---|
+| the community model's affinity | **0.6081** |
+| the plain RQ-VAE's quantised representation (no community supervision) | **0.6836** |
+| the same, after `1 + s` supervision | 0.6976 |
+| the same, after `s` supervision | 0.6802 |
+
+The supervision the arm transmits is *weaker* than the relation the
+reconstruction objective already encodes. Pushing the quantiser toward it
+(the concordance rise) therefore trades a global contraction for an ordering
+that is itself less informative than what the model had.
+
+### What this settles
+
+* The **weight compression was real** and it did block transmission: with the
+  mapping widened, both the target's spread and the representation's ordering
+  improved measurably.
+* **Transmission is not the bottleneck.** The signal being transmitted is the
+  bottleneck: its AUC on held-out behaviour is 0.608 against the student's own
+  0.684. This is the third branch of the decision tree, and it was decided by
+  measurement rather than by argument.
+* **The bar for any next community-guided design is now explicit**: the
+  supervision must separate held-out behaviour pairs better than the
+  reconstruction objective already does on this split (AUC > 0.684). A signal
+  that does not clear that bar cannot help, however faithfully it is learned.
+* **The collapse to watch for** is the unrelated-pair similarity. Both mappings
+  raised it; a design that raises the neighbour concordance without raising it
+  would be the first one that is actually adding information.
+

@@ -118,6 +118,10 @@ RAMP_END_EPOCH      = 3000
 GRADIENT_SHARE      = 0.10
 CGQ_TEMPERATURE     = 0.2
 CGQ_CURVATURE       = 1.0
+# 社区亲和度如何变成边权。one_plus_s 是第一次运行用的映射 (w in [1,2], 目标
+# 距均匀仅 0.2%); affinity 直接用 s, 让目标承载几何的完整差距。其余一切不变:
+# 同一个码本、同一个损失、同一个温度、同一个梯度上限、同一个候选集.
+CGQ_WEIGHT_MODE     = "one_plus_s"
 # 每个 rank 每步参与图重建的锚点数。邻居与对比候选各自要编码一次，这一步的
 # 额外张量因此是 CGQ_ANCHORS_PER_RANK × 候选宽度：256 × 32 = 8192 行/卡，实测
 # 相对基线单步的代价在 1.2 倍以内（tools 里的测量见 MECHANISM.md）。
@@ -304,7 +308,8 @@ def prepare_community_graph(train_frame, n_items: int, all_embeddings: torch.Ten
     curvature = float(payload["curvature"])
     community = torch.from_numpy(payload["community"]).to(device)
 
-    weights = affinity_weights(free, ball, edges, curvature=curvature)
+    weights = affinity_weights(free, ball, edges, curvature=curvature,
+                              mode=CGQ_WEIGHT_MODE)
 
     # every item keeps its heaviest CGQ_MAX_EDGES_PER_ITEM neighbours
     neighbour_ids = np.full((n_items, CGQ_MAX_NEIGHBOURS), -1, dtype=np.int64)

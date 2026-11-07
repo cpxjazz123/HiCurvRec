@@ -154,6 +154,14 @@ def check_entry(tree: Path | str) -> dict:
                "t.OUTPUT_JSON = t.RESULT_DIR / 'item_sids.json';"
                "t.CHECKPOINT = t.RESULT_DIR / 'rqvae_best.pth';"
                "t.LOG_DIR = t.RESULT_DIR / 'logs';"
+               # A trainer computes METRICS_PATH from LOG_DIR when the module
+               # is imported, so patching LOG_DIR afterwards does not redirect
+               # the metrics stream. Without this line a conformance run
+               # TRUNCATES the training metrics of a published run: the check
+               # ran one epoch into a tree whose 3000-epoch stream was the
+               # evidence for its report, and the stream became one row.
+               "setattr(t, 'METRICS_PATH', t.LOG_DIR / 'training_metrics.jsonl')"
+               " if hasattr(t, 'METRICS_PATH') else None;"
                "t.main()"]
     try:
         done = subprocess.run(command, cwd=str(tree), capture_output=True, text=True,

@@ -1,0 +1,69 @@
+{
+  "teacher": {
+    "validation_pair_mean_affinity": 0.3333125114440918,
+    "random_pair_mean_affinity": 0.24686971306800842,
+    "auc": 0.6080770059674866
+  },
+  "target": {
+    "one_plus_s": {
+      "anchors": 24505,
+      "mean_target_entropy": 2.706940407008236,
+      "mean_uniform_entropy": 2.7148992091068362,
+      "kl_from_uniform": 0.007958802098600337,
+      "mean_effective_support": 25.30466483515061,
+      "mean_neighbours": null,
+      "mean_max_over_min_target": 1.506882598714983
+    },
+    "affinity": {
+      "anchors": 24505,
+      "mean_target_entropy": 2.4326421884652434,
+      "mean_uniform_entropy": 2.7148992091068362,
+      "kl_from_uniform": 0.28225702064159286,
+      "mean_effective_support": 19.3214832582322,
+      "mean_neighbours": null,
+      "mean_max_over_min_target": 4780725.087895258
+    }
+  },
+  "checkpoints": {
+    "frozen baseline": {
+      "concordance_with_affinity": 0.6647350611773372,
+      "concordance_with_shuffled_affinity": 0.4966169353918707,
+      "pairs_compared": 2147609,
+      "validation_positive_mean_cos": 0.634993851184845,
+      "validation_negative_mean_cos": 0.5069393515586853,
+      "validation_gap": 0.12805449962615967,
+      "validation_auc": 0.6835732147325022,
+      "unrelated_pair_mean_cos": 0.49804815649986267
+    },
+    "baseline re-run": {
+      "concordance_with_affinity": 0.6578352949722226,
+      "concordance_with_shuffled_affinity": 0.5000738030060407,
+      "pairs_compared": 2147609,
+      "validation_positive_mean_cos": 0.608167827129364,
+      "validation_negative_mean_cos": 0.4745209515094757,
+      "validation_gap": 0.1336468756198883,
+      "validation_auc": 0.6838224949732223,
+      "unrelated_pair_mean_cos": 0.469036728143692
+    },
+    "weights 1+s": {
+      "concordance_with_affinity": 0.6923997804069549,
+      "concordance_with_shuffled_affinity": 0.5015656946865095,
+      "pairs_compared": 2147609,
+      "validation_positive_mean_cos": 0.826236367225647,
+      "validation_negative_mean_cos": 0.7477415204048157,
+      "validation_gap": 0.0784948468208313,
+      "validation_auc": 0.6976214801202666,
+      "unrelated_pair_mean_cos": 0.735525369644165
+    },
+    "weights s": {
+      "concordance_with_affinity": 0.7082499654266675,
+      "concordance_with_shuffled_affinity": 0.5002737929827045,
+      "pairs_compared": 2147609,
+      "validation_positive_mean_cos": 0.7610241174697876,
+      "validation_negative_mean_cos": 0.663173258304596,
+      "validation_gap": 0.09785085916519165,
+      "validation_auc": 0.6802264022937511,
+      "unrelated_pair_mean_cos": 0.6416695713996887
+    }
+  }
+}
