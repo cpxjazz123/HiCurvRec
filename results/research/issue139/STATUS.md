@@ -31,9 +31,27 @@ not restored; the test records that instead of pinning them.
 |---|---|---|---|---|---|---|---|---|
 | F0 | **done** | 552.7 s | 0.2579 | 0.3885 | 0.1429 | 4.586 | 4,256 | no (0.3885 > 0.35) |
 | G | **done** | 975.8 s | 0.2330 | 0.3572 | 0.1315 | 5.017 | 4,631 | no (0.3572 > 0.35) |
-| E | training | — | — | — | — | — | — | — |
+| E | **crashed at its first round** | — | — | — | — | — | — | — |
 | A | not started | — | — | — | — | — | — | — |
 | L | blocked | — | — | — | — | — | — | — |
+
+**E died at its epoch-1500 round, and the reason is a measured cost, not a bug
+in the mechanism.** Its last epoch (1499) was recorded at 01:15:48 and the
+collective watchdog fired at 01:25:49 — exactly the default NCCL timeout of 600
+seconds — with `Watchdog caught collective operation timeout:
+WorkNCCL(SeqNum=48043, OpType=BROADCAST)`, the weight-table broadcast at the
+round's boundary. G's rounds finish in 108 seconds; E's first round did not
+finish in ten minutes. The difference is the arm: with the curvature at zero the
+codes are coarser, so the qualifying prefixes are bigger, so each per-prefix
+candidate evaluation updates far more pairs. The review removed the wall-clock
+ceiling this work had introduced as an unapproved policy, and there is now
+nothing between that cost and the collective timeout.
+
+Three ways forward, and only one of them is mine to take: raise the
+process-group timeout so a long round is not aborted (an infrastructure limit,
+not a scientific one); build the exact incremental path for large prefixes; or
+have the owner approve a declared per-round budget. E is idle until one of them
+is chosen, and L would hit the same wall for the same reason.
 
 G's outer loop accepted 2 of its 12 candidate weights: one at epoch 2000
 (D 0.29688 → 0.29686) and one at 2500 (D 0.29693 → 0.29656); rounds at 1500 and
