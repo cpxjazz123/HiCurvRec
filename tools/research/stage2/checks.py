@@ -123,7 +123,11 @@ def _admission_tree(tree: Path) -> Path:
     target = root / "stage2_RQ-VAE" / ("_admission_" + tree.name + "_" + digest)
     if target.exists():
         shutil.rmtree(target)
-    shutil.copytree(tree, target)
+    # The candidate trees carry the frozen dataset directory with a symlink
+    # that points outside the tree; copying it as a link keeps the admission
+    # working instead of failing on a file the training entry point never
+    # reads. The copy is thrown away after the check.
+    shutil.copytree(tree, target, symlinks=True)
     return target
 
 

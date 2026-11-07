@@ -398,9 +398,14 @@ def point_cost(residual_e: torch.Tensor, residual_h: torch.Tensor,
     left out of this surface because its ``tanh(z)/z`` form has no removable
     singularity the statement language can express.
     """
-    euclidean = (residual_e - code_e).pow(2).sum()
+    # One value per item: the reduction is over the coordinates, never over the
+    # batch, because the reference this is compared with returns one value per
+    # sampled row.
+    euclidean = (residual_e - code_e).pow(2).sum(dim=-1)
     if float(curvature) > 0:
-        curved = squared_distance(residual_h, code_h, curvature).pow(2)
+        # squared_distance is already the squared geodesic distance.
+        curved = squared_distance(residual_h, code_h, curvature)
     else:
-        curved = (residual_h - code_h).pow(2).sum()
-    return 2.0 * (alpha * euclidean + (1.0 - alpha) * curved / 4.0)
+        curved = (residual_h - code_h).pow(2).sum(dim=-1)
+    weight = alpha if not torch.is_tensor(alpha) else alpha.reshape(-1)
+    return 2.0 * (weight * euclidean + (1.0 - weight) * curved / 4.0)

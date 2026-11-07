@@ -521,11 +521,11 @@ def main() -> None:
                     READOUT_FILE.write_text(json.dumps(readout_parameters, indent=2))
                 run_outer_loop(epoch, raw_module, train_embeddings, all_embeddings, device,
                                raw_module._structure_bundle, readout_parameters, _record)
-                if world_size > 1:
-                    payload = [raw_module.rq.alpha_table.to_dict()]
-                    dist.broadcast_object_list(payload, src=0)
-            elif world_size > 1:
-                payload = [None]
+            # Every rank enters the broadcast: rank 0 carries the table it just
+            # chose, the others receive it, so all four ranks quantize with the
+            # same weights from the next step on.
+            payload = [raw_module.rq.alpha_table.to_dict() if rank == 0 else None]
+            if world_size > 1:
                 dist.broadcast_object_list(payload, src=0)
                 from model.mixed_rq import AlphaTable as _AlphaTable
                 raw_module.rq.alpha_table = _AlphaTable.from_dict(payload[0])
