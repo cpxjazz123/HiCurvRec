@@ -1,10 +1,30 @@
 {
+  "active_prefixes_measured": {
+    "consequence": "the third level has no prefix that meets the 32-item activation rule, so its table falls back to the nearest ancestor; the issue requires this to be reported and forbids claiming a full three-level local fit",
+    "level_1": {
+      "prefixes": 1,
+      "with_at_least_32_items": 1
+    },
+    "level_2": {
+      "items_covered": 1460,
+      "prefixes": 7465,
+      "with_at_least_32_items": 34
+    },
+    "level_3": {
+      "items_covered": 0,
+      "prefixes": 20522,
+      "with_at_least_32_items": 0
+    },
+    "source": "results/stage2_RQ-VAE/TIGER_af3_triplet/item_sids.json (proxy for the size distribution)"
+  },
   "budget": {
     "allowance_seconds": 570,
-    "evaluations_needed_per_round_L": 3000,
     "f0_training_seconds_measured": 570,
-    "seconds_per_evaluation": 12.15,
-    "verdict": "RESOURCE_BLOCKED"
+    "per_round_seconds_estimate": 93.66000000000001,
+    "rounds": 4,
+    "superseded_verdict": "RESOURCE_BLOCKED (64x over) before the exact incremental engine",
+    "total_seconds_estimate": 374.6,
+    "verdict": "FEASIBLE_WITH_L3_FALLBACK"
   },
   "distortion": {
     "edge_half": 0.5699912358202883,
@@ -20,8 +40,28 @@
     "nodes": 24556
   },
   "host": "m3g110",
+  "incremental_engine": {
+    "equivalence_evidence": "tests/test_af3_engine.py: a local update equals a full recomputation pair by pair after a change of four items",
+    "full_recompute_seconds": 12.06,
+    "local_update_seconds": {
+      "128": 1.85,
+      "32": 0.58,
+      "512": 5.26
+    }
+  },
   "issue": 139,
   "measured_on": "2026-11-07",
+  "mechanism_activity_probe": {
+    "alpha_high": 0.75,
+    "alpha_low": 0.25,
+    "caveat": "an untrained projection and an initialised codebook, so this is a scale probe, not a claim about the trained model",
+    "items": 24556,
+    "items_whose_tokens_change": 12909,
+    "question": "does the weight change the codes the quantization actually takes?",
+    "rate": 0.5257,
+    "setup": "PCA-32 projection of the frozen stage1 embeddings (24,556 training items), KMeans codebook initialised exactly as training initialises it, three levels of 256",
+    "verdict": "the weight has geometric leverage: half the items take different codes"
+  },
   "peak_rss_mb": 5866,
   "readout": {
     "density": 0.33297297183162533,

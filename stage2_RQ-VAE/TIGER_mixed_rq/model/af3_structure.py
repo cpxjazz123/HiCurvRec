@@ -271,7 +271,7 @@ def huber(value: np.ndarray, delta: float = 1.0) -> np.ndarray:
 
 def structural_distortion(phi: torch.Tensor, support: dict, kappa: dict, *,
                           tau: float, intercept: float, n_nodes: int,
-                          device=None) -> dict:
+                          scale: float | None = None, device=None) -> dict:
     """``D_AF3``: the class-balanced Huber of the expectation surrogate."""
     delta = readout_delta(phi, support["pairs"], device=device)
     probability = readout_probability(delta, tau, intercept)
@@ -287,7 +287,8 @@ def structural_distortion(phi: torch.Tensor, support: dict, kappa: dict, *,
         value = lookup.get((int(i), int(j)))
         if value is not None:
             edge_kappa[position] = value
-    scale = float(max(1.0, float(np.subtract(*np.quantile(kappa["kappa"], [0.75, 0.25])))))
+    if scale is None:
+        scale = float(max(1.0, float(np.subtract(*np.quantile(kappa["kappa"], [0.75, 0.25])))))
     edge_half = float(huber((predicted[is_edge] - edge_kappa[is_edge]) / scale).mean()) if is_edge.any() else 0.0
     other_half = float(huber(predicted[~is_edge] / scale).mean()) if (~is_edge).any() else 0.0
     return {"distortion": 0.5 * edge_half + 0.5 * other_half,
