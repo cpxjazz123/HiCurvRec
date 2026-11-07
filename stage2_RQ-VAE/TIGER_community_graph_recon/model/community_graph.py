@@ -47,17 +47,6 @@ import torch.nn.functional as F
 
 from .poincare_contract import distance as contract_distance
 
-#: The number of a candidate set's columns: real neighbours plus contrast
-#: candidates. Fixed, so the batch's shape does not vary between steps.
-MAX_CANDIDATES = 48
-
-#: How many real neighbours an anchor keeps, and how many contrast candidates
-#: of each kind. The real neighbours are the target; the contrast candidates
-#: give the softmax a denominator and carry no target mass.
-MAX_NEIGHBOURS = 16
-MAX_SAME_COMMUNITY = 8
-MAX_OTHER_COMMUNITY = 8
-
 #: The temperature of the cosine softmax, fixed by the specification.
 TEMPERATURE = 0.2
 
@@ -178,52 +167,6 @@ class CandidateSet:
             candidate_weights=self.candidate_weights.to(device),
             candidate_mask=self.candidate_mask.to(device),
         )
-
-
-def build_candidate_set(anchor_ids: torch.Tensor,
-                        neighbour_ids: torch.Tensor,
-                        neighbour_weights: torch.Tensor,
-                        same_community_ids: torch.Tensor,
-                        other_community_ids: torch.Tensor) -> CandidateSet:
-    """Assemble the candidate set of a batch of anchors.
-
-    The real neighbours come first: they carry the target, and every one of
-    them takes part in it. Then the same-community and the other-community
-    contrast candidates, which carry no target mass. Every anchor's set is
-    padded to the same width, and ``candidate_mask`` says which positions hold
-    a real candidate.
-
-    ``candidate_rows`` are the positions in the encoded candidate tensor: the
-    candidates are encoded once per step, in their own forward, and the rows
-    point into that tensor.
-    """
-    batch = int(anchor_ids.shape[0])
-    width = MAX_NEIGHBOURS + MAX_SAME_COMMUNITY + MAX_OTHER_COMMUNITY
-    rows = torch.zeros((batch, width), dtype=torch.long)
-    weights = torch.zeros((batch, width), dtype=torch.float32)
-    mask = torch.zeros((batch, width), dtype=torch.bool)
-
-    offset = 0
-    for row in range(batch):
-        position = 0
-        for values, values_weights, limit in (
-            (neighbour_ids[row], neighbour_weights[row], MAX_NEIGHBOURS),
-            (same_community_ids[row], None, MAX_SAME_COMMUNITY),
-            (other_community_ids[row], None, MAX_OTHER_COMMUNITY),
-        ):
-            taken = 0
-            for index, _ in enumerate(values.tolist()):
-                if taken >= limit:
-                    break
-                rows[row, position] = offset + position
-                if values_weights is not None:
-                    weights[row, position] = float(values_weights[index])
-                mask[row, position] = True
-                position += 1
-                taken += 1
-        offset += position
-    return CandidateSet(anchors=anchor_ids, candidate_rows=rows,
-                        candidate_weights=weights, candidate_mask=mask)
 
 
 # --------------------------------------------------------------------------

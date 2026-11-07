@@ -151,10 +151,16 @@ the base gradient. Ten of ten machine checks passed; the run took 600.8 s for
   term's own gradient is non-zero for the encoder and the codebook at every
   logged epoch, the applied scale rises 3.1e-6 → 3.4e-5 to hold the
   contribution at a tenth, and the identifiers never freeze.
-* are the behaviour neighbours better preserved? **No**: the level-1 share is
-  0.0821 against the baseline's 0.0833 and the level-3 enrichment is worse. The
-  hierarchy's *shape* improved (collision 0.1775 → 0.1672, largest level-1 code
-  3.49% → 2.62%) with the prefix count unchanged.
+* are the behaviour neighbours better preserved? **No, and neither is the
+  hierarchy** — the apparent improvement was the baseline's own run-to-run
+  spread. A second run of the *frozen baseline* (same code, same seed, same
+  data, deterministic) produced level-1 share 0.0813, collision 0.1624 and
+  largest code 2.39% against the committed run's 0.0833 / 0.1775 / 3.49%, and
+  the arm sat between the two on every one of them. The lesson is
+  methodological: **the SID-level structural metrics carry a run-to-run spread
+  as large as the effects the campaign has been attributing to mechanisms**, so
+  "the collision fell from X to Y" needs at least two baseline runs before it
+  means anything.
 
 The lesson for the next design is the first bullet: a community weight bounded
 in `[1, 2]` over eleven neighbours cannot express a preference strong enough to
