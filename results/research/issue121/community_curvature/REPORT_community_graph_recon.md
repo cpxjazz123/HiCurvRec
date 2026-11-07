@@ -225,3 +225,36 @@ committed baseline number as a reference.
   mandatory layered record, written before any Stage-3 number was read
 * `results/research/issue121/community_curvature/neighbour_preservation.json` —
   the numbers in the Q3 tables
+
+## What the next design has to change, and the number to design it against
+
+The three measurements together say exactly where the leverage is missing.
+
+**The weight's range is the binding constraint.** `w = 1 + s` with `s ≤ 1` puts
+every observed edge within a factor of two of every other, and with eleven
+neighbours per anchor that leaves the target 0.2% from uniform. A design that
+wants the community to steer the identifiers has to widen that range — either
+by letting `s` enter multiplicatively over a wider domain, or by letting the
+affinity decide *which* neighbours are in the target at all (a threshold or a
+top-k on `s`, which changes the target's support rather than its weights), or
+by making the target's temperature a function of the geometry.
+
+**The number to report for any such design is `KL(t ‖ uniform)`**, computed once
+on the training graph before the run. This arm's 0.0054 nats is the reason its
+identifiers did not move relative to the baseline's own run-to-run spread; a
+design whose target sits at, say, 0.3 nats is doing something an unweighted
+neighbourhood loss cannot do. Reporting the community model's separation or its
+AF3 gap instead says nothing about whether the supervision carries a signal.
+
+**A 10% gradient budget is a weak channel, and that may be the right setting.**
+At exactly a tenth of the base gradient the term moved the quantiser's own
+losses not at all (the reconstruction curve is the baseline's) and the
+identifiers only within the noise. If a future mechanism is to show an effect
+under the same budget, the effect has to come from the target's *shape* rather
+than from the term's strength.
+
+**Two baseline runs are the minimum for any SID-level claim.** The frozen
+baseline's own identifiers differ between runs on every structural metric this
+report uses, so a single baseline run cannot certify a change of the size these
+arms produce. The measurement is cheap — 269 s for Stage 2, 40 minutes for
+Stage 3 — and it is the difference between a measurement and a coincidence.
