@@ -383,3 +383,24 @@ def _override_rows(level: int, tokens: list[torch.Tensor], override: dict,
     return torch.tensor([float(override.get((3, (int(a), int(b))),
                                             table.get(3, (int(a), int(b)))))
                          for a, b in zip(first, second)])
+
+
+def point_cost(residual_e: torch.Tensor, residual_h: torch.Tensor,
+               code_e: torch.Tensor, code_h: torch.Tensor,
+               alpha, curvature=CURVATURE) -> torch.Tensor:
+    """``C`` for one item and one code, the closed form the contract freezes.
+
+    One vectorised call :func:`mixed_cost` is what training uses; this scalar
+    path exists so the framework can compare the mechanism against a reference
+    rebuilt from SymPy statements, which a batched matrix cannot express.
+    ``code_h`` is the ball point, not the tangent parameter: the tangent-to-ball
+    map ``exp_0`` is a convention of the codebook, declared in the math spec, and
+    left out of this surface because its ``tanh(z)/z`` form has no removable
+    singularity the statement language can express.
+    """
+    euclidean = (residual_e - code_e).pow(2).sum()
+    if float(curvature) > 0:
+        curved = squared_distance(residual_h, code_h, curvature).pow(2)
+    else:
+        curved = (residual_h - code_h).pow(2).sum()
+    return 2.0 * (alpha * euclidean + (1.0 - alpha) * curved / 4.0)
