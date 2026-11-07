@@ -13,6 +13,7 @@ pass: the admission treats it as missing evidence.
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -120,7 +121,13 @@ def _admission_tree(tree: Path) -> Path:
     # name cannot copy into the same directory and delete each other's copy.
     import hashlib
     digest = hashlib.sha256(str(tree).encode("utf-8")).hexdigest()[:10]
-    target = root / "stage2_RQ-VAE" / ("_admission_" + tree.name + "_" + digest)
+    # One scratch directory per check run, not per tree: two admissions of the
+    # same tree that run at the same time (a dispatch while a manual check is
+    # under way) would otherwise share the directory, and the first to finish
+    # deletes the copy the second is still reading. The failure it produces is a
+    # missing source file in the copy, which reads like a defect of the tree.
+    target = root / "stage2_RQ-VAE" / (
+        "_admission_" + tree.name + "_" + digest + "_" + str(os.getpid()))
     if target.exists():
         shutil.rmtree(target)
     # The candidate trees carry the frozen dataset directory with a symlink
