@@ -126,8 +126,10 @@ def _admission_tree(tree: Path) -> Path:
     # under way) would otherwise share the directory, and the first to finish
     # deletes the copy the second is still reading. The failure it produces is a
     # missing source file in the copy, which reads like a defect of the tree.
+    import uuid
     target = root / "stage2_RQ-VAE" / (
-        "_admission_" + tree.name + "_" + digest + "_" + str(os.getpid()))
+        "_admission_" + tree.name + "_" + digest + "_"
+        + str(os.getpid()) + "_" + uuid.uuid4().hex[:8])
     if target.exists():
         shutil.rmtree(target)
     # The candidate trees carry the frozen dataset directory with a symlink
