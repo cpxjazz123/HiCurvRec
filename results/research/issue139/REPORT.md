@@ -46,7 +46,17 @@ feasible region holds.
 | the Bernoulli surrogate of the AF3 target equals the exact expectation over every subgraph of a four-node graph; binary p recovers κ exactly | `tests/test_af3_structure.py` |
 | a local update of the structural distortion equals a full recomputation, pair by pair | `tests/test_af3_engine.py`, 1e-12 |
 | the mechanism against an independently rebuilt reference | values 1.4e-17, gradients 1.1e-16, gradcheck on both sides |
-| the machine admission | 11 of 11 checks pass on F0, G and A; L and E were being checked when the work stopped |
+| the machine admission | 11 of 11 checks pass on F0, G, E and A; L's entry check passes but its local path now fails closed (below) |
+| the reviewed regression suites | 115 tests plus 24 subtests pass in each of the six trees (base, F0, G, L, E, A), from the review commit `3ee9374c` |
+
+A later review (`3ee9374c`, on the remote) repaired the incremental degree
+dependencies, the shared feasibility definitions, the TRAIN node mapping, the
+deterministic support, the immutability of the F0 calibration, the alpha
+inheritance, rollback and checkpoint state, and the rank-zero codebook
+initialisation; it also removed the wall-clock prefix truncation this work had
+introduced, as an unapproved policy, and made the explicit local entries fail
+closed rather than invent a pruning rule. That review's state is what this
+report describes.
 
 Writing those tests found two errors in my own mathematics, both recorded in
 the test docstrings: the arc-sinh form of the ball distance is wrong by a
@@ -113,10 +123,18 @@ not.
 
 ## 5. What was not done
 
-- **L, E and A were not trained.** All three trees exist, are wired and were
-  admitted; the L dispatch was cancelled before its smoke finished. The issue's
-  DoD ("five arms, each one complete 3000-epoch run with an exported hard SID")
-  is therefore **not met**, and this report does not claim it.
+- **L, E and A were not trained.** All three trees exist and are wired; the L
+  dispatch was cancelled before its smoke finished. The issue's DoD ("five arms,
+  each one complete 3000-epoch run with an exported hard SID") is therefore
+  **not met**, and this report does not claim it.
+- **The L arm cannot be dispatched as it stands.** The reviewed code rejects
+  explicit local entries that it cannot serve, pending a fallback-transition
+  specification that has been reviewed and approved. Until that exists, the arm
+  that could have shown a local advantage is the one that fails closed.
+- The wall-clock ceiling on one outer-loop round that this work had added was
+  removed by the review as an unapproved policy: the round now processes every
+  qualifying prefix, and the cost of that is a measurement the L arm has not
+  yet paid.
 - The differential check across three independent derivations was not run.
 - The frozen-snapshot diagnostics of §3.1 (Forman instead of AF3, shuffled AF3,
   degree and triangle errors separately, and the shuffled local table) were not
@@ -125,6 +143,10 @@ not.
 - The `TIGER_af3_hierarchy` arm's identifiers were overwritten by a run that
   used the wrong arm name; they were moved to `/tmp/af3h_quarantine/` and that
   arm has to be re-run to restore them. No Stage 3 result consumed them.
+- The `TIGER_af3_triplet` arm, which belongs to an earlier issue, finished its
+  Stage 3 at **test_recall@10 = 0.0551**, below the 0.065 line. It is recorded
+  here only so that nothing about this session is lost: it is not part of this
+  issue.
 
 ## 6. Where the evidence lives
 
