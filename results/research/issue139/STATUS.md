@@ -1,5 +1,33 @@
 # Issue #139 — status (2026-11-08)
 
+## 0. The goal, restated by the owner
+
+Complete the Stage 2 of all five mechanisms, record the structural distortion of
+the five resulting SIDs, and run the corresponding Stage 3 for each of them.
+That widens the earlier Stage-2-only framing, and it has two consequences that
+are recorded rather than assumed:
+
+* **The learned collision gate no longer gates these five arms.**
+  `tools/genrec-mcp/stage2_quality_gate.py` carries an explicit
+  `ISSUE139_STAGE3_EXCEPTION` naming the five arm directories; the collision is
+  still measured and recorded as a diagnostic, the exception is written into the
+  admission evidence, and nothing else is relaxed. A test pins both halves: the
+  excepted arms pass and an unrelated arm with the same collision is refused.
+  Recorded in `CLAUDE.md` as the owner's instruction of 2026-11-08.
+* **The sequence is now five Stage 2 runs, then five measurements of the
+  structural distortion, then five Stage 3 runs**, each about two and a half
+  hours on four cards, so the Stage 3 module is the long pole.
+
+### Where the five arms stand
+
+| arm | Stage 2 | distortion recorded | Stage 3 |
+|---|---|---|---|
+| F0 | done | yes (0.296474) | pending the exception, which now exists |
+| G | done | yes (0.295375) | pending |
+| E | smoke running, then training | — | — |
+| A | not started (admitted) | — | — |
+| L | not started (admitted) | — | — |
+
 **State: in progress.** Two of five arms are complete on the reviewed source, one
 is training, two have not run. The core hypothesis has been tested directly and
 holds, with a small margin. Nothing here is a Stage 3 result.
