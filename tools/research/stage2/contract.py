@@ -143,6 +143,11 @@ def launch_env(extra: dict | None = None) -> dict:
     # one drift by several percent, which is larger than the differences
     # between the arms and therefore hides every real effect.
     env.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+    # The ranks' output has to reach the log while the job runs. A killed job
+    # loses whatever sat in its buffer, so a run that died early left a
+    # zero-byte log and the real error was gone; that cost three launches and
+    # an hour before the cause was visible.
+    env.setdefault("PYTHONUNBUFFERED", "1")
     env.pop(SINGLE_GPU_ENV, None)
     if extra:
         env.update(extra)
