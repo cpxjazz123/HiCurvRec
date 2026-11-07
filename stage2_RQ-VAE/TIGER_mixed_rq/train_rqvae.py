@@ -35,6 +35,7 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
 from model import RQVAE
+from model.model import MixedRQVAE
 
 
 # === 路径常量（无绝对路径；由文件自身向上找仓库标记推导）===
@@ -55,8 +56,29 @@ def _repository_root() -> Path:
 
 REPO_ROOT = _repository_root()
 # The arm name is this tree's promoted name; a candidate copy changes only this line.
-ARM_NAME = "TIGER_RQ-VAE"
-RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
+ARM_NAME = "TIGER_mixed_rq"
+# === Issue #139: the arm of this tree ===
+# F0: mixed space, weight fixed at 1/2. G: one global weight per level, chosen
+# by the outer loop. L: one weight per prefix. E: the same local loop with the
+# curvature at zero, so both halves are Euclidean. A: the mixed space at 1/2
+# plus the existing AF3 auxiliary supervision.
+ARM_VARIANT = "F0"
+CURVATURE = 0.0 if ARM_VARIANT == "E" else 1.0
+OUTER_LOOP = ARM_VARIANT in ("G", "L", "E")
+OUTER_LOOP_EPOCHS = (1500, 2000, 2500, 3000)
+#: The wall-clock ceiling of one outer-loop round. The prefixes are processed in
+#: the fixed stable order and every prefix the ceiling defers is recorded by
+#: name; the budget is never met by shrinking the support or skipping the
+#: cross-prefix terms, only by processing fewer prefixes and saying which.
+OUTER_LOOP_SECONDS = 150.0
+#: The frozen readout, shared by the outer-loop arms. Written once by F0 at its
+#: 1500th epoch from the complete hard-SID readout of the training items.
+READOUT_FILE = REPO_ROOT / "results" / "research" / "issue139" / "readout.json"
+#: The frozen AF3 table of the training behaviour graph (issue #136's export).
+AF3_CACHE = (REPO_ROOT / "results" / "research" / "issue121" / "community_curvature"
+             / "train_edge_af3.npz")
+AUX_AF3 = ARM_VARIANT == "A"
+RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / (ARM_NAME + "_" + ARM_VARIANT)
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
 TRAIN_FILE     = REPO_ROOT / "results" / "stage0_build_parquet" / "train.parquet"
@@ -208,6 +230,149 @@ def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int]) -> np.ndar
     return result
 
 
+
+# === Issue #139: the AF3 outer loop =====================================
+def _frozen_structure():
+    """The graph, its target, the fixed support and per-pair targets."""
+    from model import af3_structure as structure
+    graph = structure.load_graph(AF3_CACHE)
+    kappa = structure.target_kappa(graph)
+    embeddings = np.load(EMBEDDING_FILE)
+    support = structure.build_support(graph, kappa, embeddings, k=16, seed=42)
+    lookup = {(int(i), int(j)): float(v)
+              for i, j, v in zip(kappa["rows"], kappa["cols"], kappa["kappa"])}
+    targets = np.array([lookup.get((int(i), int(j)), 0.0) for i, j in support["pairs"]])
+    return graph, support, targets
+
+
+def _readout_parameters(raw_module, train_embeddings, support, device):
+    """``tau`` and the intercept of the shared readout, from one snapshot."""
+    from model import af3_structure as structure
+    from model.mixed_rq import encode_tokens
+    from model.af3_selector import _readout_of
+    with torch.no_grad():
+        z = raw_module.encoder(train_embeddings.to(device))
+        tokens = encode_tokens(z, raw_module.rq)
+        phi = _readout_of(z, tokens, raw_module.rq)
+    return structure.calibrate(phi, support, device=phi.device)
+
+
+def run_outer_loop(epoch, raw_module, train_embeddings, all_embeddings, device,
+                   state_bundle, readout, record_fn):
+    """One scheduled round: choose the geometry weights, never train."""
+    import time
+    from model.af3_engine import StructuralState
+    from model.af3_selector import (choose_weight, prefix_groups, prefix_probe_counts,
+                                    resolution_report, within_feasible_region)
+    from model.mixed_rq import encode_tokens
+    from model.af3_selector import _readout_of
+    import torch.nn.functional as F
+
+    graph, support, targets = state_bundle
+    started = time.time()
+    if not hasattr(raw_module, "_structure_state"):
+        raw_module._structure_state = StructuralState(
+            support["pairs"], support["is_edge"], targets, graph["n_nodes"],
+            tau=readout["tau"], intercept=readout["intercept"],
+            scale=max(1.0, float(np.subtract(*np.quantile(
+                targets[support["is_edge"]], [0.75, 0.25])))))
+    state = raw_module._structure_state
+    with torch.no_grad():
+        z = raw_module.encoder(train_embeddings.to(device))
+        tokens = encode_tokens(z, raw_module.rq)
+        phi = _readout_of(z, tokens, raw_module.rq)
+    state.full(phi)
+    start_distortion = state.summary()["distortion"]
+    start_resolution = resolution_report(tokens, max(raw_module.rq.levels[0].n_embed, 2))
+    with torch.no_grad():
+        recon_start = float(F.mse_loss(raw_module.decoder(phi), train_embeddings.to(device)))
+    degree = np.zeros(graph["n_nodes"])
+    np.add.at(degree, support["pairs"][:, 0], 1.0)
+    np.add.at(degree, support["pairs"][:, 1], 1.0)
+    start = {"semantic": recon_start, "adjacency_brier": 0.0, "degree_error": 0.0,
+             "resolution": start_resolution}
+    predicted = state.predicted
+    is_edge = support["is_edge"]
+    start["adjacency_brier"] = float(np.mean((predicted - is_edge.astype(np.float64)) ** 2))
+    soft = np.zeros(graph["n_nodes"])
+    np.add.at(soft, support["pairs"][:, 0], state.probability)
+    np.add.at(soft, support["pairs"][:, 1], state.probability)
+    # The degree error is measured on the observed edges only: the unobserved
+    # half of the support has no degree to compare with.
+    observed_degree = degree[support["pairs"][:, 0]] + degree[support["pairs"][:, 1]]
+    soft_degree = soft[support["pairs"][:, 0]] + soft[support["pairs"][:, 1]]
+    start["degree_error"] = float(np.abs(soft_degree[is_edge] - observed_degree[is_edge]).mean()
+                                  / max(observed_degree[is_edge].mean(), 1e-9))
+    start["bucket_scale"] = start_resolution["max_bucket"]
+
+    def evaluate(candidate_tokens, outcome):
+        resolution = resolution_report(candidate_tokens, max(raw_module.rq.levels[0].n_embed, 2))
+        with torch.no_grad():
+            candidate_phi = _readout_of(z, candidate_tokens, raw_module.rq)
+            recon = float(F.mse_loss(raw_module.decoder(candidate_phi), train_embeddings.to(device)))
+        brier = float(np.mean((outcome.get("probability", state.probability)
+                               - is_edge.astype(np.float64)) ** 2))
+        candidate = dict(resolution)
+        candidate["probe_degree_error"] = start["degree_error"]
+        return within_feasible_region(start, candidate, recon, brier, start["degree_error"])
+
+    record = {"round": int(getattr(raw_module, "_round_index", 0)), "epoch": int(epoch),
+              "distortion_start": start_distortion, "accepted": [], "skipped": [],
+              "rejected": [], "deferred": []}
+    raw_module._round_index = record["round"] + 1
+    levels = len(raw_module.rq.levels)
+    for level in range(1, levels + 1):
+        if ARM_VARIANT == "G":
+            groups = {(): np.arange(tokens.shape[0])}
+        elif level == 1:
+            # The first level has only the root: its table entry is the one
+            # weight every item shares.
+            groups = {(): np.arange(tokens.shape[0])}
+        else:
+            # A level's table is keyed by the *earlier* levels, so a third-level
+            # entry is addressed by the first two tokens.
+            groups = prefix_groups(tokens, level - 1)
+        for prefix, items in groups.items():
+            if time.time() - started > OUTER_LOOP_SECONDS:
+                record["deferred"].append({"level": level, "prefix": list(prefix),
+                                           "items": int(len(items)),
+                                           "reason": "the round's wall-clock ceiling was reached"})
+                continue
+            if level > 1 and len(items) < 32:
+                record["skipped"].append({"level": level, "prefix": list(prefix),
+                                          "items": int(len(items)),
+                                          "reason": "fewer than 32 items, so it inherits its ancestor"})
+                continue
+            if level > 1:
+                edges, unobserved = prefix_probe_counts(items, state)
+                if edges < 64 or unobserved < 64:
+                    record["skipped"].append({"level": level, "prefix": list(prefix),
+                                              "items": int(len(items)),
+                                              "probes": [edges, unobserved],
+                                              "reason": "insufficient probes, so it inherits its ancestor"})
+                    continue
+            outcome = choose_weight(z, raw_module.rq, raw_module.rq.alpha_table, state,
+                                    level=level, prefix=prefix, items=items,
+                                    current_tokens=tokens, start=start,
+                                    evaluate_feasibility=evaluate)
+            entry = {"level": level, "prefix": list(prefix), "items": int(len(items)),
+                     "attempts": outcome["attempts"], "accepted": outcome["accepted"]}
+            if outcome["accepted"]:
+                record["accepted"].append(entry)
+                tokens = encode_tokens(z, raw_module.rq)
+            else:
+                record["rejected"].append(entry)
+    record["distortion_end"] = state.summary()["distortion"]
+    record["seconds"] = round(time.time() - started, 3)
+    record["alpha_table"] = raw_module.rq.alpha_table.to_dict()
+    record_fn(0, "outer_loop", **record)
+    print(f"[outer loop] epoch={epoch} round={record['round']} "
+          f"D {record['distortion_start']:.5f} -> {record['distortion_end']:.5f} "
+          f"accepted={len(record['accepted'])} rejected={len(record['rejected'])} "
+          f"skipped={len(record['skipped'])} deferred={len(record['deferred'])} "
+          f"in {record['seconds']}s", flush=True)
+    return record
+
 def _tokenizer_config() -> SimpleNamespace:
     sizes = list(CODEBOOK_SIZE)
     if len(sizes) == 1:
@@ -252,7 +417,7 @@ def main() -> None:
     all_embeddings = torch.from_numpy(embeddings)
     train_embeddings = all_embeddings[torch.from_numpy(train_ids)]
     config = _tokenizer_config()
-    model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
+    model = MixedRQVAE(config, in_dim=embeddings.shape[1], curvature=CURVATURE).to(device)
     if XAVIER_INIT:
         initialize_tiger_weights(model)
     if world_size > 1:
@@ -302,6 +467,9 @@ def main() -> None:
 
     # Stage3 only consumes the final-epoch weights, so tracking the best
     # collision across epochs would be misleading; keep the last evaluation.
+    readout_parameters = None
+    if OUTER_LOOP and READOUT_FILE.is_file():
+        readout_parameters = json.loads(READOUT_FILE.read_text())
     final_collision = float("inf")
     final_raw_unique = 0
     codebook_sizes = list(config.codebook_size)
@@ -339,6 +507,29 @@ def main() -> None:
         avg_loss = float(local_loss.item()) / max(world_size, 1)
         avg_recon = float(local_recon.item()) / max(world_size, 1)
         cur_lr = optimizer.param_groups[0]["lr"]
+
+        # === Issue #139: the scheduled outer-loop round ===
+        if OUTER_LOOP and epoch in OUTER_LOOP_EPOCHS:
+            model.eval()
+            if rank == 0:
+                if not hasattr(raw_module, "_structure_bundle"):
+                    raw_module._structure_bundle = _frozen_structure()
+                if readout_parameters is None:
+                    readout_parameters = _readout_parameters(
+                        raw_module, train_embeddings, raw_module._structure_bundle[1], device)
+                    READOUT_FILE.parent.mkdir(parents=True, exist_ok=True)
+                    READOUT_FILE.write_text(json.dumps(readout_parameters, indent=2))
+                run_outer_loop(epoch, raw_module, train_embeddings, all_embeddings, device,
+                               raw_module._structure_bundle, readout_parameters, _record)
+                if world_size > 1:
+                    payload = [raw_module.rq.alpha_table.to_dict()]
+                    dist.broadcast_object_list(payload, src=0)
+            elif world_size > 1:
+                payload = [None]
+                dist.broadcast_object_list(payload, src=0)
+                from model.mixed_rq import AlphaTable as _AlphaTable
+                raw_module.rq.alpha_table = _AlphaTable.from_dict(payload[0])
+            model.train()
 
         # === 非 eval 间隔: 只 log train 行 ===
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:

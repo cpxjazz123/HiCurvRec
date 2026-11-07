@@ -181,7 +181,7 @@ class MixedVQLevel(nn.Module):
         used = onehot.sum(0).float()
         unused = int((used == 0).sum().item())
         if (torch.distributed.is_available() and torch.distributed.is_initialized()
-                and infer_use_sk is False):
+                and infer_use_sk is False and not getattr(self, "_skip_ddp_reduce", False)):
             torch.distributed.all_reduce(used, op=torch.distributed.ReduceOp.SUM)
             unused = int((used == 0).sum().item())
         # The commitment (code detached) and the codebook term (residual
@@ -300,6 +300,11 @@ class MixedRQ(nn.Module):
                 sk_epsilon=sk_epsilon if last else -1.0,
                 sk_iters=sk_iters if last else -1,
             ))
+
+    @property
+    def vq_layers(self) -> nn.ModuleList:
+        """The name the frozen trainer uses for the per-level modules."""
+        return self.levels
 
     def forward(self, z: torch.Tensor, infer_use_sk: bool = False):
         """Quantize a 32-dimensional tangent-space code and read it back out."""
