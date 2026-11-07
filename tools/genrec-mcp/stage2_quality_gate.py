@@ -34,6 +34,18 @@ FROZEN_BASELINE_L2_PREFIXES = 16145  # Verified reference for the diagnostic rep
 #: post-processing. This deliberately overrides the technical-validity-only policy
 #: of issue #120; the equality boundary is admitted ("> 35%").
 L3_COLLISION_MAX = 0.35
+#: Owner instruction (2026-11-08): the five arms of issue #139 are admitted to
+#: Stage 3 whatever their learned collision, because the goal of that issue is to
+#: compare five mechanisms end to end and each of them has to produce a recall
+#: number. The collision is still measured and recorded as a diagnostic; the
+#: exception is scoped to these directory names and relaxes nothing else.
+ISSUE139_STAGE3_EXCEPTION = (
+    "TIGER_mixed_rq_F0",
+    "TIGER_mixed_rq_G",
+    "TIGER_mixed_rq_L",
+    "TIGER_mixed_rq_E",
+    "TIGER_mixed_rq_A",
+)
 #: The learned collision is read from the run's own metrics stream; an exported
 #: SID whose collision disagrees with it was post-processed after training, which
 #: the owner forbids. The tolerance absorbs the fact that the exported SID is
@@ -240,8 +252,16 @@ def exported_raw_collision(sid) -> float:
 
 
 def collision_gate(candidate: dict, learned: float | None = None,
-                   exported_raw: float | None = None) -> str | None:
-    """The single quality rule: the LEARNED L3 collision must not exceed the gate."""
+                   exported_raw: float | None = None,
+                   arm: str | None = None) -> str | None:
+    """The single quality rule: the LEARNED L3 collision must not exceed the gate.
+
+    ``arm`` names the arm the SID belongs to. An arm in the explicit
+    ``ISSUE139_STAGE3_EXCEPTION`` is admitted whatever its collision, and the
+    exception is recorded in the evidence rather than applied silently.
+    """
+    if arm in ISSUE139_STAGE3_EXCEPTION:
+        return None
     collision = candidate.get("l3_collision")
     if collision is None:
         return ("the three-level collision could not be measured, so the 20% "
@@ -318,9 +338,12 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path,
                 baseline_metrics = _measures(baseline, anchors, positives, negatives)
         except (QualityGateError, OSError, TypeError, ValueError, KeyError) as exc:
             reference_status["diagnostics"] = str(exc)
+        arm_name = Path(sid_path).parent.name
         collision_refusal = collision_gate(
             candidate, learned_collision(Path(sid_path).parent),
-            exported_raw_collision(sid) if sid else None)
+            exported_raw_collision(sid) if sid else None, arm=arm_name)
+        evidence["collision_gate_exception"] = (
+            arm_name if arm_name in ISSUE139_STAGE3_EXCEPTION else None)
         if collision_refusal is not None and enforce_collision:
             failures.append(collision_refusal)
         evidence.update({
