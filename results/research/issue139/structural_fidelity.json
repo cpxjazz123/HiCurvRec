@@ -1,0 +1,42 @@
+{
+  "arms": {
+    "F0": {
+      "D_continuous": 0.298475489100233,
+      "D_discrete": 0.2964742445391998,
+      "brier_continuous": 0.2534902987762611,
+      "brier_discrete": 0.2518699006976492,
+      "edge_half_continuous": 0.593180043716674,
+      "edge_half_discrete": 0.5890347711348068,
+      "items": 24587,
+      "neighbour_pairs": 630782,
+      "neighbour_retention": 0.010826244249201785,
+      "quantization_cost": -0.002001244561033233,
+      "scale": 239.0,
+      "unobserved_half_continuous": 0.0037709344837921037,
+      "unobserved_half_discrete": 0.003913717943592767
+    },
+    "G": {
+      "D_continuous": 0.29790533940692465,
+      "D_discrete": 0.2953746819566299,
+      "brier_continuous": 0.2530512126486481,
+      "brier_discrete": 0.25128334517943574,
+      "edge_half_continuous": 0.5920714762164951,
+      "edge_half_discrete": 0.5868301792999926,
+      "items": 24587,
+      "neighbour_pairs": 630782,
+      "neighbour_retention": 0.011355745725147515,
+      "quantization_cost": -0.0025306574502947377,
+      "scale": 239.0,
+      "unobserved_half_continuous": 0.0037392025973541415,
+      "unobserved_half_discrete": 0.003919184613267253
+    }
+  },
+  "hypothesis": {
+    "G_minus_F0_continuous": -0.000570149693308375,
+    "G_minus_F0_discrete": -0.0010995625825698796,
+    "statement": "D_AF3(G, final) < D_AF3(F0, final)",
+    "supported": true
+  },
+  "source": "results/research/issue139/readout.json (frozen by F0 at epoch 1500)",
+  "support": "/fs04/ar57/wenyu/GeneRec/results/research/issue139/support.npz"
+}
