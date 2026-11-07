@@ -21,6 +21,7 @@ import subprocess
 import sys
 import threading
 import time
+from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -316,7 +317,8 @@ def run_outer_loop(epoch, raw_module, train_embeddings, all_embeddings, device,
     from model.af3_engine import StructuralState
     from model.af3_selector import (choose_weight, prefix_groups, prefix_probe_counts,
                                     resolution_report, within_feasible_region,
-                                    structural_guard_metrics, prefix_eligibility_error)
+                                    structural_guard_metrics, prefix_eligibility_error,
+                                    resolve_local_table)
     from model.mixed_rq import encode_tokens
     from model.af3_selector import _readout_of
     import torch.nn.functional as F
@@ -340,10 +342,24 @@ def run_outer_loop(epoch, raw_module, train_embeddings, all_embeddings, device,
         tokens = encode_tokens(z, raw_module.rq)
         phi = _readout_of(z, tokens, raw_module.rq)
     state.full(phi)
+    transition = {"status": "not_applicable", "passes": 0, "deleted": []}
     if ARM_VARIANT in ("L", "E"):
-        eligibility_error = prefix_eligibility_error(raw_module.rq.alpha_table, tokens, state)
-        if eligibility_error:
-            raise RuntimeError("NEEDS_SPEC_REVIEW: " + eligibility_error)
+        # The reviewed transition: a local entry whose prefix fell below the
+        # activation rule is deleted, the codes are re-encoded under the
+        # ancestor's weight, and the procedure repeats until nothing is stale.
+        transition = resolve_local_table(
+            raw_module.rq.alpha_table, z, raw_module.rq, state, tokens,
+            encode=lambda: encode_tokens(z, raw_module.rq),
+            readout=lambda current: _readout_of(z, current, raw_module.rq))
+        if transition["status"] != "converged":
+            raise RuntimeError("the local table did not reach a consistent state: "
+                               + json.dumps(transition)[:300])
+        if transition["deleted"]:
+            tokens = encode_tokens(z, raw_module.rq)
+            phi = _readout_of(z, tokens, raw_module.rq)
+            state.full(phi)
+            print("[outer loop] local table transition: %d stale entries deleted"
+                  % len(transition["deleted"]), flush=True)
     start_distortion = state.summary()["distortion"]
     start_resolution = resolution_report(tokens, max(raw_module.rq.levels[0].n_embed, 2))
     with torch.no_grad():
@@ -443,10 +459,20 @@ def _tokenizer_config() -> SimpleNamespace:
     )
 
 
+# The collective timeout of the process group. The default of ten minutes is an
+# infrastructure limit, not a scientific one: the outer loop of the local arms is
+# a legitimate long computation on rank 0 while the other three wait at the
+# weight-table broadcast, and an E-arm round was measured to exceed ten minutes
+# and abort the run. Two hours is long enough for any legitimate round and short
+# enough that a genuinely stuck job is still reported as a failure.
+PROCESS_GROUP_TIMEOUT_S = 7200
+
+
 def main() -> None:
     # === DDP 初始化 ===
     if "RANK" in os.environ and int(os.environ.get("RANK", -1)) >= 0:
-        dist.init_process_group(backend="nccl")
+        dist.init_process_group(backend="nccl",
+                                timeout=timedelta(seconds=PROCESS_GROUP_TIMEOUT_S))
         rank = dist.get_rank()
         world_size = dist.get_world_size()
         local_rank = int(os.environ.get("LOCAL_RANK", rank))

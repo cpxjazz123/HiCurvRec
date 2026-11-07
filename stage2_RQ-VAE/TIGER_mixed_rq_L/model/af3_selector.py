@@ -262,3 +262,47 @@ def _readout_of(z: torch.Tensor, tokens: torch.Tensor, rq) -> torch.Tensor:
         curved.append(expmap0(right, rq.curvature) if rq.curvature > 0 else right)
     return quantized_readout(euclidean, curved, rq.curvature)
 
+
+def resolve_local_table(table, z, rq, state, tokens, encode, readout, *, max_passes=8):
+    """Delete stale local entries and re-encode until the table is consistent.
+
+    A prefix that was supported when its entry was written can shrink below the
+    activation rule after SGD or after an earlier-level change. Skipping it would
+    leave the entry in place, so every item under it would keep a weight its
+    support no longer justifies; deleting it makes ``AlphaTable.get`` inherit the
+    nearest ancestor, which IS the documented rule for a prefix without an entry.
+    The deletion can change codes, which can make another prefix stale, so the
+    procedure iterates to a fixed point in a deterministic order -- level
+    ascending, prefix ascending -- and reports every deletion it made.
+
+    The round's guard baseline is taken after this returns, so the round is
+    judged against the state it actually starts from rather than against a state
+    the transition already changed.
+    """
+    deleted = []
+    for attempt in range(int(max_passes)):
+        stale = []
+        for level, entries in sorted(table.levels.items()):
+            if int(level) <= 1:
+                continue
+            groups = prefix_groups(tokens, level - 1)
+            for prefix in sorted(entries):
+                if not prefix:
+                    continue                      # a global coordinate, not local
+                items = groups.get(prefix)
+                supported = items is not None and len(items) >= MIN_PREFIX_ITEMS
+                if supported:
+                    edges, unobserved = prefix_probe_counts(items, state)
+                    supported = (edges >= MIN_PREFIX_EDGES
+                                 and unobserved >= MIN_PREFIX_UNOBSERVED)
+                if not supported:
+                    stale.append((int(level), prefix, items))
+        if not stale:
+            return {"status": "converged", "passes": attempt, "deleted": deleted}
+        for level, prefix, items in stale:
+            table.levels[level].pop(prefix, None)
+            deleted.append({"level": level, "prefix": list(prefix),
+                            "items": 0 if items is None else int(len(items))})
+        tokens = encode()
+        state.full(readout(tokens))
+    return {"status": "did_not_converge", "passes": int(max_passes), "deleted": deleted}
