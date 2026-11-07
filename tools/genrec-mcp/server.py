@@ -1339,6 +1339,49 @@ def run_subprocess(cmd: list[str], cwd: Path, timeout: int, env: dict | None = N
         return {"cmd": " ".join(cmd), "rc": None, "stdout": "", "stderr": str(exc)}
 
 
+COMPATIBILITY_SCRIPT = """
+import sys
+from pathlib import Path
+import torch
+tree = Path(sys.argv[1]); checkpoint = Path(sys.argv[2])
+sys.path.insert(0, str(tree))
+from model import RQVAE as _RQVAE
+config = __import__("train_rqvae")._tokenizer_config()
+payload = torch.load(checkpoint, map_location="cpu")
+state = payload.get("state_dict", payload)
+try:
+    model = _RQVAE(config, in_dim=int(state["encoder.0.weight"].shape[1])) if "encoder.0.weight" in state else _RQVAE(config, in_dim=768)
+    model.load_state_dict(state, strict=True)
+except Exception as exc:
+    print("INCOMPATIBLE " + str(exc)[:300])
+    raise SystemExit(3)
+print("COMPATIBLE")
+"""
+
+
+def checkpoint_matches(tree: Path, checkpoint: Path, python: str) -> tuple[bool, str]:
+    """Whether this checkpoint was written by the model this tree builds.
+
+    A checkpoint from another version of the model cannot probe this one, and
+    loading it with ``strict=True`` raises a missing-key error that reads like a
+    defect of the tree. The question is asked here, in the tree's own
+    interpreter, before the smoke is started.
+    """
+    import subprocess
+    import tempfile
+    with tempfile.TemporaryDirectory() as raw:
+        script = Path(raw) / "compat.py"
+        script.write_text(COMPATIBILITY_SCRIPT, encoding="utf-8")
+        try:
+            done = subprocess.run([python, str(script), str(tree), str(checkpoint)],
+                                  capture_output=True, text=True, timeout=300)
+        except (OSError, subprocess.SubprocessError) as exc:
+            return False, "the compatibility probe could not run: " + str(exc)
+    if done.returncode == 0 and "COMPATIBLE" in done.stdout:
+        return True, "compatible"
+    return False, (done.stdout + done.stderr).strip()[:300]
+
+
 def probe_checkpoint(tree: Path, result_dir: Path) -> tuple[Path | None, str]:
     """The trained weights the smoke probe needs.
 
@@ -1673,6 +1716,15 @@ def stage2_worker_main(tree_arg: str, spec: dict) -> int:
                                "refused": "source/test verification drift before smoke: "
                                           + str(before.get("refused")), **logs})
         return 1
+    # A checkpoint from another version of the model cannot probe this one, and
+    # loading it would raise a missing-key error that reads like a defect of the
+    # tree. It is asked here, before the smoke, and an incompatible checkpoint is
+    # treated exactly like an absent one.
+    if checkpoint is not None:
+        compatible, why = checkpoint_matches(tree, checkpoint, spec["python"])
+        if not compatible:
+            checkpoint_source = checkpoint_source + " (incompatible: " + why[:160] + ")"
+            checkpoint = None
     smoke = run_stage2_smoke(
         tree,
         spec["python"],
