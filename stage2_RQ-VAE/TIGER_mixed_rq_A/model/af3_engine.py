@@ -34,7 +34,7 @@ import numpy as np
 import scipy.sparse as sp
 import torch
 
-from .af3_structure import TAU_FLOOR, huber, readout_probability
+from .af3_structure import TAU_FLOOR, huber, readout_delta, readout_probability
 
 
 class StructuralState:
@@ -97,8 +97,6 @@ class StructuralState:
         indptr, indices = matrix.indptr, matrix.indices
         directed_rows = np.concatenate([self.pairs[:, 0], self.pairs[:, 1]])
         directed_cols = np.concatenate([self.pairs[:, 1], self.pairs[:, 0]])
-        start = indptr[directed_rows]
-        offset = np.searchsorted(indices, directed_cols) - np.zeros_like(start)
         positions = np.empty(len(directed_rows), dtype=np.int64)
         for index in range(len(directed_rows)):
             row = int(directed_rows[index])
@@ -110,12 +108,8 @@ class StructuralState:
     def _readout(self, phi: torch.Tensor, positions: np.ndarray) -> np.ndarray:
         """``1 - cos`` and ``sigmoid(b - delta / tau)`` at the given positions."""
         subset = self.pairs[positions]
-        index = torch.as_tensor(subset.T, dtype=torch.long, device=phi.device)
-        left = phi[index[0]]
-        right = phi[index[1]]
-        denominator = (left.norm(dim=-1) * right.norm(dim=-1)).clamp_min(1e-8)
-        delta = 1.0 - (left * right).sum(-1) / denominator
-        probability = readout_probability(delta.double(), self.tau, self.intercept)
+        delta = readout_delta(phi, subset)
+        probability = readout_probability(delta, self.tau, self.intercept)
         return delta.detach().cpu().numpy(), probability.detach().cpu().numpy()
 
     def full(self, phi: torch.Tensor) -> dict:
@@ -123,10 +117,9 @@ class StructuralState:
         every = np.arange(len(self.pairs), dtype=np.int64)
         self.delta, self.probability = self._readout(phi, every)
         matrix = self._matrix()
-        product = (matrix @ matrix).tocsr()
         rows = self.pairs[:, 0]
         cols = self.pairs[:, 1]
-        values = np.asarray(product[rows, cols]).reshape(-1)
+        values = self._triangle_values(matrix, every)
         degree = np.asarray(matrix.sum(axis=1)).reshape(-1)
         self.triangle = values
         term = (2.0 - (degree[rows] - self.probability)
@@ -134,40 +127,52 @@ class StructuralState:
         self.predicted = self.probability * term
         return self.summary()
 
+    def _triangle_values(self, matrix: sp.csr_matrix,
+                         positions: np.ndarray) -> np.ndarray:
+        """Read only supported entries of P squared, in bounded row blocks.
+
+        A sparse P does not imply a sparse P squared. Never materialise the
+        entire N by N product even in the full-recomputation oracle.
+        """
+        rows = self.pairs[positions, 0]
+        columns = self.pairs[positions, 1]
+        needed = np.unique(rows)
+        values = np.empty(len(positions), dtype=np.float64)
+        for start in range(0, len(needed), 256):
+            block_rows = needed[start:start + 256]
+            selected = (rows >= block_rows[0]) & (rows <= block_rows[-1])
+            product = (matrix[block_rows] @ matrix).tocsr()
+            local_rows = np.searchsorted(block_rows, rows[selected])
+            values[selected] = np.asarray(product[local_rows, columns[selected]]).reshape(-1)
+        return values
+
     def update(self, phi: torch.Tensor, items: np.ndarray) -> dict:
         """Recompute exactly the pairs a change of these items can have moved."""
         items = np.asarray(items, dtype=np.int64)
-        direct = (np.concatenate([self.incident[int(item)] for item in items])
+        direct = (np.unique(np.concatenate([self.incident[int(item)] for item in items]))
                   if items.size else np.array([], dtype=np.int64))
-        neighbours = np.unique(self.pairs[direct]) if direct.size else np.array([], dtype=np.int64)
-        # The triangle term of (i, j) moves only if a *common* supported partner
-        # changed, which needs both endpoints in the neighbourhood of the change.
-        # Taking every pair incident to that neighbourhood instead would grow the
-        # update to most of the graph and give the local path no advantage.
+        if not direct.size:
+            return self.summary()
+        # Only these probabilities change. Both endpoints of each direct edge
+        # can change soft degree, including a neighbour outside U itself.
+        neighbours = np.unique(self.pairs[direct])
         inner = np.zeros(self.n_nodes, dtype=bool)
         inner[neighbours] = True
-        second = (np.concatenate([self.incident[int(node)] for node in neighbours])
-                  if neighbours.size else np.array([], dtype=np.int64))
-        if second.size:
-            other = np.where(self.pairs[second, 0] == self.pairs[second, 1],
-                             self.pairs[second, 0], 0)
-            left_in = inner[self.pairs[second, 0]]
-            right_in = inner[self.pairs[second, 1]]
-            second = second[left_in & right_in]
-        positions = np.unique(np.concatenate([direct, second]))
-        if positions.size == 0:
-            return self.summary()
-        self.delta[positions], self.probability[positions] = self._readout(phi, positions)
+        degree_positions = np.unique(np.concatenate(
+            [self.incident[int(node)] for node in neighbours]))
+        # Triangle updates have a narrower dependency than degree updates.
+        # Direct pairs may change through an endpoint; otherwise both endpoints
+        # must neighbour a changed common partner. Do NOT apply this restriction
+        # to the degree contribution (the path 0--1--2 is a counterexample).
+        triangle_positions = np.unique(np.concatenate([
+            direct, degree_positions[inner[self.pairs[degree_positions, 0]]
+                                     & inner[self.pairs[degree_positions, 1]]]]))
+        self.delta[direct], self.probability[direct] = self._readout(phi, direct)
         matrix = self._matrix()
-        rows = np.unique(np.concatenate([self.pairs[positions, 0], self.pairs[positions, 1]]))
-        product = (matrix[rows] @ matrix).tocsr()
-        subset_rows = self.pairs[positions, 0]
-        subset_cols = self.pairs[positions, 1]
-        # The product has one row per requested node, so the pair's first
-        # endpoint has to be mapped into that block before it is read.
-        local_rows = np.searchsorted(rows, subset_rows)
-        self.triangle[positions] = np.asarray(product[local_rows, subset_cols]).reshape(-1)
+        self.triangle[triangle_positions] = self._triangle_values(matrix, triangle_positions)
         degree = np.asarray(matrix.sum(axis=1)).reshape(-1)
+        positions = degree_positions
+        subset_rows, subset_cols = self.pairs[positions].T
         term = (2.0 - (degree[subset_rows] - self.probability[positions])
                 - (degree[subset_cols] - self.probability[positions])
                 + 3.0 * self.triangle[positions])
@@ -188,3 +193,4 @@ class StructuralState:
         """The per-pair arrays, so a test can compare an update with a full run."""
         return {"delta": self.delta.copy(), "probability": self.probability.copy(),
                 "triangle": self.triangle.copy(), "predicted": self.predicted.copy()}
+

@@ -1,5 +1,11 @@
 """AF3-guided hierarchical supervision for the three-level RQ-VAE.
 
+Issue-139 A-arm reuse of TIGER_af3_hierarchy at 9e44096 (original blob
+9f2c77ff55f586fa994fc3cbc8090c6c64717ef4), with the mixed soft-readout adaptation
+introduced by 87f2563. The four loss definitions and constants are unchanged;
+the adapter fixes the mixed cost's coordinate/temperature conventions and the
+gradient-budget helpers fix device safety and the zero-base-gradient edge case.
+
 The baseline learns three residual codes per item from its semantic embedding
 alone. This module adds supervision that acts on **each level's own assignment**
 and on the prefix it forms, driven by the training behaviour graph and its AF3
@@ -41,6 +47,7 @@ balanced assignment, untouched.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 import torch
 import torch.nn.functional as F
@@ -78,31 +85,27 @@ def soft_assignments(latent: torch.Tensor, codebooks: list[torch.Tensor],
     """The soft assignment of every item at every level, along the residual chain.
 
     ``latent`` is the encoder's output. Level ``l`` assigns the residual that is
-    left after the previous levels' expected codewords, which is the same
-    structure the quantiser uses; the difference is that this read-out is soft
-    and differentiable, so a loss can act on it.
+    left after the previous levels' expected tangent codewords. The mixed
+    auxiliary readout introduced in 87f2563 deliberately keeps tangent-space
+    subtraction; it is not the hard quantizer's native Mobius residual.
+    Map that tangent residual to the ball for the mixed metric at each level.
     """
     assignments = []
     residual = latent
     for codebook in codebooks:
         if float(curvature) > 0:
-            # The mixed space: the assignment is taken over the mixed cost, and
-            # the soft residual stays in the tangent space, where the curved
-            # half of a codeword is a parameter. That deviation from the native
-            # hyperbolic residual is confined to this auxiliary soft read-out;
-            # the quantizer's own path is native.
             from .mixed_rq import mixed_cost, split
-            residual_e, residual_h = split(residual)
-            code_e, code_h = split(codebook)
-            ball = torch.tanh(code_h) * 0.0 + code_h
-            distances = mixed_cost(residual_e, residual_h, code_e, ball,
-                                   torch.full((residual.shape[0],), 0.5,
-                                              dtype=residual.dtype, device=residual.device),
-                                   float(curvature))
+            residual_e, residual_t = split(residual)
+            code_e, code_t = split(codebook)
+            # mixed_cost maps code_t itself and already returns squared cost.
+            cost = mixed_cost(residual_e, expmap0(residual_t, curvature), code_e, code_t,
+                              torch.full((len(residual),), 0.5,
+                                         dtype=residual.dtype, device=residual.device),
+                              float(curvature))
         else:
-            distances = torch.cdist(residual, codebook,
-                                    compute_mode="donot_use_mm_for_euclid_dist")
-        weights = torch.softmax(-distances.pow(2) / max(temperature, 1e-6), dim=-1)
+            cost = torch.cdist(residual, codebook,
+                               compute_mode="donot_use_mm_for_euclid_dist").pow(2)
+        weights = torch.softmax(-cost / max(temperature, 1e-6), dim=-1)
         assignments.append(weights)
         residual = residual - weights @ codebook
     return tuple(assignments)
@@ -275,11 +278,11 @@ def gradient_norm(loss: torch.Tensor, parameters) -> float:
     if not selected:
         return 0.0
     grads = torch.autograd.grad(loss, selected, retain_graph=True, allow_unused=True)
-    total = torch.zeros((), dtype=torch.float64)
-    for grad in grads:
-        if grad is not None:
-            total = total + grad.detach().double().pow(2).sum()
-    return float(total.sqrt())
+    # Each scalar is reduced on its parameter's own device; no CPU tensor is
+    # accidentally added to a CUDA tensor, and .grad remains untouched.
+    total = sum(float(grad.detach().double().pow(2).sum())
+                for grad in grads if grad is not None)
+    return math.sqrt(total)
 
 
 @dataclass
@@ -307,8 +310,12 @@ class GradientBudget:
         return self.scale
 
     def _ratio(self, base: float, new: float) -> float:
-        if new <= 0.0 or base <= 0.0:
+        if not math.isfinite(base) or not math.isfinite(new) or base < 0 or new < 0:
+            raise ValueError("gradient norms must be finite and non-negative")
+        if new == 0.0:
             return 1.0
+        if base == 0.0:
+            return 0.0
         return min(1.0, self.share * base / new)
 
 
@@ -346,3 +353,4 @@ def weighted_curve_term(weight: torch.Tensor, left: torch.Tensor,
     # from a per-row contract call; both mean the same thing
     flat = weight.reshape(-1)
     return -flat * torch.log(kernel.clamp_min(1e-6))
+

@@ -36,8 +36,8 @@ from tqdm import tqdm
 
 from model import RQVAE
 from model.model import MixedRQVAE
-from model.af3_hierarchy import (GradientBudget, af3_weights, gradient_norm,
-                                  hierarchical_loss)
+from model.af3_runtime import (input_identity, resolve_shared_readout,
+                               snapshot_sha256, snapshot_state)
 
 
 # === 路径常量（无绝对路径；由文件自身向上找仓库标记推导）===
@@ -68,37 +68,16 @@ ARM_VARIANT = "A"
 CURVATURE = 0.0 if ARM_VARIANT == "E" else 1.0
 OUTER_LOOP = ARM_VARIANT in ("G", "L", "E")
 OUTER_LOOP_EPOCHS = (1500, 2000, 2500, 3000)
-#: The wall-clock ceiling of one outer-loop round. The prefixes are processed in
-#: the fixed stable order and every prefix the ceiling defers is recorded by
-#: name; the budget is never met by shrinking the support or skipping the
-#: cross-prefix terms, only by processing fewer prefixes and saying which.
-OUTER_LOOP_SECONDS = 150.0
-#: The epoch at which the reference arm freezes the shared readout.
-READOUT_EPOCH = 1500 if ARM_VARIANT == "F0" else 0
+# No wall-clock prefix truncation: Issue #139 requires a complete deterministic
+# sweep. A failed full-sweep cost precheck is RESOURCE_BLOCKED, not permission
+# to silently change which coordinates the experiment evaluates.
 #: The frozen readout, shared by the outer-loop arms. Written once by F0 at its
 #: 1500th epoch from the complete hard-SID readout of the training items.
 READOUT_FILE = REPO_ROOT / "results" / "research" / "issue139" / "readout.json"
 #: The frozen AF3 table of the training behaviour graph (issue #136's export).
 AF3_CACHE = (REPO_ROOT / "results" / "research" / "issue121" / "community_curvature"
              / "train_edge_af3.npz")
-#: The name the AF3 hierarchy module and the supervision preparation use.
-AF3_PATH = AF3_CACHE
 AUX_AF3 = ARM_VARIANT == "A"
-# === Issue #139 arm A: the existing AF3 auxiliary supervision ===
-# The auxiliary term is the one the AF3 hierarchy arm already implemented: the
-# same sampling of 192 edges and 192 pairs per step, the same ramp from epoch
-# 1500 to 3000, the same cap of 0.10 on the share of the gradient it may take,
-# and the same TRAIN weights. Only the interface changed: the soft read-out
-# takes the mixed cost, and the quantizer it supervises is the joint codebook.
-HIER_START_EPOCH    = 1500
-HIER_END_EPOCH      = 3000
-HIER_WEIGHT_LEVEL1  = 1.0
-HIER_WEIGHT_LEVEL2  = 1.0
-HIER_WEIGHT_LEVEL3  = 1.0
-HIER_WEIGHT_BALANCE = 1.0
-HIER_GRADIENT_SHARE = 0.10
-HIER_EDGES_PER_STEP = 192
-HIER_PAIRS_PER_STEP = 192
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
@@ -256,10 +235,28 @@ def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int]) -> np.ndar
 def _frozen_structure():
     """The graph, its target, the fixed support and per-pair targets."""
     from model import af3_structure as structure
+    # The existing cache stores graph-position endpoints, not embedding IDs.
+    # Reconstruct its exact TRAIN-only convention to recover and verify the
+    # mapping, rather than assuming the graph rows equal sorted target IDs.
+    if str(REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(REPO_ROOT))
+    from tools.research.science.community_curvature import data as graph_data
     graph = structure.load_graph(AF3_CACHE)
+    canonical = graph_data.build_graph("train")
+    if (graph["n_nodes"] != canonical.n_nodes
+            or not np.array_equal(graph["rows"], canonical.edges[0])
+            or not np.array_equal(graph["cols"], canonical.edges[1])):
+        raise ValueError("AF3 cache does not match the canonical TRAIN graph")
+    graph["item_ids"] = np.asarray(canonical.nodes, dtype=np.int64)
     kappa = structure.target_kappa(graph)
+    if not np.allclose(kappa["kappa"], graph["weights"], rtol=0, atol=1e-6):
+        raise ValueError("cached AF3 does not match the canonical TRAIN target")
+    graph["degree"] = kappa["degree"]
     embeddings = np.load(EMBEDDING_FILE)
-    support = structure.build_support(graph, kappa, embeddings, k=16, seed=42)
+    if (len(np.unique(graph["item_ids"])) != graph["n_nodes"]
+            or graph["item_ids"].min() < 0 or graph["item_ids"].max() >= len(embeddings)):
+        raise ValueError("canonical TRAIN item mapping does not match embedding rows")
+    support = structure.build_support(graph, kappa, embeddings[graph["item_ids"]], k=16, seed=42)
     lookup = {(int(i), int(j)): float(v)
               for i, j, v in zip(kappa["rows"], kappa["cols"], kappa["kappa"])}
     targets = np.array([lookup.get((int(i), int(j)), 0.0) for i, j in support["pairs"]])
@@ -275,21 +272,61 @@ def _readout_parameters(raw_module, train_embeddings, support, device):
         z = raw_module.encoder(train_embeddings.to(device))
         tokens = encode_tokens(z, raw_module.rq)
         phi = _readout_of(z, tokens, raw_module.rq)
-    return structure.calibrate(phi, support, device=phi.device)
+    parameters = structure.calibrate(phi, support, device=phi.device)
+    parameters["snapshot_sha256"] = snapshot_sha256(raw_module)
+    return parameters
 
 
+def _prepare_readout_inputs(raw_module):
+    if not hasattr(raw_module, "_structure_bundle"):
+        raw_module._structure_bundle = _frozen_structure()
+    graph, support, _ = raw_module._structure_bundle
+    common_code = [Path(__file__).parent / "model" / name for name in
+                   ("af3_structure.py", "af3_engine.py", "af3_runtime.py", "mixed_rq.py",
+                    "poincare_contract.py", "model.py", "layers.py")]
+    identity = input_identity(graph, support, AF3_CACHE, EMBEDDING_FILE, TRAIN_FILE, common_code)
+    return graph, support, identity
+
+
+def _on_rank_zero(operation, rank, world_size):
+    """Broadcast the result OR failure of a rank-zero-only mechanism operation.
+
+    A missing shared calibration or a failed outer loop must not leave the
+    other ranks waiting forever at a collective that rank zero never enters.
+    This is not a launcher and does not grant training admission.
+    """
+    message = [None]
+    if rank == 0:
+        try:
+            message[0] = {"ok": True, "value": operation()}
+        except Exception as exc:
+            message[0] = {"ok": False, "error": type(exc).__name__ + ": " + str(exc)}
+    if world_size > 1:
+        dist.broadcast_object_list(message, src=0)
+    if not message[0]["ok"]:
+        raise RuntimeError("rank-zero mechanism operation failed: " + message[0]["error"])
+    return message[0]["value"]
+
+
+@torch.no_grad()
 def run_outer_loop(epoch, raw_module, train_embeddings, all_embeddings, device,
                    state_bundle, readout, record_fn):
     """One scheduled round: choose the geometry weights, never train."""
     import time
     from model.af3_engine import StructuralState
     from model.af3_selector import (choose_weight, prefix_groups, prefix_probe_counts,
-                                    resolution_report, within_feasible_region)
+                                    resolution_report, within_feasible_region,
+                                    structural_guard_metrics, prefix_eligibility_error)
     from model.mixed_rq import encode_tokens
     from model.af3_selector import _readout_of
     import torch.nn.functional as F
 
     graph, support, targets = state_bundle
+    # TRAIN graph vertices include history items and need not equal the
+    # tokenizer's training target rows. Use the verified position -> ID map.
+    item_ids = torch.as_tensor(graph["item_ids"], dtype=torch.long,
+                                device=all_embeddings.device)
+    graph_embeddings = all_embeddings[item_ids].to(device)
     started = time.time()
     if not hasattr(raw_module, "_structure_state"):
         raw_module._structure_state = StructuralState(
@@ -299,47 +336,43 @@ def run_outer_loop(epoch, raw_module, train_embeddings, all_embeddings, device,
                 targets[support["is_edge"]], [0.75, 0.25])))))
     state = raw_module._structure_state
     with torch.no_grad():
-        z = raw_module.encoder(train_embeddings.to(device))
+        z = raw_module.encoder(graph_embeddings)
         tokens = encode_tokens(z, raw_module.rq)
         phi = _readout_of(z, tokens, raw_module.rq)
     state.full(phi)
+    if ARM_VARIANT in ("L", "E"):
+        eligibility_error = prefix_eligibility_error(raw_module.rq.alpha_table, tokens, state)
+        if eligibility_error:
+            raise RuntimeError("NEEDS_SPEC_REVIEW: " + eligibility_error)
     start_distortion = state.summary()["distortion"]
     start_resolution = resolution_report(tokens, max(raw_module.rq.levels[0].n_embed, 2))
     with torch.no_grad():
-        recon_start = float(F.mse_loss(raw_module.decoder(phi), train_embeddings.to(device)))
+        recon_start = float(F.mse_loss(raw_module.decoder(phi), graph_embeddings))
     degree = np.zeros(graph["n_nodes"])
-    np.add.at(degree, support["pairs"][:, 0], 1.0)
-    np.add.at(degree, support["pairs"][:, 1], 1.0)
-    start = {"semantic": recon_start, "adjacency_brier": 0.0, "degree_error": 0.0,
-             "resolution": start_resolution}
-    predicted = state.predicted
+    np.add.at(degree, graph["rows"], 1.0)
+    np.add.at(degree, graph["cols"], 1.0)
+    start = {"semantic": recon_start, "resolution": start_resolution}
     is_edge = support["is_edge"]
-    start["adjacency_brier"] = float(np.mean((predicted - is_edge.astype(np.float64)) ** 2))
-    soft = np.zeros(graph["n_nodes"])
-    np.add.at(soft, support["pairs"][:, 0], state.probability)
-    np.add.at(soft, support["pairs"][:, 1], state.probability)
-    # The degree error is measured on the observed edges only: the unobserved
-    # half of the support has no degree to compare with.
-    observed_degree = degree[support["pairs"][:, 0]] + degree[support["pairs"][:, 1]]
-    soft_degree = soft[support["pairs"][:, 0]] + soft[support["pairs"][:, 1]]
-    start["degree_error"] = float(np.abs(soft_degree[is_edge] - observed_degree[is_edge]).mean()
-                                  / max(observed_degree[is_edge].mean(), 1e-9))
-    start["bucket_scale"] = start_resolution["max_bucket"]
+    start.update(structural_guard_metrics(state.probability, support["pairs"], is_edge, degree))
 
     def evaluate(candidate_tokens, outcome):
+        if ARM_VARIANT in ("L", "E"):
+            eligibility_error = prefix_eligibility_error(
+                raw_module.rq.alpha_table, candidate_tokens, state)
+            if eligibility_error:
+                return False, eligibility_error
         resolution = resolution_report(candidate_tokens, max(raw_module.rq.levels[0].n_embed, 2))
         with torch.no_grad():
             candidate_phi = _readout_of(z, candidate_tokens, raw_module.rq)
-            recon = float(F.mse_loss(raw_module.decoder(candidate_phi), train_embeddings.to(device)))
-        brier = float(np.mean((outcome.get("probability", state.probability)
-                               - is_edge.astype(np.float64)) ** 2))
-        candidate = dict(resolution)
-        candidate["probe_degree_error"] = start["degree_error"]
-        return within_feasible_region(start, candidate, recon, brier, start["degree_error"])
+            recon = float(F.mse_loss(raw_module.decoder(candidate_phi), graph_embeddings))
+        guards = structural_guard_metrics(state.probability, support["pairs"], is_edge, degree)
+        outcome["guard_metrics"] = dict(guards, semantic=recon, resolution=resolution)
+        return within_feasible_region(start, resolution, recon,
+                                      guards["adjacency_brier"], guards["degree_error"])
 
     record = {"round": int(getattr(raw_module, "_round_index", 0)), "epoch": int(epoch),
               "distortion_start": start_distortion, "accepted": [], "skipped": [],
-              "rejected": [], "deferred": []}
+              "rejected": [], "guard_start": start}
     raw_module._round_index = record["round"] + 1
     levels = len(raw_module.rq.levels)
     for level in range(1, levels + 1):
@@ -354,11 +387,6 @@ def run_outer_loop(epoch, raw_module, train_embeddings, all_embeddings, device,
             # entry is addressed by the first two tokens.
             groups = prefix_groups(tokens, level - 1)
         for prefix, items in groups.items():
-            if time.time() - started > OUTER_LOOP_SECONDS:
-                record["deferred"].append({"level": level, "prefix": list(prefix),
-                                           "items": int(len(items)),
-                                           "reason": "the round's wall-clock ceiling was reached"})
-                continue
             if level > 1 and len(items) < 32:
                 record["skipped"].append({"level": level, "prefix": list(prefix),
                                           "items": int(len(items)),
@@ -390,83 +418,9 @@ def run_outer_loop(epoch, raw_module, train_embeddings, all_embeddings, device,
     print(f"[outer loop] epoch={epoch} round={record['round']} "
           f"D {record['distortion_start']:.5f} -> {record['distortion_end']:.5f} "
           f"accepted={len(record['accepted'])} rejected={len(record['rejected'])} "
-          f"skipped={len(record['skipped'])} deferred={len(record['deferred'])} "
+          f"skipped={len(record['skipped'])} "
           f"in {record['seconds']}s", flush=True)
     return record
-
-def prepare_af3_supervision(all_embeddings: torch.Tensor, n_items: int,
-                             device: torch.device) -> dict:
-    """The frozen AF3 table, read once, plus the sampling pools it drives.
-
-    Everything comes from the training split: the AF3 table was exported from
-    the train graph by the issue-#136 convention, and the pairs below are drawn
-    from it. No validation or test interaction is read.
-    """
-    if not AF3_PATH.is_file():
-        raise RuntimeError(
-            "the frozen AF3 table is missing: " + str(AF3_PATH)
-            + "; regenerate it with tools/research/science/community_curvature/"
-              "export_edge_af3.py")
-    payload = np.load(AF3_PATH)
-    rows = torch.from_numpy(payload["rows"].astype(np.int64))
-    cols = torch.from_numpy(payload["cols"].astype(np.int64))
-    af3 = torch.from_numpy(payload["af3"].astype(np.float32))
-    median = float(payload["median"])
-    p90 = float(payload["p90"])
-
-    weight = af3_weights(af3, median, p90)
-    dense = weight > 0
-    return {
-        "rows": rows.to(device),
-        "cols": cols.to(device),
-        "af3_weight": weight.to(device),
-        "dense_rows": rows[dense].to(device),
-        "dense_cols": cols[dense].to(device),
-        "dense_weight": weight[dense].to(device),
-        "all_embeddings": all_embeddings,
-        "n_items": n_items,
-        "n_edges": int(rows.shape[0]),
-        "n_dense": int(dense.sum()),
-        "af3_median": median,
-        "af3_p90": p90,
-    }
-
-
-
-def sample_hierarchical_pairs(state: dict, rng) -> dict:
-    """Draw the four pools of pairs the losses consume.
-
-    ``af3``: edges the curvature calls locally dense, weighted by how dense.
-    ``positive``: behaviour edges, whatever their curvature.
-    ``negative``: pairs that are NOT an edge; the level-2 term keeps only those
-    that share a level-1 group, which is what makes it a refinement term.
-    ``unrelated``: random pairs, for the level-3 hinge.
-    """
-    dense_rows = state["dense_rows"]
-    n_dense = dense_rows.shape[0]
-    af3_choice = torch.from_numpy(rng.integers(0, n_dense, size=HIER_EDGES_PER_STEP))
-    af3_pairs = torch.stack([state["dense_rows"][af3_choice],
-                             state["dense_cols"][af3_choice]], dim=1)
-    af3_weight = state["dense_weight"][af3_choice]
-
-    edge_choice = torch.from_numpy(rng.integers(0, state["rows"].shape[0],
-                                                size=HIER_PAIRS_PER_STEP * 4))
-    positive = torch.stack([state["rows"][edge_choice],
-                            state["cols"][edge_choice]], dim=1)
-
-    # A behaviour edge lands inside one level-1 group about 8% of the time, so
-    # the pools are drawn wider than what the term keeps: the level-2 term needs
-    # pairs that already share the group to have anything to refine.
-    random_pairs = torch.from_numpy(rng.integers(0, state["n_items"],
-                                                 size=(HIER_PAIRS_PER_STEP * 4, 2)))
-    negative = random_pairs[:HIER_PAIRS_PER_STEP * 2]
-    unrelated = random_pairs[HIER_PAIRS_PER_STEP * 2:]
-    device = dense_rows.device
-    return {"af3": af3_pairs.to(device), "af3_weight": af3_weight.to(device),
-            "positive": positive.to(device), "negative": negative.to(device),
-            "unrelated": unrelated.to(device)}
-
-
 
 def _tokenizer_config() -> SimpleNamespace:
     sizes = list(CODEBOOK_SIZE)
@@ -512,11 +466,32 @@ def main() -> None:
     all_embeddings = torch.from_numpy(embeddings)
     train_embeddings = all_embeddings[torch.from_numpy(train_ids)]
     config = _tokenizer_config()
-    model = RQVAE(config, in_dim=embeddings.shape[1], curvature=CURVATURE).to(device)
+    model = MixedRQVAE(config, in_dim=embeddings.shape[1], curvature=CURVATURE).to(device)
+    if ARM_VARIANT == "G":
+        # G chooses independent per-layer globals. Otherwise the local-table
+        # ancestor fallback would also change later layers when L1 changes.
+        for level in range(1, CODEBOOK_NUM + 1):
+            model.rq.alpha_table.set(level, (), 0.5)
     if XAVIER_INIT:
         initialize_tiger_weights(model)
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
+    raw_module = model.module if isinstance(model, DDP) else model
+    readout_parameters, af3_state = None, None
+    sampling = np.random.default_rng(SEED)
+    if OUTER_LOOP or AUX_AF3:
+        def prepare_consumer():
+            if not READOUT_FILE.is_file():
+                raise FileNotFoundError("missing F0 epoch-1500 shared readout: " + str(READOUT_FILE))
+            graph, _, identity = _prepare_readout_inputs(raw_module)
+            parameters = resolve_shared_readout(ARM_VARIANT, 0, READOUT_FILE, None, identity)
+            return {"readout": parameters, "graph": graph if AUX_AF3 else None}
+
+        prepared = _on_rank_zero(prepare_consumer, rank, world_size)
+        readout_parameters = prepared["readout"]
+        if AUX_AF3:
+            from model.af3_auxiliary import prepare_state, augment_loss
+            af3_state = prepare_state(prepared["graph"], all_embeddings, device)
 
     train_dataset = TensorDataset(train_embeddings)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
@@ -554,7 +529,6 @@ def main() -> None:
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
         print("[RecBole RQ-VAE] initializing codebooks with KMeans", flush=True)
-    raw_module = model.module if isinstance(model, DDP) else model
     with torch.no_grad():
         raw_module.init_codebook(train_embeddings.to(device))
     if world_size > 1:
@@ -562,30 +536,17 @@ def main() -> None:
 
     # Stage3 only consumes the final-epoch weights, so tracking the best
     # collision across epochs would be misleading; keep the last evaluation.
-    readout_parameters = None
-    if OUTER_LOOP and READOUT_FILE.is_file():
-        readout_parameters = json.loads(READOUT_FILE.read_text())
     final_collision = float("inf")
     final_raw_unique = 0
     codebook_sizes = list(config.codebook_size)
 
-    af3_state = None
-    if AUX_AF3:
-        af3_state = prepare_af3_supervision(all_embeddings.to(device), len(all_embeddings), device)
-    budget = GradientBudget(share=HIER_GRADIENT_SHARE)
-    sampling = np.random.default_rng(SEED)
-
     for epoch in range(1, EPOCHS + 1):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
-        # Before the ramp only the original objective trains; the auxiliary term
-        # then enters linearly, exactly as the AF3 hierarchy arm did.
-        ramp = min(1.0, max(0.0, (epoch - HIER_START_EPOCH)
-                            / max(1, HIER_END_EPOCH - HIER_START_EPOCH))) if AUX_AF3 else 0.0
         model.train()
         losses: list[float] = []
         recons: list[float] = []
-        hier_log: list[tuple] = []
+        auxiliary_logs = []
         _epoch_t0 = time.time()
         for (batch,) in loader:
             batch = batch.to(device, non_blocking=True)
@@ -595,54 +556,9 @@ def main() -> None:
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
-            if ramp > 0.0 and af3_state is not None:
-                # The sampled edges are not in the batch, so their two endpoints
-                # are encoded once each.
-                codebooks = [layer.get_code_embs() for layer in raw_module.rq.vq_layers]
-                picked = sample_hierarchical_pairs(af3_state, sampling)
-                endpoints = torch.cat([picked["af3"], picked["positive"],
-                                       picked["negative"], picked["unrelated"]], dim=0)
-                flat = af3_state["all_embeddings"][endpoints.reshape(-1).cpu()].to(device)
-                latent = raw_module.encoder(flat)
-
-                def pair_rows(offset_pairs: int, count: int) -> tuple[torch.Tensor, torch.Tensor]:
-                    base = torch.arange(offset_pairs, offset_pairs + count, device=device) * 2
-                    return base, base + 1
-
-                n_af3 = int(picked["af3"].shape[0])
-                n_pos = int(picked["positive"].shape[0])
-                n_neg = int(picked["negative"].shape[0])
-                n_unrel = int(picked["unrelated"].shape[0])
-                af3_left, af3_right = pair_rows(0, n_af3)
-                pos_left, pos_right = pair_rows(n_af3, n_pos)
-                neg_left, neg_right = pair_rows(n_af3 + n_pos, n_neg)
-                unrel_left, unrel_right = pair_rows(n_af3 + n_pos + n_neg, n_unrel)
-                weights = {"level1": HIER_WEIGHT_LEVEL1, "level2": HIER_WEIGHT_LEVEL2,
-                           "level3": HIER_WEIGHT_LEVEL3, "balance": HIER_WEIGHT_BALANCE}
-                total, parts = hierarchical_loss(
-                    latent, codebooks,
-                    {
-                        "af3_left": af3_left, "af3_right": af3_right,
-                        "af3_weight": picked["af3_weight"],
-                        "positive_left": pos_left, "positive_right": pos_right,
-                        "negative_left": neg_left, "negative_right": neg_right,
-                        "unrelated_left": unrel_left, "unrelated_right": unrel_right,
-                    }, weights, curvature=CURVATURE)
-                if torch.isfinite(total):
-                    encoder_parameters = list(raw_module.encoder.parameters())
-                    base_grads = (gradient_norm(loss, encoder_parameters),
-                                  gradient_norm(loss, codebooks))
-                    new_grads = (gradient_norm(total, encoder_parameters),
-                                 gradient_norm(total, codebooks))
-                    budget.observe(base_encoder=base_grads[0], new_encoder=new_grads[0],
-                                   base_codebook=base_grads[1], new_codebook=new_grads[1])
-                    scale_tensor = torch.tensor([budget.scale], device=device)
-                    if world_size > 1:
-                        dist.all_reduce(scale_tensor, op=dist.ReduceOp.MIN)
-                    scale = float(scale_tensor.item())
-                    loss = loss + ramp * scale * total
-                    hier_log.append((parts["level1"], parts["level2"], parts["level3"],
-                                     parts["balance"], scale))
+            if AUX_AF3:
+                loss, auxiliary_log = augment_loss(loss, raw_module, af3_state, epoch, sampling)
+                auxiliary_logs.append(auxiliary_log)
             loss.backward()
             if GRADIENT_CLIP_NORM > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIP_NORM)
@@ -660,52 +576,37 @@ def main() -> None:
             dist.all_reduce(local_recon, op=dist.ReduceOp.SUM)
         avg_loss = float(local_loss.item()) / max(world_size, 1)
         avg_recon = float(local_recon.item()) / max(world_size, 1)
-        hier_fields = {}
-        if hier_log:
-            hier_fields = {
-                "hier_level1": float(np.mean([row[0] for row in hier_log])),
-                "hier_level2": float(np.mean([row[1] for row in hier_log])),
-                "hier_level3": float(np.mean([row[2] for row in hier_log])),
-                "hier_balance": float(np.mean([row[3] for row in hier_log])),
-                "hier_scale": float(np.mean([row[4] for row in hier_log])),
-                "ramp": ramp,
-            }
         cur_lr = optimizer.param_groups[0]["lr"]
+        if AUX_AF3 and auxiliary_logs:
+            active = [entry for entry in auxiliary_logs if entry["active"]]
+            _record(rank, "auxiliary", epoch=epoch, active_steps=len(active),
+                    ramp=auxiliary_logs[-1]["ramp"],
+                    mean_scale=float(np.mean([entry["scale"] for entry in active])) if active else 0.0,
+                    last_step=auxiliary_logs[-1])
 
         # === Issue #139: the scheduled outer-loop round ===
-        if READOUT_EPOCH and epoch == READOUT_EPOCH and rank == 0:
-            # The reference arm freezes the shared readout: the temperature and
-            # the intercept every outer-loop arm then uses, calibrated once on
-            # the complete hard-SID readout of the training items.
-            if not hasattr(raw_module, "_structure_bundle"):
-                raw_module._structure_bundle = _frozen_structure()
-            readout_parameters = _readout_parameters(
-                raw_module, train_embeddings, raw_module._structure_bundle[1], device)
-            READOUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-            READOUT_FILE.write_text(json.dumps(readout_parameters, indent=2))
-            print(f"[readout] tau={readout_parameters['tau']:.6f} "
-                  f"intercept={readout_parameters['intercept']:.6f} "
-                  f"density={readout_parameters['density']:.6f}", flush=True)
-        if OUTER_LOOP and epoch in OUTER_LOOP_EPOCHS:
+        if ((ARM_VARIANT == "F0" and epoch == 1500)
+                or (OUTER_LOOP and epoch in OUTER_LOOP_EPOCHS)):
             model.eval()
-            if rank == 0:
-                if not hasattr(raw_module, "_structure_bundle"):
-                    raw_module._structure_bundle = _frozen_structure()
-                if readout_parameters is None:
-                    readout_parameters = _readout_parameters(
-                        raw_module, train_embeddings, raw_module._structure_bundle[1], device)
-                    READOUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-                    READOUT_FILE.write_text(json.dumps(readout_parameters, indent=2))
-                run_outer_loop(epoch, raw_module, train_embeddings, all_embeddings, device,
-                               raw_module._structure_bundle, readout_parameters, _record)
-            # Every rank enters the broadcast: rank 0 carries the table it just
-            # chose, the others receive it, so all four ranks quantize with the
-            # same weights from the next step on.
-            payload = [raw_module.rq.alpha_table.to_dict() if rank == 0 else None]
-            if world_size > 1:
-                dist.broadcast_object_list(payload, src=0)
-                from model.mixed_rq import AlphaTable as _AlphaTable
-                raw_module.rq.alpha_table = _AlphaTable.from_dict(payload[0])
+            def scheduled_operation():
+                graph, support, identity = _prepare_readout_inputs(raw_module)
+                graph_embeddings = all_embeddings[torch.as_tensor(graph["item_ids"], dtype=torch.long)]
+                parameters = resolve_shared_readout(
+                    ARM_VARIANT, epoch, READOUT_FILE,
+                    lambda: _readout_parameters(raw_module, graph_embeddings, support, device), identity)
+                if ARM_VARIANT == "F0":
+                    if parameters.get("snapshot_sha256") != snapshot_sha256(raw_module):
+                        raise ValueError("existing F0 readout is bound to a different model snapshot")
+                    _record(rank, "shared_readout_frozen", epoch=epoch, readout=parameters)
+                else:
+                    run_outer_loop(epoch, raw_module, train_embeddings, all_embeddings, device,
+                                   raw_module._structure_bundle, parameters, _record)
+                return {"alpha_table": raw_module.rq.alpha_table.to_dict(), "readout": parameters}
+
+            payload = _on_rank_zero(scheduled_operation, rank, world_size)
+            from model.mixed_rq import AlphaTable as _AlphaTable
+            raw_module.rq.alpha_table = _AlphaTable.from_dict(payload["alpha_table"])
+            readout_parameters = payload["readout"]
             model.train()
 
         # === 非 eval 间隔: 只 log train 行 ===
@@ -754,10 +655,7 @@ def main() -> None:
     # === 训练结束: only rank 0 保存终点 checkpoint 并导出 SID ===
     # Stage3 只接受训练终点权重；不保留任何中间或"最优 collision"快照。
     if rank == 0:
-        final_state = {
-            name: value.detach().cpu().clone()
-            for name, value in raw_module.state_dict().items()
-        }
+        final_state = snapshot_state(raw_module)
         CHECKPOINT.parent.mkdir(parents=True, exist_ok=True)
         torch.save(
             {
@@ -765,6 +663,8 @@ def main() -> None:
                 "epoch": EPOCHS,
                 "collision": final_collision,
                 "selection": "final_epoch",
+                "arm_variant": ARM_VARIANT,
+                "readout": readout_parameters,
             },
             CHECKPOINT,
         )
@@ -832,3 +732,4 @@ def _launch_via_torchrun() -> None:
 if __name__ == "__main__":
     _launch_via_torchrun()
     main()
+

@@ -1,0 +1,251 @@
+{
+  "schema": "issue139-repair-source/1",
+  "source_base": "9e44096b82cbdc819dbed0f4b5f28cb040202312",
+  "merge_parent": "87f2563eeeedda6fa839d61d98f0d5eee84e6682",
+  "base_files": {
+    "stage2_RQ-VAE/TIGER_mixed_rq/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+    "stage2_RQ-VAE/TIGER_mixed_rq/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+    "stage2_RQ-VAE/TIGER_mixed_rq/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+    "stage2_RQ-VAE/TIGER_mixed_rq/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+    "stage2_RQ-VAE/TIGER_mixed_rq/model/af3_runtime.py": "e2f6ab2e7cad82a9e964679f1d23c9cb41d22ac3587116565850499f04a381e7",
+    "stage2_RQ-VAE/TIGER_mixed_rq/model/af3_selector.py": "174ccf0410ff61c1f6c5f7c1d5bf6dd94b2fa08cf20eddb32948a0ef0e7e8673",
+    "stage2_RQ-VAE/TIGER_mixed_rq/model/af3_structure.py": "b1c82f7f24a8ca9f2d176c2ade856e44a7e57ead6691780c637cc9c8a31a7b10",
+    "stage2_RQ-VAE/TIGER_mixed_rq/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+    "stage2_RQ-VAE/TIGER_mixed_rq/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+    "stage2_RQ-VAE/TIGER_mixed_rq/model/model.py": "077de54f98e84683c20b35dcbde6d071cb3a3c340ff09a966f8beb9548fe709d",
+    "stage2_RQ-VAE/TIGER_mixed_rq/model/poincare_contract.py": "283080ad67a1a80fc5cf32b59ff54a10ef71b06d66f6bbb94c5f6faf8144e355",
+    "stage2_RQ-VAE/TIGER_mixed_rq/model/utils.py": "b741b642b4c6bd1b63d1bc9f5d5de54e4e651c621ddc01d882e58a2179518dcd",
+    "stage2_RQ-VAE/TIGER_mixed_rq/tests/test_af3_engine.py": "4bef80bf8e456df3b14ef23e892aee4be99c2fc29ce9fa42e480dacd2d81bc80",
+    "stage2_RQ-VAE/TIGER_mixed_rq/tests/test_af3_regressions.py": "4dfb2d5b629effc9701b52dbd3ff7e0e022d758cadb93f83602ed250b1f3f417",
+    "stage2_RQ-VAE/TIGER_mixed_rq/tests/test_af3_structure.py": "fd0574d910cff2bb5df69db8a1af6afea78bda998a446870046054f73aa09412",
+    "stage2_RQ-VAE/TIGER_mixed_rq/tests/test_auxiliary_geometry.py": "c24b59c535cedd586e080b08df073dec3a0b1f276f60430e51c5a79a676fc38c",
+    "stage2_RQ-VAE/TIGER_mixed_rq/tests/test_integration_regressions.py": "04b68ced2903207801fb938417d95457b65ab8aeb3a4f5310dda836d133f1b1f",
+    "stage2_RQ-VAE/TIGER_mixed_rq/tests/test_mixed_rq.py": "3f4f9b5d4cd851071f654ff5959bd86f7bb65fed45563b4b2b9c4b1394519a69",
+    "stage2_RQ-VAE/TIGER_mixed_rq/tests/test_prefix_eligibility.py": "827378dc457d5064ec66e67e3973cf5d50b8eea419d56c984311029e921dfc05",
+    "stage2_RQ-VAE/TIGER_mixed_rq/tests/test_quantizer_ddp_regression.py": "86d2443d88064dbe21d9afc10b0804f1e00006a89b15c5dbdfba6c842f5ebb7d",
+    "stage2_RQ-VAE/TIGER_mixed_rq/tests/test_quantizer_regressions.py": "c9266cd09ef7d972a66717f814b7f4c6af692d3f8399877e0b52d25ea5ad5d36",
+    "stage2_RQ-VAE/TIGER_mixed_rq/tests/test_readout_provenance.py": "e1ac61777ca61acee29de0c6c56bff8be1d93d6048889c00aa49c9c829e12276",
+    "stage2_RQ-VAE/TIGER_mixed_rq/tests/test_selector_lifecycle.py": "90c17670897b600c6a045cd0770d3d8aa953cd28594d2729428340a7611586c2",
+    "stage2_RQ-VAE/TIGER_mixed_rq/tests/test_support_regressions.py": "3aaff33708feea3304236241ee08c1362c099490b8f758ec3d5f390ac9123674",
+    "stage2_RQ-VAE/TIGER_mixed_rq/tests/test_trainer_smoke.py": "aa7e388aed9062b335843f6146e0146d95537794e0ed2840abd29d8df16155cc",
+    "stage2_RQ-VAE/TIGER_mixed_rq/train_rqvae.py": "124e911c72113d23b9e05fd5f22d52b63489ce79ed44611a03f85c24653edb78"
+  },
+  "arms": {
+    "F0": {
+      "files": {
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/model/af3_runtime.py": "e2f6ab2e7cad82a9e964679f1d23c9cb41d22ac3587116565850499f04a381e7",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/model/af3_selector.py": "174ccf0410ff61c1f6c5f7c1d5bf6dd94b2fa08cf20eddb32948a0ef0e7e8673",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/model/af3_structure.py": "b1c82f7f24a8ca9f2d176c2ade856e44a7e57ead6691780c637cc9c8a31a7b10",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/model/model.py": "077de54f98e84683c20b35dcbde6d071cb3a3c340ff09a966f8beb9548fe709d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/model/poincare_contract.py": "283080ad67a1a80fc5cf32b59ff54a10ef71b06d66f6bbb94c5f6faf8144e355",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/model/utils.py": "b741b642b4c6bd1b63d1bc9f5d5de54e4e651c621ddc01d882e58a2179518dcd",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/tests/test_af3_engine.py": "4bef80bf8e456df3b14ef23e892aee4be99c2fc29ce9fa42e480dacd2d81bc80",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/tests/test_af3_regressions.py": "4dfb2d5b629effc9701b52dbd3ff7e0e022d758cadb93f83602ed250b1f3f417",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/tests/test_af3_structure.py": "fd0574d910cff2bb5df69db8a1af6afea78bda998a446870046054f73aa09412",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/tests/test_auxiliary_geometry.py": "c24b59c535cedd586e080b08df073dec3a0b1f276f60430e51c5a79a676fc38c",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/tests/test_integration_regressions.py": "04b68ced2903207801fb938417d95457b65ab8aeb3a4f5310dda836d133f1b1f",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/tests/test_mixed_rq.py": "3f4f9b5d4cd851071f654ff5959bd86f7bb65fed45563b4b2b9c4b1394519a69",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/tests/test_prefix_eligibility.py": "827378dc457d5064ec66e67e3973cf5d50b8eea419d56c984311029e921dfc05",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/tests/test_quantizer_ddp_regression.py": "86d2443d88064dbe21d9afc10b0804f1e00006a89b15c5dbdfba6c842f5ebb7d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/tests/test_quantizer_regressions.py": "c9266cd09ef7d972a66717f814b7f4c6af692d3f8399877e0b52d25ea5ad5d36",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/tests/test_readout_provenance.py": "e1ac61777ca61acee29de0c6c56bff8be1d93d6048889c00aa49c9c829e12276",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/tests/test_selector_lifecycle.py": "90c17670897b600c6a045cd0770d3d8aa953cd28594d2729428340a7611586c2",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/tests/test_support_regressions.py": "3aaff33708feea3304236241ee08c1362c099490b8f758ec3d5f390ac9123674",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/tests/test_trainer_smoke.py": "aa7e388aed9062b335843f6146e0146d95537794e0ed2840abd29d8df16155cc",
+        "stage2_RQ-VAE/TIGER_mixed_rq_F0/train_rqvae.py": "124e911c72113d23b9e05fd5f22d52b63489ce79ed44611a03f85c24653edb78"
+      }
+    },
+    "G": {
+      "files": {
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/model/af3_runtime.py": "e2f6ab2e7cad82a9e964679f1d23c9cb41d22ac3587116565850499f04a381e7",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/model/af3_selector.py": "174ccf0410ff61c1f6c5f7c1d5bf6dd94b2fa08cf20eddb32948a0ef0e7e8673",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/model/af3_structure.py": "b1c82f7f24a8ca9f2d176c2ade856e44a7e57ead6691780c637cc9c8a31a7b10",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/model/model.py": "077de54f98e84683c20b35dcbde6d071cb3a3c340ff09a966f8beb9548fe709d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/model/poincare_contract.py": "283080ad67a1a80fc5cf32b59ff54a10ef71b06d66f6bbb94c5f6faf8144e355",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/model/utils.py": "b741b642b4c6bd1b63d1bc9f5d5de54e4e651c621ddc01d882e58a2179518dcd",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/tests/test_af3_engine.py": "4bef80bf8e456df3b14ef23e892aee4be99c2fc29ce9fa42e480dacd2d81bc80",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/tests/test_af3_regressions.py": "4dfb2d5b629effc9701b52dbd3ff7e0e022d758cadb93f83602ed250b1f3f417",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/tests/test_af3_structure.py": "fd0574d910cff2bb5df69db8a1af6afea78bda998a446870046054f73aa09412",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/tests/test_auxiliary_geometry.py": "c24b59c535cedd586e080b08df073dec3a0b1f276f60430e51c5a79a676fc38c",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/tests/test_integration_regressions.py": "04b68ced2903207801fb938417d95457b65ab8aeb3a4f5310dda836d133f1b1f",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/tests/test_mixed_rq.py": "3f4f9b5d4cd851071f654ff5959bd86f7bb65fed45563b4b2b9c4b1394519a69",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/tests/test_prefix_eligibility.py": "827378dc457d5064ec66e67e3973cf5d50b8eea419d56c984311029e921dfc05",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/tests/test_quantizer_ddp_regression.py": "86d2443d88064dbe21d9afc10b0804f1e00006a89b15c5dbdfba6c842f5ebb7d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/tests/test_quantizer_regressions.py": "c9266cd09ef7d972a66717f814b7f4c6af692d3f8399877e0b52d25ea5ad5d36",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/tests/test_readout_provenance.py": "e1ac61777ca61acee29de0c6c56bff8be1d93d6048889c00aa49c9c829e12276",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/tests/test_selector_lifecycle.py": "90c17670897b600c6a045cd0770d3d8aa953cd28594d2729428340a7611586c2",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/tests/test_support_regressions.py": "3aaff33708feea3304236241ee08c1362c099490b8f758ec3d5f390ac9123674",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/tests/test_trainer_smoke.py": "aa7e388aed9062b335843f6146e0146d95537794e0ed2840abd29d8df16155cc",
+        "stage2_RQ-VAE/TIGER_mixed_rq_G/train_rqvae.py": "41c20145fc6c9e63c4bdb31708d6a3848d6a0e6bf326cc430212d3e118c17153"
+      }
+    },
+    "L": {
+      "files": {
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/model/af3_runtime.py": "e2f6ab2e7cad82a9e964679f1d23c9cb41d22ac3587116565850499f04a381e7",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/model/af3_selector.py": "174ccf0410ff61c1f6c5f7c1d5bf6dd94b2fa08cf20eddb32948a0ef0e7e8673",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/model/af3_structure.py": "b1c82f7f24a8ca9f2d176c2ade856e44a7e57ead6691780c637cc9c8a31a7b10",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/model/model.py": "077de54f98e84683c20b35dcbde6d071cb3a3c340ff09a966f8beb9548fe709d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/model/poincare_contract.py": "283080ad67a1a80fc5cf32b59ff54a10ef71b06d66f6bbb94c5f6faf8144e355",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/model/utils.py": "b741b642b4c6bd1b63d1bc9f5d5de54e4e651c621ddc01d882e58a2179518dcd",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/tests/test_af3_engine.py": "4bef80bf8e456df3b14ef23e892aee4be99c2fc29ce9fa42e480dacd2d81bc80",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/tests/test_af3_regressions.py": "4dfb2d5b629effc9701b52dbd3ff7e0e022d758cadb93f83602ed250b1f3f417",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/tests/test_af3_structure.py": "fd0574d910cff2bb5df69db8a1af6afea78bda998a446870046054f73aa09412",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/tests/test_auxiliary_geometry.py": "c24b59c535cedd586e080b08df073dec3a0b1f276f60430e51c5a79a676fc38c",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/tests/test_integration_regressions.py": "04b68ced2903207801fb938417d95457b65ab8aeb3a4f5310dda836d133f1b1f",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/tests/test_mixed_rq.py": "3f4f9b5d4cd851071f654ff5959bd86f7bb65fed45563b4b2b9c4b1394519a69",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/tests/test_prefix_eligibility.py": "827378dc457d5064ec66e67e3973cf5d50b8eea419d56c984311029e921dfc05",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/tests/test_quantizer_ddp_regression.py": "86d2443d88064dbe21d9afc10b0804f1e00006a89b15c5dbdfba6c842f5ebb7d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/tests/test_quantizer_regressions.py": "c9266cd09ef7d972a66717f814b7f4c6af692d3f8399877e0b52d25ea5ad5d36",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/tests/test_readout_provenance.py": "e1ac61777ca61acee29de0c6c56bff8be1d93d6048889c00aa49c9c829e12276",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/tests/test_selector_lifecycle.py": "90c17670897b600c6a045cd0770d3d8aa953cd28594d2729428340a7611586c2",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/tests/test_support_regressions.py": "3aaff33708feea3304236241ee08c1362c099490b8f758ec3d5f390ac9123674",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/tests/test_trainer_smoke.py": "aa7e388aed9062b335843f6146e0146d95537794e0ed2840abd29d8df16155cc",
+        "stage2_RQ-VAE/TIGER_mixed_rq_L/train_rqvae.py": "b52ed3b64096920e8b1f45df425cc5a692569ada9e955428a7f80e2c052c9a67"
+      }
+    },
+    "E": {
+      "files": {
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/model/af3_runtime.py": "e2f6ab2e7cad82a9e964679f1d23c9cb41d22ac3587116565850499f04a381e7",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/model/af3_selector.py": "174ccf0410ff61c1f6c5f7c1d5bf6dd94b2fa08cf20eddb32948a0ef0e7e8673",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/model/af3_structure.py": "b1c82f7f24a8ca9f2d176c2ade856e44a7e57ead6691780c637cc9c8a31a7b10",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/model/model.py": "077de54f98e84683c20b35dcbde6d071cb3a3c340ff09a966f8beb9548fe709d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/model/poincare_contract.py": "283080ad67a1a80fc5cf32b59ff54a10ef71b06d66f6bbb94c5f6faf8144e355",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/model/utils.py": "b741b642b4c6bd1b63d1bc9f5d5de54e4e651c621ddc01d882e58a2179518dcd",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/tests/test_af3_engine.py": "4bef80bf8e456df3b14ef23e892aee4be99c2fc29ce9fa42e480dacd2d81bc80",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/tests/test_af3_regressions.py": "4dfb2d5b629effc9701b52dbd3ff7e0e022d758cadb93f83602ed250b1f3f417",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/tests/test_af3_structure.py": "fd0574d910cff2bb5df69db8a1af6afea78bda998a446870046054f73aa09412",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/tests/test_auxiliary_geometry.py": "c24b59c535cedd586e080b08df073dec3a0b1f276f60430e51c5a79a676fc38c",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/tests/test_integration_regressions.py": "04b68ced2903207801fb938417d95457b65ab8aeb3a4f5310dda836d133f1b1f",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/tests/test_mixed_rq.py": "3f4f9b5d4cd851071f654ff5959bd86f7bb65fed45563b4b2b9c4b1394519a69",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/tests/test_prefix_eligibility.py": "827378dc457d5064ec66e67e3973cf5d50b8eea419d56c984311029e921dfc05",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/tests/test_quantizer_ddp_regression.py": "86d2443d88064dbe21d9afc10b0804f1e00006a89b15c5dbdfba6c842f5ebb7d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/tests/test_quantizer_regressions.py": "c9266cd09ef7d972a66717f814b7f4c6af692d3f8399877e0b52d25ea5ad5d36",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/tests/test_readout_provenance.py": "e1ac61777ca61acee29de0c6c56bff8be1d93d6048889c00aa49c9c829e12276",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/tests/test_selector_lifecycle.py": "90c17670897b600c6a045cd0770d3d8aa953cd28594d2729428340a7611586c2",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/tests/test_support_regressions.py": "3aaff33708feea3304236241ee08c1362c099490b8f758ec3d5f390ac9123674",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/tests/test_trainer_smoke.py": "aa7e388aed9062b335843f6146e0146d95537794e0ed2840abd29d8df16155cc",
+        "stage2_RQ-VAE/TIGER_mixed_rq_E/train_rqvae.py": "22527a46727edca73d0852f7be4c87500ffeb0c5560ed116ba4610923c00f0d0"
+      }
+    },
+    "A": {
+      "files": {
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/model/af3_runtime.py": "e2f6ab2e7cad82a9e964679f1d23c9cb41d22ac3587116565850499f04a381e7",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/model/af3_selector.py": "174ccf0410ff61c1f6c5f7c1d5bf6dd94b2fa08cf20eddb32948a0ef0e7e8673",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/model/af3_structure.py": "b1c82f7f24a8ca9f2d176c2ade856e44a7e57ead6691780c637cc9c8a31a7b10",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/model/model.py": "077de54f98e84683c20b35dcbde6d071cb3a3c340ff09a966f8beb9548fe709d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/model/poincare_contract.py": "283080ad67a1a80fc5cf32b59ff54a10ef71b06d66f6bbb94c5f6faf8144e355",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/model/utils.py": "b741b642b4c6bd1b63d1bc9f5d5de54e4e651c621ddc01d882e58a2179518dcd",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/tests/test_af3_engine.py": "4bef80bf8e456df3b14ef23e892aee4be99c2fc29ce9fa42e480dacd2d81bc80",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/tests/test_af3_regressions.py": "4dfb2d5b629effc9701b52dbd3ff7e0e022d758cadb93f83602ed250b1f3f417",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/tests/test_af3_structure.py": "fd0574d910cff2bb5df69db8a1af6afea78bda998a446870046054f73aa09412",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/tests/test_auxiliary_geometry.py": "c24b59c535cedd586e080b08df073dec3a0b1f276f60430e51c5a79a676fc38c",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/tests/test_integration_regressions.py": "04b68ced2903207801fb938417d95457b65ab8aeb3a4f5310dda836d133f1b1f",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/tests/test_mixed_rq.py": "3f4f9b5d4cd851071f654ff5959bd86f7bb65fed45563b4b2b9c4b1394519a69",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/tests/test_prefix_eligibility.py": "827378dc457d5064ec66e67e3973cf5d50b8eea419d56c984311029e921dfc05",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/tests/test_quantizer_ddp_regression.py": "86d2443d88064dbe21d9afc10b0804f1e00006a89b15c5dbdfba6c842f5ebb7d",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/tests/test_quantizer_regressions.py": "c9266cd09ef7d972a66717f814b7f4c6af692d3f8399877e0b52d25ea5ad5d36",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/tests/test_readout_provenance.py": "e1ac61777ca61acee29de0c6c56bff8be1d93d6048889c00aa49c9c829e12276",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/tests/test_selector_lifecycle.py": "90c17670897b600c6a045cd0770d3d8aa953cd28594d2729428340a7611586c2",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/tests/test_support_regressions.py": "3aaff33708feea3304236241ee08c1362c099490b8f758ec3d5f390ac9123674",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/tests/test_trainer_smoke.py": "aa7e388aed9062b335843f6146e0146d95537794e0ed2840abd29d8df16155cc",
+        "stage2_RQ-VAE/TIGER_mixed_rq_A/train_rqvae.py": "6d446ae1a3337f5975eb827fa67cc4cde0eb96bf4f7f052670ca85e26adff0d1"
+      }
+    }
+  },
+  "status": "CPU_REPAIR_VERIFIED",
+  "formal_admission": "NOT_RUN",
+  "specification": "NEEDS_SPEC_REVIEW_AND_REFREEZE",
+  "runtime": {
+    "python": "3.12",
+    "torch": "2.15.0+cpu",
+    "pytest": "9.2.0",
+    "formal_stage2_environment": false
+  },
+  "tests": {
+    "base": {
+      "passed": 115,
+      "subtests_passed": 24,
+      "seconds": 3.77
+    },
+    "arms": {
+      "F0": {
+        "passed": 115,
+        "subtests_passed": 24,
+        "exit_code": 0,
+        "output": ".....      [100%]\n115 passed, 24 subtests passed in 72.27s (0:01:12)\n"
+      },
+      "G": {
+        "passed": 115,
+        "subtests_passed": 24,
+        "exit_code": 0,
+        "output": ".....      [100%]\n115 passed, 24 subtests passed in 76.74s (0:01:16)\n"
+      },
+      "L": {
+        "passed": 115,
+        "subtests_passed": 24,
+        "exit_code": 0,
+        "output": ".....      [100%]\n115 passed, 24 subtests passed in 77.41s (0:01:17)\n"
+      },
+      "E": {
+        "passed": 115,
+        "subtests_passed": 24,
+        "exit_code": 0,
+        "output": ".....      [100%]\n115 passed, 24 subtests passed in 76.25s (0:01:16)\n"
+      },
+      "A": {
+        "passed": 115,
+        "subtests_passed": 24,
+        "exit_code": 0,
+        "output": ".....      [100%]\n115 passed, 24 subtests passed in 71.49s (0:01:11)\n"
+      }
+    }
+  },
+  "excluded_tests": [
+    "tests/test_quantizer_ddp_regression.py"
+  ],
+  "real_ddp": {
+    "status": "NOT_RUN_AFTER_SOCKET_INFRA_ERROR",
+    "reason": "Two-process Gloo initialization denied: Operation not permitted. No bypass or socket retry. Added active-A DDP test syntax-checked only."
+  },
+  "reference": {
+    "status": "OK",
+    "surface": "common mixed codeword cost only",
+    "samples": 16,
+    "value_max_abs_diff": 1.3877787807814457e-17,
+    "gradient_max_abs_diff": 1.1102230246251565e-16,
+    "gradcheck_candidate": true,
+    "gradcheck_reference": true,
+    "coupling": "PASS"
+  },
+  "formal_training_started_by_this_repair": false
+}

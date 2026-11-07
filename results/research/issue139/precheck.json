@@ -1,6 +1,6 @@
 {
   "active_prefixes_measured": {
-    "consequence": "the third level has no prefix that meets the 32-item activation rule, so its table falls back to the nearest ancestor; the issue requires this to be reported and forbids claiming a full three-level local fit",
+    "consequence": "Historical proxy counts are off by one level: a level-2 alpha table is indexed by one-token prefixes (at most 256), not 7465 two-token prefixes. Recount on the actual F0 snapshot and do not infer inactive L3.",
     "level_1": {
       "prefixes": 1,
       "with_at_least_32_items": 1
@@ -15,7 +15,8 @@
       "prefixes": 20522,
       "with_at_least_32_items": 0
     },
-    "source": "results/stage2_RQ-VAE/TIGER_af3_triplet/item_sids.json (proxy for the size distribution)"
+    "source": "results/stage2_RQ-VAE/TIGER_af3_triplet/item_sids.json (proxy for the size distribution)",
+    "status": "INVALID_LEVEL_INDEXING_REQUIRES_RECOUNT"
   },
   "budget": {
     "allowance_seconds": 570,
@@ -24,18 +25,18 @@
     "rounds": 4,
     "superseded_verdict": "RESOURCE_BLOCKED (64x over) before the exact incremental engine",
     "total_seconds_estimate": 374.6,
-    "verdict": "FEASIBLE_WITH_L3_FALLBACK"
+    "verdict": "RECHECK_REQUIRED"
   },
   "distortion": {
     "edge_half": 0.5699912358202883,
-    "scale": 239.0,
+    "scale": 239,
     "seconds": 12.15,
     "unobserved_half": 0.0036175674476847655,
     "value": 0.2868044016339865
   },
   "graph": {
-    "af3_median": -128.0,
-    "af3_p90": -28.0,
+    "af3_median": -128,
+    "af3_p90": -28,
     "edges": 315391,
     "nodes": 24556
   },
@@ -44,8 +45,8 @@
     "equivalence_evidence": "tests/test_af3_engine.py: a local update equals a full recomputation pair by pair after a change of four items",
     "full_recompute_seconds": 12.06,
     "local_update_seconds": {
-      "128": 1.85,
       "32": 0.58,
+      "128": 1.85,
       "512": 5.26
     }
   },
@@ -85,10 +86,23 @@
     "unobserved": 631806
   },
   "target": {
-    "iqr": 239.0,
+    "iqr": 239,
     "kernel_sha256": "c5660213612054cf4f9024feab5429cb0462e4cd6a5a0bfe30ba2fd905004e71",
-    "max": 0.0,
-    "min": -2511.0,
+    "max": 0,
+    "min": -2511,
     "seconds": 2.37
-  }
+  },
+  "previous_budget_verdict": "FEASIBLE_WITH_L3_FALLBACK",
+  "status": "RECHECK_REQUIRED",
+  "valid_for_repaired_source": false,
+  "historical_measurements": true,
+  "repair_review": "REPAIR_REVIEW.md",
+  "invalidated_reasons": [
+    "The cached local update omitted soft-degree dependencies; new full-vs-incremental regression tests reproduce and repair the error.",
+    "The old candidate guard used AF3 mu as a probability and used a different degree target from the round start.",
+    "Graph endpoints were compressed TRAIN-node indices, not catalog IDs.",
+    "The repaired support uses explicit train-degree-stratified quotas and deterministic tie handling; old support hashes and timings do not bind it.",
+    "The unapproved 150-second prefix truncation is removed; only a complete deterministic sweep can establish resource feasibility.",
+    "Real TRAIN cost, candidate eligibility counts, shared F0 calibration and active-phase four-rank admission must be rerun for the repaired source."
+  ]
 }

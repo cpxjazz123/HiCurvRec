@@ -35,7 +35,7 @@ an ``alpha = 1/2`` code is the plain 32-dimensional squared distance.
 """
 from __future__ import annotations
 
-from typing import Callable, Iterable
+from typing import Iterable
 
 import torch
 import torch.nn.functional as F
@@ -186,10 +186,11 @@ class MixedVQLevel(nn.Module):
             unused = int((used == 0).sum().item())
         # The commitment (code detached) and the codebook term (residual
         # detached), both in the mixed metric, divided by the joint width.
-        commitment = self._cost_of(residual_e, residual_h, picked_e, picked_h, alpha)
+        commitment = self._cost_of(residual_e, residual_h,
+                                    picked_e.detach(), picked_h.detach(), alpha)
         codebook_term = self._cost_of(residual_e.detach(), residual_h.detach(),
                                       picked_e, picked_h, alpha)
-        quant_loss = (commitment + self.beta * codebook_term).mean() / float(TOTAL_DIM)
+        quant_loss = (codebook_term + self.beta * commitment).mean() / float(TOTAL_DIM)
         # The residual update detaches only the chosen code.
         det_e = picked_e.detach()
         det_h = picked_h.detach()
@@ -203,24 +204,27 @@ class MixedVQLevel(nn.Module):
     def _cost_of(self, residual_e: torch.Tensor, residual_h: torch.Tensor,
                  picked_e: torch.Tensor, picked_h: torch.Tensor,
                  alpha: torch.Tensor) -> torch.Tensor:
-        euclidean = (residual_e - picked_e).pow(2).sum(-1)
-        if self.curvature > 0:
-            curved = squared_distance(residual_h, picked_h, self.curvature)
-        else:
-            curved = (residual_h - picked_h).pow(2).sum(-1)
-        return 2.0 * (alpha * euclidean + (1.0 - alpha) * curved / 4.0)
+        return point_cost(residual_e, residual_h, picked_e, picked_h, alpha, self.curvature)
 
+    @torch.no_grad()
     def init_codebook(self, residual_e: torch.Tensor, residual_h: torch.Tensor,
                       device: torch.device) -> None:
-        """KMeans on each half: the Euclidean residual and the tangent residual."""
+        """Rank-zero KMeans, broadcast before any rank computes its residual.
+
+        DDP synchronises parameters at construction, before this initialisation.
+        Its later gradient reduction cannot repair independently sampled centres.
+        """
         from .utils import kmeans
-        codes_e = kmeans(residual_e.detach().float(), self.n_embed)
-        tangent = (logmap0(residual_h.detach().float(), self.curvature)
-                   if self.curvature > 0 else residual_h.detach().float())
-        codes_h = kmeans(tangent, self.n_embed)
-        with torch.no_grad():
+        distributed = torch.distributed.is_available() and torch.distributed.is_initialized()
+        if not distributed or torch.distributed.get_rank() == 0:
+            codes_e = kmeans(residual_e.detach().float(), self.n_embed)
+            tangent = (logmap0(residual_h.detach().float(), self.curvature)
+                       if self.curvature > 0 else residual_h.detach().float())
+            codes_h = kmeans(tangent, self.n_embed)
             self.embed.weight[:, :EUCLIDEAN_DIM].copy_(codes_e)
             self.embed.weight[:, EUCLIDEAN_DIM:].copy_(codes_h)
+        if distributed:
+            torch.distributed.broadcast(self.embed.weight, src=0)
 
 
 class AlphaTable:
@@ -237,33 +241,39 @@ class AlphaTable:
         self.initial = float(initial)
         self.levels[1][()] = float(initial)
 
-    def get(self, level: int, prefix: tuple) -> float:
-        """The weight of one prefix, walking up to the nearest set ancestor."""
+    def get(self, level: int, prefix: tuple, override: dict | None = None) -> float:
+        """Exact entry, this layer's global entry, then the parent layer.
+
+        A trial override uses the very same lookup as a committed entry,
+        including its effect on descendants inheriting from that entry.
+        Per-layer global entries are used by G; local tables use prefix parents.
+        """
+        level = int(level)
         prefix = tuple(prefix)
-        while True:
-            table = self.levels.get(int(level), {})
-            if prefix in table:
-                return float(table[prefix])
-            if not prefix:
-                return float(self.initial)
+        override = override or {}
+        while level >= 1:
+            table = self.levels.get(level, {})
+            for key in (prefix, ()) if prefix else ((),):
+                if (level, key) in override:
+                    return float(override[(level, key)])
+                if key in table:
+                    return float(table[key])
             prefix = prefix[:-1]
+            level -= 1
+        return float(self.initial)
 
     def set(self, level: int, prefix: tuple, value: float) -> None:
         self.levels[int(level)][tuple(prefix)] = float(value)
 
-    def lookups(self, level: int, tokens: list[torch.Tensor]) -> torch.Tensor:
+    def lookups(self, level: int, tokens: list[torch.Tensor],
+                override: dict | None = None) -> torch.Tensor:
         """The weight of every item, given the tokens of the earlier levels."""
-        table = self.levels[int(level)]
         if level == 1 or not tokens:
-            return torch.full((tokens[0].shape[0],) if tokens else (1,), self.get(level, ()),
+            return torch.full((tokens[0].shape[0],) if tokens else (1,),
+                              self.get(level, (), override),
                               dtype=torch.float32)
-        prefix = tuple(int(value) for value in tokens[0].detach().cpu().tolist()) if level == 2 else None
-        if level == 2:
-            row = [self.get(2, (value,)) for value in prefix]
-            return torch.tensor(row, dtype=torch.float32)
-        first = tokens[0].detach().cpu().tolist()
-        second = tokens[1].detach().cpu().tolist()
-        row = [self.get(3, (int(a), int(b))) for a, b in zip(first, second)]
+        prefixes = torch.stack(tokens[:level - 1], dim=1).detach().cpu().tolist()
+        row = [self.get(level, tuple(int(x) for x in prefix), override) for prefix in prefixes]
         return torch.tensor(row, dtype=torch.float32)
 
     def to_dict(self) -> dict:
@@ -301,6 +311,20 @@ class MixedRQ(nn.Module):
                 sk_iters=sk_iters if last else -1,
             ))
 
+    def get_extra_state(self) -> dict:
+        """The non-parameter alpha table is part of a deployable tokenizer."""
+        return {"schema": "mixed-rq-state/1", "curvature": self.curvature,
+                "initial": self.alpha_table.initial,
+                "alpha_table": self.alpha_table.to_dict()}
+
+    def set_extra_state(self, state: dict) -> None:
+        if state.get("schema") != "mixed-rq-state/1":
+            raise ValueError("unsupported mixed-RQ checkpoint state")
+        if float(state["curvature"]) != self.curvature:
+            raise ValueError("checkpoint and tokenizer curvatures differ")
+        self.alpha_table = AlphaTable.from_dict(state["alpha_table"], levels=len(self.levels),
+                                                initial=float(state["initial"]))
+
     @property
     def vq_layers(self) -> nn.ModuleList:
         """The name the frozen trainer uses for the per-level modules."""
@@ -334,10 +358,12 @@ class MixedRQ(nn.Module):
         z_e, z_t = split(z)
         residual_e = z_e
         residual_h = expmap0(z_t, self.curvature) if self.curvature > 0 else z_t
+        tokens: list[torch.Tensor] = []
         for level, layer in enumerate(self.levels, start=1):
             layer.init_codebook(residual_e, residual_h, device)
-            alpha = self.alpha_table.lookups(level, []).to(device)
-            (residual_e, residual_h), _, _, _, _, _ = layer(residual_e, residual_h, alpha)
+            alpha = self.alpha_table.lookups(level, tokens).to(device)
+            (residual_e, residual_h), _, _, index, _, _ = layer(residual_e, residual_h, alpha)
+            tokens.append(index)
 
 
 def encode_tokens(z: torch.Tensor, rq: MixedRQ, override: dict | None = None) -> torch.Tensor:
@@ -373,16 +399,7 @@ def encode_tokens(z: torch.Tensor, rq: MixedRQ, override: dict | None = None) ->
 def _override_rows(level: int, tokens: list[torch.Tensor], override: dict,
                    table: AlphaTable) -> torch.Tensor:
     """Per-item weights under a candidate override, falling back to the table."""
-    if level == 1 or not tokens:
-        return torch.full((1,), float(override.get((level, ()), table.get(level, ()))))
-    first = tokens[0].detach().cpu().tolist()
-    if level == 2:
-        return torch.tensor([float(override.get((2, (int(a),)), table.get(2, (int(a),))))
-                             for a in first])
-    second = tokens[1].detach().cpu().tolist()
-    return torch.tensor([float(override.get((3, (int(a), int(b))),
-                                            table.get(3, (int(a), int(b)))))
-                         for a, b in zip(first, second)])
+    return table.lookups(level, tokens, override=override)
 
 
 def point_cost(residual_e: torch.Tensor, residual_h: torch.Tensor,
@@ -402,10 +419,8 @@ def point_cost(residual_e: torch.Tensor, residual_h: torch.Tensor,
     # batch, because the reference this is compared with returns one value per
     # sampled row.
     euclidean = (residual_e - code_e).pow(2).sum(dim=-1)
-    if float(curvature) > 0:
-        # squared_distance is already the squared geodesic distance.
-        curved = squared_distance(residual_h, code_h, curvature)
-    else:
-        curved = (residual_h - code_h).pow(2).sum(dim=-1)
+    # The canonical c=0 distance is 2||u-v|| as well; never drop its factor 4.
+    curved = squared_distance(residual_h, code_h, curvature)
     weight = alpha if not torch.is_tensor(alpha) else alpha.reshape(-1)
     return 2.0 * (weight * euclidean + (1.0 - weight) * curved / 4.0)
+

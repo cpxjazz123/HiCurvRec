@@ -1,5 +1,13 @@
 # Issue #139 — measured pre-check and the state of the five-arm design
 
+> **Historical evidence only — RECHECK_REQUIRED (2026-11-07 repair).**
+> This document predates the repaired graph mapping, structural cache, feasible
+> region, shared calibration and complete outer-loop sweep. Its runnability and
+> no-training statements below are historical, not the current state. The old
+> JSON feasibility conclusion and prefix-level counts are invalid for the new
+> code. See `REPAIR_REVIEW.md` and the updated `precheck.json`; no formal
+> admission or real-data resource conclusion is granted by the CPU repair tests.
+
 Written 2026-11-07, on `m3g110`, against the frozen data of the repository.
 Everything below is measured, not estimated; the machine-readable form is
 `precheck.json` next to this file.
@@ -72,3 +80,4 @@ forbids all three.
 The owner approved the #139 five-arm, Stage2-only, one-seed exception in this
 session (2026-11-07); the exception is recorded in `CLAUDE.md` §19g. The
 approval covers the five arms this issue lists and nothing else.
+

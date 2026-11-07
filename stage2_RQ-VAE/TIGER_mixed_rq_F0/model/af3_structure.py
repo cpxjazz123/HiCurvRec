@@ -40,14 +40,36 @@ CALIBRATION_TOL = 1e-8
 
 def load_graph(path: Path) -> dict:
     """The frozen training graph: undirected, de-duplicated, weighted by AF3."""
-    payload = np.load(Path(path))
-    rows = np.asarray(payload["rows"], dtype=np.int64)
-    cols = np.asarray(payload["cols"], dtype=np.int64)
-    weights = np.asarray(payload["af3"], dtype=np.float64)
-    n_nodes = int(max(int(payload["nodes"]) if "nodes" in payload.files else 0,
-                      int(rows.max()) + 1, int(cols.max()) + 1))
-    return {"rows": rows, "cols": cols, "weights": weights, "n_nodes": n_nodes,
-            "af3_median": float(payload["median"]), "af3_p90": float(payload["p90"])}
+    with np.load(Path(path), allow_pickle=False) as payload:
+        if "nodes" not in payload.files:
+            raise ValueError("AF3 cache must declare its graph-position row count")
+        rows, cols = np.asarray(payload["rows"]), np.asarray(payload["cols"])
+        nodes = np.asarray(payload["nodes"])
+        if nodes.ndim != 0 or not np.issubdtype(nodes.dtype, np.integer):
+            raise ValueError("AF3 node count must be an integer scalar")
+        n_nodes = int(nodes)
+        _validate_graph_edges(rows, cols, n_nodes)
+        weights = np.asarray(payload["af3"], dtype=np.float64)
+        if weights.shape != rows.shape or not np.isfinite(weights).all():
+            raise ValueError("AF3 weights must be finite and aligned with graph edges")
+        median, p90 = float(payload["median"]), float(payload["p90"])
+        if not np.isfinite([median, p90]).all():
+            raise ValueError("AF3 summary statistics must be finite")
+        return {"rows": rows.astype(np.int64), "cols": cols.astype(np.int64),
+                "weights": weights, "n_nodes": n_nodes,
+                "af3_median": median, "af3_p90": p90}
+
+
+def _validate_graph_edges(rows, cols, n_nodes):
+    if (rows.ndim != 1 or cols.shape != rows.shape or not len(rows)
+            or not np.issubdtype(rows.dtype, np.integer)
+            or not np.issubdtype(cols.dtype, np.integer) or n_nodes <= 0):
+        raise ValueError("graph requires non-empty aligned integer endpoint vectors")
+    if np.any(rows < 0) or np.any(cols >= n_nodes) or np.any(rows >= cols):
+        raise ValueError("graph requires in-range canonical pairs with row < col")
+    keys = rows.astype(np.int64) * int(n_nodes) + cols.astype(np.int64)
+    if len(np.unique(keys)) != len(keys):
+        raise ValueError("duplicate graph edges would change AF3 targets")
 
 
 def _neighbours(rows: np.ndarray, cols: np.ndarray, n_nodes: int) -> list[np.ndarray]:
@@ -87,22 +109,26 @@ def build_support(graph: dict, kappa: dict, embeddings: np.ndarray | None = None
                   k: int = SEMANTIC_CANDIDATES, seed: int = SUPPORT_SEED) -> dict:
     """The fixed support: the edges, the semantic candidates and the stratified sample.
 
-    Every unobserved group has the size of the edge set, drawn from the TRAIN
-    degree strata, so the two classes carry the same weight in the distortion.
-    The result records what it actually built, including the per-stratum counts.
+    Requested random non-edges total |E|, with TRAIN-degree quartile quotas
+    proportional to node populations (integer largest remainder; lower-bin
+    tie break). This makes stratification real rather than merely labelling
+    uniform draws afterwards. Underfilled strata are recorded, not reallocated.
+    The new support must be reviewed/refrozen before formal training.
     """
     rows, cols = graph["rows"], graph["cols"]
     n_nodes = graph["n_nodes"]
-    observed = set(int(value) for value in rows * n_nodes + cols)
+    _validate_graph_edges(rows, cols, n_nodes)
     pairs = [(int(i), int(j)) for i, j in zip(rows, cols)]
     seen = set(int(i) * n_nodes + int(j) for i, j in pairs)
 
     semantic_added = 0
+    effective_k = min(max(int(k), 0), n_nodes - 1)
     if embeddings is not None:
-        # Only the training items are nodes of the graph: the validation and
-        # test items have embeddings too, and a candidate edge that touches one
-        # of them would put held-out items into the support.
-        matrix = np.asarray(embeddings, dtype=np.float32)[:n_nodes]
+        # The caller must index by the VERIFIED graph-position -> item map.
+        # Truncating catalog embeddings to n_nodes silently selects wrong items.
+        matrix = np.asarray(embeddings, dtype=np.float32)
+        if matrix.ndim != 2 or len(matrix) != n_nodes or not np.isfinite(matrix).all():
+            raise ValueError("support embeddings must be finite and exactly graph-row aligned")
         norm = np.linalg.norm(matrix, axis=1, keepdims=True).clip(1e-8)
         unit = matrix / norm
         neighbour_index = []
@@ -110,7 +136,8 @@ def build_support(graph: dict, kappa: dict, embeddings: np.ndarray | None = None
         for start in range(0, unit.shape[0], chunk):
             block = unit[start:start + chunk] @ unit.T
             block[np.arange(block.shape[0]), np.arange(start, start + block.shape[0])] = -2.0
-            neighbour_index.append(np.argpartition(-block, k, axis=1)[:, :k])
+            # Stable sorting makes equal-cosine ties choose the lower node ID.
+            neighbour_index.append(np.argsort(-block, axis=1, kind="stable")[:, :effective_k])
         neighbours = np.concatenate(neighbour_index, 0)
         for item in range(unit.shape[0]):
             for partner in neighbours[item]:
@@ -129,25 +156,34 @@ def build_support(graph: dict, kappa: dict, embeddings: np.ndarray | None = None
     strata = np.digitize(degree, np.quantile(degree, [0.25, 0.5, 0.75]))
     target = len(rows)
     per_stratum = np.bincount(strata, minlength=4)
+    quotas = (target * per_stratum) // n_nodes
+    priority = sorted(range(4), key=lambda bucket:
+                      (-int((target * per_stratum[bucket]) % n_nodes), bucket))
+    for bucket in priority[:target - int(quotas.sum())]:
+        quotas[bucket] += 1
     drawn = 0
-    strata_counts = {}
+    strata_counts = {str(bucket): 0 for bucket in range(4)}
+    anchors = []
     attempts = 0
-    max_attempts = 80 * target
-    while drawn < target and attempts < max_attempts:
-        item = int(rng.integers(0, n_nodes))
-        partner = int(rng.integers(0, n_nodes))
-        attempts += 1
-        if item == partner:
-            continue
-        a, b = (item, partner) if item < partner else (partner, item)
-        key = a * n_nodes + b
-        if key in seen:
-            continue
-        seen.add(key)
-        pairs.append((a, b))
-        drawn += 1
-        bucket = int(strata[a])
-        strata_counts[bucket] = strata_counts.get(bucket, 0) + 1
+    for bucket in range(4):
+        population = np.flatnonzero(strata == bucket)
+        quota, tried = int(quotas[bucket]), 0
+        while strata_counts[str(bucket)] < quota and tried < 80 * quota:
+            item = int(population[rng.integers(len(population))])
+            partner = int(rng.integers(n_nodes))
+            tried += 1
+            attempts += 1
+            if item == partner:
+                continue
+            a, b = (item, partner) if item < partner else (partner, item)
+            key = a * n_nodes + b
+            if key in seen:
+                continue
+            seen.add(key)
+            pairs.append((a, b))
+            anchors.append(item)
+            drawn += 1
+            strata_counts[str(bucket)] += 1
 
     pair_array = np.array(pairs, dtype=np.int64)
     is_edge = np.zeros(len(pair_array), dtype=bool)
@@ -163,23 +199,33 @@ def build_support(graph: dict, kappa: dict, embeddings: np.ndarray | None = None
         "unobserved": int((~is_edge).sum()),
         "semantic_added": semantic_added,
         "sampled_unobserved": drawn,
+        "sampled_unobserved_requested": target,
+        "sampled_anchors": np.asarray(anchors, dtype=np.int64),
+        "sampling_policy": "train-degree-proportional-largest-remainder-v1",
+        "strata_targets": {str(bucket): int(quotas[bucket]) for bucket in range(4)},
         "attempts": attempts,
         "strata_counts": strata_counts,
         "strata_population": {str(i): int(value) for i, value in enumerate(per_stratum)},
         "seed": seed,
         "k": k,
+        "effective_k": effective_k,
     }
 
 
 def readout_delta(phi: torch.Tensor, pairs: np.ndarray, *, device=None) -> torch.Tensor:
     """``1 - cos(phi_i, phi_j)`` for every supported pair."""
-    index = torch.as_tensor(pairs.T, dtype=torch.long, device=device or phi.device)
-    left = phi[index[0]]
-    right = phi[index[1]]
-    # The norm denominator is clamped exactly as the spec says.
-    denominator = (left.norm(dim=-1) * right.norm(dim=-1)).clamp_min(1e-8)
-    cosine = (left * right).sum(-1) / denominator
-    return 1.0 - cosine
+    values = phi.to(device=device or phi.device, dtype=torch.float64)
+    if not torch.isfinite(values).all():
+        raise ValueError("the readout contains NaN or infinity")
+    pieces = []
+    # Do not allocate two support_size by embedding_dim endpoint matrices.
+    for start in range(0, len(pairs), 65536):
+        index = torch.as_tensor(pairs[start:start + 65536].T,
+                                dtype=torch.long, device=values.device)
+        left, right = values[index[0]], values[index[1]]
+        denominator = (left.norm(dim=-1) * right.norm(dim=-1)).clamp_min(1e-8)
+        pieces.append(1.0 - (left * right).sum(-1) / denominator)
+    return torch.cat(pieces) if pieces else values.new_empty(0)
 
 
 def readout_probability(delta: torch.Tensor, tau: float, intercept: float) -> torch.Tensor:
@@ -187,6 +233,7 @@ def readout_probability(delta: torch.Tensor, tau: float, intercept: float) -> to
     return torch.sigmoid(intercept - delta / max(float(tau), TAU_FLOOR))
 
 
+@torch.no_grad()
 def calibrate(phi: torch.Tensor, support: dict, *, device=None):
     """The frozen ``(tau, b)``: the IQR of delta and the intercept that matches density.
 
@@ -196,27 +243,41 @@ def calibrate(phi: torch.Tensor, support: dict, *, device=None):
     one snapshot and then shared, never re-fitted per arm.
     """
     delta = readout_delta(phi, support["pairs"], device=device)
+    if not len(delta):
+        raise ValueError("cannot calibrate an empty support")
     quantiles = torch.quantile(delta, torch.tensor([0.25, 0.75], dtype=delta.dtype,
                                                    device=delta.device))
     tau = float(max(float(quantiles[1] - quantiles[0]), TAU_FLOOR))
     density = float(support["edges"]) / float(len(support["pairs"]))
+    if not 0.0 < density < 1.0:
+        raise ValueError("a finite calibration intercept requires both adjacency classes")
 
     def mean_probability(intercept: float) -> float:
         return float(readout_probability(delta, tau, intercept).mean())
 
-    low, high = -60.0, 60.0
+    # If shift=delta/tau, min(shift)+logit(density) brackets the root
+    # from below and max(shift)+logit(density) brackets it from above.
+    # A fixed [-60,60] interval fails, e.g. delta=1 and tau=1e-6.
+    shift = delta / tau
+    logit = float(np.log(density) - np.log1p(-density))
+    low, high = float(shift.min()) + logit, float(shift.max()) + logit
     for _ in range(200):
         middle = 0.5 * (low + high)
-        if mean_probability(middle) < density:
+        measured = mean_probability(middle)
+        if abs(measured - density) <= CALIBRATION_TOL:
+            break
+        if measured < density:
             low = middle
         else:
             high = middle
-        if high - low < CALIBRATION_TOL:
-            break
-    intercept = 0.5 * (low + high)
+    intercept = middle
+    measured = mean_probability(intercept)
+    if not np.isfinite(intercept) or abs(measured - density) > CALIBRATION_TOL:
+        raise RuntimeError("calibration failed to match the TRAIN edge density")
     return {"tau": tau, "intercept": intercept,
-            "mean_probability": mean_probability(intercept),
-            "density": density}
+            "mean_probability": measured, "density": density,
+            "delta_iqr": float(quantiles[1] - quantiles[0]),
+            "temperature_at_floor": bool(tau == TAU_FLOOR)}
 
 
 def soft_structure(support: dict, probability: torch.Tensor, n_nodes: int):
@@ -296,3 +357,4 @@ def structural_distortion(phi: torch.Tensor, support: dict, kappa: dict, *,
             "scale": scale,
             "probability": probability.detach().cpu().numpy(),
             "predicted": predicted}
+

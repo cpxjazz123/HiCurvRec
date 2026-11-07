@@ -294,3 +294,4 @@ class RQLayer(nn.Module):
         for vq_layer in self.vq_layers:
             residual = vq_layer.init_codebook(residual, device)
         return residual
+

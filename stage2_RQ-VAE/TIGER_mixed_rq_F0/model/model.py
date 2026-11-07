@@ -69,11 +69,15 @@ class MixedRQVAE(nn.Module):
         sizes = ([int(config.codebook_size)] * int(config.codebook_num)
                  if isinstance(config.codebook_size, int)
                  else [int(size) for size in config.codebook_size])
-        self.alpha_table = AlphaTable(levels=len(sizes))
-        self.rq = MixedRQ(sizes, self.alpha_table, curvature=float(curvature),
+        self.rq = MixedRQ(sizes, AlphaTable(levels=len(sizes)), curvature=float(curvature),
                           beta=float(config.beta), sk_epsilon=float(config.sk_epsilon),
                           sk_iters=int(config.sk_iters))
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
+
+    @property
+    def alpha_table(self):
+        """Do not retain a stale alias after DDP broadcasts or checkpoint load."""
+        return self.rq.alpha_table
 
     def forward(self, embeddings: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
         encoded = self.encoder(embeddings)
@@ -97,3 +101,4 @@ class MixedRQVAE(nn.Module):
                      quant_loss: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         recon_loss = F.mse_loss(reconstructed, embeddings)
         return recon_loss + quant_loss, recon_loss
+
