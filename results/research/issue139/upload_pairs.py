@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import os
 import re
@@ -32,7 +33,7 @@ REPO = Path(__file__).resolve().parents[3]
 RESEARCH = Path(__file__).resolve().parent
 sys.path.insert(0, str(RESEARCH))
 
-from upload_stage3 import R2_REMOTE, RCLONE, credentials, sha256  # noqa: E402
+from r2_layout import Ledger, upload_directory  # noqa: E402
 
 AUDIT = REPO / "analysis_sid_recall" / "pair_audit.csv"
 PREFIX = "issue139pairs"
@@ -46,10 +47,13 @@ def recall_block(path: Path) -> dict:
 
 
 def build(row: dict, staging: Path) -> dict:
+    """Stage exactly four entries: the code folder, the SID, the checkpoint, the recall.
+
+    The layout is the owner's: no manifest, no extra names. The checksums and the
+    identity of the directory go into the repository-side ledger instead, so the
+    bucket keeps the four entries and the provenance stays auditable.
+    """
     sid_path = REPO / row["sid_path"]
-    # The candidate tree lives beside the result directory, named by the arm, not
-    # by the results root: results/stage2_RQ-VAE/<arm>/item_sids.json pairs with
-    # stage2_RQ-VAE/<arm>/ (and for nested arms, the parent directory as well).
     arm = sid_path.parent.name
     candidates = [REPO / "stage2_RQ-VAE" / arm,
                   REPO / "stage2_RQ-VAE" / sid_path.parent.parent.name / arm]
@@ -58,55 +62,28 @@ def build(row: dict, staging: Path) -> dict:
     recall_path = Path(row["recall_path"]) if row.get("recall_path") else None
     block = recall_block(recall_path) if recall_path else {}
 
+    code = staging / "stage2_code"
     staging.mkdir(parents=True, exist_ok=True)
-    manifest = {"pair": {"stage2_rel": row["stage2_rel"], "variant": row["variant"],
-                         "sid_sha256": row["sid_sha256"], "verdict": row["verdict"],
-                         "commit_tier": row.get("commit_tier")},
-                "archived_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                "recall_block": block, "missing": [], "files": {}}
+    code.mkdir(exist_ok=True)
+    for relative in ("train_rqvae.py", "math_spec.json", "reference_contract.json"):
+        candidate = source / relative
+        if candidate.is_file():
+            shutil.copy2(candidate, code / relative)
+    if (source / "model").is_dir():
+        shutil.copytree(source / "model", code / "model",
+                        ignore=shutil.ignore_patterns("__pycache__"))
+    shutil.copy2(sid_path, staging / "item_sids.json")
+    shutil.copy2(checkpoint, staging / "rqvae_best.pth")
+    (staging / "recall.json").write_text(json.dumps(block, indent=2, sort_keys=True) + "\n")
 
-    if sid_path.is_file():
-        shutil.copy2(sid_path, staging / "item_sids.json")
-        manifest["files"]["item_sids.json"] = sha256(sid_path)
-    else:
-        manifest["missing"].append("item_sids.json")
-    if checkpoint.is_file():
-        shutil.copy2(checkpoint, staging / "rqvae_best.pth")
-        manifest["files"]["rqvae_best.pth"] = sha256(checkpoint)
-    else:
-        manifest["missing"].append("rqvae_best.pth (the codes cannot be decoded without it)")
-    if source.is_dir():
-        archive = staging / "stage2_source.tar.gz"
-        with tarfile.open(archive, "w:gz") as tar:
-            for relative in ("train_rqvae.py", "math_spec.json", "reference_contract.json"):
-                candidate = source / relative
-                if candidate.is_file():
-                    tar.add(candidate, arcname=relative)
-            if (source / "model").is_dir():
-                tar.add(source / "model", arcname="model")
-        manifest["files"]["stage2_source.tar.gz"] = sha256(archive)
-    else:
-        manifest["missing"].append("stage2 source tree")
-    if block:
-        if recall_path.is_file():
-            shutil.copy2(recall_path, staging / "stage3_test_final.json")
-            manifest["files"]["stage3_test_final.json"] = sha256(recall_path)
-        manifest["recall_keys"] = sorted(block)
-    else:
-        manifest["missing"].append("stage3 result")
-    (staging / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-    return manifest
-
-
-def upload(staging: Path, target: str, *, dry_run: bool) -> None:
-    env = dict(os.environ)
-    env.update(credentials())
-    command = [str(RCLONE), "copy", str(staging), target, "--s3-no-check-bucket"]
-    if dry_run:
-        command.append("--dry-run")
-    done = subprocess.run(command, capture_output=True, text=True, env=env, timeout=1800)
-    if done.returncode != 0:
-        raise RuntimeError((done.stderr or done.stdout)[-400:])
+    files = {}
+    for path in sorted(staging.rglob("*")):
+        if path.is_file():
+            files[str(path.relative_to(staging))] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return {"files": files, "recall_keys": sorted(block),
+            "key": "%s/%s" % (row["stage2_rel"], row["sid_sha256"][:12]),
+            "pair": {"stage2_rel": row["stage2_rel"], "variant": row["variant"],
+                     "sid_sha256": row["sid_sha256"], "commit_tier": row.get("commit_tier")}}
 
 
 def pieces(row: dict) -> dict:
@@ -130,6 +107,7 @@ def main() -> int:
     parser.add_argument("--keep", action="store_true")
     args = parser.parse_args()
 
+    ledger = Ledger()
     verified = [row for row in csv.DictReader(open(AUDIT)) if row["verdict"] == "VERIFIED"]
     tiers = {}
     for row in verified:
@@ -150,15 +128,15 @@ def main() -> int:
         rows = rows[:args.limit]
     uploaded, counts = 0, {}
     for row in rows:
-        slug = re.sub(r"[^A-Za-z0-9._-]+", "__", row["stage2_rel"])
-        target = "%s/%s/%s/%s/" % (R2_REMOTE, PREFIX, slug, row["sid_sha256"][:12])
         staging = Path("/tmp") / ("r2_pair_%s" % row["sid_sha256"][:12])
         shutil.rmtree(staging, ignore_errors=True)
-        manifest = build(row, staging)
-        for item in manifest["missing"]:
-            counts[item] = counts.get(item, 0) + 1
+        bundle = build(row, staging)
+        number = ledger.assign(bundle["key"])
         try:
-            upload(staging, target, dry_run=args.dry_run)
+            target = upload_directory(staging, number, dry_run=args.dry_run)
+            ledger.record(number, bundle["key"], bundle["files"], {"pair": bundle["pair"],
+                                                                  "recall_keys": bundle["recall_keys"],
+                                                                  "target": target})
             uploaded += 1
             if uploaded % 10 == 0 or uploaded == 1:
                 print("  [%d/%d] %s -> %s" % (uploaded, len(rows), row["stage2_rel"][:52], target),
@@ -172,6 +150,7 @@ def main() -> int:
     print("gaps by reason:")
     for reason, count in sorted(counts.items(), key=lambda item: -item[1]):
         print("  %5d  %s" % (count, reason))
+    ledger.save()
     Path(RESEARCH / "r2_pairs_upload.json").write_text(json.dumps(
         {"pairs": len(rows), "uploaded": uploaded, "gaps": counts,
          "dry_run": args.dry_run, "when": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())},

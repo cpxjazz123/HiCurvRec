@@ -1,169 +1,105 @@
-"""Archive one finished Stage 3 run to Cloudflare R2.
+"""Archive one finished Stage 3 run into the numbered layout.
 
-The rule (CLAUDE.md section 12, added 2026-11-08 on the owner's instruction): every
-time a Stage 3 run finishes, upload the Stage 2 code it used, the SID table, the
-checkpoint that exported that table, and the COMPLETE recall block of the Stage 3
-result -- not `test_recall@10` alone.
+The rule (CLAUDE.md 6b): every time a Stage 3 run finishes, the four pieces are
+archived together -- the Stage 2 code it used, the SID table, the checkpoint that
+exported that table, and the complete recall block. The bucket's first level is a
+two-digit number and each number holds exactly those four entries:
 
-Credentials are read from `r2_apikey` in the repository root and are never printed
-or written into the manifest. rclone is configured through environment variables,
-so nothing persistent is created on the host.
+    r2:genrec/<NN>/stage2_code/        train_rqvae.py, model/, math_spec.json,
+                                       reference_contract.json
+    r2:genrec/<NN>/item_sids.json
+    r2:genrec/<NN>/rqvae_best.pth
+    r2:genrec/<NN>/recall.json         every key of test_final.json
+
+What the number refers to, and the checksum of every uploaded file, goes into
+`r2_ledger.json` beside this script.
 
     python3 results/research/issue139/upload_stage3.py F0
     python3 results/research/issue139/upload_stage3.py F0 --dry-run
-    python3 results/research/issue139/upload_stage3.py F0 --allow-incomplete
 """
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
-import os
-import re
 import shutil
-import subprocess
 import sys
-import tarfile
-import time
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[3]
-CREDENTIALS = REPO / "r2_apikey"
-RCLONE = Path("/home/wlia0047/bin/rclone")
-#: Where the archive lives. The bucket exists already; the prefix is ours.
-R2_REMOTE = "r2:genrec"
-R2_PREFIX = "genrec/issue139"
+RESEARCH = Path(__file__).resolve().parent
+REPO = RESEARCH.parents[2]
+sys.path.insert(0, str(RESEARCH))
+
+from r2_layout import Ledger, sha256, upload_directory  # noqa: E402
+
+RESULTS = REPO / "results"
+TREES = REPO / "stage2_RQ-VAE"
+STAGE3_LOGS = RESULTS / "stage3_T5Train"
 
 
-def credentials() -> dict:
-    """The four values rclone needs, read from the owner's key file."""
-    raw = CREDENTIALS.read_text()
-
-    def grab(label: str) -> str:
-        match = re.search(re.escape(label) + r"\s*=\s*(\S+)", raw)
-        if not match:
-            raise SystemExit("r2_apikey is missing the line %r" % label)
-        return match.group(1)
-
-    return {
-        "RCLONE_CONFIG_R2_TYPE": "s3",
-        "RCLONE_CONFIG_R2_PROVIDER": "Cloudflare",
-        "RCLONE_CONFIG_R2_ACCESS_KEY_ID": grab("Access Key ID"),
-        "RCLONE_CONFIG_R2_SECRET_ACCESS_KEY": grab("Secret Access Key"),
-        "RCLONE_CONFIG_R2_ENDPOINT": grab("S3 API"),
-        "RCLONE_CONFIG_R2_REGION": "auto",
-    }
-
-
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1 << 20), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def stage3_result(arm: str) -> tuple[Path | None, dict]:
-    folder = REPO / "results" / "stage3_T5Train" / ("TIGER_mixed_rq_" + arm)
-    found = sorted(folder.glob("logs/*/*/test_final.json")) if folder.is_dir() else []
-    if not found:
-        return None, {}
-    path = found[-1]
-    return path, json.loads(path.read_text())
-
-
-def build_bundle(arm: str, staging: Path, *, allow_incomplete: bool) -> dict:
-    """Copy what the rule names into one directory, and describe it."""
-    tree = REPO / "stage2_RQ-VAE" / ("TIGER_mixed_rq_" + arm)
-    result = REPO / "results" / "stage2_RQ-VAE" / ("TIGER_mixed_rq_" + arm)
+def stage(arm: str, staging: Path) -> tuple[dict, str]:
+    """Stage the four entries; return the checksums and the ledger key."""
+    result = RESULTS / "stage2_RQ-VAE" / arm
     sid = result / "item_sids.json"
     checkpoint = result / "rqvae_best.pth"
-    metrics = tree / "logs" / "training_metrics.jsonl"
-    test_final, recall_block = stage3_result(arm)
-    missing = [name for name, path in (("stage2 tree", tree), ("item_sids.json", sid),
+    source = TREES / arm
+    if not source.is_dir():
+        for candidate in sorted(TREES.glob("*/" + arm)):
+            if candidate.is_dir():
+                source = candidate
+                break
+    stage3 = STAGE3_LOGS / arm / "test_final.json"
+
+    missing = [name for name, path in (("item_sids.json", sid),
                                        ("rqvae_best.pth", checkpoint),
-                                       ("training_metrics.jsonl", metrics)) if not path.exists()]
-    if test_final is None:
-        missing.append("stage3 test_final.json")
-    if missing and not allow_incomplete:
-        raise SystemExit("nothing archived: missing " + ", ".join(missing)
-                         + " (pass --allow-incomplete to archive anyway)")
+                                       ("stage2 source tree", source if source.is_dir() else None),
+                                       ("stage3 test_final.json", stage3)) if path is None]
+    if missing:
+        raise SystemExit("%s is incomplete, not archiving: %s" % (arm, ", ".join(missing)))
 
     staging.mkdir(parents=True, exist_ok=True)
-    manifest = {"arm": arm, "archived_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                "recall_block": recall_block, "missing": missing, "files": {}}
+    code = staging / "stage2_code"
+    code.mkdir(exist_ok=True)
+    for relative in ("train_rqvae.py", "math_spec.json", "reference_contract.json"):
+        if (source / relative).is_file():
+            shutil.copy2(source / relative, code / relative)
+    if (source / "model").is_dir():
+        shutil.copytree(source / "model", code / "model",
+                        ignore=shutil.ignore_patterns("__pycache__"))
+    shutil.copy2(sid, staging / "item_sids.json")
+    shutil.copy2(checkpoint, staging / "rqvae_best.pth")
+    block = json.loads(stage3.read_text())
+    (staging / "recall.json").write_text(json.dumps(block, indent=2, sort_keys=True) + "\n")
 
-    # 1. the Stage 2 code, as it stands in the tree that produced the SID
-    if tree.is_dir():
-        archive = staging / "stage2_source.tar.gz"
-        with tarfile.open(archive, "w:gz") as tar:
-            for relative in ("train_rqvae.py", "math_spec.json", "reference_contract.json"):
-                candidate = tree / relative
-                if candidate.is_file():
-                    tar.add(candidate, arcname=relative)
-            if (tree / "model").is_dir():
-                tar.add(tree / "model", arcname="model")
-        manifest["files"]["stage2_source.tar.gz"] = sha256(archive)
-    # 2. the SID table
-    if sid.is_file():
-        shutil.copy2(sid, staging / "item_sids.json")
-        manifest["files"]["item_sids.json"] = sha256(sid)
-    # 3. the checkpoint that exported it
-    if checkpoint.is_file():
-        shutil.copy2(checkpoint, staging / "rqvae_best.pth")
-        manifest["files"]["rqvae_best.pth"] = sha256(checkpoint)
-    # 4. the Stage 2 run record
-    if metrics.is_file():
-        shutil.copy2(metrics, staging / "stage2_training_metrics.jsonl")
-        manifest["files"]["stage2_training_metrics.jsonl"] = sha256(metrics)
-    # 5. the complete Stage 3 record, every key of it
-    if test_final is not None:
-        shutil.copy2(test_final, staging / "stage3_test_final.json")
-        manifest["files"]["stage3_test_final.json"] = sha256(test_final)
-        for name, pattern in (("stage3_training_metrics.jsonl", "training_metrics.jsonl"),
-                              ("stage3_run.log", "HG_Rec.log")):
-            candidate = test_final.parent / pattern
-            if candidate.is_file():
-                shutil.copy2(candidate, staging / name)
-                manifest["files"][name] = sha256(candidate)
-    manifest["recall_keys"] = sorted(recall_block)
-    (staging / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-    manifest["files"]["manifest.json"] = sha256(staging / "manifest.json")
-    return manifest
-
-
-def upload(arm: str, staging: Path, *, dry_run: bool) -> str:
-    target = "%s/%s/%s/%s/" % (R2_REMOTE, R2_PREFIX, arm,
-                               time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()))
-    env = dict(os.environ)
-    env.update(credentials())
-    command = [str(RCLONE), "copy", str(staging), target, "--s3-no-check-bucket"]
-    if dry_run:
-        command.append("--dry-run")
-    done = subprocess.run(command, capture_output=True, text=True, env=env, timeout=3600)
-    if done.returncode != 0:
-        raise SystemExit("upload failed: " + (done.stderr or done.stdout)[-800:])
-    return target
+    files = {str(path.relative_to(staging)): sha256(path)
+             for path in sorted(staging.rglob("*")) if path.is_file()}
+    return files, arm
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("arm")
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--allow-incomplete", action="store_true")
-    parser.add_argument("--keep", action="store_true", help="keep the staging directory")
+    parser.add_argument("--keep", action="store_true")
     args = parser.parse_args()
 
-    staging = Path("/tmp") / ("r2_stage3_%s_%d" % (args.arm, int(time.time())))
-    manifest = build_bundle(args.arm, staging, allow_incomplete=args.allow_incomplete)
-    print("bundle for %s: %d files, recall keys %s"
-          % (args.arm, len(manifest["files"]) - 1, manifest["recall_keys"]))
-    if manifest["missing"]:
-        print("  incomplete, missing:", manifest["missing"])
-    target = upload(args.arm, staging, dry_run=args.dry_run)
-    print(("would upload to " if args.dry_run else "uploaded to ") + target)
-    if not args.keep:
-        shutil.rmtree(staging, ignore_errors=True)
+    staging = Path("/tmp") / ("r2_arm_%s" % args.arm.replace("/", "__"))
+    shutil.rmtree(staging, ignore_errors=True)
+    try:
+        files, key = stage(args.arm, staging)
+        ledger = Ledger()
+        number = ledger.assign(key)
+        target = upload_directory(staging, number, dry_run=args.dry_run)
+        ledger.record(number, key, files, {"arm": args.arm,
+                                           "recall_keys": sorted(json.loads(
+                                               (staging / "recall.json").read_text()))})
+        if not args.dry_run:
+            ledger.save()
+        print("%s: %d files, recall keys %d -> %s" % (
+            args.arm, len(files), len(json.loads((staging / "recall.json").read_text())), target))
+        print(("would upload to " if args.dry_run else "uploaded to ") + target)
+    finally:
+        if not args.keep:
+            shutil.rmtree(staging, ignore_errors=True)
     return 0
 
 
