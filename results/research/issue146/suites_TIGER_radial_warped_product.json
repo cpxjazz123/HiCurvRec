@@ -1,0 +1,18 @@
+{
+  "arm": "TIGER_radial_warped_product",
+  "blocked": "RESOURCE_BLOCKED / IMPLEMENTATION_NEEDS_FIX",
+  "note": "only the geometry suite exists; gradient/DDP/entrypoint are NOT_APPLICABLE because the exact geodesic is not differentiable and no training was started",
+  "ok": true,
+  "suites": {
+    "math": {
+      "errors": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "ok": true,
+      "path": "stage2_RQ-VAE/TIGER_radial_warped_product/tests/test_math.py",
+      "skipped": 0,
+      "tests_run": 7,
+      "unexpected_successes": 0
+    }
+  }
+}
