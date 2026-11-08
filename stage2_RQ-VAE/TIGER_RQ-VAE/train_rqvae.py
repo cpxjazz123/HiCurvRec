@@ -248,6 +248,10 @@ def main() -> None:
         dist.init_process_group(backend="nccl")
         rank = dist.get_rank()
         world_size = dist.get_world_size()
+        if world_size == 1:
+            # A one-rank group is the single-card case reached through torchrun:
+            # keep the four-rank global batch so the optimisation does not move.
+            BATCH_SIZE_PER_RANK = SINGLE_CARD_BATCH
         local_rank = int(os.environ.get("LOCAL_RANK", rank))
         torch.cuda.set_device(local_rank)
         device = torch.device(f"cuda:{local_rank}")

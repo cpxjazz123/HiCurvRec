@@ -1798,6 +1798,10 @@ def stage2_worker_main(tree_arg: str, spec: dict) -> int:
         "--result-dir", str(result_dir),
         "--python", str(spec["python"]),
         "--visible-devices", ",".join(str(x) for x in (gpu_probe.get("visible") or [])),
+        # One rank per visible card: a one-card host must not be asked for four,
+        # and a four-rank job must still get four. The world size is a property
+        # of the probed layout, not a constant of the contract.
+        "--world-size", str(max(1, int(gpu_probe.get("visible_count") or 1))),
     ]
     # The arm's log directory does not exist yet for a fresh tree, and the run
     # log is opened before the trainer can create it.
