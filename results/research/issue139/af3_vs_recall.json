@@ -1,0 +1,238 @@
+{
+  "calibration": {
+    "intercept": -0.044043178029793226,
+    "tau": 0.37430533908313046
+  },
+  "families": {
+    "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": 10,
+    "TIGER_RQ-VAE": 1,
+    "TIGER_bootstrap_code_stability": 1,
+    "TIGER_c117_hyperbolic_item_semantic_id": 1,
+    "TIGER_curriculum-behaviour-rq": 1,
+    "TIGER_curvature-embedding-rq": 1,
+    "TIGER_successor_entropy_curvature": 1,
+    "TIGER_successor_residual_barycenter": 1,
+    "TIGER_tangent_successor_residual": 1,
+    "TIGER_transition_busemann_gate": 1
+  },
+  "groups": {
+    "kind:euclidean": {
+      "n": 19,
+      "rho": -0.29473684210526313
+    },
+    "verdict:REJECTED_NAME": {
+      "n": 11,
+      "rho": -0.02727272727272728
+    },
+    "verdict:VERIFIED": {
+      "n": 8,
+      "rho": -0.38095238095238104
+    }
+  },
+  "measured": [
+    {
+      "D_af3": 0.30077883680170464,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "kind": "euclidean",
+      "recall@10": 0.06425947526941625,
+      "stage2_rel": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_posattract_w3",
+      "variant": "tiger_sample_crowd_posattract_w3",
+      "verdict": "REJECTED_NAME"
+    },
+    {
+      "D_af3": 0.3041046472728621,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "kind": "euclidean",
+      "recall@10": 0.06373718205400512,
+      "stage2_rel": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/L2COND_CTRL",
+      "variant": "tiger_sample_resample",
+      "verdict": "REJECTED_NAME"
+    },
+    {
+      "D_af3": 0.3219473479927356,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "kind": "euclidean",
+      "recall@10": 0.06356308431553474,
+      "stage2_rel": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask",
+      "variant": "tiger_sample_resample_fn_mask",
+      "verdict": "REJECTED_NAME"
+    },
+    {
+      "D_af3": 0.31045459925550034,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "kind": "euclidean",
+      "recall@10": 0.06352826476784067,
+      "stage2_rel": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_couser_w3",
+      "variant": "tiger_sample_crowd_couser_w3",
+      "verdict": "REJECTED_NAME"
+    },
+    {
+      "D_af3": 0.25226435417810067,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_bootstrap_code_stability",
+      "kind": "euclidean",
+      "recall@10": 0.06335416702937029,
+      "stage2_rel": "TIGER_bootstrap_code_stability/resample",
+      "variant": "TIGER_bootstrap_code_stability__resample",
+      "verdict": "VERIFIED"
+    },
+    {
+      "D_af3": 0.3192050509517724,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "kind": "euclidean",
+      "recall@10": 0.06302338132627658,
+      "stage2_rel": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43",
+      "variant": "tiger_sample_resample_s43",
+      "verdict": "REJECTED_NAME"
+    },
+    {
+      "D_af3": 0.3198383821831524,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "kind": "euclidean",
+      "recall@10": 0.06283187381395916,
+      "stage2_rel": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l1only",
+      "variant": "tiger_sample_resample_l1only",
+      "verdict": "REJECTED_NAME"
+    },
+    {
+      "D_af3": 0.3252204888401913,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "kind": "euclidean",
+      "recall@10": 0.06237921969393618,
+      "stage2_rel": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44",
+      "variant": "tiger_sample_resample_s44",
+      "verdict": "REJECTED_NAME"
+    },
+    {
+      "D_af3": 0.26959846898766465,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "kind": "euclidean",
+      "recall@10": 0.05921064085377531,
+      "stage2_rel": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/STE_FIX",
+      "variant": "tiger_sample_STE_FIX",
+      "verdict": "REJECTED_NAME"
+    },
+    {
+      "D_af3": 0.3129626394892795,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "kind": "euclidean",
+      "recall@10": 0.05600724246592037,
+      "stage2_rel": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/MARGIN",
+      "variant": "tiger_sample_MARGIN",
+      "verdict": "REJECTED_NAME"
+    },
+    {
+      "D_af3": 0.3148729828779894,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_c117_hyperbolic_item_semantic_id",
+      "kind": "euclidean",
+      "recall@10": 0.05557199811974443,
+      "stage2_rel": "TIGER_c117_hyperbolic_item_semantic_id",
+      "variant": "TIGER_c117_hyperbolic_item_semantic_id",
+      "verdict": "VERIFIED"
+    },
+    {
+      "D_af3": 0.30984785386726515,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "kind": "euclidean",
+      "recall@10": 0.05553717857205035,
+      "stage2_rel": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/bw0",
+      "variant": "TIGER_RQ-VAE",
+      "verdict": "REJECTED_NAME"
+    },
+    {
+      "D_af3": 0.3187113542876859,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_transition_busemann_gate",
+      "kind": "euclidean",
+      "recall@10": 0.0548233778443218,
+      "stage2_rel": "TIGER_transition_busemann_gate",
+      "variant": "TIGER_transition_busemann_gate",
+      "verdict": "VERIFIED"
+    },
+    {
+      "D_af3": 0.3414289003025757,
+      "commit_tier": "SAME_COMMIT",
+      "family": "TIGER_curriculum-behaviour-rq",
+      "kind": "euclidean",
+      "recall@10": 0.05480596807047476,
+      "stage2_rel": "TIGER_curriculum-behaviour-rq",
+      "variant": "TIGER_curriculum-behaviour-rq",
+      "verdict": "VERIFIED"
+    },
+    {
+      "D_af3": 0.30984785386726515,
+      "commit_tier": "SAME_COMMIT",
+      "family": "TIGER_RQ-VAE",
+      "kind": "euclidean",
+      "recall@10": 0.054736328975086616,
+      "stage2_rel": "TIGER_RQ-VAE",
+      "variant": "tiger",
+      "verdict": "REJECTED_NAME"
+    },
+    {
+      "D_af3": 0.30800432381324966,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_successor_residual_barycenter",
+      "kind": "euclidean",
+      "recall@10": 0.05435331395045179,
+      "stage2_rel": "TIGER_successor_residual_barycenter",
+      "variant": "TIGER_successor_residual_barycenter",
+      "verdict": "VERIFIED"
+    },
+    {
+      "D_af3": 0.31763703768741336,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_tangent_successor_residual",
+      "kind": "euclidean",
+      "recall@10": 0.05424885530736956,
+      "stage2_rel": "TIGER_tangent_successor_residual",
+      "variant": "TIGER_tangent_successor_residual",
+      "verdict": "VERIFIED"
+    },
+    {
+      "D_af3": 0.33575558188272203,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_successor_entropy_curvature",
+      "kind": "euclidean",
+      "recall@10": 0.05062762234718571,
+      "stage2_rel": "TIGER_successor_entropy_curvature",
+      "variant": "TIGER_successor_entropy_curvature",
+      "verdict": "VERIFIED"
+    },
+    {
+      "D_af3": 0.31661557255993666,
+      "commit_tier": "COMMITS_DIFFER",
+      "family": "TIGER_curvature-embedding-rq",
+      "kind": "euclidean",
+      "recall@10": 0.048973693831717124,
+      "stage2_rel": "TIGER_curvature-embedding-rq",
+      "variant": "TIGER_curvature-embedding-rq",
+      "verdict": "VERIFIED"
+    }
+  ],
+  "pairs_total": 190,
+  "skipped": {
+    "measurement failed: RuntimeError": 3,
+    "no SID table on disk": 144,
+    "no Stage 3 result": 21,
+    "no codebook: the 32 numbers behind the codes are gone (CLAUDE.md 46)": 3
+  },
+  "spearman": {
+    "ci_high": 0.2316228070175432,
+    "ci_low": -0.6508771929824562,
+    "n": 19,
+    "rho": -0.29473684210526313
+  },
+  "why_so_few": "a distortion needs the SID table, the codebook and a Stage 3 result at once; binaries are kept out of git by CLAUDE.md 46"
+}
