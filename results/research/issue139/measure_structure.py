@@ -36,6 +36,10 @@ import numpy as np
 import torch
 
 REPO = Path(__file__).resolve().parents[3]
+#: The arm whose curvature the measurement builds its model with. The E arm
+#: runs at curvature zero and its checkpoint carries that in its extra state, so
+#: a model built from another arm's tree refuses to load it -- correctly.
+ARM_CURVATURE = {"F0": 1.0, "G": 1.0, "L": 1.0, "E": 0.0, "A": 1.0}
 TREE = REPO / "stage2_RQ-VAE" / "TIGER_mixed_rq_F0"
 sys.path.insert(0, str(TREE))
 sys.path.insert(0, str(REPO))
@@ -132,7 +136,7 @@ def arm_phi(arm: str) -> tuple[torch.Tensor, torch.Tensor, dict]:
     import train_rqvae as trainer
     config = trainer._tokenizer_config()
     from model.model import MixedRQVAE
-    model = MixedRQVAE(config, in_dim=768, curvature=1.0)
+    model = MixedRQVAE(config, in_dim=768, curvature=ARM_CURVATURE.get(arm, 1.0))
     model.load_state_dict(state, strict=True)
     model.eval()
 

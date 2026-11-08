@@ -110,7 +110,7 @@ def wait_for_stage2(arm: str, timeout: int = 4 * 3600) -> str:
                 time.sleep(30)
                 if last_run_finished(arm):
                     return "finished"
-                return "worker gone without a final event"
+                return "worker gone without a final event: " + crash_tail(arm)
         epoch = last_epoch(arm)
         if epoch and epoch != last_report and epoch % 500 == 0:
             last_report = epoch
@@ -125,10 +125,27 @@ def start_stage2(arm: str) -> str:
     answer = module.tool_stage2_start(str(tree(arm)), "machine:issue139-" + arm.lower())
     if answer.get("started"):
         return "started"
+    # The first version of this line returned "refused: None" and hid the real
+    # reason, so the whole answer is logged when a dispatch does not start.
     verdict = answer.get("agent_verification") or {}
-    if verdict.get("passed") is False:
-        return "refused: " + str(verdict.get("refused"))[:200]
-    return "refused: " + str(answer.get("refused"))[:200]
+    failed = [check for check in (verdict.get("checks") or [])
+              if check.get("status") != "PASS"]
+    reason = answer.get("refused") or verdict.get("refused") or "no reason in the answer"
+    log("%s dispatch did not start: %s | failing checks: %s"
+        % (arm, str(reason)[:300], [c.get("name") for c in failed] or "none"))
+    return "refused: " + str(reason)[:300]
+
+
+def crash_tail(arm: str, limit: int = 3) -> str:
+    """The last error lines of the arm's launch log, for a run that died."""
+    log_path = result(arm) / "logs" / "train_migrated.log"
+    if not log_path.is_file():
+        return "no launch log"
+    lines = [line for line in log_path.read_text(errors="replace").splitlines()
+             if any(marker in line for marker in ("Error", "Traceback", "ValueError",
+                                                  "RuntimeError", "SIGABRT", "signal"))
+             and "UserWarning" not in line]
+    return " || ".join(lines[-limit:])[:400] or "no error line in the launch log"
 
 
 def record_layers(arm: str) -> str:
@@ -159,6 +176,9 @@ def stage3_dir(arm: str) -> Path:
 def wait_for_stage3(arm: str, timeout: int = 6 * 3600) -> str:
     deadline = time.time() + timeout
     while time.time() < deadline:
+        if not any(("stage3" in str(path) and arm in str(path))
+                   for path in []):
+            pass
         found = list(stage3_dir(arm).glob("logs/*/*/test_final.json"))
         if found:
             payload = json.loads(found[-1].read_text())
