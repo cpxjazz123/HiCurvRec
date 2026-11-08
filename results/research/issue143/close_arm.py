@@ -25,7 +25,7 @@ sys.path.insert(0, str(REPO))
 from tools.research.stage2 import run_metrics  # noqa: E402
 
 ARMS = ("M1_learned_kappa", "M2_radial_manifold", "M3_role_profiles",
-        "M4_post_sid_af3")
+        "M4_post_sid_af3", "af3sign_capacity", "factorized_joint_codebook")
 EPOCHS = 3000
 
 

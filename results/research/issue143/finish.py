@@ -28,6 +28,8 @@ ARMS = {
     "M2_radial_manifold": {"issue": 141, "event": "radial"},
     "M3_role_profiles": {"issue": 142, "event": "role"},
     "M4_post_sid_af3": {"issue": 143, "event": "post_sid"},
+    "af3sign_capacity": {"issue": 145, "event": None},
+    "factorized_joint_codebook": {"issue": 147, "event": None},
 }
 
 

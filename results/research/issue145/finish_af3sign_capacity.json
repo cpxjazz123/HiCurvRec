@@ -1,0 +1,54 @@
+{
+  "arm": "af3sign_capacity",
+  "diagnostics": {
+    "available": true,
+    "epoch_time_s": 0.353,
+    "epochs": 3000,
+    "finished": true,
+    "last_epoch": 3000,
+    "source": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_af3sign_capacity/logs/run_metrics.jsonl",
+    "wall_s": 936.986
+  },
+  "issue": 145,
+  "layer_record": {
+    "report": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_af3sign_capacity/stage2_metrics/b9083f4dd9cb32f7c51ad586da15af2574b4b0e3d677cc89524c8a9af6ad7855.json",
+    "sid_sha256": "b9083f4dd9cb32f7c51ad586da15af2574b4b0e3d677cc89524c8a9af6ad7855",
+    "tail": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_af3sign_capacity/stage2_metrics/b9083f4dd9cb32f7c51ad586da15af2574b4b0e3d677cc89524c8a9af6ad7855.json",
+    "written": true
+  },
+  "preserved_run": {
+    "available": false
+  },
+  "runs": {
+    "audit": {
+      "delivered": {
+        "events": {
+          "ckpt_saved": 1,
+          "train": 3000,
+          "train_end": 1,
+          "train_start": 1
+        },
+        "output": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_af3sign_capacity/logs/run_metrics.jsonl",
+        "rows": 3003,
+        "run_start": 1794147897.4681897
+      },
+      "epochs": 3000,
+      "runs": {
+        "1794147897.47": {
+          "contiguous": true,
+          "events": {
+            "ckpt_saved": 1,
+            "train": 3000,
+            "train_end": 1,
+            "train_start": 1
+          },
+          "first_epoch": 1,
+          "last_epoch": 3000,
+          "rows": 3003
+        }
+      },
+      "source": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_af3sign_capacity/logs/training_metrics.jsonl"
+    },
+    "available": true
+  }
+}

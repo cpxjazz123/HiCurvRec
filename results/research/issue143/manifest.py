@@ -19,7 +19,8 @@ REPO = Path(__file__).resolve().parents[3]
 TREE = REPO / "stage2_RQ-VAE"
 CACHE = REPO / "results" / "research" / "_conformance"
 ISSUE = {"M1_learned_kappa": 140, "M2_radial_manifold": 141,
-         "M3_role_profiles": 142, "M4_post_sid_af3": 143}
+         "M3_role_profiles": 142, "M4_post_sid_af3": 143,
+         "af3sign_capacity": 145, "factorized_joint_codebook": 147}
 
 
 def digest(path: Path) -> str:

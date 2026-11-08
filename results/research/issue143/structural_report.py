@@ -181,25 +181,54 @@ def main() -> int:
     # mixed readout. Using the mixed readout on the Euclidean baseline would put
     # its last 16 dims through a Poincare log map and change every distance.
     from model.mixed_rq import quantized_readout
+    from model.poincare_contract import expmap0, logmap0, mobius_add
     checkpoint = RESULT / args.arm / "rqvae_best.pth"
     if not checkpoint.is_file():
         raise SystemExit("%s has no checkpoint to reconstruct the readout" % args.arm)
     state = torch.load(checkpoint, map_location="cpu", weights_only=True)["state_dict"]
-    codebooks = [state[key] for key in sorted(state) if key.startswith("rq.")
-                 and key.endswith("embed.weight")]
-    if not codebooks:
-        raise SystemExit("the checkpoint carries no codebooks")
-    rows = len(codebooks)
-    with torch.no_grad():
-        if args.arm == "TIGER_RQ-VAE":
-            phi = sum(book[torch.as_tensor(tokens[:, level])]
-                      for level, book in enumerate(codebooks))
-        else:
-            codes_e = [book[:, :16][torch.as_tensor(tokens[:, level])]
-                       for level, book in enumerate(codebooks)]
-            codes_h = [book[:, 16:][torch.as_tensor(tokens[:, level])]
-                       for level, book in enumerate(codebooks)]
-            phi = quantized_readout(codes_e, codes_h, curvature=1.0)
+    arms_with_branch_codebooks = {"TIGER_factorized_joint_codebook"}
+    if args.arm in arms_with_branch_codebooks:
+        e_books = [state[key] for key in sorted(state)
+                   if key.startswith("rq.levels.") and key.endswith("e_embed.weight")]
+        h_books = [state[key] for key in sorted(state)
+                   if key.startswith("rq.levels.") and key.endswith("h_embed.weight")]
+        if not e_books or not h_books:
+            raise SystemExit("the factorized checkpoint carries no branch codebooks")
+        rows = len(e_books)
+        branch = int(e_books[0].shape[0])
+        with torch.no_grad():
+            k_e = [tokens[:, level] // branch for level in range(rows)]
+            k_h = [tokens[:, level] % branch for level in range(rows)]
+            q_e = sum(book[index] for book, index in zip(e_books, k_e))
+            points = [expmap0(book[index], 1.0) for book, index in zip(h_books, k_h)]
+            q_h = points[-1]
+            for point in reversed(points[:-1]):
+                q_h = mobius_add(point, q_h, 1.0)
+            phi = torch.cat([q_e, logmap0(q_h, 1.0)], dim=-1)
+    else:
+        codebooks = [state[key] for key in sorted(state) if key.startswith("rq.")
+                     and key.endswith("embed.weight")]
+        if not codebooks:
+            raise SystemExit("the checkpoint carries no codebooks")
+        rows = len(codebooks)
+        with torch.no_grad():
+            if args.arm == "TIGER_RQ-VAE":
+                phi = sum(book[torch.as_tensor(tokens[:, level])]
+                          for level, book in enumerate(codebooks))
+            elif args.arm == "TIGER_af3sign_capacity":
+                # Issue #145: L1 is E32 (its tangent code), L2/L3 are H32 and
+                # compose natively; the readout is their common 32-d tangent.
+                q_e = codebooks[0][torch.as_tensor(tokens[:, 0])]
+                q_h = expmap0(codebooks[2][torch.as_tensor(tokens[:, 2])], 1.0)
+                q_h = mobius_add(expmap0(codebooks[1][torch.as_tensor(tokens[:, 1])], 1.0),
+                                 q_h, 1.0)
+                phi = q_e + logmap0(q_h, 1.0)
+            else:
+                codes_e = [book[:, :16][torch.as_tensor(tokens[:, level])]
+                           for level, book in enumerate(codebooks)]
+                codes_h = [book[:, 16:][torch.as_tensor(tokens[:, level])]
+                           for level, book in enumerate(codebooks)]
+                phi = quantized_readout(codes_e, codes_h, curvature=1.0)
     calibration = structure.calibrate(phi, support, device=phi.device)
     result = structure.structural_distortion(
         phi, support, kappa, tau=calibration["tau"], intercept=calibration["intercept"],

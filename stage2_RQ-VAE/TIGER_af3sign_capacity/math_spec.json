@@ -1,0 +1,120 @@
+{
+  "issue": 145,
+  "arm": "TIGER_af3sign_capacity",
+  "mechanism": {
+    "name": "static capacity allocation from the TRAIN graph's AF3 sign mix",
+    "question": "Can the sign distribution of the TRAIN graph's AF3 edge values decide, before training, how the 32 coordinates of each RQ-VAE level split into hyperbolic, Euclidean and spherical components, so the hard SID preserves behaviour-graph structure better?",
+    "one_sentence": "Level 1 stays E32; levels 2 and 3 split 32 coordinates into H x E x S by largest remainder of the AF3 sign proportions, then train the frozen RQ-VAE recipe once with no behaviour signal in the training path.",
+    "distinct_from": "M1 learns one curvature per level and M2 carries a radial coordinate inside the code; here nothing about the geometry is learned or carried by the code: the graph's sign mix only decides a fixed dimension budget before training, and AF3 is read once, outside the model."
+  },
+  "computations": [
+    {
+      "id": "signs",
+      "statement": "For every canonical TRAIN edge (i, j): F_ij = 4 - d_i - d_j + 3 T_ij; count minus = #{F_ij < 0}, zero = #{F_ij = 0}, plus = #{F_ij > 0}. Frozen counts: 315391 edges, 315390 minus, 1 zero, 0 plus; proportions (0.9999968293324794, 3.170667520633119e-06, 0.0).",
+      "discrete": true
+    },
+    {
+      "id": "allocation",
+      "statement": "Largest remainder on 32 with order (H, E, S) and ties to the lower index. Level 1 is fixed at (0, 32, 0) by the issue. The frozen proportions give level 2 = level 3 = (32, 0, 0): H32, E0, S0. The sphere component is zero, so no sphere code path exists in this candidate; the rule is still exercised by tests on synthetic counts.",
+      "discrete": true
+    },
+    {
+      "id": "cost",
+      "statement": "Per level, in its own space: Euclidean level cost = ||r - c||^2; hyperbolic level cost = d_c(r, exp_0(c))^2 / 4, with the repository convention d_0(x, y) = 2||x - y||. Curvature c = 1 is frozen.",
+      "discrete": false
+    },
+    {
+      "id": "residual",
+      "statement": "Euclidean level: r' = r - c. Hyperbolic level: r' = project((-exp_0(c)) (+) r). Space transition E -> H uses exp_0(r); H -> H is the identity. A sphere transition would use the same exp/log pair but is unreachable because every d_S is zero.",
+      "discrete": false
+    },
+    {
+      "id": "readout",
+      "statement": "phi(q) = q_E(L1) + log_0(exp_0(c_2) (+) exp_0(c_3)): the Euclidean level contributes its tangent code, the hyperbolic levels contribute the log of their nested ball sum. The result is 32-dimensional, the decoder input.",
+      "discrete": false
+    },
+    {
+      "id": "assignment",
+      "statement": "Nearest code on levels 1 and 2, the baseline's balanced Sinkhorn on level 3 during training, deterministic nearest code at export. The rule is the frozen baseline's; the cost matrix is the allocated one.",
+      "discrete": true
+    },
+    {
+      "id": "init",
+      "statement": "Rank-zero KMeans of the residual in the level's native tangent (Euclidean coordinates for E, log_0 coordinates for H), broadcast to every rank before the first step.",
+      "discrete": true
+    }
+  ],
+  "inputs": {
+    "embeddings": "stage1_GeneEmbedding/output/sentence_t5.npy",
+    "graph": "the canonical TRAIN behaviour graph with F_ij = 4 - d_i - d_j + 3 T_ij (read once for the sign counts, never inside the model)"
+  },
+  "outputs": {
+    "sid": "three tokens per item plus the disambiguation token",
+    "geometry": "the per-level (H, E, S) layout, frozen and recorded"
+  },
+  "parameters": {
+    "learned": [
+      "encoder",
+      "decoder",
+      "three codebooks of 256 x 32 (level 1 Euclidean, levels 2 and 3 hyperbolic)"
+    ],
+    "frozen": {
+      "sign_counts": {"edges": 315391, "minus": 315390, "zero": 1, "plus": 0},
+      "layouts": [[0, 32, 0], [32, 0, 0], [32, 0, 0]],
+      "curvature": 1.0,
+      "beta": 0.25,
+      "sinkhorn_epsilon": 0.003,
+      "sinkhorn_iterations": 5
+    }
+  },
+  "dimensions": {
+    "codeword": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "level_layouts_H_E_S": [[0, 32, 0], [32, 0, 0], [32, 0, 0]]
+  },
+  "gradient_rules": {
+    "encoder": "through the straight-through readout: the decoder sees phi(q), the encoder receives its gradient",
+    "codebooks": "each level's commitment (code detached) and codebook (residual detached) terms in its own cost",
+    "residual": "the chosen code is detached; the residual recursion carries no codebook gradient"
+  },
+  "training_integration": {
+    "entry": "stage2_RQ-VAE/TIGER_af3sign_capacity/train_rqvae.py",
+    "epochs": 3000,
+    "seed": 42,
+    "records": "logs/training_metrics.jsonl carries one train event per epoch; the geometry is a frozen constant, so there is no per-epoch mechanism event"
+  },
+  "conventions": {
+    "distance": "d_0(x, y) = 2||x - y||; d_c(x, y) = 2 atanh(sqrt(c)||(-x) (+) y||)/sqrt(c)",
+    "curvature": "kappa = -c, c = 1; the ball is {x : c|x|^2 < 1}",
+    "readout": "phi is the 32-d tangent vector the decoder reconstructs from"
+  },
+  "switches": {
+    "GEOMETRY_ON": "the frozen allocation (E32, H32, H32)",
+    "GEOMETRY_OFF": "all levels E32, the frozen baseline's geometry; only a cheap wiring check, never trained",
+    "BEHAVIOUR_ON": "not applicable: AF3 never enters forward, loss, sampling or gradients in this issue",
+    "policy": "no arm with a switch off is trained"
+  },
+  "excluded": [
+    {"surface": "the sign counting and the largest-remainder allocation", "reason": "discrete and frozen before training"},
+    {"surface": "the assignment and the Sinkhorn balancing", "reason": "discrete; the rule is the baseline's"},
+    {"surface": "the Euclidean level cost", "reason": "the frozen baseline's own surface, verified by its tree"},
+    {"surface": "the 32-dimensional norm inside the hyperbolic cost", "reason": "the symbolic contract states the width-1 surface; the callable applies the same formula to the norm, exercised numerically"},
+    {"surface": "the sphere branch", "reason": "the frozen allocation gives every d_S = 0; no sphere code path exists in this candidate"}
+  ],
+  "continuous_surface": {
+    "callable": "model.capacity_rq:hyperbolic_cost",
+    "symbols": ["r", "q"],
+    "args": [
+      {"name": "residual_r", "width": 1, "radius": 0.9, "sampler": "box"},
+      {"name": "code_q", "width": 1, "radius": 0.9, "sampler": "box"}
+    ],
+    "statements": [
+      "ball = tanh(q)",
+      "delta = (r - ball)/(1 - r*ball)",
+      "cost = atanh(delta)**2"
+    ],
+    "output": "cost",
+    "note": "The width-1 form of d_c(r, exp_0(q))^2/4 at c = 1: Möbius subtraction in one dimension. The trained implementation applies the same expression to the norm of the 32-d residual and code; that norm form is excluded from the symbolic comparison and covered by tests/test_math.py."
+  }
+}

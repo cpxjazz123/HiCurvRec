@@ -473,5 +473,83 @@
     ],
     "stage": "stage2-only",
     "target": "r2:genrec/12/"
+  },
+  "13": {
+    "arm": "af3sign_capacity",
+    "files": {
+      "af3sign_capacity/math_spec.json": "2758ab67f94e5f3106a261dd89d8dc416c8b10f51637a69790ee03f5e8e4d225",
+      "af3sign_capacity/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "af3sign_capacity/model/capacity_rq.py": "1e286d9f6966e95c676da568048ccff281da984ae204403f2a03b31411ab685f",
+      "af3sign_capacity/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "af3sign_capacity/model/model.py": "4bb05c59792cd8966494172513dc274c53a31846251927e74e68e27a7a769a7b",
+      "af3sign_capacity/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "af3sign_capacity/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "af3sign_capacity/reference_contract.json": "513d6c00769014971a126054a5b090e00f78e0c358be0e52f5a94a3beec8ee16",
+      "af3sign_capacity/tests/test_ddp.py": "aee2edad2538d56c7684ef7dfd6515f2d6f7e99f6678bf96f1c195f15aa94ae0",
+      "af3sign_capacity/tests/test_entrypoint.py": "c53eb03029dcda7cf390ad8449d60dd1850db6685def08065e7337c3d5a7b3aa",
+      "af3sign_capacity/tests/test_gradient.py": "c7ef2c6a22754d360934d0f7f15602d181293b97b1e93bbb21c2683ccdfc9967",
+      "af3sign_capacity/tests/test_math.py": "884e868db00c6c9c404b6d34ffc63a35e586323640bc95b3564005d4fe4414f4",
+      "af3sign_capacity/train_rqvae.py": "ca77a66a9fb2847dc4f61d5fc0e803ccd6235c01e7505c565e4d0f8d80ef7838",
+      "item_sids.json": "b9083f4dd9cb32f7c51ad586da15af2574b4b0e3d677cc89524c8a9af6ad7855",
+      "rqvae_best.pth": "a9227b73b179b444bcaf1f75974f5f631aa45d71784ad62b8bb79745c1c74797",
+      "stage2_record.json": "fcf095f101d4dcba5a7f64aceeb1af6f3c3cced1ea45668145e50c91b01bf58e"
+    },
+    "key": "stage2:af3sign_capacity",
+    "missing": [],
+    "record_keys": [
+      "admission_policy",
+      "baseline_metrics",
+      "diagnostics",
+      "diagnostics_only",
+      "methodology",
+      "metrics",
+      "provenance",
+      "quality_source",
+      "report_path",
+      "schema",
+      "status",
+      "technically_valid_sid"
+    ],
+    "stage": "stage2-only",
+    "target": "r2:genrec/13/"
+  },
+  "14": {
+    "arm": "factorized_joint_codebook",
+    "files": {
+      "factorized_joint_codebook/math_spec.json": "76260d60fc8a432bc9dd83006092dc95b5ce9f3509ce0272e30423bc04166620",
+      "factorized_joint_codebook/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "factorized_joint_codebook/model/factorized_rq.py": "4dcb9ae0fb2e99e90ffb98821c7baa72fdd09ac3fd15c24450d5b9753af20e8d",
+      "factorized_joint_codebook/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "factorized_joint_codebook/model/model.py": "fcd5ff7ee29d3e0eb5f6c8e79c91161d4071d64217a3ccb85d648f8ae00d5da2",
+      "factorized_joint_codebook/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "factorized_joint_codebook/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "factorized_joint_codebook/reference_contract.json": "18b892f2c4a55c7bdc22fffc17f626e8d4c1709f12ac941c5dcf025244868620",
+      "factorized_joint_codebook/tests/test_ddp.py": "4177de21b16b5e97fe8d9dcc5a3eaad6fbd815ad40bac751101c6296a5e89343",
+      "factorized_joint_codebook/tests/test_entrypoint.py": "d6a098ff1a0b9c6f95604c210f5eac4fb6f548df9e187e235c900021589bd7b5",
+      "factorized_joint_codebook/tests/test_gradient.py": "1b959702b77a7c61f93233ee93fc5053ada596c16c5280f973ba00d205b37ac9",
+      "factorized_joint_codebook/tests/test_math.py": "c6b5056bd97af8ed36cfc81663e1eee954c4af5b60e717c28e0f540086c9a2f0",
+      "factorized_joint_codebook/train_rqvae.py": "674c73451a495ed74a250e8aa5cd4ab80f6521f69cf899474ad8e94c599ea2d5",
+      "item_sids.json": "994d87ca7b8d39f0a0fcaf734180297534a5aeb44bd486a2d7050983d61305ba",
+      "rqvae_best.pth": "250055cb55aef56a7f81372d5ae45da48025444547061d63c7b83eb9538fab59",
+      "stage2_record.json": "31534a9128e9a68742cb1b7c8c360fcc6a0790b9b825003907077881005a10c7"
+    },
+    "key": "stage2:factorized_joint_codebook",
+    "missing": [],
+    "record_keys": [
+      "admission_policy",
+      "baseline_metrics",
+      "diagnostics",
+      "diagnostics_only",
+      "methodology",
+      "metrics",
+      "provenance",
+      "quality_source",
+      "report_path",
+      "schema",
+      "status",
+      "technically_valid_sid"
+    ],
+    "stage": "stage2-only",
+    "target": "r2:genrec/14/"
   }
 }

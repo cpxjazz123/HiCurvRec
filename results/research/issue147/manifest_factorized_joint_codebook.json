@@ -1,0 +1,100 @@
+{
+  "arm": "factorized_joint_codebook",
+  "artifacts": {
+    "checkpoint": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_factorized_joint_codebook/rqvae_best.pth",
+      "sha256": "250055cb55aef56a7f81372d5ae45da48025444547061d63c7b83eb9538fab59"
+    },
+    "item_sids": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_factorized_joint_codebook/item_sids.json",
+      "sha256": "994d87ca7b8d39f0a0fcaf734180297534a5aeb44bd486a2d7050983d61305ba"
+    },
+    "layer_record": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_factorized_joint_codebook/stage2_metrics/994d87ca7b8d39f0a0fcaf734180297534a5aeb44bd486a2d7050983d61305ba.json",
+      "sha256": "31534a9128e9a68742cb1b7c8c360fcc6a0790b9b825003907077881005a10c7"
+    },
+    "preserved_first_run_sid": {
+      "missing": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_factorized_joint_codebook/run_a_complete/item_sids.json"
+    },
+    "run_split": {
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_factorized_joint_codebook/logs/run_split.json",
+      "sha256": "c5038d8b104d8109ab6310473d37dff881f684cb9b3c7e2def0d4c7b4e8c8edc"
+    },
+    "run_stream": {
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_factorized_joint_codebook/logs/run_metrics.jsonl",
+      "sha256": "c9f25f922cd0a4844d8777a6631f7b17866125f098734f0cf6efc9455d7270cd"
+    }
+  },
+  "conformance": {
+    "cache": null,
+    "passed": null,
+    "reason": "no conformance report is cached for this tree: the launch ran the checks live, and they are re-run after training so the four-rank probe does not compete with the runs for the card"
+  },
+  "files": {
+    "math_spec.json": "76260d60fc8a432bc9dd83006092dc95b5ce9f3509ce0272e30423bc04166620",
+    "model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+    "model/factorized_rq.py": "4dcb9ae0fb2e99e90ffb98821c7baa72fdd09ac3fd15c24450d5b9753af20e8d",
+    "model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+    "model/model.py": "fcd5ff7ee29d3e0eb5f6c8e79c91161d4071d64217a3ccb85d648f8ae00d5da2",
+    "model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+    "model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+    "reference_contract.json": "18b892f2c4a55c7bdc22fffc17f626e8d4c1709f12ac941c5dcf025244868620",
+    "tests/test_ddp.py": "4177de21b16b5e97fe8d9dcc5a3eaad6fbd815ad40bac751101c6296a5e89343",
+    "tests/test_entrypoint.py": "d6a098ff1a0b9c6f95604c210f5eac4fb6f548df9e187e235c900021589bd7b5",
+    "tests/test_gradient.py": "1b959702b77a7c61f93233ee93fc5053ada596c16c5280f973ba00d205b37ac9",
+    "tests/test_math.py": "c6b5056bd97af8ed36cfc81663e1eee954c4af5b60e717c28e0f540086c9a2f0",
+    "train_rqvae.py": "674c73451a495ed74a250e8aa5cd4ab80f6521f69cf899474ad8e94c599ea2d5"
+  },
+  "issue": 147,
+  "math_spec_sha256": "76260d60fc8a432bc9dd83006092dc95b5ce9f3509ce0272e30423bc04166620",
+  "reference_contract_sha256": "18b892f2c4a55c7bdc22fffc17f626e8d4c1709f12ac941c5dcf025244868620",
+  "run": {
+    "all_items": 24587,
+    "available": true,
+    "batch_size_per_rank": 4096,
+    "beta": 0.25,
+    "codebook_dim": 32,
+    "codebook_num": 3,
+    "codebook_size": [
+      256,
+      256,
+      256
+    ],
+    "early_stop": "disabled",
+    "ema_decay": 0.99,
+    "embedding_shape": [
+      24587,
+      768
+    ],
+    "epochs": 3000,
+    "eval_interval": 50,
+    "event": "train_start",
+    "gradient_clip_norm": 1.0,
+    "hidden_sizes": [
+      512,
+      256,
+      128
+    ],
+    "lr": 0.001,
+    "metrics": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_factorized_joint_codebook/logs/run_metrics.jsonl",
+    "num_workers": 0,
+    "optimizer": "AdamW",
+    "pca_dim": 0,
+    "seed": 42,
+    "sk_epsilon": 0.003,
+    "sk_iters": 50,
+    "timestamp": 1794148036.5958488,
+    "total_batch_size": 4096,
+    "train_items": 24556,
+    "vq_type": "vq",
+    "wall_time_s": 2.161,
+    "warmup_epochs": 50,
+    "weight_decay": 0.0001,
+    "world_size": 1,
+    "xavier_init": true
+  },
+  "stage": "stage2-only",
+  "stage3": "not started and not designed (Issues #140-#143)",
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_factorized_joint_codebook"
+}

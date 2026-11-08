@@ -1,0 +1,66 @@
+{
+  "adjacency_brier": 0.2432409196773433,
+  "arm": "TIGER_factorized_joint_codebook",
+  "calibration": {
+    "intercept": 0.3042022537950704,
+    "tau": 0.5172433699705297
+  },
+  "collision_first": 0.886118680603571,
+  "collision_full": 0.35201529263431897,
+  "collision_full_items": 8655,
+  "degree_triangle": {
+    "computed": false,
+    "reason": "a full 24587x24587 SID graph would be rebuilt from hard distances; the issue's D_AF3/retention/Brier are measured on the frozen stratified support, and no unbiased degree/triangle estimator exists on that support, so none is reported as if it were the full-graph number"
+  },
+  "distortion": 0.28593212331590767,
+  "edge_half": 0.5679953865914091,
+  "level2_prefixes": 5376,
+  "level3_triples": 18939,
+  "max_level_code_usage": [
+    1263,
+    920,
+    325
+  ],
+  "max_triple_bucket": 40,
+  "neighbour_retention@16": {
+    "k": 16,
+    "mean_edges_among_k": 0.6728515625,
+    "retention": 0.04205322265625,
+    "sample": 2048
+  },
+  "reconstruction": {
+    "dim": 768,
+    "items": 24587,
+    "mse": 7.482642104150727e-05
+  },
+  "scale": 239.0,
+  "sid": {
+    "items": 24587,
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_factorized_joint_codebook/item_sids.json",
+    "sha256": "994d87ca7b8d39f0a0fcaf734180297534a5aeb44bd486a2d7050983d61305ba",
+    "tokens": 3
+  },
+  "sid_change": {
+    "available": true,
+    "baseline": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+    "baseline_sha256": "53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85",
+    "changed_items": 24587,
+    "changed_share": 1.0,
+    "levels": 3,
+    "per_level_changed": [
+      0.9992272339040956,
+      0.9959734819213405,
+      0.9968682637165982
+    ]
+  },
+  "support": {
+    "edges": 315391,
+    "pairs": 940498
+  },
+  "unobserved_half": 0.0038688600404062283,
+  "usage": [
+    220,
+    246,
+    256
+  ]
+}

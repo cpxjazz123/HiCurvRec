@@ -1,0 +1,54 @@
+{
+  "arm": "factorized_joint_codebook",
+  "diagnostics": {
+    "available": true,
+    "epoch_time_s": 0.331,
+    "epochs": 3000,
+    "finished": true,
+    "last_epoch": 3000,
+    "source": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_factorized_joint_codebook/logs/run_metrics.jsonl",
+    "wall_s": 921.936
+  },
+  "issue": 147,
+  "layer_record": {
+    "report": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_factorized_joint_codebook/stage2_metrics/994d87ca7b8d39f0a0fcaf734180297534a5aeb44bd486a2d7050983d61305ba.json",
+    "sid_sha256": "994d87ca7b8d39f0a0fcaf734180297534a5aeb44bd486a2d7050983d61305ba",
+    "tail": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_factorized_joint_codebook/stage2_metrics/994d87ca7b8d39f0a0fcaf734180297534a5aeb44bd486a2d7050983d61305ba.json",
+    "written": true
+  },
+  "preserved_run": {
+    "available": false
+  },
+  "runs": {
+    "audit": {
+      "delivered": {
+        "events": {
+          "ckpt_saved": 1,
+          "train": 3000,
+          "train_end": 1,
+          "train_start": 1
+        },
+        "output": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_factorized_joint_codebook/logs/run_metrics.jsonl",
+        "rows": 3003,
+        "run_start": 1794148034.4348488
+      },
+      "epochs": 3000,
+      "runs": {
+        "1794148034.43": {
+          "contiguous": true,
+          "events": {
+            "ckpt_saved": 1,
+            "train": 3000,
+            "train_end": 1,
+            "train_start": 1
+          },
+          "first_epoch": 1,
+          "last_epoch": 3000,
+          "rows": 3003
+        }
+      },
+      "source": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_factorized_joint_codebook/logs/training_metrics.jsonl"
+    },
+    "available": true
+  }
+}

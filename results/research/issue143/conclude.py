@@ -19,6 +19,8 @@ ARMS = {
     "M2_radial_manifold": (141, "异质径向流形", "E15 x H16 x R1，d^2 = E + H/4 + (dr)^2，R_M = R_H + R_phi(r)"),
     "M3_role_profiles": (142, "局部曲率 profile", "TRAIN-only 七维结构角色经量化读出回传到码本"),
     "M4_post_sid_af3": (143, "量化后 AF3", "独立 Bernoulli 边的 AF3 期望经软读出反传，含邻域保持与用量项"),
+    "af3sign_capacity": (145, "AF3 符号容量分配", "L1=E32、L2/L3=H32（由 TRAIN 边 AF3 符号比例的 largest remainder 冻结），训练不含行为信号"),
+    "factorized_joint_codebook": (147, "因子化 E×H 联合码本", "每层 16×16 分支码本对 → token=16*k_E+k_H，联合代价 + 基线 Sinkhorn"),
 }
 COUNTEREXAMPLES = {
     "M1_learned_kappa": [
@@ -36,6 +38,14 @@ COUNTEREXAMPLES = {
     "M4_post_sid_af3": [
         "若 soft AF3 降而 hard D_AF3 不降 ⇒ 判未证实",
         "若 D_AF3 降而邻域保持/重建/用量恶化 ⇒ 判未证实",
+    ],
+    "af3sign_capacity": [
+        "若 AF3 符号比例极端导致某分量维数为 0 ⇒ 按确定性规则保留并报告",
+        "若结构指标未改善 ⇒ 说明静态签名映射不受支持；D_AF3 改善但邻域/用量/碰撞恶化也不能称整体更好",
+    ],
+    "factorized_joint_codebook": [
+        "若联合对明显稀疏或量化后结构未改善 ⇒ 如实记录为负结果",
+        "若联合分配退化为分别 argmin 或绕过 Sinkhorn ⇒ 机制未实现",
     ],
 }
 #: The measured answer to each pre-registered counterexample, from the pinned
@@ -74,6 +84,24 @@ MEASURED = {
         "首次完成运行的产物原被放在 `_aborted_620epochs/`（名称误导：内容是 3000 epoch 的完整导出），"
         "已原样复制到 `run_a_complete/` 并保留原目录；两次运行的 SID 分别为 "
         "`c6a0bfe3…`（首次）与 `6f71e6b2…`（交付），不做择优。",
+    ],
+    "af3sign_capacity": [
+        "AF3 符号分布极极端：315391 条 TRAIN 边中 315390 负、1 零、0 正；largest remainder 给出 "
+        "L2/L3 = H32 × E0 × S0，按确定性规则保留，球面分量为 0，因此没有球面代码路径。",
+        "结构确实小幅改善：D_AF3 0.28763（基线 0.28866）、ret@16 0.05084（0.04922，首次超过基线）、"
+        "Brier 0.24467（0.24827）、L3 碰撞 0.2704（0.2745）、最大三级桶 22（42）、Hard ER 6.296（6.468）。",
+        "代价同时记录：一级码 177/256（基线 247）、L2 前缀 6701（7414）、重建 MSE 6.689e-5（6.665e-5）。"
+        "判 **小幅结构改善但粗层容量与重建有代价**；效应量小，不宣称整体更好，也不宣称 Recall。",
+        "test_math 6/6、test_gradient 3/3、test_ddp 1/1、test_entrypoint 1/1；碰撞闸门 True（0.2704 < 0.35）。",
+    ],
+    "factorized_joint_codebook": [
+        "联合分配没有退化为分别 argmin：代价是 16×16 展开后的 256 个联合候选，Sinkhorn 仍按基线在最后一层执行，"
+        "token 仍是 3 个、每层 256 个联合码（token=16*k_E+k_H）。",
+        "联合对不稀疏：usage [220, 246, 256]，三级用满 256 个联合对；Hard ER 4.096（基线 6.468）、"
+        "D_AF3 0.28593（0.28866）、Brier 0.24324（0.24827）、L2 前缀 5376（7414）改善。",
+        "但 ret@16 0.04205（基线 0.04922）明显变差、L3 碰撞 0.3520（0.2745，闸门 False）、"
+        "重建 MSE 7.48e-5（6.665e-5）变差：按预注册反证判 **未证实的整体结构改善**。",
+        "test_math 5/5、test_gradient 3/3、test_ddp 1/1、test_entrypoint 1/1。",
     ],
 }
 
@@ -192,7 +220,7 @@ def main() -> int:
     for item in COUNTEREXAMPLES[args.arm]:
         lines.append(f"- 预注册：{item}")
     lines += ["", "**实测回答（来自分层记录与结构报告的实际数值）**", ""]
-    for item in MEASURED[args.arm]:
+    for item in MEASURED.get(args.arm, ["实测回答待结构报告生成后补写"]):
         lines.append(f"- {item}")
     lines += ["", "## 诚实边界", "",
               "- 单次运行即定论，种子噪声计入不确定性，不做多种子。",
