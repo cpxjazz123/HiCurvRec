@@ -65,7 +65,15 @@ def input_identity(graph: dict, support: dict, graph_path: Path,
         code.update(path.name.encode("utf-8"))
         code.update(file_sha256(path).encode("ascii"))
     return {"graph_sha256": file_sha256(graph_path),
-            "support_sha256": array_sha256(support["pairs"], support["is_edge"]),
+            # The support enters the provenance as a CONTENT digest: the
+            # distortion is a mean over pairs and therefore order-invariant, so
+            # an order that varied between processes made the check refuse
+            # legitimate calibrations without protecting anything. Sorting here
+            # keeps the identity meaningful (same pairs, same edges) and makes it
+            # reproducible from the builder's output alone.
+            "support_sha256": array_sha256(
+                np.asarray(support["pairs"])[np.lexsort(np.asarray(support["pairs"]).T[::-1])],
+                np.asarray(support["is_edge"])[np.lexsort(np.asarray(support["pairs"]).T[::-1])]),
             "embedding_sha256": file_sha256(embedding_path),
             "train_sha256": file_sha256(train_path),
             "item_ids_sha256": array_sha256(graph["item_ids"]),
