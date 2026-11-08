@@ -79,7 +79,12 @@ class MixedRQVAE(nn.Module):
         """Do not retain a stale alias after DDP broadcasts or checkpoint load."""
         return self.rq.alpha_table
 
-    def forward(self, embeddings: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+    def forward(self, embeddings: torch.Tensor, item_ids: torch.Tensor | None = None
+                ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+        # The item ids are accepted and ignored: the framework's one-epoch smoke
+        # probes the trained weights by calling the model the way the baseline's
+        # is called, with the item ids of the batch. This mechanism reads no
+        # per-item state, so the ids carry nothing.
         encoded = self.encoder(embeddings)
         readout, quant_loss, unused_codes, tokens = self.rq(encoded)
         quantized = encoded + (readout - encoded).detach()
