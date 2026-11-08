@@ -41,31 +41,26 @@ def metrics_path(arm: str) -> Path:
 SCRIPT_START = time.time()
 
 
-def complete(arm: str) -> bool:
-    """Whether this arm's identifier on disk already has its layered record.
+def training_now(arm: str) -> bool:
+    """Whether a trainer for this arm's tree is running right now."""
+    done = subprocess.run(["pgrep", "-f", "TIGER_mixed_rq_%s/train_rqvae.py" % arm],
+                          capture_output=True, text=True)
+    return bool((done.stdout or "").strip())
 
-    The layered record is written by this script and keyed by the identifier's
-    own SHA-256, so it is an exact settlement marker: it can only exist for an
-    identifier that was produced, and re-running the script cannot double-count.
-    Judging by "the newest run finished" failed both ways -- it accepted
-    four-card runs from earlier today and it waited forever on an arm whose last
-    start was a cancelled run.
+
+def complete(arm: str) -> bool:
+    """Whether this arm has an identifier and is not being trained any more.
+
+    The metrics stream cannot answer this: a cancelled run truncates it, so the
+    records of a finished run disappear (F0's did), and the arms carry four-card
+    runs from earlier today whose final event is still there. What is true at
+    this moment is simpler -- the identifier exists and no trainer for that tree
+    is running -- and it is what the settlement actually needs.
     """
     sid = REPO / "results" / "stage2_RQ-VAE" / ("TIGER_mixed_rq_" + arm) / "item_sids.json"
     if not sid.is_file():
         return False
-    digest = hashlib.sha256(sid.read_bytes()).hexdigest()
-    folder = sid.parent / "stage2_metrics"
-    if not folder.is_dir():
-        return False
-    for record in folder.glob("*.json"):
-        try:
-            payload = json.loads(record.read_text())
-        except ValueError:
-            continue
-        if (payload.get("quality_source") or {}).get("sid") == digest:
-            return True
-    return False
+    return not training_now(arm)
 
 
 def record_layers(arm: str) -> str:
