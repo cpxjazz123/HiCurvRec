@@ -80,3 +80,15 @@ No arm is tuned, no seed is repeated, no ablation is added, and no arm is
 dropped because its diagnostics look poor. The five comparisons the issue names
 (F0 vs G, G vs L, L vs E, L vs A) are read from the numbers these five runs
 produce, not chosen afterwards.
+
+## 7. 单卡阶段的执行计划与预算（2026-11-08 晚）
+
+主机只剩一张 A100，四个 Stage2 臂（G/E/A/L）按新规则**并发**运行（各 1 process、全局 batch 4096、约 3.5 GB 显存），F0 已单独完成（collision 0.2572）。
+
+**共享校准**（τ = 0.374305，b = −0.044043，来源 F0@1500）已固定，五臂共用；溯源摘要改为**记录、不拦截**（owner 2026-11-08 指令），因此不再有"改代码即重训 F0"的循环。
+
+**自动结算**：`run_after_stage2.py` 等五臂各自的新一轮结束后，自动 ① 记录分层 SID 指标 → ② 五臂同口径测结构失真（同图、同 940k 支撑、同校准、同 Huber 尺度）→ ③ 重生成 `FINAL_REPORT.md`。数字全部由代码产生，不手填。
+
+**Stage3 预算（单卡，硬上限）**：冻结协议是 150 epoch、`EVAL_START_EPOCH=75`、`EARLY_EVAL_EPOCHS=(25,50,75,100,125)`、beam 20。四卡时每臂约 2.5 h，单卡约 8–10 h ⇒ **五臂 ≈ 40–55 h**，且每臂必须独占整卡（Stage3 仍保留框架的全局单例守卫）。`run_stage3.py` 会在五臂 Stage2 齐备后依次启动并记录 `test_recall@10`。
+
+**因此在当前硬件上，"五个 Stage3" 是两天量级的工作**；在此之前不应声称任何召回结论。
