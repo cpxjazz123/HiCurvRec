@@ -68,14 +68,21 @@ def diagnostics(arm: str, event: str) -> dict:
     if mechanism:
         first, last = mechanism[0], mechanism[-1]
         out["mechanism_events"] = len(mechanism)
-        out["first"] = {key: first[key] for key in first
-                        if key in ("epoch", "scale", "kappa", "kappa_gradient", "structural",
-                                   "radius_mean", "curvature_mean", "profile", "geometry",
-                                   "keep_geometry", "af3", "neighbour", "usage")}
-        out["last"] = {key: last[key] for key in last
-                       if key in ("epoch", "scale", "kappa", "kappa_gradient", "structural",
-                                  "radius_mean", "curvature_mean", "profile", "geometry",
-                                  "keep_geometry", "af3", "neighbour", "usage")}
+        wanted = ("epoch", "scale", "kappa", "kappa_gradient", "structural", "radius_mean",
+                  "curvature_mean", "profile", "geometry", "keep_geometry", "af3",
+                  "neighbour", "usage", "mean_scale")
+        def pick(row):
+            out = {key: row[key] for key in row if key in wanted}
+            # The post-SID event nests the per-step numbers one level down.
+            step = row.get("last_step")
+            if isinstance(step, dict):
+                for key in ("af3", "neighbour", "usage", "scale", "kappa_gradient",
+                            "mean_probability", "realised_gradient_ratio"):
+                    if key in step:
+                        out["step_" + key] = step[key]
+            return out
+        out["first"] = pick(first)
+        out["last"] = pick(last)
     return out
 
 
