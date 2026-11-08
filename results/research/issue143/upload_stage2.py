@@ -35,9 +35,14 @@ def digest(path: Path) -> str:
     return value.hexdigest()
 
 
+def arm_directory(arm: str) -> str:
+    """The arm's directory name, accepting either 'X' or the full 'TIGER_X'."""
+    return arm if arm.startswith("TIGER_") else "TIGER_" + arm
+
+
 def stage(arm: str, staging: Path) -> dict:
-    result = RESULT / ("TIGER_" + arm)
-    tree = TREE / ("TIGER_" + arm)
+    result = RESULT / arm_directory(arm)
+    tree = TREE / arm_directory(arm)
     sid = result / "item_sids.json"
     checkpoint = result / "rqvae_best.pth"
     missing = [name for name, path in (("item_sids.json", sid), ("rqvae_best.pth", checkpoint),
