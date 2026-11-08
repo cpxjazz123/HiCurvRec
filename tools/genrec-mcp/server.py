@@ -1591,7 +1591,12 @@ def tool_stage2_start(source_dir: str, verification_id: str) -> dict:
     existing_artifacts = [name for name in STAGE2_ARTIFACTS if (result_dir / name).is_file()]
     archived: list[str] = []
     if existing_artifacts:
-        archive = STAGE2_ARCHIVE_ROOT / f"{tree.name}_{int(time.time())}"
+        # The archive directory must be unique per dispatch: two dispatches in the
+        # same second collided on the timestamp alone and the second one refused
+        # with 'File exists' before it ever looked at the tree.
+        import uuid as _uuid
+        archive = STAGE2_ARCHIVE_ROOT / (
+            f"{tree.name}_{int(time.time())}_{_uuid.uuid4().hex[:6]}")
         try:
             archive.mkdir(parents=True, exist_ok=False)
             for name in existing_artifacts:
