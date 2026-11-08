@@ -47,10 +47,13 @@ def recall_block(path: Path) -> dict:
 
 def build(row: dict, staging: Path) -> dict:
     sid_path = REPO / row["sid_path"]
-    tree = sid_path.parent.parent           # results/stage2_RQ-VAE/<parent>
-    source = REPO / "stage2_RQ-VAE" / tree.name
-    if not source.is_dir():
-        source = REPO / "stage2_RQ-VAE" / tree.parent.name / tree.name
+    # The candidate tree lives beside the result directory, named by the arm, not
+    # by the results root: results/stage2_RQ-VAE/<arm>/item_sids.json pairs with
+    # stage2_RQ-VAE/<arm>/ (and for nested arms, the parent directory as well).
+    arm = sid_path.parent.name
+    candidates = [REPO / "stage2_RQ-VAE" / arm,
+                  REPO / "stage2_RQ-VAE" / sid_path.parent.parent.name / arm]
+    source = next((path for path in candidates if path.is_dir()), candidates[0])
     checkpoint = sid_path.parent / "rqvae_best.pth"
     recall_path = Path(row["recall_path"]) if row.get("recall_path") else None
     block = recall_block(recall_path) if recall_path else {}
@@ -106,17 +109,45 @@ def upload(staging: Path, target: str, *, dry_run: bool) -> None:
         raise RuntimeError((done.stderr or done.stdout)[-400:])
 
 
+def pieces(row: dict) -> dict:
+    """Which of the four required pieces exist for this pair."""
+    sid = REPO / row["sid_path"]
+    checkpoint = sid.parent / "rqvae_best.pth"
+    source = REPO / "stage2_RQ-VAE" / sid.parent.name
+    if not source.is_dir():
+        source = REPO / "stage2_RQ-VAE" / sid.parent.parent.name / sid.parent.name
+    block = recall_block(Path(row["recall_path"])) if row.get("recall_path") else {}
+    return {"sid": sid.is_file(), "checkpoint": checkpoint.is_file(),
+            "stage3": bool(block), "source": source.is_dir()}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--include-incomplete", action="store_true",
+                        help="also archive pairs that are missing a piece (default: no)")
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--keep", action="store_true")
     args = parser.parse_args()
 
-    rows = [row for row in csv.DictReader(open(AUDIT)) if row["verdict"] == "VERIFIED"]
+    verified = [row for row in csv.DictReader(open(AUDIT)) if row["verdict"] == "VERIFIED"]
+    tiers = {}
+    for row in verified:
+        have = pieces(row)
+        key = " ".join("%s%s" % (name, "+" if have[name] else "-") for name in have)
+        tiers.setdefault(key, []).append(row)
+    print("VERIFIED pairs: %d" % len(verified))
+    for key, members in sorted(tiers.items(), key=lambda item: -len(item[1])):
+        print("  %4d  %s" % (len(members), key))
+    complete = [row for key, members in tiers.items() if all(p == "+" for p in
+                [v for k, v in zip(key.split(), [True]*4)]) for row in members]
+    # A pair is archivable only when all four pieces exist; that is the rule.
+    complete = [row for row in verified if all(pieces(row).values())]
+    rows = verified if args.include_incomplete else complete
+    print("archivable (all four pieces): %d%s" % (len(complete),
+          "" if args.include_incomplete else " -- the only ones archived"))
     if args.limit:
         rows = rows[:args.limit]
-    print("VERIFIED pairs to archive:", len(rows), flush=True)
     uploaded, counts = 0, {}
     for row in rows:
         slug = re.sub(r"[^A-Za-z0-9._-]+", "__", row["stage2_rel"])
