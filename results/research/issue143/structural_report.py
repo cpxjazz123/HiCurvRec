@@ -175,8 +175,11 @@ def main() -> int:
     graph, kappa, support, embeddings = frozen_graph()
 
     # The readout the metric is defined on, composed from the EXPORTED tokens and
-    # the checkpoint's codebooks. The encoder is not needed and is not rebuilt: its
-    # width belongs to the arm, while the codebooks are 32-wide in every arm.
+    # the checkpoint's codebooks. The frozen TIGER baseline is a plain Euclidean
+    # 32-d residual quantizer, so its readout is the sum of the full 32-d codes;
+    # the mixed-geometry arms split every code into E16 x H16 and use the frozen
+    # mixed readout. Using the mixed readout on the Euclidean baseline would put
+    # its last 16 dims through a Poincare log map and change every distance.
     from model.mixed_rq import quantized_readout
     checkpoint = RESULT / args.arm / "rqvae_best.pth"
     if not checkpoint.is_file():
@@ -187,10 +190,16 @@ def main() -> int:
     if not codebooks:
         raise SystemExit("the checkpoint carries no codebooks")
     rows = len(codebooks)
-    codes_e = [book[:, :16][torch.as_tensor(tokens[:, level])] for level, book in enumerate(codebooks)]
-    codes_h = [book[:, 16:][torch.as_tensor(tokens[:, level])] for level, book in enumerate(codebooks)]
     with torch.no_grad():
-        phi = quantized_readout(codes_e, codes_h, curvature=1.0)
+        if args.arm == "TIGER_RQ-VAE":
+            phi = sum(book[torch.as_tensor(tokens[:, level])]
+                      for level, book in enumerate(codebooks))
+        else:
+            codes_e = [book[:, :16][torch.as_tensor(tokens[:, level])]
+                       for level, book in enumerate(codebooks)]
+            codes_h = [book[:, 16:][torch.as_tensor(tokens[:, level])]
+                       for level, book in enumerate(codebooks)]
+            phi = quantized_readout(codes_e, codes_h, curvature=1.0)
     calibration = structure.calibrate(phi, support, device=phi.device)
     result = structure.structural_distortion(
         phi, support, kappa, tau=calibration["tau"], intercept=calibration["intercept"],

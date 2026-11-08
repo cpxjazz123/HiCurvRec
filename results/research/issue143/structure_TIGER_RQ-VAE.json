@@ -1,9 +1,9 @@
 {
-  "adjacency_brier": 0.24827616140270206,
+  "adjacency_brier": 0.2482683951655989,
   "arm": "TIGER_RQ-VAE",
   "calibration": {
-    "intercept": 0.8932151627425342,
-    "tau": 0.28430737924411204
+    "intercept": 0.8952038206183869,
+    "tau": 0.2845074525561714
   },
   "collision_first": 0.8430471387318501,
   "collision_full": 0.2745353235449628,
@@ -12,8 +12,8 @@
     "computed": false,
     "reason": "a full 24587x24587 SID graph would be rebuilt from hard distances; the issue's D_AF3/retention/Brier are measured on the frozen stratified support, and no unbiased degree/triangle estimator exists on that support, so none is reported as if it were the full-graph number"
   },
-  "distortion": 0.2886732654457991,
-  "edge_half": 0.5734648279840009,
+  "distortion": 0.28865508197737616,
+  "edge_half": 0.5734275573789717,
   "level2_prefixes": 7414,
   "level3_triples": 20223,
   "max_level_code_usage": [
@@ -24,14 +24,14 @@
   "max_triple_bucket": 42,
   "neighbour_retention@16": {
     "k": 16,
-    "mean_edges_among_k": 0.78955078125,
-    "retention": 0.049346923828125,
+    "mean_edges_among_k": 0.78759765625,
+    "retention": 0.049224853515625,
     "sample": 2048
   },
   "reconstruction": {
     "dim": 768,
     "items": 24587,
-    "mse": 6.712303002132103e-05
+    "mse": 6.665317778242752e-05
   },
   "scale": 239.0,
   "sid": {
@@ -57,7 +57,7 @@
     "edges": 315391,
     "pairs": 940498
   },
-  "unobserved_half": 0.0038817029075973023,
+  "unobserved_half": 0.0038826065757807037,
   "usage": [
     247,
     256,

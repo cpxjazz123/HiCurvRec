@@ -1,0 +1,326 @@
+{
+  "evaluation": {
+    "TIGER_RQ-VAE": {
+      "available": true,
+      "brier": 0.24831165074021644,
+      "checkpoint_sha256": "018ef7b19d471714da3055395cd49f1920cd12efa14c72dd9ac8f0e04f6f54fb",
+      "collision_full": 0.2745353235449628,
+      "distortion": 0.2886353333551347,
+      "max_triple_bucket": 42,
+      "reconstruction_mse": 6.665317778242752e-05,
+      "retention": 0.049530029296875,
+      "sid_sha256": "53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85",
+      "usage": [
+        247,
+        256,
+        256
+      ]
+    },
+    "TIGER_mixed_rq_A": {
+      "available": true,
+      "brier": 0.24593215753416145,
+      "checkpoint_sha256": "974538fc8c121966559f07a21595971546e181451f99101c601d52357b3eb039",
+      "collision_full": 0.4610566559563997,
+      "distortion": 0.28610966314835345,
+      "max_triple_bucket": 50,
+      "reconstruction_mse": 7.240140985231847e-05,
+      "retention": 0.0452880859375,
+      "sid_sha256": "5ba00b5647b0808c0f89dcf85360c7892465069b8604b642a7d9c072f7bcafbe",
+      "usage": [
+        50,
+        216,
+        256
+      ]
+    },
+    "TIGER_mixed_rq_E": {
+      "available": true,
+      "brier": 0.24388805015980008,
+      "checkpoint_sha256": "1fdfd667e951da0f7896a6fa0360be6febee4b570109d9fb35671a15a63a76b0",
+      "collision_full": 0.33542115752226787,
+      "distortion": 0.28821625753401503,
+      "max_triple_bucket": 34,
+      "reconstruction_mse": 7.14126872480847e-05,
+      "retention": 0.046722412109375,
+      "sid_sha256": "e6059f4ba534f87414b0d0b86e1e166edc3e3319fcc025623e514b6b48d8e576",
+      "usage": [
+        87,
+        223,
+        256
+      ]
+    },
+    "TIGER_mixed_rq_F0": {
+      "available": true,
+      "brier": 0.24426066984726957,
+      "checkpoint_sha256": "9e958a8e21e67af7f2218a2a511e550131fac9f8227f7472d12f8e108b232077",
+      "collision_full": 0.3890673933379428,
+      "distortion": 0.28734427984490274,
+      "max_triple_bucket": 46,
+      "reconstruction_mse": 7.100772199919447e-05,
+      "retention": 0.046234130859375,
+      "sid_sha256": "afa89a10b1b197a7b56da4ad322c6ddd96a3c26c04238af326d88747378bb848",
+      "usage": [
+        79,
+        227,
+        256
+      ]
+    },
+    "TIGER_mixed_rq_G": {
+      "available": true,
+      "brier": 0.24557969475723057,
+      "checkpoint_sha256": "dbd32be3be316d6da1250bfababfb640ea929bc15ea6dc9f015b8a6c46e0d42e",
+      "collision_full": 0.4218489445642006,
+      "distortion": 0.28477334196457593,
+      "max_triple_bucket": 46,
+      "reconstruction_mse": 7.140575326047838e-05,
+      "retention": 0.04693603515625,
+      "sid_sha256": "98355a218df41120e09cfbd49fbd390b3843554569cdacb1594aad91de0ca0c7",
+      "usage": [
+        64,
+        233,
+        256
+      ]
+    },
+    "TIGER_mixed_rq_L": {
+      "available": true,
+      "brier": 0.2448396486892526,
+      "checkpoint_sha256": "a85ad1115f2ac066a8186648c4ce2a12dfc1ed271c888a3ae3973748bdbc71a1",
+      "collision_full": 0.44100540936267135,
+      "distortion": 0.2881248428917223,
+      "max_triple_bucket": 46,
+      "reconstruction_mse": 7.29082603356801e-05,
+      "retention": 0.0465087890625,
+      "sid_sha256": "505761151964eb5de3aad75ed5d17caf87a8b674447c969f6cefd5a0bf699efe",
+      "usage": [
+        49,
+        220,
+        256
+      ]
+    }
+  },
+  "evaluation_pareto": [
+    "TIGER_RQ-VAE",
+    "TIGER_mixed_rq_E",
+    "TIGER_mixed_rq_F0",
+    "TIGER_mixed_rq_G",
+    "TIGER_mixed_rq_L"
+  ],
+  "inventory": {
+    "TIGER_RQ-VAE": {
+      "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth",
+      "has_checkpoint": true,
+      "has_sid": true,
+      "math_spec_sha256": null,
+      "profile": {
+        "L1": "E32",
+        "L2": "E32",
+        "L3": "E32",
+        "alpha": "none",
+        "curvature": null
+      },
+      "readout": "euclidean",
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json"
+    },
+    "TIGER_mixed_rq_A": {
+      "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_mixed_rq_A/rqvae_best.pth",
+      "has_checkpoint": true,
+      "has_sid": true,
+      "math_spec_sha256": "ebd4ddf6477d8206950c69d813a101a3bbdd251d0ff5b9cda70ab1db9cea7290",
+      "profile": {
+        "L1": "E16xH16",
+        "L2": "E16xH16",
+        "L3": "E16xH16",
+        "alpha": "fixed 1/2 + AF3 auxiliary",
+        "curvature": 1.0
+      },
+      "readout": "mixed",
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_mixed_rq_A/item_sids.json"
+    },
+    "TIGER_mixed_rq_E": {
+      "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_mixed_rq_E/rqvae_best.pth",
+      "has_checkpoint": true,
+      "has_sid": true,
+      "math_spec_sha256": "ebd4ddf6477d8206950c69d813a101a3bbdd251d0ff5b9cda70ab1db9cea7290",
+      "profile": {
+        "L1": "E16xE16",
+        "L2": "E16xE16",
+        "L3": "E16xE16",
+        "alpha": "local outer loop",
+        "curvature": 0.0
+      },
+      "readout": "euclidean",
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_mixed_rq_E/item_sids.json"
+    },
+    "TIGER_mixed_rq_F0": {
+      "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_mixed_rq_F0/rqvae_best.pth",
+      "has_checkpoint": true,
+      "has_sid": true,
+      "math_spec_sha256": "ebd4ddf6477d8206950c69d813a101a3bbdd251d0ff5b9cda70ab1db9cea7290",
+      "profile": {
+        "L1": "E16xH16",
+        "L2": "E16xH16",
+        "L3": "E16xH16",
+        "alpha": "fixed 1/2",
+        "curvature": 1.0
+      },
+      "readout": "mixed",
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_mixed_rq_F0/item_sids.json"
+    },
+    "TIGER_mixed_rq_G": {
+      "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_mixed_rq_G/rqvae_best.pth",
+      "has_checkpoint": true,
+      "has_sid": true,
+      "math_spec_sha256": "ebd4ddf6477d8206950c69d813a101a3bbdd251d0ff5b9cda70ab1db9cea7290",
+      "profile": {
+        "L1": "E16xH16",
+        "L2": "E16xH16",
+        "L3": "E16xH16",
+        "alpha": "global alpha_l",
+        "curvature": 1.0
+      },
+      "readout": "mixed",
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_mixed_rq_G/item_sids.json"
+    },
+    "TIGER_mixed_rq_L": {
+      "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_mixed_rq_L/rqvae_best.pth",
+      "has_checkpoint": true,
+      "has_sid": true,
+      "math_spec_sha256": "ebd4ddf6477d8206950c69d813a101a3bbdd251d0ff5b9cda70ab1db9cea7290",
+      "profile": {
+        "L1": "E16xH16",
+        "L2": "E16xH16",
+        "L3": "E16xH16",
+        "alpha": "prefix alpha_l(p)",
+        "curvature": 1.0
+      },
+      "readout": "mixed",
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_mixed_rq_L/item_sids.json"
+    }
+  },
+  "rank_stability": {
+    "brier": 1.0,
+    "distortion": 1.0,
+    "retention": 0.9428571428571428
+  },
+  "selection": {
+    "TIGER_RQ-VAE": {
+      "available": true,
+      "brier": 0.24826839516559895,
+      "checkpoint_sha256": "018ef7b19d471714da3055395cd49f1920cd12efa14c72dd9ac8f0e04f6f54fb",
+      "collision_full": 0.2745353235449628,
+      "distortion": 0.28865508197737616,
+      "max_triple_bucket": 42,
+      "reconstruction_mse": 6.665317778242752e-05,
+      "retention": 0.049224853515625,
+      "sid_sha256": "53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85",
+      "usage": [
+        247,
+        256,
+        256
+      ]
+    },
+    "TIGER_mixed_rq_A": {
+      "available": true,
+      "brier": 0.2459890947093426,
+      "checkpoint_sha256": "974538fc8c121966559f07a21595971546e181451f99101c601d52357b3eb039",
+      "collision_full": 0.4610566559563997,
+      "distortion": 0.28615146971367295,
+      "max_triple_bucket": 50,
+      "reconstruction_mse": 7.240140985231847e-05,
+      "retention": 0.04510498046875,
+      "sid_sha256": "5ba00b5647b0808c0f89dcf85360c7892465069b8604b642a7d9c072f7bcafbe",
+      "usage": [
+        50,
+        216,
+        256
+      ]
+    },
+    "TIGER_mixed_rq_E": {
+      "available": true,
+      "brier": 0.2439075349367994,
+      "checkpoint_sha256": "1fdfd667e951da0f7896a6fa0360be6febee4b570109d9fb35671a15a63a76b0",
+      "collision_full": 0.33542115752226787,
+      "distortion": 0.28826494065903946,
+      "max_triple_bucket": 34,
+      "reconstruction_mse": 7.14126872480847e-05,
+      "retention": 0.047119140625,
+      "sid_sha256": "e6059f4ba534f87414b0d0b86e1e166edc3e3319fcc025623e514b6b48d8e576",
+      "usage": [
+        87,
+        223,
+        256
+      ]
+    },
+    "TIGER_mixed_rq_F0": {
+      "available": true,
+      "brier": 0.24430888369455087,
+      "checkpoint_sha256": "9e958a8e21e67af7f2218a2a511e550131fac9f8227f7472d12f8e108b232077",
+      "collision_full": 0.3890673933379428,
+      "distortion": 0.28739881783172994,
+      "max_triple_bucket": 46,
+      "reconstruction_mse": 7.100772199919447e-05,
+      "retention": 0.046417236328125,
+      "sid_sha256": "afa89a10b1b197a7b56da4ad322c6ddd96a3c26c04238af326d88747378bb848",
+      "usage": [
+        79,
+        227,
+        256
+      ]
+    },
+    "TIGER_mixed_rq_G": {
+      "available": true,
+      "brier": 0.2455555430003329,
+      "checkpoint_sha256": "dbd32be3be316d6da1250bfababfb640ea929bc15ea6dc9f015b8a6c46e0d42e",
+      "collision_full": 0.4218489445642006,
+      "distortion": 0.2848055698010612,
+      "max_triple_bucket": 46,
+      "reconstruction_mse": 7.140575326047838e-05,
+      "retention": 0.046875,
+      "sid_sha256": "98355a218df41120e09cfbd49fbd390b3843554569cdacb1594aad91de0ca0c7",
+      "usage": [
+        64,
+        233,
+        256
+      ]
+    },
+    "TIGER_mixed_rq_L": {
+      "available": true,
+      "brier": 0.2448462267213666,
+      "checkpoint_sha256": "a85ad1115f2ac066a8186648c4ce2a12dfc1ed271c888a3ae3973748bdbc71a1",
+      "collision_full": 0.44100540936267135,
+      "distortion": 0.28817941595418917,
+      "max_triple_bucket": 46,
+      "reconstruction_mse": 7.29082603356801e-05,
+      "retention": 0.046661376953125,
+      "sid_sha256": "505761151964eb5de3aad75ed5d17caf87a8b674447c969f6cefd5a0bf699efe",
+      "usage": [
+        49,
+        220,
+        256
+      ]
+    }
+  },
+  "selection_pareto": [
+    "TIGER_RQ-VAE",
+    "TIGER_mixed_rq_E",
+    "TIGER_mixed_rq_F0",
+    "TIGER_mixed_rq_G",
+    "TIGER_mixed_rq_L"
+  ],
+  "supports": {
+    "evaluation": {
+      "built_after_the_selection_support_was_frozen": true,
+      "edges": 315391,
+      "pairs": 940498,
+      "seed": 7
+    },
+    "selection": {
+      "edges": 315391,
+      "pairs": 940498,
+      "seed": 42
+    }
+  },
+  "verdict": {
+    "note": "stability needs the same ordering and the same Pareto set on the untouched support; a single support cannot prove it",
+    "selector_stable": true
+  }
+}
