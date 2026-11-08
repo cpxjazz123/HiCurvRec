@@ -22,7 +22,11 @@ from pathlib import Path
 from . import contract
 
 #: The suffix ``_admission_tree`` appends to a promoted copy's name.
-_DIGEST_SUFFIX = re.compile(r"_[0-9a-f]{10}$")
+# The admission copy appends ``_<digest10>_<pid>_<uuid8>`` since the copy became
+# per-run, so stripping only the digest left the pid and the uuid on the name and
+# the entry check wrote into a scratch directory the identifier check never read.
+# Both halves are optional so an older copy name still resolves.
+_DIGEST_SUFFIX = re.compile(r"_[0-9a-f]{10}(?:_\d+_[0-9a-f]{8})?$")
 
 
 def _scratch_dir(tree: Path) -> Path:

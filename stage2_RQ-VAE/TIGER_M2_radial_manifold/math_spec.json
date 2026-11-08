@@ -1,0 +1,125 @@
+{
+  "issue": 141,
+  "arm": "TIGER_M2_radial_manifold",
+  "mechanism": {
+    "name": "a heterogeneous radial manifold inside the joint codeword",
+    "question": "Can one radius, carried by the three joint codes on a rotationally symmetric surface whose curvature varies with the radius, match a measured structural target without adding a token?",
+    "one_sentence": "E15 x H16 x R1 with d^2 = E + H/4 + (dr)^2 and R_M = R_H + R_phi(r), where the radius the loss sees is the radius the identifier carries.",
+    "distinct_from": "M1 learns one curvature per level; here the curvature varies with the radius of each node, and the radial coordinate is part of the 32-wide code."
+  },
+  "computations": [
+    {
+      "id": "surface",
+      "statement": "phi_alpha(r) = alpha arctan(r/alpha), ds^2 = dr^2 + phi_alpha(r)^2 dtheta^2, K(r) = (2r/alpha^2)/((1+(r/alpha)^2)^2 alpha arctan(r/alpha)), R_phi = 2K, R_M = R_H + R_phi with R_H = -2.",
+      "discrete": false
+    },
+    {
+      "id": "alpha",
+      "statement": "alpha is the median of the TRAIN node curvatures F_i = d_i^-1 sum_j F_ij over the valid nodes; it is measured, not chosen.",
+      "discrete": false
+    },
+    {
+      "id": "cost",
+      "statement": "d_M^2 = ||rE - eE||^2 + d_H^2(rH, eH)/4 + (r_i - r_k)^2, with the 15 + 16 + 1 split of the 32-wide code.",
+      "discrete": false
+    },
+    {
+      "id": "radius",
+      "statement": "r_q = clamp(sum_l r_{l,k}, min=0): the radius the identifier carries, reconstructed from the three chosen codes.",
+      "discrete": false
+    },
+    {
+      "id": "objective",
+      "statement": "L = L_RQ + lambda * Huber((a F_i + b - R_M(q_i))/alpha), lambda = 0.10 |L_RQ|/|aux| measured on the first step of each epoch.",
+      "discrete": false
+    }
+  ],
+  "inputs": {
+    "embeddings": "stage1_GeneEmbedding/output/sentence_t5.npy",
+    "graph": "the canonical TRAIN behaviour graph with F_ij = 4 - d_i - d_j + 3 T_ij"
+  },
+  "outputs": {
+    "sid": "three tokens per item plus the disambiguation token",
+    "radius": "the reconstructed radius per item, recorded"
+  },
+  "parameters": {
+    "learned": [
+      "encoder",
+      "decoder",
+      "three joint codebooks of 256 x 32 (the last column is the radius)"
+    ],
+    "frozen": {
+      "alpha": "median TRAIN node curvature",
+      "R_H": -2.0,
+      "HUBER_DELTA": 1.0,
+      "STRUCTURAL_SHARE": 0.1
+    }
+  },
+  "dimensions": {
+    "codeword": 32,
+    "split": {
+      "euclidean": 15,
+      "hyperbolic": 16,
+      "radial": 1
+    },
+    "levels": 3,
+    "codes_per_level": 256
+  },
+  "gradient_rules": {
+    "encoder": "through the mixed-plus-radial cost",
+    "codebooks": "both halves and the radial column",
+    "radius": "selected by the same rule as the rest of the code"
+  },
+  "training_integration": {
+    "entry": "stage2_RQ-VAE/TIGER_M2_radial_manifold/train_rqvae.py",
+    "epochs": 3000,
+    "seed": 42,
+    "records": "logs/training_metrics.jsonl carries a radial event with the radius and curvature means"
+  },
+  "conventions": {
+    "distance": "d_0(x,y) = 2||x - y||",
+    "radius": "non-negative, reconstructed from the codes, never a private continuous value"
+  },
+  "switches": {
+    "BEHAVIOUR_ON": "the node-curvature matching term",
+    "GEOMETRY_ON": "the non-constant radial factor (off => the flat control)",
+    "both_on": "the complete signal",
+    "policy": "no arm with a switch off is trained"
+  },
+  "excluded": [
+    {
+      "surface": "the assignment and the Sinkhorn balancing",
+      "reason": "discrete"
+    },
+    {
+      "surface": "alpha and the affine calibration",
+      "reason": "measured once on TRAIN and frozen"
+    }
+  ],
+  "continuous_surface": {
+    "callable": "model.radial_manifold:radial_cost",
+    "symbols": [
+      "r",
+      "kr"
+    ],
+    "args": [
+      {
+        "name": "residual_r",
+        "width": 1,
+        "radius": 0.5,
+        "sampler": "box"
+      },
+      {
+        "name": "code_r",
+        "width": 1,
+        "radius": 0.5,
+        "sampler": "box"
+      }
+    ],
+    "statements": [
+      "cost = (r - kr)**2"
+    ],
+    "output": "cost",
+    "note": "The term the mechanism adds to the frozen mixed cost: the squared radial difference. The mixed part is the frozen tree's surface, verified by its own contract; the surface curvature R_phi is exercised numerically in tests/test_math.py."
+  }
+}

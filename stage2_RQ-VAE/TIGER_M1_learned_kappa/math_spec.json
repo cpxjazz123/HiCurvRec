@@ -1,0 +1,185 @@
+{
+  "issue": 140,
+  "arm": "TIGER_M1_learned_kappa",
+  "mechanism": {
+    "name": "one learned curvature per level, inside the joint quantization",
+    "question": "Does making each level's curvature a learned quantity -- rather than the fixed c = 1 -- change which joint codes are selected and what the three tokens carry?",
+    "one_sentence": "kappa_l = KAPPA_MAX tanh(theta_l) enters the level's cost, its native residual and its readout, and the AF3 structural objective is the training signal that moves it.",
+    "distinct_from": "G/L reweight the two halves at a fixed curvature; M2 adds a radial coordinate; M4 keeps the geometry and changes the objective. Here the curvature itself is learned."
+  },
+  "computations": [
+    {
+      "id": "curvature",
+      "statement": "kappa_l = KAPPA_MAX * tanh(theta_l), KAPPA_MAX = 1 / PROJECTION_RADIUS**2 with PROJECTION_RADIUS = 0.95, and theta initialised so kappa_l = -1 (the frozen c = 1).",
+      "discrete": false
+    },
+    {
+      "id": "cost",
+      "statement": "C = 2[alpha ||rE - eE||^2 + (1 - alpha) d_{kappa_l}^2(rH, eH)/4], alpha = 1/2, with rH the level's tangent residual mapped into its own space.",
+      "discrete": false
+    },
+    {
+      "id": "residual",
+      "statement": "rH_l = log_0^{kappa_l}( (-eH) (+)_{kappa_l} rH_{l-1} ): the native left cancellation in the level's space, returned to the common tangent space.",
+      "discrete": false
+    },
+    {
+      "id": "readout",
+      "statement": "phi(q) = [sum_l eE_l, u_1] with u_l = log_0^{kappa_l}( eH_l (+)_{kappa_l} exp_0^{kappa_l}(u_{l+1}) ), right-nested from level 3 down.",
+      "discrete": false
+    },
+    {
+      "id": "objective",
+      "statement": "L = L_RQ + lambda * [w_af3 Huber(F_hat - F)/scale + w_n L_N + w_use L_use], the same structural surrogate as the post-SID arm, with lambda = 0.10 * |L_RQ| / |aux| measured on the first step of each epoch.",
+      "discrete": false
+    }
+  ],
+  "inputs": {
+    "embeddings": "stage1_GeneEmbedding/output/sentence_t5.npy rows of the TRAIN items",
+    "graph": "the canonical TRAIN behaviour graph with F_ij = 4 - d_i - d_j + 3 T_ij",
+    "support": "af3_structure.build_support(graph, kappa, embeddings, k=16, seed=42)"
+  },
+  "outputs": {
+    "sid": "three tokens per item plus the deterministic disambiguation token",
+    "curvature": "the three learned curvatures, recorded every evaluation epoch"
+  },
+  "parameters": {
+    "learned": [
+      "encoder weights",
+      "decoder weights",
+      "three joint codebooks",
+      "theta (three scalars)"
+    ],
+    "frozen": {
+      "PROJECTION_RADIUS": 0.95,
+      "KAPPA_MAX": 1.108033,
+      "KAPPA_INITIAL": -1.0,
+      "alpha": 0.5,
+      "ANCHORS_PER_STEP": 96,
+      "CANDIDATES": 32,
+      "HUBER_DELTA": 1.0,
+      "GRADIENT_SHARE": 0.1
+    }
+  },
+  "dimensions": {
+    "codeword": 32,
+    "codeword_halves": {
+      "euclidean": 16,
+      "hyperbolic_tangent": 16
+    },
+    "levels": 3,
+    "codes_per_level": 256,
+    "learned_scalars": 3
+  },
+  "gradient_rules": {
+    "encoder": "through the curved cost and the soft readout",
+    "codebooks": "through the curved cost, both halves",
+    "theta": "through the curved cost and the readout; the run records |d aux / d theta| every epoch and it must be non-zero",
+    "scale": "lambda is a share of the base objective's magnitude, measured once per epoch"
+  },
+  "training_integration": {
+    "entry": "stage2_RQ-VAE/TIGER_M1_learned_kappa/train_rqvae.py",
+    "epochs": 3000,
+    "seed": 42,
+    "records": "logs/training_metrics.jsonl carries kappa and kappa_gradient in every post_sid event"
+  },
+  "conventions": {
+    "distance": "d_0(x,y) = 2||x - y||; at kappa = -1 the metric is the frozen ball's",
+    "projection": "every mapped point is rescaled to stay inside PROJECTION_RADIUS of its ball",
+    "sign": "kappa < 0 hyperbolic, kappa = 0 Euclidean, kappa > 0 spherical"
+  },
+  "switches": {
+    "BEHAVIOUR_ON": "the AF3 structural terms; off => L = L_RQ with the same learned geometry",
+    "GEOMETRY_ON": "off => kappa pinned to the Euclidean limit (theta = 0)",
+    "both_on": "the complete training signal",
+    "policy": "the switches exist and are wired; no arm with a switch off is trained"
+  },
+  "excluded": [
+    {
+      "surface": "the assignment k_l and the Sinkhorn balancing",
+      "reason": "discrete; the rule is the baseline's"
+    },
+    {
+      "surface": "the spherical branch (kappa > 0)",
+      "reason": "a separate closed form with its own radius domain; exercised numerically in tests/test_math.py, not symbolically"
+    },
+    {
+      "surface": "the calibration (tau, b) of the structural objective",
+      "reason": "computed once on a frozen snapshot"
+    }
+  ],
+  "continuous_surface": {
+    "callable": "model.learned_curvature:point_cost",
+    "symbols": [
+      "x0",
+      "x1",
+      "h0",
+      "h1",
+      "k0",
+      "k1",
+      "y0",
+      "y1",
+      "a",
+      "c"
+    ],
+    "args": [
+      {
+        "name": "residual_e",
+        "width": 2,
+        "radius": 0.2,
+        "sampler": "box"
+      },
+      {
+        "name": "tangent_residual",
+        "width": 2,
+        "radius": 0.2,
+        "sampler": "box"
+      },
+      {
+        "name": "code_e",
+        "width": 2,
+        "radius": 0.2,
+        "sampler": "box"
+      },
+      {
+        "name": "code_t",
+        "width": 2,
+        "radius": 0.2,
+        "sampler": "box"
+      },
+      {
+        "name": "alpha",
+        "scalar": 0.5
+      },
+      {
+        "name": "kappa",
+        "scalar": -1.0
+      }
+    ],
+    "statements": [
+      "bc = 1/sqrt(-c)",
+      "ah = tanh(sqrt(-c)*sqrt(h0**2 + h1**2))/(sqrt(-c)*sqrt(h0**2 + h1**2) + 1e-12)",
+      "b0 = ah*h0",
+      "b1 = ah*h1",
+      "ak = tanh(sqrt(-c)*sqrt(y0**2 + y1**2))/(sqrt(-c)*sqrt(y0**2 + y1**2) + 1e-12)",
+      "d0 = ak*y0",
+      "d1 = ak*y1",
+      "xy = -(b0*d0 + b1*d1)",
+      "hn = b0**2 + b1**2",
+      "yn = d0**2 + d1**2",
+      "negc = -c",
+      "num0 = (1 + 2*negc*xy + negc*yn)*(-b0) + (1 - negc*hn)*d0",
+      "num1 = (1 + 2*negc*xy + negc*yn)*(-b1) + (1 - negc*hn)*d1",
+      "den = 1 + 2*negc*xy + negc**2*hn*yn + 1e-12",
+      "mx0 = num0/den",
+      "mx1 = num1/den",
+      "mn = mx0**2 + mx1**2",
+      "dist = 2/sqrt(negc)*atanh(Min(sqrt(negc)*sqrt(mn), 1 - 1e-6))",
+      "euclidean = (x0 - k0)**2 + (x1 - k1)**2",
+      "curved = dist**2",
+      "cost = 2*(a*euclidean + (1 - a)*curved/4)"
+    ],
+    "output": "cost",
+    "note": "The hyperbolic branch, which is the regime the run starts in. The maps are the frozen ball's; the only new argument is the curvature."
+  }
+}

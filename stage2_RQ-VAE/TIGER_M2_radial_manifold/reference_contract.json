@@ -1,0 +1,64 @@
+{
+  "mechanism": "Issue #141 (M2): E15 x H16 x R1 with the radial coordinate in the cost on a heterogeneous surface",
+  "calls": [
+    {
+      "name": "radial term of the joint cost",
+      "callable": "model.radial_manifold:radial_cost",
+      "note": "The surface the mechanism adds: a code carries a radius and is compared by it.",
+      "symbols": [
+        "r",
+        "kr"
+      ],
+      "args": [
+        {
+          "name": "residual_r",
+          "width": 1,
+          "radius": 0.5,
+          "sampler": "box"
+        },
+        {
+          "name": "code_r",
+          "width": 1,
+          "radius": 0.5,
+          "sampler": "box"
+        }
+      ],
+      "statements": [
+        "cost = (r - kr)**2"
+      ],
+      "output": "cost"
+    }
+  ],
+  "coupling": {
+    "callable": "model.radial_manifold:radial_cost",
+    "behaviour_arguments": [
+      "residual_r"
+    ],
+    "control_argument": "code_r",
+    "note": "The item's radius moves the radial cost, which is what makes the radius a quantized quantity rather than a private scalar.",
+    "args": [
+      {
+        "name": "residual_r",
+        "width": 1,
+        "radius": 0.5,
+        "sampler": "box"
+      },
+      {
+        "name": "code_r",
+        "width": 1,
+        "radius": 0.5,
+        "sampler": "box"
+      }
+    ]
+  },
+  "excluded": [
+    {
+      "surface": "the assignment and the Sinkhorn balancing",
+      "reason": "discrete"
+    },
+    {
+      "surface": "alpha and the affine calibration",
+      "reason": "measured once on TRAIN and frozen"
+    }
+  ]
+}
