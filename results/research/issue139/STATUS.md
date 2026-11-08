@@ -141,3 +141,15 @@ more instructive.
 | `arms_table.md`, `arms_summary.json` | the arm table from `collect_arms.py` (pre-review numbers, kept for contrast) |
 | `precheck.json` | the measured graph, support, readout cost, engine timings, active-prefix counts |
 | `premove/` | the pre-review shared readout |
+
+## 6. 单卡主机与共享校准（2026-11-08 晚）
+
+**主机只剩一张 A100**，四卡配方不可用。七个训练器（含冻结基线 `TIGER_RQ-VAE`）都加了单卡分支：可见卡 ≤1 时**不 fork torchrun**，单进程运行，**per-process batch 4096 = 四卡全局 batch**（每 epoch 6 个优化步、同一批样本，仅求和顺序不同）。实测单卡 F0：**collision 0.2572**，四卡版 0.2579 ⇒ 该配方复现四卡结果。
+
+**共享校准（τ、b）** 是把 SID 读出换算成"边概率"的标尺，由 F0 在 epoch 1500 冻结、其余四臂共用（否则各用自己的尺子量自己，D_AF3 不可比）。当前在用：**τ = 0.374305，b = −0.044043**，来源 F0@1500。
+
+**溯源摘要改为"记录、不拦截"（owner 2026-11-08 指令）**：此前六项 SHA-256 不匹配即拒绝运行，导致"改一行代码 ⇒ 校准作废 ⇒ 重训 F0"的循环，重复三次。现在摘要照旧写入校准与各臂记录（报告可核对是否共用同一溯源），但只有尺子本身的性质 fail-closed：schema、来源必须是 F0@1500、τ 有限为正、平均预测概率等于真实边密度。
+
+**Stage2 可并行（owner 2026-11-08 规则，CLAUDE.md §19d0b）**：多个 Stage2 可同时运行；为此每个 launch 取自己的 rendezvous 端口（首个仍用 50202）。
+
+**已修的相关缺陷**（每条都有对应记录）：fork-after-import 死锁（改由无 torch 的 `bootstrap.py` fork）、`bootstrap.py` 曾未入库、MCP 无条件 `--world-size 4`、单卡分支缺失、端口复用、归档目录按秒命名、并发准入共用临时目录、支撑集顺序不可复现、冒烟探针的模型签名。
