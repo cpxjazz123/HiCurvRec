@@ -5,10 +5,10 @@ This runner keeps every framework call in a separate, time-limited subprocess, s
 a stuck call is a recorded failure rather than a dead pipeline, and it waits for
 the last Stage 2 arm before it touches the GPUs.
 
-It starts nothing that is not already admissible: the framework's own
-`tool_stage3_start` performs the checks (SID validity, the frozen protocol, the
-collision gate with the issue #139 exception) and the runner records whatever it
-answers.
+Since 2026-11-09 the framework's `tool_stage3_start` performs no admission
+checks (owner policy): it starts any SID under the Stage 2 result root, records
+the layer-record outcome as a diagnostic, and the runner records whatever it
+answers. The frozen Stage 3 protocol itself is still checked.
 
 Usage:
     nohup python3 results/research/issue139/run_stage3.py > stage3.log 2>&1 &

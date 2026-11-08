@@ -2247,32 +2247,6 @@ def record_sid_layers(sid: Path) -> dict:
     return {"passed": True, "report": str(target), "reused": False}
 
 
-def stage2_validity_admission(sid: Path) -> dict:
-    """Check that the exported Stage2 SID is technically usable.
-
-    Issue #120 removed every quality floor from admission: ER, level-two prefix
-    counts, collisions and usage are measured as diagnostics and never refuse a
-    Stage 3 launch. Only an unreadable, malformed or ambiguous SID does. The
-    check is read-only and runs before GPU probing; a user-authored PASS record
-    is never trusted.
-    """
-    import importlib.util
-    src = REPO / "tools" / "genrec-mcp" / "stage2_quality_gate.py"
-    try:
-        spec = importlib.util.spec_from_file_location("stage2_quality_gate", src)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module.evaluate(
-            sid,
-            RESULT2_ROOT / "TIGER_BEHAVIOR_SAMPLE_RQ-VAE" / "resample" / "item_sids.json",
-            RESULT3_ROOT / "monotonicity" / "behavior_pairs_valid_s42.npz",
-            RESULT3_ROOT / "monotonicity" / "behavior_pairs_valid_s42.meta.json",
-        )
-    except Exception as exc:
-        return {"passed": False, "refused": "quality verifier unavailable: " +
-                type(exc).__name__ + ": " + str(exc)}
-
-
 def tool_stage3_start(item_sids: str | None = None) -> dict:
     """Start Stage3 for the SID path given by the caller -- the only argument.
 
@@ -2302,26 +2276,13 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         }
     if not sid.is_file():
         return {"started": False, "refused": f"no item_sids file at {given}"}
-    validity = stage2_validity_admission(sid)
-    if not validity["passed"]:
-        return {"started": False,
-                "refused": "Stage2 SID validity: " + str(validity.get("refused")),
-                "validity": validity}
-    # Issue #121 section 63: the layer record is written BEFORE any Stage 3 result
-    # exists, once per exported SID, and a failure refuses the launch rather than
-    # being skipped. The record is what makes the diagnostics auditable without
-    # borrowing the recall it was meant to predict.
+    # Owner policy (2026-11-09): starting Stage 3 performs NO admission checks.
+    # The mandatory layer record is still written before any Stage 3 result
+    # exists, but its outcome is reported, never used to refuse the launch.
     try:
         layer_record = record_sid_layers(sid)
-    except Exception as exc:  # noqa: BLE001 - the reason is returned, never hidden
-        return {"started": False,
-                "refused": "the Stage2 layer record could not be written: " + repr(exc),
-                "item_sids": str(sid)}
-    if not layer_record.get("passed"):
-        return {"started": False,
-                "refused": "the Stage2 layer record is incomplete: " +
-                           str(layer_record.get("reason")),
-                "layer_record": layer_record}
+    except Exception as exc:  # noqa: BLE001 - the reason is reported, never hidden
+        layer_record = {"passed": False, "reason": "record failed: " + repr(exc)}
 
     # Canonical logical (/home) form: Path.resolve() would embed the physical
     # /fs04 path, while the repository and Stage3 record /home paths.
@@ -2349,6 +2310,7 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         "sid": sid_info,
         "variant": chosen_variant,
         "per_user_dump": STAGE3_PER_USER_DUMP,
+        "layer_record": layer_record,
     }
     protocol = frozen_protocol_check()
     context["protocol"] = protocol
@@ -2395,7 +2357,7 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         "cwd": str(STAGE3_DIR),
         "variant": chosen_variant,
         "sid": str(sid),
-        "stage2_validity": validity,
+        "layer_record": layer_record,
         "run_log": str(run_log),
         "native_log": str(RESULT3_ROOT / chosen_variant / "logs/_stage3_launcher.log"),
         "harness": str(harness),

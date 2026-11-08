@@ -195,14 +195,6 @@ class Stage3AdmissionTests(unittest.TestCase):
         done = subprocess.run(command, capture_output=True, text=True, timeout=120)
         self.assertEqual(done.returncode, 0, done.stderr[-500:])
 
-    def test_stage3_checks_validity_before_gpu_or_launch(self):
-        server = (HERE / "tools/genrec-mcp/server.py").read_text()
-        launch = server[server.index("def tool_stage3_start("):]
-        self.assertIn("stage2_validity_admission(sid)", launch)
-        self.assertLess(launch.index("stage2_validity_admission(sid)"),
-                        launch.index("probe_gpu_layout()"))
-        self.assertLess(launch.index('if not validity["passed"]:'),
-                        launch.index("subprocess.Popen("))
 
 
 if __name__ == "__main__":
