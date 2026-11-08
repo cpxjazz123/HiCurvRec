@@ -74,7 +74,28 @@
       "scale": 239.0,
       "unobserved_half_continuous": 0.003491492593967304,
       "unobserved_half_discrete": 0.003694435562262497
+    },
+    "TIGER": {
+      "D_continuous": 0.31404285885701455,
+      "D_discrete": 0.30984785386726515,
+      "brier_continuous": 0.2629012337278909,
+      "brier_discrete": 0.25932597007519226,
+      "edge_half_continuous": 0.6257582936003436,
+      "edge_half_discrete": 0.617047402843061,
+      "items": 24587,
+      "neighbour_pairs": 630782,
+      "neighbour_retention": 0.012329140653981883,
+      "note": "the frozen baseline, reconstructed from sids_for_hgrec.npy and its checkpoint; its readout is the Euclidean sum of the three codewords",
+      "quantization_cost": -0.004195004989749396,
+      "scale": 239.0,
+      "unobserved_half_continuous": 0.002327424113685527,
+      "unobserved_half_discrete": 0.0026483048914693187
     }
+  },
+  "baseline_comparison": {
+    "A_better": true,
+    "A_minus_TIGER": -0.02074791597069925,
+    "statement": "A versus the frozen baseline it was derived from"
   },
   "hypothesis": {
     "G_minus_F0_continuous": -0.003286934697344146,

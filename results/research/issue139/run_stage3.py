@@ -48,12 +48,19 @@ def sid_of(arm: str) -> Path:
 
 
 def stage2_done(arm: str) -> bool:
-    metrics = REPO / "stage2_RQ-VAE" / ("TIGER_mixed_rq_" + arm) / "logs" / "training_metrics.jsonl"
-    if not metrics.is_file():
+    """Whether this arm has an identifier and no Stage 2 trainer is running.
+
+    Reading the metrics stream does not answer it: a cancelled run truncates the
+    stream, so F0's finished run left no final event behind, and asking for one
+    would keep the whole Stage 3 queue waiting forever. What the queue needs is
+    simpler: the identifier exists and nobody is training that tree.
+    """
+    sid = sid_of(arm)
+    if not sid.is_file():
         return False
-    events = [json.loads(line) for line in metrics.open() if line.strip()]
-    starts = [i for i, e in enumerate(events) if e.get("event") == "train_start"]
-    return any(e.get("event") == "train_end" for e in events[starts[-1]:]) if starts else False
+    done = subprocess.run(["pgrep", "-f", "TIGER_mixed_rq_%s/train_rqvae.py" % arm],
+                          capture_output=True, text=True)
+    return not bool((done.stdout or "").strip())
 
 
 def stage3_result(arm: str) -> dict | None:
