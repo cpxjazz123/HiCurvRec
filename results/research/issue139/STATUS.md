@@ -219,3 +219,18 @@ more instructive.
 **结论一（回答"是否比 TIGER 更好"）**：**是**。五个臂的 AF3 结构失真全部低于冻结基线，A 最好（−6.70%）；仅混合空间本身（F0）就已比 TIGER 低 4.70%，AF3 辅助损失再贡献约 2 个百分点。
 
 **结论二（必须同时披露的反向指标）**：**TIGER 的邻居保持率最高**（0.0123 vs 0.0109–0.0113），且量化代价最负（−0.0042）⇒ 基线码本"平滑"更强，绝对近邻结构反而更好；但它的邻接 Brier 最差（0.2593）。三个结构量并不一致，因此正确表述是：**在 AF3 目标本身（度数 + 三角形）上，五个臂都比基线更贴近原图**，不能扩展成"在所有结构意义上都优于 TIGER"。
+
+## 10. Stage3 已按 owner 指令停止（2026-11-08 19:3x）
+
+**Stage3 未完成，也没有任何召回结论。** 按 owner 指令终止：队列进程（`run_stage3.py`）与 F0 的 Stage3 进程均已停止，GPU 已释放。
+
+停下时的实际状态：
+- **F0 的 Stage3** 跑到 **epoch 39/150**（`ckpt_saved`，wall ≈ 1159 s），**没有 `test_final.json`** ⇒ 没有任何 `test_recall@10`；
+- G / E / A / L 的 Stage3 **未启动**；
+- `results/stage3_T5Train/TIGER_mixed_rq_F0/` 保留 19 MB 过程产物（ckpt、日志、metrics），作为"曾执行过"的证据，不被当作结果。
+
+**实测速率（用于重新估算，勿再用旧数字）**：单卡 Stage3 约 **30 s/epoch**（`train_batch=4096`、97 batch/epoch）⇒ 150 epoch ≈ **1–1.5 h/臂** ⇒ 五臂 ≈ **5–7 h**，而非此前按四卡三倍外推的 40–55 h（旧估计错误，已作废）。
+
+**恢复方式（若重新开工）**：`nohup python3 results/research/issue139/run_stage3.py > results/research/issue139/stage3.log 2>&1 &` —— 它按 F0 → G → E → A → L 顺序执行，每臂出 `test_recall@10` 后写 `stage3_report.json`。
+
+**因此三个验收标准里，第 1 与第 2 条成立，第 3 条未完成**：五臂 Stage2 完成、五臂失真已同口径记录、五个 Stage3 未产出召回。
