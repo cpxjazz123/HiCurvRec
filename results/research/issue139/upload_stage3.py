@@ -5,7 +5,7 @@ archived together -- the Stage 2 code it used, the SID table, the checkpoint tha
 exported that table, and the complete recall block. The bucket's first level is a
 two-digit number and each number holds exactly those four entries:
 
-    r2:genrec/<NN>/stage2_code/        train_rqvae.py, model/, math_spec.json,
+    r2:genrec/<NN>/<mechanism>/        train_rqvae.py, model/, math_spec.json,
                                        reference_contract.json
     r2:genrec/<NN>/item_sids.json
     r2:genrec/<NN>/rqvae_best.pth
@@ -57,7 +57,7 @@ def stage(arm: str, staging: Path) -> tuple[dict, str]:
         raise SystemExit("%s is incomplete, not archiving: %s" % (arm, ", ".join(missing)))
 
     staging.mkdir(parents=True, exist_ok=True)
-    code = staging / "stage2_code"
+    code = staging / arm.replace("/", "__")
     code.mkdir(exist_ok=True)
     for relative in ("train_rqvae.py", "math_spec.json", "reference_contract.json"):
         if (source / relative).is_file():

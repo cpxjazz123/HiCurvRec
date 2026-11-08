@@ -62,7 +62,7 @@ def build(row: dict, staging: Path) -> dict:
     recall_path = Path(row["recall_path"]) if row.get("recall_path") else None
     block = recall_block(recall_path) if recall_path else {}
 
-    code = staging / "stage2_code"
+    code = staging / row["stage2_rel"].replace("/", "__")
     staging.mkdir(parents=True, exist_ok=True)
     code.mkdir(exist_ok=True)
     for relative in ("train_rqvae.py", "math_spec.json", "reference_contract.json"):

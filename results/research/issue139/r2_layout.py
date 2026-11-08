@@ -3,7 +3,8 @@
 The owner's layout (2026-11-08): the bucket's first level is `01`, `02`, `03`, ...
 and each of those holds exactly four things --
 
-    stage2_code/           the Stage 2 source that produced the identifier
+    <mechanism>/           the Stage 2 source that produced the identifier,
+                           named after the mechanism itself
     item_sids.json         the identifier table
     rqvae_best.pth         the checkpoint that exported it
     recall.json            every key of the Stage 3 result
@@ -34,12 +35,11 @@ RCLONE = Path("/home/wlia0047/bin/rclone")
 BUCKET = "r2:genrec"
 CREDENTIALS = REPO / "r2_apikey"
 
-#: The four entries every numbered directory carries, in this order.
-STAGE2_CODE = "stage2_code"
+#: The four entries every numbered directory carries: the code folder carries the
+#: mechanism's own name, so it is built per archive rather than fixed here.
 SID = "item_sids.json"
 CHECKPOINT = "rqvae_best.pth"
 RECALL = "recall.json"
-LAYOUT = (STAGE2_CODE, SID, CHECKPOINT, RECALL)
 
 
 def credentials() -> dict:
