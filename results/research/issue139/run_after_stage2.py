@@ -35,14 +35,27 @@ def metrics_path(arm: str) -> Path:
     return REPO / "stage2_RQ-VAE" / ("TIGER_mixed_rq_" + arm) / "logs" / "training_metrics.jsonl"
 
 
+#: When this script started. Only a run that began after it counts: the arms
+#: carry four-card runs from earlier today whose final event is on disk, and a
+#: check that accepted those would report a fresh run as finished before it began.
+SCRIPT_START = time.time()
+
+
 def complete(arm: str) -> bool:
-    """A run finished if its newest run wrote its final event."""
+    """Whether the run this script is waiting for has finished.
+
+    A run counts only if it started after this script did, wrote at least one
+    epoch and wrote its final event.
+    """
     path = metrics_path(arm)
     if not path.is_file():
         return False
     events = [json.loads(line) for line in path.open() if line.strip()]
     starts = [index for index, event in enumerate(events) if event.get("event") == "train_start"]
     if not starts:
+        return False
+    start = events[starts[-1]]
+    if float(start.get("timestamp") or 0) < SCRIPT_START:
         return False
     body = events[starts[-1]:]
     ends = [event for event in body if event.get("event") == "train_end"]
