@@ -468,9 +468,37 @@ def _tokenizer_config() -> SimpleNamespace:
 PROCESS_GROUP_TIMEOUT_S = 7200
 
 
+# The single-card contract of the frozen recipe: when the framework asks for it,
+# the trainer runs in this process as the only rank instead of forking four. The
+# host that runs this arm has one card, so the four-rank path is not available.
+SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"
+#: The per-rank batch in single-card mode. The four-rank recipe is four ranks of
+#: 1024; on one card the same per-rank batch gives a quarter of the global batch,
+#: which is a different optimisation regime and is recorded as such.
+SINGLE_CARD_BATCH = 4096
+
+
+def _single_card_mode() -> bool:
+    return os.environ.get(SINGLE_GPU_ENV) == "1"
+
+
 def main() -> None:
     # === DDP 初始化 ===
-    if "RANK" in os.environ and int(os.environ.get("RANK", -1)) >= 0:
+    if _single_card_mode():
+        # One process, one rank, no process group: every collective below is
+        # guarded by `world_size > 1` and therefore skipped.
+        rank, world_size, local_rank = 0, 1, 0
+        global BATCH_SIZE_PER_RANK
+        BATCH_SIZE_PER_RANK = SINGLE_CARD_BATCH
+        if torch.cuda.is_available():
+            torch.cuda.set_device(0)
+            device = torch.device("cuda:0")
+        else:
+            device = torch.device("cpu")
+        if rank == 0:
+            print("[single card] one process, one rank, per-process batch %d"
+                  % BATCH_SIZE_PER_RANK, flush=True)
+    elif "RANK" in os.environ and int(os.environ.get("RANK", -1)) >= 0:
         dist.init_process_group(backend="nccl",
                                 timeout=timedelta(seconds=PROCESS_GROUP_TIMEOUT_S))
         rank = dist.get_rank()
