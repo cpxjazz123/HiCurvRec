@@ -47,6 +47,8 @@ STAGE2_SMOKE_TIMEOUT_S = 3600
 #: is the signal that the ranks are alive and past the point where a fork can
 #: deadlock.
 STAGE2_LIVENESS_TIMEOUT_S = 420
+#: The frozen default rendezvous port of a Stage 2 job (mirrors the contract).
+STAGE2_PORT_CONTRACT = 50202
 
 STATE_DIR = Path(os.path.expanduser("~/.cache/genrec-mcp"))
 # Generated per-launch Stage3 entrypoints live outside the repository: the run's
@@ -436,6 +438,31 @@ def project_from_training_metrics(result_dir: Path) -> dict:
     return {"projected_hours": per_epoch * STAGE2_FROZEN_EPOCHS / 3600.0,
             "per_epoch_s": per_epoch, "measured_epochs": int(epochs),
             "epochs": STAGE2_FROZEN_EPOCHS, "budget_hours": STAGE2_COST_BUDGET_HOURS}
+
+
+
+def free_stage2_port(start: int = None, span: int = 200) -> int:
+    """A rendezvous port that is free right now.
+
+    The contract fixes 50202 as the port of the four-rank Stage 2 job, which is
+    correct while one job runs. Stage 2 may now run several candidates at once,
+    and a second job that asks for the same port dies with 'address already in
+    use' -- silently, because the failure happens inside torchrun. The first free
+    port from the contract's own upward keeps the frozen default for the first
+    job and gives every concurrent job its own.
+    """
+    import socket
+    base = int(start if start is not None else STAGE2_PORT_CONTRACT)
+    for offset in range(int(span)):
+        candidate = base + offset
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+            probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            try:
+                probe.bind(("127.0.0.1", candidate))
+            except OSError:
+                continue
+        return candidate
+    raise RuntimeError("no free Stage 2 rendezvous port in [%d, %d)" % (base, base + span))
 
 
 def stage2_launch_decision(gpu_probe: dict) -> str | None:
@@ -1802,6 +1829,10 @@ def stage2_worker_main(tree_arg: str, spec: dict) -> int:
         # and a four-rank job must still get four. The world size is a property
         # of the probed layout, not a constant of the contract.
         "--world-size", str(max(1, int(gpu_probe.get("visible_count") or 1))),
+        # Stage 2 may run concurrently, so the rendezvous port is per launch:
+        # the first job still gets the contract's 50202, the others the next
+        # free port above it.
+        "--port", str(free_stage2_port()),
     ]
     # The arm's log directory does not exist yet for a fresh tree, and the run
     # log is opened before the trainer can create it.
