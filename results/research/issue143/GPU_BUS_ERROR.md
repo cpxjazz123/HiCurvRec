@@ -1,53 +1,44 @@
-# "Bus error (core dumped)": 已经查到的原因
+# "Bus error (core dumped)": 找到的原因
 
-结论先说：这些 `Bus error` **不是 Python/训练代码的缺陷**，是 NVIDIA 驱动在 GPU 上
-打错之后把 CUDA 上下文销毁，进程随后访问已失效的映射就收到 SIGBUS。证据全部在
-`dmesg` 里，进程名就是我们的训练进程。
+结论：**不是训练代码的缺陷**。排查过程中把三类现象分开记账之后，实际原因和 GPU 报错
+无关，而是**进程被工具的生命周期回收**；而真正能被称作 GPU 故障的 Xid 事件是历史记录，
+不是反复出现的那一类。
 
-## 证据（`dmesg` 里 404 条 NVRM 记录，逐条对应到卡）
+## 一、核心里程碑证据
 
-| 卡 | PCI | 驱动报错 | 进程 | 含义 |
-|---|---|---|---|---|
-| 0 | `0000:02:00` | **Xid 31**：`MMU Fault: ENGINE GRAPHICS GPC5 GPCCLIENT_GCC faulted @ 0x… Fault is of type FAULT_PDE ACCESS_TYPE_VIRT_READ` | `name=python` | GPU 的 MMU 在一次虚拟读上 fault，上下文被销毁；同一时刻用户态出现 `python … segfault … in libcuda.so.580.126.20` |
-| 1 | `0000:64:00` | **Xid 109** ×6：`CTX SWITCH TIMEOUT` | `name=pt_main_thread` | 上下文切换超时（每一条都是我们的 PyTorch 训练主线程），驱动随后丢弃这些进程 |
+| 现象 | 证据 | 时间 | 判定 |
+|---|---|---|---|
+| `Xid 31` MMU fault（卡 0，`name=python`）+ 同刻 `python segfault in libcuda.so.580.126.20` | `dmesg` | **21252 分钟前（14.7 天）** | 历史事件，与当前无关 |
+| `Xid 109` CTX SWITCH TIMEOUT ×6（卡 1，`name=pt_main_thread`） | `dmesg` | **11455 / 8817 分钟前（8 / 6 天）** | 历史事件 |
+| `Memory cgroup out of memory: Killed process … (pt_main_thread)`，RSS 14–19 GB | `dmesg`，共 14 条 | **9067–30252 分钟前（6–21 天）** | 历史事件 |
+| 四张卡的最小 kernel 测试 | `CUDA_VISIBLE_DEVICES=i` 做 512×512 矩阵乘 | 刚才 | **四张卡全部正常** |
+| 训练进程在 ~2 分钟内以 exit=1 退出且**日志里没有 traceback** | `proc://` 服务状态 + 服务日志 | 刚才 | 进程被外部终止，不是崩溃 |
 
-另外还有重复的：
+⇒ "Bus error" 那一次的真实机理仍然是 GPU 侧：Xid 31 打掉的是 **CUDA 上下文**而不是进程，
+进程随后访问失效的 device 映射就收到 SIGBUS，glibc 打印 `Bus error (core dumped)`。但这条
+记录是 14 天前的，**不能用来解释这两天的反复退出**。
 
-```
-NVRM: Going over RM unhandled interrupt threshold for irq 445
-```
+## 二、这两天反复退出的真实原因（三个叠加因素）
 
-这是驱动在丢中断 —— 典型的卡住/驱动层故障前兆，不是应用能触发的东西。
+1. **会话中期换卡**（A100 → L40S）。旧上下文在设备消失的瞬间失效，这是第一次三臂在
+   epoch 620 / 2321 / 2491 处突然 `end=True` 的原因。
+2. **同一张卡上跑多个独立 CUDA 上下文**。我并行脚本与 service 重复启动时一度出现
+   **6 个进程 / 3 张卡**（每卡 2 个上下文），这正是历史上 Xid 109 出现的条件，必须避免。
+3. **进程挂在工具自己的生命周期上**。用 `bash` 的 service（`persist=false`）或普通
+   `nohup &` 启动的训练，会在会话工具调用切换时被回收器一并杀掉，表现为"跑了 2 分钟就
+   没了、日志无 traceback"。这条是我这边的操作错误，与集群无关。
 
-硬件侧核对：四张 L40S 的 ECC 都是 `Enabled`，`retired_pages.pending` 都是 `N/A`，
-没有退化页 ⇒ 不是显存坏块。
+## 三、已执行的处置
 
-## 为什么是 SIGBUS 而不是普通异常
+- 启动脚本 `/tmp/run_arm.sh` 用 `setsid nohup` 把训练**脱离调用者的进程组**，每臂
+  独立日志 `logs/train_card<N>.log`；一臂一卡（M3→2、M1→3、M4→0），**每卡只有一个
+  CUDA 上下文**；卡 1 因有 Xid 109 历史暂不使用。
+- 全局 batch 仍为 4096（单 rank 单卡分支），与冻结配方一致。
+- 训练期间不再并发跑 `checks.run_all`（它的 `four_rank` 探针会额外开上下文，且会与
+  正在跑的 admission 副本互相删除，之前两次假 `NOT_RUN`/`refused` 就是这么来的）。
 
-Xid 31（MMU fault）打掉的是 **CUDA 上下文**，不是进程。进程继续跑，下一次对已失效
-的 device 映射的访问就由内核投递 SIGBUS；glibc 打印 `Bus error (core dumped)`。
-Xid 109（context switch timeout）则让驱动直接终止持有上下文的进程。
+## 四、需要 root 的部分（我做不到）
 
-## 我们这边能控制、也确实会放大的因素
-
-1. **同一张卡上跑多个独立 CUDA 上下文**。第一次是 4 个臂挤在 1 张卡上（5-6 个进程），
-   第二次是我并行脚本和 service 重复启动，一度出现 **6 个进程 / 3 张卡**（每卡 2 个
-   上下文）。Xid 109 的 6 条全部出现在这种"多上下文同卡"的时段。
-2. **会话中期换了显卡**（A100 → L40S）。旧上下文在换卡瞬间失效，这是第一波
-   `end=True` 在 epoch 620 / 2321 / 2491 处突然结束的直接原因。
-
-## 处置（已执行 / 约束）
-
-- 现在改成 **一臂一卡**，每卡只允许 **一个** CUDA 上下文：
-  M3 → card 2、M1 → card 3、M4 → card 0（card 1 有 Xid 109 历史，先不用）。
-- 启动器在 `run_parallel.py` 里记录每臂的 `pid`、`card`、源码摘要；同一卡出现第二个
-  进程即视为配置错误。
-- 训练不再与任何 CPU/GPU 检查并发执行：`checks.run_all` 的 `four_rank` 探针会额外开
-  上下文，之前的假 `NOT_RUN`/`refused` 就是它和别人抢同一份 admission 副本造成的。
-
-## 仍需人（有 root）处理的部分
-
-- 若 Xid 109 / Xid 31 再次出现，卡需要 `nvidia-smi --gpu-reset` 或整机重启；
-  用户态没有权限做这件事，也无法用代码规避。
-- 如果只是某一张卡反复出 Xid 109，可以把这张卡从训练里排除（这正是当前的做法：
-  用 card 2/3 跑，card 0 观察，card 1 停用）。
+- 若再次出现 Xid 109 / Xid 31，需要 `nvidia-smi --gpu-reset` 或重启节点；用户态无权限。
+- cgroup 内存上限我没有读到（`/sys/fs/cgroup/memory.max` 不可读），但节点 `free` 显示
+  1511 GB 总内存、可用 1343 GB，所以并发 3 臂（每臂 ~19 GB 峰值）不是内存问题。
