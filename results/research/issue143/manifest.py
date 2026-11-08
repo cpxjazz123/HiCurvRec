@@ -69,16 +69,37 @@ def conformance(tree_name: str) -> dict:
 
 
 def run_config(arm: str) -> dict:
-    path = TREE / arm_directory(arm) / "logs" / "training_metrics.jsonl"
-    if not path.is_file():
-        return {"available": False, "reason": "no metrics stream"}
-    for line in path.read_text().splitlines():
-        if not line.strip():
+    logs = TREE / arm_directory(arm) / "logs"
+    for name in ("run_metrics.jsonl", "training_metrics.jsonl"):
+        path = logs / name
+        if not path.is_file():
             continue
-        row = json.loads(line)
-        if row.get("event") == "train_start":
-            return {"available": True, "metrics": str(path), **row}
+        for line in path.read_text().splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if row.get("event") == "train_start":
+                return {"available": True, "metrics": str(path), **row}
     return {"available": False, "reason": "no train_start event"}
+
+
+def artifacts(arm: str) -> dict:
+    """The delivered SID, checkpoint and records, with the SHAs that bind them."""
+    result = REPO / "results" / "stage2_RQ-VAE" / arm_directory(arm)
+    logs = TREE / arm_directory(arm) / "logs"
+    out = {}
+    for label, path in (("item_sids", result / "item_sids.json"),
+                        ("checkpoint", result / "rqvae_best.pth"),
+                        ("run_stream", logs / "run_metrics.jsonl"),
+                        ("run_split", logs / "run_split.json"),
+                        ("preserved_first_run_sid", result / "run_a_complete"
+                         / "item_sids.json")):
+        out[label] = ({"path": str(path), "sha256": digest(path)}
+                      if path.is_file() else {"path": str(path), "missing": True})
+    record = result / "stage2_metrics" / (out["item_sids"].get("sha256", "") + ".json")
+    out["layer_record"] = ({"path": str(record), "sha256": digest(record)}
+                           if record.is_file() else {"path": str(record), "missing": True})
+    return out
 
 
 def main() -> int:
@@ -99,6 +120,7 @@ def main() -> int:
         "reference_contract_sha256": digest(tree / "reference_contract.json"),
         "conformance": conformance(tree_name),
         "run": run_config(args.arm),
+        "artifacts": artifacts(args.arm),
         "stage": "stage2-only",
         "stage3": "not started and not designed (Issues #140-#143)",
     }

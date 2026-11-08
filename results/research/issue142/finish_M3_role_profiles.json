@@ -1,0 +1,70 @@
+{
+  "arm": "M3_role_profiles",
+  "diagnostics": {
+    "available": true,
+    "epoch_time_s": 1.015,
+    "epochs": 3000,
+    "finished": true,
+    "first": {
+      "epoch": 1,
+      "mean_scale": 0.00046216631088167866,
+      "step_scale": 0.0003643001265538134
+    },
+    "last": {
+      "epoch": 3000,
+      "mean_scale": 2.8262368777192584e-10,
+      "step_scale": 6.343946043275867e-10
+    },
+    "last_epoch": 3000,
+    "mechanism_events": 3000,
+    "source": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M3_role_profiles/logs/run_metrics.jsonl",
+    "wall_s": 3577.692
+  },
+  "issue": 142,
+  "layer_record": {
+    "report": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M3_role_profiles/stage2_metrics/4dcbe0d969b7587a280c7b635256753e0fa9f684e5a799e8a31b94801cf246df.json",
+    "sid_sha256": "4dcbe0d969b7587a280c7b635256753e0fa9f684e5a799e8a31b94801cf246df",
+    "tail": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M3_role_profiles/stage2_metrics/4dcbe0d969b7587a280c7b635256753e0fa9f684e5a799e8a31b94801cf246df.json",
+    "written": true
+  },
+  "preserved_run": {
+    "available": true,
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M3_role_profiles/run_a_complete/item_sids.json",
+    "same_as_delivered": false,
+    "sid_sha256": "56277eaf6e54ef9875ea0214d9f682de4ebc8586a5cab4edc18d22ea17062d90"
+  },
+  "runs": {
+    "audit": {
+      "delivered": {
+        "events": {
+          "ckpt_saved": 1,
+          "role": 3000,
+          "train": 3000,
+          "train_end": 1,
+          "train_start": 1
+        },
+        "output": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M3_role_profiles/logs/run_metrics.jsonl",
+        "rows": 6003,
+        "run_start": 1794139055.15563
+      },
+      "epochs": 3000,
+      "runs": {
+        "1794139055.16": {
+          "contiguous": true,
+          "events": {
+            "ckpt_saved": 1,
+            "role": 3000,
+            "train": 3000,
+            "train_end": 1,
+            "train_start": 1
+          },
+          "first_epoch": 1,
+          "last_epoch": 3000,
+          "rows": 6003
+        }
+      },
+      "source": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M3_role_profiles/logs/training_metrics.jsonl"
+    },
+    "available": true
+  }
+}

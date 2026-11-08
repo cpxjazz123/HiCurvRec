@@ -32,10 +32,34 @@ ARMS = {
 
 
 def metrics(arm: str) -> list[dict]:
-    path = TREE / ("TIGER_" + arm) / "logs" / "training_metrics.jsonl"
+    """The delivered run's stream: the split file when the shared one was mixed.
+
+    A duplicate run on 2026-11-08 truncated the shared ``training_metrics.jsonl``
+    and the earlier run kept appending its tail; ``run_metrics.jsonl`` holds the
+    one complete run recovered by ``tools.research.stage2.run_metrics``.
+    """
+    logs = TREE / ("TIGER_" + arm) / "logs"
+    for name in ("run_metrics.jsonl", "training_metrics.jsonl"):
+        path = logs / name
+        if path.is_file():
+            return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+    return []
+
+
+def metrics_source(arm: str) -> str:
+    logs = TREE / ("TIGER_" + arm) / "logs"
+    for name in ("run_metrics.jsonl", "training_metrics.jsonl"):
+        if (logs / name).is_file():
+            return str(logs / name)
+    return ""
+
+
+def run_audit(arm: str) -> dict:
+    """Every run the shared file held, and which of them is the delivered one."""
+    path = TREE / ("TIGER_" + arm) / "logs" / "run_split.json"
     if not path.is_file():
-        return []
-    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+        return {"available": False, "reason": "no run_split.json (stream was not shared)"}
+    return {"available": True, "audit": json.loads(path.read_text())}
 
 
 def layer_record(arm: str) -> dict:
@@ -54,13 +78,29 @@ def layer_record(arm: str) -> dict:
             "sid_sha256": digest, "tail": (done.stdout or "").strip()[-800:]}
 
 
+def preserved_run(arm: str, delivered: dict) -> dict:
+    """The first completed run's artifacts, kept when a duplicate overwrote them.
+
+    The first run of each arm finished 2026-11-08 and its artifacts were copied
+    to ``run_a_complete/`` before the duplicate exported. The SID SHA tells
+    whether the two runs actually agree.
+    """
+    import hashlib
+    path = RESULT / ("TIGER_" + arm) / "run_a_complete" / "item_sids.json"
+    if not path.is_file():
+        return {"available": False}
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    return {"available": True, "path": str(path), "sid_sha256": digest,
+            "same_as_delivered": digest == delivered.get("sid_sha256")}
+
+
 def diagnostics(arm: str, event: str) -> dict:
     rows = metrics(arm)
     if not rows:
         return {"available": False, "reason": "no metrics stream"}
     train = [row for row in rows if row.get("event") == "train"]
     mechanism = [row for row in rows if row.get("event") == event]
-    out = {"available": True, "epochs": len(train),
+    out = {"available": True, "source": metrics_source(arm), "epochs": len(train),
            "last_epoch": train[-1].get("epoch") if train else None,
            "finished": any(row.get("event") == "train_end" for row in rows),
            "wall_s": train[-1].get("cumulative_time_s") if train else None,
@@ -94,7 +134,8 @@ def main() -> int:
     diag = diagnostics(args.arm, spec["event"])
     record = layer_record(args.arm)
     payload = {"arm": args.arm, "issue": spec["issue"], "diagnostics": diag,
-               "layer_record": record}
+               "layer_record": record, "runs": run_audit(args.arm),
+               "preserved_run": preserved_run(args.arm, record)}
     target = REPO / "results" / "research" / ("issue%d" % spec["issue"])
     target.mkdir(parents=True, exist_ok=True)
     (target / ("finish_%s.json" % args.arm)).write_text(json.dumps(payload, indent=2,

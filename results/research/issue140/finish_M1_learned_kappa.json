@@ -1,0 +1,102 @@
+{
+  "arm": "M1_learned_kappa",
+  "diagnostics": {
+    "available": true,
+    "epoch_time_s": 1.186,
+    "epochs": 3000,
+    "finished": true,
+    "first": {
+      "epoch": 1,
+      "kappa": [
+        -0.9999901056289673,
+        -0.9999978542327881,
+        -0.9999904036521912
+      ],
+      "mean_scale": 4.072893866866965e-05,
+      "step_af3": 0.6934558926620042,
+      "step_kappa_gradient": 1.773612900990429e-08,
+      "step_mean_probability": 0.4265811877146608,
+      "step_neighbour": 0.6362551233798617,
+      "step_scale": 3.8987883887838e-05,
+      "step_usage": 2.656380456755869e-05
+    },
+    "last": {
+      "epoch": 3000,
+      "kappa": [
+        2.7137824076817196e-07,
+        -3.715461389219854e-06,
+        4.4076468839193694e-06
+      ],
+      "mean_scale": 1.3785624600831374e-05,
+      "step_af3": 0.3137827671531862,
+      "step_kappa_gradient": 0.00012439228885341436,
+      "step_mean_probability": 0.4265738402225073,
+      "step_neighbour": 0.6270109455955392,
+      "step_scale": 1.7583173866147636e-05,
+      "step_usage": 0.00022687515593133867
+    },
+    "last_epoch": 3000,
+    "mechanism_events": 3000,
+    "source": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M1_learned_kappa/logs/run_metrics.jsonl",
+    "wall_s": 4097.945
+  },
+  "issue": 140,
+  "layer_record": {
+    "report": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M1_learned_kappa/stage2_metrics/92ca528bd9b962bea44c42806db7fded6afa12cd84886d7ef0e2be9b7a81c012.json",
+    "sid_sha256": "92ca528bd9b962bea44c42806db7fded6afa12cd84886d7ef0e2be9b7a81c012",
+    "tail": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M1_learned_kappa/stage2_metrics/92ca528bd9b962bea44c42806db7fded6afa12cd84886d7ef0e2be9b7a81c012.json",
+    "written": true
+  },
+  "preserved_run": {
+    "available": true,
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M1_learned_kappa/run_a_complete/item_sids.json",
+    "same_as_delivered": false,
+    "sid_sha256": "8f6ff43f46bd4b666459dfd5718b6d2b79f7d2ed6f1d9849945a7bf0f3f2bf2c"
+  },
+  "runs": {
+    "audit": {
+      "delivered": {
+        "events": {
+          "ckpt_saved": 1,
+          "curvature": 3000,
+          "train": 3000,
+          "train_end": 1,
+          "train_start": 1
+        },
+        "output": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M1_learned_kappa/logs/run_metrics.jsonl",
+        "rows": 6003,
+        "run_start": 1794139056.7617216
+      },
+      "epochs": 3000,
+      "runs": {
+        "1794131858.65": {
+          "contiguous": false,
+          "events": {
+            "ckpt_saved": 1,
+            "curvature": 134,
+            "train": 134,
+            "train_end": 1
+          },
+          "first_epoch": 2867,
+          "last_epoch": 3000,
+          "rows": 270
+        },
+        "1794139056.76": {
+          "contiguous": true,
+          "events": {
+            "ckpt_saved": 1,
+            "curvature": 3000,
+            "train": 3000,
+            "train_end": 1,
+            "train_start": 1
+          },
+          "first_epoch": 1,
+          "last_epoch": 3000,
+          "rows": 6003
+        }
+      },
+      "source": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M1_learned_kappa/logs/training_metrics.jsonl"
+    },
+    "available": true
+  }
+}

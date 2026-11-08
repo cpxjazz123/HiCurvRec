@@ -1,5 +1,31 @@
 {
   "arm": "M3_role_profiles",
+  "artifacts": {
+    "checkpoint": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M3_role_profiles/rqvae_best.pth",
+      "sha256": "ead72b5ab57322d9b948613c32f9ccd12180c1b139a788d331edc6efa68fd29f"
+    },
+    "item_sids": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M3_role_profiles/item_sids.json",
+      "sha256": "4dcbe0d969b7587a280c7b635256753e0fa9f684e5a799e8a31b94801cf246df"
+    },
+    "layer_record": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M3_role_profiles/stage2_metrics/4dcbe0d969b7587a280c7b635256753e0fa9f684e5a799e8a31b94801cf246df.json",
+      "sha256": "5ca02947bd6e17e7c9ac4ac062c2d1ec2ea15bac7185b3f69fa40188ec0712a0"
+    },
+    "preserved_first_run_sid": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M3_role_profiles/run_a_complete/item_sids.json",
+      "sha256": "56277eaf6e54ef9875ea0214d9f682de4ebc8586a5cab4edc18d22ea17062d90"
+    },
+    "run_split": {
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M3_role_profiles/logs/run_split.json",
+      "sha256": "b72d57618a3ba56628ee7572c2b5663ca34bc4d96940b8f4d115d160ae75223a"
+    },
+    "run_stream": {
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M3_role_profiles/logs/run_metrics.jsonl",
+      "sha256": "bc0ee1401885853e8cc50ad6b7f322731af30278b6a08f66f006c0ce4e4a9c31"
+    }
+  },
   "conformance": {
     "cache": null,
     "passed": null,
@@ -73,18 +99,18 @@
       128
     ],
     "lr": 0.001,
-    "metrics": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M3_role_profiles/logs/training_metrics.jsonl",
+    "metrics": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M3_role_profiles/logs/run_metrics.jsonl",
     "num_workers": 0,
     "optimizer": "AdamW",
     "pca_dim": 0,
     "seed": 42,
     "sk_epsilon": 0.003,
     "sk_iters": 50,
-    "timestamp": 1794132586.231143,
+    "timestamp": 1794139117.4186301,
     "total_batch_size": 4096,
     "train_items": 24556,
     "vq_type": "vq",
-    "wall_time_s": 79.569,
+    "wall_time_s": 62.263,
     "warmup_epochs": 50,
     "weight_decay": 0.0001,
     "world_size": 1,

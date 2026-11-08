@@ -92,6 +92,80 @@ def sid_table(arm: str) -> dict:
     return path, json.loads(path.read_text())
 
 
+def collision(codes: np.ndarray) -> dict:
+    """The frozen item-weighted collision: share of items whose code repeats.
+
+    This is the definition the mandatory layer record uses; counting
+    ``1 - distinct/items`` instead would treat one item of every repeated bucket
+    as non-colliding and understate the collapse.
+    """
+    from collections import Counter
+    counts = Counter(map(tuple, np.asarray(codes).tolist()))
+    total = len(codes)
+    shared = sum(count for count in counts.values() if count > 1)
+    return {"items": int(total), "distinct": int(len(counts)),
+            "colliding_items": int(shared), "share": float(shared / total) if total else 0.0,
+            "max_bucket": int(max(counts.values())) if counts else 0}
+
+
+def decoder_reconstruction(state: dict, phi: torch.Tensor, embeddings: np.ndarray) -> dict:
+    """MSE of the SID reconstruction: decoder(phi) against the T5 embedding.
+
+    The decoder is the arm's own trained MLP (32 -> 128 -> 256 -> 512 -> 768,
+    ReLU between layers); at eval the dropout layers are the identity. The target
+    is the embedding the SID was built from, in the export's item order.
+    """
+    import torch.nn as nn
+    weights = sorted((key for key in state if key.startswith("decoder.mlp.")
+                      and key.endswith(".weight")),
+                     key=lambda name: int(name.split(".")[2]))
+    layers = []
+    for position, key in enumerate(weights):
+        weight = state[key]
+        bias = state[key.replace(".weight", ".bias")]
+        linear = nn.Linear(int(weight.shape[1]), int(weight.shape[0]))
+        linear.weight.data.copy_(weight)
+        linear.bias.data.copy_(bias)
+        layers.append(linear)
+        if position != len(weights) - 1:
+            layers.append(nn.ReLU())
+    decoder = nn.Sequential(*layers).float().eval()
+    with torch.no_grad():
+        reconstructed = decoder(torch.as_tensor(phi, dtype=torch.float32))
+    target = torch.as_tensor(embeddings, dtype=torch.float32)
+    if reconstructed.shape != target.shape:
+        raise ValueError("decoder output %r does not match the embedding %r"
+                         % (tuple(reconstructed.shape), tuple(target.shape)))
+    return {"mse": float(torch.mean((reconstructed - target) ** 2)),
+            "items": int(target.shape[0]), "dim": int(target.shape[1])}
+
+
+def sid_change(tokens: np.ndarray, levels: int) -> dict:
+    """How the exported semantic SID differs from the frozen baseline's.
+
+    Only the ``levels`` semantic tokens are compared: the fourth token is the
+    deterministic collision-extension, not a level of the identifier.
+    """
+    path = RESULT / "TIGER_RQ-VAE" / "item_sids.json"
+    if not path.is_file():
+        return {"available": False, "reason": "the frozen baseline SID is missing"}
+    base = json.loads(path.read_text())
+    if len(base) != len(tokens):
+        return {"available": False,
+                "reason": "baseline has %d items, candidate %d" % (len(base), len(tokens))}
+    baseline = np.asarray([base[str(index)] for index in range(len(base))], dtype=np.int64)
+    baseline = baseline[:, :levels]
+    candidate = tokens[:, :levels]
+    changed = np.any(baseline != candidate, axis=1)
+    return {"available": True, "baseline": str(path),
+            "baseline_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "levels": int(levels),
+            "changed_items": int(changed.sum()),
+            "changed_share": float(changed.mean()),
+            "per_level_changed": [float(np.mean(baseline[:, level] != candidate[:, level]))
+                                  for level in range(levels)]}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("arm")
@@ -132,6 +206,10 @@ def main() -> int:
     brier = float(np.mean((probability.numpy() - is_edge.astype(np.float64)) ** 2))
 
     codes = tokens[:, :rows]
+    reconstruction = decoder_reconstruction(state, phi, embeddings)
+    change = sid_change(tokens, rows)
+    full = collision(codes)
+    first = collision(codes[:, :2]) if rows >= 2 else None
     report = {
         "arm": args.arm,
         "sid": {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
@@ -147,10 +225,22 @@ def main() -> int:
         "adjacency_brier": brier,
         "usage": [int(len(np.unique(codes[:, level]))) for level in range(rows)],
         "level2_prefixes": int(len(np.unique(codes[:, :2], axis=0))),
-        "level3_triples": int(len(np.unique(codes[:, :3], axis=0))) if rows >= 3 else None,
-        "collision_full": float(1.0 - len(np.unique(codes, axis=0)) / len(codes)),
-        "collision_first": float(1.0 - len(np.unique(codes[:, :2], axis=0)) / len(codes))
-        if rows >= 2 else None,
+        "level3_triples": full["distinct"],
+        "collision_full": full["share"],
+        "collision_full_items": full["colliding_items"],
+        "collision_first": first["share"] if first else None,
+        "max_triple_bucket": full["max_bucket"],
+        "max_level_code_usage": [int(np.bincount(codes[:, level]).max())
+                                 for level in range(rows)],
+        "reconstruction": reconstruction,
+        "sid_change": change,
+        "degree_triangle": {
+            "computed": False,
+            "reason": "a full 24587x24587 SID graph would be rebuilt from hard "
+                      "distances; the issue's D_AF3/retention/Brier are measured on "
+                      "the frozen stratified support, and no unbiased degree/triangle "
+                      "estimator exists on that support, so none is reported as if "
+                      "it were the full-graph number"},
     }
     target = REPO / "results" / "research" / "issue143" / ("structure_%s.json" % args.arm)
     target.parent.mkdir(parents=True, exist_ok=True)

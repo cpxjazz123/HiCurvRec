@@ -215,7 +215,12 @@ def learned_collision(result_dir) -> float | None:
     trained with the other.
     """
     result_dir = Path(result_dir)
+    # A recovered single-run stream wins over a shared file: on 2026-11-08 a
+    # duplicate kept appending to the shared stream after the delivered run had
+    # finished, and its stale collision was read as the learned value.
     candidates = [
+        REPOSITORY / "stage2_RQ-VAE" / result_dir.name / "logs" / "run_metrics.jsonl",
+        result_dir / "logs" / "run_metrics.jsonl",
         result_dir / "logs" / "training_metrics.jsonl",
         REPOSITORY / "stage2_RQ-VAE" / result_dir.name / "logs" / "training_metrics.jsonl",
     ]

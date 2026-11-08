@@ -1,0 +1,88 @@
+{
+  "arm": "M4_post_sid_af3",
+  "diagnostics": {
+    "available": true,
+    "epoch_time_s": 0.971,
+    "epochs": 3000,
+    "finished": true,
+    "first": {
+      "epoch": 1,
+      "mean_scale": 4.374861838537184e-07,
+      "step_af3": 0.700154607644064,
+      "step_mean_probability": 0.010580824936138877,
+      "step_neighbour": 2.5325958308256666,
+      "step_scale": 4.374861838537184e-07,
+      "step_usage": 0.001538097858428955
+    },
+    "last": {
+      "epoch": 3000,
+      "mean_scale": 1.36395599776021e-06,
+      "step_af3": 0.31719414818140196,
+      "step_mean_probability": 0.09465041361972415,
+      "step_neighbour": 0.5441243409097316,
+      "step_scale": 1.3639559977602103e-06,
+      "step_usage": 0.008285224437713623
+    },
+    "last_epoch": 3000,
+    "mechanism_events": 3000,
+    "source": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M4_post_sid_af3/logs/run_metrics.jsonl",
+    "wall_s": 2866.491
+  },
+  "issue": 143,
+  "layer_record": {
+    "report": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M4_post_sid_af3/stage2_metrics/6f71e6b20b42c48866809c454551a2be9ee600d3746ba2bdb110330bfafd15a3.json",
+    "sid_sha256": "6f71e6b20b42c48866809c454551a2be9ee600d3746ba2bdb110330bfafd15a3",
+    "tail": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M4_post_sid_af3/stage2_metrics/6f71e6b20b42c48866809c454551a2be9ee600d3746ba2bdb110330bfafd15a3.json",
+    "written": true
+  },
+  "preserved_run": {
+    "available": true,
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M4_post_sid_af3/run_a_complete/item_sids.json",
+    "same_as_delivered": false,
+    "sid_sha256": "c6a0bfe3b25ae12e5db11384f3d5b67eb3ffbdc838428663f8b103d8e379453e"
+  },
+  "runs": {
+    "audit": {
+      "delivered": {
+        "events": {
+          "ckpt_saved": 1,
+          "post_sid": 3000,
+          "train": 3000,
+          "train_end": 1,
+          "train_start": 1
+        },
+        "output": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M4_post_sid_af3/logs/run_metrics.jsonl",
+        "rows": 6003,
+        "run_start": 1794139058.7920477
+      },
+      "epochs": 3000,
+      "runs": {
+        "1794130544.71": {
+          "contiguous": false,
+          "events": {
+            "post_sid": 460,
+            "train": 460
+          },
+          "first_epoch": 743,
+          "last_epoch": 1202,
+          "rows": 920
+        },
+        "1794139058.79": {
+          "contiguous": true,
+          "events": {
+            "ckpt_saved": 1,
+            "post_sid": 3000,
+            "train": 3000,
+            "train_end": 1,
+            "train_start": 1
+          },
+          "first_epoch": 1,
+          "last_epoch": 3000,
+          "rows": 6003
+        }
+      },
+      "source": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M4_post_sid_af3/logs/training_metrics.jsonl"
+    },
+    "available": true
+  }
+}

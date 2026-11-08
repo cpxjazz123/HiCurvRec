@@ -1,5 +1,31 @@
 {
   "arm": "M1_learned_kappa",
+  "artifacts": {
+    "checkpoint": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M1_learned_kappa/rqvae_best.pth",
+      "sha256": "2fa0b377f96d589c0db4a081fadbec15cbcc74d230fab5a4271b84f7dca8ab45"
+    },
+    "item_sids": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M1_learned_kappa/item_sids.json",
+      "sha256": "92ca528bd9b962bea44c42806db7fded6afa12cd84886d7ef0e2be9b7a81c012"
+    },
+    "layer_record": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M1_learned_kappa/stage2_metrics/92ca528bd9b962bea44c42806db7fded6afa12cd84886d7ef0e2be9b7a81c012.json",
+      "sha256": "b8198e7669572385025896afb0ccc6f79f157507471421c03fe20c94d69cdc79"
+    },
+    "preserved_first_run_sid": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_M1_learned_kappa/run_a_complete/item_sids.json",
+      "sha256": "8f6ff43f46bd4b666459dfd5718b6d2b79f7d2ed6f1d9849945a7bf0f3f2bf2c"
+    },
+    "run_split": {
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M1_learned_kappa/logs/run_split.json",
+      "sha256": "82d45f96f392396c033c2294c2e2102454e80d8ca9a2b29b95cb6b9661a2e788"
+    },
+    "run_stream": {
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M1_learned_kappa/logs/run_metrics.jsonl",
+      "sha256": "18dbf3f2aa51fcb1bbf4ec16622e6711e03a37dcb469be5d56582db0568de509"
+    }
+  },
   "conformance": {
     "cache": null,
     "passed": null,
@@ -74,18 +100,18 @@
       128
     ],
     "lr": 0.001,
-    "metrics": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M1_learned_kappa/logs/training_metrics.jsonl",
+    "metrics": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M1_learned_kappa/logs/run_metrics.jsonl",
     "num_workers": 0,
     "optimizer": "AdamW",
     "pca_dim": 0,
     "seed": 42,
     "sk_epsilon": 0.003,
     "sk_iters": 50,
-    "timestamp": 1794131930.5302525,
+    "timestamp": 1794139115.3877215,
     "total_batch_size": 4096,
     "train_items": 24556,
     "vq_type": "vq",
-    "wall_time_s": 71.885,
+    "wall_time_s": 58.626,
     "warmup_epochs": 50,
     "weight_decay": 0.0001,
     "world_size": 1,

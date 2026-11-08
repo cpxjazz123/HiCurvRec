@@ -1,0 +1,52 @@
+{
+  "arm": "M3_role_profiles",
+  "interpreter": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+  "ok": true,
+  "suites": {
+    "ddp": {
+      "errors": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "ok": true,
+      "output": "test_both_ranks_agree_on_the_scale (test_ddp.DistributedScaleTest) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 10.664s\n\nOK\n",
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M3_role_profiles/tests/test_ddp.py",
+      "skipped": 0,
+      "tests_run": 1,
+      "unexpected_successes": 0
+    },
+    "entrypoint": {
+      "errors": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "ok": true,
+      "output": "test_one_epoch_exports_and_records_the_mechanism (test_entrypoint.EntryPointTest) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 2.898s\n\nOK\n",
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M3_role_profiles/tests/test_entrypoint.py",
+      "skipped": 0,
+      "tests_run": 1,
+      "unexpected_successes": 0
+    },
+    "gradient": {
+      "errors": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "ok": true,
+      "output": "test_behaviour_off_leaves_the_base_loss_untouched (test_gradient.RoleGradientTest) ... ok\ntest_encoder_and_codebooks_receive_the_role_gradient (test_gradient.RoleGradientTest) ... ok\ntest_the_export_path_does_not_touch_the_head (test_gradient.RoleGradientTest) ... ok\ntest_the_share_bound_holds (test_gradient.RoleGradientTest) ... ok\ntest_the_term_is_finite_and_recorded (test_gradient.RoleGradientTest) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 1.670s\n\nOK\n",
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M3_role_profiles/tests/test_gradient.py",
+      "skipped": 0,
+      "tests_run": 5,
+      "unexpected_successes": 0
+    },
+    "math": {
+      "errors": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "ok": true,
+      "output": "test_equals_the_huber_of_the_coordinate_difference (test_math.ProfilePenaltyTest) ... ok\ntest_gradient_is_the_residual_inside_the_quadratic_region (test_math.ProfilePenaltyTest) ... ok\ntest_coordinates_match_a_hand_computation (test_math.ProfileTest) ... ok\ntest_local_closure_is_the_triangle_ratio (test_math.ProfileTest) ... ok\ntest_standardisation_has_zero_mean_and_unit_scale_over_valid_nodes (test_math.ProfileTest) ... ok\ntest_a_disagreeing_line_is_refused (test_math.RelationalFitTest) ... ok\ntest_recovers_a_known_line (test_math.RelationalFitTest) ... ok\ntest_batch_sizes_are_bounded (test_math.SparseBatchTest) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.327s\n\nOK\n",
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M3_role_profiles/tests/test_math.py",
+      "skipped": 0,
+      "tests_run": 8,
+      "unexpected_successes": 0
+    }
+  },
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M3_role_profiles/tests"
+}

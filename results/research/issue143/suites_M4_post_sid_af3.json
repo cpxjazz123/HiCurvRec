@@ -1,0 +1,52 @@
+{
+  "arm": "M4_post_sid_af3",
+  "interpreter": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+  "ok": true,
+  "suites": {
+    "ddp": {
+      "errors": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "ok": true,
+      "output": "test_both_ranks_agree_on_the_scale (test_ddp.DistributedScaleTest) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 9.842s\n\nOK\n",
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M4_post_sid_af3/tests/test_ddp.py",
+      "skipped": 0,
+      "tests_run": 1,
+      "unexpected_successes": 0
+    },
+    "entrypoint": {
+      "errors": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "ok": true,
+      "output": "test_one_epoch_exports_and_records_the_mechanism (test_entrypoint.EntryPointTest) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 2.936s\n\nOK\n",
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M4_post_sid_af3/tests/test_entrypoint.py",
+      "skipped": 0,
+      "tests_run": 1,
+      "unexpected_successes": 0
+    },
+    "gradient": {
+      "errors": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "ok": true,
+      "output": " (test_gradient.StructuralGradientTest) ... ok\ntest_encoder_and_codebooks_receive_the_structural_gradient (test_gradient.StructuralGradientTest) ... ok\ntest_soft_readout_carries_gradient_to_the_codebooks (test_gradient.StructuralGradientTest) ... ok\ntest_the_gradient_responds_to_the_af3_target (test_gradient.StructuralGradientTest)\nThe contract's counterexample: a different target, a different gradient. ... ok\ntest_the_gradient_share_bound_holds (test_gradient.StructuralGradientTest) ... ok\ntest_the_structural_gradient_comes_from_the_objective_not_the_reconstruction (test_gradient.StructuralGradientTest) ... ok\ntest_the_term_is_finite_and_recorded (test_gradient.StructuralGradientTest) ... ok\n\n----------------------------------------------------------------------\nRan 7 tests in 0.256s\n\nOK\n",
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M4_post_sid_af3/tests/test_gradient.py",
+      "skipped": 0,
+      "tests_run": 7,
+      "unexpected_successes": 0
+    },
+    "math": {
+      "errors": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "ok": true,
+      "output": "rm (test_math.ReadoutTest)\nAn independent form of the same distance: no Mobius addition involved. ... ok\ntest_mixed_delta_reduces_to_the_euclidean_limit (test_math.ReadoutTest) ... ok\ntest_soft_readout_reduces_to_the_hard_readout (test_math.ReadoutTest) ... ok\ntest_squared_distance_is_the_square_in_the_euclidean_limit (test_math.ReadoutTest) ... ok\ntest_structural_delta_is_the_frozen_readout_metric (test_math.ReadoutTest)\nThe training objective must read the metric the report measures. ... ok\ntest_candidate_sets_stay_local (test_math.SparseTest) ... ok\ntest_collapsed_assignment_has_a_full_deficit (test_math.UsageTest) ... ok\ntest_uniform_assignment_has_no_deficit (test_math.UsageTest) ... ok\n\n----------------------------------------------------------------------\nRan 17 tests in 0.570s\n\nOK\n",
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M4_post_sid_af3/tests/test_math.py",
+      "skipped": 0,
+      "tests_run": 17,
+      "unexpected_successes": 0
+    }
+  },
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M4_post_sid_af3/tests"
+}

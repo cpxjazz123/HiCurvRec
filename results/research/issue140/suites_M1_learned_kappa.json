@@ -1,0 +1,52 @@
+{
+  "arm": "M1_learned_kappa",
+  "interpreter": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+  "ok": true,
+  "suites": {
+    "ddp": {
+      "errors": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "ok": true,
+      "output": "test_both_ranks_agree_on_the_scale (test_ddp.DistributedScaleTest) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 16.073s\n\nOK\n",
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M1_learned_kappa/tests/test_ddp.py",
+      "skipped": 0,
+      "tests_run": 1,
+      "unexpected_successes": 0
+    },
+    "entrypoint": {
+      "errors": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "ok": true,
+      "output": "test_one_epoch_exports_and_records_the_mechanism (test_entrypoint.EntryPointTest) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 2.947s\n\nOK\n",
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M1_learned_kappa/tests/test_entrypoint.py",
+      "skipped": 0,
+      "tests_run": 1,
+      "unexpected_successes": 0
+    },
+    "gradient": {
+      "errors": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "ok": true,
+      "output": "test_moving_the_curvature_changes_the_selected_code (test_gradient.CurvatureGradientTest)\nThe mechanism's claim: the curvature is part of the assignment. ... ok\ntest_the_encoder_and_the_codebooks_receive_gradient (test_gradient.CurvatureGradientTest) ... ok\ntest_the_structural_objective_trains_the_curvature (test_gradient.CurvatureGradientTest) ... ok\ntest_the_weight_is_a_share_of_the_objective (test_gradient.CurvatureGradientTest) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 23.271s\n\nOK\n",
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M1_learned_kappa/tests/test_gradient.py",
+      "skipped": 0,
+      "tests_run": 4,
+      "unexpected_successes": 0
+    },
+    "math": {
+      "errors": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "ok": true,
+      "output": "rvature (test_math.BoundedCurvatureTest) ... ok\ntest_zero_theta_is_the_euclidean_level (test_math.BoundedCurvatureTest) ... ok\ntest_the_cost_moves_with_the_curvature (test_math.CostLimitTest) ... ok\ntest_the_euclidean_limit_is_the_plain_squared_distance (test_math.CostLimitTest) ... ok\ntest_the_hyperbolic_limit_matches_the_frozen_mixed_cost (test_math.CostLimitTest) ... ok\ntest_the_spherical_branch_is_the_closed_form (test_math.CostLimitTest) ... ok\ntest_the_native_residual_round_trips_without_error (test_math.ResidualAndReadoutTest)\nNo quantization error: subtracting the code and reading back is identity. ... ok\ntest_the_readout_is_finite_and_shaped (test_math.ResidualAndReadoutTest) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 0.008s\n\nOK\n",
+      "path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M1_learned_kappa/tests/test_math.py",
+      "skipped": 0,
+      "tests_run": 11,
+      "unexpected_successes": 0
+    }
+  },
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_M1_learned_kappa/tests"
+}
