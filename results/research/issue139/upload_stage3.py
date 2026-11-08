@@ -36,6 +36,16 @@ TREES = REPO / "stage2_RQ-VAE"
 STAGE3_LOGS = RESULTS / "stage3_T5Train"
 
 
+def _latest_test_final(arm: str) -> Path | None:
+    """The arm's newest test_final.json: flat if present, else the nested log layout."""
+    flat = STAGE3_LOGS / arm / "test_final.json"
+    if flat.is_file():
+        return flat
+    nested = sorted((STAGE3_LOGS / arm).glob("logs/*/*/test_final.json"),
+                    key=lambda path: path.stat().st_mtime, reverse=True)
+    return nested[0] if nested else None
+
+
 def stage(arm: str, staging: Path) -> tuple[dict, str]:
     """Stage the four entries; return the checksums and the ledger key."""
     result = RESULTS / "stage2_RQ-VAE" / arm
@@ -47,7 +57,7 @@ def stage(arm: str, staging: Path) -> tuple[dict, str]:
             if candidate.is_dir():
                 source = candidate
                 break
-    stage3 = STAGE3_LOGS / arm / "test_final.json"
+    stage3 = _latest_test_final(arm)
 
     missing = [name for name, path in (("item_sids.json", sid),
                                        ("rqvae_best.pth", checkpoint),
