@@ -42,32 +42,30 @@ SCRIPT_START = time.time()
 
 
 def complete(arm: str) -> bool:
-    """Whether the run this script is waiting for has finished.
+    """Whether this arm's identifier on disk already has its layered record.
 
-    A run counts only if it started after this script did, wrote at least one
-    epoch and wrote its final event.
+    The layered record is written by this script and keyed by the identifier's
+    own SHA-256, so it is an exact settlement marker: it can only exist for an
+    identifier that was produced, and re-running the script cannot double-count.
+    Judging by "the newest run finished" failed both ways -- it accepted
+    four-card runs from earlier today and it waited forever on an arm whose last
+    start was a cancelled run.
     """
-    path = metrics_path(arm)
-    if not path.is_file():
-        return False
-    events = [json.loads(line) for line in path.open() if line.strip()]
-    starts = [index for index, event in enumerate(events) if event.get("event") == "train_start"]
-    if not starts:
-        return False
-    start = events[starts[-1]]
-    body = events[starts[-1]:]
-    ends = [event for event in body if event.get("event") == "train_end"]
-    epochs = [event for event in body if event.get("event") == "train"]
-    if not ends or not epochs:
-        return False
-    # The SID has to come from this run: an arm whose identifier predates its
-    # last training start is mid-run, and one whose identifier is newer than the
-    # start has finished. That accepts F0, which finished before this script
-    # started, without accepting the four-card runs of the other arms.
     sid = REPO / "results" / "stage2_RQ-VAE" / ("TIGER_mixed_rq_" + arm) / "item_sids.json"
     if not sid.is_file():
         return False
-    return sid.stat().st_mtime >= float(start.get("timestamp") or 0)
+    digest = hashlib.sha256(sid.read_bytes()).hexdigest()
+    folder = sid.parent / "stage2_metrics"
+    if not folder.is_dir():
+        return False
+    for record in folder.glob("*.json"):
+        try:
+            payload = json.loads(record.read_text())
+        except ValueError:
+            continue
+        if (payload.get("quality_source") or {}).get("sid") == digest:
+            return True
+    return False
 
 
 def record_layers(arm: str) -> str:
