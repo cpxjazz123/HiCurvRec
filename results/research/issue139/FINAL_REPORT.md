@@ -9,24 +9,26 @@ not happen is printed as UNKNOWN; nothing is filled in.
 
 | arm | Stage 2 | collision | L3 collision | D_AF3 (hard SID) | D_AF3 (continuous) | neighbour retention | test_R@10 |
 |---|---|---|---|---|---|---|---|
-| F0 | DONE 553s | 0.2579 | 0.3885 | 0.296474 | 0.298475 | 0.0108 | UNKNOWN |
-| G | DONE 976s | 0.2330 | 0.3572 | 0.295375 | 0.297905 | 0.0114 | UNKNOWN |
-| L | RUNNING | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
-| E | RUNNING | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
-| A | NOT_RUN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
+| F0 | RUNNING | UNKNOWN | 0.3891 | 0.295281 | 0.298137 | 0.0113 | UNKNOWN |
+| G | DONE 2292s | 0.2807 | 0.4218 | 0.291589 | 0.294850 | 0.0110 | UNKNOWN |
+| L | DONE 5590s | 0.2975 | 0.4410 | 0.297422 | 0.300854 | 0.0109 | UNKNOWN |
+| E | DONE 5313s | 0.2161 | 0.3354 | 0.298023 | 0.300694 | 0.0112 | UNKNOWN |
+| A | DONE 2569s | 0.3137 | 0.4611 | 0.289100 | 0.291957 | 0.0109 | UNKNOWN |
 
 ## The outer loop, per arm
 
 | arm | rounds | weight changes accepted | per round |
 |---|---|---|---|
-| G | 4 | 2 | 1500: 0.29713 -> 0.29713 (0 接受, 108s); 2000: 0.29688 -> 0.29686 (1 接受, 108s); 2500: 0.29693 -> 0.29656 (1 接受, 109s); 3000: 0.29537 -> 0.29537 (0 接受, 100s) |
+| G | 4 | 2 | 1500: 0.29216 -> 0.29200 (1 接受, 137s); 2000: 0.29170 -> 0.29129 (1 接受, 126s); 2500: 0.29419 -> 0.29419 (0 接受, 118s); 3000: 0.29159 -> 0.29159 (0 接受, 117s) |
+| L | 4 | 370 | 1500: 0.29863 -> 0.29841 (96 接受, 965s); 2000: 0.29891 -> 0.29868 (91 接受, 965s); 2500: 0.29875 -> 0.29854 (89 接受, 959s); 3000: 0.29771 -> 0.29742 (94 接受, 940s) |
+| E | 4 | 346 | 1500: 0.29949 -> 0.29927 (83 接受, 971s); 2000: 0.29982 -> 0.29949 (93 接受, 1015s); 2500: 0.29853 -> 0.29806 (82 接受, 983s); 3000: 0.29829 -> 0.29802 (88 接受, 989s) |
 
 ## The comparisons the issue asks for
 
 | comparison | what it decides | measured |
 |---|---|---|
-| F0 vs G | does a globally chosen geometry weight help | D_AF3 0.296474 vs 0.295375 |
-| G vs L/E | does the weight need to be local | E accepted 0 weights, G accepted 2 |
+| F0 vs G | does a globally chosen geometry weight help | D_AF3 0.295281 vs 0.291589 |
+| G vs L/E | does the weight need to be local | E accepted 346 weights, G accepted 2 |
 | L vs E | is the non-Euclidean geometry necessary | UNKNOWN until both have Stage 3 |
 | L vs A | is choosing the metric better than adding a loss | UNKNOWN until both have Stage 3 |
 
@@ -36,13 +38,39 @@ not happen is printed as UNKNOWN; nothing is filled in.
 {
   "A": {
     "distortion": {
-      "state": "UNKNOWN"
+      "D_continuous": 0.2919571938652168,
+      "D_discrete": 0.2890999378965659,
+      "brier_continuous": 0.2501377088663993,
+      "brier_discrete": 0.24802844446118494,
+      "edge_half_continuous": 0.5796999485425112,
+      "edge_half_discrete": 0.5737628946792108,
+      "items": 24587,
+      "neighbour_pairs": 630782,
+      "neighbour_retention": 0.010895998934655713,
+      "quantization_cost": -0.0028572559686508847,
+      "scale": 239.0,
+      "state": "DONE",
+      "unobserved_half_continuous": 0.00421443918792243,
+      "unobserved_half_discrete": 0.00443698111392095
     },
     "layers": {
-      "state": "UNKNOWN"
+      "conditional_l3_gain": -0.18892388150144362,
+      "l3_collision": 0.4610566559563997,
+      "l3_refinement_gain_bits": 3.7094805712717256,
+      "level2_distinct_prefixes": 3019,
+      "level3_distinct_triples": 16873,
+      "sid_sha256": "5ba00b5647b0808c0f89dcf85360c7892465069b8604b642a7d9c072f7bcafbe",
+      "state": "DONE",
+      "technically_valid": true,
+      "valid_l1_hard_er": 3.3658735639399837,
+      "valid_l1_negative_hit_rate": 0.0602743354460316,
+      "valid_l1_positive_hit_rate": 0.20287579226184846
     },
     "stage2": {
-      "state": "NOT_RUN"
+      "collision": 0.31374303493716194,
+      "rounds": [],
+      "state": "DONE",
+      "wall_s": 2568.9
     },
     "stage3": {
       "state": "NOT_RUN"
@@ -50,16 +78,72 @@ not happen is printed as UNKNOWN; nothing is filled in.
   },
   "E": {
     "distortion": {
-      "state": "UNKNOWN"
+      "D_continuous": 0.3006938870732315,
+      "D_discrete": 0.2980230459204596,
+      "brier_continuous": 0.2554294992988886,
+      "brier_discrete": 0.2531801123428497,
+      "edge_half_continuous": 0.5978612259533833,
+      "edge_half_discrete": 0.5923476446717644,
+      "items": 24587,
+      "neighbour_pairs": 630782,
+      "neighbour_retention": 0.011241601694404723,
+      "quantization_cost": -0.002670841152771941,
+      "scale": 239.0,
+      "state": "DONE",
+      "unobserved_half_continuous": 0.003526548193079764,
+      "unobserved_half_discrete": 0.0036984471691548335
     },
     "layers": {
-      "state": "UNKNOWN"
+      "conditional_l3_gain": -0.10566647648825774,
+      "l3_collision": 0.33542115752226787,
+      "l3_refinement_gain_bits": 2.996780244162955,
+      "level2_distinct_prefixes": 4655,
+      "level3_distinct_triples": 19274,
+      "sid_sha256": "e6059f4ba534f87414b0d0b86e1e166edc3e3319fcc025623e514b6b48d8e576",
+      "state": "DONE",
+      "technically_valid": true,
+      "valid_l1_hard_er": 4.956561499771376,
+      "valid_l1_negative_hit_rate": 0.024826411881562767,
+      "valid_l1_positive_hit_rate": 0.12305363730962066
     },
     "stage2": {
-      "epoch": 2499,
-      "rounds": [],
-      "rounds_done": 2,
-      "state": "RUNNING"
+      "collision": 0.21608980355472407,
+      "rounds": [
+        {
+          "accepted": 83,
+          "epoch": 1500,
+          "from": 0.29949046504959315,
+          "rejected": 122,
+          "seconds": 970.502,
+          "to": 0.2992652203222067
+        },
+        {
+          "accepted": 93,
+          "epoch": 2000,
+          "from": 0.29981932032229014,
+          "rejected": 104,
+          "seconds": 1014.621,
+          "to": 0.29948936113498964
+        },
+        {
+          "accepted": 82,
+          "epoch": 2500,
+          "from": 0.29852744448837826,
+          "rejected": 111,
+          "seconds": 982.595,
+          "to": 0.298063829825587
+        },
+        {
+          "accepted": 88,
+          "epoch": 3000,
+          "from": 0.2982891492902412,
+          "rejected": 111,
+          "seconds": 989.067,
+          "to": 0.2980230453267917
+        }
+      ],
+      "state": "DONE",
+      "wall_s": 5313.1
     },
     "stage3": {
       "state": "NOT_RUN"
@@ -67,126 +151,36 @@ not happen is printed as UNKNOWN; nothing is filled in.
   },
   "F0": {
     "distortion": {
-      "D_continuous": 0.298475489100233,
-      "D_discrete": 0.2964742445391998,
-      "brier_continuous": 0.2534902987762611,
-      "brier_discrete": 0.2518699006976492,
-      "edge_half_continuous": 0.593180043716674,
-      "edge_half_discrete": 0.5890347711348068,
+      "D_continuous": 0.2981365697378734,
+      "D_discrete": 0.2952806919583499,
+      "brier_continuous": 0.2538068776879791,
+      "brier_discrete": 0.2516325575669851,
+      "edge_half_continuous": 0.5925957423274966,
+      "edge_half_discrete": 0.5866926619325883,
       "items": 24587,
       "neighbour_pairs": 630782,
-      "neighbour_retention": 0.010826244249201785,
-      "quantization_cost": -0.002001244561033233,
+      "neighbour_retention": 0.011312941713618968,
+      "quantization_cost": -0.002855877779523508,
       "scale": 239.0,
       "state": "DONE",
-      "unobserved_half_continuous": 0.0037709344837921037,
-      "unobserved_half_discrete": 0.003913717943592767
+      "unobserved_half_continuous": 0.0036773971482502313,
+      "unobserved_half_discrete": 0.003868721984111488
     },
     "layers": {
-      "conditional_l3_gain": -0.12869521667805234,
-      "l3_collision": 0.38849798674096064,
-      "l3_refinement_gain_bits": 3.1849193276617065,
-      "level2_distinct_prefixes": 4256,
-      "level3_distinct_triples": 18245,
-      "sid_sha256": "5907f0b2ceed202b60d876b918effdda78e61da84dcdc9c75db622967761f811",
+      "conditional_l3_gain": -0.13173207741623527,
+      "l3_collision": 0.3890673933379428,
+      "l3_refinement_gain_bits": 3.244652835906699,
+      "level2_distinct_prefixes": 4151,
+      "level3_distinct_triples": 18264,
+      "sid_sha256": "afa89a10b1b197a7b56da4ad322c6ddd96a3c26c04238af326d88747378bb848",
       "state": "DONE",
-      "technically_valid": false,
-      "valid_l1_hard_er": 4.586091709687215,
-      "valid_l1_negative_hit_rate": 0.03115126288903604,
-      "valid_l1_positive_hit_rate": 0.14286254848169522
+      "technically_valid": true,
+      "valid_l1_hard_er": 4.548321167883212,
+      "valid_l1_negative_hit_rate": 0.03239996216062813,
+      "valid_l1_positive_hit_rate": 0.1473654337338
     },
     "stage2": {
-      "collision": 0.2579411884329117,
-      "rounds": [],
-      "state": "DONE",
-      "wall_s": 552.7
-    },
-    "stage3": {
-      "state": "NOT_RUN"
-    }
-  },
-  "G": {
-    "distortion": {
-      "D_continuous": 0.29790533940692465,
-      "D_discrete": 0.2953746819566299,
-      "brier_continuous": 0.2530512126486481,
-      "brier_discrete": 0.25128334517943574,
-      "edge_half_continuous": 0.5920714762164951,
-      "edge_half_discrete": 0.5868301792999926,
-      "items": 24587,
-      "neighbour_pairs": 630782,
-      "neighbour_retention": 0.011355745725147515,
-      "quantization_cost": -0.0025306574502947377,
-      "scale": 239.0,
-      "state": "DONE",
-      "unobserved_half_continuous": 0.0037392025973541415,
-      "unobserved_half_discrete": 0.003919184613267253
-    },
-    "layers": {
-      "conditional_l3_gain": -0.09790515181291302,
-      "l3_collision": 0.3572212958067271,
-      "l3_refinement_gain_bits": 3.0303049561413444,
-      "level2_distinct_prefixes": 4631,
-      "level3_distinct_triples": 18857,
-      "sid_sha256": "b02c847ffd65bb26594670f90b1249870eb1f6da6b6a36ff156a5a6b5e1ecb9a",
-      "state": "DONE",
-      "technically_valid": false,
-      "valid_l1_hard_er": 5.016958937721007,
-      "valid_l1_negative_hit_rate": 0.02621700879765396,
-      "valid_l1_positive_hit_rate": 0.1315296566077003
-    },
-    "stage2": {
-      "collision": 0.23304998576483504,
-      "rounds": [
-        {
-          "accepted": 0,
-          "epoch": 1500,
-          "from": 0.2971307131724467,
-          "rejected": 3,
-          "seconds": 107.574,
-          "to": 0.2971307131724467
-        },
-        {
-          "accepted": 1,
-          "epoch": 2000,
-          "from": 0.29688133433237257,
-          "rejected": 2,
-          "seconds": 107.828,
-          "to": 0.29685883497529053
-        },
-        {
-          "accepted": 1,
-          "epoch": 2500,
-          "from": 0.2969318564677629,
-          "rejected": 2,
-          "seconds": 108.659,
-          "to": 0.2965591139281344
-        },
-        {
-          "accepted": 0,
-          "epoch": 3000,
-          "from": 0.295374682243283,
-          "rejected": 3,
-          "seconds": 99.553,
-          "to": 0.295374682243283
-        }
-      ],
-      "state": "DONE",
-      "wall_s": 975.8
-    },
-    "stage3": {
-      "state": "NOT_RUN"
-    }
-  },
-  "L": {
-    "distortion": {
-      "state": "UNKNOWN"
-    },
-    "layers": {
-      "state": "UNKNOWN"
-    },
-    "stage2": {
-      "epoch": 1499,
+      "epoch": 1534,
       "rounds": [],
       "rounds_done": 0,
       "state": "RUNNING"
@@ -194,6 +188,34 @@ not happen is printed as UNKNOWN; nothing is filled in.
     "stage3": {
       "state": "NOT_RUN"
     }
-  }
-}
+  },
+  "G": {
+    "distortion": {
+      "D_continuous": 0.29484963504052925,
+      "D_discrete": 0.29158895527870904,
+      "brier_continuous": 0.2523244910504805,
+      "brier_discrete": 0.24972592996935353,
+      "edge_half_continuous": 0.5857209373446078,
+      "edge_half_discrete": 0.5789653100837634,
+      "items": 24587,
+      "neighbour_pairs": 630782,
+      "neighbour_retention": 0.01104977630940642,
+      "quantization_cost": -0.0032606797618202066,
+      "scale": 239.0,
+      "state": "DONE",
+      "unobserved_half_continuous": 0.003978332736450673,
+      "unobserved_half_discrete": 0.004212600473654735
+    },
+    "layers": {
+      "conditional_l3_gain": -0.16889731478003395,
+      "l3_collision": 0.4218489445642006,
+      "l3_refinement_gain_bits": 3.4743003658400755,
+      "level2_distinct_prefixes": 3714,
+      "level3_distinct_triples": 17685,
+      "sid_sha256": "98355a218df41120e09cfbd49fbd390b3843554569cdacb1594aad91de0ca0c7",
+      "state": "DONE",
+      "technically_valid": true,
+      "valid_l1_hard_er": 3.7899712289354706,
+      "valid_l1_negative_hit_rate": 0.046031595875508466,
+      "valid_l1_positive_hit
 ```
