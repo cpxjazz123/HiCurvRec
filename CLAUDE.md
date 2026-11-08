@@ -75,6 +75,19 @@
 39. `tools/research/integrations/` 只使用现有 MCP 训练接口，不得自行创建第二套训练调度器。
 40. `tools/research/agents/` 的真实进程默认禁用，必须在隔离和测试验收后才允许开启。
 
+## 6b. Stage3 完成后必须归档到 R2（2026-11-08 owner 指令）
+
+每次 **Stage3 跑完**，必须把该次结果所需的一切上传到 Cloudflare R2，缺一不可：
+
+1. **该 Stage3 所用的 Stage2 代码**（`stage2_RQ-VAE/TIGER_mixed_rq_<ARM>/` 的 `train_rqvae.py`、`model/`、`math_spec.json`、`reference_contract.json`，打包为 `stage2_source.tar.gz`）；
+2. **SID 文件**（`item_sids.json`）；
+3. **导出该 SID 的 Stage2 checkpoint**（`rqvae_best.pth`）；
+4. **完整的 Stage3 recall 记录**——不止 `test_recall@10`，`test_final.json` 的全部键值原样上传，并附 `HG_Rec.log` 与 `training_metrics.jsonl`。
+
+实现：`results/research/issue139/upload_stage3.py <ARM>`，凭证从仓库根的 `r2_apikey` 读取（**该文件已加入 `.gitignore`，禁止入库**），rclone 通过环境变量配置、不在主机留持久配置。目标位置 `r2:models/genrec/issue139/<ARM>/<UTC 时间戳>/`，同目录写 `manifest.json`（每个文件的 SHA-256、完整 recall 块、缺失项清单）。`run_stage3.py` 在每臂产出 `test_final.json` 后自动调用它。
+
+`r2_apikey` 只用于上传；任何日志、manifest、提交都不得包含其内容。
+
 ## 7. Git 与交付
 
 41. Git 远端只允许使用 `https://github.com/cpxjazz123/HiCurvRec.git`。

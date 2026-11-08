@@ -105,7 +105,15 @@ def main() -> int:
             result = stage3_result(arm)
             if result is not None:
                 log("%s Stage 3 done: R@10=%.6f" % (arm, result.get("test_recall@10", -1)))
-                report[arm] = {"state": "done", "recall@10": result.get("test_recall@10")}
+                report[arm] = {"state": "done", "recall@10": result.get("test_recall@10"),
+                               "recall_block": result}
+                # The rule: every finished Stage 3 is archived to R2 with the Stage 2
+                # code, the SID, the checkpoint and the complete recall record.
+                archive = subprocess.run(
+                    [PY, str(OUT / "upload_stage3.py"), arm],
+                    capture_output=True, text=True, timeout=3600)
+                log("%s archive: %s" % (arm, ((archive.stdout or archive.stderr).strip()
+                                              .splitlines() or ["?"])[-1][:200]))
                 break
             time.sleep(120)
         else:
