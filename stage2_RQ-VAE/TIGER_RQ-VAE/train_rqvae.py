@@ -231,7 +231,20 @@ def _tokenizer_config() -> SimpleNamespace:
 
 def main() -> None:
     # === DDP 初始化 ===
-    if "RANK" in os.environ and int(os.environ.get("RANK", -1)) >= 0:
+    if _single_card_mode():
+        # One process, one rank, no process group: every collective below is
+        # guarded by world_size > 1 and therefore skipped.
+        rank, world_size, local_rank = 0, 1, 0
+        global BATCH_SIZE_PER_RANK
+        BATCH_SIZE_PER_RANK = SINGLE_CARD_BATCH
+        if torch.cuda.is_available():
+            torch.cuda.set_device(0)
+            device = torch.device("cuda:0")
+        else:
+            device = torch.device("cpu")
+        print("[single card] one process, one rank, per-process batch %d"
+              % BATCH_SIZE_PER_RANK, flush=True)
+    elif "RANK" in os.environ and int(os.environ.get("RANK", -1)) >= 0:
         dist.init_process_group(backend="nccl")
         rank = dist.get_rank()
         world_size = dist.get_world_size()
@@ -433,10 +446,41 @@ def main() -> None:
         dist.destroy_process_group()
 
 
+#: The single-card contract of the frozen recipe. On a host with one visible
+#: card the trainer runs in this process as the only rank instead of forking
+#: four, and the per-process batch is the four-rank global batch, so the
+#: optimisation regime does not move: the same six optimizer steps per epoch
+#: over the same samples, only the order of the summation differs.
+SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"
+SINGLE_CARD_BATCH = 4096
+
+
+def _visible_card_count() -> int:
+    """How many cards this process can actually see."""
+    try:
+        return max(1, int(torch.cuda.device_count()))
+    except Exception:  # noqa: BLE001 - a host without torch still has to run CPU
+        return 0
+
+
+def _single_card_mode() -> bool:
+    return os.environ.get(SINGLE_GPU_ENV) == "1"
+
+
 def _launch_via_torchrun() -> None:
-    """2026-09-22: 与 stage3 同款, 但不同端口 (50202). 顶层调用时自动 fork 4 卡 DDP."""
+    """Four ranks on a four-card host; this process alone when there is one card.
+
+    The frozen recipe starts four ranks through the framework's launcher. On a
+    host with a single visible card that launch cannot work: ranks 1 to 3 ask
+    for ``cuda:1`` to ``cuda:3`` and torch aborts with 'invalid device ordinal'.
+    A one-card host therefore runs in this process, with the four-rank global
+    batch and no process group.
+    """
     if int(os.environ.get("RANK", -1)) >= 0:
         return  # 已经在 torchrun 启动的子进程里
+    if _visible_card_count() <= 1:
+        os.environ[SINGLE_GPU_ENV] = "1"
+        return
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
     env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["visible_dev"]
