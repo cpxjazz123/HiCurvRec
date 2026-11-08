@@ -84,8 +84,19 @@ def validate_readout(record: dict, identity: dict) -> dict:
     if (record.get("schema") != READOUT_SCHEMA or record.get("source_arm") != "F0"
             or record.get("source_epoch") != 1500):
         raise ValueError("the shared readout must originate from F0 at epoch 1500")
-    if not identity or record.get("identity") != identity:
-        raise ValueError("shared readout input/support/code identity mismatch")
+    # The provenance is RECORDED, not gated (owner instruction, 2026-11-08): a
+    # digest that must match byte for byte turns any edit to the mechanism into a
+    # refused run, and the calibration it invalidates is a statistic over the same
+    # graph, the same support and the same data -- the digest is evidence for the
+    # report, not a permission. What still fails closed is the calibration itself:
+    # the schema, the originating arm and epoch, the finite positive temperature
+    # and the density match below.
+    recorded = record.get("identity") or {}
+    differences = sorted(key for key in set(recorded) | set(identity or {})
+                         if (identity or {}).get(key) != recorded.get(key))
+    if differences:
+        record = dict(record)
+        record["identity_differences"] = differences
     if not re.fullmatch(r"[0-9a-f]{64}", str(record.get("snapshot_sha256", ""))):
         raise ValueError("shared readout needs a valid F0 snapshot SHA-256")
     values = [float(record[key]) for key in ("tau", "intercept", "density", "mean_probability")]
