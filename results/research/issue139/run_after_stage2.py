@@ -55,11 +55,19 @@ def complete(arm: str) -> bool:
     if not starts:
         return False
     start = events[starts[-1]]
-    if float(start.get("timestamp") or 0) < SCRIPT_START:
-        return False
     body = events[starts[-1]:]
     ends = [event for event in body if event.get("event") == "train_end"]
-    return bool(ends) and bool([e for e in body if e.get("event") == "train"])
+    epochs = [event for event in body if event.get("event") == "train"]
+    if not ends or not epochs:
+        return False
+    # The SID has to come from this run: an arm whose identifier predates its
+    # last training start is mid-run, and one whose identifier is newer than the
+    # start has finished. That accepts F0, which finished before this script
+    # started, without accepting the four-card runs of the other arms.
+    sid = REPO / "results" / "stage2_RQ-VAE" / ("TIGER_mixed_rq_" + arm) / "item_sids.json"
+    if not sid.is_file():
+        return False
+    return sid.stat().st_mtime >= float(start.get("timestamp") or 0)
 
 
 def record_layers(arm: str) -> str:
