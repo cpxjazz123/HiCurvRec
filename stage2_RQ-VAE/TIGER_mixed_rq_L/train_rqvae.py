@@ -755,10 +755,30 @@ def main() -> None:
         dist.destroy_process_group()
 
 
+def _visible_card_count() -> int:
+    """How many cards this process can actually see."""
+    try:
+        import torch
+        return max(1, int(torch.cuda.device_count()))
+    except Exception:  # noqa: BLE001 - a host without torch still has to run CPU
+        return 0
+
+
 def _launch_via_torchrun() -> None:
-    """2026-09-22: 与 stage3 同款, 但不同端口 (50202). 顶层调用时自动 fork 4 卡 DDP."""
+    """Four ranks on a four-card host; this process alone when there is one card.
+
+    The frozen recipe starts four ranks through the framework's launcher. On a
+    host with a single visible card that launch cannot work: ranks 1 to 3 ask for
+    ``cuda:1`` to ``cuda:3`` and torch aborts with 'invalid device ordinal', which
+    is what this host was doing. A one-card host therefore runs the trainer in
+    this process, with the per-process batch that keeps the global batch at the
+    four-rank value, and no process group at all.
+    """
     if int(os.environ.get("RANK", -1)) >= 0:
         return  # 已经在 torchrun 启动的子进程里
+    if _visible_card_count() <= 1:
+        os.environ[SINGLE_GPU_ENV] = "1"
+        return
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
     env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["visible_dev"]
