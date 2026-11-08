@@ -100,8 +100,10 @@ class ProfilePenaltyTest(unittest.TestCase):
     def test_equals_the_huber_of_the_coordinate_difference(self):
         predicted = torch.tensor([[0.3], [-2.0]], dtype=torch.float64)
         target = torch.tensor([[-0.1], [0.5]], dtype=torch.float64)
+        # The contract surface returns one scalar per row; the raw penalty keeps
+        # the coordinate axis.
         torch.testing.assert_close(module.profile_penalty(predicted, target, 1.0),
-                                   huber_penalty(predicted - target, 1.0),
+                                   huber_penalty(predicted - target, 1.0).squeeze(-1),
                                    rtol=0, atol=0)
 
     def test_gradient_is_the_residual_inside_the_quadratic_region(self):
