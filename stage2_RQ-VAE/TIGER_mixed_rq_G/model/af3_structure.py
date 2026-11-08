@@ -185,7 +185,12 @@ def build_support(graph: dict, kappa: dict, embeddings: np.ndarray | None = None
             drawn += 1
             strata_counts[str(bucket)] += 1
 
-    pair_array = np.array(pairs, dtype=np.int64)
+    # The order of the support is part of its identity: it is hashed into the
+    # shared readout's provenance, and an order that came from set iteration
+    # differs between processes even when every pair is the same. Sorting by
+    # (left, right) makes the support reproducible from its inputs alone, which
+    # is what "a fixed support" has to mean.
+    pair_array = np.array(sorted(set(pairs)), dtype=np.int64)
     is_edge = np.zeros(len(pair_array), dtype=bool)
     edge_index = {}
     for index, (i, j) in enumerate(zip(rows, cols)):
