@@ -35,7 +35,7 @@ sys.path.insert(0, str(RESEARCH))
 from upload_stage3 import R2_REMOTE, RCLONE, credentials, sha256  # noqa: E402
 
 AUDIT = REPO / "analysis_sid_recall" / "pair_audit.csv"
-PREFIX = "genrec/issue139pairs"
+PREFIX = "issue139pairs"
 
 
 def recall_block(path: Path) -> dict:

@@ -84,7 +84,7 @@
 3. **导出该 SID 的 Stage2 checkpoint**（`rqvae_best.pth`）；
 4. **完整的 Stage3 recall 记录**——不止 `test_recall@10`，`test_final.json` 的全部键值原样上传，并附 `HG_Rec.log` 与 `training_metrics.jsonl`。
 
-实现：`results/research/issue139/upload_stage3.py <ARM>`，凭证从仓库根的 `r2_apikey` 读取（**该文件已加入 `.gitignore`，禁止入库**），rclone 通过环境变量配置、不在主机留持久配置。目标位置 `r2:models/genrec/issue139/<ARM>/<UTC 时间戳>/`，同目录写 `manifest.json`（每个文件的 SHA-256、完整 recall 块、缺失项清单）。`run_stage3.py` 在每臂产出 `test_final.json` 后自动调用它。
+实现：`results/research/issue139/upload_stage3.py <ARM>`，凭证从仓库根的 `r2_apikey` 读取（**该文件已加入 `.gitignore`，禁止入库**），rclone 通过环境变量配置、不在主机留持久配置。目标位置 **`r2:genrec/issue139/<ARM>/<UTC 时间戳>/`**（专用桶 `genrec`，2026-11-08 新建），同目录写 `manifest.json`（每个文件的 SHA-256、完整 recall 块、缺失项清单）。`run_stage3.py` 在每臂产出 `test_final.json` 后自动调用它。
 
 **只归档四件齐全的**：SID 表、码本、Stage2 源码树、完整 Stage3 recall 块——缺任一件就**不上传**，并在脚本输出的缺口统计里注明原因（这是 owner 2026-11-08 的明确要求）。历史 118 个 VERIFIED 配对中齐全的只有 **8 个**；`upload_pairs.py` 默认只传这 8 个（`--include-incomplete` 才放宽），`upload_stage3.py` 默认要求 `test_final.json` 存在（`--allow-incomplete` 才放宽）。
 

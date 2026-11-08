@@ -31,7 +31,7 @@ REPO = Path(__file__).resolve().parents[3]
 CREDENTIALS = REPO / "r2_apikey"
 RCLONE = Path("/home/wlia0047/bin/rclone")
 #: Where the archive lives. The bucket exists already; the prefix is ours.
-R2_REMOTE = "r2:models"
+R2_REMOTE = "r2:genrec"
 R2_PREFIX = "genrec/issue139"
 
 
