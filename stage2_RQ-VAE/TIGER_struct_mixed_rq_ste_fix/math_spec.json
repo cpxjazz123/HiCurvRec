@@ -203,8 +203,8 @@
    ],
    "callable": "NOT_IMPLEMENTED",
    "note": "one shared s, one lambda, one TRAIN triple set with the three pair targets; no next-item objective, no per-layer scale, no second gather.  The implemented training term is the last-layer structure loss, not this prefix objective",
-   "full_space": "E16 x H16: the Euclidean part is a squared difference; the H16 part uses the radial ball map to_ball(t)=tanh(|t|)/|t|*t, the vector cross-ratio t=(1-|b|^2)(1-|b'|^2)/|b-b'|^2 and phi(t)=asinh(sqrt(t))^2; curvature c=1 is a fixed normalisation, not a per-layer degree of freedom",
-   "residual_and_readback": "levels are encoded once; each layer quantises the running residual r_l = r_{l-1} - z_l and the cumulative codeword position is read back by the native right-nested composition; the prefix term may not re-quantise or add a second gather",
+   "full_space": "E16 x H16: Euclidean part is a squared difference. H part: ball point b = to_ball(t) = tanh(|t|)/|t| * t; t_cross = |b-b'|^2 / ((1-|b|^2)(1-|b'|^2)) (this direction, NOT its reciprocal); phi(t) = asinh(sqrt(t))^2 and d_M^2 = |e-e'|^2 + phi(t). Standard hyperbolic squared distance is 4*phi; the product term uses phi, so the normalisation is fixed and c=1. A reciprocal cross-ratio would diverge at the legal collision b=b' (t_cross=0) and is wrong.",
+   "residual_and_readback": "Let C_l be the selected codeword's tangent coordinates at level l and B_l = code_ball(C_l^H); initial state r_0^E = z^E, r_0^H = to_ball(z^H). Then r_l^E = r_{l-1}^E - C_l^E and r_l^H = (-B_l) mobius_add r_{l-1}^H (Moebius left inverse). The cumulative codeword position of level l is R_l = (sum_{j<=l} C_j^E, log_0(B_1 mobius_add (B_2 mobius_add ... B_l))); the readback is q_l = R_l + z - sg(z). The selection input is the E coordinates of the current residual and log_0 of its H ball, not a whole-space subtraction. Mobius addition and its inverse are defined on the open ball |a|<1; boundary points are excluded. Encoder STE and codebook native Jacobian are stated separately in ste_boundaries.",
    "ste_boundaries": "encoder receives straight-through gradients through each selection; codebooks receive their native readback gradients only; the discrete choice remains the baseline Sinkhorn assignment, not a plain argmin",
    "calibration": {
     "s": "one shared positive scale from calibrate_structure_scale on the initialised model: the median h=1 pair distance over TRAIN triples; structure.calibrate_scale currently returns 1.0 on an empty sample, which is a known degenerate default and is not a calibrated value",
@@ -215,7 +215,11 @@
     "the reduced E1 x H1 adapter uses h=1+tanh(u) and box sampling; exact h=2 is covered by the real target tests (test_structure.py), not by the reduced adapter",
     "H1 squared-difference identity does not demonstrate H16 non-Euclidean effects",
     "this prefix objective is NOT_IMPLEMENTED in the trainer; only the last-layer structure term runs"
-   ]
+   ],
+   "rejected_draft_forms": {
+    "cross_ratio_reciprocal": "t_draft=(1-|a|^2)(1-|b|^2)/|a-b|^2 gave 19.007999999999996 where the native t is 0.05260942760942763 for the same ball points, and divides by zero at the legal collision",
+    "euclidean_residual": "r_l=r_{l-1}-z_l would give H tangent (0.2,-0.2) instead of the native (0.1868567811974333,-0.22350722788306665); a native readback then recovers with error 0.023069610924273662 instead of 8.3e-17"
+   }
   },
   "expression_note": "on the E1 x H1 subface the H16 cross-ratio reduces to sinh(x1-y1)^2 and asinh^2(sqrt(t)) = (x1-y1)^2; the statements use that identity so the declared surface has a finite backward at coincident points"
  },
