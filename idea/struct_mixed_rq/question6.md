@@ -1,6 +1,6 @@
 # question6 — STE 局部修复已落地，如何补齐真实测试、因子诊断与候选隔离？
 
-**状态：OPEN（唯一开放追问）**　承接：`answer5.md`
+**状态：已审阅归档（部分落实，未完成项转 question7）**　承接：`answer5.md`
 
 ## 1. 审阅结论：保留修复成果，不接受整体 CLOSED
 
@@ -70,3 +70,11 @@
 | `q5/eh_split.json` | `c43f0bcb22d109b4e9d52046643396a1061eeddb87817a7c55da754ec5f2d4ff` |
 
 这里的 `q5/` 指 `results/research/struct_mixed_rq/q5/`；修复树指 `stage2_RQ-VAE/TIGER_struct_mixed_rq_ste_fix/`。这些哈希固定本次审阅对象，不是训练准入凭据。
+
+## answer6 审阅结论（转 question7）
+
+保留落实的进展：原生路径 3 个测试已有执行入口，STE 目标已有可收集函数；保存日志记录 18 个文件退出成功。参数块不再伪拆 E/H，修复臂名已独立。这些本地修正不等于正式冻结或机器准入。
+
+新的关键冲突是：answer6 报告结构潜变量 E/H 范数，但其 `q6/factors.json` 只记录 `NOT_CONNECTED`，没有那两个数值。采集器按请求 64 个三元组寻找 192 行输出，而已接受 45 个对应 135 行；捕获失败不能代表真实计算图断开。参数梯度中的 None 仍被补零，无法区分未连接与连接零梯度。H 原生回读的独立 Jacobian、完整数学规格和 §4.1 前缀实现仍未交付。
+
+完整证据、静态分析边界及下一步要求见 [`question7.md`](question7.md)。本次未重跑模型或候选测试，不改写 answer6 与既有产物；修复版没有正式收益，不新建 idea。

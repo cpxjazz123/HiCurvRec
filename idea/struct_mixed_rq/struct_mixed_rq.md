@@ -1,8 +1,8 @@
 # struct_mixed_rq — 闭合/分叉结构监督下的固定 E16×H16 乘积空间 RQ-VAE
 
 > 主线（不变）：把曲率几何真正接入 RQ-VAE 的选码与重构通路，并以冻结协议下的 Stage3 `test_R@10` 判断是否获得增益。
-> 候选树：`stage2_RQ-VAE/TIGER_struct_mixed_rq`。本文是机制说明，不是准入声明。
-> 本目录的开放问题按 `question1.md`、`question2.md`… 顺序推进；**同一时刻只允许一个未解决的问题**，前一个关闭后才建下一个。
+> 原实验树：`stage2_RQ-VAE/TIGER_struct_mixed_rq`；隔离修复副本：`stage2_RQ-VAE/TIGER_struct_mixed_rq_ste_fix`（未准入、未正式训练）。本文是机制说明，不是准入声明。
+> 本目录的开放问题按 `question1.md`、`question2.md`… 顺序推进；**同一时刻只保留一个 OPEN 追问**。已答问题审阅归档，未完成要求显式转入下一问，不视为验收通过。
 
 ---
 
@@ -128,7 +128,7 @@ $$\mathcal L_{\text{struct}}=\mathbb E_T\Bigl[\tfrac13\sum_{a<b}\Bigl(\frac{d_M^
 
 1. 曲线距离进入真实选码代价；Möbius 残差/合成/log0 回读进入 `RQLayer`/decoder。
 2. 真实 TRAIN batch：仅重构 → encoder 与三级码本均非零梯度；结构项 → 两者均非零且一步 AdamW 后参数确实变化。还须核对 E/H 因子的方向与倍率，不能只凭完整张量范数非零验收代理梯度。
-3. CPU 预检记录换码计数（见 `question1.md`）；联合损失训练前后的换码只证明训练轨迹在动，不能单独证明结构项或曲率的贡献。历次测量与修复审阅见 `question2.md`–`question5.md`，当前测试执行、因子诊断与隔离缺口见 `question6.md`。
+3. CPU 预检记录换码计数（见 `question1.md`）；联合损失训练前后的换码只证明训练轨迹在动，不能单独证明结构项或曲率的贡献。历次测量与修复审阅见 `question2.md`–`question6.md`，当前潜变量证据、H 梯度与完整规格要求见 `question7.md`。
 4. 记录对 token 重标号不敏感的指标：L1/L2/L3 同前缀邻居对比例、前缀数、L3 碰撞率、训练分支（Sinkhorn+argmax）与导出分支（argmin）的 token 差异率。
 
 **最终判据**：一次冻结 Stage2（3000 epoch、全局 batch 4096、seed 42、无早停）→ 同名目录冻结 Stage3（150 epoch）→ `test_R@10 > 0.065`。AF3 Gap、聚类系数、距离失真只作诊断。
@@ -144,16 +144,18 @@ $$\mathcal L_{\text{struct}}=\mathbb E_T\Bigl[\tfrac13\sum_{a<b}\Bigl(\frac{d_M^
 
 ---
 
-## 9. 当前状态（审阅 answer5）
+## 9. 当前状态（审阅 answer6）
 
-已实现记录：固定 E16×H16 与 `phi` 距离；原生残差 + 右嵌套回读接入 `RQLayer`；结构项已去除旧的额外 gather 路径；STE 局部修复已写入 `TIGER_struct_mixed_rq_ste_fix`，原树保留旧图，修复副本尚未完整验收；单一几何开关；块预算标定（历史 CPU 读数 $\lambda=3.5211\text{e-}06$，不是正式训练的实际标定值）；旧 ratio 校准路径清零。
+已实现记录：固定 E16×H16 与 `phi` 距离；原生残差 + 右嵌套回读接入 `RQLayer`；结构项已去除旧的额外 gather 路径；STE 局部修复已写入 `TIGER_struct_mixed_rq_ste_fix`，原树保留旧图，修复副本的本地测试入口与臂名已修正，正式规格/准入仍未完成；单一几何开关；块预算标定（历史 CPU 读数 $\lambda=3.5211\text{e-}06$，不是正式训练的实际标定值）；旧 ratio 校准路径清零。
 
 关键提交：`dd9f47cb`（原生回读）、`85ad67d5`（Möbius 残差）、`22009173`（单一路径）、`19cac54a`（单开关 + 去重）、`f35a9e9e`（去 `STRUCT_LAMBDA_RATIO`）、`b3178d3e`（删旧 ratio 校准）。
 
-`question1`–`question5` 的实验与审阅按顺序归档，未完成的测试、测量、身份及规格要求集中转交 `question6.md`，不把局部修复记为完整机制验收。question1 的换码只是联合训练观测；question2 修正了占用口径与 train/eval 切换。两者原 `/tmp` 输出仍未找到，不能以最终 checkpoint 的新测量冒充旧轨迹复现。
+`question1`–`question6` 的实验与审阅按顺序归档，未完成的诊断、数学对照、规格及运行身份要求集中转交 `question7.md`，不把局部修复记为完整机制验收。question1 的换码只是联合训练观测；question2 修正了占用口径与 train/eval 切换。两者原 `/tmp` 输出仍未找到，不能以最终 checkpoint 的新测量冒充旧轨迹复现。
 
 既有日志已记录 3000 epoch Stage2 与 150 epoch Stage3 完成，Stage2 实际标定为 $s=0.04444597661495209$、$\lambda=9.226019983543665\text{e-}07$。SID SHA-256 为 `7c147fc634cc2939367d3fc83bc0a8ebfaa2d96a92cf23e060c7c88b4ac390a1`，分层报告已存在。同名 Stage3 的 `test_final.json` 已核对：`test_recall@10=0.05790490781524748`，**未达到 0.065**；这是旧源码图的结果，不能沿用为修复版本收益。R2 台账编号 57 记录该旧版本，本次未远端逐文件重验。§4.1 逐层前缀监督仍为设计项，完整机制未交付。
 
-`answer5` 的修复源码与保存的 E 因子红→绿断言相符，但“16 个脚本成功”漏掉了没有执行入口的 3 个原生路径测试，新增 STE 断言也尚非 pytest 可收集用例。encoder/decoder 的参数列切分不是 E/H 因子归因；C1/C2/C3 的 32 维码本拆分有效。修复副本 `ARM_NAME` 仍指旧臂，默认产物路径存在冲突；未见已覆盖证据，不启动训练。规格仍为 DRAFT，旧运行冻结身份仍 UNAVAILABLE，不倒填。本次只核对源码、保存记录、哈希与静态 AST，未重新执行模型或测试套件。
+`answer6` 保存了 18 个文件退出成功的本地测试日志；原生路径 3 个函数已有执行入口，STE 目标已有可收集函数。参数块不再伪拆 E/H，修复臂名已独立；实际运行的不可变绑定与机器准入仍未完成。
 
-唯一开放追问：[`question6.md`](question6.md)——保留 STE 局部修复，补齐真正执行的测试、按实际潜坐标定义的梯度诊断、框架产物隔离与真实冻结凭据；不调参、不覆盖旧实验、不自动派发正式训练。原始 answer 文件不改写；机制尚未完整验收，修复版下游收益为 NOT_RUN，不创建新 idea。
+新增证据缺口：文中所报结构潜变量 E/H 范数不在其 `q6/factors.json` 中，原文件实际为 `NOT_CONNECTED`。采集器按请求数寻找 192 行，接受的 45 个三元组对应 135 行，不能将捕获失败当成计算图断开；参数梯度 None 补零也仍丢失连接状态。H 回读现有检查只证非零梯度，独立 Jacobian 对照未交付。规格仍为 DRAFT，旧运行冻结身份仍 UNAVAILABLE，不倒填。本次只检查源码、保存记录、哈希及静态统计，未重跑模型或候选测试。
+
+唯一开放追问：[`question7.md`](question7.md)——先修正潜变量证据错报与 None/零混淆，再补 H 原生计算的独立梯度、§4.1 完整规格及框架运行身份；已落实的局部修复不推倒重来。不调参、不覆盖旧实验、不自动派发正式训练。原始 answer 文件不改写；机制尚未完整验收，修复版下游收益为 NOT_RUN，不创建新 idea。
