@@ -96,8 +96,9 @@ def main():
         for mode in ("geometry_on", "geometry_off"):
             geometry = mode == "geometry_on"
             _, _, _, pair_tokens, pair_levels = model.forward_with_codes(batch[[a, b]])
-            positions = pair_levels[-1] + (model.codes_to_positions(pair_tokens)
-                                           - model.codes_to_positions(pair_tokens).detach())
+            # one path only: levels[-1] is the native readback and already carries
+            # the codebook gradient; adding codes_to_positions doubled it
+            positions = pair_levels[-1]
             structure_term = S.pair_stress(positions[0:1], positions[1:2], scale=scale,
                                            h=1.0, geometry_on=geometry)
             reconstructed, quant_loss, _, _, _ = model.forward_with_codes(batch[[a, b]])

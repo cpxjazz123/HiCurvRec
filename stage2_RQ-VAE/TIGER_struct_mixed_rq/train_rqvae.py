@@ -387,9 +387,14 @@ def main() -> None:
         if rank == 0:
             print("[structure] scale=%.6f lambda=%.6f triples/step=%d switches behaviour=%s geometry=%s"
                   % (struct_scale, struct_lambda, STRUCT_TRIPLES, BEHAVIOUR_ON, GEOMETRY_ON), flush=True)
+        deciding = min((name for name, block in block_detail["blocks"].items()
+                        if block["base_norm"] and block["structure_norm"]),
+                       key=lambda name: block_detail["blocks"][name]["base_norm"]
+                       / block_detail["blocks"][name]["structure_norm"], default=None)
         _record(rank, "structure_calibration", scale=struct_scale, lam=struct_lambda,
                 triples=STRUCT_TRIPLES, behaviour_on=BEHAVIOUR_ON, geometry_on=GEOMETRY_ON,
-                calibration_triples=STRUCT_CALIBRATION_TRIPLES)
+                calibration_triples=STRUCT_CALIBRATION_TRIPLES,
+                blocks=block_detail["blocks"], lambda_deciding_block=deciding)
     struct_rng = __import__("random").Random(SEED + rank + 1000)
 
     # Stage3 only consumes the final-epoch weights, so tracking the best

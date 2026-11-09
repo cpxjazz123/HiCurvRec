@@ -29,18 +29,6 @@ class RQVAE(nn.Module):
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens
 
-    def codes_to_positions(self, tokens: torch.Tensor) -> torch.Tensor:
-        """Sum of the selected codeword vectors: differentiable in the codebook.
-
-        The straight-through vector has no gradient into the codebook, so the
-        structure term adds this term to let the selected codewords themselves move.
-        """
-        positions = None
-        for level, layer in enumerate(self.rq.vq_layers):
-            vector = layer.embed_code(tokens[..., level])
-            positions = vector if positions is None else positions + vector
-        return positions
-
     def forward_with_codes(self, embeddings: torch.Tensor):
         """Forward that also returns the cumulative vector of every level.
 
