@@ -76,7 +76,6 @@ METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 BEHAVIOUR_ON        = True     # structure term on/off
 GEOMETRY_ON         = True     # product geodesic on/off (Euclidean control otherwise)
 STRUCT_TRIPLES      = 256      # triples per optimisation step
-STRUCT_LAMBDA_RATIO = 0.1      # structure term == 10% of the base loss at init
 STRUCT_CALIBRATION_TRIPLES = 4096
 
 EPOCHS              = 3000
