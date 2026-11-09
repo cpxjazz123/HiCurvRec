@@ -77,6 +77,17 @@ def test_calibrated_scale_is_positive_and_reproducible():
     assert first > 0 and first == second
 
 
+def test_gradient_weight_calibration_hits_the_ratio():
+    model = tiny_model()
+    embeddings = torch.randn(6, 32, requires_grad=False)
+    base = sum((p ** 2).sum() for p in model.parameters())
+    lam, detail = H.calibrate_lambda_by_gradient(
+        model, embeddings, synthetic_graph(), random.Random(4), scale=1.0, size=16,
+        base_loss=base, target_ratio=0.1, geometry_on=True)
+    assert detail["structure_grad_norm"] > 0 and detail["base_grad_norm"] > 0
+    assert abs(lam * detail["structure_grad_norm"] / detail["base_grad_norm"] - 0.1) < 1e-9
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

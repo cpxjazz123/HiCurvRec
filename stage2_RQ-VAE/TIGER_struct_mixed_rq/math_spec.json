@@ -5,8 +5,8 @@
     "hyperbolic half mapped into the Poincare ball of curvature 1 by the radial map h * tanh(||h||)/||h||, with a 1-1e-6 guard so no point reaches the boundary",
     "product squared distance: ||e1-e2||^2 + d_H(h1,h2)^2/4",
     "closed triangle: three pairs with target h=1; open wedge A-B, A-C: observed pairs h=1, the unobserved B-C pair h=2",
-    "structure objective: (1/3) sum over the three pairs of (d/(scale*h) - 1)^2, evaluated on positions rebuilt from the selected codewords",
-    "scale: median distance of the h=1 pairs on a fixed TRAIN sample, measured once after codebook init; weight: lambda = ratio * |base| / |structure| at the same point, ratio 0.1"
+    "structure objective: (1/3) sum over the three pairs of (d^2/(s^2 h^2) - 1)^2, on positions rebuilt from the selected codewords",
+    "scale: median distance of the h=1 pairs on a fixed TRAIN sample, once after codebook init; weight: lambda solved so ||grad L_structure|| is a declared fraction of ||grad L_base|| at the same TRAIN point (gradient units, not a ratio of loss values)"
   ],
   "inputs": {
     "z": [
@@ -23,7 +23,8 @@
     "margin": null,
     "scale": "calibrated, frozen",
     "lambda": "calibrated, frozen",
-    "ratio": 0.1
+    "ratio": 0.1,
+    "weight_rule": "gradient-norm calibration; the 0.1 target is a declared constant, not tuned on recall"
   },
   "dimensions": {
     "latent": 32,
@@ -92,10 +93,9 @@
       "h0 = 1 + tanh(u0)",
       "h1 = 1 + tanh(u1)",
       "h2 = 1 + tanh(u2)",
-      "r01 = sqrt(d01) / (scale * h0)",
-      "r01 = sqrt(d01) / (s * h0)",
-      "r02 = sqrt(d02) / (s * h1)",
-      "r12 = sqrt(d12) / (s * h2)",
+      "r01 = d01 / (s * s * h0 * h0)",
+      "r02 = d02 / (s * s * h1 * h1)",
+      "r12 = d12 / (s * s * h2 * h2)",
       "L = ((r01 - 1) ** 2 + (r02 - 1) ** 2 + (r12 - 1) ** 2) / 3"
     ],
     "output": "L",
@@ -116,5 +116,12 @@
       ],
       "output": "d"
     }
+  },
+  "status": "DRAFT \u2014 revised per review; not admitted, not frozen",
+  "revision": {
+    "version": 2,
+    "reason": "the distance-norm stress (d/(s h) - 1)^2 has a cusp at a collision (q_a == q_b is possible once hard SIDs collide); the squared-distance stress has an exact zero gradient there",
+    "delta": "objective is now (d_M^2 / (s^2 h^2) - 1)^2 per pair; the target distance is unchanged, the loss and its gradient are not",
+    "analytic_reference": "for a Euclidean difference x and target a = s h: grad = 4x/a^2 (||x||^2/a^2 - 1); at x = 0 it is exactly 0"
   }
 }

@@ -83,6 +83,30 @@ def test_hub_centres_do_not_dominate():
     assert centres.count(0) <= 5
 
 
+def test_stress_gradient_is_exactly_zero_at_a_collision():
+    # analytic: d/dx (||x||^2/a^2 - 1)^2 = 4x/a^2 (||x||^2/a^2 - 1) -> 0 at x = 0
+    left = torch.zeros(4, 32, dtype=torch.float64, requires_grad=True)
+    right = torch.zeros(4, 32, dtype=torch.float64)
+    loss = S.pair_stress(left, right, scale=1.3, h=1.0, geometry_on=False)
+    loss.sum().backward()
+    assert torch.equal(left.grad, torch.zeros_like(left.grad))
+
+
+def test_analytic_gradient_of_one_pair_matches_the_formula():
+    left = torch.tensor([[0.4, 0.0]], dtype=torch.float64, requires_grad=True)
+    right = torch.zeros(1, 2, dtype=torch.float64)
+    scale, h = 2.0, 1.0
+    # geometry-off on a width that is not 32: use the full 32-d layout instead
+    left = torch.zeros(1, 32, dtype=torch.float64, requires_grad=True)
+    left.data[0, 0] = 0.4
+    value = S.pair_stress(left, torch.zeros(1, 32, dtype=torch.float64),
+                          scale=scale, h=h, geometry_on=False)
+    value.backward()
+    a2 = (scale * h) ** 2
+    expected = 4 * 0.4 / a2 * (0.4 ** 2 / a2 - 1)
+    assert abs(left.grad[0, 0].item() - expected) < 1e-9
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

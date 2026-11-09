@@ -109,15 +109,27 @@ def triple_targets(kinds: list[str], device=None) -> torch.Tensor:
 PAIR_INDEX = ((0, 1), (0, 2), (1, 2))
 
 
+def pair_stress(left: torch.Tensor, right: torch.Tensor, *, scale: float, h: float,
+                geometry_on: bool | None = None) -> torch.Tensor:
+    """Relative stress on the SQUARED distance, smooth at a collision.
+
+    (d^2/(s^2 h^2) - 1)^2 has derivative 4x/(s^2 h^2) (||x||^2/(s^2 h^2) - 1) in
+    the Euclidean case, which is exactly zero at x = 0: two items that share a
+    hard SID do not sit on a cusp of the loss.
+    """
+    squared = G.mixed_sq(left, right, geometry_on)
+    ratio = squared / (scale * scale * h * h)
+    return (ratio - 1.0) ** 2
+
+
 def structure_loss(points: torch.Tensor, h: torch.Tensor, *, scale: float,
                    geometry_on: bool | None = None) -> torch.Tensor:
-    """(1/3) mean over the three pairs of (d/(scale*h) - 1)^2."""
-    # mixed_sq returns a squared distance; the ratio in the loss is between
-    # distances, so take the root here (the targets h are distances as well).
-    distances = torch.stack([G.mixed_sq(points[:, a], points[:, b], geometry_on).clamp_min(1e-8).sqrt()
-                             for a, b in PAIR_INDEX], dim=-1)
-    ratio = distances / (scale * h.clamp_min(1e-6))
-    return ((ratio - 1.0) ** 2).mean()
+    """(1/3) mean over the three pairs of the squared-distance stress."""
+    ratios = torch.stack([
+        G.mixed_sq(points[:, a], points[:, b], geometry_on)
+        / (scale * scale * h[:, index] ** 2)
+        for index, (a, b) in enumerate(PAIR_INDEX)], dim=-1)
+    return ((ratios - 1.0) ** 2).mean()
 
 
 def calibrate_scale(points: torch.Tensor, h: torch.Tensor) -> float:
@@ -141,17 +153,17 @@ def calibrate_lambda(*, base_loss: float, structure: float, ratio: float) -> flo
 
 
 def reference_objective(points: torch.Tensor, h: torch.Tensor, scale: float) -> torch.Tensor:
-    """The same structure objective on the 2-coordinate surface of the contract."""
+    """Squared-distance stress on the 2-coordinate contract surface."""
     points = points.reshape(points.shape[0], 3, 2)
-    distances = torch.stack([
-        G.reference_surface(points[:, a], points[:, b]) for a, b in PAIR_INDEX], dim=-1).clamp_min(1e-8).sqrt()
-    ratio = distances / (scale * h.clamp_min(1e-6))
+    squared = torch.stack([
+        G.reference_surface(points[:, a], points[:, b]) for a, b in PAIR_INDEX], dim=-1)
+    ratio = squared / (scale * scale * h.clamp_min(1e-6) ** 2)
     return ((ratio - 1.0) ** 2).mean()
 
 
 def reference_objective_surface(points: torch.Tensor, u: torch.Tensor,
                                 scale: torch.Tensor) -> torch.Tensor:
-    """Contract form: the three pair targets are written as 1 + tanh(u) > 0."""
+    """Contract form of the squared stress: targets are 1 + tanh(u) > 0."""
     points = points.reshape(points.shape[0], 3, 2)
     targets = 1.0 + torch.tanh(u)
 
@@ -163,7 +175,8 @@ def reference_objective_surface(points: torch.Tensor, u: torch.Tensor,
         den = (1.0 - left ** 2) * (1.0 - right ** 2)
         return euclid + (torch.acosh(1.0 + num / den) ** 2) / 4.0
 
-    distances = torch.stack([pair(0, 1), pair(0, 2), pair(1, 2)], dim=-1).clamp_min(1e-8).sqrt()
-    ratio = distances / (scale.reshape(-1, 1) * targets)
+    squared = torch.stack([pair(0, 1), pair(0, 2), pair(1, 2)], dim=-1)
+    s = scale.reshape(-1, 1)
+    ratio = squared / (s * s * targets * targets)
     # Per row: the framework compares one value per sample, the trainer averages.
     return ((ratio - 1.0) ** 2).mean(dim=-1)

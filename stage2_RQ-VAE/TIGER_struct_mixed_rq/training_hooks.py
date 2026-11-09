@@ -48,3 +48,27 @@ def calibrate_structure_scale(model, embeddings: torch.Tensor, graph, rng: rando
     positions = _positions(model, embeddings, item_ids).reshape(len(triples), 3, -1)
     h = S.triple_targets([kind for *_, kind in triples], device=positions.device)
     return S.calibrate_scale(positions, h)
+
+
+def calibrate_lambda_by_gradient(model, embeddings: torch.Tensor, graph,
+                                 rng: random.Random, *, scale: float, size: int,
+                                 base_loss: torch.Tensor, target_ratio: float,
+                                 geometry_on: bool | None = None) -> tuple[float, dict]:
+    """Weight so the structure gradient is `target_ratio` of the base gradient.
+
+    A ratio of loss values is not a ratio of influence: the two terms have
+    different curvature and different units.  This measures the gradient norms of
+    the two terms at the same point, on TRAIN data, and solves for the weight there.
+    """
+    def gradient_norm(term: torch.Tensor) -> float:
+        params = [p for p in model.parameters() if p.requires_grad]
+        grads = torch.autograd.grad(term, params, retain_graph=True, allow_unused=True)
+        return sum(float(g.pow(2).sum()) for g in grads if g is not None) ** 0.5
+
+    structure = structure_term(model, embeddings, graph, rng, scale=scale, size=size,
+                               behaviour_on=True, geometry_on=geometry_on)
+    base_norm = gradient_norm(base_loss)
+    structure_norm = gradient_norm(structure)
+    lam = (target_ratio * base_norm / structure_norm) if structure_norm > 1e-12 else 0.0
+    return lam, {"base_grad_norm": base_norm, "structure_grad_norm": structure_norm,
+                 "target_ratio": target_ratio}
