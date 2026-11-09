@@ -55,11 +55,6 @@ def test_scale_calibration_is_deterministic_and_positive():
     assert first == second and first > 0
 
 
-def test_lambda_calibration_hits_the_target_ratio():
-    lam = S.calibrate_lambda(base_loss=10.0, structure=2.0, ratio=0.1)
-    assert abs(lam * 2.0 / 10.0 - 0.1) < 1e-9
-
-
 def test_sampler_respects_edges_and_wedges():
     # Two separate centres: 0 owns a real triangle (1-2 edge exists), 1 owns a
     # real wedge (3-4 edge does not exist).  The fixture itself is checked below.

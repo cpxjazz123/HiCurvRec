@@ -145,13 +145,6 @@ def calibrate_scale(points: torch.Tensor, h: torch.Tensor) -> float:
     return value if value > 1e-6 else 1.0
 
 
-def calibrate_lambda(*, base_loss: float, structure: float, ratio: float) -> float:
-    """Weight that makes the structure term `ratio` of the base loss at init."""
-    if structure <= 1e-9:
-        return 0.0
-    return float(ratio * abs(base_loss) / abs(structure))
-
-
 def reference_objective(points: torch.Tensor, h: torch.Tensor, scale: float) -> torch.Tensor:
     """Squared-distance stress on the 2-coordinate contract surface."""
     points = points.reshape(points.shape[0], 3, 2)
