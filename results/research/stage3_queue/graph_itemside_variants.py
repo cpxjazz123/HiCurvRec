@@ -49,6 +49,26 @@ def pairs(seqs, window: int):
     return edges[edges[:, 0] != edges[:, 1]]
 
 
+def session_pairs(seqs, per_session: int = 8, seed: int = 42):
+    """All pairs inside one session, sampled uniformly so 397k sessions fit."""
+    rng = np.random.default_rng(seed)
+    out = []
+    for items in seqs:
+        n = len(items)
+        if n < 2:
+            continue
+        wanted = min(per_session, n * (n - 1) // 2)
+        left = rng.integers(0, n, size=wanted)
+        right = rng.integers(0, n, size=wanted)
+        keep = left != right
+        if keep.any():
+            out.append(np.stack([items[left[keep]], items[right[keep]]], axis=1))
+    if not out:
+        return np.zeros((0, 2), dtype=np.int64)
+    edges = np.sort(np.concatenate(out, axis=0), axis=1)
+    return np.unique(edges, axis=0)
+
+
 def subsample(edges, cap=CAP):
     if len(edges) > cap:
         rng = np.random.default_rng(42)
@@ -108,6 +128,7 @@ def main():
         "consecutive": subsample(pairs(seqs, 1)),
         "window2": subsample(pairs(seqs, 2)),
         "session_sample": subsample(pairs(seqs, 1), cap=100_000),
+        "session_all_pairs": subsample(session_pairs(seqs), cap=CAP),
     }
     built = {name: graph(edges) for name, edges in graphs.items()}
     rows = []
