@@ -268,6 +268,10 @@ class DerivationPayload(BaseModel):
 #: failed to parse the answer.
 DAG_ROLES = ("behavior", "literature", "geometry", "review")
 
+#: The verification author and the independent reviewer are read as JSON by
+#: verification/workflow.py, while the round helpers read plain text.
+JSON_DOC_ROLES = ("verify_json",)
+
 DAG_JSON_INSTRUCTIONS = (
     "Return exactly one JSON object and nothing else: no IDEA/END IDEA markers, "
     "no prose before or after it. Do not wrap the object in a field named after "
@@ -298,7 +302,7 @@ def answer_text_for(role: str, answer_text: str, records) -> str:
 
 def output_schema(role: str):
     """The structured-output schema of a role, when the provider supports it."""
-    if dag_role(role) or str(role) == "verify":
+    if dag_role(role) or str(role) == "verify" or str(role) in JSON_DOC_ROLES:
         # The default role of run_agent is the verification author, which writes
         # tests and a verdict; falling through to IdeaPayload asked it for an idea
         # block and threw its answer away.
@@ -703,7 +707,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         instructions = SYSTEM_PROMPT + "\n" + RANK_JSON_INSTRUCTIONS
     elif str(role) == "verify":
         instructions = SYSTEM_PROMPT
-    elif dag_role(role):
+    elif dag_role(role) or str(role) in JSON_DOC_ROLES:
         instructions = SYSTEM_PROMPT + "\n" + DAG_JSON_INSTRUCTIONS
     else:
         instructions = SYSTEM_PROMPT + "\n" + IDEA_JSON_INSTRUCTIONS

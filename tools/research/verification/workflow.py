@@ -152,7 +152,8 @@ def draft_test_suites(candidate_id: str, tree: Path, run_id: str,
         # research files it may read, the run's other agents' answers are not
         # among them, and the agent's only write is its progress file.
         execution = run_agent(task_id, prompt, output, run_root,
-                                                            model=settings.AGENT_CHAT_MODEL,
+                              role="verify_json",
+                              model=settings.AGENT_CHAT_MODEL,
                               read_paths=[tree, Path(contract.STAGE2_PYTHON).parent.parent],
                               allowed_roots=[settings.ROOT, Path(contract.STAGE2_PYTHON).parent.parent],
                               candidate_tree=tree,
@@ -218,7 +219,8 @@ def review_committed_suites(candidate_id: str, tree: Path, run_id: str,
                      root=run_root)
     _archive_workspace(run_root / "agents" / (candidate_id + "_review"), request_id)
     return run_agent(candidate_id + "_review", prompt, "review.json",
-                     run_root,                      model=settings.AGENT_CHAT_MODEL,
+                     run_root, role="verify_json",
+                     model=settings.AGENT_CHAT_MODEL,
                      read_paths=[tree, Path(contract.STAGE2_PYTHON).parent.parent],
                      allowed_roots=[settings.ROOT, Path(contract.STAGE2_PYTHON).parent.parent],
                      candidate_tree=tree,
