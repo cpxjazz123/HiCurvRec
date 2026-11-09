@@ -21,6 +21,19 @@ def triples_digest(triples) -> str:
     return hashlib.sha256(blob).hexdigest()
 
 
+def validate_identity(report) -> bool:
+    """The consumer-side invariant: rows, list length and digest must agree."""
+    ident = report["identity"]
+    triples = [(int(c), int(a), int(b), str(k)) for c, a, b, k in ident["triples"]]
+    if ident["z_struct_rows"] != 3 * ident["triples_accepted"]:
+        raise ValueError("z_struct_rows must be 3*triples_accepted")
+    if len(triples) != ident["triples_accepted"]:
+        raise ValueError("the stored triple list must have triples_accepted entries")
+    if ident["triples_sha256"] != triples_digest(triples):
+        raise ValueError("the stored digest does not match the stored triples")
+    return True
+
+
 def split_latent(g):
     return {"E_norm": float(g[..., :E].pow(2).sum()) ** 0.5,
             "H_norm": float(g[..., E:].pow(2).sum()) ** 0.5}
@@ -153,6 +166,7 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
     finally:
         handle.remove()
 
+    validate_identity(report)
     out_dir = _unique_dir(Path(out_root))
     out_dir.mkdir(parents=True)
     (out_dir / "factors.json").write_text(json.dumps(report, indent=1))

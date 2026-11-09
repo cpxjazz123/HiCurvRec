@@ -34,10 +34,11 @@ def test_runs_are_immutable_and_the_real_consumer_accepts_the_identity():
         assert len(dirs) == 2, "a repeated run must not overwrite the first record"
         for report in (first, second):
             ident = report["identity"]
-            assert ident["z_struct_rows"] == 3 * ident["triples_accepted"] + 0 or \
-                ident["z_struct_rows"] == 3 * 33
+            assert ident["z_struct_rows"] == 3 * ident["triples_accepted"]
+            assert ident["z_struct_rows"] == 3 * len(ident["triples"])
             assert len(ident["triples"]) == ident["triples_accepted"]
             assert identity_matches(report, [tuple(t) for t in ident["triples"]])
+            assert probe_q9.validate_identity(report)
 
 
 def test_a_truncated_checkpoint_is_refused_by_the_consumer():
@@ -58,8 +59,39 @@ def test_a_truncated_checkpoint_is_refused_by_the_consumer():
             "a refused run must not leave a success report"
 
 
+def _forged(report, mutate):
+    import copy
+    forged = copy.deepcopy(report)
+    mutate(forged["identity"])
+    return forged
+
+
+def test_the_consumer_rejects_forged_identities():
+    base = {"identity": {
+        "z_struct_rows": 135, "triples_accepted": 45,
+        "triples": [[i, i + 1, i + 2, "triangle" if i % 2 else "wedge"] for i in range(45)],
+    }}
+    base["identity"]["triples_sha256"] = probe_q9.triples_digest(
+        [tuple(t) for t in base["identity"]["triples"]])
+    assert probe_q9.validate_identity(base)
+
+    def rows(ident): ident["z_struct_rows"] = 99
+    def item(ident): ident["triples"][0] = [0, 1, 4, ident["triples"][0][3]]
+    def kind(ident): ident["triples"][0] = [0, 1, 2, "swapped"]
+    def order(ident): ident["triples"] = list(reversed(ident["triples"]))
+
+    for mutate in (rows, item, kind, order):
+        forged = _forged(base, mutate)
+        try:
+            probe_q9.validate_identity(forged)
+        except ValueError:
+            continue
+        raise AssertionError(("the consumer accepted a forged identity", mutate.__name__))
+
+
 if __name__ == "__main__":
     test_same_count_different_items_is_rejected()
     test_runs_are_immutable_and_the_real_consumer_accepts_the_identity()
     test_a_truncated_checkpoint_is_refused_by_the_consumer()
+    test_the_consumer_rejects_forged_identities()
     print("ok")
