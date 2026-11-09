@@ -35,13 +35,15 @@ def structure_term(model, embeddings: torch.Tensor, graph, rng: random.Random, *
     if not triples:
         return torch.zeros((), device=embeddings.device)
     item_ids = [item for centre, a, b, _ in triples for item in (centre, a, b)]
-    positions = _positions(model, embeddings, item_ids)[-1].reshape(len(triples), 3, -1)
-    h = S.triple_targets([kind for *_, kind in triples], device=positions.device)
+    positions_all = _positions(model, embeddings, item_ids).reshape(3, len(triples), 3, -1)
+    h = S.triple_targets([kind for *_, kind in triples], device=positions_all.device)
     if capture is not None:
         capture.append({"items": list(item_ids),
                         "triples": [tuple(t) for t in triples],
                         "targets": h.detach().tolist()})
-    return S.structure_loss(positions, h, scale=scale, geometry_on=geometry_on)
+    losses = [S.structure_loss(positions_all[l], h, scale=scale, geometry_on=geometry_on)
+              for l in range(3)]
+    return torch.stack(losses).mean()
 
 
 def calibrate_structure_scale(model, embeddings: torch.Tensor, graph, rng: random.Random, *,
