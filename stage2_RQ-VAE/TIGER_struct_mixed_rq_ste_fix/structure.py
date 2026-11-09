@@ -151,6 +151,31 @@ def reference_prefix_surface(qs, h: torch.Tensor, s: torch.Tensor) -> torch.Tens
     return total / 3
 
 
+def reference_prefix_surface_reduced(codes: torch.Tensor, h: torch.Tensor,
+                                     s: torch.Tensor) -> torch.Tensor:
+    """1D-reduced prefix surface matching contract.calls[name=prefix_surface_1d].
+
+    codes: (batch, 18) = 3 layers x 3 points x (E, H) tangent code coordinates,
+    h: (batch, 3) pair targets, s: (batch, 1).  In one H coordinate the nested
+    readback is the running sum of tangent code coordinates.
+    """
+    codes = codes.reshape(-1, 3, 3, 2)
+    qe = torch.cumsum(codes[..., 0], dim=1)
+    qh = torch.cumsum(codes[..., 1], dim=1)
+    ball = torch.tanh(qh)
+    pairs = [(0, 1, 0), (0, 2, 1), (1, 2, 2)]
+    total = 0.0
+    for l in range(3):
+        terms = []
+        for i, j, k in pairs:
+            t = (ball[:, l, i] - ball[:, l, j]) ** 2 / (
+                (1 - ball[:, l, i] ** 2) * (1 - ball[:, l, j] ** 2))
+            d = (qe[:, l, i] - qe[:, l, j]) ** 2 + torch.asinh(torch.sqrt(t)) ** 2
+            terms.append((d / (s[:, 0] ** 2 * h[:, k] ** 2) - 1) ** 2)
+        total = total + (terms[0] + terms[1] + terms[2]) / 3
+    return total / 3
+
+
 def calibrate_scale(points: torch.Tensor, h: torch.Tensor) -> float:
     """Median distance of the h = 1 pairs at initialisation (TRAIN only)."""
     distances = []

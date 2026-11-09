@@ -215,7 +215,8 @@
    "coverage_gaps": [
     "the reduced E1 x H1 adapter uses h=1+tanh(u) and box sampling; exact h=2 is covered by the real target tests (test_structure.py), not by the reduced adapter",
     "H1 squared-difference identity does not demonstrate H16 non-Euclidean effects",
-    "this prefix objective is NOT_IMPLEMENTED in the trainer; only the last-layer structure term runs"
+    "this prefix objective is NOT_IMPLEMENTED in the trainer; only the last-layer structure term runs",
+    "the buildable SymPy call covers the reduced E1 x H1 prefix path (cumulative sums, three pairs, three layers); the full E16 x H16 prefix has an executable torch reference and program, not yet a SymPy contract call"
    ],
    "rejected_draft_forms": {
     "cross_ratio_reciprocal": "t_draft=(1-|a|^2)(1-|b|^2)/|a-b|^2 gave 19.007999999999996 where the native t is 0.05260942760942763 for the same ball points, and divides by zero at the legal collision",
@@ -246,7 +247,7 @@
      "  L_l=(e_l^ca+e_l^cb+e_l^ab)/3",
      "  L_prefix=(L_1+L_2+L_3)/3"
     ],
-    "reference": "structure.reference_prefix_surface(qs, h, s) implements the program above on the full 32-d cumulative positions; it is a reference surface, not the trainer path"
+    "reference": "structure.reference_prefix_surface(qs, h, s): qs is a length-3 sequence, each (B,3,32); the second axis is the three triple items, not the layer axis; the return is (B,) per-triple mean before any sample average. structure.reference_prefix_surface_reduced(codes,h,s) is the 1D-reduced surface matching contract.calls[name=prefix_surface_1d] (codes (B,18), 3 layers x 3 points x E,H)."
    },
    "faces": {
     "implemented": "last-layer structure term on quantised positions, mixed_sq with the phi form; this is the only term the trainer currently applies",
