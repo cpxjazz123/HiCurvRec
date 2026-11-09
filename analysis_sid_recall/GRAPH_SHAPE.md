@@ -9,21 +9,25 @@ twice) and **not sampled** -- all 264,326 edges are used.  One run,
 |---|---|
 | nodes / edges | 24,474 / 264,326 |
 | mean / median degree | 21.6 / 11 |
-| clustering mean / median | 0.039 / 0.028 |
-| clustering p90 / p99 | 0.095 / 0.222 |
-| clustering kurtosis | 77.1 |
-| nodes with clustering 0 | **32.0%** |
+| clustering mean / median | 0.0390 / 0.0278 |
+| clustering p90 / p99 | 0.0948 / 0.2222 |
+| clustering kurtosis | 77.3 |
+| nodes with clustering 0 (including the 210 of degree < 2) | **32.5%** |
 | nodes with 0 < C < 0.1 | 59.2% |
 | nodes with 0.1 <= C < 0.3 | 8.1% |
-| nodes with C >= 0.3 | **0.7%** |
+| nodes with C >= 0.3 | **0.71%** |
 | edges in no triangle | **46.0%** |
 | edges in >= 5 triangles | 19.1% |
 | max k-core / share core >= 5 / >= 10 | 40 / 89.1% / 43.9% |
 | triangles held by the top 1% of nodes | **60.6%** |
-| clustering of hubs (deg >= 50) vs leaves (deg <= 3) | 0.045 vs 0.038 |
+| clustering of hubs (deg >= 50) vs leaves (deg <= 3) | 0.0451 vs 0.0323 |
 | share of nodes in the largest component | 1.00 |
 
-A third of the nodes have no neighbour pair that knows each other and 46% of the
+Clustering is the usual local coefficient with degree < 2 counted as 0: a node
+with a single neighbour cannot close a triangle, so dropping it would quietly
+report the mean over only the nodes that could.  (210 nodes, 0.86%, are in that
+bucket.)  Under that convention a third of the nodes have no neighbour pair that
+knows each other and 46% of the
 edges sit in no triangle: that is the tree-like branch structure.  At the same
 time 0.7% of the nodes carry a clustering of 0.3 or more and the top 1% of nodes
 hold 60% of all triangles: that is the dense community structure.  Clustering on

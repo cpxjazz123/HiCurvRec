@@ -8,7 +8,10 @@ involved, so this describes the data every Stage 2 arm is asked to quantize.
 
 Readings
 --------
-clustering   local clustering coefficient per node (triangles / wedges)
+clustering   local clustering coefficient per node (triangles / wedges), with
+             a node of degree < 2 counted as 0 (the usual convention: it has no
+             neighbour pair, so no triangle can close around it) rather than
+             dropped as undefined
 edges        share of edges that sit in no triangle, in >=3, in >=5
 cores        k-core sizes by iterative peeling
 concentration share of all triangles held by the top 1% of nodes
@@ -55,8 +58,8 @@ def shape(pairs: np.ndarray) -> dict:
     edge_tri = np.asarray(S[index[:, 0], index[:, 1]]).ravel()
     node_tri = np.asarray(S.multiply(A).sum(1)).ravel()   # (A^3)_vv = 2 triangles at v
     with np.errstate(invalid="ignore", divide="ignore"):
-        clustering = np.where(deg >= 2, node_tri / (deg * (deg - 1.0)), np.nan)
-    values = clustering[~np.isnan(clustering)]
+        clustering = np.where(deg >= 2, node_tri / (deg * (deg - 1.0)), 0.0)
+    values = clustering  # degree < 2 is 0, not undefined: nothing can close there
     core = deg.copy().astype(int)
     alive = np.ones(n, bool)
     level = 0
@@ -80,6 +83,7 @@ def shape(pairs: np.ndarray) -> dict:
         "clustering_mean": float(values.mean()), "clustering_median": float(np.median(values)),
         "clustering_percentiles": {("p%d" % q): float(np.percentile(values, q))
                                    for q in (10, 25, 50, 75, 90, 99)},
+        "nodes_degree_below_2": int((deg < 2).sum()),
         "clustering_kurtosis": float(kurtosis(values)),
         "share_clustering_zero": float((values == 0).mean()),
         "share_clustering_below_0_1": float(((values > 0) & (values < 0.1)).mean()),
