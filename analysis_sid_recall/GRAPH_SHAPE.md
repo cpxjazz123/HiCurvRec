@@ -41,30 +41,41 @@ curvature, is what tracks recall (see `report.md`).
 
 ## Do the high-closure nodes form a region?
 
-`closure_regions.py` -> `closure_regions.json` takes the top 1%, 5% and 10% of
-nodes by local clustering and asks whether they sit together, against two nulls:
-degree-matched random nodes, and a degree-preserving rewiring of the same graph.
+`closure_regions.py` -> `closure_regions.json`.  Correction (2026-11-09): the
+first version of this section compared a high-clustering selection (mean degree
+5.3) against random nodes of mean degree 19.2 -- the "degree matched" sampler was
+drawing the wanted degrees from the whole graph.  The table below is the fixed
+version: the control now reproduces the selection's degree multiset exactly
+(5.25 vs 5.25, 7.83 vs 7.83, 11.35 vs 11.35), with 20 replicates per share.
+The earlier claim that the high-closure nodes are *more dispersed* than random
+does not survive that fix.
 
-Closure itself is real -- it is not a degree artefact:
+Closure itself is far beyond a degree-preserving null (5 rewirings, mean +- sd):
 
-| | real graph | degree-preserving rewiring |
-|---|---|---|
-| triangles | 367,434 | 170,855 (x0.47) |
-| mean clustering | 0.0390 | 0.0231 (x0.59) |
-| share of nodes with C >= 0.3 | 0.71% | 0.38% (x0.53) |
+| | real graph | rewired (5 runs) | z |
+|---|---|---|---|
+| triangles | 367,434 | 168,485 +- 905 | ~220 |
+| mean clustering | 0.0390 | 0.0232 +- 0.0002 | ~79 |
+| share of nodes with C >= 0.3 | 0.71% | 0.40% +- 0.03% | ~10 |
 
-But the high-closure nodes do **not** form a region:
+Triangles are contiguous, not scattered: 2,414 patches share edges, but one
+patch holds **99.2%** of all 367,434 triangles and only four patches carry 10 or
+more; the other 2,410 patches are isolated single triangles.
 
-| selection | inside edges | density vs degree-matched | neighbour share vs matched | hops to nearest selected (matched) |
-|---|---|---|---|---|
-| top 1% (244) | 3 | 0.11x | 0.006 vs 0.011 (0.58x) | 2.08 (1.89) |
-| top 5% (1223) | 83 | 0.11x | 0.018 vs 0.051 (0.35x) | 1.90 (1.51) |
-| top 10% (2447) | 846 | 0.32x | 0.056 vs 0.101 (0.55x) | 1.59 (1.33) |
+Do the high-closure nodes sit inside a particular patch or region?  After the
+degree fix the answer is "weakly, if at all":
 
-Their spread across communities is the same as the degree-matched sample (0.79-
-0.83 of the selection in the top three communities, matched 0.75-0.78), and they
-are, if anything, slightly **farther** apart than random nodes of the same
-degree.  So the honest statement is: **triangle closure is real and concentrated
-on a minority of nodes, but those nodes are not a contiguous high-closure
-region.**  They are scattered, each sitting in its own small neighbourhood; that
-does not by itself support a picture of one dense zone next to one tree zone.
+| selection | inside edges | density z | neighbour-share z | hops z (negative = closer) | top-3 communities (matched) |
+|---|---|---|---|---|---|
+| top 1% (244) | 3 | +0.08 | +0.5 | **-6.1** (2.10 vs 2.51) | 0.83 (0.69) |
+| top 5% (1223) | 83 | -2.4 | -2.1 | +0.6 | 0.81 (0.73) |
+| top 10% (2447) | 846 | +0.15 | -4.1 | +1.9 | 0.79 (0.76) |
+
+So: at the top 1% the nodes are closer to each other than degree-matched random
+nodes and fall into fewer communities, but they still share almost no edges
+(3 of 244); at 5% and 10% those effects shrink or reverse sign, and the
+neighbour-share is consistently *below* the degree-matched control.  The honest
+reading is that **triangle closure is real, statistically overwhelming, and
+essentially one contiguous mass; the nodes with the highest local clustering are
+not a separate dense zone beside a tree zone**, and this analysis does not by
+itself support or refute the heterogeneous-manifold hypothesis.

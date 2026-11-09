@@ -25,6 +25,8 @@ TRAIN = REPO / "results" / "stage0_build_parquet" / "train.parquet"
 OUT = Path(__file__).resolve().parent / "closure_regions.json"
 SEED = 42
 SHARES = (0.01, 0.05, 0.10)
+REPLICATES = 20
+REWIRE_REPLICATES = 5
 SWAP_FACTOR = 2
 
 
@@ -142,19 +144,74 @@ def hop_distance(G: nx.Graph, selected: np.ndarray, sample: int, seed: int) -> f
     return float(np.mean(distances)) if distances else None
 
 
-def degree_matched_sample(deg: np.ndarray, size: int, rng: np.random.Generator) -> np.ndarray:
-    """Nodes drawn so the degree multiset matches the selected one."""
-    pool = np.argsort(deg)
-    out = set()
-    for value in np.sort(deg[np.random.default_rng(SEED).choice(len(deg), size, replace=False)]):
-        lo = np.searchsorted(deg[pool], value, side="left")
-        hi = np.searchsorted(deg[pool], value, side="right")
-        candidates = pool[lo:hi]
-        pick = int(rng.choice(candidates))
-        while pick in out:
-            pick = int(rng.choice(candidates))
-        out.add(pick)
-    return np.array(sorted(out))
+def degree_matched_sample(deg: np.ndarray, selected: np.ndarray,
+                          rng: np.random.Generator) -> np.ndarray:
+    """A sample whose degree multiset is exactly the selection's, node by node.
+
+    The earlier version drew the wanted degree values from the whole graph, so a
+    high-clustering selection (mean degree 5.3) was compared against nodes of
+    mean degree 19.2.  Here the values come from the selection itself.
+    """
+    buckets: dict[int, list[int]] = {}
+    for node, value in enumerate(deg):
+        buckets.setdefault(int(value), []).append(node)
+    for nodes_at in buckets.values():
+        rng.shuffle(nodes_at)
+    chosen = set(int(x) for x in selected)
+    picked = []
+    for value in deg[selected]:
+        pool = buckets[int(value)]
+        while pool and pool[-1] in chosen:
+            pool.pop()
+        if not pool:
+            continue
+        node = pool.pop()
+        chosen.add(node)
+        picked.append(node)
+    return np.array(sorted(picked))
+
+
+def triangle_components(A: sparse.csr_matrix) -> dict:
+    """Triangles that share an edge belong to one contiguous patch."""
+    adj = [set(A.indices[A.indptr[v]:A.indptr[v + 1]]) for v in range(A.shape[0])]
+    triangles = []
+    edge_ids: dict[tuple[int, int], list[int]] = {}
+    for u in range(A.shape[0]):
+        nbrs = [v for v in adj[u] if v > u]
+        for i, v in enumerate(nbrs):
+            for w in nbrs[i + 1:]:
+                if w in adj[v]:
+                    tid = len(triangles)
+                    triangles.append((u, v, w))
+                    for edge in ((u, v), (u, w), (v, w)):
+                        edge_ids.setdefault(edge, []).append(tid)
+    parent = list(range(len(triangles)))
+
+    def find(x: int) -> int:
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a: int, b: int) -> None:
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[rb] = ra
+
+    for shared in edge_ids.values():
+        for other in shared[1:]:
+            union(shared[0], other)
+    sizes = np.bincount([find(i) for i in range(len(triangles))]) if triangles else np.array([0])
+    sizes = sizes[sizes > 0]
+    return {
+        "triangles": int(len(triangles)),
+        "patches": int(len(sizes)),
+        "largest_patch_triangles": int(sizes.max()) if len(sizes) else 0,
+        "share_in_largest_patch": float(sizes.max() / len(triangles)) if len(triangles) else None,
+        "patches_with_10plus": int((sizes >= 10).sum()),
+        "triangles_in_patches_10plus": int(sizes[sizes >= 10].sum()),
+        "median_patch_size": float(np.median(sizes)) if len(sizes) else None,
+    }
 
 
 def main() -> None:
@@ -173,7 +230,28 @@ def main() -> None:
     null_pairs = rewire(index, len(nodes))
     _, null_index, null_A = graph(np.vstack([null_pairs]))
     null_deg, null_c = clustering(null_A, null_index)
+    null_runs = []
+    for rep in range(REWIRE_REPLICATES):
+        shuffled = rewire(index, len(nodes), seed=SEED + 100 + rep)
+        _, shuffled_index, shuffled_A = graph(np.vstack([shuffled]))
+        _, shuffled_c = clustering(shuffled_A, shuffled_index)
+        tri = int(np.asarray(shuffled_A.multiply(shuffled_A @ shuffled_A).sum()) / 6)
+        null_runs.append({"mean_clustering": float(shuffled_c.mean()),
+                          "share_ge_0_3": float((shuffled_c >= 0.3).mean()),
+                          "triangles": tri})
+    null_summary = {
+        "replicates": REWIRE_REPLICATES,
+        "triangles_mean": float(np.mean([r["triangles"] for r in null_runs])),
+        "triangles_sd": float(np.std([r["triangles"] for r in null_runs])),
+        "mean_clustering_mean": float(np.mean([r["mean_clustering"] for r in null_runs])),
+        "mean_clustering_sd": float(np.std([r["mean_clustering"] for r in null_runs])),
+        "share_ge_0_3_mean": float(np.mean([r["share_ge_0_3"] for r in null_runs])),
+        "share_ge_0_3_sd": float(np.std([r["share_ge_0_3"] for r in null_runs])),
+        "runs": null_runs,
+    }
     report = {"nodes": int(len(nodes)), "edges": int(len(index)),
+              "triangle_patches": triangle_components(A),
+              "rewiring_null": null_summary,
               "clustering_real": {"mean": float(c.mean()),
                                    "share_ge_0_3": float((c >= 0.3).mean()),
                                    "triangles": int(np.asarray(A.multiply(A @ A).sum()) / 6)},
@@ -187,24 +265,51 @@ def main() -> None:
         k = max(10, int(share * len(nodes)))
         selected = order[:k]
         real = induced_stats(A, selected, deg, communities)
-        matched = degree_matched_sample(deg, k, rng)
+        replicates = []
+        for rep in range(REPLICATES):
+            matched_rep = degree_matched_sample(deg, selected, np.random.default_rng(SEED + rep))
+            reps_stats = induced_stats(A, matched_rep, deg, communities)
+            reps_stats["hops"] = hop_distance(G, matched_rep, 50, SEED + rep)
+            replicates.append(reps_stats)
+        matched = degree_matched_sample(deg, selected, np.random.default_rng(SEED))
+        controlled = {
+            "replicates": REPLICATES,
+            "density_inside_mean": float(np.mean([r["density_inside"] for r in replicates])),
+            "density_inside_sd": float(np.std([r["density_inside"] for r in replicates])),
+            "neighbour_share_mean": float(np.mean([r["mean_share_neighbours_selected"] for r in replicates])),
+            "neighbour_share_sd": float(np.std([r["mean_share_neighbours_selected"] for r in replicates])),
+            "hops_mean": float(np.nanmean([r["hops"] for r in replicates])),
+            "hops_sd": float(np.nanstd([r["hops"] for r in replicates])),
+            "degree_mean_of_matched": float(deg[matched].mean()),
+            "degree_mean_of_selected": float(deg[selected].mean()),
+        }
         random_stats = induced_stats(A, matched, deg, communities)
         # the same nodes evaluated on the rewired graph: closure there is gone by construction,
         # so the interesting comparison is their induced density and neighbour overlap
         null_stats = induced_stats(null_A, selected, null_deg, communities)
-        hops_real = hop_distance(G, selected, 100, SEED)
+        hops_real = hop_distance(G, selected, 50, SEED)
+        real_hops = hops_real
+        block_hops = hops_real
         hops_rand = hop_distance(G, matched, 100, SEED)
         report["shares"]["top%g%%" % (share * 100)] = {
             "real": real, "degree_matched_random_nodes": random_stats,
             "same_nodes_on_rewired_graph": null_stats,
             "mean_hops_between_selected": hops_real,
             "mean_hops_between_matched": hops_rand,
-            "density_ratio_vs_matched": (real["density_inside"] / random_stats["density_inside"]
-                                         if random_stats["density_inside"] else None),
-            "neighbour_share_ratio_vs_matched": (real["mean_share_neighbours_selected"]
-                                                 / random_stats["mean_share_neighbours_selected"]),
+            "degree_matched_control": controlled,
+            "density_z": ((real["density_inside"] - controlled["density_inside_mean"])
+                          / controlled["density_inside_sd"]) if controlled["density_inside_sd"] else None,
+            "neighbour_share_z": ((real["mean_share_neighbours_selected"]
+                                   - controlled["neighbour_share_mean"])
+                                  / controlled["neighbour_share_sd"]) if controlled["neighbour_share_sd"] else None,
+            "hops_z": ((block_hops := real_hops) - controlled["hops_mean"]) / controlled["hops_sd"]
+                      if controlled["hops_sd"] else None,
         }
     OUT.write_text(json.dumps(report, indent=2) + "\n")
+    patches = report["triangle_patches"]
+    print("triangle patches: %d, largest holds %.1f%% of all triangles, %d patches have >=10"
+          % (patches["patches"], 100 * patches["share_in_largest_patch"],
+             patches["patches_with_10plus"]))
     print("nodes %d edges %d communities %d modularity %.3f"
           % (report["nodes"], report["edges"], report["communities"], report["modularity"]))
     print("clustering  real mean %.4f share>=0.3 %.4f triangles %d | rewired mean %.4f share>=0.3 %.4f triangles %d"
@@ -213,10 +318,14 @@ def main() -> None:
              report["clustering_rewired"]["share_ge_0_3"], report["clustering_rewired"]["triangles"]))
     for name, block in report["shares"].items():
         real, rand = block["real"], block["degree_matched_random_nodes"]
-        print("%s k=%d  density %.3f vs matched %.3f (x%.2f)  neighbour-share %.3f vs %.3f (x%.2f)"
-              % (name, real["selected"], real["density_inside"], rand["density_inside"],
-                 block["density_ratio_vs_matched"], real["mean_share_neighbours_selected"],
-                 rand["mean_share_neighbours_selected"], block["neighbour_share_ratio_vs_matched"]))
+        ctl = block["degree_matched_control"]
+        print("%s k=%d degree %.2f vs matched %.2f | density %.5f vs %.5f (z=%.1f)"
+              % (name, real["selected"], ctl["degree_mean_of_selected"], ctl["degree_mean_of_matched"],
+                 real["density_inside"], ctl["density_inside_mean"], block["density_z"]))
+        print("     neighbour-share %.3f vs %.3f (z=%.1f) | hops %.2f vs %.2f (z=%.1f)"
+              % (real["mean_share_neighbours_selected"], ctl["neighbour_share_mean"],
+                 block["neighbour_share_z"], block["mean_hops_between_selected"],
+                 ctl["hops_mean"], block["hops_z"] if block["hops_z"] is not None else float('nan')))
         print("     top-3 communities hold %.2f of the selection (matched %.2f); largest %.2f"
               % (real["share_in_top3_communities"], rand["share_in_top3_communities"],
                  real["share_in_largest_community"]))
