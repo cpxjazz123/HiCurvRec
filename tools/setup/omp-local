@@ -1,0 +1,53 @@
+#!/bin/sh
+# omp-local — run oh-my-pi with ALL state on local disk (ext4 /var), never on NFS/Lustre.
+#
+# Why: oh-my-pi keeps SQLite databases in WAL mode. SQLite mmaps the "-shm"
+# file; if that file lives on NFS/Lustre and is truncated/replaced (or the page
+# cannot be re-fetched), touching the mapping raises SIGBUS/BUS_ADRERR and the
+# whole agent dies (exit 135).  Evidence: 7 cores on 2026-11-08, fault address
+# == mmap base of ~/.omp/cache/legacy-pi-extension-cache.db-shm on NFS.
+#
+# Usage:  omp-local <profile> [omp args...]
+#   profile = directory name under /var/tmp/omp_local/roots (one per profile,
+#             e.g. "default" for omp, "b" for omp-b).  One live process per
+#             profile: the wrapper holds a lock so two agents can never share
+#             the same SQLite files.
+set -e
+
+LOCAL=/var/tmp/omp_local
+prof=${1:?usage: omp-local <profile> [omp args...]}
+shift || true
+
+case $prof in
+  *[!A-Za-z0-9_-]*|'') echo "omp-local: bad profile name: $prof" >&2; exit 2 ;;
+esac
+
+root=$LOCAL/roots/$prof
+home_link=$HOME/omp_local_$prof
+mkdir -p "$root" "$LOCAL/locks" "$LOCAL/bin"
+
+# PI_CONFIG_DIR is a dirname under $HOME, so expose the local root through a symlink.
+if [ ! -L "$home_link" ]; then
+  [ -e "$home_link" ] && { echo "omp-local: $home_link exists and is not a symlink" >&2; exit 2; }
+  ln -s "$root" "$home_link"
+fi
+
+# One live agent per profile: the SQLite files must never be opened concurrently.
+exec 9>"$LOCAL/locks/$prof.lock"
+if ! flock -n 9; then
+  echo "omp-local: profile '$prof' is already in use by another omp process" >&2
+  exit 3
+fi
+
+# Prefer the local copy of the binary: a 284 MB executable paged from NFS is
+# itself a SIGBUS risk (faulty page-in => SIGBUS delivered to the process).
+bin=$LOCAL/bin/omp
+[ -x "$bin" ] || bin=$HOME/.local/bin/omp
+
+export PI_CONFIG_DIR=omp_local_$prof
+# An inherited PI_CODING_AGENT_DIR (e.g. from an `omp-b` alias) outranks the
+# config root and silently puts the SQLite files back on the network FS.
+export PI_CODING_AGENT_DIR="$root/agent"
+unset PI_CODING_AGENT_SESSION_DIR PI_SESSION_FILE PI_SESSION_ID PI_TOOL_CALL_ID
+mkdir -p "$root/agent"
+exec "$bin" "$@"

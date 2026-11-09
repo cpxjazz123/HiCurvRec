@@ -1,0 +1,65 @@
+#!/bin/sh
+# Make `omp-<profile>` work on ANY node, with the same plugins everywhere.
+#
+# The reason this exists: an omp profile keeps its databases under
+# /var/tmp/omp_local/roots/<profile> (node-local ext4, on purpose -- SQLite WAL on
+# NFS raises SIGBUS), while $HOME is NFS.  So on a fresh node the profile root,
+# the wrapper and the plugins are all missing, and /room never appears.
+#
+# This script is idempotent and cheap: it provisions the local root, copies the
+# binary from the shared copy, and points the profile's plugin directory at a
+# SHARED plugin store, so a plugin installed once is visible on every node.
+#
+# Usage:  tools/env/omp-bootstrap <profile> [omp args...]
+set -e
+prof=${1:?usage: omp-bootstrap <profile> [omp args...]}
+shift || true
+case $prof in *[!A-Za-z0-9_-]*|'') echo "omp-bootstrap: bad profile name: $prof" >&2; exit 2 ;; esac
+[ "$#" -gt 0 ] || true
+
+LOCAL=/var/tmp/omp_local
+SHARED=/fs04/ar57/wenyu/omp_plugins          # shared, node-independent plugin store
+REPO=$(cd "$(dirname "$0")/../.." && pwd)
+
+mkdir -p "$LOCAL/bin" "$LOCAL/roots" "$LOCAL/logs" "$LOCAL/locks"
+
+# 1) the binary: copy once per node (running it from NFS is slow and can block)
+if [ ! -x "$LOCAL/bin/omp" ]; then
+  if [ -x "$HOME/.local/bin/omp" ]; then
+    echo "omp-bootstrap: seeding $LOCAL/bin/omp from ~/.local/bin/omp"
+    cp "$HOME/.local/bin/omp" "$LOCAL/bin/omp"
+  else
+    echo "omp-bootstrap: no omp binary to seed from" >&2; exit 2
+  fi
+fi
+
+# 2) the wrapper itself
+if [ ! -x "$LOCAL/bin/omp-local" ]; then
+  cp "$REPO/tools/env/omp-local" "$LOCAL/bin/omp-local"
+  chmod +x "$LOCAL/bin/omp-local"
+fi
+
+# 3) the profile root and its home-facing symlink
+root=$LOCAL/roots/$prof
+mkdir -p "$root"
+link=$HOME/omp_local_$prof
+if [ ! -L "$link" ]; then
+  [ -e "$link" ] && { echo "omp-bootstrap: $link exists and is not a symlink" >&2; exit 2; }
+  ln -s "$root" "$link"
+fi
+
+# 4) plugins: one shared store, linked into this node's profile.  Symlinking the
+#    directory (not its contents) keeps `omp plugin install` working anywhere.
+mkdir -p "$SHARED/$prof"
+shared_plugins=$SHARED/$prof
+local_plugins=$root/plugins
+if [ ! -L "$local_plugins" ]; then
+  if [ -d "$local_plugins" ]; then
+    cp -an "$local_plugins/." "$shared_plugins/" 2>/dev/null || true
+    rm -rf "$local_plugins"
+  fi
+  ln -s "$shared_plugins" "$local_plugins"
+fi
+
+# 5) hand over to the wrapper (which holds the per-profile lock and runs omp)
+exec "$LOCAL/bin/omp-local" "$prof" "$@"
