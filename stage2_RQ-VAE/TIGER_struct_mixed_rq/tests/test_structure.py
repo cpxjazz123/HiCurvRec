@@ -64,10 +64,11 @@ def test_sampler_respects_edges_and_wedges():
     # Two separate centres: 0 owns a real triangle (1-2 edge exists), 1 owns a
     # real wedge (3-4 edge does not exist).  The fixture itself is checked below.
     nodes = np.arange(6)
-    neighbours = {0: {1, 2}, 1: {0, 2}, 2: {0, 1, 3}, 3: {2, 4}, 4: {3}, 5: set()}
-    assert 2 in neighbours[1] and 1 in neighbours[2]      # triangle 0-1-2
+    neighbours = {0: {1, 2, 3, 4}, 1: {0, 2}, 2: {0, 1}, 3: {0}, 4: {0}, 5: set()}
+    assert 2 in neighbours[1] and 1 in neighbours[2]      # closed: 0-1, 0-2, 1-2
+    assert 3 in neighbours[0] and 4 in neighbours[0] and 4 not in neighbours[3]
     graph = S.Graph(nodes=nodes, neighbours=neighbours,
-                    triangle_pairs={0: [(1, 2)]}, wedge_pairs={1: [(3, 4)]})
+                    triangle_pairs={0: [(1, 2)]}, wedge_pairs={0: [(3, 4)]})
     triples = S.sample_triples(graph, 64, random.Random(0))
     kinds = {kind for *_, kind in triples}
     assert triples and kinds == {"triangle", "wedge"}
