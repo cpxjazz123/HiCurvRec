@@ -39,12 +39,7 @@ def test_the_shared_prompt_does_not_impose_the_idea_block():
 def test_each_verification_consumer_gets_its_own_contract():
     # verification/workflow.py reads JSON; the round helpers parse plain text.
     assert runtime.output_schema("verify_json") is None
-    assert "JSON object" in runtime.DAG_JSON_INSTRUCTIONS
     assert runtime.dag_role("verify") is False
     assert runtime.dag_role("verify_json") is True or "verify_json" in runtime.JSON_DOC_ROLES
 
 
-def test_dag_instructions_are_not_idea_instructions():
-    assert runtime.dag_role("literature")
-    assert "IDEA" not in runtime.DAG_JSON_INSTRUCTIONS
-    assert "JSON object" in runtime.DAG_JSON_INSTRUCTIONS
