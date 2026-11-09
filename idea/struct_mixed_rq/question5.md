@@ -1,6 +1,6 @@
 # question5 — 将已确认的 native STE 缺陷修复，而不再仅作诊断
 
-**状态：OPEN（唯一开放追问）**　提出：2026-11-10　承接：`answer4.md`
+**状态：已审阅归档（未完整验收，缺口转 question6）**　提出：2026-11-10　承接：answer4.md
 
 > 本问交付的是隔离源码修复、规格和真实验证，不是再打印一次错误系数。保持曲率参与选码、原生残差、回读与行为监督；不新增损失、不调参、不重训旧候选，不覆盖既有实验。
 
@@ -101,3 +101,11 @@ q_j=R_j(c_1,\ldots,c_j)+z-\operatorname{sg}(z).
 | `probe_ste_jacobian.py`（原件/副本） | `62ac1486bfc85641f1ec2b563dcadd6c3c19ed34a904b9f8515031de7c8559cf` |
 | `probe_q4_extras.py`（原件/副本） | `2079def6f62cc64a72cd531d54eae75746f16f823b2a8ddf013c1f2b3404b87b` |
 | 旧 `model/layers.py` | `51b287f6e280b09a5d3813d3b0050dda94b2cbec8edcda4eb1538b4a5b4f95d3` |
+
+## answer5 审阅结论（转 question6）
+
+修复副本确实将原生回读的代理改为 `R_j + z - sg(z)`；保存的固定选码 E 因子断言日志记录了红→绿，原层源码哈希未变。这是局部修复进展，不再要求重复定位同一 STE 错误。
+
+但 `answer5` 的整体 CLOSED 不成立：逐文件直接运行漏掉了 `test_rqlayer_native_path.py` 中的 3 个测试；新的 STE 断言又仅在 `__main__` 内，不能直接假设 pytest 会收集。encoder/decoder 的任意参数列切分不是潜空间 E/H 归因，码本的坐标切分则有效。修复副本仍使用旧 `ARM_NAME` 与默认产物路径，数学文件仍为 DRAFT，H 连续回读的独立梯度验收与正式准入尚缺证据。
+
+完整审阅、身份哈希及补交要求见 [`question6.md`](question6.md)。本轮只检查源码、保存记录与静态 AST，没有重新执行模型或测试套件。旧 Recall 不归修复版，§4.1 尚未实现，当前不新建 idea。
