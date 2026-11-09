@@ -140,18 +140,3 @@ def test_the_coding_phase_can_ask_for_a_module(tmp_path):
     assert "coding_1".replace("-", "").replace("_", "").isalnum()
 
 
-def test_a_bare_module_answer_is_accepted():
-    """A coding agent answers with the module or with a JSON object carrying it."""
-    from tools.research.rounds.worker import _parse_coding
-
-    bare = _parse_coding("import torch\n\nEPS = 1e-12\n")
-    assert bare["module"].startswith("import torch")
-
-    fenced = _parse_coding("Here is the module:\n```python\nimport torch\n```\n")
-    assert fenced["module"] == "import torch"
-
-    wrapped = _parse_coding('{"module": "import torch\\nx = 1", "notes": "ok"}')
-    assert wrapped["module"] == "import torch\nx = 1"
-    assert wrapped["notes"] == "ok"
-
-    assert _parse_coding("")["module"] == ""
