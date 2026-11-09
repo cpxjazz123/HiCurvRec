@@ -18,6 +18,7 @@ case $prof in *[!A-Za-z0-9_-]*|'') echo "omp-bootstrap: bad profile name: $prof"
 [ "$#" -gt 0 ] || true
 
 LOCAL=/var/tmp/omp_local
+STATE=$HOME/bin/omp-state
 SHARED=/fs04/ar57/wenyu/omp_plugins          # shared, node-independent plugin store
 HERE=$(cd "$(dirname "$0")" && pwd)
 REPO_SHARED=/fs04/ar57/wenyu/GeneRec
@@ -67,6 +68,17 @@ if [ ! -L "$local_plugins" ]; then
     rm -rf "$local_plugins"
   fi
   ln -s "$shared_plugins" "$local_plugins"
+fi
+
+# 4b) configuration that must follow the user across nodes (model roles,
+#     providers, package list, optionally history).  Databases live on the local
+#     disk for a reason, so only a missing file is restored by default.
+if [ -x "$STATE" ]; then
+  if [ "${1:-}" = push ] || [ "${1:-}" = pull ]; then
+    action=$1; shift
+    exec "$STATE" "$action" "$prof" "$@"
+  fi
+  "$STATE" restore "$prof" >/dev/null 2>&1 || true
 fi
 
 # 5) hand over to the wrapper (which holds the per-profile lock and runs omp)

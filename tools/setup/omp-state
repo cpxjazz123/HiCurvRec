@@ -1,0 +1,60 @@
+#!/bin/sh
+# Carry an omp profile's configuration (and optionally its databases) across nodes.
+#
+# Why this is needed: the profile root lives on /var/tmp, which is node-local on
+# purpose (SQLite WAL on NFS raises SIGBUS).  So a new node starts from defaults:
+# model roles, providers, package list and history are all gone.  Config files are
+# small and safe to share; the databases are copied with sqlite3's own backup so a
+# running WAL never yields a half-written copy.
+#
+# Usage:
+#   omp-state push <profile> [--with-db]   local  -> shared store
+#   omp-state pull <profile> [--with-db]   shared -> local (overwrites)
+#   omp-state restore <profile>            shared -> local, only files that are missing
+#
+# Shared store: /fs04/ar57/wenyu/omp_state/<profile>/agent
+set -e
+action=${1:?usage: omp-state push|pull|restore <profile> [--with-db]}
+prof=${2:?usage: omp-state push|pull|restore <profile> [--with-db]}
+with_db=no
+for arg in "$@"; do [ "$arg" = "--with-db" ] && with_db=yes; done
+SHARED=/fs04/ar57/wenyu/omp_state/$prof/agent
+root=$HOME/omp_local_$prof
+local=$(readlink -f "$root")/agent
+CONFIG_FILES="config.yml settings.json auth.json models-store.json keybindings.json"
+DB_FILES="agent.db history.db models.db skill-descriptions.db"
+
+copy_sqlite() {  # copy_sqlite <src> <dst>
+  if command -v sqlite3 >/dev/null 2>&1; then
+    sqlite3 "$1" ".backup '$2'" 2>/dev/null || cp -f "$1" "$2"
+  else
+    cp -f "$1" "$2"
+  fi
+}
+
+case $action in
+  push)
+    mkdir -p "$SHARED"
+    for f in $CONFIG_FILES; do [ -f "$local/$f" ] && cp -f "$local/$f" "$SHARED/$f"; done
+    if [ "$with_db" = yes ]; then
+      for f in $DB_FILES; do [ -f "$local/$f" ] && copy_sqlite "$local/$f" "$SHARED/$f"; done
+    fi
+    echo "omp-state: pushed $(ls -1 "$SHARED" | wc -l) files to $SHARED"
+    ;;
+  pull|restore)
+    [ -d "$SHARED" ] || { echo "omp-state: nothing shared yet for profile $prof" >&2; exit 2; }
+    mkdir -p "$local"
+    for f in $CONFIG_FILES; do
+      [ -f "$SHARED/$f" ] || continue
+      if [ "$action" = pull ] || [ ! -f "$local/$f" ]; then cp -f "$SHARED/$f" "$local/$f"; fi
+    done
+    if [ "$with_db" = yes ]; then
+      for f in $DB_FILES; do
+        [ -f "$SHARED/$f" ] || continue
+        if [ "$action" = pull ] || [ ! -f "$local/$f" ]; then copy_sqlite "$SHARED/$f" "$local/$f"; fi
+      done
+    fi
+    echo "omp-state: $action done for profile $prof (databases: $with_db)"
+    ;;
+  *) echo "omp-state: unknown action $action" >&2; exit 2 ;;
+esac
