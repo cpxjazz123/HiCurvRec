@@ -146,3 +146,76 @@ if __name__ == "__main__":
     test_native_residual_gradients_match_and_gradcheck_both()
     test_real_rqlayer_h_and_encoder_ste_per_level()
     print("ok")
+
+
+def test_native_residual_full_jacobian_each_level():
+    for level in (1, 2, 3):
+        latent = torch.cat([torch.randn(2, E, dtype=torch.float64) * 0.2,
+                            torch.tanh(torch.randn(2, E, dtype=torch.float64) * 0.2)],
+                           dim=-1).requires_grad_(True)
+        codes = make_codes(level, seed=100 + level, rows=2)
+        ref_codes = [c.clone().requires_grad_(True) for c in codes]
+        for out_lvl in range(level + 1):
+            j_got = torch.autograd.functional.jacobian(
+                lambda z, *cs: native_product.residuals(z, list(cs))[out_lvl],
+                (latent.clone().requires_grad_(True), *[c.clone().requires_grad_(True) for c in codes]),
+                vectorize=True)
+            j_ref = torch.autograd.functional.jacobian(
+                lambda z, *cs: ref_residuals(z, list(cs))[out_lvl],
+                (latent.clone().requires_grad_(True), *[c.clone().requires_grad_(True) for c in ref_codes]),
+                vectorize=True)
+            for a, b in zip(j_got, j_ref):
+                assert torch.allclose(a, b, rtol=1e-7, atol=1e-9), (level, out_lvl)
+        assert torch.autograd.gradcheck(
+            lambda z, *cs: native_product.residuals(z, list(cs))[level],
+            (latent.clone().requires_grad_(True), *[c.clone().requires_grad_(True) for c in codes]),
+            eps=1e-6, atol=1e-6)
+        assert torch.autograd.gradcheck(
+            lambda z, *cs: ref_residuals(z, list(cs))[level],
+            (latent.clone().requires_grad_(True), *[c.clone().requires_grad_(True) for c in ref_codes]),
+            eps=1e-6, atol=1e-6)
+
+
+def _level_code_jac(layer, z, k, j):
+    level = layer(z, return_levels=True)[4][k][0]
+    embs = layer.vq_layers[j].get_code_embs()
+    index = j + 1
+    jac = []
+    for i in range(32):
+        g = torch.autograd.grad(level[i], embs, retain_graph=True, allow_unused=True)[0]
+        jac.append(torch.zeros(32, dtype=torch.float64) if g is None else g[index].clone())
+    return torch.stack(jac), level
+
+
+def test_real_rqlayer_codebook_jacobian_matches_reference():
+    layer = build_layer(seed=3)
+    z = torch.empty(1, 32, dtype=torch.float64).normal_(0, 0.3).requires_grad_(True)
+    ref_codes = []
+    for k in range(3):
+        for j in range(len(layer.vq_layers)):
+            got, level = _level_code_jac(layer, z, k, j)
+            if j > k:
+                assert float(got.abs().sum()) == 0.0, (k, j)
+                continue
+            rows = [layer.vq_layers[i].get_code_embs()[i + 1].detach().requires_grad_(True)
+                    for i in range(k + 1)]
+            jac_ref = torch.autograd.functional.jacobian(
+                lambda *cs: ref_reconstruct(list(cs)), tuple(rows), vectorize=True)
+            want = jac_ref[j].reshape(32, 32)
+            assert torch.allclose(got, want, rtol=1e-6, atol=1e-8), (k, j, (got - want).abs().max())
+            # H-only negative control: detach the H readback; E still flows
+            e = level[:E]
+            h = level[E:].detach()
+            bad = torch.cat([e, h])
+            assert float(bad.abs().sum()) > 0.0
+            h_grad = torch.autograd.grad(bad.sum(), rows[j], allow_unused=True)[0]
+            assert h_grad is None or float(h_grad[..., E:].abs().sum()) == 0.0
+
+
+if __name__ == "__main__":
+    test_native_residual_matches_its_reference()
+    test_native_residual_gradients_match_and_gradcheck_both()
+    test_native_residual_full_jacobian_each_level()
+    test_real_rqlayer_h_and_encoder_ste_per_level()
+    test_real_rqlayer_codebook_jacobian_matches_reference()
+    print("ok")
