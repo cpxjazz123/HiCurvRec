@@ -346,43 +346,37 @@ def main() -> None:
     calibration_flags = {"degenerate_scale": False, "degenerate_gradient": False}
     if BEHAVIOUR_ON:
         graph = structure.build_graph(TRAIN_FILE, seed=SEED)
-        # Every rank draws the SAME calibration sample (seed without rank), and
-        # rank 0 owns the numbers; the pair is broadcast so all ranks train with
-        # one scale and one weight.
-        calibration_rng = __import__("random").Random(SEED)
-        scale_tensor = torch.tensor([1.0], device=device)
-        lambda_tensor = torch.tensor([0.0], device=device)
-        if rank == 0:
-            with torch.no_grad():
-                measured = training_hooks.calibrate_structure_scale(
-                    raw_module, all_embeddings_device, graph, __import__("random").Random(SEED),
-                    size=STRUCT_CALIBRATION_TRIPLES, geometry_on=GEOMETRY_ON)
-            if not (measured == measured) or measured <= 1e-6:
-                # Recorded, never silent: a degenerate TRAIN sample cannot define a scale.
-                calibration_flags["degenerate_scale"] = True
-                measured = 1.0
-            probe_batch = train_embeddings[:BATCH_SIZE_PER_RANK].to(device)
-            reconstructed, quant_loss_vec, _, _, _probe_levels = raw_module.forward_with_codes(probe_batch)
-            base_term, _ = raw_module.compute_loss(probe_batch, reconstructed, quant_loss_vec)
-            with torch.no_grad():
-                structure_probe = training_hooks.structure_term(
-                    raw_module, all_embeddings_device, graph, __import__("random").Random(SEED),
-                    scale=measured, size=STRUCT_CALIBRATION_TRIPLES,
-                    behaviour_on=True, geometry_on=GEOMETRY_ON)
-            lam, detail = training_hooks.calibrate_lambda_by_gradient(
-                raw_module, all_embeddings_device, graph, __import__("random").Random(SEED),
-                scale=measured, size=STRUCT_CALIBRATION_TRIPLES, base_loss=base_term,
-                target_ratio=STRUCT_LAMBDA_RATIO, geometry_on=GEOMETRY_ON)
-            if not (lam == lam) or lam <= 0:
-                calibration_flags["degenerate_gradient"] = True
-                lam = 0.0
-            scale_tensor[0] = measured
-            lambda_tensor[0] = lam
-            print("[structure] scale=%.6f lambda=%.6f degenerate=%s"
-                  % (measured, lam, calibration_flags), flush=True)
+        # Every rank runs the SAME forwards on the SAME sample: the model's own
+        # forward calls all_reduce, so a rank0-only calibration forward would
+        # deadlock the other three ranks while they wait for the broadcast.
+        measured = training_hooks.calibrate_structure_scale(
+            raw_module, all_embeddings_device, graph, __import__("random").Random(SEED),
+            size=STRUCT_CALIBRATION_TRIPLES, geometry_on=GEOMETRY_ON)
+        probe_batch = train_embeddings[:BATCH_SIZE_PER_RANK].to(device)
+        reconstructed, quant_loss_vec, _, _, _probe_levels = raw_module.forward_with_codes(probe_batch)
+        base_term, _ = raw_module.compute_loss(probe_batch, reconstructed, quant_loss_vec)
+        lam, block_detail = training_hooks.calibrate_lambda_block_budget(
+            raw_module, all_embeddings_device, graph, __import__("random").Random(SEED),
+            scale=measured, size=STRUCT_CALIBRATION_TRIPLES,
+            base_loss=base_term, geometry_on=GEOMETRY_ON)
+        degenerate = [name for name, block in block_detail.get("blocks", {}).items()
+                      if not block["base_norm"] or not block["structure_norm"]]
+        if not (measured == measured) or measured <= 1e-6 or degenerate or block_detail.get("degenerate_block"):
+            # Fail closed: the mechanism is undefined here, and continuing with
+            # s=1 or lambda=0 would silently change what the arm trains on.
+            raise RuntimeError(
+                "CALIBRATION_DEGENERATE scale=%r degenerate_blocks=%s detail=%s"
+                % (measured, degenerate or [block_detail.get("degenerate_block")], block_detail))
+        scale_tensor[0] = measured
+        lambda_tensor[0] = lam
         if world_size > 1:
             dist.broadcast(scale_tensor, 0)
             dist.broadcast(lambda_tensor, 0)
+        if rank == 0:
+            print("[structure] scale=%.6f lambda=%.6f blocks=%s"
+                  % (measured, lam, {k: {kk: (round(vv, 6) if isinstance(vv, float) else vv)
+                                          for kk, vv in v.items()} for k, v in block_detail["blocks"].items()}),
+                  flush=True)
         struct_scale = float(scale_tensor.item())
         struct_lambda = float(lambda_tensor.item())
         if rank == 0:

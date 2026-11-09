@@ -65,3 +65,20 @@ the codebook through the gather term; the reconstruction objectives are unchange
   assignment cost and the structure distances are the Euclidean distance over all
   32 coordinates (the H half is still used, just measured flat); this is the
   control arm, not a different architecture.
+
+## Assignment branches (baseline protocol, unchanged)
+
+`VQLayer._indices` chooses: Sinkhorn normalisation then `argmax` when
+`(self.training and self.use_sk) or (self.use_sk and infer_use_sk)`, otherwise
+`argmin` of the cost matrix.  The frozen baseline therefore **trains** with the
+Sinkhorn branch in every level, and **exports** with `infer_use_sk=False` while
+the module is in eval mode, which takes the `argmin` branch on the same cost.
+
+Consequences recorded here rather than papered over:
+
+- the structure term reads the tokens produced by the training branch (Sinkhorn
+  + argmax); the exported SID can differ from those tokens;
+- sharing `_distances` proves the two branches use one **cost function**, not that
+  they select the same codes.  The trainer records the export-vs-training token
+  mismatch rate as a diagnostic, and nothing in this candidate removes Sinkhorn or
+  widens it to more levels.
