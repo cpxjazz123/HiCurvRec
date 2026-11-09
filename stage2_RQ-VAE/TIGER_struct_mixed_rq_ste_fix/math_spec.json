@@ -174,49 +174,42 @@
   },
   "args": [
    {
-    "name": "p0, p2, p4",
-    "width": 16,
-    "domain": "Euclidean tangent coordinates of the three points, real"
+    "name": "points",
+    "width": 6,
+    "domain": "three points, each (E tangent, H tangent); box sampler, radius 0.3"
    },
    {
-    "name": "p1, p3, p5",
-    "width": 16,
-    "domain": "hyperbolic tangent coordinates; the ball point is to_ball(t) = tanh(|t|)/|t| * t"
+    "name": "u",
+    "width": 3,
+    "domain": "target offsets; h_k = 1 + tanh(u_k) > 0; box sampler, radius 0.5"
    },
    {
-    "name": "u0, u1, u2",
+    "name": "scale",
     "width": 1,
-    "domain": "log-scale offsets; h_k = 1 + tanh(u_k), so 0 < h_k < 2"
-   },
-   {
-    "name": "s",
-    "width": 1,
-    "domain": "positive median target-side distance (calibrate_structure_scale)"
+    "domain": "positive median-distance scale; box sampler, radius 0.5"
    }
   ],
-  "callable": "structure.structure_loss",
-  "callable_note": "structure_loss calls mixed_geometry.mixed_sq for each pair and then the quadratic hinge in this surface",
-  "limitations": "the statements reduce each 16-dim component to one coordinate to stay readable; the implemented distance sums the 16 E coordinates and applies asinh(sqrt(sum_k t_k))^2 to the 16 H coordinates (mean aggregation), so this is a reduced reference surface, not a claim of full-dimensional equivalence",
+  "callable": "structure:reference_objective_surface",
+  "callable_note": "the adapter reshapes points to (batch, 3, 2) and calls mixed_geometry.reference_surface; it is the same phi form the production distance uses",
+  "limitations": "the surface is the E1 x H1 per-point subspace of the full E16 x H16 distance; the embedding into 32 dimensions and the vector-norm cross ratio of H16 are not represented here, so this is a reduced reference surface, not a full-dimensional equivalence claim",
   "prefix_surface": {
    "symbols": [
     "q1",
     "q2",
     "q3",
-    "s1",
-    "s2",
-    "s3"
+    "h_ab",
+    "s"
    ],
    "statements": [
-    "q1 = readback(residual_1)",
-    "q2 = readback(residual_2)",
-    "q3 = readback(residual_3)",
-    "L1 = mean(max(dist(q1[centre], q1[successor]) / s1 - 1, 0) ** 2)",
-    "L2 = mean(max(dist(q2[prefix], q2[next_item]) / s2 - 1, 0) ** 2)",
-    "L3 = mean(max(dist(q3[prefix], q3[next_item]) / s3 - 1, 0) ** 2)",
+    "q1 = native_cumulative_codeword(layer 1, same quantization)",
+    "q2 = native_cumulative_codeword(layer 2, same quantization)",
+    "q3 = native_cumulative_codeword(layer 3, same quantization)",
+    "e_l = (mixed_sq(q_l[centre], q_l[a]) / (s * s * h_ab * h_ab) - 1) ** 2",
+    "L_l = mean over TRAIN triples of (e_l(centre, a) + e_l(centre, b) + e_l(a, b)) / 3",
     "L_prefix = (L1 + L2 + L3) / 3"
    ],
    "callable": "NOT_IMPLEMENTED",
-   "note": "the readback is the native right-nested composition of the three codebook readbacks; the composition with the prefix targets is not implemented in this candidate"
+   "note": "one shared s, one lambda, one TRAIN triple set with the three pair targets; no next-item objective, no per-layer scale, no second gather.  The implemented training term is the last-layer structure loss, not this prefix objective"
   }
  },
  "status": "DRAFT — revised per review; not admitted, not frozen",

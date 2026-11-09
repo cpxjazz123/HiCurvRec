@@ -133,6 +133,7 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
         recon_loss = torch.nn.functional.mse_loss(recon, batch)
         base = model.compute_loss(batch, recon, quant)[0]
         current[0] = "struct"
+        should_forward = bool(T.BEHAVIOUR_ON) and bool(used)
         term = H.structure_term(model, items, graph, random.Random(seed), scale=scale,
                                 size=len(used), triples=used,
                                 behaviour_on=bool(T.BEHAVIOUR_ON))
@@ -141,6 +142,10 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
         z_base = captures["base"][0]
         z_struct = captures["struct"][0] if captures["struct"] else None
         struct_active = z_struct is not None
+        if should_forward and not struct_active:
+            raise RuntimeError("a legal sample was given but the structure forward did not run")
+        if not should_forward and struct_active:
+            raise RuntimeError("the structure forward ran although the branch is inactive")
         if struct_active and not struct.requires_grad:
             raise RuntimeError("the structure graph is active but its loss has no graph")
 
@@ -194,7 +199,8 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
                 "source_sha256": {name: sha_bytes(Path(__file__).parent / name)
                                   for name in ("model/layers.py", "model/model.py",
                                                "mixed_geometry.py", "native_product.py",
-                                               "structure.py", "training_hooks.py")},
+                                               "structure.py", "training_hooks.py",
+                                               "train_rqvae.py")},
                 "s": scale, "lambda": lam, "seed": seed,
                 "batch_ids": [int(i) for i in ids],
                 "triples_requested": requested, "triples_sampled": len(used),
@@ -220,8 +226,7 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
     finally:
         handle.remove()
 
-    validate_identity(report, consumed_triples=[
-        tuple(row) for row in report["identity"]["triples"]])
+    validate_identity(report, consumed_triples=list(used))
     out_dir = _unique_dir(Path(out_root))
     out_dir.mkdir(parents=True)
     (out_dir / "factors.json").write_text(json.dumps(report, indent=1))
