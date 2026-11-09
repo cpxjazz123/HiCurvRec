@@ -88,6 +88,13 @@ def retention_strata(index: np.ndarray, group: np.ndarray, strata: np.ndarray) -
     return rates
 
 
+def retention_stratum(index: np.ndarray, edge_tri: np.ndarray, group: np.ndarray,
+                      triangle_free: bool) -> float:
+    pick = edge_tri == 0 if triangle_free else edge_tri > 0
+    mask = pick & (group[index[:, 0]] >= 0) & (group[index[:, 1]] >= 0)
+    return float((group[index[mask, 0]] == group[index[mask, 1]]).mean()) if mask.any() else float("nan")
+
+
 def retention(index: np.ndarray, tris: np.ndarray, group: np.ndarray) -> tuple[float, float]:
     valid_edge = (group[index[:, 0]] >= 0) & (group[index[:, 1]] >= 0)
     edge_ok = (group[index[:, 0]] == group[index[:, 1]]) & valid_edge
@@ -124,6 +131,8 @@ def main() -> None:
         for level in LEVELS:
             group = prefixes(table, nodes, level)
             edge_rate, tri_rate = retention(index, tris, group)
+            free_rate = retention_stratum(index, edge_tri, group, True)
+            dense_rate = retention_stratum(index, edge_tri, group, False)
             by_stratum = []
             for band in range(4):
                 mask = (strata == band) & (group[index[:, 0]] >= 0) & (group[index[:, 1]] >= 0)
@@ -140,6 +149,8 @@ def main() -> None:
                 tris_null.append(t_rate)
                 strata_null.append(retention_strata(index, shuffled, strata))
             arm["levels"]["L%d" % level] = {
+                "edge_retention_triangle_free": free_rate,
+                "edge_retention_in_triangle": dense_rate,
                 "edge_retention": edge_rate, "triangle_retention": tri_rate,
                 "edge_retention_by_af3_quartile": by_stratum,
                 "null_edge_retention_by_af3_quartile": [
@@ -174,6 +185,9 @@ def main() -> None:
     for value in arms.values():
         for band, rate in enumerate(value["levels"]["L1"]["edge_retention_by_af3_quartile"]):
             strata[band].append(rate)
+    for key in ("edge_retention_triangle_free", "edge_retention_in_triangle"):
+        summary["L1_%s_mean" % key] = float(np.mean(
+            [v["levels"]["L1"][key] for v in arms.values() if not np.isnan(v["levels"]["L1"][key])])) if arms else None
     summary["L1_edge_retention_by_af3_quartile"] = {
         "Q%d" % (band + 1): float(np.mean(rates)) for band, rates in strata.items() if rates}
     for key in ("null", "lift"):

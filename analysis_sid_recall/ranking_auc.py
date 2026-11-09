@@ -24,6 +24,20 @@ SEED = 42
 PAIRS = 40_000
 
 
+def edges_with_triangles() -> tuple[np.ndarray, np.ndarray]:
+    """Edges plus the number of triangles sitting on each of them."""
+    from scipy import sparse
+    pairs, triangles = edges_with_triangles()
+    nodes, inverse = np.unique(pairs, return_inverse=True)
+    index = inverse.reshape(-1, 2)
+    A = sparse.coo_matrix((np.ones(len(index)), (index[:, 0], index[:, 1])),
+                          shape=(len(nodes), len(nodes))).tocsr()
+    A = A + A.T
+    A.data[:] = 1.0
+    triangles = np.asarray((A @ A)[index[:, 0], index[:, 1]]).ravel()
+    return pairs, triangles
+
+
 def edges() -> np.ndarray:
     frame = pd.read_parquet(TRAIN)
     chunks = []
@@ -45,7 +59,8 @@ def prefix_length(a: tuple[int, ...], b: tuple[int, ...]) -> int:
     return length
 
 
-def auc(pairs: np.ndarray, table: dict, rng: np.random.Generator) -> dict:
+def auc(pairs: np.ndarray, table: dict, rng: np.random.Generator,
+        subset: np.ndarray | None = None) -> dict:
     degree: dict[int, int] = {}
     for left, right in pairs:
         degree[int(left)] = degree.get(int(left), 0) + 1
@@ -54,7 +69,8 @@ def auc(pairs: np.ndarray, table: dict, rng: np.random.Generator) -> dict:
     for node, value in degree.items():
         by_degree.setdefault(value // 5, []).append(node)   # degree buckets of five
 
-    picks = rng.choice(len(pairs), min(PAIRS, len(pairs)), replace=False)
+    pool = np.arange(len(pairs)) if subset is None else np.flatnonzero(subset)
+    picks = rng.choice(pool, min(PAIRS, len(pool)), replace=False)
     scores_pos, scores_neg = [], []
     for position in picks:
         left, right = int(pairs[position, 0]), int(pairs[position, 1])
@@ -85,12 +101,16 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--arms", default="24")
     parser.add_argument("--sid", default="", help="an item_sids.json outside the mirror")
+    parser.add_argument("--strata", action="store_true",
+                        help="report triangle-free and triangle edges separately")
     args = parser.parse_args()
-    pairs = edges()
+    pairs, triangles = edges_with_triangles()
     report = {}
     if args.sid:
         table = {int(k): v for k, v in json.loads(Path(args.sid).read_text()).items()}
         block = auc(pairs, table, np.random.default_rng(SEED))
+        block["triangle_free"] = auc(pairs, table, np.random.default_rng(SEED), subset=triangles == 0)
+        block["in_triangle"] = auc(pairs, table, np.random.default_rng(SEED), subset=triangles > 0)
         report["sid"] = block
         print("sid %s: AUC %.3f | positive %.2f vs negative %.2f"
               % (Path(args.sid).parent.name, block["auc"],
@@ -100,11 +120,18 @@ def main() -> None:
         if not path.is_file():
             continue
         table = {int(k): v for k, v in json.loads(path.read_text()).items()}
-        report[number] = auc(pairs, table, np.random.default_rng(SEED))
+        rng = np.random.default_rng(SEED)
+        report[number] = auc(pairs, table, rng)
+        if args.strata:
+            report[number]["triangle_free"] = auc(pairs, table, rng, subset=triangles == 0)
+            report[number]["in_triangle"] = auc(pairs, table, rng, subset=triangles > 0)
         block = report[number]
         print("arm %s: AUC %.3f | positive prefix %.2f vs negative %.2f | pairs %d"
               % (number, block["auc"], block["mean_prefix_positive"],
                  block["mean_prefix_negative"], block["pairs"]))
+        if args.strata:
+            print("      triangle-free AUC %.3f | in-triangle AUC %.3f"
+                  % (block["triangle_free"]["auc"], block["in_triangle"]["auc"]))
     OUT.write_text(json.dumps(report, indent=2) + "\n")
 
 
