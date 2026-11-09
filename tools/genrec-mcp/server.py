@@ -1010,15 +1010,34 @@ def _probe(key, out, args):
     # sum asks the same question -- is this output wired into the graph -- and for a
     # one-element tensor the sum is the tensor, so scalar terms probe exactly as before.
     surrogate = tensor.sum()
+    differentiable = False
     for arg in args:
         if not torch.is_tensor(arg) or not arg.requires_grad:
             continue
+        differentiable = True
         try:
             grad = torch.autograd.grad(surrogate, arg, retain_graph=True, allow_unused=True)[0]
         except RuntimeError:
             continue
         if grad is not None:
             best = max(best, float(grad.abs().sum()))
+    # A term that receives a module instead of a differentiable tensor (the
+    # structure term takes the model and reads its parameters) has no tensor
+    # argument to differentiate against; without this it was recorded with grad 0
+    # and read as dead.
+    params = [p for arg in args if isinstance(arg, torch.nn.Module)
+              for p in arg.parameters() if p.requires_grad]
+    if params:
+        differentiable = True
+        try:
+            grads = torch.autograd.grad(surrogate, params, retain_graph=True,
+                                        allow_unused=True)
+            best = max([best] + [float(g.abs().sum()) for g in grads if g is not None])
+        except RuntimeError:
+            pass
+    if not differentiable:
+        # nothing in this call can carry a gradient: that is unprobeable, not dead
+        return
     magnitude = tensor.detach().abs()
     if magnitude.numel() == 0:
         return
