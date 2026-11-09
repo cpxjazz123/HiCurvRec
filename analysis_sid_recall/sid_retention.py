@@ -146,7 +146,33 @@ def main() -> None:
                   % (level, block["edge_retention"], block["null_edge_mean"],
                      block["triangle_retention"], block["null_triangle_mean"]), end="")
         print()
+    arms = {k: v for k, v in report["arms"].items() if v["levels"]["L1"]}
+    summary = {"arms": len(arms)}
+    for level in LEVELS:
+        block = [v["levels"]["L%d" % level] for v in arms.values()]
+        summary["L%d" % level] = {
+            "edge_retention_mean": float(np.mean([b["edge_retention"] for b in block])),
+            "edge_lift_mean": float(np.mean([b["edge_lift_vs_null"] for b in block])),
+            "triangle_retention_mean": float(np.mean([b["triangle_retention"] for b in block])),
+            "triangle_lift_mean": float(np.mean([b["triangle_lift_vs_null"] for b in block])),
+        }
+    strata = {band: [] for band in range(4)}
+    for value in arms.values():
+        for band, rate in enumerate(value["levels"]["L1"]["edge_retention_by_af3_quartile"]):
+            strata[band].append(rate)
+    summary["L1_edge_retention_by_af3_quartile"] = {
+        "Q%d" % (band + 1): float(np.mean(rates)) for band, rates in strata.items() if rates}
+    scored = [(v["recall@10"], v["levels"]["L1"]["edge_lift_vs_null"])
+              for v in arms.values() if v["recall@10"] is not None]
+    if len(scored) > 5:
+        from scipy.stats import pearsonr, spearmanr
+        rho, p_rho = spearmanr([x for x, _ in scored], [y for _, y in scored])
+        r, p_r = pearsonr([x for x, _ in scored], [y for _, y in scored])
+        summary["lift_vs_recall"] = {"n": len(scored), "spearman": rho, "p_spearman": p_rho,
+                                     "pearson": r, "p_pearson": p_r}
+    report["summary"] = summary
     OUT.write_text(json.dumps(report, indent=2) + "\n")
+    print("SUMMARY", json.dumps(summary, indent=2))
 
 
 if __name__ == "__main__":
