@@ -1,6 +1,6 @@
 # question10 — 补齐原生残差与真实 H/STE 验证，完成诊断交接并保留规格阻塞
 
-**状态：OPEN（唯一开放追问）**　承接：`answer9.md`
+**状态：已审阅归档（部分完成，未闭合项转 question11）**　承接：`answer9.md`
 
 ## 1. 审阅结论：诊断有进展，机制仍未闭合
 
@@ -118,3 +118,11 @@ q9 的 `identity` 有 batch IDs、请求/接受数和行数，却**没有实际�
 | `q9/test_q9_sampling_identity.py` | `4d3a78276c3140c7fc690c6f646642b0a87eec89879b05e0e3f79d611c33c347` |
 | `q9/run-q9/factors.json` | `bdf41e9b0a57243afdd0a989cdf3bcaa4536cf3a4b6c727fa0a9e973e3504293` |
 | `q9/tests.log` | `6a0dda015132256176ab11abe47d73852caf246058db3cdfed668fe42cc0ee91` |
+
+## answer10 审阅结论（转 question11）
+
+接受原生残差的独立前向参考、两层最终输出的 VJP 对照与两侧 gradcheck；接受真实 RQLayer 各累计层前向和 encoder 完整单位 Jacobian 的验证。新增测试归档与源码一致，23 个文件退出成功的日志已核对，既有 q8 回读测试保留。
+
+“两项数学验证完成”仍过宽：残差尚未比较各累计层完整 Jacobian；真实 RQLayer 码本部分只检查整个张量非零/未来层零，没有计算或比较参考 H 码字导数，E 梯度可掩盖 H 缺失。后者的隔离 CPU 反例检查在本轮 60 秒超时，未得运行判决；代码断言缺口已核对，反例预期不冒充实测结果。
+
+诊断交接和前缀待审稿仍明确未交付，独立审查/冻结继续 BLOCKED；此阻塞不阻止完成本地测试、诊断和 DRAFT 整理。后续集中到 [`question11.md`](question11.md)，不新建平行 probe 或调度器，不自动训练。修复版/前缀版收益仍 `NOT_RUN`，不创建新 idea。
