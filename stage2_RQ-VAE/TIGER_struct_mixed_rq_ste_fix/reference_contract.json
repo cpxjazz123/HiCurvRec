@@ -47,7 +47,8 @@
     "r12 = d12 / (s * s * h2 * h2)",
     "L = ((r01 - 1) ** 2 + (r02 - 1) ** 2 + (r12 - 1) ** 2) / 3"
    ],
-   "output": "L"
+   "output": "L",
+   "domain": "||C_l^H|| <= 1; to_ball saturation shrink (1-1e-6) and log_0 clamp 1-1e-9 are the single declared strategy"
   },
   {
    "name": "mixed_distance",
@@ -78,7 +79,8 @@
     "d = euclid + hyperbolic"
    ],
    "output": "d",
-   "note": "on the E1 x H1 subface the cross-ratio is t = sinh(x1-y1)^2, so asinh(sqrt(t))^2 = (x1-y1)^2; this is the same function with a finite backward at the collision, not a floor or a different metric"
+   "note": "on the E1 x H1 subface the cross-ratio is t = sinh(x1-y1)^2, so asinh(sqrt(t))^2 = (x1-y1)^2; this is the same function with a finite backward at the collision, not a floor or a different metric",
+   "domain": "||C_l^H|| <= 1; to_ball saturation shrink (1-1e-6) and log_0 clamp 1-1e-9 are the single declared strategy"
   },
   {
    "name": "prefix_surface_1d",
@@ -170,7 +172,8 @@
     "L = (L1 + L2 + L3) / 3"
    ],
    "output": "L",
-   "note": "E1 x H1: the H contribution is (qh_i-qh_j)^2 by the identity asinh^2(sqrt(t))=(qH_i-qH_j)^2, so the surface has a finite backward at a collision"
+   "note": "E1 x H1: the H contribution is (qh_i-qh_j)^2 by the identity asinh^2(sqrt(t))=(qH_i-qH_j)^2, so the surface has a finite backward at a collision",
+   "domain": "||C_l^H|| <= 1; to_ball saturation shrink (1-1e-6) and log_0 clamp 1-1e-9 are the single declared strategy"
   }
  ],
  "coupling": {

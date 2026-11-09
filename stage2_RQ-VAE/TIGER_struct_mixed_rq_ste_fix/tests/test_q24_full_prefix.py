@@ -6,6 +6,7 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import mixed_geometry as G
 import structure as S
 
 D = torch.float64
@@ -101,8 +102,47 @@ def test_the_full_prefix_gradchecks_off_the_collision():
         eps=1e-6, atol=1e-8, rtol=1e-6)
 
 
+def test_the_reference_radial_map_matches_production_over_the_measured_norms():
+    for norm in (0.16, 1.0, 5.0, 10.0, 15.0, 19.0, 20.0, 30.0):
+        t = torch.zeros(1, 16, dtype=D)
+        t[0, 0] = norm
+        got = S._log0(S._ball(t))
+        exp = G.log_zero(G.to_ball(t))
+        assert torch.allclose(got, exp, rtol=0.0, atol=1e-9), (norm, got[0, 0], exp[0, 0])
+
+
+def test_the_near_collision_uses_distinct_products_and_covers_the_h_domain():
+    torch.manual_seed(3)
+    h = torch.ones(1, 3, dtype=D)
+    h[:, 2] = 2.0
+    s = torch.ones(1, 1, dtype=D)
+    base = torch.zeros(1, 3, 32, dtype=D)
+    base[0, 0, 16] = 0.5
+    base[0, 1, 16] = 0.5 + 1e-5
+    base[0, 2, 16] = 0.5 - 2e-5
+    base[0, 0, 0] = 0.01
+    base[0, 2, 0] = -0.02
+    codes = [base.clone() for _ in range(3)]
+    for c in codes:
+        c.requires_grad_(True)
+    loss = S.reference_prefix_native(codes, h, s)
+    assert 0.98 <= float(loss) <= 1.0
+    g = torch.autograd.grad(loss.sum(), codes)
+    assert all(torch.isfinite(x).all() for x in g)
+
+    wide = [base.clone() * 1.8 for _ in range(3)]
+    for c in wide:
+        c.requires_grad_(True)
+    loss = S.reference_prefix_native(wide, h, s)
+    assert torch.isfinite(loss).all()
+    g = torch.autograd.grad(loss.sum(), wide)
+    assert all(torch.isfinite(x).all() for x in g)
+
+
 if __name__ == "__main__":
     test_the_full_prefix_matches_the_manual_readback()
     test_the_full_prefix_is_finite_at_the_collision_and_near_collision()
     test_the_full_prefix_gradchecks_off_the_collision()
+    test_the_reference_radial_map_matches_production_over_the_measured_norms()
+    test_the_near_collision_uses_distinct_products_and_covers_the_h_domain()
     print("ok")

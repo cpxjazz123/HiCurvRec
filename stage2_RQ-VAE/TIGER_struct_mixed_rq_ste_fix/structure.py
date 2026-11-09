@@ -177,13 +177,17 @@ def reference_prefix_surface_reduced(codes: torch.Tensor, h: torch.Tensor,
 def _ball(t):
     r = torch.sqrt((t * t).sum(-1, keepdim=True) + 1e-24)
     safe = r.clamp_min(1e-12)
-    return torch.where(r > 0, torch.tanh(safe) / safe, torch.ones_like(r)) * t
+    point = torch.where(r > 0, torch.tanh(safe) / safe, torch.ones_like(r)) * t
+    norm = torch.sqrt((point * point).sum(-1, keepdim=True) + 1e-24)
+    saturated = (norm >= 1.0).to(point.dtype)
+    return point * (1.0 - saturated * 1e-6)
 
 
 def _log0(b):
     r = torch.sqrt((b * b).sum(-1, keepdim=True) + 1e-24)
-    safe = r.clamp(1e-12, 1 - 1e-12)
-    return torch.where(r > 0, torch.atanh(safe) / safe, torch.ones_like(r)) * b
+    scale = torch.atanh(r.clamp(max=1.0 - 1e-9))
+    factor = torch.where(r > 1e-12, scale / r.clamp_min(1e-12), torch.ones_like(r))
+    return factor * b
 
 
 def _phi_stable(t):
