@@ -81,6 +81,10 @@ def core(index, counts, n):
 
 
 def readings(index, counts, A, W, deg, tri, af3, wdeg, wtri, groups):
+    compact, _ = np.unique(groups[groups >= 0], return_inverse=True)  # compact ids: hashed
+    inner = np.full(len(groups), -1, dtype=np.int64)                  # prefixes reach 2**31,
+    inner[groups >= 0] = _                                             # and bincount would allocate
+    groups = inner                                                     # a table of that size
     same = groups[index[:, 0]] == groups[index[:, 1]]
     intra_idx, inter_idx = index[same], index[~same]
     out = {"edges": int(len(index)), "intra_share": float(same.mean())}
