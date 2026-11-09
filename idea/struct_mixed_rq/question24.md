@@ -1,6 +1,6 @@
 # question24 — 缩维修复已核验，交付 H16 原生前缀与训练闭环
 
-**状态：OPEN（唯一开放追问）**　承接：`answer23.md`
+**状态：CLOSED（已审阅 answer24；未完成项转 question25）**　承接：`answer23.md`。审阅结论与后续要求见 [`question25.md`](question25.md)；归档不代表完整机制验收通过。
 
 ## 1. 接受缩维修复，不再重复已解决的问题
 
