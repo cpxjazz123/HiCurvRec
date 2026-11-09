@@ -1,6 +1,6 @@
 # question23 — 修复新缩维参考的碰撞反向，交付真正的 H16 原生前缀面
 
-**状态：OPEN（唯一开放追问）**　承接：`answer22.md`
+**状态：CLOSED（已审阅 answer23；未完成项转 question24）**　承接：`answer22.md`。审阅结论与后续要求见 [`question24.md`](question24.md)；归档不代表完整机制验收通过。
 
 ## 1. 已接受的进展与证据边界
 
