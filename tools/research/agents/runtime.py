@@ -34,9 +34,6 @@ SYSTEM_PROMPT = (
     "carry the complete answer in the requested format, not a confirmation. "
     "Never copy the task text into a file: the file must hold your own answer, "
     "and a file that repeats the instructions is treated as no answer at all. "
-    "Every proposal is one block that starts with 'IDEA: <identifier>' and ends "
-    "with 'END IDEA', with the fields the task asks for in between; the last "
-    "record you append carries that block in full. "
     "Answer with the fields the task asks for, in that order, and start with the "
     "first field; do not restate the request."
 )
@@ -384,6 +381,8 @@ JSON_FIELDS = (
 )
 
 IDEA_JSON_INSTRUCTIONS = (
+    "Every proposal is one block that starts with 'IDEA: <identifier>' and ends "
+    "with 'END IDEA', with the fields the task asks for in between. "
     "Answer with ONE JSON object and nothing else: no prose, no markdown fence. "
     "Its keys are: " + ", ".join(key for key, _ in JSON_FIELDS) + ". "
     "Every key is a string except 'risks', which is a list of strings."

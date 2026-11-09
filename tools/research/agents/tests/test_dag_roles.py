@@ -21,6 +21,14 @@ def test_dag_roles_do_not_get_the_idea_schema():
     assert runtime.output_schema("ideate") is runtime.IdeaPayload
 
 
+def test_the_shared_prompt_does_not_impose_the_idea_block():
+    # The old SYSTEM_PROMPT told every role to answer in an IDEA block, which the
+    # literature census obeyed even after the role dispatch was fixed.
+    assert "IDEA:" not in runtime.SYSTEM_PROMPT
+    assert "END IDEA" not in runtime.SYSTEM_PROMPT
+    assert "IDEA:" in runtime.IDEA_JSON_INSTRUCTIONS
+
+
 def test_dag_instructions_are_not_idea_instructions():
     assert runtime.dag_role("literature")
     assert "IDEA" not in runtime.DAG_JSON_INSTRUCTIONS
