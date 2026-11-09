@@ -340,7 +340,7 @@ def main() -> None:
         dist.barrier()
 
     # === structure calibration: TRAIN only, once, frozen ===
-    model_layers.MIXED_ASSIGNMENT = GEOMETRY_ON
+    mixed_geometry.GEOMETRY_ON = GEOMETRY_ON
     all_embeddings_device = all_embeddings.to(device)
     struct_scale, struct_lambda = 1.0, 0.0
     calibration_flags = {"degenerate_scale": False, "degenerate_gradient": False}

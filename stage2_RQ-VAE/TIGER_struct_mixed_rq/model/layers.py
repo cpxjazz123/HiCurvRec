@@ -19,11 +19,6 @@ from sklearn.cluster import KMeans
 import mixed_geometry
 import native_product
 
-#: The assignment metric.  True: the product-space geodesic of mixed_geometry;
-#: False: the baseline Euclidean distance (the geometry control arm).
-MIXED_ASSIGNMENT = True
-
-
 class MLP(nn.Module):
     """RecBole3.0's dropout/linear/ReLU MLP helper."""
 
@@ -104,7 +99,7 @@ class VQLayer(nn.Module):
 
     def _distances(self, latent: torch.Tensor) -> torch.Tensor:
         code_embs = self.get_code_embs()
-        if MIXED_ASSIGNMENT and self.dim == mixed_geometry.E_DIM + mixed_geometry.H_DIM:
+        if mixed_geometry.GEOMETRY_ON and self.dim == mixed_geometry.E_DIM + mixed_geometry.H_DIM:
             # The same product distance that the structure term uses: squared
             # distances between every row of the batch and every codeword.
             rows = latent.shape[0]
