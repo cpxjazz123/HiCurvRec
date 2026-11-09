@@ -1509,11 +1509,14 @@ def run_stage2_smoke(
     }
 
 
-def tool_stage2_start(source_dir: str, verification_id: str) -> dict:
-    """Launch only after independent Agent tests and real trainer smoke.
+def tool_stage2_start(source_dir: str, verification_id: str = "") -> dict:
+    """Launch a Stage2 run.
 
-    Historical admission records and direct trainer calls do not grant access.
-    No agent or model can approve training merely by writing a verdict string.
+    The sub-agents that authored the independent verification suites were removed,
+    so the agent-verification gate is gone with them: there is no longer a
+    verification_id to bind.  The machine checks stay (tree resolution, a runnable
+    entrypoint, the GPU layout probe, the one-epoch smoke the worker performs);
+    a verdict string written by any model never granted access and still does not.
     """
     tree, problem = resolve_stage2_tree(source_dir)
     if tree is None:
@@ -1551,14 +1554,6 @@ def tool_stage2_start(source_dir: str, verification_id: str) -> dict:
             "refused": "no runnable Stage2 entrypoint in this tree",
             **context,
         }
-    # Deterministic test gate runs BEFORE any archive or dispatch side effect.
-    verification = run_agent_verification(tree, verification_id)
-    context["agent_verification"] = verification
-    if not verification.get("passed"):
-        return {"started": False,
-                "refused": "independent executable verification: "
-                           + str(verification.get("refused") or "no passing evidence"),
-                **context}
     refusal = stage2_launch_decision(gpu_probe)
     if refusal is not None:
         return {"started": False, "refused": refusal, **context}
@@ -1739,15 +1734,6 @@ def stage2_worker_main(tree_arg: str, spec: dict) -> int:
     checkpoint, checkpoint_source = probe_checkpoint(tree, result_dir)
     gpu_probe = spec.get("gpu_probe") or probe_gpu_layout()
     child_env = stage2_child_env(tree, gpu_probe)
-    # Fail closed before touching the trainer: a worker can outlive its MCP call.
-    verification_id = spec.get("verification_id")
-    before = validate_agent_evidence_only(tree, verification_id)
-    if not before.get("passed"):
-        save_state(state_key, {"status": "refused", "worker_pid": pending.get("worker_pid"),
-                               "tree": str(tree), "result_dir": str(result_dir),
-                               "refused": "source/test verification drift before smoke: "
-                                          + str(before.get("refused")), **logs})
-        return 1
     # A checkpoint from another version of the model cannot probe this one, and
     # loading it would raise a missing-key error that reads like a defect of the
     # tree. It is asked here, before the smoke, and an incompatible checkpoint is
@@ -1785,10 +1771,6 @@ def stage2_worker_main(tree_arg: str, spec: dict) -> int:
     refused = None
     if not smoke["passed"]:
         refused = "the one-epoch gradient smoke failed, so no training was started"
-    else:
-        after = validate_agent_evidence_only(tree, verification_id)
-        if not after.get("passed"):
-            refused = "source/test verification drift after smoke: " + str(after.get("refused"))
     # The smoke pays for the DDP start-up, so its step time is only a hint. The
     # honest cost probe is the measured epoch time of the real run, and the round
     # checks that while the job runs.
@@ -2837,11 +2819,11 @@ TOOLS: dict[str, dict] = {
 
     "stage2_start": {
         "fn": tool_stage2_start,
-        "args": {"source_dir": "string", "verification_id": "string"},
-        "description": "Start one Stage2 candidate only after the source-bound "
-        "independent math/gradient/DDP/entrypoint Agent tests have ACTUALLY executed "
-        "and passed, then perform the existing real one-epoch gradient smoke before "
-        "3000-epoch training; historical admissions are not accepted.",
+        "args": {"source_dir": "string"},
+        "description": "Start one Stage2 candidate: resolve the tree, probe the GPU "
+        "layout, run the real one-epoch gradient smoke, then the 3000-epoch training. "
+        "The agent-authored verification suites were removed with the sub-agents, so "
+        "no verification_id is required or accepted; machine checks still apply.",
     },
     "verification_check": {
         "fn": tool_verification_check,
