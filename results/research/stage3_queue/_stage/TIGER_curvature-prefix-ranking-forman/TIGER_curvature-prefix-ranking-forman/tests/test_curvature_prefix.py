@@ -1,0 +1,752 @@
+"""Failing-first tests for the curvature-guided hierarchical prefix ranking.
+
+The mechanism: augmented-FORMAN (AF3) cohesion on the TRAIN behaviour graph
+decides which behavioural neighbours should share coarse SID prefixes, and a
+ranking loss acts on the hyperbolic prefix-assignment probabilities of the
+RQ-VAE, so the relative preference (cohesive pair vs bridge pair) is optimised
+through the model's curve. Both switches are exercised here; only the both-on
+arm is trained (CLAUDE.md 19g).
+"""
+from __future__ import annotations
+
+import sys
+import unittest
+from pathlib import Path
+
+import numpy as np
+import torch
+
+HERE = Path(__file__).resolve().parent
+TREE = HERE.parent
+for path in (str(TREE), str(TREE.parent.parent)):
+    if path not in sys.path:
+        sys.path.insert(0, path)
+
+import curvature_prefix as cp  # noqa: E402
+
+
+def edge_list(edges):
+    return np.asarray(edges, dtype=np.int64)
+
+
+class Af3Tests(unittest.TestCase):
+    def test_edges_of_a_triangle_have_af3_three(self):
+        edges = edge_list([(0, 1), (1, 2), (0, 2)])
+        table = cp.build_edge_tables(edges, 3)
+        self.assertAlmostEqual(float(table["af3"].min()), 3.0)
+        self.assertAlmostEqual(float(table["af3"].max()), 3.0)
+        self.assertEqual(table["af3"].shape[0], 3)
+
+    def test_p4_edges_keep_their_plain_forman(self):
+        edges = edge_list([(0, 1), (1, 2), (2, 3)])
+        table = cp.build_edge_tables(edges, 4)
+        self.assertAlmostEqual(float(table["af3"].min()), 0.0)
+        self.assertAlmostEqual(float(table["af3"].max()), 1.0)
+
+    def test_af3_minus_forman_is_three_triangles(self):
+        edges = edge_list([(0, 1), (1, 2), (0, 2), (2, 3), (3, 4), (2, 4)])
+        table = cp.build_edge_tables(edges, 5)
+        self.assertTrue(np.allclose(table["af3"] - table["forman"],
+                                    3.0 * table["triangles"]))
+
+    def test_symmetrised_duplicates_do_not_double_count(self):
+        edges = edge_list([(0, 1), (1, 0), (1, 2)])
+        table = cp.build_edge_tables(edges, 3)
+        self.assertEqual(table["af3"].shape[0], 2)
+
+
+class CohesionTests(unittest.TestCase):
+    def test_weights_are_bounded_and_monotone(self):
+        af3 = np.asarray([-3.0, 0.0, 3.0, 6.0])
+        weights, median, scale = cp.cohesion_weights(af3)
+        self.assertTrue(np.all(weights > 0) and np.all(weights < 1))
+        self.assertTrue(np.all(np.diff(weights) > 0))
+        self.assertAlmostEqual(median, 1.5)
+        self.assertGreater(scale, 0)
+
+    def test_the_median_maps_to_one_half(self):
+        af3 = np.asarray([-2.0, 0.0, 2.0])
+        weights, median, _ = cp.cohesion_weights(af3)
+        self.assertAlmostEqual(float(weights[1]), 0.5)
+        self.assertAlmostEqual(float(median), 0.0)
+
+    def test_a_degenerate_iqr_falls_back_to_one(self):
+        weights, median, scale = cp.cohesion_weights(np.asarray([2.0, 2.0, 2.0]))
+        self.assertEqual(scale, 1.0)
+        self.assertAlmostEqual(float(weights[0]), 0.5)
+
+
+class TripleTests(unittest.TestCase):
+    def setUp(self):
+        # a square with a diagonal: node 0 has neighbours 1, 2, 3
+        self.edges = edge_list([(0, 1), (0, 2), (0, 3), (1, 2), (1, 3)])
+        self.table = cp.build_edge_tables(self.edges, 4)
+        self.lookup = cp.TripleLookup(self.table)
+
+    def test_triples_pick_the_most_and_least_cohesive_neighbour(self):
+        triples = self.lookup.triples(np.arange(4))
+        anchor = triples["anchor"]
+        self.assertIn(0, anchor.tolist())
+        position = int(np.nonzero(anchor == 0)[0][0])
+        high, low = int(triples["high"][position]), int(triples["low"][position])
+        self.assertNotEqual(high, low)
+        weights = self.lookup.pair_weight(0, np.asarray([high, low]))
+        self.assertGreater(weights[0], weights[1])
+
+    def test_items_outside_the_batch_never_appear(self):
+        triples = self.lookup.triples(np.asarray([0, 1]))
+        for key in ("anchor", "high", "low"):
+            self.assertTrue(set(triples[key].tolist()).issubset({0, 1}))
+
+    def test_an_item_with_one_neighbour_is_skipped(self):
+        edges = edge_list([(0, 1)])
+        lookup = cp.TripleLookup(cp.build_edge_tables(edges, 2))
+        self.assertEqual(lookup.triples(np.arange(2))["anchor"].size, 0)
+
+    def test_triple_weight_lies_in_the_unit_interval(self):
+        triples = self.lookup.triples(np.arange(4))
+        self.assertTrue(np.all(triples["weight"] > 0))
+        self.assertTrue(np.all(triples["weight"] < 1))
+
+
+class GeometryCompatibilityTests(unittest.TestCase):
+    def test_the_tree_uses_the_framework_geometry_contract(self):
+        """The mechanism has no distance of its own: it calls the contract."""
+        from tools.research.geometry import poincare_contract as canonical
+        self.assertIs(cp.geometry, canonical)
+        self.assertEqual(cp.CURVATURE, 1.0)
+        copied = TREE / "model" / "poincare_contract.py"
+        self.assertTrue(copied.is_file(), "the framework module travels with the tree")
+        self.assertEqual(copied.read_bytes(),
+                         Path(canonical.__file__).read_bytes())
+
+
+class PrefixAgreementTests(unittest.TestCase):
+    """The gap temperature makes the prefix overlap say "same code or not"."""
+
+    def setUp(self):
+        torch.manual_seed(0)
+        self.codebook = torch.randn(64, 8) * 0.2
+
+    def test_the_margin_is_not_a_constant(self):
+        """With the nearest-distance kernel the overlap was uniform (std < 1e-3)."""
+        points = torch.randn(16, 8) * 0.2
+        others = points.roll(1, dims=0)
+        agreement = cp.prefix_agreement(points, others, self.codebook)
+        self.assertGreater(float(agreement.std()), 1e-3)
+
+    def test_the_same_assignment_agrees_more_than_a_different_one(self):
+        points = torch.randn(8, 8) * 0.2
+        others = points + 0.75 * torch.randn(8, 8)
+        same = cp.prefix_agreement(points, points, self.codebook)
+        apart = cp.prefix_agreement(points, others, self.codebook)
+        self.assertGreater(float(same.mean()), float(apart.mean()))
+
+    def test_the_gradient_reaches_the_encoder_side_points(self):
+        points = (torch.randn(8, 8) * 0.2).requires_grad_(True)
+        other = torch.randn(8, 8) * 0.2
+        agreement = cp.prefix_agreement(points, other, self.codebook)
+        agreement.sum().backward()
+        self.assertGreater(float(points.grad.abs().sum()), 0.0)
+
+    def test_the_curve_changes_the_agreement(self):
+        points = torch.randn(5, 8) * 0.5
+        curved = cp.prefix_agreement(points, points * 2.0, self.codebook, use_curvature=True)
+        flat = cp.prefix_agreement(points, points * 2.0, self.codebook, use_curvature=False)
+        self.assertFalse(torch.allclose(curved, flat))
+
+
+class RankingLossTests(unittest.TestCase):
+    def setUp(self):
+        torch.manual_seed(3)
+        self.levels = [torch.randn(9, 4) * 0.2 for _ in range(3)]
+        self.codebooks = [torch.randn(8, 4) * 0.2 for _ in range(3)]
+        self.anchor = torch.tensor([0, 1, 2])
+        self.high = torch.tensor([3, 4, 5])
+        self.low = torch.tensor([6, 7, 8])
+        self.weights = torch.tensor([0.9, 0.8, 0.7])
+        self.temperature = 0.1
+
+    def test_the_loss_is_a_finite_scalar(self):
+        loss = cp.curvature_prefix_ranking_loss(
+            self.levels[0], self.levels[1], self.levels[2], self.codebooks,
+            self.anchor, self.high, self.low, self.weights,
+            temperature=self.temperature)
+        self.assertTrue(torch.isfinite(loss))
+        self.assertEqual(loss.dim(), 0)
+
+    def test_a_preferred_high_pair_lowers_the_loss(self):
+        # The tangents are the codebook rows themselves, so a "close" pair lands
+        # in the same cell and a "far" pair in a different one.
+        generator = torch.Generator().manual_seed(11)
+        codebook = torch.nn.functional.normalize(torch.randn(8, 4, generator=generator),
+                                                 dim=1) * 0.05
+        anchors = torch.tensor([0, 1, 2])
+        close_high = torch.tensor([0, 1, 2])
+        far_high = torch.tensor([3, 4, 5])
+        low = torch.tensor([6, 7, 6])
+        weights = torch.tensor([0.9, 0.8, 0.7])
+
+        def build(high):
+            level = torch.zeros(8, 4)
+            level[anchors] = codebook[anchors]
+            level[high] = codebook[high]
+            level[low] = codebook[low]
+            return level
+
+        codebooks = [codebook for _ in range(3)]
+        levels_close = [build(close_high) for _ in range(3)]
+        levels_far = [build(far_high) for _ in range(3)]
+        loss_close = cp.curvature_prefix_ranking_loss(
+            levels_close[0], levels_close[1], levels_close[2], codebooks,
+            anchors, close_high, low, weights, temperature=0.1)
+        loss_far = cp.curvature_prefix_ranking_loss(
+            levels_far[0], levels_far[1], levels_far[2], codebooks,
+            anchors, far_high, low, weights, temperature=0.1)
+        self.assertLess(float(loss_close), float(loss_far))
+
+    def test_the_behaviour_weights_change_the_value(self):
+        uniform = torch.ones_like(self.weights)
+        weighted = cp.curvature_prefix_ranking_loss(
+            self.levels[0], self.levels[1], self.levels[2], self.codebooks,
+            self.anchor, self.high, self.low, self.weights,
+            temperature=self.temperature)
+        plain = cp.curvature_prefix_ranking_loss(
+            self.levels[0], self.levels[1], self.levels[2], self.codebooks,
+            self.anchor, self.high, self.low, uniform,
+            temperature=self.temperature)
+        self.assertNotAlmostEqual(float(weighted), float(plain), places=6)
+
+    def test_gradients_reach_the_encoder_side_points(self):
+        levels = [level.clone().requires_grad_(True) for level in self.levels]
+        loss = cp.curvature_prefix_ranking_loss(
+            levels[0], levels[1], levels[2], self.codebooks,
+            self.anchor, self.high, self.low, self.weights,
+            temperature=self.temperature)
+        loss.backward()
+        for level in levels:
+            self.assertIsNotNone(level.grad)
+            self.assertTrue(torch.isfinite(level.grad).all())
+            self.assertGreater(float(level.grad.abs().sum()), 0.0)
+
+    def test_no_triples_returns_a_zero_tensor_with_grad(self):
+        empty = torch.zeros(0, dtype=torch.long)
+        levels = [level.clone().requires_grad_(True) for level in self.levels]
+        loss = cp.curvature_prefix_ranking_loss(
+            levels[0], levels[1], levels[2], self.codebooks,
+            empty, empty, empty, torch.zeros(0),
+            temperature=self.temperature)
+        self.assertEqual(float(loss), 0.0)
+        loss.backward()
+        self.assertTrue(all(level.grad is not None for level in levels))
+
+
+class ModelWiringTests(unittest.TestCase):
+    def test_the_quantizer_exposes_level_points_and_codebooks(self):
+        from types import SimpleNamespace
+        from model import RQVAE
+
+        config = SimpleNamespace(hidden_sizes=(16, 8), codebook_num=3, codebook_size=(8, 8, 8),
+                                 codebook_dim=4, dropout=0.0, beta=0.25, vq_type="vq",
+                                 ema_decay=0.99, fix_code_embs=False, sk_epsilon=-1.0,
+                                 sk_iters=-1, frechet_codebook=True, use_behaviour=True,
+                                 use_curvature=True, frechet_eta=1.0)
+        model = RQVAE(config, in_dim=6)
+        embeddings = torch.randn(20, 6)
+        with torch.no_grad():
+            model.init_codebook(embeddings)
+        embeddings = embeddings[:5]
+        item_ids = torch.arange(5)
+        reconstructed, quant_loss, _, tokens, reference = model(embeddings, item_ids)
+        self.assertTrue(torch.equal(reference, embeddings))
+        points = model.level_points()
+        codebooks = model.level_codebooks()
+        self.assertEqual(len(points), 3)
+        self.assertEqual(len(codebooks), 3)
+        for point in points:
+            self.assertEqual(point.shape, (5, 4))
+            self.assertTrue(point.requires_grad)
+        self.assertEqual(tokens.shape, (5, 3))
+
+        triples_anchor = torch.tensor([0, 1])
+        triples_high = torch.tensor([2, 3])
+        triples_low = torch.tensor([4, 0])
+        loss = cp.curvature_prefix_ranking_loss(points[0], points[1], points[2], codebooks,
+                                                triples_anchor, triples_high, triples_low,
+                                                torch.ones(2))
+        rebuilt, _ = model.compute_loss(reference, reconstructed, quant_loss)
+        (rebuilt + loss).backward()
+        self.assertTrue(any(parameter.grad is not None
+                            and float(parameter.grad.abs().sum()) > 0
+                            for parameter in model.encoder.parameters()))
+
+
+class LevelSelectionTests(unittest.TestCase):
+    def test_the_ranking_can_use_the_coarse_level_only(self):
+        torch.manual_seed(23)
+        levels = [torch.randn(6, 4) * 0.2 for _ in range(3)]
+        codebooks = [torch.randn(8, 4) * 0.2 for _ in range(3)]
+        anchor = torch.tensor([0, 1, 2])
+        high = torch.tensor([3, 4, 5])
+        low = torch.tensor([5, 3, 4])
+        weights = torch.tensor([0.9, 0.8, 0.7])
+        base = cp.curvature_prefix_ranking_loss(
+            levels[0], levels[1], levels[2], codebooks, anchor, high, low, weights,
+            levels=(0,), temperature=0.1)
+        moved = [levels[0].clone(), levels[1] + 0.4, levels[2] - 0.3]
+        again = cp.curvature_prefix_ranking_loss(
+            moved[0], moved[1], moved[2], codebooks, anchor, high, low, weights,
+            levels=(0,), temperature=0.1)
+        self.assertEqual(float(base), float(again))
+        shifted = [levels[0] + 0.4, levels[1], levels[2]]
+        different = cp.curvature_prefix_ranking_loss(
+            shifted[0], shifted[1], shifted[2], codebooks, anchor, high, low, weights,
+            levels=(0,), temperature=0.1)
+        self.assertNotAlmostEqual(float(base), float(different), places=6)
+
+
+class GradientBudgetTests(unittest.TestCase):
+    def test_the_scale_sets_the_share_of_the_reconstruction_gradient(self):
+        mech = [torch.ones(4) * 2.0]
+        recon = [torch.ones(4) * 10.0]
+        scale = cp.gradient_budget_scale(mech, recon, 0.10)
+        self.assertAlmostEqual(scale, 0.10 * 10.0 / 2.0)
+        self.assertAlmostEqual(scale * 2.0, 0.10 * 10.0)
+
+    def test_missing_gradients_are_treated_as_zero(self):
+        mech = [None, torch.ones(2)]
+        recon = [torch.ones(2) * 3.0, None]
+        scale = cp.gradient_budget_scale(mech, recon, 0.5)
+        self.assertAlmostEqual(scale, 0.5 * 3.0 / 1.0)
+
+
+class CollisionBudgetTests(unittest.TestCase):
+    def test_the_decision_accepts_inside_the_budget(self):
+        self.assertEqual(cp.collision_budget_decision(0.30, 0.30), "accept")
+        self.assertEqual(cp.collision_budget_decision(0.10, 0.30), "accept")
+        self.assertEqual(cp.collision_budget_decision(0.300001, 0.30), "rollback")
+
+    def test_a_missing_measurement_rolls_back(self):
+        self.assertEqual(cp.collision_budget_decision(None, 0.30), "rollback")
+
+
+class BucketSpreadTests(unittest.TestCase):
+    """The coarse bucket must use the fine level's codes."""
+
+    def setUp(self):
+        torch.manual_seed(5)
+        self.codebook = torch.randn(16, 8) * 0.2
+        self.buckets = torch.zeros(8, dtype=torch.long)
+
+    def test_a_spread_bucket_has_higher_entropy(self):
+        one_code = self.codebook[3].repeat(8, 1)
+        spread = self.codebook[:8].clone()
+        concentrated = cp.bucket_entropy(one_code, self.codebook, self.buckets)
+        even = cp.bucket_entropy(spread, self.codebook, self.buckets)
+        self.assertGreater(float(even), float(concentrated))
+
+    def test_the_cohesion_weights_scale_the_bucket(self):
+        spread = self.codebook[:8].clone()
+        heavy = cp.bucket_entropy(spread, self.codebook, self.buckets,
+                                  weights=torch.ones(8))
+        light = cp.bucket_entropy(spread, self.codebook, self.buckets,
+                                  weights=torch.zeros(8))
+        self.assertLess(float(light), float(heavy))
+
+    def test_the_loss_has_a_gradient_on_the_points(self):
+        torch.manual_seed(29)
+        points = (self.codebook[:8].clone() + 0.05 * torch.randn(8, 8)).requires_grad_(True)
+        cp.bucket_spread_loss(points, self.codebook, self.buckets,
+                              use_curvature=False).backward()
+        self.assertGreater(float(points.grad.abs().sum()), 0.0)
+
+    def test_the_gradient_is_comparable_to_the_ranking(self):
+        """One shared budget must be able to size both terms."""
+        torch.manual_seed(13)
+        codebook = torch.randn(16, 8) * 0.2
+        points = (codebook[:8].clone() + 0.05 * torch.randn(8, 8)).requires_grad_(True)
+        buckets = torch.zeros(8, dtype=torch.long)
+        weights = torch.ones(8)
+        anchor, high, low = torch.arange(3), torch.tensor([3, 4, 5]), torch.tensor([6, 7, 3])
+        spread = cp.bucket_spread_loss(points, codebook, buckets, weights,
+                                       use_curvature=False)
+        spread.backward()
+        spread_grad = float(points.grad.norm())
+        points.grad = None
+        ranking = cp.curvature_prefix_ranking_loss(
+            points, points, points, [codebook] * 3, anchor, high, low, torch.ones(3),
+            levels=(1,), use_curvature=False)
+        ranking.backward()
+        ranking_grad = float(points.grad.norm())
+        ratio = spread_grad / max(ranking_grad, 1e-9)
+        self.assertGreater(ratio, 1e-3)
+        self.assertLess(ratio, 1e3)
+
+    def test_an_isolated_item_gets_the_table_mean_cohesion(self):
+        table = cp.build_edge_tables(np.array([[0, 1], [0, 2]]), 4)
+        lookup = cp.TripleLookup(table)
+        cohesion = lookup.item_cohesion(np.arange(4))
+        self.assertEqual(cohesion.shape, (4,))
+        self.assertAlmostEqual(float(cohesion[3]), float(lookup.weights.mean()))
+
+
+class CoClusterTests(unittest.TestCase):
+    """Cohesive pairs must share the PREFIX, not merely rank above."""
+
+    def setUp(self):
+        torch.manual_seed(17)
+        self.codebook = torch.randn(16, 8) * 0.2
+
+    def test_an_aligned_pair_scores_better_than_a_split_pair(self):
+        same = self.codebook[4].repeat(4, 1)
+        split = self.codebook[4:8].clone()
+        aligned = cp.prefix_cocluster_loss([same], [same], [self.codebook], 0)
+        separated = cp.prefix_cocluster_loss([split], [split.roll(1, 0)],
+                                             [self.codebook], 0)
+        self.assertLess(float(aligned), float(separated))
+
+    def test_the_gradient_reaches_the_points_and_the_codebook(self):
+        codebook = self.codebook.clone().requires_grad_(True)
+        points = (torch.randn(4, 8) * 0.2).requires_grad_(True)
+        loss = cp.prefix_cocluster_loss([points], [points.roll(1, 0)], [codebook], 0)
+        loss.backward()
+        self.assertGreater(float(points.grad.abs().sum()), 0.0)
+        self.assertGreater(float(codebook.grad.abs().sum()), 0.0)
+
+    def test_the_curve_changes_the_loss(self):
+        points = torch.randn(4, 8) * 0.1
+        curved = cp.prefix_cocluster_loss([points], [points.roll(1, 0)],
+                                          [self.codebook], 0,
+                                          use_curvature=True, curvature=100.0)
+        flat = cp.prefix_cocluster_loss([points], [points.roll(1, 0)],
+                                        [self.codebook], 0, use_curvature=False)
+        self.assertNotAlmostEqual(float(curved), float(flat), places=6)
+
+
+class GeometryRevertTests(unittest.TestCase):
+    """A curved assignment that cannot hold the budget is abandoned, not exported."""
+
+    def _layer(self):
+        from types import SimpleNamespace
+        from model.recording import RecordingRQLayer
+        config = SimpleNamespace(hidden_sizes=(16, 8), codebook_num=3,
+                                 codebook_size=(8, 8, 8), codebook_dim=4,
+                                 dropout=0.0, beta=0.25, vq_type="vq",
+                                 ema_decay=0.99, fix_code_embs=False,
+                                 sk_epsilon=-1.0, sk_iters=-1, use_curvature=True)
+        return RecordingRQLayer(config)
+
+    def test_reverting_restores_the_euclidean_assignment(self):
+        layer = self._layer()
+        layer.vq_layers[0].curvature = 1e5
+        latent = torch.tensor([[0.01, 0.02, 0.0, 0.0]])
+        curved = layer.vq_layers[0]._distances(latent)
+        layer.revert_to_euclidean()
+        euclid = layer.vq_layers[0]._distances(latent)
+        expected = cp._assignment_cost(latent, layer.vq_layers[0].get_code_embs(),
+                                       use_curvature=False)
+        self.assertFalse(torch.allclose(curved, euclid))
+        self.assertTrue(torch.allclose(euclid, expected, atol=1e-6))
+
+
+class BoundaryAlignmentTests(unittest.TestCase):
+    """Issue 138 B: the partition is trained against the AF3 edge probability."""
+
+    def setUp(self):
+        torch.manual_seed(31)
+        self.codebook = torch.randn(16, 8) * 0.2
+
+    def test_a_high_target_pushes_towards_sharing(self):
+        same = self.codebook[4].repeat(4, 1)
+        split = self.codebook[4:8].clone()
+        shared = cp.boundary_alignment_loss([same], [same], [self.codebook], 0,
+                                            torch.ones(4), use_curvature=False)
+        apart = cp.boundary_alignment_loss([split], [split.roll(1, 0)],
+                                          [self.codebook], 0, torch.ones(4),
+                                          use_curvature=False)
+        self.assertLess(float(shared), float(apart))
+
+    def test_a_low_target_pushes_apart(self):
+        same = self.codebook[4].repeat(4, 1)
+        zero = torch.zeros(4)
+        loss = cp.boundary_alignment_loss([same], [same], [self.codebook], 0, zero,
+                                          use_curvature=False)
+        self.assertGreater(float(loss), 0.5)
+
+    def test_the_loss_has_gradients_on_points_and_codebook(self):
+        points = (self.codebook[:4].clone() + 0.05 * torch.randn(4, 8)).requires_grad_(True)
+        codebook = self.codebook.clone().requires_grad_(True)
+        loss = cp.boundary_alignment_loss([points], [points.roll(1, 0)], [codebook], 0,
+                                          torch.ones(4), use_curvature=False)
+        loss.backward()
+        self.assertGreater(float(points.grad.abs().sum()), 0.0)
+        self.assertGreater(float(codebook.grad.abs().sum()), 0.0)
+
+
+class GraphPrefixReportTests(unittest.TestCase):
+    """Issue 138 B: the within/cross edge curvature gap of a SID partition."""
+
+    def _tokens(self):
+        # 0..5 inside one prefix, 6 outside.
+        return np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1],
+                         [1, 1, 1], [1, 1, 1], [2, 9, 9]])
+
+    def test_the_two_triangle_gap_is_the_issue_value(self):
+        tokens = self._tokens()
+        intra = [(0, 1), (2, 3), (4, 5), (0, 2), (1, 4), (3, 5)]
+        edges = np.array(intra + [(5, 6)])
+        af3 = np.array([3, 2, 2, 2, 2, 3, -2], dtype=float)
+        report = cp.graph_prefix_report(tokens, edges, af3, level=2)
+        self.assertEqual(report["within_edges"], 6)
+        self.assertEqual(report["cross_edges"], 1)
+        self.assertAlmostEqual(report["within_mean"], 14 / 6, places=5)
+        self.assertAlmostEqual(report["cross_mean"], -2.0, places=5)
+        self.assertAlmostEqual(report["gap"], 14 / 6 + 2.0, places=5)
+
+    def test_the_gap_changes_with_the_partition(self):
+        # L1 is shared by 0..5, L2 splits them into two groups.
+        tokens = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1],
+                           [1, 2, 1], [1, 2, 1], [1, 2, 1], [2, 9, 9]])
+        edges = np.array([(0, 1), (2, 3), (4, 5), (0, 2), (1, 4), (3, 5), (5, 6)])
+        af3 = np.array([3, 2, 2, 2, 2, 3, -2], dtype=float)
+        coarse = cp.graph_prefix_report(tokens, edges, af3, level=0)
+        fine = cp.graph_prefix_report(tokens, edges, af3, level=1)
+        self.assertGreater(coarse["within_edges"], fine["within_edges"])
+
+    def test_an_empty_graph_is_reported_not_invented(self):
+        report = cp.graph_prefix_report(np.zeros((0, 3), dtype=int),
+                                        np.zeros((0, 2), dtype=int),
+                                        np.zeros(0), level=1)
+        self.assertFalse(report["available"])
+        self.assertIsNone(report["gap"])
+
+
+class CurvatureStatisticTests(unittest.TestCase):
+    """Issue #138 B: ordinary Forman is the triangle-augmentation ablation."""
+
+    EDGES = np.array([[0, 1], [1, 2], [0, 2], [2, 3]])
+
+    def test_the_af3_statistic_counts_the_triangle(self):
+        table = cp.build_edge_tables(self.EDGES, 4, statistic="af3")
+        forman = cp.build_edge_tables(self.EDGES, 4, statistic="forman")
+        self.assertTrue(np.allclose(table["curvature"], table["af3"]))
+        self.assertTrue(np.allclose(forman["curvature"], forman["forman"]))
+        self.assertFalse(np.allclose(table["curvature"], forman["curvature"]))
+
+    def test_the_default_statistic_is_af3(self):
+        table = cp.build_edge_tables(self.EDGES, 4)
+        self.assertTrue(np.allclose(table["curvature"], table["af3"]))
+
+    def test_an_unknown_statistic_is_refused(self):
+        with self.assertRaises(ValueError):
+            cp.build_edge_tables(self.EDGES, 4, statistic="cheeger")
+
+
+class CurvedAssignmentTests(unittest.TestCase):
+    """Issue #138 C: the curve must enter the hard code selection itself."""
+
+    def _layer(self, use_curvature: bool):
+        from types import SimpleNamespace
+        from model.recording import RecordingRQLayer
+        config = SimpleNamespace(hidden_sizes=(16, 8), codebook_num=3,
+                                 codebook_size=(8, 8, 8), codebook_dim=4,
+                                 dropout=0.0, beta=0.25, vq_type="vq",
+                                 ema_decay=0.99, fix_code_embs=False,
+                                 sk_epsilon=-1.0, sk_iters=-1,
+                                 use_curvature=use_curvature)
+        return RecordingRQLayer(config)
+
+    def test_the_assignment_cost_is_the_curved_one_when_enabled(self):
+        layer = self._layer(True)
+        layer.vq_layers[0].curvature = 1e5
+        latent = torch.tensor([[0.01, 0.02, 0.0, 0.0], [0.03, -0.01, 0.0, 0.0]])
+        curved = layer.vq_layers[0]._distances(latent)
+        expected = cp.curved_codes_cost(latent, layer.vq_layers[0].get_code_embs(), 1e5)
+        self.assertTrue(torch.allclose(curved, expected, atol=1e-6))
+
+    def test_the_euclidean_cost_stays_when_the_geometry_is_off(self):
+        layer = self._layer(False)
+        latent = torch.tensor([[0.01, 0.02, 0.0, 0.0]])
+        code = layer.vq_layers[0].get_code_embs()
+        euclid = cp._assignment_cost(latent, code, use_curvature=False)
+        self.assertTrue(torch.allclose(layer.vq_layers[0]._distances(latent), euclid,
+                                       atol=1e-6))
+
+    def test_the_curved_argmin_can_differ_from_the_euclidean_one(self):
+        layer = self._layer(True)
+        layer.vq_layers[0].curvature = 1e6
+        latent = torch.tensor([[0.999, 0.0, 0.0, 0.0], [0.0, 0.02, 0.0, 0.0]])
+        curved_index = int(layer.vq_layers[0]._distances(latent).argmin(dim=-1)[0])
+        euclid_index = int(cp._assignment_cost(
+            latent, layer.vq_layers[0].get_code_embs(), use_curvature=False
+        ).argmin(dim=-1)[0])
+        self.assertNotEqual(curved_index, euclid_index,
+                            "at high curvature the assignment must be able to move")
+
+
+class PrefixSemanticsTests(unittest.TestCase):
+    """Issue #138 A: an L2 prefix is q1..q2, not q2 alone."""
+
+    def setUp(self):
+        self.cb1 = torch.tensor([[-1.0, -1.0], [1.0, 1.0]])
+        self.cb2 = torch.tensor([[-1.0, -1.0], [1.0, 1.0]])
+        # u and v sit on opposite coarse codes but on the same second code.
+        self.u1 = torch.tensor([[-1.0, -0.9]])
+        self.v1 = torch.tensor([[0.9, 1.0]])
+        self.u2 = torch.tensor([[1.0, 0.9]])
+        self.v2 = torch.tensor([[1.0, 0.8]])
+
+    def test_the_same_l2_code_with_different_l1_share_no_l2_prefix(self):
+        same_code = cp.prefix_agreement(self.u2, self.v2, self.cb2)
+        prefix = cp.prefix_share([self.u1, self.u2], [self.v1, self.v2],
+                                 [self.cb1, self.cb2], level=1)
+        self.assertGreater(float(same_code), 0.5, "the second codes do agree")
+        self.assertLess(float(prefix), 0.05,
+                        "sharing q2 without q1 is not sharing the L2 prefix")
+
+    def test_a_full_prefix_match_is_the_product_of_the_levels(self):
+        share = cp.prefix_share([self.u1, self.u2], [self.u1, self.u2],
+                                [self.cb1, self.cb2], level=1)
+        self.assertGreater(float(share), 0.9)
+
+    def test_the_share_has_a_gradient(self):
+        a = [self.u1.clone().requires_grad_(True), self.u2.clone().requires_grad_(True)]
+        b = [self.v1.clone(), self.v2.clone()]
+        cp.prefix_share(a, b, [self.cb1, self.cb2], level=1).sum().backward()
+        self.assertGreater(float(a[0].grad.abs().sum()), 0.0)
+
+
+class UsageEntropyTests(unittest.TestCase):
+    """The coarse level must not collapse into a few codes."""
+
+    def setUp(self):
+        torch.manual_seed(19)
+        self.codebook = torch.randn(32, 8) * 0.2
+
+    def test_a_concentrated_batch_has_lower_entropy(self):
+        one = self.codebook[7].repeat(12, 1)
+        spread = self.codebook[:12].clone()
+        concentrated = cp.usage_entropy(one, self.codebook)
+        even = cp.usage_entropy(spread, self.codebook)
+        self.assertGreater(float(even), float(concentrated))
+
+    def test_the_term_has_a_gradient(self):
+        points = (torch.randn(8, 8) * 0.2).requires_grad_(True)
+        cp.usage_entropy(points, self.codebook).sum().backward()
+        self.assertGreater(float(points.grad.abs().sum()), 0.0)
+
+    def test_the_curve_changes_the_entropy(self):
+        points = torch.randn(8, 8) * 0.1
+        curved = cp.usage_entropy(points, self.codebook, use_curvature=True, curvature=100.0)
+        flat = cp.usage_entropy(points, self.codebook, use_curvature=False)
+        self.assertNotAlmostEqual(float(curved), float(flat), places=6)
+
+
+class CodebookUpdateTests(unittest.TestCase):
+    """The coarse codebook may follow the behaviour cohesion, but bounded."""
+
+    def test_a_code_moves_towards_its_assigned_items_by_the_step(self):
+        codebook = torch.tensor([[0.0, 0.0], [1.0, 1.0]])
+        points = torch.tensor([[0.2, 0.0], [0.4, 0.0]])
+        assignment = torch.tensor([0, 0])
+        weights = torch.ones(2)
+        updated = cp.cohesion_codebook_update(points, codebook, assignment, weights, 0.1)
+        self.assertTrue(torch.allclose(updated[0], torch.tensor([0.03, 0.0]), atol=1e-6))
+        self.assertTrue(torch.allclose(updated[1], codebook[1]))
+
+    def test_a_code_without_assignments_does_not_move(self):
+        codebook = torch.tensor([[0.0, 0.0], [1.0, 1.0]])
+        points = torch.tensor([[0.2, 0.0]])
+        updated = cp.cohesion_codebook_update(points, codebook, torch.tensor([1]),
+                                              torch.ones(1), 0.5)
+        self.assertTrue(torch.allclose(updated[0], codebook[0]))
+
+    def test_the_step_is_a_hard_bound(self):
+        codebook = torch.tensor([[0.0, 0.0]])
+        points = torch.tensor([[10.0, 0.0]])
+        updated = cp.cohesion_codebook_update(points, codebook, torch.tensor([0]),
+                                              torch.ones(1), 0.1)
+        self.assertAlmostEqual(float(updated[0, 0]), 1.0, places=5)
+
+
+class CurvatureScaleTests(unittest.TestCase):
+    """Curvature 1 is locally Euclidean at this data's radial scale."""
+
+    def test_the_measured_curvature_puts_the_data_at_the_ball_scale(self):
+        norms = torch.full((16,), 0.1)
+        curvature = cp.data_curvature(norms)
+        self.assertAlmostEqual(curvature, 100.0, places=3)
+
+    def test_the_curved_cost_is_scale_free(self):
+        """Both sides are normalised: a rescaling cannot change the assignment."""
+        torch.manual_seed(3)
+        points = torch.randn(16, 8) * 0.1
+        codebook = torch.randn(16, 8) * 0.1
+        base = cp._assignment_cost(points, codebook, True, curvature=1.0)
+        scaled = cp._assignment_cost(points * 20.0, codebook * 0.2, True, curvature=1.0)
+        self.assertTrue(torch.allclose(base, scaled, atol=1e-5),
+                        "the curved cost must not depend on the radial scale")
+        euclid = cp._assignment_cost(points, codebook, use_curvature=False)
+        self.assertFalse(torch.allclose(base, euclid, atol=1e-5))
+
+
+class AssignmentRuleTests(unittest.TestCase):
+    """The candidate owns its assignment rule (CLAUDE.md 66)."""
+
+    def _layer(self):
+        from types import SimpleNamespace
+        from model.recording import RecordingRQLayer
+        config = SimpleNamespace(hidden_sizes=(16, 8), codebook_num=3,
+                                 codebook_size=(16, 16, 16), codebook_dim=4,
+                                 dropout=0.0, beta=0.25, vq_type="vq",
+                                 ema_decay=0.99, fix_code_embs=False,
+                                 sk_epsilon=0.003, sk_iters=50)
+        return RecordingRQLayer(config)
+
+    def test_the_second_level_is_balanced_like_the_last_one(self):
+        layer = self._layer()
+        self.assertTrue(layer.vq_layers[2].use_sk)
+        self.assertTrue(layer.vq_layers[1].use_sk,
+                        "level 2 must be balanced: the L2 spread is the recall lever")
+        self.assertFalse(layer.vq_layers[0].use_sk,
+                         "the coarse level carries the cohesion, not the balance")
+
+
+class CollisionSlotTests(unittest.TestCase):
+    """The 4th token is the item's rank inside its coarse group, by behaviour."""
+
+    def test_a_priority_orders_the_slot_inside_each_group(self):
+        import train_rqvae as trainer
+        tokens = torch.tensor([[1, 2, 3], [1, 2, 3], [1, 2, 3], [4, 5, 6]])
+        priority = torch.tensor([0.1, 0.9, 0.5, 0.3])
+        sid = trainer._extend_collisions(tokens.numpy(), [256, 256, 256], priority=priority)
+        group = {int(row[3]) - 768: i for i, row in enumerate(sid[:3])}
+        self.assertEqual(group, {0: 1, 1: 2, 2: 0})
+        self.assertEqual(int(sid[3, 3]), 768)
+
+    def test_without_a_priority_the_order_is_the_item_order(self):
+        import train_rqvae as trainer
+        tokens = torch.tensor([[1, 2, 3], [1, 2, 3]])
+        sid = trainer._extend_collisions(tokens.numpy(), [256, 256, 256])
+        self.assertEqual([int(sid[0, 3]), int(sid[1, 3])], [768, 769])
+
+
+class DeterminismTests(unittest.TestCase):
+    def test_the_same_inputs_give_the_same_loss(self):
+        torch.manual_seed(7)
+        levels = [torch.randn(4, 3) for _ in range(3)]
+        codebooks = [torch.randn(5, 3) for _ in range(3)]
+        anchor = torch.tensor([0, 1])
+        high = torch.tensor([2, 3])
+        low = torch.tensor([3, 2])
+        first = cp.curvature_prefix_ranking_loss(levels[0], levels[1], levels[2], codebooks,
+                                                 anchor, high, low, torch.ones(2),
+                                                 temperature=0.1)
+        second = cp.curvature_prefix_ranking_loss(levels[0], levels[1], levels[2], codebooks,
+                                                  anchor, high, low, torch.ones(2),
+                                                  temperature=0.1)
+        self.assertEqual(float(first), float(second))
+
+
+if __name__ == "__main__":
+    unittest.main()

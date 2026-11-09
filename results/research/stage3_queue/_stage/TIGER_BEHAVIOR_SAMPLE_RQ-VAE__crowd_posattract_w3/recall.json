@@ -1,0 +1,15 @@
+{
+  "_provenance": {
+    "note": "recall measured on a destroyed SID, retraining produced a new one",
+    "paired_sid_sha256": null,
+    "recall_source": "results/stage3_T5Train/tiger_sample_crowd_posattract_w3/logs/Amazon_2023_Instruments/Oct-14-2026_22-57-10/test_final.json",
+    "sid_sha256_of_this_arm": "8ac310520d5589bc535a333fad33f18ebf5e6457e53ebb61c60cc37355743aad",
+    "stage3_arm": "tiger_sample_crowd_posattract_w3"
+  },
+  "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_sample_crowd_posattract_w3/ckpt/Amazon_2023_Instruments/Oct-14-2026_22-57-10/HG_Rec_best.pth",
+  "n_eval": 57439,
+  "test_ndcg@10": 0.03468583532606373,
+  "test_ndcg@5": 0.02748766703922283,
+  "test_recall@10": 0.06351085499399363,
+  "test_recall@5": 0.04115670537439719
+}

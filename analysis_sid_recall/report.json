@@ -1177,130 +1177,305 @@
       "prefix_overlap@3_neg": 2.5e-05,
       "prefix_overlap@3_gap": 0.0006000000000000001,
       "sid_sha256": "3b669a031729c6740b6defed95b459ef9022e25846f5757eacf2d97553790c5f"
+    },
+    {
+      "number": "48",
+      "arm": "TIGER_BEHAVIOR_R48",
+      "test_recall@10": 0.0619265655739132,
+      "test_recall@5": 0.040721461028221245,
+      "test_ndcg@10": 0.033820355166338016,
+      "n_items": 24587,
+      "l1_codes": 240,
+      "l1_er": 222.0920056559653,
+      "l1_max_share": 0.011184772440720706,
+      "l2_prefixes": 15495,
+      "l3_distinct": 23582,
+      "l3_collision": 0.04087525928336111,
+      "l3_gain_bits": 0.06020963510788891,
+      "prefix_overlap@1_pos": 0.05564,
+      "prefix_overlap@1_neg": 0.004805,
+      "prefix_overlap@1_gap": 0.050835000000000005,
+      "prefix_overlap@2_pos": 0.00284,
+      "prefix_overlap@2_neg": 6.5e-05,
+      "prefix_overlap@2_gap": 0.002775,
+      "prefix_overlap@3_pos": 0.00042,
+      "prefix_overlap@3_neg": 5e-06,
+      "prefix_overlap@3_gap": 0.000415,
+      "sid_sha256": "e0a2af8559412a25901afb2ca4f4c6ef1cdd416f09bca8725e7b42d6af767654"
+    },
+    {
+      "number": "49",
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE__resample",
+      "test_recall@10": 0.06373718205400512,
+      "test_recall@5": 0.0425494872821602,
+      "test_ndcg@10": 0.03511031834988592,
+      "n_items": 24587,
+      "l1_codes": 238,
+      "l1_er": 223.27352753041998,
+      "l1_max_share": 0.010045959246756416,
+      "l2_prefixes": 15860,
+      "l3_distinct": 23675,
+      "l3_collision": 0.037092772603408264,
+      "l3_gain_bits": 0.05453128853439389,
+      "prefix_overlap@1_pos": 0.056435,
+      "prefix_overlap@1_neg": 0.00452,
+      "prefix_overlap@1_gap": 0.051915,
+      "prefix_overlap@2_pos": 0.00312,
+      "prefix_overlap@2_neg": 6e-05,
+      "prefix_overlap@2_gap": 0.00306,
+      "prefix_overlap@3_pos": 0.000475,
+      "prefix_overlap@3_neg": 0.0,
+      "prefix_overlap@3_gap": 0.000475,
+      "sid_sha256": "5e4562c05c7d28ac9996882ce28c8ad718f53b22067b3e0edc837bfd6f95fc42"
+    },
+    {
+      "number": "50",
+      "arm": "TIGER_behavior_residual_geometry_transport__r8_control",
+      "test_recall@10": 0.06338898657706436,
+      "test_recall@5": 0.04171381813750239,
+      "test_ndcg@10": 0.03454331085500618,
+      "n_items": 24587,
+      "l1_codes": 238,
+      "l1_er": 217.8939858470669,
+      "l1_max_share": 0.010249318745678611,
+      "l2_prefixes": 15655,
+      "l3_distinct": 23609,
+      "l3_collision": 0.039777117989181265,
+      "l3_gain_bits": 0.05855877920933328,
+      "prefix_overlap@1_pos": 0.058735,
+      "prefix_overlap@1_neg": 0.00466,
+      "prefix_overlap@1_gap": 0.054075000000000005,
+      "prefix_overlap@2_pos": 0.003355,
+      "prefix_overlap@2_neg": 5.5e-05,
+      "prefix_overlap@2_gap": 0.0033,
+      "prefix_overlap@3_pos": 0.00052,
+      "prefix_overlap@3_neg": 5e-06,
+      "prefix_overlap@3_gap": 0.0005149999999999999,
+      "sid_sha256": "52773d4df6acfc9bed2e3ee4308bb046dd98e7b0293fc771a838e5ee461a0387"
+    },
+    {
+      "number": "51",
+      "arm": "TIGER_bootstrap_code_stability__resample",
+      "test_recall@10": 0.06335416702937029,
+      "test_recall@5": 0.04265394592524243,
+      "test_ndcg@10": 0.03516551922018455,
+      "n_items": 24587,
+      "l1_codes": 238,
+      "l1_er": 221.51520519202043,
+      "l1_max_share": 0.010818725342660755,
+      "l2_prefixes": 15711,
+      "l3_distinct": 23571,
+      "l3_collision": 0.041322650180989906,
+      "l3_gain_bits": 0.060882747984595004,
+      "prefix_overlap@1_pos": 0.055765,
+      "prefix_overlap@1_neg": 0.00462,
+      "prefix_overlap@1_gap": 0.051145,
+      "prefix_overlap@2_pos": 0.003015,
+      "prefix_overlap@2_neg": 6.5e-05,
+      "prefix_overlap@2_gap": 0.00295,
+      "prefix_overlap@3_pos": 0.000455,
+      "prefix_overlap@3_neg": 5e-06,
+      "prefix_overlap@3_gap": 0.00045,
+      "sid_sha256": "779c4a86f3dcdba76cc3fac5f9fc03ad7194ddd43dec9e44b12a051752f9f4cb"
+    },
+    {
+      "number": "52",
+      "arm": "TIGER_c106_directed_assignment_usage_balance__r8_control",
+      "test_recall@10": 0.06241403924163025,
+      "test_recall@5": 0.04204460384059611,
+      "test_ndcg@10": 0.034312283480564885,
+      "n_items": 24587,
+      "l1_codes": 236,
+      "l1_er": 215.76149531731372,
+      "l1_max_share": 0.013543742628218164,
+      "l2_prefixes": 15580,
+      "l3_distinct": 23515,
+      "l3_collision": 0.04360027656891852,
+      "l3_gain_bits": 0.06431438203215957,
+      "prefix_overlap@1_pos": 0.05814,
+      "prefix_overlap@1_neg": 0.00499,
+      "prefix_overlap@1_gap": 0.053149999999999996,
+      "prefix_overlap@2_pos": 0.003295,
+      "prefix_overlap@2_neg": 4e-05,
+      "prefix_overlap@2_gap": 0.003255,
+      "prefix_overlap@3_pos": 0.00054,
+      "prefix_overlap@3_neg": 5e-06,
+      "prefix_overlap@3_gap": 0.000535,
+      "sid_sha256": "88611b25f659cf6781f1465fc7e84becbc2c63aea175f74eddc5739440f015ae"
+    },
+    {
+      "number": "53",
+      "arm": "TIGER_c106_directed_codeword_margin_geometry__r8_control",
+      "test_recall@10": 0.06373718205400512,
+      "test_recall@5": 0.04160935949442017,
+      "test_ndcg@10": 0.03466763666330205,
+      "n_items": 24587,
+      "l1_codes": 242,
+      "l1_er": 225.91699655518048,
+      "l1_max_share": 0.010859397242445194,
+      "l2_prefixes": 15724,
+      "l3_distinct": 23533,
+      "l3_collision": 0.04286818237279866,
+      "l3_gain_bits": 0.06321046637142844,
+      "prefix_overlap@1_pos": 0.05598,
+      "prefix_overlap@1_neg": 0.004525,
+      "prefix_overlap@1_gap": 0.051455,
+      "prefix_overlap@2_pos": 0.003065,
+      "prefix_overlap@2_neg": 5.5e-05,
+      "prefix_overlap@2_gap": 0.00301,
+      "prefix_overlap@3_pos": 0.000465,
+      "prefix_overlap@3_neg": 0.0,
+      "prefix_overlap@3_gap": 0.000465,
+      "sid_sha256": "99d7f86fd23f2c39cd840b40933176b03978a4c14595e730199df6e86bd2c684"
+    },
+    {
+      "number": "54",
+      "arm": "TIGER_c1_behaviour_conditioned_residual_target__r8_control",
+      "test_recall@10": 0.0610038475600202,
+      "test_recall@5": 0.04098260763592681,
+      "test_ndcg@10": 0.03381020016512428,
+      "n_items": 24587,
+      "l1_codes": 241,
+      "l1_er": 201.00715593686039,
+      "l1_max_share": 0.011998210436409485,
+      "l2_prefixes": 14725,
+      "l3_distinct": 23420,
+      "l3_collision": 0.047464107048440285,
+      "l3_gain_bits": 0.07015463838892588,
+      "prefix_overlap@1_pos": 0.05872,
+      "prefix_overlap@1_neg": 0.005395,
+      "prefix_overlap@1_gap": 0.053325000000000004,
+      "prefix_overlap@2_pos": 0.003315,
+      "prefix_overlap@2_neg": 5e-05,
+      "prefix_overlap@2_gap": 0.0032649999999999997,
+      "prefix_overlap@3_pos": 0.00049,
+      "prefix_overlap@3_neg": 5e-06,
+      "prefix_overlap@3_gap": 0.00048499999999999997,
+      "sid_sha256": "54e5b6bbef1326ad6dcf69ca262e2ef7397e3d4e970d4032be278f737eb0fa0d"
     }
   ],
   "correlations": {
     "l1_codes": {
-      "n": 47,
-      "rho": -0.06052366955716292,
+      "n": 54,
+      "rho": 0.04485640032172403,
       "ci95": [
-        -0.3954572381901245,
-        0.2688072981174403
+        -0.27818094437995927,
+        0.33807502151289415
       ]
     },
     "l1_er": {
-      "n": 47,
-      "rho": -0.016651248843663275,
+      "n": 54,
+      "rho": 0.2742190627344366,
       "ci95": [
-        -0.3364605049803104,
-        0.31517960602549244
+        -0.044404566454125466,
+        0.5553815036674572
       ]
     },
     "l1_max_share": {
-      "n": 47,
-      "rho": 0.0013876040703052729,
+      "n": 54,
+      "rho": -0.2842821476054251,
       "ci95": [
-        -0.3113404452690167,
-        0.3076432751926754
+        -0.5647197955213062,
+        0.018327605956471937
       ]
     },
     "l2_prefixes": {
-      "n": 47,
-      "rho": 0.08556891766882516,
+      "n": 54,
+      "rho": 0.39703443945536443,
       "ci95": [
-        -0.25385775612019956,
-        0.40580633945645245
+        0.08024573587209524,
+        0.6452758235185492
       ]
     },
     "l3_distinct": {
-      "n": 47,
-      "rho": 0.02717391304347826,
+      "n": 54,
+      "rho": 0.3347881606889848,
       "ci95": [
-        -0.30633762020623334,
-        0.3562405840769498
+        0.02574877750611247,
+        0.5966245370193592
       ]
     },
     "l3_collision": {
-      "n": 47,
-      "rho": -0.02717391304347826,
+      "n": 54,
+      "rho": -0.3347881606889848,
       "ci95": [
-        -0.35722985905689925,
-        0.3057535199026595
+        -0.5970223325062035,
+        -0.025815321163980755
       ]
     },
     "l3_gain_bits": {
-      "n": 47,
-      "rho": -0.02717391304347826,
+      "n": 54,
+      "rho": -0.3347881606889848,
       "ci95": [
-        -0.35722985905689925,
-        0.3057535199026595
+        -0.5970223325062035,
+        -0.025815321163980755
       ]
     },
     "prefix_overlap@1_gap": {
-      "n": 47,
-      "rho": 0.3790471785383904,
+      "n": 54,
+      "rho": 0.33124321033670473,
       "ci95": [
-        0.09561891515994436,
-        0.6194839083792404
+        0.06673789445567978,
+        0.5831996945399007
       ]
     },
     "prefix_overlap@2_gap": {
-      "n": 47,
-      "rho": 0.08637835337650324,
+      "n": 54,
+      "rho": -0.18875907682248125,
       "ci95": [
-        -0.24662377557526227,
-        0.42301233424054663
+        -0.47767576003649675,
+        0.12537210982107222
       ]
     },
     "prefix_overlap@3_gap": {
-      "n": 47,
-      "rho": 0.1412506143806691,
+      "n": 54,
+      "rho": -0.17347716703514524,
       "ci95": [
-        -0.1668890306862347,
-        0.468643246111684
+        -0.45298802506399644,
+        0.147120558714651
       ]
     }
   },
   "correlations_unique_sid": {
     "l1_codes": {
-      "n": 47,
-      "rho": -0.06052366955716292
+      "n": 54,
+      "rho": 0.04485640032172403
     },
     "l1_er": {
-      "n": 47,
-      "rho": -0.016651248843663275
+      "n": 54,
+      "rho": 0.2742190627344366
     },
     "l1_max_share": {
-      "n": 47,
-      "rho": 0.0013876040703052729
+      "n": 54,
+      "rho": -0.2842821476054251
     },
     "l2_prefixes": {
-      "n": 47,
-      "rho": 0.08556891766882516
+      "n": 54,
+      "rho": 0.39703443945536443
     },
     "l3_distinct": {
-      "n": 47,
-      "rho": 0.02717391304347826
+      "n": 54,
+      "rho": 0.3347881606889848
     },
     "l3_collision": {
-      "n": 47,
-      "rho": -0.02717391304347826
+      "n": 54,
+      "rho": -0.3347881606889848
     },
     "l3_gain_bits": {
-      "n": 47,
-      "rho": -0.02717391304347826
+      "n": 54,
+      "rho": -0.3347881606889848
     },
     "prefix_overlap@1_gap": {
-      "n": 47,
-      "rho": 0.3790471785383904
+      "n": 54,
+      "rho": 0.33124321033670473
     },
     "prefix_overlap@2_gap": {
-      "n": 47,
-      "rho": 0.08637835337650324
+      "n": 54,
+      "rho": -0.18875907682248125
     },
     "prefix_overlap@3_gap": {
-      "n": 47,
-      "rho": 0.1412506143806691
+      "n": 54,
+      "rho": -0.17347716703514524
     }
   }
 }

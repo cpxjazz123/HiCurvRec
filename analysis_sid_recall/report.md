@@ -1,4 +1,4 @@
-# R2 pairs, one pass over 47 pairs
+# R2 pairs, one pass over 54 pairs
 
 Sample: 200000 TRAIN-only transitions, 200000 random pairs (seed 20261109).
 
@@ -51,33 +51,40 @@ Sample: 200000 TRAIN-only transitions, 200000 random pairs (seed 20261109).
 | 45 | `TIGER_community-repulse-l1-rq` | 0.0542 | 255 | 84.5 | 0.036 | 6318 | 19089 | 0.224 | 0.37 |
 | 46 | `TIGER_community-balance-repulse-rq` | 0.0532 | 256 | 254.2 | 0.005 | 8575 | 21952 | 0.107 | 0.16 |
 | 47 | `TIGER_community_graph_recon` | 0.0558 | 246 | 124.4 | 0.026 | 7432 | 20476 | 0.167 | 0.26 |
+| 48 | `TIGER_BEHAVIOR_R48` | 0.0619 | 240 | 222.1 | 0.011 | 15495 | 23582 | 0.041 | 0.06 |
+| 49 | `TIGER_BEHAVIOR_SAMPLE_RQ-VAE__resample` | 0.0637 | 238 | 223.3 | 0.010 | 15860 | 23675 | 0.037 | 0.05 |
+| 50 | `TIGER_behavior_residual_geometry_transport__r8_control` | 0.0634 | 238 | 217.9 | 0.010 | 15655 | 23609 | 0.040 | 0.06 |
+| 51 | `TIGER_bootstrap_code_stability__resample` | 0.0634 | 238 | 221.5 | 0.011 | 15711 | 23571 | 0.041 | 0.06 |
+| 52 | `TIGER_c106_directed_assignment_usage_balance__r8_control` | 0.0624 | 236 | 215.8 | 0.014 | 15580 | 23515 | 0.044 | 0.06 |
+| 53 | `TIGER_c106_directed_codeword_margin_geometry__r8_control` | 0.0637 | 242 | 225.9 | 0.011 | 15724 | 23533 | 0.043 | 0.06 |
+| 54 | `TIGER_c1_behaviour_conditioned_residual_target__r8_control` | 0.0610 | 241 | 201.0 | 0.012 | 14725 | 23420 | 0.047 | 0.07 |
 
-## Spearman against test_recall@10 (n = 47 pairs with Stage 3)
+## Spearman against test_recall@10 (n = 54 pairs with Stage 3)
 
 | metric | rho | 95% bootstrap |
 |---|---|---|
-| l1_codes | -0.061 | [-0.395, 0.269] |
-| l1_er | -0.017 | [-0.336, 0.315] |
-| l1_max_share | 0.001 | [-0.311, 0.308] |
-| l2_prefixes | 0.086 | [-0.254, 0.406] |
-| l3_distinct | 0.027 | [-0.306, 0.356] |
-| l3_collision | -0.027 | [-0.357, 0.306] |
-| l3_gain_bits | -0.027 | [-0.357, 0.306] |
-| prefix_overlap@1_gap | 0.379 | [0.096, 0.619] |
-| prefix_overlap@2_gap | 0.086 | [-0.247, 0.423] |
-| prefix_overlap@3_gap | 0.141 | [-0.167, 0.469] |
+| l1_codes | 0.045 | [-0.278, 0.338] |
+| l1_er | 0.274 | [-0.044, 0.555] |
+| l1_max_share | -0.284 | [-0.565, 0.018] |
+| l2_prefixes | 0.397 | [0.080, 0.645] |
+| l3_distinct | 0.335 | [0.026, 0.597] |
+| l3_collision | -0.335 | [-0.597, -0.026] |
+| l3_gain_bits | -0.335 | [-0.597, -0.026] |
+| prefix_overlap@1_gap | 0.331 | [0.067, 0.583] |
+| prefix_overlap@2_gap | -0.189 | [-0.478, 0.125] |
+| prefix_overlap@3_gap | -0.173 | [-0.453, 0.147] |
 
-## Same, one row per distinct item_sids.json (n = 47)
+## Same, one row per distinct item_sids.json (n = 54)
 
 | metric | rho |
 |---|---|
-| l1_codes | -0.061 |
-| l1_er | -0.017 |
-| l1_max_share | 0.001 |
-| l2_prefixes | 0.086 |
-| l3_distinct | 0.027 |
-| l3_collision | -0.027 |
-| l3_gain_bits | -0.027 |
-| prefix_overlap@1_gap | 0.379 |
-| prefix_overlap@2_gap | 0.086 |
-| prefix_overlap@3_gap | 0.141 |
+| l1_codes | 0.045 |
+| l1_er | 0.274 |
+| l1_max_share | -0.284 |
+| l2_prefixes | 0.397 |
+| l3_distinct | 0.335 |
+| l3_collision | -0.335 |
+| l3_gain_bits | -0.335 |
+| prefix_overlap@1_gap | 0.331 |
+| prefix_overlap@2_gap | -0.189 |
+| prefix_overlap@3_gap | -0.173 |
