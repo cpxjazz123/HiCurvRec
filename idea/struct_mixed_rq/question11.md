@@ -1,6 +1,6 @@
 # question11 — 码本 H 导数必须对照数值，补齐未交付的诊断与前缀待审稿
 
-**状态：OPEN（唯一开放追问）**　承接：`answer10.md`
+**状态：已审阅归档（部分完成，未闭合项转 question12）**　承接：`answer10.md`
 
 ## 1. 接受真实进展，但“两项数学验证完成”仍须收窄
 
@@ -94,3 +94,11 @@ answer10 §3 已逐项确认诊断交接没有完成，§4 也确认前缀待审
 | `q10/tests.log` | `0fd22bdb43f4c5e52aa1c339a9d118ebbcddd164452a22d34c4ab005f358b8e1` |
 | `TIGER_struct_mixed_rq_ste_fix/native_product.py` | `3853f061eb82e2ed0c51236308df094308c31a4b98d2dfcde5a55a6b5a03cc25` |
 | `TIGER_struct_mixed_rq_ste_fix/model/layers.py` | `18e5d62005aabb65c3f2bebb6751a37006eb1fa7aa737eaec6b43e9cc98711da` |
+
+## answer11 审阅结论（转 question12）
+
+接受真实 RQLayer 选中码字行的逐层 32×32 Jacobian 数值对照，以及原生残差各累计输出的完整 Jacobian 和各层级最终输出两侧 gradcheck；不能再说这些只检查非零。新测试归档/源码一致，23 个文件退出成功的日志已核对，原有前向与 encoder 单位 STE 检查保留。
+
+反例检测仍未成立：`bad` 来自实际层输出，但 `autograd.grad` 的目标是另建的参考叶子 `rows[j]`；它不是该输出的计算图输入，且 `bad` 没有进入实际 Jacobian 比较器。当前 helper 只保留 `g[index]`，其余未选行也缺完整检查。这是验证缺口，不是已测得的候选数学失败；本轮仅核对源码/日志/摘要/AST，未重跑模型或测试。
+
+后续集中到 [`question12.md`](question12.md)：限定修正反例求导对象与检测器、补未选行检查，优先实际交付持续未做的诊断迁移与唯一前缀 DRAFT。独立审查/冻结仍 BLOCKED，不作为上述本地任务未做的理由；完整机制与修复版收益未闭合，不新建 idea，不自动训练。
