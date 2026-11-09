@@ -36,6 +36,13 @@ def test_the_shared_prompt_does_not_impose_the_idea_block():
     assert "IDEA:" in runtime.IDEA_JSON_INSTRUCTIONS
 
 
+def test_the_verification_author_is_not_asked_for_an_idea():
+    # role="verify" is run_agent's default and is what a verification author gets;
+    # it returned IdeaPayload and the answer was rendered as an idea block.
+    assert runtime.output_schema("verify") is None
+    assert runtime.dag_role("verify") is False
+
+
 def test_dag_instructions_are_not_idea_instructions():
     assert runtime.dag_role("literature")
     assert "IDEA" not in runtime.DAG_JSON_INSTRUCTIONS

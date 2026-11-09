@@ -298,7 +298,10 @@ def answer_text_for(role: str, answer_text: str, records) -> str:
 
 def output_schema(role: str):
     """The structured-output schema of a role, when the provider supports it."""
-    if dag_role(role):
+    if dag_role(role) or str(role) == "verify":
+        # The default role of run_agent is the verification author, which writes
+        # tests and a verdict; falling through to IdeaPayload asked it for an idea
+        # block and threw its answer away.
         return None
     if role == "score":
         return RankPayload
@@ -698,6 +701,8 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         instructions = SYSTEM_PROMPT + "\n" + CODING_JSON_INSTRUCTIONS
     elif role == "score":
         instructions = SYSTEM_PROMPT + "\n" + RANK_JSON_INSTRUCTIONS
+    elif str(role) == "verify":
+        instructions = SYSTEM_PROMPT
     elif dag_role(role):
         instructions = SYSTEM_PROMPT + "\n" + DAG_JSON_INSTRUCTIONS
     else:
