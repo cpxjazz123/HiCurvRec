@@ -35,7 +35,7 @@ def _require_live():
 
 
 def _inputs(candidate_id: str, tree: Path, run_id: str) -> dict:
-    from ..workflows.pipeline import run_dir
+    from ..workflows.paths import run_dir
     root = run_dir(run_id)
     if not (root / "run.json").is_file():
         raise AdmissionError("run_id does not reference a recorded research run")
@@ -132,7 +132,7 @@ def draft_test_suites(candidate_id: str, tree: Path, run_id: str,
     """Write untrusted test drafts only to results/, never into tracked cases."""
     _require_live()
     data = _inputs(candidate_id, tree, run_id)
-    from ..workflows.pipeline import run_dir
+    from ..workflows.paths import run_dir
     run_root = run_dir(run_id)
     draft_dir = EVIDENCE_ROOT / "verification" / candidate_id / "drafts"
     draft_dir.mkdir(parents=True, exist_ok=True)
@@ -187,7 +187,7 @@ def review_committed_suites(candidate_id: str, tree: Path, run_id: str,
                         request_id: str = "") -> Path:
     """Read actual committed files, then run a distinct independent review Agent."""
     _require_live()
-    from ..workflows.pipeline import run_dir
+    from ..workflows.paths import run_dir
     run_root = run_dir(run_id)
     data = _inputs(candidate_id, tree, run_id)
     case_dir = CASES_ROOT / candidate_id

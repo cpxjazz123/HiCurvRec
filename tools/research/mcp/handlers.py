@@ -16,7 +16,17 @@ from pathlib import Path
 
 from .. import settings
 from ..core.evidence import atomic_json, digest_file, read_json
-from ..workflows import pipeline
+from ..workflows.paths import run_dir as _run_dir
+
+
+class _RemovedDag:
+    """The research DAG is gone; any surviving call site fails loudly."""
+
+    def __getattr__(self, name):
+        raise RuntimeError("the research DAG was removed: " + str(name))
+
+
+pipeline = _RemovedDag()
 
 RUN_ID = re.compile(r"^run_[0-9a-f]{16}$")
 ROLES = ("behavior", "literature", "geometry", "review")
@@ -38,7 +48,7 @@ def _launch_lock():
 def _root(run_id):
     if not isinstance(run_id, str) or not RUN_ID.fullmatch(run_id):
         raise ValueError("invalid run_id")
-    path = pipeline.run_dir(run_id)
+    path = _run_dir(run_id)
     if not (path / "run.json").is_file():
         raise ValueError("unknown research run")
     return path

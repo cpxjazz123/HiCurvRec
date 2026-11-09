@@ -2884,6 +2884,14 @@ TOOLS: dict[str, dict] = {
 }
 
 
+# The persistent DAG and its behaviour/literature/geometry/review stages were
+# removed: only implementation and later stay.  Unregistering here keeps the
+# remaining tools importable without the deleted scheduler.
+for _removed in ("research_start", "research_resume", "research_status",
+                 "research_cancel", "research_results"):
+    TOOLS.pop(_removed, None)
+
+
 def tool_schema(name: str) -> dict:
     spec = TOOLS[name]
     properties = {}
