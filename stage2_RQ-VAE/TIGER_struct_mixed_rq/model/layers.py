@@ -17,6 +17,7 @@ import torch.nn.functional as F
 from sklearn.cluster import KMeans
 
 import mixed_geometry
+import native_product
 
 #: The assignment metric.  True: the product-space geodesic of mixed_geometry;
 #: False: the baseline Euclidean distance (the geometry control arm).
@@ -304,10 +305,23 @@ class RQLayer(nn.Module):
         num_unused_codes = 0.0
         output = torch.empty(x.shape[0], self.codebook_num, dtype=torch.long, device=x.device)
         residual = x
+        codes: list[torch.Tensor] = []
+        tangent_cum = torch.zeros_like(x)
+        native = (mixed_geometry.GEOMETRY_ON
+                  and self.codebook_dim == mixed_geometry.E_DIM + mixed_geometry.H_DIM)
         for level, vq_layer in enumerate(self.vq_layers):
             quant, quant_loss, unused, indices = vq_layer(residual, infer_use_sk)
+            codes.append(vq_layer.embed_code(indices))
             residual = residual - quant
-            quantized_x = quantized_x + quant
+            tangent_cum = tangent_cum + quant
+            if native:
+                # forward: the right-nested composition read through log0;
+                # backward: the tangent path, so the encoder and the levels keep
+                # the gradient the straight-through estimator carries
+                quantized_x = (native_product.reconstruct(codes)
+                               + (tangent_cum - tangent_cum.detach()))
+            else:
+                quantized_x = tangent_cum
             sum_quant_loss = sum_quant_loss + quant_loss
             num_unused_codes += unused
             output[:, level] = indices
