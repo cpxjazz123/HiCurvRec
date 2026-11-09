@@ -310,6 +310,10 @@ class RQLayer(nn.Module):
         native = (mixed_geometry.GEOMETRY_ON
                   and self.codebook_dim == mixed_geometry.E_DIM + mixed_geometry.H_DIM)
         for level, vq_layer in enumerate(self.vq_layers):
+            if native:
+                # the level's residual is the Mobius left inverse of the codes
+                # chosen so far, not a tangent-space subtraction
+                residual = native_product.residuals(x, codes)[level]
             quant, quant_loss, unused, indices = vq_layer(residual, infer_use_sk)
             codes.append(vq_layer.embed_code(indices))
             residual = residual - quant
