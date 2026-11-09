@@ -1,4 +1,39 @@
 {
+  "TIGER_BEHAVIOR_R48": {
+    "archive": "uploaded to r2:genrec/48/",
+    "launch": {
+      "error": null,
+      "pid": 2521490,
+      "refused": null,
+      "run_log": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_BEHAVIOR_R48/logs/_stage3_run.log",
+      "started": true,
+      "variant": "TIGER_BEHAVIOR_R48"
+    },
+    "recall": {
+      "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_BEHAVIOR_R48/ckpt/Amazon_2023_Instruments/Nov-09-2026_14-24-15/HG_Rec_best.pth",
+      "n_eval": 57439,
+      "test_ndcg@10": 0.03489381716515873,
+      "test_ndcg@5": 0.028110779781450677,
+      "test_recall@10": 0.06311043019551175,
+      "test_recall@5": 0.04200978429290204
+    },
+    "recall@10": 0.06311043019551175,
+    "state": "done"
+  },
+  "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample": {
+    "archive": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample is incomplete, not archiving: stage2 source tree, stage3 test_final.json",
+    "launch": null,
+    "recall": {
+      "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_BEHAVIOR_SAMPLE_RQ-VAE__resample/ckpt/Amazon_2023_Instruments/Nov-09-2026_15-08-53/HG_Rec_best.pth",
+      "n_eval": 57439,
+      "test_ndcg@10": 0.03501657907216505,
+      "test_ndcg@5": 0.028335052043664412,
+      "test_recall@10": 0.06330193770782917,
+      "test_recall@5": 0.042497257960619095
+    },
+    "recall@10": 0.06330193770782917,
+    "state": "done"
+  },
   "TIGER_M1_learned_kappa": {
     "archive": "uploaded to r2:genrec/17/",
     "launch": {
@@ -97,6 +132,10 @@
     "recall@10": 0.05451000191507512,
     "state": "done"
   },
+  "TIGER_behavior_residual_geometry_transport/r8_control": {
+    "recall@10": 0.06338898657706436,
+    "state": "already"
+  },
   "TIGER_behaviour-pairs-curved-rq": {
     "archive": "uploaded to r2:genrec/28/",
     "launch": {
@@ -138,6 +177,22 @@
     },
     "recall@10": 0.055798325179755914,
     "state": "done"
+  },
+  "TIGER_bootstrap_code_stability/resample": {
+    "recall@10": 0.06335416702937029,
+    "state": "already"
+  },
+  "TIGER_c106_directed_assignment_usage_balance/r8_control": {
+    "recall@10": 0.06241403924163025,
+    "state": "already"
+  },
+  "TIGER_c106_directed_codeword_margin_geometry/r8_control": {
+    "recall@10": 0.06373718205400512,
+    "state": "already"
+  },
+  "TIGER_c1_behaviour_conditioned_residual_target/r8_control": {
+    "recall@10": 0.0610038475600202,
+    "state": "already"
   },
   "TIGER_community-balance-l1-rq": {
     "archive": "uploaded to r2:genrec/26/",

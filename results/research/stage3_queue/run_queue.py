@@ -55,9 +55,34 @@ def sid_of(arm: str) -> Path:
 
 
 def stage3_result(arm: str) -> dict | None:
-    folder = RESULT3 / arm
-    found = sorted(folder.glob("logs/*/*/test_final.json")) if folder.is_dir() else []
-    return json.loads(found[-1].read_text()) if found else None
+    """Nested arms (``tree/variant``) get a ``__`` folder from the trainer."""
+    for name in (arm, arm.replace("/", "__")):
+        folder = RESULT3 / name
+        found = sorted(folder.glob("logs/*/*/test_final.json")) if folder.is_dir() else []
+        if found:
+            newest = found[-1]
+            sid = RESULT2 / arm / "item_sids.json"
+            if sid.is_file() and newest.stat().st_mtime < sid.stat().st_mtime:
+                continue  # that result predates the retrained SID: not a pairing
+            return json.loads(newest.read_text())
+    return None
+
+
+def stage3_live() -> bool:
+    """A launcher may still be importing with no GPU memory yet, so ask both."""
+    import subprocess as _sp
+
+    if _sp.run(["pgrep", "-f", "run_stage3_param"], capture_output=True).returncode == 0:
+        return True
+    return gpu_busy()
+
+
+def gpu_busy() -> bool:
+    """Any sizeable GPU allocation means a Stage 3 is live, whatever its name."""
+    done = subprocess.run(["nvidia-smi", "--query-gpu=memory.used",
+                           "--format=csv,noheader,nounits"], capture_output=True, text=True)
+    used = [int(x) for x in (done.stdout or "").split() if x.strip().isdigit()]
+    return bool(used) and max(used) > 5_000
 
 
 def start(arm: str) -> dict:
@@ -101,6 +126,9 @@ def run_arm(arm: str, report: dict) -> None:
         result = stage3_result(arm)
         if result is not None:
             break
+        if stage3_live() and stage3_result(arm) is None:
+            time.sleep(POLL_SECONDS)
+            continue
         answer = start(arm)
         if answer.get("started"):
             started = answer

@@ -37,13 +37,16 @@ STAGE3_LOGS = RESULTS / "stage3_T5Train"
 
 
 def _latest_test_final(arm: str) -> Path | None:
-    """The arm's newest test_final.json: flat if present, else the nested log layout."""
-    flat = STAGE3_LOGS / arm / "test_final.json"
-    if flat.is_file():
-        return flat
-    nested = sorted((STAGE3_LOGS / arm).glob("logs/*/*/test_final.json"),
-                    key=lambda path: path.stat().st_mtime, reverse=True)
-    return nested[0] if nested else None
+    """Newest test_final.json of this arm; nested arms are stored with ``__``."""
+    for name in (arm, arm.replace("/", "__")):
+        flat = STAGE3_LOGS / name / "test_final.json"
+        if flat.is_file():
+            return flat
+        nested = sorted((STAGE3_LOGS / name).glob("logs/*/*/test_final.json"),
+                        key=lambda path: path.stat().st_mtime, reverse=True)
+        if nested:
+            return nested[0]
+    return None
 
 
 def stage(arm: str, staging: Path) -> tuple[dict, str]:
@@ -51,7 +54,12 @@ def stage(arm: str, staging: Path) -> tuple[dict, str]:
     result = RESULTS / "stage2_RQ-VAE" / arm
     sid = result / "item_sids.json"
     checkpoint = result / "rqvae_best.pth"
+    if not checkpoint.is_file():
+        found = sorted(result.rglob("rqvae_best.pth"))
+        checkpoint = found[0] if found else checkpoint
     source = TREES / arm
+    if not source.is_dir():
+        source = TREES / arm.split("/")[0]
     if not source.is_dir():
         for candidate in sorted(TREES.glob("*/" + arm)):
             if candidate.is_dir():
@@ -82,7 +90,7 @@ def stage(arm: str, staging: Path) -> tuple[dict, str]:
 
     files = {str(path.relative_to(staging)): sha256(path)
              for path in sorted(staging.rglob("*")) if path.is_file()}
-    return files, arm
+    return files, arm.replace("/", "__")
 
 
 def main() -> int:
