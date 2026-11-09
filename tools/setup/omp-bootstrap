@@ -85,5 +85,20 @@ if [ -x "$STATE" ]; then
   "$STATE" restore "$prof" >/dev/null 2>&1 || true
 fi
 
+# 4c) rooms are shared too.  The extension keeps them under <agentDir>/rooms, and
+#     the agent directory is node-local, so rooms opened on one node were invisible
+#     on the others.  One shared directory fixes that; it holds only small JSON
+#     files (no SQLite, no mmap), so NFS is safe here.
+SHARED_ROOMS=/fs04/ar57/wenyu/omp_rooms
+mkdir -p "$SHARED_ROOMS"
+local_rooms=$root/agent/rooms
+if [ ! -L "$local_rooms" ]; then
+  if [ -d "$local_rooms" ] && [ "$(ls -A "$local_rooms" 2>/dev/null)" ]; then
+    cp -an "$local_rooms/." "$SHARED_ROOMS/" 2>/dev/null || true
+  fi
+  [ -d "$local_rooms" ] && rm -rf "$local_rooms"
+  ln -s "$SHARED_ROOMS" "$local_rooms"
+fi
+
 # 5) hand over to the wrapper (which holds the per-profile lock and runs omp)
 exec "$LOCAL/bin/omp-local" "$prof" "$@"
