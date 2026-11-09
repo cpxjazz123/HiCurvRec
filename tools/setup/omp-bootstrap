@@ -37,15 +37,19 @@ fi
 
 # 2) the wrapper itself: prefer the copy that sits next to this script (both on
 #    NFS, so one copy serves every node), fall back to the repository checkout.
-if [ ! -x "$LOCAL/bin/omp-local" ]; then
-  for candidate in "$HERE/omp-local" "$REPO_SHARED/tools/setup/omp-local"; do
-    if [ -x "$candidate" ]; then
+# Refresh, do not just install-if-missing: a stale wrapper on the node may be an
+# older revision that execs the NFS copy of the binary, and that copy faults with
+# SIGBUS ("error (core dumped)") exactly like the bug the wrapper exists to stop.
+for candidate in "$HERE/omp-local" "$REPO_SHARED/tools/setup/omp-local"; do
+  if [ -x "$candidate" ]; then
+    if ! cmp -s "$candidate" "$LOCAL/bin/omp-local" 2>/dev/null; then
       cp "$candidate" "$LOCAL/bin/omp-local"
       chmod +x "$LOCAL/bin/omp-local"
-      break
+      echo "omp-bootstrap: refreshed $LOCAL/bin/omp-local"
     fi
-  done
-fi
+    break
+  fi
+done
 [ -x "$LOCAL/bin/omp-local" ] || { echo "omp-bootstrap: cannot find omp-local to install" >&2; exit 2; }
 
 # 3) the profile root and its home-facing symlink
