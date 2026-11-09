@@ -65,7 +65,7 @@ rejected at 2 2 -> (2, 2, 0.8806541327555217)
 `results/research/struct_mixed_rq/q14/tests.log` 由本轮一次完整运行生成,含:
 - 命令行、解释器绝对路径、开始/结束时间;
 - 每个测试文件一行 `rc=`;
-- 结尾 `files pass=25 fail=0`(22 个测试文件 + 3 个探针/工具脚本口径按实际 `test_*.py` 计)。
+- 结尾 `files pass=25 fail=0`(25 个 `tests/test_*.py` 全部 rc=0,未包含任何探针脚本)。
 
 ## 8. 仍未实现 / 未运行(不冒充完成)
 | 项 | 状态 | 说明 |
