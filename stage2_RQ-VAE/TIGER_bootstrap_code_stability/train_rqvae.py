@@ -408,7 +408,7 @@ def _quantized_gradient_norms(quantized_term: torch.Tensor, model: nn.Module) ->
 
 # === 硬编码超参 (原 argparse default 值, 保留原 TIGER 默认) ===
 EPOCHS              = 3000
-BATCH_SIZE_PER_RANK = 1024       # 每卡 batch, 总 batch = 1024 * 4 = 4096
+BATCH_SIZE_PER_RANK = 4096       # 每卡 batch, 总 batch = 1024 * 4 = 4096
 LR                  = 1e-3
 WEIGHT_DECAY        = 1e-4
 HIDDEN_SIZES        = (512, 256, 128)
@@ -440,7 +440,7 @@ if EXPERIMENT_ARM in _ARM_BEHAVIOR_WEIGHT:
     BEHAVIOR_WEIGHT_MAX = _ARM_BEHAVIOR_WEIGHT[EXPERIMENT_ARM]
 BEHAVIOR_TEMPERATURE    = 0.07
 RAMP_START_EPOCH        = 1500
-PAIR_BATCH_SIZE_PER_RANK = 512
+PAIR_BATCH_SIZE_PER_RANK = 2048
 RESAMPLE_PAIRS          = True
 
 FALSE_NEGATIVE_MASK     = EXPERIMENT_ARM == "resample_fn_mask"

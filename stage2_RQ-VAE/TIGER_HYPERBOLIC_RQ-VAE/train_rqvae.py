@@ -125,7 +125,7 @@ METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 
 # === 硬编码超参 (原 argparse default 值, 保留原 TIGER 默认) ===
 EPOCHS              = 3000
-BATCH_SIZE_PER_RANK = 1024       # 每卡 batch, 总 batch = 1024 * 4 = 4096
+BATCH_SIZE_PER_RANK = 4096       # 每卡 batch, 总 batch = 1024 * 4 = 4096
 LR                  = 1e-3
 WEIGHT_DECAY        = 1e-4
 HIDDEN_SIZES        = (512, 256, 128)
@@ -151,7 +151,7 @@ EVAL_INTERVAL       = 50
 BEHAVIOR_WEIGHT_MAX     = 0.20
 BEHAVIOR_TEMPERATURE    = 0.07
 RAMP_START_EPOCH        = 1500
-PAIR_BATCH_SIZE_PER_RANK = 512   # 每卡 pair 数; source+target 单独一次前向
+PAIR_BATCH_SIZE_PER_RANK = 2048   # 每卡 pair 数; source+target 单独一次前向
 # === 实验 1 的两个开关 ===
 # RESAMPLE_PAIRS=True 每 epoch 重建 pair 迭代器 (修复 cycle 缓存);
 # False 复现基线的一次性 cycle 行为。

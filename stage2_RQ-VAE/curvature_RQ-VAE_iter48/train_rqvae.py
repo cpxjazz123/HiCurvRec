@@ -42,7 +42,7 @@ SNAPSHOT_STEPS = {int(experiment.MAX_GLOBAL_STEPS): "hyperbolic"}
 # === TIGER hyperparameters; the step budget is TIGER-aligned in curvature_config ===
 MAX_GLOBAL_STEPS = int(experiment.MAX_GLOBAL_STEPS)
 EVAL_INTERVAL_STEPS = int(experiment.EVAL_INTERVAL_STEPS)
-BATCH_SIZE_PER_RANK = 1024
+BATCH_SIZE_PER_RANK = 4096
 LR = 1e-3
 WEIGHT_DECAY = 1e-4
 HIDDEN_SIZES = (512, 256, 128)

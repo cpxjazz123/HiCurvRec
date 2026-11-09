@@ -98,6 +98,9 @@ def stage(rel: str, sid: Path, *, dry_run: bool) -> str:
 
     stage3_arm, recall_path = TO_STAGE3.get(rel, (None, None))
     recall_path = Path(recall_path) if recall_path else None
+    if recall_path is None:
+        print("%s has no historical Stage 3 run; not archiving (four pieces would be incomplete)" % rel)
+        return ""
     block = {"_provenance": {
         "recall_source": str(recall_path.relative_to(REPO)) if recall_path else None,
         "stage3_arm": stage3_arm,

@@ -92,9 +92,15 @@
   "TIGER_FORK_RQ-VAE": {
     "commit": "d6d5c2d2435d",
     "gpu": 2,
+    "log": "results/research/stage3_queue/retrain_TIGER_FORK_RQ-VAE.log",
     "port": 50222,
-    "state": "waiting_gpu",
-    "train_sha256": "5d7f7426959ca7b126b1c09dc9ec2da32398acefc23c1c8a1a6514fce71d1c5b"
+    "returncode": 0,
+    "sids": [
+      "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/hyper_l1_angsel_s42/item_sids.json"
+    ],
+    "state": "done",
+    "train_sha256": "5d7f7426959ca7b126b1c09dc9ec2da32398acefc23c1c8a1a6514fce71d1c5b",
+    "wall_time_s": 2910.1
   },
   "TIGER_HYPERBOLIC_RQ-VAE": {
     "commit": "1b6a93aacfbc",

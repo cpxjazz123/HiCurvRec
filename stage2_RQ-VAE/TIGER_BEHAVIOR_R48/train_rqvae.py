@@ -74,7 +74,7 @@ LOG_DIR        = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BEH
 
 # === 硬编码超参 (原 argparse default 值, 保留原 TIGER 默认) ===
 EPOCHS              = 3000
-BATCH_SIZE_PER_RANK = 1024       # 每卡 batch, 总 batch = 1024 * 4 = 4096
+BATCH_SIZE_PER_RANK = 4096       # 每卡 batch, 总 batch = 1024 * 4 = 4096
 LR                  = 1e-3
 WEIGHT_DECAY        = 1e-4
 HIDDEN_SIZES        = (512, 256, 128)
@@ -100,7 +100,7 @@ EVAL_INTERVAL       = 50
 BEHAVIOR_WEIGHT_MAX     = 0.20
 BEHAVIOR_TEMPERATURE    = 0.07
 RAMP_START_EPOCH        = 1500
-PAIR_BATCH_SIZE_PER_RANK = 512   # 每卡 pair 数; source+target 单独一次前向
+PAIR_BATCH_SIZE_PER_RANK = 2048   # 每卡 pair 数; source+target 单独一次前向
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
 # 候选是否采用完全交由下游 stage3 test_R@10 裁决.
 # 保留 best-collision checkpoint 仅作为导出用的最后一次快照.
