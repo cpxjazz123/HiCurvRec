@@ -26,11 +26,21 @@ def test_no_shared_sid_is_not_covered_not_substituted():
     assert "shared_sid" in pairs["not_covered"]
 
 
-def test_all_identical_leaves_different_sid_not_covered():
+def test_two_items_with_one_shared_sid_cover_shared_only():
+    # two different items, same full SID: a real collision, so shared_sid is COVERED
     tokens = torch.tensor([[1, 2, 3], [1, 2, 3]])
     pairs = probe.classify_pairs(tokens)
+    assert pairs["shared_sid"][0:2] == (0, 1)
+    assert "shared_sid" not in pairs["not_covered"]
     assert pairs["different_sid"] is None
     assert "different_sid" in pairs["not_covered"]
+
+
+def test_fewer_than_two_items_leaves_both_not_covered():
+    tokens = torch.tensor([[1, 2, 3]])
+    pairs = probe.classify_pairs(tokens)
+    assert pairs["shared_sid"] is None and pairs["different_sid"] is None
+    assert set(pairs["not_covered"]) == {"shared_sid", "different_sid"}
 
 
 if __name__ == "__main__":
