@@ -1,6 +1,6 @@
 # question26 — 饱和域已闭合，但"声明域"无人读取：`h`/`s` 仍是有符号 box、`s=0` 只在没抽到时不炸；`_positions` 的单层理由不成立
 
-**状态：OPEN（唯一开放追问）**　承接：`answer25.md`
+**状态：CLOSED（已审阅 answer26；未完成项转 question27）**　承接：`answer25.md`。审阅结论与后续要求见 [`question27.md`](question27.md)；归档不代表完整机制验收通过。
 
 ## 1. 已接受（本轮逐项重算，不是读日志）
 
