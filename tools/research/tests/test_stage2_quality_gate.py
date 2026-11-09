@@ -112,14 +112,18 @@ class Stage3AdmissionTests(unittest.TestCase):
         # 2 of 13 items share a triple: 2/13 = 0.154 <= 0.20.
         self.candidate = {str(i): [0, 0, min(i, 11), i] for i in range(13)}
         self.candidate_path.write_text(json.dumps(self.candidate))
-        self.write_learned(gate.three_level_collision(self.candidate))
+        # the trainer logs 1 - distinct/total, which is what the export check
+        # compares; the item-weighted share is the threshold measure.
+        self.write_learned(gate.exported_raw_collision(self.candidate))
         result = self.evaluate()
         self.assertTrue(result["passed"], result)
         self.assertLessEqual(result["candidate"]["l3_collision"], 0.20)
 
     def test_the_collision_gate_boundary(self):
-        self.assertIsNone(gate.collision_gate({"l3_collision": 0.35}, learned=0.35))
-        self.assertIsNone(gate.collision_gate({"l3_collision": 0.0}, learned=0.0))
+        self.assertIsNone(gate.collision_gate({"l3_collision": 0.35}, learned=0.35,
+                                              exported_raw=0.35))
+        self.assertIsNone(gate.collision_gate({"l3_collision": 0.0}, learned=0.0,
+                                              exported_raw=0.0))
         self.assertIsNotNone(gate.collision_gate({"l3_collision": 0.350001}, learned=0.35))
         self.assertIsNotNone(gate.collision_gate({}, learned=0.0))
         self.assertIsNotNone(gate.collision_gate({"l3_collision": 0.0}, learned=None))
@@ -190,7 +194,7 @@ class Stage3AdmissionTests(unittest.TestCase):
             "import importlib.util; "
             "spec = importlib.util.spec_from_file_location('g', " + repr(str(SOURCE)) + "); "
             "module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module); "
-            "assert module.collision_gate({'l3_collision': 0.20}, learned=0.20) is None",
+            "assert module.collision_gate({'l3_collision': 0.20}, learned=0.20, exported_raw=0.20) is None",
         ]
         done = subprocess.run(command, capture_output=True, text=True, timeout=120)
         self.assertEqual(done.returncode, 0, done.stderr[-500:])
