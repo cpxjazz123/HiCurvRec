@@ -903,3 +903,6 @@ stage1_GeneEmbedding/output/*.npy
 !results/stage2_RQ-VAE/_ablation_affinity_weights/logs/
 !results/stage2_RQ-VAE/_ablation_affinity_weights/logs/**
 r2_apikey
+
+# The R2 mirror is a download cache: regenerate with analyze.py --download.
+analysis_sid_recall/r2/

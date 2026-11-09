@@ -89,7 +89,7 @@
 实现：`results/research/issue139/upload_stage3.py <ARM>`，凭证从仓库根的 `r2_apikey` 读取（**该文件已加入 `.gitignore`，禁止入库**），rclone 通过环境变量配置、不在主机留持久配置。目标位置是**专用桶 `genrec`**（2026-11-08 新建）。桶内**第一层目录是 `01`、`02`、`03`……编号**，每个编号目录下**只有四项**（owner 2026-11-08 指定，不出现 issue/臂名）：
 
 ```
-genrec/<NN>/<机制名>/       ← 该机制的 Stage2 源码：train_rqvae.py、model/、math_spec.json、reference_contract.json
+genrec/<NN>/<机制名>/       ← 该机制的 Stage2 源码：train_rqvae.py 与 model/（若候选树另有 math_spec.json、reference_contract.json，则一并附带；它们不是归档必需项）
 genrec/<NN>/item_sids.json   ← SID 表
 genrec/<NN>/rqvae_best.pth   ← 导出该 SID 的 Stage2 checkpoint
 genrec/<NN>/recall.json      ← Stage3 结果的全部键值

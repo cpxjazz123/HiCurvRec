@@ -231,6 +231,165 @@
     "target": "r2:genrec/08/"
   },
   "09": {
+    "arm": "TIGER_factorized_joint_codebook",
+    "files": {
+      "TIGER_factorized_joint_codebook/math_spec.json": "76260d60fc8a432bc9dd83006092dc95b5ce9f3509ce0272e30423bc04166620",
+      "TIGER_factorized_joint_codebook/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_factorized_joint_codebook/model/factorized_rq.py": "4dcb9ae0fb2e99e90ffb98821c7baa72fdd09ac3fd15c24450d5b9753af20e8d",
+      "TIGER_factorized_joint_codebook/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "TIGER_factorized_joint_codebook/model/model.py": "fcd5ff7ee29d3e0eb5f6c8e79c91161d4071d64217a3ccb85d648f8ae00d5da2",
+      "TIGER_factorized_joint_codebook/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_factorized_joint_codebook/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_factorized_joint_codebook/reference_contract.json": "18b892f2c4a55c7bdc22fffc17f626e8d4c1709f12ac941c5dcf025244868620",
+      "TIGER_factorized_joint_codebook/train_rqvae.py": "674c73451a495ed74a250e8aa5cd4ab80f6521f69cf899474ad8e94c599ea2d5",
+      "item_sids.json": "994d87ca7b8d39f0a0fcaf734180297534a5aeb44bd486a2d7050983d61305ba",
+      "recall.json": "49e0e0d4cb5c3a3bbd6426528cdc5a6a89c9c175df83d1ad40e620f973c5bf17",
+      "rqvae_best.pth": "250055cb55aef56a7f81372d5ae45da48025444547061d63c7b83eb9538fab59"
+    },
+    "key": "TIGER_factorized_joint_codebook",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ],
+    "target": "r2:genrec/09/"
+  },
+  "10": {
+    "arm": "TIGER_af3sign_capacity",
+    "files": {
+      "TIGER_af3sign_capacity/math_spec.json": "2758ab67f94e5f3106a261dd89d8dc416c8b10f51637a69790ee03f5e8e4d225",
+      "TIGER_af3sign_capacity/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_af3sign_capacity/model/capacity_rq.py": "1e286d9f6966e95c676da568048ccff281da984ae204403f2a03b31411ab685f",
+      "TIGER_af3sign_capacity/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "TIGER_af3sign_capacity/model/model.py": "4bb05c59792cd8966494172513dc274c53a31846251927e74e68e27a7a769a7b",
+      "TIGER_af3sign_capacity/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_af3sign_capacity/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_af3sign_capacity/reference_contract.json": "513d6c00769014971a126054a5b090e00f78e0c358be0e52f5a94a3beec8ee16",
+      "TIGER_af3sign_capacity/train_rqvae.py": "ca77a66a9fb2847dc4f61d5fc0e803ccd6235c01e7505c565e4d0f8d80ef7838",
+      "item_sids.json": "b9083f4dd9cb32f7c51ad586da15af2574b4b0e3d677cc89524c8a9af6ad7855",
+      "recall.json": "1ec9ee0c758f030bd7009fc45b5a9994fe9c983c7b1f87c0de0da1aefdd6bf4f",
+      "rqvae_best.pth": "a9227b73b179b444bcaf1f75974f5f631aa45d71784ad62b8bb79745c1c74797"
+    },
+    "key": "TIGER_af3sign_capacity",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ],
+    "target": "r2:genrec/10/"
+  },
+  "11": {
+    "arm": "TIGER_M1_learned_kappa",
+    "files": {
+      "TIGER_M1_learned_kappa/math_spec.json": "e66a60c87ea143507f53b2f9dbb56d13d7f70d49c72accbcbc356b5e123210c9",
+      "TIGER_M1_learned_kappa/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+      "TIGER_M1_learned_kappa/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+      "TIGER_M1_learned_kappa/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+      "TIGER_M1_learned_kappa/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+      "TIGER_M1_learned_kappa/model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
+      "TIGER_M1_learned_kappa/model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
+      "TIGER_M1_learned_kappa/model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
+      "TIGER_M1_learned_kappa/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+      "TIGER_M1_learned_kappa/model/learned_curvature.py": "eb9e8145bba8d66440458fec447cca69cb4b3294a4058f3418444e7df5a5a0ba",
+      "TIGER_M1_learned_kappa/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+      "TIGER_M1_learned_kappa/model/model.py": "7e520278dff80db6752b38c4e983ac3005b94365a44dc8dbc353707478bc8682",
+      "TIGER_M1_learned_kappa/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_M1_learned_kappa/model/structure_objective.py": "75bcb2affa0a335fd2b8da3284f46a6e1796756151b41fc95dde250b02392377",
+      "TIGER_M1_learned_kappa/model/structure_surface.py": "ae48758f779677d8781fc29c06fefe1ac6e174e01a1074e36e04a2473ddeffce",
+      "TIGER_M1_learned_kappa/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_M1_learned_kappa/reference_contract.json": "83b1048cb2daf56262e996c36b81aea49a5133edad9e74f9c3d95dfa91165bbc",
+      "TIGER_M1_learned_kappa/train_rqvae.py": "fbe94ca422cb0c8f8f6e7f7670216c73255ae17dc3c49c59c19263b62ca2d879",
+      "item_sids.json": "92ca528bd9b962bea44c42806db7fded6afa12cd84886d7ef0e2be9b7a81c012",
+      "recall.json": "4f5246af98c6c0792e9e24fe732ab797c3d93acfe8a19e26a0cdfc1d3387b5bf",
+      "rqvae_best.pth": "2fa0b377f96d589c0db4a081fadbec15cbcc74d230fab5a4271b84f7dca8ab45"
+    },
+    "key": "TIGER_M1_learned_kappa",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ],
+    "target": "r2:genrec/11/"
+  },
+  "12": {
+    "arm": "TIGER_M3_role_profiles",
+    "files": {
+      "TIGER_M3_role_profiles/math_spec.json": "9bb2d41bf5dbbd82946b2c78b02cf9150835e0c66ff2fadab4602aab9d7ae3b3",
+      "TIGER_M3_role_profiles/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+      "TIGER_M3_role_profiles/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+      "TIGER_M3_role_profiles/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+      "TIGER_M3_role_profiles/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+      "TIGER_M3_role_profiles/model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
+      "TIGER_M3_role_profiles/model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
+      "TIGER_M3_role_profiles/model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
+      "TIGER_M3_role_profiles/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+      "TIGER_M3_role_profiles/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+      "TIGER_M3_role_profiles/model/model.py": "559752236ffb9521cf40a64ecf563cbdfcbed775d12feb391d825ec256d61843",
+      "TIGER_M3_role_profiles/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_M3_role_profiles/model/role_profiles.py": "87e29e3872c2e559e3d0da0d67f9a5d221bf222e3574e755d41817b5e9539b5e",
+      "TIGER_M3_role_profiles/model/structure_surface.py": "ae48758f779677d8781fc29c06fefe1ac6e174e01a1074e36e04a2473ddeffce",
+      "TIGER_M3_role_profiles/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_M3_role_profiles/reference_contract.json": "fdd9d5abfe02680d95bfc459b08aa788ff749ffed53afdc472c92b08d34df9e4",
+      "TIGER_M3_role_profiles/train_rqvae.py": "b0d945eb1d0dee873bc19f78478c2f9c045a3978254918284e6d7be3c78c5059",
+      "item_sids.json": "4dcbe0d969b7587a280c7b635256753e0fa9f684e5a799e8a31b94801cf246df",
+      "recall.json": "2c51a1f58db40db0701f9346be7140ed4a27ab1b3a0fdec1f6c1ba728d4e363b",
+      "rqvae_best.pth": "ead72b5ab57322d9b948613c32f9ccd12180c1b139a788d331edc6efa68fd29f"
+    },
+    "key": "TIGER_M3_role_profiles",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ],
+    "target": "r2:genrec/12/"
+  },
+  "13": {
+    "arm": "TIGER_M4_post_sid_af3",
+    "files": {
+      "TIGER_M4_post_sid_af3/math_spec.json": "3101c32223d9f12cb95028877bb126227a43bf4bb2fcdd32ff74ccf49525d945",
+      "TIGER_M4_post_sid_af3/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+      "TIGER_M4_post_sid_af3/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+      "TIGER_M4_post_sid_af3/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+      "TIGER_M4_post_sid_af3/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+      "TIGER_M4_post_sid_af3/model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
+      "TIGER_M4_post_sid_af3/model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
+      "TIGER_M4_post_sid_af3/model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
+      "TIGER_M4_post_sid_af3/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+      "TIGER_M4_post_sid_af3/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+      "TIGER_M4_post_sid_af3/model/model.py": "559752236ffb9521cf40a64ecf563cbdfcbed775d12feb391d825ec256d61843",
+      "TIGER_M4_post_sid_af3/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_M4_post_sid_af3/model/post_sid_af3.py": "4e1a3ab7b2c68e2eee9a4aed90366a09fc5f4be03f3eb173007fb9121d999c39",
+      "TIGER_M4_post_sid_af3/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_M4_post_sid_af3/reference_contract.json": "4dc58a19b5a85eee3686da465b714009d8dd688ef907c402d856830cebfbcc52",
+      "TIGER_M4_post_sid_af3/train_rqvae.py": "7b7e9af9adbbe4d3b78918b7cc7740cdf756a69c7cd2ebd6c3e5bd9f17ce7463",
+      "item_sids.json": "6f71e6b20b42c48866809c454551a2be9ee600d3746ba2bdb110330bfafd15a3",
+      "recall.json": "cabed6bb6e54f9bc146e920e2f4ddec9dad051efcc472b8c92b11718997821ef",
+      "rqvae_best.pth": "b27e1ecd8543f36554bfa9063e32adcd5110d0f32d358bb2977ef9974934f061"
+    },
+    "key": "TIGER_M4_post_sid_af3",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ],
+    "target": "r2:genrec/13/"
+  },
+  "14": {
     "arm": "TIGER_M2_radial_manifold",
     "files": {
       "TIGER_M2_radial_manifold/math_spec.json": "a5b2e0869fdb5eb560c6aabbe684e964c065eac26e5e3a58f479077b64e9d524",
@@ -249,307 +408,902 @@
       "TIGER_M2_radial_manifold/model/structure_surface.py": "ae48758f779677d8781fc29c06fefe1ac6e174e01a1074e36e04a2473ddeffce",
       "TIGER_M2_radial_manifold/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
       "TIGER_M2_radial_manifold/reference_contract.json": "433aaecd723b11e7a1412cdc0571d896260da47d0aa77d4f720af6ea74b573d2",
-      "TIGER_M2_radial_manifold/tests/test_af3_engine.py": "4bef80bf8e456df3b14ef23e892aee4be99c2fc29ce9fa42e480dacd2d81bc80",
-      "TIGER_M2_radial_manifold/tests/test_af3_regressions.py": "4dfb2d5b629effc9701b52dbd3ff7e0e022d758cadb93f83602ed250b1f3f417",
-      "TIGER_M2_radial_manifold/tests/test_af3_structure.py": "fd0574d910cff2bb5df69db8a1af6afea78bda998a446870046054f73aa09412",
-      "TIGER_M2_radial_manifold/tests/test_auxiliary_geometry.py": "c24b59c535cedd586e080b08df073dec3a0b1f276f60430e51c5a79a676fc38c",
-      "TIGER_M2_radial_manifold/tests/test_ddp.py": "be734052a8e896eea76753c022356ff72f80587647bdf14a2a3beb3ade8e8815",
-      "TIGER_M2_radial_manifold/tests/test_entrypoint.py": "5c7732c4fba9e04940a069f1b2223bcf560053a2f8a23be1aab2e045ecfd2038",
-      "TIGER_M2_radial_manifold/tests/test_gradient.py": "d859d19a0c0cad074d4ea2ba44ab9621460f12de78e385c2a955e66ac7e05b91",
-      "TIGER_M2_radial_manifold/tests/test_integration_regressions.py": "04b68ced2903207801fb938417d95457b65ab8aeb3a4f5310dda836d133f1b1f",
-      "TIGER_M2_radial_manifold/tests/test_local_transition.py": "911a63f646e3ab0073c091bbe6d5cf7a39ff2a093887a0e442d3cc2271f6eb51",
-      "TIGER_M2_radial_manifold/tests/test_math.py": "a78b06f85241889ac131ecae74b491a122a210264a50a8710506deeee8c6af38",
-      "TIGER_M2_radial_manifold/tests/test_mixed_rq.py": "3f4f9b5d4cd851071f654ff5959bd86f7bb65fed45563b4b2b9c4b1394519a69",
-      "TIGER_M2_radial_manifold/tests/test_prefix_eligibility.py": "827378dc457d5064ec66e67e3973cf5d50b8eea419d56c984311029e921dfc05",
-      "TIGER_M2_radial_manifold/tests/test_quantizer_ddp_regression.py": "86d2443d88064dbe21d9afc10b0804f1e00006a89b15c5dbdfba6c842f5ebb7d",
-      "TIGER_M2_radial_manifold/tests/test_quantizer_regressions.py": "c9266cd09ef7d972a66717f814b7f4c6af692d3f8399877e0b52d25ea5ad5d36",
-      "TIGER_M2_radial_manifold/tests/test_readout_provenance.py": "e1ac61777ca61acee29de0c6c56bff8be1d93d6048889c00aa49c9c829e12276",
-      "TIGER_M2_radial_manifold/tests/test_selector_lifecycle.py": "90c17670897b600c6a045cd0770d3d8aa953cd28594d2729428340a7611586c2",
-      "TIGER_M2_radial_manifold/tests/test_support_regressions.py": "3aaff33708feea3304236241ee08c1362c099490b8f758ec3d5f390ac9123674",
-      "TIGER_M2_radial_manifold/tests/test_trainer_smoke.py": "aa7e388aed9062b335843f6146e0146d95537794e0ed2840abd29d8df16155cc",
       "TIGER_M2_radial_manifold/train_rqvae.py": "f3693d33ddc7121a976004fdaccc555a91c10ff7c0cc3b879e8d772a39da1f45",
       "item_sids.json": "3ede5bd240da7eae1f2ceddb9343e38750dd8a3c0c95c63932f0216324d28055",
-      "rqvae_best.pth": "3c1add25bab942035210a58cea8f17b39e1b3522c2b837f05579e9c8b3285434",
-      "stage2_record.json": "f618d8668692f0bfdef07719f7fd2bbdf20cacf88975aa4e8c08b704612de756"
+      "recall.json": "3821200bf17fd8034e7d9fa12332e50635aa34f4ac24f101740014ae108ac85b",
+      "rqvae_best.pth": "3c1add25bab942035210a58cea8f17b39e1b3522c2b837f05579e9c8b3285434"
     },
-    "key": "stage2:TIGER_M2_radial_manifold",
-    "missing": [],
-    "record_keys": [
-      "admission_policy",
-      "baseline_metrics",
-      "diagnostics",
-      "diagnostics_only",
-      "methodology",
-      "metrics",
-      "provenance",
-      "quality_source",
-      "report_path",
-      "schema",
-      "status",
-      "technically_valid_sid"
+    "key": "TIGER_M2_radial_manifold",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
     ],
-    "stage": "stage2-only",
-    "target": "r2:genrec/09/"
-  },
-  "10": {
-    "arm": "M1_learned_kappa",
-    "files": {
-      "M1_learned_kappa/math_spec.json": "e66a60c87ea143507f53b2f9dbb56d13d7f70d49c72accbcbc356b5e123210c9",
-      "M1_learned_kappa/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
-      "M1_learned_kappa/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
-      "M1_learned_kappa/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
-      "M1_learned_kappa/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
-      "M1_learned_kappa/model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
-      "M1_learned_kappa/model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
-      "M1_learned_kappa/model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
-      "M1_learned_kappa/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
-      "M1_learned_kappa/model/learned_curvature.py": "eb9e8145bba8d66440458fec447cca69cb4b3294a4058f3418444e7df5a5a0ba",
-      "M1_learned_kappa/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
-      "M1_learned_kappa/model/model.py": "7e520278dff80db6752b38c4e983ac3005b94365a44dc8dbc353707478bc8682",
-      "M1_learned_kappa/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
-      "M1_learned_kappa/model/structure_objective.py": "75bcb2affa0a335fd2b8da3284f46a6e1796756151b41fc95dde250b02392377",
-      "M1_learned_kappa/model/structure_surface.py": "ae48758f779677d8781fc29c06fefe1ac6e174e01a1074e36e04a2473ddeffce",
-      "M1_learned_kappa/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
-      "M1_learned_kappa/reference_contract.json": "83b1048cb2daf56262e996c36b81aea49a5133edad9e74f9c3d95dfa91165bbc",
-      "M1_learned_kappa/tests/test_af3_engine.py": "4bef80bf8e456df3b14ef23e892aee4be99c2fc29ce9fa42e480dacd2d81bc80",
-      "M1_learned_kappa/tests/test_af3_regressions.py": "4dfb2d5b629effc9701b52dbd3ff7e0e022d758cadb93f83602ed250b1f3f417",
-      "M1_learned_kappa/tests/test_af3_structure.py": "fd0574d910cff2bb5df69db8a1af6afea78bda998a446870046054f73aa09412",
-      "M1_learned_kappa/tests/test_auxiliary_geometry.py": "c24b59c535cedd586e080b08df073dec3a0b1f276f60430e51c5a79a676fc38c",
-      "M1_learned_kappa/tests/test_ddp.py": "2fdbb8032fda5b0efb45bd4743b8c2e8131d50b6a2b4f4ced533883b9d6480a1",
-      "M1_learned_kappa/tests/test_entrypoint.py": "dfa93de654e028524c84919dd476eb64bac5f95936d84a972b9a63659b52ac63",
-      "M1_learned_kappa/tests/test_gradient.py": "cabaffb4cad7fe7ac30628fd10232146de3988b1a5534bf0c34f635e6b7785d0",
-      "M1_learned_kappa/tests/test_integration_regressions.py": "04b68ced2903207801fb938417d95457b65ab8aeb3a4f5310dda836d133f1b1f",
-      "M1_learned_kappa/tests/test_local_transition.py": "911a63f646e3ab0073c091bbe6d5cf7a39ff2a093887a0e442d3cc2271f6eb51",
-      "M1_learned_kappa/tests/test_math.py": "bdb43b8a92510ec854570554a08ffa1ec441c00ada7d97e4f696461de9bc5a43",
-      "M1_learned_kappa/tests/test_mixed_rq.py": "3f4f9b5d4cd851071f654ff5959bd86f7bb65fed45563b4b2b9c4b1394519a69",
-      "M1_learned_kappa/tests/test_prefix_eligibility.py": "827378dc457d5064ec66e67e3973cf5d50b8eea419d56c984311029e921dfc05",
-      "M1_learned_kappa/tests/test_quantizer_ddp_regression.py": "86d2443d88064dbe21d9afc10b0804f1e00006a89b15c5dbdfba6c842f5ebb7d",
-      "M1_learned_kappa/tests/test_quantizer_regressions.py": "c9266cd09ef7d972a66717f814b7f4c6af692d3f8399877e0b52d25ea5ad5d36",
-      "M1_learned_kappa/tests/test_readout_provenance.py": "e1ac61777ca61acee29de0c6c56bff8be1d93d6048889c00aa49c9c829e12276",
-      "M1_learned_kappa/tests/test_selector_lifecycle.py": "90c17670897b600c6a045cd0770d3d8aa953cd28594d2729428340a7611586c2",
-      "M1_learned_kappa/tests/test_support_regressions.py": "3aaff33708feea3304236241ee08c1362c099490b8f758ec3d5f390ac9123674",
-      "M1_learned_kappa/tests/test_trainer_smoke.py": "aa7e388aed9062b335843f6146e0146d95537794e0ed2840abd29d8df16155cc",
-      "M1_learned_kappa/train_rqvae.py": "fbe94ca422cb0c8f8f6e7f7670216c73255ae17dc3c49c59c19263b62ca2d879",
-      "item_sids.json": "92ca528bd9b962bea44c42806db7fded6afa12cd84886d7ef0e2be9b7a81c012",
-      "rqvae_best.pth": "2fa0b377f96d589c0db4a081fadbec15cbcc74d230fab5a4271b84f7dca8ab45",
-      "stage2_record.json": "b8198e7669572385025896afb0ccc6f79f157507471421c03fe20c94d69cdc79"
-    },
-    "key": "stage2:M1_learned_kappa",
-    "missing": [],
-    "record_keys": [
-      "admission_policy",
-      "baseline_metrics",
-      "diagnostics",
-      "diagnostics_only",
-      "methodology",
-      "metrics",
-      "provenance",
-      "quality_source",
-      "report_path",
-      "schema",
-      "status",
-      "technically_valid_sid"
-    ],
-    "stage": "stage2-only",
-    "target": "r2:genrec/10/"
-  },
-  "11": {
-    "arm": "M3_role_profiles",
-    "files": {
-      "M3_role_profiles/math_spec.json": "9bb2d41bf5dbbd82946b2c78b02cf9150835e0c66ff2fadab4602aab9d7ae3b3",
-      "M3_role_profiles/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
-      "M3_role_profiles/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
-      "M3_role_profiles/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
-      "M3_role_profiles/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
-      "M3_role_profiles/model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
-      "M3_role_profiles/model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
-      "M3_role_profiles/model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
-      "M3_role_profiles/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
-      "M3_role_profiles/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
-      "M3_role_profiles/model/model.py": "559752236ffb9521cf40a64ecf563cbdfcbed775d12feb391d825ec256d61843",
-      "M3_role_profiles/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
-      "M3_role_profiles/model/role_profiles.py": "87e29e3872c2e559e3d0da0d67f9a5d221bf222e3574e755d41817b5e9539b5e",
-      "M3_role_profiles/model/structure_surface.py": "ae48758f779677d8781fc29c06fefe1ac6e174e01a1074e36e04a2473ddeffce",
-      "M3_role_profiles/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
-      "M3_role_profiles/reference_contract.json": "fdd9d5abfe02680d95bfc459b08aa788ff749ffed53afdc472c92b08d34df9e4",
-      "M3_role_profiles/tests/test_af3_engine.py": "4bef80bf8e456df3b14ef23e892aee4be99c2fc29ce9fa42e480dacd2d81bc80",
-      "M3_role_profiles/tests/test_af3_regressions.py": "4dfb2d5b629effc9701b52dbd3ff7e0e022d758cadb93f83602ed250b1f3f417",
-      "M3_role_profiles/tests/test_af3_structure.py": "fd0574d910cff2bb5df69db8a1af6afea78bda998a446870046054f73aa09412",
-      "M3_role_profiles/tests/test_auxiliary_geometry.py": "c24b59c535cedd586e080b08df073dec3a0b1f276f60430e51c5a79a676fc38c",
-      "M3_role_profiles/tests/test_ddp.py": "4ac2a23d46035f1e378ad943c595b16aa4e2bb1bf7f7b53feab68c5305ae54cc",
-      "M3_role_profiles/tests/test_entrypoint.py": "07d84d6d2d26f2a5396c684b5df5bd94e05ca00e02319a421c5b0082596711ce",
-      "M3_role_profiles/tests/test_gradient.py": "0053a626fdba6a9144e4f7343adc66fe87d7ea4f4bae93d55552a96d6609a4d5",
-      "M3_role_profiles/tests/test_integration_regressions.py": "04b68ced2903207801fb938417d95457b65ab8aeb3a4f5310dda836d133f1b1f",
-      "M3_role_profiles/tests/test_local_transition.py": "911a63f646e3ab0073c091bbe6d5cf7a39ff2a093887a0e442d3cc2271f6eb51",
-      "M3_role_profiles/tests/test_math.py": "1c4c234736e06e5d91402bcdf538def2136a3a634275953c1795f09fa3546a27",
-      "M3_role_profiles/tests/test_mixed_rq.py": "3f4f9b5d4cd851071f654ff5959bd86f7bb65fed45563b4b2b9c4b1394519a69",
-      "M3_role_profiles/tests/test_prefix_eligibility.py": "827378dc457d5064ec66e67e3973cf5d50b8eea419d56c984311029e921dfc05",
-      "M3_role_profiles/tests/test_quantizer_ddp_regression.py": "86d2443d88064dbe21d9afc10b0804f1e00006a89b15c5dbdfba6c842f5ebb7d",
-      "M3_role_profiles/tests/test_quantizer_regressions.py": "c9266cd09ef7d972a66717f814b7f4c6af692d3f8399877e0b52d25ea5ad5d36",
-      "M3_role_profiles/tests/test_readout_provenance.py": "e1ac61777ca61acee29de0c6c56bff8be1d93d6048889c00aa49c9c829e12276",
-      "M3_role_profiles/tests/test_selector_lifecycle.py": "90c17670897b600c6a045cd0770d3d8aa953cd28594d2729428340a7611586c2",
-      "M3_role_profiles/tests/test_support_regressions.py": "3aaff33708feea3304236241ee08c1362c099490b8f758ec3d5f390ac9123674",
-      "M3_role_profiles/tests/test_trainer_smoke.py": "aa7e388aed9062b335843f6146e0146d95537794e0ed2840abd29d8df16155cc",
-      "M3_role_profiles/train_rqvae.py": "b0d945eb1d0dee873bc19f78478c2f9c045a3978254918284e6d7be3c78c5059",
-      "item_sids.json": "4dcbe0d969b7587a280c7b635256753e0fa9f684e5a799e8a31b94801cf246df",
-      "rqvae_best.pth": "ead72b5ab57322d9b948613c32f9ccd12180c1b139a788d331edc6efa68fd29f",
-      "stage2_record.json": "5ca02947bd6e17e7c9ac4ac062c2d1ec2ea15bac7185b3f69fa40188ec0712a0"
-    },
-    "key": "stage2:M3_role_profiles",
-    "missing": [],
-    "record_keys": [
-      "admission_policy",
-      "baseline_metrics",
-      "diagnostics",
-      "diagnostics_only",
-      "methodology",
-      "metrics",
-      "provenance",
-      "quality_source",
-      "report_path",
-      "schema",
-      "status",
-      "technically_valid_sid"
-    ],
-    "stage": "stage2-only",
-    "target": "r2:genrec/11/"
-  },
-  "12": {
-    "arm": "M4_post_sid_af3",
-    "files": {
-      "M4_post_sid_af3/math_spec.json": "3101c32223d9f12cb95028877bb126227a43bf4bb2fcdd32ff74ccf49525d945",
-      "M4_post_sid_af3/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
-      "M4_post_sid_af3/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
-      "M4_post_sid_af3/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
-      "M4_post_sid_af3/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
-      "M4_post_sid_af3/model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
-      "M4_post_sid_af3/model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
-      "M4_post_sid_af3/model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
-      "M4_post_sid_af3/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
-      "M4_post_sid_af3/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
-      "M4_post_sid_af3/model/model.py": "559752236ffb9521cf40a64ecf563cbdfcbed775d12feb391d825ec256d61843",
-      "M4_post_sid_af3/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
-      "M4_post_sid_af3/model/post_sid_af3.py": "4e1a3ab7b2c68e2eee9a4aed90366a09fc5f4be03f3eb173007fb9121d999c39",
-      "M4_post_sid_af3/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
-      "M4_post_sid_af3/reference_contract.json": "4dc58a19b5a85eee3686da465b714009d8dd688ef907c402d856830cebfbcc52",
-      "M4_post_sid_af3/tests/test_af3_engine.py": "4bef80bf8e456df3b14ef23e892aee4be99c2fc29ce9fa42e480dacd2d81bc80",
-      "M4_post_sid_af3/tests/test_af3_regressions.py": "4dfb2d5b629effc9701b52dbd3ff7e0e022d758cadb93f83602ed250b1f3f417",
-      "M4_post_sid_af3/tests/test_af3_structure.py": "fd0574d910cff2bb5df69db8a1af6afea78bda998a446870046054f73aa09412",
-      "M4_post_sid_af3/tests/test_auxiliary_geometry.py": "c24b59c535cedd586e080b08df073dec3a0b1f276f60430e51c5a79a676fc38c",
-      "M4_post_sid_af3/tests/test_ddp.py": "a4a80854325385a7da7ff6f7c93e7a7ddb26bd38c1fd7ad298220e5e05b72834",
-      "M4_post_sid_af3/tests/test_entrypoint.py": "f38ab8850b37b401112d406390b3ee09eadb2286b74d0a3c41ee69a9980c7ea0",
-      "M4_post_sid_af3/tests/test_gradient.py": "36093121c1f8a42c6821182a277ce135e6116a87b75e7da1ef26b3f57c79dd4c",
-      "M4_post_sid_af3/tests/test_integration_regressions.py": "04b68ced2903207801fb938417d95457b65ab8aeb3a4f5310dda836d133f1b1f",
-      "M4_post_sid_af3/tests/test_local_transition.py": "911a63f646e3ab0073c091bbe6d5cf7a39ff2a093887a0e442d3cc2271f6eb51",
-      "M4_post_sid_af3/tests/test_math.py": "1f3d60c199ec3c4c05027d8bb428bb8eca512d7d88f8a5e00d5f5c0b6352df71",
-      "M4_post_sid_af3/tests/test_mixed_rq.py": "3f4f9b5d4cd851071f654ff5959bd86f7bb65fed45563b4b2b9c4b1394519a69",
-      "M4_post_sid_af3/tests/test_prefix_eligibility.py": "827378dc457d5064ec66e67e3973cf5d50b8eea419d56c984311029e921dfc05",
-      "M4_post_sid_af3/tests/test_quantizer_ddp_regression.py": "86d2443d88064dbe21d9afc10b0804f1e00006a89b15c5dbdfba6c842f5ebb7d",
-      "M4_post_sid_af3/tests/test_quantizer_regressions.py": "c9266cd09ef7d972a66717f814b7f4c6af692d3f8399877e0b52d25ea5ad5d36",
-      "M4_post_sid_af3/tests/test_readout_provenance.py": "e1ac61777ca61acee29de0c6c56bff8be1d93d6048889c00aa49c9c829e12276",
-      "M4_post_sid_af3/tests/test_selector_lifecycle.py": "90c17670897b600c6a045cd0770d3d8aa953cd28594d2729428340a7611586c2",
-      "M4_post_sid_af3/tests/test_support_regressions.py": "3aaff33708feea3304236241ee08c1362c099490b8f758ec3d5f390ac9123674",
-      "M4_post_sid_af3/tests/test_trainer_smoke.py": "aa7e388aed9062b335843f6146e0146d95537794e0ed2840abd29d8df16155cc",
-      "M4_post_sid_af3/train_rqvae.py": "7b7e9af9adbbe4d3b78918b7cc7740cdf756a69c7cd2ebd6c3e5bd9f17ce7463",
-      "item_sids.json": "6f71e6b20b42c48866809c454551a2be9ee600d3746ba2bdb110330bfafd15a3",
-      "rqvae_best.pth": "b27e1ecd8543f36554bfa9063e32adcd5110d0f32d358bb2977ef9974934f061",
-      "stage2_record.json": "b7ea65dcdfd89c2f89ccdc2418be3ece5c2dd42147b3c01d9a94a4fe90d9a067"
-    },
-    "key": "stage2:M4_post_sid_af3",
-    "missing": [],
-    "record_keys": [
-      "admission_policy",
-      "baseline_metrics",
-      "diagnostics",
-      "diagnostics_only",
-      "methodology",
-      "metrics",
-      "provenance",
-      "quality_source",
-      "report_path",
-      "schema",
-      "status",
-      "technically_valid_sid"
-    ],
-    "stage": "stage2-only",
-    "target": "r2:genrec/12/"
-  },
-  "13": {
-    "arm": "af3sign_capacity",
-    "files": {
-      "af3sign_capacity/math_spec.json": "2758ab67f94e5f3106a261dd89d8dc416c8b10f51637a69790ee03f5e8e4d225",
-      "af3sign_capacity/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
-      "af3sign_capacity/model/capacity_rq.py": "1e286d9f6966e95c676da568048ccff281da984ae204403f2a03b31411ab685f",
-      "af3sign_capacity/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
-      "af3sign_capacity/model/model.py": "4bb05c59792cd8966494172513dc274c53a31846251927e74e68e27a7a769a7b",
-      "af3sign_capacity/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
-      "af3sign_capacity/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
-      "af3sign_capacity/reference_contract.json": "513d6c00769014971a126054a5b090e00f78e0c358be0e52f5a94a3beec8ee16",
-      "af3sign_capacity/tests/test_ddp.py": "aee2edad2538d56c7684ef7dfd6515f2d6f7e99f6678bf96f1c195f15aa94ae0",
-      "af3sign_capacity/tests/test_entrypoint.py": "c53eb03029dcda7cf390ad8449d60dd1850db6685def08065e7337c3d5a7b3aa",
-      "af3sign_capacity/tests/test_gradient.py": "c7ef2c6a22754d360934d0f7f15602d181293b97b1e93bbb21c2683ccdfc9967",
-      "af3sign_capacity/tests/test_math.py": "884e868db00c6c9c404b6d34ffc63a35e586323640bc95b3564005d4fe4414f4",
-      "af3sign_capacity/train_rqvae.py": "ca77a66a9fb2847dc4f61d5fc0e803ccd6235c01e7505c565e4d0f8d80ef7838",
-      "item_sids.json": "b9083f4dd9cb32f7c51ad586da15af2574b4b0e3d677cc89524c8a9af6ad7855",
-      "rqvae_best.pth": "a9227b73b179b444bcaf1f75974f5f631aa45d71784ad62b8bb79745c1c74797",
-      "stage2_record.json": "fcf095f101d4dcba5a7f64aceeb1af6f3c3cced1ea45668145e50c91b01bf58e"
-    },
-    "key": "stage2:af3sign_capacity",
-    "missing": [],
-    "record_keys": [
-      "admission_policy",
-      "baseline_metrics",
-      "diagnostics",
-      "diagnostics_only",
-      "methodology",
-      "metrics",
-      "provenance",
-      "quality_source",
-      "report_path",
-      "schema",
-      "status",
-      "technically_valid_sid"
-    ],
-    "stage": "stage2-only",
-    "target": "r2:genrec/13/"
-  },
-  "14": {
-    "arm": "factorized_joint_codebook",
-    "files": {
-      "factorized_joint_codebook/math_spec.json": "76260d60fc8a432bc9dd83006092dc95b5ce9f3509ce0272e30423bc04166620",
-      "factorized_joint_codebook/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
-      "factorized_joint_codebook/model/factorized_rq.py": "4dcb9ae0fb2e99e90ffb98821c7baa72fdd09ac3fd15c24450d5b9753af20e8d",
-      "factorized_joint_codebook/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
-      "factorized_joint_codebook/model/model.py": "fcd5ff7ee29d3e0eb5f6c8e79c91161d4071d64217a3ccb85d648f8ae00d5da2",
-      "factorized_joint_codebook/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
-      "factorized_joint_codebook/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
-      "factorized_joint_codebook/reference_contract.json": "18b892f2c4a55c7bdc22fffc17f626e8d4c1709f12ac941c5dcf025244868620",
-      "factorized_joint_codebook/tests/test_ddp.py": "4177de21b16b5e97fe8d9dcc5a3eaad6fbd815ad40bac751101c6296a5e89343",
-      "factorized_joint_codebook/tests/test_entrypoint.py": "d6a098ff1a0b9c6f95604c210f5eac4fb6f548df9e187e235c900021589bd7b5",
-      "factorized_joint_codebook/tests/test_gradient.py": "1b959702b77a7c61f93233ee93fc5053ada596c16c5280f973ba00d205b37ac9",
-      "factorized_joint_codebook/tests/test_math.py": "c6b5056bd97af8ed36cfc81663e1eee954c4af5b60e717c28e0f540086c9a2f0",
-      "factorized_joint_codebook/train_rqvae.py": "674c73451a495ed74a250e8aa5cd4ab80f6521f69cf899474ad8e94c599ea2d5",
-      "item_sids.json": "994d87ca7b8d39f0a0fcaf734180297534a5aeb44bd486a2d7050983d61305ba",
-      "rqvae_best.pth": "250055cb55aef56a7f81372d5ae45da48025444547061d63c7b83eb9538fab59",
-      "stage2_record.json": "31534a9128e9a68742cb1b7c8c360fcc6a0790b9b825003907077881005a10c7"
-    },
-    "key": "stage2:factorized_joint_codebook",
-    "missing": [],
-    "record_keys": [
-      "admission_policy",
-      "baseline_metrics",
-      "diagnostics",
-      "diagnostics_only",
-      "methodology",
-      "metrics",
-      "provenance",
-      "quality_source",
-      "report_path",
-      "schema",
-      "status",
-      "technically_valid_sid"
-    ],
-    "stage": "stage2-only",
     "target": "r2:genrec/14/"
+  },
+  "15": {
+    "arm": "TIGER_mixed_rq_L",
+    "files": {
+      "TIGER_mixed_rq_L/math_spec.json": "ebd4ddf6477d8206950c69d813a101a3bbdd251d0ff5b9cda70ab1db9cea7290",
+      "TIGER_mixed_rq_L/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+      "TIGER_mixed_rq_L/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+      "TIGER_mixed_rq_L/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+      "TIGER_mixed_rq_L/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+      "TIGER_mixed_rq_L/model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
+      "TIGER_mixed_rq_L/model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
+      "TIGER_mixed_rq_L/model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
+      "TIGER_mixed_rq_L/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+      "TIGER_mixed_rq_L/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+      "TIGER_mixed_rq_L/model/model.py": "559752236ffb9521cf40a64ecf563cbdfcbed775d12feb391d825ec256d61843",
+      "TIGER_mixed_rq_L/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_mixed_rq_L/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_mixed_rq_L/reference_contract.json": "219ceebc63668a860491d186c12d7c25916aba6ca19d471455b598e51f80ac34",
+      "TIGER_mixed_rq_L/train_rqvae.py": "4713ff0b3d53a2a808ba7cc49491fd1146bc244db0b5b02aa9fbac43e5cbfb8e",
+      "item_sids.json": "505761151964eb5de3aad75ed5d17caf87a8b674447c969f6cefd5a0bf699efe",
+      "recall.json": "439bd7af753ab4e1ed20d43ce384434bf66adefabcfde411048e242fccc26b05",
+      "rqvae_best.pth": "a85ad1115f2ac066a8186648c4ce2a12dfc1ed271c888a3ae3973748bdbc71a1"
+    },
+    "key": "TIGER_mixed_rq_L",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ],
+    "target": "r2:genrec/15/"
+  },
+  "16": {
+    "arm": "TIGER_mixed_rq_E",
+    "files": {
+      "TIGER_mixed_rq_E/math_spec.json": "ebd4ddf6477d8206950c69d813a101a3bbdd251d0ff5b9cda70ab1db9cea7290",
+      "TIGER_mixed_rq_E/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+      "TIGER_mixed_rq_E/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+      "TIGER_mixed_rq_E/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+      "TIGER_mixed_rq_E/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+      "TIGER_mixed_rq_E/model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
+      "TIGER_mixed_rq_E/model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
+      "TIGER_mixed_rq_E/model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
+      "TIGER_mixed_rq_E/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+      "TIGER_mixed_rq_E/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+      "TIGER_mixed_rq_E/model/model.py": "559752236ffb9521cf40a64ecf563cbdfcbed775d12feb391d825ec256d61843",
+      "TIGER_mixed_rq_E/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_mixed_rq_E/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_mixed_rq_E/reference_contract.json": "219ceebc63668a860491d186c12d7c25916aba6ca19d471455b598e51f80ac34",
+      "TIGER_mixed_rq_E/train_rqvae.py": "f0fc87badbcd370b365c05fe90f8d52023f7d26faa07f4be38375fc2849d9ba6",
+      "item_sids.json": "e6059f4ba534f87414b0d0b86e1e166edc3e3319fcc025623e514b6b48d8e576",
+      "recall.json": "904a645d48199bce9a8f78dbd07ea2f3136bf492d085152ea7ac4aeb1b9de0d2",
+      "rqvae_best.pth": "1fdfd667e951da0f7896a6fa0360be6febee4b570109d9fb35671a15a63a76b0"
+    },
+    "key": "TIGER_mixed_rq_E",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ],
+    "target": "r2:genrec/16/"
+  },
+  "17": {
+    "arm": "TIGER_mixed_rq_A",
+    "files": {
+      "TIGER_mixed_rq_A/math_spec.json": "ebd4ddf6477d8206950c69d813a101a3bbdd251d0ff5b9cda70ab1db9cea7290",
+      "TIGER_mixed_rq_A/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+      "TIGER_mixed_rq_A/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+      "TIGER_mixed_rq_A/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+      "TIGER_mixed_rq_A/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+      "TIGER_mixed_rq_A/model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
+      "TIGER_mixed_rq_A/model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
+      "TIGER_mixed_rq_A/model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
+      "TIGER_mixed_rq_A/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+      "TIGER_mixed_rq_A/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+      "TIGER_mixed_rq_A/model/model.py": "559752236ffb9521cf40a64ecf563cbdfcbed775d12feb391d825ec256d61843",
+      "TIGER_mixed_rq_A/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_mixed_rq_A/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_mixed_rq_A/reference_contract.json": "219ceebc63668a860491d186c12d7c25916aba6ca19d471455b598e51f80ac34",
+      "TIGER_mixed_rq_A/train_rqvae.py": "944aea61d676165c97a012f79510c467ebb4b1ef09877bc8e3cf7b3099e93e04",
+      "item_sids.json": "5ba00b5647b0808c0f89dcf85360c7892465069b8604b642a7d9c072f7bcafbe",
+      "recall.json": "a7ec28498bba829077618ab1b67256a95f6d57d4d7f614b5ae3be65044ce6c0d",
+      "rqvae_best.pth": "974538fc8c121966559f07a21595971546e181451f99101c601d52357b3eb039"
+    },
+    "key": "TIGER_mixed_rq_A",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ],
+    "target": "r2:genrec/17/"
+  },
+  "18": {
+    "arm": "TIGER_mixed_rq_G",
+    "files": {
+      "TIGER_mixed_rq_G/math_spec.json": "ebd4ddf6477d8206950c69d813a101a3bbdd251d0ff5b9cda70ab1db9cea7290",
+      "TIGER_mixed_rq_G/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+      "TIGER_mixed_rq_G/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+      "TIGER_mixed_rq_G/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+      "TIGER_mixed_rq_G/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+      "TIGER_mixed_rq_G/model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
+      "TIGER_mixed_rq_G/model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
+      "TIGER_mixed_rq_G/model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
+      "TIGER_mixed_rq_G/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+      "TIGER_mixed_rq_G/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+      "TIGER_mixed_rq_G/model/model.py": "559752236ffb9521cf40a64ecf563cbdfcbed775d12feb391d825ec256d61843",
+      "TIGER_mixed_rq_G/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_mixed_rq_G/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_mixed_rq_G/reference_contract.json": "219ceebc63668a860491d186c12d7c25916aba6ca19d471455b598e51f80ac34",
+      "TIGER_mixed_rq_G/train_rqvae.py": "b0700ea5f1bb6c0cdc83f22b51b54af37427cacf7a17e5512b2f8a24cbbbfe21",
+      "item_sids.json": "98355a218df41120e09cfbd49fbd390b3843554569cdacb1594aad91de0ca0c7",
+      "recall.json": "c4e5fa4af3d5b164cb8698d1408e0a2b4f594a518f77907e1b178195b01e641b",
+      "rqvae_best.pth": "dbd32be3be316d6da1250bfababfb640ea929bc15ea6dc9f015b8a6c46e0d42e"
+    },
+    "key": "TIGER_mixed_rq_G",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ],
+    "target": "r2:genrec/18/"
+  },
+  "19": {
+    "arm": "TIGER_mixed_rq_F0",
+    "files": {
+      "TIGER_mixed_rq_F0/math_spec.json": "ebd4ddf6477d8206950c69d813a101a3bbdd251d0ff5b9cda70ab1db9cea7290",
+      "TIGER_mixed_rq_F0/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+      "TIGER_mixed_rq_F0/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+      "TIGER_mixed_rq_F0/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+      "TIGER_mixed_rq_F0/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+      "TIGER_mixed_rq_F0/model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
+      "TIGER_mixed_rq_F0/model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
+      "TIGER_mixed_rq_F0/model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
+      "TIGER_mixed_rq_F0/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+      "TIGER_mixed_rq_F0/model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+      "TIGER_mixed_rq_F0/model/model.py": "559752236ffb9521cf40a64ecf563cbdfcbed775d12feb391d825ec256d61843",
+      "TIGER_mixed_rq_F0/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_mixed_rq_F0/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_mixed_rq_F0/reference_contract.json": "219ceebc63668a860491d186c12d7c25916aba6ca19d471455b598e51f80ac34",
+      "TIGER_mixed_rq_F0/train_rqvae.py": "eb10e83b73c3bffa13736cfdc5f5c58f2a24bf223568761c59811d73d45ef50a",
+      "item_sids.json": "afa89a10b1b197a7b56da4ad322c6ddd96a3c26c04238af326d88747378bb848",
+      "recall.json": "fe770222ae70b3c48f76f6f3e01a3456dca7041d2df2826abfc3bfbee49b604f",
+      "rqvae_best.pth": "9e958a8e21e67af7f2218a2a511e550131fac9f8227f7472d12f8e108b232077"
+    },
+    "key": "TIGER_mixed_rq_F0",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ],
+    "target": "r2:genrec/19/"
+  },
+  "20": {
+    "arm": "TIGER_community-balance-l1-rq",
+    "files": {
+      "TIGER_community-balance-l1-rq/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_community-balance-l1-rq/model/community.py": "7caa261ab5ab5ce0f41faccf7addac3d8434a311c0eb7c1f8caa39a3351e979c",
+      "TIGER_community-balance-l1-rq/model/layers.py": "3055b8aae8645d0aee207d3f3f9bfbb84ad1ce021692669f97ba20e7398c624f",
+      "TIGER_community-balance-l1-rq/model/model.py": "f3610e5eb7a56f4907c3308ea6091f86af7b30905c2460ec0bd0cdb60e24a59f",
+      "TIGER_community-balance-l1-rq/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_community-balance-l1-rq/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_community-balance-l1-rq/reference_contract.json": "471c565fd8cdf0edcc3a271286285716232bddda575ffe402ac70309fc621fa6",
+      "TIGER_community-balance-l1-rq/train_rqvae.py": "160c5677fdbbca7868b160e153f79433f5ab09d0c8bf020e9fbe4174a4b0ccb1",
+      "item_sids.json": "bfe3409a6a6e58d6f3c0898ab5fa8ceefc13a1d796dfb3f6530bcd4a5cc45028",
+      "recall.json": "f6263ab1e945f8c7cf60ed1ec5f8886e2b05fbb7225aa9d0c93f233f1e39786a",
+      "rqvae_best.pth": "d7d9bc1e48b0cc659a89077080a32291df2b5918b3d42fc04be3e6a4aa3889e3"
+    },
+    "key": "TIGER_community-balance-l1-rq",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ],
+    "target": "r2:genrec/20/"
+  },
+  "21": {
+    "arm": "TIGER_behaviour-pairs-levels-rq",
+    "files": {
+      "TIGER_behaviour-pairs-levels-rq/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_behaviour-pairs-levels-rq/model/behaviour_pairs.py": "e8852eccf52b405085d61837200125820e3d8a95108d4caffd2097050f468921",
+      "TIGER_behaviour-pairs-levels-rq/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "TIGER_behaviour-pairs-levels-rq/model/model.py": "22f8752db26432e70085ff38d291e127cd3def3043d188c25c0144f6a49fc09f",
+      "TIGER_behaviour-pairs-levels-rq/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_behaviour-pairs-levels-rq/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_behaviour-pairs-levels-rq/reference_contract.json": "02d87d9c83fb8021fdffdd43d01362919c49db3bf7f552421acda48fce4c9401",
+      "TIGER_behaviour-pairs-levels-rq/train_rqvae.py": "f99f777f0c9e8ad73fc5d28a904760de4f3f643bef476fdb8fb71c326da25c08",
+      "item_sids.json": "d6497a7b91fcec9fb1db60fabcdab3129373a7880c52dfef98505f546d8a71f2",
+      "recall.json": "aa5ebafc1adc55bff4c81e1076fa1af669ddeb2bd7445c27e5e2a8ce44d3fe02",
+      "rqvae_best.pth": "1bf6cf45a45fd29b615b03bc180ee30f59c51b91225eceb52ae0ff693ad2a61b"
+    },
+    "key": "TIGER_behaviour-pairs-levels-rq",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ],
+    "target": "r2:genrec/21/"
+  },
+  "22": {
+    "arm": "TIGER_behaviour-pairs-curved-rq",
+    "files": {
+      "TIGER_behaviour-pairs-curved-rq/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_behaviour-pairs-curved-rq/model/behaviour_pairs.py": "e8852eccf52b405085d61837200125820e3d8a95108d4caffd2097050f468921",
+      "TIGER_behaviour-pairs-curved-rq/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "TIGER_behaviour-pairs-curved-rq/model/model.py": "22f8752db26432e70085ff38d291e127cd3def3043d188c25c0144f6a49fc09f",
+      "TIGER_behaviour-pairs-curved-rq/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_behaviour-pairs-curved-rq/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_behaviour-pairs-curved-rq/reference_contract.json": "02d87d9c83fb8021fdffdd43d01362919c49db3bf7f552421acda48fce4c9401",
+      "TIGER_behaviour-pairs-curved-rq/train_rqvae.py": "31f422b40e22bb307be651936f7d8ff39cd8311e22042e76f3b906c26b34fd80",
+      "item_sids.json": "19d6aa46d81084d80d5e1830c9268bc67f67212d8a3e7ad39a94062140f07db4",
+      "recall.json": "245f093085cb839157b1815b35824ffa8029d6bf9cde842973d772595fa35650",
+      "rqvae_best.pth": "315113ad0865ec400c55c248d1b37c41776f689de21e91296d0701543d528f08"
+    },
+    "key": "TIGER_behaviour-pairs-curved-rq",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ],
+    "target": "r2:genrec/22/"
+  },
+  "23": {
+    "arm": "TIGER_curvature-stratum-sinkhorn-v1",
+    "files": {
+      "TIGER_curvature-stratum-sinkhorn-v1/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_curvature-stratum-sinkhorn-v1/model/layers.py": "5f329706e79dab6022eb6ae92ab17be5d96f243ecca7d5193f1cbcf8b341335e",
+      "TIGER_curvature-stratum-sinkhorn-v1/model/model.py": "d4c45240604071d794df29c330617b4a1711d4b5e71886de27ffcb142d9fe567",
+      "TIGER_curvature-stratum-sinkhorn-v1/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_curvature-stratum-sinkhorn-v1/model/stratum.py": "788fa1a9cf3d63d34d9a2a438ddd788179d179431c4cd272e7686b5474469910",
+      "TIGER_curvature-stratum-sinkhorn-v1/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_curvature-stratum-sinkhorn-v1/reference_contract.json": "f3f39c3f3923538d84c9f72b0cdc67b297fa86fce89a06ec9f75656184381502",
+      "TIGER_curvature-stratum-sinkhorn-v1/train_rqvae.py": "c206f1dbab1bd42e2b4d32536e70c76c705b2daac23ec8b839b4c74f29bf89ae",
+      "item_sids.json": "20844a80a708dbd7cd26fd78ce30c7f23b1a34f732781704eee22d651874d493",
+      "recall.json": "87ae5e698da49bd0e0c7d855944ad83d2c1fe6862404a26591c79f2aeafe7589",
+      "rqvae_best.pth": "f441a04f9b965508fd17a22ade93c4ca27a71a6a7d2cc7a7fbb746248cc36af0"
+    },
+    "key": "TIGER_curvature-stratum-sinkhorn-v1",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ],
+    "target": "r2:genrec/23/"
+  },
+  "24": {
+    "arm": "TIGER_RQ-VAE",
+    "files": {
+      "TIGER_RQ-VAE/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_RQ-VAE/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "TIGER_RQ-VAE/model/model.py": "22f8752db26432e70085ff38d291e127cd3def3043d188c25c0144f6a49fc09f",
+      "TIGER_RQ-VAE/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_RQ-VAE/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_RQ-VAE/train_rqvae.py": "ac370fd3ef04ae405f27d19260372759c2c0fa1e4a3ff72b85b1c00583deba74",
+      "item_sids.json": "53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85",
+      "recall.json": "2937b9fd2f31596f525f1255f2b7897cdc7081259883ba79a21be951cc9c073c",
+      "rqvae_best.pth": "018ef7b19d471714da3055395cd49f1920cd12efa14c72dd9ac8f0e04f6f54fb"
+    },
+    "key": "TIGER_RQ-VAE",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "25": {
+    "arm": "TIGER_behaviour_code_cohesion",
+    "files": {
+      "TIGER_behaviour_code_cohesion/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_behaviour_code_cohesion/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "TIGER_behaviour_code_cohesion/model/model.py": "22f8752db26432e70085ff38d291e127cd3def3043d188c25c0144f6a49fc09f",
+      "TIGER_behaviour_code_cohesion/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_behaviour_code_cohesion/train_rqvae.py": "7849b93374a4e51dbdee6fb312ea17174d23edf8096e567d1416ad3febe2532c",
+      "item_sids.json": "28de33d5b03622c70af9f2a7bc95d0d2a710be910e0a4f909a35d22366eb6d1f",
+      "recall.json": "3d1581da6f6e528ccd2392f4b4c253cacf7a4a612a4c5f51f0c2fc1cdaf49561",
+      "rqvae_best.pth": "67b3283e17883daf9cc778000160143067947752c73f8aee21bb9881d5520812"
+    },
+    "key": "TIGER_behaviour_code_cohesion",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "26": {
+    "arm": "TIGER_cooccur_coherent_sid",
+    "files": {
+      "TIGER_cooccur_coherent_sid/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_cooccur_coherent_sid/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "TIGER_cooccur_coherent_sid/model/model.py": "22f8752db26432e70085ff38d291e127cd3def3043d188c25c0144f6a49fc09f",
+      "TIGER_cooccur_coherent_sid/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_cooccur_coherent_sid/train_rqvae.py": "e54b66f884a00d6558dcfb3354bd998c0eabbf0606d60e6fd1a7fc28fe7c360c",
+      "item_sids.json": "d49280fe54987a3325d502c11261199a5543b1db4d9a5f1f402d4313238f7851",
+      "recall.json": "d97dec9c3fc46f8eae9b83632a4ae9cac89ab5696381a60b58de6a30fd78d990",
+      "rqvae_best.pth": "1047713da3f843021574fecfde5ccc25fe71f50a4b5446a952793ace5f618872"
+    },
+    "key": "TIGER_cooccur_coherent_sid",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "27": {
+    "arm": "TIGER_incoming_context_barycenter",
+    "files": {
+      "TIGER_incoming_context_barycenter/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_incoming_context_barycenter/model/layers.py": "6a0b4ec81a87d85a36008c8b435266856c0f30ec49779347c1cb79a01bfcd101",
+      "TIGER_incoming_context_barycenter/model/model.py": "b8680956459bda9ace6f740ac3fb8f4fb97c23bdab168c957c529beb3fea5188",
+      "TIGER_incoming_context_barycenter/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_incoming_context_barycenter/train_rqvae.py": "0b8faca19d16f9f5da978fce223b9daca7ee3bb947449859ecfd5fcab704e9e4",
+      "item_sids.json": "37e1bf3474da04436c8d9b5fde90a4162e67929c13849f17637bd5e2c064cfbf",
+      "recall.json": "f335a0ab64fb1d4a2e021ed87c52ff47fb91fbf7ac854524e1d572005bdac85a",
+      "rqvae_best.pth": "340f24f67a2c83054aaa1a84ff1ee613fdda3d5c043493289d202cc155d9013c"
+    },
+    "key": "TIGER_incoming_context_barycenter",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "28": {
+    "arm": "TIGER_cogeo_region_argmax",
+    "files": {
+      "TIGER_cogeo_region_argmax/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_cogeo_region_argmax/model/layers.py": "504e44ee195c22d82775f25dd64d8e477ee5bd8b3f2b05a54049dd643c221469",
+      "TIGER_cogeo_region_argmax/model/model.py": "22f8752db26432e70085ff38d291e127cd3def3043d188c25c0144f6a49fc09f",
+      "TIGER_cogeo_region_argmax/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_cogeo_region_argmax/train_rqvae.py": "7cf6a45390be84166857b93f457b92580fbfe2511aee96b1930831c27215c57f",
+      "item_sids.json": "322cc48fdfb86ded9f9aa436e650da1cda773bcf8a6e7a5632a5a4bd5e6a0217",
+      "recall.json": "0731630dd9652966d2d920d125582fb7f2b11bac67a0e91d1fed492bd24f9008",
+      "rqvae_best.pth": "19efa0bdab518e733ee3f2a96441f1862d9e3591d58828a2c996d9d65676c94d"
+    },
+    "key": "TIGER_cogeo_region_argmax",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "29": {
+    "arm": "TIGER_COOC_RANK_FRECHET",
+    "files": {
+      "TIGER_COOC_RANK_FRECHET/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_COOC_RANK_FRECHET/model/layers.py": "7bcd7ac05b2839b3fdb93610873b20df2847031405ccab2c6e1c29fe88fd2867",
+      "TIGER_COOC_RANK_FRECHET/model/model.py": "4cd02a58ae69474f5d68a04a5010fe877ceddb3b5b466b247fd5bdbb3f1c6994",
+      "TIGER_COOC_RANK_FRECHET/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_COOC_RANK_FRECHET/train_rqvae.py": "6b7b8cd8368bdfa7847a332c6984b6518dab7187071b757d842873f8c3cedb8f",
+      "item_sids.json": "5060047a00636796457fadd14c862cd3f0da7bdbbc8b3eb8f634dce8bd90df16",
+      "recall.json": "a1469b010701543db0d9f66a3615965da1679754ff152666f316341e5f204d1f",
+      "rqvae_best.pth": "7efe78b9a1938f31539e7aa2c7fd69036d086aca0d8a4de6f60cca2f4493718f"
+    },
+    "key": "TIGER_COOC_RANK_FRECHET",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "30": {
+    "arm": "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL",
+    "files": {
+      "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/hyperbolic.py": "18789b942000d2a4cecd953e2d48b1baeadb6a44c4d76828a0c29e1a984859eb",
+      "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/layers.py": "97dbc2b6dfeea31eeb2fac9a5cf55a3b6c3347ef1524078c3617f189fd778e32",
+      "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/model.py": "9c0080ac2fb112fcc71b78514efade32606f287397c64754fd9b1bd219ce9a5c",
+      "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/train_rqvae.py": "6d6a3734c1e4d688cfe270ff81589e8f6dc0cba3871f7ef4cf9d2a593b20d4ff",
+      "item_sids.json": "12bc86ecc4996a5953b735c9bc5be743d8405d6b5118f84d800a7d694c14ed2b",
+      "recall.json": "be1f4062abd1aa9a095c5a818dd268439c897340cc8c6837bec2fce3ebcf71b6",
+      "rqvae_best.pth": "a337332ba348c0923556ac3ade1736246bc42072252264e5da94fca998b44d72"
+    },
+    "key": "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "31": {
+    "arm": "TIGER_interest_signature_hypball",
+    "files": {
+      "TIGER_interest_signature_hypball/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_interest_signature_hypball/model/hyperbolic.py": "18789b942000d2a4cecd953e2d48b1baeadb6a44c4d76828a0c29e1a984859eb",
+      "TIGER_interest_signature_hypball/model/layers.py": "0e62ec84c8de12064bb2fb900dfcc6eb9f5c94fbbe72b48840d8c35f34c43711",
+      "TIGER_interest_signature_hypball/model/model.py": "681702555121e047608abb45c15ef6485817f466bce23970f75fe3d7527109a7",
+      "TIGER_interest_signature_hypball/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_interest_signature_hypball/train_rqvae.py": "dcc32dda4c7a12fe2c07ae687279a2b7a163d6bcbbfad235dbc31820a2aecd85",
+      "item_sids.json": "4772785a44f946df16db7dc3ac14f78c331d28deb044786c1c25cbaa8a3bb0dc",
+      "recall.json": "d42e6478153111507db431243b2d5bcba72ef6ac9dacd364b29efec278134c7a",
+      "rqvae_best.pth": "bbc1f49ffdcb873beac705dc4d8f9bf9ee8311afcba4359e000289513620708b"
+    },
+    "key": "TIGER_interest_signature_hypball",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "32": {
+    "arm": "TIGER_branch-geodesic-rank",
+    "files": {
+      "TIGER_branch-geodesic-rank/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_branch-geodesic-rank/model/hyperbolic.py": "4a7c451a6f310f3689c93507575532e89bc9eb4e0ac4afaceaa8beb0fe3f8800",
+      "TIGER_branch-geodesic-rank/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "TIGER_branch-geodesic-rank/model/model.py": "22f8752db26432e70085ff38d291e127cd3def3043d188c25c0144f6a49fc09f",
+      "TIGER_branch-geodesic-rank/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_branch-geodesic-rank/train_rqvae.py": "fddb9fd12a1c9a649d27f32626c3140c97afbfa4b65c665d78cae301984dd16c",
+      "item_sids.json": "de8cbbe1d90e630ce40e18903806e16025e3d53fadcd073e06666399a68bc35a",
+      "recall.json": "338815b2f06ac12b7c77fad23520d1c48a1ce25965548340233ec8b897e6164c",
+      "rqvae_best.pth": "bd360827422db8c8fe5ab4356bfb6bd6c249177e26e7b8980e468e785251c91a"
+    },
+    "key": "TIGER_branch-geodesic-rank",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "33": {
+    "arm": "TIGER_poincare-frechet-successor-codebook",
+    "files": {
+      "TIGER_poincare-frechet-successor-codebook/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_poincare-frechet-successor-codebook/model/frechet_poincare.py": "89e670f4b65c537e6fc22a98a02b69e3ca1ec43eb4c6ab5c3f3e6b1a1e38c6dd",
+      "TIGER_poincare-frechet-successor-codebook/model/layers.py": "134abe0459f06076101322d3efea16b635cbf90cbd29a46dd4c63c0cdb407f32",
+      "TIGER_poincare-frechet-successor-codebook/model/model.py": "1780294799e5ffefcffa32ae00f2949a9381403acd67d98f6341b1c25ad1d362",
+      "TIGER_poincare-frechet-successor-codebook/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_poincare-frechet-successor-codebook/train_rqvae.py": "27bb0a9bb57e09e19515148ef31cacf706df62110dbc24640b58cb2ad9294faa",
+      "item_sids.json": "67f77d170c7977d0462567d8553ea8c7d5f7b52b290cd585525586723c2a8063",
+      "recall.json": "b02b80c0e9363dcd081ed8d7ccb279aac7163a777670d73265078fd645a6fb84",
+      "rqvae_best.pth": "f7e825add4fac9ffbe129e08fd58b53ac54c0961b0ff69db2639cca069e92e05"
+    },
+    "key": "TIGER_poincare-frechet-successor-codebook",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "34": {
+    "arm": "TIGER_BRad-RQ",
+    "files": {
+      "TIGER_BRad-RQ/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_BRad-RQ/model/behaviour_radius.py": "66ce9244443d5abd375d3ee3daa826d106e3f1cf08e9bee36b4f1dd8609aa4c0",
+      "TIGER_BRad-RQ/model/frechet_poincare.py": "89e670f4b65c537e6fc22a98a02b69e3ca1ec43eb4c6ab5c3f3e6b1a1e38c6dd",
+      "TIGER_BRad-RQ/model/layers.py": "382c405cbee9caa60cc7106a4f0e85e68bd2c3c2017b206d47acf29375939931",
+      "TIGER_BRad-RQ/model/model.py": "dfeebbdd75d0919f8083162ac3f4af02c6a975ed85cb5da363b1591c2ac02129",
+      "TIGER_BRad-RQ/model/poincare_contract.py": "99ce1e9be6e5a7058b4c823762a352c7c7b2bc59b4ace5c8ea828600f402912b",
+      "TIGER_BRad-RQ/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_BRad-RQ/train_rqvae.py": "e3ed677d0c1cda33a0aec94863823a8bfba5fe67fe473c8005ca144299da4cff",
+      "item_sids.json": "cfc3f291b84593c6a418143bb7ed4c1c313070785236b9a8c124138db61afd24",
+      "recall.json": "8bbca5a066965c14f704692dfe9395428dc77d8e0b7b22b77f662962170b2157",
+      "rqvae_best.pth": "e87ac4700d3854962543f074480876a413270f2a1e24fa4efaa187a5993e6578"
+    },
+    "key": "TIGER_BRad-RQ",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "provenance",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "35": {
+    "arm": "TIGER_GDELTA-SUCC-PULL-RQ",
+    "files": {
+      "TIGER_GDELTA-SUCC-PULL-RQ/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_GDELTA-SUCC-PULL-RQ/model/behaviour_radius.py": "66ce9244443d5abd375d3ee3daa826d106e3f1cf08e9bee36b4f1dd8609aa4c0",
+      "TIGER_GDELTA-SUCC-PULL-RQ/model/frechet_poincare.py": "89e670f4b65c537e6fc22a98a02b69e3ca1ec43eb4c6ab5c3f3e6b1a1e38c6dd",
+      "TIGER_GDELTA-SUCC-PULL-RQ/model/layers.py": "bfb6291ac6e1a5f44a96d6fa72dd72fd008f14791d71bc304480b5e3262a9996",
+      "TIGER_GDELTA-SUCC-PULL-RQ/model/model.py": "dfeebbdd75d0919f8083162ac3f4af02c6a975ed85cb5da363b1591c2ac02129",
+      "TIGER_GDELTA-SUCC-PULL-RQ/model/poincare_contract.py": "99ce1e9be6e5a7058b4c823762a352c7c7b2bc59b4ace5c8ea828600f402912b",
+      "TIGER_GDELTA-SUCC-PULL-RQ/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_GDELTA-SUCC-PULL-RQ/train_rqvae.py": "c0490d46e17e4d7b065809cb484732123dc11728c6817fdec549ffd7d30dac37",
+      "item_sids.json": "ead1cea428ef3906696da889c7b55a9f62acd36b7ce1d06e06d188a545ba181c",
+      "recall.json": "9363f31a236c69eaf70ea3f9c1dd108a1d7a578a3faf48333fbcdeedf4b39c18",
+      "rqvae_best.pth": "a80d33ea26bd4657a2c4195c44a120ba5c08cd6fb78a578f599784f01fca4b13"
+    },
+    "key": "TIGER_GDELTA-SUCC-PULL-RQ",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "36": {
+    "arm": "TIGER_HGS-TREE",
+    "files": {
+      "TIGER_HGS-TREE/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_HGS-TREE/model/hierarchy.py": "e30d596e52f013aa2188f938fcc45218e6a48231108309c8e6624710bb3b4111",
+      "TIGER_HGS-TREE/model/hierarchy_loss.py": "4f0f5db07be03fe5c0c48b01dd1958c56fd59b7ea6235ca46a76da0bb684433f",
+      "TIGER_HGS-TREE/model/layers.py": "1b5249287c19f601b8ab1937c50b6e72b9a4848fff7b31d15d8d2faf0f077c8a",
+      "TIGER_HGS-TREE/model/model.py": "961d39de1c72324d15901c516efb04c1032005f0de84b1b4e9fc56fb8ae9ad7a",
+      "TIGER_HGS-TREE/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_HGS-TREE/train_rqvae.py": "14b75db86fd0a61c00937927cc7f34baa6ec61d56c2182813d758e89867a6b53",
+      "item_sids.json": "f873884f7c451ce4b107924f9cb65e931d98e7257073e40a5626e9446ca11df8",
+      "recall.json": "3b34003d75d46cf5cacd2adadddd7e8f950c370ade8449d10354c4050022e1da",
+      "rqvae_best.pth": "83dffe7bafdd7dafd6eeb681399f5d328f12a57ff0d496f1efbe5c67db5c3c12"
+    },
+    "key": "TIGER_HGS-TREE",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "37": {
+    "arm": "TIGER_CURVALLOC-LORENTZ-RQ",
+    "files": {
+      "TIGER_CURVALLOC-LORENTZ-RQ/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_CURVALLOC-LORENTZ-RQ/model/behaviour_radius.py": "66ce9244443d5abd375d3ee3daa826d106e3f1cf08e9bee36b4f1dd8609aa4c0",
+      "TIGER_CURVALLOC-LORENTZ-RQ/model/curvature_allocation.py": "95ed75dd06eb54809a00c7a16bea2112173c7c3d0b0da83ddd4ce9042ccd8b46",
+      "TIGER_CURVALLOC-LORENTZ-RQ/model/frechet_poincare.py": "89e670f4b65c537e6fc22a98a02b69e3ca1ec43eb4c6ab5c3f3e6b1a1e38c6dd",
+      "TIGER_CURVALLOC-LORENTZ-RQ/model/layers.py": "c2842e6224b48f77cd299df91fbd5099df633b1f868fb328fa6d3009d5ab6d64",
+      "TIGER_CURVALLOC-LORENTZ-RQ/model/model.py": "57aef890c463a0e2ce4b526a720ceb6dded1fc83c1abe807abf04781151153ee",
+      "TIGER_CURVALLOC-LORENTZ-RQ/model/poincare_contract.py": "99ce1e9be6e5a7058b4c823762a352c7c7b2bc59b4ace5c8ea828600f402912b",
+      "TIGER_CURVALLOC-LORENTZ-RQ/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_CURVALLOC-LORENTZ-RQ/train_rqvae.py": "cc2ff5e2ba08bdd6e857536bfcc3dafbd11996ed643f2b4cbd4c145582555675",
+      "item_sids.json": "8e9164b8f70b0e6432d7be1313805a99bea0228c63dcda2e3e4bc15c37b8346f",
+      "recall.json": "2c94ed5e54d387e626abbcb4655b3b1a95b9050e577be57f0e2b430603b13b76",
+      "rqvae_best.pth": "3553186bbddf6eeae8d7966bfa3451388600904e4a4424f23aa8e7fb1a1e5b4f"
+    },
+    "key": "TIGER_CURVALLOC-LORENTZ-RQ",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "38": {
+    "arm": "TIGER_EQVOTE-HYP-RQ",
+    "files": {
+      "TIGER_EQVOTE-HYP-RQ/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_EQVOTE-HYP-RQ/model/eqvote.py": "d0faae50c53534c1a48dce927ddb5edd9961fe58fa8b5b0922f4e8d50813c538",
+      "TIGER_EQVOTE-HYP-RQ/model/layers.py": "e18a524abdfabae7f840809b851af3e79bf97194c662b4c34c6c956c162bde75",
+      "TIGER_EQVOTE-HYP-RQ/model/model.py": "741cbaa0fbb174bad3765c9ffd7855078c6c0e24b95df266388200f17f8edb1a",
+      "TIGER_EQVOTE-HYP-RQ/model/poincare_contract.py": "99ce1e9be6e5a7058b4c823762a352c7c7b2bc59b4ace5c8ea828600f402912b",
+      "TIGER_EQVOTE-HYP-RQ/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_EQVOTE-HYP-RQ/train_rqvae.py": "8dd13c3602b3a6a4a21b436c922ff4f1552ce29f1c19a9c9ae79e3e20e67b848",
+      "item_sids.json": "a8a4a6122069e77166f34ca680aacedcc18c48fa3db269bf32abecbec18f0a9f",
+      "recall.json": "9529686d132d9ae5deda45805a998fbfacfa44591ed6a3480ae5cf37b3a5e5b5",
+      "rqvae_best.pth": "e47ce9965162dad4594961a726c2589df3c41e4c28eac0f9fdaac7285e10379c"
+    },
+    "key": "TIGER_EQVOTE-HYP-RQ",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "39": {
+    "arm": "TIGER_curvature-prefix-ranking",
+    "files": {
+      "TIGER_curvature-prefix-ranking/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_curvature-prefix-ranking/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "TIGER_curvature-prefix-ranking/model/model.py": "49d78dc65e63331951f3bb478a0ae7e128a3c3412e712191a2f64c9b5a3b64b9",
+      "TIGER_curvature-prefix-ranking/model/poincare_contract.py": "99ce1e9be6e5a7058b4c823762a352c7c7b2bc59b4ace5c8ea828600f402912b",
+      "TIGER_curvature-prefix-ranking/model/recording.py": "99b2c6ddbf8ac8d40862664efee98b412b7c317a99d48cd4836d8eb2819248ad",
+      "TIGER_curvature-prefix-ranking/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_curvature-prefix-ranking/train_rqvae.py": "21f5da3ff1931fd8308fdfc7a54c9e6c00b066ec0636f83e62ba31348af29ab2",
+      "item_sids.json": "c17fc4cea019a840dc4c3d874126575529cfea87bf6e9864f5ab6f7c2bf82101",
+      "recall.json": "978d2b1fad6ef98541bd1cdde43b421423bfbbc88736e0031dacec071620cbf4",
+      "rqvae_best.pth": "7609ab6ba3221f704fcea0c63fe8601ea67568589bf694478f333feaee7f7adf"
+    },
+    "key": "TIGER_curvature-prefix-ranking",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "40": {
+    "arm": "TIGER_curvature-prefix-ranking-euclid",
+    "files": {
+      "TIGER_curvature-prefix-ranking-euclid/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_curvature-prefix-ranking-euclid/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "TIGER_curvature-prefix-ranking-euclid/model/model.py": "49d78dc65e63331951f3bb478a0ae7e128a3c3412e712191a2f64c9b5a3b64b9",
+      "TIGER_curvature-prefix-ranking-euclid/model/poincare_contract.py": "99ce1e9be6e5a7058b4c823762a352c7c7b2bc59b4ace5c8ea828600f402912b",
+      "TIGER_curvature-prefix-ranking-euclid/model/recording.py": "99b2c6ddbf8ac8d40862664efee98b412b7c317a99d48cd4836d8eb2819248ad",
+      "TIGER_curvature-prefix-ranking-euclid/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_curvature-prefix-ranking-euclid/train_rqvae.py": "318acf19a4d8cf63a4d7dac3112adce0fbb3181c47691e8e43f0ab48da26a200",
+      "item_sids.json": "e47301d0465514f83cff1d166f4bdcbff0dacac13224b0628ac0809b85fdb126",
+      "recall.json": "a6de0f437efc014403c0d2d9dcda27b5398384d6c73e10652b757ef7c3137e64",
+      "rqvae_best.pth": "1ff5afb289ef231f305a4930ad18b2b194edd27f7eba2c608ad03a2efc0f8d24"
+    },
+    "key": "TIGER_curvature-prefix-ranking-euclid",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "41": {
+    "arm": "TIGER_curvature-prefix-ranking-nobehaviour",
+    "files": {
+      "TIGER_curvature-prefix-ranking-nobehaviour/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_curvature-prefix-ranking-nobehaviour/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "TIGER_curvature-prefix-ranking-nobehaviour/model/model.py": "49d78dc65e63331951f3bb478a0ae7e128a3c3412e712191a2f64c9b5a3b64b9",
+      "TIGER_curvature-prefix-ranking-nobehaviour/model/poincare_contract.py": "99ce1e9be6e5a7058b4c823762a352c7c7b2bc59b4ace5c8ea828600f402912b",
+      "TIGER_curvature-prefix-ranking-nobehaviour/model/recording.py": "99b2c6ddbf8ac8d40862664efee98b412b7c317a99d48cd4836d8eb2819248ad",
+      "TIGER_curvature-prefix-ranking-nobehaviour/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_curvature-prefix-ranking-nobehaviour/train_rqvae.py": "b7155097d1e56703b20dc26e00656ef262ea5c1a0db2f0d693dab6b2dcd6f05f",
+      "item_sids.json": "b6fbb6f9e1dd51f9d83125003edcd3475be40f5bff725ff52a6f160bdf9d274e",
+      "recall.json": "ac6c3630193fb9fc3c568229d8a6db45c8eae08beecdde2f94085d19e1b41681",
+      "rqvae_best.pth": "466e1d08d477608687a1b80ccd4cd7d9a3622fb1bce01e119608573615ded981"
+    },
+    "key": "TIGER_curvature-prefix-ranking-nobehaviour",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "42": {
+    "arm": "TIGER_curvature-prefix-ranking-forman",
+    "files": {
+      "TIGER_curvature-prefix-ranking-forman/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_curvature-prefix-ranking-forman/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "TIGER_curvature-prefix-ranking-forman/model/model.py": "49d78dc65e63331951f3bb478a0ae7e128a3c3412e712191a2f64c9b5a3b64b9",
+      "TIGER_curvature-prefix-ranking-forman/model/poincare_contract.py": "99ce1e9be6e5a7058b4c823762a352c7c7b2bc59b4ace5c8ea828600f402912b",
+      "TIGER_curvature-prefix-ranking-forman/model/recording.py": "99b2c6ddbf8ac8d40862664efee98b412b7c317a99d48cd4836d8eb2819248ad",
+      "TIGER_curvature-prefix-ranking-forman/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_curvature-prefix-ranking-forman/train_rqvae.py": "47faca1019ed14ab4de6e5fd0c2a4e633ebbe6deda19af4c7582a173c1b4a36c",
+      "item_sids.json": "89e66d5b368f927c59b48c8db0ef47e6644cf3c285fb7afc5f056a0dfcd39ce7",
+      "recall.json": "816d5c9bbc6186ee6ac11d09d81a3b68fb65b7cacc8e0a1ef5a6f619b018f31c",
+      "rqvae_best.pth": "f51d09eaa0ef09529b4cecf7a892128aff0794c89ece525d6ebff9e8f0a10134"
+    },
+    "key": "TIGER_curvature-prefix-ranking-forman",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "43": {
+    "arm": "TIGER_community-l1-rq",
+    "files": {
+      "TIGER_community-l1-rq/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_community-l1-rq/model/community.py": "7caa261ab5ab5ce0f41faccf7addac3d8434a311c0eb7c1f8caa39a3351e979c",
+      "TIGER_community-l1-rq/model/layers.py": "5d06e901e8b571d927b00475143e5edd1d949eaeb13a0e2c075831b73b02bb60",
+      "TIGER_community-l1-rq/model/model.py": "f3610e5eb7a56f4907c3308ea6091f86af7b30905c2460ec0bd0cdb60e24a59f",
+      "TIGER_community-l1-rq/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_community-l1-rq/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_community-l1-rq/reference_contract.json": "471c565fd8cdf0edcc3a271286285716232bddda575ffe402ac70309fc621fa6",
+      "TIGER_community-l1-rq/train_rqvae.py": "3fd8b42f962d69f4e913c0bf7804874c098e31759ff0d9722fd756b882f69907",
+      "item_sids.json": "9e00e58d10b571f7afedfa9d9c8bad2d0a63e09278c2b6f235d25b32c3f0db26",
+      "recall.json": "367f20478dc84ed3117c6ff2ebcf16762ae3cf2b345cb60b7f4c48d9666764c2",
+      "rqvae_best.pth": "157a9891c90c5b7b524c961bd998981957dc46ab42c5771c9ff2f8b66e55fe14"
+    },
+    "key": "TIGER_community-l1-rq",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "44": {
+    "arm": "TIGER_community-pairs-guarded-rq",
+    "files": {
+      "TIGER_community-pairs-guarded-rq/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_community-pairs-guarded-rq/model/community_pairs.py": "6385261d571b1c1b25b94213e6294422f3218d55fb186edfa701d25c30aa6dd9",
+      "TIGER_community-pairs-guarded-rq/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "TIGER_community-pairs-guarded-rq/model/model.py": "22f8752db26432e70085ff38d291e127cd3def3043d188c25c0144f6a49fc09f",
+      "TIGER_community-pairs-guarded-rq/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_community-pairs-guarded-rq/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_community-pairs-guarded-rq/reference_contract.json": "a9f8d80c620f62189ca2392fbe4cae443085aa158684546f126c916011f45395",
+      "TIGER_community-pairs-guarded-rq/train_rqvae.py": "88db36c0b50bccd14d84fcd97a2ad5c6747ae2dcc41f79d5ce65cd79bd362cd0",
+      "item_sids.json": "48c8953e2cd5430dbc50f4d8df8df34f27e92d435d4106f98481dd224402b0b5",
+      "recall.json": "e4244495bbc51f55e60547c161f846c6a1e7d9ac890f8c56ae9de365ee3b2f8c",
+      "rqvae_best.pth": "d8d15a753239e9eca64bf227a453c61bb0077c1592814aed750afa72fe7828ff"
+    },
+    "key": "TIGER_community-pairs-guarded-rq",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "45": {
+    "arm": "TIGER_community-repulse-l1-rq",
+    "files": {
+      "TIGER_community-repulse-l1-rq/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_community-repulse-l1-rq/model/community.py": "c46f3579d3acbb9949a7339460d74420335f7bf4508aaf94aa668ea78735f082",
+      "TIGER_community-repulse-l1-rq/model/layers.py": "1b541b70f7ededd200fbcfd828910afdc41a2846b18570edbba8ffc6cfd7a462",
+      "TIGER_community-repulse-l1-rq/model/model.py": "f3610e5eb7a56f4907c3308ea6091f86af7b30905c2460ec0bd0cdb60e24a59f",
+      "TIGER_community-repulse-l1-rq/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_community-repulse-l1-rq/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_community-repulse-l1-rq/reference_contract.json": "d46cc163948d3db85f276d364260db0d9cbab5d2dcba8afebc4c674dadc1b7c3",
+      "TIGER_community-repulse-l1-rq/train_rqvae.py": "ab581ba54adf2980a34af400581fd9088d01311222b4f1a1f029fc79ec726762",
+      "item_sids.json": "c6c6ae124c2da95355b10495099fd53a6d16fb123c21e7b59777d28ff1941c7d",
+      "recall.json": "a8a83450b71fb48b6e426bd780e55f3a3165256fc17a216f497032140f76c0c9",
+      "rqvae_best.pth": "5f59ef5e6ee8b6f88185496468b7172b34f3188227eea1076866c152857217ae"
+    },
+    "key": "TIGER_community-repulse-l1-rq",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "46": {
+    "arm": "TIGER_community-balance-repulse-rq",
+    "files": {
+      "TIGER_community-balance-repulse-rq/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_community-balance-repulse-rq/model/community.py": "7caa261ab5ab5ce0f41faccf7addac3d8434a311c0eb7c1f8caa39a3351e979c",
+      "TIGER_community-balance-repulse-rq/model/layers.py": "f3de08ebffaef6f187a14e7f7dc6eb83b3d527e96cadb87bbda7ae8043a5b21f",
+      "TIGER_community-balance-repulse-rq/model/model.py": "f3610e5eb7a56f4907c3308ea6091f86af7b30905c2460ec0bd0cdb60e24a59f",
+      "TIGER_community-balance-repulse-rq/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_community-balance-repulse-rq/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_community-balance-repulse-rq/reference_contract.json": "471c565fd8cdf0edcc3a271286285716232bddda575ffe402ac70309fc621fa6",
+      "TIGER_community-balance-repulse-rq/train_rqvae.py": "10fe5222cef4417a51f40bcdade9cbbcb62840c7b241495dcef997f34010c89b",
+      "item_sids.json": "54bee99f05239156b66c2db7a9c85754e09bd829a111517d96129bc8a42473f2",
+      "recall.json": "bc1c6b1af451a2eeb66d446cd3d84da866c9682983886f72fa3883e582171e39",
+      "rqvae_best.pth": "f705d3f899233115cde2b4c8e1e0a544804a68126f8466aea8b9a9d39029b566"
+    },
+    "key": "TIGER_community-balance-repulse-rq",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "47": {
+    "arm": "TIGER_community_graph_recon",
+    "files": {
+      "TIGER_community_graph_recon/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_community_graph_recon/model/community_graph.py": "90dd1eb6341abfe7c18dd2084ab80c34d487928ac85f4ca2dc40be715b5f2ce3",
+      "TIGER_community_graph_recon/model/layers.py": "347f9aca523c1a8aee8348a8650e7f0d861e1b61a18f138935fab6d289b06277",
+      "TIGER_community_graph_recon/model/model.py": "5b28bb9dc844fc3307e9b57309587644960c344ce461a62cc93f516d005a433a",
+      "TIGER_community_graph_recon/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_community_graph_recon/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_community_graph_recon/reference_contract.json": "ec642e62a6e9419a549e48430f944d19af9281eba2857c5073b8c2a948466f91",
+      "TIGER_community_graph_recon/train_rqvae.py": "0fd277f491ba5ade804c380ab46d9cac36f9a6c6218f729255e0c13cd29ed613",
+      "item_sids.json": "3b669a031729c6740b6defed95b459ef9022e25846f5757eacf2d97553790c5f",
+      "recall.json": "f9dbb54c9dd2f8d991b127116d3baab3e27afc03fc8d4a535c3efcd6a83483af",
+      "rqvae_best.pth": "5da8bcb875e94f8497d9f9353b3c04a8a3996a3216ec92a98615459d4c7c4fc7"
+    },
+    "key": "TIGER_community_graph_recon",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
+  "R09": {
+    "arm": "TIGER_M2_radial_manifold",
+    "duplicate_of": "20",
+    "note": "removed 2026-11-09: same item_sids.json and recall.json as the kept number",
+    "retired": true,
+    "retired_from": "09"
+  },
+  "R10": {
+    "arm": "M1_learned_kappa",
+    "duplicate_of": "17",
+    "note": "removed 2026-11-09: same item_sids.json and recall.json as the kept number",
+    "retired": true,
+    "retired_from": "10"
+  },
+  "R11": {
+    "arm": "M3_role_profiles",
+    "duplicate_of": "18",
+    "note": "removed 2026-11-09: same item_sids.json and recall.json as the kept number",
+    "retired": true,
+    "retired_from": "11"
+  },
+  "R12": {
+    "arm": "M4_post_sid_af3",
+    "duplicate_of": "19",
+    "note": "removed 2026-11-09: same item_sids.json and recall.json as the kept number",
+    "retired": true,
+    "retired_from": "12"
+  },
+  "R13": {
+    "arm": "af3sign_capacity",
+    "duplicate_of": "16",
+    "note": "removed 2026-11-09: same item_sids.json and recall.json as the kept number",
+    "retired": true,
+    "retired_from": "13"
+  },
+  "R14": {
+    "arm": "factorized_joint_codebook",
+    "duplicate_of": "15",
+    "note": "removed 2026-11-09: same item_sids.json and recall.json as the kept number",
+    "retired": true,
+    "retired_from": "14"
   }
 }

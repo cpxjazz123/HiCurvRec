@@ -80,7 +80,7 @@ class Ledger:
         self.entries = json.loads(LEDGER_PATH.read_text()) if LEDGER_PATH.is_file() else {}
 
     def number(self) -> int:
-        used = [int(key) for key in self.entries] or [0]
+        used = [int(key) for key in self.entries if key.isdigit()] or [0]
         return max(used) + 1
 
     def assign(self, key: str) -> str:
