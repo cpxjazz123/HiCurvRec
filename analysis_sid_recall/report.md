@@ -1,4 +1,4 @@
-# R2 pairs, one pass over 54 pairs
+# R2 pairs, one pass over 56 pairs
 
 Sample: 200000 TRAIN-only transitions, 200000 random pairs (seed 20261109).
 
@@ -58,33 +58,55 @@ Sample: 200000 TRAIN-only transitions, 200000 random pairs (seed 20261109).
 | 52 | `TIGER_c106_directed_assignment_usage_balance__r8_control` | 0.0624 | 236 | 215.8 | 0.014 | 15580 | 23515 | 0.044 | 0.06 |
 | 53 | `TIGER_c106_directed_codeword_margin_geometry__r8_control` | 0.0637 | 242 | 225.9 | 0.011 | 15724 | 23533 | 0.043 | 0.06 |
 | 54 | `TIGER_c1_behaviour_conditioned_residual_target__r8_control` | 0.0610 | 241 | 201.0 | 0.012 | 14725 | 23420 | 0.047 | 0.07 |
+| 55 | `TIGER_FORK_RQ-VAE__hyper_l1_angsel_s42` | 0.0614 | 234 | 207.2 | 0.021 | 9463 | 23353 | 0.050 | 0.07 |
+| 56 | `curvature_RQ-VAE_iter48` | 0.0601 | 256 | 255.1 | 0.006 | 12030 | 19041 | 0.226 | 0.37 |
 
-## Spearman against test_recall@10 (n = 54 pairs with Stage 3)
+## Spearman against test_recall@10 (n = 56 pairs with Stage 3)
 
 | metric | rho | 95% bootstrap |
 |---|---|---|
-| l1_codes | 0.045 | [-0.278, 0.338] |
-| l1_er | 0.274 | [-0.044, 0.555] |
-| l1_max_share | -0.284 | [-0.565, 0.018] |
-| l2_prefixes | 0.397 | [0.080, 0.645] |
-| l3_distinct | 0.335 | [0.026, 0.597] |
-| l3_collision | -0.335 | [-0.597, -0.026] |
-| l3_gain_bits | -0.335 | [-0.597, -0.026] |
-| prefix_overlap@1_gap | 0.331 | [0.067, 0.583] |
-| prefix_overlap@2_gap | -0.189 | [-0.478, 0.125] |
-| prefix_overlap@3_gap | -0.173 | [-0.453, 0.147] |
+| l1_codes | 0.089 | [-0.208, 0.368] |
+| l1_er | 0.337 | [0.018, 0.597] |
+| l1_max_share | -0.338 | [-0.598, -0.038] |
+| l2_prefixes | 0.454 | [0.144, 0.698] |
+| l3_distinct | 0.358 | [0.037, 0.620] |
+| l3_collision | -0.358 | [-0.620, -0.038] |
+| l3_gain_bits | -0.358 | [-0.620, -0.038] |
+| prefix_overlap@1_gap | 0.276 | [0.004, 0.536] |
+| prefix_overlap@2_gap | -0.230 | [-0.510, 0.085] |
+| prefix_overlap@3_gap | -0.241 | [-0.509, 0.069] |
 
-## Same, one row per distinct item_sids.json (n = 54)
+## Same, one row per distinct item_sids.json (n = 56)
 
 | metric | rho |
 |---|---|
-| l1_codes | 0.045 |
-| l1_er | 0.274 |
-| l1_max_share | -0.284 |
-| l2_prefixes | 0.397 |
-| l3_distinct | 0.335 |
-| l3_collision | -0.335 |
-| l3_gain_bits | -0.335 |
-| prefix_overlap@1_gap | 0.331 |
-| prefix_overlap@2_gap | -0.189 |
-| prefix_overlap@3_gap | -0.173 |
+| l1_codes | 0.089 |
+| l1_er | 0.337 |
+| l1_max_share | -0.338 |
+| l2_prefixes | 0.454 |
+| l3_distinct | 0.358 |
+| l3_collision | -0.358 |
+| l3_gain_bits | -0.358 |
+| prefix_overlap@1_gap | 0.276 |
+| prefix_overlap@2_gap | -0.230 |
+| prefix_overlap@3_gap | -0.241 |
+
+## The item graph, SID prefixes as groups (60000 edges, 20617 nodes)
+
+| reading | n | Spearman rho | Pearson r |
+|---|---|---|---|
+| L2/density_ratio | 56 | 0.521 | 0.602 |
+| L1/density_intra | 56 | 0.515 | 0.614 |
+| L2/density_intra | 56 | 0.513 | 0.603 |
+| L2/af3_med_gap | 56 | 0.506 | 0.624 |
+| L1/density_ratio | 56 | 0.486 | 0.593 |
+| L3/density_ratio | 56 | 0.477 | 0.581 |
+| L3/density_intra | 56 | 0.477 | 0.582 |
+| L2/af3_auc | 56 | 0.464 | 0.741 |
+| L1/af3_auc | 56 | 0.458 | 0.698 |
+| L2/transitivity_intra | 56 | 0.430 | 0.322 |
+| L1/af3_med_gap | 56 | 0.382 | 0.640 |
+| L3/af3_med_gap | 56 | 0.338 | 0.489 |
+| L3/af3_auc | 56 | 0.317 | 0.581 |
+| L1/transitivity_intra | 56 | 0.177 | 0.127 |
+| L3/transitivity_intra | 54 | 0.148 | 0.348 |

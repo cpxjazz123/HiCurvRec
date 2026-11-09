@@ -200,13 +200,146 @@ def bootstrap(xs, ys, seed=SEED):
     return lo, hi
 
 
+# --- the item-side graph, read through the SID prefixes -----------------------
+# The graph is the TRAIN behaviour graph (pairs within a window of two, sampled);
+# SIDs only label groups, and a group is the FULL prefix.  Every reading is
+# therefore about the items, not about a code graph.
+
+GRAPH_EDGES = 60_000
+GRAPH_SESSIONS = 60_000
+
+
+def _item_graph():
+    import numpy as np
+    import pandas as pd
+
+    frame = pd.read_parquet(REPO / "results" / "stage0_build_parquet" / "train.parquet")
+    histories = [h for h in frame["history"] if h is not None and len(h) >= 2]
+    rng = np.random.default_rng(SEED)
+    if len(histories) > GRAPH_SESSIONS:
+        pick = rng.choice(len(histories), GRAPH_SESSIONS, replace=False)
+        histories = [histories[i] for i in pick]
+    chunks = []
+    for history in histories:
+        items = np.asarray([int(x) for x in history])
+        for shift in (1, 2):
+            if len(items) > shift:
+                chunks.append(np.stack([items[:-shift], items[shift:]], axis=1))
+    edges = np.sort(np.concatenate(chunks, axis=0), axis=1)
+    edges = edges[edges[:, 0] != edges[:, 1]]
+    uniq, counts = np.unique(edges, axis=0, return_counts=True)
+    if len(uniq) > GRAPH_EDGES:
+        pick = np.random.default_rng(SEED).choice(len(uniq), GRAPH_EDGES, replace=False)
+        uniq, counts = uniq[pick], counts[pick]
+    nodes, inverse = np.unique(uniq, return_inverse=True)
+    index = inverse.reshape(-1, 2)
+    return nodes, index, counts.astype(float)
+
+
+def _graph_core(index, n):
+    import numpy as np
+    from scipy import sparse
+
+    A = sparse.coo_matrix((np.ones(len(index)), (index[:, 0], index[:, 1])),
+                          shape=(n, n)).tocsr()
+    A = A + A.T
+    A.data[:] = 1.0
+    deg = np.asarray(A.sum(axis=1)).ravel()
+    S = A @ A
+    tri = np.asarray(S[index[:, 0], index[:, 1]]).ravel()
+    return A, deg, 4.0 - deg[index[:, 0]] - deg[index[:, 1]] + 3.0 * tri
+
+
+def _graph_reading(index, counts, A, deg, af3, groups):
+    import numpy as np
+    from scipy import sparse
+
+    compact, inverse = np.unique(groups[groups >= 0], return_inverse=True)
+    inner = np.full(len(groups), -1, dtype=np.int64)
+    inner[groups >= 0] = inverse
+    groups = inner
+    same = groups[index[:, 0]] == groups[index[:, 1]]
+    intra, inter = index[same], index[~same]
+    sizes = np.bincount(groups[groups >= 0])
+    possible = (sizes * (sizes - 1) / 2.0).sum()
+    cross = (len(groups[groups >= 0]) ** 2 - (sizes ** 2).sum()) / 2.0
+    out = {"intra_share": float(same.mean()),
+           "density_intra": float(len(intra) / possible) if possible else None,
+           "density_ratio": None, "transitivity_intra": None,
+           "af3_auc": None, "af3_med_gap": None}
+    if cross and len(inter):
+        out["density_ratio"] = out["density_intra"] / (len(inter) / cross)
+    if len(intra):
+        M = sparse.coo_matrix((np.ones(len(intra)), (intra[:, 0], intra[:, 1])),
+                              shape=A.shape).tocsr()
+        M = M + M.T
+        d = np.asarray(M.sum(axis=1)).ravel()
+        triples = (d * (d - 1) / 2.0).sum()
+        tri3 = np.asarray((M @ M).multiply(M).sum()) / 6.0
+        out["transitivity_intra"] = float(3.0 * tri3 / triples) if triples else None
+    if len(intra) and len(inter):
+        from scipy.stats import mannwhitneyu
+
+        a, b = af3[same], af3[~same]
+        out["af3_auc"] = float(mannwhitneyu(a, b, alternative="greater").statistic
+                               / (len(a) * len(b)))
+        out["af3_med_gap"] = float(np.median(a) - np.median(b))
+    return out
+
+
+def graph_section(pairs_by_number: dict) -> dict:
+    """Per-arm graph readings and their correlation with recall, all three levels."""
+    try:
+        import numpy as np
+    except ImportError as error:  # the project interpreters carry these
+        return {"error": "numpy/scipy/pandas unavailable: %s" % error}
+    nodes, index, counts = _item_graph()
+    A, deg, af3 = _graph_core(index, len(nodes))
+    position = {int(node): i for i, node in enumerate(nodes)}
+    rows = []
+    for number, tokens in pairs_by_number.items():
+        recall = None
+        recall_path = MIRROR / number / "recall.json"
+        if recall_path.is_file():
+            value = json.loads(recall_path.read_text()).get("test_recall@10")
+            recall = value if isinstance(value, (int, float)) else None
+        for level in (1, 2, 3):
+            groups = np.full(len(nodes), -1, dtype=np.int64)
+            for item, token in tokens:
+                pos = position.get(int(item))
+                if pos is None or len(token) < level:
+                    continue
+                groups[pos] = hash(tuple(int(x) for x in token[:level])) & 0x7FFFFFFF
+            rows.append({"number": number, "level": level, "recall@10": recall,
+                         **_graph_reading(index, counts, A, deg, af3, groups)})
+    fields = ["density_intra", "density_ratio", "transitivity_intra", "af3_auc", "af3_med_gap"]
+    summary = {}
+    for level in (1, 2, 3):
+        subset = [r for r in rows if r["level"] == level and r["recall@10"] is not None]
+        for field in fields:
+            usable = [r for r in subset if r.get(field) is not None]
+            if len(usable) < 10:
+                continue
+            xs = [r[field] for r in usable]
+            ys = [r["recall@10"] for r in usable]
+            entry = {"n": len(usable), "rho": spearman(xs, ys)}
+            try:
+                from scipy.stats import pearsonr
+
+                entry["r"] = float(pearsonr(xs, ys)[0])
+            except ImportError:
+                entry["r"] = None
+            summary["L%d/%s" % (level, field)] = entry
+    return {"edges": int(len(index)), "nodes": int(len(nodes)), "rows": rows, "summary": summary}
+
+
 def main() -> int:
     if "--download" in sys.argv or "--check" in sys.argv:
         return mirror("--download" in sys.argv, "--check" in sys.argv)
 
     ledger = json.loads(LEDGER.read_text())
     positives, negatives = train_pairs(SEED)
-    pairs, rows = [], []
+    pairs, rows, graph_input = [], [], {}
     for number in sorted(ledger):
         if ledger[number].get("retired"):
             continue
@@ -225,6 +358,7 @@ def main() -> int:
                "test_recall@5": recall.get("test_recall@5"),
                "test_ndcg@10": recall.get("test_ndcg@10")}
         row.update(sid_metrics(tokens, positives, negatives))
+        graph_input[number] = [(int(k), raw[k]) for k in raw if len(raw[k]) >= 3]
         row["sid_sha256"] = hashlib.sha256(sid_path.read_bytes()).hexdigest()
         pairs.append(row)
     metrics = ["l1_codes", "l1_er", "l1_max_share", "l2_prefixes", "l3_distinct",
@@ -254,9 +388,11 @@ def main() -> int:
             unique_corr[m] = {"n": len(xs), "rho": None}
             continue
         unique_corr[m] = {"n": len(xs), "rho": spearman(xs, [p["test_recall@10"] for p in unique])}
+    graph = ({"skipped": "per --no-graph"} if "--no-graph" in sys.argv
+             else graph_section(graph_input))
     result = {"seed": SEED, "positives": len(positives), "negatives": len(negatives),
               "pairs": pairs, "correlations": correlations,
-              "correlations_unique_sid": unique_corr}
+              "correlations_unique_sid": unique_corr, "graph": graph}
     REPORT_JSON.write_text(json.dumps(result, indent=2) + "\n")
 
     lines = ["# R2 pairs, one pass over %d pairs" % len(pairs), "",
@@ -283,10 +419,25 @@ def main() -> int:
               "| metric | rho |", "|---|---|"]
     for m, c in unique_corr.items():
         lines.append("| %s | %s |" % (m, "%.3f" % c["rho"] if c["rho"] is not None else "n/a"))
+    if graph.get("summary"):
+        lines += ["", "## The item graph, SID prefixes as groups (%d edges, %d nodes)"
+                  % (graph["edges"], graph["nodes"]), "",
+                  "| reading | n | Spearman rho | Pearson r |", "|---|---|---|---|"]
+        for name, entry in sorted(graph["summary"].items(),
+                                  key=lambda kv: -abs(kv[1]["rho"] or 0)):
+            lines.append("| %s | %d | %.3f | %s |" % (
+                name, entry["n"], entry["rho"],
+                "%.3f" % entry["r"] if entry.get("r") is not None else "n/a"))
+    elif graph.get("error"):
+        lines += ["", "## The item graph", "", "Not computed: %s" % graph["error"]]
     REPORT_MD.write_text("\n".join(lines) + "\n")
     print("pairs: %d; report: %s" % (len(pairs), REPORT_MD))
     for m, c in correlations.items():
         print("%-24s rho=%s n=%d" % (m, "%.3f" % c["rho"] if c["rho"] is not None else "n/a", c["n"]))
+    if graph.get("summary"):
+        for name, entry in sorted(graph["summary"].items(), key=lambda kv: -abs(kv[1]["rho"] or 0))[:6]:
+            print("%-26s rho=%.3f r=%s n=%d" % (name, entry["rho"],
+                  "%.3f" % entry["r"] if entry.get("r") is not None else "n/a", entry["n"]))
     return 0
 
 
