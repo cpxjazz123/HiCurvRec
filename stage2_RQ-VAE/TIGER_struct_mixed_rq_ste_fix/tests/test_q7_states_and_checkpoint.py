@@ -6,7 +6,7 @@ import torch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-import probe_factors as F
+import probe_q9 as F
 from model.model import RQVAE
 import train_rqvae as T
 
@@ -16,9 +16,9 @@ CKPT = Path("/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_struct_mixed_r
 def test_none_and_zero_gradients_are_counted_separately():
     a = torch.nn.Parameter(torch.zeros(3))
     b = torch.nn.Parameter(torch.zeros(3))
-    out = F.block_status([a, b], [None, torch.zeros(3)])
-    assert out["none_tensors"] == 1 and out["zero_tensors"] == 1
-    assert out["nonzero_tensors"] == 0
+    out = F.report_blocks({"blk": [a, b]}, {"blk": [None, torch.zeros(3)]})["blk"]
+    assert out["none"] == 1 and out["zero"] == 1
+    assert out["nonzero"] == 0
 
 
 def test_the_checkpoint_restores_weights_and_rejects_a_truncated_state():
