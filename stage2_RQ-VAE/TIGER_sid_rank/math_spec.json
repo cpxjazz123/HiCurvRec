@@ -1,0 +1,45 @@
+{
+  "mechanism": "margin ranking on the quantized representation (issue #144)",
+  "computations": [
+    "similarity of two items after quantizing to a level: negative squared distance of the cumulative quantized vectors",
+    "ranking term: mean of softplus(margin - s_positive + s_negative)",
+    "total loss: base RQ-VAE loss + lambda_final * rank(level 3) + lambda_coarse * rank(level 1)"
+  ],
+  "inputs": {
+    "q_left": ["x1", "x2"],
+    "q_right": ["y1", "y2"]
+  },
+  "outputs": {"similarity": "s", "ranking": "L"},
+  "parameters": {"margin": 0.5, "lambda_final": 0.1, "lambda_coarse": 0.05},
+  "dimensions": {"embedding": 32, "levels": 3},
+  "gradient_rules": [
+    "dL/ds_positive = -sigmoid(margin - s_positive + s_negative), so pulling the edge closer lowers the loss",
+    "dL/ds_negative = +sigmoid(margin - s_positive + s_negative), so pushing the non-edge away lowers the loss",
+    "s is a squared distance, so its gradient w.r.t. the codeword difference is linear and reaches the encoder through the straight-through path"
+  ],
+  "training_integration": {
+    "rank_on_final": true,
+    "rank_on_coarse": true,
+    "loss": "L = L_RQVAE + lambda_final * L_rank(3) + lambda_coarse * L_rank(1)"
+  },
+  "conventions": {"distance": "squared euclidean on the cumulative quantized vector", "softplus": "log(1 + exp(z))"},
+  "switches": {
+    "rank_on_final_off": "L_rank(3) is not added",
+    "rank_on_coarse_off": "L_rank(1) is not added",
+    "both_on": "both terms with their lambdas"
+  },
+  "excluded": [
+    {"surface": "negative sampler", "reason": "discrete choice of a non-neighbour; cannot be symbolically compared"},
+    {"surface": "argmin code selection and straight-through gradient", "reason": "discrete; covered by the four suites and the one-epoch smoke"}
+  ],
+  "continuous_surface": {
+    "symbols": ["x1", "x2", "y1", "y2", "s_positive", "s_negative", "margin"],
+    "args": {"q_left": 2, "q_right": 2, "s_positive": "scalar", "s_negative": "scalar", "margin": "scalar"},
+    "statements": [
+      "s_positive = -(q_left_1 - q_right_1)**2 - (q_left_2 - q_right_2)**2",
+      "gap = margin - s_positive + s_negative",
+      "L = log(1 + exp(gap))"
+    ],
+    "output": "L"
+  }
+}
