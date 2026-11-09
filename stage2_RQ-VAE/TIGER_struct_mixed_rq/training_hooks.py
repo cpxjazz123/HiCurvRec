@@ -11,16 +11,14 @@ import structure as S
 def _positions(model, embeddings: torch.Tensor, item_ids: list[int]) -> torch.Tensor:
     """Positions rebuilt from the selected codes, differentiable on both sides.
 
-    The straight-through path carries the encoder gradient; the codebook path
-    (a plain gather of the selected codeword vectors) carries the codebook
-    gradient, which the detach inside the straight-through estimator would
-    otherwise block.
+    levels[-1] is the native readback plus the tangent straight-through: it is
+    differentiable in the codebook (through the composition) and in the encoder
+    (through the straight-through value).  Adding codes_to_positions on top of it
+    would add a second codebook path and silently change the mechanism.
     """
     gathered = embeddings[torch.tensor(item_ids, dtype=torch.long)]
-    _, _, _, tokens, levels = model.forward_with_codes(gathered)
-    straight_through = levels[-1]
-    codebook = model.codes_to_positions(tokens)
-    return straight_through + (codebook - codebook.detach())
+    _, _, _, _, levels = model.forward_with_codes(gathered)
+    return levels[-1]
 
 
 def structure_term(model, embeddings: torch.Tensor, graph, rng: random.Random, *,
