@@ -25,3 +25,6 @@ with a percentile bootstrap interval over pairs; n is printed with every row.
 Twenty-odd arms from a handful of families are not a population — the intervals
 say so, and no metric here is an admission gate (Stage 3 `test_recall@10` is the
 only verdict, per CLAUDE.md §19/§25).
+
+`graph_shape.py` -> `graph_shape.json` / `GRAPH_SHAPE.md`: the shape of the
+TRAIN behaviour graph itself (tree-like branches next to dense communities).
