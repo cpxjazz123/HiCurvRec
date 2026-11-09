@@ -1,14 +1,54 @@
 {
  "mechanism": "closure/fork structure supervision on a fixed E16 x H16 product quantizer",
  "computations": [
-  "latent split into 16 Euclidean and 16 hyperbolic tangent coordinates",
-  "H mapped into the curvature-1 Poincare ball by h*tanh(||h||)/||h||; only saturated tails are pulled back",
-  "product squared distance: ||e1-e2||^2 + phi(t), phi(t)=asinh^2(sqrt(t))",
-  "one real quantization forward yields one selection and three cumulative positions q1=c1, q2=c1(+)c2, q3=c1(+)(c2(+)c3); no re-quantization, no second gather",
-  "closed triangle h=1 on all three pairs; open wedge: observed pairs h=1, unobserved B-C pair h=2",
-  "per-level objective L_l = E_T[(1/3) sum_{a<b} (d^2/(s^2 h^2) - 1)^2]",
-  "prefix objective L_prefix = (L_1+L_2+L_3)/3 with the same triples, targets, s and lambda",
-  "scale: median of sqrt(clamp_min(d_M^2,1e-8)) over h=1 pairs on a fixed TRAIN sample, once after codebook init on the last level, frozen for all levels; empty/undefined samples are degenerate"
+  {
+   "name": "split",
+   "definition": "latent split into 16 Euclidean and 16 hyperbolic tangent coordinates",
+   "inputs": "latent z (B,32)",
+   "output": "z_E (B,16), z_H (B,16)"
+  },
+  {
+   "name": "ball_map",
+   "definition": "H mapped into the curvature-1 Poincare ball by h*tanh(||h||)/||h||; only saturated tails are pulled back",
+   "inputs": "H tangent (B,16)",
+   "output": "b in ball"
+  },
+  {
+   "name": "product_distance",
+   "definition": "product squared distance: ||e1-e2||^2 + phi(t), phi(t)=asinh^2(sqrt(t))",
+   "inputs": "positions (B,32)",
+   "output": "d^2 (B,B)"
+  },
+  {
+   "name": "cumulative_positions",
+   "definition": "one real quantization forward yields one selection and three cumulative positions q1=c1, q2=c1(+)c2, q3=c1(+)(c2(+)c3); no re-quantization, no second gather",
+   "inputs": "one forward's selection + z",
+   "output": "q^(1),q^(2),q^(3)"
+  },
+  {
+   "name": "triples",
+   "definition": "closed triangle h=1 on all three pairs; open wedge: observed pairs h=1, unobserved B-C pair h=2",
+   "inputs": "TRAIN graph + triples",
+   "output": "triples with h targets"
+  },
+  {
+   "name": "level_objective",
+   "definition": "per-level objective L_l = E_T[(1/3) sum_{a<b} (d^2/(s^2 h^2) - 1)^2]",
+   "inputs": "levels l=1..3 positions",
+   "output": "L_l"
+  },
+  {
+   "name": "prefix_objective",
+   "definition": "prefix objective L_prefix = (L_1+L_2+L_3)/3 with the same triples, targets, s and lambda",
+   "inputs": "L_1,L_2,L_3",
+   "output": "L_prefix"
+  },
+  {
+   "name": "scale",
+   "definition": "scale: median of sqrt(clamp_min(d_M^2,1e-8)) over h=1 pairs on a fixed TRAIN sample, once after codebook init on the last level, frozen for all levels; empty/undefined samples are degenerate",
+   "inputs": "TRAIN h=1 pairs",
+   "output": "s"
+  }
  ],
  "inputs": {
   "z": [
@@ -35,16 +75,28 @@
   "codes_per_level": 256
  },
  "gradient_rules": [
-  "encoder: one unit straight-through per level, q^(l)=R_l+z-sg(z); proxy Jacobian is I at every level",
-  "codebooks: only the native readback's continuous Jacobian including the indirect path through earlier codewords; no additional residual STE path",
-  "quantisation loss keeps its own gather path to the codebooks"
+  {
+   "operator": "encoder straight-through",
+   "rule": "encoder: one unit straight-through per level, q^(l)=R_l+z-sg(z); proxy Jacobian is I at every level"
+  },
+  {
+   "operator": "codebook native readback",
+   "rule": "codebooks: only the native readback's continuous Jacobian including the indirect path through earlier codewords; no additional residual STE path"
+  },
+  {
+   "operator": "codebook native readback",
+   "rule": "quantisation loss keeps its own gather path to the codebooks"
+  }
  ],
  "training_integration": {
   "behaviour_on": "structure term added with its calibrated lambda",
   "geometry_on": "product geodesic in assignment and loss; otherwise the Euclidean control",
   "both_on": "both of the above",
   "assignment": "baseline Sinkhorn, unchanged rule",
-  "prefix_objective": "L = L_base + lambda*L_prefix; lambda calibrated once before any optimizer step with the two-block budget; lambda_mean=3*lambda_sum only under identical s, state, sample and blocks, and does not make last-level supervision equivalent"
+  "prefix_objective": "L = L_base + lambda*L_prefix; lambda calibrated once before any optimizer step with the two-block budget; lambda_mean=3*lambda_sum only under identical s, state, sample and blocks, and does not make last-level supervision equivalent",
+  "loss": "L = L_base + lambda * L_prefix, where L_base = reconstruction MSE + commitment",
+  "reconstruction": "decoder consumes the log0 readback of the right-nested composition",
+  "optimizer": "AdamW on the frozen budget; no early stopping, no per-layer weights"
  },
  "conventions": {
   "distance": "sqrt of the product squared distance",
@@ -112,15 +164,27 @@
     "y1"
    ],
    "statements": [
-    "bx = tanh(x1) * (1 - 0.000001)",
-    "by = tanh(y1) * (1 - 0.000001)",
+    "bx = tanh(x1)",
+    "by = tanh(y1)",
     "euclid = (x0 - y0) ** 2",
-    "num = 2 * ((bx - by) ** 2)",
-    "den = (1 - bx ** 2) * (1 - by ** 2)",
-    "d = euclid + acosh(1 + num / den) ** 2 / 4"
+    "t = (bx - by) ** 2 / ((1 - bx ** 2) * (1 - by ** 2))",
+    "d = euclid + asinh(sqrt(t)) ** 2"
    ],
    "output": "d"
-  }
+  },
+  "args": [
+   {
+    "name": "left",
+    "width": 32,
+    "domain": "ball for H, real for E"
+   },
+   {
+    "name": "right",
+    "width": 32,
+    "domain": "ball for H, real for E"
+   }
+  ],
+  "callable": "mixed_geometry.mixed_sq"
  },
  "status": "DRAFT — revised per review; not admitted, not frozen",
  "revision": {
