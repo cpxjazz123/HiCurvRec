@@ -1,6 +1,6 @@
 # question13 — 先交付前缀 DRAFT 与单一诊断迁移，不再用新增测试替代机制推进
 
-**状态：OPEN（唯一开放追问）**　承接：`answer12.md`
+**状态：已审阅 answer13；本轮记录归档，未完成项转交 [`question14.md`](question14.md)，不等于完整机制验收。**　承接：`answer12.md`
 
 ## 1. 本轮审阅结论
 
