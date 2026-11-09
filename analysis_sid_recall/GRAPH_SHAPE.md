@@ -38,3 +38,33 @@ component (a core-periphery graph).
 Consequence for Stage 2: a single curvature cannot fit both regimes at once,
 which is why the intra-versus-inter Forman-Ricci separation, not a global
 curvature, is what tracks recall (see `report.md`).
+
+## Do the high-closure nodes form a region?
+
+`closure_regions.py` -> `closure_regions.json` takes the top 1%, 5% and 10% of
+nodes by local clustering and asks whether they sit together, against two nulls:
+degree-matched random nodes, and a degree-preserving rewiring of the same graph.
+
+Closure itself is real -- it is not a degree artefact:
+
+| | real graph | degree-preserving rewiring |
+|---|---|---|
+| triangles | 367,434 | 170,855 (x0.47) |
+| mean clustering | 0.0390 | 0.0231 (x0.59) |
+| share of nodes with C >= 0.3 | 0.71% | 0.38% (x0.53) |
+
+But the high-closure nodes do **not** form a region:
+
+| selection | inside edges | density vs degree-matched | neighbour share vs matched | hops to nearest selected (matched) |
+|---|---|---|---|---|
+| top 1% (244) | 3 | 0.11x | 0.006 vs 0.011 (0.58x) | 2.08 (1.89) |
+| top 5% (1223) | 83 | 0.11x | 0.018 vs 0.051 (0.35x) | 1.90 (1.51) |
+| top 10% (2447) | 846 | 0.32x | 0.056 vs 0.101 (0.55x) | 1.59 (1.33) |
+
+Their spread across communities is the same as the degree-matched sample (0.79-
+0.83 of the selection in the top three communities, matched 0.75-0.78), and they
+are, if anything, slightly **farther** apart than random nodes of the same
+degree.  So the honest statement is: **triangle closure is real and concentrated
+on a minority of nodes, but those nodes are not a contiguous high-closure
+region.**  They are scattered, each sitting in its own small neighbourhood; that
+does not by itself support a picture of one dense zone next to one tree zone.
