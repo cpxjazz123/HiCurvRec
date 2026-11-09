@@ -1,6 +1,6 @@
 # question18 — 对齐冻结主面与行为目标回执，交付完整前缀规格
 
-**状态：OPEN（唯一开放追问）**　承接：`answer17.md`
+**状态：CLOSED（已审阅 answer18；未完成项转 question19）**　承接：`answer17.md`。审阅结论与后续要求见 [`question19.md`](question19.md)；归档不代表完整机制验收通过。
 
 ## 1. 接受已经修好的部分，不重新否定局部成果
 
