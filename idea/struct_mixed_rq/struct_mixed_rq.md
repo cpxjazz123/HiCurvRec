@@ -127,8 +127,8 @@ $$\mathcal L_{\text{struct}}=\mathbb E_T\Bigl[\tfrac13\sum_{a<b}\Bigl(\frac{d_M^
 **参与性（必须先成立）**
 
 1. 曲线距离进入真实选码代价；Möbius 残差/合成/log0 回读进入 `RQLayer`/decoder。
-2. 真实 TRAIN batch：仅重构 → encoder 与三级码本均非零梯度；结构项 → 两者均非零且一步 AdamW 后参数确实变化。
-3. CPU 预检记录换码计数（见 `question1.md`）；联合损失训练前后的换码只证明训练轨迹在动，不能单独证明结构项或曲率的贡献。测量审阅见 `question2.md`，当前梯度契约与逐层补证见 `question3.md`。
+2. 真实 TRAIN batch：仅重构 → encoder 与三级码本均非零梯度；结构项 → 两者均非零且一步 AdamW 后参数确实变化。还须核对 E/H 因子的方向与倍率，不能只凭完整张量范数非零验收代理梯度。
+3. CPU 预检记录换码计数（见 `question1.md`）；联合损失训练前后的换码只证明训练轨迹在动，不能单独证明结构项或曲率的贡献。历次测量审阅见 `question2.md`、`question3.md`，当前原生回读梯度契约见 `question4.md`。
 4. 记录对 token 重标号不敏感的指标：L1/L2/L3 同前缀邻居对比例、前缀数、L3 碰撞率、训练分支（Sinkhorn+argmax）与导出分支（argmin）的 token 差异率。
 
 **最终判据**：一次冻结 Stage2（3000 epoch、全局 batch 4096、seed 42、无早停）→ 同名目录冻结 Stage3（150 epoch）→ `test_R@10 > 0.065`。AF3 Gap、聚类系数、距离失真只作诊断。
@@ -144,16 +144,16 @@ $$\mathcal L_{\text{struct}}=\mathbb E_T\Bigl[\tfrac13\sum_{a<b}\Bigl(\frac{d_M^
 
 ---
 
-## 9. 当前状态（2026-11-10 审阅 answer2）
+## 9. 当前状态（2026-11-10 审阅 answer3）
 
-已实现记录：固定 E16×H16 与 `phi` 距离；原生残差 + 右嵌套回读接入 `RQLayer`；结构项单一码本梯度路径；单一几何开关；块预算标定（历史 CPU 读数 $\lambda=3.5211\text{e-}06$，不是正式训练的实际标定值）；旧 ratio 校准路径清零。
+已实现记录：固定 E16×H16 与 `phi` 距离；原生残差 + 右嵌套回读接入 `RQLayer`；结构项已去除旧的额外 gather 路径，但原生回读中的 STE 代理梯度仍未验收；单一几何开关；块预算标定（历史 CPU 读数 $\lambda=3.5211\text{e-}06$，不是正式训练的实际标定值）；旧 ratio 校准路径清零。
 
 关键提交：`dd9f47cb`（原生回读）、`85ad67d5`（Möbius 残差）、`22009173`（单一路径）、`19cac54a`（单开关 + 去重）、`f35a9e9e`（去 `STRUCT_LAMBDA_RATIO`）、`b3178d3e`（删旧 ratio 校准）。
 
-`question1` 原实验已审阅归档，**不记为验收通过**，最初补证转交 `question2.md`，剩余要求由 `question3.md` 承接。`answer1.md` 报告 batch=64 时三层换码数为 64/64/63（step 50）与 64/64/64（step 100），L1 前缀 37→6、L2 前缀 64→15→26；这些是联合训练的观测，不能单独归因于结构项。原报告的 96.9% 是重复前缀桶中的商品占比，不是最大桶占比；原预检没有正确切换 train/eval。原执行材料未找到，不能以新 checkpoint 的静态测量替代它。
+`question1`–`question3` 的实验与审阅按顺序归档，未完成的梯度契约要求集中转交 `question4.md`，不把部分测量修复记为完整机制验收。question1 的换码只是联合训练观测；question2 修正了占用口径与 train/eval 切换。两者原 `/tmp` 输出仍未找到，不能以最终 checkpoint 的新测量冒充旧轨迹复现。
 
-既有日志已记录 3000 epoch 正式 Stage2 完成，实际标定为 $s=0.04444597661495209$、$\lambda=9.226019983543665\text{e-}07$；预检 λ 是其 3.81649 倍。SID SHA-256 为 `7c147fc634cc2939367d3fc83bc0a8ebfaa2d96a92cf23e060c7c88b4ac390a1`，对应分层报告已存在；这些证据不证明预检和正式运行等价，也不是本次启动或准入审计的结果。本次读取的同名 Stage3 日志最新 train 事件为 epoch 61/150，未找到最终 recall；§4.1 逐层前缀监督仍为设计项，不能宣称完整机制已有增益。
+既有日志已记录 3000 epoch 正式 Stage2 完成，实际标定为 $s=0.04444597661495209$、$\lambda=9.226019983543665\text{e-}07$；预检 λ 是其 3.81649 倍。SID SHA-256 为 `7c147fc634cc2939367d3fc83bc0a8ebfaa2d96a92cf23e060c7c88b4ac390a1`，对应分层报告已存在；这些证据不证明预检和正式运行等价，也不是本次启动或准入审计的结果。本次读取的同名 Stage3 日志最新 train 事件为 epoch 125/150，未找到最终 recall；§4.1 逐层前缀监督仍为设计项，不能宣称完整机制已有增益。
 
-`answer2` 的占用、分母和模式切换修复部分保留，但不作完整验收：42/64 的 L3 差异是 train/export 差异，geometry-on/off 的 token 差异仍报告为 0/0/0；所谓 encoder 余弦 −0.0154 实际来自全参数；逐层码本梯度未齐，完整输出仍只写入本次未找到的 `/tmp/q2_out.json`。geometry-off 回读的 STE detach 与 native 码字回读形成不同梯度图，零结构梯度不能自动当作 bug 或几何收益。当前工作树数学文件仍标 DRAFT，实际运行绑定的冻结版本需单独核对，不能倒填。
+`answer3` 已持久化 JSON 与同 SHA 的脚本副本，逐层结构梯度非零及 None/zero 记录保留。但 on 公式把 `T−sg(T)` 写成外层 sg，与代码不等价；源码与独立标量代数推导显示，E16 因子的 STE 代理 Jacobian 为 encoder `3I`、C1 `−I`、C2 `0`、C3 `I`，完整 32 维范数非零不能排除半区反向或抵消。真实 RQLayer CPU 检查 120 秒超时，尚无运行验收。§3“码本 native 真梯度、encoder 直通”仍是待对齐的目标，不是当前已通过的结论；工作树数学文件仍标 DRAFT，旧运行的冻结身份仍 UNAVAILABLE，不倒填。
 
-唯一开放追问：[`question3.md`](question3.md)——明确曲率切换与码本梯度策略的契约，补齐固定状态的逐层接线与持久证据；不调参、不重训、不训练关闭开关的臂。原始 answer 文件不改写；完整机制与收益证据未齐，不创建新 idea。
+唯一开放追问：[`question4.md`](question4.md)——明确原生回读的目标代理 Jacobian，用解析反例和真实接线证据处理必要修复；不以调 λ 或新增损失掩盖抵消，不重训、不覆盖旧运行。原始 answer 文件不改写；完整机制与收益证据未齐，不创建新 idea。
