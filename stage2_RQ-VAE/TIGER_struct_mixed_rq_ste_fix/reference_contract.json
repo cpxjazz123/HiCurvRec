@@ -24,13 +24,12 @@
     }
    ],
    "statements": [
-    "bx = tanh(x1)",
-    "by = tanh(y1)",
     "euclid = (x0 - y0) ** 2",
-    "t = (bx - by) ** 2 / ((1 - bx ** 2) * (1 - by ** 2))",
-    "d = euclid + asinh(sqrt(t)) ** 2"
+    "hyperbolic = (x1 - y1) ** 2",
+    "d = euclid + hyperbolic"
    ],
-   "output": "d"
+   "output": "d",
+   "note": "on the E1 x H1 subface the cross-ratio is t = sinh(x1-y1)^2, so asinh(sqrt(t))^2 = (x1-y1)^2; this is the same function with a finite backward at the collision, not a floor or a different metric"
   },
   {
    "name": "structure_objective",
@@ -68,18 +67,12 @@
     }
    ],
    "statements": [
-    "a0 = tanh(p1)",
-    "b0 = tanh(p3)",
-    "c0 = tanh(p5)",
-    "g01 = (a0 - b0) ** 2 / ((1 - a0 ** 2) * (1 - b0 ** 2))",
-    "g02 = (a0 - c0) ** 2 / ((1 - a0 ** 2) * (1 - c0 ** 2))",
-    "g12 = (b0 - c0) ** 2 / ((1 - b0 ** 2) * (1 - c0 ** 2))",
-    "d01 = (p0 - p2) ** 2 + asinh(sqrt(g01)) ** 2",
-    "d02 = (p0 - p4) ** 2 + asinh(sqrt(g02)) ** 2",
-    "d12 = (p2 - p4) ** 2 + asinh(sqrt(g12)) ** 2",
     "h0 = 1 + tanh(u0)",
     "h1 = 1 + tanh(u1)",
     "h2 = 1 + tanh(u2)",
+    "d01 = (p0 - p2) ** 2 + (p1 - p3) ** 2",
+    "d02 = (p0 - p4) ** 2 + (p1 - p5) ** 2",
+    "d12 = (p2 - p4) ** 2 + (p3 - p5) ** 2",
     "r01 = d01 / (s * s * h0 * h0)",
     "r02 = d02 / (s * s * h1 * h1)",
     "r12 = d12 / (s * s * h2 * h2)",

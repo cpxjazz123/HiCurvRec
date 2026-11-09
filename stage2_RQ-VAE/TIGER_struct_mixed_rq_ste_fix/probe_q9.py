@@ -134,9 +134,18 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
         base = model.compute_loss(batch, recon, quant)[0]
         current[0] = "struct"
         should_forward = bool(T.BEHAVIOUR_ON) and bool(used)
+        gathered = []
         term = H.structure_term(model, items, graph, random.Random(seed), scale=scale,
                                 size=len(used), triples=used,
-                                behaviour_on=bool(T.BEHAVIOUR_ON))
+                                behaviour_on=bool(T.BEHAVIOUR_ON),
+                                capture=gathered)
+        consumed = []
+        if gathered:
+            flat = gathered[0]
+            for k, (centre, a, b, kind) in enumerate(used):
+                consumed.append((flat[3 * k], flat[3 * k + 1], flat[3 * k + 2], kind))
+            if consumed != [tuple(t) for t in used]:
+                raise RuntimeError("the gathered items differ from the sampled triples")
         struct = lam * term
         total = base + struct
         z_base = captures["base"][0]
@@ -204,10 +213,9 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
                 "s": scale, "lambda": lam, "seed": seed,
                 "batch_ids": [int(i) for i in ids],
                 "triples_requested": requested, "triples_sampled": len(used),
-                "triples_accepted": len(used if struct_active else []),
-                "triples": [[int(c), int(a), int(b), str(k)] for c, a, b, k in
-                            (used if struct_active else [])],
-                "triples_sha256": triples_digest(used if struct_active else []),
+                "triples_accepted": len(consumed),
+                "triples": [[int(c), int(a), int(b), str(k)] for c, a, b, k in consumed],
+                "triples_sha256": triples_digest(consumed),
                 "z_base_rows": z_base.shape[0],
                 "z_struct_rows": int(z_struct.shape[0]) if struct_active else 0,
                 "structure_forward": struct_active,
@@ -226,7 +234,7 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
     finally:
         handle.remove()
 
-    validate_identity(report, consumed_triples=list(used))
+    validate_identity(report, consumed_triples=consumed)
     out_dir = _unique_dir(Path(out_root))
     out_dir.mkdir(parents=True)
     (out_dir / "factors.json").write_text(json.dumps(report, indent=1))

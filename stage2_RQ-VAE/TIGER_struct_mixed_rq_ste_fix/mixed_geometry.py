@@ -114,13 +114,12 @@ def reference_surface(left: torch.Tensor, right: torch.Tensor) -> torch.Tensor:
     """
     left_e, left_h = left[..., :1], left[..., 1:2]
     right_e, right_h = right[..., :1], right[..., 1:2]
-    ball_l = to_ball(left_h)
-    ball_r = to_ball(right_h)
-    num = ((ball_l - ball_r) ** 2).sum(-1)
-    den = ((1.0 - ball_l ** 2).sum(-1)) * ((1.0 - ball_r ** 2).sum(-1))
-    t = (num / den.clamp_min(torch.finfo(torch.float64).tiny)).clamp_min(0.0)
-    # same normalisation as mixed_sq: the H contribution is phi(t), not 4*phi(t)
-    return (left_e - right_e).pow(2).sum(-1) + phi(t)
+    if left_h.shape[-1] != 1:
+        raise ValueError("the reference surface is defined on one H coordinate")
+    # The 1-coordinate cross-ratio equals sinh(left - right)^2, so
+    # asinh(sqrt(t))^2 = (left - right)^2.  This is the same function with a
+    # finite backward at the collision, not a floor and not a different metric.
+    return (left_e - right_e).pow(2).sum(-1) + (left_h - right_h).pow(2).sum(-1)
 
 
 def mobius_add(a: torch.Tensor, b: torch.Tensor, curvature: float = CURVATURE) -> torch.Tensor:

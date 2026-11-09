@@ -24,7 +24,7 @@ def _positions(model, embeddings: torch.Tensor, item_ids: list[int]) -> torch.Te
 def structure_term(model, embeddings: torch.Tensor, graph, rng: random.Random, *,
                    scale: float, size: int, behaviour_on: bool = True,
                    geometry_on: bool | None = None,
-                   triples=None) -> torch.Tensor:
+                   triples=None, capture=None) -> torch.Tensor:
     """(1/3) mean pairwise term over sampled triples, on quantized positions."""
     if not behaviour_on:
         return torch.zeros((), device=embeddings.device)
@@ -35,6 +35,8 @@ def structure_term(model, embeddings: torch.Tensor, graph, rng: random.Random, *
     if not triples:
         return torch.zeros((), device=embeddings.device)
     item_ids = [item for centre, a, b, _ in triples for item in (centre, a, b)]
+    if capture is not None:
+        capture.append(list(item_ids))
     positions = _positions(model, embeddings, item_ids).reshape(len(triples), 3, -1)
     h = S.triple_targets([kind for *_, kind in triples], device=positions.device)
     return S.structure_loss(positions, h, scale=scale, geometry_on=geometry_on)
