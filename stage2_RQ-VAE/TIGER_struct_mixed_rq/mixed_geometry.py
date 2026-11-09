@@ -33,9 +33,18 @@ def to_ball(tangent: torch.Tensor, curvature: float = CURVATURE) -> torch.Tensor
     # is tanh(||h||) < 1.  Scaling each coordinate separately would let the norm
     # reach sqrt(16); tanh also saturates to 1.0 in float32, so the last factor
     # keeps the point strictly inside the ball where the geodesic stays finite.
+    # No extra shrink factor: b(h) is the radial map itself, so log0(b(h)) = h
+    # exactly (up to float64 rounding).  Saturation is handled where distances are
+    # computed, in float64, rather than by bending the projection.
     scale = curvature ** 0.5
     length = tangent.norm(dim=-1, keepdim=True).clamp_min(1e-12)
-    return tangent * (torch.tanh(length * scale) / length) * (1.0 - 1e-6) / scale
+    point = tangent * (torch.tanh(length * scale) / length) / scale
+    # Only the saturated tail is pulled inside: tanh rounds to 1.0 in low precision
+    # for very large inputs, and a point exactly on the boundary has no finite
+    # distance.  Ordinary points keep log0(b(h)) = h exactly.
+    norm = point.to(torch.float64).norm(dim=-1, keepdim=True)
+    saturated = (norm >= 1.0).to(point.dtype)
+    return point * (1.0 - saturated * 1e-6)
 
 
 TAU = 1e-3   # series threshold: truncation after t^3 is O(t^4) = 1e-12 at this point
@@ -114,3 +123,46 @@ def reference_surface(left: torch.Tensor, right: torch.Tensor) -> torch.Tensor:
     den = ((1.0 - left_ball ** 2).sum(-1)) * ((1.0 - right_ball ** 2).sum(-1))
     argument = 1.0 + (num / den).clamp_min(0.0)
     return euclid + (torch.acosh(argument.clamp_min(1.0)) ** 2) / 4.0
+
+
+def mobius_add(a: torch.Tensor, b: torch.Tensor, curvature: float = CURVATURE) -> torch.Tensor:
+    """Moebius addition in the ball of curvature 1 (batched over the last dim)."""
+    a64, b64 = a.to(torch.float64), b.to(torch.float64)
+    a2 = a64.pow(2).sum(-1, keepdim=True)
+    b2 = b64.pow(2).sum(-1, keepdim=True)
+    ab = (a64 * b64).sum(-1, keepdim=True)
+    numerator = (1.0 + 2.0 * ab + b2) * a64 + (1.0 - a2) * b64
+    denominator = 1.0 + 2.0 * ab + a2 * b2
+    return (numerator / denominator.clamp_min(torch.finfo(torch.float64).tiny)).to(a.dtype)
+
+
+def mobius_neg(a: torch.Tensor) -> torch.Tensor:
+    return -a
+
+
+def log_zero(point: torch.Tensor, curvature: float = CURVATURE) -> torch.Tensor:
+    """Inverse of the radial map b(h) = h*tanh(||h||)/||h||, computed in double."""
+    p64 = point.to(torch.float64)
+    norm = p64.norm(dim=-1, keepdim=True)
+    scale = torch.atanh(norm.clamp(max=1.0 - 1e-9))
+    factor = torch.where(norm > 1e-12, scale / norm.clamp_min(1e-12), torch.ones_like(norm))
+    return (p64 * factor).to(point.dtype)
+
+
+def residual_step(code: torch.Tensor, residual_e: torch.Tensor,
+                  residual_h_ball: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    """One level of the product residual: E subtracts, H uses the Moebius left inverse."""
+    return residual_e - code[..., :E_DIM], mobius_add(mobius_neg(code_ball(code)), residual_h_ball)
+
+
+def code_ball(tangent_code: torch.Tensor) -> torch.Tensor:
+    """Codeword tangent coordinates into the ball (last H_DIM entries)."""
+    return to_ball(tangent_code[..., E_DIM:E_DIM + H_DIM])
+
+
+def nested_compose(codes: list[torch.Tensor]) -> torch.Tensor:
+    """Right-nested product composition c1 (+) (c2 (+) c3), folded from the last level."""
+    composed = code_ball(codes[-1])
+    for code in reversed(codes[:-1]):
+        composed = mobius_add(code_ball(code), composed)
+    return composed
