@@ -168,12 +168,11 @@ def reference_objective_surface(points: torch.Tensor, u: torch.Tensor,
     targets = 1.0 + torch.tanh(u)
 
     def pair(a: int, b: int) -> torch.Tensor:
-        euclid = (points[:, a, 0] - points[:, b, 0]) ** 2
-        left = torch.tanh(points[:, a, 1]) * (1.0 - 1e-6)
-        right = torch.tanh(points[:, b, 1]) * (1.0 - 1e-6)
-        num = 2.0 * ((left - right) ** 2)
-        den = (1.0 - left ** 2) * (1.0 - right ** 2)
-        return euclid + (torch.acosh(1.0 + num / den) ** 2) / 4.0
+        # the same phi form the production distance uses; the acosh copy that
+        # stood here differed from it by the series truncation (3.9e-5 at t=0.04)
+        left = torch.stack([points[:, a, 0], points[:, a, 1]], dim=-1)
+        right = torch.stack([points[:, b, 0], points[:, b, 1]], dim=-1)
+        return G.reference_surface(left, right)
 
     squared = torch.stack([pair(0, 1), pair(0, 2), pair(1, 2)], dim=-1)
     s = scale.reshape(-1, 1)
