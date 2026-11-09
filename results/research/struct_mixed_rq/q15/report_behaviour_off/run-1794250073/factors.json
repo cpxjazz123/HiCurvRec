@@ -1,0 +1,256 @@
+{
+ "identity": {
+  "script_sha256": "acffc9b50c9ef625e985a554b27771615cb7505b55f5cd417b16ea1e7e32ed12",
+  "checkpoint_sha256": "84f05d46419e6f5c8b80706bd24aafbf41a401cf8d6e5631e99305eb98c14672",
+  "sid_sha256": "7c147fc634cc2939367d3fc83bc0a8ebfaa2d96a92cf23e060c7c88b4ac390a1",
+  "train_path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+  "train_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+  "embedding_path": "/fs04/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+  "embedding_sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+  "pca_dim": 0,
+  "calibration_provenance": "historical run calibration, not the prefix candidate's own calibration",
+  "source_sha256": {
+   "model/layers.py": "18e5d62005aabb65c3f2bebb6751a37006eb1fa7aa737eaec6b43e9cc98711da",
+   "model/model.py": "ba221245c40fd1083d2034b5835ef636149d3bdda1bbb4ab29e4b2f9f7a49c2b",
+   "mixed_geometry.py": "7f9ee28f7c46e3697e93ae393ebedc82c0870732a12dd739194d810ae9a0cc08",
+   "native_product.py": "3853f061eb82e2ed0c51236308df094308c31a4b98d2dfcde5a55a6b5a03cc25",
+   "structure.py": "bbbb79caf9392829a87ff9d5494a113502445eabc8bd0831d652ee1149bfc3d6",
+   "training_hooks.py": "8226380f4c8c355ff30d8133b28921d62f2643fbaac5ae50801bd3fa97a15ddf"
+  },
+  "s": 0.04444597661495209,
+  "lambda": 9.226019983543665e-07,
+  "seed": 42,
+  "batch_ids": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   52,
+   53,
+   54,
+   55,
+   56,
+   57,
+   58,
+   59,
+   60,
+   61,
+   62,
+   63
+  ],
+  "triples_requested": 64,
+  "triples_sampled": 45,
+  "triples_accepted": 0,
+  "triples": [],
+  "triples_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "z_base_rows": 64,
+  "z_struct_rows": 0,
+  "structure_forward": false,
+  "structure_zero_reason": "behaviour_off",
+  "mode": "train",
+  "behaviour_on": false,
+  "geometry_on": true
+ },
+ "losses": {
+  "recon": 0.00010601340909488499,
+  "quant": 0.00016659620450809598,
+  "structure_weighted": 0.0,
+  "total": 0.00027260961360298097
+ },
+ "states": {
+  "recon": {
+   "encoder": {
+    "tensors": 8,
+    "none": 0,
+    "zero": 0,
+    "nonzero": 8,
+    "norm": 0.0007525551482103765
+   },
+   "C1": {
+    "tensors": 1,
+    "none": 0,
+    "zero": 0,
+    "nonzero": 1,
+    "norm": 0.00041638792026787996
+   },
+   "C2": {
+    "tensors": 1,
+    "none": 0,
+    "zero": 0,
+    "nonzero": 1,
+    "norm": 0.00032519406522624195
+   },
+   "C3": {
+    "tensors": 1,
+    "none": 0,
+    "zero": 0,
+    "nonzero": 1,
+    "norm": 0.00031431257957592607
+   },
+   "decoder": {
+    "tensors": 8,
+    "none": 0,
+    "zero": 0,
+    "nonzero": 8,
+    "norm": 0.00043197296326979995
+   }
+  },
+  "quant": {
+   "encoder": {
+    "tensors": 8,
+    "none": 0,
+    "zero": 0,
+    "nonzero": 8,
+    "norm": 0.00039774528704583645
+   },
+   "C1": {
+    "tensors": 1,
+    "none": 0,
+    "zero": 0,
+    "nonzero": 1,
+    "norm": 0.00047958793584257364
+   },
+   "C2": {
+    "tensors": 1,
+    "none": 0,
+    "zero": 0,
+    "nonzero": 1,
+    "norm": 0.00022374550462700427
+   },
+   "C3": {
+    "tensors": 1,
+    "none": 0,
+    "zero": 0,
+    "nonzero": 1,
+    "norm": 0.00014470085443463176
+   },
+   "decoder": {
+    "tensors": 8,
+    "none": 8,
+    "zero": 0,
+    "nonzero": 0,
+    "norm": 0.0
+   }
+  },
+  "structure": {
+   "status": "NOT_APPLICABLE",
+   "reason": "algorithmic zero with no autograd graph"
+  },
+  "total": {
+   "encoder": {
+    "tensors": 8,
+    "none": 0,
+    "zero": 0,
+    "nonzero": 8,
+    "norm": 0.0005722534260712564
+   },
+   "C1": {
+    "tensors": 1,
+    "none": 0,
+    "zero": 0,
+    "nonzero": 1,
+    "norm": 0.0008046910515986383
+   },
+   "C2": {
+    "tensors": 1,
+    "none": 0,
+    "zero": 0,
+    "nonzero": 1,
+    "norm": 0.0004665558226406574
+   },
+   "C3": {
+    "tensors": 1,
+    "none": 0,
+    "zero": 0,
+    "nonzero": 1,
+    "norm": 0.0003970521502196789
+   },
+   "decoder": {
+    "tensors": 8,
+    "none": 0,
+    "zero": 0,
+    "nonzero": 8,
+    "norm": 0.00043197296326979995
+   }
+  }
+ },
+ "latent": {
+  "recon": {
+   "z_base": {
+    "E_norm": 0.00024668162662090084,
+    "H_norm": 0.00019556566439538414
+   },
+   "z_struct": "NOT_APPLICABLE"
+  },
+  "quant": {
+   "z_base": {
+    "E_norm": 8.105692600107915e-05,
+    "H_norm": 8.353686123767667e-05
+   },
+   "z_struct": "NOT_APPLICABLE"
+  },
+  "structure": {
+   "z_base": "NOT_APPLICABLE",
+   "z_struct": "NOT_APPLICABLE"
+  },
+  "total": {
+   "z_base": {
+    "E_norm": 0.00022549613267272198,
+    "H_norm": 0.00017656869748975323
+   },
+   "z_struct": "NOT_APPLICABLE"
+  }
+ },
+ "diffs": {
+  "base_vs_total_z_base": 0.0,
+  "struct_vs_total_z_struct": null
+ }
+}

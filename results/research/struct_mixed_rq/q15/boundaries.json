@@ -1,0 +1,50 @@
+{
+ "both_on": {
+  "structure_forward": true,
+  "structure_zero_reason": null,
+  "triples_sampled": 45,
+  "triples_accepted": 45,
+  "z_struct_rows": 135,
+  "latent_z_struct": {
+   "E_norm": 3.804699513201433e-05,
+   "H_norm": 4.253528175652463e-05
+  },
+  "state_status": null,
+  "losses": {
+   "recon": 0.00010601340909488499,
+   "quant": 0.00016659620450809598,
+   "structure_weighted": 3.961445145250764e-06,
+   "total": 0.0002765710523817688
+  }
+ },
+ "behaviour_off": {
+  "structure_forward": false,
+  "structure_zero_reason": "behaviour_off",
+  "triples_sampled": 45,
+  "triples_accepted": 0,
+  "z_struct_rows": 0,
+  "latent_z_struct": "NOT_APPLICABLE",
+  "state_status": "NOT_APPLICABLE",
+  "losses": {
+   "recon": 0.00010601340909488499,
+   "quant": 0.00016659620450809598,
+   "structure_weighted": 0.0,
+   "total": 0.00027260961360298097
+  }
+ },
+ "empty_triples": {
+  "structure_forward": false,
+  "structure_zero_reason": "no_accepted_triples",
+  "triples_sampled": 0,
+  "triples_accepted": 0,
+  "z_struct_rows": 0,
+  "latent_z_struct": "NOT_APPLICABLE",
+  "state_status": "NOT_APPLICABLE",
+  "losses": {
+   "recon": 0.00010601340909488499,
+   "quant": 0.00016659620450809598,
+   "structure_weighted": 0.0,
+   "total": 0.00027260961360298097
+  }
+ }
+}

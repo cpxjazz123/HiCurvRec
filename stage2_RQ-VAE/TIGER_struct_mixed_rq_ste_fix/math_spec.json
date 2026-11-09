@@ -138,15 +138,15 @@
    "s"
   ],
   "statements": [
-   "a0 = tanh(p1) * (1 - 0.000001)",
-   "b0 = tanh(p3) * (1 - 0.000001)",
-   "c0 = tanh(p5) * (1 - 0.000001)",
-   "g01 = 2 * ((a0 - b0) ** 2) / ((1 - a0 ** 2) * (1 - b0 ** 2))",
-   "g02 = 2 * ((a0 - c0) ** 2) / ((1 - a0 ** 2) * (1 - c0 ** 2))",
-   "g12 = 2 * ((b0 - c0) ** 2) / ((1 - b0 ** 2) * (1 - c0 ** 2))",
-   "d01 = (p0 - p2) ** 2 + acosh(1 + g01) ** 2 / 4",
-   "d02 = (p0 - p4) ** 2 + acosh(1 + g02) ** 2 / 4",
-   "d12 = (p2 - p4) ** 2 + acosh(1 + g12) ** 2 / 4",
+   "a0 = tanh(p1)",
+   "b0 = tanh(p3)",
+   "c0 = tanh(p5)",
+   "g01 = (a0 - b0) ** 2 / ((1 - a0 ** 2) * (1 - b0 ** 2))",
+   "g02 = (a0 - c0) ** 2 / ((1 - a0 ** 2) * (1 - c0 ** 2))",
+   "g12 = (b0 - c0) ** 2 / ((1 - b0 ** 2) * (1 - c0 ** 2))",
+   "d01 = (p0 - p2) ** 2 + asinh(sqrt(g01)) ** 2",
+   "d02 = (p0 - p4) ** 2 + asinh(sqrt(g02)) ** 2",
+   "d12 = (p2 - p4) ** 2 + asinh(sqrt(g12)) ** 2",
    "h0 = 1 + tanh(u0)",
    "h1 = 1 + tanh(u1)",
    "h2 = 1 + tanh(u2)",
@@ -174,17 +174,50 @@
   },
   "args": [
    {
-    "name": "left",
-    "width": 32,
-    "domain": "ball for H, real for E"
+    "name": "p0, p2, p4",
+    "width": 16,
+    "domain": "Euclidean tangent coordinates of the three points, real"
    },
    {
-    "name": "right",
-    "width": 32,
-    "domain": "ball for H, real for E"
+    "name": "p1, p3, p5",
+    "width": 16,
+    "domain": "hyperbolic tangent coordinates; the ball point is to_ball(t) = tanh(|t|)/|t| * t"
+   },
+   {
+    "name": "u0, u1, u2",
+    "width": 1,
+    "domain": "log-scale offsets; h_k = 1 + tanh(u_k), so 0 < h_k < 2"
+   },
+   {
+    "name": "s",
+    "width": 1,
+    "domain": "positive median target-side distance (calibrate_structure_scale)"
    }
   ],
-  "callable": "mixed_geometry.mixed_sq"
+  "callable": "structure.structure_loss",
+  "callable_note": "structure_loss calls mixed_geometry.mixed_sq for each pair and then the quadratic hinge in this surface",
+  "limitations": "the statements reduce each 16-dim component to one coordinate to stay readable; the implemented distance sums the 16 E coordinates and applies asinh(sqrt(sum_k t_k))^2 to the 16 H coordinates (mean aggregation), so this is a reduced reference surface, not a claim of full-dimensional equivalence",
+  "prefix_surface": {
+   "symbols": [
+    "q1",
+    "q2",
+    "q3",
+    "s1",
+    "s2",
+    "s3"
+   ],
+   "statements": [
+    "q1 = readback(residual_1)",
+    "q2 = readback(residual_2)",
+    "q3 = readback(residual_3)",
+    "L1 = mean(max(dist(q1[centre], q1[successor]) / s1 - 1, 0) ** 2)",
+    "L2 = mean(max(dist(q2[prefix], q2[next_item]) / s2 - 1, 0) ** 2)",
+    "L3 = mean(max(dist(q3[prefix], q3[next_item]) / s3 - 1, 0) ** 2)",
+    "L_prefix = (L1 + L2 + L3) / 3"
+   ],
+   "callable": "NOT_IMPLEMENTED",
+   "note": "the readback is the native right-nested composition of the three codebook readbacks; the composition with the prefix targets is not implemented in this candidate"
+  }
  },
  "status": "DRAFT — revised per review; not admitted, not frozen",
  "revision": {

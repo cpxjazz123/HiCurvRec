@@ -21,16 +21,40 @@ def triples_digest(triples) -> str:
     return hashlib.sha256(blob).hexdigest()
 
 
-def validate_identity(report) -> bool:
-    """The consumer-side invariant: rows, list length and digest must agree."""
+def validate_identity(report, consumed_triples=None) -> bool:
+    """The consumer-side invariants, bound to the sample the run consumed.
+
+    An inactive structure graph has no latent, no rows and a stated reason; an
+    active one has rows equal to three times the consumed triples, a matching
+    digest, and a structure latent that actually received a gradient.
+    """
     ident = report["identity"]
+    rows = ident["z_struct_rows"]
+    accepted = ident["triples_accepted"]
+    forward = ident.get("structure_forward", True)
+    latent = (report.get("latent", {}).get("structure", {}) or {}).get("z_struct")
+    if not forward:
+        if accepted != 0 or rows != 0:
+            raise ValueError("an inactive structure graph states %r triples and %r rows"
+                             % (accepted, rows))
+        if ident.get("structure_zero_reason") not in ("behaviour_off", "no_accepted_triples"):
+            raise ValueError("an inactive structure graph states no reason")
+        if latent != "NOT_APPLICABLE":
+            raise ValueError("an inactive structure graph has a structure latent")
+        return True
     triples = [(int(c), int(a), int(b), str(k)) for c, a, b, k in ident["triples"]]
-    if ident["z_struct_rows"] != 3 * ident["triples_accepted"]:
-        raise ValueError("z_struct_rows must be 3*triples_accepted")
-    if len(triples) != ident["triples_accepted"]:
+    if accepted != len(triples):
         raise ValueError("the stored triple list must have triples_accepted entries")
+    if rows != 3 * accepted:
+        raise ValueError("z_struct_rows must be 3*triples_accepted")
     if ident["triples_sha256"] != triples_digest(triples):
         raise ValueError("the stored digest does not match the stored triples")
+    if latent is None:
+        raise ValueError("an active structure graph has no structure gradient")
+    if consumed_triples is not None:
+        consumed = [(int(c), int(a), int(b), str(k)) for c, a, b, k in consumed_triples]
+        if consumed != triples:
+            raise ValueError("the consumed sample differs from the reported triples")
     return True
 
 
@@ -116,6 +140,9 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
         total = base + struct
         z_base = captures["base"][0]
         z_struct = captures["struct"][0] if captures["struct"] else None
+        struct_active = z_struct is not None
+        if struct_active and not struct.requires_grad:
+            raise RuntimeError("the structure graph is active but its loss has no graph")
 
         blocks = {"encoder": list(model.encoder.parameters())}
         for i, layer in enumerate(model.rq.vq_layers):
@@ -125,6 +152,11 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
         states, latent = {}, {}
         for name, loss in (("recon", recon_loss), ("quant", quant),
                            ("structure", struct), ("total", total)):
+            if not loss.requires_grad:
+                states[name] = {"status": "NOT_APPLICABLE",
+                                "reason": "algorithmic zero with no autograd graph"}
+                latent[name] = {"z_base": "NOT_APPLICABLE", "z_struct": "NOT_APPLICABLE"}
+                continue
             raw = torch.autograd.grad(loss, flat, retain_graph=True, allow_unused=True)
             per, cur = {}, 0
             for block, ps in blocks.items():
@@ -135,12 +167,14 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
             got = torch.autograd.grad(loss, targets, retain_graph=True, allow_unused=True)
             gb = got[0]
             gs = got[1] if len(got) > 1 else None
+            if struct_active and name in ("structure", "total") and gs is None:
+                raise RuntimeError("the active structure latent received no gradient")
             latent[name] = {"z_base": None if gb is None else split_latent(gb.detach()),
                             "z_struct": ("NOT_APPLICABLE" if z_struct is None else
                                          (None if gs is None else split_latent(gs.detach())))}
         tb = torch.autograd.grad(total, z_base, retain_graph=True)[0]
         bb = torch.autograd.grad(base, z_base, retain_graph=True)[0]
-        if z_struct is not None:
+        if struct_active and struct.requires_grad:
             ts = torch.autograd.grad(total, z_struct, retain_graph=True)[0]
             ss = torch.autograd.grad(struct, z_struct, retain_graph=True)[0]
             struct_diff = float((ts - ss).abs().max())
@@ -163,10 +197,17 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
                                                "structure.py", "training_hooks.py")},
                 "s": scale, "lambda": lam, "seed": seed,
                 "batch_ids": [int(i) for i in ids],
-                "triples_requested": requested, "triples_accepted": len(used),
-                "triples": [[int(c), int(a), int(b), str(k)] for c, a, b, k in used],
-                "triples_sha256": triples_digest(used),
-                "z_base_rows": z_base.shape[0], "z_struct_rows": z_struct.shape[0],
+                "triples_requested": requested, "triples_sampled": len(used),
+                "triples_accepted": len(used if struct_active else []),
+                "triples": [[int(c), int(a), int(b), str(k)] for c, a, b, k in
+                            (used if struct_active else [])],
+                "triples_sha256": triples_digest(used if struct_active else []),
+                "z_base_rows": z_base.shape[0],
+                "z_struct_rows": int(z_struct.shape[0]) if struct_active else 0,
+                "structure_forward": struct_active,
+                "structure_zero_reason": (None if struct_active else
+                                          ("behaviour_off" if not T.BEHAVIOUR_ON
+                                           else "no_accepted_triples")),
                 "mode": "train", "behaviour_on": bool(T.BEHAVIOUR_ON),
                 "geometry_on": bool(G.GEOMETRY_ON),
             },
@@ -179,7 +220,8 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
     finally:
         handle.remove()
 
-    validate_identity(report)
+    validate_identity(report, consumed_triples=[
+        tuple(row) for row in report["identity"]["triples"]])
     out_dir = _unique_dir(Path(out_root))
     out_dir.mkdir(parents=True)
     (out_dir / "factors.json").write_text(json.dumps(report, indent=1))

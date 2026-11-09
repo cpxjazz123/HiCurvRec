@@ -69,8 +69,9 @@ def _forged(report, mutate):
 def test_the_consumer_rejects_forged_identities():
     base = {"identity": {
         "z_struct_rows": 135, "triples_accepted": 45,
+        "structure_forward": True, "structure_zero_reason": None,
         "triples": [[i, i + 1, i + 2, "triangle" if i % 2 else "wedge"] for i in range(45)],
-    }}
+    }, "latent": {"structure": {"z_struct": {"E_norm": 0.1, "H_norm": 0.1}}}}
     base["identity"]["triples_sha256"] = probe_q9.triples_digest(
         [tuple(t) for t in base["identity"]["triples"]])
     assert probe_q9.validate_identity(base)
