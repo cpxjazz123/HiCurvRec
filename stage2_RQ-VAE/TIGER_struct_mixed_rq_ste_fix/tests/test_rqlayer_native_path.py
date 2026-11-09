@@ -64,3 +64,10 @@ def test_geometry_off_still_takes_the_tangent_path():
         assert torch.allclose(quantized, tangent, atol=1e-6)
     finally:
         G.GEOMETRY_ON = old
+
+
+if __name__ == "__main__":
+    test_forward_is_the_native_readback()
+    test_reconstruction_gradient_reaches_the_encoder_and_the_codebooks()
+    test_geometry_off_still_takes_the_tangent_path()
+    print("ok")

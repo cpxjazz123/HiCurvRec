@@ -51,7 +51,18 @@ def expected(level):
     return forward, dz, codes
 
 
+def test_cumulative_levels_match_the_target_jacobian():
+    for level in range(3):
+        got = jacobian(level)
+        want = expected(level)
+        assert abs(got[0] - want[0]) < 1e-9, (level, "forward", got[0], want[0])
+        assert abs(got[1] - want[1]) < 1e-9, (level, "encoder coefficient", got[1], want[1])
+        for i, (g, w) in enumerate(zip(got[2], want[2])):
+            assert abs(g - w) < 1e-9, (level, f"codebook {i+1}", g, w)
+
+
 if __name__ == "__main__":
+    test_cumulative_levels_match_the_target_jacobian()
     for level in range(3):
         got = jacobian(level)
         want = expected(level)

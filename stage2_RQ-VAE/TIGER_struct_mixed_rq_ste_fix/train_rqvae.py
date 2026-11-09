@@ -59,7 +59,7 @@ def _repository_root() -> Path:
 
 REPO_ROOT = _repository_root()
 # The arm name is this tree's promoted name; a candidate copy changes only this line.
-ARM_NAME = "TIGER_struct_mixed_rq"
+ARM_NAME = "TIGER_struct_mixed_rq_ste_fix"
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
