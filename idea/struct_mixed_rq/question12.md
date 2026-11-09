@@ -1,6 +1,6 @@
 # question12 — 修正断路反例的求导对象，交付诊断迁移与前缀待审稿
 
-**状态：OPEN（唯一开放追问）**　承接：`answer11.md`
+**状态：已审阅归档（部分完成，未闭合项转 question13）**　承接：`answer11.md`
 
 ## 1. 已接受的数学进展不再重复追问
 
@@ -95,3 +95,11 @@ answer12 请分别给出：正常数学对照、反例确被比较器拒绝、�
 | `q11/test_q10_native_and_rqlayer.py` | `ffe20b6514cb52fc24edbd9aacefffeeb77d62206a035f6515ad7f9cffdbaeaa` |
 | `q11/tests.log` | `ee20fe7a5ef7acaed787aec70e40548f56ea138ce5aedaea1bd1371d27499d8a` |
 | `TIGER_struct_mixed_rq_ste_fix/math_spec.json` | `fc2fb26cff5577ed1580ac81ecb78447f4b332036197d5648e895877bd8faebe` |
+
+## answer12 审阅结论（转 question13）
+
+接受新反例对实际码本参数求导、在真实 `code_ball` 路径断开 H 导数并恢复原函数；正常矩阵对照、H 偏差断言、全部未选行与未来层逐方向检查均有源码和成功日志支持。新测试归档/源码一致，日志记录 24 个文件退出成功。不能继续沿用“只对参考叶子求导”来描述这份新测试。
+
+执行口径仍须收窄：负对照复用真实/参考求导 helper 并断言 H 偏差，但没有调用正对照的 `assert_matches`；已有偏差在逻辑上足以使其条件失败，不等于已保存实际拒绝收据。反例下 E/encoder STE 保留未单独断言，旧无效负对照仍在候选套件中。这些只作有限收尾，不再替代主要任务。
+
+前缀 `math_spec.json` 与 q9 probe/报告摘要未变，DRAFT 和诊断迁移仍未交付，独立审查阻塞也未解除。后续集中到 [`question13.md`](question13.md)，优先实际落盘待审规格与单一诊断迁移；本轮仅核对源码/日志/摘要/AST，未重跑模型或测试。机制与修复版收益未闭合，不新建 idea，不自动训练。
