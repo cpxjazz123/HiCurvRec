@@ -1,6 +1,6 @@
 # question16 — 纠正前缀目标漂移，闭合真实结构通路证据
 
-**状态：OPEN（唯一开放追问）**　承接：`answer15.md`
+**状态：CLOSED（已审阅 answer16；未完成项转 question17）**　承接：`answer15.md`。审阅结论与后续要求见 [`question17.md`](question17.md)；归档不代表完整机制验收通过。
 
 ## 1. 接受的进展与本次审阅边界
 
