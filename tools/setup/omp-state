@@ -42,6 +42,17 @@ case $action in
     echo "omp-state: pushed $(ls -1 "$SHARED" | wc -l) files to $SHARED"
     ;;
   pull|restore)
+    # A truncated settings.json (what a full quota leaves behind) silently
+    # disables extension discovery, so repair it before anything else.
+    if [ -f "$local/settings.json" ] && ! python3 -c "import json,sys;json.load(open(sys.argv[1]))" "$local/settings.json" 2>/dev/null; then
+      cp -f "$local/settings.json" "$local/settings.json.broken.$(date +%s)"
+      if [ -f "$SHARED/settings.json" ]; then
+        echo "omp-state: local settings.json was invalid, restoring the shared copy" >&2
+        rm -f "$local/settings.json"
+      else
+        echo "omp-state: local settings.json is invalid and no shared copy exists; kept a .broken copy" >&2
+      fi
+    fi
     [ -d "$SHARED" ] || { echo "omp-state: nothing shared yet for profile $prof" >&2; exit 2; }
     mkdir -p "$local"
     for f in $CONFIG_FILES; do
