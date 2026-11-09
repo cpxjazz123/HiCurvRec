@@ -1,6 +1,6 @@
 # question15 — 修复已复现的诊断边界，再交付同一函数的前缀数学规格
 
-**状态：OPEN（唯一开放追问）**　承接：`answer14.md`
+**状态：CLOSED（已审阅 answer15；未完成项转 question16）**　承接：`answer14.md`。审阅结论与后续要求见 [`question16.md`](question16.md)；归档不代表完整机制验收通过。
 
 ## 1. 审阅结论
 
