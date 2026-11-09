@@ -1,0 +1,81 @@
+{
+  "items": 24587,
+  "folds": 5,
+  "ridge_alpha": 10.0,
+  "targets": {
+    "clustering": {
+      "semantic_ridge": {
+        "spearman_mean": 0.14343756585623693,
+        "spearman_sd": 0.01086191910852704,
+        "r2_mean": -0.02570011248394257
+      },
+      "degree_only": {
+        "spearman_mean": 0.37799255705564716,
+        "spearman_sd": 0.012459054349294727,
+        "r2_mean": 0.0004422120301479371
+      },
+      "semantic_knn": {
+        "spearman_mean": 0.15783718541496777,
+        "spearman_sd": 0.013569098373951184
+      },
+      "semantic_mlp": {
+        "spearman_mean": 0.1311668680216353,
+        "spearman_sd": 0.005611450750577588,
+        "epochs": 15
+      }
+    },
+    "log_degree": {
+      "semantic_ridge": {
+        "spearman_mean": 0.21906941767443078,
+        "spearman_sd": 0.0064784147119263304,
+        "r2_mean": 0.029979097398484054
+      },
+      "degree_only": {
+        "spearman_mean": 1.0,
+        "spearman_sd": 4.965068306494546e-17,
+        "r2_mean": 0.4469217131763322
+      },
+      "semantic_knn": {
+        "spearman_mean": 0.20646712302915876,
+        "spearman_sd": 0.019116626874934952
+      }
+    },
+    "af3_mean": {
+      "semantic_ridge": {
+        "spearman_mean": 0.373840940270732,
+        "spearman_sd": 0.007608325969241311,
+        "r2_mean": 0.08238270353487212
+      },
+      "degree_only": {
+        "spearman_mean": 0.44737388427932717,
+        "spearman_sd": 0.014058415075637673,
+        "r2_mean": 0.26696342157764386
+      },
+      "semantic_knn": {
+        "spearman_mean": 0.3864129547961666,
+        "spearman_sd": 0.010645486023812323
+      },
+      "semantic_mlp": {
+        "spearman_mean": 0.3976919167484493,
+        "spearman_sd": 0.010790764106797059,
+        "epochs": 15
+      }
+    },
+    "tri_free_share": {
+      "semantic_ridge": {
+        "spearman_mean": 0.21398903053667997,
+        "spearman_sd": 0.009263299413202745,
+        "r2_mean": 0.018644874240375996
+      },
+      "degree_only": {
+        "spearman_mean": 0.6224848546315243,
+        "spearman_sd": 0.009941607427678092,
+        "r2_mean": 0.18187981401966632
+      },
+      "semantic_knn": {
+        "spearman_mean": 0.21923735746260312,
+        "spearman_sd": 0.018022796290172973
+      }
+    }
+  }
+}
