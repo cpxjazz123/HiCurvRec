@@ -1,8 +1,9 @@
 # The train behaviour graph is tree-like and community-like at once
 
-`graph_shape.py` reads the TRAIN behaviour graph (an edge for every consecutive
-item pair inside a user history, deduplicated, sampled to 400k edges at seed 42)
-and reports on one run, `graph_shape.json`:
+`graph_shape.py` reads the TRAIN behaviour graph: every consecutive item pair
+inside a user history, deduplicated (a simple graph cannot hold the same edge
+twice) and **not sampled** -- all 264,326 edges are used.  One run,
+`graph_shape.json`:
 
 | reading | value |
 |---|---|

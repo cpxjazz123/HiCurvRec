@@ -1,9 +1,10 @@
 """Is the train behaviour graph tree-like, community-like, or both at once?
 
 The graph is the TRAIN behaviour graph: an undirected edge for every consecutive
-item pair inside a user's history, deduplicated and sampled to at most 400k
-edges (seed 42).  No SID is involved, so this describes the data every Stage 2
-arm is asked to quantize.
+item pair inside a user's history, deduplicated.  Every edge is kept -- sampling
+would drop edges and triangles and change the structural readings, and the graph
+(it is a quarter of a million edges) fits in memory as it is.  No SID is
+involved, so this describes the data every Stage 2 arm is asked to quantize.
 
 Readings
 --------
@@ -27,8 +28,6 @@ from scipy.stats import kurtosis
 REPO = Path(__file__).resolve().parents[1]
 TRAIN = REPO / "results" / "stage0_build_parquet" / "train.parquet"
 OUT = Path(__file__).resolve().parent / "graph_shape.json"
-SEED = 42
-EDGE_CAP = 400_000
 
 
 def edges() -> np.ndarray:
@@ -40,11 +39,7 @@ def edges() -> np.ndarray:
         items = np.asarray([int(x) for x in history])
         chunks.append(np.stack([items[:-1], items[1:]], axis=1))
     pairs = np.unique(np.sort(np.concatenate(chunks), axis=1), axis=0)
-    pairs = pairs[pairs[:, 0] != pairs[:, 1]]
-    if len(pairs) > EDGE_CAP:
-        rng = np.random.default_rng(SEED)
-        pairs = pairs[rng.choice(len(pairs), EDGE_CAP, replace=False)]
-    return pairs
+    return pairs[pairs[:, 0] != pairs[:, 1]]
 
 
 def shape(pairs: np.ndarray) -> dict:
@@ -101,7 +96,6 @@ def shape(pairs: np.ndarray) -> dict:
         "clustering_leaves_deg_le3": float(np.nanmean(clustering[leaves])) if leaves.any() else None,
         "components": int(components),
         "share_nodes_in_largest_component": float(np.bincount(labels).max() / n),
-        "edge_cap": EDGE_CAP, "seed": SEED,
     }
 
 
