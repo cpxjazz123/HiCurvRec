@@ -139,11 +139,11 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
                                 size=len(used), triples=used,
                                 behaviour_on=bool(T.BEHAVIOUR_ON),
                                 capture=gathered)
-        consumed = []
+        consumed, consumed_targets = [], None
         if gathered:
-            flat = gathered[0]
-            for k, (centre, a, b, kind) in enumerate(used):
-                consumed.append((flat[3 * k], flat[3 * k + 1], flat[3 * k + 2], kind))
+            entry = gathered[0]
+            consumed = [tuple(t) for t in entry["triples"]]
+            consumed_targets = [[float(x) for x in row] for row in entry["targets"]]
             if consumed != [tuple(t) for t in used]:
                 raise RuntimeError("the gathered items differ from the sampled triples")
         struct = lam * term
@@ -216,6 +216,7 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
                 "triples_accepted": len(consumed),
                 "triples": [[int(c), int(a), int(b), str(k)] for c, a, b, k in consumed],
                 "triples_sha256": triples_digest(consumed),
+                "targets": consumed_targets,
                 "z_base_rows": z_base.shape[0],
                 "z_struct_rows": int(z_struct.shape[0]) if struct_active else 0,
                 "structure_forward": struct_active,

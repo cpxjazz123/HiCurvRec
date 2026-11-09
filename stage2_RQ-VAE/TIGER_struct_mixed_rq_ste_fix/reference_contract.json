@@ -1,37 +1,6 @@
 {
  "calls": [
   {
-   "name": "mixed_distance",
-   "callable": "mixed_geometry:reference_surface",
-   "symbols": [
-    "x0",
-    "x1",
-    "y0",
-    "y1"
-   ],
-   "args": [
-    {
-     "name": "left",
-     "width": 2,
-     "radius": 0.5,
-     "sampler": "box"
-    },
-    {
-     "name": "right",
-     "width": 2,
-     "radius": 0.5,
-     "sampler": "box"
-    }
-   ],
-   "statements": [
-    "euclid = (x0 - y0) ** 2",
-    "hyperbolic = (x1 - y1) ** 2",
-    "d = euclid + hyperbolic"
-   ],
-   "output": "d",
-   "note": "on the E1 x H1 subface the cross-ratio is t = sinh(x1-y1)^2, so asinh(sqrt(t))^2 = (x1-y1)^2; this is the same function with a finite backward at the collision, not a floor or a different metric"
-  },
-  {
    "name": "structure_objective",
    "callable": "structure:reference_objective_surface",
    "symbols": [
@@ -79,6 +48,37 @@
     "L = ((r01 - 1) ** 2 + (r02 - 1) ** 2 + (r12 - 1) ** 2) / 3"
    ],
    "output": "L"
+  },
+  {
+   "name": "mixed_distance",
+   "callable": "mixed_geometry:reference_surface",
+   "symbols": [
+    "x0",
+    "x1",
+    "y0",
+    "y1"
+   ],
+   "args": [
+    {
+     "name": "left",
+     "width": 2,
+     "radius": 0.5,
+     "sampler": "box"
+    },
+    {
+     "name": "right",
+     "width": 2,
+     "radius": 0.5,
+     "sampler": "box"
+    }
+   ],
+   "statements": [
+    "euclid = (x0 - y0) ** 2",
+    "hyperbolic = (x1 - y1) ** 2",
+    "d = euclid + hyperbolic"
+   ],
+   "output": "d",
+   "note": "on the E1 x H1 subface the cross-ratio is t = sinh(x1-y1)^2, so asinh(sqrt(t))^2 = (x1-y1)^2; this is the same function with a finite backward at the collision, not a floor or a different metric"
   }
  ],
  "coupling": {

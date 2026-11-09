@@ -158,13 +158,12 @@
     "y1"
    ],
    "statements": [
-    "bx = tanh(x1)",
-    "by = tanh(y1)",
     "euclid = (x0 - y0) ** 2",
-    "t = (bx - by) ** 2 / ((1 - bx ** 2) * (1 - by ** 2))",
-    "d = euclid + asinh(sqrt(t)) ** 2"
+    "hyperbolic = (x1 - y1) ** 2",
+    "d = euclid + hyperbolic"
    ],
-   "output": "d"
+   "output": "d",
+   "note": "aligned with contract.calls[name=mixed_distance]; both use the stable squared differences"
   },
   "args": [
    {
@@ -203,7 +202,20 @@
     "L_prefix = (L1 + L2 + L3) / 3"
    ],
    "callable": "NOT_IMPLEMENTED",
-   "note": "one shared s, one lambda, one TRAIN triple set with the three pair targets; no next-item objective, no per-layer scale, no second gather.  The implemented training term is the last-layer structure loss, not this prefix objective"
+   "note": "one shared s, one lambda, one TRAIN triple set with the three pair targets; no next-item objective, no per-layer scale, no second gather.  The implemented training term is the last-layer structure loss, not this prefix objective",
+   "full_space": "E16 x H16: the Euclidean part is a squared difference; the H16 part uses the radial ball map to_ball(t)=tanh(|t|)/|t|*t, the vector cross-ratio t=(1-|b|^2)(1-|b'|^2)/|b-b'|^2 and phi(t)=asinh(sqrt(t))^2; curvature c=1 is a fixed normalisation, not a per-layer degree of freedom",
+   "residual_and_readback": "levels are encoded once; each layer quantises the running residual r_l = r_{l-1} - z_l and the cumulative codeword position is read back by the native right-nested composition; the prefix term may not re-quantise or add a second gather",
+   "ste_boundaries": "encoder receives straight-through gradients through each selection; codebooks receive their native readback gradients only; the discrete choice remains the baseline Sinkhorn assignment, not a plain argmin",
+   "calibration": {
+    "s": "one shared positive scale from calibrate_structure_scale on the initialised model: the median h=1 pair distance over TRAIN triples; structure.calibrate_scale currently returns 1.0 on an empty sample, which is a known degenerate default and is not a calibrated value",
+    "lambda": "one value for the complete prefix objective, calibrated by the two-block rule (encoder; all codebooks merged) from question8 section 4; not the historical checkpoint's value",
+    "budget": "frozen optimizer budget; no per-layer weight selection, no scan, no extra seed"
+   },
+   "coverage_gaps": [
+    "the reduced E1 x H1 adapter uses h=1+tanh(u) and box sampling; exact h=2 is covered by the real target tests (test_structure.py), not by the reduced adapter",
+    "H1 squared-difference identity does not demonstrate H16 non-Euclidean effects",
+    "this prefix objective is NOT_IMPLEMENTED in the trainer; only the last-layer structure term runs"
+   ]
   },
   "expression_note": "on the E1 x H1 subface the H16 cross-ratio reduces to sinh(x1-y1)^2 and asinh^2(sqrt(t)) = (x1-y1)^2; the statements use that identity so the declared surface has a finite backward at coincident points"
  },

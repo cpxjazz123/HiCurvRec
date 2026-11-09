@@ -35,10 +35,12 @@ def structure_term(model, embeddings: torch.Tensor, graph, rng: random.Random, *
     if not triples:
         return torch.zeros((), device=embeddings.device)
     item_ids = [item for centre, a, b, _ in triples for item in (centre, a, b)]
-    if capture is not None:
-        capture.append(list(item_ids))
     positions = _positions(model, embeddings, item_ids).reshape(len(triples), 3, -1)
     h = S.triple_targets([kind for *_, kind in triples], device=positions.device)
+    if capture is not None:
+        capture.append({"items": list(item_ids),
+                        "triples": [tuple(t) for t in triples],
+                        "targets": h.detach().tolist()})
     return S.structure_loss(positions, h, scale=scale, geometry_on=geometry_on)
 
 
