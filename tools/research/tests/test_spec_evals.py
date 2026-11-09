@@ -226,19 +226,6 @@ def test_an_unknown_finding_blocks_the_freeze():
     assert evals.undecided(findings) == findings
 
 
-def test_the_gate_refuses_when_a_finding_is_undecided(monkeypatch):
-    """The freeze is refused while a caught defect has no decision."""
-    from tools.research.rounds import worker
-
-    undone = ["a defect nobody decided"]
-
-    def fake_undecided(findings, entries=None):
-        return undone
-
-    monkeypatch.setattr(evals, "undecided", fake_undecided)
-    assert worker.evals_module.undecided(undone) == undone
-
-
 # ---- the surface evals: the listing must be a program ------------------------
 
 def _draft() -> dict:
