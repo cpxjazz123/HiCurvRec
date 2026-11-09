@@ -80,6 +80,14 @@ def prefixes(table: dict, nodes: np.ndarray, level: int) -> np.ndarray:
     return out
 
 
+def retention_strata(index: np.ndarray, group: np.ndarray, strata: np.ndarray) -> list[float]:
+    rates = []
+    for band in range(4):
+        mask = (strata == band) & (group[index[:, 0]] >= 0) & (group[index[:, 1]] >= 0)
+        rates.append(float((group[index[mask, 0]] == group[index[mask, 1]]).mean()) if mask.any() else float("nan"))
+    return rates
+
+
 def retention(index: np.ndarray, tris: np.ndarray, group: np.ndarray) -> tuple[float, float]:
     valid_edge = (group[index[:, 0]] >= 0) & (group[index[:, 1]] >= 0)
     edge_ok = (group[index[:, 0]] == group[index[:, 1]]) & valid_edge
@@ -122,7 +130,7 @@ def main() -> None:
                 if mask.any():
                     by_stratum.append(float((group[index[mask, 0]] == group[index[mask, 1]]).mean()))
             rng = np.random.default_rng(42 + level)
-            edges_null, tris_null = [], []
+            edges_null, tris_null, strata_null = [], [], []
             for _ in range(NULL_RUNS):
                 shuffled = np.full(len(nodes), -1, dtype=np.int64)
                 valid = np.flatnonzero(group >= 0)
@@ -130,9 +138,15 @@ def main() -> None:
                 e_rate, t_rate = retention(index, tris, shuffled)
                 edges_null.append(e_rate)
                 tris_null.append(t_rate)
+                strata_null.append(retention_strata(index, shuffled, strata))
             arm["levels"]["L%d" % level] = {
                 "edge_retention": edge_rate, "triangle_retention": tri_rate,
                 "edge_retention_by_af3_quartile": by_stratum,
+                "null_edge_retention_by_af3_quartile": [
+                    float(np.nanmean([run[band] for run in strata_null])) for band in range(4)],
+                "edge_lift_by_af3_quartile": [
+                    by_stratum[band] - float(np.nanmean([run[band] for run in strata_null]))
+                    for band in range(4)] if len(by_stratum) == 4 else [],
                 "null_edge_mean": float(np.mean(edges_null)),
                 "null_triangle_mean": float(np.mean(tris_null)),
                 "edge_lift_vs_null": edge_rate - float(np.mean(edges_null)),
@@ -162,6 +176,14 @@ def main() -> None:
             strata[band].append(rate)
     summary["L1_edge_retention_by_af3_quartile"] = {
         "Q%d" % (band + 1): float(np.mean(rates)) for band, rates in strata.items() if rates}
+    for key in ("null", "lift"):
+        collected = {band: [] for band in range(4)}
+        for value in arms.values():
+            for band, rate in enumerate(value["levels"]["L1"]["%s_edge_retention_by_af3_quartile" % key]):
+                if not np.isnan(rate):
+                    collected[band].append(rate)
+        summary["L1_%s_by_af3_quartile" % key] = {
+            "Q%d" % (band + 1): float(np.mean(rates)) for band, rates in collected.items() if rates}
     scored = [(v["recall@10"], v["levels"]["L1"]["edge_lift_vs_null"])
               for v in arms.values() if v["recall@10"] is not None]
     if len(scored) > 5:
