@@ -1,173 +1,37 @@
 {
-  "generated": "2026-11-09T01:56:38",
-  "policy": "Stage3 has no admission checks (owner 2026-11-09); order is most recently completed Stage2 first (item_sids.json mtime).",
-  "total_with_sid": 65,
-  "already_stage3": 32,
-  "pending": 33,
   "queue": [
     {
-      "arm": "TIGER_factorized_joint_codebook",
-      "sid": "results/stage2_RQ-VAE/TIGER_factorized_joint_codebook/item_sids.json",
-      "stage2_sid_mtime": "2026-11-09T01:42:36",
-      "stage3_done": false,
-      "test_final": []
+      "arm": "TIGER_BEHAVIOR_R48"
     },
     {
-      "arm": "TIGER_af3sign_capacity",
-      "sid": "results/stage2_RQ-VAE/TIGER_af3sign_capacity/item_sids.json",
-      "stage2_sid_mtime": "2026-11-09T01:40:34",
-      "stage3_done": false,
-      "test_final": []
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample"
     },
     {
-      "arm": "TIGER_M1_learned_kappa",
-      "sid": "results/stage2_RQ-VAE/TIGER_M1_learned_kappa/item_sids.json",
-      "stage2_sid_mtime": "2026-11-09T00:05:55",
-      "stage3_done": false,
-      "test_final": []
+      "arm": "TIGER_behavior_residual_geometry_transport/r8_control"
     },
     {
-      "arm": "TIGER_M3_role_profiles",
-      "sid": "results/stage2_RQ-VAE/TIGER_M3_role_profiles/item_sids.json",
-      "stage2_sid_mtime": "2026-11-08T23:57:13",
-      "stage3_done": false,
-      "test_final": []
+      "arm": "TIGER_bootstrap_code_stability/resample"
     },
     {
-      "arm": "TIGER_M4_post_sid_af3",
-      "sid": "results/stage2_RQ-VAE/TIGER_M4_post_sid_af3/item_sids.json",
-      "stage2_sid_mtime": "2026-11-08T23:45:26",
-      "stage3_done": false,
-      "test_final": []
+      "arm": "TIGER_c106_directed_assignment_usage_balance/r8_control"
     },
     {
-      "arm": "TIGER_M2_radial_manifold",
-      "sid": "results/stage2_RQ-VAE/TIGER_M2_radial_manifold/item_sids.json",
-      "stage2_sid_mtime": "2026-11-08T22:21:08",
-      "stage3_done": false,
-      "test_final": []
+      "arm": "TIGER_c106_directed_codeword_margin_geometry/r8_control"
     },
     {
-      "arm": "TIGER_mixed_rq_L",
-      "sid": "results/stage2_RQ-VAE/TIGER_mixed_rq_L/item_sids.json",
-      "stage2_sid_mtime": "2026-11-08T18:20:05",
-      "stage3_done": false,
-      "test_final": []
+      "arm": "TIGER_c1_behaviour_conditioned_residual_target/r8_control"
     },
     {
-      "arm": "TIGER_mixed_rq_E",
-      "sid": "results/stage2_RQ-VAE/TIGER_mixed_rq_E/item_sids.json",
-      "stage2_sid_mtime": "2026-11-08T18:11:54",
-      "stage3_done": false,
-      "test_final": []
+      "arm": "TIGER_FORK_RQ-VAE/hyper_l1_angsel_s42"
     },
     {
-      "arm": "TIGER_mixed_rq_A",
-      "sid": "results/stage2_RQ-VAE/TIGER_mixed_rq_A/item_sids.json",
-      "stage2_sid_mtime": "2026-11-08T17:28:10",
-      "stage3_done": false,
-      "test_final": []
+      "arm": "TIGER_HYPERBOLIC_RQ-VAE/fix_carry_euclid_raw"
     },
     {
-      "arm": "TIGER_mixed_rq_G",
-      "sid": "results/stage2_RQ-VAE/TIGER_mixed_rq_G/item_sids.json",
-      "stage2_sid_mtime": "2026-11-08T17:19:50",
-      "stage3_done": false,
-      "test_final": []
+      "arm": "curvature_RQ-VAE"
     },
     {
-      "arm": "TIGER_mixed_rq_F0",
-      "sid": "results/stage2_RQ-VAE/TIGER_mixed_rq_F0/item_sids.json",
-      "stage2_sid_mtime": "2026-11-08T16:48:48",
-      "stage3_done": false,
-      "test_final": []
-    },
-    {
-      "arm": "TIGER_community-balance-l1-rq",
-      "sid": "results/stage2_RQ-VAE/TIGER_community-balance-l1-rq/item_sids.json",
-      "stage2_sid_mtime": "2026-11-07T07:32:34",
-      "stage3_done": false,
-      "test_final": []
-    },
-    {
-      "arm": "TIGER_behaviour-pairs-levels-rq",
-      "sid": "results/stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/item_sids.json",
-      "stage2_sid_mtime": "2026-11-07T07:09:34",
-      "stage3_done": false,
-      "test_final": []
-    },
-    {
-      "arm": "TIGER_behaviour-pairs-curved-rq",
-      "sid": "results/stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/item_sids.json",
-      "stage2_sid_mtime": "2026-11-07T06:46:15",
-      "stage3_done": false,
-      "test_final": []
-    },
-    {
-      "arm": "TIGER_curvature-stratum-sinkhorn-v1",
-      "sid": "results/stage2_RQ-VAE/TIGER_curvature-stratum-sinkhorn-v1/item_sids.json",
-      "stage2_sid_mtime": "2026-11-06T13:37:46",
-      "stage3_done": false,
-      "test_final": []
-    },
-    {
-      "arm": "TIGER_pmi-geomargin-l1-rq",
-      "sid": "results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/item_sids.json",
-      "stage2_sid_mtime": "2026-11-05T19:45:03",
-      "stage3_done": false,
-      "test_final": []
-    }
-  ],
-  "already_done": [
-    "TIGER_community_graph_recon",
-    "TIGER_community-balance-repulse-rq",
-    "TIGER_community-repulse-l1-rq",
-    "TIGER_community-pairs-guarded-rq",
-    "TIGER_community-l1-rq",
-    "TIGER_curriculum-behaviour-rq",
-    "TIGER_curvature-embedding-rq",
-    "TIGER_curvature-prefix-ranking-forman",
-    "TIGER_curvature-prefix-ranking-nobehaviour",
-    "TIGER_curvature-prefix-ranking-euclid",
-    "TIGER_curvature-prefix-ranking",
-    "TIGER_EQVOTE-HYP-RQ",
-    "TIGER_CURVALLOC-LORENTZ-RQ",
-    "TIGER_HGS-TREE",
-    "TIGER_GDELTA-SUCC-PULL-RQ",
-    "TIGER_BRad-RQ",
-    "TIGER_poincare-frechet-successor-codebook",
-    "TIGER_branch-geodesic-rank",
-    "TIGER_interest_signature_hypball",
-    "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL",
-    "TIGER_COOC_RANK_FRECHET",
-    "TIGER_cogeo_region_argmax",
-    "TIGER_incoming_context_barycenter",
-    "TIGER_cooccur_coherent_sid",
-    "TIGER_behaviour_code_cohesion",
-    "TIGER_successor-geodesic-coarse",
-    "TIGER_successor_residual_barycenter",
-    "TIGER_tangent_successor_residual",
-    "TIGER_successor_entropy_curvature",
-    "TIGER_transition_busemann_gate",
-    "TIGER_RQ-VAE",
-    "TIGER_c117_hyperbolic_item_semantic_id"
-  ],
-  "runs": [
-    {
-      "arm": "TIGER_factorized_joint_codebook",
-      "status": "finished",
-      "launched_at": "2026-11-09T02:00:49+11:00",
-      "mode": "ddp4",
-      "r2": "15",
-      "test_recall@10": 0.0513588328487613,
-      "test_recall@5": 0.03459322063406396,
-      "test_ndcg@10": 0.028497413942327302,
-      "test_final": "results/stage3_T5Train/TIGER_factorized_joint_codebook/logs/Amazon_2023_Instruments/Nov-09-2026_02-00-49/test_final.json"
-    },
-    {
-      "arm": "TIGER_af3sign_capacity",
-      "status": "starting",
-      "r2": null
+      "arm": "curvature_RQ-VAE_iter48"
     }
   ]
 }
