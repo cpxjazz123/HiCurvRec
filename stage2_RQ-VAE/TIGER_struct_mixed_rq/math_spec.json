@@ -1,0 +1,120 @@
+{
+  "mechanism": "closure/fork structure supervision on a fixed E16 x H16 product quantizer",
+  "computations": [
+    "latent split into 16 Euclidean and 16 hyperbolic coordinates (the latter read as a tangent vector at the ball origin)",
+    "hyperbolic half mapped into the Poincare ball of curvature 1 by the radial map h * tanh(||h||)/||h||, with a 1-1e-6 guard so no point reaches the boundary",
+    "product squared distance: ||e1-e2||^2 + d_H(h1,h2)^2/4",
+    "closed triangle: three pairs with target h=1; open wedge A-B, A-C: observed pairs h=1, the unobserved B-C pair h=2",
+    "structure objective: (1/3) sum over the three pairs of (d/(scale*h) - 1)^2, evaluated on positions rebuilt from the selected codewords",
+    "scale: median distance of the h=1 pairs on a fixed TRAIN sample, measured once after codebook init; weight: lambda = ratio * |base| / |structure| at the same point, ratio 0.1"
+  ],
+  "inputs": {
+    "z": [
+      "e16",
+      "h16"
+    ],
+    "triples": "centre and two partners from the TRAIN graph"
+  },
+  "outputs": {
+    "loss": "structure objective",
+    "positions": "cumulative codeword sum"
+  },
+  "parameters": {
+    "margin": null,
+    "scale": "calibrated, frozen",
+    "lambda": "calibrated, frozen",
+    "ratio": 0.1
+  },
+  "dimensions": {
+    "latent": 32,
+    "euclidean": 16,
+    "hyperbolic": 16,
+    "levels": 3,
+    "codes_per_level": 256
+  },
+  "gradient_rules": [
+    "the structure term reaches the encoder through the straight-through path of the selected codewords",
+    "it reaches the codebook through a plain gather of the selected codeword vectors (the STE detaches the other path)",
+    "the assignment cost uses the same product distance, so the geodesic also moves which code is selected"
+  ],
+  "training_integration": {
+    "behaviour_on": "structure term added with its calibrated lambda",
+    "geometry_on": "product geodesic in assignment and loss; otherwise the Euclidean control",
+    "both_on": "both of the above",
+    "assignment": "baseline Sinkhorn, unchanged rule"
+  },
+  "conventions": {
+    "distance": "sqrt of the product squared distance",
+    "objectives": "mean over sampled triples"
+  },
+  "switches": {
+    "behaviour_off": "structure term is not added; reconstruction/commitment unchanged",
+    "geometry_off": "assignment and structure use the Euclidean distance instead of the product geodesic",
+    "both_on": "structure term with the product geodesic"
+  },
+  "excluded": [
+    {
+      "surface": "code selection (argmin) and straight-through estimator",
+      "reason": "an argmin is not differentiable; the surrogate carries the gradient but cannot be symbolically compared"
+    },
+    {
+      "surface": "Sinkhorn assignment",
+      "reason": "iterative normalisation with an argmax at the end; discrete output, covered by the assignment-rule check and the suites"
+    },
+    {
+      "surface": "structure sampling (which triples are drawn)",
+      "reason": "discrete sampling; the contract covers the objective it feeds, the sampler is covered by its own tests"
+    }
+  ],
+  "continuous_surface": {
+    "symbols": [
+      "p0",
+      "p1",
+      "p2",
+      "p3",
+      "p4",
+      "p5",
+      "u0",
+      "u1",
+      "u2",
+      "s"
+    ],
+    "statements": [
+      "a0 = tanh(p1) * (1 - 0.000001)",
+      "b0 = tanh(p3) * (1 - 0.000001)",
+      "c0 = tanh(p5) * (1 - 0.000001)",
+      "g01 = 2 * ((a0 - b0) ** 2) / ((1 - a0 ** 2) * (1 - b0 ** 2))",
+      "g02 = 2 * ((a0 - c0) ** 2) / ((1 - a0 ** 2) * (1 - c0 ** 2))",
+      "g12 = 2 * ((b0 - c0) ** 2) / ((1 - b0 ** 2) * (1 - c0 ** 2))",
+      "d01 = (p0 - p2) ** 2 + acosh(1 + g01) ** 2 / 4",
+      "d02 = (p0 - p4) ** 2 + acosh(1 + g02) ** 2 / 4",
+      "d12 = (p2 - p4) ** 2 + acosh(1 + g12) ** 2 / 4",
+      "h0 = 1 + tanh(u0)",
+      "h1 = 1 + tanh(u1)",
+      "h2 = 1 + tanh(u2)",
+      "r01 = sqrt(d01) / (scale * h0)",
+      "r01 = sqrt(d01) / (s * h0)",
+      "r02 = sqrt(d02) / (s * h1)",
+      "r12 = sqrt(d12) / (s * h2)",
+      "L = ((r01 - 1) ** 2 + (r02 - 1) ** 2 + (r12 - 1) ** 2) / 3"
+    ],
+    "output": "L",
+    "distance_surface": {
+      "symbols": [
+        "x0",
+        "x1",
+        "y0",
+        "y1"
+      ],
+      "statements": [
+        "bx = tanh(x1) * (1 - 0.000001)",
+        "by = tanh(y1) * (1 - 0.000001)",
+        "euclid = (x0 - y0) ** 2",
+        "num = 2 * ((bx - by) ** 2)",
+        "den = (1 - bx ** 2) * (1 - by ** 2)",
+        "d = euclid + acosh(1 + num / den) ** 2 / 4"
+      ],
+      "output": "d"
+    }
+  }
+}
