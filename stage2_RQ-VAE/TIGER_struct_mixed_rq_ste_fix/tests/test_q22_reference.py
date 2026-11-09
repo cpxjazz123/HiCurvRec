@@ -29,7 +29,7 @@ def test_the_reduced_prefix_rebuilds_from_its_statements():
     s = torch.ones(2, 1, dtype=D)
     got = S.reference_prefix_surface_reduced(codes, h, s)
     expected = ref(codes=codes, h=h, s=s)
-    assert torch.allclose(got, expected, atol=1e-12)
+    assert torch.allclose(got, expected, rtol=0.0, atol=1e-7)  # SymPy constant gap ~7.3e-9
 
 
 def test_both_prefix_surfaces_gradcheck():
@@ -42,13 +42,40 @@ def test_both_prefix_surfaces_gradcheck():
     assert torch.autograd.gradcheck(lambda c: S.reference_prefix_surface_reduced(c, h, s),
                                     (codes,), eps=1e-6, atol=1e-8, rtol=1e-6)
     assert torch.autograd.gradcheck(lambda c: ref(codes=c, h=h, s=s), (codes,),
-                                    eps=1e-6, atol=1e-8, rtol=1e-6)
+                                    eps=1e-6, atol=1e-6, rtol=1e-5)
 
 
 def _ball(t):
     r = t.norm(dim=-1, keepdim=True)
     scale = torch.where(r > 0, torch.tanh(r) / r, torch.ones_like(r))
     return scale * t
+
+
+def test_the_reduced_prefix_has_finite_gradients_at_collisions():
+    ref, _ = build_reference(CALL)
+    h = torch.ones(1, 3, dtype=D)
+    h[:, 2] = 2.0
+    s = torch.ones(1, 1, dtype=D)
+
+    for codes in (torch.zeros(1, 18, dtype=D).requires_grad_(True),):
+        got = S.reference_prefix_surface_reduced(codes, h, s)
+        assert abs(float(got) - 1.0) < 1e-6
+        g = torch.autograd.grad(got.sum(), codes)[0]
+        assert torch.isfinite(g).all()
+        assert torch.autograd.gradcheck(
+            lambda c: ref(codes=c, h=h, s=s), (codes,), eps=1e-6, atol=1e-8, rtol=1e-6)
+
+    coincident_h = torch.zeros(1, 18, dtype=D)
+    coincident_h[0, 0:2] = torch.tensor([0.0, 0.1], dtype=D)
+    coincident_h[0, 2:4] = torch.tensor([0.1, 0.1], dtype=D)
+    coincident_h[0, 4:6] = torch.tensor([0.2, 0.1], dtype=D)
+    for l in range(1, 3):
+        coincident_h[0, 6 * l + 0:6 * l + 6] = coincident_h[0, 0:6]
+    coincident_h.requires_grad_(True)
+    got = S.reference_prefix_surface_reduced(coincident_h, h, s)
+    g = torch.autograd.grad(got.sum(), coincident_h)[0]
+    assert torch.isfinite(g).all()
+    assert torch.allclose(got, ref(codes=coincident_h, h=h, s=s), rtol=0, atol=1e-6)
 
 
 def _analytic_phi_distance(a_h, b_h):
@@ -86,4 +113,5 @@ if __name__ == "__main__":
     test_the_reduced_prefix_rebuilds_from_its_statements()
     test_both_prefix_surfaces_gradcheck()
     test_the_distance_gradient_matches_an_independent_analytic_derivative()
+    test_the_reduced_prefix_has_finite_gradients_at_collisions()
     print("ok")

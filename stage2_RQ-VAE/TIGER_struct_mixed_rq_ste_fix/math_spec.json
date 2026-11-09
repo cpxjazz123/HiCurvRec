@@ -247,7 +247,8 @@
      "  L_l=(e_l^ca+e_l^cb+e_l^ab)/3",
      "  L_prefix=(L_1+L_2+L_3)/3"
     ],
-    "reference": "structure.reference_prefix_surface(qs, h, s): qs is a length-3 sequence, each (B,3,32); the second axis is the three triple items, not the layer axis; the return is (B,) per-triple mean before any sample average. structure.reference_prefix_surface_reduced(codes,h,s) is the 1D-reduced surface matching contract.calls[name=prefix_surface_1d] (codes (B,18), 3 layers x 3 points x E,H)."
+    "reference": "structure.reference_prefix_surface(qs, h, s): qs is a length-3 sequence, each (B,3,32); the second axis is the three triple items, not the layer axis; the return is (B,) per-triple mean before any sample average. structure.reference_prefix_surface_reduced(codes,h,s) is the 1D-reduced surface matching contract.calls[name=prefix_surface_1d] (codes (B,18), 3 layers x 3 points x E,H).",
+    "reduced_surface": "prefix_surface_1d uses the H1 identity asinh^2(sqrt(t))=(qh_i-qh_j)^2, so the declared surface and its torch counterpart have finite gradients at the all-zero and H-coincident collisions; SymPy reference constants differ from the torch value by ~7.3e-9, and tests state rtol=0 with explicit atol"
    },
    "faces": {
     "implemented": "last-layer structure term on quantised positions, mixed_sq with the phi form; this is the only term the trainer currently applies",
