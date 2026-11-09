@@ -151,8 +151,12 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
                 "script_sha256": sha_bytes(Path(__file__)),
                 "checkpoint_sha256": sha_bytes(ckpt),
                 "sid_sha256": sha_bytes(SID),
+                "train_path": str(Path(T.TRAIN_FILE)),
                 "train_sha256": sha_bytes(Path(T.TRAIN_FILE)),
+                "embedding_path": str(Path(T.EMBEDDING_FILE)),
                 "embedding_sha256": sha_bytes(Path(T.EMBEDDING_FILE)),
+                "pca_dim": int(T.PCA_DIM),
+                "calibration_provenance": "historical run calibration, not the prefix candidate's own calibration",
                 "source_sha256": {name: sha_bytes(Path(__file__).parent / name)
                                   for name in ("model/layers.py", "model/model.py",
                                                "mixed_geometry.py", "native_product.py",
