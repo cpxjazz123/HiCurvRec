@@ -11,7 +11,7 @@ from model.model import RQVAE
 SEED = T.SEED; BATCH, TRIPLES = 64, 64
 S_SCALE, LAMBDA = 0.04444597661495209, 9.226019983543665e-07
 CKPT = Path("/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_struct_mixed_rq/rqvae_best.pth")
-OUT = Path("/fs04/ar57/wenyu/GeneRec/results/research/struct_mixed_rq/q6"); OUT.mkdir(parents=True, exist_ok=True)
+OUT = Path("/fs04/ar57/wenyu/GeneRec/results/research/struct_mixed_rq/q7"); OUT.mkdir(parents=True, exist_ok=True)
 
 torch.manual_seed(SEED)
 emb = T.maybe_apply_pca(T.load_embeddings(T.EMBEDDING_FILE), T.PCA_DIM, SEED)
@@ -75,12 +75,16 @@ def latent_grad(kind):
         losses = {"recon": recon_loss, "quant": quant, "structure": LAMBDA * term}
         model.zero_grad(set_to_none=True)
         losses[kind].backward(retain_graph=False)
-        rows = batch.shape[0] if kind in ("recon", "quant") else 3 * TRIPLES
+        rows = batch.shape[0] if kind in ("recon", "quant") else 3 * len(triples)
         chosen = [z for z in captured if z.shape[0] == rows]
         if not chosen:
-            return "NOT_CONNECTED"
+            # nothing was captured with the row count the loss used: that is a
+            # measurement gap, not evidence that the graph is disconnected
+            return "NOT_MEASURED"
         z = chosen[0]
-        return z.grad.detach().clone() if z.grad is not None else None
+        if z.grad is None:
+            return "NOT_CONNECTED"
+        return z.grad.detach().clone()
     finally:
         handle.remove()
 

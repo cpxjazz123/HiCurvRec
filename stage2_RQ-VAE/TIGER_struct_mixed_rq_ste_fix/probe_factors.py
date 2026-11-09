@@ -37,3 +37,14 @@ def block_report(named_grads: dict) -> dict:
         else:
             out[name] = factor_norms(name, grad, kind)
     return out
+
+
+def block_status(params, grads) -> dict:
+    """Counts that keep '未连接' and '已连接但为零' apart."""
+    none = sum(1 for g in grads if g is None)
+    zero = sum(1 for g in grads if g is not None and float(g.abs().sum()) == 0.0)
+    nonzero = sum(1 for g in grads if g is not None and float(g.abs().sum()) > 0.0)
+    flat = torch.cat([(torch.zeros_like(p) if g is None else g).reshape(-1)
+                      for p, g in zip(params, grads)])
+    return {"norm": float(flat.norm()), "none_tensors": none,
+            "zero_tensors": zero, "nonzero_tensors": nonzero}

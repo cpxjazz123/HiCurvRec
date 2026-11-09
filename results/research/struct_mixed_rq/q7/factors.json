@@ -1,0 +1,254 @@
+{
+ "identity": {
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_struct_mixed_rq_ste_fix",
+  "arm_name": "TIGER_struct_mixed_rq_ste_fix",
+  "checkpoint_sha256": "84f05d46419e6f5c8b80706bd24aafbf41a401cf8d6e5631e99305eb98c14672",
+  "sid_sha256": "7c147fc634cc2939367d3fc83bc0a8ebfaa2d96a92cf23e060c7c88b4ac390a1",
+  "script_sha256": "3808cc90baca948b21c52f72392de7a632fc237c53bbe3c8ab5bdf5d35e2716a",
+  "layers_sha256": "18e5d62005aabb65c3f2bebb6751a37006eb1fa7aa737eaec6b43e9cc98711da",
+  "s": 0.04444597661495209,
+  "lambda": 9.226019983543665e-07,
+  "note": "old checkpoint, new wiring; not the fix version's calibration",
+  "seed": 42,
+  "batch_ids": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   52,
+   53,
+   54,
+   55,
+   56,
+   57,
+   58,
+   59,
+   60,
+   61,
+   62,
+   63
+  ],
+  "triples_accepted": 45,
+  "mode": "train",
+  "geometry_on": true,
+  "behaviour_on": true
+ },
+ "losses": {
+  "recon": 0.0001060134163708426,
+  "quant": 0.00016659620450809598,
+  "structure_weighted": 3.961445145250764e-06,
+  "total": 0.0002765710523817688
+ },
+ "gradients": {
+  "recon": {
+   "encoder": {
+    "name": "encoder",
+    "split": "NOT_APPLICABLE",
+    "norm": 0.0007525553193108526
+   },
+   "C1": {
+    "name": "C1",
+    "split": "E16/H16",
+    "E_norm": 0.00029087130163467357,
+    "H_norm": 0.000297947647525522
+   },
+   "C2": {
+    "name": "C2",
+    "split": "E16/H16",
+    "E_norm": 0.00025127501474085895,
+    "H_norm": 0.0002064268998645267
+   },
+   "C3": {
+    "name": "C3",
+    "split": "E16/H16",
+    "E_norm": 0.00024668162662090084,
+    "H_norm": 0.00019478341935375937
+   },
+   "decoder": {
+    "name": "decoder",
+    "split": "NOT_APPLICABLE",
+    "norm": 0.00043199604407776675
+   }
+  },
+  "quant": {
+   "encoder": {
+    "name": "encoder",
+    "split": "NOT_APPLICABLE",
+    "norm": 0.00039774534512425277
+   },
+   "C1": {
+    "name": "C1",
+    "split": "E16/H16",
+    "E_norm": 0.0003420871073883224,
+    "H_norm": 0.0003361264730487529
+   },
+   "C2": {
+    "name": "C2",
+    "split": "E16/H16",
+    "E_norm": 0.00015453225776961412,
+    "H_norm": 0.0001618080255820397
+   },
+   "C3": {
+    "name": "C3",
+    "split": "E16/H16",
+    "E_norm": 9.853438782224291e-05,
+    "H_norm": 0.00010596844673166007
+   },
+   "decoder": {
+    "name": "decoder",
+    "split": "NOT_APPLICABLE",
+    "norm": 0.0
+   }
+  },
+  "structure": {
+   "encoder": {
+    "name": "encoder",
+    "split": "NOT_APPLICABLE",
+    "norm": 4.719834782317125e-05
+   },
+   "C1": {
+    "name": "C1",
+    "split": "E16/H16",
+    "E_norm": 3.0059846406750096e-05,
+    "H_norm": 3.035509544926021e-05
+   },
+   "C2": {
+    "name": "C2",
+    "split": "E16/H16",
+    "E_norm": 3.989124763674583e-05,
+    "H_norm": 4.493894011139605e-05
+   },
+   "C3": {
+    "name": "C3",
+    "split": "E16/H16",
+    "E_norm": 3.818965283063922e-05,
+    "H_norm": 4.2657764208271414e-05
+   },
+   "decoder": {
+    "name": "decoder",
+    "split": "NOT_APPLICABLE",
+    "norm": 0.0
+   }
+  },
+  "total": {
+   "encoder": {
+    "name": "encoder",
+    "split": "NOT_APPLICABLE",
+    "norm": 0.0005747462735440929
+   },
+   "C1": {
+    "name": "C1",
+    "split": "E16/H16",
+    "E_norm": 0.0005487369473312295,
+    "H_norm": 0.0005851289829778611
+   },
+   "C2": {
+    "name": "C2",
+    "split": "E16/H16",
+    "E_norm": 0.00034111155484641573,
+    "H_norm": 0.00032195733434898605
+   },
+   "C3": {
+    "name": "C3",
+    "split": "E16/H16",
+    "E_norm": 0.00030092807335724617,
+    "H_norm": 0.00026514693275470075
+   },
+   "decoder": {
+    "name": "decoder",
+    "split": "NOT_APPLICABLE",
+    "norm": 0.00043199604407776675
+   }
+  }
+ },
+ "latent": {
+  "recon": {
+   "split": "NOT_MEASURED"
+  },
+  "quant": {
+   "split": "NOT_MEASURED"
+  },
+  "structure": {
+   "name": "latent",
+   "split": "E16/H16",
+   "E_norm": 3.804699513201433e-05,
+   "H_norm": 4.253528175652463e-05
+  },
+  "total": {
+   "split": "NOT_MEASURED"
+  }
+ },
+ "composition": {
+  "checked": "base + structure per tensor",
+  "worst_abs_dev": 2.9103830456733704e-11,
+  "per_tensor": {
+   "encoder[0]": 0.0,
+   "encoder[1]": 0.0,
+   "encoder[2]": 0.0,
+   "encoder[3]": 0.0,
+   "encoder[4]": 0.0,
+   "encoder[5]": 0.0,
+   "encoder[6]": 0.0,
+   "encoder[7]": 0.0,
+   "C1[0]": 2.9103830456733704e-11,
+   "C2[0]": 3.637978807091713e-12,
+   "C3[0]": 1.8189894035458565e-12,
+   "decoder[0]": 0.0,
+   "decoder[1]": 0.0,
+   "decoder[2]": 0.0,
+   "decoder[3]": 0.0,
+   "decoder[4]": 0.0,
+   "decoder[5]": 0.0,
+   "decoder[6]": 0.0,
+   "decoder[7]": 0.0
+  }
+ }
+}
