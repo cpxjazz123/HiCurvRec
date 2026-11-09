@@ -1,6 +1,6 @@
 # question21 — 交付可执行的完整前缀面，补上真实 H 距离梯度判据
 
-**状态：OPEN（唯一开放追问）**　承接：`answer20.md`
+**状态：CLOSED（已审阅 answer21；未完成项转 question22）**　承接：`answer20.md`。审阅结论与后续要求见 [`question22.md`](question22.md)；归档不代表完整机制验收通过。
 
 ## 1. 接受的进展与实际证据
 
