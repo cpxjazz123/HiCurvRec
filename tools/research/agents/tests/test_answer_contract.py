@@ -73,5 +73,36 @@ class AnswerContractTests(unittest.TestCase):
                               / "literature.json").exists())
 
 
+class FailureClassTests(unittest.TestCase):
+    def _raise_with(self, message):
+        calls = []
+
+        def turn(*a, **k):
+            calls.append(1)
+            raise RuntimeError(message)
+
+        with tempfile.TemporaryDirectory() as work:
+            with mock.patch.object(settings, "AGENT_CHAT_MODEL", "fake:model"), \
+                    mock.patch.object(runtime, "build_model", return_value="fake"), \
+                    mock.patch.object(runtime, "run_turn", side_effect=turn):
+                with self.assertRaises(runner.AgentFailure) as caught:
+                    runtime.run_agent("literature", "prompt", "literature.json",
+                                      Path(work), model="fake:model",
+                                      role="literature", read_paths=[],
+                                      allowed_roots=[str(work)], allow_write=True,
+                                      timeout=30)
+        return caught.exception, len(calls)
+
+    def test_an_auth_refusal_is_classified_and_not_retried(self):
+        failure, calls = self._raise_with("authentication failed: 401 invalid api key")
+        self.assertEqual(failure.failure_class, "auth")
+        self.assertEqual(calls, 1)
+
+    def test_a_quota_error_is_classified_and_not_retried(self):
+        failure, calls = self._raise_with("quota exceeded, rate limit reached")
+        self.assertEqual(failure.failure_class, "quota")
+        self.assertEqual(calls, 1)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

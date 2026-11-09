@@ -859,6 +859,10 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
     receipt_path = workspace / "execution.json"
     receipt_path.write_text(json.dumps(receipt, indent=1), encoding="utf-8")
     if failure and not output.is_file():
-        raise runner.AgentFailure("timeout" if timed_out else "AGENT_CRASHED",
-                                  str(receipt_path), failure)
+        # The class decides whether the caller retries or pauses: an auth refusal
+        # retried in place is an infinite loop, so read it from the receipt.
+        kind = runner.class_of_failure(receipt_path, timed_out=timed_out,
+                                       cancelled=False, exit_code=0,
+                                       wrote_answer=output.is_file())
+        raise runner.AgentFailure(kind, str(receipt_path), failure)
     return receipt_path
