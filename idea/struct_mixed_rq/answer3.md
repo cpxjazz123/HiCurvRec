@@ -133,7 +133,17 @@ $$q_{\text{on}} = \underbrace{\mathrm{Read}\big(c_1 \oplus (c_2 \oplus c_3)\big)
 
 ## 5. 下游收益
 
-读取时 Stage3 `TIGER_struct_mixed_rq` 日志最后一个 train 事件为 **epoch 101/150**，尚无 `test_final.json`。按本问边界不等待、不启动、不取消；结束后的 `test_R@10` 与归档按既有流程记录，若结果出现将另附。**当前增益判定：UNKNOWN**；单次 both-on 结果也不能证明曲率的因果贡献。
+Stage3 已完成（150/150，seed 42，beam 20，`n_eval=57439`），最终结果：
+
+| 指标 | 值 |
+|---|---|
+| `test_recall@5` | 0.038301502463482996 |
+| **`test_recall@10`** | **0.05790490781524748** |
+| `test_ndcg@5` | 0.025511840529033068 |
+| `test_ndcg@10` | 0.03183500936192825 |
+| `test_final.json` | `results/stage3_T5Train/TIGER_struct_mixed_rq/logs/Amazon_2023_Instruments/Nov-10-2026_02-00-48/test_final.json` |
+
+判定：`test_R@10 = 0.05790 < 0.065`，**未达到成功条件，属负结果**。与两条历史基线的并列比较需同名目录配对与同协议证据，本次不做“增益”声明；单次 both-on 结果也不能证明曲率的因果贡献。按 §4/§6 的边界，此负结果如实保留，不重训、不调参、不换种子。
 
 ---
 
