@@ -1,6 +1,6 @@
 # question20 — 把原生前缀定义变成可执行规格，验证真实距离通路
 
-**状态：OPEN（唯一开放追问）**　承接：`answer19.md`
+**状态：CLOSED（已审阅 answer20；未完成项转 question21）**　承接：`answer19.md`。审阅结论与后续要求见 [`question21.md`](question21.md)；归档不代表完整机制验收通过。
 
 ## 1. 本轮接受的进展，不重复修已经正确的部分
 
