@@ -174,6 +174,60 @@ def reference_prefix_surface_reduced(codes: torch.Tensor, h: torch.Tensor,
     return total / 3
 
 
+def _ball(t):
+    r = torch.sqrt((t * t).sum(-1, keepdim=True) + 1e-24)
+    safe = r.clamp_min(1e-12)
+    return torch.where(r > 0, torch.tanh(safe) / safe, torch.ones_like(r)) * t
+
+
+def _log0(b):
+    r = torch.sqrt((b * b).sum(-1, keepdim=True) + 1e-24)
+    safe = r.clamp(1e-12, 1 - 1e-12)
+    return torch.where(r > 0, torch.atanh(safe) / safe, torch.ones_like(r)) * b
+
+
+def _phi_stable(t):
+    t = t.clamp_min(0.0)
+    root = torch.sqrt(t.clamp_min(1e-30))
+    return torch.where(t < 1e-6, t - t * t / 3, torch.asinh(root) ** 2)
+
+
+def _mobius_add(a, b):
+    a2 = (a * a).sum(-1, keepdim=True)
+    b2 = (b * b).sum(-1, keepdim=True)
+    ab = (a * b).sum(-1, keepdim=True)
+    return ((1 + 2 * ab + b2) * a + (1 - a2) * b) / (1 + 2 * ab + a2 * b2)
+
+
+def reference_prefix_native(codes, h: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
+    """Full E16 x H16 prefix readback and stress, independent of the production
+    geometry helpers.  codes: length-3 sequence of (B,3,32) codeword tangents.
+    """
+    qs = []
+    balls = []
+    euclid = 0.0
+    for level in codes:
+        euclid = euclid + level[..., :16]
+        balls.append(_ball(level[..., 16:]))
+        nested = balls[-1]
+        for earlier in reversed(balls[:-1]):
+            nested = _mobius_add(earlier, nested)
+        qs.append(torch.cat([euclid, _log0(nested)], dim=-1))
+    pairs = [(0, 1, 0), (0, 2, 1), (1, 2, 2)]
+    total = 0.0
+    for q in qs:
+        terms = []
+        for i, j, k in pairs:
+            bi, bj = _ball(q[:, i, 16:]), _ball(q[:, j, 16:])
+            num = ((bi - bj) ** 2).sum(-1)
+            den = (1 - (bi ** 2).sum(-1)) * (1 - (bj ** 2).sum(-1))
+            t = (num / den).clamp_min(0.0)
+            d = ((q[:, i, :16] - q[:, j, :16]) ** 2).sum(-1) + _phi_stable(t)
+            terms.append((d / (s[:, 0] ** 2 * h[:, k] ** 2) - 1) ** 2)
+        total = total + (terms[0] + terms[1] + terms[2]) / 3
+    return total / 3
+
+
 def calibrate_scale(points: torch.Tensor, h: torch.Tensor) -> float:
     """Median distance of the h = 1 pairs at initialisation (TRAIN only)."""
     distances = []
