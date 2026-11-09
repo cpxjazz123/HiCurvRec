@@ -107,8 +107,9 @@ def retention(index: np.ndarray, tris: np.ndarray, group: np.ndarray) -> tuple[f
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--arms", default="24")
+    parser.add_argument("--sid", default="", help="an item_sids.json outside the mirror")
     args = parser.parse_args()
-    numbers = [n.strip() for n in args.arms.split(",") if n.strip()]
+    numbers = [n.strip() for n in args.arms.split(",") if n.strip()] if not args.sid else []
     pairs = edges()
     nodes, index, A, deg, af3 = graph(pairs)
     tris = triangles(A)
@@ -117,6 +118,22 @@ def main() -> None:
     with np.errstate(invalid="ignore", divide="ignore"):
         c = np.where(deg >= 2, np.asarray((A @ A).multiply(A).sum(1)).ravel() / (deg * (deg - 1.0)), 0.0)
     report = {"edges": int(len(index)), "triangles": int(len(tris)), "arms": {}}
+    if args.sid:
+        table = json.loads(Path(args.sid).read_text())
+        entry = {"recall@10": None, "levels": {}}
+        for level in LEVELS:
+            group = prefixes(table, nodes, level)
+            edge_rate, tri_rate = retention(index, tris, group)
+            entry["levels"]["L%d" % level] = {
+                "edge_retention": edge_rate, "triangle_retention": tri_rate,
+                "edge_retention_triangle_free": retention_stratum(index, edge_tri, group, True),
+                "edge_retention_in_triangle": retention_stratum(index, edge_tri, group, False)}
+        report["arms"]["sid"] = entry
+        for level in LEVELS:
+            block = entry["levels"]["L%d" % level]
+            print("sid L%d edges %.4f (free %.4f / tri %.4f) triangles %.4f"
+                  % (level, block["edge_retention"], block["edge_retention_triangle_free"],
+                     block["edge_retention_in_triangle"], block["triangle_retention"]))
     for number in numbers:
         sid = MIRROR / number / "item_sids.json"
         if not sid.is_file():

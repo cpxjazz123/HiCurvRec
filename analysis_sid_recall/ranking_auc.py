@@ -27,7 +27,7 @@ PAIRS = 40_000
 def edges_with_triangles() -> tuple[np.ndarray, np.ndarray]:
     """Edges plus the number of triangles sitting on each of them."""
     from scipy import sparse
-    pairs, triangles = edges_with_triangles()
+    pairs = edges()
     nodes, inverse = np.unique(pairs, return_inverse=True)
     index = inverse.reshape(-1, 2)
     A = sparse.coo_matrix((np.ones(len(index)), (index[:, 0], index[:, 1])),

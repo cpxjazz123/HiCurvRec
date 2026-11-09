@@ -1,0 +1,92 @@
+{
+  "baseline_24": {
+    "sid": "analysis_sid_recall/r2/24/item_sids.json",
+    "recall@10": null,
+    "ranking_auc": 0.5352755180756242,
+    "ranking_auc_triangle_free": 0.5317774863723318,
+    "ranking_auc_in_triangle": 0.5375625922096483,
+    "levels": {
+      "L1": {
+        "edge_retention": 0.08282953625447365,
+        "triangle_retention": 0.01610357234224378,
+        "edge_retention_triangle_free": 0.07749113905313279,
+        "edge_retention_in_triangle": 0.08737782448765108
+      },
+      "L2": {
+        "edge_retention": 0.00891323592836119,
+        "triangle_retention": 0.00040823658126357387,
+        "edge_retention_triangle_free": 0.008708809960444404,
+        "edge_retention_in_triangle": 0.009087405850411632
+      },
+      "L3": {
+        "edge_retention": 0.0019483516566663893,
+        "triangle_retention": 5.987469858532417e-05,
+        "edge_retention_triangle_free": 0.001990115212868315,
+        "edge_retention_in_triangle": 0.0019127693116132423
+      }
+    },
+    "l1_codes_used": 247,
+    "l3_distinct": 20223,
+    "l3_collision": 0.17749217065929146
+  },
+  "v1_sid_rank": {
+    "sid": "results/stage2_RQ-VAE/TIGER_sid_rank/item_sids.json",
+    "recall@10": null,
+    "ranking_auc": 0.521293396914545,
+    "ranking_auc_triangle_free": 0.5208962989357854,
+    "ranking_auc_in_triangle": 0.5236954451062222,
+    "levels": {
+      "L1": {
+        "edge_retention": 0.06726542224374446,
+        "triangle_retention": 0.04554559458297273,
+        "edge_retention_triangle_free": 0.05167720660191939,
+        "edge_retention_in_triangle": 0.08054650551760378
+      },
+      "L2": {
+        "edge_retention": 0.002379637266103221,
+        "triangle_retention": 0.00013063570600434365,
+        "edge_retention_triangle_free": 0.001990115212868315,
+        "edge_retention_in_triangle": 0.0027115081450341566
+      },
+      "L3": {
+        "edge_retention": 0.0002496916686213237,
+        "triangle_retention": 5.443154416847652e-06,
+        "edge_retention_triangle_free": 0.0002713793472093157,
+        "edge_retention_in_triangle": 0.00023121387283236994
+      }
+    },
+    "l1_codes_used": 252,
+    "l3_distinct": 23880,
+    "l3_collision": 0.028755033147598308
+  },
+  "v2_sid_rank_v2": {
+    "sid": "results/stage2_RQ-VAE/TIGER_sid_rank_v2/item_sids.json",
+    "recall@10": null,
+    "ranking_auc": 0.5206139229285831,
+    "ranking_auc_triangle_free": 0.5223065340416453,
+    "ranking_auc_in_triangle": 0.5199143758486733,
+    "levels": {
+      "L1": {
+        "edge_retention": 0.05533318704932545,
+        "triangle_retention": 0.049176178579010105,
+        "edge_retention_triangle_free": 0.049465053741334364,
+        "edge_retention_in_triangle": 0.06033280784725872
+      },
+      "L2": {
+        "edge_retention": 0.001895386757261866,
+        "triangle_retention": 5.987469858532417e-05,
+        "edge_retention_triangle_free": 0.0019489971299578128,
+        "edge_retention_in_triangle": 0.0018497109826589595
+      },
+      "L3": {
+        "edge_retention": 0.0002496916686213237,
+        "triangle_retention": 0.0,
+        "edge_retention_triangle_free": 0.0003124974301198181,
+        "edge_retention_in_triangle": 0.00019618146785776845
+      }
+    },
+    "l1_codes_used": 253,
+    "l3_distinct": 23835,
+    "l3_collision": 0.030585268637898122
+  }
+}
