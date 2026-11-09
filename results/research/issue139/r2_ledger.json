@@ -1539,6 +1539,27 @@
     "recall_source": "results/stage3_T5Train/tiger_fork_hyper_l1_angsel_s42/logs/Amazon_2023_Instruments/Oct-12-2026_12-38-45/test_final.json",
     "stage": "stage2-retrain"
   },
+  "56": {
+    "arm": "curvature_RQ-VAE_iter48",
+    "files": {
+      "curvature_RQ-VAE_iter48/curvature_config.py": "15c2c3c16e37d69ceb10c561517ab3f737840880a21dffb1e890292a6d00a0e7",
+      "curvature_RQ-VAE_iter48/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "curvature_RQ-VAE_iter48/model/layers.py": "9ad9a0cfaeb6e903b584d7b32342d3c2e5facdde25047588a4810aaed5110c45",
+      "curvature_RQ-VAE_iter48/model/model.py": "b04e5eac73817066fff0e59693f8e5971b5fb69e166bd27acaaeaf643382e61a",
+      "curvature_RQ-VAE_iter48/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "curvature_RQ-VAE_iter48/scripts/mvg_check.py": "8d6ddfcb0c9775c00137f8d567d7f2d841eae22c21cd1d94099da7079fd912a6",
+      "curvature_RQ-VAE_iter48/scripts/run_stage2_iter48.py": "a7ca087373ded7d6cae3647abb7dfa1f3429ade5ed4c71048572da45e2d14466",
+      "curvature_RQ-VAE_iter48/scripts/run_stage3_iter48.py": "cb5b52489171108594209998062179de2d02c27b063c954efe5ba756edb818bc",
+      "curvature_RQ-VAE_iter48/train_rqvae.py": "ca5d77f664a9ecc31a35781fefeabef03a94f6fb9690aa8545ab56b151255451",
+      "item_sids.json": "a2be23155bbd5aa4f9fc2261ccb4bb9209e8a46734fde609ca70d4cb9d0dc415",
+      "recall.json": "14129c7befc6d6c8b9cbc49330c57549934828eb131f9a8ca301c25dbc2cc25e",
+      "rqvae_best.pth": "0b242059c7cd25c1a2253018ef5d5c46586f698febd0a6625d207aa2aadb56ba"
+    },
+    "key": "curvature_RQ-VAE_iter48",
+    "recall_paired": false,
+    "recall_source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-03-2026_20-34-59/test_final.json",
+    "stage": "stage2-retrain"
+  },
   "R09": {
     "arm": "TIGER_M2_radial_manifold",
     "duplicate_of": "20",

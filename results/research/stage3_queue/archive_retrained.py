@@ -77,6 +77,10 @@ def stage(rel: str, sid: Path, *, dry_run: bool) -> str:
     tree_name, _, variant = rel.partition("/")
     checkpoint = sid.parent / "rqvae_best.pth"
     if not checkpoint.is_file():
+        found = sorted(sid.parent.rglob("rqvae_best.pth"))
+        if found:
+            checkpoint = found[0]
+    if not checkpoint.is_file():
         print("%s has no checkpoint yet, skipping" % rel)
         return ""
 
