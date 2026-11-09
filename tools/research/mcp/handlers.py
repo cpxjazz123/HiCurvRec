@@ -109,7 +109,7 @@ def _launch_if_possible(run_id, root):
     reopened = []
     for name in ROLES:
         record = state.get(prefix + name, {})
-        if record.get("status") == "cancelled":
+        if record.get("status") in ("cancelled", "cancelling"):
             pipeline.store().reopen(prefix + name, "resume after cooperative cancel")
             reopened.append(name)
     if reopened:
