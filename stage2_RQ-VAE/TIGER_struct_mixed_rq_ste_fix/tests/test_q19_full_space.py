@@ -15,19 +15,51 @@ import native_product as N
 D = torch.float64
 
 
-def test_the_cross_ratio_direction_matches_the_native_distance():
-    a = torch.zeros(1, 16, dtype=D)
-    b = torch.zeros(1, 16, dtype=D)
-    a[0, 0] = 0.2
-    b[0, 1] = 0.1
-    num = float(((a - b) ** 2).sum())
-    den = float((1 - (a ** 2).sum()) * (1 - (b ** 2).sum()))
-    correct = num / den
-    reciprocal = den / num
-    phi_prod = float(G.phi(torch.tensor(correct, dtype=D)))
-    assert abs(phi_prod - 0.051711885865117525) < 1e-12
-    assert abs(correct - 0.05260942760942763) < 1e-12
-    assert abs(reciprocal - 19.007999999999996) < 1e-9
+def _expected(tangent_a, tangent_b):
+    ball_a, ball_b = G.to_ball(tangent_a), G.to_ball(tangent_b)
+    num = float(((ball_a - ball_b) ** 2).sum())
+    den = float((1 - (ball_a ** 2).sum()) * (1 - (ball_b ** 2).sum()))
+    return float(G.phi(torch.tensor(num / den, dtype=D)))
+
+
+def _inputs():
+    a = torch.zeros(1, 32, dtype=D)
+    b = torch.zeros(1, 32, dtype=D)
+    a[0, 16] = 0.2
+    b[0, 17] = 0.1
+    return a, b
+
+
+def test_the_real_distance_matches_the_independent_cross_ratio():
+    a, b = _inputs()
+    expected = _expected(a[0, 16:], b[0, 16:])
+    got = float(G.mixed_sq(a, b))
+    assert abs(got - expected) < 1e-12
+    assert abs(got - 0.05052627184756516) < 1e-12
+    ball_a = torch.zeros(1, 16, dtype=D)
+    ball_b = torch.zeros(1, 16, dtype=D)
+    ball_a[0, 0] = 0.2
+    ball_b[0, 1] = 0.1
+    num = float(((ball_a - ball_b) ** 2).sum())
+    den = float((1 - (ball_a ** 2).sum()) * (1 - (ball_b ** 2).sum()))
+    produced = float(G.phi(torch.tensor(num / den)))
+    assert abs(produced - 0.05171188712120056) < 1e-12
+    assert abs(produced - 0.051711885865117525) < 5e-9  # series truncation
+
+
+def test_a_reciprocal_distance_variant_is_rejected_by_the_same_check():
+    a, b = _inputs()
+    expected = _expected(a[0, 16:], b[0, 16:])
+    saved = G.poincare_sq
+    ball_a, ball_b = G.to_ball(a[0, 16:]), G.to_ball(b[0, 16:])
+    num = ((ball_a - ball_b) ** 2).sum()
+    den = (1 - (ball_a ** 2).sum()) * (1 - (ball_b ** 2).sum())
+    G.poincare_sq = lambda x, y: 4.0 * G.phi((den / num).reshape(-1))
+    try:
+        got = float(G.mixed_sq(a, b))
+    finally:
+        G.poincare_sq = saved
+    assert abs(got - expected) > 1e-2
 
 
 def test_the_h_residual_is_mobius_not_subtraction():
@@ -53,6 +85,7 @@ def test_the_h_residual_is_mobius_not_subtraction():
 
 
 if __name__ == "__main__":
-    test_the_cross_ratio_direction_matches_the_native_distance()
+    test_the_real_distance_matches_the_independent_cross_ratio()
+    test_a_reciprocal_distance_variant_is_rejected_by_the_same_check()
     test_the_h_residual_is_mobius_not_subtraction()
     print("ok")

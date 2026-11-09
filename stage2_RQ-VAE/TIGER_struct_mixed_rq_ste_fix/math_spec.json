@@ -207,9 +207,10 @@
    "residual_and_readback": "Let C_l be the selected codeword's tangent coordinates at level l and B_l = code_ball(C_l^H); initial state r_0^E = z^E, r_0^H = to_ball(z^H). Then r_l^E = r_{l-1}^E - C_l^E and r_l^H = (-B_l) mobius_add r_{l-1}^H (Moebius left inverse). The cumulative codeword position of level l is R_l = (sum_{j<=l} C_j^E, log_0(B_1 mobius_add (B_2 mobius_add ... B_l))); the readback is q_l = R_l + z - sg(z). The selection input is the E coordinates of the current residual and log_0 of its H ball, not a whole-space subtraction. Mobius addition and its inverse are defined on the open ball |a|<1; boundary points are excluded. Encoder STE and codebook native Jacobian are stated separately in ste_boundaries.",
    "ste_boundaries": "encoder receives straight-through gradients through each selection; codebooks receive their native readback gradients only; the discrete choice remains the baseline Sinkhorn assignment, not a plain argmin",
    "calibration": {
-    "s": "one shared positive scale from calibrate_structure_scale on the initialised model: the median h=1 pair distance over TRAIN triples; structure.calibrate_scale currently returns 1.0 on an empty sample, which is a known degenerate default and is not a calibrated value",
-    "lambda": "one value for the complete prefix objective, calibrated by the two-block rule (encoder; all codebooks merged) from question8 section 4; not the historical checkpoint's value",
-    "budget": "frozen optimizer budget; no per-layer weight selection, no scan, no extra seed"
+    "s": "one shared positive scale: median over TRAIN h=1 pairs of sqrt(clamp_min(d_M^2,1e-8)) at initialisation",
+    "s_degenerate": "structure.calibrate_scale returns 1.0 when there is no distance, when value<=1e-6, and training_hooks.calibrate_structure_scale returns 1.0 when no triples; these are uncalibrated defaults pending the frozen rule",
+    "lambda": "one value for the complete prefix objective from the two-block norm budget (encoder; all codebooks merged; decoder excluded); historical checkpoint values are not used",
+    "budget": "frozen optimizer budget; no per-layer weights, no epsilon, no scan"
    },
    "coverage_gaps": [
     "the reduced E1 x H1 adapter uses h=1+tanh(u) and box sampling; exact h=2 is covered by the real target tests (test_structure.py), not by the reduced adapter",
@@ -219,7 +220,36 @@
    "rejected_draft_forms": {
     "cross_ratio_reciprocal": "t_draft=(1-|a|^2)(1-|b|^2)/|a-b|^2 gave 19.007999999999996 where the native t is 0.05260942760942763 for the same ball points, and divides by zero at the legal collision",
     "euclidean_residual": "r_l=r_{l-1}-z_l would give H tangent (0.2,-0.2) instead of the native (0.1868567811974333,-0.22350722788306665); a native readback then recovers with error 0.023069610924273662 instead of 8.3e-17"
-   }
+   },
+   "definitions": {
+    "to_ball": "b(t) = 0 if t=0 else tanh(|t|)/|t| * t; domain all real tangent vectors; image the open ball |b|<1",
+    "log_zero": "log_0(b) = 0 if b=0 else atanh(|b|)/|b| * b; defined on |b|<1",
+    "mobius_add": "a (+) b = ((1 + 2<a,b> + |b|^2) a + (1 - |a|^2) b) / (1 + 2<a,b> + |a|^2 |b|^2)",
+    "mobius_left_inverse": "(-a) (+) r, with (-a) the Euclidean negation in the ball",
+    "nested_compose": "B_1 (+) (B_2 (+) ( ... (+) B_L)) evaluated left to right in the stated nesting",
+    "code_mapping": "C_l is the full 32-d codeword; B_l = code_ball(C_l), where code_ball returns to_ball(C_l[16:32]). Passing only the 16-d H slice to code_ball returns an empty slice, so the interface takes the full codeword",
+    "distance": "d_M^2 = |e-e'|^2 + phi(t), t = |b-b'|^2 / ((1-|b|^2)(1-|b'|^2)), phi(t)=asinh^2(sqrt(t)); curvature c=1; the standard hyperbolic squared distance is 4*phi and the product term uses phi",
+    "phi_implementation": "the implementation evaluates phi with a cubic series for small t (t - t^2/3 + 8t^3/45) and the asinh^2 branch above the threshold; at t=0.0526 this differs from the exact asinh^2 by about 1.3e-9, recorded by the distance test"
+   },
+   "prefix_path": {
+    "quantisation": "one forward on the running residual produces the three selections; no re-quantisation and no second gather",
+    "residual": "r_0^E=z^E, r_0^H=b(z^H); r_l^E=r_{l-1}^E-C_l^E; r_l^H=(-B_l)(+)r_{l-1}^H",
+    "cumulative": "R_l=(sum_{j<=l} C_j^E, log_0(B_1 (+) ... (+) B_l)); q_l=R_l+z-sg(z)",
+    "loss": "e_l^ab=(d_M^2(q_l^a,q_l^b)/(s^2 h_ab^2)-1)^2; L_l=(e_l^{c,a}+e_l^{c,b}+e_l^{a,b})/3 over the same TRAIN triples; L_prefix=(L1+L2+L3)/3",
+    "reconstruction": "decoder input = (sum_l C_l^E, log_0(B_1 (+) B_2 (+) B_3))",
+    "objective": "L = L_base + lambda * L_prefix with the same triples, the same three h, one shared s and one lambda",
+    "targets": "closed triples h=(1,1,1); wedges h=(1,1,2) on the (a,b) side; the exact h=2 is part of this domain and is covered by the real-target test, not by the 1+tanh(u) adapter"
+   },
+   "faces": {
+    "implemented": "last-layer structure term on quantised positions, mixed_sq with the phi form; this is the only term the trainer currently applies",
+    "to_freeze": "full E16 x H16 three-layer prefix objective and readback above",
+    "to_implement": "wiring: _positions still returns levels[-1]; the prefix path must run through the same quantisation and readback, not a copy"
+   },
+   "excluded": [
+    "assignment (Sinkhorn at the last training layer, export branch otherwise) is discrete; the balancing rule is unchanged",
+    "straight-through estimator: the declared surface is the received Jacobian; ordinary finite differences do not prove the surrogate gradient",
+    "H multi-dimensional and per-layer Jacobian evidence stays with the existing native tests; the E1 x H1 identity is only a reduced check"
+   ]
   },
   "expression_note": "on the E1 x H1 subface the H16 cross-ratio reduces to sinh(x1-y1)^2 and asinh^2(sqrt(t)) = (x1-y1)^2; the statements use that identity so the declared surface has a finite backward at coincident points"
  },
