@@ -42,10 +42,12 @@ def test_the_frozen_specification_passes_every_eval():
     the codebook. It is checked on its own below.
     """
     result = evals.run(_frozen())
-    # Two checks were written AFTER this round: the balancing rule and the
-    # behaviour-chain shape. They judge the live specifications, not the history.
+    # These checks were written AFTER this round: the balancing rule, the
+    # behaviour-chain shape and the domain statement (its rationale IS this
+    # round's displaced-code wording). They judge the live specifications, not
+    # the frozen document, which cannot be rewritten after the fact.
     historical = {"assignment-keeps-the-balancing", "behaviour-off-arithmetic",
-                  "behaviour-chain"}
+                  "behaviour-chain", "the-distance-states-its-domain"}
     failures = [failure for failure in result["failures"]
                 if failure["id"] not in historical]
     assert not failures, failures
