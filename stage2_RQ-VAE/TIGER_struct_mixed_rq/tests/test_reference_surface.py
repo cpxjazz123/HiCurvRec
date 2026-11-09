@@ -9,27 +9,22 @@ import mixed_geometry as G
 import structure as S
 
 
-def test_reduced_surface_matches_the_full_distance():
+def test_reduced_surface_matches_the_closed_form():
+    # Independent reference for the reduced surface: E = (x0-y0)^2, and the H part
+    # is phi(t) with t built from tanh of the two tangent coordinates.
     torch.manual_seed(0)
-    # Radial inputs: everything on the first Euclidean coordinate and on the
-    # first hyperbolic one, which is the configuration the 2-d surface states.
-    left = torch.zeros(12, 32, dtype=torch.float64)
-    right = torch.zeros(12, 32, dtype=torch.float64)
-    left[:, 0] = torch.randn(12, dtype=torch.float64) * 0.3
-    right[:, 0] = torch.randn(12, dtype=torch.float64) * 0.3
-    left[:, 16] = torch.randn(12, dtype=torch.float64) * 0.4
-    right[:, 16] = torch.randn(12, dtype=torch.float64) * 0.4
-    # mixed_sq expects the 32-d layout; place the two coordinates where the split
-    # reads them (index 0 for E, index 16 for the first H coordinate).
-    full_l = torch.zeros(12, 32, dtype=torch.float64)
-    full_r = torch.zeros(12, 32, dtype=torch.float64)
-    full_l[:, 0], full_l[:, 16] = left[:, 0], left[:, 1]
-    full_r[:, 0], full_r[:, 16] = right[:, 0], right[:, 1]
-    full = G.mixed_sq(full_l, full_r)
-    reduced = G.reference_surface(left[:, [0, 16]], right[:, [0, 16]])
-    # the reduced and full layouts reach tanh through differently shaped tensors;
-    # the difference is float noise, not a different formula
-    assert torch.allclose(full, reduced, rtol=1e-5, atol=1e-9)
+    x_e = torch.randn(12, dtype=torch.float64) * 0.3
+    y_e = torch.randn(12, dtype=torch.float64) * 0.3
+    x_h = torch.randn(12, dtype=torch.float64) * 0.4
+    y_h = torch.randn(12, dtype=torch.float64) * 0.4
+    a = torch.tanh(x_h)
+    b = torch.tanh(y_h)
+    t = (a - b) ** 2 / ((1 - a ** 2) * (1 - b ** 2))
+    expected = (x_e - y_e) ** 2 + torch.asinh(t.clamp_min(0).sqrt()) ** 2
+    left = torch.stack([x_e, x_h], dim=-1)
+    right = torch.stack([y_e, y_h], dim=-1)
+    got = G.reference_surface(left, right)
+    assert torch.allclose(got, expected, rtol=1e-12, atol=1e-15)
 
 
 def test_reduced_objective_matches_the_full_loss():
