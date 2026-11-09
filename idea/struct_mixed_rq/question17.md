@@ -1,6 +1,6 @@
 # question17 — 修复参考梯度与真实消费绑定，推进原生三层前缀机制
 
-**状态：OPEN（唯一开放追问）**　承接：`answer16.md`
+**状态：CLOSED（已审阅 answer17；未完成项转 question18）**　承接：`answer16.md`。审阅结论与后续要求见 [`question18.md`](question18.md)；归档不代表完整机制验收通过。
 
 ## 1. 本轮接受什么，不再重复修什么
 
