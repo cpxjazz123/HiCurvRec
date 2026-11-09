@@ -735,6 +735,8 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
             box["text"] = run_turn(agent, prompt)
         except Exception as exc:                               # noqa: BLE001
             box["error"] = exc
+            import traceback as _tb
+            box["trace"] = _tb.format_exc()
 
     worker_thread = threading.Thread(target=_turn, daemon=True)
     worker_thread.start()
@@ -744,10 +746,12 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         failure = ("TIMEOUT: the agent did not finish within " + str(int(budget)) +
                    " seconds; what it saved is what it delivered")
     if box.get("error") is not None:
-        # The turn raised inside its thread; without this the empty text was
-        # written as an answer and the receipt could still say verified.
+        # The turn raised inside its thread.  Record it as the failure so the
+        # receipt below is written with verified=false, then let the normal exit
+        # raise: raising here skipped the receipt entirely.
         err = box["error"]
-        raise RuntimeError("agent turn failed: " + type(err).__name__ + ": " + str(err))
+        failure = type(err).__name__ + ": " + str(err)[:300]
+        failure_trace = str(box.get("trace", ""))[-1500:]
     try:
         answer_text = box.get("text", "")
     except Exception as exc:                                   # noqa: BLE001
@@ -770,7 +774,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
             failure_trace = traceback.format_exc()[-1500:]
     if timed_out:
         answer_text = ""
-    if not output.is_file():
+    if not output.is_file() and not failure:
         # A read-only role has no write tool, and an agent that answered in the
         # chat instead of the file still delivered its answer: the records are
         # what the framework reads, so they are what the answer file carries.
