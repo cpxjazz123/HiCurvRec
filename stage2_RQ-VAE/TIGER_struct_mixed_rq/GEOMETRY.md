@@ -70,9 +70,14 @@ the codebook through the gather term; the reconstruction objectives are unchange
 
 `VQLayer._indices` chooses: Sinkhorn normalisation then `argmax` when
 `(self.training and self.use_sk) or (self.use_sk and infer_use_sk)`, otherwise
-`argmin` of the cost matrix.  The frozen baseline therefore **trains** with the
-Sinkhorn branch in every level, and **exports** with `infer_use_sk=False` while
-the module is in eval mode, which takes the `argmin` branch on the same cost.
+`argmin` of the cost matrix.
+
+Per level, from the frozen baseline source (`RQVAE(T._tokenizer_config())`):
+levels 1 and 2 have `use_sk = False` (Sinkhorn is configured on the last level
+only), so they always take `argmin`; level 3 has `use_sk = True`, takes Sinkhorn
+in training and `argmin` at export where `infer_use_sk=False` and the module is in
+eval mode.  `tests/test_assignment_branches.py` pins this pattern, because an
+earlier note here claimed "every level" and the source contradicted it.
 
 Consequences recorded here rather than papered over:
 
