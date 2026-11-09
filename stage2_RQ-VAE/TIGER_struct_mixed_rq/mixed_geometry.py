@@ -39,15 +39,25 @@ def to_ball(tangent: torch.Tensor, curvature: float = CURVATURE) -> torch.Tensor
 
 
 def poincare_sq(a: torch.Tensor, b: torch.Tensor, curvature: float = CURVATURE) -> torch.Tensor:
-    """Squared geodesic distance between points of the ball (batched)."""
-    scale = 1.0 / curvature
-    num = 2.0 * curvature * ((a - b) ** 2).sum(-1)
-    # A point very close to the boundary would send arcosh's argument to infinity
-    # and its gradient through the roof; clamping the two denominators keeps the
-    # distance (and its derivative) finite while staying exact well inside.
-    den = (scale - a.pow(2).sum(-1)).clamp_min(1e-3) * (scale - b.pow(2).sum(-1)).clamp_min(1e-3)
-    argument = 1.0 + (num / den).clamp_min(0.0)
-    return (torch.acosh(argument.clamp_min(1.0 + 1e-6)) ** 2) / curvature
+    """Squared geodesic distance via the Moebius difference and 2*atanh.
+
+    d^2 = 4 * atanh(||(-a) (+) b||)^2.  The argument is exactly 0 when a == b, so
+    two identical points have distance exactly 0; near the diagonal atanh(u) =
+    u + u^3/3 keeps the gradient finite, and the only clamp is the open-ball
+    bound (u < 1), which no finite point reaches.
+
+    The earlier arcosh(1 + ...) form needed a floor on its argument, which made
+    d(x, x) about 5e-7 instead of 0 and turned small distances into a constant.
+    """
+    # Moebius addition of (-a) and b, curvature 1
+    a2 = a.pow(2).sum(-1).unsqueeze(-1)
+    b2 = b.pow(2).sum(-1).unsqueeze(-1)
+    ab = (a * b).sum(-1, keepdim=True)
+    numerator = (1.0 - 2.0 * ab + b2) * (-a) + (1.0 - a2) * b
+    denominator = (1.0 - 2.0 * ab + a2 * b2).clamp_min(1e-12)
+    difference = numerator / denominator
+    norm = difference.norm(dim=-1).clamp(max=1.0 - 1e-12)
+    return (2.0 * torch.atanh(norm)) ** 2 / curvature
 
 
 def mixed_sq(left: torch.Tensor, right: torch.Tensor, geometry_on: bool | None = None) -> torch.Tensor:

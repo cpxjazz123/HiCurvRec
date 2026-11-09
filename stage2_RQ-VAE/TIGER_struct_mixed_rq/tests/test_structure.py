@@ -61,17 +61,22 @@ def test_lambda_calibration_hits_the_target_ratio():
 
 
 def test_sampler_respects_edges_and_wedges():
+    # Two separate centres: 0 owns a real triangle (1-2 edge exists), 1 owns a
+    # real wedge (3-4 edge does not exist).  The fixture itself is checked below.
     nodes = np.arange(6)
-    edges = {(0, 1), (0, 2), (1, 0), (2, 0)}
-    graph = S.Graph(nodes=nodes, neighbours={0: {1, 2}, 1: {0}, 2: {0}, 3: set(), 4: set(), 5: set()},
-                    wedge_pairs={0: [(1, 2)]}, triangle_pairs={0: [(1, 2)]})
+    neighbours = {0: {1, 2}, 1: {0, 2}, 2: {0, 1, 3}, 3: {2, 4}, 4: {3}, 5: set()}
+    assert 2 in neighbours[1] and 1 in neighbours[2]      # triangle 0-1-2
+    graph = S.Graph(nodes=nodes, neighbours=neighbours,
+                    triangle_pairs={0: [(1, 2)]}, wedge_pairs={1: [(3, 4)]})
     triples = S.sample_triples(graph, 64, random.Random(0))
-    assert len(triples) > 0
-    for triple in triples:
-        centre, partner_a, partner_b, kind = triple
-        assert (partner_a, partner_b) in graph.neighbours.get(centre, set()) or True
-        if kind == "wedge":
-            assert partner_b not in graph.neighbours.get(partner_a, set())
+    kinds = {kind for *_, kind in triples}
+    assert triples and kinds == {"triangle", "wedge"}
+    for centre, partner_a, partner_b, kind in triples:
+        assert partner_a in neighbours[centre] and partner_b in neighbours[centre]
+        if kind == "triangle":
+            assert partner_b in neighbours[partner_a]
+        else:
+            assert partner_b not in neighbours[partner_a]
 
 
 def test_hub_centres_do_not_dominate():

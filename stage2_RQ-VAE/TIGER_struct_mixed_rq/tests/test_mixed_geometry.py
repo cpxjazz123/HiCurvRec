@@ -28,11 +28,33 @@ def test_poincare_sq_matches_closed_form():
     zero = torch.zeros(1, 16, dtype=torch.float64)
     point = torch.zeros(1, 16, dtype=torch.float64)
     point[0, 0] = 0.25
-    # for a radial point, d = 2 atanh(||b||); take r from the mapped point itself
     r = float(G.to_ball(point).norm())
     expected = (2.0 * torch.atanh(torch.tensor(r, dtype=torch.float64)).item()) ** 2
     got = G.poincare_sq(G.to_ball(zero), G.to_ball(point)).item()
-    assert math.isclose(got, expected, rel_tol=1e-9)
+    assert math.isclose(got, expected, rel_tol=1e-12, abs_tol=1e-18)
+
+
+def test_zero_distance_is_exactly_zero():
+    a = torch.randn(5, 16, dtype=torch.float64) * 0.7
+    assert torch.equal(G.poincare_sq(a, a.clone()), torch.zeros(5, dtype=torch.float64))
+
+
+def test_small_distance_is_not_floored():
+    # origin to the tangent point 1e-4: d^2 must be (2 atanh(tanh(1e-4)*guard))^2
+    a = torch.zeros(1, 16, dtype=torch.float64)
+    b = torch.zeros(1, 16, dtype=torch.float64)
+    b[0, 0] = 1e-4
+    got = G.poincare_sq(G.to_ball(a), G.to_ball(b)).item()
+    assert got < 1e-6 and got > 0
+
+
+def test_near_diagonal_gradient_is_finite():
+    a = torch.zeros(1, 16, dtype=torch.float64, requires_grad=True)
+    b = torch.zeros(1, 16, dtype=torch.float64)
+    b.data[0, 0] = 1e-6
+    value = G.poincare_sq(G.to_ball(a), G.to_ball(b))
+    value.backward()
+    assert torch.isfinite(a.grad).all()
 
 
 def test_poincare_sq_is_finite_at_touching_points():
