@@ -110,10 +110,12 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
         base = model.compute_loss(batch, recon, quant)[0]
         current[0] = "struct"
         term = H.structure_term(model, items, graph, random.Random(seed), scale=scale,
-                                size=len(used), triples=used)
+                                size=len(used), triples=used,
+                                behaviour_on=bool(T.BEHAVIOUR_ON))
         struct = lam * term
         total = base + struct
-        z_base, z_struct = captures["base"][0], captures["struct"][0]
+        z_base = captures["base"][0]
+        z_struct = captures["struct"][0] if captures["struct"] else None
 
         blocks = {"encoder": list(model.encoder.parameters())}
         for i, layer in enumerate(model.rq.vq_layers):
@@ -129,14 +131,21 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
                 per[block] = raw[cur:cur + len(ps)]
                 cur += len(ps)
             states[name] = report_blocks(blocks, per)
-            gb, gs = torch.autograd.grad(loss, [z_base, z_struct], retain_graph=True,
-                                         allow_unused=True)
+            targets = [z_base] + ([z_struct] if z_struct is not None else [])
+            got = torch.autograd.grad(loss, targets, retain_graph=True, allow_unused=True)
+            gb = got[0]
+            gs = got[1] if len(got) > 1 else None
             latent[name] = {"z_base": None if gb is None else split_latent(gb.detach()),
-                            "z_struct": None if gs is None else split_latent(gs.detach())}
+                            "z_struct": ("NOT_APPLICABLE" if z_struct is None else
+                                         (None if gs is None else split_latent(gs.detach())))}
         tb = torch.autograd.grad(total, z_base, retain_graph=True)[0]
         bb = torch.autograd.grad(base, z_base, retain_graph=True)[0]
-        ts = torch.autograd.grad(total, z_struct, retain_graph=True)[0]
-        ss = torch.autograd.grad(struct, z_struct, retain_graph=True)[0]
+        if z_struct is not None:
+            ts = torch.autograd.grad(total, z_struct, retain_graph=True)[0]
+            ss = torch.autograd.grad(struct, z_struct, retain_graph=True)[0]
+            struct_diff = float((ts - ss).abs().max())
+        else:
+            struct_diff = None
         report = {
             "identity": {
                 "script_sha256": sha_bytes(Path(__file__)),
@@ -161,7 +170,7 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
                        "structure_weighted": float(struct.detach()), "total": float(total.detach())},
             "states": states, "latent": latent,
             "diffs": {"base_vs_total_z_base": float((tb - bb).abs().max()),
-                      "struct_vs_total_z_struct": float((ts - ss).abs().max())},
+                      "struct_vs_total_z_struct": struct_diff},
         }
     finally:
         handle.remove()
