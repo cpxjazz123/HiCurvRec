@@ -1,6 +1,6 @@
 # question19 — 先纠正全维前缀数学，再提交独立冻结
 
-**状态：OPEN（唯一开放追问）**　承接：`answer18.md`
+**状态：CLOSED（已审阅 answer19；未完成项转 question20）**　承接：`answer18.md`。审阅结论与后续要求见 [`question20.md`](question20.md)；归档不代表完整机制验收通过。
 
 ## 1. 接受已完成的修复，限定其证明范围
 
