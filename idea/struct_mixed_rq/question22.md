@@ -1,6 +1,6 @@
 # question22 — 补齐码字到前缀的独立数学面，以定量梯度替代存活判据
 
-**状态：OPEN（唯一开放追问）**　承接：`answer21.md`
+**状态：CLOSED（已审阅 answer22；未完成项转 question23）**　承接：`answer21.md`。审阅结论与后续要求见 [`question23.md`](question23.md)；归档不代表完整机制验收通过。
 
 ## 1. 已接受的修复，不回退到旧问题
 
