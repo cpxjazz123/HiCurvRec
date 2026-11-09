@@ -281,6 +281,21 @@ def dag_role(role: str) -> bool:
     return str(role) in DAG_ROLES
 
 
+def answer_text_for(role: str, answer_text: str, records) -> str:
+    """The text that becomes the answer file.
+
+    An ideation agent may deliver its block through progress records, and that is
+    still its answer.  A DAG document task may not: the progress is narration
+    ("STEP 1 - workspace inspection"), and adopting it turned a failed answer into
+    a file that could not be parsed.
+    """
+    if dag_role(role):
+        return answer_text
+    joined = "\n\n".join(str(record.get("content", "")) for record in records
+                          if str(record.get("content", "")).strip())
+    return joined or answer_text
+
+
 def output_schema(role: str):
     """The structured-output schema of a role, when the provider supports it."""
     if dag_role(role):
@@ -760,9 +775,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         # chat instead of the file still delivered its answer: the records are
         # what the framework reads, so they are what the answer file carries.
         records = progress_server.read_records(workspace / runner.PROGRESS_FILE_NAME)
-        joined = "\n\n".join(str(record.get("content", "")) for record in records
-                             if str(record.get("content", "")).strip())
-        text = joined or answer_text
+        text = answer_text_for(role, answer_text, records)
         payload = extract_json(answer_text) or extract_json(text)
         block = None
         if isinstance(payload, dict):

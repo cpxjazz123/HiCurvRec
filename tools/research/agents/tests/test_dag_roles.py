@@ -21,6 +21,13 @@ def test_dag_roles_do_not_get_the_idea_schema():
     assert runtime.output_schema("ideate") is runtime.IdeaPayload
 
 
+def test_progress_is_not_the_answer_of_a_dag_task():
+    records = [{"content": "STEP 1 - workspace inspection"}]
+    assert runtime.answer_text_for("literature", '{"sources": []}', records) == '{"sources": []}'
+    # ideation still reads progress, which is how a long block arrives
+    assert runtime.answer_text_for("ideate", "", records) == "STEP 1 - workspace inspection"
+
+
 def test_the_shared_prompt_does_not_impose_the_idea_block():
     # The old SYSTEM_PROMPT told every role to answer in an IDEA block, which the
     # literature census obeyed even after the role dispatch was fixed.
