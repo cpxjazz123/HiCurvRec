@@ -343,6 +343,11 @@ def main() -> None:
     all_embeddings_device = all_embeddings.to(device)
     struct_scale, struct_lambda = 1.0, 0.0
     calibration_flags = {"degenerate_scale": False, "degenerate_gradient": False}
+    # The calibrated values are broadcast from rank 0 over these buffers; they were
+    # used below without ever being defined, so the smoke died with NameError on
+    # every path that reached the calibration.
+    scale_tensor = torch.tensor([1.0], device=device)
+    lambda_tensor = torch.tensor([0.0], device=device)
     if BEHAVIOUR_ON:
         graph = structure.build_graph(TRAIN_FILE, seed=SEED)
         # Every rank runs the SAME forwards on the SAME sample: the model's own

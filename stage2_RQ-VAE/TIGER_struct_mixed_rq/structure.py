@@ -141,7 +141,7 @@ def calibrate_scale(points: torch.Tensor, h: torch.Tensor) -> float:
             distances.append(G.mixed_sq(points[mask, a], points[mask, b]).clamp_min(1e-8).sqrt())
     if not distances:
         return 1.0
-    value = float(torch.median(torch.cat(distances)))
+    value = float(torch.median(torch.cat(distances)).detach())
     return value if value > 1e-6 else 1.0
 
 
