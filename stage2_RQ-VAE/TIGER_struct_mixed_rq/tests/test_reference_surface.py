@@ -19,7 +19,13 @@ def test_reduced_surface_matches_the_full_distance():
     right[:, 0] = torch.randn(12, dtype=torch.float64) * 0.3
     left[:, 16] = torch.randn(12, dtype=torch.float64) * 0.4
     right[:, 16] = torch.randn(12, dtype=torch.float64) * 0.4
-    full = G.mixed_sq(left, right)
+    # mixed_sq expects the 32-d layout; place the two coordinates where the split
+    # reads them (index 0 for E, index 16 for the first H coordinate).
+    full_l = torch.zeros(12, 32, dtype=torch.float64)
+    full_r = torch.zeros(12, 32, dtype=torch.float64)
+    full_l[:, 0], full_l[:, 16] = left[:, 0], left[:, 1]
+    full_r[:, 0], full_r[:, 16] = right[:, 0], right[:, 1]
+    full = G.mixed_sq(full_l, full_r)
     reduced = G.reference_surface(left[:, [0, 16]], right[:, [0, 16]])
     assert torch.allclose(full, reduced, rtol=1e-9, atol=1e-12)
 

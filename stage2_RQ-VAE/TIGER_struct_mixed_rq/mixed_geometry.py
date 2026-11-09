@@ -107,6 +107,45 @@ def pairwise_mixed_sq(points: torch.Tensor, geometry_on: bool | None = None) -> 
 
 
 def reference_surface(left: torch.Tensor, right: torch.Tensor) -> torch.Tensor:
+    """The contract surface on 2 coordinates (1 Euclidean + 1 radial), phi form.
+
+    Returns the squared geodesic distance 4*phi(t) exactly as mixed_sq computes
+    it; phi is the same function, so the reduced surface is not a second formula.
+    """
+    left_e, left_h = left[..., :1], left[..., 1:2]
+    right_e, right_h = right[..., :1], right[..., 1:2]
+    ball_l = to_ball(left_h)
+    ball_r = to_ball(right_h)
+    num = ((ball_l - ball_r) ** 2).sum(-1)
+    den = ((1.0 - ball_l ** 2).sum(-1)) * ((1.0 - ball_r ** 2).sum(-1))
+    t = (num / den.clamp_min(torch.finfo(torch.float64).tiny)).clamp_min(0.0)
+    # same normalisation as mixed_sq: the H contribution is phi(t), not 4*phi(t)
+    return (left_e - right_e).pow(2).sum(-1) + phi(t)
+
+
+def mixed_sq(left: torch.Tensor, right: torch.Tensor, geometry_on: bool | None = None) -> torch.Tensor:
+    """Product-space squared distance; the switch selects the control metric."""
+    if geometry_on is None:
+        geometry_on = GEOMETRY_ON
+    left_e, left_h = split(left)
+    right_e, right_h = split(right)
+    euclid = ((left_e - right_e) ** 2).sum(-1)
+    if not geometry_on:
+        return euclid + ((left_h - right_h) ** 2).sum(-1)
+    return euclid + poincare_sq(to_ball(left_h), to_ball(right_h)) / 4.0
+
+
+def pairwise_mixed_sq(points: torch.Tensor, geometry_on: bool | None = None) -> torch.Tensor:
+    """(..., n, 32) -> (..., n, n) squared distances."""
+    flat = points.reshape(-1, points.shape[-1])
+    n = points.shape[-2]
+    rows = flat.repeat_interleave(n, dim=0)
+    cols = flat.repeat(n, 1)
+    distances = mixed_sq(rows, cols, geometry_on).reshape(*points.shape[:-2], n, n)
+    return distances
+
+
+def reference_surface(left: torch.Tensor, right: torch.Tensor) -> torch.Tensor:
     """The same formula on a 2-coordinate surface (1 Euclidean + 1 radial).
 
     It exists so the frozen contract can state the surface in closed form and the

@@ -19,7 +19,7 @@ def test_split_sizes():
 
 
 def test_ball_projection_is_inside_the_ball():
-    h = torch.randn(5, 16) * 10
+    h = torch.randn(5, 16, dtype=torch.float64) * 10
     ball = G.to_ball(h)
     assert (ball.norm(dim=-1) < 1).all()
 
