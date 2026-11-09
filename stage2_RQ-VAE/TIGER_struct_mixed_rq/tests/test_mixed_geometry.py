@@ -68,6 +68,21 @@ def test_phi_series_matches_the_closed_form_near_zero():
     assert torch.allclose(G.phi(t), expected, rtol=1e-9, atol=1e-15)
 
 
+def test_far_points_are_not_capped():
+    # Two radial points with tangent coordinates -3 and +3: the closed form gives
+    # d_H = 2 atanh(||b||) with ||b|| the mapped radius, so d_H^2 must match it and
+    # must NOT be halved by any cap on the Mobius difference.
+    a = torch.tensor([[0.0, -3.0]], dtype=torch.float64)
+    b = torch.tensor([[0.0, 3.0]], dtype=torch.float64)
+    ball_a, ball_b = G.to_ball(a), G.to_ball(b)
+    radius = float(ball_b.norm())
+    # opposite radial points: d_H = 2 atanh(2r/(1+r^2)) = 4 atanh(r)
+    expected = (4.0 * math.atanh(radius)) ** 2
+    got = G.poincare_sq(ball_a, ball_b).item()
+    assert abs(got - expected) / expected < 1e-9
+    assert radius > 0.99
+
+
 def test_near_diagonal_gradient_is_finite():
     a = torch.zeros(1, 16, dtype=torch.float64, requires_grad=True)
     b = torch.zeros(1, 16, dtype=torch.float64)

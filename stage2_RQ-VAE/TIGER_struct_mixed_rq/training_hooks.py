@@ -74,6 +74,15 @@ def calibrate_lambda_by_gradient(model, embeddings: torch.Tensor, graph,
                  "target_ratio": target_ratio}
 
 
+class CalibrationDegenerate(RuntimeError):
+    """The frozen calibration cannot define a weight; the run must not train."""
+
+    def __init__(self, detail: dict) -> None:
+        super().__init__("CALIBRATION_DEGENERATE: %s" % detail)
+        self.detail = detail
+        self.status = "CALIBRATION_DEGENERATE"
+
+
 def calibrate_lambda_block_budget(model, embeddings: torch.Tensor, graph,
                                   rng: random.Random, *, scale: float, size: int,
                                   base_loss: torch.Tensor, geometry_on: bool | None = None,
@@ -119,12 +128,13 @@ def calibrate_lambda_block_budget(model, embeddings: torch.Tensor, graph,
         if gb is not None and gs is not None and nb > 0 and ns > 0:
             cosine = float(torch.dot(gb, gs) / (gb.norm() * gs.norm()))
         detail["blocks"][name] = {"base_norm": nb, "structure_norm": ns, "cosine": cosine}
-        if gb is None or gs is None or nb is None or ns is None:
+        if (gb is None or gs is None or nb is None or ns is None
+                or not (torch.isfinite(torch.tensor(nb)) and torch.isfinite(torch.tensor(ns)))
+                or nb == 0 or ns == 0):
             detail["degenerate_block"] = name
-            return 0.0, detail
-        if not (torch.isfinite(torch.tensor(nb)) and torch.isfinite(torch.tensor(ns))) or nb == 0 or ns == 0:
-            detail["degenerate_block"] = name
-            return 0.0, detail
+            detail["status"] = "CALIBRATION_DEGENERATE"
+            detail["lambda"] = None
+            raise CalibrationDegenerate(detail)
         candidates.append(nb / ns)
     lam = min(candidates)
     detail["lambda"] = lam

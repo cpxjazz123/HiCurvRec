@@ -107,10 +107,16 @@ def test_block_budget_reports_a_degenerate_block_instead_of_guessing():
     embeddings = torch.randn(6, 32)
     # a base loss with no path to the codebooks makes that block degenerate
     base = sum((p ** 2).sum() for p in model.encoder.parameters())
-    lam, detail = H.calibrate_lambda_block_budget(
-        model, embeddings, synthetic_graph(), random.Random(6), scale=1.0, size=16,
-        base_loss=base, geometry_on=True)
-    assert lam == 0.0 and detail.get("degenerate_block") == "codebooks"
+    try:
+        H.calibrate_lambda_block_budget(
+            model, embeddings, synthetic_graph(), random.Random(6), scale=1.0, size=16,
+            base_loss=base, geometry_on=True)
+    except H.CalibrationDegenerate as failure:
+        assert failure.status == "CALIBRATION_DEGENERATE"
+        assert failure.detail["degenerate_block"] == "codebooks"
+        assert failure.detail["lambda"] is None
+    else:
+        raise AssertionError("a degenerate block must raise, not return a usable lambda")
 
 
 if __name__ == "__main__":

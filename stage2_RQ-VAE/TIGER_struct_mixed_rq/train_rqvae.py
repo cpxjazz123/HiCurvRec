@@ -355,10 +355,16 @@ def main() -> None:
         probe_batch = train_embeddings[:BATCH_SIZE_PER_RANK].to(device)
         reconstructed, quant_loss_vec, _, _, _probe_levels = raw_module.forward_with_codes(probe_batch)
         base_term, _ = raw_module.compute_loss(probe_batch, reconstructed, quant_loss_vec)
-        lam, block_detail = training_hooks.calibrate_lambda_block_budget(
-            raw_module, all_embeddings_device, graph, __import__("random").Random(SEED),
-            scale=measured, size=STRUCT_CALIBRATION_TRIPLES,
-            base_loss=base_term, geometry_on=GEOMETRY_ON)
+        try:
+            lam, block_detail = training_hooks.calibrate_lambda_block_budget(
+                raw_module, all_embeddings_device, graph, __import__("random").Random(SEED),
+                scale=measured, size=STRUCT_CALIBRATION_TRIPLES,
+                base_loss=base_term, geometry_on=GEOMETRY_ON)
+        except training_hooks.CalibrationDegenerate as failure:
+            # No training loop, no optimizer.step and no export: the calibration
+            # could not define the weight, and a fabricated lambda is not a result.
+            _record(rank, "calibration_degenerate", detail=failure.detail)
+            raise SystemExit("CALIBRATION_DEGENERATE: %s" % failure.detail)
         degenerate = [name for name, block in block_detail.get("blocks", {}).items()
                       if not block["base_norm"] or not block["structure_norm"]]
         if not (measured == measured) or measured <= 1e-6 or degenerate or block_detail.get("degenerate_block"):
