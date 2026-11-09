@@ -19,7 +19,8 @@ case $prof in *[!A-Za-z0-9_-]*|'') echo "omp-bootstrap: bad profile name: $prof"
 
 LOCAL=/var/tmp/omp_local
 SHARED=/fs04/ar57/wenyu/omp_plugins          # shared, node-independent plugin store
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+HERE=$(cd "$(dirname "$0")" && pwd)
+REPO_SHARED=/fs04/ar57/wenyu/GeneRec
 
 mkdir -p "$LOCAL/bin" "$LOCAL/roots" "$LOCAL/logs" "$LOCAL/locks"
 
@@ -33,11 +34,18 @@ if [ ! -x "$LOCAL/bin/omp" ]; then
   fi
 fi
 
-# 2) the wrapper itself
+# 2) the wrapper itself: prefer the copy that sits next to this script (both on
+#    NFS, so one copy serves every node), fall back to the repository checkout.
 if [ ! -x "$LOCAL/bin/omp-local" ]; then
-  cp "$REPO/tools/env/omp-local" "$LOCAL/bin/omp-local"
-  chmod +x "$LOCAL/bin/omp-local"
+  for candidate in "$HERE/omp-local" "$REPO_SHARED/tools/setup/omp-local"; do
+    if [ -x "$candidate" ]; then
+      cp "$candidate" "$LOCAL/bin/omp-local"
+      chmod +x "$LOCAL/bin/omp-local"
+      break
+    fi
+  done
 fi
+[ -x "$LOCAL/bin/omp-local" ] || { echo "omp-bootstrap: cannot find omp-local to install" >&2; exit 2; }
 
 # 3) the profile root and its home-facing symlink
 root=$LOCAL/roots/$prof
