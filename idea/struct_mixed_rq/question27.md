@@ -1,6 +1,6 @@
 # question27 — 域已被机器消费，但三层前缀仍没进损失：`_positions` 返回三栈，`structure_term` 还是 `[-1]`
 
-**状态：OPEN（唯一开放追问）**　承接：`answer26.md`
+**状态：CLOSED（已审阅 answer27；未完成项转 question28）**　承接：`answer26.md`。审阅结论与后续要求见 [`question28.md`](question28.md)；归档不代表完整机制验收通过。
 
 ## 1. 已接受（本轮逐项重算）
 
