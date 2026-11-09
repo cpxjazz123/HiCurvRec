@@ -134,7 +134,7 @@ class TaskStore:
         with self.locked():
             state = self._load()
             task = state["tasks"].get(task_id)
-            if not task or task["status"] not in ("done", "cancelled", "cancelling"):
+            if not task or task["status"] not in ("done", "cancelled"):
                 # A cooperative cancel leaves unfinished tasks terminal; a resume
                 # has to be able to put exactly those back in the queue.
                 raise StateError("only a completed or cancelled task can be reopened")
