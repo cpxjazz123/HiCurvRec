@@ -213,7 +213,7 @@
     "budget": "frozen optimizer budget; no per-layer weights, no epsilon, no scan"
    },
    "coverage_gaps": [
-    "the reduced E1 x H1 adapter uses h=1+tanh(u) and box sampling; exact h=2 is covered by the real target tests (test_structure.py), not by the reduced adapter",
+    "the reduced adapter samples h in {1,2} and s>0 from the contract args (not 1+tanh(u)); exact h=2 is therefore inside its sampling domain",
     "H1 squared-difference identity does not demonstrate H16 non-Euclidean effects",
     "this prefix objective is NOT_IMPLEMENTED in the trainer; only the last-layer structure term runs",
     "the buildable SymPy call covers the reduced E1 x H1 prefix path (cumulative sums, three pairs, three layers); the full E16 x H16 prefix has an executable torch reference and program, not yet a SymPy contract call"
@@ -263,8 +263,9 @@
    "domain": {
     "codewords": "the declared readback domain is ||C_l^H|| <= 1 per codeword; the measured checkpoint L1/L2/L3 H norms are 0.63/0.27/0.04 at mean and stay below the boundary",
     "saturation": "one strategy only: to_ball keeps the radial map and pulls only the saturated tail by (1-1e-6); log_0 clamps the norm at 1-1e-9 and divides by norm when norm>1e-12. Both the torch reference and the declared surface use these epsilons",
-    "outside": "outside ||C^H||>1 the map is saturated, not an exact inverse; the reference reproduces the production saturation so both sides return the same finite value, and the gap is recorded as a diagnostic, not a gate"
-   }
+    "outside": "the readback is invertible up to ||t|| about 10 (ratio 0.9999999996); from about 19 the tanh saturation collapses the round trip to 7.25; these measured points are diagnostics, not an acceptance gate"
+   },
+   "statements_status": "pseudocode only; not rebuildable by tools/research/stage2/reference.build_reference"
   },
   "expression_note": "on the E1 x H1 subface the H16 cross-ratio reduces to sinh(x1-y1)^2 and asinh^2(sqrt(t)) = (x1-y1)^2; the statements use that identity so the declared surface has a finite backward at coincident points"
  },

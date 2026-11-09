@@ -119,14 +119,17 @@
     {
      "name": "h",
      "width": 3,
-     "radius": 0.5,
-     "sampler": "box"
+     "choices": [
+      1.0,
+      2.0
+     ]
     },
     {
      "name": "s",
      "width": 1,
-     "radius": 0.5,
-     "sampler": "box"
+     "positive": true,
+     "min": 0.1,
+     "max": 1.0
     }
    ],
    "statements": [
@@ -173,7 +176,7 @@
    ],
    "output": "L",
    "note": "E1 x H1: the H contribution is (qh_i-qh_j)^2 by the identity asinh^2(sqrt(t))=(qH_i-qH_j)^2, so the surface has a finite backward at a collision",
-   "domain": "||C_l^H|| <= 1; to_ball saturation shrink (1-1e-6) and log_0 clamp 1-1e-9 are the single declared strategy"
+   "domain": "h in {1,2}; s>0; the reduced surface samples these choices, not a signed box"
   }
  ],
  "coupling": {

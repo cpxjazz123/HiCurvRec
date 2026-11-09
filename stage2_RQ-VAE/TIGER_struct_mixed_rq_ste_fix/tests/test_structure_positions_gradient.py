@@ -40,7 +40,7 @@ def test_the_positions_carry_one_codebook_gradient():
             layer.get_code_embs().normal_(0, 0.5)
     embeddings = torch.empty(40, 32).normal_(0, 2.0)
     ids = list(range(12))
-    positions = H._positions(model, embeddings, ids)
+    positions = H._positions(model, embeddings, ids)[-1]
     _, _, _, tokens, levels = model.forward_with_codes(embeddings[ids])
     assert len({tuple(row.tolist()) for row in tokens}) > 1, (
         "the fixture collapsed onto one code; the gradient comparison is void")

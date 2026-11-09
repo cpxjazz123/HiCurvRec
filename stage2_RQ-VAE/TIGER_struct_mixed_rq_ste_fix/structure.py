@@ -211,6 +211,9 @@ def reference_prefix_native(codes, h: torch.Tensor, s: torch.Tensor) -> torch.Te
     balls = []
     euclid = 0.0
     for level in codes:
+        if float(level[..., 16:].norm(dim=-1).max()) > 1.0:
+            raise ValueError("the codeword H norm leaves the declared domain ||C^H|| <= 1")
+    for level in codes:
         euclid = euclid + level[..., :16]
         balls.append(_ball(level[..., 16:]))
         nested = balls[-1]

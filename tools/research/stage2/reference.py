@@ -80,6 +80,19 @@ def build_reference(contract_call: dict):
     module = sympytorch.SymPyModule(expressions=[expression])
 
     def reference(**arguments):
+        import torch
+        for spec in contract_call["args"]:
+            value = arguments[spec["name"]]
+            if spec.get("positive") and (value <= 0).any():
+                raise ValueError("the argument %r must be positive" % spec["name"])
+            if spec.get("choices"):
+                allowed = torch.tensor(spec["choices"], dtype=value.dtype)
+                if not torch.isin(value, allowed).all():
+                    raise ValueError("the argument %r leaves its declared choices" % spec["name"])
+        if contract_call.get("codeword_h_max") is not None and "codes" in arguments:
+            h = arguments["codes"][..., 16:]
+            if (h.norm(dim=-1) > float(contract_call["codeword_h_max"])).any():
+                raise ValueError("the codeword H norm leaves the declared domain")
         columns = {}
         for spec in contract_call["args"]:
             value = arguments[spec["name"]]
@@ -123,13 +136,21 @@ def _inputs(contract_call: dict, *, seed: int):
         width = int(spec["width"] or 1)
         radius = float(spec.get("radius") or 0.1)
         count = int(spec.get("samples") or 16)
-        raw = (torch.rand(count, width, generator=generator, dtype=torch.float64) * 2 - 1)
+        if spec.get("choices"):
+            choices = torch.tensor(spec["choices"], dtype=torch.float64)
+            raw = choices[torch.randint(0, len(choices), (count, width), generator=generator)]
+        elif spec.get("positive"):
+            low = float(spec.get("min", 0.1))
+            high = float(spec.get("max", 1.0))
+            raw = torch.rand(count, width, generator=generator, dtype=torch.float64) * (high - low) + low
+        else:
+            raw = (torch.rand(count, width, generator=generator, dtype=torch.float64) * 2 - 1)
         if spec.get("sampler", "ball") == "ball":
             # Inside the ball of the declared radius: scale each row's norm.
             norms = raw.norm(dim=1, keepdim=True).clamp_min(1e-12)
             raw = raw / norms * (radius * torch.rand(count, 1, generator=generator,
                                                      dtype=torch.float64))
-        else:
+        if not (spec.get("choices") or spec.get("positive")):
             raw = raw * radius
         raw = raw.requires_grad_(True)
         arguments[spec["name"]] = raw

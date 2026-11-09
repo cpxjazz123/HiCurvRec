@@ -18,7 +18,7 @@ def _positions(model, embeddings: torch.Tensor, item_ids: list[int]) -> torch.Te
     """
     gathered = embeddings[torch.tensor(item_ids, dtype=torch.long)]
     _, _, _, _, levels = model.forward_with_codes(gathered)
-    return levels[-1]
+    return torch.stack(levels, dim=0)
 
 
 def structure_term(model, embeddings: torch.Tensor, graph, rng: random.Random, *,
@@ -35,7 +35,7 @@ def structure_term(model, embeddings: torch.Tensor, graph, rng: random.Random, *
     if not triples:
         return torch.zeros((), device=embeddings.device)
     item_ids = [item for centre, a, b, _ in triples for item in (centre, a, b)]
-    positions = _positions(model, embeddings, item_ids).reshape(len(triples), 3, -1)
+    positions = _positions(model, embeddings, item_ids)[-1].reshape(len(triples), 3, -1)
     h = S.triple_targets([kind for *_, kind in triples], device=positions.device)
     if capture is not None:
         capture.append({"items": list(item_ids),
@@ -51,7 +51,7 @@ def calibrate_structure_scale(model, embeddings: torch.Tensor, graph, rng: rando
     if not triples:
         return 1.0
     item_ids = [item for centre, a, b, _ in triples for item in (centre, a, b)]
-    positions = _positions(model, embeddings, item_ids).reshape(len(triples), 3, -1)
+    positions = _positions(model, embeddings, item_ids)[-1].reshape(len(triples), 3, -1)
     h = S.triple_targets([kind for *_, kind in triples], device=positions.device)
     return S.calibrate_scale(positions, h)
 
