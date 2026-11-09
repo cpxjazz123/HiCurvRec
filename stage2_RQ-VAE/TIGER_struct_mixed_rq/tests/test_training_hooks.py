@@ -88,6 +88,31 @@ def test_gradient_weight_calibration_hits_the_ratio():
     assert abs(lam * detail["structure_grad_norm"] / detail["base_grad_norm"] - 0.1) < 1e-9
 
 
+def test_block_budget_is_the_minimum_over_blocks():
+    model = tiny_model()
+    embeddings = torch.randn(6, 32)
+    base = sum((p ** 2).sum() for p in model.parameters())
+    lam, detail = H.calibrate_lambda_block_budget(
+        model, embeddings, synthetic_graph(), random.Random(5), scale=1.0, size=16,
+        base_loss=base, geometry_on=True)
+    ratios = [b["base_norm"] / b["structure_norm"] for b in detail["blocks"].values()]
+    assert abs(lam - min(ratios)) < 1e-9
+    assert set(detail["blocks"]) == {"encoder", "codebooks"}
+    for block in detail["blocks"].values():
+        assert lam * block["structure_norm"] <= block["base_norm"] + 1e-9
+
+
+def test_block_budget_reports_a_degenerate_block_instead_of_guessing():
+    model = tiny_model()
+    embeddings = torch.randn(6, 32)
+    # a base loss with no path to the codebooks makes that block degenerate
+    base = sum((p ** 2).sum() for p in model.encoder.parameters())
+    lam, detail = H.calibrate_lambda_block_budget(
+        model, embeddings, synthetic_graph(), random.Random(6), scale=1.0, size=16,
+        base_loss=base, geometry_on=True)
+    assert lam == 0.0 and detail.get("degenerate_block") == "codebooks"
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

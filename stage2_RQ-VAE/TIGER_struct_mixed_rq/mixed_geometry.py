@@ -56,7 +56,9 @@ def poincare_sq(a: torch.Tensor, b: torch.Tensor, curvature: float = CURVATURE) 
     numerator = (1.0 - 2.0 * ab + b2) * (-a) + (1.0 - a2) * b
     denominator = (1.0 - 2.0 * ab + a2 * b2).clamp_min(1e-12)
     difference = numerator / denominator
-    norm = difference.norm(dim=-1).clamp(max=1.0 - 1e-12)
+    # 1 - 1e-12 is not representable in float32 and would clamp to exactly 1,
+    # making atanh infinite; 1 - 1e-6 stays below the boundary in both dtypes.
+    norm = difference.norm(dim=-1).clamp(max=1.0 - 1e-6)
     return (2.0 * torch.atanh(norm)) ** 2 / curvature
 
 

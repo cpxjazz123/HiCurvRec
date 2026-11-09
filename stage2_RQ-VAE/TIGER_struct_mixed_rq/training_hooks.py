@@ -72,3 +72,60 @@ def calibrate_lambda_by_gradient(model, embeddings: torch.Tensor, graph,
     lam = (target_ratio * base_norm / structure_norm) if structure_norm > 1e-12 else 0.0
     return lam, {"base_grad_norm": base_norm, "structure_grad_norm": structure_norm,
                  "target_ratio": target_ratio}
+
+
+def calibrate_lambda_block_budget(model, embeddings: torch.Tensor, graph,
+                                  rng: random.Random, *, scale: float, size: int,
+                                  base_loss: torch.Tensor, geometry_on: bool | None = None,
+                                  epsilon: float = 0.0) -> tuple[float, dict]:
+    """lambda* = min over parameter blocks of ||g_block^base|| / ||g_block^struct||.
+
+    The budget is pre-registered: the structure term may not exceed the base
+    term's gradient norm on ANY of the jointly supervised blocks at calibration
+    time.  The decoder is deliberately not a block: a large decoder gradient must
+    not raise the structure weight.  No epsilon, no seed switching, no fallback.
+    """
+    blocks = {
+        "encoder": list(model.encoder.parameters()),
+        "codebooks": [p for layer in model.rq.vq_layers for p in layer.parameters()],
+    }
+    structure = structure_term(model, embeddings, graph, rng, scale=scale, size=size,
+                               behaviour_on=True, geometry_on=geometry_on)
+
+    def block_gradients(term: torch.Tensor) -> dict[str, torch.Tensor | None]:
+        flat = [p for params in blocks.values() for p in params if p.requires_grad]
+        grads = torch.autograd.grad(term, flat, retain_graph=True, allow_unused=True)
+        out, cursor = {}, 0
+        for name, params in blocks.items():
+            collected = []
+            for p in params:
+                if not p.requires_grad:
+                    continue
+                g = grads[cursor]
+                cursor += 1
+                collected.append(torch.zeros_like(p) if g is None else g)
+            out[name] = torch.cat([g.reshape(-1) for g in collected]) if collected else None
+        return out
+
+    base_grads = block_gradients(base_loss)
+    struct_grads = block_gradients(structure)
+    detail = {"blocks": {}, "epsilon": epsilon}
+    candidates = []
+    for name in blocks:
+        gb, gs = base_grads[name], struct_grads[name]
+        nb = float(gb.norm()) if gb is not None else None
+        ns = float(gs.norm()) if gs is not None else None
+        cosine = None
+        if gb is not None and gs is not None and nb > 0 and ns > 0:
+            cosine = float(torch.dot(gb, gs) / (gb.norm() * gs.norm()))
+        detail["blocks"][name] = {"base_norm": nb, "structure_norm": ns, "cosine": cosine}
+        if gb is None or gs is None or nb is None or ns is None:
+            detail["degenerate_block"] = name
+            return 0.0, detail
+        if not (torch.isfinite(torch.tensor(nb)) and torch.isfinite(torch.tensor(ns))) or nb == 0 or ns == 0:
+            detail["degenerate_block"] = name
+            return 0.0, detail
+        candidates.append(nb / ns)
+    lam = min(candidates)
+    detail["lambda"] = lam
+    return lam, detail

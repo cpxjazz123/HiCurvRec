@@ -1,0 +1,16 @@
+{
+  "what": "unadmitted training run: 1074 of 3000 epochs, interrupted, no export",
+  "command": "CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_IB_DISABLE=1 timeout 240 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun --standalone --nproc_per_node=4 --master_port=50202 train_rqvae.py",
+  "cwd": "stage2_RQ-VAE/TIGER_struct_mixed_rq",
+  "tool": "torchrun (project Stage2 interpreter), launched from my shell, not via MCP",
+  "timeout_seconds": 240,
+  "training_window_seconds": 191,
+  "note_on_windows": "the 240 s is my timeout budget and the 191 s is the metrics stream's own window (22:51:27 to 22:54:38 +1100); they have different start points and are not the same measurement",
+  "signal": "SIGTERM (timeout), process 890231; the only traceback in the log is that signal",
+  "final_epoch": 1074,
+  "artifacts": "none: no item_sids.json, no rqvae_best.pth, no results directory",
+  "source_identity": "UNKNOWN: the tree was being edited at the time and no trusted snapshot was taken; current commits are not that identity",
+  "reuse": "none; weights, optimizer state and metrics are not reused or used for tuning",
+  "run_id": "run_9f65a8558d314391",
+  "archived_to": "results/research/issue144/evidence/unadmitted_1074epoch (the issue117 tree is gitignored runtime state)"
+}
