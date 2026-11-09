@@ -29,11 +29,33 @@ class RQVAE(nn.Module):
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens
 
+    def forward_with_codes(self, embeddings: torch.Tensor):
+        """Same as forward but also returns the cumulative quantized vector.
+
+        The ranking term needs that vector; recomputing the encoder for it doubled
+        the activation memory and the training job hit the cgroup limit.
+        """
+        encoded = self.encoder(embeddings)
+        quantized, quant_loss, unused_codes, tokens = self.rq(encoded)
+        reconstructed = self.decoder(quantized)
+        return reconstructed, quant_loss, int(unused_codes), tokens, quantized
+
     @torch.no_grad()
     def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
         encoded = self.encoder(embeddings)
         _, _, _, tokens = self.rq(encoded, infer_use_sk=infer_use_sk)
         return tokens
+
+    def forward_with_codes(self, embeddings: torch.Tensor):
+        """Same as forward but also returns the cumulative quantized vector.
+
+        The ranking term needs that vector; recomputing the encoder for it doubled
+        the activation memory and the training job hit the cgroup limit.
+        """
+        encoded = self.encoder(embeddings)
+        quantized, quant_loss, unused_codes, tokens = self.rq(encoded)
+        reconstructed = self.decoder(quantized)
+        return reconstructed, quant_loss, int(unused_codes), tokens, quantized
 
     @torch.no_grad()
     def init_codebook(self, embeddings: torch.Tensor) -> None:

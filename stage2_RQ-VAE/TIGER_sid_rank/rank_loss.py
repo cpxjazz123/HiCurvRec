@@ -15,13 +15,32 @@ import torch.nn.functional as F
 
 MARGIN = 0.5
 RANK_ON_FINAL = True
+GEOMETRY_ON = True          # False compares with the euclidean distance instead
+CURVATURE = 1.0
 RANK_ON_COARSE = True
 LAMBDA_FINAL = 0.1
 LAMBDA_COARSE = 0.05
 
 
+def poincare_sq(left: torch.Tensor, right: torch.Tensor,
+                curvature: float = CURVATURE) -> torch.Tensor:
+    """Squared hyperbolic distance in the Poincare ball of curvature 1/c."""
+    scale = 1.0 / curvature ** 0.5
+    left = torch.tanh(left * scale) * scale
+    right = torch.tanh(right * scale) * scale
+    norm_l = (left ** 2).sum(dim=-1)
+    norm_r = (right ** 2).sum(dim=-1)
+    denom = (1.0 / curvature - norm_l) * (1.0 / curvature - norm_r)
+    ratio = 2.0 * curvature * ((left - right) ** 2).sum(dim=-1) / denom.clamp_min(1e-9)
+    # acosh is only defined for argument >= 1; rounding can put 1+ratio at 0.9999999
+    # and the NaN that follows poisons the whole batch through the shared encoder.
+    return (torch.acosh((1.0 + ratio).clamp_min(1.0 + 1e-7)) ** 2) / curvature
+
+
 def similarity(left: torch.Tensor, right: torch.Tensor) -> torch.Tensor:
-    """Negative squared distance, the quantity the ranking compares."""
+    """Negative squared distance; hyperbolic when the geometry switch is on."""
+    if GEOMETRY_ON:
+        return -poincare_sq(left, right)
     return -((left - right) ** 2).sum(dim=-1)
 
 
@@ -59,3 +78,46 @@ def total_loss(base: torch.Tensor, final_term: torch.Tensor | None,
     if RANK_ON_COARSE and coarse_term is not None:
         loss = loss + lambda_coarse * coarse_term
     return loss
+
+
+def batch_rank_term(quantized: torch.Tensor, items: torch.Tensor,
+                    neighbours: dict[int, set[int]],
+                    generator: torch.Generator, margin: float = MARGIN) -> torch.Tensor:
+    """One ranking term for a batch: positives are observed neighbours in the batch.
+
+    Sampling runs in plain python over the batch (a thousand items per step); the
+    tensors are built once at the end, because per-item tensor creation was what
+    made the first version spend seconds per epoch.
+    """
+    import random as _random
+
+    rng = _random.Random(int(torch.randint(0, 2**31 - 1, (1,), generator=generator).item()))
+    ids = items.tolist()
+    rows = {int(item): index for index, item in enumerate(ids)}
+    left, right, neg_left, neg_right = [], [], [], []
+    batch_ids = list(rows)
+    for item, row in rows.items():
+        pool = [other for other in neighbours.get(item, ()) if other in rows]
+        if not pool:
+            continue
+        partner = pool[rng.randrange(len(pool))]
+        negative = None
+        for _ in range(8):
+            candidate = batch_ids[rng.randrange(len(batch_ids))]
+            if candidate != item and candidate not in neighbours.get(item, ()):
+                negative = candidate
+                break
+        if negative is None:
+            continue
+        left.append(row)
+        right.append(rows[int(partner)])
+        neg_left.append(row)
+        neg_right.append(rows[int(negative)])
+    if not left:
+        return torch.zeros((), device=quantized.device)
+    device = quantized.device
+    pos = torch.tensor(list(zip(left, right)), dtype=torch.long, device=device)
+    neg = torch.tensor(list(zip(neg_left, neg_right)), dtype=torch.long, device=device)
+    s_pos = similarity(quantized[pos[:, 0]], quantized[pos[:, 1]])
+    s_neg = similarity(quantized[neg[:, 0]], quantized[neg[:, 1]])
+    return rank_loss(s_pos, s_neg, margin)

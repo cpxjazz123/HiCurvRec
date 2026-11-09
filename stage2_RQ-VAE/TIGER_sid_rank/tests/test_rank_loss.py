@@ -32,9 +32,14 @@ def test_margin_monotonic():
     assert R.rank_loss(pos, neg, 0.1) < R.rank_loss(pos, neg, 1.0)
 
 
-def test_similarity_is_negative_squared_distance():
+def test_similarity_is_negative_squared_distance_euclidean():
     a, b = torch.tensor([[0.0, 0.0]]), torch.tensor([[3.0, 4.0]])
-    assert math.isclose(R.similarity(a, b).item(), -25.0)
+    saved = R.GEOMETRY_ON
+    try:
+        R.GEOMETRY_ON = False
+        assert math.isclose(R.similarity(a, b).item(), -25.0)
+    finally:
+        R.GEOMETRY_ON = saved
 
 
 def test_stratified_mean_weights_strata_equally():
@@ -63,6 +68,51 @@ def test_switches_disable_the_terms():
         R.RANK_ON_FINAL, R.RANK_ON_COARSE = saved
 
 
+def test_batch_term_is_finite_and_zero_without_positives():
+    q = torch.randn(4, 3, requires_grad=True)
+    items = torch.arange(4)
+    generator = torch.Generator().manual_seed(0)
+    empty = R.batch_rank_term(q, items, {}, generator)
+    assert float(empty) == 0.0
+    neighbours = {0: {1}, 1: {0}}
+    term = R.batch_rank_term(q, items, neighbours, generator)
+    assert torch.isfinite(term)
+    term.backward()
+    assert q.grad is not None and torch.isfinite(q.grad).all()
+
+
+def test_poincare_distance_matches_closed_form():
+    zero = torch.zeros(1, 2, dtype=torch.float64)
+    point = torch.tensor([[0.25, 0.0]], dtype=torch.float64)
+    # tanh scaling maps 0.25 -> tanh(0.25); the closed form for (0, r) is 2*artanh(r)
+    r = float(torch.tanh(torch.tensor(0.25, dtype=torch.float64)))
+    expected = (2.0 * torch.atanh(torch.tensor(r)).item()) ** 2
+    assert math.isclose(R.poincare_sq(zero, point).item(), expected, rel_tol=1e-6)
+
+
+def test_geometry_switch_changes_the_similarity():
+    a = torch.tensor([[0.2, 0.1]])
+    b = torch.tensor([[0.9, 0.3]])
+    saved = R.GEOMETRY_ON
+    try:
+        R.GEOMETRY_ON = True
+        hyp = R.similarity(a, b).item()
+        R.GEOMETRY_ON = False
+        euc = R.similarity(a, b).item()
+        assert hyp != euc
+        assert math.isclose(euc, -((a - b) ** 2).sum().item(), rel_tol=1e-6)
+    finally:
+        R.GEOMETRY_ON = saved
+
+
+def test_poincare_is_finite_at_touching_points():
+    a = torch.tensor([[0.0, 0.0]])
+    b = torch.tensor([[0.0, 0.0]])
+    value = R.poincare_sq(a, b)
+    assert torch.isfinite(value).all()
+    assert math.isclose(value.item(), 0.0, abs_tol=1e-6)
+
+
 if __name__ == "__main__":
     failures = 0
     for name, function in sorted(globals().items()):
@@ -74,3 +124,5 @@ if __name__ == "__main__":
                 failures += 1
                 print("FAIL ", name)
     raise SystemExit(1 if failures else 0)
+
+

@@ -35,6 +35,7 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
 from model import RQVAE
+from rank_loss import LAMBDA_FINAL, RANK_ON_FINAL, batch_rank_term
 
 
 # === 路径常量（无绝对路径；由文件自身向上找仓库标记推导）===
@@ -55,7 +56,7 @@ def _repository_root() -> Path:
 
 REPO_ROOT = _repository_root()
 # The arm name is this tree's promoted name; a candidate copy changes only this line.
-ARM_NAME = "TIGER_RQ-VAE"
+ARM_NAME = "TIGER_sid_rank"
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
@@ -275,7 +276,32 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
-    train_dataset = TensorDataset(train_embeddings)
+    class ItemDataset(torch.utils.data.Dataset):
+        """Embedding rows together with the item id they belong to."""
+
+        def __init__(self, embeddings: torch.Tensor, item_ids: np.ndarray) -> None:
+            self.embeddings = embeddings
+            self.item_ids = torch.from_numpy(item_ids.astype(np.int64))
+
+        def __len__(self) -> int:
+            return len(self.embeddings)
+
+        def __getitem__(self, index: int):
+            return self.embeddings[index], self.item_ids[index]
+
+    neighbours: dict[int, set[int]] = {}
+    for history in train_frame["history"]:
+        if history is None or len(history) < 2:
+            continue
+        items = [int(x) for x in history]
+        for left, right in zip(items[:-1], items[1:]):
+            if left == right:
+                continue
+            neighbours.setdefault(left, set()).add(right)
+            neighbours.setdefault(right, set()).add(left)
+    rank_generator = torch.Generator().manual_seed(SEED)
+
+    train_dataset = ItemDataset(train_embeddings, train_ids)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -330,12 +356,20 @@ def main() -> None:
         losses: list[float] = []
         recons: list[float] = []
         _epoch_t0 = time.time()
-        for (batch,) in loader:
+        for batch, item_ids in loader:
             batch = batch.to(device, non_blocking=True)
+            item_ids = item_ids.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _ = model(batch)
+            if RANK_ON_FINAL:
+                reconstructed, quant_loss, _, _, quantized = raw_module.forward_with_codes(batch)
+            else:
+                reconstructed, quant_loss, _, _ = model(batch)
+                quantized = None
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
+            if RANK_ON_FINAL and quantized is not None:
+                rank_term = batch_rank_term(quantized, item_ids, neighbours, rank_generator)
+                loss = loss + LAMBDA_FINAL * rank_term
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
