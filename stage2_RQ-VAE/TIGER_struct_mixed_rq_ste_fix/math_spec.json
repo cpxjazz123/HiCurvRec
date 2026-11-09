@@ -204,7 +204,7 @@
    "callable": "NOT_IMPLEMENTED",
    "note": "one shared s, one lambda, one TRAIN triple set with the three pair targets; no next-item objective, no per-layer scale, no second gather.  The implemented training term is the last-layer structure loss, not this prefix objective",
    "full_space": "E16 x H16: Euclidean part is a squared difference. H part: ball point b = to_ball(t) = tanh(|t|)/|t| * t; t_cross = |b-b'|^2 / ((1-|b|^2)(1-|b'|^2)) (this direction, NOT its reciprocal); phi(t) = asinh(sqrt(t))^2 and d_M^2 = |e-e'|^2 + phi(t). Standard hyperbolic squared distance is 4*phi; the product term uses phi, so the normalisation is fixed and c=1. A reciprocal cross-ratio would diverge at the legal collision b=b' (t_cross=0) and is wrong.",
-   "residual_and_readback": "Let C_l be the selected codeword's tangent coordinates at level l and B_l = code_ball(C_l^H); initial state r_0^E = z^E, r_0^H = to_ball(z^H). Then r_l^E = r_{l-1}^E - C_l^E and r_l^H = (-B_l) mobius_add r_{l-1}^H (Moebius left inverse). The cumulative codeword position of level l is R_l = (sum_{j<=l} C_j^E, log_0(B_1 mobius_add (B_2 mobius_add ... B_l))); the readback is q_l = R_l + z - sg(z). The selection input is the E coordinates of the current residual and log_0 of its H ball, not a whole-space subtraction. Mobius addition and its inverse are defined on the open ball |a|<1; boundary points are excluded. Encoder STE and codebook native Jacobian are stated separately in ste_boundaries.",
+   "residual_and_readback": "Let C_l be the selected codeword's tangent coordinates at level l and B_l = code_ball(C_l), i.e. b(C_l^H) applied to the full 32-d codeword; initial state r_0^E = z^E, r_0^H = to_ball(z^H). Then r_l^E = r_{l-1}^E - C_l^E and r_l^H = (-B_l) mobius_add r_{l-1}^H (Moebius left inverse). The cumulative codeword position of level l is R_l = (sum_{j<=l} C_j^E, log_0(B_1 mobius_add (B_2 mobius_add ... B_l))); the readback is q_l = R_l + z - sg(z). The selection input is the E coordinates of the current residual and log_0 of its H ball, not a whole-space subtraction. Mobius addition and its inverse are defined on the open ball |a|<1; boundary points are excluded. Encoder STE and codebook native Jacobian are stated separately in ste_boundaries.",
    "ste_boundaries": "encoder receives straight-through gradients through each selection; codebooks receive their native readback gradients only; the discrete choice remains the baseline Sinkhorn assignment, not a plain argmin",
    "calibration": {
     "s": "one shared positive scale: median over TRAIN h=1 pairs of sqrt(clamp_min(d_M^2,1e-8)) at initialisation",
@@ -226,19 +226,27 @@
     "log_zero": "log_0(b) = 0 if b=0 else atanh(|b|)/|b| * b; defined on |b|<1",
     "mobius_add": "a (+) b = ((1 + 2<a,b> + |b|^2) a + (1 - |a|^2) b) / (1 + 2<a,b> + |a|^2 |b|^2)",
     "mobius_left_inverse": "(-a) (+) r, with (-a) the Euclidean negation in the ball",
-    "nested_compose": "B_1 (+) (B_2 (+) ( ... (+) B_L)) evaluated left to right in the stated nesting",
+    "nested_compose": "right fold: start with the last B_L, then for j=L-1..1 compute B_j (+) accumulated; brackets are explicit and Moebius addition is not associative, so no left-to-right regrouping is allowed",
     "code_mapping": "C_l is the full 32-d codeword; B_l = code_ball(C_l), where code_ball returns to_ball(C_l[16:32]). Passing only the 16-d H slice to code_ball returns an empty slice, so the interface takes the full codeword",
     "distance": "d_M^2 = |e-e'|^2 + phi(t), t = |b-b'|^2 / ((1-|b|^2)(1-|b'|^2)), phi(t)=asinh^2(sqrt(t)); curvature c=1; the standard hyperbolic squared distance is 4*phi and the product term uses phi",
-    "phi_implementation": "the implementation evaluates phi with a cubic series for small t (t - t^2/3 + 8t^3/45) and the asinh^2 branch above the threshold; at t=0.0526 this differs from the exact asinh^2 by about 1.3e-9, recorded by the distance test"
+    "phi_implementation": "phi selects the asinh branch above TAU=0.001 and the cubic series below it. The 1.256e-9 difference reported at t=0.0526 was float32 rounding in a diagnostic tensor, not series truncation; analytic comparisons use float64 (math.asinh^2 equals 0.051711885865117525)."
    },
    "prefix_path": {
     "quantisation": "one forward on the running residual produces the three selections; no re-quantisation and no second gather",
     "residual": "r_0^E=z^E, r_0^H=b(z^H); r_l^E=r_{l-1}^E-C_l^E; r_l^H=(-B_l)(+)r_{l-1}^H",
-    "cumulative": "R_l=(sum_{j<=l} C_j^E, log_0(B_1 (+) ... (+) B_l)); q_l=R_l+z-sg(z)",
+    "cumulative": "R_l = ( sum_{j<=l} C_j^E, log_0( B_1 (+) ( B_2 (+) ( ... (+) B_l ) ) ) ); q_l = R_l + z - sg(z)",
     "loss": "e_l^ab=(d_M^2(q_l^a,q_l^b)/(s^2 h_ab^2)-1)^2; L_l=(e_l^{c,a}+e_l^{c,b}+e_l^{a,b})/3 over the same TRAIN triples; L_prefix=(L1+L2+L3)/3",
-    "reconstruction": "decoder input = (sum_l C_l^E, log_0(B_1 (+) B_2 (+) B_3))",
+    "reconstruction": "decoder input = ( sum_l C_l^E, log_0( B_1 (+) ( B_2 (+) B_3 ) ) )",
     "objective": "L = L_base + lambda * L_prefix with the same triples, the same three h, one shared s and one lambda",
-    "targets": "closed triples h=(1,1,1); wedges h=(1,1,2) on the (a,b) side; the exact h=2 is part of this domain and is covered by the real-target test, not by the 1+tanh(u) adapter"
+    "targets": "closed triples h=(1,1,1); wedges h=(1,1,2) on the (a,b) side; the exact h=2 is part of this domain and is covered by the real-target test, not by the 1+tanh(u) adapter",
+    "program": [
+     "for each TRAIN triple (c,a,b) and its three h=(h_ca,h_cb,h_ab):",
+     "  for l=1..3: d_l^ca=mixed_sq(q_l[c],q_l[a]); d_l^cb=mixed_sq(q_l[c],q_l[b]); d_l^ab=mixed_sq(q_l[a],q_l[b])",
+     "  e_l^ca=(d_l^ca/(s*s*h_ca*h_ca)-1)^2 and likewise for cb, ab",
+     "  L_l=(e_l^ca+e_l^cb+e_l^ab)/3",
+     "  L_prefix=(L_1+L_2+L_3)/3"
+    ],
+    "reference": "structure.reference_prefix_surface(qs, h, s) implements the program above on the full 32-d cumulative positions; it is a reference surface, not the trainer path"
    },
    "faces": {
     "implemented": "last-layer structure term on quantised positions, mixed_sq with the phi form; this is the only term the trainer currently applies",

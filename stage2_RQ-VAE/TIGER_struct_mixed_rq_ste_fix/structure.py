@@ -132,6 +132,25 @@ def structure_loss(points: torch.Tensor, h: torch.Tensor, *, scale: float,
     return ((ratios - 1.0) ** 2).mean()
 
 
+def reference_prefix_surface(qs, h: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
+    """The three-layer prefix stress on cumulative positions; reference only.
+
+    qs: three tensors (batch, 3, 32) of cumulative codeword positions,
+    h: (batch, 3) targets for (centre,a), (centre,b), (a,b), s: (batch, 1).
+    """
+    total = None
+    for q in qs:
+        d01 = G.mixed_sq(q[:, 0], q[:, 1])
+        d02 = G.mixed_sq(q[:, 0], q[:, 2])
+        d12 = G.mixed_sq(q[:, 1], q[:, 2])
+        e01 = (d01 / (s[:, 0] ** 2 * h[:, 0] ** 2) - 1) ** 2
+        e02 = (d02 / (s[:, 0] ** 2 * h[:, 1] ** 2) - 1) ** 2
+        e12 = (d12 / (s[:, 0] ** 2 * h[:, 2] ** 2) - 1) ** 2
+        layer = (e01 + e02 + e12) / 3
+        total = layer if total is None else total + layer
+    return total / 3
+
+
 def calibrate_scale(points: torch.Tensor, h: torch.Tensor) -> float:
     """Median distance of the h = 1 pairs at initialisation (TRAIN only)."""
     distances = []

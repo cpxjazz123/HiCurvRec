@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import mixed_geometry as G
 import native_product as N
+import structure as S
 
 D = torch.float64
 
@@ -42,9 +43,8 @@ def test_the_real_distance_matches_the_independent_cross_ratio():
     ball_b[0, 1] = 0.1
     num = float(((ball_a - ball_b) ** 2).sum())
     den = float((1 - (ball_a ** 2).sum()) * (1 - (ball_b ** 2).sum()))
-    produced = float(G.phi(torch.tensor(num / den)))
-    assert abs(produced - 0.05171188712120056) < 1e-12
-    assert abs(produced - 0.051711885865117525) < 5e-9  # series truncation
+    produced = float(G.phi(torch.tensor(num / den, dtype=D)))
+    assert abs(produced - 0.051711885865117525) < 1e-12
 
 
 def test_a_reciprocal_distance_variant_is_rejected_by_the_same_check():
@@ -84,8 +84,59 @@ def test_the_h_residual_is_mobius_not_subtraction():
     assert error_naive > 1e-2
 
 
+def test_the_real_distance_has_a_live_h_gradient():
+    a, b = _inputs()
+    a.requires_grad_(True)
+    b.requires_grad_(True)
+    d = G.mixed_sq(a, b)
+    ga, gb = torch.autograd.grad(d, (a, b))
+    assert float(torch.cat([ga, gb])[:, 16:].norm()) > 1e-6
+
+    saved = G.poincare_sq
+    G.poincare_sq = lambda x, y: saved(x, y).detach()
+    try:
+        a2, b2 = _inputs()
+        a2.requires_grad_(True)
+        b2.requires_grad_(True)
+        d2 = G.mixed_sq(a2, b2)
+        ga2, gb2 = torch.autograd.grad(d2, (a2, b2))
+    finally:
+        G.poincare_sq = saved
+    assert float(torch.cat([ga2, gb2])[:, 16:].norm()) < 1e-12
+
+
+def test_the_prefix_reference_is_the_three_layer_stress():
+    torch.manual_seed(0)
+    qs = [torch.randn(2, 3, 32, dtype=D) for _ in range(3)]
+    h = torch.ones(2, 3, dtype=D)
+    h[:, 2] = torch.tensor([1.0, 2.0], dtype=D)
+    s = torch.ones(2, 1, dtype=D)
+    for q in qs:
+        q.requires_grad_(True)
+    loss = S.reference_prefix_surface(qs, h, s)
+
+    manual = None
+    for q in qs:
+        d = [G.mixed_sq(q[:, 0], q[:, 1]), G.mixed_sq(q[:, 0], q[:, 2]),
+             G.mixed_sq(q[:, 1], q[:, 2])]
+        e = [(d[k] / (s[:, 0] ** 2 * h[:, k] ** 2) - 1) ** 2 for k in range(3)]
+        layer = (e[0] + e[1] + e[2]) / 3
+        manual = layer if manual is None else manual + layer
+    manual = manual / 3
+    assert torch.allclose(loss, manual, atol=1e-12)
+    g = torch.autograd.grad(loss.sum(), qs)
+    assert all(float(x[:, :, 16:].norm()) > 1e-6 for x in g)
+
+    zero = [torch.zeros(1, 3, 32, dtype=D) for _ in range(3)]
+    collapsed = S.reference_prefix_surface(zero, torch.ones(1, 3, dtype=D),
+                                            torch.ones(1, 1, dtype=D))
+    assert abs(float(collapsed) - 1.0) < 1e-9
+
+
 if __name__ == "__main__":
     test_the_real_distance_matches_the_independent_cross_ratio()
     test_a_reciprocal_distance_variant_is_rejected_by_the_same_check()
+    test_the_real_distance_has_a_live_h_gradient()
+    test_the_prefix_reference_is_the_three_layer_stress()
     test_the_h_residual_is_mobius_not_subtraction()
     print("ok")
