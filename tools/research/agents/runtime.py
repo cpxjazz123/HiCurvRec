@@ -265,8 +265,29 @@ class DerivationPayload(BaseModel):
     args: list[DerivationArgument] = Field(default_factory=list)
 
 
+#: The Issue #117 DAG tasks are document tasks: they return one JSON object of
+#: their own (a census, a candidate, a review), never an ideation payload.  The
+#: old fall-through silently rendered them as IDEA blocks and the framework then
+#: failed to parse the answer.
+DAG_ROLES = ("behavior", "literature", "geometry", "review")
+
+DAG_JSON_INSTRUCTIONS = (
+    "Return exactly one JSON object and nothing else: no IDEA/END IDEA markers, "
+    "no prose before or after it. Do not wrap the object in a field named after "
+    "another role. Every field the task asks for must be present with its real "
+    "value; write UNKNOWN or NOT_CHECKED where the evidence does not support a "
+    "claim, never a placeholder citation."
+)
+
+
+def dag_role(role: str) -> bool:
+    return str(role) in DAG_ROLES
+
+
 def output_schema(role: str):
     """The structured-output schema of a role, when the provider supports it."""
+    if dag_role(role):
+        return None
     if role == "score":
         return RankPayload
     if role == "derive":
@@ -663,6 +684,8 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         instructions = SYSTEM_PROMPT + "\n" + CODING_JSON_INSTRUCTIONS
     elif role == "score":
         instructions = SYSTEM_PROMPT + "\n" + RANK_JSON_INSTRUCTIONS
+    elif dag_role(role):
+        instructions = SYSTEM_PROMPT + "\n" + DAG_JSON_INSTRUCTIONS
     else:
         instructions = SYSTEM_PROMPT + "\n" + IDEA_JSON_INSTRUCTIONS
     schema = None
@@ -706,6 +729,11 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         timed_out = True
         failure = ("TIMEOUT: the agent did not finish within " + str(int(budget)) +
                    " seconds; what it saved is what it delivered")
+    if box.get("error") is not None:
+        # The turn raised inside its thread; without this the empty text was
+        # written as an answer and the receipt could still say verified.
+        err = box["error"]
+        raise RuntimeError("agent turn failed: " + type(err).__name__ + ": " + str(err))
     try:
         answer_text = box.get("text", "")
     except Exception as exc:                                   # noqa: BLE001
