@@ -1,0 +1,361 @@
+{
+ "identity": {
+  "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_struct_mixed_rq/rqvae_best.pth",
+  "checkpoint_sha256": "84f05d46419e6f5c8b80706bd24aafbf41a401cf8d6e5631e99305eb98c14672",
+  "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_struct_mixed_rq/item_sids.json",
+  "sid_sha256": "7c147fc634cc2939367d3fc83bc0a8ebfaa2d96a92cf23e060c7c88b4ac390a1",
+  "script": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_struct_mixed_rq/precheck_question3.py",
+  "script_sha256": "fc356f333deabc9ea125bb52df847273ca8a1f82c549c550b30518b00a56e5fb",
+  "sources": {
+   "model/layers.py": "51b287f6e280b09a5d3813d3b0050dda94b2cbec8edcda4eb1538b4a5b4f95d3",
+   "model/model.py": "ba221245c40fd1083d2034b5835ef636149d3bdda1bbb4ab29e4b2f9f7a49c2b",
+   "mixed_geometry.py": "7f9ee28f7c46e3697e93ae393ebedc82c0870732a12dd739194d810ae9a0cc08",
+   "native_product.py": "3853f061eb82e2ed0c51236308df094308c31a4b98d2dfcde5a55a6b5a03cc25",
+   "structure.py": "bbbb79caf9392829a87ff9d5494a113502445eabc8bd0831d652ee1149bfc3d6",
+   "training_hooks.py": "a071174646a8bf6083e1e5eb17e75bd408ecbceabb286c2b26332e251d7539a6",
+   "probe_blocks.py": "f3df06053fc2578ce8273951c1f699beee41ae976117436127323a76d52ad8c2"
+  },
+  "inputs": {
+   "train": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+   "embedding": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+  },
+  "seed": 42,
+  "batch_ids": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   52,
+   53,
+   54,
+   55,
+   56,
+   57,
+   58,
+   59,
+   60,
+   61,
+   62,
+   63
+  ],
+  "batch": 64,
+  "triples_requested": 64,
+  "triples_accepted": 45,
+  "acceptance_rate": 0.703125,
+  "s": 0.04444597661495209,
+  "lambda": 9.226019983543665e-07,
+  "sources_of_s_lambda": "formal run calibration (training log)",
+  "switches": {
+   "behaviour_on": true,
+   "geometry_on": true
+  },
+  "load_state_dict": {
+   "missing": [],
+   "unexpected": []
+  },
+  "run_id": "UNAVAILABLE"
+ },
+ "branch": {
+  "train_vs_export": [
+   0,
+   0,
+   42
+  ]
+ },
+ "losses": {
+  "recon": 0.0001060134163708426,
+  "quant": 0.00016659620450809598,
+  "structure_weighted": 3.961445145250764e-06,
+  "structure_raw": 4.293774604797363,
+  "total": 0.0002765710523817688
+ },
+ "gradients": {
+  "recon": {
+   "blocks": {
+    "encoder": {
+     "norm": 0.0022592353634536266,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 8
+    },
+    "C1": {
+     "norm": 0.00041724747279658914,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 1
+    },
+    "C2": {
+     "norm": 1.4616389307775535e-06,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 1
+    },
+    "C3": {
+     "norm": 0.00031431257957592607,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 1
+    },
+    "decoder": {
+     "norm": 0.00043197296326979995,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 8
+    }
+   },
+   "cosines_vs_total": null,
+   "block_cosines_vs_total": {
+    "encoder": {
+     "cosine": 0.9864505529403687,
+     "norm": 0.0022592353634536266
+    },
+    "C1": {
+     "cosine": 0.2946244478225708,
+     "norm": 0.00041724747279658914
+    },
+    "C2": {
+     "cosine": 0.001181414583697915,
+     "norm": 1.4616389307775535e-06
+    },
+    "C3": {
+     "cosine": 0.934134304523468,
+     "norm": 0.00031431257957592607
+    },
+    "decoder": {
+     "cosine": 1.0001065731048584,
+     "norm": 0.00043197296326979995
+    }
+   }
+  },
+  "quant": {
+   "blocks": {
+    "encoder": {
+     "norm": 0.00039774528704583645,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 8
+    },
+    "C1": {
+     "norm": 0.00047958793584257364,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 1
+    },
+    "C2": {
+     "norm": 0.00022374550462700427,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 1
+    },
+    "C3": {
+     "norm": 0.00014470085443463176,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 1
+    },
+    "decoder": {
+     "norm": 0.0,
+     "finite": true,
+     "none_tensors": 8,
+     "zero_tensors": 0,
+     "tensors": 8
+    }
+   },
+   "cosines_vs_total": null,
+   "block_cosines_vs_total": {
+    "encoder": {
+     "cosine": -0.5432572364807129,
+     "norm": 0.00039774528704583645
+    },
+    "C1": {
+     "cosine": 0.5725653171539307,
+     "norm": 0.00047958793584257364
+    },
+    "C2": {
+     "cosine": 0.9999725222587585,
+     "norm": 0.00022374550462700427
+    },
+    "C3": {
+     "cosine": 0.6867648363113403,
+     "norm": 0.00014470085443463176
+    },
+    "decoder": {
+     "cosine": "UNDEFINED",
+     "norm": 0.0
+    }
+   }
+  },
+  "structure": {
+   "blocks": {
+    "encoder": {
+     "norm": 0.00014155831013340503,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 8
+    },
+    "C1": {
+     "norm": 4.331332092988305e-05,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 1
+    },
+    "C2": {
+     "norm": 7.857092327867576e-07,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 1
+    },
+    "C3": {
+     "norm": 5.72549834032543e-05,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 1
+    },
+    "decoder": {
+     "norm": 0.0,
+     "finite": true,
+     "none_tensors": 8,
+     "zero_tensors": 0,
+     "tensors": 8
+    }
+   },
+   "cosines_vs_total": null,
+   "block_cosines_vs_total": {
+    "encoder": {
+     "cosine": 0.07421499490737915,
+     "norm": 0.00014155831013340503
+    },
+    "C1": {
+     "cosine": -0.26116329431533813,
+     "norm": 4.331332092988305e-05
+    },
+    "C2": {
+     "cosine": 0.005313526373356581,
+     "norm": 7.857092327867576e-07
+    },
+    "C3": {
+     "cosine": 0.1412748545408249,
+     "norm": 5.72549834032543e-05
+    },
+    "decoder": {
+     "cosine": "UNDEFINED",
+     "norm": 0.0
+    }
+   }
+  },
+  "total": {
+   "blocks": {
+    "encoder": {
+     "norm": 0.002023051492869854,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 8
+    },
+    "C1": {
+     "norm": 0.0003862149314954877,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 1
+    },
+    "C2": {
+     "norm": 0.00022374525724444538,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 1
+    },
+    "C3": {
+     "norm": 0.000401074270484969,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 1
+    },
+    "decoder": {
+     "norm": 0.00043197296326979995,
+     "finite": true,
+     "none_tensors": 0,
+     "zero_tensors": 0,
+     "tensors": 8
+    }
+   },
+   "cosines_vs_total": null
+  }
+ },
+ "geometry_on_off_same_assignment_mode": {
+  "token_diff": [
+   0,
+   0,
+   0
+  ],
+  "readback_max_abs_diff": [
+   2.7939677238464355e-09,
+   0.00019334966782480478,
+   0.013489212840795517
+  ],
+  "structure_term_off": 4.282893657684326
+ }
+}
