@@ -145,25 +145,6 @@ def pairwise_mixed_sq(points: torch.Tensor, geometry_on: bool | None = None) -> 
     return distances
 
 
-def reference_surface(left: torch.Tensor, right: torch.Tensor) -> torch.Tensor:
-    """The same formula on a 2-coordinate surface (1 Euclidean + 1 radial).
-
-    It exists so the frozen contract can state the surface in closed form and the
-    framework can rebuild it independently; `tests/test_reference_surface.py`
-    checks that it agrees with `mixed_sq` on full 32-d inputs.
-    """
-    left_e, left_h = left[..., :1], left[..., 1:2]
-    right_e, right_h = right[..., :1], right[..., 1:2]
-    guard = 1.0 - 1e-6
-    left_ball = torch.tanh(left_h) * guard
-    right_ball = torch.tanh(right_h) * guard
-    euclid = ((left_e - right_e) ** 2).sum(-1)
-    num = 2.0 * ((left_ball - right_ball) ** 2).sum(-1)
-    den = ((1.0 - left_ball ** 2).sum(-1)) * ((1.0 - right_ball ** 2).sum(-1))
-    argument = 1.0 + (num / den).clamp_min(0.0)
-    return euclid + (torch.acosh(argument.clamp_min(1.0)) ** 2) / 4.0
-
-
 def mobius_add(a: torch.Tensor, b: torch.Tensor, curvature: float = CURVATURE) -> torch.Tensor:
     """Moebius addition in the ball of curvature 1 (batched over the last dim)."""
     a64, b64 = a.to(torch.float64), b.to(torch.float64)

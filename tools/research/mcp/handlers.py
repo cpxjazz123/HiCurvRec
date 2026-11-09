@@ -103,6 +103,17 @@ def _launch_if_possible(run_id, root):
         return {"workers_started": [], "reason": "cancel_requested"}
     state = pipeline.store().snapshot()["tasks"]
     prefix = run_id + "__"
+    # A cooperative cancel leaves the unfinished tasks terminal, and a resume
+    # could then never find work.  Reopen exactly those: the completed steps keep
+    # their evidence and are not recomputed.
+    reopened = []
+    for name in ROLES:
+        record = state.get(prefix + name, {})
+        if record.get("status") == "cancelled":
+            pipeline.store().reopen(prefix + name, "resume after cooperative cancel")
+            reopened.append(name)
+    if reopened:
+        state = pipeline.store().snapshot()["tasks"]
     tasks = {name: state.get(prefix + name, {}) for name in ROLES}
     running = [task for task in tasks.values() if task.get("status") in ("running", "cancelling")]
     if running and any(worker["alive"] for worker in _workers(root)):
