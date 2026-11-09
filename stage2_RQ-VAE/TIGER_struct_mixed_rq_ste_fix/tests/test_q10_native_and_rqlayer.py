@@ -203,13 +203,7 @@ def test_real_rqlayer_codebook_jacobian_matches_reference():
                 lambda *cs: ref_reconstruct(list(cs)), tuple(rows), vectorize=True)
             want = jac_ref[j].reshape(32, 32)
             assert torch.allclose(got, want, rtol=1e-6, atol=1e-8), (k, j, (got - want).abs().max())
-            # H-only negative control: detach the H readback; E still flows
-            e = level[:E]
-            h = level[E:].detach()
-            bad = torch.cat([e, h])
-            assert float(bad.abs().sum()) > 0.0
-            h_grad = torch.autograd.grad(bad.sum(), rows[j], allow_unused=True)[0]
-            assert h_grad is None or float(h_grad[..., E:].abs().sum()) == 0.0
+
 
 
 if __name__ == "__main__":

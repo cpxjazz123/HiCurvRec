@@ -71,9 +71,19 @@ def test_the_h_break_is_rejected_by_the_same_comparator():
     try:
         for k in range(3):
             for j in range(k + 1):
-                got, want = full_row_jac(layer, z, k, j)[0], ref_jac(layer, k, j)
-                h_diff = float((got[:, E:] - want[:, E:]).abs().max())
-                assert h_diff > 1e-6, ("the comparator must reject the H break", k, j, h_diff)
+                level = layer(z, return_levels=True)[4][k][0]
+                embs = layer.vq_layers[j].get_code_embs()
+                ge = torch.autograd.grad(level[:E].sum(), embs, allow_unused=True)[0]
+                assert ge is not None and float(ge.abs().sum()) > 0.0, ("E lost", k, j)
+                jac_z = torch.autograd.functional.jacobian(
+                    lambda zz: layer(zz.unsqueeze(0), return_levels=True)[4][k][0], z[0])
+                assert torch.allclose(jac_z, torch.eye(32, dtype=torch.float64), atol=1e-9)
+                try:
+                    assert_matches(layer, z, k, j)
+                except AssertionError as err:
+                    print("rejected at", k, j, "->", str(err)[:80])
+                else:
+                    raise AssertionError(("comparator accepted the H break", k, j))
     finally:
         mixed_geometry.code_ball = original
 
