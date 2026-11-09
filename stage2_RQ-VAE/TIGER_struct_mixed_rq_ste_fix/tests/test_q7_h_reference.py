@@ -56,6 +56,46 @@ def test_cumulative_readback_matches_the_independent_reference():
         assert a is not None and torch.allclose(a, b, rtol=1e-8, atol=1e-10)
 
 
+
+
+
+def _jacobians(level):
+    torch.manual_seed(1)
+    base = [torch.randn(2, 32, dtype=torch.float64) * 0.2 for _ in range(level)]
+    base = [torch.cat([c[..., :E], torch.tanh(c[..., E:])], dim=-1) for c in base]
+
+    def fn_native(*cs):
+        return native_product.reconstruct(list(cs))
+
+    def fn_ref(*cs):
+        return reference(list(cs))
+
+    jn = torch.autograd.functional.jacobian(lambda *cs: fn_native(*cs), tuple(base), vectorize=True)
+    jr = torch.autograd.functional.jacobian(lambda *cs: fn_ref(*cs), tuple(base), vectorize=True)
+    return jn, jr
+
+
+def test_each_cumulative_level_has_a_full_jacobian_match():
+    for level in (1, 2, 3):
+        jn, jr = _jacobians(level)
+        for a, b in zip(jn, jr):
+            assert torch.allclose(a, b, rtol=1e-8, atol=1e-10), (level, (a - b).abs().max())
+
+
+def test_both_implementations_pass_gradcheck():
+    torch.manual_seed(2)
+    codes = [torch.cat([c[..., :E], torch.tanh(c[..., E:])], dim=-1)
+             for c in (torch.randn(2, 32, dtype=torch.float64) * 0.2 for _ in range(3))]
+    assert torch.autograd.gradcheck(lambda *cs: native_product.reconstruct(list(cs)),
+                                    tuple(c.clone().requires_grad_(True) for c in codes),
+                                    eps=1e-6, atol=1e-6)
+    assert torch.autograd.gradcheck(lambda *cs: reference(list(cs)),
+                                    tuple(c.clone().requires_grad_(True) for c in codes),
+                                    eps=1e-6, atol=1e-6)
+
+
 if __name__ == "__main__":
     test_cumulative_readback_matches_the_independent_reference()
+    test_each_cumulative_level_has_a_full_jacobian_match()
+    test_both_implementations_pass_gradcheck()
     print("ok")
