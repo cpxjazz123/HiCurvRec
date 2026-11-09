@@ -48,6 +48,26 @@ def test_small_distance_is_not_floored():
     assert got < 1e-6 and got > 0
 
 
+def test_phi_zero_and_first_derivative():
+    t = torch.tensor([0.0], dtype=torch.float64, requires_grad=True)
+    value = G.phi(t)
+    assert float(value) == 0.0
+    value.backward()
+    assert abs(float(t.grad) - 1.0) < 1e-9
+
+
+def test_phi_matches_asinh_form_above_the_series_threshold():
+    t = torch.tensor([0.5, 2.0, 50.0], dtype=torch.float64)
+    expected = torch.asinh(t.sqrt()).pow(2)
+    assert torch.allclose(G.phi(t), expected, rtol=1e-12)
+
+
+def test_phi_series_matches_the_closed_form_near_zero():
+    t = torch.tensor([1e-6, 1e-4], dtype=torch.float64)
+    expected = torch.asinh(t.sqrt()).pow(2)
+    assert torch.allclose(G.phi(t), expected, rtol=1e-9, atol=1e-15)
+
+
 def test_near_diagonal_gradient_is_finite():
     a = torch.zeros(1, 16, dtype=torch.float64, requires_grad=True)
     b = torch.zeros(1, 16, dtype=torch.float64)

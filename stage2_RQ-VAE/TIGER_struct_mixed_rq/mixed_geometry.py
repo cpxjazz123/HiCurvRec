@@ -38,28 +38,41 @@ def to_ball(tangent: torch.Tensor, curvature: float = CURVATURE) -> torch.Tensor
     return tangent * (torch.tanh(length * scale) / length) * (1.0 - 1e-6) / scale
 
 
-def poincare_sq(a: torch.Tensor, b: torch.Tensor, curvature: float = CURVATURE) -> torch.Tensor:
-    """Squared geodesic distance via the Moebius difference and 2*atanh.
+TAU = 1e-3   # series threshold: truncation after t^3 is O(t^4) = 1e-12 at this point
 
-    d^2 = 4 * atanh(||(-a) (+) b||)^2.  The argument is exactly 0 when a == b, so
-    two identical points have distance exactly 0; near the diagonal atanh(u) =
-    u + u^3/3 keeps the gradient finite, and the only clamp is the open-ball
-    bound (u < 1), which no finite point reaches.
 
-    The earlier arcosh(1 + ...) form needed a floor on its argument, which made
-    d(x, x) about 5e-7 instead of 0 and turned small distances into a constant.
+def phi(t: torch.Tensor) -> torch.Tensor:
+    """asinh(sqrt(t))^2, evaluated so that t = 0 is exact and differentiable.
+
+    phi(0) = 0 and phi'(0) = 1, so two coincident points have exactly zero
+    distance with a finite gradient.  For small t the series
+    t - t^2/3 + 8 t^3/45 (error O(t^4)) is used; the asymptotic branch never runs
+    at t = 0, and the series never runs for large t, so no branch produces a NaN
+    in the backward pass.  TAU follows from the truncation bound, not from any
+    training result.
     """
-    # Moebius addition of (-a) and b, curvature 1
-    a2 = a.pow(2).sum(-1).unsqueeze(-1)
-    b2 = b.pow(2).sum(-1).unsqueeze(-1)
-    ab = (a * b).sum(-1, keepdim=True)
-    numerator = (1.0 - 2.0 * ab + b2) * (-a) + (1.0 - a2) * b
-    denominator = (1.0 - 2.0 * ab + a2 * b2).clamp_min(1e-12)
-    difference = numerator / denominator
-    # 1 - 1e-12 is not representable in float32 and would clamp to exactly 1,
-    # making atanh infinite; 1 - 1e-6 stays below the boundary in both dtypes.
-    norm = difference.norm(dim=-1).clamp(max=1.0 - 1e-6)
-    return (2.0 * torch.atanh(norm)) ** 2 / curvature
+    squared = t.clamp_min(0.0)
+    series = squared - squared.pow(2) / 3.0 + 8.0 * squared.pow(3) / 45.0
+    asymptotic = torch.asinh(squared.clamp_min(TAU).sqrt()).pow(2)
+    use_series = squared < TAU
+    # where the series is selected the asymptotic branch is still evaluated, so its
+    # derivative must be finite there: clamp_min keeps sqrt inside the domain
+    return torch.where(use_series, series, asymptotic)
+
+
+def poincare_sq(a: torch.Tensor, b: torch.Tensor, curvature: float = CURVATURE) -> torch.Tensor:
+    """Squared geodesic distance, as 4 * phi(t) with the product form phi(t).
+
+    a and b are points already inside the ball.  t is the standard cross-ratio
+    expression ||a-b||^2 / ((1-||a||^2)(1-||b||^2)); the product metric uses
+    d_H^2/4 = phi(t), so this function returns 4*phi(t) and mixed_sq divides by 4.
+    """
+    dtype = a.dtype
+    a64, b64 = a.to(torch.float64), b.to(torch.float64)
+    num = ((a64 - b64) ** 2).sum(-1)
+    den = (1.0 - a64.pow(2).sum(-1)) * (1.0 - b64.pow(2).sum(-1))
+    t = (num / den.clamp_min(torch.finfo(torch.float64).tiny)).clamp_min(0.0)
+    return (4.0 * phi(t) / curvature).to(dtype)
 
 
 def mixed_sq(left: torch.Tensor, right: torch.Tensor, geometry_on: bool | None = None) -> torch.Tensor:
