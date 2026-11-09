@@ -778,7 +778,12 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         text = answer_text_for(role, answer_text, records)
         payload = extract_json(answer_text) or extract_json(text)
         block = None
-        if isinstance(payload, dict):
+        if isinstance(payload, dict) and dag_role(role):
+            # A DAG document is saved exactly as the agent wrote it.  Guessing the
+            # format from a field name dropped candidate_id/candidate_sha256 from a
+            # review and everything the census carried beyond its first keys.
+            block = json.dumps(payload, indent=1, ensure_ascii=False)
+        elif isinstance(payload, dict):
             if payload.get("idea_id"):
                 block = render_idea_json(payload)
             elif payload.get("ranking"):
