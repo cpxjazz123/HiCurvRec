@@ -23,7 +23,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy import sparse
-from scipy.stats import spearmanr
+from scipy.stats import pearsonr, spearmanr
 
 REPO = Path(__file__).resolve().parents[3]
 MIRROR = REPO / "analysis_sid_recall" / "r2"
@@ -122,8 +122,12 @@ def main() -> None:
     usable = [r for r in rows if r["recall@10"] is not None and r["transitivity"] is not None]
     for field in ("transitivity", "af3_mean"):
         if len(usable) > 3:
-            rho, p = spearmanr([r[field] for r in usable], [r["recall@10"] for r in usable])
-            print("spearman %s vs recall@10: rho=%.3f p=%.4f n=%d" % (field, rho, p, len(usable)))
+            xs = [r[field] for r in usable]
+            ys = [r["recall@10"] for r in usable]
+            rho, p = spearmanr(xs, ys)
+            r, p_r = pearsonr(xs, ys)
+            print("spearman %s: rho=%.3f p=%.4f | pearson r=%.3f p=%.4f n=%d"
+                  % (field, rho, p, r, p_r, len(usable)))
 
 
 if __name__ == "__main__":
