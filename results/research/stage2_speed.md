@@ -98,3 +98,11 @@ softmax/one-hot/centring），在 GPU 上是微秒到毫秒级；真正 host 绑
 - 判断真实速度看 `latest_train.epoch_time_s` 或 `train_end.total_wall_time_s`。
 - 想知道下一步该优化什么，看 `profile` 事件那一行。
 - Stage2 已经不是整轮的大头：Stage3 单臂 150 epoch ≈ 30-38 分钟（冻结协议，不可动）。
+
+八、决定（owner，2026-11-10）
+
+Stage2 速度不再继续优化，维持 3000 epoch 冻结预算。
+理由与余量已记在第五、六节：代码侧已到这类模型的实测量级（host 块 9.2 ms/步、
+投影口径已修正、分块计时与设备侧窗口已入库），一臂 88% 的时间是预算本身；
+继续压墙钟只能改预算（§18 冻结项、会与 36 个历史臂不可比）。将来若重新开启，
+需要的输入是一次带 CUDA 的 `profile` 行。
