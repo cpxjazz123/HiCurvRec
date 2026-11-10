@@ -29,8 +29,17 @@ class RQVAE(nn.Module):
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens
 
+    def attach_item_layers(self, item_layers: dict) -> None:
+        """The id -> structure layer map the shift needs at export time."""
+        top = max(int(key) for key in item_layers) + 1
+        table = torch.zeros(top, dtype=torch.long)
+        for key, value in item_layers.items():
+            table[int(key)] = int(value)
+        self.item_layers = table
+
     @torch.no_grad()
-    def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
+    def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False,
+                    item_ids: torch.Tensor | None = None) -> torch.Tensor:
         encoded = self.encoder(embeddings)
         _, _, _, tokens = self.rq(encoded, infer_use_sk=infer_use_sk)
         return tokens
@@ -91,12 +100,25 @@ class MixedRQVAE(nn.Module):
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens
 
+    def attach_item_layers(self, item_layers: dict) -> None:
+        """The id -> structure layer map the shift needs at export time."""
+        top = max(int(key) for key in item_layers) + 1
+        table = torch.zeros(top, dtype=torch.long)
+        for key, value in item_layers.items():
+            table[int(key)] = int(value)
+        self.item_layers = table
+
     @torch.no_grad()
-    def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
+    def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False,
+                    item_ids: torch.Tensor | None = None) -> torch.Tensor:
         from .mixed_rq import encode_tokens
         # The export is the deterministic nearest code at every level; the
         # training-only balanced assignment never runs at inference.
-        return encode_tokens(self.encoder(embeddings), self.rq)
+        groups = None
+        if item_ids is not None and getattr(self, "item_layers", None) is not None:
+            groups = self.item_layers[item_ids.cpu().clamp(max=self.item_layers.numel() - 1)].to(
+                embeddings.device)
+        return encode_tokens(self.encoder(embeddings), self.rq, groups=groups)
 
     @torch.no_grad()
     def init_codebook(self, embeddings: torch.Tensor) -> None:

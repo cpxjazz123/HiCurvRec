@@ -428,7 +428,8 @@ class MixedRQ(nn.Module):
             tokens.append(index)
 
 
-def encode_tokens(z: torch.Tensor, rq: MixedRQ, override: dict | None = None) -> torch.Tensor:
+def encode_tokens(z: torch.Tensor, rq: MixedRQ, override: dict | None = None,
+                  groups: torch.Tensor | None = None) -> torch.Tensor:
     """The hard three-token codes of a batch of tangent codes, without gradients.
 
     ``override`` maps ``(level, prefix)`` to a weight, which is how the outer
