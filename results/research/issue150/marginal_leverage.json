@@ -1,0 +1,45 @@
+{
+  "centred_span": 2.0,
+  "frozen_iterations": 50,
+  "gap_mean": 0.002590827556559816,
+  "gap_quantiles": {
+    "p1": 1.955926418304444e-05,
+    "p25": 0.0005071759223937988,
+    "p5": 8.840858936309814e-05,
+    "p50": 0.0011955201625823975,
+    "p75": 0.0023385286331176758,
+    "p95": 0.005630120635032654,
+    "p99": 0.016816425323486484
+  },
+  "iteration_sweep": [
+    {
+      "iterations": 50,
+      "max_relative_error": 0.8758989491845262,
+      "max_row_deviation": 14.071454302716191
+    },
+    {
+      "iterations": 200,
+      "max_relative_error": 1.3750638474894269e-06,
+      "max_row_deviation": 1.1525539230561321e-05
+    },
+    {
+      "iterations": 500,
+      "max_relative_error": 2.3079144317043865e-13,
+      "max_row_deviation": 1.9344525981068728e-12
+    },
+    {
+      "iterations": 2000,
+      "max_relative_error": 2.943175709024651e-16,
+      "max_row_deviation": 7.105427357601002e-15
+    }
+  ],
+  "leverage_centred_units": 0.003173668856865512,
+  "log_pi_span": 1.0578896189551705,
+  "logit_span_over_epsilon": 666.6666666666666,
+  "note": "a row changes its code only if its top-1/top-2 gap is below log(pi_max/pi_min) * eps; the share below that threshold is the most the column marginal can move without touching the cost",
+  "pi_max_over_min": 2.880286069651741,
+  "rows": 4096,
+  "share_below_leverage": 0.843505859375,
+  "sk_epsilon": 0.003,
+  "verdict": "PARTIAL_LEVERAGE"
+}
