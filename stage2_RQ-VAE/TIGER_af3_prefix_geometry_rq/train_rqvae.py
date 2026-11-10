@@ -612,6 +612,10 @@ def main() -> None:
             reconstructed, quant_loss, _, _ = model(batch)
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
+            # issue #154: the two prefix-order terms belong here, but this loader yields
+            # (batch,) only -- no item ids -- so which rows form which edges is unknown in
+            # this loop. The dataset has to carry the ids before the terms can be added;
+            # recorded in results/research/issue154/implementation_note.md.
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             if AUX_AF3:

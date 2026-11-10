@@ -340,8 +340,16 @@ class MixedRQ(nn.Module):
         tokens: list[torch.Tensor] = []
         total_loss: torch.Tensor | float = 0.0
         unused_total = 0
+        from .prefix_geometry import compose_prefix, soft_prefix
+        prefixes: list[tuple[torch.Tensor, torch.Tensor]] = []
+        running: tuple[torch.Tensor, torch.Tensor] | None = None
         for level, layer in enumerate(self.levels, start=1):
             alpha = self.alpha_table.lookups(level, tokens).to(z.device)
+            pre_cost = layer.distances(residual_e, residual_h, alpha)
+            running = compose_prefix(running, soft_prefix(pre_cost, layer.embed.weight[:, :EUCLIDEAN_DIM],
+                                                          layer.embed.weight[:, EUCLIDEAN_DIM:]),
+                                     level, self.curvature)
+            prefixes.append(running)
             (residual_e, residual_h), quant_loss, unused, index, picked_e, picked_h = layer(
                 residual_e, residual_h, alpha, infer_use_sk=infer_use_sk)
             codes_e.append(picked_e)

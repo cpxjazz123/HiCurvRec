@@ -115,3 +115,27 @@ def structure_losses(prefix_e: torch.Tensor, prefix_h: torch.Tensor,
     else:
         tri = torch.zeros((), dtype=torch.float64)
     return {"gap": gap, "tri": tri, "delta_bar": d_bar, "tau": tau}
+
+
+def soft_prefix(cost: torch.Tensor, code_e: torch.Tensor, code_h: torch.Tensor
+                ) -> tuple[torch.Tensor, torch.Tensor]:
+    """The level's prefix embedding: the softmax expectation of its code vectors.
+
+    No new constant enters: the weights are the softmax of the level's own mixed cost, the
+    same quantity the hard argmin reads. This is what keeps d_l / s_l differentiable with
+    respect to the encoder, while the exported SID still uses the hard argmin.
+    """
+    weights = torch.softmax(-cost.double(), dim=-1)
+    return weights @ code_e.double(), weights @ code_h.double()
+
+
+def compose_prefix(previous: tuple[torch.Tensor, torch.Tensor] | None,
+                   step: tuple[torch.Tensor, torch.Tensor], level: int,
+                   curvature: float) -> tuple[torch.Tensor, torch.Tensor]:
+    """Running mean of the per-level prefix embeddings (ball point for the H half)."""
+    if previous is None:
+        return step
+    from .poincare_contract import mobius_add
+    total_e = previous[0] + step[0]
+    total_h = step[1] if curvature <= 0 else mobius_add(previous[1], step[1], float(curvature))
+    return total_e / float(level), total_h / float(level)
