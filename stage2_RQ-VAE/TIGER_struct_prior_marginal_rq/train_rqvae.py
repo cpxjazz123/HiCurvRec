@@ -41,9 +41,10 @@ from model.af3_runtime import (input_identity, resolve_shared_readout,
                                snapshot_sha256, snapshot_state)
 from model.struct_prior import (BEHAVIOR_OFF, GEOMETRY_OFF, GROUPS, LAMBDA_FORK,
                                 LAMBDA_PRIOR, LAMBDA_TRIANGLE, StructPriorTable,
-                                batch_sets, equal_partition, fork_loss,
+                                equal_partition, fork_loss,
                                 prior_kl, sha256_of as prior_sha256,
                                 target_marginal, triangle_loss, usage_partition)
+from model.struct_sets_fast import SetWindow
 
 
 # === 路径常量（无绝对路径；由文件自身向上找仓库标记推导）===
@@ -540,11 +541,20 @@ def main() -> None:
             model.rq.alpha_table.set(level, (), 0.5)
     prior_active = ARM_VARIANT == "PRIORMARGINAL"
     prior_table = None
+    prior_window = None
     if prior_active:
         if not STRUCTURE_PRIOR.is_file():
             raise FileNotFoundError("missing frozen structure prior: " + str(STRUCTURE_PRIOR)
                                     + " (build it with build_structure_prior.py)")
         prior_table = StructPriorTable.load(STRUCTURE_PRIOR)
+        # The structural terms need, per step, the frozen triangles and edges whose
+        # endpoints are all in the batch. Scanning the whole pool (546438 triangles,
+        # 315391 edges) costs about 21-36 ms per step; the item-indexed window
+        # answers the identical question from the batch's own items and measures
+        # 9 ms per step on the same data (tests/test_struct_sets_fast.py pins the
+        # equality of the returned arrays and counts).
+        prior_window = SetWindow(prior_table.edges, prior_table.triangles,
+                                 int(prior_table.metadata["n_items"]))
         model.attach_prior(prior_table)
     if XAVIER_INIT:
         initialize_tiger_weights(model)
@@ -635,10 +645,11 @@ def main() -> None:
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             if prior_active:
                 prefixes = raw_module.rq.last_prefixes
-                local = batch_sets(batch_ids.detach().cpu().numpy(),
-                                   prior_table.layer_of(batch_ids.detach().cpu().numpy()),
-                                   prior_table.edges, prior_table.triangles,
-                                   prior_table.metadata["n_items"])
+                # One device sync per step: the window and the usage histogram read
+                # the same id array and the same layer array.
+                ids_np = batch_ids.detach().cpu().numpy()
+                layers_np = prior_table.layer_of(ids_np)
+                local = prior_window.batch_sets(ids_np, layers_np)
                 terms = {
                     "tri": triangle_loss(prefixes, torch.from_numpy(local["triangles"]).to(device)),
                     "fork": fork_loss(prefixes,
@@ -648,8 +659,7 @@ def main() -> None:
                 }
                 loss = (loss + LAMBDA_TRIANGLE * terms["tri"] + LAMBDA_FORK * terms["fork"]
                         + LAMBDA_PRIOR * terms["far"])
-                usage_running = usage_running + raw_module.rq.code_usage(
-                    prior_table.layer_of(batch_ids.detach().cpu().numpy()), GROUPS)
+                usage_running = usage_running + raw_module.rq.code_usage(layers_np, GROUPS)
                 prior_logs.append({name: float(value.detach()) for name, value in terms.items()}
                                   | local["coverage"])
             if not torch.isfinite(loss):
