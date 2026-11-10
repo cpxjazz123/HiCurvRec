@@ -45,12 +45,13 @@
       "name": "structured assignment",
       "definition": "the baseline's Sinkhorn: exp(-centred(C)/eps), column normalisation to B * pi, row normalisation, for SK_ITERS=50 and eps=SK_EPSILON=0.003; the taken code is argmax of the row-normalised plan",
       "output": "a row-normalised plan and one integer token for the last level",
-      "gradient": "the plan is differentiable in the cost; the token is not",
-      "excluded": true
+      "gradient": "the plan is READ-ONLY in the graph: it is computed under no_grad and enters the forward only at argmax, which is the taken code. The differentiable surface is the proxy's carrier (the next entry), a single softmax of the same centring at T = 2/64",
+      "excluded": true,
+      "measured": "back-propagating through the fifty normalisations at epsilon = 0.003 amplifies the sensitivity by (1/eps)^50 per level and drove the four-rank run to NaN inside the first epoch, while every offline single-process check stayed finite; the read-only plan removes that path"
     },
     {
       "name": "assignment proxy",
-      "definition": "h = one_hot(k) + (p - p.detach()); last level: k = argmax(plan), p = (1-S)plan + S/K; earlier levels: k = argmin(C), p = (1-S)softmax(-centred(C)/T) + S/K, T = 2/64, S = 1e-3",
+      "definition": "h = one_hot(k) + (p - p.detach()); k = argmax(plan) on the last level and argmin(C) before it; p = (1-S)softmax(-centred(C)/T) + S/K on every level, with T = 2/64 and S = 1e-3; the carrier is derived from cost alone, never from the plan",
       "output": "one proxy per level whose forward value is the taken code's one-hot",
       "gradient": "through p; T follows from the centring's span of 2 and float32's exponent range, S from float32's resolution near one"
     },
@@ -94,6 +95,10 @@
     {
       "what": "the layer's transport plan is row-normalised",
       "why": "the baseline normalises the last level's plan to row sums of one; the column target is therefore B * pi, not pi. The uniform special case reproduces the baseline's own sinkhorn to 1e-9, which is the test that pins it"
+    },
+    {
+      "what": "the balanced plan's derivative is removed from the graph",
+      "why": "measured: fifty column/row normalisations at epsilon = 0.003 amplify the backward by (1/eps)^50 per level, and the four-rank run left float range inside epoch 1. The plan is now a read-only surface that enters only at argmax; the carrier, not the plan, is what the three terms differentiate. Both the value (the taken code) and the derivative (the carrier) are unchanged in kind from the straight-through pattern the repository already accepts"
     }
   ],
   "excluded": [
