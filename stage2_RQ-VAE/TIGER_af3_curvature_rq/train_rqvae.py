@@ -89,6 +89,12 @@ AF3_Q05 = -931.0
 AF3_Q95 = -20.0
 
 
+def _kappa_table_sha256() -> str:
+    import hashlib
+    path = REPO_ROOT / "results" / "research" / "issue167" / "kappa.json"
+    return hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else "MISSING"
+
+
 def _af3_table_sha256() -> str:
     import hashlib
     path = REPO_ROOT / "results" / "research" / "issue155" / "af3_edges.json"
@@ -767,6 +773,7 @@ def main() -> None:
                 "af3_q05": AF3_Q05,
                 "af3_q95": AF3_Q95,
                 "sigma_min": SIGMA_MIN,
+                "kappa_table_sha256": _kappa_table_sha256(),
                 "structure_off": bool(STRUCTURE_OFF),
             },
             CHECKPOINT,
