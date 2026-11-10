@@ -364,6 +364,6 @@
     "fork": 0.0,
     "tri": 0.4292437533537547
   },
-  "verdict": "NEGATIVE_RESULT: the structure-stratified target marginal collapsed the code space (three-code collision 0.6821, \u00a763 l3_collision 0.8296, level-2 prefixes 1057 and a single L1 code holding two thirds of the items mid-run), so Stage3 is not started",
+  "verdict": "NEGATIVE_RESULT: the structure-stratified target marginal did not allocate capacity by share (realised bucket mass 8532/6622/6968/2434 against targets 5913/6164/9263/3216) and collapsed inside the buckets at the per-code level: level 1 ends with 58 of 256 codes and one code holding 58.7% of the items (entropy 0.258), where epoch 1000 still had 172 codes at 15.9%. Three-code collision 0.68215 and \u00a763 l3_collision 0.82958 are both far above the 0.40 gate, so Stage3 is not started",
   "wall_time_s": 1090.034
 }
