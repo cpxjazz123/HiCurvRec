@@ -121,6 +121,10 @@ OPTIMIZER           = "AdamW"
 SEED                = 42
 NUM_WORKERS         = 0  # 2026-09-24: 0 防 DDP fork storm (4 rank × 4 worker = 16 子进程在 barrier 后挂死)
 EVAL_INTERVAL       = 50
+#: Epochs on which the step loop reports a per-block timing breakdown. Only the
+#: first epoch by default: the breakdown is the basis of a speed decision, while
+#: synchronising every step would perturb the run it measures.
+PROFILE_EPOCHS      = (1,)
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
 # 候选是否采用完全交由下游 stage3 test_R@10 裁决.
 # 保留 best-collision checkpoint 仅作为导出用的最后一次快照.
@@ -636,11 +640,34 @@ def main() -> None:
         recons: list[float] = []
         auxiliary_logs = []
         _epoch_t0 = time.time()
+        # Per-block timing on the profiled epoch only: the synchronisation it needs
+        # would otherwise perturb the very pipeline it measures. Reading it is the
+        # only honest basis for a speed decision, because on this model the split
+        # between host work, device work and DDP is not guessable.
+        profile_epoch = epoch in PROFILE_EPOCHS
+        blocks = {"data_s": 0.0, "forward_s": 0.0, "terms_s": 0.0, "backward_s": 0.0}
+        mark = None
+
+        def _mark() -> float:
+            if profile_epoch and device.type == "cuda":
+                torch.cuda.synchronize()
+            return time.perf_counter()
+
         for (batch, batch_ids) in loader:
+            if profile_epoch and mark is not None:
+                now = _mark()
+                blocks["data_s"] += now - mark
+                mark = now
             batch = batch.to(device, non_blocking=True)
             batch_ids = batch_ids.to(device, non_blocking=True)
+            if profile_epoch:
+                mark = _mark()
             optimizer.zero_grad(set_to_none=True)
             reconstructed, quant_loss, _, _ = model(batch, batch_ids)
+            if profile_epoch:
+                now = _mark()
+                blocks["forward_s"] += now - mark
+                mark = now
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             if prior_active:
@@ -662,19 +689,33 @@ def main() -> None:
                 usage_running = usage_running + raw_module.rq.code_usage(layers_np, GROUPS)
                 prior_logs.append({name: float(value.detach()) for name, value in terms.items()}
                                   | local["coverage"])
+            if profile_epoch:
+                now = _mark()
+                blocks["terms_s"] += now - mark
+                mark = now
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             if AUX_AF3:
                 loss, auxiliary_log = augment_loss(loss, raw_module, af3_state, epoch, sampling)
                 auxiliary_logs.append(auxiliary_log)
             loss.backward()
+            if profile_epoch:
+                now = _mark()
+                blocks["backward_s"] += now - mark
+                mark = now
             if GRADIENT_CLIP_NORM > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIP_NORM)
             optimizer.step()
             scheduler.step()
+            if profile_epoch:
+                mark = _mark()
             losses.append(float(loss.detach()))
             recons.append(float(recon_loss.detach()))
         epoch_time_s = round(time.time() - _epoch_t0, 3)
+        if profile_epoch and rank == 0:
+            _record(rank, "profile", epoch=epoch, steps=len(losses),
+                    total_s=epoch_time_s,
+                    **{name: round(value, 4) for name, value in blocks.items()})
 
         # === DDP all_reduce: 跨 rank 求平均 loss / recon ===
         local_loss = torch.tensor(float(np.mean(losses)) if losses else 0.0, device=device)
