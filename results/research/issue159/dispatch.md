@@ -10,3 +10,8 @@
 - 可见卡 ≥4 时走冻结四卡 DDP（全局 train batch 16384），<4 时走单卡分支（全局 train batch 4096）——当前 4 张卡全空，符合四卡分支。
 - 前置：§63 先记（`post_stage2.py` 已脚本化），入口碰撞 < 0.40 才允许启动。
 - Stage3 跑完后按 §6b 把四件（Stage2 源码树、`item_sids.json`、`rqvae_best.pth`、完整 recall 块）归档进 `genrec/<NN>/`，SHA 记 `r2_ledger.json`。
+
+## §6b 归档就绪
+
+- 归档脚本 `results/research/issue139/upload_stage3.py` 存在，凭证从仓库根 `r2_apikey` 读取（已 gitignore，日志不得包含其内容），目标桶 `genrec/<NN>/`，四件齐全才上传。
+- 现存账本 `results/research/issue139/r2_ledger.json` 已有 68 条记录；本轮的结果届时按新编号追加，SHA 一并写入。
