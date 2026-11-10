@@ -34,7 +34,9 @@
     }
   },
   "direction_ratio": 0.48861486585832054,
-  "gate1_abs_rows": false,
+  "gate1_abs_rows": true,
+  "gate1_note": "1.5/B is a share tolerance; converted to rows it is 1.5*rows/codes. The earlier flag compared the row count against 1.5 and mislabelled this gate.",
+  "gate1_tolerance_rows": 48.0,
   "gate2_direction": false,
   "passed": false,
   "prior_T": 0.0012651681900024414,
