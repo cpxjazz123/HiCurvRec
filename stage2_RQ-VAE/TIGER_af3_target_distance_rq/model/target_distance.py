@@ -66,17 +66,25 @@ def compose_prefix(previous: tuple[torch.Tensor, torch.Tensor] | None,
 def edge_distance(prefix_e: torch.Tensor, prefix_h: torch.Tensor, edges: torch.Tensor,
                   curvature: float) -> torch.Tensor:
     if edges.numel() == 0:
-        return torch.zeros(0, dtype=torch.float64)
+        return torch.zeros(0, dtype=torch.float64, device=prefix_e.device)
+    edges = edges.to(prefix_e.device)
     tail, head = edges[:, 0], edges[:, 1]
     return mixed_distance(prefix_e[tail], prefix_h[tail], prefix_e[head], prefix_h[head],
                           curvature)
 
 
 def struct_loss(distance: torch.Tensor, target: torch.Tensor, d_ref: torch.Tensor) -> torch.Tensor:
-    """``mean_e |d_e - t_e| / d_ref`` -- bounded by construction when d, t <= ~d_ref."""
+    """``mean_e |d_e - t_e| / d_ref`` -- bounded by construction when d, t <= ~d_ref.
+
+    ``target`` and ``d_ref`` are moved to the distance's device and dtype: the frozen table lives
+    on the CPU while the prefixes live on the GPU, and mixing the two is a hard error, not a
+    silent cast (the first dispatch died on exactly this).
+    """
     if distance.numel() == 0:
-        return torch.zeros((), dtype=torch.float64)
-    return (distance - target).abs().mean() / d_ref.clamp_min(1e-12)
+        return torch.zeros((), dtype=distance.dtype, device=distance.device)
+    target = target.to(device=distance.device, dtype=distance.dtype)
+    reference = torch.as_tensor(d_ref, dtype=distance.dtype, device=distance.device)
+    return (distance - target).abs().mean() / reference.clamp_min(1e-12)
 
 
 def edge_regression(prefix_e: torch.Tensor, prefix_h: torch.Tensor, edges: torch.Tensor,
@@ -89,20 +97,23 @@ def edge_regression(prefix_e: torch.Tensor, prefix_h: torch.Tensor, edges: torch
 def triangle_term(distances: torch.Tensor, d_ref: torch.Tensor) -> torch.Tensor:
     """``mean(1 - min(1 - d/d_ref))`` over the closed triangles given, one row each."""
     if distances.numel() == 0:
-        return torch.zeros((), dtype=torch.float64)
-    return (1.0 - (1.0 - distances / d_ref.clamp_min(1e-12)).min(dim=-1).values).mean()
+        return torch.zeros((), dtype=distances.dtype, device=distances.device)
+    reference = torch.as_tensor(d_ref, dtype=distances.dtype, device=distances.device)
+    return (1.0 - (1.0 - distances / reference.clamp_min(1e-12)).min(dim=-1).values).mean()
 
 
 def structure_losses(prefixes: list, edges: torch.Tensor, target: torch.Tensor,
                      triples: torch.Tensor, d_ref: torch.Tensor,
                      curvature: float) -> dict:
     """Both terms over every level's prefixes, averaged across the levels as specified."""
+    device = prefixes[0][0].device if prefixes else torch.device("cpu")
     if STRUCTURE_OFF:
-        zero = torch.zeros((), dtype=torch.float64)
+        zero = torch.zeros((), dtype=torch.float64, device=device)
         return {"struct": zero, "tri": zero}
     struct_terms = [edge_regression(prefix_e, prefix_h, edges, target, d_ref, curvature)
                     for prefix_e, prefix_h in prefixes]
-    struct = torch.stack(struct_terms).mean() if struct_terms else torch.zeros((), dtype=torch.float64)
+    struct = (torch.stack(struct_terms).mean() if struct_terms
+              else torch.zeros((), dtype=torch.float64, device=device))
     if triples.numel():
         rows = []
         for prefix_e, prefix_h in prefixes:
@@ -114,5 +125,5 @@ def structure_losses(prefixes: list, edges: torch.Tensor, target: torch.Tensor,
             rows.append(triangle_term(distance, d_ref))
         tri = torch.stack(rows).mean()
     else:
-        tri = torch.zeros((), dtype=torch.float64)
+        tri = torch.zeros((), dtype=torch.float64, device=device)
     return {"struct": struct, "tri": tri}
