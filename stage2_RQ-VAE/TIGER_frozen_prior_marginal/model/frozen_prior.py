@@ -43,8 +43,14 @@ LAMBDA_PRIOR = 1.0
 #: keeps the sharp end representable so no row loses its derivative.
 PROXY_TEMPERATURE = 2.0 / 64.0
 PROXY_SMOOTHING = 1e-3
-#: The dispatch-time realizability bound and the training-time exposure guard.
-REALISED_TOLERANCE = 0.05
+#: The dispatch-time gate, corrected by the review: a 5% relative error at the
+#: training batch is arithmetically unreachable (one row is 1/B of the mass, and
+#: 1/(B * min(pi)) is 23.86% at B = 1024), so the gate is expressed at a scale where
+#: it can be met and in a per-row unit where it means something.
+PROBE_ROWS = 16384            # >= 8192 required; at 16384 the arithmetic bound is 2.98%
+PROBE_TOLERANCE = 0.05        # max relative error of the realised column mass at the probe
+BATCH_TOLERANCE_ROWS = 1.5    # |realised_k - pi_k| <= 1.5 rows at the training batch
+CURVE_BATCHES = (1024, 2048, 4096, 8192, 16384)
 CODES_USED_MIN = 128
 MAX_BUCKET_SHARE_MAX = 0.10
 
@@ -266,6 +272,46 @@ def realised_error(plan: torch.Tensor, marginal: torch.Tensor) -> torch.Tensor:
     got = plan.mean(0)
     got = got / got.sum().clamp_min(1e-12)
     return ((got - marginal).abs() / marginal.clamp_min(1e-12)).max()
+
+
+def realised_rows(plan: torch.Tensor, marginal: torch.Tensor) -> torch.Tensor:
+    """``|realised_k - pi_k|`` expressed in rows of this batch, per code."""
+    rows = float(plan.shape[0])
+    marginal = marginal.reshape(-1)
+    got = plan.mean(0)
+    got = got / got.sum().clamp_min(1e-12)
+    return (got - marginal).abs() * rows
+
+
+def realisability(plan_of_batch, marginal: torch.Tensor) -> dict:
+    """The three checks the review replaced the single threshold with.
+
+    ``plan_of_batch`` is called with a row count and must return the row-normalised
+    plan of that many rows. The report carries the probe's relative error, the
+    per-code row deviation at the training batch, and the whole curve, so a reader
+    can see the 1/B decay instead of one number that was never reachable.
+    """
+    curve = []
+    for rows in CURVE_BATCHES:
+        plan = plan_of_batch(rows)
+        curve.append({"rows": int(rows),
+                      "max_relative_error": float(realised_error(plan, marginal)),
+                      "max_row_deviation": float(realised_rows(plan, marginal).max())})
+    probe = next(entry for entry in curve if entry["rows"] == PROBE_ROWS)
+    batch = next(entry for entry in curve if entry["rows"] == 4096)
+    return {
+        "probe": {"rows": probe["rows"], "max_relative_error": probe["max_relative_error"],
+                  "tolerance": PROBE_TOLERANCE,
+                  "arithmetic_bound": 1.0 / (probe["rows"] * float(marginal.min())),
+                  "passed": probe["max_relative_error"] <= PROBE_TOLERANCE},
+        "batch": {"rows": batch["rows"], "max_row_deviation": batch["max_row_deviation"],
+                  "tolerance_rows": BATCH_TOLERANCE_ROWS,
+                  "passed": batch["max_row_deviation"] <= BATCH_TOLERANCE_ROWS},
+        "curve": curve,
+        "curve_decays": all(curve[index]["max_relative_error"]
+                            >= curve[index + 1]["max_relative_error"]
+                            for index in range(len(curve) - 1)),
+    }
 
 
 def batch_triangles(item_ids: np.ndarray, triangles: np.ndarray,

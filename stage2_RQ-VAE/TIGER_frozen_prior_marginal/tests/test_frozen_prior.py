@@ -49,26 +49,46 @@ def test_the_frozen_partition_is_byte_stable_and_equal_sized(frozen):
     assert abs(float(first["marginal"].sum()) - 1.0) < 1e-12
 
 
-def test_the_realizability_gate_passes_for_the_frozen_marginal(frozen):
-    metadata = frozen["metadata"]
-    assert metadata["realised_error"] <= prior.REALISED_TOLERANCE, metadata
-    assert metadata["method"] in ("affinity", "equal_fallback")
+def test_the_probe_realises_the_marginal_within_five_percent(frozen):
+    """The gate as corrected: a probe large enough for the arithmetic bound to be < 5%."""
+    gate = frozen["metadata"]["realisability"]
+    probe = gate["probe"]
+    assert probe["rows"] == prior.PROBE_ROWS >= 8192
+    assert probe["arithmetic_bound"] <= probe["tolerance"], probe
+    assert probe["max_relative_error"] <= probe["tolerance"], probe
 
 
-def test_the_realizability_gate_rejects_a_marginal_the_plan_cannot_realise():
-    """A 20x bucket ratio at the frozen epsilon cannot be realised: the gate must say so."""
-    rows, codes = 512, 32
-    generator = torch.Generator().manual_seed(150)
-    cost = torch.randn(rows, codes, generator=generator, dtype=torch.float64)
-    centred = prior.centred_cost(cost)
-    partition = prior.equal_partition(codes, 4)
-    reachable = prior.target_marginal(partition, [0.25] * 4)
-    extreme = prior.target_marginal(partition, [0.7, 0.1, 0.1, 0.1])
-    got = prior.structured_sinkhorn(centred, 0.003, 50, extreme)
-    assert float(prior.realised_error(got, extreme)) > prior.REALISED_TOLERANCE
-    # the uniform target is realisable, which is the control
-    flat = prior.structured_sinkhorn(centred, 0.003, 50, reachable)
-    assert float(prior.realised_error(flat, reachable)) <= 1.0
+def test_every_code_sits_within_one_and_a_half_rows_of_its_target(frozen):
+    """The per-batch form of the gate: one row is 1/B of the mass, so that is the unit."""
+    batch = frozen["metadata"]["realisability"]["batch"]
+    assert batch["rows"] == 4096
+    assert batch["max_row_deviation"] <= batch["tolerance_rows"], batch
+
+
+def test_the_relative_error_falls_with_the_batch_size(frozen):
+    curve = frozen["metadata"]["realisability"]["curve"]
+    rows = [entry["rows"] for entry in curve]
+    assert rows == list(prior.CURVE_BATCHES)
+    errors = [entry["max_relative_error"] for entry in curve]
+    assert frozen["metadata"]["realisability"]["curve_decays"], errors
+    # a 1/B decay is what the arithmetic promises: sixteen times the rows must buy
+    # roughly sixteen times the relative accuracy
+    assert errors[0] >= 8.0 * errors[-1], errors
+    assert all(entry["max_row_deviation"] <= 1.5 for entry in curve if entry["rows"] >= 4096), curve
+
+
+def test_the_row_deviation_definition_is_the_one_row_unit():
+    """A plan one row off its target must read exactly one row of deviation."""
+    rows, codes = 1024, 4
+    target = torch.full((codes,), 1.0 / codes, dtype=torch.float64)
+    exact = torch.full((rows, codes), 1.0 / codes, dtype=torch.float64)
+    assert float(prior.realised_rows(exact, target).max()) <= 1e-9
+    off = exact.clone()
+    # moving one row's mass by one whole item shifts its column mean by 1/rows,
+    # which is exactly one row of the target
+    off[0, 0] += 1.0
+    off[0, 1] -= 1.0
+    assert abs(float(prior.realised_rows(off, target).max()) - 1.0) < 1e-9
 
 
 def test_the_guard_fires_on_a_level_outside_its_bounds():

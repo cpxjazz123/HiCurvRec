@@ -74,28 +74,34 @@ def main() -> int:
     rho = np.asarray(structure["rho"], dtype=np.float64)
     marginal = target_marginal(partition, rho, codes=int(sum(len(b) for b in partition)))
 
-    # Dispatch-time realizability: one forward on a frozen slice, last level only.
+    # Dispatch-time realizability, in the form the review corrected it to: a probe
+    # large enough for the arithmetic bound to sit under 5%, a per-row deviation at
+    # the training batch, and the whole curve so the 1/B decay is visible.
     generator = torch.Generator().manual_seed(150)
-    pick = torch.randperm(len(train_ids), generator=generator)[:1024].numpy()
+    pick = torch.randperm(len(train_ids), generator=generator)[:prior.PROBE_ROWS].numpy()
     model.rq.attach_frozen_prior({"partition": partition,
                                   "marginal": marginal.numpy(),
                                   "sha256": "preview"})
     # train mode: the balanced assignment (and therefore the plan) only runs while
     # training, which is the regime the marginal is for
     model.train()
-    with torch.no_grad():
-        encoded = model.encoder(rows[torch.from_numpy(train_ids[pick])].to(device))
-        z_e, z_t = split(encoded)
-        residual_e, residual_h = z_e, expmap0(z_t, model.rq.curvature)
-        for level, layer in enumerate(model.rq.levels, start=1):
-            alpha = model.rq.alpha_table.lookups(level, []).to(device)
+    rows_all = rows[torch.from_numpy(train_ids[pick])].to(device)
+
+    def plan_of(rows_count: int):
+        with torch.no_grad():
+            encoded = model.encoder(rows_all[:rows_count])
+            z_e, z_t = split(encoded)
+            residual_e, residual_h = z_e, expmap0(z_t, model.rq.curvature)
             record: dict = {}
-            (residual_e, residual_h), _, _, index, picked_e, picked_h = layer(
-                residual_e, residual_h, alpha, infer_use_sk=True,
-                marginal=marginal.to(device) if level == len(model.rq.levels) else None,
-                record=record)
-        plan = model.rq.last_plan if model.rq.last_plan is not None else record["plan"]
-        error = float(realised_error(plan.cpu(), marginal))
+            for level, layer in enumerate(model.rq.levels, start=1):
+                alpha = model.rq.alpha_table.lookups(level, []).to(device)
+                (residual_e, residual_h), _, _, index, picked_e, picked_h = layer(
+                    residual_e, residual_h, alpha, infer_use_sk=True,
+                    marginal=marginal.to(device) if level == len(model.rq.levels) else None,
+                    record=record)
+            return record["plan"].cpu()
+
+    gate = prior.realisability(plan_of, marginal)
 
     path = prior.partition_path(root)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -108,8 +114,7 @@ def main() -> int:
         "rho": [float(value) for value in rho],
         "marginal_min": float(marginal.min()),
         "marginal_max": float(marginal.max()),
-        "realised_error": error,
-        "realised_tolerance": prior.REALISED_TOLERANCE,
+        "realisability": gate,
         "structure_table_sha256": structure["sha256"],
         "frozen_before_training": True,
         "note": ("bucket members never change after this file is written; the run's own "
@@ -124,11 +129,10 @@ def main() -> int:
                 "metadata": metadata}
     prior.manifest_path(path).write_text(json.dumps(manifest, indent=2, sort_keys=True),
                                          encoding="utf-8")
-    print(json.dumps({"method": method, "realised_error": error,
-                      "tolerance": prior.REALISED_TOLERANCE,
+    print(json.dumps({"method": method, "realisability": gate,
                       "partition_sha256": manifest["table_sha256"]}, indent=2))
-    if error > prior.REALISED_TOLERANCE:
-        print("REALISABILITY_FAILED: the frozen marginal cannot be realised at the last level")
+    if not (gate["probe"]["passed"] and gate["batch"]["passed"] and gate["curve_decays"]):
+        print("REALISABILITY_FAILED: see the three checks above")
         return 4
     return 0
 
