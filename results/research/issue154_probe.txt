@@ -1,0 +1,15 @@
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_af3_prefix_geometry_rq/probe_gradient.py:72: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  "gap": float(losses["gap"]), "tri": float(losses["tri"]),
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_af3_prefix_geometry_rq/probe_gradient.py", line 88, in <module>
+    raise SystemExit(main())
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_af3_prefix_geometry_rq/probe_gradient.py", line 76, in main
+    losses[name].backward(retain_graph=True)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/_tensor.py", line 647, in backward
+    torch.autograd.backward(
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py", line 829, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn

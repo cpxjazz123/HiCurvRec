@@ -40,3 +40,13 @@ Issue 第 6 条要求测试覆盖「两项的定义域与梯度」，第 1 条�
 2. 训练前一次性建「embedding 行 → 商品 id」的精确映射（行内容哈希），循环里按行查 id，不改 dataset。
 
 在 id 通路打通之前，损失**没有**接进训练；模型侧已经具备可微前缀（`soft_prefix` + `compose_prefix`，`last_prefixes` 记录），并由 `probe_gradient.py` 单独测量两项对编码器的梯度，以证明这个读法确实把梯度带回了编码器，而不是又一次只动码本。
+
+## 第三个缺口（实测中，未解决）
+
+`probe_gradient.py` 在真实 batch（2048 行、冻结边表）上把 `L_gap` 反传时抛
+`element 0 of tensors does not require grad and does not have a grad_fn`——即**软前缀目前仍未带梯度**。
+
+已排除：`MixedRQ.forward`、`MixedRQVAE.forward`、`split` 都没有 `@torch.no_grad()`；`mobius_add` 的实现是普通张量运算；`layer.distances` 是 no-grad 表面，所以已改成损失自己用 `mixed_distance` 重算同一代价（`permixed` 广播版，代码里注释说明"冻结代价函数本身不动"）。
+
+下一步的确定诊断（一次就能定位）：在同一 batch 上按顺序打印
+`model.encoder(batch).requires_grad` → `expmap0(...).requires_grad` → `pre_cost.requires_grad` → `soft_prefix(...)[1].requires_grad`，第一个为 `False` 的那一环就是断点；同时检查 `initialize_tiger_weights` 之后 encoder 参数是否 `requires_grad=True`（若初始化被包在 `no_grad` 里且顺手把参数设成了常量，这是最可能的原因）。
