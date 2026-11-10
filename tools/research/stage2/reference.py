@@ -300,7 +300,10 @@ def coupling_verdict(contract: dict, *, seed: int = 17) -> dict:
     if control:
         changed = dict(arguments)
         value = arguments[control]
-        changed[control] = value + 0.5 if not hasattr(value, "dtype") else value + 0.5
+        if "geometry" in control.lower() and not hasattr(value, "dtype"):
+            changed[control] = 0.0
+        else:
+            changed[control] = value + 0.5
         try:
             third = function(**changed)
         except Exception as exc:  # noqa: BLE001

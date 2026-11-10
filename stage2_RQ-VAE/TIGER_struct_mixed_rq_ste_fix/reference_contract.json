@@ -182,7 +182,7 @@
  "coupling": {
   "callable": "structure:prefix_coupling_surface",
   "behaviour_argument": "h",
-  "control_argument": "s",
+  "control_argument": "geometry_on",
   "args": [
    {
     "name": "codes",
@@ -197,9 +197,14 @@
    {
     "name": "s",
     "scalar": 1.0
+   },
+   {
+    "name": "geometry_on",
+    "scalar": 1.0
    }
   ],
-  "note": "the coupling runs on the full E16 x H16 three-layer prefix path, not the reduced surface"
+  "behaviour_note": "the behaviour enters as the target ratio h; h and s are not separable in this objective, so a control on s cannot witness the behaviour",
+  "note": "the coupling runs on the full E16 x H16 three-layer prefix path; the control switches the geometry off"
  },
  "excluded": [
   {
