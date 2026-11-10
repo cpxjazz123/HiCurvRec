@@ -1,0 +1,112 @@
+{
+  "artifacts_written": [],
+  "checkpoint_absent": true,
+  "diagnostics_while_running": {
+    "alpha_last": [
+      {
+        "alpha_above_0.95": 0.0,
+        "alpha_below_0.05": 1.0,
+        "alpha_max": 2.6807514860862873e-19,
+        "alpha_mean": 7.069688802040423e-21,
+        "alpha_min": 0.0,
+        "alpha_std": 2.2078199373676868e-20,
+        "level": 1
+      },
+      {
+        "alpha_above_0.95": 0.0,
+        "alpha_below_0.05": 1.0,
+        "alpha_max": 3.499136532089674e-18,
+        "alpha_mean": 5.516984116028656e-20,
+        "alpha_min": 0.0,
+        "alpha_std": 1.8708134103196038e-19,
+        "level": 2
+      },
+      {
+        "alpha_above_0.95": 0.0,
+        "alpha_below_0.05": 1.0,
+        "alpha_max": 3.4302265967997187e-18,
+        "alpha_mean": 1.0939841971520549e-19,
+        "alpha_min": 0.0,
+        "alpha_std": 3.0899274051604763e-19,
+        "level": 3
+      }
+    ],
+    "note": "alpha saturated to 0.0 on all three levels by epoch ~500 and the three-code collision climbed to 0.9998; this is the gate-degeneracy failure mode the issue names, and it is recorded, not repaired: no weight, initialisation or lambda is changed after seeing it",
+    "structure_terms_mean": {
+      "bridge": 4.084707540508137e-08,
+      "closure": 0.981905908888789,
+      "usage": 0.00017155980465454284
+    },
+    "three_code_collision": [
+      {
+        "collision": 0.8297067556025541,
+        "epoch": 50,
+        "unique": 4187
+      },
+      {
+        "collision": 0.8640338390206206,
+        "epoch": 100,
+        "unique": 3343
+      },
+      {
+        "collision": 0.8577296945540326,
+        "epoch": 150,
+        "unique": 3498
+      },
+      {
+        "collision": 0.9081628502867369,
+        "epoch": 200,
+        "unique": 2258
+      },
+      {
+        "collision": 0.9755968601293367,
+        "epoch": 250,
+        "unique": 600
+      },
+      {
+        "collision": 0.9766543295237321,
+        "epoch": 300,
+        "unique": 574
+      },
+      {
+        "collision": 0.9882864928620816,
+        "epoch": 350,
+        "unique": 288
+      },
+      {
+        "collision": 0.9959734819213405,
+        "epoch": 400,
+        "unique": 99
+      },
+      {
+        "collision": 0.9991052182047423,
+        "epoch": 450,
+        "unique": 22
+      },
+      {
+        "collision": 0.9997559686012933,
+        "epoch": 500,
+        "unique": 6
+      },
+      {
+        "collision": 0.9992272339040956,
+        "epoch": 550,
+        "unique": 19
+      },
+      {
+        "collision": 0.9985358116077602,
+        "epoch": 600,
+        "unique": 36
+      }
+    ]
+  },
+  "dispatched_at_epoch": 1,
+  "epoch_time_s_last": 0.3,
+  "epochs_completed": 644,
+  "item_sids_absent": true,
+  "last_epoch": 644,
+  "metrics_evidence": "results/research/issue149/aborted_run/training_metrics.jsonl",
+  "smoke_before_run": "PASS (24 steps, no dead term, positive step norms)",
+  "status": "ABORTED_BY_OWNER_INSTRUCTION",
+  "why": "the owner's interjection of 2026-11-10 requires a commit and an issue comment, and the controller's review approval, BEFORE the full Stage2 run starts; this run had been dispatched under the previous instruction"
+}

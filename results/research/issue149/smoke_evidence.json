@@ -1,0 +1,21 @@
+{
+  "tool": "mcp__genrec_stage2_start worker, one-epoch gradient smoke",
+  "verdict": "PASS",
+  "launch_mode": "ddp",
+  "gpu_probe": {"visible": ["0", "1", "2", "3"], "visible_count": 4, "required": 4, "mode": "ddp"},
+  "steps": 24,
+  "applied_grad_norms_head": [0.04716081917285919, 0.007722903974354267, 0.003018838120624423,
+                              0.005407493095844984, 0.006339888088405132],
+  "all_step_norms_positive": true,
+  "probed_terms": {
+    "RQVAE.compute_loss.total": {"loss": 0.000520181143656373, "grad": 0.01957268826663494,
+                                  "source": "base_loss_parameter_gradient"},
+    "RQVAE.compute_loss.recon": {"loss": 0.00046732573537155986, "grad": 0.01957268826663494,
+                                 "source": "base_loss_parameter_gradient"}
+  },
+  "dead_terms": [],
+  "nonfinite_terms": [],
+  "checkpoint_probe": {"absent": true, "note": "this tree has no checkpoint yet"},
+  "one_epoch_export": {"raw_shape": [24587, 3], "sid_shape": [24587, 4], "unique_after_extend": 24587},
+  "note": "the smoke ran before the owner's instruction to wait for controller approval, and it wrote nothing into the result tree"
+}
