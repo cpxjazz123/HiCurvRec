@@ -263,8 +263,9 @@
     "l3_collision_63": 0.8295847399032009
   },
   "conclusion": {
-    "channel_was_alive": "before dispatch, 22.75% of tokens changed when the marginal went from uniform to structural, so the channel was not inert; it failed by starving one bucket",
-    "failure_mode": "capacity concentrated into the rho = 0.377 bucket starves the rho = 0.131 bucket: level 1 keeps 99 of 256 codes with 58.42% of the items in one code, and level-2 prefixes fall from 13956 (arm #149) to 1057",
+    "channel_was_alive": "before dispatch, 22.75% of tokens changed when the marginal went from uniform to structural, so the channel was not inert; it failed, but not by being inert",
+    "corrected_after_review": "the first version said the high-share bucket ate the capacity; the report's own bucket mass contradicts that, so the sentence now follows the numbers",
+    "failure_mode": "the realised bucket mass does not follow the prior: measured [8532, 6622, 6968, 2434] against targets [5913, 6164, 9263, 3216], so the two lowest-share buckets are over-allocated (1.44x and 1.07x) and the 0.377-share bucket is under its target (0.75x). The collapse is therefore within the buckets, at the per-code level: the last epoch's level 1 keeps 58 of 256 codes with one code holding 58.7% of the items (normalised entropy 0.258), while at epoch 1000 it still had 172 codes, 15.9% in the largest and entropy 0.793. The prior failed to allocate capacity by share, and inside the buckets a few codes absorbed the mass",
     "not_an_improvement": "valid_l1_positive_hit_rate 0.4956 and negative_hit_rate 0.4514 are far above arm #149's 0.0074/0.0052 only because the prefixes collapsed to nearly the same value for everyone; they are a by-product of the collapse and must not be read as an improvement",
     "stage3": "not started: the three-code collision 0.68215 is above the 0.40 gate, which \u00a789 enforces"
   },
@@ -352,7 +353,7 @@
     "min": 0.0020463429391384125,
     "uniform": false
   },
-  "prior_table_sha256": null,
+  "prior_table_sha256": "ca4f07f840fa1383195f233a5134c4bad7e4fe84a0bd0ebd3125ced16768df60",
   "switches": {
     "behavior_off": false,
     "both_on": true,
