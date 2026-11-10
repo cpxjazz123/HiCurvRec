@@ -1,14 +1,6 @@
-
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-=========================== short test summary info ============================
-FAILED tests/test_integration_regressions.py::test_consumer_rejects_shared_readout_with_wrong_input_identity - Failed: DID NOT RAISE any of (<class 'ValueError'>, <class 'RuntimeError'>)
-FAILED tests/test_prefix_eligibility.py::test_stale_explicit_local_entry_stops_before_any_selection[few_items-2-prefix0-L] - Failed: DID NOT RAISE <class 'RuntimeError'>
-FAILED tests/test_prefix_eligibility.py::test_stale_explicit_local_entry_stops_before_any_selection[few_items-2-prefix0-E] - Failed: DID NOT RAISE <class 'RuntimeError'>
-FAILED tests/test_prefix_eligibility.py::test_stale_explicit_local_entry_stops_before_any_selection[few_edges-2-prefix1-L] - Failed: DID NOT RAISE <class 'RuntimeError'>
-FAILED tests/test_prefix_eligibility.py::test_stale_explicit_local_entry_stops_before_any_selection[few_edges-2-prefix1-E] - Failed: DID NOT RAISE <class 'RuntimeError'>
 FAILED tests/test_prefix_eligibility.py::test_stale_explicit_local_entry_stops_before_any_selection[few_unobserved-3-prefix2-L] - Failed: DID NOT RAISE <class 'RuntimeError'>
 FAILED tests/test_prefix_eligibility.py::test_stale_explicit_local_entry_stops_before_any_selection[few_unobserved-3-prefix2-E] - Failed: DID NOT RAISE <class 'RuntimeError'>
 FAILED tests/test_prefix_eligibility.py::test_stale_explicit_local_entry_stops_before_any_selection[absent_prefix-3-prefix3-L] - Failed: DID NOT RAISE <class 'RuntimeError'>
 FAILED tests/test_prefix_eligibility.py::test_stale_explicit_local_entry_stops_before_any_selection[absent_prefix-3-prefix3-E] - Failed: DID NOT RAISE <class 'RuntimeError'>
 FAILED tests/test_support_regressions.py::StratifiedSupportTests::test_proportional_quotas_are_enforced_and_counts_use_the_chosen_anchor - AssertionError: np.False_ is not true
-10 failed, 161 passed, 19 warnings in 112.22s (0:01:52)
+10 failed, 161 passed, 19 warnings in 118.14s (0:01:58)

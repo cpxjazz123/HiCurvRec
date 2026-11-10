@@ -652,7 +652,7 @@ def main() -> None:
         recons: list[float] = []
         auxiliary_logs = []
         _epoch_t0 = time.time()
-        for (batch, batch_ids) in loader:
+        for step_index, (batch, batch_ids) in enumerate(loader):
             batch = batch.to(device, non_blocking=True)
             batch_ids = batch_ids.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
@@ -670,6 +670,19 @@ def main() -> None:
                     probe_prefixes, probe_ids_tensor, structure_sets,
                     item_count=structure_item_count)
                 loss = loss + structural
+                if epoch % EVAL_INTERVAL == 0 and step_index == 0:
+                    # One gradient probe per evaluation epoch: differentiating the
+                    # structural objective through the Sinkhorn carrier costs about
+                    # a backward pass, so it is measured every EVAL_INTERVAL epochs
+                    # rather than every epoch. The value is a property of the term,
+                    # not a training signal.
+                    alphas_now = raw_module.rq.last_alphas or []
+                    for level, alpha in enumerate(alphas_now, start=1):
+                        grad = torch.autograd.grad(structural, alpha, retain_graph=True,
+                                                   allow_unused=True)[0]
+                        if grad is not None:
+                            structure_log["dl_dalpha_median_level_%d" % level] = float(
+                                grad.abs().median())
                 structure_logs.append(structure_log)
                 level_diag.append(level_diagnostics(
                     probe_prefixes, raw_module.rq.last_records,
@@ -730,7 +743,15 @@ def main() -> None:
                         for name in structure_logs[-1][keys[level]]})
                 averaged["spearman_descriptor"] = rows[-1].get("spearman_descriptor")
                 levels.append(averaged)
+            # The gradient probe runs on the first step of an evaluation epoch, so
+            # the back half of the epoch's logs do not carry the field; average the
+            # steps that do instead of reading only the last one.
+            gradient_keys = {key for log in structure_logs for key in log
+                             if key.startswith("dl_dalpha_median_level_")}
+            grad_fields = {key: float(np.mean([log[key] for log in structure_logs
+                                               if key in log])) for key in gradient_keys}
             _record(rank, "structure", epoch=epoch,
+                    **grad_fields,
                     closure=float(np.mean([row["closure"] for row in structure_logs])),
                     bridge=float(np.mean([row["bridge"] for row in structure_logs])),
                     usage=float(np.mean([row["usage"] for row in structure_logs])),
@@ -743,6 +764,7 @@ def main() -> None:
                     cross_pairs_total=int(structure_logs[-1]["cross_pairs_total"]),
                     steps=len(structure_logs),
                     probe_items=int(probe_ids.size),
+                    probe_fraction=float(probe_ids.size) / float(len(all_embeddings)),
                     levels=levels)
 
         if structure_sets is not None:
@@ -860,7 +882,21 @@ def main() -> None:
         payload = {str(item_id): [int(value) for value in row] for item_id, row in enumerate(sid)}
         OUTPUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         print(f"[RecBole RQ-VAE] exported raw_shape={raw_tokens.shape} sid_shape={sid.shape} unique={len(np.unique(sid, axis=0))} -> {OUTPUT_SID}", flush=True)
-        _record(rank, "train_end", total_wall_time_s=round(time.time() - _T0, 3), final_collision=final_collision, checkpoint_selection="final_epoch", sid_shape=list(sid.shape), output_sid=str(OUTPUT_SID), output_json=str(OUTPUT_JSON), unique_after_extend=len(np.unique(sid, axis=0)))
+        unobserved = None
+        if structure_table is not None:
+            # The items with no TRAIN graph row are routed at the population-mean
+            # descriptor; their final weight is reported by value, not left implicit.
+            missing = np.nonzero(~structure_table.observed.any(axis=1))[0]
+            if missing.size:
+                with torch.no_grad():
+                    weights = raw_module.rq.alphas(torch.from_numpy(missing).to(device))
+                unobserved = {
+                    "count": int(missing.size),
+                    "ids": [int(value) for value in missing],
+                    "alpha_per_level": [float(value.mean()) for value in weights],
+                    "alpha_std_per_level": [float(value.std(unbiased=False)) for value in weights],
+                }
+        _record(rank, "train_end", total_wall_time_s=round(time.time() - _T0, 3), final_collision=final_collision, checkpoint_selection="final_epoch", sid_shape=list(sid.shape), output_sid=str(OUTPUT_SID), output_json=str(OUTPUT_JSON), unique_after_extend=len(np.unique(sid, axis=0)), structure_unobserved=unobserved)
 
     if world_size > 1:
         dist.barrier()

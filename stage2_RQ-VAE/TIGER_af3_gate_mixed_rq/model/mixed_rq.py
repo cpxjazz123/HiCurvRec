@@ -348,7 +348,14 @@ class MixedRQ(nn.Module):
     # -- the structure gate ------------------------------------------------
     def attach_structure(self, table) -> None:
         """Freeze the per-item descriptor this quantizer reads."""
-        values = getattr(table, "values", table)
+        # A torch.Tensor also has a ``values`` *method* (the sparse accessor), so
+        # the table lookup has to be explicit rather than a getattr fallback.
+        if isinstance(table, torch.Tensor):
+            values = table
+        elif hasattr(table, "values"):
+            values = table.values
+        else:
+            values = torch.as_tensor(table)
         values = torch.as_tensor(values, dtype=torch.float32)
         if values.ndim != 2 or int(values.shape[1]) != DESCRIPTOR_DIMS:
             raise ValueError("a structure table is [items, " + str(DESCRIPTOR_DIMS) + "]")

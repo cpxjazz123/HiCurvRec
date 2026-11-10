@@ -112,7 +112,14 @@ class MixedRQVAE(nn.Module):
                 table = (structure_table if isinstance(structure_table, StructureTable)
                          else StructureTable.load(structure_table))
             expected = extra.get("table_sha256")
-            if expected and table.sha256 and table.sha256 != expected:
+            # Failure closed: a gated checkpoint with no recorded table identity
+            # cannot be paired with any table, and a table that is not pinned to a
+            # file cannot be compared at all. Both raise instead of restoring.
+            if not expected:
+                raise ValueError("this gated checkpoint does not record its structure table")
+            if not table.sha256:
+                raise ValueError("the supplied structure table is not pinned to a file")
+            if table.sha256 != expected:
                 raise ValueError("this checkpoint was trained against another structure table")
             model.rq.attach_structure(table)
         model.load_state_dict(state, strict=True)

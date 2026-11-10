@@ -113,7 +113,13 @@ def test_gated_entry_point_exports_what_the_gate_produced(monkeypatch, tmp_path)
     assert last["cross_pairs_used"] == last["cross_pairs_total"] * last["steps"]
     assert last["triangles_total"] == 2
     assert last["probe_items"] >= 1
+    assert last["probe_fraction"] == pytest.approx(last["probe_items"] / ROWS)
     assert [row["level"] for row in last["levels"]] == [1, 2, 3]
+    # the gradient of the structural objective into alpha is measured at the
+    # evaluation interval, and it is present on all three levels
+    for level in (1, 2, 3):
+        assert f"dl_dalpha_median_level_{level}" in last, sorted(last)
+        assert last[f"dl_dalpha_median_level_{level}"] >= 0.0
     for row in last["levels"]:
         assert 0.0 < row["alpha_mean"] < 1.0
         assert 0.0 < row["alpha_std"]
@@ -157,6 +163,14 @@ def test_the_checkpoint_binds_its_frozen_table(monkeypatch, tmp_path):
         right = second.rq.alphas(ids)
     for first_level, second_level in zip(left, right):
         assert torch.equal(first_level, second_level)
+
+    # a gated checkpoint that records no table identity must fail closed
+    stripped = dict(state)
+    stripped["rq._extra_state"] = {key: value for key, value in state["rq._extra_state"].items()
+                                   if key != "table_sha256"}
+    with pytest.raises(ValueError, match="does not record its structure table"):
+        MixedRQVAE.from_checkpoint(config, stripped, in_dim=DIM,
+                                   structure_table=trainer.STRUCTURE_TABLE)
 
     # a different but perfectly valid table must be refused, not silently used
     other = _write_table(tmp_path / "other_table.npz", seed=7)
