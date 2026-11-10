@@ -41,7 +41,7 @@ def main() -> int:
     rows = torch.from_numpy(np.ascontiguousarray(embeddings.astype(np.float32)))
     model.init_codebook(rows[torch.from_numpy(np.asarray(train_ids[:4096]))])
     generator = torch.Generator().manual_seed(154)
-    pick = torch.randperm(len(train_ids), generator=generator)[:2048].numpy()
+    pick = torch.randperm(len(train_ids), generator=generator)[:4096].numpy()
     batch_ids = np.asarray(train_ids)[pick]
     batch = rows[torch.from_numpy(batch_ids)]
     position = {int(item): index for index, item in enumerate(batch_ids)}
@@ -57,18 +57,39 @@ def main() -> int:
             item_of_node.get(int(head), -1))
         if left is not None and right is not None:
             low.append((left, right))
+    # the closed high triangles of the frozen graph: keep those whose three nodes are all
+    # in this batch, which is what the batch-restricted L_tri can actually see
+    edge_key = {}
+    for index, (tail, head) in enumerate(raw["edges"].tolist()):
+        edge_key[(min(tail, head), max(tail, head))] = index
+    high_mask = np.zeros(raw["edges"].shape[0], dtype=bool)
+    for tail, head in table["high_edges"]:
+        index = edge_key.get((min(int(tail), int(head)), max(int(tail), int(head))))
+        if index is not None:
+            high_mask[index] = True
     triples = []
-    for triangle in ():
-        pass
+    for triangle in raw["triangles"].tolist():
+        nodes = [int(triangle[0]), int(triangle[1]), int(triangle[2])]
+        items = [item_of_node.get(node) for node in nodes]
+        if any(item is None or item not in position for item in items):
+            continue
+        members = [(min(nodes[0], nodes[1]), max(nodes[0], nodes[1])),
+                   (min(nodes[1], nodes[2]), max(nodes[1], nodes[2])),
+                   (min(nodes[0], nodes[2]), max(nodes[0], nodes[2]))]
+        indices = [edge_key.get(member) for member in members]
+        if all(index is not None and high_mask[index] for index in indices):
+            triples.append([position[item] for item in items])
     model.train()
     out = model(batch)
     prefixes = model.rq.last_prefixes
     losses = pg.structure_losses(prefixes[-1][0], prefixes[-1][1],
                                  torch.tensor(high, dtype=torch.long),
                                  torch.tensor(low, dtype=torch.long),
-                                 torch.zeros(0, 3, dtype=torch.long),
+                                 torch.tensor(triples, dtype=torch.long)
+                                 if triples else torch.zeros(0, 3, dtype=torch.long),
                                  delta=torch.tensor(0.0), curvature=1.0)
-    report = {"batch": 2048, "high_edges_in_batch": len(high), "low_edges_in_batch": len(low),
+    report = {"batch": 4096, "high_edges_in_batch": len(high), "low_edges_in_batch": len(low),
+              "closed_triangles_in_batch": len(triples),
               "gap": float(losses["gap"]), "tri": float(losses["tri"]),
               "d_bar": float(losses["delta_bar"]), "tau": float(losses["tau"])}
     report["prefix_grad_flags"] = [bool(value.requires_grad) for value in prefixes[-1]]

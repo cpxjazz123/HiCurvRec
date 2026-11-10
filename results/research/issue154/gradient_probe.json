@@ -1,18 +1,20 @@
 {
-  "batch": 2048,
-  "d_bar": 4.619093490366923e-05,
-  "gap": 0.7019465480098145,
-  "gap_encoder_grad": 735.1584086418152,
-  "high_edges_in_batch": 537,
+  "batch": 4096,
+  "closed_triangles_in_batch": 8,
+  "d_bar": 4.4599812775517514e-05,
+  "gap": 0.6997708873442471,
+  "gap_encoder_grad": 480.31668615341187,
+  "high_edges_in_batch": 2170,
   "loss_grad_flags": {
     "gap": true,
-    "tri": false
+    "tri": true
   },
-  "low_edges_in_batch": 568,
+  "low_edges_in_batch": 3105,
   "prefix_grad_flags": [
     true,
     true
   ],
-  "tau": 1.470994012264504e-05,
-  "tri": 0.0
+  "tau": 1.3127528371246127e-05,
+  "tri": 0.8061379667807435,
+  "tri_encoder_grad": 9419.667724609375
 }
