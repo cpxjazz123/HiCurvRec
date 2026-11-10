@@ -37,11 +37,26 @@ def exact_assign(cost_group: torch.Tensor, quotas: torch.Tensor) -> torch.Tensor
     return picks
 
 
+#: The largest group the exact solver is asked to take at once. Level 1 has no parent, so on the
+#: export (24587 rows) its single group would demand a 24587 x 24587 assignment, which is not
+#: feasible; it is therefore cut into blocks of this size, each with its own uniform quota. Levels 2
+#: and 3 are conditioned on a parent and their groups are small by construction, so they never block.
+EXACT_GROUP_CAP = 1024
+
+
 def assign(plan: torch.Tensor, cost: torch.Tensor, parents: torch.Tensor | None) -> torch.Tensor:
     """One code per row, quotas conditional on the parent prefix (a single group when parents is None)."""
     codes = int(plan.shape[1])
     picks = torch.zeros(plan.shape[0], dtype=torch.long, device=plan.device)
     if parents is None:
+        if plan.shape[0] > EXACT_GROUP_CAP:
+            for start in range(0, plan.shape[0], EXACT_GROUP_CAP):
+                piece_cost = cost[start:start + EXACT_GROUP_CAP]
+                piece_plan = plan[start:start + EXACT_GROUP_CAP]
+                count = piece_cost.shape[0]
+                quotas = group_quotas(piece_plan, count, codes)
+                picks[start:start + EXACT_GROUP_CAP] = exact_assign(piece_cost, quotas)
+            return picks
         groups = [(torch.arange(plan.shape[0], device=plan.device), None)]
     else:
         groups = [(torch.nonzero(parents == value, as_tuple=False).flatten(), value)
