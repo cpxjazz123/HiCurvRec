@@ -179,9 +179,10 @@ class MixedVQLevel(nn.Module):
             # the prior enters as an additive bias on this level's own cost, in the
             # same centred units the assignment compares; the Sinkhorn target below
             # stays the baseline's uniform one
-            from .frozen_prior import prior_bias
-            cost = cost + prior_bias(self.prior_log_pi.to(cost.device),
-                                     self.prior_scale).to(cost.dtype).unsqueeze(0)
+            # c'_k = c_k - T * log pi_k; prior_log_pi already holds log(pi), so this
+            # is one multiplication -- applying log again clamped it to a constant
+            cost = cost - float(self.prior_scale) * self.prior_log_pi.to(
+                cost.device).to(cost.dtype).unsqueeze(0)
         if marginal is None and self.prior_scale is not None and self.use_sk \
                 and (self.training or infer_use_sk):
             from .frozen_prior import centred_cost, structured_sinkhorn
