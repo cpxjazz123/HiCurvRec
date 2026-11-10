@@ -1,6 +1,6 @@
 # question1 — 让曲率进入 Sinkhorn 的代价矩阵：实现 + 跑完一次完整 Stage2（验收＝那次 Stage2）
 
-**状态：OPEN（新 idea 的第一问）**　前序结论：`idea/struct_mixed_rq/CONCLUSION.md`
+**状态：CLOSED（已验收：一次完整 Stage2 跑满 3000 epoch；SID 坍缩，见 answer1；下一轮转 Stage3）**　前序结论：`idea/struct_mixed_rq/CONCLUSION.md`
 
 ## 0. 为什么换到代价侧（有数据支撑，不是换口味）
 
