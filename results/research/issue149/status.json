@@ -66,8 +66,21 @@
     ],
     "last_epoch": 644
   },
+  "acceptance": {
+    "closed_at": "2026-11-10T08:02:54Z",
+    "closed_by": "ISSUE_CONTROLLER",
+    "closure_conditions": {
+      "collision_below_0.40": true,
+      "stage2_complete": true,
+      "stage3_complete": true
+    },
+    "executor_closed_issue": false,
+    "reviewed_sha": "1f66b07d",
+    "verdict": "negative result accepted; test_R@10 0.028865 against the 0.065 bar"
+  },
   "arm": "TIGER_af3_gate_mixed_rq",
   "commits": [
+    "1f66b07d issue 149: Stage3 finishes at test_R@10 0.028865, a negative result, archived as R2 59",
     "ca6f2a4a issue 149: the single Stage2 run finishes 3000 epochs; three-code collision 0.1223 against the 0.40 gate",
     "937c1dec issue 149: the restore fails closed on a missing table identity, and the run records what the review asked for",
     "cc15c9b9 issue 149: implementation and verification are complete; awaiting the review that starts Stage2",
@@ -88,6 +101,7 @@
   },
   "idea": "AF3-guided structure-preserving mixed-curvature quantisation",
   "issue": 149,
+  "mechanism_conclusion": "the structure gate is effective at level 3 only (alpha 0.540 +- 0.469, |rho| 0.920 against triangles_log); levels 1-2 saturate to alpha ~ 0, L_bridge stays 0 by definition, and the structural supervision covers 12.5% of trainable items. Replacing the frozen weight with this gate does not hold under the current recipe",
   "not_started_gated": {
     "acceptance": "waits for the controller; the issue is not closed by the executor",
     "implementation": "done",
@@ -95,7 +109,7 @@
     "stage3": "done"
   },
   "protocol": "each stage is signalled by a pushed commit; no issue comment is used",
-  "stage": "stage3_complete_negative_result_awaiting_acceptance",
+  "stage": "accepted_negative_result_issue_closed_by_controller",
   "stage2": {
     "alpha_final_per_level": [
       {
