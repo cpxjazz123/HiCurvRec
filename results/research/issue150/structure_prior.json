@@ -7,6 +7,12 @@
     "input_rule": "TRAIN split only; the validation and test splits and any future behaviour are never read",
     "issue": 150,
     "items_without_structure": 31,
+    "layer_sizes": [
+      5913,
+      6164,
+      9263,
+      3216
+    ],
     "louvain_resolution": 1.0,
     "mechanism": "structure-stratified target marginal of the balanced assignment",
     "n_edges": 315391,
@@ -14,20 +20,20 @@
     "n_nodes": 24556,
     "n_triangles": 546438,
     "rho": [
-      0.24926698159309335,
-      0.24824890047238965,
-      0.2460091220068415,
-      0.25647499592767553
+      0.24079654666883857,
+      0.2510180811207037,
+      0.37721941684313404,
+      0.13096595536732367
     ],
     "seed": 42,
-    "tau_mean": 0.35198390811524255,
-    "tau_quantile_cuts": [
-      0.125,
-      0.35294117647058826,
-      0.5555555555555556
+    "tau_cuts": [
+      0.3333333333333333,
+      0.6666666666666666
     ],
+    "tau_mean": 0.35198390811524255,
+    "tau_zero_layer": true,
     "train_parquet_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
   },
   "table": "/fs04/ar57/wenyu/GeneRec/results/research/issue150/structure_prior.npz",
-  "table_sha256": "cbd864c1093e400e6cf69c72e081c19eac9eee97b01569cdddf16693511998f8"
+  "table_sha256": "ca4f07f840fa1383195f233a5134c4bad7e4fe84a0bd0ebd3125ced16768df60"
 }

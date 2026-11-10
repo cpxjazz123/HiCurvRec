@@ -29,9 +29,18 @@ from pathlib import Path
 import numpy as np
 import torch
 
-#: The number of structure layers. Four is the quartile definition of tau, not a
-#: tuned knob: it is the number of layers a quartile split can distinguish.
+#: The number of structure layers.
 GROUPS = 4
+#: The layer boundaries on tau. The layers are *thresholds*, not quantiles, because
+#: quantiles force an equal population per layer and therefore a nearly uniform
+#: target marginal (measured: rho within 4.19% of 1/4, pi within 2.59% of uniform,
+#: 0.39% of tokens changed on a real 1024x256 cost matrix). The cuts are the
+#: thirds of the participation share after the exact zero, which is its own layer:
+#: an item with no triangular edge has no partial participation at all, and a
+#: third is the coarsest split that keeps three distinguishable partial levels.
+#: Frozen before the single run; the review asked for this decision explicitly.
+TAU_ZERO_LAYER = True
+TAU_CUTS = (1.0 / 3.0, 2.0 / 3.0)
 #: The three term weights. Each term is normalised into [0, 1] by its own
 #: definition, so the three are the same kind of quantity and equal weight is the
 #: default rather than a swept value.
@@ -117,11 +126,23 @@ def verify(path: Path | str) -> dict:
 
 
 # ------------------------------------------------------------------ marginal
-def stratify(tau: np.ndarray, groups: int = GROUPS) -> tuple[np.ndarray, np.ndarray]:
-    """Quartile layers of tau, plus the frozen share of every layer."""
+def stratify(tau: np.ndarray, cuts=TAU_CUTS) -> tuple[np.ndarray, np.ndarray]:
+    """Threshold layers of tau, plus their frozen population shares.
+
+    ``tau = 0`` is its own layer when ``TAU_ZERO_LAYER``; the remaining items fall
+    into the bands the cuts define. The shares are whatever the data gives, which
+    is the point: a quantile split would force them to ``1/G`` and make the target
+    marginal almost uniform.
+    """
     tau = np.asarray(tau, dtype=np.float64)
-    cuts = np.quantile(tau, [index / groups for index in range(1, groups)])
-    layer = np.searchsorted(cuts, tau, side="right").astype(np.int64)
+    boundaries = list(cuts)
+    if TAU_ZERO_LAYER:
+        layer = np.zeros(tau.shape, dtype=np.int64)
+        positive = tau > 0
+        layer[positive] = np.searchsorted(boundaries, tau[positive], side="left") + 1
+    else:
+        layer = np.searchsorted(boundaries, tau, side="left").astype(np.int64)
+    groups = int(layer.max()) + 1 if tau.size else 0
     counts = np.bincount(layer, minlength=groups).astype(np.float64)
     return layer, counts / counts.sum()
 

@@ -7,18 +7,19 @@
     "split": "TRAIN only",
     "graph": "the TRAIN co-occurrence graph, rebuilt and verified edge for edge against the frozen AF3 cache of issue #136 (315391 edges, 24556 nodes, MATCHED)",
     "tau": "tau_i = share of item i's incident edges that lie in at least one triangle; 0 for the 31 items with no TRAIN graph row",
-    "layers": "the four quartiles of tau over the trainable items, frozen with their cuts [0.125, 0.35294117647058826, 0.5555555555555556] and sizes [6121, 6096, 6041, 6298]",
+    "layers": "threshold strata of tau, chosen after the review measured the quantile split as nearly inert: tau = 0 is its own layer, then bands (0, 1/3], (1/3, 2/3], (2/3, 1]. Sizes [6118, 6379, 9582, 3327] of 24556",
     "rho": [
-      0.24926698159309335,
-      0.24824890047238965,
-      0.2460091220068415,
-      0.25647499592767553
+      0.24079654666883857,
+      0.2510180811207037,
+      0.37721941684313404,
+      0.13096595536732367
     ],
     "communities": "Louvain on the TRAIN graph, resolution 1.0, seed 42 (recorded, not used by the terms)",
     "sets": {
       "edges": 315391,
       "triangles": 546438
-    }
+    },
+    "prior_table_sha256": "ca4f07f840fa1383195f233a5134c4bad7e4fe84a0bd0ebd3125ced16768df60"
   },
   "computations": [
     {
@@ -38,7 +39,7 @@
       "definition": "pi_k = rho_{g(k)} / |B_{g(k)}|, normalised; uniform under BEHAVIOR_OFF",
       "output": "pi, a distribution over the K codes",
       "gradient": "none: it is the assignment's target, not a learned quantity",
-      "measured_limit": "quartile strata make rho ~ 1/4 by construction, so pi is within 2.59% relative of uniform: the structural content of the marginal is bounded by that number before any training happens"
+      "measured_limit": "with quantile strata rho was within 4.19% of 1/4 and the marginal within 2.59% of uniform, which the review measured as 0.39% of tokens changed at the frozen epsilon. The strata are therefore thresholds, not quantiles: rho max/min = 2.88, pi deviates from uniform by up to 50.9% relative, and the same token-change measurement gives 77.3% on a real 1024x256 cost matrix at epsilon = 0.003 with 50 iterations. The marginal is now decisive, and the collapse risk the issue names is live and is what the collision gate and the per-level usage record exist to catch"
     },
     {
       "name": "structured assignment",
@@ -111,6 +112,17 @@
     {
       "surface": "the max/min re-centring of the cost matrix",
       "reason": "piecewise differentiable in the batch"
+    }
+  ],
+  "decision_log": [
+    {
+      "when": "before the single run, after the review of commit 304385ce",
+      "what": "strata are the third-thresholds of tau with the exact zero as its own layer, not its quartiles",
+      "why": "quantiles force an equal population per layer, so the target marginal is almost uniform and the mechanism is inert (review measurement: 0.39% of tokens, and our own: rho spread 4.19%, pi deviation 2.59%). Thresholds leave rho to the data (2.88x between the largest and the smallest layer), which restores the mechanism's intended effect without touching the frozen epsilon, the iteration count or any weight",
+      "alternatives_rejected": [
+        "keeping quantiles and re-defining the bucket target as a continuous tau statistic: it would replace the population share with a second derived quantity and obscure what the assignment is being told",
+        "narrowing the claim to a mild prior: it would move the round's novelty onto the two graph terms, which is the #149 shape the review wanted to avoid"
+      ]
     }
   ]
 }

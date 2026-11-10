@@ -138,12 +138,14 @@ def test_prior_kl_is_zero_when_the_usage_already_matches_the_marginal():
     assert abs(float(value)) < 1e-9
 
 
-def test_stratification_uses_tau_quartiles_and_frozen_proportions():
-    tau = np.array([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
-    layer, rho = prior.stratify(tau, groups=4)
-    assert layer.tolist() == [0, 0, 0, 1, 1, 2, 2, 3, 3, 3]
+def test_stratification_uses_the_third_thresholds_and_an_exact_zero_layer():
+    tau = np.array([0.0, 0.1, 0.3, 1.0 / 3.0, 0.4, 0.6, 2.0 / 3.0, 0.7, 0.9])
+    layer, rho = prior.stratify(tau)
+    # tau = 0 is its own layer; the bands are (0, 1/3], (1/3, 2/3], (2/3, 1]
+    assert layer.tolist() == [0, 1, 1, 1, 2, 2, 2, 3, 3]
     assert abs(float(rho.sum()) - 1.0) < 1e-12
-    assert rho.tolist() == [0.3, 0.2, 0.2, 0.3]
+    assert rho.tolist() == [1.0 / 9.0, 3.0 / 9.0, 3.0 / 9.0, 2.0 / 9.0]
+    assert prior.TAU_CUTS == (1.0 / 3.0, 2.0 / 3.0)
 
 
 def test_geometry_off_has_a_euclidean_hyperbolic_half():

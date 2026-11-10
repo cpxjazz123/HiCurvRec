@@ -133,7 +133,7 @@ def build(root: Path) -> dict:
     np.add.at(positive, graph["rows"], edge_triangle.astype(np.float64))
     np.add.at(positive, graph["cols"], edge_triangle.astype(np.float64))
     tau = np.divide(positive, incident, out=np.zeros_like(positive), where=incident > 0)
-    layer, rho = struct_prior.stratify(tau, struct_prior.GROUPS)
+    layer, rho = struct_prior.stratify(tau)
     communities = _communities(graph["binary"])
     triangles = _all_triangles(graph["binary"], graph["rows"], graph["cols"])
 
@@ -154,10 +154,11 @@ def build(root: Path) -> dict:
         "n_nodes": int(item_ids.size),
         "n_edges": int(edges.shape[0]),
         "n_triangles": int(triangle_items.shape[0]),
-        "groups": struct_prior.GROUPS,
+        "groups": int(rho.size),
         "rho": [float(value) for value in rho],
-        "tau_quantile_cuts": [float(value) for value in
-                              np.quantile(tau, [0.25, 0.5, 0.75])],
+        "tau_cuts": [float(value) for value in struct_prior.TAU_CUTS],
+        "tau_zero_layer": bool(struct_prior.TAU_ZERO_LAYER),
+        "layer_sizes": [int(value) for value in np.bincount(layer)],
         "tau_mean": float(tau.mean()),
         "louvain_resolution": LOUVAIN_RESOLUTION,
         "seed": SEED,

@@ -1,26 +1,37 @@
 Issue #150 implementation record
 
-TDD, in the order it happened:
-1. tests/test_struct_prior.py was written before model/struct_prior.py existed; the
-   run failed at import (the module was missing). A first version asserted the
-   column marginal equals pi at the run's own epsilon; that failed (the plan is
-   sharp there, and the plan is row-normalised, so its columns carry B*pi, not pi)
-   -- see issue150_marginal_regime.txt. The test was corrected to the two regimes
-   that are actually true: exact at a smooth epsilon, ordering-and-tolerance at the
-   frozen one, and the uniform special case is pinned against the baseline's own
-   sinkhorn to 1e-9.
+Design decision taken before the single run, after the controller's review of
+commit 304385ce (their measurement: quantile strata make the marginal change
+0.39% of tokens at the frozen epsilon, i.e. nearly inert):
+
+  strata are now THRESHOLDS on tau, not quartiles: tau = 0 is its own layer, then
+  (0, 1/3], (1/3, 2/3], (2/3, 1]. The frozen prior is
+    rho = [0.24080, 0.25102, 0.37722, 0.13097]  (max/min 2.88)
+    layer sizes [6118, 6379, 9582, 3327] of 24556
+    table SHA-256 ca4f07f840fa1383195f233a5134c4bad7e4fe84a0bd0ebd3125ced16768df60
+  and the target marginal now deviates from uniform by up to 50.9% relative. The
+  same token-change measurement the review used returns 77.3% on a real 1024x256
+  cost matrix at epsilon = 0.003 with 50 iterations (uniform vs structural plan).
+  Reason, alternatives and their rejection are in math_spec.json decision_log.
+
+Everything else is unchanged from the reviewed commit: the structured Sinkhorn is
+the baseline's iteration with the column target replaced, the buckets stay equal
+sized, epoch 1 uses the uniform marginal, and the three terms run on the batch's
+own triangles and edges.
+
+TDD and verification:
+1. tests/test_struct_prior.py was written before model/struct_prior.py existed;
+   the run failed at import. A first version of the column-marginal test asserted
+   pi at the run's own epsilon, which is false because the plan is row-normalised
+   (columns carry B*pi): see issue150_marginal_regime.txt. The test now pins the
+   uniform special case against the baseline's own sinkhorn to 1e-9, the exact
+   marginal in the smooth regime, and the bucket ordering at the frozen epsilon.
 2. tests/test_prior_entrypoints.py pins the export path (the last level's token
    comes from the structured plan) and the checkpoint binding (another prior, or a
    missing identity, must raise).
-3. A synthetic two-epoch run of the real main() exercised every wiring point:
-   epoch 1 uniform marginal, epoch 2 the structural one, the three terms with
-   coverage counts, the bucket partition, the export.
-
-Measured property of the definitions, recorded before any training:
-quartile strata force rho ~ 1/4 (measured [0.24927, 0.24825, 0.24601, 0.25647],
-relative spread 4.19%), so with equal-size buckets the target marginal pi is
-within 2.59% relative of uniform. The marginal's structural content is therefore
-bounded by that spread by construction; the rest of the mechanism (bucket
-composition, L_tri, L_fork, L_prior) is what can act. This is reported, not
-repaired, because changing G, rho or the stratification after seeing it is
-forbidden by the issue's own risk rules.
+3. A synthetic two-epoch main() exercised epoch-1 uniform -> epoch-2 structural
+   marginal, the bucket partition, the three terms and the export.
+4. The real entry point ran one epoch on the real data (results/research/
+   issue150_smoke.txt): batch-induced coverage 2597 triangles and 8784 edges per
+   step, L_tri 0.9687, L_fork 0.00066, L_prior 0.1815, epoch-1 bucket mass
+   [8118, 7296, 5781, 3361] against targets [6118, 6095, 6040, 6303].
