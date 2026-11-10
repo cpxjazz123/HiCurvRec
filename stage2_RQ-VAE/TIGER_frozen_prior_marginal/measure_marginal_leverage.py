@@ -30,7 +30,7 @@ from model.poincare_contract import expmap0  # noqa: E402
 from model.poincare_contract import mobius_add as mobius  # noqa: E402
 from model.poincare_contract import project as prior_project  # noqa: E402
 
-ROWS = 4096
+ROWS = 1024
 
 
 def _repository_root() -> Path:
@@ -121,6 +121,42 @@ def main() -> int:
                                 "max_row_deviation": float(prior.realised_rows(plan, target).max())})
     report = {**report, "iteration_sweep": convergence,
               "frozen_iterations": int(model.rq.levels[-1].sk_iters)}
+
+    # the four items the review asked for, on this 1024-row probe
+    with torch.no_grad():
+        target = marginal.to(centred.device)
+        uniform = torch.full_like(target, 1.0 / float(target.numel()))
+        plan_pi = prior.structured_sinkhorn(centred, eps, int(model.rq.levels[-1].sk_iters), target)
+        plan_u = prior.structured_sinkhorn(centred, eps, int(model.rq.levels[-1].sk_iters), uniform)
+        pick_pi = plan_pi.argmax(-1)
+        pick_u = plan_u.argmax(-1)
+
+        def _hist(picks):
+            counts = torch.bincount(picks, minlength=int(target.numel())).to(torch.float64)
+            share = counts / counts.sum().clamp_min(1.0)
+            nonzero = share[share > 0]
+            return {"codes_used": int((counts > 0).sum()),
+                    "max_bucket_share": float(share.max()),
+                    "usage_entropy_normalised": float(
+                        -(nonzero * nonzero.log()).sum() / math.log(float(target.numel())))}
+
+        scale_probe = {
+            "rows": int(values.numel()),
+            "sk_epsilon": eps,
+            "leverage_centred_units": leverage,
+            "gap": {"min": float(values.min()), "p5": float(values.quantile(0.05)),
+                    "median": float(values.median()), "p50": float(values.quantile(0.50)),
+                    "p95": float(values.quantile(0.95)), "max": float(values.max())},
+            "share_gap_below_leverage": share,
+            "argmax_changed_share_frozen_iterations": float((pick_pi != pick_u).float().mean()),
+            "histogram_pi": _hist(pick_pi),
+            "histogram_uniform": _hist(pick_u),
+            "frozen_iterations": int(model.rq.levels[-1].sk_iters),
+            "iteration_sweep": convergence,
+        }
+        scale_path = root / "results" / "research" / "issue150" / "marginal_scale_probe.json"
+        scale_path.write_text(json.dumps(scale_probe, indent=2, sort_keys=True) + "\n",
+                              encoding="utf-8")
 
     path = root / "results" / "research" / "issue150" / "marginal_leverage.json"
     path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")

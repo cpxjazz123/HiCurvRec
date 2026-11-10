@@ -1,0 +1,48 @@
+{
+  "argmax_changed_share_frozen_iterations": 0.2509765625,
+  "frozen_iterations": 50,
+  "gap": {
+    "max": 0.5500346720218658,
+    "median": 0.0012651681900024414,
+    "min": 1.6689300537109375e-06,
+    "p5": 9.261369705200196e-05,
+    "p50": 0.001267462968826294,
+    "p95": 0.006553387641906731
+  },
+  "histogram_pi": {
+    "codes_used": 234,
+    "max_bucket_share": 0.0126953125,
+    "usage_entropy_normalised": 0.9511324047588163
+  },
+  "histogram_uniform": {
+    "codes_used": 242,
+    "max_bucket_share": 0.0107421875,
+    "usage_entropy_normalised": 0.9686196251240824
+  },
+  "iteration_sweep": [
+    {
+      "iterations": 50,
+      "max_relative_error": 0.7404447826822256,
+      "max_row_deviation": 2.852744746701417
+    },
+    {
+      "iterations": 200,
+      "max_relative_error": 0.0013225691780643614,
+      "max_row_deviation": 0.00509552145293668
+    },
+    {
+      "iterations": 500,
+      "max_relative_error": 8.209902257751138e-11,
+      "max_row_deviation": 1.7203483082539606e-10
+    },
+    {
+      "iterations": 2000,
+      "max_relative_error": 4.4228806931692646e-16,
+      "max_row_deviation": 1.7763568394002505e-15
+    }
+  ],
+  "leverage_centred_units": 0.003173668856865512,
+  "rows": 1024,
+  "share_gap_below_leverage": 0.828125,
+  "sk_epsilon": 0.003
+}
