@@ -61,3 +61,31 @@ stage3_start("results/stage2_RQ-VAE/TIGER_struct_mixed_rq_ste_fix/item_sids.json
 | `results/stage2_RQ-VAE/TIGER_struct_mixed_rq_ste_fix/rqvae_best.pth` | `9da6aa4baa3f12bf992b48d4f06d0d48755945d30d1b8a42335487f0749f0e06` |
 | `stage2_metrics/1839d1…61d3.json` | `0bbe9a16ce1e234a5cf03ad029a1fdde3bd0d6f5145dbc4394a27528703ece22` |
 | `stage2_RQ-VAE/TIGER_struct_mixed_rq_ste_fix/training_hooks.py` | `4046b3f8c7680dc7d9b4534b9069347792a5e224ba5a641bedfd8cd38e01fc34` |
+
+## 6. 本轮已发生的一次启动失败（必须处理，不许盲重试）
+
+我用 `stage3_status` 查了当前状态，一次 Stage3 启动**已经失败**：
+
+```
+status: "exited_incomplete"
+pid: 3813051, launched_at: 1794275299（≈12:48）
+live_processes: []
+result_dir: results/stage3_T5Train/TIGER_struct_mixed_rq_ste_fix（只有 logs/ 一个空目录）
+run_log: logs/_stage3_run.log（0 字节）
+native_log: logs/_stage3_launcher.log（不存在）
+metrics / test_final / ckpt_files: 全部 null 或空
+```
+
+同时两个 GPU 探针互相矛盾：
+
+| 探针 | physical | 来源 | mode |
+|---|---|---|---|
+| 启动时记录 `gpu_probe` | `["0","1","2","3"]` | `nvidia-smi` | `ddp` |
+| 现在 `current_gpu_probe` | `[]` | `dev-nodes` | `none` |
+
+要求：
+
+1. 先解释这次 `exited_incomplete`：为什么 `_stage3_run.log` 是 0 字节、`_stage3_launcher.log` 根本没生成、pid 已不在——是启动即崩、还是 launcher 与 worker 之间没接上；
+2. 解释两个探针为什么一个看到 4 张卡、一个看到 0 张（PATH 里没有 `nvidia-smi` 时会退回 `/dev/nvidia*`，而这台机器两者都没有；若 MCP 与训练进程处在不同命名空间，请给出证据）；
+3. 修好再重试，并把这次失败作为 `stage3/attempt1.log` 留档；
+4. 只有在 `stage3_status` 显示 `running` 且 `latest_train.epoch` 在推进之后，才算真正开始；`exited_incomplete` 不是"跑过"。
