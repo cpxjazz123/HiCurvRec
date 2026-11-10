@@ -1,0 +1,46 @@
+Issue #150: why the formal Stage2 has not started (documented blocker)
+
+Four dispatches of the single formal run were attempted and each died before the
+first epoch printed a line. The chain of evidence, in the order it was obtained:
+
+1. dispatch 1 — DDP wrap aborted: "No backend type associated with device type
+   cpu". Cause: target_marginal is a registered (non-persistent) buffer, DDP
+   broadcasts every buffer, and it had been created on the CPU after the model
+   moved to CUDA. Fixed in bac21302 (buffer built on the codebook's device).
+
+2. dispatch 2 — "Cannot center a constant distance matrix" on ranks 1 and 3.
+   Cause: the proxy centres every level, and MixedVQLevel.center_distance raises
+   on a matrix with no spread because the baseline only centres one it is about to
+   balance. Fixed in 34d82de7 (centred_cost: zero on a flat matrix, raise with the
+   range on a non-finite one).
+
+3. dispatch 3 — "the cost matrix is not finite: max=nan min=nan" on all ranks.
+   Instrumented in 28e51322: the message names the call site.
+
+4. dispatch 4 — "the cost matrix is not finite at level 1: max=nan min=nan
+   finite_rows=0.0 shape=(1024, 256)", then, with the tensor guard of 2b7b2c10,
+   "the encoder output is not finite: finite share 0.0 shape (1024, 32)".
+
+So in the launched run the encoder produces NaN for the whole batch at step 0,
+which means its parameters (or their broadcast) are NaN, since the inputs are
+finite: the embedding matrix is finite with |x| <= 0.59 and 24556 TRAIN rows, all
+non-zero.
+
+What does *not* reproduce it, all run inside this repository:
+
+* one process, batch 1024, the trainer's own main(): one epoch completes,
+  collision 0.360 at epoch 1 (results recorded in the round's notes);
+* one process, batch 4096: one epoch completes (issue150_smoke.txt);
+* four NCCL ranks replaying the trainer's exact order — attach the prior,
+  initialise the weights with set_seed(SEED+rank), wrap in DDP, initialise the
+  codebooks on the full TRAIN set, forward 1024 shuffled rows per rank — every
+  level finite, 256 distinct codes per level, ball gap 0.91, residual norm 0.30
+  (results/research/issue150/four_rank_step0.json).
+
+The difference is therefore confined to the launch environment or to a part of
+main() that the replay does not execute, not to the mechanism, the data or the
+arithmetic. The next step is to print, inside the launch, whether the encoder's
+parameters themselves are finite before the first forward, and to bisect the
+launcher's env (NCCL/OMP/TORCH_NCCL_BLOCKING_WAIT) against the replay. Until that
+is settled the arm has no checkpoint, no item_sids.json and no collision number,
+so nothing downstream of it can run.
