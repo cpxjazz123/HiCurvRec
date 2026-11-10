@@ -17,7 +17,7 @@ if str(TREE) not in sys.path:
     sys.path.insert(0, str(TREE))
 
 from model.struct_prior import batch_sets as reference_sets          # noqa: E402
-from model.struct_sets_fast import SetWindow                          # noqa: E402
+from model.struct_sets_fast import SetWindow, SetWindowTorch          # noqa: E402
 
 
 def synthetic_pool(items: int, edges: int, triangles: int, seed: int = 0):
@@ -125,6 +125,45 @@ def test_the_real_pool_matches_the_reference():
         ids = rng.choice(24556, size=1024, replace=False).astype(np.int64)
         fast = window.batch_sets(ids, layer_of[ids])
         slow = reference_sets(ids, layer_of[ids], edges, triangles, int(items))
+        assert fast["coverage"] == slow["coverage"]
+        for key in ("triangles", "within", "cross"):
+            assert np.array_equal(np.asarray(fast[key]), np.asarray(slow[key])), key
+
+def test_the_device_window_matches_the_reference_on_random_batches():
+    """The CUDA path must answer exactly what the host path answers.
+
+    The tensor window runs the same two gathers on whatever device it is given, so
+    the equality is checkable here with CPU tensors; on a card the kernels differ
+    but the quantities do not.
+    """
+    items = 4096
+    edges, triangles = synthetic_pool(items, edges=20000, triangles=30000)
+    layer_of = layer_table(items)
+    window = SetWindowTorch(edges, triangles, items, "cpu")
+    rng = np.random.default_rng(13)
+    for batch in (1, 7, 64, 512):
+        for _ in range(6):
+            ids = rng.choice(items, size=batch, replace=False)
+            fast = window.batch_sets(ids, layer_of[ids])
+            slow = reference_sets(ids, layer_of[ids], edges, triangles, items)
+            assert fast["coverage"] == slow["coverage"]
+            for key in ("triangles", "within", "cross"):
+                assert np.array_equal(np.asarray(fast[key]), np.asarray(slow[key])), key
+
+
+@pytest.mark.skipif(not REAL.is_file(), reason="the frozen #150 prior is not present")
+def test_the_device_window_matches_the_reference_on_the_real_pool():
+    payload = np.load(REAL)
+    edges = np.asarray(payload["edges"], dtype=np.int64)
+    triangles = np.asarray(payload["triangles"], dtype=np.int64)
+    layer_of = np.full(24587, -1, dtype=np.int64)
+    layer_of[np.asarray(payload["item_ids"], dtype=np.int64)] = np.asarray(payload["layer"], dtype=np.int64)
+    window = SetWindowTorch(edges, triangles, 24587, "cpu")
+    rng = np.random.default_rng(17)
+    for _ in range(3):
+        ids = rng.choice(24556, size=1024, replace=False).astype(np.int64)
+        fast = window.batch_sets(ids, layer_of[ids])
+        slow = reference_sets(ids, layer_of[ids], edges, triangles, 24587)
         assert fast["coverage"] == slow["coverage"]
         for key in ("triangles", "within", "cross"):
             assert np.array_equal(np.asarray(fast[key]), np.asarray(slow[key])), key

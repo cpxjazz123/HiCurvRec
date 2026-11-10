@@ -19,6 +19,7 @@ batches of several sizes.
 from __future__ import annotations
 
 import numpy as np
+import torch
 
 
 def _csr(rows: np.ndarray, width: int, item_count: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -99,4 +100,69 @@ class SetWindow:
         }
 
 
-__all__ = ["SetWindow"]
+class SetWindowTorch:
+    """The same question answered on the accelerator.
+
+    ``SetWindow`` is host work: it gathers about 68k candidates and sorts them, and
+    it is the only part of an epoch that a GPU cannot make cheaper by itself. This
+    class keeps the two pools resident on the device and answers the membership
+    question with two gathers, so the host only hands over 1024 item ids per step.
+
+    Correctness is identical to ``SetWindow`` and to ``struct_prior.batch_sets``:
+    the pools, the membership test, the ascending row order and the coverage counts
+    are the same quantities, and ``tests/test_struct_sets_fast.py`` asserts the
+    equality on device tensors (CPU tensors here, the same kernels on a card).
+
+    The speed-up is *expected*, not measured on this host: the machine that edited
+    this file reports ``torch.cuda.is_available() = False``, so the only thing a
+    measurement here could show is the CPU kernel cost, which is not the case this
+    class exists for. The trainer selects it when the run is on CUDA and keeps the
+    numpy window otherwise.
+    """
+
+    def __init__(self, edges: np.ndarray, triangles: np.ndarray, item_count: int,
+                 device, dtype=torch.int64):
+        self.item_count = int(item_count)
+        self.device = torch.device(device)
+        self.triangles = torch.as_tensor(np.asarray(triangles).reshape(-1, 3),
+                                        dtype=dtype, device=self.device)
+        self.edges = torch.as_tensor(np.asarray(edges).reshape(-1, 2),
+                                     dtype=dtype, device=self.device)
+        self.lookup = torch.full((self.item_count,), -1, dtype=dtype, device=self.device)
+
+    def batch_sets(self, item_ids, layer_of_item) -> dict:
+        ids = torch.as_tensor(item_ids, dtype=torch.int64, device=self.device).reshape(-1)
+        layers = torch.as_tensor(layer_of_item, dtype=torch.int64, device=self.device).reshape(-1)
+        if int(layers.numel()) != int(ids.numel()):
+            raise ValueError("one layer per item id is required")
+
+        self.lookup.fill_(-1)
+        self.lookup[ids] = torch.arange(ids.numel(), dtype=torch.int64, device=self.device)
+
+        mapped_triangles = self.lookup[self.triangles]
+        triangle_keep = (mapped_triangles >= 0).all(dim=1)
+        mapped_edges = self.lookup[self.edges]
+        edge_keep = (mapped_edges >= 0).all(dim=1)
+        kept_edges = mapped_edges[edge_keep]
+        if kept_edges.numel():
+            same_layer = layers[kept_edges[:, 0]] == layers[kept_edges[:, 1]]
+        else:
+            same_layer = torch.zeros(0, dtype=torch.bool, device=self.device)
+        within = kept_edges[same_layer]
+        cross = kept_edges[~same_layer]
+        return {
+            "triangles": mapped_triangles[triangle_keep],
+            "within": within,
+            "cross": cross,
+            "coverage": {
+                "triangles_used": int(triangle_keep.sum()),
+                "triangles_total": int(self.triangles.shape[0]),
+                "edges_used": int(edge_keep.sum()),
+                "edges_total": int(self.edges.shape[0]),
+                "within_used": int(within.shape[0]),
+                "cross_used": int(cross.shape[0]),
+            },
+        }
+
+
+__all__ = ["SetWindow", "SetWindowTorch"]

@@ -72,9 +72,14 @@ softmax/one-hot/centring），在 GPU 上是微秒到毫秒级；真正 host 绑
 
 五、仍可尝试的两条（都未落地）
 
-1. GPU 侧掩码：把三角/边以 int32 常驻显存（6.5 MB），掩码在卡上做。
-   预计再省 ~9 ms/步（约 1.6 min/臂），但本项目当前可用 shell 无 GPU，
-   **只能验证正确性、无法验证加速比**，所以没有提交。
+1. GPU 侧掩码：**已实现**（`SetWindowTorch`，训练器检测到 CUDA 时启用，
+   非 CUDA 保持 numpy 路径）。三角/边以 int64 常驻显存，每步在卡上做两次
+   gather 与掩码，host 只交出 1024 个 id。
+   - 正确性：与 `SetWindow` 及 `batch_sets` 逐位一致（合成池与真实 #150 池，
+     `tests/test_struct_sets_fast.py`，10 例通过）。
+   - 速度：**未在本机测量**（两个项目解释器均 `torch.cuda.is_available() = False`）。
+     CPU 上它反而更慢（19.1 → 41.2 ms/步），所以路径按 `device.type == "cuda"`
+     门控；卡上的收益是推断值（全池 gather 861k 元素，预计亚毫秒），不是实测值。
 2. 探针前向频率：3072 行/步 → 每 k 步一次。这是**改目标**（每 epoch 结构项数量变化），
    按 CLAUDE.md §19g 必须在派发前写进 `math_spec.json`，不属于"优化"。
 

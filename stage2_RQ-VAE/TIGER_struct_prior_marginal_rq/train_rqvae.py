@@ -44,7 +44,7 @@ from model.struct_prior import (BEHAVIOR_OFF, GEOMETRY_OFF, GROUPS, LAMBDA_FORK,
                                 equal_partition, fork_loss,
                                 prior_kl, sha256_of as prior_sha256,
                                 target_marginal, triangle_loss, usage_partition)
-from model.struct_sets_fast import SetWindow
+from model.struct_sets_fast import SetWindow, SetWindowTorch
 
 
 # === 路径常量（无绝对路径；由文件自身向上找仓库标记推导）===
@@ -546,6 +546,7 @@ def main() -> None:
     prior_active = ARM_VARIANT == "PRIORMARGINAL"
     prior_table = None
     prior_window = None
+    prior_window_torch = None
     if prior_active:
         if not STRUCTURE_PRIOR.is_file():
             raise FileNotFoundError("missing frozen structure prior: " + str(STRUCTURE_PRIOR)
@@ -559,6 +560,12 @@ def main() -> None:
         # equality of the returned arrays and counts).
         prior_window = SetWindow(prior_table.edges, prior_table.triangles,
                                  int(prior_table.metadata["n_items"]))
+        # On a card the same question is answered on the device: the pools stay
+        # resident and the host only hands over the batch's own ids. The numpy
+        # window stays the reference (and the CPU path).
+        prior_window_torch = (SetWindowTorch(prior_table.edges, prior_table.triangles,
+                                             int(prior_table.metadata["n_items"]), device)
+                              if device.type == "cuda" else None)
         model.attach_prior(prior_table)
     if XAVIER_INIT:
         initialize_tiger_weights(model)
@@ -676,12 +683,18 @@ def main() -> None:
                 # the same id array and the same layer array.
                 ids_np = batch_ids.detach().cpu().numpy()
                 layers_np = prior_table.layer_of(ids_np)
-                local = prior_window.batch_sets(ids_np, layers_np)
+                if prior_window_torch is not None:
+                    local = prior_window_torch.batch_sets(batch_ids, layers_np)
+                    triangles_t, within_t, cross_t = (local["triangles"], local["within"],
+                                                      local["cross"])
+                else:
+                    local = prior_window.batch_sets(ids_np, layers_np)
+                    triangles_t = torch.from_numpy(local["triangles"]).to(device)
+                    within_t = torch.from_numpy(local["within"]).to(device)
+                    cross_t = torch.from_numpy(local["cross"]).to(device)
                 terms = {
-                    "tri": triangle_loss(prefixes, torch.from_numpy(local["triangles"]).to(device)),
-                    "fork": fork_loss(prefixes,
-                                      torch.from_numpy(local["within"]).to(device),
-                                      torch.from_numpy(local["cross"]).to(device)),
+                    "tri": triangle_loss(prefixes, triangles_t),
+                    "fork": fork_loss(prefixes, within_t, cross_t),
                     "far": prior_kl(prefixes, raw_module.rq.target_marginal.to(device)),
                 }
                 loss = (loss + LAMBDA_TRIANGLE * terms["tri"] + LAMBDA_FORK * terms["fork"]
