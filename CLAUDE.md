@@ -204,3 +204,5 @@ genrec/<NN>/recall.json      ← Stage3 结果的全部键值
 ## 16. 临时文件位置（2026-11-10 owner 指令）
 
 86. **禁止在 `/tmp` 下放置任何脚本、数据或文件。** 所有临时脚本、日志、测试产物与中间数据只能放在当前仓库目录内（例如 `results/research/` 下的专门目录），并在用完后自行清理；已在 `/tmp` 留下的历史文件必须删除。任何命令、日志或提交中都不得再出现新的 `/tmp/<name>` 产物路径。
+
+87. **申报公式与代码的自动比对已从准入移除（2026-11-10 owner 指令）。** `check_reference_agreement` 不再进入 `run_all`，round 登记的 `reference_verdict` 门槛与 `stage2_start` 的 `admissible` 分支已删除；其余机器检查（冻结常量、真实入口、SID、四卡、分配规则、编码器梯度）不变。`reference_contract.json` 仍保留为文档与差分证据，但不再阻断训练。

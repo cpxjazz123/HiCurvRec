@@ -145,7 +145,9 @@ def _inputs(contract_call: dict, *, seed: int):
             raw = torch.rand(count, width, generator=generator, dtype=torch.float64) * (high - low) + low
         else:
             raw = (torch.rand(count, width, generator=generator, dtype=torch.float64) * 2 - 1)
-        if spec.get("sampler", "ball") == "ball":
+        if spec.get("sampler", "ball") == "ball" and not spec.get("choices"):
+            # The values came from the declared choices; rescaling them would
+            # move them off the set the callable accepts.
             # Inside the ball of the declared radius: scale each row's norm.
             norms = raw.norm(dim=1, keepdim=True).clamp_min(1e-12)
             raw = raw / norms * (radius * torch.rand(count, 1, generator=generator,
@@ -215,8 +217,10 @@ def compare(tree: Path, contract: dict, *, seed: int = 17) -> dict:
                     left.detach(), right.detach(),
                     rtol=float(contract_call.get("grad_rtol") or GRAD_RTOL),
                     atol=float(contract_call.get("grad_atol") or GRAD_ATOL))
+            # gradcheck perturbs by eps, so an argument drawn from a finite set
+            # of choices cannot be gradchecked: keep the continuous tensors only.
             tensor_names = [spec["name"] for spec in contract_call["args"]
-                            if spec.get("scalar") is None]
+                            if spec.get("scalar") is None and not spec.get("choices")]
 
             def bound(function, names):
                 def wrapped(*values):
@@ -225,11 +229,17 @@ def compare(tree: Path, contract: dict, *, seed: int = 17) -> dict:
                     return function(**bound_arguments)
                 return wrapped
 
+            grad_names = [spec["name"] for spec, tensor in zip(
+                [a for a in contract_call["args"] if a.get("scalar") is None], tensors)
+                if not spec.get("choices")]
+            grad_values = tuple(tensor for spec, tensor in zip(
+                [a for a in contract_call["args"] if a.get("scalar") is None], tensors)
+                if not spec.get("choices"))
             entry["gradcheck_candidate"] = bool(torch.autograd.gradcheck(
-                bound(candidate, tensor_names), tuple(tensors),
+                bound(candidate, grad_names), grad_values,
                 eps=1e-6, atol=1e-5, rtol=1e-4))
             entry["gradcheck_reference"] = bool(torch.autograd.gradcheck(
-                bound(reference, tensor_names), tuple(tensors),
+                bound(reference, grad_names), grad_values,
                 eps=1e-6, atol=1e-5, rtol=1e-4))
         except AssertionError as exc:
             entry.update(status="FAIL", reason=str(exc).splitlines()[0][:300])

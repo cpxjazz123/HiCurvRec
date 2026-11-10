@@ -2679,17 +2679,8 @@ def round_admission(tree: Path, verification_id: str) -> dict:
         return {"passed": False,
                 "refused": "the candidate fails the frozen engineering checks: " +
                            "; ".join(failing)}
-    # The mechanism declares its continuous surface and the framework rebuilds
-    # it; a tree without a contract, or one whose declared formula disagrees
-    # with the code, is refused before the GPU work starts.
-    if not conformance.get("admissible"):
-        reference = next((check for check in conformance.get("checks", [])
-                          if check.get("name") == "reference_agreement"), {})
-        return {"passed": False,
-                "refused": "the formula reference is not satisfied (" +
-                           str(reference.get("status")) + "): " +
-                           str(reference.get("detail"))[:300]}
-
+    # The declared-formula-versus-code comparison was removed from the
+    # admission by the owner on 2026-11-10.
     if failures:
         # The probe and the math checks are executed evidence. Without a review
         # agent there is nothing to clear a counterexample, so a FAIL refuses.

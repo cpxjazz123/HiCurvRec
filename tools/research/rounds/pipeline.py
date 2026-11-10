@@ -422,14 +422,8 @@ def register_implementation(state: dict, implementation_id: str, report: dict) -
             str(differential.get("status")) + "): " +
             str(differential.get("reason"))[:200] +
             "; the admission rests on the machine-checked code evidence")
-    verdict = reference_verdict(tree)
-    record["reference_agreement"] = verdict
-    if verdict.get("status") != "PASS":
-        raise RoundError(
-            "the formula reference is not satisfied (" + str(verdict.get("status")) +
-            "): " + str(verdict.get("detail"))[:300] +
-            " - declare the mechanism's equations in reference_contract.json and make "
-            "the code agree with them")
+    # The owner removed the declared-formula-versus-code comparison from the
+    # admission on 2026-11-10; the executable conformance checks stay below.
     # The formula compiler's gate: the frozen specification (reviewed twice and
     # unchanged on disk), the three independent implementations agreeing, the
     # contract stating the frozen statements, and every conformance check

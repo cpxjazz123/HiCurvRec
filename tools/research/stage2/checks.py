@@ -578,16 +578,11 @@ def run_all(tree: Path | str) -> dict:
     checks = [check_names(tree), check_collectives(tree), check_constants(tree),
               check_geometry_contract(tree), check_entry(tree),
               check_identifier(tree), check_four_rank(tree),
-              check_assignment_rule(tree),
-              check_reference_agreement(tree), check_encoder_gradient(tree)]
-    # The reference contract is reported separately: a tree without one keeps
-    # its reason in the report and is NOT admissible, while the four frozen
-    # engineering categories stay what "passed" means (the baseline short flow
-    # predates the contract and must remain runnable).
-    reference = next(check for check in checks
-                     if check.get("name") == "reference_agreement")
-    passed = all(check["status"] == "PASS" for check in checks[:-1])
-    admissible = bool(passed and reference.get("status") == "PASS")
+              check_assignment_rule(tree), check_encoder_gradient(tree)]
+    # The owner removed the declared-formula-versus-code comparison from the
+    # admission on 2026-11-10: the remaining checks are the executable ones.
+    passed = all(check["status"] == "PASS" for check in checks)
+    admissible = passed
     _discard_admission_tree(tree)
     return {"tree": str(tree), "passed": passed, "admissible": admissible,
             "checks": checks}
