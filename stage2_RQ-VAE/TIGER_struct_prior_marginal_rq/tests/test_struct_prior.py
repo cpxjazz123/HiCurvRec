@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pytest
 import torch
 
 TREE = Path(__file__).resolve().parents[1]
@@ -154,6 +155,18 @@ def test_geometry_off_has_a_euclidean_hyperbolic_half():
     second = 0.1 * torch.randn(8, 16, generator=generator, dtype=torch.float64)
     torch.testing.assert_close(squared_distance(first, second, 0.0) / 4.0,
                                (first - second).pow(2).sum(-1), rtol=0, atol=1e-6)
+
+
+def test_a_constant_cost_matrix_has_a_defined_zero_centring():
+    flat = torch.full((4, 8), 0.37)
+    torch.testing.assert_close(prior.centred_cost(flat), torch.zeros_like(flat))
+    varying = torch.arange(32, dtype=torch.float32).reshape(4, 8)
+    centred = prior.centred_cost(varying)
+    assert float(centred.max()) <= 1.0 + 1e-5 and float(centred.min()) >= -1.0 - 1e-5
+    bad = varying.clone()
+    bad[0, 0] = float("nan")
+    with pytest.raises(ValueError, match="not finite"):
+        prior.centred_cost(bad)
 
 
 def test_switch_constants_exist():

@@ -224,6 +224,25 @@ def structured_sinkhorn(centred: torch.Tensor, epsilon: float, iterations: int,
 
 
 # ------------------------------------------------------------------- proxies
+def centred_cost(cost: torch.Tensor) -> torch.Tensor:
+    """The baseline's centring, with the degenerate cases named.
+
+    ``MixedVQLevel.center_distance`` raises on a constant matrix because the
+    baseline only ever centres a matrix it is about to balance; the proxy centres
+    every level, and a level whose cost has no spread carries no preference, so a
+    zero centring is the defined answer there. A non-finite matrix is a real defect
+    and still raises, with the range in the message.
+    """
+    maximum, minimum = cost.max(), cost.min()
+    spread = maximum - minimum
+    if not bool(torch.isfinite(spread)):
+        raise ValueError("the cost matrix is not finite: max=" + str(float(maximum))
+                         + " min=" + str(float(minimum)))
+    if float(spread) <= 0:
+        return torch.zeros_like(cost)
+    return (cost - (maximum + minimum) / 2) / (spread / 2 + 1e-5)
+
+
 def proxy_assignment(cost: torch.Tensor, plan: torch.Tensor | None) -> torch.Tensor:
     """Straight-through proxy: the taken code in the forward, a live carrier back.
 
@@ -237,8 +256,7 @@ def proxy_assignment(cost: torch.Tensor, plan: torch.Tensor | None) -> torch.Ten
         carrier = plan
         hard = carrier.detach().argmax(dim=-1)
     else:
-        from .mixed_rq import MixedVQLevel
-        centred = MixedVQLevel.center_distance(cost)
+        centred = centred_cost(cost)
         carrier = torch.softmax(-centred / PROXY_TEMPERATURE, dim=-1)
         hard = cost.detach().argmin(dim=-1)
     smoothed = (1.0 - PROXY_SMOOTHING) * carrier + PROXY_SMOOTHING / float(codes)
