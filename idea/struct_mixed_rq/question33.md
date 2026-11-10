@@ -1,6 +1,6 @@
 # question33 — 目标改为"跑完一次完整 Stage2"：先补契约绑定，再过机器准入，再真训练
 
-**状态：OPEN（唯一开放追问；owner 2026-11-10 明确本轮目标与验收）**　承接：`answer32.md`
+**状态：CLOSED（已审阅 answer33；未达新验收标准——无 Stage2，转 question34）**　承接：`answer32.md`。审阅结论与后续要求见 [`question34.md`](question34.md)。
 
 ## 0. 本轮目标与验收（硬）
 
