@@ -1567,6 +1567,31 @@
       "test_recall@5"
     ]
   },
+  "58": {
+    "arm": "TIGER_struct_mixed_rq_ste_fix",
+    "files": {
+      "TIGER_struct_mixed_rq_ste_fix/math_spec.json": "7e1f233790e3de44c9b6a9aeb295abdc2de0dd6e4f06ff4e8ed42e01f4dd8d4d",
+      "TIGER_struct_mixed_rq_ste_fix/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_struct_mixed_rq_ste_fix/model/layers.py": "18e5d62005aabb65c3f2bebb6751a37006eb1fa7aa737eaec6b43e9cc98711da",
+      "TIGER_struct_mixed_rq_ste_fix/model/model.py": "ba221245c40fd1083d2034b5835ef636149d3bdda1bbb4ab29e4b2f9f7a49c2b",
+      "TIGER_struct_mixed_rq_ste_fix/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_struct_mixed_rq_ste_fix/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_struct_mixed_rq_ste_fix/reference_contract.json": "6b2a4187f99694343b1012f302995150519b740e481937d062a6f28fab07d31d",
+      "TIGER_struct_mixed_rq_ste_fix/train_rqvae.py": "61dd1d9ada2b02aa752b9832951275819186c7e55d7d6781a761589d6160add9",
+      "item_sids.json": "1839d1cea74dbc0eb5789c88b3fda1d69ff87586c561ea7b1c19ca41a5ec61d3",
+      "recall.json": "994af4ab68f9be43daccd2c08abe8352fac74e887096ec18e8a52bae72060574",
+      "rqvae_best.pth": "9da6aa4baa3f12bf992b48d4f06d0d48755945d30d1b8a42335487f0749f0e06"
+    },
+    "key": "TIGER_struct_mixed_rq_ste_fix",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
   "R09": {
     "arm": "TIGER_M2_radial_manifold",
     "duplicate_of": "20",
