@@ -305,12 +305,29 @@ STAGE2_JOBS_PER_GPU = 2
 #: 0.14 s/epoch on four cards against 1.5 s/epoch on one.
 STAGE2_LAUNCH_STRATEGY = "ddp4"
 
-#: The frozen Stage2 run: 3000 epochs over 24556 items with 24 steps per epoch.
+#: The frozen Stage2 run: 3000 epochs over 24556 items.
 STAGE2_FROZEN_EPOCHS = 3000
 #: How often a Stage 2 job may be put back into the queue after its worker
 #: process died, before the job is failed.
 MAX_STAGE2_JOB_ATTEMPTS = 3
-STAGE2_FROZEN_STEPS_PER_EPOCH = 24
+#: Steps per epoch depend on the launch layout, and getting this wrong scales the
+#: whole projection:
+#:
+#: * ``ddp4`` -- the frozen recipe -- puts one candidate on four cards, so the
+#:   global batch is 4096 and one rank sees ``ceil(24556 / 4096) = 6`` steps;
+#: * the single-card branch keeps a global batch of 1024, so one process sees
+#:   ``ceil(24556 / 1024) = 24`` steps.
+#:
+#: The old single constant (24) described the single-card branch only, and with
+#: the ddp4 strategy it inflated every projection by a factor of four: the first
+#: #150 smoke projected 10.5 h for a run that took 1090 s.
+STAGE2_TRAIN_ITEMS = 24556
+STAGE2_BATCH_PER_RANK = 1024
+STAGE2_FROZEN_WORLD_SIZE = 4
+STAGE2_FROZEN_STEPS_PER_EPOCH_DDP4 = 6
+STAGE2_FROZEN_STEPS_PER_EPOCH_SINGLE = 24
+#: Kept for the callers that predate the split; it is the single-card figure.
+STAGE2_FROZEN_STEPS_PER_EPOCH = STAGE2_FROZEN_STEPS_PER_EPOCH_SINGLE
 #: A run that projects beyond this is a resource fact, not a scientific verdict.
 STAGE2_COST_BUDGET_HOURS = 48.0
 
@@ -319,19 +336,61 @@ def project_frozen_run_cost(summary: dict | None) -> dict:
     """Project the frozen run from the measured smoke.
 
     The smoke runs the real trainer on the real data for a few steps, so its
-    step time is the only honest cost probe available before the full run.
+    step time is the only honest cost probe available before the full run -- but
+    two corrections are needed for it to mean anything:
+
+    * the steps per epoch follow the launch layout (6 under ``ddp4``, 24 on the
+      single-card branch), and
+    * ``elapsed_s`` covers the whole smoke process -- interpreter start, the data
+      and prior load, the DDP group and the first kernel launches -- so the
+      per-step figure it yields is an **upper bound**. The measured epoch time of
+      the real run (``project_from_metrics``) is the number to believe once the
+      first epochs are on disk.
     """
     summary = summary or {}
     elapsed = summary.get("elapsed_s")
     steps = summary.get("steps")
     if not elapsed or not steps:
         return {"projected_hours": None, "reason": "the smoke reported no timing"}
+    mode = str(summary.get("launch_mode") or "").lower()
+    if mode.startswith("ddp"):
+        steps_per_epoch = STAGE2_FROZEN_STEPS_PER_EPOCH_DDP4
+    elif mode:
+        steps_per_epoch = STAGE2_FROZEN_STEPS_PER_EPOCH_SINGLE
+    else:
+        steps_per_epoch = (STAGE2_FROZEN_STEPS_PER_EPOCH_DDP4
+                           if STAGE2_LAUNCH_STRATEGY == "ddp4"
+                           else STAGE2_FROZEN_STEPS_PER_EPOCH_SINGLE)
     per_step = float(elapsed) / float(steps)
-    total_steps = STAGE2_FROZEN_EPOCHS * STAGE2_FROZEN_STEPS_PER_EPOCH
+    total_steps = STAGE2_FROZEN_EPOCHS * steps_per_epoch
     return {"projected_hours": per_step * total_steps / 3600.0,
             "per_step_s": per_step, "elapsed_s": elapsed, "steps": steps,
-            "epochs": STAGE2_FROZEN_EPOCHS, "steps_per_epoch": STAGE2_FROZEN_STEPS_PER_EPOCH,
+            "epochs": STAGE2_FROZEN_EPOCHS, "steps_per_epoch": steps_per_epoch,
+            "launch_mode": mode or None,
+            "upper_bound": True,
+            "note": "per_step_s covers the smoke's whole start-up; the epoch time of "
+                    "the real run replaces this estimate once epochs are recorded",
             "budget_hours": STAGE2_COST_BUDGET_HOURS}
+
+
+def refresh_smoke_projection(smoke):
+    """Re-derive a *stored* smoke projection with the current steps-per-epoch rule.
+
+    The projection is written into the state file when the smoke runs, so a rule
+    fixed after that (the ddp4 step count) would leave an old, wrong number on
+    screen for a run that is already going. Recomputing it costs nothing and the
+    inputs -- ``elapsed_s``, ``steps``, ``launch_mode`` -- are all in the record.
+    """
+    if not isinstance(smoke, dict):
+        return smoke
+    hint = smoke.get("cost_projection_hint")
+    if not isinstance(hint, dict) or not hint.get("elapsed_s") or not hint.get("steps"):
+        return smoke
+    refreshed = dict(smoke)
+    refreshed["cost_projection_hint"] = project_frozen_run_cost(
+        {"elapsed_s": hint["elapsed_s"], "steps": hint["steps"],
+         "launch_mode": smoke.get("launch_mode")})
+    return refreshed
 
 
 def stage3_running() -> bool:
@@ -2050,7 +2109,7 @@ def tool_stage2_status(source_dir: str) -> dict:
         "smoke_log_tail": _tail_text(HARNESS_DIR / f"smoke_{tree.name}.log", 4000),
         "run_log_tail": _tail_text(Path(logs["run_log"]), 4000),
         "native_log_tail": _tail_text(Path(logs["native_log"]), 4000),
-        "smoke": state.get("smoke"),
+        "smoke": refresh_smoke_projection(state.get("smoke")),
         "refused": state.get("refused"),
         "traceback": state.get("traceback"),
         "artifacts": artifacts,
