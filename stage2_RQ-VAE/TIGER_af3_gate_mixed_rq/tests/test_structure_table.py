@@ -136,22 +136,27 @@ def test_descriptor_declares_eight_named_dimensions():
     assert len(table.DESCRIPTOR_NAMES) == table.DESCRIPTOR_DIMS
 
 
-def test_frozen_triangle_and_pair_sets_are_deterministic_and_typed():
+def test_probe_subgraph_is_frozen_and_induces_its_own_sets():
     adjacency, degree, triangles_per_edge, af3 = _synthetic()
-    first = table.frozen_sets(adjacency=adjacency, community=LABELS, seed=42,
-                              triangle_cap=10, pair_cap=10)
-    second = table.frozen_sets(adjacency=adjacency, community=LABELS, seed=42,
-                               triangle_cap=10, pair_cap=10)
-    assert np.array_equal(first["triangles"], second["triangles"])
-    assert np.array_equal(first["same_pairs"], second["same_pairs"])
-    assert np.array_equal(first["cross_pairs"], second["cross_pairs"])
-    # exactly one triangle exists, (0, 1, 2), and one cross edge, (2, 3)
-    assert np.array_equal(first["triangles"], np.array([[0, 1, 2]]))
-    assert np.array_equal(first["cross_pairs"], np.array([[2, 3]]))
-    # every same-group pair is inside one community and is not the same node
+    first = table.probe_subgraph(adjacency, LABELS, seed=42, items=4)
+    second = table.probe_subgraph(adjacency, LABELS, seed=42, items=4)
+    for key in ("probe_items", "triangles", "same_pairs", "cross_pairs"):
+        assert np.array_equal(first[key], second[key]), key
+    members = set(first["probe_items"].tolist())
+    assert members, "the probe set is never empty"
+    for name in ("triangles", "same_pairs", "cross_pairs"):
+        values = first[name]
+        if values.size == 0:
+            continue
+        assert set(values.reshape(-1).tolist()) <= members
+    # the two pair sets are real edges of the graph, split by the community split
+    edges = {tuple(sorted(edge)) for edge in EDGES}
     for first_node, second_node in first["same_pairs"]:
-        assert first_node != second_node
+        assert (int(first_node), int(second_node)) in edges
         assert LABELS[first_node] == LABELS[second_node]
+    for first_node, second_node in first["cross_pairs"]:
+        assert (int(first_node), int(second_node)) in edges
+        assert LABELS[first_node] != LABELS[second_node]
 
 
 def test_train_graph_rebuild_reproduces_the_frozen_af3_cache():
@@ -178,6 +183,7 @@ def test_frozen_table_on_disk_is_pinned_by_its_manifest():
     assert manifest["table_sha256"] == table.sha256_of(path)
     assert loaded["values"].shape[1] == table.DESCRIPTOR_DIMS
     assert loaded["values"].shape[0] == int(loaded["metadata"]["n_items"])
+    assert loaded["probe_items"].ndim == 1
     assert loaded["triangles"].shape[1] == 3
     assert loaded["same_pairs"].shape[1] == 2
     assert loaded["cross_pairs"].shape[1] == 2

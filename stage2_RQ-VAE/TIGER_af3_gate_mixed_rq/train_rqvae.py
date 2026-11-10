@@ -41,7 +41,8 @@ from model.af3_runtime import (input_identity, resolve_shared_readout,
                                snapshot_sha256, snapshot_state)
 from model.structure_gate import (BEHAVIOR_OFF, GEOMETRY_OFF, LAMBDA_BRIDGE,
                                   LAMBDA_CLOSURE, LAMBDA_USAGE, StructureGate,
-                                  StructureTable, structural_objective)
+                                  StructureTable, level_diagnostics,
+                                  structural_objective)
 from model.structure_table import manifest_path as structure_manifest_path
 from model.structure_table import sha256_of as structure_sha256
 
@@ -630,8 +631,18 @@ def main() -> None:
     # tensors of the TRAIN graph, frozen with the descriptor table.
     structure_sets = structure_table.frozen_sets() if structure_table is not None else None
     structure_item_count = structure_table.item_count if structure_table is not None else 0
+    # The three structural terms are estimated on the frozen probe subgraph every
+    # step: all of its induced triangles and edges are scored every time, so the
+    # coverage is 1.0 by construction instead of a lottery over the batch.
+    probe_ids = structure_table.probe_items if structure_table is not None else None
+    probe_ids_tensor = (torch.from_numpy(probe_ids.astype(np.int64)).to(device)
+                        if probe_ids is not None else None)
+    probe_embeddings = (all_embeddings.index_select(0, probe_ids_tensor.cpu()).to(device)
+                        if probe_ids is not None else None)
+    probe_descriptors = (torch.from_numpy(structure_table.values.numpy()[probe_ids])
+                         if structure_table is not None else None)
     structure_logs: list[dict] = []
-    gate_alphas: list[list[float]] = [[], [], []]
+    level_diag: list[list[dict]] = []
 
     for epoch in range(1, EPOCHS + 1):
         if train_sampler is not None:
@@ -649,20 +660,29 @@ def main() -> None:
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             if structure_sets is not None:
-                # The three terms are added to the same scalar the optimizer steps
-                # on, and they read the soft assignment of the pass that just ran.
+                # The probe pass runs encoder + gate + quantiser on the frozen
+                # subgraph, and the three terms are added to the same scalar the
+                # optimizer steps on. Its own quantisation loss is deliberately
+                # not added: only the structural supervision comes from here.
+                probe_prefixes = raw_module.structure_proxies(probe_embeddings,
+                                                              probe_ids_tensor)
                 structural, structure_log = structural_objective(
-                    raw_module.rq.last_prefixes, batch_ids, structure_sets,
+                    probe_prefixes, probe_ids_tensor, structure_sets,
                     item_count=structure_item_count)
                 loss = loss + structural
                 structure_logs.append(structure_log)
-                alphas = raw_module.rq.last_alphas or []
-                for level, alpha in enumerate(alphas):
-                    detached = alpha.detach()
-                    gate_alphas[level].append(
-                        (float(detached.mean()), float(detached.std(unbiased=False)),
-                         float((detached < 0.05).float().mean()),
-                         float((detached > 0.95).float().mean())))
+                level_diag.append(level_diagnostics(
+                    probe_prefixes, raw_module.rq.last_records,
+                    raw_module.rq.last_alphas, probe_descriptors))
+                for level, alpha in enumerate(raw_module.rq.last_alphas or []):
+                    structure_log[f"alpha_level_{level + 1}"] = {
+                        "mean": float(alpha.detach().mean()),
+                        "std": float(alpha.detach().std(unbiased=False)),
+                        "min": float(alpha.detach().min()),
+                        "max": float(alpha.detach().max()),
+                        "below_0.05": float((alpha.detach() < 0.05).float().mean()),
+                        "above_0.95": float((alpha.detach() > 0.95).float().mean()),
+                    }
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             if AUX_AF3:
@@ -693,22 +713,23 @@ def main() -> None:
                     mean_scale=float(np.mean([entry["scale"] for entry in active])) if active else 0.0,
                     last_step=auxiliary_logs[-1])
         if structure_logs and rank == 0:
-            # Diagnostics only: the alphas and the three terms are measured, never
-            # used to select an epoch, a weight or a seed.
-            levels = []
+            # Diagnostics only: the proxies, the alphas and the three terms are
+            # measured, never used to select an epoch, a weight or a seed.
+            keys = [name for name in structure_logs[0] if name.startswith("alpha_level_")]
+            levels: list[dict] = []
             for level in range(3):
-                rows = gate_alphas[level] or [(float("nan"),) * 4]
-                stacked = np.asarray(rows, dtype=np.float64)
-                levels.append({"level": level + 1,
-                               "alpha_mean": float(stacked[:, 0].mean()),
-                               "alpha_std": float(stacked[:, 1].mean()),
-                               "alpha_below_0.05": float(stacked[:, 2].mean()),
-                               "alpha_above_0.95": float(stacked[:, 3].mean())})
-            alphas = [alpha.detach().float().cpu() for alpha in (raw_module.rq.last_alphas or [])]
-            if alphas:
-                for record_row, alpha in zip(levels, alphas):
-                    record_row["alpha_min"] = float(alpha.min())
-                    record_row["alpha_max"] = float(alpha.max())
+                rows = [entry[level] for entry in level_diag if level < len(entry)]
+                averaged = {key: float(np.mean([row[key] for row in rows]))
+                            for key in rows[0]
+                            if isinstance(rows[0][key], (int, float))
+                            and not isinstance(rows[0][key], bool)}
+                averaged["level"] = level + 1
+                if keys and level < len(keys):
+                    averaged.update({"alpha_" + name: float(
+                        np.mean([log[keys[level]][name] for log in structure_logs]))
+                        for name in structure_logs[-1][keys[level]]})
+                averaged["spearman_descriptor"] = rows[-1].get("spearman_descriptor")
+                levels.append(averaged)
             _record(rank, "structure", epoch=epoch,
                     closure=float(np.mean([row["closure"] for row in structure_logs])),
                     bridge=float(np.mean([row["bridge"] for row in structure_logs])),
@@ -720,15 +741,14 @@ def main() -> None:
                     same_pairs_total=int(structure_logs[-1]["same_pairs_total"]),
                     cross_pairs_used=int(np.sum([row["cross_pairs_used"] for row in structure_logs])),
                     cross_pairs_total=int(structure_logs[-1]["cross_pairs_total"]),
-                    levels=levels,
-                    steps=len(structure_logs))
-            gate_alphas = [[], [], []]
-            structure_logs = []
+                    steps=len(structure_logs),
+                    probe_items=int(probe_ids.size),
+                    levels=levels)
 
         if structure_sets is not None:
             # Every rank keeps its own buffers; only rank zero writes them out.
-            gate_alphas = [[], [], []]
             structure_logs = []
+            level_diag = []
 
         # === Issue #139: the scheduled outer-loop round ===
         if ((ARM_VARIANT == "F0" and epoch == 1500)

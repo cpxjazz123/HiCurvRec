@@ -137,6 +137,46 @@ def test_train_and_export_paths_run_the_same_gate():
                            encode_tokens(z, model.rq, batch_ids)[:, 0])
 
 
+def test_the_proxy_of_every_level_is_the_assignment_the_run_takes():
+    """The controller's correspondence check, on real costs through the real gate."""
+    embeddings, ids = _real_inputs()
+    table = _frozen_table()
+    sets = _frozen_sets()
+    model = _build_model()
+    model.train()
+    with torch.no_grad():
+        for head in model.rq.gate.heads:
+            head[-1].weight.normal_(0.0, 0.5)
+            head[-1].bias.normal_(0.0, 0.5)
+    probe = torch.from_numpy(table.probe_items)
+    proxies = model.structure_proxies(embeddings[probe], probe)
+    costs = [record["cost"] for record in model.rq.last_records]
+    assert len(proxies) == 3 and len(costs) == 3
+    softs = []
+    for level, (proxy, cost) in enumerate(zip(proxies, costs), start=1):
+        soft, hard = aux.proxy_soft_part(cost, model.rq.levels[level - 1],
+                                         level == len(costs))
+        softs.append((soft, hard))
+        # the token the quantiser takes on this very cost matrix
+        taken = model.rq.levels[level - 1]._indices(cost, infer_use_sk=True)
+        torch.testing.assert_close(proxy.detach(),
+                                   torch.zeros_like(proxy).scatter_(1, hard.unsqueeze(1), 1.0))
+        assert torch.equal(hard, taken), level
+        assert torch.equal(soft.argmax(-1), hard), level
+        assert bool((soft > 0).all()), level
+    # liveness of the derivative on the real cost matrix, reported not assumed
+    loss, report = aux.structural_objective(proxies, probe, sets,
+                                           item_count=table.item_count)
+    for level, cost in enumerate(costs, start=1):
+        grad = torch.autograd.grad(loss, cost, retain_graph=True)[0]
+        rows = grad.abs().sum(-1)
+        assert int((rows == 0).sum()) == 0, f"level {level} has a dead row"
+        assert float(rows.median()) >= 1e-6, (level, float(rows.median()))
+    assert report["triangles_used"] == report["triangles_total"]
+    assert report["same_pairs_used"] == report["same_pairs_total"]
+    assert report["cross_pairs_used"] == report["cross_pairs_total"]
+
+
 def test_unobserved_items_are_routed_at_the_population_mean():
     table = _frozen_table()
     observed_any = table.observed.any(axis=1)

@@ -7,13 +7,29 @@
     "split": "TRAIN only; the validation and test splits and any future behaviour are never read",
     "graph": "the TRAIN co-occurrence graph: one row's history plus its target is a sequence, consecutive items are adjacent, the graph is made undirected, de-duplicated and binarised; the rebuild reproduces the frozen AF3 cache of issue #136 edge for edge",
     "af3": "AF3(u,v) = 4 - deg(u) - deg(v) + 3 |N(u) & N(v)| on the binary TRAIN graph",
-    "communities": "Louvain on the TRAIN binary graph, resolution 1.0, seed 42",
-    "descriptor_names": ["degree_log", "triangles_log", "af3_mean", "af3_spread", "triangle_edge_share", "open_edge_share", "neighbour_degree_entropy", "cross_community_share"]
+    "communities": "Louvain on the TRAIN binary graph, resolution 1.0, seed 42; the measured partition has 6 communities, so cross-community means between those six blocks, not between small groups",
+    "descriptor_names": [
+      "degree_log",
+      "triangles_log",
+      "af3_mean",
+      "af3_spread",
+      "triangle_edge_share",
+      "open_edge_share",
+      "neighbour_degree_entropy",
+      "cross_community_share"
+    ],
+    "probe_subgraph": "3072 item ids drawn once from the TRAIN graph's nodes (seed 42); the three auxiliary terms are estimated on every triangle and every edge this set induces, so one step covers 100% of those sets. A batch-induced selection was measured at 3.4 triangles per step on the 4x1024-recipe, which is why the fixed probe subgraph replaced it before the single run."
   },
   "computations": [
     {
       "name": "local structure descriptor",
-      "inputs": ["degree d_i", "per-edge triangle count T_e", "per-edge AF3", "community label", "neighbour degrees"],
+      "inputs": [
+        "degree d_i",
+        "per-edge triangle count T_e",
+        "per-edge AF3",
+        "community label",
+        "neighbour degrees"
+      ],
       "definition": "s_i = [log(1+d_i), log(1 + 0.5 sum_{e incident to i} T_e), mean_e AF3(e), q90_e AF3(e) - q10_e AF3(e), |{e incident to i : T_e>0}| / d_i, 1 - that share, -sum_b p_b log p_b / log d_i, |{j in N(i) : label_j != label_i}| / d_i]; every dimension is z-scored with the TRAIN mean and standard deviation of its observed entries",
       "output": "s_i in R^8",
       "gradient": "frozen; it is not differentiated and not learned"
@@ -26,14 +42,27 @@
     },
     {
       "name": "per-level structure gate",
-      "inputs": ["s_i", "per-level weight W1 (8x16)", "per-level bias b1 (16)", "per-level weight W2 (16)", "per-level bias b2 (1)"],
+      "inputs": [
+        "s_i",
+        "per-level weight W1 (8x16)",
+        "per-level bias b1 (16)",
+        "per-level weight W2 (16)",
+        "per-level bias b2 (1)"
+      ],
       "definition": "alpha_{i,l} = sigmoid(W2_l . GELU(W1_l s_i + b1_l) + b2_l), one independent head per level; W2_l and b2_l start at zero, so alpha_{i,l} = sigmoid(0) = 1/2 exactly at initialisation, which is the frozen baseline's ALPHA_INITIAL",
       "output": "alpha_{i,l} in (0,1)",
       "gradient": "d alpha / d s = alpha (1-alpha) W2 . (GELU'(W1 s + b1) * W1); the descriptor is frozen, so the only learned parameters are W1, b1, W2, b2"
     },
     {
       "name": "gated mixed cost of a joint codeword",
-      "inputs": ["residual_e", "residual_h", "code_e", "code_h", "alpha_{i,l}", "curvature c"],
+      "inputs": [
+        "residual_e",
+        "residual_h",
+        "code_e",
+        "code_h",
+        "alpha_{i,l}",
+        "curvature c"
+      ],
       "definition": "C_{ik}^(l) = 2 * [ alpha_{i,l} || rE_{i,l} - eE_k ||^2 + (1 - alpha_{i,l}) d_c(rH_{i,l}, eH_k)^2 / 4 ]",
       "output": "cost matrix of shape [batch, 256]",
       "gradient": "differentiable in the residuals and in alpha; the discrete assignment built on top of it is not part of this surface"
@@ -58,36 +87,49 @@
       "gradient": "the straight-through path is the baseline's; its backward is the identity on phi by construction"
     },
     {
-      "name": "soft prefix approximation",
-      "inputs": ["cost matrix C^(l)"],
-      "definition": "q^(l) = softmax(-centred(C^(l)) / 1), where centred(x) = (x - (max+min)/2) / (max - (max+min)/2 + 1e-5) is the baseline's own centring rule, which already maps the matrix into about [-1, 1]",
-      "output": "q^(l) of shape [batch, 256], a row-stochastic approximation of the assignment",
-      "gradient": "differentiable in the cost and therefore in alpha, the residual, the codebook and the encoder; the temperature is one because the centring fixed the scale, and it is never swept"
+      "name": "assignment proxy (straight-through)",
+      "inputs": [
+        "cost matrix C^(l)",
+        "the level's own centring, epsilon and iteration count"
+      ],
+      "definition": "h^(l) = one_hot(k_l) + (p^(l) - p^(l).detach()); k_l is the code the quantiser itself takes -- argmin(C) on levels 1 and 2, and argmax(plan) on level 3, where plan is the same centring, the same SK_EPSILON and the same iteration count, row-normalised; p^(1,2) = (1-S)*softmax(-centred(C)/T) + S/K with T = 2/64 = 0.03125 and S = 1e-3, and p^(3) = (1-S)*plan + S/K",
+      "output": "h^(l) of shape [items, 256]; its forward value is exactly the one-hot of the taken code",
+      "gradient": "d h / d C = d p / d C. T is derived: the centring fixes the logit span at 2, so T = 2/64 keeps every exponent inside float32 both ways (exp(-32) = 1.3e-14) and no entry underflows. S is derived: a sharp softmax rounds its maximum to exactly 1.0 in float32 once the off-mass falls below the format's resolution near one (~1e-7), and such a row would have no derivative; S = 1e-3 bounds the maximum by 1 - S(1-1/K) and leaves four decades of margin. The uniform floor does not move the argmax, so k_l is untouched.",
+      "measured": "on the real probe pass with three random gate draws: no row has zero gradient on any level; median |dL/dC| = 1.5e-4 / 8.5e-5 / 3.1e-6 for levels 1/2/3 and median |dL/dalpha| = 4.5e-4 / 4.7e-4 / 1.3e-5; the carrier's argmax equals the taken code on 100% of rows on all three levels; L_closure reaches 0.00 and 1.00 on real cost matrices when the hard codes are made all-equal and all-distinct"
     },
     {
       "name": "closure term",
-      "inputs": ["q^(1..3)", "the frozen TRAIN triangles"],
-      "definition": "L_closure = 1 - mean_{triangles} mean_{(i,j) in triangle} (1/3) sum_l <q_i^(l), q_j^(l)>",
+      "inputs": [
+        "h^(1..3)",
+        "the probe subgraph's frozen triangles"
+      ],
+      "definition": "L_closure = 1 - mean_{triangles} mean_{(i,j) in triangle} (1/3) sum_l <h_i^(l), h_j^(l)>",
       "output": "a scalar in [0, 1]",
-      "gradient": "differentiable in q; the triangles are frozen with the table, and a triangle is used only when all three of its items are in the batch"
+      "gradient": "differentiable in the proxy's carrier; the value is exact token equality, because h is one-hot in the forward pass"
     },
     {
       "name": "bridge term",
-      "inputs": ["q^(1..3)", "the frozen within-community edge set", "the frozen cross-community edge set"],
-      "definition": "L_bridge = relu( mean_{within-community edges} (1 - overlap) - mean_{cross edges} (1 - overlap) ), overlap(i,j) = (1/3) sum_l <q_i^(l), q_j^(l)>",
+      "inputs": [
+        "h^(1..3)",
+        "the probe subgraph's within-community edges",
+        "its cross-community edges"
+      ],
+      "definition": "L_bridge = relu( mean_{within-community edges} (1 - overlap) - mean_{cross-community edges} (1 - overlap) ), overlap(i,j) = (1/3) sum_l <h_i^(l), h_j^(l)>",
       "output": "a scalar in [0, 1]",
       "gradient": "differentiable in q; a cross-community edge is never treated as a negative sample, the term only asks that its dissimilarity exceed a within-community edge's"
     },
     {
       "name": "usage term",
-      "inputs": ["q^(1..3)"],
-      "definition": "L_usage = (1/3) sum_l (1 - H(p_l) / log 256), p_l = mean_i q_i^(l)",
+      "inputs": [
+        "h^(1..3)"
+      ],
+      "definition": "L_usage = (1/3) sum_l (1 - H(p_l) / log 256), p_l = mean_i h_i^(l); the value is the entropy deficit of the taken codes and the gradient comes from the carrier",
       "output": "a scalar in [0, 1]",
       "gradient": "differentiable in q; it is the entropy deficit of the soft code usage, so a collapsing codebook raises it"
     },
     {
       "name": "training objective",
-      "definition": "L = L_RQ + L_closure + L_bridge + L_usage, with L_RQ = MSE(decoder(phi(q)), x) + quantisation term of the baseline and all three weights equal to one",
+      "definition": "L = L_RQ + L_closure + L_bridge + L_usage, with L_RQ the baseline's reconstruction + quantisation term and all three weights equal to one; the three structural terms are measured on the fixed probe subgraph (coverage 1.0) and their own quantisation loss is not added",
       "output": "the scalar the optimiser steps on",
       "gradient": "the same scalar carries the gate parameters, the encoder, the codebooks and the decoder"
     }
@@ -131,6 +173,14 @@
     {
       "surface": "the gate's hidden width, the equal lambda weights and the unit temperature",
       "reason": "design constants fixed before the single run, not fitted: two cells per descriptor dimension, three terms that already lie in [0,1], and the scale the baseline's centring leaves behind"
+    },
+    {
+      "surface": "the straight-through residual p - p.detach() and the choice T = 2/64, S = 1e-3",
+      "reason": "the residual is the surrogate derivative, not the derivative of the hard assignment; T and S are derived from the centring's span and float32's resolution near one, and are fixed before the single run"
+    },
+    {
+      "surface": "the balanced plan's column normalisation, used as level 3's carrier",
+      "reason": "it is differentiable and carried written out (sinkhorn_plan), but its backward is the derivative of an iterative normalisation, not of a closed form"
     }
   ]
 }

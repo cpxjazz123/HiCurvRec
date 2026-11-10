@@ -1,6 +1,6 @@
 """Build the frozen local-structure table of issue #149, once, before training.
 
-    /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 build_structure_table.py
+    <stage-2 interpreter> build_structure_table.py   (see CLAUDE.md §2 for the path)
 
 The builder reads the TRAIN split only, rebuilds the behaviour graph the frozen
 AF3 cache was measured on, verifies the rebuild edge for edge, and writes

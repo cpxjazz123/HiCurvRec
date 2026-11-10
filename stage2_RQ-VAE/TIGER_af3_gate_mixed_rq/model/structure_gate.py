@@ -58,11 +58,21 @@ GEOMETRY_OFF = False
 LAMBDA_CLOSURE = 1.0
 LAMBDA_BRIDGE = 1.0
 LAMBDA_USAGE = 1.0
-#: The temperature of the soft assignment approximation. The baseline's own
-#: centring already divides the cost by ``max - middle``, which puts the matrix
-#: in [-1, 1]; one is therefore the scale the centring leaves behind, not a value
-#: chosen from a result.
-TEMPERATURE = 1.0
+#: The temperature of the differentiable part of the proxy assignment. The
+#: baseline's centring maps the matrix into [-1, 1], so the logits span
+#: ``2 / T``. With ``T = 2 / 64 = 1/32`` that span is 64, i.e. ``exp(-32)`` at
+#: the flat end -- thirteen decades above the float32 underflow line -- so no
+#: entry underflows, every row keeps a gradient, and the sharpest non-underflowing
+#: value is what the derivation gives, not a swept one.
+PROXY_TEMPERATURE = 2.0 / 64.0
+#: The uniform floor mixed into the soft part. A sharp softmax in float32 rounds
+#: its maximum to exactly 1.0 once the off-mass falls below the format's
+#: resolution near one (~1e-7), and a row whose soft part is exactly one-hot has
+#: no derivative left. Mixing in ``S / K`` bounds the maximum by
+#: ``1 - S(1 - 1/K)``, so the straight-through residual keeps ~1e-3 of dynamic
+#: range -- four decades above float32's resolution -- while the argmax, and
+#: therefore the hard assignment, is unchanged by a uniform shift.
+PROXY_SMOOTHING = 1e-3
 
 
 class StructureTable:
@@ -115,9 +125,14 @@ class StructureTable:
                    sha256=sha256_of(path))
 
     def frozen_sets(self) -> dict:
-        """The triangles and the two pair sets, as item-id tensors."""
+        """The probe subgraph's triangles and pair sets, as item-id tensors."""
         return {name: torch.from_numpy(self.arrays[name].astype(np.int64))
                 for name in ("triangles", "same_pairs", "cross_pairs")}
+
+    @property
+    def probe_items(self) -> np.ndarray:
+        """The frozen item ids the three structural terms are estimated on."""
+        return np.asarray(self.arrays["probe_items"], dtype=np.int64)
 
 
 class StructureGate(nn.Module):
@@ -158,13 +173,161 @@ def _centred(cost: torch.Tensor) -> torch.Tensor:
     return (cost - middle) / amplitude
 
 
-def soft_prefix(cost: torch.Tensor) -> torch.Tensor:
-    """The differentiable approximation of one level's assignment.
+def sinkhorn_plan(centred: torch.Tensor, epsilon: float, iterations: int) -> torch.Tensor:
+    """The baseline's balanced assignment as a differentiable plan.
 
-    ``q = softmax(-centred(C) / 1)``. It is used by the three structural terms
-    only; the assignment that produces the SID stays the baseline's.
+    The frozen ``MixedVQLevel.sinkhorn`` is ``@torch.no_grad()`` because it only
+    produces an index. The proxy needs the same numbers *with* a derivative, so
+    this is the same iteration written out, in double, and row-normalised at the
+    end. ``test_proxy_assignment.py`` checks it against the quantiser's own plan.
     """
-    return torch.softmax(-_centred(cost) / TEMPERATURE, dim=-1)
+    q = torch.exp(-centred / float(epsilon))
+    q = q / q.sum()
+    batch, codes = int(q.shape[0]), int(q.shape[1])
+    for _ in range(int(iterations)):
+        q = q / q.sum(0, keepdim=True)
+        q = q / float(codes)
+        q = q / q.sum(1, keepdim=True)
+        q = q / float(batch)
+    q = q * float(batch)
+    return q / q.sum(-1, keepdim=True)
+
+
+def hard_index(cost: torch.Tensor, layer, is_last: bool) -> torch.Tensor:
+    """The code the quantiser's own rule would take on this cost matrix."""
+    if is_last and bool(getattr(layer, "use_sk", False)):
+        centred = layer.center_distance(cost).detach().double()
+        plan = layer.sinkhorn(centred, layer.sk_epsilon, layer.sk_iters)
+        return (plan / plan.sum(-1, keepdim=True)).argmax(dim=-1)
+    return cost.detach().argmin(dim=-1)
+
+
+def proxy_soft_part(cost: torch.Tensor, layer, is_last: bool) -> tuple[torch.Tensor, torch.Tensor]:
+    """The gradient carrier and the hard code it is centred on.
+
+    * the last level carries the balanced plan itself -- the same centring, the
+      same ``SK_EPSILON``, the same iteration count, row-normalised -- so the
+      carrier's ``argmax`` is the token the quantiser takes; a pure per-row
+      softmax cannot reproduce a balancing constraint;
+    * the earlier levels carry the softmax of the same centred cost, whose
+      ``argmax`` is the ``argmin`` the quantiser takes there;
+    * the uniform floor keeps every entry positive.
+
+    This is the straight-through pattern: the value is the real assignment, the
+    derivative is the carrier's.
+    """
+    centred = layer.center_distance(cost)
+    if is_last and bool(getattr(layer, "use_sk", False)):
+        soft = sinkhorn_plan(centred.double(), layer.sk_epsilon, layer.sk_iters).to(cost.dtype)
+        hard = soft.detach().argmax(dim=-1)
+    else:
+        soft = torch.softmax(-centred / PROXY_TEMPERATURE, dim=-1)
+        hard = cost.detach().argmin(dim=-1)
+    codes = int(soft.shape[-1])
+    soft = (1.0 - PROXY_SMOOTHING) * soft + PROXY_SMOOTHING / float(codes)
+    return soft, hard
+
+
+def proxy_assignment(cost: torch.Tensor, layer, is_last: bool) -> torch.Tensor:
+    """One level's assignment proxy: the hard rule's one-hot plus a live gradient.
+
+    ``h = one_hot(hard) + (soft - soft.detach())``. Its forward value is exactly
+    the hard assignment, so a term built on it reaches 0 and 1 the way the tokens
+    do; its backward is the derivative of ``soft``, so the cost matrix, the gate
+    and the encoder keep a gradient.
+
+    * the last level's hard rule is the baseline's balanced assignment: the
+      transport plan of the same centring, the same ``SK_EPSILON`` and the same
+      iteration count, row-normalised, and its ``argmax``;
+    * the earlier levels' hard rule is the baseline's ``argmin`` of the cost, and
+      ``soft`` is the softmax of the same centred cost;
+    * a uniform floor is mixed into ``soft`` so its maximum stays strictly below
+      one and the straight-through residual keeps float32 dynamic range.
+
+    This is the same straight-through pattern the frozen quantiser already uses on
+    the codebook; the proxy never produces a SID.
+    """
+    soft, hard = proxy_soft_part(cost, layer, is_last)
+    onehot = torch.zeros_like(soft).scatter_(1, hard.unsqueeze(1), 1.0)
+    return onehot + (soft - soft.detach())
+
+
+def _proxy_from_hard(proxy: torch.Tensor, hard: torch.Tensor) -> torch.Tensor:
+    """The proxy rebuilt around a declared hard code; a test/derivation helper."""
+    onehot = torch.zeros_like(proxy).scatter_(1, hard.reshape(-1, 1).to(proxy.device), 1.0)
+    soft = proxy - proxy.detach() + onehot.detach()
+    return onehot + (soft - soft.detach())
+
+
+def _one_hot_proxy(reference: torch.Tensor, hard: torch.Tensor) -> torch.Tensor:
+    """A pure one-hot proxy of the reference's shape, for endpoint constructions."""
+    return torch.zeros_like(reference).scatter_(1, hard.reshape(-1, 1).to(reference.device), 1.0)
+
+
+def level_diagnostics(proxies: list[torch.Tensor], records: list[dict],
+                      alphas: list[torch.Tensor] | None,
+                      structure: torch.Tensor | None) -> list[dict]:
+    """Per-level evidence that the gate and the terms are alive (R7/R8).
+
+    Usage is read off the proxy's hard part, the two half-distances off the pass
+    that produced it, and the structure dependence as the largest absolute
+    Spearman correlation between ``alpha`` and a descriptor dimension.
+    """
+    import numpy as np
+    rows = []
+    for level, proxy in enumerate(proxies):
+        hard = proxy.detach().argmax(dim=-1)
+        counts = torch.bincount(hard, minlength=int(proxy.shape[-1])).to(torch.float64)
+        probability = counts / counts.sum()
+        nonzero = probability[probability > 0]
+        entropy = float(-(nonzero * nonzero.log()).sum())
+        codes = int(proxy.shape[-1])
+        record = records[level] if level < len(records) else {}
+        entry = {
+            "level": level + 1,
+            "codes_used": int((counts > 0).sum()),
+            "max_bucket_share": float(probability.max()),
+            "usage_entropy": entropy,
+            "usage_entropy_normalised": entropy / math.log(codes) if codes > 1 else 0.0,
+        }
+        if "residual_e" in record and "picked_e" in record:
+            squared_e = (record["residual_e"] - record["picked_e"]).pow(2).sum(-1)
+            from .poincare_contract import squared_distance
+            squared_h = squared_distance(record["residual_h"], record["picked_h"],
+                                         record["curvature"]) / 4.0
+            entry["mean_squared_euclidean"] = float(squared_e.mean())
+            entry["mean_squared_curved_over_four"] = float(squared_h.mean())
+            ratio = float(squared_e.mean()) / max(float(squared_h.mean()), 1e-12)
+            entry["euclidean_over_curved"] = ratio
+        if alphas is not None and structure is not None and level < len(alphas):
+            alpha = alphas[level].detach().cpu().numpy()
+            descriptors = structure.detach().cpu().numpy()
+            best = (0.0, None)
+            for dim, name in enumerate(DESCRIPTOR_NAMES):
+                column = descriptors[:, dim]
+                if float(column.std()) <= 0:
+                    continue
+                correlation = _spearman(alpha, column)
+                if abs(correlation) > abs(best[0]):
+                    best = (correlation, name)
+            entry["max_abs_spearman_alpha_vs_descriptor"] = float(best[0])
+            entry["spearman_descriptor"] = best[1]
+        rows.append(entry)
+    return rows
+
+
+def _spearman(first, second) -> float:
+    """Rank correlation, centred; the caller has already dropped constant columns."""
+    import numpy as np
+    def _rank(values):
+        order = np.argsort(values, kind="stable")
+        ranks = np.empty(values.size, dtype=np.float64)
+        ranks[order] = np.arange(values.size, dtype=np.float64)
+        return ranks - ranks.mean()
+    left = _rank(np.asarray(first, dtype=np.float64))
+    right = _rank(np.asarray(second, dtype=np.float64))
+    denominator = float(np.linalg.norm(left) * np.linalg.norm(right))
+    return float(left @ right / denominator) if denominator > 0 else 0.0
 
 
 def _overlap(prefixes: list[torch.Tensor], first: torch.Tensor, second: torch.Tensor) -> torch.Tensor:
@@ -286,8 +449,10 @@ def default_table(root: Path | str) -> Path:
 
 
 __all__ = ["StructureGate", "StructureTable", "BEHAVIOR_OFF", "GEOMETRY_OFF",
-           "closure_loss", "bridge_loss", "usage_loss", "soft_prefix",
+           "closure_loss", "bridge_loss", "usage_loss", "proxy_assignment",
+           "proxy_soft_part", "hard_index", "sinkhorn_plan",
+           "level_diagnostics",
            "structural_objective", "default_table", "table_path", "manifest_path",
            "sha256_of", "DESCRIPTOR_NAMES", "DESCRIPTOR_DIMS", "LEVELS",
            "ALPHA_INIT", "LAMBDA_CLOSURE", "LAMBDA_BRIDGE", "LAMBDA_USAGE",
-           "TEMPERATURE"]
+           "PROXY_TEMPERATURE", "PROXY_SMOOTHING"]

@@ -119,13 +119,17 @@ def test_empty_sets_return_a_connected_but_zero_term():
     assert float(closure) == 0.0 and float(bridge) == 0.0
 
 
-def test_soft_prefix_is_a_centred_softmax_in_the_baselines_own_scale():
+def test_the_carrier_is_the_baselines_centred_softmax_plus_the_floor():
+    from model.mixed_rq import MixedVQLevel
     generator = torch.Generator().manual_seed(17)
     cost = torch.randn(4, 8, generator=generator)
-    prefix = aux.soft_prefix(cost)
-    torch.testing.assert_close(prefix.sum(-1), torch.ones(4), rtol=1e-6, atol=1e-6)
-    centred = (cost - (cost.max() + cost.min()) / 2) / (cost.max() / 2 - cost.min() / 2 + 1e-5)
-    torch.testing.assert_close(prefix, torch.softmax(-centred, dim=-1), rtol=1e-6, atol=1e-6)
+    level = MixedVQLevel(8, curvature=1.0)
+    soft, hard = aux.proxy_soft_part(cost, level, is_last=False)
+    centred = level.center_distance(cost)
+    expected = torch.softmax(-centred / aux.PROXY_TEMPERATURE, dim=-1)
+    expected = (1.0 - aux.PROXY_SMOOTHING) * expected + aux.PROXY_SMOOTHING / 8.0
+    torch.testing.assert_close(soft, expected, rtol=1e-6, atol=1e-7)
+    assert torch.equal(hard, cost.argmin(-1))
 
 
 def test_structural_objective_reports_what_it_could_not_use():

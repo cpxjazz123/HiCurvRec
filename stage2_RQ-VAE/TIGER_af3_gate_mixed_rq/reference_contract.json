@@ -6,14 +6,47 @@
       "name": "gated mixed cost of one joint codeword",
       "callable": "model.mixed_rq:point_cost",
       "note": "The cost the assignment is taken over, with the curved codeword already mapped into the ball. alpha is now a per-item number produced by the gate instead of a table entry; the formula is unchanged, and it is the only differentiable place the weight lives.",
-      "symbols": ["x0", "x1", "h0", "h1", "k0", "k1", "y0", "y1", "a", "c"],
+      "symbols": [
+        "x0",
+        "x1",
+        "h0",
+        "h1",
+        "k0",
+        "k1",
+        "y0",
+        "y1",
+        "a",
+        "c"
+      ],
       "args": [
-        {"name": "residual_e", "width": 2, "radius": 0.2},
-        {"name": "residual_h", "width": 2, "radius": 0.2},
-        {"name": "code_e", "width": 2, "radius": 0.2},
-        {"name": "code_h", "width": 2, "radius": 0.2},
-        {"name": "alpha", "scalar": 0.5},
-        {"name": "curvature", "scalar": 1.0}
+        {
+          "name": "residual_e",
+          "width": 2,
+          "radius": 0.2
+        },
+        {
+          "name": "residual_h",
+          "width": 2,
+          "radius": 0.2
+        },
+        {
+          "name": "code_e",
+          "width": 2,
+          "radius": 0.2
+        },
+        {
+          "name": "code_h",
+          "width": 2,
+          "radius": 0.2
+        },
+        {
+          "name": "alpha",
+          "scalar": 0.5
+        },
+        {
+          "name": "curvature",
+          "scalar": 1.0
+        }
       ],
       "statements": [
         "xy = -(h0*y0 + h1*y1)",
@@ -36,13 +69,38 @@
       "name": "one hidden unit of the structure gate",
       "callable": "model.structure_gate:gate_alpha",
       "note": "One level's head is GATE_HIDDEN such units followed by a weight vector; a single unit is the surface a statement language can carry. The implemented head uses the same exact (erf) GELU and the same sigmoid, so the frozen formula is the formula the code evaluates.",
-      "symbols": ["s0", "s1", "w0", "w1", "b", "u", "v"],
+      "symbols": [
+        "s0",
+        "s1",
+        "w0",
+        "w1",
+        "b",
+        "u",
+        "v"
+      ],
       "args": [
-        {"name": "structure", "width": 2, "radius": 2.0},
-        {"name": "weight", "width": 2, "radius": 1.0},
-        {"name": "bias", "scalar": 0.0},
-        {"name": "scale", "scalar": 1.0},
-        {"name": "shift", "scalar": 0.0}
+        {
+          "name": "structure",
+          "width": 2,
+          "radius": 2.0
+        },
+        {
+          "name": "weight",
+          "width": 2,
+          "radius": 1.0
+        },
+        {
+          "name": "bias",
+          "scalar": 0.0
+        },
+        {
+          "name": "scale",
+          "scalar": 1.0
+        },
+        {
+          "name": "shift",
+          "scalar": 0.0
+        }
       ],
       "statements": [
         "pre = w0*s0 + w1*s1 + b",
@@ -54,19 +112,47 @@
   ],
   "coupling": {
     "callable": "model.mixed_rq:mixed_cost",
-    "behaviour_arguments": ["alpha"],
+    "behaviour_arguments": [
+      "alpha"
+    ],
     "control_argument": "codes_e",
     "note": "The gate's weight is the only behaviour-carrying argument of the cost matrix the assignment consumes, and the two halves of every codeword disagree, so moving the weight can change which joint code is nearest. At initialisation the output layer is zero, so alpha = 1/2 for every item and every level, which is exactly the frozen baseline's weight: the point of departure is the baseline, not a re-parameterisation of it.",
     "args": [
-      {"name": "residual_e", "width": 16},
-      {"name": "residual_h", "width": 16},
-      {"name": "codes_e", "width": 16},
-      {"name": "codes_h", "width": 16},
-      {"name": "alpha", "width": 1},
-      {"name": "curvature", "scalar": 1.0}
+      {
+        "name": "residual_e",
+        "width": 16
+      },
+      {
+        "name": "residual_h",
+        "width": 16
+      },
+      {
+        "name": "codes_e",
+        "width": 16
+      },
+      {
+        "name": "codes_h",
+        "width": 16
+      },
+      {
+        "name": "alpha",
+        "width": 1
+      },
+      {
+        "name": "curvature",
+        "scalar": 1.0
+      }
     ]
   },
   "excluded": [
+    {
+      "surface": "the straight-through residual of the assignment proxy, p - p.detach(), and the derived constants T = 2/64, S = 1e-3",
+      "reason": "the residual is the surrogate derivative of a hard assignment; the value of the proxy is the hard one-hot, so the three structural terms are exact functions of the taken codes while their derivative is the carrier's. T follows from the centring's span of 2 and float32's exponent range, S from float32's resolution near one."
+    },
+    {
+      "surface": "the iterative column normalisation of the balanced plan used as level 3's carrier",
+      "reason": "implemented as sinkhorn_plan with the layer's own epsilon and iteration count; differentiable but not a closed form, so it is not part of the symbolic surface"
+    },
     {
       "surface": "the chosen index k_l = argmin_k C^(l) on the first two levels, and the balanced Sinkhorn argmax on the last level",
       "reason": "discrete: the assignment rule is the baseline's and carries no gradient; the mechanism's score enters the cost matrix that rule consumes"

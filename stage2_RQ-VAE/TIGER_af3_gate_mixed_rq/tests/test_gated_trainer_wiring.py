@@ -50,6 +50,7 @@ def _write_table(path: Path, item_count: int = ROWS) -> Path:
         path, values=values, raw=values.copy(), observed=observed,
         mean=np.zeros(structure_table.DESCRIPTOR_DIMS), std=np.ones(structure_table.DESCRIPTOR_DIMS),
         item_ids=np.arange(item_count, dtype=np.int64),
+        probe_items=np.arange(item_count, dtype=np.int32),
         community=np.zeros(item_count, dtype=np.int64),
         triangles=np.array([[0, 1, 2], [1, 2, 3]], dtype=np.int32),
         cross_pairs=np.array([[2, 4], [3, 5]], dtype=np.int32),
@@ -106,10 +107,21 @@ def test_gated_entry_point_exports_what_the_gate_produced(monkeypatch, tmp_path)
     last = structure_events[-1]
     for name in ("closure", "bridge", "usage", "total"):
         assert 0.0 <= last[name] <= 1.0 + 1e-6, (name, last[name])
+    # the probe subgraph covers its own induced sets completely, every epoch
+    assert last["triangles_used"] == last["triangles_total"] * last["steps"]
+    assert last["same_pairs_used"] == last["same_pairs_total"] * last["steps"]
+    assert last["cross_pairs_used"] == last["cross_pairs_total"] * last["steps"]
     assert last["triangles_total"] == 2
+    assert last["probe_items"] >= 1
     assert [row["level"] for row in last["levels"]] == [1, 2, 3]
     for row in last["levels"]:
         assert 0.0 < row["alpha_mean"] < 1.0
+        assert 0.0 < row["alpha_std"]
+        assert row["codes_used"] >= 1
+        assert 0.0 < row["max_bucket_share"] <= 1.0
+        assert 0.0 <= row["usage_entropy_normalised"] <= 1.0
+        assert "euclidean_over_curved" in row
+        assert -1.0 <= row["max_abs_spearman_alpha_vs_descriptor"] <= 1.0
 
     # the export is the gated assignment, restored from the checkpoint
     checkpoint = torch.load(trainer.CHECKPOINT, map_location="cpu", weights_only=True)
@@ -143,4 +155,5 @@ def test_behaviour_off_makes_the_export_item_independent(monkeypatch, tmp_path):
     # with the item-independent descriptor the gate is one constant per level, so
     # a batch of items shows zero spread on every level
     for row in last["levels"]:
-        assert row["alpha_std"] == 0.0, row
+        # the GEMM's accumulation order leaves ~1e-8, not a per-item value
+        assert row["alpha_std"] < 1e-6, row

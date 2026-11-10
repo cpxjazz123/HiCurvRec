@@ -177,6 +177,9 @@ class MixedVQLevel(nn.Module):
         cost = self.distances(residual_e, residual_h, alpha)
         if record is not None:
             record["cost"] = cost
+            record["residual_e"] = residual_e.detach()
+            record["residual_h"] = residual_h.detach()
+            record["curvature"] = self.curvature
         index = self._indices(cost, infer_use_sk)
         codes = self.get_code_embs()
         codes_e, codes_h_tangent = split(codes)
@@ -185,6 +188,9 @@ class MixedVQLevel(nn.Module):
         picked_h = expmap0(picked_h_tangent, self.curvature) if self.curvature > 0 else picked_h_tangent
         # Unused-code accounting, the baseline's shape: a one-hot column sum,
         # reduced across ranks when DDP is up.
+        if record is not None:
+            record["picked_e"] = picked_e.detach()
+            record["picked_h"] = picked_h.detach()
         onehot = F.one_hot(index, self.n_embed)
         used = onehot.sum(0).float()
         unused = int((used == 0).sum().item())
@@ -326,6 +332,7 @@ class MixedRQ(nn.Module):
         #: the trainer can add the structural terms of the very pass it ran.
         self.last_alphas: list[torch.Tensor] | None = None
         self.last_prefixes: list[torch.Tensor] | None = None
+        self.last_records: list[dict] | None = None
         #: The SHA-256 of the frozen descriptor file, carried into the checkpoint
         #: so a restore can refuse a table that is not the one the weights saw.
         self.structure_sha256: str | None = None
@@ -394,7 +401,7 @@ class MixedRQ(nn.Module):
         frozen table would be a different mechanism. The soft assignment of every
         level is kept in ``last_prefixes`` for the structural terms.
         """
-        from .structure_gate import soft_prefix
+        from .structure_gate import proxy_assignment
         z_e, z_t = split(z)
         residual_e = z_e
         residual_h = expmap0(z_t, self.curvature) if self.curvature > 0 else z_t
@@ -405,8 +412,9 @@ class MixedRQ(nn.Module):
             if int(alphas[0].shape[0]) != int(z.shape[0]):
                 raise ValueError("the item ids and the batch disagree in length")
             prefixes: list[torch.Tensor] | None = []
+            records: list[dict] | None = []
         else:
-            alphas, prefixes = None, None
+            alphas, prefixes, records = None, None, None
         codes_e: list[torch.Tensor] = []
         codes_h: list[torch.Tensor] = []
         tokens: list[torch.Tensor] = []
@@ -422,13 +430,16 @@ class MixedRQ(nn.Module):
             (residual_e, residual_h), quant_loss, unused, index, picked_e, picked_h = layer(
                 residual_e, residual_h, alpha, infer_use_sk=infer_use_sk, record=record)
             if prefixes is not None:
-                prefixes.append(soft_prefix(record["cost"]))
+                prefixes.append(proxy_assignment(record["cost"], layer,
+                                                 level == len(self.levels)))
+                records.append(record)
             codes_e.append(picked_e)
             codes_h.append(picked_h)
             tokens.append(index)
             total_loss = total_loss + quant_loss
             unused_total += int(unused)
         self.last_prefixes = prefixes
+        self.last_records = records
         readout = quantized_readout(codes_e, codes_h, self.curvature)
         stacked = torch.stack(tokens, dim=1)
         return readout, total_loss / len(self.levels), unused_total, stacked

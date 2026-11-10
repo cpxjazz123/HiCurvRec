@@ -1,12 +1,11 @@
-TDD red state (issue #149), captured before the mechanism module existed.
+TDD red state (issue #149), captured before the mechanism modules existed.
 
-$ /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m pytest \
-    tests/test_structure_table.py tests/test_structure_gate.py \
-    tests/test_structure_losses.py tests/test_real_batch_gate.py -q
+$ <stage-2 interpreter> -m pytest tests/test_structure_table.py \
+    tests/test_structure_gate.py tests/test_structure_losses.py \
+    tests/test_real_batch_gate.py -q
 tests/test_real_batch_gate.py:30: in <module>
     from model import structure_gate as aux  # noqa: E402
 E   ImportError: cannot import name 'structure_gate' from 'model'
-    (/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_af3_gate_mixed_rq/model/__init__.py)
 ERROR tests/test_structure_table.py
 ERROR tests/test_structure_gate.py
 ERROR tests/test_structure_losses.py
@@ -14,16 +13,23 @@ ERROR tests/test_real_batch_gate.py
 !!!! Interrupted: 4 errors during collection !!!!
 4 errors in 21.28s
 
-Green state after the implementation, the frozen table and the wiring tests:
+Every later defect the controller named was also turned into a test before the
+fix, in the same order the reviews raised them:
 
-  tests/test_structure_table.py      12 passed
-  tests/test_structure_gate.py       11 passed
-  tests/test_structure_losses.py     11 passed
-  tests/test_real_batch_gate.py       5 passed
-  tests/test_reference_contract.py    3 passed
-  tests/test_gated_trainer_wiring.py  3 passed
+* the assignment proxy had to carry the real assignment, not a flat softmax:
+  tests/test_proxy_assignment.py checks argmax(proxy) == the quantiser's own
+  token on all three levels, the plan against the quantiser's own Sinkhorn, the
+  endpoints 0/1 on a real cost matrix, and the liveness of the derivative;
+* the probe subgraph had to replace the batch-induced sampling:
+  tests/test_structure_table.py checks the induced sets are its own and frozen;
+* the descriptor identity had to bind to the checkpoint:
+  tests/test_gated_trainer_wiring.py restores through from_checkpoint and
+  refuses a table that does not match.
 
-Whole candidate suite (tests/, one hour budget): 151 passed, 10 failed.
+Whole candidate suite after the fixes:
+
+  160 passed, 10 failed in 122.23s
+
 All 10 failures reproduce unchanged in the frozen baseline tree
 stage2_RQ-VAE/TIGER_mixed_rq, so they are baseline-red, not regressions:
 

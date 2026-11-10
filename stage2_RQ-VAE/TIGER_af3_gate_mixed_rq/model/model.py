@@ -133,6 +133,17 @@ class MixedRQVAE(nn.Module):
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens
 
+    def structure_proxies(self, embeddings: torch.Tensor, item_ids: torch.Tensor):
+        """The three assignment proxies of this batch, through encoder and gate.
+
+        Only the quantiser runs: no decoder, no readout. The three structural
+        terms are estimated on the fixed probe subgraph every step, and this is
+        the pass that produces their proxies.
+        """
+        encoded = self.encoder(embeddings)
+        self.rq(encoded, item_ids=item_ids)
+        return self.rq.last_prefixes
+
     @torch.no_grad()
     def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False,
                     item_ids: torch.Tensor | None = None) -> torch.Tensor:

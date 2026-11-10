@@ -66,10 +66,14 @@ TRAIN_WEIGHT_STEP = 0.5
 LOUVAIN_RESOLUTION = 1.0
 #: One seed for the community labelling and for every frozen sample.
 SEED = 42
-#: Budget caps of the frozen sets the auxiliary terms consume. They are a cost
-#: bound of one epoch, sampled once, and never selected on a result.
-TRIANGLE_CAP = 200_000
-PAIR_CAP = 200_000
+#: The fixed structure probe subgraph the three auxiliary terms are estimated on.
+#: A batch of 1024 rows out of 24556 spans (1024/24556) of the items, so a
+#: batch-induced triangle set holds about fifteen triangles -- measured, not
+#: assumed -- and a term that fires on fifteen triangles every step is not a
+#: coupling. The probe set is frozen with the table and its induced sets are
+#: enumerated exactly, so every step covers the same 12.5% of the trainable items
+#: and no step can be empty.
+PROBE_ITEMS = 3072
 
 
 # --------------------------------------------------------------------- graph
@@ -249,46 +253,40 @@ def standardise(raw: np.ndarray, observed: np.ndarray) -> tuple[np.ndarray, np.n
 
 
 # -------------------------------------------------------------- frozen sets
-def frozen_sets(adjacency, community: np.ndarray, seed: int = SEED,
-                triangle_cap: int = TRIANGLE_CAP, pair_cap: int = PAIR_CAP) -> dict:
-    """The triangles, the cross-community edges and the same-community pairs.
+def probe_subgraph(adjacency, community: np.ndarray, seed: int = SEED,
+                   items: int = PROBE_ITEMS) -> dict:
+    """The fixed probe subgraph and the sets it induces, enumerated exactly.
 
-    One deterministic sample of the TRAIN graph, frozen with the table: the
-    auxiliary terms consume these every epoch, so they must not move. The two
-    pair sets are the real edges of the graph, split into crossing and
-    within-community edges, so the bridge hinge compares like with like.
+    The probe items are drawn once from the TRAIN graph's nodes, and the three
+    sets are every triangle and every edge of the graph whose endpoints all lie
+    in that set. Nothing is subsampled afterwards: the coverage of one step is
+    therefore exactly ``1.0`` of these sets, and the same items are scored every
+    step, which is what makes the recorded curves comparable across epochs.
     """
-    rows, cols = _edges(adjacency)
+    nodes = int(np.asarray(community).size)
     rng = np.random.default_rng(seed)
-    order = rng.permutation(rows.size)
-    triangles: dict[tuple[int, int, int], None] = {}
-    for position in order.tolist():
-        first, second = int(rows[position]), int(cols[position])
+    chosen = np.sort(rng.choice(nodes, size=min(int(items), nodes), replace=False))
+    member = np.zeros(nodes, dtype=bool)
+    member[chosen] = True
+    labels = np.asarray(community, dtype=np.int64)
+
+    rows, cols = _edges(adjacency)
+    inside = member[rows] & member[cols]
+    edge_rows, edge_cols = rows[inside], cols[inside]
+    crossing = labels[edge_rows] != labels[edge_cols]
+    cross = np.stack([edge_rows[crossing], edge_cols[crossing]], axis=1)
+    within = np.stack([edge_rows[~crossing], edge_cols[~crossing]], axis=1)
+
+    triangles: set[tuple[int, int, int]] = set()
+    for first, second in zip(edge_rows.tolist(), edge_cols.tolist()):
         common = np.intersect1d(_neighbours(adjacency, first), _neighbours(adjacency, second),
                                 assume_unique=True)
+        common = common[member[common]]
         for third in common.tolist():
-            triangles[tuple(sorted((first, second, int(third))))] = None
-            if len(triangles) >= int(triangle_cap):
-                break
-        if len(triangles) >= int(triangle_cap):
-            break
+            triangles.add(tuple(sorted((first, second, int(third)))))
     triangle_array = np.asarray(sorted(triangles), dtype=np.int64).reshape(-1, 3)
-
-    labels = np.asarray(community, dtype=np.int64)
-    # The two sides of the bridge hinge are the same kind of object: real TRAIN
-    # edges, split by whether they cross a community. A cross edge is compared
-    # with an in-community edge, so the term asks that the coarse prefixes keep
-    # community structure without forcing a real bridge into one group.
-    crossing = labels[rows] != labels[cols]
-    cross = np.stack([rows[crossing], cols[crossing]], axis=1)
-    within = np.stack([rows[~crossing], cols[~crossing]], axis=1)
-    if cross.shape[0] > int(pair_cap):
-        chosen = np.sort(rng.permutation(cross.shape[0])[:int(pair_cap)])
-        cross = cross[chosen]
-    if within.shape[0] > int(pair_cap):
-        chosen = np.sort(rng.permutation(within.shape[0])[:int(pair_cap)])
-        within = within[chosen]
-    return {"triangles": triangle_array, "cross_pairs": cross, "same_pairs": within}
+    return {"probe_items": chosen, "triangles": triangle_array,
+            "cross_pairs": cross.reshape(-1, 2), "same_pairs": within.reshape(-1, 2)}
 
 
 # -------------------------------------------------------------------- build
@@ -322,7 +320,7 @@ def build(root: Path | str) -> dict:
     raw, observed = descriptor_matrix(graph["binary"], graph["degree"], triangles_per_edge,
                                       af3, labels, nodes_len=graph["nodes"].size)
     values, mean, std = standardise(raw, observed)
-    sets = frozen_sets(graph["binary"], labels)
+    sets = probe_subgraph(graph["binary"], labels)
 
     item_count = int(np.load(root.joinpath(*EMBEDDING_RELATIVE), mmap_mode="r").shape[0])
     node_ids = graph["nodes"]
@@ -348,8 +346,8 @@ def build(root: Path | str) -> dict:
         "n_communities": int(np.unique(labels).size),
         "louvain_resolution": LOUVAIN_RESOLUTION,
         "seed": SEED,
-        "triangle_cap": TRIANGLE_CAP,
-        "pair_cap": PAIR_CAP,
+        "probe_seed": SEED,
+        "probe_items": int(sets["probe_items"].size),
         "triangles": int(sets["triangles"].shape[0]),
         "cross_pairs": int(sets["cross_pairs"].shape[0]),
         "same_pairs": int(sets["same_pairs"].shape[0]),
@@ -370,6 +368,7 @@ def build(root: Path | str) -> dict:
     }
     return {"values": full_values, "raw": full_raw, "observed": full_observed,
             "mean": mean, "std": std, "item_ids": node_ids, "community": full_community,
+            "probe_items": sets["probe_items"].astype(np.int32),
             "triangles": sets["triangles"].astype(np.int32),
             "cross_pairs": sets["cross_pairs"].astype(np.int32),
             "same_pairs": sets["same_pairs"].astype(np.int32),
@@ -386,7 +385,8 @@ def write_table(root: Path | str) -> dict:
         path,
         values=payload["values"], raw=payload["raw"], observed=payload["observed"],
         mean=payload["mean"], std=payload["std"], item_ids=payload["item_ids"],
-        community=payload["community"], triangles=payload["triangles"],
+        community=payload["community"], probe_items=payload["probe_items"],
+        triangles=payload["triangles"],
         cross_pairs=payload["cross_pairs"], same_pairs=payload["same_pairs"],
         metadata=np.asarray(json.dumps(payload["metadata"], sort_keys=True)),
     )
