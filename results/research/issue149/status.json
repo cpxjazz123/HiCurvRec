@@ -1,0 +1,129 @@
+{
+  "aborted_pre_approval_run": {
+    "alpha_saturation": "all three levels reached alpha = 0.0",
+    "artifacts_written": [],
+    "collision_series": [
+      {
+        "collision": 0.8297067556025541,
+        "epoch": 50,
+        "unique": 4187
+      },
+      {
+        "collision": 0.8640338390206206,
+        "epoch": 100,
+        "unique": 3343
+      },
+      {
+        "collision": 0.8577296945540326,
+        "epoch": 150,
+        "unique": 3498
+      },
+      {
+        "collision": 0.9081628502867369,
+        "epoch": 200,
+        "unique": 2258
+      },
+      {
+        "collision": 0.9755968601293367,
+        "epoch": 250,
+        "unique": 600
+      },
+      {
+        "collision": 0.9766543295237321,
+        "epoch": 300,
+        "unique": 574
+      },
+      {
+        "collision": 0.9882864928620816,
+        "epoch": 350,
+        "unique": 288
+      },
+      {
+        "collision": 0.9959734819213405,
+        "epoch": 400,
+        "unique": 99
+      },
+      {
+        "collision": 0.9991052182047423,
+        "epoch": 450,
+        "unique": 22
+      },
+      {
+        "collision": 0.9997559686012933,
+        "epoch": 500,
+        "unique": 6
+      },
+      {
+        "collision": 0.9992272339040956,
+        "epoch": 550,
+        "unique": 19
+      },
+      {
+        "collision": 0.9985358116077602,
+        "epoch": 600,
+        "unique": 36
+      }
+    ],
+    "last_epoch": 644
+  },
+  "arm": "TIGER_af3_gate_mixed_rq",
+  "commits": [
+    "f014f0f9 issue 149: the \u00a763 recorder is dry-run against a scratch SID copy before the single run",
+    "93c67415 issue 149: record the R2 key-name addendum comment",
+    "38bc5519 issue 149: the checkpoint names its table with the reviewed key, and a restore proves it",
+    "e48a2bf9 issue 149: record the F1/F2/F4/R2 disposition comment and its measurements",
+    "9948e496 issue 149: the structural terms read the real assignment, on a frozen probe subgraph",
+    "fe6f29be issue 149: implementation evidence, smoke pass, and the aborted pre-approval Stage2 run"
+  ],
+  "frozen_inputs": {
+    "communities": 6,
+    "cross_community_edges": 2119,
+    "items_without_structure": 31,
+    "probe_items": 3072,
+    "structure_table_sha256": "216b451147323dc161d12d5851c8dbcad2cee784626252fbb1eefb9d38793e0e",
+    "triangles": 1006,
+    "within_community_edges": 2897
+  },
+  "idea": "AF3-guided structure-preserving mixed-curvature quantisation",
+  "issue": 149,
+  "not_started_gated": {
+    "layer_record_63": "needs the Stage2 item_sids.json; the recorder is dry-run verified",
+    "r2_archive": "needs the Stage3 recall block",
+    "stage2": "waits for controller approval of the implementation commits",
+    "stage3": "needs the controller's confirmation that the three-code collision is below 0.40"
+  },
+  "protocol": "each stage is signalled by a pushed commit; no issue comment is used",
+  "stage": "implementation_verified_awaiting_controller_review",
+  "verification": {
+    "baseline_red_note": "the 10 failures reproduce unchanged in the frozen baseline tree stage2_RQ-VAE/TIGER_mixed_rq",
+    "proxy": {
+      "argmax_agreement_per_level": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "closure_endpoints": {
+        "all_same": 0.0,
+        "no_same": 0.9986746311187744
+      },
+      "dead_rows_per_level": [
+        0,
+        0,
+        0
+      ],
+      "median_abs_grad_per_row": [
+        0.00015214469749480486,
+        8.516347588738427e-05,
+        3.8592265809711535e-06
+      ],
+      "soft_max_prob_mean": [
+        0.6882403492927551,
+        0.740490734577179,
+        0.6437331438064575
+      ],
+      "usage_change_half_dominated": 0.37730610370635986
+    },
+    "suite": "10 failed, 161 passed, 19 warnings in 112.22s (0:01:52)",
+    "threshold_note": "median |dL/dC| is below the controller's proposed 1e-3 floor on real costs (L1/L2 ~1e-4, L3 ~1e-6); reported, not repaired, since lambda and the carrier's scale are fixed before the single run"
+  }
+}
