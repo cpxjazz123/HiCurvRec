@@ -1,0 +1,73 @@
+{
+  "metadata": {
+    "af3_cache": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/community_curvature/train_edge_af3.npz",
+    "af3_cache_status": "MATCHED",
+    "cross_pairs": 128450,
+    "degree": {
+      "max": 2220,
+      "mean": 25.687489819188794,
+      "min": 1
+    },
+    "descriptor_names": [
+      "degree_log",
+      "triangles_log",
+      "af3_mean",
+      "af3_spread",
+      "triangle_edge_share",
+      "open_edge_share",
+      "neighbour_degree_entropy",
+      "cross_community_share"
+    ],
+    "embedding_sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+    "input_rule": "TRAIN split only; the validation and test splits and any future behaviour are never read",
+    "issue": 149,
+    "items_without_structure": 31,
+    "louvain_resolution": 1.0,
+    "mechanism": "AF3-guided structure-preserving mixed-curvature quantization",
+    "n_communities": 6,
+    "n_edges": 315391,
+    "n_items": 24587,
+    "n_nodes": 24556,
+    "pair_cap": 200000,
+    "same_pairs": 186941,
+    "seed": 42,
+    "standardisation": {
+      "mean": [
+        2.7953452905238914,
+        1.7358644574782225,
+        -140.36774189095857,
+        265.26088939566705,
+        0.35198390811524255,
+        0.6480160918847575,
+        0.9600963904228516,
+        0.36484109916400936
+      ],
+      "std": [
+        0.8374802534644942,
+        1.6740180002647658,
+        98.5467932924305,
+        224.02176702008612,
+        0.26463460341429385,
+        0.26463460341429385,
+        0.04806748010023142,
+        0.18644753214142748
+      ]
+    },
+    "train_parquet": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "train_parquet_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "triangle_cap": 200000,
+    "triangles": 200000,
+    "undefined_dimensions": {
+      "af3_mean": 31,
+      "af3_spread": 31,
+      "cross_community_share": 31,
+      "degree_log": 31,
+      "neighbour_degree_entropy": 82,
+      "open_edge_share": 31,
+      "triangle_edge_share": 31,
+      "triangles_log": 31
+    }
+  },
+  "table": "/fs04/ar57/wenyu/GeneRec/results/research/issue149/structure_table.npz",
+  "table_sha256": "955e170abb0d9ed0346819497f573d665f34fe148e2f06333accd6a6d6906646"
+}

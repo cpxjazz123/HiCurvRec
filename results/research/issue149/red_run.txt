@@ -1,0 +1,32 @@
+TDD red state (issue #149), captured before the mechanism module existed.
+
+$ /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m pytest \
+    tests/test_structure_table.py tests/test_structure_gate.py \
+    tests/test_structure_losses.py tests/test_real_batch_gate.py -q
+tests/test_real_batch_gate.py:30: in <module>
+    from model import structure_gate as aux  # noqa: E402
+E   ImportError: cannot import name 'structure_gate' from 'model'
+    (/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_af3_gate_mixed_rq/model/__init__.py)
+ERROR tests/test_structure_table.py
+ERROR tests/test_structure_gate.py
+ERROR tests/test_structure_losses.py
+ERROR tests/test_real_batch_gate.py
+!!!! Interrupted: 4 errors during collection !!!!
+4 errors in 21.28s
+
+Green state after the implementation, the frozen table and the wiring tests:
+
+  tests/test_structure_table.py      12 passed
+  tests/test_structure_gate.py       11 passed
+  tests/test_structure_losses.py     11 passed
+  tests/test_real_batch_gate.py       5 passed
+  tests/test_reference_contract.py    3 passed
+  tests/test_gated_trainer_wiring.py  3 passed
+
+Whole candidate suite (tests/, one hour budget): 151 passed, 10 failed.
+All 10 failures reproduce unchanged in the frozen baseline tree
+stage2_RQ-VAE/TIGER_mixed_rq, so they are baseline-red, not regressions:
+
+  tests/test_integration_regressions.py::test_consumer_rejects_shared_readout_with_wrong_input_identity
+  tests/test_prefix_eligibility.py::test_stale_explicit_local_entry_stops_before_any_selection[8 cases]
+  tests/test_support_regressions.py::StratifiedSupportTests::test_proportional_quotas_are_enforced_and_counts_use_the_chosen_anchor

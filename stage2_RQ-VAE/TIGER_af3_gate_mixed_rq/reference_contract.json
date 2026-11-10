@@ -1,0 +1,99 @@
+{
+  "issue": 149,
+  "mechanism": "AF3-guided structure-preserving mixed-curvature quantisation: the weight between the Euclidean and the hyperbolic half of a joint E16 x H16 code is a learned gate over the item's frozen local AF3 structure descriptor, and it enters the baseline's cost matrix, assignment rule, residual recursion and export unchanged",
+  "calls": [
+    {
+      "name": "gated mixed cost of one joint codeword",
+      "callable": "model.mixed_rq:point_cost",
+      "note": "The cost the assignment is taken over, with the curved codeword already mapped into the ball. alpha is now a per-item number produced by the gate instead of a table entry; the formula is unchanged, and it is the only differentiable place the weight lives.",
+      "symbols": ["x0", "x1", "h0", "h1", "k0", "k1", "y0", "y1", "a", "c"],
+      "args": [
+        {"name": "residual_e", "width": 2, "radius": 0.2},
+        {"name": "residual_h", "width": 2, "radius": 0.2},
+        {"name": "code_e", "width": 2, "radius": 0.2},
+        {"name": "code_h", "width": 2, "radius": 0.2},
+        {"name": "alpha", "scalar": 0.5},
+        {"name": "curvature", "scalar": 1.0}
+      ],
+      "statements": [
+        "xy = -(h0*y0 + h1*y1)",
+        "hn = h0**2 + h1**2",
+        "yn = y0**2 + y1**2",
+        "num0 = (1 + 2*c*xy + c*yn)*(-h0) + (1 - c*hn)*y0",
+        "num1 = (1 + 2*c*xy + c*yn)*(-h1) + (1 - c*hn)*y1",
+        "den = 1 + 2*c*xy + c**2*hn*yn + 1e-12",
+        "mx0 = num0/den",
+        "mx1 = num1/den",
+        "mn = mx0**2 + mx1**2",
+        "d = 2/sqrt(c)*atanh(Min(sqrt(c)*sqrt(mn), 1 - 1e-6))",
+        "euclidean = (x0 - k0)**2 + (x1 - k1)**2",
+        "curved = d**2",
+        "cost = 2*(a*euclidean + (1 - a)*curved/4)"
+      ],
+      "output": "cost"
+    },
+    {
+      "name": "one hidden unit of the structure gate",
+      "callable": "model.structure_gate:gate_alpha",
+      "note": "One level's head is GATE_HIDDEN such units followed by a weight vector; a single unit is the surface a statement language can carry. The implemented head uses the same exact (erf) GELU and the same sigmoid, so the frozen formula is the formula the code evaluates.",
+      "symbols": ["s0", "s1", "w0", "w1", "b", "u", "v"],
+      "args": [
+        {"name": "structure", "width": 2, "radius": 2.0},
+        {"name": "weight", "width": 2, "radius": 1.0},
+        {"name": "bias", "scalar": 0.0},
+        {"name": "scale", "scalar": 1.0},
+        {"name": "shift", "scalar": 0.0}
+      ],
+      "statements": [
+        "pre = w0*s0 + w1*s1 + b",
+        "hidden = 0.5*pre*(1 + erf(pre/sqrt(2)))",
+        "alpha = 1/(1 + exp(-(u*hidden + v)))"
+      ],
+      "output": "alpha"
+    }
+  ],
+  "coupling": {
+    "callable": "model.mixed_rq:mixed_cost",
+    "behaviour_arguments": ["alpha"],
+    "control_argument": "codes_e",
+    "note": "The gate's weight is the only behaviour-carrying argument of the cost matrix the assignment consumes, and the two halves of every codeword disagree, so moving the weight can change which joint code is nearest. At initialisation the output layer is zero, so alpha = 1/2 for every item and every level, which is exactly the frozen baseline's weight: the point of departure is the baseline, not a re-parameterisation of it.",
+    "args": [
+      {"name": "residual_e", "width": 16},
+      {"name": "residual_h", "width": 16},
+      {"name": "codes_e", "width": 16},
+      {"name": "codes_h", "width": 16},
+      {"name": "alpha", "width": 1},
+      {"name": "curvature", "scalar": 1.0}
+    ]
+  },
+  "excluded": [
+    {
+      "surface": "the chosen index k_l = argmin_k C^(l) on the first two levels, and the balanced Sinkhorn argmax on the last level",
+      "reason": "discrete: the assignment rule is the baseline's and carries no gradient; the mechanism's score enters the cost matrix that rule consumes"
+    },
+    {
+      "surface": "the max/min re-centring inside the soft assignment approximation used by the three structural terms",
+      "reason": "piecewise differentiable in the batch; the approximation is supervision only and never produces the SID"
+    },
+    {
+      "surface": "the residual update rE - sg(eE) and (-sg(eH)) (+) rH",
+      "reason": "the detach is a routing decision, not a derivative of the forward value"
+    },
+    {
+      "surface": "the decoder straight-through path z + sg(phi(q) - z)",
+      "reason": "its backward is the identity on phi by construction"
+    },
+    {
+      "surface": "the structure descriptor itself: degree, triangles, per-edge AF3, community labels, and their standardisation",
+      "reason": "computed once on the frozen TRAIN graph and read as a constant; it is not a parameter of the model"
+    },
+    {
+      "surface": "the frozen triangle and edge samples the three structural terms consume",
+      "reason": "a deterministic seeded sample frozen with the table; only its members present in the batch enter a step, and the coverage is recorded per epoch"
+    },
+    {
+      "surface": "the undefined-dimension routing rule (a flagged entry is read as the TRAIN population mean)",
+      "reason": "a declared routing rule with recorded counts, not a fitted quantity; the mask travels with the table and with the run record"
+    }
+  ]
+}

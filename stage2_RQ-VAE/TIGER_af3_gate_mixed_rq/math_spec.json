@@ -1,0 +1,136 @@
+{
+  "schema": "issue149-math-spec/1",
+  "issue": 149,
+  "mechanism": "AF3-guided structure-preserving mixed-curvature quantisation: one joint E16 x H16 codeword per token, and the weight between the two halves of every (item, level) is a learned gate over that item's frozen local AF3 structure descriptor",
+  "frozen_inputs": {
+    "structure_table": "results/research/issue149/structure_table.npz (+ structure_table.json with its SHA-256)",
+    "split": "TRAIN only; the validation and test splits and any future behaviour are never read",
+    "graph": "the TRAIN co-occurrence graph: one row's history plus its target is a sequence, consecutive items are adjacent, the graph is made undirected, de-duplicated and binarised; the rebuild reproduces the frozen AF3 cache of issue #136 edge for edge",
+    "af3": "AF3(u,v) = 4 - deg(u) - deg(v) + 3 |N(u) & N(v)| on the binary TRAIN graph",
+    "communities": "Louvain on the TRAIN binary graph, resolution 1.0, seed 42",
+    "descriptor_names": ["degree_log", "triangles_log", "af3_mean", "af3_spread", "triangle_edge_share", "open_edge_share", "neighbour_degree_entropy", "cross_community_share"]
+  },
+  "computations": [
+    {
+      "name": "local structure descriptor",
+      "inputs": ["degree d_i", "per-edge triangle count T_e", "per-edge AF3", "community label", "neighbour degrees"],
+      "definition": "s_i = [log(1+d_i), log(1 + 0.5 sum_{e incident to i} T_e), mean_e AF3(e), q90_e AF3(e) - q10_e AF3(e), |{e incident to i : T_e>0}| / d_i, 1 - that share, -sum_b p_b log p_b / log d_i, |{j in N(i) : label_j != label_i}| / d_i]; every dimension is z-scored with the TRAIN mean and standard deviation of its observed entries",
+      "output": "s_i in R^8",
+      "gradient": "frozen; it is not differentiated and not learned"
+    },
+    {
+      "name": "undefined descriptor entries",
+      "definition": "a dimension that cannot be measured (a node outside the graph, or no incident edge, or a single neighbour for the entropy) is stored as NaN and flagged in the mask; the gate consumes 0.0 for a flagged entry, which after standardisation is the TRAIN population mean",
+      "output": "the same 8-vector for the gate, with the mask as evidence",
+      "gradient": "none: this is a routing rule, and its counts are written to the table manifest and to the run's train_start record"
+    },
+    {
+      "name": "per-level structure gate",
+      "inputs": ["s_i", "per-level weight W1 (8x16)", "per-level bias b1 (16)", "per-level weight W2 (16)", "per-level bias b2 (1)"],
+      "definition": "alpha_{i,l} = sigmoid(W2_l . GELU(W1_l s_i + b1_l) + b2_l), one independent head per level; W2_l and b2_l start at zero, so alpha_{i,l} = sigmoid(0) = 1/2 exactly at initialisation, which is the frozen baseline's ALPHA_INITIAL",
+      "output": "alpha_{i,l} in (0,1)",
+      "gradient": "d alpha / d s = alpha (1-alpha) W2 . (GELU'(W1 s + b1) * W1); the descriptor is frozen, so the only learned parameters are W1, b1, W2, b2"
+    },
+    {
+      "name": "gated mixed cost of a joint codeword",
+      "inputs": ["residual_e", "residual_h", "code_e", "code_h", "alpha_{i,l}", "curvature c"],
+      "definition": "C_{ik}^(l) = 2 * [ alpha_{i,l} || rE_{i,l} - eE_k ||^2 + (1 - alpha_{i,l}) d_c(rH_{i,l}, eH_k)^2 / 4 ]",
+      "output": "cost matrix of shape [batch, 256]",
+      "gradient": "differentiable in the residuals and in alpha; the discrete assignment built on top of it is not part of this surface"
+    },
+    {
+      "name": "assignment rule",
+      "definition": "the baseline's rule, unchanged: the first two levels take the nearest code, the last level takes the balanced Sinkhorn assignment in training; alpha enters the cost matrix only, and n o argmin replaces the balancing",
+      "output": "three integer tokens per item",
+      "gradient": "excluded: discrete (see excluded)",
+      "excluded": true
+    },
+    {
+      "name": "native residual update",
+      "definition": "rE_l = rE_{l-1} - sg(eE_k), rH_l = (-sg(eH_k)) (+) rH_{l-1}, right-nested Moebius addition; alpha decides which code is chosen, never what the residual update is",
+      "output": "the next residual pair",
+      "gradient": "only the chosen code is detached, so the encoder keeps its commitment path and the codebook is updated by its own term"
+    },
+    {
+      "name": "readout of a complete code",
+      "definition": "phi(q) = [qE, log_0(qH)], qE = sum_k eE_k, qH = eH_1 (+) (eH_2 (+) eH_3); the decoder reads phi(q) through the baseline's straight-through path",
+      "output": "a 32-dimensional reconstruction target",
+      "gradient": "the straight-through path is the baseline's; its backward is the identity on phi by construction"
+    },
+    {
+      "name": "soft prefix approximation",
+      "inputs": ["cost matrix C^(l)"],
+      "definition": "q^(l) = softmax(-centred(C^(l)) / 1), where centred(x) = (x - (max+min)/2) / (max - (max+min)/2 + 1e-5) is the baseline's own centring rule, which already maps the matrix into about [-1, 1]",
+      "output": "q^(l) of shape [batch, 256], a row-stochastic approximation of the assignment",
+      "gradient": "differentiable in the cost and therefore in alpha, the residual, the codebook and the encoder; the temperature is one because the centring fixed the scale, and it is never swept"
+    },
+    {
+      "name": "closure term",
+      "inputs": ["q^(1..3)", "the frozen TRAIN triangles"],
+      "definition": "L_closure = 1 - mean_{triangles} mean_{(i,j) in triangle} (1/3) sum_l <q_i^(l), q_j^(l)>",
+      "output": "a scalar in [0, 1]",
+      "gradient": "differentiable in q; the triangles are frozen with the table, and a triangle is used only when all three of its items are in the batch"
+    },
+    {
+      "name": "bridge term",
+      "inputs": ["q^(1..3)", "the frozen within-community edge set", "the frozen cross-community edge set"],
+      "definition": "L_bridge = relu( mean_{within-community edges} (1 - overlap) - mean_{cross edges} (1 - overlap) ), overlap(i,j) = (1/3) sum_l <q_i^(l), q_j^(l)>",
+      "output": "a scalar in [0, 1]",
+      "gradient": "differentiable in q; a cross-community edge is never treated as a negative sample, the term only asks that its dissimilarity exceed a within-community edge's"
+    },
+    {
+      "name": "usage term",
+      "inputs": ["q^(1..3)"],
+      "definition": "L_usage = (1/3) sum_l (1 - H(p_l) / log 256), p_l = mean_i q_i^(l)",
+      "output": "a scalar in [0, 1]",
+      "gradient": "differentiable in q; it is the entropy deficit of the soft code usage, so a collapsing codebook raises it"
+    },
+    {
+      "name": "training objective",
+      "definition": "L = L_RQ + L_closure + L_bridge + L_usage, with L_RQ = MSE(decoder(phi(q)), x) + quantisation term of the baseline and all three weights equal to one",
+      "output": "the scalar the optimiser steps on",
+      "gradient": "the same scalar carries the gate parameters, the encoder, the codebooks and the decoder"
+    }
+  ],
+  "switches": {
+    "BEHAVIOR_OFF": "the gate reads the frozen TRAIN-mean descriptor (the zero row after standardisation), so alpha_{i,l} = sigmoid(f_l(0)) does not depend on the item; the wiring check is that every item of a batch gets one identical alpha per level",
+    "GEOMETRY_OFF": "c = 0, so d_0^2 / 4 equals the squared Euclidean distance (numerically to 1e-6) and the hyperbolic half degenerates; the gate is unchanged",
+    "BOTH_ON": "the factory configuration of model/structure_gate.py: structure gate + c = 1"
+  },
+  "coupling": {
+    "path": "TRAIN graph AF3 local structure s_i -> gate alpha_{i,l} -> mixed cost C_{ijk}^(l) -> Sinkhorn / nearest-code assignment on the same cost -> residual recursion -> three-token SID -> reconstruction and the three structural terms",
+    "behaviour_side": "replacing s_i by the frozen mean (BEHAVIOR_OFF) changes alpha, the cost matrix, the chosen codes and the loss on the same batch",
+    "geometry_side": "c = 0 removes the curved half's contribution, so the same codes are scored differently and the assignment can change",
+    "not_in_the_path": "no second, independent loss carries the behaviour signal: the descriptor reaches the assignment through the cost matrix, and the three structural terms are additional supervision on the same soft assignments"
+  },
+  "excluded": [
+    {
+      "surface": "the chosen index k_l = argmin_k C^(l) on the first two levels and the signed Sinkhorn argmax on the last",
+      "reason": "discrete: the assignment rule is the baseline's and carries no gradient"
+    },
+    {
+      "surface": "the re-centring max/min inside the soft assignment approximation",
+      "reason": "piecewise differentiable with respect to the batch; the approximation is supervision only and never produces the SID"
+    },
+    {
+      "surface": "the residual update rE - sg(eE) and (-sg(eH)) (+) rH",
+      "reason": "the detach is a routing decision, not a derivative of the forward value"
+    },
+    {
+      "surface": "the decoder straight-through path z + sg(phi(q) - z)",
+      "reason": "its backward is the identity on phi by construction"
+    },
+    {
+      "surface": "the structure descriptor, the AF3 values, the triangle counts and the community labels",
+      "reason": "computed once on the frozen TRAIN graph and read as a constant; they are not parameters and have no derivative"
+    },
+    {
+      "surface": "the frozen triangle and edge samples",
+      "reason": "a deterministic seeded sample, frozen before training; only its members that happen to be in the batch enter a step, and the coverage is recorded"
+    },
+    {
+      "surface": "the gate's hidden width, the equal lambda weights and the unit temperature",
+      "reason": "design constants fixed before the single run, not fitted: two cells per descriptor dimension, three terms that already lie in [0,1], and the scale the baseline's centring leaves behind"
+    }
+  ]
+}
