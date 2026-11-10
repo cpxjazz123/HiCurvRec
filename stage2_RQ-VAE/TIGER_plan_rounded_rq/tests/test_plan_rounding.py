@@ -14,11 +14,23 @@ if str(TREE) not in sys.path:
 from model.rounding import column_capacities, round_plan  # noqa: E402
 
 
-def _problem(rows=64, codes=16, seed=0, sharpness=4.0):
+def _problem(rows=64, codes=16, seed=0, epsilon=0.05, iters=60):
+    """A *doubly balanced* plan, which is what Sinkhorn actually hands to the rounding.
+
+    The first version of this fixture only normalised the total, so its column sums were the
+    softmax masses and not the balance the real plan has -- a fixture that let a bad rule look
+    fine on one seed. Iterative proportional fitting reproduces the real input.
+    """
     generator = torch.Generator().manual_seed(seed)
     cost = torch.rand(rows, codes, generator=generator, dtype=torch.float64)
-    plan = torch.softmax(-cost * sharpness, dim=-1)
-    plan = plan / plan.sum() * rows
+    kernel = torch.exp(-cost / epsilon)
+    left = torch.ones(rows, dtype=torch.float64)
+    right = torch.ones(codes, dtype=torch.float64)
+    target = torch.full((codes,), rows / codes, dtype=torch.float64)
+    for _ in range(iters):
+        left = 1.0 / (kernel @ right)
+        right = target / (kernel.t() @ left)
+    plan = left[:, None] * kernel * right[None, :]
     return plan, cost
 
 
@@ -41,7 +53,7 @@ def test_capacity_deviation_from_the_plan_is_at_most_one_row():
 
 
 def test_cost_stays_within_one_percent_of_the_plan():
-    plan, cost = _problem(rows=128, codes=32, seed=1)
+    plan, cost = _problem(rows=128, codes=32, seed=1)   # doubly balanced, as Sinkhorn emits
     picks = round_plan(plan, cost)
     mine = float(cost[torch.arange(cost.shape[0]), picks].sum())
     plan_cost = float((plan * cost).sum())
