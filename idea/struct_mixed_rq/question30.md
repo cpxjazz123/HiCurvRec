@@ -1,6 +1,6 @@
 # question30 — 三个 call 绑的都是缩维替身：机器一致性能变绿，却从不比较真正被训练的 H16 三层项
 
-**状态：OPEN（唯一开放追问）**　承接：`answer29.md`
+**状态：CLOSED（已审阅 answer30；未完成项转 question31）**　承接：`answer29.md`。审阅结论与后续要求见 [`question31.md`](question31.md)；归档不代表完整机制验收通过。
 
 ## 1. 已接受（本轮逐项重算）
 
