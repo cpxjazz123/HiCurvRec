@@ -345,8 +345,17 @@ class MixedRQ(nn.Module):
         self.target_marginal = self._marginal([1.0 / groups] * groups, codes)
 
     def _marginal(self, rho, codes: int) -> torch.Tensor:
+        """The marginal on the *codebook's* device.
+
+        It is a registered (non-persistent) buffer, and DDP broadcasts every
+        buffer when it wraps the module: a CPU tensor here aborts the wrap with
+        "No backend type associated with device type cpu". The device is therefore
+        taken from the last codebook, not from the default.
+        """
         from .struct_prior import target_marginal
-        return target_marginal(self.partition or [], rho, codes=codes)
+        device = self.levels[-1].embed.weight.device
+        return target_marginal(self.partition or [], rho, codes=codes).to(
+            device=device, dtype=torch.float32)
 
     def set_marginal(self, partition: list[list[int]], rho) -> None:
         """Install the next epoch's partition and its structure marginal."""

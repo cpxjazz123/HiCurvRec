@@ -84,6 +84,15 @@ def test_the_export_takes_the_last_level_from_the_structured_plan(tmp_path):
     assert torch.equal(tokens, torch.stack(tokens_seen, dim=1))
 
 
+def test_the_marginal_lives_on_the_codebooks_device(tmp_path):
+    """DDP broadcasts every buffer, so a CPU marginal aborts the wrap."""
+    rq = _quantizer(_write_prior(tmp_path / "p.npz"))
+    assert rq.target_marginal.device == rq.levels[-1].embed.weight.device
+    assert rq.target_marginal.dtype == torch.float32
+    rq.set_marginal(prior.equal_partition(CODES, 4), [0.4, 0.3, 0.2, 0.1])
+    assert rq.target_marginal.device == rq.levels[-1].embed.weight.device
+
+
 def test_a_restore_refuses_another_prior(tmp_path):
     from model.model import MixedRQVAE
     from types import SimpleNamespace
