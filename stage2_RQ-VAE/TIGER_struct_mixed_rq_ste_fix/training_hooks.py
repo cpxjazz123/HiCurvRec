@@ -9,12 +9,12 @@ import structure as S
 
 
 def _positions(model, embeddings: torch.Tensor, item_ids: list[int]) -> torch.Tensor:
-    """Positions rebuilt from the selected codes, differentiable on both sides.
+    """The three cumulative readbacks q_1, q_2, q_3 from the same forward.
 
-    levels[-1] is the native readback plus the tangent straight-through: it is
-    differentiable in the codebook (through the composition) and in the encoder
-    (through the straight-through value).  Adding codes_to_positions on top of it
-    would add a second codebook path and silently change the mechanism.
+    forward_with_codes already returns every level as reconstruct(codes up to
+    that level) plus the tangent straight-through, so reading all three adds no
+    second codebook path: the codebook sees the native composition Jacobian and
+    the encoder sees the STE of x.
     """
     gathered = embeddings[torch.tensor(item_ids, dtype=torch.long)]
     _, _, _, _, levels = model.forward_with_codes(gathered)
@@ -40,7 +40,10 @@ def structure_term(model, embeddings: torch.Tensor, graph, rng: random.Random, *
     if capture is not None:
         capture.append({"items": list(item_ids),
                         "triples": [tuple(t) for t in triples],
-                        "targets": h.detach().tolist()})
+                        "targets": h.detach().tolist(),
+                        "layer_h_norm_max": [float(positions_all[l][..., 16:].norm(dim=-1).max())
+                                             if positions_all.shape[-1] > 16 else 0.0
+                                             for l in range(3)]})
     losses = [S.structure_loss(positions_all[l], h, scale=scale, geometry_on=geometry_on)
               for l in range(3)]
     return torch.stack(losses).mean()

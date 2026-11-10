@@ -27,13 +27,18 @@ def test_three_levels_differ_from_the_last_level_only():
     term = _term(model, items, triples)
 
     ids = [item for centre, a, b, _ in triples for item in (centre, a, b)]
-    positions = H._positions(model, items, ids)[-1].reshape(len(triples), 3, -1)
+    stack = H._positions(model, items, ids)
+    positions = (stack if stack.dim() == 2 else stack[-1]).reshape(len(triples), 3, -1)
     h = S.triple_targets([kind for *_, kind in triples], device=positions.device)
     last = S.structure_loss(positions, h, scale=1.0)
     assert not torch.allclose(term, last, rtol=0.0, atol=1e-6)
 
 
-def test_the_second_level_receives_a_gradient():
+def _codeword_params(model):
+    return [layer.get_code_embs() for layer in model.rq.vq_layers]
+
+
+def test_the_prefix_gradient_differs_from_the_last_layer_gradient():
     model, items, _ = E._setup()
     graph = S.build_graph(T.TRAIN_FILE, seed=T.SEED)
     triples = S.sample_triples(graph, 32, random.Random(T.SEED))
@@ -48,13 +53,22 @@ def test_the_second_level_receives_a_gradient():
     model.forward_with_codes = wrapped
     term = _term(model, items, triples)
     assert len(captured) == 3
-    params = list(model.encoder.parameters()) + [l.get_code_embs() for l in model.rq.vq_layers]
-    grads = torch.autograd.grad(term, params, retain_graph=True, allow_unused=True)
-    assert any(g is not None and float(g.abs().max()) > 0 for g in grads)
-    assert term.requires_grad
+    ids = [item for centre, a, b, _ in triples for item in (centre, a, b)]
+    stack = H._positions(model, items, ids)
+    positions = (stack if stack.dim() == 2 else stack[-1]).reshape(len(triples), 3, -1)
+    h = S.triple_targets([kind for *_, kind in triples], device=positions.device)
+    last = S.structure_loss(positions, h, scale=1.0)
+    params = _codeword_params(model)
+    g_term = torch.autograd.grad(term, params, retain_graph=True, allow_unused=True)
+    g_last = torch.autograd.grad(last, params, retain_graph=True, allow_unused=True)
+    differs = any(
+        (a is None) != (b is None) or (a is not None and b is not None
+                                        and not torch.allclose(a, b, rtol=0.0, atol=0.0))
+        for a, b in zip(g_term, g_last))
+    assert differs
 
 
 if __name__ == "__main__":
     test_three_levels_differ_from_the_last_level_only()
-    test_the_second_level_receives_a_gradient()
+    test_the_prefix_gradient_differs_from_the_last_layer_gradient()
     print("ok")

@@ -93,7 +93,7 @@
   "geometry_on": "product geodesic in assignment and loss; otherwise the Euclidean control",
   "both_on": "both of the above",
   "assignment": "baseline Sinkhorn, unchanged rule",
-  "prefix_objective": "L = L_base + lambda*L_prefix; lambda calibrated once before any optimizer step with the two-block budget; lambda_mean=3*lambda_sum only under identical s, state, sample and blocks, and does not make last-level supervision equivalent",
+  "prefix_objective": "structure_term applies the three-layer mean; encoder STE and codebook native Jacobian as stated",
   "loss": "L = L_base + lambda * L_prefix, where L_base = reconstruction MSE + commitment",
   "reconstruction": "decoder consumes the log0 readback of the right-nested composition",
   "optimizer": "AdamW on the frozen budget; no early stopping, no per-layer weights"
@@ -215,7 +215,7 @@
    "coverage_gaps": [
     "the reduced adapter samples h in {1,2} and s>0 from the contract args (not 1+tanh(u)); exact h=2 is therefore inside its sampling domain",
     "H1 squared-difference identity does not demonstrate H16 non-Euclidean effects",
-    "this prefix objective is NOT_IMPLEMENTED in the trainer; only the last-layer structure term runs",
+    "the three-layer prefix objective is applied by structure_term (mean of L1,L2,L3); the symbolic face remains not rebuildable",
     "the buildable SymPy call covers the reduced E1 x H1 prefix path (cumulative sums, three pairs, three layers); the full E16 x H16 prefix has an executable torch reference and program, not yet a SymPy contract call"
    ],
    "rejected_draft_forms": {
@@ -251,9 +251,9 @@
     "reduced_surface": "prefix_surface_1d uses the H1 identity asinh^2(sqrt(t))=(qh_i-qh_j)^2, so the declared surface and its torch counterpart have finite gradients at the all-zero and H-coincident collisions; SymPy reference constants differ from the torch value by ~7.3e-9, and tests state rtol=0 with explicit atol"
    },
    "faces": {
-    "implemented": "last-layer structure term on quantised positions, mixed_sq with the phi form; this is the only term the trainer currently applies",
+    "implemented": "three-layer cumulative structure term on quantised positions: the trainer averages L1/L2/L3 from the same forward, same triples and same h; the trainer applies this prefix term",
     "to_freeze": "full E16 x H16 three-layer prefix objective and readback above",
-    "to_implement": "wiring: _positions still returns levels[-1]; the prefix path must run through the same quantisation and readback, not a copy"
+    "to_implement": "nothing on the positions path: _positions returns q_1..q_3 from the same forward_with_codes call; the remaining gaps are the symbolic face and monitoring"
    },
    "excluded": [
     "assignment (Sinkhorn at the last training layer, export branch otherwise) is discrete; the balancing rule is unchanged",
