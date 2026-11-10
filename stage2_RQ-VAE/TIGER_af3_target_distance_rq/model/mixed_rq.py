@@ -368,6 +368,8 @@ class MixedRQ(nn.Module):
             total_loss = total_loss + quant_loss
             unused_total += int(unused)
         self.last_prefixes = prefixes
+        #: The per-level hard codes of the last forward, for the gates and the exports.
+        self.last_codes = list(tokens)
         readout = quantized_readout(codes_e, codes_h, self.curvature)
         stacked = torch.stack(tokens, dim=1)
         return readout, total_loss / len(self.levels), unused_total, stacked

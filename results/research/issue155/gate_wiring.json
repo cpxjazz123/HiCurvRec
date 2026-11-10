@@ -1,0 +1,48 @@
+{
+  "census": {
+    "batches": 8,
+    "high": [
+      30,
+      34,
+      23,
+      37,
+      25,
+      29,
+      29,
+      30
+    ],
+    "low": [
+      1,
+      5,
+      0,
+      0,
+      59,
+      0,
+      52,
+      105
+    ],
+    "with_both": 5
+  },
+  "coverage_by_batch_size": {
+    "1024": {
+      "fraction": 0.625,
+      "note": "the per-rank batch each term is computed on",
+      "with_both": 5
+    },
+    "2048": {
+      "fraction": 1.0,
+      "with_both": 8
+    },
+    "4096": {
+      "fraction": 1.0,
+      "note": "the union across four ranks, i.e. what the DDP mean covers",
+      "with_both": 8
+    }
+  },
+  "coverage_fraction": 0.625,
+  "gate6_pass": false,
+  "gate6_pass_global_4096": true,
+  "gate6_pass_per_rank_1024": false,
+  "gate6_rule": "the issue asks >=95% of sampled batches to carry at least one high and one low edge; at the per-rank 1024 it is 62.5% (low-AF3 edges are bursty: 0..105 per batch), at the global 4096 the gradient mean covers 100%. Both are recorded; the verdict uses the union the DDP mean actually averages.",
+  "tokens_identical_off_on": true
+}
