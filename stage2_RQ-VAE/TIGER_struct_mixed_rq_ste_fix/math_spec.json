@@ -216,7 +216,8 @@
     "the reduced adapter samples h in {1,2} and s>0 from the contract args (not 1+tanh(u)); exact h=2 is therefore inside its sampling domain",
     "H1 squared-difference identity does not demonstrate H16 non-Euclidean effects",
     "the three-layer prefix objective is applied by structure_term (mean of L1,L2,L3); the symbolic face remains not rebuildable",
-    "the buildable SymPy call covers the reduced E1 x H1 prefix path (cumulative sums, three pairs, three layers); the full E16 x H16 prefix has an executable torch reference and program, not yet a SymPy contract call"
+    "the buildable SymPy call covers the reduced E1 x H1 prefix path (cumulative sums, three pairs, three layers); the full E16 x H16 prefix has an executable torch reference and program, not yet a SymPy contract call",
+    "the reference_contract calls bind the reduced surfaces; the trained three-layer H16 term has no symbolic call and mixed_sq's 16-dimension cross ratio is not bound, so machine agreement does not target the trained function"
    ],
    "rejected_draft_forms": {
     "cross_ratio_reciprocal": "t_draft=(1-|a|^2)(1-|b|^2)/|a-b|^2 gave 19.007999999999996 where the native t is 0.05260942760942763 for the same ball points, and divides by zero at the legal collision",
@@ -252,7 +253,7 @@
    },
    "faces": {
     "implemented": "three-layer cumulative structure term on quantised positions: the trainer averages L1/L2/L3 from the same forward, same triples and same h; the trainer applies this prefix term",
-    "to_freeze": "full E16 x H16 three-layer prefix objective and readback above",
+    "to_freeze": "full E16 x H16 three-layer prefix objective and readback; the contract must bind this function, not only its 1D reduction",
     "to_implement": "nothing on the positions path: _positions returns q_1..q_3 from the same forward_with_codes call; the remaining gaps are the symbolic face and monitoring"
    },
    "excluded": [

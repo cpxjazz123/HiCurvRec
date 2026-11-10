@@ -180,23 +180,26 @@
   }
  ],
  "coupling": {
-  "callable": "structure:reference_objective_surface",
-  "behaviour_argument": "u",
-  "control_argument": "scale",
+  "callable": "structure:prefix_coupling_surface",
+  "behaviour_argument": "h",
+  "control_argument": "s",
   "args": [
    {
-    "name": "points",
-    "width": 6
+    "name": "codes",
+    "width": 288,
+    "radius": 0.2,
+    "sampler": "box"
    },
    {
-    "name": "u",
-    "width": 3
+    "name": "h",
+    "scalar": 1.0
    },
    {
-    "name": "scale",
-    "width": 1
+    "name": "s",
+    "scalar": 1.0
    }
-  ]
+  ],
+  "note": "the coupling runs on the full E16 x H16 three-layer prefix path, not the reduced surface"
  },
  "excluded": [
   {

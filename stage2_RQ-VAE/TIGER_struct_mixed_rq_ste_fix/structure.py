@@ -203,7 +203,7 @@ def _mobius_add(a, b):
     return ((1 + 2 * ab + b2) * a + (1 - a2) * b) / (1 + 2 * ab + a2 * b2)
 
 
-def reference_prefix_native(codes, h: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
+def reference_prefix_native(codes, h: torch.Tensor, s: torch.Tensor, geometry_on: bool | None = None) -> torch.Tensor:
     """Full E16 x H16 prefix readback and stress, independent of the production
     geometry helpers.  codes: length-3 sequence of (B,3,32) codeword tangents.
     """
@@ -229,10 +229,24 @@ def reference_prefix_native(codes, h: torch.Tensor, s: torch.Tensor) -> torch.Te
             num = ((bi - bj) ** 2).sum(-1)
             den = (1 - (bi ** 2).sum(-1)) * (1 - (bj ** 2).sum(-1))
             t = (num / den).clamp_min(0.0)
-            d = ((q[:, i, :16] - q[:, j, :16]) ** 2).sum(-1) + _phi_stable(t)
+            d = ((q[:, i, :16] - q[:, j, :16]) ** 2).sum(-1) + (_phi_stable(t) if geometry_on is None or geometry_on else ((q[:, i, 16:] - q[:, j, 16:]) ** 2).sum(-1))
             terms.append((d / (s[:, 0] ** 2 * h[:, k] ** 2) - 1) ** 2)
         total = total + (terms[0] + terms[1] + terms[2]) / 3
     return total / 3
+
+
+def prefix_coupling_surface(codes: torch.Tensor, h: torch.Tensor, s: torch.Tensor, geometry_on: float = 1.0) -> torch.Tensor:
+    """The coupling surface over the full H16 prefix path.
+
+    codes: (B, 288) = 3 layers x 3 points x 32 coordinates; h: (B, 3) targets;
+    s: (B, 1) scale.  The behaviour enters through h, the control through s.
+    """
+    levels = [codes.reshape(codes.shape[0], 3, 3, 32)[:, l] for l in range(3)]
+    if not torch.is_tensor(h):
+        h = torch.full((codes.shape[0], 3), float(h), dtype=codes.dtype)
+    if not torch.is_tensor(s):
+        s = torch.full((codes.shape[0], 1), float(s), dtype=codes.dtype)
+    return reference_prefix_native(levels, h, s, geometry_on=bool(geometry_on))
 
 
 def calibrate_scale(points: torch.Tensor, h: torch.Tensor) -> float:

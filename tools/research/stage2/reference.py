@@ -296,11 +296,23 @@ def coupling_verdict(contract: dict, *, seed: int = 17) -> dict:
                     "reason": "the coupling surface could not be called: %s" % exc}
         difference = max(difference,
                          float((first.detach() - second.detach()).abs().max()))
-    moved = difference > 1e-6
+    control_difference = None
+    if control:
+        changed = dict(arguments)
+        value = arguments[control]
+        changed[control] = value + 0.5 if not hasattr(value, "dtype") else value + 0.5
+        try:
+            third = function(**changed)
+        except Exception as exc:  # noqa: BLE001
+            return {"status": "FAIL",
+                    "reason": "the control argument could not be applied: %s" % exc}
+        control_difference = float((first.detach() - third.detach()).abs().max())
+    moved = difference > 1e-6 and (control_difference is None or control_difference > 1e-6)
     return {"status": "PASS" if moved else "FAIL",
             "behaviour_argument": ", ".join(behaviour_arguments),
             "control_argument": control,
             "max_abs_difference": difference,
+            "control_max_abs_difference": control_difference,
             "reason": ("the behaviour moves the computation" if moved else
                        "the behaviour argument does not change the computation, so it "
                        "cannot move the assignment")}
