@@ -37,6 +37,7 @@ from tqdm import tqdm
 
 from model import RQVAE
 from model.model import MixedRQVAE
+from model.rank_objective import STRUCTURE_OFF
 from model.af3_runtime import (input_identity, resolve_shared_readout,
                                snapshot_sha256, snapshot_state)
 
@@ -79,6 +80,22 @@ READOUT_FILE = REPO_ROOT / "results" / "research" / "issue139" / "readout.json"
 AF3_CACHE = (REPO_ROOT / "results" / "research" / "issue121" / "community_curvature"
              / "train_edge_af3.npz")
 AUX_AF3 = ARM_VARIANT == "A"
+
+#: The spread floor of issue #157: half the initial spread of the normalised edge distances,
+#: measured once on the frozen probe and recorded in results/research/issue157/sigma_min.json
+#: (file sha256 44eedd4d...). A measurement, not a hyper-parameter; never re-derived from the
+#: run's own usage.
+SIGMA_MIN = 0.48247611144034613
+
+#: The cuts the frozen table was built with, for the checkpoint binding.
+AF3_Q05 = -931.0
+AF3_Q95 = -20.0
+
+
+def _af3_table_sha256() -> str:
+    import hashlib
+    path = REPO_ROOT / "results" / "research" / "issue155" / "af3_edges.json"
+    return hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else "MISSING"
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
@@ -535,6 +552,11 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
     raw_module = model.module if isinstance(model, DDP) else model
+    # issue #157: the batch-restricted rank supervision; rows are resolved to item ids exactly
+    structure_supervision = None
+    if ARM_VARIANT == "AF3RANK" and not STRUCTURE_OFF:
+        from model.structure_runtime import StructureSupervision
+        structure_supervision = StructureSupervision.from_repo(REPO_ROOT, SIGMA_MIN)
     readout_parameters, af3_state = None, None
     sampling = np.random.default_rng(SEED)
     if OUTER_LOOP or AUX_AF3:
@@ -612,6 +634,10 @@ def main() -> None:
             reconstructed, quant_loss, _, _ = model(batch)
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
+            if structure_supervision is not None:
+                terms = structure_supervision.terms(raw_module, batch, CURVATURE)
+                if terms is not None:
+                    loss = loss + terms
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             if AUX_AF3:
@@ -723,6 +749,12 @@ def main() -> None:
                 "selection": "final_epoch",
                 "arm_variant": ARM_VARIANT,
                 "readout": readout_parameters,
+                # the frozen structure evidence this run was trained against
+                "af3_table_sha256": _af3_table_sha256(),
+                "af3_q05": AF3_Q05,
+                "af3_q95": AF3_Q95,
+                "sigma_min": SIGMA_MIN,
+                "structure_off": bool(STRUCTURE_OFF),
             },
             CHECKPOINT,
         )

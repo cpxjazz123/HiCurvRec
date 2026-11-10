@@ -73,3 +73,46 @@ def structure_losses(rhos: list, high: torch.Tensor, low: torch.Tensor,
     tri = triangle_term(triples_rho) if triples_rho.numel() else torch.zeros(
         (), dtype=torch.float64, device=device)
     return {"rank": rank, "spread": spread, "tri": tri}
+
+
+def edge_distance(prefix_e: torch.Tensor, prefix_h: torch.Tensor, edges: torch.Tensor,
+                  curvature: float = 1.0) -> torch.Tensor:
+    """The mixed Poincare distance of the two endpoints of every edge."""
+    if edges.numel() == 0:
+        return torch.zeros(0, dtype=torch.float64, device=prefix_e.device)
+    edges = edges.to(prefix_e.device)
+    tail, head = edges[:, 0], edges[:, 1]
+    return mixed_distance(prefix_e[tail], prefix_h[tail], prefix_e[head], prefix_h[head],
+                          curvature)
+
+
+def ball_distance(left: torch.Tensor, right: torch.Tensor, curvature: float) -> torch.Tensor:
+    """``d_c`` in the Poincare ball; the c = 0 branch is the Euclidean norm."""
+    if GEOMETRY_OFF or curvature <= 0:
+        return (left - right).norm(dim=-1)
+    from .poincare_contract import mobius_add
+    moved = mobius_add(-left, right, float(curvature)).norm(dim=-1).clamp(max=1.0 - 1e-7)
+    return 2.0 * torch.atanh(moved * (float(curvature) ** 0.5)) / (float(curvature) ** 0.5)
+
+
+def mixed_distance(left_e: torch.Tensor, left_h: torch.Tensor, right_e: torch.Tensor,
+                   right_h: torch.Tensor, curvature: float) -> torch.Tensor:
+    return 0.5 * ((left_e - right_e).norm(dim=-1)
+                  + ball_distance(left_h, right_h, curvature))
+
+
+def soft_prefix(cost: torch.Tensor, code_e: torch.Tensor, code_h: torch.Tensor
+                ) -> tuple[torch.Tensor, torch.Tensor]:
+    weights = torch.softmax(-cost.double(), dim=-1)
+    return weights @ code_e.double(), weights @ code_h.double()
+
+
+def compose_prefix(previous: tuple[torch.Tensor, torch.Tensor] | None,
+                   step: tuple[torch.Tensor, torch.Tensor], level: int,
+                   curvature: float) -> tuple[torch.Tensor, torch.Tensor]:
+    if previous is None:
+        return step
+    from .poincare_contract import mobius_add
+    total_e = previous[0] + step[0]
+    total_h = step[1] if curvature <= 0 else mobius_add(previous[1], step[1], float(curvature))
+    return total_e / float(level), total_h / float(level)
