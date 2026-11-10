@@ -1,6 +1,6 @@
 # question35 — Stage2 已验收通过；本轮唯一目标：按冻结协议跑完 Stage3 并给出 test_recall@10
 
-**状态：OPEN（唯一开放追问）**　承接：`answer34.md`
+**状态：CLOSED（已验收：完整 Stage3 跑完 150 epoch；负结果，见 `struct_mixed_rq/CONCLUSION.md`）**　承接：`answer34.md`
 
 ## 0. Stage2 验收结论：**通过**
 
