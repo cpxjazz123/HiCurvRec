@@ -71,3 +71,4 @@
 - 因此本轮给入口加**崩溃落盘**：`_main_with_a_crash_log()` 捕获 `BaseException`，把 traceback 写到 `logs/crash_<时间戳>.log` 后重新抛出；并用一次合成的 `RuntimeError` 实测验证（生成 `crash_20261111_083006.log`，内容末行为 `RuntimeError: synthetic crash for the probe`）。
 - 同时**排除**了两个候选原因：① OOM——节点 1.31 TB 可用、进程 RSS 峰值不到 1 GB；② 评估路径内存泄漏——四次重复 `get_indices` 的 RSS 为 838.2 / 772.2 / 832.4 / 776.4 MB（增长 −61.8 MB），且 `prefixes_held` 为 0（`encode_tokens` 不保留图）。也排除了 MCP 的 liveness watchdog（它只看 metrics 文件是否存在、不看静默）与 Slurm 时限（作业 7 天、已用 2 天）。
 - 下一次派发若再死，`logs/crash_*.log` 会给出真实堆栈。
+- **第四次运行越过了此前的死亡点**：epoch **303** 完成，`eval 300` 正常（collision 0.000000），六进程存活、无 `crash_*.log`。前两次都死在 epoch 300 的评估处；本次唯一新增是入口的崩溃落盘包装（不改计算）。下一个观察点：epoch 400（第一次运行的死亡点）。
