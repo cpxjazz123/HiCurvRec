@@ -1,0 +1,72 @@
+Issue #150 real-data one-epoch smoke (single card, not the formal Stage2)
+
+Command: the tree's own train_rqvae.main() with EPOCHS=1 and every output path
+redirected into results/research/issue150/_smoke (deleted after this record).
+
+config: all_items=24587, train_items=24556, batch_size_per_rank=4096, world_size=1
+epoch 1: loss=1.15134060 recon=0.00046407 raw_unique=18159
+         collision=0.261439 epoch_time_s=9.56
+export: raw_shape, sid_shape (24587,4), 24587 unique after the RecBole extension
+
+prior row, epoch 1 (the uniform-marginal epoch):
+{
+  "bucket_mass": [
+    8118.0,
+    7296.0,
+    5781.0,
+    3361.0
+  ],
+  "bucket_sizes": [
+    64,
+    64,
+    64,
+    64
+  ],
+  "bucket_target": [
+    0.24926698159309335,
+    0.24824890047238965,
+    0.2460091220068415,
+    0.25647499592767553
+  ],
+  "cross_used": 27862,
+  "edges_total": 315391,
+  "edges_used": 52704,
+  "far": 0.18150273448806822,
+  "fork": 0.0006550848484039307,
+  "levels": [
+    {
+      "codes_used": 145,
+      "level": 1,
+      "max_bucket_share": 0.07777232580961727,
+      "usage_entropy_normalised": 0.7151375126349728
+    },
+    {
+      "codes_used": 165,
+      "level": 2,
+      "max_bucket_share": 0.06575073601570167,
+      "usage_entropy_normalised": 0.770291413439788
+    },
+    {
+      "codes_used": 256,
+      "level": 3,
+      "max_bucket_share": 0.007114818449460255,
+      "usage_entropy_normalised": 0.9859780574332704
+    }
+  ],
+  "marginal_max": 0.00400742181136993,
+  "marginal_min": 0.0038438925313568984,
+  "marginal_uniform": false,
+  "steps": 6,
+  "tri": 0.9686658581097921,
+  "triangles_total": 546438,
+  "triangles_used": 15584,
+  "within_used": 24842
+}
+
+Reading it: the batch-induced sets are small -- 15584 triangle hits over 6 steps
+(~2597 per step of 546438) and 52704 edge hits (~8784 per step of 315391) -- so the
+report has to state that coverage, exactly as issue #150 asks. The marginal is
+structural but within 2.59% of uniform, and the bucket mass on epoch 1 is
+[8118.0, 7296.0, 5781.0, 3361.0] against the frozen targets [0.24926698159309335, 0.24824890047238965, 0.2460091220068415, 0.25647499592767553], i.e. the
+lowest-tau layer starts with the most mass: that imbalance is what the prior acts on
+from epoch 2 onwards.
