@@ -68,6 +68,8 @@
   },
   "arm": "TIGER_af3_gate_mixed_rq",
   "commits": [
+    "937c1dec issue 149: the restore fails closed on a missing table identity, and the run records what the review asked for",
+    "cc15c9b9 issue 149: implementation and verification are complete; awaiting the review that starts Stage2",
     "f014f0f9 issue 149: the \u00a763 recorder is dry-run against a scratch SID copy before the single run",
     "93c67415 issue 149: record the R2 key-name addendum comment",
     "38bc5519 issue 149: the checkpoint names its table with the reviewed key, and a restore proves it",
@@ -89,11 +91,110 @@
   "not_started_gated": {
     "layer_record_63": "needs the Stage2 item_sids.json; the recorder is dry-run verified",
     "r2_archive": "needs the Stage3 recall block",
-    "stage2": "waits for controller approval of the implementation commits",
-    "stage3": "needs the controller's confirmation that the three-code collision is below 0.40"
+    "stage2": "done",
+    "stage3": "waits for the controller's confirmation that the three-code collision is below 0.40; measured 0.1223"
   },
   "protocol": "each stage is signalled by a pushed commit; no issue comment is used",
-  "stage": "implementation_verified_awaiting_controller_review",
+  "stage": "stage2_complete_awaiting_collision_confirmation",
+  "stage2": {
+    "alpha_final_per_level": [
+      {
+        "alpha_mean": 0.0018293082248419523,
+        "alpha_std": 0.04138946905732155,
+        "codes_used": 256.0,
+        "euclidean_over_curved": 3.607467766949918,
+        "level": 1,
+        "max_abs_spearman_alpha_vs_descriptor": -0.48712452902722664,
+        "max_bucket_share": 0.06770833333333333,
+        "spearman_descriptor": "triangle_edge_share",
+        "usage_entropy_normalised": 0.9701626240554969
+      },
+      {
+        "alpha_mean": 2.137064560277698e-06,
+        "alpha_std": 3.864927066388191e-06,
+        "codes_used": 256.0,
+        "euclidean_over_curved": 6.760214581438141,
+        "level": 2,
+        "max_abs_spearman_alpha_vs_descriptor": -0.14070510078656417,
+        "max_bucket_share": 0.076171875,
+        "spearman_descriptor": "triangle_edge_share",
+        "usage_entropy_normalised": 0.9707958172415104
+      },
+      {
+        "alpha_mean": 0.5395781298478445,
+        "alpha_std": 0.4686229129632314,
+        "codes_used": 256.0,
+        "euclidean_over_curved": 3.313173340765402,
+        "level": 3,
+        "max_abs_spearman_alpha_vs_descriptor": -0.9195909783307424,
+        "max_bucket_share": 0.019314236111111115,
+        "spearman_descriptor": "triangles_log",
+        "usage_entropy_normalised": 0.9786564196474424
+      }
+    ],
+    "arm": "TIGER_af3_gate_mixed_rq",
+    "artifacts": {
+      "item_sids.json": "results/stage2_RQ-VAE/TIGER_af3_gate_mixed_rq/item_sids.json",
+      "rqvae_best.pth": "results/stage2_RQ-VAE/TIGER_af3_gate_mixed_rq/rqvae_best.pth",
+      "sids_for_hgrec.npy": "results/stage2_RQ-VAE/TIGER_af3_gate_mixed_rq/sids_for_hgrec.npy"
+    },
+    "degeneracy": "alpha saturates to 0 at levels 1 and 2 (Euclidean half off) while level 3 keeps a wide per-item spread; recorded as the mechanism's failure mode, no constant changed",
+    "epochs": 3000,
+    "items_without_structure": {
+      "alpha_per_level": [
+        1.6035829730753903e-06,
+        1.7370659406878985e-05,
+        0.4822288453578949
+      ],
+      "count": 31
+    },
+    "l3_collision_63": 0.20018709073900842,
+    "layer_metrics": {
+      "conditional_l3_gain": -0.013045535124200546,
+      "l3_collision": 0.20018709073900842,
+      "l3_refinement_gain_bits": 0.9390855769754977,
+      "level2_distinct_prefixes": 13956,
+      "level3_distinct_triples": 21580,
+      "valid_l1_hard_er": 1.4254545454545455,
+      "valid_l1_negative_hit_rate": 0.005202913631633715,
+      "valid_l1_positive_hit_rate": 0.007416516885819695
+    },
+    "probe": {
+      "coverage_last_epoch": {
+        "cross": [
+          12714,
+          2119
+        ],
+        "triangles": [
+          6036,
+          1006
+        ],
+        "within": [
+          17382,
+          2897
+        ]
+      },
+      "cross_community_edges": 2119,
+      "fraction_of_trainable": 0.1249440761377964,
+      "items": 3072,
+      "triangles": 1006,
+      "within_community_edges": 2897
+    },
+    "report": "results/research/issue149/stage2_report.json",
+    "terms_last_epoch": {
+      "bridge": 0.0,
+      "closure": 0.47647446393966675,
+      "total": 0.5032695134480795,
+      "usage": 0.02679504981885354
+    },
+    "three_code_collision_entry_gate": {
+      "collision": 0.12230040265180786,
+      "distinct_triples": 21580,
+      "formula": "1 - distinct(first three codes) / items",
+      "items": 24587
+    },
+    "wall_time_s": 1412.693
+  },
   "verification": {
     "baseline_red_note": "the 10 failures reproduce unchanged in the frozen baseline tree stage2_RQ-VAE/TIGER_mixed_rq",
     "proxy": {
