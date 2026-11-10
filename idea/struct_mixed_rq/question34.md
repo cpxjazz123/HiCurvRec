@@ -1,6 +1,6 @@
 # question34 — 唯一交付仍是一次完整 Stage2；但本轮先要解决两个已实测的启动障碍
 
-**状态：OPEN（唯一开放追问）**　承接：`answer33.md`
+**状态：CLOSED（已验收：一次完整 Stage2 跑满 3000 epoch；下一轮转 Stage3）**　承接：`answer33.md`。Stage3 要求见 [`question35.md`](question35.md)。
 
 ## 0. 验收标准（不变）
 
