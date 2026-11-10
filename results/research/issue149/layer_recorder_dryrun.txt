@@ -1,0 +1,26 @@
+§63 layer-metrics recorder, dry run before the formal Stage2 (issue #149)
+
+Why: CLAUDE.md §63 requires record_single_sid on the exported SID of this arm
+*before* any Stage3 number is read. The tool and its frozen inputs are shared
+with every other arm, so a missing input or a schema drift would only surface
+after the single 3000-epoch run. The dry run used a *copy* of an already frozen
+arm's item_sids.json in a scratch directory under results/stage2_RQ-VAE/; no
+frozen arm directory was written to, and the scratch directory (including the
+record it produced) was deleted afterwards.
+
+Command (copies only):
+  mkdir -p results/stage2_RQ-VAE/_dryrun_issue149
+  cp results/stage2_RQ-VAE/TIGER_mixed_rq_F0/item_sids.json results/stage2_RQ-VAE/_dryrun_issue149/
+  <stage-2 interpreter> -c "record_single_sid(Path('results/stage2_RQ-VAE/_dryrun_issue149/item_sids.json'))"
+
+Result: status complete. The record carries every number §63 names --
+valid_l1_hard_er, valid_l1_positive_hit_rate, valid_l1_negative_hit_rate,
+level2_distinct_prefixes, level3_distinct_triples, l3_collision,
+l3_refinement_gain_bits, conditional_l3_gain -- plus provenance with the SID,
+train parquet and validation npz SHA-256 and stage3_results_used = false, and it
+marks the behavioural L3 numbers as diagnostics_only. Sample values from that
+copy (F0, not this arm): l3_collision 0.3891, level2_distinct_prefixes 4151,
+level3_distinct_triples 18264, valid_l1_hard_er 4.5483.
+
+Conclusion: the post-Stage2 recorder step is runnable with the current tree and
+inputs; nothing about it needs to change before this arm trains.
