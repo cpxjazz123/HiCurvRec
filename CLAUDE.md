@@ -208,3 +208,5 @@ genrec/<NN>/recall.json      ← Stage3 结果的全部键值
 87. **申报公式与代码的自动比对已从准入移除（2026-11-10 owner 指令）。** `check_reference_agreement` 不再进入 `run_all`，round 登记的 `reference_verdict` 门槛与 `stage2_start` 的 `admissible` 分支已删除；其余机器检查（冻结常量、真实入口、SID、四卡、分配规则、编码器梯度）不变。`reference_contract.json` 仍保留为文档与差分证据，但不再阻断训练。
 
 88. **Stage2 机器一致性准入只保留真实入口检查（2026-11-10 owner 指令）。** `run_all` 只执行 `check_entry`（真实入口跑通 1 epoch 并导出 SID）；`check_names`、`check_collectives`、`check_constants`、`check_geometry_contract`、`check_identifier`、`check_four_rank`、`check_assignment_rule`、`check_encoder_gradient` 不再作为准入条件，仅保留为独立诊断函数，不阻断训练。
+
+89. **Stage3 入场门槛：三层码字碰撞率必须 < 0.40（2026-11-10 owner 指令）。** 该门槛由 `tools/genrec-mcp/server.py::tool_stage3_start` 强制执行：读 `item_sids.json` 前三码，`collision = 1 − 不同三元组数 / 商品数`，`collision ≥ 0.40` 直接拒绝并返回实测值，不启动 Stage3。这一条**覆盖**第 19 条里"Stage3 启动不作任何准入检查"的旧措辞；其余诊断（L1/L2 使用率、Hard ER、二级前缀数、码使用率等）仍只记录、不阻断。第 63 条的 `l3_collision`（三码 item-weighted 重复占比）继续照记，报告时必须与门槛所用的 `collision` 并列、带名字，不得互相替代。实测：`TIGER_af3_cost_side_rq` 的 `collision=0.9700248098588685`，已被拒绝进入 Stage3。
