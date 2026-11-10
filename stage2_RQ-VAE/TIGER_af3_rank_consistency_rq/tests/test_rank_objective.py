@@ -68,3 +68,16 @@ def test_structure_off_zeroes_every_term(monkeypatch):
 def test_triangle_term_uses_rho_units():
     rho = torch.tensor([[0.1, 0.1, 0.5]], dtype=torch.float64)
     assert float(ro.triangle_term(rho)) == pytest.approx(0.5, rel=1e-9)
+
+
+def test_losses_themselves_are_scale_invariant():
+    distances = torch.rand(16, dtype=torch.float64) + 0.05
+    high = torch.tensor([0, 1, 2, 3])
+    low = torch.tensor([12, 13, 14, 15])
+    sigma = torch.tensor(0.4, dtype=torch.float64)
+    base_rank = ro.rank_loss(ro.normalise(distances), high, low)
+    base_spread = ro.spread_loss(ro.normalise(distances), sigma)
+    for factor in (0.25, 4.0):
+        scaled = ro.normalise(distances * factor)
+        assert torch.allclose(ro.rank_loss(scaled, high, low), base_rank, atol=1e-9)
+        assert torch.allclose(ro.spread_loss(scaled, sigma), base_spread, atol=1e-9)
