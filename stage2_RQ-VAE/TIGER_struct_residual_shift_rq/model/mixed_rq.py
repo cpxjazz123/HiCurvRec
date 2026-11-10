@@ -45,6 +45,51 @@ from .poincare_contract import expmap0, logmap0, mobius_add, project, squared_di
 
 #: The curvature of the mixed space. Fixed: the mechanism never learns or scans it.
 CURVATURE = 1.0
+
+#: The structural residual shift of issue #153. SHIFT_OFF turns it into the identity
+#: (bitwise the baseline); GEOMETRY_OFF makes the Poincare translation a plain
+#: Euclidean one, which is the c = 0 limit.
+SHIFT_OFF = False
+GEOMETRY_OFF = False
+
+
+def layer_centroid(payload: dict, layer: int, level: int) -> torch.Tensor:
+    """The frozen centroid of structure layer ``layer`` at ``level`` (16 tangent dims)."""
+    raw = payload["centroids"][f"{int(layer)}_{int(level)}"]
+    return torch.tensor(raw, dtype=torch.float64)
+
+
+def layer_alpha(payload: dict, layer: int, level: int) -> float:
+    """``||c|| / (||c|| + median||r||)`` -- a ratio of two measured quantities."""
+    return float(payload["alpha"][f"{int(layer)}_{int(level)}"])
+
+
+def shift_mask(payload: dict) -> bool:
+    return not SHIFT_OFF and any(float(value) > 0.0 for value in payload["alpha"].values())
+
+
+def apply_residual_shift(point: torch.Tensor, groups: torch.Tensor, payload: dict,
+                         level: int, curvature: float) -> torch.Tensor:
+    """Move each row's ball point by ``-alpha_{g,l} * c_{g,l}``.
+
+    The shift is the Möbius translation inside the ball when curvature > 0 and the plain
+    vector subtraction in the c = 0 limit; with SHIFT_OFF it is the identity.
+    """
+    if SHIFT_OFF:
+        return point
+    out = point.clone()
+    for layer in sorted({int(value) for value in groups.tolist()}):
+        rows = groups == layer
+        alpha = layer_alpha(payload, layer, level)
+        if alpha == 0.0:
+            continue
+        centroid = layer_centroid(payload, layer, level).to(point.dtype).to(point.device)
+        centroid = centroid * alpha
+        if GEOMETRY_OFF or curvature <= 0:
+            out[rows] = point[rows] - centroid
+        else:
+            out[rows] = mobius_add(point[rows], -centroid, float(curvature))
+    return out
 #: The width of each half.
 EUCLIDEAN_DIM = 16
 HYPERBOLIC_DIM = 16
@@ -330,7 +375,14 @@ class MixedRQ(nn.Module):
         """The name the frozen trainer uses for the per-level modules."""
         return self.levels
 
-    def forward(self, z: torch.Tensor, infer_use_sk: bool = False):
+    def attach_centroids(self, payload: dict) -> None:
+        """Install the frozen centroid table exactly once (its sha travels in the state)."""
+        self.centroid_payload = {"centroids": dict(payload["centroids"]),
+                                 "alpha": dict(payload["alpha"]),
+                                 "median_residual_norm": dict(payload["median_residual_norm"])}
+
+    def forward(self, z: torch.Tensor, infer_use_sk: bool = False,
+                groups: torch.Tensor | None = None):
         """Quantize a 32-dimensional tangent-space code and read it back out."""
         z_e, z_t = split(z)
         residual_e = z_e
@@ -347,8 +399,18 @@ class MixedRQ(nn.Module):
             codes_e.append(picked_e)
             codes_h.append(picked_h)
             tokens.append(index)
+            # the structural shift acts between levels: after l in {1,2} the residual is
+            # translated by the layer centroid, so level l+1 starts from the layer's own
+            # position rather than from a globally shared one
+            if (groups is not None and self.centroid_payload is not None and level < len(self.levels)
+                    and shift_mask(self.centroid_payload)):
+                with torch.no_grad():
+                    residual_h = apply_residual_shift(residual_h, groups,
+                                                      self.centroid_payload, level,
+                                                      self.curvature).to(residual_h.dtype)
             total_loss = total_loss + quant_loss
             unused_total += int(unused)
+        self.last_codes = [index for index in tokens]
         readout = quantized_readout(codes_e, codes_h, self.curvature)
         stacked = torch.stack(tokens, dim=1)
         return readout, total_loss / len(self.levels), unused_total, stacked
