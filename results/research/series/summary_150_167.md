@@ -48,3 +48,14 @@
 4. **秩监督与配额构造不相容**：#165/#166 在同一构造下被测成负向（−0.0266 / −0.0426），而全局比较在无该构造时为正（+0.0100 / +0.0528）。
 5. **导出成本的真实来源**：三层计划（≈0.95 s）+ 逐组调度（曾是 10.47 s）+ 编码器前向（≈1.5 s）；基线导出 0.50 s 是纯 argmin，"≤1.5× 基线"与该机制不相容。
 6. **测量陷阱（都亲身踩过）**：`init_codebook` 的 KMeans 未定种子（同树两次也不同，跨树逐位比较无效）；eval 模式下规则退回 `argmin`（#159 首次量错）；把参考实现放在开关复位后比较（#167）；把商品 id 当作节点 id（#155 三角形普查）。
+
+## F. 合规审计（本轮补，全部实测）
+
+对系列里我新建的 **17 棵候选树**逐树扫描 §19b0 的三类违规模式（`/home/`、`/fs04/`、`/tmp/` 字面量；`Path(__file__).parents[N]` 深度依赖）：
+
+| 结果 | 树数 |
+|---|---|
+| 含绝对路径或 parents[N] 的 `.py` 文件 | **0** |
+| 通过 | **17 / 17** |
+
+（扫描命令为 `grep -rlE "/home/|/fs04/|/tmp/|Path\(__file__\)\.parents\[[0-9]" <tree> --include=*.py`；树名：`TIGER_frozen_prior_marginal`、`TIGER_prior_bias_marginal`、`TIGER_struct_bucket_mask_rq`、`TIGER_struct_residual_shift_rq`、`TIGER_af3_prefix_geometry_rq`、`TIGER_af3_target_distance_rq`、`TIGER_af3_rank_consistency_rq`、`TIGER_plan_rounded_rq`、`TIGER_greedy_quota_rq`、`TIGER_batched_quota_rq`、`TIGER_conditional_quota_final_rq`、`TIGER_within_parent_rank_rq`、`TIGER_af3_curvature_rq`、`TIGER_rounded_balanced_rq`、`TIGER_uniform_quota_rq`、`TIGER_conditional_quota_rq`、`TIGER_three_level_balanced_rq`。）
