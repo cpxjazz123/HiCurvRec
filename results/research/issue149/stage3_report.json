@@ -1,0 +1,202 @@
+{
+  "acceptance": {
+    "criterion": "test_R@10 > 0.065",
+    "measured": 0.028865405038388553,
+    "no_reselection": true,
+    "note": "recorded as a negative result; no constant, initialisation, lambda or seed was changed after seeing it, and the arm is not rerun",
+    "passed": false,
+    "verdict": "NEGATIVE_RESULT"
+  },
+  "arm": "TIGER_af3_gate_mixed_rq",
+  "closed": false,
+  "collisions": {
+    "difference": "the entry gate counts distinct first-three-code tuples over all items; the \u00a763 l3_collision is the item-weighted share of repeats. They are different quantities on the same codes and are reported side by side, never substituted",
+    "entry_gate_three_code": {
+      "collision": 0.12230040265180786,
+      "distinct_triples": 21580,
+      "formula": "1 - distinct(first three codes) / items",
+      "items": 24587
+    },
+    "l3_collision_63": 0.20018709073900842
+  },
+  "comparison": {
+    "frozen_baseline_f0_test_R@10": 0.05554,
+    "note": "the comparison arms are read from the repository's own records; this arm is below both and below the acceptance bar",
+    "struct_mixed_rq_ste_fix_test_R@10": 0.05459705078431031,
+    "this_arm_test_R@10": 0.028865405038388553
+  },
+  "issue": 149,
+  "layer_metrics_63": {
+    "conditional_l3_gain": -0.013045535124200546,
+    "l3_collision": 0.20018709073900842,
+    "l3_refinement_gain_bits": 0.9390855769754977,
+    "level2_distinct_prefixes": 13956,
+    "level3_distinct_triples": 21580,
+    "valid_l1_hard_er": 1.4254545454545455,
+    "valid_l1_negative_hit_rate": 0.005202913631633715,
+    "valid_l1_positive_hit_rate": 0.007416516885819695
+  },
+  "mechanism_behaviour": {
+    "alpha_final_per_level": [
+      {
+        "alpha_above_0.95": 0.0016276042442768812,
+        "alpha_below_0.05": 0.998046875,
+        "alpha_max": 0.9999992847442627,
+        "alpha_mean": 0.0018293082248419523,
+        "alpha_min": 7.020833177846987e-21,
+        "alpha_std": 0.04138946905732155,
+        "codes_used": 256.0,
+        "euclidean_over_curved": 3.607467766949918,
+        "level": 1,
+        "max_abs_spearman_alpha_vs_descriptor": -0.48712452902722664,
+        "max_bucket_share": 0.06770833333333333,
+        "mean_squared_curved_over_four": 0.120081577450037,
+        "mean_squared_euclidean": 0.4331904202699661,
+        "spearman_descriptor": "triangle_edge_share",
+        "usage_entropy": 5.379723900389647,
+        "usage_entropy_normalised": 0.9701626240554969
+      },
+      {
+        "alpha_above_0.95": 0.0,
+        "alpha_below_0.05": 1.0,
+        "alpha_max": 2.863032871876688e-05,
+        "alpha_mean": 2.137064560277698e-06,
+        "alpha_min": 7.933990740973286e-25,
+        "alpha_std": 3.864927066388191e-06,
+        "codes_used": 256.0,
+        "euclidean_over_curved": 6.760214581438141,
+        "level": 2,
+        "max_abs_spearman_alpha_vs_descriptor": -0.14070510078656417,
+        "max_bucket_share": 0.076171875,
+        "mean_squared_curved_over_four": 0.07138408968846004,
+        "mean_squared_euclidean": 0.482571745912234,
+        "spearman_descriptor": "triangle_edge_share",
+        "usage_entropy": 5.383235068962727,
+        "usage_entropy_normalised": 0.9707958172415104
+      },
+      {
+        "alpha_above_0.95": 0.4537760615348816,
+        "alpha_below_0.05": 0.3733724057674408,
+        "alpha_max": 1.0,
+        "alpha_mean": 0.5395781298478445,
+        "alpha_min": 3.651365753899367e-26,
+        "alpha_std": 0.4686229129632314,
+        "codes_used": 256.0,
+        "euclidean_over_curved": 3.313173340765402,
+        "level": 3,
+        "max_abs_spearman_alpha_vs_descriptor": -0.9195909783307424,
+        "max_bucket_share": 0.019314236111111115,
+        "mean_squared_curved_over_four": 0.1091646837691466,
+        "mean_squared_euclidean": 0.3616807907819748,
+        "spearman_descriptor": "triangles_log",
+        "usage_entropy": 5.4268235041241235,
+        "usage_entropy_normalised": 0.9786564196474424
+      }
+    ],
+    "bridge_note": "L_bridge stayed 0.0 from the first epoch: cross-community real edges were already less prefix-similar than within-community edges, so the hinge never fired. It is a guard, not an active force in this run",
+    "conclusion": "the geometry gate is effective at level 3 only: levels 1 and 2 saturate to alpha ~ 0 (Euclidean half switched off), level 3 keeps a wide per-item spread correlated with the triangle descriptor. What this run measures is therefore level-3 gating plus the three structural terms, not three-level adaptivity",
+    "probe_limitation": {
+      "fraction": 0.1249440761377964,
+      "items": 3072,
+      "note": "structural supervision covers 12.5% of trainable items"
+    },
+    "terms_last_epoch": {
+      "bridge": 0.0,
+      "closure": 0.47647446393966675,
+      "total": 0.5032695134480795,
+      "usage": 0.02679504981885354
+    }
+  },
+  "pairing": {
+    "same_name": true,
+    "sid_sha256": "c7e2afe73dcc6d12d0cf168034d2e66b2e7b59e191a3d3ccd54d6c34e9654bbe",
+    "stage2_dir": "results/stage2_RQ-VAE/TIGER_af3_gate_mixed_rq",
+    "stage2_source_sha256": "d6de45d17a7fa044353e27a40af72e70ee5afca610fd54e172108e78f346d5dc",
+    "stage3_dir": "results/stage3_T5Train/TIGER_af3_gate_mixed_rq"
+  },
+  "r2_archive": {
+    "bucket": "genrec",
+    "entry": "59",
+    "files": [
+      "TIGER_af3_gate_mixed_rq/math_spec.json",
+      "TIGER_af3_gate_mixed_rq/model/__init__.py",
+      "TIGER_af3_gate_mixed_rq/model/af3_auxiliary.py",
+      "TIGER_af3_gate_mixed_rq/model/af3_engine.py",
+      "TIGER_af3_gate_mixed_rq/model/af3_hierarchy.py",
+      "TIGER_af3_gate_mixed_rq/model/af3_runtime.py",
+      "TIGER_af3_gate_mixed_rq/model/af3_selector.py",
+      "TIGER_af3_gate_mixed_rq/model/af3_structure.py",
+      "TIGER_af3_gate_mixed_rq/model/layers.py",
+      "TIGER_af3_gate_mixed_rq/model/mixed_rq.py",
+      "TIGER_af3_gate_mixed_rq/model/model.py",
+      "TIGER_af3_gate_mixed_rq/model/poincare_contract.py",
+      "TIGER_af3_gate_mixed_rq/model/structure_gate.py",
+      "TIGER_af3_gate_mixed_rq/model/structure_table.py",
+      "TIGER_af3_gate_mixed_rq/model/utils.py",
+      "TIGER_af3_gate_mixed_rq/reference_contract.json",
+      "TIGER_af3_gate_mixed_rq/train_rqvae.py",
+      "item_sids.json",
+      "recall.json",
+      "rqvae_best.pth"
+    ],
+    "hashes": {
+      "TIGER_af3_gate_mixed_rq/math_spec.json": "c58f4cc0178d70d81479de1885a0118bd15eb26e8223340926089245c48085a3",
+      "TIGER_af3_gate_mixed_rq/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+      "TIGER_af3_gate_mixed_rq/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+      "TIGER_af3_gate_mixed_rq/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+      "TIGER_af3_gate_mixed_rq/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+      "TIGER_af3_gate_mixed_rq/model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
+      "TIGER_af3_gate_mixed_rq/model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
+      "TIGER_af3_gate_mixed_rq/model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
+      "TIGER_af3_gate_mixed_rq/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+      "TIGER_af3_gate_mixed_rq/model/mixed_rq.py": "fb13819bfebbd010ce9e605115d31742dbfd715ee63535d0951c662ec74f9d86",
+      "TIGER_af3_gate_mixed_rq/model/model.py": "7e77d4feba23301f2effb080f33b8e4128a6377da8bfd0aaf2a1f0311c659e38",
+      "TIGER_af3_gate_mixed_rq/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_af3_gate_mixed_rq/model/structure_gate.py": "8aaf77325b8ec906169174388bc3497aac5a1deb8aa20740752e4f11d2484e18",
+      "TIGER_af3_gate_mixed_rq/model/structure_table.py": "c41f80781c7d168260426cf7e187aa2c26e54d4f9250df9a929ed01aedaf9650",
+      "TIGER_af3_gate_mixed_rq/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_af3_gate_mixed_rq/reference_contract.json": "5fdc7b7a2474948bf46e66a58d8a0d6d152949d9ead4861df5ed56b9c13809e7",
+      "TIGER_af3_gate_mixed_rq/train_rqvae.py": "d6de45d17a7fa044353e27a40af72e70ee5afca610fd54e172108e78f346d5dc",
+      "item_sids.json": "c7e2afe73dcc6d12d0cf168034d2e66b2e7b59e191a3d3ccd54d6c34e9654bbe",
+      "recall.json": "6e003944a6b372b555d7c5830bee09058090a2a698720aa813c768963c2bfd72",
+      "rqvae_best.pth": "4d89b8a5998b6015e7c242f951bf2a4fdd6a40ec911e2dace03e8fe410c50982"
+    },
+    "ledger": "results/research/issue139/r2_ledger.json",
+    "prefix": "59"
+  },
+  "stage3": {
+    "artifacts": [
+      "results/research/issue149/stage3_artifacts/test_final.json",
+      "results/research/issue149/stage3_artifacts/HG_Rec.log",
+      "results/research/issue149/stage3_artifacts/training_metrics.jsonl"
+    ],
+    "global_train_batch": 16384,
+    "infer_batch_per_process": 1024,
+    "launch_mode": "ddp4",
+    "protocol": {
+      "BEAM_SIZE": 20,
+      "EARLY_EVAL_EPOCHS": [
+        25,
+        50,
+        75,
+        100,
+        125
+      ],
+      "EVAL_INTERVAL": 5,
+      "EVAL_START_EPOCH": 75,
+      "NO_EVAL": true,
+      "NUM_EPOCHS": 150,
+      "SEED": 42,
+      "SKIP_TEST": false
+    },
+    "test_final": {
+      "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_af3_gate_mixed_rq/ckpt/Amazon_2023_Instruments/Nov-10-2026_18-26-32/HG_Rec_best.pth",
+      "n_eval": 57439,
+      "test_ndcg@10": 0.015315391034809094,
+      "test_ndcg@5": 0.012162105967903148,
+      "test_recall@10": 0.028865405038388553,
+      "test_recall@5": 0.01906370236250631
+    },
+    "train_batch_per_process": 4096
+  }
+}
