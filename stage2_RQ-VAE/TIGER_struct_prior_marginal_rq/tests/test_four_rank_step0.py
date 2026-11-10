@@ -46,7 +46,7 @@ def _worker(rank: int, world: int):
         import train_rqvae as trainer
         settings = trainer._tokenizer_config()
         table = prior.StructPriorTable.load(prior.table_path(REPO))
-        torch.manual_seed(trainer.SEED)
+        trainer.set_seed(trainer.SEED + rank)
         model = MixedRQVAE(settings, in_dim=768, curvature=1.0).to(device)
         model.attach_prior(table)
         trainer.initialize_tiger_weights(model)
@@ -58,7 +58,9 @@ def _worker(rank: int, world: int):
             columns=["target"])["target"].to_numpy())
         all_rows = torch.from_numpy(np.ascontiguousarray(embeddings.astype(np.float32)))
         model.module.init_codebook(all_rows[torch.from_numpy(ids)].to(device))
-        rows = all_rows[torch.from_numpy(ids[rank * 1024:(rank + 1) * 1024])].to(device)
+        generator = torch.Generator().manual_seed(1000 + rank)
+        pick = torch.randperm(len(ids), generator=generator)[:1024].numpy()
+        rows = all_rows[torch.from_numpy(ids[pick])].to(device)
         model.train()
         # the forward, with the per-level numbers the review asked for
         with torch.no_grad():

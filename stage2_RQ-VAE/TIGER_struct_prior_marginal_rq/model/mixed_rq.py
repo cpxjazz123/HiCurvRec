@@ -424,6 +424,13 @@ class MixedRQ(nn.Module):
         tokens: list[torch.Tensor] = []
         total_loss: torch.Tensor | float = 0.0
         unused_total = 0
+        if not bool(torch.isfinite(z).all()):
+            raise ValueError("the encoder output is not finite: finite share "
+                             + str(float(torch.isfinite(z).float().mean()))
+                             + " shape " + str(tuple(z.shape)))
+        for index, layer in enumerate(self.levels, start=1):
+            if not bool(torch.isfinite(layer.embed.weight).all()):
+                raise ValueError("the codebook of level " + str(index) + " is not finite")
         marginal = self.target_marginal.to(z.device) if self.target_marginal.numel() else None
         prefixes: list[torch.Tensor] = []
         from .struct_prior import proxy_assignment
