@@ -85,6 +85,19 @@ AUX_AF3 = ARM_VARIANT == "A"
 #: recorded in results/research/issue155/gate_dref.json (key "d_ref"); it is a measurement,
 #: not a hyper-parameter, and it is never re-derived from the run's own usage.
 D_REF = 1.5215499925510368e-04
+
+#: The cuts the frozen table was built with, for the checkpoint binding.
+AF3_Q05 = -931.0
+AF3_Q95 = -20.0
+
+
+def _af3_table_sha256() -> str:
+    """The SHA-256 of the frozen AF3 table this run reads, or "MISSING" if it is absent."""
+    import hashlib
+    path = REPO_ROOT / "results" / "research" / "issue155" / "af3_edges.json"
+    if not path.exists():
+        return "MISSING"
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
@@ -739,6 +752,13 @@ def main() -> None:
                 "selection": "final_epoch",
                 "arm_variant": ARM_VARIANT,
                 "readout": readout_parameters,
+                # issue #156: the checkpoint carries the frozen structure evidence it was
+                # trained against, so a run can never be read without its table and cuts
+                "af3_table_sha256": _af3_table_sha256(),
+                "af3_q05": AF3_Q05,
+                "af3_q95": AF3_Q95,
+                "d_ref": D_REF,
+                "structure_off": bool(STRUCTURE_OFF),
             },
             CHECKPOINT,
         )
