@@ -67,6 +67,7 @@ def assign(plan: torch.Tensor, cost: torch.Tensor, parents: torch.Tensor | None,
                                  dtype=torch.long, device=device)
         order = torch.argsort(plan.sum(dim=0), descending=True).tolist()
         for code in order:
+            used_global = torch.bincount(picks[picks >= 0], minlength=codes).double().to(device)
             room_global = int(caps_global[code].item()) - int(used_global[code].item())
             if room_global <= 0:
                 continue
@@ -110,7 +111,48 @@ def assign(plan: torch.Tensor, cost: torch.Tensor, parents: torch.Tensor | None,
             picks[row] = code
             used_global[code] += 1
             code_in_parent[int(row_group[row]), code] = True
+    # repair: a relaxed row lands on the least loaded code, which can leave one code over and another under.
+    # Move such a row to a code that is under capacity, provided its parent has not used that code.
+    for _ in range(4 * codes):
+        counts = torch.bincount(picks[picks >= 0], minlength=codes).double()
+        over = (counts > caps_global).nonzero().flatten()
+        under = (counts < caps_global).nonzero().flatten()
+        if over.numel() == 0 or under.numel() == 0:
+            break
+        moved = False
+        for code_over in over.tolist():
+            rows_here = (picks == code_over).nonzero(as_tuple=False).flatten()
+            for row in rows_here.tolist():
+                group = int(row_group[row]) if parents is not None else -1
+                for code_under in under.tolist():
+                    if parents is not None and bool(code_in_parent[group, code_under]):
+                        continue
+                    picks[row] = code_under
+                    if parents is not None:
+                        code_in_parent[group, code_over] = bool(
+                            (picks[row_group == group] == code_over).any())
+                        code_in_parent[group, code_under] = True
+                    moved = True
+                    break
+                if moved:
+                    break
+            if moved:
+                break
+        if not moved:
+            break
     leftovers = (picks < 0).nonzero(as_tuple=False).flatten()
     for row in leftovers.tolist():
-        picks[row] = int(cost[row].argmin())
+        # the blind argmin fallback broke the capacity identity by exactly the rows it touched: it can hand a row to
+        # a code that is already full. Prefer any code with spare room, and only when none exists -- which a feasible
+        # instance cannot reach -- take the least loaded code and record the row as a relaxation.
+        spare = used_global < caps_global
+        if bool(spare.any()):
+            code = int(cost[row].masked_fill(~spare, float("inf")).argmin())
+            picks[row] = code
+            used_global[code] += 1
+            continue
+        if relaxations is not None:
+            relaxations.append(int(row))
+        picks[row] = int(used_global.argmin())
+        used_global[int(picks[row])] += 1
     return picks
