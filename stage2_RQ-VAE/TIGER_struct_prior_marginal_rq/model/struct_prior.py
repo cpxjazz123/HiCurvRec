@@ -255,13 +255,15 @@ def proxy_assignment(cost: torch.Tensor, plan: torch.Tensor | None,
     1; the derivative is the carrier's.
     """
     codes = int(cost.shape[-1])
-    if plan is not None:
-        carrier = plan
-        hard = carrier.detach().argmax(dim=-1)
-    else:
-        centred = centred_cost(cost, where=where)
-        carrier = torch.softmax(-centred / PROXY_TEMPERATURE, dim=-1)
-        hard = cost.detach().argmin(dim=-1)
+    centred = centred_cost(cost, where=where)
+    # The hard code is the one the assignment takes -- the balanced plan's argmax on
+    # the last level, the cost's argmin before it. The *derivative* is always the
+    # carrier's single softmax: back-propagating through fifty Sinkhorn
+    # normalisations at epsilon = 0.003 amplifies by (1/eps)^50 and drove the run to
+    # NaN inside the first epoch, which is the failure this surrogate removes.
+    carrier = torch.softmax(-centred / PROXY_TEMPERATURE, dim=-1)
+    hard = (plan.detach().argmax(dim=-1) if plan is not None
+            else cost.detach().argmin(dim=-1))
     smoothed = (1.0 - PROXY_SMOOTHING) * carrier + PROXY_SMOOTHING / float(codes)
     onehot = torch.zeros_like(smoothed).scatter_(1, hard.unsqueeze(1), 1.0)
     return onehot + (smoothed - smoothed.detach())

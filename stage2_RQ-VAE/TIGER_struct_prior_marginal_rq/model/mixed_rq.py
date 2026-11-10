@@ -174,9 +174,12 @@ class MixedVQLevel(nn.Module):
         if marginal is not None and self.use_sk and (self.training or infer_use_sk):
             # The balanced assignment normalised to the structure prior's marginal.
             from .struct_prior import centred_cost, structured_sinkhorn
-            centred = centred_cost(cost, where="the balanced plan").double()
-            plan = structured_sinkhorn(centred, self.sk_epsilon, self.sk_iters,
-                                       marginal).to(cost.dtype)
+            # The plan is only read for its argmax; keeping it out of the graph
+            # stops fifty sharp normalisations from amplifying the backward.
+            with torch.no_grad():
+                centred = centred_cost(cost, where="the balanced plan").double()
+                plan = structured_sinkhorn(centred, self.sk_epsilon, self.sk_iters,
+                                           marginal).to(cost.dtype)
             index = plan.argmax(dim=-1)
         else:
             index = self._indices(cost, infer_use_sk)
