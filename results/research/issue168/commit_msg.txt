@@ -1,0 +1,16 @@
+issue 168: the three structural gates pass together for the first time; the cost-quality gate fails by two orders of magnitude
+
+Measured: entry collision 0.009924 with 23616 level-2 prefixes and 256 codes per level at 0.3945/0.4311/0.3945% shares -- the
+three conditions the issue exists for hold simultaneously, which #161 through #167 never managed. The dual-capacity identity,
+the 200-step pilot and the timing also pass, and the switch and checkpoint bindings are in place.
+
+Gate 5 does not: against the exact assignment under the same capacities the two-sided greedy costs 1405% more on an
+uncorrelated plan and 113% more on a Sinkhorn-shaped one, where the issue allows 1e-2. That is the same wall #158 and #163
+hit -- a structured greedy is excellent at the structure and poor at the cost.
+
+Also corrected: my first pilot measured the batch mean prefix distance over a single arbitrary pair, which is not a batch
+mean; averaging 4096 pairs is what the recorded numbers use.
+
+Per item 9: pre-dispatch negative, nothing dispatched, nothing tuned. Making gate 5 hold would need the exact solver inside
+the dual capacities (0.027 s per level at the training shape, blocks for the export) or a different quality reference --
+both change the arm's assignment semantics and need the issue's word.
