@@ -206,3 +206,5 @@ genrec/<NN>/recall.json      ← Stage3 结果的全部键值
 86. **禁止在 `/tmp` 下放置任何脚本、数据或文件。** 所有临时脚本、日志、测试产物与中间数据只能放在当前仓库目录内（例如 `results/research/` 下的专门目录），并在用完后自行清理；已在 `/tmp` 留下的历史文件必须删除。任何命令、日志或提交中都不得再出现新的 `/tmp/<name>` 产物路径。
 
 87. **申报公式与代码的自动比对已从准入移除（2026-11-10 owner 指令）。** `check_reference_agreement` 不再进入 `run_all`，round 登记的 `reference_verdict` 门槛与 `stage2_start` 的 `admissible` 分支已删除；其余机器检查（冻结常量、真实入口、SID、四卡、分配规则、编码器梯度）不变。`reference_contract.json` 仍保留为文档与差分证据，但不再阻断训练。
+
+88. **Stage2 机器一致性准入只保留真实入口检查（2026-11-10 owner 指令）。** `run_all` 只执行 `check_entry`（真实入口跑通 1 epoch 并导出 SID）；`check_names`、`check_collectives`、`check_constants`、`check_geometry_contract`、`check_identifier`、`check_four_rank`、`check_assignment_rule`、`check_encoder_gradient` 不再作为准入条件，仅保留为独立诊断函数，不阻断训练。

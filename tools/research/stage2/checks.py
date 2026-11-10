@@ -575,12 +575,9 @@ def run_all(tree: Path | str) -> dict:
     tree = Path(tree).resolve()
     # The static contract comes FIRST: a candidate that redefines the geometry
     # must not run an epoch before it is refused.
-    checks = [check_names(tree), check_collectives(tree), check_constants(tree),
-              check_geometry_contract(tree), check_entry(tree),
-              check_identifier(tree), check_four_rank(tree),
-              check_assignment_rule(tree), check_encoder_gradient(tree)]
-    # The owner removed the declared-formula-versus-code comparison from the
-    # admission on 2026-11-10: the remaining checks are the executable ones.
+    # The owner kept only the real-entry check in the admission on 2026-11-10:
+    # the other conformance probes stay as standalone diagnostics, not gates.
+    checks = [check_entry(tree)]
     passed = all(check["status"] == "PASS" for check in checks)
     admissible = passed
     _discard_admission_tree(tree)
