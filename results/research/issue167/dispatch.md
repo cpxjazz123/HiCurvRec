@@ -44,3 +44,4 @@
 - 观测：`stage2_status` 报 `exited_incomplete`；**无 traceback、`train_run.log` 与 worker 日志皆为空**，`training_metrics.jsonl` 停在 epoch 399（loss 2.54e-4、recon 1.45e-4，均正常）、无 `train_end` 记录；四个 rank 进程与显存占用同时消失。
 - 分类：按 §19c 属 `STAGE2_3_FAILED`（执行故障），**不是**机制的科学负结果——机制侧的六门已通过、训练前 399 epoch 的评估点（50/100/150/200/250/300/350）全部 collision 0.0、损失从 9.5e-4 降到 2.0e-4 后稳定在 2–2.5e-4，没有任何发散或异常前兆。
 - 处理：以同一树、同一配方（seed 42、3000 epoch、全局 batch 4096、四卡 50202）**重新派发**（worker 2625224），冒烟需重跑。日志为空使根因无法定位，只能记录为"外部终止/被杀"，不做猜测。
+- 重派发：冒烟 **SMOKE_PASS**（24 步、梯度范数全正、无 dead/非有限项、导出唯一），四卡重新训练（metrics 从 epoch 1 重新计数，当前 14/3000），预计仍需约 4.5 小时。
