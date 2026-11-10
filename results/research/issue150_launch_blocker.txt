@@ -44,3 +44,12 @@ parameters themselves are finite before the first forward, and to bisect the
 launcher's env (NCCL/OMP/TORCH_NCCL_BLOCKING_WAIT) against the replay. Until that
 is settled the arm has no checkpoint, no item_sids.json and no collision number,
 so nothing downstream of it can run.
+
+RESOLVED (same day): the failure was not the launch environment. The balanced plan
+was differentiable through fifty Sinkhorn normalisations at epsilon 0.003, whose
+backward amplifies by (1/eps)^50 per level; with four ranks that left float range
+inside the first epoch, which is why every offline single-process run was finite
+(fewer steps between prints) and the launch was not. The plan is now computed
+under no_grad -- its argmax is still the taken code -- and the derivative comes
+from the single centred softmax at the derived temperature, the straight-through
+pattern accepted for #149. Commit 6119ea8b; the run then trained all 3000 epochs.
