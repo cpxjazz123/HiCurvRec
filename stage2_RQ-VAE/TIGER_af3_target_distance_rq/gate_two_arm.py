@@ -36,15 +36,17 @@ def main() -> int:
                   allow_pickle=True)
     item_of_node = {index: int(item) for index, item in enumerate(raw["item_ids"])}
     all_ids = sorted(item_of_node.values())
-    edges_by_item = {}
-    af3_by_item = {}
+    # vectorised edge arrays: the per-step Python loop over 315k edges was the bottleneck
+    edge_rows, edge_u = [], []
     for (tail, head), u in zip(table["edges"], table["u"]):
         left, right = item_of_node.get(int(tail)), item_of_node.get(int(head))
         if left is None or right is None:
             continue
-        edges_by_item.setdefault(left, []).append(right)
-        edges_by_item.setdefault(right, []).append(left)
-        af3_by_item[(min(left, right), max(left, right))] = float(u)
+        edge_rows.append((left, right))
+        edge_u.append(float(u))
+    edge_items = np.asarray(edge_rows, dtype=np.int64)
+    edge_targets = np.asarray(edge_u, dtype=np.float64)
+    top_item = int(max(edge_items.max(), max(all_ids))) + 1
     embeddings = np.load(root / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy")
     rows = torch.from_numpy(np.ascontiguousarray(embeddings.astype(np.float32)))
 
@@ -56,15 +58,13 @@ def main() -> int:
         return model
 
     eval_ids = np.asarray(all_ids)[:EVAL]
-    eval_edges, eval_u = [], []
-    for (left, right), u in af3_by_item.items():
-        if left in set(eval_ids.tolist()) and right in set(eval_ids.tolist()):
-            pass
     position_eval = {int(item): index for index, item in enumerate(eval_ids)}
-    for (left, right), u in af3_by_item.items():
-        if left in position_eval and right in position_eval:
-            eval_edges.append((position_eval[left], position_eval[right]))
-            eval_u.append(u)
+    eval_mask = np.array([left in position_eval and right in position_eval
+                          for left, right in edge_items], dtype=bool)
+    eval_pairs = edge_items[eval_mask]
+    eval_u = edge_targets[eval_mask]
+    eval_edges = [(position_eval[int(left)], position_eval[int(right)])
+                  for left, right in eval_pairs]
     eval_edges_t = torch.tensor(eval_edges, dtype=torch.long) if eval_edges else torch.zeros(0, 2, dtype=torch.long)
     eval_u_t = np.asarray(eval_u)
 
@@ -96,12 +96,11 @@ def main() -> int:
             loss, _ = model.compute_loss(batch, reconstructed, quant_loss)
             if mode != "U":
                 position = {int(item): index for index, item in enumerate(batch_ids)}
-                pairs, targets = [], []
-                for (left, right), u in af3_by_item.items():
-                    a, b = position.get(left), position.get(right)
-                    if a is not None and b is not None:
-                        pairs.append((a, b))
-                        targets.append(u)
+                inside = np.zeros(top_item, dtype=bool)
+                inside[batch_ids] = True
+                mask = inside[edge_items[:, 0]] & inside[edge_items[:, 1]]
+                pairs = [(position[int(a)], position[int(b)]) for a, b in edge_items[mask]]
+                targets = edge_targets[mask].tolist()
                 if pairs:
                     noise = torch.Generator().manual_seed(15521 + step)
                     if mode == "N":
