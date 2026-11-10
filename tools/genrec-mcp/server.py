@@ -2277,9 +2277,10 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         }
     if not sid.is_file():
         return {"started": False, "refused": f"no item_sids file at {given}"}
-    # Owner policy (2026-11-09): starting Stage 3 performs NO admission checks.
-    # The mandatory layer record is still written before any Stage 3 result
-    # exists, but its outcome is reported, never used to refuse the launch.
+    # Owner policy (updated 2026-11-10): Stage 3 entry now requires the
+    # three-level collision to be strictly below 40%.  Other quality metrics
+    # stay diagnostic.  The mandatory layer record is still written before any
+    # Stage 3 result exists and is reported alongside the collision gate.
     try:
         layer_record = record_sid_layers(sid)
     except Exception as exc:  # noqa: BLE001 - the reason is reported, never hidden
@@ -2306,12 +2307,22 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         "items": len(payload),
         "row_widths": widths,
     }
+    triples = {tuple(value[:3]) for value in payload.values() if hasattr(value, "__len__")}
+    collision = 1.0 - (len(triples) / max(len(payload), 1))
+    if collision >= 0.40:
+        return {
+            "started": False,
+            "refused": ("three-level collision %.6f is not below the 0.40 Stage3 entry gate"
+                        % collision),
+            "collision": collision,
+        }
     chosen_variant = derive_stage3_variant(sid_logical)
     context = {
         "sid": sid_info,
         "variant": chosen_variant,
         "per_user_dump": STAGE3_PER_USER_DUMP,
         "layer_record": layer_record,
+        "collision": collision,
     }
     protocol = frozen_protocol_check()
     context["protocol"] = protocol
