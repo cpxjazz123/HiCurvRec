@@ -36,9 +36,9 @@ def _load_trainer():
     return trainer
 
 
-def _write_table(path: Path, item_count: int = ROWS) -> Path:
+def _write_table(path: Path, item_count: int = ROWS, seed: int = 149) -> Path:
     """A tiny frozen table with the same schema and a manifest that pins it."""
-    generator = np.random.default_rng(149)
+    generator = np.random.default_rng(seed)
     values = generator.normal(size=(item_count, structure_table.DESCRIPTOR_DIMS)).astype(np.float32)
     observed = np.ones_like(values, dtype=bool)
     observed[item_count - 1, 6] = False
@@ -134,6 +134,35 @@ def test_gated_entry_point_exports_what_the_gate_produced(monkeypatch, tmp_path)
     sid = np.load(trainer.OUTPUT_SID)
     np.testing.assert_array_equal(sid[:, :3], expected)
     assert len(np.unique(sid, axis=0)) == ROWS
+
+
+def test_the_checkpoint_binds_its_frozen_table(monkeypatch, tmp_path):
+    """R2/R10: the state carries the table's SHA, and a restore decides by it."""
+    trainer, embeddings = _configure(monkeypatch, tmp_path)
+    trainer.main()
+    checkpoint = torch.load(trainer.CHECKPOINT, map_location="cpu", weights_only=False)
+    state = checkpoint["state_dict"]
+    expected = structure_table.sha256_of(trainer.STRUCTURE_TABLE)
+    assert state["rq._extra_state"]["table_sha256"] == expected
+
+    from model.model import MixedRQVAE
+    config = trainer._tokenizer_config()
+    first = MixedRQVAE.from_checkpoint(config, state, in_dim=DIM,
+                                       structure_table=trainer.STRUCTURE_TABLE).eval()
+    second = MixedRQVAE.from_checkpoint(config, state, in_dim=DIM,
+                                        structure_table=trainer.STRUCTURE_TABLE).eval()
+    ids = torch.arange(ROWS)
+    with torch.no_grad():
+        left = first.rq.alphas(ids)
+        right = second.rq.alphas(ids)
+    for first_level, second_level in zip(left, right):
+        assert torch.equal(first_level, second_level)
+
+    # a different but perfectly valid table must be refused, not silently used
+    other = _write_table(tmp_path / "other_table.npz", seed=7)
+    assert structure_table.sha256_of(other) != expected
+    with pytest.raises(ValueError, match="another structure table"):
+        MixedRQVAE.from_checkpoint(config, state, in_dim=DIM, structure_table=other)
 
 
 def test_gated_entry_point_rejects_a_table_that_covers_too_few_items(monkeypatch, tmp_path):

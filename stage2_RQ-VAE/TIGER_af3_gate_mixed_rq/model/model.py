@@ -111,7 +111,7 @@ class MixedRQVAE(nn.Module):
             else:
                 table = (structure_table if isinstance(structure_table, StructureTable)
                          else StructureTable.load(structure_table))
-            expected = extra.get("structure_sha256")
+            expected = extra.get("table_sha256")
             if expected and table.sha256 and table.sha256 != expected:
                 raise ValueError("this checkpoint was trained against another structure table")
             model.rq.attach_structure(table)

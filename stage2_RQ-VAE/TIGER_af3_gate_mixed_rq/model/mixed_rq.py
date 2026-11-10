@@ -333,9 +333,9 @@ class MixedRQ(nn.Module):
         self.last_alphas: list[torch.Tensor] | None = None
         self.last_prefixes: list[torch.Tensor] | None = None
         self.last_records: list[dict] | None = None
-        #: The SHA-256 of the frozen descriptor file, carried into the checkpoint
+        #: The SHA-256 of the frozen descriptor table, carried into the checkpoint
         #: so a restore can refuse a table that is not the one the weights saw.
-        self.structure_sha256: str | None = None
+        self.table_sha256: str | None = None
         self.levels = nn.ModuleList()
         for index, size in enumerate(sizes):
             last = index == len(sizes) - 1
@@ -355,7 +355,7 @@ class MixedRQ(nn.Module):
         # Follow the quantizer's device: the trainer attaches the table after
         # ``.to(device)``, and a CPU buffer would break the first gate call.
         self.structure = values.clone().detach().to(self.structure.device)
-        self.structure_sha256 = getattr(table, "sha256", None)
+        self.table_sha256 = getattr(table, "sha256", None)
 
     def alphas(self, item_ids) -> list[torch.Tensor]:
         """``alpha_{i,l}`` for these items, one tensor per level."""
@@ -377,7 +377,7 @@ class MixedRQ(nn.Module):
         return {"schema": "mixed-rq-state/1", "curvature": self.curvature,
                 "initial": self.alpha_table.initial,
                 "alpha_table": self.alpha_table.to_dict(),
-                "structure_sha256": self.structure_sha256}
+                "table_sha256": self.table_sha256}
 
     def set_extra_state(self, state: dict) -> None:
         if state.get("schema") != "mixed-rq-state/1":
@@ -386,7 +386,7 @@ class MixedRQ(nn.Module):
             raise ValueError("checkpoint and tokenizer curvatures differ")
         self.alpha_table = AlphaTable.from_dict(state["alpha_table"], levels=len(self.levels),
                                                 initial=float(state["initial"]))
-        self.structure_sha256 = state.get("structure_sha256")
+        self.table_sha256 = state.get("table_sha256")
 
     @property
     def vq_layers(self) -> nn.ModuleList:

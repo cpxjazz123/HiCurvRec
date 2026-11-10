@@ -1,5 +1,3 @@
-  Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
-    assert float(soft.max()) <= limit + 1e-7
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
@@ -13,4 +11,4 @@ FAILED tests/test_prefix_eligibility.py::test_stale_explicit_local_entry_stops_b
 FAILED tests/test_prefix_eligibility.py::test_stale_explicit_local_entry_stops_before_any_selection[absent_prefix-3-prefix3-L] - Failed: DID NOT RAISE <class 'RuntimeError'>
 FAILED tests/test_prefix_eligibility.py::test_stale_explicit_local_entry_stops_before_any_selection[absent_prefix-3-prefix3-E] - Failed: DID NOT RAISE <class 'RuntimeError'>
 FAILED tests/test_support_regressions.py::StratifiedSupportTests::test_proportional_quotas_are_enforced_and_counts_use_the_chosen_anchor - AssertionError: np.False_ is not true
-10 failed, 160 passed, 19 warnings in 122.23s (0:02:02)
+10 failed, 161 passed, 19 warnings in 112.22s (0:01:52)

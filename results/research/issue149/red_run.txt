@@ -23,12 +23,12 @@ fix, in the same order the reviews raised them:
 * the probe subgraph had to replace the batch-induced sampling:
   tests/test_structure_table.py checks the induced sets are its own and frozen;
 * the descriptor identity had to bind to the checkpoint:
-  tests/test_gated_trainer_wiring.py restores through from_checkpoint and
-  refuses a table that does not match.
+  tests/test_gated_trainer_wiring.py restores through from_checkpoint, checks the
+  state's table_sha256, and refuses a different but otherwise valid table.
 
 Whole candidate suite after the fixes:
 
-  160 passed, 10 failed in 122.23s
+  161 passed, 10 failed in 112.22s
 
 All 10 failures reproduce unchanged in the frozen baseline tree
 stage2_RQ-VAE/TIGER_mixed_rq, so they are baseline-red, not regressions:
