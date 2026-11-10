@@ -41,9 +41,11 @@ def structure_term(model, embeddings: torch.Tensor, graph, rng: random.Random, *
         capture.append({"items": list(item_ids),
                         "triples": [tuple(t) for t in triples],
                         "targets": h.detach().tolist(),
-                        "layer_h_norm_max": [float(positions_all[l][..., 16:].norm(dim=-1).max())
-                                             if positions_all.shape[-1] > 16 else 0.0
-                                             for l in range(3)]})
+                        "position_h_norm_max": [float(positions_all[l][..., 16:].norm(dim=-1).max())
+                                                if positions_all.shape[-1] > 16 else 0.0
+                                                for l in range(3)],
+                        "codeword_h_norm_max": [float(layer.get_code_embs()[..., 16:].norm(dim=-1).max().detach())
+                                                for layer in model.rq.vq_layers]})
     losses = [S.structure_loss(positions_all[l], h, scale=scale, geometry_on=geometry_on)
               for l in range(3)]
     return torch.stack(losses).mean()

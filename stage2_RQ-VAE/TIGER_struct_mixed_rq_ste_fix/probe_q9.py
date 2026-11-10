@@ -139,7 +139,7 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
                                 size=len(used), triples=used,
                                 behaviour_on=bool(T.BEHAVIOUR_ON),
                                 capture=gathered)
-        consumed, consumed_targets, layer_h_norm_max = [], None, None
+        consumed, consumed_targets, position_h_norm_max, codeword_h_norm_max = [], None, None, None
         if gathered:
             entry = gathered[0]
             consumed = [tuple(t) for t in entry["triples"]]
@@ -217,7 +217,8 @@ def run(out_root: Path, ckpt: Path | None = None) -> dict:
                 "triples": [[int(c), int(a), int(b), str(k)] for c, a, b, k in consumed],
                 "triples_sha256": triples_digest(consumed),
                 "targets": consumed_targets,
-                "layer_h_norm_max": layer_h_norm_max,
+                "position_h_norm_max": position_h_norm_max,
+                "codeword_h_norm_max": codeword_h_norm_max,
                 "z_base_rows": z_base.shape[0],
                 "z_struct_rows": int(z_struct.shape[0]) if struct_active else 0,
                 "structure_forward": struct_active,

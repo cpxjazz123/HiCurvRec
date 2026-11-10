@@ -264,7 +264,7 @@
     "codewords": "the declared readback domain is ||C_l^H|| <= 1 per codeword; the measured checkpoint L1/L2/L3 H norms are 0.63/0.27/0.04 at mean and stay below the boundary",
     "saturation": "one strategy only: to_ball keeps the radial map and pulls only the saturated tail by (1-1e-6); log_0 clamps the norm at 1-1e-9 and divides by norm when norm>1e-12. Both the torch reference and the declared surface use these epsilons",
     "outside": "the readback is invertible up to ||t|| about 10 (ratio 0.9999999996); from about 19 the tanh saturation collapses the round trip to 7.25; these measured points are diagnostics, not an acceptance gate",
-    "training_path": "the trainer consumes mixed_geometry.mixed_sq for every norm; the <=1 bound is the reference sampling domain, not a runtime constraint. step-0 diagnostics with 256 triples: s=0.04256, L1/L2/L3=1.4636/1.7739/2.0399, zero-distance pair fraction 2.06%/0.17%/0%; one shared s is intentional (spec states a single s), and the zero-distance pairs are pinned at stress 1"
+    "training_path": "the trainer consumes mixed_geometry.mixed_sq for every norm; the <=1 bound is the reference sampling domain, not a runtime constraint. the codeword norm ||C_l^H|| is logged in training_metrics.jsonl as codeword_h_max (per-layer running max, written at EVAL_INTERVAL and the final epoch); the probe records codeword_h_norm_max and position_h_norm_max separately"
    },
    "statements_status": "pseudocode only; not rebuildable by tools/research/stage2/reference.build_reference"
   },

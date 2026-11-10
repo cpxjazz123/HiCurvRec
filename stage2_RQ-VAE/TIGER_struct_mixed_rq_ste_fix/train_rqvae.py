@@ -408,12 +408,16 @@ def main() -> None:
     final_raw_unique = 0
     codebook_sizes = list(config.codebook_size)
 
+    codeword_h_running = [0.0] * 3
     for epoch in range(1, EPOCHS + 1):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
         model.train()
         losses: list[float] = []
         recons: list[float] = []
+        codeword_h = [float(layer.get_code_embs()[..., 16:].norm(dim=-1).max().detach())
+                      for layer in raw_module.rq.vq_layers]
+        codeword_h_running = [max(a, b) for a, b in zip(codeword_h_running, codeword_h)]
         _epoch_t0 = time.time()
         for batch, item_ids in loader:
             batch = batch.to(device, non_blocking=True)
@@ -453,7 +457,7 @@ def main() -> None:
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), codeword_h_max=codeword_h_running)
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -485,6 +489,7 @@ def main() -> None:
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
+                    codeword_h_max=codeword_h_running,
                 )
         finally:
             for layer in raw_module.rq.vq_layers:
