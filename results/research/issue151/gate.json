@@ -1,0 +1,43 @@
+{
+  "base": {
+    "histogram": {
+      "codes_used": 256,
+      "max_bucket_share": 0.007080078125,
+      "usage_entropy_normalised": 0.9779282261691271
+    },
+    "vs_pi": {
+      "max_relative_error": 2.4598686256218905,
+      "max_row_deviation": 47.28408535592116,
+      "quantisation_floor": 0.029826453669154228
+    },
+    "vs_uniform": {
+      "max_relative_error": 0.96875,
+      "max_row_deviation": 31.0,
+      "quantisation_floor": 0.015625
+    }
+  },
+  "biased": {
+    "histogram": {
+      "codes_used": 256,
+      "max_bucket_share": 0.007080078125,
+      "usage_entropy_normalised": 0.9779282261691271
+    },
+    "vs_pi": {
+      "max_relative_error": 2.4598686256218905,
+      "max_row_deviation": 47.28408535592116,
+      "quantisation_floor": 0.029826453669154228
+    },
+    "vs_uniform": {
+      "max_relative_error": 0.96875,
+      "max_row_deviation": 31.0,
+      "quantisation_floor": 0.015625
+    }
+  },
+  "direction_ratio": 0.3938218447560735,
+  "gate1_abs_rows": false,
+  "gate2_direction": false,
+  "passed": false,
+  "prior_T": 0.0012651681900024414,
+  "rows": 8192,
+  "wire_T0_matches_unbiased": true
+}
