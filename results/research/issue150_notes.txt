@@ -1,0 +1,26 @@
+Issue #150 implementation record
+
+TDD, in the order it happened:
+1. tests/test_struct_prior.py was written before model/struct_prior.py existed; the
+   run failed at import (the module was missing). A first version asserted the
+   column marginal equals pi at the run's own epsilon; that failed (the plan is
+   sharp there, and the plan is row-normalised, so its columns carry B*pi, not pi)
+   -- see issue150_marginal_regime.txt. The test was corrected to the two regimes
+   that are actually true: exact at a smooth epsilon, ordering-and-tolerance at the
+   frozen one, and the uniform special case is pinned against the baseline's own
+   sinkhorn to 1e-9.
+2. tests/test_prior_entrypoints.py pins the export path (the last level's token
+   comes from the structured plan) and the checkpoint binding (another prior, or a
+   missing identity, must raise).
+3. A synthetic two-epoch run of the real main() exercised every wiring point:
+   epoch 1 uniform marginal, epoch 2 the structural one, the three terms with
+   coverage counts, the bucket partition, the export.
+
+Measured property of the definitions, recorded before any training:
+quartile strata force rho ~ 1/4 (measured [0.24927, 0.24825, 0.24601, 0.25647],
+relative spread 4.19%), so with equal-size buckets the target marginal pi is
+within 2.59% relative of uniform. The marginal's structural content is therefore
+bounded by that spread by construction; the rest of the mechanism (bucket
+composition, L_tri, L_fork, L_prior) is what can act. This is reported, not
+repaired, because changing G, rho or the stratification after seeing it is
+forbidden by the issue's own risk rules.

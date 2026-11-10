@@ -1,0 +1,101 @@
+{
+  "issue": 150,
+  "mechanism": "structure-stratified target marginal of the balanced assignment",
+  "calls": [
+    {
+      "name": "structured assignment's column target",
+      "callable": "model.struct_prior:target_marginal",
+      "note": "the only quantity the mechanism changes in the assignment; the Sinkhorn rule itself is the baseline's",
+      "args": [
+        {
+          "name": "partition",
+          "table": [
+            4,
+            64
+          ]
+        }
+      ],
+      "statements": [
+        "pi = rho_g / 64 for every code in bucket g"
+      ],
+      "output": "pi"
+    },
+    {
+      "name": "gated mixed cost of a joint codeword",
+      "callable": "model.mixed_rq:point_cost",
+      "note": "unchanged from the baseline; alpha is the frozen table's 1/2",
+      "symbols": [
+        "x0",
+        "x1",
+        "h0",
+        "h1",
+        "k0",
+        "k1",
+        "y0",
+        "y1",
+        "a",
+        "c"
+      ],
+      "args": [
+        {
+          "name": "residual_e",
+          "width": 2,
+          "radius": 0.2
+        },
+        {
+          "name": "residual_h",
+          "width": 2,
+          "radius": 0.2
+        },
+        {
+          "name": "code_e",
+          "width": 2,
+          "radius": 0.2
+        },
+        {
+          "name": "code_h",
+          "width": 2,
+          "radius": 0.2
+        },
+        {
+          "name": "alpha",
+          "scalar": 0.5
+        },
+        {
+          "name": "curvature",
+          "scalar": 1.0
+        }
+      ],
+      "statements": [
+        "xy = -(h0*y0 + h1*y1)",
+        "hn = h0**2 + h1**2",
+        "yn = y0**2 + y1**2",
+        "num0 = (1 + 2*c*xy + c*yn)*(-h0) + (1 - c*hn)*y0",
+        "num1 = (1 + 2*c*xy + c*yn)*(-h1) + (1 - c*hn)*y1",
+        "den = 1 + 2*c*xy + c**2*hn*yn + 1e-12",
+        "mx0 = num0/den",
+        "mx1 = num1/den",
+        "mn = mx0**2 + mx1**2",
+        "d = 2/sqrt(c)*atanh(Min(sqrt(c)*sqrt(mn), 1 - 1e-6))",
+        "euclidean = (x0 - k0)**2 + (x1 - k1)**2",
+        "curved = d**2",
+        "cost = 2*(a*euclidean + (1 - a)*curved/4)"
+      ],
+      "output": "cost"
+    }
+  ],
+  "excluded": [
+    {
+      "surface": "the Sinkhorn plan and its argmax",
+      "reason": "the rule is the baseline's; the plan is differentiable but its iteration is not a closed form"
+    },
+    {
+      "surface": "the straight-through proxy's residual",
+      "reason": "surrogate derivative of a hard assignment"
+    },
+    {
+      "surface": "tau, quartile cuts, rho, bucket partition",
+      "reason": "frozen inputs, no derivative"
+    }
+  ]
+}

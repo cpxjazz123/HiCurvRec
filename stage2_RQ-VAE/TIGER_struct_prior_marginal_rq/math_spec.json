@@ -1,0 +1,116 @@
+{
+  "schema": "issue150-math-spec/1",
+  "issue": 150,
+  "mechanism": "the structure signal is placed on the target column marginal of the balanced assignment; cost, residual recursion, readout, export and the assignment rule are the frozen baseline's",
+  "frozen_inputs": {
+    "prior_table": "results/research/issue150/structure_prior.npz (+ .json with its SHA-256)",
+    "split": "TRAIN only",
+    "graph": "the TRAIN co-occurrence graph, rebuilt and verified edge for edge against the frozen AF3 cache of issue #136 (315391 edges, 24556 nodes, MATCHED)",
+    "tau": "tau_i = share of item i's incident edges that lie in at least one triangle; 0 for the 31 items with no TRAIN graph row",
+    "layers": "the four quartiles of tau over the trainable items, frozen with their cuts [0.125, 0.35294117647058826, 0.5555555555555556] and sizes [6121, 6096, 6041, 6298]",
+    "rho": [
+      0.24926698159309335,
+      0.24824890047238965,
+      0.2460091220068415,
+      0.25647499592767553
+    ],
+    "communities": "Louvain on the TRAIN graph, resolution 1.0, seed 42 (recorded, not used by the terms)",
+    "sets": {
+      "edges": 315391,
+      "triangles": 546438
+    }
+  },
+  "computations": [
+    {
+      "name": "stratify",
+      "definition": "layer_i = searchsorted(quartile cuts of tau, tau_i); rho_g = share of trainable items in layer g",
+      "output": "layer_i in {0..3}, rho in the 4-simplex",
+      "gradient": "frozen; no derivative"
+    },
+    {
+      "name": "buckets",
+      "definition": "at the end of every epoch the (layer, code) usage mass of the last level is all-reduced; layer g takes the bucket_size unassigned codes with the largest mass from layer g, ties to the lower code index, layer order deciding a contested code; bucket_size = K / G = 64",
+      "output": "a partition of the K codes into G equal buckets",
+      "gradient": "discrete and frozen between epochs; epoch 1 uses the uniform partition"
+    },
+    {
+      "name": "target marginal",
+      "definition": "pi_k = rho_{g(k)} / |B_{g(k)}|, normalised; uniform under BEHAVIOR_OFF",
+      "output": "pi, a distribution over the K codes",
+      "gradient": "none: it is the assignment's target, not a learned quantity",
+      "measured_limit": "quartile strata make rho ~ 1/4 by construction, so pi is within 2.59% relative of uniform: the structural content of the marginal is bounded by that number before any training happens"
+    },
+    {
+      "name": "structured assignment",
+      "definition": "the baseline's Sinkhorn: exp(-centred(C)/eps), column normalisation to B * pi, row normalisation, for SK_ITERS=50 and eps=SK_EPSILON=0.003; the taken code is argmax of the row-normalised plan",
+      "output": "a row-normalised plan and one integer token for the last level",
+      "gradient": "the plan is differentiable in the cost; the token is not",
+      "excluded": true
+    },
+    {
+      "name": "assignment proxy",
+      "definition": "h = one_hot(k) + (p - p.detach()); last level: k = argmax(plan), p = (1-S)plan + S/K; earlier levels: k = argmin(C), p = (1-S)softmax(-centred(C)/T) + S/K, T = 2/64, S = 1e-3",
+      "output": "one proxy per level whose forward value is the taken code's one-hot",
+      "gradient": "through p; T follows from the centring's span of 2 and float32's exponent range, S from float32's resolution near one"
+    },
+    {
+      "name": "triangle term",
+      "definition": "L_tri = 1 - mean over batch triangles of the mean pairwise prefix overlap",
+      "output": "scalar in [0, 1]",
+      "gradient": "differentiable through the proxies"
+    },
+    {
+      "name": "fork term",
+      "definition": "L_fork = relu(mean_{within-layer batch edges} (1 - overlap) - mean_{cross-layer batch edges} (1 - overlap))",
+      "output": "scalar in [0, 1]",
+      "gradient": "differentiable; a low-AF3 open edge is never a negative sample"
+    },
+    {
+      "name": "prior term",
+      "definition": "L_prior = mean_l KL(qbar_l || pi) / log(1 / min pi), qbar_l the column mean of the level's transport plan (the usage histogram from the proxy); the divisor is the exact upper bound of that KL, so the term lies in [0, 1]",
+      "output": "scalar in [0, 1]",
+      "gradient": "differentiable through the proxies"
+    },
+    {
+      "name": "training objective",
+      "definition": "L = L_RQ + L_tri + L_fork + L_prior, all three weights one",
+      "output": "the scalar the optimiser steps on",
+      "gradient": "the same scalar carries encoder, codebooks, decoder"
+    }
+  ],
+  "switches": {
+    "BEHAVIOR_OFF": "pi uniform and the layer does not enter the bucket rule; check: every marginal entry equals 1/K",
+    "GEOMETRY_OFF": "c = 0 so d_c^2/4 equals the squared Euclidean distance; check to 1e-6",
+    "BOTH_ON": "the factory configuration of model/struct_prior.py"
+  },
+  "coupling": {
+    "path": "TRAIN graph triangles -> tau_i -> quartile layer -> rho_g -> (bucket partition, per-code share) -> pi -> Sinkhorn column target -> taken codes -> SID -> the three terms and their gradients",
+    "behaviour_side": "flattening pi (BEHAVIOR_OFF) changes the assignment on the same batch",
+    "geometry_side": "c = 0 changes the cost the assignment is taken over",
+    "measured_caveat": "because the layers are quartiles of tau, rho is within 4.19% of 1/4 and pi within 2.59% of uniform; the marginal's structural signal is therefore bounded by that spread, while the bucket composition and the two graph terms carry the rest"
+  },
+  "corrections": [
+    {
+      "what": "the layer's transport plan is row-normalised",
+      "why": "the baseline normalises the last level's plan to row sums of one; the column target is therefore B * pi, not pi. The uniform special case reproduces the baseline's own sinkhorn to 1e-9, which is the test that pins it"
+    }
+  ],
+  "excluded": [
+    {
+      "surface": "argmax of the plan and argmin of the cost",
+      "reason": "discrete, and the rule is the baseline's"
+    },
+    {
+      "surface": "the straight-through residual and the derived T, S",
+      "reason": "surrogate derivative; the constants are derived, not swept"
+    },
+    {
+      "surface": "tau, the quartile cuts, rho, the bucket partition",
+      "reason": "computed once from TRAIN and frozen; the partition changes only between epochs from measured usage"
+    },
+    {
+      "surface": "the max/min re-centring of the cost matrix",
+      "reason": "piecewise differentiable in the batch"
+    }
+  ]
+}
