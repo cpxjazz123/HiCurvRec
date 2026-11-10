@@ -712,6 +712,24 @@ def main() -> None:
                     ).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
+                # issue #165 item 6: the per-level guardrail. Marginals are diagnostics now, but
+                # a codebook that has collapsed still has to stop the run instead of being recorded
+                # and carried to Stage3.
+                _levels = raw_tokens.shape[1]
+                for _level in range(_levels):
+                    _codes = int(CODEBOOK_SIZE[_level])
+                    if _codes < 128:
+                        # a synthetic or tiny codebook cannot carry the real guardrail; enforcing it
+                        # there would trip on tests that use a handful of codes
+                        continue
+                    _counts = np.bincount(raw_tokens[:, _level], minlength=_codes)
+                    _used = int((_counts > 0).sum())
+                    _share = float(_counts.max() / max(int(_counts.sum()), 1))
+                    if _used < 128 or _share > 0.10:
+                        raise RuntimeError(
+                            f"level {_level + 1} occupancy guardrail tripped at epoch {epoch}: "
+                            f"codes_used={_used}, max_bucket_share={_share:.4f}")
+
                 final_collision = collision_v
                 final_raw_unique = raw_unique
                 print(

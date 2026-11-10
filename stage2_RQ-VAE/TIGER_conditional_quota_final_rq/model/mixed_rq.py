@@ -317,6 +317,8 @@ class MixedRQ(nn.Module):
         sizes = [int(size) for size in sizes]
         self.curvature = float(curvature)
         self.alpha_table = alpha_table
+        #: Per-level soft prefix embeddings of the last forward (the structure supervision reads them).
+        self.last_prefixes: list[tuple[torch.Tensor, torch.Tensor]] = []
         self.levels = nn.ModuleList()
         for index, size in enumerate(sizes):
             last = index == len(sizes) - 1
@@ -355,8 +357,22 @@ class MixedRQ(nn.Module):
         tokens: list[torch.Tensor] = []
         total_loss: torch.Tensor | float = 0.0
         unused_total = 0
+        from .rank_objective import compose_prefix, mixed_distance, soft_prefix
+        prefixes: list[tuple[torch.Tensor, torch.Tensor]] = []
+        running: tuple[torch.Tensor, torch.Tensor] | None = None
         for level, layer in enumerate(self.levels, start=1):
             alpha = self.alpha_table.lookups(level, tokens).to(z.device)
+            codes_e_all = layer.embed.weight[:, :EUCLIDEAN_DIM]
+            codes_h_all = layer.embed.weight[:, EUCLIDEAN_DIM:]
+            rows = residual_e.shape[0]
+            pre_cost = mixed_distance(
+                residual_e[:, None, :].expand(rows, codes_e_all.shape[0], -1),
+                residual_h[:, None, :].expand(rows, codes_h_all.shape[0], -1),
+                codes_e_all[None, :, :].expand(rows, -1, -1),
+                codes_h_all[None, :, :].expand(rows, -1, -1), self.curvature)
+            running = compose_prefix(running, soft_prefix(pre_cost, codes_e_all, codes_h_all),
+                                     level, self.curvature)
+            prefixes.append(running)
             (residual_e, residual_h), quant_loss, unused, index, picked_e, picked_h = layer(
                 residual_e, residual_h, alpha, infer_use_sk=infer_use_sk,
                 parents=parents_for(tokens, z.device))
@@ -365,6 +381,8 @@ class MixedRQ(nn.Module):
             tokens.append(index)
             total_loss = total_loss + quant_loss
             unused_total += int(unused)
+        self.last_codes = list(tokens)
+        self.last_prefixes = prefixes
         readout = quantized_readout(codes_e, codes_h, self.curvature)
         stacked = torch.stack(tokens, dim=1)
         return readout, total_loss / len(self.levels), unused_total, stacked
