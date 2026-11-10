@@ -174,7 +174,7 @@ class MixedVQLevel(nn.Module):
         if marginal is not None and self.use_sk and (self.training or infer_use_sk):
             # The balanced assignment normalised to the structure prior's marginal.
             from .struct_prior import centred_cost, structured_sinkhorn
-            centred = centred_cost(cost).double()
+            centred = centred_cost(cost, where="the balanced plan").double()
             plan = structured_sinkhorn(centred, self.sk_epsilon, self.sk_iters,
                                        marginal).to(cost.dtype)
             index = plan.argmax(dim=-1)
@@ -433,7 +433,8 @@ class MixedRQ(nn.Module):
             (residual_e, residual_h), quant_loss, unused, index, picked_e, picked_h = layer(
                 residual_e, residual_h, alpha, infer_use_sk=infer_use_sk,
                 marginal=marginal if level == len(self.levels) else None, record=record)
-            prefixes.append(proxy_assignment(record["cost"], record.get("plan")))
+            prefixes.append(proxy_assignment(record["cost"], record.get("plan"),
+                                               where="level " + str(level)))
             self.last_prefixes = prefixes
             codes_e.append(picked_e)
             codes_h.append(picked_h)

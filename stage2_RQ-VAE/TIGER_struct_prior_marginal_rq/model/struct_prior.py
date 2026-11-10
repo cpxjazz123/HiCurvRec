@@ -224,7 +224,7 @@ def structured_sinkhorn(centred: torch.Tensor, epsilon: float, iterations: int,
 
 
 # ------------------------------------------------------------------- proxies
-def centred_cost(cost: torch.Tensor) -> torch.Tensor:
+def centred_cost(cost: torch.Tensor, where: str = "") -> torch.Tensor:
     """The baseline's centring, with the degenerate cases named.
 
     ``MixedVQLevel.center_distance`` raises on a constant matrix because the
@@ -236,14 +236,17 @@ def centred_cost(cost: torch.Tensor) -> torch.Tensor:
     maximum, minimum = cost.max(), cost.min()
     spread = maximum - minimum
     if not bool(torch.isfinite(spread)):
-        raise ValueError("the cost matrix is not finite: max=" + str(float(maximum))
-                         + " min=" + str(float(minimum)))
+        finite = float(torch.isfinite(cost).float().mean())
+        raise ValueError("the cost matrix is not finite at " + (where or "an unnamed call")
+                         + ": max=" + str(float(maximum)) + " min=" + str(float(minimum))
+                         + " finite_rows=" + str(finite) + " shape=" + str(tuple(cost.shape)))
     if float(spread) <= 0:
         return torch.zeros_like(cost)
     return (cost - (maximum + minimum) / 2) / (spread / 2 + 1e-5)
 
 
-def proxy_assignment(cost: torch.Tensor, plan: torch.Tensor | None) -> torch.Tensor:
+def proxy_assignment(cost: torch.Tensor, plan: torch.Tensor | None,
+                     where: str = "") -> torch.Tensor:
     """Straight-through proxy: the taken code in the forward, a live carrier back.
 
     The last level's hard code is the balanced plan's ``argmax``; the earlier
@@ -256,7 +259,7 @@ def proxy_assignment(cost: torch.Tensor, plan: torch.Tensor | None) -> torch.Ten
         carrier = plan
         hard = carrier.detach().argmax(dim=-1)
     else:
-        centred = centred_cost(cost)
+        centred = centred_cost(cost, where=where)
         carrier = torch.softmax(-centred / PROXY_TEMPERATURE, dim=-1)
         hard = cost.detach().argmin(dim=-1)
     smoothed = (1.0 - PROXY_SMOOTHING) * carrier + PROXY_SMOOTHING / float(codes)
