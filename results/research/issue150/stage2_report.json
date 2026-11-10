@@ -1,4 +1,9 @@
 {
+  "L1_usage": {
+    "codes_used": 99,
+    "max_bucket_share": 0.5842111685036808,
+    "of": 256
+  },
   "arm": "TIGER_struct_prior_marginal_rq",
   "artifacts": [
     "item_sids.json",
@@ -256,6 +261,12 @@
     },
     "gate": "Stage3 refuses anything not below 0.40; this arm is above it",
     "l3_collision_63": 0.8295847399032009
+  },
+  "conclusion": {
+    "channel_was_alive": "before dispatch, 22.75% of tokens changed when the marginal went from uniform to structural, so the channel was not inert; it failed by starving one bucket",
+    "failure_mode": "capacity concentrated into the rho = 0.377 bucket starves the rho = 0.131 bucket: level 1 keeps 99 of 256 codes with 58.42% of the items in one code, and level-2 prefixes fall from 13956 (arm #149) to 1057",
+    "not_an_improvement": "valid_l1_positive_hit_rate 0.4956 and negative_hit_rate 0.4514 are far above arm #149's 0.0074/0.0052 only because the prefixes collapsed to nearly the same value for everyone; they are a by-product of the collapse and must not be read as an improvement",
+    "stage3": "not started: the three-code collision 0.68215 is above the 0.40 gate, which \u00a789 enforces"
   },
   "coverage_last_epoch": {
     "cross_used": 1894,
