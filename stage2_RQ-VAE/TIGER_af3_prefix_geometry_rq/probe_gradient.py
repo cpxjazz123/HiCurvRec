@@ -71,7 +71,12 @@ def main() -> int:
     report = {"batch": 2048, "high_edges_in_batch": len(high), "low_edges_in_batch": len(low),
               "gap": float(losses["gap"]), "tri": float(losses["tri"]),
               "d_bar": float(losses["delta_bar"]), "tau": float(losses["tau"])}
+    report["prefix_grad_flags"] = [bool(value.requires_grad) for value in prefixes[-1]]
+    report["loss_grad_flags"] = {name: bool(losses[name].requires_grad)
+                                 for name in ("gap", "tri")}
     for name in ("gap", "tri"):
+        if not losses[name].requires_grad:
+            continue
         model.zero_grad(set_to_none=True)
         losses[name].backward(retain_graph=True)
         encoder_grad = sum(float(parameter.grad.abs().sum())
