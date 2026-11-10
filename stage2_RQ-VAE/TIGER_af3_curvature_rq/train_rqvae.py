@@ -859,7 +859,26 @@ def _launch_via_torchrun() -> None:
     sys.exit(rc)
 
 
+def _main_with_a_crash_log() -> None:
+    """Run the entry point and, on any fatal error, leave the traceback on disk.
+
+    Three runs of this tree died at an evaluation boundary with no traceback anywhere: the launcher's
+    stdout sink produced an empty file even while training ran normally, so a crash message had nowhere
+    to go. Writing the traceback next to the metrics is the cheapest way to make the next failure
+    diagnosable.
+    """
+    import traceback
+    try:
+        main()
+    except BaseException:
+        stamp = time.strftime("%Y%m%d_%H%M%S")
+        crash = LOG_DIR / f"crash_{stamp}.log"
+        crash.parent.mkdir(parents=True, exist_ok=True)
+        crash.write_text(traceback.format_exc(), encoding="utf-8")
+        raise
+
+
 if __name__ == "__main__":
     _launch_via_torchrun()
-    main()
+    _main_with_a_crash_log()
 

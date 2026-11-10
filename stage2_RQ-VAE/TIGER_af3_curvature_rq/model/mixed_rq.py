@@ -81,14 +81,25 @@ def mixed_cost(residual_e: torch.Tensor, residual_h: torch.Tensor,
     if curvature_rows is not None:
         # issue #167: each item's own kappa enters the distance only. The codes are still mapped at the
         # reference curvature, so the ball is the same object for every row and only the metric differs.
+        #
+        # The full (B*K, D) expansion is what killed two runs at their first eval epoch: at 24587 items
+        # against 256 codes that is 100M floats per level, and the OS killed the process with no traceback.
+        # Rows are therefore processed in chunks of the training batch, which is the same arithmetic with a
+        # bounded footprint.
         from .per_row_curvature import as_column, distance_rows
         rows = residual_h.shape[0]
         codes = codes_h.shape[0]
-        column = as_column(curvature_rows, residual_e)                 # [B, 1]
-        x = residual_h.unsqueeze(1).expand(rows, codes, -1).reshape(rows * codes, -1)
-        y = ball.unsqueeze(0).expand(rows, codes, -1).reshape(rows * codes, -1)
-        c = column.repeat_interleave(codes, dim=0)                      # [B*K, 1]
-        curved = (distance_rows(x, y, c).reshape(rows, codes) ** 2)
+        column = as_column(curvature_rows, residual_e)                  # [B, 1]
+        chunk = min(int(rows), 1024)
+        pieces = []
+        for start in range(0, rows, chunk):
+            stop = min(start + chunk, rows)
+            n = stop - start
+            x = residual_h[start:stop].unsqueeze(1).expand(n, codes, -1).reshape(n * codes, -1)
+            y = ball.unsqueeze(0).expand(n, codes, -1).reshape(n * codes, -1)
+            c = column[start:stop].repeat_interleave(codes, dim=0)
+            pieces.append(distance_rows(x, y, c).reshape(n, codes) ** 2)
+        curved = torch.cat(pieces, dim=0)
     else:
         curved = squared_distance(residual_h.unsqueeze(1), ball.unsqueeze(0), curvature)
     alpha = alpha.view(-1, 1)

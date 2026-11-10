@@ -64,3 +64,10 @@
 - 可排除：DDP 集合通信（`distances` 内无 collective）；编码器前向本身（训练稳态 5.5–5.8 s/epoch 一直正常）。
 - 下一步应做的最小诊断（无需新决定）：在**前台短跑**里按 epoch 打印 RSS 与评估前后的 RSS 差值（60–100 epoch、含至少一次评估），看是否单调增长；若增长，再二分定位（评估的 `get_indices` 内部、还是 `assign` 的 Python 对象）。
 - 分类：按 §19c 属 `RESOURCE_BLOCKED`（实测不可行：在当前主机与冻结配方下无法完成 3000 epoch），**不是**机制的科学负结果。机制侧的六门此前全部通过，评估点 50–350 全部 collision 0.000000。
+
+## 关键发现：三次死亡都**没有日志**，因为入口的 stdout 根本没被落盘
+
+- 训练正常运行期间 `logs/train_run.log` 也是 **0 字节**（epoch 记录只写 `training_metrics.jsonl`），所以崩溃信息一直无处可去——这就是三次死亡都没有 traceback 的直接原因。
+- 因此本轮给入口加**崩溃落盘**：`_main_with_a_crash_log()` 捕获 `BaseException`，把 traceback 写到 `logs/crash_<时间戳>.log` 后重新抛出；并用一次合成的 `RuntimeError` 实测验证（生成 `crash_20261111_083006.log`，内容末行为 `RuntimeError: synthetic crash for the probe`）。
+- 同时**排除**了两个候选原因：① OOM——节点 1.31 TB 可用、进程 RSS 峰值不到 1 GB；② 评估路径内存泄漏——四次重复 `get_indices` 的 RSS 为 838.2 / 772.2 / 832.4 / 776.4 MB（增长 −61.8 MB），且 `prefixes_held` 为 0（`encode_tokens` 不保留图）。也排除了 MCP 的 liveness watchdog（它只看 metrics 文件是否存在、不看静默）与 Slurm 时限（作业 7 天、已用 2 天）。
+- 下一次派发若再死，`logs/crash_*.log` 会给出真实堆栈。
