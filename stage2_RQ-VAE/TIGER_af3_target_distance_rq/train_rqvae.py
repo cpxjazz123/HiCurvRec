@@ -37,6 +37,7 @@ from tqdm import tqdm
 
 from model import RQVAE
 from model.model import MixedRQVAE
+from model.target_distance import STRUCTURE_OFF
 from model.af3_runtime import (input_identity, resolve_shared_readout,
                                snapshot_sha256, snapshot_state)
 
@@ -79,6 +80,11 @@ READOUT_FILE = REPO_ROOT / "results" / "research" / "issue139" / "readout.json"
 AF3_CACHE = (REPO_ROOT / "results" / "research" / "issue121" / "community_curvature"
              / "train_edge_af3.npz")
 AUX_AF3 = ARM_VARIANT == "A"
+
+#: The reference distance the #155 targets scale by. Measured once on the frozen probe and
+#: recorded in results/research/issue155/gate_dref.json (key "d_ref"); it is a measurement,
+#: not a hyper-parameter, and it is never re-derived from the run's own usage.
+D_REF = 1.5215499925510368e-04
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
@@ -535,6 +541,12 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
     raw_module = model.module if isinstance(model, DDP) else model
+    # issue #155: the batch-restricted AF3 supervision; the frozen table is read once and the
+    # loader's rows are resolved to item ids exactly, so a batch only ever sees its own edges
+    structure_supervision = None
+    if ARM_VARIANT == "AF3TGTDIST" and not STRUCTURE_OFF:
+        from model.structure_runtime import StructureSupervision
+        structure_supervision = StructureSupervision.from_repo(REPO_ROOT, D_REF)
     readout_parameters, af3_state = None, None
     sampling = np.random.default_rng(SEED)
     if OUTER_LOOP or AUX_AF3:
@@ -612,6 +624,10 @@ def main() -> None:
             reconstructed, quant_loss, _, _ = model(batch)
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
+            if structure_supervision is not None:
+                terms = structure_supervision.terms(raw_module, batch, CURVATURE)
+                if terms is not None:
+                    loss = loss + terms
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             if AUX_AF3:
