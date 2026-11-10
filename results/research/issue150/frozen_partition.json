@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "arm": "TIGER_frozen_prior_marginal",
+    "bucket_sizes": [
+      64,
+      64,
+      64,
+      64
+    ],
+    "frozen_before_training": true,
+    "groups": 4,
+    "issue": 150,
+    "marginal_max": 0.005894053388173969,
+    "marginal_min": 0.0020463430526144323,
+    "method": "affinity",
+    "note": "bucket members never change after this file is written; the run's own usage is recorded but never used to re-partition (that was #150's failure root)",
+    "realised_error": 0.5227039228031292,
+    "realised_tolerance": 0.05,
+    "rho": [
+      0.24079654666883857,
+      0.2510180811207037,
+      0.37721941684313404,
+      0.13096595536732367
+    ],
+    "structure_table_sha256": "ca4f07f840fa1383195f233a5134c4bad7e4fe84a0bd0ebd3125ced16768df60"
+  },
+  "table": "/fs04/ar57/wenyu/GeneRec/results/research/issue150/frozen_partition.npz",
+  "table_sha256": "e85f0c0477db6692447f8410ad67d83a0d15927fc5fa109bdb34afda788e7ab5"
+}
