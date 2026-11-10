@@ -74,6 +74,29 @@ class MixedRQVAE(nn.Module):
                           sk_iters=int(config.sk_iters))
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
 
+    def attach_kappa(self, kappa: dict, row_index: dict) -> None:
+        """Issue #167: the per-item curvature as a dense table indexed by item id.
+
+        Rows are resolved to item ids through the byte index built from the frozen embedding matrix, so a
+        row's kappa is the same in training and in the export.
+        """
+        top = max(int(key) for key in kappa) + 1
+        table = torch.ones(top, dtype=torch.float32)
+        for key, value in kappa.items():
+            table[int(key)] = float(value)
+        self.kappa_table = table
+        self.row_index = row_index
+
+    def kappa_of(self, embeddings: torch.Tensor) -> torch.Tensor | None:
+        """The per-row curvature for these embeddings, or None when no table is attached."""
+        table = getattr(self, "kappa_table", None)
+        index = getattr(self, "row_index", None)
+        if table is None or index is None:
+            return None
+        from . import item_index as ii
+        ids = ii.lookup(embeddings, index)
+        return table[ids].to(embeddings.device)
+
     @property
     def alpha_table(self):
         """Do not retain a stale alias after DDP broadcasts or checkpoint load."""
@@ -86,7 +109,7 @@ class MixedRQVAE(nn.Module):
         # is called, with the item ids of the batch. This mechanism reads no
         # per-item state, so the ids carry nothing.
         encoded = self.encoder(embeddings)
-        readout, quant_loss, unused_codes, tokens = self.rq(encoded)
+        readout, quant_loss, unused_codes, tokens = self.rq(encoded, kappa=self.kappa_of(embeddings))
         quantized = encoded + (readout - encoded).detach()
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens
@@ -96,7 +119,7 @@ class MixedRQVAE(nn.Module):
         from .mixed_rq import encode_tokens
         # The export is the deterministic nearest code at every level; the
         # training-only balanced assignment never runs at inference.
-        return encode_tokens(self.encoder(embeddings), self.rq)
+        return encode_tokens(self.encoder(embeddings), self.rq, kappa=self.kappa_of(embeddings))
 
     @torch.no_grad()
     def init_codebook(self, embeddings: torch.Tensor) -> None:

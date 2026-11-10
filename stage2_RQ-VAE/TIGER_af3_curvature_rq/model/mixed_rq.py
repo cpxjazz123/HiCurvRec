@@ -67,7 +67,8 @@ def split(z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
 
 def mixed_cost(residual_e: torch.Tensor, residual_h: torch.Tensor,
                codes_e: torch.Tensor, codes_h: torch.Tensor,
-               alpha: torch.Tensor, curvature: float = CURVATURE) -> torch.Tensor:
+               alpha: torch.Tensor, curvature: float = CURVATURE,
+               curvature_rows: torch.Tensor | None = None) -> torch.Tensor:
     """``C`` for every (item, code) pair, in the convention of the spec.
 
     ``residual_h`` is already in the ball. ``codes_h`` are tangent-space
@@ -77,7 +78,19 @@ def mixed_cost(residual_e: torch.Tensor, residual_h: torch.Tensor,
     """
     ball = expmap0(codes_h, curvature) if float(curvature) > 0 else codes_h
     euclidean = (residual_e.unsqueeze(1) - codes_e.unsqueeze(0)).pow(2).sum(-1)
-    curved = squared_distance(residual_h.unsqueeze(1), ball.unsqueeze(0), curvature)
+    if curvature_rows is not None:
+        # issue #167: each item's own kappa enters the distance only. The codes are still mapped at the
+        # reference curvature, so the ball is the same object for every row and only the metric differs.
+        from .per_row_curvature import as_column, distance_rows
+        rows = residual_h.shape[0]
+        codes = codes_h.shape[0]
+        column = as_column(curvature_rows, residual_e)                 # [B, 1]
+        x = residual_h.unsqueeze(1).expand(rows, codes, -1).reshape(rows * codes, -1)
+        y = ball.unsqueeze(0).expand(rows, codes, -1).reshape(rows * codes, -1)
+        c = column.repeat_interleave(codes, dim=0)                      # [B*K, 1]
+        curved = (distance_rows(x, y, c).reshape(rows, codes) ** 2)
+    else:
+        curved = squared_distance(residual_h.unsqueeze(1), ball.unsqueeze(0), curvature)
     alpha = alpha.view(-1, 1)
     return 2.0 * (alpha * euclidean + (1.0 - alpha) * curved / 4.0)
 
@@ -161,20 +174,22 @@ class MixedVQLevel(nn.Module):
         return self.embed.weight
 
     def distances(self, residual_e: torch.Tensor, residual_h: torch.Tensor,
-                  alpha: torch.Tensor) -> torch.Tensor:
+                  alpha: torch.Tensor, curvature_rows: torch.Tensor | None = None) -> torch.Tensor:
         codes = self.get_code_embs()
         codes_e, codes_h = split(codes)
-        return mixed_cost(residual_e, residual_h, codes_e, codes_h, alpha, self.curvature)
+        return mixed_cost(residual_e, residual_h, codes_e, codes_h, alpha, self.curvature,
+                          curvature_rows=curvature_rows)
 
     def forward(self, residual_e: torch.Tensor, residual_h: torch.Tensor,
                 alpha: torch.Tensor, infer_use_sk: bool = False,
-                parents: "torch.Tensor | None" = None):
+                parents: "torch.Tensor | None" = None,
+                curvature_rows: "torch.Tensor | None" = None):
         """Quantize one level and return the new residual, the losses and the code.
 
         ``residual_e`` is ``[B, 16]``, ``residual_h`` is ``[B, 16]`` in the ball,
         ``alpha`` is ``[B]``.
         """
-        cost = self.distances(residual_e, residual_h, alpha)
+        cost = self.distances(residual_e, residual_h, alpha, curvature_rows=curvature_rows)
         index = self._indices(cost, infer_use_sk, parents=parents)
         codes = self.get_code_embs()
         codes_e, codes_h_tangent = split(codes)
@@ -347,7 +362,8 @@ class MixedRQ(nn.Module):
         """The name the frozen trainer uses for the per-level modules."""
         return self.levels
 
-    def forward(self, z: torch.Tensor, infer_use_sk: bool = False):
+    def forward(self, z: torch.Tensor, infer_use_sk: bool = False,
+                kappa: torch.Tensor | None = None):
         """Quantize a 32-dimensional tangent-space code and read it back out."""
         z_e, z_t = split(z)
         residual_e = z_e
@@ -375,7 +391,7 @@ class MixedRQ(nn.Module):
             prefixes.append(running)
             (residual_e, residual_h), quant_loss, unused, index, picked_e, picked_h = layer(
                 residual_e, residual_h, alpha, infer_use_sk=infer_use_sk,
-                parents=parents_for(tokens, z.device))
+                parents=parents_for(tokens, z.device), curvature_rows=kappa)
             codes_e.append(picked_e)
             codes_h.append(picked_h)
             tokens.append(index)
@@ -400,7 +416,8 @@ class MixedRQ(nn.Module):
             tokens.append(index)
 
 
-def encode_tokens(z: torch.Tensor, rq: MixedRQ, override: dict | None = None) -> torch.Tensor:
+def encode_tokens(z: torch.Tensor, rq: MixedRQ, override: dict | None = None,
+                  kappa: "torch.Tensor | None" = None) -> torch.Tensor:
     """The hard three-token codes of a batch of tangent codes, without gradients.
 
     ``override`` maps ``(level, prefix)`` to a weight, which is how the outer
@@ -417,7 +434,7 @@ def encode_tokens(z: torch.Tensor, rq: MixedRQ, override: dict | None = None) ->
                 alpha = rows.to(z.device)
             else:
                 alpha = rq.alpha_table.lookups(level, tokens).to(z.device)
-            cost = layer.distances(residual_e, residual_h, alpha)
+            cost = layer.distances(residual_e, residual_h, alpha, curvature_rows=kappa)
             if layer.use_sk:
                 index = layer._indices(cost, infer_use_sk=True,
                                        parents=parents_for(tokens, z.device))
