@@ -8,8 +8,10 @@
   `prefix_surface_1d`(E1×H1、40 语句)。**没有任何 call 绑定 `structure.structure_loss` 的组合面或
   `reference_prefix_native`**;`mixed_sq` 的 16 维 H 交叉比也不在任何 call 里。question30 §2 的事实成立。
 - 试写 288 标量 SymPy 生成器(径向球映射 → 右折叠 Möbius → log0 → 三对交叉比 → phi → 三层均值)。
-  首次运行在符号构造处失败:`IndexError: tuple index out of range`(`rc=1`),
-  日志存为 `q30/sympy_generator_attempt.log`。该生成器**尚未修正**,因此没有可用于 `build_reference` 的语句。
+  首次运行在符号构造处失败(`IndexError`),修正符号命名后第二次运行在 180 秒内未完成。
+  **按 CLAUDE.md §86(owner 2026-11-10: 禁止在 /tmp 放置任何文件),这两次尝试的临时脚本与日志已删除,
+  不再作为持久证据**;本项记为 `NOT_RECORDED`/`TIMEOUT`,生成器仍未修正,因此没有可用于
+  `build_reference` 的语句。
 
 ## 2. 因此未交付
 - 契约中绑定训练函数的 call(含 `mixed_distance` 对 `mixed_sq` 的 16 维绑定);
@@ -23,4 +25,4 @@
 ## 4. 摘要
 | 文件 | SHA-256 |
 |---|---|
-| 证据 `q30/sympy_generator_attempt.log` | `9c7af49c9707daf8b4a1fc3db0522d99e34293ccf3f6c5a36568c5d441ab4f42` |
+| 生成器尝试证据 | `NOT_RECORDED`(临时文件按 §86 删除) |
