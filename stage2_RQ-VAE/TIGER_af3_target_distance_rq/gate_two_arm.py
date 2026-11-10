@@ -119,6 +119,7 @@ def main() -> int:
     out = {}
     for mode in ("U", "R", "N"):
         out[mode] = fit(mode)
+        print(f"[arm {mode}] rank_consistency={out[mode]['rank_consistency']:.6f}", flush=True)
         sample = out[mode]["codes"]
         report[f"{mode}_rank_consistency"] = out[mode]["rank_consistency"]
         report[f"{mode}_codes"] = sample
