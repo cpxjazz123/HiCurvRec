@@ -148,7 +148,10 @@ class MixedVQLevel(nn.Module):
             q = self.sinkhorn(centered, self.sk_epsilon, self.sk_iters)
             if torch.isnan(q).any() or torch.isinf(q).any():
                 raise RuntimeError("Sinkhorn assignment returned NaN or infinity.")
-            return torch.argmax(q, dim=-1)
+            # issue #159: the plan is the relaxation optimum, so the rounding preserves the plan's
+            # own quality instead of throwing its columns away with an argmax
+            from .rounding import round_plan
+            return round_plan(q, distances)
         return torch.argmin(distances, dim=-1)
 
     # -- the mixed cost ----------------------------------------------------
@@ -302,6 +305,8 @@ class MixedRQ(nn.Module):
         sizes = [int(size) for size in sizes]
         self.curvature = float(curvature)
         self.alpha_table = alpha_table
+        #: Per-level soft prefix embeddings of the last forward (issue #159).
+        self.last_prefixes: list[tuple[torch.Tensor, torch.Tensor]] = []
         self.levels = nn.ModuleList()
         for index, size in enumerate(sizes):
             last = index == len(sizes) - 1
@@ -340,8 +345,22 @@ class MixedRQ(nn.Module):
         tokens: list[torch.Tensor] = []
         total_loss: torch.Tensor | float = 0.0
         unused_total = 0
+        from .rank_objective import compose_prefix, mixed_distance, soft_prefix
+        prefixes: list[tuple[torch.Tensor, torch.Tensor]] = []
+        running: tuple[torch.Tensor, torch.Tensor] | None = None
         for level, layer in enumerate(self.levels, start=1):
             alpha = self.alpha_table.lookups(level, tokens).to(z.device)
+            codes_e_all = layer.embed.weight[:, :EUCLIDEAN_DIM]
+            codes_h_all = layer.embed.weight[:, EUCLIDEAN_DIM:]
+            rows = residual_e.shape[0]
+            pre_cost = mixed_distance(
+                residual_e[:, None, :].expand(rows, codes_e_all.shape[0], -1),
+                residual_h[:, None, :].expand(rows, codes_h_all.shape[0], -1),
+                codes_e_all[None, :, :].expand(rows, -1, -1),
+                codes_h_all[None, :, :].expand(rows, -1, -1), self.curvature)
+            running = compose_prefix(running, soft_prefix(pre_cost, codes_e_all, codes_h_all),
+                                     level, self.curvature)
+            prefixes.append(running)
             (residual_e, residual_h), quant_loss, unused, index, picked_e, picked_h = layer(
                 residual_e, residual_h, alpha, infer_use_sk=infer_use_sk)
             codes_e.append(picked_e)
@@ -349,6 +368,8 @@ class MixedRQ(nn.Module):
             tokens.append(index)
             total_loss = total_loss + quant_loss
             unused_total += int(unused)
+        self.last_prefixes = prefixes
+        self.last_codes = list(tokens)
         readout = quantized_readout(codes_e, codes_h, self.curvature)
         stacked = torch.stack(tokens, dim=1)
         return readout, total_loss / len(self.levels), unused_total, stacked
@@ -384,7 +405,11 @@ def encode_tokens(z: torch.Tensor, rq: MixedRQ, override: dict | None = None) ->
             else:
                 alpha = rq.alpha_table.lookups(level, tokens).to(z.device)
             cost = layer.distances(residual_e, residual_h, alpha)
-            index = torch.argmin(cost, dim=-1)
+            if level == len(rq.levels) and layer.use_sk:
+                # the export runs the same rule as training: plan, then plan-mass rounding
+                index = layer._indices(cost, infer_use_sk=True)
+            else:
+                index = torch.argmin(cost, dim=-1)
             codes = layer.get_code_embs()
             codes_e, codes_h_tangent = split(codes)
             picked_e = codes_e[index]
