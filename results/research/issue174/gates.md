@@ -13,3 +13,8 @@
 | 7 诊断 | 偏好保真度、逐层份额、耗时已记录；放宽逐层分布与分块数在报告内 | 记录 |
 
 结论：按第 9 条全门通过 → 本 Issue 授权派发这一次 Stage2。
+
+## 派发
+
+- `stage2_start(source_dir="TIGER_two_sided_soft_rq")` → worker 4061012；真实入口一 epoch 冒烟 **SMOKE_PASS**（24 步、梯度范数全正、`dead_terms=[]`、`nonfinite_terms=[]`、导出唯一），四卡已启动。
+- 配方：seed 42、3000 epoch、全局 batch 4096、四卡 50202；产物 `results/stage2_RQ-VAE/TIGER_two_sided_soft_rq/`。
