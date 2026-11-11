@@ -57,3 +57,33 @@ def shrink_events(x: torch.Tensor, y: torch.Tensor, kappa: torch.Tensor) -> int:
     denominator = (1.0 + 2.0 * k * xy + k.pow(2) * y2 * x2).clamp_min(eps)
     out = numerator / denominator
     return int(((k * out.pow(2).sum(-1, keepdim=True)) >= 1.0).sum())
+
+
+_TABLE = None
+from pathlib import Path as _Path
+
+TABLE_RELPATH = _Path("results") / "research" / "issue167" / "kappa.json"
+
+
+def repo_root(start=None) -> _Path:
+    here = (start or _Path(__file__).resolve()).resolve()
+    for candidate in (here, *here.parents):
+        if all((candidate / m).is_dir() for m in ("stage2_RQ-VAE", "results", "stage1_GeneEmbedding")):
+            return candidate
+    raise FileNotFoundError("no repository root above this module")
+
+
+def load_table() -> dict:
+    global _TABLE
+    if _TABLE is None:
+        import json
+        _TABLE = json.loads((repo_root() / TABLE_RELPATH).read_text())
+    return _TABLE
+
+
+def kappa_of(item_ids: torch.Tensor, table: dict | None = None) -> torch.Tensor:
+    """The frozen per-item curvature, mean-filled for the blind spot and floored."""
+    table = load_table() if table is None else table
+    entries, mean_frozen = table["kappa"], float(table["mean_frozen"])
+    values = [float(entries.get(str(int(i)), mean_frozen)) for i in item_ids.detach().cpu().tolist()]
+    return torch.tensor(values, dtype=torch.float64).clamp_min(1e-3)
