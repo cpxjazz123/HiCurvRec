@@ -36,9 +36,25 @@ class RQVAE(nn.Module):
         straight-through value is differentiable in the encoder, which is what the structure term's gradient is supposed to reach.
         """
         encoded = self.encoder(embeddings)
-        quantized, quant_loss, unused_codes, tokens = self.rq(encoded)
+        # walk the stack so the raw codeword readout is available beside the straight-through one: the raw sum is differentiable in the
+        # codebook as well as the encoder, which is what the structure term's budget needs (issue #192)
+        residual = encoded
+        straight_total = 0.0
+        raw_total = 0.0
+        indices = []
+        for layer in self.rq.vq_layers:
+            straight, raw, index = layer.quantize_with_raw(residual)
+            residual = residual - straight
+            straight_total = straight_total + straight
+            raw_total = raw_total + raw
+            indices.append(index)
+        tokens = torch.stack(indices, dim=-1)
+        quantized = straight_total
+        # this entry point exists for the structure term's positions; its loss outputs are placeholders and must not be used for training
+        quant_loss = torch.zeros((), device=encoded.device)
+        unused_codes = 0
         reconstructed = self.decoder(quantized)
-        return reconstructed, quant_loss, int(unused_codes), tokens, [quantized]
+        return reconstructed, quant_loss, int(unused_codes), tokens, [raw_total]
 
     @torch.no_grad()
     def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
