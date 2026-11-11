@@ -42,3 +42,12 @@
 测试 `tests/test_kappa_table.py` 6 项全过：标记根推导、实测形状（层 2 = 240、层 3 = 7408、31 个补齐项）、层 1 全 1.0、逐行解析 + 未见表项回落、张量与元组等价、实际表查出的值落在实测区间内。
 
 仍待：把 `kappa_for_rows` 接进 `layers.py::_distances`（按层选 `d_κ` 或 `mixed_sq`）、训练与导出用同一表、导出统计、一 epoch 冒烟，然后派发。
+
+## 本轮：三层接线完成，16/16 通过
+
+- `model/mixed_rq.py`：`MixedVQLevel.distances(..., kappa=None)` 在 `kappa` 非 `None` 时返回 `mixed_cost + d_κ`（κ 逐行展开到 `[B·K]`，联合向量 = 欧氏 16 维 ⊕ 球面 16 维）；`kappa=None` 时**逐位就是参照臂的代价**。
+- `MixedRQ.forward`（训练）与 `encode_tokens`（导出）**用同一条规则**解析 κ：`level>=2` 时按累积 prefix 查冻结表，`level==1` 传 `None`——训练与导出一致性由同一函数保证。
+- `HC3_ON` 开关：关闭时完全不解析 κ，等价冻结基线。
+- 测试 **16 passed**（3 个套件）：层 1 代价与 `kappa=None` **逐位相等**；加 κ 项后有限且非负；κ=0.2 与 5.0 给出不同代价矩阵；开关关闭时栈仍产出 (5,3) 的三 token 且损失有限；另加度规与表两套（各 6 项）。
+
+仍待：导出统计（逐层码使用/最大份额/二级前缀/三级碰撞、§63 l3_collision，与 `TIGER_struct_mixed_rq` 并列）、一 epoch 真实入口冒烟（`collision<0.40`），然后派发 Stage2。

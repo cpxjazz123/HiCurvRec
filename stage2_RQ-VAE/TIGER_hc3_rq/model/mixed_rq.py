@@ -35,6 +35,9 @@ an ``alpha = 1/2`` code is the plain 32-dimensional squared distance.
 """
 from __future__ import annotations
 
+#: Issue #177: levels 2 and 3 add the prefix-conditioned d_kappa; level 1 is untouched.
+HC3_ON = True
+
 from typing import Iterable
 
 import torch
@@ -156,19 +159,32 @@ class MixedVQLevel(nn.Module):
         return self.embed.weight
 
     def distances(self, residual_e: torch.Tensor, residual_h: torch.Tensor,
-                  alpha: torch.Tensor) -> torch.Tensor:
+                  alpha: torch.Tensor, kappa: torch.Tensor | None = None) -> torch.Tensor:
         codes = self.get_code_embs()
         codes_e, codes_h = split(codes)
-        return mixed_cost(residual_e, residual_h, codes_e, codes_h, alpha, self.curvature)
+        cost = mixed_cost(residual_e, residual_h, codes_e, codes_h, alpha, self.curvature)
+        if kappa is None:
+            return cost
+        # Issue #177: the prefix-conditioned curvature contributes d_kappa on top of the level-1 coupling term. Level 1 passes
+        # kappa=None, so its cost stays bitwise the reference arm's.
+        from . import kappa_metric
+        rows, codes_n = cost.shape
+        joint = torch.cat((residual_e, residual_h), dim=-1)
+        book = torch.cat((codes_e, expmap0(codes_h, self.curvature)), dim=-1)
+        per_pair = kappa.to(cost.dtype).to(cost.device).reshape(-1, 1).repeat_interleave(codes_n, 0)
+        left = joint.unsqueeze(1).expand(rows, codes_n, joint.shape[-1]).reshape(-1, joint.shape[-1])
+        right = book.unsqueeze(0).expand(rows, codes_n, book.shape[-1]).reshape(-1, book.shape[-1])
+        return cost + kappa_metric.distance(left, right, per_pair).reshape(rows, codes_n)
 
     def forward(self, residual_e: torch.Tensor, residual_h: torch.Tensor,
-                alpha: torch.Tensor, infer_use_sk: bool = False):
+                alpha: torch.Tensor, infer_use_sk: bool = False,
+                kappa: torch.Tensor | None = None):
         """Quantize one level and return the new residual, the losses and the code.
 
         ``residual_e`` is ``[B, 16]``, ``residual_h`` is ``[B, 16]`` in the ball,
         ``alpha`` is ``[B]``.
         """
-        cost = self.distances(residual_e, residual_h, alpha)
+        cost = self.distances(residual_e, residual_h, alpha, kappa)
         index = self._indices(cost, infer_use_sk)
         codes = self.get_code_embs()
         codes_e, codes_h_tangent = split(codes)
@@ -342,8 +358,12 @@ class MixedRQ(nn.Module):
         unused_total = 0
         for level, layer in enumerate(self.levels, start=1):
             alpha = self.alpha_table.lookups(level, tokens).to(z.device)
+            kappa = None
+            if HC3_ON and level >= 2:
+                from . import kappa_table
+                kappa = kappa_table.kappa_for_rows(tokens.tolist(), level)
             (residual_e, residual_h), quant_loss, unused, index, picked_e, picked_h = layer(
-                residual_e, residual_h, alpha, infer_use_sk=infer_use_sk)
+                residual_e, residual_h, alpha, infer_use_sk=infer_use_sk, kappa=kappa)
             codes_e.append(picked_e)
             codes_h.append(picked_h)
             tokens.append(index)
@@ -362,7 +382,12 @@ class MixedRQ(nn.Module):
         for level, layer in enumerate(self.levels, start=1):
             layer.init_codebook(residual_e, residual_h, device)
             alpha = self.alpha_table.lookups(level, tokens).to(device)
-            (residual_e, residual_h), _, _, index, _, _ = layer(residual_e, residual_h, alpha)
+            kappa = None
+            if HC3_ON and level >= 2:
+                from . import kappa_table
+                kappa = kappa_table.kappa_for_rows(tokens.tolist(), level)
+            (residual_e, residual_h), _, _, index, _, _ = layer(
+                residual_e, residual_h, alpha, infer_use_sk=True, kappa=kappa)
             tokens.append(index)
 
 
