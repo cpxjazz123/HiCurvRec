@@ -601,7 +601,7 @@ def main() -> None:
 
     LAMBDA_RAD = 0.0
     if not rad_loss.BEHAVIOUR_OFF:
-        _first_batch, _ = next(iter(loader))
+        _first_batch = next(iter(loader))[0]   # this tree’s dataset is embeddings only, so the batch is a 1-tuple
         _base_term, _rad_term, _ = rad_loss.step_terms(raw_module, _first_batch.to(device))
         try:
             LAMBDA_RAD, _budget = rad_loss.calibrate_budget(
