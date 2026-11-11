@@ -16,3 +16,9 @@
 2. **未决**：`test_gradients_are_finite_at_small_and_large_curvature` 仍失败——在循环内重置 `x.grad/y.grad` 后以 `retain_graph=True` 反复 backward，两个叶子读到的 `.grad` 都是 `None`。这不像是公式问题（其余 5 项都过，含与冻结契约 `κ=1` 一致、`x⊖x=0`、球内、κ=0 极限逐位），但我尚未定位；按 Issue 验收第 3 条（"编码器确实收到非零梯度"）未通过即**不派发**。
 
 当前测试：**5 passed / 1 failed**。
+
+## 未决项已解决：**6 passed**
+
+原因是我在测试里写 `x = torch.randn(...) * 0.5` 之后再加 `requires_grad=True`——这样 `x`/`y` 是**非叶子张量**（`grad_fn=<MulBackward0>`），非叶子永远不累积 `.grad`，与公式无关。改为先乘后 `requires_grad_(True)`（成为叶子）后，两侧梯度都出现且有限，**6/6 通过**。
+
+教训记录：`retain_graph` 循环 + `grad=None` 的写法本身没问题，出错的是"看起来像叶子"的张量。
