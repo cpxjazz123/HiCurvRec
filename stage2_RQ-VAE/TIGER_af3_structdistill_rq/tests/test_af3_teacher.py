@@ -93,3 +93,12 @@ def test_teacher_scores_read_the_requested_pairs():
     for a, row in enumerate(anchors.tolist()):
         for c, item in enumerate(candidates[a].tolist()):
             assert abs(float(got[a, c]) - float(dense[row, item])) < 1e-12
+
+
+def test_pack_and_unpack_round_trip_the_teacher_bit_for_bit():
+    coo = [(0, 1), (1, 2), (2, 3), (1, 3)]
+    sparse, manifest = t.build_sparse(coo, 4)
+    payload = t.pack(sparse, manifest)
+    restored, restored_manifest = t.unpack(payload)
+    assert torch.equal(restored.to_dense(), sparse.to_dense())
+    assert restored_manifest["q05"] == manifest["q05"] and restored_manifest["q95"] == manifest["q95"]

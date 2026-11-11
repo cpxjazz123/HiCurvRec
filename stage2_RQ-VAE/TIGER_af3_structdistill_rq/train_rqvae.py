@@ -415,7 +415,29 @@ def main() -> None:
     _coo = sorted(_edges)
     n_items = int(max(max(edge) for edge in _coo)) + 1
     _t0 = time.time()
-    _teacher_sparse, teacher_manifest = _af3.build_sparse(_coo, n_items)
+    # Only rank 0 builds P^2 (7 s standalone, but four ranks building 51M-nnz tensors at once is minutes of contention); the rest
+    # receive the coalesced tensor and the quantiles, so every rank sees the same teacher bit for bit.
+    if distributed.is_initialized() and rank != 0:
+        _payload = {}
+        _head = torch.zeros(1, dtype=torch.long, device=device)
+        distributed.broadcast(_head, 0)
+        _nnz = int(_head.item())
+        _shape = torch.zeros(2, dtype=torch.long, device=device)
+        _quant = torch.zeros(2, dtype=torch.float64, device=device)
+        _indices = torch.zeros((2, _nnz), dtype=torch.int64, device=device)
+        _values = torch.zeros(_nnz, dtype=torch.float64, device=device)
+        distributed.broadcast(_shape, 0); distributed.broadcast(_quant, 0)
+        distributed.broadcast(_indices, 0); distributed.broadcast(_values, 0)
+        _payload = {"shape": _shape.cpu(), "indices": _indices.cpu(), "values": _values.cpu(), "quantiles": _quant.cpu()}
+        _teacher_sparse, teacher_manifest = _af3.unpack(_payload)
+    else:
+        _teacher_sparse, teacher_manifest = _af3.build_sparse(_coo, n_items)
+        if distributed.is_initialized():
+            _packed = _af3.pack(_teacher_sparse, teacher_manifest)
+            _head = torch.tensor([_packed["indices"].shape[1]], dtype=torch.long, device=device)
+            distributed.broadcast(_head, 0)
+            for _key in ("shape", "quantiles", "indices", "values"):
+                distributed.broadcast(_packed[_key].to(device), 0)
     teacher_rows = _af3.SparseRows(_teacher_sparse)
     teacher_build_s = time.time() - _t0
     neighbours: dict[int, list[int]] = {}

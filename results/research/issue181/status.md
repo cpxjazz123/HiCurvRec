@@ -141,3 +141,9 @@
 ## 冒烟第二轮：仍卡在教师构建（4 rank 各自构建）
 
 并集编码已生效，但冒烟 4 分钟后仍停在 `torch.sparse.mm(p, p)`。单进程离线构建只需 **7.1 s**，因此变慢的原因不是算法而是**每个 rank 都独立构建一次**（4 份 `P²`、4 份 51M 非零元、4 倍内存与 CPU 争用）。修法：只在 rank 0 构建一次，再把稀疏 `T` 的 `indices/values`（以及 `q05/q95`）通过 `distributed.broadcast` 发给其余 rank；或在 rank 0 落盘后由其它 rank 读取，两条都只构建一次。
+
+## 教师改为 rank 0 构建 + 广播（本轮，**44 passed**）
+
+- `af3_teacher.pack/unpack`：把合并后的教师打成一个可传输的 payload（`shape`、`indices[int64]`、`values[float64]`、两个分位数），`unpack` 逐位还原。
+- 训练器里：`distributed.is_initialized() and rank != 0` 时**不构建**，按 `nnz → shape/quantiles → indices/values` 的顺序 4 次 `broadcast` 接收；rank 0 构建一次后同样广播。所有 rank 最终持有**同一张表**（逐位一致），`q05/q95` 也随之传递（不再各自计算）。
+- 测试 `test_pack_and_unpack_round_trip_the_teacher_bit_for_bit`：还原后的 `to_dense()` 与原件 `torch.equal`、q05/q95 相同。全树 **44 passed**。

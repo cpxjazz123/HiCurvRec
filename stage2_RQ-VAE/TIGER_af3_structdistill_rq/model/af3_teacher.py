@@ -140,3 +140,24 @@ def teacher_scores(teacher_sparse: torch.Tensor, anchors: torch.Tensor, candidat
     Uses :class:`SparseRows`, so nothing is densified; the caller may cache the lookup across steps.
     """
     return SparseRows(teacher_sparse).gather(anchors, candidates)
+
+
+def pack(teacher_sparse: torch.Tensor, manifest: dict) -> dict:
+    """A rank-transferable payload for the coalesced teacher: shapes, indices, values and the two quantiles."""
+    coalesced = teacher_sparse.coalesce()
+    return {
+        "shape": torch.tensor(coalesced.shape, dtype=torch.long),
+        "indices": coalesced.indices().to(torch.int64).contiguous(),
+        "values": coalesced.values().to(torch.float64).contiguous(),
+        "quantiles": torch.tensor([manifest["q05"], manifest["q95"]], dtype=torch.float64),
+    }
+
+
+def unpack(payload: dict) -> tuple[torch.Tensor, dict]:
+    """The inverse of :func:`pack`; the receiving ranks get the builder's tensor bit for bit."""
+    shape = tuple(int(x) for x in payload["shape"].tolist())
+    teacher_sparse = torch.sparse_coo_tensor(payload["indices"], payload["values"], shape).coalesce()
+    q05, q95 = (float(x) for x in payload["quantiles"].tolist())
+    manifest = {"n_items": int(shape[0]), "edges": -1, "q05": q05, "q95": q95,
+                "rule": "received from rank 0: W=1+clip((AF3-q05)/(q95-q05),0,1); T=(P+P^2)/2 sparse"}
+    return teacher_sparse, manifest
