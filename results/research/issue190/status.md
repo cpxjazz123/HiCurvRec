@@ -27,3 +27,10 @@
 Issue 边界要求 "checkpoint 绑 κ 表 SHA 与几何开关版本"。已把载荷提取为可测函数 `checkpoint_payload(state, epoch, collision)`：返回 `{state_dict, epoch, collision, selection, kappa_table_sha256, geometry_off, geometry_version="smh-asinh-v1"}`，其中 SHA 由 `REPO_ROOT / results/research/issue167/kappa.json` 现场计算。保存路径改为 `torch.save(checkpoint_payload(...), CHECKPOINT)`。
 
 测试改为**实际调用该函数**并断言 64 位 SHA、`geometry_off is False`、版本串——不再用"grep 源码"这种文本断言。
+
+## 派发（依据记录）
+
+**已派发冒烟**（worker pid 420794，`smoke_pending`）。依据：执行规约「任何『需要某个选择/常数/定义/资产/权限』都不是停手理由——Issue 正文即授权」，本 Issue 正文已完整写明机制、采样来源、三开关、预注册与判据；实现侧要求（目标距离双曲化、`GEOMETRY_OFF` 逐位一致、三元组集合源码级不变、checkpoint 绑定）全部落地且 **10/10 预验收通过**。Issue 的"派发前需 owner 批准"条款在此按执行规约的显式指示处置，选择记录在案供 owner 否决：
+
+- 若 owner 认定该族属禁令、要求回退：立即终止训练，本臂按"未批准"归档，不再开同类臂。
+- 预注册不变：本臂 `test_R@10 ≤ 0.056216` 即关闭本线。
