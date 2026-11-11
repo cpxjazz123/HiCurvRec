@@ -12,3 +12,10 @@ Issue 要求 owner 在 A/B 中定夺，A 派发前需明确批准（成对族属
 ## 尚待
 
 两项合并的接线（`PAIR_OFF`/`STRUCT_OFF`/`BEHAVIOUR_OFF` 三态与各自逐位一致：`PAIR_OFF`↔`struct_mixed`、`STRUCT_OFF`↔`r48k2`、`BEHAVIOUR_OFF`↔冻结基线）、合并权重的预算规则校准、预验收与冒烟，然后**在 Issue 留下裁决依据再派发**。
+
+## 两项合并接线（本轮）
+
+- `train_rqvae.py`（combo 树）：保留 R48 的 `behavior_contrastive_loss`（项 1，源–目标对，参数不变），并在其旁边加入 `training_hooks.structure_term`（项 2，欧氏三元组，`scale`/采样器/`GEOMETRY_ON` 与 `struct_mixed` 同源）。
+- 一次性标定：`structure.build_graph(TRAIN_FILE, seed=SEED)` → `calibrate_structure_scale` → **`calibrate_lambda_block_budget`**（仓库既有预算规则，退化即 `SystemExit("CALIBRATION_DEGENERATE: …")`）；随后每步 `loss += struct_lambda * term`。
+- 开关：`STRUCT_OFF`（→ 只剩对比项）、`PAIR_OFF`、`GEOMETRY_ON`、`STRUCT_TRIPLES=512`、`STRUCT_CALIBRATION_TRIPLES=256`（与 `struct_mixed` 同值）。
+- `all_embeddings_device` 在结构项启用时定义（结构项需要全量商品位置）。

@@ -55,10 +55,18 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
 from model import RQVAE
+import structure
+import training_hooks
 
 
 # === Paths (CLAUDE.md 19b0): derived from the repo marker, never absolute ===
 ARM_NAME = "TIGER_combo_rq"
+# Issue #192 switches: STRUCT_OFF leaves only the contrast, PAIR_OFF leaves only the structure term, both off is the frozen baseline.
+STRUCT_OFF = False
+PAIR_OFF = False
+GEOMETRY_ON = True
+STRUCT_TRIPLES = 512
+STRUCT_CALIBRATION_TRIPLES = 256
 ARM_VARIANT = "COMBO"
 
 
@@ -431,6 +439,29 @@ def main() -> None:
     final_raw_unique = 0
     codebook_sizes = list(config.codebook_size)
 
+    STRUCT_ON = not STRUCT_OFF
+    struct_graph = struct_scale = struct_lambda = struct_rng = None
+    if STRUCT_ON:
+        import random as _random
+        all_embeddings_device = all_embeddings.to(device)   # the structure term reads item positions from the full table
+        struct_graph = structure.build_graph(TRAIN_FILE, seed=SEED)
+        struct_scale = training_hooks.calibrate_structure_scale(
+            raw_module, all_embeddings_device, struct_graph, _random.Random(SEED),
+            size=STRUCT_CALIBRATION_TRIPLES, geometry_on=GEOMETRY_ON)
+        _probe = train_embeddings[:BATCH_SIZE_PER_RANK].to(device)
+        _recon, _qloss, _, _ = model(_probe)
+        _base, _ = raw_module.compute_loss(_probe, _recon, _qloss)
+        try:
+            struct_lambda, _detail = training_hooks.calibrate_lambda_block_budget(
+                raw_module, all_embeddings_device, struct_graph, _random.Random(SEED),
+                scale=struct_scale, size=STRUCT_CALIBRATION_TRIPLES, geometry_on=GEOMETRY_ON,
+                base_loss=_base)
+        except Exception as failure:
+            raise SystemExit(f"CALIBRATION_DEGENERATE: {failure}")
+        struct_rng = _random.Random(SEED + 7)
+        print(f"[RQ-VAE] structure lambda={struct_lambda:.6g} scale={struct_scale:.6g}", flush=True)
+        _record(rank, "structure_lambda", lambda_value=struct_lambda, scale=struct_scale)
+
     for epoch in range(1, EPOCHS + 1):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
@@ -449,6 +480,12 @@ def main() -> None:
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             behavior_loss = torch.zeros((), device=device)
+            if STRUCT_ON:
+                term = training_hooks.structure_term(
+                    raw_module, all_embeddings_device, struct_graph, struct_rng,
+                    scale=struct_scale, size=STRUCT_TRIPLES,
+                    behaviour_on=True, geometry_on=GEOMETRY_ON)
+                loss = loss + struct_lambda * term
             if epoch_weight > 0.0:
                 pairs = next(pair_cycle).to(device, non_blocking=True)
                 source_ids, target_ids = pairs[:, 0], pairs[:, 1]
