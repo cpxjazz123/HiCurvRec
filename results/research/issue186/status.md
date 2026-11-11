@@ -56,3 +56,7 @@ Issue 写「`struct_mixed` 在**一级用 `d_{κ_i}` 选码**，但残差仍是�
 ## `STEP_OFF` 在真实栈上逐位一致（本轮，**8 passed**）
 
 新测试 `test_step_off_matches_the_flat_path_through_the_real_stack`：同一 `MixedRQ` 权重下，(a) 不注册 `item_kappa`（基线的平直路径）与 (b) 注册 `κ_i=2` 且 `STEP_OFF=True`，**三级 token 与损失都 `torch.equal`**。这条把"只动了残差步"钉在真实量化栈上，而不只是 `mobius_sub` 单函数。
+
+## 冒烟 **PASS** → 正式训练已启动
+
+`SMOKE_PASS`；`applied_grad_norms` 八项全为有限正值（0.00069–0.00257）。冒烟单 epoch `collision=0.822833`（早期值仅记录）。训练已起（6 进程），epoch 288/3000、loss 1.46e-4。
