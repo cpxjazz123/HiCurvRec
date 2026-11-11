@@ -175,3 +175,11 @@
 3. `torch.sparse_csr` 在 CUDA 上下文已初始化后走的是不同的转换实现。
 
 下一步：在 `main()` 里给教师构建的每个阶段（边集 → `weights` → `to_sparse_csr` → `sparse.mm` → `to_sparse_coo`）各打一行 `time.time()` 差，用一次冒烟把真实瓶颈钉到具体一步，再决定是改构造方式还是改存储。**这一轮不猜、不改公式。**
+
+## 逐阶段计时结果：**教师构建不是瓶颈（共 ≈2.65 s）**
+
+冒烟日志实测：`edges+quantiles=1.11s`、`weights=0.13s`、`degree=0.42s`、`to_csr=0.20s`、`sparse_mm=0.28s`、`p_plus_p2=0.05s`（`to_coo` 因我把最后一段从打印里漏掉而未显示）。此前"卡在 sparse.mm"是**误读**——那只是最后一行日志的位置。
+
+真正的时间在构建之后：`structural_loss` 每步要为 batch 的全部 anchor 编码**候选并集**。1024 anchors × 最多 64 候选 ⇒ 并集可达数万行，`6 steps/epoch × 3000 epochs` 就是上亿次行编码，这才是冒烟跑不完的原因。
+
+**下一步（下轮）**：把每步参与结构损失的 anchor 数限制到一个**可推导**的值（例如沿用 R48 的 pair 采样比例，或按"每步候选并集 ≤ N"反推 anchor 上限），并在 manifest 里写明依据；不引入按指标调的常数。教师的 2.65 s 与 51M 非零元不再动。
