@@ -189,3 +189,12 @@
 `sd_step.ANCHORS_PER_STEP = 4096 // (16 + 16 + 32 + 1) = 63`：结构步要编码 `anchors + |候选并集|` 行，单个 anchor 的候选集合最多 64 个，因此 63 个 anchor 使该步的行数与 **R48 对比损失所花的 2×2048 = 4096 行**相同。依据写在注释与 manifest 口径里，**不是**按指标试出来的数。
 
 训练循环取 `batch_ids[:ANCHORS_PER_STEP]` 作为该步 anchor。全树 **44 passed**。
+
+## 冒烟第五轮：构建 2.4 s 完成，之后仍慢 —— 下一步给**探针与首步**加计时
+
+日志确认教师构建已走完（`edges+quantiles=0.92s`、`weights=0.14s`、`degree=0.41s`、`to_csr=0.20s`、`sparse_mm=0.29s`、`p_plus_p2=0.05s`，合计约 2.4 s，另 `to_coo` 未打印）。之后 3 分钟无输出，因此剩余嫌疑集中在两处：
+
+1. `to_coo`（51M 非零元 CSR→COO 的索引分配，离线约 2 s，但进程内可能显著更久）；
+2. `probe_lambda_star`（两次 `autograd.grad` 加一次 `structural_loss`）与其后的**第一个训练步**。
+
+下一轮：给 `to_coo`、探针（含 `next(iter(loader))`）、首个训练步各打时间戳，再次冒烟即可锁定。anchor 上限 63 已生效，本轮不再动常数。
