@@ -35,3 +35,9 @@
 第一次冒烟 PASS（`collision=0.847765`），但 metrics 里 **`kappa_refresh` 计数 = 0**。核查发现：我插入刷新块用的锚点 `_epoch_t1 = time.time()` 在本树中不存在（本树是 `epoch_time_s = round(time.time() - _epoch_t0, 3)`），那次 `str.replace` **静默失败**——于是累积的 `(κ_i, token)` 从未被消费，`κ_k ≡ 1`，**该次运行实际就是冻结基线**。
 
 已按本树的真实锚点（`epoch_time_s = ...` 之前）插入刷新块，`grep -c kappa_refresh` = 1，训练器可导入。教训：`str.replace` 的锚点必须回读确认，不能只信打印。
+
+## 冒烟 **PASS**，刷新确实生效（本轮实测）
+
+- `SMOKE_PASS`；metrics 中 `kappa_refresh` 事件**逐 epoch 记录**（到第 401 epoch 已 401 条），不再是静默 no-op。
+- 实测表在动：epoch 1 `moved=153 / empty=103 / floored=0`，`q05=0.556027、median=1.0、q95=1.455871`；epoch 401 `moved=66 / empty=190`、`q05=0.296023、q95=1.861915`——**κ_k 从常数 1 分化出来**，空码数随分组集中而上升（256 个码里 190 个在该 epoch 没分到商品）。
+- 训练进行中（6 进程），epoch 401/3000、loss 1.51e-4。
