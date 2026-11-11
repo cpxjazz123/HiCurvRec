@@ -23,3 +23,9 @@
 - `rcs_loss.step_terms(module, embeddings, κ)`：位置取**编码器输出**（欧氏半原样、双曲半过 `expmap0`），码向量取 `module.rq.levels[0].get_code_embs()[token_1]`——**带梯度**，这正是让 codebook block 进入预算视野的关键。
 - 训练器：数据集改为 `(embedding, id)`；λ 在首个 batch 上标定一次（encoder + codebooks 两 block），退化即 `SystemExit("CALIBRATION_DEGENERATE: …")`；随后每步 `loss += λ·L_rcs`；`TERM_OFF` 时 λ=0、分支不进入（与冻结基线逐位一致）。
 - 训练器在项目解释器下可导入。
+
+## 冒烟 **PASS**：两块梯度都非零（#187 的失败点已清除）
+
+`SMOKE_PASS`，日志给出 **`rcs lambda=2.55933e-05`** —— 说明预算规则**成功标定**，即 encoder 与 codebook 两个 block 的结构梯度都 **> 0**（若任一为 0，规则会 `CALIBRATION_DEGENERATE` 并拒绝训练；#187 正是死在这里）。
+
+`applied_grad_norms` 八项全为有限正值（0.00075–0.00269）。训练已起（6 进程），epoch 265/3000、loss 1.42e-4。λ 与各 block 比值已写入 metrics（`rcs_lambda` 事件）。
