@@ -55,6 +55,7 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
 from model import RQVAE
+from model import sd_step, struct_distill      # issue #181: the structural term and its schedule
 
 
 # === Paths (CLAUDE.md 19b0): derived from the repo marker, never absolute ===

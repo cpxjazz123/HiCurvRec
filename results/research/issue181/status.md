@@ -216,3 +216,9 @@
 去掉 `SparseRows` 的冗余排序后日志仍停在教师构建之后，排查到训练器里那段 `two_hop` 预计算：对每个节点展开两跳邻居，复杂度约 `Σ deg²`。本图的边有 32 万条、度分布长尾（存在度数百的枢纽），于是两跳池极大——既慢又占内存。
 
 修法（不改机制定义）：`struct_distill.two_hop_of(anchor, neighbours)` **按需**为当前 anchor 推导两跳池，`candidate_sets` 的 `two_hop` 参数允许为 `None`（此时逐 anchor 现算）；训练器不再预计算，只保留一跳邻接表。一步只有 63 个 anchor，因此每步只算 63 个两跳池。全树 **45 passed**。
+
+## 冒烟前进了一大步：探针 0.18 s 取到首批 → 修 `sd_step` 作用域
+
+去掉两跳预计算后，日志已出现 `probe: fetching the first batch` 与 `probe batch ready in 0.18s`——**取批不再是瓶颈**。随后失败在 `NameError: sd_step is not defined`：我在 `main()` 里用 `from model import … sd_step …` 局部导入，而 `probe_lambda_star` 是**模块级函数**，看不到局部名。
+
+修法：在 `train_rqvae.py` 顶部加 `from model import sd_step, struct_distill`（第 58 行），局部导入保留亦无碍。模块在项目解释器下可导入、`sd_step` 可见。
