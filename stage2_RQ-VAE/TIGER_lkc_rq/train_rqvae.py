@@ -531,12 +531,13 @@ def main() -> None:
         # ancestor fallback would also change later layers when L1 changes.
         for level in range(1, CODEBOOK_NUM + 1):
             model.rq.alpha_table.set(level, (), 0.5)
-    raw_module.rq.kappa_codes = r48k_geometry_learned.initial(int(config.codebook_size[0]))
     if XAVIER_INIT:
         initialize_tiger_weights(model)
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
     raw_module = model.module if isinstance(model, DDP) else model
+    # issue #184: the per-code curvature table starts at one and is refreshed at each epoch end
+    raw_module.rq.kappa_codes = r48k_geometry_learned.initial(int(config.codebook_size[0]))
     readout_parameters, af3_state = None, None
     sampling = np.random.default_rng(SEED)
     if OUTER_LOOP or AUX_AF3:
