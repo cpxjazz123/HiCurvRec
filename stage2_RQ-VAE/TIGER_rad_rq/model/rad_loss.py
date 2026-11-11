@@ -105,3 +105,20 @@ def calibrate_budget(blocks: dict, base_loss: torch.Tensor, struct_loss: torch.T
         ratios[name] = base[name] / value if base[name] is not None else 0.0
     lam = min(ratios.values())
     return lam, {"ratios": ratios, "lambda": lam}
+
+
+def positions(quantised: torch.Tensor, e_dim: int):
+    """Split the quantised readout into the Euclidean block and the hyperbolic block (the latter already in the ball)."""
+    return quantised[..., :e_dim], quantised[..., e_dim:]
+
+
+def step_terms(module, embeddings: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, dict]:
+    """``(base_loss, radius_loss, record)`` for one batch, along the module's own encoder-then-rq path."""
+    z = module.encoder(embeddings)
+    quantised, quant_loss, _, tokens = module.rq(z)
+    recon = module.decoder(quantised)
+    base = torch.nn.functional.mse_loss(recon, embeddings) + quant_loss
+    e_dim = quantised.shape[-1] // 2
+    pos_e, pos_h = positions(quantised, e_dim)
+    rad = radii(pos_e, pos_h)
+    return base, radius_loss(rad, tokens[:, 0].detach())[0], radius_loss(rad, tokens[:, 0].detach())[1]

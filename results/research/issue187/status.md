@@ -25,3 +25,9 @@
 - 仓库既有规则 `calibrate_lambda_block_budget` 在 `TIGER_struct_mixed_rq/training_hooks.py:60`，但它内部调用的是 **`structure_term`（抽样三元组成对项）**——本臂禁止使用。
 - 因此按"同一规则、换结构项"实现 `rad_loss.calibrate_budget(blocks, base_loss, struct_loss)`：`λ* = min_over_blocks ‖g_block^base‖/‖g_block^struct‖`，**无 ε、无种子切换、无回退**；任一 block 的结构梯度为 0 时抛 `CalibrationDegenerate`（`status="CALIBRATION_DEGENERATE"`），**不得静默继续训练**。
 - 新测试两项：预算等于最紧 block 的比值；结构梯度为 0 时必须拒绝（而不是返回猜测值）。
+
+## 训练循环接线（本轮）
+
+- `rad_loss.step_terms(module, embeddings)`：走模块自身的 `encoder → rq → decoder`，返回 `(base_term, radius_term, record)`；`positions` 按 16/16 切分量化读出（欧氏块/球面块）。
+- 训练器：`LAMBDA_RAD` 在首个 batch 上用 `rad_loss.calibrate_budget` 标定一次（encoder 与 codebook 两个 block），退化为 `SystemExit("CALIBRATION_DEGENERATE: …")`、**不训练**；随后每个 batch `loss += LAMBDA_RAD · radius_term`。`BEHAVIOUR_OFF` 时 `LAMBDA_RAD=0` 且分支不进入（与冻结基线逐位一致）。
+- 训练器在项目解释器下可导入（`raw_module.rq.vq_layers` 为正确属性名）。

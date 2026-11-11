@@ -36,6 +36,7 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
 from model import RQVAE
+from model import rad_loss
 from model.model import MixedRQVAE
 from model.af3_runtime import (input_identity, resolve_shared_readout,
                                snapshot_sha256, snapshot_state)
@@ -598,6 +599,20 @@ def main() -> None:
     final_raw_unique = 0
     codebook_sizes = list(config.codebook_size)
 
+    LAMBDA_RAD = 0.0
+    if not rad_loss.BEHAVIOUR_OFF:
+        _first_batch, _ = next(iter(loader))
+        _base_term, _rad_term, _ = rad_loss.step_terms(raw_module, _first_batch.to(device))
+        try:
+            LAMBDA_RAD, _budget = rad_loss.calibrate_budget(
+                {"encoder": list(raw_module.encoder.parameters()),
+                 "codebooks": [p for layer in raw_module.rq.vq_layers for p in layer.parameters()]},
+                _base_term, _rad_term)
+        except rad_loss.CalibrationDegenerate as failure:
+            raise SystemExit(f"CALIBRATION_DEGENERATE: {failure}")
+        print(f"[RQ-VAE] radius lambda={LAMBDA_RAD:.6g} ratios={_budget['ratios']}", flush=True)
+        _record(rank, "radius_lambda", lambda_value=LAMBDA_RAD, ratios=_budget["ratios"])
+
     for epoch in range(1, EPOCHS + 1):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
@@ -612,6 +627,10 @@ def main() -> None:
             reconstructed, quant_loss, _, _ = model(batch)
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
+            if LAMBDA_RAD > 0.0:
+                # issue #187: the radius dispersion inside each first-level group, dimensionless, no pairs anywhere
+                _base_term, _rad_term, _rad_record = rad_loss.step_terms(raw_module, batch)
+                loss = loss + LAMBDA_RAD * _rad_term
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             if AUX_AF3:
