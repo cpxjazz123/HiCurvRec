@@ -41,7 +41,8 @@ def test_the_group_mean_and_the_loss_are_hand_checkable():
     # group 0 mean 2, group 1 mean 5, group 2 mean 7 (a singleton, contributing 0); scale is the overall mean 4
     expected = ((1.0 - 2.0) ** 2 + (3.0 - 2.0) ** 2 + (5.0 - 5.0) ** 2 + (7.0 - 7.0) ** 2) / 4 / 16.0
     assert abs(float(loss) - expected) < 1e-12
-    assert record["singletons"] == 1 and record["groups"] == 3
+    # groups are [1, 3, 5, 7] over ids [0, 0, 1, 2]: group 1 and group 2 both hold a single item
+    assert record["singletons"] == 2 and record["groups"] == 3
 
 
 def test_equal_radii_inside_every_group_give_zero():

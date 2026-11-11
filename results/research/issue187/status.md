@@ -13,3 +13,9 @@
 ## 尚待
 
 把 `radius_loss` 接进训练循环（一级 token 作为 `group_ids`、λ 用仓库既有 `calibrate_lambda_block_budget` 初始化一次后冻结、`CALIBRATION_DEGENERATE` 时拒绝训练）、`BEHAVIOUR_OFF` 与冻结基线逐位一致、冒烟后派发 Stage2。
+
+## 测试修正后 **8 passed**
+
+两处失败都是测试/检查器自身的问题，不是机制：
+1. `singletons` 断言写成 1，实际组 `[0,0,1,2]` 有两个单样本组（组 1、组 2），**2 才是对的**；
+2. `is_pairwise_free` 把自己模块的 docstring 与它自己的 token 列表也扫进去了——改为**只扫可执行代码**（去掉模块 docstring 与本函数自身的字面量）后通过。
