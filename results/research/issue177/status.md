@@ -22,3 +22,11 @@
 - **测试 6/6 通过**（原点恒等、对称与自距离为 0、三角不等式、多 κ 参照一致、`GEOMETRY_OFF` 欧氏、`prefix_kappa`）。
 
 仍待：三层接线（第 1 层与 `TIGER_struct_mixed_rq` 逐位一致）、导出统计、一 epoch 冒烟，然后派发。
+
+## 接线前读到的关键事实（本轮）
+
+`TIGER_struct_mixed_rq` 的第 1 层**没有独立的"耦合项"**：`model/layers.py::_distances` 在 `mixed_geometry.GEOMETRY_ON` 且 `dim == E_DIM+H_DIM` 时只返回 E16×H16 的**乘积平方距离** `mixed_sq`，随后 `_indices` 在训练（或 `infer_use_sk`）时对 `center_distance` 后的矩阵跑 Sinkhorn（ε=0.003、`sk_iters`、`double()`），否则 `argmin`。
+
+因此 Issue 第 4 条的"与 `TIGER_struct_mixed_rq` 第 1 层完全相同的耦合项"应读作：**第 1 层沿用该臂的 `mixed_sq` + 同一 Sinkhorn 配置**（不是另有一项）；本臂第 2、3 层改为 `d_{κ_ℓ(p)}`，第 1 层保持 `κ_1 = 1` 且拓扑与配置逐位不变。这一读法已记入 commit 依据。
+
+接线还差：`kappa_prefix.json` 的**标记目录相对路径**加载（REPO_ROOT 推导，禁绝对路径）、`_distances` 按层选择 κ、前缀查表在 DDP 下的一致性（每 rank 用同一张冻结表即可，因表由导出 SID 与 κ 表确定）、导出统计与一 epoch 冒烟。
