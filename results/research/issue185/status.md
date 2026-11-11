@@ -17,3 +17,8 @@
 ## 测试：**8 passed**
 
 四项状态与刷新规则的测试全部通过（比值手算、clip 两端、`RATIO_OFF` 与欧氏**逐位相等**、`NUMERATOR_ONLY`/`DENOMINATOR_ONLY` 的退化、刷新均值与空码保持、无梯度、球内与重合点有限）。
+
+## 接线完成（本轮）
+
+- `model/mixed_rq.py`：`MixedVQLevel.distances/forward` 接受 `item_kappa/code_kappa`，给出时该层代价改为 `cmr.level1_cost(...)`；`MixedRQ` 持有 `kappa_codes`（κ_k）与 `item_kappa`（批内 κ_i），**只把这两者传给第 1 层**，其余层保持基线乘积代价（Sinkhorn 未改，§19h）。
+- `train_rqvae.py`：数据集改为 `(embedding, id)`、循环注册 `raw_module.rq.item_kappa = kappa_of(batch_ids)`（`try/finally` 清除）、累积 `(κ_i, 一级 token)` 并在 **`epoch_time_s = ...` 之前**刷新 `κ_k` 与记录 `kappa_refresh`（`grep -c` = 1，训练器可导入）。`κ_k` 初值 256 个 1.0。

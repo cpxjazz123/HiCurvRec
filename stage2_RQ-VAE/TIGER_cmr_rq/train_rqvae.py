@@ -36,6 +36,7 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
 from model import RQVAE
+from model import cmr_geometry
 from model.model import MixedRQVAE
 from model.af3_runtime import (input_identity, resolve_shared_readout,
                                snapshot_sha256, snapshot_state)
@@ -535,6 +536,8 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
     raw_module = model.module if isinstance(model, DDP) else model
+    # issue #185: kappa_k starts at one and is refreshed at each epoch end
+    raw_module.rq.kappa_codes = torch.ones(int(config.codebook_size[0]), dtype=torch.float64)
     readout_parameters, af3_state = None, None
     sampling = np.random.default_rng(SEED)
     if OUTER_LOOP or AUX_AF3:
@@ -551,7 +554,9 @@ def main() -> None:
             from model.af3_auxiliary import prepare_state, augment_loss
             af3_state = prepare_state(prepared["graph"], all_embeddings, device)
 
-    train_dataset = TensorDataset(train_embeddings)
+    # Issue #185: rows carry their ids so the level-1 cost can use each item's own curvature
+    train_ids_tensor = torch.from_numpy(train_ids.astype(np.int64))
+    train_dataset = TensorDataset(train_embeddings, train_ids_tensor)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -602,14 +607,20 @@ def main() -> None:
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
         model.train()
+        _cmr_pairs = []
         losses: list[float] = []
         recons: list[float] = []
         auxiliary_logs = []
         _epoch_t0 = time.time()
-        for (batch,) in loader:
+        for batch, batch_ids in loader:
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _ = model(batch)
+            _item_kappa = cmr_geometry.kappa_of(batch_ids)
+            raw_module.rq.item_kappa = _item_kappa
+            try:
+                reconstructed, quant_loss, _, _tokens = model(batch)
+            finally:
+                raw_module.rq.item_kappa = None
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             if not torch.isfinite(loss):
@@ -618,12 +629,24 @@ def main() -> None:
                 loss, auxiliary_log = augment_loss(loss, raw_module, af3_state, epoch, sampling)
                 auxiliary_logs.append(auxiliary_log)
             loss.backward()
+            if _tokens is not None:
+                _cmr_pairs.append((_item_kappa.detach(), _tokens[:, 0].detach().cpu()))
             if GRADIENT_CLIP_NORM > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIP_NORM)
             optimizer.step()
             scheduler.step()
             losses.append(float(loss.detach()))
             recons.append(float(recon_loss.detach()))
+        # issue #185: refresh kappa_k from this epoch's assignment and record what happened
+        if getattr(raw_module.rq, "kappa_codes", None) is not None and _cmr_pairs:
+            _items = torch.cat([pair[0] for pair in _cmr_pairs]).to(torch.float64)
+            _codes = torch.cat([pair[1] for pair in _cmr_pairs])
+            _new_table, _record_info = cmr_geometry.refresh_codes(raw_module.rq.kappa_codes, _items, _codes)
+            raw_module.rq.kappa_codes = _new_table
+            _qs = torch.quantile(_new_table, torch.tensor([0.05, 0.5, 0.95], dtype=_new_table.dtype))
+            _record(rank, "kappa_refresh", epoch=epoch, moved=_record_info["moved"], empty=_record_info["empty"],
+                    floored=_record_info["floored"], q05=round(float(_qs[0]), 6), median=round(float(_qs[1]), 6),
+                    q95=round(float(_qs[2]), 6))
         epoch_time_s = round(time.time() - _epoch_t0, 3)
 
         # === DDP all_reduce: 跨 rank 求平均 loss / recon ===

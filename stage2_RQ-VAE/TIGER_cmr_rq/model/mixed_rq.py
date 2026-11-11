@@ -156,19 +156,25 @@ class MixedVQLevel(nn.Module):
         return self.embed.weight
 
     def distances(self, residual_e: torch.Tensor, residual_h: torch.Tensor,
-                  alpha: torch.Tensor) -> torch.Tensor:
+                  alpha: torch.Tensor, item_kappa=None, code_kappa=None) -> torch.Tensor:
         codes = self.get_code_embs()
         codes_e, codes_h = split(codes)
-        return mixed_cost(residual_e, residual_h, codes_e, codes_h, alpha, self.curvature)
+        base = mixed_cost(residual_e, residual_h, codes_e, codes_h, alpha, self.curvature)
+        if item_kappa is None or code_kappa is None:
+            return base
+        # Issue #185: level 1 measures the item against the code it would join, at their relative curvature
+        from . import cmr_geometry as cmr
+        return cmr.level1_cost(torch.cat((residual_e, residual_h), dim=-1), codes, item_kappa, code_kappa)
 
     def forward(self, residual_e: torch.Tensor, residual_h: torch.Tensor,
-                alpha: torch.Tensor, infer_use_sk: bool = False):
+                alpha: torch.Tensor, infer_use_sk: bool = False,
+                item_kappa=None, code_kappa=None):
         """Quantize one level and return the new residual, the losses and the code.
 
         ``residual_e`` is ``[B, 16]``, ``residual_h`` is ``[B, 16]`` in the ball,
         ``alpha`` is ``[B]``.
         """
-        cost = self.distances(residual_e, residual_h, alpha)
+        cost = self.distances(residual_e, residual_h, alpha, item_kappa, code_kappa)
         index = self._indices(cost, infer_use_sk)
         codes = self.get_code_embs()
         codes_e, codes_h_tangent = split(codes)
@@ -302,6 +308,8 @@ class MixedRQ(nn.Module):
         sizes = [int(size) for size in sizes]
         self.curvature = float(curvature)
         self.alpha_table = alpha_table
+        self.kappa_codes = None    # issue #185: kappa_k, refreshed by the trainer each epoch
+        self.item_kappa = None     # issue #185: the current batch's kappa_i, registered around the forward pass
         self.levels = nn.ModuleList()
         for index, size in enumerate(sizes):
             last = index == len(sizes) - 1
@@ -343,7 +351,9 @@ class MixedRQ(nn.Module):
         for level, layer in enumerate(self.levels, start=1):
             alpha = self.alpha_table.lookups(level, tokens).to(z.device)
             (residual_e, residual_h), quant_loss, unused, index, picked_e, picked_h = layer(
-                residual_e, residual_h, alpha, infer_use_sk=infer_use_sk)
+                residual_e, residual_h, alpha, infer_use_sk=infer_use_sk,
+                item_kappa=self.item_kappa if level == 1 else None,
+                code_kappa=self.kappa_codes if level == 1 else None)
             codes_e.append(picked_e)
             codes_h.append(picked_h)
             tokens.append(index)
