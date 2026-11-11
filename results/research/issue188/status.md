@@ -29,3 +29,8 @@
 `SMOKE_PASS`，日志给出 **`rcs lambda=2.55933e-05`** —— 说明预算规则**成功标定**，即 encoder 与 codebook 两个 block 的结构梯度都 **> 0**（若任一为 0，规则会 `CALIBRATION_DEGENERATE` 并拒绝训练；#187 正是死在这里）。
 
 `applied_grad_norms` 八项全为有限正值（0.00075–0.00269）。训练已起（6 进程），epoch 265/3000、loss 1.42e-4。λ 与各 block 比值已写入 metrics（`rcs_lambda` 事件）。
+
+### 两点必须记清
+
+1. **比值**：metrics 的 `rcs_lambda` 显示 `ratios = {encoder: 2.2974e-05, codebooks: 4.5491e-04}`，`λ*` 取最小者（encoder 侧）。codebook 侧比值大约 20 倍，说明**码本块的结构梯度比编码器块小约 20 倍但确实非零**——这正是本臂相对 #187 的差别所在，也说明 λ 实际被编码器块支配。
+2. **rank 间差异**：日志打印 `2.55933e-05`、metrics 记录 `2.2974e-05`——每个 rank 用**自己**的首个 batch 标定，因此各 rank 的 λ 略有不同（同一规则、不同样本）。本轮如实并列记录，不取平均、不事后统一。
