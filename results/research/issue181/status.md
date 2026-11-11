@@ -198,3 +198,9 @@
 2. `probe_lambda_star`（两次 `autograd.grad` 加一次 `structural_loss`）与其后的**第一个训练步**。
 
 下一轮：给 `to_coo`、探针（含 `next(iter(loader))`）、首个训练步各打时间戳，再次冒烟即可锁定。anchor 上限 63 已生效，本轮不再动常数。
+
+## 构建确认 **2.39 s**（含 `to_coo=0.00s`），静默发生在**探针**
+
+本轮计时行：`edges+quantiles=0.95s`、`weights=0.13s`、`degree=0.42s`、`to_csr=0.20s`、`sparse_mm=0.29s`、`p_plus_p2=0.05s`、`to_coo=0.00s` —— 合计 **2.39 s**，教师构建彻底排除。构建之后约 4 分钟无任何输出（连 `probe batch ready in …` 也未打印），故瓶颈落在**探针的第一个动作之前或之内**：`next(iter(loader))` 之后我立刻要打印"batch ready"，它没出现，说明卡在 `next(iter(loader))` 本身（DataLoader 的 worker/pin_memory 首次填充）或探针前的模型准备。
+
+下一轮把时间戳再往前挪一层：`next(iter(loader))` 前后各一行，以及 `probe_lambda_star` 内部 encoder/rq/decoder/grad 四段。**仍不改任何常数与公式。**
