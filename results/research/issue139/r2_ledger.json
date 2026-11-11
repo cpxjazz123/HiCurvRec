@@ -1955,6 +1955,33 @@
       "test_recall@5"
     ]
   },
+  "71": {
+    "arm": "TIGER_snt_rq",
+    "files": {
+      "TIGER_snt_rq/math_spec.json": "fc2fb26cff5577ed1580ac81ecb78447f4b332036197d5648e895877bd8faebe",
+      "TIGER_snt_rq/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_snt_rq/model/hyperbolic_target.py": "772ee582a74570c9415a22b9d4b80337b1b8f18108999b394f2a3caf2d3af3c2",
+      "TIGER_snt_rq/model/layers.py": "51b287f6e280b09a5d3813d3b0050dda94b2cbec8edcda4eb1538b4a5b4f95d3",
+      "TIGER_snt_rq/model/model.py": "ba221245c40fd1083d2034b5835ef636149d3bdda1bbb4ab29e4b2f9f7a49c2b",
+      "TIGER_snt_rq/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_snt_rq/model/self_normalised.py": "38270edbd4df8911fb2cd711c8962da8881073d73ffccc1100b26d75b80495d1",
+      "TIGER_snt_rq/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_snt_rq/reference_contract.json": "a450744572f3a0f88bd55ecf11db8be61eea66aca64ba112f55fe540ce3ca490",
+      "TIGER_snt_rq/train_rqvae.py": "50c5686b0988f72b2f5fc7d6785a8a01eba25b5f1a336c6f7700ecac712fdc2c",
+      "item_sids.json": "578ac4ea0a8eb51cfcb667704ec9cf42627b362af1078e49bbbad55589fecede",
+      "recall.json": "98c3bab5ed8e6988529e7b7ab6e55688d7b1230859124fb61cb6546e02b6b72c",
+      "rqvae_best.pth": "30e0f6fbe0c63b2e9f71f1c38817a149649528fcd09f9daea71a62003218f169"
+    },
+    "key": "TIGER_snt_rq",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
   "R09": {
     "arm": "TIGER_M2_radial_manifold",
     "duplicate_of": "20",
