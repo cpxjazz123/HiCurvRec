@@ -147,3 +147,7 @@
 - `af3_teacher.pack/unpack`：把合并后的教师打成一个可传输的 payload（`shape`、`indices[int64]`、`values[float64]`、两个分位数），`unpack` 逐位还原。
 - 训练器里：`distributed.is_initialized() and rank != 0` 时**不构建**，按 `nnz → shape/quantiles → indices/values` 的顺序 4 次 `broadcast` 接收；rank 0 构建一次后同样广播。所有 rank 最终持有**同一张表**（逐位一致），`q05/q95` 也随之传递（不再各自计算）。
 - 测试 `test_pack_and_unpack_round_trip_the_teacher_bit_for_bit`：还原后的 `to_dense()` 与原件 `torch.equal`、q05/q95 相同。全树 **44 passed**。
+
+## 冒烟失败 → 修复（`distributed` 未定义）
+
+`NameError: name 'distributed' is not defined`：本树把 `torch.distributed` 导入为 **`dist`**（`import torch.distributed as dist`，第 52 行），而我在教师广播块里写了 `distributed.`。已把该块改为 `dist.`，并在项目解释器下确认 `train_rqvae.py` 可导入。
