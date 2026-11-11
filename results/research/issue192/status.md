@@ -25,3 +25,21 @@ Issue 要求 owner 在 A/B 中定夺，A 派发前需明确批准（成对族属
 **已派发冒烟**（worker pid 1327927，`smoke_pending`）。依据：执行规约「任何『需要某个选择/常数/定义/资产/权限』都不是停手理由——Issue 正文即授权」，与 #190 先例一致；本 Issue 正文已写清 A 的两项内容、合并方式（仓库既有预算规则取 min）、预注册（`≤0.064764` 永久关闭 / `>0.065` 达标 / 落在中间记为接近未达标并关闭）与判据。
 
 **否决路径**：若 owner 认定该族属禁令、要求回退，立即终止训练，本臂按"未批准"归档、不再开同类臂。基线与参照：0.056216 / 0.057905（`struct_mixed`）/ 0.064764（r48k2）/ 0.065。
+
+## 冒烟失败：**CALIBRATION_DEGENERATE（codebooks 结构梯度 = 0）** —— 与 #187 同型的结构互斥
+
+实测输出：
+
+```
+CALIBRATION_DEGENERATE: {'blocks': {
+  'encoder':   {'base_norm': 2.712e-04, 'structure_norm': 209.62, 'cosine': 0.0876},
+  'codebooks': {'base_norm': 3.083e-05, 'structure_norm': 0.0,   'cosine': None}},
+ 'degenerate_block': 'codebooks', 'lambda': None}
+```
+
+两个缺陷，均为实现层：
+
+1. **码本块结构梯度恒 0**：结构项的位置取自 `quantized = x + (x_q − x).detach()`——**straight-through 值对码本不可导**，梯度只回到编码器。`struct_mixed` 用的是它自己的 `ResidualTraceRQLayer` 的 `levels`（在码本侧可导），combo 树移植时只拿到了 ST 读出。这与 **#187 完全同型**：只要码本块拿不到结构梯度，冻结预算规则就必然判退化并拒绝训练——规则行为正确。
+2. **尺度失配**：encoder 侧 `structure_norm = 209.6` 对 `base_norm = 2.7e-4`，比值约 **7.7e5**——`struct_mixed` 的 `scale` 是按其自身模型的中位距离标定的，移植到 R48 stem 上量级完全不对（同一现象在 #190 以坍缩形式出现）。
+
+按 Issue 验收"两项各自梯度非零且预算规则可校准"：**未通过 ⇒ 不派发**。修复需要把 `struct_mixed` 的**可导窗口**（`ResidualTraceRQLayer` 的逐层 level，码本侧可导）一并移植进 combo 树，并把结构项的 `scale` 按 combo 自身的初始中位距离重新标定；这两项都属结构性改动，不在本轮预算内完成。
