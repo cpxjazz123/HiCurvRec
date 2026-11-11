@@ -14,3 +14,7 @@
 从 R48 继承的 `train_rqvae.py` 原本**硬编码绝对路径**（输出目录、embedding、train parquet、metrics、以及 `_LAUNCHER` 的 torchrun）。已全部改为：`ARM_NAME="TIGER_r48k2_rq"`、`ARM_VARIANT="R48K2"`、仓库根由标记目录（`stage2_RQ-VAE`/`results`/`stage1_GeneEmbedding`）向上推导，`RESULT_DIR = REPO_ROOT/"results"/"stage2_RQ-VAE"/ARM_NAME`，torchrun 由 `Path(sys.executable).parent` 推导。**树内 `/home/` 绝对路径计数 = 0**。
 
 τ=0.07、权重调度→0.20、配对/过滤、Sinkhorn(ε=0.003、50 sweeps、centring)、码本 256、3000 epoch、seed 42、全局 batch 4096 全部保持 R48 原样。
+
+## 冒烟 **PASS** → 正式训练已启动
+
+`SMOKE_PASS`、`"passed": true`。`applied_grad_norms` 六个全为**有限正值**（0.0558–0.0973，无 NaN/Inf），#178 的 `[NaN]` 未再出现；冒烟 epoch 内 `collision=0.878879`（单 epoch 早期值，仅记录）。训练已起（6 个相关进程），首个记录 epoch 1455/3000、loss 2.99e-4。
