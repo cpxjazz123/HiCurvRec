@@ -41,7 +41,8 @@ def test_scale_invariance_holds_in_the_linear_regime_and_is_bounded_outside_it()
         normalised, _ = sn.median_normalise(d)
         return ((normalised - 1.0) ** 2).mean()
 
-    k_small = torch.full((6,), 1e-3, dtype=torch.float64)     # sqrt(k)|x| << 1: the linear regime, median cancels exactly
+    # sqrt(k) = 1e-6 against |x| ~ 1e-1 leaves asinh(x)/x - 1 at 5e-15, so the linear regime is exact to float precision
+    k_small = torch.full((6,), 1e-12, dtype=torch.float64)
     base = stress(a, b, k_small)
     scaled = stress(a * 0.5, b * 0.5, k_small)
     assert abs(float(base) - float(scaled)) < 1e-9
@@ -61,3 +62,26 @@ def test_the_normalisation_keeps_the_kappa_dependence():
 
 def test_the_switches_default_to_the_arm():
     assert sn.GEOMETRY_OFF is False and sn.NORM_OFF is False and sn.BEHAVIOUR_OFF is False
+
+
+def test_structure_loss_without_kappa_is_struct_mixed_bitwise():
+    import structure as S
+    import mixed_geometry as G
+    torch.manual_seed(9)
+    points = torch.randn(4, 3, 6, dtype=torch.float64) * 0.2
+    h = torch.ones(4, 3, dtype=torch.float64)
+    got = S.structure_loss(points, h, scale=1.0, kappa_pairs=None)
+    ratios = torch.stack([G.mixed_sq(points[:, a], points[:, b]) / (1.0 * 1.0 * h[:, i] ** 2)
+                          for i, (a, b) in enumerate(S.PAIR_INDEX)], dim=-1)
+    assert torch.equal(got, ((ratios - 1.0) ** 2).mean())
+
+
+def test_the_normalised_state_drops_the_scale_entirely():
+    import structure as S
+    torch.manual_seed(10)
+    points = torch.randn(6, 3, 6, dtype=torch.float64) * 0.2
+    h = torch.ones(6, 3, dtype=torch.float64)
+    kappa_pairs = [torch.full((6,), k, dtype=torch.float64) for k in (0.7, 1.0, 1.3)]
+    one = S.structure_loss(points, h, scale=1.0, kappa_pairs=kappa_pairs)
+    ten = S.structure_loss(points, h, scale=10.0, kappa_pairs=kappa_pairs)
+    assert torch.equal(one, ten), "the scale argument must be ignored in the normalised state"
