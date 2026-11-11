@@ -19,3 +19,7 @@
 另补两项机器断言：
 - `structure_loss(kappa_pairs=None)` 与逐字重写的 `mixed_sq/(scale²h²)` 参照表达式 **`torch.equal` 逐位相等**（`GEOMETRY_OFF` / `BEHAVIOUR_OFF` 走这条路径）。
 - **`scale` 在归一化态下被完全忽略**：`scale=1` 与 `scale=10` 的输出 `torch.equal` 相等——这条把 Issue 的"自由参数 1→0"钉成机器可验证的事实。
+
+## 冒烟 **PASS** → 正式训练已启动
+
+`SMOKE_PASS`；`applied_grad_norms` 全为有限正值。冒烟单 epoch `collision=0.911742`（早期值仅记录）。训练已起（6 进程），见 `training_metrics.jsonl`。
