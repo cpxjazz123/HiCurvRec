@@ -79,7 +79,7 @@ def test_the_sparse_teacher_equals_the_dense_one():
     coo = [(0, 1), (1, 2), (2, 3), (1, 3)]
     dense, m1 = t.build(coo, 4)
     sparse, m2 = t.build_sparse(coo, 4)
-    assert torch.allclose(sparse.to_dense(), dense, atol=1e-12)
+    assert torch.allclose(sparse.to_dense().double(), dense, atol=1e-6)   # float32 storage, same definition
     assert m1["q05"] == m2["q05"] and m1["q95"] == m2["q95"]
 
 

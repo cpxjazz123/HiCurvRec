@@ -157,3 +157,10 @@
 改为 rank 0 构建后，冒烟 3 分钟仍停在 `torch.sparse.mm(p, p)`。离线单进程同一张图只要 7.1 s，差别在**内存**：51.1M 非零元的 `P²` 在 float64 下约 **1.2 GB**（值 409 MB + 两路 int64 索引 818 MB），`sparse.mm` 的中间 CSR 与时序还要再叠一层；四卡进程各自还常驻嵌入与模型，合计把主机压到换页区间。
 
 修法（不改公式，只改数值宽度与存储形态）：`P`/`P²` 用 **float32 + int32 索引**（非零元数值 ≈ 0.6 GB，索引减半），并在 `build_sparse` 里先以 CSR 做乘法再转回 COO 存 `T`。这与 Issue 要求的"教师冻结、公式不变"并不冲突——它改变的是 dtype 与存储，不是 `W`、`P`、`P²` 的定义。
+
+## 教师改窄存（本轮实测）
+
+- `build_sparse` 改为：`W` 归一化后**在 CSR 上做 `sparse.mm`**，`T=(P+P²)/2` 以 **float32 值**存储，再转回 COO；`SparseRows` 兼容窄 dtype/索引并做必要转换。
+- 真实图上实测：**构建 4.62 s**（此前 float64 版 7.13 s）、**峰值 RSS 6.47 GB**、nnz 51,144,592、值 dtype **float32**。
+- 如实记录偏差：索引最终仍是 **int64**——`to_sparse_csr()`/`coalesce()` 的内部往返把我 cast 的 int32 还原了，因此本轮只省下值的内存（409 MB 而非 818 MB），索引那一半没省。若要省索引需改用 `torch.sparse_csr_tensor` 直接构造并在 COO 侧避免 `coalesce`，留待需要时再做。
+- 测试相应把"稀疏=稠密"的比较改为 **float32 容差 1e-6**（存储变窄、定义不变），pack/unpack 往返改为 `torch.equal`（同一 dtype 下应逐位一致）。全树 **44 passed**。

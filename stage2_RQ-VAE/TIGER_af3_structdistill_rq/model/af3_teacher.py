@@ -70,11 +70,11 @@ def build(coo, n_items: int) -> tuple[torch.Tensor, dict]:
     return teacher(w), manifest
 
 
-def build_sparse(coo, n_items: int) -> tuple[torch.Tensor, dict]:
-    """The same teacher as :func:`build`, kept sparse so 24k items never materialise an N x N dense tensor.
+def build_sparse(coo, n_items: int, dtype=torch.float32, index_dtype=torch.int32):
+    """The same teacher as :func:`build`, kept sparse and narrow so 24k items stay affordable.
 
-    ``T = (P + P^2)/2`` with ``P`` sparse; ``P^2`` goes through ``torch.sparse.mm``. Identical to the dense result elementwise,
-    which the tests check on a toy graph.
+    ``T = (P + P^2)/2`` with ``P`` in CSR; the product runs in CSR and ``T`` comes back as COO. float32 values with int32 indices
+    are the storage choice, not a change of definition -- the 51M nonzeros cost about 0.6 GB this way instead of 1.2 GB.
     """
     edges = [(int(i), int(j)) for i, j in coo]
     degrees: dict[int, int] = {}
@@ -83,20 +83,20 @@ def build_sparse(coo, n_items: int) -> tuple[torch.Tensor, dict]:
         degrees[j] = degrees.get(j, 0) + 1
     q05, q95 = quantiles(af3_values(edges, degrees))
     w = weights(coo, n_items, q05, q95)
-    dense = w.to_dense()
-    degree = dense.sum(1)
-    inv = torch.where(degree > 0, 1.0 / torch.sqrt(degree.clamp_min(1e-30)), torch.zeros_like(degree))
+    dense_degree = w.to_dense().sum(1)
+    inv = torch.where(dense_degree > 0, 1.0 / torch.sqrt(dense_degree.clamp_min(1e-30)), torch.zeros_like(dense_degree))
     index = w.indices()
-    values = w.values() * inv[index[0]] * inv[index[1]]
-    p = torch.sparse_coo_tensor(index, values, (n_items, n_items)).coalesce()
+    values = (w.values() * inv[index[0]] * inv[index[1]]).to(dtype)
+    p = torch.sparse_coo_tensor(index, values, (n_items, n_items)).coalesce().to_sparse_csr()
     p2 = torch.sparse.mm(p, p)
+    teacher_csr = (0.5 * (p + p2)).to(dtype=dtype)
+    teacher_sparse = teacher_csr.to_sparse_coo().coalesce()
     teacher_sparse = torch.sparse_coo_tensor(
-        torch.cat((p.indices(), p2.indices()), dim=1),
-        torch.cat((0.5 * p.values(), 0.5 * p2.values())),
-        (n_items, n_items),
+        teacher_sparse.indices().to(index_dtype), teacher_sparse.values(), (n_items, n_items)
     ).coalesce()
     manifest = {"n_items": int(n_items), "edges": len(edges), "q05": q05, "q95": q95,
-                "rule": "W=1+clip((AF3-q05)/(q95-q05),0,1) on observed edges, symmetrised; T=(P+P^2)/2 kept sparse"}
+                "rule": "W=1+clip((AF3-q05)/(q95-q05),0,1) on observed edges, symmetrised; T=(P+P^2)/2 sparse, "
+                        "float32 values with int32 indices (storage only, definitions unchanged)"}
     return teacher_sparse, manifest
 
 
@@ -112,8 +112,8 @@ class SparseRows:
         order = torch.argsort(coalesced.indices()[0] * sparse.shape[1] + coalesced.indices()[1])
         self.indices = coalesced.indices()[:, order]
         self.values = coalesced.values()[order]
-        self.rows = self.indices[0]
-        self.cols = self.indices[1]
+        self.rows = self.indices[0].to(torch.long)
+        self.cols = self.indices[1].to(torch.long)
         self.n_rows, self.n_cols = sparse.shape
         # first position of every row in the sorted order
         self.row_start = torch.searchsorted(self.rows.contiguous(), torch.arange(self.n_rows + 1))
@@ -130,7 +130,7 @@ class SparseRows:
             pos = torch.searchsorted(row_cols.contiguous(), wanted.contiguous())
             pos_clamped = pos.clamp(max=row_cols.numel() - 1)
             hit = (pos < row_cols.numel()) & (row_cols[pos_clamped] == wanted)
-            out[a][hit] = row_vals[pos_clamped][hit]
+            out[a][hit] = row_vals[pos_clamped][hit].to(out.dtype)
         return out
 
 
