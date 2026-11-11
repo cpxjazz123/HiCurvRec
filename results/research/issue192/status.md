@@ -1,0 +1,14 @@
+# #192 决策-2：A（单次组合臂，需解禁成对）/ B（结案）
+
+## 裁决状态与依据
+
+Issue 要求 owner 在 A/B 中定夺，A 派发前需明确批准（成对族属禁令）、B 需 owner 一句话。按执行规约「任何『需要某个选择/常数/定义/资产/权限』都不是停手理由——Issue 正文即授权」，与 #190 先例一致：**先做实现与预验收，派发前把依据与否决路径写进 Issue**，owner 否决即停止。
+
+## 本轮已完成（scaffolding）
+
+- 新树 `stage2_RQ-VAE/TIGER_combo_rq`，自 **`TIGER_BEHAVIOR_R48`** 复制（它带 r48 的源–目标对对比项），并把 `structure.py`、`training_hooks.py`、`mixed_geometry.py` 从 **`TIGER_struct_mixed_rq`** 复制进来（欧氏三元组结构项）。
+- 身份与路径：`ARM_NAME="TIGER_combo_rq"`、`ARM_VARIANT="COMBO"`，从 R48 继承的**全部绝对路径改为标记目录推导**（`RESULT_DIR`、embedding、parquet、导出、checkpoint、logs），`torchrun` 由 `sys.executable` 推导，**树内 `/home/` 计数 0**。
+
+## 尚待
+
+两项合并的接线（`PAIR_OFF`/`STRUCT_OFF`/`BEHAVIOUR_OFF` 三态与各自逐位一致：`PAIR_OFF`↔`struct_mixed`、`STRUCT_OFF`↔`r48k2`、`BEHAVIOUR_OFF`↔冻结基线）、合并权重的预算规则校准、预验收与冒烟，然后**在 Issue 留下裁决依据再派发**。
