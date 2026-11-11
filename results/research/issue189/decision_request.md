@@ -28,3 +28,18 @@ owner 2026-11-11 对 A/B/C 三选项的回复是「你发 commit 问问」。按
 
 - **不自行关闭**（Issue 明确要求）、**不实现、不派发、不改源码**。
 - 证据链均在库：`results/research/issue177..188/`（每条含 Stage2 结果、§63 报告、`test_final.json`）与 `r2:genrec/62..70/` 归档。
+
+## 证据链机械核对（自审计，8/8 一致）
+
+对 #189 表格里六个已完成臂逐项核对（SID 存在、Stage3 `test_final.json` 存在、`recall@10` 与结果文档一致、`r2_ledger.json` 有条目）：
+
+| 臂 | Issue | SID | Stage3 结果 | `recall@10` | 结果文档 | R2 ledger |
+|---|---|---|---|---|---|---|
+| `TIGER_lkc_rq` | 184 | ✓ | ✓ | 0.056408 | ✓ | ✓ |
+| `TIGER_rcs_rq` | 188 | ✓ | ✓ | 0.055746 | ✓ | ✓ |
+| `TIGER_cmr_rq` | 185 | ✓ | ✓ | 0.054127 | ✓ | ✓ |
+| `TIGER_mbr_rq` | 186 | ✓ | ✓ | 0.054110 | ✓ | ✓ |
+| `TIGER_af3_structdistill_rq` | 181 | ✓ | ✓ | 0.054266 | ✓ | ✓ |
+| `TIGER_hc3_rq` | 177 | ✓ | ✓ | 0.054023 | ✓ | ✓ |
+
+六个数字与各臂 `stage3_result.md`、Issue 关闭评论、以及本决策请求表格**逐位一致**；`r2:genrec/62–70/` 均有归档条目。证据链可用于 owner 定夺。
