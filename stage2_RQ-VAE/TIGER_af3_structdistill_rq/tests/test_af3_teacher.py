@@ -30,9 +30,9 @@ def test_quantiles_and_the_clipping_span():
 
 
 def test_weights_keep_bridge_edges_strictly_positive():
-    # a path 0-1-2-3 plus a triangle 1-2-3, giving mixed degrees and therefore unequal AF3 values
+    # a path 0-1-2-3 plus the chord 1-3, giving mixed degrees and therefore unequal AF3 values
     coo = [(0, 1), (1, 2), (2, 3), (1, 3)]
-    degrees = {0: 1, 1: 3, 2: 2, 3: 3}
+    degrees = {0: 1, 1: 3, 2: 2, 3: 2}
     af3 = t.af3_values(coo, degrees)
     q05, q95 = t.quantiles(af3)
     w = t.weights(coo, 4, q05, q95).to_dense()
@@ -50,8 +50,10 @@ def test_teacher_is_symmetric_and_reproduces_the_definition():
     coo = [(0, 1), (1, 2), (2, 3), (1, 3)]
     teacher, manifest = t.build(coo, 4)
     assert torch.allclose(teacher, teacher.t(), atol=1e-12)
-    # the definition, rebuilt through the same public helpers the module exposes
-    degrees = {0: 1, 1: 3, 2: 2, 3: 3}
+    # the definition, rebuilt through the same public helpers the module exposes.
+    # node 3 appears in (2,3) and (1,3), so its degree is 2, not 3 -- an earlier hand-written dict had 3 and made this test fail
+    # against a correct teacher.
+    degrees = {0: 1, 1: 3, 2: 2, 3: 2}
     q05, q95 = t.quantiles(t.af3_values(coo, degrees))
     p_dense = t.normalized(t.weights(coo, 4, q05, q95))
     assert torch.allclose(teacher, 0.5 * (p_dense + p_dense @ p_dense), atol=1e-12)
