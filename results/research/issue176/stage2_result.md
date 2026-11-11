@@ -11,3 +11,18 @@
 - 实测 **β = 2.332169**（epoch 1 的 `mean(L_RQ)/mean(L_unique)`，冻结后未变）——接近论文 2.0，说明把分母从 `|P|` 换成 `B` 后项的量级回到与 `L_RQ` 可比的范围。
 - 碰撞率 4.43%：比基线好（1/3.7），但比 #175 的 1.57% 差——正是"削弱唯一性项强度"的直接代价，符合 Issue 的设计意图（用碰撞换召回）。
 - §89 准入（<0.40）：**通过**，可进 Stage3。
+
+## §63 全量数值
+
+| 量 | DUL-S | #175 DUL | 基线 |
+|---|---|---|---|
+| §63 `l3_collision` | **0.082605** | 0.030707 | — |
+| 二级不同前缀 | **7964** | 12284 | — |
+| 三级不同组合 | 23498 | 24201 | — |
+| L1 Hard ER | **3.6108** | 1.5388 | 16.1417 |
+| L3 Refinement Gain (bits) | 2.1659 | 1.3350 | — |
+| Conditional G3 | −0.0377 | −0.0089 | — |
+
+## Stage3 已启动
+
+`stage3_start(item_sids="results/stage2_RQ-VAE/TIGER_dul_s_rq/item_sids.json")` → pid 1521653，variant `TIGER_dul_s_rq`，四卡 DDP；冻结协议核验一致（150 epoch、`NO_EVAL=True`、`SKIP_TEST=False`、seed 42、beam 20，`mismatched={}`、无早停），§63 记录复用（`passed: true`）。
