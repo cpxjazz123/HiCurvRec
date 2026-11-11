@@ -18,7 +18,7 @@ def test_normalisation_is_the_batch_size_not_the_pair_count():
     tokens = torch.tensor([[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2]], dtype=torch.long)
     loss = ul.uniqueness_loss(z, tokens)
     # two pairs of cos 1 each, relu(1 - 0.9) = 0.1 -> total 0.2; divided by B = 4 (not |P| = 2)
-    assert abs(float(loss) - 0.05) < 1e-9
+    assert abs(float(loss) - 0.05) < 1e-6   # float32 accumulation, not a bound on the definition
 
 
 def test_zero_pairs_is_a_finite_zero():

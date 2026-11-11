@@ -724,7 +724,6 @@ def main() -> None:
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
                     unique_pairs=unique_loss_module.LAST_STATS.get("pairs"),
-                    unique_beta=unique_loss_module.beta(),
                     unique_ratio=(unique_loss_module.beta() * (unique_loss_module.LAST_STATS.get("loss") or 0.0))
                     / max(avg_loss, 1e-12),
                     unique_beta=unique_loss_module.beta(),
