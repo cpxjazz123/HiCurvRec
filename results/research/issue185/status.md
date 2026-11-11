@@ -22,3 +22,9 @@
 
 - `model/mixed_rq.py`：`MixedVQLevel.distances/forward` 接受 `item_kappa/code_kappa`，给出时该层代价改为 `cmr.level1_cost(...)`；`MixedRQ` 持有 `kappa_codes`（κ_k）与 `item_kappa`（批内 κ_i），**只把这两者传给第 1 层**，其余层保持基线乘积代价（Sinkhorn 未改，§19h）。
 - `train_rqvae.py`：数据集改为 `(embedding, id)`、循环注册 `raw_module.rq.item_kappa = kappa_of(batch_ids)`（`try/finally` 清除）、累积 `(κ_i, 一级 token)` 并在 **`epoch_time_s = ...` 之前**刷新 `κ_k` 与记录 `kappa_refresh`（`grep -c` = 1，训练器可导入）。`κ_k` 初值 256 个 1.0。
+
+## 冒烟 **PASS**，刷新逐 epoch 记录（本轮实测）
+
+- `SMOKE_PASS`；`applied_grad_norms` 八项全为有限正值（0.00068–0.00255）。
+- `kappa_refresh` 逐 epoch 记录：epoch 1 `moved=153 / empty=103`、`q05=0.5614 / median=1.0 / q95=1.4559`；epoch 150 `moved=39 / empty=217`、`q05=0.2967 / q95=1.7400`——**κ_k 从 1 分化，空码随分配集中上升**（与 #184 同型，但本臂的代价还带 `κ_i` 作分子）。
+- 训练进行中（6 进程），epoch 150/3000、loss 1.51e-4。
