@@ -36,6 +36,7 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
 from model import RQVAE
+from model import r48k_geometry_learned
 from model.model import MixedRQVAE
 from model.af3_runtime import (input_identity, resolve_shared_readout,
                                snapshot_sha256, snapshot_state)
@@ -530,6 +531,7 @@ def main() -> None:
         # ancestor fallback would also change later layers when L1 changes.
         for level in range(1, CODEBOOK_NUM + 1):
             model.rq.alpha_table.set(level, (), 0.5)
+    raw_module.rq.kappa_codes = r48k_geometry_learned.initial(int(config.codebook_size[0]))
     if XAVIER_INIT:
         initialize_tiger_weights(model)
     if world_size > 1:
@@ -551,7 +553,9 @@ def main() -> None:
             from model.af3_auxiliary import prepare_state, augment_loss
             af3_state = prepare_state(prepared["graph"], all_embeddings, device)
 
-    train_dataset = TensorDataset(train_embeddings)
+    # Issue #184: rows carry their ids so the epoch-end curvature refresh can average the assigned items' kappa
+    train_ids_tensor = torch.from_numpy(train_ids.astype(np.int64))
+    train_dataset = TensorDataset(train_embeddings, train_ids_tensor)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -602,14 +606,15 @@ def main() -> None:
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
         model.train()
+        _lkc_pairs: list[tuple[torch.Tensor, torch.Tensor]] = []
         losses: list[float] = []
         recons: list[float] = []
         auxiliary_logs = []
         _epoch_t0 = time.time()
-        for (batch,) in loader:
+        for batch, batch_ids in loader:
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _ = model(batch)
+            reconstructed, quant_loss, _, _tokens = model(batch)
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             if not torch.isfinite(loss):
@@ -618,6 +623,8 @@ def main() -> None:
                 loss, auxiliary_log = augment_loss(loss, raw_module, af3_state, epoch, sampling)
                 auxiliary_logs.append(auxiliary_log)
             loss.backward()
+            if raw_module.rq.kappa_codes is not None and _tokens is not None:
+                _lkc_pairs.append((r48k_geometry_learned.kappa_of(batch_ids), _tokens[:, 0].detach().cpu()))
             if GRADIENT_CLIP_NORM > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIP_NORM)
             optimizer.step()

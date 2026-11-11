@@ -19,3 +19,13 @@
 - `model/mixed_rq.py`：`MixedVQLevel.distances/forward` 接受可选 `kappa_codes`，给出时该层代价改为 `lk.level1_cost(cat(r_e, r_h), codes, κ_codes)`（**只有第 1 层**由 `MixedRQ.forward` 传入，其余层仍用基线的乘积代价）；`MixedRQ` 持有 `self.kappa_codes` 供训练器刷新。
 - `r48k_geometry_learned.update` 的均值赋值改为在 `torch.no_grad()` 内完成并对结果 `detach()`——**刷新是分配的统计量、不是可微路径**（Issue 验收 4）。
 - 测试修正一处：表项是 float32，`0.7` 的比较容差从 1e-12 放宽到 1e-6（存储精度，不是实现松弛）；`update` 无梯度断言此前失败，正是缺 `detach` 的真实缺陷。
+
+## 继承测试失败的定性（重要）
+
+在**未改动的冻结基线** `TIGER_mixed_rq` 上跑同一套 `tests/`：**10 failed / 109 passed**；本树 **10 failed / 116 passed**——**同样的 10 个失败在基线上就存在**（`test_support_regressions.py` 的配额用例、`test_prefix_eligibility.py` 的陈旧前缀用例等），与本机制无关；本树多出的 7 个通过用例正是 `test_lkc.py`。
+
+## epoch 末刷新已接线
+
+- 数据集改为 `(embedding, id)`；循环解包 `batch, batch_ids`；每 batch 把 `(κ_of(batch_ids), 一级 token)` 累积下来。
+- epoch 末调用 `r48k_geometry_learned.update(...)`，新表写回 `raw_module.rq.kappa_codes`，并把 `{moved, empty, floored}` 与 κ 的 5%/50%/95% 分位数写入 metrics（`kappa_refresh` 事件）。
+- 初始 `κ_k(0) = 1.0`（256 个码）。
