@@ -361,7 +361,9 @@ class MixedRQ(nn.Module):
             kappa = None
             if HC3_ON and level >= 2:
                 from . import kappa_table
-                kappa = kappa_table.kappa_for_rows(tokens.tolist(), level)
+                # ``tokens`` is the list of per-level index tensors, so the prefix matrix is built by stacking, not tolist().
+                prefix = torch.stack(tokens, dim=1) if tokens else torch.zeros((z.shape[0], 0), dtype=torch.long)
+                kappa = kappa_table.kappa_for_rows(prefix, level)
             (residual_e, residual_h), quant_loss, unused, index, picked_e, picked_h = layer(
                 residual_e, residual_h, alpha, infer_use_sk=infer_use_sk, kappa=kappa)
             codes_e.append(picked_e)
@@ -385,7 +387,9 @@ class MixedRQ(nn.Module):
             kappa = None
             if HC3_ON and level >= 2:
                 from . import kappa_table
-                kappa = kappa_table.kappa_for_rows(tokens.tolist(), level)
+                # ``tokens`` is the list of per-level index tensors, so the prefix matrix is built by stacking, not tolist().
+                prefix = torch.stack(tokens, dim=1) if tokens else torch.zeros((z.shape[0], 0), dtype=torch.long)
+                kappa = kappa_table.kappa_for_rows(prefix, level)
             (residual_e, residual_h), _, _, index, _, _ = layer(
                 residual_e, residual_h, alpha, infer_use_sk=True, kappa=kappa)
             tokens.append(index)

@@ -66,3 +66,18 @@ def test_switch_off_reproduces_the_reference_stack(monkeypatch):
     readout, loss, unused, tokens = table(z)
     assert tokens.shape == (5, 3)
     assert bool(torch.isfinite(loss).all())
+
+
+def test_the_switch_on_stack_actually_resolves_kappa_from_its_own_tokens():
+    # regression for the smoke crash: MixedRQ.forward used to call .tolist() on the token *list* before any level appended,
+    # so the real entry died with "'list' object has no attribute 'tolist'" during codebook initialisation
+    table = mr.MixedRQ([16, 16, 16], mr.AlphaTable(levels=3), curvature=1.0)
+    torch.manual_seed(11)
+    z = torch.randn(6, DIM_E + DIM_H, dtype=torch.float64) * 0.1
+    readout, loss, unused, tokens = table(z)
+    assert tokens.shape == (6, 3)
+    assert bool(torch.isfinite(loss).all())
+    # and it is genuinely using the table, not silently the level-1 path
+    from model import kappa_table
+    assert mr.HC3_ON is True
+    assert kappa_table.kappa_for_rows(tokens[:, :1], 2).shape == (6, 1)

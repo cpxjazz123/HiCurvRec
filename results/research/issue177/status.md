@@ -58,3 +58,9 @@
 
 - 注：传 `stage2_RQ-VAE/TIGER_hc3_rq`（带前缀的相对路径）被拒绝，工具只接受**裸树名**；裸名 `TIGER_hc3_rq` 通过。该形态已记录。
 - 下一步：真实入口一 epoch 冒烟（`check_entry`）→ 3000 epoch 四卡训练；冒烟结论与逐层导出统计由 `stage2_status` / 导出文件给出。
+
+## 冒烟失败 → 修复重新派发
+
+一 epoch 冒烟在 `train_rqvae.py:591` 崩：`AttributeError: 'list' object has no attribute 'tolist'`。原因是我在 `MixedRQ.forward` / `encode_tokens` 里对 `tokens`（**逐层 index 张量的 list**）直接调 `.tolist()`；层 1 之前该 list 为空，层 2 时它也仍是 list。
+
+修复：用 `torch.stack(tokens, dim=1)` 组成前缀矩阵再交给 `kappa_for_rows`（空时给 `[B,0]`）。补**回归测试** `test_the_switch_on_stack_actually_resolves_kappa_from_its_own_tokens`（开关打开时跑通 `MixedRQ.forward`、损失有限、且确实走 κ 解析），连同前三套 **17 passed**。
