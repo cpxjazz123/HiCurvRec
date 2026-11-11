@@ -71,3 +71,30 @@ def test_the_switch_off_returns_exactly_zero():
 def test_no_pairwise_machinery_is_present_in_the_module():
     source = Path(rl.__file__).read_text()
     assert rl.is_pairwise_free(source)
+
+
+def test_the_budget_is_the_tightest_block_ratio():
+    torch.manual_seed(0)
+    encoder = torch.nn.Linear(4, 3, bias=False, dtype=torch.float64)
+    codebook = torch.nn.Linear(3, 2, bias=False, dtype=torch.float64)
+    blocks = {"encoder": list(encoder.parameters()), "codebooks": list(codebook.parameters())}
+    x = torch.randn(5, 4, dtype=torch.float64)
+    base = encoder(x).sum() + codebook(encoder(x)).sum()
+    struct = (encoder(x).pow(2).sum()) * 2.0 + (codebook(encoder(x)).pow(2).sum())
+    lam, record = rl.calibrate_budget(blocks, base, struct)
+    assert lam == min(record["ratios"].values())
+    assert lam > 0.0
+
+
+def test_a_vanishing_structure_gradient_refuses_calibration():
+    encoder = torch.nn.Linear(4, 3, bias=False, dtype=torch.float64)
+    blocks = {"encoder": list(encoder.parameters())}
+    x = torch.randn(5, 4, dtype=torch.float64)
+    base = encoder(x).sum()
+    constant = torch.zeros((), dtype=torch.float64, requires_grad=True)
+    try:
+        rl.calibrate_budget(blocks, base, constant)
+    except rl.CalibrationDegenerate as failure:
+        assert failure.status == "CALIBRATION_DEGENERATE"
+    else:                     # pragma: no cover - the rule must refuse
+        raise AssertionError("calibration must refuse a zero structure gradient")

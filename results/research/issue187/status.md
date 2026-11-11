@@ -19,3 +19,9 @@
 两处失败都是测试/检查器自身的问题，不是机制：
 1. `singletons` 断言写成 1，实际组 `[0,0,1,2]` 有两个单样本组（组 1、组 2），**2 才是对的**；
 2. `is_pairwise_free` 把自己模块的 docstring 与它自己的 token 列表也扫进去了——改为**只扫可执行代码**（去掉模块 docstring 与本函数自身的字面量）后通过。
+
+## λ 预算（本轮，**10 passed**）
+
+- 仓库既有规则 `calibrate_lambda_block_budget` 在 `TIGER_struct_mixed_rq/training_hooks.py:60`，但它内部调用的是 **`structure_term`（抽样三元组成对项）**——本臂禁止使用。
+- 因此按"同一规则、换结构项"实现 `rad_loss.calibrate_budget(blocks, base_loss, struct_loss)`：`λ* = min_over_blocks ‖g_block^base‖/‖g_block^struct‖`，**无 ε、无种子切换、无回退**；任一 block 的结构梯度为 0 时抛 `CalibrationDegenerate`（`status="CALIBRATION_DEGENERATE"`），**不得静默继续训练**。
+- 新测试两项：预算等于最紧 block 的比值；结构梯度为 0 时必须拒绝（而不是返回猜测值）。

@@ -62,3 +62,46 @@ def is_pairwise_free(source: str) -> bool:
     body = body.split("def is_pairwise_free")[0]      # and this checker's own literal
     forbidden = ("triple", "margin", "InfoNCE", "infonce", "BCE", "bce_loss", "edge_index", "source_target")
     return not any(token in body for token in forbidden)
+
+
+class CalibrationDegenerate(RuntimeError):
+    """The budget rule has no finite answer, so training must not start."""
+
+    status = "CALIBRATION_DEGENERATE"
+
+
+def calibrate_budget(blocks: dict, base_loss: torch.Tensor, struct_loss: torch.Tensor) -> tuple[float, dict]:
+    """``lambda* = min over blocks ||g_block^base|| / ||g_block^struct||``, the repository's frozen budget rule.
+
+    Same rule as ``training_hooks.calibrate_lambda_block_budget`` -- no epsilon, no seed switching, no fallback -- but its structure term is this
+    module's radius loss, because the hooks' term is the pairwise triple objective this arm may not use. A block whose structure gradient
+    vanishes makes the budget undefined and raises :class:`CalibrationDegenerate` instead of returning a guess.
+    """
+    flat = [p for params in blocks.values() for p in params if p.requires_grad]
+    if not flat:
+        raise CalibrationDegenerate("no trainable parameters in the supervised blocks")
+
+    def block_norms(term: torch.Tensor) -> dict:
+        grads = torch.autograd.grad(term, flat, retain_graph=True, allow_unused=True)
+        out, cursor = {}, 0
+        for name, params in blocks.items():
+            collected = []
+            for p in params:
+                if not p.requires_grad:
+                    continue
+                g = grads[cursor]
+                cursor += 1
+                collected.append(torch.zeros_like(p) if g is None else g)
+            stack = torch.cat([g.reshape(-1) for g in collected]) if collected else None
+            out[name] = None if stack is None else float(stack.norm())
+        return out
+
+    base = block_norms(base_loss)
+    struct = block_norms(struct_loss)
+    ratios = {}
+    for name, value in struct.items():
+        if value is None or value <= 0.0:
+            raise CalibrationDegenerate(f"block {name} has no structure gradient (norm={value})")
+        ratios[name] = base[name] / value if base[name] is not None else 0.0
+    lam = min(ratios.values())
+    return lam, {"ratios": ratios, "lambda": lam}
