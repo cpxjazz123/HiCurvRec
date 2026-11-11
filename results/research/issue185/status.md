@@ -13,3 +13,7 @@
 ## 尚待
 
 一级代价接进 `MixedVQLevel`（仅第 1 层）、训练器 epoch 末刷新并记录 `ρ` 分位数与 `{moved, empty, floored}`、`NUMERATOR_ONLY` 与 `TIGER_struct_mixed_rq` 的损失逐位一致（双强回归的第二条）、一 epoch 冒烟，然后派发 Stage2。
+
+## 测试：**8 passed**
+
+四项状态与刷新规则的测试全部通过（比值手算、clip 两端、`RATIO_OFF` 与欧氏**逐位相等**、`NUMERATOR_ONLY`/`DENOMINATOR_ONLY` 的退化、刷新均值与空码保持、无梯度、球内与重合点有限）。
