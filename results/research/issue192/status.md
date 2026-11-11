@@ -51,3 +51,9 @@ CALIBRATION_DEGENERATE: {'blocks': {
 修法：结构项的位置改为**双通路** `pos = raw_codeword_sum + (encoded − encoded.detach())`——raw 项对码本可导，ST 项对编码器可导。
 
 离线实测（COMBO 模型、真实 `forward_with_codes`）：`encoder grad nonzero: True`、`codebook grad nonzero: True`。这正是预算规则的前提条件。
+
+## 冒烟 **PASS**（预算规则成功标定）
+
+`SMOKE_PASS`，日志给出 **`structure lambda = 2.56423e-07`**：双通路位置让编码器与码本两块都有非零结构梯度，**`calibrate_lambda_block_budget` 因此能给出有限 λ***（此前两次都因某一块为 0 而 `CALIBRATION_DEGENERATE` 拒绝）。`applied_grad_norms` 见日志；训练已起（6 进程）。
+
+λ 量级很小（2.6e-7），与 #191 的 2.3e-5 同量级的"结构项被预算压得很轻"——这正是规则的设计意图：结构项在任何受监督 block 上的梯度范数都不得超过 base。
