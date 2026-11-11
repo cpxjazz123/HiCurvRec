@@ -30,3 +30,15 @@
 因此 Issue 第 4 条的"与 `TIGER_struct_mixed_rq` 第 1 层完全相同的耦合项"应读作：**第 1 层沿用该臂的 `mixed_sq` + 同一 Sinkhorn 配置**（不是另有一项）；本臂第 2、3 层改为 `d_{κ_ℓ(p)}`，第 1 层保持 `κ_1 = 1` 且拓扑与配置逐位不变。这一读法已记入 commit 依据。
 
 接线还差：`kappa_prefix.json` 的**标记目录相对路径**加载（REPO_ROOT 推导，禁绝对路径）、`_distances` 按层选择 κ、前缀查表在 DDP 下的一致性（每 rank 用同一张冻结表即可，因表由导出 SID 与 κ 表确定）、导出统计与一 epoch 冒烟。
+
+## 本轮：κ 表加载器 + 逐行解析（**6/6 通过**）
+
+`model/kappa_table.py`：
+- `repo_root()` 用**标记目录**（同时含 `stage2_RQ-VAE`、`results`、`stage1_GeneEmbedding`）向上推导，**源码无绝对路径**（§19b0）。
+- `load()` 每进程只读一次 `results/research/issue177/kappa_prefix.json`。
+- `kappa_for_rows(prefixes, level)`：层 1 恒返回 1.0（保证第 1 层与参照臂逐位一致），层 2/3 按前缀逐行查表，未见表项回落到 `mean_frozen`；支持 tuple 列表与 `[B, level-1]` 整型张量两种输入。
+- DDP 一致性：κ 只是 (level, prefix) 的纯函数且表冻结，**每个 rank 独立解析出同一值，不需要集合通信**。
+
+测试 `tests/test_kappa_table.py` 6 项全过：标记根推导、实测形状（层 2 = 240、层 3 = 7408、31 个补齐项）、层 1 全 1.0、逐行解析 + 未见表项回落、张量与元组等价、实际表查出的值落在实测区间内。
+
+仍待：把 `kappa_for_rows` 接进 `layers.py::_distances`（按层选 `d_κ` 或 `mixed_sq`）、训练与导出用同一表、导出统计、一 epoch 冒烟，然后派发。
