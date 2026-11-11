@@ -137,3 +137,7 @@
 `structural_loss` 改为：先把 batch 内所有候选 id **取并集**（`torch.unique(..., return_inverse=True)`），锚点与并集各编码**一次**，再用 `inverse` 把行 gather 回每个 anchor 的候选位置。单 step 编码次数从"最多 anchors×64"降到"anchors + |并集|"；候选在 anchor 之间重复时收益最大。
 
 新增回归测试 `test_repeated_candidates_are_encoded_once`：两个 anchor 共享全部候选时，统计 `quantised_readout` 的**行数总和**必须显著小于逐 anchor 版本的 `2×(1+64)+64` 上界。全树 **43 passed**。
+
+## 冒烟第二轮：仍卡在教师构建（4 rank 各自构建）
+
+并集编码已生效，但冒烟 4 分钟后仍停在 `torch.sparse.mm(p, p)`。单进程离线构建只需 **7.1 s**，因此变慢的原因不是算法而是**每个 rank 都独立构建一次**（4 份 `P²`、4 份 51M 非零元、4 倍内存与 CPU 争用）。修法：只在 rank 0 构建一次，再把稀疏 `T` 的 `indices/values`（以及 `q05/q95`）通过 `distributed.broadcast` 发给其余 rank；或在 rank 0 落盘后由其它 rank 读取，两条都只构建一次。
