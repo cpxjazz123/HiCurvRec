@@ -34,3 +34,7 @@ Issue 边界要求 "checkpoint 绑 κ 表 SHA 与几何开关版本"。已把载
 
 - 若 owner 认定该族属禁令、要求回退：立即终止训练，本臂按"未批准"归档，不再开同类臂。
 - 预注册不变：本臂 `test_R@10 ≤ 0.056216` 即关闭本线。
+
+## 冒烟 **PASS** → 正式训练已启动
+
+`SMOKE_PASS`；`applied_grad_norms` 全为有限正值（见日志）。冒烟单 epoch `collision=0.906292`（早期值仅记录）。训练已起（6 进程），见 `training_metrics.jsonl`。
