@@ -238,3 +238,10 @@
 逐段计时：`encoder 0.00s`、`rq 0.10s`、`decoder 0.00s`、**`sd_loss 2.20s`**、`grad_rq 0.44s`、`grad_sd 0.00s`，随后打印 `probe lambda_star=1.68372e-05` —— Issue 要求的一次性标定已完成，`λ*` 由 `0.1·‖g_RQ‖/(‖g_SD‖+1e-12)` 得到，之后全程冻结。
 
 紧接着失败于 `NameError: name 'epoch_weight' is not defined`：R48 对比损失删除后，日志与 metrics 里仍引用旧变量名。已改为 `SD_LAMBDA`，并把 metrics 字段名由 `behavior_contrastive/behavior_weight` 改为 `structural_distill/structural_weight`；模块可正常导入。
+
+## 冒烟 **PASS** → 正式训练已启动
+
+- `SMOKE_PASS`；`applied_grad_norms` 六个全为有限正值（0.00119–0.00182）。
+- 探针 `lambda_star = 1.7151e-05`（与上一轮 1.68372e-05 略有差异——KMeans 初始化未固定种子，两次 probe 的 `‖g_RQ‖` 不同；按 Issue 只标定一次，本次训练用的是本次探针值，如实记录）。
+- 冒烟单 epoch `collision = 0.954569`（早期原始值，仅记录）。
+- 正式训练已起（6 进程），首个记录 epoch 399/3000、`structural_weight = 0.0`（1500 前为 0，符合 `lambda_schedule`）、loss 2.07e-4。
