@@ -29,3 +29,9 @@
 - 数据集改为 `(embedding, id)`；循环解包 `batch, batch_ids`；每 batch 把 `(κ_of(batch_ids), 一级 token)` 累积下来。
 - epoch 末调用 `r48k_geometry_learned.update(...)`，新表写回 `raw_module.rq.kappa_codes`，并把 `{moved, empty, floored}` 与 κ 的 5%/50%/95% 分位数写入 metrics（`kappa_refresh` 事件）。
 - 初始 `κ_k(0) = 1.0`（256 个码）。
+
+## 重要缺陷：刷新块曾**静默未插入**（冒烟 PASS 但臂等于基线）
+
+第一次冒烟 PASS（`collision=0.847765`），但 metrics 里 **`kappa_refresh` 计数 = 0**。核查发现：我插入刷新块用的锚点 `_epoch_t1 = time.time()` 在本树中不存在（本树是 `epoch_time_s = round(time.time() - _epoch_t0, 3)`），那次 `str.replace` **静默失败**——于是累积的 `(κ_i, token)` 从未被消费，`κ_k ≡ 1`，**该次运行实际就是冻结基线**。
+
+已按本树的真实锚点（`epoch_time_s = ...` 之前）插入刷新块，`grep -c kappa_refresh` = 1，训练器可导入。教训：`str.replace` 的锚点必须回读确认，不能只信打印。

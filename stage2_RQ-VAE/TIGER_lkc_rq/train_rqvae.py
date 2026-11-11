@@ -632,6 +632,16 @@ def main() -> None:
             scheduler.step()
             losses.append(float(loss.detach()))
             recons.append(float(recon_loss.detach()))
+        # issue #184: refresh the per-code curvature from what this epoch's assignment actually did (detached, no gradient)
+        if getattr(raw_module.rq, "kappa_codes", None) is not None and _lkc_pairs:
+            _item_kappa = torch.cat([pair[0] for pair in _lkc_pairs]).to(torch.float64)
+            _codes = torch.cat([pair[1] for pair in _lkc_pairs])
+            _new_table, _record_info = r48k_geometry_learned.update(raw_module.rq.kappa_codes, _item_kappa, _codes)
+            raw_module.rq.kappa_codes = _new_table
+            _qs = torch.quantile(_new_table, torch.tensor([0.05, 0.5, 0.95]))
+            _record(rank, "kappa_refresh", epoch=epoch, moved=_record_info["moved"], empty=_record_info["empty"],
+                    floored=_record_info["floored"], q05=round(float(_qs[0]), 6), median=round(float(_qs[1]), 6),
+                    q95=round(float(_qs[2]), 6))
         epoch_time_s = round(time.time() - _epoch_t0, 3)
 
         # === DDP all_reduce: 跨 rank 求平均 loss / recon ===
