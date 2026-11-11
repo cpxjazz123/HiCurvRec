@@ -29,6 +29,17 @@ class RQVAE(nn.Module):
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens
 
+    def forward_with_codes(self, embeddings: torch.Tensor):
+        """Like :meth:`forward`, but also returns the residual stack's readout as ``levels[-1]``.
+
+        Issue #192 needs item positions for the structure term, and they must be the quantiser's own readout rather than a second codebook path: the
+        straight-through value is differentiable in the encoder, which is what the structure term's gradient is supposed to reach.
+        """
+        encoded = self.encoder(embeddings)
+        quantized, quant_loss, unused_codes, tokens = self.rq(encoded)
+        reconstructed = self.decoder(quantized)
+        return reconstructed, quant_loss, int(unused_codes), tokens, [quantized]
+
     @torch.no_grad()
     def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
         encoded = self.encoder(embeddings)
