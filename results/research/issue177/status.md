@@ -51,3 +51,10 @@
 - 测试 **16 passed**（3 个套件）：层 1 代价与 `kappa=None` **逐位相等**；加 κ 项后有限且非负；κ=0.2 与 5.0 给出不同代价矩阵；开关关闭时栈仍产出 (5,3) 的三 token 且损失有限；另加度规与表两套（各 6 项）。
 
 仍待：导出统计（逐层码使用/最大份额/二级前缀/三级碰撞、§63 l3_collision，与 `TIGER_struct_mixed_rq` 并列）、一 epoch 真实入口冒烟（`collision<0.40`），然后派发 Stage2。
+
+## 派发（本轮）
+
+`stage2_start` 已接受 `TIGER_hc3_rq`：`started=false, status=**smoke_pending**`，worker pid **2132656**，4 卡可见（`ddp`，要求 4）、结果目录 `results/stage2_RQ-VAE/TIGER_hc3_rq`。
+
+- 注：传 `stage2_RQ-VAE/TIGER_hc3_rq`（带前缀的相对路径）被拒绝，工具只接受**裸树名**；裸名 `TIGER_hc3_rq` 通过。该形态已记录。
+- 下一步：真实入口一 epoch 冒烟（`check_entry`）→ 3000 epoch 四卡训练；冒烟结论与逐层导出统计由 `stage2_status` / 导出文件给出。
