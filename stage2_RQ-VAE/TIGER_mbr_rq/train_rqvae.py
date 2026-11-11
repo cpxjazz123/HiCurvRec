@@ -36,6 +36,7 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
 from model import RQVAE
+from model import mbr_step
 from model.model import MixedRQVAE
 from model.af3_runtime import (input_identity, resolve_shared_readout,
                                snapshot_sha256, snapshot_state)
@@ -551,7 +552,9 @@ def main() -> None:
             from model.af3_auxiliary import prepare_state, augment_loss
             af3_state = prepare_state(prepared["graph"], all_embeddings, device)
 
-    train_dataset = TensorDataset(train_embeddings)
+    # Issue #186: rows carry their ids so the residual step can use each item's curvature
+    train_ids_tensor = torch.from_numpy(train_ids.astype(np.int64))
+    train_dataset = TensorDataset(train_embeddings, train_ids_tensor)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -606,10 +609,14 @@ def main() -> None:
         recons: list[float] = []
         auxiliary_logs = []
         _epoch_t0 = time.time()
-        for (batch,) in loader:
+        for batch, batch_ids in loader:
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _ = model(batch)
+            raw_module.rq.item_kappa = mbr_step.kappa_of(batch_ids)
+            try:
+                reconstructed, quant_loss, _, _ = model(batch)
+            finally:
+                raw_module.rq.item_kappa = None
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             if not torch.isfinite(loss):

@@ -39,3 +39,10 @@ Issue 写「`struct_mixed` 在**一级用 `d_{κ_i}` 选码**，但残差仍是�
 - 于是 `STEP_OFF`（κ≡0）必须与**冻结基线**逐位一致（`y−x` 平直减法），`BOTH_ON` 才是"基线 + 莫比乌斯残差"。这比 Issue 原本设想的对照更干净：**单一变量就是残差步**。
 
 已把该依据写入本轮 commit。
+
+## 残差步接线完成（本轮）
+
+- `mixed_rq.MixedVQLevel.forward` 接受 `item_kappa`；给出时残差更新改为
+  `next = mbr_step.mobius_sub(cat(r_e, r_h), cat(det_e, det_h), κ_i)`，取欧氏 16 维部分作为下一层残差（`item_kappa is None` 时仍是基线的 `residual_e − det_e`）。
+- `MixedRQ` 持有 `item_kappa`；训练器把数据集改成 `(embedding, id)`、在 `model(batch)` 前后注册/清除批内 `κ_i`（`try/finally`）。
+- 训练器与模型在项目解释器下均可导入。

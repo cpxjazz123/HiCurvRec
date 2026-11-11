@@ -162,7 +162,7 @@ class MixedVQLevel(nn.Module):
         return mixed_cost(residual_e, residual_h, codes_e, codes_h, alpha, self.curvature)
 
     def forward(self, residual_e: torch.Tensor, residual_h: torch.Tensor,
-                alpha: torch.Tensor, infer_use_sk: bool = False):
+                alpha: torch.Tensor, infer_use_sk: bool = False, item_kappa=None):
         """Quantize one level and return the new residual, the losses and the code.
 
         ``residual_e`` is ``[B, 16]``, ``residual_h`` is ``[B, 16]`` in the ball,
@@ -194,7 +194,15 @@ class MixedVQLevel(nn.Module):
         # The residual update detaches only the chosen code.
         det_e = picked_e.detach()
         det_h = picked_h.detach()
-        next_e = residual_e - det_e
+        if item_kappa is None:
+            next_e = residual_e - det_e
+        else:
+            # Issue #186: the subtraction itself runs at the item's curvature; STEP_OFF gives y - x, the baseline's flat step
+            from . import mbr_step
+            joint = mbr_step.mobius_sub(torch.cat((residual_e, residual_h), dim=-1),
+                                        torch.cat((det_e, det_h), dim=-1),
+                                        item_kappa.reshape(-1, 1).to(residual_e.device, residual_e.dtype))
+            next_e = joint[:, :residual_e.shape[-1]]
         if self.curvature > 0:
             next_h = project(mobius_add(-det_h, residual_h, self.curvature), self.curvature)
         else:
@@ -302,6 +310,7 @@ class MixedRQ(nn.Module):
         sizes = [int(size) for size in sizes]
         self.curvature = float(curvature)
         self.alpha_table = alpha_table
+        self.item_kappa = None    # issue #186: the batch's per-item curvature, registered by the trainer
         self.levels = nn.ModuleList()
         for index, size in enumerate(sizes):
             last = index == len(sizes) - 1
@@ -343,7 +352,8 @@ class MixedRQ(nn.Module):
         for level, layer in enumerate(self.levels, start=1):
             alpha = self.alpha_table.lookups(level, tokens).to(z.device)
             (residual_e, residual_h), quant_loss, unused, index, picked_e, picked_h = layer(
-                residual_e, residual_h, alpha, infer_use_sk=infer_use_sk)
+                residual_e, residual_h, alpha, infer_use_sk=infer_use_sk,
+                item_kappa=self.item_kappa if self.item_kappa is not None else None)
             codes_e.append(picked_e)
             codes_h.append(picked_h)
             tokens.append(index)
