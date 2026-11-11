@@ -25,7 +25,10 @@ def project_to_ball(u: torch.Tensor, kappa: torch.Tensor) -> torch.Tensor:
     """``tanh(sqrt(k)||u||)/(sqrt(k)||u||) * u``, with the zero vector taking the limit 1."""
     root = torch.sqrt(kappa)
     norm = u.norm(dim=-1, keepdim=True)
-    scale = torch.where(norm > 0, torch.tanh(root * norm) / (root * norm).clamp_min(1e-30), torch.ones_like(norm))
+    # the (1 - eps) keeps the projection strictly inside: tanh saturates to exactly 1 in float64 for a large norm
+    scale = torch.where(norm > 0,
+                        torch.tanh(root * norm) * (1.0 - 1e-6) / (root * norm).clamp_min(1e-30),
+                        torch.ones_like(norm))
     return u * scale
 
 
