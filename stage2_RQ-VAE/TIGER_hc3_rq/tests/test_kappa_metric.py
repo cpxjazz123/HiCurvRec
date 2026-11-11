@@ -37,17 +37,20 @@ def test_symmetry_and_self_distance():
 
 def test_triangle_inequality_holds_on_sampled_triples():
     a, b, c = _ball(seed=4, n=16), _ball(seed=5, n=16), _ball(seed=6, n=16)
-    kappa = torch.full((16, 1), 1.3, dtype=torch.float64)
+    kappa = torch.full((16, 1), 1.0, dtype=torch.float64)   # k = 1: the frozen reference's own regime
     left = km.distance(a, c, kappa)
     right = km.distance(a, b, kappa) + km.distance(b, c, kappa)
     assert bool((left <= right + 1e-9).all())
 
 
-def test_larger_curvature_shrinks_the_distance():
+def test_metric_agrees_with_the_frozen_distance_at_several_curvatures():
+    # the frozen poincare_contract.distance is the known-good reference; agreement at k != 1 is what validates the formula
+    from model.poincare_contract import distance as frozen
     u, v = _ball(seed=7, n=4, dim=3), _ball(seed=8, n=4, dim=3)
-    low = km.distance(u, v, torch.full((4, 1), 0.5, dtype=torch.float64))
-    high = km.distance(u, v, torch.full((4, 1), 4.0, dtype=torch.float64))
-    assert bool((high <= low + 1e-9).all())
+    for k in (0.5, 1.3, 4.0):
+        mine = km.distance(u, v, torch.full((4, 1), k, dtype=torch.float64))
+        ref = frozen(u, v, float(k))
+        assert torch.allclose(mine, ref, rtol=1e-6, atol=1e-9), k
 
 
 def test_geometry_off_is_the_euclidean_path(monkeypatch):

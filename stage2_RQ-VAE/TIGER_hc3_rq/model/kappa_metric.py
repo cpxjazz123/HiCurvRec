@@ -31,7 +31,7 @@ def distance(u: torch.Tensor, v: torch.Tensor, kappa, curvature: float = 1.0) ->
     v2 = (v.pow(2).sum(-1, keepdim=True) * k).clamp(max=1.0 - BALL_EPS)
     diff2 = (u - v).pow(2).sum(-1, keepdim=True)
     argument = 1.0 + 2.0 * k * diff2 / ((1.0 - u2) * (1.0 - v2))
-    return (torch.acosh(argument.clamp_min(1.0 + 1e-12)) / torch.sqrt(k)).squeeze(-1)
+    return (torch.acosh(argument.clamp_min(1.0)) / torch.sqrt(k)).squeeze(-1)
 
 
 def at_origin(v: torch.Tensor, kappa, ) -> torch.Tensor:
