@@ -43,3 +43,17 @@
 `ValueError: Cannot center a constant distance matrix.`（`model/layers.py:77`），同时行为损失梯度为 0、`applied_grad_norms: [NaN]`。原因：两次投影点非常接近时，`arccosh` 的参数与 1 的差在 **float32** 下小于机器 epsilon，整张矩阵被 `clamp_min(1.0)` 压成**全零常数阵**，Sinkhorn 的居中因此无振幅可分。
 
 修复：`behaviour_distances` 内部一律用 **float64** 计算（投影与 `acosh` 都在双精度），返回时再转回输入 dtype；Sinkhorn 本来就以 `.double()` 运行，与之同精度。补回归测试 `test_float32_points_still_produce_a_non_constant_matrix`（float32 输入下矩阵标准差 > 0 且 max>min）。两套共 **13 passed**。
+
+## 第三次冒烟仍失败 → 按 Issue 第 9 条记**预派发负结果**并停止
+
+三次冒烟同一处失败：
+
+1. 第 1 次：`project_to_ball` 设备不匹配（κ 查到的是 CPU float32、残差在 cuda/float64）→ 已修（`dccbbf272`）。
+2. 第 2 次：`ValueError: Cannot center a constant distance matrix.` + 行为项梯度 0 + `applied_grad_norms: [NaN]` → 判为 float32 精度，改为内部 float64（`be2b2c2f1`）。
+3. 第 3 次：**仍是同一句** `Cannot center a constant distance matrix.`，且 `applied_grad_norms` 仍为 `[NaN]`。
+
+离线复核排除了"距离恒等"：用与真实残差同量级的 float32 输入（`‖·‖≈1e-3`、真实 κ 表值 0.07–2.21）跑 `behaviour_distances` 得到 `min 0.00733 / max 0.01355 / std 0.00153`、无 NaN/Inf、不恒定。因此**常数矩阵不是对比距离造成的**，而是**上游已经崩溃**：`applied_grad_norms: [NaN]` 表明第一步反传就产生了 NaN，随后权重被污染、`_distances` 输出恒定，Sinkhorn 的居中才报"常数矩阵"。最可能的位置是新距离里 `arccosh` 的**奇异梯度**：参数被 `clamp_min(1.0)` 截断时 `acosh'(1)=∞`，仅当截断真正生效（参数在数值上落到 1）即产生 NaN；我在 float64 下用远离边界的点做过性质测试，没有覆盖"点重合/极近导致截断"这一条。
+
+按 Issue 第 9 条（"1–6 任一不过：按**预派发负结果**记录并停止，不改 τ/权重/预算"），本臂**停止在派发前**，不派发这次 Stage2，也不再改动 τ/权重/预算来绕过。
+
+结论：`TIGER_r48k_rq` 的机制数学与接线（11→13 项测试全绿，含 `GEOMETRY_OFF` 与 R48 逐位相等、κ=1 与冻结参照一致、球内投影、梯度通路）成立，但**真实入口的一 epoch 冒烟未通过**（NaN 反传 → 常数距离矩阵），机制因此不可达；这是实现层缺陷而非实验结论，未产生任何 Stage2/Stage3 数字。
