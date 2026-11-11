@@ -28,3 +28,10 @@
 - 修复后派发：`stage2_start(source_dir="TIGER_dul_rq")` → worker 611731；真实入口一 epoch 冒烟 **SMOKE_PASS**（`dead_terms=[]`、`nonfinite_terms=[]`、梯度范数全正、导出唯一），四卡已启动。
 - 首次失败的冒烟本身已给出有用证据：`compute_loss.total = 0.1275`、梯度 262.6 —— 说明 DUL 项确实在损失里且可反传（基线 rc 项只有 4.6e-4）。
 - 配方：seed 42、3000 epoch、全局 batch 4096、四卡 50202；产物 `results/stage2_RQ-VAE/TIGER_dul_rq/`。
+
+
+## 首次正式运行的中断与观察（记在案）
+
+- 运行到 epoch 400 时发现评估记录里 `unique_pairs` / `unique_loss` 为 **None**：`from model.unique_loss import LAST_STATS as UNIQUE_STATS` 绑定的是**当时的空 dict 对象**，而 `uniqueness_loss` 里 `global LAST_STATS` 会**重新绑定**模块属性，别名因此永远看不到更新。已改为通过模块读取（`unique_loss_module.LAST_STATS`，`d795f030` 之后的又一处）。
+- 该缺陷只影响记录、不影响损失；但 Issue 第 5 条要求逐 batch 记 `|P|` 与 `cos>m` 占比，故按执行故障重启这一次运行（机制未变、未调 β/m）。
+- 中断前的碰撞轨迹值得记：eval **300 → 0.67194**、**350 → 0.59649**、**400 → 0.56957**，即 DUL 在跑，但三级碰撞率远高于基线 **0.162444**、且高于 §89 的 **0.40** 门槛（趋势向好，但离门槛仍远）。

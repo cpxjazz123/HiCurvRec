@@ -37,7 +37,7 @@ from tqdm import tqdm
 
 from model import RQVAE
 from model.model import MixedRQVAE
-from model.unique_loss import LAST_STATS as UNIQUE_STATS
+from model import unique_loss as unique_loss_module
 from model.af3_runtime import (input_identity, resolve_shared_readout,
                                snapshot_sha256, snapshot_state)
 
@@ -695,7 +695,7 @@ def main() -> None:
                 final_raw_unique = raw_unique
                 print(
                     f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} "
-                    f"lr={cur_lr:.3e} unique_pairs={UNIQUE_STATS.get('pairs')} "
+                    f"lr={cur_lr:.3e} unique_pairs={unique_loss_module.LAST_STATS.get('pairs')} "
                     f"raw_unique={raw_unique}/{len(raw_tokens)} "
                     f"collision={collision_v:.6f} time={epoch_time_s}s",
                     flush=True,
@@ -705,9 +705,9 @@ def main() -> None:
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
-                    unique_pairs=UNIQUE_STATS.get("pairs"),
-                    unique_above_margin=UNIQUE_STATS.get("above_margin"),
-                    unique_loss=UNIQUE_STATS.get("loss"),
+                    unique_pairs=unique_loss_module.LAST_STATS.get("pairs"),
+                    unique_above_margin=unique_loss_module.LAST_STATS.get("above_margin"),
+                    unique_loss=unique_loss_module.LAST_STATS.get("loss"),
                 )
         finally:
             for layer in raw_module.rq.vq_layers:
