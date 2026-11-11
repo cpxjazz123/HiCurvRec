@@ -133,6 +133,18 @@ class VQLayer(nn.Module):
         x_q = x + (x_q - x).detach()
         return x_q, quant_loss, unused_codes, embed_ind.view(*x.shape[:-1])
 
+    def quantize_with_raw(self, x: torch.Tensor, infer_use_sk: bool = False):
+        """The codeword readout *before* the straight-through substitution, beside the straight-through value.
+
+        Issue #192 needs a position differentiable in the codebook as well as the encoder: the straight-through value carries gradient only to the
+        encoder, which is why the budget rule saw a zero structure norm on the codebook block.
+        """
+        latent = x.view(-1, self.dim)
+        embed_ind = self._indices(self._distances(latent), infer_use_sk)
+        raw = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
+        straight = x + (raw - x).detach()
+        return straight, raw, embed_ind.view(*x.shape[:-1])
+
     def embed_code(self, embed_id: torch.Tensor) -> torch.Tensor:
         return F.embedding(embed_id, self.get_code_embs())
 
