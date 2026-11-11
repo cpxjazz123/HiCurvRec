@@ -210,3 +210,9 @@
 日志停在教师构建之后、探针之前，其间唯一的重活是 `teacher_rows = af3_teacher.SparseRows(_teacher_sparse)`。该构造器此前会 `torch.argsort` 全部 **51,144,592** 个索引（`indices[0]*n + indices[1]`），在 51M 元素上排序就是分钟级开销，且**完全多余**——`coalesce()` 返回的 COO 索引本来就按行主序有序。
 
 修法：直接使用 `coalesce()` 给出的顺序，`row_start` 的 `searchsorted` 依赖的正是这一有序性；新增回归测试断言 `rows*n_cols+cols` 非递减，并逐项核对 gather 与稠密矩阵一致。全树 **45 passed**。
+
+## 锁定第二个瓶颈：`two_hop` 对**全部 24k 节点**预计算
+
+去掉 `SparseRows` 的冗余排序后日志仍停在教师构建之后，排查到训练器里那段 `two_hop` 预计算：对每个节点展开两跳邻居，复杂度约 `Σ deg²`。本图的边有 32 万条、度分布长尾（存在度数百的枢纽），于是两跳池极大——既慢又占内存。
+
+修法（不改机制定义）：`struct_distill.two_hop_of(anchor, neighbours)` **按需**为当前 anchor 推导两跳池，`candidate_sets` 的 `two_hop` 参数允许为 `None`（此时逐 anchor 现算）；训练器不再预计算，只保留一跳邻接表。一步只有 63 个 anchor，因此每步只算 63 个两跳池。全树 **45 passed**。

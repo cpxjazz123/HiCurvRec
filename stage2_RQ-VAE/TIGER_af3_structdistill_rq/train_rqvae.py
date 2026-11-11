@@ -444,14 +444,8 @@ def main() -> None:
     for _i, _j in _coo:
         neighbours.setdefault(_i, []).append(_j)
         neighbours.setdefault(_j, []).append(_i)
-    two_hop: dict[int, list[int]] = {}
-    for _node, _first in neighbours.items():
-        _seen: list[int] = []
-        for _mid in _first:
-            for _far in neighbours.get(_mid, []):
-                if _far != _node and _far not in _seen:
-                    _seen.append(_far)
-        two_hop[_node] = _seen
+    # two-hop sets are derived per anchor inside candidate_sets; precomputing them for all 24k nodes is |N| x deg^2 and stalls the run
+    two_hop = None
     LAMBDA_STAR = 0.0
     print(f"[RQ-VAE] teacher nnz={_teacher_sparse._nnz()} build_s={teacher_build_s:.2f} items={n_items}", flush=True)
 

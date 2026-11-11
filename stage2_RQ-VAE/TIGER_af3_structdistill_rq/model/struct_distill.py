@@ -26,13 +26,31 @@ def ste_readout(z: torch.Tensor, q: torch.Tensor) -> torch.Tensor:
     return z + (q - z).detach()
 
 
+def two_hop_of(anchor: int, neighbours: dict) -> list[int]:
+    """Two-hop neighbours of one anchor, computed on demand.
+
+    Precomputing this for every node costs |N| x deg^2 on a graph with hubs in the thousands, which is why it is derived per anchor
+    instead: a step only ever asks for its 63 anchors.
+    """
+    seen: list[int] = []
+    for mid in neighbours.get(anchor, []):
+        for far in neighbours.get(mid, []):
+            if far != anchor and far not in seen:
+                seen.append(far)
+    return seen
+
+
 def candidate_sets(anchors, neighbours, two_hop, n_items: int, seed: int = 42) -> list[list[int]]:
-    """Deterministic per-anchor candidate sets: up to 16 one-hop, 16 two-hop, 32 global, deduplicated, anchor excluded."""
+    """Deterministic per-anchor candidate sets: up to 16 one-hop, 16 two-hop, 32 global, deduplicated, anchor excluded.
+
+    ``two_hop`` may be ``None``, in which case each anchor's two-hop pool is derived from ``neighbours`` as it is needed.
+    """
     generator = torch.Generator().manual_seed(seed)
     sets: list[list[int]] = []
     for anchor in anchors:
         chosen: list[int] = []
-        for pool, limit in ((neighbours.get(anchor, []), ONE_HOP), (two_hop.get(anchor, []), TWO_HOP)):
+        second = two_hop_of(anchor, neighbours) if two_hop is None else two_hop.get(anchor, [])
+        for pool, limit in ((neighbours.get(anchor, []), ONE_HOP), (second, TWO_HOP)):
             for item in list(pool)[:limit]:
                 if int(item) != int(anchor) and int(item) not in chosen:
                     chosen.append(int(item))
