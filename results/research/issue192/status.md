@@ -57,3 +57,28 @@ CALIBRATION_DEGENERATE: {'blocks': {
 `SMOKE_PASS`，日志给出 **`structure lambda = 2.56423e-07`**：双通路位置让编码器与码本两块都有非零结构梯度，**`calibrate_lambda_block_budget` 因此能给出有限 λ***（此前两次都因某一块为 0 而 `CALIBRATION_DEGENERATE` 拒绝）。`applied_grad_norms` 见日志；训练已起（6 进程）。
 
 λ 量级很小（2.6e-7），与 #191 的 2.3e-5 同量级的"结构项被预算压得很轻"——这正是规则的设计意图：结构项在任何受监督 block 上的梯度范数都不得超过 base。
+
+## Stage2 结果（完整 3000 epoch，本臂定论）
+
+产物：`results/stage2_RQ-VAE/TIGER_combo_rq/item_sids.json`（24,587 商品）、`rqvae_best.pth`、`logs/training_metrics.jsonl`。
+分层指标按 §63 记录于 `results/stage2_RQ-VAE/TIGER_combo_rq/stage2_metrics/04eaa21ccdc54b38042932a42881c2b530a877f4fbb6a53e445ed635e8741973.json`。
+
+| 指标 | 本臂 | 基线 `TIGER_RQ-VAE` |
+|---|---|---|
+| **§89 门槛 `collision`（三码重复，MCP 算式 `1 − distinct/items`）** | **0.5043722292** | — |
+| §63 `l3_collision`（item-weighted 重复占比，另一个口径） | 0.6304957905 | — |
+| 不同三级组合 | 12,186 | — |
+| 二级前缀数 | 3,335 | 15,860 |
+| 有效 L1 Hard ER | 6.9168 | 16.1417 |
+| L1 正/负命中率（仅诊断） | 0.19321 / 0.02793 | 0.07931 / 0.00491 |
+| L3 Refinement Gain (bits) | 2.94140 | — |
+| Conditional G3 | −0.087981 | — |
+
+**Stage3：§89 门槛拒绝，未启动。** 实测 MCP 返回 `{"started": false, "refused": "three-level collision 0.504372 is not below the 0.40 Stage3 entry gate", "collision": 0.5043722292268271}`。
+
+## 结论（本臂定论，按预注册记账）
+
+1. **两项合并并未降低碰撞**：`collision = 0.5044 ≥ 0.40`，且二级前缀 3,335 远低于基线 15,860——结构项与对比项同时在线后，SID 的**层级区分度是下降的**，不是上升的。L1 层的有效分辨率反而更好（Hard ER 6.92 vs 16.14），说明退化发生在**末级**：末级码字把商品更多地压进了同一个三码桶（refinement 2.94 bits、Conditional G3 **为负** ⇒ 第三码在给定前两码后并不增加train-后继似然，甚至轻微降低）。
+2. **预注册的 Stage3 判据不可达**：`≤0.064764` / `>0.065` 两个分支都以进入 Stage3 为前提；§89 硬门在前，故 `test_R@10` 记为 **`NOT_RUN`**，本轮**不**对增益问题下任何结论（不把"没测到"写成"已否定"）。
+3. **预算规则的作用被证实**：λ = 2.56423e-07 是规则在"两项都必须有非零梯度"的约束下给出的上限；结构项确实很轻，但轻到该量级时它对末级码本分布的塑造力不足以改变层级区分度。这不是调参问题（§19g 禁止调 λ），而是该组合形式本身的结果。
+4. **两次同型工程故障已修**（并在 commit 里留证）：`forward_with_codes` 缺失、以及 ST/raw 位置的单侧可导——后者是 #187 已经遇到过的同一互斥，本轮以双通路位置解决，代码留在 combo 树。
