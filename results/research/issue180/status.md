@@ -32,3 +32,7 @@
 `TypeError: dropout(): argument 'input' (position 1) must be Tensor, not tuple`：`_encode_all` 返回的是 **RQVAE.forward 的整个返回元组**（模型输出 `(reconstructed, quant_loss, _, tokens)`），而外层又把它喂给 `get_indices`，于是编码器收到 tuple。原代码本来是 `raw_module.get_indices(all_embeddings, infer_use_sk=False)`——`get_indices` 接受**原始嵌入**。
 
 修复：`_encode_all` 内部改为 `module.get_indices(embeddings, infer_use_sk=False)`，两处调用点简化为 `raw_tokens = _encode_all(raw_module, all_embeddings.to(device))`；回归测试的记录器也改为实现 `get_indices`。6/6 通过。
+
+## 冒烟 **PASS** → 正式训练已启动
+
+`SMOKE_PASS`，`applied_grad_norms` 六个全为有限正值（0.0574–0.0973）；冒烟单 epoch `collision=0.873510`（仅记录）。训练已起，首个记录 epoch 476/3000、loss 2.24e-4。
