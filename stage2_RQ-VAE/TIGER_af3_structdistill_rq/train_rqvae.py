@@ -291,12 +291,28 @@ def probe_lambda_star(module, embeddings, batch_ids, rows, neighbours, two_hop, 
                 total = total + g.pow(2).sum()
         return float(total.sqrt())
 
+    _t0 = time.time()
+
+    def _lap(name):
+        nonlocal _t0
+        _now = time.time()
+        print(f"[probe] {name} {_now - _t0:.2f}s", flush=True)
+        _t0 = _now
+
     z = module.encoder(embeddings)
+    _lap("encoder")
     quantised, quant_loss, _, _ = module.rq(z)
+    _lap("rq")
     recon = module.decoder(quantised)
     rq_loss = torch.nn.functional.mse_loss(recon, embeddings) + quant_loss
+    _lap("decoder")
     sd_loss = sd_step.structural_loss(module, embeddings, batch_ids, rows, neighbours, two_hop, n_items)
-    return struct_distill.calibrate(grad_norm(rq_loss), grad_norm(sd_loss))
+    _lap("sd_loss")
+    g_rq = grad_norm(rq_loss)
+    _lap("grad_rq")
+    g_sd = grad_norm(sd_loss)
+    _lap("grad_sd")
+    return struct_distill.calibrate(g_rq, g_sd)
 
 
 def _encode_all(module, embeddings: torch.Tensor):
