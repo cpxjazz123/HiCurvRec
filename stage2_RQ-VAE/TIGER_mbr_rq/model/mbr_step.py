@@ -19,7 +19,12 @@ SHRINK = 1.0 - 1e-6
 
 
 def mobius_sub(x: torch.Tensor, y: torch.Tensor, kappa: torch.Tensor) -> torch.Tensor:
-    """``x (-)_kappa y``, with an epsilon floor on the denominator and a pull-back when the result leaves the ball."""
+    """``x (-)_kappa y``, i.e. ``mobius_add(-x, y, kappa)``, with an epsilon floor and a pull-back inside the ball.
+
+    The frozen contract writes ``mobius_add(a, b, c) = [(1 + 2c<a,b> + c|b|^2) a + (1 - c|a|^2) b] / [1 + 2c<a,b> + c^2|a|^2|b|^2]``, so the
+    subtraction carries two numerator terms, not one: with ``a = -x`` the first term flips sign and the second supplies ``y``. At
+    ``kappa = 0`` that collapses to ``y - x``.
+    """
     if STEP_OFF:
         return y - x
     k = kappa.to(x.device, x.dtype).reshape(-1, 1) if kappa.dim() == 1 else kappa.to(x.device, x.dtype)
@@ -27,10 +32,10 @@ def mobius_sub(x: torch.Tensor, y: torch.Tensor, kappa: torch.Tensor) -> torch.T
     y2 = y.pow(2).sum(-1, keepdim=True)
     x2 = x.pow(2).sum(-1, keepdim=True)
     eps = torch.finfo(x.dtype).eps * torch.maximum(torch.maximum(x2, y2), torch.ones_like(x2))
-    numerator = (1.0 + 2.0 * k * xy + k * y2) * y - x
-    denominator = (1.0 + 2.0 * k * xy + k.pow(2) * y2 * x2).clamp_min(eps)
+    cross = -xy                                          # <a, b> with a = -x
+    numerator = -(1.0 + 2.0 * k * cross + k * y2) * x + (1.0 - k * x2) * y
+    denominator = (1.0 + 2.0 * k * cross + k.pow(2) * y2 * x2).clamp_min(eps)
     out = numerator / denominator
-    # keep the residual inside every ball the next level might use
     limit = (k * out.pow(2).sum(-1, keepdim=True)).clamp_min(0.0)
     over = limit >= 1.0
     if bool(over.any()):
