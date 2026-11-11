@@ -286,7 +286,7 @@ def _encode_all(module, embeddings: torch.Tensor):
     ids = torch.arange(embeddings.shape[0])
     r48k2_assign.set_batch_kappa(_assign_kappa(ids))
     try:
-        return module(embeddings)
+        return module.get_indices(embeddings, infer_use_sk=False)
     finally:
         r48k2_assign.set_batch_kappa(None)
 
@@ -538,9 +538,7 @@ def main() -> None:
         try:
             if rank == 0:
                 with torch.no_grad():
-                    raw_tokens = raw_module.get_indices(
-                        _encode_all(raw_module, all_embeddings.to(device))
-                    ).cpu().numpy().astype(np.int64)
+                    raw_tokens = _encode_all(raw_module, all_embeddings.to(device)).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
                 final_collision = collision_v
@@ -592,9 +590,7 @@ def main() -> None:
             layer._skip_ddp_reduce = True
         try:
             with torch.no_grad():
-                raw_tokens = raw_module.get_indices(
-                    _encode_all(raw_module, all_embeddings.to(device))
-                ).cpu().numpy().astype(np.int64)
+                raw_tokens = _encode_all(raw_module, all_embeddings.to(device)).cpu().numpy().astype(np.int64)
         finally:
             for layer in raw_module.rq.vq_layers:
                 layer._skip_ddp_reduce = False

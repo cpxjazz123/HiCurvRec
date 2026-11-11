@@ -26,3 +26,9 @@
 ## 冒烟失败 → 修复（第 1 次）
 
 `TypeError: forward() got an unexpected keyword argument 'infer_use_sk'`：我把导出调用包进 `_encode_all(module, ...)` 时沿用了 `infer_use_sk=False`，但 `module` 是 **RQVAE**（其 `forward` 不接受该关键字；该标志属于残差栈，由 RQVAE 自己传）。改为 `module(embeddings)`，并补回归测试 `test_the_export_wrapper_calls_the_module_without_infer_use_sk`（记录调用形状、断言钩子在返回后已清除）。6/6 通过。
+
+## 冒烟失败 → 修复（第 2 次）
+
+`TypeError: dropout(): argument 'input' (position 1) must be Tensor, not tuple`：`_encode_all` 返回的是 **RQVAE.forward 的整个返回元组**（模型输出 `(reconstructed, quant_loss, _, tokens)`），而外层又把它喂给 `get_indices`，于是编码器收到 tuple。原代码本来是 `raw_module.get_indices(all_embeddings, infer_use_sk=False)`——`get_indices` 接受**原始嵌入**。
+
+修复：`_encode_all` 内部改为 `module.get_indices(embeddings, infer_use_sk=False)`，两处调用点简化为 `raw_tokens = _encode_all(raw_module, all_embeddings.to(device))`；回归测试的记录器也改为实现 `get_indices`。6/6 通过。

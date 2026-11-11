@@ -107,7 +107,7 @@ def test_the_export_wrapper_calls_the_module_without_infer_use_sk():
             super().__init__()
             self.seen = None
 
-        def forward(self, x):
+        def get_indices(self, x, infer_use_sk=False):
             self.seen = tuple(x.shape)
             return x
 
