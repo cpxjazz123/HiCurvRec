@@ -183,3 +183,9 @@
 真正的时间在构建之后：`structural_loss` 每步要为 batch 的全部 anchor 编码**候选并集**。1024 anchors × 最多 64 候选 ⇒ 并集可达数万行，`6 steps/epoch × 3000 epochs` 就是上亿次行编码，这才是冒烟跑不完的原因。
 
 **下一步（下轮）**：把每步参与结构损失的 anchor 数限制到一个**可推导**的值（例如沿用 R48 的 pair 采样比例，或按"每步候选并集 ≤ N"反推 anchor 上限），并在 manifest 里写明依据；不引入按指标调的常数。教师的 2.65 s 与 51M 非零元不再动。
+
+## anchor 上限：**63**（可推导，非调参）
+
+`sd_step.ANCHORS_PER_STEP = 4096 // (16 + 16 + 32 + 1) = 63`：结构步要编码 `anchors + |候选并集|` 行，单个 anchor 的候选集合最多 64 个，因此 63 个 anchor 使该步的行数与 **R48 对比损失所花的 2×2048 = 4096 行**相同。依据写在注释与 manifest 口径里，**不是**按指标试出来的数。
+
+训练循环取 `batch_ids[:ANCHORS_PER_STEP]` 作为该步 anchor。全树 **44 passed**。

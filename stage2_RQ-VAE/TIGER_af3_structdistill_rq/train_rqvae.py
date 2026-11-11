@@ -570,8 +570,10 @@ def main() -> None:
             behavior_loss = torch.zeros((), device=device)
             if SD_LAMBDA > 0.0:
                 # issue #181: no positive/negative samples at all -- the structural KL on the final quantised readout
+                # the step's anchors are capped so its row count matches what the R48 contrast spent (see sd_step.ANCHORS_PER_STEP)
+                _anchors = batch_ids[: sd_step.ANCHORS_PER_STEP].to(device)
                 sd_value = sd_step.structural_loss(
-                    raw_module, all_embeddings.to(device), batch_ids.to(device),
+                    raw_module, all_embeddings.to(device), _anchors,
                     teacher_rows, neighbours, two_hop, n_items,
                 )
                 behavior_loss = sd_value

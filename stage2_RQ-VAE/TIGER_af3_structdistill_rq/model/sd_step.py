@@ -11,6 +11,12 @@ import torch
 from . import af3_teacher, struct_distill
 
 
+#: Anchors per structural step. Derivation rather than tuning: the step encodes ``anchors + |candidate union|`` rows, and a set holds
+#: at most ``1 + struct_distill.ONE_HOP + TWO_HOP + GLOBAL`` items, so this value keeps the structural step at the row count the R48
+#: contrast spent (2 * 2048 = 4096): 4096 // (64 + 1) = 63.
+ANCHORS_PER_STEP = 4096 // (struct_distill.ONE_HOP + struct_distill.TWO_HOP + struct_distill.GLOBAL + 1)
+
+
 def quantised_readout(module, embeddings: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
     """``(z, q)``: the encoder output and the quantiser's readout of it, along the trainer's own path."""
     z = module.encoder(embeddings)
