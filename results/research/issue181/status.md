@@ -204,3 +204,9 @@
 本轮计时行：`edges+quantiles=0.95s`、`weights=0.13s`、`degree=0.42s`、`to_csr=0.20s`、`sparse_mm=0.29s`、`p_plus_p2=0.05s`、`to_coo=0.00s` —— 合计 **2.39 s**，教师构建彻底排除。构建之后约 4 分钟无任何输出（连 `probe batch ready in …` 也未打印），故瓶颈落在**探针的第一个动作之前或之内**：`next(iter(loader))` 之后我立刻要打印"batch ready"，它没出现，说明卡在 `next(iter(loader))` 本身（DataLoader 的 worker/pin_memory 首次填充）或探针前的模型准备。
 
 下一轮把时间戳再往前挪一层：`next(iter(loader))` 前后各一行，以及 `probe_lambda_star` 内部 encoder/rq/decoder/grad 四段。**仍不改任何常数与公式。**
+
+## 锁定瓶颈：`SparseRows` 对 51M 索引做了一次多余的 `argsort`
+
+日志停在教师构建之后、探针之前，其间唯一的重活是 `teacher_rows = af3_teacher.SparseRows(_teacher_sparse)`。该构造器此前会 `torch.argsort` 全部 **51,144,592** 个索引（`indices[0]*n + indices[1]`），在 51M 元素上排序就是分钟级开销，且**完全多余**——`coalesce()` 返回的 COO 索引本来就按行主序有序。
+
+修法：直接使用 `coalesce()` 给出的顺序，`row_start` 的 `searchsorted` 依赖的正是这一有序性；新增回归测试断言 `rows*n_cols+cols` 非递减，并逐项核对 gather 与稠密矩阵一致。全树 **45 passed**。

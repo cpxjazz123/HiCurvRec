@@ -102,3 +102,18 @@ def test_pack_and_unpack_round_trip_the_teacher_bit_for_bit():
     restored, restored_manifest = t.unpack(payload)
     assert torch.equal(restored.to_dense(), sparse.to_dense())
     assert restored_manifest["q05"] == manifest["q05"] and restored_manifest["q95"] == manifest["q95"]
+
+
+def test_sparse_rows_trusts_the_coalesced_order_without_resorting():
+    # regression: SparseRows used to argsort all nnz indices, which is minutes on the real 51M-nonzero teacher
+    coo = [(0, 1), (1, 2), (2, 3), (1, 3)]
+    sparse, _ = t.build_sparse(coo, 4)
+    rows = t.SparseRows(sparse)
+    # indices must be non-decreasing in row-major order, which is what row_start's searchsorted relies on
+    flat = rows.rows * rows.n_cols + rows.cols
+    assert bool((flat[1:] >= flat[:-1]).all())
+    dense = sparse.to_dense()
+    got = rows.gather(torch.tensor([0, 1, 2]), torch.tensor([[1, 2], [0, 3], [1, 3]]))
+    for a, anchor in enumerate([0, 1, 2]):
+        for c, item in enumerate([[1, 2], [0, 3], [1, 3]][a]):
+            assert abs(float(got[a, c]) - float(dense[anchor, item])) < 1e-6

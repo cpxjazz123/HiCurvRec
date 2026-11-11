@@ -126,10 +126,10 @@ class SparseRows:
     """
 
     def __init__(self, sparse: torch.Tensor):
+        # coalesce() already returns row-major sorted indices, so sorting 51M entries again here would cost minutes for nothing
         coalesced = sparse.coalesce()
-        order = torch.argsort(coalesced.indices()[0] * sparse.shape[1] + coalesced.indices()[1])
-        self.indices = coalesced.indices()[:, order]
-        self.values = coalesced.values()[order]
+        self.indices = coalesced.indices()
+        self.values = coalesced.values()
         self.rows = self.indices[0].to(torch.long)
         self.cols = self.indices[1].to(torch.long)
         self.n_rows, self.n_cols = sparse.shape
