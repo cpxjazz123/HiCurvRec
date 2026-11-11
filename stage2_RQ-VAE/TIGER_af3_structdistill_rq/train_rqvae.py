@@ -538,6 +538,7 @@ def main() -> None:
     if not struct_distill.SD_OFF:
         with torch.enable_grad():
             _probe_t0 = time.time()
+            print("[RQ-VAE] probe: fetching the first batch", flush=True)
             _probe_batch, _probe_ids = next(iter(loader))
             print(f"[RQ-VAE] probe batch ready in {time.time() - _probe_t0:.2f}s", flush=True)
             LAMBDA_STAR = probe_lambda_star(
