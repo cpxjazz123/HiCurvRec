@@ -43,3 +43,11 @@ CALIBRATION_DEGENERATE: {'blocks': {
 2. **尺度失配**：encoder 侧 `structure_norm = 209.6` 对 `base_norm = 2.7e-4`，比值约 **7.7e5**——`struct_mixed` 的 `scale` 是按其自身模型的中位距离标定的，移植到 R48 stem 上量级完全不对（同一现象在 #190 以坍缩形式出现）。
 
 按 Issue 验收"两项各自梯度非零且预算规则可校准"：**未通过 ⇒ 不派发**。修复需要把 `struct_mixed` 的**可导窗口**（`ResidualTraceRQLayer` 的逐层 level，码本侧可导）一并移植进 combo 树，并把结构项的 `scale` 按 combo 自身的初始中位距离重新标定；这两项都属结构性改动，不在本轮预算内完成。
+
+## 双向可导位置（本轮，实测两块的梯度都非零）
+
+前一次冒烟的 dump 显示：改成"原始码字和"后，**encoder 侧**变成 0（raw 只是查表，与编码器无关）；此前用 ST 值时**码本侧**为 0。这是同一互斥的第三次出现（#187 RAD 一次、本轮两次）。
+
+修法：结构项的位置改为**双通路** `pos = raw_codeword_sum + (encoded − encoded.detach())`——raw 项对码本可导，ST 项对编码器可导。
+
+离线实测（COMBO 模型、真实 `forward_with_codes`）：`encoder grad nonzero: True`、`codebook grad nonzero: True`。这正是预算规则的前提条件。

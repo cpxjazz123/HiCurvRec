@@ -54,7 +54,10 @@ class RQVAE(nn.Module):
         quant_loss = torch.zeros((), device=encoded.device)
         unused_codes = 0
         reconstructed = self.decoder(quantized)
-        return reconstructed, quant_loss, int(unused_codes), tokens, [raw_total]
+        # both paths at once: the raw codeword sum carries gradient into the codebook, and the straight-through term carries it into the encoder, so
+        # neither supervised block sees a zero structure norm (the budget rule refuses when either does)
+        positions = raw_total + (encoded - encoded.detach())
+        return reconstructed, quant_loss, int(unused_codes), tokens, [positions]
 
     @torch.no_grad()
     def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
