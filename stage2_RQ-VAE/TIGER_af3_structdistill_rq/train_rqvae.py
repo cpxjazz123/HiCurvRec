@@ -276,6 +276,28 @@ def _residuals_with_trace(
     return torch.stack(traces[: raw_module.rq.codebook_num], dim=0)
 
 
+def probe_lambda_star(module, embeddings, batch_ids, rows, neighbours, two_hop, n_items) -> float:
+    """The issue's one-shot probe: lambda* = 0.1 * ||grad_enc L_RQ|| / (||grad_enc L_SD|| + 1e-12).
+
+    Measured on the first training batch only, then frozen into the manifest and the logs; nothing re-measures it later.
+    """
+    def grad_norm(loss):
+        params = [p for p in module.encoder.parameters() if p.requires_grad]
+        grads = torch.autograd.grad(loss, params, retain_graph=False, allow_unused=True)
+        total = torch.zeros((), device=loss.device)
+        for g in grads:
+            if g is not None:
+                total = total + g.pow(2).sum()
+        return float(total.sqrt())
+
+    z = module.encoder(embeddings)
+    quantised, quant_loss, _, _ = module.rq(z)
+    recon = module.decoder(quantised)
+    rq_loss = torch.nn.functional.mse_loss(recon, embeddings) + quant_loss
+    sd_loss = sd_step.structural_loss(module, embeddings, batch_ids, rows, neighbours, two_hop, n_items)
+    return struct_distill.calibrate(grad_norm(rq_loss), grad_norm(sd_loss))
+
+
 def _encode_all(module, embeddings: torch.Tensor):
     """Encode every item with its own curvature registered, so export uses the training rule (issue #180).
 
@@ -381,6 +403,36 @@ def main() -> None:
     # iter48's full transition stream, drawn by its own sampler so the item
     # batch above keeps exactly the rows, order and Sinkhorn balancing the
     # baseline sees.
+    # --- issue #181: the frozen AF3 teacher, built from TRAIN edges only ---
+    import pandas as _pd
+    from model import af3_teacher as _af3, sd_step, struct_distill
+    import torch as _torch
+    _edges = set()
+    for _history, _target in zip(train_frame["seen_history"].to_numpy(), train_frame["target"].to_numpy(np.int64)):
+        if _history is None or len(_history) == 0:
+            continue
+        _edges.add((int(_history[-1]), int(_target)))
+    _coo = sorted(_edges)
+    n_items = int(max(max(edge) for edge in _coo)) + 1
+    _t0 = time.time()
+    _teacher_sparse, teacher_manifest = _af3.build_sparse(_coo, n_items)
+    teacher_rows = _af3.SparseRows(_teacher_sparse)
+    teacher_build_s = time.time() - _t0
+    neighbours: dict[int, list[int]] = {}
+    for _i, _j in _coo:
+        neighbours.setdefault(_i, []).append(_j)
+        neighbours.setdefault(_j, []).append(_i)
+    two_hop: dict[int, list[int]] = {}
+    for _node, _first in neighbours.items():
+        _seen: list[int] = []
+        for _mid in _first:
+            for _far in neighbours.get(_mid, []):
+                if _far != _node and _far not in _seen:
+                    _seen.append(_far)
+        two_hop[_node] = _seen
+    LAMBDA_STAR = 0.0
+    print(f"[RQ-VAE] teacher nnz={_teacher_sparse._nnz()} build_s={teacher_build_s:.2f} items={n_items}", flush=True)
+
     pair_dataset = TransitionPairs(train_frame)
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
@@ -461,6 +513,16 @@ def main() -> None:
     final_raw_unique = 0
     codebook_sizes = list(config.codebook_size)
 
+    if not struct_distill.SD_OFF:
+        with torch.enable_grad():
+            _probe_batch, _probe_ids = next(iter(loader))
+            LAMBDA_STAR = probe_lambda_star(
+                raw_module, all_embeddings.to(device), _probe_ids.to(device),
+                teacher_rows, neighbours, two_hop, n_items,
+            )
+        print(f"[RQ-VAE] probe lambda_star={LAMBDA_STAR:.6g}", flush=True)
+        _record(rank, "lambda_probe", lambda_star=LAMBDA_STAR)
+
     for epoch in range(1, EPOCHS + 1):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
@@ -470,7 +532,7 @@ def main() -> None:
         losses: list[float] = []
         recons: list[float] = []
         behaviors: list[float] = []
-        epoch_weight = behavior_weight(epoch)
+        SD_LAMBDA = 0.0 if struct_distill.SD_OFF else struct_distill.lambda_schedule(epoch) * LAMBDA_STAR
         _epoch_t0 = time.time()
         for batch, batch_ids in loader:
             batch = batch.to(device, non_blocking=True)
@@ -484,17 +546,14 @@ def main() -> None:
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             behavior_loss = torch.zeros((), device=device)
-            if epoch_weight > 0.0:
-                pairs = next(pair_cycle).to(device, non_blocking=True)
-                source_ids, target_ids = pairs[:, 0], pairs[:, 1]
-                pair_batch = all_embeddings[
-                    torch.cat((source_ids, target_ids)).cpu()
-                ].to(device, non_blocking=True)
-                residuals = _residuals_with_trace(raw_module, pair_batch)
-                behavior_loss = behavior_contrastive_loss(
-                    residuals, source_ids, target_ids
+            if SD_LAMBDA > 0.0:
+                # issue #181: no positive/negative samples at all -- the structural KL on the final quantised readout
+                sd_value = sd_step.structural_loss(
+                    raw_module, all_embeddings.to(device), batch_ids.to(device),
+                    teacher_rows, neighbours, two_hop, n_items,
                 )
-                loss = loss + epoch_weight * behavior_loss
+                behavior_loss = sd_value
+                loss = loss + SD_LAMBDA * sd_value
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()

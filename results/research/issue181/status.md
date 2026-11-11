@@ -114,3 +114,14 @@
 ## 尚待
 
 把 `structural_loss` 接进训练循环（替换 R48 对比、`SD_OFF` 时完全不执行）、λ* 探针实测并写 manifest、`SD_OFF`/`GEOMETRY_OFF` 逐位一致、4-rank DDP 检查、一 epoch 冒烟，然后 Stage2/Stage3 与结构保真报告。
+
+## 训练循环接线 + λ* 探针（本轮）；**42 passed**
+
+- 训练循环里 R48/#179 的**正负样本对比调用已删除**，替换为 `sd_step.structural_loss`，权重 `SD_LAMBDA = 0 if SD_OFF else lambda_schedule(epoch) · λ*`；`SD_OFF` 时结构项完全不执行（`SD_LAMBDA = 0.0`，分支不进入）。
+- 教师在建 loader 前**构建一次**（TRAIN 边、`build_sparse`、`SparseRows`），并建一跳/两跳邻接表；`teacher nnz / build 秒数 / items` 打进日志。
+- `probe_lambda_star`：在**第一个训练 batch** 上分别对 `L_RQ`（`mse(decoder(q), emb) + quant_loss`）与 `L_SD` 取编码器参数梯度范数，用 Issue 公式算 `λ* = 0.1·‖g_RQ‖/(‖g_SD‖+1e-12)`，随后**冻结**（`_record(rank, "lambda_probe", lambda_star=…)`），全程不再重测。
+- 全树 **42 passed**（教师 8、学生 9、SD 单步 3、继承 22）。
+
+## 尚待
+
+`SD_OFF` 与"#180 几何选码开启、对比关闭、结构项为零"的同树对照逐位一致、4-rank DDP 检查、一 epoch 真实入口冒烟，然后 Stage2/Stage3 与结构保真报告。
