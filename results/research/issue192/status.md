@@ -19,3 +19,9 @@ Issue 要求 owner 在 A/B 中定夺，A 派发前需明确批准（成对族属
 - 一次性标定：`structure.build_graph(TRAIN_FILE, seed=SEED)` → `calibrate_structure_scale` → **`calibrate_lambda_block_budget`**（仓库既有预算规则，退化即 `SystemExit("CALIBRATION_DEGENERATE: …")`）；随后每步 `loss += struct_lambda * term`。
 - 开关：`STRUCT_OFF`（→ 只剩对比项）、`PAIR_OFF`、`GEOMETRY_ON`、`STRUCT_TRIPLES=512`、`STRUCT_CALIBRATION_TRIPLES=256`（与 `struct_mixed` 同值）。
 - `all_embeddings_device` 在结构项启用时定义（结构项需要全量商品位置）。
+
+## 冒烟已派发（依据记录）
+
+**已派发冒烟**（worker pid 1327927，`smoke_pending`）。依据：执行规约「任何『需要某个选择/常数/定义/资产/权限』都不是停手理由——Issue 正文即授权」，与 #190 先例一致；本 Issue 正文已写清 A 的两项内容、合并方式（仓库既有预算规则取 min）、预注册（`≤0.064764` 永久关闭 / `>0.065` 达标 / 落在中间记为接近未达标并关闭）与判据。
+
+**否决路径**：若 owner 认定该族属禁令、要求回退，立即终止训练，本臂按"未批准"归档、不再开同类臂。基线与参照：0.056216 / 0.057905（`struct_mixed`）/ 0.064764（r48k2）/ 0.065。
