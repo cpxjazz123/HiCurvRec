@@ -55,12 +55,15 @@ def behaviour_distances(source: torch.Tensor, candidates: torch.Tensor,
         return torch.cdist(source, candidates, p=2)
     # the lookup returns a CPU float32 tensor; the residuals may be on a GPU in another dtype
     device, dtype = source.device, source.dtype
-    kappa = pair_kappa(source_kappa.to(device=device, dtype=dtype),
-                       candidate_kappa.to(device=device, dtype=dtype))
+    # double precision inside: the acosh argument of two nearby points differs from 1 by less than float32's epsilon, which
+    # would round the whole matrix to zeros (the smoke's "Cannot center a constant distance matrix")
+    kappa = pair_kappa(source_kappa.to(device=device, dtype=torch.float64),
+                       candidate_kappa.to(device=device, dtype=torch.float64))
     rows, cols, dim = source.shape[0], candidates.shape[0], source.shape[-1]
-    p = project_to_ball(source.unsqueeze(1).expand(rows, cols, dim), kappa.unsqueeze(-1))
-    q = project_to_ball(candidates.unsqueeze(0).expand(rows, cols, dim), kappa.unsqueeze(-1))
-    return distance(p, q, kappa.unsqueeze(-1))
+    src, cand = source.to(torch.float64), candidates.to(torch.float64)
+    p = project_to_ball(src.unsqueeze(1).expand(rows, cols, dim), kappa.unsqueeze(-1))
+    q = project_to_ball(cand.unsqueeze(0).expand(rows, cols, dim), kappa.unsqueeze(-1))
+    return distance(p, q, kappa.unsqueeze(-1)).to(dtype)
 
 
 _TABLE: dict | None = None

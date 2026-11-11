@@ -98,3 +98,17 @@ def test_kappa_from_the_lookup_is_moved_to_the_points_device_and_dtype(monkeypat
     loss = trainer.behavior_contrastive_loss(residuals, source, target)
     assert loss.dtype == residuals.dtype
     assert torch.isfinite(loss)
+
+
+def test_float32_points_still_produce_a_non_constant_matrix(monkeypatch):
+    # regression for the second smoke: in float32 the acosh argument rounded to exactly 1 for every pair, so the matrix was
+    # constant zeros and Sinkhorn's centring raised "Cannot center a constant distance matrix"
+    monkeypatch.setattr(g, "GEOMETRY_OFF", False)
+    generator = torch.Generator().manual_seed(5)
+    source = (torch.randn(6, 16, generator=generator) * 0.05).float()
+    candidates = (torch.randn(6, 16, generator=generator) * 0.05).float()
+    kappa = torch.full((6,), 4.0)
+    matrix = g.behaviour_distances(source, candidates, kappa, kappa)
+    assert matrix.dtype == source.dtype
+    assert float(matrix.std()) > 0.0
+    assert float(matrix.max()) > float(matrix.min())

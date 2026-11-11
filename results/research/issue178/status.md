@@ -37,3 +37,9 @@
 一 epoch 冒烟崩在 `project_to_ball`：`RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!`。原因：`kappa_of` 查表返回 **CPU float32** 张量，而残差在 **cuda/float64**。
 
 修复：`behaviour_distances` 先把两侧 κ 转到 `source.device` 与 `source.dtype` 再算 `pair_kappa`。补回归测试 `test_kappa_from_the_lookup_is_moved_to_the_points_device_and_dtype`（断言损失 dtype 与残差一致且有限）。两套共 **12 passed**。
+
+## 第二次冒烟失败 → 修复 → 13/13
+
+`ValueError: Cannot center a constant distance matrix.`（`model/layers.py:77`），同时行为损失梯度为 0、`applied_grad_norms: [NaN]`。原因：两次投影点非常接近时，`arccosh` 的参数与 1 的差在 **float32** 下小于机器 epsilon，整张矩阵被 `clamp_min(1.0)` 压成**全零常数阵**，Sinkhorn 的居中因此无振幅可分。
+
+修复：`behaviour_distances` 内部一律用 **float64** 计算（投影与 `acosh` 都在双精度），返回时再转回输入 dtype；Sinkhorn 本来就以 `.double()` 运行，与之同精度。补回归测试 `test_float32_points_still_produce_a_non_constant_matrix`（float32 输入下矩阵标准差 > 0 且 max>min）。两套共 **13 passed**。
