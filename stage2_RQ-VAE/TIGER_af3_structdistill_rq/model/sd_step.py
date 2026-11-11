@@ -52,7 +52,7 @@ def structural_loss(module, embeddings: torch.Tensor, anchor_ids: torch.Tensor,
     cosines = struct_distill.student_cosines(z_hat, cand_q)
 
     scores = rows.gather(anchor_ids.cpu(), candidates.clamp_min(0)).to(cosines.dtype).to(cosines.device)
-    mask = candidates >= 0
+    mask = (candidates >= 0).to(cosines.device)      # candidates' ids stay on the cpu; the scores live with the model
     if not bool(mask.all()):
         floor = scores.masked_fill(~mask, float("inf")).min(dim=-1, keepdim=True).values
         scores = torch.where(mask, scores, floor)

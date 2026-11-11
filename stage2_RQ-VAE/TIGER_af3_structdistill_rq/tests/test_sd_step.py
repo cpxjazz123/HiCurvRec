@@ -86,3 +86,15 @@ def test_repeated_candidates_are_encoded_once(monkeypatch):
     assert torch.isfinite(loss)
     # 2 anchors + the union {1, 2, plus global draws} -- and crucially the global draws are shared between the two anchors
     assert calls["n"] < 2 * (1 + 64) + 64
+
+
+def test_padded_candidates_do_not_break_the_device_placement(monkeypatch):
+    # regression: mask was built from the cpu candidate ids while cosine and scores were on the model's device
+    torch.manual_seed(4)
+    module = RQVAE(_config(), in_dim=8)
+    embeddings = torch.randn(12, 8) * 0.1
+    rows = _teacher()
+    # disjoint neighbour sets give anchors different set sizes, so padding exists
+    loss = sd_step.structural_loss(module, embeddings, torch.tensor([0, 5]), rows,
+                                   {0: [1, 2], 5: []}, {}, n_items=12)
+    assert torch.isfinite(loss)
