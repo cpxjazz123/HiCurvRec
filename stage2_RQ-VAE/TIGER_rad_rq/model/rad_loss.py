@@ -113,12 +113,20 @@ def positions(quantised: torch.Tensor, e_dim: int):
 
 
 def step_terms(module, embeddings: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, dict]:
-    """``(base_loss, radius_loss, record)`` for one batch, along the module's own encoder-then-rq path."""
+    """``(base_loss, radius_loss, record)`` for one batch, along the module's own encoder-then-rq path.
+
+    The positions are read from the **encoder output**, not from the quantised readout: the residual stack hands back
+    ``x + (x_q - x).detach()``, so a radius computed on it carries no gradient to the encoder at all and the budget rule correctly refuses
+    calibration (``CALIBRATION_DEGENERATE: block encoder has no structure gradient``). The hyperbolic half gets the same exponential map the
+    stack uses, which keeps it in the ball.
+    """
     z = module.encoder(embeddings)
     quantised, quant_loss, _, tokens = module.rq(z)
     recon = module.decoder(quantised)
     base = torch.nn.functional.mse_loss(recon, embeddings) + quant_loss
-    e_dim = quantised.shape[-1] // 2
-    pos_e, pos_h = positions(quantised, e_dim)
+    e_dim = z.shape[-1] // 2
+    pos_e = z[..., :e_dim]
+    from . import poincare_contract
+    pos_h = poincare_contract.expmap0(z[..., e_dim:], module.rq.curvature) if module.rq.curvature > 0 else z[..., e_dim:]
     rad = radii(pos_e, pos_h)
     return base, radius_loss(rad, tokens[:, 0].detach())[0], radius_loss(rad, tokens[:, 0].detach())[1]

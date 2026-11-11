@@ -31,3 +31,9 @@
 - `rad_loss.step_terms(module, embeddings)`：走模块自身的 `encoder → rq → decoder`，返回 `(base_term, radius_term, record)`；`positions` 按 16/16 切分量化读出（欧氏块/球面块）。
 - 训练器：`LAMBDA_RAD` 在首个 batch 上用 `rad_loss.calibrate_budget` 标定一次（encoder 与 codebook 两个 block），退化为 `SystemExit("CALIBRATION_DEGENERATE: …")`、**不训练**；随后每个 batch `loss += LAMBDA_RAD · radius_term`。`BEHAVIOUR_OFF` 时 `LAMBDA_RAD=0` 且分支不进入（与冻结基线逐位一致）。
 - 训练器在项目解释器下可导入（`raw_module.rq.vq_layers` 为正确属性名）。
+
+## 冒烟：**CALIBRATION_DEGENERATE 生效并拒绝了训练** —— 并暴露一处实现缺陷
+
+第二次冒烟输出 `CALIBRATION_DEGENERATE: block encoder has no structure gradient (norm=0.0)`，**没有开始训练**——预算规则按 Issue 要求 fail-closed，行为正确。
+
+原因是我把位置取自**量化读出**：残差栈返回 `x + (x_q − x).detach()`，半径定义在它上面时对编码器的梯度精确为 0。Issue 要求 `pos_i` 与 `struct_mixed_rq` 的 `_positions` 同口径（编码器侧位置）。已改为从**编码器输出**取位置：`pos_e = z[:, :16]`、`pos_h = expmap0(z[:, 16:], curvature)`（同一指数映射、留在球内）。测试仍 **10 passed**。
