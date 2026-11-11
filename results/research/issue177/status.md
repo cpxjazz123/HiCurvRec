@@ -64,3 +64,9 @@
 一 epoch 冒烟在 `train_rqvae.py:591` 崩：`AttributeError: 'list' object has no attribute 'tolist'`。原因是我在 `MixedRQ.forward` / `encode_tokens` 里对 `tokens`（**逐层 index 张量的 list**）直接调 `.tolist()`；层 1 之前该 list 为空，层 2 时它也仍是 list。
 
 修复：用 `torch.stack(tokens, dim=1)` 组成前缀矩阵再交给 `kappa_for_rows`（空时给 `[B,0]`）。补**回归测试** `test_the_switch_on_stack_actually_resolves_kappa_from_its_own_tokens`（开关打开时跑通 `MixedRQ.forward`、损失有限、且确实走 κ 解析），连同前三套 **17 passed**。
+
+## 冒烟通过 → 正式训练已启动
+
+`SMOKE_PASS`：24 步、`applied_grad_norms` 全部为正（0.0007–0.0026）、活项 `RQVAE.compute_loss.recon` 与 `.total` 都有梯度、无 `dead_terms`/`nonfinite_terms`、导出 `unique=24587`、`passed=true`。
+
+正式训练：pid **2188984**（`bootstrap` → torchrun，`--world-size 4 --port 50202`），四进程各 **5182 MiB**，已到 epoch 28（0.202 s/epoch，累计 13.5 s），loss 1.716e-4。冒烟外推上界 **3.95 h**（3000 epoch）。
