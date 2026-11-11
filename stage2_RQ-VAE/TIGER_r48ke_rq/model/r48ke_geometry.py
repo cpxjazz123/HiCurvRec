@@ -100,3 +100,24 @@ def kappa_of(item_ids: torch.Tensor, table: dict | None = None) -> torch.Tensor:
     entries, mean_frozen = table["kappa"], float(table["mean_frozen"])
     values = [float(entries.get(str(int(i)), mean_frozen)) for i in item_ids.detach().cpu().tolist()]
     return torch.tensor(values, dtype=torch.float32).clamp_min(1e-3)
+
+
+_KAPPA = None
+
+
+def set_batch_kappa(kappa) -> None:
+    """The current batch's per-row curvature, registered by the trainer around its forward pass."""
+    global _KAPPA
+    _KAPPA = None if kappa is None else torch.as_tensor(kappa).reshape(-1)
+
+
+def batch_kappa():
+    return _KAPPA
+
+
+def map_representation(z: torch.Tensor) -> torch.Tensor:
+    """Apply ``expmap0`` to the encoder output when the trainer has registered the batch's curvature."""
+    kappa = batch_kappa()
+    if kappa is None or kappa.shape[0] != z.shape[0]:
+        return z
+    return expmap0(z, kappa.reshape(-1, 1).to(z.device, z.dtype))

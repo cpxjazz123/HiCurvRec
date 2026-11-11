@@ -13,3 +13,10 @@
 
 1. **量化器输入也必须是 `z'`**（Issue 要求"量化/残差/对比全部作用在 `z'_i`"）：需要在 `RQVAE.forward` 的 `encoder→rq` 之间按行 κ 做 `expmap0`（用与 #180 同款 `set_batch_kappa` 钩子，并让 `_encode_all` 在导出时同样注册）。
 2. `GEOMETRY_OFF` 与 R48 损失**逐位一致**的三态测试、三处同一 κ 的绑定断言、一 epoch 冒烟，然后派发。
+
+## 量化器输入也映射 + 绑定断言（本轮，**21 passed**）
+
+- `r48ke_geometry` 增加 `set_batch_kappa/batch_kappa/map_representation`：训练器在 `model(batch)` 前后注册/清除批内逐行 κ（`GEOMETRY_OFF` 时注册 `None`）。
+- `model/model.py` 的 `RQVAE.forward` 在 `encoder` 与 `rq` 之间调用 `map_representation`，于是**量化、残差、对比三处作用在同一张 `z'` 与同一 κ 表上**（Issue 验收 4）。
+- 训练器：数据集改为 `(embedding, id)`、循环解包 `batch, batch_ids` 并注册 κ——与 #180 同一套 loader 契约改动。
+- 新测试 `tests/test_r48ke_binding.py` 4 项：钩子注册时模型输出等于 `expmap0(encoder(x), κ)`、映射后严格在各自球内、对比用的 `pair_kappa` 与查表一致（对角等于 κ_i）、`GEOMETRY_OFF` 同时让映射与距离退回欧氏。全树 **21 passed**。

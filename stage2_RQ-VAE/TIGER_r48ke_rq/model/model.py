@@ -25,6 +25,9 @@ class RQVAE(nn.Module):
 
     def forward(self, embeddings: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
         encoded = self.encoder(embeddings)
+        # Issue #183: the representation itself carries the curvature, so quantisation, residuals and the contrast share one geometry
+        from . import r48ke_geometry
+        encoded = r48ke_geometry.map_representation(encoded)
         quantized, quant_loss, unused_codes, tokens = self.rq(encoded)
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens

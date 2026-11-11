@@ -365,7 +365,9 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
-    train_dataset = TensorDataset(train_embeddings)
+    # Issue #183: rows carry their ids so the encoder output can be mapped at the item's own curvature
+    train_ids_tensor = torch.from_numpy(train_ids.astype(np.int64))
+    train_dataset = TensorDataset(train_embeddings, train_ids_tensor)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -446,10 +448,15 @@ def main() -> None:
         behaviors: list[float] = []
         epoch_weight = behavior_weight(epoch)
         _epoch_t0 = time.time()
-        for (batch,) in loader:
+        for batch, batch_ids in loader:
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _ = model(batch)
+            from model import r48ke_geometry as _ke
+            _ke.set_batch_kappa(_ke.kappa_of(batch_ids) if not (_ke.GEOMETRY_OFF) else None)
+            try:
+                reconstructed, quant_loss, _, _ = model(batch)
+            finally:
+                _ke.set_batch_kappa(None)
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             behavior_loss = torch.zeros((), device=device)
