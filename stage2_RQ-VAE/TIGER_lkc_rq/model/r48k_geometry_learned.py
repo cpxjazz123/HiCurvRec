@@ -82,3 +82,33 @@ def level1_cost(latent: torch.Tensor, codes: torch.Tensor, kappa_codes: torch.Te
     p = to_ball(latent.to(torch.float64).unsqueeze(1).expand(rows, cols, dim), kappa)
     q = to_ball(codes.to(torch.float64).unsqueeze(0).expand(rows, cols, dim), kappa)
     return distance(p, q, kappa).to(latent.dtype)
+
+
+_TABLE = None
+from pathlib import Path as _Path
+
+TABLE_RELPATH = _Path("results") / "research" / "issue167" / "kappa.json"
+
+
+def repo_root(start=None) -> _Path:
+    here = (start or _Path(__file__).resolve()).resolve()
+    for candidate in (here, *here.parents):
+        if all((candidate / m).is_dir() for m in ("stage2_RQ-VAE", "results", "stage1_GeneEmbedding")):
+            return candidate
+    raise FileNotFoundError("no repository root above this module")
+
+
+def load_table() -> dict:
+    global _TABLE
+    if _TABLE is None:
+        import json
+        _TABLE = json.loads((repo_root() / TABLE_RELPATH).read_text())
+    return _TABLE
+
+
+def kappa_of(item_ids: torch.Tensor, table: dict | None = None) -> torch.Tensor:
+    """The frozen per-item curvature, the fill for the blind spot, floored at the issue's 1e-3."""
+    table = load_table() if table is None else table
+    entries, mean_frozen = table["kappa"], float(table["mean_frozen"])
+    values = [float(entries.get(str(int(i)), mean_frozen)) for i in item_ids.detach().cpu().tolist()]
+    return torch.tensor(values, dtype=torch.float64).clamp_min(FLOOR)
