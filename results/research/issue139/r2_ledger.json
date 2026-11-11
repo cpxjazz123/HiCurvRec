@@ -1749,6 +1749,30 @@
       "test_recall@5"
     ]
   },
+  "64": {
+    "arm": "TIGER_r48k2u_rq",
+    "files": {
+      "TIGER_r48k2u_rq/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_r48k2u_rq/model/layers.py": "bd75031d4010917e23796f7a0ae543ae4fc2d9f851218f580e10053e72e07c71",
+      "TIGER_r48k2u_rq/model/model.py": "22f8752db26432e70085ff38d291e127cd3def3043d188c25c0144f6a49fc09f",
+      "TIGER_r48k2u_rq/model/r48k2_assign.py": "fa944f0d016a97cb57769c9b38e08f9922c70d6c648d4087b980b2ef62474d22",
+      "TIGER_r48k2u_rq/model/r48k_geometry.py": "3ee8f069513207b644b0f47d4f070d535c6e210b3380158f0576bbf2e583ff6a",
+      "TIGER_r48k2u_rq/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_r48k2u_rq/train_rqvae.py": "4313c810b371e97011c9ac0b275a936876eb55e6b0b6555f397b3dcdf38fff06",
+      "item_sids.json": "fdee44192643ae8630bea30d05bc0c50c781bd73584231c99fcf2811a71f8ff4",
+      "recall.json": "40befa26fc2ab29675d3398da3cf4a514646b4dbaec189890547a79a4d2fa661",
+      "rqvae_best.pth": "943b76bd99e41eb934450ebc36e1ff239f07cd9698786e06c26dcb9ccc4146d4"
+    },
+    "key": "TIGER_r48k2u_rq",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
   "R09": {
     "arm": "TIGER_M2_radial_manifold",
     "duplicate_of": "20",
