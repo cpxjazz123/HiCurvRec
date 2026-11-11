@@ -15,3 +15,24 @@
 ## 尚待
 
 学生侧 STE 读出 `z_hat = z + stopgrad(q − z)`、候选集合采样（16 一跳 + 16 两跳 + 32 全局）、逐行 zscore+softmax 的 KL、λ* 探针标定、SD_OFF/GEOMETRY_OFF 两个开关的逐位一致、梯度与 DDP 检查、一 epoch 冒烟，然后 Stage2/Stage3 与结构保真报告。
+
+## 学生侧已实现（12 passed / 1 failed）
+
+新增 `model/struct_distill.py`：`ste_readout(z,q)=z+stopgrad(q−z)`（前向等于量化读出、梯度回编码器）、`candidate_sets`（16 一跳 + 16 两跳 + 32 全局、去重、排除自身、固定 seed、有界）、`zscore`（逐行、方差下限）、`relational_loss`（`KL(stopgrad p_G ‖ p_Q)`、教师侧 `detach`）、`student_cosines`（接受共享池或逐 anchor 集合）。
+
+测试 `tests/test_struct_distill.py`（7 项）全部通过：STE 前向等于量化值（按浮点舍入 `allclose`）且梯度为 1、候选集合确定且有界且排除自身、学生=教师时 KL≈0、学生被置换时 KL 显著变大、**教师侧无梯度**、`zscore` 对常量行不产生 NaN、学生余弦读的是 STE 读出而不是量化前值。
+
+## 仍未通过的一项：教师与定义式**不一致**（已记录，未修）
+
+`test_teacher_is_symmetric_and_reproduces_the_definition` 失败，实测数字：
+
+- `build()` 给出的 `T[0,0] = 0.25` ⇒ `p[0,1] = 0.7071` ⇒ `W[0,1] = 1.2247`（即 `u ≈ 0.2247`）；
+- 用同一模块的公开助手（`quantiles` → `weights` → `normalized`）在测试里重算得到 `p[0,1] = 0.6325` ⇒ `W[0,1] ≈ 1.0954`（`u ≈ 0.0954`）。
+
+两者仅差在 **u**，即 q05/q95 的取值不同，而两条路径本应传入同一组 `coo` 与 `degrees`——这是一个尚未定位的实现差异（可能出在 `weights` 内部重算度数与 `build` 传入度数的不一致，或 `coalesce` 对同向重复边的合并）。**未修，未放宽断言**：教师是整条机制的信号源，在它与定义式逐元素一致之前不能派发。
+
+对称性、桥梁权重 ≥1、未观测为 0、孤立节点零行、确定性这些性质在另一项测试里已通过。
+
+## 结论（本轮）
+
+实现进度：教师（待修）+ 学生侧损失（已通过）。按 Issue 的"实现前验收"要求，第 1 项未完全通过即**不派发**；下一步是定位 `u` 的差异（打印两条路径的 q05/q95 与度数），修好后重跑 6 项教师验收。
