@@ -277,12 +277,16 @@ def _residuals_with_trace(
 
 
 def _encode_all(module, embeddings: torch.Tensor):
-    """Encode every item with its own curvature registered, so export uses the training rule (issue #180)."""
+    """Encode every item with its own curvature registered, so export uses the training rule (issue #180).
+
+    ``module`` is the RQVAE itself, whose ``forward`` takes no ``infer_use_sk``; the flag belongs to the residual stack, which
+    the RQVAE calls on its own. Passing it here was the smoke's TypeError.
+    """
     from model import r48k2_assign
     ids = torch.arange(embeddings.shape[0])
     r48k2_assign.set_batch_kappa(_assign_kappa(ids))
     try:
-        return module(embeddings, infer_use_sk=False)
+        return module(embeddings)
     finally:
         r48k2_assign.set_batch_kappa(None)
 

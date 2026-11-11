@@ -92,3 +92,28 @@ def test_the_layer_hook_uses_the_batch_kappa_when_the_mode_asks_for_it():
     a.set_batch_kappa(None)
     assert not torch.equal(plain, curved)
     assert torch.equal(layer._distances(latent), plain)
+
+
+def test_the_export_wrapper_calls_the_module_without_infer_use_sk():
+    # regression for the smoke's TypeError: _encode_all passed infer_use_sk to RQVAE.forward, which does not take it
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("r48k2u_trainer", TREE / "train_rqvae.py")
+    trainer = importlib.util.module_from_spec(spec)
+    sys.modules["r48k2u_trainer"] = trainer
+    spec.loader.exec_module(trainer)
+
+    class Recorder(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.seen = None
+
+        def forward(self, x):
+            self.seen = tuple(x.shape)
+            return x
+
+    model = Recorder()
+    out = trainer._encode_all(model, torch.randn(4, 4) * 0.1)
+    assert model.seen == (4, 4)
+    assert out.shape == (4, 4)
+    from model import r48k2_assign
+    assert r48k2_assign.batch_kappa() is None      # the hook is cleared afterwards

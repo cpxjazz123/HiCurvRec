@@ -22,3 +22,7 @@
 `_assign_kappa` 在 `CONTRAST_ONLY` 或 `GEOMETRY_OFF` 时返回 `None`，于是 `layers._distances` 原样走冻结欧氏表达式——两个开关的语义因此是"代价侧完全不介入"。
 
 测试 **21 passed**（含 #179 的 16 项与本轮的 5 项）。
+
+## 冒烟失败 → 修复（第 1 次）
+
+`TypeError: forward() got an unexpected keyword argument 'infer_use_sk'`：我把导出调用包进 `_encode_all(module, ...)` 时沿用了 `infer_use_sk=False`，但 `module` 是 **RQVAE**（其 `forward` 不接受该关键字；该标志属于残差栈，由 RQVAE 自己传）。改为 `module(embeddings)`，并补回归测试 `test_the_export_wrapper_calls_the_module_without_infer_use_sk`（记录调用形状、断言钩子在返回后已清除）。6/6 通过。
