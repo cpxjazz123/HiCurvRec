@@ -37,3 +37,14 @@
 第二次冒烟输出 `CALIBRATION_DEGENERATE: block encoder has no structure gradient (norm=0.0)`，**没有开始训练**——预算规则按 Issue 要求 fail-closed，行为正确。
 
 原因是我把位置取自**量化读出**：残差栈返回 `x + (x_q − x).detach()`，半径定义在它上面时对编码器的梯度精确为 0。Issue 要求 `pos_i` 与 `struct_mixed_rq` 的 `_positions` 同口径（编码器侧位置）。已改为从**编码器输出**取位置：`pos_e = z[:, :16]`、`pos_h = expmap0(z[:, 16:], curvature)`（同一指数映射、留在球内）。测试仍 **10 passed**。
+
+## 预派发负结果：冻结预算规则与半径项在结构上不相容
+
+改到编码器侧位置后，冒烟给出 **`CALIBRATION_DEGENERATE: block codebooks has no structure gradient (norm=0.0)`**，同样**拒绝训练**。
+
+机制原因（不是实现缺陷）：
+- 半径 `r_i = 2·atanh(‖pos_i^H‖)` 只依赖**位置**，而位置来自编码器输出；因此梯度**只到编码器**，对码本参数**恒为 0**；
+- 反过来把位置取自量化读出（`x + (x_q − x).detach()`）时，编码器侧恒为 0（上一次冒烟已实测）；
+- 仓库既有冻结规则 `calibrate_lambda_block_budget` 取 `min over {encoder, codebooks}`，任一块结构梯度为 0 即 `CALIBRATION_DEGENERATE`；Issue 明确该状态**不得训练**且**不得静默换规则/回退**。
+
+结论：**按 Issue 规定的半径形式（只用位置、非成对）+ 冻结的 block 预算规则，二者在结构上不相容**——不存在既满足"半径只依赖位置"又让 codebook block 收到非零结构梯度的配置。按 Issue 第 5 条（λ 退化即拒绝训练、不得换规则），本臂记为**预派发负结果**并停止，不修改半径定义、不改预算规则、不偷换 block 集合。
