@@ -86,3 +86,23 @@ def test_the_flat_limit_is_residual_minus_code_not_the_reverse():
     m.STEP_OFF = False
     assert torch.equal(got, residual - code)
     assert not torch.equal(got, code - residual)
+
+
+def test_step_off_matches_the_flat_path_through_the_real_stack():
+    """With STEP_OFF the stack must behave exactly as when no curvature is registered at all."""
+    import torch.nn as nn
+    from model.mixed_rq import MixedRQ, AlphaTable
+
+    torch.manual_seed(0)
+    stack_flat = MixedRQ([16, 16, 16], AlphaTable(levels=3), curvature=1.0)
+    stack_off = MixedRQ([16, 16, 16], AlphaTable(levels=3), curvature=1.0)
+    stack_off.load_state_dict(stack_flat.state_dict())
+    z = torch.randn(6, 32, dtype=torch.float64) * 0.1
+    with torch.no_grad():
+        _, loss_flat, _, tokens_flat = stack_flat(z)
+        stack_off.item_kappa = torch.full((6,), 2.0, dtype=torch.float64)
+        m.STEP_OFF = True
+        _, loss_off, _, tokens_off = stack_off(z)
+        m.STEP_OFF = False
+    assert torch.equal(tokens_flat, tokens_off)
+    assert torch.equal(loss_flat, loss_off)

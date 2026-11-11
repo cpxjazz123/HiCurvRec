@@ -52,3 +52,7 @@ Issue 写「`struct_mixed` 在**一级用 `d_{κ_i}` 选码**，但残差仍是�
 第一次接线把 `mobius_sub` 的实参写成 `(residual, code)`，但语义应是 **`residual ⊖ code = mobius_add(−code, residual)`**，即 `x=code, y=residual`。按旧写法 `STEP_OFF` 会得到 `code − residual`——**每层残差符号翻转**，与基线不符。已改正，并补回归测试 `test_the_flat_limit_is_residual_minus_code_not_the_reverse`（`κ=0` 时必须逐位等于 `residual − code` 且不等于 `code − residual`）。
 
 测试 **7 passed**。
+
+## `STEP_OFF` 在真实栈上逐位一致（本轮，**8 passed**）
+
+新测试 `test_step_off_matches_the_flat_path_through_the_real_stack`：同一 `MixedRQ` 权重下，(a) 不注册 `item_kappa`（基线的平直路径）与 (b) 注册 `κ_i=2` 且 `STEP_OFF=True`，**三级 token 与损失都 `torch.equal`**。这条把"只动了残差步"钉在真实量化栈上，而不只是 `mobius_sub` 单函数。
