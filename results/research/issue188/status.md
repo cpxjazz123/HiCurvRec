@@ -17,3 +17,9 @@
 ## 尚待
 
 接进训练循环（位置取编码器输出、码向量取一级码含梯度、λ 首个 batch 标定后冻结、退化即 `SystemExit`）、`TERM_OFF` 与冻结基线逐位一致、冒烟后派发 Stage2。
+
+## 训练循环接线（本轮）
+
+- `rcs_loss.step_terms(module, embeddings, κ)`：位置取**编码器输出**（欧氏半原样、双曲半过 `expmap0`），码向量取 `module.rq.levels[0].get_code_embs()[token_1]`——**带梯度**，这正是让 codebook block 进入预算视野的关键。
+- 训练器：数据集改为 `(embedding, id)`；λ 在首个 batch 上标定一次（encoder + codebooks 两 block），退化即 `SystemExit("CALIBRATION_DEGENERATE: …")`；随后每步 `loss += λ·L_rcs`；`TERM_OFF` 时 λ=0、分支不进入（与冻结基线逐位一致）。
+- 训练器在项目解释器下可导入。

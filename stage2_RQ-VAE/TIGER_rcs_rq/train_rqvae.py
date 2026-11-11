@@ -36,6 +36,7 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
 from model import RQVAE
+from model import rcs_loss
 from model.model import MixedRQVAE
 from model.af3_runtime import (input_identity, resolve_shared_readout,
                                snapshot_sha256, snapshot_state)
@@ -551,7 +552,9 @@ def main() -> None:
             from model.af3_auxiliary import prepare_state, augment_loss
             af3_state = prepare_state(prepared["graph"], all_embeddings, device)
 
-    train_dataset = TensorDataset(train_embeddings)
+    # Issue #188: rows carry their ids so each item's curvature can be looked up
+    train_ids_tensor = torch.from_numpy(train_ids.astype(np.int64))
+    train_dataset = TensorDataset(train_embeddings, train_ids_tensor)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -598,6 +601,21 @@ def main() -> None:
     final_raw_unique = 0
     codebook_sizes = list(config.codebook_size)
 
+    LAMBDA_RCS = 0.0
+    if not rcs_loss.TERM_OFF:
+        _first_batch, _first_ids = next(iter(loader))
+        _first_batch = _first_batch.to(device)
+        _base_term, _rcs_term, _ = rcs_loss.step_terms(raw_module, _first_batch, rcs_loss.kappa_of(_first_ids).to(device))
+        try:
+            LAMBDA_RCS, _budget = rcs_loss.calibrate_budget(
+                {"encoder": list(raw_module.encoder.parameters()),
+                 "codebooks": [p for layer in raw_module.rq.vq_layers for p in layer.parameters()]},
+                _base_term, _rcs_term)
+        except rcs_loss.CalibrationDegenerate as failure:
+            raise SystemExit(f"CALIBRATION_DEGENERATE: {failure}")
+        print(f"[RQ-VAE] rcs lambda={LAMBDA_RCS:.6g} ratios={_budget['ratios']}", flush=True)
+        _record(rank, "rcs_lambda", lambda_value=LAMBDA_RCS, ratios=_budget["ratios"])
+
     for epoch in range(1, EPOCHS + 1):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
@@ -606,12 +624,16 @@ def main() -> None:
         recons: list[float] = []
         auxiliary_logs = []
         _epoch_t0 = time.time()
-        for (batch,) in loader:
+        for batch, batch_ids in loader:
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
             reconstructed, quant_loss, _, _ = model(batch)
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
+            if LAMBDA_RCS > 0.0:
+                _kappa = rcs_loss.kappa_of(batch_ids).to(device)
+                _base_term, _rcs_term, _rcs_record = rcs_loss.step_terms(raw_module, batch, _kappa)
+                loss = loss + LAMBDA_RCS * _rcs_term
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             if AUX_AF3:

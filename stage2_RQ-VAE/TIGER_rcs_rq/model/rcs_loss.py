@@ -83,3 +83,55 @@ def is_pairwise_free(source: str) -> bool:
     body = body.split("def is_pairwise_free")[0]
     forbidden = ("triple", "margin", "InfoNCE", "infonce", "BCE", "bce_loss", "edge_index", "source_target")
     return not any(token in body for token in forbidden)
+
+
+def step_terms(module, embeddings: torch.Tensor, kappa: torch.Tensor):
+    """``(base_loss, radial_term, record)`` for one batch along the module's own encoder-then-rq path.
+
+    Positions come from the encoder output; the code vectors come from the level-1 codebook with their gradient intact, which is what makes the
+    codebook block visible to the budget rule.
+    """
+    from . import poincare_contract
+    z = module.encoder(embeddings)
+    quantised, quant_loss, _, tokens = module.rq(z)
+    recon = module.decoder(quantised)
+    base = torch.nn.functional.mse_loss(recon, embeddings) + quant_loss
+    e_dim = z.shape[-1] // 2
+    # the item's position: the Euclidean half as it is, the hyperbolic half through the same map the stack uses
+    curvature = getattr(module.rq, "curvature", 1.0)
+    pos_e = z[..., :e_dim]
+    pos_h = poincare_contract.expmap0(z[..., e_dim:], curvature) if curvature > 0 else z[..., e_dim:]
+    item_pos = torch.cat((pos_e, pos_h), dim=-1)
+    level1 = module.rq.levels[0]
+    code_vectors = level1.get_code_embs()[tokens[:, 0].detach()]
+    term, record = loss(item_pos, code_vectors.to(item_pos.dtype), kappa)
+    return base, term, record
+
+
+_TABLE = None
+from pathlib import Path as _Path
+
+TABLE_RELPATH = _Path("results") / "research" / "issue167" / "kappa.json"
+
+
+def repo_root(start=None) -> _Path:
+    here = (start or _Path(__file__).resolve()).resolve()
+    for candidate in (here, *here.parents):
+        if all((candidate / m).is_dir() for m in ("stage2_RQ-VAE", "results", "stage1_GeneEmbedding")):
+            return candidate
+    raise FileNotFoundError("no repository root above this module")
+
+
+def load_table() -> dict:
+    global _TABLE
+    if _TABLE is None:
+        import json
+        _TABLE = json.loads((repo_root() / TABLE_RELPATH).read_text())
+    return _TABLE
+
+
+def kappa_of(item_ids: torch.Tensor, table: dict | None = None) -> torch.Tensor:
+    table = load_table() if table is None else table
+    entries, mean_frozen = table["kappa"], float(table["mean_frozen"])
+    values = [float(entries.get(str(int(i)), mean_frozen)) for i in item_ids.detach().cpu().tolist()]
+    return torch.tensor(values, dtype=torch.float64).clamp_min(1e-3)
