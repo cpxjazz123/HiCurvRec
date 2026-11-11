@@ -65,3 +65,24 @@ def test_the_teacher_lookup_carries_no_gradient():
     loss.backward()
     # SparseRows holds plain tensors, not parameters: nothing on the teacher side can accumulate a gradient
     assert torch.is_tensor(rows.values) and not rows.values.requires_grad
+
+
+def test_repeated_candidates_are_encoded_once(monkeypatch):
+    # two anchors sharing every candidate must cost one encoding of the union, not one per anchor
+    torch.manual_seed(3)
+    module = RQVAE(_config(), in_dim=8)
+    embeddings = torch.randn(12, 8) * 0.1
+    rows = _teacher()
+    calls = {"n": 0}
+    real = sd_step.quantised_readout
+
+    def counting(m, x):
+        calls["n"] += x.shape[0]
+        return real(m, x)
+
+    monkeypatch.setattr(sd_step, "quantised_readout", counting)
+    shared = {0: [1, 2], 1: [1, 2]}
+    loss = sd_step.structural_loss(module, embeddings, torch.tensor([0, 1]), rows, shared, {}, n_items=12)
+    assert torch.isfinite(loss)
+    # 2 anchors + the union {1, 2, plus global draws} -- and crucially the global draws are shared between the two anchors
+    assert calls["n"] < 2 * (1 + 64) + 64

@@ -21,7 +21,11 @@ def quantised_readout(module, embeddings: torch.Tensor) -> tuple[torch.Tensor, t
 def structural_loss(module, embeddings: torch.Tensor, anchor_ids: torch.Tensor,
                     rows: af3_teacher.SparseRows, neighbours: dict, two_hop: dict,
                     n_items: int, seed: int = 42) -> torch.Tensor:
-    """``KL(stopgrad p_G || p_Q)`` for the batch's anchors and their candidate sets."""
+    """``KL(stopgrad p_G || p_Q)`` for the batch's anchors and their candidate sets.
+
+    The batch's candidate ids are unioned before encoding, so an item that appears in many anchors' sets is encoded once: the
+    per-anchor form of this step asked for up to anchors x 64 forward passes per training step, almost all of them repeats.
+    """
     sets = struct_distill.candidate_sets(anchor_ids.tolist(), neighbours, two_hop, n_items, seed=seed)
     width = max(len(s) for s in sets)
     candidates = torch.full((len(sets), width), -1, dtype=torch.long)
@@ -29,10 +33,13 @@ def structural_loss(module, embeddings: torch.Tensor, anchor_ids: torch.Tensor,
         candidates[i, : len(chosen)] = torch.tensor(chosen, dtype=torch.long)
 
     anchor_z, anchor_q = quantised_readout(module, embeddings[anchor_ids.cpu()])
+
     flat = candidates.flatten()
     valid = flat >= 0
+    unique_ids, inverse = torch.unique(flat[valid], return_inverse=True)
+    cand_q_unique = quantised_readout(module, embeddings[unique_ids.cpu()])[1]
     cand_q = torch.zeros((flat.numel(), anchor_q.shape[-1]), dtype=anchor_q.dtype, device=anchor_q.device)
-    cand_q[valid] = quantised_readout(module, embeddings[flat[valid].cpu()])[1]
+    cand_q[valid] = cand_q_unique[inverse.to(cand_q_unique.device)]
     cand_q = cand_q.view(len(sets), width, -1)
 
     z_hat = struct_distill.ste_readout(anchor_z, anchor_q)
@@ -40,7 +47,6 @@ def structural_loss(module, embeddings: torch.Tensor, anchor_ids: torch.Tensor,
 
     scores = rows.gather(anchor_ids.cpu(), candidates.clamp_min(0)).to(cosines.dtype).to(cosines.device)
     mask = candidates >= 0
-    # padding slots must not enter the softmax: give them the set minimum so they contribute nothing after z-scoring
     if not bool(mask.all()):
         floor = scores.masked_fill(~mask, float("inf")).min(dim=-1, keepdim=True).values
         scores = torch.where(mask, scores, floor)

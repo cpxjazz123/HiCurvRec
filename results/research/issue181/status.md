@@ -131,3 +131,9 @@
 冒烟已跑约 7 分钟仍在 `smoke_pending`，进程存活、日志停在教师构建后。定位到**计算量设计问题**：`sd_step.structural_loss` 对**每个 anchor 的每个候选**单独过一次量化器，一次 step 最多 `A × 64` 次编码（`A` 为 batch 内 anchor 数，1024 时为 6.5 万次前向）——候选在 batch 内大量重复，属于**可去重的浪费**。
 
 这不是公式问题，而是把"每 anchor 独立候选集合"直接照字面实现成逐行编码的结果。修法是**先把 batch 内所有候选 id 取并集、只编码一次**，再按 anchor 的候选位置 gather 回来；教师侧本来就是稀疏行式查询、不受影响。
+
+## 候选并集编码（本轮，**43 passed**）
+
+`structural_loss` 改为：先把 batch 内所有候选 id **取并集**（`torch.unique(..., return_inverse=True)`），锚点与并集各编码**一次**，再用 `inverse` 把行 gather 回每个 anchor 的候选位置。单 step 编码次数从"最多 anchors×64"降到"anchors + |并集|"；候选在 anchor 之间重复时收益最大。
+
+新增回归测试 `test_repeated_candidates_are_encoded_once`：两个 anchor 共享全部候选时，统计 `quantised_readout` 的**行数总和**必须显著小于逐 anchor 版本的 `2×(1+64)+64` 上界。全树 **43 passed**。
