@@ -151,3 +151,9 @@
 ## 冒烟失败 → 修复（`distributed` 未定义）
 
 `NameError: name 'distributed' is not defined`：本树把 `torch.distributed` 导入为 **`dist`**（`import torch.distributed as dist`，第 52 行），而我在教师广播块里写了 `distributed.`。已把该块改为 `dist.`，并在项目解释器下确认 `train_rqvae.py` 可导入。
+
+## 冒烟第三轮：rank 0 单构建后仍卡在 `sparse.mm`
+
+改为 rank 0 构建后，冒烟 3 分钟仍停在 `torch.sparse.mm(p, p)`。离线单进程同一张图只要 7.1 s，差别在**内存**：51.1M 非零元的 `P²` 在 float64 下约 **1.2 GB**（值 409 MB + 两路 int64 索引 818 MB），`sparse.mm` 的中间 CSR 与时序还要再叠一层；四卡进程各自还常驻嵌入与模型，合计把主机压到换页区间。
+
+修法（不改公式，只改数值宽度与存储形态）：`P`/`P²` 用 **float32 + int32 索引**（非零元数值 ≈ 0.6 GB，索引减半），并在 `build_sparse` 里先以 CSR 做乘法再转回 COO 存 `T`。这与 Issue 要求的"教师冻结、公式不变"并不冲突——它改变的是 dtype 与存储，不是 `W`、`P`、`P²` 的定义。
