@@ -21,3 +21,10 @@
 - 一 epoch 真实入口冒烟（需派发时由 MCP 执行）；
 - 全量导出统计（三级碰撞率对 0.162444、码使用量、最大份额、二级前缀数）；
 - §89 入场判断（`collision < 0.40`）。
+
+## 派发
+
+- 冒烟第一次失败：`NameError: _unique_stats`（统计导入写在打印语句之后）。修复 `d795f030`（导入提到模块级、引用改为 `UNIQUE_STATS`，并实测 `import train_rqvae` 正常）。
+- 修复后派发：`stage2_start(source_dir="TIGER_dul_rq")` → worker 611731；真实入口一 epoch 冒烟 **SMOKE_PASS**（`dead_terms=[]`、`nonfinite_terms=[]`、梯度范数全正、导出唯一），四卡已启动。
+- 首次失败的冒烟本身已给出有用证据：`compute_loss.total = 0.1275`、梯度 262.6 —— 说明 DUL 项确实在损失里且可反传（基线 rc 项只有 4.6e-4）。
+- 配方：seed 42、3000 epoch、全局 batch 4096、四卡 50202；产物 `results/stage2_RQ-VAE/TIGER_dul_rq/`。
