@@ -638,7 +638,7 @@ def main() -> None:
             _codes = torch.cat([pair[1] for pair in _lkc_pairs])
             _new_table, _record_info = r48k_geometry_learned.update(raw_module.rq.kappa_codes, _item_kappa, _codes)
             raw_module.rq.kappa_codes = _new_table
-            _qs = torch.quantile(_new_table, torch.tensor([0.05, 0.5, 0.95]))
+            _qs = torch.quantile(_new_table, torch.tensor([0.05, 0.5, 0.95], dtype=_new_table.dtype))
             _record(rank, "kappa_refresh", epoch=epoch, moved=_record_info["moved"], empty=_record_info["empty"],
                     floored=_record_info["floored"], q05=round(float(_qs[0]), 6), median=round(float(_qs[1]), 6),
                     q95=round(float(_qs[2]), 6))
