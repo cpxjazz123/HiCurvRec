@@ -69,3 +69,23 @@ def student_cosines(z_hat: torch.Tensor, candidates: torch.Tensor) -> torch.Tens
     a = F.normalize(z_hat, dim=-1)
     b = F.normalize(candidates if candidates.dim() == 3 else candidates.unsqueeze(0), dim=-1)
     return torch.einsum("ad,acd->ac", a, b.expand(a.shape[0], -1, -1))
+
+
+#: Time window of the structural term, taken from #179: nothing before epoch 1500, linear to lambda* at 3000.
+WARMUP_EPOCH, FULL_EPOCH = 1500, 3000
+#: The probe's fixed scale, from the issue's formula.
+LAMBDA_SCALE = 0.1
+
+
+def lambda_schedule(epoch: int) -> float:
+    """``0`` before the window, then linear from ``0`` at ``WARMUP_EPOCH`` to ``1`` at ``FULL_EPOCH``."""
+    if epoch <= WARMUP_EPOCH:
+        return 0.0
+    if epoch >= FULL_EPOCH:
+        return 1.0
+    return (epoch - WARMUP_EPOCH) / float(FULL_EPOCH - WARMUP_EPOCH)
+
+
+def calibrate(grad_rq: float, grad_sd: float) -> float:
+    """``lambda* = 0.1 * ||grad_enc L_RQ|| / (||grad_enc L_SD|| + 1e-12)``, measured once on the frozen probe."""
+    return LAMBDA_SCALE * float(grad_rq) / (float(grad_sd) + 1e-12)

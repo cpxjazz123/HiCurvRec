@@ -69,3 +69,18 @@ def test_the_student_cosines_read_the_ste_readout_not_the_pre_quantisation_value
     cos = sd.student_cosines(sd.ste_readout(z, q), candidates)
     # forward uses q, so the second candidate is the aligned one
     assert float(cos[0, 1]) > float(cos[0, 0])
+
+
+def test_the_lambda_schedule_is_flat_then_linear_then_capped():
+    assert sd.lambda_schedule(1) == 0.0
+    assert sd.lambda_schedule(sd.WARMUP_EPOCH) == 0.0
+    assert abs(sd.lambda_schedule(2250) - 0.5) < 1e-12
+    assert sd.lambda_schedule(sd.FULL_EPOCH) == 1.0
+    assert sd.lambda_schedule(3001) == 1.0
+
+
+def test_the_lambda_star_is_the_issue_formula_and_survives_a_zero_denominator():
+    assert abs(sd.calibrate(2.0, 4.0) - 0.05) < 1e-12
+    # a zero denominator is guarded, not capped: the value stays finite and enormous rather than raising
+    import math
+    assert math.isfinite(sd.calibrate(1.0, 0.0))
