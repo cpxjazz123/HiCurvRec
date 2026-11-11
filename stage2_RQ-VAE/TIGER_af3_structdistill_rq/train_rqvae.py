@@ -620,8 +620,8 @@ def main() -> None:
         # === 非 eval 间隔: 只 log train 行 ===
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
-                print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
+                print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} w={SD_LAMBDA:.3g} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, structural_distill=avg_behavior, structural_weight=SD_LAMBDA, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -647,7 +647,7 @@ def main() -> None:
                     flush=True,
                 )
                 _record(
-                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, lr=cur_lr,
+                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, structural_distill=avg_behavior, structural_weight=SD_LAMBDA, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,

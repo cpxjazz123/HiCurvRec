@@ -232,3 +232,9 @@
 ## 冒烟失败 → 修复：padding 掩码在 CPU、分数在 cuda
 
 `RuntimeError: expected self and mask to be on the same device, but got mask on cpu and self on cuda:0`：`structural_loss` 里 `mask = candidates >= 0` 跟着 **CPU 的候选 id**，而 `cosines`/`scores` 在模型所在设备上。已把掩码搬到 `cosines.device`，并补回归测试（两个 anchor 的候选集合大小不同，必然产生 padding）。全树 **47 passed**。
+
+## 探针通过：**λ\* = 1.68372e-05**（首次实测并冻结）
+
+逐段计时：`encoder 0.00s`、`rq 0.10s`、`decoder 0.00s`、**`sd_loss 2.20s`**、`grad_rq 0.44s`、`grad_sd 0.00s`，随后打印 `probe lambda_star=1.68372e-05` —— Issue 要求的一次性标定已完成，`λ*` 由 `0.1·‖g_RQ‖/(‖g_SD‖+1e-12)` 得到，之后全程冻结。
+
+紧接着失败于 `NameError: name 'epoch_weight' is not defined`：R48 对比损失删除后，日志与 metrics 里仍引用旧变量名。已改为 `SD_LAMBDA`，并把 metrics 字段名由 `behavior_contrastive/behavior_weight` 改为 `structural_distill/structural_weight`；模块可正常导入。
