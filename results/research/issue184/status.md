@@ -13,3 +13,9 @@
 ## 尚待
 
 把 `level1_cost` 接进一级分配（替换 `mixed_rq` 里的代价），在训练循环 epoch 末调用 `update(...)` 并把 `{moved, empty, floored}` 与 κ 分位数写入 metrics，`KAPPA_FROZEN` 与基线**损失与导出逐位一致**的测试，一 epoch 冒烟，然后派发 Stage2。
+
+## 一级代价接线 + 刷新去梯度（本轮）
+
+- `model/mixed_rq.py`：`MixedVQLevel.distances/forward` 接受可选 `kappa_codes`，给出时该层代价改为 `lk.level1_cost(cat(r_e, r_h), codes, κ_codes)`（**只有第 1 层**由 `MixedRQ.forward` 传入，其余层仍用基线的乘积代价）；`MixedRQ` 持有 `self.kappa_codes` 供训练器刷新。
+- `r48k_geometry_learned.update` 的均值赋值改为在 `torch.no_grad()` 内完成并对结果 `detach()`——**刷新是分配的统计量、不是可微路径**（Issue 验收 4）。
+- 测试修正一处：表项是 float32，`0.7` 的比较容差从 1e-12 放宽到 1e-6（存储精度，不是实现松弛）；`update` 无梯度断言此前失败，正是缺 `detach` 的真实缺陷。

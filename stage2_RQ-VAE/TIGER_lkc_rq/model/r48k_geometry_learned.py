@@ -38,8 +38,11 @@ def update(kappa_codes: torch.Tensor, assigned_item_kappa: torch.Tensor, assigne
         sums.index_add_(0, codes, assigned_item_kappa.to(torch.float64))
         seen.index_add_(0, codes, torch.ones_like(codes, dtype=torch.float64))
     moved = seen > 0
+    # the refresh is a statistic of the assignment, never a differentiable path: detach here so no gradient can reach the encoder
     new_table = kappa_codes.clone()
-    new_table[moved] = sums[moved] / seen[moved]
+    with torch.no_grad():
+        new_table[moved] = (sums[moved] / seen[moved]).detach()
+    new_table = new_table.detach()
     if BEHAVIOUR_OFF and n_codes > 1:
         # the same distribution, assigned to the wrong codes: the arm's negative control
         permutation = torch.randperm(n_codes, generator=torch.Generator().manual_seed(0))

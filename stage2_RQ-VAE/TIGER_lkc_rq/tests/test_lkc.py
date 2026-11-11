@@ -26,7 +26,7 @@ def test_each_code_takes_the_mean_of_the_curvatures_it_received():
 def test_empty_codes_keep_their_previous_value():
     table = torch.tensor([1.0, 5.0, 0.7])
     new, record = lk.update(table, torch.tensor([2.0]), torch.tensor([0]))
-    assert abs(float(new[1]) - 5.0) < 1e-12 and abs(float(new[2]) - 0.7) < 1e-12
+    assert abs(float(new[1]) - 5.0) < 1e-12 and abs(float(new[2]) - 0.7) < 1e-6   # float32 table entries keep ~1e-8
     assert record["empty"] == 2
 
 
