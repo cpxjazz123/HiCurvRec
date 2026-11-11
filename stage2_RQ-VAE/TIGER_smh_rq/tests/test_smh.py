@@ -52,3 +52,43 @@ def test_the_table_lookup_fills_and_floors():
 
 def test_the_switch_default_is_geometry_on():
     assert ht.GEOMETRY_OFF is False
+
+
+def test_structure_loss_without_kappa_is_the_reference_expression():
+    import structure as S
+    import mixed_geometry as G
+    torch.manual_seed(5)
+    points = torch.randn(4, 3, 6, dtype=torch.float64) * 0.2
+    h = torch.ones(4, 3, dtype=torch.float64)
+    scale = 1.0
+    got = S.structure_loss(points, h, scale=scale, kappa_pairs=None)
+    ratios = torch.stack([
+        G.mixed_sq(points[:, a], points[:, b]) / (scale * scale * h[:, index] ** 2)
+        for index, (a, b) in enumerate(S.PAIR_INDEX)], dim=-1)
+    assert torch.equal(got, ((ratios - 1.0) ** 2).mean())
+
+
+def test_structure_loss_with_kappa_changes_the_value_and_stays_finite():
+    import structure as S
+    torch.manual_seed(6)
+    points = torch.randn(4, 3, 6, dtype=torch.float64) * 0.2
+    h = torch.ones(4, 3, dtype=torch.float64)
+    kappa_pairs = [torch.full((4,), k, dtype=torch.float64) for k in (0.5, 1.0, 2.0)]
+    curved = S.structure_loss(points, h, scale=1.0, kappa_pairs=kappa_pairs)
+    flat = S.structure_loss(points, h, scale=1.0, kappa_pairs=None)
+    assert bool(torch.isfinite(curved).all())
+    assert not torch.equal(curved, flat)
+
+
+def test_the_triple_sampler_is_byte_identical_to_struct_mixed():
+    """The claim is that the triple set is unchanged, so the machine check is on the source of the sampler itself."""
+    ref = TREE.parent / "TIGER_struct_mixed_rq" / "structure.py"
+    ours = TREE / "structure.py"
+
+    def body(path: Path) -> str:
+        text = path.read_text()
+        start = text.index("def sample_triples(")
+        end = text.index("\ndef ", start + 1)
+        return text[start:end]
+
+    assert body(ours) == body(ref), "sample_triples must be untouched so the triples reproduce bit for bit"
