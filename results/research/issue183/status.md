@@ -20,3 +20,7 @@
 - `model/model.py` 的 `RQVAE.forward` 在 `encoder` 与 `rq` 之间调用 `map_representation`，于是**量化、残差、对比三处作用在同一张 `z'` 与同一 κ 表上**（Issue 验收 4）。
 - 训练器：数据集改为 `(embedding, id)`、循环解包 `batch, batch_ids` 并注册 κ——与 #180 同一套 loader 契约改动。
 - 新测试 `tests/test_r48ke_binding.py` 4 项：钩子注册时模型输出等于 `expmap0(encoder(x), κ)`、映射后严格在各自球内、对比用的 `pair_kappa` 与查表一致（对角等于 κ_i）、`GEOMETRY_OFF` 同时让映射与距离退回欧氏。全树 **21 passed**。
+
+## 冒烟 **PASS** → 正式训练已启动
+
+`SMOKE_PASS`；`applied_grad_norms` 六个全为有限正值（0.0554–0.0973）。冒烟单 epoch `collision=0.877822`（早期值仅记录）。训练已起（6 进程），epoch 576/3000、loss 2.42e-4、`behavior_weight = 0.0`（1500 前为 0）。
