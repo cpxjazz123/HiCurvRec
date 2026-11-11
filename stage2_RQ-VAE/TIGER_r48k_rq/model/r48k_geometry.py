@@ -53,7 +53,10 @@ def behaviour_distances(source: torch.Tensor, candidates: torch.Tensor,
     """The ``[B, B]`` distance matrix the contrast consumes."""
     if GEOMETRY_OFF:
         return torch.cdist(source, candidates, p=2)
-    kappa = pair_kappa(source_kappa, candidate_kappa)
+    # the lookup returns a CPU float32 tensor; the residuals may be on a GPU in another dtype
+    device, dtype = source.device, source.dtype
+    kappa = pair_kappa(source_kappa.to(device=device, dtype=dtype),
+                       candidate_kappa.to(device=device, dtype=dtype))
     rows, cols, dim = source.shape[0], candidates.shape[0], source.shape[-1]
     p = project_to_ball(source.unsqueeze(1).expand(rows, cols, dim), kappa.unsqueeze(-1))
     q = project_to_ball(candidates.unsqueeze(0).expand(rows, cols, dim), kappa.unsqueeze(-1))

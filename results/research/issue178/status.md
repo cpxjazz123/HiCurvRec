@@ -31,3 +31,9 @@
 - 曲率打开与关闭给出**不同的损失**（且都有限），证明 κ 真的进入了对比（不是空接线）。
 - 只对 `L_behavior` 反向时残差**确实收到非零有限梯度**（对应 Issue 验收 4）。
 - `kappa_of` 对已知 id 返回表值、对表外 id 回落到 `mean_frozen`。
+
+## 冒烟失败 → 修复 → 12/12
+
+一 epoch 冒烟崩在 `project_to_ball`：`RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!`。原因：`kappa_of` 查表返回 **CPU float32** 张量，而残差在 **cuda/float64**。
+
+修复：`behaviour_distances` 先把两侧 κ 转到 `source.device` 与 `source.dtype` 再算 `pair_kappa`。补回归测试 `test_kappa_from_the_lookup_is_moved_to_the_points_device_and_dtype`（断言损失 dtype 与残差一致且有限）。两套共 **12 passed**。

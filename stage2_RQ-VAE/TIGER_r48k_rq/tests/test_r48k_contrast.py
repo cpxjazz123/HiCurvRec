@@ -88,3 +88,13 @@ def test_kappa_lookup_uses_the_frozen_table_for_the_pair_ids():
     table = {"kappa": {"1": 4.0, "2": 0.25}, "mean_frozen": 0.5, "mean_kappa": 1.0}
     values = g.kappa_of(torch.tensor([1, 2, 999]), table=table)
     assert [round(float(x), 6) for x in values] == [4.0, 0.25, 0.5]
+
+
+def test_kappa_from_the_lookup_is_moved_to_the_points_device_and_dtype(monkeypatch):
+    # regression for the smoke crash: kappa_of returns CPU float32 while the residuals are float64 (and cuda in the real run)
+    trainer = _load_trainer()
+    residuals, source, target = _batch(seed=3)
+    monkeypatch.setattr(g, "GEOMETRY_OFF", False)
+    loss = trainer.behavior_contrastive_loss(residuals, source, target)
+    assert loss.dtype == residuals.dtype
+    assert torch.isfinite(loss)
