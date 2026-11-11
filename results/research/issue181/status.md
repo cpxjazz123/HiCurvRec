@@ -222,3 +222,9 @@
 去掉两跳预计算后，日志已出现 `probe: fetching the first batch` 与 `probe batch ready in 0.18s`——**取批不再是瓶颈**。随后失败在 `NameError: sd_step is not defined`：我在 `main()` 里用 `from model import … sd_step …` 局部导入，而 `probe_lambda_star` 是**模块级函数**，看不到局部名。
 
 修法：在 `train_rqvae.py` 顶部加 `from model import sd_step, struct_distill`（第 58 行），局部导入保留亦无碍。模块在项目解释器下可导入、`sd_step` 可见。
+
+## 探针计时锁定第三个瓶颈：`two_hop_of` 的 O(n²) 成员检查 + 无界展开
+
+实测 `[probe] encoder 0.00s`、`rq 0.09s`、`decoder 0.00s`，随后停在 `sd_loss` —— 即 `structural_loss` 里的 `candidate_sets`。根因：`two_hop_of` 用 **list** 做成员判断（`far not in seen` 是 O(n) 扫描），枢纽 anchor 的两跳展开是 `deg × deg` 次 O(n) 比较；而对候选取用来说，一场展开只需前 `TWO_HOP×4` 个两跳邻居。
+
+修法：成员判定改 **set**、并加**早退**（收集到 `TWO_HOP*4` 即返回）。新增测试用 2000 度枢纽验证：两跳池 ≤ `TWO_HOP*4`、不含自身、无重复。套件 **10 passed**（全树 45）。

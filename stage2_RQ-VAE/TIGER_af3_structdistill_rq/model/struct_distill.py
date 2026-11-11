@@ -32,12 +32,18 @@ def two_hop_of(anchor: int, neighbours: dict) -> list[int]:
     Precomputing this for every node costs |N| x deg^2 on a graph with hubs in the thousands, which is why it is derived per anchor
     instead: a step only ever asks for its 63 anchors.
     """
-    seen: list[int] = []
+    # membership in a set (a list scan is O(n^2) on hub anchors) and an early stop once enough two-hop candidates exist: the
+    # candidate set only ever keeps TWO_HOP of them, so expanding a hub's whole neighbourhood buys nothing
+    seen: set[int] = set()
+    out: list[int] = []
     for mid in neighbours.get(anchor, []):
         for far in neighbours.get(mid, []):
             if far != anchor and far not in seen:
-                seen.append(far)
-    return seen
+                seen.add(far)
+                out.append(far)
+                if len(out) >= TWO_HOP * 4:
+                    return out
+    return out
 
 
 def candidate_sets(anchors, neighbours, two_hop, n_items: int, seed: int = 42) -> list[list[int]]:

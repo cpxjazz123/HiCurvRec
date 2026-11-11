@@ -84,3 +84,13 @@ def test_the_lambda_star_is_the_issue_formula_and_survives_a_zero_denominator():
     # a zero denominator is guarded, not capped: the value stays finite and enormous rather than raising
     import math
     assert math.isfinite(sd.calibrate(1.0, 0.0))
+
+
+def test_two_hop_stops_early_on_a_hub_anchor():
+    # a hub with 2000 neighbours each holding 2 far nodes: unbounded expansion is 4000 scans of an O(n) list, the bound keeps it small
+    neighbours = {0: list(range(1, 2001))}
+    for node in range(1, 2001):
+        neighbours[node] = [5000 + node, 9000 + node]
+    pool = sd.two_hop_of(0, neighbours)
+    assert len(pool) <= sd.TWO_HOP * 4
+    assert 0 not in pool and len(pool) == len(set(pool))
