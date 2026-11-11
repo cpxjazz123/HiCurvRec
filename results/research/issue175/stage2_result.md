@@ -29,3 +29,7 @@
 ## 下一步
 
 按 Issue：进 Stage3（冻结协议：NUM_EPOCHS=150、EVAL_INTERVAL=5、EVAL_START_EPOCH=75、EARLY_EVAL_EPOCHS=(25,50,75,100,125)、SEED=42、BEAM_SIZE=20、NO_EVAL=True、SKIP_TEST=False），最终判据 `test_R@10 > 0.065`。
+
+## Stage3 已启动
+
+`stage3_start(item_sids="results/stage2_RQ-VAE/TIGER_dul_rq/item_sids.json")` → pid 838659，variant `TIGER_dul_rq`，四卡 DDP；冻结协议核验通过（`NUM_EPOCHS=150`、`NO_EVAL=True`、`SKIP_TEST=False`、`SEED=42`、`BEAM_SIZE=20`，`mismatched={}`、`early_stop_present=false`）。§63 分层记录被复用（`passed: true`）。
