@@ -106,6 +106,7 @@ def build_sparse(coo, n_items: int, dtype=torch.float32, index_dtype=torch.int32
     _mark("p_plus_p2")
     teacher_sparse = teacher_csr.to_sparse_coo().coalesce()
     _mark("to_coo")
+    _mark("done")
     teacher_sparse = torch.sparse_coo_tensor(
         teacher_sparse.indices().to(index_dtype), teacher_sparse.values(), (n_items, n_items)
     ).coalesce()

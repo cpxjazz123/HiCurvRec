@@ -537,12 +537,14 @@ def main() -> None:
 
     if not struct_distill.SD_OFF:
         with torch.enable_grad():
+            _probe_t0 = time.time()
             _probe_batch, _probe_ids = next(iter(loader))
+            print(f"[RQ-VAE] probe batch ready in {time.time() - _probe_t0:.2f}s", flush=True)
             LAMBDA_STAR = probe_lambda_star(
                 raw_module, all_embeddings.to(device), _probe_ids.to(device),
                 teacher_rows, neighbours, two_hop, n_items,
             )
-        print(f"[RQ-VAE] probe lambda_star={LAMBDA_STAR:.6g}", flush=True)
+        print(f"[RQ-VAE] probe lambda_star={LAMBDA_STAR:.6g} in {time.time() - _probe_t0:.2f}s", flush=True)
         _record(rank, "lambda_probe", lambda_star=LAMBDA_STAR)
 
     for epoch in range(1, EPOCHS + 1):
