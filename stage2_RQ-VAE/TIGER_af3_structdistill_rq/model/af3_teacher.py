@@ -76,27 +76,44 @@ def build_sparse(coo, n_items: int, dtype=torch.float32, index_dtype=torch.int32
     ``T = (P + P^2)/2`` with ``P`` in CSR; the product runs in CSR and ``T`` comes back as COO. float32 values with int32 indices
     are the storage choice, not a change of definition -- the 51M nonzeros cost about 0.6 GB this way instead of 1.2 GB.
     """
+    import time as _time
+
+    _stages: list[tuple[str, float]] = []
+
+    def _mark(name: str) -> None:
+        _stages.append((name, _time.time()))
+
+    _mark("start")
     edges = [(int(i), int(j)) for i, j in coo]
     degrees: dict[int, int] = {}
     for i, j in edges:
         degrees[i] = degrees.get(i, 0) + 1
         degrees[j] = degrees.get(j, 0) + 1
     q05, q95 = quantiles(af3_values(edges, degrees))
+    _mark("edges+quantiles")
     w = weights(coo, n_items, q05, q95)
+    _mark("weights")
     dense_degree = w.to_dense().sum(1)
+    _mark("degree")
     inv = torch.where(dense_degree > 0, 1.0 / torch.sqrt(dense_degree.clamp_min(1e-30)), torch.zeros_like(dense_degree))
     index = w.indices()
     values = (w.values() * inv[index[0]] * inv[index[1]]).to(dtype)
     p = torch.sparse_coo_tensor(index, values, (n_items, n_items)).coalesce().to_sparse_csr()
+    _mark("to_csr")
     p2 = torch.sparse.mm(p, p)
+    _mark("sparse_mm")
     teacher_csr = (0.5 * (p + p2)).to(dtype=dtype)
+    _mark("p_plus_p2")
     teacher_sparse = teacher_csr.to_sparse_coo().coalesce()
+    _mark("to_coo")
     teacher_sparse = torch.sparse_coo_tensor(
         teacher_sparse.indices().to(index_dtype), teacher_sparse.values(), (n_items, n_items)
     ).coalesce()
     manifest = {"n_items": int(n_items), "edges": len(edges), "q05": q05, "q95": q95,
                 "rule": "W=1+clip((AF3-q05)/(q95-q05),0,1) on observed edges, symmetrised; T=(P+P^2)/2 sparse, "
                         "float32 values with int32 indices (storage only, definitions unchanged)"}
+    _marks = [(name, _stages[i + 1][1] - _stages[i][1]) for i, (name, _) in enumerate(_stages[:-1])]
+    print("[af3_teacher] stages " + " ".join(f"{name}={seconds:.2f}s" for name, seconds in _marks), flush=True)
     return teacher_sparse, manifest
 
 
