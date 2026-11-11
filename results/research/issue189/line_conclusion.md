@@ -35,3 +35,12 @@
 
 - **A**（解禁成对、只做三元组的双曲化）：`struct_mixed` 的 `training_hooks.structure_term` 已有 `geometry_on` 开关，改动面小；必须新 Issue 写清采样来源（train-only）、双曲目标可微形式、三开关定义与"仍 ≤ 基线则本线关闭"的预注册。
 - **C**：按 owner 给的新轴开新 Issue，走同一冻结协议。
+
+## 五、基线与禁止类臂的读数核对（本轮）
+
+| 项 | 核对结果 |
+|---|---|
+| 基线 `_reference_baseline_deterministic` | SID 存在、Stage3 `test_final.json` 存在，`recall@10 = **0.056216**`、`n_eval = 57439` —— **与决策表逐位一致** |
+| `TIGER_mixed_rq`（当前树名） | 该名下**没有** SID 与 Stage3 结果：0.056216 来自 `_reference_baseline_deterministic`，不是来自 `TIGER_mixed_rq` 目录。决策表选用的是正确的那一个，但**臂名容易误读**，此处明确 |
+
+因此 #189 表格里"对基线 0.056216"的百分比全部成立；后续任何新增臂应以 `_reference_baseline_deterministic` 的 0.056216 为唯一基线口径。
