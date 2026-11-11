@@ -276,6 +276,25 @@ def _residuals_with_trace(
     return torch.stack(traces[: raw_module.rq.codebook_num], dim=0)
 
 
+def _encode_all(module, embeddings: torch.Tensor):
+    """Encode every item with its own curvature registered, so export uses the training rule (issue #180)."""
+    from model import r48k2_assign
+    ids = torch.arange(embeddings.shape[0])
+    r48k2_assign.set_batch_kappa(_assign_kappa(ids))
+    try:
+        return module(embeddings, infer_use_sk=False)
+    finally:
+        r48k2_assign.set_batch_kappa(None)
+
+
+def _assign_kappa(batch_ids: torch.Tensor) -> torch.Tensor | None:
+    """The batch's per-item curvature, or ``None`` when the assignment side is switched off (issue #180)."""
+    from model import r48k2_assign, r48k_geometry
+    if r48k2_assign.CONTRAST_ONLY or r48k_geometry.GEOMETRY_OFF:
+        return None
+    return r48k_geometry.kappa_of(batch_ids)
+
+
 def behavior_contrastive_loss(
     residuals: torch.Tensor,
     source_ids: torch.Tensor,
@@ -366,7 +385,9 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
-    train_dataset = TensorDataset(train_embeddings)
+    # Issue #180: rows carry their item ids, otherwise a shuffled batch cannot be given its per-row curvature
+    train_ids_tensor = torch.from_numpy(train_ids.astype(np.int64))
+    train_dataset = TensorDataset(train_embeddings, train_ids_tensor)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -447,10 +468,15 @@ def main() -> None:
         behaviors: list[float] = []
         epoch_weight = behavior_weight(epoch)
         _epoch_t0 = time.time()
-        for (batch,) in loader:
+        for batch, batch_ids in loader:
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _ = model(batch)
+            from model import r48k2_assign as _assign
+            _assign.set_batch_kappa(_assign_kappa(batch_ids))
+            try:
+                reconstructed, quant_loss, _, _ = model(batch)
+            finally:
+                _assign.set_batch_kappa(None)
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             behavior_loss = torch.zeros((), device=device)
@@ -509,7 +535,7 @@ def main() -> None:
             if rank == 0:
                 with torch.no_grad():
                     raw_tokens = raw_module.get_indices(
-                        all_embeddings.to(device), infer_use_sk=False
+                        _encode_all(raw_module, all_embeddings.to(device))
                     ).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
@@ -563,7 +589,7 @@ def main() -> None:
         try:
             with torch.no_grad():
                 raw_tokens = raw_module.get_indices(
-                    all_embeddings.to(device), infer_use_sk=False
+                    _encode_all(raw_module, all_embeddings.to(device))
                 ).cpu().numpy().astype(np.int64)
         finally:
             for layer in raw_module.rq.vq_layers:
