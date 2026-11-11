@@ -132,7 +132,7 @@ def structure_loss(points: torch.Tensor, h: torch.Tensor, *, scale: float,
     from model import hyperbolic_target as HT
     ratios = torch.stack([
         ((G.mixed_sq(points[:, a], points[:, b], geometry_on) if kappa_pairs is None
-          else HT.squared(points[:, a], points[:, b], kappa_pairs[index].to(points.dtype))))
+          else HT.squared(points[:, a], points[:, b], kappa_pairs[index].to(device=points.device, dtype=points.dtype))))
         / (scale * scale * h[:, index] ** 2)
         for index, (a, b) in enumerate(PAIR_INDEX)], dim=-1)
     return ((ratios - 1.0) ** 2).mean()
