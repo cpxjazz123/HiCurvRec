@@ -92,3 +92,17 @@ def test_the_triple_sampler_is_byte_identical_to_struct_mixed():
         return text[start:end]
 
     assert body(ours) == body(ref), "sample_triples must be untouched so the triples reproduce bit for bit"
+
+
+def test_the_checkpoint_payload_carries_the_table_sha_and_the_switch():
+    """The issue requires the checkpoint to bind the kappa table's SHA and the geometry switch version."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("smh_trainer", TREE / "train_rqvae.py")
+    trainer = importlib.util.module_from_spec(spec)
+    sys.modules["smh_trainer"] = trainer
+    spec.loader.exec_module(trainer)
+    payload = trainer.checkpoint_payload({"w": 1}, 3000, 0.1)
+    assert payload["epoch"] == 3000 and payload["collision"] == 0.1
+    assert len(payload["kappa_table_sha256"]) == 64
+    assert payload["geometry_off"] is False
+    assert payload["geometry_version"] == "smh-asinh-v1"

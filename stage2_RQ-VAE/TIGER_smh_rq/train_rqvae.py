@@ -124,6 +124,22 @@ _T0 = time.time()
 # so a single ``training_metrics.jsonl`` always represents exactly one run
 # (no leftover rows from a prior failed attempt).
 _metrics_truncated = False
+def checkpoint_payload(state: dict, epoch: int, collision: float) -> dict:
+    """The checkpoint dict, which binds the curvature table's SHA and the geometry switch it was produced under (issue #190)."""
+    import hashlib
+    from model import hyperbolic_target as HT
+    table_sha = hashlib.sha256((REPO_ROOT / HT.TABLE_RELPATH).read_bytes()).hexdigest()
+    return {
+        "state_dict": state,
+        "epoch": epoch,
+        "collision": collision,
+        "selection": "final_epoch",
+        "kappa_table_sha256": table_sha,
+        "geometry_off": bool(HT.GEOMETRY_OFF),
+        "geometry_version": "smh-asinh-v1",
+    }
+
+
 def _record(rank, event, **fields):
     if rank != 0:
         return
@@ -500,12 +516,20 @@ def main() -> None:
             for name, value in raw_module.state_dict().items()
         }
         CHECKPOINT.parent.mkdir(parents=True, exist_ok=True)
+        # issue #190: the checkpoint binds the curvature table and the geometry switch it was produced under
+        import hashlib as _hashlib
+        from model import hyperbolic_target as _ht
+        _table_path = REPO_ROOT / _ht.TABLE_RELPATH
+        _table_sha = _hashlib.sha256(_table_path.read_bytes()).hexdigest()
         torch.save(
             {
                 "state_dict": final_state,
                 "epoch": EPOCHS,
                 "collision": final_collision,
                 "selection": "final_epoch",
+                "kappa_table_sha256": _table_sha,
+                "geometry_off": bool(_ht.GEOMETRY_OFF),
+                "geometry_version": "smh-asinh-v1",
             },
             CHECKPOINT,
         )

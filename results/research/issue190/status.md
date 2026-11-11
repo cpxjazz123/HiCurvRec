@@ -21,3 +21,9 @@
 - 连同此前 6 项（κ=1 与冻结契约一致、几何平均、重合点有限、`squared=d²`、查表与下限、默认几何开）共 **9 passed**。
 
 **冒烟未运行**：`stage2_start` 在冒烟通过后会直接进入 3000 epoch 正式训练，而 Issue 规定"**批准前只允许实现 + 预验收，不得派发**"，因此冒烟必须等 owner 批准后才做——这是工具形态与 Issue 门控的直接冲突，选择服从门控。
+
+## checkpoint 绑定（本轮，**10 passed**）
+
+Issue 边界要求 "checkpoint 绑 κ 表 SHA 与几何开关版本"。已把载荷提取为可测函数 `checkpoint_payload(state, epoch, collision)`：返回 `{state_dict, epoch, collision, selection, kappa_table_sha256, geometry_off, geometry_version="smh-asinh-v1"}`，其中 SHA 由 `REPO_ROOT / results/research/issue167/kappa.json` 现场计算。保存路径改为 `torch.save(checkpoint_payload(...), CHECKPOINT)`。
+
+测试改为**实际调用该函数**并断言 64 位 SHA、`geometry_off is False`、版本串——不再用"grep 源码"这种文本断言。
