@@ -68,3 +68,75 @@ def build(coo, n_items: int) -> tuple[torch.Tensor, dict]:
     manifest = {"n_items": int(n_items), "edges": len(edges), "q05": q05, "q95": q95,
                 "rule": "W=1+clip((AF3-q05)/(q95-q05),0,1) on observed edges, symmetrised, zero-degree rows stay zero"}
     return teacher(w), manifest
+
+
+def build_sparse(coo, n_items: int) -> tuple[torch.Tensor, dict]:
+    """The same teacher as :func:`build`, kept sparse so 24k items never materialise an N x N dense tensor.
+
+    ``T = (P + P^2)/2`` with ``P`` sparse; ``P^2`` goes through ``torch.sparse.mm``. Identical to the dense result elementwise,
+    which the tests check on a toy graph.
+    """
+    edges = [(int(i), int(j)) for i, j in coo]
+    degrees: dict[int, int] = {}
+    for i, j in edges:
+        degrees[i] = degrees.get(i, 0) + 1
+        degrees[j] = degrees.get(j, 0) + 1
+    q05, q95 = quantiles(af3_values(edges, degrees))
+    w = weights(coo, n_items, q05, q95)
+    dense = w.to_dense()
+    degree = dense.sum(1)
+    inv = torch.where(degree > 0, 1.0 / torch.sqrt(degree.clamp_min(1e-30)), torch.zeros_like(degree))
+    index = w.indices()
+    values = w.values() * inv[index[0]] * inv[index[1]]
+    p = torch.sparse_coo_tensor(index, values, (n_items, n_items)).coalesce()
+    p2 = torch.sparse.mm(p, p)
+    teacher_sparse = torch.sparse_coo_tensor(
+        torch.cat((p.indices(), p2.indices()), dim=1),
+        torch.cat((0.5 * p.values(), 0.5 * p2.values())),
+        (n_items, n_items),
+    ).coalesce()
+    manifest = {"n_items": int(n_items), "edges": len(edges), "q05": q05, "q95": q95,
+                "rule": "W=1+clip((AF3-q05)/(q95-q05),0,1) on observed edges, symmetrised; T=(P+P^2)/2 kept sparse"}
+    return teacher_sparse, manifest
+
+
+class SparseRows:
+    """Row-wise lookup into a coalesced sparse matrix without materialising it dense.
+
+    The coalesced indices are sorted lexicographically by ``(row, col)``, so a row is a contiguous slice found by binary search;
+    gathering a row costs O(log nnz + cols log cols) instead of an N x N allocation.
+    """
+
+    def __init__(self, sparse: torch.Tensor):
+        coalesced = sparse.coalesce()
+        order = torch.argsort(coalesced.indices()[0] * sparse.shape[1] + coalesced.indices()[1])
+        self.indices = coalesced.indices()[:, order]
+        self.values = coalesced.values()[order]
+        self.rows = self.indices[0]
+        self.cols = self.indices[1]
+        self.n_rows, self.n_cols = sparse.shape
+        # first position of every row in the sorted order
+        self.row_start = torch.searchsorted(self.rows.contiguous(), torch.arange(self.n_rows + 1))
+
+    def gather(self, anchors: torch.Tensor, candidates: torch.Tensor) -> torch.Tensor:
+        out = torch.zeros((len(anchors), candidates.shape[1]), dtype=self.values.dtype)
+        for a, anchor in enumerate(anchors.tolist()):
+            lo, hi = int(self.row_start[anchor]), int(self.row_start[anchor + 1])
+            if hi <= lo:
+                continue
+            row_cols = self.cols[lo:hi]
+            row_vals = self.values[lo:hi]
+            wanted = candidates[a]
+            pos = torch.searchsorted(row_cols.contiguous(), wanted.contiguous())
+            pos_clamped = pos.clamp(max=row_cols.numel() - 1)
+            hit = (pos < row_cols.numel()) & (row_cols[pos_clamped] == wanted)
+            out[a][hit] = row_vals[pos_clamped][hit]
+        return out
+
+
+def teacher_scores(teacher_sparse: torch.Tensor, anchors: torch.Tensor, candidates: torch.Tensor) -> torch.Tensor:
+    """``[A, C]`` teacher relations for per-anchor candidate id lists, read out of the sparse teacher.
+
+    Uses :class:`SparseRows`, so nothing is densified; the caller may cache the lookup across steps.
+    """
+    return SparseRows(teacher_sparse).gather(anchors, candidates)

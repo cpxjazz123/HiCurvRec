@@ -73,3 +73,23 @@ def test_the_teacher_is_deterministic():
     first, m1 = t.build(coo, 4)
     second, m2 = t.build(coo, 4)
     assert torch.equal(first, second) and m1 == m2
+
+
+def test_the_sparse_teacher_equals_the_dense_one():
+    coo = [(0, 1), (1, 2), (2, 3), (1, 3)]
+    dense, m1 = t.build(coo, 4)
+    sparse, m2 = t.build_sparse(coo, 4)
+    assert torch.allclose(sparse.to_dense(), dense, atol=1e-12)
+    assert m1["q05"] == m2["q05"] and m1["q95"] == m2["q95"]
+
+
+def test_teacher_scores_read_the_requested_pairs():
+    coo = [(0, 1), (1, 2), (2, 3), (1, 3)]
+    sparse, _ = t.build_sparse(coo, 4)
+    dense = sparse.to_dense()
+    anchors = torch.tensor([0, 1])
+    candidates = torch.tensor([[1, 2], [0, 3]])
+    got = t.teacher_scores(sparse, anchors, candidates)
+    for a, row in enumerate(anchors.tolist()):
+        for c, item in enumerate(candidates[a].tolist()):
+            assert abs(float(got[a, c]) - float(dense[row, item])) < 1e-12

@@ -71,3 +71,11 @@
 ## 尚待
 
 把 SD 损失接进训练循环（替换 R48 对比损失、`SD_OFF` 时完全不执行）、λ* 探针实测并写 manifest、`SD_OFF`/`GEOMETRY_OFF` 逐位一致测试、4-rank DDP 与梯度方向检查、一 epoch 冒烟，然后 Stage2/Stage3 与结构保真报告。
+
+## 稀疏教师 + 行式查询（本轮）
+
+- `build_sparse(coo, n_items)`：同一教师，但 **`T=(P+P²)/2` 全程保持稀疏**（`P²` 用 `torch.sparse.mm`），避免 24k 商品时 576M 元素的稠密矩阵；返回 manifest 与稠密版同源。
+- `SparseRows`：把合并后的 `indices` 按 `(row,col)` 排序，用 `searchsorted` 定位每行区间，再对候选列做二分查找；**取一行是 O(log nnz + C log C)，不做任何 N×N 分配**。`teacher_scores` 即其封装（调用方可缓存该 lookup）。
+- 测试：**稀疏教师与稠密版逐元素一致**（`allclose 1e-12`，q05/q95 相同）、`teacher_scores` 对指定 (anchor, candidate) 与稠密矩阵取值逐项一致。教师套件 **8 passed**。
+
+> 说明：我第一版 `teacher_scores` 用 `to_dense()` 取单行，虽然 toy 测试能过，但 24k 商品时等于把整张教师稠密化（约 4.6 GB），已换成本轮的 `SparseRows`，不保留稠密回退路径。
