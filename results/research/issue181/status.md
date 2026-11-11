@@ -164,3 +164,14 @@
 - 真实图上实测：**构建 4.62 s**（此前 float64 版 7.13 s）、**峰值 RSS 6.47 GB**、nnz 51,144,592、值 dtype **float32**。
 - 如实记录偏差：索引最终仍是 **int64**——`to_sparse_csr()`/`coalesce()` 的内部往返把我 cast 的 int32 还原了，因此本轮只省下值的内存（409 MB 而非 818 MB），索引那一半没省。若要省索引需改用 `torch.sparse_csr_tensor` 直接构造并在 COO 侧避免 `coalesce`，留待需要时再做。
 - 测试相应把"稀疏=稠密"的比较改为 **float32 容差 1e-6**（存储变窄、定义不变），pack/unpack 往返改为 `torch.equal`（同一 dtype 下应逐位一致）。全树 **44 passed**。
+
+## 冒烟第四轮：教师构建在**冒烟进程内**比离线慢两个数量级
+
+同一张图、同一份 parquet：离线的 `build_sparse` **4.62 s** 完成；冒烟进程内 5 分钟仍停在 `to_sparse_csr()`。冒烟日志显示 `world_size=1`（单进程），因此不是四 rank 重复构建，也不是内存不足（主机可用 1250 GB）。
+
+尚未定位的差异候选：
+1. 冒烟进程此时已持有 `all_embeddings`（24587 × 1024 float32）与模型，CSR 转换的临时量把工作集推大；
+2. `smoke_driver` 可能在同一次运行里多次触发 `main()` 的初始化路径；
+3. `torch.sparse_csr` 在 CUDA 上下文已初始化后走的是不同的转换实现。
+
+下一步：在 `main()` 里给教师构建的每个阶段（边集 → `weights` → `to_sparse_csr` → `sparse.mm` → `to_sparse_coo`）各打一行 `time.time()` 差，用一次冒烟把真实瓶颈钉到具体一步，再决定是改构造方式还是改存储。**这一轮不猜、不改公式。**
