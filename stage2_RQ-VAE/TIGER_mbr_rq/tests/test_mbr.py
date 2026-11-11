@@ -74,3 +74,15 @@ def test_gradients_are_finite_at_small_and_large_curvature():
         assert bool(torch.isfinite(out).all()), k
         assert x.grad is not None and bool(torch.isfinite(x.grad).all()), k
         assert y.grad is not None and bool(torch.isfinite(y.grad).all()), k
+
+
+def test_the_flat_limit_is_residual_minus_code_not_the_reverse():
+    # the arm calls mobius_sub(code, residual): at kappa = 0 that is residual - code, the baseline's step. The reversed order would give
+    # code - residual, a sign flip on every level.
+    residual = torch.randn(5, 4, dtype=torch.float64)
+    code = torch.randn(5, 4, dtype=torch.float64)
+    m.STEP_OFF = True
+    got = m.mobius_sub(code, residual, torch.ones(5, 1, dtype=torch.float64))
+    m.STEP_OFF = False
+    assert torch.equal(got, residual - code)
+    assert not torch.equal(got, code - residual)

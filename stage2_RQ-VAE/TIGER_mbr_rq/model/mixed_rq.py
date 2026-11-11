@@ -199,8 +199,11 @@ class MixedVQLevel(nn.Module):
         else:
             # Issue #186: the subtraction itself runs at the item's curvature; STEP_OFF gives y - x, the baseline's flat step
             from . import mbr_step
-            joint = mbr_step.mobius_sub(torch.cat((residual_e, residual_h), dim=-1),
-                                        torch.cat((det_e, det_h), dim=-1),
+            # x is the code and y the residual: residual (-) code, which is mobius_add(-code, residual) and, at kappa = 0, exactly
+            # residual - code -- the baseline's flat step. The arguments were the other way round in the first wiring, which would have
+            # flipped the sign of every residual.
+            joint = mbr_step.mobius_sub(torch.cat((det_e, det_h), dim=-1),
+                                        torch.cat((residual_e, residual_h), dim=-1),
                                         item_kappa.reshape(-1, 1).to(residual_e.device, residual_e.dtype))
             next_e = joint[:, :residual_e.shape[-1]]
         if self.curvature > 0:

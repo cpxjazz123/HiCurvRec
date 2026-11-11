@@ -46,3 +46,9 @@ Issue 写「`struct_mixed` 在**一级用 `d_{κ_i}` 选码**，但残差仍是�
   `next = mbr_step.mobius_sub(cat(r_e, r_h), cat(det_e, det_h), κ_i)`，取欧氏 16 维部分作为下一层残差（`item_kappa is None` 时仍是基线的 `residual_e − det_e`）。
 - `MixedRQ` 持有 `item_kappa`；训练器把数据集改成 `(embedding, id)`、在 `model(batch)` 前后注册/清除批内 `κ_i`（`try/finally`）。
 - 训练器与模型在项目解释器下均可导入。
+
+## 关键修正：参数顺序（本轮）
+
+第一次接线把 `mobius_sub` 的实参写成 `(residual, code)`，但语义应是 **`residual ⊖ code = mobius_add(−code, residual)`**，即 `x=code, y=residual`。按旧写法 `STEP_OFF` 会得到 `code − residual`——**每层残差符号翻转**，与基线不符。已改正，并补回归测试 `test_the_flat_limit_is_residual_minus_code_not_the_reverse`（`κ=0` 时必须逐位等于 `residual − code` 且不等于 `code − residual`）。
+
+测试 **7 passed**。
