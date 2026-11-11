@@ -97,3 +97,20 @@
 判读：
 - `P²` 把教师从 32 万条边扩到 5100 万个非零元，float64 下约 **1.2 GB**（值 409 MB + 两路 int64 索引 818 MB）。当前主机可承受，但这是本臂最重的常驻开销；若后续 OOM，按 Issue 的"效率报告"条款记录归因，不改公式。
 - q05/q95 都在**大负数**区间，说明 `u = clip((AF3−q05)/(q95−q05),0,1)` 在这张图上主要由度数驱动：绝大多数边落到 0 或 1（权重 1 或 2）。这是**必须报告的结构事实**——Issue 明确禁止把负 AF3 当负样本，本实现也确实只把它当连续分数。
+
+## SD 单步接到真实量化器（本轮，**42 passed**）
+
+`model/sd_step.py`：
+- `quantised_readout(module, embeddings)`：走**训练器同一条路径**（`module.encoder` → `module.rq`），返回 `(z, q)`；
+- `structural_loss(...)`：对 batch 的 anchors 取候选集合（16/16/32，去重、排除自身）→ 锚点与候选都过同一量化器取 `q` → `ste_readout` → `student_cosines` → 稀疏教师 `SparseRows.gather` 取关系分 → `relational_loss`；**padding 槽位用集合内最小值填充**，保证不进入 softmax。
+
+测试 `tests/test_sd_step.py` 3 项 + 全树 **42 passed**：
+- 损失有限、反传后**编码器参数确实收到梯度**（真实 `RQVAE`，不是合成张量）；
+- 换掉嵌入集合会改变学生的码、从而改变损失（教师矩阵不变）；
+- 教师侧（`SparseRows` 的 values 是普通张量、`requires_grad=False`）**不可能累积梯度**。
+
+> 过程中修掉两处**我的测试**缺陷：小配置缺 `hidden_sizes`；以及对"教师张量"错误地调用 `.parameters()`。断言改得更贴近事实（教师根本没有参数），未放宽任何实现约束。
+
+## 尚待
+
+把 `structural_loss` 接进训练循环（替换 R48 对比、`SD_OFF` 时完全不执行）、λ* 探针实测并写 manifest、`SD_OFF`/`GEOMETRY_OFF` 逐位一致、4-rank DDP 检查、一 epoch 冒烟，然后 Stage2/Stage3 与结构保真报告。
