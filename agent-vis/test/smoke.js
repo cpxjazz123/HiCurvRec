@@ -843,6 +843,10 @@ async function main() {
                 '主线的 must_hold 要么不给，要么是非空数组');
     }
     assert.equal(initial.mainLineError, null);
+    // 基线事实共用一份，机制文件不再抄：页面从 baseline 块读。
+    assert.equal(typeof initial.baseline, 'object', 'baseline 没返回');
+    assert.equal(typeof initial.baseline.tree, 'string');
+    assert.equal(initial.baselineError, null);
 
     res = await put({ text: ideaText });
     assert.equal(res.status, 200, await res.text());

@@ -20,15 +20,7 @@
       "claim": "按曲率分层的前缀会让同一前缀下的商品在训练图上结构更相近，从而抬高 Stage3 test_R@10。",
       "confirmation": "三条读数同时成立：test_R@10 高于 F0；冻结支撑上的结构失真相对基线降 ≥5%；每层 Sinkhorn 行/列边际偏差 ≤2%。"
     },
-    "3_start": {
-      "tree": "stage2_RQ-VAE/TIGER_RQ-VAE",
-      "digest": "80c90f2ff854270fecbd4ca3fabcbffe461b10644412460d12b2fa0e5970713b",
-      "config": "config/train_config.json（21 个超参）；插件位 losses/、distances/、train_config.py",
-      "sid": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
-      "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
-      "sid_recall": 0.05545012970281516,
-      "reference": "results/stage3_T5Train/TIGER_mixed_rq_F0/logs/Amazon_2023_Instruments/Nov-09-2026_08-07-21/test_final.json"
-    },
+    "3_start": "复制起点、基线 digest、当前 SID 与 recall、F0 对照：见 ideas/baseline.json（页面「基线」块）",
     "4_method": {
       "single_variable": "新增 AF3 曲率项并接进每层代价与结构项，其余冻结配方原样复用。",
       "definitions": [

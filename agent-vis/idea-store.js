@@ -112,6 +112,28 @@ export function readMainLine() {
 }
 
 /**
+ * 基线事实：`ideas/baseline.json`，每个候选共用一份。
+ *
+ * 复制起点、基线 digest、当前 SID 与读数对所有机制都一样，写在机制文件里就是
+ * 每一份都抄一遍。页面把它单独列一块，机制文件只写自己多出来的部分。
+ */
+export function readBaseline() {
+  const file = path.join(SANDBOX_ROOT, 'ideas', 'baseline.json');
+  let text = '';
+  try {
+    text = fs.readFileSync(file, 'utf8');
+  } catch {
+    return { doc: null, error: 'ideas/baseline.json 不存在' };
+  }
+  try {
+    return { doc: JSON.parse(text), error: null };
+  } catch (err) {
+    return { doc: null,
+             error: `ideas/baseline.json 解析失败：${err && err.message ? err.message : String(err)}` };
+  }
+}
+
+/**
  * 读出当前的 IDEA 文本。
  *
  * 没有文件是预期内的（还没填过）；文件坏了要报错，不能悄悄当成空 ——

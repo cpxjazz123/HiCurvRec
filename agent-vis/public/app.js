@@ -2930,7 +2930,7 @@ function countSections(doc) {
   }).length;
 }
 
-function renderIdeaDoc(doc, error, mainLine) {
+function renderIdeaDoc(doc, error, mainLine, baseline) {
   if (!ideaUi.kv) return;
   ideaUi.kv.innerHTML = '';
   ideaDoc = doc || null;
@@ -2948,6 +2948,10 @@ function renderIdeaDoc(doc, error, mainLine) {
     const line = mainLine || doc.main_line;
     if (line !== undefined && line !== null) {
       ideaUi.kv.appendChild(kvSection('主线', flattenRows(line, '', [])));
+    }
+    // 基线事实每个候选都一样，单独一块，机制文件不再抄。
+    if (baseline && typeof baseline === 'object') {
+      ideaUi.kv.appendChild(kvSection('基线', flattenRows(baseline, '', [])));
     }
     if (doc.sections) {
       for (const key of Object.keys(doc.sections)) {
@@ -2996,7 +3000,7 @@ async function loadIdea() {
       const where = typeof data.ideaPath === 'string' && data.ideaPath
         ? data.ideaPath : 'ideas/*_idea.json';
       if (ideaUi.state) ideaUi.state.textContent = `来自仓库 ${where}（结构化真源）`;
-      renderIdeaDoc(doc, null, data.mainLine || null);
+      renderIdeaDoc(doc, null, data.mainLine || null, data.baseline || null);
       return;
     }
     const storedText = typeof data.text === 'string' ? data.text : '';
