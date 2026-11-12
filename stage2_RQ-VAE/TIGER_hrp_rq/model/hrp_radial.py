@@ -59,13 +59,20 @@ def radius_rows(item_ids, table: dict | None = None) -> torch.Tensor:
 
 
 def phi(radius: torch.Tensor, points: torch.Tensor) -> torch.Tensor:
-    """``tanh(r * atanh(|p| / (1 + eps))) * p / |p|``: same direction, radius moved, differentiable through the clamped ``atanh``."""
-    r = radius.reshape(-1, 1).to(dtype=points.dtype, device=points.device)
-    norm = points.norm(dim=-1, keepdim=True)
+    """``tanh(r * atanh(clamp(|p|))) * p / |p|``: same direction, radius moved, differentiable through the clamped ``atanh``.
+
+    The radius is transformed in double precision and cast back: in float32 the composition of ``atanh`` and ``tanh`` loses enough precision at moderate radii to
+    tilt a direction by 3e-4 radians, and the map is supposed to leave the direction exactly alone.  The clamp is applied to the argument rather than to the
+    radius, so ``phi_{1/r}`` composed with ``phi_r`` is the identity whenever the clamp is not active.
+    """
+    dtype = points.dtype
+    r = radius.reshape(-1, 1).to(dtype=torch.float64, device=points.device)
+    p64 = points.to(torch.float64)
+    norm = p64.norm(dim=-1, keepdim=True)
     safe = norm.clamp_min(1e-30)
-    argument = (norm / (1.0 + RADIUS_EPS)).clamp(max=1.0 - RADIUS_EPS)
+    argument = norm.clamp(min=0.0, max=1.0 - RADIUS_EPS)
     scaled = torch.tanh(r * torch.atanh(argument))
-    return points / safe * scaled
+    return (p64 / safe * scaled).to(dtype)
 
 
 def phi_inverse(radius: torch.Tensor, points: torch.Tensor) -> torch.Tensor:

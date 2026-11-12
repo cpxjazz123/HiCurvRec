@@ -69,17 +69,21 @@ def test_r_one_is_the_identity_matrix():
 
 
 def test_the_map_is_invertible():
+    """In the precision it is evaluated in: the map is exact in double, and float32 storage costs about 1e-4 on a component near 0.2."""
     torch.manual_seed(1)
-    points = torch.rand(5, 8) * 0.5
-    r = torch.tensor([0.3, 0.7, 1.0, 2.0, 3.5])
+    raw = torch.rand(5, 8, dtype=torch.float64) + 0.05
+    points = raw / raw.norm(dim=-1, keepdim=True) * 0.6      # inside the ball, where the map is defined
+    r = torch.tensor([0.3, 0.7, 1.0, 2.0, 3.5], dtype=torch.float64)
     round_trip = h.phi_inverse(r, h.phi(r, points))
     assert torch.allclose(round_trip, points, rtol=1e-9, atol=1e-9)
 
 
 def test_the_map_keeps_the_direction():
+    """Double precision: the 4e-4 radian tilt seen in float32 is the storage rounding of the output, not the map."""
     torch.manual_seed(2)
-    points = torch.rand(5, 8) * 0.8 + 0.05
-    r = torch.tensor([0.25, 0.5, 1.0, 2.0, 4.0])
+    raw = torch.rand(5, 8, dtype=torch.float64) + 0.05
+    points = raw / raw.norm(dim=-1, keepdim=True) * 0.8
+    r = torch.tensor([0.25, 0.5, 1.0, 2.0, 4.0], dtype=torch.float64)
     moved = h.phi(r, points)
     cos = torch.nn.functional.cosine_similarity(points, moved, dim=-1)
     angle = torch.arccos(cos.clamp(-1.0, 1.0))

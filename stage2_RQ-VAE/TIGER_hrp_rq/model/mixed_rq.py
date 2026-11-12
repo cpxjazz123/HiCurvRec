@@ -39,6 +39,8 @@ from typing import Iterable
 
 import torch
 import torch.nn.functional as F
+
+from . import hrp_radial
 from torch import nn
 
 from .poincare_contract import expmap0, logmap0, mobius_add, project, squared_distance
