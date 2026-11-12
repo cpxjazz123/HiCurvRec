@@ -56,36 +56,6 @@
           ],
           "exports": "structural_loss(s, tokens, potential) -> scalar",
           "not": "不做 class-balance 重加权（s 已标准化），不加额外温度或 clip 常数"
-        },
-        {
-          "path": "tests/test_af3_potential.py",
-          "what": "固定算式正确：3 节点手算图（一条三角形 + 一条链）上的 d_i、T_ij、kappa_ij、s_i、标准化",
-          "contents": [
-            "test_kappa_three_node_graph",
-            "test_degree_zero_item_takes_mean",
-            "test_standardization_mean0_std1",
-            "test_table_sha_recorded"
-          ]
-        },
-        {
-          "path": "tests/test_af3_offset.py",
-          "what": "代价与选择：偏移进入代价、lambda 可复算、开关打开后 argmin 确实改变",
-          "contents": [
-            "test_cost_equals_base_plus_offset",
-            "test_lambda_is_deterministic",
-            "test_geometry_off_returns_base",
-            "test_selection_changes_with_curvature"
-          ]
-        },
-        {
-          "path": "tests/test_structural.py",
-          "what": "梯度归属与退化：L_struct 只到 g，both-off 时前向与梯度逐位等于基线",
-          "contents": [
-            "test_grad_reaches_only_g",
-            "test_encoder_gets_no_structural_grad",
-            "test_both_off_equals_baseline_forward",
-            "test_init_reproducible_same_seed"
-          ]
         }
       ]
     }
