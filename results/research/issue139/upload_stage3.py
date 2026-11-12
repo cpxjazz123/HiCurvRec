@@ -35,6 +35,10 @@ RESULTS = REPO / "results"
 TREES = REPO / "stage2_RQ-VAE"
 STAGE3_LOGS = RESULTS / "stage3_T5Train"
 
+#: Entries of a Stage2 tree that are run artifacts, not the mechanism's source.
+_NOT_SOURCE = {"logs", "__pycache__", "dataset", "ckpt", "results", ".git"}
+_NOT_SOURCE_SUFFIXES = {".pth", ".pt", ".npy", ".npz", ".parquet", ".log", ".pyc", ".tmp"}
+
 
 def _latest_test_final(arm: str) -> Path | None:
     """Newest test_final.json of this arm; nested arms are stored with ``__``."""
@@ -47,6 +51,17 @@ def _latest_test_final(arm: str) -> Path | None:
         if nested:
             return nested[0]
     return None
+
+
+def archive_key(arm: str, sid_path: Path) -> str:
+    """The ledger key: the arm and the digest of the SID table it archived.
+
+    A re-run of the same arm does not reproduce the SID (the codebook initialisation
+    is not seeded), so keying by the arm name alone would overwrite the earlier
+    archive and its recall the moment a second run finished. The digest makes the key
+    name what it holds, and an identical SID still maps to the same number.
+    """
+    return "%s/%s" % (arm.replace("/", "__"), sha256(Path(sid_path))[:12])
 
 
 def stage(arm: str, staging: Path) -> tuple[dict, str]:
@@ -77,12 +92,20 @@ def stage(arm: str, staging: Path) -> tuple[dict, str]:
     staging.mkdir(parents=True, exist_ok=True)
     code = staging / arm.replace("/", "__")
     code.mkdir(exist_ok=True)
-    for relative in ("train_rqvae.py", "math_spec.json", "reference_contract.json"):
-        if (source / relative).is_file():
-            shutil.copy2(source / relative, code / relative)
-    if (source / "model").is_dir():
-        shutil.copytree(source / "model", code / "model",
-                        ignore=shutil.ignore_patterns("__pycache__"))
+    # The mechanism's source is whatever the tree imports: copying a fixed three-file
+    # list archived a trainer whose `losses/`, `distances/` and `train_config.py` were
+    # missing, so the archived copy could not run. Everything that is source travels;
+    # run artifacts, binaries and the dataset link do not.
+    for entry in sorted(source.iterdir()):
+        name = entry.name
+        if name in _NOT_SOURCE or name.startswith("."):
+            continue
+        if entry.is_dir():
+            shutil.copytree(entry, code / name,
+                            ignore=shutil.ignore_patterns("__pycache__", "logs",
+                                                          "*.pth", "*.npy", "*.parquet"))
+        elif entry.suffix.lower() not in _NOT_SOURCE_SUFFIXES:
+            shutil.copy2(entry, code / name)
     shutil.copy2(sid, staging / "item_sids.json")
     shutil.copy2(checkpoint, staging / "rqvae_best.pth")
     block = json.loads(stage3.read_text())
@@ -90,7 +113,7 @@ def stage(arm: str, staging: Path) -> tuple[dict, str]:
 
     files = {str(path.relative_to(staging)): sha256(path)
              for path in sorted(staging.rglob("*")) if path.is_file()}
-    return files, arm.replace("/", "__")
+    return files, archive_key(arm, sid)
 
 
 def main() -> int:

@@ -1916,6 +1916,38 @@
     ],
     "renumbered_from": "74"
   },
+  "69": {
+    "arm": "TIGER_RQ-VAE",
+    "files": {
+      "TIGER_RQ-VAE/config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+      "TIGER_RQ-VAE/distances/__init__.py": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+      "TIGER_RQ-VAE/distances/distance.py": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+      "TIGER_RQ-VAE/losses/__init__.py": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+      "TIGER_RQ-VAE/losses/_pairs.py": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+      "TIGER_RQ-VAE/losses/codebook.py": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+      "TIGER_RQ-VAE/losses/commitment.py": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+      "TIGER_RQ-VAE/losses/quantization.py": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+      "TIGER_RQ-VAE/losses/reconstruction.py": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+      "TIGER_RQ-VAE/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_RQ-VAE/model/layers.py": "0d5eacf6b3cbfe8874c2b8d54f7c7554de1ade392ae8b54521b53cecec4c994a",
+      "TIGER_RQ-VAE/model/model.py": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+      "TIGER_RQ-VAE/model/utils.py": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+      "TIGER_RQ-VAE/train_config.py": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+      "TIGER_RQ-VAE/train_rqvae.py": "a06d9f9716d9b9ea616cf6c3b8dcf8e354f6f3a96aea50bb4896a31e3b64cf26",
+      "item_sids.json": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+      "recall.json": "41c88adf9b51ac801fcebcabc718ecd0704bba16cacd9ecbad2e4e48e50c56e4",
+      "rqvae_best.pth": "4ecdfb1514cd836aabe8efce74ab936ccdbd8c1a355c40847a532e881fa678dd"
+    },
+    "key": "TIGER_RQ-VAE/025ad8bd5809",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
   "R09": {
     "arm": "TIGER_M2_radial_manifold",
     "duplicate_of": "20",

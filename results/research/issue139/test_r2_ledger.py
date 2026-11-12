@@ -164,6 +164,61 @@ def test_renumber_refuses_a_number_that_is_taken_or_retired() -> str:
     return "renumber refuses a taken target and a retired source"
 
 
+def test_the_archive_key_names_the_sid_it_holds() -> str:
+    """A re-run of an arm produces a new SID, so it must not overwrite the old entry."""
+    import shutil
+    import tempfile
+    sys.path.insert(0, str(HERE))
+    import upload_stage3
+
+    sid = REPO / "results" / "stage2_RQ-VAE" / "TIGER_RQ-VAE" / "item_sids.json"
+    if not sid.is_file():
+        return "the baseline SID is not present; nothing to key"
+    first = upload_stage3.archive_key("TIGER_RQ-VAE", sid)
+    again = upload_stage3.archive_key("TIGER_RQ-VAE", sid)
+    if first != again:
+        raise AssertionError("the same SID produced two keys: %r vs %r" % (first, again))
+    if not first.startswith("TIGER_RQ-VAE/"):
+        raise AssertionError("the key does not name the arm: %r" % first)
+    with tempfile.TemporaryDirectory(dir=REPO / "results" / "research") as folder:
+        other = Path(folder) / "item_sids.json"
+        other.write_text('{"0": [1, 2, 3, 4]}')
+        different = upload_stage3.archive_key("TIGER_RQ-VAE", other)
+    if different == first:
+        raise AssertionError("two different SIDs shared one key: %r" % first)
+    return "the key is the arm plus the SID digest, so a re-run gets its own number"
+
+
+def test_the_staged_source_is_the_code_the_trainer_imports() -> str:
+    """The archive must hold the tree's own modules, not a fixed three-file list."""
+    import sys
+    import tempfile
+    sys.path.insert(0, str(HERE))
+    import upload_stage3
+
+    sid = REPO / "results" / "stage2_RQ-VAE" / "TIGER_RQ-VAE" / "item_sids.json"
+    tree = REPO / "stage2_RQ-VAE" / "TIGER_RQ-VAE"
+    if not sid.is_file() or not tree.is_dir():
+        return "the baseline tree or its SID is absent; nothing to stage"
+    with tempfile.TemporaryDirectory(dir=REPO / "results" / "research") as folder:
+        files, _key = upload_stage3.stage("TIGER_RQ-VAE", Path(folder))
+    staged = set(files)
+    root = "TIGER_RQ-VAE/"
+    required = [root + name for name in ("train_rqvae.py", "train_config.py",
+                                         "config/train_config.json")]
+    missing = [name for name in required if name not in staged]
+    for prefix in ("losses/", "distances/", "model/"):
+        if not any(name.startswith(root + prefix) for name in staged):
+            missing.append(root + prefix + "*")
+    if missing:
+        raise AssertionError("the staged source misses %r, so the archive cannot run"
+                             % (missing,))
+    inside_source = [name for name in staged if name.startswith(root)]
+    if any(name.endswith((".pth", ".pt", ".npy", ".parquet")) for name in inside_source):
+        raise AssertionError("the staged source tree carries a binary artifact")
+    return "the archive carries every module the trainer imports, and no artifacts"
+
+
 def test_the_uploaders_stage_inside_the_repository() -> str:
     for name in ("upload_stage3.py", "upload_pairs.py"):
         source = (HERE / name).read_text()
@@ -180,6 +235,8 @@ if __name__ == "__main__":
                  test_reconcile_is_idempotent,
                  test_reconcile_reports_recorded_files_that_are_absent,
                  test_withdraw_retires_a_number_and_keeps_what_was_deleted,
+                 test_the_archive_key_names_the_sid_it_holds,
+                 test_the_staged_source_is_the_code_the_trainer_imports,
                  test_renumber_moves_a_number_and_rewrites_its_bucket_path,
                  test_renumber_refuses_a_number_that_is_taken_or_retired,
                  test_the_uploaders_stage_inside_the_repository):
