@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import torch
-import torch.nn.functional as F
+
+from ._pairs import pair_error
 
 NAME = "commitment"
 DESCRIPTION = "MSE(quantized, sg[latent]) -- pulls the encoder towards the code it chose"
@@ -11,4 +12,4 @@ DESCRIPTION = "MSE(quantized, sg[latent]) -- pulls the encoder towards the code 
 
 def commitment_loss(latent: torch.Tensor, quantized: torch.Tensor) -> torch.Tensor:
     """||q - sg[x]||^2: only the encoder moves, the codebook is the target."""
-    return F.mse_loss(quantized, latent.detach())
+    return pair_error(quantized, latent.detach(), term=NAME)

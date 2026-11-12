@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import torch
-import torch.nn.functional as F
+
+from ._pairs import pair_error
 
 NAME = "reconstruction"
 DESCRIPTION = "mean squared error between the reconstruction and the item embedding"
@@ -11,4 +12,4 @@ DESCRIPTION = "mean squared error between the reconstruction and the item embedd
 
 def reconstruction_loss(reconstructed: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
     """MSE(reconstruction, embedding) -- the term that keeps the SID decodable."""
-    return F.mse_loss(reconstructed, target)
+    return pair_error(reconstructed, target, term=NAME)

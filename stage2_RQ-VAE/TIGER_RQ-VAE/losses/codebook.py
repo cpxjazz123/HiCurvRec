@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import torch
-import torch.nn.functional as F
+
+from ._pairs import pair_error
 
 NAME = "codebook"
 DESCRIPTION = "MSE(sg[latent], quantized) -- pulls the chosen code towards the encoder"
@@ -11,4 +12,4 @@ DESCRIPTION = "MSE(sg[latent], quantized) -- pulls the chosen code towards the e
 
 def codebook_loss(latent: torch.Tensor, quantized: torch.Tensor) -> torch.Tensor:
     """||sg[x] - q||^2: only the codebook moves, the encoder is the target."""
-    return F.mse_loss(latent, quantized.detach())
+    return pair_error(latent, quantized.detach(), term=NAME)

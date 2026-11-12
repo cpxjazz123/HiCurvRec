@@ -103,4 +103,10 @@ def build_loss(config) -> TotalLoss:
     if unknown:
         raise LossError("unknown loss %s; the registry holds %s"
                         % (", ".join(map(repr, unknown)), ", ".join(sorted(LOSSES))))
+    # commitment and codebook are pieces of the quantization term, not terms of their
+    # own: accepting them here would build a criterion that fails only when called.
+    nested = [name for name in terms if name in ("commitment", "codebook")]
+    if nested:
+        raise LossError("%s is computed inside 'quantization'; enable that instead"
+                        % ", ".join(map(repr, nested)))
     return TotalLoss(float(beta), tuple(terms))
