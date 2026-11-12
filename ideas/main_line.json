@@ -1,0 +1,9 @@
+{
+  "schema": "genrec.main_line.v1",
+  "statement": "AF3 图曲率进入量化通路并改变选码：结构 → 曲率势 → Sinkhorn 代价 → SID。机制可以换，这条通路始终成立。",
+  "must_hold": [
+    "曲率以代价矩阵的形式参与每层的均衡分配（Sinkhorn 的 cost 带上曲率距离）",
+    "固定 batch 上，加入曲率项后选码发生变化（机器可验证）",
+    "AF3 数值取自冻结表，全仓单一实现"
+  ]
+}

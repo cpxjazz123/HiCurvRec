@@ -29,7 +29,7 @@ import {
   clearChatRecords,
   setDataDir,
 } from './config.js';
-import { readIdea, readIdeaDoc, readIdeaFile, writeIdea } from './idea-store.js';
+import { readIdea, readIdeaDoc, readIdeaFile, readMainLine, writeIdea } from './idea-store.js';
 import { runMockChunks } from './mock-agent.js';
 import { runLiveChunks } from './live-agent.js';
 
@@ -785,12 +785,15 @@ export function createServer({
           // fileText 是仓库 idea.txt 的内容：页面第一次打开时拿它当草稿。
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
           const ideaDoc = readIdeaDoc();
+          const mainLine = readMainLine();
           res.end(JSON.stringify({
             ...readIdea(),
             fileText: readIdeaFile(),
             doc: ideaDoc.doc,
             docError: ideaDoc.error,
             ideaPath: ideaDoc.path,
+            mainLine: mainLine.doc,
+            mainLineError: mainLine.error,
           }));
         } catch (err) {
           res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });

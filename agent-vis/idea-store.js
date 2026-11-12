@@ -90,6 +90,28 @@ export function readIdeaDoc() {
 }
 
 /**
+ * 主线：`ideas/main_line.json`，整份方向共用一份。
+ *
+ * 机制文件只写"这一轮怎么变"，主线写在单独的文件里：换机制时它保持原样，页面
+ * 把两块并排显示，读者一眼能看出某个机制是否还在这条线上。
+ */
+export function readMainLine() {
+  const file = path.join(SANDBOX_ROOT, 'ideas', 'main_line.json');
+  let text = '';
+  try {
+    text = fs.readFileSync(file, 'utf8');
+  } catch {
+    return { doc: null, error: 'ideas/main_line.json 不存在' };
+  }
+  try {
+    return { doc: JSON.parse(text), error: null };
+  } catch (err) {
+    return { doc: null,
+             error: `ideas/main_line.json 解析失败：${err && err.message ? err.message : String(err)}` };
+  }
+}
+
+/**
  * 读出当前的 IDEA 文本。
  *
  * 没有文件是预期内的（还没填过）；文件坏了要报错，不能悄悄当成空 ——

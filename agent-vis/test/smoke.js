@@ -796,7 +796,14 @@ async function main() {
     assert.equal(initial.updatedAt, null);
     // 仓库里的 idea.txt 要能拿到：窗口第一次打开时靠它当草稿，不然就是一片空白。
     assert.equal(typeof initial.fileText, 'string');
-    assert.ok(initial.fileText.length > 0, 'idea.txt 的内容没拿到');
+    assert.ok(initial.fileText.length > 0, '机制文件的内容没拿到');
+    // 主线在 ideas/main_line.json，整份方向共用一份；机制文件只写这一轮的差异。
+    assert.equal(typeof initial.mainLine, 'object', 'mainLine 没返回');
+    assert.equal(typeof initial.mainLine.statement, 'string');
+    assert.ok(initial.mainLine.statement.length > 0, '主线的 statement 是空的');
+    assert.ok(Array.isArray(initial.mainLine.must_hold) && initial.mainLine.must_hold.length > 0,
+              '主线的 must_hold 是空的');
+    assert.equal(initial.mainLineError, null);
 
     res = await put({ text: ideaText });
     assert.equal(res.status, 200, await res.text());

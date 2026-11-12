@@ -2798,7 +2798,7 @@ function countSections(doc) {
   }).length;
 }
 
-function renderIdeaDoc(doc, error) {
+function renderIdeaDoc(doc, error, mainLine) {
   if (!ideaUi.kv) return;
   ideaUi.kv.innerHTML = '';
   ideaDoc = doc || null;
@@ -2812,9 +2812,10 @@ function renderIdeaDoc(doc, error) {
     const meta = ['id', 'title', 'type', 'status', 'issue', 'date', 'supersedes']
       .filter((k) => doc[k] !== undefined);
     if (meta.length) ideaUi.kv.appendChild(kvSection('元信息', meta.map((k) => [k, doc[k]])));
-    // 主线单独一块、排在正文之前：机制怎么换，这一段都不动。
-    if (doc.main_line !== undefined) {
-      ideaUi.kv.appendChild(kvSection('主线', flattenRows(doc.main_line, '', [])));
+    // 主线单独一块、排在正文之前：它来自 ideas/main_line.json，机制文件不再自带副本。
+    const line = mainLine || doc.main_line;
+    if (line !== undefined && line !== null) {
+      ideaUi.kv.appendChild(kvSection('主线', flattenRows(line, '', [])));
     }
     if (doc.sections) {
       for (const key of Object.keys(doc.sections)) {
@@ -2863,7 +2864,7 @@ async function loadIdea() {
       const where = typeof data.ideaPath === 'string' && data.ideaPath
         ? data.ideaPath : 'ideas/*_idea.json';
       if (ideaUi.state) ideaUi.state.textContent = `来自仓库 ${where}（结构化真源）`;
-      renderIdeaDoc(doc, null);
+      renderIdeaDoc(doc, null, data.mainLine || null);
       return;
     }
     const storedText = typeof data.text === 'string' ? data.text : '';
