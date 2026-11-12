@@ -37,3 +37,7 @@
 ## 读法（前导诊断，不作闸门）
 
 把几何从一级移到二级后，SID 侧没有变好：二级前缀比同族起点 F0 少 **30%**（2,901 vs 4,151）、不同三码少 8%、§63 `l3_collision` 更高（0.4681 vs SIGN 的 0.4527）、`Conditional G3` 更负（−0.1919）。一级仍是 42 码（族内正常），说明**一级容量瓶颈没有被绕过**——二级的曲率只是在已经偏窄的前缀空间上再压缩。最终判据仍是 `test_R@10`。
+
+## Stage3 已派发
+
+`stage3_start` 返回 `started: true`，pid **1732424**，variant `TIGER_l2k_rq`（与 Stage2 臂目录同名，§64b 满足）；冻结协议核验通过（150 epoch、`NO_EVAL=True`、`SKIP_TEST=False`、seed 42、beam 20、无 early stop），分层记录 `passed: true` 复用 `c88c83c9….json`。Stage2 的 `train_end` 自报 `wall_time ≈ 561 s`。
