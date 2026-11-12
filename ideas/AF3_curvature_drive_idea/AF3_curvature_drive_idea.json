@@ -1,10 +1,5 @@
 {
-  "schema": "genrec.idea.v1",
-  "id": "C-215",
   "title": "AF3 图曲率驱动残差分配：曲率势进入 Sinkhorn 代价，码字势由结构项训练",
-  "type": "mechanism",
-  "status": "draft",
-  "issue": "unassigned",
   "date": "2026-11-12",
   "supersedes": "C-212（同 SID 噪声标定，已完成）",
   "sections": {
@@ -19,8 +14,7 @@
         "distances/ 注册表：代价项 d(z_i, c_k) 与曲率偏移相加后交给 Sinkhorn",
         "losses/ 注册表：新增 L_struct，只训练码字势 g",
         "config/train_config.json：lambda、delta、g 初始化所需键"
-      ],
-      "unchanged": "按仓库冻结配方：config/train_config.json（21 项）+ 现有 losses/、distances/ 注册表；Stage3 协议、结果目录与导出格式沿用仓库约定。"
+      ]
     }
   },
   "result": {
