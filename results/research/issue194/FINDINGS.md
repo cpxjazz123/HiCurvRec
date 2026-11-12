@@ -78,3 +78,7 @@ BATCH_SIZE_PER_RANK = 4096       # 每卡 batch, 总 batch = 1024 * 4 = 4096
 读法：碰撞门通过（0.2119），三级区分度比 #192 组合臂（0.5044）与 #181（12,186 组合）都高；L1 有效分辨率 5.99 优于基线 16.14，但**负样本前缀命中率同时升到基线的 3.4 倍**（0.01650 vs 0.00491）——L1 更细的划分把更多合法但不相似的样本也拉近了，这是前导诊断，不作闸门。`Conditional G3` 仍为负（−0.0478，比 #192 的 −0.0880 轻），说明第三码在给定前两码后仍不增加 train-后继似然的两两优势改善有限。
 
 **下一步**：§89 通过 ⇒ 允许 Stage3；`test_R@10` 与预注册阈值（`≤0.056216` 关闭 / `>0.064764` 需附证据）比较。
+
+## 8. Stage3 已派发（§89 放行后的一次冻结运行）
+
+`stage3_start` 返回 `started: true`，pid **1005817**，variant `TIGER_sdh_rq`（与 Stage2 臂目录同名，§64b(i)(ii) 满足）；冻结协议核验通过：`NUM_EPOCHS=150`、`NO_EVAL=True`、`SKIP_TEST=False`、`SEED=42`、`BEAM_SIZE=20`，无 early stop。分层记录 `passed: true`（复用 `stage2_metrics/cdcf29ce….json`）。Stage2 的 `train_end` 也自报 `final_collision = 0.21190059787692683`、`unique_after_extend = 24587`，与门用的算式逐位一致。
