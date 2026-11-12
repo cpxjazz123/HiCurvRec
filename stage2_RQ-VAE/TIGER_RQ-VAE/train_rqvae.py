@@ -34,6 +34,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
+from distances import build_distance
 from losses import build_loss
 from model import RQVAE
 from train_config import load_train_config
@@ -74,8 +75,9 @@ METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 # 路径与 ARM_NAME 不在配置里 —— 它们归框架 (CLAUDE.md 19b0/67)。
 CONFIG_FILE = Path(__file__).resolve().with_name("config") / "train_config.json"
 CONFIG = load_train_config(CONFIG_FILE)
-# 损失由注册表组装；训练循环只说"在哪儿接"，不关心项是什么 (losses/*.py)。
+# 损失与距离都由注册表给出；训练文件只负责导入并把它们接到模型上。
 CRITERION = build_loss(CONFIG)
+DISTANCE = build_distance(CONFIG)
 
 EPOCHS              = CONFIG.EPOCHS
 BATCH_SIZE_PER_RANK = CONFIG.BATCH_SIZE_PER_RANK     # 每卡 batch, 总 batch = 每卡 * world_size
@@ -278,7 +280,7 @@ def main() -> None:
     all_embeddings = torch.from_numpy(embeddings)
     train_embeddings = all_embeddings[torch.from_numpy(train_ids)]
     config = _tokenizer_config()
-    model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
+    model = RQVAE(config, in_dim=embeddings.shape[1], distance=DISTANCE).to(device)
     if XAVIER_INIT:
         initialize_tiger_weights(model)
     if world_size > 1:

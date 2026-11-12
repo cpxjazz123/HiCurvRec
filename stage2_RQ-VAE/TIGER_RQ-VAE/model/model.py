@@ -15,13 +15,14 @@ from .layers import MLP, RQLayer
 class RQVAE(nn.Module):
     """Encode semantic item embeddings into residual-quantized integer SIDs."""
 
-    def __init__(self, config: Any, *, in_dim: int):
+    def __init__(self, config: Any, *, in_dim: int, distance=None):
         super().__init__()
         self.config = config
         hidden_sizes = tuple(int(size) for size in config.hidden_sizes)
         self.encoder_sizes = (int(in_dim), *hidden_sizes, int(config.codebook_dim))
         self.encoder = MLP(list(self.encoder_sizes), dropout=float(config.dropout))
-        self.rq = RQLayer(config)
+        # The metric comes from the caller; the model does not choose one.
+        self.rq = RQLayer(config, distance=distance)
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
 
     def forward(self, embeddings: torch.Tensor) -> tuple[torch.Tensor, list, int, torch.Tensor]:

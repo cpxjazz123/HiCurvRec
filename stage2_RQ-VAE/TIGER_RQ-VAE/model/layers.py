@@ -21,6 +21,9 @@ from sklearn.cluster import KMeans
 from losses.codebook import codebook_loss
 from losses.commitment import commitment_loss
 
+# The metric is its own module; the quantiser only calls what it was handed.
+from distances import build_distance
+
 
 class MLP(nn.Module):
     """RecBole3.0's dropout/linear/ReLU MLP helper."""
@@ -56,6 +59,7 @@ class VQLayer(nn.Module):
         beta: float = 0.25,
         sk_epsilon: float = -1.0,
         sk_iters: int = -1,
+        distance=None,
     ):
         super().__init__()
         self.dim = int(codebook_dim)
@@ -64,6 +68,9 @@ class VQLayer(nn.Module):
         self.use_sk = sk_epsilon > 0 and sk_iters > 0
         self.sk_epsilon = float(sk_epsilon)
         self.sk_iters = int(sk_iters)
+        # The metric is injected; a quantiser without one falls back to the registry's
+        # default so existing callers (a probe, a framework check) keep working.
+        self.distance = distance if distance is not None else build_distance()
         self.embed = nn.Embedding(self.n_embed, self.dim)
 
     def get_code_embs(self) -> nn.Parameter:
@@ -101,12 +108,8 @@ class VQLayer(nn.Module):
         return q
 
     def _distances(self, latent: torch.Tensor) -> torch.Tensor:
-        code_embs = self.get_code_embs()
-        return (
-            latent.pow(2).sum(1, keepdim=True)
-            - 2 * latent @ code_embs.t()
-            + code_embs.pow(2).sum(1, keepdim=True).t()
-        )
+        """The metric is the object handed in; this layer owns no formula."""
+        return self.distance(latent, self.get_code_embs())
 
     def _indices(self, distances: torch.Tensor, infer_use_sk: bool) -> torch.Tensor:
         if (self.training and self.use_sk) or (self.use_sk and infer_use_sk):
@@ -165,8 +168,10 @@ class EMAVQLayer(VQLayer):
         sk_iters: int = -1,
         decay: float = 0.99,
         eps: float = 1e-5,
+        distance=None,
     ):
-        super().__init__(codebook_size, codebook_dim, beta, sk_epsilon, sk_iters)
+        super().__init__(codebook_size, codebook_dim, beta, sk_epsilon, sk_iters,
+                         distance=distance)
         self.decay = float(decay)
         self.eps = float(eps)
         embed = torch.zeros(self.n_embed, self.dim)
@@ -229,8 +234,10 @@ class SimVQLayer(VQLayer):
         sk_epsilon: float = -1.0,
         sk_iters: int = -1,
         fix_code_embs: bool = False,
+        distance=None,
     ):
-        super().__init__(codebook_size, codebook_dim, beta, sk_epsilon, sk_iters)
+        super().__init__(codebook_size, codebook_dim, beta, sk_epsilon, sk_iters,
+                         distance=distance)
         nn.init.xavier_normal_(self.embed.weight)
         self.embed_proj = nn.Linear(self.dim, self.dim, bias=False)
         if fix_code_embs:
@@ -247,9 +254,11 @@ class SimVQLayer(VQLayer):
 class RQLayer(nn.Module):
     """Residual stack matching RecBole3.0's RQLayer."""
 
-    def __init__(self, config: Any):
+    def __init__(self, config: Any, distance=None):
         super().__init__()
         self.config = config
+        # One metric object for the whole residual stack; the levels share it.
+        self.distance = distance if distance is not None else build_distance()
         self.codebook_num = int(config.codebook_num)
         self.codebook_dim = int(config.codebook_dim)
         if isinstance(config.codebook_size, int):
@@ -269,11 +278,14 @@ class RQLayer(nn.Module):
             epsilon = self.sk_epsilon if level == self.codebook_num - 1 else -1.0
             iterations = self.sk_iters if level == self.codebook_num - 1 else -1
             if self.vq_type == "vq":
-                layer = VQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations)
+                layer = VQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations,
+                                distance=self.distance)
             elif self.vq_type == "ema":
-                layer = EMAVQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations, config.ema_decay)
+                layer = EMAVQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations,
+                                   config.ema_decay, distance=self.distance)
             elif self.vq_type == "simvq":
-                layer = SimVQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations, config.fix_code_embs)
+                layer = SimVQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations,
+                                   config.fix_code_embs, distance=self.distance)
             else:
                 raise ValueError(f"Unsupported vq_type: {self.vq_type}")
             layers.append(layer)
