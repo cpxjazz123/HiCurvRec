@@ -11,8 +11,8 @@
     "1_goal": {
       "statement": "在主线上加一层：AF3 曲率势驱动残差分配，其余沿用冻结配方。"
     },
-    "2_hypothesis": "见 verification.json → hypothesis",
-    "3_start": "见 ideas/baseline.json（复制起点、基线 digest、当前 SID 与 recall、F0 对照）",
+    "2_hypothesis": "曲率分层的前缀会抬高 Stage3 test_R@10：R 超过主参照，且冻结支撑上的结构失真明显下降。",
+    "3_start": "起点是仓库冻结基线树；当前 SID 与 recall 取该树最近一次正式运行；对照取主参照的读数。",
     "4_method": {
       "single_variable": "新增 AF3 曲率项，接进每层分配的代价与结构项。",
       "touch_points": [
@@ -20,13 +20,12 @@
         "losses/ 注册表：新增 L_struct，只训练码字势 g",
         "config/train_config.json：lambda、delta、g 初始化所需键"
       ],
-      "formulas": "见 verification.json → symbols 与 checks",
       "unchanged": "按仓库冻结配方：config/train_config.json（21 项）+ 现有 losses/、distances/ 注册表；Stage3 协议、结果目录与导出格式沿用仓库约定。"
     },
-    "5_switches": "见 verification.json → switches",
-    "6_preregistration": "见 verification.json → preregistration",
-    "7_verification": "见 verification.json → checks",
-    "8_expectation": "见 verification.json → hypothesis 与 preregistration",
+    "5_switches": "三开关：behaviour-off（s=0、g=0）、geometry-off（lambda=0）、both-on；只做接线检查，不训练关闭态。",
+    "6_preregistration": "三档：达到成功线即采纳；落在主参照与成功线之间记正向不足；低于主参照即否定。",
+    "7_verification": "九项公式化检查：kappa、结构势、lambda、初始化、代价携带曲率、开关退化、Sinkhorn 均衡、导出与训练一致、梯度归属。",
+    "8_expectation": "结构失真相对基线降至少 5%，test_R@10 按三档落位。",
     "9_records": "results/stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/ 与 results/stage3_T5Train/TIGER_af3_curvature_drive_rq/；必记：结构失真、L3 collision、lambda_l、test_final 全部键",
     "10_boundaries": "按仓库规则执行（§19 / §19g / §19h / §89）：训练划分构图、Sinkhorn 保持均衡、AF3 查冻结表、单次运行"
   },
