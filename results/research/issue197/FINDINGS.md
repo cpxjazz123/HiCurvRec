@@ -29,3 +29,18 @@ Issue 明确：若 `Δ` 在训练集上几乎全正或全负（退化为单一 r
 ## 独立复算（验收 2）
 
 第二个实现故意写得笨拙：从 parquet 重建边、用 BFS 求分量（而不是并查集）、用显式循环求组内/组外均值。抽 200 件，与并查集实现**逐件比对，0 处不符**（含 `None` 的一致性）。
+
+## 6. 训练器的 Δ 构建必须对合成帧 fail-open
+
+首次跑树内全量测试时 `tests/test_trainer_smoke.py` 有 4 项 `KeyError: 'seen_history'`——冒烟夹具构造的 `train_frame` 没有该列，而我在训练器里直接读了它。已改为：缺列 ⇒ `_delta = {}`、`_shares = {"delta_unavailable": ...}`，臂在基线几何上运行并**记录原因**，不凭空造 Δ。改后 `test_trainer_smoke.py` **6 项全过**。
+
+## 7. 继承基线的既有红测（不是本 Issue 引入）
+
+`tests/test_prefix_eligibility.py` 与 `tests/test_support_regressions.py` 在两棵树里**逐项相同地失败**：
+
+| 树 | 结果 |
+|---|---|
+| `TIGER_mixed_rq`（冻结起点，只读） | **9 failed / 16 passed** |
+| `TIGER_sign_rq`（本树） | **9 failed / 16 passed** |
+
+失败形态相同（`test_stale_explicit_local_entry_stops_before_any_selection` 的 8 个参数化用例未抛 `RuntimeError`、`test_proportional_quotas_are_enforced…` 断言为假）。按规则不修改、不重新钉住基线既有测试；此处只记录"起点本身就红"，以免被当作本 Issue 的回归。

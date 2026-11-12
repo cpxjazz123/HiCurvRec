@@ -586,29 +586,34 @@ def main() -> None:
 
     # === issue #197: the two-regime curvature, decided by the sign of the in-group minus out-of-group AF3 weight ===
     from model import sign_metric as _sign
-    _edges = sorted({(int(h[-1]), int(t)) for h, t in
-                     zip(train_frame["seen_history"].to_numpy(), train_frame["target"].to_numpy(np.int64))
-                     if h is not None and len(h) > 0})
-    _groups = _sign.components(_sign.closed_subgraph(_edges))
-    _weights = _sign.af3_weights(_edges)
-    _delta = _sign.delta_of(_edges, _weights, _groups)
-    _known = [v for v in _delta.values() if v is not None]
-    _enabled = [i for i, v in _delta.items() if v is not None and v > 0.0]
-    _shares = {
-        "items_with_delta": len(_known),
-        "items_without_delta": len(_delta) - len(_known),
-        "positive_share_of_known": (len(_enabled) / len(_known)) if _known else None,
-        "negative_share_of_known": (1.0 - len(_enabled) / len(_known)) if _known else None,
-        "groups": len(set(_groups.values())),
-        "closed_edges": len(_sign.closed_subgraph(_edges)),
-        "train_edges": len(_edges),
-        "kappa_table_sha256": __import__("hashlib").sha256((_sign.repo_root() / _sign.TABLE_RELPATH).read_bytes()).hexdigest(),
-        "switches": {"sign_off": _sign.SIGN_OFF, "sign_flip": _sign.SIGN_FLIP},
-        "degenerate_single_regime": bool(_known and (len(_enabled) / len(_known) < 0.05 or len(_enabled) / len(_known) > 0.95)),
-    }
+    if "seen_history" not in train_frame.columns:
+        # a synthetic frame (the smoke fixture) carries no histories, so there is no graph to read: the arm then runs on the baseline geometry and
+        # says so, rather than inventing a Delta
+        _edges, _delta, _shares = [], {}, {"delta_unavailable": "train frame has no seen_history column"}
+    else:
+        _edges = sorted({(int(h[-1]), int(t)) for h, t in
+                         zip(train_frame["seen_history"].to_numpy(), train_frame["target"].to_numpy(np.int64))
+                         if h is not None and len(h) > 0})
+        _groups = _sign.components(_sign.closed_subgraph(_edges))
+        _weights = _sign.af3_weights(_edges)
+        _delta = _sign.delta_of(_edges, _weights, _groups)
+        _known = [v for v in _delta.values() if v is not None]
+        _enabled = [i for i, v in _delta.items() if v is not None and v > 0.0]
+        _shares = {
+            "items_with_delta": len(_known),
+            "items_without_delta": len(_delta) - len(_known),
+            "positive_share_of_known": (len(_enabled) / len(_known)) if _known else None,
+            "negative_share_of_known": (1.0 - len(_enabled) / len(_known)) if _known else None,
+            "groups": len(set(_groups.values())),
+            "closed_edges": len(_sign.closed_subgraph(_edges)),
+            "train_edges": len(_edges),
+            "kappa_table_sha256": __import__("hashlib").sha256((_sign.repo_root() / _sign.TABLE_RELPATH).read_bytes()).hexdigest(),
+            "switches": {"sign_off": _sign.SIGN_OFF, "sign_flip": _sign.SIGN_FLIP},
+            "degenerate_single_regime": bool(_known and (len(_enabled) / len(_known) < 0.05 or len(_enabled) / len(_known) > 0.95)),
+        }
     raw_module.delta = _delta
     if rank == 0:
-        print(f"[sign] delta items={_shares['items_with_delta']} enabled={len(_enabled)} groups={_shares['groups']} degenerate={_shares['degenerate_single_regime']}", flush=True)
+        print(f"[sign] delta {_shares}", flush=True)
         _record(rank, "sign_delta", **_shares)
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
