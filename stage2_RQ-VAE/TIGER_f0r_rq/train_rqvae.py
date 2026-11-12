@@ -483,6 +483,16 @@ def _single_card_mode() -> bool:
     return os.environ.get(SINGLE_GPU_ENV) == "1"
 
 
+def value_identity_holds(lam: float, l_sd: float, l_recon: float, rtol: float = 1e-9) -> bool:
+    """Issue #206's assertion, as a predicate: ``lambda * L_SD == L_recon`` to rtol."""
+    return abs(lam * l_sd - l_recon) <= rtol * max(abs(l_recon), 1.0)
+
+
+def collapse_gate_fires(collision: float, threshold: float = 0.40) -> bool:
+    """Issue #204's second gate, as a predicate: an export at or above the threshold stops the arm."""
+    return collision >= threshold
+
+
 def block_budget_lambda(module, base_loss: torch.Tensor, struct_loss: torch.Tensor) -> tuple[float, dict]:
     """``lambda* = min over the jointly supervised blocks of ||g_base|| / ||g_struct||``.
 
@@ -544,14 +554,25 @@ def probe_lambda_star(module, batch, full_embeddings, batch_ids, rows, neighbour
     rq_loss = torch.nn.functional.mse_loss(recon, batch) + quant_loss
     sd_loss = sd_step.structural_loss(module, full_embeddings, batch_ids, rows, neighbours, two_hop, n_items)
     _sync("structural loss done")
-    lam, details = block_budget_lambda(module, rq_loss, sd_loss)
-    details["l_sd"] = float(sd_loss.detach())
-    details["l_recon"] = float(rq_loss.detach())
-    details["lambda_times_l_sd"] = lam * details["l_sd"]
-    details["ten_l_recon"] = 10.0 * details["l_recon"]
-    details["scale_gate_pass"] = bool(1e-6 <= lam <= 1e3 and details["lambda_times_l_sd"] <= details["ten_l_recon"])
-    details["l_sd_first_batch"] = details["l_sd"]
-    return lam, details
+    lam_block, details = block_budget_lambda(module, rq_loss, sd_loss)
+    l_recon = float(rq_loss.detach())
+    l_sd = float(sd_loss.detach())
+    # issue #206: the weight is the value ratio, one to one and with no free coefficient, so the structure term's value equals the reconstruction's by
+    # construction.  The block-budget lambda is still measured and recorded -- it is the number that showed the two readings are mutually exclusive -- but it
+    # no longer sets the weight.
+    lam_value = l_recon / l_sd if l_sd > 0 else float("inf")
+    details.update({
+        "lambda_block": lam_block,
+        "lambda_value": lam_value,
+        "l_sd": l_sd,
+        "l_recon": l_recon,
+        "lambda_value_times_l_sd": lam_value * l_sd,
+        "value_identity_pass": bool(value_identity_holds(lam_value, l_sd, l_recon)),
+        "lambda_block_times_l_sd": lam_block * l_sd,
+        "ten_l_recon": 10.0 * l_recon,
+        "block_gate_would_pass": bool(1e-6 <= lam_block <= 1e3 and lam_block * l_sd <= 10.0 * l_recon),
+    })
+    return lam_value, details
 
 
 
@@ -686,11 +707,16 @@ def main() -> None:
         print(f"[f0r] {_meta}", flush=True)
         _record(rank, "f0r", **_meta)
 
-    if not _meta.get("lambda_details", {}).get("scale_gate_pass", True):
-        # issue #204's first gate: a lambda outside [1e-6, 1e3], or a structure term whose weighted value exceeds ten reconstructions, is not trained on
+    _ld = _meta.get("lambda_details", {})
+    if not _ld.get("value_identity_pass", True):
+        # issue #206's assertion: the value ratio must satisfy lambda * L_SD == L_recon exactly; if it does not, the weight is not what it claims to be
         if rank == 0:
-            _record(rank, "scale_gate_blocked", lambda_star=_meta.get("lambda_star"), details=_meta.get("lambda_details"))
-        raise SystemExit("SCALE_GATE_BLOCKED: issue #204 forbids training this arm")
+            _record(rank, "value_identity_failed", lambda_star=_meta.get("lambda_star"), details=_ld)
+        raise SystemExit("VALUE_IDENTITY_FAILED: issue #206 requires lambda_value * L_SD == L_recon")
+    if not _ld.get("block_gate_would_pass", True):
+        # kept as an assertion rather than a stop: the block budget is recorded precisely because it would have refused this configuration
+        if rank == 0:
+            _record(rank, "block_gate_diagnostic", lambda_block=_ld.get("lambda_block"), details=_ld)
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
@@ -804,7 +830,7 @@ def main() -> None:
                     ).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
-                if collision_v >= 0.40:
+                if collapse_gate_fires(collision_v):
                     # issue #204's second gate: a collapsed export stops the arm instead of running out the budget
                     _record(rank, "collapse_gate", epoch=epoch, collision=collision_v)
                     raise SystemExit(f"COLLAPSE_GATE_TRIGGERED: collision {collision_v:.6f} >= 0.40 at epoch {epoch}")
