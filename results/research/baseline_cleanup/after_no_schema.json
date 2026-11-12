@@ -1,0 +1,50 @@
+{
+  "export_shape": [
+    48,
+    3
+  ],
+  "export_tokens": "5872c91f01f50b178e270d462f68e803ac89f906a4b1323ae6f0889090568ef7",
+  "imports": {
+    "model.poincare_contract": false,
+    "model.utils": false
+  },
+  "module_files": [
+    "model/__init__.py",
+    "model/layers.py",
+    "model/model.py",
+    "model/utils.py"
+  ],
+  "param_count": 395072,
+  "steps": [
+    {
+      "grads": "a6ee63e35901686bcb5b0168e69689049f8db90d489d80f6f6fe96129c520731",
+      "loss": 2.251352310180664,
+      "params": "a82f18b2ce5717986be6eb024fe450c981eaaea1cb5363aa695c84c2da02af43",
+      "quant_loss": 1.206114649772644,
+      "recon_loss": 1.0452375411987305,
+      "step": 0,
+      "tokens": "67d76ea0b4640c818171c331d485093fa6b3043dff3d3091635d403c91400da6",
+      "unused_codes": 717
+    },
+    {
+      "grads": "b8c8cd9a536994d8dfb4937957e4c7a4dfabadf67a38e104c4de8d6258b77ba3",
+      "loss": 2.176457643508911,
+      "params": "50901c74a85b971a1380795e203cc89ddb727f6f62a79612266dcb2b942e6a64",
+      "quant_loss": 1.1426819562911987,
+      "recon_loss": 1.0337756872177124,
+      "step": 1,
+      "tokens": "ea86ca19cbdbba6da30065480edba346fa50254329b2eb877abcdbb9b5b240d3",
+      "unused_codes": 715
+    },
+    {
+      "grads": "510c1cd8b9ee8b899874f01c6b844a7c00350b23e3a4d2ede80aa5ad6a06068b",
+      "loss": 2.1331024169921875,
+      "params": "d43366ca5d990f17d728f2e97b3c33927f40b27e8a0d61617c5058874829715e",
+      "quant_loss": 1.1121891736984253,
+      "recon_loss": 1.0209131240844727,
+      "step": 2,
+      "tokens": "63b0e032f3bb0ffb501a83bb2b4377f96a0f7aa3c28c7765723507433b3ea875",
+      "unused_codes": 717
+    }
+  ]
+}

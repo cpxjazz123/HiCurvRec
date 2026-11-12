@@ -68,7 +68,7 @@ LOG_DIR        = REPO_ROOT / "stage2_RQ-VAE" / ARM_NAME / "logs"
 METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 
 
-# === 超参来自 config/train_config.json (schema genrec.stage2.train.v1) ===
+# === 超参来自 config/train_config.json（严格校验：缺键/多键/类型/范围）===
 # 一个 JSON 文件、严格校验：缺键/多键/类型错/越界都在碰 GPU 之前 ConfigError。
 # 路径与 ARM_NAME 不在配置里 —— 它们归框架 (CLAUDE.md 19b0/67)。
 CONFIG_FILE = Path(__file__).resolve().with_name("config") / "train_config.json"

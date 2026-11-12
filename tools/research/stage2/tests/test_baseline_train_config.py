@@ -55,7 +55,6 @@ def test_the_config_file_holds_the_frozen_values() -> str:
     if not CONFIG.is_file():
         raise AssertionError("the trainer has no config file to read: " + str(CONFIG))
     values = json.loads(CONFIG.read_text())
-    values.pop("schema", None)
     if set(values) != set(EXPECTED):
         raise AssertionError("key set differs: missing %r, unexpected %r"
                              % (sorted(set(EXPECTED) - set(values)),

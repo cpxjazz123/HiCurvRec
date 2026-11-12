@@ -19,9 +19,6 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
-#: Which schema this loader understands.
-SCHEMA = "genrec.stage2.train.v1"
-
 #: key -> (kind, extra) with `extra` the allowed set for a string or None.
 FIELDS = {
     "EPOCHS": ("int", None),
@@ -128,10 +125,6 @@ def load_train_config(path: Path) -> SimpleNamespace:
     if not isinstance(payload, dict):
         raise ConfigError("the config must be a JSON object, got %r" % (type(payload).__name__,))
 
-    schema = payload.pop("schema", None)
-    if schema != SCHEMA:
-        raise ConfigError("the config schema is %r; this trainer expects %r" % (schema, SCHEMA))
-
     missing = sorted(set(FIELDS) - set(payload))
     unknown = sorted(set(payload) - set(FIELDS))
     if missing or unknown:
@@ -153,7 +146,6 @@ def load_train_config(path: Path) -> SimpleNamespace:
     if values["SK_EPSILON"] > 0 and values["SK_ITERS"] < 1:
         raise ConfigError("Sinkhorn is enabled but SK_ITERS is %d" % values["SK_ITERS"])
 
-    values["schema"] = schema
     values["path"] = str(path)
     values["sha256"] = hashlib.sha256(raw).hexdigest()
     return SimpleNamespace(**values)
