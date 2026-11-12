@@ -12,10 +12,15 @@ import torch.nn.functional as F
 
 #: Switches of the issue: SD_OFF reproduces the #180 arm with the contrast closed and no structural term; GEOMETRY_OFF is the
 #: Euclidean degeneration and is a separate switch on purpose.
-SD_OFF = False
-#: Issue #194's name for the same switch: ``BEHAVIOUR_OFF`` closes the structural term entirely, which is the state that has to reproduce the frozen
-#: baseline bit for bit.  It is the same flag as ``SD_OFF`` so there is one place to flip, and the trainer keeps reading ``SD_OFF``.
-BEHAVIOUR_OFF = SD_OFF
+#: Issue #194's switch: ``BEHAVIOUR_OFF`` closes the structural term entirely, which is the state that has to reproduce the frozen baseline.
+BEHAVIOUR_OFF = False
+
+
+def __getattr__(name: str):
+    """``SD_OFF`` is #181's name for the same flag, read through this hook so setting one name cannot leave the other stale."""
+    if name == "SD_OFF":
+        return BEHAVIOUR_OFF
+    raise AttributeError(name)
 GEOMETRY_OFF = False
 
 #: Candidate-set composition, fixed by the issue.

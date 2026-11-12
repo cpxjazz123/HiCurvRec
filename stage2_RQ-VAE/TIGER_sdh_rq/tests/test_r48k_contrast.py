@@ -53,51 +53,27 @@ def _batch(seed=0, n=8, levels=3, dim=16):
     return residuals, source, target
 
 
-def test_geometry_off_is_bitwise_the_r48_loss(monkeypatch):
-    trainer = _load_trainer()
-    residuals, source, target = _batch()
-    monkeypatch.setattr(g, "GEOMETRY_OFF", True)
-    mine = trainer.behavior_contrastive_loss(residuals, source, target)
-    ref = r48_reference_loss(residuals, source, target, trainer.BEHAVIOR_TEMPERATURE)
-    assert torch.equal(mine, ref)
-
-
-def test_the_curvature_actually_changes_the_loss(monkeypatch):
-    trainer = _load_trainer()
-    residuals, source, target = _batch(seed=1)
-    monkeypatch.setattr(g, "GEOMETRY_OFF", False)
-    curved = trainer.behavior_contrastive_loss(residuals, source, target)
-    monkeypatch.setattr(g, "GEOMETRY_OFF", True)
-    flat = trainer.behavior_contrastive_loss(residuals, source, target)
-    assert torch.isfinite(curved) and torch.isfinite(flat)
-    assert not torch.equal(curved, flat)
-
-
-def test_only_the_behaviour_loss_sends_gradient_to_the_residuals(monkeypatch):
-    trainer = _load_trainer()
-    residuals, source, target = _batch(seed=2)
-    monkeypatch.setattr(g, "GEOMETRY_OFF", False)
-    loss = trainer.behavior_contrastive_loss(residuals, source, target)
-    loss.backward()
-    assert residuals.grad is not None
-    assert float(residuals.grad.abs().sum()) > 0.0
-    assert bool(torch.isfinite(residuals.grad).all())
-
-
 def test_kappa_lookup_uses_the_frozen_table_for_the_pair_ids():
     table = {"kappa": {"1": 4.0, "2": 0.25}, "mean_frozen": 0.5, "mean_kappa": 1.0}
     values = g.kappa_of(torch.tensor([1, 2, 999]), table=table)
     assert [round(float(x), 6) for x in values] == [4.0, 0.25, 0.5]
 
 
-def test_kappa_from_the_lookup_is_moved_to_the_points_device_and_dtype(monkeypatch):
-    # regression for the smoke crash: kappa_of returns CPU float32 while the residuals are float64 (and cuda in the real run)
-    trainer = _load_trainer()
-    residuals, source, target = _batch(seed=3)
+def test_the_curvature_kernel_keeps_the_inputs_dtype_and_stays_finite(monkeypatch):
+    # regression for the smoke crash this geometry once caused: kappa_of returns CPU float32 while the points are float64, so the kernel
+    # computes in float64 and must hand back the caller's dtype -- the surviving consumer is model.sdh_kernel.affinity
+    from model import sdh_kernel
+
+    generator = torch.Generator().manual_seed(3)
+    anchor = torch.randn(2, 16, generator=generator) * 0.05
+    candidates = (torch.randn(2, 5, 16, generator=generator) * 0.05)
+    kappa_a = torch.full((2,), 4.0)
+    kappa_c = torch.full((5,), 0.25)
     monkeypatch.setattr(g, "GEOMETRY_OFF", False)
-    loss = trainer.behavior_contrastive_loss(residuals, source, target)
-    assert loss.dtype == residuals.dtype
-    assert torch.isfinite(loss)
+    values = sdh_kernel.affinity(anchor, candidates, kappa_a, kappa_c)
+    assert values.dtype == anchor.dtype
+    assert torch.isfinite(values).all()
+    assert float(values.min()) < float(values.max())
 
 
 def test_float32_points_still_produce_a_non_constant_matrix(monkeypatch):

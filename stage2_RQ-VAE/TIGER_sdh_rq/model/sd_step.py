@@ -69,12 +69,19 @@ def structural_loss(module, embeddings: torch.Tensor, anchor_ids: torch.Tensor,
     # on a supported pair is the curvature kernel, not the row of T.
     anchor_codes = codes_of(module, embeddings, anchor_ids)
     unique_codes = codes_of(module, embeddings, unique_ids)
-    candidate_codes = unique_codes[inverse.to(unique_codes.device)].view(len(sets), width, -1)
+    # padded slots carry no id, so ``inverse`` covers only the valid ones: scatter instead of indexing, or the reshape cannot close
+    flat_codes = torch.zeros(flat.numel(), unique_codes.shape[-1], dtype=unique_codes.dtype, device=unique_codes.device)
+    flat_codes[valid.to(unique_codes.device)] = unique_codes[inverse.to(unique_codes.device)]
+    candidate_codes = flat_codes.view(len(sets), width, -1)
     mask = sdh_kernel.support_mask(anchor_codes, candidate_codes, candidates.to(candidate_codes.device))
 
+    flat_emb = torch.zeros(flat.numel(), embeddings.shape[-1], dtype=embeddings.dtype, device=cosines.device)
+    flat_emb[valid.to(cosines.device)] = embeddings[unique_ids.cpu()].to(cosines.device)[inverse.to(cosines.device)]
     anchor_emb = embeddings[anchor_ids.cpu()].to(cosines.device)
-    cand_emb = embeddings[unique_ids.cpu()].to(cosines.device)[inverse.to(cosines.device)].view(len(sets), width, -1)
-    cand_kappa = r48k_geometry.kappa_of(unique_ids.cpu())[inverse].view(len(sets), width)
+    cand_emb = flat_emb.view(len(sets), width, -1)
+    flat_kappa = torch.zeros(flat.numel(), dtype=torch.float32)
+    flat_kappa[valid] = r48k_geometry.kappa_of(unique_ids.cpu())[inverse]
+    cand_kappa = flat_kappa.view(len(sets), width)
     scores = sdh_kernel.affinity(anchor_emb, cand_emb,
                                  r48k_geometry.kappa_of(anchor_ids.cpu()), cand_kappa)
     teacher = sdh_kernel.teacher_distribution(scores.to(cosines.dtype), mask)

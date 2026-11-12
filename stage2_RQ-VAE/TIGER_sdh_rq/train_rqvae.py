@@ -84,7 +84,8 @@ METRICS_PATH = LOG_DIR / "training_metrics.jsonl"
 
 # === 硬编码超参 (原 argparse default 值, 保留原 TIGER 默认) ===
 EPOCHS              = 3000
-BATCH_SIZE_PER_RANK = 4096       # 每卡 batch, 总 batch = 1024 * 4 = 4096
+BATCH_SIZE_PER_RANK = 1024       # 每卡 batch, 总 batch = 1024 * 4 = 4096 (issue #194: the inherited 4096 made the arm's global batch 16384,
+                                 # four times the frozen recipe, which is why its numbers were never comparable)
 LR                  = 1e-3
 WEIGHT_DECAY        = 1e-4
 HIDDEN_SIZES        = (512, 256, 128)
@@ -110,7 +111,6 @@ EVAL_INTERVAL       = 50
 BEHAVIOR_WEIGHT_MAX     = 0.20
 BEHAVIOR_TEMPERATURE    = 0.07
 RAMP_START_EPOCH        = 1500
-PAIR_BATCH_SIZE_PER_RANK = 2048   # 每卡 pair 数; source+target 单独一次前向
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
 # 候选是否采用完全交由下游 stage3 test_R@10 裁决.
 # 保留 best-collision checkpoint 仅作为导出用的最后一次快照.
@@ -236,29 +236,6 @@ def behavior_weight(epoch: int) -> float:
     return BEHAVIOR_WEIGHT_MAX * alpha
 
 
-class TransitionPairs(torch.utils.data.Dataset):
-    """The full ``history[-1] -> target`` stream, duplicates kept (iter48)."""
-
-    def __init__(self, train_frame: pd.DataFrame) -> None:
-        pairs: list[tuple[int, int]] = []
-        for history, target in zip(
-            train_frame["seen_history"].to_numpy(),
-            train_frame["target"].to_numpy(dtype=np.int64),
-        ):
-            if history is None or len(history) == 0:
-                continue
-            pairs.append((int(history[-1]), int(target)))
-        if not pairs:
-            raise ValueError("Training parquet contains no history-target pairs")
-        self.pairs = torch.tensor(pairs, dtype=torch.long)
-
-    def __len__(self) -> int:
-        return int(self.pairs.shape[0])
-
-    def __getitem__(self, index: int) -> torch.Tensor:
-        return self.pairs[index]
-
-
 def _residuals_with_trace(
     raw_module: RQVAE, embeddings: torch.Tensor
 ) -> torch.Tensor:
@@ -331,47 +308,15 @@ def _encode_all(module, embeddings: torch.Tensor):
 
 
 def _assign_kappa(batch_ids: torch.Tensor) -> torch.Tensor | None:
-    """The batch's per-item curvature, or ``None`` when the assignment side is switched off (issue #180)."""
-    from model import r48k2_assign, r48k_geometry
-    if r48k2_assign.CONTRAST_ONLY or r48k_geometry.GEOMETRY_OFF:
+    """The batch's per-item curvature, or ``None`` when the behaviour side is switched off.
+
+    Issue #194: ``BEHAVIOUR_OFF`` closes the whole behaviour path, assignment curvature included.  Leaving the curvature registered while the structural
+    term is off would keep the quantiser selecting on a metric the frozen baseline does not have, and the off state would not be the baseline's.
+    """
+    from model import r48k2_assign, r48k_geometry, struct_distill
+    if struct_distill.BEHAVIOUR_OFF or r48k2_assign.CONTRAST_ONLY or r48k_geometry.GEOMETRY_OFF:
         return None
     return r48k_geometry.kappa_of(batch_ids)
-
-
-def behavior_contrastive_loss(
-    residuals: torch.Tensor,
-    source_ids: torch.Tensor,
-    target_ids: torch.Tensor,
-) -> torch.Tensor:
-    """iter48's three-level contrastive loss over residual vectors.
-
-    ``residuals`` holds the pair batch with sources in the first half and
-    targets in the second half, exactly as iter48 fed
-    ``cat(source_emb, target_emb)`` through the quantizer.
-    """
-    batch_size = int(source_ids.shape[0])
-    losses: list[torch.Tensor] = []
-    for level in range(residuals.shape[0]):
-        source = residuals[level, :batch_size]
-        candidates = residuals[level, batch_size:]
-        # Issue #178: the pair's own curvature replaces the Euclidean cdist; GEOMETRY_OFF restores R48 bit for bit.
-        from model import r48k_geometry as _r48k
-        distances = _r48k.behaviour_distances(
-            source, candidates, _r48k.kappa_of(source_ids), _r48k.kappa_of(target_ids)
-        )
-        logits = -distances / BEHAVIOR_TEMPERATURE
-        # iter48's filter: drop candidates sharing the anchor's own target, then
-        # keep only rows whose source and target differ.
-        duplicate_targets = target_ids[:, None].eq(target_ids[None, :])
-        duplicate_targets.fill_diagonal_(False)
-        logits = logits.masked_fill(duplicate_targets, -torch.inf)
-        valid = source_ids.ne(target_ids)
-        if bool(valid.any()):
-            labels = torch.arange(batch_size, device=source_ids.device)
-            losses.append(F.cross_entropy(logits[valid], labels[valid]))
-    if not losses:
-        return residuals.sum() * 0.0
-    return torch.stack(losses).mean()
 
 
 def _tokenizer_config() -> SimpleNamespace:
@@ -466,7 +411,6 @@ def main() -> None:
     LAMBDA_STAR = 0.0
     print(f"[RQ-VAE] teacher nnz={_teacher_sparse._nnz()} build_s={teacher_build_s:.2f} items={n_items}", flush=True)
 
-    pair_dataset = TransitionPairs(train_frame)
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
     if XAVIER_INIT:
@@ -488,27 +432,6 @@ def main() -> None:
         persistent_workers=False,  # 2026-09-24: 关闭避免每个 epoch 都 fork 一次
     )
 
-    # Independent sampler: a different seed offset keeps the pair stream from
-    # being phase-locked to the item stream.
-    pair_sampler = (
-        DistributedSampler(
-            pair_dataset, num_replicas=world_size, rank=rank,
-            shuffle=True, seed=SEED + 1, drop_last=False,
-        )
-        if world_size > 1
-        else None
-    )
-    pair_loader = DataLoader(
-        pair_dataset,
-        batch_size=PAIR_BATCH_SIZE_PER_RANK,
-        shuffle=(pair_sampler is None),
-        sampler=pair_sampler,
-        num_workers=NUM_WORKERS,
-        pin_memory=device.type == "cuda",
-        persistent_workers=False,
-        drop_last=False,
-    )
-    pair_cycle = cycle(pair_loader)
 
     if OPTIMIZER.lower() == "adagrad":
         optimizer = torch.optim.Adagrad(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
@@ -529,7 +452,7 @@ def main() -> None:
     if rank == 0:
         print(f"[RecBole RQ-VAE] device={device} all_items={len(all_embeddings)} train_items={len(train_embeddings)} world_size={world_size}", flush=True)
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
-        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="iter48_residual_contrastive", behavior_weight_max=BEHAVIOR_WEIGHT_MAX, behavior_temperature=BEHAVIOR_TEMPERATURE, behavior_ramp_start_epoch=RAMP_START_EPOCH, pair_batch_size_per_rank=PAIR_BATCH_SIZE_PER_RANK, transition_pairs=len(pair_dataset), pair_sampler_seed=SEED + 1, source="348aed182")
+        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="iter48_residual_contrastive", behavior_weight_max=BEHAVIOR_WEIGHT_MAX, pair_sampler_seed=SEED + 1, source="348aed182")
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
@@ -562,8 +485,6 @@ def main() -> None:
     for epoch in range(1, EPOCHS + 1):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
-        if pair_sampler is not None:
-            pair_sampler.set_epoch(epoch - 1)
         model.train()
         losses: list[float] = []
         recons: list[float] = []

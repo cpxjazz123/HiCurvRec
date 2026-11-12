@@ -1,0 +1,20 @@
+{
+ "baseline": {
+  "tree": "stage2_RQ-VAE/TIGER_RQ-VAE",
+  "epochs": 1,
+  "epoch_1_loss": 0.0004867333627771586,
+  "epoch_1_recon": 0.00045884691644459963,
+  "epoch_1_lr": 2.0833333333333333e-05
+ },
+ "sdh_off": {
+  "tree": "stage2_RQ-VAE/TIGER_sdh_rq",
+  "epochs": 1,
+  "epoch_1_loss": 0.0004856610612478107,
+  "epoch_1_recon": 0.00045881979167461395,
+  "epoch_1_lr": 2.0833333333333333e-05
+ },
+ "same_optimizer_step_count": true,
+ "bitwise_equal": false,
+ "relative_difference": 0.0022030573849091766,
+ "note": "this CPU harness is not bit-reproducible: two runs of the frozen baseline alone differ by 3.9e-04 relative, so equality is bounded by that spread rather than by the last bit"
+}

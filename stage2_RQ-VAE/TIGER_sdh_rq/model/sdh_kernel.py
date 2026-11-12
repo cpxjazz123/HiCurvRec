@@ -56,7 +56,7 @@ def affinity(anchor_embeddings: torch.Tensor, candidate_embeddings: torch.Tensor
     c_k = candidate_kappa.detach().to(torch.float64)
     if c_k.dim() == 1:
         c_k = c_k.unsqueeze(0)
-    k = torch.sqrt((a_k * c_k).clamp_min(0.0)).clamp_min(r48k_geometry.KAPPA_FLOOR)
+    k = torch.sqrt((a_k.to(a.device) * c_k.to(a.device)).clamp_min(0.0)).clamp_min(r48k_geometry.KAPPA_FLOOR)
     p = r48k_geometry.project_to_ball(a, k.unsqueeze(-1))
     q = r48k_geometry.project_to_ball(b, k.unsqueeze(-1))
     return (1.0 / (1.0 + r48k_geometry.distance(p, q, k.unsqueeze(-1)))).to(anchor_embeddings.dtype)
