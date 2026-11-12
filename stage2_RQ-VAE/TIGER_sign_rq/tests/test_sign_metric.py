@@ -143,3 +143,16 @@ def test_the_paired_cost_is_row_wise_and_does_not_build_a_square_matrix():
 
     wide = sm.curved_squared_paired(torch.randn(4096, 8) * 0.01, torch.randn(4096, 8) * 0.01, torch.ones(4096))
     assert wide.shape == (4096,) and bool(torch.isfinite(wide).all())
+
+
+def test_a_zero_curvature_entry_is_floored_like_the_frozen_table_convention():
+    """Regression for the third smoke: the frozen table holds zero-curvature items, and 2/sqrt(0) is infinite.
+
+    #180's r48k_geometry already floors the same table at 1e-3; this mechanism reuses that value instead of inventing one, and the cost stays finite.
+    """
+    table = {"kappa": {"0": 0.0, "1": 8.2671}, "mean_frozen": 0.0}
+    kappa = sm.regime_kappa(torch.tensor([0, 1]), {0: 0.5, 1: 0.5}, table)
+    assert kappa.tolist() == pytest.approx([sm.KAPPA_FLOOR, 8.2671], rel=1e-6)
+    points = torch.randn(2, 8) * 0.05
+    values = sm.curved_squared_paired(points, points, kappa)
+    assert bool(torch.isfinite(values).all())

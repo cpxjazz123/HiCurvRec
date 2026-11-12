@@ -33,6 +33,9 @@ SIGN_FLIP = False
 TABLE_RELPATH = Path("results") / "research" / "issue167" / "kappa.json"
 BASELINE_CURVATURE = 1.0
 ARTANH_EPS = 1e-6
+#: Floor on the curvature, the value #180's r48k_geometry uses for the same table (``KAPPA_FLOOR = 1e-3``).  It is not a new constant: the frozen table
+#: contains zero-curvature entries, and a curvature of zero makes ``2/sqrt(c)`` infinite, so the predecessor's floor is reused rather than reinvented.
+KAPPA_FLOOR = 1e-3
 #: Floor on the Moebius denominator.  The exact expression reaches zero only on the boundary of the ball, and a boundary pair is already outside the
 #: metric's domain; a fixed floor keeps the arithmetic finite without moving any interior value (it is never active there).
 DENOMINATOR_FLOOR = 1e-3
@@ -144,7 +147,7 @@ def regime_kappa(item_ids, delta: dict[int, float | None], table: dict | None = 
         if SIGN_FLIP:
             enabled = not enabled
         rows.append(float(entries.get(str(int(item)), mean_frozen)) if enabled else BASELINE_CURVATURE)
-    return torch.tensor(rows, dtype=torch.float32)
+    return torch.tensor(rows, dtype=torch.float32).clamp_min(KAPPA_FLOOR)
 
 
 # --- the level-1 cost under a per-item curvature -------------------------------------------------------------------
