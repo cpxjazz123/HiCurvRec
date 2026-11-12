@@ -10,11 +10,6 @@
     "3_start": "起点是仓库冻结基线树；当前 SID 与 recall 取该树最近一次正式运行；对照取主参照的读数。",
     "4_method": {
       "single_variable": "新增 AF3 曲率项，接进每层分配的代价与结构项。",
-      "touch_points": [
-        "distances/ 注册表：代价项 d(z_i, c_k) 与曲率偏移相加后交给 Sinkhorn",
-        "losses/ 注册表：新增 L_struct，只训练码字势 g",
-        "config/train_config.json：lambda、delta、g 初始化所需键"
-      ],
       "new_files": [
         {
           "path": "af3_potential.py",
@@ -91,24 +86,6 @@
             "test_both_off_equals_baseline_forward",
             "test_init_reproducible_same_seed"
           ]
-        }
-      ],
-      "existing_files": [
-        {
-          "path": "model/layers.py",
-          "edit": "RQLayer 接受 distance_factory(level) 并对每层各建一个距离对象；默认 None 时行为与现在逐位相同"
-        },
-        {
-          "path": "losses/__init__.py",
-          "edit": "LOSSES 增加 'structural' 一条（module、function、spec），build_loss 可选中"
-        },
-        {
-          "path": "config/train_config.json",
-          "edit": "新增 AF3_CACHE（相对仓库根的 npz 路径）、HUBER_DELTA=1.0、AF3_GEOMETRY_OFF=false、AF3_BEHAVIOUR_OFF=false、STRUCTURAL_WEIGHT=1.0"
-        },
-        {
-          "path": "train_rqvae.py",
-          "edit": "每个 batch 前把该 batch 的 s_i 喂给各层距离对象；初始化后跑一次 lambda 标定与 g 初始化"
         }
       ]
     }
