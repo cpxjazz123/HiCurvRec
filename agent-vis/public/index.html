@@ -557,6 +557,22 @@
           <button type="button" data-role="settingsSave">保存</button>
           <button type="button" data-role="settingsClose">关闭</button>
         </menu>
+
+        <hr class="settings-sep" />
+
+        <section class="settings-block">
+          <h4>重置 agent 会话</h4>
+          <p class="settings-note">
+            清掉对话记录与模型上下文：被重置的 agent 下一次运行从空白开始。
+          </p>
+          <label class="settings-field">
+            <span>选择 agent</span>
+            <select data-role="settingsAgent"></select>
+          </label>
+          <menu class="settings-actions">
+            <button type="button" data-role="settingsResetSession">重置会话</button>
+          </menu>
+        </section>
       </form>
     </dialog>
 

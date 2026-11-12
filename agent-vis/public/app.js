@@ -23,6 +23,8 @@ const settingsStateEl = document.querySelector('[data-role=settingsState]');
 const settingsSaveEl = document.querySelector('[data-role=settingsSave]');
 const settingsResetEl = document.querySelector('[data-role=settingsReset]');
 const settingsCloseEl = document.querySelector('[data-role=settingsClose]');
+const settingsAgentEl = document.querySelector('[data-role=settingsAgent]');
+const settingsResetSessionEl = document.querySelector('[data-role=settingsResetSession]');
 const layoutEl = document.querySelector('.layout');
 const agentListEl = document.querySelector('[data-role=agentList]');
 
@@ -77,7 +79,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-13.2';
+const FRONTEND_VERSION = '2026-11-13.3';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -2369,6 +2371,13 @@ function createPanel(root) {
      * 清掉这一栏的对话记录：服务端那份删掉，页面上的时间轴也清空。
      */
     clearHistory,
+    /**
+     * 只清页面上的时间轴（服务端那份已经由别处清过了）。
+     *
+     * 「重置会话」是服务端先清记录、再由这里清时间轴 —— 两边一起清，
+     * 刷新页面它才不会再回来。
+     */
+    clearTimelineOnly: clearTimeline,
     /** 输入框里现在写的（对下游 agent 来说就是"要求"）。 */
     getPrompt() {
       return els.prompt.value.trim();
@@ -2508,6 +2517,52 @@ async function saveGlobalSettings() {
   } catch (err) {
     showAlert(`存全局设置失败：${err && err.message ? err.message : String(err)}`);
   }
+}
+
+/**
+ * 填「重置会话」那一栏的 agent 列表。
+ *
+ * 名单来自服务端给的 agent 清单（页面上的自定义 agent 也在里面）。
+ * 第一项是"全部 agent"。
+ */
+function fillSettingsAgentList() {
+  if (!settingsAgentEl) return;
+  const names = [...agentNames.entries()].map(([id, name]) => ({ id, name }));
+  names.sort((a, b) => a.name.localeCompare(b.name));
+  settingsAgentEl.innerHTML = '';
+  const all = document.createElement('option');
+  all.value = '__all__';
+  all.textContent = '全部 agent';
+  settingsAgentEl.appendChild(all);
+  for (const entry of names) {
+    const option = document.createElement('option');
+    option.value = entry.id;
+    option.textContent = entry.name;
+    settingsAgentEl.appendChild(option);
+  }
+}
+
+/**
+ * 重置 agent 会话：清掉它的对话记录与模型上下文。
+ *
+ * 服务端先清（记录 + 会话），页面再清时间轴 —— 只清一边的话，刷新页面它又回来了。
+ */
+async function resetAgentSession(agentId) {
+  const body = agentId === '__all__' ? { all: true } : { agentId };
+  const res = await fetch(`${API_BASE}/api/session/reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || `HTTP ${res.status}`);
+  }
+  const affected = Array.isArray(data.agents) ? data.agents : [];
+  for (const panel of panels) {
+    if (affected.includes(panel.profileId)) panel.clearTimelineOnly();
+  }
+  return data;
 }
 
 function resetGlobalSettingsForm() {
@@ -2748,6 +2803,7 @@ if (newAgentBtnEl) {
 if (settingsBtnEl) {
   settingsBtnEl.addEventListener('click', () => {
     loadGlobalSettings().then(() => {
+      fillSettingsAgentList();
       if (settingsDialogEl && typeof settingsDialogEl.showModal === 'function') {
         settingsDialogEl.showModal();
       }
@@ -2767,6 +2823,48 @@ if (settingsResetEl) {
 if (settingsCloseEl) {
   settingsCloseEl.addEventListener('click', () => {
     if (settingsDialogEl && typeof settingsDialogEl.close === 'function') settingsDialogEl.close();
+  });
+}
+if (settingsResetSessionEl) {
+  // 两步确认：第一次点只上膛（按钮变成"确认重置"），第二次才真重置。
+  // 不用 window.confirm —— 弹窗在自动化里会被直接按掉，按钮上膛更可靠。
+  let resetArmed = false;
+  settingsResetSessionEl.addEventListener('click', () => {
+    const agentId = settingsAgentEl ? settingsAgentEl.value : '';
+    if (agentId === '') return;
+    const label = agentId === '__all__' ? '全部 agent' : (agentNames.get(agentId) || agentId);
+    if (!resetArmed) {
+      resetArmed = true;
+      settingsResetSessionEl.textContent = '确认重置';
+      settingsResetSessionEl.classList.add('armed');
+      if (settingsStateEl) {
+        settingsStateEl.textContent = `再点一次就重置 ${label} 的会话（对话记录与模型上下文都清掉）。`;
+        settingsStateEl.classList.remove('bad');
+      }
+      return;
+    }
+    resetArmed = false;
+    settingsResetSessionEl.textContent = '重置会话';
+    settingsResetSessionEl.classList.remove('armed');
+    settingsResetSessionEl.disabled = true;
+    resetAgentSession(agentId)
+      .then((data) => {
+        const count = Array.isArray(data.agents) ? data.agents.length : 0;
+        if (settingsStateEl) {
+          settingsStateEl.textContent = `已重置 ${count} 个 agent 的会话。`;
+          settingsStateEl.classList.remove('bad');
+        }
+        fillSettingsAgentList();
+      })
+      .catch((err) => {
+        if (settingsStateEl) {
+          settingsStateEl.textContent = `重置失败：${err && err.message ? err.message : String(err)}`;
+          settingsStateEl.classList.add('bad');
+        }
+      })
+      .finally(() => {
+        settingsResetSessionEl.disabled = false;
+      });
   });
 }
 

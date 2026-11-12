@@ -431,6 +431,49 @@ async function main() {
     assert.equal(config.agentEnvProblem(), null);
   });
 
+  await test('重置会话：清掉记录与模型上下文', async () => {
+    // 先跑一轮，让 agent-a 真的有对话记录。
+    await readSse(`${base}/api/run?prompt=记一句&v=${config.FRONTEND_VERSION}&profile=agent-a`);
+    const before = await (await fetch(`${base}/api/agents/agent-a/chats`)).json();
+    assert.ok((before.records || []).length > 0, '跑完一轮却没有任何记录');
+
+    // 身份不存在要报错，别静默什么都不做。
+    const unknown = await fetch(`${base}/api/session/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentId: 'no-such-agent' }),
+    });
+    assert.equal(unknown.status, 404, `状态码 ${unknown.status}`);
+    const empty = await fetch(`${base}/api/session/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    assert.equal(empty.status, 400, `状态码 ${empty.status}`);
+
+    const reset = await fetch(`${base}/api/session/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentId: 'agent-a' }),
+    });
+    assert.equal(reset.status, 200, `状态码 ${reset.status}`);
+    const payload = await reset.json();
+    assert.deepEqual(payload.agents, ['agent-a']);
+    const after = await (await fetch(`${base}/api/agents/agent-a/chats`)).json();
+    assert.equal((after.records || []).length, 0, '重置之后记录应该没了');
+
+    // 全部重置：把所有身份都清一遍。
+    const all = await fetch(`${base}/api/session/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ all: true }),
+    });
+    assert.equal(all.status, 200, `状态码 ${all.status}`);
+    const allPayload = await all.json();
+    assert.ok(Array.isArray(allPayload.agents) && allPayload.agents.length >= 3,
+              `全部重置应该覆盖所有身份: ${JSON.stringify(allPayload.agents)}`);
+  });
+
   await test('全局设置可读可改，改完立刻对运行生效', async () => {
     const before = await (await fetch(`${base}/api/settings`)).json();
     assert.ok(before.settings, 'settings 没返回');

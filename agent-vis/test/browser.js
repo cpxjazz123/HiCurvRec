@@ -3223,6 +3223,46 @@ async function main() {
     );
     check('改回正确的主机后恢复正常', okV === 'ok', `状态 ${okV}`);
 
+    // 重置会话：跑一轮 → 在设置里重置 → 这一栏回到空白。
+    await cdp.evaluate(submitPrompt(PANEL_A, '跑一轮待会清掉'));
+    await waitFor(
+      cdp,
+      inPanel(PANEL_A, "panel.querySelectorAll('.run-block').length > 0 ? 'ok' : ''"),
+      120,
+      250,
+    );
+    await cdp.evaluate(
+      "(function () {" +
+        "var b = document.querySelector('[data-role=settingsBtn]');" +
+        'if (b) b.click();' +
+        '})()',
+    );
+    await waitFor(
+      cdp,
+      "document.querySelector('[data-role=settingsDialog]').open ? 'open' : ''",
+      60,
+      200,
+    );
+    await cdp.evaluate(
+      '(function () {' +
+        "  var sel = document.querySelector('[data-role=settingsAgent]');" +
+        "  sel.value = 'agent-a';" +
+        "  document.querySelector('[data-role=settingsResetSession]').click();" +
+        '})()',
+    );
+    const armedV = await cdp.evaluate(
+      "document.querySelector('[data-role=settingsResetSession]').textContent",
+    );
+    check('第一次点只是上膛，等第二次确认', String(armedV).includes('确认'), `按钮文字 ${armedV}`);
+    await cdp.evaluate("document.querySelector('[data-role=settingsResetSession]').click();");
+    const clearedV = await waitFor(
+      cdp,
+      inPanel(PANEL_A, "panel.querySelectorAll('.run-block').length === 0 ? 'ok' : ''"),
+      120,
+      250,
+    );
+    check('重置之后这一栏的时间轴空了', clearedV === 'ok', `状态 ${clearedV}`);
+
     mockServerV.closeAllConnections();
     await new Promise((resolve) => mockServerV.close(resolve));
 

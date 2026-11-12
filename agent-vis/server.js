@@ -32,7 +32,7 @@ import {
 } from './config.js';
 import { readBaseline, readIdea, readIdeaDoc, readIdeaFile, readMainLine, readMath, readVerification, writeIdea } from './idea-store.js';
 import { runMockChunks } from './mock-agent.js';
-import { runLiveChunks } from './live-agent.js';
+import { resetAgentSessions, runLiveChunks } from './live-agent.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(HERE, 'public');
@@ -854,6 +854,50 @@ export function createServer({
       }
       res.writeHead(405, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ error: '/api/idea 只接受 GET 与 PUT' }));
+      return;
+    }
+
+    // 重置会话：把 agent 拉回"没说过话"的状态。
+    //
+    // 一次重置做两件事：清掉服务端存的对话记录，并丢掉内存里挂着的模型会话
+    // （pi 的会话带着前面的对话，不丢掉它就还是接着上次说）。页面上的时间轴
+    // 由前端自己清 —— 服务端管不了浏览器里的东西。
+    if (url.pathname === '/api/session/reset') {
+      if (req.method !== 'POST') {
+        res.writeHead(405, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: '重置会话只接受 POST' }));
+        return;
+      }
+      readJsonBody(req)
+        .then((body) => {
+          const agentId = body && typeof body.agentId === 'string' ? body.agentId.trim() : '';
+          const all = Boolean(body && body.all === true);
+          if (!all && agentId === '') {
+            res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ error: '要指定 agentId，或者 all=true' }));
+            return;
+          }
+          const known = new Set(listProfiles().map((profile) => profile.id));
+          if (!all && !known.has(agentId)) {
+            res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ error: `没有这个 agent 身份：${agentId}` }));
+            return;
+          }
+          const targets = all ? [...known] : [agentId];
+          let disposed = 0;
+          for (const id of targets) {
+            config.clearChatRecords(id);
+            disposed += resetAgentSessions(id);
+          }
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ ok: true, agents: targets, disposedSessions: disposed }));
+        })
+        .catch((err) => {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(
+            JSON.stringify({ error: err && err.message ? err.message : String(err) }),
+          );
+        });
       return;
     }
 

@@ -970,6 +970,27 @@ export function disposeRoundSession(key) {
   safeDispose(entry.session);
 }
 
+/**
+ * 重置某个 agent 的会话：丢掉它挂着的轮次会话与本轮输入。
+ *
+ * pi 的会话本身记着前面的对话，所以"重置会话"要动的是这里：
+ * 丢掉之后下一次运行从空白上下文开始。返回丢掉了几个会话。
+ */
+export function resetAgentSessions(profileId) {
+  const id = typeof profileId === 'string' ? profileId.trim() : '';
+  if (id === '') return 0;
+  let disposed = 0;
+  for (const [key, entry] of [...roundSessions]) {
+    if (!key.endsWith(`:${id}`)) continue;
+    roundSessions.delete(key);
+    safeDispose(entry.session);
+    // 本轮输入也跟着走：会话没了，那段话留着也没用。
+    roundPrompts.delete(key.slice(0, key.length - id.length - 1));
+    disposed += 1;
+  }
+  return disposed;
+}
+
 /** 现在挂着的轮次会话有几个（测试与诊断用）。 */
 export function roundSessionCount() {
   return roundSessions.size;
