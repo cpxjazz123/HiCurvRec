@@ -1,0 +1,215 @@
+{
+ "trees": {
+  "baseline": {
+   "arm": "TIGER_mixed_rq",
+   "logged": {
+    "epochs": null,
+    "batch_size_per_rank": null,
+    "total_batch_size": null,
+    "world_size": null,
+    "optimizer": null,
+    "lr": null,
+    "weight_decay": null,
+    "warmup_epochs": null,
+    "seed": null,
+    "codebook_num": null,
+    "codebook_size": null,
+    "codebook_dim": null,
+    "beta": null,
+    "vq_type": null,
+    "sk_epsilon": null,
+    "sk_iters": null,
+    "pca_dim": null,
+    "gradient_clip_norm": null,
+    "num_workers": null,
+    "eval_interval": null
+   },
+   "constants": {
+    "EPOCHS": "3000",
+    "BATCH_SIZE_PER_RANK": "1024",
+    "LR": "1e-3",
+    "WEIGHT_DECAY": "1e-4",
+    "CODEBOOK_NUM": "3",
+    "CODEBOOK_SIZE": "(256, 256, 256)",
+    "CODEBOOK_DIM": "32",
+    "BETA": "0.25",
+    "VQ_TYPE": "\"vq\"",
+    "SK_EPSILON": "0.003",
+    "SK_ITERS": "50",
+    "PCA_DIM": "0",
+    "WARMUP_EPOCHS": "50",
+    "GRADIENT_CLIP_NORM": "1.0",
+    "OPTIMIZER": "\"AdamW\"",
+    "SEED": "42",
+    "NUM_WORKERS": "0",
+    "EVAL_INTERVAL": "50"
+   },
+   "has_metrics": false
+  },
+  "sign": {
+   "arm": "TIGER_sign_rq",
+   "logged": {
+    "epochs": 3000,
+    "batch_size_per_rank": 1024,
+    "total_batch_size": 4096,
+    "world_size": 4,
+    "optimizer": "AdamW",
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "warmup_epochs": 50,
+    "seed": 42,
+    "codebook_num": 3,
+    "codebook_size": [
+     256,
+     256,
+     256
+    ],
+    "codebook_dim": 32,
+    "beta": 0.25,
+    "vq_type": "vq",
+    "sk_epsilon": 0.003,
+    "sk_iters": 50,
+    "pca_dim": 0,
+    "gradient_clip_norm": 1.0,
+    "num_workers": 0,
+    "eval_interval": 50
+   },
+   "constants": {
+    "EPOCHS": "3000",
+    "BATCH_SIZE_PER_RANK": "1024",
+    "LR": "1e-3",
+    "WEIGHT_DECAY": "1e-4",
+    "CODEBOOK_NUM": "3",
+    "CODEBOOK_SIZE": "(256, 256, 256)",
+    "CODEBOOK_DIM": "32",
+    "BETA": "0.25",
+    "VQ_TYPE": "\"vq\"",
+    "SK_EPSILON": "0.003",
+    "SK_ITERS": "50",
+    "PCA_DIM": "0",
+    "WARMUP_EPOCHS": "50",
+    "GRADIENT_CLIP_NORM": "1.0",
+    "OPTIMIZER": "\"AdamW\"",
+    "SEED": "42",
+    "NUM_WORKERS": "0",
+    "EVAL_INTERVAL": "50"
+   },
+   "has_metrics": true
+  }
+ },
+ "differences": [
+  {
+   "field": "epochs",
+   "baseline": null,
+   "sign": 3000
+  },
+  {
+   "field": "batch_size_per_rank",
+   "baseline": null,
+   "sign": 1024
+  },
+  {
+   "field": "total_batch_size",
+   "baseline": null,
+   "sign": 4096
+  },
+  {
+   "field": "world_size",
+   "baseline": null,
+   "sign": 4
+  },
+  {
+   "field": "optimizer",
+   "baseline": null,
+   "sign": "AdamW"
+  },
+  {
+   "field": "lr",
+   "baseline": null,
+   "sign": 0.001
+  },
+  {
+   "field": "weight_decay",
+   "baseline": null,
+   "sign": 0.0001
+  },
+  {
+   "field": "warmup_epochs",
+   "baseline": null,
+   "sign": 50
+  },
+  {
+   "field": "seed",
+   "baseline": null,
+   "sign": 42
+  },
+  {
+   "field": "codebook_num",
+   "baseline": null,
+   "sign": 3
+  },
+  {
+   "field": "codebook_size",
+   "baseline": null,
+   "sign": [
+    256,
+    256,
+    256
+   ]
+  },
+  {
+   "field": "codebook_dim",
+   "baseline": null,
+   "sign": 32
+  },
+  {
+   "field": "beta",
+   "baseline": null,
+   "sign": 0.25
+  },
+  {
+   "field": "vq_type",
+   "baseline": null,
+   "sign": "vq"
+  },
+  {
+   "field": "sk_epsilon",
+   "baseline": null,
+   "sign": 0.003
+  },
+  {
+   "field": "sk_iters",
+   "baseline": null,
+   "sign": 50
+  },
+  {
+   "field": "pca_dim",
+   "baseline": null,
+   "sign": 0
+  },
+  {
+   "field": "gradient_clip_norm",
+   "baseline": null,
+   "sign": 1.0
+  },
+  {
+   "field": "num_workers",
+   "baseline": null,
+   "sign": 0
+  },
+  {
+   "field": "eval_interval",
+   "baseline": null,
+   "sign": 50
+  }
+ ],
+ "steps_per_epoch": {
+  "sign": {
+   "train_items": 24556,
+   "global_batch": 4096,
+   "expected": 6
+  }
+ },
+ "recipe_identical": false,
+ "global_batch_is_frozen_4096": true
+}
