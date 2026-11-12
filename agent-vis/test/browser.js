@@ -517,6 +517,51 @@ async function openFresh(cdp, base, options = {}) {
   }
 }
 
+/**
+ * 候选树快照：跑测试前记下 stage2_RQ-VAE 下有哪些目录。
+ *
+ * 活的 agent（AGENT Write 有写权限）会按 idea 建候选树 —— 那是它该干的活，
+ * 但测试跑完不该把半成品留在仓库里。跑完按这份快照把"这次跑新建出来的、
+ * 且 git 没跟踪"的目录删掉。
+ */
+function snapshotCandidateTrees() {
+  const dir = path.join(config.SANDBOX_ROOT, 'stage2_RQ-VAE');
+  try {
+    return new Set(fs.readdirSync(dir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name));
+  } catch {
+    return new Set();
+  }
+}
+
+function removeNewCandidateTrees(before) {
+  const dir = path.join(config.SANDBOX_ROOT, 'stage2_RQ-VAE');
+  let entries = [];
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const removed = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    if (before.has(entry.name)) continue;
+    const full = path.join(dir, entry.name);
+    // git 跟踪着的目录不动：那是仓库里的东西，不是这次跑出来的。
+    let tracked = '';
+    try {
+      tracked = execFileSync('git', ['ls-files', full], { cwd: config.SANDBOX_ROOT, encoding: 'utf8' });
+    } catch {
+      tracked = '';
+    }
+    if (tracked.trim() !== '') continue;
+    fs.rmSync(full, { recursive: true, force: true });
+    removed.push(entry.name);
+  }
+  return removed;
+}
+
 async function main() {
   process.stdout.write('agent-vis 浏览器端回归测试\n');
 
@@ -524,6 +569,8 @@ async function main() {
   // 写在仓库里的 .local-public-path，本地跑测试不该被它挡住。
   // 数据目录先清干净：上一次跑剩的配置与对话记录不能让这一次的结论失真。
   fs.rmSync(SCRATCH_DATA, { recursive: true, force: true });
+  // 跑之前记下候选树清单：活的 agent 建出来的目录，跑完要收拾掉。
+  const candidateTreesBefore = snapshotCandidateTrees();
   // 上一次跑被中途杀掉时，Chromium 会留在调试端口上；新的一轮会连到那具旧尸体，
   // 页面状态全是上一轮的。开跑前先把它清掉。
   try {
@@ -3316,6 +3363,15 @@ async function main() {
       }
     }
     await sleep(500);
+    // 这次跑新建出来的候选树（git 没跟踪的）收拾掉，别把半成品留在仓库里。
+    try {
+      const removed = removeNewCandidateTrees(candidateTreesBefore);
+      if (removed.length > 0) {
+        process.stdout.write(`  （清掉了这次跑新建的候选树：${removed.join('、')}）\n`);
+      }
+    } catch (err) {
+      process.stdout.write(`  （清理候选树失败：${(err && err.message) || String(err)}）\n`);
+    }
     // chromium 会 fork 出脱离原进程组的子进程（crashpad 等），
     // 只 kill 进程组清不干净，所以再按调试端口特征扫一遍。
     try {
