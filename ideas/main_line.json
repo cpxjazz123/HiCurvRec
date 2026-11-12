@@ -1,9 +1,61 @@
 {
   "schema": "genrec.main_line.v1",
-  "statement": "AF3 图曲率进入量化通路并改变选码：结构 → 曲率势 → Sinkhorn 代价 → SID。机制可以换，这条通路始终成立。",
-  "must_hold": [
-    "曲率以代价矩阵的形式参与每层的均衡分配（Sinkhorn 的 cost 带上曲率距离）",
-    "固定 batch 上，加入曲率项后选码发生变化（机器可验证）",
-    "AF3 数值取自冻结表，全仓单一实现"
-  ]
+
+  "statement": "以 AF3 图曲率为核心结构信息，研究如何将行为图中的结构关系融入 RQ-VAE 的表示学习与离散量化过程，使最终生成的 Semantic ID（SID）更好地保留商品之间的行为关系，并提升下游生成式推荐性能。具体实现机制不受限制。",
+
+  "definitions": {
+    "af3": {
+      "name": "AF3 图曲率",
+      "meaning": "Augmented Forman–Ricci Curvature，是一种用于描述图中边的局部结构特征的离散曲率指标。",
+      "role": "帮助识别行为图中的不同局部连接模式，例如社区内部的密集连接、稀疏连接以及跨社区的桥梁关系。"
+    },
+
+    "behavior_graph": {
+      "name": "行为图",
+      "meaning": "根据用户与商品的历史交互行为构建的图结构。节点代表商品，边代表商品之间由用户行为形成的关联。",
+      "role": "提供商品语义信息之外的行为关系和拓扑结构信息。"
+    },
+
+    "structural_relationships": {
+      "name": "行为图结构关系",
+      "meaning": "商品在行为图中的连接模式及相互关系，包括局部邻域、社区结构、连接强度、桥梁关系和层次性等。",
+      "role": "是我们希望 RQ-VAE 学习并保留的信息。"
+    },
+
+    "representation_learning": {
+      "name": "RQ-VAE 表示学习",
+      "meaning": "RQ-VAE 在离散量化之前，通过编码器学习商品连续潜在表示的过程。",
+      "role": "研究如何使商品的连续表示包含有价值的行为图结构信息。"
+    },
+
+    "discrete_quantization": {
+      "name": "离散量化",
+      "meaning": "RQ-VAE 通过多层残差量化，将商品的连续潜在表示映射为有限码本中的离散码字。",
+      "role": "研究行为结构信息如何影响离散表示的生成，以及这些信息能否在量化之后继续保留。"
+    },
+
+    "semantic_id": {
+      "name": "Semantic ID（SID）",
+      "meaning": "由 RQ-VAE 多层量化码字组成的离散商品标识，用于下游生成式推荐模型。",
+      "role": "是本研究最终关注的表示对象，而不仅仅是量化前的连续 Embedding。"
+    },
+
+    "structure_preservation": {
+      "name": "行为结构保留",
+      "meaning": "最终 SID 仍然能够反映商品在原始行为图中的重要结构关系，而不是仅仅保留商品语义相似性。",
+      "role": "是本研究希望改善的核心表示能力。"
+    },
+
+    "downstream_recommendation": {
+      "name": "下游生成式推荐",
+      "meaning": "利用商品 SID 表示用户历史交互序列，并通过生成模型预测用户下一步可能交互的商品。",
+      "role": "是最终 SID 的实际应用场景。"
+    },
+
+    "mechanism_freedom": {
+      "name": "具体实现机制不受限制",
+      "meaning": "研究不预设必须采用某一种 Loss、Transformer、Encoder、几何空间、距离函数、码本更新方法或量化算法。",
+      "role": "允许围绕同一研究主线探索不同方法，不将某个具体机制视为研究目标本身。"
+    }
+  }
 }

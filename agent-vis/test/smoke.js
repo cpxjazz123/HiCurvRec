@@ -838,8 +838,10 @@ async function main() {
     assert.equal(typeof initial.mainLine, 'object', 'mainLine 没返回');
     assert.equal(typeof initial.mainLine.statement, 'string');
     assert.ok(initial.mainLine.statement.length > 0, '主线的 statement 是空的');
-    assert.ok(Array.isArray(initial.mainLine.must_hold) && initial.mainLine.must_hold.length > 0,
-              '主线的 must_hold 是空的');
+    if (initial.mainLine.must_hold !== undefined) {
+      assert.ok(Array.isArray(initial.mainLine.must_hold) && initial.mainLine.must_hold.length > 0,
+                '主线的 must_hold 要么不给，要么是非空数组');
+    }
     assert.equal(initial.mainLineError, null);
 
     res = await put({ text: ideaText });
