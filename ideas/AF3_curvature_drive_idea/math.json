@@ -8,13 +8,25 @@
     "kappa_ij": "AF3 曲率（一条边的标量）",
     "s_i": "商品 i 的结构势（全图标准化的标量）",
     "z_i^(l)": "第 l 层编码器给出的残差向量",
-    "c_k": "第 l 层码本里的第 k 个码字",
+    "c_k": "第 l 层码本里的第 k 个码字，记作 c_k^(l)；公式里出现的 c_k 与 c 都指当前层的码本（各层码本独立）",
     "g_k^(l)": "第 l 层第 k 个码字的码字势（可训练标量）",
     "lambda_l": "第 l 层把势差换算成距离单位的标定系数（初始化时算定，不训练）",
     "d(x, c)": "基础距离：平方欧氏 |x|^2 - 2 x.c + |c|^2",
     "H_delta": "Huber 函数，delta = 1",
     "Q^(l)": "第 l 层 Sinkhorn 的传输矩阵（B x K）",
-    "token_l(i)": "商品 i 在第 l 层被分配到的码字下标"
+    "token_l(i)": "商品 i 在第 l 层被分配到的码字下标",
+    "mu_s": "全图商品上标准化前的 s 的均值，mu_s = mean_i s_i",
+    "sigma_s": "全图商品上标准化前的 s 的标准差；总体/样本口径 math.json 未规定，复现时须固定一个口径",
+    "eps": "数值下限 1e-8，用于 standardisation 与 lambda_calibration 的分母保护",
+    "beta": "commitment 项的权重，取 config/train_config.json 的 BETA = 0.25",
+    "B": "batch 里的商品数，即 Q^(l) 的行数",
+    "K": "每层码本大小（config 的 CODEBOOK_SIZE），即 Q^(l) 的列数",
+    "L_recon": "重建损失 MSE(reconstruction, embedding)",
+    "codebook_l": "第 l 层的 codebook 项 MSE(q, sg[x])",
+    "commitment_l": "第 l 层的 commitment 项 MSE(x, sg[q])",
+    "L_struct": "结构损失，定义见 formula structural_loss",
+    "L": "总损失，定义见 formula total_loss",
+    "structural_weight": "L_struct 在总损失里的权重，取值见 constants"
   },
   "formulas": [
     {
@@ -74,14 +86,14 @@
     }
   ],
   "switches": {
-    "behaviour_off": "s_i = 0 => C_ik = d，L_struct = 0（Huber 在 0 处取 0）。g = 0 是 L_struct 的驻点（dL_struct/dg_k = -(s_i - g_k) = 0），且 H_delta(-g) 在 |g| <= 1 段等于 0.5 * g^2、梯度 g 把 g 拉回 0，故 s = 0 时即使 g 在训练，g 也停在 0、C 停在 d；behaviour_off 只需 s = 0 或 structural_weight = 0 之一成立，不要求冻结 g",
+    "behaviour_off": "s_i = 0 => C_ik = d，L_struct = 0（Huber 在 0 处取 0）。g = 0 是 L_struct 的驻点（dL_struct/dg_k = -(s_i - g_k) = 0），且 H_delta(-g) 在 |g| <= 1 段等于 0.5 * g^2、梯度 g 把 g 拉回 0，故 s = 0 时即使 g 在训练，g 也停在 0、C 停在 d；behaviour_off 的成立条件是 s_i = 0 且 g_k^(l) = 0（s = 0 时由 codeword_potential_init 自动给出 g = 0），或等价地走 geometry_off（lambda_l = 0）。structural_weight = 0 单独不构成 behaviour_off：它只关掉 L_struct 的梯度通路，lambda_l > 0 时代价里的 lambda_l * H_delta(s_i - g_k^(l)) 仍在、g 停在初始值，C_ik != d",
     "geometry_off": "lambda_l = 0 => C_ik = d，仅剩 L_struct 训练 g",
     "both_on": "上两式同时生效"
   },
   "constants": {
     "delta": 1.0,
     "structural_weight": 1.0,
-    "sk_epsilon": "config/train_config.json 的 sk_epsilon",
-    "sk_iters": "config/train_config.json 的 sk_iters"
+    "sk_epsilon": 0.003,
+    "sk_iters": 50
   }
 }
