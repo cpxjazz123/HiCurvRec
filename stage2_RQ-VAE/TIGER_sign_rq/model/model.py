@@ -74,6 +74,9 @@ class MixedRQVAE(nn.Module):
                           sk_iters=int(config.sk_iters))
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
 
+    #: ``item -> Delta_i`` for the two-regime curvature; the trainer fills it from TRAIN edges only (#197).
+    delta: dict | None = None
+
     @property
     def alpha_table(self):
         """Do not retain a stale alias after DDP broadcasts or checkpoint load."""
@@ -81,26 +84,37 @@ class MixedRQVAE(nn.Module):
 
     def forward(self, embeddings: torch.Tensor, item_ids: torch.Tensor | None = None
                 ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
-        # The item ids are accepted and ignored: the framework's one-epoch smoke
-        # probes the trained weights by calling the model the way the baseline's
-        # is called, with the item ids of the batch. This mechanism reads no
-        # per-item state, so the ids carry nothing.
+        # Issue #197 reads per-item state, so the ids are no longer decorative: they select the two-regime curvature of the first level. A caller that
+        # passes no ids gets the baseline's uniform geometry, which is what the framework's weight probes do.
+        from . import sign_metric
         encoded = self.encoder(embeddings)
-        readout, quant_loss, unused_codes, tokens = self.rq(encoded)
+        kappa = None
+        if item_ids is not None and self.delta is not None:
+            kappa = sign_metric.regime_kappa(item_ids.cpu(), self.delta).to(encoded.device)
+        readout, quant_loss, unused_codes, tokens = self.rq(encoded, kappa=kappa)
         quantized = encoded + (readout - encoded).detach()
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens
 
     @torch.no_grad()
-    def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
+    def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False,
+                    item_ids: torch.Tensor | None = None) -> torch.Tensor:
+        from . import sign_metric
         from .mixed_rq import encode_tokens
         # The export is the deterministic nearest code at every level; the
-        # training-only balanced assignment never runs at inference.
-        return encode_tokens(self.encoder(embeddings), self.rq)
+        # training-only balanced assignment never runs at inference. The curvature is the one the ids select, so the file and the objective agree.
+        kappa = None
+        if item_ids is not None and self.delta is not None:
+            kappa = sign_metric.regime_kappa(item_ids.cpu(), self.delta).to(embeddings.device)
+        return encode_tokens(self.encoder(embeddings), self.rq, kappa=kappa)
 
     @torch.no_grad()
-    def init_codebook(self, embeddings: torch.Tensor) -> None:
-        self.rq.init_codebooks(self.encoder(embeddings), embeddings.device)
+    def init_codebook(self, embeddings: torch.Tensor, item_ids: torch.Tensor | None = None) -> None:
+        from . import sign_metric
+        kappa = None
+        if item_ids is not None and self.delta is not None:
+            kappa = sign_metric.regime_kappa(item_ids.cpu(), self.delta).to(embeddings.device)
+        self.rq.init_codebooks(self.encoder(embeddings), embeddings.device, kappa=kappa)
 
     def compute_loss(self, embeddings: torch.Tensor, reconstructed: torch.Tensor,
                      quant_loss: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:

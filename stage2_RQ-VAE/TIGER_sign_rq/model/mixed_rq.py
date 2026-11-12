@@ -82,6 +82,23 @@ def mixed_cost(residual_e: torch.Tensor, residual_h: torch.Tensor,
     return 2.0 * (alpha * euclidean + (1.0 - alpha) * curved / 4.0)
 
 
+def mixed_cost_with_kappa(residual_e: torch.Tensor, residual_h: torch.Tensor,
+                          codes_e: torch.Tensor, codes_h: torch.Tensor,
+                          alpha: torch.Tensor, kappa: torch.Tensor,
+                          curvature: float = CURVATURE) -> torch.Tensor:
+    """The mixed cost of issue #197: the hyperbolic half measured under a curvature that varies per item.
+
+    Everything except that half is the frozen expression -- the codes are mapped into the ball with the tree's own curvature, the Euclidean half is the
+    same squared difference, and ``alpha`` keeps its role -- so the two-regime metric is the only difference.
+    """
+    from . import sign_metric
+    ball = expmap0(codes_h, curvature) if float(curvature) > 0 else codes_h
+    euclidean = (residual_e.unsqueeze(1) - codes_e.unsqueeze(0)).pow(2).sum(-1)
+    curved = sign_metric.curved_squared(residual_h, ball, kappa)
+    alpha = alpha.view(-1, 1)
+    return 2.0 * (alpha * euclidean + (1.0 - alpha) * curved / 4.0)
+
+
 def quantized_readout(codes_e: list[torch.Tensor], codes_h: list[torch.Tensor],
                       curvature: float = CURVATURE) -> torch.Tensor:
     """``phi(q)`` for a complete code: the Euclidean sum and the nested ball sum."""
@@ -156,19 +173,21 @@ class MixedVQLevel(nn.Module):
         return self.embed.weight
 
     def distances(self, residual_e: torch.Tensor, residual_h: torch.Tensor,
-                  alpha: torch.Tensor) -> torch.Tensor:
+                  alpha: torch.Tensor, kappa: torch.Tensor | None = None) -> torch.Tensor:
         codes = self.get_code_embs()
         codes_e, codes_h = split(codes)
-        return mixed_cost(residual_e, residual_h, codes_e, codes_h, alpha, self.curvature)
+        if kappa is None:
+            return mixed_cost(residual_e, residual_h, codes_e, codes_h, alpha, self.curvature)
+        return mixed_cost_with_kappa(residual_e, residual_h, codes_e, codes_h, alpha, kappa, self.curvature)
 
     def forward(self, residual_e: torch.Tensor, residual_h: torch.Tensor,
-                alpha: torch.Tensor, infer_use_sk: bool = False):
+                alpha: torch.Tensor, infer_use_sk: bool = False, kappa: torch.Tensor | None = None):
         """Quantize one level and return the new residual, the losses and the code.
 
         ``residual_e`` is ``[B, 16]``, ``residual_h`` is ``[B, 16]`` in the ball,
         ``alpha`` is ``[B]``.
         """
-        cost = self.distances(residual_e, residual_h, alpha)
+        cost = self.distances(residual_e, residual_h, alpha, kappa)
         index = self._indices(cost, infer_use_sk)
         codes = self.get_code_embs()
         codes_e, codes_h_tangent = split(codes)
@@ -187,9 +206,9 @@ class MixedVQLevel(nn.Module):
         # The commitment (code detached) and the codebook term (residual
         # detached), both in the mixed metric, divided by the joint width.
         commitment = self._cost_of(residual_e, residual_h,
-                                    picked_e.detach(), picked_h.detach(), alpha)
+                                    picked_e.detach(), picked_h.detach(), alpha, kappa)
         codebook_term = self._cost_of(residual_e.detach(), residual_h.detach(),
-                                      picked_e, picked_h, alpha)
+                                      picked_e, picked_h, alpha, kappa)
         quant_loss = (codebook_term + self.beta * commitment).mean() / float(TOTAL_DIM)
         # The residual update detaches only the chosen code.
         det_e = picked_e.detach()
@@ -203,8 +222,15 @@ class MixedVQLevel(nn.Module):
 
     def _cost_of(self, residual_e: torch.Tensor, residual_h: torch.Tensor,
                  picked_e: torch.Tensor, picked_h: torch.Tensor,
-                 alpha: torch.Tensor) -> torch.Tensor:
-        return point_cost(residual_e, residual_h, picked_e, picked_h, alpha, self.curvature)
+                 alpha: torch.Tensor, kappa: torch.Tensor | None = None) -> torch.Tensor:
+        if kappa is None:
+            return point_cost(residual_e, residual_h, picked_e, picked_h, alpha, self.curvature)
+        # the same point cost with the row-wise curvature: alpha * squared-Euclidean + (1-alpha) * d_kappa^2 / 4, in the frozen normalisation
+        from . import sign_metric
+        euclidean = (residual_e - picked_e).pow(2).sum(-1)
+        curved = sign_metric.curved_squared(residual_h, picked_h, kappa).diagonal()
+        alpha_v = alpha.view(-1)
+        return 2.0 * (alpha_v * euclidean + (1.0 - alpha_v) * curved / 4.0)
 
     @torch.no_grad()
     def init_codebook(self, residual_e: torch.Tensor, residual_h: torch.Tensor,
@@ -330,8 +356,12 @@ class MixedRQ(nn.Module):
         """The name the frozen trainer uses for the per-level modules."""
         return self.levels
 
-    def forward(self, z: torch.Tensor, infer_use_sk: bool = False):
-        """Quantize a 32-dimensional tangent-space code and read it back out."""
+    def forward(self, z: torch.Tensor, infer_use_sk: bool = False, kappa: torch.Tensor | None = None):
+        """Quantize a 32-dimensional tangent-space code and read it back out.
+
+        ``kappa`` is issue #197's two-regime curvature, one value per row; it reaches the first level's metric and nothing else, because the mechanism
+        changes only the level-1 geometry.
+        """
         z_e, z_t = split(z)
         residual_e = z_e
         residual_h = expmap0(z_t, self.curvature) if self.curvature > 0 else z_t
@@ -343,7 +373,8 @@ class MixedRQ(nn.Module):
         for level, layer in enumerate(self.levels, start=1):
             alpha = self.alpha_table.lookups(level, tokens).to(z.device)
             (residual_e, residual_h), quant_loss, unused, index, picked_e, picked_h = layer(
-                residual_e, residual_h, alpha, infer_use_sk=infer_use_sk)
+                residual_e, residual_h, alpha, infer_use_sk=infer_use_sk,
+                kappa=(kappa if level == 1 else None))
             codes_e.append(picked_e)
             codes_h.append(picked_h)
             tokens.append(index)
@@ -354,7 +385,7 @@ class MixedRQ(nn.Module):
         return readout, total_loss / len(self.levels), unused_total, stacked
 
     @torch.no_grad()
-    def init_codebooks(self, z: torch.Tensor, device: torch.device) -> None:
+    def init_codebooks(self, z: torch.Tensor, device: torch.device, kappa: torch.Tensor | None = None) -> None:
         z_e, z_t = split(z)
         residual_e = z_e
         residual_h = expmap0(z_t, self.curvature) if self.curvature > 0 else z_t
@@ -362,11 +393,13 @@ class MixedRQ(nn.Module):
         for level, layer in enumerate(self.levels, start=1):
             layer.init_codebook(residual_e, residual_h, device)
             alpha = self.alpha_table.lookups(level, tokens).to(device)
-            (residual_e, residual_h), _, _, index, _, _ = layer(residual_e, residual_h, alpha)
+            (residual_e, residual_h), _, _, index, _, _ = layer(
+                residual_e, residual_h, alpha, kappa=(kappa if level == 1 else None))
             tokens.append(index)
 
 
-def encode_tokens(z: torch.Tensor, rq: MixedRQ, override: dict | None = None) -> torch.Tensor:
+def encode_tokens(z: torch.Tensor, rq: MixedRQ, override: dict | None = None,
+                  kappa: torch.Tensor | None = None) -> torch.Tensor:
     """The hard three-token codes of a batch of tangent codes, without gradients.
 
     ``override`` maps ``(level, prefix)`` to a weight, which is how the outer

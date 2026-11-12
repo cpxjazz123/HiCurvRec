@@ -551,7 +551,7 @@ def main() -> None:
             from model.af3_auxiliary import prepare_state, augment_loss
             af3_state = prepare_state(prepared["graph"], all_embeddings, device)
 
-    train_dataset = TensorDataset(train_embeddings)
+    train_dataset = TensorDataset(train_embeddings, torch.from_numpy(train_ids))
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -584,11 +584,39 @@ def main() -> None:
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
         _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size)
 
+    # === issue #197: the two-regime curvature, decided by the sign of the in-group minus out-of-group AF3 weight ===
+    from model import sign_metric as _sign
+    _edges = sorted({(int(h[-1]), int(t)) for h, t in
+                     zip(train_frame["seen_history"].to_numpy(), train_frame["target"].to_numpy(np.int64))
+                     if h is not None and len(h) > 0})
+    _groups = _sign.components(_sign.closed_subgraph(_edges))
+    _weights = _sign.af3_weights(_edges)
+    _delta = _sign.delta_of(_edges, _weights, _groups)
+    _known = [v for v in _delta.values() if v is not None]
+    _enabled = [i for i, v in _delta.items() if v is not None and v > 0.0]
+    _shares = {
+        "items_with_delta": len(_known),
+        "items_without_delta": len(_delta) - len(_known),
+        "positive_share_of_known": (len(_enabled) / len(_known)) if _known else None,
+        "negative_share_of_known": (1.0 - len(_enabled) / len(_known)) if _known else None,
+        "groups": len(set(_groups.values())),
+        "closed_edges": len(_sign.closed_subgraph(_edges)),
+        "train_edges": len(_edges),
+        "kappa_table_sha256": __import__("hashlib").sha256((_sign.repo_root() / _sign.TABLE_RELPATH).read_bytes()).hexdigest(),
+        "switches": {"sign_off": _sign.SIGN_OFF, "sign_flip": _sign.SIGN_FLIP},
+        "degenerate_single_regime": bool(_known and (len(_enabled) / len(_known) < 0.05 or len(_enabled) / len(_known) > 0.95)),
+    }
+    raw_module.delta = _delta
+    if rank == 0:
+        print(f"[sign] delta items={_shares['items_with_delta']} enabled={len(_enabled)} groups={_shares['groups']} degenerate={_shares['degenerate_single_regime']}", flush=True)
+        _record(rank, "sign_delta", **_shares)
+
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
         print("[RecBole RQ-VAE] initializing codebooks with KMeans", flush=True)
     with torch.no_grad():
-        raw_module.init_codebook(train_embeddings.to(device))
+        raw_module.init_codebook(train_embeddings.to(device),
+                                 item_ids=torch.from_numpy(train_ids).to(device))
     if world_size > 1:
         dist.barrier()
 
@@ -606,10 +634,10 @@ def main() -> None:
         recons: list[float] = []
         auxiliary_logs = []
         _epoch_t0 = time.time()
-        for (batch,) in loader:
+        for batch, batch_ids in loader:
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _ = model(batch)
+            reconstructed, quant_loss, _, _ = model(batch, item_ids=batch_ids.to(device))
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             if not torch.isfinite(loss):
@@ -686,7 +714,8 @@ def main() -> None:
             if rank == 0:
                 with torch.no_grad():
                     raw_tokens = raw_module.get_indices(
-                        all_embeddings.to(device), infer_use_sk=False
+                        all_embeddings.to(device), infer_use_sk=False,
+                        item_ids=torch.arange(all_embeddings.shape[0], device=device),
                     ).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
@@ -739,7 +768,8 @@ def main() -> None:
         try:
             with torch.no_grad():
                 raw_tokens = raw_module.get_indices(
-                    all_embeddings.to(device), infer_use_sk=False
+                    all_embeddings.to(device), infer_use_sk=False,
+                    item_ids=torch.arange(all_embeddings.shape[0], device=device),
                 ).cpu().numpy().astype(np.int64)
         finally:
             for layer in raw_module.rq.vq_layers:
