@@ -16,10 +16,7 @@
       "statement": "在主线上加一层：曲率以代价矩阵的形式进入每层 Sinkhorn 分配，码字势由结构项训练。曲率变 → 分配变 → SID 变，三者同一条通路。",
       "decision_form": "与主参照 F0 和成功线比较 Stage3 test_R@10，并按预注册三档落位。"
     },
-    "2_hypothesis": {
-      "claim": "按曲率分层的前缀会让同一前缀下的商品在训练图上结构更相近，从而抬高 Stage3 test_R@10。",
-      "confirmation": "三条读数同时成立：test_R@10 高于 F0；冻结支撑上的结构失真相对基线降 ≥5%；每层 Sinkhorn 行/列边际偏差 ≤2%。"
-    },
+    "2_hypothesis": "见 verification.json → hypothesis（claim 与三条判据）",
     "3_start": "复制起点、基线 digest、当前 SID 与 recall、F0 对照：见 ideas/baseline.json（页面「基线」块）",
     "4_method": {
       "single_variable": "新增 AF3 曲率项并接进每层代价与结构项，其余冻结配方原样复用。",
@@ -34,31 +31,10 @@
       ],
       "unchanged": "按仓库冻结配方：config/train_config.json（21 项）+ 现有 losses/、distances/ 注册表；Stage3 协议、结果目录与导出格式沿用仓库约定。"
     },
-    "5_switches": {
-      "behaviour-off": "s≡0、g≡0：代价为 d、L_struct 为 0，固定 batch 上逐位等于基线",
-      "geometry-off": "lambda=0：曲率项与结构项同关，s 照常写入诊断",
-      "both-on": "全启用，正式运行形态",
-      "wiring_check": "一个单测断言上述数值退化"
-    },
-    "6_preregistration": {
-      "tiers": [
-        "test_R@10 ≥ 0.065（CLAUDE.md §25）→ 成立，归档并入报告",
-        "F0 读数（0.057278）与成功线之间 → 正向不足，按单次结果记录",
-        "test_R@10 低于 F0 读数 → 否定，记录诊断并关闭方向"
-      ],
-      "run_policy": "单次正式训练（CLAUDE.md §19g）；Stage3 入场按三层码字碰撞率 <0.40（§89）。"
-    },
-    "7_verification": [
-      "kappa 恒等式对 5 节点小图与参考实现逐位一致",
-      "s_i 与标准化在 3 节点手算图上核对",
-      "lambda 与 g 初始化可复算（同输入两次同值）",
-      "三开关数值退化与 Sinkhorn 边际偏差（≤2%）",
-      "导出路径 argmin(C) 与训练路径一致；L_struct 梯度落在 g、编码器梯度经 STE 到达"
-    ],
-    "8_expectation": {
-      "expected": "结构失真相对基线降 ≥5%；test_R@10 按 6_preregistration 的三档落位。",
-      "verdict_rule": "读 test_final.json 的 test_recall@10、冻结支撑上的结构失真、每层 Sinkhorn 边际偏差。"
-    },
+    "5_switches": "见 verification.json → switches（behaviour-off / geometry-off / both-on 与接线检查）",
+    "6_preregistration": "见 verification.json → preregistration（三档阈值与运行政策）",
+    "7_verification": "见 verification.json → checks（机制专属的可执行检查）",
+    "8_expectation": "见 verification.json → expectation（期望读数与落档方式）",
     "9_records": {
       "run_dir": "results/stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/",
       "stage3_dir": "results/stage3_T5Train/TIGER_af3_curvature_drive_rq/",

@@ -2930,7 +2930,8 @@ function countSections(doc) {
   }).length;
 }
 
-function renderIdeaDoc(doc, error, mainLine, baseline) {
+function renderIdeaDoc(doc, error, extras = {}) {
+  const { mainLine = null, baseline = null, verification = null } = extras || {};
   if (!ideaUi.kv) return;
   ideaUi.kv.innerHTML = '';
   ideaDoc = doc || null;
@@ -2952,6 +2953,10 @@ function renderIdeaDoc(doc, error, mainLine, baseline) {
     // 基线事实每个候选都一样，单独一块，机制文件不再抄。
     if (baseline && typeof baseline === 'object') {
       ideaUi.kv.appendChild(kvSection('基线', flattenRows(baseline, '', [])));
+    }
+    // 要验证什么（假设/开关/预注册/检查/期望）在方向目录的 verification.json。
+    if (verification && typeof verification === 'object') {
+      ideaUi.kv.appendChild(kvSection('验证计划', flattenRows(verification, '', [])));
     }
     if (doc.sections) {
       for (const key of Object.keys(doc.sections)) {
@@ -3000,7 +3005,11 @@ async function loadIdea() {
       const where = typeof data.ideaPath === 'string' && data.ideaPath
         ? data.ideaPath : 'ideas/*_idea.json';
       if (ideaUi.state) ideaUi.state.textContent = `来自仓库 ${where}（结构化真源）`;
-      renderIdeaDoc(doc, null, data.mainLine || null, data.baseline || null);
+      renderIdeaDoc(doc, null, {
+        mainLine: data.mainLine || null,
+        baseline: data.baseline || null,
+        verification: data.verification || null,
+      });
       return;
     }
     const storedText = typeof data.text === 'string' ? data.text : '';

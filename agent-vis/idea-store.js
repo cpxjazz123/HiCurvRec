@@ -145,6 +145,30 @@ export function readBaseline() {
 }
 
 /**
+ * 验证计划：方向目录里的 `verification.json`。
+ *
+ * "要验证什么"（假设、开关、预注册、检查清单、期望）与"怎么实现"分开存：换机制
+ * 时这份文件可以整份复用或整份替换，页面把它单独列一块。
+ */
+export function readVerification() {
+  const ideaFile = ideaDocPath();
+  if (!ideaFile) return { doc: null, error: 'ideas/ 下没有 *_idea.json，不知道读哪个方向的验证计划' };
+  const file = path.join(path.dirname(ideaFile), 'verification.json');
+  let text = '';
+  try {
+    text = fs.readFileSync(file, 'utf8');
+  } catch {
+    return { doc: null, error: `${path.relative(SANDBOX_ROOT, file)} 不存在` };
+  }
+  try {
+    return { doc: JSON.parse(text), error: null, path: path.relative(SANDBOX_ROOT, file) };
+  } catch (err) {
+    return { doc: null, path: path.relative(SANDBOX_ROOT, file),
+             error: `${path.relative(SANDBOX_ROOT, file)} 解析失败：${err && err.message ? err.message : String(err)}` };
+  }
+}
+
+/**
  * 读出当前的 IDEA 文本。
  *
  * 没有文件是预期内的（还没填过）；文件坏了要报错，不能悄悄当成空 ——

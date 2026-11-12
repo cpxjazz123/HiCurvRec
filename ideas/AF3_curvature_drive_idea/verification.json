@@ -1,0 +1,32 @@
+{
+  "schema": "genrec.verification.v1",
+  "hypothesis": {
+    "claim": "按曲率分层的前缀会让同一前缀下的商品在训练图上结构更相近，从而抬高 Stage3 test_R@10。",
+    "confirmation": "三条读数同时成立：test_R@10 高于 F0；冻结支撑上的结构失真相对基线降 ≥5%；每层 Sinkhorn 行/列边际偏差 ≤2%。"
+  },
+  "switches": {
+    "behaviour-off": "s≡0、g≡0：代价为 d、L_struct 为 0，固定 batch 上逐位等于基线",
+    "geometry-off": "lambda=0：曲率项与结构项同关，s 照常写入诊断",
+    "both-on": "全启用，正式运行形态",
+    "wiring_check": "一个单测断言上述数值退化"
+  },
+  "preregistration": {
+    "tiers": [
+      "test_R@10 ≥ 0.065（CLAUDE.md §25）→ 成立，归档并入报告",
+      "F0 读数（0.057278）与成功线之间 → 正向不足，按单次结果记录",
+      "test_R@10 低于 F0 读数 → 否定，记录诊断并关闭方向"
+    ],
+    "run_policy": "单次正式训练（CLAUDE.md §19g）；Stage3 入场按三层码字碰撞率 <0.40（§89）。"
+  },
+  "checks": [
+    "kappa 恒等式对 5 节点小图与参考实现逐位一致",
+    "s_i 与标准化在 3 节点手算图上核对",
+    "lambda 与 g 初始化可复算（同输入两次同值）",
+    "三开关数值退化与 Sinkhorn 边际偏差（≤2%）",
+    "导出路径 argmin(C) 与训练路径一致；L_struct 梯度落在 g、编码器梯度经 STE 到达"
+  ],
+  "expectation": {
+    "expected": "结构失真相对基线降 ≥5%；test_R@10 按 6_preregistration 的三档落位。",
+    "verdict_rule": "读 test_final.json 的 test_recall@10、冻结支撑上的结构失真、每层 Sinkhorn 边际偏差。"
+  }
+}

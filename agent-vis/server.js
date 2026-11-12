@@ -29,7 +29,7 @@ import {
   clearChatRecords,
   setDataDir,
 } from './config.js';
-import { readBaseline, readIdea, readIdeaDoc, readIdeaFile, readMainLine, writeIdea } from './idea-store.js';
+import { readBaseline, readIdea, readIdeaDoc, readIdeaFile, readMainLine, readVerification, writeIdea } from './idea-store.js';
 import { runMockChunks } from './mock-agent.js';
 import { runLiveChunks } from './live-agent.js';
 
@@ -787,6 +787,7 @@ export function createServer({
           const ideaDoc = readIdeaDoc();
           const mainLine = readMainLine();
           const baseline = readBaseline();
+          const verification = readVerification();
           res.end(JSON.stringify({
             ...readIdea(),
             fileText: readIdeaFile(),
@@ -797,6 +798,9 @@ export function createServer({
             mainLineError: mainLine.error,
             baseline: baseline.doc,
             baselineError: baseline.error,
+            verification: verification.doc,
+            verificationPath: verification.path || null,
+            verificationError: verification.error,
           }));
         } catch (err) {
           res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });

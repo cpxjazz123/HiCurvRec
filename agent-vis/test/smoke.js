@@ -847,6 +847,11 @@ async function main() {
     assert.equal(typeof initial.baseline, 'object', 'baseline 没返回');
     assert.equal(typeof initial.baseline.tree, 'string');
     assert.equal(initial.baselineError, null);
+    // 要验证什么单独一份：方向目录下的 verification.json。
+    assert.equal(typeof initial.verification, 'object', 'verification 没返回');
+    assert.ok(Array.isArray(initial.verification.checks) && initial.verification.checks.length > 0,
+              'verification.checks 应该是非空数组');
+    assert.equal(initial.verificationError, null);
 
     res = await put({ text: ideaText });
     assert.equal(res.status, 200, await res.text());
