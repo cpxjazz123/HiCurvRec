@@ -33,6 +33,9 @@ SIGN_FLIP = False
 TABLE_RELPATH = Path("results") / "research" / "issue167" / "kappa.json"
 BASELINE_CURVATURE = 1.0
 ARTANH_EPS = 1e-6
+#: Floor on the Moebius denominator.  The exact expression reaches zero only on the boundary of the ball, and a boundary pair is already outside the
+#: metric's domain; a fixed floor keeps the arithmetic finite without moving any interior value (it is never active there).
+DENOMINATOR_FLOOR = 1e-3
 
 _TABLE: dict | None = None
 
@@ -161,7 +164,9 @@ def _mobius_add_rows(a: torch.Tensor, b: torch.Tensor, c: torch.Tensor) -> torch
     c = c.unsqueeze(-1) if c.dim() == a.dim() - 1 else c
     numerator = (1.0 + 2.0 * c * inner + c * b2) * a + (1.0 - c * a2) * b
     denominator = 1.0 + 2.0 * c * inner + c.pow(2) * a2 * b2
-    return numerator / denominator.clamp_min(1e-30)
+    # the denominator vanishes only in the boundary limit; clamping it at a fixed floor keeps the quotient finite instead of letting 1/1e-30 blow the
+    # whole step up, which is what turned the first smoke's epoch-1 loss into a non-finite value
+    return numerator / denominator.clamp_min(DENOMINATOR_FLOOR)
 
 
 def _into_row_balls(points: torch.Tensor, c: torch.Tensor) -> torch.Tensor:
@@ -191,7 +196,16 @@ def curved_squared(residual_h: torch.Tensor, code_balls: torch.Tensor, kappa: to
     norm = difference.norm(dim=-1)
     root = torch.sqrt(c)
     argument = (root * norm).clamp(max=1.0 - ARTANH_EPS)
-    return ((2.0 / root) * torch.atanh(argument)).pow(2)
+    return _finite_or_raise(((2.0 / root) * torch.atanh(argument)).pow(2), kappa)
+
+
+def _finite_or_raise(values: torch.Tensor, kappa: torch.Tensor) -> torch.Tensor:
+    """A non-finite cost must name itself here rather than surface as a dead epoch."""
+    if not bool(torch.isfinite(values).all()):
+        bad = int((~torch.isfinite(values)).sum().item())
+        kappa_range = (float(torch.min(kappa)), float(torch.max(kappa)))
+        raise RuntimeError(f"curved cost is not finite on {bad} pairs (kappa range {kappa_range})")
+    return values
 
 
 def curved_squared_paired(points: torch.Tensor, picked: torch.Tensor, kappa: torch.Tensor) -> torch.Tensor:
@@ -207,4 +221,4 @@ def curved_squared_paired(points: torch.Tensor, picked: torch.Tensor, kappa: tor
     norm = difference.norm(dim=-1)
     root = torch.sqrt(c).reshape(-1)
     argument = (root * norm).clamp(max=1.0 - ARTANH_EPS)
-    return ((2.0 / root) * torch.atanh(argument)).pow(2)
+    return _finite_or_raise(((2.0 / root) * torch.atanh(argument)).pow(2), kappa)
