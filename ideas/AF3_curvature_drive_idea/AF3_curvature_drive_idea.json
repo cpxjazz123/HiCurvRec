@@ -13,49 +13,19 @@
       "new_files": [
         {
           "path": "af3_potential.py",
-          "what": "把冻结的 AF3 表变成每个商品的结构势 s_i，并算出 per-level 的 lambda 标定值",
-          "contents": [
-            "load_graph(REPO_ROOT/'results/research/issue121/community_curvature/train_edge_af3.npz')（npz 里的 rows/cols/af3/nodes/median/p90，训练划分构图）",
-            "kappa_ij = 4 - d_i - d_j + 3 T_ij（复用 model/af3_structure.py 的 target_kappa，不重写公式）",
-            "s_i = sum_{j in N(i)} kappa_ij / d_i，再按全图 mean/std 标准化；d_i = 0 的商品取全图均值",
-            "calibrate_lambda(base_distances, s, tokens, level) -> float：median_i d(z_i,c_k) / median_i |s_i - g_k|"
-          ],
-          "exports": "load_potential() -> torch.Tensor[N]（float32，requires_grad=False）",
-          "not": "不训练、不重算曲率、不读验证或测试划分"
+          "what": "把冻结的 AF3 表变成每个商品的结构势 s_i，并算出 per-level 的 lambda 标定值"
         },
         {
           "path": "model/codeword_potential.py",
-          "what": "保存每层每码字的势 g_k 与 per-level 的 lambda_l，并给出进入代价的那个偏移张量",
-          "contents": [
-            "class CodewordPotential(nn.Module)：g = nn.Parameter(levels, K_max)，lambda_l = registered buffer(levels)",
-            "offset(s_batch, level) -> (B, K)：lambda_l * Huber_delta(s_i - g_k)，Huber 取 af3_structure.huber（delta=1.0）",
-            "init_from(s, tokens)：g_k^(0) = mean{s_i : 商品 i 的 level 码是 k}；rank 0 算完广播",
-            "开关：AF3_GEOMETRY_OFF=True 时 offset 恒返回 0（只做接线检查，不训练该臂）"
-          ],
-          "exports": "CodewordPotential(levels, codebook_sizes, delta) / .offset(s_batch, level) / .init_from(s, tokens)",
-          "not": "不改分配规则：Sinkhorn 仍在 VQLayer 里，偏移只加进代价矩阵"
+          "what": "保存每层每码字的势 g_k 与 per-level 的 lambda_l，并给出进入代价的那个偏移张量"
         },
         {
           "path": "distances/af3_offset.py",
-          "what": "把基础欧氏代价与上面的偏移合成一个可调用对象，交给 VQLayer 当距离用",
-          "contents": [
-            "class Af3OffsetDistance(nn.Module)：__call__(latent, codebook) = base(latent, codebook) + potential.offset(self.s, self.level)",
-            "set_batch(s_batch)：训练循环在每个 batch 前喂入该 batch 的 s_i（按商品 id 对齐行）",
-            "base 直接复用 distances/distance.py 的 distances()，不复制欧氏公式"
-          ],
-          "exports": "Af3OffsetDistance(base, potential, level, delta)",
-          "not": "不写进 DISTANCES 注册表：注册表条目是无参函数，此处需要携带 g 与 lambda 的参数对象"
+          "what": "把基础欧氏代价与上面的偏移合成一个可调用对象，交给 VQLayer 当距离用"
         },
         {
           "path": "losses/structural.py",
-          "what": "结构项：只训练码字势 g，让 g 去拟合冻结的 s",
-          "contents": [
-            "NAME = 'structural'，SPEC = {form: 'huber_pair', gradient: 'second', detached: 'encoder'}",
-            "L_struct = mean_{i,l} Huber_delta(s_i - g_{k_i}^(l))，权重固定 1.0（不扫描）",
-            "结构项不产生编码器梯度：Sinkhorn 的 argmax 侧本就不可微，编码器只经 STE 拿量化梯度"
-          ],
-          "exports": "structural_loss(s, tokens, potential) -> scalar",
-          "not": "不做 class-balance 重加权（s 已标准化），不加额外温度或 clip 常数"
+          "what": "结构项：只训练码字势 g，让 g 去拟合冻结的 s"
         }
       ]
     }
