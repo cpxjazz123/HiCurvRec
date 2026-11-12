@@ -847,11 +847,19 @@ async function main() {
     assert.equal(typeof initial.baseline, 'object', 'baseline 没返回');
     assert.equal(typeof initial.baseline.tree, 'string');
     assert.equal(initial.baselineError, null);
-    // 要验证什么单独一份：方向目录下的 verification.json。
-    assert.equal(typeof initial.verification, 'object', 'verification 没返回');
-    assert.ok(Array.isArray(initial.verification.checks) && initial.verification.checks.length > 0,
-              'verification.checks 应该是非空数组');
-    assert.equal(initial.verificationError, null);
+    // 验证计划是可选的：方向目录没有 verification.json 时，其余块照常返回，
+    // verification 为 null 并带一句原因，而不是整页报错。
+    const hasVerification = initial.verification !== null && initial.verification !== undefined;
+    if (hasVerification) {
+      assert.equal(typeof initial.verification, 'object', 'verification 应该是对象');
+      assert.ok(Array.isArray(initial.verification.checks) && initial.verification.checks.length > 0,
+                'verification.checks 应该是非空数组');
+      assert.equal(initial.verificationError, null);
+    } else {
+      assert.equal(typeof initial.verificationError, 'string', '缺 verification.json 时要给出原因');
+      assert.ok(initial.verificationError.includes('verification.json'),
+                `原因里要点名文件，实际是 ${JSON.stringify(initial.verificationError)}`);
+    }
 
     res = await put({ text: ideaText });
     assert.equal(res.status, 200, await res.text());
