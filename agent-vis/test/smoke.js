@@ -849,6 +849,20 @@ async function main() {
     assert.equal(initial.baselineError, null);
     // 验证计划是可选的：方向目录没有 verification.json 时，其余块照常返回，
     // verification 为 null 并带一句原因，而不是整页报错。
+    // 公式单独一份：方向目录下的 math.json，可选；缺了整块不显示。
+    const hasMath = initial.math !== null && initial.math !== undefined;
+    if (hasMath) {
+      assert.equal(typeof initial.math, 'object', 'math 应该是对象');
+      assert.ok(Array.isArray(initial.math.formulas) && initial.math.formulas.length > 0,
+                'math.formulas 应该是非空数组');
+      assert.ok(initial.math.formulas.every((f) => typeof f.formula === 'string' && f.formula.trim() !== ''),
+                '每条公式都要有 formula 文本');
+      assert.equal(initial.mathError, null);
+    } else {
+      assert.equal(typeof initial.mathError, 'string', '缺 math.json 时要给出原因');
+      assert.ok(initial.mathError.includes('math.json'),
+                `原因里要点名文件，实际是 ${JSON.stringify(initial.mathError)}`);
+    }
     const hasVerification = initial.verification !== null && initial.verification !== undefined;
     if (hasVerification) {
       assert.equal(typeof initial.verification, 'object', 'verification 应该是对象');

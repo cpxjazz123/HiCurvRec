@@ -2,26 +2,26 @@
   "date": "2026-11-12",
   "sections": {
     "1_goal": {
-      "statement": "每个商品先取一个结构势 s_i：用训练划分的商品共现图算 AF3 曲率 kappa_ij = 4 - d_i - d_j + 3 T_ij（d 为度，T 为共同邻居数），再按度数加权平均 s_i = sum_{j in N(i)} kappa_ij / d_i 并做全图标准化。每一层量化不再只按 d(z_i, c_k) 分配，而是按 C_ik = d(z_i, c_k) + lambda_l * Huber_delta(s_i - g_k^(l)) 做 Sinkhorn 均衡分配；码字势 g_k^(l) 由结构项 mean_{i} Huber_delta(s_i - g_k^(l)) 训练，lambda_l 由初始化时 median_i d(z_i, c_k) / median_i |s_i - g_k^(l)| 自标定（delta = 1，权重 1.0，不扫描）。编码器、残差堆叠与 SID 导出沿用既有实现，于是商品的三级 SID 由曲率进入代价后的分配结果决定。"
+      "statement": "每个商品从训练划分的商品共现图取一个 AF3 曲率，再按度数加权平均成结构势并做全图标准化。每一层量化在原有的平方欧氏代价上加一项「码字势与结构势的 Huber 偏差」，仍由均衡 Sinkhorn 产生分配；码字势由结构损失训练，把偏差换算成距离单位的系数在初始化时按中位数比自标定，不做扫描。编码器、残差堆叠与 SID 导出不变，于是商品的三级 SID 由曲率进入代价后的分配决定。"
     },
     "4_method": {
       "single_variable": "新增 AF3 曲率项，接进每层分配的代价与结构项。",
       "new_files": [
         {
           "path": "af3_potential.py",
-          "what": "把冻结的 AF3 表变成每个商品的结构势 s_i，并算出 per-level 的 lambda 标定值"
+          "what": "把冻结的 AF3 表算成每个商品的结构势并做全图标准化，同时给出每层的代价换算系数"
         },
         {
           "path": "model/codeword_potential.py",
-          "what": "保存每层每码字的势 g_k 与 per-level 的 lambda_l，并给出进入代价的那个偏移张量"
+          "what": "存放每层每码字的势与每层的换算系数，产出进入代价的那个偏置张量"
         },
         {
           "path": "distances/af3_offset.py",
-          "what": "把基础欧氏代价与上面的偏移合成一个可调用对象，交给 VQLayer 当距离用"
+          "what": "把基础欧氏代价与上面的偏置合成一个可调用对象，交给量化器当距离用"
         },
         {
           "path": "losses/structural.py",
-          "what": "结构项：只训练码字势 g，让 g 去拟合冻结的 s"
+          "what": "结构损失：只训练码字势去拟合冻结的结构势，不给编码器梯度"
         }
       ]
     }

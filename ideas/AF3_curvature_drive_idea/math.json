@@ -1,0 +1,86 @@
+{
+  "symbols": {
+    "i, j": "商品下标；N(i) 为训练划分共现图里 i 的邻居集合",
+    "l = 1, 2, 3": "残差层号",
+    "d_i": "商品 i 在训练共现图里的度",
+    "T_ij": "商品 i 与 j 在训练共现图里的共同邻居数",
+    "kappa_ij": "AF3 曲率（一条边的标量）",
+    "s_i": "商品 i 的结构势（全图标准化的标量）",
+    "z_i": "第 l 层编码器给出的残差向量",
+    "c_k": "第 l 层码本里的第 k 个码字",
+    "g_k^(l)": "第 l 层第 k 个码字的码字势（可训练标量）",
+    "lambda_l": "第 l 层把势差换算成距离单位的标定系数（初始化时算定，不训练）",
+    "d(x, c)": "基础距离：平方欧氏 |x|^2 - 2 x.c + |c|^2",
+    "H_delta": "Huber 函数，delta = 1",
+    "Q^(l)": "第 l 层 Sinkhorn 的传输矩阵（B x K）",
+    "token_l(i)": "商品 i 在第 l 层被分配到的码字下标"
+  },
+  "formulas": [
+    {
+      "name": "curvature",
+      "formula": "kappa_ij = 4 - d_i - d_j + 3 * T_ij",
+      "note": "只在训练划分的共现图上算；冻结表，训练中不更新"
+    },
+    {
+      "name": "structural_potential",
+      "formula": "s_i = (sum_{j in N(i)} kappa_ij) / d_i",
+      "note": "d_i = 0 的商品取全图均值"
+    },
+    {
+      "name": "standardisation",
+      "formula": "s_i <- (s_i - mu_s) / sigma_s",
+      "note": "mu_s、sigma_s 取全图商品上的均值与标准差"
+    },
+    {
+      "name": "huber",
+      "formula": "H_delta(x) = 0.5 * x^2 若 |x| <= delta；否则 delta * (|x| - 0.5 * delta)",
+      "note": "delta = 1"
+    },
+    {
+      "name": "codeword_potential_init",
+      "formula": "g_k^(l) <- mean{ s_i : token_l(i) = k }",
+      "note": "用 KMeans 初始化后的分配算一次；空码取 0（即 s 的均值）"
+    },
+    {
+      "name": "lambda_calibration",
+      "formula": "lambda_l = median_i d(z_i, c_{token_l(i)}) / median_i |s_i - g_{token_l(i)}^(l)|",
+      "note": "初始化后算定一次写入指标；两侧中位数都不为 0 才有定义"
+    },
+    {
+      "name": "assignment_cost",
+      "formula": "C_ik^(l) = d(z_i, c_k) + lambda_l * H_delta(s_i - g_k^(l))",
+      "note": "每层各自一份代价矩阵；基线的欧氏项原样保留"
+    },
+    {
+      "name": "assignment",
+      "formula": "Q^(l) = Sinkhorn(center(C^(l)); epsilon = sk_epsilon, iters = sk_iters)；token_l(i) = argmax_k Q_ik^(l)",
+      "note": "分配规则与基线相同，仍是均衡 Sinkhorn；只有代价矩阵多了势差项"
+    },
+    {
+      "name": "structural_loss",
+      "formula": "L_struct = mean_{i,l} H_delta(s_i - g_{token_l(i)}^(l))",
+      "note": "权重 1.0；只训练 g，不给编码器梯度"
+    },
+    {
+      "name": "total_loss",
+      "formula": "L = L_recon + L_commitment + L_codebook + L_struct",
+      "note": "前两项与基线逐位相同"
+    },
+    {
+      "name": "gradient_routing",
+      "formula": "dL_struct/dg != 0；dL_struct/dz = 0；dL/dz 经 straight-through 估计器来自量化项",
+      "note": "argmax 与 Sinkhorn 的不可微部分不进结构项的梯度通路"
+    }
+  ],
+  "switches": {
+    "behaviour_off": "s_i = 0 且 g = 0 => C_ik = d，L_struct = 0（Huber 在 0 处取 0）",
+    "geometry_off": "lambda_l = 0 => C_ik = d，仅剩 L_struct 训练 g",
+    "both_on": "上两式同时生效"
+  },
+  "constants": {
+    "delta": 1.0,
+    "structural_weight": 1.0,
+    "sk_epsilon": "config/train_config.json 的 sk_epsilon",
+    "sk_iters": "config/train_config.json 的 sk_iters"
+  }
+}

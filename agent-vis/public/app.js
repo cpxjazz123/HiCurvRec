@@ -2932,7 +2932,7 @@ function countSections(doc) {
 }
 
 function renderIdeaDoc(doc, error, extras = {}) {
-  const { mainLine = null, baseline = null, verification = null } = extras || {};
+  const { mainLine = null, baseline = null, verification = null, math = null } = extras || {};
   if (!ideaUi.kv) return;
   ideaUi.kv.innerHTML = '';
   ideaDoc = doc || null;
@@ -2954,6 +2954,10 @@ function renderIdeaDoc(doc, error, extras = {}) {
     // 基线事实每个候选都一样，单独一块，机制文件不再抄。
     if (baseline && typeof baseline === 'object') {
       ideaUi.kv.appendChild(kvSection('基线', flattenRows(baseline, '', [])));
+    }
+    // 用什么算式在方向目录的 math.json：先摆公式，再摆机制正文。
+    if (math && typeof math === 'object') {
+      ideaUi.kv.appendChild(kvSection('公式', flattenRows(math, '', [])));
     }
     // 要验证什么（假设/开关/预注册/检查/期望）在方向目录的 verification.json。
     if (verification && typeof verification === 'object') {
@@ -3010,6 +3014,7 @@ async function loadIdea() {
         mainLine: data.mainLine || null,
         baseline: data.baseline || null,
         verification: data.verification || null,
+        math: data.math || null,
       });
       return;
     }

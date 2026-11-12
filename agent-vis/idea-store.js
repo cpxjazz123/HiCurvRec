@@ -169,6 +169,30 @@ export function readVerification() {
 }
 
 /**
+ * 公式：方向目录里的 `math.json`。
+ *
+ * "用什么算式"单独存一份，机制文件只写目标与方法；页面把它列成一块，
+ * 缺这份文件时整块不显示（不是错误）。
+ */
+export function readMath() {
+  const ideaFile = ideaDocPath();
+  if (!ideaFile) return { doc: null, error: 'ideas/ 下没有 *_idea.json，不知道读哪个方向的公式' };
+  const file = path.join(path.dirname(ideaFile), 'math.json');
+  let text = '';
+  try {
+    text = fs.readFileSync(file, 'utf8');
+  } catch {
+    return { doc: null, error: `${path.relative(SANDBOX_ROOT, file)} 不存在` };
+  }
+  try {
+    return { doc: JSON.parse(text), error: null, path: path.relative(SANDBOX_ROOT, file) };
+  } catch (err) {
+    return { doc: null, path: path.relative(SANDBOX_ROOT, file),
+             error: `${path.relative(SANDBOX_ROOT, file)} 解析失败：${err && err.message ? err.message : String(err)}` };
+  }
+}
+
+/**
  * 读出当前的 IDEA 文本。
  *
  * 没有文件是预期内的（还没填过）；文件坏了要报错，不能悄悄当成空 ——
