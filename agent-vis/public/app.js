@@ -275,6 +275,9 @@ function createPanel(root) {
   let controller = null;
   /** 跑完之后的回调（交接用）：收到本轮最后一段文字回答。 */
   let finishHandler = null;
+  // 本轮如果有上游，记下它的 agent 身份：收尾时不把结果再交回给上游，
+  // 否则 A → B → A → B 会互相触发成环。
+  let handoffSourceId = '';
   /** 这一轮是不是正在跑（决定「结束」按钮该不该可点）。 */
   let running = false;
   /** 本轮是不是被用户点「结束」停掉的。 */
@@ -1832,6 +1835,8 @@ function createPanel(root) {
     currentPartOfRound = options.partOfRound === true;
 
     const handoff = typeof options.handoff === 'string' ? options.handoff : '';
+    // 谁把这轮的结果发过来的（agent 身份）。没上游就是空串。
+    handoffSourceId = typeof options.handoffFromId === 'string' ? options.handoffFromId : '';
     // 上游的名字：没给就用固定的那个（直接调用接口时的老规矩）。
     const handoffFrom =
       typeof options.handoffFrom === 'string' && options.handoffFrom.trim() !== ''
@@ -2289,7 +2294,7 @@ function createPanel(root) {
     name() {
       return displayName;
     },
-    /** 固定的两个 agent 是配置里写死的，删的只是页面上的面板。 */
+    /** 配置里写死的 agent 删不掉，删的只是页面上的面板。 */
     isBuiltin() {
       return root.dataset.builtin === 'true';
     },
@@ -2392,7 +2397,7 @@ function createPanel(root) {
   }
 
   // 跑完之后的收尾：把本轮结果交给交接配置里勾选的那些 agent。
-  finishHandler = (answer) => deliverResult(api, answer);
+  finishHandler = (answer) => deliverResult(api, answer, { skipProfileId: handoffSourceId });
 
   return api;
 }
@@ -2558,18 +2563,21 @@ function mountPanel(profile, options = {}) {
   knownAgentIds.add(profile.id);
   agentNames.set(profile.id, profile.name);
 
+  // 配置里写死的身份：面板能删，但服务端的身份删不掉（与 AGENT A/B 同规矩）。
+  if (profile.builtin) root.dataset.builtin = 'true';
   const nameEl = root.querySelector('[data-role=name]');
   if (nameEl) nameEl.textContent = profile.name;
   const promptEl = root.querySelector('[data-role=prompt]');
-  if (promptEl) promptEl.value = '';
+  if (promptEl) promptEl.value = typeof profile.defaultPrompt === 'string' ? profile.defaultPrompt : '';
   const hintEl = root.querySelector('.hint');
   if (hintEl) {
     const instrLen =
       typeof profile.instructions === 'string' ? profile.instructions.trim().length : 0;
+    const prefix = profile.builtin ? '配置里的固定角色' : '新建的 agent';
     hintEl.textContent =
       instrLen > 0
-        ? `新建的 agent · 系统提示词已配置 ${instrLen} 个字符（「配置」里可改）。`
-        : '新建的 agent · 系统提示词默认是空的，自己写。';
+        ? `${prefix} · 系统提示词已配置 ${instrLen} 个字符（「配置」里可改）。`
+        : `${prefix} · 系统提示词默认是空的，自己写。`;
   }
 
   layoutEl.appendChild(root);
@@ -2654,14 +2662,21 @@ function clearPendingHandoffs(pending) {
   pending.clear();
 }
 
-function deliverResult(source, answer) {
+function deliverResult(source, answer, options = {}) {
   if (answer === '') {
     source.note('这一栏这轮没有产出文字结果，没有可交接的内容。');
     return;
   }
-  const targets = source.targets();
+  const skipProfileId =
+    typeof options.skipProfileId === 'string' ? options.skipProfileId : '';
+  const targets = source.targets().filter((id) => id !== skipProfileId);
+  const skipped = source.targets().length - targets.length;
   if (targets.length === 0) {
-    source.note('没有勾选交接目标，本轮结果没有发出去。');
+    source.note(
+      skipped > 0
+        ? '本轮结果来自上游，不再交回给它（避免来回触发），没有其他交接目标。'
+        : '没有勾选交接目标，本轮结果没有发出去。',
+    );
     return;
   }
   // 延迟是"这一栏自己的配置"：跑完隔多少秒才发。0 = 立刻。
@@ -2684,6 +2699,7 @@ function deliverResult(source, answer) {
       handoff: answer,
       instruction: requirement,
       handoffFrom: source.name(),
+      handoffFromId: source.profileId,
     };
     if (delaySeconds > 0) {
       // 延迟交接：定时器归来源这一栏管 —— 它重新跑一轮或删面板时会被取消，
@@ -2700,13 +2716,13 @@ function deliverResult(source, answer) {
  * 删掉一个面板。
  *
  * 新建的 agent 还要从服务端的身份表里删掉 —— 留着的话刷新页面它又会冒出来。
- * 固定的两个（AGENT A / AGENT B）是配置里写死的，删的只是页面上的面板。
+ * 配置里写死的（AGENT A / AGENT B / AGENT MATH）删不掉，删的只是页面上的面板。
  *
  * 服务端删不掉时面板也不动：面板还在、身份没了是半截状态。
  */
 async function removePanel(panel) {
   const profileId = panel.profileId;
-  // 服务端的身份还在不在：固定的两个是配置里写死的，删的只是页面上的面板。
+  // 服务端的身份还在不在：配置里写死的不给删，页面上的面板只是本页的挂载。
   let removedFromServer = false;
   if (!panel.isBuiltin()) {
     const res = await fetch(`${API_BASE}/api/agents/${encodeURIComponent(profileId)}`, {
@@ -2729,7 +2745,7 @@ async function removePanel(panel) {
   // 服务端的身份已经没了：本地这份清单也得跟着摘 ——
   // 不摘的话，它还会出现在别的面板的交接目标里，交过去必然失败。
   //
-  // 固定的两个不在这里摘：它们在服务端还在（只是页面上不挂了），
+  // 配置里写死的不在这里摘：它们在服务端还在（只是页面上不挂了），
   // 摘了会让别人交不出去的目标被无声地抹掉。
   if (removedFromServer) {
     knownAgentIds.delete(profileId);
@@ -2809,10 +2825,10 @@ async function loadHealth() {
     for (const panel of panels) panel.setPermissionCatalog(info.permissionCatalog);
   }
 
-  // 服务端有、页面上还没有的运行时 agent：把它挂上来。
-  // 这些身份存在服务端（agents.json），刷新页面不该把它们弄丢。
+  // 服务端有、页面上还没有的 agent：把它挂上来。
+  // 运行时新建的存在服务端（agents.json）、刷新不该弄丢；配置里新加的内置角色
+  // （例如 AGENT MATH）页面上没有静态面板，也从模板挂一份。
   for (const agent of info.agents) {
-    if (agent.builtin) continue;
     if (panels.some((panel) => panel.profileId === agent.id)) continue;
     mountPanel(agent, { activate: false });
   }
@@ -3149,7 +3165,6 @@ async function syncAgentPanels() {
 
   let mounted = false;
   for (const agent of info.agents) {
-    if (agent.builtin) continue;
     if (panels.some((panel) => panel.profileId === agent.id)) continue;
     try {
       const panel = mountPanel(agent, { activate: false });

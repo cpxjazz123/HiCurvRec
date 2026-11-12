@@ -28,8 +28,8 @@
     },
     {
       "name": "standardisation",
-      "formula": "s_i <- (s_i - mu_s) / sigma_s",
-      "note": "mu_s、sigma_s 取全图商品上的均值与标准差"
+      "formula": "s_i <- (s_i - mu_s) / max(sigma_s, eps)；若 sigma_s = 0 则 s_i <- 0",
+      "note": "mu_s、sigma_s 取全图商品上的均值与标准差；eps = 1e-8。sigma_s = 0 时（全图 s 相同、单连通分量的极端情形）直接取 0，避免除零把 s 变成 NaN；该分支同时让 behaviour_off 有定义"
     },
     {
       "name": "huber",
@@ -43,8 +43,8 @@
     },
     {
       "name": "lambda_calibration",
-      "formula": "lambda_l = median_i d(z_i, c_{token_l(i)}) / median_i |s_i - g_{token_l(i)}^(l)|",
-      "note": "初始化后算定一次写入指标；两侧中位数都不为 0 才有定义"
+      "formula": "den_l = median_i |s_i - g_{token_l(i)}^(l)|；lambda_l = median_i d(z_i, c_{token_l(i)}) / den_l，若 den_l > eps；否则 lambda_l = 0",
+      "note": "初始化后算定一次写入指标；eps = 1e-8。den_l 过小（例如每码只分到一件商品、s_i = g 处处成立）时取 0，即退化为纯基线 d；den_l 与 lambda_l 一起记录进 metrics"
     },
     {
       "name": "assignment_cost",
@@ -53,8 +53,8 @@
     },
     {
       "name": "assignment",
-      "formula": "Q^(l) = Sinkhorn(center(C^(l)); epsilon = sk_epsilon, iters = sk_iters)；token_l(i) = argmax_k Q_ik^(l)",
-      "note": "分配规则与基线相同，仍是均衡 Sinkhorn；只有代价矩阵多了势差项"
+      "formula": "末层 l = L：Q^(L) = Sinkhorn(center(C^(L)); epsilon = sk_epsilon, iters = sk_iters)，token_L(i) = argmax_k Q_ik^(L)；其余层 l < L：token_l(i) = argmin_k C_ik^(l)",
+      "note": "与基线一致：Sinkhorn 只作用于最后一层，其余层是代价矩阵上的 argmin（基线 model/layers.py 用 epsilon = -1.0 关掉非末层的 Sinkhorn）；势差项进每一层的代价 C"
     },
     {
       "name": "structural_loss",
@@ -63,8 +63,8 @@
     },
     {
       "name": "total_loss",
-      "formula": "L = L_recon + L_commitment + L_codebook + L_struct",
-      "note": "前两项与基线逐位相同"
+      "formula": "L = L_recon + (1/L) * sum_l [ codebook_l + beta * commitment_l ] + structural_weight * L_struct",
+      "note": "前两项与基线逐位相同：beta = config 的 BETA = 0.25 压在 commitment 上，量化项按层取平均（losses/quantization.py:quantization_total），不是各项权重 1.0 直接相加；structural_weight = 1.0"
     },
     {
       "name": "gradient_routing",
@@ -73,7 +73,7 @@
     }
   ],
   "switches": {
-    "behaviour_off": "s_i = 0 且 g = 0 => C_ik = d，L_struct = 0（Huber 在 0 处取 0）",
+    "behaviour_off": "s_i = 0 => C_ik = d，L_struct = 0（Huber 在 0 处取 0）。g = 0 是 L_struct 的驻点（dL_struct/dg_k = -(s_i - g_k) = 0），且 H_delta(-g) 在 |g| <= 1 段等于 0.5 * g^2、梯度 g 把 g 拉回 0，故 s = 0 时即使 g 在训练，g 也停在 0、C 停在 d；behaviour_off 只需 s = 0 或 structural_weight = 0 之一成立，不要求冻结 g",
     "geometry_off": "lambda_l = 0 => C_ik = d，仅剩 L_struct 训练 g",
     "both_on": "上两式同时生效"
   },

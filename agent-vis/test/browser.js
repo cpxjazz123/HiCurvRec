@@ -10,7 +10,7 @@ import { createServer, config } from '../server.js';
  * 浏览器端回归测试：真实 Chromium 里验证前端。
  *
  * 覆盖四件事：
- *   1. 页面上左右两个 agent 面板各自独立 —— 各跑各的，互不串内容，还能同时跑；
+ *   1. 页面上的 agent 面板各自独立 —— 各跑各的，互不串内容，还能同时跑；
  *   2. AGENT A 跑完后自动把分析结果交给 AGENT B（交接）；
  *   3. AGENT B 单独跑时不带交接；
  *   4. 浏览器缓存了旧版 JS 时，首页守卫会换一次性地址重载并自愈。
@@ -184,6 +184,34 @@ function panelCards(panelId) {
       "return {badge: p.querySelector('.badge') && p.querySelector('.badge').textContent," +
       "state: p.querySelector('.state') && p.querySelector('.state').textContent};})",
   );
+}
+
+const PANEL_IDS_EXPR =
+  "Array.from(document.querySelectorAll('.panel')).map(function (p) { return p.id; })";
+
+/**
+ * 点「新建 Agent」，返回新出现的那个面板 id。
+ *
+ * 不能按「最后一个面板」取：页面上除了 A/B 还有内置的 AGENT MATH（从模板挂载）
+ * 与之前场景留下的自定义 agent，新建的那个不一定排在末尾。按前后 id 集合求差。
+ */
+async function createAgentAndWait(cdp) {
+  const before = await cdp.evaluate(PANEL_IDS_EXPR);
+  await cdp.evaluate(
+    "(function () {" +
+      "var b = document.querySelector('[data-role=newAgentBtn]');" +
+      'if (b) b.click();' +
+      '})()',
+  );
+  for (let i = 0; i < 120; i++) {
+    const now = await cdp.evaluate(PANEL_IDS_EXPR);
+    if (now.length > before.length) {
+      const added = now.filter((id) => !before.includes(id));
+      if (added.length > 0) return added[added.length - 1];
+    }
+    await sleep(250);
+  }
+  return '';
 }
 
 function panelDone(panelId) {
@@ -1609,29 +1637,12 @@ async function main() {
     await openFresh(cdp, base, { noSteps: true });
 
     const panelsBefore = await cdp.evaluate("document.querySelectorAll('.panel').length");
-    check('一开始页面上只有两个面板', panelsBefore === 2, `${panelsBefore} 个`);
+    check('一开始页面上有三个面板', panelsBefore === 3, `${panelsBefore} 个`);
 
-    await cdp.evaluate(
-      "(function () {" +
-        "var b = document.querySelector('[data-role=newAgentBtn]');" +
-        'if (b) b.click();' +
-        '})()',
-    );
-
-    const panelsAfter = await waitFor(
-      cdp,
-      "document.querySelectorAll('.panel').length > 2 ? 'added' : ''",
-      60,
-      200,
-    );
-    check('点一下就多出一个面板', panelsAfter === 'added', `状态 ${panelsAfter}`);
-
-    const newPanelId = await cdp.evaluate(
-      "(function () {" +
-        'var ps = document.querySelectorAll(".panel");' +
-        'return ps[ps.length - 1].id;' +
-        '})()',
-    );
+    const countsBeforeJ = await cdp.evaluate("document.querySelectorAll('.panel').length");
+    const newPanelId = await createAgentAndWait(cdp);
+    const countsAfterJ = await cdp.evaluate("document.querySelectorAll('.panel').length");
+    check('点一下就多出一个面板', countsAfterJ === countsBeforeJ + 1, `${countsBeforeJ} → ${countsAfterJ}`);
     check('新面板有独立的 id', Boolean(newPanelId), `${newPanelId}`);
 
     const newInstructions = await cdp.evaluate(
@@ -1757,7 +1768,7 @@ async function main() {
     await openFresh(cdp, mockBase, { noSteps: true });
 
     const panelsAtStart = await cdp.evaluate("document.querySelectorAll('.panel').length");
-    check('一开始页面上有两个面板', panelsAtStart === 2, `${panelsAtStart} 个`);
+    check('一开始页面上有三个面板', panelsAtStart === 3, `${panelsAtStart} 个`);
 
     const delButtons = await cdp.evaluate(
       "document.querySelectorAll('.panel [data-role=deleteBtn]').length",
@@ -1795,37 +1806,33 @@ async function main() {
     );
 
     // 新建一个 agent：别的面板的交接目标列表里要出现它。
-    await cdp.evaluate(
-      "(function () {" +
-        "var b = document.querySelector('[data-role=newAgentBtn]');" +
-        'if (b) b.click();' +
-        '})()',
-    );
-    const newPanelId2 = await waitFor(
-      cdp,
-      "(function () {" +
-        "var ps = document.querySelectorAll('.panel');" +
-        "return ps.length > 2 ? ps[ps.length - 1].id : '';" +
-        '})()',
-      60,
-      200,
-    );
+    const newPanelId2 = await createAgentAndWait(cdp);
     check('新 agent 的面板出来了', Boolean(newPanelId2), `${newPanelId2}`);
     const newProfileId = String(newPanelId2).replace(/^panel-/, '');
 
+    await waitFor(
+      cdp,
+      inPanel(
+        PANEL_A,
+        `Array.from(panel.querySelectorAll('[data-role=handoffTargets] input[type=checkbox]')).some(function (i) { return i.value === '${newProfileId}'; }) ? 'ready' : ''`,
+      ),
+      60,
+      200,
+    );
     const optionsAfterCreate = await readTargets(PANEL_A);
     check(
       '新 agent 出现在 AGENT A 的交接目标里',
-      Array.isArray(optionsAfterCreate) && optionsAfterCreate.length === 2,
+      Array.isArray(optionsAfterCreate) && optionsAfterCreate.length === 3,
       JSON.stringify(optionsAfterCreate),
     );
 
-    // 多选：同时勾上 AGENT B 和新 agent。
+    // 多选：勾上新建的那个（AGENT B 默认已勾），其余目标保持不勾 ——
+    // 页面上的目标不止两个，全点一遍会把不相干的目标也拉进来。
     await cdp.evaluate(
       inPanel(
         PANEL_A,
         "Array.from(panel.querySelectorAll('[data-role=handoffTargets] input[type=checkbox]')).forEach(function (i) {" +
-          'if (!i.checked) i.click();' +
+          `if (i.value === '${newProfileId}' && !i.checked) i.click();` +
           '})',
       ),
     );
@@ -1896,14 +1903,14 @@ async function main() {
     );
     check('第一次点删除只是进入确认状态', String(armedText).includes('确认'), `按钮文字 ${armedText}`);
     const stillThere = await cdp.evaluate("document.querySelectorAll('.panel').length");
-    check('确认之前面板还在', stillThere === 3, `${stillThere} 个`);
+    check('确认之前面板还在', stillThere === 4, `${stillThere} 个`);
 
     await cdp.evaluate(
       runInPanel(newPanelId2, "var b = panel.querySelector('[data-role=deleteBtn]'); if (b) b.click();"),
     );
     const gone = await waitFor(
       cdp,
-      "document.querySelectorAll('.panel').length === 2 ? 'gone' : ''",
+      "document.querySelectorAll('.panel').length === 3 ? 'gone' : ''",
       60,
       200,
     );
@@ -1929,7 +1936,7 @@ async function main() {
       runInPanel(
         PANEL_B,
         "Array.from(panel.querySelectorAll('[data-role=handoffTargets] input[type=checkbox]')).forEach(function (i) {" +
-          'if (!i.checked) i.click();' +
+          "if (i.value === 'agent-a' && !i.checked) i.click();" +
           '})',
       ),
     );
@@ -1972,7 +1979,7 @@ async function main() {
     );
     const goneA = await waitFor(
       cdp,
-      "document.querySelectorAll('.panel').length === 1 ? 'gone' : ''",
+      "document.querySelectorAll('.panel').length === 2 ? 'gone' : ''",
       60,
       200,
     );
@@ -2002,7 +2009,7 @@ async function main() {
     const stepAreas = await cdp.evaluate(
       "document.querySelectorAll('.panel [data-role=stepsList]').length",
     );
-    check('每个面板都有轮次步骤的配置区', stepAreas === 2, `${stepAreas} 个`);
+    check('每个面板都有轮次步骤的配置区', stepAreas === 3, `${stepAreas} 个`);
 
     // 默认步骤：AGENT A / AGENT B 的提示词拆成的固定步骤。
     // 服务端给出来，用户没配过之前页面就铺好。
@@ -2341,13 +2348,13 @@ async function main() {
     await openFresh(cdp, mockBaseM, { noSteps: true });
     await waitFor(
       cdp,
-      "document.querySelectorAll('.panel [data-role=permissionList]').length === 2",
+      "document.querySelectorAll('.panel [data-role=permissionList]').length === 3",
     );
 
     const permAreasM = await cdp.evaluate(
       "document.querySelectorAll('.panel [data-role=permissionList]').length",
     );
-    check('每个面板都有权限的配置区', permAreasM === 2, `${permAreasM} 个`);
+    check('每个面板都有权限的配置区', permAreasM === 3, `${permAreasM} 个`);
 
     const permBoxesM = await cdp.evaluate(
       inPanel(
@@ -2527,7 +2534,7 @@ async function main() {
     await waitFor(cdp, 'window.__AGENT_VIS_FRONTEND__ || null');
     await waitFor(
       cdp,
-      "document.querySelectorAll('.panel [data-role=stepBar]').length === 2",
+      "document.querySelectorAll('.panel [data-role=stepBar]').length === 3",
     );
 
     const metaFieldsO = await cdp.evaluate(
@@ -2554,14 +2561,22 @@ async function main() {
           "})",
       ),
     );
+    // 期望值取自 AGENT A 面板自己的步骤配置，不写死标题：默认步骤改过一次，
+    // 写死的标题会把"按配置铺开"这条检查变成检查一份过期的副本。
+    const configuredStepsO = await cdp.evaluate(
+      inPanel(
+        PANEL_A,
+        "Array.from(panel.querySelectorAll('.step-title')).map(function (t) { return t.value; })",
+      ),
+    );
     check(
       '步骤进度按配好的四个步骤铺开',
       Array.isArray(stepChipsO) &&
-        stepChipsO.length === 4 &&
-        ['查 Open Issue', '读 Issue 正文', '对齐 idea.txt', '实现机制并给出验证'].every(
+        stepChipsO.length === configuredStepsO.length &&
+        configuredStepsO.every(
           (title, i) => stepChipsO[i] && stepChipsO[i].text.includes(title),
         ),
-      JSON.stringify(stepChipsO),
+      `chips ${JSON.stringify(stepChipsO)} / 配置 ${JSON.stringify(configuredStepsO)}`,
     );
     check(
       '还没开跑时四个步骤都是待开始',
@@ -2636,7 +2651,7 @@ async function main() {
     const mockBaseP = `http://127.0.0.1:${mockServerP.address().port}`;
     await openFresh(cdp, mockBaseP);
     await waitFor(cdp, 'window.__AGENT_VIS_FRONTEND__ || null');
-    // 加两个 agent：总共四个，用来确认侧边栏把它们都列出来了。
+    // 加两个 agent：三个内置 + 两个新建，共五个，用来确认侧边栏把它们都列出来了。
     await cdp.evaluate("document.querySelector('.new-agent').click();");
     await sleep(300);
     await cdp.evaluate("document.querySelector('.new-agent').click();");
@@ -2671,8 +2686,8 @@ async function main() {
         "  };" +
         "})()",
     );
-    check('侧边栏把四个 agent 都列出来了', layoutP.sidebarCount === 4, JSON.stringify(layoutP));
-    check('页面上四个 agent 的面板都在', layoutP.panelCount === 4, JSON.stringify(layoutP));
+    check('侧边栏把五个 agent 都列出来了', layoutP.sidebarCount === 5, JSON.stringify(layoutP));
+    check('页面上五个 agent 的面板都在', layoutP.panelCount === 5, JSON.stringify(layoutP));
     check(
       '右侧只显示当前这一个 agent 的聊天框',
       layoutP.visibleCount === 1,
@@ -2697,7 +2712,7 @@ async function main() {
     await waitFor(cdp, 'window.__AGENT_VIS_FRONTEND__ || null');
     await waitFor(
       cdp,
-      "document.querySelectorAll('[data-role=agentList] [data-agent-id]').length === 2",
+      "document.querySelectorAll('[data-role=agentList] [data-agent-id]').length === 3",
     );
 
     const sideQ = await cdp.evaluate(

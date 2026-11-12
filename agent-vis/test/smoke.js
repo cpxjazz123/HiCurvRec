@@ -275,20 +275,21 @@ async function main() {
     }
 
     const ids = [...html.matchAll(/data-profile="([^"]+)"/g)].map((m) => m[1]);
-    assert.equal(ids.length, 2, `面板应声明两个 agent 身份，实际 ${ids.length}`);
-    assert.notEqual(ids[0], ids[1], '左右两个面板必须是不同的 agent');
+    assert.equal(ids.length, 2, `静态面板应声明两个 agent 身份，实际 ${ids.length}`);
+    assert.notEqual(ids[0], ids[1], '两个静态面板必须是不同的 agent');
   });
 
-  await test('/api/health 列出两个 agent 的身份', async () => {
+  await test('/api/health 列出三个 agent 的身份', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.ok(Array.isArray(info.agents), 'health 没列出 agents');
-    assert.equal(info.agents.length, 2, `应为两个 agent，实际 ${info.agents.length}`);
+    assert.equal(info.agents.length, 3, `应为三个 agent，实际 ${info.agents.length}`);
     for (const agent of info.agents) {
       assert.equal(typeof agent.id, 'string');
       assert.equal(typeof agent.name, 'string');
       assert.ok(agent.name.length > 0);
     }
-    assert.notEqual(info.agents[0].id, info.agents[1].id, '两个 agent 身份必须不同');
+    const unique = new Set(info.agents.map((agent) => agent.id));
+    assert.equal(unique.size, info.agents.length, 'agent 身份必须互不相同');
   });
 
   await test('两个内置 agent 的提示词已经拆成固定步骤', async () => {
@@ -345,30 +346,28 @@ async function main() {
     assert.equal(res.status, 400, '未知 agent 应该被拒掉');
   });
 
-  await test('两个 agent 各自有一份独立的人设', async () => {
+  await test('三个 agent 各自有一份独立的人设', async () => {
     assert.ok(Array.isArray(config.AGENT_PROFILES), 'config 没导出 AGENT_PROFILES');
-    assert.equal(config.AGENT_PROFILES.length, 2);
-    assert.notEqual(
-      config.AGENT_PROFILES[0].instructions,
-      config.AGENT_PROFILES[1].instructions,
-      '两个 agent 的人设说明必须不同，否则左右两栏做的是同一件事',
-    );
+    assert.equal(config.AGENT_PROFILES.length, 3);
+    const texts = new Set(config.AGENT_PROFILES.map((profile) => profile.instructions));
+    assert.equal(texts.size, config.AGENT_PROFILES.length,
+                 '每个 agent 的人设说明必须不同，否则几栏做的是同一件事');
   });
 
-  await test('两个 agent 就叫 AGENT A 和 AGENT B', async () => {
+  await test('三个 agent 就叫 AGENT A、AGENT B 与 AGENT MATH', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.name),
-      ['AGENT A', 'AGENT B'],
-      '页面上左右两栏的 agent 名字不对',
+      ['AGENT A', 'AGENT B', 'AGENT MATH'],
+      '页面上三栏的 agent 名字不对',
     );
   });
 
-  await test('两个 agent 分别是 Issue 执行者与控制器', async () => {
+  await test('三个 agent 分别是 Issue 执行者、控制器与公式审计员', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.role),
-      ['ISSUE_EXECUTOR', 'ISSUE_CONTROLLER'],
+      ['ISSUE_EXECUTOR', 'ISSUE_CONTROLLER', 'MATH_AUDITOR'],
       '两个 agent 的角色不是"执行者 / 控制器"这一对',
     );
     assert.ok(
@@ -379,6 +378,26 @@ async function main() {
       config.AGENT_PROFILES[1].instructions.includes('ISSUE_CONTROLLER'),
       'AGENT B 的人设里没写明它是 ISSUE_CONTROLLER',
     );
+  });
+
+  await test('AGENT MATH 拿读与写权限，只核对公式', async () => {
+    const info = await (await fetch(`${base}/api/health`)).json();
+    const math = info.agents.find((agent) => agent.id === 'agent-math');
+    assert.ok(math, 'health 里没有 agent-math');
+    assert.deepEqual(math.permissions, ['read', 'write'],
+                     `AGENT MATH 的权限不对: ${JSON.stringify(math.permissions)}`);
+    assert.equal(math.builtin, true, 'AGENT MATH 是配置里写死的身份');
+    assert.equal(math.steps.length, 5, `AGENT MATH 的步骤数不对: ${math.steps.length}`);
+    const text = math.steps.map((step) => step.instruction).join('\n');
+    assert.ok(text.includes('math.json'), 'AGENT MATH 的步骤里没点名 math.json');
+    assert.ok(text.includes('writeFile'), 'AGENT MATH 改公式该用 writeFile');
+    assert.ok(text.includes('PASS') && text.includes('FAIL'),
+              'AGENT MATH 要对每条公式给出 PASS/FAIL 结论');
+    assert.ok(math.instructions.includes('MATH_AUDITOR') &&
+              math.instructions.includes('math.json'),
+              'AGENT MATH 的人设没写明它审的是 math.json');
+    assert.equal(math.defaultPrompt.includes('math.json'), true,
+                 'AGENT MATH 的输入框预填指令该指向 math.json');
   });
 
   await test('旧版前端被版本闸门拦下，拿到刷新提示而不是 400', async () => {
@@ -1249,8 +1268,8 @@ async function main() {
     assert.equal(run.status, 400, '删掉的身份不该还能跑');
   });
 
-  await test('固定的 AGENT A / AGENT B 不能从服务端删除', async () => {
-    for (const id of ['agent-a', 'agent-b']) {
+  await test('配置里写死的 AGENT A / AGENT B / AGENT MATH 不能从服务端删除', async () => {
+    for (const id of ['agent-a', 'agent-b', 'agent-math']) {
       const res = await fetch(`${base}/api/agents/${id}`, { method: 'DELETE' });
       assert.equal(res.status, 400, `${id} 应该被拒掉`);
     }

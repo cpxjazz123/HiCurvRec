@@ -385,7 +385,7 @@ async function handleCreateAgent(req, res) {
 /**
  * 删掉一个 agent 身份。
  *
- * 只有运行时新建的 agent 能从服务端删掉：固定的两个（agent-a / agent-b）
+ * 只有运行时新建的 agent 能从服务端删掉：配置里写死的（agent-a / agent-b / agent-math）
  * 是配置里写死的，页面上删它们的只是面板，身份还在。
  *
  * 状态码：
@@ -408,7 +408,7 @@ async function handleDeleteAgent(req, res, profileId) {
   }
   if (known.builtin) {
     res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify({ error: `固定的两个 agent 不能从服务端删除: ${profileId}` }));
+    res.end(JSON.stringify({ error: `配置里写死的 agent 不能从服务端删除: ${profileId}` }));
     return;
   }
 

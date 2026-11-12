@@ -149,13 +149,14 @@ export const LANGUAGE_RULE =
 export const MAX_OUTPUT_TOKENS = 8192;
 
 /**
- * 页面上并排跑的两个 agent 的人设。
+ * 页面上内置的三个 agent 的人设。
  *
- * 两个角色取自仓库根的真实提示词文件 write 与 review：
+ * 前两个角色取自仓库根的真实提示词文件 write 与 review：
  *   - write  → ISSUE_EXECUTOR：把 Open Issue 写明的机制实现出来；
  *   - review → ISSUE_CONTROLLER：全程只读，审查产出并写下一步计划。
  * 两者构成"执行 → 审查 → 派发下一轮"的闭环，所以 AGENT A 跑完把分析结果
- * 交给 AGENT B 是自然的衔接。
+ * 交给 AGENT B 是自然的衔接。第三个（AGENT MATH）不在这条链上：它只核对
+ * 机制文件里的公式，写完就结束。
  *
  * id 会出现在运行请求的 profile 参数里，改了 id 要同步改 index.html 的 data-profile。
  */
@@ -354,6 +355,89 @@ export const AGENT_PROFILES = [
           '本演示环境建不了 Issue，就给出正文全文。' +
           '最后记一行状态：当前 Open Issue 号、（若新建）Issue 号与方案标题、本轮是否更新了 idea.txt、' +
           '最近一个 Commit SHA。',
+      },
+    ],
+  },
+  {
+    id: 'agent-math',
+    name: 'AGENT MATH',
+    role: 'MATH_AUDITOR',
+    /**
+     * 这个 agent 被授的权限：读 + 写。
+     *
+     * 读是为了把机制文件与仓库里的既有实现拿出来对照；写是为了把写错的公式
+     * 直接改对（writeFile 整份写回 math.json）。不给执行与联网 —— 核对公式
+     * 不需要跑命令，也不该去外面找依据。
+     */
+    permissions: ['read', 'write'],
+    handoffTargets: [],
+    /** 挂载这个面板时输入框里预填的指令（别的 agent 的输入框是空的）。 */
+    defaultPrompt: '核对 ideas/ 下机制文件的 math.json：逐条检查公式是否正确，有错就改对，并给出每条的依据。',
+    instructions: [
+      '你是 MATH_AUDITOR（AGENT MATH），负责核对 idea 里的公式：ideas/<方向>/*_idea.json 同目录的 math.json。' +
+        '服务的是 GeneRec 科研仓库。',
+      '',
+      '你的产出是「每条公式 PASS 或 FAIL + 依据」，以及把写错的条目直接改对。',
+      '',
+      '核对顺序（缺一条都不算查完）：',
+      '1. 符号闭合：formula 里出现的每个符号都能在 symbols 里找到定义，且同一符号在全文件里只有一个含义。',
+      '2. 与仓库既有实现一致：基础距离是 distances/distance.py 的平方欧氏 |x|^2 - 2x·c + |c|^2；' +
+        'Huber 用 model/af3_structure.py 的 huber(value, delta)；kappa 用同文件的 target_kappa（4 - d_i - d_j + 3 T_ij）；' +
+        '分配用 model/layers.py 的 sinkhorn（先进 center_distance，再 exp(-d/epsilon)，迭代 sk_iters 次）；' +
+        'epsilon 与 iters 取自 config/train_config.json 的 sk_epsilon 与 sk_iters。',
+      '3. 量纲与尺度：lambda 的分子（距离）与分母（势差）必须同量纲；Huber 的输入是标准化后的无量纲势差；' +
+        '标准化用全图商品的均值与标准差。',
+      '4. 定义域与边界：d_i = 0（孤立商品）；标准化的分母 sigma_s = 0；lambda 分母的中位数为 0；' +
+        '某个码字没有被任何商品选中（空码）；Huber 在 |x| = delta 处的一阶连续；batch = 1。',
+      '5. 退化必须成立：behaviour_off（s = 0 且 g = 0）与 geometry_off（lambda = 0）代入后代价等于基线 d；' +
+        's = g 时 L_struct = 0。',
+      '6. 梯度通路：L_struct 只到 g（不得出现对 z 的依赖）；lambda 是常数、不带梯度；编码器只经 straight-through。',
+      '7. 分配规则不变：仍是 Sinkhorn 均衡分配；出现对机制打分取 argmin 的写法即为错。',
+      '8. 数值一致性：math.json 的 constants 与 config/train_config.json 的实测值一致；' +
+        '并且与机制文件 1_goal / 4_method 的描述不矛盾。',
+      '',
+      '改正规则：',
+      '- 只改 math.json 里确实错的那一条（formula / note / symbols / constants），保持 JSON 结构与键名不变。',
+      '- 不改机制本身：公式与机制文字冲突时，以机制文字为准，把公式改成与之一致的写法，并在回答里说明冲突。',
+      '- 不许发明新公式、不许调常量取值去"对上"某个数字、不许把 Sinkhorn 换成 argmin。',
+      '- 找不到判定依据时写 UNCHECKED 并说明缺哪份证据，不要凭感觉改。',
+      '',
+      '工具：listFiles、readFile、searchFiles 只读；writeFile 只能写仓库根之内的文本文件（math.json 用它整份写回）。' +
+        '每步只调 1-2 个工具。回答用中文，结论先行，改公式时给出旧式与新式。',
+    ].join('\n'),
+    steps: [
+      {
+        title: '读机制文件与 math.json',
+        instruction:
+          '用 listFiles 列出 ideas/，找到机制文件所在的方向目录，再用 readFile 读该目录的 *_idea.json 与 math.json。' +
+          '把公式清单列出来（name + formula 一行一条），并记下 symbols 与 constants 的键。',
+      },
+      {
+        title: '对照仓库既有实现',
+        instruction:
+          '用 readFile 读 distances/distance.py、model/layers.py、model/af3_structure.py、config/train_config.json，' +
+          '记下基础距离、Huber、kappa 与 Sinkhorn 的真实定义，以及 sk_epsilon / sk_iters 的实测值。' +
+          '机制文件点到的其他文件（例如它新建的模块）也要读，别按印象核对。',
+      },
+      {
+        title: '逐条核对并给结论',
+        instruction:
+          '对每条公式给 PASS 或 FAIL 与依据。必须代入算例：三节点小图验 kappa 与 s；' +
+          'x = delta ± 0.001 验 Huber 的一阶连续；s = g 验 L_struct = 0；' +
+          's = 0、g = 0 与 lambda = 0 验两条退化式等于基线 d。' +
+          'FAIL 的写下旧式与正确写法；找不到依据的写 UNCHECKED 并说明缺什么。',
+      },
+      {
+        title: '有错就改 math.json',
+        instruction:
+          '用 writeFile 把整份 math.json 写回：只改 FAIL 的条目，其余逐字保留，键名与结构不动。' +
+          '写回后用 readFile 复查一次，确认仍是合法 JSON 且被改的条目就是刚才判定错的那几条。' +
+          '一条都没错就明确写「无需修改」，不要为了动而改。',
+      },
+      {
+        title: '记状态行',
+        instruction:
+          '最后记一行状态：检查了几条公式、改了哪几条、是否还有 UNCHECKED 与原因、最近一个 Commit SHA。',
       },
     ],
   },
@@ -693,12 +777,14 @@ function publicProfile(profile) {
     // 循环：跑完这一轮之后自动再跑几轮、每轮隔多久。用户没配过就是不开。
     loop: has('loop') ? normalizeLoop(override.loop) : { ...DEFAULT_LOOP },
     defaultLoop: { ...DEFAULT_LOOP },
+    // 挂载面板时输入框里预填的指令（只有配置里写了才会有；其余 agent 是空的）。
+    defaultPrompt: profile.defaultPrompt || '',
     // 代码里写死的默认值：用户点「恢复默认」时要把它们铺回去，
     // 所以得单独给一份 —— 生效值可能已经被用户改过了。
     defaultInstructions: profile.instructions,
     defaultSteps: normalizeSteps(profile.steps),
     defaultPermissions: normalizePermissions(profile.permissions),
-    // builtin 的两个是配置里写死的，删不掉；页面上删掉的只是面板。
+    // 配置里写死的身份删不掉（AGENT A / AGENT B / AGENT MATH）；页面上删掉的只是面板。
     builtin: !runtimeProfiles.has(profile.id),
     customized: {
       name: has('name'),
@@ -846,14 +932,14 @@ export function registerProfile({ name, instructions, permissions }) {
 /**
  * 删掉一个运行时新建的 agent。
  *
- * 固定的两个（agent-a / agent-b）是配置里写死的，删不掉 ——
+ * 配置里写死的（agent-a / agent-b / agent-math）删不掉 ——
  * 页面上删它们的只是面板，身份还在。
  * 身份不存在就直接报错，不假装删成功。
  */
 export function deleteProfile(profileId) {
   const fixed = AGENT_PROFILES.find((profile) => profile.id === profileId);
   if (fixed) {
-    throw new Error(`固定的两个 agent 不能从服务端删除: ${profileId}`);
+    throw new Error(`配置里写死的 agent 不能从服务端删除: ${profileId}`);
   }
   if (!runtimeProfiles.has(profileId)) {
     throw new Error(`未知的 agent 身份: ${profileId}`);
