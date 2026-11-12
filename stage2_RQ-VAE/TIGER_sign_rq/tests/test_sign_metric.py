@@ -125,3 +125,21 @@ def test_gradients_are_finite_at_the_boundary_and_gradcheck_passes():
         return sm.curved_squared(p, codes, kappa)
 
     assert torch.autograd.gradcheck(f, (points.detach().clone().requires_grad_(True),), eps=1e-6, atol=1e-4)
+
+
+def test_the_paired_cost_is_row_wise_and_does_not_build_a_square_matrix():
+    """Regression for the smoke's CUDA OOM: the commitment and codebook terms compare each row with its own picked point.
+
+    Feeding those points into ``curved_squared`` broadcasts them into a ``[B, B, D]`` tensor -- 38 GiB at the codebook initialisation's batch -- so the paired
+    helper exists and the model must use it.  Here the property is stated without a GPU: the paired result is the matrix diagonal, and 4096 rows stay a vector.
+    """
+    torch.manual_seed(3)
+    points = pc.project(torch.randn(64, 8) * 0.05, 1.0)
+    picked = pc.project(torch.randn(64, 8) * 0.05, 1.0)
+    kappa = torch.full((64,), 1.0)
+    paired = sm.curved_squared_paired(points, picked, kappa)
+    assert paired.shape == (64,)
+    assert torch.allclose(paired, sm.curved_squared(points, picked, kappa).diagonal(), rtol=1e-6)
+
+    wide = sm.curved_squared_paired(torch.randn(4096, 8) * 0.01, torch.randn(4096, 8) * 0.01, torch.ones(4096))
+    assert wide.shape == (4096,) and bool(torch.isfinite(wide).all())

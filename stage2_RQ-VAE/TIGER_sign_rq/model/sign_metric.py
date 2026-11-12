@@ -176,6 +176,9 @@ def _into_row_balls(points: torch.Tensor, c: torch.Tensor) -> torch.Tensor:
 def curved_squared(residual_h: torch.Tensor, code_balls: torch.Tensor, kappa: torch.Tensor) -> torch.Tensor:
     """``d_kappa(p, q)^2`` for every (item, code) pair, ``kappa`` one value per row.
 
+    This builds the full ``[B, K]`` matrix over codes.  For the commitment and codebook terms, where each row has its own picked point, use
+    :func:`curved_squared_paired` -- feeding the picked points here would build a ``[B, B]`` matrix instead.
+
     ``residual_h`` is ``[B, D]`` in the ball, ``code_balls`` is ``[K, D]`` in the ball; the returned matrix is ``[B, K]``.  The expression is the frozen
     ``(2/sqrt(c)) artanh(sqrt(c)|(-p) (+) q|)`` with the curvature varying per row.  A row whose curvature shrinks the ball is first scaled into it --
     the same projection the frozen contract applies, applied per row -- and the pair is evaluated by broadcasting, so the 24k-item export never builds a
@@ -187,5 +190,21 @@ def curved_squared(residual_h: torch.Tensor, code_balls: torch.Tensor, kappa: to
     difference = _mobius_add_rows(-p, q, c)
     norm = difference.norm(dim=-1)
     root = torch.sqrt(c)
+    argument = (root * norm).clamp(max=1.0 - ARTANH_EPS)
+    return ((2.0 / root) * torch.atanh(argument)).pow(2)
+
+
+def curved_squared_paired(points: torch.Tensor, picked: torch.Tensor, kappa: torch.Tensor) -> torch.Tensor:
+    """``d_kappa^2`` between each row and its own picked point, ``[B]`` -- no cross matrix.
+
+    The commitment and codebook terms compare every item with the single code it chose, so building the full ``[B, B]`` matrix there is both wrong and
+    fatal: the codebook initialisation does it on the whole training set, and 24556 squared rows do not fit in any GPU.
+    """
+    c = torch.as_tensor(kappa, dtype=points.dtype, device=points.device).reshape(-1, 1)
+    p = _into_row_balls(points, c)
+    q = _into_row_balls(picked, c)
+    difference = _mobius_add_rows(-p, q, c)
+    norm = difference.norm(dim=-1)
+    root = torch.sqrt(c).reshape(-1)
     argument = (root * norm).clamp(max=1.0 - ARTANH_EPS)
     return ((2.0 / root) * torch.atanh(argument)).pow(2)

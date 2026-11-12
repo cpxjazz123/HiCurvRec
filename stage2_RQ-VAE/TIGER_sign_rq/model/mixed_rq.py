@@ -228,7 +228,7 @@ class MixedVQLevel(nn.Module):
         # the same point cost with the row-wise curvature: alpha * squared-Euclidean + (1-alpha) * d_kappa^2 / 4, in the frozen normalisation
         from . import sign_metric
         euclidean = (residual_e - picked_e).pow(2).sum(-1)
-        curved = sign_metric.curved_squared(residual_h, picked_h, kappa).diagonal()
+        curved = sign_metric.curved_squared_paired(residual_h, picked_h, kappa)
         alpha_v = alpha.view(-1)
         return 2.0 * (alpha_v * euclidean + (1.0 - alpha_v) * curved / 4.0)
 
