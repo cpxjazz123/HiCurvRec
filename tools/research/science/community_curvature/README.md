@@ -27,9 +27,10 @@ representation; the input embedding is never modified. The curvature is fixed
 at c = 1 (sectional curvature −1) in this round, so the only variable is the
 **geometry of the combination**, not its strength.
 
-The hyperbolic branch uses the frozen contract operators of the Stage-2
-baseline (`stage2_RQ-VAE/TIGER_RQ-VAE/model/poincare_contract.py`), imported by
-path; the run report carries that file's sha256.
+The hyperbolic branch uses the frozen contract operators of the framework's
+geometry module (`tools/research/geometry/poincare_contract.py`), imported by
+path; the run report carries that file's sha256. (The frozen baseline used to
+ship a byte-identical copy under `model/`; that copy is gone.)
 
 ## How the communities are supervised
 

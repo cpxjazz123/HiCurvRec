@@ -6,10 +6,11 @@ learnable community centres, and the two branch distances are combined into the
 cost that the soft assignment sees.
 
 Geometry: the hyperbolic branch uses the frozen contract operators of the
-Stage-2 baseline (``model/poincare_contract.py``), reached through the origin
-exponential map, with the curvature fixed at c = 1 (sectional curvature -1). The
-operators are imported, not re-derived, and the file's sha256 is recorded in the
-run report so a reader can tell which geometry ran.
+framework's geometry module (``tools/research/geometry/poincare_contract.py``),
+reached through the origin exponential map, with the curvature fixed at c = 1
+(sectional curvature -1). The operators are imported, not re-derived, and the
+file's sha256 is recorded in the run report so a reader can tell which geometry
+ran.
 
 The distance combination has no free knob. Each branch's distance row (the 64
 distances of one item to the centres) is standardised per item -- zero mean,
@@ -30,7 +31,10 @@ import torch
 from torch import nn
 
 REPO = Path(__file__).resolve().parents[4]
-CONTRACT_PATH = REPO / "stage2_RQ-VAE" / "TIGER_RQ-VAE" / "model" / "poincare_contract.py"
+#: The geometry contract is the framework's, and it lives in the framework. The
+#: frozen baseline used to ship a byte-identical copy; that copy was removed with
+#: the baseline's hyperbolic leftovers, so the canonical module is read directly.
+CONTRACT_PATH = REPO / "tools" / "research" / "geometry" / "poincare_contract.py"
 
 
 def load_contract():
