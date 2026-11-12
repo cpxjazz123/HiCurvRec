@@ -51,8 +51,12 @@ def affinity(anchor_embeddings: torch.Tensor, candidate_embeddings: torch.Tensor
     if GEOMETRY_OFF:
         cos = torch.nn.functional.cosine_similarity(a, b, dim=-1)
         return (0.5 * (cos + 1.0)).to(anchor_embeddings.dtype)
-    k = r48k_geometry.pair_kappa(anchor_kappa.detach().reshape(-1), candidate_kappa.detach().reshape(-1))
-    k = k.to(torch.float64)
+    # per-slot curvature: a padded candidate keeps the curvature of whatever id sits in its slot, and the mask decides whether the slot counts
+    a_k = anchor_kappa.detach().reshape(-1).to(torch.float64).unsqueeze(-1)
+    c_k = candidate_kappa.detach().to(torch.float64)
+    if c_k.dim() == 1:
+        c_k = c_k.unsqueeze(0)
+    k = torch.sqrt((a_k * c_k).clamp_min(0.0)).clamp_min(r48k_geometry.KAPPA_FLOOR)
     p = r48k_geometry.project_to_ball(a, k.unsqueeze(-1))
     q = r48k_geometry.project_to_ball(b, k.unsqueeze(-1))
     return (1.0 / (1.0 + r48k_geometry.distance(p, q, k.unsqueeze(-1)))).to(anchor_embeddings.dtype)
@@ -72,7 +76,11 @@ def kl_within_support(student_logits: torch.Tensor, teacher: torch.Tensor, mask:
     contributes nothing rather than a NaN.
     """
     log_p = torch.log_softmax(student_logits.masked_fill(~mask, float("-inf")), dim=-1)
-    per_anchor = (teacher * (torch.log(teacher.clamp_min(1e-12)) - log_p)).sum(dim=-1)
+    # outside the support the teacher is zero, and a zero times the -inf the softmax leaves there is a NaN: the term is only evaluated where the
+    # teacher actually puts mass
+    live_terms = (teacher > 0) & mask
+    safe_log_p = torch.where(live_terms, log_p, torch.zeros_like(log_p))
+    per_anchor = (teacher * (torch.log(teacher.clamp_min(1e-12)) - safe_log_p)).sum(dim=-1)
     live = (teacher > 0).any(dim=-1)
     if not bool(live.any()):
         return student_logits.sum() * 0.0

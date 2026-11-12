@@ -13,20 +13,9 @@ if str(TREE) not in sys.path:
 
 from model import af3_teacher as t  # noqa: E402
 
-# a 4-node path 0-1-2-3 plus the closing edge 3-0, so every node has degree 2 and one triangle exists (0,1,...) no: it is a 4-cycle
+# a 4-node path 0-1-2-3 plus the closing edge 3-0: a 4-cycle, which has no triangle at all.  The two cases that asserted AF3 == 3.0 here were
+# pinning the constant-3 defect (#193 P0-2); they are deleted rather than re-pinned, and tests/test_sdh_kernel.py states the truth instead.
 CYCLE4 = [(0, 1), (1, 2), (2, 3), (3, 0)]
-
-
-def test_af3_on_a_cycle_is_minus_the_degree_plus_three():
-    degrees = {0: 2, 1: 2, 2: 2, 3: 2}
-    af3 = t.af3_values(CYCLE4, degrees)
-    assert all(abs(v - 3.0) < 1e-12 for v in af3.values())     # 4 - 2 - 2 + 3 = 3
-
-
-def test_quantiles_and_the_clipping_span():
-    degrees = {0: 2, 1: 2, 2: 2, 3: 2}
-    q05, q95 = t.quantiles(t.af3_values(CYCLE4, degrees))
-    assert abs(q05 - 3.0) < 1e-12 and abs(q95 - 3.0) < 1e-12
 
 
 def test_weights_keep_bridge_edges_strictly_positive():

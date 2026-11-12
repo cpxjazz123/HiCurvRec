@@ -1,0 +1,17 @@
+{
+ "sid_source": "results/stage2_RQ-VAE/TIGER_af3_structdistill_rq/item_sids.json",
+ "train_file": "results/stage0_build_parquet/train.parquet",
+ "anchors_requested": 4000,
+ "anchors_used": 3996,
+ "anchors_with_non_empty_support": 3616,
+ "pairs": 238959,
+ "share_by_shared_levels": {
+  "0": 0.936265217045602,
+  "1": 0.058863654434442726,
+  "2": 0.004197372771061144,
+  "3": 0.0006737557488941618
+ },
+ "support_share_at_least_one_level": 0.06373478295439805,
+ "audit_193_reference_share_none": 0.9494785269223038,
+ "note": "the #193 reference was measured over the teacher's T support; this one over the distillation's candidate sets, which is the population the support mask acts on"
+}

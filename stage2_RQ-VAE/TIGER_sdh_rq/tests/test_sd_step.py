@@ -76,9 +76,9 @@ def test_repeated_candidates_are_encoded_once(monkeypatch):
     calls = {"n": 0}
     real = sd_step.quantised_readout
 
-    def counting(m, x):
+    def counting(m, x, item_ids=None):
         calls["n"] += x.shape[0]
-        return real(m, x)
+        return real(m, x, item_ids)
 
     monkeypatch.setattr(sd_step, "quantised_readout", counting)
     shared = {0: [1, 2], 1: [1, 2]}

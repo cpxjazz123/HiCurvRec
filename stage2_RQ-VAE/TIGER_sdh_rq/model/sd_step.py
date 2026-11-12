@@ -74,9 +74,9 @@ def structural_loss(module, embeddings: torch.Tensor, anchor_ids: torch.Tensor,
 
     anchor_emb = embeddings[anchor_ids.cpu()].to(cosines.device)
     cand_emb = embeddings[unique_ids.cpu()].to(cosines.device)[inverse.to(cosines.device)].view(len(sets), width, -1)
+    cand_kappa = r48k_geometry.kappa_of(unique_ids.cpu())[inverse].view(len(sets), width)
     scores = sdh_kernel.affinity(anchor_emb, cand_emb,
-                                 r48k_geometry.kappa_of(anchor_ids.cpu()),
-                                 r48k_geometry.kappa_of(unique_ids.cpu())[inverse])
+                                 r48k_geometry.kappa_of(anchor_ids.cpu()), cand_kappa)
     teacher = sdh_kernel.teacher_distribution(scores.to(cosines.dtype), mask)
     return sdh_kernel.kl_within_support(cosines, teacher, mask)
 
