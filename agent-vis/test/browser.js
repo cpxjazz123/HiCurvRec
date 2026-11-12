@@ -3275,6 +3275,34 @@ async function main() {
     mockServerV.closeAllConnections();
     await new Promise((resolve) => mockServerV.close(resolve));
 
+    // ---------- 场景 W：地址栏直接指到某个 agent ----------
+    process.stdout.write('\n  场景 W · 地址栏指到配置里的 agent（AGENT MATH）\n');
+    const mockServerW = createServer({ mode: 'mock', publicPath: '', dataDir: SCRATCH_DATA });
+    await new Promise((resolve) => mockServerW.listen(0, '127.0.0.1', resolve));
+    const mockBaseW = `http://127.0.0.1:${mockServerW.address().port}`;
+    // 直接带着地址打开：AGENT MATH 的面板是从模板挂的，挂上去要等 /api/health 回来。
+    await openPage(cdp, `${mockBaseW}#/agent/agent-math/chat`);
+    await waitFor(cdp, 'window.__AGENT_VIS_FRONTEND__ || null');
+    const shownW = await waitFor(
+      cdp,
+      "(function () {" +
+        "  var ps = Array.from(document.querySelectorAll('.panel')).filter(function (p) { return !p.hidden; });" +
+        "  return ps.length === 1 && ps[0].dataset.profile === 'agent-math' ? 'math' : '';" +
+        '})()',
+      120,
+      250,
+    );
+    check('地址栏指的 agent 被显示出来', shownW === 'math', `状态 ${shownW}`);
+    const alertW = await cdp.evaluate("document.getElementById('alertBar').textContent");
+    check(
+      '不该报"页面上不存在"',
+      !String(alertW).includes('不存在'),
+      String(alertW),
+    );
+
+    mockServerW.closeAllConnections();
+    await new Promise((resolve) => mockServerW.close(resolve));
+
     ws.close();
   } finally {
     // 先让浏览器自己退出：CDP 的 Browser.close 会把 chromium 及其所有

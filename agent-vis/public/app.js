@@ -65,6 +65,10 @@ const sidebarRows = new Map();
  * null 表示还没定 —— 页面第一次起来时定成第一个 agent。
  */
 let activeAgentId = null;
+/** 服务端的 agent 清单到了没有：没到之前，地址栏指向还没挂出来的面板不算错。 */
+let healthLoaded = false;
+/** 地址栏指着、但面板还没挂出来的那个 agent。 */
+let pendingRoute = null;
 
 /**
  * 右侧当前显示的是聊天框还是配置页。
@@ -79,7 +83,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-13.3';
+const FRONTEND_VERSION = '2026-11-13.4';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -2682,6 +2686,13 @@ function applyRoute() {
   }
   const panel = panels.find((item) => item.profileId === route.profileId);
   if (!panel) {
+    // 配置里的角色（例如 AGENT MATH）是从模板挂的，要等 /api/health 回来才挂上：
+    // 这时候地址栏指的 agent 不是"不存在"，只是还没挂出来 —— 先记下，面板挂好再按
+    // 地址栏显示。只有服务端压根不认这个身份，才是真错了。
+    if (!healthLoaded || knownAgentIds.has(route.profileId)) {
+      pendingRoute = route;
+      return;
+    }
     showAlert(`地址里指定的 agent「${route.profileId}」页面上不存在。`);
     return;
   }
@@ -3085,6 +3096,15 @@ async function loadHealth() {
   refreshAllTargets();
   // 左侧栏里的名字也用服务端的这份。
   renderSidebar();
+
+  // 清单到了，面板也挂齐了：这时才按地址栏显示。
+  // 配置里的角色（AGENT MATH 等）是这一步才挂上来的 —— 地址栏指着它们时，
+  // 不能在它们挂出来之前就报"不存在"。
+  healthLoaded = true;
+  if (pendingRoute) {
+    pendingRoute = null;
+  }
+  applyRoute();
 
   // 历史：每一栏跑过的那几轮都存在服务端，刷新页面后照样在。
   for (const panel of panels) {
