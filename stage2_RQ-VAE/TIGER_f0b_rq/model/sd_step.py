@@ -28,9 +28,25 @@ def quantised_readout(module, embeddings: torch.Tensor) -> tuple[torch.Tensor, t
 
 
 def codes_of(module, embeddings: torch.Tensor) -> torch.Tensor:
-    """The three-token codes of these rows under the export rule, with no gradient: they only decide who is in the support."""
-    with torch.no_grad():
-        return module.get_indices(embeddings, infer_use_sk=False).detach()
+    """The three-token codes of these rows under the export rule, with no gradient: they only decide who is in the support.
+
+    The model is switched to eval for the duration and the quantiser's rank-reduce is skipped, exactly as the exporter does: the balanced Sinkhorn assignment is a
+    training-time rule, and running it here made the structural step issue an unsynchronised collective in the middle of a DDP step -- the device-side assert the
+    first smoke raised.  Restoring both states in ``finally`` keeps the training step untouched.
+    """
+    was_training = module.training
+    layers = list(module.rq.vq_layers)
+    flags = [bool(getattr(layer, "_skip_ddp_reduce", False)) for layer in layers]
+    module.eval()
+    for layer in layers:
+        layer._skip_ddp_reduce = True
+    try:
+        with torch.no_grad():
+            return module.get_indices(embeddings, infer_use_sk=False).detach()
+    finally:
+        for layer, flag in zip(layers, flags):
+            layer._skip_ddp_reduce = flag
+        module.train(was_training)
 
 
 def structural_loss(module, embeddings: torch.Tensor, anchor_ids: torch.Tensor,
