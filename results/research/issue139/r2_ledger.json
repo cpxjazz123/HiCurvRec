@@ -2043,6 +2043,39 @@
       "test_recall@5"
     ]
   },
+  "74": {
+    "arm": "TIGER_l2k_rq",
+    "files": {
+      "TIGER_l2k_rq/math_spec.json": "ebd4ddf6477d8206950c69d813a101a3bbdd251d0ff5b9cda70ab1db9cea7290",
+      "TIGER_l2k_rq/model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+      "TIGER_l2k_rq/model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+      "TIGER_l2k_rq/model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+      "TIGER_l2k_rq/model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+      "TIGER_l2k_rq/model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
+      "TIGER_l2k_rq/model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
+      "TIGER_l2k_rq/model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
+      "TIGER_l2k_rq/model/l2k_metric.py": "8baae3312191d69c4864e7d62c14d4cd00c250bd7e1a27a934da4740a9284f27",
+      "TIGER_l2k_rq/model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+      "TIGER_l2k_rq/model/mixed_rq.py": "9addf80c94b52aacd8943656c5d587c126395d57220b0c856f9e305caebc03e6",
+      "TIGER_l2k_rq/model/model.py": "c0ac1c6f7758d6125b9b96164bb714b18f00ffd417b0bb3e43e967c79a866355",
+      "TIGER_l2k_rq/model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+      "TIGER_l2k_rq/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_l2k_rq/reference_contract.json": "219ceebc63668a860491d186c12d7c25916aba6ca19d471455b598e51f80ac34",
+      "TIGER_l2k_rq/train_rqvae.py": "b296bfbcb0eaba12ae6800582f54a808c7b31679a5e247898ff7a508757e6f21",
+      "item_sids.json": "c88c83c9c114ae8f334b4e1dc33a1670cac810bdeaf421aa4ea3b4be30966345",
+      "recall.json": "669f02ffa57fb8a0a60f4ad9e48e0633a23d6b5a552ca8c02c5424712dc7682f",
+      "rqvae_best.pth": "7c18117f7d03c6904edb5ec1cca5cfd2d3698d032f32106bce7472a71234e059"
+    },
+    "key": "TIGER_l2k_rq",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
   "R09": {
     "arm": "TIGER_M2_radial_manifold",
     "duplicate_of": "20",
