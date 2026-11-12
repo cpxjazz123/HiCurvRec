@@ -1,0 +1,50 @@
+Idea：F0R-δ——`TIGER_f0r_rq` 只差清掉 λ 的死代码与陈旧 docstring（其余已合规）
+英文名称：F0R-delta — Delete the Dead LAMBDA_SCALE Path, Then Run
+
+## 一、`#204` 的提交核验结果（已关闭）
+
+`886e7433` 把**实际计算路径**改对了：
+
+- `train_rqvae.py:486 block_budget_lambda` = `min over {encoder, codebooks} ‖g_base‖/‖g_struct‖`，**无系数、无 ε、无回退**，decoder 不计入 block；
+- `probe_lambda_star`（`:514`）已改调 `block_budget_lambda`（`:543`），并落盘 `l_sd`、`l_recon`；
+- 两道闸门已实现：`scale_gate_pass`（`:548`，`λ∈[1e-6,1e3] 且 λ·L_SD ≤ 10·L_recon`）与 `collapse_gate`（`:804`，任一评估点 `collision ≥ 0.40` 即 `SystemExit`）；
+- 秩教师已实现且静态核对正确（`sdh_kernel.rank_teacher`：整数秩、支撑内 `1/(1+rank)`、支撑外 0、逐 anchor 归一化）。
+
+但**验收第 2 条（"源码无 `LAMBDA_SCALE`/`0.1 *`"）未满足**：
+
+- `model/struct_distill.py:109` 仍定义 `LAMBDA_SCALE = 0.1`，`:123` 仍 `return LAMBDA_SCALE * grad_rq / (grad_sd + 1e-12)`（该 `calibrate` 已无调用者，属死代码）；
+- `train_rqvae.py:671` 仍把 `sd_lambda_scale = struct_distill.LAMBDA_SCALE` 写进元数据；
+- `probe_lambda_star` 的 docstring 仍写 `lambda* = 0.1 * ...`，与实际实现不符——审查者若只看文档会读错规则。
+
+## 二、本 Issue 的全部工作量（三处清理，不动机制）
+
+1. 删除 `model/struct_distill.py` 中的 `LAMBDA_SCALE` 与 `calibrate` 函数（及其唯一引用）；
+2. 删除 `train_rqvae.py:671` 的 `sd_lambda_scale` 字段；
+3. 修正 `probe_lambda_star` 的 docstring 为 `lambda* = min over {encoder, codebooks} ‖g_base‖/‖g_struct‖`（与 `block_budget_lambda` 一致）。
+
+**其余一律不动**：秩教师、同码支撑、修正 AF3、F0 起点、两道闸门、开关、预算与 Stage3 协议全部保持 `886e7433` 的状态。
+
+## 三、验收（派发前）
+
+1. `grep -rn "LAMBDA_SCALE\|0\.1 \*" stage2_RQ-VAE/TIGER_f0r_rq --include=*.py` **无输出**；
+2. `probe_lambda_star` 的 docstring 与 `block_budget_lambda` 的公式逐字一致；
+3. `BEHAVIOUR_OFF` 与 `TIGER_mixed_rq_F0` 逐位一致（沿用既有断言）；
+4. 秩教师非均匀断言（支撑内 `max(w)/min(w) ≥ 2`、熵低于均匀）、`UNIFORM_TEACHER` 自检可用；
+5. 两道闸门可触发：构造 `λ*=1e6` 与 `collision=0.9` 的单元用例，断言分别抛 `SCALE_GATE_BLOCKED`、`COLLAPSE_GATE_TRIGGERED`；
+6. `d_κ` 性质 + gradcheck + 编码器非零梯度；
+7. 一 epoch 真实入口冒烟：损失有限、碰撞逐 epoch 记录、导出 SID 有效；
+8. **TDD**：先写会失败的测试（grep 断言、docstring 一致、两闸门触发），红后再改。
+
+## 四、预注册（沿用 `#204`，不变）
+
+1. **尺度闸门**：`λ* ∉ [1e-6,1e3]` 或 `λ*·L_SD > 10·L_recon` ⇒ 不训练；
+2. **塌缩闸门**：任一评估点 `collision ≥ 0.40` ⇒ 立即停止并记负结果；
+3. **科学闸门**：`test_R@10 ≤ 0.057278156`（F0）⇒ 本线关闭。
+
+只跑**一次**（§19g）；不做消融/多种子/扫描；报告并列同族 F0/M1/SIGN/L2K，不得以 `TIGER_RQ-VAE`（E32）作参照列。
+
+## 五、边界
+
+- 树内无绝对路径；`/tmp` 不落产物；checkpoint 绑 κ 表 SHA、教师形态版本、λ 规则版本与开关状态。
+- 判据唯一：`test_R@10`；参照 **0.057278（F0）** / 0.056216（冻结基线）/ 0.064764（禁令族）/ 0.065（成功线）。
+- 被任一闸门拦下或 ≤ F0：本线以"允许类零增益（上限 +1.9%）"结案。

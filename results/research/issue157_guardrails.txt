@@ -1,0 +1,24 @@
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_af3_rank_consistency_rq/gate_guardrails.py:71: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  distances.append(float(ro.edge_distance(prefix_e, prefix_h, pairs, 1.0).mean()))
+{
+  "arm_profile": {
+    "codes_used": 27,
+    "max_share": 0.30810546875,
+    "mean_distance": 0.00038901143397888926
+  },
+  "baseline_profile": {
+    "codes_used": 239,
+    "max_share": 0.0263671875,
+    "mean_distance": 8.05343776845928e-06
+  },
+  "batch": 512,
+  "gate3_codes_used_ok": false,
+  "gate3_max_share_ok": false,
+  "gate3_pass": false,
+  "gate3_spread_ok": true,
+  "gate4_curved_vs_flat": 0.0021663003377607737,
+  "gate4_pass": true,
+  "gate5_structure_off_bitwise": true,
+  "steps": 200
+}

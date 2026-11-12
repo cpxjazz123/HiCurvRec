@@ -1,0 +1,21 @@
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_two_sided_quota_rq/gate_pilot.py:47: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  distance = float(ro.edge_distance(model.rq.last_prefixes[-1][0],
+{
+  "after": {
+    "codes_used": 256,
+    "max_share": 0.00390625,
+    "mean_distance": 0.00015725754697865047
+  },
+  "batch": 512,
+  "before": {
+    "codes_used": 256,
+    "max_share": 0.00390625,
+    "mean_distance": 0.00019906259517761326
+  },
+  "gate3_codes_used_ok": true,
+  "gate3_distance_ok": true,
+  "gate3_max_share_ok": true,
+  "gate3_pass": true,
+  "steps": 200
+}

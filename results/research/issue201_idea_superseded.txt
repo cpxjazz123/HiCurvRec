@@ -1,0 +1,55 @@
+Idea：F0C——起点沿用同族最好的纯几何 F0，但 λ 必须走**仓库既有冻结预算规则**（无 0.1 系数，无自由常数）
+英文名称：F0C — F0 Start with the Frozen Block-Budget Rule (No Free Scale)
+
+## 一、为什么重开（`#200` 的实现被查出实质缺陷，已关闭）
+
+`#200` 的树 `TIGER_f0b_rq` 已完成实现（`2f021926`），核验时发现两处**违反该 Issue 自身约束**的问题：
+
+1. **λ 用了硬编码系数**：`model/struct_distill.py:109` `LAMBDA_SCALE = 0.1`，且
+   `train_rqvae.py:616` 的 `probe_lambda_star` 计算的是
+   `λ* = 0.1 · ‖g_encoder L_RQ‖ / (‖g_encoder L_SD‖ + 1e-12)`
+   —— 只在 **encoder** 一个块上取比值，并乘一个**不可推导的 0.1**。
+   而 Issue #200 明文要求"λ 走既有预算规则（`λ* = min_blocks ‖g_base‖ / ‖g_struct‖`）"且"无自由常数"；仓库里既有的冻结规则是
+   `training_hooks.calibrate_lambda_block_budget`（`struct_mixed/training_hooks.py:60`，`min over {encoder, codebooks}`、无系数）。
+2. **树上带进了含 margin/hinge 的死模块**：`model/af3_hierarchy.py` 内有 `DISCRIMINATION_MARGIN = 0.05` 与 `hierarchical_loss`（把"无关对"压到 margin 之下的 hinge），
+   经 `af3_auxiliary.py` 引用。当前 `train_rqvae.py` 并未导入该链，属死代码；但本线明令禁止 margin 类损失，**不能让它在树里"存在即合理"**。
+
+## 二、沿用部分（机制方向不变）
+
+- **起点**：`stage2_RQ-VAE/TIGER_mixed_rq_F0`（同族最好、纯几何、`recall@10 = 0.057278156`，对冻结基线 +1.9%），只读、逐文件 SHA 记 manifest → 新树 `TIGER_f0c_rq`（`ARM_VARIANT="F0C"`）。
+- **唯一的结构项**：同码支撑 + `A_κ = 1/(1 + d_κ)` 关系蒸馏（`#194` 的形态），教师用**已修正**的 `AF3 = 4 − d_i − d_j + 3·m_ij`（`m_ij` 两跳交集，`#193` 实现），蒸馏与导出注册同一曲率路径。
+- 三级度规、Sinkhorn、码本、E16×H16、残差递推、读出/导出、3000 epoch、seed 42、全局 batch 4096、四卡 50202、Stage3 冻结协议**全部不动**。
+
+## 三、必须改掉的两点（本 Issue 的唯一差异）
+
+1. **λ 用仓库既有冻结规则**：直接调用 `training_hooks.calibrate_lambda_block_budget`（`min over {encoder, codebooks}`），**不得**出现任何常数（不做 `0.1·`、不做只取 encoder 的比值、不引入 ε）。`CALIBRATION_DEGENERATE`（任一 block 梯度为 0）时**不得训练**，如实记录后关闭。
+2. **清掉含 margin/hinge 的死模块**：删除 `model/af3_hierarchy.py` 与 `model/af3_auxiliary.py`（以及任何只被它们引用的东西），并在验收里用机器断言证明训练路径（`train_rqvae.py`、`sd_step.py`、`sdh_kernel.py`、`struct_distill.py`、`model/model.py`、`model/mixed_rq.py`、`model/layers.py`）**不含** `margin`/`hinge`/`infonce`/`bce`/`contrast` 任一符号。
+
+## 四、开关（存在且接线正确，**不训练关闭态**）
+
+- `BEHAVIOUR_OFF`：结构项整项关闭 ⇒ **必须与 `TIGER_mixed_rq_F0` 逐位一致**（loss、逐层码分配、导出 SID）。
+- `SUPPORT_ALL`：支撑放开为全部候选对（等价 #181 形态），仅离线对账、不训练。
+- `BOTH_ON`：出厂。
+
+## 五、预注册
+
+- `test_R@10 ≤ 0.057278156`（F0）⇒ **本线关闭**，不换项、不换支撑、不重跑。
+- 只跑**一次**（§19g）；不做消融、不做多种子、不做参数扫描。
+- 报告必须并列同族 F0 / M1 / SIGN / L2K，**不得**以 `TIGER_RQ-VAE`（E32）作参照列。
+- **若 λ 校准退化（任一 block 梯度为 0）**：按仓库规则拒绝训练，记为预派发负结果并关闭本线，不得改规则或加 ε。
+
+## 六、验收（派发前）
+
+1. `BEHAVIOUR_OFF` 与 `TIGER_mixed_rq_F0` **逐位一致**。
+2. **λ 来源**：源码中不存在 `LAMBDA_SCALE`、`0.1 *`、`probe_lambda_star` 这类自定义标定；唯一入口是 `calibrate_lambda_block_budget`；`λ*` 与各 block 的 `‖g_base‖`、`‖g_struct‖` 一并落盘。
+3. **无 margin/hinge 残留**：`af3_hierarchy.py`、`af3_auxiliary.py` 已删除；机器断言训练路径五个模块不含 `margin|hinge|infonce|bce|contrast`。
+4. 起点确认：新树与 F0 的唯一差异是结构项与 `ARM_NAME`（逐文件 diff 断言），几何代码逐字相同。
+5. 修正 AF3 与 `#193` 实现一致 + 三组图论测试（无三角形/单三角形/多三角形）红→绿留痕。
+6. 蒸馏读出与导出路径 0 分歧（同 batch 码分配完全相同）；`A_κ` 性质（κ=1 与既有双曲距离一致 rtol 1e-6、`i=j ⇒ 1`、梯度有限）+ gradcheck；编码器非零梯度。
+7. 一 epoch 真实入口冒烟；导出统计 + §89 `collision < 0.40`；完成后 §63 分层指标；Stage3 后 §6b 四件归档。
+
+## 七、边界
+
+- 树内无绝对路径；`/tmp` 不落产物；checkpoint 绑 κ 表 SHA、AF3 修正版本、λ 规则版本与开关状态。
+- `collision ≥ 0.40` ⇒ §89 拒绝 Stage3，按负结果关闭。
+- 判据唯一：`test_R@10`；参照 **0.057278（F0，同族最好且允许）** / 0.056216（冻结基线）/ 0.064764（禁令族最好）/ 0.065（成功线）。

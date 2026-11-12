@@ -1,0 +1,27 @@
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_plan_rounded_rq/gate_occupancy.py:70: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  last_distance = float(ro.edge_distance(model.rq.last_prefixes[-1][0],
+{
+  "arm_profile": {
+    "codes_used": 256,
+    "max_share": 0.00390625,
+    "mean_distance": 9.378143757481056e-05
+  },
+  "baseline_profile": {
+    "codes_used": 256,
+    "max_share": 0.00390625,
+    "mean_distance": 6.245144800226927e-06
+  },
+  "batch": 512,
+  "gate1_codes_used_ok": true,
+  "gate1_max_share_ok": true,
+  "gate1_pass": true,
+  "gate3_pass": true,
+  "gate3_rounding_seconds": 0.009502583183348179,
+  "gate7_rounding_off_changes_codes": true,
+  "gate8_codes_used_ok": true,
+  "gate8_max_share_ok": true,
+  "gate8_pass": true,
+  "gate8_spread_ok": true,
+  "steps": 200
+}

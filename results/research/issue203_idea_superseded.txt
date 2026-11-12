@@ -1,0 +1,54 @@
+Idea：F0C-patch——把已建好的 `TIGER_f0b_rq` 就地修成合规树（只改两处），不再从零重建
+英文名称：F0C — Patch the Existing F0B Tree: Two Edits, Nothing Else
+
+## 一、为什么要"就地修"而不是重建（`#201` 已空闲 20 min 未建树）
+
+`TIGER_f0b_rq` 已经具备本方向所需的全部内容，且已通过 15 项验收（起点逐字节等于 F0、几何文件哈希不变、`BEHAVIOUR_OFF` 下不触碰结构路径、AF3 计数 4-环0/三角3/K4 4、`codes_of` 等于导出规则、DDP 集合通信缺陷已修 `9f08a844`）。它**不能派发**的原因只有两条（`#200` 关闭理由）：
+
+1. `model/struct_distill.py:109` `LAMBDA_SCALE = 0.1`，`:123` `λ = 0.1·‖g_enc L_RQ‖/‖g_enc L_SD‖` —— 只在 encoder 一块取比值并乘不可推导常数，违反"λ 走冻结块预算规则、无自由常数"。
+2. `model/af3_hierarchy.py` 内有 `DISCRIMINATION_MARGIN = 0.05` 与 `hierarchical_loss`（margin/hinge），经 `af3_auxiliary.py` 引用；训练路径未导入，但本线禁止 margin 类损失。
+
+因此本臂的任务被压缩为**两处编辑**，其余一律不动。
+
+## 二、两处编辑（本 Issue 的全部工作量）
+
+**编辑 1：λ 换成仓库既有冻结规则。**
+- 删除 `LAMBDA_SCALE` 与 `struct_distill.calibrate` 里的 `0.1·` 形式；`probe_lambda_star` 改为调用
+  `training_hooks.calibrate_lambda_block_budget`（`struct_mixed/training_hooks.py:60`，`λ* = min over {encoder, codebooks} ‖g_base‖/‖g_struct‖`，无系数、无 ε）。
+- `CALIBRATION_DEGENERATE`（任一 block 梯度为 0）⇒ **不得训练**，如实记录后关闭本线。
+- 落盘：`λ*` 与 `{encoder, codebooks}` 每块的 `‖g_base‖`、`‖g_struct‖`。
+
+**编辑 2：删掉 margin/hinge 死模块。**
+- `git rm model/af3_hierarchy.py model/af3_auxiliary.py`（及其只被它们引用的依赖）。
+- 机器断言：训练路径七个模块（`train_rqvae.py`、`sd_step.py`、`sdh_kernel.py`、`struct_distill.py`、`model/model.py`、`model/mixed_rq.py`、`model/layers.py`、`model/__init__.py`）不含 `margin|hinge|infonce|bce|contrast` 任一符号（区分大小写不敏感）。
+
+**其余一律不动**：起点仍为 `TIGER_mixed_rq_F0`（`recall@10 = 0.057278156`，同族最好、纯几何）、同码支撑 + `A_κ = 1/(1+d_κ)`、修正 AF3（`4 − d_i − d_j + 3·m_ij`）、蒸馏与导出同曲率路径、Sinkhorn、码本 K=256、E16×H16、三级递推、读出/导出、3000 epoch、seed 42、全局 batch 4096、四卡 50202、Stage3 协议。
+
+## 三、开关（存在且接线正确，**不训练关闭态**）
+
+- `BEHAVIOUR_OFF`：结构项关闭 ⇒ **必须与 `TIGER_mixed_rq_F0` 逐位一致**（沿用 `faf8a93b`/`48842778` 已建的两个断言：几何文件哈希不变 + 关闭态不触碰结构路径）。
+- `SUPPORT_ALL`：支撑放开为全部候选对，仅离线对账、不训练。
+- `BOTH_ON`：出厂。
+
+## 四、预注册
+
+- `test_R@10 ≤ 0.057278156`（F0）⇒ **本线关闭**，不换项、不换支撑、不重跑。
+- 只跑**一次**（§19g）；不做消融/多种子/扫描。
+- 报告并列同族 F0 / M1 / SIGN / L2K，不得以 `TIGER_RQ-VAE`（E32）作参照列。
+- λ 退化即拒绝训练并记预派发负结果。
+
+## 五、验收（派发前）
+
+1. **两处编辑的 diff 是全部改动**：`git diff` 只含 `struct_distill.py`、`train_rqvae.py`（λ 部分）与两个被删文件；几何文件哈希与 F0 逐字节相同（沿用既有断言）。
+2. **λ 来源断言**：源码中不存在 `LAMBDA_SCALE`、`0.1 *`、自定义标定函数；唯一入口 `calibrate_lambda_block_budget`；`λ*` 与各块梯度范数落盘。
+3. **无 margin 残留**：两文件已删 + 七模块符号断言。
+4. `BEHAVIOUR_OFF` 与 F0 逐位一致（loss、逐层码分配、导出 SID）。
+5. 修正 AF3 与 `#193` 实现一致 + 三组图论测试（无三角形/单三角形/多三角形）红→绿留痕。
+6. 蒸馏读出与导出 0 分歧；`A_κ` 性质 + gradcheck；编码器非零梯度。
+7. 一 epoch 真实入口冒烟；导出统计 + §89 `collision < 0.40`；完成后 §63 分层指标；Stage3 后 §6b 四件归档。
+
+## 六、边界
+
+- 树内无绝对路径；`/tmp` 不落产物；checkpoint 绑 κ 表 SHA、AF3 版本、λ 规则版本与开关状态。
+- `collision ≥ 0.40` ⇒ §89 拒绝 Stage3，按负结果关闭。
+- 判据唯一：`test_R@10`；参照 **0.057278（F0，同族最好且允许）** / 0.056216（冻结基线）/ 0.064764（禁令族最好）/ 0.065（成功线）。
