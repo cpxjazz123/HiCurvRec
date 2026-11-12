@@ -1,0 +1,99 @@
+{
+ "enabled_items": 28,
+ "enabled_item_ids_first": [
+  4155,
+  7772,
+  7775,
+  8670,
+  9753,
+  11536,
+  14068,
+  15879,
+  18904,
+  19286
+ ],
+ "kappa_of_enabled": {
+  "min": 0.0,
+  "q25": 0.029362948741633775,
+  "median": 0.09586729654766013,
+  "q75": 0.38825819603065254,
+  "max": 8.267094668333288,
+  "mean": 0.5350543436754048
+ },
+ "kappa_rows_uniform_one_share": 0.9988597631454468,
+ "batch_size": 1024,
+ "enabled_hits_per_batch": {
+  "samples": [
+   2,
+   0,
+   1,
+   2,
+   0,
+   0,
+   2,
+   3,
+   1,
+   1,
+   0,
+   1,
+   0,
+   1,
+   1,
+   1,
+   0,
+   2,
+   2,
+   2
+  ],
+  "mean": 1.1,
+  "max": 3,
+  "batches_with_none": 6
+ },
+ "expected_items_per_batch": 1.1676168757126568,
+ "gradient_norms_gate_on": {
+  "loss": 0.00014363329682964832,
+  "recon": 6.716467760270461e-05,
+  "encoder_norm": 5.521917038130876e-05,
+  "decoder_norm": 5.6709956203489315e-05,
+  "codebook_norm": 5.143974037466332e-05,
+  "other_norm": 0.0,
+  "encoder_tensors": 8,
+  "decoder_tensors": 8,
+  "codebook_tensors": 3,
+  "other_tensors": 0
+ },
+ "gradient_norms_gate_off": {
+  "loss": 0.00014363348600454628,
+  "recon": 6.716467760270461e-05,
+  "encoder_norm": 5.5220680378436584e-05,
+  "decoder_norm": 5.6709956203489315e-05,
+  "codebook_norm": 5.144032426964409e-05,
+  "other_norm": 0.0,
+  "encoder_tensors": 8,
+  "decoder_tensors": 8,
+  "codebook_tensors": 3,
+  "other_tensors": 0
+ },
+ "source_hooks": {
+  "model.py kappa from ids": [
+   "93: kappa = sign_metric.regime_kappa(item_ids.cpu(), self.delta).to(encoded.device)",
+   "94: readout, quant_loss, unused_codes, tokens = self.rq(encoded, kappa=kappa)",
+   "108: kappa = sign_metric.regime_kappa(item_ids.cpu(), self.delta).to(embeddings.device)",
+   "116: kappa = sign_metric.regime_kappa(item_ids.cpu(), self.delta).to(embeddings.device)"
+  ],
+  "mixed_rq.py level routing": [
+   "377: kappa=(kappa if level == 1 else None))",
+   "397: residual_e, residual_h, alpha, kappa=(kappa if level == 1 else None))"
+  ],
+  "mixed_rq.py cost use": [
+   "85: def mixed_cost_with_kappa(residual_e: torch.Tensor, residual_h: torch.Tensor,",
+   "181: return mixed_cost_with_kappa(residual_e, residual_h, codes_e, codes_h, alpha, kappa, self.curvature)",
+   "231: curved = sign_metric.curved_squared_paired(residual_h, picked_h, kappa)"
+  ],
+  "sign_metric.py regime": [
+   "136: def regime_kappa(item_ids, delta: dict[int, float | None], table: dict | None = None) -> torch.Tensor:",
+   "146: enabled = bool(value is not None and value > 0.0)",
+   "150: return torch.tensor(rows, dtype=torch.float32).clamp_min(KAPPA_FLOOR)"
+  ]
+ }
+}
