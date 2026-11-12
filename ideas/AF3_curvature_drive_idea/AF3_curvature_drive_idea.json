@@ -21,13 +21,7 @@
         "config/train_config.json：lambda、delta、g 初始化所需键"
       ],
       "unchanged": "按仓库冻结配方：config/train_config.json（21 项）+ 现有 losses/、distances/ 注册表；Stage3 协议、结果目录与导出格式沿用仓库约定。"
-    },
-    "5_switches": "三开关：behaviour-off（s=0、g=0）、geometry-off（lambda=0）、both-on；只做接线检查，不训练关闭态。",
-    "6_preregistration": "三档：达到成功线即采纳；落在主参照与成功线之间记正向不足；低于主参照即否定。",
-    "7_verification": "九项公式化检查：kappa、结构势、lambda、初始化、代价携带曲率、开关退化、Sinkhorn 均衡、导出与训练一致、梯度归属。",
-    "8_expectation": "结构失真相对基线降至少 5%，test_R@10 按三档落位。",
-    "9_records": "results/stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/ 与 results/stage3_T5Train/TIGER_af3_curvature_drive_rq/；必记：结构失真、L3 collision、lambda_l、test_final 全部键",
-    "10_boundaries": "按仓库规则执行（§19 / §19g / §19h / §89）：训练划分构图、Sinkhorn 保持均衡、AF3 查冻结表、单次运行"
+    }
   },
   "result": {
     "status": "not_run"

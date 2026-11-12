@@ -2857,10 +2857,11 @@ const ideaUi = {
   mode: document.querySelector('[data-role=ideaMode]'),
 };
 
-const IDEA_REQUIRED_SECTIONS = [
-  '1_goal', '2_hypothesis', '3_start', '4_method', '5_switches',
-  '6_preregistration', '7_verification', '8_expectation', '9_records', '10_boundaries',
-];
+// 机制文件只需要回答四件事：目标、假设、起点、方法。
+// 开关/预注册/检查/记录/边界由方向目录的 verification.json 与仓库规则承担，
+// 所以完整性门槛按这四段判定，而不是按固定的十段。
+const IDEA_REQUIRED_SECTIONS = ['1_goal', '2_hypothesis', '3_start', '4_method'];
+const IDEA_REQUIRED_COUNT = IDEA_REQUIRED_SECTIONS.length;
 
 let ideaSaveTimer = null;
 let ideaDoc = null;
@@ -2967,10 +2968,10 @@ function renderIdeaDoc(doc, error, extras = {}) {
       if (doc[key] !== undefined) ideaUi.kv.appendChild(kvSection(key, flattenRows(doc[key], '', [])));
     }
   }
-  if (ideaUi.count) ideaUi.count.textContent = `${ideaCountSections}/10 段`;
+  if (ideaUi.count) ideaUi.count.textContent = `${ideaCountSections}/${IDEA_REQUIRED_COUNT} 段`;
   if (ideaUi.struct) {
-    ideaUi.struct.textContent = ideaCountSections === 10 ? '结构合格' : '结构不合格（缺段或空段）';
-    ideaUi.struct.dataset.ok = ideaCountSections === 10 ? '1' : '0';
+    ideaUi.struct.textContent = ideaCountSections === IDEA_REQUIRED_COUNT ? '结构合格' : '结构不合格（缺段或空段）';
+    ideaUi.struct.dataset.ok = ideaCountSections === IDEA_REQUIRED_COUNT ? '1' : '0';
   }
   if (ideaUi.input && doc) ideaUi.input.value = JSON.stringify(doc, null, 2);
   refreshIdeaUi();
@@ -2989,7 +2990,7 @@ function refreshIdeaUi() {
   const text = ideaUi.input ? ideaUi.input.value : '';
   if (ideaUi.chars) ideaUi.chars.textContent = `${text.length} 字符`;
   if (ideaUi.btn) {
-    ideaUi.btn.textContent = text.trim() === '' ? 'IDEA（空）' : `IDEA · ${ideaCountSections}/10 段`;
+    ideaUi.btn.textContent = text.trim() === '' ? 'IDEA（空）' : `IDEA · ${ideaCountSections}/${IDEA_REQUIRED_COUNT} 段`;
   }
 }
 
@@ -3045,8 +3046,8 @@ async function saveIdeaNow() {
     if (ideaUi.state) ideaUi.state.textContent = `结构不合格：${err.message}`;
     return;
   }
-  if (doc && countSections(doc) < 10) {
-    if (ideaUi.state) ideaUi.state.textContent = `结构不合格：只有 ${countSections(doc)}/10 段，未保存`;
+  if (doc && countSections(doc) < IDEA_REQUIRED_COUNT) {
+    if (ideaUi.state) ideaUi.state.textContent = `结构不合格：只有 ${countSections(doc)}/${IDEA_REQUIRED_COUNT} 段，未保存`;
     return;
   }
   try {
