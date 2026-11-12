@@ -124,6 +124,46 @@ def test_both_config_spellings_are_accepted() -> str:
     return "the trainer's BETA and the tokeniser's beta both build the same criterion"
 
 
+def _tiny_model():
+    from model import RQVAE
+    import train_rqvae as trainer
+    torch.manual_seed(31)
+    model = RQVAE(trainer._tokenizer_config(), in_dim=8)
+    generator = torch.Generator().manual_seed(5)
+    with torch.no_grad():
+        for layer in model.rq.vq_layers:
+            weight = layer.get_code_embs()
+            weight.copy_(torch.randn(weight.shape, generator=generator))
+    model.train()
+    return model
+
+
+def test_compute_loss_accepts_the_parts_the_forward_returns() -> str:
+    """The framework's checkpoint probe passes forward's own output back into compute_loss."""
+    model = _tiny_model()
+    batch = torch.randn(4, 8, generator=torch.Generator().manual_seed(7))
+    reconstructed, quant_parts, _, _ = model(batch)
+    total, recon = model.compute_loss(batch, reconstructed, quant_parts)
+    want_total, components = losses.build_loss(model.config)(reconstructed, batch, quant_parts)
+    if not torch.equal(total, want_total):
+        raise AssertionError("compute_loss does not score the parts with the registry")
+    if not torch.equal(recon, components["reconstruction"]):
+        raise AssertionError("compute_loss returned a different reconstruction term")
+    return "compute_loss scores the parts list the forward hands out"
+
+
+def test_compute_loss_still_takes_a_precomputed_scalar() -> str:
+    """Trees outside the trainer (older probes) may pass the scalar they computed."""
+    model = _tiny_model()
+    batch = torch.randn(4, 8, generator=torch.Generator().manual_seed(9))
+    reconstructed, _, _, _ = model(batch)
+    scalar = torch.tensor(0.5)
+    total, recon = model.compute_loss(batch, reconstructed, scalar)
+    if not torch.equal(total, recon + scalar):
+        raise AssertionError("a precomputed scalar is no longer accepted")
+    return "a precomputed quantisation scalar still adds to the reconstruction term"
+
+
 def main() -> int:
     failures = 0
     for test in (test_each_term_has_its_own_module,
@@ -131,7 +171,9 @@ def main() -> int:
                  test_the_total_is_the_sum_of_its_parts,
                  test_an_unknown_loss_name_is_refused,
                  test_the_trainer_does_no_loss_arithmetic,
-                 test_both_config_spellings_are_accepted):
+                 test_both_config_spellings_are_accepted,
+                 test_compute_loss_accepts_the_parts_the_forward_returns,
+                 test_compute_loss_still_takes_a_precomputed_scalar):
         try:
             print("PASS %s: %s" % (test.__name__, test()), flush=True)
         except AssertionError as exc:

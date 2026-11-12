@@ -7,7 +7,7 @@ from typing import Any
 import torch
 import torch.nn as nn
 
-from losses import build_loss
+from losses import build_loss, reconstruction_loss
 
 from .layers import MLP, RQLayer
 
@@ -51,12 +51,17 @@ class RQVAE(nn.Module):
         self,
         embeddings: torch.Tensor,
         reconstructed: torch.Tensor,
-        quant_parts: list,
+        quant,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Total and reconstruction loss, computed by the registry, not here.
 
-        Kept for callers outside the trainer (a snapshot, a probe); the training
-        loop builds the criterion itself from `losses.build_loss`.
+        `quant` is what `forward` handed out: the per-level `(commitment, codebook)`
+        parts. A caller outside the trainer that computed the scalar itself may still
+        pass that scalar, which is added as before -- the framework's checkpoint probe
+        does exactly that with a tree whose forward returns a loss.
         """
-        total, components = build_loss(self.config)(reconstructed, embeddings, quant_parts)
+        if torch.is_tensor(quant):
+            recon_only = reconstruction_loss(reconstructed, embeddings)
+            return recon_only + quant, recon_only
+        total, components = build_loss(self.config)(reconstructed, embeddings, quant)
         return total, components["reconstruction"]

@@ -1321,13 +1321,24 @@ else:
     radius = None
     if table is not None and int(getattr(table, "numel", lambda: 0)()) > 0:
         radius = table[batch_ids]
+    # The forward's ARITY is the tree's: the frozen baseline takes `(x)` while a
+    # behaviour tree takes `(x, item_ids)`. Passing the ids unconditionally failed
+    # every baseline dispatch that had a checkpoint to probe -- the failure was the
+    # probe's, not the tree's.
+    import inspect
+    try:
+        arity = len([p for p in inspect.signature(probe_model.forward).parameters.values()
+                     if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)])
+    except (TypeError, ValueError):
+        arity = 2
+    forward_args = (batch, batch_ids) if arity >= 2 else (batch,)
     # Only a tree that carries a radius table takes the keyword: passing it
     # unconditionally breaks every candidate whose forward is (x, item_ids), and
     # the failure is the probe's, not the tree's.
     if radius is None:
-        probed = probe_model(batch, batch_ids)
+        probed = probe_model(*forward_args)
     else:
-        probed = probe_model(batch, batch_ids, radius=radius)
+        probed = probe_model(*forward_args, radius=radius)
     # The forward's return shape is the tree's, not the probe's: the frozen
     # baseline returns (reconstructed, quant_loss, unused, tokens) and a
     # behaviour tree may return a fifth value (the reference the reconstruction
