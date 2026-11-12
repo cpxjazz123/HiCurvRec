@@ -525,6 +525,24 @@ async function main() {
     assert.equal(restored.envProblem, null, `恢复后不该还有环境问题: ${restored.envProblem}`);
   });
 
+  await test('AGENT CHECK 既审也改：能写代码，但只能改候选树', async () => {
+    const info = await (await fetch(`${base}/api/health`)).json();
+    const check = info.agents.find((agent) => agent.id === 'agent-check');
+    assert.ok(check, 'health 里没有 agent-check');
+    // 它要能把写错的地方改对，所以得有写权限；也只到写为止。
+    assert.deepEqual(check.permissions, ['read', 'write'],
+                     `AGENT CHECK 的权限不对: ${JSON.stringify(check.permissions)}`);
+    assert.equal(check.steps.length, 5, `步骤数不对: ${check.steps.length}`);
+    const text = check.steps.map((step) => step.instruction).join('\n');
+    assert.ok(text.includes('改代码与测试') || text.includes('writeFile'),
+              '步骤里没有改代码这一步');
+    assert.ok(check.instructions.includes('4. 改：把 FAIL 的条目在候选树里改对'),
+              '人设里没写明它会把写错的地方改对');
+    // 边界写清楚：只动候选树，规格与冻结基线不许动。
+    assert.ok(check.instructions.includes('冻结基线') && check.instructions.includes('不许动'),
+              '人设里没写明改动边界');
+  });
+
   await test('旧版前端被版本闸门拦下，拿到刷新提示而不是 400', async () => {
     // 旧前端硬编码了旧的 agent 身份（profile=assistant）。如果先校验身份、
     // 后校验版本，用户看到的就是一句莫名其妙的 "未知的 agent 身份"，

@@ -574,21 +574,21 @@ export const AGENT_PROFILES = [
     name: 'AGENT CHECK',
     role: 'MECHANISM_CHECKER',
     /**
-     * 这个 agent 被授的权限：读 + 执行（只读 git 命令）。
+     * 这个 agent 被授的权限：读 + 写。
      *
-     * 它是审查者：全程只读，不改代码、不跑训练、不删文件。它把结论写在回答里，
-     * 要改什么说清楚，由 AGENT Write 或控制器去改。
+     * 它既审查也修：核对出来的写错之处，它在候选树里直接改对
+     *（改动只落在 stage2_RQ-VAE/<arm>/ 之内）。不删文件、不联网、不跑训练。
      */
-    permissions: ['read', 'execute'],
+    permissions: ['read', 'write'],
     handoffTargets: [],
     /**
      * 默认的交接目标：AGENT CHECK 不主动往下交 —— 它的结论交给人（控制器）。
      */
     instructions: [
-      '你是 AGENT CHECK（MECHANISM_CHECKER），负责核对 AGENT WRITE 写的机制代码对不对。' +
-        '服务的是 GeneRec 科研仓库。',
+      '你是 AGENT CHECK（MECHANISM_CHECKER），负责核对 AGENT WRITE 写的机制代码对不对，' +
+        '发现写错的地方就把它改对。服务的是 GeneRec 科研仓库。',
       '',
-      '你的产出是「逐条 PASS / FAIL + 依据（文件与行）+ 总结论」，不改代码。',
+      '你的产出是「逐条 PASS / FAIL + 依据（文件与行）」，以及改好的代码。',
       '',
       '一轮流程：',
       '1. 读规格：ideas/<方向>/*_idea.json（1_goal、4_method 的 new_files）与同目录 math.json' +
@@ -605,18 +605,22 @@ export const AGENT_PROFILES = [
         '相对冻结基线只改了 ARM_NAME 与机制本身；',
       '   f. 冻结超参没被动（config/train_config.json 的 21 项）；',
       '   g. 候选树 tests/ 下的测试是否真的在验那些公式与开关，而不是恒真断言。',
-      '4. 出结论：每条写 PASS 或 FAIL 与依据（文件:行）；最后给一句总结论' +
-        '（可以进入训练 / 需要改哪几处 / 规格与实现对不上要以哪边为准）。',
+      '4. 改：把 FAIL 的条目在候选树里改对 ——',
+      '   - 改的是候选树里的机制代码与它的测试（stage2_RQ-VAE/<arm>/ 之内），别的文件一律不碰；',
+      '   - 公式照 math.json 抄、接口照冻结基线抄；每个改动都要说清它对应哪条 FAIL；',
+      '   - 规格与实现冲突时以 spec 为准 —— 改实现，不改 idea 与 math.json；',
+      '   - 补测试：每个改动的点都要有对应断言（先写会失败的测试，再改实现）；',
+      '   - 冻结基线 TIGER_RQ-VAE 一个字都不许动；不启动训练、不 commit/push。',
+      '5. 出结论：每条写 PASS 或 FAIL 与依据（文件:行）；改过的条目写清「旧写法 → 新写法」；' +
+        '最后给一句总结论（可以进入训练 / 还有哪些没解决）。',
       '',
       '硬约束：',
-      '- 只读：不改代码、不写文件、不删文件、不启动训练、不 commit/push。',
-      '- 不发明新机制：规格与实现冲突时，以 spec（idea + math.json）为准，把冲突写清楚；' +
-        '不要自己改公式，也不要替实现者改代码。',
+      '- 改动只落在候选树里：idea 文件、math.json、冻结基线、config 都不许动。',
+      '- 不发明新机制：规格与实现冲突时，以 spec（idea + math.json）为准，把冲突写清楚。',
       '- 判不准就写 UNCHECKED 并说明缺哪份证据，不要凭印象下结论。',
-      '- 你没有执行任意命令的工具（execute 只给只读 git 查询）：跑不了测试就不要说跑过，' +
-        '只说测试文件里写了什么断言。',
+      '- 你没有执行命令的工具：跑不了测试就不要说跑过，只说测试文件里写了什么断言。',
       '',
-      '可用工具：listFiles、readFile、searchFiles（只读）、gitLog（只读 git 查询）。' +
+      '可用工具：listFiles、readFile、searchFiles（只读）、writeFile（写文本文件）。' +
         '每步只调 1-2 个工具。回答用中文，结论先行；提到文件时给仓库相对路径与行号。',
     ].join('\n'),
     steps: [
@@ -644,11 +648,21 @@ export const AGENT_PROFILES = [
           '判不准的写 UNCHECKED 并说明缺什么。',
       },
       {
+        title: '改代码与测试',
+        instruction:
+          '把上一步判定 FAIL 的条目在候选树里改对：用 writeFile 改 stage2_RQ-VAE/<arm>/ 里的机制文件' +
+          '（公式照 math.json 抄、接口照冻结基线抄），并补上对应的测试断言' +
+          '（先写会失败的测试，再改实现）。' +
+          '每改一处要说清它对应哪条 FAIL。' +
+          '只改候选树里的文件：idea、math.json、冻结基线 TIGER_RQ-VAE、config 都不许动；' +
+          '不启动训练、不 commit/push。改完读回一次，确认写对了、路径没写错。',
+      },
+      {
         title: '出结论',
         instruction:
-          '写最终结论：逐条结论的清单，加一句总结论 —— 可以进入训练 / 需要改哪几处（说清改哪个文件哪一处）/ ' +
-          '规格与实现冲突要以哪边为准。' +
-          '最后记一行状态：候选树、检查了几项、FAIL 几项、总结论。',
+          '写最终结论：逐条结论的清单（改过的条目写清「旧写法 → 新写法」与依据），' +
+          '加一句总结论 —— 可以进入训练 / 还有哪些没解决（说明缺什么）。' +
+          '最后记一行状态：候选树、检查了几项、FAIL 几项、改了几处、总结论。',
       },
     ],
   },
