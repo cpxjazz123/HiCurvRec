@@ -13,6 +13,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 import * as config from './config.js';
@@ -538,6 +539,14 @@ async function handleRun(req, res, url, mode) {
     return;
   }
 
+  // 运行环境是硬约束：主机或工作目录不对就拒绝启动，不让 agent 在别处读写。
+  const envProblem = config.agentEnvProblem();
+  if (envProblem) {
+    res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ error: envProblem }));
+    return;
+  }
+
   const { handoff, handoffFrom, clientVersion, instructions } = request;
   let prompt = request.prompt.trim();
   // 没有要求、但有上游的交接结果：照样能跑 ——
@@ -768,6 +777,11 @@ export function createServer({
           model: config.MODEL_ID,
           provider: config.PROVIDER_NAME,
           sandboxRoot: config.SANDBOX_ROOT,
+          // 所有 agent 的工作目录与运行主机（硬约束，页面与测试都读这里）。
+          workdir: config.AGENT_WORKDIR,
+          requiredHost: config.AGENT_HOST,
+          host: os.hostname(),
+          envProblem: config.agentEnvProblem(),
           frontendVersion: config.FRONTEND_VERSION,
           protocolVersion: config.PROTOCOL_VERSION,
           // 权限目录：页面上的权限区按它铺复选框。
@@ -907,8 +921,12 @@ export function createServer({
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   createServer().listen(config.PORT, config.HOST, () => {
+    const problem = config.agentEnvProblem();
     process.stdout.write(
-      `agent-vis (${config.MODE}) listening on http://${config.HOST}:${config.PORT}\n`,
+      `agent-vis (${config.MODE}) listening on http://${config.HOST}:${config.PORT}\n` +
+        `  agent workdir ${config.AGENT_WORKDIR} on ${os.hostname()}`
+        + ` (required host ${config.AGENT_HOST})`
+        + (problem ? `\n  REFUSING RUNS: ${problem}` : '\n'),
     );
   });
 }

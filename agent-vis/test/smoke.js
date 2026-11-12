@@ -400,6 +400,37 @@ async function main() {
                  'AGENT MATH 的输入框预填指令该指向 math.json');
   });
 
+  await test('每个 agent 的工作目录与运行主机是硬约束', async () => {
+    const info = await (await fetch(`${base}/api/health`)).json();
+    assert.equal(info.workdir, config.AGENT_WORKDIR, `workdir 不对: ${info.workdir}`);
+    assert.equal(info.requiredHost, config.AGENT_HOST, `requiredHost 不对: ${info.requiredHost}`);
+    assert.equal(typeof info.host, 'string');
+    assert.ok(info.host.length > 0, 'health 没报当前主机名');
+    assert.equal(info.envProblem, null, `本机不该有环境问题: ${info.envProblem}`);
+    // 目录就是那个仓库：三个标记目录都在。
+    assert.equal(config.agentWorkdirOk(), true,
+                 `${config.AGENT_WORKDIR} 下缺仓库目录`);
+    // 主机名判定：本名、带域名后缀都算对，别的主机不算。
+    assert.equal(config.agentHostOk(config.AGENT_HOST), true);
+    assert.equal(config.agentHostOk(`${config.AGENT_HOST}.massive.org.au`), true);
+    assert.equal(config.agentHostOk('m3g105'), false, '别的主机不能算通过');
+    assert.equal(config.agentEnvProblem(), null);
+  });
+
+  await test('环境不对时运行请求被拒绝，而不是跑到别处去', async () => {
+    // 判定函数带上假的主机名/目录：必须给出可执行的原因，而不是静默放行。
+    const wrongHost = config.agentEnvProblem({ hostname: 'm3g999' });
+    assert.equal(typeof wrongHost, 'string');
+    assert.ok(wrongHost.includes(config.AGENT_HOST),
+              `原因里要点名要求的主机: ${wrongHost}`);
+    const wrongDir = config.agentEnvProblem({ workdir: '/proc' });
+    assert.equal(typeof wrongDir, 'string');
+    assert.ok(wrongDir.includes(config.AGENT_WORKDIR) || wrongDir.includes('/proc'),
+              `原因里要点名目录: ${wrongDir}`);
+    // 本机（真主机名 + 真目录）必须通过。
+    assert.equal(config.agentEnvProblem(), null);
+  });
+
   await test('旧版前端被版本闸门拦下，拿到刷新提示而不是 400', async () => {
     // 旧前端硬编码了旧的 agent 身份（profile=assistant）。如果先校验身份、
     // 后校验版本，用户看到的就是一句莫名其妙的 "未知的 agent 身份"，

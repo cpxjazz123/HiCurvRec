@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-12.13';
+export const FRONTEND_VERSION = '2026-11-13.1';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -68,9 +68,54 @@ export const DEFAULT_PUBLIC_PATH = readPublicPath();
 /** 前缀拼进 URL 时的样子：'' 或 '/vis-3f9a2c71'。 */
 export const PUBLIC_PATH_PREFIX = DEFAULT_PUBLIC_PATH ? `/${DEFAULT_PUBLIC_PATH}` : '';
 
-/** 仓库根。agent 的工具只能在它下面读，越界直接报错。 */
+/**
+ * 所有 agent 的工作目录：仓库根的固定绝对路径（owner 指定）。
+ *
+ * 这是硬约束，不是默认值：每个 agent 的会话都以它为 cwd，它下面的文件工具
+ * 也只在它之内读写。用绝对路径而不是从 HERE 推导 —— 同一棵树在集群上有多个挂载名
+ * （/home/... 与 /fs04/...），owner 要的是这一个。
+ */
+export const AGENT_WORKDIR = '/home/wlia0047/ar57/wenyu/GeneRec';
+
+/** 所有 agent 必须运行在这台主机上（owner 指定）。 */
+export const AGENT_HOST = 'm3g104';
+
+/** 主机名是否满足要求：允许带域名后缀（m3g104.massive.org.au 也算对）。 */
+export function agentHostOk(hostname = os.hostname()) {
+  const name = String(hostname || '').trim().toLowerCase();
+  const want = AGENT_HOST.toLowerCase();
+  return name === want || name.startsWith(`${want}.`);
+}
+
+/** 工作目录是不是那个仓库：用三个必备目录当标记，挂错盘会缺。 */
+export function agentWorkdirOk(dir = AGENT_WORKDIR) {
+  return ['stage2_RQ-VAE', 'stage1_GeneEmbedding', 'results'].every((marker) => {
+    try {
+      return fs.statSync(path.join(dir, marker)).isDirectory();
+    } catch {
+      return false;
+    }
+  });
+}
+
+/**
+ * 运行环境不满足要求时返回一句可执行的原因，满足时返回 null。
+ *
+ * 跑之前检查：换主机或挂错盘时，宁可拒绝启动也不要让 agent 在别处读写。
+ */
+export function agentEnvProblem({ hostname = os.hostname(), workdir = AGENT_WORKDIR } = {}) {
+  if (!agentHostOk(hostname)) {
+    return `agent 必须在 ${AGENT_HOST} 上运行，当前主机是 ${hostname}`;
+  }
+  if (!agentWorkdirOk(workdir)) {
+    return `agent 的工作目录不可用：${workdir} 下缺 stage2_RQ-VAE / stage1_GeneEmbedding / results`;
+  }
+  return null;
+}
+
+/** 仓库根（服务端自己读源码用）。agent 的工具边界是 AGENT_WORKDIR。 */
 export const REPO_ROOT = path.resolve(HERE, '..');
-export const SANDBOX_ROOT = REPO_ROOT;
+export const SANDBOX_ROOT = AGENT_WORKDIR;
 
 /**
  * 模型后端：pi agent 的自定义 provider（OpenAI 兼容的 commandcode 通道）。

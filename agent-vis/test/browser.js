@@ -1703,7 +1703,11 @@ async function main() {
     check('新面板的部件与 AGENT A 一样', rolesNew === rolesA, `${rolesNew} / ${rolesA}`);
 
     // 给新 agent 写一份系统提示词，跑起来 —— 它得真的按这份提示词回答。
-    const NEW_INSTRUCTIONS = '你只需要回答一句话：新建的 agent 生效。不要调用任何工具。';
+    // 复述用固定标记而不是一句自然语言：模型会把句子改写（"生效" → "已经生效"），
+    // 这里要验的是"用的是这份提示词"，不是它的文风。
+    const NEW_AGENT_MARKER = 'NEW_AGENT_MARKER_42';
+    const NEW_INSTRUCTIONS =
+      `只回答这个字符串，一个字都不要改：${NEW_AGENT_MARKER}。不要调用任何工具。`;
     postBodies.length = 0;
     await cdp.evaluate(
       runInPanel(
@@ -1754,7 +1758,7 @@ async function main() {
     const newAnswer = await cdp.evaluate(panelFinalAnswer(newPanelId));
     check(
       '新 agent 按自己写的提示词回答',
-      typeof newAnswer === 'string' && newAnswer.includes('新建的 agent 生效'),
+      typeof newAnswer === 'string' && newAnswer.includes(NEW_AGENT_MARKER),
       String(newAnswer).slice(0, 140),
     );
 
