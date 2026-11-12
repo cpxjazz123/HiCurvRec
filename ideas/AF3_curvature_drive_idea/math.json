@@ -2,11 +2,12 @@
   "symbols": {
     "i, j": "商品下标；N(i) 为训练划分共现图里 i 的邻居集合",
     "l = 1, 2, 3": "残差层号",
+    "N_l": "残差层数（= config 的 CODEBOOK_NUM = 3）",
     "d_i": "商品 i 在训练共现图里的度",
     "T_ij": "商品 i 与 j 在训练共现图里的共同邻居数",
     "kappa_ij": "AF3 曲率（一条边的标量）",
     "s_i": "商品 i 的结构势（全图标准化的标量）",
-    "z_i": "第 l 层编码器给出的残差向量",
+    "z_i^(l)": "第 l 层编码器给出的残差向量",
     "c_k": "第 l 层码本里的第 k 个码字",
     "g_k^(l)": "第 l 层第 k 个码字的码字势（可训练标量）",
     "lambda_l": "第 l 层把势差换算成距离单位的标定系数（初始化时算定，不训练）",
@@ -43,17 +44,17 @@
     },
     {
       "name": "lambda_calibration",
-      "formula": "den_l = median_i |s_i - g_{token_l(i)}^(l)|；lambda_l = median_i d(z_i, c_{token_l(i)}) / den_l，若 den_l > eps；否则 lambda_l = 0",
+      "formula": "den_l = median_i |s_i - g_{token_l(i)}^(l)|；lambda_l = median_i d(z_i^(l), c_{token_l(i)}) / den_l，若 den_l > eps；否则 lambda_l = 0",
       "note": "初始化后算定一次写入指标；eps = 1e-8。den_l 过小（例如每码只分到一件商品、s_i = g 处处成立）时取 0，即退化为纯基线 d；den_l 与 lambda_l 一起记录进 metrics"
     },
     {
       "name": "assignment_cost",
-      "formula": "C_ik^(l) = d(z_i, c_k) + lambda_l * H_delta(s_i - g_k^(l))",
+      "formula": "C_ik^(l) = d(z_i^(l), c_k) + lambda_l * H_delta(s_i - g_k^(l))",
       "note": "每层各自一份代价矩阵；基线的欧氏项原样保留"
     },
     {
       "name": "assignment",
-      "formula": "末层 l = L：Q^(L) = Sinkhorn(center(C^(L)); epsilon = sk_epsilon, iters = sk_iters)，token_L(i) = argmax_k Q_ik^(L)；其余层 l < L：token_l(i) = argmin_k C_ik^(l)",
+      "formula": "末层 l = N_l：Q^(N_l) = Sinkhorn(center(C^(N_l)); epsilon = sk_epsilon, iters = sk_iters)，token_{N_l}(i) = argmax_k Q_ik^(N_l)；其余层 l < N_l：token_l(i) = argmin_k C_ik^(l)",
       "note": "与基线一致：Sinkhorn 只作用于最后一层，其余层是代价矩阵上的 argmin（基线 model/layers.py 用 epsilon = -1.0 关掉非末层的 Sinkhorn）；势差项进每一层的代价 C"
     },
     {
@@ -63,12 +64,12 @@
     },
     {
       "name": "total_loss",
-      "formula": "L = L_recon + (1/L) * sum_l [ codebook_l + beta * commitment_l ] + structural_weight * L_struct",
+      "formula": "L = L_recon + (1/N_l) * sum_l [ codebook_l + beta * commitment_l ] + structural_weight * L_struct",
       "note": "前两项与基线逐位相同：beta = config 的 BETA = 0.25 压在 commitment 上，量化项按层取平均（losses/quantization.py:quantization_total），不是各项权重 1.0 直接相加；structural_weight = 1.0"
     },
     {
       "name": "gradient_routing",
-      "formula": "dL_struct/dg != 0；dL_struct/dz = 0；dL/dz 经 straight-through 估计器来自量化项",
+      "formula": "dL_struct/dg != 0；dL_struct/dz_i^(l) = 0；dL/dz_i^(l) 经 straight-through 估计器来自量化项",
       "note": "argmax 与 Sinkhorn 的不可微部分不进结构项的梯度通路"
     }
   ],
