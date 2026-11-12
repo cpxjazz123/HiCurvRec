@@ -637,7 +637,9 @@ def probe_lambda_star(module, batch, full_embeddings, batch_ids, rows, neighbour
     quantized = z + (readout - z).detach()
     recon = module.decoder(quantized)
     _sync("decoder done")
-    rq_loss = torch.nn.functional.mse_loss(recon, embeddings) + quant_loss
+    # the reconstruction term is measured on the batch; the structural term indexes the whole catalogue by item id,
+    # so it has to be given the whole table -- passing the batch rows there was an out-of-range index, which CUDA reports as a device-side assert
+    rq_loss = torch.nn.functional.mse_loss(recon, batch) + quant_loss
     sd_loss = sd_step.structural_loss(module, full_embeddings, batch_ids, rows, neighbours, two_hop, n_items)
     _sync("structural loss done")
     return struct_distill.calibrate(grad_norm(rq_loss), grad_norm(sd_loss))
