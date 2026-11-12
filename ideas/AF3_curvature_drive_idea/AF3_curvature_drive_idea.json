@@ -1,13 +1,10 @@
 {
   "title": "AF3 图曲率驱动残差分配：曲率势进入 Sinkhorn 代价，码字势由结构项训练",
   "date": "2026-11-12",
-  "supersedes": "C-212（同 SID 噪声标定，已完成）",
   "sections": {
     "1_goal": {
       "statement": "在主线上加一层：AF3 曲率势驱动残差分配，其余沿用冻结配方。"
     },
-    "2_hypothesis": "曲率分层的前缀会抬高 Stage3 test_R@10：R 超过主参照，且冻结支撑上的结构失真明显下降。",
-    "3_start": "起点是仓库冻结基线树；当前 SID 与 recall 取该树最近一次正式运行；对照取主参照的读数。",
     "4_method": {
       "single_variable": "新增 AF3 曲率项，接进每层分配的代价与结构项。",
       "new_files": [

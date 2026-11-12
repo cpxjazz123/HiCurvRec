@@ -2857,10 +2857,10 @@ const ideaUi = {
   mode: document.querySelector('[data-role=ideaMode]'),
 };
 
-// 机制文件只需要回答四件事：目标、假设、起点、方法。
-// 开关/预注册/检查/记录/边界由方向目录的 verification.json 与仓库规则承担，
-// 所以完整性门槛按这四段判定，而不是按固定的十段。
-const IDEA_REQUIRED_SECTIONS = ['1_goal', '2_hypothesis', '3_start', '4_method'];
+// 机制文件回答两件事：目标与方法（方法里写明要新建哪些文件）。
+// 假设、起点、开关、预注册、检查、记录、边界由 verification.json 与仓库规则承担，
+// 所以完整性门槛按这两段判定，而不是按固定的十段。
+const IDEA_REQUIRED_SECTIONS = ['1_goal', '4_method'];
 const IDEA_REQUIRED_COUNT = IDEA_REQUIRED_SECTIONS.length;
 
 let ideaSaveTimer = null;
