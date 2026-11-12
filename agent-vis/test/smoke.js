@@ -1,0 +1,1289 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { createServer, runStatus } from '../server.js';
+import { config } from '../server.js';
+import { createStore, applyChunk, foldText, roundEnded, ROUND_END_TOOL } from '../public/protocol.js';
+import { runMockChunks } from '../mock-agent.js';
+import {
+  PERMISSION_CATALOG,
+  buildHandoffPrompt,
+  buildPermissionPrompt,
+  normalizePermissions,
+  resolvePermissions,
+} from '../config.js';
+import { PI_TOOLS, toolsForPermissions } from '../live-agent.js';
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+
+/**
+ * 测试用的数据目录。
+ *
+ * 配置与对话记录现在会落盘；测试跑在自己的目录里（仓库内的 .out/），
+ * 不然每次跑测试都会往用户自己的 .data/ 里写东西。
+ */
+const SCRATCH_DATA = path.join(HERE, '..', '.out', 'smoke-data');
+
+/**
+ * 离线协议一致性测试：不联网、不调用 LLM。
+ *
+ * 覆盖三件事：
+ *   1. 静态资源与路径安全；
+ *   2. 服务端输出的是标准 AI SDK v7 UI message stream（header + 帧格式 + [DONE]）；
+ *   3. 前端 reducer 能把这一串分片还原成时间轴模型。
+ *
+ * 真实 agent 的端到端检查在 test/browser.js（真浏览器 + 真模型）。
+ */
+
+let passed = 0;
+const failures = [];
+
+async function test(name, fn) {
+  try {
+    await fn();
+    passed += 1;
+    process.stdout.write(`  ✓ ${name}\n`);
+  } catch (err) {
+    failures.push({ name, err });
+    process.stdout.write(`  ✗ ${name}\n    ${err && err.message}\n`);
+  }
+}
+
+function listen(server) {
+  return new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', () => resolve(server.address().port));
+  });
+}
+
+function close(server) {
+  return new Promise((resolve) => server.close(resolve));
+}
+
+/** 读取 SSE 响应并按帧拆开。 */
+async function readSse(url, { signal, method = 'GET', payload } = {}) {
+  // mock 模式的 140ms/块延迟是给人眼看的动画；测试要的只是协议与内容，
+  // 直接把延迟关掉（instant=1），几十条断言就从分钟级掉到秒级。
+  let target = url;
+  if (target.includes('/api/run') && !target.includes('instant=')) {
+    target += target.includes('?') ? '&instant=1' : '?instant=1';
+  }
+  const init = { method, signal };
+  if (payload !== undefined) {
+    init.headers = { 'Content-Type': 'application/json' };
+    init.body = JSON.stringify(payload);
+  }
+  const res = await fetch(target, init);
+  const body = await res.text();
+  const frames = [];
+  for (const block of body.split('\n\n')) {
+    const dataLines = block
+      .split('\n')
+      .filter((line) => line.startsWith('data:'))
+      .map((line) => line.slice(5).trim());
+    if (dataLines.length > 0) frames.push(dataLines.join('\n'));
+  }
+  return { res, body, frames };
+}
+
+function parseChunks(frames) {
+  return frames
+    .filter((frame) => frame !== '[DONE]')
+    .map((frame) => JSON.parse(frame));
+}
+
+/** 从首页 HTML 里截出一个既有面板的片段（从 <section 到对应的 </section>）。 */
+function extractPanel(html, id) {
+  const at = html.indexOf(`id="${id}"`);
+  if (at < 0) return null;
+  const open = html.lastIndexOf('<section', at);
+  const end = html.indexOf('</section>', at);
+  if (open < 0 || end < 0) return null;
+  return html.slice(open, end);
+}
+
+/** 从首页 HTML 里截出模板的**内容**（不含 <template> 本身）。 */
+function extractTemplate(html, id) {
+  const at = html.indexOf(`<template id="${id}">`);
+  if (at < 0) return null;
+  const openEnd = html.indexOf('>', at) + 1;
+  const end = html.indexOf('</template>', openEnd);
+  if (end < 0) return null;
+  return html.slice(openEnd, end);
+}
+
+/**
+ * 页面的"骨架"：只看标签名与 data-role，不看文字与属性值。
+ *
+ * 用它比对新建 agent 的模板与既有面板是不是同一种形式 ——
+ * 只比对 data-role 的集合会漏掉标签结构本身的差异。
+ */
+function skeleton(html) {
+  return (html.match(/<[a-zA-Z][^>]*>/g) || [])
+    .map((tag) => {
+      const name = tag.match(/^<([a-zA-Z][\w-]*)/)[1];
+      const role = tag.match(/data-role="([^"]+)"/);
+      return role ? `${name}[${role[1]}]` : name;
+    })
+    .join(' ');
+}
+
+async function main() {
+  process.stdout.write('agent-vis 离线协议测试\n');
+
+  // publicPath: '' —— 测试要的是不带访问门槛的裸服务。仓库里的
+  // .local-public-path 是给公网入口用的，本地跑测试不该被它挡住。
+  fs.rmSync(SCRATCH_DATA, { recursive: true, force: true });
+  const server = createServer({ mode: 'mock', publicPath: '', dataDir: SCRATCH_DATA });
+  const port = await listen(server);
+  const base = `http://127.0.0.1:${port}`;
+
+  /** PUT 一个 agent 的配置，返回 {status, json}。 */
+  const putAgentConfig = (id, patch) =>
+    fetch(`${base}/api/agents/${id}/config`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    }).then(async (res) => ({ status: res.status, json: await res.json().catch(() => null) }));
+
+  await test('静态资源返回正确的 content-type', async () => {
+    for (const [route, type] of [
+      ['/', 'text/html'],
+      ['/app.js', 'text/javascript'],
+      ['/protocol.js', 'text/javascript'],
+      ['/style.css', 'text/css'],
+    ]) {
+      const res = await fetch(`${base}${route}`);
+      assert.equal(res.status, 200, `${route} 状态码`);
+      assert.match(res.headers.get('content-type'), new RegExp(type));
+    }
+  });
+
+  await test('未知路由返回 404', async () => {
+    const res = await fetch(`${base}/no-such-file`);
+    assert.equal(res.status, 404);
+  });
+
+  await test('路径穿越无法读到源码', async () => {
+    const res = await fetch(`${base}/../server.js`);
+    assert.notEqual(res.status, 200);
+    const text = await res.text();
+    assert.ok(!text.includes('createServer'), '响应体泄露了服务端源码');
+  });
+
+  await test('/api/health 报告模式与模型', async () => {
+    const res = await fetch(`${base}/api/health`);
+    assert.equal(res.status, 200);
+    const info = await res.json();
+    assert.equal(info.ok, true);
+    assert.equal(info.mode, 'mock');
+    assert.equal(typeof info.model, 'string');
+    assert.equal(info.frontendVersion, config.FRONTEND_VERSION);
+    assert.equal(info.protocolVersion, config.PROTOCOL_VERSION);
+  });
+
+  await test('前端 app.js 内置的版本号与服务端一致', async () => {
+    // 改了 public/ 却忘了同步版本号时，靠这条测试兜住：
+    // 否则旧标签页会拿旧前端去解新协议，画出一堆看不懂的卡片。
+    const source = fs.readFileSync(path.join(HERE, '..', 'public', 'app.js'), 'utf8');
+    const match = source.match(/const FRONTEND_VERSION = '([^']+)'/);
+    assert.ok(match, 'app.js 里找不到 FRONTEND_VERSION');
+    assert.equal(match[1], config.FRONTEND_VERSION);
+  });
+
+  await test('首页给资产 URL 加一次性版本号，JS 不会被浏览器缓存', async () => {
+    // 浏览器缓存旧版 app.js 是"只显示 input-start"的根因。
+    // 每次请求首页都换一个 nonce，URL 变了浏览器就必须重新下载。
+    const first = await (await fetch(`${base}/`)).text();
+    const second = await (await fetch(`${base}/`)).text();
+
+    const a = first.match(/\/app\.js\?v=([a-zA-Z0-9]+)/);
+    const b = second.match(/\/app\.js\?v=([a-zA-Z0-9]+)/);
+    assert.ok(a, '首页没有给 app.js 加版本参数');
+    assert.ok(b, '首页没有给 app.js 加版本参数');
+    assert.notEqual(a[1], b[1], '两次请求用了同一个资产版本号，缓存照样命中');
+
+    assert.ok(first.includes('/style.css?v='), '样式表没有版本参数');
+  });
+
+  await test('首页带自愈守卫：JS 起不来就换地址重载一次', async () => {
+    const html = await (await fetch(`${base}/`)).text();
+    assert.ok(html.includes('__AGENT_VIS_FRONTEND__'), '首页缺少启动标记检查');
+    assert.ok(html.includes('location.replace'), '首页缺少强制重载逻辑');
+  });
+
+  await test('旧版前端不带版本号时被拦下，并给出能照做的提示', async () => {
+    // 旧前端解析不了新协议，会把分片画成 "input-start" 这种看不懂的卡片。
+    // 服务端必须认出它、并且不再浪费一次真实的 agent 调用。
+    const { res, frames } = await readSse(`${base}/api/run?prompt=stale-probe`);
+    assert.equal(res.status, 200);
+
+    const chunks = parseChunks(frames);
+    const types = chunks.map((c) => c.type);
+    assert.ok(!types.includes('start'), '旧版前端不该真的把 agent 跑起来');
+
+    const err = chunks.find((c) => c.type === 'error');
+    assert.ok(err, '没有给出错误提示');
+    assert.match(err.errorText, /刷新/, '提示里没说要刷新');
+    assert.ok(
+      err.errorText.includes(config.FRONTEND_VERSION),
+      '提示里没有当前服务端版本号',
+    );
+  });
+
+  await test('版本号对得上的客户端正常跑', async () => {
+    const { frames } = await readSse(
+      `${base}/api/run?prompt=hello&v=${config.FRONTEND_VERSION}`,
+    );
+    const types = parseChunks(frames).map((c) => c.type);
+    assert.equal(types[0], 'start', '版本号正确时不该被拦下');
+  });
+
+  await test('版本号过期的客户端同样被拦下', async () => {
+    const { frames } = await readSse(`${base}/api/run?prompt=stale-probe&v=1999-01-01.0`);
+    const chunks = parseChunks(frames);
+    assert.ok(!chunks.some((c) => c.type === 'start'), '过期前端不该把 agent 跑起来');
+    assert.ok(chunks.some((c) => c.type === 'error'), '过期前端应收到错误提示');
+  });
+
+  await test('前端 app.js 会暴露启动标记并在运行请求里带上版本号', async () => {
+    const source = fs.readFileSync(path.join(HERE, '..', 'public', 'app.js'), 'utf8');
+    assert.ok(
+      source.includes('window.__AGENT_VIS_FRONTEND__'),
+      'app.js 没有设置启动标记，首页守卫会误判成旧版',
+    );
+    assert.match(source, /v=\$\{FRONTEND_VERSION\}/, 'app.js 的运行请求没带版本号');
+  });
+
+  await test('页面左右各有一个 agent 面板', async () => {
+    const html = await (await fetch(`${base}/`)).text();
+    assert.ok(html.includes('id="panelA"'), '缺少左侧面板');
+    assert.ok(html.includes('id="panelB"'), '缺少右侧面板');
+
+    const panelA = extractPanel(html, 'panelA');
+    const panelB = extractPanel(html, 'panelB');
+    assert.ok(panelA && panelB, '左右两个面板的片段没截出来');
+
+    // 两个面板各自要有输入框、运行按钮、时间轴、统计区。
+    // 只数这两个面板里的 —— 首页里还有一份给新建 agent 用的模板，
+    // 它不是此刻在跑的面板。
+    const both = panelA + panelB;
+    for (const role of ['prompt', 'runBtn', 'timeline', 'metaList']) {
+      const count = (both.match(new RegExp(`data-role="${role}"`, 'g')) || []).length;
+      assert.equal(count, 2, `${role} 的数量应为 2，实际 ${count}`);
+    }
+
+    const ids = [...html.matchAll(/data-profile="([^"]+)"/g)].map((m) => m[1]);
+    assert.equal(ids.length, 2, `面板应声明两个 agent 身份，实际 ${ids.length}`);
+    assert.notEqual(ids[0], ids[1], '左右两个面板必须是不同的 agent');
+  });
+
+  await test('/api/health 列出两个 agent 的身份', async () => {
+    const info = await (await fetch(`${base}/api/health`)).json();
+    assert.ok(Array.isArray(info.agents), 'health 没列出 agents');
+    assert.equal(info.agents.length, 2, `应为两个 agent，实际 ${info.agents.length}`);
+    for (const agent of info.agents) {
+      assert.equal(typeof agent.id, 'string');
+      assert.equal(typeof agent.name, 'string');
+      assert.ok(agent.name.length > 0);
+    }
+    assert.notEqual(info.agents[0].id, info.agents[1].id, '两个 agent 身份必须不同');
+  });
+
+  await test('两个内置 agent 的提示词已经拆成固定步骤', async () => {
+    const info = await (await fetch(`${base}/api/health`)).json();
+    const byId = new Map(info.agents.map((agent) => [agent.id, agent]));
+    const a = byId.get('agent-a');
+    const b = byId.get('agent-b');
+    assert.ok(a && b, 'health 里没有两个内置 agent');
+
+    for (const agent of [a, b]) {
+      assert.ok(Array.isArray(agent.steps), `${agent.id} 没有 steps`);
+      assert.equal(agent.steps.length, 4, `${agent.id} 的步骤数不对`);
+      agent.steps.forEach((step, index) => {
+        assert.equal(typeof step.title, 'string');
+        assert.ok(step.title.trim().length > 0, `${agent.id} 第 ${index} 步没有标题`);
+        assert.equal(typeof step.instruction, 'string');
+        assert.ok(step.instruction.trim().length > 0, `${agent.id} 第 ${index} 步没有指令`);
+        assert.deepEqual(Object.keys(step).sort(), ['instruction', 'title'], `${agent.id} 第 ${index} 步带了多余字段`);
+      });
+    }
+
+    // 步骤必须是提示词里那份流程拆出来的：用到的工具要对得上。
+    const aText = a.steps.map((step) => step.instruction).join('\n');
+    assert.ok(aText.includes('listIssues'), 'AGENT A 的第一步该用 listIssues');
+    assert.ok(aText.includes('readIssue'), 'AGENT A 该用 readIssue 读 Issue 正文');
+    assert.ok(aText.includes('idea.txt'), 'AGENT A 的机制定义该来自 idea.txt');
+
+    const bText = b.steps.map((step) => step.instruction).join('\n');
+    assert.ok(bText.includes('listIssues'), 'AGENT B 的第一步该用 listIssues');
+    assert.ok(bText.includes('gitLog'), 'AGENT B 该用 gitLog 读最近的 commit');
+    assert.ok(bText.includes('idea.txt'), 'AGENT B 该核对 idea.txt');
+  });
+
+  await test('可以指定用哪个 agent 跑', async () => {
+    const info = await (await fetch(`${base}/api/health`)).json();
+    const second = info.agents[1];
+    const { frames } = await readSse(
+      `${base}/api/run?prompt=hi&v=${config.FRONTEND_VERSION}&profile=${second.id}`,
+    );
+    const chunks = parseChunks(frames);
+    assert.equal(chunks[0].type, 'start', '指定 agent 后应正常开始');
+
+    const text = chunks
+      .filter((c) => c.type === 'text-delta')
+      .map((c) => c.delta)
+      .join('');
+    assert.ok(text.includes(second.name), `回答里没认出第二个 agent: ${text.slice(0, 120)}`);
+  });
+
+  await test('不存在的 agent 身份直接报错，不退回默认', async () => {
+    const res = await fetch(
+      `${base}/api/run?prompt=hi&v=${config.FRONTEND_VERSION}&profile=no-such-agent`,
+    );
+    assert.equal(res.status, 400, '未知 agent 应该被拒掉');
+  });
+
+  await test('两个 agent 各自有一份独立的人设', async () => {
+    assert.ok(Array.isArray(config.AGENT_PROFILES), 'config 没导出 AGENT_PROFILES');
+    assert.equal(config.AGENT_PROFILES.length, 2);
+    assert.notEqual(
+      config.AGENT_PROFILES[0].instructions,
+      config.AGENT_PROFILES[1].instructions,
+      '两个 agent 的人设说明必须不同，否则左右两栏做的是同一件事',
+    );
+  });
+
+  await test('两个 agent 就叫 AGENT A 和 AGENT B', async () => {
+    const info = await (await fetch(`${base}/api/health`)).json();
+    assert.deepEqual(
+      info.agents.map((agent) => agent.name),
+      ['AGENT A', 'AGENT B'],
+      '页面上左右两栏的 agent 名字不对',
+    );
+  });
+
+  await test('两个 agent 分别是 Issue 执行者与控制器', async () => {
+    const info = await (await fetch(`${base}/api/health`)).json();
+    assert.deepEqual(
+      info.agents.map((agent) => agent.role),
+      ['ISSUE_EXECUTOR', 'ISSUE_CONTROLLER'],
+      '两个 agent 的角色不是"执行者 / 控制器"这一对',
+    );
+    assert.ok(
+      config.AGENT_PROFILES[0].instructions.includes('ISSUE_EXECUTOR'),
+      'AGENT A 的人设里没写明它是 ISSUE_EXECUTOR',
+    );
+    assert.ok(
+      config.AGENT_PROFILES[1].instructions.includes('ISSUE_CONTROLLER'),
+      'AGENT B 的人设里没写明它是 ISSUE_CONTROLLER',
+    );
+  });
+
+  await test('旧版前端被版本闸门拦下，拿到刷新提示而不是 400', async () => {
+    // 旧前端硬编码了旧的 agent 身份（profile=assistant）。如果先校验身份、
+    // 后校验版本，用户看到的就是一句莫名其妙的 "未知的 agent 身份"，
+    // 根本猜不到要刷新页面。版本闸门必须排在身份校验前面。
+    const { res, frames } = await readSse(
+      `${base}/api/run?prompt=hi&v=2026-11-10.4&profile=assistant`,
+    );
+    assert.equal(res.status, 200, '旧版前端不该拿到 400，它应该收到可执行的提示');
+
+    const chunks = parseChunks(frames);
+    assert.ok(!chunks.some((c) => c.type === 'start'), '旧版前端不该把 agent 跑起来');
+
+    const err = chunks.find((c) => c.type === 'error');
+    assert.ok(err, '没有给出错误提示');
+    assert.match(err.errorText, /刷新/, `提示里没说要刷新: ${err.errorText}`);
+    assert.ok(
+      err.errorText.includes(config.FRONTEND_VERSION),
+      '提示里没有当前服务端版本号',
+    );
+  });
+
+  await test('首页带上服务端当前版本号，页面守卫能据此比对', async () => {
+    // 旧版的守卫只检查"启动标记在不在"，旧版 JS 也会设置标记，于是放行、
+    // 一直用旧 JS。守卫得比对版本号，得先把期望值写进首页。
+    const html = await (await fetch(`${base}/`)).text();
+    assert.ok(
+      html.includes(config.FRONTEND_VERSION),
+      '首页里没有服务端当前版本号，守卫无从比对',
+    );
+    assert.ok(
+      !html.includes('__FRONTEND_VERSION__'),
+      '版本号占位符没有被替换',
+    );
+  });
+
+  await test('POST /api/run 把上游分析结果交给下游 agent', async () => {
+    const { res, frames } = await readSse(`${base}/api/run`, {
+      method: 'POST',
+      payload: {
+        prompt: '把要点整理成三条行动项',
+        v: config.FRONTEND_VERSION,
+        profile: 'agent-b',
+        handoff: 'AGENT A 的分析结论：正式训练入口在 stage3_T5Train/train_HG-Rec.py。',
+      },
+    });
+    assert.equal(res.status, 200);
+
+    const chunks = parseChunks(frames);
+    assert.equal(chunks[0].type, 'start', '交接请求应正常开始');
+
+    const text = chunks
+      .filter((c) => c.type === 'text-delta')
+      .map((c) => c.delta)
+      .join('');
+    assert.ok(
+      text.includes('AGENT A 的分析结论'),
+      `下游没拿到上游的分析结果: ${text.slice(0, 200)}`,
+    );
+    assert.ok(
+      text.includes('三条行动项'),
+      `下游没拿到给它的要求: ${text.slice(0, 200)}`,
+    );
+  });
+
+  await test('POST /api/run 只有交接内容、没有要求时照样能跑', async () => {
+    const { res, frames } = await readSse(`${base}/api/run`, {
+      method: 'POST',
+      payload: {
+        prompt: '',
+        v: config.FRONTEND_VERSION,
+        profile: 'agent-b',
+        handoff: 'AGENT A 的分析结论：正式训练入口在 stage3_T5Train/train_HG-Rec.py。',
+      },
+    });
+    assert.equal(res.status, 200, '只带交接内容时不该被拒掉');
+
+    const text = parseChunks(frames)
+      .filter((c) => c.type === 'text-delta')
+      .map((c) => c.delta)
+      .join('');
+    assert.ok(
+      text.includes('AGENT A 的分析结论'),
+      `下游没拿到上游的分析结果: ${text.slice(0, 200)}`,
+    );
+  });
+
+  await test('交接消息里没有要求时，不留一个空的「给你的要求」段', () => {
+    const withEmpty = buildHandoffPrompt('', '上游的一段分析', 'AGENT B');
+    assert.ok(withEmpty.includes('上游的一段分析'), '上游结果丢了');
+    assert.ok(!withEmpty.includes('【给你的要求】'), '不该出现空的「给你的要求」段');
+
+    const withRequirement = buildHandoffPrompt('请给三条建议', '上游的一段分析', 'AGENT B');
+    assert.ok(withRequirement.includes('【给你的要求】'), '有要求时该有这一段');
+    assert.ok(withRequirement.includes('请给三条建议'), '要求丢了');
+  });
+
+  await test('POST /api/run 没有交接内容时，下游不会凭空收到上游结果', async () => {
+    const { frames } = await readSse(`${base}/api/run`, {
+      method: 'POST',
+      payload: { prompt: 'hi', v: config.FRONTEND_VERSION, profile: 'agent-b' },
+    });
+    const text = parseChunks(frames)
+      .filter((c) => c.type === 'text-delta')
+      .map((c) => c.delta)
+      .join('');
+    assert.ok(!text.includes('AGENT A 的分析结论'), '没交接就不该出现上游结果');
+  });
+
+  await test('POST /api/run 缺 prompt 直接 400', async () => {
+    const res = await fetch(`${base}/api/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: '   ',
+        v: config.FRONTEND_VERSION,
+        profile: 'agent-b',
+      }),
+    });
+    assert.equal(res.status, 400, '空 prompt 应被拒掉');
+  });
+
+  await test('POST /api/run 身份不认识直接 400，不退回默认', async () => {
+    const res = await fetch(`${base}/api/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: 'hi',
+        v: config.FRONTEND_VERSION,
+        profile: 'no-such-agent',
+      }),
+    });
+    assert.equal(res.status, 400, '未知 agent 应该被拒掉');
+  });
+
+  await test('POST /api/run 版本对不上照样被拦下', async () => {
+    const { res, frames } = await readSse(`${base}/api/run`, {
+      method: 'POST',
+      payload: { prompt: 'hi', v: '1999-01-01.0', profile: 'agent-b' },
+    });
+    assert.equal(res.status, 200);
+    const chunks = parseChunks(frames);
+    assert.ok(!chunks.some((c) => c.type === 'start'), '过期前端不该把 agent 跑起来');
+    assert.ok(chunks.some((c) => c.type === 'error'), '过期前端应收到错误提示');
+  });
+
+  await test('空 prompt 返回 400 而不是静默运行', async () => {
+    const res = await fetch(`${base}/api/run?prompt=`);
+    assert.equal(res.status, 400);
+  });
+
+  await test('SSE 响应带 UI message stream 头', async () => {
+    const { res } = await readSse(`${base}/api/run?prompt=hello&v=${config.FRONTEND_VERSION}`);
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get('x-vercel-ai-ui-message-stream'), 'v1');
+    assert.match(res.headers.get('content-type'), /text\/event-stream/);
+  });
+
+  await test('SSE 以 data: [DONE] 结束', async () => {
+    const { frames } = await readSse(`${base}/api/run?prompt=hello&v=${config.FRONTEND_VERSION}`);
+    assert.ok(frames.length > 0, '没有任何帧');
+    assert.equal(frames[frames.length - 1], '[DONE]');
+  });
+
+  await test('记录里的运行状态跟着流里的实际情况走', async () => {
+    assert.equal(runStatus({ chunks: [{ type: 'start' }, { type: 'finish' }] }), 'done');
+    // 流里出现 error 分片就不是 done —— 否则刷新后历史写着"已完成"，那一轮却什么都没产出。
+    assert.equal(runStatus({ chunks: [{ type: 'start' }, { type: 'error' }] }), 'error');
+    // 客户端断开优先：断线不是 agent 的失败。
+    assert.equal(
+      runStatus({ aborted: true, chunks: [{ type: 'error' }] }),
+      'aborted',
+    );
+  });
+
+  await test('帧序列覆盖 start/step/tool/text/finish', async () => {
+    const { frames } = await readSse(`${base}/api/run?prompt=hello&v=${config.FRONTEND_VERSION}`);
+    const chunks = parseChunks(frames);
+    const types = chunks.map((c) => c.type);
+    assert.equal(types[0], 'start');
+    assert.ok(types.includes('start-step'), '缺少 start-step');
+    assert.ok(types.includes('tool-input-start'), '缺少 tool-input-start');
+    assert.ok(types.includes('tool-input-available'), '缺少 tool-input-available');
+    assert.ok(types.includes('tool-output-available'), '缺少 tool-output-available');
+    assert.ok(types.includes('text-delta'), '缺少 text-delta');
+    assert.ok(types.includes('finish-step'), '缺少 finish-step');
+    assert.equal(types[types.length - 2], 'finish');
+  });
+
+  await test('reducer 把分片还原成时间轴', async () => {
+    const { frames } = await readSse(`${base}/api/run?prompt=hello&v=${config.FRONTEND_VERSION}`);
+    const store = createStore();
+    for (const chunk of parseChunks(frames)) applyChunk(store, chunk);
+
+    assert.equal(store.steps.length, 2, '步骤数');
+    assert.equal(store.messageId !== null, true, 'messageId');
+
+    const tools = store.steps.flatMap((s) => s.parts).filter((p) => p.kind === 'tool');
+    assert.equal(tools.length, 1, '工具调用数');
+    assert.equal(tools[0].state, 'output-available');
+    assert.deepEqual(tools[0].input, { path: 'package.json' });
+
+    const texts = store.steps.flatMap((s) => s.parts).filter((p) => p.kind === 'text');
+    assert.equal(texts.length, 1);
+    assert.ok(texts[0].text.length > 0, '文本为空');
+
+    assert.equal(store.finishReason, 'stop');
+    assert.equal(store.usage.totalTokens, 2159);
+    assert.equal(store.steps[0].closed, true, '第一步应已闭合');
+  });
+
+  await test('reducer 记录工具失败', async () => {
+    const store = createStore();
+    applyChunk(store, { type: 'start-step' });
+    applyChunk(store, { type: 'tool-input-start', toolCallId: 'c1', toolName: 'readFile' });
+    applyChunk(store, { type: 'tool-input-available', toolCallId: 'c1', toolName: 'readFile', input: { path: 'x' } });
+    applyChunk(store, { type: 'tool-output-error', toolCallId: 'c1', errorText: '路径不存在: x' });
+    const part = store.steps[0].parts[0];
+    assert.equal(part.state, 'output-error');
+    assert.equal(part.errorText, '路径不存在: x');
+  });
+
+  await test('reducer 记录 error 与 abort', async () => {
+    const store = createStore();
+    applyChunk(store, { type: 'error', errorText: 'boom' });
+    applyChunk(store, { type: 'abort', reason: 'user cancelled' });
+    assert.equal(store.error, 'boom');
+    assert.equal(store.aborted, 'user cancelled');
+  });
+
+  await test('reducer 累积流式 text-delta 与 reasoning-delta', async () => {
+    const store = createStore();
+    applyChunk(store, { type: 'start-step' });
+    applyChunk(store, { type: 'text-start', id: 't1' });
+    applyChunk(store, { type: 'text-delta', id: 't1', delta: 'Hel' });
+    applyChunk(store, { type: 'text-delta', id: 't1', delta: 'lo' });
+    applyChunk(store, { type: 'text-end', id: 't1' });
+    applyChunk(store, { type: 'reasoning-start', id: 'r1' });
+    applyChunk(store, { type: 'reasoning-delta', id: 'r1', delta: 'think' });
+    applyChunk(store, { type: 'reasoning-end', id: 'r1' });
+    const parts = store.steps[0].parts;
+    assert.equal(parts.find((p) => p.kind === 'text').text, 'Hello');
+    assert.equal(parts.find((p) => p.kind === 'reasoning').text, 'think');
+  });
+
+  await test('mock agent 的分片本身就是协议合法的', async () => {
+    const store = createStore();
+    let count = 0;
+    for await (const chunk of runMockChunks('hi')) {
+      count += 1;
+      applyChunk(store, chunk);
+    }
+    assert.ok(count > 8, '分片太少');
+    assert.equal(store.steps.length, 2);
+    assert.equal(store.error, null);
+  });
+
+  await test('foldText 把长输出折叠、短输出原样返回', async () => {
+    const short = foldText('hello');
+    assert.equal(short.collapsed, false);
+    assert.equal(short.full, 'hello');
+    assert.equal(short.preview, 'hello');
+
+    const long = foldText('x'.repeat(1200));
+    assert.equal(long.collapsed, true);
+    assert.equal(long.preview.length, 600);
+    assert.equal(long.full.length, 1200);
+    assert.equal(long.chars, 1200);
+    assert.equal(long.lines, 1);
+
+    const obj = foldText({ a: 1 });
+    assert.equal(obj.collapsed, false);
+    assert.ok(obj.full.includes('"a": 1'));
+  });
+
+  await test('roundEnded 只认 endRound 工具调用，不认文字', async () => {
+    assert.equal(config.ROUND_END_TOOL, ROUND_END_TOOL, '配置与协议里的控件名不一致');
+
+    const store = createStore();
+    applyChunk(store, { type: 'start-step' });
+    applyChunk(store, { type: 'text-delta', id: 't', delta: '没有 Open Issue，本轮结束。' });
+    assert.equal(roundEnded(store), false, '文字里的"本轮结束"不该被当成信号');
+
+    applyChunk(store, { type: 'tool-input-start', toolCallId: 'e1', toolName: ROUND_END_TOOL });
+    assert.equal(roundEnded(store), false, '参数还没到就不算调用');
+
+    applyChunk(store, {
+      type: 'tool-input-available',
+      toolCallId: 'e1',
+      toolName: ROUND_END_TOOL,
+      input: { reason: '没有 Open Issue' },
+    });
+    assert.equal(roundEnded(store), true);
+  });
+
+  await test('reducer 记录认不出的分片类型', async () => {
+    const store = createStore();
+    applyChunk(store, { type: 'text-start', id: 't1' });
+    applyChunk(store, { type: 'totally-unknown-chunk', payload: 1 });
+    applyChunk(store, { type: 'totally-unknown-chunk', payload: 2 });
+    assert.deepEqual(store.unknownTypes, ['totally-unknown-chunk']);
+  });
+
+  await test('reducer 处理审批、来源、附件、steering 分片', async () => {
+    const store = createStore();
+    applyChunk(store, { type: 'start-step' });
+    applyChunk(store, { type: 'tool-input-start', toolCallId: 'c9', toolName: 'write' });
+    applyChunk(store, {
+      type: 'tool-approval-request',
+      toolCallId: 'c9',
+      approvalId: 'a9',
+      reason: '需要人工确认',
+    });
+    const tool = store.steps[0].parts.find((p) => p.kind === 'tool');
+    assert.equal(tool.state, 'approval-requested');
+    assert.equal(tool.approvalId, 'a9');
+
+    applyChunk(store, { type: 'tool-approval-response', approvalId: 'a9', approved: false });
+    assert.equal(tool.state, 'approval-answered');
+    assert.equal(tool.approved, false);
+
+    applyChunk(store, { type: 'source-url', sourceId: 's1', url: 'https://x.dev' });
+    applyChunk(store, { type: 'file', url: 'data:image/png;base64,AAA', mediaType: 'image/png' });
+    applyChunk(store, { type: 'custom', kind: 'openai.compaction' });
+    applyChunk(store, { type: 'steering-message', id: 'st1', parts: [] });
+    const kinds = store.steps[0].parts.map((p) => p.kind);
+    assert.ok(kinds.includes('source-url'));
+    assert.ok(kinds.includes('file'));
+    assert.ok(kinds.includes('custom'));
+    assert.equal(store.steering.length, 1);
+  });
+
+  await test('客户端中途断开不会弄坏服务端', async () => {
+    const controller = new AbortController();
+    // 这条要的是"流还在吐的时候断开"，所以显式 instant=0 把 mock 的延迟留回来；
+    // 关掉延迟的话整条响应会在 abort 之前就跑完，测不到断开。
+    const pending = readSse(
+      `${base}/api/run?prompt=hello&v=${config.FRONTEND_VERSION}&instant=0`,
+      { signal: controller.signal },
+    );
+    setTimeout(() => controller.abort(), 30);
+    await assert.rejects(pending, (err) => err.name === 'AbortError');
+
+    // 服务端仍能继续服务下一个请求
+    const { frames } = await readSse(`${base}/api/run?prompt=again&v=${config.FRONTEND_VERSION}`);
+    assert.equal(frames[frames.length - 1], '[DONE]');
+  });
+
+  await test('PUT 配置：名字能改、能恢复默认、非法名字被拒', async () => {
+    const put = putAgentConfig;
+
+    const renamed = await put('agent-a', { name: '  首席执行者  ' });
+    assert.equal(renamed.status, 200, JSON.stringify(renamed.json));
+    assert.equal(renamed.json.name, '首席执行者');
+    assert.equal(renamed.json.defaultName, 'AGENT A');
+    assert.equal(renamed.json.customized.name, true);
+
+    const health = await (await fetch(`${base}/api/health`)).json();
+    assert.equal(
+      health.agents.find((agent) => agent.id === 'agent-a').name,
+      '首席执行者',
+      'health 里还是旧名字',
+    );
+
+    const blank = await put('agent-a', { name: '   ' });
+    assert.equal(blank.status, 400, '空名字应该被拒');
+    const long = await put('agent-a', { name: 'x'.repeat(41) });
+    assert.equal(long.status, 400, '超长名字应该被拒');
+
+    const restored = await put('agent-a', { name: null });
+    assert.equal(restored.status, 200);
+    assert.equal(restored.json.name, 'AGENT A');
+    assert.equal(restored.json.customized.name, false);
+  });
+
+  await test('PUT 配置：交接延迟能设、能清、非法值被拒', async () => {
+    const set = await putAgentConfig('agent-a', { handoffDelaySeconds: 5 });
+    assert.equal(set.status, 200, JSON.stringify(set.json));
+    assert.equal(set.json.handoffDelaySeconds, 5);
+    assert.equal(set.json.customized.handoffDelay, true);
+
+    const health = await (await fetch(`${base}/api/health`)).json();
+    assert.equal(
+      health.agents.find((agent) => agent.id === 'agent-a').handoffDelaySeconds,
+      5,
+      'health 里没有延迟',
+    );
+
+    assert.equal((await putAgentConfig('agent-a', { handoffDelaySeconds: -1 })).status, 400);
+    assert.equal((await putAgentConfig('agent-a', { handoffDelaySeconds: 1.5 })).status, 400);
+    assert.equal((await putAgentConfig('agent-a', { handoffDelaySeconds: 3601 })).status, 400);
+    assert.equal((await putAgentConfig('agent-a', { handoffDelaySeconds: '5' })).status, 400);
+
+    const cleared = await putAgentConfig('agent-a', { handoffDelaySeconds: null });
+    assert.equal(cleared.status, 200);
+    assert.equal(cleared.json.handoffDelaySeconds, 0);
+    assert.equal(cleared.json.customized.handoffDelay, false);
+  });
+
+  await test('IDEA 文本：能存能取、非法值被拒、随运行发给 agent', async () => {
+    const ideaText = '页面提供的机制定义：E16×H16 混合几何，结构信号必须进同一条通路。';
+    const put = (body) =>
+      fetch(`${base}/api/idea`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+    let res = await fetch(`${base}/api/idea`);
+    assert.equal(res.status, 200);
+    const initial = await res.json();
+    assert.equal(typeof initial.text, 'string');
+    assert.equal(initial.text, '', '还没保存过，页面那份应该是空的');
+    assert.equal(initial.updatedAt, null);
+    // 仓库里的 idea.txt 要能拿到：窗口第一次打开时靠它当草稿，不然就是一片空白。
+    assert.equal(typeof initial.fileText, 'string');
+    assert.ok(initial.fileText.length > 0, 'idea.txt 的内容没拿到');
+
+    res = await put({ text: ideaText });
+    assert.equal(res.status, 200, await res.text());
+    const saved = await (await fetch(`${base}/api/idea`)).json();
+    assert.equal(saved.text, ideaText);
+    assert.equal(typeof saved.updatedAt, 'number');
+
+    assert.equal((await put({})).status, 400, '缺 text 应该被拒');
+    assert.equal((await put({ text: 123 })).status, 400, 'text 不是字符串应该被拒');
+    assert.equal((await put({ text: 'x'.repeat(200001) })).status, 400, '超长应该被拒');
+
+    // 随运行发送：mock 会把收到的 prompt 原样念出来。
+    const { frames } = await readSse(`${base}/api/run?prompt=hello&v=${config.FRONTEND_VERSION}`);
+    const spoken = parseChunks(frames)
+      .filter((chunk) => chunk.type === 'text-delta')
+      .map((chunk) => chunk.delta)
+      .join('');
+    assert.ok(spoken.includes('页面提供的机制定义'), 'prompt 里没有带上 idea 文本');
+
+    // 清空，别影响后面的用例。
+    assert.equal((await put({ text: '' })).status, 200);
+  });
+
+  // ---------- 新建 agent ----------
+  // 这一段必须放在最后：新建的 agent 会进服务端的 agent 列表，
+  // 前面那些"服务端有两个 agent"的断言得先跑完。
+  process.stdout.write('\n  新建 agent · 系统提示词默认是空的\n');
+
+  const homeHtml = await (await fetch(`${base}/`)).text();
+
+  await test('首页有「新建 Agent」按钮', async () => {
+    assert.ok(
+      homeHtml.includes('data-role="newAgentBtn"'),
+      '首页里没有新建 agent 的按钮',
+    );
+  });
+
+  await test('主页面有 agent 侧边栏，配置不铺在聊天页上', async () => {
+    // 主页面不该直接摊开完整配置：聊天区与配置区分成两块，
+    // 配置区单独占一个视图（点侧边栏的「配置」进去）。
+    assert.ok(homeHtml.includes('data-role="agentList"'), '首页里没有 agent 列表（侧边栏）');
+    const chatAt = homeHtml.indexOf('class="chat-part"');
+    const configAt = homeHtml.indexOf('class="config-part"');
+    assert.ok(chatAt >= 0 && configAt > chatAt, '首页里没有把面板分成 chat-part / config-part');
+    const timelineAt = homeHtml.indexOf('data-role="timeline"');
+    assert.ok(
+      timelineAt > chatAt && timelineAt < configAt,
+      '时间轴不在聊天区里 —— 聊天框与配置区没有分开',
+    );
+    const instrAt = homeHtml.indexOf('data-role="instructionsBox"');
+    assert.ok(instrAt > configAt, '系统提示词的配置不在配置区里');
+    assert.ok(homeHtml.includes('data-role="backToChat"'), '配置区里没有回到聊天的入口');
+  });
+
+  await test('新建 agent 用的面板模板与既有面板同构', async () => {
+    // 模板与 AGENT A / AGENT B 必须是同一种形式，差别只在提示词与预填内容。
+    // 逐个标签比对骨架：只看 data-role 的集合会漏掉标签结构本身的差异。
+    const panelA = extractPanel(homeHtml, 'panelA');
+    const tpl = extractTemplate(homeHtml, 'panelTemplate');
+    assert.ok(panelA, '首页里找不到 panelA');
+    assert.ok(tpl, '首页里找不到给新建 agent 用的面板模板');
+    assert.equal(
+      skeleton(tpl),
+      skeleton(panelA),
+      '新建 agent 的模板与左栏结构不一致',
+    );
+  });
+
+  let created = null;
+
+  await test('POST /api/agents 造出一个系统提示词为空的 agent', async () => {
+    const res = await fetch(`${base}/api/agents`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    assert.equal(res.status, 201, `状态码 ${res.status}`);
+    const profile = await res.json();
+    assert.equal(typeof profile.id, 'string');
+    assert.ok(profile.id.length > 0, '新 agent 没有 id');
+    assert.ok(typeof profile.name === 'string' && profile.name.length > 0, '新 agent 没有名字');
+    assert.equal(profile.instructions, '', '新 agent 的系统提示词应该是空的');
+    assert.deepEqual(profile.steps, [], '新 agent 没有默认步骤');
+    created = profile;
+  });
+
+  await test('新建的 agent 出现在 /api/health 里', async () => {
+    const info = await (await fetch(`${base}/api/health`)).json();
+    const found = (info.agents || []).find((agent) => agent.id === created.id);
+    assert.ok(found, 'health 里没有新 agent');
+    assert.equal(found.instructions, '', 'health 里新 agent 的提示词应该还是空的');
+  });
+
+  await test('新建的 agent 能真的跑起来', async () => {
+    const { frames } = await readSse(
+      `${base}/api/run?prompt=hi&v=${config.FRONTEND_VERSION}&profile=${created.id}`,
+    );
+    const chunks = parseChunks(frames);
+    assert.equal(chunks[0].type, 'start', '新 agent 没有跑起来');
+    const text = chunks
+      .filter((c) => c.type === 'text-delta')
+      .map((c) => c.delta)
+      .join('');
+    assert.ok(text.includes(created.name), `回答里没认出新 agent: ${text.slice(0, 120)}`);
+  });
+
+  await test('POST /api/agents 参数不合法直接 400', async () => {
+    for (const body of [{ name: 123 }, { name: ['x'] }, { instructions: { a: 1 } }]) {
+      const res = await fetch(`${base}/api/agents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      assert.equal(res.status, 400, `${JSON.stringify(body)} 应该被拒掉`);
+    }
+  });
+
+  await test('POST /api/run 带空的 instructions 表示明确不要系统提示词', async () => {
+    // 字段缺省 = 用这个 agent 的默认提示词；字段存在但为空 = 明确不要。
+    // 这两件事必须分得开，否则"把提示词框清空"会被悄悄换成默认提示词。
+    const { frames } = await readSse(`${base}/api/run`, {
+      method: 'POST',
+      payload: {
+        prompt: 'hi',
+        v: config.FRONTEND_VERSION,
+        profile: 'agent-a',
+        instructions: '',
+      },
+    });
+    const text = parseChunks(frames)
+      .filter((c) => c.type === 'text-delta')
+      .map((c) => c.delta)
+      .join('');
+    assert.ok(
+      text.includes('没有系统提示词'),
+      `回答里没说清没有系统提示词: ${text.slice(0, 160)}`,
+    );
+  });
+
+  // ---------- 权限 ----------
+  process.stdout.write('\n  权限 · 每个 agent 能做什么由配置说了算\n');
+
+  await test('权限目录里的每一项都绑着真实存在的工具', async () => {
+    assert.ok(Array.isArray(PERMISSION_CATALOG), '权限目录必须是数组');
+    assert.ok(PERMISSION_CATALOG.length > 0, '权限目录不能是空的');
+    for (const item of PERMISSION_CATALOG) {
+      assert.ok(typeof item.id === 'string' && item.id !== '', '权限项缺 id');
+      assert.ok(typeof item.label === 'string' && item.label !== '', `权限 ${item.id} 缺名称`);
+      assert.ok(
+        typeof item.description === 'string' && item.description !== '',
+        `权限 ${item.id} 缺说明`,
+      );
+      assert.ok(
+        Array.isArray(item.tools) && item.tools.length > 0,
+        `权限 ${item.id} 没有对应工具`,
+      );
+      for (const name of item.tools) {
+        assert.ok(PI_TOOLS[name], `权限 ${item.id} 指向了不存在的工具 ${name}`);
+      }
+    }
+  });
+
+  const toolNames = (perms) => toolsForPermissions(perms).map((tool) => tool.name).sort();
+
+  await test('按权限裁剪出来的工具集正好是目录里写的那些', async () => {
+    assert.deepEqual(toolNames([]), []);
+    assert.deepEqual(toolNames(['read']), ['listFiles', 'readFile', 'searchFiles']);
+    assert.deepEqual(toolNames(['write']), ['writeFile']);
+    assert.deepEqual(toolNames(['delete']), ['deleteFile']);
+    assert.deepEqual(toolNames(['execute']), ['gitLog']);
+    assert.deepEqual(toolNames(['network']), ['listIssues', 'readIssue']);
+    assert.deepEqual(toolNames(['read', 'execute', 'network']), [
+      'gitLog',
+      'listFiles',
+      'listIssues',
+      'readFile',
+      'readIssue',
+      'searchFiles',
+    ]);
+  });
+
+  await test('权限目录里就是 read / write 这类基础权限', async () => {
+    const ids = PERMISSION_CATALOG.map((item) => item.id);
+    for (const id of ['read', 'write']) {
+      assert.ok(ids.includes(id), `权限目录里没有 ${id}：${ids.join('、')}`);
+    }
+    // 每一项都得说清它管的是哪一类动作。
+    for (const item of PERMISSION_CATALOG) {
+      assert.ok(item.label.length > 0 && item.description.length > 0, `${item.id} 说不清自己管什么`);
+    }
+  });
+
+  await test('不认识的权限 id 直接报错，不静默忽略', async () => {
+    assert.throws(() => normalizePermissions(['read', 'nope']), /nope/);
+    assert.throws(() => normalizePermissions('read'), /数组/);
+    assert.throws(
+      () => resolvePermissions({ permissions: ['read'] }, ['bad.id']),
+      /bad\.id/,
+    );
+  });
+
+  await test('没给权限就用这个 agent 自己的默认权限，给了空数组就是一项都不要', async () => {
+    const profile = { permissions: ['read'] };
+    assert.deepEqual(resolvePermissions(profile, undefined), ['read']);
+    assert.deepEqual(resolvePermissions(profile, []), []);
+    assert.deepEqual(resolvePermissions(profile, ['write']), ['write']);
+  });
+
+  await test('权限说明写进系统提示词：授了什么、没授什么', async () => {
+    const text = buildPermissionPrompt(['read', 'write']);
+    assert.match(text, /read/);
+    assert.match(text, /write/);
+    assert.match(text, /writeFile/);
+    // 没授的权限一个字都不该露出来 —— 露出来模型就会去用没给它的工具。
+    assert.doesNotMatch(text, /gitLog/);
+    assert.doesNotMatch(text, /execute/);
+  });
+
+  await test('写权限的工具真的能把文件写进仓库', async () => {
+    const rel = 'agent-vis/.out-permission-write-test.txt';
+    const abs = path.join(config.REPO_ROOT, rel);
+    const content = '权限测试写入\n';
+    try {
+      const result = await PI_TOOLS.writeFile.execute(
+        'test-write',
+        { path: rel, content },
+        undefined,
+        undefined,
+        undefined,
+      );
+      assert.equal(result.details.path, rel, `写到了 ${result.details.path}`);
+      assert.equal(result.details.bytes, Buffer.byteLength(content), '字节数不对');
+      assert.equal(fs.readFileSync(abs, 'utf8'), content, '文件内容不对');
+    } finally {
+      fs.rmSync(abs, { force: true });
+    }
+  });
+
+  await test('写权限也不许越界、不许写 .git 目录', async () => {
+    const call = (input) =>
+      PI_TOOLS.writeFile.execute('test-write', input, undefined, undefined, undefined);
+    await assert.rejects(() => call({ path: '../outside.txt', content: 'x' }), /越界/);
+    await assert.rejects(
+      () => call({ path: '.git/config', content: 'x' }),
+      /\.git/,
+    );
+    await assert.rejects(
+      () => call({ path: 'agent-vis/.out-too-big.txt', content: 'x'.repeat(2 * 1024 * 1024) }),
+      /太大/,
+    );
+  });
+
+  await test('删除权限能删掉仓库里的文件', async () => {
+    const rel = 'agent-vis/.out-permission-delete-test.txt';
+    const abs = path.join(config.REPO_ROOT, rel);
+    fs.writeFileSync(abs, '待删\n', 'utf8');
+    try {
+      const result = await PI_TOOLS.deleteFile.execute(
+        'test-delete',
+        { path: rel },
+        undefined,
+        undefined,
+        undefined,
+      );
+      assert.equal(result.details.path, rel, `删的是 ${result.details.path}`);
+      assert.equal(fs.existsSync(abs), false, '文件还在');
+    } finally {
+      fs.rmSync(abs, { force: true });
+    }
+  });
+
+  await test('删除权限不许删 .git、不许删仓库根、不许删不存在的东西', async () => {
+    const call = (input) =>
+      PI_TOOLS.deleteFile.execute('test-delete', input, undefined, undefined, undefined);
+    await assert.rejects(() => call({ path: '.git/config' }), /\.git/);
+    await assert.rejects(() => call({ path: '.' }), /仓库根/);
+    await assert.rejects(
+      () => call({ path: 'agent-vis/.out-not-here.txt' }),
+      /不存在/,
+    );
+  });
+
+  await test('health 里带着权限目录与每个 agent 的默认权限', async () => {
+    const info = await (await fetch(`${base}/api/health`)).json();
+    assert.ok(Array.isArray(info.permissionCatalog), 'health 里没有权限目录');
+    assert.ok(info.permissionCatalog.length > 0, '权限目录是空的');
+    const ids = new Set(info.permissionCatalog.map((item) => item.id));
+    for (const agent of info.agents) {
+      assert.ok(Array.isArray(agent.permissions), `${agent.id} 没有权限字段`);
+      for (const id of agent.permissions) {
+        assert.ok(ids.has(id), `${agent.id} 的权限 ${id} 不在目录里`);
+      }
+    }
+  });
+
+  await test('请求里带不认识的权限 id 时直接拒绝', async () => {
+    const { res, body } = await readSse(
+      `${base}/api/run?prompt=hi&v=${config.FRONTEND_VERSION}` +
+        `&profile=agent-a&permissions=read,bogus`,
+    );
+    assert.equal(res.status, 400, `状态码 ${res.status}`);
+    assert.ok(body.includes('bogus'), `错误信息里没有指出是哪个权限：${body.slice(0, 200)}`);
+  });
+
+  await test('请求里带的权限决定这一轮拿到的工具', async () => {
+    const { res, frames } = await readSse(`${base}/api/run`, {
+      method: 'POST',
+      payload: {
+        prompt: 'hi',
+        v: config.FRONTEND_VERSION,
+        profile: 'agent-a',
+        permissions: ['read'],
+      },
+    });
+    assert.equal(res.status, 200, `状态码 ${res.status}`);
+    const text = parseChunks(frames)
+      .filter((c) => c.type === 'text-delta')
+      .map((c) => c.delta)
+      .join('');
+    assert.ok(text.includes('read'), `回答里没写明授了什么权限：${text.slice(0, 200)}`);
+    assert.ok(!text.includes('execute'), `回答里写了没授的权限：${text.slice(0, 200)}`);
+  });
+
+  await test('新建 agent 时可以带上它的权限', async () => {
+    const res = await fetch(`${base}/api/agents`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'AGENT X',
+        instructions: 'x',
+        permissions: ['read', 'write'],
+      }),
+    });
+    assert.equal(res.status, 201, `状态码 ${res.status}`);
+    const profile = await res.json();
+    assert.deepEqual(profile.permissions, ['read', 'write']);
+  });
+
+  await test('新建 agent 时给不认识的权限 id 直接拒绝', async () => {
+    const res = await fetch(`${base}/api/agents`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'AGENT Y', permissions: ['read', 'weird.id'] }),
+    });
+    assert.equal(res.status, 400, `状态码 ${res.status}`);
+    const body = await res.text();
+    assert.ok(body.includes('weird.id'), `错误信息里没有指出是哪个权限：${body.slice(0, 200)}`);
+  });
+
+  // ---------- 删除 agent ----------
+  process.stdout.write('\n  删除 agent · 身份要从服务端的表里拿掉\n');
+
+  await test('DELETE /api/agents/<id> 删掉运行时新建的 agent', async () => {
+    const createdRes = await fetch(`${base}/api/agents`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const profile = await createdRes.json();
+
+    const res = await fetch(`${base}/api/agents/${profile.id}`, { method: 'DELETE' });
+    assert.equal(res.status, 200, `状态码 ${res.status}`);
+
+    const info = await (await fetch(`${base}/api/health`)).json();
+    assert.ok(
+      !info.agents.some((agent) => agent.id === profile.id),
+      'health 里还有这个 agent',
+    );
+
+    const run = await fetch(
+      `${base}/api/run?prompt=hi&v=${config.FRONTEND_VERSION}&profile=${profile.id}`,
+    );
+    assert.equal(run.status, 400, '删掉的身份不该还能跑');
+  });
+
+  await test('固定的 AGENT A / AGENT B 不能从服务端删除', async () => {
+    for (const id of ['agent-a', 'agent-b']) {
+      const res = await fetch(`${base}/api/agents/${id}`, { method: 'DELETE' });
+      assert.equal(res.status, 400, `${id} 应该被拒掉`);
+    }
+  });
+
+  await test('DELETE 不认识的 agent 直接 404', async () => {
+    const res = await fetch(`${base}/api/agents/custom-999`, { method: 'DELETE' });
+    assert.equal(res.status, 404, `状态码 ${res.status}`);
+  });
+
+  await test('新建 agent 只接受 POST，GET 不新建', async () => {
+    const before = (await (await fetch(`${base}/api/health`)).json()).agents.length;
+    const res = await fetch(`${base}/api/agents`);
+    assert.equal(res.status, 405, `状态码 ${res.status}`);
+    const after = (await (await fetch(`${base}/api/health`)).json()).agents.length;
+    assert.equal(after, before, 'GET 不该新建出 agent');
+  });
+
+  await test('health 说得出每个 agent 能不能被删', async () => {
+    const createdRes = await fetch(`${base}/api/agents`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const profile = await createdRes.json();
+    const info = await (await fetch(`${base}/api/health`)).json();
+    const fixed = info.agents.find((agent) => agent.id === 'agent-a');
+    const custom = info.agents.find((agent) => agent.id === profile.id);
+    assert.equal(fixed.builtin, true, '固定的两个 agent 应该是 builtin');
+    assert.equal(custom.builtin, false, '新建的 agent 不该是 builtin');
+  });
+
+  await test('交接消息里的来源名字跟着发送方走', async () => {
+    // 交接不再只有 A → B 这一条路，来源名字必须跟着实际发送方走。
+    const { frames } = await readSse(`${base}/api/run`, {
+      method: 'POST',
+      payload: {
+        prompt: 'hi',
+        v: config.FRONTEND_VERSION,
+        profile: 'agent-b',
+        handoff: '上游给的一段结论。',
+        handoffFrom: 'AGENT C',
+      },
+    });
+    const text = parseChunks(frames)
+      .filter((c) => c.type === 'text-delta')
+      .map((c) => c.delta)
+      .join('');
+    assert.ok(text.includes('AGENT C'), `回答里没认出上游是 AGENT C: ${text.slice(0, 160)}`);
+  });
+
+  // ---------- 公网反代：访问门槛（路径前缀）----------
+  // 这个服务能调真实模型、能读仓库里的文件。挂到公网上时必须有一道门槛，
+  // 否则任何拿到链接的人都能用掉模型额度、读走仓库里的凭证。
+  process.stdout.write('\n  公网反代 · 路径前缀是访问门槛\n');
+
+  const gated = createServer({ mode: 'mock', publicPath: 'test-token', dataDir: SCRATCH_DATA });
+  const gatedPort = await listen(gated);
+  const gatedBase = `http://127.0.0.1:${gatedPort}`;
+
+  await test('没带前缀的路径一律被挡下（不说是谁挡的）', async () => {
+    for (const route of ['/', '/api/health', '/app.js', '/style.css', '/api/agents']) {
+      const res = await fetch(`${gatedBase}${route}`);
+      assert.equal(res.status, 404, `${route} 状态码 ${res.status}`);
+      const body = await res.text();
+      assert.ok(!body.includes('test-token'), `${route} 的响应里漏了前缀：${body.slice(0, 120)}`);
+    }
+  });
+
+  await test('带前缀的路径正常工作', async () => {
+    const res = await fetch(`${gatedBase}/test-token/api/health`);
+    assert.equal(res.status, 200, `状态码 ${res.status}`);
+    const info = await res.json();
+    assert.equal(info.ok, true);
+  });
+
+  await test('只写前缀（没有尾斜杠）会跳到带尾斜杠的地址', async () => {
+    const res = await fetch(`${gatedBase}/test-token`, { redirect: 'manual' });
+    assert.equal(res.status, 301, `状态码 ${res.status}`);
+    assert.equal(res.headers.get('location'), '/test-token/');
+  });
+
+  await test('静态资源也在前缀下', async () => {
+    const res = await fetch(`${gatedBase}/test-token/app.js`);
+    assert.equal(res.status, 200, `状态码 ${res.status}`);
+    assert.match(res.headers.get('content-type'), /text\/javascript/);
+  });
+
+  await test('HTML 里注入了 API_BASE，前端知道请求该往哪发', async () => {
+    const res = await fetch(`${gatedBase}/test-token/`);
+    assert.equal(res.status, 200, `状态码 ${res.status}`);
+    const html = await res.text();
+    assert.match(html, /__AGENT_VIS_API_BASE__\s*=\s*['"]\/test-token['"]/, '没注入 API_BASE');
+    assert.ok(!html.includes('__API_BASE_TOKEN__'), '占位符没被替换');
+  });
+
+  await close(gated);
+
+  await close(server);
+
+  process.stdout.write(`\n${passed} 通过, ${failures.length} 失败\n`);
+  if (failures.length > 0) {
+    for (const { name, err } of failures) {
+      process.stdout.write(`\n--- ${name} ---\n${err && err.stack}\n`);
+    }
+    process.exitCode = 1;
+  }
+}
+
+main().catch((err) => {
+  process.stderr.write(`${err && err.stack}\n`);
+  process.exit(1);
+});

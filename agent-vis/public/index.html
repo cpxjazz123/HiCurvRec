@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agent 可视化</title>
+    <!-- 资产 URL 里的 __ASSET_V__ 由服务端在每次响应时替换成随机值：
+         URL 一变，浏览器就必须重新下载，缓存里的旧版 JS 顶不上来。
+         __API_BASE_TOKEN__ 则是本次部署的路径前缀（对外暴露时的访问门槛）：
+         本地部署时它是空串，公网部署时是 '/vis-xxxx'，两种情况下 URL 都对。 -->
+    <link rel="stylesheet" href="__API_BASE_TOKEN__/style.css?v=__ASSET_V__" />
+    <!-- 前端所有接口调用都以它为根 —— 挂在路径前缀下时才知道该往哪发。 -->
+    <script>
+      window.__AGENT_VIS_API_BASE__ = '__API_BASE_TOKEN__';
+    </script>
+  </head>
+  <body>
+    <div id="alertBar" class="alertbar"></div>
+
+    <!--
+      左：agent 列表（像 DeepSeek 的会话列表）。右：当前选中的那一个 agent
+      的完整聊天框。每个 agent 的配置不在这里摊开 —— 点它自己的「配置」
+      进它自己的配置页。
+    -->
+    <div class="shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">
+          <span class="logo-dot"></span>
+          <span class="brand-text">Agent 可视化</span>
+        </div>
+
+        <button type="button" class="new-agent" data-role="newAgentBtn">＋ 新建 Agent</button>
+
+        <button type="button" class="new-agent idea-open" data-role="ideaBtn">
+          IDEA 文本（空）
+        </button>
+
+        <div class="sidebar-label">Agent</div>
+        <ul class="agent-list" data-role="agentList"></ul>
+
+        <div class="sidebar-foot">
+          <span class="sub" id="globalMeta"></span>
+          <span class="sub" id="buildTag"></span>
+        </div>
+      </nav>
+
+      <main class="layout">
+        <!-- 左边 AGENT A，右边 AGENT B。
+             A 跑完后，它的分析结果会自动连同下面的「要求」一起交给 B。 -->
+        <section class="panel" id="panelA" data-profile="agent-a" data-builtin="true">
+          <div class="chat-part">
+            <div class="panel-head">
+              <span class="dot" data-role="statusDot"></span>
+              <h2 data-role="name">AGENT A</h2>
+              <span class="sub" data-role="statusText">待运行</span>
+              <button type="button" class="panel-config" data-role="configBtn">配置</button>
+              <button type="button" class="panel-clear" data-role="clearHistory">清空历史</button>
+              <button type="button" class="panel-del" data-role="deleteBtn">删除</button>
+            </div>
+
+            <div class="timeline" data-role="timeline">
+              <div class="timeline-inner" data-role="timelineInner">
+                <p class="empty" data-role="emptyHint">
+                  点击「运行」开始。这条时间轴会实时显示 agent 的每一步。
+                </p>
+              </div>
+            </div>
+
+            <!-- 输入区：像 DeepSeek 那样，输入框压在下面，聊天记录在上面。 -->
+            <div class="composer">
+              <form class="controls" data-role="form">
+                <div class="composer-input">
+                  <input
+                    data-role="prompt"
+                    type="text"
+                    value="查一下有没有 Open Issue，读它的正文，说明按正文该实现什么机制、要改哪些文件、怎么验证。"
+                    autocomplete="off"
+                    placeholder="给 AGENT A（Issue 执行者）的指令"
+                  />
+                  <button type="submit" class="send" data-role="runBtn">运行</button>
+                </div>
+                <div class="composer-bar">
+                  <div class="stepbar" data-role="stepBar"></div>
+                  <dl class="meta" data-role="metaList">
+                    <dt>总耗时</dt>
+                    <dd data-field="duration">—</dd>
+                  </dl>
+                  <button type="button" class="stop" data-role="stopBtn" disabled>结束</button>
+                </div>
+              </form>
+              <p class="hint">ISSUE_EXECUTOR · 跑完后自动把实现分析交给 AGENT B 审查。</p>
+            </div>
+          </div>
+
+          <!-- 这个 agent 自己的配置页：点「配置」才进来。 -->
+          <div class="config-part">
+            <div class="config-head">
+              <h2 data-role="configTitle">AGENT A · 配置</h2>
+              <button type="button" class="config-back" data-role="backToChat">← 回到聊天</button>
+            </div>
+            <div class="config-body">
+              <!-- 名字：页头、左侧栏、交接卡片都用这个名字。 -->
+              <div class="name-config">
+                <label class="name-label">
+                  名字
+                  <input
+                    type="text"
+                    data-role="nameInput"
+                    maxlength="40"
+                    spellcheck="false"
+                    placeholder="这个 agent 的名字"
+                  />
+                </label>
+                <button type="button" data-role="resetName">恢复默认</button>
+                <span class="instructions-state" data-role="nameState"></span>
+              </div>
+
+              <details class="instructions" data-role="instructionsBox">
+                <summary>
+                  <span data-role="instructionsSummary">系统提示词</span>
+                </summary>
+                <textarea
+                  data-role="instructions"
+                  rows="6"
+                  spellcheck="false"
+                  placeholder="这一栏 agent 的系统提示词。改完直接生效，不用重启服务。"
+                ></textarea>
+                <div class="instructions-actions">
+                  <button type="button" data-role="resetInstructions">恢复默认</button>
+                  <span class="instructions-state" data-role="instructionsState"></span>
+                </div>
+              </details>
+
+              <!-- 权限：这个 agent 被授了哪些能力。
+                   没授的工具压根不会进这一轮的工具表 —— 模型调不到它。 -->
+              <details class="instructions permissions-config" data-role="permissionsBox">
+                <summary>
+                  <span data-role="permissionsSummary">权限（还没从服务端取回来）</span>
+                </summary>
+                <div class="permission-list" data-role="permissionList"></div>
+                <p class="permission-note" data-role="permissionsNote">
+                  没授的工具不会出现在这一轮的工具表里 —— 模型调不到它。
+                </p>
+              </details>
+
+              <!-- 交接配置：这一栏跑完后，结果发给哪些 agent（可多选）。 -->
+              <details class="instructions handoff-config" data-role="handoffBox">
+                <summary>
+                  <span data-role="handoffSummary">交接配置（未选目标）</span>
+                </summary>
+                <div class="handoff-targets" data-role="handoffTargets"></div>
+                <div class="handoff-delay">
+                  <label>
+                    延迟
+                    <input type="number" data-role="handoffDelay" min="0" max="3600" step="1" />
+                    秒后再发送（0 = 立即）
+                  </label>
+                  <span class="instructions-state" data-role="handoffDelayState"></span>
+                </div>
+
+                <p class="handoff-note" data-role="handoffNote">
+                  勾选的 agent 会在这一栏跑完后收到本轮结果（可多选）。
+                </p>
+              </details>
+
+              <!-- 轮次步骤：这一轮按哪几步做。一条都没配就还是一次跑完。 -->
+              <details class="instructions steps-config" data-role="stepsBox">
+                <summary>
+                  <span data-role="stepsSummary">轮次步骤（未配置，一次跑完）</span>
+                </summary>
+                <div class="steps-list" data-role="stepsList"></div>
+                <div class="instructions-actions">
+                  <button type="button" data-role="addStep">＋ 加一步</button>
+                  <button type="button" data-role="clearSteps">清空</button>
+                  <button type="button" data-role="restoreSteps">恢复默认步骤</button>
+                  <span class="instructions-state" data-role="stepsHint">
+                    步骤按顺序跑：前一步的产出接到后一步；没配过时用这个 agent 的默认步骤。
+                  </span>
+                </div>
+              </details>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="panelB" data-profile="agent-b" data-builtin="true">
+          <div class="chat-part">
+            <div class="panel-head">
+              <span class="dot" data-role="statusDot"></span>
+              <h2 data-role="name">AGENT B</h2>
+              <span class="sub" data-role="statusText">待运行</span>
+              <button type="button" class="panel-config" data-role="configBtn">配置</button>
+              <button type="button" class="panel-clear" data-role="clearHistory">清空历史</button>
+              <button type="button" class="panel-del" data-role="deleteBtn">删除</button>
+            </div>
+
+            <div class="timeline" data-role="timeline">
+              <div class="timeline-inner" data-role="timelineInner">
+                <p class="empty" data-role="emptyHint">
+                  点击「运行」开始。这条时间轴会实时显示 agent 的每一步。
+                </p>
+              </div>
+            </div>
+
+            <!-- 输入区：像 DeepSeek 那样，输入框压在下面，聊天记录在上面。 -->
+            <div class="composer">
+              <form class="controls" data-role="form">
+                <div class="composer-input">
+                  <input
+                    data-role="prompt"
+                    type="text"
+                    value="读最近的 commit 判断上一步做得对不对，然后写出下一步计划（可直接当 Issue 正文用）。"
+                    autocomplete="off"
+                    placeholder="给 AGENT B（Issue 控制器）的指令"
+                  />
+                  <button type="submit" class="send" data-role="runBtn">运行</button>
+                </div>
+                <div class="composer-bar">
+                  <div class="stepbar" data-role="stepBar"></div>
+                  <dl class="meta" data-role="metaList">
+                    <dt>总耗时</dt>
+                    <dd data-field="duration">—</dd>
+                  </dl>
+                  <button type="button" class="stop" data-role="stopBtn" disabled>结束</button>
+                </div>
+              </form>
+              <p class="hint">ISSUE_CONTROLLER · 收到 AGENT A 的结果后自动开始审查。</p>
+            </div>
+          </div>
+
+          <!-- 这个 agent 自己的配置页：点「配置」才进来。 -->
+          <div class="config-part">
+            <div class="config-head">
+              <h2 data-role="configTitle">AGENT B · 配置</h2>
+              <button type="button" class="config-back" data-role="backToChat">← 回到聊天</button>
+            </div>
+            <div class="config-body">
+              <!-- 名字：页头、左侧栏、交接卡片都用这个名字。 -->
+              <div class="name-config">
+                <label class="name-label">
+                  名字
+                  <input
+                    type="text"
+                    data-role="nameInput"
+                    maxlength="40"
+                    spellcheck="false"
+                    placeholder="这个 agent 的名字"
+                  />
+                </label>
+                <button type="button" data-role="resetName">恢复默认</button>
+                <span class="instructions-state" data-role="nameState"></span>
+              </div>
+
+              <details class="instructions" data-role="instructionsBox">
+                <summary>
+                  <span data-role="instructionsSummary">系统提示词</span>
+                </summary>
+                <textarea
+                  data-role="instructions"
+                  rows="6"
+                  spellcheck="false"
+                  placeholder="这一栏 agent 的系统提示词。改完直接生效，不用重启服务。"
+                ></textarea>
+                <div class="instructions-actions">
+                  <button type="button" data-role="resetInstructions">恢复默认</button>
+                  <span class="instructions-state" data-role="instructionsState"></span>
+                </div>
+              </details>
+
+              <!-- 权限：这个 agent 被授了哪些能力。
+                   没授的工具压根不会进这一轮的工具表 —— 模型调不到它。 -->
+              <details class="instructions permissions-config" data-role="permissionsBox">
+                <summary>
+                  <span data-role="permissionsSummary">权限（还没从服务端取回来）</span>
+                </summary>
+                <div class="permission-list" data-role="permissionList"></div>
+                <p class="permission-note" data-role="permissionsNote">
+                  没授的工具不会出现在这一轮的工具表里 —— 模型调不到它。
+                </p>
+              </details>
+
+              <!-- 交接配置：这一栏跑完后，结果发给哪些 agent（可多选）。 -->
+              <details class="instructions handoff-config" data-role="handoffBox">
+                <summary>
+                  <span data-role="handoffSummary">交接配置（未选目标）</span>
+                </summary>
+                <div class="handoff-targets" data-role="handoffTargets"></div>
+                <div class="handoff-delay">
+                  <label>
+                    延迟
+                    <input type="number" data-role="handoffDelay" min="0" max="3600" step="1" />
+                    秒后再发送（0 = 立即）
+                  </label>
+                  <span class="instructions-state" data-role="handoffDelayState"></span>
+                </div>
+
+                <p class="handoff-note" data-role="handoffNote">
+                  勾选的 agent 会在这一栏跑完后收到本轮结果（可多选）。
+                </p>
+              </details>
+
+              <!-- 轮次步骤：这一轮按哪几步做。一条都没配就还是一次跑完。 -->
+              <details class="instructions steps-config" data-role="stepsBox">
+                <summary>
+                  <span data-role="stepsSummary">轮次步骤（未配置，一次跑完）</span>
+                </summary>
+                <div class="steps-list" data-role="stepsList"></div>
+                <div class="instructions-actions">
+                  <button type="button" data-role="addStep">＋ 加一步</button>
+                  <button type="button" data-role="clearSteps">清空</button>
+                  <button type="button" data-role="restoreSteps">恢复默认步骤</button>
+                  <span class="instructions-state" data-role="stepsHint">
+                    步骤按顺序跑：前一步的产出接到后一步；没配过时用这个 agent 的默认步骤。
+                  </span>
+                </div>
+              </details>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!--
+      新建 agent 用的面板模板。
+
+      结构必须与上面的 panelA / panelB 完全一致 —— 唯一的区别是提示词为空、
+      输入框也为空，等用户自己填。smoke.js 里有一条测试逐个标签比对本模板与
+      左栏的骨架，改了一边忘了另一边会被它抓住。
+    -->
+    <template id="panelTemplate">
+      <section class="panel">
+        <div class="chat-part">
+          <div class="panel-head">
+            <span class="dot" data-role="statusDot"></span>
+            <h2 data-role="name">新 AGENT</h2>
+            <span class="sub" data-role="statusText">待运行</span>
+            <button type="button" class="panel-config" data-role="configBtn">配置</button>
+            <button type="button" class="panel-clear" data-role="clearHistory">清空历史</button>
+            <button type="button" class="panel-del" data-role="deleteBtn">删除</button>
+          </div>
+
+          <div class="timeline" data-role="timeline">
+            <div class="timeline-inner" data-role="timelineInner">
+              <p class="empty" data-role="emptyHint">
+                点击「运行」开始。这条时间轴会实时显示 agent 的每一步。
+              </p>
+            </div>
+          </div>
+
+          <div class="composer">
+            <form class="controls" data-role="form">
+              <div class="composer-input">
+                <input
+                  data-role="prompt"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="给这个 agent 的指令"
+                />
+                <button type="submit" class="send" data-role="runBtn">运行</button>
+              </div>
+              <div class="composer-bar">
+                <div class="stepbar" data-role="stepBar"></div>
+                <dl class="meta" data-role="metaList">
+                  <dt>总耗时</dt>
+                  <dd data-field="duration">—</dd>
+                </dl>
+                <button type="button" class="stop" data-role="stopBtn" disabled>结束</button>
+              </div>
+            </form>
+            <p class="hint">新建的 agent · 系统提示词默认是空的，自己写。</p>
+          </div>
+        </div>
+
+        <!-- 这个 agent 自己的配置页：点「配置」才进来。 -->
+        <div class="config-part">
+          <div class="config-head">
+            <h2 data-role="configTitle">新 AGENT · 配置</h2>
+            <button type="button" class="config-back" data-role="backToChat">← 回到聊天</button>
+          </div>
+          <div class="config-body">
+            <!-- 名字：页头、左侧栏、交接卡片都用这个名字。 -->
+            <div class="name-config">
+              <label class="name-label">
+                名字
+                <input
+                  type="text"
+                  data-role="nameInput"
+                  maxlength="40"
+                  spellcheck="false"
+                  placeholder="这个 agent 的名字"
+                />
+              </label>
+              <button type="button" data-role="resetName">恢复默认</button>
+              <span class="instructions-state" data-role="nameState"></span>
+            </div>
+
+            <details class="instructions" data-role="instructionsBox">
+              <summary>
+                <span data-role="instructionsSummary">系统提示词</span>
+              </summary>
+              <textarea
+                data-role="instructions"
+                rows="6"
+                spellcheck="false"
+                placeholder="这一栏 agent 的系统提示词。改完直接生效，不用重启服务。"
+              ></textarea>
+              <div class="instructions-actions">
+                <button type="button" data-role="resetInstructions">恢复默认</button>
+                <span class="instructions-state" data-role="instructionsState"></span>
+              </div>
+            </details>
+
+            <!-- 权限：这个 agent 被授了哪些能力。
+                 没授的工具压根不会进这一轮的工具表 —— 模型调不到它。 -->
+            <details class="instructions permissions-config" data-role="permissionsBox">
+              <summary>
+                <span data-role="permissionsSummary">权限（还没从服务端取回来）</span>
+              </summary>
+              <div class="permission-list" data-role="permissionList"></div>
+              <p class="permission-note" data-role="permissionsNote">
+                没授的工具不会出现在这一轮的工具表里 —— 模型调不到它。
+              </p>
+            </details>
+
+            <!-- 交接配置：这一栏跑完后，结果发给哪些 agent（可多选）。 -->
+            <details class="instructions handoff-config" data-role="handoffBox">
+              <summary>
+                <span data-role="handoffSummary">交接配置（未选目标）</span>
+              </summary>
+              <div class="handoff-targets" data-role="handoffTargets"></div>
+              <div class="handoff-delay">
+                <label>
+                  延迟
+                  <input type="number" data-role="handoffDelay" min="0" max="3600" step="1" />
+                  秒后再发送（0 = 立即）
+                </label>
+                <span class="instructions-state" data-role="handoffDelayState"></span>
+              </div>
+
+              <p class="handoff-note" data-role="handoffNote">
+                勾选的 agent 会在这一栏跑完后收到本轮结果（可多选）。
+              </p>
+            </details>
+
+            <!-- 轮次步骤：这一轮按哪几步做。一条都没配就还是一次跑完。 -->
+            <details class="instructions steps-config" data-role="stepsBox">
+              <summary>
+                <span data-role="stepsSummary">轮次步骤（未配置，一次跑完）</span>
+              </summary>
+              <div class="steps-list" data-role="stepsList"></div>
+              <div class="instructions-actions">
+                <button type="button" data-role="addStep">＋ 加一步</button>
+                <button type="button" data-role="clearSteps">清空</button>
+                <button type="button" data-role="restoreSteps">恢复默认步骤</button>
+                <span class="instructions-state" data-role="stepsHint">
+                  步骤按顺序跑：前一步的产出接到后一步；没配过时用这个 agent 的默认步骤。
+                </span>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+    </template>
+
+    <script>
+      // 自愈守卫：模块脚本是 defer 的，等它启动并设置启动标记之后再判断。
+      //
+      // 比对的是版本号，不是"标记在不在" —— 旧版 JS 也会设置标记（值是旧版本号），
+      // 只看标记在不在会把旧版误判成"已启动"，于是旧版一直用下去，
+      // 请求带着旧的身份 id 打到服务端，只会得到一句莫名其妙的 400。
+      //
+      // 但"标记还没出现"同样不能立刻当成旧版：app.js 还在路上的时候（网络慢、
+      // 机器正忙）标记当然不在，这时候重载只会把一次正常启动打断 ——
+      // 之前固定 800ms 就重载，机器一忙就会莫名其妙地多刷一次。
+      // 所以这里轮询：版本号对不上立刻换地址重载；标记还没出现就继续等它；
+      // 久等到不了才算启动失败，也只重载一次（地址里已经有 r= 就不再重载，不死循环）。
+      //
+      // __FRONTEND_VERSION__ 由服务端替换成当前版本号。
+      (function () {
+        window.__AGENT_VIS_EXPECTED__ = '__FRONTEND_VERSION__';
+        var EXPECTED = window.__AGENT_VIS_EXPECTED__;
+        var DEADLINE_MS = 15000;
+        var startedAt = Date.now();
+
+        function reload() {
+          if (new URLSearchParams(location.search).has('r')) return;
+          // 连 hash 一起带上：重载后还停在原来那个 agent 的那一页。
+          location.replace(location.pathname + '?r=' + Date.now() + location.hash);
+        }
+
+        function poll() {
+          var actual = window.__AGENT_VIS_FRONTEND__;
+          if (actual === EXPECTED) return;
+          if (typeof actual === 'string') {
+            reload(); // 版本号对不上：浏览器里跑的是旧版 JS
+            return;
+          }
+          if (Date.now() - startedAt > DEADLINE_MS) {
+            reload(); // 太久都没启动起来：重载一次，换个地址再试
+            return;
+          }
+          setTimeout(poll, 100);
+        }
+
+        setTimeout(poll, 100);
+      })();
+    </script>
+    <script type="module" src="__API_BASE_TOKEN__/app.js?v=__ASSET_V__"></script>
+
+    <!-- IDEA 文本：全局一份，随每次运行发给所有 agent（优先于仓库里的 idea.txt）。 -->
+    <div class="idea-modal" data-role="ideaModal" hidden>
+      <div class="idea-backdrop" data-role="ideaBackdrop"></div>
+      <div class="idea-window" role="dialog" aria-label="IDEA 文本">
+        <div class="idea-head">
+          <h2>IDEA 文本</h2>
+          <span class="instructions-state" data-role="ideaState">还没有内容</span>
+          <button type="button" data-role="ideaClose">关闭</button>
+        </div>
+        <div class="idea-toolbar">
+          <span class="instructions-state" data-role="ideaCount">0/10 段</span>
+          <span class="instructions-state" data-role="ideaStruct"></span>
+          <button type="button" data-role="ideaMode">源码（JSON）</button>
+        </div>
+        <div class="idea-kv" data-role="ideaKv"></div>
+        <textarea
+          data-role="ideaInput"
+          spellcheck="false"
+          hidden
+          placeholder="结构化模式的源码：这里必须是合法 JSON（idea.json 的内容）。"
+        ></textarea>
+        <div class="idea-actions">
+          <button type="button" data-role="ideaClear">清空</button>
+          <span class="instructions-state" data-role="ideaChars">0 字符</span>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>

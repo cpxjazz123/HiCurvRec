@@ -1,0 +1,159 @@
+{
+  "schema": "genrec.idea.v1",
+  "id": "C-212",
+  "title": "噪声标定：用冻结协议对同一 SID 重跑，量出 Stage3 自身方差",
+  "type": "diagnostic",
+  "status": "completed",
+  "issue": 212,
+  "date": "2026-11-12",
+  "supersedes": "results/research/issue213_idea_txt_superseded.txt",
+  "rules": {
+    "completeness": "sections 必须恰好包含 10 段（goal..boundaries），缺任一段即不合格",
+    "no_placeholders": "任何字段的值不得为空字符串、null，或含 TODO/TBD",
+    "traceability": "一切数值必须带 source（路径或命令）与 sha256（可适用时）",
+    "single_variable": "一个 idea 只有一个变量；不改动清单必须显式列出",
+    "single_run": "一个候选只跑一次；不做消融、多种子、调参扫描",
+    "switches": "开关只存在于代码并做接线检查，不训练关闭态"
+  },
+  "references": {
+    "F0": {
+      "value": 0.057278156,
+      "source": "results/stage3_T5Train/TIGER_mixed_rq_F0/logs/Amazon_2023_Instruments/Nov-09-2026_08-07-21/test_final.json",
+      "role": "主参照（允许类上限）"
+    },
+    "history_baseline": {
+      "value": 0.056216,
+      "source": "results/stage3_T5Train/_reference_baseline_deterministic/logs/Amazon_2023_Instruments/Nov-07-2026_15-47-31/test_final.json",
+      "role": "历史对照"
+    },
+    "forbidden_family": {
+      "value": 0.064764,
+      "source": "results/stage3_T5Train/TIGER_r48k2_rq",
+      "role": "禁令族（未解禁）"
+    },
+    "success_line": {
+      "value": 0.065,
+      "role": "成功线"
+    },
+    "delta_threshold": 0.001062
+  },
+  "sections": {
+    "1_goal": {
+      "statement": "用冻结 Stage3 协议对同一固定 SID 重跑一次，量出协议自身的非确定性 Δ_same_sid。",
+      "decision_form": "给出实数 Δ_same_sid = |recall_new − recall_ref|，与 0.001062 比较。"
+    },
+    "2_hypothesis": {
+      "claim": "Stage3 同一 SID 的重跑方差显著小于臂间差值（Δ_same_sid < 0.0004）。",
+      "refutation": "若 Δ_same_sid ≥ 0.001062，则本线全部臂间排序不可分辨，F0 的 +1.9% 必须降级为未超出噪声。"
+    },
+    "3_start": {
+      "measured_sid": "results/stage2_RQ-VAE/TIGER_mixed_rq_F0/item_sids.json",
+      "measured_sid_sha256": "afa89a10b1b197a7b56da4ad322c6ddd96a3c26c04238af326d88747378bb848",
+      "absent_sid_note": "results/stage2_RQ-VAE/TIGER_mixed_rq/item_sids.json 不存在（见 cca82cf4）",
+      "reference_run": "results/stage3_T5Train/TIGER_mixed_rq_F0/logs/Amazon_2023_Instruments/Nov-09-2026_08-07-21/test_final.json"
+    },
+    "4_method": {
+      "single_variable": "重跑（不改代码、不改超参）",
+      "protocol": {
+        "num_epochs": 150,
+        "eval_interval": 5,
+        "eval_start_epoch": 75,
+        "early_eval_epochs": [
+          25,
+          50,
+          75,
+          100,
+          125
+        ],
+        "seed": 42,
+        "beam_size": 20,
+        "no_eval": true,
+        "skip_test": false,
+        "master_port": 50201
+      },
+      "unchanged": [
+        "Stage2/Stage3 源码",
+        "冻结协议常量",
+        "SID 本身",
+        "历史结果文件"
+      ]
+    },
+    "5_switches": {
+      "mechanism_switches": "无（诊断不引入新代码路径）",
+      "wiring_check": "HG_Rec.log 第 1 行 Configuration: 与冻结协议常量逐项机器对比"
+    },
+    "6_preregistration": {
+      "tiers": [
+        {
+          "condition": "Δ_same_sid >= 0.001062",
+          "action": "臂间不可分辨；结案文件须写明此前排序仅描述性，F0 的 +1.9% 未超出协议噪声"
+        },
+        {
+          "condition": "0.0004 <= Δ_same_sid < 0.001062",
+          "action": "部分可分辨：只允许 F0 > 历史基线 一条结论"
+        },
+        {
+          "condition": "Δ_same_sid < 0.0004",
+          "action": "F0 的 +1.9% 可分辨；≤0.3% 的差别属噪声"
+        }
+      ],
+      "run_policy": "只跑一次，不重复、不换 seed"
+    },
+    "7_verification": [
+      "输出齐全：test_final.json / HG_Rec.log / training_metrics.jsonl",
+      "SID sha256 等于 afa89a10b1b197a7b56da4ad322c6ddd96a3c26c04238af326d88747378bb848",
+      "Configuration: 行与冻结协议逐项一致（机器对照）",
+      "报告给出 Δ_same_sid 与 Δ(F0)、Δ(历史基线) 并列表",
+      "若判不可分辨，必须在 results/research/line_closure/line_closure_2026-11-12.md 追加噪声标定行",
+      "git diff --stat 不含 results/stage2_RQ-VAE/** 与 results/stage3_T5Train/** 下文件"
+    ],
+    "8_expectation": {
+      "expected": "Δ_same_sid 在 1e-4 量级，即 < 0.0004，F0 的 +1.9% 站得住",
+      "falsifier": "若 Δ_same_sid >= 0.001062，则本线所有 0.4%/0.8% 判读作废，且 F0 相对历史基线的 +1.9% 不可主张"
+    },
+    "9_records": {
+      "run_dir": "results/stage3_T5Train/TIGER_mixed_rq_F0/logs/Amazon_2023_Instruments/Nov-12-2026_17-01-43/",
+      "result_file": "results/stage3_T5Train/TIGER_mixed_rq_F0/logs/Amazon_2023_Instruments/Nov-12-2026_17-01-43/test_final.json",
+      "metrics_file": "results/stage3_T5Train/TIGER_mixed_rq_F0/logs/Amazon_2023_Instruments/Nov-12-2026_17-01-43/training_metrics.jsonl",
+      "r2": "不新增（诊断不产出新 SID / 新 Stage2 源码）"
+    },
+    "10_boundaries": [
+      "不训练 Stage2、不改 Stage2 源码、不新建候选树",
+      "不改冻结 Stage3 协议常量；不换 seed；不重复运行",
+      "不得据本次结果调参或选最优运行"
+    ]
+  },
+  "result": {
+    "same_sid_recall_new": 0.05722592663521301,
+    "same_sid_recall_ref": 0.057278155956754125,
+    "delta_same_sid": 5.2229321e-05,
+    "delta_relative": 0.000912,
+    "verdict": "Δ_same_sid = 5.22e-05 < 0.0004 ⇒ 第三档：F0 的 +1.9% 可分辨；协议噪声约 0.09%",
+    "implications": [
+      "F0 +1.9% 远大于噪声（约 21×），站得住",
+      "LKC +0.3% 约为噪声 3.3×，方向可信但量级小",
+      "SIGN −0.2%、L2K/SDH −0.4% 亦超出噪声，属真实但微小的负效应"
+    ]
+  },
+  "web_contract": {
+    "source_of_truth": "idea.json（schema genrec.idea.v1）是唯一真源；idea.txt 是它的**逐字节 JSON 镜像**（供旧版服务/静态读取），页面优先用 /api/idea 的 doc，取不到时回退解析 fileText",
+    "render_mode": "**键值对渲染**：不再用整段文本呈现。每个 section 渲染为一个区块，区块内每一对 (JSON 键 → 值) 渲染为一行 key-value 行；嵌套对象用键路径展开（如 6_preregistration.tiers[0].condition），数组渲染为行内列表或每项一行",
+    "row_layout": "左列键名（等宽字体、直接用 JSON 键名或其本地化标签）、右列值；number 用等宽且保留原始精度、boolean 渲染为徽章（true/false）、string 保留原样并按 markdown 渲染行内代码/链接、数组逐项换行、空值显示「缺失」",
+    "section_order": "元信息 → sections.1_goal … sections.10_boundaries → result → web_contract；10 段缺任一段显示「缺失」而不是隐藏",
+    "completeness_badge": "顶部常显 N/10；N<10 时禁用保存/发送，并列出缺失段名",
+    "edit_mode": "默认只读键值视图；编辑通过「源码（JSON）」切换，编辑后用 JSON.parse 校验，失败则拒绝保存并标出错误位置",
+    "numeric_links": "references.*.value 与 result.* 的数值渲染为可点击引用，跳到对应 source 路径；无 source 的数值标红",
+    "prereg_visibility": "6_preregistration.tiers 三档必须常显（表格化：condition / action），不得折叠",
+    "validation": "缺 id/title/references ⇒ 区块顶部显示「结构不合格」并拒绝保存",
+    "no_second_schema": "页面不得另造字段名或另存一份结构；键名一律用 idea.json 的键名"
+  },
+  "self_check": {
+    "sections_complete": 10,
+    "placeholders": 0,
+    "traceable_numbers": true,
+    "single_variable": "重跑",
+    "prereg_tiers": 3,
+    "falsifier_written": true,
+    "boundaries_listed": true
+  }
+}
