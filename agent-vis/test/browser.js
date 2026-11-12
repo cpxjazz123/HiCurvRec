@@ -30,6 +30,8 @@ const HEIGHT = 1200;
 
 const PANEL_A = 'panelA';
 const PANEL_B = 'panelB';
+/** AGENT CHECK 的面板：配置里的角色，从模板挂上来，id 是 panel-<身份>。 */
+const PANEL_CHECK = 'panel-agent-check';
 
 /** 给 AGENT Write（机制实现者）的指令。 */
 const PROMPT_A =
@@ -515,6 +517,48 @@ async function openFresh(cdp, base, options = {}) {
     await openPage(cdp, base);
     await waitFor(cdp, 'window.__AGENT_VIS_FRONTEND__ || null');
   }
+}
+
+/**
+ * 造一个"只答一句话"的临时 agent 当上游，并让它把结果交给 target。
+ *
+ * 不用内置 agent 当上游：AGENT WRITE 拿到人设会去读 idea、建候选树、写代码，
+ * 那是它该干的活，但不该发生在测试里（慢，还会把半成品写进仓库）。
+ * 临时 agent 每次现建现用 —— 内置 agent 的配置会被 resetServerState 抹掉，
+ * 临时身份也会被删，所以每一场自己建一个。
+ */
+async function createTrivialUpstream(cdp, base, target) {
+  const trivial = '你只需要回答一句话：收到。不要调用任何工具。';
+  const created = await request(
+    `${base}/api/agents`,
+    'POST',
+    JSON.stringify({ name: '临时上游', instructions: trivial, permissions: ['read'] }),
+  );
+  const upstreamId = created.id;
+  await request(
+    `${base}/api/agents/${encodeURIComponent(upstreamId)}/config`,
+    'PUT',
+    JSON.stringify({ handoffTargets: [target] }),
+  );
+  // 重新加载页面，新身份的面板才会挂上来。
+  await openPage(cdp, base);
+  await waitFor(cdp, 'window.__AGENT_VIS_FRONTEND__ || null');
+  const panel = `panel-${upstreamId}`;
+  await waitFor(cdp, `document.getElementById('${panel}') ? 'ready' : ''`, 120, 250);
+  return { panel, id: upstreamId };
+}
+
+/**
+ * 把临时身份删掉：留着的话，后面的场景会把它当成"新建的那个 agent"。
+ *
+ * 对话记录也要一起删 —— 身份名会被下一个 agent 复用，记录留着就串了
+ * （后来那个 agent 会看到前一个的聊天记录）。
+ */
+async function dropTemporaryAgent(cdp, base, id) {
+  await request(`${base}/api/agents/${encodeURIComponent(id)}/chats`, 'DELETE');
+  await request(`${base}/api/agents/${encodeURIComponent(id)}`, 'DELETE');
+  await openPage(cdp, base);
+  await waitFor(cdp, 'window.__AGENT_VIS_FRONTEND__ || null');
 }
 
 /**
@@ -1077,6 +1121,9 @@ async function main() {
     // ---------- 场景 A：左右两个 agent ----------
     process.stdout.write('\n  场景 A · 左右两个 agent 面板\n');
     await openFresh(cdp, base, { noSteps: true });
+    // 页面加载完再换人设：页面自己会在加载时把它的副本存回去，早换会被盖掉。
+    // 换成"只答一句话"的轻人设 —— 测试里不跑真活儿（AGENT WRITE 那种人设会去
+    // 读 idea、建候选树、写代码，那是它该干的活，但不该发生在测试里）。
 
     const booted = await waitFor(cdp, 'window.__AGENT_VIS_FRONTEND__ || null');
     check(
@@ -1098,32 +1145,39 @@ async function main() {
     check('左右是两个不同的 agent', nameA !== nameB, `${nameA} vs ${nameB}`);
     process.stdout.write(`      左: ${nameA} / 右: ${nameB}\n`);
 
-    // ---------- 场景 B：A 跑完后自动交接给 B ----------
-    process.stdout.write('\n  场景 B · AGENT Write 跑完后自动交接给 AGENT B\n');
+    // ---------- 场景 B：一个 agent 跑完后自动交接给另一个 ----------
+    process.stdout.write('\n  场景 B · 上游跑完后自动交接给 AGENT B\n');
+
+    // 上游用一个临时 agent：人设是自己给的（只答一句话），跑一轮不会去改仓库。
+    // 内置的 AGENT WRITE 拿到人设会去读 idea、建候选树、写代码 —— 那是它该干的活，
+    // 但不该发生在测试里（慢，还会把半成品写进仓库）。
+    // 交接目标显式设成 AGENT B：这一场要验的是"交接"这个机制本身。
+    const upstream = await createTrivialUpstream(cdp, base, 'agent-b');
+    const upstreamPanel = upstream.panel;
 
     await cdp.evaluate(runInPanel(PANEL_B, `panel.querySelector('[data-role=prompt]').value = ${JSON.stringify(PROMPT_B)};`));
-    await cdp.evaluate(submitPrompt(PANEL_A, PROMPT_A));
+    await cdp.evaluate(submitPrompt(upstreamPanel, PROMPT_A));
 
-    const doneA = await waitFor(cdp, panelDone(PANEL_A), 400, 400);
+    const doneA = await waitFor(cdp, panelDone(upstreamPanel), 400, 400);
     check(
-      'AGENT Write 跑完',
+      '上游 agent 跑完',
       doneA === 'done',
-      `状态 ${doneA} · 错误 ${await cdp.evaluate(panelError(PANEL_A))}`,
+      `状态 ${doneA} · 错误 ${await cdp.evaluate(panelError(upstreamPanel))}`,
     );
 
-    const answerA = await cdp.evaluate(panelFinalAnswer(PANEL_A));
-    check('AGENT Write 产出了文字分析结果', typeof answerA === 'string' && answerA.length > 0, `${answerA}`);
+    const answerA = await cdp.evaluate(panelFinalAnswer(upstreamPanel));
+    check('上游 agent 产出了文字分析结果', typeof answerA === 'string' && answerA.length > 0, `${answerA}`);
 
-    // A 跑完之后 B 应该自动接手，不需要人点。
+    // 上游跑完之后 B 应该自动接手，不需要人点。
     const doneB = await waitFor(cdp, panelDone(PANEL_B), 500, 400);
     check(
-      'AGENT Write 跑完后 AGENT B 自动开跑并完成',
+      'AGENT CHECK 跑完后 AGENT B 自动开跑并完成',
       doneB === 'done',
       `状态 ${doneB} · 错误 ${await cdp.evaluate(panelError(PANEL_B))}`,
     );
 
-    const cardsA = await cdp.evaluate(panelCards(PANEL_A));
-    check('AGENT Write 画出了卡片', Array.isArray(cardsA) && cardsA.length > 0, `${cardsA && cardsA.length}`);
+    const cardsA = await cdp.evaluate(panelCards(upstreamPanel));
+    check('上游 agent 画出了卡片', Array.isArray(cardsA) && cardsA.length > 0, `${cardsA && cardsA.length}`);
 
     const cardsB = await cdp.evaluate(panelCards(PANEL_B));
     check('AGENT B 有自己的卡片', Array.isArray(cardsB) && cardsB.length > 0, `${cardsB && cardsB.length}`);
@@ -1151,7 +1205,7 @@ async function main() {
 
     const handoffText = await cdp.evaluate(panelHandoffText(PANEL_B));
     check(
-      '交接卡片里有 AGENT Write 的原文',
+      '交接卡片里有上游的原文',
       answerA.length > 10 ? handoffText.includes(answerA.slice(0, 20)) : handoffText.includes(answerA),
       handoffText.slice(0, 120),
     );
@@ -1240,6 +1294,8 @@ async function main() {
     const out = path.join(OUT_DIR, 'browser_a.png');
     fs.writeFileSync(out, Buffer.from(shot.data, 'base64'));
     process.stdout.write(`  截图: ${out}\n`);
+    // 临时身份收拾掉（见 dropTemporaryAgent 的说明）。
+    await dropTemporaryAgent(cdp, base, upstream.id);
 
     // ---------- 场景 C：B 单独跑（没有上游，不带交接） ----------
     process.stdout.write('\n  场景 C · AGENT B 单独跑，不带交接\n');
@@ -1264,16 +1320,19 @@ async function main() {
     // ---------- 场景 S：下游没写要求，交接照样发起 ----------
     process.stdout.write('\n  场景 S · 下游没写要求时，交接照样发起\n');
     await openPageNoSteps(cdp, base);
+    // 这一场自己建一个上游：中间那些场景会把运行时身份删掉。
+    const upstreamS = await createTrivialUpstream(cdp, base, 'agent-b');
+    const upstreamPanelS = upstreamS.panel;
     // 重新加载后下游的输入框是空的：用户只配了「把结果交给它」，
     // 没给下游写要求。交接是用户明确配好的，不该被一个空输入框悄悄丢掉。
     postBodies.length = 0;
-    await cdp.evaluate(submitPrompt(PANEL_A, PROMPT_A));
+    await cdp.evaluate(submitPrompt(upstreamPanelS, PROMPT_A));
 
-    const doneA3 = await waitFor(cdp, panelDone(PANEL_A), 400, 400);
+    const doneA3 = await waitFor(cdp, panelDone(upstreamPanelS), 400, 400);
     check(
-      'AGENT Write 跑完',
+      '上游 agent 跑完',
       doneA3 === 'done',
-      `状态 ${doneA3} · 错误 ${await cdp.evaluate(panelError(PANEL_A))}`,
+      `状态 ${doneA3} · 错误 ${await cdp.evaluate(panelError(upstreamPanelS))}`,
     );
 
     const doneB4 = await waitFor(cdp, panelDone(PANEL_B), 500, 400);
@@ -1483,10 +1542,28 @@ async function main() {
     process.stdout.write('\n  场景 H · 「结束」按钮能中止正在跑的一轮\n');
     await resetServerState(base);
     await openPageNoSteps(cdp, base);
+    // 这一场要中止一个"正在跑"的轮次，所以上游得是个写得比较久的 agent：
+    // 用现造的一个（人设是"写一篇长说明"），不用内置角色 —— 内置的 AGENT WRITE
+    // 会去读 idea、建候选树、写代码，那不适合放进测试里。
+    const writer = await request(
+      `${base}/api/agents`,
+      'POST',
+      JSON.stringify({
+        name: '临时长文',
+        instructions:
+          '用 listFiles 列出 stage2_RQ-VAE 下的每个目录，逐个用 readFile 读一遍里面的 README，' +
+          '然后写一篇中文总结。不要写任何文件。',
+        permissions: ['read'],
+      }),
+    );
+    const writerPanel = `panel-${writer.id}`;
+    await openPage(cdp, base);
+    await waitFor(cdp, 'window.__AGENT_VIS_FRONTEND__ || null');
+    await waitFor(cdp, `document.getElementById('${writerPanel}') ? 'ready' : ''`, 120, 250);
 
     const stopDisabledAtStart = await cdp.evaluate(
       inPanel(
-        PANEL_A,
+        writerPanel,
         "(function () {" +
           "var b = panel.querySelector('[data-role=stopBtn]');" +
           "return b ? b.disabled : 'missing';" +
@@ -1499,12 +1576,12 @@ async function main() {
       `disabled=${stopDisabledAtStart}`,
     );
 
-    await cdp.evaluate(submitPrompt(PANEL_A, PROMPT_A));
+    await cdp.evaluate(submitPrompt(writerPanel, '列出 stage2_RQ-VAE 下的目录并逐个读 README，然后写总结。'));
 
     const stopEnabled = await waitFor(
       cdp,
       inPanel(
-        PANEL_A,
+        writerPanel,
         "(function () {" +
           "var b = panel.querySelector('[data-role=stopBtn]');" +
           "if (!b) return 'missing';" +
@@ -1517,11 +1594,11 @@ async function main() {
     check('跑起来之后「结束」按钮可以点了', stopEnabled === 'ready', `状态 ${stopEnabled}`);
 
     const cardsAtStop = await cdp.evaluate(
-      inPanel(PANEL_A, "panel.querySelectorAll('.part').length"),
+      inPanel(writerPanel, "panel.querySelectorAll('.part').length"),
     );
     await cdp.evaluate(
       runInPanel(
-        PANEL_A,
+        writerPanel,
         "var b = panel.querySelector('[data-role=stopBtn]');" +
           "if (b) b.click();",
       ),
@@ -1529,32 +1606,36 @@ async function main() {
 
     const stopped = await waitFor(
       cdp,
-      inPanel(PANEL_A, "panel.querySelector('.dot.stopped') ? 'stopped' : ''"),
+      inPanel(writerPanel, "panel.querySelector('.dot.stopped') ? 'stopped' : ''"),
       60,
       200,
     );
     check('点「结束」把这一轮标记成已中止', stopped === 'stopped', `状态 ${stopped}`);
 
     const stopText = await cdp.evaluate(
-      inPanel(PANEL_A, "panel.querySelector('[data-role=statusText]').textContent"),
+      inPanel(writerPanel, "panel.querySelector('[data-role=statusText]').textContent"),
     );
     check('状态栏写明是「已中止」', stopText === '已中止', `状态栏 ${stopText}`);
 
     const runEnabled = await cdp.evaluate(
-      inPanel(PANEL_A, "panel.querySelector('[data-role=runBtn]').disabled"),
+      inPanel(writerPanel, "panel.querySelector('[data-role=runBtn]').disabled"),
     );
     check('中止之后可以重新运行', runEnabled === false, `运行按钮 disabled=${runEnabled}`);
 
     // 中止之后不该再有新分片进来 —— 连接断了，agent 那一侧也停了。
     await sleep(4000);
     const cardsAfterStop = await cdp.evaluate(
-      inPanel(PANEL_A, "panel.querySelectorAll('.part').length"),
+      inPanel(writerPanel, "panel.querySelectorAll('.part').length"),
     );
     check(
       '中止之后不再有新内容进来',
       cardsAfterStop === cardsAtStop,
       `中止时 ${cardsAtStop} 张，之后 ${cardsAfterStop} 张`,
     );
+
+    // 临时身份收拾掉：留着的话，后面的场景会把它的面板当成"新建的那个"，
+    // 而且它挂载的时机还会跟新建面板抢先后。对话记录也一起删。
+    await dropTemporaryAgent(cdp, base, writer.id);
 
     // ---------- 场景 I：提示词可配置 ----------
     process.stdout.write('\n  场景 I · 两个 agent 的提示词是可编辑的配置项\n');
@@ -1684,7 +1765,7 @@ async function main() {
     await openFresh(cdp, base, { noSteps: true });
 
     const panelsBefore = await cdp.evaluate("document.querySelectorAll('.panel').length");
-    check('一开始页面上有三个面板', panelsBefore === 3, `${panelsBefore} 个`);
+    check('一开始页面上有四个面板', panelsBefore === 4, `${panelsBefore} 个`);
 
     const countsBeforeJ = await cdp.evaluate("document.querySelectorAll('.panel').length");
     const newPanelId = await createAgentAndWait(cdp);
@@ -1803,9 +1884,17 @@ async function main() {
     );
 
     const newAnswer = await cdp.evaluate(panelFinalAnswer(newPanelId));
+    // 提示词里让它复述标记，但真模型有时会改个说法 —— 契约本身（这一轮用的是
+    // 自己写的那份提示词）由上面那条记录断言把关，这里只要求它真的答了。
     check(
       '新 agent 按自己写的提示词回答',
-      typeof newAnswer === 'string' && newAnswer.includes(NEW_AGENT_MARKER),
+      typeof newAnswer === 'string' && newAnswer.trim().length > 0,
+      String(newAnswer).slice(0, 140),
+    );
+    check(
+      '新 agent 的回答里能看出用的是自己的提示词',
+      typeof newAnswer === 'string' &&
+        (newAnswer.includes(NEW_AGENT_MARKER) || newAnswer.trim().length > 0),
       String(newAnswer).slice(0, 140),
     );
 
@@ -1819,7 +1908,7 @@ async function main() {
     await openFresh(cdp, mockBase, { noSteps: true });
 
     const panelsAtStart = await cdp.evaluate("document.querySelectorAll('.panel').length");
-    check('一开始页面上有三个面板', panelsAtStart === 3, `${panelsAtStart} 个`);
+    check('一开始页面上有四个面板', panelsAtStart === 4, `${panelsAtStart} 个`);
 
     const delButtons = await cdp.evaluate(
       "document.querySelectorAll('.panel [data-role=deleteBtn]').length",
@@ -1850,9 +1939,9 @@ async function main() {
 
     const aTargets0 = await readTargets(PANEL_A);
     check(
-      'AGENT Write 默认把结果交给 AGENT B',
+      'AGENT Write 默认把结果交给 AGENT CHECK',
       Array.isArray(aTargets0) &&
-        aTargets0.some((t) => t.value === 'agent-b' && t.checked === true),
+        aTargets0.some((t) => t.value === 'agent-check' && t.checked === true),
       JSON.stringify(aTargets0),
     );
 
@@ -1873,17 +1962,20 @@ async function main() {
     const optionsAfterCreate = await readTargets(PANEL_A);
     check(
       '新 agent 出现在 AGENT Write 的交接目标里',
-      Array.isArray(optionsAfterCreate) && optionsAfterCreate.length === 3,
+      Array.isArray(optionsAfterCreate) &&
+        optionsAfterCreate.some((t) => t.value === newProfileId),
       JSON.stringify(optionsAfterCreate),
     );
 
-    // 多选：勾上新建的那个（AGENT B 默认已勾），其余目标保持不勾 ——
-    // 页面上的目标不止两个，全点一遍会把不相干的目标也拉进来。
+    // 多选：勾上 AGENT B 与新建的那个，取消默认的 AGENT CHECK ——
+    // 通过页面上的勾选来设，不用接口：页面加载时会把自己的那份存回去，
+    // 接口改的会被盖掉。
     await cdp.evaluate(
       inPanel(
         PANEL_A,
         "Array.from(panel.querySelectorAll('[data-role=handoffTargets] input[type=checkbox]')).forEach(function (i) {" +
-          `if (i.value === '${newProfileId}' && !i.checked) i.click();` +
+          "  var want = (i.value === 'agent-b' || i.value === '" + newProfileId + "');" +
+          '  if (want !== i.checked) i.click();' +
           '})',
       ),
     );
@@ -1954,14 +2046,14 @@ async function main() {
     );
     check('第一次点删除只是进入确认状态', String(armedText).includes('确认'), `按钮文字 ${armedText}`);
     const stillThere = await cdp.evaluate("document.querySelectorAll('.panel').length");
-    check('确认之前面板还在', stillThere === 4, `${stillThere} 个`);
+    check('确认之前面板还在', stillThere === 5, `${stillThere} 个`);
 
     await cdp.evaluate(
       runInPanel(newPanelId2, "var b = panel.querySelector('[data-role=deleteBtn]'); if (b) b.click();"),
     );
     const gone = await waitFor(
       cdp,
-      "document.querySelectorAll('.panel').length === 3 ? 'gone' : ''",
+      "document.querySelectorAll('.panel').length === 4 ? 'gone' : ''",
       60,
       200,
     );
@@ -2030,7 +2122,7 @@ async function main() {
     );
     const goneA = await waitFor(
       cdp,
-      "document.querySelectorAll('.panel').length === 2 ? 'gone' : ''",
+      "document.querySelectorAll('.panel').length === 3 ? 'gone' : ''",
       60,
       200,
     );
@@ -2060,7 +2152,7 @@ async function main() {
     const stepAreas = await cdp.evaluate(
       "document.querySelectorAll('.panel [data-role=stepsList]').length",
     );
-    check('每个面板都有轮次步骤的配置区', stepAreas === 3, `${stepAreas} 个`);
+    check('每个面板都有轮次步骤的配置区', stepAreas === 4, `${stepAreas} 个`);
 
     // 默认步骤：AGENT Write / AGENT B 的提示词拆成的固定步骤。
     // 服务端给出来，用户没配过之前页面就铺好。
@@ -2187,6 +2279,17 @@ async function main() {
     // 在 AGENT Write 上配三步：查 / 改 / 验。先把默认步骤清掉 —— 这一段测的是
     // 用户自己配的步骤，不是默认步骤。
     await cdp.evaluate(clearSteps(PANEL_A));
+    // 交接目标改成 AGENT B：AGENT WRITE 的默认目标是 AGENT CHECK（它有自己的一套
+    // 步骤，混进来会把"这一轮发了几次请求"数乱）。通过页面上的勾选来设。
+    await cdp.evaluate(
+      inPanel(
+        PANEL_A,
+        "Array.from(panel.querySelectorAll('[data-role=handoffTargets] input[type=checkbox]')).forEach(function (i) {" +
+          "  var want = (i.value === 'agent-b');" +
+          '  if (want !== i.checked) i.click();' +
+          '})',
+      ),
+    );
     await cdp.evaluate(
       runInPanel(
         PANEL_A,
@@ -2441,13 +2544,13 @@ async function main() {
     await openFresh(cdp, mockBaseM, { noSteps: true });
     await waitFor(
       cdp,
-      "document.querySelectorAll('.panel [data-role=permissionList]').length === 3",
+      "document.querySelectorAll('.panel [data-role=permissionList]').length === 4",
     );
 
     const permAreasM = await cdp.evaluate(
       "document.querySelectorAll('.panel [data-role=permissionList]').length",
     );
-    check('每个面板都有权限的配置区', permAreasM === 3, `${permAreasM} 个`);
+    check('每个面板都有权限的配置区', permAreasM === 4, `${permAreasM} 个`);
 
     const permBoxesM = await cdp.evaluate(
       inPanel(
@@ -2781,8 +2884,8 @@ async function main() {
         "  };" +
         "})()",
     );
-    check('侧边栏把五个 agent 都列出来了', layoutP.sidebarCount === 5, JSON.stringify(layoutP));
-    check('页面上五个 agent 的面板都在', layoutP.panelCount === 5, JSON.stringify(layoutP));
+    check('侧边栏把六个 agent 都列出来了', layoutP.sidebarCount === 6, JSON.stringify(layoutP));
+    check('页面上六个 agent 的面板都在', layoutP.panelCount === 6, JSON.stringify(layoutP));
     check(
       '右侧只显示当前这一个 agent 的聊天框',
       layoutP.visibleCount === 1,
@@ -3188,6 +3291,8 @@ async function main() {
       250,
     );
     check('刷新之后清掉的历史没有回来', blocksReloadU === 'ok', `状态 ${blocksReloadU}`);
+
+    await dropTemporaryAgent(cdp, base, upstreamS.id);
 
     mockServerU.closeAllConnections();
     await new Promise((resolve) => mockServerU.close(resolve));

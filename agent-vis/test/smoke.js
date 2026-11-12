@@ -279,10 +279,10 @@ async function main() {
     assert.notEqual(ids[0], ids[1], '两个静态面板必须是不同的 agent');
   });
 
-  await test('/api/health 列出三个 agent 的身份', async () => {
+  await test('/api/health 列出四个 agent 的身份', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.ok(Array.isArray(info.agents), 'health 没列出 agents');
-    assert.equal(info.agents.length, 3, `应为三个 agent，实际 ${info.agents.length}`);
+    assert.equal(info.agents.length, 4, `应为四个 agent，实际 ${info.agents.length}`);
     for (const agent of info.agents) {
       assert.equal(typeof agent.id, 'string');
       assert.equal(typeof agent.name, 'string');
@@ -351,28 +351,28 @@ async function main() {
     assert.equal(res.status, 400, '未知 agent 应该被拒掉');
   });
 
-  await test('三个 agent 各自有一份独立的人设', async () => {
+  await test('四个 agent 各自有一份独立的人设', async () => {
     assert.ok(Array.isArray(config.AGENT_PROFILES), 'config 没导出 AGENT_PROFILES');
-    assert.equal(config.AGENT_PROFILES.length, 3);
+    assert.equal(config.AGENT_PROFILES.length, 4);
     const texts = new Set(config.AGENT_PROFILES.map((profile) => profile.instructions));
     assert.equal(texts.size, config.AGENT_PROFILES.length,
                  '每个 agent 的人设说明必须不同，否则几栏做的是同一件事');
   });
 
-  await test('三个 agent 就叫 AGENT Write、AGENT B 与 AGENT MATH', async () => {
+  await test('四个 agent 就叫 AGENT Write、AGENT B、AGENT MATH 与 AGENT CHECK', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.name),
-      ['AGENT Write', 'AGENT B', 'AGENT MATH'],
+      ['AGENT Write', 'AGENT B', 'AGENT MATH', 'AGENT CHECK'],
       '页面上三栏的 agent 名字不对',
     );
   });
 
-  await test('三个 agent 分别是 Issue 执行者、控制器与公式审计员', async () => {
+  await test('四个 agent 分别是机制实现者、控制器、公式审计员与机制核对员', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.role),
-      ['MECHANISM_BUILDER', 'ISSUE_CONTROLLER', 'MATH_AUDITOR'],
+      ['MECHANISM_BUILDER', 'ISSUE_CONTROLLER', 'MATH_AUDITOR', 'MECHANISM_CHECKER'],
       '两个 agent 的角色不是"执行者 / 控制器"这一对',
     );
     assert.ok(
@@ -1435,8 +1435,8 @@ async function main() {
     assert.equal(run.status, 400, '删掉的身份不该还能跑');
   });
 
-  await test('配置里写死的 AGENT Write / AGENT B / AGENT MATH 不能从服务端删除', async () => {
-    for (const id of ['agent-a', 'agent-b', 'agent-math']) {
+  await test('配置里写死的四个 agent 不能从服务端删除', async () => {
+    for (const id of ['agent-a', 'agent-b', 'agent-math', 'agent-check']) {
       const res = await fetch(`${base}/api/agents/${id}`, { method: 'DELETE' });
       assert.equal(res.status, 400, `${id} 应该被拒掉`);
     }

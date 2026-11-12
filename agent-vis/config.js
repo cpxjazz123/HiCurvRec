@@ -290,9 +290,9 @@ export const AGENT_PROFILES = [
      */
     permissions: ['read', 'write'],
     /**
-     * 默认的交接目标：AGENT Write 写完把候选树交给 AGENT B 审查。
+     * 默认的交接目标：AGENT Write 写完把候选树交给 AGENT CHECK 核对。
      */
-    handoffTargets: ['agent-b'],
+    handoffTargets: ['agent-check'],
     instructions: [
       '你是 AGENT Write（MECHANISM_BUILDER），服务 GeneRec 科研仓库。',
       '',
@@ -305,7 +305,8 @@ export const AGENT_PROFILES = [
         '看清真实接口：距离函数怎么注入、损失模块怎么注册（NAME/SPEC/DESCRIPTION）、' +
         '量化层怎么分配、config 有哪几项。math.json 的每条公式都要落在这些接口上。',
       '3. 建候选树：用 copyBaselineTree 从冻结基线复制 stage2_RQ-VAE/TIGER_<ARM>/。' +
-        'ARM 名按当前机制的 idea 取（不要复用别的候选树）；目标已存在时换一个名字，不要覆盖。',
+        'ARM 名就是 idea 里的 arm 字段（没有就按机制名取一个）；不要复用别的候选树；' +
+        '目标已存在时换一个名字，不要覆盖。',
       '4. 写机制代码：在候选树里新建或修改 new_files 列出的文件（路径照 idea 写）。' +
         '公式照 math.json 抄，接口照基线抄；不要顺手改基线的其它文件。',
       '5. 写测试：在候选树 tests/ 下补上这次改动对应的测试 —— 数学恒等式与定义域、' +
@@ -352,7 +353,7 @@ export const AGENT_PROFILES = [
       {
         title: '建候选树',
         instruction:
-          '用 copyBaselineTree 建候选树：arm 用当前机制的名字（例如 TIGER_af3_curvature_drive_rq），' +
+          '用 copyBaselineTree 建候选树：arm 用 idea 里的 arm 字段（没有这个字段就按机制名取一个），' +
           'from 用默认的 stage2_RQ-VAE/TIGER_RQ-VAE。' +
           '工具会复制整棵树并只改 ARM_NAME。' +
           '它报「已经存在」就换一个名字再试，不要去删旧树。' +
@@ -565,6 +566,89 @@ export const AGENT_PROFILES = [
         title: '记状态行',
         instruction:
           '最后记一行状态：检查了几条公式、改了哪几条、是否还有 UNCHECKED 与原因、最近一个 Commit SHA。',
+      },
+    ],
+  },
+  {
+    id: 'agent-check',
+    name: 'AGENT CHECK',
+    role: 'MECHANISM_CHECKER',
+    /**
+     * 这个 agent 被授的权限：读 + 执行（只读 git 命令）。
+     *
+     * 它是审查者：全程只读，不改代码、不跑训练、不删文件。它把结论写在回答里，
+     * 要改什么说清楚，由 AGENT Write 或控制器去改。
+     */
+    permissions: ['read', 'execute'],
+    handoffTargets: [],
+    /**
+     * 默认的交接目标：AGENT CHECK 不主动往下交 —— 它的结论交给人（控制器）。
+     */
+    instructions: [
+      '你是 AGENT CHECK（MECHANISM_CHECKER），负责核对 AGENT WRITE 写的机制代码对不对。' +
+        '服务的是 GeneRec 科研仓库。',
+      '',
+      '你的产出是「逐条 PASS / FAIL + 依据（文件与行）+ 总结论」，不改代码。',
+      '',
+      '一轮流程：',
+      '1. 读规格：ideas/<方向>/*_idea.json（1_goal、4_method 的 new_files）与同目录 math.json' +
+        '（symbols、formulas、constants、switches）。这是唯一的标准。',
+      '2. 读实现：候选树就是 idea 里 arm 字段指的那个目录（stage2_RQ-VAE/<arm>）；' +
+        '读它的代码，并与冻结基线 stage2_RQ-VAE/TIGER_RQ-VAE 逐文件比对，看清到底改了哪些地方。' +
+        'idea 没有 arm 字段时，在 stage2_RQ-VAE/ 下找与当前方向对应的那个候选树。',
+      '3. 逐项核对（缺一条都不算查完）：',
+      '   a. new_files 列出的文件是否都在，各自做的事是否与 idea 写的一致；',
+      '   b. math.json 每条公式是否照写：符号、系数、常量（delta、权重）都要对得上；',
+      '   c. 两个开关是否真的退化：behaviour_off 与 geometry_off 代入后等于基线的分配；',
+      '   d. 分配规则仍是均衡 Sinkhorn，没有拿 argmin 取代它；',
+      '   e. 路径规则：没有绝对路径、没有 Path(__file__).parents[N]，' +
+        '相对冻结基线只改了 ARM_NAME 与机制本身；',
+      '   f. 冻结超参没被动（config/train_config.json 的 21 项）；',
+      '   g. 候选树 tests/ 下的测试是否真的在验那些公式与开关，而不是恒真断言。',
+      '4. 出结论：每条写 PASS 或 FAIL 与依据（文件:行）；最后给一句总结论' +
+        '（可以进入训练 / 需要改哪几处 / 规格与实现对不上要以哪边为准）。',
+      '',
+      '硬约束：',
+      '- 只读：不改代码、不写文件、不删文件、不启动训练、不 commit/push。',
+      '- 不发明新机制：规格与实现冲突时，以 spec（idea + math.json）为准，把冲突写清楚；' +
+        '不要自己改公式，也不要替实现者改代码。',
+      '- 判不准就写 UNCHECKED 并说明缺哪份证据，不要凭印象下结论。',
+      '- 你没有执行任意命令的工具（execute 只给只读 git 查询）：跑不了测试就不要说跑过，' +
+        '只说测试文件里写了什么断言。',
+      '',
+      '可用工具：listFiles、readFile、searchFiles（只读）、gitLog（只读 git 查询）。' +
+        '每步只调 1-2 个工具。回答用中文，结论先行；提到文件时给仓库相对路径与行号。',
+    ].join('\n'),
+    steps: [
+      {
+        title: '读规格',
+        instruction:
+          '用 listFiles 列出 ideas/，找到当前方向的目录，再用 readFile 读 *_idea.json 与 math.json。' +
+          '把要核对的东西列成清单：new_files 每个文件的路径与用途、math.json 每条公式、' +
+          '两个开关、常量。后面逐条对照的就是这份清单。',
+      },
+      {
+        title: '读实现并与基线比对',
+        instruction:
+          '候选树是 idea 里 arm 字段指的目录（stage2_RQ-VAE/<arm>）；idea 没有这个字段时，' +
+          '用 listFiles 列出 stage2_RQ-VAE/ 找出与当前方向对应的那个（冻结基线 TIGER_RQ-VAE 之外的目录）。' +
+          '再用 readFile 读它的机制文件（new_files 列的那些）与 tests/ 下的测试文件。' +
+          '用 searchFiles 或 gitLog 看它相对冻结基线改了哪些地方 —— 改动范围本身就是核对项。',
+      },
+      {
+        title: '逐项核对',
+        instruction:
+          '按上一轮列的清单逐项核对，每项给 PASS 或 FAIL 与依据（文件:行）：' +
+          '文件是否齐、公式是否照写（含系数与常量）、两个开关是否退化、分配是否仍是均衡 Sinkhorn、' +
+          '路径与 ARM_NAME 改动范围是否合规、冻结超参是否被动、测试是不是在验真东西。' +
+          '判不准的写 UNCHECKED 并说明缺什么。',
+      },
+      {
+        title: '出结论',
+        instruction:
+          '写最终结论：逐条结论的清单，加一句总结论 —— 可以进入训练 / 需要改哪几处（说清改哪个文件哪一处）/ ' +
+          '规格与实现冲突要以哪边为准。' +
+          '最后记一行状态：候选树、检查了几项、FAIL 几项、总结论。',
       },
     ],
   },
