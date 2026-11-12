@@ -7,7 +7,7 @@
     "D": "冻结支撑上的 AF3 结构失真（class-balanced Huber 期望）",
     "D0": "基线同口径失真",
     "M": "各层 Sinkhorn 分配的行/列边际最大相对偏差",
-    "kappa_ij": "AF3 曲率：4 - d_i - d_j + 3 T_ij（d 度，T 共同邻居数）",
+    "kappa_ij": "AF3 曲率：4 - d_i - d_j + 3 T_ij（d 度，T 共同邻居数）；实现见 results/research/stage3_queue/_stage/TIGER_mixed_rq_A/TIGER_mixed_rq_A/model/af3_structure.py",
     "s_i": "商品结构势：邻居曲率的度加权均值，按全图标准化",
     "g_k": "第 l 层码字 k 的可学习势",
     "d(z,c)": "距离注册表里的度量（当前为平方欧氏）",
