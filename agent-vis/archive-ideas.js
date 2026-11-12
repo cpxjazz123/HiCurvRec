@@ -38,16 +38,30 @@ export function archiveReady({ ideasDir, archiveDir, dryRun = false } = {}) {
   const kept = [];
   const broken = [];
 
-  let names = [];
-  try {
-    names = fs.readdirSync(source).filter((name) => name.endsWith('_idea.json')).sort();
-  } catch (err) {
-    if (err && err.code === 'ENOENT') return { moved, kept, broken, dryRun };
-    throw err;
-  }
+  // 方向是目录（ideas/<方向>/<方向>_idea.json），扁平存放也认：递归找 *_idea.json，
+  // 归档时保留相对路径，方向目录搬空后顺手删掉。
+  const files = [];
+  const walk = (dir) => {
+    let entries = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch (err) {
+      if (err && err.code === 'ENOENT') return;
+      throw err;
+    }
+    for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith('_idea.json')) files.push(full);
+    }
+  };
+  walk(source);
+  files.sort();
 
-  for (const name of names) {
-    const from = path.join(source, name);
+  for (const from of files) {
+    const relative = path.relative(source, from);
+    const name = relative;
     let doc;
     try {
       doc = JSON.parse(fs.readFileSync(from, 'utf8'));
@@ -62,8 +76,20 @@ export function archiveReady({ ideasDir, archiveDir, dryRun = false } = {}) {
       continue;
     }
     if (!dryRun) {
-      fs.mkdirSync(target, { recursive: true });
-      fs.renameSync(from, path.join(target, name));
+      const to = path.join(target, relative);
+      fs.mkdirSync(path.dirname(to), { recursive: true });
+      fs.renameSync(from, to);
+      // 方向目录空了就删掉，ideas/ 里不留空壳。
+      let parent = path.dirname(from);
+      while (parent !== source && parent.startsWith(source)) {
+        try {
+          if (fs.readdirSync(parent).length > 0) break;
+          fs.rmdirSync(parent);
+        } catch {
+          break;
+        }
+        parent = path.dirname(parent);
+      }
     }
     moved.push({ name, status });
   }

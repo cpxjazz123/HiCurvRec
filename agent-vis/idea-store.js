@@ -26,25 +26,36 @@ function ideaFile() {
  */
 function ideaDocPath() {
   const folder = path.join(SANDBOX_ROOT, 'ideas');
-  let entries = [];
-  try {
-    entries = fs.readdirSync(folder).filter((name) => name.endsWith('_idea.json'));
-  } catch {
-    entries = [];
-  }
-  if (entries.length === 0) return null;
-  const withTime = entries.map((name) => {
-    const full = path.join(folder, name);
-    let mtime = 0;
+  const found = [];
+  // 方向是目录：ideas/<方向>/<方向>_idea.json；顶层直接放 *_idea.json 的老写法也认，
+  // 于是一个方向一个目录与扁平存放并存，页面读最新的那一份。
+  const walk = (dir) => {
+    let entries = [];
     try {
-      mtime = fs.statSync(full).mtimeMs;
+      entries = fs.readdirSync(dir, { withFileTypes: true });
     } catch {
-      mtime = 0;
+      return;
     }
-    return { full, mtime };
-  });
-  withTime.sort((a, b) => b.mtime - a.mtime || a.full.localeCompare(b.full));
-  return withTime[0].full;
+    for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+      } else if (entry.name.endsWith('_idea.json')) {
+        let mtime = 0;
+        try {
+          mtime = fs.statSync(full).mtimeMs;
+        } catch {
+          mtime = 0;
+        }
+        found.push({ full, mtime });
+      }
+    }
+  };
+  walk(folder);
+  if (found.length === 0) return null;
+  found.sort((a, b) => b.mtime - a.mtime || a.full.localeCompare(b.full));
+  return found[0].full;
 }
 
 /**

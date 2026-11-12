@@ -31,7 +31,9 @@ function fresh() {
 function run() {
   fs.rmSync(scratch, { recursive: true, force: true });
   let failures = 0;
+  let checks = 0;
   const test = (name, fn) => {
+    checks += 1;
     try {
       fn();
       console.log(`  ✓ ${name}`);
@@ -90,6 +92,26 @@ function run() {
     assert.equal(fs.existsSync(path.join(ideas, 'notes.json')), true);
   });
 
+  test('方向目录：保留相对路径归档，空了就删目录', () => {
+    const { ideas, archive } = fresh();
+    const direction = path.join(ideas, 'D1');
+    writeIdea(direction, 'D1_idea.json', 'completed');
+    const out = archiveReady({ ideasDir: ideas, archiveDir: archive });
+    assert.deepEqual(out.moved.map((m) => m.name), [path.join('D1', 'D1_idea.json')]);
+    assert.equal(fs.existsSync(path.join(archive, 'D1', 'D1_idea.json')), true);
+    assert.equal(fs.existsSync(direction), false, '搬空的方向目录应被删掉');
+  });
+
+  test('方向目录里待做的留下、同目录的共享文件不动', () => {
+    const { ideas, archive } = fresh();
+    const direction = path.join(ideas, 'D2');
+    writeIdea(direction, 'D2_idea.json', ACTIVE_STATUS);
+    fs.writeFileSync(path.join(direction, 'main_line.json'), '{}');
+    const out = archiveReady({ ideasDir: ideas, archiveDir: archive });
+    assert.equal(out.moved.length, 0);
+    assert.deepEqual(fs.readdirSync(direction).sort(), ['D2_idea.json', 'main_line.json']);
+  });
+
   test('目录不存在时安静返回', () => {
     const out = archiveReady({ ideasDir: path.join(scratch, 'nope'),
                               archiveDir: path.join(scratch, 'nope_archive') });
@@ -98,8 +120,8 @@ function run() {
 
   fs.rmSync(scratch, { recursive: true, force: true });
   console.log(failures === 0
-    ? 'ARCHIVE_IDEAS_PASS 6 checks'
-    : `ARCHIVE_IDEAS_FAIL ${failures} check(s)`);
+    ? `ARCHIVE_IDEAS_PASS ${checks} checks`
+    : `ARCHIVE_IDEAS_FAIL ${failures} of ${checks} check(s)`);
   return failures === 0 ? 0 : 1;
 }
 
