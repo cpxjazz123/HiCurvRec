@@ -30,8 +30,6 @@ const HEIGHT = 1200;
 
 const PANEL_A = 'panelA';
 const PANEL_B = 'panelB';
-/** AGENT CHECK 的面板：配置里的角色，从模板挂上来，id 是 panel-<身份>。 */
-const PANEL_CHECK = 'panel-agent-check';
 
 /** 给 AGENT Write（机制实现者）的指令。 */
 const PROMPT_A =
@@ -1171,7 +1169,7 @@ async function main() {
     // 上游跑完之后 B 应该自动接手，不需要人点。
     const doneB = await waitFor(cdp, panelDone(PANEL_B), 500, 400);
     check(
-      'AGENT CHECK 跑完后 AGENT B 自动开跑并完成',
+      'AGENT FIX 跑完后 AGENT B 自动开跑并完成',
       doneB === 'done',
       `状态 ${doneB} · 错误 ${await cdp.evaluate(panelError(PANEL_B))}`,
     );
@@ -1765,7 +1763,7 @@ async function main() {
     await openFresh(cdp, base, { noSteps: true });
 
     const panelsBefore = await cdp.evaluate("document.querySelectorAll('.panel').length");
-    check('一开始页面上有四个面板', panelsBefore === 4, `${panelsBefore} 个`);
+    check('一开始页面上有五个面板', panelsBefore === 5, `${panelsBefore} 个`);
 
     const countsBeforeJ = await cdp.evaluate("document.querySelectorAll('.panel').length");
     const newPanelId = await createAgentAndWait(cdp);
@@ -1908,7 +1906,7 @@ async function main() {
     await openFresh(cdp, mockBase, { noSteps: true });
 
     const panelsAtStart = await cdp.evaluate("document.querySelectorAll('.panel').length");
-    check('一开始页面上有四个面板', panelsAtStart === 4, `${panelsAtStart} 个`);
+    check('一开始页面上有五个面板', panelsAtStart === 5, `${panelsAtStart} 个`);
 
     const delButtons = await cdp.evaluate(
       "document.querySelectorAll('.panel [data-role=deleteBtn]').length",
@@ -1939,9 +1937,9 @@ async function main() {
 
     const aTargets0 = await readTargets(PANEL_A);
     check(
-      'AGENT Write 默认把结果交给 AGENT CHECK',
+      'AGENT Write 默认把结果交给 AGENT FIX',
       Array.isArray(aTargets0) &&
-        aTargets0.some((t) => t.value === 'agent-check' && t.checked === true),
+        aTargets0.some((t) => t.value === 'agent-fix' && t.checked === true),
       JSON.stringify(aTargets0),
     );
 
@@ -1967,7 +1965,7 @@ async function main() {
       JSON.stringify(optionsAfterCreate),
     );
 
-    // 多选：勾上 AGENT B 与新建的那个，取消默认的 AGENT CHECK ——
+    // 多选：勾上 AGENT B 与新建的那个，取消默认的 AGENT FIX ——
     // 通过页面上的勾选来设，不用接口：页面加载时会把自己的那份存回去，
     // 接口改的会被盖掉。
     await cdp.evaluate(
@@ -2046,14 +2044,14 @@ async function main() {
     );
     check('第一次点删除只是进入确认状态', String(armedText).includes('确认'), `按钮文字 ${armedText}`);
     const stillThere = await cdp.evaluate("document.querySelectorAll('.panel').length");
-    check('确认之前面板还在', stillThere === 5, `${stillThere} 个`);
+    check('确认之前面板还在', stillThere === 6, `${stillThere} 个`);
 
     await cdp.evaluate(
       runInPanel(newPanelId2, "var b = panel.querySelector('[data-role=deleteBtn]'); if (b) b.click();"),
     );
     const gone = await waitFor(
       cdp,
-      "document.querySelectorAll('.panel').length === 4 ? 'gone' : ''",
+      "document.querySelectorAll('.panel').length === 5 ? 'gone' : ''",
       60,
       200,
     );
@@ -2122,7 +2120,7 @@ async function main() {
     );
     const goneA = await waitFor(
       cdp,
-      "document.querySelectorAll('.panel').length === 3 ? 'gone' : ''",
+      "document.querySelectorAll('.panel').length === 4 ? 'gone' : ''",
       60,
       200,
     );
@@ -2152,7 +2150,7 @@ async function main() {
     const stepAreas = await cdp.evaluate(
       "document.querySelectorAll('.panel [data-role=stepsList]').length",
     );
-    check('每个面板都有轮次步骤的配置区', stepAreas === 4, `${stepAreas} 个`);
+    check('每个面板都有轮次步骤的配置区', stepAreas === 5, `${stepAreas} 个`);
 
     // 默认步骤：AGENT Write / AGENT B 的提示词拆成的固定步骤。
     // 服务端给出来，用户没配过之前页面就铺好。
@@ -2279,7 +2277,7 @@ async function main() {
     // 在 AGENT Write 上配三步：查 / 改 / 验。先把默认步骤清掉 —— 这一段测的是
     // 用户自己配的步骤，不是默认步骤。
     await cdp.evaluate(clearSteps(PANEL_A));
-    // 交接目标改成 AGENT B：AGENT WRITE 的默认目标是 AGENT CHECK（它有自己的一套
+    // 交接目标改成 AGENT B：AGENT WRITE 的默认目标是 AGENT FIX（它有自己的一套
     // 步骤，混进来会把"这一轮发了几次请求"数乱）。通过页面上的勾选来设。
     await cdp.evaluate(
       inPanel(
@@ -2544,13 +2542,13 @@ async function main() {
     await openFresh(cdp, mockBaseM, { noSteps: true });
     await waitFor(
       cdp,
-      "document.querySelectorAll('.panel [data-role=permissionList]').length === 4",
+      "document.querySelectorAll('.panel [data-role=permissionList]').length === 5",
     );
 
     const permAreasM = await cdp.evaluate(
       "document.querySelectorAll('.panel [data-role=permissionList]').length",
     );
-    check('每个面板都有权限的配置区', permAreasM === 4, `${permAreasM} 个`);
+    check('每个面板都有权限的配置区', permAreasM === 5, `${permAreasM} 个`);
 
     const permBoxesM = await cdp.evaluate(
       inPanel(
@@ -2561,13 +2559,13 @@ async function main() {
     );
     check(
       '权限区按服务端的权限目录铺出复选框',
-      Array.isArray(permBoxesM) && permBoxesM.length === 5,
+      Array.isArray(permBoxesM) && permBoxesM.length === 6,
       JSON.stringify(permBoxesM),
     );
     check(
       '权限目录里就是 read / write 这类基础权限',
       Array.isArray(permBoxesM) &&
-        ['read', 'write', 'delete', 'execute', 'network'].every((id) =>
+        ['read', 'write', 'delete', 'train', 'execute', 'network'].every((id) =>
           permBoxesM.some((b) => b.id === id),
         ),
       JSON.stringify(permBoxesM),
@@ -2732,7 +2730,7 @@ async function main() {
     await waitFor(cdp, 'window.__AGENT_VIS_FRONTEND__ || null');
     await waitFor(
       cdp,
-      "document.querySelectorAll('.panel [data-role=stepBar]').length === 3",
+      "document.querySelectorAll('.panel [data-role=stepBar]').length === 5",
     );
 
     const metaFieldsO = await cdp.evaluate(
@@ -2884,8 +2882,8 @@ async function main() {
         "  };" +
         "})()",
     );
-    check('侧边栏把六个 agent 都列出来了', layoutP.sidebarCount === 6, JSON.stringify(layoutP));
-    check('页面上六个 agent 的面板都在', layoutP.panelCount === 6, JSON.stringify(layoutP));
+    check('侧边栏把七个 agent 都列出来了', layoutP.sidebarCount === 7, JSON.stringify(layoutP));
+    check('页面上七个 agent 的面板都在', layoutP.panelCount === 7, JSON.stringify(layoutP));
     check(
       '右侧只显示当前这一个 agent 的聊天框',
       layoutP.visibleCount === 1,

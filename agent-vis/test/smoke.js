@@ -279,10 +279,10 @@ async function main() {
     assert.notEqual(ids[0], ids[1], '两个静态面板必须是不同的 agent');
   });
 
-  await test('/api/health 列出四个 agent 的身份', async () => {
+  await test('/api/health 列出五个 agent 的身份', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.ok(Array.isArray(info.agents), 'health 没列出 agents');
-    assert.equal(info.agents.length, 4, `应为四个 agent，实际 ${info.agents.length}`);
+    assert.equal(info.agents.length, 5, `应为五个 agent，实际 ${info.agents.length}`);
     for (const agent of info.agents) {
       assert.equal(typeof agent.id, 'string');
       assert.equal(typeof agent.name, 'string');
@@ -351,28 +351,28 @@ async function main() {
     assert.equal(res.status, 400, '未知 agent 应该被拒掉');
   });
 
-  await test('四个 agent 各自有一份独立的人设', async () => {
+  await test('五个 agent 各自有一份独立的人设', async () => {
     assert.ok(Array.isArray(config.AGENT_PROFILES), 'config 没导出 AGENT_PROFILES');
-    assert.equal(config.AGENT_PROFILES.length, 4);
+    assert.equal(config.AGENT_PROFILES.length, 5);
     const texts = new Set(config.AGENT_PROFILES.map((profile) => profile.instructions));
     assert.equal(texts.size, config.AGENT_PROFILES.length,
                  '每个 agent 的人设说明必须不同，否则几栏做的是同一件事');
   });
 
-  await test('四个 agent 就叫 AGENT Write、AGENT B、AGENT MATH 与 AGENT CHECK', async () => {
+  await test('五个 agent 的名字分别是 Write / B / MATH / STAGE2 / FIX', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.name),
-      ['AGENT Write', 'AGENT B', 'AGENT MATH', 'AGENT CHECK'],
+      ['AGENT Write', 'AGENT B', 'AGENT MATH', 'AGENT STAGE2', 'AGENT FIX'],
       '页面上三栏的 agent 名字不对',
     );
   });
 
-  await test('四个 agent 分别是机制实现者、控制器、公式审计员与机制核对员', async () => {
+  await test('五个 agent 分别是实现者、控制器、公式审计员、训练员与核对员', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.role),
-      ['MECHANISM_BUILDER', 'ISSUE_CONTROLLER', 'MATH_AUDITOR', 'MECHANISM_CHECKER'],
+      ['MECHANISM_BUILDER', 'ISSUE_CONTROLLER', 'MATH_AUDITOR', 'STAGE2_RUNNER', 'MECHANISM_CHECKER'],
       '两个 agent 的角色不是"执行者 / 控制器"这一对',
     );
     assert.ok(
@@ -525,13 +525,13 @@ async function main() {
     assert.equal(restored.envProblem, null, `恢复后不该还有环境问题: ${restored.envProblem}`);
   });
 
-  await test('AGENT CHECK 既审也改：能写代码，但只能改候选树', async () => {
+  await test('AGENT FIX 既审也改：能写代码，但只能改候选树', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
-    const check = info.agents.find((agent) => agent.id === 'agent-check');
-    assert.ok(check, 'health 里没有 agent-check');
+    const check = info.agents.find((agent) => agent.id === 'agent-fix');
+    assert.ok(check, 'health 里没有 agent-fix');
     // 它要能把写错的地方改对，所以得有写权限；也只到写为止。
     assert.deepEqual(check.permissions, ['read', 'write'],
-                     `AGENT CHECK 的权限不对: ${JSON.stringify(check.permissions)}`);
+                     `AGENT FIX 的权限不对: ${JSON.stringify(check.permissions)}`);
     assert.equal(check.steps.length, 5, `步骤数不对: ${check.steps.length}`);
     const text = check.steps.map((step) => step.instruction).join('\n');
     assert.ok(text.includes('改代码与测试') || text.includes('writeFile'),
@@ -541,6 +541,26 @@ async function main() {
     // 边界写清楚：只动候选树，规格与冻结基线不许动。
     assert.ok(check.instructions.includes('冻结基线') && check.instructions.includes('不许动'),
               '人设里没写明改动边界');
+  });
+
+  await test('AGENT STAGE2 只跑训练：能启动、能看状态、能暂停', async () => {
+    const info = await (await fetch(`${base}/api/health`)).json();
+    const runner = info.agents.find((agent) => agent.id === 'agent-stage2');
+    assert.ok(runner, 'health 里没有 agent-stage2');
+    assert.deepEqual(runner.permissions, ['read', 'train'],
+                     `AGENT STAGE2 的权限不对: ${JSON.stringify(runner.permissions)}`);
+    assert.equal(runner.steps.length, 5, `步骤数不对: ${runner.steps.length}`);
+    const text = runner.steps.map((step) => step.instruction).join('\n');
+    assert.ok(text.includes('stage2Start'), '它该会启动训练');
+    assert.ok(text.includes('stage2Status'), '它该会看训练状态');
+    assert.ok(text.includes('stage2Stop'), '发现问题时它该会暂停训练');
+    assert.ok(text.includes('每分钟'), '它的步骤里没写明每分钟检查一次');
+    assert.deepEqual(runner.handoffTargets, ['agent-fix'],
+                     '出问题时它该把活交给 AGENT FIX');
+    // 训练这一项权限带的就是这三个工具。
+    const train = (info.permissionCatalog || []).find((item) => item.id === 'train');
+    assert.ok(train, '权限目录里没有 train');
+    assert.deepEqual(train.tools, ['stage2Start', 'stage2Status', 'stage2Stop']);
   });
 
   await test('旧版前端被版本闸门拦下，拿到刷新提示而不是 400', async () => {
@@ -1453,8 +1473,8 @@ async function main() {
     assert.equal(run.status, 400, '删掉的身份不该还能跑');
   });
 
-  await test('配置里写死的四个 agent 不能从服务端删除', async () => {
-    for (const id of ['agent-a', 'agent-b', 'agent-math', 'agent-check']) {
+  await test('配置里写死的五个 agent 不能从服务端删除', async () => {
+    for (const id of ['agent-a', 'agent-b', 'agent-math', 'agent-stage2', 'agent-fix']) {
       const res = await fetch(`${base}/api/agents/${id}`, { method: 'DELETE' });
       assert.equal(res.status, 400, `${id} 应该被拒掉`);
     }

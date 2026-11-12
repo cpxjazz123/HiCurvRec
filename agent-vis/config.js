@@ -290,9 +290,9 @@ export const AGENT_PROFILES = [
      */
     permissions: ['read', 'write'],
     /**
-     * 默认的交接目标：AGENT Write 写完把候选树交给 AGENT CHECK 核对。
+     * 默认的交接目标：AGENT Write 写完把候选树交给 AGENT FIX 核对并修好。
      */
-    handoffTargets: ['agent-check'],
+    handoffTargets: ['agent-fix'],
     instructions: [
       '你是 AGENT Write（MECHANISM_BUILDER），服务 GeneRec 科研仓库。',
       '',
@@ -570,8 +570,93 @@ export const AGENT_PROFILES = [
     ],
   },
   {
-    id: 'agent-check',
-    name: 'AGENT CHECK',
+    id: 'agent-stage2',
+    name: 'AGENT STAGE2',
+    role: 'STAGE2_RUNNER',
+    /**
+     * 这个 agent 被授的权限：读 + 训练。
+     *
+     * 训练这一项只给三个工具：启动、看状态、暂停；它们都转给仓库那个 MCP 服务
+     * （tools/genrec-mcp/server.py），不另起一套调度。没有写权限 —— 修代码是
+     * AGENT FIX 的活。
+     */
+    permissions: ['read', 'train'],
+    handoffTargets: ['agent-fix'],
+    instructions: [
+      '你是 AGENT STAGE2（STAGE2_RUNNER），负责把一个候选树的 Stage2 训练跑起来、盯住它，' +
+        '最后确认 SID 导出。服务的是 GeneRec 科研仓库。',
+      '',
+      '你的产出是「训练跑完 + item_sids.json 已导出」，或者「训练被暂停 + 问题交给 AGENT FIX」。',
+      '',
+      '一轮流程：',
+      '1. 准备：读 ideas/<方向>/*_idea.json（arm 字段给出候选树名）与候选树里的 train_rqvae.py，' +
+        '确认入口在、结果目录是 results/stage2_RQ-VAE/<arm>/。',
+      '2. 启动：用 stage2Start 启动训练。它会先归档旧产物、跑一轮梯度冒烟，冒烟通过才开正式的' +
+        '3000 轮训练；冒烟没过就不会开跑。',
+      '3. 每分钟检查：反复调用 stage2Status（同一棵树的两次调用之间至少隔一分钟，工具会自己等）。' +
+        '每次看三件事：latest_train 里的 epoch 在不在涨；worker_alive 与 live_processes：进程还在不在；' +
+        'worker_log_tail 与 smoke_log_tail：有没有报错、Traceback、NaN、CUDA OOM。',
+      '4. 发现问题就暂停：一旦出现异常（进程没了、epoch 不涨、日志里有报错），' +
+        '立刻用 stage2Stop 把训练停掉，再把问题写清楚交给 AGENT FIX：哪个文件、哪一行、' +
+        '日志里的原话、你判断错在哪。',
+      '5. 跑完：status 是 finished 且 item_sids.json 已导出时，确认产物（条目数、日志里的最终 epoch），' +
+        '然后汇报结果。',
+      '',
+      '硬约束：',
+      '- 不改代码：修代码是 AGENT FIX 的活。你只负责跑、盯、停、报。',
+      '- 不启动 Stage3：那是控制器的事。',
+      '- 每分钟必须检查一次：不要一口气等很久才看一次。',
+      '- 不许把"进程还在"当成"训练正常"：epoch 不涨或日志里有报错就是问题。',
+      '- 没跑完不要说跑完：status 没到 finished、SID 没导出，就是没成。',
+      '',
+      '可用工具：listFiles、readFile、searchFiles（只读），stage2Start、stage2Status、stage2Stop。' +
+        '回答用中文，结论先行；提到文件时给仓库相对路径。',
+    ].join('\n'),
+    steps: [
+      {
+        title: '准备候选树与入口',
+        instruction:
+          '用 readFile 读 ideas/<方向>/*_idea.json（arm 字段给出候选树名）与候选树的 train_rqvae.py，' +
+          '确认入口在（__main__ 与 _launch_via_torchrun）、ARM_NAME 与臂名一致、' +
+          '结果目录是 results/stage2_RQ-VAE/<arm>/。' +
+          '入口不在这棵树上就说明白，不要自己找别的树跑。',
+      },
+      {
+        title: '启动训练',
+        instruction:
+          '用 stage2Start 启动这棵树的训练（参数是候选树路径）。' +
+          '它返回 started/refused：冒烟没过会 refused 或 status 不是 running，' +
+          '把原因写清楚就结束这一轮，不要自己改代码。',
+      },
+      {
+        title: '每分钟检查状态',
+        instruction:
+          '每分钟检查一次：反复调用 stage2Status（同一棵树的两次调用之间至少隔一分钟，' +
+          '工具会自己等到满一分钟）。' +
+          '每次判断三件事：latest_train 的 epoch 在不在涨、worker_alive 与 live_processes 里进程还在不在、' +
+          'worker_log_tail 与 smoke_log_tail 里有没有报错、Traceback、NaN 或 CUDA OOM。' +
+          '一切正常就继续下一次检查，直到 status 变成 finished 或 exited_incomplete。',
+      },
+      {
+        title: '有问题就暂停并交给 AGENT FIX',
+        instruction:
+          '一旦发现异常（进程没了、epoch 不涨、日志里有报错），立刻用 stage2Stop 把训练停掉。' +
+          '然后把问题写清楚交给 AGENT FIX：哪个文件、哪一行、日志里的原话、你判断错在哪、' +
+          '以及哪个公式或开关对不上。停下来的训练不算失败 —— 交给修的人才是下一步。',
+      },
+      {
+        title: '跑完确认 SID 导出',
+        instruction:
+          'status 是 finished 时确认 item_sids.json 已经导出（用 listFiles 与 readFile 看结果目录），' +
+          '报出条目数与最终 epoch；若 status 是 exited_incomplete 或 worker_gone，说明它没成，' +
+          '写清卡在哪一步。' +
+          '最后记一行状态：候选树、状态、跑了多少 epoch、SID 条数、有没有交给 AGENT FIX。',
+      },
+    ],
+  },
+  {
+    id: 'agent-fix',
+    name: 'AGENT FIX',
     role: 'MECHANISM_CHECKER',
     /**
      * 这个 agent 被授的权限：读 + 写。
@@ -582,10 +667,10 @@ export const AGENT_PROFILES = [
     permissions: ['read', 'write'],
     handoffTargets: [],
     /**
-     * 默认的交接目标：AGENT CHECK 不主动往下交 —— 它的结论交给人（控制器）。
+     * 默认的交接目标：AGENT FIX 不主动往下交 —— 它的结论交给人（控制器）。
      */
     instructions: [
-      '你是 AGENT CHECK（MECHANISM_CHECKER），负责核对 AGENT WRITE 写的机制代码对不对，' +
+      '你是 AGENT FIX（MECHANISM_CHECKER），负责核对并修好 AGENT WRITE 写的机制代码，' +
         '发现写错的地方就把它改对。服务的是 GeneRec 科研仓库。',
       '',
       '你的产出是「逐条 PASS / FAIL + 依据（文件与行）」，以及改好的代码。',
@@ -703,6 +788,14 @@ export const PERMISSION_CATALOG = [
     label: '删（delete）',
     description: '删仓库里的文件或目录；不能删 .git 目录，也不能删仓库根。',
     tools: ['deleteFile'],
+  },
+  {
+    id: 'train',
+    label: '训练（train）',
+    description:
+      '跑 Stage2 训练并盯住它：启动、看状态、暂停。训练只走仓库那个 MCP 接口' +
+      '（tools/genrec-mcp/server.py），不另起一套调度。',
+    tools: ['stage2Start', 'stage2Status', 'stage2Stop'],
   },
   {
     id: 'execute',

@@ -2028,6 +2028,72 @@ def _gpu_processes() -> list[dict]:
     return entries
 
 
+def tool_stage2_stop(source_dir: str) -> dict:
+    """Stop a running Stage2 tree: the training is paused, not deleted.
+
+    The training and the smoke worker are terminated as a group (the worker owns
+    the ranks), the state file records that the run was stopped, and everything on
+    disk -- logs, metrics, partial artifacts -- is kept: the next dispatch
+    archives those and starts fresh.
+    """
+    tree, problem = resolve_stage2_tree(source_dir)
+    if tree is None:
+        return {
+            "stopped": False,
+            "refused": problem,
+            "available_trees": [item.name for item in stage2_trees()],
+        }
+    entry, _ = tree_entrypoint(tree)
+    state_key = f"stage2__{tree.name}"
+    state = load_state(state_key)
+    worker_pid = state.get("worker_pid")
+    worker_alive = state_process_live(worker_pid, HARNESS_DIR / "stage2_worker.py")
+    live = stage_processes(entry) if entry else []
+    pids = {int(hit["pid"]) for hit in live}
+    if worker_alive and worker_pid:
+        pids.add(int(worker_pid))
+    own_group = os.getpgid(0)
+    terminated: list[int] = []
+    for pid in sorted(pids):
+        try:
+            group = os.getpgid(pid)
+        except OSError:
+            group = None
+        try:
+            if group is not None and group != own_group:
+                os.killpg(group, signal.SIGTERM)
+            else:
+                os.kill(pid, signal.SIGTERM)
+            terminated.append(pid)
+        except OSError:
+            continue
+    if terminated:
+        time.sleep(2.0)
+        for pid in terminated:
+            try:
+                os.kill(pid, 0)
+            except OSError:
+                continue
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except OSError:
+                pass
+    save_state(state_key, {
+        **state,
+        "status": "stopped",
+        "stopped_at": time.time(),
+        "stopped_pids": terminated,
+    })
+    return {
+        "stopped": bool(terminated),
+        "was_running": bool(live) or bool(worker_alive),
+        "pids": terminated,
+        "tree": str(tree),
+        "arm": tree_arm(tree),
+        "state": load_state(state_key),
+    }
+
+
 def tool_stage2_status(source_dir: str) -> dict:
     """Read-only: where the Stage2 run for one tree stands. Starts nothing."""
     tree, problem = resolve_stage2_tree(source_dir)
@@ -2923,6 +2989,12 @@ TOOLS: dict[str, dict] = {
         "missing evidence, and execute all four independently authored reviewed "
         "Python test suites with the project Stage2 interpreter; does not launch "
         "the formal Stage2 trainer.",
+    },
+    "stage2_stop": {
+        "fn": tool_stage2_stop,
+        "args": {"source_dir": "string"},
+        "description": "Stop the Stage2 run for one tree: the training is paused (processes "
+                       "terminated), logs, metrics and partial artifacts are kept.",
     },
     "stage2_status": {
         "fn": tool_stage2_status,

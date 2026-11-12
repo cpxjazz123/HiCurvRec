@@ -16,7 +16,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 
 import {
@@ -430,6 +430,57 @@ function piTool({ name, label, description, parameters, impl, callArgs = (params
   });
 }
 
+const stage2StartTool = piTool({
+  name: 'stage2Start',
+  label: '启动 Stage2 训练',
+  description:
+    'Start the Stage2 training for one candidate tree (stage2_RQ-VAE/TIGER_<ARM>/) through the ' +
+    'repository MCP server. It archives old artifacts, runs the one-epoch smoke, then trains.',
+  parameters: Type.Object({
+    tree: Type.String({ description: '候选树路径，例如 stage2_RQ-VAE/TIGER_af3_curvature_drive_rq' }),
+  }),
+  impl: async ({ tree }) => {
+    // 绝对路径：MCP 那边的 source_dir 要么是树名，要么是能解析到那棵树的绝对路径。
+    return callGenrecMcp('stage2_start', { source_dir: stage2TreePath(tree) });
+  },
+});
+
+const stage2StatusTool = piTool({
+  name: 'stage2Status',
+  label: '看 Stage2 训练状态',
+  description:
+    'Read where the Stage2 run of one candidate tree stands (status, worker, latest epoch, ' +
+    'log tails, exported artifacts). Calls for the same tree are spaced one minute apart, so ' +
+    'calling it repeatedly is how you watch the training.',
+  parameters: Type.Object({
+    tree: Type.String({ description: '候选树路径' }),
+  }),
+  impl: async ({ tree }) => {
+    stage2TreePath(tree);
+    const key = path.resolve(currentWorkdir(), tree);
+    const previous = lastStage2StatusAt.get(key) || 0;
+    const wait = Math.max(0, STAGE2_STATUS_INTERVAL_MS - (Date.now() - previous));
+    if (wait > 0) await sleepMs(wait);
+    lastStage2StatusAt.set(key, Date.now());
+    const status = await callGenrecMcp('stage2_status', { source_dir: stage2TreePath(tree) });
+    return { waited_seconds: Math.round(wait / 1000), ...status };
+  },
+});
+
+const stage2StopTool = piTool({
+  name: 'stage2Stop',
+  label: '暂停 Stage2 训练',
+  description:
+    'Stop the Stage2 run of one candidate tree: the training and its smoke worker are ' +
+    'terminated, logs and partial artifacts are kept.',
+  parameters: Type.Object({
+    tree: Type.String({ description: '候选树路径' }),
+  }),
+  impl: async ({ tree }) => {
+    return callGenrecMcp('stage2_stop', { source_dir: stage2TreePath(tree) });
+  },
+});
+
 const listFilesTool = piTool({
   name: 'listFiles',
   label: '列目录',
@@ -568,8 +619,109 @@ const endRoundTool = defineTool({
  *
  * 权限目录里写的工具名必须都在这张表里 —— 对不上就是配置坏了。
  */
+/**
+ * 调用仓库里那个 MCP 服务（tools/genrec-mcp/server.py）的一个工具。
+ *
+ * 训练只有这一条入口（CLAUDE.md §39：只使用现有 MCP 训练接口），所以这里
+ * 不自己实现训练、不自己调度进程 —— 只是把一次 tools/call 转过去。
+ */
+async function callGenrecMcp(toolName, args, { timeoutMs = 180000 } = {}) {
+  const root = currentWorkdir();
+  const server = path.join(root, 'tools', 'genrec-mcp', 'server.py');
+  if (!fs.existsSync(server)) {
+    throw new Error(`找不到 MCP 服务：${server}`);
+  }
+  const request = {
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'tools/call',
+    params: { name: toolName, arguments: args || {} },
+  };
+  return new Promise((resolve, reject) => {
+    const child = spawn('python3', [server], {
+      cwd: root,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    let out = '';
+    let err = '';
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL');
+      reject(new Error(`MCP 工具 ${toolName} 超时（${timeoutMs} ms）`));
+    }, timeoutMs);
+    child.stdout.on('data', (chunk) => {
+      out += chunk.toString();
+    });
+    child.stderr.on('data', (chunk) => {
+      err += chunk.toString();
+    });
+    child.on('error', (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+    child.on('close', () => {
+      clearTimeout(timer);
+      for (const line of out.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('{')) continue;
+        let message;
+        try {
+          message = JSON.parse(trimmed);
+        } catch {
+          continue;
+        }
+        if (message.id !== 1) continue;
+        const content = message.result && message.result.content;
+        const text = content && content[0] ? content[0].text : '';
+        if (message.error) {
+          reject(new Error(message.error.message || 'MCP 调用失败'));
+          return;
+        }
+        if (message.result && message.result.isError) {
+          reject(new Error(String(text).slice(0, 400)));
+          return;
+        }
+        try {
+          resolve(JSON.parse(text));
+        } catch {
+          resolve({ text: String(text) });
+        }
+        return;
+      }
+      reject(new Error(`MCP 工具 ${toolName} 没有回话${err ? `：${err.slice(0, 300)}` : ''}`));
+    });
+    child.stdin.write(`${JSON.stringify(request)}\n`);
+    child.stdin.end();
+  });
+}
+
+/**
+ * 状态检查的节奏：同一棵树两次检查之间至少隔一分钟。
+ *
+ * 需求是"每 1 分钟检查一次训练状态"，所以这个工具自己把关节奏：
+ * 离上次检查不到一分钟时，它等到满一分钟再回话。返回值带 waited_seconds，
+ * 模型能看见自己等了多久。
+ */
+const STAGE2_STATUS_INTERVAL_MS = 60000;
+const lastStage2StatusAt = new Map();
+
+function sleepMs(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function stage2TreePath(relPath) {
+  const target = path.resolve(currentWorkdir(), relPath);
+  const root = currentWorkdir();
+  if (target !== root && !target.startsWith(root + path.sep)) {
+    throw new Error(`路径越界（只允许仓库根 ${root} 之内）: ${relPath}`);
+  }
+  return target;
+}
+
 export const PI_TOOLS = {
   listFiles: listFilesTool,
+  stage2Start: stage2StartTool,
+  stage2Status: stage2StatusTool,
+  stage2Stop: stage2StopTool,
   readFile: readFileTool,
   searchFiles: searchFilesTool,
   listIssues: listIssuesTool,
