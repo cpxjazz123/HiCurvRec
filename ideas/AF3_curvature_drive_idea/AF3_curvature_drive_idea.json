@@ -3,7 +3,7 @@
   "date": "2026-11-12",
   "sections": {
     "1_goal": {
-      "statement": "在主线上加一层：AF3 曲率势驱动残差分配，其余沿用冻结配方。"
+      "statement": "每个商品先取一个结构势 s_i：用训练划分的商品共现图算 AF3 曲率 kappa_ij = 4 - d_i - d_j + 3 T_ij（d 为度，T 为共同邻居数），再按度数加权平均 s_i = sum_{j in N(i)} kappa_ij / d_i 并做全图标准化。每一层量化不再只按 d(z_i, c_k) 分配，而是按 C_ik = d(z_i, c_k) + lambda_l * Huber_delta(s_i - g_k^(l)) 做 Sinkhorn 均衡分配；码字势 g_k^(l) 由结构项 mean_{i} Huber_delta(s_i - g_k^(l)) 训练，lambda_l 由初始化时 median_i d(z_i, c_k) / median_i |s_i - g_k^(l)| 自标定（delta = 1，权重 1.0，不扫描）。编码器、残差堆叠与 SID 导出沿用既有实现，于是商品的三级 SID 由曲率进入代价后的分配结果决定。"
     },
     "4_method": {
       "single_variable": "新增 AF3 曲率项，接进每层分配的代价与结构项。",
