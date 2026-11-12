@@ -624,12 +624,21 @@ def probe_lambda_star(module, embeddings, batch_ids, rows, neighbours, two_hop, 
                 total = total + g.pow(2).sum()
         return float(total.sqrt())
 
+    def _sync(stage):
+        # a device-side assert is reported at whatever kernel runs next; syncing each stage pins it to the one that raised
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        print(f"[probe] {stage}", flush=True)
+
     z = module.encoder(embeddings)
+    _sync("encoder done")
     readout, quant_loss, _, _ = module.rq(z)
+    _sync("rq done")
     quantized = z + (readout - z).detach()
     recon = module.decoder(quantized)
     rq_loss = torch.nn.functional.mse_loss(recon, embeddings) + quant_loss
     sd_loss = sd_step.structural_loss(module, embeddings, batch_ids, rows, neighbours, two_hop, n_items)
+    _sync("structural loss done")
     return struct_distill.calibrate(grad_norm(rq_loss), grad_norm(sd_loss))
 
 
