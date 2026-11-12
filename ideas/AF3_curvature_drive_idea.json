@@ -8,13 +8,12 @@
   "date": "2026-11-12",
   "supersedes": "C-212（同 SID 噪声标定，已完成）",
   "references": {
-    "af3_convention": "tools/research/science/community_curvature/export_edge_af3.py（issue #136 约定：二值无向训练图，臂只查表）",
-    "af3_formula": "results/research/stage3_queue/_stage/TIGER_mixed_rq_A/TIGER_mixed_rq_A/model/af3_structure.py（kappa 参考实现）",
-    "baseline_tree": "stage2_RQ-VAE/TIGER_RQ-VAE"
+    "baseline_tree": "stage2_RQ-VAE/TIGER_RQ-VAE",
+    "af3_impl": "results/research/stage3_queue/_stage/TIGER_mixed_rq_A/TIGER_mixed_rq_A/model/af3_structure.py（kappa 的仓库实现）"
   },
   "sections": {
     "1_goal": {
-      "statement": "让 AF3 曲率驱动残差分配：冻结的图曲率给出每个商品的结构势，每层码字持有可学习势，二者之差与距离一起构成该层的 Sinkhorn 代价；同一对势再由结构项训练。曲率改变 → 分配改变 → SID 改变，三者一条通路。",
+      "statement": "在主线上加一层：曲率以代价矩阵的形式进入每层 Sinkhorn 分配，码字势由结构项训练。曲率变 → 分配变 → SID 变，三者同一条通路。",
       "decision_form": "与主参照 F0 和成功线比较 Stage3 test_R@10，并按预注册三档落位。"
     },
     "2_hypothesis": {
