@@ -247,6 +247,12 @@ function createPanel(root) {
     handoffTargets: pick('handoffTargets'),
     handoffDelay: pick('handoffDelay'),
     handoffDelayState: pick('handoffDelayState'),
+    loopBox: pick('loopBox'),
+    loopSummary: pick('loopSummary'),
+    loopEnabled: pick('loopEnabled'),
+    loopCount: pick('loopCount'),
+    loopInterval: pick('loopInterval'),
+    loopState: pick('loopState'),
     stepsBox: pick('stepsBox'),
     stepsSummary: pick('stepsSummary'),
     stepsList: pick('stepsList'),
@@ -275,6 +281,10 @@ function createPanel(root) {
   let abortedByUser = false;
   /** 运行序号：只有最新那一轮的收尾才配改状态，旧轮的收尾不许覆盖新轮。 */
   let runSeq = 0;
+  /** 本次手动运行配置的总轮数、已完成的轮数（0 = 不在循环里），以及下一轮的定时器。 */
+  let loopTarget = 0;
+  let loopDone = 0;
+  let loopTimer = null;
   /** 时间轴上的块序号：给没有服务端记录 id 的块起个名字。 */
   let blockSeq = 0;
   /** 轮次序号：同一轮里的几步共用一个 roundId，靠它认得出来。 */
@@ -301,6 +311,7 @@ function createPanel(root) {
     permissions: false,
     handoff: false,
     handoffDelay: false,
+    loop: false,
     name: false,
   };
   /**
@@ -595,6 +606,16 @@ function createPanel(root) {
       refreshHandoffDelayState();
     }
 
+    // 循环：用户改过就不覆盖输入框，否则铺服务端那份（默认关闭）。
+    if (!(first && userEdited.loop) && els.loopEnabled) {
+      const loop = profile.loop && typeof profile.loop === 'object' ? profile.loop : null;
+      const setting = loop || { enabled: false, count: 2, intervalSeconds: 0 };
+      els.loopEnabled.checked = Boolean(setting.enabled);
+      if (els.loopCount) els.loopCount.value = String(setting.count);
+      if (els.loopInterval) els.loopInterval.value = String(setting.intervalSeconds);
+      refreshLoopState();
+    }
+
     // 存下来的目标里可能有已经被删掉的 agent：那些交不出去，摘掉并存回去。
     const dropped = pruneHandoffTargets();
     renderHandoffTargets();
@@ -741,6 +762,42 @@ function createPanel(root) {
     const delay = Number.isInteger(raw) && raw > 0 ? raw : 0;
     els.handoffDelayState.textContent =
       delay === 0 ? '立即发送' : `${delay} 秒后发送`;
+  }
+
+  /**
+   * 面板上的循环设置：读输入框，夹到合法区间。
+   *
+   * 页面上敲的中间态（空串、负数）按"最小合法值"解释，存盘时再由服务端复核。
+   */
+  function loopSetting() {
+    const enabled = Boolean(els.loopEnabled && els.loopEnabled.checked);
+    const countRaw = els.loopCount ? Number(els.loopCount.value) : 1;
+    const intervalRaw = els.loopInterval ? Number(els.loopInterval.value) : 0;
+    return {
+      enabled,
+      count: Number.isInteger(countRaw) ? Math.min(100, Math.max(1, countRaw)) : 1,
+      intervalSeconds: Number.isInteger(intervalRaw) ? Math.min(3600, Math.max(0, intervalRaw)) : 0,
+    };
+  }
+
+  /** 折叠栏与状态行：现在开没开、几轮、隔多久、还剩几轮。 */
+  function refreshLoopState() {
+    const setting = loopSetting();
+    if (els.loopSummary) {
+      els.loopSummary.textContent = setting.enabled
+        ? `循环（${setting.count} 轮 · 间隔 ${setting.intervalSeconds}s）`
+        : '循环（关闭）';
+    }
+    if (!els.loopState) return;
+    if (!setting.enabled) {
+      els.loopState.textContent = '关闭时点一次「运行」就跑一轮。';
+      return;
+    }
+    if (loopTarget > 0 && loopDone < loopTarget) {
+      els.loopState.textContent = `进行中：已完成 ${loopDone} 轮，共 ${loopTarget} 轮。`;
+      return;
+    }
+    els.loopState.textContent = `共 ${setting.count} 轮，每轮间隔 ${setting.intervalSeconds} 秒。`;
   }
 
   /** 折叠栏上写明勾了几个交接目标。 */
@@ -1529,6 +1586,61 @@ function createPanel(root) {
     }
   }
 
+  /** 取消还没到点的下一轮：用户点了结束、或者手动又点了一次运行。 */
+  function cancelLoop() {
+    if (loopTimer !== null) {
+      clearTimeout(loopTimer);
+      loopTimer = null;
+    }
+    loopTarget = 0;
+    loopDone = 0;
+    refreshLoopState();
+  }
+
+  /**
+   * 一轮跑完之后，按配置决定要不要再跑。
+   *
+   * 只有最新那一轮（mySeq 仍是当前序号）才配安排下一轮；用户点了结束、或者次数
+   * 已用完，都不再排。第一轮由用户点击触发，loopContinuation 不再重置剩余轮数。
+   */
+  function scheduleLoopAfter(mySeq, options) {
+    if (mySeq !== runSeq) return;
+    if (abortedByUser) {
+      cancelLoop();
+      return;
+    }
+    const setting = loopSetting();
+    if (!setting.enabled) {
+      cancelLoop();
+      return;
+    }
+    if (!options.loopContinuation) {
+      loopTarget = setting.count;
+      loopDone = 1;
+    } else {
+      loopDone += 1;
+    }
+    if (loopDone >= loopTarget) {
+      const total = loopDone;
+      loopTarget = 0;
+      loopDone = 0;
+      if (els.loopState) els.loopState.textContent = `循环完成：共 ${total} 轮。`;
+      return;
+    }
+    const waitMs = Math.max(0, setting.intervalSeconds) * 1000;
+    if (els.loopState) {
+      els.loopState.textContent = waitMs > 0
+        ? `第 ${loopDone} 轮已结束，${setting.intervalSeconds} 秒后开第 ${loopDone + 1} 轮。`
+        : `第 ${loopDone} 轮已结束，马上开第 ${loopDone + 1} 轮。`;
+    }
+    loopTimer = setTimeout(() => {
+      loopTimer = null;
+      if (mySeq !== runSeq) return;
+      if (abortedByUser) return;
+      void run({ ...options, loopContinuation: true });
+    }, waitMs);
+  }
+
   /**
    * 中止当前这一轮。
    *
@@ -1536,8 +1648,13 @@ function createPanel(root) {
    * 正在跑的那一轮是真的停下来，不只是前端不再往下显示。
    */
   function stop() {
-    if (!running) return;
+    if (!running) {
+      cancelLoop();
+      setStatus('idle', '待运行');
+      return;
+    }
     abortedByUser = true;
+    cancelLoop();
     controller.abort();
     running = false;
     setRunning(false);
@@ -1552,6 +1669,8 @@ function createPanel(root) {
    * 前一步的产出接到后一步。一步都没配就一次跑完 —— 和以前一样。
    */
   async function run(options = {}) {
+    // 手动点「运行」= 从头开始：取消还没到点的下一轮，并按次数重新计。
+    if (!options.loopContinuation) cancelLoop();
     // 上一轮还在跑就把它停掉：新的一轮顶掉旧的一轮。
     if (controller) controller.abort();
     // 本轮的序号：收尾时只有最新的一轮才配改状态与按钮，
@@ -1566,9 +1685,11 @@ function createPanel(root) {
     }
     if (steps.length > 0) {
       await runRound(options, mySeq);
-      return;
+    } else {
+      await runOne(options, mySeq);
     }
-    await runOne(options, mySeq);
+    // 单一收尾点：一轮结束之后，循环要不要继续在这里决定。
+    scheduleLoopAfter(mySeq, options);
   }
 
   /**
@@ -2090,6 +2211,17 @@ function createPanel(root) {
       userEdited.handoffDelay = true;
       refreshHandoffDelayState();
       void saveConfig({ handoffDelaySeconds: raw });
+    });
+  }
+
+  // 循环：勾选/改数值都存到服务端，改完立刻反映到折叠栏与状态行。
+  for (const el of [els.loopEnabled, els.loopCount, els.loopInterval]) {
+    if (!el) continue;
+    el.addEventListener('input', () => refreshLoopState());
+    el.addEventListener('change', () => {
+      userEdited.loop = true;
+      refreshLoopState();
+      scheduleSave({ loop: loopSetting() });
     });
   }
 

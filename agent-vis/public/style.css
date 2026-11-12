@@ -1489,3 +1489,16 @@ body {
 .kv-bool { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; opacity: .9; }
 .kv-missing { color: var(--danger, #d9534f); font-style: italic; }
 .kv-invalid { color: var(--danger, #d9534f); padding: 8px 0; }
+
+/* 循环配置：勾选 + 次数 + 间隔，一行放得下。 */
+.loop-config .loop-toggle {
+  display: flex; align-items: center; gap: 6px;
+  padding: 2px 0 6px;
+}
+.loop-config .loop-fields {
+  display: flex; flex-wrap: wrap; gap: 12px;
+}
+.loop-config .loop-fields input[type="number"] {
+  width: 5.5em;
+  margin: 0 4px;
+}

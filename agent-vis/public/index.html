@@ -163,6 +163,30 @@
                 </p>
               </details>
 
+              <!-- 循环：跑完这一轮之后自动再跑几轮、每轮隔多久。 -->
+              <details class="instructions loop-config" data-role="loopBox">
+                <summary>
+                  <span data-role="loopSummary">循环（关闭）</span>
+                </summary>
+                <label class="loop-toggle">
+                  <input type="checkbox" data-role="loopEnabled" />
+                  跑完自动再跑
+                </label>
+                <div class="loop-fields">
+                  <label>
+                    次数
+                    <input type="number" data-role="loopCount" min="1" max="100" step="1" value="2" />
+                    轮（含第一轮）
+                  </label>
+                  <label>
+                    间隔
+                    <input type="number" data-role="loopInterval" min="0" max="3600" step="1" value="0" />
+                    秒
+                  </label>
+                </div>
+                <span class="instructions-state" data-role="loopState"></span>
+              </details>
+
               <!-- 轮次步骤：这一轮按哪几步做。一条都没配就还是一次跑完。 -->
               <details class="instructions steps-config" data-role="stepsBox">
                 <summary>
@@ -296,6 +320,30 @@
                 <p class="handoff-note" data-role="handoffNote">
                   勾选的 agent 会在这一栏跑完后收到本轮结果（可多选）。
                 </p>
+              </details>
+
+              <!-- 循环：跑完这一轮之后自动再跑几轮、每轮隔多久。 -->
+              <details class="instructions loop-config" data-role="loopBox">
+                <summary>
+                  <span data-role="loopSummary">循环（关闭）</span>
+                </summary>
+                <label class="loop-toggle">
+                  <input type="checkbox" data-role="loopEnabled" />
+                  跑完自动再跑
+                </label>
+                <div class="loop-fields">
+                  <label>
+                    次数
+                    <input type="number" data-role="loopCount" min="1" max="100" step="1" value="2" />
+                    轮（含第一轮）
+                  </label>
+                  <label>
+                    间隔
+                    <input type="number" data-role="loopInterval" min="0" max="3600" step="1" value="0" />
+                    秒
+                  </label>
+                </div>
+                <span class="instructions-state" data-role="loopState"></span>
               </details>
 
               <!-- 轮次步骤：这一轮按哪几步做。一条都没配就还是一次跑完。 -->
@@ -441,7 +489,31 @@
               </p>
             </details>
 
-            <!-- 轮次步骤：这一轮按哪几步做。一条都没配就还是一次跑完。 -->
+            <!-- 循环：跑完这一轮之后自动再跑几轮、每轮隔多久。 -->
+              <details class="instructions loop-config" data-role="loopBox">
+                <summary>
+                  <span data-role="loopSummary">循环（关闭）</span>
+                </summary>
+                <label class="loop-toggle">
+                  <input type="checkbox" data-role="loopEnabled" />
+                  跑完自动再跑
+                </label>
+                <div class="loop-fields">
+                  <label>
+                    次数
+                    <input type="number" data-role="loopCount" min="1" max="100" step="1" value="2" />
+                    轮（含第一轮）
+                  </label>
+                  <label>
+                    间隔
+                    <input type="number" data-role="loopInterval" min="0" max="3600" step="1" value="0" />
+                    秒
+                  </label>
+                </div>
+                <span class="instructions-state" data-role="loopState"></span>
+              </details>
+
+              <!-- 轮次步骤：这一轮按哪几步做。一条都没配就还是一次跑完。 -->
             <details class="instructions steps-config" data-role="stepsBox">
               <summary>
                 <span data-role="stepsSummary">轮次步骤（未配置，一次跑完）</span>

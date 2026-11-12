@@ -779,6 +779,43 @@ async function main() {
     assert.equal(cleared.json.customized.handoffDelay, false);
   });
 
+  await test('循环配置：次数与间隔能存能取，坏值被拒', async () => {
+    const putLoop = (loop) =>
+      fetch(`${base}/api/agents/agent-a/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ loop }),
+      });
+
+    let res = await putLoop({ enabled: true, count: 3, intervalSeconds: 7 });
+    const savedText = await res.text();
+    assert.equal(res.status, 200, savedText);
+    const saved = JSON.parse(savedText);
+    assert.deepEqual(saved.loop, { enabled: true, count: 3, intervalSeconds: 7 });
+    assert.equal(saved.customized.loop, true);
+    assert.deepEqual(saved.defaultLoop, { enabled: false, count: 2, intervalSeconds: 0 });
+
+    const health = await (await fetch(`${base}/api/health`)).json();
+    const agentA = health.agents.find((agent) => agent.id === 'agent-a');
+    assert.deepEqual(agentA.loop, { enabled: true, count: 3, intervalSeconds: 7 });
+
+    for (const bad of [
+      { enabled: 'yes', count: 2, intervalSeconds: 0 },
+      { enabled: true, count: 0, intervalSeconds: 0 },
+      { enabled: true, count: 101, intervalSeconds: 0 },
+      { enabled: true, count: 2, intervalSeconds: -1 },
+      { enabled: true, count: 2, intervalSeconds: 3601 },
+      { enabled: true, count: 2.5, intervalSeconds: 0 },
+      5,
+    ]) {
+      assert.equal((await putLoop(bad)).status, 400, `坏配置应被拒：${JSON.stringify(bad)}`);
+    }
+
+    res = await putLoop(null);
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).customized.loop, false, '置空之后回到默认关闭');
+  });
+
   await test('IDEA 文本：能存能取、非法值被拒、随运行发给 agent', async () => {
     const ideaText = '页面提供的机制定义：E16×H16 混合几何，结构信号必须进同一条通路。';
     const put = (body) =>

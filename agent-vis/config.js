@@ -560,6 +560,37 @@ const MAX_HANDOFF_DELAY_SECONDS = 3600;
 /** 交接的默认延迟：0 = 跑完立刻发。 */
 export const DEFAULT_HANDOFF_DELAY_SECONDS = 0;
 
+/** 循环次数上限：再多就该用定时任务，页面上的自动重跑按百次封顶。 */
+const MAX_LOOP_COUNT = 100;
+
+/** 循环间隔上限：与交接延迟同口径，一小时。 */
+const MAX_LOOP_INTERVAL_SECONDS = 3600;
+
+/** 默认不开循环：点一次「运行」就跑一次；选中之后按次数自动重跑。 */
+export const DEFAULT_LOOP = Object.freeze({ enabled: false, count: 2, intervalSeconds: 0 });
+
+/**
+ * 校验循环配置。
+ *
+ * 三项一起给：只给 enabled 会让"次数/间隔"退回默认，用户看到的输入框与实际生效
+ * 的值就会对不上。整份要么全对，要么整份拒掉。
+ */
+export function normalizeLoop(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('loop 必须是 {enabled, count, intervalSeconds} 对象');
+  }
+  const { enabled, count, intervalSeconds } = value;
+  if (typeof enabled !== 'boolean') throw new Error('loop.enabled 必须是布尔值');
+  if (!Number.isInteger(count) || count < 1 || count > MAX_LOOP_COUNT) {
+    throw new Error(`loop.count 必须是 1 到 ${MAX_LOOP_COUNT} 的整数`);
+  }
+  if (!Number.isInteger(intervalSeconds)
+      || intervalSeconds < 0 || intervalSeconds > MAX_LOOP_INTERVAL_SECONDS) {
+    throw new Error(`loop.intervalSeconds 必须是 0 到 ${MAX_LOOP_INTERVAL_SECONDS} 的整数`);
+  }
+  return { enabled, count, intervalSeconds };
+}
+
 /** 名字的长度上限：面板标题、左侧栏、交接卡片都只放得下一行。 */
 const MAX_AGENT_NAME_LENGTH = 40;
 
@@ -659,6 +690,9 @@ function publicProfile(profile) {
       ? override.handoffDelaySeconds
       : DEFAULT_HANDOFF_DELAY_SECONDS,
     defaultHandoffDelaySeconds: DEFAULT_HANDOFF_DELAY_SECONDS,
+    // 循环：跑完这一轮之后自动再跑几轮、每轮隔多久。用户没配过就是不开。
+    loop: has('loop') ? normalizeLoop(override.loop) : { ...DEFAULT_LOOP },
+    defaultLoop: { ...DEFAULT_LOOP },
     // 代码里写死的默认值：用户点「恢复默认」时要把它们铺回去，
     // 所以得单独给一份 —— 生效值可能已经被用户改过了。
     defaultInstructions: profile.instructions,
@@ -669,6 +703,7 @@ function publicProfile(profile) {
     customized: {
       name: has('name'),
       handoffDelay: has('handoffDelaySeconds'),
+      loop: has('loop'),
       instructions: has('instructions'),
       steps: has('steps'),
       permissions: has('permissions'),
@@ -888,6 +923,13 @@ export function saveProfileConfig(profileId, patch) {
         throw new Error(`handoffDelaySeconds 必须在 0 到 ${MAX_HANDOFF_DELAY_SECONDS} 之间`);
       }
       next.handoffDelaySeconds = delay;
+    }
+  }
+  if (patch.loop !== undefined) {
+    if (patch.loop === null) {
+      delete next.loop;
+    } else {
+      next.loop = normalizeLoop(patch.loop);
     }
   }
   if (patch.handoffTargets !== undefined) {
