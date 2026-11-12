@@ -18,6 +18,7 @@ from .codebook import codebook_loss
 from .commitment import commitment_loss
 
 NAME = "quantization"
+SPEC = {"form": "composite"}
 DESCRIPTION = "the codebook objective: commitment + beta * codebook, averaged over levels"
 
 

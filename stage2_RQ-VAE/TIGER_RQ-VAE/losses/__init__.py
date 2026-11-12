@@ -12,6 +12,10 @@ object; it never computes an MSE, scales a beta or sums two losses itself.
 from __future__ import annotations
 
 from .codebook import codebook_loss
+from . import codebook as _codebook
+from . import commitment as _commitment
+from . import quantization as _quantization
+from . import reconstruction as _reconstruction
 from .commitment import commitment_loss
 from .quantization import quantization_loss, quantization_total
 from .reconstruction import reconstruction_loss
@@ -27,18 +31,22 @@ LOSSES = {
     "reconstruction": {
         "description": "MSE(reconstruction, embedding): keeps the SID decodable",
         "function": reconstruction_loss,
+        "spec": _reconstruction.SPEC,
     },
     "commitment": {
         "description": "MSE(quantized, sg[latent]): pulls the encoder to its code",
         "function": commitment_loss,
+        "spec": _commitment.SPEC,
     },
     "codebook": {
         "description": "MSE(sg[latent], quantized): pulls the code to the encoder",
         "function": codebook_loss,
+        "spec": _codebook.SPEC,
     },
     "quantization": {
         "description": "commitment + beta * codebook, averaged over the levels",
         "function": quantization_total,
+        "spec": _quantization.SPEC,
     },
 }
 

@@ -3,13 +3,18 @@
 from __future__ import annotations
 
 import torch
+import torch.nn.functional as F
 
-from ._pairs import pair_error
+from ._pairs import validate_pair
 
 NAME = "reconstruction"
+# What a test may assume about this formula (see tools/research/stage2/tests/test_losses_math.py).
+SPEC = {"form": "mse_pair", "symmetric": True, "shift_invariant": True,
+        "scale_power": 2, "zero_at_equality": True}
 DESCRIPTION = "mean squared error between the reconstruction and the item embedding"
 
 
 def reconstruction_loss(reconstructed: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
     """MSE(reconstruction, embedding) -- the term that keeps the SID decodable."""
-    return pair_error(reconstructed, target, term=NAME)
+    validate_pair(reconstructed, target, term=NAME)
+    return F.mse_loss(reconstructed, target)
