@@ -45,13 +45,13 @@ def main() -> int:
         degrees[i] = degrees.get(i, 0) + 1
         degrees[j] = degrees.get(j, 0) + 1
 
+    adjacency = fixed.neighbour_sets(edge_list)
     old = shipped.af3_values(edge_list, degrees)
-    new = fixed.af3_values(edge_list, degrees, fixed.neighbour_sets(edge_list))
+    new = fixed.af3_values(edge_list, degrees, adjacency)
 
     old_values = np.array([old[e] for e in edge_list], dtype=np.float64)
     new_values = np.array([new[e] for e in edge_list], dtype=np.float64)
-    shared = np.array([len(fixed.neighbour_sets(edge_list).get(i, set()) & fixed.neighbour_sets(edge_list).get(j, set()))
-                       for i, j in edge_list])
+    shared = np.array([len(adjacency.get(i, set()) & adjacency.get(j, set())) for i, j in edge_list])
 
     def span(values):
         q05, q95 = np.quantile(values, 0.05), np.quantile(values, 0.95)

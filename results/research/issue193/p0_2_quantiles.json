@@ -1,0 +1,35 @@
+{
+ "train_file": "results/stage0_build_parquet/train.parquet",
+ "train_rows": 396958,
+ "edges": 323633,
+ "items_touched": 24556,
+ "common_neighbour_counts": {
+  "0": 130138,
+  "1": 55071,
+  "2": 29299,
+  "3": 18457,
+  "4": 12775,
+  "5": 9351
+ },
+ "edges_in_zero_triangles_share": 0.40211597704807606,
+ "shipped": {
+  "q05": -1189.0,
+  "q95": -18.0,
+  "u_at_zero_share": 0.05001035123117853,
+  "u_at_one_share": 0.05435168848665,
+  "u_mean": 0.7867919007888883,
+  "u_std": 0.2696119488000761
+ },
+ "fixed": {
+  "q05": -1078.3999999999996,
+  "q95": -20.0,
+  "u_at_zero_share": 0.05000108147191418,
+  "u_at_one_share": 0.05148424295421048,
+  "u_mean": 0.7798217982319814,
+  "u_std": 0.2714032700916669
+ },
+ "spearman_old_vs_new_u": 0.9992857415281989,
+ "weight_changed_share": 0.9033411302308479,
+ "mean_abs_u_change": 0.011797314566158705,
+ "note": "u = clip((AF3 - q05)/(q95 - q05), 0, 1); W = 1 + u on observed edges"
+}

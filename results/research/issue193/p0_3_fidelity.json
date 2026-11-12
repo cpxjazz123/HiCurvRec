@@ -1,0 +1,46 @@
+{
+ "arm": "TIGER_af3_structdistill_rq",
+ "items": 24587,
+ "edges": 323633,
+ "trained_collision_from_checkpoint": 0.204498312116159,
+ "shipped_teacher": {
+  "anchors_used": 512,
+  "pairs": 895540,
+  "pearson_weight_vs_shared_levels": 0.1052992969655829,
+  "pearson_weight_vs_agreement": 0.10529929696558304,
+  "spearman_weight_vs_shared_levels": 0.10746407371606508,
+  "kl_p_teacher_q_sid_mean": 2.0384501514417295,
+  "mean_teacher_weight_by_shared_levels": {
+   "0": 0.00039584942069200395,
+   "1": 0.0008678196558801836,
+   "2": 0.002220503345736459,
+   "3": 0.02002302622571645
+  },
+  "support_share_by_shared_levels": {
+   "0": 0.9494785269223038,
+   "1": 0.047957656832748954,
+   "2": 0.00186033008017509,
+   "3": 0.0007034861647720928
+  }
+ },
+ "fixed_teacher": {
+  "anchors_used": 512,
+  "pairs": 895540,
+  "pearson_weight_vs_shared_levels": 0.10542875640537953,
+  "pearson_weight_vs_agreement": 0.10542875640538016,
+  "spearman_weight_vs_shared_levels": 0.1080254138800754,
+  "kl_p_teacher_q_sid_mean": 2.044675995778224,
+  "mean_teacher_weight_by_shared_levels": {
+   "0": 0.00039604478469161173,
+   "1": 0.0008693167954659942,
+   "2": 0.002223935421654412,
+   "3": 0.020113916671672977
+  },
+  "support_share_by_shared_levels": {
+   "0": 0.9494774102775979,
+   "1": 0.047957656832748954,
+   "2": 0.0018614467248810774,
+   "3": 0.0007034861647720928
+  }
+ }
+}

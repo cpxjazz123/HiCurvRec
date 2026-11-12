@@ -72,25 +72,39 @@ def teacher_weights(coo, n_items, af3_module, with_triangles: bool) -> torch.Ten
     return torch.sparse_coo_tensor(index, torch.tensor(vals, dtype=torch.float64), (n_items, n_items)).coalesce()
 
 
-def teacher_matrix(w: torch.Tensor) -> torch.Tensor:
-    dense = w.to_dense()
-    degree = dense.sum(1)
-    inv = torch.where(degree > 0, 1.0 / torch.sqrt(degree.clamp_min(1e-30)), torch.zeros_like(degree))
-    p = dense * inv.unsqueeze(1) * inv.unsqueeze(0)
-    t = 0.5 * (p + p @ p)
-    return 0.5 * (t + t.t())
+def normalized_sparse(w: torch.Tensor) -> torch.Tensor:
+    """``P = D^-1/2 W D^-1/2`` kept sparse: a dense 24587^2 float64 matrix would be 4.8 GB, and only anchor rows are ever read."""
+    dense_degree = torch.zeros(w.shape[0], dtype=torch.float64)
+    dense_degree.index_add_(0, w.indices()[0], w.values())
+    inv = torch.where(dense_degree > 0, 1.0 / torch.sqrt(dense_degree.clamp_min(1e-30)), torch.zeros_like(dense_degree))
+    index = w.indices()
+    values = w.values() * inv[index[0]] * inv[index[1]]
+    return torch.sparse_coo_tensor(index, values, w.shape).coalesce().to_sparse_csr()
 
 
-def fiducial(teacher: torch.Tensor, sids: np.ndarray, n_items: int) -> dict:
+def teacher_rows(p_csr, anchors: torch.Tensor, n_items: int) -> torch.Tensor:
+    """Rows of ``T = (P + P^2)/2`` for the given anchors, without ever materialising the dense matrix."""
+    onehot = torch.zeros(n_items, anchors.numel(), dtype=torch.float64)
+    onehot[anchors, torch.arange(anchors.numel())] = 1.0
+    direct = torch.sparse.mm(p_csr, onehot)
+    two_hop = torch.sparse.mm(p_csr, direct)
+    rows = 0.5 * (direct + two_hop)
+    return rows.T.contiguous()
+
+
+def fiducial(p_csr, sids: np.ndarray, n_items: int) -> dict:
     rng = np.random.default_rng(SEED)
-    anchors = rng.choice(n_items, size=min(ANCHORS, n_items), replace=False)
-    anchors = [int(a) for a in anchors if float(teacher[a].abs().sum()) > 0]
+    chosen = rng.choice(n_items, size=min(ANCHORS, n_items), replace=False)
+    chosen = torch.tensor(sorted(int(a) for a in chosen), dtype=torch.long)
+    block = teacher_rows(p_csr, chosen, n_items)
+    teacher_rows_list = {int(a): block[i] for i, a in enumerate(chosen.tolist())}
+    anchors = [a for a in chosen.tolist() if float(teacher_rows_list[a].abs().sum()) > 0]
 
     xs, ys, ys_w = [], [], []
     kl_terms, layer_sums, layer_counts = [], np.zeros(4), np.zeros(4)
 
     for anchor in anchors:
-        row = teacher[anchor]
+        row = teacher_rows_list[anchor]
         support = torch.nonzero(row, as_tuple=False).reshape(-1)
         if support.numel() == 0:
             continue
@@ -166,8 +180,8 @@ def main() -> int:
         "items": n_items,
         "edges": len(coo),
         "trained_collision_from_checkpoint": 0.204498312116159,
-        "shipped_teacher": fiducial(teacher_matrix(teacher_weights(coo, n_items, shipped, False)), sids, n_items),
-        "fixed_teacher": fiducial(teacher_matrix(teacher_weights(coo, n_items, fixed, True)), sids, n_items),
+        "shipped_teacher": fiducial(normalized_sparse(teacher_weights(coo, n_items, shipped, False)), sids, n_items),
+        "fixed_teacher": fiducial(normalized_sparse(teacher_weights(coo, n_items, fixed, True)), sids, n_items),
     }
     (HERE / "p0_3_fidelity.json").write_text(json.dumps(report, indent=1))
     print(json.dumps(report, indent=1))
