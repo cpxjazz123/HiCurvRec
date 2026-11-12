@@ -16,15 +16,15 @@ experiment, so the choice is made in source.
 
 from __future__ import annotations
 
-from . import euclidean
+from . import distance
 
-__all__ = ["DISTANCES", "DistanceError", "build_distance", "euclidean"]
+__all__ = ["DISTANCES", "DistanceError", "build_distance", "distance"]
 
 #: name -> what the metric is, and the callable that computes it.
 DISTANCES = {
     "euclidean": {
         "description": "squared Euclidean distance |x|^2 - 2 x.c + |c|^2",
-        "function": euclidean.distances,
+        "function": distance.distances,
     },
 }
 

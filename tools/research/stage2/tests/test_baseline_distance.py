@@ -7,7 +7,7 @@
 
 so the choice of codeword was decided by a formula living inside the layer that also
 owned the codebook, the Sinkhorn assignment and the straight-through trick. It now
-lives in `distances/euclidean.py` behind a registry, and the training entry point
+lives in `distances/distance.py` behind a registry, and the training entry point
 imports the built object and hands it to the model -- it names no formula itself.
 
 These tests pin three things: the module exists, the arithmetic is unchanged, and the
@@ -30,8 +30,8 @@ from model.layers import VQLayer  # noqa: E402
 
 
 def test_the_distance_has_its_own_module() -> str:
-    if not (BASELINE / "distances" / "euclidean.py").is_file():
-        raise AssertionError("distances/euclidean.py is missing")
+    if not (BASELINE / "distances" / "distance.py").is_file():
+        raise AssertionError("distances/distance.py is missing")
     if "euclidean" not in distances.DISTANCES:
         raise AssertionError("the registry does not name euclidean: %r"
                              % sorted(distances.DISTANCES))
@@ -50,7 +50,7 @@ def test_the_arithmetic_is_unchanged() -> str:
     expected = (latent.pow(2).sum(1, keepdim=True)
                 - 2 * latent @ codebook.t()
                 + codebook.pow(2).sum(1, keepdim=True).t())
-    got = distances.euclidean.distances(latent, codebook)
+    got = distances.distance.distances(latent, codebook)
     if got.shape != expected.shape or not torch.equal(got, expected):
         raise AssertionError("the distance matrix changed:\n%r\n%r" % (got[:2], expected[:2]))
     return "the squared-distance matrix is bit-identical to the inline expression"
@@ -61,14 +61,14 @@ def test_the_injected_distance_decides_the_codeword() -> str:
     x = torch.randn(16, 8)
     default = VQLayer(64, 8, 0.25, -1.0, -1, distance=distances.build_distance())
     flipped = VQLayer(64, 8, 0.25, -1.0, -1, distance=lambda latent, codebook:
-                      -distances.euclidean.distances(latent, codebook))
+                      -distances.distance.distances(latent, codebook))
     flipped.load_state_dict(default.state_dict())
     for layer in (default, flipped):
         layer.eval()
     with torch.no_grad():
         _, _, _, tokens_default = default(x)
         _, _, _, tokens_flipped = flipped(x)
-        manual = torch.argmin(distances.euclidean.distances(
+        manual = torch.argmin(distances.distance.distances(
             x.view(-1, 8), default.get_code_embs()), dim=-1).view(x.shape[:-1])
     if not torch.equal(tokens_default, manual):
         raise AssertionError("the default layer no longer picks the nearest codeword")
