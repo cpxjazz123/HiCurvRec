@@ -1,12 +1,12 @@
 {
   "schema": "genrec.idea.v1",
-  "id": "C-212",
-  "title": "噪声标定：用冻结协议对同一 SID 重跑，量出 Stage3 自身方差",
-  "type": "diagnostic",
-  "status": "completed",
-  "issue": 212,
+  "id": "C-215",
+  "title": "AF3 图曲率驱动残差分配：曲率势进入 Sinkhorn 代价，码字势由结构项训练",
+  "type": "mechanism",
+  "status": "draft",
+  "issue": "unassigned",
   "date": "2026-11-12",
-  "supersedes": "results/research/issue213_idea_txt_superseded.txt",
+  "supersedes": "C-212（Stage3 同 SID 噪声标定，已完成）；其 Δ=5.22e-05 的噪声带宽作为本 idea 的判据依据",
   "rules": {
     "completeness": "sections 必须恰好包含 10 段（goal..boundaries），缺任一段即不合格",
     "no_placeholders": "任何字段的值不得为空字符串、null，或含 TODO/TBD",
@@ -19,139 +19,154 @@
     "F0": {
       "value": 0.057278156,
       "source": "results/stage3_T5Train/TIGER_mixed_rq_F0/logs/Amazon_2023_Instruments/Nov-09-2026_08-07-21/test_final.json",
-      "role": "主参照（允许类上限）"
+      "role": "主参照（允许类上限，baseline.md §1）"
     },
     "history_baseline": {
       "value": 0.056216,
-      "source": "results/stage3_T5Train/_reference_baseline_deterministic/logs/Amazon_2023_Instruments/Nov-07-2026_15-47-31/test_final.json",
-      "role": "历史对照"
-    },
-    "forbidden_family": {
-      "value": 0.064764,
-      "source": "results/stage3_T5Train/TIGER_r48k2_rq",
-      "role": "禁令族（未解禁）"
+      "source": "results/research/baseline.md（§3 历史对照行）",
+      "role": "同树历史对照（E32 欧氏 TIGER_RQ-VAE）"
     },
     "success_line": {
       "value": 0.065,
-      "role": "成功线"
+      "role": "成功线（CLAUDE.md §25）"
     },
-    "delta_threshold": 0.001062
+    "delta_threshold": 0.001062,
+    "same_sid_noise": {
+      "value": 5.22e-05,
+      "source": "results/research/issue212",
+      "role": "Stage3 同 SID 重跑噪声（用作可分辨性下限）"
+    },
+    "af3_convention": {
+      "source": "tools/research/science/community_curvature/export_edge_af3.py",
+      "role": "AF3 的冻结约定：issue #136 augmented Forman curvature，二值无向训练图；臂只读该表，不得自算"
+    },
+    "af3_target_formula": {
+      "source": "results/research/stage3_queue/_stage/TIGER_mixed_rq_A/TIGER_mixed_rq_A/model/af3_structure.py",
+      "role": "kappa_ij = 4 - d_i - d_j + 3 T_ij 的参考实现与固定支撑/读数定义"
+    },
+    "baseline_tree": {
+      "source": "stage2_RQ-VAE/TIGER_RQ-VAE",
+      "value": "80c90f2ff854270fecbd4ca3fabcbffe461b10644412460d12b2fa0e5970713b",
+      "role": "唯一允许的复制起点（source_digest）"
+    },
+    "current_sid": {
+      "source": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+      "value": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+      "role": "该树本次重跑的 SID（recall@10=0.05545012970281516，Nov-12 运行）"
+    }
   },
   "sections": {
     "1_goal": {
-      "statement": "用冻结 Stage3 协议对同一固定 SID 重跑一次，量出协议自身的非确定性 Δ_same_sid。",
-      "decision_form": "给出实数 Δ_same_sid = |recall_new − recall_ref|，与 0.001062 比较。"
+      "statement": "让 AF3 曲率成为残差分配的驱动信号，而不是旁路损失：同一条连通通路上，冻结 AF3 目标（kappa_ij = 4 - d_i - d_j + 3 T_ij）给出每个商品的结构势 s_i，每层码字持有可学习势 g_k，二者之差以 Huber 进入该层的 Sinkhorn 代价矩阵 C_ik = d(z_i, c_k) + lambda * Huber_delta(s_i - g_k)，均衡分配仍由 Sinkhorn 完成；同一对 (s, g) 又由结构项 L_struct 训练。删掉 s、去掉 g、或把 Huber 从代价里拿掉，分配结果与损失都会变。",
+      "decision_form": "与主参照 F0（0.057278156）和成功线 0.065 比较 Stage3 test_R@10；同时记录 AF3 结构失真、L3 collision、L1 使用码、二级前缀数作为前导诊断。"
     },
     "2_hypothesis": {
-      "claim": "Stage3 同一 SID 的重跑方差显著小于臂间差值（Δ_same_sid < 0.0004）。",
-      "refutation": "若 Δ_same_sid ≥ 0.001062，则本线全部臂间排序不可分辨，F0 的 +1.9% 必须降级为未超出噪声。"
+      "claim": "在冻结配方下，按 AF3 曲率分层的前缀会让同一 trie 前缀下的商品在训练图上结构更相近，从而在 Stage3 test_R@10 上超过 F0 的 0.057278，目标达到 0.065。",
+      "refutation": "三条任一成立即否定：(1) both-on 单次运行 test_R@10 < 0.057278；(2) 冻结支撑上的 AF3 结构失真相对基线下降不足 5%（机制没推动它声称推动的结构）；(3) Sinkhorn 行/列边际相对偏差 > 2%（均衡被破坏，违反 CLAUDE.md §19h）。"
     },
     "3_start": {
-      "measured_sid": "results/stage2_RQ-VAE/TIGER_mixed_rq_F0/item_sids.json",
-      "measured_sid_sha256": "afa89a10b1b197a7b56da4ad322c6ddd96a3c26c04238af326d88747378bb848",
-      "absent_sid_note": "results/stage2_RQ-VAE/TIGER_mixed_rq/item_sids.json 不存在（见 cca82cf4）",
-      "reference_run": "results/stage3_T5Train/TIGER_mixed_rq_F0/logs/Amazon_2023_Instruments/Nov-09-2026_08-07-21/test_final.json"
+      "baseline_tree": "stage2_RQ-VAE/TIGER_RQ-VAE",
+      "baseline_digest": "80c90f2ff854270fecbd4ca3fabcbffe461b10644412460d12b2fa0e5970713b",
+      "baseline_config": "stage2_RQ-VAE/TIGER_RQ-VAE/config/train_config.json（21 个超参，严格校验）",
+      "baseline_plugins": "losses/（reconstruction/commitment/codebook/quantization 注册表）、distances/（distance.py 度量注册表）、train_config.py",
+      "measured_sid": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+      "measured_sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+      "measured_recall": 0.05545012970281516,
+      "measured_run": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-12-2026_21-04-04/test_final.json",
+      "note": "F0 的源码树已在阶段清理中移除，只作数值对照，不可作为复制起点；复制起点只能是上面的 baseline_tree。"
     },
     "4_method": {
-      "single_variable": "重跑（不改代码、不改超参）",
-      "protocol": {
-        "num_epochs": 150,
-        "eval_interval": 5,
-        "eval_start_epoch": 75,
-        "early_eval_epochs": [
-          25,
-          50,
-          75,
-          100,
-          125
-        ],
-        "seed": 42,
-        "beam_size": 20,
-        "no_eval": true,
-        "skip_test": false,
-        "master_port": 50201
-      },
+      "single_variable": "只新增 AF3 曲率项（s_i 的度量、g_k 的参数化、lambda 的自标定、Huber 的 delta）并把它接进每层 Sinkhorn 代价与结构项；其余一律冻结。",
+      "definitions": [
+        "kappa_ij = 4 - d_i - d_j + 3 T_ij，d 为二值无向训练图的度，T 为共同邻居数；直接读冻结约定，禁止第二实现。",
+        "s_i = (sum_{j in N(i)} kappa_ij) / d_i，再按全图 mean/std 标准化；d_i = 0 的商品取全图均值。",
+        "g_k^(l) 为每层每码字的标量势，初始化 = 该码字在初始化分配下所辖商品的 s 均值；初始化确定性由 seed 与冻结分配决定。",
+        "lambda_l = median_i d(z_i^(l), c_{k(i)}^(l)) / median_i |s_i - g_{k(i)}^(l)|，在初始化时一次算定并写进训练指标，保证曲率项与距离项同量级；不做扫描。",
+        "C_ik^(l) = d_registry(z_i^(l), c_k^(l)) + lambda_l * Huber_delta(s_i - g_k^(l))，delta = 1（s 已标准化，等于一个标准差）。",
+        "分配仍为该代价矩阵上的 Sinkhorn（eps 0.003，50 迭代），禁止用 argmin 取代均衡分配。",
+        "L_struct = mean_{i,l} Huber_delta(s_i - g_(k_i^(l))^(l))，权重 1；梯度只到 g（Sinkhorn 的 argmax 不可微，STE 只负责编码器侧）。",
+        "覆盖范围：新增键必须同时加进 train_config.FIELDS 与其测试；度量仍走 distances 注册表；损失项放进 losses/ 并在注册表登记。"
+      ],
       "unchanged": [
-        "Stage2/Stage3 源码",
-        "冻结协议常量",
-        "SID 本身",
-        "历史结果文件"
+        "3000 epoch、seed 42、全局 batch 4096（4 rank 每 rank 1024）、端口 50202",
+        "LR 1e-3、AdamW、weight_decay 1e-4、50 epoch warmup、梯度裁剪 1.0",
+        "码本 3 层 × 256 × 32、beta 0.25、Sinkhorn eps 0.003/50 迭代",
+        "Stage3 冻结协议（150 epoch、eval 5、eval_start 75、early_eval 25/50/75/100/125、beam 20、seed 42）",
+        "结果目录、SID 导出格式、四卡 DDP 启动方式、R2 归档布局"
       ]
     },
     "5_switches": {
-      "mechanism_switches": "无（诊断不引入新代码路径）",
-      "wiring_check": "HG_Rec.log 第 1 行 Configuration: 与冻结协议常量逐项机器对比"
+      "mechanism_switches": [
+        {"name": "behaviour-off", "definition": "s_i ≡ 0 且 g 冻结为 0：代价退化为 d，L_struct 恒为 0，数值等于基线"},
+        {"name": "geometry-off", "definition": "lambda = 0（曲率项与结构项同时关闭），s 仍计算并写入诊断"},
+        {"name": "both-on", "definition": "s、g、lambda、Huber 全启用，即正式运行形态"}
+      ],
+      "wiring_check": "一个廉价单测断言三个开关各自的代码路径与数值退化（behaviour-off 与 geometry-off 在固定 batch 上逐位等于基线），不训练任何关闭开关的臂。"
     },
     "6_preregistration": {
       "tiers": [
-        {
-          "condition": "Δ_same_sid >= 0.001062",
-          "action": "臂间不可分辨；结案文件须写明此前排序仅描述性，F0 的 +1.9% 未超出协议噪声"
-        },
-        {
-          "condition": "0.0004 <= Δ_same_sid < 0.001062",
-          "action": "部分可分辨：只允许 F0 > 历史基线 一条结论"
-        },
-        {
-          "condition": "Δ_same_sid < 0.0004",
-          "action": "F0 的 +1.9% 可分辨；≤0.3% 的差别属噪声"
-        }
+        {"condition": "both-on 的 test_R@10 ≥ 0.065", "action": "机制成立：归档 R2、写报告、关闭方向"},
+        {"condition": "0.057278 ≤ both-on 的 test_R@10 < 0.065", "action": "正向但不足：记录全部诊断，不重跑、不换种子、不调参（CLAUDE.md §19g）"},
+        {"condition": "both-on 的 test_R@10 < 0.057278", "action": "否定：记录 AF3 结构失真与 L3 collision，关闭该方向"}
       ],
-      "run_policy": "只跑一次，不重复、不换 seed"
+      "run_policy": "正式 Stage2 只跑一次（seed 42、3000 epoch、冻结全局 batch）；不消融、不多种子、不调参扫描；Stage3 入场需三层码字碰撞率 < 0.40（CLAUDE.md §89），低于该门才允许启动。"
     },
     "7_verification": [
-      "输出齐全：test_final.json / HG_Rec.log / training_metrics.jsonl",
-      "SID sha256 等于 afa89a10b1b197a7b56da4ad322c6ddd96a3c26c04238af326d88747378bb848",
-      "Configuration: 行与冻结协议逐项一致（机器对照）",
-      "报告给出 Δ_same_sid 与 Δ(F0)、Δ(历史基线) 并列表",
-      "若判不可分辨，必须在 results/research/line_closure/line_closure_2026-11-12.md 追加噪声标定行",
-      "git diff --stat 不含 results/stage2_RQ-VAE/** 与 results/stage3_T5Train/** 下文件"
+      "kappa 恒等式：5 节点小图上 kappa = 4 - d_i - d_j + 3 T_ij 与参考实现逐位一致（含边界：度为 1、无共同邻居）",
+      "s_i 定义：3 节点手算图核对度加权均值与标准化（全图 mean≈0、std≈1）",
+      "lambda 自标定：同一份 SID 与码本重算两次得到同一 lambda，并写进 train_start 指标",
+      "g 初始化确定性：同 seed 两次初始化逐位相同",
+      "三开关接线检查：behaviour-off 与 geometry-off 在固定 batch 上逐位等于基线输出",
+      "Sinkhorn 仍均衡：每层分配的行/列边际相对均匀分布偏差 ≤ 2%",
+      "导出与训练同代价：eval 路径的 argmin(C) 与训练路径 use_sk=False 的选择逐位一致",
+      "梯度归属：L_struct 的梯度只到 g；重构/commitment 经 STE 到达编码器；AF3 统计不带梯度",
+      "四卡 DDP 不挂死；真实入口一 epoch 冒烟导出合法 SID；MCP 冒烟探针通过",
+      "全量测试：新 loss 项进入 test_losses_math 的声明驱动套件，metric 进入 test_baseline_distance 形式的一致性检查"
     ],
     "8_expectation": {
-      "expected": "Δ_same_sid 在 1e-4 量级，即 < 0.0004，F0 的 +1.9% 站得住",
-      "falsifier": "若 Δ_same_sid >= 0.001062，则本线所有 0.4%/0.8% 判读作废，且 F0 相对历史基线的 +1.9% 不可主张"
+      "expected": "AF3 结构失真相对基线下降 ≥ 5%；L3 collision 不高于基线 0.169276 且 < 0.40；test_R@10 最可能落在 [0.057278, 0.065) 区间，≥ 0.065 才算成功。",
+      "falsifier": "test_R@10 < 0.057278，或结构失真下降 < 5%，或 Sinkhorn 边际偏差 > 2% —— 三者任一即判假设不成立。"
     },
     "9_records": {
-      "run_dir": "results/stage3_T5Train/TIGER_mixed_rq_F0/logs/Amazon_2023_Instruments/Nov-12-2026_17-01-43/",
-      "result_file": "results/stage3_T5Train/TIGER_mixed_rq_F0/logs/Amazon_2023_Instruments/Nov-12-2026_17-01-43/test_final.json",
-      "metrics_file": "results/stage3_T5Train/TIGER_mixed_rq_F0/logs/Amazon_2023_Instruments/Nov-12-2026_17-01-43/training_metrics.jsonl",
-      "r2": "不新增（诊断不产出新 SID / 新 Stage2 源码）"
+      "run_dir": "results/stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/",
+      "metrics_file": "stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/logs/training_metrics.jsonl",
+      "stage2_metrics": "results/stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/stage2_metrics/<sid_sha256>.json",
+      "stage3_dir": "results/stage3_T5Train/TIGER_af3_curvature_drive_rq/",
+      "stage3_result": "results/stage3_T5Train/TIGER_af3_curvature_drive_rq/logs/Amazon_2023_Instruments/<run>/test_final.json",
+      "r2": "results/research/issue139/r2_ledger.json（新编号，键=臂名/SID 摘要；四件齐全才上传）",
+      "must_record": "AF3 结构失真（相对基线与自身）、L3 collision、L1 使用码数、二级前缀数、lambda_l、test_final 全部键原样"
     },
     "10_boundaries": [
-      "不训练 Stage2、不改 Stage2 源码、不新建候选树",
-      "不改冻结 Stage3 协议常量；不换 seed；不重复运行",
-      "不得据本次结果调参或选最优运行"
+      "只用训练划分的交互构图；不得读验证/测试或未来行为",
+      "不得用 argmin 取代 Sinkhorn 均衡分配（CLAUDE.md §19h）",
+      "不得在臂内重算 AF3（读冻结表；第二实现即判不合格）",
+      "不训练 behaviour-off / geometry-off 臂，不做消融、多种子、调参扫描",
+      "不改冻结 Stage3 协议、结果路径与导出格式",
+      "不得据 Stage3 结果调参或挑选最优运行",
+      "issue 未指派前不得派发正式训练"
     ]
   },
   "result": {
-    "same_sid_recall_new": 0.05722592663521301,
-    "same_sid_recall_ref": 0.057278155956754125,
-    "delta_same_sid": 5.2229321e-05,
-    "delta_relative": 0.000912,
-    "verdict": "Δ_same_sid = 5.22e-05 < 0.0004 ⇒ 第三档：F0 的 +1.9% 可分辨；协议噪声约 0.09%",
-    "implications": [
-      "F0 +1.9% 远大于噪声（约 21×），站得住",
-      "LKC +0.3% 约为噪声 3.3×，方向可信但量级小",
-      "SIGN −0.2%、L2K/SDH −0.4% 亦超出噪声，属真实但微小的负效应"
-    ]
+    "status": "not_run",
+    "note": "尚未训练；both-on 完成后由 Stage3 test_final.json 回填 test_R@10 与全部诊断"
   },
   "web_contract": {
     "source_of_truth": "idea.json（schema genrec.idea.v1）是唯一真源；idea.txt 是它的**逐字节 JSON 镜像**（供旧版服务/静态读取），页面优先用 /api/idea 的 doc，取不到时回退解析 fileText",
-    "render_mode": "**键值对渲染**：不再用整段文本呈现。每个 section 渲染为一个区块，区块内每一对 (JSON 键 → 值) 渲染为一行 key-value 行；嵌套对象用键路径展开（如 6_preregistration.tiers[0].condition），数组渲染为行内列表或每项一行",
+    "render_mode": "**键值对渲染**：每个 section 渲染为一个区块，区块内每一对 (JSON 键 → 值) 渲染为一行 key-value 行；嵌套对象用键路径展开（如 6_preregistration.tiers[0].condition），数组渲染为行内列表或每项一行",
     "row_layout": "左列键名（等宽字体、直接用 JSON 键名或其本地化标签）、右列值；number 用等宽且保留原始精度、boolean 渲染为徽章（true/false）、string 保留原样并按 markdown 渲染行内代码/链接、数组逐项换行、空值显示「缺失」",
     "section_order": "元信息 → sections.1_goal … sections.10_boundaries → result → web_contract；10 段缺任一段显示「缺失」而不是隐藏",
     "completeness_badge": "顶部常显 N/10；N<10 时禁用保存/发送，并列出缺失段名",
     "edit_mode": "默认只读键值视图；编辑通过「源码（JSON）」切换，编辑后用 JSON.parse 校验，失败则拒绝保存并标出错误位置",
     "numeric_links": "references.*.value 与 result.* 的数值渲染为可点击引用，跳到对应 source 路径；无 source 的数值标红",
     "prereg_visibility": "6_preregistration.tiers 三档必须常显（表格化：condition / action），不得折叠",
-    "validation": "缺 id/title/references ⇒ 区块顶部显示「结构不合格」并拒绝保存",
-    "no_second_schema": "页面不得另造字段名或另存一份结构；键名一律用 idea.json 的键名"
+    "validation": "缺 id/title/issue 或 sections 少于 10 段时拒绝保存；占位符（空串/null/TODO/TBD）视为结构不合格",
+    "no_second_schema": "不得再引入第二份 idea 文本；旧版 idea.txt 已是被取代的镜像"
   },
   "self_check": {
     "sections_complete": 10,
     "placeholders": 0,
     "traceable_numbers": true,
-    "single_variable": "重跑",
+    "single_variable": "AF3 曲率项进入 Sinkhorn 代价 + L_struct 训练码字势",
     "prereg_tiers": 3,
     "falsifier_written": true,
     "boundaries_listed": true
