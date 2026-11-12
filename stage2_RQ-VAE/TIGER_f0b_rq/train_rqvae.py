@@ -483,6 +483,39 @@ def _single_card_mode() -> bool:
     return os.environ.get(SINGLE_GPU_ENV) == "1"
 
 
+def probe_lambda_star(module, batch, full_embeddings, batch_ids, rows, neighbours, two_hop, n_items) -> float:
+    """``lambda* = 0.1 * ||grad_enc L_RQ|| / (||grad_enc L_SD|| + 1e-12)``, measured once on the first batch and then frozen."""
+    def grad_norm(loss):
+        params = [p for p in module.encoder.parameters() if p.requires_grad]
+        grads = torch.autograd.grad(loss, params, retain_graph=False, allow_unused=True)
+        total = torch.zeros((), device=loss.device)
+        for g in grads:
+            if g is not None:
+                total = total + g.pow(2).sum()
+        return float(total.sqrt())
+
+    def _sync(stage):
+        # a device-side assert is reported at whatever kernel runs next; syncing each stage pins it to the one that raised
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        print(f"[probe] {stage}", flush=True)
+
+    z = module.encoder(batch)
+    _sync("encoder done")
+    readout, quant_loss, _, _ = module.rq(z)
+    _sync("rq done")
+    quantized = z + (readout - z).detach()
+    recon = module.decoder(quantized)
+    _sync("decoder done")
+    # the reconstruction term is measured on the batch; the structural term indexes the whole catalogue by item id,
+    # so it has to be given the whole table -- passing the batch rows there was an out-of-range index, which CUDA reports as a device-side assert
+    rq_loss = torch.nn.functional.mse_loss(recon, batch) + quant_loss
+    sd_loss = sd_step.structural_loss(module, full_embeddings, batch_ids, rows, neighbours, two_hop, n_items)
+    _sync("structural loss done")
+    return struct_distill.calibrate(grad_norm(rq_loss), grad_norm(sd_loss))
+
+
+
 def main() -> None:
     # === DDP 初始化 ===
     if _single_card_mode():
@@ -612,38 +645,6 @@ def main() -> None:
     if rank == 0:
         print(f"[f0b] {_meta}", flush=True)
         _record(rank, "f0b", **_meta)
-
-def probe_lambda_star(module, batch, full_embeddings, batch_ids, rows, neighbours, two_hop, n_items) -> float:
-    """``lambda* = 0.1 * ||grad_enc L_RQ|| / (||grad_enc L_SD|| + 1e-12)``, measured once on the first batch and then frozen."""
-    def grad_norm(loss):
-        params = [p for p in module.encoder.parameters() if p.requires_grad]
-        grads = torch.autograd.grad(loss, params, retain_graph=False, allow_unused=True)
-        total = torch.zeros((), device=loss.device)
-        for g in grads:
-            if g is not None:
-                total = total + g.pow(2).sum()
-        return float(total.sqrt())
-
-    def _sync(stage):
-        # a device-side assert is reported at whatever kernel runs next; syncing each stage pins it to the one that raised
-        if torch.cuda.is_available():
-            torch.cuda.synchronize()
-        print(f"[probe] {stage}", flush=True)
-
-    z = module.encoder(batch)
-    _sync("encoder done")
-    readout, quant_loss, _, _ = module.rq(z)
-    _sync("rq done")
-    quantized = z + (readout - z).detach()
-    recon = module.decoder(quantized)
-    _sync("decoder done")
-    # the reconstruction term is measured on the batch; the structural term indexes the whole catalogue by item id,
-    # so it has to be given the whole table -- passing the batch rows there was an out-of-range index, which CUDA reports as a device-side assert
-    rq_loss = torch.nn.functional.mse_loss(recon, batch) + quant_loss
-    sd_loss = sd_step.structural_loss(module, full_embeddings, batch_ids, rows, neighbours, two_hop, n_items)
-    _sync("structural loss done")
-    return struct_distill.calibrate(grad_norm(rq_loss), grad_norm(sd_loss))
-
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
