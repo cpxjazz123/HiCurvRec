@@ -48,13 +48,13 @@
       </nav>
 
       <main class="layout">
-        <!-- 左边 AGENT A，右边 AGENT B。
-             A 跑完后，它的分析结果会自动连同下面的「要求」一起交给 B。 -->
+        <!-- 左边 AGENT Write，右边 AGENT B。
+             Write 跑完后，它的分析结果会自动连同下面的「要求」一起交给 B。 -->
         <section class="panel" id="panelA" data-profile="agent-a" data-builtin="true">
           <div class="chat-part">
             <div class="panel-head">
               <span class="dot" data-role="statusDot"></span>
-              <h2 data-role="name">AGENT A</h2>
+              <h2 data-role="name">AGENT Write</h2>
               <span class="sub" data-role="statusText">待运行</span>
               <button type="button" class="panel-config" data-role="configBtn">配置</button>
               <button type="button" class="panel-clear" data-role="clearHistory">清空历史</button>
@@ -76,9 +76,9 @@
                   <input
                     data-role="prompt"
                     type="text"
-                    value="查一下有没有 Open Issue，读它的正文，说明按正文该实现什么机制、要改哪些文件、怎么验证。"
+                    value="读 ideas/ 下当前方向的机制定义与 math.json，在 stage2_RQ-VAE/ 下新建对应的机制脚本代码与测试。"
                     autocomplete="off"
-                    placeholder="给 AGENT A（Issue 执行者）的指令"
+                    placeholder="给 AGENT Write（机制实现者）的指令"
                   />
                   <button type="submit" class="send" data-role="runBtn">运行</button>
                 </div>

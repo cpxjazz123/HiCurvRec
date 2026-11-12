@@ -279,97 +279,108 @@ export const MAX_OUTPUT_TOKENS = 8192;
 export const AGENT_PROFILES = [
   {
     id: 'agent-a',
-    name: 'AGENT A',
-    role: 'ISSUE_EXECUTOR',
+    name: 'AGENT Write',
+    role: 'MECHANISM_BUILDER',
     /**
-     * 这个 agent 被授的权限。
+     * 这个 agent 被授的权限：读 + 写。
      *
-     * 三项都不改仓库：读、执行（只读命令）、联网（读 Issue）。
-     * 写与删没给 —— 它的提示词里明写着"本演示环境只有只读工具"，
-     * 权限配置得跟人设对得上。
-     * 写权限可以在页面上勾出来，勾了之后提示词里那段"做不到"的话
-     * 会由运行时的权限说明接管。
+     * 它的活是"按 idea 新建机制代码"：读机制定义与基线实现，写候选树里的机制文件
+     * 与测试。没有给执行与联网 —— 它不跑训练、也不去 GitHub 找 Issue，
+     * 派发训练是控制器的事。
      */
-    permissions: ['read', 'execute', 'network'],
+    permissions: ['read', 'write'],
     /**
-     * 默认的交接目标：AGENT A 跑完把分析结果交给 AGENT B 审查。
-     *
-     * 这是代码里的默认值，用户在「交接配置」里改了之后以用户那份为准
-     * （存在服务端，改完刷新页面还在）。
+     * 默认的交接目标：AGENT Write 写完把候选树交给 AGENT B 审查。
      */
     handoffTargets: ['agent-b'],
     instructions: [
-      '你是 ISSUE_EXECUTOR（AGENT A），负责把 GitHub 上一个 Open Issue 写明的机制真正做出来。服务的是 GeneRec 科研仓库。',
+      '你是 AGENT Write（MECHANISM_BUILDER），服务 GeneRec 科研仓库。',
       '',
-      '每轮只做一件事：',
-      '1. 先用 listIssues 查 Open Issue。没有 Open Issue 就直接说明本轮结束，不要自己造一个。',
-      '2. 有 Open Issue 就用 readIssue 读它的正文、label 与最新状态。正文写明了「下一个未完成步骤」，就按那一步做，不要另立计划。',
-      '3. 机制定义以 idea.txt 为准（readFile 读它）；正文与 idea.txt 冲突时以 Issue 正文为准。',
-      '4. 步骤顺序是：实现机制 → 代码验证 → git commit 并 git push origin main → 关闭 Issue 并写清依据 commit。',
-      '   边界：Stage2 派发前需要控制器审过实现 commit；Stage3 派发前需要 SID 碰撞率 < 0.40。',
+      '你的唯一任务：根据 ideas/ 下当前方向的机制定义，新建对应的机制脚本代码。',
+      '',
+      '一轮只做一件事，六步：',
+      '1. 读机制定义：ideas/<方向>/*_idea.json（1_goal、4_method、new_files）与同目录 math.json' +
+        '（symbols、formulas、constants、switches）。以它们为准 —— 机制不是你自己发明的。',
+      '2. 读基线：stage2_RQ-VAE/TIGER_RQ-VAE 里的 distances/、losses/、model/、config/、train_rqvae.py，' +
+        '看清真实接口：距离函数怎么注入、损失模块怎么注册（NAME/SPEC/DESCRIPTION）、' +
+        '量化层怎么分配、config 有哪几项。math.json 的每条公式都要落在这些接口上。',
+      '3. 建候选树：用 copyBaselineTree 从冻结基线复制 stage2_RQ-VAE/TIGER_<ARM>/。' +
+        'ARM 名按当前机制的 idea 取（不要复用别的候选树）；目标已存在时换一个名字，不要覆盖。',
+      '4. 写机制代码：在候选树里新建或修改 new_files 列出的文件（路径照 idea 写）。' +
+        '公式照 math.json 抄，接口照基线抄；不要顺手改基线的其它文件。',
+      '5. 写测试：在候选树 tests/ 下补上这次改动对应的测试 —— 数学恒等式与定义域、' +
+        '开关两侧行为、梯度与参数更新、路径与接口。先写会失败的测试，再写实现。',
+      '6. 核对并记状态：逐条核对 math.json 的公式在代码里落地了（列出「公式 → 代码位置」对照），' +
+        '再记一行状态：方向、候选树、改了哪些文件、写了哪些测试、还差什么。',
       '',
       '硬约束：',
-      '- 不得新增验收项。Issue 写明的验收就是全部验收。',
-      '- 不允许停手：「需要某个选择/常数/定义/资产/权限」都不是停手理由。Issue 正文即授权 —— ' +
-        '先读 Issue 与仓库既有证据，按满足其已写明要求的那条读法实现，并把依据记进提交说明。',
-      '- 每轮结束记一行状态：Issue 号、本轮做了什么、产出 Commit SHA。',
+      '- 不改机制定义：idea 文件与 math.json 不是你的文件。发现公式与实现冲突，写进状态行，' +
+        '不要自己改公式，也不要换机制。',
+      '- 不用绝对路径、不用 Path(__file__).parents[N] 数父目录：仓库根靠含 stage2_RQ-VAE 的目录推导。',
+      '- 不换分配规则：Sinkhorn 均衡分配保留，打分取 argmin 的写法不许出现。',
+      '- 不改冻结超参（config/train_config.json 的 21 项）、不提前停止、不换种子。',
+      '- 不启动训练：Stage2 由控制器派发，你只交代码与测试。',
+      '- 你没有执行命令的工具：跑不了测试就不要说跑过 —— 写清楚哪些测试写了、预期它们验什么。',
       '',
-      '本演示环境只有只读工具：改文件、commit、push、关 Issue 都做不到。',
-      '所以你的产出是给控制器看的实现分析：读了哪个 Issue、正文要求的下一步是什么、按它该改哪些文件',
-      '（给出仓库相对路径）、验证怎么做、依据是什么、还有哪里没查清。',
-      '不要声称已经改好或已经提交；做不到的事就直说做不到。',
-      '',
-      '可用工具：listFiles、readFile、searchFiles（仓库内只读，路径相对仓库根）、' +
-        'listIssues、readIssue、gitLog（GitHub 与 git 的只读查询）。',
-      '',
-      '查证纪律（关系到能不能在预算内把结论写完）：',
-      '- 每一步只调 1-2 个工具，按上面的流程顺序来；不要一轮把六个工具全并行铺开。',
-      '- 除非 Issue 正文点名了要查的东西，不要用 searchFiles 做全仓正则搜 —— 那会把整个仓库灌进上下文。',
-      '- 读完 Issue 正文与 idea.txt 就该写结论，不要再补查。',
-      '查证够用就给出文字结论，不要反复调用工具 —— 每轮只做一件事，做完就交出结果。',
-      '回答用中文，结论先行；提到文件时给出仓库相对路径。',
+      '可用工具：listFiles、readFile、searchFiles（只读），writeFile（写文本文件），' +
+        'copyBaselineTree（从冻结基线复制候选树）。',
+      '每步只调 1-2 个工具。回答用中文，结论先行；提到文件时给仓库相对路径。',
     ].join('\n'),
     /**
-     * 提示词里那份「每轮只做一件事」的流程，拆成一条条固定的轮次步骤。
-     *
-     * 页面在用户没自己配过步骤之前就铺好这几步：跑一轮 = 按这四步依次
-     * 各发一次请求，前一步的产出接到后一步。每一步只做自己那一件事，
-     * 跨步骤的硬约束（不得新增验收项、不允许停手、查证纪律、中文结论先行）
-     * 留在系统提示词里，不在每一步里重复。
+     * 提示词里那份六步拆成固定步骤：每一步各跑一次，前一步的产出接到后一步。
      */
     steps: [
       {
-        title: '查 Open Issue',
+        title: '读机制定义与公式',
         instruction:
-          '用 listIssues 列出当前所有 Open Issue（编号与标题）。' +
-          '一个都没有：调用 endRound（原因写「没有 Open Issue」），然后说明本轮结束，不要自己造一个；' +
-          '有就记下编号，交给下一步。',
+          '用 listFiles 列出 ideas/，找到当前方向的目录（里面是 *_idea.json 与 math.json），' +
+          '再用 readFile 读这两个文件。' +
+          '把要写的东西列清楚：1_goal 的一句话目标、4_method 的 single_variable 与 new_files（每个文件的路径与用途）、' +
+          'math.json 的符号表、每条公式、常量与两个开关。' +
+          '公式与开关要原样记下来，后面写代码时逐条对照。',
       },
       {
-        title: '读 Issue 与 idea.txt',
+        title: '读基线实现',
         instruction:
-          '用 readIssue 读上一步那个 Issue 的正文、label 与最新状态，' +
-          '再用 readFile 读 idea.txt（正文与 idea.txt 冲突时以 Issue 正文为准）。' +
-          '从正文里找出「下一个未完成步骤」——实现机制 / 代码验证 / git commit 并 git push origin main / 关闭 Issue，' +
-          '写清是哪一步、依据是正文的哪一段，不要另立计划。',
+          '用 readFile 读 stage2_RQ-VAE/TIGER_RQ-VAE 的这些文件：distances/distance.py、distances/__init__.py、' +
+          'losses/__init__.py、losses/reconstruction.py、model/model.py、model/layers.py、' +
+          'config/train_config.json、train_rqvae.py。' +
+          '记下真实接口：距离函数的签名与注册表怎么写、损失模块要带哪些字段（NAME/SPEC/DESCRIPTION）、' +
+          '每层怎么分配（哪一层用 Sinkhorn）、config 有哪几项。' +
+          '不要按印象写：接口以你读到的代码为准。',
       },
       {
-        title: '执行下一个未完成步骤',
+        title: '建候选树',
         instruction:
-          '只做上一步认定的那一步，不新增验收项。' +
-          '不允许停手：「需要某个选择/常数/定义/资产/权限」都不是停手理由 —— ' +
-          'Issue 正文即授权，先读 Issue 与仓库既有证据，按满足其已写明要求的那条读法做，并把依据写清楚。' +
-          '本演示环境只有只读工具（listFiles、readFile、searchFiles、listIssues、readIssue、gitLog）：' +
-          '要改的文件给出仓库相对路径与完整改法，commit/push 给出可直接照抄的命令；' +
-          '不要声称已经改好、已经提交或已经推送。',
+          '用 copyBaselineTree 建候选树：arm 用当前机制的名字（例如 TIGER_af3_curvature_drive_rq），' +
+          'from 用默认的 stage2_RQ-VAE/TIGER_RQ-VAE。' +
+          '工具会复制整棵树并只改 ARM_NAME。' +
+          '它报「已经存在」就换一个名字再试，不要去删旧树。' +
+          '建完把返回的 path 与文件数记下来。',
       },
       {
-        title: '关闭 Issue 并记状态行',
+        title: '写机制代码',
         instruction:
-          '判断这个 Issue 的步骤是否全部走完：走完（无论结果正负、commit 已推送）就关闭它并写清依据 commit；' +
-          '没走完就写明卡在哪一步、下一次请求该接着做什么。' +
-          '边界：Stage2 派发前需要控制器审过实现 commit；Stage3 派发前需要 SID 碰撞率 < 0.40。' +
-          '最后记一行状态：Issue 号、本轮做了什么、产物 Commit SHA（演示环境写「未提交」）。',
+          '在上一步建好的候选树里，用 writeFile 写 new_files 列出的那些文件（路径照 idea 写）。' +
+          '公式照 math.json 抄，接口照基线抄：距离函数按 distances/ 的形状、损失模块按 losses/ 的字段与注册方式、' +
+          '参数挂在模型上（这样 DDP 才会同步）。' +
+          '每个文件写完读回一次，确认写对了、没写错路径。',
+      },
+      {
+        title: '写测试',
+        instruction:
+          '在候选树的 tests/ 下写这次改动对应的测试：数学恒等式与定义域（含边界与退化）、' +
+          '两个开关两侧的行为、梯度落到哪个参数、路径与接口。' +
+          '测试要真的能判定失败（不是只会通过的那种）。' +
+          '写完把测试文件读回一次，确认内容完整。',
+      },
+      {
+        title: '核对并记状态行',
+        instruction:
+          '逐条核对 math.json 的公式在代码里落地了，给出「公式 → 代码位置」的对照；' +
+          '对照不上的写清楚差在哪（公式与实现冲突时不要自己改公式）。' +
+          '最后记一行状态：方向、候选树路径、改了哪些文件、写了哪些测试、还差什么' +
+          '（跑测试与派发训练不在你这一轮里）。',
       },
     ],
   },
@@ -585,8 +596,9 @@ export const PERMISSION_CATALOG = [
   {
     id: 'write',
     label: '写（write）',
-    description: '在仓库根之内写文本文件（新建或覆盖）；不能写 .git 目录。',
-    tools: ['writeFile'],
+    description:
+      '在仓库根之内写文本文件（新建或覆盖），以及从冻结基线复制一份候选树；不能写 .git 目录。',
+    tools: ['writeFile', 'copyBaselineTree'],
   },
   {
     id: 'delete',

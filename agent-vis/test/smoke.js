@@ -14,7 +14,7 @@ import {
   normalizePermissions,
   resolvePermissions,
 } from '../config.js';
-import { PI_TOOLS, toolsForPermissions } from '../live-agent.js';
+import { PI_TOOLS, TOOL_IMPLS, toolsForPermissions } from '../live-agent.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -301,7 +301,11 @@ async function main() {
 
     for (const agent of [a, b]) {
       assert.ok(Array.isArray(agent.steps), `${agent.id} 没有 steps`);
-      assert.equal(agent.steps.length, 4, `${agent.id} 的步骤数不对`);
+      assert.equal(
+        agent.steps.length,
+        agent.id === 'agent-a' ? 6 : 4,
+        `${agent.id} 的步骤数不对: ${agent.steps.length}`,
+      );
       agent.steps.forEach((step, index) => {
         assert.equal(typeof step.title, 'string');
         assert.ok(step.title.trim().length > 0, `${agent.id} 第 ${index} 步没有标题`);
@@ -313,9 +317,10 @@ async function main() {
 
     // 步骤必须是提示词里那份流程拆出来的：用到的工具要对得上。
     const aText = a.steps.map((step) => step.instruction).join('\n');
-    assert.ok(aText.includes('listIssues'), 'AGENT A 的第一步该用 listIssues');
-    assert.ok(aText.includes('readIssue'), 'AGENT A 该用 readIssue 读 Issue 正文');
-    assert.ok(aText.includes('idea.txt'), 'AGENT A 的机制定义该来自 idea.txt');
+    assert.ok(aText.includes('math.json'), 'AGENT Write 该读 math.json 里的公式');
+    assert.ok(aText.includes('copyBaselineTree'), 'AGENT Write 该用 copyBaselineTree 建候选树');
+    assert.ok(aText.includes('writeFile'), 'AGENT Write 该用 writeFile 写机制代码');
+    assert.ok(aText.includes('tests/'), 'AGENT Write 该写测试');
 
     const bText = b.steps.map((step) => step.instruction).join('\n');
     assert.ok(bText.includes('listIssues'), 'AGENT B 的第一步该用 listIssues');
@@ -354,11 +359,11 @@ async function main() {
                  '每个 agent 的人设说明必须不同，否则几栏做的是同一件事');
   });
 
-  await test('三个 agent 就叫 AGENT A、AGENT B 与 AGENT MATH', async () => {
+  await test('三个 agent 就叫 AGENT Write、AGENT B 与 AGENT MATH', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.name),
-      ['AGENT A', 'AGENT B', 'AGENT MATH'],
+      ['AGENT Write', 'AGENT B', 'AGENT MATH'],
       '页面上三栏的 agent 名字不对',
     );
   });
@@ -367,12 +372,12 @@ async function main() {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.role),
-      ['ISSUE_EXECUTOR', 'ISSUE_CONTROLLER', 'MATH_AUDITOR'],
+      ['MECHANISM_BUILDER', 'ISSUE_CONTROLLER', 'MATH_AUDITOR'],
       '两个 agent 的角色不是"执行者 / 控制器"这一对',
     );
     assert.ok(
-      config.AGENT_PROFILES[0].instructions.includes('ISSUE_EXECUTOR'),
-      'AGENT A 的人设里没写明它是 ISSUE_EXECUTOR',
+      config.AGENT_PROFILES[0].instructions.includes('MECHANISM_BUILDER'),
+      'AGENT Write 的人设里没写明它是 MECHANISM_BUILDER',
     );
     assert.ok(
       config.AGENT_PROFILES[1].instructions.includes('ISSUE_CONTROLLER'),
@@ -873,7 +878,7 @@ async function main() {
     const renamed = await put('agent-a', { name: '  首席执行者  ' });
     assert.equal(renamed.status, 200, JSON.stringify(renamed.json));
     assert.equal(renamed.json.name, '首席执行者');
-    assert.equal(renamed.json.defaultName, 'AGENT A');
+    assert.equal(renamed.json.defaultName, 'AGENT Write');
     assert.equal(renamed.json.customized.name, true);
 
     const health = await (await fetch(`${base}/api/health`)).json();
@@ -890,7 +895,7 @@ async function main() {
 
     const restored = await put('agent-a', { name: null });
     assert.equal(restored.status, 200);
-    assert.equal(restored.json.name, 'AGENT A');
+    assert.equal(restored.json.name, 'AGENT Write');
     assert.equal(restored.json.customized.name, false);
   });
 
@@ -1180,7 +1185,8 @@ async function main() {
   await test('按权限裁剪出来的工具集正好是目录里写的那些', async () => {
     assert.deepEqual(toolNames([]), []);
     assert.deepEqual(toolNames(['read']), ['listFiles', 'readFile', 'searchFiles']);
-    assert.deepEqual(toolNames(['write']), ['writeFile']);
+    // 写权限带两个工具：写文本文件，以及从冻结基线复制一份候选树。
+    assert.deepEqual(toolNames(['write']), ['copyBaselineTree', 'writeFile']);
     assert.deepEqual(toolNames(['delete']), ['deleteFile']);
     assert.deepEqual(toolNames(['execute']), ['gitLog']);
     assert.deepEqual(toolNames(['network']), ['listIssues', 'readIssue']);
@@ -1192,6 +1198,47 @@ async function main() {
       'readIssue',
       'searchFiles',
     ]);
+  });
+
+  await test('copyBaselineTree：从冻结基线复制候选树，只改 ARM_NAME', async () => {
+    // 路径按工作目录（/home/... 那棵树）算，不是按进程 cwd —— 两者是同一棵树，
+    // 但字符串不同，相对路径必须相对工作目录算才不会"越界"。
+    const scratch = path.join(config.SANDBOX_ROOT, 'agent-vis', '.out', `copy-tree-${process.pid}`);
+    fs.rmSync(scratch, { recursive: true, force: true });
+    const baseline = path.join(scratch, 'stage2_RQ-VAE', 'TIGER_RQ-VAE');
+    fs.mkdirSync(baseline, { recursive: true });
+    fs.writeFileSync(
+      path.join(baseline, 'train_rqvae.py'),
+      'ARM_NAME = "TIGER_RQ-VAE"\nRESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME\n',
+    );
+    fs.mkdirSync(path.join(baseline, '__pycache__'), { recursive: true });
+    fs.writeFileSync(path.join(baseline, '__pycache__', 'junk.pyc'), 'x');
+    const from = path.relative(config.SANDBOX_ROOT, baseline);
+
+    const out = await TOOL_IMPLS.copyBaselineTree({ arm: 'TIGER_probe_rq', from });
+    assert.ok(out.path.endsWith('TIGER_probe_rq'), `路径不对: ${out.path}`);
+    assert.equal(out.rewritten, 1, `ARM_NAME 应该改一处: ${out.rewritten}`);
+    const copied = fs.readFileSync(path.join(baseline, '..', 'TIGER_probe_rq', 'train_rqvae.py'), 'utf8');
+    assert.ok(copied.includes('ARM_NAME = "TIGER_probe_rq"'), `ARM_NAME 没改: ${copied}`);
+    assert.ok(copied.includes('RESULT_DIR'), '别的内容不该被改');
+    assert.equal(
+      fs.existsSync(path.join(baseline, '..', 'TIGER_probe_rq', '__pycache__')),
+      false,
+      '__pycache__ 不该被复制',
+    );
+
+    // 目标已存在不覆盖；名字不合法直接报错。
+    await assert.rejects(
+      () => TOOL_IMPLS.copyBaselineTree({ arm: 'TIGER_probe_rq', from }),
+      /已经存在/,
+      '已有的候选树不该被覆盖',
+    );
+    await assert.rejects(
+      () => TOOL_IMPLS.copyBaselineTree({ arm: '../escape', from }),
+      /arm 名字不对/,
+      '名字里带路径分隔符应该被拒',
+    );
+    fs.rmSync(scratch, { recursive: true, force: true });
   });
 
   await test('权限目录里就是 read / write 这类基础权限', async () => {
@@ -1388,7 +1435,7 @@ async function main() {
     assert.equal(run.status, 400, '删掉的身份不该还能跑');
   });
 
-  await test('配置里写死的 AGENT A / AGENT B / AGENT MATH 不能从服务端删除', async () => {
+  await test('配置里写死的 AGENT Write / AGENT B / AGENT MATH 不能从服务端删除', async () => {
     for (const id of ['agent-a', 'agent-b', 'agent-math']) {
       const res = await fetch(`${base}/api/agents/${id}`, { method: 'DELETE' });
       assert.equal(res.status, 400, `${id} 应该被拒掉`);

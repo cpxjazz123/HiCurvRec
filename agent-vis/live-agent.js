@@ -183,6 +183,76 @@ export const TOOL_IMPLS = {
     };
   },
 
+  /**
+   * 从冻结基线复制一份候选树。
+   *
+   * 每一轮的新机制都从 stage2_RQ-VAE/TIGER_RQ-VAE 起步（仓库规则 19b）：
+   * 复制一份、只改 ARM_NAME 这一个常量、其余逐文件一致。已经存在的目录不覆盖 ——
+   * 候选树要是旧的，机制就说不清是哪一版的。
+   */
+  async copyBaselineTree({ arm, from = 'stage2_RQ-VAE/TIGER_RQ-VAE' }) {
+    const name = typeof arm === 'string' ? arm.trim() : '';
+    if (!/^TIGER_[A-Za-z0-9_]+$/.test(name)) {
+      throw new Error(`arm 名字不对（要像 TIGER_af3_curvature_drive_rq）: ${arm}`);
+    }
+    const source = resolveInSandbox(from);
+    const stageRoot = path.dirname(source);
+    const target = path.join(stageRoot, name);
+    if (path.dirname(target) !== stageRoot) {
+      throw new Error(`候选树必须建在 stage2_RQ-VAE 下面: ${name}`);
+    }
+    if (fs.existsSync(target)) {
+      throw new Error(`候选树已经存在，不覆盖: ${name}`);
+    }
+    await fs.promises.cp(source, target, {
+      recursive: true,
+      filter: (src) => {
+        const base = path.basename(src);
+        return base !== '__pycache__' && base !== 'logs' && !base.endsWith('.pyc');
+      },
+    });
+    // ARM_NAME 是唯一允许改的东西：候选树的产物目录由它推出来。
+    const oldArm = path.basename(source);
+    let rewritten = 0;
+    const walk = async (dir) => {
+      const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          await walk(full);
+          continue;
+        }
+        if (!/\.(py|json|md|txt)$/.test(entry.name)) continue;
+        const text = await fs.promises.readFile(full, 'utf8');
+        const next = text.replace(
+          /(ARM_NAME\s*=\s*)"[^"]*"/,
+          `$1"${name}"`,
+        );
+        if (next !== text) {
+          await fs.promises.writeFile(full, next, 'utf8');
+          rewritten += 1;
+        }
+      }
+    };
+    await walk(target);
+    const files = [];
+    const count = async (dir) => {
+      const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isDirectory()) await count(path.join(dir, entry.name));
+        else files.push(path.join(dir, entry.name));
+      }
+    };
+    await count(target);
+    return {
+      path: relativeToRoot(target),
+      arm: name,
+      from: relativeToRoot(source),
+      files: files.length,
+      rewritten,
+    };
+  },
+
   async searchFiles({ pattern, dir = '.', maxMatches = 30 }) {
     const root = resolveInSandbox(dir);
     const re = new RegExp(pattern);
@@ -384,6 +454,21 @@ const readFileTool = piTool({
   impl: TOOL_IMPLS.readFile,
 });
 
+const copyBaselineTreeTool = piTool({
+  name: 'copyBaselineTree',
+  label: '复制基线候选树',
+  description:
+    'Copy the frozen baseline tree into a new candidate tree (stage2_RQ-VAE/TIGER_<ARM>/). ' +
+    'Only ARM_NAME is rewritten; an existing target is never overwritten.',
+  parameters: Type.Object({
+    arm: Type.String({ description: '新候选树的名字，例如 TIGER_af3_curvature_drive_rq' }),
+    from: Type.Optional(
+      Type.String({ description: '基线树路径，默认 stage2_RQ-VAE/TIGER_RQ-VAE' }),
+    ),
+  }),
+  impl: TOOL_IMPLS.copyBaselineTree,
+});
+
 const searchFilesTool = piTool({
   name: 'searchFiles',
   label: '搜索内容',
@@ -491,6 +576,7 @@ export const PI_TOOLS = {
   readIssue: readIssueTool,
   gitLog: gitLogTool,
   writeFile: writeFileTool,
+  copyBaselineTree: copyBaselineTreeTool,
   deleteFile: deleteFileTool,
 };
 

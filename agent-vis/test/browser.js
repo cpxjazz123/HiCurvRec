@@ -11,7 +11,7 @@ import { createServer, config } from '../server.js';
  *
  * 覆盖四件事：
  *   1. 页面上的 agent 面板各自独立 —— 各跑各的，互不串内容，还能同时跑；
- *   2. AGENT A 跑完后自动把分析结果交给 AGENT B（交接）；
+ *   2. AGENT Write 跑完后自动把分析结果交给 AGENT B（交接）；
  *   3. AGENT B 单独跑时不带交接；
  *   4. 浏览器缓存了旧版 JS 时，首页守卫会换一次性地址重载并自愈。
  *
@@ -31,7 +31,7 @@ const HEIGHT = 1200;
 const PANEL_A = 'panelA';
 const PANEL_B = 'panelB';
 
-/** 给 AGENT A（Issue 执行者）的指令。 */
+/** 给 AGENT Write（机制实现者）的指令。 */
 const PROMPT_A =
   '用 listFiles 列出 agent-vis 目录下的文件，然后用一句话说明这个目录是做什么的。';
 /** 给 AGENT B（Issue 控制器）的指令 —— 交接时这条指令会跟着 A 的分析结果一起发出去。 */
@@ -414,7 +414,7 @@ function clearSteps(panelId) {
 /**
  * 打开页面，并清掉两个面板上的默认步骤。
  *
- * AGENT A / AGENT B 现在默认带着提示词拆出来的固定步骤。别的场景测的是
+ * AGENT Write / AGENT B 现在默认带着提示词拆出来的固定步骤。别的场景测的是
  * "一次跑完"这条老路 —— 带着 4 步跑一遍会多发 4 次请求（live 模式下还是
  * 4 次真实请求），又慢又不稳，还会把交接请求的形状改掉。
  * 步骤编排本身由场景 L 测（那里专门看默认步骤）。
@@ -709,7 +709,7 @@ async function main() {
       check('快检：回答文字还在', quick.texts > 0, `${quick.texts} 张文字卡`);
       check('快检：时间轴不是空的', quick.parts > 0, `${quick.parts} 张卡`);
 
-      // AGENT A 的默认交接目标是 B：等那次自动交接跑完再清场，
+      // AGENT Write 的默认交接目标是 B：等那次自动交接跑完再清场，
       // 否则它的记录会在清场之后落盘，把下面的轮次计数带偏。
       await waitFor(cdp, panelDone(PANEL_B), 300, 200);
 
@@ -905,19 +905,19 @@ async function main() {
       );
       await waitForServer(async () => {
         const health = await request(`${quickBase}/api/health`);
-        return health.agents.find((agent) => agent.id === 'agent-a').name === 'AGENT A';
+        return health.agents.find((agent) => agent.id === 'agent-a').name === 'AGENT Write';
       });
       // 服务端先变、页面那边的 await 回来后才改标题：等页面追上，别抢跑。
       const restoredName = await waitFor(
         cdp,
         inPanel(
           PANEL_A,
-          "panel.querySelector('[data-role=name]').textContent === 'AGENT A' ? 'AGENT A' : ''",
+          "panel.querySelector('[data-role=name]').textContent === 'AGENT Write' ? 'AGENT Write' : ''",
         ),
         100,
         100,
       );
-      check('快检：恢复默认名字', restoredName === 'AGENT A', String(restoredName));
+      check('快检：恢复默认名字', restoredName === 'AGENT Write', String(restoredName));
 
       // 交接延迟：A 配 2 秒延迟交给 B。B 不该立刻开跑，但到点必须开跑。
       await resetServerState(quickBase);
@@ -1045,38 +1045,38 @@ async function main() {
     const nameB = await waitFor(cdp, panelName(PANEL_B));
     check(
       '两个面板都拿到了自己的 agent 名',
-      nameA === 'AGENT A' && nameB === 'AGENT B',
+      nameA === 'AGENT Write' && nameB === 'AGENT B',
       `左 ${nameA} / 右 ${nameB}`,
     );
     check('左右是两个不同的 agent', nameA !== nameB, `${nameA} vs ${nameB}`);
     process.stdout.write(`      左: ${nameA} / 右: ${nameB}\n`);
 
     // ---------- 场景 B：A 跑完后自动交接给 B ----------
-    process.stdout.write('\n  场景 B · AGENT A 跑完后自动交接给 AGENT B\n');
+    process.stdout.write('\n  场景 B · AGENT Write 跑完后自动交接给 AGENT B\n');
 
     await cdp.evaluate(runInPanel(PANEL_B, `panel.querySelector('[data-role=prompt]').value = ${JSON.stringify(PROMPT_B)};`));
     await cdp.evaluate(submitPrompt(PANEL_A, PROMPT_A));
 
     const doneA = await waitFor(cdp, panelDone(PANEL_A), 400, 400);
     check(
-      'AGENT A 跑完',
+      'AGENT Write 跑完',
       doneA === 'done',
       `状态 ${doneA} · 错误 ${await cdp.evaluate(panelError(PANEL_A))}`,
     );
 
     const answerA = await cdp.evaluate(panelFinalAnswer(PANEL_A));
-    check('AGENT A 产出了文字分析结果', typeof answerA === 'string' && answerA.length > 0, `${answerA}`);
+    check('AGENT Write 产出了文字分析结果', typeof answerA === 'string' && answerA.length > 0, `${answerA}`);
 
     // A 跑完之后 B 应该自动接手，不需要人点。
     const doneB = await waitFor(cdp, panelDone(PANEL_B), 500, 400);
     check(
-      'AGENT A 跑完后 AGENT B 自动开跑并完成',
+      'AGENT Write 跑完后 AGENT B 自动开跑并完成',
       doneB === 'done',
       `状态 ${doneB} · 错误 ${await cdp.evaluate(panelError(PANEL_B))}`,
     );
 
     const cardsA = await cdp.evaluate(panelCards(PANEL_A));
-    check('AGENT A 画出了卡片', Array.isArray(cardsA) && cardsA.length > 0, `${cardsA && cardsA.length}`);
+    check('AGENT Write 画出了卡片', Array.isArray(cardsA) && cardsA.length > 0, `${cardsA && cardsA.length}`);
 
     const cardsB = await cdp.evaluate(panelCards(PANEL_B));
     check('AGENT B 有自己的卡片', Array.isArray(cardsB) && cardsB.length > 0, `${cardsB && cardsB.length}`);
@@ -1104,7 +1104,7 @@ async function main() {
 
     const handoffText = await cdp.evaluate(panelHandoffText(PANEL_B));
     check(
-      '交接卡片里有 AGENT A 的原文',
+      '交接卡片里有 AGENT Write 的原文',
       answerA.length > 10 ? handoffText.includes(answerA.slice(0, 20)) : handoffText.includes(answerA),
       handoffText.slice(0, 120),
     );
@@ -1150,7 +1150,7 @@ async function main() {
     ];
 
     for (const [label, panelId, cards] of [
-      ['AGENT A', PANEL_A, cardsA],
+      ['AGENT Write', PANEL_A, cardsA],
       ['AGENT B', PANEL_B, cardsB],
     ]) {
       const badges = (cards || []).map((c) => c.badge);
@@ -1224,7 +1224,7 @@ async function main() {
 
     const doneA3 = await waitFor(cdp, panelDone(PANEL_A), 400, 400);
     check(
-      'AGENT A 跑完',
+      'AGENT Write 跑完',
       doneA3 === 'done',
       `状态 ${doneA3} · 错误 ${await cdp.evaluate(panelError(PANEL_A))}`,
     );
@@ -1536,7 +1536,7 @@ async function main() {
       60,
       200,
     );
-    check('AGENT A 的提示词框里装上了默认提示词', filled === 'filled', `状态 ${filled}`);
+    check('AGENT Write 的提示词框里装上了默认提示词', filled === 'filled', `状态 ${filled}`);
 
     const valueA = await cdp.evaluate(
       inPanel(
@@ -1548,7 +1548,7 @@ async function main() {
       ),
     );
     check(
-      'AGENT A 提示词框里的内容与服务端默认一致',
+      'AGENT Write 提示词框里的内容与服务端默认一致',
       valueA === defaultA.instructions,
       `页面 ${String(valueA).slice(0, 40)} / 服务端 ${String(defaultA.instructions).slice(0, 40)}`,
     );
@@ -1679,7 +1679,7 @@ async function main() {
       '新 agent 有自己的名字',
       typeof newName === 'string' &&
         newName.length > 0 &&
-        newName !== 'AGENT A' &&
+        newName !== 'AGENT Write' &&
         newName !== 'AGENT B',
       `名字 ${newName}`,
     );
@@ -1689,7 +1689,7 @@ async function main() {
     );
     check('新 agent 的输入框也是空的', newPrompt === '', `输入框 ${JSON.stringify(newPrompt)}`);
 
-    // 部件要和 AGENT A 完全一样 —— 形式相同是用户提的要求。
+    // 部件要和 AGENT Write 完全一样 —— 形式相同是用户提的要求。
     const rolesOf = (panelId) =>
       cdp.evaluate(
         inPanel(
@@ -1700,7 +1700,7 @@ async function main() {
       );
     const rolesNew = await rolesOf(newPanelId);
     const rolesA = await rolesOf(PANEL_A);
-    check('新面板的部件与 AGENT A 一样', rolesNew === rolesA, `${rolesNew} / ${rolesA}`);
+    check('新面板的部件与 AGENT Write 一样', rolesNew === rolesA, `${rolesNew} / ${rolesA}`);
 
     // 给新 agent 写一份系统提示词，跑起来 —— 它得真的按这份提示词回答。
     // 复述用固定标记而不是一句自然语言：模型会把句子改写（"生效" → "已经生效"），
@@ -1803,7 +1803,7 @@ async function main() {
 
     const aTargets0 = await readTargets(PANEL_A);
     check(
-      'AGENT A 默认把结果交给 AGENT B',
+      'AGENT Write 默认把结果交给 AGENT B',
       Array.isArray(aTargets0) &&
         aTargets0.some((t) => t.value === 'agent-b' && t.checked === true),
       JSON.stringify(aTargets0),
@@ -1825,7 +1825,7 @@ async function main() {
     );
     const optionsAfterCreate = await readTargets(PANEL_A);
     check(
-      '新 agent 出现在 AGENT A 的交接目标里',
+      '新 agent 出现在 AGENT Write 的交接目标里',
       Array.isArray(optionsAfterCreate) && optionsAfterCreate.length === 3,
       JSON.stringify(optionsAfterCreate),
     );
@@ -1885,8 +1885,8 @@ async function main() {
 
     const cardText2 = await cdp.evaluate(panelHandoffText(newPanelId2));
     check(
-      '交接卡片写明结果来自 AGENT A',
-      typeof cardText2 === 'string' && cardText2.includes('AGENT A'),
+      '交接卡片写明结果来自 AGENT Write',
+      typeof cardText2 === 'string' && cardText2.includes('AGENT Write'),
       String(cardText2).slice(0, 120),
     );
 
@@ -1894,7 +1894,7 @@ async function main() {
     check(
       '交接请求带上了来源名字 handoffFrom',
       handoffBodiesK.length > 0 &&
-        handoffBodiesK.every((body) => body.includes('"handoffFrom":"AGENT A"')),
+        handoffBodiesK.every((body) => body.includes('"handoffFrom":"AGENT Write"')),
       handoffBodiesK.length ? handoffBodiesK[0].slice(0, 160) : '（没有交接请求）',
     );
 
@@ -1946,7 +1946,7 @@ async function main() {
     );
     const bTargets = await readTargets(PANEL_B);
     check(
-      'AGENT B 的交接目标里可以选 AGENT A',
+      'AGENT B 的交接目标里可以选 AGENT Write',
       Array.isArray(bTargets) &&
         bTargets.some((t) => t.value === 'agent-a' && t.checked === true),
       JSON.stringify(bTargets),
@@ -1958,7 +1958,7 @@ async function main() {
     let sawHandoff = false;
     for (let i = 0; i < 120; i++) {
       await sleep(250);
-      if (postBodies.some((body) => body.includes('"handoffFrom":"AGENT A"'))) {
+      if (postBodies.some((body) => body.includes('"handoffFrom":"AGENT Write"'))) {
         sawHandoff = true;
         break;
       }
@@ -2015,7 +2015,7 @@ async function main() {
     );
     check('每个面板都有轮次步骤的配置区', stepAreas === 3, `${stepAreas} 个`);
 
-    // 默认步骤：AGENT A / AGENT B 的提示词拆成的固定步骤。
+    // 默认步骤：AGENT Write / AGENT B 的提示词拆成的固定步骤。
     // 服务端给出来，用户没配过之前页面就铺好。
     const defaultTitlesL = await cdp.evaluate(
       "['panelA','panelB'].map(function (id) {" +
@@ -2024,8 +2024,8 @@ async function main() {
         '})',
     );
     check(
-      'AGENT A 的步骤区按提示词铺好了 4 步',
-      Array.isArray(defaultTitlesL[0]) && defaultTitlesL[0].length === 4,
+      'AGENT Write 的步骤区按提示词铺好了 6 步',
+      Array.isArray(defaultTitlesL[0]) && defaultTitlesL[0].length === 6,
       JSON.stringify(defaultTitlesL[0]),
     );
     check(
@@ -2037,7 +2037,14 @@ async function main() {
       '默认步骤的标题写明这一步做什么',
       Array.isArray(defaultTitlesL[0]) &&
         defaultTitlesL[0].every((t) => String(t).trim().length > 0) &&
-        String(defaultTitlesL[0][0]).includes('Open Issue'),
+        String(defaultTitlesL[0][0]).includes('机制定义'),
+      JSON.stringify(defaultTitlesL[0]),
+    );
+    check(
+      'AGENT Write 的默认步骤从读机制定义走到建候选树',
+      Array.isArray(defaultTitlesL[0]) &&
+        defaultTitlesL[0].some((t) => String(t).includes('候选树')) &&
+        defaultTitlesL[0].some((t) => String(t).includes('测试')),
       JSON.stringify(defaultTitlesL[0]),
     );
     check(
@@ -2056,7 +2063,7 @@ async function main() {
     const defaultSummaryL = await cdp.evaluate(
       inPanel(PANEL_A, "panel.querySelector('[data-role=stepsSummary]').textContent"),
     );
-    check('步骤配置区写明默认有几步', String(defaultSummaryL).includes('4'), String(defaultSummaryL));
+    check('步骤配置区写明默认有几步', String(defaultSummaryL).includes('6'), String(defaultSummaryL));
 
     // 步骤一多就超出面板了：面板是固定高度 + overflow:hidden，
     // 步骤列表自己没有滚动区的话，后面几步会被裁掉，谁也看不到、也滚不到。
@@ -2111,7 +2118,7 @@ async function main() {
     );
     check(
       '清空之后摘要写明默认还有几步、怎么找回',
-      String(clearedSummaryL).includes('4') &&
+      String(clearedSummaryL).includes('6') &&
         String(clearedSummaryL).includes('恢复默认步骤'),
       String(clearedSummaryL),
     );
@@ -2122,15 +2129,15 @@ async function main() {
     const restoredL = await cdp.evaluate(
       inPanel(PANEL_A, "panel.querySelectorAll('.step-row').length"),
     );
-    check('「恢复默认步骤」能把 4 步找回来', restoredL === 4, `${restoredL} 行`);
+    check('「恢复默认步骤」能把 6 步找回来', restoredL === 6, `${restoredL} 行`);
 
     const STEP_TITLES = ['第一步 查', '第二步 改', '第三步 验'];
 
-    // 下游 AGENT B 的默认步骤先清掉：这一段数的是 AGENT A 发了几次请求，
+    // 下游 AGENT B 的默认步骤先清掉：这一段数的是 AGENT Write 发了几次请求，
     // B 带着 4 个默认步骤跑会混进同一个计数里。
     await cdp.evaluate(clearSteps(PANEL_B));
 
-    // 在 AGENT A 上配三步：查 / 改 / 验。先把默认步骤清掉 —— 这一段测的是
+    // 在 AGENT Write 上配三步：查 / 改 / 验。先把默认步骤清掉 —— 这一段测的是
     // 用户自己配的步骤，不是默认步骤。
     await cdp.evaluate(clearSteps(PANEL_A));
     await cdp.evaluate(
@@ -2317,7 +2324,7 @@ async function main() {
       '整轮跑完才交接一次，交的是最后一步的产出',
       handoffL.length === 1 &&
         handoffL[0].handoff.includes('第三步 验') &&
-        handoffL[0].handoffFrom === 'AGENT A',
+        handoffL[0].handoffFrom === 'AGENT Write',
       `交接请求 ${handoffL.length} 条`,
     );
     check(
@@ -2416,18 +2423,19 @@ async function main() {
       JSON.stringify(permBoxesM),
     );
     check(
-      'AGENT A 默认授了三项权限',
+      'AGENT Write 默认授了读与写两项权限',
       Array.isArray(permBoxesM) &&
-        permBoxesM.filter((b) => b.checked).length === 3 &&
-        ['read', 'execute', 'network'].every((id) =>
+        permBoxesM.filter((b) => b.checked).length === 2 &&
+        ['read', 'write'].every((id) =>
           permBoxesM.some((b) => b.id === id && b.checked),
         ),
       JSON.stringify(permBoxesM),
     );
     check(
-      'AGENT A 默认没有写权限',
+      'AGENT Write 默认没有执行与联网权限',
       Array.isArray(permBoxesM) &&
-        permBoxesM.some((b) => b.id === 'write' && b.checked === false),
+        permBoxesM.some((b) => b.id === 'execute' && b.checked === false) &&
+        permBoxesM.some((b) => b.id === 'network' && b.checked === false),
       JSON.stringify(permBoxesM),
     );
 
@@ -2436,16 +2444,17 @@ async function main() {
     );
     check(
       '权限区摘要写明授了几项',
-      String(permSummaryM).includes('3'),
+      String(permSummaryM).includes('2'),
       String(permSummaryM),
     );
 
-    // 勾上「写」：这一轮跑起来时请求里必须带上它。
+    // 勾上「删」：AGENT Write 默认只有读与写，删除是额外授的 ——
+    // 这一轮跑起来时它必须真的生效。
     await cdp.evaluate(
       runInPanel(
         PANEL_A,
         "panel.querySelector('[data-role=permissionsBox]').open = true;" +
-          "var b = panel.querySelector('[data-role=permissionList] input[value=\"write\"]');" +
+          "var b = panel.querySelector('[data-role=permissionList] input[value=\"delete\"]');" +
           "b.checked = true;" +
           "b.dispatchEvent(new Event('change', {bubbles: true}));",
       ),
@@ -2455,8 +2464,8 @@ async function main() {
       inPanel(PANEL_A, "panel.querySelector('[data-role=permissionsSummary]').textContent"),
     );
     check(
-      '勾上写权限后摘要变成四项',
-      String(summaryAfterM).includes('4'),
+      '勾上删除权限后摘要变成三项',
+      String(summaryAfterM).includes('3'),
       String(summaryAfterM),
     );
 
@@ -2467,23 +2476,23 @@ async function main() {
     const recordsM1 = await waitForChatCount(mockBaseM, 'agent-a', 1);
     const permsM1 = (recordsM1[recordsM1.length - 1] || {}).permissions || [];
     check(
-      '这一轮真正生效的权限里有勾上的写权限',
-      Array.isArray(permsM1) && permsM1.includes('write'),
+      '这一轮真正生效的权限里有勾上的删除权限',
+      Array.isArray(permsM1) && permsM1.includes('delete'),
       JSON.stringify(permsM1),
     );
     check(
       '这一轮真正生效的权限就是页面上勾的那些',
       Array.isArray(permsM1) &&
-        permsM1.length === 4 &&
-        ['read', 'execute', 'network', 'write'].every((id) => permsM1.includes(id)),
+        permsM1.length === 3 &&
+        ['read', 'write', 'delete'].every((id) => permsM1.includes(id)),
       JSON.stringify(permsM1),
     );
 
     const healthM1 = await request(`${mockBaseM}/api/health`);
     const agentAM1 = (healthM1.agents || []).find((a) => a.id === 'agent-a');
     check(
-      '勾上的写权限存进了服务端',
-      Boolean(agentAM1) && agentAM1.permissions.includes('write'),
+      '勾上的删除权限存进了服务端',
+      Boolean(agentAM1) && agentAM1.permissions.includes('delete'),
       JSON.stringify(agentAM1 && agentAM1.permissions),
     );
 
@@ -2514,7 +2523,7 @@ async function main() {
     );
     check(
       '没取消的权限还在',
-      Array.isArray(permsM2) && permsM2.includes('write') && permsM2.includes('network'),
+      Array.isArray(permsM2) && permsM2.includes('write') && permsM2.includes('delete'),
       JSON.stringify(permsM2),
     );
 
@@ -2600,7 +2609,7 @@ async function main() {
           "})",
       ),
     );
-    // 期望值取自 AGENT A 面板自己的步骤配置，不写死标题：默认步骤改过一次，
+    // 期望值取自 AGENT Write 面板自己的步骤配置，不写死标题：默认步骤改过一次，
     // 写死的标题会把"按配置铺开"这条检查变成检查一份过期的副本。
     const configuredStepsO = await cdp.evaluate(
       inPanel(
@@ -2646,7 +2655,7 @@ async function main() {
     );
     check(
       '正在做的那一步标成进行中，后面的还没做',
-      midStatesO === 'active,pending,pending,pending',
+      midStatesO === 'active,pending,pending,pending,pending,pending',
       String(midStatesO),
     );
 
@@ -2675,7 +2684,7 @@ async function main() {
     );
     check(
       '跑完之后每个步骤都有结果（完成或失败）',
-      finalStatesO === 'filled,filled,filled,filled',
+      finalStatesO === 'filled,filled,filled,filled,filled,filled',
       String(finalStatesO),
     );
 
@@ -2759,13 +2768,13 @@ async function main() {
         "  return li.dataset.agentId + ':' + li.textContent.trim();}).join(' | ')",
     );
     check(
-      '侧边栏列出 AGENT A 与 AGENT B',
+      '侧边栏列出 AGENT Write 与 AGENT B',
       sideQ.includes('agent-a') && sideQ.includes('agent-b') &&
-        sideQ.includes('AGENT A') && sideQ.includes('AGENT B'),
+        sideQ.includes('AGENT Write') && sideQ.includes('AGENT B'),
       sideQ,
     );
 
-    // 主页面不该直接铺开完整配置：AGENT A 的聊天视图里看不到配置区。
+    // 主页面不该直接铺开完整配置：AGENT Write 的聊天视图里看不到配置区。
     const chatViewQ = await cdp.evaluate(
       inPanel(
         PANEL_A,
