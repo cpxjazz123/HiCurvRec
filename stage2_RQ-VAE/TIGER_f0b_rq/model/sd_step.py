@@ -20,6 +20,13 @@ from . import r48k_geometry, sdh_kernel, struct_distill
 ANCHORS_PER_STEP = 4096 // (struct_distill.ONE_HOP + struct_distill.TWO_HOP + struct_distill.GLOBAL + 1)
 
 
+def _stage(name: str) -> None:
+    """Pin a device-side assert to the stage that raised it: the error otherwise surfaces at the next kernel."""
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+    print(f"[sd_step] {name}", flush=True)
+
+
 def quantised_readout(module, embeddings: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
     """``(z, q)``: the encoder output and the mixed quantiser's readout of it.
 
@@ -92,11 +99,13 @@ def structural_loss(module, embeddings: torch.Tensor, anchor_ids: torch.Tensor,
     cosines = struct_distill.student_cosines(z_hat, cand_q)
 
     # the support and the teacher's value, both on the frozen table
+    _stage("pre-codes")
     anchor_codes = codes_of(module, embeddings[anchor_ids.cpu()])
     unique_codes = codes_of(module, embeddings[unique_ids.cpu()])
     flat_codes = torch.zeros(flat.numel(), unique_codes.shape[-1], dtype=unique_codes.dtype, device=unique_codes.device)
     flat_codes[valid.to(unique_codes.device)] = unique_codes[inverse.to(unique_codes.device)]
     candidate_codes = flat_codes.view(len(sets), width, -1)
+    _stage("pre-mask")
     mask = sdh_kernel.support_mask(anchor_codes, candidate_codes, candidates.to(candidate_codes.device))
 
     flat_emb = torch.zeros(flat.numel(), embeddings.shape[-1], dtype=embeddings.dtype, device=cosines.device)
@@ -108,6 +117,9 @@ def structural_loss(module, embeddings: torch.Tensor, anchor_ids: torch.Tensor,
     flat_kappa[valid] = r48k_geometry.kappa_of(unique_ids.cpu())[inverse]
     cand_kappa = flat_kappa.view(len(sets), width)
 
+    _stage("pre-affinity")
     scores = sdh_kernel.affinity(anchor_emb, cand_emb, r48k_geometry.kappa_of(anchor_ids.cpu()), cand_kappa)
+    _stage("pre-teacher")
     teacher = sdh_kernel.teacher_distribution(scores.to(cosines.dtype), mask)
+    _stage("pre-kl")
     return sdh_kernel.kl_within_support(cosines, teacher, mask)
