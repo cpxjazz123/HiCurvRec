@@ -6,10 +6,11 @@
   "description": "Frontend visualisation of real pi agent turns (AI SDK v7 UI message stream protocol on the wire)",
   "scripts": {
     "start": "node server.js",
-    "test": "node test/pi-agent.js && node test/smoke.js",
+    "test": "node test/pi-agent.js && node test/smoke.js && node test/archive-ideas.js",
     "test:pi": "node test/pi-agent.js",
     "test:tools": "node test/tools.js",
-    "test:browser": "node test/browser.js"
+    "test:browser": "node test/browser.js",
+    "archive": "node archive-ideas.js"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.87.0",
