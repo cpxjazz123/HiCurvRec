@@ -44,3 +44,15 @@ Issue 明确：若 `Δ` 在训练集上几乎全正或全负（退化为单一 r
 | `TIGER_sign_rq`（本树） | **9 failed / 16 passed** |
 
 失败形态相同（`test_stale_explicit_local_entry_stops_before_any_selection` 的 8 个参数化用例未抛 `RuntimeError`、`test_proportional_quotas_are_enforced…` 断言为假）。按规则不修改、不重新钉住基线既有测试；此处只记录"起点本身就红"，以免被当作本 Issue 的回归。
+
+## 8. 冒烟通过（第四次派发，前三次各暴露一个真实缺陷）
+
+`SMOKE_PASS`，训练已起（6 进程，epoch 145 时 loss 1.5234e-04）。三次失败与修复，全部是工程/数值缺陷，不是机制判断：
+
+| 次序 | 失败 | 根因 | 修复 |
+|---|---|---|---|
+| 1 | `CUDA OOM，36 GiB` | commitment/codebook 两项把"每行选中的码"喂给按码广播的 `curved_squared` ⇒ `[B,B,D]` | 新增 `curved_squared_paired`（逐行、返回向量），并留回归用例 |
+| 2 | `loss became non-finite at epoch 1` | 逐行 Möbius 分母在球边界趋于 0，原先 clamp `1e-30` ⇒ 1e30 级商值 | 分母下限 `1e-3`（内部点永不触发，κ=1 对账仍 rtol 1e-6） |
+| 3 | `curved cost not finite (kappa range 0.0..8.267)` | 冻结 AF3 表含 0 曲率条目，`2/√0 = inf` | `KAPPA_FLOOR = 1e-3`，复用 #180 `r48k_geometry` 对同一张表的既有下限 |
+
+三次都由冒烟本身发现并阻断（这正是冒烟的作用），每次修复都留下能重现该形态的用例；树内 `tests/test_sign_metric.py` 现为 **13 项全过**。
