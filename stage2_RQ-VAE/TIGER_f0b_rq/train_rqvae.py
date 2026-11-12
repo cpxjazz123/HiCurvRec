@@ -606,14 +606,14 @@ def main() -> None:
     if not struct_distill.BEHAVIOUR_OFF:
         with torch.enable_grad():
             _probe_batch, _probe_ids = next(iter(loader))
-            LAMBDA_STAR = probe_lambda_star(raw_module, _probe_batch.to(device), _probe_ids.to(device),
-                                            None, _neighbours, _two_hop, _n_items)
+            LAMBDA_STAR = probe_lambda_star(raw_module, _probe_batch.to(device), all_embeddings.to(device),
+                                            _probe_ids.to(device), None, _neighbours, _two_hop, _n_items)
         _meta["lambda_star"] = LAMBDA_STAR
     if rank == 0:
         print(f"[f0b] {_meta}", flush=True)
         _record(rank, "f0b", **_meta)
 
-def probe_lambda_star(module, embeddings, batch_ids, rows, neighbours, two_hop, n_items) -> float:
+def probe_lambda_star(module, batch, full_embeddings, batch_ids, rows, neighbours, two_hop, n_items) -> float:
     """``lambda* = 0.1 * ||grad_enc L_RQ|| / (||grad_enc L_SD|| + 1e-12)``, measured once on the first batch and then frozen."""
     def grad_norm(loss):
         params = [p for p in module.encoder.parameters() if p.requires_grad]
@@ -630,7 +630,7 @@ def probe_lambda_star(module, embeddings, batch_ids, rows, neighbours, two_hop, 
             torch.cuda.synchronize()
         print(f"[probe] {stage}", flush=True)
 
-    z = module.encoder(embeddings)
+    z = module.encoder(batch)
     _sync("encoder done")
     readout, quant_loss, _, _ = module.rq(z)
     _sync("rq done")
@@ -638,7 +638,7 @@ def probe_lambda_star(module, embeddings, batch_ids, rows, neighbours, two_hop, 
     recon = module.decoder(quantized)
     _sync("decoder done")
     rq_loss = torch.nn.functional.mse_loss(recon, embeddings) + quant_loss
-    sd_loss = sd_step.structural_loss(module, embeddings, batch_ids, rows, neighbours, two_hop, n_items)
+    sd_loss = sd_step.structural_loss(module, full_embeddings, batch_ids, rows, neighbours, two_hop, n_items)
     _sync("structural loss done")
     return struct_distill.calibrate(grad_norm(rq_loss), grad_norm(sd_loss))
 
