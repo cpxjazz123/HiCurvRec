@@ -11,6 +11,7 @@
     "c_k": "第 l 层码本里的第 k 个码字，记作 c_k^(l)；公式里出现的 c_k 与 c 都指当前层的码本（各层码本独立）",
     "g_k^(l)": "第 l 层第 k 个码字的码字势（可训练标量）",
     "lambda_l": "第 l 层把势差换算成距离单位的标定系数（初始化时算定，不训练）",
+    "den_l": "第 l 层势差的中位数 den_l = median_i |s_i - g_{token_l(i)}^(l)|，是 lambda_calibration 的分母，与 lambda_l 一起记录进 metrics",
     "d(x, c)": "基础距离：平方欧氏 |x|^2 - 2 x.c + |c|^2",
     "H_delta": "Huber 函数，delta = 1",
     "Q^(l)": "第 l 层 Sinkhorn 的传输矩阵（B x K）",
