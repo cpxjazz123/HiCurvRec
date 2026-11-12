@@ -114,6 +114,33 @@ class Ledger:
             entry.update(extra)
         self.entries[number] = entry
 
+    def withdraw(self, number: str, note: str) -> str:
+        """Take a number off the shelf and keep what it held, under W<number>.
+
+        Withdrawal is for an entry that is not four-piece complete -- the files may
+        all be there, but the recall belongs to a different SID. The number must not
+        stay live (it would keep claiming a pairing it does not have) and must not be
+        handed to a future mechanism, so the record moves to a 'W' key and keeps the
+        checksums of what was deleted.
+        """
+        entry = self.entries.pop(number, None)
+        if entry is None:
+            raise SystemExit("cannot withdraw %s: the ledger has no such number" % number)
+        retired = "W" + number
+        suffix = 0
+        while retired in self.entries:
+            suffix += 1
+            retired = "W%s_%d" % (number, suffix)
+        record = dict(entry)
+        record["retired"] = True
+        record["withdrawn"] = True
+        record["retired_from"] = number
+        record["deleted_files"] = dict(entry.get("files", {}))
+        record.pop("files", None)
+        record["note"] = note
+        self.entries[retired] = record
+        return retired
+
     def remote_listing(self, number: str) -> list[tuple[str, int]]:
         """(path relative to the number, size) for every object under it."""
         done = rclone(["lsf", "%s/%s" % (BUCKET, number), "-R", "--files-only", "--format", "sp"])

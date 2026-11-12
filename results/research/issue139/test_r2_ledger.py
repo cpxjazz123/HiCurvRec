@@ -104,6 +104,26 @@ def test_reconcile_reports_recorded_files_that_are_absent() -> str:
     return "a recorded path missing from the bucket is reported, never silently dropped"
 
 
+def test_withdraw_retires_a_number_and_keeps_what_was_deleted() -> str:
+    ledger = _fresh_ledger()
+    ledger.record("51", "TIGER_bootstrap_code_stability__resample",
+                  {"item_sids.json": "abc", "recall.json": "def"})
+    ledger.record("74", "TIGER_l2k_rq", {"item_sids.json": "xyz"})
+    ledger.withdraw("51", "recall measured on a destroyed SID")
+    if "51" in ledger.entries:
+        raise AssertionError("withdraw left the number in the live shelf")
+    entry = ledger.entries.get("W51", {})
+    if entry.get("retired") is not True or entry.get("retired_from") != "51":
+        raise AssertionError("withdrawn entry is not marked: %r" % (entry,))
+    if entry.get("deleted_files") != {"item_sids.json": "abc", "recall.json": "def"}:
+        raise AssertionError("withdraw dropped the deleted checksums: %r" % (entry,))
+    if "recall measured on a destroyed SID" not in entry.get("note", ""):
+        raise AssertionError("withdraw dropped the reason: %r" % (entry,))
+    if ledger.number() != 75:
+        raise AssertionError("withdraw disturbed the number allocation: %r" % (ledger.number(),))
+    return "a withdrawn number leaves the shelf, keeps its checksums, and frees no number for reuse"
+
+
 def test_the_uploaders_stage_inside_the_repository() -> str:
     for name in ("upload_stage3.py", "upload_pairs.py"):
         source = (HERE / name).read_text()
@@ -119,6 +139,7 @@ if __name__ == "__main__":
                  test_reconcile_adds_objects_the_ledger_never_saw,
                  test_reconcile_is_idempotent,
                  test_reconcile_reports_recorded_files_that_are_absent,
+                 test_withdraw_retires_a_number_and_keeps_what_was_deleted,
                  test_the_uploaders_stage_inside_the_repository):
         try:
             note = test()
