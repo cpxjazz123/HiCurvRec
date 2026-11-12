@@ -7,6 +7,14 @@
   "issue": "unassigned",
   "date": "2026-11-12",
   "supersedes": "C-212（同 SID 噪声标定，已完成）",
+  "main_line": {
+    "statement": "AF3 图曲率进入量化通路并改变选码：结构 → 曲率势 → Sinkhorn 代价 → SID。机制可以换，这条通路始终成立。",
+    "must_hold": [
+      "曲率以代价矩阵的形式参与每层的均衡分配（Sinkhorn 的 cost 带上曲率距离）",
+      "固定 batch 上，加入曲率项后选码发生变化（机器可验证）",
+      "AF3 数值取自冻结表，全仓单一实现"
+    ]
+  },
   "references": {
     "af3_convention": "tools/research/science/community_curvature/export_edge_af3.py（issue #136 约定：二值无向训练图，臂只查表）",
     "af3_formula": "results/research/stage3_queue/_stage/TIGER_mixed_rq_A/TIGER_mixed_rq_A/model/af3_structure.py（kappa 参考实现）",

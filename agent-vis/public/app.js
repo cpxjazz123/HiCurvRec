@@ -2812,6 +2812,10 @@ function renderIdeaDoc(doc, error) {
     const meta = ['id', 'title', 'type', 'status', 'issue', 'date', 'supersedes']
       .filter((k) => doc[k] !== undefined);
     if (meta.length) ideaUi.kv.appendChild(kvSection('元信息', meta.map((k) => [k, doc[k]])));
+    // 主线单独一块、排在正文之前：机制怎么换，这一段都不动。
+    if (doc.main_line !== undefined) {
+      ideaUi.kv.appendChild(kvSection('主线', flattenRows(doc.main_line, '', [])));
+    }
     if (doc.sections) {
       for (const key of Object.keys(doc.sections)) {
         ideaUi.kv.appendChild(kvSection(sectionLabel(key), flattenRows(doc.sections[key], '', [])));
