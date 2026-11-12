@@ -82,3 +82,25 @@ BATCH_SIZE_PER_RANK = 4096       # 每卡 batch, 总 batch = 1024 * 4 = 4096
 ## 8. Stage3 已派发（§89 放行后的一次冻结运行）
 
 `stage3_start` 返回 `started: true`，pid **1005817**，variant `TIGER_sdh_rq`（与 Stage2 臂目录同名，§64b(i)(ii) 满足）；冻结协议核验通过：`NUM_EPOCHS=150`、`NO_EVAL=True`、`SKIP_TEST=False`、`SEED=42`、`BEAM_SIZE=20`，无 early stop。分层记录 `passed: true`（复用 `stage2_metrics/cdcf29ce….json`）。Stage2 的 `train_end` 也自报 `final_collision = 0.21190059787692683`、`unique_after_extend = 24587`，与门用的算式逐位一致。
+
+## 9. Stage3 结果与预注册裁决
+
+`results/stage3_T5Train/TIGER_sdh_rq/logs/Amazon_2023_Instruments/Nov-12-2026_12-02-47/test_final.json`：
+
+| 键 | 值 |
+|---|---|
+| `n_eval` | 57,439 |
+| `test_recall@5` | 0.03739619422343704 |
+| **`test_recall@10`** | **0.05598983269207333** |
+| `test_ndcg@5` | 0.025001904561182346 |
+| `test_ndcg@10` | 0.030982337859941624 |
+
+**按本 Issue 的预注册**：
+
+- `≤ 0.056216` ⇒ **本线关闭**，不换支撑阈值/核形重跑 —— 实测 **0.05598983 ≤ 0.056216**（低 0.000226，相对 0.40%）⇒ **落入关闭分支**。
+- `> 0.064764` 分支不触发，无需"不是重新引入行为信息"的论证。
+- 参照：`0.056216`（#179 参照）/ `0.054266`（#181 缺陷版）/ `0.064764` / `0.065`（成功线）。
+
+**读法**（只记事实，不改判据）：本臂是本会话**唯一通过 §89 碰撞门**的臂（0.2119，其余被拒或未测），三级区分度也最高（19,377 组合、L2 6,287、L3 熵 98.3%），但最终 `test_R@10` 仍比参照低 0.000226 并落在关闭分支内 ⇒ 支撑限制 + 曲率核这条路线**在本预算与单次运行下没有带来推荐增益**，按预注册关闭，不作调参重跑（§19g）。
+
+§6b 归档：`r2:genrec/72/`（14 个文件：`TIGER_sdh_rq/` 源码 8 个含 `sdh_kernel.py`、`item_sids.json`、`rqvae_best.pth`、`recall.json` 全部 6 个键），逐文件 SHA-256 记于 `results/research/issue139/r2_ledger.json` 的 `72` 项。

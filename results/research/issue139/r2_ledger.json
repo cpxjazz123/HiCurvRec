@@ -1982,6 +1982,34 @@
       "test_recall@5"
     ]
   },
+  "72": {
+    "arm": "TIGER_sdh_rq",
+    "files": {
+      "TIGER_sdh_rq/model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "TIGER_sdh_rq/model/af3_teacher.py": "853c61ddcfc7714d0cb51ca3d2976aa933a8845be52f51c92ac7aefd47ee0764",
+      "TIGER_sdh_rq/model/layers.py": "bd75031d4010917e23796f7a0ae543ae4fc2d9f851218f580e10053e72e07c71",
+      "TIGER_sdh_rq/model/model.py": "22f8752db26432e70085ff38d291e127cd3def3043d188c25c0144f6a49fc09f",
+      "TIGER_sdh_rq/model/r48k2_assign.py": "fa944f0d016a97cb57769c9b38e08f9922c70d6c648d4087b980b2ef62474d22",
+      "TIGER_sdh_rq/model/r48k_geometry.py": "3ee8f069513207b644b0f47d4f070d535c6e210b3380158f0576bbf2e583ff6a",
+      "TIGER_sdh_rq/model/sd_step.py": "bfda69225c0db10c3ce57c110505e4bf4b3da8ba7cb42a927909718f1cbdca25",
+      "TIGER_sdh_rq/model/sdh_kernel.py": "914643ac4da2924a24b8bf289114f630d18fe99ee0c4bedfa97b9788bb71ba1d",
+      "TIGER_sdh_rq/model/struct_distill.py": "278da73db8ed7328496d8fe3ec6f46e116d68fa18b25046c814798eced11691a",
+      "TIGER_sdh_rq/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "TIGER_sdh_rq/train_rqvae.py": "a2b916e0e332c71075d59e75026f81dfcfd36d8a5700110f00e17b9bffdb9139",
+      "item_sids.json": "cdcf29ce9f0921f790e529c3f4c5354ab823ce8a037dd00341d530a3a59d2925",
+      "recall.json": "c3ac8f8a86a6bf62af6ef18be46915f5f7f8605a82394f90da6cb6c59c63fa57",
+      "rqvae_best.pth": "c3b63bf5b9895cc780fd39f500b5d2dcec641ec22e2adf6f9482a93b66867426"
+    },
+    "key": "TIGER_sdh_rq",
+    "recall_keys": [
+      "best_checkpoint",
+      "n_eval",
+      "test_ndcg@10",
+      "test_ndcg@5",
+      "test_recall@10",
+      "test_recall@5"
+    ]
+  },
   "R09": {
     "arm": "TIGER_M2_radial_manifold",
     "duplicate_of": "20",
