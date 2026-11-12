@@ -6,7 +6,8 @@ from typing import Any
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+
+from losses import build_loss
 
 from .layers import MLP, RQLayer
 
@@ -23,11 +24,16 @@ class RQVAE(nn.Module):
         self.rq = RQLayer(config)
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
 
-    def forward(self, embeddings: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+    def forward(self, embeddings: torch.Tensor) -> tuple[torch.Tensor, list, int, torch.Tensor]:
+        """Return the reconstruction, the per-level loss parts, unused codes, tokens.
+
+        The parts are `(commitment, codebook)` pairs, one per residual level; the
+        model does not turn them into a scalar. That is `losses/quantization.py`.
+        """
         encoded = self.encoder(embeddings)
-        quantized, quant_loss, unused_codes, tokens = self.rq(encoded)
+        quantized, quant_parts, unused_codes, tokens = self.rq(encoded)
         reconstructed = self.decoder(quantized)
-        return reconstructed, quant_loss, int(unused_codes), tokens
+        return reconstructed, quant_parts, int(unused_codes), tokens
 
     @torch.no_grad()
     def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
@@ -44,7 +50,12 @@ class RQVAE(nn.Module):
         self,
         embeddings: torch.Tensor,
         reconstructed: torch.Tensor,
-        quant_loss: torch.Tensor,
+        quant_parts: list,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        recon_loss = F.mse_loss(reconstructed, embeddings)
-        return recon_loss + quant_loss, recon_loss
+        """Total and reconstruction loss, computed by the registry, not here.
+
+        Kept for callers outside the trainer (a snapshot, a probe); the training
+        loop builds the criterion itself from `losses.build_loss`.
+        """
+        total, components = build_loss(self.config)(reconstructed, embeddings, quant_parts)
+        return total, components["reconstruction"]

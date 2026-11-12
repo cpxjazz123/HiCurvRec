@@ -34,6 +34,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
+from losses import build_loss
 from model import RQVAE
 from train_config import load_train_config
 
@@ -73,6 +74,8 @@ METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 # 路径与 ARM_NAME 不在配置里 —— 它们归框架 (CLAUDE.md 19b0/67)。
 CONFIG_FILE = Path(__file__).resolve().with_name("config") / "train_config.json"
 CONFIG = load_train_config(CONFIG_FILE)
+# 损失由注册表组装；训练循环只说"在哪儿接"，不关心项是什么 (losses/*.py)。
+CRITERION = build_loss(CONFIG)
 
 EPOCHS              = CONFIG.EPOCHS
 BATCH_SIZE_PER_RANK = CONFIG.BATCH_SIZE_PER_RANK     # 每卡 batch, 总 batch = 每卡 * world_size
@@ -339,9 +342,10 @@ def main() -> None:
         for (batch,) in loader:
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _ = model(batch)
-            # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
-            loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
+            reconstructed, quant_parts, _, _ = model(batch)
+            # 唯一接入点：损失项与权重在 losses/ 里，这里只拿到总损失与分项。
+            loss, components = CRITERION(reconstructed, batch, quant_parts)
+            recon_loss = components["reconstruction"]
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()

@@ -26,6 +26,7 @@ sys.path.insert(0, str(REPO))
 import torch  # noqa: E402
 
 from model import RQVAE  # noqa: E402
+from losses import build_loss  # noqa: E402
 import train_rqvae as trainer  # noqa: E402
 
 
@@ -56,8 +57,10 @@ def main() -> int:
     for step in range(3):
         model.train()
         optimiser.zero_grad(set_to_none=True)
-        reconstructed, quant_loss, unused_codes, tokens = model(batch)
-        loss, recon_loss = model.compute_loss(batch, reconstructed, quant_loss)
+        reconstructed, quant_parts, unused_codes, tokens = model(batch)
+        loss, components = build_loss(trainer.CONFIG)(reconstructed, batch, quant_parts)
+        recon_loss = components["reconstruction"]
+        quant_loss = components["quantization"]
         loss.backward()
         grads = {name: digest(p.grad) for name, p in model.named_parameters()
                  if p.grad is not None}

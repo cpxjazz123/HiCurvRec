@@ -16,6 +16,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.cluster import KMeans
 
+# The losses are their own modules; a quantiser reports the two errors it measured
+# and never builds the scalar itself.
+from losses.codebook import codebook_loss
+from losses.commitment import commitment_loss
+
 
 class MLP(nn.Module):
     """RecBole3.0's dropout/linear/ReLU MLP helper."""
@@ -129,9 +134,11 @@ class VQLayer(nn.Module):
         unused_codes = int((used == 0).sum().item())
 
         x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
-        quant_loss = F.mse_loss(x_q, x.detach()) + self.beta * F.mse_loss(x, x_q.detach())
+        # The formula lives in losses/quantization.py; this layer only reports the
+        # two mean squared errors the term is made of.
+        quant_parts = (commitment_loss(latent, x_q), codebook_loss(latent, x_q))
         x_q = x + (x_q - x).detach()
-        return x_q, quant_loss, unused_codes, embed_ind.view(*x.shape[:-1])
+        return x_q, quant_parts, unused_codes, embed_ind.view(*x.shape[:-1])
 
     def embed_code(self, embed_id: torch.Tensor) -> torch.Tensor:
         return F.embedding(embed_id, self.get_code_embs())
@@ -204,9 +211,11 @@ class EMAVQLayer(VQLayer):
                 distributed.all_reduce(used, op=distributed.ReduceOp.SUM)
             unused_codes = int((used == 0).sum().item())
 
-        quant_loss = self.beta * F.mse_loss(x, x_q.detach())
+        # The EMA variant has no commitment term: only the codebook moves, and its
+        # scale is the loss module's business.
+        quant_parts = (None, codebook_loss(latent, x_q))
         x_q = x + (x_q - x).detach()
-        return x_q, quant_loss, unused_codes, embed_ind.view(*x.shape[:-1])
+        return x_q, quant_parts, unused_codes, embed_ind.view(*x.shape[:-1])
 
 
 class SimVQLayer(VQLayer):
@@ -276,18 +285,19 @@ class RQLayer(nn.Module):
         infer_use_sk: bool = False,
     ) -> tuple[torch.Tensor, torch.Tensor, float, torch.Tensor]:
         quantized_x = torch.zeros(x.shape[0], self.codebook_dim, device=x.device)
-        sum_quant_loss: torch.Tensor | float = 0.0
+        per_level_parts: list = []
         num_unused_codes = 0.0
         output = torch.empty(x.shape[0], self.codebook_num, dtype=torch.long, device=x.device)
         residual = x
         for level, vq_layer in enumerate(self.vq_layers):
-            quant, quant_loss, unused, indices = vq_layer(residual, infer_use_sk)
+            quant, quant_parts, unused, indices = vq_layer(residual, infer_use_sk)
             residual = residual - quant
             quantized_x = quantized_x + quant
-            sum_quant_loss = sum_quant_loss + quant_loss
+            per_level_parts.append(quant_parts)
             num_unused_codes += unused
             output[:, level] = indices
-        return quantized_x, sum_quant_loss / self.codebook_num, num_unused_codes, output
+        # The levels are reported, not summed: the scalar belongs to the loss module.
+        return quantized_x, per_level_parts, num_unused_codes, output
 
     def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
         residual = x
