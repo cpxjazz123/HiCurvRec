@@ -79,9 +79,19 @@ def curvature_distance(anchor_embeddings: torch.Tensor, candidate_embeddings: to
     if c_k.dim() == 1:
         c_k = c_k.unsqueeze(0)
     k = torch.sqrt((a_k.to(a.device) * c_k.to(a.device)).clamp_min(0.0)).clamp_min(r48k_geometry.KAPPA_FLOOR)
-    p = r48k_geometry.project_to_ball(a, k.unsqueeze(-1))
-    q = r48k_geometry.project_to_ball(b, k.unsqueeze(-1))
+    # scale only what lies outside its row's ball: re-projecting an interior point would shrink it by the contract's (1 - eps) radius factor and break the
+    # equality with poincare_contract.distance at curvature 1
+    p = _into_ball_if_needed(a, k.unsqueeze(-1))
+    q = _into_ball_if_needed(b, k.unsqueeze(-1))
     return r48k_geometry.distance(p, q, k.unsqueeze(-1)).to(anchor_embeddings.dtype)
+
+
+def _into_ball_if_needed(u: torch.Tensor, k: torch.Tensor) -> torch.Tensor:
+    """Scale a row down only when ``sqrt(k)|u|`` exceeds the ball: the identity for everything already inside."""
+    norm = u.norm(dim=-1, keepdim=True)
+    limit = (1.0 - 1e-6) / torch.sqrt(k.clamp_min(r48k_geometry.KAPPA_FLOOR))
+    scale = torch.where(norm > limit, limit / norm.clamp_min(1e-30), torch.ones_like(norm))
+    return u * scale
 
 
 def rank_teacher(distances: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
