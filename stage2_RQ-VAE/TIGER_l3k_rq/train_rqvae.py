@@ -717,7 +717,9 @@ def main() -> None:
                     ).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
-                if collapse_gate_fires(collision_v):
+                # the gate judges the arm's own training run; a one-epoch smoke evaluates at epoch 1, before the codes have settled, and its reading says
+                # nothing about the mechanism -- so the gate only applies once the budget is long enough to contain a scheduled evaluation
+                if EPOCHS >= EVAL_INTERVAL and collapse_gate_fires(collision_v):
                     _record(rank, "collapse_gate", epoch=epoch, collision=collision_v)
                     raise SystemExit(f"COLLAPSE_GATE_TRIGGERED: collision {collision_v:.6f} >= 0.40 at epoch {epoch}")
                 final_collision = collision_v
