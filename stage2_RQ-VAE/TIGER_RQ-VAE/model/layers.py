@@ -216,9 +216,9 @@ class EMAVQLayer(VQLayer):
                 distributed.all_reduce(used, op=distributed.ReduceOp.SUM)
             unused_codes = int((used == 0).sum().item())
 
-        # The EMA variant has no commitment term: only the codebook moves, and its
-        # scale is the loss module's business.
-        quant_parts = (None, codebook_loss(latent, x_q))
+        # The EMA variant has no gradient term for the entries: they move by the moving
+        # average, so only the commitment term is scored, and its weight is beta.
+        quant_parts = (commitment_loss(latent, x_q), None)
         x_q = x + (x_q - x).detach()
         return x_q, quant_parts, unused_codes, embed_ind.view(*x.shape[:-1])
 

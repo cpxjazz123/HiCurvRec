@@ -10,7 +10,7 @@ from ._pairs import validate_pair
 NAME = "reconstruction"
 # What a test may assume about this formula (see tools/research/stage2/tests/test_losses_math.py).
 SPEC = {"form": "mse_pair", "symmetric": True, "shift_invariant": True,
-        "scale_power": 2, "zero_at_equality": True}
+        "scale_power": 2, "zero_at_equality": True, "detached": "none"}
 DESCRIPTION = "mean squared error between the reconstruction and the item embedding"
 
 

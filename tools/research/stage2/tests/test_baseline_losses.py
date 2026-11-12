@@ -50,17 +50,19 @@ def test_each_term_has_its_own_module() -> str:
     return "four terms, one module each, each with its own definition"
 
 
-def test_quantization_is_commitment_plus_beta_codebook() -> str:
+def test_quantization_is_codebook_plus_beta_commitment() -> str:
     torch.manual_seed(3)
     latent = torch.randn(16, 8)
     quantized = torch.randn(16, 8)
     beta = 0.25
+    # The baseline's own arithmetic, written out: the entry term, plus beta times the
+    # encoder term. The names say which side each MSE moves.
     expected = (torch.nn.functional.mse_loss(quantized, latent.detach())
                 + beta * torch.nn.functional.mse_loss(latent, quantized.detach()))
     got = losses.quantization.quantization_loss(latent, quantized, beta)
     if not torch.allclose(got, expected, rtol=0, atol=0):
         raise AssertionError("the quantisation term changed: %r vs %r" % (got, expected))
-    ema = losses.quantization.quantization_loss(latent, quantized, beta, commitment=False)
+    ema = losses.quantization.quantization_loss(latent, quantized, beta, codebook_term=False)
     want = beta * torch.nn.functional.mse_loss(latent, quantized.detach())
     if not torch.allclose(ema, want, rtol=0, atol=0):
         raise AssertionError("the EMA variant changed: %r vs %r" % (ema, want))
@@ -74,7 +76,8 @@ def test_the_total_is_the_sum_of_its_parts() -> str:
     parts = [(torch.tensor(0.4), torch.tensor(0.8)), (torch.tensor(0.2), torch.tensor(0.1))]
     criterion = losses.build_loss({"beta": 0.25, "codebook_num": 2})
     total, components = criterion(reconstructed, target, parts)
-    expected_quant = ((0.4 + 0.25 * 0.8) + (0.2 + 0.25 * 0.1)) / 2
+    # parts are (commitment, codebook): the entry term plus beta times the encoder term.
+    expected_quant = ((0.8 + 0.25 * 0.4) + (0.1 + 0.25 * 0.2)) / 2
     expected_recon = torch.nn.functional.mse_loss(reconstructed, target)
     if set(components) != {"reconstruction", "quantization"}:
         raise AssertionError("the components are not named: %r" % (sorted(components),))
@@ -124,7 +127,7 @@ def test_both_config_spellings_are_accepted() -> str:
 def main() -> int:
     failures = 0
     for test in (test_each_term_has_its_own_module,
-                 test_quantization_is_commitment_plus_beta_codebook,
+                 test_quantization_is_codebook_plus_beta_commitment,
                  test_the_total_is_the_sum_of_its_parts,
                  test_an_unknown_loss_name_is_refused,
                  test_the_trainer_does_no_loss_arithmetic,

@@ -4,6 +4,12 @@ Every term is a module beside this one with its own `NAME`, `DESCRIPTION` and
 function. The training loop picks the terms it wants by name and calls the built
 object; it never computes an MSE, scales a beta or sums two losses itself.
 
+The two conjugate terms are named after the side their gradient reaches, which is
+the VQ-VAE convention: `commitment` moves the encoder (`MSE(x, sg[q])`) and
+`codebook` moves the entry (`MSE(q, sg[x])`). They were swapped in this baseline
+until 2026-11-12 -- the formulas were the right ones, the labels were not -- and the
+shared suite now fails if a name and its gradient side disagree.
+
     from losses import build_loss
     criterion = build_loss(CONFIG)
     total, components = criterion(reconstructed, target, quant_parts)
@@ -34,17 +40,17 @@ LOSSES = {
         "spec": _reconstruction.SPEC,
     },
     "commitment": {
-        "description": "MSE(quantized, sg[latent]): pulls the encoder to its code",
+        "description": "MSE(latent, sg[quantized]): the gradient reaches the ENCODER only",
         "function": commitment_loss,
         "spec": _commitment.SPEC,
     },
     "codebook": {
-        "description": "MSE(sg[latent], quantized): pulls the code to the encoder",
+        "description": "MSE(quantized, sg[latent]): the gradient reaches the CODEBOOK only",
         "function": codebook_loss,
         "spec": _codebook.SPEC,
     },
     "quantization": {
-        "description": "commitment + beta * codebook, averaged over the levels",
+        "description": "codebook + beta * commitment, averaged over the levels",
         "function": quantization_total,
         "spec": _quantization.SPEC,
     },
