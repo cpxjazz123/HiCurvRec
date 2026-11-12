@@ -2856,7 +2856,9 @@ async function loadIdea() {
     const data = await res.json();
     const doc = data.doc && typeof data.doc === 'object' ? data.doc : null;
     if (doc) {
-      if (ideaUi.state) ideaUi.state.textContent = '来自仓库 idea.json（结构化真源）';
+      const where = typeof data.ideaPath === 'string' && data.ideaPath
+        ? data.ideaPath : 'ideas/*_idea.json';
+      if (ideaUi.state) ideaUi.state.textContent = `来自仓库 ${where}（结构化真源）`;
       renderIdeaDoc(doc, null);
       return;
     }
@@ -2869,9 +2871,9 @@ async function loadIdea() {
     if (ideaUi.state) {
       ideaUi.state.textContent = parsed
         ? '已从服务端载入'
-        : (data.docError || '结构不合格：idea.json 不可用，当前只有纯文本');
+        : (data.docError || '结构不合格：ideas/ 下没有可解析的 *_idea.json，当前只有纯文本');
     }
-    renderIdeaDoc(parsed, parsed ? null : (data.docError || 'idea.json 不存在或解析失败'));
+    renderIdeaDoc(parsed, parsed ? null : (data.docError || 'ideas/ 下没有可解析的 *_idea.json'));
   } catch (err) {
     showAlert(`读不到 IDEA：${err && err.message ? err.message : String(err)}`);
   }

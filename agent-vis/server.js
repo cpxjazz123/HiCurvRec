@@ -785,7 +785,13 @@ export function createServer({
           // fileText 是仓库 idea.txt 的内容：页面第一次打开时拿它当草稿。
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
           const ideaDoc = readIdeaDoc();
-          res.end(JSON.stringify({ ...readIdea(), fileText: readIdeaFile(), doc: ideaDoc.doc, docError: ideaDoc.error }));
+          res.end(JSON.stringify({
+            ...readIdea(),
+            fileText: readIdeaFile(),
+            doc: ideaDoc.doc,
+            docError: ideaDoc.error,
+            ideaPath: ideaDoc.path,
+          }));
         } catch (err) {
           res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
           res.end(

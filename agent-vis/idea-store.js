@@ -18,36 +18,74 @@ function ideaFile() {
 }
 
 /**
- * 仓库根里的 idea.txt（只读）。
+ * 仓库里的机制定义：`ideas/<机制>_idea.json`，不叫固定名字。
+ *
+ * 一个目录可以放多份机制方向（AF3 曲率、行为图、容量分配……），文件名就是机制名。
+ * 页面读**最新修改**的那一份；目录里恰好只有一份时就是它。这样新增一个方向只需要
+ * 往 ideas/ 里放一个文件，不用改代码，也不会让旧方向被静默覆盖。
+ */
+function ideaDocPath() {
+  const folder = path.join(SANDBOX_ROOT, 'ideas');
+  let entries = [];
+  try {
+    entries = fs.readdirSync(folder).filter((name) => name.endsWith('_idea.json'));
+  } catch {
+    entries = [];
+  }
+  if (entries.length === 0) return null;
+  const withTime = entries.map((name) => {
+    const full = path.join(folder, name);
+    let mtime = 0;
+    try {
+      mtime = fs.statSync(full).mtimeMs;
+    } catch {
+      mtime = 0;
+    }
+    return { full, mtime };
+  });
+  withTime.sort((a, b) => b.mtime - a.mtime || a.full.localeCompare(b.full));
+  return withTime[0].full;
+}
+
+/**
+ * 仓库里的机制定义文本（只读）。
  *
  * 页面上的窗口第一次打开时用它当**草稿**：用户看到的是真正在用的那份机制定义，
  * 而不是一片空白。它不会被自动保存 —— 保存是用户显式动作，保存之后才随运行发送。
  */
 export function readIdeaFile() {
+  const file = ideaDocPath();
+  if (!file) return '';
   try {
-    return fs.readFileSync(path.join(SANDBOX_ROOT, 'idea.txt'), 'utf8');
+    return fs.readFileSync(file, 'utf8');
   } catch {
     return '';
   }
 }
 
 /**
- * 仓库根里的 idea.json（只读、结构化真源）。
+ * 逻辑与渲染都基于这份 JSON（只读、结构化真源）。
  *
- * 页面按这份 JSON 的键值渲染成界面；解析失败返回 `{doc:null, error}`，
+ * 页面按它的键值渲染成界面；解析失败返回 `{doc:null, error}`，
  * 由页面显示「结构不合格」，而不是悄悄退回纯文本。
  */
 export function readIdeaDoc() {
+  const file = ideaDocPath();
+  if (!file) {
+    return { doc: null, error: 'ideas/ 下没有 *_idea.json', path: null };
+  }
+  const name = path.relative(SANDBOX_ROOT, file);
   let text = '';
   try {
-    text = fs.readFileSync(path.join(SANDBOX_ROOT, 'idea.json'), 'utf8');
+    text = fs.readFileSync(file, 'utf8');
   } catch {
-    return { doc: null, error: 'idea.json 不存在' };
+    return { doc: null, error: `${name} 读不出来`, path: name };
   }
   try {
-    return { doc: JSON.parse(text), error: null };
+    return { doc: JSON.parse(text), error: null, path: name };
   } catch (err) {
-    return { doc: null, error: `idea.json 解析失败：${err && err.message ? err.message : String(err)}` };
+    return { doc: null, path: name,
+             error: `${name} 解析失败：${err && err.message ? err.message : String(err)}` };
   }
 }
 
