@@ -108,8 +108,12 @@ class MixedRQVAE(nn.Module):
         return encode_tokens(self.encoder(embeddings), self.rq, radius=radius)
 
     @torch.no_grad()
-    def init_codebook(self, embeddings: torch.Tensor) -> None:
-        self.rq.init_codebooks(self.encoder(embeddings), embeddings.device)
+    def init_codebook(self, embeddings: torch.Tensor, item_ids: torch.Tensor | None = None) -> None:
+        from . import hrp_radial
+        radius = None
+        if item_ids is not None:
+            radius = hrp_radial.radius_rows(item_ids.cpu()).to(embeddings.device)
+        self.rq.init_codebooks(self.encoder(embeddings), embeddings.device, radius=radius)
 
     def compute_loss(self, embeddings: torch.Tensor, reconstructed: torch.Tensor,
                      quant_loss: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:

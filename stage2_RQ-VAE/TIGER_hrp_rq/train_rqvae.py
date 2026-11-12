@@ -482,6 +482,11 @@ def _single_card_mode() -> bool:
     return os.environ.get(SINGLE_GPU_ENV) == "1"
 
 
+def collapse_gate_fires(collision: float, threshold: float = 0.40) -> bool:
+    """Issue #204's second gate, carried into this arm: an export at or above the threshold stops it."""
+    return collision >= threshold
+
+
 def main() -> None:
     # === DDP 初始化 ===
     if _single_card_mode():
@@ -551,7 +556,7 @@ def main() -> None:
             from model.af3_auxiliary import prepare_state, augment_loss
             af3_state = prepare_state(prepared["graph"], all_embeddings, device)
 
-    train_dataset = TensorDataset(train_embeddings)
+    train_dataset = TensorDataset(train_embeddings, torch.from_numpy(train_ids))
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -584,11 +589,27 @@ def main() -> None:
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
         _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size)
 
+    # === issue #209: the radial rule and its measured distribution ===
+    from model import hrp_radial as _hrp
+    _r = _hrp.radius_rows(torch.as_tensor(train_ids))
+    _meta = {
+        "r_min": float(_r.min()), "r_q25": float(_r.quantile(0.25)), "r_median": float(_r.median()),
+        "r_q75": float(_r.quantile(0.75)), "r_max": float(_r.max()), "r_mean": float(_r.mean()),
+        "rows_with_r_one": int((_r == 1.0).sum()),
+        "kappa_table_sha256": __import__("hashlib").sha256(
+            (_hrp.repo_root() / _hrp.TABLE_RELPATH).read_bytes()).hexdigest(),
+        "switches": _hrp.switches(),
+    }
+    if rank == 0:
+        print(f"[hrp] {_meta}", flush=True)
+        _record(rank, "hrp_radius", **_meta)
+
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
         print("[RecBole RQ-VAE] initializing codebooks with KMeans", flush=True)
     with torch.no_grad():
-        raw_module.init_codebook(train_embeddings.to(device))
+        raw_module.init_codebook(train_embeddings.to(device),
+                                 item_ids=torch.from_numpy(train_ids).to(device))
     if world_size > 1:
         dist.barrier()
 
@@ -606,10 +627,10 @@ def main() -> None:
         recons: list[float] = []
         auxiliary_logs = []
         _epoch_t0 = time.time()
-        for (batch,) in loader:
+        for batch, batch_ids in loader:
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _ = model(batch)
+            reconstructed, quant_loss, _, _ = model(batch, item_ids=batch_ids.to(device))
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             if not torch.isfinite(loss):
@@ -686,10 +707,14 @@ def main() -> None:
             if rank == 0:
                 with torch.no_grad():
                     raw_tokens = raw_module.get_indices(
-                        all_embeddings.to(device), infer_use_sk=False
+                        all_embeddings.to(device), infer_use_sk=False,
+                        item_ids=torch.arange(all_embeddings.shape[0], device=device),
                     ).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
+                if EPOCHS >= EVAL_INTERVAL and collapse_gate_fires(collision_v):
+                    _record(rank, "collapse_gate", epoch=epoch, collision=collision_v)
+                    raise SystemExit(f"COLLAPSE_GATE_TRIGGERED: collision {collision_v:.6f} >= 0.40 at epoch {epoch}")
                 final_collision = collision_v
                 final_raw_unique = raw_unique
                 print(
@@ -739,7 +764,8 @@ def main() -> None:
         try:
             with torch.no_grad():
                 raw_tokens = raw_module.get_indices(
-                    all_embeddings.to(device), infer_use_sk=False
+                    all_embeddings.to(device), infer_use_sk=False,
+                    item_ids=torch.arange(all_embeddings.shape[0], device=device),
                 ).cpu().numpy().astype(np.int64)
         finally:
             for layer in raw_module.rq.vq_layers:

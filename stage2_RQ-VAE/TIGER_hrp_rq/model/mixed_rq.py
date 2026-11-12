@@ -381,7 +381,7 @@ class MixedRQ(nn.Module):
         return readout, total_loss / len(self.levels), unused_total, stacked
 
     @torch.no_grad()
-    def init_codebooks(self, z: torch.Tensor, device: torch.device) -> None:
+    def init_codebooks(self, z: torch.Tensor, device: torch.device, radius: torch.Tensor | None = None) -> None:
         z_e, z_t = split(z)
         residual_e = z_e
         residual_h = expmap0(z_t, self.curvature) if self.curvature > 0 else z_t
@@ -389,7 +389,7 @@ class MixedRQ(nn.Module):
         for level, layer in enumerate(self.levels, start=1):
             layer.init_codebook(residual_e, residual_h, device)
             alpha = self.alpha_table.lookups(level, tokens).to(device)
-            (residual_e, residual_h), _, _, index, _, _ = layer(residual_e, residual_h, alpha)
+            (residual_e, residual_h), _, _, index, _, _ = layer(residual_e, residual_h, alpha, radius=radius)
             tokens.append(index)
 
 
