@@ -1,0 +1,24 @@
+{
+ "train_file": "results/stage0_build_parquet/train.parquet",
+ "edges": 323633,
+ "closed_edges": 193495,
+ "groups": 7,
+ "items_in_groups": 18643,
+ "items_total": 24587,
+ "delta_defined": 13714,
+ "delta_missing": 10842,
+ "positive": 28,
+ "negative": 13660,
+ "positive_share_of_defined": 0.0020417092022750475,
+ "missing_share_of_touched": 0.4415214204267796,
+ "degenerate_single_regime": true,
+ "recompute_sample": 200,
+ "recompute_mismatches": 0,
+ "recompute_first_mismatches": [],
+ "delta_quantiles": {
+  "q05": -0.23050151363661622,
+  "q50": -0.11302216826296163,
+  "q95": -0.014386606861819298,
+  "mean": -0.11667109300477242
+ }
+}
