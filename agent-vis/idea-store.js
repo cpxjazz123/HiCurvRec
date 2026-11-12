@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { SANDBOX_ROOT, dataDir } from './config.js';
+import { currentWorkdir, dataDir } from './config.js';
 
 /** 一份 idea 的长度上限：够放一份机制定义，又不至于把每次请求撑爆。 */
 export const MAX_IDEA_CHARS = 200_000;
@@ -25,7 +25,7 @@ function ideaFile() {
  * 往 ideas/ 里放一个文件，不用改代码，也不会让旧方向被静默覆盖。
  */
 function ideaDocPath() {
-  const folder = path.join(SANDBOX_ROOT, 'ideas');
+  const folder = path.join(currentWorkdir(), 'ideas');
   const found = [];
   // 方向是目录：ideas/<方向>/<方向>_idea.json；顶层直接放 *_idea.json 的老写法也认，
   // 于是一个方向一个目录与扁平存放并存，页面读最新的那一份。
@@ -85,7 +85,7 @@ export function readIdeaDoc() {
   if (!file) {
     return { doc: null, error: 'ideas/ 下没有 *_idea.json', path: null };
   }
-  const name = path.relative(SANDBOX_ROOT, file);
+  const name = path.relative(currentWorkdir(), file);
   let text = '';
   try {
     text = fs.readFileSync(file, 'utf8');
@@ -107,7 +107,7 @@ export function readIdeaDoc() {
  * 把两块并排显示，读者一眼能看出某个机制是否还在这条线上。
  */
 export function readMainLine() {
-  const file = path.join(SANDBOX_ROOT, 'ideas', 'main_line.json');
+  const file = path.join(currentWorkdir(), 'ideas', 'main_line.json');
   let text = '';
   try {
     text = fs.readFileSync(file, 'utf8');
@@ -129,7 +129,7 @@ export function readMainLine() {
  * 每一份都抄一遍。页面把它单独列一块，机制文件只写自己多出来的部分。
  */
 export function readBaseline() {
-  const file = path.join(SANDBOX_ROOT, 'ideas', 'baseline.json');
+  const file = path.join(currentWorkdir(), 'ideas', 'baseline.json');
   let text = '';
   try {
     text = fs.readFileSync(file, 'utf8');
@@ -158,13 +158,13 @@ export function readVerification() {
   try {
     text = fs.readFileSync(file, 'utf8');
   } catch {
-    return { doc: null, error: `${path.relative(SANDBOX_ROOT, file)} 不存在` };
+    return { doc: null, error: `${path.relative(currentWorkdir(), file)} 不存在` };
   }
   try {
-    return { doc: JSON.parse(text), error: null, path: path.relative(SANDBOX_ROOT, file) };
+    return { doc: JSON.parse(text), error: null, path: path.relative(currentWorkdir(), file) };
   } catch (err) {
-    return { doc: null, path: path.relative(SANDBOX_ROOT, file),
-             error: `${path.relative(SANDBOX_ROOT, file)} 解析失败：${err && err.message ? err.message : String(err)}` };
+    return { doc: null, path: path.relative(currentWorkdir(), file),
+             error: `${path.relative(currentWorkdir(), file)} 解析失败：${err && err.message ? err.message : String(err)}` };
   }
 }
 
@@ -182,13 +182,13 @@ export function readMath() {
   try {
     text = fs.readFileSync(file, 'utf8');
   } catch {
-    return { doc: null, error: `${path.relative(SANDBOX_ROOT, file)} 不存在` };
+    return { doc: null, error: `${path.relative(currentWorkdir(), file)} 不存在` };
   }
   try {
-    return { doc: JSON.parse(text), error: null, path: path.relative(SANDBOX_ROOT, file) };
+    return { doc: JSON.parse(text), error: null, path: path.relative(currentWorkdir(), file) };
   } catch (err) {
-    return { doc: null, path: path.relative(SANDBOX_ROOT, file),
-             error: `${path.relative(SANDBOX_ROOT, file)} 解析失败：${err && err.message ? err.message : String(err)}` };
+    return { doc: null, path: path.relative(currentWorkdir(), file),
+             error: `${path.relative(currentWorkdir(), file)} 解析失败：${err && err.message ? err.message : String(err)}` };
   }
 }
 

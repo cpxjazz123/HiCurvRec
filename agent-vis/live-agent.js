@@ -41,7 +41,7 @@ import {
   ROUND_END_RULE,
   ROUND_END_TOOL,
   ROUND_SESSION_TTL_MS,
-  SANDBOX_ROOT,
+  currentWorkdir,
   buildHandoffPrompt,
   buildPermissionPrompt,
   dataDir,
@@ -80,11 +80,22 @@ export function loadApiKey() {
   return key;
 }
 
+/**
+ * 当前的工作目录（面板上「全局设置」可改，改完立刻生效）。
+ *
+ * 会话的 cwd、只读命令的 cwd、文件工具的边界都取它 —— 三者必须是同一个目录，
+ * 否则 agent 读到的路径和它能写的路径会不是一棵树。
+ */
+function sandboxRoot() {
+  return currentWorkdir();
+}
+
 /** 把 agent 给的路径解析到沙箱根内；越界、缺文件都直接抛错。 */
 function resolveInSandbox(relPath) {
-  const target = path.resolve(SANDBOX_ROOT, relPath);
-  if (target !== SANDBOX_ROOT && !target.startsWith(SANDBOX_ROOT + path.sep)) {
-    throw new Error(`路径越界（只允许仓库根 ${SANDBOX_ROOT} 之内）: ${relPath}`);
+  const root = sandboxRoot();
+  const target = path.resolve(root, relPath);
+  if (target !== root && !target.startsWith(root + path.sep)) {
+    throw new Error(`路径越界（只允许仓库根 ${root} 之内）: ${relPath}`);
   }
   if (!fs.existsSync(target)) {
     throw new Error(`路径不存在: ${relPath}`);
@@ -98,11 +109,12 @@ function resolveInSandbox(relPath) {
  * 写与删共用这一套边界：越界、.git 一律当场报错，不做任何回退。
  */
 function resolveMutableInSandbox(relPath) {
-  const target = path.resolve(SANDBOX_ROOT, relPath);
-  if (target !== SANDBOX_ROOT && !target.startsWith(SANDBOX_ROOT + path.sep)) {
-    throw new Error(`路径越界（只允许仓库根 ${SANDBOX_ROOT} 之内）: ${relPath}`);
+  const root = sandboxRoot();
+  const target = path.resolve(root, relPath);
+  if (target !== root && !target.startsWith(root + path.sep)) {
+    throw new Error(`路径越界（只允许仓库根 ${root} 之内）: ${relPath}`);
   }
-  const rel = path.relative(SANDBOX_ROOT, target);
+  const rel = path.relative(root, target);
   if (rel.split(path.sep)[0] === '.git') {
     throw new Error(`不许动 .git 目录下的东西: ${relPath}`);
   }
@@ -110,7 +122,7 @@ function resolveMutableInSandbox(relPath) {
 }
 
 function relativeToRoot(target) {
-  const rel = path.relative(SANDBOX_ROOT, target);
+  const rel = path.relative(sandboxRoot(), target);
   return rel === '' ? '.' : rel;
 }
 
@@ -123,7 +135,7 @@ const READ_ONLY_TIMEOUT_MS = 30000;
 
 async function runReadOnly(command, args) {
   const { stdout } = await execFileAsync(command, args, {
-    cwd: SANDBOX_ROOT,
+    cwd: sandboxRoot(),
     timeout: READ_ONLY_TIMEOUT_MS,
     maxBuffer: 4 * 1024 * 1024,
   });
@@ -314,7 +326,7 @@ export const TOOL_IMPLS = {
 
   async deleteFile({ path: relPath }) {
     const target = resolveMutableInSandbox(relPath);
-    if (target === SANDBOX_ROOT) {
+    if (target === sandboxRoot()) {
       throw new Error(`不许删仓库根目录: ${relPath}`);
     }
     if (!fs.existsSync(target)) {
@@ -625,7 +637,7 @@ export async function createPiSession({ profile, instructions, permissionIds }) 
   // 客户端读不到，后面的步骤照样会发出去。
   const tools = [...toolsForPermissions(permissionIds), endRoundTool];
   const loader = new DefaultResourceLoader({
-    cwd: SANDBOX_ROOT,
+    cwd: sandboxRoot(),
     agentDir: path.join(piStateDir(), 'agent'),
     noExtensions: true,
     noSkills: true,
@@ -637,14 +649,14 @@ export async function createPiSession({ profile, instructions, permissionIds }) 
   await loader.reload();
 
   const { session } = await createAgentSession({
-    cwd: SANDBOX_ROOT,
+    cwd: sandboxRoot(),
     modelRuntime,
     model,
     noTools: 'builtin',
     tools: tools.map((tool) => tool.name),
     customTools: tools,
     resourceLoader: loader,
-    sessionManager: SessionManager.inMemory(SANDBOX_ROOT),
+    sessionManager: SessionManager.inMemory(sandboxRoot()),
     thinkingLevel: 'off',
   });
   return session;

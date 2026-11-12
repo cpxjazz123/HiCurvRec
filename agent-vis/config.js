@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-13.1';
+export const FRONTEND_VERSION = '2026-11-13.2';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -80,15 +80,44 @@ export const AGENT_WORKDIR = '/home/wlia0047/ar57/wenyu/GeneRec';
 /** 所有 agent 必须运行在这台主机上（owner 指定）。 */
 export const AGENT_HOST = 'm3g104';
 
+/**
+ * 全局设置（面板可改）：运行环境主机与工作目录。
+ *
+ * 源码里的常量是**默认值**，不是最终值 —— 页面上「全局设置」能改这两项，
+ * 改完立刻对所有 agent 生效（会话 cwd、工具边界、运行前的检查都用它们）。
+ */
+export const DEFAULT_GLOBAL_SETTINGS = Object.freeze({
+  agentHost: AGENT_HOST,
+  agentWorkdir: AGENT_WORKDIR,
+});
+
+/** 当前生效的全局设置。 */
+let globalSettings = { ...DEFAULT_GLOBAL_SETTINGS };
+
+/** 当前生效的运行环境主机。 */
+export function currentHost() {
+  return globalSettings.agentHost;
+}
+
+/** 当前生效的工作目录（agent 的 cwd 与文件工具边界都用它）。 */
+export function currentWorkdir() {
+  return globalSettings.agentWorkdir;
+}
+
+/** 仓库根（服务端自己读源码用）。agent 的工具边界是 currentWorkdir()。 */
+export const REPO_ROOT = path.resolve(HERE, '..');
+export const SANDBOX_ROOT = AGENT_WORKDIR;
+
 /** 主机名是否满足要求：允许带域名后缀（m3g104.massive.org.au 也算对）。 */
-export function agentHostOk(hostname = os.hostname()) {
+export function agentHostOk(hostname = os.hostname(), want = currentHost()) {
   const name = String(hostname || '').trim().toLowerCase();
-  const want = AGENT_HOST.toLowerCase();
-  return name === want || name.startsWith(`${want}.`);
+  const target = String(want || '').trim().toLowerCase();
+  if (target === '') return false;
+  return name === target || name.startsWith(`${target}.`);
 }
 
 /** 工作目录是不是那个仓库：用三个必备目录当标记，挂错盘会缺。 */
-export function agentWorkdirOk(dir = AGENT_WORKDIR) {
+export function agentWorkdirOk(dir = currentWorkdir()) {
   return ['stage2_RQ-VAE', 'stage1_GeneEmbedding', 'results'].every((marker) => {
     try {
       return fs.statSync(path.join(dir, marker)).isDirectory();
@@ -103,9 +132,10 @@ export function agentWorkdirOk(dir = AGENT_WORKDIR) {
  *
  * 跑之前检查：换主机或挂错盘时，宁可拒绝启动也不要让 agent 在别处读写。
  */
-export function agentEnvProblem({ hostname = os.hostname(), workdir = AGENT_WORKDIR } = {}) {
-  if (!agentHostOk(hostname)) {
-    return `agent 必须在 ${AGENT_HOST} 上运行，当前主机是 ${hostname}`;
+export function agentEnvProblem({ hostname = os.hostname(), workdir = currentWorkdir() } = {}) {
+  const want = currentHost();
+  if (!agentHostOk(hostname, want)) {
+    return `agent 必须在 ${want} 上运行，当前主机是 ${hostname}`;
   }
   if (!agentWorkdirOk(workdir)) {
     return `agent 的工作目录不可用：${workdir} 下缺 stage2_RQ-VAE / stage1_GeneEmbedding / results`;
@@ -113,9 +143,36 @@ export function agentEnvProblem({ hostname = os.hostname(), workdir = AGENT_WORK
   return null;
 }
 
-/** 仓库根（服务端自己读源码用）。agent 的工具边界是 AGENT_WORKDIR。 */
-export const REPO_ROOT = path.resolve(HERE, '..');
-export const SANDBOX_ROOT = AGENT_WORKDIR;
+/** 读出全局设置。 */
+export function getGlobalSettings() {
+  return { ...globalSettings };
+}
+
+/**
+ * 改全局设置（面板调用）。
+ *
+ * 只认两个键：运行环境主机与工作目录。主机名不能空；工作目录必须是绝对路径。
+ * 改完写盘，重启服务后仍然生效。
+ */
+export function setGlobalSettings(patch) {
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+    throw new Error('全局设置必须是一个对象');
+  }
+  const next = { ...globalSettings };
+  if (patch.agentHost !== undefined) {
+    const host = String(patch.agentHost || '').trim();
+    if (host === '') throw new Error('运行环境主机不能为空');
+    next.agentHost = host;
+  }
+  if (patch.agentWorkdir !== undefined) {
+    const dir = String(patch.agentWorkdir || '').trim();
+    if (!path.isAbsolute(dir)) throw new Error('工作目录必须是绝对路径');
+    next.agentWorkdir = dir;
+  }
+  globalSettings = next;
+  persist();
+  return getGlobalSettings();
+}
 
 /**
  * 模型后端：pi agent 的自定义 provider（OpenAI 兼容的 commandcode 通道）。
@@ -876,6 +933,7 @@ function persist() {
     version: 1,
     configs: userConfigs,
     agents: Object.fromEntries(runtimeProfiles),
+    settings: globalSettings,
   });
 }
 
@@ -883,6 +941,18 @@ function persist() {
 function hydrate() {
   const state = persistence.loadAgents();
   userConfigs = state.configs;
+  // 全局设置：文件里没有就用默认值（老版本的 agents.json 没有这一段）。
+  const stored = state.settings && typeof state.settings === 'object' ? state.settings : {};
+  globalSettings = {
+    agentHost:
+      typeof stored.agentHost === 'string' && stored.agentHost.trim() !== ''
+        ? stored.agentHost.trim()
+        : DEFAULT_GLOBAL_SETTINGS.agentHost,
+    agentWorkdir:
+      typeof stored.agentWorkdir === 'string' && stored.agentWorkdir.trim() !== ''
+        ? stored.agentWorkdir.trim()
+        : DEFAULT_GLOBAL_SETTINGS.agentWorkdir,
+  };
   runtimeProfiles.clear();
   for (const [id, profile] of Object.entries(state.agents)) {
     runtimeProfiles.set(id, profile);

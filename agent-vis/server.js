@@ -778,10 +778,13 @@ export function createServer({
           provider: config.PROVIDER_NAME,
           sandboxRoot: config.SANDBOX_ROOT,
           // 所有 agent 的工作目录与运行主机（硬约束，页面与测试都读这里）。
-          workdir: config.AGENT_WORKDIR,
-          requiredHost: config.AGENT_HOST,
+          workdir: config.currentWorkdir(),
+          requiredHost: config.currentHost(),
           host: os.hostname(),
           envProblem: config.agentEnvProblem(),
+          // 全局设置（面板的「全局设置」里可改）：运行环境主机与工作目录。
+          settings: config.getGlobalSettings(),
+          defaultSettings: config.DEFAULT_GLOBAL_SETTINGS,
           frontendVersion: config.FRONTEND_VERSION,
           protocolVersion: config.PROTOCOL_VERSION,
           // 权限目录：页面上的权限区按它铺复选框。
@@ -851,6 +854,55 @@ export function createServer({
       }
       res.writeHead(405, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ error: '/api/idea 只接受 GET 与 PUT' }));
+      return;
+    }
+
+    // 全局设置：运行环境主机与工作目录。面板上可改，改完对所有 agent 生效。
+    if (url.pathname === '/api/settings') {
+      if (req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(
+          JSON.stringify({
+            settings: config.getGlobalSettings(),
+            defaults: config.DEFAULT_GLOBAL_SETTINGS,
+            envProblem: config.agentEnvProblem(),
+            host: os.hostname(),
+          }),
+        );
+        return;
+      }
+      if (req.method === 'PUT') {
+        readJsonBody(req)
+          .then((body) => {
+            let settings;
+            try {
+              settings = config.setGlobalSettings(body || {});
+            } catch (err) {
+              res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+              res.end(
+                JSON.stringify({ error: err && err.message ? err.message : String(err) }),
+              );
+              return;
+            }
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(
+              JSON.stringify({
+                settings,
+                envProblem: config.agentEnvProblem(),
+                host: os.hostname(),
+              }),
+            );
+          })
+          .catch((err) => {
+            res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(
+              JSON.stringify({ error: err && err.message ? err.message : String(err) }),
+            );
+          });
+        return;
+      }
+      res.writeHead(405, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: '设置只接受 GET 与 PUT' }));
       return;
     }
 

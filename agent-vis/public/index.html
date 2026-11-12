@@ -35,11 +35,14 @@
           IDEA 文本（空）
         </button>
 
+        <button type="button" class="new-agent" data-role="settingsBtn">⚙ 全局设置</button>
+
         <div class="sidebar-label">Agent</div>
         <ul class="agent-list" data-role="agentList"></ul>
 
         <div class="sidebar-foot">
           <span class="sub" id="globalMeta"></span>
+          <span class="sub" id="settingsMeta"></span>
           <span class="sub" id="buildTag"></span>
         </div>
       </nav>
@@ -532,6 +535,30 @@
         </div>
       </section>
     </template>
+
+    <!-- 全局设置：运行环境主机与工作目录。所有 agent 共用，改完立刻生效。 -->
+    <dialog class="settings-dialog" data-role="settingsDialog">
+      <form method="dialog" class="settings-form">
+        <h3>全局设置</h3>
+        <p class="settings-note">
+          所有 agent 共用：会话的工作目录与运行主机。改完立刻对下一次运行生效。
+        </p>
+        <label class="settings-field">
+          <span>运行环境主机</span>
+          <input type="text" data-role="settingsHost" autocomplete="off" spellcheck="false" />
+        </label>
+        <label class="settings-field">
+          <span>工作目录</span>
+          <input type="text" data-role="settingsWorkdir" autocomplete="off" spellcheck="false" />
+        </label>
+        <p class="settings-state" data-role="settingsState"></p>
+        <menu class="settings-actions">
+          <button type="button" data-role="settingsReset">恢复默认</button>
+          <button type="button" data-role="settingsSave">保存</button>
+          <button type="button" data-role="settingsClose">关闭</button>
+        </menu>
+      </form>
+    </dialog>
 
     <script>
       // 自愈守卫：模块脚本是 defer 的，等它启动并设置启动标记之后再判断。

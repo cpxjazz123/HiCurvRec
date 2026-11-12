@@ -431,6 +431,52 @@ async function main() {
     assert.equal(config.agentEnvProblem(), null);
   });
 
+  await test('全局设置可读可改，改完立刻对运行生效', async () => {
+    const before = await (await fetch(`${base}/api/settings`)).json();
+    assert.ok(before.settings, 'settings 没返回');
+    assert.equal(typeof before.settings.agentHost, 'string');
+    assert.equal(typeof before.settings.agentWorkdir, 'string');
+    assert.ok(before.settings.agentWorkdir.startsWith('/'), '工作目录该是绝对路径');
+
+    // 改成不合法的值必须被拒：主机名不能空，工作目录必须是绝对路径。
+    const blankHost = await fetch(`${base}/api/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentHost: '   ' }),
+    });
+    assert.equal(blankHost.status, 400, '空主机名应该被拒');
+    const relativeDir = await fetch(`${base}/api/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentWorkdir: 'relative/dir' }),
+    });
+    assert.equal(relativeDir.status, 400, '相对路径应该被拒');
+
+    // 存一个会挡住运行的目录：运行请求必须被拒，而且原因要点名那个目录。
+    const original = before.settings;
+    const bad = await (await fetch(`${base}/api/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentWorkdir: '/tmp' }),
+    })).json();
+    assert.equal(bad.settings.agentWorkdir, '/tmp', '工作目录没存上');
+    assert.ok(bad.envProblem, '换一个目录后应该报告环境问题');
+    assert.ok(bad.envProblem.includes('/tmp'), `原因里要点名目录: ${bad.envProblem}`);
+    const refused = await fetch(
+      `${base}/api/run?prompt=hi&v=${config.FRONTEND_VERSION}&profile=agent-a`,
+    );
+    assert.equal(refused.status, 503, '环境不对时运行请求应该被拒');
+
+    // 换回来，后面的用例还要在这个目录里跑。
+    const restored = await (await fetch(`${base}/api/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(original),
+    })).json();
+    assert.equal(restored.settings.agentWorkdir, original.agentWorkdir);
+    assert.equal(restored.envProblem, null, `恢复后不该还有环境问题: ${restored.envProblem}`);
+  });
+
   await test('旧版前端被版本闸门拦下，拿到刷新提示而不是 400', async () => {
     // 旧前端硬编码了旧的 agent 身份（profile=assistant）。如果先校验身份、
     // 后校验版本，用户看到的就是一句莫名其妙的 "未知的 agent 身份"，

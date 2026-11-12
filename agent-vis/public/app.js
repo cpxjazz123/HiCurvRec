@@ -12,8 +12,17 @@ import { createStore, applyChunk, roundEnded } from './protocol.js?v=__ASSET_V__
 
 const buildTagEl = document.getElementById('buildTag');
 const globalMetaEl = document.getElementById('globalMeta');
+const settingsMetaEl = document.getElementById('settingsMeta');
 const alertBarEl = document.getElementById('alertBar');
 const newAgentBtnEl = document.querySelector('[data-role=newAgentBtn]');
+const settingsBtnEl = document.querySelector('[data-role=settingsBtn]');
+const settingsDialogEl = document.querySelector('[data-role=settingsDialog]');
+const settingsHostEl = document.querySelector('[data-role=settingsHost]');
+const settingsWorkdirEl = document.querySelector('[data-role=settingsWorkdir]');
+const settingsStateEl = document.querySelector('[data-role=settingsState]');
+const settingsSaveEl = document.querySelector('[data-role=settingsSave]');
+const settingsResetEl = document.querySelector('[data-role=settingsReset]');
+const settingsCloseEl = document.querySelector('[data-role=settingsClose]');
 const layoutEl = document.querySelector('.layout');
 const agentListEl = document.querySelector('[data-role=agentList]');
 
@@ -68,7 +77,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-13.1';
+const FRONTEND_VERSION = '2026-11-13.2';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -427,6 +436,9 @@ function createPanel(root) {
    * 画出来的东西跟当时跑的时候一模一样。
    */
   const runs = [];
+  // 每轮（roundId）的累计耗时：多步轮次里每一步是一次请求，
+  // 「总耗时」要把这几步加起来，而不是每换一步就从头算。
+  const roundTotals = new Map();
   /** 当前正在跑的那一轮（算耗时、看产出都看它）。 */
   let currentRun = null;
   /**
@@ -983,7 +995,18 @@ function createPanel(root) {
     // 运行信息里只留总耗时：步骤数、工具调用数、token 计数都撤了，
     // 步骤的进展改由上面的「步骤进度」条显示（那边看的是配好的步骤）。
     // 说的是最新那一轮：时间轴上留着好几轮，总耗时看的是最近这一轮。
+    //
+    // 多步轮次里「总耗时」是这一轮**所有步骤**的耗时之和：每一步是一次请求，
+    // 各有各的耗时，加起来才是这一轮真正花掉的时间。跑到一半时，
+    // 已完成的步骤用记下来的耗时，正在跑的那一步用到目前为止的时间。
     if (!run) return;
+    if (run.roundId) {
+      const acc = roundTotals.get(run.roundId) || { doneMs: 0 };
+      const live = run.durationMs === null ? Date.now() - run.startedAt : 0;
+      const total = acc.doneMs + live;
+      setMeta('duration', `${(total / 1000).toFixed(1)} s`);
+      return;
+    }
     const ms = run.durationMs === null ? Date.now() - run.startedAt : run.durationMs;
     setMeta('duration', `${(ms / 1000).toFixed(1)} s`);
   }
@@ -1000,6 +1023,8 @@ function createPanel(root) {
   function beginRun(meta = {}) {
     const run = {
       id: typeof meta.id === 'string' && meta.id !== '' ? meta.id : `run-${++blockSeq}`,
+      // 多步轮次里的每一步都带着同一个 roundId：总耗时按它归堆。
+      roundId: typeof meta.roundId === 'string' && meta.roundId !== '' ? meta.roundId : '',
       meta,
       store: createStore(),
       partNodes: new Map(),
@@ -1065,6 +1090,12 @@ function createPanel(root) {
     run.status = status;
     run.finishedAt = typeof run.finishedAt === 'number' ? run.finishedAt : Date.now();
     if (run.durationMs === null) run.durationMs = run.finishedAt - run.startedAt;
+    // 这一步的耗时记进它所属的那一轮：下一步开始时，「总耗时」接着往上加。
+    if (run.roundId) {
+      const acc = roundTotals.get(run.roundId) || { doneMs: 0 };
+      acc.doneMs += run.durationMs;
+      roundTotals.set(run.roundId, acc);
+    }
     const labels = { done: '完成', error: '出错', aborted: '已中止' };
     if (run.statusEl) run.statusEl.textContent = labels[run.status] || run.status;
     if (run.durationEl) {
@@ -1855,6 +1886,7 @@ function createPanel(root) {
     const run = beginRun({
       promptText: options.round ? showRoundPrompt : prompt,
       startedAt: Date.now(),
+      roundId: options.round ? options.round.roundId : '',
     });
     let card = null;
 
@@ -2044,6 +2076,7 @@ function createPanel(root) {
       id: typeof record.runId === 'string' && record.runId !== '' ? record.runId : undefined,
       promptText,
       startedAt,
+      roundId: typeof record.roundId === 'string' ? record.roundId : '',
     });
 
     // 上游交来的结果：把那张交接卡片原样画回来。
@@ -2411,6 +2444,79 @@ function createPanel(root) {
 document.querySelectorAll('.panel').forEach((root) => panels.push(createPanel(root)));
 
 /**
+ * 全局设置：运行环境主机与工作目录。
+ *
+ * 所有 agent 共用这两项，服务端存着，改完立刻对下一次运行生效。
+ * 侧栏底部一直显示当前生效的值：出问题时一眼能看出它在哪儿跑。
+ */
+let globalSettingsDefaults = null;
+
+function renderGlobalSettings(data) {
+  const settings = (data && data.settings) || {};
+  if (settingsMetaEl) {
+    const host = settings.agentHost || '?';
+    const dir = settings.agentWorkdir || '?';
+    settingsMetaEl.textContent = `${host} · ${dir}`;
+  }
+  if (settingsStateEl) {
+    const problem = data && data.envProblem;
+    settingsStateEl.textContent = problem
+      ? `现在不能跑：${problem}`
+      : `当前主机 ${(data && data.host) || '?'}，环境正常。`;
+    settingsStateEl.classList.toggle('bad', Boolean(problem));
+  }
+}
+
+async function loadGlobalSettings() {
+  try {
+    const res = await fetch(`${API_BASE}/api/settings`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    globalSettingsDefaults = data.defaults || null;
+    if (settingsHostEl) settingsHostEl.value = (data.settings && data.settings.agentHost) || '';
+    if (settingsWorkdirEl) {
+      settingsWorkdirEl.value = (data.settings && data.settings.agentWorkdir) || '';
+    }
+    renderGlobalSettings(data);
+    return data;
+  } catch (err) {
+    showAlert(`读全局设置失败：${err && err.message ? err.message : String(err)}`);
+    return null;
+  }
+}
+
+async function saveGlobalSettings() {
+  const body = {
+    agentHost: settingsHostEl ? settingsHostEl.value : '',
+    agentWorkdir: settingsWorkdirEl ? settingsWorkdirEl.value : '',
+  };
+  try {
+    const res = await fetch(`${API_BASE}/api/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (settingsStateEl) {
+        settingsStateEl.textContent = `没存上：${data.error || `HTTP ${res.status}`}`;
+        settingsStateEl.classList.add('bad');
+      }
+      return;
+    }
+    renderGlobalSettings(data);
+  } catch (err) {
+    showAlert(`存全局设置失败：${err && err.message ? err.message : String(err)}`);
+  }
+}
+
+function resetGlobalSettingsForm() {
+  const defaults = globalSettingsDefaults || {};
+  if (settingsHostEl) settingsHostEl.value = defaults.agentHost || '';
+  if (settingsWorkdirEl) settingsWorkdirEl.value = defaults.agentWorkdir || '';
+}
+
+/**
  * 左侧栏：把页面上所有 agent 列出来。
  *
  * 一行一个：状态点 + 名字（点它，右侧换成它的聊天框）+ 配置按钮
@@ -2638,6 +2744,32 @@ if (newAgentBtnEl) {
   });
 }
 
+// 全局设置：打开时读一遍当前生效的值，保存后立刻刷新侧栏底部那行字。
+if (settingsBtnEl) {
+  settingsBtnEl.addEventListener('click', () => {
+    loadGlobalSettings().then(() => {
+      if (settingsDialogEl && typeof settingsDialogEl.showModal === 'function') {
+        settingsDialogEl.showModal();
+      }
+    });
+  });
+}
+if (settingsSaveEl) {
+  settingsSaveEl.addEventListener('click', () => {
+    saveGlobalSettings();
+  });
+}
+if (settingsResetEl) {
+  settingsResetEl.addEventListener('click', () => {
+    resetGlobalSettingsForm();
+  });
+}
+if (settingsCloseEl) {
+  settingsCloseEl.addEventListener('click', () => {
+    if (settingsDialogEl && typeof settingsDialogEl.close === 'function') settingsDialogEl.close();
+  });
+}
+
 /**
  * 重画所有面板的交接配置。
  *
@@ -2792,6 +2924,14 @@ async function loadHealth() {
     globalMetaEl.textContent = `${info.mode} · ${info.model}`;
   }
   if (buildTagEl) buildTagEl.textContent = `前端 ${FRONTEND_VERSION}`;
+
+  // 全局设置（运行环境主机与工作目录）：侧栏底部一直显示当前生效的值。
+  globalSettingsDefaults = info.defaultSettings || null;
+  renderGlobalSettings({
+    settings: info.settings,
+    envProblem: info.envProblem,
+    host: info.host,
+  });
 
   if (info.frontendVersion && info.frontendVersion !== FRONTEND_VERSION) {
     showAlert(

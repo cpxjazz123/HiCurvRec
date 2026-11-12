@@ -2218,6 +2218,41 @@ async function main() {
     );
     check('每一步的文字各占一张卡', textCardsL === 3, `${textCardsL} 张文字卡`);
 
+    // 「总耗时」是这一轮**所有步骤**的耗时之和：每一步是一次请求，
+    // 各有各的耗时，不该每换一步就从头算。
+    const durationsL = await cdp.evaluate(
+      inPanel(
+        PANEL_A,
+        '(function () {' +
+          "  var blocks = Array.from(panel.querySelectorAll('.run-block'));" +
+          '  var stepDurations = blocks.map(function (b) {' +
+          "    var d = b.querySelector('.run-duration');" +
+          '    return d ? parseFloat(d.textContent) : null;' +
+          '  }).filter(function (v) { return typeof v === "number" && !isNaN(v); });' +
+          "  var meta = panel.querySelector('[data-role=metaList]');" +
+          '  var total = null;' +
+          '  if (meta) {' +
+          "    var dts = meta.querySelectorAll('dt');" +
+          "    var dds = meta.querySelectorAll('dd');" +
+          '    for (var i = 0; i < dts.length; i += 1) {' +
+          "      if (dts[i].textContent.indexOf('总耗时') >= 0) total = parseFloat(dds[i].textContent);" +
+          '    }' +
+          '  }' +
+          '  return { steps: stepDurations, total: total };' +
+          '})()',
+      ),
+    );
+    const lastThree = (durationsL.steps || []).slice(-3);
+    const stepSum = lastThree.reduce((sum, v) => sum + v, 0);
+    check(
+      '总耗时是这一轮各步耗时之和',
+      Array.isArray(durationsL.steps) &&
+        durationsL.steps.length >= 3 &&
+        typeof durationsL.total === 'number' &&
+        Math.abs(durationsL.total - stepSum) <= 0.25,
+      `总耗时 ${durationsL.total} / 各步 ${JSON.stringify(durationsL.steps)}`,
+    );
+
     const parsedL = postBodies
       .map((body) => {
         try {
@@ -3100,6 +3135,96 @@ async function main() {
 
     mockServerU.closeAllConnections();
     await new Promise((resolve) => mockServerU.close(resolve));
+
+    // ---------- 场景 V：全局设置（运行环境主机与工作目录） ----------
+    process.stdout.write('\n  场景 V · 全局设置面板改运行环境\n');
+    const mockServerV = createServer({ mode: 'mock', publicPath: '', dataDir: SCRATCH_DATA });
+    await new Promise((resolve) => mockServerV.listen(0, '127.0.0.1', resolve));
+    const mockBaseV = `http://127.0.0.1:${mockServerV.address().port}`;
+    await openFresh(cdp, mockBaseV);
+
+    // 侧栏底部一直写着当前生效的主机与工作目录。
+    const sideV = await cdp.evaluate("document.getElementById('settingsMeta').textContent");
+    check(
+      '侧栏底部显示当前运行环境',
+      typeof sideV === 'string' && sideV.includes('/') && sideV.length > 3,
+      sideV,
+    );
+
+    await cdp.evaluate(
+      "(function () {" +
+        "var b = document.querySelector('[data-role=settingsBtn]');" +
+        'if (b) b.click();' +
+        '})()',
+    );
+    const dialogV = await waitFor(
+      cdp,
+      "document.querySelector('[data-role=settingsDialog]').open ? 'open' : ''",
+      60,
+      200,
+    );
+    check('点一下就打开全局设置', dialogV === 'open', `状态 ${dialogV}`);
+
+    const fieldsV = await cdp.evaluate(
+      '(function () {' +
+        "  var h = document.querySelector('[data-role=settingsHost]');" +
+        "  var w = document.querySelector('[data-role=settingsWorkdir]');" +
+        '  return { host: h ? h.value : "", workdir: w ? w.value : "" };' +
+        '})()',
+    );
+    check(
+      '对话框里填着当前生效的主机与工作目录',
+      typeof fieldsV.host === 'string' &&
+        fieldsV.host.length > 0 &&
+        String(fieldsV.workdir).startsWith('/'),
+      JSON.stringify(fieldsV),
+    );
+
+    // 改成一个这台机器不是的主机：保存后应当立刻说出"跑不了"。
+    await cdp.evaluate(
+      '(function () {' +
+        "  var h = document.querySelector('[data-role=settingsHost]');" +
+        "  h.value = 'm3g999';" +
+        "  h.dispatchEvent(new Event('input', {bubbles:true}));" +
+        "  var b = document.querySelector('[data-role=settingsSave]');" +
+        '  if (b) b.click();' +
+        '})()',
+    );
+    const stateV = await waitFor(
+      cdp,
+      "document.querySelector('[data-role=settingsState]').textContent.indexOf('m3g999') >= 0 ? 'bad' : ''",
+      60,
+      200,
+    );
+    check('改成一个不对的主机后立刻报出来', stateV === 'bad', `状态 ${stateV}`);
+
+    const sideAfterV = await cdp.evaluate("document.getElementById('settingsMeta').textContent");
+    check(
+      '侧栏底部跟着新设置走',
+      typeof sideAfterV === 'string' && sideAfterV.includes('m3g999'),
+      sideAfterV,
+    );
+
+    // 改回来，后面的场景还要在这个环境里跑。
+    await cdp.evaluate(
+      '(function () {' +
+        "  var h = document.querySelector('[data-role=settingsHost]');" +
+        `  h.value = ${JSON.stringify(fieldsV.host)};` +
+        "  h.dispatchEvent(new Event('input', {bubbles:true}));" +
+        "  var b = document.querySelector('[data-role=settingsSave]');" +
+        '  if (b) b.click();' +
+        '})()',
+    );
+    const okV = await waitFor(
+      cdp,
+      "document.querySelector('[data-role=settingsState]').textContent.indexOf('环境正常') >= 0 ? 'ok' : ''",
+      60,
+      200,
+    );
+    check('改回正确的主机后恢复正常', okV === 'ok', `状态 ${okV}`);
+
+    mockServerV.closeAllConnections();
+    await new Promise((resolve) => mockServerV.close(resolve));
 
     ws.close();
   } finally {
