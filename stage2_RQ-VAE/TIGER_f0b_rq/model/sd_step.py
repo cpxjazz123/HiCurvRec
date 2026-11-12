@@ -21,10 +21,26 @@ ANCHORS_PER_STEP = 4096 // (struct_distill.ONE_HOP + struct_distill.TWO_HOP + st
 
 
 def quantised_readout(module, embeddings: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-    """``(z, q)``: the encoder output and the mixed quantiser's readout of it, along the trainer's own path."""
-    z = module.encoder(embeddings)
-    readout, _, _, _ = module.rq(z)
-    return z, readout
+    """``(z, q)``: the encoder output and the mixed quantiser's readout of it.
+
+    The quantiser runs with its rank-reduce skipped and the model in eval, for the same reason :func:`codes_of` does: the balanced assignment is a training-time
+    rule that issues a collective, and a structural step that mixes collectives with an unrelated code readout is what turned the first two smokes into a device-side
+    assert.  The straight-through value and its gradient are unaffected -- eval only changes dropout, and this term is defined on the selection path the export uses.
+    """
+    was_training = module.training
+    layers = list(module.rq.vq_layers)
+    flags = [bool(getattr(layer, "_skip_ddp_reduce", False)) for layer in layers]
+    module.eval()
+    for layer in layers:
+        layer._skip_ddp_reduce = True
+    try:
+        z = module.encoder(embeddings)
+        readout, _, _, _ = module.rq(z)
+        return z, readout
+    finally:
+        for layer, flag in zip(layers, flags):
+            layer._skip_ddp_reduce = flag
+        module.train(was_training)
 
 
 def codes_of(module, embeddings: torch.Tensor) -> torch.Tensor:

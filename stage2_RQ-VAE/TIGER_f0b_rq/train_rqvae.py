@@ -636,6 +636,7 @@ def probe_lambda_star(module, embeddings, batch_ids, rows, neighbours, two_hop, 
     _sync("rq done")
     quantized = z + (readout - z).detach()
     recon = module.decoder(quantized)
+    _sync("decoder done")
     rq_loss = torch.nn.functional.mse_loss(recon, embeddings) + quant_loss
     sd_loss = sd_step.structural_loss(module, embeddings, batch_ids, rows, neighbours, two_hop, n_items)
     _sync("structural loss done")
