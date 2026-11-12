@@ -61,6 +61,25 @@ def _python_for() -> str:
     return contract.STAGE2_PYTHON
 
 
+def _constants_from_config(loader_file: Path, config_file: Path) -> dict:
+    """The frozen constants of a tree that reads them from its own config loader.
+
+    The loader is the tree's own module, so a candidate cannot pass the check with
+    one set of values and train with another: this is the code the trainer imports.
+    """
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("_candidate_train_config", loader_file)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("the config loader cannot be imported: " + str(loader_file))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    config = module.load_train_config(config_file)
+    return {name: getattr(config, name) for name in
+            ("EPOCHS", "BATCH_SIZE_PER_RANK", "LR", "WEIGHT_DECAY", "CODEBOOK_NUM",
+             "CODEBOOK_DIM", "GRADIENT_CLIP_NORM", "SEED")}
+
+
 def check_constants(tree: Path | str) -> dict:
     """The candidate's frozen constants match the table, and its launcher is ours.
 
@@ -75,6 +94,19 @@ def check_constants(tree: Path | str) -> dict:
         return {"status": "FAIL", "detail": "the entry point is missing", "name": "constants"}
     text = entry.read_text(encoding="utf-8")
     problems: list = []
+    # A trainer may take its constants from `config/train_config.json` through its
+    # own `train_config.py` (the frozen baseline does). Then the literal parse below
+    # finds `EPOCHS = CONFIG.EPOCHS`, which is not a literal, and the check would
+    # reject a faithful tree. The effective values are read the way the trainer
+    # reads them, and the literal path stays for trees that declare them directly.
+    from_config: dict = {}
+    config_file = tree / "config" / "train_config.json"
+    loader_file = tree / "train_config.py"
+    if config_file.is_file() and loader_file.is_file():
+        try:
+            from_config = _constants_from_config(loader_file, config_file)
+        except Exception as exc:                              # noqa: BLE001
+            problems.append("the config cannot be read: " + str(exc)[:200])
     for name, value in (("EPOCHS", contract.FROZEN["epochs"]),
                         ("BATCH_SIZE_PER_RANK", contract.FROZEN["batch_size_per_rank"]),
                         ("LR", contract.FROZEN["learning_rate"]),
@@ -83,6 +115,12 @@ def check_constants(tree: Path | str) -> dict:
                         ("CODEBOOK_DIM", contract.FROZEN["codebook_dim"]),
                         ("GRADIENT_CLIP_NORM", contract.FROZEN["gradient_clip_norm"]),
                         ("SEED", contract.FROZEN["seed"])):
+        if name in from_config:
+            found = from_config[name]
+            if found != value:
+                problems.append(name + " is " + repr(found) + ", the frozen value is "
+                                + repr(value))
+            continue
         marker = name + " "
         line = next((row for row in text.splitlines()
                      if row.startswith(marker) and "=" in row), "")

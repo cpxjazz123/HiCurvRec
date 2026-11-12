@@ -144,6 +144,13 @@ def _canonical_source(tree: Path) -> dict:
         if found is not None:
             text = text[:found.start()] + 'ARM_NAME = "<arm>"' + text[found.end():]
         table[str(relative)] = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    # The trainer's constants live in config/*.json. They are not Python, so a
+    # digest that walked only *.py would call a candidate with a different budget a
+    # faithful copy of the baseline.
+    for path in sorted((tree / "config").glob("*.json")):
+        if path.is_file():
+            table[str(path.relative_to(tree)).replace("\\", "/")] = \
+                hashlib.sha256(path.read_bytes()).hexdigest()
     return table
 
 

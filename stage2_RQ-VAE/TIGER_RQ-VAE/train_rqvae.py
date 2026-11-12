@@ -35,6 +35,7 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
 from model import RQVAE
+from train_config import load_train_config
 
 
 # === 路径常量（无绝对路径；由文件自身向上找仓库标记推导）===
@@ -67,28 +68,33 @@ LOG_DIR        = REPO_ROOT / "stage2_RQ-VAE" / ARM_NAME / "logs"
 METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 
 
-# === 硬编码超参 (原 argparse default 值, 保留原 TIGER 默认) ===
-EPOCHS              = 3000
-BATCH_SIZE_PER_RANK = 1024       # 每卡 batch, 总 batch = 1024 * 4 = 4096
-LR                  = 1e-3
-WEIGHT_DECAY        = 1e-4
-HIDDEN_SIZES        = (512, 256, 128)
-CODEBOOK_NUM        = 3
-CODEBOOK_SIZE       = (256, 256, 256)
-CODEBOOK_DIM        = 32
-BETA                = 0.25
-VQ_TYPE             = "vq"
-EMA_DECAY           = 0.99
-SK_EPSILON          = 0.003
-SK_ITERS            = 50
-PCA_DIM             = 0
-XAVIER_INIT         = True
-WARMUP_EPOCHS       = 50
-GRADIENT_CLIP_NORM  = 1.0
-OPTIMIZER           = "AdamW"
-SEED                = 42
-NUM_WORKERS         = 0  # 2026-09-24: 0 防 DDP fork storm (4 rank × 4 worker = 16 子进程在 barrier 后挂死)
-EVAL_INTERVAL       = 50
+# === 超参来自 config/train_config.json (schema genrec.stage2.train.v1) ===
+# 一个 JSON 文件、严格校验：缺键/多键/类型错/越界都在碰 GPU 之前 ConfigError。
+# 路径与 ARM_NAME 不在配置里 —— 它们归框架 (CLAUDE.md 19b0/67)。
+CONFIG_FILE = Path(__file__).resolve().with_name("config") / "train_config.json"
+CONFIG = load_train_config(CONFIG_FILE)
+
+EPOCHS              = CONFIG.EPOCHS
+BATCH_SIZE_PER_RANK = CONFIG.BATCH_SIZE_PER_RANK     # 每卡 batch, 总 batch = 每卡 * world_size
+LR                  = CONFIG.LR
+WEIGHT_DECAY        = CONFIG.WEIGHT_DECAY
+HIDDEN_SIZES        = CONFIG.HIDDEN_SIZES
+CODEBOOK_NUM        = CONFIG.CODEBOOK_NUM
+CODEBOOK_SIZE       = CONFIG.CODEBOOK_SIZE
+CODEBOOK_DIM        = CONFIG.CODEBOOK_DIM
+BETA                = CONFIG.BETA
+VQ_TYPE             = CONFIG.VQ_TYPE
+EMA_DECAY           = CONFIG.EMA_DECAY
+SK_EPSILON          = CONFIG.SK_EPSILON
+SK_ITERS            = CONFIG.SK_ITERS
+PCA_DIM             = CONFIG.PCA_DIM
+XAVIER_INIT         = CONFIG.XAVIER_INIT
+WARMUP_EPOCHS       = CONFIG.WARMUP_EPOCHS
+GRADIENT_CLIP_NORM  = CONFIG.GRADIENT_CLIP_NORM
+OPTIMIZER           = CONFIG.OPTIMIZER
+SEED                = CONFIG.SEED
+NUM_WORKERS         = CONFIG.NUM_WORKERS
+EVAL_INTERVAL       = CONFIG.EVAL_INTERVAL
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
 # 候选是否采用完全交由下游 stage3 test_R@10 裁决.
 # 保留 best-collision checkpoint 仅作为导出用的最后一次快照.
@@ -306,7 +312,7 @@ def main() -> None:
     if rank == 0:
         print(f"[RecBole RQ-VAE] device={device} all_items={len(all_embeddings)} train_items={len(train_embeddings)} world_size={world_size}", flush=True)
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
-        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size)
+        _record(rank, "train_start", config_sha256=CONFIG.sha256, config_path=CONFIG.path, epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size)
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
