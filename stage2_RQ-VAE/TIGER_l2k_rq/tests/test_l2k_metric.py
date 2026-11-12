@@ -106,17 +106,18 @@ def test_gradcheck_on_the_point_argument():
     def f(points):
         return m.curved_squared(points, codes, kappa)
 
-    start = pc.project(torch.randn(3, 8) * 0.05, 1.0).double()
+    start = pc.project(torch.randn(3, 8) * 0.05, 1.0).double().requires_grad_(True)
     assert torch.autograd.gradcheck(f, (start,), eps=1e-6, atol=1e-4)
 
 
 def _tiny_model():
     from model import RQVAE
     torch.manual_seed(0)
-    config = SimpleNamespace(hidden_sizes=[16, 8], dropout=0.0, codebook_num=3, codebook_size=[16, 16, 16],
-                             codebook_dim=8, beta=0.25, vq_type="vq", ema_decay=0.99, sk_epsilon=-1.0, sk_iters=-1,
+    # the mixed quantizer splits a 32-wide code into two halves of 16, so the toy has to respect that width
+    config = SimpleNamespace(hidden_sizes=[32, 16], dropout=0.0, codebook_num=3, codebook_size=[16, 16, 16],
+                             codebook_dim=32, beta=0.25, vq_type="vq", ema_decay=0.99, sk_epsilon=-1.0, sk_iters=-1,
                              use_sk=False)
-    model = RQVAE(config, in_dim=8)
+    model = RQVAE(config, in_dim=32)
     model.eval()
     return model
 
@@ -124,7 +125,7 @@ def _tiny_model():
 def test_level_one_codes_are_identical_with_and_without_level1_on():
     """Acceptance 2, stated as the issue states it: the level-1 assignment cannot depend on the level-1 switch's alternative."""
     ids = torch.arange(256)
-    embeddings = torch.randn(256, 8)
+    embeddings = torch.randn(256, 32)
     model = _tiny_model()
     saved = (m.BEHAVIOUR_OFF, m.LEVEL1_ON)
     try:
@@ -144,7 +145,7 @@ def test_level_one_codes_are_identical_with_and_without_level1_on():
 
 def test_the_encoder_receives_gradient_and_the_curvature_is_not_a_parameter():
     model = _tiny_model()
-    embeddings = torch.randn(32, 8)
+    embeddings = torch.randn(32, 32)
     ids = torch.arange(32)
     reconstructed, quant_loss, _, _ = model(embeddings, item_ids=ids)
     loss, _ = model.compute_loss(embeddings, reconstructed, quant_loss)
