@@ -100,7 +100,7 @@ def main() -> int:
     parser.add_argument("--keep", action="store_true")
     args = parser.parse_args()
 
-    staging = Path("/tmp") / ("r2_arm_%s" % args.arm.replace("/", "__"))
+    staging = RESEARCH / "_stage" / ("r2_arm_%s" % args.arm.replace("/", "__"))
     shutil.rmtree(staging, ignore_errors=True)
     try:
         files, key = stage(args.arm, staging)
@@ -111,7 +111,15 @@ def main() -> int:
                                            "recall_keys": sorted(json.loads(
                                                (staging / "recall.json").read_text()))})
         if not args.dry_run:
+            # The ledger must cover the directory, not just this staging set:
+            # a number that earlier uploads filled tree-and-all keeps those
+            # objects, and they need a checksum too.
+            result = ledger.reconcile(number)
             ledger.save()
+            for relative in sorted(result["added"]):
+                print("  recorded without uploading: %s/%s" % (number, relative))
+            for relative in result["recorded_but_absent"]:
+                print("  WARNING recorded but not in the bucket: %s/%s" % (number, relative))
         print("%s: %d files, recall keys %d -> %s" % (
             args.arm, len(files), len(json.loads((staging / "recall.json").read_text())), target))
         print(("would upload to " if args.dry_run else "uploaded to ") + target)

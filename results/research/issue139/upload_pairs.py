@@ -128,7 +128,7 @@ def main() -> int:
         rows = rows[:args.limit]
     uploaded, counts = 0, {}
     for row in rows:
-        staging = Path("/tmp") / ("r2_pair_%s" % row["sid_sha256"][:12])
+        staging = RESEARCH / "_stage" / ("r2_pair_%s" % row["sid_sha256"][:12])
         shutil.rmtree(staging, ignore_errors=True)
         bundle = build(row, staging)
         number = ledger.assign(bundle["key"])
@@ -137,6 +137,14 @@ def main() -> int:
             ledger.record(number, bundle["key"], bundle["files"], {"pair": bundle["pair"],
                                                                   "recall_keys": bundle["recall_keys"],
                                                                   "target": target})
+            if not args.dry_run:
+                # Same rule as the Stage 3 uploader: the entry must describe the
+                # directory, including objects an earlier upload left there.
+                result = ledger.reconcile(number)
+                for relative in sorted(result["added"]):
+                    print("  recorded without uploading: %s/%s" % (number, relative))
+                for relative in result["recorded_but_absent"]:
+                    print("  WARNING recorded but not in the bucket: %s/%s" % (number, relative))
             uploaded += 1
             if uploaded % 10 == 0 or uploaded == 1:
                 print("  [%d/%d] %s -> %s" % (uploaded, len(rows), row["stage2_rel"][:52], target),
