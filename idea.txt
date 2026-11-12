@@ -7,11 +7,6 @@
   "issue": "unassigned",
   "date": "2026-11-12",
   "supersedes": "C-212（同 SID 噪声标定，已完成）",
-  "rules": {
-    "completeness": "sections 恰好 10 段",
-    "traceability": "每个数值只写一次，并带来源路径",
-    "single_run": "一个候选跑一次正式训练，单次定论"
-  },
   "references": {
     "af3_convention": "tools/research/science/community_curvature/export_edge_af3.py（issue #136 约定：二值无向训练图，臂只查表）",
     "af3_formula": "results/research/stage3_queue/_stage/TIGER_mixed_rq_A/TIGER_mixed_rq_A/model/af3_structure.py（kappa 参考实现）",
@@ -91,11 +86,5 @@
   },
   "result": {
     "status": "not_run"
-  },
-  "self_check": {
-    "sections": 10,
-    "single_variable": "AF3 曲率项进入 Sinkhorn 代价 + L_struct 训练码字势",
-    "prereg_tiers": 3,
-    "boundaries": 6
   }
 }
