@@ -1,0 +1,65 @@
+{
+ "device": "cuda:0",
+ "items": 24587,
+ "gate_on_vs_off_per_level_changed": [
+  0,
+  0,
+  0
+ ],
+ "items_with_all_codes_identical": 24587,
+ "per_level_rates": [
+  0.0,
+  0.0,
+  0.0
+ ],
+ "batch": {
+  "size": 1024,
+  "enabled_items_in_batch": [
+   7772,
+   18904,
+   19286,
+   20277
+  ],
+  "level1_codes_changed": 0
+ },
+ "level1_histogram_sign": {
+  "items": 24587,
+  "codes_used": 48,
+  "top1_share": 0.11371863179729125,
+  "top5_share": 0.3952495221051775,
+  "entropy_share_of_max": 0.8366730596994589,
+  "counts_top10": [
+   2796,
+   2231,
+   1645,
+   1641,
+   1405,
+   1337,
+   1334,
+   1029,
+   852,
+   836
+  ],
+  "sid": "results/stage2_RQ-VAE/TIGER_sign_rq/item_sids.json"
+ },
+ "level1_histogram_baseline": {
+  "items": 24587,
+  "codes_used": 247,
+  "top1_share": 0.034937161914833044,
+  "top5_share": 0.13104486110546223,
+  "entropy_share_of_max": 0.8690964232405514,
+  "counts_top10": [
+   859,
+   627,
+   605,
+   568,
+   563,
+   563,
+   476,
+   438,
+   428,
+   427
+  ],
+  "sid": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json"
+ }
+}
