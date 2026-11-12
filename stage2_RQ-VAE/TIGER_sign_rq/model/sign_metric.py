@@ -147,18 +147,45 @@ def regime_kappa(item_ids, delta: dict[int, float | None], table: dict | None = 
 # --- the level-1 cost under a per-item curvature -------------------------------------------------------------------
 
 
+def _mobius_add_rows(a: torch.Tensor, b: torch.Tensor, c: torch.Tensor) -> torch.Tensor:
+    """``a (+) b`` under a curvature that varies per row.
+
+    ``poincare_contract.mobius_add`` takes a scalar curvature (it calls ``float(c)``), and this mechanism needs one curvature per item, so the same
+    expression is written here with broadcasting: with ``<.,.>`` the inner product on the last axis,
+
+        a (+) b = ((1 + 2c<a,b> + c|b|^2) a + (1 - c|a|^2) b) / (1 + 2c<a,b> + c^2 |a|^2 |b|^2)
+    """
+    inner = (a * b).sum(-1, keepdim=True)
+    a2 = a.pow(2).sum(-1, keepdim=True)
+    b2 = b.pow(2).sum(-1, keepdim=True)
+    c = c.unsqueeze(-1) if c.dim() == a.dim() - 1 else c
+    numerator = (1.0 + 2.0 * c * inner + c * b2) * a + (1.0 - c * a2) * b
+    denominator = 1.0 + 2.0 * c * inner + c.pow(2) * a2 * b2
+    return numerator / denominator.clamp_min(1e-30)
+
+
+def _into_row_balls(points: torch.Tensor, c: torch.Tensor) -> torch.Tensor:
+    """Scale a row down when its curvature demands a smaller ball: ``sqrt(c)|x| <= 1 - eps``."""
+    c = c.reshape(-1, 1)
+    norm = points.norm(dim=-1, keepdim=True)
+    limit = (1.0 - ARTANH_EPS) / torch.sqrt(c)
+    scale = torch.where(norm > limit, limit / norm.clamp_min(1e-30), torch.ones_like(norm))
+    return points * scale
+
+
 def curved_squared(residual_h: torch.Tensor, code_balls: torch.Tensor, kappa: torch.Tensor) -> torch.Tensor:
     """``d_kappa(p, q)^2`` for every (item, code) pair, ``kappa`` one value per row.
 
     ``residual_h`` is ``[B, D]`` in the ball, ``code_balls`` is ``[K, D]`` in the ball; the returned matrix is ``[B, K]``.  The expression is the frozen
-    ``(2/sqrt(c)) artanh(sqrt(c)|(-p) (+) q|)`` with the curvature varying per row, evaluated by broadcasting so that no ``[B, K, D]`` tensor is built for
-    the 24k-item export.
+    ``(2/sqrt(c)) artanh(sqrt(c)|(-p) (+) q|)`` with the curvature varying per row.  A row whose curvature shrinks the ball is first scaled into it --
+    the same projection the frozen contract applies, applied per row -- and the pair is evaluated by broadcasting, so the 24k-item export never builds a
+    ``[B, K, D]`` tensor.
     """
     c = torch.as_tensor(kappa, dtype=residual_h.dtype, device=residual_h.device).reshape(-1, 1)
-    p = residual_h.unsqueeze(1)
+    p = _into_row_balls(residual_h, c).unsqueeze(1)
     q = code_balls.unsqueeze(0)
-    difference = poincare_contract.mobius_add(-p, q, c.unsqueeze(-1))
-    norm = difference.norm(dim=-1).clamp_min(0.0)
+    difference = _mobius_add_rows(-p, q, c)
+    norm = difference.norm(dim=-1)
     root = torch.sqrt(c)
     argument = (root * norm).clamp(max=1.0 - ARTANH_EPS)
     return ((2.0 / root) * torch.atanh(argument)).pow(2)
