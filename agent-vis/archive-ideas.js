@@ -4,8 +4,9 @@
  *
  * `ideas/` 只放还没执行的机制（`result.status === "not_run"`）。一旦某份 idea 真的
  * 跑过（`running` / `completed` / `failed`），它的数值就固定了，继续留在 `ideas/`
- * 会让页面把"历史结论"当成"待做的方向"读。这个脚本把它们移到 `ideas_archive/`，
- * 文件名保持不变，页面只读 `ideas/`，于是自然只看到待做的方向。
+ * 会让页面把"历史结论"当成"待做的方向"读。这个脚本把它们移到
+ * `ideas/_archive/`，文件名保持不变；页面扫 `ideas/` 时跳过归档目录，
+ * 于是自然只看到待做的方向。
  *
  * 判定规则写在一处：结果对象的 `status` 只要不是 `not_run` 就归档；缺 status 或
  * 解析失败的文件原地不动并被报告出来 —— 判不准的东西不搬。
@@ -17,13 +18,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { SANDBOX_ROOT } from './config.js';
+import { currentWorkdir, ideasArchiveDir, IDEAS_ARCHIVE_NAME } from './config.js';
 
 /** 正在执行的机制留在 ideas/ 的那个状态。 */
 export const ACTIVE_STATUS = 'not_run';
 
 /** 归档规则，出现在输出与文档里，跑的时候只用这一份。 */
-export const ARCHIVE_RULE = `result.status 不是 ${ACTIVE_STATUS} 就归档到 ideas_archive/`;
+export const ARCHIVE_RULE = `result.status 不是 ${ACTIVE_STATUS} 就归档到 ideas/${IDEAS_ARCHIVE_NAME}/`;
 
 /**
  * 扫描一份目录并按规则搬文件。
@@ -32,8 +33,9 @@ export const ARCHIVE_RULE = `result.status 不是 ${ACTIVE_STATUS} 就归档到 
  * `dryRun` 只报告，不改磁盘。
  */
 export function archiveReady({ ideasDir, archiveDir, dryRun = false } = {}) {
-  const source = ideasDir || path.join(SANDBOX_ROOT, 'ideas');
-  const target = archiveDir || path.join(SANDBOX_ROOT, 'ideas_archive');
+  const source = ideasDir || path.join(currentWorkdir(), 'ideas');
+  // 归档目录在 ideas/ 下面：待做与归档同根，但互不串味。
+  const target = archiveDir || ideasArchiveDir();
   const moved = [];
   const kept = [];
   const broken = [];
@@ -52,8 +54,13 @@ export function archiveReady({ ideasDir, archiveDir, dryRun = false } = {}) {
     for (const entry of entries) {
       if (entry.name.startsWith('.')) continue;
       const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) walk(full);
-      else if (entry.name.endsWith('_idea.json')) files.push(full);
+      // 归档目录本身跳过：归档过的东西不再归档一次（否则会一层层套进自己）。
+      if (entry.isDirectory()) {
+        if (entry.name === IDEAS_ARCHIVE_NAME) continue;
+        walk(full);
+      } else if (entry.name.endsWith('_idea.json')) {
+        files.push(full);
+      }
     }
   };
   walk(source);

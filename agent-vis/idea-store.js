@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { currentWorkdir, dataDir } from './config.js';
+import { currentWorkdir, dataDir, IDEAS_ARCHIVE_NAME } from './config.js';
 
 /** 一份 idea 的长度上限：够放一份机制定义，又不至于把每次请求撑爆。 */
 export const MAX_IDEA_CHARS = 200_000;
@@ -24,8 +24,7 @@ function ideaFile() {
  * 页面读**最新修改**的那一份；目录里恰好只有一份时就是它。这样新增一个方向只需要
  * 往 ideas/ 里放一个文件，不用改代码，也不会让旧方向被静默覆盖。
  */
-function ideaDocPath() {
-  const folder = path.join(currentWorkdir(), 'ideas');
+export function scanIdeaFiles(folder) {
   const found = [];
   // 方向是目录：ideas/<方向>/<方向>_idea.json；顶层直接放 *_idea.json 的老写法也认，
   // 于是一个方向一个目录与扁平存放并存，页面读最新的那一份。
@@ -40,6 +39,8 @@ function ideaDocPath() {
       if (entry.name.startsWith('.')) continue;
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) {
+        // 归档目录跳过：归档过的方向不是待做的方向，页面不该再看到它们。
+        if (entry.name === IDEAS_ARCHIVE_NAME) continue;
         walk(full);
       } else if (entry.name.endsWith('_idea.json')) {
         let mtime = 0;
@@ -53,6 +54,12 @@ function ideaDocPath() {
     }
   };
   walk(folder);
+  return found;
+}
+
+function ideaDocPath() {
+  const folder = path.join(currentWorkdir(), 'ideas');
+  const found = scanIdeaFiles(folder);
   if (found.length === 0) return null;
   found.sort((a, b) => b.mtime - a.mtime || a.full.localeCompare(b.full));
   return found[0].full;

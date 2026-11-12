@@ -9,6 +9,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { ACTIVE_STATUS, archiveReady } from '../archive-ideas.js';
+import { scanIdeaFiles } from '../idea-store.js';
+import { IDEAS_ARCHIVE_NAME } from '../config.js';
 
 const here = path.dirname(new URL(import.meta.url).pathname);
 const scratch = path.join(here, '..', '.out', `archive-ideas-${process.pid}`);
@@ -20,10 +22,19 @@ function writeIdea(dir, name, status) {
   fs.writeFileSync(path.join(dir, name), `${JSON.stringify(doc, null, 2)}\n`);
 }
 
+/** 列 ideas/ 下的东西：归档目录本身不算"待做的方向"。 */
+function listIdeas(ideas) {
+  return fs
+    .readdirSync(ideas)
+    .filter((name) => name !== IDEAS_ARCHIVE_NAME)
+    .sort();
+}
+
 function fresh() {
   fs.rmSync(scratch, { recursive: true, force: true });
   const ideas = path.join(scratch, 'ideas');
-  const archive = path.join(scratch, 'ideas_archive');
+  // 归档目录在 ideas/ 下面（与待做同根），两边互不串味。
+  const archive = path.join(ideas, IDEAS_ARCHIVE_NAME);
   fs.mkdirSync(ideas, { recursive: true });
   return { ideas, archive };
 }
@@ -51,8 +62,33 @@ function run() {
     const out = archiveReady({ ideasDir: ideas, archiveDir: archive });
     assert.deepEqual(out.moved.map((m) => m.name).sort(), ['B_idea.json', 'C_idea.json']);
     assert.deepEqual(out.kept.map((k) => k.name), ['A_idea.json']);
-    assert.deepEqual(fs.readdirSync(ideas), ['A_idea.json']);
+    assert.deepEqual(listIdeas(ideas), ['A_idea.json']);
     assert.deepEqual(fs.readdirSync(archive).sort(), ['B_idea.json', 'C_idea.json']);
+  });
+
+  test('归档目录就在 ideas/ 下面，两边互不串味', () => {
+    const { ideas, archive } = fresh();
+    writeIdea(ideas, 'E_idea.json', 'completed');
+    const first = archiveReady({ ideasDir: ideas, archiveDir: archive });
+    assert.deepEqual(first.moved.map((m) => m.name), ['E_idea.json']);
+    assert.equal(fs.existsSync(path.join(archive, 'E_idea.json')), true, '没搬进归档目录');
+    // 再跑一次：归档过的东西不会被再归档一次（不会套成 ideas/_archive/_archive/…）。
+    const second = archiveReady({ ideasDir: ideas, archiveDir: archive });
+    assert.deepEqual(second.moved.map((m) => m.name), [], '归档过的东西不该再被归档');
+    assert.deepEqual(second.kept.map((k) => k.name), [], '归档目录里的文件不该被当成待做的');
+    assert.equal(
+      fs.existsSync(path.join(archive, IDEAS_ARCHIVE_NAME, 'E_idea.json')),
+      false,
+      '不该套出第二层归档目录',
+    );
+  });
+
+  test('页面扫 ideas/ 时跳过归档目录', () => {
+    const { ideas, archive } = fresh();
+    writeIdea(ideas, 'F_idea.json', ACTIVE_STATUS);
+    writeIdea(archive, 'G_idea.json', 'completed');
+    const found = scanIdeaFiles(ideas).map((f) => path.basename(f.full)).sort();
+    assert.deepEqual(found, ['F_idea.json'], '归档目录里的方向不该被页面读到');
   });
 
   test('文件名原样保留，内容一字不动', () => {
@@ -68,7 +104,7 @@ function run() {
     writeIdea(ideas, 'E_idea.json', 'completed');
     const out = archiveReady({ ideasDir: ideas, archiveDir: archive, dryRun: true });
     assert.deepEqual(out.moved.map((m) => m.name), ['E_idea.json']);
-    assert.deepEqual(fs.readdirSync(ideas), ['E_idea.json']);
+    assert.deepEqual(listIdeas(ideas), ['E_idea.json']);
     assert.equal(fs.existsSync(archive), false);
   });
 
@@ -80,7 +116,7 @@ function run() {
     assert.equal(out.moved.length, 0);
     assert.deepEqual(out.kept.map((k) => k.name), ['G_idea.json']);
     assert.deepEqual(out.broken.map((b) => b.name), ['F_idea.json']);
-    assert.deepEqual(fs.readdirSync(ideas).sort(), ['F_idea.json', 'G_idea.json']);
+    assert.deepEqual(listIdeas(ideas), ['F_idea.json', 'G_idea.json']);
   });
 
   test('只认 *_idea.json', () => {

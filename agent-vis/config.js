@@ -143,6 +143,20 @@ export function agentEnvProblem({ hostname = os.hostname(), workdir = currentWor
   return null;
 }
 
+/**
+ * 归档目录：在 ideas/ 下面，名字固定。
+ *
+ * 归档与待做放在同一个目录下（ideas/_archive/），但两边互不串味：
+ * 扫 ideas/ 的地方一律跳过这个目录 —— 页面只该看到待做的方向，
+ * 归档脚本也不该把归档过的东西再归档一次。
+ */
+export const IDEAS_ARCHIVE_NAME = '_archive';
+
+/** 归档目录的绝对路径。 */
+export function ideasArchiveDir() {
+  return path.join(currentWorkdir(), 'ideas', IDEAS_ARCHIVE_NAME);
+}
+
 /** 读出全局设置。 */
 export function getGlobalSettings() {
   return { ...globalSettings };
