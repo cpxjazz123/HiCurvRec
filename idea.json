@@ -28,9 +28,14 @@
     },
     "success_line": {
       "value": 0.065,
-      "role": "成功线（CLAUDE.md §25）"
+      "source": "CLAUDE.md §25（Stage3 test_R@10 > 0.065 为采纳标准）",
+      "role": "成功线"
     },
-    "delta_threshold": 0.001062,
+    "delta_threshold": {
+      "value": 0.001062,
+      "source": "results/research/line_closure/line_closure_2026-11-12.md:76（F0 +1.9% 的绝对差，为噪声 20.3 倍）",
+      "role": "可分辨差值参照（F0 对历史基线的增益）"
+    },
     "same_sid_noise": {
       "value": 5.22e-05,
       "source": "results/research/issue212",
