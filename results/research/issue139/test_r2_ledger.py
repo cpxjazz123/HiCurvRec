@@ -124,6 +124,46 @@ def test_withdraw_retires_a_number_and_keeps_what_was_deleted() -> str:
     return "a withdrawn number leaves the shelf, keeps its checksums, and frees no number for reuse"
 
 
+def test_renumber_moves_a_number_and_rewrites_its_bucket_path() -> str:
+    ledger = _fresh_ledger()
+    ledger.record("57", "TIGER_struct_mixed_rq", {"item_sids.json": "a"},
+                  {"target": "r2:genrec/57/", "arm": "TIGER_struct_mixed_rq"})
+    ledger.renumber("57", "51")
+    if "57" in ledger.entries:
+        raise AssertionError("renumber left the old number behind")
+    entry = ledger.entries.get("51", {})
+    if entry.get("files") != {"item_sids.json": "a"}:
+        raise AssertionError("renumber lost the file map: %r" % (entry,))
+    if entry.get("target") != "r2:genrec/51/":
+        raise AssertionError("renumber did not rewrite the bucket path: %r" % (entry,))
+    if entry.get("renumbered_from") != "57":
+        raise AssertionError("renumber did not record where it came from: %r" % (entry,))
+    return "a renumbered entry keeps its files and points at its new directory"
+
+
+def test_renumber_refuses_a_number_that_is_taken_or_retired() -> str:
+    ledger = _fresh_ledger()
+    ledger.record("51", "kept", {"item_sids.json": "k"})
+    ledger.record("57", "moved", {"item_sids.json": "m"})
+    try:
+        ledger.renumber("57", "51")
+    except RuntimeError as exc:
+        if "51" not in str(exc):
+            raise AssertionError("the refusal does not name the taken number: %s" % exc)
+    else:
+        raise AssertionError("renumber overwrote a live number")
+    if ledger.entries["57"].get("files") != {"item_sids.json": "m"}:
+        raise AssertionError("the refused move damaged the source entry")
+    ledger.entries["W09"] = {"retired": True, "retired_from": "09"}
+    try:
+        ledger.renumber("W09", "09")
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("renumber moved a retired record onto the live shelf")
+    return "renumber refuses a taken target and a retired source"
+
+
 def test_the_uploaders_stage_inside_the_repository() -> str:
     for name in ("upload_stage3.py", "upload_pairs.py"):
         source = (HERE / name).read_text()
@@ -140,6 +180,8 @@ if __name__ == "__main__":
                  test_reconcile_is_idempotent,
                  test_reconcile_reports_recorded_files_that_are_absent,
                  test_withdraw_retires_a_number_and_keeps_what_was_deleted,
+                 test_renumber_moves_a_number_and_rewrites_its_bucket_path,
+                 test_renumber_refuses_a_number_that_is_taken_or_retired,
                  test_the_uploaders_stage_inside_the_repository):
         try:
             note = test()

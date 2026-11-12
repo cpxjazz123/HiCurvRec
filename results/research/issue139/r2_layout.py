@@ -114,6 +114,28 @@ class Ledger:
             entry.update(extra)
         self.entries[number] = entry
 
+    def renumber(self, old: str, new: str) -> str:
+        """Move a live number to a free one, and keep the trail of where it was.
+
+        Used to close the gaps that withdrawals leave, so the shelf reads 01..NN
+        without holes. Refuses a taken target and a retired source: overwriting a
+        live number would destroy its record, and moving a retired one would put a
+        withdrawn identity back on the shelf.
+        """
+        if not old.isdigit():
+            raise RuntimeError("cannot renumber %r: only a live number moves" % old)
+        if new in self.entries:
+            raise RuntimeError("cannot renumber %s to %s: %s is already in the ledger" % (old, new, new))
+        entry = self.entries.pop(old, None)
+        if entry is None:
+            raise RuntimeError("cannot renumber %s: the ledger has no such number" % old)
+        entry.setdefault("renumbered_from", old)
+        target = entry.get("target")
+        if isinstance(target, str):
+            entry["target"] = target.replace("/%s/" % old, "/%s/" % new, 1)
+        self.entries[new] = entry
+        return new
+
     def withdraw(self, number: str, note: str) -> str:
         """Take a number off the shelf and keep what it held, under W<number>.
 
