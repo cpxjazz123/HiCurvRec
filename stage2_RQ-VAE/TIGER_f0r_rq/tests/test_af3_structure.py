@@ -134,7 +134,7 @@ def test_the_calibration_matches_the_edge_density() -> str:
     generator = torch.Generator().manual_seed(11)
     n_nodes = 40
     phi = torch.randn(n_nodes, 32, generator=generator)
-    phi[1::2] = phi[0::2] * 0.9 + 0.1 * phi[1::2]
+    phi[1::2] = phi[0::2] * 0.9 + phi[1::2] * 0.1
     pairs = np.array([[i, j] for i in range(n_nodes) for j in range(i + 1, n_nodes)][:120],
                      dtype=np.int64)
     is_edge = np.zeros(len(pairs), dtype=bool)

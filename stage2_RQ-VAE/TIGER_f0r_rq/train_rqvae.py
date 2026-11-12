@@ -512,7 +512,11 @@ def block_budget_lambda(module, base_loss: torch.Tensor, struct_loss: torch.Tens
 
 
 def probe_lambda_star(module, batch, full_embeddings, batch_ids, rows, neighbours, two_hop, n_items) -> float:
-    """``lambda* = 0.1 * ||grad_enc L_RQ|| / (||grad_enc L_SD|| + 1e-12)``, measured once on the first batch and then frozen."""
+    """``lambda* = min over {encoder, codebooks} of ||g_base|| / ||g_struct||``, measured once on the first batch and then frozen.
+
+    The rule is issue #204's: no coefficient, no epsilon, no fallback.  The same expression the acceptance asks the docstring to match is the one
+    :func:`block_budget_lambda` computes.
+    """
     def grad_norm(loss):
         params = [p for p in module.encoder.parameters() if p.requires_grad]
         grads = torch.autograd.grad(loss, params, retain_graph=False, allow_unused=True)
@@ -668,7 +672,7 @@ def main() -> None:
         "behaviour_off": struct_distill.BEHAVIOUR_OFF,
         "kappa_table_sha256": __import__("hashlib").sha256(
             (sd_step.r48k_geometry.repo_root() / sd_step.r48k_geometry.TABLE_RELPATH).read_bytes()).hexdigest(),
-        "edges": len(_edges), "n_items": _n_items, "sd_lambda_scale": struct_distill.LAMBDA_SCALE,
+        "edges": len(_edges), "n_items": _n_items,
     }
     LAMBDA_STAR = 0.0
     if not struct_distill.BEHAVIOUR_OFF:
