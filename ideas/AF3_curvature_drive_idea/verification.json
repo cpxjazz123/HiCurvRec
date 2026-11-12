@@ -1,32 +1,89 @@
 {
   "schema": "genrec.verification.v1",
-  "hypothesis": {
-    "claim": "按曲率分层的前缀会让同一前缀下的商品在训练图上结构更相近，从而抬高 Stage3 test_R@10。",
-    "confirmation": "三条读数同时成立：test_R@10 高于 F0；冻结支撑上的结构失真相对基线降 ≥5%；每层 Sinkhorn 行/列边际偏差 ≤2%。"
-  },
-  "switches": {
-    "behaviour-off": "s≡0、g≡0：代价为 d、L_struct 为 0，固定 batch 上逐位等于基线",
-    "geometry-off": "lambda=0：曲率项与结构项同关，s 照常写入诊断",
-    "both-on": "全启用，正式运行形态",
-    "wiring_check": "一个单测断言上述数值退化"
-  },
-  "preregistration": {
-    "tiers": [
-      "test_R@10 ≥ 0.065（CLAUDE.md §25）→ 成立，归档并入报告",
-      "F0 读数（0.057278）与成功线之间 → 正向不足，按单次结果记录",
-      "test_R@10 低于 F0 读数 → 否定，记录诊断并关闭方向"
-    ],
-    "run_policy": "单次正式训练（CLAUDE.md §19g）；Stage3 入场按三层码字碰撞率 <0.40（§89）。"
+  "symbols": {
+    "R": "Stage3 的 test_recall@10（test_final.json）",
+    "R_F0": "主参照读数 0.057278",
+    "R*": "成功线 0.065",
+    "D": "冻结支撑上的 AF3 结构失真（class-balanced Huber 期望）",
+    "D0": "基线同口径失真",
+    "M": "各层 Sinkhorn 分配的行/列边际最大相对偏差",
+    "kappa_ij": "AF3 曲率：4 - d_i - d_j + 3 T_ij（d 度，T 共同邻居数）",
+    "s_i": "商品结构势：邻居曲率的度加权均值，按全图标准化",
+    "g_k": "第 l 层码字 k 的可学习势",
+    "d(z,c)": "距离注册表里的度量（当前为平方欧氏）",
+    "H_delta": "Huber，delta = 1"
   },
   "checks": [
-    "kappa 恒等式对 5 节点小图与参考实现逐位一致",
-    "s_i 与标准化在 3 节点手算图上核对",
-    "lambda 与 g 初始化可复算（同输入两次同值）",
-    "三开关数值退化与 Sinkhorn 边际偏差（≤2%）",
-    "导出路径 argmin(C) 与训练路径一致；L_struct 梯度落在 g、编码器梯度经 STE 到达"
+    {
+      "id": "kappa_identity",
+      "formula": "kappa_ij = 4 - d_i - d_j + 3 T_ij",
+      "pass": "hat{kappa}_ij - kappa_ij = 0（5 节点小图逐位；含 d_i = 1 与 T_ij = 0 两种边界）"
+    },
+    {
+      "id": "potential",
+      "formula": "s_i = (sum_{j in N(i)} kappa_ij) / d_i ;  s~_i = (s_i - mu_s) / sigma_s",
+      "pass": "mean(s~) = 0 且 std(s~) = 1（3 节点手算图核对）"
+    },
+    {
+      "id": "self_scaled_lambda",
+      "formula": "lambda_l = median_i d(z_i, c_{k_i}) / median_i |s_i - g_{k_i}|",
+      "pass": "同一 SID 与码本复算两次：lambda_l^{(1)} = lambda_l^{(2)}，且写入 train_start"
+    },
+    {
+      "id": "deterministic_init",
+      "formula": "g_k^{(0)} = mean{ s_i : k_i = k }",
+      "pass": "同 seed 两次初始化：g^{(0)} 逐位相同"
+    },
+    {
+      "id": "cost_carries_curvature",
+      "formula": "C_ik = d(z_i, c_k) + lambda_l * H_delta(s_i - g_k)",
+      "pass": "argmin_k C_ik (both-on) != argmin_k C_ik (geometry-off)（固定 batch）"
+    },
+    {
+      "id": "switch_degeneration",
+      "formula": "behaviour-off: s_i = 0, g = 0 => C_ik = d(z_i, c_k), L_struct = 0 ;  geometry-off: lambda_l = 0 => C_ik = d(z_i, c_k)",
+      "pass": "固定 batch 上前向与梯度逐位等于基线"
+    },
+    {
+      "id": "sinkhorn_balance",
+      "formula": "M = max_l || Q_l 1 - 1/B ||_inf / (1/B)",
+      "pass": "M <= 0.02（Q_l 为该层均衡分配矩阵，B 为 batch 大小）"
+    },
+    {
+      "id": "export_matches_train",
+      "formula": "k_i^{eval} = argmin_k C_ik ;  k_i^{train} = argmax_k Q_ik",
+      "pass": "eval 路径与训练路径 use_sk=False 的选择逐位一致"
+    },
+    {
+      "id": "gradient_routing",
+      "formula": "dL_struct/dg != 0, dL_struct/dz = 0 ;  dL_recon/dz != 0",
+      "pass": "L_struct 的梯度落在 g 上；编码器经 STE 收到重构梯度"
+    }
   ],
-  "expectation": {
-    "expected": "结构失真相对基线降 ≥5%；test_R@10 按 6_preregistration 的三档落位。",
-    "verdict_rule": "读 test_final.json 的 test_recall@10、冻结支撑上的结构失真、每层 Sinkhorn 边际偏差。"
+  "hypothesis": {
+    "claim": "R > R_F0",
+    "formula": "R >= R_F0  AND  (D0 - D) / D0 >= 0.05  AND  M <= 0.02",
+    "pass": "三条同时成立即确认；任一不成立按预注册落档"
+  },
+  "preregistration": [
+    {
+      "tier": 1,
+      "formula": "R >= R*",
+      "action": "成立：归档 R2、写报告、关闭方向"
+    },
+    {
+      "tier": 2,
+      "formula": "R_F0 <= R < R*",
+      "action": "正向不足：记录全部诊断，单次运行即定论（§19g）"
+    },
+    {
+      "tier": 3,
+      "formula": "R < R_F0",
+      "action": "否定：记录 AF3 结构失真与 L3 collision，关闭方向"
+    }
+  ],
+  "run_policy": {
+    "formula": "runs = 1 ;  seed = 42 ;  epochs = 3000 ;  gate: 1 - |distinct(k^{(l=3)})| / N_items < 0.40",
+    "note": "单次正式训练（§19g）；L3 碰撞率低于 0.40 才进入 Stage3（§89）"
   }
 }
