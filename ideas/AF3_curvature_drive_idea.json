@@ -40,7 +40,7 @@
         "分配以 C 为代价走 Sinkhorn（eps 0.003 / 50 迭代）。",
         "L_struct = mean Huber_delta(s_i - g_{k_i})，权重 1；梯度落在 g，编码器经 STE。"
       ],
-      "unchanged": "3000 epoch、seed 42、全局 batch 4096、端口 50202、LR 1e-3/AdamW/warmup 50、码本 3×256×32、beta 0.25、Sinkhorn 参数、Stage3 冻结协议、结果目录与导出格式"
+      "unchanged": "按仓库冻结配方：config/train_config.json（21 项）+ 现有 losses/、distances/ 注册表；Stage3 协议、结果目录与导出格式沿用仓库约定。"
     },
     "5_switches": {
       "behaviour-off": "s≡0、g≡0：代价为 d、L_struct 为 0，固定 batch 上逐位等于基线",
@@ -54,15 +54,14 @@
         "F0 读数（0.057278）与成功线之间 → 正向不足，按单次结果记录",
         "test_R@10 低于 F0 读数 → 否定，记录诊断并关闭方向"
       ],
-      "run_policy": "Stage2 跑一次（seed 42、3000 epoch、冻结全局 batch）；Stage3 入场按三层码字碰撞率 <0.40 判定（CLAUDE.md §89）。"
+      "run_policy": "单次正式训练（CLAUDE.md §19g）；Stage3 入场按三层码字碰撞率 <0.40（§89）。"
     },
     "7_verification": [
       "kappa 恒等式对 5 节点小图与参考实现逐位一致",
       "s_i 与标准化在 3 节点手算图上核对",
       "lambda 与 g 初始化可复算（同输入两次同值）",
       "三开关数值退化与 Sinkhorn 边际偏差（≤2%）",
-      "导出路径 argmin(C) 与训练路径一致；L_struct 梯度落在 g、编码器梯度经 STE 到达",
-      "四卡 DDP 跑满一 epoch、真实入口冒烟导出合法 SID、MCP 冒烟通过"
+      "导出路径 argmin(C) 与训练路径一致；L_struct 梯度落在 g、编码器梯度经 STE 到达"
     ],
     "8_expectation": {
       "expected": "结构失真相对基线降 ≥5%；test_R@10 按 6_preregistration 的三档落位。",
@@ -70,18 +69,10 @@
     },
     "9_records": {
       "run_dir": "results/stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/",
-      "stage3_result": "results/stage3_T5Train/TIGER_af3_curvature_drive_rq/logs/Amazon_2023_Instruments/<run>/test_final.json",
-      "ledger": "results/research/issue139/r2_ledger.json（新编号，键=臂名/SID 摘要）",
-      "must_record": "结构失真、L3 collision、L1 使用码、二级前缀、lambda_l、test_final 全部键"
+      "stage3_dir": "results/stage3_T5Train/TIGER_af3_curvature_drive_rq/",
+      "must_record": "结构失真、L3 collision、lambda_l、test_final 全部键（路径与命名按仓库约定）"
     },
-    "10_boundaries": {
-      "graph": "构图只用训练划分交互",
-      "assignment": "分配规则保持 Sinkhorn 均衡，曲率只进代价矩阵（§19h）",
-      "af3": "AF3 数值查冻结表",
-      "runs": "只跑 both-on 一次：seed 42、3000 epoch、冻结全局 batch",
-      "downstream": "Stage3 复用冻结协议与导出格式",
-      "dispatch": "issue 编号写进本文件后再派发训练"
-    }
+    "10_boundaries": "按仓库规则执行（§19 / §19g / §19h / §89）：训练划分构图、Sinkhorn 保持均衡、AF3 查冻结表、单次运行。"
   },
   "result": {
     "status": "not_run"
