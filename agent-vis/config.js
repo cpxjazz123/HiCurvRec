@@ -845,16 +845,18 @@ export const AGENT_PROFILES = [
     loop: { enabled: true, count: 0, intervalSeconds: 0 },
     loopGate: { mode: 'files', prompt: '' },
     /**
-     * 它被审的是候选树里的代码与测试（不含冻结基线 —— 基线一个字都不许动，
-     * 也就不该进"有没有进展"的判断）。
+     * 它被审的是**当前方向那一棵**候选树的代码与测试。
+     *
+     * {arm} 由框架从当前 idea 的 arm 字段填上（例如 TIGER_af3_curvature_factor_mass_rq），
+     * 于是别的方向的候选树、以及冻结基线都不会进"有没有进展"的判断。
      */
     loopWatchFiles: [
-      'stage2_RQ-VAE/*/*.py',
-      'stage2_RQ-VAE/*/model/*.py',
-      'stage2_RQ-VAE/*/distances/*.py',
-      'stage2_RQ-VAE/*/losses/*.py',
-      'stage2_RQ-VAE/*/tests/*.py',
-      'stage2_RQ-VAE/*/config/*.json',
+      'stage2_RQ-VAE/{arm}/*.py',
+      'stage2_RQ-VAE/{arm}/model/*.py',
+      'stage2_RQ-VAE/{arm}/distances/*.py',
+      'stage2_RQ-VAE/{arm}/losses/*.py',
+      'stage2_RQ-VAE/{arm}/tests/*.py',
+      'stage2_RQ-VAE/{arm}/config/*.json',
     ],
     /**
      * 默认的交接目标：AGENT FIX 不主动往下交 —— 它的结论交给人（控制器）。
@@ -1193,9 +1195,10 @@ export const LOOP_GATE_MODES = Object.freeze(['off', 'ask', 'files', 'agent']);
 /**
  * 每个 agent 自己指定"被审的文件"：循环闸（files 模式）看的就是这些。
  *
- * 写法是相对仓库根的路径模式，星号匹配一段目录名，例如
- *   'ideas/当前方向/math.json'   —— 当前方向的那份 math.json
- *   'ideas/当前方向/xxx_idea.json' —— 当前方向的 idea 文件
+ * 写法是相对仓库根的路径模式：星号匹配一段目录名，{arm} 由框架从当前 idea 的
+ * arm 字段填上。两个例子（把星号写在文字里，免得打断注释）：
+ *   当前方向的那份 math.json   —— ideas 下 星号 目录里的 math.json
+ *   当前方向那棵候选树的 model —— stage2_RQ-VAE/{arm}/model 下的 py 文件
  * 不配就用默认的一套（当前方向的所有文件 + 候选树，不含归档与冻结基线）。
  */
 export const MAX_LOOP_WATCH_FILES = 8;

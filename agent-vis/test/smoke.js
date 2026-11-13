@@ -269,19 +269,18 @@ async function main() {
     assert.equal(fix.loopGate.mode, 'files');
     const watches = fix.loopWatchFiles || [];
     assert.ok(watches.length > 0, '要有被审文件的模式');
+    // 只盯当前方向那一棵候选树：模式里用 {arm}，由框架从 idea 的 arm 填上。
     assert.ok(
-      watches.some((p) => p.includes('stage2_RQ-VAE/')),
-      `被审的应当是候选树里的代码：${JSON.stringify(watches)}`,
+      watches.every((p) => p.startsWith('stage2_RQ-VAE/{arm}/')),
+      `被审的应当只有当前方向那棵树：${JSON.stringify(watches)}`,
     );
-    assert.ok(
-      !watches.some((p) => p.includes('TIGER_RQ-VAE')),
-      '冻结基线不该进"有没有进展"的判断',
-    );
-    // 指纹接口按这些模式算，且不含基线。
     const fp = await (await fetch(`${base}/api/ideas/fingerprint?agentId=agent-fix`)).json();
     const names = Object.keys(fp.files || {});
     assert.ok(names.length > 0, 'AGENT FIX 的指纹不该是空的');
-    assert.ok(!names.some((n) => n.startsWith('stage2_RQ-VAE/TIGER_RQ-VAE/')), '基线混进指纹了');
+    const arms = new Set(names.map((n) => n.split('/')[1]));
+    assert.equal(arms.size, 1, `指纹只该覆盖一棵候选树：${[...arms].join(', ')}`);
+    assert.ok(!arms.has('TIGER_RQ-VAE'), '冻结基线混进指纹了');
+    assert.ok(!arms.has('{arm}'), '{arm} 没有被填上');
   });
 
   await test('重置会话就是把对话记录一起清掉（不留"只清上下文"这一说）', async () => {

@@ -149,7 +149,23 @@ function serveStatic(req, res, url, apiBase = '') {
  * 只算两处：ideas/ 下当前方向的文件（归档不算，它不该变）与候选树
  * （冻结基线不算，它一个字都不许动）。
  */
-function fingerprintWatchedFiles(patterns = []) {
+/**
+ * 当前方向的 arm（候选树名）：从当前 idea 的 arm 字段取。
+ *
+ * 取不到就返回空串 —— 那时 {arm} 模式匹配不到任何文件，"没改"，
+ * 循环会自己停，而不是拿别人的树当自己的进展。
+ */
+function currentArm() {
+  try {
+    const doc = readIdeaDoc().doc;
+    const arm = doc && typeof doc.arm === 'string' ? doc.arm.trim() : '';
+    return /^TIGER_[a-z0-9_]+_rq$/.test(arm) ? arm : '';
+  } catch {
+    return '';
+  }
+}
+
+function fingerprintWatchedFiles(patterns = [], arm = '') {
   const root = config.currentWorkdir();
   const files = {};
   const hashFile = (absolute) => {
@@ -178,7 +194,10 @@ function fingerprintWatchedFiles(patterns = []) {
   };
   if (Array.isArray(patterns) && patterns.length > 0) {
     // 这一栏自己指定了被审的文件：只算它们。
-    for (const pattern of patterns) {
+    for (const raw of patterns) {
+      // {arm} 由框架填上当前方向的候选树名；没有 arm 时这条模式匹配不到任何东西。
+      const pattern = String(raw).split('{arm}').join(arm);
+      if (pattern.includes('{arm}')) continue;
       const re = new RegExp(
         `^${pattern.split('*').map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*')}$`,
       );
@@ -1071,7 +1090,7 @@ export function createServer({
             patterns = [];
           }
         }
-        const files = fingerprintWatchedFiles(patterns);
+        const files = fingerprintWatchedFiles(patterns, currentArm());
         const lines = Object.keys(files)
           .sort()
           .map((name) => `${name} ${files[name]}`);
