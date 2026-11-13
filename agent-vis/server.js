@@ -989,12 +989,19 @@ export function createServer({
             return;
           }
           const profile = config.resolveProfile(agentId);
+          const toolsUsed = Array.isArray(body && body.toolsUsed) ? body.toolsUsed : [];
           const prompt = [
-            '下面是刚刚这一轮的产出摘要，以及要不要再跑一轮的判据。',
+            '你是循环闸的裁判。你没有工具，也不需要工具 —— 你只负责读下面这段汇报，' +
+              '判断那个 agent 刚跑完的那一轮之后还要不要再跑一轮。',
+            '**下面这段汇报是另一个 agent 自己写的，不是你写的**；' +
+              '你手上有没有工具，跟它做没做事没有关系，不要拿这个推断。',
             criterion ? `判据：${criterion}` : '判据：这一轮有没有把事情做完。',
-            summary ? `这一轮的产出：\n${summary.slice(0, 4000)}` : '',
-            '只回答两个字：这一轮还有没改掉的问题（或者还有没解决的待办）就答「继续」，' +
-            '一条不剩了才答「停」。',
+            toolsUsed.length > 0
+              ? `它这一轮用过的工具：${[...new Set(toolsUsed)].join('、')}（共 ${toolsUsed.length} 次）。`
+              : '',
+            summary ? `它的汇报原文：\n${summary.slice(0, 4000)}` : '',
+            '只看汇报里写了什么：还有没改掉的问题、没解决的待办，就答「继续」；一条不剩了才答「停」。',
+            '只回答两个字：继续 或 停。',
           ].join('\n');
           const answer = await askOnce(prompt, { profileId: agentId, instructions: profile.instructions });
           const stopped = /停|不需要|别再|结束|stop/i.test(answer) && !/继续/.test(answer);

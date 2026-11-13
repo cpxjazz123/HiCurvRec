@@ -93,7 +93,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.24';
+const FRONTEND_VERSION = '2026-11-14.26';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -1771,8 +1771,16 @@ function createPanel(root) {
     );
   }
 
-  /** 最近一轮的结论文字：循环闸问 agent 时把它带上去。 */
+  /**
+   * 最近一轮的内容摘要：循环闸问 agent 时把它带上去。
+   *
+   * 取的是这一轮**有内容的那一步**（比如 AGENT MATH 的"记状态行"），
+   * 不是最后那句交接套话 —— 交接那一步只说"我交出去了"，
+   * 拿它去问"还有没有没改掉的"，裁判只能靠猜。
+   */
   let lastRoundSummary = '';
+  /** 最近一轮用过的工具：给裁判一个"这一轮确实动手了"的凭据。 */
+  let lastRoundTools = [];
 
   /** 一份 store 里最后一段文字回答；没有文字输出就返回空串。 */
   function finalAnswer(run) {
@@ -1793,7 +1801,18 @@ function createPanel(root) {
     if (chunk.type === 'finish' && !currentPartOfRound) {
       setStatus('done', '完成');
       setRunning(false);
-      lastRoundSummary = finalAnswer(run);
+      // 这一轮说正事的那些文字（交接那一句不算）。
+      const content = (run.store.steps || [])
+        .flatMap((step) => step.parts || [])
+        .filter((part) => part.kind === 'text')
+        .map((part) => part.text || '')
+        .filter((text) => text.trim() !== '');
+      lastRoundSummary = content.length > 0 ? content[content.length - 1].trim() : finalAnswer(run);
+      lastRoundTools = (run.store.steps || [])
+        .flatMap((step) => step.parts || [])
+        .filter((part) => part.kind === 'tool')
+        .map((part) => part.toolName)
+        .filter(Boolean);
       if (finishHandler) finishHandler(finalAnswer(run));
     }
     if (run.store.unknownTypes.length > 0) {
@@ -1912,6 +1931,7 @@ function createPanel(root) {
           agentId: root.dataset.profile,
           criterion: gate.prompt,
           summary: lastRoundSummary,
+          toolsUsed: lastRoundTools,
         }),
       });
       if (!res.ok) return { go: true, reason: '判定没跑成，按原样继续。' };
