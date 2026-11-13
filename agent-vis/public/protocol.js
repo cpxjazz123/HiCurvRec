@@ -10,6 +10,9 @@
 /** 轮次提前结束的控件名：与 config.js 的 ROUND_END_TOOL 必须一致（smoke 会校验）。 */
 export const ROUND_END_TOOL = 'endRound';
 
+/** 交接结论的控件名：与 config.js 的 ROUND_HANDOFF_TOOL 必须一致（smoke 会校验）。 */
+export const ROUND_HANDOFF_TOOL = 'requestHandoff';
+
 /**
  * 这一步有没有要求"本轮到此结束"。
  *
@@ -22,6 +25,23 @@ export function roundEnded(store) {
       (part) =>
         part.kind === 'tool' &&
         part.toolName === ROUND_END_TOOL &&
+        (part.state === 'input-available' || part.state === 'output-available'),
+    ),
+  );
+}
+
+/**
+ * 这一轮有没有调用"交接结论"那个工具。
+ *
+ * 交接是轮次的最后一步：模型调用 requestHandoff 才交，不调用就是不交 ——
+ * 客户端只认这个结构化信号，不读文字。
+ */
+export function handoffRequested(store) {
+  return store.steps.some((step) =>
+    step.parts.some(
+      (part) =>
+        part.kind === 'tool' &&
+        part.toolName === ROUND_HANDOFF_TOOL &&
         (part.state === 'input-available' || part.state === 'output-available'),
     ),
   );

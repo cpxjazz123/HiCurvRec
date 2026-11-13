@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-13.9';
+export const FRONTEND_VERSION = '2026-11-14.3';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -365,6 +365,14 @@ export const IDEA_RULE =
 
 /** 提前结束本轮的控件名：前端（protocol.js）与 pi 工具表（live-agent.js）都靠它识别。 */
 export const ROUND_END_TOOL = 'endRound';
+
+/**
+ * 交接工具：轮次的最后一步，模型调用它才真的把结论交出去。
+ *
+ * 交接是不是该发，由最后这一步的模型判定（条件写在步骤指令里），
+ * 不靠关键词匹配 —— 它是"这一步的决定"，不是文本里的一句话。
+ */
+export const ROUND_HANDOFF_TOOL = 'requestHandoff';
 
 /**
  * 「本步判定本轮不用继续」的规则：挂在每次运行追加的提示词里。
@@ -1094,6 +1102,14 @@ const MAX_HANDOFF_DELAY_SECONDS = 3600;
 /** 交接的默认延迟：0 = 跑完立刻发。 */
 export const DEFAULT_HANDOFF_DELAY_SECONDS = 0;
 
+/**
+ * 交接条件：写给人看的一句话，由轮次最后一步的模型来判定。
+ *
+ * 空串 = 无条件（这一步总是交接）。非空时这句话原样写进最后一步的指令里，
+ * 由模型决定要不要调用 requestHandoff —— 不靠关键词匹配。
+ */
+export const DEFAULT_HANDOFF_CONDITION = '';
+
 /** 循环次数上限：再多就该用定时任务，页面上的自动重跑按百次封顶。 */
 const MAX_LOOP_COUNT = 100;
 
@@ -1224,6 +1240,14 @@ function publicProfile(profile) {
       ? override.handoffDelaySeconds
       : DEFAULT_HANDOFF_DELAY_SECONDS,
     defaultHandoffDelaySeconds: DEFAULT_HANDOFF_DELAY_SECONDS,
+    // 交接前要不要先看一个条件：条件满足时发、或者跳过（见 DEFAULT_HANDOFF_CONDITION）。
+    handoffCondition:
+      has('handoffCondition') && typeof override.handoffCondition === 'string'
+        ? override.handoffCondition
+        : DEFAULT_HANDOFF_CONDITION,
+    // 允许把结果回传给"刚把它发给我的那一栏"：默认不允许（防来回触发），
+    // 审查—返修的循环要靠它打开。
+    allowHandoffBack: has('allowHandoffBack') ? Boolean(override.allowHandoffBack) : false,
     // 交接时要不要先重置这一栏自己的会话：重置了，下游拿到消息开始干活时，
     // 这一栏的模型上下文已经清空（下一轮从头开始）。
     resetSessionOnHandoff: has('resetSessionOnHandoff')
@@ -1473,6 +1497,24 @@ export function saveProfileConfig(profileId, patch) {
       delete next.steps;
     } else {
       next.steps = normalizeUserSteps(patch.steps);
+    }
+  }
+  if (patch.handoffCondition !== undefined) {
+    if (patch.handoffCondition === null) {
+      delete next.handoffCondition;
+    } else if (typeof patch.handoffCondition !== 'string') {
+      throw new Error('handoffCondition 必须是一句话（字符串）');
+    } else {
+      next.handoffCondition = patch.handoffCondition.trim();
+    }
+  }
+  if (patch.allowHandoffBack !== undefined) {
+    if (patch.allowHandoffBack === null) {
+      delete next.allowHandoffBack;
+    } else if (typeof patch.allowHandoffBack !== 'boolean') {
+      throw new Error('allowHandoffBack 必须是布尔值');
+    } else {
+      next.allowHandoffBack = patch.allowHandoffBack;
     }
   }
   if (patch.resetSessionOnHandoff !== undefined) {

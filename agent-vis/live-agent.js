@@ -40,6 +40,7 @@ import {
   PROVIDER_NAME,
   ROUND_END_RULE,
   ROUND_END_TOOL,
+  ROUND_HANDOFF_TOOL,
   ROUND_SESSION_TTL_MS,
   currentWorkdir,
   buildHandoffPrompt,
@@ -628,6 +629,28 @@ const endRoundTool = defineTool({
 });
 
 /**
+ * 交接工具：轮次的最后一步靠它决定"要不要交"。
+ *
+ * 和 endRound 一样，它不是仓库能力，是轮次机制自己的控件 —— 客户端只能看见
+ * 工具调用这种结构化信号，看不见模型在文字里写的"该交/不该交"。
+ * 交接条件（人写的一句话）由最后一步的模型判定：判定该交才调用它。
+ */
+const requestHandoffTool = defineTool({
+  name: ROUND_HANDOFF_TOOL,
+  label: '交接结论',
+  description:
+    'Call this on the handoff step when this round result should be sent to the configured targets. ' +
+    'If the handoff condition says it should not be sent, do not call it, and say why in your answer.',
+  parameters: Type.Object({
+    summary: Type.String({ description: '一句话说明这次交的是什么' }),
+  }),
+  execute: async (toolCallId, { summary }) => ({
+    content: [{ type: 'text', text: `已交接：${summary}` }],
+    details: { summary },
+  }),
+});
+
+/**
  * 所有工具，按名字索引。
  *
  * 权限目录里写的工具名必须都在这张表里 —— 对不上就是配置坏了。
@@ -925,7 +948,7 @@ export async function createPiSession({ profile, instructions, permissionIds }) 
   const { modelRuntime, model } = await piRuntime();
   // 轮次控制工具始终可用：没有它，"本步判定本轮结束"就只能写在文字里，
   // 客户端读不到，后面的步骤照样会发出去。
-  const tools = [...toolsForPermissions(permissionIds), endRoundTool];
+  const tools = [...toolsForPermissions(permissionIds), endRoundTool, requestHandoffTool];
   const loader = new DefaultResourceLoader({
     cwd: sandboxRoot(),
     agentDir: path.join(piStateDir(), 'agent'),

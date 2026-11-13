@@ -1863,6 +1863,14 @@ async function main() {
     );
     check('新 agent 在服务端有身份', Boolean(newAgentId), `${newAgentId}`);
 
+    // 等提示词真的存到服务端再跑：输入框是攒一会儿才存的，抢在它前面跑，
+    // 这一轮用的还是上一份（这个身份名可能刚被别的 agent 用过）。
+    const instructionsSaved = await waitForServer(async () => {
+      const health = await request(`${base}/api/health`);
+      const agent = (health.agents || []).find((item) => item.id === newAgentId);
+      return agent && agent.instructions === NEW_INSTRUCTIONS;
+    });
+    check('新 agent 的提示词存到了服务端', instructionsSaved === true, String(instructionsSaved));
     await cdp.evaluate(submitPrompt(newPanelId, '测试新建的 agent'));
 
     // 提示词不再跟着请求发：它存到了服务端，服务端按自己存的那份来跑。
@@ -2366,8 +2374,8 @@ async function main() {
       ),
     );
     check(
-      '时间轴上有三张步骤卡',
-      Array.isArray(stepCardsL) && stepCardsL.length === 3,
+      '时间轴上有三张步骤卡 + 一张交接结论卡',
+      Array.isArray(stepCardsL) && stepCardsL.length === 4,
       JSON.stringify(stepCardsL),
     );
     check(
@@ -2391,7 +2399,7 @@ async function main() {
           'return p.querySelector(".badge.text");}).length',
       ),
     );
-    check('每一步的文字各占一张卡', textCardsL === 3, `${textCardsL} 张文字卡`);
+    check('每一步的文字各占一张卡', textCardsL === 4, `${textCardsL} 张文字卡`);
 
     // 「总耗时」是这一轮**所有步骤**的耗时之和：每一步是一次请求，
     // 各有各的耗时，不该每换一步就从头算。
@@ -2417,12 +2425,12 @@ async function main() {
           '})()',
       ),
     );
-    const lastThree = (durationsL.steps || []).slice(-3);
-    const stepSum = lastThree.reduce((sum, v) => sum + v, 0);
+    const lastFour = (durationsL.steps || []).slice(-4);
+    const stepSum = lastFour.reduce((sum, v) => sum + v, 0);
     check(
       '总耗时是这一轮各步耗时之和',
       Array.isArray(durationsL.steps) &&
-        durationsL.steps.length >= 3 &&
+        durationsL.steps.length >= 4 &&
         typeof durationsL.total === 'number' &&
         Math.abs(durationsL.total - stepSum) <= 0.25,
       `总耗时 ${durationsL.total} / 各步 ${JSON.stringify(durationsL.steps)}`,
@@ -2440,7 +2448,7 @@ async function main() {
     const stepReqsL = parsedL.filter(
       (b) => typeof b.prompt === 'string' && b.prompt.includes('【第 '),
     );
-    check('每一步各发一次请求', stepReqsL.length === 3, `实际 ${stepReqsL.length} 次`);
+    check('每一步各发一次请求（含交接结论那一步）', stepReqsL.length === 4, `实际 ${stepReqsL.length} 次`);
 
     check(
       '第一步只发自己的指令，本轮输入走单独字段（由服务端拼一次）',

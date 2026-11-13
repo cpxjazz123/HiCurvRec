@@ -115,6 +115,43 @@ export async function* runMockChunks(
 
   // 离线剧本里留一个"本步判定本轮结束"的入口：prompt 带这个标记就调用 endRound。
   // 用来在不起模型的情况下验证"后面的步骤会被跳过"。
+  // 交接步骤（轮次的最后一步）：剧本里默认调用 requestHandoff。
+  // 想在测试里演"判定不交接"，在条件里写 【模拟不交接】。
+  if (prompt.includes('【交接步骤】')) {
+    if (!prompt.includes('【模拟不交接】')) {
+      await wait(delay);
+      yield { type: 'tool-input-start', toolCallId: 'call_handoff', toolName: 'requestHandoff' };
+      await wait(delay);
+      yield {
+        type: 'tool-input-available',
+        toolCallId: 'call_handoff',
+        toolName: 'requestHandoff',
+        input: { summary: '离线剧本：把这一轮的结论交出去' },
+      };
+      await wait(delay);
+      yield {
+        type: 'tool-output-available',
+        toolCallId: 'call_handoff',
+        output: { summary: '离线剧本：把这一轮的结论交出去' },
+      };
+      await wait(delay);
+    }
+    yield { type: 'text-start', id: 'txt-handoff' };
+    await wait(delay);
+    yield {
+      type: 'text-delta',
+      id: 'txt-handoff',
+      delta: prompt.includes('【模拟不交接】')
+        ? '交接条件不满足：这一轮不交接。'
+        : '已交接：这一轮的结论交给下游。',
+    };
+    await wait(delay);
+    yield { type: 'text-end', id: 'txt-handoff' };
+    await wait(delay);
+    yield { type: 'finish-step' };
+    return;
+  }
+
   if (prompt.includes('【模拟空轮】')) {
     await wait(delay);
     yield { type: 'tool-input-start', toolCallId: 'call_end_round', toolName: 'endRound' };

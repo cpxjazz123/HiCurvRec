@@ -6,7 +6,7 @@ import http from 'node:http';
 
 import { createServer, runStatus } from '../server.js';
 import { config } from '../server.js';
-import { createStore, applyChunk, foldText, roundEnded, ROUND_END_TOOL } from '../public/protocol.js';
+import { createStore, applyChunk, foldText, roundEnded, handoffRequested, ROUND_END_TOOL, ROUND_HANDOFF_TOOL } from '../public/protocol.js';
 import { scanIdeaFiles, archivedDirectionNames } from '../idea-store.js';
 import { runMockChunks } from '../mock-agent.js';
 import {
@@ -510,6 +510,92 @@ async function main() {
     const restored = await (await fetch(`${base}/api/health`)).json();
     const a2 = (restored.agents || []).find((agent) => agent.id === 'agent-a');
     assert.equal(a2.resetSessionOnHandoff, false, '恢复默认后不该再重置');
+  });
+
+  await test('交接条件是一句话，交给最后一步的模型判定', async () => {
+    const put = (body) =>
+      fetch(`${base}/api/agents/agent-a/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+    // 默认没有条件（空串）= 无条件交接。
+    const before = await (await fetch(`${base}/api/health`)).json();
+    assert.equal(
+      (before.agents || []).find((agent) => agent.id === 'agent-a').handoffCondition,
+      '',
+      '默认应该是无条件',
+    );
+
+    const sentence = '只有对方要求返修时才交回去；判定可行就不交。';
+    const saved = await (await put({ handoffCondition: sentence })).json();
+    assert.equal(saved.handoffCondition, sentence, '没存上');
+    const after = await (await fetch(`${base}/api/health`)).json();
+    assert.equal(
+      (after.agents || []).find((agent) => agent.id === 'agent-a').handoffCondition,
+      sentence,
+      '服务端没记住条件',
+    );
+
+    // 条件只能是一句话，不接受对象（老的关键词形状要拒）。
+    assert.equal(
+      (await put({ handoffCondition: { match: 'x', action: 'skip' } })).status,
+      400,
+      '对象形状应该被拒',
+    );
+
+    await put({ handoffCondition: null });
+    const restored = await (await fetch(`${base}/api/health`)).json();
+    assert.equal(
+      (restored.agents || []).find((agent) => agent.id === 'agent-a').handoffCondition,
+      '',
+      '恢复默认后应该是无条件',
+    );
+  });
+
+  await test('交接工具名前后端一致', async () => {
+    assert.equal(ROUND_HANDOFF_TOOL, config.ROUND_HANDOFF_TOOL,
+                 'protocol.js 与 config.js 的交接工具名必须一致');
+    // 顺带确认识别函数认得这个工具调用。
+    const store = createStore();
+    store.steps.push({ parts: [{ kind: 'tool', toolName: ROUND_HANDOFF_TOOL, state: 'input-available' }] });
+    assert.equal(handoffRequested(store), true, 'handoffRequested 没认出交接调用');
+  });
+
+  await test('允许回传给上游是一栏一配的开关', async () => {
+    const put = (body) =>
+      fetch(`${base}/api/agents/agent-a/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+    const before = await (await fetch(`${base}/api/health`)).json();
+    assert.equal(
+      (before.agents || []).find((agent) => agent.id === 'agent-a').allowHandoffBack,
+      false,
+      '默认不许回传',
+    );
+
+    const saved = await (await put({ allowHandoffBack: true })).json();
+    assert.equal(saved.allowHandoffBack, true, '没存上');
+    const after = await (await fetch(`${base}/api/health`)).json();
+    assert.equal(
+      (after.agents || []).find((agent) => agent.id === 'agent-a').allowHandoffBack,
+      true,
+      '服务端没记住',
+    );
+
+    assert.equal((await put({ allowHandoffBack: 'yes' })).status, 400, '非布尔值应该被拒');
+
+    await put({ allowHandoffBack: null });
+    const restored = await (await fetch(`${base}/api/health`)).json();
+    assert.equal(
+      (restored.agents || []).find((agent) => agent.id === 'agent-a').allowHandoffBack,
+      false,
+      '恢复默认后不该再允许回传',
+    );
   });
 
   await test('新的 idea 不许和归档的重复', async () => {
@@ -1217,10 +1303,15 @@ async function main() {
     const hasMath = initial.math !== null && initial.math !== undefined;
     if (hasMath) {
       assert.equal(typeof initial.math, 'object', 'math 应该是对象');
-      assert.ok(Array.isArray(initial.math.formulas) && initial.math.formulas.length > 0,
-                'math.formulas 应该是非空数组');
-      assert.ok(initial.math.formulas.every((f) => typeof f.formula === 'string' && f.formula.trim() !== ''),
-                '每条公式都要有 formula 文本');
+      // 老形状是 {symbols, formulas, ...}；新方向可能用自己的键（notation /
+      // structural_potential ……）。两种都接受，但内容不能是空的。
+      assert.ok(Object.keys(initial.math).length > 0, 'math 不该是空对象');
+      if (initial.math.formulas !== undefined) {
+        assert.ok(Array.isArray(initial.math.formulas) && initial.math.formulas.length > 0,
+                  '给 formulas 就要是非空数组');
+        assert.ok(initial.math.formulas.every((f) => typeof f.formula === 'string' && f.formula.trim() !== ''),
+                  '每条公式都要有 formula 文本');
+      }
       assert.equal(initial.mathError, null);
     } else {
       assert.equal(typeof initial.mathError, 'string', '缺 math.json 时要给出原因');

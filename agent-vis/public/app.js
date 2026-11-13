@@ -1,4 +1,4 @@
-import { createStore, applyChunk, roundEnded } from './protocol.js?v=__ASSET_V__';
+import { createStore, applyChunk, roundEnded, handoffRequested } from './protocol.js?v=__ASSET_V__';
 
 /**
  * 前端渲染器。
@@ -91,7 +91,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-13.9';
+const FRONTEND_VERSION = '2026-11-14.3';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -272,6 +272,10 @@ function createPanel(root) {
     handoffDelayState: pick('handoffDelayState'),
     resetSessionHandoff: pick('resetSessionHandoff'),
     resetSessionHandoffState: pick('resetSessionHandoffState'),
+    allowHandoffBack: pick('allowHandoffBack'),
+    allowHandoffBackState: pick('allowHandoffBackState'),
+    handoffConditionText: pick('handoffConditionText'),
+    handoffConditionState: pick('handoffConditionState'),
     loopBox: pick('loopBox'),
     loopSummary: pick('loopSummary'),
     loopEnabled: pick('loopEnabled'),
@@ -630,6 +634,19 @@ function createPanel(root) {
         if (typeof id === 'string' && id !== '') handoffTargets.add(id);
       }
     }
+    // 交接条件：一句话，由轮次最后一步的模型判定。跟着服务端那份走。
+    if (els.handoffConditionText) {
+      els.handoffConditionText.value =
+        typeof profile.handoffCondition === 'string' ? profile.handoffCondition : '';
+      refreshHandoffConditionState();
+    }
+
+    // 允不允许回传给上游（审查—返修循环）：跟着服务端那份走。
+    if (els.allowHandoffBack) {
+      els.allowHandoffBack.checked = Boolean(profile.allowHandoffBack);
+      refreshAllowHandoffBackState();
+    }
+
     // 交接时要不要先重置自己这一栏的会话：跟着服务端那份走。
     if (els.resetSessionHandoff) {
       els.resetSessionHandoff.checked = Boolean(profile.resetSessionOnHandoff);
@@ -794,6 +811,25 @@ function createPanel(root) {
     els.instructions.value = defaultInstructions;
     refreshInstructionsState();
     void saveConfig({ instructions: null });
+  }
+
+  /** 交接条件那一行旁边的说明。 */
+  function refreshHandoffConditionState() {
+    if (!els.handoffConditionState) return;
+    const condition = els.handoffConditionText ? els.handoffConditionText.value.trim() : '';
+    els.handoffConditionState.textContent =
+      condition === ''
+        ? '没有条件：轮次最后会加一个「交接结论」步骤，无条件调用 requestHandoff。'
+        : `有条件：最后一步按「${condition}」判断要不要调用 requestHandoff。`;
+  }
+
+  /** 「允许回传给上游」那个勾选旁边的说明。 */
+  function refreshAllowHandoffBackState() {
+    if (!els.allowHandoffBackState) return;
+    const on = Boolean(els.allowHandoffBack && els.allowHandoffBack.checked);
+    els.allowHandoffBackState.textContent = on
+      ? '勾上了：上游把结果发过来时，这一栏可以把返修意见交回给它（循环有 8 跳上限）。'
+      : '没勾：不把结果交回给刚把它发给我的那一栏。';
   }
 
   /** 交接时重置会话那个勾选旁边的说明。 */
@@ -1800,6 +1836,18 @@ function createPanel(root) {
       title: step.title,
       instruction: step.instruction,
     }));
+    // 交接是这一轮的最后一步：默认无条件交；配了交接条件，就由这一步的模型判定。
+    // 一条步骤都没配的 agent（单次运行）不插这一步，交接保持原来的自动行为。
+    const handoffTargets = api.targets();
+    const hasHandoffStep = plan.length > 0 && handoffTargets.length > 0;
+    if (hasHandoffStep) {
+      plan.push({
+        title: '交接结论',
+        instruction: buildHandoffStepInstruction(handoffTargets, api.handoffCondition()),
+        handoff: true,
+      });
+    }
+    let handoffWanted = true;
 
     abortedByUser = false;
     running = true;
@@ -1893,15 +1941,32 @@ function createPanel(root) {
         return;
       }
 
+      if (step.handoff) handoffWanted = result.handoff === true;
       outputs.push({
         index,
         title: step.title.trim() === '' ? '未命名' : step.title.trim(),
         text: stepText,
+        handoff: step.handoff === true,
       });
     }
 
-    // 整轮跑完，最后一步的产出才交出去。
-    const finalText = outputs.length > 0 ? outputs[outputs.length - 1].text : '';
+    // 整轮跑完：交接步骤说要交，才把结果交出去。
+    // 交出去的是"结论"那一步的产出 —— 交接步骤自己的回答只是"已交接"这句话，
+    // 不该当下游的输入。
+    const contentOutputs = outputs.filter((entry) => entry.handoff !== true);
+    const finalText =
+      contentOutputs.length > 0
+        ? contentOutputs[contentOutputs.length - 1].text
+        : outputs.length > 0
+          ? outputs[outputs.length - 1].text
+          : '';
+    if (!handoffWanted) {
+      showNote('交接步骤判定这次不交接：这一轮的结论留在这里。');
+      setStatus('done', '完成');
+      running = false;
+      setRunning(false);
+      return;
+    }
     // 先把结果发出去，再把状态标成完成 —— 交接请求是在这一刻发起的，
     // 顺序反了的话，页面已经显示"完成"，下游却还没收到东西。
     if (finishHandler) finishHandler(finalText);
@@ -2095,6 +2160,7 @@ function createPanel(root) {
       card,
       // 这一步有没有要求"本轮到此结束"（endRound 工具调用）。
       ended: roundEnded(run.store),
+      handoff: handoffRequested(run.store),
     };
   }
 
@@ -2323,6 +2389,23 @@ function createPanel(root) {
     });
   }
 
+  const saveHandoffCondition = () => {
+    refreshHandoffConditionState();
+    void saveConfig({
+      handoffCondition: els.handoffConditionText ? els.handoffConditionText.value.trim() : '',
+    });
+  };
+  if (els.handoffConditionText) {
+    els.handoffConditionText.addEventListener('change', saveHandoffCondition);
+  }
+
+  if (els.allowHandoffBack) {
+    els.allowHandoffBack.addEventListener('change', () => {
+      refreshAllowHandoffBackState();
+      void saveConfig({ allowHandoffBack: Boolean(els.allowHandoffBack.checked) });
+    });
+  }
+
   if (els.resetSessionHandoff) {
     els.resetSessionHandoff.addEventListener('change', () => {
       userEdited.handoffReset = true;
@@ -2486,6 +2569,15 @@ function createPanel(root) {
     /** 交接目标：这一栏跑完后结果要发给谁（可以多选）。 */
     targets() {
       return Array.from(handoffTargets);
+    },
+    /** 交接条件：一句人话，交给轮次最后一步的模型判定。空串 = 无条件。 */
+    handoffCondition() {
+      const condition = profileState && profileState.handoffCondition;
+      return typeof condition === 'string' ? condition.trim() : '';
+    },
+    /** 允许把结果回传给刚把它发给我的那一栏（审查—返修循环要打开）。 */
+    allowHandoffBack() {
+      return profileState ? Boolean(profileState.allowHandoffBack) : false;
     },
     /** 交接延迟（秒）：0 = 跑完立刻发。 */
     handoffDelaySeconds() {
@@ -3256,14 +3348,63 @@ function clearPendingHandoffs(pending) {
   pending.clear();
 }
 
+/**
+ * 交接步骤的指令：把"交给谁"和"什么条件下才交"写清楚，判定权在模型手里。
+ *
+ * 不写关键词规则：条件是一句人话，由这一步的模型对照这一轮的产出判断。
+ */
+function buildHandoffStepInstruction(targets, condition) {
+  const names = targets
+    .map((id) =>
+      id.startsWith('group:')
+        ? `组「${(knownGroups.get(id.slice('group:'.length)) || {}).name || id}」`
+        : agentNames.get(id) || id,
+    )
+    .join('、');
+  const head = `【交接步骤】这一轮已经跑完。按这一栏的交接配置，结论要交给：${names}。`;
+  if (condition === '') {
+    return (
+      `${head}\n` +
+      '这一栏没有设置交接条件：无条件交接。' +
+      '调用 requestHandoff（summary 写一句话说明交的是什么），然后结束这一步。'
+    );
+  }
+  return (
+    `${head}\n` +
+    `交接条件：${condition}\n` +
+    '先判断这个条件在这一轮是否满足：满足就调用 requestHandoff（summary 写一句话）；' +
+    '不满足就不要调用它，并在回答里说清为什么这次不交接。' +
+    '判定要依据这一轮的产出（以及你读到的文件），不要猜。'
+  );
+}
+
+/**
+ * 交接循环的两道闸。
+ *
+ * - 这一栏自己配的交接条件（answer 里含不含某段文本）→ 该跳就跳、该发才发；
+ * - 连续交接超过 HANDOFF_MAX_HOPS 跳 → 停手并说清楚（防失控循环）。
+ */
+const HANDOFF_MAX_HOPS = 8;
+
 function deliverResult(source, answer, options = {}) {
   if (answer === '') {
     source.note('这一栏这轮没有产出文字结果，没有可交接的内容。');
     return;
   }
+
+  const depth = Number.isInteger(options.handoffDepth) ? options.handoffDepth : 0;
+  if (depth + 1 > HANDOFF_MAX_HOPS) {
+    source.note(
+      `这一条链已经连续交接 ${depth} 跳，到上限 ${HANDOFF_MAX_HOPS} 了，本轮不再往下交。`,
+    );
+    return;
+  }
   const skipProfileId =
     typeof options.skipProfileId === 'string' ? options.skipProfileId : '';
-  const targets = source.targets().filter((id) => id !== skipProfileId);
+  // 默认不把结果交回给刚把它发过来的那一栏（防来回触发）；
+  // 审查—返修这种有意的循环，靠 agent 自己的 allowHandoffBack 打开。
+  const backAllowed = source.allowHandoffBack();
+  const targets = source.targets().filter((id) => backAllowed || id !== skipProfileId);
   const skipped = source.targets().length - targets.length;
   if (targets.length === 0) {
     source.note(
@@ -3307,7 +3448,10 @@ function deliverResult(source, answer, options = {}) {
       handoff: answer,
       instruction: requirement,
       handoffFrom: source.name(),
+      // 发送方的身份：服务端据此判断"发送方要不要先重置自己的会话"。
       handoffFromId: source.profileId,
+      // 这一跳是第几跳：审查—返修那种循环要有个上限。
+      handoffDepth: depth + 1,
     };
     if (delaySeconds > 0) {
       // 延迟交接：定时器归来源这一栏管 —— 它重新跑一轮或删面板时会被取消，

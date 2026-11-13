@@ -177,6 +177,26 @@
                   <span class="instructions-state" data-role="resetSessionHandoffState"></span>
                 </div>
 
+                <div class="handoff-delay">
+                  <label>
+                    <input type="checkbox" data-role="allowHandoffBack" />
+                    允许回传给刚把结果发给我的那一栏（审查—返修循环要打开）
+                  </label>
+                  <span class="instructions-state" data-role="allowHandoffBackState"></span>
+                </div>
+
+                <div class="handoff-delay">
+                  <label>
+                    交接条件（一句话，由最后一步判定；留空 = 无条件交接）
+                    <input
+                      type="text"
+                      data-role="handoffConditionText"
+                      placeholder="例如：只有对方要求返修时才交回去"
+                    />
+                  </label>
+                  <span class="instructions-state" data-role="handoffConditionState"></span>
+                </div>
+
                 <p class="handoff-note" data-role="handoffNote">
                   勾选的 agent 会在这一栏跑完后收到本轮结果（可多选）。
                 </p>
@@ -345,6 +365,26 @@
                     交接时先重置我自己这一栏的会话
                   </label>
                   <span class="instructions-state" data-role="resetSessionHandoffState"></span>
+                </div>
+
+                <div class="handoff-delay">
+                  <label>
+                    <input type="checkbox" data-role="allowHandoffBack" />
+                    允许回传给刚把结果发给我的那一栏（审查—返修循环要打开）
+                  </label>
+                  <span class="instructions-state" data-role="allowHandoffBackState"></span>
+                </div>
+
+                <div class="handoff-delay">
+                  <label>
+                    交接条件（一句话，由最后一步判定；留空 = 无条件交接）
+                    <input
+                      type="text"
+                      data-role="handoffConditionText"
+                      placeholder="例如：只有对方要求返修时才交回去"
+                    />
+                  </label>
+                  <span class="instructions-state" data-role="handoffConditionState"></span>
                 </div>
 
                 <p class="handoff-note" data-role="handoffNote">
@@ -523,6 +563,26 @@
                   交接时先重置我自己这一栏的会话
                 </label>
                 <span class="instructions-state" data-role="resetSessionHandoffState"></span>
+              </div>
+
+              <div class="handoff-delay">
+                <label>
+                  <input type="checkbox" data-role="allowHandoffBack" />
+                  允许回传给刚把结果发给我的那一栏（审查—返修循环要打开）
+                </label>
+                <span class="instructions-state" data-role="allowHandoffBackState"></span>
+              </div>
+
+              <div class="handoff-delay">
+                <label>
+                  交接条件（一句话，由最后一步判定；留空 = 无条件交接）
+                  <input
+                    type="text"
+                    data-role="handoffConditionText"
+                    placeholder="例如：只有对方要求返修时才交回去"
+                  />
+                </label>
+                <span class="instructions-state" data-role="handoffConditionState"></span>
               </div>
 
               <p class="handoff-note" data-role="handoffNote">
