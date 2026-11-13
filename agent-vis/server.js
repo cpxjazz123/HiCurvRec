@@ -993,7 +993,8 @@ export function createServer({
             '下面是刚刚这一轮的产出摘要，以及要不要再跑一轮的判据。',
             criterion ? `判据：${criterion}` : '判据：这一轮有没有把事情做完。',
             summary ? `这一轮的产出：\n${summary.slice(0, 4000)}` : '',
-            '只回答两个字：还要继续就答「继续」，不用再跑就答「停」。',
+            '只回答两个字：这一轮还有没改掉的问题（或者还有没解决的待办）就答「继续」，' +
+            '一条不剩了才答「停」。',
           ].join('\n');
           const answer = await askOnce(prompt, { profileId: agentId, instructions: profile.instructions });
           const stopped = /停|不需要|别再|结束|stop/i.test(answer) && !/继续/.test(answer);

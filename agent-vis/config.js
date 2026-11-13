@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-14.19';
+export const FRONTEND_VERSION = '2026-11-14.20';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -401,7 +401,14 @@ export const LANGUAGE_RULE =
  * 2048 会把结论写到一半就截断（finishReason=length），下游拿到的分析结果是残句。
  * 给到 8192，让模型能把「读了哪个 Issue、该改哪些文件、怎么验证」写完。
  */
-export const MAX_OUTPUT_TOKENS = 8192;
+/**
+ * 每一步的输出上限（token）。
+ *
+ * 8192 不够用：AGENT MATH 要把整份 math.json 写回去，那份稿子 12.4k 字符 ——
+ * 一次写不完就被截断，而 writeFile 是整份覆盖，于是修正一条也落不了地。
+ * 16384 实测模型接受 ✓。
+ */
+export const MAX_OUTPUT_TOKENS = 16384;
 
 /**
  * 页面上内置的三个 agent 的人设。
@@ -650,8 +657,8 @@ export const AGENT_PROFILES = [
     loopGate: {
       mode: 'agent',
       prompt:
-        '这一轮有没有又查出新的公式错误？只有当这一轮一条新错误都没查出来时，' +
-        '才回答「停」；只要还查出了新的错误（哪怕改过的），就回答「继续」。',
+        '这一轮有没有又查出**没改掉**的问题？只要还有没改掉的（哪怕这一轮没改成），' +
+        '就回答「继续」；一条不剩了才回答「停」。',
     },
     loopResetSession: true,
     /** 挂载这个面板时输入框里预填的指令（别的 agent 的输入框是空的）。 */
