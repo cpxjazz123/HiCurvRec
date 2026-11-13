@@ -49,3 +49,8 @@ TRAIN behaviour graph itself (tree-like branches next to dense communities).
 **SID 的 sha256 以 `results/research/issue139/r2_ledger.json` 为准**，不按 `report.json`：51–56 六个配对的
 `report.json` 记录与镜像文件不一致（镜像与账本一致），说明 `report.json` 在这几个号上是陈旧的派生值。
 脚本对镜像文件按账本验证，并把这类配对标成 `record_disagrees_with_archive`，不静默丢弃。
+
+`--five` 换成 **ORCA 4+5-节点轨道（88 维）** 学出的 6 个角色（角色缓存 `structure_roles5.npz`，结果写
+`structure_retention_5node.json` / `STRUCTURE_RETENTION_5NODE.md`）。5-节点轨道由加速版 ORCA 生成：
+`results/research/issue213/orca/orca_gpu`（GPU 建表 + 32 线程 stage 3，**34.9 s**，输出与原版逐字节相同；
+原版单线程 951 s）。两个版本共用同一套角色定义与查表口径，因此两张表可直接并读。
