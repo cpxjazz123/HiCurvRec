@@ -1,0 +1,130 @@
+{
+  "date": "2026-11-16",
+  "arm": "TIGER_af3_curvature_codebook_rq",
+  "sections": {
+    "1_goal": {
+      "statement": "让 AF3 曲率只作用在 RQ-VAE 码本的「起点」上：训练前在训练划分的商品共现图上冻结地算每条边的 AF3 曲率 kappa_ij，取度加权邻域均值并做全图 z-score 得到逐商品结构势 s_i；再判断 s_i 的符号与取值区间，把商品分成 Q 个结构层（层号 q(i) ∈ {1..Q}）。随后用一次前向得到初始残差表示，按 q(i) 把商品分桶、在每个桶内用「逐商品残差向量的桶内均值」落一个初始码字，每层码本按份额 k_q = floor(K/Q) 分给各结构层（余数按层内商品数的最大余数法分配）。于是码本初始化时就已经在每个结构层里都有落点，量化器不必在训练早期把码字全抢给度数高的热门商品，SID 的每一层 token 都能覆盖「社区内部（正曲率）」与「跨社区桥梁（负曲率）」两类商品。训练开始以后一切都回到基线：码字位置照常由 codebook / commitment 项与 Sinkhorn / argmin 分配更新，码本大小 K、层数 N_l、代价公式、损失公式、SID 导出格式与基线逐位相同，本方向不新增任何参数、不新增任何损失项、也不做任何在线结构约束。整个机制只有逐商品标量与桶内均值两类运算，不构造任何商品对，不出现 InfoNCE / BCE / margin / 源-目标残差对比。init_off 时直接返回基线码本初值（同一 RNG 流），训练与导出的 SID 必须与基线逐位相同，作为自检。",
+      "difference_from_literature": "与图量化分词器一族（Learning Graph Quantized Tokenizers, 2024）不同：它的码本是在图上任务里学出来的，量化目标本身就是图任务（重建 / 对齐），码本与图结构在训练中互相塑造；我们的训练目标、损失、分配规则与基线逐位相同，曲率只在训练前一次性决定码字的初值，训练中不再出现任何结构项，因此可以把增益干净地归因到「初始覆盖」而不是「结构目标」。与几何感知 RQ-VAE 一族（Hyperbolic Residual Quantization, 2025；Geometry-Aware Hyperbolic RQ-VAE, 2026；HypRQ-VAE, 2026）不同：它们改的是嵌入空间、距离函数或量化器几何（双曲/混合曲率、层次感知半径），几何是可学的空间先验并参与每次分配；我们的空间与距离仍是基线欧氏平方，曲率是逐商品的一个冻结标量，只出现在初始化那一步。与改量化流程的一族（Decoupled Residual Quantization, 2026；Static multi-level small codebook → dynamic single-level large codebook, 2026；Asymmetric Generative Recommendation via Kronecker Residual Bridge, 2026）不同：它们改层结构、词表规模或桥接方式；我们的层数、码本大小、SID 长度全部沿用基线。与二值/低比特量化推荐（Learning Binarized Graph Representations, KDD 2022）与量化感知 GNN（Low-bit Quantization for Deep GNNs, CIKM 2023）不同：它们量化的是用户/商品向量以省存储或做 top-K 打分，没有 SID、没有自回归生成，量化感知约束作用于传播过程；我们量化的是商品语义表示以生成 SID，结构只进初始化。与本仓库已归档的五个机制不同：curvature_drive 把结构势做成码字势进代价（每一步分配都被改），curvature_depth 用曲率定层预算（改 SID 长度与参与集合），curvature_blocks 用曲率族群切码本列块（改可选列集合），curvature_pairs 用曲率符号挑正负对（成对信号，已被主线禁止），curvature_condition 用曲率生成 FiLM 参数调制编码器（改表示学习入口）；本方向既不碰代价、不碰层数、不碰可选列集合、不碰编码器，也不构造商品对，唯一改动是「码本矩阵的初始数值」，参数个数为零增量。特别地，与 curvature_blocks 的唯一表面相似处是「都按曲率群体给码字分份额」，但两者不是同一件事：blocks 把份额变成训练中每一轮都生效的硬掩码（块外代价置 -inf、末层按行块×列块解子 Sinkhorn），商品永不允许使用块外码字，码字也被永久锁定在某个列区间；本方向的份额只决定初始化时各结构层分到几个码字，训练第一步起掩码即失效——任何商品可以选任意码字、任何码字可以漂向任意位置，因此 blocks 改的是「分配约束」，本方向改的是「起点」，两者在 blocks_off / init_off 的自检里都能与基线逐位对齐，但机制归属不同侧（分配环节 vs 初始化环节）。"
+    },
+    "4_method": {
+      "single_variable": "新增「AF3 结构分层 → 码本分层初始化」这一条通路：只替换 RQ-VAE 各层码本的初始数值（以及为算初始数值而做的一次无梯度前向），训练循环、损失函数、分配规则、码本更新公式、SID 导出全部沿用基线。改动落到已有的训练入口只需在 config 里加一个 CODEBOOK_INIT 开关（linear / stratified_af3），其余行为不变。",
+      "new_files": [
+        {
+          "path": "af3_codebook_init.py",
+          "what": "从训练划分共现图冻结地算边曲率 kappa_ij（AF3 闭式）、度加权邻域均值 kappa_bar_i、全图 z-score 得结构势 s_i；再按 s_i 的符号与三分位切成 Q 个结构层 q(i)，按最大余数法算每层份额 k_q，输出与商品下标对齐的整数层号数组、份额表、以及退化标志（边数为 0、sigma_s = 0、某层为空、余数分配冲突）与分层占比统计"
+        },
+        {
+          "path": "model/stratified_codebook_init.py",
+          "what": "给定编码器与初始残差表示，按层逐次做「桶内均值落码字」：第 l 层先把商品按其 q(i) 分桶，桶内再按 s_i 排序切成 k_q 个连续子桶，取子桶内 r_i^(l-1) 的均值作初始码字；空桶回退到最近的非空桶均值并记录；全程无梯度、无损失项、不涉及任意两件商品的相似性比较；init_off 时直接返回基线码本初值，保证与基线逐位一致"
+        },
+        {
+          "path": "eval/codebook_strata_probe.py",
+          "what": "只读评估：记录每一层每层的「码字结构层覆盖率」（各结构层分到的码字数、被分配到的商品数）、每层 token 的族群纯度 purity_m、死码字数与死码字所在结构层、以及桥商品（s_i 最低分位）与社区内商品（s_i 最高分位）的 SID 前缀差异；对基线与新初始化各跑一次做对照，不参与训练"
+        }
+      ]
+    },
+    "5_references": [
+      {
+        "title": "Learning Graph Quantized Tokenizers",
+        "year": 2024,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2410.13798",
+        "cited_by": 6,
+        "authors": ["Limei Wang", "Kaveh Hassani", "Si Zhang", "Dongqi Fu"],
+        "what": "把 VQ 分词器用于图：码本在图上任务（重建/对齐）中一起学，量化目标本身带图语义。与本方向最接近，但它的码本是训练出来的、结构通过目标函数进入；我们的训练目标与基线逐位相同，曲率只在初始化时一次性决定码字起点，训练中不出现任何结构项。"
+      },
+      {
+        "title": "Decoupled Residual Quantization for Robust Semantic IDs in Recommendation",
+        "year": 2026,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2606.01844",
+        "cited_by": 4,
+        "authors": ["Xuesi Wang", "Junjie Wang", "Ziliang Wang", "Weijie Bian"],
+        "what": "解耦 RQ 各层的量化目标以提升 SID 鲁棒性；改的是量化流程，结构信号不来自行为图。本方向层结构与分配一律沿用基线，只改码本初值。"
+      },
+      {
+        "title": "Hyperbolic Residual Quantization: Discrete Representations for Data with Latent Hierarchies",
+        "year": 2025,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2505.12404",
+        "cited_by": 0,
+        "authors": ["Piotr Piękos", "Subhradeep Kayal", "Alexandros Karatzoglou"],
+        "what": "把残差量化放到双曲空间以贴合潜在层次；几何进入空间与距离，参与每次分配。本方向不改空间与距离（仍是基线欧氏平方），曲率只以冻结标量决定初值。"
+      },
+      {
+        "title": "Geometry-Aware Hyperbolic Residual-Quantized Variational Autoencoders",
+        "year": 2026,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2609.26342",
+        "cited_by": 0,
+        "authors": ["Alessio Colombo", "Melika Ayoughi"],
+        "what": "把双曲几何写进 RQ-VAE 的嵌入与量化过程，几何是可学的空间先验。本方向几何信息只用于分层初始化，模型类、参数量与量化规则不变。"
+      },
+      {
+        "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+        "year": 2026,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2609.03369",
+        "cited_by": 0,
+        "authors": ["Longfeng Wu", "Tong Zeng", "Giovanni Seni", "Zhimin Peng"],
+        "what": "为长尾商品在双曲空间里做索引，几何先验服务长尾覆盖；本方向用行为图曲率处理「桥梁 vs 社区内」覆盖，并只在初始化一步介入。"
+      },
+      {
+        "title": "From a Static Multi-Level Small Semantic Codebook to a Dynamic Single-Level Large Semantic Codebook for Generative Recommendation",
+        "year": 2026,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2608.21012",
+        "cited_by": 1,
+        "authors": ["Tianlu Xie", "Xin Ku", "Mingjie Sun", "Yunhao Sha"],
+        "what": "改码本的层级与规模（多层小码本 → 单层大码本）；属于量化流程改造。本方向码本大小与层数保持基线不变。"
+      },
+      {
+        "title": "Asymmetric Generative Recommendation via Kronecker Residual Bridge and Multi-Faceted Hierarchical Quantization",
+        "year": 2026,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2605.14512",
+        "cited_by": 3,
+        "authors": ["Bin Huang", "Xin Eric Wang", "Junwei Pan", "Yongqi Zhou"],
+        "what": "用 Kronecker 残差桥与多面层次量化改写残差通路；同样动的是量化器结构。本方向残差递归一行不改。"
+      },
+      {
+        "title": "Learning Binarized Graph Representations with Multi-faceted Quantization Reinforcement for Top-K Recommendation",
+        "year": 2022,
+        "venue": "KDD",
+        "doi": "10.1145/3534678.3539452",
+        "cited_by": 28,
+        "authors": ["Yankai Chen", "Huifeng Guo", "Yingxue Zhang", "Chen Ma"],
+        "what": "对二值图表示做量化强化以服务 top-K 推荐；量化对象是用户/商品二值码，目标是打分效率而非 SID。证明结构感知的量化可以缓解信息损失，但对象与目标都不同。"
+      },
+      {
+        "title": "Low-bit Quantization for Deep Graph Neural Networks with Smoothness-aware Message Propagation",
+        "year": 2023,
+        "venue": "CIKM",
+        "doi": "10.1145/3583780.3614955",
+        "cited_by": 15,
+        "authors": ["Shuang Wang", "Bahaeddin Eravcı", "Rustam Guliyev", "Hakan Ferhatosmanoğlu"],
+        "what": "用量化感知的平滑性约束消息传递，缓解低比特下的过平滑；曲率与平滑性同源（正曲率≈过平滑），为本方向「正/负曲率商品需要不同落位」提供理论旁证，但它作用在图网络训练而非码本初始化。"
+      },
+      {
+        "title": "Curvature graph neural network",
+        "year": 2021,
+        "venue": "Information Sciences",
+        "doi": "10.1016/j.ins.2021.12.077",
+        "authors": ["Haifeng Li", "Jun Hong Cao", "Jiawei Zhu", "Yu Liu"],
+        "what": "把离散（Forman 型）曲率接进 GNN 的传播与聚合；曲率服务于连续 embedding，没有量化与 SID。本方向沿用同一族曲率定义，但只把它压成逐商品标量用于初始化。"
+      },
+      {
+        "title": "Node Identifiers: Compact, Discrete Representations for Efficient Graph Learning",
+        "year": 2024,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2405.16435",
+        "cited_by": 7,
+        "authors": ["Yuankai Luo", "Hongkang Li", "Qijiong Liu", "Lei Shi"],
+        "what": "为图学习学紧凑离散节点标识，服务于节点级任务输入；与本方向一样关心「离散标识是否承载图信息」，但目标是图任务精度而非生成式推荐的 SID。"
+      }
+    ]
+  },
+  "result": {
+    "status": "not_run"
+  }
+}
