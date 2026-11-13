@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-14.14';
+export const FRONTEND_VERSION = '2026-11-14.15';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -638,7 +638,7 @@ export const AGENT_PROFILES = [
      * 每轮之前把会话重置（loopResetSession）：每一轮从头看一遍公式，
      * 不带着上一轮的结论去看下一轮。
      */
-    loop: { enabled: true, count: 100, intervalSeconds: 0 },
+    loop: { enabled: true, count: 0, intervalSeconds: 0 }, // 0 = 不限次数
     loopGate: {
       mode: 'agent',
       prompt:
@@ -1183,8 +1183,9 @@ export function normalizeLoop(value) {
   }
   const { enabled, count, intervalSeconds } = value;
   if (typeof enabled !== 'boolean') throw new Error('loop.enabled 必须是布尔值');
-  if (!Number.isInteger(count) || count < 1 || count > MAX_LOOP_COUNT) {
-    throw new Error(`loop.count 必须是 1 到 ${MAX_LOOP_COUNT} 的整数`);
+  // count = 0 表示不限次数：闸一直放行就接着跑。
+  if (!Number.isInteger(count) || count < 0 || count > MAX_LOOP_COUNT) {
+    throw new Error(`loop.count 必须是 0 到 ${MAX_LOOP_COUNT} 的整数（0 = 不限次数）`);
   }
   if (!Number.isInteger(intervalSeconds)
       || intervalSeconds < 0 || intervalSeconds > MAX_LOOP_INTERVAL_SECONDS) {
@@ -1311,8 +1312,8 @@ function publicProfile(profile) {
       ? Boolean(override.resetReceiverSessionOnHandoff)
       : false,
     // 循环：跑完这一轮之后自动再跑几轮、每轮隔多久。用户没配过就是不开。
-    loop: has('loop') ? normalizeLoop(override.loop) : { ...DEFAULT_LOOP },
-    defaultLoop: { ...DEFAULT_LOOP },
+    loop: has('loop') ? normalizeLoop(override.loop) : normalizeLoop(profile.loop || DEFAULT_LOOP),
+    defaultLoop: normalizeLoop(profile.loop || DEFAULT_LOOP),
     // 每轮之后要不要再跑一轮：用户没配过就是不开（跑满 count 轮）。
     loopGate: has('loopGate')
       ? normalizeLoopGate(override.loopGate)

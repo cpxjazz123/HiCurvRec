@@ -93,7 +93,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.14';
+const FRONTEND_VERSION = '2026-11-14.15';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -284,6 +284,7 @@ function createPanel(root) {
     loopSummary: pick('loopSummary'),
     loopEnabled: pick('loopEnabled'),
     loopCount: pick('loopCount'),
+    loopUnlimited: pick('loopUnlimited'),
     loopInterval: pick('loopInterval'),
     loopState: pick('loopState'),
     loopGateMode: pick('loopGateMode'),
@@ -695,7 +696,15 @@ function createPanel(root) {
       const loop = profile.loop && typeof profile.loop === 'object' ? profile.loop : null;
       const setting = loop || { enabled: false, count: 2, intervalSeconds: 0 };
       els.loopEnabled.checked = Boolean(setting.enabled);
-      if (els.loopCount) els.loopCount.value = String(setting.count);
+      if (els.loopCount) {
+        // 0 是"不限次数"，输入框里显示成空 —— 那个数只是上限，不限的时候没有上限。
+        els.loopCount.value = String(setting.count === 0 ? '' : setting.count);
+        els.loopCount.placeholder = setting.count === 0 ? '不限' : '';
+      }
+      if (els.loopUnlimited) {
+        els.loopUnlimited.checked = setting.count === 0;
+        if (els.loopCount) els.loopCount.disabled = els.loopUnlimited.checked;
+      }
       if (els.loopInterval) els.loopInterval.value = String(setting.intervalSeconds);
       refreshLoopState();
     }
@@ -894,11 +903,13 @@ function createPanel(root) {
    */
   function loopSetting() {
     const enabled = Boolean(els.loopEnabled && els.loopEnabled.checked);
+    const unlimited = Boolean(els.loopUnlimited && els.loopUnlimited.checked);
     const countRaw = els.loopCount ? Number(els.loopCount.value) : 1;
     const intervalRaw = els.loopInterval ? Number(els.loopInterval.value) : 0;
     return {
       enabled,
-      count: Number.isInteger(countRaw) ? Math.min(100, Math.max(1, countRaw)) : 1,
+      // 0 = 不限次数：闸一直放行就接着跑。
+      count: unlimited ? 0 : Number.isInteger(countRaw) ? Math.min(100, Math.max(1, countRaw)) : 1,
       intervalSeconds: Number.isInteger(intervalRaw) ? Math.min(3600, Math.max(0, intervalRaw)) : 0,
     };
   }
@@ -944,9 +955,11 @@ function createPanel(root) {
         ? '每轮之后由这个 agent 按判据自己判'
         : '每轮之后直接接着跑';
     const resetText = loopResetSessionSetting() ? '每轮之前重置会话' : '不重置会话';
-    const countText = gate.mode === 'off'
-      ? `共 ${setting.count} 轮`
-      : `最多 ${setting.count} 轮`;
+    const countText = setting.count === 0
+      ? '不限次数'
+      : gate.mode === 'off'
+        ? `共 ${setting.count} 轮`
+        : `最多 ${setting.count} 轮`;
     els.loopState.textContent =
       `${countText}，每轮间隔 ${setting.intervalSeconds} 秒；${gateText}；${resetText}。`;
   }
@@ -1931,17 +1944,17 @@ function createPanel(root) {
       loopDone += 1;
     }
     const gate = loopGateSetting();
-    // 闸开着时，跑多少轮由闸说了算：次数只是硬上限（防闸一直放行时没完没了）。
+    // 闸开着时，跑多少轮由闸说了算：次数只是硬上限（0 = 不限）。
     const gateOn = gate.mode === 'ask' || gate.mode === 'agent';
-    if (loopDone >= loopTarget && !gateOn) {
+    if (loopDone >= loopTarget && !gateOn && loopTarget > 0) {
       const total = loopDone;
       loopTarget = 0;
       loopDone = 0;
       if (els.loopState) els.loopState.textContent = `循环完成：共 ${total} 轮。`;
       return;
     }
-    // 闸一直放行时，次数就是硬上限（面板上那个"次数"在闸模式下是这个意思）。
-    if (loopDone >= loopTarget) {
+    // 闸一直放行时，次数就是硬上限（0 = 不限，就一直跑下去）。
+    if (loopTarget > 0 && loopDone >= loopTarget) {
       const total = loopDone;
       loopTarget = 0;
       loopDone = 0;
@@ -2667,6 +2680,16 @@ function createPanel(root) {
   }
 
   // 循环：勾选/改数值都存到服务端，改完立刻反映到折叠栏与状态行。
+  for (const el of [els.loopUnlimited]) {
+    if (!el) continue;
+    el.addEventListener('change', () => {
+      userEdited.loop = true;
+      if (els.loopCount) els.loopCount.disabled = el.checked;
+      refreshLoopState();
+      scheduleSave({ loop: loopSetting() });
+    });
+  }
+
   for (const el of [els.loopResetSession]) {
     if (!el) continue;
     el.addEventListener('change', () => {

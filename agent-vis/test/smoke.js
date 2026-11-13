@@ -225,6 +225,39 @@ async function main() {
     assert.deepEqual(doc.agents, ['agent-a']);
   });
 
+  await test('循环次数可以是 0（不限次数）', async () => {
+    const put = (patch) =>
+      fetch(`${base}/api/agents/agent-a/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      }).then(async (res) => ({ status: res.status, json: await res.json().catch(() => null) }));
+
+    let res = await put({ loop: { enabled: true, count: 0, intervalSeconds: 0 } });
+    assert.equal(res.status, 200);
+    assert.equal(res.json.loop.count, 0, '0 = 不限次数');
+    assert.equal(res.json.loop.enabled, true);
+
+    // 负数与超过上限的还是要拒。
+    res = await put({ loop: { enabled: true, count: -1, intervalSeconds: 0 } });
+    assert.equal(res.status, 400);
+    res = await put({ loop: { enabled: true, count: 1000, intervalSeconds: 0 } });
+    assert.equal(res.status, 400);
+
+    await put({ loop: null });
+  });
+
+  await test('AGENT MATH 配好的是：不限次数 + 按判据自己判 + 每轮重置会话', async () => {
+    const health = await (await fetch(`${base}/api/health`)).json();
+    const math = (health.agents || []).find((a) => a.id === 'agent-math');
+    assert.ok(math, 'AGENT MATH 不在身份表里');
+    assert.equal(math.loop.enabled, true);
+    assert.equal(math.loop.count, 0, '次数应为 0（不限）');
+    assert.equal(math.loopGate.mode, 'agent');
+    assert.ok(math.loopGate.prompt.includes('没有'), '判据要写清什么时候才停');
+    assert.equal(math.loopResetSession, true);
+  });
+
   await test('未知路由返回 404', async () => {
     const res = await fetch(`${base}/no-such-file`);
     assert.equal(res.status, 404);
@@ -1345,7 +1378,7 @@ async function main() {
 
     for (const bad of [
       { enabled: 'yes', count: 2, intervalSeconds: 0 },
-      { enabled: true, count: 0, intervalSeconds: 0 },
+      { enabled: true, count: -1, intervalSeconds: 0 },
       { enabled: true, count: 101, intervalSeconds: 0 },
       { enabled: true, count: 2, intervalSeconds: -1 },
       { enabled: true, count: 2, intervalSeconds: 3601 },
