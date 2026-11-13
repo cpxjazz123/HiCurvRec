@@ -1,0 +1,47 @@
+{
+  "schema": "genrec.idea.v6",
+  "arm": "TIGER_af3_curvature_factor_mass_rq",
+  "sections": {
+    "1_goal": {
+      "idea": "几何对象是曲率固定的产品流形 M=H^8(c_hi)xH^8(c_lo)xR^16（曲率取 constants 常数）。结构信号只有一条单商品标量：AF3 邻域均值 kappa_bar_i 的全表秩 u_i（复用 af3_potential.py:103/:115）。AF3 落在码字侧的分量占比 p_i=u_i：第 l 层码字 tau_k^l 切列后只对两个双曲块逐商品放缩 v_k^{l,hi}=expmap0(sqrt(p_i)tau_k^{l,h1},c_hi)、v_k^{l,lo}=expmap0(sqrt(1-p_i)tau_k^{l,h2},c_lo)，欧氏块不放缩；每个商品因此有一套自己的有效码字点云。四处：①编码器末层后紧接无参数 chart 头，x_i=(h_E, expmap0(h1,c_hi), expmap0(h2,c_lo))，编码器输出即 M 上的点；②D_ik^l=||r_i^{E,l}-tau_k^{E,l}||^2+SCALE_HYP*(d_{c_hi}(x_i^hi,v_k^{l,hi})^2+d_{c_lo}(x_i^lo,v_k^{l,lo})^2)，argmin 与末层 Sinkhorn 形状同基线；③两项量化损失同几何；④p_i 即 AF3 决定的几何量。残差通路：残差只活在欧氏 16 维（r^{E,0}=h_E，r^{E,l+1}=r^{E,l}-tau_k^{E,l}），双曲两因子不做残差量化，每层都用同一个固定商品点与第 l 层放缩后的码字比距离；三处用同一个 D_ik^l；重建项对编码器切向量 h_i 求差、读回是 sum_l tau_k^l。双曲块不做残差量化不是退化：它每层都进 argmin 与两项损失，随层变化来自码字；商品点逐层在球内移动会变成 origin_shift 式机制，本向刻意不做，代价是双曲块份额随层上升。AF3 真决定几何：p_i 作用在共享码字的切空间上，编码器只能移动自己的点、不能预缩放码字，不同 p_i 让同一商品面对不同码字点云，可达几何集随 p_i 变（乘在自己输出上只是搬点）。取哪一半：取「哪个分量」（每商品把码字多少双曲能量放高曲率因子），放弃「曲率取多少」（曲率常数）；main_line 写「曲率或分量」，故不违反主线。与 _archive：origin_shift 动商品侧锚点（单球 c=1、码字不缩放），本向商品点固定、动码字侧（商品点置球心后本向 D 仍随 p_i 变，origin_shift 不随 u 变）；per_item 是单球逐商品曲率且商品点与码字同乘一个标量，本向只在码字侧乘、两因子拿两个不同放缩因子。增量在 c_hi=c_lo 与 c->0 都还在：||x||^2、<x,tau>、||tau||^2 三项分别带 p^0、p^{1/2}、p^1，另一因子带 (1-p) 同一组幂，逐商品标量权重只能给三项同一个 w_i。判否（残差为零即判否）：只在第 1 层逐行拟合固定族 θ=(全局曲率 c、每行点半径 m_i、每行标度 w_i)，自由度 1+2N，只有 c 跨行共享。方向性预测：被分配码字两因子放缩后模长比应与 p_i/(1-p_i) 的秩单调正相关；反向读数即未生效。must_hold#1：通路只有单商品 p_i 与 item_ids，D/C/Q 无 (i,j) 项，不按符号/阈值/度数切正负组。三个开关只是接线检查（behaviour_off 返回常量 SHARE_REF；geometry_off 同时关掉曲率与放缩）。"
+    },
+    "4_method": {
+      "new_files": [
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/af3_item_potential.py",
+          "what": "训练前一次性算出并冻结、不训练：构图与势全部 from ... import 复用兄弟臂 stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/af3_potential.py 的现有函数（repository_root、train_parquet、sequences、edge_arrays、adjacency、edge_curvatures、structural_potentials），不复制 AF3 实现，跨臂 import 用 try/except ImportError 包成带完整路径与函数名的 RuntimeError；standardise / huber / calibrate_lambda / build / potential_tensor 不调用。新增三样：(1) 全表秩 u_i=(rank(kappa_bar_i)-0.5)/N，升序秩、并列取平均秩；(2) 缺 key 与度 0 商品取图均值势的秩位置（数据相关取值，逐条打印 item_id，不静默兜底）；(3) 唯一产物 eval/af3_item_potential.npz，字段 item_ids/potential/u/rank/is_missing/rank_of_graph_mean 及 sha256 digest，训练与导出只读这一份、不重算；写盘前校验长度与取值区间，否则 RuntimeError。u->p 的映射不在本文件里算，只有一处实现（factor_share_geometry.share）。"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/factor_share_geometry.py",
+          "what": "几何与分量占比的唯一实现处，放候选树顶层（不进 model/、不进 distances/），因为基线 model/__init__.py -> model/layers.py:23 -> distances/__init__.py 的包级依赖方向会造成 partially initialized module：两侧只共享这个顶层模块，distances/ 下不 import model 包子模块，model/ 下只走 layers.py:23 原有的 from distances import build_distance。无参数、无新增可训练权重，算子全部来自 tools/research/geometry/poincare_contract.py（expmap0:85、logmap0、squared_distance:153、project、BALL_EPS:16），import 包成带路径与 API 名单的 RuntimeError；契约只接受标量曲率，故每因子各传一个 float，不自写曲率算子。对外入口：(1) share(u, mode) -> (N,)：mode='struct' 时 p_i=u_i（全文件唯一一条占比映射，一次算好冻结），mode='ref' 时返回常量 SHARE_REF——两条同一签名，behaviour_off 不改调用点；(2) item_chart_head(h) -> (x_hi, x_lo)：只对商品侧做 expmap0(h1,c_hi)、expmap0(h2,c_lo)，不切分、不带 p；(3) log_at_origin(x_hi, x_lo) -> (B,16)：第一层欧氏残差初值，与 item_chart_head 互为逆；(4) codeword_chart(tau, p_batch) -> (v_hi, v_lo)：把 (K,32) 码字切列后按 sqrt(p_i)/sqrt(1-p_i) 放缩再 expmap0，得逐商品有效码字点云，向量化；(5) cost(rE, x_hi, x_lo, v_hi, v_lo) -> (B,K)：欧氏块展开式 + SCALE_HYP*(两因子测地平方和)，断言维度与 p 取值否则 ValueError；(6) quant_parts(...)：按维数取均值、stop-grad 方向与 losses/commitment.py:25、losses/codebook.py:25 逐项一致；(7) behaviour_off / geometry_off 两条分支：geometry_off 同时忽略 p 与放缩、直接走基线展开式（不是把曲率设小）。"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/distances/factor_share.py",
+          "what": "注册表适配器，不含数值：NAME='factor_share'、distances(latent, codebook, p=None) 一行转调顶层 cost；p 为 None 或形状不符即 ValueError（fail loud，不静默回退成欧氏）；不得 import model 包子模块（同上的包级依赖方向）。"
+        }
+      ],
+      "modified_files": [
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/distances/__init__.py",
+          "what": "在 DISTANCES 里加 'factor_share' 一项指向 factor_share.distances，保留 'euclidean'（geometry_off 用）；build_distance 的默认仍是 euclidean，未知名字照旧抛 DistanceError。"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/distances/distance.py",
+          "what": "只加一层兼容包装：模块级 distances(latent, codebook, p=None) 里忽略 p 并原样调用原来的展开式实现，原公式与数值路径逐字节不动——VQLayer 因此用同一个三参口径接任一注册项，geometry_off 与基线仍逐元素一致。"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/model/model.py",
+          "what": "编码器头末尾接 item_chart_head（无参数），使 forward / get_indices / init_codebook 拿到的 encoded 是 M 上的点 x_i；欧氏 16 维残差初值取 h_E、双曲两块以固定商品点参与每层距离，故 forward 交给量化层的是 (r^E,l, x_hi, x_lo) 三块而非单个 32 维残差；重建项对编码器切向量 h_i 求差、读回仍是 sum_l tau_k^l。三个入口增加 item_ids（语义上必填：省略即 ValueError，不兜底成等占比），用冻结表索引得到 p_i 并只在 codeword_chart 里使用。"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/model/layers.py",
+          "what": "VQLayer.forward / RQLayer.forward 增加 p 与商品侧固定点参数并透传给 self.distance(...)，_distances 同步；欧氏残差递归 r^E<-r^E-tau_k^E 逐字保留，双曲两块不参与递归（商品点每层复用）；init_codebook 的 KMeans 初值 argmin 用同一个 D（同一份 p，属接线检查、不作机制证据）；RQLayer 构造处断言 config.vq_type=='vq' 否则 ValueError（EMAVQLayer 的 quant_parts 是 (commitment,None)、SimVQ 重参数化码字，二者都不接管几何）。不加 buffer、不新增可训练参数：p 逐商品、由调用方按 batch 传入。"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/train_rqvae.py",
+          "what": "TensorDataset 与 DataLoader 构造处扩成同时产出 (embedding, item_id)；开训前只读 eval/af3_item_potential.npz 并用 digest 与 item_ids 覆盖训练集做校验，缺失或校验失败直接 RuntimeError（不现场重算、不补默认占比）；随后调用 factor_share_geometry.share(u, 'struct') 一次得到 (N,) 的 p 并冻结为张量。init_codebook 调用处与导出 SID 的 get_indices 调用处都改成把对应 item_ids 一并传入。日志打印 p 的分位、两放缩因子平方和的相对误差、p 与 u 的秩相关、图均值势的秩位置与 miss 数、|p_miss-SHARE_REF| 这一实测读数、VQ_TYPE 断言结果。"
+        }
+      ]
+    }
+  }
+}

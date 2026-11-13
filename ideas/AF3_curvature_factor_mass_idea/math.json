@@ -1,0 +1,184 @@
+{
+  "symbols": {
+    "kappa_ij": "AF3 边曲率 kappa_ij=4-d_i-d_j+3*T_ij，训练前在训练划分共现图上算一次后冻结（复用 stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/af3_potential.py:103 的 edge_curvatures，不复制实现）",
+    "kappa_bar_i": "结构势：邻接边 kappa_ij 的未加权邻域均值，度 0 取图均值（复用 af3_potential.py:115 的 structural_potentials）；训练前冻结，单商品一个标量，是结构信号进入几何的唯一入口",
+    "u_i": "全表全局秩 u_i=(rank(kappa_bar_i)-0.5)/N，升序秩、并列取平均秩；全表秩而非 batch 内秩，故与 batch 组成、顺序无关；缺 key 与度 0 商品取 (rank_of_graph_mean-0.5)/N（图均值势的秩位置，数据相关；势表全并列或图均值落在中位位置时该位置恰为 (N+1)/2，u_miss 因此恰为 0.5、与 SHARE_REF 数值相同，故不可用 |p_miss-SHARE_REF| 判接线），miss 数与并列数进日志",
+    "p_i": "逐商品分量占比 p_i=u_i（全文件唯一一条定义，仿射、严格单调、连续、无阈值无分段，一次算好冻结、不进计算图）；p_i 是 AF3 决定几何的唯一自由度",
+    "SHARE_REF": "占比参照值 0.5：仅用于 behaviour_off 分支的常量占比（此时两块占比相等、总模长不被切分偏向任一侧）；不参与 p_i=u_i 这条映射，且恰好也是 u 取值范围 [1/(2N),1-1/(2N)] 的中点（端点由平均秩给出：秩 1 与秩 N，极值唯一时恰好取到）——数值相同但角色不同：SHARE_REF 是 behaviour_off 的常量占比，u 是数据侧的秩",
+    "s_hi": "高曲率因子在切分里拿到的模长因子 s_hi=sqrt(p_i)；是 p_i 的确定性函数，不构成第二个自由度",
+    "s_lo": "低曲率因子拿到的模长因子 s_lo=sqrt(1-p_i)；同上是 p_i 的确定性函数",
+    "h_i": "编码器最后一层 MLP 输出的 32 维切空间向量 h_i=(h_E 16 | h1 8 | h2 8)；它本身仍是切空间量，chart 头把它变成流形点；重建项对 h_i 求差",
+    "h_E": "h_i 的欧氏块（16 维）：直接作为欧氏因子坐标与欧氏残差初值 r_i^{E,0}，不经 expmap、不带 p",
+    "h1": "h_i 的高曲率双曲块（8 维）：经 expmap0(h1, c_hi) 落成 x_i^hi，商品侧不放缩",
+    "h2": "h_i 的低曲率双曲块（8 维）：经 expmap0(h2, c_lo) 落成 x_i^lo，商品侧不放缩",
+    "g_hi": "码字侧放缩后的高曲率切向量 g_k^{l,hi}=sqrt(p_i)*tau_k^{l,h1}；放缩只作用在码字上，商品侧不放缩",
+    "g_lo": "码字侧放缩后的低曲率切向量 g_k^{l,lo}=sqrt(1-p_i)*tau_k^{l,h2}；同上，商品侧不放缩",
+    "M": "产品流形 M=H^D_H1(c_hi) x H^D_H2(c_lo) x R^D_E：两个曲率不同的双曲因子 + 一个欧氏因子；曲率是固定阶梯，不随商品、码字、层变",
+    "c_hi": "高曲率因子（弯球）的固定曲率，取 constants 的值，不由 AF3 决定",
+    "c_lo": "低曲率因子（平球）的固定曲率，取 constants 的值，不由 AF3 决定",
+    "D_E": "欧氏因子维数，恒 16",
+    "D_H1": "进 c_hi 球的双曲切向量维数，恒 8",
+    "D_H2": "进 c_lo 球的双曲切向量维数，恒 8；D_E+D_H1+D_H2=32=基线码本维数",
+    "x_i": "商品 i 在 M 上的点 x_i=(h_E, x_i^hi, x_i^lo)：由编码器的 chart 头直接产出（chart 头是编码器最后一层，无参数），量化第一步拿到的就是它；第一块是编码器的欧氏切向量块 h_E，不是残差",
+    "x_i_hi": "x_i 的高曲率分量 x_i^hi=expmap0(h1, c_hi)，不带 p",
+    "x_i_lo": "x_i 的低曲率分量 x_i^lo=expmap0(h2, c_lo)，不带 p",
+    "r_i": "第 l 层残差只活在欧氏 16 维：r_i^{E,0}=h_E，r_i^{E,l+1}=r_i^{E,l}-tau_k^{E,l}；双曲两块不参与残差递归，每层都用同一个固定商品点 (x_i^hi, x_i^lo)",
+    "tau_k": "码字切空间参数（K x 32，K 与基线同）；码字按列切分为 (tau_k^E 16 | tau_k^{h1} 8 | tau_k^{h2} 8) 后两个双曲块逐商品放缩，欧氏块不放缩",
+    "v_k_hi": "码字 k 在高曲率因子上的点 v_k^{l,hi}=expmap0(sqrt(p_i)*tau_k^{l,h1}, c_hi)：逐商品放缩后的有效码字点，随商品 i 变；字母 u 只用于结构侧（u_i 是秩），码字侧的点一律记 v",
+    "v_k_lo": "码字 k 在低曲率因子上的点 v_k^{l,lo}=expmap0(sqrt(1-p_i)*tau_k^{l,h2}, c_lo)：同上，逐商品放缩",
+    "D_ik": "D_ik^l=||r_i^{E,l}-tau_k^{E,l}||^2 + SCALE_HYP*(d_{c_hi}(x_i^hi,v_k^{l,hi})^2 + d_{c_lo}(x_i^lo,v_k^{l,lo})^2)，两因子各用自己曲率的测地平方距离、码字点带逐商品放缩，按 SCALE_HYP 合成",
+    "C_i": "commitment 项（进编码器梯度）：D 的商品侧一阶形式（码字侧 stop-grad），按维数取均值（分母取 D_E+D_H1+D_H2=32，与 F.mse_loss 对 32 维取元素均值一致），与 losses/commitment.py:28 的归一口径一致",
+    "Q_i": "codebook 项（进码字梯度）：D 的码字侧一阶形式（商品侧 stop-grad），按维数取均值（同上，分母 32），与 losses/codebook.py:28 一致",
+    "SCALE_HYP": "双曲两因子共用的固定标度，由 c->0 极限定住：d_c^2->4|x-y|^2，故 SCALE_HYP*d_c^2->|x-y|^2，使退化时 D_ik 逐元素等于基线平方欧氏；固定不扫",
+    "beta": "基线 quantization_total 里的 commitment 权重，取值与位置一行不改；但两项换成测地平方后量级与欧氏 MSE 不同，其有效值随之变化（见 formulas.geometric_quantization 的 note）",
+    "K": "码本大小，与基线同；本向没有任何 (K,) 结构参数，结构与码字无关",
+    "N": "结构势表的 size 即全表商品数；u_i 的分母，与 batch 大小无关",
+    "d_i": "商品 i 在训练划分共现图上的度数（二值、无向、去重、去自环），口径由 af3_potential.py:103 的 degrees=matrix.sum(1) 固定；只在构图阶段用于 kappa_ij",
+    "T_ij": "边 (i,j) 的公共邻居数，口径由 af3_potential.py:103 的 common=(matrix@matrix)[rows,cols] 固定；只在构图阶段用于 kappa_ij",
+    "i,k": "i 是商品，k 是码字；本向的结构参数只挂在商品轴 i 上（一条 p_i），码字轴上没有新增自由度与新增参数",
+    "SK_EPSILON": "末层 Sinkhorn 的温度 epsilon，取 config/train_config.json 的实测值 0.003（RQLayer 只对末层传，其余层传 -1 即不走 Sinkhorn）；不由 AF3 决定",
+    "SK_ITERS": "末层 Sinkhorn 的迭代次数，取 config/train_config.json 的实测值 50（sinkhorn 函数签名默认 5，但实际调用传的是 config 值，以 config 为准）；不由 AF3 决定",
+    "l": "RQ 层号，l=1..N_l；第 l 层有自己的码字切向量 tau_k^{l,·}，而商品侧点 (x_i^hi,x_i^lo) 与 p_i 逐层不变",
+    "N_l": "RQ 层数（=config/train_config.json 的 CODEBOOK_NUM=3），与 symbols.N（结构势表的商品数）不是同一个量；分配公式里的 l<N_l 即「非末层」",
+    "expmap0": "球心指数映射 expmap0(v,c)：tools/research/geometry/poincare_contract.py:85，等于 tanh(sqrt(c)|v|)/(sqrt(c)|v|)*v（||v||->0 走 tanhc 极限），c==0 分支直接返回 v，出口按 (1-BALL_EPS)/sqrt(c) 的 project 收回球内；不自写算子",
+    "d_c": "曲率 c 球内的测地距离，poincare_contract.py:141 distance：(2/sqrt(c))*artanh(sqrt(c)|(-x)(+)y|)，c==0 分支返回 2|x-y|（故 d_c^2->4|x-y|^2）；squared_distance:153 是它的平方",
+    "m_i": "判否族 F 里商品 i 那行点的半径参数（逐行自由，每行 1 个）；只出现在 allocation_residual 的拟合族里，不进训练通路",
+    "w_i": "判否族 F 里商品 i 那行的标度参数（逐行自由，每行 1 个）；同上，只出现在 allocation_residual 里",
+    "F": "判否族 F(θ; r_i^E, h1_i, h2_i, tau^1) = 「单球 + 跨行共享曲率 c + 每行点半径 m_i + 每行标度 w_i」，θ=(c,{m_i,w_i})，自由度 1+2N；本文件只给这族的成员与自由度、未给解析式（见 allocation_residual 的 UNCHECKED 记录），它不进训练通路"
+  },
+  "formulas": [
+    {
+      "name": "af3_potential",
+      "formula": "kappa_ij=4-d_i-d_j+3*T_ij；kappa_bar_i=mean_{j in N(i)} kappa_ij（未加权，度 0 取图均值）；u_i=(rank(kappa_bar_i)-0.5)/N",
+      "note": "结构信号的全部来源，训练前算一次冻结，单商品一个标量；训练通路内没有 (i,j) 项（kappa_ij 只在构图阶段用完就丢）。用秩而非原始值：kappa_ij 含 -d_i-d_j 项、重尾，秩映射对严格单调变换不变；structural_potentials（af3_potential.py:115）返回的本来就是未标准化的邻域均值，standardise 是 :136 的独立函数、只在 build() 里对另一份 potential 调用，故 rank 直接作用在未标准化值上，秩口径与是否标准化无关。全表秩保证同一商品在任何 batch 得到同一个 u_i；并列取平均秩，不按 item id 打破，避免注入 id 信息。缺 key 与度 0 商品取图均值势的秩位置 u_miss=(rank_of_graph_mean-0.5)/N：它在几何上有明确含义（「图里最典型的那个结构势」的位置），但不保证不等于 SHARE_REF——势表全并列时（三点路径图 kappa_bar 全为 1，平均秩 (N+1)/2）或图均值恰好落在中位位置时（四点路径图加一个度 0 商品：s=(1,0.5,0.5,1,0.75)，rank(0.75)=3，u_miss=0.5）u_miss 恰好等于 SHARE_REF；此时 |p_miss-SHARE_REF|=0 只反映并列，不能当作接线已通的读数。"
+    },
+    {
+      "name": "share_map",
+      "formula": "p_i = u_i（唯一一条占比定义）；s_hi=sqrt(p_i)，s_lo=sqrt(1-p_i) 都是它的确定性函数；behaviour_off 分支里 p_i 恒取 SHARE_REF",
+      "note": "AF3 决定几何的落点：决定每个商品把多少双曲能量放在高曲率分量、多少放在低曲率分量。全部只有一个自由度，没有第二个待定参数；映射是恒等映射，因此不存在「两条 alpha 定义并存」或「参照点与中点共用一个符号」的问题——SHARE_REF 只是 behaviour_off 的常量占比，不参与 p_i=u_i。占比不存在人为上下限：平均秩最小为 1、最大为 N，故由秩定义 u_i 落在 [1/(2N), 1-1/(2N)] 内，端点 1/(2N) 与 1-1/(2N) 在极值唯一时恰好取到；整个区间严格含于 (0,1)，故不谈「切组」，也没有 0/1 的质量归零问题。"
+    },
+    {
+      "name": "energy_split",
+      "formula": "商品侧不放缩：x_i^hi=expmap0(h1,c_hi)、x_i^lo=expmap0(h2,c_lo)，故商品的双曲切向量就是 (h1|h2)、与 p_i 无关；放缩只作用在码字侧：g_k^{l,hi}=sqrt(p_i)*tau_k^{l,h1}、g_k^{l,lo}=sqrt(1-p_i)*tau_k^{l,h2}",
+      "note": "这一条的作用是钉住「放缩落在哪一侧」，不是写一个守恒式：本向不改商品切向量的模长（与 _archive/origin_shift 的逐商品模长/锚点那一格正交），只把码字切向量在两个曲率因子之间按 p_i 拆开。因此不存在 ||g_hi||^2+||g_lo||^2=||h||^2 这类等式——码字侧总模长不守恒（p_i=SHARE_REF 时两个因子各乘 sqrt(0.5)）。可实测的接线读数是「商品点与 p 无关」，以及 c->0 时展开式中三项的幂次：||x||^2 带 p^0、-2<x,tau> 带 p^{1/2}、||tau||^2 带 p^1——不同幂次正是 allocation_residual 判否「单一逐商品块权重」的依据。"
+    },
+    {
+      "name": "chart_head",
+      "formula": "x_i=(h_E, expmap0(h1,c_hi), expmap0(h2,c_lo))；欧氏残差初值 r_i^{E,0}=h_E（16 维），双曲两块不参与残差递归",
+      "note": "must_hold#2 的第一处字面落实：编码器的最后一层就是 chart 头，编码器输出本身即 M 上的点（两张球内的坐标 + 欧氏块），量化拿到的是这个点，不存在「输出是切向量、由读点一步搬到流形上」的中间量被使用。expmap0 来自 poincare_contract:85（含 ||v||->0 的 tanhc 极限与按 (1-BALL_EPS)/sqrt(c) 的 project），不自写算子、不改契约；logmap0 只在需要从球点读回切向量时使用，不作为商品侧残差初值（残差初值按 1_goal 取 h_E）。基点恒为两个球的球心，无锚点、无平移项。商品侧不带 p、码字侧才放缩，故结构信号只能经码字侧进入距离，不可能通过「同时放大商品与码字」自消。"
+    },
+    {
+      "name": "product_cost",
+      "formula": "D_ik^l = ||r_i^{E,l}-tau_k^{E,l}||^2 + SCALE_HYP * ( d_{c_hi}(x_i^hi, v_k^{l,hi})^2 + d_{c_lo}(x_i^lo, v_k^{l,lo})^2 )，其中 v_k^{l,hi}=expmap0(sqrt(p_i)*tau_k^{l,h1}, c_hi)、v_k^{l,lo}=expmap0(sqrt(1-p_i)*tau_k^{l,h2}, c_lo)",
+      "note": "第二处：距离与分配在产品流形上算，两个双曲因子各用自己曲率的测地平方距离、欧氏因子用展开式，三块按固定标度相加。这是「混合曲率怎么计算」的答案：不是把一个曲率插值成一个数，而是两个互不相同的曲率因子并存、各自贡献距离；p_i 落在码字侧的放缩上，改的是同一商品行里两块码字点的半径、从而改两块的相对贡献。残差只递归欧氏 16 维（r_i^{E,0}=h_E），双曲两块每层都用同一个固定商品点与第 l 层放缩后的码字比距离——商品点逐层移动是 _archive/origin_shift 的机制，本向刻意不做。"
+    },
+    {
+      "name": "geometric_quantization",
+      "formula": "C=mean_i C_i、Q=mean_i Q_i，quant_parts=(C,Q)；总分仍是 losses/quantization.py:51 的 quantization_total(parts,beta)=mean_l(Q_l+beta*C_l)",
+      "note": "第三处，must_hold#2 的「码本或损失按几何定义」：两项不再是切空间欧氏 MSE，而与 D 同一几何（两因子测地平方和、按维数取均值以对齐 F.mse_loss 的归一口径）。stop-gradient 方向逐项对应基线（losses/commitment.py:25、losses/codebook.py:25 不改）。beta 的数值与位置一行不改，但必须如实声明：有限正曲率下测地平方距离相对平方欧氏有界且量级不同，commitment/codebook 两项的量级随之改变，等于 beta 的有效值变了；本向不重新调 beta，也不把增益归因于它，比较口径由 geometry_off（显式展开式，与基线逐元素一致）来钉住。重建项仍在 32 维欧氏空间、与基线一致。"
+    },
+    {
+      "name": "assignment",
+      "formula": "l<N_l，或 l=N_l 但处于推理且 infer_use_sk=False：token_l(i)=argmin_k D_ik；l=N_l 且（training 或 infer_use_sk=True）：A=Sinkhorn(center_distance(D); SK_EPSILON, SK_ITERS)，token_l(i)=argmax_k A_ik（token_l(i) 为第 l 层给商品 i 的码字编号；infer_use_sk 为 get_indices 的推理开关、默认 False；A 是 Sinkhorn 分配矩阵，与 symbols.Q_i 的 codebook 项 Q 不是同一个符号）",
+      "note": "分配形状与基线逐位相同（_indices:114-121、center_distance:83、sinkhorn:93），唯一变化是被喂进来的 D 换成产品流形上的值；不需要商品行号以外的额外输入（p_i 逐商品、按 batch 索引）。不加掩码、不切列块、不分组子问题、不改列边际。Sinkhorn 的分配矩阵在公式里记 A（基线局部变量名 q），避免与 symbols.Q_i 的 codebook 项撞字母。Sinkhorn 的触发条件照抄基线 layers.py:115 `(self.training and self.use_sk) or (self.use_sk and infer_use_sk)`，而 model/model.py:40 的 get_indices 默认 infer_use_sk=False，故末层在导出 SID 的默认推理路径上走 argmin、训练时才走 Sinkhorn；其余层 epsilon=-1 即 use_sk=False，恒 argmin。init_codebook 的 KMeans 初值 argmin 用的就是这个 D（layers.py:155），故「码本初始化也吃 p_i」是本向刻意的一部分：通路共四处（chart 头、距离与分配、码本初始化、两项量化损失），不是三处。"
+    },
+    {
+      "name": "euclidean_degeneracy",
+      "formula": "c->0 时 expmap0(v,c)->v 且 d_c^2->4|x-y|^2，故 SCALE_HYP=0.25 时 D_ik->||r_i^E-tau_k^E||^2+||h1_i-sqrt(p_i)tau_k^{l,h1}||^2+||h2_i-sqrt(1-p_i)tau_k^{l,h2}||^2（码字侧放缩仍在，故只是 32 维加权平方欧氏，不是基线代价）；仅当再显式去掉放缩（两个因子都不乘，即 geometry_off 分支）才退化为 ||r_i^{E,l}-tau_k^{E,l}||^2+||h1_i-tau_k^{l,h1}||^2+||h2_i-tau_k^{l,h2}||^2，即输入向量 (r_i^{E,l}, h1_i, h2_i) 上的 32 维平方欧氏（双曲两块不做残差递归，故这是同一输入向量上的逐元素一致，不等同于整条递归链与基线逐位相同）",
+      "note": "geometry_off 的数学依据，也是与基线逐元素可比的口子：geometry_off 同时丢掉 p 与两块放缩，直接走候选树 distances/distance.py 的展开式，故在同一 32 维输入向量上与基线 distances/distance.py:11-21 逐元素一致（l≥2 的输入是 (r_i^{E,l}, h1_i, h2_i)，双曲两块不参与残差递归）；仅把曲率取得很小做不到逐位相等（球距离在有限正曲率下不退化成欧氏）。算式：d_c(x,y)=(2/sqrt(c))artanh(sqrt(c)|(-x)(+)y|)（poincare_contract.py:141），小 c 时 artanh(z)->z，故 d_c^2->4|x-y|^2，乘 0.25 后还原平方欧氏；例如 h1=0.1、tau_h1=0.2、p=0.5，c->0 的极限是 |0.1-0.7071*0.2|^2=1.716e-3，而不是 |0.1-0.2|^2=1.0e-2——放缩不被丢掉时极限与基线差 5.8 倍。并如实记一条边界：c->0 但保留放缩时，本向退化成「逐商品块权重」（三项分别带 p^1、p^{1/2}、p^0，与 1_goal 的幂次一致），那条极限里本向与「逐商品距离尺度」不可区分，所以交付主张只在有限曲率下成立，判否量见 allocation_residual。"
+    },
+    {
+      "name": "no_pair_signal",
+      "formula": "通路输入只有 (单商品标量 p_i) 与 (batch 的 item_ids)；D_ik、C_i、Q_i、g_hi、g_lo 里没有任何 (i,j) 项，也没有组间比值或组间对比项",
+      "note": "对 must_hold#1 的逐项自检：不需要 InfoNCE / BCE / margin / 残差对比，也不需要按曲率符号、阈值、度数把边集或商品切成正组负组。p_i 是逐商品的连续占比，两块各自参与距离的求和，不是「两组之比」；SHARE_REF 是 behaviour_off 的常量占比、不是分组阈值；u_i 到 p_i 是恒等映射，无阈值无分段。所有指标里出现的边级统计都是只读的物化读数，不进损失、不进梯度。"
+    },
+    {
+      "name": "allocation_residual",
+      "formula": "对第 1 层的每行 i：min_{θ in Θ_shared} || D_i - F(θ; r_i^E, h1_i, h2_i, tau^1) || ，其中 F 取「单球 + 全局曲率 c（跨行共享）+ 每行点半径 m_i + 每行标度 w_i」这一族：自由度 1+2N，只有 c 跨行共享，m_i 与 w_i 逐行自由",
+      "note": "本向主张的判否量，而不是效应量：残差为零（在浮点容差内）即说明这套 D 完全能被「单球 + 全局曲率 + 逐行半径 + 逐行标度」这一类重参数化复现，本向就不是新几何，判不交付，也不用「效应小」解释。反过来，残差显著非零说明两因子测地代价的非线性与曲率耦合确实不可由逐商品标量尺度替代。判否族的自由度按 1_goal 定：全局曲率 1 个 + 每行 (m_i,w_i) 2N 个 = 1+2N，只有 c 跨行共享。本向自身的自由度计数只写 1：p_i 一条同时定 s_hi 与 s_lo，s 是 p 的确定性函数。"
+    },
+    {
+      "name": "curvature_is_fixed_ladder",
+      "formula": "c_hi、c_lo 是 constants 里的两个常数，对全部商品、全部码字、全部 RQ 层相同；AF3 只改 p_i（两块的分量占比），不改任何曲率",
+      "note": "如实声明本向在 main_line 的哪一格：main_line 允许「按结构势给商品或码字分配不同的曲率或分量」，本向取「分量」那一半——由 AF3 决定每个商品的双曲能量在两因子之间怎么分。曲率阶梯固定是刻意的：它与归档 per_item（逐商品曲率）、codeword_bundle（逐列曲率）在自由度上正交，故三个方向可逐项对位比较。曲率阶梯在本向里不是身份判据（那只是混合曲率这一共同背景），身份判据是 p_i 驱动的分量占比本身；曲率阶梯的作用是让「同一份能量放在不同球上」在几何上可辨。"
+    },
+    {
+      "name": "dedup_archive",
+      "formula": "origin_shift：自由度=逐商品锚点 a_i(单球, c≡1, 商品侧模长自由)；per_item：自由度=逐商品曲率 c_i(单球, 基点恒球心)；codeword_bundle：自由度=逐层 (K,) 曲率(列轴, 由分配聚合导出)；本向：自由度=1 条逐商品分量占比 p_i(两档固定曲率、商品侧模长不变、码字侧两块总模长随 p 变、基点在球心)",
+      "note": "与 ideas/_archive/ 三个方向按四件事对位（自由度落哪根轴 / 改曲率还是改分量占比 / 是否经过列聚合 / 是否单球），每条都可实测。三处正面回答：其一，origin_shift 的 idea 把「双曲块模长被 u 接管、基点恒球心」让了出去，本向也不占那一格——本向不改商品双曲切向量的模长（energy_split），改的只是码字切向量在两因子之间的分配比例，故与那一格正交；其二，per_item 的 c_i 在曲率取等时完全失活，而本向 p_i 在 c_hi=c_lo 时仍在改两因子代价的相对组成，说明两者不是同一件事换参数；其三，codeword_bundle 的参数挂在列轴并经过分配聚合，本向没有任何 (K,) 结构参数、p_i 一次冻结不进计算图。混合曲率流形进量化通路是三者共同背景，不是本向增量，故不拿它当判据。"
+    },
+    {
+      "name": "vq_type_fail_loud",
+      "formula": "RQLayer 构造处断言 config.vq_type=='vq'，否则 ValueError；EMAVQLayer（quant_parts 是 (commitment,None)）与 SimVQLayer（重参数化码字）一律不接管几何",
+      "note": "必须 fail loud：量化两项只在 VQLayer.forward 里被几何替换；EMA 分支码字不吃梯度、SimVQ 的码字是投影出来的。基线 RQLayer 构造读 config.vq_type 分三支、对未知类型抛错；不断言就会静默退回「欧氏两项 + 无几何」。基线 VQ_TYPE 是 'vq'（config/train_config.json:11），候选树不改该值，只断言死。"
+    }
+  ],
+  "constants": [
+    {
+      "name": "D_E",
+      "value": 16,
+      "why": "欧氏因子维数取 32 的一半：与归档两个方向同一预算，使「哪 16 维不进双曲」不成为差异来源。总维数 32 与基线码本维数相同，不改码本形状、不改 SID 长度、不新增可训练参数。"
+    },
+    {
+      "name": "D_H1",
+      "value": 8,
+      "why": "双曲 16 维对半切，两个曲率因子各占 8 维：p_i 只改分量占比、不改维数预算，否则「占比」会与「维数分配」混在一起，读不出是几何在起作用。8 维足以承载一个曲率因子，同时使 expmap0 的输入模长按 sqrt(p_i)<=1 只减不增，不引入新的饱和风险。"
+    },
+    {
+      "name": "D_H2",
+      "value": 8,
+      "why": "与 D_H1 相等，保证两因子等预算：p_i=SHARE_REF 时总切向量在两球上对称分配，behaviour_off 才是一个干净的等占比参照；若维数不等，等占比本身就会偏向一侧。D_E+D_H1+D_H2=32 与基线一致。"
+    },
+    {
+      "name": "c_hi",
+      "value": 4.0,
+      "why": "落在 HYPERBOLIC_GEOMETRY_CONTRACT.md §5 的测试曲率集合 {0.01,0.1,0.25,1,4,10} 内，算子与恒等式在这一段已被契约测试覆盖；球半径 1/sqrt(c)=0.5。本向不放大输入（切分因子 sqrt(p_i)<=1），故这里的饱和风险只来自基线切向量本身的模长量级：该量级必须由实现阶段在同一批 embedding 上实测（logmap0 后的 ||g||/球半径 分位），并配合 clip_nan_count 与球边界余量读数确认没有贴 BALL_EPS；若实测显示饱和，则这一档要按契约集合下调，而不是靠缩放掩盖。"
+    },
+    {
+      "name": "c_lo",
+      "value": 0.25,
+      "why": "同一测试曲率集合内最接近欧氏的一端（半径 2），作为「平」因子；与 c_hi 的曲率比 16、半径比 4，两个因子在几何上可辨而都不贴边界。取值与归档方向用的 c_min/c_max 同集合，使曲率阶梯不是本向相对归档的差异来源。"
+    },
+    {
+      "name": "SCALE_HYP",
+      "value": 0.25,
+      "why": "由 c->0 的退化定住：d_c^2->4|x-y|^2，乘 0.25 后双曲部分一阶等于平方欧氏，故 geometry_off 与基线 distances/distance.py:11-21 的代价可逐元素比对。不是调出来的，是被退化条件唯一确定的；固定不扫。两个因子共用同一个标度，故因子间不存在额外的可调相对权重。"
+    },
+    {
+      "name": "SHARE_REF",
+      "value": 0.5,
+      "why": "behaviour_off 的常量占比：两块占比相等，读点不偏向任一张球，于是 behaviour_off 与主臂只在「占比是否随结构变」这一点上不同，接线检验读得干净。注意角色分离：它只出现在 behaviour_off 分支，不参与 p_i=u_i 这条唯一映射；u_i 的取值区间由秩定义给出（[1/(2N), 1-1/(2N)]，极值唯一时取到端点），不靠这个常数推端点；0.5 恰好也是该区间的中点，但两者角色不同（一个是数据侧的秩，一个是 behaviour_off 的常量占比），取值相同不构成二义。缺 key 商品取图均值势的秩位置，该位置在全并列或图均值落在中位时恰为 0.5，故这一格与 SHARE_REF 在数值上可能重合，不作接线判据。"
+    },
+    {
+      "name": "SK_EPSILON",
+      "value": 0.003,
+      "why": "基线 Sinkhorn 的温度：RQLayer 只对末层把它传给 VQLayer（其余层传 -1，use_sk=False 即走 argmin），center_distance 之后再 exp(-d/epsilon)。取 config/train_config.json 的实测值，不扫、不改；本向不改分配机制，只换被喂进来的 D。"
+    },
+    {
+      "name": "SK_ITERS",
+      "value": 50,
+      "why": "基线 Sinkhorn 的迭代次数（正态化循环次数，末次 q*=batch），取 config/train_config.json 的实测值。sinkhorn 的函数签名默认 5 是旧默认，实际训练路径由 config 传入 50，故以 config 为准；不扫、不改。"
+    }
+  ],
+  "switches": {
+    "behaviour_off": "p_i 恒等于 SHARE_REF（两个曲率因子、chart 头、产品距离都在，只是分量占比不再由 AF3 的 u_i 决定）：此时切分对称、总模长分配与结构无关，用于确认结构信号确实通过 u_i->p_i->(g_hi,g_lo) 接进通路；若此时 SID 与主臂完全相同，说明这段接线没接上。不另行训练，用同一份冻结权重跑两次前向。",
+    "geometry_off": "c->0 的显式欧氏分支：忽略 p 与两个因子，直接走候选树 distances/distance.py 的展开式，即 32 维平方欧氏，须与基线代价逐元素一致、SID 逐位一致。不另行训练，用同一份冻结权重跑两次前向。",
+    "both_on": "主臂：p_i=u_i 由冻结表给出，chart 头只把商品侧切向量无放缩地落进两张球（商品侧不带 p），放缩 sqrt(p_i)/sqrt(1-p_i) 只作用在码字侧（codeword_chart），代价按两因子测地平方和，码本初始化与 commitment/codebook 两项同几何。三个开关都是代码里必须存在的接线检查（由测试调用），不是另行训练的对照臂：不重训、只对同一份冻结权重做不同前向。"
+  },
+  "metrics": {
+    "p_percentiles": "p 的分位与 s_hi/s_lo 的分位；behaviour_off 下必须恒为 SHARE_REF 与其对应的等占比",
+    "u_p_rank_corr": "p 与 u 的 Spearman 秩相关：映射是恒等，理论上等于 1；用于确认 miss 行（图均值势的秩位置）与并列数没有破坏单调性",
+    "energy_conservation_rel_error": "接线读数，逐商品比较「商品侧切向量的模长与 p 无关」：||x_i 的双曲切向量|| 应逐元素等于 ||(h1|h2)||、与 p_i 的相关系数为 0（浮点容差内），不为 0 即商品侧被误放缩；另报码字侧两块放缩后的模长比 sqrt(p_i)/sqrt(1-p_i) 与 p_i 的单调一致性。此读数不是守恒式：码字侧总模长随 p 变（p=SHARE_REF 时两个因子各乘 sqrt(0.5)）",
+    "codeword_scale_energy": "逐层报告 ||expmap0(sqrt(p_i)*tau_k^{l,h1},c_hi)|| 与 ||expmap0(sqrt(1-p_i)*tau_k^{l,h2},c_lo)|| 的分位，以及 c->0 时 D_ik 展开三项（||x||^2 带 p^0、-2<x,tau> 带 p^{1/2}、||tau||^2 带 p^1）的幂次拟合残差：确认放缩确实落在码字侧",
+    "factor_cost_vs_share": "每行两块测地代价与 p 的 Spearman 秩相关（连续取值上的单调关联；不按 p 分位切组、不取两因子代价之比、不构成任何商品对信号）",
+    "argmin_flip_vs_behaviour_off": "主臂与 behaviour_off 两套 D 的逐层逐行 argmin 翻转计数（argmin 层与 Sinkhorn 层分开报）：机制是否在分配上生效的接线读数",
+    "sid_diff_rate": "冻结权重后 behaviour_off 与主臂重算 SID 的差异率；为零即 u->p 未接线",
+    "allocation_residual": "判否本向核心主张的残差读数：固定 u_i，对每行 D 用「单球逐商品曲率 + 逐商品模长 + 逐商品块权重」这一族逐行自由拟合，报告残差相对量；残差为零即本向只是逐商品距离尺度，判不交付。这条自己判否自己，不外包给仓库契约",
+    "beta_effective_scale": "两项量化损失换成测地平方后的逐层量级与基线 F.mse_loss 量级的比值：只读报告 beta 有效值被几何改了多少，说明本向不重调 beta、也不把增益归给 beta",
+    "structure_preservation": "两个全边集单一聚合量：邻接率（每条边两端是否共享 SID 前缀的 0/1 指示在边集上的均值）与边两端 SID 前缀距离对 AF3 边曲率取值的 Spearman 秩相关（只在边的连续取值上算秩相关，不分正负、不分箱）。判否读数与同组其它指标同口径：这两个量必须同时高于 behaviour_off 与 geometry_off 的两套同名统计，任一不高于即结构未被保留；全量只读——不进损失、不进梯度、不参与任何分配决策，故不构成 must_hold#1 所禁的成对信号（唯一的成对用途是事后统计，模型通路内仍只有单商品量）",
+    "euclid_limit_rel_error": "c->0 极限重算的代价与基线 distances/distance.py:11-21 平方欧氏代价的逐元素相对误差",
+    "clip_nan_count": "expmap0 / logmap0 / artanh 的 clip 次数与 NaN 计数，以及 ||g|| 相对球半径的分位（饱和证据：本向不放大输入，仍须实测基线切向量模长量级）",
+    "batch_equivariance": "batch 内任意置换下 D、p 与切分的等变性（u_i 是全表秩，故置换不改 p）",
+    "dimension_control": "只读统计：把 p 固定在 SHARE_REF、只改两因子的维数切分（D_H1/D_H2 互换）时 D 的变化，确认读到的效应来自分量占比与曲率，而不是维数预算"
+  }
+}
