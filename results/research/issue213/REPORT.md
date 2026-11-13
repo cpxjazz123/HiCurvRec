@@ -65,3 +65,18 @@
 - 保留率只测"共享 ≥1 码 / 全 3 码"两种粗口径，未测排序保持（如 SID 距离与行为距离的秩相关）。
 - 5-节点轨道已接入（951 s 完成，73 轨道）；4-节点版结果保留在 `graphlet_roles_4node.json` 作为稳定性对照。
 - 这是**观测**，不是机制：本线三接口已结案（#210），要继续须新 Issue 并预注册。
+
+## 6. 复现（轨道文件不入库，一条命令重建）
+
+```bash
+cd results/research/issue213/orca
+git clone --depth 1 https://github.com/thocevar/orca .    # 第三方源码，不入库
+g++ -O2 -std=c++11 -o orca orca.cpp
+cd ../../.. && python3 results/research/issue213/make_orca_input.py
+cd results/research/issue213/orca
+./orca node 4 graph.in node4.out     # 1.5 s
+./orca node 5 graph.in node5.out     # 951 s
+cd ../../.. && python3 results/research/issue213/graphlet_roles.py
+```
+
+`graph.in` / `node4.out` / `node5.out` 由上述步骤确定性重建（同一 TRAIN 图、无随机性），因此不入库；`graphlet_roles.json` 是本次运行的输出，已入库。
