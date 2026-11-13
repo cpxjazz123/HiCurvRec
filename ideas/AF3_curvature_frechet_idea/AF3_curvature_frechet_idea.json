@@ -1,96 +1,12 @@
 {
-  "schema": "genrec.idea.v3",
+  "schema": "genrec.idea.v4",
   "arm": "TIGER_af3_curvature_frechet_rq",
   "sections": {
     "1_goal": {
-      "assumption": "几何对象是加权乘积流形 M = R^16（曲率 0） × H^16_{c_ref=1.0}，双曲因子的度量按商品自己的 AF3 曲率取权重 w_i = c_ref/c_i。两处：分配代价 D_ik = ||r^E_i - tau^E_k||^2 + w_i*d_{c_ref}(x_i,u_k)^2/4，其中 x_i=expmap0(r^H_i,c_ref) 与 u_k=expmap0(tau^H_k,c_ref) 同在一个参考球；码字位置改由被评估代价的加权 Fréchet 极小点给出 u_k* = argmin_u sum_{i in S_k} w_i d_{c_ref}(x_i,u)^2，取代基线的梯度码本（码本不吃梯度，单轨更新）。AF3 曲率只经 w_i 这一个单商品标量同时进这两处。边界：常曲率球距离对 c 是纯缩放等距，故不主张 c_i 改变测地几何。",
-      "af3_entry": {
-        "signal": "AF3 边曲率 kappa_ij = 4 - d_i - d_j + 3T_ij 在训练划分共现图上算一次后冻结成逐商品表 results/research/issue167/kappa.json（kappa_i = CURVATURE*(1-u_i)/mean_frozen(1-u)，CURVATURE=1，u_i 取关联边 u 的均值）；实测 mean=1.000000、mean|kappa-1|=0.5504、四分位 0.4539/0.9147/1.4029、区间 [0.0545,3.519]。本项目只查表：c_i = clamp(c_ref*max(kappa_i, kappa_floor)^0.5, c_hard_min, c_hard_max)，实测 c_i 落在 [0.2334,1.8760]，故 w_i = c_ref/c_i 落在 [0.533,4.28]、跨度 8 倍。表的条目数按实际读到的记录打印（实测 24556），缺 key 的商品取 c_i = c_ref（w_i=1，中性常数，不许静默），miss 数与表 size 写入 metrics JSONL。硬界 [1e-3,4.0] 只作数值兜底（实测命中 0%）；表按 SHA 固定、训练与导出同值，不做 batch 统计、不逐 epoch 重算，同一商品三层共用同一个 c_i。",
-        "formula": "per_item_curvature",
-        "enters_at": [
-          "assignment_cost",
-          "codebook"
-        ]
-      },
-      "one_variable": {
-        "changed": [
-          "assignment_cost",
-          "codebook"
-        ],
-        "unchanged": [
-          "encoder_output",
-          "residual_update",
-          "loss",
-          "decoder"
-        ]
-      },
-      "must_hold": [
-        {
-          "clause": "must_hold#1",
-          "how": "结构只以单商品标量进入，不组成商品对，也不把边集或商品按曲率符号/阈值/度数切成正组负组再取比值或对比：(a) 每个商品只有一个冻结表给出的 kappa_i，c_i 与 w_i=c_ref/c_i 都是该商品自身属性，不看任何另一件商品、也不看它落在哪个码字集合；(b) 几何只经 w_i 一处，公式里没有 (i,j) 项，也没有按符号/阈值/度数分组的分支（上一版的 mean_pos/mean_neg 与按成员集合改球曲率的 cbar_k 均已删除，球曲率恒为常数 c_ref）；(c) S_k 只在写回内部作为加权求位置的成员集合出现，权重是被点名成员各自的 w_i，不按分配结果回头改曲率，无分组反馈；(d) 分配代码形状不变（argmin/center_distance/Sinkhorn 原样），D_ik 的 (i,k) 是商品-码字打分；(e) 全训练路径无 InfoNCE/BCE/margin/源-目标残差对比，不新增 rank/z-score 势函数。"
-        },
-        {
-          "clause": "must_hold#2",
-          "how": "逐条对上主线三项：(1)「编码器输出落在产品流形上」——编码器输出仍是 32 维切空间参数，前 16 维即欧氏因子坐标，后 16 维经 expmap0(., c_ref) 落进双曲因子（有限曲率，不退化成欧氏直线）；(2)「距离与分配在其上计算」——D_ik 按因子分解（欧氏平方距离 + 双曲因子上的 d_{c_ref}^2/4 乘该商品的度量权重 w_i），argmin 与末层 Sinkhorn 都作用在这个 D 上；(3)「码本或损失按几何定义，且 AF3 参与决定这个几何」——码字位置由该几何下的加权 Fréchet 极小点给出，加权项 w_i 直接来自 AF3 表，故码字位置既不是欧氏均值、也不是无权 Fréchet 均值。混合曲率的落点是「曲率 0 的欧氏因子 × 曲率 c_ref 的双曲因子 + 由 c_i 逐商品决定的双曲因子权重 w_i」：一个前向里同时存在 c=0、c=c_ref 与逐商品 c_i 三套曲率参数；behaviour_off（c_i≡c_ref）时 w_i≡1，写回退化为无权 Fréchet、代价退化为单一 c_ref 双曲块，逐商品几何同时消失——一个参数、两处通路、同一个开关。"
-        }
-      ],
-      "novelty": {
-        "claim": "只主张一条新增：码字位置不是梯度下降一步、也不是成员坐标算术平均（更不是成员坐标的无权 Fréchet 均值），而是「参考球 c_ref 内、按每个成员自己的度量权重 w_i = c_ref/c_i 求的加权 Fréchet 极小点」，因而逐商品 AF3 曲率既改分配代价的双曲块权重，又改码字位置本身。与继承方向的分界明写：把这一条写回律换回基线的梯度码本（其余全不动），本向就退化并包含于 ideas/_archive/AF3_curvature_transport_idea（其 D^(l)_ik 与本向 D_ik 同式，且它明写码本更新律不动、码字仍走 nn.Embedding + 梯度）；与 continuum 的差别是它的曲率是逐对插值 c_ik = sqrt(c_i c_k)、码字另有由成员均值得来的曲率 c_k，一个 (i,k) 用一个各不相同的球，且码字仍走梯度；本向球曲率恒为常数 c_ref（不含成员聚合、不做逐对插值），c_i 只以一个逐商品权重 w_i 出现，并把「码字 = 被评估代价的加权极小点」作为唯一新增。因此本向既不重复 transport 的「曲率进残差运输与右嵌套读回」，也不重复 continuum 的「逐对曲率插值」。明确不主张：按行曲率条件化的分配代价（继承 transport）；流形上「原型=重心」的更新律本身（Le Brigant & Puechmorel 2019 已给流形量化/聚类的 Fréchet 均值原型，Shi 等 2025 给流形 k-means 的 Fréchet 重心）；产品流形与 exp/log/Mobius 算子、逐商品曲率概念、Karcher 迭代本身、加权乘积流形概念（2307.04514）。",
-        "inherited_from": [
-          "AF3_curvature_transport_idea"
-        ],
-        "closest_works": [
-          {
-            "title": "Quantization and clustering on Riemannian manifolds with an application to air traffic analysis",
-            "year": 2019,
-            "venue": "Journal of Multivariate Analysis",
-            "doi": "10.1016/j.jmva.2019.05.008",
-            "relation": "same_family"
-          },
-          {
-            "title": "Fast k-means clustering in Riemannian manifolds via Fréchet maps: Applications to large-dimensional SPD matrices",
-            "year": 2025,
-            "venue": "arXiv",
-            "doi": "10.48550/arxiv.2511.08993",
-            "relation": "same_family"
-          },
-          {
-            "title": "Hyperbolic Residual Quantization: Discrete Representations for Data with Latent Hierarchies",
-            "year": 2025,
-            "venue": "arXiv",
-            "doi": "10.48550/arxiv.2505.12404",
-            "relation": "same_family"
-          },
-          {
-            "title": "Improving Heterogeneous Graph Learning with Weighted Mixed-Curvature Product Manifold",
-            "year": 2023,
-            "venue": "arXiv",
-            "doi": "10.48550/arxiv.2307.04514",
-            "relation": "same_family"
-          },
-          {
-            "title": "HyperVQ: MLR-based Vector Quantization in Hyperbolic Space",
-            "year": 2024,
-            "venue": "arXiv",
-            "doi": "10.48550/arxiv.2403.13015",
-            "relation": "same_family"
-          }
-        ]
-      }
+      "idea": "几何对象是加权乘积流形 M = R^16（曲率 0） × H^16_{c_ref=1.0}，双曲因子的度量按商品自己的 AF3 曲率取权重 w_i = c_ref/c_i。两处：分配代价 D_ik = ||r^E_i - tau^E_k||^2 + w_i*d_{c_ref}(x_i,u_k)^2/4，其中 x_i=expmap0(r^H_i,c_ref) 与 u_k=expmap0(tau^H_k,c_ref) 同在一个参考球；码字位置改由被评估代价的加权 Fréchet 极小点给出 u_k* = argmin_u sum_{i in S_k} w_i d_{c_ref}(x_i,u)^2，取代基线的梯度码本（码本不吃梯度，单轨更新）。AF3 曲率只经 w_i 这一个单商品标量同时进这两处。边界：常曲率球距离对 c 是纯缩放等距，故不主张 c_i 改变测地几何。"
     },
     "4_method": {
-      "surfaces": [
-        {
-          "surface": "assignment_cost",
-          "symbol": "distances/product.py 导出 NAME=\"product_weighted\" 与二参 distances(latent, codebook) -> (B,K)（与 distances/distance.py:11 同签名）；可选侧信道 set_items(item_ids) 由 VQLayer._distances 调用前 set 一次并断言 len(item_ids)==B（基线 distance.py 不暴露该方法，基线路径零改动）；distances/__init__.py 的 DISTANCES 注册表加一条，build_distance(config.distance) 选中",
-          "change": "数据通路四处显式接上 item_id，不改 distance 签名：(1) train_rqvae.py:281 已有 train_ids，改为 TensorDataset(train_embeddings, torch.from_numpy(train_ids).long())；(2) :344 改为 for batch, item_ids in loader，:347 调 model(batch, item_ids)；(3) model/model.py:28 forward(self, embeddings, item_ids=None) 与 :40 get_indices(embeddings, item_ids=None) 下传；(4) model/layers.py:294 RQLayer.forward 带 item_ids 并在 :305 传给 vq_layer，:123/:129 与 :191/:197 的 VQLayer.forward 带 item_ids，:110 的 _distances 里 set_items 后调 self.distance(latent, get_code_embs())；导出路径 train_rqvae.py:455 按 all_embeddings 行序同样下传，故训练与导出同一个 c_i。代价本体：D_ik = ||r^E_i - tau^E_k||^2 + w_i * squared_distance(x_i, u_k, c_ref)/4，x_i = expmap0(r^H_i, c_ref)，u_k = expmap0(tau^H_k, c_ref)，w_i = c_ref/c_i；c_i 不进 expmap、不缩放任何坐标，只以标量 w_i 出现。argmin、center_distance、Sinkhorn(SK_EPSILON, SK_ITERS) 形状不变，唯一变化是 D 的取值。"
-        },
-        {
-          "surface": "codebook",
-          "symbol": "model/codebook_update.py::codebook_weighted_frechet(rq_layer, level, rq_layer_input, indices, weights)，在 model/layers.py 的 RQLayer.forward 里 vq_layer(...) 之后每层调用一次；expmap0/logmap0/squared_distance 与加权 Karcher 迭代 import 自 model/poincare_contract.py（该文件待建：从 analysis_sid_recall/r2/03/TIGER_curriculum-behaviour-rq/model/poincare_contract.py 逐位拷贝，来源 SHA 只作记录、不作判据），全部调用点的曲率都是标量常量 c_ref=1.0，故其 float(c) 标量守卫不被触发",
-          "change": "R3 单轨：码字位置 = argmin_u sum_{i in S_k} w_i d_{c_ref}(x_i,u)^2 的加权 Karcher 不动点；tokens 的 embed.weight 置 requires_grad=False 并从 optimizer 参数组移出，写回把 logmap0(u_k*, c_ref) 直接赋给 tau^H_k，欧氏块 tau^E_k <- mean_{i in S_k} r^E_i。无 EMA、无「覆盖写 + 梯度」并存的第二更新律，故不存在 Adam 矩引用旧位置的问题；commitment/codebook 损失项形式与权重不变（其梯度只经编码器一侧，不再流向码本）。R6：tol=frechet_tol=1e-6（fp32 可表示的相对步长；1e-9 在 fp32 不可达会造成写回静默空操作），steps=frechet_steps=20；未达 tol 时取最后一次迭代并把 not_converged 计数写 metrics JSONL，不跳过、不静默。|S_k|=0 跳过（码字保持原位置），|S_k|=1 直接取该点。DDP 下先 all_reduce(sum w_i 的切空间贡献, sum w_i) 再在 rank0 迭代并 broadcast。码本初值仍走基线 KMeans、层数仍 3。"
-        }
-      ]
+      "new_files": []
     },
     "5_references": [
       {

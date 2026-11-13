@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import http from 'node:http';
+import { spawnSync } from 'node:child_process';
 
 import { createServer, runStatus } from '../server.js';
 import { config } from '../server.js';
@@ -175,6 +176,15 @@ async function main() {
       const res = await fetch(`${base}/${route}`);
       assert.equal(res.status, 200, `页面要用的 ${spec} 发不出去（${res.status}）`);
     }
+  });
+
+  await test('配置脚本语法没错（它坏了，AGENT IDEA 的配置就刷不进去）', () => {
+    // apply-idea-schema-config.mjs 是两栏配置的唯一出处：它语法坏了，
+    // 面板上的配置就悄悄停在旧版本，而且没有任何提示。
+    const script = path.join(HERE, '..', 'apply-idea-schema-config.mjs');
+    // node --check 只做语法检查，不执行脚本（脚本会真的去改面板配置）。
+    const res = spawnSync(process.execPath, ['--check', script], { encoding: 'utf8' });
+    assert.equal(res.status, 0, `语法检查没过：${res.stderr}`);
   });
 
   await test('未知路由返回 404', async () => {

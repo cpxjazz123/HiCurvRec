@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 
 import {
   IDEA_SCHEMA_VERSION,
-  IDEA_SURFACES,
   ideaSkeleton,
   validateIdeaDoc,
 } from '../idea-schema.js';
@@ -45,37 +44,14 @@ function goodDoc() {
     arm: 'TIGER_af3_curvature_transport_rq',
     sections: {
       '1_goal': {
-        assumption: '表示空间换成逐商品曲率的产品流形，几何进分配代价与残差递推两处。',
-        af3_entry: {
-          signal: 'AF3 结构势 s_i（训练共现图上冻结）',
-          formula: 'structure_potential',
-          enters_at: ['assignment_cost', 'residual_update'],
-        },
-        one_variable: {
-          changed: ['assignment_cost', 'residual_update'],
-          unchanged: ['codebook', 'loss', 'encoder_output'],
-        },
-        must_hold: [
-          { clause: 'must_hold#1', how: '结构只以逐商品标量进入分配代价，不做商品对比较。' },
-          { clause: 'must_hold#2', how: '曲率由 s_i 闭式给出，并进分配代价与残差递推。' },
-        ],
-        novelty: {
-          claim: '只主张残差在 Poincaré 球上做 Mobius 减后 Log 回原点切空间。',
-          inherited_from: ['AF3_curvature_continuum_idea'],
-          closest_works: [
-            {
-              title: 'Hyperbolic Residual Quantization',
-              year: 2024,
-              venue: 'NeurIPS',
-              doi: '10.1234/abc',
-              relation: 'same_family',
-            },
-          ],
-        },
+        idea:
+          '表示空间换成逐商品曲率的产品流形，结构势决定每个商品落在哪一段曲率上，' +
+          '几何进该层的分配代价与残差递推两处。',
       },
       '4_method': {
-        surfaces: [
-          { surface: 'residual_update', symbol: 'ResidualTransport.forward', change: '欧氏减法换成 Mobius 减 + Log' },
+        new_files: [
+          { path: 'af3_curvature_transport.py', what: '算曲率表并冻结，输出逐商品的曲率' },
+          { path: 'model/product_geometry.py', what: '产品流形的指数映射与对数映射' },
         ],
       },
       '5_references': [
@@ -163,26 +139,39 @@ await test('must_hold 少一条就判不合规', () => {
   assert.ok(pathsOf(verdict).includes('sections.1_goal.must_hold'));
 });
 
-await test('面名只能取那七个', () => {
+await test('new_files 的每一项都要有路径与用途', () => {
   const doc = goodDoc();
-  doc.sections['1_goal'].af3_entry.enters_at = ['whatever'];
+  doc.sections['4_method'].new_files = [{ path: '', what: '' }];
   const verdict = validateIdeaDoc(doc);
   assert.equal(verdict.ok, false);
-  assert.ok(pathsOf(verdict).some((p) => p.startsWith('sections.1_goal.af3_entry.enters_at')));
-  assert.ok(IDEA_SURFACES.includes('assignment_cost'));
+  const paths = pathsOf(verdict);
+  assert.ok(paths.includes('sections.4_method.new_files[0].path'));
+  assert.ok(paths.includes('sections.4_method.new_files[0].what'));
 });
 
-await test('idea 里不许有 check / 数值 / 判据类字段（那些归实现阶段）', () => {
+await test('idea 里只留那三件事：多出来的字段一律判不合规', () => {
   const doc = goodDoc();
-  doc.sections['4_method'].sanity_checks = ['一句能机械判定的话'];
+  doc.sections['1_goal'].af3_entry = { signal: 's_i', formula: 'x', enters_at: ['loss'] };
+  doc.sections['1_goal'].must_hold = [{ clause: 'must_hold#1', how: 'x' }];
+  doc.sections['1_goal'].novelty = { claim: 'x', inherited_from: [], closest_works: [] };
+  doc.sections['4_method'].surfaces = [{ surface: 'loss', symbol: 'x', change: 'y' }];
   doc.sections['4_method'].numerics = { dtype: 'fp32', clamps: [], degenerate_to_baseline: 'x' };
+  doc.sections['4_method'].sanity_checks = ['一句能机械判定的话'];
   doc.sections['6_evaluation'] = { metric: 'stage3.test_recall@10', threshold: 0.065 };
   const verdict = validateIdeaDoc(doc);
   assert.equal(verdict.ok, false);
   const paths = pathsOf(verdict);
-  assert.ok(paths.includes('sections.4_method.sanity_checks'));
-  assert.ok(paths.includes('sections.4_method.numerics'));
-  assert.ok(paths.includes('sections.6_evaluation'));
+  for (const key of [
+    'sections.1_goal.af3_entry',
+    'sections.1_goal.must_hold',
+    'sections.1_goal.novelty',
+    'sections.4_method.surfaces',
+    'sections.4_method.numerics',
+    'sections.4_method.sanity_checks',
+    'sections.6_evaluation',
+  ]) {
+    assert.ok(paths.includes(key), `要指出 ${key}`);
+  }
 });
 
 await test('文献里的被引数判不合规（没有消费者）', () => {
@@ -195,7 +184,7 @@ await test('文献里的被引数判不合规（没有消费者）', () => {
 
 await test('多种子计划在值上被认出来', () => {
   const doc = goodDoc();
-  doc.sections['4_method'].surfaces[0].change = '跑 seed 42/43/44 三次取均值';
+  doc.sections['1_goal'].idea = '跑 seed 42/43/44 三次取均值';
   const verdict = validateIdeaDoc(doc);
   assert.equal(verdict.ok, false);
   assert.ok(pathsOf(verdict).includes('$'), '要有一条指向整份文档的错误');
@@ -203,7 +192,7 @@ await test('多种子计划在值上被认出来', () => {
 
 await test('否定句"不做多种子"不会被误伤', () => {
   const doc = goodDoc();
-  doc.sections['1_goal'].assumption = '表示空间换成逐商品曲率的产品流形；不做多种子实验，也不训练消融臂。';
+  doc.sections['1_goal'].idea = '表示空间换成逐商品曲率的产品流形；不做多种子实验，也不训练消融臂。';
   const verdict = validateIdeaDoc(doc);
   assert.equal(verdict.ok, true, `不该有错：${JSON.stringify(verdict.errors)}`);
 });
@@ -226,6 +215,7 @@ await test('真实那份 transport idea 判不合规（当时把训练计划写�
   const paths = pathsOf(verdict);
   assert.ok(paths.includes('date'), '要指出顶层多出来的键');
   assert.ok(paths.includes('sections.4_method.runs'), '要指出运行计划那一项');
+  assert.ok(paths.includes('sections.1_goal.statement'), '要指出多出来的目标字段');
   assert.ok(paths.includes('sections.6_evaluation'), '要指出整段判据不该在 idea 里');
 });
 

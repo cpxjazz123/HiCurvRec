@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { IDEA_FORBIDDEN_FIELDS, ideaSkeleton } from './idea-schema.js';
 
 /**
- * 把 AGENT IDEA 的配置改成"必须按 genrec.idea.v3 的字段写"。
+ * 把 AGENT IDEA 的配置改成"必须按 genrec.idea.v4 的字段写"。
  *
  * 骨架从 idea-schema.js 里取，保证提示词里给的形状和校验器认的形状是同一份 ——
  * 两处各写一遍，迟早漂。改完字段契约就重跑一次这个脚本，面板上的配置跟着变。
@@ -28,14 +28,18 @@ const instructions = `你是 AGENT IDEA（IDEA_KEEPER），负责 ideas/ 下的�
 - 上游交接里带着 AGENT AGAINST 的反对意见 → **返修轮**：不归档、不新建，只按清单改当前 idea；
 - 没有上游意见 → **轮换轮**：归档现有方向，按 ideas/main_line.json 造一个新的。
 
-## idea 文件的字段是定死的（genrec.idea.v3）
+## idea 文件的字段是定死的（genrec.idea.v4）
 
-idea 文件**只能**是这个形状，顶层只有 schema / arm / sections 三键，每段的键也固定：
+idea 文件**只能**是这个形状，顶层只有 schema / arm / sections 三键，每段的键也固定。
 
-**idea 只写假设**：这个方向赌的是什么、结构信号从哪来、进计算通路的哪几处、改了什么没改什么、
-与主线两条 must_hold 怎么对齐、新增性主张是什么。
-数值、界、判据、验证步骤都不写在这里 —— 常量与它们的来由写进 math.json 的 constants，
-退化路径与三个开关写进 math.json 的 switches，验收归实现阶段的测试套件。
+**idea 只回答三件事**：
+1. 这个 idea 本身是什么（1_goal.idea）；
+2. 要新建哪些文件、每个文件是干什么的（4_method.new_files）；
+3. 参考了哪些论文（5_references）。
+
+其余一律不写：数值与界、判据与门槛、验证步骤、开关、状态、训练计划。
+常量与它们的来由写进 math.json 的 constants，退化路径与三个开关写进 math.json 的 switches，
+验收归实现阶段的测试套件，判据归仓库契约。
 
 \`\`\`json
 ${skeleton}
@@ -100,17 +104,20 @@ const steps = [
   {
     title: '写或改 idea（字段必须合规）',
     instruction:
-      '轮换轮：按 genrec.idea.v3 的固定形状，用 writeFile 写 ideas/<新方向>/<新方向>_idea.json —— ' +
-      '顶层只有 schema（写 "genrec.idea.v3"）、arm、sections；三段是 1_goal / 4_method / 5_references；' +
+      '轮换轮：按 genrec.idea.v4 的固定形状，用 writeFile 写 ideas/<新方向>/<新方向>_idea.json —— ' +
+      '顶层只有 schema（写 "genrec.idea.v4"）、arm、sections；三段是 1_goal / 4_method / 5_references。' +
+      '1_goal.idea 写清这个 idea 本身是什么（几何对象 + 结构信号怎么进计算通路）；' +
+      '4_method.new_files 写这次要新建哪些文件（相对仓库根的路径）与每个文件是干什么的；' +
+      '5_references 写参考的论文（标题/年份/出处/DOI/与我们的关系）。' +
       '每段里的键照提示词里的骨架填，不要增删字段，不要写运行计划（跑几次、什么种子）、不要自定门槛、不要写状态。' +
       '同目录写 math.json（symbols / formulas / constants(带 why) / switches(只三个) / metrics）。同一次只建一个方向。' +
       '返修轮：按 AGAINST 的清单逐条修改当前方向的 idea 文件（必要时同步 math.json），每条都写清改了哪里；不同意的意见要给出依据。' +
       '写完用 checkIdea 校验，直到 ok=true；它报的每个字段都要改到过。',
   },
   {
-    title: 'must_hold 与查重自查',
+    title: '主线与查重自查',
     instruction:
-      '把 main_line.must_hold 逐条对一遍，两条都写进 1_goal.must_hold 的 how 里。' +
+      '把 main_line.must_hold 逐条对一遍（idea 里不记这一条，但必须自己核过）。' +
       '重点看两件事：(a) 有没有 InfoNCE / BCE / margin / 源-目标残差对比这类两两正负样本的写法；' +
       '(b) 有没有把边集或商品按曲率符号、阈值、度数切成正负两组再取比值或对比（这是同一种禁止形式，只是没写成损失项）。' +
       '再把 ideas/_archive/ 下的方向逐个读 1_goal 与当前方向比一遍（重名或同一件事只换说法都算重复）。' +
@@ -144,11 +151,11 @@ const againstSteps = [
   {
     title: '逐条开火',
   instruction:
-    '逐条开火：按 idea 的固定字段（genrec.idea.v3）一条一条核 —— ' +
-    '1_goal.assumption 说清的假设（几何对象与结构信号进计算通路的哪几处）、' +
-    'af3_entry.enters_at（AF3 真的进了哪几处）、' +
-    'one_variable（到底改了几处、没改的是什么）、must_hold#1 与 #2 各自的 how、' +
-    'novelty（新增性主张与继承的归档方向）、4_method.surfaces（改在哪几个符号上）。' +
+    '逐条开火：按 idea 的固定字段（genrec.idea.v4）一条一条核 —— ' +
+    '1_goal.idea 说清了这个 idea 是什么（几何对象是什么、结构信号从哪来、进计算通路的哪几处）、' +
+    '4_method.new_files（要新建的文件齐不齐、每个文件的用途说不说得清）、' +
+    '5_references（论文是不是真的相关、与我们的关系标对没有）。' +
+    'must_hold#1 与 #2 要从 idea 的正文与 math.json 里自己核，idea 里没有这两栏不是缺失。' +
     '数值、判据与验收不在 idea 里，别拿它们当缺失来打；它们在 math.json 与实现阶段。' +
     '用 readFile 读 ideas/<方向>/<方向>_idea.json 与 math.json，用 checkIdea 确认字段本身合规；' +
     '字段不合规先在意见里点出来（这本身就是要改的东西）。' +
