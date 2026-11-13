@@ -28,3 +28,24 @@ only verdict, per CLAUDE.md §19/§25).
 
 `graph_shape.py` -> `graph_shape.json` / `GRAPH_SHAPE.md`: the shape of the
 TRAIN behaviour graph itself (tree-like branches next to dense communities).
+
+## structure_retention.py — 每个结构的保留度 vs 下游 recall
+
+`structure_retention.py` 复用 `results/research/issue213/graphlet_roles.py` 的 ORCA 4-节点轨道与
+`features_and_roles`（6 个角色的 NMF 分配，缓存在 `structure_roles.npz`，因为特征构建是唯一贵的一步），
+对 `r2/<NN>/` 里每个有 `test_recall@10` 的配对计算逐角色保留度：
+
+| 列 | 定义 |
+|---|---|
+| `prefix@1` | 行为边两端共享一级码 |
+| `prefix@3` | 两端共享全部三级码 |
+| `any` | 两端在任意层级共享至少一个 token 值（213 审计的定义） |
+
+边归给**第一个端点**（历史商品）的角色，与 213 审计同口径，两张表可并读。
+
+相关系数：每条序列对 `test_recall@10` 做 Spearman，配 2000 次 percentile bootstrap（seed 20261109，与 `analyze.py` 相同）；
+`centered/*` 行是「该角色保留度减去该配对总体保留度」，用来去掉配对自身的粗细尺度，否则一个角色可能只是跟着整体粗细分变。
+
+**SID 的 sha256 以 `results/research/issue139/r2_ledger.json` 为准**，不按 `report.json`：51–56 六个配对的
+`report.json` 记录与镜像文件不一致（镜像与账本一致），说明 `report.json` 在这几个号上是陈旧的派生值。
+脚本对镜像文件按账本验证，并把这类配对标成 `record_disagrees_with_archive`，不静默丢弃。

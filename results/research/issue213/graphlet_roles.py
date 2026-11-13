@@ -88,23 +88,12 @@ def sid_tokens(name: str) -> dict[int, tuple]:
     raise SystemExit(f"no copy of the {name} SID matches its recorded sha256")
 
 
-def main() -> int:
-    rng = np.random.default_rng(SEED)
-    edges = edges_of()
-    graph = nx.Graph()
-    graph.add_edges_from(edges)
-    adj = {node: set(graph.neighbors(node)) for node in graph.nodes()}
-    degrees = dict(graph.degree())
-    print(f"graph: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges", flush=True)
+def features_and_roles(graph, degrees, adj, orbits4, orbits5):
+    """RolX's core idea on this graph: standardised per-node features, NMF, argmax membership.
 
-    orbits4, used4 = orca_orbits(ORCA_NODE4, 15)
-    # ``--only-4`` reproduces the first pass, which had no five-node orbits yet:
-    # same graph, same roles constant, 73 fewer feature columns.  It is the
-    # stability check for "does the picture depend on the larger graphlets".
-    only4 = "--only-4" in sys.argv
-    orbits5, used5 = ((np.zeros((0, 73), dtype=np.int64), None) if only4
-                      else orca_orbits(ORCA_NODE5, 73))
-    print(f"orbits: 4-node {used4 or 'NOT_RUN'} | 5-node {used5 or 'NOT_RUN'}", flush=True)
+    Returned as ``(nodes, role_of, profiles)``; ``nodes`` is ascending, so two callers that pass the
+    same graph and orbits get the same role for the same item.
+    """
     clustering = nx.clustering(graph)
     core = nx.core_number(graph)
     mean_neighbour_degree = {
@@ -147,6 +136,27 @@ def main() -> int:
         top = sorted(zip(features, cent.tolist()), key=lambda kv: -kv[1])[:5]
         profiles.append({"role": r, "members": int((np.asarray(list(role_of.values())) == r).sum()),
                          "top_features": [{"name": n, "value": round(v, 3)} for n, v in top]})
+    return nodes, role_of, profiles
+
+
+def main() -> int:
+    rng = np.random.default_rng(SEED)
+    edges = edges_of()
+    graph = nx.Graph()
+    graph.add_edges_from(edges)
+    adj = {node: set(graph.neighbors(node)) for node in graph.nodes()}
+    degrees = dict(graph.degree())
+    print(f"graph: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges", flush=True)
+
+    orbits4, used4 = orca_orbits(ORCA_NODE4, 15)
+    # ``--only-4`` reproduces the first pass, which had no five-node orbits yet:
+    # same graph, same roles constant, 73 fewer feature columns.  It is the
+    # stability check for "does the picture depend on the larger graphlets".
+    only4 = "--only-4" in sys.argv
+    orbits5, used5 = ((np.zeros((0, 73), dtype=np.int64), None) if only4
+                      else orca_orbits(ORCA_NODE5, 73))
+    print(f"orbits: 4-node {used4 or 'NOT_RUN'} | 5-node {used5 or 'NOT_RUN'}", flush=True)
+    _, role_of, profiles = features_and_roles(graph, degrees, adj, orbits4, orbits5)
 
     def retention(name: str) -> dict:
         sid = sid_tokens(name)
