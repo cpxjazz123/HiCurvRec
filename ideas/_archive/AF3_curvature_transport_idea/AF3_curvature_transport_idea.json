@@ -1,0 +1,113 @@
+{
+  "date": "2026-11-20",
+  "arm": "TIGER_af3_curvature_transport_rq",
+  "revise_round": {
+    "against": "AGENT AGAINST round3 R1-R9 (VERDICT: REVISE)",
+    "log": [
+      {"id": "R1", "where": "difference_from_literature / vs_archive_table / status_note", "change": "查重面从 _archive 扩到 analysis_sid_recall/r2 全部 68 臂。承认 r2/11 TIGER_M1_learned_kappa 的 model/mixed_rq.py:1-31（cost=2[alpha||rE-eE||^2+(1-alpha)d_c^2/4]、rH_l=(-eH)(+)rH_{l-1}、右嵌套 readout）与 :44 CURVATURE=1.0、math_spec.json:17-26 已实现同机制；并补一条意见未提到的：r2/07 TIGER_successor_entropy_curvature 已用逐商品 c_i 进第一层分配（train_rqvae.py:73-79,122-133）。新增性只剩「曲率来源换成 AF3 结构势 + 同一 c_i 进三层运输与重建读回」。三篇 arXiv 正文未取得，不主张残差不同。"},
+      {"id": "R2", "where": "new_files.model/product_geometry.py", "change": "改为 from tools.research.geometry.poincare_contract import project, mobius_add, expmap0, logmap0, squared_distance，本文件只写 product_cost/transport_step/readout/drift；已核 canonical 六算子齐备（:56/:72/:85/:95/:153），约束可实现；依据 checks.py:400-459 禁自定义几何。"},
+      {"id": "R3", "where": "new_files.losses/geometric.py / math geometric_losses", "change": "返回值改 -> (commitment_l, codebook_l)，与 layers.py:142 的 (commitment_loss, codebook_loss) 同序；旧版反序会让 Q+beta*C 变 C+beta*Q，接受。"},
+      {"id": "R4", "where": "new_files.distances/product_transport.py / distances/__init__.py / modified_files", "change": "删 init_level(l)、set_curvature、unbound；build_distance() 仍零参默认 euclidean；不新增 TRANSPORT_MODE、也不加任何配置键——按 distances/__init__.py:13-18「换度量是机制变更不是配置项，选择写在源码」在 DISTANCES 注册 product_transport，由 train_rqvae.py 按 ARM 选。因此 train_config.py 的 FIELDS(:27-49, 21 键)/RANGES 与 config/train_config.json 零改动，比意见要求更严。"},
+      {"id": "R5", "where": "1_goal.statement / math reconstruction_assembly", "change": "采用 r2/11 右嵌套双曲组装，不用切空间欧氏和：quantized_x=[sum_l tau^E_l, Log_0^{c_i}(tau^H_1 (+)_{c_i}(tau^H_2 (+)_{c_i} tau^H_3))]；差别只在曲率用商品侧 c_i 而非每层 kappa_l。c=0 时退化为基线 sum_l tau，FLAT 的 sha256 判据不变。"},
+      {"id": "R6", "where": "6_evaluation.decision_rule / prerequisite_checks / math constants", "change": "灰区下界改 ref-0.001828=0.055450155956754125（= baseline.json sid_recall）；「>=2 seed 同号」改 3/3 同号且均值差 > 1*std；补 c>0 时与 poincare_contract.squared_distance/4 逐位一致前置；补 admission 前置 checks.py 四项全 PASS（NOT_RUN 不算 PASS）。"},
+      {"id": "R7", "where": "4_method.runs", "change": "报 13 训 x 3000 epoch x 4 卡 = 156,000 卡-epoch 量级，GPU-hour 不预填、由 metrics JSONL 实测回填；给三级降级路径。"},
+      {"id": "R8", "where": "math.json", "change": "删 karcher_recenter/transport_af3_recenter/c_k/RECENTER_EVERY/KARCHER_ITERS/CURVATURE_EMA 与 |D_cont-4D_trans|<=1e-5；ablation_margin 改 3 seed + 1*std；补 drift^(3)-L_recon 秩相关。"},
+      {"id": "R9", "where": "行号", "change": "layers.py:142（元组序）、:155-156（init_codebook 残差）、:281-289 与 :292（三层共享 distance）、:74/:298/:307；quantization.py:52-67；poincare_contract.py:56/72/85/95/153；checks.py:400-459。"}
+    ]
+  },
+  "sections": {
+    "1_goal": {
+      "statement": "把 32 维瓶颈当作逐商品曲率的产品流形 M_{c_i}=R^16 x H^16_{c_i} 的原点切空间；c_i=c(sigma_i) in [1/8,8] 由冻结 AF3 结构势闭式给出。几何进三处：(1) 分配代价 D^(l)_ik=||r^E-tau^E||^2+SCALE_HYP*(1/c_i)*artanh(clamp(sqrt(c_i)u,0,1-eps))^2，u=||(-p)(+)_{c_i}q||；(2) 残差 r^H<-Log_0^{c_i}(p (-)_{c_i} q)、r^E<-r^E-tau^E；(3) 重建读回 quantized_x=[sum_l tau^E_l, Log_0^{c_i}(tau^H_1 (+)_{c_i}(tau^H_2 (+)_{c_i} tau^H_3))]，右嵌套同 r2/11/mixed_rq.py:20-23，曲率改用商品侧 c_i。SCALE_HYP=1/4 固定不扫，同时定两块权重比、末层 Sinkhorn 有效温度、与基线 MSE 量纲可比。码本更新律不动（layers.py:74 nn.Embedding+梯度）。c=0 时读回退化为 sum_l tau（:307 同形），故 FLAT 臂=c 恒 0、距离走 distances/distance.py、残差 r<-r-quant（:298），只做 forward 比 sha256，不训练。结构只以逐商品标量 c_i 进入，无 (i,j) 项、无 InfoNCE/BCE/margin/源-目标残差对比。其余不动：N_l=3、[256,256,256]、Sinkhorn(0.003,5)、32 维瓶颈、EPOCHS=3000。几何算子全部来自 tools/research/geometry/poincare_contract.py。诚实口径：编码器输出仍在 32 维原点切空间，码本更新律与 decoder 结构欧氏，M_{c_i} 是逐商品一族图不是共享流形，分量指派未实现（16+16 固定）。",
+      "why_not_just_hyperbolic": "(a) 逐商品曲率形状继承 r2/07 与归档 continuum（not_run），不计新增，新增只在曲率来源。(b) 几何进三处：代价、层间运输、重建读回。(c) transport_const_c（c 恒 1）分离「几何进递推」与「逐商品曲率」。(d) transport_shuffled 解耦结构与几何。(e) transport_gain_i 只诊断，判定用 SID 差异率。",
+      "difference_from_literature": "仓库内已有、不主张新增：(1) r2/11 TIGER_M1_learned_kappa 的 model/mixed_rq.py:1-31 与 math_spec.json:17-26 已有 d_c^2/4 产品代价、rH_l=(-eH)(+)rH_{l-1}、右嵌套读回，:44 c 固定为 1——与 idea 的 SCALE_HYP=1/4 代价和 Log_0((-tau)(+)r) 递推逐项相同；(2) r2/07 TIGER_successor_entropy_curvature 已有逐商品 c_i 进第一层分配。故本方向只剩一条新增：曲率来源换成冻结 AF3 结构势，且同一 c_i 进三层残差运输与重建读回；r2/07 是否也进运输未读到，标待核，若已进则新增为零、本方向须停。外部（仅标题层）：2505.12404 / 2609.26342 / 2609.03369 为同族最近邻，正文未取得故不主张残差不同；HiHPQ（AAAI 2024，被引 20）双曲分层 product quantization 但落图像检索、无 SID、无 AF3；HyperVQ/kappaHGCN/AMCAD/2307.04514/SINCERE/2603.16088 皆止步连续表示或 GCN/检索，无码本+SID+运输。",
+      "vs_archive_table": {
+        "columns": ["机制", "仓库已有实现", "本方向是否新增"],
+        "rows": [
+          ["AF3 势定逐商品 c_i", "r2/07 逐商品 c_i（来源 successor 熵）；continuum not_run", "形状非新增；来源是 AF3 + 进三层运输（待核 r2/07）"],
+          ["球上 Mobius 运输 + d_c^2/4 代价", "r2/11 mixed_rq.py:1-31,:44 已实现（c=1）", "非新增，仅把 c 换成逐商品"],
+          ["右嵌套读回", "r2/11 mixed_rq.py:20-23", "非新增，用 c_i 而非 kappa_l"],
+          ["码本更新律", "r2 各臂欧氏梯度；Karcher 已删", "不改"],
+          ["分量指派", "r2 各臂固定 16+16", "未实现，明写"],
+          ["_archive 8 向", "blocks/codebook/condition/continuum/depth/drive/manifold/pairs 的 result.status 全为 not_run", "不引用不存在的数字"]
+        ],
+        "status_note": "查重 = _archive 8 个 not_run 方向 + analysis_sid_recall/r2 的 68 个已跑臂；r2/11 与 r2/07 已在 difference_from_literature 点名，不再声称仓库无实现。"
+      },
+      "discriminability_checks": [
+        "c>0 时 D 与 poincare_contract.py:153 squared_distance(x,y,c)/4 逐位一致（相对误差 <=1e-6），只用组合层",
+        "闭式 (1/c)artanh^2(sqrt(c)u)=d_c^2/4（<=1e-6）",
+        "c->0：D->||r-tau||^2、递推->r-tau、读回->欧氏和（<=1e-6）；FLAT 导出 SID 与基线 sha256 逐位一致",
+        "与 r2/11 只做参数化判别（c=1 固定、每层 kappa_l 学习、joint 单码），不做数值对齐",
+        "两两 sid_diff_rate >= 20% 仅诊断，判定用 recall 差"
+      ],
+      "must_hold_alignment": "must_hold#1（无正负样本）：结构入口只有逐商品闭式标量 c_i；(i,k) 是商品-码字量化打分不是商品对；递推/读回是逐商品状态；损失只有 mean_i D_{i,k_i} 与逐商品重建项；无 (i,j) 项、无 InfoNCE/BCE/margin/源-目标残差对比、无成员集运算；batch 置换等变；eval 指标只读。must_hold#2（几何真进通路且 AF3 定几何）：c_i 由 AF3 决定并进 (i) 分配代价、(ii) 三层残差运输、(iii) 重建读回；边界：编码器输出仍在切空间、码本/decoder 欧氏、M_{c_i} 为逐商品一族图、分量指派未实现。",
+      "af3_sign_narrative": "kappa_ij=4-d_i-d_j+3T_ij（af3_potential.py:103-125,216-217）：低度叶子端为正、高度数少共同邻居为负。s_i 很负->c_i≈8；很正->c_i≈1/8。必测 Spearman(s_i,deg_i)、Spearman(log c_i,deg_i) 如实报告。"
+    },
+    "4_method": {
+      "single_variable": "只改三处：欧氏平方距离->产品流形代价（distances 注册项、源码选择）；欧氏残差减->双曲块 Mobius 减+Log 递推；重建 sum_l tau->右嵌套读回。臂由 ARM_NAME 决定（euclidean/af3/no_transport_af3/shuffled/const_c/flat），无度量配置键。",
+      "new_files": [
+        {"path": "af3_curvature_transport.py", "what": "算 kappa_ij、kappa_bar_i、s_i、sigma_i、c_i；输出 (N,) c_i 与分位/跨度/方差/Spearman 诊断"},
+        {"path": "model/product_geometry.py", "what": "组合层：product_cost/transport_step/readout/drift；算子 from tools.research.geometry.poincare_contract import project, mobius_add, expmap0, logmap0, squared_distance，不自定义（checks.py:400-459）"},
+        {"path": "distances/product_transport.py", "what": "NAME='product_transport'；__call__(latent, codebook, rows=None)->(B,K)，rows 索引 c_i，rows=None 抛 ValueError；D_EUCLID=16、D_HYP=16、SCALE_HYP=0.25 为模块常量；无 init_level/set_curvature"},
+        {"path": "losses/geometric.py", "what": "geometric_parts(latent, codebook, rows, indices)->(commitment_l, codebook_l)，与 layers.py:142 同序；SPEC detached={'codebook':'latent_side','commitment':'codebook_side'}；不注册进 LOSSES"},
+        {"path": "eval/transport_probe.py", "what": "只读：e_i 与 u 分层条件秩相关、transport_gain_i、两两 SID 差异率、码字使用、clip/NaN、FLAT sha256、drift^(l) 与 drift^(3)-L_recon 秩相关"},
+        {"path": "tests/test_transport_flat.py", "what": "c->0 退化、c>0 与 squared_distance/4 逐位一致、batch 置换等变、读回右嵌套在 c->0 等于欧氏和"},
+        {"path": "tools/research/stage2/tests/test_losses_math.py", "what": "几何两项梯度方向测试（commitment 动 z、codebook 动 q）"}
+      ],
+      "modified_files": [
+        {"path": "stage2_RQ-VAE/TIGER_RQ-VAE/distances/__init__.py", "what": "DISTANCES 注册 product_transport；build_distance() 仍零参默认 euclidean；:13-18 既有约定不改、不加读取键"},
+        {"path": "stage2_RQ-VAE/TIGER_RQ-VAE/train_rqvae.py", "what": "TensorDataset 扩为 (embeddings,item_ids)（item_id=行号）；按 ARM 在源码选注册项；init_codebook 补 item_ids；导出改为加载基线 ckpt 只做 forward"},
+        {"path": "stage2_RQ-VAE/TIGER_RQ-VAE/model/layers.py", "what": "_distances(latent, rows=None) 透传；transport 时代价走 self.distance、残差走 transport_step、:142 处改调 geometric_parts（仍 2 元组同序）；init_codebook 残差回传（:155-156）走 transport_step；重建改读回（替换 :307）；:74 与 :281-289/:292 不动"},
+        {"path": "stage2_RQ-VAE/TIGER_RQ-VAE/model/model.py", "what": "forward/get_indices 透传 item_ids->rows；init_codebook(embeddings, item_ids=None)；重建走读回后过 decoder（结构不改编）"}
+      ],
+      "runs": "13 训 + 13 次 Stage3，量级 13 x 3000 epoch x 4 卡 = 156,000 卡-epoch；GPU-hour 不预填，由 metrics JSONL 实测 step 时间回填。af3 42/43/44；no_transport_af3 42/43/44；shuffled 42/43/44（置换种子 20261120）；const_c 42/43/44；euclidean seed 43 单跑核对（差 <=0.001828 即通过）。flat 不训练：加载基线 rqvae_best.pth 只 forward 比 sha256。降级路径：(1) 先 5 训（四臂 + euclidean 各 seed 42）；(2) 再补 seed 43/44；(3) 最低 2 训（af3 vs const_c seed 42）只作方向性判断，不出胜出结论。",
+      "feasibility_domain": "参数量零增量。每层额外：一次与基线同阶 matmul + 每商品一次 Exp/Mobius/Log（逐元素，B x 16），不给上限数字，实测单 step 时间如实记录。数值：c_min 使球半径 <=2.83；artanh clamp 到 1-1e-6、占比 <=1e-3；分母 clamp 1e-8；c_min/c_max/SCALE_HYP 不扫；NaN 或超门槛回落 flat 并记 logs。"
+    },
+    "5_references": [
+      {"title": "Hyperbolic Residual Quantization: Discrete Representations for Data with Latent Hierarchies", "year": 2025, "venue": "arXiv", "doi": "10.48550/arxiv.2505.12404", "cited_by": 0, "what": "同族最直接对标；残差处理待正文核对"},
+      {"title": "Geometry-Aware Hyperbolic Residual-Quantized Variational Autoencoders", "year": 2026, "venue": "arXiv", "doi": "10.48550/arxiv.2609.26342", "cited_by": 0, "what": "整套 RQ-VAE 放双曲；残差待核"},
+      {"title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems", "year": 2026, "venue": "arXiv", "doi": "10.48550/arxiv.2609.03369", "cited_by": 0, "what": "双曲 SID + 长尾；曲率来源与残差待核"},
+      {"title": "HiHPQ: Hierarchical Hyperbolic Product Quantization for Unsupervised Image Retrieval", "year": 2024, "venue": "AAAI", "doi": "10.1609/aaai.v38i5.28261", "cited_by": 20, "what": "双曲分层 product quantization；图像检索，无 SID、无曲率来源设计"},
+      {"title": "Hyperbolic Prototype-Residual Autoencoder for Interpretable Generative Latent Organization", "year": 2026, "venue": "Sensors", "doi": "10.3390/s26154957", "cited_by": 0, "what": "连续潜变量，无码本/SID/运输"},
+      {"title": "kappaHGCN: Tree-likeness Modeling via Continuous and Discrete Curvature Learning", "year": 2023, "venue": "KDD", "doi": "10.1145/3580305.3599532", "cited_by": 24, "what": "按节点学曲率，落点 GCN"},
+      {"title": "AMCAD: Adaptive Mixed-Curvature Representation based Advertisement Retrieval System", "year": 2022, "venue": "ICDE", "doi": "10.1109/icde53745.2022.00323", "cited_by": 8, "what": "混合曲率检索；连续表示+打分"},
+      {"title": "Improving Heterogeneous Graph Learning with Weighted Mixed-Curvature Product Manifold", "year": 2023, "venue": "arXiv", "doi": "10.48550/arxiv.2307.04514", "cited_by": 4, "what": "加权乘积流形聚合；无量化"},
+      {"title": "SINCERE: Sequential Interaction Networks representation learning on Co-Evolving Riemannian manifolds", "year": 2023, "venue": "WWW", "doi": "10.1145/3543507.3583353", "cited_by": 7, "what": "止步连续表示"},
+      {"title": "HyperVQ: MLR-based Vector Quantization in Hyperbolic Space", "year": 2024, "venue": "arXiv", "doi": "10.48550/arxiv.2403.13015", "cited_by": 10, "what": "单一常数曲率双曲量化，无运输"},
+      {"title": "Decoupled Residual Quantization for Robust Semantic IDs in Recommendation", "year": 2026, "venue": "arXiv", "doi": "10.48550/arxiv.2606.01844", "cited_by": 4, "what": "改 RQ 流程，不涉几何"},
+      {"title": "Learning Variable-Length Tokenization for Generative Recommendation", "year": 2026, "venue": "arXiv", "doi": "10.48550/arxiv.2605.17779", "cited_by": 1, "what": "改层预算；本向固定 3 层"}
+    ],
+    "6_evaluation": {
+      "reference": "results/stage3_T5Train/TIGER_mixed_rq_F0/logs/Amazon_2023_Instruments/Nov-09-2026_08-07-21/test_final.json：test_recall@10=0.057278155956754125、@5=0.037814028795765946、n_eval=57439；ideas/baseline.json sid_recall=0.05545012970281516、sid_sha256=025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059；差 0.001828026253938965 = 已观测跨实现漂移。",
+      "prerequisite_checks": [
+        "admission：tools/research 的 checks.py 四项（含 :400-459 check_geometry_contract）全 PASS 才允许算结论，NOT_RUN 不算 PASS",
+        "FLAT：加载基线 rqvae_best.pth，flat 分支只 forward（不训练、不更新码本），导出 item_sids.json 与基线 sid_sha256 逐位一致（唯一判据）；item_id 取 (embeddings,item_ids) 行号",
+        "canonical 一致：c>0 时 D 与 poincare_contract.squared_distance(x,y,c)/4 逐位一致（<=1e-6）",
+        "闭式与退化：(1/c)artanh^2=d_c^2/4；c->0 时 D->||r-tau||^2、递推->r-tau、读回->欧氏和（均 <=1e-6）",
+        "构造性复算（只抓 bug）：log c_i in [log 0.125, log 8]、log10 跨度 >=1.0、sigma 方差 >0",
+        "运输有效：af3 vs shuffled 逐商品 SID 差异率 3 seed 均值 >=20%",
+        "诊断（不进判据）：e_i 在 u 三分位层内与 sigma_i 条件秩相关 >=0.5；Spearman(s_i,deg_i) 如实报；SCALE_HYP in {1/4,1} 各一次前向",
+        "数值健康：artanh_clip 与分母 clamp 占比 <=1e-3、无 NaN；重建健康用单 run 内双前向（前 100 step 同 batch 再跑 euclidean 分支、不反传），L_recon 比值中位数 <=1.05",
+        "无成对信号：batch 置换时 D/损失/SID 等变；训练路径无 InfoNCE/BCE/margin/源-目标残差对比"
+      ],
+      "decision_rule": [
+        "胜出：af3 的 test_recall@10 3 seed 均值 >= 门槛 = ref+0.002 = 0.059278155956754125（本轮无 s_e，故不启用 2*s_e；补跑得 s_e 则替换并重报门槛与灰区上界）",
+        "隔离新增点：af3 - const_c 的 3 seed 均值差 >=0.001 且 3/3 同号且 >1*std，否则 AF3 定曲率无贡献、判否",
+        "消融归因：af3 - no_transport_af3、af3 - shuffled 各 3 seed 均值差 >=0.001 且 3/3 同号且 >1*std；两条同时满足才算几何进递推+AF3 定几何成立，否则归因标 provisional、不作判否依据",
+        "灰区：3 seed 均值落在 [0.055450155956754125, 0.059278155956754125) 判否；下界 = ref-0.001828，与已观测漂移同量级故不可辨的差别不作结论",
+        "无效：均值 < 0.055450155956754125 判否，不再扫超参",
+        "结构归因：SID 差异率 <20% 或与 shuffled 差 <0.001 时，增益归因曲率自由度而非 AF3",
+        "一致性：SID 长度恒 3、每层词表 256、shape 与基线一致；TIGER 词表与序列长度不改",
+        "全部结论附 seed 均值 ± std（af3 与三条对照均 3 seed）"
+      ],
+      "diagnostics": [
+        "每层 r^H 范数、Mobius 前后夹角、drift^(l) 随层与 c_i 曲线；drift^(1..3) 分布与 drift^(3) 对 L_recon 的秩相关（只读；drift >= 残差范数 10% 或显著正相关须在结论注明）",
+        "e_i 与 transport_gain_i 随 c_i 曲线、u 分层条件秩相关、SCALE_HYP {1/4,1} 对照",
+        "每层每个 log 曲率带的码字使用数与死码字",
+        "枢纽（s_i 最低 20%）与社区内（最高 20%）的 c_i/e_i/gain_i 均值",
+        "每层与总 L_recon 曲线（前 100 step 与 euclidean 双前向对照）",
+        "四臂 c_i 分布与两两 SID 差异率（含 const_c 与主臂）"
+      ]
+    }
+  },
+  "result": {"status": "not_run"}
+}

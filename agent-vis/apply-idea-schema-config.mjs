@@ -143,7 +143,7 @@ const againstSteps = [
     '1_goal.mechanism 说清的几何与计算通路、af3_entry.enters_at（AF3 真的进了哪几处）、' +
     'one_variable（到底改了几处、没改的是什么）、must_hold#1 与 #2 各自的 how、' +
     'novelty（新增性主张与继承的归档方向）、4_method.numerics 的界与退化路径、' +
-    'sanity_checks 能不能机械判定、6_evaluation.falsifier 有没有把判否条件写死。' +
+    '6_evaluation.falsifier 有没有把判否条件写死。' +
     '用 readFile 读 ideas/<方向>/<方向>_idea.json 与 math.json，用 checkIdea 确认字段本身合规；' +
     '字段不合规先在意见里点出来（这本身就是要改的东西）。' +
     'must_hold#1 要同时看两种形态：两两正负样本的损失（InfoNCE / BCE / margin / 源-目标残差对比），' +

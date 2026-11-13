@@ -84,7 +84,6 @@ function goodDoc() {
           clamps: [{ name: 'ARTANH_EPS', value: 1e-6, why: 'artanh 的定义域边界，取 IEEE 双精度下 1-1e-6' }],
           degenerate_to_baseline: 'TRANSPORT_MODE=euclidean 时距离与递推都退回 distances/distance.py',
         },
-        sanity_checks: ['TRANSPORT_MODE=euclidean 导出的 item_sids.json 与基线 sid_sha256 逐位一致'],
       },
       '5_references': [
         {
@@ -189,6 +188,14 @@ await test('面名只能取那七个', () => {
   assert.ok(IDEA_SURFACES.includes('assignment_cost'));
 });
 
+await test('idea 里不许有 check 类字段（验证计划归实现阶段）', () => {
+  const doc = goodDoc();
+  doc.sections['4_method'].sanity_checks = ['一句能机械判定的话'];
+  const verdict = validateIdeaDoc(doc);
+  assert.equal(verdict.ok, false);
+  assert.ok(pathsOf(verdict).includes('sections.4_method.sanity_checks'));
+});
+
 await test('文献里的被引数判不合规（没有消费者）', () => {
   const doc = goodDoc();
   doc.sections['5_references'][0].cited_by = 42;
@@ -207,7 +214,7 @@ await test('多种子计划在值上被认出来', () => {
 
 await test('否定句"不做多种子"不会被误伤', () => {
   const doc = goodDoc();
-  doc.sections['4_method'].sanity_checks = ['不做多种子实验，也不训练消融臂'];
+  doc.sections['1_goal'].mechanism = '表示空间换成逐商品曲率的产品流形；不做多种子实验，也不训练消融臂。';
   const verdict = validateIdeaDoc(doc);
   assert.equal(verdict.ok, true, `不该有错：${JSON.stringify(verdict.errors)}`);
 });

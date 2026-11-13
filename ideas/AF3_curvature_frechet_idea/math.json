@@ -1,0 +1,86 @@
+{
+  "symbols": {
+    "kappa_ij": "AF3 边曲率 kappa_ij = 4 - d_i - d_j + 3*T_ij，训练前在训练划分共现图上算一次后冻结（口径见 stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/af3_potential.py:103-125,216-217）",
+    "kappa_i": "逐商品 AF3 曲率标量，取自冻结表 results/research/issue167/kappa.json（规则 kappa_i = CURVATURE*(1-u_i)/mean_frozen(1-u)，CURVATURE=1，u_i 为关联边 u 的均值）；实测 mean=1.000000、mean|kappa-1|=0.5504、四分位 0.4539/0.9147/1.4029、区间 [0.0545,3.519]。表的条目数按实际读到记录打印（实测 24556），缺 key 的商品取 c_i=c_ref 且 miss 数入日志",
+    "c_i": "商品 i 的曲率：c_i = clamp(c_ref*kappa_i^curvature_gamma, c_hard_min, c_hard_max)，单商品标量，三层共用同一个 c_i；实测落到 [0.2334,1.8760]，硬界命中 0%",
+    "c_ref": "参考曲率常数 1.0：kappa 表归一化常数（CURVATURE=1），也是唯一的球曲率（码字的家球与所有 p_i 所在的球）",
+    "w_i": "商品 i 在代价里的度量权重 w_i = c_ref/c_i，逐商品标量；c_i=c_ref 时 w_i=1（无权重）",
+    "x_i, r_i": "编码器输出与第 l 层残差（32 维切空间坐标），切成 E(16) 与 H(16)；残差更新仍是欧氏减法 r <- r - tau",
+    "tau_k": "码字 k 的切空间参数（码本 (256,32)），切成 tau^E 与 tau^H；u_k = expmap0(tau^H_k, c_ref) 是它在参考球里的家位置",
+    "p_i": "商品 i 的双曲块搬到参考球后的等距像 p_i = sqrt(c_i)*expmap0(r^H_i, c_i)（等价于把 r^H_i 在它自己曲率 c_i 的球里的点，按等距律映射到参考球）",
+    "D_ik": "商品 i 与码字 k 的产品流形代价：欧氏块平方距离 + w_i * squared_distance(p_i,u_k,c_ref)/4",
+    "S_k": "分配给码字 k 的商品集合（量化关系定义），只在写回内部作为加权求位置的成员集合出现，不参与任何球曲率计算",
+    "ema_alpha": "码字写回的 EMA 阻尼系数 0.1",
+    "frechet_steps": "加权 Karcher 迭代上限 20（tol=1e-6，fp32 可达）"
+  },
+  "formulas": [
+    {
+      "name": "per_item_curvature",
+      "formula": "c_i = clamp(c_ref * kappa_i^curvature_gamma, c_hard_min, c_hard_max)，kappa_i 查冻结表 results/research/issue167/kappa.json，三层共用同一 c_i；同时 w_i = c_ref/c_i",
+      "note": "AF3 决定几何的唯一参数源，单商品查表，不做 batch 统计、不逐 epoch 重算、不按正负边分组取比值。不再用 clip(kappa,0.25,1.0)：实测 kappa 区间 [0.0545,3.519] 大量值落在该区间外，clip 会把大部分商品压成同一个数使机制退化为常数曲率双曲 RQ。半幂映射后 c_i 落在 [0.2334,1.8760]、w_i 跨度 8 倍，硬界 [1e-3,4.0] 命中 0%。缺 key 商品的 fallback 是 c_i=c_ref（中性常数），miss 数与表 size 写入 metrics JSONL，不许静默。"
+    },
+    {
+      "name": "product_cost",
+      "formula": "D_ik = ||r^E_i - tau^E_k||^2 + w_i * squared_distance(p_i, u_k, c_ref)/4，p_i = sqrt(c_i)*expmap0(r^H_i, c_i)，u_k = expmap0(tau^H_k, c_ref)，w_i = c_ref/c_i；c_i = 0 时双曲块取 ||r^H_i - tau^H_k||^2",
+      "note": "单一球（c_ref=1.0）：商品点先用曲率等距 p_i = sqrt(c_i) expmap0(r^H_i,c_i) 搬进参考球，码字只有一个家位置 u_k，两边同球，所以写回求出的位置就是该代价的极小点（R3）。等距律 d_{c_i}(x,y) = (1/sqrt c_i) d_{c_ref}(sqrt c_i x, sqrt c_i y)，故 w_i 是把距离换回该商品自身单位的归一化因子，不是分组权重。实现形态：distances/product.py 导出二参 distances(latent, codebook) -> (B,K)（与 distances/distance.py:11 同签名），逐商品曲率经可选侧信道 set_items(item_ids) 在调用前绑定并断言 len==B，不新增第三参数；argmin/center_distance/Sinkhorn 代码形状不改。R1 数据通路：train_rqvae.py:281 的 train_ids 经 TensorDataset(train_embeddings, ids)、:344 for batch, item_ids in loader、model/model.py:28 与 :40 的签名、model/layers.py:294/:305/:123/:129/:191/:197 与 :110 的 _distances 一路下传，导出路径 :455 按 all_embeddings 行序同样下传。"
+    },
+    {
+      "name": "codebook_weighted_karcher",
+      "formula": "对每个被用到的码字 k：u_k* = argmin_u sum_{i in S_k} w_i * d_{c_ref}(p_i, u)^2（加权 Karcher 不动点迭代，steps=frechet_steps, tol=1e-6，全在标量曲率 c_ref=1.0 下）；tau^H_k <- (1-ema_alpha)*tau^H_k + ema_alpha*logmap0(u_k*, c_ref)；欧氏块 tau^E_k <- (1-ema_alpha)*tau^E_k + ema_alpha*mean_{i in S_k} r^E_i",
+      "note": "写回与分配同球（c_ref）、同权重（w_i），因此码字位置就是 sum_i D_ik 的极小点，不存在 cbar_k 那种「按成员集合改球曲率」的分组反馈（上一版的 cbar_k = sum c_i/|S_k| 已从公式与符号表删除）。Karcher 迭代用 poincare_contract 的 expmap0/logmap0/squared_distance，调用点曲率是标量常量 1.0，故契约里的 float(c) 标量守卫不被触发（R2），SHA 检查保留。R6：tol=1e-6（1e-9 在 fp32 不可达会造成写回静默空操作），未达 tol 时取最后一次迭代并计 not_converged，不跳过、不静默。R5：写回 in-place 改 embed.weight 之后把 optimizer.state 里该参数的 exp_avg/exp_avg_sq 对应行归零，Adam 矩不引用旧位置；码本仍保留基线 codebook_loss 梯度项。恒等性检查：权重全 1（c_i=c_ref）时须与 poincare_contract.frechet_mean 逐元素差 <=1e-6。R10 开销：每层每 step 的 expmap/logmap 次数 = frechet_steps * sum_k |S_k| = frechet_steps * B = 20*B，三层 60*B 次 16 维向量化运算，与一次 encoder 前向量级相当，无逐商品 Python 循环。"
+    },
+    {
+      "name": "assignment",
+      "formula": "l < N_l：token_l(i) = argmin_k D_ik；l = N_l：Q = Sinkhorn(center(D); SK_EPSILON, SK_ITERS)，token = argmax_k Q_ik",
+      "note": "分配代码形状与基线逐位相同（model/layers.py 的 _indices/sinkhorn/center_distance），唯一变化是 D 的取值按该商品的 c_i 计算。SK_EPSILON=0.003、SK_ITERS=50 取自 config。"
+    },
+    {
+      "name": "flat_limit",
+      "formula": "geometry_off：c_i=0 → D 取平方欧氏、码字写回跳过，逐元素差 <= 1e-6；behaviour_off：c_i=c_ref=1 → p_i 等距为恒等、w_i=1，加权 Karcher 与 frechet_mean 差 <= 1e-6",
+      "note": "两个开关都是可失败的数值判据，不是 sha256 恒真式。注意有限曲率下 D 与欧氏不可能逐位相等（距离的 c=0 分支是 2|x-y|，乘 1/4 才归位），因此不写「c=1 与基线逐位一致」。不把「新训复现 sid_sha256」写进判据：基线 KMeans(n_init=\"auto\")（model/layers.py:151）与 4 卡调度下训练不可逐位复现；改为「poincare_contract.py 的 SHA 与 r2/03 源文件一致」这条可机械核验的等价检查。"
+    },
+    {
+      "name": "no_pairs",
+      "formula": "结构输入只有逐商品标量 c_i（查表所得）；D_ik 的 (i,k) 是商品-码字打分；码字写回是固定球 c_ref 内、按成员各自 w_i 的加权 Karcher 均值，球曲率不含成员聚合",
+      "note": "must_hold#1 自检：训练路径无 InfoNCE/BCE/margin/源-目标残差对比，无 (i,j) 项；不把边集或商品按曲率符号、阈值、度数切成正组/负组再取比值或对比（上一版的 mean_pos/mean_neg 与 cbar_k 分组曲率都已删除）；集合运算只沿用基线已有的 Sinkhorn 与码字覆盖计数；batch 任意置换时 D、写回、SID 等变。"
+    },
+    {
+      "name": "dedup_archive",
+      "formula": "本向只动两处：分配代价的双曲块（逐商品等距 + 度量权重）与固定参考球内的码字加权 Karcher 写回；分量固定 16+16、残差仍欧氏减法、读回仍 sum_l tau、层深 3、码本大小与初值不变、commitment 与 codebook 损失项、重建项仍是基线写法",
+      "note": "逐个读 ideas/_archive 九向 1_goal 后的判别：transport 让逐商品/逐对曲率进残差运输与右嵌套读回并保持纯梯度码本 —— 本向的按行曲率分配代价与它同式，故明写为继承、不计新增，新增只在「固定球内加权 Karcher 写回」；continuum 用逐对插值 c_ik = sqrt(c_i c_k) 只换度量、码字仍欧氏梯度移动；manifold 用三固定因子 + 软权重加权和；drive 在欧氏代价加结构势偏置项；blocks 切码本列块加掩码；codebook 只改 KMeans 初值配额；condition 用 FiLM 调制编码器；depth 改层预算；pairs 用曲率符号造正负对（主线禁止）。以上均不重复本向的「同球加权极小点」写法。"
+    }
+  ],
+  "constants": [
+    { "name": "N_l", "value": 3, "why": "与 config CODEBOOK_NUM=3 一致，SID 长度不变" },
+    { "name": "K_l", "value": [256, 256, 256], "why": "与 config CODEBOOK_SIZE 一致，几何变化不夹带容量变化" },
+    { "name": "d", "value": 32, "why": "与 config CODEBOOK_DIM=32 一致；只改度量与写回，不改维度" },
+    { "name": "d_E", "value": 16, "why": "32 维对半切，欧氏块与双曲块同容量" },
+    { "name": "d_H", "value": 16, "why": "同上，产品流形是两个等容量因子的乘积" },
+    { "name": "c_ref", "value": 1.0, "why": "kappa 表归一化常数 CURVATURE=1，同时是唯一的球曲率：固定它使码字的家球不含成员聚合，并让 Karcher 用标量曲率从而复用契约算子" },
+    { "name": "curvature_gamma", "value": 0.5, "why": "半幂把 kappa 的 [0.0545,3.519] 压成 c_i 的 [0.2334,1.8760]、w_i 跨度 8 倍；gamma=1 时 w_i 跨度 64 倍，单商品权重过陡会主导加权均值" },
+    { "name": "c_hard_min", "value": 0.001, "why": "数值兜底下界；实测 c_i 最小 0.2334，命中 0%" },
+    { "name": "c_hard_max", "value": 4.0, "why": "数值兜底上界；实测 c_i 最大 1.8760，命中 0%" },
+    { "name": "ema_alpha", "value": 0.1, "why": "写回用 EMA 阻尼替代覆盖写，降低 batch 成员波动的方差，固定不扫" },
+    { "name": "frechet_steps", "value": 20, "why": "加权 Karcher 迭代上限，配 tol=1e-6 在 fp32 下可实际收敛；开销 = 20*B 次/层" },
+    { "name": "ARTANH_EPS", "value": 1e-07, "why": "复用 model/poincare_contract.py 常量作为 artanh 参数上界 1-1e-7" },
+    { "name": "BALL_EPS", "value": 1e-06, "why": "复用 poincare_contract 常量作为投影点离球边界的最小距离" },
+    { "name": "sk_epsilon", "value": 0.003, "why": "与 config SK_EPSILON 一致，沿用基线末层 Sinkhorn 温度" },
+    { "name": "sk_iters", "value": 50, "why": "与 config SK_ITERS 一致（训练路径不用函数缺省 5）" },
+    { "name": "beta", "value": 0.25, "why": "与 config BETA 一致，沿用基线 commitment 权重" },
+    { "name": "learning_rate", "value": 0.001, "why": "与 config LR 一致，不因机制改动调学习率" },
+    { "name": "weight_decay", "value": 0.0001, "why": "与 config WEIGHT_DECAY 一致" },
+    { "name": "gradient_clip_norm", "value": 1.0, "why": "与 config GRADIENT_CLIP_NORM 一致" },
+    { "name": "seed", "value": 42, "why": "与 config SEED 一致；正式训练只跑一次，不做多种子" },
+    { "name": "Epochs", "value": 3000, "why": "与 config EPOCHS 一致；判据是仓库契约的 test_R@10 > 0.065" }
+  ],
+  "switches": {
+    "behaviour_off": "结构信号关掉：所有商品 c_i 取常量 c_ref=1（忽略 kappa 表），等距退化为恒等、权重退化为 1，其余写法不变 —— 用来确认增益来自 AF3 而不是「换了个几何」。代码里必须存在的接线检查，不是要训练的对照臂",
+    "geometry_off": "几何关掉退回欧氏：所有 c_i=0，D 与基线平方欧氏逐元素差 <=1e-6，码字 Karcher 写回跳过。接线检查，不新训臂",
+    "both_on": "主臂：c_i = clamp(c_ref*kappa_i^0.5, c_hard_min, c_hard_max) 由冻结 AF3 表逐商品给出，逐层参考球产品流形代价 + 固定球内按 w_i 的码本 EMA 加权 Karcher 写回 + 基线 codebook/commitment 项"
+  },
+  "metrics": {
+    "metric": "stage3.test_recall@10",
+    "threshold": 0.065,
+    "contract": "仓库契约的 test_R@10 > 0.065；对照臂与具体数值见 ideas/baseline.json 的 reference（0.0573），不在本文件重复"
+  }
+}

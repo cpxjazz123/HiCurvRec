@@ -47,7 +47,7 @@ export const IDEA_EVAL_THRESHOLD = 0.065;
 const TOP_KEYS = ['schema', 'arm', 'sections'];
 const SECTION_KEYS = ['1_goal', '4_method', '5_references', '6_evaluation'];
 const GOAL_KEYS = ['mechanism', 'af3_entry', 'one_variable', 'must_hold', 'novelty'];
-const METHOD_KEYS = ['surfaces', 'numerics', 'sanity_checks'];
+const METHOD_KEYS = ['surfaces', 'numerics'];
 const EVAL_KEYS = ['metric', 'threshold', 'comparison_arm', 'falsifier'];
 const WORK_KEYS = ['title', 'year', 'venue', 'doi', 'relation'];
 
@@ -341,20 +341,6 @@ function checkMethod(method, add) {
       }
     }
   }
-  if (method.sanity_checks !== undefined) {
-    if (!Array.isArray(method.sanity_checks)) {
-      add('sections.4_method.sanity_checks', '必须是数组');
-    } else {
-      if (method.sanity_checks.length > 8) {
-        add('sections.4_method.sanity_checks', `最多 8 条（现在 ${method.sanity_checks.length} 条）：只留能机械判定的`);
-      }
-      method.sanity_checks.forEach((item, index) => {
-        if (!nonEmptyString(item)) {
-          add(`sections.4_method.sanity_checks[${index}]`, '必须是一句能机械判定的话');
-        }
-      });
-    }
-  }
 }
 
 function checkWorks(list, path, add, optional) {
@@ -463,8 +449,7 @@ export function ideaSkeleton() {
         "dtype": "fp32",
         "clamps": [{ "name": "", "value": 0, "why": "为什么取这个界" }],
         "degenerate_to_baseline": "关掉哪一项后退化成基线（要能逐位对齐）"
-      },
-      "sanity_checks": ["一句能机械判定的话"]
+      }
     },
     "5_references": [
       { "title": "", "year": 2024, "venue": "", "doi": "", "relation": "different" }
@@ -492,7 +477,8 @@ export const IDEA_FORBIDDEN_FIELDS = [
   { field: '4_method.new_files / modified_files', owner: '框架的候选树与登记（§66：路径归框架）' },
   { field: '6_evaluation.decision_rule', owner: '仓库契约（§25：test_R@10 > 0.065）' },
   { field: '6_evaluation.reference', owner: 'ideas/baseline.json（基线事实的单一出处）' },
-  { field: '6_evaluation.prerequisite_checks / diagnostics', owner: 'sanity_checks 与评估期的记录格式' },
+  { field: '4_method.sanity_checks', owner: '验证计划与测试归实现阶段（idea 只写机制与判据）' },
+  { field: '6_evaluation.prerequisite_checks / diagnostics', owner: '实现阶段的验证计划与评估期的记录格式' },
   { field: '1_goal.vs_archive_table', owner: 'novelty.inherited_from 与 closest_works' },
   { field: '1_goal.must_hold_alignment', owner: 'must_hold 数组（两条都要对上）' },
   { field: '5_references[].cited_by', owner: '没有消费者，删掉' },
