@@ -481,6 +481,19 @@ const stage2StopTool = piTool({
   },
 });
 
+const webSearchTool = piTool({
+  name: 'webSearch',
+  label: '检索文献',
+  description:
+    'Search published literature (OpenAlex). Returns titles, year, venue, DOI and citation ' +
+    'counts for the matches; it does not summarise them for you.',
+  parameters: Type.Object({
+    query: Type.String({ description: '检索词，例如 "hyperbolic residual quantization recommendation"' }),
+    limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 25, description: '最多返回几条，默认 8' })),
+  }),
+  impl: searchLiterature,
+});
+
 const listFilesTool = piTool({
   name: 'listFiles',
   label: '列目录',
@@ -717,8 +730,47 @@ function stage2TreePath(relPath) {
   return target;
 }
 
+/**
+ * 检索文献（OpenAlex：公开接口，不需要 key）。
+ *
+ * 返回的是"这个方向有没有现成的工作、他们做了什么"这种读数，
+ * 不是结论 —— 结论由 agent 自己从这些条目里读出来。
+ */
+async function searchLiterature({ query, limit = 8 }) {
+  const text = typeof query === 'string' ? query.trim() : '';
+  if (text === '') throw new Error('检索词不能为空');
+  const count = Math.min(Math.max(Number(limit) || 8, 1), 25);
+  const url = new URL('https://api.openalex.org/works');
+  url.searchParams.set('search', text);
+  url.searchParams.set('per-page', String(count));
+  const res = await fetch(url, { headers: { 'User-Agent': 'agent-vis/1.0' } });
+  if (!res.ok) throw new Error(`文献检索失败：HTTP ${res.status}`);
+  const data = await res.json();
+  const works = Array.isArray(data.results) ? data.results : [];
+  return {
+    query: text,
+    count: works.length,
+    works: works.map((work) => ({
+      title: work.title || '',
+      year: work.publication_year || null,
+      venue:
+        (work.primary_location &&
+          work.primary_location.source &&
+          work.primary_location.source.display_name) ||
+        '',
+      doi: work.doi || '',
+      cited_by: work.cited_by_count || 0,
+      authors: (work.authorships || [])
+        .slice(0, 4)
+        .map((entry) => (entry.author && entry.author.display_name) || '')
+        .filter(Boolean),
+    })),
+  };
+}
+
 export const PI_TOOLS = {
   listFiles: listFilesTool,
+  webSearch: webSearchTool,
   stage2Start: stage2StartTool,
   stage2Status: stage2StatusTool,
   stage2Stop: stage2StopTool,

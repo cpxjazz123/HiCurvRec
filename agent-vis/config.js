@@ -928,6 +928,14 @@ export const PERMISSION_CATALOG = [
     tools: ['gitLog'],
   },
   {
+    id: 'web',
+    label: '检索（web）',
+    description:
+      '检索已发表文献（OpenAlex 公开接口，不需要 key）：拿标题、年份、出处、DOI 与被引数，' +
+      '结论由 agent 自己读。',
+    tools: ['webSearch'],
+  },
+  {
     id: 'network',
     label: '联网（network）',
     description: '访问仓库之外的网络服务：列出并读取 GitHub 上本仓库的 Issue。',

@@ -479,6 +479,15 @@ async function main() {
               `全部重置应该覆盖所有身份: ${JSON.stringify(allPayload.agents)}`);
   });
 
+  await test('检索文献的工具与权限都在', async () => {
+    const web = PERMISSION_CATALOG.find((item) => item.id === 'web');
+    assert.ok(web, '权限目录里没有 web');
+    assert.deepEqual(web.tools, ['webSearch']);
+    assert.ok(web.description.length > 0, 'web 权限要说得清自己管什么');
+    const tools = toolsForPermissions(['read', 'web']).map((tool) => tool.name).sort();
+    assert.deepEqual(tools, ['listFiles', 'readFile', 'searchFiles', 'webSearch']);
+  });
+
   await test('全局设置可读可改，改完立刻对运行生效', async () => {
     const before = await (await fetch(`${base}/api/settings`)).json();
     assert.ok(before.settings, 'settings 没返回');
