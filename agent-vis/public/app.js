@@ -93,7 +93,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.30';
+const FRONTEND_VERSION = '2026-11-14.31';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -2196,10 +2196,12 @@ function createPanel(root) {
 
     // 整轮的编号：这几步在服务端是同一个轮次里的几步。
     const roundId = `round-${Date.now()}-${++roundSeq}`;
-    // 开跑前记一份指纹：收尾时比一比，就知道这一轮有没有改到东西。
-    if (!options.loopContinuation) {
-      roundStartFingerprint = await fetchFingerprint();
-    }
+    // 开跑前记一份指纹：收尾时比一比，就知道**这一轮**有没有改到东西。
+    //
+    // 每一轮都要重新取：续轮沿用上一轮的起点的话，"这一轮改没改"就会被算成
+    // "从第一轮到现在改没改" —— 第一轮改过，后面每一轮即使什么都没动，
+    // 也永远判成"有进展"，循环就停不下来。
+    roundStartFingerprint = await fetchFingerprint();
     const outputs = [];
     for (let index = 0; index < plan.length; index += 1) {
       // 被新的一轮顶掉了：这一轮到此为止。
