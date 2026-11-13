@@ -1,0 +1,5 @@
+[RecBole RQ-VAE] routing mode=ROLE items without a role=31 role table sha256=c7a29e6559aed1385c5ce514e506be22d88bf6e85eb61120b6dbf69375ea251c
+[RecBole RQ-VAE] device=cuda:0 all_items=24587 train_items=24556 world_size=1
+[RecBole RQ-VAE] config: epochs=1 batch_size_per_rank=4096 total_batch=4096 lr=0.001
+SMOKE_SUMMARY {"arm": "TIGER_role_geom_rq", "launch_mode": "single-gpu", "steps": 6, "applied_grad_norms": [0.0014395487960428, 0.002656604629009962, 0.0014422176172956824, 0.0012323216069489717, 0.0010655316291376948, 0.0009903652826324105], "probed_terms": {"RQVAE.compute_loss.total": {"loss": 0.0005303551442921162, "grad": 0.01967902109026909, "source": "base_loss_parameter_gradient"}, "RQVAE.compute_loss.recon": {"loss": 0.00046431910595856607, "grad": 0.01967902109026909, "source": "base_loss_parameter_gradient"}}, "checkpoint_probe": {"absent": true, "note": "this tree has no checkpoint yet; there is nothing to probe"}, "dead_terms": [], "nonfinite_terms": [], "all_step_norms_positive": true, "scratch_files": ["item_sids.json", "rqvae_best.pth", "sids_for_hgrec.npy", "training_metrics.jsonl"], "passed": true}
+SMOKE_PASS
