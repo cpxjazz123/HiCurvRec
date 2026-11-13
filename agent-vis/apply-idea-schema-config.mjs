@@ -47,8 +47,10 @@ ${forbidden}
 ## 两种轮次都要守的硬约束
 
 - **新 idea 不许和归档的 idea 重复**：方向名相同就是重复；目标与机制是同一件事、只换了说法也是重复。
-- **main_line.must_hold 两条都要对上**（写进 1_goal.must_hold 的两条 how），最要紧的是「不允许使用正负样本的形式」：
+- **main_line.must_hold 两条都要对上**（写进 1_goal.must_hold 的两条 how），最要紧的是「不允许使用正负样本的形式」。
   不许 InfoNCE / BCE / margin / 源-目标残差对比这类把商品两两组成正负样本的写法；
+  **也不许把边集或商品按曲率符号、阈值、度数切成「正组 / 负组」再取比值或对比** ——
+  那同样是把结构拆成正负两组，只是没写成损失项；
   结构信息必须能以单商品的方式进入（结构势、掩码、量化代价、分配约束、损失项）。
 - 路径都相对仓库根；只动 ideas/ 目录里的东西；不删 ideas/_archive/ 里的文件；
 - deleteFile 只用来完成「搬」的收尾（删旧位置、删搬空的方向目录），别的都不许删。
@@ -101,7 +103,9 @@ const steps = [
   {
     title: 'must_hold 与查重自查',
     instruction:
-      '把 main_line.must_hold 逐条对一遍（重点：不允许使用正负样本的形式），两条都写进 1_goal.must_hold 的 how 里；' +
+      '把 main_line.must_hold 逐条对一遍，两条都写进 1_goal.must_hold 的 how 里。' +
+      '重点看两件事：(a) 有没有 InfoNCE / BCE / margin / 源-目标残差对比这类两两正负样本的写法；' +
+      '(b) 有没有把边集或商品按曲率符号、阈值、度数切成正负两组再取比值或对比（这是同一种禁止形式，只是没写成损失项）。' +
       '再把 ideas/_archive/ 下的方向逐个读 1_goal 与当前方向比一遍（重名或同一件事只换说法都算重复）。' +
       '任何一条过不去就当场改掉；改不掉就明说卡在哪一条、这一轮不交付。最后再跑一次 checkIdea，必须 ok=true。',
   },
@@ -112,6 +116,53 @@ const steps = [
       '确认章节齐、没有跟归档重名、没有违反 must_hold、字段没有多余键。' +
       '最后记一行状态：这一轮是轮换还是返修、建了/改了哪个方向、checkIdea 结果、must_hold 逐条结论、查重结果、文件路径。' +
       '写完之后这一轮会在最后加一个「交接结论」步骤：那一步按这一栏的交接条件决定要不要调用 requestHandoff，把结论交给 AGENT AGAINST 复核。你不需要在这一步手动发。',
+  },
+];
+
+/**
+ * AGENT AGAINST 的「逐条开火」步骤：审查要按同一套字段走。
+ *
+ * 查重分两层：ideas/_archive/ 是硬性的一层；仓库里已实现并跑过的臂
+ * （analysis_sid_recall/r2/<编号>/<臂>）是另一层 —— 同一件事只换了某个标量的取值方式，
+ * 也算重复（一次候选只跑一次训练，重复一个已经 0.05x 的臂没有意义）。
+ */
+const againstSteps = [
+  {
+    title: '读 idea 与主线',
+    instruction:
+      'readFile 读 ideas/<方向>/<方向>_idea.json 与同目录 math.json，再读 ideas/main_line.json（statement 与两条 must_hold）与 ideas/baseline.json（基线事实）。' +
+      '用 checkIdea 确认 idea 文件的字段本身合规（不合规先记下来，这也是要改的东西）。' +
+      '把要开的火力点列成清单，按致命程度排序。',
+  },
+  {
+    title: '逐条开火',
+  instruction:
+    '逐条开火：按 idea 的固定字段（genrec.idea.v2）一条一条核 —— ' +
+    '1_goal.mechanism 说清的几何与计算通路、af3_entry.enters_at（AF3 真的进了哪几处）、' +
+    'one_variable（到底改了几处、没改的是什么）、must_hold#1 与 #2 各自的 how、' +
+    'novelty（新增性主张与继承的归档方向）、4_method.numerics 的界与退化路径、' +
+    'sanity_checks 能不能机械判定、6_evaluation.falsifier 有没有把判否条件写死。' +
+    '用 readFile 读 ideas/<方向>/<方向>_idea.json 与 math.json，用 checkIdea 确认字段本身合规；' +
+    '字段不合规先在意见里点出来（这本身就是要改的东西）。' +
+    'must_hold#1 要同时看两种形态：两两正负样本的损失（InfoNCE / BCE / margin / 源-目标残差对比），' +
+    '以及把边集或商品按曲率符号、阈值、度数切成正负两组再取比值或对比。' +
+    '查重分两层：ideas/_archive/ 里的方向是硬性的一层；' +
+    '仓库里已实现并跑过的臂（analysis_sid_recall/r2/<编号>/<臂>，含它们的 Stage3 分数）也要比 —— ' +
+    '同一件事只换了某个标量的取值方式，按「目标与机制是同一件事、只换了说法也是重复」判重复。' +
+    '每条反对意见都要给出依据（文件:行 / 公式），并标明是致命还是可修。',
+  },
+  {
+    title: '给返修要求',
+    instruction:
+      '把每条反对意见写成可执行的返修要求：每条说清「改哪个文件的哪一处、改成什么、依据是什么」，并标明致命还是可修。' +
+      '如果 AGENT IDEA 在不失真的前提下修不了（唯一存留的新增与仓库里已跑过的臂重复、或与主线冲突），' +
+      '就明说这一轮不交付，不要逼它包装 —— 不交付是一个合法的结论。',
+  },
+  {
+    title: '判定',
+    instruction:
+      '判定本轮结论：ACCEPT（可以进实现）或 REVISE（带清单回给 AGENT IDEA 返修）。' +
+      '判定要依据这一轮的产出与读到的文件，不要猜；结论里写清哪些致命项已解决、哪些没有。',
   },
 ];
 
@@ -128,3 +179,13 @@ console.log('agent:', doc.id, doc.name);
 console.log('instructions chars:', doc.instructions.length);
 console.log('steps:', doc.steps.map((s) => s.title).join(' | '));
 console.log('targets:', doc.handoffTargets, '| permissions:', doc.permissions);
+
+// AGENT AGAINST：审查清单同步（同一套字段 + 两层查重）。
+// 先把它现有的步骤取回来再替换那一步 —— PUT 的 steps 是整份替换，不能只送一条。
+const againstRes = await fetch(`${BASE}/api/agents/custom-3/config`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ steps: againstSteps }),
+});
+const againstDoc = JSON.parse(await againstRes.text());
+console.log('AGENT AGAINST:', againstDoc.id, againstDoc.name, '| steps:', againstDoc.steps.map((s) => s.title).join(' | '));
