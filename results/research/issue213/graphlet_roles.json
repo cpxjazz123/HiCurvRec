@@ -1,0 +1,266 @@
+{
+ "graph": {
+  "nodes": 24556,
+  "edges": 315391,
+  "roles": 6,
+  "orbit_source": "results/research/issue213/orca/node4.out",
+  "orbits": 15
+ },
+ "role_profiles": [
+  {
+   "role": 0,
+   "members": 3679,
+   "top_features": [
+    {
+     "name": "o4_14",
+     "value": 2.318
+    },
+    {
+     "name": "o4_13",
+     "value": 2.138
+    },
+    {
+     "name": "core",
+     "value": 2.129
+    },
+    {
+     "name": "o4_03",
+     "value": 2.04
+    },
+    {
+     "name": "log_degree",
+     "value": 1.908
+    }
+   ]
+  },
+  {
+   "role": 1,
+   "members": 1144,
+   "top_features": [
+    {
+     "name": "clustering",
+     "value": 2.215
+    },
+    {
+     "name": "log_mean_neighbour_degree",
+     "value": 0.783
+    },
+    {
+     "name": "o4_10",
+     "value": 0.566
+    },
+    {
+     "name": "o4_12",
+     "value": 0.549
+    },
+    {
+     "name": "o4_06",
+     "value": 0.385
+    }
+   ]
+  },
+  {
+   "role": 2,
+   "members": 2895,
+   "top_features": [
+    {
+     "name": "overlap",
+     "value": 10.885
+    },
+    {
+     "name": "clustering",
+     "value": -0.332
+    },
+    {
+     "name": "o4_14",
+     "value": -0.439
+    },
+    {
+     "name": "o4_13",
+     "value": -0.578
+    },
+    {
+     "name": "o4_03",
+     "value": -0.713
+    }
+   ]
+  },
+  {
+   "role": 3,
+   "members": 2081,
+   "top_features": [
+    {
+     "name": "o4_12",
+     "value": 1.016
+    },
+    {
+     "name": "o4_01",
+     "value": 0.949
+    },
+    {
+     "name": "o4_08",
+     "value": 0.931
+    },
+    {
+     "name": "o4_10",
+     "value": 0.915
+    },
+    {
+     "name": "o4_05",
+     "value": 0.912
+    }
+   ]
+  },
+  {
+   "role": 4,
+   "members": 6917,
+   "top_features": [
+    {
+     "name": "log_degree",
+     "value": 1.465
+    },
+    {
+     "name": "o4_00",
+     "value": 1.465
+    },
+    {
+     "name": "o4_02",
+     "value": 1.451
+    },
+    {
+     "name": "o4_07",
+     "value": 1.443
+    },
+    {
+     "name": "core",
+     "value": 1.423
+    }
+   ]
+  },
+  {
+   "role": 5,
+   "members": 7840,
+   "top_features": [
+    {
+     "name": "log_mean_neighbour_degree",
+     "value": 1.022
+    },
+    {
+     "name": "o4_06",
+     "value": 0.865
+    },
+    {
+     "name": "o4_09",
+     "value": 0.805
+    },
+    {
+     "name": "o4_01",
+     "value": 0.72
+    },
+    {
+     "name": "o4_12",
+     "value": 0.706
+    }
+   ]
+  }
+ ],
+ "retention": {
+  "F0": {
+   "overall": {
+    "edges": 323633,
+    "share1": 0.18973652254250958,
+    "share3": 0.002623341871811589
+   },
+   "per_role": {
+    "0": {
+     "edges": 24783,
+     "share1": 0.18581285558649074,
+     "share3": 0.0028245168058749948
+    },
+    "1": {
+     "edges": 4748,
+     "share1": 0.29170176916596463,
+     "share3": 0.007371524852569503
+    },
+    "2": {
+     "edges": 12087,
+     "share1": 0.27922561429635145,
+     "share3": 0.008687019111442046
+    },
+    "3": {
+     "edges": 19479,
+     "share1": 0.18655988500436368,
+     "share3": 0.0029775655834488424
+    },
+    "4": {
+     "edges": 210750,
+     "share1": 0.18631553973902729,
+     "share3": 0.002064056939501779
+    },
+    "5": {
+     "edges": 51786,
+     "share1": 0.17649557795543197,
+     "share3": 0.00281929479009771
+    }
+   },
+   "matched_random": {
+    "pairs": 40000,
+    "share1": 0.06795,
+    "share3": 2.5e-05
+   }
+  },
+  "TIGER_RQ-VAE": {
+   "overall": {
+    "edges": 323633,
+    "share1": 0.13163367147355184,
+    "share3": 0.0020238974393834994
+   },
+   "per_role": {
+    "0": {
+     "edges": 24783,
+     "share1": 0.13331719323729976,
+     "share3": 0.0018157608037767826
+    },
+    "1": {
+     "edges": 4748,
+     "share1": 0.20935130581297387,
+     "share3": 0.004212299915754001
+    },
+    "2": {
+     "edges": 12087,
+     "share1": 0.21279060147265658,
+     "share3": 0.007528749896583106
+    },
+    "3": {
+     "edges": 19479,
+     "share1": 0.13019148826941834,
+     "share3": 0.002207505518763797
+    },
+    "4": {
+     "edges": 210750,
+     "share1": 0.1276109134045077,
+     "share3": 0.001627520759193357
+    },
+    "5": {
+     "edges": 51786,
+     "share1": 0.12167381145483336,
+     "share3": 0.002182056926582474
+    }
+   },
+   "matched_random": {
+    "pairs": 40000,
+    "share1": 0.052575,
+    "share3": 0.0001
+   }
+  }
+ },
+ "sid_sha256": {
+  "F0": "afa89a10b1b197a7b56da4ad322c6ddd96a3c26c04238af326d88747378bb848",
+  "TIGER_RQ-VAE": "53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85"
+ },
+ "limits": [
+  "orbits are ORCA's 4-node node orbits (15); 5-node orbits are running separately and are not in this table",
+  "roles are NMF over standardised features; the role count is the script's constant, not selected",
+  "retention is the share of behaviour edges whose endpoints share at least one / all three SID tokens"
+ ]
+}
