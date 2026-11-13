@@ -997,6 +997,11 @@ export function createServer({
           ].join('\n');
           const answer = await askOnce(prompt, { profileId: agentId, instructions: profile.instructions });
           const stopped = /停|不需要|别再|结束|stop/i.test(answer) && !/继续/.test(answer);
+          // 为什么停要看得见：只写"不再继续"而看不出判定说了什么，等于没判。
+          process.stderr.write(
+            `[${new Date().toISOString()}] 循环闸判定（${agentId}）：${stopped ? '停' : '继续'} —— ` +
+              `${answer.replace(/\s+/g, ' ').slice(0, 300)}\n`,
+          );
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
           res.end(JSON.stringify({
             ok: true,

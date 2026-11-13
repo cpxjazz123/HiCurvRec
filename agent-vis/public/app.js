@@ -93,7 +93,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.18';
+const FRONTEND_VERSION = '2026-11-14.19';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -1977,6 +1977,8 @@ function createPanel(root) {
         loopTimer = null;
         if (mySeq !== runSeq) return;
         if (abortedByUser) return;
+        // 说清楚这是循环里的第几轮：跟手动跑长得一样，就分不清有没有在循环。
+        showNote(`循环：接着跑第 ${loopDone + 1} 轮。`);
         void run({ ...options, loopContinuation: true });
       }, waitMs);
     };
