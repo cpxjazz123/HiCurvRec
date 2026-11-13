@@ -93,7 +93,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.6';
+const FRONTEND_VERSION = '2026-11-14.7';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -388,6 +388,8 @@ function createPanel(root) {
    * 严格按顺序，前一步的产出接到后一步。
    */
   let steps = [];
+  /** 步骤有没有"改完还没存出去"的改动：存出去就归 false。 */
+  let stepsDirty = false;
   /**
    * 用户自己配过这一栏的步骤没有。
    *
@@ -515,6 +517,10 @@ function createPanel(root) {
       return null;
     }
     profileState = merged;
+    // 步骤存上去了：本地与服务端一致了，跑之前可以用服务端那份对齐。
+    if (patch && Object.prototype.hasOwnProperty.call(patch, 'steps')) {
+      stepsDirty = false;
+    }
     // 不重新渲染：用户可能正在提示词框或步骤框里打字，
     // 重画一遍会把正在打的字冲掉。界面上的内容就是刚存进去的那份。
     return merged;
@@ -1370,9 +1376,33 @@ function createPanel(root) {
    * 存的是用户这份（哪怕是空数组 —— 空数组是"用户清空了"，不是"没配过"）。
    * 「恢复默认步骤」存的是 null：抹掉用户这份改动，生效值回到代码里的默认。
    */
+  /**
+   * 把这一栏的步骤跟服务端那份对齐。
+   *
+   * 只在这一栏没有"正在改、还没存"的步骤时才替换 —— 用户正在配置页里打字，
+   * 不能被服务端的旧值顶掉。
+   */
+  async function syncStepsFromServer() {
+    try {
+      const res = await fetch(`${API_BASE}/api/health`);
+      if (!res.ok) return;
+      const info = await res.json();
+      const remote = (info.agents || []).find((item) => item.id === root.dataset.profile);
+      if (!remote || !Array.isArray(remote.steps)) return;
+      const local = JSON.stringify(steps);
+      if (JSON.stringify(remote.steps) === local) return;
+      if (stepsDirty) return; // 本地还有没存出去的改动，等它存完再说
+      steps = remote.steps.map((step) => ({ title: step.title, instruction: step.instruction }));
+      renderSteps();
+    } catch {
+      // 拿不到就先用页面手里这份：这一步只是对齐，不该挡住开跑。
+    }
+  }
+
   function saveSteps(payload) {
     userEdited.steps = true;
     stepsConfigured = payload !== null;
+    stepsDirty = true; // 还没存到服务端：这期间别用服务端那份覆盖本地
     scheduleSave({ steps: payload });
     refreshStepsSummary();
   }
@@ -1848,7 +1878,13 @@ function createPanel(root) {
    * 某一步出错就停在那里：不接着往下跑，也不把半截结果交出去。
    */
   async function runRound(options, mySeq) {
-    // 开跑前先抄一份步骤：跑的过程中用户改了配置，这一轮也不跟着变。
+    // 开跑前先把这一栏的步骤跟服务端对齐。
+    //
+    // 步骤是服务端那份为准（配置页改的就是它，脚本也能批量刷），
+    // 而页面手里这份是加载时抄的 —— 服务端那边改了，页面没刷新，
+    // 这一轮就会照着旧的步骤跑（写出来的稿子带着已经被取消的字段）。
+    await syncStepsFromServer();
+    // 抄一份：跑的过程中用户改了配置，这一轮也不跟着变。
     const plan = steps.map((step) => ({
       title: step.title,
       instruction: step.instruction,

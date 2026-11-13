@@ -1236,6 +1236,47 @@ async function main() {
       `要求: ${PROMPT_B}`,
     );
 
+    // ---------- 步骤是服务端那份为准：页面加载之后服务端改了步骤，这一轮也要用新的 ----------
+    // 这一条曾经栽过：配置是在服务端改的，页面手里还是加载时抄的那份，
+    // 于是模型照着已经被取消的字段写稿子（写出了 5_references，而契约里已经没有它了）。
+    const probeSteps = await request(
+      `${base}/api/agents`,
+      'POST',
+      JSON.stringify({ name: '步骤探针', instructions: '只回答 ok。', permissions: [] }),
+    );
+    await request(
+      `${base}/api/agents/${encodeURIComponent(probeSteps.id)}/config`,
+      'PUT',
+      JSON.stringify({ steps: [{ title: '旧步骤', instruction: '只回答 ok。' }] }),
+    );
+    await openPageAt(cdp, base);
+    const probePanel = `panel-${probeSteps.id}`;
+    await waitFor(cdp, `document.getElementById('${probePanel}') ? 'ready' : ''`, 120, 250);
+    // 服务端换步骤，页面不刷新。
+    await request(
+      `${base}/api/agents/${encodeURIComponent(probeSteps.id)}/config`,
+      'PUT',
+      JSON.stringify({ steps: [{ title: '新步骤-探针', instruction: '只回答 ok。' }] }),
+    );
+    await cdp.evaluate(submitPrompt(probePanel, '跑一次'));
+    const probeDone = await waitFor(cdp, panelDone(probePanel), 300, 400);
+    check(
+      '探针 agent 跑完了',
+      probeDone === 'done',
+      `状态 ${probeDone} · 错误 ${await cdp.evaluate(panelError(probePanel))}`,
+    );
+    const probeRecords = await request(
+      `${base}/api/agents/${encodeURIComponent(probeSteps.id)}/chats`,
+      'GET',
+    );
+    const probeStepTitles = (probeRecords.records || []).map((r) => r.stepTitle);
+    check(
+      '服务端改了步骤之后，这一轮用的是新步骤（页面加载时的旧副本不算）',
+      probeStepTitles.includes('新步骤-探针') && !probeStepTitles.includes('旧步骤'),
+      `用到的步骤：${probeStepTitles.join(' / ')}`,
+    );
+    await request(`${base}/api/agents/${encodeURIComponent(probeSteps.id)}`, 'DELETE');
+
     const handoffCards = await cdp.evaluate(panelHandoffCards(PANEL_B));
     check('AGENT B 的时间轴上显示了交接卡片', handoffCards === 1, `${handoffCards} 张`);
 

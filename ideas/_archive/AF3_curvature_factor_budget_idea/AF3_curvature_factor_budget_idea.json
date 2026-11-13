@@ -1,0 +1,96 @@
+{
+  "schema": "genrec.idea.v4",
+  "arm": "TIGER_af3_curvature_factor_budget_rq",
+  "sections": {
+    "1_goal": {
+      "idea": "几何对象是逐商品的产品流形族 M_i = R^{32-d_H(i)} x H^{d_H(i)}_{c=1}：曲率恒为 1，唯一随商品变的是双曲因子维数 d_H(i)，即 32 维切向量里「哪些坐标被双曲化」。结构信号只有一个单商品标量：AF3 势 kappa_bar_i（口径 import 复用 af3_potential.py:103-125,216-217，不复制）换成秩 u_i=(rank-0.5)/N，再闭式给 d_H(i)=4*round(2+4u_i) 属 {8,12,16,20,24}、d_E(i)=32-d_H(i)。进通路两处（不是三处）：(a) 编码器输出按 d_H(i) 切片，前 d_H(i) 维经 expmap0 落 Poincaré 球、其余留切空间，expmap0 作用的维数随商品变；(b) 代价 D_ik=||r^E-tau^E||^2+0.25*d_1(expmap0(r^H),expmap0(tau^H))^2，argmin 与末层 Sinkhorn 的代码形状与基线逐位相同。码字侧不是独立落点：码本仍 (256,32)、仍吃梯度，只是被同一 expmap0 与同一切片读成流形点。不用逐商品曲率：d_c 对 c 是纯缩放等距 d_c(x,y)=c^{-1/2}d_1(√c x, √c y)，只给同一度量换单位，且 poincare_contract.py:62-63 等把 c 收成 float，逐商品 c_i 与「全部 import 几何算子」不能共存，故 c 恒为 1。与归档方向的可数值检验判别：把 d_H 全设为 16，本向代价与 transport 的 d_c^2/4 式逐元素相同，而 transport 产生不出 d_H 非 16 的行；manifold 是固定 16/8/8 加 softmax 软权重（行和恒 1），本向是行和恒 32 的整数维数表；depth 改的是沿层轴的预算（层间方差非 0），本向 3 层共用同一切片边界（层间差为 0）。已知混杂：d_E=32-d_H 使欧氏/双曲容量反向变化，增益可能部分来自容量重分配而非结构对齐，由冻结参数后只置换 d_H 表重算 SID 的只读对照量化。文献差别：HypRQ-VAE(2026,2609.03369) 是单一双曲空间、固定维数、驱动量是长尾频次；Geometry-Aware Hyperbolic RQ-VAE(2026,2609.26342) 的几何是模型级设定、全体商品共享同一流形；Hyperbolic RQ(2025,2505.12404) 改的是残差链本身；HyperML(2020) 靠成对正负对比，主线禁止。其余全保持基线：残差仍是切空间欧氏减法、读回仍是 sum_l tau、损失形式/层深/码本大小/SID 长度不变，球只出现在 (a)(b)。"
+    },
+    "4_method": {
+      "new_files": [
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_budget_rq/af3_factor_budget.py",
+          "what": "训练前一次性算出并冻结：kappa_ij 与度加权邻域均值 kappa_bar_i 用 from ... import 复用 stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/af3_potential.py:103-125,216-217（不复制实现、不另立口径），本文件只新增秩映射 u_i 与 d_H(i)=4*round(2+4u_i)；输出 (N,) 整数表 d_H 与分布诊断（各档维数占比、跨档商品数、Spearman(kappa_bar_i,deg_i)）；缺 key 的商品取 u=0.5（d_H=16）并把 miss 数写日志"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_budget_rq/model/factor_budget_geometry.py",
+          "what": "组合层，无参数：按 d_H 的 5 个取值分组 gather 切片、expmap0/squared_distance 全部 from tools.research.geometry.poincare_contract import（曲率按契约传 float 1.0，不自定义几何算子）、逐商品 D_ik 的向量化实现（避免逐商品 Python 循环）、geometry_off 的全欧氏退化分支"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_budget_rq/distances/factor_budget.py",
+          "what": "NAME='factor_budget' 的代价矩阵实现，签名 distances(latent, codebook, rows) -> (B,K)：rows 为 batch 内商品行号，用于索引冻结的 d_H 表；rows=None 抛 ValueError，不静默退回两参语义。模块常量 D=32、SCALE_HYP=0.25 固定不扫，不新增配置键"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_budget_rq/distances/__init__.py",
+          "what": "fork 自基线注册表：登记 factor_budget，并把 build_distance 的统一签名扩成 distances(latent, codebook, rows) 一路透传；euclidean 实现接受并忽略 rows，使 geometry_off 能与基线逐元素比对"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_budget_rq/model/layers.py",
+          "what": "fork 自基线 model/layers.py：VQLayer/ResidualQuantizer 持有本 batch 的 rows 与 d_H 行索引；把 :112 的两参调用 self.distance(latent, self.get_code_embs()) 改为带 rows，:129/:155/:197 三个调用点（init_codebook、编码路径、解码路径）同步透传；_indices/center_distance/sinkhorn(:83-121) 代码形状逐位不变，残差递归仍是切空间欧氏减法、读回仍是 sum_l tau"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_budget_rq/model/model.py",
+          "what": "fork 自基线 model/model.py：forward(:28) 与 get_indices/init_codebook(:40) 两个入口增加 item_ids 并透传到每一层，使 layers 能由 item_ids 查到 rows；量化输出与解码器输入形状不变"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_budget_rq/train_rqvae.py",
+          "what": "fork 自基线 train_rqvae.py：TensorDataset 从 (embeddings) 扩为 (embeddings, item_ids)，batch 取 item_ids 作为 rows 传给 model；开训前加载 (N,) d_H 表并按 item_ids 取子表；日志打印档位占比与 miss 数"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_budget_rq/eval/factor_budget_probe.py",
+          "what": "只读探针（不训练、不改参数）：d_H(i) 档位分布、每层每次量化中双曲块代价占总代价比例、Spearman(u_i,双曲块占比)、码字使用数与死码字、expmap/artanh 的 clip 与 NaN 计数、batch 置换等变性；逐键给出 math.json switches 三个接线检查的实测值（behaviour_off 时 d_H 表 16 占比 100% 且 SID 与主臂不同、geometry_off 时与基线欧氏代价逐元素差 <=1e-6、both_on 主臂值），每键一次只读检查、不是训练臂；另含容量混杂对照：冻结已训练参数、仅随机置换 d_H 表（保持档位分布）后重算 D 与 SID，报告 SID 变化率，不重训"
+        }
+      ]
+    },
+    "5_references": [
+      {
+        "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+        "year": 2026,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2609.03369",
+        "relation": "same_family"
+      },
+      {
+        "title": "Geometry-Aware Hyperbolic Residual-Quantized Variational Autoencoders",
+        "year": 2026,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2609.26342",
+        "relation": "same_family"
+      },
+      {
+        "title": "Hyperbolic Residual Quantization: Discrete Representations for Data with Latent Hierarchies",
+        "year": 2025,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2505.12404",
+        "relation": "same_family"
+      },
+      {
+        "title": "HyperML: A Boosting Metric Learning Approach in Hyperbolic Space for Recommender Systems",
+        "year": 2020,
+        "venue": "ACM International Conference on Web Search and Data Mining (WSDM)",
+        "doi": "10.1145/3336191.3371850",
+        "relation": "baseline_method"
+      },
+      {
+        "title": "Differentiable Optimized Product Quantization and Beyond",
+        "year": 2023,
+        "venue": "International World Wide Web Conference (WWW)",
+        "doi": "10.1145/3543507.3583482",
+        "relation": "different"
+      },
+      {
+        "title": "Learnable Item Tokenization for Generative Recommendation",
+        "year": 2024,
+        "venue": "ACM International Conference on Information and Knowledge Management (CIKM)",
+        "doi": "10.1145/3627673.3679569",
+        "relation": "different"
+      },
+      {
+        "title": "Decoupled Residual Quantization for Robust Semantic IDs in Recommendation",
+        "year": 2026,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2606.01844",
+        "relation": "different"
+      }
+    ]
+  }
+}
