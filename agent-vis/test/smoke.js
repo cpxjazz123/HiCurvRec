@@ -154,11 +154,26 @@ async function main() {
       ['/', 'text/html'],
       ['/app.js', 'text/javascript'],
       ['/protocol.js', 'text/javascript'],
+      ['/run-request.js', 'text/javascript'],
       ['/style.css', 'text/css'],
     ]) {
       const res = await fetch(`${base}${route}`);
       assert.equal(res.status, 200, `${route} 状态码`);
       assert.match(res.headers.get('content-type'), new RegExp(type));
+    }
+  });
+
+  await test('页面引用的每个模块都真的发得出去', async () => {
+    // 页面里多 import 一个模块、却忘了把它放进 public/ 的话，
+    // 浏览器会静默地不执行整个 app.js —— 面板一个都不显示，也没有任何报错。
+    // （这个坑踩过一次：run-request.js 放在了 public/ 外面。）
+    const appJs = fs.readFileSync(path.join(HERE, '..', 'public', 'app.js'), 'utf8');
+    const specs = [...appJs.matchAll(/from\s+'(\.\/[^']+)'/g)].map((m) => m[1]);
+    assert.ok(specs.length > 0, '没找到页面里的 import');
+    for (const spec of specs) {
+      const route = spec.replace(/^\.\//, '').split('?')[0];
+      const res = await fetch(`${base}/${route}`);
+      assert.equal(res.status, 200, `页面要用的 ${spec} 发不出去（${res.status}）`);
     }
   });
 

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { createServer } from '../server.js';
-import { buildRunRequestBody } from '../run-request.js';
+import { buildRunRequestBody } from '../public/run-request.js';
 
 /**
  * 交接时的会话重置 —— 回归测试。
