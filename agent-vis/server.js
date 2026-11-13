@@ -31,6 +31,7 @@ import {
   setDataDir,
 } from './config.js';
 import { readBaseline, readIdea, readIdeaDoc, readIdeaFile, readMainLine, readMath, readVerification, writeIdea } from './idea-store.js';
+import { IDEA_SCHEMA_VERSION, validateIdeaDoc } from './idea-schema.js';
 import { runMockChunks } from './mock-agent.js';
 import { resetAgentSessions, runLiveChunks } from './live-agent.js';
 
@@ -824,6 +825,9 @@ export function createServer({
           ok: true,
           mode,
           model: config.MODEL_ID,
+          // 当前的 idea 字段契约版本：页面拿它跟稿子里的 schema 比，
+          // 稿子是旧契约时直接说清楚是哪一版。
+          ideaSchemaVersion: IDEA_SCHEMA_VERSION,
           provider: config.PROVIDER_NAME,
           sandboxRoot: config.SANDBOX_ROOT,
           // 所有 agent 的工作目录与运行主机（硬约束，页面与测试都读这里）。
@@ -867,6 +871,10 @@ export function createServer({
             doc: ideaDoc.doc,
             docError: ideaDoc.error,
             ideaPath: ideaDoc.path,
+            // 这份稿子对不对得上当前的字段契约（genrec.idea.v5）。
+            // 页面上的 IDEA 视图要靠它把"结构合格"说准：光看 1_goal 与 4_method
+            // 在不在，看不出稿子里还留着契约里已经删掉的字段。
+            ideaVerdict: ideaDoc.doc ? validateIdeaDoc(ideaDoc.doc) : null,
             mainLine: mainLine.doc,
             mainLineError: mainLine.error,
             baseline: baseline.doc,

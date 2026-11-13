@@ -93,7 +93,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.7';
+const FRONTEND_VERSION = '2026-11-14.8';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -3790,6 +3790,88 @@ function kvSection(title, entries) {
   return box;
 }
 
+/** IDEA 那一栏：一段话，读起来就是一段话，不是一堆键值。 */
+function kvIdeaBlock(title, text) {
+  const box = document.createElement('section');
+  box.className = 'kv-section';
+  const h = document.createElement('h3');
+  h.textContent = title;
+  box.appendChild(h);
+  const p = document.createElement('p');
+  p.className = 'kv-idea';
+  p.dataset.role = 'kv-idea';
+  p.textContent = typeof text === 'string' && text.trim() !== '' ? text : '（空）';
+  box.appendChild(p);
+  return box;
+}
+
+/** 要新建的文件：路径 + 它是干什么的，一行一个。 */
+function kvFilesBlock(title, files) {
+  const box = document.createElement('section');
+  box.className = 'kv-section';
+  const h = document.createElement('h3');
+  h.textContent = title;
+  box.appendChild(h);
+  const list = Array.isArray(files) ? files : [];
+  if (list.length === 0) {
+    const p = document.createElement('p');
+    p.className = 'kv-idea kv-missing';
+    p.textContent = '（还没有列出要新建的文件）';
+    box.appendChild(p);
+    return box;
+  }
+  for (const item of list) {
+    const row = document.createElement('div');
+    row.className = 'kv-file';
+    row.dataset.role = 'kv-file';
+    const path = document.createElement('code');
+    path.className = 'kv-file-path';
+    path.textContent = (item && item.path) || '（没写路径）';
+    const what = document.createElement('span');
+    what.className = 'kv-file-what';
+    what.textContent = (item && item.what) || '';
+    row.appendChild(path);
+    row.appendChild(what);
+    box.appendChild(row);
+  }
+  return box;
+}
+
+/** 契约核对结果：不合约就把每一条列出来，别只说一句"不合格"。 */
+function kvVerdictBlock(verdict) {
+  if (!verdict) return null;
+  const box = document.createElement('section');
+  box.className = 'kv-section';
+  const h = document.createElement('h3');
+  h.textContent = `字段契约 ${verdict.version}`;
+  box.appendChild(h);
+  if (verdict.ok) {
+    const p = document.createElement('p');
+    p.className = 'kv-idea';
+    p.dataset.role = 'kv-verdict';
+    p.dataset.ok = '1';
+    p.textContent = '这份稿子符合当前契约。';
+    box.appendChild(p);
+    return box;
+  }
+  const p = document.createElement('p');
+  p.className = 'kv-idea';
+  p.dataset.role = 'kv-verdict';
+  p.dataset.ok = '0';
+  p.textContent = `不符合当前契约，有 ${verdict.errors.length} 处：`;
+  box.appendChild(p);
+  const list = document.createElement('ul');
+  list.className = 'kv-errors';
+  for (const err of verdict.errors || []) {
+    const li = document.createElement('li');
+    li.dataset.role = 'kv-error';
+    li.textContent = `${err.path}：${err.why}`;
+    list.appendChild(li);
+  }
+  box.appendChild(list);
+  return box;
+}
+
 function countSections(doc) {
   if (!doc || !doc.sections) return 0;
   return IDEA_REQUIRED_SECTIONS.filter((k) => {
@@ -3801,7 +3883,13 @@ function countSections(doc) {
 }
 
 function renderIdeaDoc(doc, error, extras = {}) {
-  const { mainLine = null, baseline = null, verification = null, math = null } = extras || {};
+  const {
+    mainLine = null,
+    baseline = null,
+    verification = null,
+    math = null,
+    verdict = null,
+  } = extras || {};
   if (!ideaUi.kv) return;
   ideaUi.kv.innerHTML = '';
   ideaDoc = doc || null;
@@ -3812,9 +3900,12 @@ function renderIdeaDoc(doc, error, extras = {}) {
     warn.textContent = error || '结构不合格：读不到 idea.json';
     ideaUi.kv.appendChild(warn);
   } else {
-    const meta = ['id', 'title', 'type', 'status', 'issue', 'date', 'supersedes']
+    const meta = ['schema', 'arm', 'id', 'title', 'type', 'status', 'issue', 'date', 'supersedes']
       .filter((k) => doc[k] !== undefined);
     if (meta.length) ideaUi.kv.appendChild(kvSection('元信息', meta.map((k) => [k, doc[k]])));
+    // 契约核对：这一段决定"结构合格"说不说准。
+    const verdictBox = kvVerdictBlock(verdict);
+    if (verdictBox) ideaUi.kv.appendChild(verdictBox);
     // 主线单独一块、排在正文之前：它来自 ideas/main_line.json，机制文件不再自带副本。
     const line = mainLine || doc.main_line;
     if (line !== undefined && line !== null) {
@@ -3834,7 +3925,17 @@ function renderIdeaDoc(doc, error, extras = {}) {
     }
     if (doc.sections) {
       for (const key of Object.keys(doc.sections)) {
-        ideaUi.kv.appendChild(kvSection(sectionLabel(key), flattenRows(doc.sections[key], '', [])));
+        const section = doc.sections[key];
+        // 1_goal 就是一段话；4_method 是"要新建哪些文件"。
+        if (key === '1_goal' && section && typeof section === 'object' && 'idea' in section) {
+          ideaUi.kv.appendChild(kvIdeaBlock('IDEA 是什么', section.idea));
+          continue;
+        }
+        if (key === '4_method' && section && typeof section === 'object' && 'new_files' in section) {
+          ideaUi.kv.appendChild(kvFilesBlock('要新建的文件', section.new_files));
+          continue;
+        }
+        ideaUi.kv.appendChild(kvSection(sectionLabel(key), flattenRows(section, '', [])));
       }
     }
     for (const key of ['references', 'result', 'web_contract', 'self_check']) {
@@ -3843,8 +3944,15 @@ function renderIdeaDoc(doc, error, extras = {}) {
   }
   if (ideaUi.count) ideaUi.count.textContent = `${ideaCountSections}/${IDEA_REQUIRED_COUNT} 段`;
   if (ideaUi.struct) {
-    ideaUi.struct.textContent = ideaCountSections === IDEA_REQUIRED_COUNT ? '结构合格' : '结构不合格（缺段或空段）';
-    ideaUi.struct.dataset.ok = ideaCountSections === IDEA_REQUIRED_COUNT ? '1' : '0';
+    // 有契约判定就以它为准：光看两段在不在，看不出稿子里还留着契约里删掉的字段。
+    const byContract = verdict && typeof verdict.ok === 'boolean' ? verdict.ok : null;
+    const ok = byContract === null ? ideaCountSections === IDEA_REQUIRED_COUNT : byContract;
+    ideaUi.struct.textContent = ok
+      ? (byContract === null ? '结构合格' : `结构合格（${verdict.version}）`)
+      : (byContract === null
+        ? '结构不合格（缺段或空段）'
+        : `结构不合格：${verdict.errors.length} 处不合契约`);
+    ideaUi.struct.dataset.ok = ok ? '1' : '0';
   }
   if (ideaUi.input && doc) ideaUi.input.value = JSON.stringify(doc, null, 2);
   refreshIdeaUi();
@@ -3884,6 +3992,7 @@ async function loadIdea() {
         baseline: data.baseline || null,
         verification: data.verification || null,
         math: data.math || null,
+        verdict: data.ideaVerdict || null,
       });
       return;
     }

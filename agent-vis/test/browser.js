@@ -1178,6 +1178,41 @@ async function main() {
     check('左右是两个不同的 agent', nameA !== nameB, `${nameA} vs ${nameB}`);
     process.stdout.write(`      左: ${nameA} / 右: ${nameB}\n`);
 
+    // ---------- IDEA 视图：按当前的字段契约渲染 ----------
+    {
+        const ideaState = await (await request(`${base}/api/idea`, 'GET'));
+        const verdict = ideaState.ideaVerdict || {};
+        check(
+            'IDEA 接口给出字段契约的核对结果',
+            typeof verdict.ok === 'boolean' && verdict.version === 'genrec.idea.v5',
+            JSON.stringify(verdict).slice(0, 120),
+        );
+        await cdp.evaluate(`document.querySelector('[data-role=ideaBtn]').click()`);
+        await sleep(600);
+        const ideaSections = await cdp.evaluate(
+            "Array.from(document.querySelectorAll('[data-role=ideaModal] .kv-section h3')).map(function (h) { return h.textContent; })",
+        );
+        check(
+            'IDEA 视图里有契约核对这一块',
+            ideaSections.some((t) => t.includes('字段契约')),
+            ideaSections.join(' | '),
+        );
+        check(
+            'IDEA 视图里有"IDEA 是什么"与"要新建的文件"两块',
+            ideaSections.includes('IDEA 是什么') && ideaSections.includes('要新建的文件'),
+            ideaSections.join(' | '),
+        );
+        const structText = await cdp.evaluate(
+            "document.querySelector('[data-role=ideaStruct]') ? document.querySelector('[data-role=ideaStruct]').textContent : ''",
+        );
+        check(
+            'IDEA 视图的合格判定跟着契约走',
+            structText.includes('genrec.idea.v5') || structText.includes('结构不合格'),
+            structText,
+        );
+        await cdp.evaluate(`document.querySelector('[data-role=ideaClose]').click()`);
+    }
+
     // ---------- 场景 B：一个 agent 跑完后自动交接给另一个 ----------
     process.stdout.write('\n  场景 B · 上游跑完后自动交接给 AGENT B\n');
 

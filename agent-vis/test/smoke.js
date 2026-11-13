@@ -1337,6 +1337,15 @@ async function main() {
     assert.equal(typeof initial.text, 'string');
     assert.equal(initial.text, '', '还没保存过，页面那份应该是空的');
     assert.equal(initial.updatedAt, null);
+    // 字段契约的版本与核对结果要一起给页面：IDEA 视图靠它说准"结构合格"。
+    const health = await (await fetch(`${base}/api/health`)).json();
+    assert.equal(health.ideaSchemaVersion, 'genrec.idea.v5');
+    if (initial.doc) {
+      assert.ok(initial.ideaVerdict, '有稿子时必须给契约核对结果');
+      assert.equal(typeof initial.ideaVerdict.ok, 'boolean');
+      assert.equal(initial.ideaVerdict.version, 'genrec.idea.v5');
+      assert.ok(Array.isArray(initial.ideaVerdict.errors));
+    }
     // 仓库里的机制文件要能拿到：窗口第一次打开时靠它当草稿。
     // 「一个方向都没有」（都归档了）也是合法状态 —— 这时页面要明确说清楚，
     // 而不是装作有内容，也不是 500。

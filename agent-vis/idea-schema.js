@@ -141,8 +141,8 @@ function checkGoal(goal, add) {
   if (goal.idea !== undefined) {
     if (!nonEmptyString(goal.idea)) {
       add('sections.1_goal.idea', '必须是一段非空文字：这个 idea 是什么（几何对象 + 结构信号怎么进计算通路）');
-    } else if (goal.idea.length > 1200) {
-      add('sections.1_goal.idea', `太长了（${goal.idea.length} 字，上限 1200）：这是 idea 本身，不是正文`);
+    } else if (goal.idea.length > 1500) {
+      add('sections.1_goal.idea', `太长了（${goal.idea.length} 字，上限 1500）：这是 idea 本身，不是正文`);
     }
   }
 }

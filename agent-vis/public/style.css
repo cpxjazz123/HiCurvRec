@@ -1773,3 +1773,31 @@ body {
   border-color: var(--err);
   color: var(--err);
 }
+
+/* IDEA 视图（genrec.idea.v5）：一段话、一串文件、一份契约核对结果。 */
+.kv-idea {
+  margin: 0 0 8px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.kv-file {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.kv-file-path {
+  flex: 0 0 auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.kv-file-what {
+  color: var(--muted);
+}
+.kv-errors {
+  margin: 0;
+  padding-left: 18px;
+}
+.kv-errors li {
+  margin: 2px 0;
+}
