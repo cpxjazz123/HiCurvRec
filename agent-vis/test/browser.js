@@ -1213,6 +1213,50 @@ async function main() {
         await cdp.evaluate(`document.querySelector('[data-role=ideaClose]').click()`);
     }
 
+    // ---------- 循环闸：每轮之后要不要再跑一轮，由闸决定 ----------
+    {
+        const gateAgent = await request(
+            `${base}/api/agents`,
+            'POST',
+            JSON.stringify({ name: '闸探针', instructions: '只回答 ok。不要调用任何工具。', permissions: [] }),
+        );
+        await request(
+            `${base}/api/agents/${encodeURIComponent(gateAgent.id)}/config`,
+            'PUT',
+            JSON.stringify({
+                steps: [{ title: '答一句', instruction: '只回答 ok。不要调用任何工具。' }],
+                loop: { enabled: true, count: 3, intervalSeconds: 0 },
+                loopGate: { mode: 'ask', prompt: '还有没做完的事才继续' },
+            }),
+        );
+        await openPageAt(cdp, base);
+        const gatePanel = `panel-${gateAgent.id}`;
+        await waitFor(cdp, `document.getElementById('${gatePanel}') ? 'ready' : ''`, 120, 250);
+        await cdp.evaluate(submitPrompt(gatePanel, '跑一轮'));
+        const gateDone = await waitFor(cdp, panelDone(gatePanel), 300, 400);
+        check('闸探针第一轮跑完了', gateDone === 'done', `状态 ${gateDone}`);
+        const gateBox = await waitFor(
+            cdp,
+            inPanel(gatePanel, "panel.querySelector('[data-role=loopGateAsk]') ? 'shown' : ''"),
+            200,
+            250,
+        );
+        check('这一轮之后闸问出来了（面板上等人点）', gateBox === 'shown', `${gateBox}`);
+        const gateText = await cdp.evaluate(
+            inPanel(gatePanel, "panel.querySelector('[data-role=loopGateAsk]') ? panel.querySelector('[data-role=loopGateAsk]').textContent : ''"),
+        );
+        check('闸里带着用户写的判据', gateText.includes('还有没做完的事才继续'), gateText.slice(0, 80));
+        // 点"就到这里"：循环应当停在这里。
+        await cdp.evaluate(
+            inPanel(gatePanel, "panel.querySelector('[data-role=loopGateStop]').click()"),
+        );
+        const stillThere = await cdp.evaluate(
+            inPanel(gatePanel, "panel.querySelector('[data-role=loopGateAsk]') ? 'shown' : ''"),
+        );
+        check('点掉之后闸不再问', stillThere === '', `${stillThere}`);
+        await request(`${base}/api/agents/${encodeURIComponent(gateAgent.id)}`, 'DELETE');
+    }
+
     // ---------- 场景 B：一个 agent 跑完后自动交接给另一个 ----------
     process.stdout.write('\n  场景 B · 上游跑完后自动交接给 AGENT B\n');
 

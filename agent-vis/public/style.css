@@ -1801,3 +1801,19 @@ body {
 .kv-errors li {
   margin: 2px 0;
 }
+
+/* 循环闸：每轮之后问用户要不要继续 */
+.loop-gate-ask {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.loop-gate-ask p {
+  margin: 0 0 10px;
+}
+.loop-gate-actions {
+  display: flex;
+  gap: 8px;
+}

@@ -187,6 +187,44 @@ async function main() {
     assert.equal(res.status, 0, `语法检查没过：${res.stderr}`);
   });
 
+  await test('循环闸的配置：模式、判据与每轮重置会话', async () => {
+    const put = (patch) =>
+      fetch(`${base}/api/agents/agent-a/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      }).then(async (res) => ({ status: res.status, json: await res.json().catch(() => null) }));
+
+    // 闸的默认值：不设就是不设闸。
+    let res = await put({ loopGate: { mode: 'ask', prompt: '还有没做完的才继续' } });
+    assert.equal(res.status, 200);
+    assert.deepEqual(res.json.loopGate, { mode: 'ask', prompt: '还有没做完的才继续' });
+
+    res = await put({ loopResetSession: true });
+    assert.equal(res.status, 200);
+    assert.equal(res.json.loopResetSession, true);
+
+    // 不认识的模式要报错，而不是默默当成关。
+    res = await put({ loopGate: { mode: 'whatever', prompt: '' } });
+    assert.equal(res.status, 400);
+    assert.match(String(res.json.error), /loopGate.mode/);
+
+    // 还原。
+    await put({ loopGate: null, loopResetSession: null });
+  });
+
+  await test('重置会话时可以选择留下对话记录', async () => {
+    const res = await fetch(`${base}/api/session/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentId: 'agent-a', keepRecords: true }),
+    });
+    assert.equal(res.status, 200);
+    const doc = await res.json();
+    assert.equal(doc.ok, true);
+    assert.deepEqual(doc.agents, ['agent-a']);
+  });
+
   await test('未知路由返回 404', async () => {
     const res = await fetch(`${base}/no-such-file`);
     assert.equal(res.status, 404);

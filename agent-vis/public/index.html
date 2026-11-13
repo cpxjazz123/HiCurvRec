@@ -230,7 +230,28 @@
                     <input type="number" data-role="loopInterval" min="0" max="3600" step="1" value="0" />
                     秒
                   </label>
+                  <label>
+                    每轮之后
+                    <select data-role="loopGateMode">
+                      <option value="off">直接跑满次数</option>
+                      <option value="ask">问我要不要继续</option>
+                      <option value="agent">让这个 agent 按判据自己判</option>
+                    </select>
+                  </label>
                 </div>
+                <label class="loop-gate-prompt">
+                  判据
+                  <input
+                    type="text"
+                    data-role="loopGatePrompt"
+                    maxlength="500"
+                    placeholder="例：只有这一轮还有没解决的致命意见时才继续"
+                  />
+                </label>
+                <label class="loop-toggle">
+                  <input type="checkbox" data-role="loopResetSession" />
+                  每轮之前重置这一栏的会话（对话记录留着）
+                </label>
                 <span class="instructions-state" data-role="loopState"></span>
               </details>
 
@@ -428,7 +449,28 @@
                     <input type="number" data-role="loopInterval" min="0" max="3600" step="1" value="0" />
                     秒
                   </label>
+                  <label>
+                    每轮之后
+                    <select data-role="loopGateMode">
+                      <option value="off">直接跑满次数</option>
+                      <option value="ask">问我要不要继续</option>
+                      <option value="agent">让这个 agent 按判据自己判</option>
+                    </select>
+                  </label>
                 </div>
+                <label class="loop-gate-prompt">
+                  判据
+                  <input
+                    type="text"
+                    data-role="loopGatePrompt"
+                    maxlength="500"
+                    placeholder="例：只有这一轮还有没解决的致命意见时才继续"
+                  />
+                </label>
+                <label class="loop-toggle">
+                  <input type="checkbox" data-role="loopResetSession" />
+                  每轮之前重置这一栏的会话（对话记录留着）
+                </label>
                 <span class="instructions-state" data-role="loopState"></span>
               </details>
 
@@ -634,7 +676,28 @@
                     <input type="number" data-role="loopInterval" min="0" max="3600" step="1" value="0" />
                     秒
                   </label>
+                  <label>
+                    每轮之后
+                    <select data-role="loopGateMode">
+                      <option value="off">直接跑满次数</option>
+                      <option value="ask">问我要不要继续</option>
+                      <option value="agent">让这个 agent 按判据自己判</option>
+                    </select>
+                  </label>
                 </div>
+                <label class="loop-gate-prompt">
+                  判据
+                  <input
+                    type="text"
+                    data-role="loopGatePrompt"
+                    maxlength="500"
+                    placeholder="例：只有这一轮还有没解决的致命意见时才继续"
+                  />
+                </label>
+                <label class="loop-toggle">
+                  <input type="checkbox" data-role="loopResetSession" />
+                  每轮之前重置这一栏的会话（对话记录留着）
+                </label>
                 <span class="instructions-state" data-role="loopState"></span>
               </details>
 

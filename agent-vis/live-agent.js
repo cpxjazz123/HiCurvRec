@@ -889,6 +889,25 @@ async function checkIdea({ path: relPath }) {
   };
 }
 
+/**
+ * 问一句、判断一句 —— 循环闸用。
+ *
+ * 不带任何工具权限、不记轮次：跑一次，把文字收回来就够了。
+ */
+export async function askOnce(prompt, { profileId, instructions } = {}) {
+  let text = '';
+  for await (const chunk of runLiveChunks(prompt, {
+    profileId,
+    instructions,
+    permissions: [],
+  })) {
+    if (chunk && chunk.type === 'text-delta' && typeof chunk.delta === 'string') {
+      text += chunk.delta;
+    }
+  }
+  return text.trim();
+}
+
 export const PI_TOOLS = {
   listFiles: listFilesTool,
   checkJson: checkJsonTool,

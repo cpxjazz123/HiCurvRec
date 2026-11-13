@@ -33,7 +33,7 @@ import {
 import { readBaseline, readIdea, readIdeaDoc, readIdeaFile, readMainLine, readMath, readVerification, writeIdea } from './idea-store.js';
 import { IDEA_SCHEMA_VERSION, validateIdeaDoc } from './idea-schema.js';
 import { runMockChunks } from './mock-agent.js';
-import { resetAgentSessions, runLiveChunks } from './live-agent.js';
+import { askOnce, resetAgentSessions, runLiveChunks } from './live-agent.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(HERE, 'public');
@@ -946,10 +946,13 @@ export function createServer({
             res.end(JSON.stringify({ error: `没有这个 agent 身份：${agentId}` }));
             return;
           }
+          const keepRecords = Boolean(body && body.keepRecords === true);
           const targets = all ? [...known] : [agentId];
           let disposed = 0;
           for (const id of targets) {
-            config.clearChatRecords(id);
+            // keepRecords：只要模型上下文从零开始，对话记录留着。
+            // 循环里"每轮之前重置会话"用的就是这个 —— 记录是每轮的历史，不该被抹掉。
+            if (!keepRecords) config.clearChatRecords(id);
             disposed += resetAgentSessions(id);
           }
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -960,6 +963,46 @@ export function createServer({
           res.end(
             JSON.stringify({ error: err && err.message ? err.message : String(err) }),
           );
+        });
+      return;
+    }
+
+    // 循环闸：每轮之后要不要再跑一轮，由这个 agent 自己按判据说一句。
+    if (url.pathname === '/api/loop/judge') {
+      if (req.method !== 'POST') {
+        res.writeHead(405, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: '/api/loop/judge 只接受 POST' }));
+        return;
+      }
+      readJsonBody(req)
+        .then(async (body) => {
+          const agentId = body && typeof body.agentId === 'string' ? body.agentId.trim() : '';
+          const criterion = body && typeof body.criterion === 'string' ? body.criterion.trim() : '';
+          const summary = body && typeof body.summary === 'string' ? body.summary.trim() : '';
+          if (agentId === '') {
+            res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ error: '要指定 agentId' }));
+            return;
+          }
+          const profile = config.resolveProfile(agentId);
+          const prompt = [
+            '下面是刚刚这一轮的产出摘要，以及要不要再跑一轮的判据。',
+            criterion ? `判据：${criterion}` : '判据：这一轮有没有把事情做完。',
+            summary ? `这一轮的产出：\n${summary.slice(0, 4000)}` : '',
+            '只回答两个字：还要继续就答「继续」，不用再跑就答「停」。',
+          ].join('\n');
+          const answer = await askOnce(prompt, { profileId: agentId, instructions: profile.instructions });
+          const stopped = /停|不需要|别再|结束|stop/i.test(answer) && !/继续/.test(answer);
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            ok: true,
+            continue: !stopped,
+            reason: answer.slice(0, 400),
+          }));
+        })
+        .catch((err) => {
+          res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error: (err && err.message) || String(err) }));
         });
       return;
     }

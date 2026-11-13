@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-14.11';
+export const FRONTEND_VERSION = '2026-11-14.14';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -630,6 +630,22 @@ export const AGENT_PROFILES = [
      */
     permissions: ['read', 'write'],
     handoffTargets: [],
+    /**
+     * 循环：一直核，直到这一轮再没查出新的公式错误。
+     *
+     * 次数给的是上限，不是"核几轮就停" —— 真正决定停不停的是闸：
+     * 每轮之后由它自己按判据判一句还有没有新错误（loopGate.mode = agent）。
+     * 每轮之前把会话重置（loopResetSession）：每一轮从头看一遍公式，
+     * 不带着上一轮的结论去看下一轮。
+     */
+    loop: { enabled: true, count: 100, intervalSeconds: 0 },
+    loopGate: {
+      mode: 'agent',
+      prompt:
+        '这一轮有没有又查出新的公式错误？只有当这一轮一条新错误都没查出来时，' +
+        '才回答「停」；只要还查出了新的错误（哪怕改过的），就回答「继续」。',
+    },
+    loopResetSession: true,
     /** 挂载这个面板时输入框里预填的指令（别的 agent 的输入框是空的）。 */
     defaultPrompt: '核对 ideas/ 下机制文件的 math.json：逐条检查公式是否正确，有错就改对，并给出每条的依据。',
     instructions: [
@@ -1121,6 +1137,41 @@ const MAX_LOOP_INTERVAL_SECONDS = 3600;
 export const DEFAULT_LOOP = Object.freeze({ enabled: false, count: 2, intervalSeconds: 0 });
 
 /**
+ * 每一轮之后要不要再跑一轮 —— 由谁说了算。
+ *
+ * off   ：不设闸，跑满 loop.count 轮（原来的行为）。
+ * ask   ：每轮结束后面板上问用户，由用户决定要不要继续。
+ * agent ：每轮结束后让这个 agent 自己按 prompt 里的判据说一句要不要继续。
+ */
+export const LOOP_GATE_MODES = Object.freeze(['off', 'ask', 'agent']);
+/**
+ * 闸开着时，loop.count 就不再是"跑几轮就停"，而是闸说了算：
+ *   ask   —— 用户每轮之后点一次；
+ *   agent —— 这个 agent 每轮之后按判据自己判。
+ * 跑多少轮由闸决定，count 只留一个硬上限（MAX_LOOP_COUNT），防止闸一直放行时没完没了。
+ */
+export const DEFAULT_LOOP_GATE = Object.freeze({ mode: 'off', prompt: '' });
+const MAX_LOOP_GATE_PROMPT = 500;
+
+/** 校验并规范化"每轮之后要不要再跑一轮"的设置。 */
+export function normalizeLoopGate(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('loopGate 必须是 {mode, prompt} 对象');
+  }
+  const { mode, prompt } = value;
+  if (!LOOP_GATE_MODES.includes(mode)) {
+    throw new Error(`loopGate.mode 只能是 ${LOOP_GATE_MODES.join(' / ')}`);
+  }
+  if (typeof prompt !== 'string') {
+    throw new Error('loopGate.prompt 必须是字符串');
+  }
+  if (prompt.length > MAX_LOOP_GATE_PROMPT) {
+    throw new Error(`loopGate.prompt 最多 ${MAX_LOOP_GATE_PROMPT} 字`);
+  }
+  return { mode, prompt: prompt.trim() };
+}
+
+/**
  * 校验循环配置。
  *
  * 三项一起给：只给 enabled 会让"次数/间隔"退回默认，用户看到的输入框与实际生效
@@ -1262,6 +1313,23 @@ function publicProfile(profile) {
     // 循环：跑完这一轮之后自动再跑几轮、每轮隔多久。用户没配过就是不开。
     loop: has('loop') ? normalizeLoop(override.loop) : { ...DEFAULT_LOOP },
     defaultLoop: { ...DEFAULT_LOOP },
+    // 每轮之后要不要再跑一轮：用户没配过就是不开（跑满 count 轮）。
+    loopGate: has('loopGate')
+      ? normalizeLoopGate(override.loopGate)
+      : normalizeLoopGate(profile.loopGate || DEFAULT_LOOP_GATE),
+    defaultLoopGate: normalizeLoopGate(profile.loopGate || DEFAULT_LOOP_GATE),
+    // 每轮之前要不要把这个 agent 的会话重置（它的上下文从零开始，聊天记录留着）。
+    loopResetSession:
+      has('loopResetSession')
+        ? Boolean(override.loopResetSession)
+        : Boolean(profile.loopResetSession),
+    defaultLoopResetSession: Boolean(profile.loopResetSession),
+    // 每轮之前要不要把这个 agent 的会话重置（它的上下文从零开始，聊天记录留着）。
+    loopResetSession:
+      has('loopResetSession')
+        ? Boolean(override.loopResetSession)
+        : Boolean(profile.loopResetSession),
+    defaultLoopResetSession: Boolean(profile.loopResetSession),
     // 挂载面板时输入框里预填的指令（只有配置里写了才会有；其余 agent 是空的）。
     defaultPrompt: profile.defaultPrompt || '',
     // 代码里写死的默认值：用户点「恢复默认」时要把它们铺回去，
@@ -1275,6 +1343,8 @@ function publicProfile(profile) {
       name: has('name'),
       handoffDelay: has('handoffDelaySeconds'),
       loop: has('loop'),
+      loopGate: has('loopGate'),
+      loopResetSession: has('loopResetSession'),
       instructions: has('instructions'),
       steps: has('steps'),
       permissions: has('permissions'),
@@ -1554,6 +1624,20 @@ export function saveProfileConfig(profileId, patch) {
         throw new Error(`handoffDelaySeconds 必须在 0 到 ${MAX_HANDOFF_DELAY_SECONDS} 之间`);
       }
       next.handoffDelaySeconds = delay;
+    }
+  }
+  if (patch.loopResetSession !== undefined) {
+    if (patch.loopResetSession === null) {
+      delete next.loopResetSession;
+    } else {
+      next.loopResetSession = Boolean(patch.loopResetSession);
+    }
+  }
+  if (patch.loopGate !== undefined) {
+    if (patch.loopGate === null) {
+      delete next.loopGate;
+    } else {
+      next.loopGate = normalizeLoopGate(patch.loopGate);
     }
   }
   if (patch.loop !== undefined) {

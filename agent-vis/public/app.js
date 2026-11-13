@@ -93,7 +93,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.11';
+const FRONTEND_VERSION = '2026-11-14.14';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -286,6 +286,9 @@ function createPanel(root) {
     loopCount: pick('loopCount'),
     loopInterval: pick('loopInterval'),
     loopState: pick('loopState'),
+    loopGateMode: pick('loopGateMode'),
+    loopGatePrompt: pick('loopGatePrompt'),
+    loopResetSession: pick('loopResetSession'),
     stepsBox: pick('stepsBox'),
     stepsSummary: pick('stepsSummary'),
     stepsList: pick('stepsList'),
@@ -349,6 +352,7 @@ function createPanel(root) {
     handoff: false,
     handoffDelay: false,
     loop: false,
+    loopGate: false,
     name: false,
   };
   /**
@@ -677,6 +681,16 @@ function createPanel(root) {
     }
 
     // 循环：用户改过就不覆盖输入框，否则铺服务端那份（默认关闭）。
+    if (!(first && userEdited.loopGate) && els.loopGateMode) {
+      const gate = profile.loopGate && typeof profile.loopGate === 'object'
+        ? profile.loopGate
+        : { mode: 'off', prompt: '' };
+      els.loopGateMode.value = gate.mode === 'ask' || gate.mode === 'agent' ? gate.mode : 'off';
+      if (els.loopGatePrompt) els.loopGatePrompt.value = typeof gate.prompt === 'string' ? gate.prompt : '';
+    }
+    if (!(first && userEdited.loopResetSession) && els.loopResetSession) {
+      els.loopResetSession.checked = Boolean(profile.loopResetSession);
+    }
     if (!(first && userEdited.loop) && els.loopEnabled) {
       const loop = profile.loop && typeof profile.loop === 'object' ? profile.loop : null;
       const setting = loop || { enabled: false, count: 2, intervalSeconds: 0 };
@@ -889,6 +903,23 @@ function createPanel(root) {
     };
   }
 
+  /**
+   * 每轮之后要不要再跑一轮：off = 跑满次数；ask = 问用户；agent = 让这个 agent 自己判。
+   */
+  function loopGateSetting() {
+    const mode = els.loopGateMode ? els.loopGateMode.value : 'off';
+    const prompt = els.loopGatePrompt ? els.loopGatePrompt.value.trim() : '';
+    return {
+      mode: mode === 'ask' || mode === 'agent' ? mode : 'off',
+      prompt: prompt.slice(0, 500),
+    };
+  }
+
+  /** 每轮之前要不要重置这一栏的会话。 */
+  function loopResetSessionSetting() {
+    return Boolean(els.loopResetSession && els.loopResetSession.checked);
+  }
+
   /** 折叠栏与状态行：现在开没开、几轮、隔多久、还剩几轮。 */
   function refreshLoopState() {
     const setting = loopSetting();
@@ -906,7 +937,18 @@ function createPanel(root) {
       els.loopState.textContent = `进行中：已完成 ${loopDone} 轮，共 ${loopTarget} 轮。`;
       return;
     }
-    els.loopState.textContent = `共 ${setting.count} 轮，每轮间隔 ${setting.intervalSeconds} 秒。`;
+    const gate = loopGateSetting();
+    const gateText = gate.mode === 'ask'
+      ? '每轮之后问你要不要继续'
+      : gate.mode === 'agent'
+        ? '每轮之后由这个 agent 按判据自己判'
+        : '每轮之后直接接着跑';
+    const resetText = loopResetSessionSetting() ? '每轮之前重置会话' : '不重置会话';
+    const countText = gate.mode === 'off'
+      ? `共 ${setting.count} 轮`
+      : `最多 ${setting.count} 轮`;
+    els.loopState.textContent =
+      `${countText}，每轮间隔 ${setting.intervalSeconds} 秒；${gateText}；${resetText}。`;
   }
 
   /** 折叠栏上写明勾了几个交接目标。 */
@@ -1716,6 +1758,9 @@ function createPanel(root) {
     );
   }
 
+  /** 最近一轮的结论文字：循环闸问 agent 时把它带上去。 */
+  let lastRoundSummary = '';
+
   /** 一份 store 里最后一段文字回答；没有文字输出就返回空串。 */
   function finalAnswer(run) {
     if (!run) return '';
@@ -1735,6 +1780,7 @@ function createPanel(root) {
     if (chunk.type === 'finish' && !currentPartOfRound) {
       setStatus('done', '完成');
       setRunning(false);
+      lastRoundSummary = finalAnswer(run);
       if (finishHandler) finishHandler(finalAnswer(run));
     }
     if (run.store.unknownTypes.length > 0) {
@@ -1782,6 +1828,91 @@ function createPanel(root) {
    * 只有最新那一轮（mySeq 仍是当前序号）才配安排下一轮；用户点了结束、或者次数
    * 已用完，都不再排。第一轮由用户点击触发，loopContinuation 不再重置剩余轮数。
    */
+  /**
+   * 重置这一栏的会话，但留下对话记录。
+   *
+   * 面板上那个「重置会话」会把记录一起删掉；这里只要模型上下文从零开始 ——
+   * 每一轮都从头看一遍，不带着上一轮的结论。
+   */
+  async function resetSessionKeepingRecords(agentId) {
+    try {
+      await fetch(`${API_BASE}/api/session/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId, keepRecords: true }),
+      });
+    } catch {
+      // 重置失败不该挡住这一轮：照跑。
+    }
+  }
+
+  /**
+   * 问用户：这一轮之后还要不要再跑一轮。
+   *
+   * 面板上摆一个小盒子（问题 + 继续/停止），用户点一下才算数。
+   */
+  function askUserToContinue(gate) {
+    return new Promise((resolve) => {
+      const box = document.createElement('div');
+      box.className = 'loop-gate-ask';
+      box.dataset.role = 'loopGateAsk';
+      const text = document.createElement('p');
+      text.textContent = gate.prompt
+        ? `这一轮跑完了。${gate.prompt} —— 还要再跑一轮吗？`
+        : '这一轮跑完了。还要再跑一轮吗？';
+      box.appendChild(text);
+      const row = document.createElement('div');
+      row.className = 'loop-gate-actions';
+      const yes = document.createElement('button');
+      yes.type = 'button';
+      yes.dataset.role = 'loopGateContinue';
+      yes.textContent = '继续下一轮';
+      const no = document.createElement('button');
+      no.type = 'button';
+      no.dataset.role = 'loopGateStop';
+      no.textContent = '就到这里';
+      const finish = (go) => {
+        box.remove();
+        resolve(go);
+      };
+      yes.addEventListener('click', () => finish(true));
+      no.addEventListener('click', () => finish(false));
+      row.appendChild(yes);
+      row.appendChild(no);
+      box.appendChild(row);
+      els.timeline.appendChild(box);
+      box.scrollIntoView({ block: 'nearest' });
+    });
+  }
+
+  /**
+   * 让这个 agent 自己按判据说一句要不要继续。
+   *
+   * 判不出来（服务没起来、模型报错）时按"继续"处理 ——
+   * 闸只是拦一下，不该把循环整个卡死。
+   */
+  async function judgeWithAgent(gate) {
+    try {
+      const res = await fetch(`${API_BASE}/api/loop/judge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentId: root.dataset.profile,
+          criterion: gate.prompt,
+          summary: lastRoundSummary,
+        }),
+      });
+      if (!res.ok) return { go: true, reason: '判定没跑成，按原样继续。' };
+      const data = await res.json();
+      return {
+        go: data.continue !== false,
+        reason: typeof data.reason === 'string' ? data.reason : '',
+      };
+    } catch {
+      return { go: true, reason: '判定没跑成，按原样继续。' };
+    }
+  }
+
   function scheduleLoopAfter(mySeq, options) {
     if (mySeq !== runSeq) return;
     if (abortedByUser) {
@@ -1799,25 +1930,78 @@ function createPanel(root) {
     } else {
       loopDone += 1;
     }
-    if (loopDone >= loopTarget) {
+    const gate = loopGateSetting();
+    // 闸开着时，跑多少轮由闸说了算：次数只是硬上限（防闸一直放行时没完没了）。
+    const gateOn = gate.mode === 'ask' || gate.mode === 'agent';
+    if (loopDone >= loopTarget && !gateOn) {
       const total = loopDone;
       loopTarget = 0;
       loopDone = 0;
       if (els.loopState) els.loopState.textContent = `循环完成：共 ${total} 轮。`;
       return;
     }
-    const waitMs = Math.max(0, setting.intervalSeconds) * 1000;
-    if (els.loopState) {
-      els.loopState.textContent = waitMs > 0
-        ? `第 ${loopDone} 轮已结束，${setting.intervalSeconds} 秒后开第 ${loopDone + 1} 轮。`
-        : `第 ${loopDone} 轮已结束，马上开第 ${loopDone + 1} 轮。`;
+    // 闸一直放行时，次数就是硬上限（面板上那个"次数"在闸模式下是这个意思）。
+    if (loopDone >= loopTarget) {
+      const total = loopDone;
+      loopTarget = 0;
+      loopDone = 0;
+      if (els.loopState) {
+        els.loopState.textContent = `循环到上限 ${total} 轮，先停在这里（闸一直没叫停）。`;
+      }
+      return;
     }
-    loopTimer = setTimeout(() => {
-      loopTimer = null;
-      if (mySeq !== runSeq) return;
-      if (abortedByUser) return;
-      void run({ ...options, loopContinuation: true });
-    }, waitMs);
+    const scheduleNext = () => {
+      // 每轮之前要不要把这一栏的会话重置（记录留着，模型上下文清零）。
+      if (loopResetSessionSetting()) {
+        void resetSessionKeepingRecords(root.dataset.profile);
+      }
+      const waitMs = Math.max(0, setting.intervalSeconds) * 1000;
+      if (els.loopState) {
+        els.loopState.textContent = waitMs > 0
+          ? `第 ${loopDone} 轮已结束，${setting.intervalSeconds} 秒后开第 ${loopDone + 1} 轮。`
+          : `第 ${loopDone} 轮已结束，马上开第 ${loopDone + 1} 轮。`;
+      }
+      loopTimer = setTimeout(() => {
+        loopTimer = null;
+        if (mySeq !== runSeq) return;
+        if (abortedByUser) return;
+        void run({ ...options, loopContinuation: true });
+      }, waitMs);
+    };
+
+    // 闸：这一轮之后要不要再跑一轮。
+    if (gate.mode === 'ask') {
+      if (els.loopState) els.loopState.textContent = `第 ${loopDone} 轮已结束，等你说要不要继续。`;
+      void askUserToContinue(gate).then((go) => {
+        if (mySeq !== runSeq) return;
+        if (!go) {
+          const done = loopDone; // cancelLoop 会把计数清零，先记住
+          cancelLoop();
+          if (els.loopState) els.loopState.textContent = `第 ${done} 轮之后不再继续。`;
+          return;
+        }
+        scheduleNext();
+      });
+      return;
+    }
+    if (gate.mode === 'agent') {
+      if (els.loopState) els.loopState.textContent = `第 ${loopDone} 轮已结束，正在判断要不要继续。`;
+      void judgeWithAgent(gate).then((verdict) => {
+        if (mySeq !== runSeq) return;
+        if (!verdict.go) {
+          const done = loopDone; // cancelLoop 会把计数清零，先记住
+          cancelLoop();
+          if (els.loopState) {
+            els.loopState.textContent = `第 ${done} 轮之后不再继续：${verdict.reason}`;
+          }
+          showNote(`循环闸：${verdict.reason}`);
+          return;
+        }
+        scheduleNext();
+      });
+      return;
+    }
+    scheduleNext();
   }
 
   /**
@@ -2483,6 +2667,25 @@ function createPanel(root) {
   }
 
   // 循环：勾选/改数值都存到服务端，改完立刻反映到折叠栏与状态行。
+  for (const el of [els.loopResetSession]) {
+    if (!el) continue;
+    el.addEventListener('change', () => {
+      userEdited.loopResetSession = true;
+      refreshLoopState();
+      scheduleSave({ loopResetSession: loopResetSessionSetting() });
+    });
+  }
+
+  for (const el of [els.loopGateMode, els.loopGatePrompt]) {
+    if (!el) continue;
+    el.addEventListener('input', () => refreshLoopState());
+    el.addEventListener('change', () => {
+      userEdited.loopGate = true;
+      refreshLoopState();
+      scheduleSave({ loopGate: loopGateSetting() });
+    });
+  }
+
   for (const el of [els.loopEnabled, els.loopCount, els.loopInterval]) {
     if (!el) continue;
     el.addEventListener('input', () => refreshLoopState());
@@ -3447,6 +3650,7 @@ function buildHandoffStepInstruction(targets, condition) {
  * - 连续交接超过 HANDOFF_MAX_HOPS 跳 → 停手并说清楚（防失控循环）。
  */
 const HANDOFF_MAX_HOPS = 8;
+
 
 function deliverResult(source, answer, options = {}) {
   if (answer === '') {
