@@ -1,4 +1,4 @@
-# R2 pairs, one pass over 56 pairs
+# R2 pairs, one pass over 67 pairs
 
 Sample: 200000 TRAIN-only transitions, 200000 random pairs (seed 20261109).
 
@@ -27,7 +27,6 @@ Sample: 200000 TRAIN-only transitions, 200000 random pairs (seed 20261109).
 | 21 | `TIGER_behaviour-pairs-levels-rq` | 0.0558 | 70 | 31.5 | 0.066 | 3688 | 16881 | 0.313 | 0.54 |
 | 22 | `TIGER_behaviour-pairs-curved-rq` | 0.0565 | 79 | 35.7 | 0.091 | 4110 | 17608 | 0.284 | 0.48 |
 | 23 | `TIGER_curvature-stratum-sinkhorn-v1` | 0.0431 | 256 | 251.2 | 0.005 | 955 | 9510 | 0.613 | 1.37 |
-| 24 | `TIGER_RQ-VAE` | 0.0402 | 247 | 120.1 | 0.035 | 7414 | 20223 | 0.177 | 0.28 |
 | 25 | `TIGER_behaviour_code_cohesion` | 0.0546 | 12 | 3.8 | 0.421 | 574 | 11517 | 0.532 | 1.09 |
 | 26 | `TIGER_cooccur_coherent_sid` | 0.0559 | 242 | 122.6 | 0.035 | 7375 | 20412 | 0.170 | 0.27 |
 | 27 | `TIGER_incoming_context_barycenter` | 0.0585 | 104 | 2.4 | 0.693 | 853 | 8545 | 0.652 | 1.52 |
@@ -51,62 +50,74 @@ Sample: 200000 TRAIN-only transitions, 200000 random pairs (seed 20261109).
 | 45 | `TIGER_community-repulse-l1-rq` | 0.0542 | 255 | 84.5 | 0.036 | 6318 | 19089 | 0.224 | 0.37 |
 | 46 | `TIGER_community-balance-repulse-rq` | 0.0532 | 256 | 254.2 | 0.005 | 8575 | 21952 | 0.107 | 0.16 |
 | 47 | `TIGER_community_graph_recon` | 0.0558 | 246 | 124.4 | 0.026 | 7432 | 20476 | 0.167 | 0.26 |
-| 48 | `TIGER_BEHAVIOR_R48` | 0.0619 | 240 | 222.1 | 0.011 | 15495 | 23582 | 0.041 | 0.06 |
-| 49 | `TIGER_BEHAVIOR_SAMPLE_RQ-VAE__resample` | 0.0637 | 238 | 223.3 | 0.010 | 15860 | 23675 | 0.037 | 0.05 |
-| 50 | `TIGER_behavior_residual_geometry_transport__r8_control` | 0.0634 | 238 | 217.9 | 0.010 | 15655 | 23609 | 0.040 | 0.06 |
-| 51 | `TIGER_bootstrap_code_stability__resample` | 0.0634 | 238 | 221.5 | 0.011 | 15711 | 23571 | 0.041 | 0.06 |
-| 52 | `TIGER_c106_directed_assignment_usage_balance__r8_control` | 0.0624 | 236 | 215.8 | 0.014 | 15580 | 23515 | 0.044 | 0.06 |
-| 53 | `TIGER_c106_directed_codeword_margin_geometry__r8_control` | 0.0637 | 242 | 225.9 | 0.011 | 15724 | 23533 | 0.043 | 0.06 |
-| 54 | `TIGER_c1_behaviour_conditioned_residual_target__r8_control` | 0.0610 | 241 | 201.0 | 0.012 | 14725 | 23420 | 0.047 | 0.07 |
-| 55 | `TIGER_FORK_RQ-VAE__hyper_l1_angsel_s42` | 0.0614 | 234 | 207.2 | 0.021 | 9463 | 23353 | 0.050 | 0.07 |
-| 56 | `curvature_RQ-VAE_iter48` | 0.0601 | 256 | 255.1 | 0.006 | 12030 | 19041 | 0.226 | 0.37 |
+| 48 | `TIGER_BEHAVIOR_R48` | 0.0631 | 240 | 222.1 | 0.011 | 15495 | 23582 | 0.041 | 0.06 |
+| 49 | `TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample` | 0.0633 | 238 | 223.3 | 0.010 | 15860 | 23675 | 0.037 | 0.05 |
+| 50 | `TIGER_behavior_residual_geometry_transport/r8_control` | 0.0642 | 238 | 217.9 | 0.010 | 15655 | 23609 | 0.040 | 0.06 |
+| 51 | `TIGER_struct_mixed_rq` | 0.0579 | 5 | 2.9 | 0.433 | 538 | 10760 | 0.562 | 1.19 |
+| 52 | `TIGER_struct_mixed_rq_ste_fix` | 0.0546 | 224 | 149.7 | 0.020 | 9289 | 21862 | 0.111 | 0.17 |
+| 53 | `TIGER_af3_gate_mixed_rq` | 0.0289 | 256 | 226.8 | 0.018 | 13956 | 21580 | 0.122 | 0.19 |
+| 54 | `TIGER_dul_rq` | 0.0260 | 254 | 144.8 | 0.030 | 12284 | 24201 | 0.016 | 0.02 |
+| 55 | `TIGER_dul_s_rq` | 0.0427 | 223 | 100.0 | 0.034 | 7964 | 23498 | 0.044 | 0.07 |
+| 56 | `TIGER_hc3_rq` | 0.0540 | 95 | 54.4 | 0.049 | 4594 | 18883 | 0.232 | 0.38 |
+| 57 | `TIGER_r48k2_rq` | 0.0648 | 124 | 115.9 | 0.021 | 9521 | 22834 | 0.071 | 0.11 |
+| 58 | `TIGER_r48k2u_rq` | 0.0637 | 93 | 89.8 | 0.022 | 8163 | 22446 | 0.087 | 0.13 |
+| 59 | `TIGER_af3_structdistill_rq` | 0.0543 | 234 | 92.3 | 0.034 | 6073 | 19559 | 0.204 | 0.33 |
+| 60 | `TIGER_r48k1_rq` | 0.0647 | 126 | 117.0 | 0.022 | 9774 | 22715 | 0.076 | 0.11 |
+| 61 | `TIGER_lkc_rq` | 0.0564 | 72 | 34.3 | 0.083 | 3704 | 17699 | 0.280 | 0.47 |
+| 62 | `TIGER_cmr_rq` | 0.0541 | 76 | 39.5 | 0.065 | 3834 | 17968 | 0.269 | 0.45 |
+| 63 | `TIGER_mbr_rq` | 0.0541 | 137 | 74.4 | 0.043 | 5439 | 19525 | 0.206 | 0.33 |
+| 64 | `TIGER_rcs_rq` | 0.0557 | 138 | 27.5 | 0.091 | 3689 | 16692 | 0.321 | 0.56 |
+| 65 | `TIGER_snt_rq` | 0.0563 | 193 | 62.7 | 0.041 | 5432 | 19479 | 0.208 | 0.34 |
+| 66 | `TIGER_sdh_rq` | 0.0560 | 246 | 95.5 | 0.040 | 6287 | 19377 | 0.212 | 0.34 |
+| 67 | `TIGER_sign_rq` | 0.0561 | 48 | 25.5 | 0.114 | 3081 | 17012 | 0.308 | 0.53 |
+| 68 | `TIGER_l2k_rq` | 0.0560 | 42 | 22.9 | 0.094 | 2901 | 16786 | 0.317 | 0.55 |
 
-## Spearman against test_recall@10 (n = 56 pairs with Stage 3)
+## Spearman against test_recall@10 (n = 67 pairs with Stage 3)
 
 | metric | rho | 95% bootstrap |
 |---|---|---|
-| l1_codes | 0.089 | [-0.208, 0.368] |
-| l1_er | 0.337 | [0.018, 0.597] |
-| l1_max_share | -0.338 | [-0.598, -0.038] |
-| l2_prefixes | 0.454 | [0.144, 0.698] |
-| l3_distinct | 0.358 | [0.037, 0.620] |
-| l3_collision | -0.358 | [-0.620, -0.038] |
-| l3_gain_bits | -0.358 | [-0.620, -0.038] |
-| prefix_overlap@1_gap | 0.276 | [0.004, 0.536] |
-| prefix_overlap@2_gap | -0.230 | [-0.510, 0.085] |
-| prefix_overlap@3_gap | -0.241 | [-0.509, 0.069] |
+| l1_codes | -0.134 | [-0.406, 0.144] |
+| l1_er | 0.018 | [-0.258, 0.305] |
+| l1_max_share | -0.078 | [-0.348, 0.192] |
+| l2_prefixes | 0.133 | [-0.161, 0.405] |
+| l3_distinct | 0.084 | [-0.212, 0.371] |
+| l3_collision | -0.084 | [-0.372, 0.212] |
+| l3_gain_bits | -0.084 | [-0.372, 0.212] |
+| prefix_overlap@1_gap | 0.446 | [0.224, 0.652] |
+| prefix_overlap@2_gap | 0.104 | [-0.178, 0.380] |
+| prefix_overlap@3_gap | 0.125 | [-0.154, 0.417] |
 
-## Same, one row per distinct item_sids.json (n = 56)
+## Same, one row per distinct item_sids.json (n = 67)
 
 | metric | rho |
 |---|---|
-| l1_codes | 0.089 |
-| l1_er | 0.337 |
-| l1_max_share | -0.338 |
-| l2_prefixes | 0.454 |
-| l3_distinct | 0.358 |
-| l3_collision | -0.358 |
-| l3_gain_bits | -0.358 |
-| prefix_overlap@1_gap | 0.276 |
-| prefix_overlap@2_gap | -0.230 |
-| prefix_overlap@3_gap | -0.241 |
+| l1_codes | -0.134 |
+| l1_er | 0.018 |
+| l1_max_share | -0.078 |
+| l2_prefixes | 0.133 |
+| l3_distinct | 0.084 |
+| l3_collision | -0.084 |
+| l3_gain_bits | -0.084 |
+| prefix_overlap@1_gap | 0.446 |
+| prefix_overlap@2_gap | 0.104 |
+| prefix_overlap@3_gap | 0.125 |
 
 ## The item graph, SID prefixes as groups (60000 edges, 20617 nodes)
 
 | reading | n | Spearman rho | Pearson r |
 |---|---|---|---|
-| L2/density_ratio | 56 | 0.521 | 0.602 |
-| L1/density_intra | 56 | 0.515 | 0.614 |
-| L2/density_intra | 56 | 0.513 | 0.603 |
-| L2/af3_med_gap | 56 | 0.506 | 0.624 |
-| L1/density_ratio | 56 | 0.486 | 0.593 |
-| L3/density_ratio | 56 | 0.477 | 0.581 |
-| L3/density_intra | 56 | 0.477 | 0.582 |
-| L2/af3_auc | 56 | 0.464 | 0.741 |
-| L1/af3_auc | 56 | 0.458 | 0.698 |
-| L2/transitivity_intra | 56 | 0.430 | 0.322 |
-| L1/af3_med_gap | 56 | 0.382 | 0.640 |
-| L3/af3_med_gap | 56 | 0.338 | 0.489 |
-| L3/af3_auc | 56 | 0.317 | 0.581 |
-| L1/transitivity_intra | 56 | 0.177 | 0.127 |
-| L3/transitivity_intra | 54 | 0.148 | 0.348 |
+| L2/af3_med_gap | 67 | 0.477 | 0.523 |
+| L2/transitivity_intra | 66 | 0.470 | 0.324 |
+| L2/density_ratio | 67 | 0.447 | 0.543 |
+| L2/density_intra | 67 | 0.442 | 0.543 |
+| L3/af3_auc | 67 | 0.418 | 0.583 |
+| L1/density_intra | 67 | 0.411 | 0.557 |
+| L2/af3_auc | 67 | 0.407 | 0.670 |
+| L1/density_ratio | 67 | 0.399 | 0.555 |
+| L3/af3_med_gap | 67 | 0.395 | 0.408 |
+| L3/density_ratio | 67 | 0.370 | 0.495 |
+| L3/density_intra | 67 | 0.370 | 0.495 |
+| L1/af3_auc | 67 | 0.297 | 0.580 |
+| L1/af3_med_gap | 67 | 0.219 | 0.517 |
+| L1/transitivity_intra | 67 | 0.151 | 0.333 |
+| L3/transitivity_intra | 65 | 0.150 | 0.302 |

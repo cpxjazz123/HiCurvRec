@@ -51,7 +51,10 @@ def graph(pairs: np.ndarray):
     S = A @ A
     edge_tri = np.asarray(S[index[:, 0], index[:, 1]]).ravel()
     af3 = 4.0 - deg[index[:, 0]] - deg[index[:, 1]] + 3.0 * edge_tri
-    return nodes, index, A, deg, af3
+    # edge_tri decides the triangle-free / in-triangle split downstream, so it has to travel with
+    # the graph: it used to be a local of this function and main() referenced it as if it were one
+    # of its own, which raised NameError the moment the script was run.
+    return nodes, index, A, deg, af3, edge_tri
 
 
 def triangles(A: sparse.csr_matrix) -> np.ndarray:
@@ -111,7 +114,7 @@ def main() -> None:
     args = parser.parse_args()
     numbers = [n.strip() for n in args.arms.split(",") if n.strip()] if not args.sid else []
     pairs = edges()
-    nodes, index, A, deg, af3 = graph(pairs)
+    nodes, index, A, deg, af3, edge_tri = graph(pairs)
     tris = triangles(A)
     quartiles = np.quantile(af3, [0.25, 0.5, 0.75])
     strata = np.digitize(af3, quartiles)
@@ -207,10 +210,11 @@ def main() -> None:
             [v["levels"]["L1"][key] for v in arms.values() if not np.isnan(v["levels"]["L1"][key])])) if arms else None
     summary["L1_edge_retention_by_af3_quartile"] = {
         "Q%d" % (band + 1): float(np.mean(rates)) for band, rates in strata.items() if rates}
-    for key in ("null", "lift"):
+    for key, field in (("null", "null_edge_retention_by_af3_quartile"),
+                       ("lift", "edge_lift_by_af3_quartile")):
         collected = {band: [] for band in range(4)}
         for value in arms.values():
-            for band, rate in enumerate(value["levels"]["L1"]["%s_edge_retention_by_af3_quartile" % key]):
+            for band, rate in enumerate(value["levels"]["L1"][field]):
                 if not np.isnan(rate):
                     collected[band].append(rate)
         summary["L1_%s_by_af3_quartile" % key] = {

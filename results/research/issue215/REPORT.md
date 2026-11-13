@@ -57,6 +57,14 @@ C_ik = s_E * w_E,i * d_E^2 + s_H * w_H,i * d_H^2 + s_S * w_S,i * d_S^2
 - 框架自己的 1-epoch 梯度 smoke：三臂均 `SMOKE_PASS`（单卡分支，global batch 4096）。
 - 两个由 smoke 抓出的真 bug 已修并留下回归测试：球面平方距离在重合点的无穷导数（NaN 梯度）、周期评估漏传 item ids。
 
+## 4b. 数据更正：TIGER_RQ-VAE 的归档 recall 记录
+
+- `results/research/baseline.md` 登记的 `TIGER_RQ-VAE`（E32 欧氏）`test_recall@10 = **0.056216**`，issue 要求把它作为 `Δ(历史基线)` 列。
+- R2 镜像 `r2/24/recall.json` 里躺着一个 `0.040199`，且被 ledger 记录在案。**该记录是错的**（owner 2026-11-14 指出），已删除；`results/research/issue139/r2_ledger.json` 的条目 24 把它移入 `retired_files` 并写明原因，镜像不再有这一份。
+- 受影响的派生表全部重算：`analysis_sid_recall/{report,structure_retention,structure_retention_5node,community_retention,sid_retention}.json` ⇒ 配对从 **68 降到 67**。相关系数几乎没有变化（4-节点 `centered/role1` 0.612→0.616，5-节点 `centered/role4` 0.638→0.648）。
+- 顺带修了 `sid_retention.py` 两个早已坏掉的引用（`edge_tri` 未返回、quartile 汇总键名写错），否则这张表无法重算。
+- `results/research/issue121/` 下的历史轮次记录保留原值**不改写**（那是当时观测的留痕），以本条更正为准。
+
 ## 5. 结果
 
 （训练结束后填入：SID 分层指标、碰撞门、Stage3 recall、逐角色 prefix@1/2/3 保留率、三组对照。）
