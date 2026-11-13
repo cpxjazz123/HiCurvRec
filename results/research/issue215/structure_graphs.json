@@ -1,0 +1,118 @@
+{
+ "n_items": 24587,
+ "k": 26,
+ "arms": {
+  "TIGER": {
+   "z": "vectors/TIGER_z.npy",
+   "q": "vectors/TIGER_q.npy",
+   "checkpoint": "analysis_sid_recall/r2/24/rqvae_best.pth"
+  },
+  "F0": {
+   "z": "vectors/F0_z.npy",
+   "q": "vectors/F0_q.npy",
+   "checkpoint": "analysis_sid_recall/r2/19/rqvae_best.pth"
+  },
+  "B": {
+   "z": "vectors/B_z.npy",
+   "q": "vectors/B_q.npy",
+   "checkpoint": "results/stage2_RQ-VAE/TIGER_role_geom_global_rq/rqvae_best.pth"
+  },
+  "C": {
+   "z": "vectors/C_z.npy",
+   "q": "vectors/C_q.npy",
+   "checkpoint": "results/stage2_RQ-VAE/TIGER_role_geom_rq/rqvae_best.pth"
+  },
+  "D": {
+   "z": "vectors/D_z.npy",
+   "q": "vectors/D_q.npy",
+   "checkpoint": "results/stage2_RQ-VAE/TIGER_role_geom_shuffled_rq/rqvae_best.pth"
+  }
+ },
+ "graphs": {
+  "behaviour": {
+   "nodes": 24587,
+   "edges": 315391,
+   "file": "graphs/behaviour.in"
+  },
+  "TIGER_z": {
+   "nodes": 24587,
+   "edges": 315391,
+   "k": 26,
+   "budget": 315391,
+   "candidates": 515913,
+   "file": "graphs/TIGER_z.in"
+  },
+  "TIGER_q": {
+   "nodes": 24587,
+   "edges": 315391,
+   "k": 26,
+   "budget": 315391,
+   "candidates": 480975,
+   "file": "graphs/TIGER_q.in"
+  },
+  "F0_z": {
+   "nodes": 24587,
+   "edges": 315391,
+   "k": 26,
+   "budget": 315391,
+   "candidates": 492815,
+   "file": "graphs/F0_z.in"
+  },
+  "F0_q": {
+   "nodes": 24587,
+   "edges": 315391,
+   "k": 26,
+   "budget": 315391,
+   "candidates": 472575,
+   "file": "graphs/F0_q.in"
+  },
+  "B_z": {
+   "nodes": 24587,
+   "edges": 315391,
+   "k": 26,
+   "budget": 315391,
+   "candidates": 493849,
+   "file": "graphs/B_z.in"
+  },
+  "B_q": {
+   "nodes": 24587,
+   "edges": 315391,
+   "k": 26,
+   "budget": 315391,
+   "candidates": 471083,
+   "file": "graphs/B_q.in"
+  },
+  "C_z": {
+   "nodes": 24587,
+   "edges": 315391,
+   "k": 26,
+   "budget": 315391,
+   "candidates": 492595,
+   "file": "graphs/C_z.in"
+  },
+  "C_q": {
+   "nodes": 24587,
+   "edges": 315391,
+   "k": 26,
+   "budget": 315391,
+   "candidates": 473021,
+   "file": "graphs/C_q.in"
+  },
+  "D_z": {
+   "nodes": 24587,
+   "edges": 315391,
+   "k": 26,
+   "budget": 315391,
+   "candidates": 493676,
+   "file": "graphs/D_z.in"
+  },
+  "D_q": {
+   "nodes": 24587,
+   "edges": 315391,
+   "k": 26,
+   "budget": 315391,
+   "candidates": 469858,
+   "file": "graphs/D_q.in"
+  }
+ }
+}

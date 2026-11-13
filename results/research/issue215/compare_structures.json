@@ -1,0 +1,636 @@
+{
+ "items": 24587,
+ "behaviour_edges": 315391,
+ "arms": {
+  "TIGER": {
+   "z": {
+    "status": "ok",
+    "edges": 315391,
+    "edges_recovered": 6349,
+    "edge_recall_vs_behaviour": 0.02013056808849967,
+    "edge_precision_vs_behaviour": 0.02013056808849967,
+    "degree_spearman": 0.011261574537329472,
+    "clustering_spearman": 0.0038756401946265194,
+    "orbit_spearman_mean": 0.0006045115218680996,
+    "orbit_spearman_min": -0.01993544880954067,
+    "orbit_spearman_max": 0.03941824167832874,
+    "per_role": {
+     "0": {
+      "items": 3521,
+      "degree_b": 61.19852314683329,
+      "degree_x": 26.429139449020166,
+      "clustering_b": 0.017675084613496587,
+      "clustering_x": 0.35117502176981924,
+      "orbit_profile_cosine": 0.7433096016950197
+     },
+     "1": {
+      "items": 1311,
+      "degree_b": 8.236460717009916,
+      "degree_x": 25.709382151029747,
+      "clustering_b": 0.11551092044915648,
+      "clustering_x": 0.3584104267643243,
+      "orbit_profile_cosine": 0.7149315798534117
+     },
+     "2": {
+      "items": 2643,
+      "degree_b": 8.534998108210367,
+      "degree_x": 29.759742716609914,
+      "clustering_b": 0.014665174169484287,
+      "clustering_x": 0.3761702996522394,
+      "orbit_profile_cosine": 0.7146585123448229
+     },
+     "3": {
+      "items": 3543,
+      "degree_b": 31.209991532599492,
+      "degree_x": 26.13604290149591,
+      "clustering_b": 0.02405310873256322,
+      "clustering_x": 0.3556002844452078,
+      "orbit_profile_cosine": 0.7851385084966492
+     },
+     "4": {
+      "items": 657,
+      "degree_b": 25.059360730593607,
+      "degree_x": 25.488584474885844,
+      "clustering_b": 0.062014346438640754,
+      "clustering_x": 0.33677895175346484,
+      "orbit_profile_cosine": 0.728515645955408
+     },
+     "5": {
+      "items": 12881,
+      "degree_b": 19.789224439096344,
+      "degree_x": 24.45609812902725,
+      "clustering_b": 0.053447770702634886,
+      "clustering_x": 0.33565756469691493,
+      "orbit_profile_cosine": 0.5820237653583178
+     }
+    }
+   },
+   "q": {
+    "status": "ok",
+    "edges": 315391,
+    "edges_recovered": 5196,
+    "edge_recall_vs_behaviour": 0.016474788437209686,
+    "edge_precision_vs_behaviour": 0.016474788437209686,
+    "degree_spearman": 0.009667666226059761,
+    "clustering_spearman": -0.004966270932640441,
+    "orbit_spearman_mean": 0.0051474594817593556,
+    "orbit_spearman_min": -0.013115237020700686,
+    "orbit_spearman_max": 0.02574656891635799,
+    "per_role": {
+     "0": {
+      "items": 3521,
+      "degree_b": 61.19852314683329,
+      "degree_x": 26.186878727634195,
+      "clustering_b": 0.017675084613496587,
+      "clustering_x": 0.43055716594719134,
+      "orbit_profile_cosine": 0.7487022309911192
+     },
+     "1": {
+      "items": 1311,
+      "degree_b": 8.236460717009916,
+      "degree_x": 25.795575896262395,
+      "clustering_b": 0.11551092044915648,
+      "clustering_x": 0.43416769930240356,
+      "orbit_profile_cosine": 0.7094946969356227
+     },
+     "2": {
+      "items": 2643,
+      "degree_b": 8.534998108210367,
+      "degree_x": 28.78433598183882,
+      "clustering_b": 0.014665174169484287,
+      "clustering_x": 0.4509338923406574,
+      "orbit_profile_cosine": 0.7107251893682911
+     },
+     "3": {
+      "items": 3543,
+      "degree_b": 31.209991532599492,
+      "degree_x": 26.306237651707594,
+      "clustering_b": 0.02405310873256322,
+      "clustering_x": 0.43954755851169364,
+      "orbit_profile_cosine": 0.7910554566300533
+     },
+     "4": {
+      "items": 657,
+      "degree_b": 25.059360730593607,
+      "degree_x": 25.794520547945204,
+      "clustering_b": 0.062014346438640754,
+      "clustering_x": 0.41356480548388647,
+      "orbit_profile_cosine": 0.7456453915740896
+     },
+     "5": {
+      "items": 12881,
+      "degree_b": 19.789224439096344,
+      "degree_x": 24.654995730145174,
+      "clustering_b": 0.053447770702634886,
+      "clustering_x": 0.41806865031795254,
+      "orbit_profile_cosine": 0.6210153473379826
+     }
+    }
+   }
+  },
+  "F0": {
+   "z": {
+    "status": "ok",
+    "edges": 315391,
+    "edges_recovered": 6201,
+    "edge_recall_vs_behaviour": 0.01966130929544597,
+    "edge_precision_vs_behaviour": 0.01966130929544597,
+    "degree_spearman": 0.01599372553696236,
+    "clustering_spearman": 0.001792593071249208,
+    "orbit_spearman_mean": 0.006915915013661485,
+    "orbit_spearman_min": -0.011236996583591913,
+    "orbit_spearman_max": 0.0470041930340849,
+    "per_role": {
+     "0": {
+      "items": 3521,
+      "degree_b": 61.19852314683329,
+      "degree_x": 26.591309287134337,
+      "clustering_b": 0.017675084613496587,
+      "clustering_x": 0.3662194926644822,
+      "orbit_profile_cosine": 0.7086529525045803
+     },
+     "1": {
+      "items": 1311,
+      "degree_b": 8.236460717009916,
+      "degree_x": 25.397406559877957,
+      "clustering_b": 0.11551092044915648,
+      "clustering_x": 0.3782870298360443,
+      "orbit_profile_cosine": 0.6838525359235792
+     },
+     "2": {
+      "items": 2643,
+      "degree_b": 8.534998108210367,
+      "degree_x": 28.93984108967083,
+      "clustering_b": 0.014665174169484287,
+      "clustering_x": 0.39247854147856526,
+      "orbit_profile_cosine": 0.7076636334314468
+     },
+     "3": {
+      "items": 3543,
+      "degree_b": 31.209991532599492,
+      "degree_x": 26.214225232853515,
+      "clustering_b": 0.02405310873256322,
+      "clustering_x": 0.376186111950481,
+      "orbit_profile_cosine": 0.7484339528177105
+     },
+     "4": {
+      "items": 657,
+      "degree_b": 25.059360730593607,
+      "degree_x": 25.04718417047184,
+      "clustering_b": 0.062014346438640754,
+      "clustering_x": 0.3580489308575416,
+      "orbit_profile_cosine": 0.6962548162352681
+     },
+     "5": {
+      "items": 12881,
+      "degree_b": 19.789224439096344,
+      "degree_x": 24.61672230416893,
+      "clustering_b": 0.053447770702634886,
+      "clustering_x": 0.35578919394976355,
+      "orbit_profile_cosine": 0.5217360846732251
+     }
+    }
+   },
+   "q": {
+    "status": "ok",
+    "edges": 315391,
+    "edges_recovered": 4960,
+    "edge_recall_vs_behaviour": 0.01572651090234027,
+    "edge_precision_vs_behaviour": 0.01572651090234027,
+    "degree_spearman": 0.015370705594817314,
+    "clustering_spearman": -0.00018551085444571148,
+    "orbit_spearman_mean": 0.006208534498553231,
+    "orbit_spearman_min": -0.010870706754204346,
+    "orbit_spearman_max": 0.03776128006775519,
+    "per_role": {
+     "0": {
+      "items": 3521,
+      "degree_b": 61.19852314683329,
+      "degree_x": 26.361261005396194,
+      "clustering_b": 0.017675084613496587,
+      "clustering_x": 0.4309260756821222,
+      "orbit_profile_cosine": 0.7130313386587441
+     },
+     "1": {
+      "items": 1311,
+      "degree_b": 8.236460717009916,
+      "degree_x": 25.585812356979407,
+      "clustering_b": 0.11551092044915648,
+      "clustering_x": 0.43991987134574956,
+      "orbit_profile_cosine": 0.685898826052503
+     },
+     "2": {
+      "items": 2643,
+      "degree_b": 8.534998108210367,
+      "degree_x": 28.32652289065456,
+      "clustering_b": 0.014665174169484287,
+      "clustering_x": 0.4584882513873799,
+      "orbit_profile_cosine": 0.7278832904302031
+     },
+     "3": {
+      "items": 3543,
+      "degree_b": 31.209991532599492,
+      "degree_x": 26.082980524978833,
+      "clustering_b": 0.02405310873256322,
+      "clustering_x": 0.4491098205385066,
+      "orbit_profile_cosine": 0.7522753651266844
+     },
+     "4": {
+      "items": 657,
+      "degree_b": 25.059360730593607,
+      "degree_x": 25.312024353120243,
+      "clustering_b": 0.062014346438640754,
+      "clustering_x": 0.4302882823227724,
+      "orbit_profile_cosine": 0.6983683928053346
+     },
+     "5": {
+      "items": 12881,
+      "degree_b": 19.789224439096344,
+      "degree_x": 24.810263178324664,
+      "clustering_b": 0.053447770702634886,
+      "clustering_x": 0.42734096253852893,
+      "orbit_profile_cosine": 0.5270931593022115
+     }
+    }
+   }
+  },
+  "B": {
+   "z": {
+    "status": "ok",
+    "edges": 315391,
+    "edges_recovered": 6137,
+    "edge_recall_vs_behaviour": 0.01945838657412545,
+    "edge_precision_vs_behaviour": 0.01945838657412545,
+    "degree_spearman": 0.01628522071312438,
+    "clustering_spearman": 0.005917210811300457,
+    "orbit_spearman_mean": 0.007787792185452099,
+    "orbit_spearman_min": -0.010781438049271145,
+    "orbit_spearman_max": 0.04461162766421708,
+    "per_role": {
+     "0": {
+      "items": 3521,
+      "degree_b": 61.19852314683329,
+      "degree_x": 26.388809997159896,
+      "clustering_b": 0.017675084613496587,
+      "clustering_x": 0.3658831110650132,
+      "orbit_profile_cosine": 0.7042546603814938
+     },
+     "1": {
+      "items": 1311,
+      "degree_b": 8.236460717009916,
+      "degree_x": 25.440122044241036,
+      "clustering_b": 0.11551092044915648,
+      "clustering_x": 0.38268976749962585,
+      "orbit_profile_cosine": 0.6890145601755215
+     },
+     "2": {
+      "items": 2643,
+      "degree_b": 8.534998108210367,
+      "degree_x": 28.86568293605751,
+      "clustering_b": 0.014665174169484287,
+      "clustering_x": 0.3973792635698927,
+      "orbit_profile_cosine": 0.7092745200302986
+     },
+     "3": {
+      "items": 3543,
+      "degree_b": 31.209991532599492,
+      "degree_x": 26.31526954558284,
+      "clustering_b": 0.02405310873256322,
+      "clustering_x": 0.37321718283329397,
+      "orbit_profile_cosine": 0.7445850899303158
+     },
+     "4": {
+      "items": 657,
+      "degree_b": 25.059360730593607,
+      "degree_x": 25.3531202435312,
+      "clustering_b": 0.062014346438640754,
+      "clustering_x": 0.35701574380197443,
+      "orbit_profile_cosine": 0.6929820266897705
+     },
+     "5": {
+      "items": 12881,
+      "degree_b": 19.789224439096344,
+      "degree_x": 24.63558729912274,
+      "clustering_b": 0.053447770702634886,
+      "clustering_x": 0.3546784462680335,
+      "orbit_profile_cosine": 0.522895758998365
+     }
+    }
+   },
+   "q": {
+    "status": "ok",
+    "edges": 315391,
+    "edges_recovered": 4959,
+    "edge_recall_vs_behaviour": 0.01572334023481964,
+    "edge_precision_vs_behaviour": 0.01572334023481964,
+    "degree_spearman": 0.018530365147605483,
+    "clustering_spearman": 0.0014187052418661319,
+    "orbit_spearman_mean": 0.008048738373359671,
+    "orbit_spearman_min": -0.009345634824798013,
+    "orbit_spearman_max": 0.041970118870175474,
+    "per_role": {
+     "0": {
+      "items": 3521,
+      "degree_b": 61.19852314683329,
+      "degree_x": 26.08861119000284,
+      "clustering_b": 0.017675084613496587,
+      "clustering_x": 0.43314052578555035,
+      "orbit_profile_cosine": 0.7043085635107247
+     },
+     "1": {
+      "items": 1311,
+      "degree_b": 8.236460717009916,
+      "degree_x": 25.11441647597254,
+      "clustering_b": 0.11551092044915648,
+      "clustering_x": 0.44750645260508887,
+      "orbit_profile_cosine": 0.6962619894322859
+     },
+     "2": {
+      "items": 2643,
+      "degree_b": 8.534998108210367,
+      "degree_x": 28.99470298902762,
+      "clustering_b": 0.014665174169484287,
+      "clustering_x": 0.4547072856043321,
+      "orbit_profile_cosine": 0.7064436467109222
+     },
+     "3": {
+      "items": 3543,
+      "degree_b": 31.209991532599492,
+      "degree_x": 25.904882867626306,
+      "clustering_b": 0.02405310873256322,
+      "clustering_x": 0.44759776009510965,
+      "orbit_profile_cosine": 0.7562141999978702
+     },
+     "4": {
+      "items": 657,
+      "degree_b": 25.059360730593607,
+      "degree_x": 25.645357686453575,
+      "clustering_b": 0.062014346438640754,
+      "clustering_x": 0.427936986312992,
+      "orbit_profile_cosine": 0.694055984652871
+     },
+     "5": {
+      "items": 12881,
+      "degree_b": 19.789224439096344,
+      "degree_x": 24.82982687679528,
+      "clustering_b": 0.053447770702634886,
+      "clustering_x": 0.4222424886022998,
+      "orbit_profile_cosine": 0.5303151681506729
+     }
+    }
+   }
+  },
+  "C": {
+   "z": {
+    "status": "ok",
+    "edges": 315391,
+    "edges_recovered": 6003,
+    "edge_recall_vs_behaviour": 0.019033517126360613,
+    "edge_precision_vs_behaviour": 0.019033517126360613,
+    "degree_spearman": 0.013751339998134656,
+    "clustering_spearman": -0.002001688264212711,
+    "orbit_spearman_mean": 0.0033601921716934127,
+    "orbit_spearman_min": -0.014592693725742071,
+    "orbit_spearman_max": 0.03338364535110868,
+    "per_role": {
+     "0": {
+      "items": 3521,
+      "degree_b": 61.19852314683329,
+      "degree_x": 26.33399602385686,
+      "clustering_b": 0.017675084613496587,
+      "clustering_x": 0.3690167026184547,
+      "orbit_profile_cosine": 0.7058158991352517
+     },
+     "1": {
+      "items": 1311,
+      "degree_b": 8.236460717009916,
+      "degree_x": 26.76887871853547,
+      "clustering_b": 0.11551092044915648,
+      "clustering_x": 0.3755768410673196,
+      "orbit_profile_cosine": 0.6746022420087823
+     },
+     "2": {
+      "items": 2643,
+      "degree_b": 8.534998108210367,
+      "degree_x": 29.11312902005297,
+      "clustering_b": 0.014665174169484287,
+      "clustering_x": 0.39740497197996855,
+      "orbit_profile_cosine": 0.701400535174842
+     },
+     "3": {
+      "items": 3543,
+      "degree_b": 31.209991532599492,
+      "degree_x": 26.01354784081287,
+      "clustering_b": 0.02405310873256322,
+      "clustering_x": 0.37939289464974,
+      "orbit_profile_cosine": 0.7512488181531471
+     },
+     "4": {
+      "items": 657,
+      "degree_b": 25.059360730593607,
+      "degree_x": 26.619482496194824,
+      "clustering_b": 0.062014346438640754,
+      "clustering_x": 0.35944589891575457,
+      "orbit_profile_cosine": 0.6761643724648437
+     },
+     "5": {
+      "items": 12881,
+      "degree_b": 19.789224439096344,
+      "degree_x": 24.48660818259452,
+      "clustering_b": 0.053447770702634886,
+      "clustering_x": 0.35674494261420064,
+      "orbit_profile_cosine": 0.5194376059922315
+     }
+    }
+   },
+   "q": {
+    "status": "ok",
+    "edges": 315391,
+    "edges_recovered": 4655,
+    "edge_recall_vs_behaviour": 0.014759457308547169,
+    "edge_precision_vs_behaviour": 0.014759457308547169,
+    "degree_spearman": 0.01096614586548899,
+    "clustering_spearman": -0.0007728943313531695,
+    "orbit_spearman_mean": 0.004817476292305717,
+    "orbit_spearman_min": -0.009131976904538784,
+    "orbit_spearman_max": 0.035560868582778064,
+    "per_role": {
+     "0": {
+      "items": 3521,
+      "degree_b": 61.19852314683329,
+      "degree_x": 26.262141437091735,
+      "clustering_b": 0.017675084613496587,
+      "clustering_x": 0.4383844795824065,
+      "orbit_profile_cosine": 0.7019287937860709
+     },
+     "1": {
+      "items": 1311,
+      "degree_b": 8.236460717009916,
+      "degree_x": 25.939740655987794,
+      "clustering_b": 0.11551092044915648,
+      "clustering_x": 0.44339332783199487,
+      "orbit_profile_cosine": 0.6779640321861551
+     },
+     "2": {
+      "items": 2643,
+      "degree_b": 8.534998108210367,
+      "degree_x": 28.437760121074536,
+      "clustering_b": 0.014665174169484287,
+      "clustering_x": 0.4760965594833658,
+      "orbit_profile_cosine": 0.7126151838658809
+     },
+     "3": {
+      "items": 3543,
+      "degree_b": 31.209991532599492,
+      "degree_x": 25.95794524414338,
+      "clustering_b": 0.02405310873256322,
+      "clustering_x": 0.45086961819559146,
+      "orbit_profile_cosine": 0.7480792359606895
+     },
+     "4": {
+      "items": 657,
+      "degree_b": 25.059360730593607,
+      "degree_x": 25.616438356164384,
+      "clustering_b": 0.062014346438640754,
+      "clustering_x": 0.4408885120589378,
+      "orbit_profile_cosine": 0.6905958016352187
+     },
+     "5": {
+      "items": 12881,
+      "degree_b": 19.789224439096344,
+      "degree_x": 24.80273270708796,
+      "clustering_b": 0.053447770702634886,
+      "clustering_x": 0.4369327041754727,
+      "orbit_profile_cosine": 0.5175519488182043
+     }
+    }
+   }
+  },
+  "D": {
+   "z": {
+    "status": "ok",
+    "edges": 315391,
+    "edges_recovered": 6078,
+    "edge_recall_vs_behaviour": 0.019271317190408095,
+    "edge_precision_vs_behaviour": 0.019271317190408095,
+    "degree_spearman": 0.013357901647056566,
+    "clustering_spearman": 0.0023917413888472124,
+    "orbit_spearman_mean": 0.0016361862157629218,
+    "orbit_spearman_min": -0.020211539195594805,
+    "orbit_spearman_max": 0.03521820816250987,
+    "per_role": {
+     "0": {
+      "items": 3521,
+      "degree_b": 61.19852314683329,
+      "degree_x": 26.27776199943198,
+      "clustering_b": 0.017675084613496587,
+      "clustering_x": 0.36508049050027547,
+      "orbit_profile_cosine": 0.7043579262286741
+     },
+     "1": {
+      "items": 1311,
+      "degree_b": 8.236460717009916,
+      "degree_x": 25.41723874904653,
+      "clustering_b": 0.11551092044915648,
+      "clustering_x": 0.37199622281190886,
+      "orbit_profile_cosine": 0.688308387771139
+     },
+     "2": {
+      "items": 2643,
+      "degree_b": 8.534998108210367,
+      "degree_x": 29.41581536133182,
+      "clustering_b": 0.014665174169484287,
+      "clustering_x": 0.39002453061107595,
+      "orbit_profile_cosine": 0.7046434542250927
+     },
+     "3": {
+      "items": 3543,
+      "degree_b": 31.209991532599492,
+      "degree_x": 26.24837708156929,
+      "clustering_b": 0.02405310873256322,
+      "clustering_x": 0.37210081074992485,
+      "orbit_profile_cosine": 0.7516045247192193
+     },
+     "4": {
+      "items": 657,
+      "degree_b": 25.059360730593607,
+      "degree_x": 24.923896499238964,
+      "clustering_b": 0.062014346438640754,
+      "clustering_x": 0.35251747986050774,
+      "orbit_profile_cosine": 0.7039831874401369
+     },
+     "5": {
+      "items": 12881,
+      "degree_b": 19.789224439096344,
+      "degree_x": 24.59521776259607,
+      "clustering_b": 0.053447770702634886,
+      "clustering_x": 0.3510354580888483,
+      "orbit_profile_cosine": 0.5248332029675966
+     }
+    }
+   },
+   "q": {
+    "status": "ok",
+    "edges": 315391,
+    "edges_recovered": 4778,
+    "edge_recall_vs_behaviour": 0.015149449413585042,
+    "edge_precision_vs_behaviour": 0.015149449413585042,
+    "degree_spearman": 0.007208368096316789,
+    "clustering_spearman": 0.0010705849870883532,
+    "orbit_spearman_mean": -0.0023521598772085948,
+    "orbit_spearman_min": -0.019686055618305165,
+    "orbit_spearman_max": 0.02214660318505202,
+    "per_role": {
+     "0": {
+      "items": 3521,
+      "degree_b": 61.19852314683329,
+      "degree_x": 26.032945186026698,
+      "clustering_b": 0.017675084613496587,
+      "clustering_x": 0.41741641052745204,
+      "orbit_profile_cosine": 0.7159031073351075
+     },
+     "1": {
+      "items": 1311,
+      "degree_b": 8.236460717009916,
+      "degree_x": 25.93592677345538,
+      "clustering_b": 0.11551092044915648,
+      "clustering_x": 0.43017165408356317,
+      "orbit_profile_cosine": 0.6986729453134484
+     },
+     "2": {
+      "items": 2643,
+      "degree_b": 8.534998108210367,
+      "degree_x": 29.195989405978054,
+      "clustering_b": 0.014665174169484287,
+      "clustering_x": 0.4488829202925012,
+      "orbit_profile_cosine": 0.7219477187787848
+     },
+     "3": {
+      "items": 3543,
+      "degree_b": 31.209991532599492,
+      "degree_x": 26.005362686988427,
+      "clustering_b": 0.02405310873256322,
+      "clustering_x": 0.42858985124166127,
+      "orbit_profile_cosine": 0.7670773356170992
+     },
+     "4": {
+      "items": 657,
+      "degree_b": 25.059360730593607,
+      "degree_x": 24.616438356164384,
+      "clustering_b": 0.062014346438640754,
+      "clustering_x": 0.4326768608338248,
+      "orbit_profile_cosine": 0.7226363112093016
+     },
+     "5": {
+      "items": 12881,
+      "degree_b": 19.789224439096344,
+      "degree_x": 24.748311466501047,
+      "clustering_b": 0.053447770702634886,
+      "clustering_x": 0.4138171600595552,
+      "orbit_profile_cosine": 0.5395498417675006
+     }
+    }
+   }
+  }
+ }
+}
