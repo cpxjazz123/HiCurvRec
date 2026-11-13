@@ -836,6 +836,27 @@ export const AGENT_PROFILES = [
     permissions: ['read', 'write'],
     handoffTargets: [],
     /**
+     * 循环：一直核到没有可改的为止。
+     *
+     * 闸是客观的（loopGate.mode = files）：每轮之后比一比候选树的代码文件有没有变 ——
+     * 改了说明这一轮真在修，接着核下一轮；没改说明它找不出该改的了，自己结束循环。
+     * 次数 0 = 不限，停不停只由"文件有没有变"决定。
+     */
+    loop: { enabled: true, count: 0, intervalSeconds: 0 },
+    loopGate: { mode: 'files', prompt: '' },
+    /**
+     * 它被审的是候选树里的代码与测试（不含冻结基线 —— 基线一个字都不许动，
+     * 也就不该进"有没有进展"的判断）。
+     */
+    loopWatchFiles: [
+      'stage2_RQ-VAE/*/*.py',
+      'stage2_RQ-VAE/*/model/*.py',
+      'stage2_RQ-VAE/*/distances/*.py',
+      'stage2_RQ-VAE/*/losses/*.py',
+      'stage2_RQ-VAE/*/tests/*.py',
+      'stage2_RQ-VAE/*/config/*.json',
+    ],
+    /**
      * 默认的交接目标：AGENT FIX 不主动往下交 —— 它的结论交给人（控制器）。
      */
     instructions: [

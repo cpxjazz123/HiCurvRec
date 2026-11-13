@@ -260,6 +260,30 @@ async function main() {
     assert.equal(math.loopResetSession, true);
   });
 
+  await test('AGENT FIX 也配成：改了候选树代码才继续，没改就自己结束', async () => {
+    const health = await (await fetch(`${base}/api/health`)).json();
+    const fix = (health.agents || []).find((a) => a.id === 'agent-fix');
+    assert.ok(fix, 'AGENT FIX 不在身份表里');
+    assert.equal(fix.loop.enabled, true);
+    assert.equal(fix.loop.count, 0, '次数应为 0（不限，由"有没有改"决定停不停）');
+    assert.equal(fix.loopGate.mode, 'files');
+    const watches = fix.loopWatchFiles || [];
+    assert.ok(watches.length > 0, '要有被审文件的模式');
+    assert.ok(
+      watches.some((p) => p.includes('stage2_RQ-VAE/')),
+      `被审的应当是候选树里的代码：${JSON.stringify(watches)}`,
+    );
+    assert.ok(
+      !watches.some((p) => p.includes('TIGER_RQ-VAE')),
+      '冻结基线不该进"有没有进展"的判断',
+    );
+    // 指纹接口按这些模式算，且不含基线。
+    const fp = await (await fetch(`${base}/api/ideas/fingerprint?agentId=agent-fix`)).json();
+    const names = Object.keys(fp.files || {});
+    assert.ok(names.length > 0, 'AGENT FIX 的指纹不该是空的');
+    assert.ok(!names.some((n) => n.startsWith('stage2_RQ-VAE/TIGER_RQ-VAE/')), '基线混进指纹了');
+  });
+
   await test('重置会话就是把对话记录一起清掉（不留"只清上下文"这一说）', async () => {
     // 先给 agent-a 记一条对话，再重置：记录应当被清掉。
     const runRes = await fetch(`${base}/api/run`, {
