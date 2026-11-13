@@ -20,6 +20,7 @@ from __future__ import annotations
 import hashlib
 import itertools
 import json
+import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -97,7 +98,12 @@ def main() -> int:
     print(f"graph: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges", flush=True)
 
     orbits4, used4 = orca_orbits(ORCA_NODE4, 15)
-    orbits5, used5 = orca_orbits(ORCA_NODE5, 73)
+    # ``--only-4`` reproduces the first pass, which had no five-node orbits yet:
+    # same graph, same roles constant, 73 fewer feature columns.  It is the
+    # stability check for "does the picture depend on the larger graphlets".
+    only4 = "--only-4" in sys.argv
+    orbits5, used5 = ((np.zeros((0, 73), dtype=np.int64), None) if only4
+                      else orca_orbits(ORCA_NODE5, 73))
     print(f"orbits: 4-node {used4 or 'NOT_RUN'} | 5-node {used5 or 'NOT_RUN'}", flush=True)
     clustering = nx.clustering(graph)
     core = nx.core_number(graph)
@@ -197,7 +203,8 @@ def main() -> int:
             "retention is the share of behaviour edges whose endpoints share at least one / all three SID tokens",
         ],
     }
-    (HERE / "graphlet_roles.json").write_text(json.dumps(report, indent=1, default=float))
+    (HERE / ("graphlet_roles_4node.json" if only4 else "graphlet_roles.json")).write_text(
+        json.dumps(report, indent=1, default=float))
     print(json.dumps({"graph": report["graph"], "profiles": profiles}, indent=1, default=float)[:2500])
     for name, block in report["retention"].items():
         print(f"--- {name}: overall {block['overall']} random {block['matched_random']}")
