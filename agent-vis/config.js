@@ -904,8 +904,9 @@ export const PERMISSION_CATALOG = [
   {
     id: 'read',
     label: '读（read）',
-    description: '读仓库里的东西：列目录、读文件、按正则搜内容、校验 JSON —— 都限制在仓库根之内。',
-    tools: ['listFiles', 'readFile', 'searchFiles', 'checkJson'],
+    description:
+      '读仓库里的东西：列目录、读文件、按正则搜内容、校验 JSON、校验 idea 字段 —— 都限制在仓库根之内。',
+    tools: ['listFiles', 'readFile', 'searchFiles', 'checkJson', 'checkIdea'],
   },
   {
     id: 'write',

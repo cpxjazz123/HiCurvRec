@@ -725,7 +725,7 @@ async function main() {
     assert.deepEqual(web.tools, ['webSearch']);
     assert.ok(web.description.length > 0, 'web 权限要说得清自己管什么');
     const tools = toolsForPermissions(['read', 'web']).map((tool) => tool.name).sort();
-    assert.deepEqual(tools, ['checkJson', 'listFiles', 'readFile', 'searchFiles', 'webSearch']);
+    assert.deepEqual(tools, ['checkIdea', 'checkJson', 'listFiles', 'readFile', 'searchFiles', 'webSearch']);
   });
 
   await test('全局设置可读可改，改完立刻对运行生效', async () => {
@@ -1550,13 +1550,14 @@ async function main() {
 
   await test('按权限裁剪出来的工具集正好是目录里写的那些', async () => {
     assert.deepEqual(toolNames([]), []);
-    assert.deepEqual(toolNames(['read']), ['checkJson', 'listFiles', 'readFile', 'searchFiles']);
+    assert.deepEqual(toolNames(['read']), ['checkIdea', 'checkJson', 'listFiles', 'readFile', 'searchFiles']);
     // 写权限带两个工具：写文本文件，以及从冻结基线复制一份候选树。
     assert.deepEqual(toolNames(['write']), ['copyBaselineTree', 'writeFile']);
     assert.deepEqual(toolNames(['delete']), ['deleteFile']);
     assert.deepEqual(toolNames(['execute']), ['gitLog']);
     assert.deepEqual(toolNames(['network']), ['listIssues', 'readIssue']);
     assert.deepEqual(toolNames(['read', 'execute', 'network']), [
+      'checkIdea',
       'checkJson',
       'gitLog',
       'listFiles',

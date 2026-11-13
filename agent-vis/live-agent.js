@@ -28,6 +28,8 @@ import {
 } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
 
+import { IDEA_SCHEMA_VERSION, validateIdeaDoc } from './idea-schema.js';
+
 import {
   API_KEY_FILE,
   BASE_URL,
@@ -507,6 +509,19 @@ const checkJsonTool = piTool({
   impl: checkJson,
 });
 
+const checkIdeaTool = piTool({
+  name: 'checkIdea',
+  label: '校验 idea 字段',
+  description:
+    'Check one idea file against the fixed idea schema (genrec.idea.v2): required fields, closed ' +
+    'value sets, and the fields that must not exist (run plans, self-made thresholds, status). ' +
+    'Returns ok plus a per-field error list, so you can fix exactly what is wrong.',
+  parameters: Type.Object({
+    path: Type.String({ description: '仓库相对路径，例如 ideas/xxx/xxx_idea.json' }),
+  }),
+  impl: checkIdea,
+});
+
 const listFilesTool = piTool({
   name: 'listFiles',
   label: '列目录',
@@ -835,9 +850,49 @@ async function checkJson({ path: relPath }) {
   }
 }
 
+/**
+ * 校验一份 idea 文件的字段形状。
+ *
+ * checkJson 只管"能不能解析"；这个工具管"字段对不对"：
+ * 必填字段、闭合取值、以及那些**不该存在**的字段（运行计划、自定门槛、状态）。
+ * 逐条报错，模型照着改就能过。
+ */
+async function checkIdea({ path: relPath }) {
+  const target = resolveInSandbox(relPath);
+  let text = '';
+  try {
+    text = await fs.promises.readFile(target, 'utf8');
+  } catch (err) {
+    throw new Error(`读不了这个文件: ${relPath}`);
+  }
+  let value;
+  try {
+    value = JSON.parse(text);
+  } catch (err) {
+    const message = err && err.message ? err.message : String(err);
+    const matched = /line (\d+) column (\d+)/.exec(message);
+    return {
+      ok: false,
+      path: relativeToRoot(target),
+      schema: IDEA_SCHEMA_VERSION,
+      error: message,
+      line: matched ? Number(matched[1]) : null,
+      column: matched ? Number(matched[2]) : null,
+    };
+  }
+  const verdict = validateIdeaDoc(value);
+  return {
+    ok: verdict.ok,
+    path: relativeToRoot(target),
+    schema: verdict.version,
+    errors: verdict.errors,
+  };
+}
+
 export const PI_TOOLS = {
   listFiles: listFilesTool,
   checkJson: checkJsonTool,
+  checkIdea: checkIdeaTool,
   webSearch: webSearchTool,
   stage2Start: stage2StartTool,
   stage2Status: stage2StatusTool,

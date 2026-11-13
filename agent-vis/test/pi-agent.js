@@ -111,7 +111,7 @@ await test('权限目录里的每个工具名都能在 pi 工具表里找到', a
 await test('read 权限只给只读工具（含 JSON 校验）', async () => {
   assert.deepEqual(
     toolsForPermissions(['read']).map((tool) => tool.name),
-    ['listFiles', 'readFile', 'searchFiles', 'checkJson'],
+    ['listFiles', 'readFile', 'searchFiles', 'checkJson', 'checkIdea'],
   );
 });
 
@@ -128,6 +128,7 @@ await test('多项权限按请求顺序合并去重', async () => {
     'readFile',
     'searchFiles',
     'checkJson',
+    'checkIdea',
   ]);
 });
 
