@@ -1,0 +1,122 @@
+{
+  "symbols": {
+    "i, j": "商品下标；N(i) 为训练划分共现图里 i 的邻居集合",
+    "d_i": "商品 i 在训练共现图里的度",
+    "T_ij": "商品 i 与 j 在训练共现图里的共同邻居数",
+    "kappa_ij": "AF3 曲率（一条边的标量）",
+    "s_i": "商品 i 的结构势（度加权 AF3 均值，再做全图标准化）",
+    "mu_s": "全图商品上标准化前的 s 的均值",
+    "sigma_s": "全图商品上标准化前的 s 的标准差（口径须固定）",
+    "a": "深度阈值：|s_i| 的全图 2/3 分位数，a = Q_{2/3}({|s_i|})",
+    "depth(i)": "商品 i 的层预算，取值 N_l、N_l-1 或 N_l-2（且不低于 min_depth）",
+    "l = 1, ..., N_l": "残差层号",
+    "N_l": "残差层数（= config 的 CODEBOOK_NUM = 3）",
+    "S_l": "第 l 层参与量化的商品集合，S_l = {i : depth(i) >= l}",
+    "K": "每层码本大小（config 的 CODEBOOK_SIZE）",
+    "K_l": "第 l 层的哨兵 token 下标，K_l = K（码本之外额外一个 token，码本大小不变）",
+    "c_k^(l)": "第 l 层码本第 k 个码字",
+    "z_i^(l)": "商品 i 在第 l 层进入量化器的残差向量",
+    "token_l(i)": "商品 i 在第 l 层被分配的 token 下标（参与层为码字下标，跳过层为 K_l）",
+    "q_i": "商品 i 的量化向量，q_i = sum_{l <= depth(i)} c_{token_l(i)}^(l)",
+    "d(x, c)": "基线基础距离：平方欧氏 |x|^2 - 2 x.c + |c|^2",
+    "C^(l)": "第 l 层代价矩阵（|S_l| x K），元素为 d(z_i^(l), c_k)^(l)",
+    "Q^(N_l)": "末层 Sinkhorn 传输矩阵（|S_Nl| x K）",
+    "beta": "commitment 权重，取 config 的 BETA = 0.25",
+    "L_recon": "重建损失 MSE(decoder(q), x)",
+    "codebook_l": "第 l 层 codebook 项，按 S_l 归约的 MSE(sg[z], q)",
+    "commitment_l": "第 l 层 commitment 项，按 S_l 归约的 MSE(z, sg[q])",
+    "L": "总损失，见 formula total_loss",
+    "eps": "数值下限 1e-8",
+    "pad_token_ratio": "SID 中哨兵 token 的占比，记录进 metrics；truncation_off 时为 0"
+  },
+  "formulas": [
+    {
+      "name": "curvature",
+      "formula": "kappa_ij = 4 - d_i - d_j + 3 * T_ij",
+      "note": "只在训练划分的共现图上算；冻结表，训练中不更新"
+    },
+    {
+      "name": "structural_potential",
+      "formula": "s_i = (sum_{j in N(i)} kappa_ij) / d_i",
+      "note": "d_i = 0 的商品取全图均值"
+    },
+    {
+      "name": "standardisation",
+      "formula": "s_i <- (s_i - mu_s) / max(sigma_s, eps)",
+      "note": "mu_s、sigma_s 取全图商品上的均值与标准差；与归档的 AF3 机制用同一套口径，便于对照"
+    },
+    {
+      "name": "depth_threshold",
+      "formula": "a = Q_{2/3}({|s_i|})；若 sigma_s = 0 或 a <= 0，则记 degenerate = 1 并令 a = 0",
+      "note": "用分位数自标定，不做扫描；degenerate = 1 时直接走 behaviour_off，结果必须与基线逐位相同"
+    },
+    {
+      "name": "layer_budget",
+      "formula": "depth(i) = N_l 若 s_i <= -a；N_l - 2 若 s_i >= a（且 s_i > 0）；否则 N_l - 1；再取 depth(i) <- max(depth(i), min_depth)",
+      "note": "负曲率（跨社区桥梁）走满层，强正曲率（社区内部密集连接）走最浅，中间档走 N_l-1；N_l <= 2 时不再减 2，只分 N_l 与 N_l-1 两档"
+    },
+    {
+      "name": "truncated_residual",
+      "formula": "z_i^(1) = x_i；若 depth(i) >= l：z_i^(l) = x_i - sum_{m < l} c_{token_m(i)}^(m)；若 depth(i) < l：token_l(i) = K_l 且该层码字贡献固定为 0 向量",
+      "note": "跳过层不更新残差、不参与任何分配，量化贡献为 0；哨兵 token 只出现在 SID 上"
+    },
+    {
+      "name": "assignment",
+      "formula": "参与集合 S_l = {i : depth(i) >= l}；末层 l = N_l：Q^(N_l) = Sinkhorn(center(C^(N_l)); epsilon = sk_epsilon, iters = sk_iters)，token_{N_l}(i) = argmax_k Q_ik^(N_l)，i in S_Nl；其余层 l < N_l：token_l(i) = argmin_k C_ik^(l)，i in S_l",
+      "note": "与基线同一套分配（末层 Sinkhorn、其余层 argmin）；差别只在行集合是 S_l，行数随 l 递减；S_l 为空时该层不分配、codebook_l 记 0"
+    },
+    {
+      "name": "quantization_vector",
+      "formula": "q_i = sum_{l = 1}^{depth(i)} c_{token_l(i)}^(l)",
+      "note": "只用参与层的码字；跳过的层对 q_i 无贡献（等价于加零向量），因此重建必须靠更少的层完成"
+    },
+    {
+      "name": "reconstruction",
+      "formula": "L_recon = MSE(decoder(q), x)",
+      "note": "公式形式与基线相同，只是输入 q 由变长量化得到；这一项是编码器把语义压进浅层前缀的动力"
+    },
+    {
+      "name": "masked_quantization_loss",
+      "formula": "codebook_l = (1/|S_l|) * sum_{i in S_l} min_k ||sg[z_i^(l)] - c_k^(l)||^2；commitment_l = (1/|S_l|) * sum_{i in S_l} ||z_i^(l) - sg[c_{token_l(i)}^(l)]||^2",
+      "note": "分母是参与行数 |S_l|，不是 batch 大小 B；跳过行不贡献量化项。|S_l| = 0 时两项均记 0"
+    },
+    {
+      "name": "total_loss",
+      "formula": "L = L_recon + (1/N_l) * sum_l [ codebook_l + beta * commitment_l ]",
+      "note": "与基线 losses/quantization.py:quantization_total 逐位同构（beta = config 的 BETA = 0.25 压在 commitment 上，按层取平均）；不新增任何损失项，结构信息只通过 depth(i) 这个硬掩码进入"
+    },
+    {
+      "name": "sid_export",
+      "formula": "sid(i) = [token_1(i), ..., token_{N_l}(i)]，其中跳过层位置上的 token 为 K_l = K",
+      "note": "SID 长度保持 N_l 不变（下游 TIGER 序列长度不受影响）；每层词表从 K 扩到 K+1，多出的是哨兵；该 token 在训练时的 item 词表中不出现对应的真实商品"
+    },
+    {
+      "name": "gradient_routing",
+      "formula": "depth(i) 是冻结的常数（来自训练前算定的 s 与 a），dL/d depth = 0；跳过层无梯度、无参数更新；dL/dz_i^(l) 仅来自 recon 与 l <= depth(i) 的量化项",
+      "note": "截断是硬掩码，不引入额外梯度通路，也不给 AF3 表或阈值任何梯度"
+    }
+  ],
+  "switches": {
+    "truncation_off": "所有 depth(i) = N_l => S_l 等于全 batch、无哨兵 token、q_i 用满 N_l 层 => 与基线逐位相同（数学上完全退化为基线，不是近似）",
+    "truncation_on": "按 layer_budget 分三档 => S_l 随 l 收缩，SID 出现哨兵 token，pad_token_ratio > 0",
+    "behaviour_off": "truncation_off，或 degenerate = 1（sigma_s = 0 / a <= 0，即全图 s 相同）=> depth 全为 N_l => 与 truncation_off 相同 => 结果必须与基线逐位一致；这是本机制的自检开关",
+    "none_on": "truncation_on 且未退化 => 三档深度同时生效"
+  },
+  "constants": {
+    "N_l": 3,
+    "quantile_for_threshold": 0.6666666666666666,
+    "min_depth": 1,
+    "beta": 0.25,
+    "sk_epsilon": 0.003,
+    "sk_iters": 50,
+    "eps": 1e-08
+  },
+  "metrics": {
+    "record": [
+      "a（深度阈值）、degenerate 标志",
+      "三档商品数与占比",
+      "每层 |S_l| 与 sid 中哨兵 token 占比 pad_token_ratio"
+    ],
+    "reason": "a 与三档占比是结构信号强度的直接读数；|S_l| 决定掩码损失的分母，必须与训练日志一起留底才能复现"
+  }
+}

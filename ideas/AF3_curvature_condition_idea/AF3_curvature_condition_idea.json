@@ -1,0 +1,92 @@
+{
+  "date": "2026-11-15",
+  "arm": "TIGER_af3_curvature_condition_rq",
+  "sections": {
+    "1_goal": {
+      "statement": "把 AF3 曲率从「进代价 / 定层数 / 切列块」这类量化分配环节，搬回到量化之前的一步：让曲率成为每个商品自身携带的结构条件，直接调制 RQ-VAE 编码器的计算。具体地，在训练划分的商品共现图上冻结地算每条边的 AF3 曲率 kappa_ij，对每个商品取度加权的平均曲率并做全图 z-score，得到结构势 s_i；再配上同一邻域上的平均曲率符号强度 tanh(kappa_bar_i)，组成两维、逐商品、训练中完全冻结的结构描述子 b_i。编码器每层加一个由 b_i 生成的 FiLM 调制：h_l = (1 + gamma_l) * MLP_l(h_{l-1}) + beta_l，其中 (gamma_l, beta_l) = g_l(b_i)，g_l 初始化为 gamma_l = 0、beta_l = 0，即初始时等价于恒等调制；b_i 另以加性方式在输入处拼一次。于是结构信号以「单商品自身属性」的形式进入连续表示 z_i，量化后的 SID 随之按结构分层，而码本、层数、代价函数、Sinkhorn / argmin 分配规则、重建项与 codebook / commitment 项全部与基线逐位相同。conditioning_off 时 gamma ≡ 0、beta ≡ 0 且不拼 b_i，训练与导出的 SID 必须与基线逐位相同，作为自检。整个机制不构造任何商品对，不出现 InfoNCE / BCE / margin / 源-目标残差对比。",
+      "difference_from_literature": "与曲率图表示学习一族（Li et al., 2021 的 Curvature GNN；Nguyen et al., 2022 用 Ollivier-Ricci 曲率解释过平滑/过压缩）不同：它们的曲率参与消息传递、注意力或重连，服务于连续 embedding 与排序打分，没有离散量化、也没有 SID；我们把逐商品曲率压缩成两维静态描述子，只示范给编码器，不改图传播结构，目标是让量化结果（SID）继承结构。与几何感知 RQ-VAE 一族（Colombo & Ayoughi, 2026；HypRQ-VAE, 2026）不同：它们把双曲/混合曲率写进嵌入空间、距离函数或量化器整形，几何是可学的空间先验；我们的空间与距离是基线欧氏平方距离，几何只以「每个商品一组标量 + FiLM 参数」的形式出现，码本大小与量化规则一行不改。与结构感知 SID 工作（Differentiable Semantic ID, 2026；Decoupled Residual Quantization, 2026）不同：它们改的是量化流程本身（可微分配 / 层解耦），结构信号不是行为图拓扑；我们在量化流程之外做条件化，量化器保持基线，能干净地归因到表示学习入口。与本仓库已归档的四个机制不同：curvature_drive 把结构势做成码字势进代价（量化分配），curvature_depth 用曲率定层预算（SID 长度），curvature_blocks 用曲率族群切码本列块（可选列集合），curvature_pairs 用曲率符号挑正负对（成对对比，已被主线禁止）；本方向既不碰代价、不碰层数、不碰可选列集合，也不构造商品对，唯一改动在编码器的输入与逐层调制上，属于主线里 representation_learning 那一侧。"
+    },
+    "4_method": {
+      "single_variable": "新增「AF3 结构描述子 → 编码器 FiLM 条件化」这一条通路：只给编码器增加逐商品的冻结结构条件与逐层调制参数，代价公式、层数、码本大小、分配规则、损失公式与 SID 导出格式全部沿用基线。",
+      "new_files": [
+        {
+          "path": "af3_condition.py",
+          "what": "从训练划分共现图冻结地算边曲率 kappa_ij 与度加权平均曲率，做全图 z-score 得结构势 s_i，并给出邻域平均曲率符号强度 tanh(kappa_bar_i)，拼成每个商品的二维结构描述子 b_i；同时输出退化标志（曲率全零、s_i 方差为 0、孤立商品占比）与分位统计，存成与商品下标对齐的定长数组"
+        },
+        {
+          "path": "model/struct_condition.py",
+          "what": "把二维 b_i 经两层 MLP 映射成每层一组 FiLM 参数 (gamma_l, beta_l)（维度与对应隐藏层一致），输出层权重零初始化 + gamma 用 sigmoid 偏置配方使初始 gamma≈0、beta=0；conditioning_off 时直接返回全零参数且跳过 b_i 拼接，保证与基线逐位一致"
+        },
+        {
+          "path": "model/conditioned_encoder.py",
+          "what": "包装基线 encoder：输入处可选拼接 b_i，每层按 h_l = (1 + gamma_l) * MLP_l(h_{l-1}) + beta_l 施加调制，其余（层数、激活、归一化、输出维、L2 归一化位置）与基线保持逐位一致，并暴露查看 gamma/beta 幅值的接口用于诊断"
+        },
+        {
+          "path": "eval/sid_structure_probe.py",
+          "what": "只读评估：在导出的 SID 上算结构保持度指标（同族群 SID 前缀共享长度、桥梁商品与邻居的 SID 距离分位、每层 token 的族群纯度），并和基线 SID 对比；不参与训练，不改损失"
+        }
+      ]
+    },
+    "5_references": [
+      {
+        "title": "Curvature graph neural network",
+        "year": 2021,
+        "venue": "Information Sciences",
+        "doi": "10.1016/j.ins.2021.12.077",
+        "authors": ["Haifeng Li", "Jun Hong Cao", "Jiawei Zhu", "Yu Liu"],
+        "what": "把离散曲率接进图神经网络的传播与聚合，用于节点分类/图表示；曲率服务于连续 embedding，没有量化与 SID。与本方向同用 Forman 型曲率，但入口不同：它改进传播，我们只产出逐商品静态描述子去条件化编码器。"
+      },
+      {
+        "title": "Revisiting Over-smoothing and Over-squashing Using Ollivier-Ricci Curvature",
+        "year": 2022,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2211.15779",
+        "authors": ["Khang Nguyen", "Hieu Nong", "Nguyễn Quang Vịnh", "Nhat Ho"],
+        "what": "用曲率解释并缓解过平滑/过压缩，给出曲率与信息瓶颈的定量联系；为「桥梁边（负曲率）与社区内部边（正曲率）需要不同处理」提供理论依据，但不涉及离散量化。"
+      },
+      {
+        "title": "Geometry-Aware Hyperbolic Residual-Quantized Variational Autoencoders",
+        "year": 2026,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2609.26342",
+        "authors": ["Alessio Colombo", "Melika Ayoughi"],
+        "what": "把双曲几何写进 RQ-VAE 的嵌入与量化过程，几何是空间/距离层面的可学先验；本方向不改距离与码本，几何只以逐商品标量条件出现。"
+      },
+      {
+        "title": "Differentiable Semantic ID for Generative Recommendation",
+        "year": 2026,
+        "venue": "SIGIR",
+        "doi": "10.1145/3805712.3809641",
+        "authors": ["Junchen Fu", "Xuri Ge", "Alexandros Karatzoglou", "Ioannis Arapakis"],
+        "what": "让 SID 的分配过程可微以直接优化下游目标；改的是量化流程，结构信号不来自行为图拓扑。本方向量化器保持基线，改动在编码器入口。"
+      },
+      {
+        "title": "Decoupled Residual Quantization for Robust Semantic IDs in Recommendation",
+        "year": 2026,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2606.01844",
+        "authors": ["Xuesi Wang", "Junjie Wang", "Ziliang Wang", "Weijie Bian"],
+        "what": "解耦 RQ 各层以提升 SID 鲁棒性；同样属于量化流程改造。本方向不动层结构与分配，只在表示学习侧注入单商品结构条件。"
+      },
+      {
+        "title": "HRCF: Enhancing Collaborative Filtering via Hyperbolic Geometric Regularization",
+        "year": 2022,
+        "venue": "WWW",
+        "doi": "10.1145/3485447.3512118",
+        "authors": ["Menglin Yang", "Min Zhou", "Jiahong Liu", "Defu Lian"],
+        "what": "以双曲几何正则约束协同过滤的 embedding，使层次结构进入连续空间；证明几何先验能保结构，但不产生 SID，也不做离散量化。"
+      },
+      {
+        "title": "FiLM: Visual Reasoning with a General Conditioning Layer",
+        "year": 2018,
+        "venue": "AAAI",
+        "doi": "",
+        "authors": ["Ethan Perez", "Florian Strub", "Harm de Vries", "Vincent Dumoulin", "Aaron Courville"],
+        "what": "提出以外部条件生成逐层仿射调制（FiLM）的通用条件化层；本方向借用其逐层 (gamma, beta) 形式，把标量结构条件注入编码器。DOI 未在本轮检索中取得，故留空，不作引用依据。"
+      }
+    ]
+  },
+  "result": {
+    "status": "not_run"
+  }
+}
