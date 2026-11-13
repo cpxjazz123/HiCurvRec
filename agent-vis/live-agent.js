@@ -37,7 +37,6 @@ import {
   FROZEN_BASELINE_TREE,
   IDEA_RULE,
   LANGUAGE_RULE,
-  MAX_OUTPUT_TOKENS,
   MODEL_ID,
   PERMISSION_CATALOG,
   PROVIDER_NAME,
@@ -398,6 +397,55 @@ export const TOOL_IMPLS = {
     return { path: relativeToRoot(target), bytes, created: !existed };
   },
 
+  /**
+   * 改一段，不重打整份文件。
+   *
+   * 为什么需要它：writeFile 是整份覆盖 —— 要改一份 12.4k 字符的 math.json 里的
+   * 5 条公式，模型得把整份稿子重新吐一遍；那既是几十倍的多余输出，
+   * 也正是"响应被切在工具调用中间、修正一条都落不了地"的原因。
+   * 改一段就用改一段。
+   */
+  async editFile({ path: relPath, oldText, newText }) {
+    const target = resolveMutableInSandbox(relPath);
+    if (typeof oldText !== 'string' || oldText === '') {
+      throw new Error('oldText 不能为空：说清楚要被替换掉的是哪一段原文');
+    }
+    if (typeof newText !== 'string') {
+      throw new Error('newText 必须是字符串（要替换成的内容）');
+    }
+    let text = '';
+    try {
+      text = await fs.promises.readFile(target, 'utf8');
+    } catch {
+      throw new Error(`这个文件读不出来（editFile 只改已有的文件）: ${relPath}`);
+    }
+    const occurrences = text.split(oldText).length - 1;
+    if (occurrences === 0) {
+      throw new Error(
+        `文件里找不到要替换的那一段（原文必须逐字一致）: ${relPath}`,
+      );
+    }
+    if (occurrences > 1) {
+      throw new Error(
+        `要替换的那一段在文件里出现了 ${occurrences} 次，说不清该改哪一处: ${relPath}`,
+      );
+    }
+    const next = text.replace(oldText, newText);
+    const bytes = Buffer.byteLength(next, 'utf8');
+    if (bytes > MAX_WRITE_BYTES) {
+      throw new Error(
+        `改完之后太大了（${bytes} 字节，上限 ${MAX_WRITE_BYTES} 字节）: ${relPath}`,
+      );
+    }
+    await fs.promises.writeFile(target, next, 'utf8');
+    return {
+      path: relativeToRoot(target),
+      bytes,
+      replacedChars: oldText.length,
+      newChars: newText.length,
+    };
+  },
+
   async deleteFile({ path: relPath }) {
     const target = resolveMutableInSandbox(relPath);
     if (target === sandboxRoot()) {
@@ -611,6 +659,21 @@ const gitLogTool = piTool({
     ),
   }),
   impl: TOOL_IMPLS.gitLog,
+});
+
+const editFileTool = piTool({
+  name: 'editFile',
+  label: '改一段',
+  description:
+    'Replace one exact passage in a file inside the repo. The old text must appear exactly ' +
+    'once and verbatim. Use this instead of rewriting a whole file when only a few entries ' +
+    'change - it keeps the output small and the change reviewable.',
+  parameters: Type.Object({
+    path: Type.String({ description: '仓库相对路径，例如 ideas/xxx/math.json' }),
+    oldText: Type.String({ description: '要被替换掉的原文（逐字一致，且在文件里只出现一次）' }),
+    newText: Type.String({ description: '替换成的新内容' }),
+  }),
+  impl: TOOL_IMPLS.editFile,
 });
 
 const writeFileTool = piTool({
@@ -927,6 +990,7 @@ export const PI_TOOLS = {
   readIssue: readIssueTool,
   gitLog: gitLogTool,
   writeFile: writeFileTool,
+  editFile: editFileTool,
   copyBaselineTree: copyBaselineTreeTool,
   deleteFile: deleteFileTool,
 };
@@ -984,7 +1048,10 @@ export function ensurePiModelsFile() {
             reasoning: false,
             input: ['text'],
             contextWindow: CONTEXT_WINDOW,
-            maxTokens: MAX_OUTPUT_TOKENS,
+            // 不写 maxTokens：这个字段会作为 max_tokens 发给 provider，由它按模型
+            // 真实上限截断。我们以前手写 8192，结果响应正好在 8192 处被切
+            // （finishReason=length），把"我们自己设的栏杆"当成了模型的限制。
+            // 不设它，就只剩模型自己的上限与上下文窗口。
             cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
           },
         ],

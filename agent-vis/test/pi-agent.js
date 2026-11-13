@@ -108,6 +108,36 @@ await test('权限目录里的每个工具名都能在 pi 工具表里找到', a
   }
 });
 
+await test('editFile 只改一段：原文要对得上、且只能出现一次', async () => {
+  const dir = path.join(SCRATCH, 'edit');
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, 'a.json');
+  fs.writeFileSync(file, '{"x": 1, "y": 2}\n', 'utf8');
+
+  const impl = TOOL_IMPLS.editFile;
+  const rel = path.relative(REPO_ROOT, file);
+
+  const ok = await impl({ path: rel, oldText: '"x": 1', newText: '"x": 42' });
+  assert.equal(ok.replacedChars, 6);
+  assert.match(fs.readFileSync(file, 'utf8'), /"x": 42/);
+
+  // 原文对不上：报错，并且文件不动。
+  await assert.rejects(
+    () => impl({ path: rel, oldText: '"x": 99', newText: '"x": 0' }),
+    /找不到要替换的那一段/,
+  );
+  assert.match(fs.readFileSync(file, 'utf8'), /"x": 42/);
+
+  // 原文出现多次：报错，不猜改哪一处。
+  fs.writeFileSync(file, '"z": 1, "z": 1\n', 'utf8');
+  await assert.rejects(
+    () => impl({ path: rel, oldText: '"z": 1', newText: '"z": 2' }),
+    /出现了 2 次/,
+  );
+  assert.match(fs.readFileSync(file, 'utf8'), /"z": 1, "z": 1/);
+});
+
 await test('read 权限只给只读工具（含 JSON 校验）', async () => {
   assert.deepEqual(
     toolsForPermissions(['read']).map((tool) => tool.name),
