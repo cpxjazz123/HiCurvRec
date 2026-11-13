@@ -946,13 +946,13 @@ export function createServer({
             res.end(JSON.stringify({ error: `没有这个 agent 身份：${agentId}` }));
             return;
           }
-          const keepRecords = Boolean(body && body.keepRecords === true);
           const targets = all ? [...known] : [agentId];
           let disposed = 0;
           for (const id of targets) {
-            // keepRecords：只要模型上下文从零开始，对话记录留着。
-            // 循环里"每轮之前重置会话"用的就是这个 —— 记录是每轮的历史，不该被抹掉。
-            if (!keepRecords) config.clearChatRecords(id);
+            // 重置就是重置：模型上下文清零，对话记录一并清掉。
+            // 没有"只清上下文、留记录"这一说 —— 屏幕上留着模型已经不记得的对话，
+            // 那是错位，不是留痕。
+            config.clearChatRecords(id);
             disposed += resetAgentSessions(id);
           }
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });

@@ -93,7 +93,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.15';
+const FRONTEND_VERSION = '2026-11-14.16';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -1842,17 +1842,16 @@ function createPanel(root) {
    * 已用完，都不再排。第一轮由用户点击触发，loopContinuation 不再重置剩余轮数。
    */
   /**
-   * 重置这一栏的会话，但留下对话记录。
+   * 重置这一栏的会话：模型上下文清零，对话记录一并清掉。
    *
-   * 面板上那个「重置会话」会把记录一起删掉；这里只要模型上下文从零开始 ——
-   * 每一轮都从头看一遍，不带着上一轮的结论。
+   * 重置就是重置 —— 留着模型已经不记得的对话，屏幕上是错位，不是留痕。
    */
-  async function resetSessionKeepingRecords(agentId) {
+  async function resetSessionAndRecords(agentId) {
     try {
       await fetch(`${API_BASE}/api/session/reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentId, keepRecords: true }),
+        body: JSON.stringify({ agentId }),
       });
     } catch {
       // 重置失败不该挡住这一轮：照跑。
@@ -1966,7 +1965,7 @@ function createPanel(root) {
     const scheduleNext = () => {
       // 每轮之前要不要把这一栏的会话重置（记录留着，模型上下文清零）。
       if (loopResetSessionSetting()) {
-        void resetSessionKeepingRecords(root.dataset.profile);
+        void resetSessionAndRecords(root.dataset.profile);
       }
       const waitMs = Math.max(0, setting.intervalSeconds) * 1000;
       if (els.loopState) {
