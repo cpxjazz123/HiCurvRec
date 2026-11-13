@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-14.20';
+export const FRONTEND_VERSION = '2026-11-14.21';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -404,11 +404,19 @@ export const LANGUAGE_RULE =
 /**
  * 每一步的输出上限（token）。
  *
- * 8192 不够用：AGENT MATH 要把整份 math.json 写回去，那份稿子 12.4k 字符 ——
- * 一次写不完就被截断，而 writeFile 是整份覆盖，于是修正一条也落不了地。
- * 16384 实测模型接受 ✓。
+ * 这不是 pi 的策略限制，而是**我们告诉 provider 的**那一个数 ——
+ * config.js 里这个值会写进 pi 的 provider 配置、最后作为 max_tokens 发给 API，
+ * provider 按它截断（实测：声明 8192 时，响应正好在 8192 处被切，finishReason=length）。
+ *
+ * 8192 是当初随手写的一个保守值，不是模型的上限：provider 接受 131072 也不报错。
+ * 而 8192 对"把整份 math.json 写回去"这种活是不够的 ——
+ * 那份稿子 12.4k 字符，光思考就吃掉 6600 token，剩下的不够写参数，
+ * 于是响应在工具调用中间被切断，writeFile 压根没派发，修正一条也落不了地。
+ *
+ * 现在给到 32768：一次响应里既有思考、又有整份文件的参数，都放得下。
+ * 更稳的做法是让 agent 只写要改的那几条（补丁工具），不用每轮重打整份稿子。
  */
-export const MAX_OUTPUT_TOKENS = 16384;
+export const MAX_OUTPUT_TOKENS = 32768;
 
 /**
  * 页面上内置的三个 agent 的人设。
