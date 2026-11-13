@@ -4,8 +4,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  IDEA_EVAL_METRIC,
-  IDEA_EVAL_THRESHOLD,
   IDEA_SCHEMA_VERSION,
   IDEA_SURFACES,
   ideaSkeleton,
@@ -47,7 +45,7 @@ function goodDoc() {
     arm: 'TIGER_af3_curvature_transport_rq',
     sections: {
       '1_goal': {
-        mechanism: '表示空间换成逐商品曲率的产品流形，几何进分配代价与残差递推两处。',
+        assumption: '表示空间换成逐商品曲率的产品流形，几何进分配代价与残差递推两处。',
         af3_entry: {
           signal: 'AF3 结构势 s_i（训练共现图上冻结）',
           formula: 'structure_potential',
@@ -79,11 +77,6 @@ function goodDoc() {
         surfaces: [
           { surface: 'residual_update', symbol: 'ResidualTransport.forward', change: '欧氏减法换成 Mobius 减 + Log' },
         ],
-        numerics: {
-          dtype: 'fp32',
-          clamps: [{ name: 'ARTANH_EPS', value: 1e-6, why: 'artanh 的定义域边界，取 IEEE 双精度下 1-1e-6' }],
-          degenerate_to_baseline: 'TRANSPORT_MODE=euclidean 时距离与递推都退回 distances/distance.py',
-        },
       },
       '5_references': [
         {
@@ -94,12 +87,6 @@ function goodDoc() {
           relation: 'same_family',
         },
       ],
-      '6_evaluation': {
-        metric: IDEA_EVAL_METRIC,
-        threshold: IDEA_EVAL_THRESHOLD,
-        comparison_arm: 'TIGER_mixed_rq_F0',
-        falsifier: '若 test_R@10 不超过对照臂，则判否。',
-      },
     },
   };
 }
@@ -155,20 +142,17 @@ await test('4_method.runs 不存在（运行计划归框架）', () => {
   assert.ok(pathsOf(verdict).includes('sections.4_method.runs'));
 });
 
-await test('6_evaluation 自定门槛判不合规', () => {
+await test('判据整段都不许出现在 idea 里（门槛是仓库契约，不是 idea 自己定）', () => {
   const doc = goodDoc();
-  doc.sections['6_evaluation'].threshold = 0.0592;
+  doc.sections['6_evaluation'] = {
+    metric: 'stage3.test_recall@10',
+    threshold: 0.0592,
+    comparison_arm: 'TIGER_mixed_rq_F0',
+    falsifier: '若不超过对照臂则判否',
+  };
   const verdict = validateIdeaDoc(doc);
   assert.equal(verdict.ok, false);
-  assert.ok(pathsOf(verdict).includes('sections.6_evaluation.threshold'));
-});
-
-await test('指标名不是仓库契约就判不合规', () => {
-  const doc = goodDoc();
-  doc.sections['6_evaluation'].metric = 'stage2.l3_collision';
-  const verdict = validateIdeaDoc(doc);
-  assert.equal(verdict.ok, false);
-  assert.ok(pathsOf(verdict).includes('sections.6_evaluation.metric'));
+  assert.ok(pathsOf(verdict).includes('sections.6_evaluation'));
 });
 
 await test('must_hold 少一条就判不合规', () => {
@@ -188,12 +172,17 @@ await test('面名只能取那七个', () => {
   assert.ok(IDEA_SURFACES.includes('assignment_cost'));
 });
 
-await test('idea 里不许有 check 类字段（验证计划归实现阶段）', () => {
+await test('idea 里不许有 check / 数值 / 判据类字段（那些归实现阶段）', () => {
   const doc = goodDoc();
   doc.sections['4_method'].sanity_checks = ['一句能机械判定的话'];
+  doc.sections['4_method'].numerics = { dtype: 'fp32', clamps: [], degenerate_to_baseline: 'x' };
+  doc.sections['6_evaluation'] = { metric: 'stage3.test_recall@10', threshold: 0.065 };
   const verdict = validateIdeaDoc(doc);
   assert.equal(verdict.ok, false);
-  assert.ok(pathsOf(verdict).includes('sections.4_method.sanity_checks'));
+  const paths = pathsOf(verdict);
+  assert.ok(paths.includes('sections.4_method.sanity_checks'));
+  assert.ok(paths.includes('sections.4_method.numerics'));
+  assert.ok(paths.includes('sections.6_evaluation'));
 });
 
 await test('文献里的被引数判不合规（没有消费者）', () => {
@@ -206,7 +195,7 @@ await test('文献里的被引数判不合规（没有消费者）', () => {
 
 await test('多种子计划在值上被认出来', () => {
   const doc = goodDoc();
-  doc.sections['4_method'].sanity_checks = ['跑 seed 42/43/44 三次取均值'];
+  doc.sections['4_method'].surfaces[0].change = '跑 seed 42/43/44 三次取均值';
   const verdict = validateIdeaDoc(doc);
   assert.equal(verdict.ok, false);
   assert.ok(pathsOf(verdict).includes('$'), '要有一条指向整份文档的错误');
@@ -214,13 +203,19 @@ await test('多种子计划在值上被认出来', () => {
 
 await test('否定句"不做多种子"不会被误伤', () => {
   const doc = goodDoc();
-  doc.sections['1_goal'].mechanism = '表示空间换成逐商品曲率的产品流形；不做多种子实验，也不训练消融臂。';
+  doc.sections['1_goal'].assumption = '表示空间换成逐商品曲率的产品流形；不做多种子实验，也不训练消融臂。';
   const verdict = validateIdeaDoc(doc);
   assert.equal(verdict.ok, true, `不该有错：${JSON.stringify(verdict.errors)}`);
 });
 
 await test('真实那份 transport idea 判不合规（当时把训练计划写进了稿子）', () => {
-  const file = path.join(REPO, 'ideas', 'AF3_curvature_transport_idea', 'AF3_curvature_transport_idea.json');
+  const file = path.join(
+    REPO,
+    'ideas',
+    '_archive',
+    'AF3_curvature_transport_idea',
+    'AF3_curvature_transport_idea.json',
+  );
   if (!fs.existsSync(file)) {
     process.stdout.write('    （跳过：稿子不在盘上）\n');
     return;
@@ -231,7 +226,7 @@ await test('真实那份 transport idea 判不合规（当时把训练计划写�
   const paths = pathsOf(verdict);
   assert.ok(paths.includes('date'), '要指出顶层多出来的键');
   assert.ok(paths.includes('sections.4_method.runs'), '要指出运行计划那一项');
-  assert.ok(paths.includes('sections.6_evaluation.threshold'), '要指出自定门槛');
+  assert.ok(paths.includes('sections.6_evaluation'), '要指出整段判据不该在 idea 里');
 });
 
 process.stdout.write(`\n${passed} 通过, ${failures.length} 失败\n`);

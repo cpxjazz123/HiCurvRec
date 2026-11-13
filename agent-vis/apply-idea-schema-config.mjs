@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { IDEA_FORBIDDEN_FIELDS, ideaSkeleton } from './idea-schema.js';
 
 /**
- * 把 AGENT IDEA 的配置改成"必须按 genrec.idea.v2 的字段写"。
+ * 把 AGENT IDEA 的配置改成"必须按 genrec.idea.v3 的字段写"。
  *
  * 骨架从 idea-schema.js 里取，保证提示词里给的形状和校验器认的形状是同一份 ——
  * 两处各写一遍，迟早漂。改完字段契约就重跑一次这个脚本，面板上的配置跟着变。
@@ -28,9 +28,14 @@ const instructions = `你是 AGENT IDEA（IDEA_KEEPER），负责 ideas/ 下的�
 - 上游交接里带着 AGENT AGAINST 的反对意见 → **返修轮**：不归档、不新建，只按清单改当前 idea；
 - 没有上游意见 → **轮换轮**：归档现有方向，按 ideas/main_line.json 造一个新的。
 
-## idea 文件的字段是定死的（genrec.idea.v2）
+## idea 文件的字段是定死的（genrec.idea.v3）
 
 idea 文件**只能**是这个形状，顶层只有 schema / arm / sections 三键，每段的键也固定：
+
+**idea 只写假设**：这个方向赌的是什么、结构信号从哪来、进计算通路的哪几处、改了什么没改什么、
+与主线两条 must_hold 怎么对齐、新增性主张是什么。
+数值、界、判据、验证步骤都不写在这里 —— 常量与它们的来由写进 math.json 的 constants，
+退化路径与三个开关写进 math.json 的 switches，验收归实现阶段的测试套件。
 
 \`\`\`json
 ${skeleton}
@@ -95,8 +100,8 @@ const steps = [
   {
     title: '写或改 idea（字段必须合规）',
     instruction:
-      '轮换轮：按 genrec.idea.v2 的固定形状，用 writeFile 写 ideas/<新方向>/<新方向>_idea.json —— ' +
-      '顶层只有 schema（写 "genrec.idea.v2"）、arm、sections；四段是 1_goal / 4_method / 5_references / 6_evaluation；' +
+      '轮换轮：按 genrec.idea.v3 的固定形状，用 writeFile 写 ideas/<新方向>/<新方向>_idea.json —— ' +
+      '顶层只有 schema（写 "genrec.idea.v3"）、arm、sections；三段是 1_goal / 4_method / 5_references；' +
       '每段里的键照提示词里的骨架填，不要增删字段，不要写运行计划（跑几次、什么种子）、不要自定门槛、不要写状态。' +
       '同目录写 math.json（symbols / formulas / constants(带 why) / switches(只三个) / metrics）。同一次只建一个方向。' +
       '返修轮：按 AGAINST 的清单逐条修改当前方向的 idea 文件（必要时同步 math.json），每条都写清改了哪里；不同意的意见要给出依据。' +
@@ -139,11 +144,12 @@ const againstSteps = [
   {
     title: '逐条开火',
   instruction:
-    '逐条开火：按 idea 的固定字段（genrec.idea.v2）一条一条核 —— ' +
-    '1_goal.mechanism 说清的几何与计算通路、af3_entry.enters_at（AF3 真的进了哪几处）、' +
+    '逐条开火：按 idea 的固定字段（genrec.idea.v3）一条一条核 —— ' +
+    '1_goal.assumption 说清的假设（几何对象与结构信号进计算通路的哪几处）、' +
+    'af3_entry.enters_at（AF3 真的进了哪几处）、' +
     'one_variable（到底改了几处、没改的是什么）、must_hold#1 与 #2 各自的 how、' +
-    'novelty（新增性主张与继承的归档方向）、4_method.numerics 的界与退化路径、' +
-    '6_evaluation.falsifier 有没有把判否条件写死。' +
+    'novelty（新增性主张与继承的归档方向）、4_method.surfaces（改在哪几个符号上）。' +
+    '数值、判据与验收不在 idea 里，别拿它们当缺失来打；它们在 math.json 与实现阶段。' +
     '用 readFile 读 ideas/<方向>/<方向>_idea.json 与 math.json，用 checkIdea 确认字段本身合规；' +
     '字段不合规先在意见里点出来（这本身就是要改的东西）。' +
     'must_hold#1 要同时看两种形态：两两正负样本的损失（InfoNCE / BCE / margin / 源-目标残差对比），' +

@@ -1,20 +1,25 @@
 /**
- * idea 文件的字段契约（genrec.idea.v2）。
+ * idea 文件的字段契约（genrec.idea.v3）。
  *
- * 为什么要有这一份：模型写 idea 时是自由发挥的，写出来的东西看着完整，
- * 但里面常常混进不该由它决定的东西 —— 要跑几次训练、用什么种子、
- * 判据阈值是多少、状态是什么。这些是仓库契约和框架的职责（CLAUDE.md §19g、
- * §25、§66），一旦写进 idea，审稿的人就得去逐条挑，而散文是挑不干净的。
+ * idea 只写**假设**：这个方向赌的是什么、结构信号从哪来、进计算通路的哪几处、
+ * 改了什么没改什么、与主线两条 must_hold 怎么对齐、新增性主张是什么。
  *
- * 所以这里定死字段：顶层只能有三个键，每段只有那几个键，枚举值闭合，
- * 评估门槛是仓库契约里的常数。写不出来的形状（要跑 13 次训练、多个种子、
- * 自定 success threshold、带上 result.status）不是"不合规"，是**表达不出来**。
+ * 数值、界、判据、验证步骤都不属于 idea —— 那是实现阶段的事：
+ *   - 常量与它们的来由 → math.json 的 constants（name/value/why）；
+ *   - 退化路径与三个开关 → math.json 的 switches；
+ *   - 验收与判据 → 实现阶段的测试套件与仓库契约（§19g、§25）。
+ * 之前这些都塞在 idea 里，于是模型在设计稿里排训练计划（跑几次、什么种子）、
+ * 自定 success threshold、写状态；审稿的人只能逐条去挑散文，散文是挑不干净的。
+ *
+ * 所以这里定死字段：顶层只有三个键，每段只有那几个键，枚举值闭合。
+ * 写不出来的形状（要跑 13 次训练、多个种子、自定门槛、带上 result.status、
+ * 或者把数值约束与验收清单写进设计稿）不是"不合规"，是**表达不出来**。
  *
  * 校验只做形状与闭合值，不判断机制好不好 —— 好不好是 AGENT AGAINST 的活。
  */
 
 /** 这份契约的版本号，也是 idea 文件里 schema 字段必须写的值。 */
-export const IDEA_SCHEMA_VERSION = 'genrec.idea.v2';
+export const IDEA_SCHEMA_VERSION = 'genrec.idea.v3';
 
 /**
  * 候选可以动的面（CLAUDE.md §66：行为统计、双曲操作、分配规则、残差更新、
@@ -33,22 +38,14 @@ export const IDEA_SURFACES = [
 /** 文献与主线的关系：同族（只差实现）、不同族、基线方法本身。 */
 export const IDEA_RELATIONS = ['same_family', 'different', 'baseline_method'];
 
-/** 计算精度。写不出来的就不许写。 */
-export const IDEA_DTYPES = ['fp16', 'bf16', 'fp32', 'fp64'];
-
 /** 主线的两条 must_hold（CLAUDE.md 里的主线文件），两条都必须对上。 */
 export const IDEA_MUST_HOLD_CLAUSES = ['must_hold#1', 'must_hold#2'];
 
-/** 评估指标与门槛是仓库契约（§25）：test_R@10 > 0.065。idea 只能引用，不能自定义。 */
-export const IDEA_EVAL_METRIC = 'stage3.test_recall@10';
-export const IDEA_EVAL_THRESHOLD = 0.065;
-
 /** idea 文件顶层与各段允许出现的键。多一个键就是不合规。 */
 const TOP_KEYS = ['schema', 'arm', 'sections'];
-const SECTION_KEYS = ['1_goal', '4_method', '5_references', '6_evaluation'];
-const GOAL_KEYS = ['mechanism', 'af3_entry', 'one_variable', 'must_hold', 'novelty'];
-const METHOD_KEYS = ['surfaces', 'numerics'];
-const EVAL_KEYS = ['metric', 'threshold', 'comparison_arm', 'falsifier'];
+const SECTION_KEYS = ['1_goal', '4_method', '5_references'];
+const GOAL_KEYS = ['assumption', 'af3_entry', 'one_variable', 'must_hold', 'novelty'];
+const METHOD_KEYS = ['surfaces'];
 const WORK_KEYS = ['title', 'year', 'venue', 'doi', 'relation'];
 
 /**
@@ -98,7 +95,7 @@ export function validateIdeaDoc(doc) {
   for (const key of extraKeys(doc, TOP_KEYS)) {
     add(
       key,
-      `顶层不允许这个字段（v2 顶层只有 schema / arm / sections）。` +
+      `顶层不允许这个字段（${IDEA_SCHEMA_VERSION} 顶层只有 schema / arm / sections）。` +
         `状态、日期、轮次流水归轮次登记；运行计划与判据归仓库契约。`,
     );
   }
@@ -118,7 +115,7 @@ export function validateIdeaDoc(doc) {
       add('sections', '必须是对象');
     } else {
       for (const key of extraKeys(sections, SECTION_KEYS)) {
-        add(`sections.${key}`, `这一段不属于 v2（只有 ${SECTION_KEYS.join(' / ')}）`);
+        add(`sections.${key}`, `这一段不属于 ${IDEA_SCHEMA_VERSION}（只有 ${SECTION_KEYS.join(' / ')}）`);
       }
       for (const key of SECTION_KEYS) {
         if (!(key in sections)) add(`sections.${key}`, `缺少这一段`);
@@ -126,7 +123,6 @@ export function validateIdeaDoc(doc) {
       checkGoal(sections['1_goal'], add);
       checkMethod(sections['4_method'], add);
       checkReferences(sections['5_references'], add);
-      checkEvaluation(sections['6_evaluation'], add);
     }
   }
 
@@ -150,16 +146,16 @@ function checkGoal(goal, add) {
     return;
   }
   for (const key of extraKeys(goal, GOAL_KEYS)) {
-    add(`sections.1_goal.${key}`, `v2 的 1_goal 只有 ${GOAL_KEYS.join(' / ')}；这一项没有消费者，删掉或归位`);
+    add(`sections.1_goal.${key}`, `${IDEA_SCHEMA_VERSION} 的 1_goal 只有 ${GOAL_KEYS.join(' / ')}；这一项没有消费者，删掉或归位`);
   }
   for (const key of GOAL_KEYS) {
     if (!(key in goal)) add(`sections.1_goal.${key}`, `必须有 ${key}`);
   }
-  if (goal.mechanism !== undefined) {
-    if (!nonEmptyString(goal.mechanism)) {
-      add('sections.1_goal.mechanism', '必须是一段非空文字：几何对象 + 机制 + 几何进计算通路的哪两处');
-    } else if (goal.mechanism.length > 400) {
-      add('sections.1_goal.mechanism', `太长了（${goal.mechanism.length} 字，上限 400）：这是摘要，不是正文`);
+  if (goal.assumption !== undefined) {
+    if (!nonEmptyString(goal.assumption)) {
+      add('sections.1_goal.assumption', '必须是一段非空文字：这个方向假设了什么（几何对象 + 结构信号怎么进计算通路）');
+    } else if (goal.assumption.length > 400) {
+      add('sections.1_goal.assumption', `太长了（${goal.assumption.length} 字，上限 400）：这是假设，不是正文`);
     }
   }
   if (goal.af3_entry !== undefined) {
@@ -273,7 +269,7 @@ function checkMethod(method, add) {
     return;
   }
   for (const key of extraKeys(method, METHOD_KEYS)) {
-    add(`sections.4_method.${key}`, `v2 的 4_method 只有 ${METHOD_KEYS.join(' / ')}；文件路径与运行计划归框架（§66）`);
+    add(`sections.4_method.${key}`, `${IDEA_SCHEMA_VERSION} 的 4_method 只有 ${METHOD_KEYS.join(' / ')}；数值约束与运行计划归实现阶段与框架（§66）`);
   }
   for (const key of METHOD_KEYS) {
     if (!(key in method)) add(`sections.4_method.${key}`, `必须有 ${key}`);
@@ -300,45 +296,6 @@ function checkMethod(method, add) {
           add(`sections.4_method.surfaces[${index}].change`, '必须写这一处改成了什么');
         }
       });
-    }
-  }
-  if (method.numerics !== undefined) {
-    if (!isPlainObject(method.numerics)) {
-      add('sections.4_method.numerics', '必须是对象');
-    } else {
-      for (const key of extraKeys(method.numerics, ['dtype', 'clamps', 'degenerate_to_baseline'])) {
-        add(`sections.4_method.numerics.${key}`, '只允许 dtype / clamps / degenerate_to_baseline');
-      }
-      if (!IDEA_DTYPES.includes(method.numerics.dtype)) {
-        add('sections.4_method.numerics.dtype', `取值只能是 ${IDEA_DTYPES.join(' / ')}`);
-      }
-      if (method.numerics.clamps !== undefined) {
-        if (!Array.isArray(method.numerics.clamps)) {
-          add('sections.4_method.numerics.clamps', '必须是数组（没有截断就写空数组）');
-        } else {
-          method.numerics.clamps.forEach((item, index) => {
-            if (!isPlainObject(item)) {
-              add(`sections.4_method.numerics.clamps[${index}]`, '必须是对象');
-              return;
-            }
-            for (const key of extraKeys(item, ['name', 'value', 'why'])) {
-              add(`sections.4_method.numerics.clamps[${index}].${key}`, '只允许 name / value / why');
-            }
-            if (!nonEmptyString(item.name)) {
-              add(`sections.4_method.numerics.clamps[${index}].name`, '必须写截断的名字');
-            }
-            if (typeof item.value !== 'number' && typeof item.value !== 'string') {
-              add(`sections.4_method.numerics.clamps[${index}].value`, '必须是数值或字符串');
-            }
-            if (!nonEmptyString(item.why)) {
-              add(`sections.4_method.numerics.clamps[${index}].why`, '必须写为什么取这个界（要可推导，不是试出来的）');
-            }
-          });
-        }
-      }
-      if (!nonEmptyString(method.numerics.degenerate_to_baseline)) {
-        add('sections.4_method.numerics.degenerate_to_baseline', '必须写退化成什么（哪一项关掉后与基线逐位一致）');
-      }
     }
   }
 }
@@ -378,35 +335,6 @@ function checkReferences(list, add) {
   checkWorks(list, 'sections.5_references', add, false);
 }
 
-function checkEvaluation(evalObj, add) {
-  if (evalObj === undefined) return;
-  if (!isPlainObject(evalObj)) {
-    add('sections.6_evaluation', '必须是对象');
-    return;
-  }
-  for (const key of extraKeys(evalObj, EVAL_KEYS)) {
-    add(`sections.6_evaluation.${key}`, `v2 的 6_evaluation 只有 ${EVAL_KEYS.join(' / ')}；门槛是仓库契约，不许自定`);
-  }
-  for (const key of EVAL_KEYS) {
-    if (!(key in evalObj)) add(`sections.6_evaluation.${key}`, `必须有 ${key}`);
-  }
-  if (evalObj.metric !== undefined && evalObj.metric !== IDEA_EVAL_METRIC) {
-    add('sections.6_evaluation.metric', `必须是 "${IDEA_EVAL_METRIC}"（§25：最终判据是 Stage3 的 test_R@10）`);
-  }
-  if (evalObj.threshold !== undefined && evalObj.threshold !== IDEA_EVAL_THRESHOLD) {
-    add(
-      'sections.6_evaluation.threshold',
-      `必须是 ${IDEA_EVAL_THRESHOLD}（§25：test_R@10 > 0.065），自定门槛无效`,
-    );
-  }
-  if (evalObj.comparison_arm !== undefined && !nonEmptyString(evalObj.comparison_arm)) {
-    add('sections.6_evaluation.comparison_arm', '必须写对照臂的名字');
-  }
-  if (evalObj.falsifier !== undefined && !nonEmptyString(evalObj.falsifier)) {
-    add('sections.6_evaluation.falsifier', '必须写一句：什么观测会判这个机制为否');
-  }
-}
-
 /**
  * 写给模型看的骨架。
  *
@@ -419,7 +347,7 @@ export function ideaSkeleton() {
   "arm": "TIGER_<方向>_rq",
   "sections": {
     "1_goal": {
-      "mechanism": "一句话：几何对象是什么、机制做了什么、几何进计算通路的哪两处",
+      "assumption": "假设：这个方向赌的是什么（几何对象是什么、结构信号怎么进计算通路）",
       "af3_entry": {
         "signal": "AF3 给出的那个信号（什么量、怎么算）",
         "formula": "math.json 里的公式名",
@@ -444,28 +372,17 @@ export function ideaSkeleton() {
     "4_method": {
       "surfaces": [
         { "surface": "residual_update", "symbol": "<函数/类名>", "change": "这一处改成了什么" }
-      ],
-      "numerics": {
-        "dtype": "fp32",
-        "clamps": [{ "name": "", "value": 0, "why": "为什么取这个界" }],
-        "degenerate_to_baseline": "关掉哪一项后退化成基线（要能逐位对齐）"
-      }
+      ]
     },
     "5_references": [
       { "title": "", "year": 2024, "venue": "", "doi": "", "relation": "different" }
-    ],
-    "6_evaluation": {
-      "metric": "${IDEA_EVAL_METRIC}",
-      "threshold": ${IDEA_EVAL_THRESHOLD},
-      "comparison_arm": "<对照臂名字>",
-      "falsifier": "什么观测会判否"
-    }
+    ]
   }
 }`;
 }
 
 /**
- * v2 里明确不存在的字段 —— 给模型看"这些不要写"，比只给骨架更管用。
+ * 明确不存在的字段 —— 给模型看"这些不要写"，比只给骨架更管用。
  *
  * 每一条都注明它本来该归谁。
  */
@@ -475,6 +392,8 @@ export const IDEA_FORBIDDEN_FIELDS = [
   { field: 'result.status', owner: '轮次登记（状态）' },
   { field: '4_method.runs', owner: '框架的运行调度（§19g：只跑一次，不多种子、不做消融臂）' },
   { field: '4_method.new_files / modified_files', owner: '框架的候选树与登记（§66：路径归框架）' },
+  { field: '6_evaluation（整段）', owner: '判据与门槛归仓库契约（§25）与实现阶段；idea 只写假设' },
+  { field: '4_method.numerics', owner: '常量与界归 math.json 的 constants，退化路径归 switches' },
   { field: '6_evaluation.decision_rule', owner: '仓库契约（§25：test_R@10 > 0.065）' },
   { field: '6_evaluation.reference', owner: 'ideas/baseline.json（基线事实的单一出处）' },
   { field: '4_method.sanity_checks', owner: '验证计划与测试归实现阶段（idea 只写机制与判据）' },
