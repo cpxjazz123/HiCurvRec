@@ -1,0 +1,157 @@
+{
+  "symbols": {
+    "i, j": "商品下标；N(i) 为训练划分共现图里 i 的邻居集合",
+    "d_i": "商品 i 在训练共现图里的加权度",
+    "T_ij": "商品 i 与 j 的共同邻居数",
+    "kappa_ij": "AF3 曲率（边标量），训练前算一次后冻结",
+    "kappa_bar_i": "商品 i 的度加权邻域平均曲率",
+    "s_i": "商品 i 的结构势（kappa_bar_i 全图 z-score）",
+    "mu_s, sigma_s": "标准化前 s 的均值与标准差；mu_kappa 为全体边 kappa_ij 的均值",
+    "Q": "结构层数 = 6（三分位 3 档 x 正负号 2 支）",
+    "q(i)": "商品 i 的结构层号 in {1..6}，1 最负（桥梁），6 最正（社区内），对 s_i 单调不减",
+    "tau_1, tau_2": "s_i 的 1/3 与 2/3 全图分位数；tier(i) in {1,2,3}",
+    "K_l": "第 l 层码本大小，取 config 的 CODEBOOK_SIZE（int_list [256,256,256]，逐层独立）",
+    "k_q": "结构层 q 的目标簇心配额，sum_q k_q = K_l",
+    "m": "配额下限 m = floor(K_l / (2Q)) = 21",
+    "N": "训练商品数",
+    "n_q": "结构层 q 的商品数",
+    "a(i)": "KMeans 给商品 i 的簇归属（基线那一套 KMeans 的输出）",
+    "c_(l,q)": "第 l 层里被多数投票判为结构层 q 的簇心个数",
+    "Delta_l": "第 l 层的配额缺口 Delta_l = (1/2) sum_q |k_q - c_(l,q)|，即 split/merge 操作数",
+    "c_k^(l)(0)": "第 l 层第 k 个码字的初始值（本机制唯一改动对象）",
+    "r_i^(l-1)": "商品 i 在第 l 层入口的残差；l=1 时为编码器输出 z_i",
+    "R": "配额调整后的 Lloyd 收尾步数 = 10",
+    "delta": "t=0 重建护栏系数 = 0.01",
+    "beta": "commitment 权重，取 config 的 BETA = 0.25",
+    "L": "总损失，与基线 losses/quantization.py 逐位同构",
+    "eps": "数值下限 1e-8",
+    "t": "训练迭代步号；t = 0 是初始化，也是本机制唯一介入的时刻"
+  },
+  "formulas": [
+    {
+      "name": "curvature",
+      "formula": "kappa_ij = 4 - d_i - d_j + 3 * T_ij",
+      "note": "只用训练划分共现图算一次，训练与推理期间冻结，不进梯度、不是可学习参数；与归档 AF3 机制同一口径"
+    },
+    {
+      "name": "structural_potential",
+      "formula": "kappa_bar_i = (sum_{j in N(i)} kappa_ij) / d_i 若 d_i > 0；kappa_bar_i = mu_kappa 若 d_i = 0，其中 mu_kappa = (1/|E|) * sum_{(a,b) in E} kappa_ab",
+      "note": "修正 R6：旧稿把 d_i = 0 的回填写在 min 分母里与公式矛盾；回填值取全体边的曲率均值 mu_kappa（不是全图节点均值，节点上没有曲率定义），回填件数计入 degeneracy 统计"
+    },
+    {
+      "name": "standardisation",
+      "formula": "s_i = (kappa_bar_i - mu_s) / max(sigma_s, eps)",
+      "note": "均值与标准差在全图商品上算，回填在前、标准化在后；s_i 只用于分档与簇内切分，不进任何损失"
+    },
+    {
+      "name": "structural_strata",
+      "formula": "tier(i) = 1 若 s_i <= tau_1；2 若 tau_1 < s_i <= tau_2；3 若 s_i > tau_2。q(i) = tier(i) + 3 * 1[s_i >= 0]",
+      "note": "修正 R6：旧稿写成 (tier-1)*2 + sign + 1，结果不正负交错、与「1 最负 6 最正」自相矛盾；改为标准正负分层且对 s_i 单调不减。sigma_s = 0 或 tau_1 = tau_2 时记 degenerate = 1 并走 kmeans 分支"
+    },
+    {
+      "name": "baseline_kmeans_init",
+      "formula": "对第 l 层：{a_l(i)} = KMeans(K_l; random_state = SEED).fit({r_i^(l-1)})；c_k^(l) = 簇 k 的均值；r_i^(l) = r_i^(l-1) - c_{a_l(i)}^(l)",
+      "note": "这是基线本身，不是本机制：model/layers.py:149-159（KMeans, n_init=auto）与 model/layers.py:314-317（逐层在残差上重复），调用点 train_rqvae.py:324-327。修正 R1：基线不是 linear 初始化。layers.py:150 现未传 random_state，本方向两侧统一显式传 SEED 以保证 init_off 可复现"
+    },
+    {
+      "name": "quota_allocation",
+      "formula": "raw_q = max(m, K_l * n_q / N)；k_q 由最大余数法取整使 sum_q k_q = K_l；若某 q 有 k_q > n_q 则 k_q <- n_q 并把余量按最大余数回补给非空层",
+      "note": "配额只由「该结构层有多少商品」决定，与两两相似性无关；下限 m 保证被密度逻辑饿死的结构层至少拿到比例配额的一半。可行性域：对全部 q 需 k_q <= n_q，回补失败则整轮走 kmeans 分支"
+    },
+    {
+      "name": "cell_stratum_label",
+      "formula": "q_bar(k) = argmax_{q in 1..Q} |{i : a_l(i) = k 且 q(i) = q}|；c_(l,q) = |{k : q_bar(k) = q}|；Delta_l = (1/2) * sum_q |k_q - c_(l,q)|",
+      "note": "簇心按成员多数层打标签；Delta_l 是「这一层要动几个簇」的可观测剂量，logs 必记"
+    },
+    {
+      "name": "split_under_quota",
+      "formula": "对 c_(l,q) < k_q 的结构层，反复取该层成员数最多的簇 A：按成员 s_i 升序在 |A|/2 处一分为二，A1 = 前段、A2 = 后段；c^(l) <- mean({r_i^(l-1) : i in A1}) / mean({r_i^(l-1) : i in A2})，直到 c_(l,q) = k_q",
+      "note": "切分只用 s_i 这一逐商品标量与簇成员计数，不比较任意两件商品的表示相似性；要求 |A| >= 2，否则转下一个簇，全层都不可拆则记 degenerate_partial"
+    },
+    {
+      "name": "merge_over_quota",
+      "formula": "对 c_(l,q) > k_q 的结构层，反复取该层成员数最小的两个簇 A, B，合并为单个簇心 c^(l) <- (|A| * mean_A + |B| * mean_B) / (|A| + |B|)，直到 c_(l,q) = k_q",
+      "note": "选哪个簇只按成员数最小，不按中心距离、不按相似性，因此不构成成对信号；merger 后成员集合取并集"
+    },
+    {
+      "name": "lloyd_finish",
+      "formula": "以 split/merge 后的 K_l 个簇心为初值，在 {r_i^(l-1)} 上做 R = 10 步标准 Lloyd（分配 = argmin 平方欧氏，更新 = 成员均值）",
+      "note": "目的：把簇心拉回几何最优，使 t=0 重建不因配额调整显著变差；Lloyd 是基线 KMeans 自身的迭代，不引入结构项"
+    },
+    {
+      "name": "reconstruction_guard",
+      "formula": "要求 L_recon(t=0) <= (1 + delta) * L_recon^KMeans(t=0)，逐层与整体各一次；超限则整轮回退 kmeans 分支并记 guard_failed",
+      "note": "修正 R2 的核心：不允许「用更差的初值赌反直觉链条」。这是硬拦截，不是事后解释"
+    },
+    {
+      "name": "shuffled_control",
+      "formula": "q_shuf(i) = q(perm(i))，perm 为固定种子（20261116）下保持各层商品数不变的整体置换；其余流水线与 stratified_af3 完全相同",
+      "note": "R3 归因臂：KMeans 相同、配额相同、split/merge 次数相同，唯一差别是结构层标签有没有语义。stratified 与 shuffled 的差才是曲率自身的贡献"
+    },
+    {
+      "name": "no_mask_after_init",
+      "formula": "对 t >= 1：token_l(i) = argmin_{k in [K_l]} C_ik^(l)（末层 Sinkhorn 同基线），可行集恒为全部 K_l 个码字，不存在 lo_q / hi_q 列区间，也不存在块外置 -inf",
+      "note": "与 curvature_blocks 的分界线：blocks 的份额每轮生效并锁死列区间；本机制的 k_q 只在 t=0 决定初始簇心怎么切/合，t>=1 可行集与基线完全相同。检查方式：断言 t>=1 每层实际使用码字数上界为 K_l 且无掩码张量参与前向"
+    },
+    {
+      "name": "codebook_permutation_invariance",
+      "formula": "对任意码字排列 pi：{c_k^(l)} -> {c_{pi(k)}^(l)}，argmin 与损失值不变，SID 只在 token 编号上同步重排",
+      "note": "本机制改变的是簇心在特征空间里的落点分布（数值），不是编号；因此不靠 token 编号或列区间偷偷编码结构（那是 blocks 的做法）。logs 记录重排前后 SID 仅作一致性自检"
+    },
+    {
+      "name": "assignment",
+      "formula": "l < N_l：token_l(i) = argmin_k C_ik^(l)；l = N_l：Q^(N_l) = Sinkhorn(center(C^(N_l)); epsilon = sk_epsilon, iters = sk_iters)，token_{N_l}(i) = argmax_k Q_ik^(N_l)",
+      "note": "与基线同一套分配，初始化之后每次迭代都重算，不在分配上加任何结构偏置（与 curvature_drive 的本质区别）"
+    },
+    {
+      "name": "losses",
+      "formula": "L_recon = MSE(decoder(sum_l c_{token_l(i)}^(l)), x_i)；codebook_l = (1/B) sum_i min_k ||sg[r_i^(l-1)] - c_k^(l)||^2；commitment_l = (1/B) sum_i ||r_i^(l-1) - sg[c_{token_l(i)}^(l)]||^2；L = L_recon + (1/N_l) sum_l [codebook_l + beta * commitment_l]",
+      "note": "与基线 losses/quantization.py:quantization_total 逐位同构；本方向不新增任何损失项，s_i 与 q(i) 不出现在损失里"
+    },
+    {
+      "name": "sid_export",
+      "formula": "sid(i) = [token_1(i), ..., token_{N_l}(i)]",
+      "note": "长度、每层码本大小、导出格式与基线一致；下游 TIGER 序列长度与词表不受影响"
+    },
+    {
+      "name": "structural_coverage",
+      "formula": "cov_(l,q) = k_q / max(c_(l,q), 1)；pur_top_(l,q)(t) = 第 t 步被结构层 q 的商品最常使用的码字的纯度；t* = min{t : pur_top <= 1/Q + 0.05}",
+      "note": "诊断量，只读。t=0 看配额是否兑现，t>=1 看覆盖是否被密度高的商品抢走。t* 是 R5 要求的一等结果：t* <= 300 说明初始容量在终点消失，必须在报告里与最终 Delta 并列"
+    }
+  ],
+  "switches": {
+    "kmeans": "CODEBOOK_INIT = kmeans（基线行为）=> 不读取任何曲率产物 => 训练与导出的 item_sids.json 与基线 sha256 逐位一致；这是本机制的自检分支",
+    "stratified_af3": "CODEBOOK_INIT = stratified_af3 且 degenerate = 0 且 guard 通过 => 各层码本初值由 quota_allocation + split/merge + lloyd_finish 给出",
+    "shuffled_af3": "CODEBOOK_INIT = shuffled_af3 => 同一条流水线，q(i) 换成固定种子置换后的标签，作为归因对照臂（R3）",
+    "degenerate": "degenerate = 1（无边 / sigma_s = 0 / tau_1 = tau_2 / 某层为空且回补失败）或 guard_failed = 1 => 强制回落 kmeans，并在 logs 写明原因，不做静默通过",
+    "no_online_structure": "任何开关下都不允许把 s_i、q(i)、cov、pur_top 写进代价矩阵、损失或分配规则；出现即视为机制走偏",
+    "no_column_mask": "任何开关下都不允许出现列区间限制 / 块外 -inf / 分族群子 Sinkhorn；份额只存在于 t = 0。要加掩码属于 curvature_blocks，不得混入本方向"
+  },
+  "constants": {
+    "N_l": 3,
+    "K_l": "config 的 CODEBOOK_SIZE = [256, 256, 256]，是 int_list 且逐层独立，不是单个 K（修正 R6）",
+    "Q": 6,
+    "tier_quantiles": [0.3333333333333333, 0.6666666666666666],
+    "m": 21,
+    "R": 10,
+    "delta": 0.01,
+    "beta": 0.25,
+    "sk_epsilon": 0.003,
+    "sk_iters": 50,
+    "eps": 1e-08,
+    "Epochs": 3000,
+    "EvalInterval": 50,
+    "seeds": "KMeans 的 random_state = SEED = 42（stratified 与 kmeans 两侧一致）；shuffled 的置换种子 = 20261116；stratified_af3 内部除 KMeans 外不使用随机数"
+  },
+  "metrics": {
+    "record": [
+      "degenerate / degenerate_partial / guard_failed 标志与原因",
+      "各结构层商品数 n_q 与占比、每层配额 k_q、每层 c_(l,q) 与 Delta_l",
+      "split 次数、merge 次数、R 步 Lloyd 前后的 per-layer 重建误差与整体 L_recon(t=0)",
+      "t=0 / 中间 / 末轮的 pur_top_(l,q)(t) 与 t*（R5）",
+      "每层实际使用码字数（t>=1 应上界为 K_l，用于断言无掩码）与死码字数",
+      "kmeans / stratified_af3 / shuffled_af3 三份 item_sids.json 的 sha256 与相互一致性结论"
+    ],
+    "reason": "曲率只影响初值，所以必须能用「配额是否兑现 + 覆盖是否在 t* 前被抢走 + 与置换对照臂的差距」这三个读数解释增益或无效；只报下游指标会把初始化效应与训练随机性混在一起。同时记录使用码字数与死码字，才能证明没退化成 blocks 式硬掩码"
+  }
+}

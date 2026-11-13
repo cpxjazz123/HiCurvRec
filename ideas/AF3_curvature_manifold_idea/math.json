@@ -1,0 +1,212 @@
+{
+  "symbols": {
+    "i, k": "商品下标与码字下标；N(i) 为训练划分共现图里 i 的邻居集合",
+    "d_i, T_ij": "商品 i 的加权度；商品 i 与 j 的共同邻居数",
+    "kappa_ij": "AF3 曲率（边标量），训练前算一次后冻结",
+    "kappa_bar_i": "商品 i 的度加权邻域平均曲率",
+    "s_i": "商品 i 的结构势，取 kappa_bar_i 的鲁棒秩定标 s_i = 2*rank(kappa_bar_i)/(N-1) - 1 in [-1,1]，本方向唯一的结构输入",
+    "rank(.)": "在全部 N 个商品上的升序名次（并列取平均名次）",
+    "q05, q95": "s_i 的 5/95 分位，用来定 tau",
+    "mu_kappa": "全体边曲率均值（度=0 商品的回填值，回填在秩定标之前）",
+    "d": "CODEBOOK_DIM = 32；三个因子共享这 32 维，码本与网络参数量零增量",
+    "d_E, d_H": "欧氏因子 16 维；每个双曲因子 8 维（两个双曲因子共 16 维）",
+    "c_f": "因子 f 的曲率：c_E = 0，c_1 = 1，c_2 = 4（Lorentz 模型 <x,x>_L = -1/c）",
+    "u_i": "编码器输出 in R^32（HIDDEN_SIZES=[512,256,128] 不动）",
+    "t_i^(E), t_i^(f)": "u_i 的固定三段切分：u[0:16]、u[16:24]、u[24:32]",
+    "a_i,f": "商品 i 在因子 f 上的分配权重（f in {E,1,2}），冻结无梯度；同时乘在欧氏段的坐标与双曲段的切向量上",
+    "a_k,f": "码字 k 的分配权重，由成员商品的 a_i,f 做无梯度滑动平均",
+    "mu_f, tau": "分配锚点 mu_E=+1, mu_1=0, mu_2=-1（s_i 值域单位）；温度 tau = max((q95-q05)/4, 0.02)，上限 0.5",
+    "lambda, lambda_t": "切向量尺度；lambda_t 为每 step 在线算出的实际缩放 = min(lambda, R0/max(P99(||t||),eps))，不回传梯度",
+    "R_max, R0, RADIUS_MAX_FACTOR": "exp 前范数上限 R_max = RADIUS_MAX_FACTOR/sqrt(c_f)（RADIUS_MAX_FACTOR=15），保证 sqrt(c)||v|| <= 15；R0 = 2.0 为在线缩放的目标半径",
+    "exp_0^c, log_0^c": "曲率 c 的 Lorentz 双曲面上原点处的指数/对数映射",
+    "x_i": "商品 i 在产品流形 M = R^16 x H^8_{c_1} x H^8_{c_2} 上的点 (e_i, h_i^(1), h_i^(2))",
+    "tau_k": "第 k 个码字的切向量参数 in R^32，与基线码本 C in R^{K_l x 32} 同形状",
+    "C_k": "码字点 (e_k, kappa_k^(1), kappa_k^(2))，由 tau_k 与 a_k,f 经同一规则（含欧氏段缩放）给出",
+    "C_ik": "商品 i 与码字 k 的产品流形代价（按因子平方距离加权求和），进入 argmin / Sinkhorn",
+    "w_E, w_f": "因子权重：w_E = w_1 = w_2 = 1.0（不扫描）",
+    "alloc": "距离函数的第三个实参：{'item': (B,3), 'codeword': (K_l,3)}；alloc=None 时走 euclidean 展开式",
+    "r_i,f": "商品 i 的距离占比 = w_f d_f(x_i,q_i)^2 / sum_{f'} w_{f'} d_{f'}(x_i,q_i)^2；三层平均后作为「AF3 是否决定几何」的主读数",
+    "r_i^(l-1)": "第 l 层入口残差点；l=1 时是 x_i，l>=2 时是上一层按因子切空间相减后重建的点",
+    "q_i^(l)": "商品 i 第 l 层选中的码字点",
+    "K_l": "第 l 层码本大小，取 CODEBOOK_SIZE = [256,256,256]（int_list，逐层独立）",
+    "beta": "commitment 权重，取 BETA = 0.25",
+    "c_eff(i)": "商品 i 的有效曲率 = (a_i,1 c_1 + a_i,2 c_2)/max(a_i,1+a_i,2, eps) in [1,4]；只作日志，不作判据",
+    "eps": "数值下限 1e-8；arcosh 参数先 clamp 到 >= 1+eps",
+    "rho": "码字分配权重的滑动平均系数 = 0.1",
+    "B": "batch 内商品数",
+    "t": "训练迭代步号"
+  },
+  "formulas": [
+    {
+      "name": "curvature",
+      "formula": "kappa_ij = 4 - d_i - d_j + 3 * T_ij",
+      "note": "只用训练划分共现图算一次后冻结；复用 stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/af3_potential.py:103-125,216-217 的口径。符号：两端都是低度叶子时 d_i=d_j=1, T_ij=0 得 kappa=2>0，故负曲率对应「两端度数高且共同邻居少」的跨社区弱边，不是「稀疏小桥」"
+    },
+    {
+      "name": "structural_potential",
+      "formula": "kappa_bar_i = (sum_{j in N(i)} kappa_ij)/d_i 若 d_i>0 否则 mu_kappa；s_i = 2*rank(kappa_bar_i)/(N-1) - 1",
+      "note": "单商品标量，回填在前。标准化由 z-score 改为秩映射：kappa 含 -d_i-d_j 项、分布重尾，z-score 会让少数极端商品独占分配；秩映射后 s_i 值域固定为 [-1,1]，与锚点 E:+1/H1:0/H2:-1 同尺度"
+    },
+    {
+      "name": "alloc_temperature",
+      "formula": "tau = clip( max((q95(s_i) - q05(s_i))/4, 0.02), 2e-2, 0.5 )",
+      "note": "由 s_i 的 5/95 分位定，不写死 0.5；使锚点间的过渡带宽与 s_i 实际的分布跨度匹配。开训前必须打印分位表与预估 argmax 占比"
+    },
+    {
+      "name": "allocation",
+      "formula": "g_i,f = exp(-(s_i-mu_f)^2/(2 tau^2)) / sum_{f' in {E,1,2}} exp(-(s_i-mu_f')^2/(2 tau^2))，f in {E,1,2}",
+      "note": "闭式、冻结、无梯度、只用自己的 s_i。s_i 越负（高连接度枢纽之间的跨社区弱边）越偏强曲率双曲因子 c=4，越正（社区内部）越偏欧氏因子 —— 这是「AF3 决定几何」的落点"
+    },
+    {
+      "name": "alloc_pregate",
+      "formula": "pi_f = mean_i 1[argmax_{f'} a_i,f' = f]；若 max_f pi_f > 0.98 或 #{f: pi_f >= 0.05} < 2 则不解冻训练",
+      "note": "开训前的硬门槛：不是在退化分配上开训后再兜底，而是先修定标（调 tau / 重看 s_i 分布）；与 switches.degenerate 联动"
+    },
+    {
+      "name": "tangent_split",
+      "formula": "t_i^(E) = u_i[0:16]；t_i^(1) = u_i[16:24]；t_i^(2) = u_i[24:32]",
+      "note": "固定索引切分，32 维用完不增维；编码器/解码器形状与基线一致"
+    },
+    {
+      "name": "exp_map",
+      "formula": "v = lambda_t * a_i,f * t_i^(f)；v <- v * min(1, R_max/max(||v||, eps))；exp_0^c(v) = ( cosh(sqrt(c)||v||)/sqrt(c), sinh(sqrt(c)||v||)/(sqrt(c)||v||) * v )，||v||->0 取极限 (1/sqrt(c), v)",
+      "note": "在线数值护栏：clamp 在 exp 之前，每次 clamp 记一次 exp_clip；c=4 时半径涨到几十即 inf，所以上限必须是 R_max = 15/sqrt(c) 而不是初始化分位。a->0 表示该商品在该因子停在原点（不占该分量）"
+    },
+    {
+      "name": "log_map",
+      "formula": "log_0^c(x) = (1/sqrt(c)) * arcosh(clamp(-c x_0, 1+eps, .)) * x_s / max(||x_s||, eps)",
+      "note": "解码器输入拼接与残差切空间运算用；arcosh 参数 clamp 次数逐 step 记录，占比门槛 1e-3"
+    },
+    {
+      "name": "item_point",
+      "formula": "x_i = ( a_i,E * t_i^(E), exp_0^{c_1}(lambda_t a_i,1 t_i^(1)), exp_0^{c_2}(lambda_t a_i,2 t_i^(2)) )",
+      "note": "欧氏段也乘 a_i,E（旧稿只有双曲段乘 a，导致 a_i,E 空转、欧氏 16 维恒满额参与距离）；a 由 AF3 决定，三个因子同时受控，几何不是「双曲段被缩放 + 欧氏段恒定」"
+    },
+    {
+      "name": "codeword_point",
+      "formula": "C_k = ( a_k,E * tau_k[0:16], exp_0^{c_1}(lambda_t a_k,1 tau_k[16:24]), exp_0^{c_2}(lambda_t a_k,2 tau_k[24:32]) )",
+      "note": "码本参数仍是 (K_l, 32)，但每个码字作为流形点被解释；a_k,f 让码字曲率分配跟随它覆盖的结构角色"
+    },
+    {
+      "name": "product_distance",
+      "formula": "C_ik = w_E ||a_i,E t_i^(E) - a_k,E tau_k[0:16]||^2 + w_1 d_{c_1}(h_i^(1),kappa_k^(1))^2 + w_2 d_{c_2}(h_i^(2),kappa_k^(2))^2；d_c(x,y) = (1/sqrt(c)) arcosh(clamp(-c<x,y>_L, 1+eps, .))",
+      "note": "两个双曲因子曲率不同（1 与 4），距离按因子分算再合成 —— 混合曲率真正进入分配通路。契约是 distance(latent, codebook, alloc) -> (B,K)，第三参数必需（对 distances/distance.py 的两参数签名是显式变更），由 model/layers.py:109-112 调用"
+    },
+    {
+      "name": "distance_fraction",
+      "formula": "r_i,f^(l) = w_f d_f(x_i^(l), q_i^(l))^2 / max(sum_{f'} w_{f'} d_{f'}^2, eps)；r_i,f = (1/N_l) sum_l r_i,f^(l)",
+      "note": "「AF3 是否真的决定几何」的主读数，与度量直接挂钩，取代旧稿的 c_eff 判据（c_eff 由 a 直接算出，度量没被结构控制时也能满足 -0.9）。要求 Spearman(s_i, r_i,E) >= 0.9 且 Spearman(s_i, r_i,H2) <= -0.9；记 s̃_i = -s_i 时等价于 Spearman(s̃_i, r_i,H2) >= 0.9 且 Spearman(s̃_i, r_i,E) <= -0.9"
+    },
+    {
+      "name": "small_radius_expansion",
+      "formula": "d_c(exp_0^c v, exp_0^c w)^2 = ||v-w||^2 * (1 + (c/6)||v-w||^2 + O(||v-w||^4))，故 d_{c_1}^2 - d_{c_2}^2 = O((c_2-c_1)||v-w||^4)",
+      "note": "「多曲率不可被逐商品度量加权替代」的量化依据：在小半径极限下 d_c 的首阶与 c 无关、只剩 ||a_i t_i - a_k tau_k||，即归档 drive 方向的逐商品加权形式；曲率只有在半径不小（a 接近 1 的商品）时才可分辨。因此必须有 single_c 臂与「同一商品对在两曲率下排序 Kendall tau」的诊断，否则无法排除同族重复"
+    },
+    {
+      "name": "single_c_arm",
+      "formula": "c_1 = c_2 = 1，a_i 与 a_k 完全不变 => C_ik^(single) = w_E||.||^2 + d_{1}^2 + d_{1}^2",
+      "note": "分离「多曲率」与「结构分配」两自由度：mixed_af3 必须优于 single_c（>= 0.001，3 seed 均值）才能声称多曲率有效；两者接近即与归档 drive 同族，判否"
+    },
+    {
+      "name": "flat_limit",
+      "formula": "c_1,c_2 -> 0，a_i,f = a_k,f = 1，lambda_t = 1 时 C_ik -> ||u_i - tau_k||^2（三段平方和相加），log_0 退化为取切向量",
+      "note": "FLAT_OFF=1 自检：判据只取一条 —— 导出的 item_sids.json 与基线 sha256 逐位一致（layers.py:117 的 argmax 在 1e-6 级差异处会翻转，所以不同时要求「max|ΔC| <= 1e-6 且 SID 一致」两条阈值）；max|ΔC|/max|C| 只作诊断记录"
+    },
+    {
+      "name": "codebook_init",
+      "formula": "在 {u_i} 上跑基线同一份 KMeans(K_l; random_state=SEED) 得簇心 m_k；tau_k <- m_k，a_k,f <- 该簇成员 mean(a_i,f)，再按 codeword_point 建点",
+      "note": "复用 model/layers.py:149-157；t=0 簇心仍是数据均值，差别只在「簇心如何解释成流形上的点」与因子分配。旧稿用 t=0 簇心分位定 lambda 的做法已删除，改为在线缩放"
+    },
+    {
+      "name": "codebook_allocation_ema",
+      "formula": "a_k,f <- (1-rho) a_k,f + rho * mean_{i: token(i)=k} a_i,f（只在该码字有成员时更新）",
+      "note": "无梯度、按码字对成员做一阶均值（单商品聚合，不是成对比较）；这是码字的曲率分配"
+    },
+    {
+      "name": "assignment",
+      "formula": "l<N_l：token_l(i)=argmin_k C_ik^(l)；l=N_l：Q=Sinkhorn(center(C^(N_l)); sk_epsilon, sk_iters)，token=argmax_k Q_ik",
+      "note": "分配代码形状与基线逐位相同（model/layers.py:93-121），只把代价矩阵换成 product_distance 并多传 alloc；不在 C_ik 之外加任何结构偏置或掩码"
+    },
+    {
+      "name": "geometric_losses",
+      "formula": "commitment_l = (1/(B*3)) sum_i sum_{f in {E,1,2}} d_f(r_i^(l-1), q_i^(l))^2；codebook_l = (1/(B*3)) sum_i sum_f d_f(q_i^(l), sg[r_i^(l-1)])^2；L = L_recon + (1/N_l) sum_l [codebook_l + beta commitment_l]",
+      "note": "d_f 在欧氏因子取平方欧氏、在双曲因子取 d_{c_f}^2；L 的骨架与 losses/quantization.py:quantization_total 同形，只把 MSE 换成几何距离。SPEC 另立：{'form':'geometric_pair','shift_invariant':false,'scale_power':'metric_dependent'} —— 平方测地距离既不平移不变、量纲也随度量变化，所以不再声称沿用 codebook/commitment 的 SPEC"
+    },
+    {
+      "name": "residual_recur",
+      "formula": "v_i^(l) = log_0(r_i^(l-1)) - log_0(q_i^(l))（按因子分别施加，欧氏因子直接相减）；r_i^(l) = exp_0(v_i^(l))",
+      "note": "残差递归改成流形上的按因子切空间差；旧稿把「r = exp_q(log_q(r))」这条恒等式写进公式，现已删除（它在 q 处切空间成立但与实现无关，且与切空间差写法混在一起会误导）。l=1 时 r_i^(0) = x_i，层数 N_l=3、码本大小不变"
+    },
+    {
+      "name": "decode_stitch",
+      "formula": "z_hat_i = concat( e_i^dec, log_0^{c_1}(h_i^dec1), log_0^{c_2}(h_i^dec2) ) in R^32；L_recon = MSE(decoder(z_hat_i), u_i)",
+      "note": "解码器输入维数仍是 32，网络与基线同形；重建目标由旧稿的 x_i^input 改名为 u_i（编码器输出切向量，不是流形点），避免与流形点 x_i 混淆"
+    },
+    {
+      "name": "effective_curvature",
+      "formula": "c_eff(i) = (a_i,1 c_1 + a_i,2 c_2) / max(a_i,1 + a_i,2, eps) in [1,4]",
+      "note": "只作日志与诊断，不作判据（旧稿用它当判据是错的：它由 a 直接算出，与度量是否被结构控制无关）。判据改用 distance_fraction 的 Spearman"
+    },
+    {
+      "name": "online_guard",
+      "formula": "exp_clip_ratio = (#{v: ||v|| > R_max} / #v) <= 1e-3；lambda_t = min(RADIUS_LAMBDA, R0 / max(P99(||t||), eps))，R_max = RADIUS_MAX_FACTOR/sqrt(c_f)",
+      "note": "逐 step 统计并在日志里写 exp_clip / arcosh_clip / NaN；超门槛即判数值不稳，先降 RADIUS_LAMBDA，不许静默通过"
+    },
+    {
+      "name": "no_pairs",
+      "formula": "全部结构输入都是逐商品标量 s_i 的单点函数：a_i = f(s_i)；码字侧 a_k 是成员 a_i 的均值；损失与分配中不存在任何 (i,j) 成对项",
+      "note": "自检方式：对 batch 做任意置换，C、损失、SID 完全不变（等变）；训练路径代码中不出现 InfoNCE / BCE / margin / 源-目标残差对比。eval 探针里的成对排序比较（Kendall tau）只读、不进梯度、不进损失与分配"
+    }
+  ],
+  "switches": {
+    "mixed_on": "CURVATURE_MODE=mixed_af3：c_1=1, c_2=4，a_i 由 AF3 分配表给出 => 主臂",
+    "shuffled_s": "CURVATURE_MODE=mixed_shuffled：几何完全相同，只把 s_i 按固定种子整体置换后再算 a_i => 「结构 vs 几何」归因对照臂",
+    "single_c": "CURVATURE_MODE=single_c：c_1=c_2=1，AF3 分配不变 => 「多曲率 vs 逐商品加权」归因对照臂（R2）",
+    "flat_off": "FLAT_OFF=1：c_1=c_2=0、a≡1、lambda=1 => 退化欧氏，必须导出与基线 sha256 一致的 SID，只用于自检，不训练",
+    "degenerate": "秩定标后 sigma_s=0 / 某因子维数为 0 / a_i 的 argmax 单一占比 > 0.98（或有效因子数 < 2）=> 开训前即判 degenerate_geometry 并停，先修定标；开训后 exp_clip 占比 > 1e-3 或出现 NaN => 回落 flat_off 并在 logs 写明原因",
+    "no_online_structure": "除 C_ik 之外不额外加任何结构偏置：s_i、c_eff、a_i 只能通过「点在哪、用哪个度量」进入 C_ik，不许写进分配规则（掩码/加分项）或额外损失项"
+  },
+  "constants": {
+    "N_l": 3,
+    "K_l": "CODEBOOK_SIZE = [256, 256, 256]（int_list，逐层独立）",
+    "d": 32,
+    "d_E": 16,
+    "d_H": 8,
+    "c_1": 1.0,
+    "c_2": 4.0,
+    "c_single": 1.0,
+    "lambda": 1.0,
+    "R0": 2.0,
+    "RADIUS_MAX_FACTOR": 15.0,
+    "R_max": "15/sqrt(c_f) => c=1: 15.0, c=4: 7.5",
+    "exp_clip_ratio_max": 0.001,
+    "arcosh_clip_ratio_max": 0.001,
+    "tau": "max((q95-q05)/4, 0.02)，上限 0.5（由 s_i 分位定，不写死）",
+    "argmax_share_max": 0.98,
+    "anchors": {"E": 1.0, "H1": 0.0, "H2": -1.0},
+    "w_E": 1.0,
+    "w_f": 1.0,
+    "rho": 0.1,
+    "beta": 0.25,
+    "sk_epsilon": 0.003,
+    "sk_iters": 50,
+    "eps": 1e-08,
+    "Epochs": 3000,
+    "EvalInterval": 50,
+    "seeds": "KMeans random_state = SEED = 42（与基线同一处）；主判据用 seed 42/43/44 三 seed 均值 ± std；shuffled_s 的置换种子 = 20261117；机制本身不使用随机数"
+  },
+  "metrics": {
+    "record": [
+      "r_i,f（三层平均）与 Spearman(s_i, r_i,E)、Spearman(s_i, r_i,H2)——主判据；c_eff 分布只作日志",
+      "Spearman(s_i, deg_i)：校验 AF3 符号叙事（负曲率 = 高连接度枢纽之间的弱边）",
+      "a_i 的三分量均值与方差、argmax 占比（开训前预估 + 训练中实际）、有效因子数",
+      "每层每因子的码字使用数（死码字）、a_k 的分布、枢纽/社区商品在各因子上的平均半径",
+      "exp_clip_ratio / arcosh_clip_ratio / NaN 计数（在线门槛 1e-3）",
+      "FLAT_OFF 自检：item_sids.json 与基线 sha256 是否逐位一致（判据），max|ΔC|/max|C| 作诊断",
+      "mixed_af3 / mixed_shuffled / single_c 三臂的 Stage3 test_recall@10 / @5、两两差值、3 seed 均值 ± std",
+      "同一商品对在 c=1 与 c=4 度量下距离排序的 Kendall tau（只读探针）",
+      "t=0 / 中间 / 末轮的 L_recon 与每层 L_recon（判断几何没有把重建搞坏）"
+    ],
+    "reason": "曲率分配是本方向唯一的自变量，必须同时看到四件事：几何确实按 s_i 分了（r_i,f 与 s_i 的秩相关，而不是由 a 自证的 c_eff）、几何没把量化搞坏（L_recon 与死码字）、增益确实来自结构（与 mixed_shuffled 的差）、增益确实来自多曲率而不是逐商品加权（与 single_c 的差）。只报下游指标或只报 c_eff 都无法区分这四者。"
+  }
+}

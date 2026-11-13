@@ -1,0 +1,192 @@
+{
+  "date": "2026-11-18",
+  "revised": "2026-11-19 REVISE round: R1-R10 of AGENT AGAINST applied",
+  "arm": "TIGER_af3_curvature_manifold_rq",
+  "sections": {
+    "1_goal": {
+      "statement": "把 RQ-VAE 的表示空间从单一欧氏换成混合曲率的乘积流形 M = R^16 x H^8_{c_1=1} x H^8_{c_2=4}，并让 AF3 决定每个商品与每个码字在这三个因子上的分配权重，从而决定它落在什么几何里。做法：(1) 训练前在训练划分共现图上冻结地算 AF3 边曲率 kappa_ij = 4 - d_i - d_j + 3 T_ij，取度加权邻域均值得到 kappa_bar_i，再改用鲁棒秩定标 s_i = 2*rank(kappa_bar_i)/(N-1) - 1（均值/方差换成秩映射，避免重尾与 -d_i-d_j 项造成的极端值；曲率口径仍复用 af3_potential.py:103-125,216-217）；(2) 用闭式软分配把 s_i 变成三分量权重 a_i = softmax_f(-(s_i-mu_f)^2/(2 tau^2))，锚点 mu 取 E:+1 / H1:0 / H2:-1，tau 由 s_i 的 5/95 分位定（tau = max((q95-q05)/4, 0.02)，上限 0.5），不再固定 0.5；(3) 三个因子都受 a 控制，欧氏段不例外：x_i = ( a_i,E * t_i^(E), exp_0^{c_1}(lambda a_i,1 t_i^(1)), exp_0^{c_2}(lambda a_i,2 t_i^(2)) )，因此商品在欧氏因子上同样可以被「让出去」，几何由结构决定而不只是双曲段被缩放；(4) 码本仍是 (K_l, 32) 的切向量参数 tau_k，但每个码字按同一规则解释成流形点 C_k = ( a_k,E * tau_k[0:16], exp_0^{c_1}(lambda a_k,1 tau_k[16:24]), exp_0^{c_2}(lambda a_k,2 tau_k[24:32]) )，a_k,f 由成员商品 a_i,f 的无梯度滑动平均给出（rho=0.1）；(5) 代价矩阵换成按因子分算再合成的产品流形代价 C_ik = w_E ||a_i,E t_i^(E) - a_k,E tau_k[0:16]||^2 + w_1 d_{c_1}^2 + w_2 d_{c_2}^2，argmin 与末层 Sinkhorn 的代码形状与基线逐位相同（layers.py:93-121），只是被喂的代价变了；(6) codebook/commitment 两项损失改按几何定义（双曲因子用 d_{c_f}^2 而不是 MSE），SPEC 单独声明（不沿用原 SPEC）；(7) 残差递归改成按因子的切空间相减，解码器输入按 log_0 拼回 32 维。数值护栏在线执行：exp 前 clamp(||v||<=R_max) 并记 exp_clip，lambda 按运行时切范数分位在线缩放。结构信号全程只以「s_i 的单点函数」出现：商品侧 a_i=f(s_i)，码字侧 a_k=成员均值，不构造任何商品对，不出现 InfoNCE / BCE / margin / 源-目标残差对比。FLAT_OFF=1（c=0、a≡1、lambda=1）时距离退化回平方欧氏，作为实现自检。",
+      "why_not_just_hyperbolic": "主线禁止「只把欧氏距离换成双曲距离」。本方向有三处硬约束保证不是那样：(a) 两个双曲因子的曲率不同（1 与 4），距离必须按因子分算再合成，单一双曲度量表达不了，且专门有 single_c 臂（c=(1,1) 配同一 AF3 分配）来分离「多曲率」与「结构分配」两个自由度；(b) 商品与码字在产品流形上的位置由 exp_0 给出，分配权重 a 由 AF3 决定，a 同时乘在欧氏段与双曲段的切向量上，所以每个商品的几何（哪个因子承载多少距离）都是结构决定的；(c) 分配权重同时进入商品点与码字点（含 EMA），「谁在哪个分量」随结构角色移动。关键在于读数：c_eff 只作日志，判据用与度量直接挂钩的距离占比 r_i,f = w_f d_f(x_i,q_i)^2 / sum_f w_f d_f^2（见 6_evaluation 与 math.json 的 distance_fraction）。",
+      "difference_from_literature": "与纯双曲量化（HypRQ-VAE 2026, arXiv 2609.03369：长尾感知的双曲 item indexing；Geometry-Aware Hyperbolic RQ-VAE 2026, arXiv 2609.26342；Hyperbolic RQ 2025；HyperVQ 2024）不同：它们的空间是单一曲率、曲率固定或可学、与行为图结构无关，长尾由数据分布驱动；这里是多因子不同曲率，分配由冻结的 AF3 结构势闭式给出，新增自由度不是新的可学超参。与 HiHPQ（AAAI 2024, 10.1609/aaai.v38i5.28261）不同：HiHPQ 的 product quantization 是「码本侧的子空间切分」（多个子码本分别量化子向量）再在双曲空间做层级约束，空间本身仍是单一双曲；我们的「乘积」在空间几何上（欧氏因子 x 两个不同曲率双曲因子的乘积流形），码本侧仍是单码本残差量化 —— 两者的 product 不是同一件事。与乘积流形/混合曲率表示（Switch Spaces 2021；Weighted Mixed-Curvature Product Manifold 2023；HyperML 2020）不同：它们在连续表示或度量学习层面用乘积空间，空间选择靠可学习门控或类型先验，且都没有离散量化与 SID；这里分配来自离散曲率，落点在 RQ-VAE 的代价、码本几何与损失上，产出三级 SID。与曲率改图网络/粗化（Curvature-aware Graph Network 2025；Curvature graph neural network 2021）不同：曲率在那里改消息传递，这里改的是量化空间的几何。与本仓库 6 个归档方向不同：drive 在欧氏代价上加结构势偏置、depth 改层预算、blocks 加列掩码、pairs 用曲率挑正负对（已被主线禁止）、condition 用曲率调制编码器、codebook 只改 t=0 的簇心配额（空间与距离不动）；本方向是唯一改动「空间本身 + 距离 + 码本几何 + 损失几何」的方向，且不改层数、码本大小、SID 长度、分配代码形状。",
+      "af3_sign_narrative": "符号必须与 kappa_ij 公式一致：kappa_ij = 4 - d_i - d_j + 3 T_ij，在两端都是低度叶子时（d_i=d_j=1, T_ij=0）得 4-1-1+0 = 2 > 0，所以「负曲率 = 稀疏连接的小桥」是错的，已改掉。负曲率出现在「两端度数都高、共同邻居少」的边上，即高连接度枢纽之间的弱边（跨社区的松散连接）；正曲率出现在社区内部（共同邻居多）。因此读法改为：s_i 很负 = 参与多条跨社区弱边的高连接度枢纽 -> 主要落强曲率双曲因子 c=4（双曲空间容量随半径指数增长，适合承载度数大的枢纽）；s_i 很正 = 社区内部商品 -> 主要落欧氏因子。必测 Spearman(s_i, deg_i)，确认分配不是退化成「按度数排序」。",
+      "must_hold_alignment": "must_hold#1（不允许正负样本）：结构只以逐商品标量 s_i 进入，a_i 是 s_i 的单点闭式函数，a_k 是成员 a_i 的一阶均值，损失与分配里没有 (i,j) 成对项，没有任何 InfoNCE / BCE / margin / 源-目标残差对比；eval 探针里的「同一商品对在两种曲率下的排序比较」只进只读诊断，不进梯度、不进分配、不进损失。must_hold#2（混合曲率必须真进通路且 AF3 决定几何）：空间、距离、码本点、两项量化损失四处都按几何定义；a 同时乘在欧氏段与双曲段；判据用与度量挂钩的距离占比 r_i,f（Spearman(s_i, r_i,E) >= 0.9 且 Spearman(s_i, r_i,H2) <= -0.9），并有 single_c 臂证伪「多曲率等价于逐商品加权」。"
+    },
+    "4_method": {
+      "single_variable": "只换「表示空间与它的几何」这一条：欧氏 R^32 -> 产品流形 R^16 x H^8_{c=1} x H^8_{c=4}，几何分配由 AF3 决定。不改层数、码本大小、SID 长度、Sinkhorn 超参、优化器、训练轮数。入口是一个 CURVATURE_MODE 开关（euclidean / mixed_af3 / mixed_shuffled / single_c / flat_off）。",
+      "new_files": [
+        {
+          "path": "af3_curvature_allocation.py",
+          "what": "算 kappa_ij、kappa_bar_i、鲁棒秩定标 s_i = 2*rank/(N-1)-1、由 5/95 分位定 tau、三分量分配 a_i、以及开训前的分位表与预估 argmax 占比；输出 (N,3) 分配表与退化标志（无边 / sigma_s=0 / argmax 单一占比>0.98 / 有效因子数<2）；曲率原始口径复用 stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/af3_potential.py:103-125,216-217"
+        },
+        {
+          "path": "model/product_manifold.py",
+          "what": "scaled Lorentz 的 exp_0^c / log_0^c（含 ||v||->0 极限与 arcosh clamp）、exp 前的在线 clamp(||v||<=R_max) 与 exp_clip 计数、因子切片 (16/8/8)、逐因子平方距离、码字点构造、欧氏段的 a 缩放、flat 退化分支；纯函数、无参数"
+        },
+        {
+          "path": "distances/mixed_curvature.py",
+          "what": "NAME='mixed_curvature' 的代价矩阵实现，签名 distance(latent, codebook, alloc=None) -> (B,K)：alloc = {'item': (B,3), 'codeword': (K_l,3)} 为必需输入，alloc=None 时整套实现按 euclidean 展开式走（供基线路径与 FLAT_OFF 复用）。内部把两侧映射成流形点再按因子求和。删掉旧稿「接口与 distances/distance.py 完全一致」的说法：第三参数是契约变更"
+        },
+        {
+          "path": "losses/geometric.py",
+          "what": "geometric_codebook_loss / geometric_commitment_loss：按因子平方距离计算，返回与基线同形的 (commitment, codebook) 对；SPEC 显式声明为 {'form': 'geometric_pair', 'shift_invariant': false, 'scale_power': 'metric_dependent'}，并在 losses/__init__.py 的注册表里登记该 SPEC 与对应的共享测试（不再声称保持 codebook/commitment 的 SPEC 语义）"
+        },
+        {
+          "path": "eval/manifold_probe.py",
+          "what": "只读探针（eval/ 为新建目录）：逐因子距离占比 r_i,f 与 Spearman(s_i, r_i,f)（主判据）、a_i 三分量统计与 argmax 占比、Spearman(s_i, deg_i)、每层每因子码字使用数与死码字、各因子平均半径、exp_clip / arcosh_clip / NaN 计数、FLAT_OFF 的 max|ΔC|/|C| 与 SID sha256 比对、三臂下游指标差，以及「同一商品对在 c=1 与 c=4 两种度量下距离排序的 Kendall tau」（只在 eval 里算，不进梯度）"
+        }
+      ],
+      "modified_files": [
+        {
+          "path": "stage2_RQ-VAE/TIGER_RQ-VAE/train_config.py",
+          "what": "FIELDS 白名单加 CURVATURE_MODE(str: euclidean/mixed_af3/mixed_shuffled/single_c/flat_off)、FACTOR_SPLIT(int_list [16,8,8])、CURVATURE_LEVELS(float_list [1.0,4.0])、ALLOC_TAU(float，缺省 null 时由 5/95 分位自动定)、ALLOC_ANCHORS(float_list [1.0,0.0,-1.0])、RADIUS_LAMBDA(float 1.0)、RADIUS_MAX_FACTOR(float 15.0)、ALLOC_EMA(float 0.1)、AF3_ALLOC_PATH(str)；现有 21 键语义与取值范围不动"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_RQ-VAE/config/train_config.json",
+          "what": "加上述 8 个键，默认 CURVATURE_MODE=euclidean（默认行为即基线，euclidean 分支不读曲率产物）"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_RQ-VAE/distances/__init__.py",
+          "what": "注册 mixed_curvature；build_distance 按 CURVATURE_MODE 返回 euclidean 或 mixed_curvature。统一契约改为 distance(latent, codebook, alloc=None)，euclidean 实现接受并忽略 alloc"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_RQ-VAE/model/layers.py",
+          "what": "VQLayer 持有本层 alloc（商品 a_i、码字 a_k），在 :109-112 改为 self.distance(latent, get_code_embs(), alloc=alloc)；码字参数保持 (K_l,32) 切向量形状，只在被解释成点时做 exp；codebook/commitment 改调 losses/geometric.py（原 :20-21 两处 import 按 CURVATURE_MODE 分派并选用新 SPEC）；init_codebook(:149-157) 仍 KMeans，写入 a_k 初值 = 成员 a_i 均值；残差递归(:123-140) 在 mixed 下走按因子切空间差；不改 _indices/center_distance/sinkhorn(:83-121) 的代码形状"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_RQ-VAE/model/model.py",
+          "what": "forward 签名增加 item_ids（:28-48 目前只收 embeddings），get_indices / init_codebook 同步透传 alloc；mixed 模式下解码侧把量化结果按 log_0 拼回 32 维再送 decoder（:28-45），解码器输入形状不变"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_RQ-VAE/train_rqvae.py",
+          "what": "TensorDataset 从 (embeddings) 扩为 (embeddings, item_ids)（:281-283），batch 带 item_ids；加载 AF3 分配表产物并按 item_ids 取子表传给模型；日志打印 r_i,f 与 Spearman(s_i,r_i,f)、Spearman(s_i,deg_i)、exp_clip 占比、FLAT_OFF 自检结果（:324-327 的 init_codebook 调用点保持原语义）"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_RQ-VAE/losses/__init__.py",
+          "what": "在 :40-55 的 SPEC 注册表里登记 geometric 两项的 SPEC（form=geometric_pair，shift_invariant=false，scale_power=metric_dependent），并让共享测试套件按 SPEC 分支断言（对 geometric 项断言的是按因子距离的零损失点与 stop-gradient 关系，而不是 shift/scale 不变性）"
+        }
+      ],
+      "runs": "总训练次数 = 14（3 个 RQ-VAE 训练臂 + 每个臂一次 Stage3，主 seed 42 为 6 次；mixed_af3 与 single_c 各补 seed 43/44，每臂每 seed 再 2 次，共 8 次）：(1) mixed_af3（c_1=1, c_2=4，AF3 分配）；(2) mixed_shuffled（同几何同 c 同分配算法，只把 s_i 用固定种子 20261117 整体置换后再算 a_i，归因对照）；(3) single_c（c_1=c_2=1，AF3 分配完全不变，用来分离「多曲率」与「结构分配」）。euclidean / flat_off 不训新模型：复用 ideas/baseline.json 的 sid_sha256 与 sid_recall，并用同一 seed 重跑一次 euclidean 分支核对（计为复用，不计入上方次数）。两阶段都跑满 EPOCHS=3000（config/train_config.json:2），无早停。",
+      "feasibility_domain": "CODEBOOK_DIM=32 切成 16+8+8，正好用满，不新增参数；c_1=1 与 c_2=4 固定不扫；lambda、rho=0.1、w_f=1 全部固定不扫（lambda 只做在线缩放，见 (b)）。可行性风险与兜底：(a) exp 前在线 clamp(||v||<=R_max)，R_max = RADIUS_MAX_FACTOR / sqrt(c_f)（c=1 时 15、c=4 时 7.5），使 sqrt(c)||v|| <= 15、cosh/sinh 不溢出；exp_clip 次数逐 step 记录，占比门槛 <= 1e-3，超门槛判数值不稳并降 RADIUS_LAMBDA，不静默通过。(b) lambda 改为运行时缩放，不用 t=0 的 KMeans 分位：每 step 取本 batch 切向量范数的 99 分位 P99(||t||)，令 lambda_t = min(RADIUS_LAMBDA, R0 / max(P99(||t||), eps))（R0 = 2.0），只缩放不学习、不回传梯度。(c) 若 a_i 的 argmax 单一占比 > 0.98 或有效因子数 < 2，开训前就判 degenerate_geometry 并停（先修定标，不许带着退化分配开训）；开训后若 exp_clip 或 NaN 触发则回落 flat_off 并在 logs 写明。(d) 三层 RQ 共用同一套 (16/8/8) 切分与曲率，逐层独立码本 256 不变。"
+    },
+    "5_references": [
+      {
+        "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+        "year": 2026,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2609.03369",
+        "cited_by": 0,
+        "authors": ["Longfeng Wu", "Tong Zeng", "Giovanni Seni", "Zhimin Peng"],
+        "what": "生成式推荐里把 item indexing 放到双曲空间以照顾长尾层级，直接产出 SID。与我们的差别：(a) 单一曲率，无乘积流形、无逐因子不同曲率；(b) 几何与行为图 AF3 曲率无关，没有「结构决定几何」这一步；(c) 长尾由数据分布驱动，我们的 a_i 是冻结结构势的闭式函数。它是「只把欧氏换双曲」最直接的对照，必须正面区分"
+      },
+      {
+        "title": "HiHPQ: Hierarchical Hyperbolic Product Quantization for Unsupervised Image Retrieval",
+        "year": 2024,
+        "venue": "AAAI 2024",
+        "doi": "10.1609/aaai.v38i5.28261",
+        "cited_by": 20,
+        "authors": ["Zexuan Qiu", "Jiahong Liu", "Yankai Chen", "Irwin King"],
+        "what": "层级 + 双曲 + 乘积量化：多个子码本对子向量分别量化，再在双曲空间施加层级约束。它的 product 在码本子空间上，空间仍是单一双曲；我们的 product 在空间几何上（欧氏因子 x c=1 x c=4），码本仍是单码本残差量化，且面向 SID；两者不是同一件事"
+      },
+      {
+        "title": "Switch Spaces: Learning Product Spaces with Sparse Gating",
+        "year": 2021,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2102.08688",
+        "cited_by": 9,
+        "authors": ["Shuai Zhang", "Yi Tay", "Wenqi Jiang", "Da-Cheng Juan"],
+        "what": "在多个乘积空间之间用稀疏门控为每个样本选空间，是连续表示层的混合曲率；我们不用可学习门控，不做对比式训练，分配来自冻结的 AF3 结构势，且落点在离散量化的代价/码本/损失上"
+      },
+      {
+        "title": "Improving Heterogeneous Graph Learning with Weighted Mixed-Curvature Product Manifold",
+        "year": 2023,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2307.04514",
+        "cited_by": 4,
+        "authors": ["Tuc Nguyen-Van", "Dung D. Le", "The-Anh Ta"],
+        "what": "异质图上加权混合曲率乘积流形的聚合，权重来自节点/关系类型；我们的权重来自 AF3 结构势，对象是商品 SID 的量化器而不是图网络"
+      },
+      {
+        "title": "HyperML: A Boosting Metric Learning Approach in Hyperbolic Space for Recommender Systems",
+        "year": 2020,
+        "venue": "WSDM",
+        "doi": "10.1145/3336191.3371850",
+        "cited_by": 143,
+        "authors": ["Lucas Vinh Tran", "Yi Tay", "Shuai Zhang", "Gao Cong"],
+        "what": "双曲空间里做度量学习推荐，靠成对/三元组损失拉近正样本；主线禁止成对信号，我们的损失与分配没有任何 (i,j) 项，双曲几何只用于量化器"
+      },
+      {
+        "title": "Hyperbolic Residual Quantization: Discrete Representations for Data with Latent Hierarchies",
+        "year": 2025,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2505.12404",
+        "cited_by": 0,
+        "authors": ["Piotr Piękos", "Subhradeep Kayal", "Alexandros Karatzoglou"],
+        "what": "残差量化整体放在单一双曲空间，曲率固定；我们是多因子不同曲率且分配由结构决定"
+      },
+      {
+        "title": "Geometry-Aware Hyperbolic Residual-Quantized Variational Autoencoders",
+        "year": 2026,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2609.26342",
+        "cited_by": 0,
+        "authors": ["Alessio Colombo", "Melika Ayoughi"],
+        "what": "双曲几何写进 RQ-VAE 嵌入与量化，几何由可学先验决定；我们的几何参数是冻结 AF3 结构势的闭式函数，零新增可学几何参数，且是多因子不同曲率"
+      },
+      {
+        "title": "HyperVQ: MLR-based Vector Quantization in Hyperbolic Space",
+        "year": 2024,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2403.13015",
+        "cited_by": 10,
+        "authors": ["Nabarun Goswami", "Yusuke Mukuta", "Tatsuya Harada"],
+        "what": "用 MLR 把量化器搬到单一双曲空间，处理码字几何；我们没有 MLR 式成对 logit，代价是逐因子的测地距离"
+      },
+      {
+        "title": "Efficient Curvature-aware Graph Network",
+        "year": 2025,
+        "venue": "arXiv",
+        "doi": "10.48550/arxiv.2511.01443",
+        "cited_by": 3,
+        "authors": ["Chaoqun Fei", "Tinglve Zhou", "Tianyong Hao", "Yangyang Li"],
+        "what": "离散曲率用于图网络的高效聚合；曲率不进量化空间，我们让曲率决定商品/码字所在的分量与曲率"
+      },
+      {
+        "title": "Curvature graph neural network",
+        "year": 2021,
+        "venue": "Information Sciences",
+        "doi": "10.1016/j.ins.2021.12.077",
+        "authors": ["Haifeng Li", "Jun Hong Cao", "Jiawei Zhu", "Yu Liu"],
+        "what": "Forman 型离散曲率接进 GNN 传播；本方向沿用同族曲率定义，但只把它压成逐商品结构势，用来分配几何"
+      }
+    ],
+    "6_evaluation": {
+      "reference": "主参照 = results/stage3_T5Train/TIGER_mixed_rq_F0/logs/Amazon_2023_Instruments/Nov-09-2026_08-07-21/test_final.json：test_recall@10 = 0.057278155956754125、test_recall@5 = 0.037814028795765946、n_eval = 57439；另记 ideas/baseline.json 的 sid_recall = 0.05545012970281516 与 sid_sha256 = 025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059。",
+      "prerequisite_checks": [
+        "FLAT_OFF 自检（先跑，不训练）：c=0、a≡1、lambda=1 下相对代价误差 max|ΔC|/max|C| <= 1e-6（阈值只取这一条）；SID 比对改用 sha256 逐位一致并显式记录为第二判据 —— 若两者冲突，判据以「sha256 与基线完全一致」为准，不设双重阈值（layers.py:117 的 argmax 会在 1e-6 级差异处翻转，故不同时要求两条）",
+        "几何有效性（与度量挂钩，取代旧的 c_eff 判据）：逐因子距离占比 r_i,f = w_f d_f(x_i,q_i)^2 / sum_f w_f d_f^2（三层平均），要求 Spearman(s_i, r_i,E) >= 0.9 且 Spearman(s_i, r_i,H2) <= -0.9；c_eff 只进日志不作判据。等效写法：若记 s̃_i = -s_i，则等价于 Spearman(s̃_i, r_i,H2) >= 0.9 且 Spearman(s̃_i, r_i,E) <= -0.9",
+        "多曲率不可替代性：mixed_af3 必须优于 single_c（c=(1,1)、同一 AF3 分配），否则本方向退化为「逐商品度量加权」，与归档的 drive 同族，判否",
+        "符号自洽：Spearman(s_i, deg_i) 必须与 AF3 的符号叙事一致（s_i 负 = 高连接度枢纽之间的弱边），且 a_i 的 argmax 三分量各至少覆盖 5% 商品；否则记 degenerate_geometry 并如实报告",
+        "数值健康（在线）：exp_clip 占比 <= 1e-3、arcosh_clip 占比 <= 1e-3、无 NaN/Inf、t=0 的 L_recon <= 1.05 * 基线 t=0",
+        "无成对信号：对同一 batch 做随机置换，C/损失/SID 等变（误差 0），且训练路径代码中不出现 InfoNCE / BCE / margin / 源-目标残差对比"
+      ],
+      "decision_rule": [
+        "胜出：mixed_af3 的 Stage3 test_recall@10（3 seed 均值，seed 42/43/44）>= 0.059278155956754125（主参照 + 0.002），且相对 mixed_shuffled >= max(0.001, 2*std_mixed_af3)，且相对 single_c >= 0.001，三条同时满足才算「多曲率 + AF3 决定几何」有效",
+        "灰区判否：3 seed 均值落在 [0.056778155956754125, 0.059278155956754125) 一律判否，不解释为趋势、不改口径去认账",
+        "归因：mixed_af3 与 mixed_shuffled 的差 < 0.001 时，增益归因于「换了混合曲率空间」这一几何自由度而不是结构，本方向判否",
+        "退化：mixed_af3 与 single_c 的差 < 0.001 时，多曲率不成立（等价于逐商品加权），本方向判否，不再扫 c_2 / tau / 因子切分",
+        "无效：mixed_af3 test_recall@10 < 0.056778155956754125（主参照 - 0.0005）即判否，不再扫描 c_2 / tau / lambda / 因子切分",
+        "一致性：item_sids.json 必须 SID 长度恒为 3、每层词表恒为 256、与基线 shape 完全一致；下游 TIGER 词表与序列长度不改",
+        "全部结论都附 seed 均值 ± std（mixed_shuffled 只有 seed 42，其差值门槛用上面 max(0.001, 2*std) 的形式吸收方差）"
+      ],
+      "diagnostics": [
+        "每层每因子的码字使用数与死码字数（判断混合曲率是否把某一因子饿死）",
+        "高连接度枢纽（s_i 最低 20%）与社区内商品（s_i 最高 20%）在各因子的平均半径，以及 Spearman(s_i,deg_i)",
+        "同一商品对在 c=1 与 c=4 两种度量下距离排序的 Kendall tau（只读探针，检验「换曲率真的改变了排序」，而不是逐商品加权能复现的）",
+        "每层 L_recon 与总 L_recon 随 epoch 的曲线；与基线同 step 对比",
+        "mixed_af3 / mixed_shuffled / single_c 三臂的 r_i,f 分布与 a_i 分布"
+      ]
+    }
+  },
+  "result": {
+    "status": "not_run"
+  }
+}
