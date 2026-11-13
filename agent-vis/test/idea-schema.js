@@ -46,7 +46,8 @@ function goodDoc() {
       '1_goal': {
         idea:
           '表示空间换成逐商品曲率的产品流形，结构势决定每个商品落在哪一段曲率上，' +
-          '几何进该层的分配代价与残差递推两处。',
+          '几何进该层的分配代价与残差递推两处；与已有的双曲量化工作相比，' +
+          '曲率由商品侧的结构势给出，而不是固定值。',
       },
       '4_method': {
         new_files: [
@@ -54,15 +55,6 @@ function goodDoc() {
           { path: 'model/product_geometry.py', what: '产品流形的指数映射与对数映射' },
         ],
       },
-      '5_references': [
-        {
-          title: 'Hyperbolic Residual Quantization',
-          year: 2024,
-          venue: 'NeurIPS',
-          doi: '10.1234/abc',
-          relation: 'same_family',
-        },
-      ],
     },
   };
 }
@@ -158,6 +150,7 @@ await test('idea 里只留那三件事：多出来的字段一律判不合规', 
   doc.sections['4_method'].numerics = { dtype: 'fp32', clamps: [], degenerate_to_baseline: 'x' };
   doc.sections['4_method'].sanity_checks = ['一句能机械判定的话'];
   doc.sections['6_evaluation'] = { metric: 'stage3.test_recall@10', threshold: 0.065 };
+  doc.sections['5_references'] = [];
   const verdict = validateIdeaDoc(doc);
   assert.equal(verdict.ok, false);
   const paths = pathsOf(verdict);
@@ -169,17 +162,20 @@ await test('idea 里只留那三件事：多出来的字段一律判不合规', 
     'sections.4_method.numerics',
     'sections.4_method.sanity_checks',
     'sections.6_evaluation',
+    'sections.5_references',
   ]) {
     assert.ok(paths.includes(key), `要指出 ${key}`);
   }
 });
 
-await test('文献里的被引数判不合规（没有消费者）', () => {
+await test('参考文献整段不许出现在 idea 里（检索照做，但不写进文件）', () => {
   const doc = goodDoc();
-  doc.sections['5_references'][0].cited_by = 42;
+  doc.sections['5_references'] = [
+    { title: 'A', year: 2024, venue: 'NeurIPS', doi: '10.1/a', relation: 'same_family' },
+  ];
   const verdict = validateIdeaDoc(doc);
   assert.equal(verdict.ok, false);
-  assert.ok(pathsOf(verdict).includes('sections.5_references[0].cited_by'));
+  assert.ok(pathsOf(verdict).includes('sections.5_references'));
 });
 
 await test('多种子计划在值上被认出来', () => {

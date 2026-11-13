@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { IDEA_FORBIDDEN_FIELDS, ideaSkeleton } from './idea-schema.js';
 
 /**
- * 把 AGENT IDEA 的配置改成"必须按 genrec.idea.v4 的字段写"。
+ * 把 AGENT IDEA 的配置改成"必须按 genrec.idea.v5 的字段写"。
  *
  * 骨架从 idea-schema.js 里取，保证提示词里给的形状和校验器认的形状是同一份 ——
  * 两处各写一遍，迟早漂。改完字段契约就重跑一次这个脚本，面板上的配置跟着变。
@@ -28,14 +28,16 @@ const instructions = `你是 AGENT IDEA（IDEA_KEEPER），负责 ideas/ 下的�
 - 上游交接里带着 AGENT AGAINST 的反对意见 → **返修轮**：不归档、不新建，只按清单改当前 idea；
 - 没有上游意见 → **轮换轮**：归档现有方向，按 ideas/main_line.json 造一个新的。
 
-## idea 文件的字段是定死的（genrec.idea.v4）
+## idea 文件的字段是定死的（genrec.idea.v5）
 
 idea 文件**只能**是这个形状，顶层只有 schema / arm / sections 三键，每段的键也固定。
 
-**idea 只回答三件事**：
+**idea 只回答两件事**：
 1. 这个 idea 本身是什么（1_goal.idea）；
-2. 要新建哪些文件、每个文件是干什么的（4_method.new_files）；
-3. 参考了哪些论文（5_references）。
+2. 要新建哪些文件、每个文件是干什么的（4_method.new_files）。
+
+**文献不进文件**：写 idea 时照样可以检索文献（检索帮你判断新增性、与已有工作的差别），
+但稿子里不存参考文献清单 —— 差别直接写进 1_goal.idea 的正文即可。
 
 其余一律不写：数值与界、判据与门槛、验证步骤、开关、状态、训练计划。
 常量与它们的来由写进 math.json 的 constants，退化路径与三个开关写进 math.json 的 switches，
@@ -97,18 +99,19 @@ const steps = [
   {
     title: '搜索相关文献',
     instruction:
-      '轮换轮：用 webSearch 按机制关键词检两三组（limit 8 左右），整理成清单（标题/年份/出处/DOI），读出它们做了什么、与主线的关系（relation 取 same_family / different / baseline_method）、我们的差别。' +
-      '找不到就写「没有找到」，不要编；references 里不要写被引数。' +
+      '轮换轮：用 webSearch 按机制关键词检两三组（limit 8 左右），读出它们做了什么、与我们的差别 —— ' +
+      '差别要写进 1_goal.idea 的正文（那部分才是稿子里的东西）。' +
+      '**检索结果不要写进 idea 文件**（文件里没有 5_references 这一段）。' +
+      '找不到就写「没有找到」，不要编。' +
       '返修轮：只在意见点到文献时补检一次，否则跳过并说明。',
   },
   {
     title: '写或改 idea（字段必须合规）',
     instruction:
-      '轮换轮：按 genrec.idea.v4 的固定形状，用 writeFile 写 ideas/<新方向>/<新方向>_idea.json —— ' +
-      '顶层只有 schema（写 "genrec.idea.v4"）、arm、sections；三段是 1_goal / 4_method / 5_references。' +
+      '轮换轮：按 genrec.idea.v5 的固定形状，用 writeFile 写 ideas/<新方向>/<新方向>_idea.json —— ' +
+      '顶层只有 schema（写 "genrec.idea.v5"）、arm、sections；两段是 1_goal / 4_method。' +
       '1_goal.idea 写清这个 idea 本身是什么（几何对象 + 结构信号怎么进计算通路）；' +
-      '4_method.new_files 写这次要新建哪些文件（相对仓库根的路径）与每个文件是干什么的；' +
-      '5_references 写参考的论文（标题/年份/出处/DOI/与我们的关系）。' +
+      '4_method.new_files 写这次要新建哪些文件（相对仓库根的路径）与每个文件是干什么的。' +
       '每段里的键照提示词里的骨架填，不要增删字段，不要写运行计划（跑几次、什么种子）、不要自定门槛、不要写状态。' +
       '同目录写 math.json（symbols / formulas / constants(带 why) / switches(只三个) / metrics）。同一次只建一个方向。' +
       '返修轮：按 AGAINST 的清单逐条修改当前方向的 idea 文件（必要时同步 math.json），每条都写清改了哪里；不同意的意见要给出依据。' +
@@ -151,10 +154,10 @@ const againstSteps = [
   {
     title: '逐条开火',
   instruction:
-    '逐条开火：按 idea 的固定字段（genrec.idea.v4）一条一条核 —— ' +
+    '逐条开火：按 idea 的固定字段（genrec.idea.v5）一条一条核 —— ' +
     '1_goal.idea 说清了这个 idea 是什么（几何对象是什么、结构信号从哪来、进计算通路的哪几处）、' +
-    '4_method.new_files（要新建的文件齐不齐、每个文件的用途说不说得清）、' +
-    '5_references（论文是不是真的相关、与我们的关系标对没有）。' +
+    '4_method.new_files（要新建的文件齐不齐、每个文件的用途说不说得清）。' +
+    '文献不在 idea 里，也不用核文献对不对：稿子里没有参考文献这一段。' +
     'must_hold#1 与 #2 要从 idea 的正文与 math.json 里自己核，idea 里没有这两栏不是缺失。' +
     '数值、判据与验收不在 idea 里，别拿它们当缺失来打；它们在 math.json 与实现阶段。' +
     '用 readFile 读 ideas/<方向>/<方向>_idea.json 与 math.json，用 checkIdea 确认字段本身合规；' +

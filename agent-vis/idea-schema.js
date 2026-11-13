@@ -1,10 +1,12 @@
 /**
  * idea 文件的字段契约（genrec.idea.v4）。
  *
- * idea 只回答三件事：
+ * idea 只回答两件事：
  *   1. 这个 idea 本身是什么（1_goal.idea）；
- *   2. 要新建哪些文件、每个文件是干什么的（4_method.new_files）；
- *   3. 参考了哪些论文（5_references）。
+ *   2. 要新建哪些文件、每个文件是干什么的（4_method.new_files）。
+ *
+ * 文献不进文件：写 idea 时照样可以检索（检索的结果帮助判断新增性），
+ * 但稿子里不存参考文献清单 —— 查重只看 ideas/_archive/，审稿方也不再核文献。
  *
  * 其余一律不写：数值与界、判据与门槛、验证步骤、开关、状态、训练计划。
  * 那些各有归属 —— 常量与它们的来由在 math.json 的 constants，退化路径与三个开关在
@@ -19,17 +21,13 @@
  */
 
 /** 这份契约的版本号，也是 idea 文件里 schema 字段必须写的值。 */
-export const IDEA_SCHEMA_VERSION = 'genrec.idea.v4';
-
-/** 文献与主线的关系：同族（只差实现）、不同族、基线方法本身。 */
-export const IDEA_RELATIONS = ['same_family', 'different', 'baseline_method'];
+export const IDEA_SCHEMA_VERSION = 'genrec.idea.v5';
 
 /** idea 文件顶层与各段允许出现的键。多一个键就是不合规。 */
 const TOP_KEYS = ['schema', 'arm', 'sections'];
-const SECTION_KEYS = ['1_goal', '4_method', '5_references'];
+const SECTION_KEYS = ['1_goal', '4_method'];
 const GOAL_KEYS = ['idea'];
 const METHOD_KEYS = ['new_files'];
-const WORK_KEYS = ['title', 'year', 'venue', 'doi', 'relation'];
 
 /**
  * 整份文档里都不许出现的写法：多种子计划。
@@ -108,7 +106,6 @@ export function validateIdeaDoc(doc) {
       }
       checkGoal(sections['1_goal'], add);
       checkNewFiles(sections['4_method'], add);
-      checkReferences(sections['5_references'], add);
     }
   }
 
@@ -191,41 +188,6 @@ function checkNewFiles(method, add) {
   });
 }
 
-function checkWorks(list, path, add) {
-  if (list === undefined) {
-    add(path, '必须是数组（找不到文献就写空数组）');
-    return;
-  }
-  if (!Array.isArray(list)) {
-    add(path, '必须是数组');
-    return;
-  }
-  list.forEach((item, index) => {
-    if (!isPlainObject(item)) {
-      add(`${path}[${index}]`, '必须是对象');
-      return;
-    }
-    for (const key of extraKeys(item, WORK_KEYS)) {
-      add(`${path}[${index}].${key}`, `只允许 ${WORK_KEYS.join(' / ')}（被引数之类没有消费者，删掉）`);
-    }
-    for (const key of ['title', 'venue', 'doi']) {
-      if (!nonEmptyString(item[key])) add(`${path}[${index}].${key}`, '必须是非空字符串');
-    }
-    if (!Number.isInteger(item.year)) add(`${path}[${index}].year`, '必须是整数年份');
-    if (!IDEA_RELATIONS.includes(item.relation)) {
-      add(`${path}[${index}].relation`, `取值只能是 ${IDEA_RELATIONS.join(' / ')}`);
-    }
-  });
-}
-
-function checkReferences(list, add) {
-  if (list === undefined) {
-    add('sections.5_references', '必须有这一段（找不到文献就写空数组）');
-    return;
-  }
-  checkWorks(list, 'sections.5_references', add);
-}
-
 /**
  * 写给模型看的骨架。
  *
@@ -244,10 +206,7 @@ export function ideaSkeleton() {
       "new_files": [
         { "path": "<相对仓库根的路径>", "what": "这个新文件是干什么的" }
       ]
-    },
-    "5_references": [
-      { "title": "", "year": 2024, "venue": "", "doi": "", "relation": "same_family" }
-    ]
+    }
   }
 }`;
 }
@@ -273,5 +232,6 @@ export const IDEA_FORBIDDEN_FIELDS = [
   { field: '6_evaluation（整段）', owner: '判据与门槛归仓库契约（§25）与实现阶段' },
   { field: '6_evaluation.decision_rule', owner: '仓库契约（§25：test_R@10 > 0.065）' },
   { field: '6_evaluation.reference', owner: 'ideas/baseline.json（基线事实的单一出处）' },
+  { field: '5_references（整段）', owner: '文献不进文件：检索照做，差别写进 1_goal.idea 的正文' },
   { field: '5_references[].cited_by', owner: '没有消费者，删掉' },
 ];
