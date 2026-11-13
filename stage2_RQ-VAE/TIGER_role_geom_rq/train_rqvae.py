@@ -713,7 +713,8 @@ def main() -> None:
             if rank == 0:
                 with torch.no_grad():
                     raw_tokens = raw_module.get_indices(
-                        all_embeddings.to(device), infer_use_sk=False
+                        all_embeddings.to(device), infer_use_sk=False,
+                        item_ids=torch.arange(len(embeddings), dtype=torch.long, device=device),
                     ).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)

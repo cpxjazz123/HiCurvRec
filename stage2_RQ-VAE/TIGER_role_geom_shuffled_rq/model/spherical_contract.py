@@ -31,6 +31,8 @@ import torch
 SPHERE_EPS = 1e-7
 #: The tangent radius at which the exponential map stops being injective.
 SPHERE_POLE = 3.141592653589793
+#: How far the inner product is kept from the poles of the cosine.
+SPHERE_DOT_EPS = 1e-7
 
 
 def sphere_expmap0(v: torch.Tensor) -> torch.Tensor:
@@ -55,8 +57,14 @@ def sphere_distance(p: torch.Tensor, q: torch.Tensor) -> torch.Tensor:
 
 
 def sphere_squared_distance(p: torch.Tensor, q: torch.Tensor) -> torch.Tensor:
-    """The squared geodesic distance."""
-    return sphere_distance(p, q).pow(2)
+    """The squared geodesic distance: ``acos(p . q) ** 2``, with the cosine kept off the poles.
+
+    The inner product is clamped a little inside ``[-1, 1]``.  At ``p . q = 1`` the derivative of
+    ``acos`` is infinite, and a NaN gradient in the cost is a NaN model after one optimizer step;
+    the clamped value costs at most ``2e-7`` of squared distance and keeps the gradient finite.
+    """
+    dot = (p * q).sum(-1).clamp(-1.0 + SPHERE_DOT_EPS, 1.0 - SPHERE_DOT_EPS)
+    return torch.acos(dot).pow(2)
 
 
 def sphere_report(p: torch.Tensor, q: torch.Tensor) -> dict:

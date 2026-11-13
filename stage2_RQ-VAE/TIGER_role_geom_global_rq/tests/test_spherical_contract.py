@@ -71,3 +71,27 @@ def test_no_nan_for_extreme_inputs() -> None:
     assert torch.isfinite(p).all()
     assert torch.isfinite(sphere_distance(p, p)).all()
     assert torch.isfinite(sphere_logmap0(p)).all()
+
+
+def test_the_squared_distance_has_a_finite_gradient_at_coincident_points() -> None:
+    """``acos`` has an infinite derivative at one, so the squared distance is computed directly.
+
+    The routed cost uses the squared geodesic, and the gradient of the naive ``acos(dot)**2`` is
+    infinite whenever two points coincide -- which happens as soon as an item and a code are the
+    same point.  That is a NaN gradient, and a NaN gradient is a NaN model.
+    """
+    v = torch.randn(8, 16, dtype=torch.float64) * 0.3
+    p = sphere_expmap0(v).requires_grad_(True)
+    q = sphere_expmap0(v).requires_grad_(True)
+    loss = sphere_squared_distance(p, q).sum()
+    loss.backward()
+    assert torch.isfinite(p.grad).all()
+    assert torch.isfinite(q.grad).all()
+
+
+def test_the_squared_distance_equals_the_squared_geodesic() -> None:
+    p = sphere_expmap0(torch.randn(16, 16, dtype=torch.float64) * 0.4)
+    q = sphere_expmap0(torch.randn(16, 16, dtype=torch.float64) * 0.4)
+    # the inner product is clamped a little inside the poles, so the two differ by at most the
+    # clamp's effect on the squared angle
+    assert torch.allclose(sphere_squared_distance(p, q), sphere_distance(p, q).pow(2), atol=1e-5)
