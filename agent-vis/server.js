@@ -655,7 +655,8 @@ async function handleRun(req, res, url, mode, { viaPublicPath = false } = {}) {
     } catch (err) {
       // 发送方身份认不出来（它被删了？）：不挡这一轮，交接照发。
       process.stderr.write(
-        `交接来源 ${handoffFromId} 认不出来，没能重置它的会话：${(err && err.message) || String(err)}\n`,
+        `[${new Date().toISOString()}] 交接来源 ${handoffFromId} 认不出来，没能重置它的会话：` +
+          `${(err && err.message) || String(err)}\n`,
       );
     }
   }

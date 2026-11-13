@@ -1403,7 +1403,9 @@ export function resetAgentSessions(profileId) {
   }
   // 重置有没有真的发生，要看得见：以前这段代码在接收方身份解析之前，
   // 抛的错被 catch 吃掉，日志里只留下一句"来源认不出来"，重置从来没发生过。
-  process.stderr.write(`重置会话：${id} 丢了 ${disposed} 个会话\n`);
+  process.stderr.write(
+    `[${new Date().toISOString()}] 重置会话：${id} 丢了 ${disposed} 个会话\n`,
+  );
   return disposed;
 }
 
