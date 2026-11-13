@@ -1683,7 +1683,7 @@ async function main() {
     assert.deepEqual(toolNames([]), []);
     assert.deepEqual(toolNames(['read']), ['checkIdea', 'checkJson', 'listFiles', 'readFile', 'searchFiles']);
     // 写权限带两个工具：写文本文件，以及从冻结基线复制一份候选树。
-    assert.deepEqual(toolNames(['write']), ['copyBaselineTree', 'editFile', 'writeFile']);
+    assert.deepEqual(toolNames(['write']), ['copyBaselineTree', 'edit', 'writeFile']);
     assert.deepEqual(toolNames(['delete']), ['deleteFile']);
     assert.deepEqual(toolNames(['execute']), ['gitLog']);
     assert.deepEqual(toolNames(['network']), ['listIssues', 'readIssue']);

@@ -24,6 +24,7 @@ import {
   ModelRuntime,
   SessionManager,
   createAgentSession,
+  createEditToolDefinition,
   defineTool,
 } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
@@ -397,55 +398,6 @@ export const TOOL_IMPLS = {
     return { path: relativeToRoot(target), bytes, created: !existed };
   },
 
-  /**
-   * 改一段，不重打整份文件。
-   *
-   * 为什么需要它：writeFile 是整份覆盖 —— 要改一份 12.4k 字符的 math.json 里的
-   * 5 条公式，模型得把整份稿子重新吐一遍；那既是几十倍的多余输出，
-   * 也正是"响应被切在工具调用中间、修正一条都落不了地"的原因。
-   * 改一段就用改一段。
-   */
-  async editFile({ path: relPath, oldText, newText }) {
-    const target = resolveMutableInSandbox(relPath);
-    if (typeof oldText !== 'string' || oldText === '') {
-      throw new Error('oldText 不能为空：说清楚要被替换掉的是哪一段原文');
-    }
-    if (typeof newText !== 'string') {
-      throw new Error('newText 必须是字符串（要替换成的内容）');
-    }
-    let text = '';
-    try {
-      text = await fs.promises.readFile(target, 'utf8');
-    } catch {
-      throw new Error(`这个文件读不出来（editFile 只改已有的文件）: ${relPath}`);
-    }
-    const occurrences = text.split(oldText).length - 1;
-    if (occurrences === 0) {
-      throw new Error(
-        `文件里找不到要替换的那一段（原文必须逐字一致）: ${relPath}`,
-      );
-    }
-    if (occurrences > 1) {
-      throw new Error(
-        `要替换的那一段在文件里出现了 ${occurrences} 次，说不清该改哪一处: ${relPath}`,
-      );
-    }
-    const next = text.replace(oldText, newText);
-    const bytes = Buffer.byteLength(next, 'utf8');
-    if (bytes > MAX_WRITE_BYTES) {
-      throw new Error(
-        `改完之后太大了（${bytes} 字节，上限 ${MAX_WRITE_BYTES} 字节）: ${relPath}`,
-      );
-    }
-    await fs.promises.writeFile(target, next, 'utf8');
-    return {
-      path: relativeToRoot(target),
-      bytes,
-      replacedChars: oldText.length,
-      newChars: newText.length,
-    };
-  },
-
   async deleteFile({ path: relPath }) {
     const target = resolveMutableInSandbox(relPath);
     if (target === sandboxRoot()) {
@@ -659,21 +611,6 @@ const gitLogTool = piTool({
     ),
   }),
   impl: TOOL_IMPLS.gitLog,
-});
-
-const editFileTool = piTool({
-  name: 'editFile',
-  label: '改一段',
-  description:
-    'Replace one exact passage in a file inside the repo. The old text must appear exactly ' +
-    'once and verbatim. Use this instead of rewriting a whole file when only a few entries ' +
-    'change - it keeps the output small and the change reviewable.',
-  parameters: Type.Object({
-    path: Type.String({ description: '仓库相对路径，例如 ideas/xxx/math.json' }),
-    oldText: Type.String({ description: '要被替换掉的原文（逐字一致，且在文件里只出现一次）' }),
-    newText: Type.String({ description: '替换成的新内容' }),
-  }),
-  impl: TOOL_IMPLS.editFile,
 });
 
 const writeFileTool = piTool({
@@ -976,6 +913,43 @@ export async function askOnce(prompt, { profileId, instructions } = {}) {
   return text.trim();
 }
 
+/**
+ * pi 自带的 edit 工具：按原文精确替换（一处找不到会试模糊匹配），
+ * 一次调用可以改多处。
+ *
+ * 引擎用 pi 自己的 —— 不重复实现它已经有的能力。
+ * 但"文件能改在哪"由我们说了算：pi 的 edit 允许的操作被换成我们的实现，
+ * 于是仓库根之外、.git 之内这些仍然被挡着（工具本身不认识仓库的规矩）。
+ */
+const piEditTool = createEditToolDefinition(sandboxRoot(), {
+  operations: {
+    readFile: async (absolutePath) => {
+      const target = resolveMutableInSandbox(absolutePath);
+      const buf = await fs.promises.readFile(target);
+      if (buf.byteLength > MAX_WRITE_BYTES) {
+        throw new Error(
+          `文件太大（${buf.byteLength} 字节，上限 ${MAX_WRITE_BYTES} 字节），改不动: ${absolutePath}`,
+        );
+      }
+      return buf;
+    },
+    writeFile: async (absolutePath, content) => {
+      const target = resolveMutableInSandbox(absolutePath);
+      const buf = Buffer.from(content);
+      if (buf.byteLength > MAX_WRITE_BYTES) {
+        throw new Error(
+          `改完之后太大了（${buf.byteLength} 字节，上限 ${MAX_WRITE_BYTES} 字节）: ${absolutePath}`,
+        );
+      }
+      await fs.promises.writeFile(target, buf);
+    },
+    access: async (absolutePath) => {
+      const target = resolveMutableInSandbox(absolutePath);
+      await fs.promises.access(target, fs.constants.R_OK | fs.constants.W_OK);
+    },
+  },
+});
+
 export const PI_TOOLS = {
   listFiles: listFilesTool,
   checkJson: checkJsonTool,
@@ -990,7 +964,7 @@ export const PI_TOOLS = {
   readIssue: readIssueTool,
   gitLog: gitLogTool,
   writeFile: writeFileTool,
-  editFile: editFileTool,
+  edit: piEditTool,
   copyBaselineTree: copyBaselineTreeTool,
   deleteFile: deleteFileTool,
 };

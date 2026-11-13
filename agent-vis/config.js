@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-14.22';
+export const FRONTEND_VERSION = '2026-11-14.23';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -684,7 +684,7 @@ export const AGENT_PROFILES = [
       '- 找不到判定依据时写 UNCHECKED 并说明缺哪份证据，不要凭感觉改。',
       '',
       '工具：listFiles、readFile、searchFiles 只读；writeFile 写仓库根之内的文本文件；' +
-      'editFile 只改文件里的一段（math.json 改那几条用它，别整份重写）。' +
+      'edit 只改文件里的几处（math.json 改那几条用它，别整份重写）。' +
         '每步只调 1-2 个工具。回答用中文，结论先行，改公式时给出旧式与新式。',
     ].join('\n'),
     steps: [
@@ -712,9 +712,9 @@ export const AGENT_PROFILES = [
       {
         title: '有错就改 math.json',
         instruction:
-          '只改 FAIL 的那几条：用 editFile 逐条替换（oldText 写该条的原文、newText 写改好的，' +
-          '旧文本要逐字一致且在文件里只出现一次）；其余条目一个字都别动，键名与结构不动。' +
-          'editFile 改不动（原文对不上、出现多次）就 readFile 把那一条读准了再改；' +
+          '只改 FAIL 的那几条：用 edit 工具，一次调用把要改的条目都放进 edits[]（' +
+          '每项 oldText 写该条的原文、newText 写改好的）；其余条目一个字都别动，键名与结构不动。' +
+          '旧文本要逐字一致（在文件里唯一），对不上就 readFile 把那一条读准了再改。' +
           '不要用 writeFile 整份重写 math.json —— 整份重写会超出一轮的输出，修正反而落不了地。' +
           '改完用 readFile 复查一次，确认仍是合法 JSON 且被改的条目就是刚才判定错的那几条。' +
           '一条都没错就明确写「无需修改」，不要为了动而改。',
@@ -938,8 +938,8 @@ export const PERMISSION_CATALOG = [
     id: 'write',
     label: '写（write）',
     description:
-      '在仓库根之内写文本文件（新建或覆盖）、只改文件里的一段，以及从冻结基线复制一份候选树；不能写 .git 目录。',
-    tools: ['writeFile', 'editFile', 'copyBaselineTree'],
+      '在仓库根之内写文本文件（新建或覆盖）、只改文件里的几处，以及从冻结基线复制一份候选树；不能写 .git 目录。',
+    tools: ['writeFile', 'edit', 'copyBaselineTree'],
   },
   {
     id: 'delete',
