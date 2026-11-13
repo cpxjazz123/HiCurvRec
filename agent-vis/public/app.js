@@ -93,7 +93,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.29';
+const FRONTEND_VERSION = '2026-11-14.30';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -1785,7 +1785,9 @@ function createPanel(root) {
   /** 取一次被审文件的指纹（服务端算，页面不碰文件系统）。 */
   async function fetchFingerprint() {
     try {
-      const res = await fetch(`${API_BASE}/api/ideas/fingerprint`);
+      const res = await fetch(
+        `${API_BASE}/api/ideas/fingerprint?agentId=${encodeURIComponent(root.dataset.profile)}`,
+      );
       if (!res.ok) return null;
       const data = await res.json();
       return typeof data.fingerprint === 'string' ? data.fingerprint : null;

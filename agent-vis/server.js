@@ -149,7 +149,7 @@ function serveStatic(req, res, url, apiBase = '') {
  * 只算两处：ideas/ 下当前方向的文件（归档不算，它不该变）与候选树
  * （冻结基线不算，它一个字都不许动）。
  */
-function fingerprintWatchedFiles() {
+function fingerprintWatchedFiles(patterns = []) {
   const root = config.currentWorkdir();
   const files = {};
   const hashFile = (absolute) => {
@@ -176,6 +176,19 @@ function fingerprintWatchedFiles() {
       else if (entry.isFile()) hashFile(full);
     }
   };
+  if (Array.isArray(patterns) && patterns.length > 0) {
+    // 这一栏自己指定了被审的文件：只算它们。
+    for (const pattern of patterns) {
+      const re = new RegExp(
+        `^${pattern.split('*').map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*')}$`,
+      );
+      for (const name of listFilesRecursive(root)) {
+        const rel = path.relative(root, name).split(path.sep).join('/');
+        if (re.test(rel)) hashFile(name);
+      }
+    }
+    return files;
+  }
   walk(path.join(root, 'ideas'), ['_archive']);
   const stage2 = path.join(root, 'stage2_RQ-VAE');
   let candidates = [];
@@ -190,6 +203,27 @@ function fingerprintWatchedFiles() {
     walk(path.join(stage2, entry.name), null);
   }
   return files;
+}
+
+/** 仓库里所有文件（跳过 .git 与 __pycache__）。 */
+function listFilesRecursive(root) {
+  const out = [];
+  const walk = (dir) => {
+    let entries = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (entry.name === '.git' || entry.name === '__pycache__' || entry.name === 'node_modules') continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.isFile()) out.push(full);
+    }
+  };
+  walk(root);
+  return out;
 }
 
 function staleFrontendMessage(clientVersion) {
@@ -1026,7 +1060,16 @@ export function createServer({
     // （不含冻结基线）。归档不该变，基线更不该变，所以不进来。
     if (url.pathname === '/api/ideas/fingerprint') {
       try {
-        const files = fingerprintWatchedFiles();
+        const agentId = url.searchParams.get('agentId') || '';
+        let patterns = [];
+        if (agentId) {
+          try {
+            patterns = config.resolveProfile(agentId).loopWatchFiles || [];
+          } catch {
+            patterns = [];
+          }
+        }
+        const files = fingerprintWatchedFiles(patterns);
         const lines = Object.keys(files)
           .sort()
           .map((name) => `${name} ${files[name]}`);

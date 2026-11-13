@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-14.29';
+export const FRONTEND_VERSION = '2026-11-14.30';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -650,6 +650,13 @@ export const AGENT_PROFILES = [
       mode: 'files',
       prompt: '',
     },
+    /**
+     * 它被审的就是那一份 math.json：闸只看这个文件有没有被改。
+     *
+     * 公式对不对、有没有改完，都落在这一个文件上；状态行、idea 那些是汇报，
+     * 每轮都会变，拿它们当依据等于永远"有进展"。
+     */
+    loopWatchFiles: ['ideas/*/math.json'],
     loopResetSession: true,
     /** 挂载这个面板时输入框里预填的指令（别的 agent 的输入框是空的）。 */
     defaultPrompt: '核对 ideas/ 下机制文件的 math.json：逐条检查公式是否正确，有错就改对，并给出每条的依据。',
@@ -1155,6 +1162,40 @@ export const DEFAULT_LOOP = Object.freeze({ enabled: false, count: 2, intervalSe
  * agent ：每轮结束后让这个 agent 自己按 prompt 里的判据说一句要不要继续。
  */
 export const LOOP_GATE_MODES = Object.freeze(['off', 'ask', 'files', 'agent']);
+
+/**
+ * 每个 agent 自己指定"被审的文件"：循环闸（files 模式）看的就是这些。
+ *
+ * 写法是相对仓库根的路径模式，星号匹配一段目录名，例如
+ *   'ideas/当前方向/math.json'   —— 当前方向的那份 math.json
+ *   'ideas/当前方向/xxx_idea.json' —— 当前方向的 idea 文件
+ * 不配就用默认的一套（当前方向的所有文件 + 候选树，不含归档与冻结基线）。
+ */
+export const MAX_LOOP_WATCH_FILES = 8;
+const MAX_LOOP_WATCH_PATTERN = 200;
+
+/** 校验并规范化"被审文件"的模式列表。 */
+export function normalizeLoopWatchFiles(value) {
+  if (!Array.isArray(value)) {
+    throw new Error('loopWatchFiles 必须是数组');
+  }
+  if (value.length > MAX_LOOP_WATCH_FILES) {
+    throw new Error(`loopWatchFiles 最多 ${MAX_LOOP_WATCH_FILES} 条`);
+  }
+  return value.map((item) => {
+    if (typeof item !== 'string' || item.trim() === '') {
+      throw new Error('loopWatchFiles 的每一项都要是非空字符串');
+    }
+    const pattern = item.trim();
+    if (pattern.length > MAX_LOOP_WATCH_PATTERN) {
+      throw new Error(`loopWatchFiles 的每一项最多 ${MAX_LOOP_WATCH_PATTERN} 字`);
+    }
+    if (pattern.startsWith('/')) {
+      throw new Error(`loopWatchFiles 的路径要相对仓库根，不要以 / 开头: ${pattern}`);
+    }
+    return pattern;
+  });
+}
 /**
  * 闸开着时，loop.count 就不再是"跑几轮就停"，而是闸说了算：
  *   ask   —— 用户每轮之后点一次；
@@ -1336,6 +1377,11 @@ function publicProfile(profile) {
         ? Boolean(override.loopResetSession)
         : Boolean(profile.loopResetSession),
     defaultLoopResetSession: Boolean(profile.loopResetSession),
+    // 这一栏被审的文件：循环闸（files 模式）看的就是它们。
+    loopWatchFiles: has('loopWatchFiles')
+      ? normalizeLoopWatchFiles(override.loopWatchFiles)
+      : [...(profile.loopWatchFiles || [])],
+    defaultLoopWatchFiles: [...(profile.loopWatchFiles || [])],
     // 每轮之前要不要把这个 agent 的会话重置（它的上下文从零开始，聊天记录留着）。
     loopResetSession:
       has('loopResetSession')
@@ -1357,6 +1403,7 @@ function publicProfile(profile) {
       loop: has('loop'),
       loopGate: has('loopGate'),
       loopResetSession: has('loopResetSession'),
+      loopWatchFiles: has('loopWatchFiles'),
       instructions: has('instructions'),
       steps: has('steps'),
       permissions: has('permissions'),
@@ -1636,6 +1683,13 @@ export function saveProfileConfig(profileId, patch) {
         throw new Error(`handoffDelaySeconds 必须在 0 到 ${MAX_HANDOFF_DELAY_SECONDS} 之间`);
       }
       next.handoffDelaySeconds = delay;
+    }
+  }
+  if (patch.loopWatchFiles !== undefined) {
+    if (patch.loopWatchFiles === null) {
+      delete next.loopWatchFiles;
+    } else {
+      next.loopWatchFiles = normalizeLoopWatchFiles(patch.loopWatchFiles);
     }
   }
   if (patch.loopResetSession !== undefined) {

@@ -255,6 +255,8 @@ async function main() {
     assert.equal(math.loop.count, 0, '次数应为 0（不限）');
     assert.equal(math.loopGate.mode, 'files', '闸应当是客观的：看文件有没有改');
     assert.equal(math.loopGate.prompt, '', 'files 模式不用判据文本');
+    // 它被审的只有那一份 math.json：状态行与 idea 每轮都变，拿它们当依据等于永远"有进展"。
+    assert.deepEqual(math.loopWatchFiles, ['ideas/*/math.json']);
     assert.equal(math.loopResetSession, true);
   });
 
@@ -282,6 +284,17 @@ async function main() {
 
     const after = await (await fetch(`${base}/api/agents/agent-a/chats`)).json();
     assert.equal((after.records || []).length, 0, '重置之后记录应当被清空');
+  });
+
+  await test('循环闸的指纹：agent 算自己被审的文件', async () => {
+    const all = await (await fetch(`${base}/api/ideas/fingerprint`)).json();
+    assert.ok(Object.keys(all.files || {}).length > 1, '默认要覆盖一摊文件');
+
+    const math = await (await fetch(`${base}/api/ideas/fingerprint?agentId=agent-math`)).json();
+    const names = Object.keys(math.files || {});
+    assert.equal(names.length, 1, `AGENT MATH 只该看一份 math.json，实际 ${names.length} 份`);
+    assert.match(names[0], /^ideas\/.+\/math\.json$/, `看的不是 math.json：${names[0]}`);
+    assert.equal(typeof math.fingerprint, 'string');
   });
 
   await test('未知路由返回 404', async () => {
