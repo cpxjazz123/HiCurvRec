@@ -93,7 +93,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.8';
+const FRONTEND_VERSION = '2026-11-14.11';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -3747,23 +3747,87 @@ function fmtValue(value) {
   }
   if (typeof value === 'number') return { text: String(value), cls: 'kv-num' };
   if (typeof value === 'boolean') return { text: value ? 'true' : 'false', cls: 'kv-bool' };
-  if (Array.isArray(value)) return { text: value.map((v) => String(v)).join('、'), cls: 'kv-arr' };
-  if (typeof value === 'object') return { text: JSON.stringify(value), cls: 'kv-obj' };
+  if (typeof value === 'object') return { text: summarizeValue(value), cls: 'kv-obj' };
   return { text: String(value), cls: 'kv-str' };
 }
 
-/** 把任意 JSON 展平成 [路径, 值] 行；对象按路径展开，数组逐项。 */
-function flattenRows(value, path, out) {
+/**
+ * 一层字段一行。
+ *
+ * 不摊到叶子：摊平之后 constants[15].name 这种东西也会各占一行 ——
+ * 一个词成了一段，读的人要在几十行里拼出"这个常数是多少、为什么"。
+ * 这里只按 JSON 自己的字段分层：对象按它的键、数组按它的项。
+ */
+function rowsOf(value) {
+  if (Array.isArray(value)) return value.map((item, index) => [String(index + 1), item]);
+  if (value && typeof value === 'object') return Object.entries(value);
+  return [['', value]];
+}
+
+/**
+ * 一个块里的行：顶层字段各占一行，字段本身是表的就按表里的项展开。
+ *
+ * 公式表是 {symbols, formulas, constants, switches, metrics} ✓，
+ * 每个又是一张表 —— 摊平到叶子就是 constants[15].name 这种货色，
+ * 合成一行又成一堵字墙。这里的粒度是"表里的一项一行"，
+ * 标号写成 "表名 · 项名" ✓。
+ */
+function blockRows(obj) {
+  const rows = [];
+  for (const [key, value] of Object.entries(obj || {})) {
+    if (value && typeof value === 'object') {
+      for (const [label, item] of fieldRows(value)) rows.push([`${key} · ${label}`, item]);
+      continue;
+    }
+    rows.push([key, value]);
+  }
+  return rows;
+}
+
+/**
+ * 一层字段再往下看一层：列表里的每一项各占一行，标号用它的名字。
+ *
+ * 公式表、常数表、开关表都是这种形状 —— 一行一项才读得动，
+ * 合成一大行就成了"一堵字墙"。
+ */
+function fieldRows(value) {
   if (Array.isArray(value)) {
-    value.forEach((item, i) => flattenRows(item, `${path}[${i}]`, out));
-    return out;
+    return value.map((item, index) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        return [String(index + 1), item];
+      }
+      const labelKey = ['name', 'title', 'key', 'id'].find((k) => typeof item[k] === 'string' && item[k]);
+      const label = labelKey ? item[labelKey] : String(index + 1);
+      // 标号已经写着名字了，值里就别再重复一遍。
+      const rest = { ...item };
+      if (labelKey) delete rest[labelKey];
+      return [label, rest];
+    });
   }
-  if (value && typeof value === 'object') {
-    for (const [k, v] of Object.entries(value)) { flattenRows(v, path === '' ? k : `${path}.${k}`, out); }
-    return out;
+  if (value && typeof value === 'object') return Object.entries(value);
+  return [['', value]];
+}
+
+/**
+ * 把一个字段的值压成一句能读的话。
+ *
+ * 标量原样；记录型（{name, value, why} 这类）写成 "name = value（why）"；
+ * 再复杂的就按 "键: 值" 串起来 —— 一行读得完，不展开成几十行。
+ */
+function summarizeValue(value) {
+  if (value === null || value === undefined) return '（空）';
+  if (typeof value !== 'object') return String(value);
+  if (Array.isArray(value)) return value.map((item) => summarizeValue(item)).join('；');
+  const entries = Object.entries(value);
+  if (entries.length === 0) return '（空）';
+  if (entries.every(([, v]) => v === null || typeof v !== 'object')) {
+    const name = entries.find(([k]) => k === 'name' || k === 'title' || k === 'key');
+    const rest = entries.filter(([k]) => k !== (name ? name[0] : null));
+    const head = name ? String(name[1]) : null;
+    const body = rest.map(([k, v]) => (k === 'why' || k === 'note' ? `（${summarizeValue(v)}）` : `${k} = ${summarizeValue(v)}`)).join('，');
+    return head ? (body ? `${head}：${body}` : head) : body;
   }
-  out.push([path, value]);
-  return out;
+  return entries.map(([k, v]) => `${k}: ${summarizeValue(v)}`).join('；');
 }
 
 function kvSection(title, entries) {
@@ -3877,8 +3941,8 @@ function countSections(doc) {
   return IDEA_REQUIRED_SECTIONS.filter((k) => {
     const v = doc.sections[k];
     if (v === undefined || v === null) return false;
-    const rows = flattenRows(v, '', []);
-    return rows.length > 0 && rows.every(([, x]) => String(x ?? '').trim() !== '');
+    const rows = rowsOf(v);
+    return rows.length > 0 && rows.every(([, x]) => summarizeValue(x).trim() !== '');
   }).length;
 }
 
@@ -3909,19 +3973,34 @@ function renderIdeaDoc(doc, error, extras = {}) {
     // 主线单独一块、排在正文之前：它来自 ideas/main_line.json，机制文件不再自带副本。
     const line = mainLine || doc.main_line;
     if (line !== undefined && line !== null) {
-      ideaUi.kv.appendChild(kvSection('主线', flattenRows(line, '', [])));
+      // 主线那段话就是一段话，单独摆出来；条款与定义按字段列。
+      if (typeof line === 'object' && !Array.isArray(line)) {
+        const rest = {};
+        for (const [k, v] of Object.entries(line)) {
+          if (k === 'statement') continue;
+          rest[k] = v;
+        }
+        if (typeof line.statement === 'string') {
+          ideaUi.kv.appendChild(kvIdeaBlock('主线', line.statement));
+        }
+        if (Object.keys(rest).length > 0) {
+          ideaUi.kv.appendChild(kvSection('主线（条款与定义）', blockRows(rest)));
+        }
+      } else {
+        ideaUi.kv.appendChild(kvSection('主线', rowsOf(line)));
+      }
     }
     // 基线事实每个候选都一样，单独一块，机制文件不再抄。
     if (baseline && typeof baseline === 'object') {
-      ideaUi.kv.appendChild(kvSection('基线', flattenRows(baseline, '', [])));
+      ideaUi.kv.appendChild(kvSection('基线', blockRows(baseline)));
     }
     // 用什么算式在方向目录的 math.json：先摆公式，再摆机制正文。
     if (math && typeof math === 'object') {
-      ideaUi.kv.appendChild(kvSection('公式', flattenRows(math, '', [])));
+      ideaUi.kv.appendChild(kvSection('公式', blockRows(math)));
     }
     // 要验证什么（假设/开关/预注册/检查/期望）在方向目录的 verification.json。
     if (verification && typeof verification === 'object') {
-      ideaUi.kv.appendChild(kvSection('验证计划', flattenRows(verification, '', [])));
+      ideaUi.kv.appendChild(kvSection('验证计划', blockRows(verification)));
     }
     if (doc.sections) {
       for (const key of Object.keys(doc.sections)) {
@@ -3935,11 +4014,11 @@ function renderIdeaDoc(doc, error, extras = {}) {
           ideaUi.kv.appendChild(kvFilesBlock('要新建的文件', section.new_files));
           continue;
         }
-        ideaUi.kv.appendChild(kvSection(sectionLabel(key), flattenRows(section, '', [])));
+        ideaUi.kv.appendChild(kvSection(sectionLabel(key), rowsOf(section)));
       }
     }
     for (const key of ['references', 'result', 'web_contract', 'self_check']) {
-      if (doc[key] !== undefined) ideaUi.kv.appendChild(kvSection(key, flattenRows(doc[key], '', [])));
+      if (doc[key] !== undefined) ideaUi.kv.appendChild(kvSection(key, rowsOf(doc[key])));
     }
   }
   if (ideaUi.count) ideaUi.count.textContent = `${ideaCountSections}/${IDEA_REQUIRED_COUNT} 段`;
