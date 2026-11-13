@@ -31,11 +31,16 @@
 
         <button type="button" class="new-agent" data-role="newAgentBtn">＋ 新建 Agent</button>
 
+        <button type="button" class="new-agent" data-role="newGroupBtn">＋ 新建组</button>
+
         <button type="button" class="new-agent idea-open" data-role="ideaBtn">
           IDEA 文本（空）
         </button>
 
         <button type="button" class="new-agent" data-role="settingsBtn">⚙ 全局设置</button>
+
+        <div class="sidebar-label">组</div>
+        <ul class="group-list" data-role="groupList"></ul>
 
         <div class="sidebar-label">Agent</div>
         <ul class="agent-list" data-role="agentList"></ul>
@@ -80,7 +85,10 @@
                     autocomplete="off"
                     placeholder="给 AGENT Write（机制实现者）的指令"
                   />
-                  <button type="submit" class="send" data-role="runBtn">运行</button>
+                  <button type="button" class="reset-session" data-role="resetSessionBtn">
+                    重置会话
+                  </button>
+                <button type="submit" class="send" data-role="runBtn">运行</button>
                 </div>
                 <div class="composer-bar">
                   <div class="stepbar" data-role="stepBar"></div>
@@ -239,6 +247,9 @@
                     autocomplete="off"
                     placeholder="给 AGENT B（Issue 控制器）的指令"
                   />
+                  <button type="button" class="reset-session" data-role="resetSessionBtn">
+                    重置会话
+                  </button>
                   <button type="submit" class="send" data-role="runBtn">运行</button>
                 </div>
                 <div class="composer-bar">
@@ -406,6 +417,9 @@
                   autocomplete="off"
                   placeholder="给这个 agent 的指令"
                 />
+                <button type="button" class="reset-session" data-role="resetSessionBtn">
+                  重置会话
+                </button>
                 <button type="submit" class="send" data-role="runBtn">运行</button>
               </div>
               <div class="composer-bar">
@@ -536,6 +550,20 @@
       </section>
     </template>
 
+    <!-- 新建组：把若干 agent 放进一组，交接时可以整组发给。 -->
+    <dialog class="settings-dialog" data-role="newGroupDialog">
+      <form method="dialog" class="settings-form">
+        <h3>新建组</h3>
+        <p class="settings-note">
+          组里的 agent 会一起收到同一条消息，并且各自都要回应。选好成员再点「新建组」。
+        </p>
+        <div data-role="newGroupBody"></div>
+        <menu class="settings-actions">
+          <button type="button" data-role="newGroupClose">关闭</button>
+        </menu>
+      </form>
+    </dialog>
+
     <!-- 全局设置：运行环境主机与工作目录。所有 agent 共用，改完立刻生效。 -->
     <dialog class="settings-dialog" data-role="settingsDialog">
       <form method="dialog" class="settings-form">
@@ -559,6 +587,15 @@
         </menu>
 
         <hr class="settings-sep" />
+
+        <section class="settings-block">
+          <h4>Group</h4>
+          <p class="settings-note">
+            把若干 agent 放在一组里。交接目标可以指向某一个 agent，也可以指向一个 group ——
+            发给 group 时，组里每个人都会收到同一条消息，并且各自都要回应。
+          </p>
+          <div class="settings-groups" data-role="settingsGroups"></div>
+        </section>
 
         <section class="settings-block">
           <h4>重置 agent 会话</h4>

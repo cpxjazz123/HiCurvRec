@@ -419,9 +419,30 @@ function clearSteps(panelId) {
  * 4 次真实请求），又慢又不稳，还会把交接请求的形状改掉。
  * 步骤编排本身由场景 L 测（那里专门看默认步骤）。
  */
-async function openPageNoSteps(cdp, base) {
+/**
+ * 打开页面，并且确认它已经是那个地址。
+ *
+ * 导航是有延迟的：Page.navigate 发出去之后，CDP 的 evaluate 可能还落在
+ * 旧页面上 —— 于是点击、勾选都作用在上一场那个服务器上（共享的数据目录里
+ * 连组名都一样，看着完全正常，实际上发错了地方）。所以导航之后先等
+ * location.origin 变成目标地址，再动手。
+ */
+async function openPageAt(cdp, base) {
   await openPage(cdp, base);
   await waitFor(cdp, 'window.__AGENT_VIS_FRONTEND__ || null');
+  const origin = new URL(base).origin;
+  const here = await waitFor(
+    cdp,
+    `location.origin === '${origin}' ? 'here' : ''`,
+    120,
+    250,
+  );
+  if (here !== 'here') throw new Error(`页面还没切到 ${origin}`);
+  return here;
+}
+
+async function openPageNoSteps(cdp, base) {
+  await openPageAt(cdp, base);
   await cdp.evaluate(clearSteps(PANEL_A));
   await cdp.evaluate(clearSteps(PANEL_B));
   // 清空步骤是攒一会儿才发出去的：不等它落到服务端就走，
@@ -539,8 +560,7 @@ async function createTrivialUpstream(cdp, base, target) {
     JSON.stringify({ handoffTargets: [target] }),
   );
   // 重新加载页面，新身份的面板才会挂上来。
-  await openPage(cdp, base);
-  await waitFor(cdp, 'window.__AGENT_VIS_FRONTEND__ || null');
+  await openPageAt(cdp, base);
   const panel = `panel-${upstreamId}`;
   await waitFor(cdp, `document.getElementById('${panel}') ? 'ready' : ''`, 120, 250);
   return { panel, id: upstreamId };
@@ -555,8 +575,7 @@ async function createTrivialUpstream(cdp, base, target) {
 async function dropTemporaryAgent(cdp, base, id) {
   await request(`${base}/api/agents/${encodeURIComponent(id)}/chats`, 'DELETE');
   await request(`${base}/api/agents/${encodeURIComponent(id)}`, 'DELETE');
-  await openPage(cdp, base);
-  await waitFor(cdp, 'window.__AGENT_VIS_FRONTEND__ || null');
+  await openPageAt(cdp, base);
 }
 
 /**
@@ -585,23 +604,19 @@ function removeNewCandidateTrees(before) {
   } catch {
     return [];
   }
-  const removed = [];
+  const fresh = [];
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
     if (before.has(entry.name)) continue;
-    const full = path.join(dir, entry.name);
-    // git 跟踪着的目录不动：那是仓库里的东西，不是这次跑出来的。
-    let tracked = '';
-    try {
-      tracked = execFileSync('git', ['ls-files', full], { cwd: config.SANDBOX_ROOT, encoding: 'utf8' });
-    } catch {
-      tracked = '';
-    }
-    if (tracked.trim() !== '') continue;
-    fs.rmSync(full, { recursive: true, force: true });
-    removed.push(entry.name);
+    fresh.push(entry.name);
   }
-  return removed;
+  // 只**报出来**，不删。
+  //
+  // 删是危险的：真人正在跑的 agent（比如面板上的 AGENT WRITE）会在
+  // stage2_RQ-VAE/ 下建候选树，测试跑完把它删掉，那份工作就白费了。
+  // 测试自己不再建树（live 场景用的是临时 agent），所以这里看到新树，
+  // 说明有人正在跑 —— 报出来给人看，不要动它。
+  return fresh;
 }
 
 async function main() {
@@ -3453,6 +3468,65 @@ async function main() {
     mockServerW.closeAllConnections();
     await new Promise((resolve) => mockServerW.close(resolve));
 
+    // ---------- 场景 X：整组交接 ----------
+    process.stdout.write('\n  场景 X · 发给一个 group：组里每个人都收到并回应\n');
+    const mockServerX = createServer({ mode: 'mock', publicPath: '', dataDir: SCRATCH_DATA });
+    await new Promise((resolve) => mockServerX.listen(0, '127.0.0.1', resolve));
+    const mockBaseX = `http://127.0.0.1:${mockServerX.address().port}`;
+    // 组先建好，页面再打开：页面一上来就知道有哪些组。
+    const groupX = await request(
+      `${mockBaseX}/api/groups`,
+      'POST',
+      JSON.stringify({ name: '两个一组', members: ['agent-b', 'agent-fix'] }),
+    );
+    check('组建起来了', Boolean(groupX && groupX.group), JSON.stringify(groupX).slice(0, 120));
+    if (groupX && groupX.group) {
+      const groupIdX = groupX.group.id;
+      await openPageAt(cdp, mockBaseX);
+      const groupOption = await waitFor(
+        cdp,
+        inPanel(
+          PANEL_A,
+          `Array.from(panel.querySelectorAll('[data-role=handoffTargets] input[type=checkbox]')).some(function (i) { return i.value === 'group:${groupIdX}'; }) ? 'ready' : ''`,
+        ),
+        120,
+        250,
+      );
+      check('交接目标里出现了这个组', groupOption === 'ready', `状态 ${groupOption}`);
+      // 目标直接写进服务端：这一场要验的是"发给组时组里每个人都收到"，
+      // 勾选框那一手在别处验。页面上的复选框会随配置重画，点到旧元素上
+      // 会静默失效 —— 那不是这一场要考的东西。
+      await request(
+        `${mockBaseX}/api/agents/agent-a/config`,
+        'PUT',
+        JSON.stringify({ handoffTargets: [`group:${groupIdX}`] }),
+      );
+      const savedTargetsX = await waitForServer(async () => {
+        const health = await request(`${mockBaseX}/api/health`);
+        const agent = (health.agents || []).find((a) => a.id === 'agent-a');
+        return agent && (agent.handoffTargets || []).includes(`group:${groupIdX}`);
+      });
+      check('组存成了 AGENT Write 的交接目标', savedTargetsX === true, String(savedTargetsX));
+      // 页面重新加载一次，让这一栏拿到新的目标。
+      await openPageAt(cdp, mockBaseX);
+      await cdp.evaluate(submitPrompt(PANEL_A, '整组交接'));
+      await waitFor(cdp, panelDone(PANEL_A), 200, 300);
+      const groupCardsB = await waitFor(cdp, panelHandoffCards(PANEL_B), 200, 300);
+      const groupCardsFix = await waitFor(
+        cdp,
+        panelHandoffCards('panel-agent-fix'),
+        200,
+        300,
+      );
+      check('组里的 AGENT B 收到了消息', groupCardsB === 1, `${groupCardsB} 张卡片`);
+      check('组里的 AGENT FIX 也收到了消息', groupCardsFix === 1, `${groupCardsFix} 张卡片`);
+      const answeredFix = await waitFor(cdp, panelDone('panel-agent-fix'), 200, 300);
+      check('组里的每个 agent 都回应了', answeredFix === 'done', `状态 ${answeredFix}`);
+      await request(`${mockBaseX}/api/groups/${groupIdX}`, 'DELETE');
+    }
+    mockServerX.closeAllConnections();
+    await new Promise((resolve) => mockServerX.close(resolve));
+
     ws.close();
   } finally {
     // 先让浏览器自己退出：CDP 的 Browser.close 会把 chromium 及其所有
@@ -3468,12 +3542,14 @@ async function main() {
     await sleep(500);
     // 这次跑新建出来的候选树（git 没跟踪的）收拾掉，别把半成品留在仓库里。
     try {
-      const removed = removeNewCandidateTrees(candidateTreesBefore);
-      if (removed.length > 0) {
-        process.stdout.write(`  （清掉了这次跑新建的候选树：${removed.join('、')}）\n`);
+      const fresh = removeNewCandidateTrees(candidateTreesBefore);
+      if (fresh.length > 0) {
+        process.stdout.write(
+          `  （这次跑期间 stage2_RQ-VAE/ 下多了候选树：${fresh.join('、')} —— 没动它）\n`,
+        );
       }
     } catch (err) {
-      process.stdout.write(`  （清理候选树失败：${(err && err.message) || String(err)}）\n`);
+      process.stdout.write(`  （检查候选树失败：${(err && err.message) || String(err)}）\n`);
     }
     // chromium 会 fork 出脱离原进程组的子进程（crashpad 等），
     // 只 kill 进程组清不干净，所以再按调试端口特征扫一遍。

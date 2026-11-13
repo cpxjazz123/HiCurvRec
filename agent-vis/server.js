@@ -785,6 +785,8 @@ export function createServer({
           // 全局设置（面板的「全局设置」里可改）：运行环境主机与工作目录。
           settings: config.getGlobalSettings(),
           defaultSettings: config.DEFAULT_GLOBAL_SETTINGS,
+          // 组：交接目标既可以是 agent，也可以是组（组里每个人都收到同一条消息）。
+          groups: config.listGroups(),
           frontendVersion: config.FRONTEND_VERSION,
           protocolVersion: config.PROTOCOL_VERSION,
           // 权限目录：页面上的权限区按它铺复选框。
@@ -898,6 +900,81 @@ export function createServer({
             JSON.stringify({ error: err && err.message ? err.message : String(err) }),
           );
         });
+      return;
+    }
+
+    // Group：把若干 agent 放在一组里，交接时可以整组发给。
+    if (url.pathname === '/api/groups' || url.pathname.startsWith('/api/groups/')) {
+      const rest = url.pathname.slice('/api/groups'.length).replace(/^\//, '');
+      const groupId = rest ? decodeURIComponent(rest) : '';
+      if (req.method === 'GET' && !groupId) {
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ groups: config.listGroups() }));
+        return;
+      }
+      if (req.method === 'POST' && !groupId) {
+        readJsonBody(req)
+          .then((body) => {
+            let group;
+            try {
+              group = config.createGroup(body || {});
+            } catch (err) {
+              res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+              res.end(
+                JSON.stringify({ error: err && err.message ? err.message : String(err) }),
+              );
+              return;
+            }
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ group, groups: config.listGroups() }));
+          })
+          .catch((err) => {
+            res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(
+              JSON.stringify({ error: err && err.message ? err.message : String(err) }),
+            );
+          });
+        return;
+      }
+      if (req.method === 'PUT' && groupId) {
+        readJsonBody(req)
+          .then((body) => {
+            let group;
+            try {
+              group = config.updateGroup(groupId, body || {});
+            } catch (err) {
+              res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+              res.end(
+                JSON.stringify({ error: err && err.message ? err.message : String(err) }),
+              );
+              return;
+            }
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ group, groups: config.listGroups() }));
+          })
+          .catch((err) => {
+            res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(
+              JSON.stringify({ error: err && err.message ? err.message : String(err) }),
+            );
+          });
+        return;
+      }
+      if (req.method === 'DELETE' && groupId) {
+        try {
+          const result = config.deleteGroup(groupId);
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ ...result, groups: config.listGroups() }));
+        } catch (err) {
+          res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(
+            JSON.stringify({ error: err && err.message ? err.message : String(err) }),
+          );
+        }
+        return;
+      }
+      res.writeHead(405, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: '组只接受 GET / POST / PUT / DELETE' }));
       return;
     }
 

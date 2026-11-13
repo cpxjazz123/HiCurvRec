@@ -563,6 +563,56 @@ async function main() {
     assert.deepEqual(train.tools, ['stage2Start', 'stage2Status', 'stage2Stop']);
   });
 
+  await test('Group：建组、改组、整组交接、删组', async () => {
+    const post = (body) =>
+      fetch(`${base}/api/groups`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    const created = await (await post({ name: '修复组', members: ['agent-fix', 'agent-math'] })).json();
+    assert.ok(created.group, '组没建起来');
+    const groupId = created.group.id;
+    assert.equal(created.group.name, '修复组');
+    assert.deepEqual(created.group.members, ['agent-fix', 'agent-math']);
+
+    // 组名不能空，成员必须是存在的身份。
+    assert.equal((await post({ name: '  ', members: ['agent-a'] })).status, 400, '空组名应该被拒');
+    assert.equal((await post({ name: 'x', members: [] })).status, 400, '空成员应该被拒');
+    assert.equal((await post({ name: 'x', members: ['no-such-agent'] })).status, 400, '不存在的成员应该被拒');
+
+    // 改组：成员可以换。
+    const updated = await (await fetch(`${base}/api/groups/${groupId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ members: ['agent-fix'] }),
+    })).json();
+    assert.deepEqual(updated.group.members, ['agent-fix']);
+
+    // 交接目标可以指向一个组。
+    const put = await fetch(`${base}/api/agents/agent-a/config`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ handoffTargets: [`group:${groupId}`] }),
+    });
+    assert.equal(put.status, 200, '把组设成交接目标应该被接受');
+    const health = await (await fetch(`${base}/api/health`)).json();
+    const a = health.agents.find((agent) => agent.id === 'agent-a');
+    assert.ok(a.handoffTargets.includes(`group:${groupId}`), '组没进交接目标');
+    assert.ok(
+      (health.groups || []).some((group) => group.id === groupId),
+      'health 里没有这个组',
+    );
+
+    // 删组：各 agent 的交接目标里那个组引用也要被摘掉。
+    const removed = await fetch(`${base}/api/groups/${groupId}`, { method: 'DELETE' });
+    assert.equal(removed.status, 200);
+    const after = await (await fetch(`${base}/api/health`)).json();
+    const a2 = after.agents.find((agent) => agent.id === 'agent-a');
+    assert.ok(!a2.handoffTargets.includes(`group:${groupId}`), '删组后目标里不该还留着它');
+    assert.equal((after.groups || []).length, 0, '组应该被删干净了');
+  });
+
   await test('旧版前端被版本闸门拦下，拿到刷新提示而不是 400', async () => {
     // 旧前端硬编码了旧的 agent 身份（profile=assistant）。如果先校验身份、
     // 后校验版本，用户看到的就是一句莫名其妙的 "未知的 agent 身份"，

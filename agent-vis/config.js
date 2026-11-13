@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-13.4';
+export const FRONTEND_VERSION = '2026-11-13.8';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -155,6 +155,129 @@ export const IDEAS_ARCHIVE_NAME = '_archive';
 /** 归档目录的绝对路径。 */
 export function ideasArchiveDir() {
   return path.join(currentWorkdir(), 'ideas', IDEAS_ARCHIVE_NAME);
+}
+
+/**
+ * Group：把若干 agent 放在一组里，交接时可以整组发给。
+ *
+ * 一个 agent 的交接目标既可以是一个 agent，也可以是一个 group（目标写成
+ * "group:<id>"）。发给 group 的意思是：组里每个 agent 都收到同一条消息，
+ * 并且各自都要回应。
+ */
+export const GROUP_TARGET_PREFIX = 'group:';
+
+/** 当前生效的组。 */
+let globalGroups = [];
+
+/** 组里成员的 id 列表。 */
+function groupMembers(group) {
+  return Array.isArray(group && group.members) ? group.members : [];
+}
+
+/** 读出全部组。 */
+export function listGroups() {
+  return globalGroups.map((group) => ({
+    id: group.id,
+    name: group.name,
+    members: [...groupMembers(group)],
+  }));
+}
+
+/** 按 id 找组。 */
+export function groupById(id) {
+  return globalGroups.find((group) => group.id === id) || null;
+}
+
+/** 这个交接目标指的是一个组吗。 */
+export function isGroupTarget(target) {
+  return typeof target === 'string' && target.startsWith(GROUP_TARGET_PREFIX);
+}
+
+/** 把一个组目标展开成它的成员（不是组目标就原样返回）。 */
+export function expandTarget(target) {
+  if (!isGroupTarget(target)) return [target];
+  const group = groupById(target.slice(GROUP_TARGET_PREFIX.length));
+  return group ? groupMembers(group) : [];
+}
+
+/** 服务端认识的 agent 身份（内置 + 运行时新建）。 */
+function knownAgentIds() {
+  return new Set([
+    ...AGENT_PROFILES.map((profile) => profile.id),
+    ...runtimeProfiles.keys(),
+  ]);
+}
+
+/**
+ * 新建一个组。
+ *
+ * 名字不能空；成员必须是服务端认识的 agent 身份，至少一个。
+ */
+export function createGroup({ name, members } = {}) {
+  const label = typeof name === 'string' ? name.trim() : '';
+  if (label === '') throw new Error('组名不能为空');
+  if (!Array.isArray(members) || members.length === 0) {
+    throw new Error('组里至少要有一个 agent');
+  }
+  const known = knownAgentIds();
+  const unique = [];
+  for (const member of members) {
+    if (typeof member !== 'string' || !known.has(member)) {
+      throw new Error(`组里有一个不存在的 agent 身份：${JSON.stringify(member)}`);
+    }
+    if (!unique.includes(member)) unique.push(member);
+  }
+  let counter = 1;
+  while (globalGroups.some((group) => group.id === `group-${counter}`)) counter += 1;
+  const group = { id: `group-${counter}`, name: label, members: unique };
+  globalGroups.push(group);
+  persist();
+  return group;
+}
+
+/** 改一个组：名字与成员。 */
+export function updateGroup(id, patch = {}) {
+  const group = groupById(id);
+  if (!group) throw new Error(`没有这个组：${id}`);
+  if (patch.name !== undefined) {
+    const label = typeof patch.name === 'string' ? patch.name.trim() : '';
+    if (label === '') throw new Error('组名不能为空');
+    group.name = label;
+  }
+  if (patch.members !== undefined) {
+    if (!Array.isArray(patch.members) || patch.members.length === 0) {
+      throw new Error('组里至少要有一个 agent');
+    }
+    const known = knownAgentIds();
+    const unique = [];
+    for (const member of patch.members) {
+      if (typeof member !== 'string' || !known.has(member)) {
+        throw new Error(`组里有一个不存在的 agent 身份：${JSON.stringify(member)}`);
+      }
+      if (!unique.includes(member)) unique.push(member);
+    }
+    group.members = unique;
+  }
+  persist();
+  return group;
+}
+
+/** 删一个组；同时把它从各 agent 的交接目标里摘掉。 */
+export function deleteGroup(id) {
+  const index = globalGroups.findIndex((group) => group.id === id);
+  if (index < 0) throw new Error(`没有这个组：${id}`);
+  globalGroups.splice(index, 1);
+  const target = `${GROUP_TARGET_PREFIX}${id}`;
+  for (const [agentId, override] of Object.entries(userConfigs)) {
+    if (!Array.isArray(override.handoffTargets)) continue;
+    if (!override.handoffTargets.includes(target)) continue;
+    const next = { ...override };
+    next.handoffTargets = override.handoffTargets.filter((item) => item !== target);
+    if (Object.keys(next).length === 0) delete userConfigs[agentId];
+    else userConfigs[agentId] = next;
+  }
+  persist();
+  return { id, deleted: true };
 }
 
 /** 读出全局设置。 */
@@ -1151,6 +1274,7 @@ function persist() {
     configs: userConfigs,
     agents: Object.fromEntries(runtimeProfiles),
     settings: globalSettings,
+    groups: globalGroups,
   });
 }
 
@@ -1160,6 +1284,15 @@ function hydrate() {
   userConfigs = state.configs;
   // 全局设置：文件里没有就用默认值（老版本的 agents.json 没有这一段）。
   const stored = state.settings && typeof state.settings === 'object' ? state.settings : {};
+  // 组：老文件里没有这一段就当没有组。
+  const storedGroups = Array.isArray(state.groups) ? state.groups : [];
+  globalGroups = storedGroups
+    .filter((group) => group && typeof group.id === 'string' && typeof group.name === 'string')
+    .map((group) => ({
+      id: group.id,
+      name: group.name,
+      members: groupMembers(group).filter((id) => typeof id === 'string'),
+    }));
   globalSettings = {
     agentHost:
       typeof stored.agentHost === 'string' && stored.agentHost.trim() !== ''

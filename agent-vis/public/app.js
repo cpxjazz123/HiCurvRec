@@ -25,8 +25,14 @@ const settingsResetEl = document.querySelector('[data-role=settingsReset]');
 const settingsCloseEl = document.querySelector('[data-role=settingsClose]');
 const settingsAgentEl = document.querySelector('[data-role=settingsAgent]');
 const settingsResetSessionEl = document.querySelector('[data-role=settingsResetSession]');
+const settingsGroupsEl = document.querySelector('[data-role=settingsGroups]');
+const newGroupBtnEl = document.querySelector('[data-role=newGroupBtn]');
+const newGroupDialogEl = document.querySelector('[data-role=newGroupDialog]');
+const newGroupBodyEl = document.querySelector('[data-role=newGroupBody]');
+const newGroupCloseEl = document.querySelector('[data-role=newGroupClose]');
 const layoutEl = document.querySelector('.layout');
 const agentListEl = document.querySelector('[data-role=agentList]');
+const groupListEl = document.querySelector('[data-role=groupList]');
 
 /**
  * 页面上所有面板。
@@ -43,6 +49,8 @@ const panels = [];
  * 清单来自服务端的 /api/health：删掉的 agent 要从这里摘掉。
  */
 const knownAgentIds = new Set();
+/** 服务端上的组：id -> {id, name, members}。 */
+const knownGroups = new Map();
 
 /**
  * agent 身份 → 显示用的名字。
@@ -83,7 +91,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-13.4';
+const FRONTEND_VERSION = '2026-11-13.8';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -283,6 +291,7 @@ function createPanel(root) {
     stepBar: pick('stepBar'),
     configBtn: pick('configBtn'),
     clearHistoryBtn: pick('clearHistory'),
+    resetSessionBtn: pick('resetSessionBtn'),
     backToChat: pick('backToChat'),
     configTitle: pick('configTitle'),
   };
@@ -671,7 +680,10 @@ function createPanel(root) {
     if (knownAgentIds.size === 0) return [];
     const dropped = [];
     for (const id of Array.from(handoffTargets)) {
-      if (!knownAgentIds.has(id)) {
+      // 目标是 agent 或者组（group:<id>）：两边都得是服务端还认识的。
+      const isGroup = id.startsWith('group:');
+      const alive = isGroup ? knownGroups.has(id.slice('group:'.length)) : knownAgentIds.has(id);
+      if (!alive) {
         handoffTargets.delete(id);
         dropped.push(id);
       }
@@ -846,6 +858,33 @@ function createPanel(root) {
       empty.className = 'handoff-empty';
       empty.textContent = '服务端上没有别的 agent 可选。';
       els.handoffTargets.appendChild(empty);
+    }
+    // 组：整组发给一个人，组里每个人都收到同一条消息。
+    for (const group of knownGroups.values()) {
+      const target = `group:${group.id}`;
+      const label = document.createElement('label');
+      label.className = 'handoff-option handoff-group';
+
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.value = target;
+      box.checked = handoffTargets.has(target);
+      box.addEventListener('change', () => {
+        userEdited.handoff = true;
+        if (box.checked) handoffTargets.add(target);
+        else handoffTargets.delete(target);
+        refreshHandoffSummary();
+        void saveConfig({ handoffTargets: Array.from(handoffTargets) });
+      });
+
+      const text = document.createElement('span');
+      const memberNames = group.members
+        .map((id) => agentNames.get(id) || id)
+        .join('、');
+      text.textContent = `组：${group.name}（${group.members.length} 人：${memberNames}）`;
+
+      label.append(box, text);
+      els.handoffTargets.appendChild(label);
     }
     for (const id of others) {
       const label = document.createElement('label');
@@ -2154,6 +2193,30 @@ function createPanel(root) {
    *
    * 两边必须一起清 —— 只清一边的话，刷新页面它又回来了。
    */
+  /**
+   * 重置这一栏的会话：对话记录与模型上下文都清掉。
+   *
+   * 全局设置里也有同一个动作；这里是就近的一键版 —— 每一栏自己就能点。
+   */
+  async function resetThisSession() {
+    try {
+      const res = await fetch(`${API_BASE}/api/session/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId: root.dataset.profile }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showAlert(`会话没能重置：${data.error || `HTTP ${res.status}`}`);
+        return;
+      }
+      clearTimeline();
+      showNote('这一栏的会话已重置：对话记录与模型上下文都清掉了。');
+    } catch (err) {
+      showAlert(`会话没能重置：${err && err.message ? err.message : String(err)}`);
+    }
+  }
+
   async function clearHistory() {
     try {
       await deleteChats(root.dataset.profile);
@@ -2275,6 +2338,11 @@ function createPanel(root) {
   if (els.clearHistoryBtn) {
     els.clearHistoryBtn.addEventListener('click', () => {
       void clearHistory();
+    });
+  }
+  if (els.resetSessionBtn) {
+    els.resetSessionBtn.addEventListener('click', () => {
+      void resetThisSession();
     });
   }
 
@@ -2569,10 +2637,258 @@ async function resetAgentSession(agentId) {
   return data;
 }
 
+/**
+ * 组的管理：每个组一块（名字 + 成员），外加一块"新建组"。
+ *
+ * 成员勾选与保存都在这一块里做完，改完服务端存下来，页面重新读一次清单。
+ */
+function renderGroupEditors() {
+  if (!settingsGroupsEl) return;
+  settingsGroupsEl.innerHTML = '';
+  for (const group of knownGroups.values()) {
+    settingsGroupsEl.appendChild(groupEditor(group, false));
+  }
+  settingsGroupsEl.appendChild(groupEditor(null, true));
+}
+
+function groupEditor(group, isNew) {
+  const block = document.createElement('div');
+  block.className = 'settings-group';
+
+  const name = document.createElement('input');
+  name.type = 'text';
+  name.value = group ? group.name : '';
+  name.placeholder = '组的名字';
+  name.dataset.role = 'groupName';
+
+  const members = document.createElement('div');
+  members.className = 'settings-group-members';
+  const picked = new Set(group ? group.members : []);
+  for (const [id, agentName] of agentNames) {
+    const label = document.createElement('label');
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+    box.value = id;
+    box.checked = picked.has(id);
+    box.addEventListener('change', () => {
+      if (box.checked) picked.add(id);
+      else picked.delete(id);
+    });
+    const text = document.createElement('span');
+    text.textContent = agentName;
+    label.append(box, text);
+    members.appendChild(label);
+  }
+
+  const actions = document.createElement('div');
+  actions.className = 'settings-group-actions';
+  const save = document.createElement('button');
+  save.type = 'button';
+  save.dataset.role = 'groupSave';
+  save.textContent = isNew ? '新建组' : '保存这个组';
+  save.addEventListener('click', () => {
+    const body = { name: name.value, members: Array.from(picked) };
+    const url = isNew
+      ? `${API_BASE}/api/groups`
+      : `${API_BASE}/api/groups/${encodeURIComponent(group.id)}`;
+    fetch(url, {
+      method: isNew ? 'POST' : 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          showAlert(`组没存上：${data.error || `HTTP ${res.status}`}`);
+          return;
+        }
+        await refreshGroups();
+        renderGroupEditors();
+        // 新建组用的那个对话框建完就收起来。
+        if (newGroupDialogEl && newGroupDialogEl.open && typeof newGroupDialogEl.close === 'function') {
+          newGroupDialogEl.close();
+        }
+      })
+      .catch((err) => showAlert(`组没存上：${err && err.message ? err.message : String(err)}`));
+  });
+  actions.appendChild(save);
+
+  if (!isNew) {
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.dataset.role = 'groupDelete';
+    del.textContent = '删除这个组';
+    del.addEventListener('click', () => {
+      fetch(`${API_BASE}/api/groups/${encodeURIComponent(group.id)}`, { method: 'DELETE' })
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            showAlert(`组没删掉：${data.error || `HTTP ${res.status}`}`);
+            return;
+          }
+          await refreshGroups();
+          renderGroupEditors();
+        })
+        .catch((err) => showAlert(`组没删掉：${err && err.message ? err.message : String(err)}`));
+    });
+    actions.appendChild(del);
+  }
+
+  block.append(name, members, actions);
+  return block;
+}
+
+/**
+ * 「新建组」：打开对话框，填名字、勾成员，存下来。
+ *
+ * 建完的组立刻出现在各 agent 的交接目标里（那边刷新一下目标列表）。
+ */
+function openNewGroupDialog() {
+  if (!newGroupDialogEl) return;
+  if (newGroupBodyEl) {
+    newGroupBodyEl.innerHTML = '';
+    newGroupBodyEl.appendChild(groupEditor(null, true));
+  }
+  if (typeof newGroupDialogEl.showModal === 'function') newGroupDialogEl.showModal();
+}
+
+/** 重新读一次组清单（服务端是唯一的一份）。 */
+async function refreshGroups() {
+  try {
+    const res = await fetch(`${API_BASE}/api/groups`);
+    if (!res.ok) return;
+    const data = await res.json();
+    knownGroups.clear();
+    for (const group of Array.isArray(data.groups) ? data.groups : []) {
+      if (!group || typeof group.id !== 'string') continue;
+      knownGroups.set(group.id, {
+        id: group.id,
+        name: typeof group.name === 'string' ? group.name : group.id,
+        members: Array.isArray(group.members) ? group.members : [],
+      });
+    }
+    for (const panel of panels) panel.refreshTargets();
+    renderGroupList();
+  } catch {
+    // 读不到就先用手上这份：不影响别的功能。
+  }
+}
+
 function resetGlobalSettingsForm() {
   const defaults = globalSettingsDefaults || {};
   if (settingsHostEl) settingsHostEl.value = defaults.agentHost || '';
   if (settingsWorkdirEl) settingsWorkdirEl.value = defaults.agentWorkdir || '';
+}
+
+/**
+ * 组名就地改：点一下名字变成输入框，回车或失焦存下，Esc 放弃。
+ */
+function makeGroupNameEditable(group, nameEl) {
+  nameEl.addEventListener('click', (event) => {
+    // 别让 details 折叠掉 —— 这次点击是去改名字的。
+    event.preventDefault();
+    event.stopPropagation();
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'group-name-input';
+    input.value = group.name;
+    nameEl.replaceWith(input);
+    input.focus();
+    input.select();
+    let done = false;
+    const commit = async (save) => {
+      if (done) return;
+      done = true;
+      const value = input.value.trim();
+      if (!save || value === '' || value === group.name) {
+        input.replaceWith(nameEl);
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/api/groups/${encodeURIComponent(group.id)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: value }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          showAlert(`组没改名：${data.error || `HTTP ${res.status}`}`);
+          input.replaceWith(nameEl);
+          return;
+        }
+        await refreshGroups();
+      } catch (err) {
+        showAlert(`组没改名：${err && err.message ? err.message : String(err)}`);
+        input.replaceWith(nameEl);
+      }
+    };
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        void commit(true);
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        void commit(false);
+      }
+    });
+    input.addEventListener('blur', () => {
+      void commit(true);
+    });
+  });
+}
+
+/**
+ * 左侧栏的「组」：每个组一行，展开看组里有哪些 agent。
+ *
+ * 组排在 agent 列表上面：先看分组，再看全部 agent。组里的成员可以点，
+ * 直接跳到那个 agent 的聊天。
+ */
+function renderGroupList() {
+  if (!groupListEl) return;
+  groupListEl.innerHTML = '';
+  if (knownGroups.size === 0) {
+    const empty = document.createElement('li');
+    empty.className = 'group-empty';
+    empty.textContent = '还没有组。点上面的「＋ 新建组」把几个 agent 放在一起。';
+    groupListEl.appendChild(empty);
+    return;
+  }
+  for (const group of knownGroups.values()) {
+    const item = document.createElement('li');
+    item.className = 'group-item';
+    item.dataset.groupId = group.id;
+
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    summary.className = 'group-summary';
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'group-name';
+    nameSpan.textContent = group.name;
+    makeGroupNameEditable(group, nameSpan);
+    summary.append(nameSpan);
+    const count = document.createElement('span');
+    count.className = 'group-count';
+    count.textContent = `（${group.members.length} 人）`;
+    summary.append(count);
+    details.appendChild(summary);
+
+    const members = document.createElement('ul');
+    members.className = 'group-members';
+    for (const member of group.members) {
+      const row = document.createElement('li');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'group-member';
+      button.textContent = agentNames.get(member) || member;
+      button.addEventListener('click', () => setActiveAgent(member, 'chat'));
+      row.appendChild(button);
+      members.appendChild(row);
+    }
+    details.appendChild(members);
+    item.appendChild(details);
+    groupListEl.appendChild(item);
+  }
 }
 
 /**
@@ -2811,10 +3127,22 @@ if (newAgentBtnEl) {
 }
 
 // 全局设置：打开时读一遍当前生效的值，保存后立刻刷新侧栏底部那行字。
+if (newGroupBtnEl) {
+  newGroupBtnEl.addEventListener('click', () => {
+    openNewGroupDialog();
+  });
+}
+if (newGroupCloseEl) {
+  newGroupCloseEl.addEventListener('click', () => {
+    if (newGroupDialogEl && typeof newGroupDialogEl.close === 'function') newGroupDialogEl.close();
+  });
+}
+
 if (settingsBtnEl) {
   settingsBtnEl.addEventListener('click', () => {
     loadGlobalSettings().then(() => {
       fillSettingsAgentList();
+      renderGroupEditors();
       if (settingsDialogEl && typeof settingsDialogEl.showModal === 'function') {
         settingsDialogEl.showModal();
       }
@@ -2922,7 +3250,21 @@ function deliverResult(source, answer, options = {}) {
   }
   // 延迟是"这一栏自己的配置"：跑完隔多少秒才发。0 = 立刻。
   const delaySeconds = source.handoffDelaySeconds();
-  for (const targetId of targets) {
+  // 目标里可能有组：组里每个人都收到同一条消息，并且各自都要回应。
+  // 同一个人既是直接目标又是组成员时，只发一次。
+  const recipients = [];
+  for (const target of targets) {
+    if (target.startsWith('group:')) {
+      const group = knownGroups.get(target.slice('group:'.length));
+      if (!group) continue;
+      for (const member of group.members) {
+        if (!recipients.includes(member)) recipients.push(member);
+      }
+      continue;
+    }
+    if (!recipients.includes(target)) recipients.push(target);
+  }
+  for (const targetId of recipients) {
     const target = panels.find((item) => item.profileId === targetId);
     if (!target) continue;
     const requirement = target.getPrompt();
@@ -3066,6 +3408,18 @@ async function loadHealth() {
     knownAgentIds.add(agent.id);
     agentNames.set(agent.id, agent.name);
   }
+
+  // 组：交接目标可以指向一整组。
+  knownGroups.clear();
+  for (const group of Array.isArray(info.groups) ? info.groups : []) {
+    if (!group || typeof group.id !== 'string') continue;
+    knownGroups.set(group.id, {
+      id: group.id,
+      name: typeof group.name === 'string' ? group.name : group.id,
+      members: Array.isArray(group.members) ? group.members : [],
+    });
+  }
+  renderGroupList();
 
   // 权限目录是全局的一份：所有面板共用同一张权限表，
   // 每一栏勾哪几项是各的（存在服务端的那份配置里）。
