@@ -143,6 +143,55 @@ function serveStatic(req, res, url, apiBase = '') {
  * 旧版前端不认识新协议，会把 tool-input-start 之类的分片画成 "input-start"
  * 这种看不懂的卡片 —— 与其让它画错，不如明确告诉用户怎么修。
  */
+/**
+ * 被审文件的指纹：路径 -> 内容哈希。
+ *
+ * 只算两处：ideas/ 下当前方向的文件（归档不算，它不该变）与候选树
+ * （冻结基线不算，它一个字都不许动）。
+ */
+function fingerprintWatchedFiles() {
+  const root = config.currentWorkdir();
+  const files = {};
+  const hashFile = (absolute) => {
+    try {
+      files[path.relative(root, absolute)] = crypto
+        .createHash('sha256')
+        .update(fs.readFileSync(absolute))
+        .digest('hex');
+    } catch {
+      // 读不到（正在写、或者刚被删）就不算它。
+    }
+  };
+  const walk = (dir, skip) => {
+    let entries = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (skip && skip.includes(entry.name)) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full, null);
+      else if (entry.isFile()) hashFile(full);
+    }
+  };
+  walk(path.join(root, 'ideas'), ['_archive']);
+  const stage2 = path.join(root, 'stage2_RQ-VAE');
+  let candidates = [];
+  try {
+    candidates = fs.readdirSync(stage2, { withFileTypes: true });
+  } catch {
+    candidates = [];
+  }
+  for (const entry of candidates) {
+    if (!entry.isDirectory()) continue;
+    if (entry.name === 'TIGER_RQ-VAE') continue; // 冻结基线：不该变，也不该算
+    walk(path.join(stage2, entry.name), null);
+  }
+  return files;
+}
+
 function staleFrontendMessage(clientVersion) {
   const shown = clientVersion ? `v=${clientVersion}` : '没有声明版本（是旧版前端）';
   return (
@@ -968,6 +1017,29 @@ export function createServer({
             JSON.stringify({ error: err && err.message ? err.message : String(err) }),
           );
         });
+      return;
+    }
+
+    // 循环闸的客观依据：这一轮有没有真的改到东西。
+    //
+    // 指纹覆盖"被审的东西"：ideas/ 下当前方向的文件（不含归档）与候选树
+    // （不含冻结基线）。归档不该变，基线更不该变，所以不进来。
+    if (url.pathname === '/api/ideas/fingerprint') {
+      try {
+        const files = fingerprintWatchedFiles();
+        const lines = Object.keys(files)
+          .sort()
+          .map((name) => `${name} ${files[name]}`);
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          ok: true,
+          files,
+          fingerprint: crypto.createHash('sha256').update(lines.join('\n')).digest('hex'),
+        }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: (err && err.message) || String(err) }));
+      }
       return;
     }
 

@@ -247,14 +247,14 @@ async function main() {
     await put({ loop: null });
   });
 
-  await test('AGENT MATH 配好的是：不限次数 + 按判据自己判 + 每轮重置会话', async () => {
+  await test('AGENT MATH 配好的是：不限次数 + 改了被审的文件才继续 + 每轮重置会话', async () => {
     const health = await (await fetch(`${base}/api/health`)).json();
     const math = (health.agents || []).find((a) => a.id === 'agent-math');
     assert.ok(math, 'AGENT MATH 不在身份表里');
     assert.equal(math.loop.enabled, true);
     assert.equal(math.loop.count, 0, '次数应为 0（不限）');
-    assert.equal(math.loopGate.mode, 'agent');
-    assert.ok(math.loopGate.prompt.includes('没有'), '判据要写清什么时候才停');
+    assert.equal(math.loopGate.mode, 'files', '闸应当是客观的：看文件有没有改');
+    assert.equal(math.loopGate.prompt, '', 'files 模式不用判据文本');
     assert.equal(math.loopResetSession, true);
   });
 

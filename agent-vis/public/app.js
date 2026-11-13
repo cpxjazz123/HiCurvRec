@@ -93,7 +93,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.26';
+const FRONTEND_VERSION = '2026-11-14.29';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -686,8 +686,9 @@ function createPanel(root) {
       const gate = profile.loopGate && typeof profile.loopGate === 'object'
         ? profile.loopGate
         : { mode: 'off', prompt: '' };
-      els.loopGateMode.value = gate.mode === 'ask' || gate.mode === 'agent' ? gate.mode : 'off';
+      els.loopGateMode.value = ['ask', 'files', 'agent'].includes(gate.mode) ? gate.mode : 'off';
       if (els.loopGatePrompt) els.loopGatePrompt.value = typeof gate.prompt === 'string' ? gate.prompt : '';
+      refreshLoopState();
     }
     if (!(first && userEdited.loopResetSession) && els.loopResetSession) {
       els.loopResetSession.checked = Boolean(profile.loopResetSession);
@@ -921,7 +922,7 @@ function createPanel(root) {
     const mode = els.loopGateMode ? els.loopGateMode.value : 'off';
     const prompt = els.loopGatePrompt ? els.loopGatePrompt.value.trim() : '';
     return {
-      mode: mode === 'ask' || mode === 'agent' ? mode : 'off',
+      mode: ['ask', 'files', 'agent'].includes(mode) ? mode : 'off',
       prompt: prompt.slice(0, 500),
     };
   }
@@ -951,9 +952,11 @@ function createPanel(root) {
     const gate = loopGateSetting();
     const gateText = gate.mode === 'ask'
       ? '每轮之后问你要不要继续'
-      : gate.mode === 'agent'
-        ? '每轮之后由这个 agent 按判据自己判'
-        : '每轮之后直接接着跑';
+      : gate.mode === 'files'
+        ? '改了被审的文件才继续'
+        : gate.mode === 'agent'
+          ? '每轮之后由这个 agent 按判据自己判'
+          : '每轮之后直接接着跑';
     const resetText = loopResetSessionSetting() ? '每轮之前重置会话' : '不重置会话';
     const countText = setting.count === 0
       ? '不限次数'
@@ -1772,6 +1775,26 @@ function createPanel(root) {
   }
 
   /**
+   * 这一轮开始前，被审文件的指纹。
+   *
+   * 循环闸的客观依据：这一轮有没有真的改到东西。改了才继续，没改就停 ——
+   * 不问模型，不读摘要。
+   */
+  let roundStartFingerprint = null;
+
+  /** 取一次被审文件的指纹（服务端算，页面不碰文件系统）。 */
+  async function fetchFingerprint() {
+    try {
+      const res = await fetch(`${API_BASE}/api/ideas/fingerprint`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return typeof data.fingerprint === 'string' ? data.fingerprint : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * 最近一轮的内容摘要：循环闸问 agent 时把它带上去。
    *
    * 取的是这一轮**有内容的那一步**（比如 AGENT MATH 的"记状态行"），
@@ -1945,7 +1968,7 @@ function createPanel(root) {
     }
   }
 
-  function scheduleLoopAfter(mySeq, options) {
+  async function scheduleLoopAfter(mySeq, options) {
     if (mySeq !== runSeq) return;
     if (abortedByUser) {
       cancelLoop();
@@ -2018,6 +2041,28 @@ function createPanel(root) {
       });
       return;
     }
+    if (gate.mode === 'files') {
+      // 客观判定：这一轮有没有改到被审的文件。
+      const after = await fetchFingerprint();
+      const changed =
+        after !== null && roundStartFingerprint !== null && after !== roundStartFingerprint;
+      if (els.loopState) {
+        els.loopState.textContent = changed
+          ? `第 ${loopDone} 轮改到了被审的文件，接着跑第 ${loopDone + 1} 轮。`
+          : `第 ${loopDone} 轮没有改到被审的文件，就此打住。`;
+      }
+      showNote(
+        changed
+          ? `循环闸：这一轮改到了被审的文件 —— 继续下一轮。`
+          : `循环闸：这一轮没有改到被审的文件 —— 停。`,
+      );
+      if (!changed) {
+        cancelLoop();
+        return;
+      }
+      scheduleNext();
+      return;
+    }
     if (gate.mode === 'agent') {
       if (els.loopState) els.loopState.textContent = `第 ${loopDone} 轮已结束，正在判断要不要继续。`;
       void judgeWithAgent(gate).then((verdict) => {
@@ -2086,7 +2131,9 @@ function createPanel(root) {
       await runOne(options, mySeq);
     }
     // 单一收尾点：一轮结束之后，循环要不要继续在这里决定。
-    scheduleLoopAfter(mySeq, options);
+    void scheduleLoopAfter(mySeq, options).catch((err) => {
+      showError(`循环没能继续：${(err && err.message) || String(err)}`);
+    });
   }
 
   /**
@@ -2147,6 +2194,10 @@ function createPanel(root) {
 
     // 整轮的编号：这几步在服务端是同一个轮次里的几步。
     const roundId = `round-${Date.now()}-${++roundSeq}`;
+    // 开跑前记一份指纹：收尾时比一比，就知道这一轮有没有改到东西。
+    if (!options.loopContinuation) {
+      roundStartFingerprint = await fetchFingerprint();
+    }
     const outputs = [];
     for (let index = 0; index < plan.length; index += 1) {
       // 被新的一轮顶掉了：这一轮到此为止。

@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-14.26';
+export const FRONTEND_VERSION = '2026-11-14.29';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -637,19 +637,18 @@ export const AGENT_PROFILES = [
     permissions: ['read', 'write'],
     handoffTargets: [],
     /**
-     * 循环：一直核，直到这一轮再没查出新的公式错误。
+     * 循环：一直核到它改不动为止。
      *
-     * 次数给的是上限，不是"核几轮就停" —— 真正决定停不停的是闸：
-     * 每轮之后由它自己按判据判一句还有没有新错误（loopGate.mode = agent）。
+     * 闸是客观的（loopGate.mode = files）：每轮之后比一比被审的文件有没有变 ——
+     * 改了（math.json、idea 之类）就接着核下一轮，没改就说明它改不动了，就此打住。
+     * 不问模型，也不读它自己写的总结：文件变没变是硬事实。
      * 每轮之前把会话重置（loopResetSession）：每一轮从头看一遍公式，
      * 不带着上一轮的结论去看下一轮。
      */
     loop: { enabled: true, count: 0, intervalSeconds: 0 }, // 0 = 不限次数
     loopGate: {
-      mode: 'agent',
-      prompt:
-        '这一轮有没有又查出**没改掉**的问题？只要还有没改掉的（哪怕这一轮没改成），' +
-        '就回答「继续」；一条不剩了才回答「停」。',
+      mode: 'files',
+      prompt: '',
     },
     loopResetSession: true,
     /** 挂载这个面板时输入框里预填的指令（别的 agent 的输入框是空的）。 */
@@ -1151,9 +1150,11 @@ export const DEFAULT_LOOP = Object.freeze({ enabled: false, count: 2, intervalSe
  *
  * off   ：不设闸，跑满 loop.count 轮（原来的行为）。
  * ask   ：每轮结束后面板上问用户，由用户决定要不要继续。
+ * files ：客观判定：这一轮有没有真的改到被审的文件（ideas/ 当前方向 + 候选树）。
+ *         改了才继续，没改就停 —— 不问模型，不读摘要。
  * agent ：每轮结束后让这个 agent 自己按 prompt 里的判据说一句要不要继续。
  */
-export const LOOP_GATE_MODES = Object.freeze(['off', 'ask', 'agent']);
+export const LOOP_GATE_MODES = Object.freeze(['off', 'ask', 'files', 'agent']);
 /**
  * 闸开着时，loop.count 就不再是"跑几轮就停"，而是闸说了算：
  *   ask   —— 用户每轮之后点一次；
