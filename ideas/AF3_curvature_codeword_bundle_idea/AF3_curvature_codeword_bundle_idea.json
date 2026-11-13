@@ -1,0 +1,43 @@
+{
+  "schema": "genrec.idea.v6",
+  "arm": "TIGER_af3_curvature_codeword_bundle_rq",
+  "sections": {
+    "1_goal": {
+      "idea": "几何对象是产品流形 R^16 x H^16(c_k)，曲率挂在码字（列）轴上：第 k 列一张 Poincare 球、曲率 c_k，欧氏因子各列共享、曲率恒 0；每层各 K 个码字、各持一份 (K,) 曲率表，形状不随 batch 变、取值按 EMA 更新，第 l 层的 S_k 是该层硬分配集合（l<N_l 由 argmin D、末层由 argmax Q 给出）。结构信号只有一个单商品标量：AF3 势 kappa_bar_i（复用 af3_potential.py:103 的 edge_curvatures 与 :115 的 structural_potentials），冻结前取全表秩 u_i=(rank-0.5)/N。落点是分配聚合：每层在本次分配后取 m_k=mean_{i in S_k} u_i（stop-grad；死码字取全表 u 中值，其 c_k 由该 m_k 的实际秩决定、不保证回到 1），再取全表秩 r_k 单调映射到 [c_min,c_max]（端点、SCALE_HYP、EMA 系数、c_ref 见 math.json constants）。S_k 是 VQ 固有的划分，不按曲率符号/阈值/度数切正负组；m_k 是集合内均值、非簇大小，通路不施加约束、无 (i,j) 项与组间比值（R2：r_k 只是对列统计量的单调重参数化，只保留同层 K 个槽位的序，不引入任一商品对的相似/不相似标签）。R4：u 大＝稠密社区内部商品给更弯的球、u 小＝稀疏桥接给更平的球；更弯的球半径更小、expmap 更快饱和，把稠密区仍须区分的差别放大以免坍缩，稀疏离群商品用近欧氏平球更稳。这与 _archive/per_item 及主线相反，属独立选型，并给可判死预测：若方向错，双曲块代价占比、commitment 残差与死码字率会随列 u 单调上升。通路三处：读点 x_i^(k)=(r_i^E, expmap0(r_i^H,c_k))、u_k=(tau_k^E, expmap0(tau_k^H,c_k))，基点恒球心、网络与参数量不改；D_ik=||r_i^E-tau_k^E||^2+SCALE_HYP*d_{c_k}(x_i^(k),u_k)^2 驱动 argmin 与 Sinkhorn（形状同基线）；两项量化改用被分配码字那一列的测地平方距离（stop-grad 与项数不变）。R1：改 c_k 同时改点在球上的位置与块间标度 1:SCALE_HYP/c_k，不回避；立得住的是切向量本身被 sqrt(c_k) 缩放，同一商品在不同列读成不同球上的不同点、码字亦然，故不是逐列标量乘子——乘子不改点在本球里的位置、也不改码本更新方向；其实证是只读 P 臂（只动点、权重固定为 c=1）与 W 臂（只动权重、点不动），P 为零或主臂等同 W 即判否。R3：本向不声称编码器直出 32 维就是流形点；编码器仍出切空间参数 r_i，网络与重建项（仍在解码器欧氏空间）不动，落在流形上发生在读点一步，几何进的是读点、度量与分配、码本更新方向三处，与字面写法确有差别。R7：列轴不可被行轴替代属机制身份：报同一 u_i 下按列与按行两套 D 的逐行 argmin 差集，及行轴拿不到的对象（Q_i 用 c_{k_i}、末层列边际与死码字）；差集为零即退化为换轴写法、判不交付。与归档差别：origin_shift 逐商品锚点、per_item 逐商品曲率，本向曲率随列且由分配聚合导出；混合曲率流形进量化通路是共同背景、非增量。网络、损失项、码本形状、SID 长度、配置键全同基线。"
+    },
+    "4_method": {
+      "new_files": [
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_codeword_bundle_rq/af3_item_potential.py",
+          "what": "训练前一次性算出并冻结，不训练：构图与势全部 from ... import 复用兄弟臂 stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/af3_potential.py 的现有函数（构图 repository_root:37、train_parquet:46、sequences:55、edge_arrays:75、adjacency:90，势 edge_curvatures:103、structural_potentials:115），不复制 AF3 实现，跨臂 import 用 try/except ImportError 包成带完整路径与函数名的 RuntimeError。取势口径只声明到能自证的程度：本文件直接调用上述 7 个函数，并只取 structural_potentials:115 的输出后重排秩；standardise:136 / huber:152 / calibrate_lambda:168 / build:195 / potential_tensor:241 本文件不调用，但若 :115 内部已调用标准化，那是函数内部行为、与秩对严格单调变换不变无关，故不声称标准化没有发生，只声称秩口径不受影响，实现时用 readFile 核对 :115 与 :136 的实际调用关系。新增两样：(1) 全表秩坐标 u_i=(rank(kappa_bar_i)-0.5)/N，升序秩、并列取平均秩；(2) 唯一产物 eval/af3_item_potential.npz，字段 item_ids / potential / u / rank / is_missing 及其 sha256 digest，训练与 probe 都只读这一份、不各自重算。另出诊断（u 分位、并列数与 miss 数、Spearman(kappa_bar_i,deg_i)、表 size）；缺 key 商品 u=0.5 并逐条打印 item_id，不静默兜底；写盘前校验 len(item_ids)==len(u)==N、u 全在 (0,1)，否则 RuntimeError。全程 numpy 向量化（一次 argsort），无逐商品 python 循环。"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_codeword_bundle_rq/codeword_bundle_geometry.py",
+          "what": "几何与分配聚合的唯一实现处，放在候选树顶层（不进 model/、不进 distances/）：基线 model/__init__.py:3-4 -> model/layers.py:23 -> distances/__init__.py 的包级依赖方向会造成 partially initialized module，故两侧只共享这个顶层模块，distances/ 下不得 import model 包子模块，model/ 下不得直接 import 本模块的实现（只走 layers.py:23 原有的 from distances import build_distance）。无参数、无新增可训练权重，算子全部来自 tools/research/geometry/poincare_contract.py（expmap0:85、squared_distance:153、project；BALL_EPS:16=1e-6、ARTANH_EPS:18=1e-7），import 包成带路径与 API 名单的 RuntimeError。契约只接受标量 c，故逐列曲率用恒等式组合：expmap0(v,c)=(1/sqrt c)*expmap0(sqrt c*v,1)、d_c(x,y)=(1/sqrt c)*d_1(sqrt c*x, sqrt c*y)，对 (K,) 向量广播，不逐列 python 循环、不改契约、不自写曲率算子。对外入口：(1) codeword_curvature(u, assign_set, curvature_prev, layer) -> (K,)：按层做分配聚合 m_k（末层用 argmax Q 的集合，死码字回退为全表 u 中值），取秩得 c_k^new 并按 EMA 返回更新后的表；(2) cost(latent, codebook, curvature) -> (B,K)，D_ik=||r^E-tau_k^E||^2+SCALE_HYP*d_{c_k}(x_i^(k),u_k)^2；(3) quant_parts(latent, assigned_codebook, curvature, assigned_idx) -> (commitment, codebook)，按维数取均值、stop-grad 方向与 losses/commitment.py:25、losses/codebook.py:25 逐字节一致；(4) 两个只读分离臂 point_only_cost（只让点随 sqrt(c_k) 动、块权重固定为 c=1）与 weight_only_cost（只让块权重按 1/c_k 动、点不动），只给 probe 调用、不参与任何训练路径。入口断言 latent.shape[1]==32 且 D_E+D_H==32、curvature.shape==(K,)、layer 与缓冲索引一致，否则 ValueError；含恒等式自检与三个开关分支。"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_codeword_bundle_rq/eval/codeword_bundle_probe.py",
+          "what": "只读探针（不训练、不改参数、不写权重），只读 eval/af3_item_potential.npz 与模型导出的每层 c_k / m_k：报 c_k 分位与列间方差、R_k=1/sqrt(c_k) 与球边界余量、每层每 batch 双曲块代价占比、码字使用数与死码字、expmap/artanh 的 clip 与 NaN 计数、batch 置换等变性、契约恒等式残差、常量自检（D_E=D_H=16、SCALE_HYP、c_k 在区间内）。判否条款（不是报数）：(A) 分离对照——调 point_only_cost 得 P 臂、weight_only_cost 得 W 臂，报 P/W/主臂/geometry_off 四套 D 的逐层 argmin 翻转计数与 SID 差异率；P 臂为零或主臂与 W 臂无差别即判否（退化为逐列加权欧氏）。(B) 行轴不可替代——同一 u_i 下按列 c_k 与按行 c_i 两套 D 的逐行 argmin 翻转矩阵与差集；差集为零或无效即判否（退化为换轴写法）。(C) 结构保留读数——两个全边集单一聚合量，不切正负组、不取组间比值、不按符号/阈值/度数分组：邻接率（图中每条边两端共享 SID 前缀的比例，一条边一个 0/1 指示取边集均值）与 SID 前缀距离对 AF3 边曲率取值的 Spearman 单调关联系数（只在边的连续取值上算秩相关，既不分正负也不分箱）；两者若不优于 behaviour_off（全列 c=c_ref）与 geometry_off，则结构保留不成立（判否以仓库契约的比较关系给出，不在此设数值门槛）。这两度量只是只读统计，不进损失、不构成任何商品对信号。(D) 信息量——列曲率与码本更新方向（Q 项按列曲率）的一致性、死码字数与末层列边际在 behaviour_off 与主臂间的差别；若两者不随 c_k 列间分布变化，则列级曲率只等价于全局重标度，判否。旁证、不判否：c->0 极限与基线 distance.py:11-21 的逐元素相对误差；按列随机置换 c_k（保持边缘分布）后的 SID 变化率（结论强度只到能否否定取值无关）；m_k 与列曲率、列覆盖商品平均 u 的 Spearman；方向检验（双曲块代价占比、commitment 残差、死码字率对列 u 与列 c_k 的 Spearman 是否与 R4 预期同号——只读统计，不切正负组、不取组间比值）。"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_codeword_bundle_rq/distances/bundle.py",
+          "what": "注册表适配器，不含数值：NAME='bundle'、distances(latent, codebook, curvature) 一行转调顶层 cost，断言 curvature is None 与 latent.shape[1]!=32 均 ValueError；曲率只按列，故不需要 rows 参数；不得 import model 包子模块（基线 model/__init__.py:3-4 -> model/layers.py:23 -> distances/__init__.py 的包级依赖方向会造成 partially initialized module，故只共享顶层模块）"
+        }
+      ],
+      "modified_files": [
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_codeword_bundle_rq/train_rqvae.py",
+          "what": "fork 自基线 train_rqvae.py：TensorDataset(:289)、DataLoader(:291)、init_codebook(:327)、导出 SID 前的 get_indices(:390 与 :444) 改成把 latent 与各层 (K,) 曲率缓冲一起喂给 model；开训前只读 eval/af3_item_potential.npz（与 probe 同一份、不重算），校验 digest 与 item_ids 覆盖训练集，缺失或校验失败直接 RuntimeError（不现场重算、不缺省全 1）；c_k 的初始化与每 forward 的更新都只走 codeword_bundle_geometry 那一个入口。日志打印各层 c_k 分位、每列结构势均值 m_k 的分位与死码字数、miss 数与 VQ_TYPE 断言结果。"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_codeword_bundle_rq/model/layers.py",
+          "what": "每层 RQLayer 各持一份 (K,) 曲率缓冲（非 nn.Parameter、不参与优化，仅 buffer）；每个 forward 在本次分配得到 S_k 之后、下一次计算 D 之前，调用 codeword_bundle_geometry.codeword_curvature 更新该层 c_k 并按 EMA 阻尼一次。（基线 model/__init__.py:3-4 -> model/layers.py:23 -> distances/__init__.py 的包级依赖方向会造成 partially initialized module，故 model/ 下不直接 import 顶层实现，只走 layers.py:23 原有的 from dist...）"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_codeword_bundle_rq/model/model.py",
+          "what": "把每层的曲率缓冲一路传下去：model/model.py:28 forward(self, embeddings, item_ids=None)、:40 get_indices 同签名下传，RQLayer 侧见 model/layers.py:294 与 :305。"
+        }
+      ]
+    }
+  }
+}

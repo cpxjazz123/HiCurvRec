@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { IDEA_FORBIDDEN_FIELDS, ideaSkeleton } from './idea-schema.js';
 
 /**
- * 把 AGENT IDEA 的配置改成"必须按 genrec.idea.v5 的字段写"。
+ * 把 AGENT IDEA 的配置改成"必须按 genrec.idea.v6 的字段写"。
  *
  * 骨架从 idea-schema.js 里取，保证提示词里给的形状和校验器认的形状是同一份 ——
  * 两处各写一遍，迟早漂。改完字段契约就重跑一次这个脚本，面板上的配置跟着变。
@@ -28,13 +28,19 @@ const instructions = `你是 AGENT IDEA（IDEA_KEEPER），负责 ideas/ 下的�
 - 上游交接里带着 AGENT AGAINST 的反对意见 → **返修轮**：不归档、不新建，只按清单改当前 idea；
 - 没有上游意见 → **轮换轮**：归档现有方向，按 ideas/main_line.json 造一个新的。
 
-## idea 文件的字段是定死的（genrec.idea.v5）
+## idea 文件的字段是定死的（genrec.idea.v6）
 
 idea 文件**只能**是这个形状，顶层只有 schema / arm / sections 三键，每段的键也固定。
 
 **idea 只回答两件事**：
 1. 这个 idea 本身是什么（1_goal.idea）；
-2. 要新建哪些文件、每个文件是干什么的（4_method.new_files）。
+2. 文件怎么动（4_method）：
+   - **new_files**：基线里没有、这次要新建的文件；
+   - **modified_files**：基线里有、这次要改的文件（写清改了什么）。
+
+**"把基线那个文件原样复制一份"不是新文件，也不算改动** —— 候选树本来就是基线的一份拷贝，
+那些文件不用进清单（losses/、dataset/、train_config.py 这类原样搬过去的，一个字都别写）。
+基线里已有的文件写进 new_files 会被判不合规。
 
 **文献不进文件**：写 idea 时照样可以检索文献（检索帮你判断新增性、与已有工作的差别），
 但稿子里不存参考文献清单 —— 差别直接写进 1_goal.idea 的正文即可。
@@ -108,10 +114,12 @@ const steps = [
   {
     title: '写或改 idea（字段必须合规）',
     instruction:
-      '轮换轮：按 genrec.idea.v5 的固定形状，用 writeFile 写 ideas/<新方向>/<新方向>_idea.json —— ' +
-      '顶层只有 schema（写 "genrec.idea.v5"）、arm、sections；两段是 1_goal / 4_method。' +
+      '轮换轮：按 genrec.idea.v6 的固定形状，用 writeFile 写 ideas/<新方向>/<新方向>_idea.json —— ' +
+      '顶层只有 schema（写 "genrec.idea.v6"）、arm、sections；两段是 1_goal / 4_method。' +
       '1_goal.idea 写清这个 idea 本身是什么（几何对象 + 结构信号怎么进计算通路）；' +
-      '4_method.new_files 写这次要新建哪些文件（相对仓库根的路径）与每个文件是干什么的。' +
+      '4_method 分两份清单：new_files 是基线里没有、这次要新建的文件（相对仓库根的路径 + 它是干什么的）；' +
+      'modified_files 是基线里有、这次要改的文件（路径 + 改了什么）。' +
+      '原样复制基线文件的不用写（候选树本来就是基线的拷贝）；基线里已有的文件不能写进 new_files。' +
       '每段里的键照提示词里的骨架填，不要增删字段，不要写运行计划（跑几次、什么种子）、不要自定门槛、不要写状态。' +
       '同目录写 math.json（symbols / formulas / constants(带 why) / switches(只三个) / metrics）。同一次只建一个方向。' +
       '返修轮：按 AGAINST 的清单逐条修改当前方向的 idea 文件（必要时同步 math.json），每条都写清改了哪里；不同意的意见要给出依据。' +
@@ -219,7 +227,7 @@ const againstInstructions = [
   '   有没有真新的一步，还是同一件事换个说法。',
   '',
   '你不看具体怎么实现：公式、算式、代码、文件怎么改，都不归你。',
-  'idea 文件里本来也没有这些东西（genrec.idea.v5 只有 1_goal.idea 与 4_method.new_files）。',
+  'idea 文件里本来也没有这些东西（genrec.idea.v6 只有 1_goal.idea 与 4_method 的两份文件清单）。',
   '',
   '每条意见都要给出依据（引用 idea 里的原话，或指出 ideas/ 下的路径），',
   '并标明是致命（自相矛盾、违反 must_hold、与已有方向重复）还是可修（说得不够清）。',

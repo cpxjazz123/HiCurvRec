@@ -1,0 +1,115 @@
+{
+  "symbols": {
+    "kappa_ij": "AF3 边曲率 kappa_ij = 4 - d_i - d_j + 3*T_ij，训练前在训练划分共现图上算一次后冻结（口径 from ... import 复用 stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/af3_potential.py:103-125,216-217，不复制实现）",
+    "kappa_bar_i": "商品 i 的结构势：邻接边 kappa_ij 的度加权均值，训练前冻结，单商品一个标量；这是结构信号进入几何的全部入口",
+    "u_i": "结构势的秩坐标 u_i=(rank(kappa_bar_i)-0.5)/N，升序秩、平局取平均秩，取值 (0,1)；把重尾压成有界量，且与图规模无关",
+    "s_i": "商品 i 的锚点（基点）在双曲因子里的测地参数：s_i=s_min+(s_max-s_min)*u_i，单商品一个实数，关于 u_i 严格单调递增",
+    "p_i": "商品 i 的锚点（双曲因子的 D_H 维点）：p_i=expmap0(s_i*e_1, c_hyp)，落在由固定方向 e_1 张成的那条测地线上；|p_i|=tanh(s_i/2)。这是本向唯一新增的自由度：结构决定「切空间长在流形的哪里」",
+    "e_1": "双曲块的第一根坐标轴（固定单位向量），锚点方向恒为它，不由结构决定（结构只决定沿这条测地线走多远），避免用手搓的多维方向冒充结构",
+    "lambda_p": "锚点处的共形因子 lambda_{p_i}=2/(1-c_hyp*|p_i|^2)=2*cosh^2(s_i/2)：同一单位切步在深锚点处对应更大的球内位移，故结构实际上设定了该商品量化所用的局部尺度",
+    "D_E": "欧氏因子维数，恒 16；该因子的坐标原点是固定的，不再由结构平移",
+    "D_H": "双曲因子维数，恒 16；D_E+D_H=32=基线码本维数，因子划分只在 32 维内部切，总维数不变",
+    "c_hyp": "双曲因子曲率标量，恒取 1.0（按契约传给 poincare_contract 的 float 参数）；不用逐商品曲率，因为常曲率球上 d_c 对 c 只是缩放等距、不构成自由度",
+    "c_euc": "欧氏因子曲率，恒为 0（平坦），故 M 是真正的混合曲率产品流形（0 与 -1）",
+    "M": "混合曲率产品流形 M=R^{D_E} x H^{D_H}_{c=1}；商品点的「绝对值」由结构锚点与编码器输出的切向量共同决定",
+    "r_i": "编码器输出与第 l 层残差（32 维切空间坐标），按 (r_i^E, r_i^H) 切块；r_i^H 是锚点 p_i 处切空间里的向量，方向与模长都自由",
+    "x_i": "商品 i 在 M 上的点：x_i=( r_i^E, expmap(p_i, r_i^H, c_hyp) )；r_i^H=0 时 x_i=(r_i^E, p_i)，即锚点本身（结构在此时仍然可见）",
+    "tau_k": "码字 k 的切空间参数（码本 (256,32)）；在 M 上读成 u_k=( tau_k^E, expmap0(tau_k^H, c_hyp) )，其球内位置由码字自身参数决定、不受结构约束",
+    "D_ik": "商品 i 与码字 k 在 M 上的代价：欧氏块平方距离 + SCALE_HYP*d_{c_hyp}(x_i^H, u_k^H)^2",
+    "SCALE_HYP": "双曲块相对欧氏块的固定标度 0.25，使 d_c^2 与 squared_distance/4 同口径、两块量纲可比；固定不扫",
+    "S_k": "分配给码字 k 的商品集合，只用于只读统计（使用数、死码字、平均锚点归一化位置），不参与任何代价或位置写入"
+  },
+  "formulas": [
+    {
+      "name": "af3_potential",
+      "formula": "kappa_ij = 4 - d_i - d_j + 3*T_ij；kappa_bar_i = sum_{j in N(i)} w_ij*kappa_ij / sum_{j in N(i)} w_ij，w_ij=(d_i d_j)^-1/2；u_i = (rank(kappa_bar_i) - 0.5)/N",
+      "note": "结构信号的全部来源，训练前算一次冻结，单商品一个标量；没有任何 (i,j) 项留在训练通路里（kappa_ij 只在构图阶段用完就丢）。用秩而非原始 kappa 值：kappa_ij 含 -d_i-d_j 项、重尾，原始值直接映射会让少数枢纽主导；秩映射让 u 分布在 (0,1)。缺 key 的商品取 u=0.5（锚点取中值），miss 数与表 size 写日志，不静默。"
+    },
+    {
+      "name": "origin_anchor",
+      "formula": "s_i = s_min + (s_max - s_min)*u_i；p_i = expmap0(s_i*e_1, c_hyp)；|p_i| = tanh(s_i/2)；lambda_{p_i} = 2*cosh^2(s_i/2)",
+      "note": "结构进入几何的唯一一步：把双曲因子的坐标原点搬到 p_i，等价于对该商品的切空间做一次测地平移。s_i 关于 u_i 连续且严格单调（不是分段常数、不是硬分组），因此不构成「按阈值把商品切成正组/负组」，也没有任何组间比值或对比。沿固定测地线平移（方向恒为 e_1）而不是沿结构给的多维方向：方向只要由一个标量决定就必然是手搓的，而「走多远」是结构势唯一能无歧义决定的东西。"
+    },
+    {
+      "name": "anchor_range",
+      "formula": "s in [s_min, s_max] = [0.5, 3.5] → |p| in [tanh(0.25), tanh(1.75)] = [0.2449, 0.9411]，lambda_p in [2*cosh^2(0.25), 2*cosh^2(1.75)] ≈ [2.06, 17.6]",
+      "note": "为什么取这个区间：下限 0.5 使锚点离球心足够远（|p|=0.245），否则所有商品都在球心附近、机制退化成基线式的球心锚定，结构不进几何；上限 3.5 使 |p|<=0.9411，给球边界 1-BALL_EPS 留出约 0.06 的余量，d_c 里的 artanh 不饱和、expmap at base 不溢出，同时深锚点的 lambda_p≈17.6 说明局部尺度确实被结构拉得很开、几何不近似欧氏。区间是固定常数、不扫，避免用区间宽度调优劣。"
+    },
+    {
+      "name": "manifold_point",
+      "formula": "x_i = ( r_i^E, expmap(p_i, r_i^H, c_hyp) )；u_k = ( tau_k^E, expmap0(tau_k^H, c_hyp) )",
+      "note": "must_hold#2 要求的第一处：编码器输出真的落在混合曲率产品流形上，且双曲块的切空间基点由结构决定。expmap / expmap0 全部来自 tools.research.geometry.poincare_contract（含 ||v||->0 极限与 artanh clamp），不自写几何算子；曲率按契约传 float 1.0。注意这里用的是「在点 p_i 处的」expmap，而不是 expmap0 —— 这正是与基线和与 radial_shell（锚定在球心、只改模长）的区别所在。"
+    },
+    {
+      "name": "product_cost",
+      "formula": "D_ik = ||r_i^E - tau_k^E||^2 + SCALE_HYP * d_{c_hyp}( expmap(p_i, r_i^H, c_hyp), expmap0(tau_k^H, c_hyp) )^2",
+      "note": "第二处：距离与分配在 M 上计算，两个因子各自用自己的度量再按固定标度合成 —— 这就是「混合曲率怎么计算」的答案（欧氏因子曲率 0 用平方欧氏，双曲因子曲率 -1 用 Poincaré 测地距离）。结构只经由 p_i 进入，且进入方式是「点的位置」，不是「权重大小」。"
+    },
+    {
+      "name": "not_a_scale",
+      "formula": "mobius 形式：d_c(x_i^H, u_k^H) = (2/sqrt(c))*artanh(sqrt(c)*|(-x_i^H)(+)u_k^H|)，其中 (-x_i^H)(+)u_k^H 依赖 p_i 与 u_k^H 的相对位置（含两者的夹角项）；逐商品标量乘子 a_i 只作用于 D 的第 i 行，argmin_k 与逐行比值 D_ik/D_ik' 不变",
+      "note": "为什么本向不能被「给代价乘权重」复现，也不是 drive 那种加偏置：逐行标量乘子与逐行加性偏置都改变不了该行 argmin 的排序（乘子连比值都不改；偏置对固定 i 是常数、只平移不换序），而移动基点会改变 p_i 与各码字的夹角/相对位置，从而改变排序。这就是可数值检验的判别量：主臂与 geometry_off 两套 D 的逐行 argmin 翻转计数，若恒为 0 说明机制等于没接线。"
+    },
+    {
+      "name": "assignment",
+      "formula": "l < N_l：token_l(i) = argmin_k D_ik；l = N_l：Q = Sinkhorn(center_distance(D); SK_EPSILON, SK_ITERS)，token = argmax_k Q_ik",
+      "note": "分配代码形状与基线逐位相同（model/layers.py 的 _indices/center_distance/sinkhorn），唯一变化是被喂进来的 D 换成产品流形上的值，且该调用需要 rows（batch 内商品行号）才能索引冻结的锚点表。不加掩码、不切列块、不分组子问题、不改列边际。SK_EPSILON=0.003、SK_ITERS=50 取自 config。"
+    },
+    {
+      "name": "residual_and_readout",
+      "formula": "r_i <- r_i - tau_{k_i}（锚点切空间内的欧氏减法，与基线 model/layers.py 同式，3 层共用同一 p_i）；读回 quantized_x = sum_l tau_l",
+      "note": "明写边界：残差递归与读回都保持在锚点切空间里，不做 Möbius 运输链、不做右嵌套读回（归档 transport 的做法）、不做按加权重心的码本写回（归档 frechet 的做法）、不按层换预算（归档 depth 的做法）。每层算 D 之前用同一个 p_i 重新落点，因此「锚点在层间不变」是逐层可见、可单独关掉的性质。码本仍吃梯度、embed.weight 仍 requires_grad，commitment/codebook/重建项形式与 beta 全部不变。"
+    },
+    {
+      "name": "flat_limit",
+      "formula": "geometry_off：忽略锚点表、不走 expmap，D 取 32 维平方欧氏，须与基线 distances/distance.py:11 的实现逐元素一致；behaviour_off：所有商品取 u_i=0.5 → s_i ≡ (s_min+s_max)/2、锚点表方差为 0（流形仍在、expmap 仍在，只是基点不再由结构决定）",
+      "note": "两个开关都是可失败的数值判据，不是恒真式：geometry_off 要求与基线欧氏代价逐元素相等；behaviour_off 要求锚点表退化为单一常数（行间方差为 0）且此时 SID 与主臂不同（否则说明锚点根本没接线）。不写「有限曲率下与基线逐位一致」：球距离不能退化成欧氏，这是数学事实。"
+    },
+    {
+      "name": "anchor_confound",
+      "formula": "p_i 由 u_i 唯一决定；|p_i| 的样本方差 > 0；按商品随机置换锚点表后 u 与 p 的对应被切断（|p| 的边缘分布保持）",
+      "note": "已知混杂，必须明写：锚点位置同时是一种「按结构分层设局部尺度」的先验 —— 即使 AF3 毫无信息，按任意单指标给商品不同锚点也可能改变 SID。所以判据不是「有没有增益」而是「增益是否依赖 AF3 的具体取值」：冻结已训练参数，仅置换锚点表后重算 D 与 SID，报告 SID 变化率；若几乎不变，说明增益与结构无关。另一条容量侧事实：锚点数是冻结的、不新增可训练参数，本向的容量变化只来自「切向量相对锚点而非球心」这一点。"
+    },
+    {
+      "name": "no_pairs",
+      "formula": "结构输入只有单商品标量 u_i 及其单点函数 s_i、p_i；D_ik 的 (i,k) 是商品-码字打分；训练通路无 (i,j) 项、无组内/组间均值、无比值、无正负样本",
+      "note": "must_hold#1 自检：没有 InfoNCE/BCE/margin/源-目标残差对比；也没有把边集或商品按曲率符号、阈值、度数切成正组/负组再取比值或对比 —— 这里只有一条连续单调的映射 u->s->p，不分组、不比两组、不造对。集合运算只沿用基线已有的 Sinkhorn 与只读的码字覆盖计数；batch 任意置换时 D、损失、SID 等变。"
+    },
+    {
+      "name": "dedup_archive",
+      "formula": "本向唯一新增的自由度是「商品在双曲因子里的锚点（切空间基点）p_i」；D_E=D_H=16、c≡1、算子全部 import 自 poincare_contract、码本/损失/网络/层数/维数一行不改、残差保持锚点切空间的欧氏减法、读回保持 sum_l tau",
+      "note": "对 13 个归档向的可数值检验判别（不是措辞差别）：(1) radial_shell——它把双曲块模长钉在 s_i、基点恒为球心，故 d_1(0,x_i) 由 u_i 唯一决定（corr=1）且 r^H=0 时点塌回球心；本向模长自由、基点平移，判别量是 corr(u_i,d_1(0,x_i))<1 与「模长未被结构接管」。(2) transport——逐商品曲率 c_i 进 d_{c_i}^2/4 且残差链走 Möbius 运输；本向 c≡1、残差链不改。(3) frechet——逐商品度量权重 w_i 乘在双曲块上；本向无任何 w_i，改的是点的位置。(4) manifold——softmax 软权重逐坐标乘切向量（行和 1、基点球心）；本向权重恒 1、无门控、自由度在锚点。(5) factor_budget——整数维数表 d_H(i) 随商品变；本向 d_H≡16。(6) depth——预算表沿层轴变化；本向 3 层同一锚点表（层间差为 0）。(7) condition——FiLM 调制改网络、几何仍欧氏；本向不改网络与损失。(8) drive——欧氏代价上加逐商品偏置（加性、不换序）；本向移动点的位置（会换序）。(9) blocks/codebook——列块掩码 / KMeans 初值配额；本向码本写法不动。(10) continuum——逐对插值 c_ik 与成员均值；本向无 (i,j) 项。(11) pairs——曲率符号造正负对，主线禁止，本向不做。"
+    }
+  ],
+  "constants": [
+    { "name": "N_l", "value": 3, "why": "与 config CODEBOOK_NUM=3 一致，SID 长度不变" },
+    { "name": "K_l", "value": [256, 256, 256], "why": "与 config CODEBOOK_SIZE 一致，几何变化不夹带码本容量变化" },
+    { "name": "d", "value": 32, "why": "与 config CODEBOOK_DIM=32 一致；因子划分只在 32 维内部切，总维数不变" },
+    { "name": "D_H", "value": 16, "why": "双曲因子维数取 32 的一半，使基线的 32 维欧氏空间被等量分成平坦与常负曲率两块；恒定不随商品变（与 factor_budget 的维数自由度正交），锚点也只在这 16 维里平移" },
+    { "name": "D_E", "value": 16, "why": "= d - D_H；欧氏因子保持原点锚定、坐标完全自由，使结构的几何作用只发生在一侧、可分辨" },
+    { "name": "c_hyp", "value": 1.0, "why": "双曲因子曲率取契约默认值 1.0（poincare_contract 要求 float 标量）；不用逐商品曲率，因为常曲率球上 d_c 对 c 是缩放等距、不构成自由度" },
+    { "name": "c_euc", "value": 0.0, "why": "欧氏因子曲率取 0，产品流形因此是真正的「混合曲率」（0 与 -1），不是单一空间加一个距离" },
+    { "name": "s_min", "value": 0.5, "why": "锚点参数下限：|p|=tanh(0.25)=0.2449，保证最浅的锚点也离开球心，机制不退化成基线式的球心锚定；同时 lambda_p=2*cosh^2(0.25)≈2.06 有限、expmap at base 数值稳定" },
+    { "name": "s_max", "value": 3.5, "why": "锚点参数上限：|p|=tanh(1.75)=0.9411，离球边界 1-BALL_EPS 留约 0.06 余量，d_c 的 artanh 不饱和、expmap at base 不溢出；lambda_p≈17.6 表明深锚点处局部尺度被拉得足够开，几何不近似欧氏" },
+    { "name": "SCALE_HYP", "value": 0.25, "why": "与 poincare_contract.squared_distance/4 同口径（基线欧氏代价是平方距离），使两块量纲可比；固定不扫，避免用标度调优劣" },
+    { "name": "BALL_EPS", "value": 0.000001, "why": "复用 poincare_contract 常量：球内点离边界的最小距离，project 会用它把点收回球内；不自定义" },
+    { "name": "ARTANH_EPS", "value": 0.0000001, "why": "复用 poincare_contract 常量作为 artanh 参数上界 1-1e-7，防止 expmap/distance 在球边界溢出；不自定义" },
+    { "name": "sk_epsilon", "value": 0.003, "why": "与 config SK_EPSILON 一致，沿用基线末层 Sinkhorn 温度" },
+    { "name": "sk_iters", "value": 50, "why": "与 config SK_ITERS 一致（训练路径不用函数缺省 5）" },
+    { "name": "beta", "value": 0.25, "why": "与 config BETA 一致，沿用基线 commitment 权重；本向不改损失形式" },
+    { "name": "learning_rate", "value": 0.001, "why": "与 config LR 一致，不因机制改动调学习率" },
+    { "name": "weight_decay", "value": 0.0001, "why": "与 config WEIGHT_DECAY 一致" },
+    { "name": "gradient_clip_norm", "value": 1.0, "why": "与 config GRADIENT_CLIP_NORM 一致" },
+    { "name": "seed", "value": 42, "why": "与 config SEED 一致；正式训练只跑一次，不做多种子" },
+    { "name": "Epochs", "value": 3000, "why": "与 config EPOCHS 一致；判据是仓库契约的 test_R@10 > 0.065" }
+  ],
+  "switches": {
+    "behaviour_off": "结构信号关掉：忽略 u_i，所有商品取 u_i=0.5 → s_i ≡ (s_min+s_max)/2、锚点表行间方差为 0，产品流形 R^16 x H^16 仍在、expmap at base 仍在，只是基点不再由结构决定；用来确认增益来自「AF3 决定锚点」而不是「换了个几何」。代码里必须存在的接线检查，不是要训练的对照臂",
+    "geometry_off": "几何关掉退回欧氏：忽略锚点表与 expmap，D 取 32 维平方欧氏，必须与基线 distances/distance.py:11 的实现逐元素一致。接线检查，不新训臂",
+    "both_on": "主臂：u_i 由冻结 AF3 秩表给出，s_i=s_min+(s_max-s_min)u_i，p_i=expmap0(s_i*e_1,1)，编码器输出的双曲块经 expmap(p_i,·,1) 落在锚点切空间，代价按 SCALE_HYP=0.25 合成两个因子距离，分配/码本/损失/残差/读回沿用基线写法，曲率取 (c_euc=0, c_hyp=1)"
+  },
+  "metrics": {
+    "metric": "stage3.test_recall@10",
+    "contract": "仓库契约（§25）的 test_R@10 > 0.065；基线与历史臂数值见 ideas/baseline.json 的 reference，不在本文件重复"
+  }
+}

@@ -1436,11 +1436,11 @@ async function main() {
     assert.equal(initial.updatedAt, null);
     // 字段契约的版本与核对结果要一起给页面：IDEA 视图靠它说准"结构合格"。
     const health = await (await fetch(`${base}/api/health`)).json();
-    assert.equal(health.ideaSchemaVersion, 'genrec.idea.v5');
+    assert.equal(health.ideaSchemaVersion, 'genrec.idea.v6');
     if (initial.doc) {
       assert.ok(initial.ideaVerdict, '有稿子时必须给契约核对结果');
       assert.equal(typeof initial.ideaVerdict.ok, 'boolean');
-      assert.equal(initial.ideaVerdict.version, 'genrec.idea.v5');
+      assert.equal(initial.ideaVerdict.version, 'genrec.idea.v6');
       assert.ok(Array.isArray(initial.ideaVerdict.errors));
     }
     // 仓库里的机制文件要能拿到：窗口第一次打开时靠它当草稿。

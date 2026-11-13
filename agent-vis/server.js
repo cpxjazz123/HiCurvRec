@@ -874,7 +874,11 @@ export function createServer({
             // 这份稿子对不对得上当前的字段契约（genrec.idea.v5）。
             // 页面上的 IDEA 视图要靠它把"结构合格"说准：光看 1_goal 与 4_method
             // 在不在，看不出稿子里还留着契约里已经删掉的字段。
-            ideaVerdict: ideaDoc.doc ? validateIdeaDoc(ideaDoc.doc) : null,
+            ideaVerdict: ideaDoc.doc
+              ? validateIdeaDoc(ideaDoc.doc, {
+                  baselineRoot: path.join(config.SANDBOX_ROOT, config.FROZEN_BASELINE_TREE),
+                })
+              : null,
             mainLine: mainLine.doc,
             mainLineError: mainLine.error,
             baseline: baseline.doc,

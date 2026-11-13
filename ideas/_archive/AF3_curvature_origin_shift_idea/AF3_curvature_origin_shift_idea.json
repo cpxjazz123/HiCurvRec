@@ -1,0 +1,45 @@
+{
+  "schema": "genrec.idea.v5",
+  "arm": "TIGER_af3_curvature_origin_shift_rq",
+  "sections": {
+    "1_goal": {
+      "idea": "几何对象是固定产品流形 M=R^16 x H^16(c=1)：欧氏因子曲率 0、双曲因子 -1，维数/层数/码本/SID 长度全同基线。结构信号只有一个单商品标量：AF3 势 kappa_bar_i（复用 af3_potential.py:103-125,216-217），取秩坐标 u_i=(rank-0.5)/N。唯一新增自由度是双曲因子的锚点（切空间基点）：s_i=s_min+(s_max-s_min)u_i，p_i=expmap0(s_i*e_1,1) 沿固定测地线 e_1，|p_i|=tanh(s_i/2) 随 u_i 单调，方向恒为 e_1（结构只决定走多远）。进通路三处：(a) 编码器输出落在 M 上，x_i=(r^E, expmap(p_i,r^H,1))，切向量的方向与模长全自由，结构只决定切空间长在哪；(b) 3 层共用同一 p_i，残差保持锚点切空间欧氏减法 r<-r-tau_l、读回 sum_l tau_l；(c) D_ik=||r^E-tau_k^E||^2+SCALE_HYP*d_1(expmap(p_i,r^H,1),expmap0(tau_k^H,1))^2，argmin 与末层 Sinkhorn 形状同基线。为什么不是乘权重：码字球内位置固定、基点随商品动，D 里进的是 p_i 与 u_k 的相对位置（含夹角项），逐行乘子或加性偏置都不改该行 argmin 排序，移动基点会改。为什么不是曲率：c 恒 1，常曲率球上 d_c 对 c 只是缩放等距。与归档判别：radial_shell 把双曲块模长钉在 s_i、基点恒为球心（d_1(0,x_i) 由 u_i 唯一决定、r^H=0 塌回球心），本向模长自由、r^H=0 时点落在 p_i，判别量 corr(u_i,d_1(0,x_i))<1 且模长未被接管；transport 用逐商品 c_i 与 Möbius 运输链，本向 c≡1、残差链不改；frechet 乘权重 w_i、manifold 是 softmax 门控且基点球心；factor_budget 变 d_H(i)、depth 变层轴预算、condition 改网络、drive 加偏置、blocks/codebook 动码本、continuum 有逐对 c_ik、pairs 造正负对（禁）；本向 d_H≡16、3 层同一锚点表、网络/损失/码本一行不改。文献上（沿用前轮记录）：混合曲率产品流形此前用于检索嵌入、不进量化通路，单一双曲工作用频次或层级先验驱动几何，正负样本对的对比式几何学习在本主线禁止。限制：锚点冻结、不新增可训练参数；增益可能是「按结构设局部尺度」的先验而非 AF3 取值，用冻结权重后仅置换锚点表重算 SID 的只读对照量化。其余全同基线：损失/beta/层深/码本/SID/超参不变，geometry_off 与基线欧氏代价逐元素一致，behaviour_off 锚点表方差为 0。"
+    },
+    "4_method": {
+      "new_files": [
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_origin_shift_rq/af3_origin_anchor.py",
+          "what": "训练前一次性算出并冻结，不训练：kappa_ij 与度加权邻域均值 kappa_bar_i 用 from ... import 复用 stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/af3_potential.py:103-125,216-217（不复制实现、不另立口径）；本文件只新增秩映射 u_i 与锚点参数 s_i=s_min+(s_max-s_min)*u_i，并由 poincare_contract.expmap0 生成 (N, D_H) 的锚点表 P（第 j 行为 p_j=expmap0(s_j*e_1,1.0)），连同分布诊断（s_i 分位、|p_i|=tanh(s_i/2) 与球边界的最近距离、共形因子 2*cosh^2(s_i/2) 的分位、Spearman(kappa_bar_i,deg_i)）一起返回；缺 key 的商品取 u=0.5（锚点取中值）并把 miss 数写日志，不静默"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_origin_shift_rq/model/origin_shift_geometry.py",
+          "what": "组合层，无参数、无新增可训练权重：按 batch 内行号 gather 锚点 p_i，把 32 维残差切成 (r^E, r^H)，双曲块用 expmap(p_i, r^H, 1.0) 落在锚点切空间（来自 tools.research.geometry.poincare_contract，不自写几何算子），欧氏块原样；返回 D_ik = ||r^E-tau_k^E||^2 + SCALE_HYP*squared_distance(x^H, expmap0(tau_k^H,1.0), 1.0) 的 (B,K) 矩阵，全程向量化（不逐商品 Python 循环）；另含 geometry_off 的全欧氏退化分支（忽略锚点、不走 expmap，D 取 32 维平方欧氏）与 behaviour_off 的单锚点分支（所有行取同一中值锚点）"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_origin_shift_rq/distances/origin_shift.py",
+          "what": "NAME='origin_shift' 的代价矩阵实现，签名 distances(latent, codebook, rows) -> (B,K)：rows 是 batch 内商品行号，用于索引冻结的锚点表 P；rows=None 抛 ValueError，不静默退回两参语义（否则会悄悄用错锚点）。模块常量 D=32、D_H=16、SCALE_HYP=0.25 固定不扫，不新增配置键"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_origin_shift_rq/distances/__init__.py",
+          "what": "fork 自基线 distances/__init__.py 的注册表：登记 origin_shift，并把 build_distance 的统一调用约定扩成 distances(latent, codebook, rows) 一路透传；euclidean 实现接受并忽略 rows，使 geometry_off 能与基线 distances/distance.py:11 的实现逐元素比对"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_origin_shift_rq/model/layers.py",
+          "what": "fork 自基线 model/layers.py：VQLayer/ResidualQuantizer 持有本 batch 的 rows；把 _distances(:110-112) 扩成 _distances(latent, rows) 并在 forward(:113) 与 init_codebook(:196) 两个调用点透传 rows（KMeans 初值仍用同一行的 D 做 argmin）；_indices/center_distance/sinkhorn 与码本更新、commitment/codebook 损失形式逐位不变；残差递归仍是切空间欧氏减法 r<-r-tau_l（同一锚点，故 3 层共用 p_i），读回仍是 sum_l tau_l"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_origin_shift_rq/model/model.py",
+          "what": "fork 自基线 model/model.py：forward 与 get_indices/init_codebook 两个入口增加 item_ids 并逐层透传，使各层能由 item_ids 查到 rows 从而取到锚点；量化输出形状与解码器输入形状不变"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_origin_shift_rq/train_rqvae.py",
+          "what": "fork 自基线 train_rqvae.py：TensorDataset 从 (embeddings) 扩为 (embeddings, item_ids)，每个 batch 把 item_ids 作为 rows 传给 model；开训前加载 (N, D_H) 锚点表并按 item_ids 取子表；日志打印 s_i 分位、|p_i| 与球边界余量、共形因子分位、miss 数"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_origin_shift_rq/eval/origin_shift_probe.py",
+          "what": "只读探针（不训练、不改任何参数）：锚点与共形因子分布、每层每 batch 双曲块代价占总代价比例、商品锚点与其被分配码字在球内位置的相对关系、码字使用数与死码字、expmap/artanh 的 clip 与 NaN 计数、batch 任意置换下的等变性；判别量逐条给实测值——(1) corr(u_i, d_1(0,x_i)) 与双曲块模长是否被结构钉住（对 radial_shell 的判别），(2) 主臂与 geometry_off 两套 D 的逐行 argmin 翻转计数（对逐行标量乘子/加性偏置的判别：后者恒为 0），(3) math.json 三个 switches 的接线实测值（behaviour_off 锚点方差为 0、geometry_off 与基线欧氏代价逐元素一致、both_on 主臂值），(4) 锚点置换只读对照：冻结已训练权重、仅按商品随机置换锚点表（保持 |p_i| 分布）后重算 D 与 SID，报告 SID 变化率，不重训"
+        }
+      ]
+    }
+  }
+}

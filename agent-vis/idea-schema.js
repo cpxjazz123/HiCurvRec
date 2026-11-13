@@ -1,9 +1,17 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
 /**
- * idea 文件的字段契约（genrec.idea.v4）。
+ * idea 文件的字段契约（genrec.idea.v6）。
  *
  * idea 只回答两件事：
  *   1. 这个 idea 本身是什么（1_goal.idea）；
- *   2. 要新建哪些文件、每个文件是干什么的（4_method.new_files）。
+ *   2. 文件怎么动（4_method）：
+ *      - new_files      —— 基线里没有、这次要新建的文件；
+ *      - modified_files —— 基线里有、这次要改的文件。
+ *
+ * "把基线那个文件原样复制一份"不是新文件，也不算改动：候选树本来就是基线的一份拷贝，
+ * 那些文件不用进清单。清单里把基线已有的文件写进 new_files，会被判不合规。
  *
  * 文献不进文件：写 idea 时照样可以检索（检索的结果帮助判断新增性），
  * 但稿子里不存参考文献清单 —— 查重只看 ideas/_archive/，审稿方也不再核文献。
@@ -21,13 +29,13 @@
  */
 
 /** 这份契约的版本号，也是 idea 文件里 schema 字段必须写的值。 */
-export const IDEA_SCHEMA_VERSION = 'genrec.idea.v5';
+export const IDEA_SCHEMA_VERSION = 'genrec.idea.v6';
 
 /** idea 文件顶层与各段允许出现的键。多一个键就是不合规。 */
 const TOP_KEYS = ['schema', 'arm', 'sections'];
 const SECTION_KEYS = ['1_goal', '4_method'];
 const GOAL_KEYS = ['idea'];
-const METHOD_KEYS = ['new_files'];
+const METHOD_KEYS = ['new_files', 'modified_files'];
 
 /**
  * 整份文档里都不许出现的写法：多种子计划。
@@ -64,7 +72,7 @@ function extraKeys(obj, allowed) {
  * @param {unknown} doc 解析后的 JSON
  * @returns {{ok: boolean, version: string, errors: {path: string, why: string}[]}}
  */
-export function validateIdeaDoc(doc) {
+export function validateIdeaDoc(doc, options = {}) {
   const errors = [];
   const add = (path, why) => errors.push({ path, why });
 
@@ -105,7 +113,7 @@ export function validateIdeaDoc(doc) {
         if (!(key in sections)) add(`sections.${key}`, `缺少这一段`);
       }
       checkGoal(sections['1_goal'], add);
-      checkNewFiles(sections['4_method'], add);
+      checkFiles(sections['4_method'], add, options.baselineRoot);
     }
   }
 
@@ -147,7 +155,7 @@ function checkGoal(goal, add) {
   }
 }
 
-function checkNewFiles(method, add) {
+function checkFiles(method, add, baselineRoot) {
   if (method === undefined) return;
   if (!isPlainObject(method)) {
     add('sections.4_method', '必须是对象');
@@ -157,35 +165,90 @@ function checkNewFiles(method, add) {
     add(
       `sections.4_method.${key}`,
       `${IDEA_SCHEMA_VERSION} 的 4_method 只有 ${METHOD_KEYS.join(' / ')}；` +
-        `改动清单、验证步骤与运行计划不写在这里。`,
+        '数值约束与运行计划不写在这里。',
     );
   }
   for (const key of METHOD_KEYS) {
     if (!(key in method)) add(`sections.4_method.${key}`, `必须有 ${key}`);
   }
-  if (method.new_files === undefined) return;
-  if (!Array.isArray(method.new_files)) {
-    add('sections.4_method.new_files', '必须是数组（还没有要新建的文件就写空数组）');
+  checkFileList(method.new_files, 'new_files', add, baselineRoot, 'new');
+  checkFileList(method.modified_files, 'modified_files', add, baselineRoot, 'modified');
+}
+
+/**
+ * 一份文件清单。
+ *
+ * kind = 'new'      ：基线里没有的文件 —— 出现基线里已有的路径就是错的。
+ * kind = 'modified' ：基线里有的文件 —— 路径不存在于基线就是错的（那应该是新建的）。
+ *
+ * 基线树没给（离线校验）时只查形状，不查基线。
+ */
+function checkFileList(list, key, add, baselineRoot, kind) {
+  if (list === undefined) return;
+  if (!Array.isArray(list)) {
+    add(`sections.4_method.${key}`, '必须是数组（还没有就写空数组）');
     return;
   }
-  if (method.new_files.length > MAX_NEW_FILES) {
-    add('sections.4_method.new_files', `最多 ${MAX_NEW_FILES} 条（现在 ${method.new_files.length} 条）`);
+  if (list.length > MAX_NEW_FILES) {
+    add(`sections.4_method.${key}`, `最多 ${MAX_NEW_FILES} 条（现在 ${list.length} 条）`);
   }
-  method.new_files.forEach((item, index) => {
+  list.forEach((item, index) => {
+    const at = `sections.4_method.${key}[${index}]`;
     if (!isPlainObject(item)) {
-      add(`sections.4_method.new_files[${index}]`, '必须是对象');
+      add(at, '必须是对象');
       return;
     }
-    for (const key of extraKeys(item, ['path', 'what'])) {
-      add(`sections.4_method.new_files[${index}].${key}`, '只允许 path / what');
+    for (const extra of extraKeys(item, ['path', 'what'])) {
+      add(`${at}.${extra}`, '只允许 path / what');
     }
-    if (!nonEmptyString(item.path)) {
-      add(`sections.4_method.new_files[${index}].path`, '必须写这个新文件放在哪（相对仓库根的路径）');
+    const pathOk = nonEmptyString(item.path);
+    if (!pathOk) {
+      add(`${at}.path`, '必须写这个文件放在哪（相对仓库根的路径）');
     }
     if (!nonEmptyString(item.what)) {
-      add(`sections.4_method.new_files[${index}].what`, '必须写这个文件是干什么的');
+      add(`${at}.what`, '必须写这个文件是干什么的 / 改了什么');
+    }
+    if (!baselineRoot || !pathOk) return;
+    const stat = statInBaseline(baselineRoot, item.path);
+    if (stat === 'directory') {
+      add(`${at}.path`, 'path 必须指向一个文件；目录要拆成一个个文件');
+      return;
+    }
+    if (kind === 'new' && stat === 'file') {
+      add(
+        `${at}.path`,
+        '基线里已经有这个文件了：候选树本来就是基线的一份拷贝，' +
+          '原样复制不用写进清单；要改它就放进 modified_files',
+      );
+    }
+    if (kind === 'modified' && stat === 'missing') {
+      add(`${at}.path`, '基线里没有这个文件：它该放进 new_files，不是 modified_files');
     }
   });
+}
+
+/**
+ * 这个路径在冻结基线里是什么：file / directory / missing。
+ *
+ * 路径写成候选树里的样子（stage2_RQ-VAE/<臂>/...），去掉候选树那一段，
+ * 再去基线树里找同一个相对路径。
+ */
+function statInBaseline(baselineRoot, relPath) {
+  const normalized = String(relPath).replace(/\\/g, '/').replace(/^\.\//, '');
+  const parts = normalized.split('/').filter((part) => part !== '');
+  let relative = parts;
+  const stage2At = parts.indexOf('stage2_RQ-VAE');
+  if (stage2At >= 0) {
+    // stage2_RQ-VAE/<臂>/... → 去掉臂那一段，剩下的就是相对基线的路径。
+    relative = parts.slice(stage2At + 2);
+  }
+  const target = path.join(baselineRoot, ...relative);
+  try {
+    const stat = fs.statSync(target);
+    return stat.isDirectory() ? 'directory' : 'file';
+  } catch {
+    return 'missing';
+  }
 }
 
 /**
@@ -205,6 +268,9 @@ export function ideaSkeleton() {
     "4_method": {
       "new_files": [
         { "path": "<相对仓库根的路径>", "what": "这个新文件是干什么的" }
+      ],
+      "modified_files": [
+        { "path": "<相对仓库根的路径>", "what": "基线里这个文件改了什么" }
       ]
     }
   }
@@ -225,7 +291,8 @@ export const IDEA_FORBIDDEN_FIELDS = [
   { field: '1_goal.one_variable', owner: '实现阶段登记改动的文件与符号' },
   { field: '1_goal.must_hold', owner: '主线合规由审稿方逐条核（AGENT AGAINST）' },
   { field: '1_goal.novelty', owner: '查重由审稿方做；idea 只写自己是什么' },
-  { field: '4_method.surfaces', owner: 'v4 里 4_method 只写要新建的文件' },
+  { field: '4_method.surfaces', owner: 'v6 里 4_method 分 new_files 与 modified_files' },
+  { field: '把基线文件原样复制一份', owner: '候选树本来就是基线的拷贝，不用进清单' },
   { field: '4_method.numerics', owner: '常量与界归 math.json 的 constants，退化路径归 switches' },
   { field: '4_method.sanity_checks', owner: '验证计划与测试归实现阶段' },
   { field: '4_method.runs', owner: '框架的运行调度（§19g：只跑一次，不多种子、不做消融臂）' },

@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-14.17';
+export const FRONTEND_VERSION = '2026-11-14.18';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -107,6 +107,14 @@ export function currentWorkdir() {
 /** 仓库根（服务端自己读源码用）。agent 的工具边界是 currentWorkdir()。 */
 export const REPO_ROOT = path.resolve(HERE, '..');
 export const SANDBOX_ROOT = AGENT_WORKDIR;
+
+/**
+ * 冻结基线树（ideas/baseline.json 里记的就是它）。
+ *
+ * 用它来判断一份 idea 的文件清单：基线里没有的才是新文件，基线里有的就是改动 ——
+ * "把基线那个文件原样复制一份"不算新文件。
+ */
+export const FROZEN_BASELINE_TREE = 'stage2_RQ-VAE/TIGER_RQ-VAE';
 
 /** 主机名是否满足要求：允许带域名后缀（m3g104.massive.org.au 也算对）。 */
 export function agentHostOk(hostname = os.hostname(), want = currentHost()) {

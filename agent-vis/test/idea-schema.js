@@ -22,6 +22,8 @@ import {
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.join(HERE, '..', '..');
+/** 冻结基线树：用来分辨"新文件"与"基线里已有、这次要改的文件"。 */
+const BASELINE_ROOT = path.join(REPO, 'stage2_RQ-VAE', 'TIGER_RQ-VAE');
 
 let passed = 0;
 const failures = [];
@@ -53,6 +55,9 @@ function goodDoc() {
         new_files: [
           { path: 'af3_curvature_transport.py', what: '算曲率表并冻结，输出逐商品的曲率' },
           { path: 'model/product_geometry.py', what: '产品流形的指数映射与对数映射' },
+        ],
+        modified_files: [
+          { path: 'model/layers.py', what: '把欧氏减法换成 Mobius 减 + Log' },
         ],
       },
     },
@@ -176,6 +181,26 @@ await test('参考文献整段不许出现在 idea 里（检索照做，但不�
   const verdict = validateIdeaDoc(doc);
   assert.equal(verdict.ok, false);
   assert.ok(pathsOf(verdict).includes('sections.5_references'));
+});
+
+await test('基线里已有的文件写进 new_files 判不合规（复制基线不算新建）', () => {
+  const doc = goodDoc();
+  doc.sections['4_method'].new_files.push({ path: 'model/layers.py', what: '照抄基线' });
+  const verdict = validateIdeaDoc(doc, { baselineRoot: BASELINE_ROOT });
+  assert.equal(verdict.ok, false);
+  const hit = verdict.errors.find((e) => e.path.endsWith('new_files[2].path'));
+  assert.ok(hit, '要指出那一条');
+  assert.match(hit.why, /基线里已经有这个文件/);
+});
+
+await test('基线里没有的文件写进 modified_files 判不合规', () => {
+  const doc = goodDoc();
+  doc.sections['4_method'].modified_files.push({ path: 'totally_new_thing.py', what: '新的' });
+  const verdict = validateIdeaDoc(doc, { baselineRoot: BASELINE_ROOT });
+  assert.equal(verdict.ok, false);
+  const hit = verdict.errors.find((e) => e.path.endsWith('modified_files[1].path'));
+  assert.ok(hit, '要指出那一条');
+  assert.match(hit.why, /基线里没有这个文件/);
 });
 
 await test('多种子计划在值上被认出来', () => {

@@ -34,6 +34,7 @@ import {
   API_KEY_FILE,
   BASE_URL,
   CONTEXT_WINDOW,
+  FROZEN_BASELINE_TREE,
   IDEA_RULE,
   LANGUAGE_RULE,
   MAX_OUTPUT_TOKENS,
@@ -880,7 +881,11 @@ async function checkIdea({ path: relPath }) {
       column: matched ? Number(matched[2]) : null,
     };
   }
-  const verdict = validateIdeaDoc(value);
+  // 基线树给进去：这样"新文件"与"改动文件"分得开 ——
+  // 基线里已有的文件写进 new_files 会被指出来。
+  const verdict = validateIdeaDoc(value, {
+    baselineRoot: path.join(sandboxRoot(), FROZEN_BASELINE_TREE),
+  });
   return {
     ok: verdict.ok,
     path: relativeToRoot(target),
