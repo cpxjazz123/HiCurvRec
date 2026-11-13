@@ -109,6 +109,15 @@ export const REPO_ROOT = path.resolve(HERE, '..');
 export const SANDBOX_ROOT = AGENT_WORKDIR;
 
 /**
+ * Stage2 与机制测试用的解释器（CLAUDE.md §7）。
+ *
+ * 面板只在一个地方用它：runTests —— 让 agent 自己跑候选树 tests/ 里的单元测试。
+ * 那份结果只归它自己调试用，准入仍然是框架用四套独立验证套件判的。
+ */
+export const STAGE2_PYTHON =
+  '/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9';
+
+/**
  * 冻结基线树（ideas/baseline.json 里记的就是它）。
  *
  * 用它来判断一份 idea 的文件清单：基线里没有的才是新文件，基线里有的就是改动 ——
@@ -895,9 +904,12 @@ export const AGENT_PROFILES = [
       '- 改动只落在候选树里：idea 文件、math.json、冻结基线、config 都不许动。',
       '- 不发明新机制：规格与实现冲突时，以 spec（idea + math.json）为准，把冲突写清楚。',
       '- 判不准就写 UNCHECKED 并说明缺哪份证据，不要凭印象下结论。',
-      '- 你没有执行命令的工具：跑不了测试就不要说跑过，只说测试文件里写了什么断言。',
+      '- 你可以用 runTests 在 CPU 上跑候选树 tests/ 里的单元测试：先写、再跑、看结果再改。' +
+        '但它只是你自测用的 —— 准入仍然由框架跑的四套独立验证套件判定，runTests 的结果不算证据；' +
+        '别把"我跑过了"当成"验证通过了"。',
       '',
-      '可用工具：ls、read、grep（只读）、write（写文本文件）。' +
+      '可用工具：ls、read、grep（只读）、write/edit（写文件）、gitLog（读提交）、' +
+        'runTests（跑候选树 tests/ 自测）。' +
         '每步只调 1-2 个工具。回答用中文，结论先行；提到文件时给仓库相对路径与行号。',
     ].join('\n'),
     steps: [
@@ -994,8 +1006,9 @@ export const PERMISSION_CATALOG = [
     id: 'execute',
     label: '执行（execute）',
     description:
-      '执行代码里写死的只读命令（当前是 git log，读最近的提交与它改过的文件）—— 不是任意命令执行。',
-    tools: ['gitLog'],
+      '执行代码里写死的命令：git log（读提交），以及在 CPU 上跑候选树 tests/ 里的单元测试（自测用，' +
+      '不是准入证据）—— 不是任意命令执行，命令行由代码固定。',
+    tools: ['gitLog', 'runTests'],
   },
   {
     id: 'web',

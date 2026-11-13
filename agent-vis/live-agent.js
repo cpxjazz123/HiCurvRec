@@ -47,6 +47,7 @@ import {
   PERMISSION_CATALOG,
   PROVIDER_NAME,
   ROUND_END_RULE,
+  STAGE2_PYTHON,
   ROUND_END_TOOL,
   ROUND_HANDOFF_TOOL,
   ROUND_SESSION_TTL_MS,
@@ -438,6 +439,22 @@ function piTool({ name, label, description, parameters, impl, callArgs = (params
     },
   });
 }
+
+const runTestsTool = piTool({
+  name: 'runTests',
+  label: '跑候选树的单元测试',
+  description:
+    'Run the unit tests in a candidate tree (<tree>/tests) on CPU with the Stage2 interpreter. ' +
+    'Only for you to check your own work: it is not admission evidence (the framework runs the ' +
+    'four verification suites itself). Returns exit code and the tail of the output.',
+  parameters: Type.Object({
+    tree: Type.String({ description: '候选树路径，例如 stage2_RQ-VAE/TIGER_xxx_rq' }),
+    timeoutSeconds: Type.Optional(
+      Type.Integer({ minimum: 1, maximum: 1800, description: '超时秒数，默认 600' }),
+    ),
+  }),
+  impl: runTests,
+});
 
 const stage2StartTool = piTool({
   name: 'stage2Start',
@@ -942,6 +959,65 @@ const piEditTool = createEditToolDefinition(sandboxRoot(), {
   },
 });
 
+/**
+ * 在 CPU 上跑候选树 tests/ 里的单元测试。
+ *
+ * 只给 agent 自测用 —— 准入由框架用四套独立验证套件判，这个结果不算证据。
+ * 命令行是写死的：解释器、`-m pytest`、测试目录都由代码决定，模型只能指定跑哪棵树。
+ */
+async function runTests({ tree, timeoutSeconds = 600 }) {
+  // stage2TreePath 已经给出绝对路径，别再 join 一次（会把绝对路径拼成两级）。
+  const treeDir = stage2TreePath(tree);
+  const target = relativeToRoot(treeDir);
+  const testsDir = path.join(treeDir, 'tests');
+  if (!fs.existsSync(testsDir)) {
+    return {
+      ok: false,
+      tree: target,
+      error: `这棵树里没有 tests/ 目录：${target}/tests`,
+    };
+  }
+  const started = Date.now();
+  try {
+    const { stdout, stderr } = await execFileAsync(
+      STAGE2_PYTHON,
+      ['-m', 'pytest', '-q', testsDir],
+      {
+        cwd: treeDir,
+        timeout: Math.min(1800, Math.max(1, timeoutSeconds)) * 1000,
+        maxBuffer: 4 * 1024 * 1024,
+        env: { ...process.env, CUDA_VISIBLE_DEVICES: '', PYTHONHASHSEED: '0' },
+      },
+    );
+    return {
+      ok: true,
+      tree: target,
+      exitCode: 0,
+      durationMs: Date.now() - started,
+      output: tailLines(stdout, 40),
+      stderr: stderr.trim() === '' ? '' : tailLines(stderr, 10),
+    };
+  } catch (err) {
+    const stdout = (err && err.stdout) || '';
+    const stderr = (err && err.stderr) || '';
+    return {
+      ok: false,
+      tree: target,
+      exitCode: typeof err.code === 'number' ? err.code : null,
+      durationMs: Date.now() - started,
+      error: (err && err.message) || String(err),
+      output: tailLines(stdout, 40),
+      stderr: tailLines(stderr, 10),
+    };
+  }
+}
+
+/** 取最后 n 行：测试输出前面一大截是噪声，结论在尾巴上。 */
+function tailLines(text, n) {
+  const lines = String(text || '').trimEnd().split('\n');
+  return lines.slice(Math.max(0, lines.length - n)).join('\n');
+}
+
 export const PI_TOOLS = {
   read: piReadTool,
   write: piWriteTool,
@@ -958,6 +1034,7 @@ export const PI_TOOLS = {
   listIssues: listIssuesTool,
   readIssue: readIssueTool,
   gitLog: gitLogTool,
+  runTests: runTestsTool,
   copyBaselineTree: copyBaselineTreeTool,
   deleteFile: deleteFileTool,
 };

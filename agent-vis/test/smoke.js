@@ -320,6 +320,38 @@ async function main() {
     assert.equal(typeof math.fingerprint, 'string');
   });
 
+  await test('runTests 在 CPU 上跑候选树 tests/（自测用）', async () => {
+    const { PI_TOOLS } = await import('../live-agent.js');
+    // 造一棵最小的候选树：一个通过的测试、一个失败的测试。
+    const tree = 'stage2_RQ-VAE/TIGER_probe_runtests_rq';
+    const dir = path.join(config.REPO_ROOT, tree, 'tests');
+    fs.rmSync(path.join(config.REPO_ROOT, tree), { recursive: true, force: true });
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'test_probe.py'),
+      'def test_ok():\n    assert 1 + 1 == 2\n',
+      'utf8',
+    );
+    try {
+      const pass = await PI_TOOLS.runTests.execute('rt1', { tree, timeoutSeconds: 180 });
+      const passDoc = JSON.parse((pass.content || [])[0].text);
+      assert.equal(passDoc.ok, true, `该通过的没通过：${passDoc.error || passDoc.output}`);
+      assert.equal(passDoc.exitCode, 0);
+
+      fs.writeFileSync(
+        path.join(dir, 'test_probe.py'),
+        'def test_bad():\n    assert 1 + 1 == 3\n',
+        'utf8',
+      );
+      const fail = await PI_TOOLS.runTests.execute('rt2', { tree, timeoutSeconds: 180 });
+      const failDoc = JSON.parse((fail.content || [])[0].text);
+      assert.equal(failDoc.ok, false, '失败的测试应当报 ok:false');
+      assert.notEqual(failDoc.exitCode, 0);
+    } finally {
+      fs.rmSync(path.join(config.REPO_ROOT, tree), { recursive: true, force: true });
+    }
+  });
+
   await test('未知路由返回 404', async () => {
     const res = await fetch(`${base}/no-such-file`);
     assert.equal(res.status, 404);
@@ -1721,7 +1753,7 @@ async function main() {
     // 写权限带三个工具：写文本文件、只改几处，以及从冻结基线复制一份候选树。
     assert.deepEqual(toolNames(['write']), ['copyBaselineTree', 'edit', 'write']);
     assert.deepEqual(toolNames(['delete']), ['deleteFile']);
-    assert.deepEqual(toolNames(['execute']), ['gitLog']);
+    assert.deepEqual(toolNames(['execute']), ['gitLog', 'runTests']);
     assert.deepEqual(toolNames(['network']), ['listIssues', 'readIssue']);
     assert.deepEqual(toolNames(['read', 'execute', 'network']), [
       'checkIdea',
@@ -1733,6 +1765,7 @@ async function main() {
       'ls',
       'read',
       'readIssue',
+      'runTests',
     ]);
   });
 
