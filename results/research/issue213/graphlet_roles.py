@@ -32,6 +32,7 @@ HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[2]
 TRAIN = REPO_ROOT / "results" / "stage0_build_parquet" / "train.parquet"
 ORCA_NODE4 = HERE / "orca" / "node4.out"
+ORCA_NODE5 = HERE / "orca" / "node5.out"
 
 #: The two SIDs used for the retention columns, by their recorded sha256.
 SIDS = {
@@ -48,6 +49,7 @@ SID_SHA = {
 ROLES = 6
 SEED = 42
 ORBITS_4 = [f"o4_{i:02d}" for i in range(15)]
+ORBITS_5 = [f"o5_{i:02d}" for i in range(73)]
 
 
 def edges_of() -> list[tuple[int, int]]:
@@ -60,11 +62,13 @@ def edges_of() -> list[tuple[int, int]]:
     return sorted(pairs)
 
 
-def orca_orbits() -> np.ndarray:
-    """``n x 15`` exact node-orbit counts, as ORCA wrote them."""
-    counts = np.loadtxt(ORCA_NODE4, dtype=np.int64)
-    assert counts.ndim == 2 and counts.shape[1] == 15, counts.shape
-    return counts
+def orca_orbits(path: Path, width: int) -> tuple[np.ndarray, str | None]:
+    """Exact node-orbit counts as ORCA wrote them; ``(empty, None)`` when that size has not been computed."""
+    if not path.exists() or path.stat().st_size == 0:
+        return np.zeros((0, width), dtype=np.int64), None
+    counts = np.loadtxt(path, dtype=np.int64)
+    assert counts.ndim == 2 and counts.shape[1] == width, counts.shape
+    return counts, str(path.relative_to(REPO_ROOT))
 
 
 def sid_tokens(name: str) -> dict[int, tuple]:
@@ -92,7 +96,9 @@ def main() -> int:
     degrees = dict(graph.degree())
     print(f"graph: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges", flush=True)
 
-    orbits = orca_orbits()
+    orbits4, used4 = orca_orbits(ORCA_NODE4, 15)
+    orbits5, used5 = orca_orbits(ORCA_NODE5, 73)
+    print(f"orbits: 4-node {used4 or 'NOT_RUN'} | 5-node {used5 or 'NOT_RUN'}", flush=True)
     clustering = nx.clustering(graph)
     core = nx.core_number(graph)
     mean_neighbour_degree = {
@@ -115,9 +121,12 @@ def main() -> int:
     for node in nodes:
         rows.append([
             np.log1p(degrees[node]), clustering[node], core[node], np.log1p(mean_neighbour_degree[node]), overlap[node],
-            *[np.log1p(v) for v in orbits[node]],
+            *[np.log1p(v) for v in orbits4[node]],
+            *([np.log1p(v) for v in orbits5[node]] if orbits5.size else []),
         ])
     features = ["log_degree", "clustering", "core", "log_mean_neighbour_degree", "overlap", *ORBITS_4]
+    if orbits5.size:
+        features = features + ORBITS_5
     X = np.asarray(rows, dtype=np.float64)
     X = (X - X.mean(0)) / X.std(0).clip(min=1e-9)
 
@@ -177,12 +186,13 @@ def main() -> int:
 
     report = {
         "graph": {"nodes": graph.number_of_nodes(), "edges": graph.number_of_edges(), "roles": ROLES,
-                  "orbit_source": str(ORCA_NODE4.relative_to(REPO_ROOT)), "orbits": 15},
+                  "orbit_sources": {"4-node": used4, "5-node": used5},
+                  "orbits": 15 + (73 if orbits5.size else 0)},
         "role_profiles": profiles,
         "retention": {"F0": retention("F0"), "TIGER_RQ-VAE": retention("TIGER_RQ-VAE")},
         "sid_sha256": SID_SHA,
         "limits": [
-            "orbits are ORCA's 4-node node orbits (15); 5-node orbits are running separately and are not in this table",
+            "orbits are ORCA's node orbits of graphlets up to 4 nodes (15) and, when node5.out is present, up to 5 nodes (73) as well",
             "roles are NMF over standardised features; the role count is the script's constant, not selected",
             "retention is the share of behaviour edges whose endpoints share at least one / all three SID tokens",
         ],
