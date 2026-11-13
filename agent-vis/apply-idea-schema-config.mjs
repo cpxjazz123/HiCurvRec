@@ -84,22 +84,22 @@ ${forbidden}
 与 idea 同目录，形状固定：symbols / formulas（每条带 name、formula、note）/ constants（每条带 why，说明这个界为什么这么取）/ switches / metrics。
 switches 只写三个：behaviour_off（结构信号关掉）、geometry_off（几何关掉，退回欧氏）、both_on（主臂）。**它们是代码里必须存在的接线检查，不是要跑的臂**；不要在 switches 里写要训练几组对照。
 
-可用工具：listFiles、readFile、searchFiles、checkJson、checkIdea（只读）、writeFile、deleteFile、webSearch。
+可用工具：ls、read、grep、checkJson、checkIdea（只读）、write、deleteFile、webSearch。
 每步只调 1-2 个工具。回答用中文，结论先行；最后记一行状态：这一轮是轮换还是返修、改了/建了什么、checkIdea 是否 ok、must_hold 逐条结论、查重结论、文件路径。`;
 
 const steps = [
   {
     title: '读主线、现有方向与上游意见',
     instruction:
-      '先 readFile 读 ideas/main_line.json（statement、must_hold、格式），并用 listFiles 列出 ideas/ 与 ideas/_archive/。' +
-      '再看这一轮有没有上游交接：有 AGENT AGAINST 的意见 → 判定为返修轮，把它的每条意见列成清单，并 readFile 读当前方向的 <方向>_idea.json 与 math.json；' +
+      '先 read 读 ideas/main_line.json（statement、must_hold、格式），并用 ls 列出 ideas/ 与 ideas/_archive/。' +
+      '再看这一轮有没有上游交接：有 AGENT AGAINST 的意见 → 判定为返修轮，把它的每条意见列成清单，并 read 读当前方向的 <方向>_idea.json 与 math.json；' +
       '没有上游意见 → 判定为轮换轮，列出要归档的方向文件。' +
       '顺手 checkIdea 读当前 idea 文件，把不合规的字段先记下来（返修轮要一并修掉，轮换轮只作为反面例子）。',
   },
   {
     title: '归档现有方向（返修轮跳过）',
     instruction:
-      '轮换轮：把 ideas/<方向>/<方向>_idea.json 与 math.json 搬到 ideas/_archive/<方向>/（readFile→writeFile→deleteFile 搬，不是复制），目标已有同名文件加后缀不覆盖，搬完删掉空掉的方向目录。' +
+      '轮换轮：把 ideas/<方向>/<方向>_idea.json 与 math.json 搬到 ideas/_archive/<方向>/（read→write→deleteFile 搬，不是复制），目标已有同名文件加后缀不覆盖，搬完删掉空掉的方向目录。' +
       '返修轮：跳过这一步，什么都不做，并说明「这一轮是返修，不动归档」。',
   },
   {
@@ -114,7 +114,7 @@ const steps = [
   {
     title: '写或改 idea（字段必须合规）',
     instruction:
-      '轮换轮：按 genrec.idea.v6 的固定形状，用 writeFile 写 ideas/<新方向>/<新方向>_idea.json —— ' +
+      '轮换轮：按 genrec.idea.v6 的固定形状，用 write 写 ideas/<新方向>/<新方向>_idea.json —— ' +
       '顶层只有 schema（写 "genrec.idea.v6"）、arm、sections；两段是 1_goal / 4_method。' +
       '1_goal.idea 写清这个 idea 本身是什么（几何对象 + 结构信号怎么进计算通路）；' +
       '4_method 分两份清单：new_files 是基线里没有、这次要新建的文件（相对仓库根的路径 + 它是干什么的）；' +
@@ -138,7 +138,7 @@ const steps = [
   {
     title: '读回确认并记状态',
     instruction:
-      'readFile 把改/写后的 idea 读回来，再用 checkIdea 确认 ok=true（JSON 本身用 checkJson）。' +
+      'read 把改/写后的 idea 读回来，再用 checkIdea 确认 ok=true（JSON 本身用 checkJson）。' +
       '确认章节齐、没有跟归档重名、没有违反 must_hold、字段没有多余键。' +
       '最后记一行状态：这一轮是轮换还是返修、建了/改了哪个方向、checkIdea 结果、must_hold 逐条结论、查重结果、文件路径。' +
       '写完之后这一轮会在最后加一个「交接结论」步骤：那一步按这一栏的交接条件决定要不要调用 requestHandoff，把结论交给 AGENT AGAINST 复核。你不需要在这一步手动发。',
@@ -155,8 +155,8 @@ const againstSteps = [
   {
     title: '读 idea 与主线',
     instruction:
-      '用 listFiles 列出 ideas/，找到当前方向（不在 _archive/ 里的那个），' +
-      '用 readFile 读它的 *_idea.json，再读 ideas/main_line.json（主线与两条 must_hold）。' +
+      '用 ls 列出 ideas/，找到当前方向（不在 _archive/ 里的那个），' +
+      '用 read 读它的 *_idea.json，再读 ideas/main_line.json（主线与两条 must_hold）。' +
       '上游交接里点了方向就按那个读。把 idea 全文读一遍。',
   },
   {
@@ -179,7 +179,7 @@ const againstSteps = [
   {
     title: '看新颖性',
     instruction:
-      '先用 listFiles + readFile 把 ideas/_archive/ 里的方向逐个读一遍（读它们的 idea 即可），' +
+      '先用 ls + read 把 ideas/_archive/ 里的方向逐个读一遍（读它们的 idea 即可），' +
       '跟当前方向比：方向名相同就是重复；目标与机制是同一件事、只换了说法也是重复。' +
       '再用 webSearch 检两三组最接近的已发表工作（limit 8 左右），读出它们做了什么、' +
       '与当前方向的差别；找不到就写「没有找到」，不要编。' +
@@ -238,7 +238,7 @@ const againstInstructions = [
   '- 不许为了让 idea 过关而放过 must_hold 的违规。',
   '- 查重只看 ideas/_archive/：不要拿仓库里别的臂当重复依据。',
   '',
-  '可用工具：listFiles、readFile、searchFiles（只读）、webSearch（检索文献，必要时用）。',
+  '可用工具：ls、read、grep（只读）、webSearch（检索文献，必要时用）。',
   '每步只调 1-2 个工具。回答用中文，结论先行；提到文件时给仓库相对路径。',
 ].join('\n');
 

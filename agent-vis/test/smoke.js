@@ -443,7 +443,7 @@ async function main() {
     const aText = a.steps.map((step) => step.instruction).join('\n');
     assert.ok(aText.includes('math.json'), 'AGENT Write 该读 math.json 里的公式');
     assert.ok(aText.includes('copyBaselineTree'), 'AGENT Write 该用 copyBaselineTree 建候选树');
-    assert.ok(aText.includes('writeFile'), 'AGENT Write 该用 writeFile 写机制代码');
+    assert.ok(aText.includes('用 write'), 'AGENT Write 该用 write 写机制代码');
     assert.ok(aText.includes('tests/'), 'AGENT Write 该写测试');
 
     const bText = b.steps.map((step) => step.instruction).join('\n');
@@ -519,7 +519,7 @@ async function main() {
     assert.equal(math.steps.length, 5, `AGENT MATH 的步骤数不对: ${math.steps.length}`);
     const text = math.steps.map((step) => step.instruction).join('\n');
     assert.ok(text.includes('math.json'), 'AGENT MATH 的步骤里没点名 math.json');
-    assert.ok(text.includes('writeFile'), 'AGENT MATH 改公式该用 writeFile');
+    assert.ok(text.includes('用 edit'), 'AGENT MATH 改公式该用 edit');
     assert.ok(text.includes('PASS') && text.includes('FAIL'),
               'AGENT MATH 要对每条公式给出 PASS/FAIL 结论');
     assert.ok(math.instructions.includes('MATH_AUDITOR') &&
@@ -847,7 +847,7 @@ async function main() {
     assert.deepEqual(web.tools, ['webSearch']);
     assert.ok(web.description.length > 0, 'web 权限要说得清自己管什么');
     const tools = toolsForPermissions(['read', 'web']).map((tool) => tool.name).sort();
-    assert.deepEqual(tools, ['checkIdea', 'checkJson', 'listFiles', 'readFile', 'searchFiles', 'webSearch']);
+    assert.deepEqual(tools, ['checkIdea', 'checkJson', 'find', 'grep', 'ls', 'read', 'webSearch']);
   });
 
   await test('全局设置可读可改，改完立刻对运行生效', async () => {
@@ -905,7 +905,7 @@ async function main() {
                      `AGENT FIX 的权限不对: ${JSON.stringify(check.permissions)}`);
     assert.equal(check.steps.length, 5, `步骤数不对: ${check.steps.length}`);
     const text = check.steps.map((step) => step.instruction).join('\n');
-    assert.ok(text.includes('改代码与测试') || text.includes('writeFile'),
+    assert.ok(text.includes('改代码与测试') || text.includes('write'),
               '步骤里没有改代码这一步');
     assert.ok(check.instructions.includes('4. 改：把 FAIL 的条目在候选树里改对'),
               '人设里没写明它会把写错的地方改对');
@@ -1681,21 +1681,22 @@ async function main() {
 
   await test('按权限裁剪出来的工具集正好是目录里写的那些', async () => {
     assert.deepEqual(toolNames([]), []);
-    assert.deepEqual(toolNames(['read']), ['checkIdea', 'checkJson', 'listFiles', 'readFile', 'searchFiles']);
-    // 写权限带两个工具：写文本文件，以及从冻结基线复制一份候选树。
-    assert.deepEqual(toolNames(['write']), ['copyBaselineTree', 'edit', 'writeFile']);
+    assert.deepEqual(toolNames(['read']), ['checkIdea', 'checkJson', 'find', 'grep', 'ls', 'read']);
+    // 写权限带三个工具：写文本文件、只改几处，以及从冻结基线复制一份候选树。
+    assert.deepEqual(toolNames(['write']), ['copyBaselineTree', 'edit', 'write']);
     assert.deepEqual(toolNames(['delete']), ['deleteFile']);
     assert.deepEqual(toolNames(['execute']), ['gitLog']);
     assert.deepEqual(toolNames(['network']), ['listIssues', 'readIssue']);
     assert.deepEqual(toolNames(['read', 'execute', 'network']), [
       'checkIdea',
       'checkJson',
+      'find',
       'gitLog',
-      'listFiles',
+      'grep',
       'listIssues',
-      'readFile',
+      'ls',
+      'read',
       'readIssue',
-      'searchFiles',
     ]);
   });
 
@@ -1771,7 +1772,7 @@ async function main() {
     const text = buildPermissionPrompt(['read', 'write']);
     assert.match(text, /read/);
     assert.match(text, /write/);
-    assert.match(text, /writeFile/);
+    assert.match(text, /write/);
     // 没授的权限一个字都不该露出来 —— 露出来模型就会去用没给它的工具。
     assert.doesNotMatch(text, /gitLog/);
     assert.doesNotMatch(text, /execute/);
@@ -1782,15 +1783,13 @@ async function main() {
     const abs = path.join(config.REPO_ROOT, rel);
     const content = '权限测试写入\n';
     try {
-      const result = await PI_TOOLS.writeFile.execute(
+      await PI_TOOLS.write.execute(
         'test-write',
         { path: rel, content },
         undefined,
         undefined,
         undefined,
       );
-      assert.equal(result.details.path, rel, `写到了 ${result.details.path}`);
-      assert.equal(result.details.bytes, Buffer.byteLength(content), '字节数不对');
       assert.equal(fs.readFileSync(abs, 'utf8'), content, '文件内容不对');
     } finally {
       fs.rmSync(abs, { force: true });
@@ -1799,7 +1798,7 @@ async function main() {
 
   await test('写权限也不许越界、不许写 .git 目录', async () => {
     const call = (input) =>
-      PI_TOOLS.writeFile.execute('test-write', input, undefined, undefined, undefined);
+      PI_TOOLS.write.execute('test-write', input, undefined, undefined, undefined);
     await assert.rejects(() => call({ path: '../outside.txt', content: 'x' }), /越界/);
     await assert.rejects(
       () => call({ path: '.git/config', content: 'x' }),

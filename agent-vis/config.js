@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-14.23';
+export const FRONTEND_VERSION = '2026-11-14.24';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -460,7 +460,7 @@ export const AGENT_PROFILES = [
       '- 不启动训练：Stage2 由控制器派发，你只交代码与测试。',
       '- 你没有执行命令的工具：跑不了测试就不要说跑过 —— 写清楚哪些测试写了、预期它们验什么。',
       '',
-      '可用工具：listFiles、readFile、searchFiles（只读），writeFile（写文本文件），' +
+      '可用工具：ls、read、grep（只读），write（写文本文件），' +
         'copyBaselineTree（从冻结基线复制候选树）。',
       '每步只调 1-2 个工具。回答用中文，结论先行；提到文件时给仓库相对路径。',
     ].join('\n'),
@@ -471,8 +471,8 @@ export const AGENT_PROFILES = [
       {
         title: '读机制定义与公式',
         instruction:
-          '用 listFiles 列出 ideas/，找到当前方向的目录（里面是 *_idea.json 与 math.json），' +
-          '再用 readFile 读这两个文件。' +
+          '用 ls 列出 ideas/，找到当前方向的目录（里面是 *_idea.json 与 math.json），' +
+          '再用 read 读这两个文件。' +
           '把要写的东西列清楚：1_goal 的一句话目标、4_method 的 single_variable 与 new_files（每个文件的路径与用途）、' +
           'math.json 的符号表、每条公式、常量与两个开关。' +
           '公式与开关要原样记下来，后面写代码时逐条对照。',
@@ -480,7 +480,7 @@ export const AGENT_PROFILES = [
       {
         title: '读基线实现',
         instruction:
-          '用 readFile 读 stage2_RQ-VAE/TIGER_RQ-VAE 的这些文件：distances/distance.py、distances/__init__.py、' +
+          '用 read 读 stage2_RQ-VAE/TIGER_RQ-VAE 的这些文件：distances/distance.py、distances/__init__.py、' +
           'losses/__init__.py、losses/reconstruction.py、model/model.py、model/layers.py、' +
           'config/train_config.json、train_rqvae.py。' +
           '记下真实接口：距离函数的签名与注册表怎么写、损失模块要带哪些字段（NAME/SPEC/DESCRIPTION）、' +
@@ -499,7 +499,7 @@ export const AGENT_PROFILES = [
       {
         title: '写机制代码',
         instruction:
-          '在上一步建好的候选树里，用 writeFile 写 new_files 列出的那些文件（路径照 idea 写）。' +
+          '在上一步建好的候选树里，用 write 写 new_files 列出的那些文件（路径照 idea 写）。' +
           '公式照 math.json 抄，接口照基线抄：距离函数按 distances/ 的形状、损失模块按 losses/ 的字段与注册方式、' +
           '参数挂在模型上（这样 DDP 才会同步）。' +
           '每个文件写完读回一次，确认写对了、没写错路径。',
@@ -559,7 +559,7 @@ export const AGENT_PROFILES = [
       '1. 先查 Open Issue。只要还有 Open Issue 就什么都不做：不审 commit、不发评论、不改代码、' +
         '不启动训练，直接结束本轮。',
       '2. 只有当没有任何 Open Issue 时：用 gitLog 读最近的 commit（连同它改动的文件与实验结论），' +
-        '再用 readFile 读 idea.txt，据此撰写下一步的计划。',
+        '再用 read 读 idea.txt，据此撰写下一步的计划。',
       '3. 新建 Issue 之前，先判断 idea.txt 是否仍准确描述要执行的机制：若新计划与它不一致，' +
         '或它已被上一步的实测结果证伪/过期，就先把它改写为新计划的机制定义' +
         '（旧文本另存到 results/research/<上一个Issue号>_idea_superseded.txt 备查），再新建 Issue。',
@@ -569,12 +569,12 @@ export const AGENT_PROFILES = [
       '每轮结束只记一行状态：当前 Open Issue 号、若新建则记 Issue 号与方案标题、' +
         '本轮是否更新了 idea.txt、最近一个 Commit SHA。',
       '',
-      '可用工具：listFiles、readFile、searchFiles（仓库内只读，路径相对仓库根）、' +
+      '可用工具：ls、read、grep（仓库内只读，路径相对仓库根）、' +
         'listIssues、readIssue、gitLog（GitHub 与 git 的只读查询）。',
       '',
       '查证纪律（关系到能不能在预算内把结论写完）：',
       '- 每一步只调 1-2 个工具，按上面的流程顺序来；不要一轮把六个工具全并行铺开。',
-      '- 除非 Issue 正文点名了要查的东西，不要用 searchFiles 做全仓正则搜 —— 那会把整个仓库灌进上下文。',
+      '- 除非 Issue 正文点名了要查的东西，不要用 grep 做全仓正则搜 —— 那会把整个仓库灌进上下文。',
       '- 查证够用就写结论，不要再补查。',
       '查证够用就给出文字结论，不要反复调用工具 —— 每轮只做一件事，做完就交出结果。',
       '回答用中文，结论先行；提到文件时给出仓库相对路径。',
@@ -597,7 +597,7 @@ export const AGENT_PROFILES = [
       {
         title: '读最近 Commit 与 idea.txt',
         instruction:
-          '用 gitLog 读最近的 commit（连同改动过的文件与实验结论），再用 readFile 读 idea.txt。' +
+          '用 gitLog 读最近的 commit（连同改动过的文件与实验结论），再用 read 读 idea.txt。' +
           '判断两件事：上一步到底做了什么；idea.txt 是否仍准确描述要执行的机制' +
           '（与最新 commit 或实测结论不一致、或已过期，就在下一步改写）。',
       },
@@ -631,7 +631,7 @@ export const AGENT_PROFILES = [
      * 这个 agent 被授的权限：读 + 写。
      *
      * 读是为了把机制文件与仓库里的既有实现拿出来对照；写是为了把写错的公式
-     * 直接改对（writeFile 整份写回 math.json）。不给执行与联网 —— 核对公式
+     * 直接改对（write 整份写回 math.json）。不给执行与联网 —— 核对公式
      * 不需要跑命令，也不该去外面找依据。
      */
     permissions: ['read', 'write'],
@@ -683,7 +683,7 @@ export const AGENT_PROFILES = [
       '- 不许发明新公式、不许调常量取值去"对上"某个数字、不许把 Sinkhorn 换成 argmin。',
       '- 找不到判定依据时写 UNCHECKED 并说明缺哪份证据，不要凭感觉改。',
       '',
-      '工具：listFiles、readFile、searchFiles 只读；writeFile 写仓库根之内的文本文件；' +
+      '工具：ls、read、grep 只读；write 写仓库根之内的文本文件；' +
       'edit 只改文件里的几处（math.json 改那几条用它，别整份重写）。' +
         '每步只调 1-2 个工具。回答用中文，结论先行，改公式时给出旧式与新式。',
     ].join('\n'),
@@ -691,13 +691,13 @@ export const AGENT_PROFILES = [
       {
         title: '读机制文件与 math.json',
         instruction:
-          '用 listFiles 列出 ideas/，找到机制文件所在的方向目录，再用 readFile 读该目录的 *_idea.json 与 math.json。' +
+          '用 ls 列出 ideas/，找到机制文件所在的方向目录，再用 read 读该目录的 *_idea.json 与 math.json。' +
           '把公式清单列出来（name + formula 一行一条），并记下 symbols 与 constants 的键。',
       },
       {
         title: '对照仓库既有实现',
         instruction:
-          '用 readFile 读 distances/distance.py、model/layers.py、model/af3_structure.py、config/train_config.json，' +
+          '用 read 读 distances/distance.py、model/layers.py、model/af3_structure.py、config/train_config.json，' +
           '记下基础距离、Huber、kappa 与 Sinkhorn 的真实定义，以及 sk_epsilon / sk_iters 的实测值。' +
           '机制文件点到的其他文件（例如它新建的模块）也要读，别按印象核对。',
       },
@@ -714,9 +714,9 @@ export const AGENT_PROFILES = [
         instruction:
           '只改 FAIL 的那几条：用 edit 工具，一次调用把要改的条目都放进 edits[]（' +
           '每项 oldText 写该条的原文、newText 写改好的）；其余条目一个字都别动，键名与结构不动。' +
-          '旧文本要逐字一致（在文件里唯一），对不上就 readFile 把那一条读准了再改。' +
-          '不要用 writeFile 整份重写 math.json —— 整份重写会超出一轮的输出，修正反而落不了地。' +
-          '改完用 readFile 复查一次，确认仍是合法 JSON 且被改的条目就是刚才判定错的那几条。' +
+          '旧文本要逐字一致（在文件里唯一），对不上就 read 把那一条读准了再改。' +
+          '不要用 write 整份重写 math.json —— 整份重写会超出一轮的输出，修正反而落不了地。' +
+          '改完用 read 复查一次，确认仍是合法 JSON 且被改的条目就是刚才判定错的那几条。' +
           '一条都没错就明确写「无需修改」，不要为了动而改。',
       },
       {
@@ -766,14 +766,14 @@ export const AGENT_PROFILES = [
       '- 不许把"进程还在"当成"训练正常"：epoch 不涨或日志里有报错就是问题。',
       '- 没跑完不要说跑完：status 没到 finished、SID 没导出，就是没成。',
       '',
-      '可用工具：listFiles、readFile、searchFiles（只读），stage2Start、stage2Status、stage2Stop。' +
+      '可用工具：ls、read、grep（只读），stage2Start、stage2Status、stage2Stop。' +
         '回答用中文，结论先行；提到文件时给仓库相对路径。',
     ].join('\n'),
     steps: [
       {
         title: '准备候选树与入口',
         instruction:
-          '用 readFile 读 ideas/<方向>/*_idea.json（arm 字段给出候选树名）与候选树的 train_rqvae.py，' +
+          '用 read 读 ideas/<方向>/*_idea.json（arm 字段给出候选树名）与候选树的 train_rqvae.py，' +
           '确认入口在（__main__ 与 _launch_via_torchrun）、ARM_NAME 与臂名一致、' +
           '结果目录是 results/stage2_RQ-VAE/<arm>/。' +
           '入口不在这棵树上就说明白，不要自己找别的树跑。',
@@ -804,7 +804,7 @@ export const AGENT_PROFILES = [
       {
         title: '跑完确认 SID 导出',
         instruction:
-          'status 是 finished 时确认 item_sids.json 已经导出（用 listFiles 与 readFile 看结果目录），' +
+          'status 是 finished 时确认 item_sids.json 已经导出（用 ls 与 read 看结果目录），' +
           '报出条目数与最终 epoch；若 status 是 exited_incomplete 或 worker_gone，说明它没成，' +
           '写清卡在哪一步。' +
           '最后记一行状态：候选树、状态、跑了多少 epoch、SID 条数、有没有交给 AGENT FIX。',
@@ -862,14 +862,14 @@ export const AGENT_PROFILES = [
       '- 判不准就写 UNCHECKED 并说明缺哪份证据，不要凭印象下结论。',
       '- 你没有执行命令的工具：跑不了测试就不要说跑过，只说测试文件里写了什么断言。',
       '',
-      '可用工具：listFiles、readFile、searchFiles（只读）、writeFile（写文本文件）。' +
+      '可用工具：ls、read、grep（只读）、write（写文本文件）。' +
         '每步只调 1-2 个工具。回答用中文，结论先行；提到文件时给仓库相对路径与行号。',
     ].join('\n'),
     steps: [
       {
         title: '读规格',
         instruction:
-          '用 listFiles 列出 ideas/，找到当前方向的目录，再用 readFile 读 *_idea.json 与 math.json。' +
+          '用 ls 列出 ideas/，找到当前方向的目录，再用 read 读 *_idea.json 与 math.json。' +
           '把要核对的东西列成清单：new_files 每个文件的路径与用途、math.json 每条公式、' +
           '两个开关、常量。后面逐条对照的就是这份清单。',
       },
@@ -877,9 +877,9 @@ export const AGENT_PROFILES = [
         title: '读实现并与基线比对',
         instruction:
           '候选树是 idea 里 arm 字段指的目录（stage2_RQ-VAE/<arm>）；idea 没有这个字段时，' +
-          '用 listFiles 列出 stage2_RQ-VAE/ 找出与当前方向对应的那个（冻结基线 TIGER_RQ-VAE 之外的目录）。' +
-          '再用 readFile 读它的机制文件（new_files 列的那些）与 tests/ 下的测试文件。' +
-          '用 searchFiles 或 gitLog 看它相对冻结基线改了哪些地方 —— 改动范围本身就是核对项。',
+          '用 ls 列出 stage2_RQ-VAE/ 找出与当前方向对应的那个（冻结基线 TIGER_RQ-VAE 之外的目录）。' +
+          '再用 read 读它的机制文件（new_files 列的那些）与 tests/ 下的测试文件。' +
+          '用 grep 或 gitLog 看它相对冻结基线改了哪些地方 —— 改动范围本身就是核对项。',
       },
       {
         title: '逐项核对',
@@ -892,7 +892,7 @@ export const AGENT_PROFILES = [
       {
         title: '改代码与测试',
         instruction:
-          '把上一步判定 FAIL 的条目在候选树里改对：用 writeFile 改 stage2_RQ-VAE/<arm>/ 里的机制文件' +
+          '把上一步判定 FAIL 的条目在候选树里改对：用 write 改 stage2_RQ-VAE/<arm>/ 里的机制文件' +
           '（公式照 math.json 抄、接口照冻结基线抄），并补上对应的测试断言' +
           '（先写会失败的测试，再改实现）。' +
           '每改一处要说清它对应哪条 FAIL。' +
@@ -931,15 +931,15 @@ export const PERMISSION_CATALOG = [
     id: 'read',
     label: '读（read）',
     description:
-      '读仓库里的东西：列目录、读文件、按正则搜内容、校验 JSON、校验 idea 字段 —— 都限制在仓库根之内。',
-    tools: ['listFiles', 'readFile', 'searchFiles', 'checkJson', 'checkIdea'],
+      '读仓库里的东西：列目录、读文件、按正则搜内容、找文件、校验 JSON、校验 idea 字段 —— 都限制在仓库根之内。',
+    tools: ['read', 'ls', 'grep', 'find', 'checkJson', 'checkIdea'],
   },
   {
     id: 'write',
     label: '写（write）',
     description:
       '在仓库根之内写文本文件（新建或覆盖）、只改文件里的几处，以及从冻结基线复制一份候选树；不能写 .git 目录。',
-    tools: ['writeFile', 'edit', 'copyBaselineTree'],
+    tools: ['write', 'edit', 'copyBaselineTree'],
   },
   {
     id: 'delete',

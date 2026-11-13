@@ -25,6 +25,11 @@ import {
   SessionManager,
   createAgentSession,
   createEditToolDefinition,
+  createFindToolDefinition,
+  createGrepToolDefinition,
+  createLsToolDefinition,
+  createReadToolDefinition,
+  createWriteToolDefinition,
   defineTool,
 } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
@@ -523,30 +528,6 @@ const checkIdeaTool = piTool({
   impl: checkIdea,
 });
 
-const listFilesTool = piTool({
-  name: 'listFiles',
-  label: '列目录',
-  description:
-    'List the direct children of a directory inside the repo. Path is relative to the repo root, "." means the root itself.',
-  parameters: Type.Object({
-    dir: Type.String({ description: '仓库相对路径，根目录用 "."' }),
-  }),
-  impl: TOOL_IMPLS.listFiles,
-});
-
-const readFileTool = piTool({
-  name: 'readFile',
-  label: '读文件',
-  description: 'Read the beginning of a text file inside the repo. Path is relative to the repo root.',
-  parameters: Type.Object({
-    path: Type.String({ description: '仓库相对路径' }),
-    maxLines: Type.Optional(
-      Type.Integer({ minimum: 1, maximum: 400, description: '最多返回多少行，默认 120' }),
-    ),
-  }),
-  impl: TOOL_IMPLS.readFile,
-});
-
 const copyBaselineTreeTool = piTool({
   name: 'copyBaselineTree',
   label: '复制基线候选树',
@@ -560,21 +541,6 @@ const copyBaselineTreeTool = piTool({
     ),
   }),
   impl: TOOL_IMPLS.copyBaselineTree,
-});
-
-const searchFilesTool = piTool({
-  name: 'searchFiles',
-  label: '搜索内容',
-  description:
-    'Search file contents inside the repo with a regular expression. Returns matching lines with file and line number.',
-  parameters: Type.Object({
-    pattern: Type.String({ description: '正则表达式（JavaScript 语法）' }),
-    dir: Type.Optional(Type.String({ description: '限定搜索目录，仓库相对路径，默认整个仓库' })),
-    maxMatches: Type.Optional(
-      Type.Integer({ minimum: 1, maximum: 100, description: '最多返回多少条命中，默认 30' }),
-    ),
-  }),
-  impl: TOOL_IMPLS.searchFiles,
 });
 
 const listIssuesTool = piTool({
@@ -611,18 +577,6 @@ const gitLogTool = piTool({
     ),
   }),
   impl: TOOL_IMPLS.gitLog,
-});
-
-const writeFileTool = piTool({
-  name: 'writeFile',
-  label: '写文件',
-  description:
-    'Write a text file inside the repo, creating it or overwriting it. Path is relative to the repo root.',
-  parameters: Type.Object({
-    path: Type.String({ description: '仓库相对路径' }),
-    content: Type.String({ description: '要写入的文本内容' }),
-  }),
-  impl: TOOL_IMPLS.writeFile,
 });
 
 const deleteFileTool = piTool({
@@ -914,12 +868,62 @@ export async function askOnce(prompt, { profileId, instructions } = {}) {
 }
 
 /**
+ * pi 自己的文件工具：read / write / edit / ls / grep / find。
+ *
+ * 引擎全是 pi 的 —— 不重复实现它已经有的能力。
+ * 但"能碰哪些文件"由我们说了算：这些工具的文件操作被换成我们的实现，
+ * 于是仓库根之外、.git 之内这些仍然被挡着（pi 的工具不认识仓库的规矩）。
+ *
+ * 只读的那几个（read/ls/grep/find）用 pi 的默认实现即可：它们只读，
+ * 而会话的 cwd 就是仓库根，边界天然是仓库根。
+ */
+const sandboxReadOperations = {
+  readFile: async (absolutePath) => {
+    const target = resolveInSandbox(absolutePath);
+    return fs.promises.readFile(target);
+  },
+  access: async (absolutePath) => {
+    const target = resolveInSandbox(absolutePath);
+    await fs.promises.access(target, fs.constants.R_OK);
+  },
+};
+
+const sandboxWriteOperations = {
+  writeFile: async (absolutePath, content) => {
+    const target = resolveMutableInSandbox(absolutePath);
+    const buf = Buffer.from(content);
+    if (buf.byteLength > MAX_WRITE_BYTES) {
+      throw new Error(
+        `要写的内容太大（${buf.byteLength} 字节，上限 ${MAX_WRITE_BYTES} 字节）: ${absolutePath}`,
+      );
+    }
+    await fs.promises.writeFile(target, buf);
+  },
+  mkdir: async (dir) => {
+    const target = resolveMutableInSandbox(dir);
+    await fs.promises.mkdir(target, { recursive: true });
+  },
+  access: async (absolutePath) => {
+    const target = resolveMutableInSandbox(absolutePath);
+    await fs.promises.access(target, fs.constants.R_OK | fs.constants.W_OK);
+  },
+};
+
+const piReadTool = createReadToolDefinition(sandboxRoot(), {
+  operations: sandboxReadOperations,
+});
+
+const piWriteTool = createWriteToolDefinition(sandboxRoot(), {
+  operations: sandboxWriteOperations,
+});
+
+const piLsTool = createLsToolDefinition(sandboxRoot());
+const piGrepTool = createGrepToolDefinition(sandboxRoot());
+const piFindTool = createFindToolDefinition(sandboxRoot());
+
+/**
  * pi 自带的 edit 工具：按原文精确替换（一处找不到会试模糊匹配），
  * 一次调用可以改多处。
- *
- * 引擎用 pi 自己的 —— 不重复实现它已经有的能力。
- * 但"文件能改在哪"由我们说了算：pi 的 edit 允许的操作被换成我们的实现，
- * 于是仓库根之外、.git 之内这些仍然被挡着（工具本身不认识仓库的规矩）。
  */
 const piEditTool = createEditToolDefinition(sandboxRoot(), {
   operations: {
@@ -933,38 +937,27 @@ const piEditTool = createEditToolDefinition(sandboxRoot(), {
       }
       return buf;
     },
-    writeFile: async (absolutePath, content) => {
-      const target = resolveMutableInSandbox(absolutePath);
-      const buf = Buffer.from(content);
-      if (buf.byteLength > MAX_WRITE_BYTES) {
-        throw new Error(
-          `改完之后太大了（${buf.byteLength} 字节，上限 ${MAX_WRITE_BYTES} 字节）: ${absolutePath}`,
-        );
-      }
-      await fs.promises.writeFile(target, buf);
-    },
-    access: async (absolutePath) => {
-      const target = resolveMutableInSandbox(absolutePath);
-      await fs.promises.access(target, fs.constants.R_OK | fs.constants.W_OK);
-    },
+    writeFile: sandboxWriteOperations.writeFile,
+    access: sandboxWriteOperations.access,
   },
 });
 
 export const PI_TOOLS = {
-  listFiles: listFilesTool,
+  read: piReadTool,
+  write: piWriteTool,
+  edit: piEditTool,
+  ls: piLsTool,
+  grep: piGrepTool,
+  find: piFindTool,
   checkJson: checkJsonTool,
   checkIdea: checkIdeaTool,
   webSearch: webSearchTool,
   stage2Start: stage2StartTool,
   stage2Status: stage2StatusTool,
   stage2Stop: stage2StopTool,
-  readFile: readFileTool,
-  searchFiles: searchFilesTool,
   listIssues: listIssuesTool,
   readIssue: readIssueTool,
   gitLog: gitLogTool,
-  writeFile: writeFileTool,
-  edit: piEditTool,
   copyBaselineTree: copyBaselineTreeTool,
   deleteFile: deleteFileTool,
 };

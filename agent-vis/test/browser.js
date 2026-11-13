@@ -33,7 +33,7 @@ const PANEL_B = 'panelB';
 
 /** 给 AGENT Write（机制实现者）的指令。 */
 const PROMPT_A =
-  '用 listFiles 列出 agent-vis 目录下的文件，然后用一句话说明这个目录是做什么的。';
+  '用 ls 列出 agent-vis 目录下的文件，然后用一句话说明这个目录是做什么的。';
 /** 给 AGENT B（Issue 控制器）的指令 —— 交接时这条指令会跟着 A 的分析结果一起发出去。 */
 const PROMPT_B = '请基于上游给出的分析结论，给出三条最值得先动手的改进建议。';
 
@@ -1413,13 +1413,13 @@ async function main() {
     );
 
     const TOOL_NAMES = [
-      'listFiles',
-      'readFile',
-      'searchFiles',
+      'ls',
+      'read',
+      'grep',
       'listIssues',
       'readIssue',
       'gitLog',
-      'writeFile',
+      'write',
       'deleteFile',
     ];
 
@@ -1724,7 +1724,7 @@ async function main() {
       JSON.stringify({
         name: '临时长文',
         instructions:
-          '用 listFiles 列出 stage2_RQ-VAE 下的每个目录，逐个用 readFile 读一遍里面的 README，' +
+          '用 ls 列出 stage2_RQ-VAE 下的每个目录，逐个用 read 读一遍里面的 README，' +
           '然后写一篇中文总结。不要写任何文件。',
         permissions: ['read'],
       }),

@@ -140,7 +140,7 @@ await test('edit 走 pi 自己的引擎，但守住仓库的规矩', async () =>
 await test('read 权限只给只读工具（含 JSON 校验）', async () => {
   assert.deepEqual(
     toolsForPermissions(['read']).map((tool) => tool.name),
-    ['listFiles', 'readFile', 'searchFiles', 'checkJson', 'checkIdea'],
+    ['read', 'ls', 'grep', 'find', 'checkJson', 'checkIdea'],
   );
 });
 
@@ -153,9 +153,10 @@ await test('多项权限按请求顺序合并去重', async () => {
   assert.deepEqual(names, [
     'listIssues',
     'readIssue',
-    'listFiles',
-    'readFile',
-    'searchFiles',
+    'read',
+    'ls',
+    'grep',
+    'find',
     'checkJson',
     'checkIdea',
   ]);
@@ -195,48 +196,35 @@ const relScratch = path.relative(REPO_ROOT, SCRATCH);
 fs.writeFileSync(path.join(SCRATCH, 'a.txt'), 'line one\nline two\n');
 fs.writeFileSync(path.join(SCRATCH, 'sub', 'b.txt'), 'nested needle\n');
 
-await test('readFile 读到真实内容并按行截断', async () => {
-  const result = await TOOL_IMPLS.readFile({ path: `${relScratch}/a.txt`, maxLines: 1 });
-  assert.equal(result.content, 'line one');
-  assert.equal(result.truncated, true);
-  assert.equal(result.totalLines, 3);
+await test('pi 的 read 读到真实内容', async () => {
+  const tool = PI_TOOLS.read;
+  const result = await tool.execute('r1', { path: `${relScratch}/a.txt` });
+  const text = (result.content || []).map((c) => c.text || '').join('\n');
+  assert.match(text, /line one/);
 });
 
-await test('readFile 越出仓库根直接报错', async () => {
-  await assert.rejects(() => TOOL_IMPLS.readFile({ path: '../outside.txt' }), /越界/);
+await test('pi 的 read 越出仓库根直接报错', async () => {
+  const tool = PI_TOOLS.read;
+  await assert.rejects(() => tool.execute('r2', { path: '../outside.txt' }), /越界/);
 });
 
-await test('listFiles 跳过大目录，给出条目与大小', async () => {
-  const result = await TOOL_IMPLS.listFiles({ dir: relScratch });
-  assert.equal(result.count, result.items.length);
-  const names = result.items.map((item) => item.name);
-  assert.ok(names.includes('a.txt'));
-  assert.ok(!names.includes('node_modules'));
-  const file = result.items.find((item) => item.name === 'a.txt');
-  assert.equal(file.type, 'file');
-  assert.equal(typeof file.size, 'number');
+
+await test('pi 的 write 写进仓库', async () => {
+  const tool = PI_TOOLS.write;
+  await tool.execute('w1', { path: `${relScratch}/new.txt`, content: '你好' });
+  assert.match(fs.readFileSync(path.join(REPO_ROOT, relScratch, 'new.txt'), 'utf8'), /你好/);
 });
 
-await test('searchFiles 命中带文件名与行号', async () => {
-  const result = await TOOL_IMPLS.searchFiles({ pattern: 'needle', dir: relScratch });
-  assert.equal(result.matchCount, 1);
-  assert.equal(result.matches[0].line, 1);
-  assert.ok(result.matches[0].file.endsWith('b.txt'));
-});
-
-await test('writeFile 写进仓库并报告字节数', async () => {
-  const result = await TOOL_IMPLS.writeFile({ path: `${relScratch}/new.txt`, content: '你好' });
-  assert.equal(result.created, true);
-  assert.equal(result.bytes, 6);
-  assert.equal(fs.readFileSync(path.join(SCRATCH, 'new.txt'), 'utf8'), '你好');
-});
-
-await test('writeFile 不许写 .git 目录', async () => {
+await test('pi 的 write 不许写 .git 目录', async () => {
+  const tool = PI_TOOLS.write;
+  const gitFile = path.join(REPO_ROOT, '.git', 'probe-write-test');
   await assert.rejects(
-    () => TOOL_IMPLS.writeFile({ path: '.git/hooks/x', content: 'x' }),
+    () => tool.execute('w2', { path: path.relative(REPO_ROOT, gitFile), content: 'x' }),
     /\.git/,
   );
+  assert.equal(fs.existsSync(gitFile), false, '.git 下不该留下任何东西');
 });
+
 
 await test('deleteFile 不许删仓库根', async () => {
   await assert.rejects(() => TOOL_IMPLS.deleteFile({ path: '.' }), /仓库根/);
