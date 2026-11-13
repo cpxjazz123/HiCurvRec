@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-13.8';
+export const FRONTEND_VERSION = '2026-11-13.9';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -1224,6 +1224,11 @@ function publicProfile(profile) {
       ? override.handoffDelaySeconds
       : DEFAULT_HANDOFF_DELAY_SECONDS,
     defaultHandoffDelaySeconds: DEFAULT_HANDOFF_DELAY_SECONDS,
+    // 交接时要不要先重置这一栏自己的会话：重置了，下游拿到消息开始干活时，
+    // 这一栏的模型上下文已经清空（下一轮从头开始）。
+    resetSessionOnHandoff: has('resetSessionOnHandoff')
+      ? Boolean(override.resetSessionOnHandoff)
+      : false,
     // 循环：跑完这一轮之后自动再跑几轮、每轮隔多久。用户没配过就是不开。
     loop: has('loop') ? normalizeLoop(override.loop) : { ...DEFAULT_LOOP },
     defaultLoop: { ...DEFAULT_LOOP },
@@ -1468,6 +1473,16 @@ export function saveProfileConfig(profileId, patch) {
       delete next.steps;
     } else {
       next.steps = normalizeUserSteps(patch.steps);
+    }
+  }
+  if (patch.resetSessionOnHandoff !== undefined) {
+    if (patch.resetSessionOnHandoff === null) {
+      // null = 恢复默认（跟名字、提示词一样：把这一项从覆写里摘掉）。
+      delete next.resetSessionOnHandoff;
+    } else if (typeof patch.resetSessionOnHandoff !== 'boolean') {
+      throw new Error('resetSessionOnHandoff 必须是布尔值');
+    } else {
+      next.resetSessionOnHandoff = patch.resetSessionOnHandoff;
     }
   }
   if (patch.handoffDelaySeconds !== undefined) {

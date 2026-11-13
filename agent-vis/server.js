@@ -226,6 +226,8 @@ async function parseRunRequest(req, url) {
       handoff: typeof body.handoff === 'string' ? body.handoff : '',
       handoffFrom: typeof body.handoffFrom === 'string' ? body.handoffFrom : undefined,
       instructions: typeof body.instructions === 'string' ? body.instructions : undefined,
+      // 交接来源的身份：用来判断"发送方要不要先重置自己的会话"。
+      handoffFromId: typeof body.handoffFromId === 'string' ? body.handoffFromId : '',
       permissions: parsePermissions(body.permissions),
       clientVersion: typeof body.v === 'string' ? body.v : null,
       round: parseRoundMeta(body),
@@ -244,6 +246,7 @@ async function parseRunRequest(req, url) {
     handoff: '',
     handoffFrom: rawHandoffFrom === null ? undefined : rawHandoffFrom,
     instructions: rawInstructions === null ? undefined : rawInstructions,
+    handoffFromId: url.searchParams.get('handoffFromId') || '',
     permissions: rawPermissions === null ? undefined : parsePermissions(rawPermissions),
     clientVersion: url.searchParams.get('v'),
     round: parseRoundMeta({
@@ -547,7 +550,24 @@ async function handleRun(req, res, url, mode, { viaPublicPath = false } = {}) {
     return;
   }
 
-  const { handoff, handoffFrom, clientVersion, instructions } = request;
+  const { handoff, handoffFrom, clientVersion, instructions, handoffFromId } = request;
+
+  // 交接：发送方在配置里勾了"交接时先重置我自己的会话"的话，
+  // 在下游拿到消息开始干活之前，先把发送方那一栏的模型会话清掉 ——
+  // 它的下一轮从头开始，不带着这一轮的上下文。
+  if (handoff.trim() !== '' && handoffFromId) {
+    try {
+      const sender = resolveProfile(handoffFromId);
+      if (sender.resetSessionOnHandoff) {
+        resetAgentSessions(handoffFromId);
+      }
+    } catch (err) {
+      // 发送方身份认不出来（它被删了？）：不挡这一轮，交接照发。
+      process.stderr.write(
+        `交接来源 ${handoffFromId} 认不出来，没能重置它的会话：${(err && err.message) || String(err)}\n`,
+      );
+    }
+  }
   let prompt = request.prompt.trim();
   // 没有要求、但有上游的交接结果：照样能跑 ——
   // 上游的分析结果本身就是下游要接着做的事，用户没写要求不该把交接挡掉。

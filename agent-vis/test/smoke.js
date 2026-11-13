@@ -481,6 +481,37 @@ async function main() {
               `全部重置应该覆盖所有身份: ${JSON.stringify(allPayload.agents)}`);
   });
 
+  await test('交接时要不要重置发送方的会话，可以逐个 agent 配', async () => {
+    const put = (body) =>
+      fetch(`${base}/api/agents/agent-a/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+    // 默认是关的。
+    const before = await (await fetch(`${base}/api/health`)).json();
+    const a0 = (before.agents || []).find((agent) => agent.id === 'agent-a');
+    assert.equal(a0.resetSessionOnHandoff, false, '默认不该重置');
+
+    // 勾上：存下来、读得回。
+    const saved = await (await put({ resetSessionOnHandoff: true })).json();
+    assert.equal(saved.resetSessionOnHandoff, true, '没存上');
+    const after = await (await fetch(`${base}/api/health`)).json();
+    const a1 = (after.agents || []).find((agent) => agent.id === 'agent-a');
+    assert.equal(a1.resetSessionOnHandoff, true, '服务端没记住');
+
+    // 不是布尔值要拒。
+    const bad = await put({ resetSessionOnHandoff: 'yes' });
+    assert.equal(bad.status, 400, '非布尔值应该被拒');
+
+    // 恢复默认。
+    await put({ resetSessionOnHandoff: null });
+    const restored = await (await fetch(`${base}/api/health`)).json();
+    const a2 = (restored.agents || []).find((agent) => agent.id === 'agent-a');
+    assert.equal(a2.resetSessionOnHandoff, false, '恢复默认后不该再重置');
+  });
+
   await test('新的 idea 不许和归档的重复', async () => {
     const root = path.join(HERE, '..', '.out', `dedup-${process.pid}`);
     const ideas = path.join(root, 'ideas');
@@ -1153,9 +1184,20 @@ async function main() {
     assert.equal(typeof initial.text, 'string');
     assert.equal(initial.text, '', '还没保存过，页面那份应该是空的');
     assert.equal(initial.updatedAt, null);
-    // 仓库里的 idea.txt 要能拿到：窗口第一次打开时靠它当草稿，不然就是一片空白。
+    // 仓库里的机制文件要能拿到：窗口第一次打开时靠它当草稿。
+    // 「一个方向都没有」（都归档了）也是合法状态 —— 这时页面要明确说清楚，
+    // 而不是装作有内容，也不是 500。
     assert.equal(typeof initial.fileText, 'string');
-    assert.ok(initial.fileText.length > 0, '机制文件的内容没拿到');
+    if (initial.doc) {
+      assert.ok(initial.fileText.length > 0, '机制文件的内容没拿到');
+    } else {
+      assert.equal(initial.fileText, '', '没有方向时不该凭空有内容');
+      assert.equal(typeof initial.docError, 'string');
+      assert.ok(
+        initial.docError.includes('*_idea.json'),
+        `没有方向时要说清楚找的是什么: ${initial.docError}`,
+      );
+    }
     // 主线在 ideas/main_line.json，整份方向共用一份；机制文件只写这一轮的差异。
     assert.equal(typeof initial.mainLine, 'object', 'mainLine 没返回');
     assert.equal(typeof initial.mainLine.statement, 'string');
@@ -1182,8 +1224,10 @@ async function main() {
       assert.equal(initial.mathError, null);
     } else {
       assert.equal(typeof initial.mathError, 'string', '缺 math.json 时要给出原因');
-      assert.ok(initial.mathError.includes('math.json'),
-                `原因里要点名文件，实际是 ${JSON.stringify(initial.mathError)}`);
+      assert.ok(
+        initial.mathError.includes('math.json') || initial.mathError.includes('*_idea.json'),
+        `原因里要点名文件（缺公式文件，或者连方向都没有），实际是 ${JSON.stringify(initial.mathError)}`,
+      );
     }
     const hasVerification = initial.verification !== null && initial.verification !== undefined;
     if (hasVerification) {
@@ -1193,8 +1237,11 @@ async function main() {
       assert.equal(initial.verificationError, null);
     } else {
       assert.equal(typeof initial.verificationError, 'string', '缺 verification.json 时要给出原因');
-      assert.ok(initial.verificationError.includes('verification.json'),
-                `原因里要点名文件，实际是 ${JSON.stringify(initial.verificationError)}`);
+      assert.ok(
+        initial.verificationError.includes('verification.json') ||
+          initial.verificationError.includes('*_idea.json'),
+        `原因里要点名文件（缺验证计划，或者连方向都没有），实际是 ${JSON.stringify(initial.verificationError)}`,
+      );
     }
 
     res = await put({ text: ideaText });

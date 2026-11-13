@@ -1867,7 +1867,12 @@ async function main() {
 
     // 提示词不再跟着请求发：它存到了服务端，服务端按自己存的那份来跑。
     const recordsJ = await waitForChatCount(base, newAgentId, 1);
-    const recordJ = recordsJ[recordsJ.length - 1] || {};
+    // 身份名会被复用（临时 agent 删掉之后新 agent 可能拿到同一个 id），
+    // 所以不取"最后一条"，而是找这一轮写进去的那条。
+    const recordJ =
+      [...recordsJ].reverse().find((record) => record.instructions === NEW_INSTRUCTIONS) ||
+      recordsJ[recordsJ.length - 1] ||
+      {};
     check(
       '新 agent 跑的时候用的就是自己写的那份提示词',
       recordJ.instructions === NEW_INSTRUCTIONS,
@@ -2574,13 +2579,13 @@ async function main() {
     );
     check(
       '权限区按服务端的权限目录铺出复选框',
-      Array.isArray(permBoxesM) && permBoxesM.length === 6,
+      Array.isArray(permBoxesM) && permBoxesM.length === 7,
       JSON.stringify(permBoxesM),
     );
     check(
       '权限目录里就是 read / write 这类基础权限',
       Array.isArray(permBoxesM) &&
-        ['read', 'write', 'delete', 'train', 'execute', 'network'].every((id) =>
+        ['read', 'write', 'delete', 'train', 'execute', 'web', 'network'].every((id) =>
           permBoxesM.some((b) => b.id === id),
         ),
       JSON.stringify(permBoxesM),

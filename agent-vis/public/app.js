@@ -91,7 +91,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-13.8';
+const FRONTEND_VERSION = '2026-11-13.9';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -270,6 +270,8 @@ function createPanel(root) {
     handoffTargets: pick('handoffTargets'),
     handoffDelay: pick('handoffDelay'),
     handoffDelayState: pick('handoffDelayState'),
+    resetSessionHandoff: pick('resetSessionHandoff'),
+    resetSessionHandoffState: pick('resetSessionHandoffState'),
     loopBox: pick('loopBox'),
     loopSummary: pick('loopSummary'),
     loopEnabled: pick('loopEnabled'),
@@ -628,6 +630,12 @@ function createPanel(root) {
         if (typeof id === 'string' && id !== '') handoffTargets.add(id);
       }
     }
+    // 交接时要不要先重置自己这一栏的会话：跟着服务端那份走。
+    if (els.resetSessionHandoff) {
+      els.resetSessionHandoff.checked = Boolean(profile.resetSessionOnHandoff);
+      refreshResetSessionHandoffState();
+    }
+
     // 交接延迟：0 = 立刻。输入框跟着服务端那份走。
     if (els.handoffDelay) {
       const delay =
@@ -786,6 +794,15 @@ function createPanel(root) {
     els.instructions.value = defaultInstructions;
     refreshInstructionsState();
     void saveConfig({ instructions: null });
+  }
+
+  /** 交接时重置会话那个勾选旁边的说明。 */
+  function refreshResetSessionHandoffState() {
+    if (!els.resetSessionHandoffState) return;
+    const on = Boolean(els.resetSessionHandoff && els.resetSessionHandoff.checked);
+    els.resetSessionHandoffState.textContent = on
+      ? '勾上了：交接时先清掉这一栏的会话，下游拿到消息时它已经从头开始。'
+      : '没勾：交接不动这一栏的会话。';
   }
 
   /** 延迟输入框旁边的说明：写清"现在是多少"，以及是不是用户改过的。 */
@@ -2303,6 +2320,14 @@ function createPanel(root) {
       nameCustomized = false;
       refreshNameState();
       refreshAllTargets();
+    });
+  }
+
+  if (els.resetSessionHandoff) {
+    els.resetSessionHandoff.addEventListener('change', () => {
+      userEdited.handoffReset = true;
+      refreshResetSessionHandoffState();
+      void saveConfig({ resetSessionOnHandoff: Boolean(els.resetSessionHandoff.checked) });
     });
   }
 
