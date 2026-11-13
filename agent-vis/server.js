@@ -529,7 +529,7 @@ export function runStatus({ aborted = false, chunks = [] } = {}) {
   return 'done';
 }
 
-async function handleRun(req, res, url, mode) {
+async function handleRun(req, res, url, mode, { viaPublicPath = false } = {}) {
   let request;
   try {
     request = await parseRunRequest(req, url);
@@ -616,6 +616,10 @@ async function handleRun(req, res, url, mode) {
     // 这一轮真正生效的权限：请求里明确给了就用给的，没给就用这个 agent 的默认。
     // 请求里那份在解析阶段就校验过了（不认识的 id 早就 400 了）。
     effectivePermissions = resolvePermissions(profile, request.permissions);
+    // 公网入口不给「检索文献」：那个工具要出网，只留给本机直连。
+    if (viaPublicPath) {
+      effectivePermissions = effectivePermissions.filter((id) => id !== 'web');
+    }
   } catch (err) {
     res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(
@@ -751,6 +755,18 @@ export function createServer({
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     logRequest(req, url);
 
+    // 这次请求是不是从外面进来的。
+    //
+    // 判据是 Host：本机直连的 Host 是 127.0.0.1:<端口> 或 localhost:<端口>，
+    // 隧道过来的请求 Host 是隧道域名（Cloudflare 会把它改写掉，客户端伪造不了）。
+    // 访问门槛（路径前缀）挡的是"谁进得来"，这一条挡的是"进了来的人能用什么"：
+    // 文献检索要出网，只留给本机直连的那个入口。
+    const localPort = req.socket.localPort;
+    const requestHost = String(req.headers.host || '').toLowerCase();
+    const viaPublicPath = !(
+      requestHost === `127.0.0.1:${localPort}` || requestHost === `localhost:${localPort}`
+    );
+
     if (prefix) {
       // 只写了前缀、没写尾斜杠：补上斜杠，省得后面的相对路径全错位。
       if (url.pathname === prefix) {
@@ -790,7 +806,11 @@ export function createServer({
           frontendVersion: config.FRONTEND_VERSION,
           protocolVersion: config.PROTOCOL_VERSION,
           // 权限目录：页面上的权限区按它铺复选框。
-          permissionCatalog: config.PERMISSION_CATALOG,
+          // 公网入口（带访问门槛前缀进来的）不给「检索文献」：出网的能力
+          // 只留在本机直连的那个入口上。
+          permissionCatalog: viaPublicPath
+            ? config.PERMISSION_CATALOG.filter((item) => item.id !== 'web')
+            : config.PERMISSION_CATALOG,
           agents: listProfiles(),
         }),
       );
@@ -1074,7 +1094,7 @@ export function createServer({
     }
 
     if (url.pathname === '/api/run') {
-      handleRun(req, res, url, mode).catch((err) => {
+      handleRun(req, res, url, mode, { viaPublicPath }).catch((err) => {
         if (!res.writableEnded) {
           res.write(
             `data: ${JSON.stringify({

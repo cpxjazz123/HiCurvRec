@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import http from 'node:http';
 
 import { createServer, runStatus } from '../server.js';
 import { config } from '../server.js';
@@ -477,6 +478,61 @@ async function main() {
     const allPayload = await all.json();
     assert.ok(Array.isArray(allPayload.agents) && allPayload.agents.length >= 3,
               `全部重置应该覆盖所有身份: ${JSON.stringify(allPayload.agents)}`);
+  });
+
+  await test('公网入口不给文献检索，本机直连才有', async () => {
+    // 本机直连（没有访问门槛前缀）：目录里有 web。
+    const local = await (await fetch(`${base}/api/health`)).json();
+    assert.ok(
+      (local.permissionCatalog || []).some((item) => item.id === 'web'),
+      '本机直连应当给文献检索',
+    );
+
+    // 从外面进来的请求（Host 不是本机）：出网的能力不给。
+    const scratch = path.join(HERE, '..', '.out', `gated-${process.pid}`);
+    const gated = createServer({ mode: 'mock', publicPath: '', dataDir: scratch });
+    await new Promise((resolve) => gated.listen(0, '127.0.0.1', resolve));
+    try {
+      const gatedBase = `http://127.0.0.1:${gated.address().port}`;
+      // fetch 不让改 Host，所以这里直接用 http 发一个带 Host 的请求。
+      const info = await new Promise((resolve, reject) => {
+        const request = http.request(
+          {
+            host: '127.0.0.1',
+            port: gated.address().port,
+            path: '/api/health',
+            headers: { Host: 'outside.example.com' },
+          },
+          (response) => {
+            let body = '';
+            response.on('data', (chunk) => {
+              body += chunk;
+            });
+            response.on('end', () => {
+              try {
+                resolve(JSON.parse(body));
+              } catch (err) {
+                reject(err);
+              }
+            });
+          },
+        );
+        request.on('error', reject);
+        request.end();
+      });
+      assert.ok(
+        !(info.permissionCatalog || []).some((item) => item.id === 'web'),
+        '外面进来的请求不该给文献检索',
+      );
+      assert.ok(
+        (info.permissionCatalog || []).some((item) => item.id === 'read'),
+        '别的权限照给',
+      );
+    } finally {
+      gated.closeAllConnections();
+      await new Promise((resolve) => gated.close(resolve));
+      fs.rmSync(scratch, { recursive: true, force: true });
+    }
   });
 
   await test('检索文献的工具与权限都在', async () => {
