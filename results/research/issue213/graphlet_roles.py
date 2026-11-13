@@ -88,7 +88,7 @@ def sid_tokens(name: str) -> dict[int, tuple]:
     raise SystemExit(f"no copy of the {name} SID matches its recorded sha256")
 
 
-def features_and_roles(graph, degrees, adj, orbits4, orbits5):
+def features_and_roles(graph, degrees, adj, orbits):
     """RolX's core idea on this graph: standardised per-node features, NMF, argmax membership.
 
     Returned as ``(nodes, role_of, profiles)``; ``nodes`` is ascending, so two callers that pass the
@@ -112,16 +112,15 @@ def features_and_roles(graph, degrees, adj, orbits4, orbits5):
         overlap[node] = total / (len(neigh) * (len(neigh) - 1) / 2)
 
     nodes = sorted(graph.nodes())
+    width = orbits.shape[1]
+    names = ORBITS_4 if width == 15 else ORBITS_5
     rows = []
     for node in nodes:
         rows.append([
             np.log1p(degrees[node]), clustering[node], core[node], np.log1p(mean_neighbour_degree[node]), overlap[node],
-            *[np.log1p(v) for v in orbits4[node]],
-            *([np.log1p(v) for v in orbits5[node]] if orbits5.size else []),
+            *[np.log1p(v) for v in orbits[node]],
         ])
-    features = ["log_degree", "clustering", "core", "log_mean_neighbour_degree", "overlap", *ORBITS_4]
-    if orbits5.size:
-        features = features + ORBITS_5
+    features = ["log_degree", "clustering", "core", "log_mean_neighbour_degree", "overlap", *names]
     X = np.asarray(rows, dtype=np.float64)
     X = (X - X.mean(0)) / X.std(0).clip(min=1e-9)
 
@@ -156,7 +155,7 @@ def main() -> int:
     orbits5, used5 = ((np.zeros((0, 73), dtype=np.int64), None) if only4
                       else orca_orbits(ORCA_NODE5, 73))
     print(f"orbits: 4-node {used4 or 'NOT_RUN'} | 5-node {used5 or 'NOT_RUN'}", flush=True)
-    _, role_of, profiles = features_and_roles(graph, degrees, adj, orbits4, orbits5)
+    _, role_of, profiles = features_and_roles(graph, degrees, adj, orbits5 if not only4 else orbits4)
 
     def retention(name: str) -> dict:
         sid = sid_tokens(name)
@@ -203,12 +202,13 @@ def main() -> int:
     report = {
         "graph": {"nodes": graph.number_of_nodes(), "edges": graph.number_of_edges(), "roles": ROLES,
                   "orbit_sources": {"4-node": used4, "5-node": used5},
-                  "orbits": 15 + (73 if orbits5.size else 0)},
+                  "orbits": 15 if only4 else 73,
+                  "feature_columns": 5 + (15 if only4 else 73)},
         "role_profiles": profiles,
         "retention": {"F0": retention("F0"), "TIGER_RQ-VAE": retention("TIGER_RQ-VAE")},
         "sid_sha256": SID_SHA,
         "limits": [
-            "orbits are ORCA's node orbits of graphlets up to 4 nodes (15) and, when node5.out is present, up to 5 nodes (73) as well",
+            "orbits are ORCA's node orbits of graphlets up to the stated size, one column per orbit: the 15 four-node columns are byte-identical to the first 15 of the 73 five-node columns, so only one matrix is ever used",
             "roles are NMF over standardised features; the role count is the script's constant, not selected",
             "retention is the share of behaviour edges whose endpoints share at least one / all three SID tokens",
         ],

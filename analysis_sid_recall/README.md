@@ -38,8 +38,11 @@ TRAIN behaviour graph itself (tree-like branches next to dense communities).
 | 列 | 定义 |
 |---|---|
 | `prefix@1` | 行为边两端共享一级码 |
+| `prefix@2` | 两端共享一级与二级码 |
 | `prefix@3` | 两端共享全部三级码 |
-| `any` | 两端在任意层级共享至少一个 token 值（213 审计的定义） |
+
+只比较**同一层级**的码：一方的一级码不会因为等于另一方的二级码而算作匹配（早先的 `any` 列允许跨层匹配，已删除）。
+定义经独立复核：对配对 01 用逐边暴力循环重算 6 个角色 × 3 个前缀层级，与脚本向量化结果逐位相同。
 
 边归给**第一个端点**（历史商品）的角色，与 213 审计同口径，两张表可并读。
 
@@ -50,7 +53,10 @@ TRAIN behaviour graph itself (tree-like branches next to dense communities).
 `report.json` 记录与镜像文件不一致（镜像与账本一致），说明 `report.json` 在这几个号上是陈旧的派生值。
 脚本对镜像文件按账本验证，并把这类配对标成 `record_disagrees_with_archive`，不静默丢弃。
 
-`--five` 换成 **ORCA 4+5-节点轨道（88 维）** 学出的 6 个角色（角色缓存 `structure_roles5.npz`，结果写
+`--five` 换成 **ORCA 5-节点轨道（标准 73 维）** 学出的 6 个角色（角色缓存 `structure_roles5.npz`，结果写
 `structure_retention_5node.json` / `STRUCTURE_RETENTION_5NODE.md`）。5-节点轨道由加速版 ORCA 生成：
 `results/research/issue213/orca/orca_gpu`（GPU 建表 + 32 线程 stage 3，**34.9 s**，输出与原版逐字节相同；
 原版单线程 951 s）。两个版本共用同一套角色定义与查表口径，因此两张表可直接并读。
+
+**特征维度**：`node5.out` 的前 15 列与 `node4.out` 的 15 列**逐字节相同**（24,587 节点全对），
+所以五节点特征只取标准的 73 维，不再拼接成 88 维——拼接会让标准化后的矩阵秩亏，并把四节点信息加权两次。

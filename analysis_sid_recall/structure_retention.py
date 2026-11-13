@@ -19,8 +19,11 @@ Structure, fixed once for all arms and independent of any SID:
 Retention of one pair, per role:
 
     prefix@1   both endpoints share the level-1 code
+    prefix@2   they share levels 1 and 2
     prefix@3   they share all three codes (the full semantic triple)
-    any        they share at least one token value at any level (the 213 definition)
+
+    Only the same SID position is ever compared: a level-1 code of one item is never counted as a
+    match for the level-2 code of the other.
 
 An edge is attributed to the role of its first endpoint, the history item, exactly
 as the 213 audit does, so the two tables can be read side by side.
@@ -62,7 +65,8 @@ RECALL = "test_recall@10"
 #: Above this level-1 share the level-1 code is nearly a constant, so "structure retention" at that
 #: level says nothing about structure.  Fixed before any correlation was computed.
 COARSE_L1 = 0.5
-LEVELS = ("prefix@1", "prefix@3", "any")
+#: prefixes of the SAME SID positions: an edge counts when both ends agree on level 1, on 1+2, on all three
+LEVELS = ("prefix@1", "prefix@2", "prefix@3")
 
 
 def load_roles_module():
@@ -104,7 +108,7 @@ def role_assignment(gr, graph, degrees, adj, five=False):
         orbits5, used5 = gr.orca_orbits(gr.ORCA_NODE5, 73)
         if used5 is None:
             raise SystemExit("no node5.out: build it with the accelerated ORCA first")
-    nodes, role_of, profiles = gr.features_and_roles(graph, degrees, adj, orbits4, orbits5)
+    nodes, role_of, profiles = gr.features_and_roles(graph, degrees, adj, orbits5 if five else orbits4)
     np.savez(cache, nodes=np.asarray(nodes, dtype=np.int64),
              role=np.asarray([role_of[node] for node in nodes], dtype=np.int64))
     print(f"roles: {len(profiles)} fitted from {used4}" + (f" + {used5}" if used5 else "") +
@@ -115,17 +119,15 @@ def role_assignment(gr, graph, degrees, adj, five=False):
 def retention(tokens: np.ndarray, u, v, role_of_u, n_roles: int) -> dict:
     """prefix@1, prefix@3 and 'any token' shares, overall and per role of the first endpoint."""
     a1, a2, a3 = tokens[0], tokens[1], tokens[2]
+    # same position on both sides: a level-1 code of one item never counts as a match for the
+    # level-2 code of the other, which is what the earlier "any token" column allowed.
     m1 = (a1[u] == a1[v]) & (a1[u] >= 0)
-    m2 = (a2[u] == a2[v]) & (a2[u] >= 0)
-    m3 = (a3[u] == a3[v]) & (a3[u] >= 0)
-    any_ = np.zeros(u.shape[0], dtype=bool)
-    for pos_u in range(3):
-        for pos_v in range(3):
-            any_ |= (tokens[pos_u][u] == tokens[pos_v][v]) & (tokens[pos_u][u] >= 0)
+    m2 = m1 & (a2[u] == a2[v]) & (a2[u] >= 0)
+    m3 = m2 & (a3[u] == a3[v]) & (a3[u] >= 0)
 
     def block(mask):
         out = {"edges": int(mask.sum())}
-        for name, hit in (("prefix@1", m1), ("prefix@3", m1 & m2 & m3), ("any", any_)):
+        for name, hit in (("prefix@1", m1), ("prefix@2", m2), ("prefix@3", m3)):
             out[name] = float(hit[mask].mean()) if mask.any() else None
         return out
 
@@ -291,7 +293,7 @@ def main() -> int:
              "the six roles are NMF with k fixed by the 213 script, not selected here" if five else
              "structure is ORCA's node orbits of graphlets up to 4 nodes plus four invariants; the six roles are NMF with k fixed by the 213 script, not selected here"),
             "an edge is attributed to the role of its first endpoint (the history item), the same convention as the 213 audit",
-            "'any' counts a token value matched at any level, so a level-1 code of one item may match a level-2 code of the other; prefix@1 and prefix@3 do not",
+            "every column compares the same SID position on both sides; no cross-level matching",
             f"{len(rows)} pairs are {len(rows)} arms under distinct family names: no within-family replication exists, so the interval is over arms, not over runs of one arm",
             f"Spearman on {len(rows)} arms with no multiple-comparison correction is exploratory; a row that clears zero is a hypothesis, not a finding",
             f"the robust/ rows drop the arms whose level-1 share exceeds {COARSE_L1} ({', '.join(degenerate)}): a level-1 code that coarse cannot carry structure, "

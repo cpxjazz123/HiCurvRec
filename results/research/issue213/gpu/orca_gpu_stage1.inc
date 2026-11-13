@@ -15,6 +15,7 @@
 // unordered_map -- which is also why they get cheaper.
 
 static int *g_ptr = nullptr, *g_adjlist = nullptr;
+static int *g_ptr_host = nullptr;   // CSR offsets on the host, for stage 3's edge ids
 static uint32_t *g_mat = nullptr;
 static unsigned *g_c2_dev = nullptr;
 static unsigned long long *g_keys = nullptr;
@@ -111,6 +112,8 @@ __host__ static void gpu_tables_init(int n, int m) {
     h_keys = (unsigned long long*)calloc(g_cap, sizeof(unsigned long long));
     h_vals = (unsigned*)calloc(g_cap, sizeof(unsigned));
 
+    g_ptr_host = (int*)malloc((n + 1) * sizeof(int));
+    memcpy(g_ptr_host, ptr.data(), (n + 1) * sizeof(int));
     cudaMalloc(&g_ptr, (n + 1) * sizeof(int));
     cudaMalloc(&g_adjlist, (size_t)m * 2 * sizeof(int));
     cudaMalloc(&g_mat, words * sizeof(uint32_t));
