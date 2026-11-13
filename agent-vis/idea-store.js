@@ -24,8 +24,34 @@ function ideaFile() {
  * 页面读**最新修改**的那一份；目录里恰好只有一份时就是它。这样新增一个方向只需要
  * 往 ideas/ 里放一个文件，不用改代码，也不会让旧方向被静默覆盖。
  */
+/**
+ * 归档目录里已经有的方向名。
+ *
+ * 归档过的方向不是待做的方向：新的 idea 不许跟归档的重复，
+ * 所以扫描待做方向时要把这些名字排掉。
+ */
+export function archivedDirectionNames(folder) {
+  const archive = path.join(folder, IDEAS_ARCHIVE_NAME);
+  const names = new Set();
+  let entries = [];
+  try {
+    entries = fs.readdirSync(archive, { withFileTypes: true });
+  } catch {
+    return names;
+  }
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    names.add(entry.name);
+    // 扁平存放的老写法：归档目录里直接躺着 <方向>_idea.json。
+    const flat = path.join(archive, `${entry.name}_idea.json`);
+    if (fs.existsSync(flat)) names.add(entry.name);
+  }
+  return names;
+}
+
 export function scanIdeaFiles(folder) {
   const found = [];
+  const archived = archivedDirectionNames(folder);
   // 方向是目录：ideas/<方向>/<方向>_idea.json；顶层直接放 *_idea.json 的老写法也认，
   // 于是一个方向一个目录与扁平存放并存，页面读最新的那一份。
   const walk = (dir) => {
@@ -43,6 +69,9 @@ export function scanIdeaFiles(folder) {
         if (entry.name === IDEAS_ARCHIVE_NAME) continue;
         walk(full);
       } else if (entry.name.endsWith('_idea.json')) {
+        // 方向名跟归档里的重了 = 新 idea 跟归档的重复：不当作待做的方向。
+        const direction = entry.name.replace(/_idea\.json$/, '');
+        if (archived.has(direction)) continue;
         let mtime = 0;
         try {
           mtime = fs.statSync(full).mtimeMs;

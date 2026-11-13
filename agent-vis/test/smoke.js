@@ -7,6 +7,7 @@ import http from 'node:http';
 import { createServer, runStatus } from '../server.js';
 import { config } from '../server.js';
 import { createStore, applyChunk, foldText, roundEnded, ROUND_END_TOOL } from '../public/protocol.js';
+import { scanIdeaFiles, archivedDirectionNames } from '../idea-store.js';
 import { runMockChunks } from '../mock-agent.js';
 import {
   PERMISSION_CATALOG,
@@ -478,6 +479,30 @@ async function main() {
     const allPayload = await all.json();
     assert.ok(Array.isArray(allPayload.agents) && allPayload.agents.length >= 3,
               `全部重置应该覆盖所有身份: ${JSON.stringify(allPayload.agents)}`);
+  });
+
+  await test('新的 idea 不许和归档的重复', async () => {
+    const root = path.join(HERE, '..', '.out', `dedup-${process.pid}`);
+    const ideas = path.join(root, 'ideas');
+    const write = (dir, name) => {
+      fs.mkdirSync(path.join(ideas, dir), { recursive: true });
+      fs.writeFileSync(
+        path.join(ideas, dir, name),
+        JSON.stringify({ sections: { '1_goal': { statement: dir } }, result: { status: 'not_run' } }),
+      );
+    };
+    write('kept', 'kept_idea.json');
+    write('dup', 'dup_idea.json');
+    write(path.join('_archive', 'dup'), 'dup_idea.json');
+    try {
+      // 归档里有的方向名，扫待做方向时要排掉。
+      const archived = archivedDirectionNames(ideas);
+      assert.ok(archived.has('dup'), '归档里的方向名没被认出来');
+      const found = scanIdeaFiles(ideas).map((entry) => path.basename(entry.full));
+      assert.deepEqual(found, ['kept_idea.json'], `重复的方向不该被当成待做: ${found}`);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 
   await test('公网入口不给文献检索，本机直连才有', async () => {
