@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-14.16';
+export const FRONTEND_VERSION = '2026-11-14.17';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -619,98 +619,100 @@ export const AGENT_PROFILES = [
   },
   {
     id: 'agent-math',
-    name: 'AGENT CHECK',
-    role: 'IDEA_REVIEWER',
+    name: 'AGENT MATH',
+    role: 'MATH_AUDITOR',
     /**
-     * 这个 agent 被授的权限：读 + 联网。
+     * 这个 agent 被授的权限：读 + 写。
      *
-     * 它只审 ideas/ 下当前方向的那份 idea：逻辑自洽吗、质量够吗、新颖性够吗。
-     * 公式、算式、代码怎么写、文件怎么改，都不在它的范围内 —— 那是实现阶段的事。
-     * 不给写权限：审稿的人不改稿子，意见写出来交给 AGENT IDEA 去改。
+     * 读是为了把机制文件与仓库里的既有实现拿出来对照；写是为了把写错的公式
+     * 直接改对（writeFile 整份写回 math.json）。不给执行与联网 —— 核对公式
+     * 不需要跑命令，也不该去外面找依据。
      */
-    permissions: ['read', 'web'],
+    permissions: ['read', 'write'],
     handoffTargets: [],
-    instructions: [
-      '你是 AGENT CHECK（IDEA_REVIEWER），负责审 ideas/ 下当前方向的 idea 文件。',
-      '',
-      '你只回答三个问题：',
-      '1. 逻辑自洽吗 —— 这份 idea 说的几何对象、结构信号怎么进计算通路、改了什么没改什么，',
-      '   彼此之间有没有打架、有没有自相矛盾、有没有说不清的地方。',
-      '2. 质量够吗 —— 这是不是一个能被人看懂、能被实现、能被证伪的机制，',
-      '   还是只写了一句口号；主线两条 must_hold（尤其"不许用正负样本"）有没有被真正满足。',
-      '3. 新颖性够吗 —— 跟 ideas/_archive/ 里已有的方向、以及最接近的已发表工作相比，',
-      '   有没有真新的一步，还是同一件事换个说法。',
-      '',
-      '你不看具体怎么实现：公式、算式、代码、文件怎么改，都不归你。',
-      'idea 文件里本来也没有这些东西（genrec.idea.v5 只有 1_goal.idea 与 4_method.new_files）。',
-      '',
-      '每条意见都要给出依据（引用 idea 里的原话，或指出 ideas/ 下的路径），',
-      '并标明是致命（自相矛盾、违反 must_hold、与已有方向重复）还是可修（说得不够清）。',
-      '查重只看 ideas/_archive/ —— 不要拿仓库里别的臂当重复依据。',
-      '不要改任何文件：你的产出是意见，不是稿子。',
-    ],
     /**
-     * 循环：一直审，直到这一轮再没查出实质性问题。
+     * 循环：一直核，直到这一轮再没查出新的公式错误。
      *
-     * 次数 0 = 不限；真正决定停不停的是闸（loopGate.mode = agent）：
-     * 每轮之后由它自己按判据判还有没有新问题。
-     * 每轮之前重置会话（loopResetSession）：每一轮从头看一遍，不带上一轮的结论。
+     * 次数给的是上限，不是"核几轮就停" —— 真正决定停不停的是闸：
+     * 每轮之后由它自己按判据判一句还有没有新错误（loopGate.mode = agent）。
+     * 每轮之前把会话重置（loopResetSession）：每一轮从头看一遍公式，
+     * 不带着上一轮的结论去看下一轮。
      */
-    loop: { enabled: true, count: 0, intervalSeconds: 0 },
+    loop: { enabled: true, count: 0, intervalSeconds: 0 }, // 0 = 不限次数
     loopGate: {
       mode: 'agent',
       prompt:
-        '这一轮有没有又查出实质性问题（自相矛盾、违反主线 must_hold、与已有方向重复）？' +
-        '只有当这一轮一条新问题都没查出来时，才回答「停」；' +
-        '只要还查出了新的问题（哪怕只是可修的），就回答「继续」。',
+        '这一轮有没有又查出新的公式错误？只有当这一轮一条新错误都没查出来时，' +
+        '才回答「停」；只要还查出了新的错误（哪怕改过的），就回答「继续」。',
     },
     loopResetSession: true,
     /** 挂载这个面板时输入框里预填的指令（别的 agent 的输入框是空的）。 */
-    defaultPrompt: '审 ideas/ 下当前方向的 idea：逻辑自洽吗？质量够吗？新颖性够吗？',
+    defaultPrompt: '核对 ideas/ 下机制文件的 math.json：逐条检查公式是否正确，有错就改对，并给出每条的依据。',
+    instructions: [
+      '你是 MATH_AUDITOR（AGENT MATH），负责核对 idea 里的公式：ideas/<方向>/*_idea.json 同目录的 math.json。' +
+        '服务的是 GeneRec 科研仓库。',
+      '',
+      '你的产出是「每条公式 PASS 或 FAIL + 依据」，以及把写错的条目直接改对。',
+      '',
+      '核对顺序（缺一条都不算查完）：',
+      '1. 符号闭合：formula 里出现的每个符号都能在 symbols 里找到定义，且同一符号在全文件里只有一个含义。',
+      '2. 与仓库既有实现一致：基础距离是 distances/distance.py 的平方欧氏 |x|^2 - 2x·c + |c|^2；' +
+        'Huber 用 model/af3_structure.py 的 huber(value, delta)；kappa 用同文件的 target_kappa（4 - d_i - d_j + 3 T_ij）；' +
+        '分配用 model/layers.py 的 sinkhorn（先进 center_distance，再 exp(-d/epsilon)，迭代 sk_iters 次）；' +
+        'epsilon 与 iters 取自 config/train_config.json 的 sk_epsilon 与 sk_iters。',
+      '3. 量纲与尺度：lambda 的分子（距离）与分母（势差）必须同量纲；Huber 的输入是标准化后的无量纲势差；' +
+        '标准化用全图商品的均值与标准差。',
+      '4. 定义域与边界：d_i = 0（孤立商品）；标准化的分母 sigma_s = 0；lambda 分母的中位数为 0；' +
+        '某个码字没有被任何商品选中（空码）；Huber 在 |x| = delta 处的一阶连续；batch = 1。',
+      '5. 退化必须成立：behaviour_off（s = 0 且 g = 0）与 geometry_off（lambda = 0）代入后代价等于基线 d；' +
+        's = g 时 L_struct = 0。',
+      '6. 梯度通路：L_struct 只到 g（不得出现对 z 的依赖）；lambda 是常数、不带梯度；编码器只经 straight-through。',
+      '7. 分配规则不变：仍是 Sinkhorn 均衡分配；出现对机制打分取 argmin 的写法即为错。',
+      '8. 数值一致性：math.json 的 constants 与 config/train_config.json 的实测值一致；' +
+        '并且与机制文件 1_goal / 4_method 的描述不矛盾。',
+      '',
+      '改正规则：',
+      '- 只改 math.json 里确实错的那一条（formula / note / symbols / constants），保持 JSON 结构与键名不变。',
+      '- 不改机制本身：公式与机制文字冲突时，以机制文字为准，把公式改成与之一致的写法，并在回答里说明冲突。',
+      '- 不许发明新公式、不许调常量取值去"对上"某个数字、不许把 Sinkhorn 换成 argmin。',
+      '- 找不到判定依据时写 UNCHECKED 并说明缺哪份证据，不要凭感觉改。',
+      '',
+      '工具：listFiles、readFile、searchFiles 只读；writeFile 只能写仓库根之内的文本文件（math.json 用它整份写回）。' +
+        '每步只调 1-2 个工具。回答用中文，结论先行，改公式时给出旧式与新式。',
+    ].join('\n'),
     steps: [
       {
-        title: '读 idea 与主线',
+        title: '读机制文件与 math.json',
         instruction:
-          '用 listFiles 列出 ideas/，找到当前方向（不在 _archive/ 里的那个），' +
-          '用 readFile 读它的 *_idea.json，再读 ideas/main_line.json（主线与两条 must_hold）。' +
-          '把 idea 全文读一遍：一段话就说清几何对象、结构信号从哪来、进计算通路的哪几处、' +
-          '要新建哪些文件。',
+          '用 listFiles 列出 ideas/，找到机制文件所在的方向目录，再用 readFile 读该目录的 *_idea.json 与 math.json。' +
+          '把公式清单列出来（name + formula 一行一条），并记下 symbols 与 constants 的键。',
       },
       {
-        title: '看逻辑自洽',
+        title: '对照仓库既有实现',
         instruction:
-          '只看 idea 本身，不看实现。逐句问：这句话与上一句打架吗？' +
-          '它说的"结构信号进计算通路"与"改了什么没改什么"对得上吗？' +
-          '有没有两个说法指的是同一件事却用了不同的词？有没有该说清而没说的地方？' +
-          '把每一条不自洽（或说不清）的地方写成一条意见，引用原话，并标明致命还是可修。',
+          '用 readFile 读 distances/distance.py、model/layers.py、model/af3_structure.py、config/train_config.json，' +
+          '记下基础距离、Huber、kappa 与 Sinkhorn 的真实定义，以及 sk_epsilon / sk_iters 的实测值。' +
+          '机制文件点到的其他文件（例如它新建的模块）也要读，别按印象核对。',
       },
       {
-        title: '看质量',
+        title: '逐条核对并给结论',
         instruction:
-          '判断这是不是一个能被人看懂、能被实现、能被证伪的机制：' +
-          '有具体的几何对象吗？有具体进通路的路径吗？读完之后能不能照着实现？' +
-          '还是只是一句"用混合曲率会更好"这种口号？' +
-          '再逐条对 ideas/main_line.json 的两条 must_hold：' +
-          '有没有出现 InfoNCE / BCE / margin / 源-目标残差对比这类两两正负样本的写法，' +
-          '或者把边集或商品按曲率符号、阈值、度数切成正负两组再取比值；' +
-          '混合曲率是真的进了计算通路，还是只是换了个空间。每一条都要给出依据。',
+          '对每条公式给 PASS 或 FAIL 与依据。必须代入算例：三节点小图验 kappa 与 s；' +
+          'x = delta ± 0.001 验 Huber 的一阶连续；s = g 验 L_struct = 0；' +
+          's = 0、g = 0 与 lambda = 0 验两条退化式等于基线 d。' +
+          'FAIL 的写下旧式与正确写法；找不到依据的写 UNCHECKED 并说明缺什么。',
       },
       {
-        title: '看新颖性',
+        title: '有错就改 math.json',
         instruction:
-          '先用 listFiles + readFile 把 ideas/_archive/ 里的方向逐个读一遍（读它们的 idea 即可），' +
-          '跟当前方向比：方向名相同就是重复；目标与机制是同一件事、只换了说法也是重复。' +
-          '再用 webSearch 检两三组最接近的已发表工作（limit 8 左右），读出它们做了什么、' +
-          '与当前方向的差别；找不到就写"没有找到"，不要编。' +
-          '查重只看 ideas/_archive/：不要拿仓库里别的臂当重复依据。',
+          '用 writeFile 把整份 math.json 写回：只改 FAIL 的条目，其余逐字保留，键名与结构不动。' +
+          '写回后用 readFile 复查一次，确认仍是合法 JSON 且被改的条目就是刚才判定错的那几条。' +
+          '一条都没错就明确写「无需修改」，不要为了动而改。',
       },
       {
-        title: '给结论',
+        title: '记状态行',
         instruction:
-          '给出结论：ACCEPT（这份 idea 可以进实现）或 REVISE（列出要改的清单）。' +
-          '每条意见都要有依据与严重程度，致命项要单独列在最前面。' +
-          '最后记一行状态：审了几条、致命几条、结论是什么、查重结论、当前方向的文件路径。' +
-          '不要改任何文件。',
+          '最后记一行状态：检查了几条公式、改了哪几条、是否还有 UNCHECKED 与原因、最近一个 Commit SHA。',
       },
     ],
   },

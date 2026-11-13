@@ -213,30 +213,16 @@ async function main() {
     await put({ loopGate: null, loopResetSession: null });
   });
 
-  await test('重置会话就是把对话记录一起清掉（不留"只清上下文"这一说）', async () => {
-    // 先给 agent-a 记一条对话，再重置：记录应当被清掉。
-    const runRes = await fetch(`${base}/api/run`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ v: config.FRONTEND_VERSION, profile: 'agent-a', prompt: '记一句' }),
-    });
-    assert.equal(runRes.status, 200);
-    await runRes.text();
-    const before = await (await fetch(`${base}/api/agents/agent-a/chats`)).json();
-    assert.ok((before.records || []).length > 0, '重置之前应当有记录');
-
+  await test('重置会话时可以选择留下对话记录', async () => {
     const res = await fetch(`${base}/api/session/reset`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agentId: 'agent-a' }),
+      body: JSON.stringify({ agentId: 'agent-a', keepRecords: true }),
     });
     assert.equal(res.status, 200);
     const doc = await res.json();
     assert.equal(doc.ok, true);
     assert.deepEqual(doc.agents, ['agent-a']);
-
-    const after = await (await fetch(`${base}/api/agents/agent-a/chats`)).json();
-    assert.equal((after.records || []).length, 0, '重置之后记录应当被清空');
   });
 
   await test('循环次数可以是 0（不限次数）', async () => {
@@ -270,6 +256,32 @@ async function main() {
     assert.equal(math.loopGate.mode, 'agent');
     assert.ok(math.loopGate.prompt.includes('没有'), '判据要写清什么时候才停');
     assert.equal(math.loopResetSession, true);
+  });
+
+  await test('重置会话就是把对话记录一起清掉（不留"只清上下文"这一说）', async () => {
+    // 先给 agent-a 记一条对话，再重置：记录应当被清掉。
+    const runRes = await fetch(`${base}/api/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ v: config.FRONTEND_VERSION, profile: 'agent-a', prompt: '记一句' }),
+    });
+    assert.equal(runRes.status, 200);
+    await runRes.text();
+    const before = await (await fetch(`${base}/api/agents/agent-a/chats`)).json();
+    assert.ok((before.records || []).length > 0, '重置之前应当有记录');
+
+    const res = await fetch(`${base}/api/session/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentId: 'agent-a' }),
+    });
+    assert.equal(res.status, 200);
+    const doc = await res.json();
+    assert.equal(doc.ok, true);
+    assert.deepEqual(doc.agents, ['agent-a']);
+
+    const after = await (await fetch(`${base}/api/agents/agent-a/chats`)).json();
+    assert.equal((after.records || []).length, 0, '重置之后记录应当被清空');
   });
 
   await test('未知路由返回 404', async () => {
@@ -475,16 +487,16 @@ async function main() {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.name),
-      ['AGENT Write', 'AGENT B', 'AGENT CHECK', 'AGENT STAGE2', 'AGENT FIX'],
+      ['AGENT Write', 'AGENT B', 'AGENT MATH', 'AGENT STAGE2', 'AGENT FIX'],
       '页面上三栏的 agent 名字不对',
     );
   });
 
-  await test('五个 agent 分别是实现者、控制器、idea 审稿员、训练员与核对员', async () => {
+  await test('五个 agent 分别是实现者、控制器、公式审计员、训练员与核对员', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.role),
-      ['MECHANISM_BUILDER', 'ISSUE_CONTROLLER', 'IDEA_REVIEWER', 'STAGE2_RUNNER', 'MECHANISM_CHECKER'],
+      ['MECHANISM_BUILDER', 'ISSUE_CONTROLLER', 'MATH_AUDITOR', 'STAGE2_RUNNER', 'MECHANISM_CHECKER'],
       '两个 agent 的角色不是"执行者 / 控制器"这一对',
     );
     assert.ok(
@@ -497,43 +509,24 @@ async function main() {
     );
   });
 
-  await test('AGENT CHECK 只读 + 联网，审的是 idea 本身，不碰公式与实现', async () => {
+  await test('AGENT MATH 拿读与写权限，只核对公式', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
-    const check = info.agents.find((agent) => agent.id === 'agent-math');
-    assert.ok(check, 'health 里没有 agent-math');
-    assert.equal(check.name, 'AGENT CHECK');
-    assert.deepEqual(check.permissions, ['read', 'web'],
-                     `AGENT CHECK 的权限不对: ${JSON.stringify(check.permissions)}`);
-    assert.equal(check.builtin, true, 'AGENT CHECK 是配置里写死的身份');
-    assert.equal(check.steps.length, 5, `AGENT CHECK 的步骤数不对: ${check.steps.length}`);
-    const text = check.steps.map((step) => step.instruction).join('\n');
-    const titles = check.steps.map((step) => step.title).join(' / ');
-    // 它审的是 idea：自洽、质量、新颖性三件事。
-    assert.ok(titles.includes('逻辑自洽'), `没有"逻辑自洽"这一步：${titles}`);
-    assert.ok(titles.includes('质量'), `没有"质量"这一步：${titles}`);
-    assert.ok(titles.includes('新颖性'), `没有"新颖性"这一步：${titles}`);
-    // 公式与实现不在它的范围内。
-    assert.ok(!text.includes('math.json'), '它不该去读 math.json');
-    assert.ok(!text.includes('PASS') || !text.includes('FAIL'),
-              '它不该再对公式给 PASS/FAIL');
-    assert.ok(!text.includes('writeFile'), '审稿的人不该改稿子');
-  });
-
-  await test('AGENT CHECK 的闸：不限次数、按判据自己判、每轮重置会话', async () => {
-    const info = await (await fetch(`${base}/api/health`)).json();
-    const check = info.agents.find((agent) => agent.id === 'agent-math');
-    assert.ok(check, 'health 里没有 agent-math');
-    assert.equal(check.loop.enabled, true);
-    assert.equal(check.loop.count, 0, '次数应为 0（不限）');
-    assert.equal(check.loopGate.mode, 'agent');
-    assert.ok(check.loopGate.prompt.includes('停'), '判据要写清什么时候才停');
-    assert.equal(check.loopResetSession, true);
-    // 人设里写明它是审 idea 的：不碰公式、不碰实现。
-    const persona = JSON.stringify(check.instructions);
-    assert.ok(persona.includes('IDEA_REVIEWER'), '人设里没写明它是 IDEA_REVIEWER');
-    assert.ok(persona.includes('逻辑自洽'), '人设里没写它审逻辑自洽');
-    assert.ok(!persona.includes('math.json'), '人设里不该再提 math.json');
-    assert.ok(check.defaultPrompt.includes('审'), `输入框预填指令该指向审 idea：${check.defaultPrompt}`);
+    const math = info.agents.find((agent) => agent.id === 'agent-math');
+    assert.ok(math, 'health 里没有 agent-math');
+    assert.deepEqual(math.permissions, ['read', 'write'],
+                     `AGENT MATH 的权限不对: ${JSON.stringify(math.permissions)}`);
+    assert.equal(math.builtin, true, 'AGENT MATH 是配置里写死的身份');
+    assert.equal(math.steps.length, 5, `AGENT MATH 的步骤数不对: ${math.steps.length}`);
+    const text = math.steps.map((step) => step.instruction).join('\n');
+    assert.ok(text.includes('math.json'), 'AGENT MATH 的步骤里没点名 math.json');
+    assert.ok(text.includes('writeFile'), 'AGENT MATH 改公式该用 writeFile');
+    assert.ok(text.includes('PASS') && text.includes('FAIL'),
+              'AGENT MATH 要对每条公式给出 PASS/FAIL 结论');
+    assert.ok(math.instructions.includes('MATH_AUDITOR') &&
+              math.instructions.includes('math.json'),
+              'AGENT MATH 的人设没写明它审的是 math.json');
+    assert.equal(math.defaultPrompt.includes('math.json'), true,
+                 'AGENT MATH 的输入框预填指令该指向 math.json');
   });
 
   await test('每个 agent 的工作目录与运行主机是硬约束', async () => {
