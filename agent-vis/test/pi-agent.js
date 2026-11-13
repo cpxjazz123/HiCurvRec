@@ -108,10 +108,10 @@ await test('权限目录里的每个工具名都能在 pi 工具表里找到', a
   }
 });
 
-await test('read 权限只给三个只读工具', async () => {
+await test('read 权限只给只读工具（含 JSON 校验）', async () => {
   assert.deepEqual(
     toolsForPermissions(['read']).map((tool) => tool.name),
-    ['listFiles', 'readFile', 'searchFiles'],
+    ['listFiles', 'readFile', 'searchFiles', 'checkJson'],
   );
 });
 
@@ -121,7 +121,14 @@ await test('没授权限就一个工具都不给', async () => {
 
 await test('多项权限按请求顺序合并去重', async () => {
   const names = toolsForPermissions(['network', 'read', 'read']).map((tool) => tool.name);
-  assert.deepEqual(names, ['listIssues', 'readIssue', 'listFiles', 'readFile', 'searchFiles']);
+  assert.deepEqual(names, [
+    'listIssues',
+    'readIssue',
+    'listFiles',
+    'readFile',
+    'searchFiles',
+    'checkJson',
+  ]);
 });
 
 await test('不认识的权限直接报错，不静默丢掉', async () => {

@@ -495,6 +495,18 @@ const webSearchTool = piTool({
   impl: searchLiterature,
 });
 
+const checkJsonTool = piTool({
+  name: 'checkJson',
+  label: '校验 JSON',
+  description:
+    'Parse one JSON file inside the repo and report whether it is valid; on failure you get ' +
+    'the parser message with line and column, so you can fix exactly that spot.',
+  parameters: Type.Object({
+    path: Type.String({ description: '仓库相对路径，例如 ideas/xxx/xxx_idea.json' }),
+  }),
+  impl: checkJson,
+});
+
 const listFilesTool = piTool({
   name: 'listFiles',
   label: '列目录',
@@ -791,8 +803,41 @@ async function searchLiterature({ query, limit = 8 }) {
   };
 }
 
+/**
+ * 校验一个仓库里的 JSON 文件能不能解析。
+ *
+ * 模型写字容易漏逗号、丢引号，而它自己没有执行工具、没法当场验证 ——
+ * 这个工具就是它的"解析器"：返回 ok 或者具体的行列与错误信息。
+ */
+async function checkJson({ path: relPath }) {
+  const target = resolveInSandbox(relPath);
+  let text = '';
+  try {
+    text = await fs.promises.readFile(target, 'utf8');
+  } catch (err) {
+    throw new Error(`读不了这个文件: ${relPath}`);
+  }
+  try {
+    const value = JSON.parse(text);
+    return { ok: true, path: relativeToRoot(target), bytes: text.length, kind: Array.isArray(value) ? 'array' : typeof value, keys: Array.isArray(value) ? null : Object.keys(value) };
+  } catch (err) {
+    const message = err && err.message ? err.message : String(err);
+    // JSON.parse 的错误里带 "line X column Y" —— 原样给出去，模型才改得准。
+    const matched = /line (\d+) column (\d+)/.exec(message);
+    return {
+      ok: false,
+      path: relativeToRoot(target),
+      bytes: text.length,
+      error: message,
+      line: matched ? Number(matched[1]) : null,
+      column: matched ? Number(matched[2]) : null,
+    };
+  }
+}
+
 export const PI_TOOLS = {
   listFiles: listFilesTool,
+  checkJson: checkJsonTool,
   webSearch: webSearchTool,
   stage2Start: stage2StartTool,
   stage2Status: stage2StatusTool,

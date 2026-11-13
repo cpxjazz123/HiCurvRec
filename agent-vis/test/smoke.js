@@ -512,6 +512,48 @@ async function main() {
     assert.equal(a2.resetSessionOnHandoff, false, '恢复默认后不该再重置');
   });
 
+  await test('交接时的两个重置开关：发送方自己 / 接收方', async () => {
+    const put = (body) =>
+      fetch(`${base}/api/agents/agent-a/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    const get = async () => {
+      const info = await (await fetch(`${base}/api/health`)).json();
+      return (info.agents || []).find((agent) => agent.id === 'agent-a');
+    };
+
+    // 两个默认都关。
+    const before = await get();
+    assert.equal(before.resetSessionOnHandoff, false, '默认不重置发送方');
+    assert.equal(before.resetReceiverSessionOnHandoff, false, '默认不重置接收方');
+
+    // 能各开各的。
+    const onlySender = await (await put({ resetSessionOnHandoff: true })).json();
+    assert.equal(onlySender.resetSessionOnHandoff, true);
+    assert.equal(onlySender.resetReceiverSessionOnHandoff, false);
+    const onlyReceiver = await (await put({
+      resetSessionOnHandoff: false,
+      resetReceiverSessionOnHandoff: true,
+    })).json();
+    assert.equal(onlyReceiver.resetSessionOnHandoff, false);
+    assert.equal(onlyReceiver.resetReceiverSessionOnHandoff, true);
+
+    // 非布尔值要拒。
+    assert.equal(
+      (await put({ resetReceiverSessionOnHandoff: 'yes' })).status,
+      400,
+      '非布尔值应该被拒',
+    );
+
+    // 恢复默认。
+    await put({ resetSessionOnHandoff: null, resetReceiverSessionOnHandoff: null });
+    const restored = await get();
+    assert.equal(restored.resetSessionOnHandoff, false);
+    assert.equal(restored.resetReceiverSessionOnHandoff, false);
+  });
+
   await test('交接条件是一句话，交给最后一步的模型判定', async () => {
     const put = (body) =>
       fetch(`${base}/api/agents/agent-a/config`, {
@@ -683,7 +725,7 @@ async function main() {
     assert.deepEqual(web.tools, ['webSearch']);
     assert.ok(web.description.length > 0, 'web 权限要说得清自己管什么');
     const tools = toolsForPermissions(['read', 'web']).map((tool) => tool.name).sort();
-    assert.deepEqual(tools, ['listFiles', 'readFile', 'searchFiles', 'webSearch']);
+    assert.deepEqual(tools, ['checkJson', 'listFiles', 'readFile', 'searchFiles', 'webSearch']);
   });
 
   await test('全局设置可读可改，改完立刻对运行生效', async () => {
@@ -1277,12 +1319,20 @@ async function main() {
     if (initial.doc) {
       assert.ok(initial.fileText.length > 0, '机制文件的内容没拿到');
     } else {
-      assert.equal(initial.fileText, '', '没有方向时不该凭空有内容');
+      // 两种都合法：一个方向都没有（fileText 空、错误里点名 *_idea.json）；
+      // 或者文件正在被写/写坏了（fileText 有内容、错误里是解析失败）。
       assert.equal(typeof initial.docError, 'string');
-      assert.ok(
-        initial.docError.includes('*_idea.json'),
-        `没有方向时要说清楚找的是什么: ${initial.docError}`,
-      );
+      if (initial.fileText === '') {
+        assert.ok(
+          initial.docError.includes('*_idea.json'),
+          `没有方向时要说清楚找的是什么: ${initial.docError}`,
+        );
+      } else {
+        assert.ok(
+          initial.docError.includes('解析失败') || initial.docError.includes('不是 JSON'),
+          `文件读得出但解析不了时要报解析错误: ${initial.docError}`,
+        );
+      }
     }
     // 主线在 ideas/main_line.json，整份方向共用一份；机制文件只写这一轮的差异。
     assert.equal(typeof initial.mainLine, 'object', 'mainLine 没返回');
@@ -1500,13 +1550,14 @@ async function main() {
 
   await test('按权限裁剪出来的工具集正好是目录里写的那些', async () => {
     assert.deepEqual(toolNames([]), []);
-    assert.deepEqual(toolNames(['read']), ['listFiles', 'readFile', 'searchFiles']);
+    assert.deepEqual(toolNames(['read']), ['checkJson', 'listFiles', 'readFile', 'searchFiles']);
     // 写权限带两个工具：写文本文件，以及从冻结基线复制一份候选树。
     assert.deepEqual(toolNames(['write']), ['copyBaselineTree', 'writeFile']);
     assert.deepEqual(toolNames(['delete']), ['deleteFile']);
     assert.deepEqual(toolNames(['execute']), ['gitLog']);
     assert.deepEqual(toolNames(['network']), ['listIssues', 'readIssue']);
     assert.deepEqual(toolNames(['read', 'execute', 'network']), [
+      'checkJson',
       'gitLog',
       'listFiles',
       'listIssues',

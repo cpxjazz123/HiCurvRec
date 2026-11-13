@@ -91,7 +91,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.3';
+const FRONTEND_VERSION = '2026-11-14.4';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -272,6 +272,8 @@ function createPanel(root) {
     handoffDelayState: pick('handoffDelayState'),
     resetSessionHandoff: pick('resetSessionHandoff'),
     resetSessionHandoffState: pick('resetSessionHandoffState'),
+    resetReceiverSessionHandoff: pick('resetReceiverSessionHandoff'),
+    resetReceiverSessionHandoffState: pick('resetReceiverSessionHandoffState'),
     allowHandoffBack: pick('allowHandoffBack'),
     allowHandoffBackState: pick('allowHandoffBackState'),
     handoffConditionText: pick('handoffConditionText'),
@@ -652,6 +654,11 @@ function createPanel(root) {
       els.resetSessionHandoff.checked = Boolean(profile.resetSessionOnHandoff);
       refreshResetSessionHandoffState();
     }
+    // 交接时要不要把接收方的会话也重置：跟着服务端那份走。
+    if (els.resetReceiverSessionHandoff) {
+      els.resetReceiverSessionHandoff.checked = Boolean(profile.resetReceiverSessionOnHandoff);
+      refreshResetReceiverHandoffState();
+    }
 
     // 交接延迟：0 = 立刻。输入框跟着服务端那份走。
     if (els.handoffDelay) {
@@ -832,13 +839,21 @@ function createPanel(root) {
       : '没勾：不把结果交回给刚把它发给我的那一栏。';
   }
 
-  /** 交接时重置会话那个勾选旁边的说明。 */
+  /** 交接时重置（发送方自己 / 接收方）两个勾选旁边的说明。 */
   function refreshResetSessionHandoffState() {
     if (!els.resetSessionHandoffState) return;
     const on = Boolean(els.resetSessionHandoff && els.resetSessionHandoff.checked);
     els.resetSessionHandoffState.textContent = on
-      ? '勾上了：交接时先清掉这一栏的会话，下游拿到消息时它已经从头开始。'
-      : '没勾：交接不动这一栏的会话。';
+      ? '勾上了：交接时先清掉这一栏（发送方）的会话，它下一轮从头开始。'
+      : '没勾：交接不动发送方自己的会话。';
+  }
+
+  function refreshResetReceiverHandoffState() {
+    if (!els.resetReceiverSessionHandoffState) return;
+    const on = Boolean(els.resetReceiverSessionHandoff && els.resetReceiverSessionHandoff.checked);
+    els.resetReceiverSessionHandoffState.textContent = on
+      ? '勾上了：接收方拿到这条消息时先清掉自己的旧上下文，只看这一条。'
+      : '没勾：接收方带着自己的上下文干活。';
   }
 
   /** 延迟输入框旁边的说明：写清"现在是多少"，以及是不是用户改过的。 */
@@ -2411,6 +2426,15 @@ function createPanel(root) {
       userEdited.handoffReset = true;
       refreshResetSessionHandoffState();
       void saveConfig({ resetSessionOnHandoff: Boolean(els.resetSessionHandoff.checked) });
+    });
+  }
+
+  if (els.resetReceiverSessionHandoff) {
+    els.resetReceiverSessionHandoff.addEventListener('change', () => {
+      refreshResetReceiverHandoffState();
+      void saveConfig({
+        resetReceiverSessionOnHandoff: Boolean(els.resetReceiverSessionHandoff.checked),
+      });
     });
   }
 

@@ -552,14 +552,18 @@ async function handleRun(req, res, url, mode, { viaPublicPath = false } = {}) {
 
   const { handoff, handoffFrom, clientVersion, instructions, handoffFromId } = request;
 
-  // 交接：发送方在配置里勾了"交接时先重置我自己的会话"的话，
-  // 在下游拿到消息开始干活之前，先把发送方那一栏的模型会话清掉 ——
-  // 它的下一轮从头开始，不带着这一轮的上下文。
+  // 交接：发送方的配置里有两个开关，都在"下游拿到消息开始干活之前"生效 ——
+  //   resetSessionOnHandoff         → 清掉发送方自己的会话（它下一轮从头开始）；
+  //   resetReceiverSessionOnHandoff → 清掉接收方（也就是这一轮要跑的这一栏）的会话，
+  //                                   让它只看这一条消息，不被自己上一轮的上下文带偏。
   if (handoff.trim() !== '' && handoffFromId) {
     try {
       const sender = resolveProfile(handoffFromId);
       if (sender.resetSessionOnHandoff) {
         resetAgentSessions(handoffFromId);
+      }
+      if (sender.resetReceiverSessionOnHandoff) {
+        resetAgentSessions(profile.id);
       }
     } catch (err) {
       // 发送方身份认不出来（它被删了？）：不挡这一轮，交接照发。

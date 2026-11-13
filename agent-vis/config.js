@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-14.3';
+export const FRONTEND_VERSION = '2026-11-14.4';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -904,8 +904,8 @@ export const PERMISSION_CATALOG = [
   {
     id: 'read',
     label: '读（read）',
-    description: '读仓库里的东西：列目录、读文件、按正则搜内容 —— 都限制在仓库根之内。',
-    tools: ['listFiles', 'readFile', 'searchFiles'],
+    description: '读仓库里的东西：列目录、读文件、按正则搜内容、校验 JSON —— 都限制在仓库根之内。',
+    tools: ['listFiles', 'readFile', 'searchFiles', 'checkJson'],
   },
   {
     id: 'write',
@@ -1253,6 +1253,11 @@ function publicProfile(profile) {
     resetSessionOnHandoff: has('resetSessionOnHandoff')
       ? Boolean(override.resetSessionOnHandoff)
       : false,
+    // 交接时要不要把"接收方"的会话也重置：重置了，接收方拿到这条消息时
+    // 从零开始，只看这一条消息（不被自己上一轮的上下文带偏）。
+    resetReceiverSessionOnHandoff: has('resetReceiverSessionOnHandoff')
+      ? Boolean(override.resetReceiverSessionOnHandoff)
+      : false,
     // 循环：跑完这一轮之后自动再跑几轮、每轮隔多久。用户没配过就是不开。
     loop: has('loop') ? normalizeLoop(override.loop) : { ...DEFAULT_LOOP },
     defaultLoop: { ...DEFAULT_LOOP },
@@ -1515,6 +1520,15 @@ export function saveProfileConfig(profileId, patch) {
       throw new Error('allowHandoffBack 必须是布尔值');
     } else {
       next.allowHandoffBack = patch.allowHandoffBack;
+    }
+  }
+  if (patch.resetReceiverSessionOnHandoff !== undefined) {
+    if (patch.resetReceiverSessionOnHandoff === null) {
+      delete next.resetReceiverSessionOnHandoff;
+    } else if (typeof patch.resetReceiverSessionOnHandoff !== 'boolean') {
+      throw new Error('resetReceiverSessionOnHandoff 必须是布尔值');
+    } else {
+      next.resetReceiverSessionOnHandoff = patch.resetReceiverSessionOnHandoff;
     }
   }
   if (patch.resetSessionOnHandoff !== undefined) {
