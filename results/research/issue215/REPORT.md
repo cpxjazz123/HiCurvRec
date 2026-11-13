@@ -136,6 +136,23 @@ C_ik = s_E * w_E,i * d_E^2 + s_H * w_H,i * d_H^2 + s_S * w_S,i * d_S^2
 
 **更正**：本报告早期版本把 C 的 `test_ndcg@5 = 0.025029` 误记为 ndcg@10；C 的 `ndcg@10 = 0.030678`。
 
+## 5.6 交付对照（issue 要求的每一项在哪里）
+
+| issue 要求 | 在哪里 |
+|---|---|
+| 新臂源码 / 测试 | `stage2_RQ-VAE/TIGER_role_geom_{rq,global_rq,shuffled_rq}`，测试在各自 `tests/`（25 个全过） |
+| 冻结 ORCA 73 维角色表 + SHA | `results/research/issue215/orca_roles_frozen.csv` + `orca_roles_meta.json`（sha `c7a29e6559ae…`） |
+| 四臂 Stage2 SID | `results/stage2_RQ-VAE/<arm>/item_sids.json`（各自 sha 见 `arm_metrics.json`） |
+| 四臂 Stage3 结果 | `results/stage3_T5Train/<arm>/`（`test_final.json` 在 `logs/<dataset>/<timestamp>/`） |
+| 逐角色 retention | `retention_by_role.json`（prefix@1/2/3 + centered） |
+| Recall 对照 | §5.1（两列差值） |
+| 数值检查 | `smoke_evidence/`（三臂的一轮 smoke 摘要）+ 机制测试里的球面/梯度/等价性契约 |
+| CGV 六项原始日志 | 1–2：机制测试（`tests/`）；3–4：同上的参数更新与跨 rank 对齐断言；5：`smoke_evidence/`；6：本报告 + 归档账本 |
+
+**两处没有按臂实测、只由测试覆盖的项**（如实标注，不含糊）：
+- 「同一 checkpoint 训练/导出一致性」：机制测试 `test_gradients_and_export.py::test_the_export_reads_the_same_codes_the_training_cost_would_pick` 对导出路径逐层核对了 argmin 与训练代价一致；**没有**在三个真实臂上再跑一遍（训练期的 Sinkhorn 分配未被训练器保存，无法事后比对）。
+- 「GPU 峰值显存」：训练器的 metrics 不记录该字段，本次三臂与 Stage3 均未采集 ⇒ `NOT_RECORDED`，不做估计。
+
 ## 6. 边界
 
 - 68 臂横截面的相关性只用来提出假设，本 issue 的结论只来自四臂对照。
