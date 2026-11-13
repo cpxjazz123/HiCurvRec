@@ -982,14 +982,35 @@ export function createServer({
         .then(async (body) => {
           const agentId = body && typeof body.agentId === 'string' ? body.agentId.trim() : '';
           const criterion = body && typeof body.criterion === 'string' ? body.criterion.trim() : '';
-          const summary = body && typeof body.summary === 'string' ? body.summary.trim() : '';
           if (agentId === '') {
             res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
             res.end(JSON.stringify({ error: '要指定 agentId' }));
             return;
           }
           const profile = config.resolveProfile(agentId);
-          const toolsUsed = Array.isArray(body && body.toolsUsed) ? body.toolsUsed : [];
+          // 摘要与工具清单自己算，不靠页面送：
+          // 页面可能还是旧的（它送上来的是交接那一句套话），而服务端记着每一轮。
+          const records = listChatRecords(agentId);
+          const lastRecord = records.length > 0 ? records[records.length - 1] : null;
+          const recordParts = (lastRecord && lastRecord.chunks) || [];
+          const recordTexts = recordParts
+            .filter((part) => part && part.type === 'text-delta' && typeof part.delta === 'string')
+            .map((part) => part.delta.trim())
+            .filter((text) => text !== '');
+          // 最长的一段就是那一轮的汇报（交接那一句很短）。
+          const recordSummary = recordTexts.reduce(
+            (best, text) => (text.length > best.length ? text : best),
+            '',
+          );
+          const recordTools = recordParts
+            .filter((part) => part && part.type === 'tool-input-available')
+            .map((part) => part.toolName)
+            .filter(Boolean);
+          const summaryFromPage = typeof body.summary === 'string' ? body.summary.trim() : '';
+          const summary = recordSummary.length >= summaryFromPage.length ? recordSummary : summaryFromPage;
+          const toolsUsed = recordTools.length > 0
+            ? recordTools
+            : (Array.isArray(body && body.toolsUsed) ? body.toolsUsed : []);
           const prompt = [
             '你是循环闸的裁判。你没有工具，也不需要工具 —— 你只负责读下面这段汇报，' +
               '判断那个 agent 刚跑完的那一轮之后还要不要再跑一轮。',
