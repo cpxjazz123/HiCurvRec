@@ -1,4 +1,5 @@
 import { createStore, applyChunk, roundEnded, handoffRequested } from './protocol.js?v=__ASSET_V__';
+import { buildRunRequestBody } from './run-request.js?v=__ASSET_V__';
 
 /**
  * 前端渲染器。
@@ -91,7 +92,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.4';
+const FRONTEND_VERSION = '2026-11-14.5';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -2083,24 +2084,15 @@ function createPanel(root) {
       url = `${API_BASE}/api/run`;
       init.method = 'POST';
       init.headers = { 'Content-Type': 'application/json' };
-      const body = {
+      const body = buildRunRequestBody({
         prompt,
-        v: FRONTEND_VERSION,
+        version: FRONTEND_VERSION,
         profile: root.dataset.profile,
         handoff,
-      };
-      // 来源名字：下游看到的"这是谁的结果"得跟着实际发送方走。
-      if (handoff !== '') body.handoffFrom = handoffFrom;
-      // 这一步在整轮里的位置：服务端原样记进对话记录。
-      if (options.round) {
-        body.roundId = options.round.roundId;
-        body.stepIndex = options.round.stepIndex;
-        body.stepTitle = options.round.stepTitle;
-        body.stepInstruction = options.round.stepInstruction;
-        body.totalSteps = options.round.totalSteps;
-        // 本轮输入只在第一步发：服务端会记住它，会话丢失时用来自动补上下文。
-        if (options.round.stepIndex === 0) body.roundPrompt = options.round.roundPrompt;
-      }
+        handoffFrom,
+        handoffFromId: handoffSourceId,
+        round: options.round || null,
+      });
       init.body = JSON.stringify(body);
     }
 

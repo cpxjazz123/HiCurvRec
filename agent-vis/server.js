@@ -552,26 +552,6 @@ async function handleRun(req, res, url, mode, { viaPublicPath = false } = {}) {
 
   const { handoff, handoffFrom, clientVersion, instructions, handoffFromId } = request;
 
-  // 交接：发送方的配置里有两个开关，都在"下游拿到消息开始干活之前"生效 ——
-  //   resetSessionOnHandoff         → 清掉发送方自己的会话（它下一轮从头开始）；
-  //   resetReceiverSessionOnHandoff → 清掉接收方（也就是这一轮要跑的这一栏）的会话，
-  //                                   让它只看这一条消息，不被自己上一轮的上下文带偏。
-  if (handoff.trim() !== '' && handoffFromId) {
-    try {
-      const sender = resolveProfile(handoffFromId);
-      if (sender.resetSessionOnHandoff) {
-        resetAgentSessions(handoffFromId);
-      }
-      if (sender.resetReceiverSessionOnHandoff) {
-        resetAgentSessions(profile.id);
-      }
-    } catch (err) {
-      // 发送方身份认不出来（它被删了？）：不挡这一轮，交接照发。
-      process.stderr.write(
-        `交接来源 ${handoffFromId} 认不出来，没能重置它的会话：${(err && err.message) || String(err)}\n`,
-      );
-    }
-  }
   let prompt = request.prompt.trim();
   // 没有要求、但有上游的交接结果：照样能跑 ——
   // 上游的分析结果本身就是下游要接着做的事，用户没写要求不该把交接挡掉。
@@ -653,6 +633,31 @@ async function handleRun(req, res, url, mode, { viaPublicPath = false } = {}) {
       }),
     );
     return;
+  }
+
+  // 交接：发送方的配置里有两个开关，都在"下游拿到消息开始干活之前"生效 ——
+  //   resetSessionOnHandoff         → 清掉发送方自己的会话（它下一轮从头开始）；
+  //   resetReceiverSessionOnHandoff → 清掉接收方（也就是这一轮要跑的这一栏）的会话，
+  //                                   让它只看这一条消息，不被自己上一轮的上下文带偏。
+  //
+  // 必须放在接收方身份解析之后：清接收方要用它的 id。
+  // 放前面会撞上 profile 的暂时性死区（const 还没初始化），报错被 catch 吃掉 ——
+  // 重置从来没有发生过，而日志里只会说"来源认不出来"，看不出真正的原因。
+  if (handoff.trim() !== '' && handoffFromId) {
+    try {
+      const sender = resolveProfile(handoffFromId);
+      if (sender.resetSessionOnHandoff) {
+        resetAgentSessions(handoffFromId);
+      }
+      if (sender.resetReceiverSessionOnHandoff) {
+        resetAgentSessions(profile.id);
+      }
+    } catch (err) {
+      // 发送方身份认不出来（它被删了？）：不挡这一轮，交接照发。
+      process.stderr.write(
+        `交接来源 ${handoffFromId} 认不出来，没能重置它的会话：${(err && err.message) || String(err)}\n`,
+      );
+    }
   }
 
   res.writeHead(200, { ...UI_MESSAGE_STREAM_HEADERS });
