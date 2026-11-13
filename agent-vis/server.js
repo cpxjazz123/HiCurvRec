@@ -651,6 +651,9 @@ async function handleRun(req, res, url, mode, { viaPublicPath = false } = {}) {
       }
       if (sender.resetReceiverSessionOnHandoff) {
         resetAgentSessions(profile.id);
+        // 接收方的对话记录也一并清掉：模型已经不记得上一轮了，
+        // 服务端就别再留着那些记录 —— 页面清一次、刷新一次又冒出来，不是重置。
+        clearChatRecords(profile.id);
       }
     } catch (err) {
       // 发送方身份认不出来（它被删了？）：不挡这一轮，交接照发。

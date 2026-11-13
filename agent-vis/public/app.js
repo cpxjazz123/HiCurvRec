@@ -1,5 +1,6 @@
 import { createStore, applyChunk, roundEnded, handoffRequested } from './protocol.js?v=__ASSET_V__';
 import { buildRunRequestBody } from './run-request.js?v=__ASSET_V__';
+import { handoffResetsReceiver } from './handoff-rules.js?v=__ASSET_V__';
 
 /**
  * 前端渲染器。
@@ -92,7 +93,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.5';
+const FRONTEND_VERSION = '2026-11-14.6';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -2591,6 +2592,15 @@ function createPanel(root) {
       const condition = profileState && profileState.handoffCondition;
       return typeof condition === 'string' ? condition.trim() : '';
     },
+    /**
+     * 这一栏把结果交出去时，接收方的会话会不会被重置。
+     *
+     * 开着的话，接收方收到交接时：模型上下文清空、对话记录清空、面板上画出来的
+     * 历史也清空 —— 三边一致，屏幕上不会留着模型已经不记得的东西。
+     */
+    resetsReceiverOnHandoff() {
+      return handoffResetsReceiver(profileState);
+    },
     /** 允许把结果回传给刚把它发给我的那一栏（审查—返修循环要打开）。 */
     allowHandoffBack() {
       return profileState ? Boolean(profileState.allowHandoffBack) : false;
@@ -3449,6 +3459,16 @@ function deliverResult(source, answer, options = {}) {
   for (const targetId of recipients) {
     const target = panels.find((item) => item.profileId === targetId);
     if (!target) continue;
+    // 发送方配了"重置接收方会话" → 接收方的模型上下文由服务端清掉；
+    // 这里把面板上画出来的历史也清掉，两边才对得上：
+    // 屏幕上不该留着模型已经不记得的东西。
+    if (source.resetsReceiverOnHandoff()) {
+      target.clearTimelineOnly();
+      target.note(
+        `${source.name()} 交接过来了：按发送方的配置，这一栏的会话已重置，` +
+          '模型上下文与面板上的历史都清空了。',
+      );
+    }
     const requirement = target.getPrompt();
     // 下游的输入框是空的，不等于没活干：
     // 上游的结果本身就是它要接着做的事，用户配了交接就该交出去。

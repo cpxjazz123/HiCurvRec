@@ -477,6 +477,24 @@ async function waitForServer(fn, tries = 120, gap = 200) {
  * 记录是请求跑完之后才写进去的：不等一下就查，会查到"上一轮"的记录，
  * 把结论算到错的轮次上。
  */
+/**
+ * 等到出现一条满足条件的对话记录。
+ *
+ * 只等"记录数够了"是不够的：这一栏的身份名会被复用，
+ * 上一位的记录可能先到，等的是它就白等了 —— 要等自己认得的那一条。
+ */
+async function waitForChatRecord(base, agentId, predicate, tries = 240) {
+  let records = [];
+  for (let i = 0; i < tries; i += 1) {
+    const res = await request(`${base}/api/agents/${encodeURIComponent(agentId)}/chats`);
+    records = res.records || [];
+    const hit = records.find((record) => predicate(record));
+    if (hit) return { records, hit };
+    await sleep(250);
+  }
+  return { records, hit: undefined };
+}
+
 async function waitForChatCount(base, agentId, n, tries = 120) {
   let records = [];
   for (let i = 0; i < tries; i++) {
@@ -557,7 +575,9 @@ async function createTrivialUpstream(cdp, base, target) {
   await request(
     `${base}/api/agents/${encodeURIComponent(upstreamId)}/config`,
     'PUT',
-    JSON.stringify({ handoffTargets: [target] }),
+    // resetReceiverSessionOnHandoff：交接时接收方会被重置 ——
+    // 模型上下文清空、对话记录清空、面板上画出来的历史也清空。
+    JSON.stringify({ handoffTargets: [target], resetReceiverSessionOnHandoff: true }),
   );
   // 重新加载页面，新身份的面板才会挂上来。
   await openPageAt(cdp, base);
@@ -1169,6 +1189,9 @@ async function main() {
     const upstreamPanel = upstream.panel;
 
     await cdp.evaluate(runInPanel(PANEL_B, `panel.querySelector('[data-role=prompt]').value = ${JSON.stringify(PROMPT_B)};`));
+    const blocksBeforeHandoff = await cdp.evaluate(
+      inPanel(PANEL_B, "panel.querySelectorAll('.run-block').length"),
+    );
     await cdp.evaluate(submitPrompt(upstreamPanel, PROMPT_A));
 
     const doneA = await waitFor(cdp, panelDone(upstreamPanel), 400, 400);
@@ -1215,6 +1238,23 @@ async function main() {
 
     const handoffCards = await cdp.evaluate(panelHandoffCards(PANEL_B));
     check('AGENT B 的时间轴上显示了交接卡片', handoffCards === 1, `${handoffCards} 张`);
+
+    // 发送方开了"重置接收方会话" → 接收方的模型上下文、对话记录与面板历史一起清空。
+    // 屏幕上不该留着模型已经不记得的东西。
+    const blocksAfterHandoff = await cdp.evaluate(
+      inPanel(PANEL_B, "panel.querySelectorAll('.run-block').length"),
+    );
+    check(
+      '接收方收到交接后，面板上的历史被清空了（只剩交接这一轮）',
+      blocksAfterHandoff === 1,
+      `交接前 ${blocksBeforeHandoff} 块 · 交接后 ${blocksAfterHandoff} 块`,
+    );
+    const recordsAfterHandoff = await request(`${base}/api/agents/agent-b/chats`, 'GET');
+    check(
+      '接收方存着的对话记录也一起清掉了（刷新页面不会又冒出来）',
+      Array.isArray(recordsAfterHandoff.records) && recordsAfterHandoff.records.length === 1,
+      `${recordsAfterHandoff.records ? recordsAfterHandoff.records.length : '?'} 条`,
+    );
 
     const handoffText = await cdp.evaluate(panelHandoffText(PANEL_B));
     check(
@@ -1874,13 +1914,13 @@ async function main() {
     await cdp.evaluate(submitPrompt(newPanelId, '测试新建的 agent'));
 
     // 提示词不再跟着请求发：它存到了服务端，服务端按自己存的那份来跑。
-    const recordsJ = await waitForChatCount(base, newAgentId, 1);
     // 身份名会被复用（临时 agent 删掉之后新 agent 可能拿到同一个 id），
-    // 所以不取"最后一条"，而是找这一轮写进去的那条。
-    const recordJ =
-      [...recordsJ].reverse().find((record) => record.instructions === NEW_INSTRUCTIONS) ||
-      recordsJ[recordsJ.length - 1] ||
-      {};
+    // 所以不能只等"记录数够了" —— 要等自己认得的那一条（用的是这份提示词）。
+    const { records: recordsJ, hit: recordJ } = await waitForChatRecord(
+      base,
+      newAgentId,
+      (record) => record.instructions === NEW_INSTRUCTIONS,
+    );
     check(
       '新 agent 跑的时候用的就是自己写的那份提示词',
       recordJ.instructions === NEW_INSTRUCTIONS,

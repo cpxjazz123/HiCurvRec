@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { createServer } from '../server.js';
 import { buildRunRequestBody } from '../public/run-request.js';
+import { handoffResetsReceiver } from '../public/handoff-rules.js';
 
 /**
  * 交接时的会话重置 —— 回归测试。
@@ -125,6 +126,66 @@ await test('服务端收到发送方身份时不报错（重置代码曾经撞�
     assert.deepEqual(warnings, [], '重置代码不该抛错：那说明它又踩到暂时性死区了');
   } finally {
     process.stderr.write = originalWrite;
+    server.close();
+  }
+});
+
+await test('交接时要不要清接收方，看发送方的那一个开关', () => {
+  assert.equal(handoffResetsReceiver({ resetReceiverSessionOnHandoff: true }), true);
+  assert.equal(handoffResetsReceiver({ resetReceiverSessionOnHandoff: false }), false);
+  assert.equal(handoffResetsReceiver({}), false);
+  assert.equal(handoffResetsReceiver(null), false);
+});
+
+await test('接收方收到交接时，它存着的对话记录也一起清掉（否则刷新又冒出来）', async () => {
+  fs.rmSync(SCRATCH, { recursive: true, force: true });
+  const server = createServer({ mode: 'mock', publicPath: '', dataDir: SCRATCH });
+  const port = await listen(server);
+  const base = `http://127.0.0.1:${port}`;
+  const version = (await import('../config.js')).FRONTEND_VERSION;
+  const post = (body) =>
+    fetch(`${base}/api/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ v: version, ...body }),
+    }).then((res) => res.text());
+  const count = async (id) => {
+    const res = await fetch(`${base}/api/agents/${id}/chats`);
+    const doc = await res.json();
+    return (doc.records || []).length;
+  };
+  try {
+    // 发送方打开"重置接收方会话"。
+    await fetch(`${base}/api/agents/agent-a/config`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resetReceiverSessionOnHandoff: true }),
+    });
+
+    // 接收方先有一段历史。
+    await post({ profile: 'agent-b', prompt: '第一轮：先说一句话' });
+    assert.equal(await count('agent-b'), 1, '接收方应当先有一段记录');
+
+    // 交接进来。
+    await post({
+      profile: 'agent-b',
+      prompt: '接着做',
+      handoff: '上游交下来的结果',
+      handoffFrom: 'AGENT A',
+      handoffFromId: 'agent-a',
+    });
+    assert.equal(await count('agent-b'), 1, '旧的记录应当被清掉，只剩交接这一轮');
+
+    // 对照：不带发送方身份 → 服务端不重置 → 记录都留着。
+    await post({ profile: 'agent-b', prompt: '再记一轮' });
+    await post({
+      profile: 'agent-b',
+      prompt: '接着做',
+      handoff: '上游交下来的结果',
+      handoffFrom: 'AGENT A',
+    });
+    assert.equal(await count('agent-b'), 3, '不重置时记录应当都留着');
+  } finally {
     server.close();
   }
 });
