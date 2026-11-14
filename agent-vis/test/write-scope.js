@@ -113,6 +113,7 @@ await test('没有作用域时行为不变（整仓库根都可写）', async ()
 await test('writer 能写自己的文件，但工具表里没有 copyBaselineTree（树由 AGENT IDEA 建）', () => {
   for (const id of ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']) {
     const profile = resolveProfile(id);
+    if (profile.writeScope.length === 0) continue; // 空栏没有任务，另有用例覆盖
     const names = toolsForPermissions(profile.permissions, {
       writeScope: profile.writeScope,
       denyTools: profile.denyTools,
@@ -182,9 +183,25 @@ await test('当前 idea 的 owners 覆盖全部实现文件（provided 的只读
   }
 });
 
+await test('没分到文件的 writer：没有写工具、预填说明无任务', () => {
+  const empty = ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']
+    .map((id) => resolveProfile(id))
+    .find((profile) => profile.writeScope.length === 0);
+  if (!empty) return; // 当前 idea 的角色数等于 4 时没有空栏
+  const names = toolsForPermissions(empty.permissions, {
+    writeScope: empty.writeScope,
+    denyTools: empty.denyTools,
+  }).map((tool) => tool.name);
+  assert.equal(names.includes('write'), false);
+  assert.equal(names.includes('edit'), false);
+  assert.match(empty.defaultPrompt, /无任务/);
+});
+
 await test('writer 的运行命令只描述功能，不含具体文件名', () => {
   for (const id of ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']) {
-    const prompt = resolveProfile(id).defaultPrompt || '';
+    const profile = resolveProfile(id);
+    if (profile.writeScope.length === 0) continue;
+    const prompt = profile.defaultPrompt || '';
     assert.equal(prompt.includes('stage2_RQ-VAE/'), false, `${id} 的预填里出现了文件路径`);
     assert.ok(prompt.includes('assignedFiles'), `${id} 的预填要指向 assignedFiles`);
   }
@@ -193,6 +210,7 @@ await test('writer 的运行命令只描述功能，不含具体文件名', () =
 await test('assignedFiles 列出的就是这一栏的写入范围', async () => {
   for (const id of ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']) {
     const profile = resolveProfile(id);
+    if (profile.writeScope.length === 0) continue;
     const tool = toolsForPermissions(profile.permissions, {
       writeScope: profile.writeScope,
       denyTools: profile.denyTools,

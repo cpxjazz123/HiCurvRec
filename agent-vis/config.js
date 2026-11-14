@@ -1666,6 +1666,8 @@ function publicProfile(profile) {
   const dynamicFiles = profile.dynamicWriter
     ? (partitionWriterFiles(currentIdeaFiles(), 4, currentIdeaOwners())[profile.dynamicWriter - 1] || [])
     : null;
+  // 分到了 0 份文件（角色数少于 4）：这一栏没有任务，也不许写任何东西。
+  const emptySlice = profile.dynamicWriter !== undefined && dynamicFiles !== null && dynamicFiles.length === 0;
   const has = (key) => Object.prototype.hasOwnProperty.call(override, key);
   const storedPermissions = has('permissions') ? override.permissions : profile.permissions;
   const splitPermissions = splitKnownPermissions(storedPermissions);
@@ -1726,8 +1728,15 @@ function publicProfile(profile) {
         : Boolean(profile.loopResetSession),
     defaultLoopResetSession: Boolean(profile.loopResetSession),
     // 工具黑名单：这些工具即使权限里有，也不进这一栏的工具表（例如 writer 不许自己建树）。
-    denyTools: has('denyTools') ? [...override.denyTools] : [...(profile.denyTools || [])],
-    defaultDenyTools: [...(profile.denyTools || [])],
+    denyTools: (() => {
+      const base = has('denyTools') ? [...override.denyTools] : [...(profile.denyTools || [])];
+      // 空分片 = 没有任务：连写能力也一起摘掉，避免"空作用域"被当成"整仓库可写"。
+      if (!emptySlice) return base;
+      return [...new Set([...base, 'write', 'edit', 'deleteFile', 'copyBaselineTree'])];
+    })(),
+    defaultDenyTools: emptySlice
+      ? [...new Set([...(profile.denyTools || []), 'write', 'edit', 'deleteFile', 'copyBaselineTree'])]
+      : [...(profile.denyTools || [])],
     // 写作用域：非空时这个 agent 只能写命中这些通配的路径。
     // 多个 agent 并行写同一棵候选树时，靠它各写各的文件（硬约束在 live-agent 里执行）。
     writeScope: has('writeScope')
@@ -1748,7 +1757,10 @@ function publicProfile(profile) {
     // 挂载面板时输入框里预填的指令（只有配置里写了才会有；其余 agent 是空的）。
     defaultPrompt: has('defaultPrompt')
       ? override.defaultPrompt
-      : (dynamicFiles ? buildWriterPrompt() : profile.defaultPrompt || ''),
+      : (emptySlice
+        ? '你这一轮没有被分到文件（当前 idea 的 owners 里没有你的角色）：不要写任何文件，' +
+          '在结论里写「无任务」并结束。'
+        : (dynamicFiles ? buildWriterPrompt() : profile.defaultPrompt || '')),
     // 代码里写死的默认值：用户点「恢复默认」时要把它们铺回去，
     // 所以得单独给一份 —— 生效值可能已经被用户改过了。
     defaultInstructions: profile.instructions,
