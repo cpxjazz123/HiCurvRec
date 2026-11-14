@@ -221,18 +221,25 @@ await test('assignedFiles 列出的就是这一栏的写入范围', async () => 
   }
 });
 
-await test('四个 writer 的分片只含实现文件：覆盖、互斥、不含测试', () => {
-  const slices = ['agent-w1']
-    .map((id) => resolveProfile(id).writeScope);
-  const flat = slices.flat();
-  assert.equal(flat.length, new Set(flat).size, '同一份文件不能分给两栏');
+await test('两个写手按类别分工：w1=distances/、w2=losses/，互斥且不含测试', () => {
+  const w1 = resolveProfile('agent-w1').writeScope;
+  const w2 = resolveProfile('agent-w2').writeScope;
+  const flat = [...w1, ...w2];
+  assert.equal(new Set(flat).size, flat.length, '同一个文件不能分给两个写手');
   assert.equal(flat.some((file) => file.includes('/tests/')), false, '写手不负责测试文件');
+  for (const file of w1) assert.match(file, /\/distances\//, `距离写手拿到了非距离文件：${file}`);
+  for (const file of w2) assert.match(file, /\/losses\//, `损失写手拿到了非损失文件：${file}`);
+  // 覆盖：当前 idea 声明的距离/损失实现文件都必须有人负责。
   const owners = currentIdeaOwners();
   const declared = currentIdeaFiles()
     .filter((file) => !file.includes('/tests/'))
     .filter((file) => owners[file] !== 'provided');
   const covered = new Set(flat);
-  for (const file of declared) assert.ok(covered.has(file), `声明文件没被任何一栏覆盖：${file}`);
+  for (const file of declared) {
+    if (/\/distances\//.test(file) || /\/losses\//.test(file)) {
+      assert.ok(covered.has(file), `声明文件没被对应写手覆盖：${file}`);
+    }
+  }
 });
 
 // 建树是四个 writer 任意一个都能做的事：先复制冻结基线，再写自己的文件。
@@ -249,13 +256,13 @@ await test('树还没建时，作用域内的写入被拒并提示先建树', as
   assert.equal(fs.existsSync(abs(`stage2_RQ-VAE/${PROBE}`)), false, '不能顺手造出空树');
 });
 
-await test('四个 writer 的 writeScope 互不重叠，且都落在候选树里', () => {
-  const scopes = ['agent-w1'].map(
+await test('两个写手的 writeScope 互不重叠，且都落在候选树里', () => {
+  const scopes = ['agent-w1', 'agent-w2'].map(
     (id) => resolveProfile(id).writeScope,
   );
   const flat = scopes.flat();
   assert.equal(new Set(flat).size, flat.length, '同一个文件不能有两个 owner');
-  for (const entry of flat) assert.match(entry, /^stage2_RQ-VAE\/TIGER_af3_curvature_factor_mass_rq\//);
+  for (const entry of flat) assert.match(entry, /^stage2_RQ-VAE\/TIGER_af3_curvature_factor_mass_rq\/(distances|losses)\//);
 });
 
 rm(ROOT);

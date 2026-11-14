@@ -481,10 +481,10 @@ async function main() {
     assert.notEqual(ids[0], ids[1], '两个静态面板必须是不同的 agent');
   });
 
-  await test('/api/health 列出六个 agent 的身份', async () => {
+  await test('/api/health 列出七个 agent 的身份', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.ok(Array.isArray(info.agents), 'health 没列出 agents');
-    assert.equal(info.agents.length, 6, `应为六个 agent，实际 ${info.agents.length}`);
+    assert.equal(info.agents.length, 7, `应为七个 agent，实际 ${info.agents.length}`);
     for (const agent of info.agents) {
       assert.equal(typeof agent.id, 'string');
       assert.equal(typeof agent.name, 'string');
@@ -553,31 +553,32 @@ async function main() {
     assert.equal(res.status, 400, '未知 agent 应该被拒掉');
   });
 
-  await test('六个 agent 各自有一份独立的人设', async () => {
+  await test('七个 agent 各自有一份独立的人设', async () => {
     assert.ok(Array.isArray(config.AGENT_PROFILES), 'config 没导出 AGENT_PROFILES');
-    assert.equal(config.AGENT_PROFILES.length, 6);
+    assert.equal(config.AGENT_PROFILES.length, 7);
     const texts = new Set(config.AGENT_PROFILES.map((profile) => profile.instructions));
     assert.equal(texts.size, config.AGENT_PROFILES.length,
                  '每个 agent 的人设说明必须不同，否则几栏做的是同一件事');
   });
 
-  await test('六个 agent 的名字分别是 Write / B / MATH / STAGE2 / FIX / W1', async () => {
+  await test('七个 agent 的名字分别是 IDEA / B / MATH / STAGE2 / FIX / DISTANCE / LOSS', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.name),
       [
-        'AGENT Write',
+        'AGENT IDEA',
         'AGENT B',
         'AGENT MATH',
         'AGENT STAGE2',
         'AGENT FIX',
-        'AGENT W1',
+        'AGENT WRITE DISTANCE',
+        'AGENT LOSS',
       ],
-      '页面上三栏的 agent 名字不对',
+      '页面上的 agent 名字不对',
     );
   });
 
-  await test('五个 agent 分别是实现者、控制器、公式审计员、训练员与核对员', async () => {
+  await test('七个 agent 的角色：构思/控制/公式/训练/核对 + 距离写手 + 损失写手', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.role),
@@ -588,12 +589,13 @@ async function main() {
         'STAGE2_RUNNER',
         'MECHANISM_CHECKER',
         'MECHANISM_WRITER',
+        'MECHANISM_WRITER',
       ],
-      '两个 agent 的角色不是"执行者 / 控制器"这一对',
+      'agent 的角色不对',
     );
     assert.ok(
       config.AGENT_PROFILES[0].instructions.includes('MECHANISM_BUILDER'),
-      'AGENT Write 的人设里没写明它是 MECHANISM_BUILDER',
+      'AGENT IDEA 的人设里没写明它是 MECHANISM_BUILDER',
     );
     assert.ok(
       config.AGENT_PROFILES[1].instructions.includes('ISSUE_CONTROLLER'),
@@ -1429,7 +1431,7 @@ async function main() {
     const renamed = await put('agent-a', { name: '  首席执行者  ' });
     assert.equal(renamed.status, 200, JSON.stringify(renamed.json));
     assert.equal(renamed.json.name, '首席执行者');
-    assert.equal(renamed.json.defaultName, 'AGENT Write');
+    assert.equal(renamed.json.defaultName, 'AGENT IDEA');
     assert.equal(renamed.json.customized.name, true);
 
     const health = await (await fetch(`${base}/api/health`)).json();
@@ -1446,7 +1448,7 @@ async function main() {
 
     const restored = await put('agent-a', { name: null });
     assert.equal(restored.status, 200);
-    assert.equal(restored.json.name, 'AGENT Write');
+    assert.equal(restored.json.name, 'AGENT IDEA');
     assert.equal(restored.json.customized.name, false);
   });
 

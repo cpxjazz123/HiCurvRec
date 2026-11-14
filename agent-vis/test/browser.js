@@ -11,7 +11,7 @@ import { createServer, config } from '../server.js';
  *
  * 覆盖四件事：
  *   1. 页面上的 agent 面板各自独立 —— 各跑各的，互不串内容，还能同时跑；
- *   2. AGENT Write 跑完后自动把分析结果交给 AGENT B（交接）；
+ *   2. AGENT IDEA 跑完后自动把分析结果交给 AGENT B（交接）；
  *   3. AGENT B 单独跑时不带交接；
  *   4. 浏览器缓存了旧版 JS 时，首页守卫会换一次性地址重载并自愈。
  *
@@ -31,7 +31,7 @@ const HEIGHT = 1200;
 const PANEL_A = 'panelA';
 const PANEL_B = 'panelB';
 
-/** 给 AGENT Write（机制实现者）的指令。 */
+/** 给 AGENT IDEA（机制实现者）的指令。 */
 const PROMPT_A =
   '用 ls 列出 agent-vis 目录下的文件，然后用一句话说明这个目录是做什么的。';
 /** 给 AGENT B（Issue 控制器）的指令 —— 交接时这条指令会跟着 A 的分析结果一起发出去。 */
@@ -414,7 +414,7 @@ function clearSteps(panelId) {
 /**
  * 打开页面，并清掉两个面板上的默认步骤。
  *
- * AGENT Write / AGENT B 现在默认带着提示词拆出来的固定步骤。别的场景测的是
+ * AGENT IDEA / AGENT B 现在默认带着提示词拆出来的固定步骤。别的场景测的是
  * "一次跑完"这条老路 —— 带着 4 步跑一遍会多发 4 次请求（live 模式下还是
  * 4 次真实请求），又慢又不稳，还会把交接请求的形状改掉。
  * 步骤编排本身由场景 L 测（那里专门看默认步骤）。
@@ -601,7 +601,7 @@ async function dropTemporaryAgent(cdp, base, id) {
 /**
  * 候选树快照：跑测试前记下 stage2_RQ-VAE 下有哪些目录。
  *
- * 活的 agent（AGENT Write 有写权限）会按 idea 建候选树 —— 那是它该干的活，
+ * 活的 agent（AGENT IDEA 有写权限）会按 idea 建候选树 —— 那是它该干的活，
  * 但测试跑完不该把半成品留在仓库里。跑完按这份快照把"这次跑新建出来的、
  * 且 git 没跟踪"的目录删掉。
  */
@@ -833,7 +833,7 @@ async function main() {
       check('快检：回答文字还在', quick.texts > 0, `${quick.texts} 张文字卡`);
       check('快检：时间轴不是空的', quick.parts > 0, `${quick.parts} 张卡`);
 
-      // AGENT Write 的默认交接目标是 B：等那次自动交接跑完再清场，
+      // AGENT IDEA 的默认交接目标是 B：等那次自动交接跑完再清场，
       // 否则它的记录会在清场之后落盘，把下面的轮次计数带偏。
       await waitFor(cdp, panelDone(PANEL_B), 300, 200);
 
@@ -1029,19 +1029,19 @@ async function main() {
       );
       await waitForServer(async () => {
         const health = await request(`${quickBase}/api/health`);
-        return health.agents.find((agent) => agent.id === 'agent-a').name === 'AGENT Write';
+        return health.agents.find((agent) => agent.id === 'agent-a').name === 'AGENT IDEA';
       });
       // 服务端先变、页面那边的 await 回来后才改标题：等页面追上，别抢跑。
       const restoredName = await waitFor(
         cdp,
         inPanel(
           PANEL_A,
-          "panel.querySelector('[data-role=name]').textContent === 'AGENT Write' ? 'AGENT Write' : ''",
+          "panel.querySelector('[data-role=name]').textContent === 'AGENT IDEA' ? 'AGENT IDEA' : ''",
         ),
         100,
         100,
       );
-      check('快检：恢复默认名字', restoredName === 'AGENT Write', String(restoredName));
+      check('快检：恢复默认名字', restoredName === 'AGENT IDEA', String(restoredName));
 
       // 交接延迟：A 配 2 秒延迟交给 B。B 不该立刻开跑，但到点必须开跑。
       await resetServerState(quickBase);
@@ -1172,7 +1172,7 @@ async function main() {
     const nameB = await waitFor(cdp, panelName(PANEL_B));
     check(
       '两个面板都拿到了自己的 agent 名',
-      nameA === 'AGENT Write' && nameB === 'AGENT B',
+      nameA === 'AGENT IDEA' && nameB === 'AGENT B',
       `左 ${nameA} / 右 ${nameB}`,
     );
     check('左右是两个不同的 agent', nameA !== nameB, `${nameA} vs ${nameB}`);
@@ -1424,7 +1424,7 @@ async function main() {
     ];
 
     for (const [label, panelId, cards] of [
-      ['AGENT Write', PANEL_A, cardsA],
+      ['AGENT IDEA', PANEL_A, cardsA],
       ['AGENT B', PANEL_B, cardsB],
     ]) {
       const badges = (cards || []).map((c) => c.badge);
@@ -1837,7 +1837,7 @@ async function main() {
       60,
       200,
     );
-    check('AGENT Write 的提示词框里装上了默认提示词', filled === 'filled', `状态 ${filled}`);
+    check('AGENT IDEA 的提示词框里装上了默认提示词', filled === 'filled', `状态 ${filled}`);
 
     const valueA = await cdp.evaluate(
       inPanel(
@@ -1849,7 +1849,7 @@ async function main() {
       ),
     );
     check(
-      'AGENT Write 提示词框里的内容与服务端默认一致',
+      'AGENT IDEA 提示词框里的内容与服务端默认一致',
       valueA === defaultA.instructions,
       `页面 ${String(valueA).slice(0, 40)} / 服务端 ${String(defaultA.instructions).slice(0, 40)}`,
     );
@@ -1980,7 +1980,7 @@ async function main() {
       '新 agent 有自己的名字',
       typeof newName === 'string' &&
         newName.length > 0 &&
-        newName !== 'AGENT Write' &&
+        newName !== 'AGENT IDEA' &&
         newName !== 'AGENT B',
       `名字 ${newName}`,
     );
@@ -1990,7 +1990,7 @@ async function main() {
     );
     check('新 agent 的输入框也是空的', newPrompt === '', `输入框 ${JSON.stringify(newPrompt)}`);
 
-    // 部件要和 AGENT Write 完全一样 —— 形式相同是用户提的要求。
+    // 部件要和 AGENT IDEA 完全一样 —— 形式相同是用户提的要求。
     const rolesOf = (panelId) =>
       cdp.evaluate(
         inPanel(
@@ -2001,7 +2001,7 @@ async function main() {
       );
     const rolesNew = await rolesOf(newPanelId);
     const rolesA = await rolesOf(PANEL_A);
-    check('新面板的部件与 AGENT Write 一样', rolesNew === rolesA, `${rolesNew} / ${rolesA}`);
+    check('新面板的部件与 AGENT IDEA 一样', rolesNew === rolesA, `${rolesNew} / ${rolesA}`);
 
     // 给新 agent 写一份系统提示词，跑起来 —— 它得真的按这份提示词回答。
     // 复述用固定标记而不是一句自然语言：模型会把句子改写（"生效" → "已经生效"），
@@ -2125,7 +2125,7 @@ async function main() {
 
     const aTargets0 = await readTargets(PANEL_A);
     check(
-      'AGENT Write 默认把结果交给 AGENT FIX',
+      'AGENT IDEA 默认把结果交给 AGENT FIX',
       Array.isArray(aTargets0) &&
         aTargets0.some((t) => t.value === 'agent-fix' && t.checked === true),
       JSON.stringify(aTargets0),
@@ -2147,7 +2147,7 @@ async function main() {
     );
     const optionsAfterCreate = await readTargets(PANEL_A);
     check(
-      '新 agent 出现在 AGENT Write 的交接目标里',
+      '新 agent 出现在 AGENT IDEA 的交接目标里',
       Array.isArray(optionsAfterCreate) &&
         optionsAfterCreate.some((t) => t.value === newProfileId),
       JSON.stringify(optionsAfterCreate),
@@ -2210,8 +2210,8 @@ async function main() {
 
     const cardText2 = await cdp.evaluate(panelHandoffText(newPanelId2));
     check(
-      '交接卡片写明结果来自 AGENT Write',
-      typeof cardText2 === 'string' && cardText2.includes('AGENT Write'),
+      '交接卡片写明结果来自 AGENT IDEA',
+      typeof cardText2 === 'string' && cardText2.includes('AGENT IDEA'),
       String(cardText2).slice(0, 120),
     );
 
@@ -2219,7 +2219,7 @@ async function main() {
     check(
       '交接请求带上了来源名字 handoffFrom',
       handoffBodiesK.length > 0 &&
-        handoffBodiesK.every((body) => body.includes('"handoffFrom":"AGENT Write"')),
+        handoffBodiesK.every((body) => body.includes('"handoffFrom":"AGENT IDEA"')),
       handoffBodiesK.length ? handoffBodiesK[0].slice(0, 160) : '（没有交接请求）',
     );
 
@@ -2271,7 +2271,7 @@ async function main() {
     );
     const bTargets = await readTargets(PANEL_B);
     check(
-      'AGENT B 的交接目标里可以选 AGENT Write',
+      'AGENT B 的交接目标里可以选 AGENT IDEA',
       Array.isArray(bTargets) &&
         bTargets.some((t) => t.value === 'agent-a' && t.checked === true),
       JSON.stringify(bTargets),
@@ -2283,7 +2283,7 @@ async function main() {
     let sawHandoff = false;
     for (let i = 0; i < 120; i++) {
       await sleep(250);
-      if (postBodies.some((body) => body.includes('"handoffFrom":"AGENT Write"'))) {
+      if (postBodies.some((body) => body.includes('"handoffFrom":"AGENT IDEA"'))) {
         sawHandoff = true;
         break;
       }
@@ -2340,7 +2340,7 @@ async function main() {
     );
     check('每个面板都有轮次步骤的配置区', stepAreas === 5, `${stepAreas} 个`);
 
-    // 默认步骤：AGENT Write / AGENT B 的提示词拆成的固定步骤。
+    // 默认步骤：AGENT IDEA / AGENT B 的提示词拆成的固定步骤。
     // 服务端给出来，用户没配过之前页面就铺好。
     const defaultTitlesL = await cdp.evaluate(
       "['panelA','panelB'].map(function (id) {" +
@@ -2349,7 +2349,7 @@ async function main() {
         '})',
     );
     check(
-      'AGENT Write 的步骤区按提示词铺好了 6 步',
+      'AGENT IDEA 的步骤区按提示词铺好了 6 步',
       Array.isArray(defaultTitlesL[0]) && defaultTitlesL[0].length === 6,
       JSON.stringify(defaultTitlesL[0]),
     );
@@ -2366,7 +2366,7 @@ async function main() {
       JSON.stringify(defaultTitlesL[0]),
     );
     check(
-      'AGENT Write 的默认步骤从读机制定义走到建候选树',
+      'AGENT IDEA 的默认步骤从读机制定义走到建候选树',
       Array.isArray(defaultTitlesL[0]) &&
         defaultTitlesL[0].some((t) => String(t).includes('候选树')) &&
         defaultTitlesL[0].some((t) => String(t).includes('测试')),
@@ -2458,11 +2458,11 @@ async function main() {
 
     const STEP_TITLES = ['第一步 查', '第二步 改', '第三步 验'];
 
-    // 下游 AGENT B 的默认步骤先清掉：这一段数的是 AGENT Write 发了几次请求，
+    // 下游 AGENT B 的默认步骤先清掉：这一段数的是 AGENT IDEA 发了几次请求，
     // B 带着 4 个默认步骤跑会混进同一个计数里。
     await cdp.evaluate(clearSteps(PANEL_B));
 
-    // 在 AGENT Write 上配三步：查 / 改 / 验。先把默认步骤清掉 —— 这一段测的是
+    // 在 AGENT IDEA 上配三步：查 / 改 / 验。先把默认步骤清掉 —— 这一段测的是
     // 用户自己配的步骤，不是默认步骤。
     await cdp.evaluate(clearSteps(PANEL_A));
     // 交接目标改成 AGENT B：AGENT WRITE 的默认目标是 AGENT FIX（它有自己的一套
@@ -2660,7 +2660,7 @@ async function main() {
       '整轮跑完才交接一次，交的是最后一步的产出',
       handoffL.length === 1 &&
         handoffL[0].handoff.includes('第三步 验') &&
-        handoffL[0].handoffFrom === 'AGENT Write',
+        handoffL[0].handoffFrom === 'AGENT IDEA',
       `交接请求 ${handoffL.length} 条`,
     );
     check(
@@ -2759,7 +2759,7 @@ async function main() {
       JSON.stringify(permBoxesM),
     );
     check(
-      'AGENT Write 默认授了读与写两项权限',
+      'AGENT IDEA 默认授了读与写两项权限',
       Array.isArray(permBoxesM) &&
         permBoxesM.filter((b) => b.checked).length === 2 &&
         ['read', 'write'].every((id) =>
@@ -2768,7 +2768,7 @@ async function main() {
       JSON.stringify(permBoxesM),
     );
     check(
-      'AGENT Write 默认没有执行与联网权限',
+      'AGENT IDEA 默认没有执行与联网权限',
       Array.isArray(permBoxesM) &&
         permBoxesM.some((b) => b.id === 'execute' && b.checked === false) &&
         permBoxesM.some((b) => b.id === 'network' && b.checked === false),
@@ -2784,7 +2784,7 @@ async function main() {
       String(permSummaryM),
     );
 
-    // 勾上「删」：AGENT Write 默认只有读与写，删除是额外授的 ——
+    // 勾上「删」：AGENT IDEA 默认只有读与写，删除是额外授的 ——
     // 这一轮跑起来时它必须真的生效。
     await cdp.evaluate(
       runInPanel(
@@ -2945,7 +2945,7 @@ async function main() {
           "})",
       ),
     );
-    // 期望值取自 AGENT Write 面板自己的步骤配置，不写死标题：默认步骤改过一次，
+    // 期望值取自 AGENT IDEA 面板自己的步骤配置，不写死标题：默认步骤改过一次，
     // 写死的标题会把"按配置铺开"这条检查变成检查一份过期的副本。
     const configuredStepsO = await cdp.evaluate(
       inPanel(
@@ -3104,13 +3104,13 @@ async function main() {
         "  return li.dataset.agentId + ':' + li.textContent.trim();}).join(' | ')",
     );
     check(
-      '侧边栏列出 AGENT Write 与 AGENT B',
+      '侧边栏列出 AGENT IDEA 与 AGENT B',
       sideQ.includes('agent-a') && sideQ.includes('agent-b') &&
-        sideQ.includes('AGENT Write') && sideQ.includes('AGENT B'),
+        sideQ.includes('AGENT IDEA') && sideQ.includes('AGENT B'),
       sideQ,
     );
 
-    // 主页面不该直接铺开完整配置：AGENT Write 的聊天视图里看不到配置区。
+    // 主页面不该直接铺开完整配置：AGENT IDEA 的聊天视图里看不到配置区。
     const chatViewQ = await cdp.evaluate(
       inPanel(
         PANEL_A,
@@ -3679,7 +3679,7 @@ async function main() {
         const agent = (health.agents || []).find((a) => a.id === 'agent-a');
         return agent && (agent.handoffTargets || []).includes(`group:${groupIdX}`);
       });
-      check('组存成了 AGENT Write 的交接目标', savedTargetsX === true, String(savedTargetsX));
+      check('组存成了 AGENT IDEA 的交接目标', savedTargetsX === true, String(savedTargetsX));
       // 页面重新加载一次，让这一栏拿到新的目标。
       await openPageAt(cdp, mockBaseX);
       await cdp.evaluate(submitPrompt(PANEL_A, '整组交接'));

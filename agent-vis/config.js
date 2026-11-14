@@ -425,7 +425,7 @@ export const LANGUAGE_RULE =
 export const AGENT_PROFILES = [
   {
     id: 'agent-a',
-    name: 'AGENT Write',
+    name: 'AGENT IDEA',
     role: 'MECHANISM_BUILDER',
     /**
      * 这个 agent 被授的权限：读 + 写。
@@ -871,7 +871,7 @@ export const AGENT_PROFILES = [
      * 默认的交接目标：AGENT FIX 不主动往下交 —— 它的结论交给人（控制器）。
      */
     instructions: [
-      '你是 AGENT FIX（MECHANISM_CHECKER），负责核对并修好 AGENT WRITE 写的机制代码，' +
+      '你是 AGENT FIX（MECHANISM_CHECKER），负责核对并修好 AGENT WRITE DISTANCE / AGENT LOSS 写的机制代码，' +
         '发现写错的地方就把它改对。服务的是 GeneRec 科研仓库。',
       '',
       '你的产出是「逐条 PASS / FAIL + 依据（文件与行）」，以及改好的代码。',
@@ -1344,51 +1344,58 @@ export function currentIdeaFiles() {
  */
 const WRITER_TREE = 'stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq';
 
-function writerInstructions(title) {
+function writerInstructions(title, kind) {
+  const scope = kind === 'distance' ? '距离/度量（distances/*.py）' : '损失/目标（losses/*.py）';
   return [
-    `你是 ${title}，负责当前 idea 声明文件里分给你的那一片（具体文件写在输入框的工作单里）。`,
+    `你是 ${title}，只负责这次机制在${scope}上的实现。`,
     '',
     '写之前先读：当前方向 ideas/<方向>/ 的 *_idea.json（4_method）与 math.json，',
-    '再读这棵树里已有的机制文件 —— 它们的函数签名就是契约：你调用它们时按实际签名写，不许改它们。',
+    '再读这棵树里已有的实现（签名就是契约，不许改别人的文件）。',
     '基线是 stage2_RQ-VAE/TIGER_RQ-VAE：接口照它抄，config 的冻结超参一个字都不许动。',
     '',
-    '硬约束（机器强制）：write/edit/deleteFile 只能写 assignedFiles 列出的那些文件，越界会直接报错，不会落盘。',
-    '树由 AGENT IDEA 建好（只换目录名、内容与基线一致）：不要自己建树；树不存在就停下并写"树缺失"。',
-    '发现必须改别人的文件时，只在结论里写清"要改哪个文件、改成什么"，不要动手改。',
+    '硬约束（机器强制）：write/edit/deleteFile 只能写 assignedFiles 列出的文件，越界会直接报错。',
+    '分配规则（Sinkhorn）、量化层、模型接口、训练入口、数据管线都不归你改；需要时写进结论。',
+    '你只负责实现，不写测试文件（测试与核对由 AGENT FIX 负责）。',
     '不跑训练、不 commit/push。每写完一份读回一次，确认写对了、路径没写错。',
   ].join('\n');
 }
 
 /** 给某个 writer 的工作单：只列它分到的文件，不写死方向名。 */
-export function buildWriterPrompt() {
+export function buildWriterPrompt(kind) {
+  const scope = kind === 'distance' ? '距离/度量（distances/*.py）' : '损失/目标（losses/*.py）';
   return [
-    '实现你负责的那一片机制功能（这次 idea 的一部分）。',
+    `实现这次机制在${scope}上的部分。`,
     '',
     '第一步：调 assignedFiles 看你这片包含哪些文件 —— 你的写入范围由工具强制，越界写会被直接拒绝。',
     '候选树已由 AGENT IDEA 建好（只换目录名、内容与基线一致）：不要自己建树；若树不存在，就在结论里写"树缺失"并停下。',
-    '然后读当前方向的 *_idea.json 与 math.json，再读这棵树里已有的机制文件（签名就是契约，不许改）。',
-    '需要改别人的文件时，把"改哪个文件、改成什么"写进结论，不要动手。',
+    '然后读当前方向的 *_idea.json 与 math.json，再读这棵树里已有的实现（签名就是契约，不许改）。',
+    '分配规则（Sinkhorn）、量化层、模型接口、训练入口、数据管线都不归你改；需要时写进结论。',
     '只写实现，不写测试文件（测试由 AGENT FIX 负责）。每写完一份用 read 读回确认；不跑训练、不 commit/push。',
     '最后一张表：文件 | 做了什么 | 依赖谁 | 还缺什么。',
   ].join('\n');
 }
 
-// 机制落成后只剩一个 mechanism.py，一个写手就够；分片逻辑仍按 WRITER_COUNT 自适应。
-const WRITER_PROFILES = [1].map((index) => ({
-  id: `agent-w${index}`,
-  name: `AGENT W${index}`,
+const WRITER_KINDS = [
+  { id: 'agent-w1', name: 'AGENT WRITE DISTANCE', kind: 'distance', pattern: /^distances\/[^/]+\.py$/ },
+  { id: 'agent-w2', name: 'AGENT LOSS', kind: 'loss', pattern: /^losses\/[^/]+\.py$/ },
+];
+
+const WRITER_PROFILES = WRITER_KINDS.map((entry) => ({
+  id: entry.id,
+  name: entry.name,
   role: 'MECHANISM_WRITER',
-  dynamicWriter: index,
+  dynamicWriter: entry.kind,
+  writerPattern: entry.pattern,
   permissions: ['read', 'write'],
-  // 树由 AGENT IDEA 建：writer 连"自己复制一棵树"的能力都没有。
+  // 树由 AGENT IDEA 建；机制只落在两类文件上。
   denyTools: ['copyBaselineTree'],
-  instructions: writerInstructions(`AGENT W${index}`),
+  instructions: writerInstructions(entry.name, entry.kind),
   handoffTargets: ['agent-fix'],
   steps: [
     {
       title: '读契约',
       instruction:
-        '读当前方向 ideas/<方向>/ 的 *_idea.json（4_method）与 math.json，只摘出你分到的文件要提供什么' +
+        '读当前方向 ideas/<方向>/ 的 *_idea.json（4_method）与 math.json，只摘出你这一类文件要提供什么' +
         '（函数名/输入输出/常量/开关），不超过 20 行。',
     },
     {
@@ -1667,8 +1674,19 @@ function splitKnownPermissions(list) {
 function publicProfile(profile) {
   const override = userConfigs[profile.id] || {};
   // 写手的分片是"按当前 idea 算"的：换方向时文件清单变了，作用域与工作单跟着变。
+  // 写手按类别（distance / loss）取当前 idea 里属于它的实现文件；
+  // owners 里标 provided 的只读文件不分配。
   const dynamicFiles = profile.dynamicWriter
-    ? (partitionWriterFiles(currentIdeaFiles(), WRITER_COUNT, currentIdeaOwners())[profile.dynamicWriter - 1] || [])
+    ? (() => {
+        const pattern = profile.writerPattern;
+        const owners = currentIdeaOwners();
+        const treeRoot = (file) => file.split('/').slice(0, 2).join('/');
+        return currentIdeaFiles()
+          .filter((file) => !file.includes('/tests/'))
+          .filter((file) => owners[file] !== 'provided')
+          .filter((file) => pattern.test(file.slice(treeRoot(file).length + 1)))
+          .sort();
+      })()
     : null;
   // 分到了 0 份文件（角色数少于 4）：这一栏没有任务，也不许写任何东西。
   const emptySlice = profile.dynamicWriter !== undefined && dynamicFiles !== null && dynamicFiles.length === 0;
@@ -1764,7 +1782,7 @@ function publicProfile(profile) {
       : (emptySlice
         ? '你这一轮没有被分到文件（当前 idea 的 owners 里没有你的角色）：不要写任何文件，' +
           '在结论里写「无任务」并结束。'
-        : (dynamicFiles ? buildWriterPrompt() : profile.defaultPrompt || '')),
+        : (dynamicFiles ? buildWriterPrompt(profile.dynamicWriter) : profile.defaultPrompt || '')),
     // 代码里写死的默认值：用户点「恢复默认」时要把它们铺回去，
     // 所以得单独给一份 —— 生效值可能已经被用户改过了。
     defaultInstructions: profile.instructions,
