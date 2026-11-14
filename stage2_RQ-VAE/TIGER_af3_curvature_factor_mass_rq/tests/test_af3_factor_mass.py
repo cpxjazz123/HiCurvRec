@@ -346,6 +346,9 @@ def test_behaviour_off_does_not_need_the_frozen_table(monkeypatch):
 
 def test_switches_default_to_off():
     assert D.switches() == {"behaviour_off": False, "geometry_off": False}
+    # behaviour_off alone keeps the product geometry (only p is pinned)
+    # geometry_off alone returns the baseline expansion
+    assert D.NAME == "euclidean" and D.MECHANISM == "af3_factor_mass"
 
 
 def test_row_chunking_changes_no_value(small_table, monkeypatch):
@@ -355,6 +358,88 @@ def test_row_chunking_changes_no_value(small_table, monkeypatch):
     monkeypatch.setattr(D, "ROW_CHUNK", 1)
     chunked = D.distances(latent, words)
     assert torch.allclose(whole, chunked, rtol=0, atol=1e-12)
+
+
+def test_share_rows_follow_the_item_id_order(small_table):
+    # formula `share_map`: row i of D uses p_i of item_id[i], never the sorted order
+    latent, words = make_pair(rows=3, seed=11)
+    frozen = torch.as_tensor(small_table["p"], dtype=torch.float64)
+    runtime_context.set_fields({"item_id": torch.tensor([2, 0, 1])})
+    cost = D.distances(latent, words)
+    assert torch.allclose(cost, ref_product_cost(latent, words, frozen[[2, 0, 1]]),
+                          rtol=0, atol=1e-10)
+    # the identity order is a different cost here, so the check is not vacuous
+    assert not torch.allclose(cost, ref_product_cost(latent, words, frozen),
+                              rtol=0, atol=1e-10)
+
+
+# --------------------------------------------------------------------------------------
+# boundary readout of the two factors (uses sqrt(p) on the codeword side)
+# --------------------------------------------------------------------------------------
+
+def ref_boundary_ratio(values: torch.Tensor, c: float) -> np.ndarray:
+    """`||expmap0(v, c)|| / ((1 - BALL_EPS) / sqrt(c))`, from the contract formula."""
+    limit = (1.0 - D.BALL_EPS) / math.sqrt(c)
+    mapped = ref_expmap0(values, c)
+    return (mapped.norm(dim=-1) / limit).flatten().numpy()
+
+
+def test_ball_boundary_readout_uses_sqrt_share_on_the_codeword_side():
+    latent, words = make_pair(rows=4, codebook=6, seed=12)
+    share = 0.7
+    report = D.saturation_readout(latent, words, share=share)
+
+    # codeword side: sqrt(p) on the high factor, sqrt(1-p) on the low one
+    hi_ref = ref_boundary_ratio(math.sqrt(share) * words[:, 16:24], C_HI_REF)
+    lo_ref = ref_boundary_ratio(math.sqrt(1.0 - share) * words[:, 24:], C_LO_REF)
+    for name, q in (("p05", 5.0), ("p50", 50.0), ("p95", 95.0)):
+        assert abs(report["codeword_hi"]["quantiles"][name]
+                   - float(np.percentile(hi_ref, q))) < 1e-12
+        assert abs(report["codeword_lo"]["quantiles"][name]
+                   - float(np.percentile(lo_ref, q))) < 1e-12
+
+    # item side carries no factor at all
+    item_hi = ref_boundary_ratio(latent[:, 16:24], C_HI_REF)
+    item_lo = ref_boundary_ratio(latent[:, 24:], C_LO_REF)
+    assert abs(report["item_hi"]["quantiles"]["p50"]
+               - float(np.percentile(item_hi, 50.0))) < 1e-12
+    assert abs(report["item_lo"]["quantiles"]["p50"]
+               - float(np.percentile(item_lo, 50.0))) < 1e-12
+
+    # the readout pins sqrt(p), not p (the old bug) -- the two differ materially
+    hi_p = ref_boundary_ratio(share * words[:, 16:24], C_HI_REF)
+    lo_p = ref_boundary_ratio((1.0 - share) * words[:, 24:], C_LO_REF)
+    assert abs(report["codeword_hi"]["quantiles"]["p50"]
+               - float(np.percentile(hi_p, 50.0))) > 1e-6
+    assert abs(report["codeword_lo"]["quantiles"]["p50"]
+               - float(np.percentile(lo_p, 50.0))) > 1e-6
+
+
+def test_ball_boundary_readout_flags_a_saturated_point():
+    latent, words = make_pair(rows=3, seed=13)
+    report = D.ball_boundary_readout(50.0 * latent[:, :8], C_HI_REF)
+    limit = (1.0 - D.BALL_EPS) / math.sqrt(C_HI_REF)
+    assert abs(report["limit"] - limit) < 1e-12
+    assert report["clipped_fraction"] == 1.0
+    for value in report["quantiles"].values():
+        assert abs(value - 1.0) < 1e-6
+    # a point well inside the ball is not reported as clipped
+    assert D.ball_boundary_readout(0.01 * latent[:, :8], C_HI_REF)["clipped_fraction"] == 0.0
+
+
+def test_readouts_scaled_factors_follow_the_share_and_the_switch(small_table):
+    shares = np.asarray(small_table["p"], dtype=np.float64)
+    plain = D.readouts()
+    assert abs(plain["scaled_hi_min"] - float(np.sqrt(shares).min())) < 1e-12
+    assert abs(plain["scaled_lo_min"] - float(np.sqrt(1.0 - shares).min())) < 1e-12
+    assert abs(plain["share_min"] - float(shares.min())) < 1e-12
+    assert plain["share_source"] == "af3_potential_rank"
+
+    D.set_switches(behaviour_off=True)
+    off = D.readouts()
+    assert abs(off["scaled_hi_min"] - math.sqrt(D.SHARE_REF)) < 1e-12
+    assert abs(off["scaled_lo_min"] - math.sqrt(D.SHARE_REF)) < 1e-12
+    assert abs(off["share_min"] - D.SHARE_REF) < 1e-12
 
 
 # --------------------------------------------------------------------------------------
