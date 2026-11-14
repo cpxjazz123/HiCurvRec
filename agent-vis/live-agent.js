@@ -1669,9 +1669,14 @@ async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }
     const outOfScope = touched !== null ? touched.filter((rel) => !onSurface(rel)) : [];
     const allowed = touched !== null ? new Set(touched.filter(onSurface)) : null;
     const isAllowed = (rel) => (allowed !== null ? allowed.has(rel) : onSurface(rel));
-    const unexpectedNew = newNames.filter((name) => !isAllowed(name));
+    // 测试属于候选树的一部分（TDD 要求先写测试），但它们不是机制面：
+    // 单列出来，不计入 unexpected，也不占用 touch 名单。
+    const isTest = (rel) => rel.startsWith('tests/');
+    const testFiles = [...newNames, ...changedNames].filter(isTest);
+    const unexpectedNew = newNames.filter((name) => !isTest(name) && !isAllowed(name));
     const unexpectedChanged = [];
     for (const rel of changedNames) {
+      if (isTest(rel)) continue;
       if (isAllowed(rel)) continue;
       if (rel === 'train_rqvae.py' && armNameOnly && armNameOnly.ok) continue;
       unexpectedChanged.push({
@@ -1689,6 +1694,7 @@ async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }
       mechanism: treeFiles.has('mechanism.py'),
       newFiles: newNames,
       changedFiles: changedNames,
+      testFiles,
       unexpectedNew,
       unexpectedChanged,
       armNameOnly,
@@ -1724,7 +1730,7 @@ async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }
       'files.* 里剩下的条目就是问题：missing 的没写，differsFromBaseline=false 的声明改了却没改。',
       'paths.absolute / paths.parentsN 的 total 必须是 0；armNames 只允许一个值且等于候选树目录名。',
       'paths.crossArm 必须为空：候选树只能依赖冻结基线与本树，引用别的臂就是外部依赖。',
-      'surface：必须 ok=true —— 机制只允许改 distances/ 或 losses/ 下的文件（idea.touch 只能在这两类里点名）；train_rqvae.py 只允许改 ARM_NAME。',
+      'surface：必须 ok=true —— 机制只允许改 distances/ 或 losses/ 下的文件（idea.touch 只能在这两类里点名）；tests/ 下的测试文件可以新增/修改（单列在 testFiles，不算机制面）；train_rqvae.py 只允许改 ARM_NAME。',
       'frozen.*.changed 必须为空；frozen.constants.added 是机制自己的常量，属正常。',
       'metrics.missing 是规格要求但树里没有的读数名。',
       'declarations.constants/formulas 是规格声明的名字在树里的位置（hits=0 表示没找到，需要你判断是命名不同还是真缺）。',

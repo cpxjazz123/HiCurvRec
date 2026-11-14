@@ -413,6 +413,10 @@ def readouts() -> dict:
     """Diagnostics for the frozen table and the current switch state."""
     frozen = table()
     shares = frozen["p"]
+    if BEHAVIOUR_OFF:
+        # metric `p_percentiles`: under behaviour_off the share is the constant SHARE_REF
+        # (the same value the distance branch uses), so the readout must show it.
+        shares = np.full(shares.shape, SHARE_REF, dtype=np.float64)
     percentiles = {}
     if shares.size:
         for name, q in (("p05", 5.0), ("p50", 50.0), ("p95", 95.0)):
@@ -548,7 +552,8 @@ def _product_cost(latent: torch.Tensor, codebook: torch.Tensor,
     # Hyperbolic factors: the item side is fixed, the codeword side is scaled per item.
     x_hi = expmap0(x_h1, C_HI).unsqueeze(1)
     x_lo = expmap0(x_h2, C_LO).unsqueeze(1)
-    v_hi = expmap0(share * t_h1.unsqueeze(0), C_HI)
+    # formula `energy_split`: s_hi = sqrt(p_i), s_lo = sqrt(1 - p_i), codeword side only.
+    v_hi = expmap0(torch.sqrt(share) * t_h1.unsqueeze(0), C_HI)
     v_lo = expmap0(torch.sqrt(1.0 - share) * t_h2.unsqueeze(0), C_LO)
 
     return cost + SCALE_HYP * (
@@ -579,17 +584,21 @@ def distances(latent: torch.Tensor, codebook: torch.Tensor) -> torch.Tensor:
 
     import runtime_context
 
-    shares_np = shares_for(runtime_context.get("item_id"))
-    if shares_np.size != latent.shape[0]:
-        raise ValueError(
-            "the AF3 share table gave %d rows for %d latents"
-            % (shares_np.size, latent.shape[0]))
-    share = torch.as_tensor(shares_np, dtype=latent.dtype, device=latent.device)
-    if BEHAVIOUR_OFF:
-        share = torch.full_like(share, SHARE_REF)
-    share = share.view(-1, 1, 1)
-
     total = latent.shape[0]
+    if BEHAVIOUR_OFF:
+        # formula `share_map`: behaviour_off pins p_i to SHARE_REF (the geometry, i.e. the
+        # curvatures / expmap / product cost, stays). This branch is a wiring check, so the
+        # frozen table is not consulted at all.
+        share = torch.full((total, 1, 1), SHARE_REF, dtype=latent.dtype,
+                           device=latent.device)
+    else:
+        shares_np = shares_for(runtime_context.get("item_id"))
+        if shares_np.size != total:
+            raise ValueError(
+                "the AF3 share table gave %d rows for %d latents"
+                % (shares_np.size, total))
+        share = torch.as_tensor(shares_np, dtype=latent.dtype,
+                                device=latent.device).view(-1, 1, 1)
     if total <= ROW_CHUNK:
         return _product_cost(latent, codebook, share)
     blocks = [_product_cost(latent[start:start + ROW_CHUNK], codebook,
@@ -662,7 +671,7 @@ def saturation_readout(latent: torch.Tensor, codebook: torch.Tensor,
         "share": float(share),
         "item_hi": ball_boundary_readout(x_h1, C_HI),
         "item_lo": ball_boundary_readout(x_h2, C_LO),
-        "codeword_hi": ball_boundary_readout(scale * t_h1, C_HI),
+        "codeword_hi": ball_boundary_readout(torch.sqrt(scale) * t_h1, C_HI),
         "codeword_lo": ball_boundary_readout(torch.sqrt(1.0 - scale) * t_h2, C_LO),
     }
 

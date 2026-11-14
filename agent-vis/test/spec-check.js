@@ -235,6 +235,21 @@ await test('touch 里点名 distances/losses 之外的文件 → outOfScope', as
   assert.equal(out.surface.ok, false);
 });
 
+await test('候选树里新增/修改 tests/ 下的测试 → 允许，且单列在 testFiles', async () => {
+  const P_TEST = `${ROOT}/surface-tests`;
+  write(`${P_TEST}/mechanism_base.py`, '"""host marker"""\n');
+  write(`${P_TEST}/train_rqvae.py`, 'ARM_NAME = "TIGER_surface"\nprint("baseline")\n');
+  write(`${P_TEST}/config/train_config.json`, JSON.stringify({ epochs: 3000 }, null, 2));
+  write(`${P_TEST}/distances/distance.py`, 'X = 2\n');
+  write(`${P_TEST}/losses/reconstruction.py`, 'L = 1\n');
+  write(`${P_TEST}/model/layers.py`, 'Y = 1\n');
+  write(`${P_TEST}/tests/test_mechanism.py`, 'def test_x():\n    assert True\n');
+  const outTest = await call({ tree: P_TEST, baseline: PB, idea: ideaFor(P_TEST) });
+  assert.deepEqual(outTest.surface.unexpectedNew, [], JSON.stringify(outTest.surface));
+  assert.deepEqual(outTest.surface.testFiles, ['tests/test_mechanism.py']);
+  assert.equal(outTest.surface.ok, true);
+});
+
 await test('非插件基线：surface 为 null（沿用原规则）', async () => {
   assert.equal(out.surface, null);
 });
