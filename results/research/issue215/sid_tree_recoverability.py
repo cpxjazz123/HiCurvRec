@@ -40,7 +40,9 @@ JOURNAL = OUT / "sid_tree_recoverability.json"
 ARMS = ("TIGER", "F0", "B", "C", "D")
 SEED = 42
 VALIDATION = 0.2
-LAMBDA_GRID = np.round(np.arange(0.0, 3.01, 0.05), 3)
+#: lambda may be negative: if the tree's information points the other way, a positive-only
+#: grid would forbid the model from using it at all.
+LAMBDA_GRID = np.round(np.arange(-10.0, 10.01, 0.05), 3)
 STRUCTURES = ("path3", "path4", "star4", "cycle4", "triangle_tail", "diamond")
 
 sys.path.insert(0, str(OUT))
@@ -180,7 +182,13 @@ def evaluate(pairs: list[tuple], vectors: np.ndarray, sid: dict[int, tuple],
         if score > best_score:
             best_lambda, best_score = float(lambda_value), score
 
+    tree_wins = float(np.mean(true_l > false_l))
+    tree_ties = float(np.mean(true_l == false_l))
+    tree_losses = float(np.mean(true_l < false_l))
     return {
+        "tree_true_larger": tree_wins,
+        "tree_tied": tree_ties,
+        "tree_false_larger": tree_losses,
         "A vectors only": accuracy(-true_d[test], -false_d[test]),
         "B tree only": accuracy(true_l[test], false_l[test]),
         "C vectors + tree": accuracy((-true_d + best_lambda * true_l)[test],
@@ -215,7 +223,8 @@ def main() -> int:
             scores = block[name]
             print(f"{arm:<6} {name:<15} A {scores['A vectors only']:.4f} | B {scores['B tree only']:.4f} | "
                   f"C {scores['C vectors + tree']:.4f} | D {scores['D vectors + shuffled tree']:.4f} "
-                  f"(lambda {scores['lambda']:.2f})", flush=True)
+                  f"(lambda {scores['lambda']:+.2f}) | tree: true> {scores['tree_true_larger']:.3f} "
+                  f"= {scores['tree_tied']:.3f} < {scores['tree_false_larger']:.3f}", flush=True)
         report["structures"][arm] = block
 
     JOURNAL.write_text(json.dumps(report, indent=1, default=float))
