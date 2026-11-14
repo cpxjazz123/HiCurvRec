@@ -140,7 +140,7 @@ await test('edit 走 pi 自己的引擎，但守住仓库的规矩', async () =>
 await test('read 权限只给只读工具（含 JSON 校验）', async () => {
   assert.deepEqual(
     toolsForPermissions(['read']).map((tool) => tool.name),
-    ['read', 'ls', 'grep', 'find', 'checkJson', 'checkIdea'],
+    ['read', 'ls', 'grep', 'find', 'checkJson', 'checkIdea', 'treeDiff'],
   );
 });
 
@@ -159,6 +159,7 @@ await test('多项权限按请求顺序合并去重', async () => {
     'find',
     'checkJson',
     'checkIdea',
+    'treeDiff',
   ]);
 });
 

@@ -456,6 +456,29 @@ const runTestsTool = piTool({
   impl: runTests,
 });
 
+const treeDiffTool = piTool({
+  name: 'treeDiff',
+  label: '比两棵树',
+  description:
+    'Compare a candidate tree with the frozen baseline: byte-identical files, changed files with the ' +
+    'first lines of each unified diff, and files that exist on one side only. Read-only. ' +
+    'Use it instead of walking both trees by hand - the review only has to look at the delta.',
+  parameters: Type.Object({
+    baseline: Type.String({
+      description: '冻结基线目录（仓库内相对路径），例如 stage2_RQ-VAE/TIGER_RQ-VAE',
+    }),
+    tree: Type.String({ description: '候选树目录，例如 stage2_RQ-VAE/TIGER_xxx_rq' }),
+    maxHunkLines: Type.Optional(
+      Type.Integer({
+        minimum: 1,
+        maximum: 200,
+        description: '每个改动文件最多回多少行 diff，默认 40',
+      }),
+    ),
+  }),
+  impl: treeDiff,
+});
+
 const stage2StartTool = piTool({
   name: 'stage2Start',
   label: '启动 Stage2 训练',
@@ -1012,6 +1035,126 @@ async function runTests({ tree, timeoutSeconds = 600 }) {
   }
 }
 
+/**
+ * 一棵树里的文本文件（相对路径 → 绝对路径）。
+ *
+ * 和 grep/find 用同一套跳过规矩：缓存目录与二进制不进表，超过上限的文件也不进 ——
+ * 比对的对象是源码，不是训练产物。
+ */
+function listTextFiles(rootDir) {
+  const files = new Map();
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (SKIP_DIRS.has(entry.name)) continue;
+        walk(path.join(dir, entry.name));
+        continue;
+      }
+      if (!entry.isFile() || SKIP_FILE_RE.test(entry.name)) continue;
+      const abs = path.join(dir, entry.name);
+      let stat;
+      try {
+        stat = fs.statSync(abs);
+      } catch {
+        continue;
+      }
+      if (stat.size > MAX_WRITE_BYTES) continue;
+      files.set(path.relative(rootDir, abs), abs);
+    }
+  };
+  walk(rootDir);
+  return files;
+}
+
+/** 一份 unified diff 里加了多少行、减了多少行（不算 ---/+++ 头）。 */
+function countDiffLines(unified) {
+  let added = 0;
+  let removed = 0;
+  for (const line of unified.split('\n')) {
+    if (line.startsWith('+++') || line.startsWith('---')) continue;
+    if (line.startsWith('+')) added += 1;
+    else if (line.startsWith('-')) removed += 1;
+  }
+  return { added, removed };
+}
+
+/**
+ * 两棵树的差异：逐字节相同的、改了的（带 diff 头几行）、只在一边的。
+ *
+ * 候选树是冻结基线的一份副本加上机制增量，所以"改了什么"本身就是核对项：
+ * 判定只需要落在增量上，没变的文件不必重读。只读，两棵树都必须在仓库根之内。
+ */
+async function treeDiff({ baseline, tree, maxHunkLines = 40, maxChangedFiles = 40 }) {
+  const baseDir = stage2TreePath(baseline);
+  const treeDir = stage2TreePath(tree);
+  for (const [label, dir] of [['baseline', baseDir], ['tree', treeDir]]) {
+    let stat;
+    try {
+      stat = fs.statSync(dir);
+    } catch {
+      return { ok: false, error: `${label} 路径不存在: ${dir}` };
+    }
+    if (!stat.isDirectory()) return { ok: false, error: `${label} 不是目录: ${dir}` };
+  }
+  const baseFiles = listTextFiles(baseDir);
+  const treeFiles = listTextFiles(treeDir);
+  const names = [...new Set([...baseFiles.keys(), ...treeFiles.keys()])].sort();
+  const identical = [];
+  const onlyInBaseline = [];
+  const onlyInTree = [];
+  const changed = [];
+  for (const rel of names) {
+    const a = baseFiles.get(rel);
+    const b = treeFiles.get(rel);
+    if (a && !b) {
+      onlyInBaseline.push(rel);
+      continue;
+    }
+    if (b && !a) {
+      onlyInTree.push(rel);
+      continue;
+    }
+    if (fs.readFileSync(a).equals(fs.readFileSync(b))) {
+      identical.push(rel);
+      continue;
+    }
+    let unified = '';
+    try {
+      const { stdout } = await execFileAsync('diff', ['-u', a, b], {
+        maxBuffer: 4 * 1024 * 1024,
+      });
+      unified = stdout;
+    } catch (err) {
+      // diff 的退出码 1 就是"有差异"，不是失败。
+      if (err && err.code === 1) unified = err.stdout || '';
+      else throw err;
+    }
+    const { added, removed } = countDiffLines(unified);
+    changed.push({
+      file: rel,
+      added,
+      removed,
+      hunks: unified.split('\n').slice(2, 2 + Math.max(1, maxHunkLines)).join('\n'),
+    });
+  }
+  return {
+    ok: true,
+    baseline: relativeToRoot(baseDir),
+    tree: relativeToRoot(treeDir),
+    summary: {
+      identical: identical.length,
+      changed: changed.length,
+      onlyInTree: onlyInTree.length,
+      onlyInBaseline: onlyInBaseline.length,
+    },
+    identical,
+    changed: changed.slice(0, Math.max(1, maxChangedFiles)),
+    changedTruncated: changed.length > maxChangedFiles,
+    onlyInTree,
+    onlyInBaseline,
+  };
+}
+
 /** 取最后 n 行：测试输出前面一大截是噪声，结论在尾巴上。 */
 function tailLines(text, n) {
   const lines = String(text || '').trimEnd().split('\n');
@@ -1035,6 +1178,7 @@ export const PI_TOOLS = {
   readIssue: readIssueTool,
   gitLog: gitLogTool,
   runTests: runTestsTool,
+  treeDiff: treeDiffTool,
   copyBaselineTree: copyBaselineTreeTool,
   deleteFile: deleteFileTool,
 };
