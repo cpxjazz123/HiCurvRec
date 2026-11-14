@@ -1,4 +1,27 @@
-# Stage2 参照基线：`TIGER_mixed_rq_F0`（自 2026-11-12 起）
+# Stage2 参照基线：`TIGER_RQ-VAE`（owner 决定 2026-11-14；`TIGER_mixed_rq_F0` 转为历史对照）
+
+> **owner 决定（2026-11-14）：只做 TIGER，永远只做 TIGER。**
+> 从这条起，所有新机制都建在 **`TIGER_RQ-VAE`**（E32 全欧氏）上；`TIGER_mixed_rq_F0` 与本族
+> 的角色路由臂（B/C/D）**留档为历史证据，不再投入**。下面的数字全部保留、全部可复核，只是主参照换人。
+
+## 0. 参照基线的变更记录
+
+| 日期 | 主参照 | 依据 |
+|---|---|---|
+| 2026-11-12 | `TIGER_mixed_rq_F0` = 0.057278156 | Issue #211 |
+| **2026-11-14** | **`TIGER_RQ-VAE` = 0.056216** | owner 决定：只做 TIGER，永远只做 TIGER |
+
+## 0b. 当前主参照：`TIGER_RQ-VAE`
+
+| 项 | 值 / 路径 |
+|---|---|
+| 臂名 | **`TIGER_RQ-VAE`**（E32 全欧氏、三层三 token） |
+| `test_recall@10` | **0.056216** |
+| SID 表 | `analysis_sid_recall/r2/24/item_sids.json`（sha256 `53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85`） |
+| 同 SID 重跑（2026-11-14，冻结协议） | **0.054719** —— 同 SID、同协议两次运行差 **2.7%**，是本 issue 所有"臂间差"的噪声下限 |
+| 源码树 | `analysis_sid_recall/r2/24/TIGER_RQ-VAE/`（归档副本，sha 逐文件核对） |
+
+---
 
 本文件是 Issue #211 的落地物，**不含任何训练**，也不改动已产出的任何结果或历史结论。
 
