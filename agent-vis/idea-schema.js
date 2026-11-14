@@ -37,7 +37,7 @@ const SECTION_KEYS = ['1_goal', '4_method'];
 const GOAL_KEYS = ['idea'];
 // 4_method 里必须有的清单，以及可选的"谁写哪个文件"分工（owners：路径 → 角色）。
 const REQUIRED_METHOD_KEYS = ['new_files', 'modified_files'];
-const OPTIONAL_METHOD_KEYS = ['owners'];
+const OPTIONAL_METHOD_KEYS = ['owners', 'touch'];
 const METHOD_KEYS = [...REQUIRED_METHOD_KEYS, ...OPTIONAL_METHOD_KEYS];
 
 /**
@@ -177,6 +177,7 @@ function checkFiles(method, add, baselineRoot) {
   checkFileList(method.new_files, 'new_files', add, baselineRoot, 'new');
   checkFileList(method.modified_files, 'modified_files', add, baselineRoot, 'modified');
   checkOwners(method.owners, add);
+  checkTouch(method.touch, add);
 }
 
 /**
@@ -185,6 +186,35 @@ function checkFiles(method, add, baselineRoot) {
  * 可选：没有它时框架按 import 依赖自己分片。有它时角色是规格的一部分，
  * 换 idea 也不会因为文件名变化而把分工讲错。
  */
+/**
+ * `4_method.touch`：这次机制允许改动的文件清单（可选）。
+ *
+ * 有它时，验收只放行这些文件（外加 train_rqvae.py 的 ARM_NAME 一行）；
+ * 这让"改距离就只改距离文件"这类原位改动也成为规格的一部分。
+ */
+function checkTouch(touch, add) {
+  if (touch === undefined) return;
+  if (!Array.isArray(touch)) {
+    add('sections.4_method.touch', '必须是数组（允许改动的文件路径）');
+    return;
+  }
+  if (touch.length === 0) {
+    add('sections.4_method.touch', '给了就要至少一个文件');
+    return;
+  }
+  if (touch.length > 10) {
+    add('sections.4_method.touch', `最多 10 条（现在 ${touch.length} 条）`);
+  }
+  touch.forEach((file, index) => {
+    const at = `sections.4_method.touch[${index}]`;
+    if (typeof file !== 'string' || file.trim() === '') {
+      add(at, '必须是非空字符串');
+      return;
+    }
+    if (file.startsWith('/')) add(at, '路径要是仓库相对路径');
+  });
+}
+
 function checkOwners(owners, add) {
   if (owners === undefined) return;
   if (!isPlainObject(owners)) {

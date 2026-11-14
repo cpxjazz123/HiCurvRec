@@ -1632,9 +1632,13 @@ async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }
     formulas: declareLocations(Array.isArray(math.formulas) ? math.formulas : []),
   };
 
-  // 插件宿主基线：改动面必须是"一个 mechanism.py + ARM_NAME"，别的一律算越界。
+  // 改动面：优先看 idea 声明的 touch；没有 touch 且基线是插件宿主时按"mechanism.py + ARM_NAME"。
+  const touch = Array.isArray(method.touch) && method.touch.length > 0
+    ? method.touch.map((item) => String(item))
+    : null;
+  const pluginHost = fs.existsSync(path.join(baseDir, 'mechanism_base.py'));
   let surface = null;
-  if (fs.existsSync(path.join(baseDir, 'mechanism_base.py'))) {
+  if (touch !== null || pluginHost) {
     const newNames = [];
     const changedNames = [];
     for (const [rel, abs] of treeFiles) {
@@ -1645,29 +1649,39 @@ async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }
       }
       if (!fs.readFileSync(base).equals(fs.readFileSync(abs))) changedNames.push(rel);
     }
-    const unexpectedNew = newNames.filter((name) => name !== 'mechanism.py');
-    const unexpectedChanged = [];
+    // train_rqvae.py 的 ARM_NAME 由框架改写：单独核，只允许这一行。
     let armNameOnly = null;
+    if (changedNames.includes('train_rqvae.py')) {
+      const diff = await unifiedDiff(baseFiles.get('train_rqvae.py'), treeFiles.get('train_rqvae.py'));
+      const extras = diff
+        .split('\n')
+        .filter((line) => (line.startsWith('+') || line.startsWith('-'))
+          && !line.startsWith('+++') && !line.startsWith('---')
+          && !line.includes('ARM_NAME'));
+      armNameOnly = { ok: extras.length === 0, extras: extras.slice(0, 10) };
+    }
+    // touch 里写的是仓库相对路径（带树名），比对用的是树内相对路径。
+    const relOf = (item) => (item.startsWith(`${treeRel}/`) ? item.slice(treeRel.length + 1) : item);
+    const allowed = touch !== null ? new Set(touch.map(relOf)) : new Set(['mechanism.py']);
+    const unexpectedNew = newNames.filter((name) => !allowed.has(name));
+    const unexpectedChanged = [];
     for (const rel of changedNames) {
-      if (rel === 'train_rqvae.py') {
-        const diff = await unifiedDiff(baseFiles.get(rel), treeFiles.get(rel));
-        const extras = diff
-          .split('\n')
-          .filter((line) => (line.startsWith('+') || line.startsWith('-'))
-            && !line.startsWith('+++') && !line.startsWith('---')
-            && !line.includes('ARM_NAME'));
-        armNameOnly = { ok: extras.length === 0, extras: extras.slice(0, 10) };
-        if (!armNameOnly.ok) {
-          unexpectedChanged.push({ file: rel, reason: 'train_rqvae.py 除了 ARM_NAME 还有别的改动' });
-        }
-        continue;
-      }
-      unexpectedChanged.push({ file: rel, reason: '插件宿主只允许新增 mechanism.py、并且只改 ARM_NAME' });
+      if (allowed.has(rel)) continue;
+      if (rel === 'train_rqvae.py' && armNameOnly && armNameOnly.ok) continue;
+      unexpectedChanged.push({
+        file: rel,
+        reason: touch !== null
+          ? '不在 idea 的 touch 清单里（只允许改清单里的文件）'
+          : '插件宿主只允许新增 mechanism.py、并且只改 ARM_NAME',
+      });
     }
     surface = {
-      pluginHost: true,
+      mode: touch !== null ? 'touch' : 'plugin',
+      pluginHost,
+      allowed: [...allowed],
       mechanism: treeFiles.has('mechanism.py'),
       newFiles: newNames,
+      changedFiles: changedNames,
       unexpectedNew,
       unexpectedChanged,
       armNameOnly,
@@ -1703,7 +1717,7 @@ async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }
       'files.* 里剩下的条目就是问题：missing 的没写，differsFromBaseline=false 的声明改了却没改。',
       'paths.absolute / paths.parentsN 的 total 必须是 0；armNames 只允许一个值且等于候选树目录名。',
       'paths.crossArm 必须为空：候选树只能依赖冻结基线与本树，引用别的臂就是外部依赖。',
-      'surface（基线是插件宿主时）：必须 ok=true —— 只允许新增 mechanism.py、且 train_rqvae.py 只改 ARM_NAME。',
+      'surface：必须 ok=true —— idea 有 touch 时只允许改 touch 里的文件；否则（插件宿主）只允许新增 mechanism.py；train_rqvae.py 只允许改 ARM_NAME。',
       'frozen.*.changed 必须为空；frozen.constants.added 是机制自己的常量，属正常。',
       'metrics.missing 是规格要求但树里没有的读数名。',
       'declarations.constants/formulas 是规格声明的名字在树里的位置（hits=0 表示没找到，需要你判断是命名不同还是真缺）。',

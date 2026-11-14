@@ -166,6 +166,7 @@ write(`${PB}/mechanism_base.py`, '"""host marker"""\n');
 write(`${PB}/train_rqvae.py`, 'ARM_NAME = "TIGER_RQ-VAE"\nprint("baseline")\n');
 write(`${PB}/config/train_config.json`, JSON.stringify({ epochs: 3000 }, null, 2));
 write(`${PB}/distances/distance.py`, 'X = 1\n');
+write(`${PB}/model/layers.py`, 'Y = 1\n');
 for (const dir of [PT, PT2, PT3]) {
   write(`${dir}/mechanism_base.py`, '"""host marker"""\n');
   write(`${dir}/train_rqvae.py`, 'ARM_NAME = "TIGER_rq_plugin"\nprint("baseline")\n');
@@ -202,6 +203,50 @@ await test('插件宿主：改动别的文件 → 被点名', async () => {
 
 await test('非插件基线：surface 为 null（沿用原规则）', async () => {
   assert.equal(out.surface, null);
+});
+
+
+// ---- touch：idea 直接声明"允许改哪些文件" ----------------------------------
+const TD = `${ROOT}/touch-idea`;
+const PT4 = `${ROOT}/touch-tree`;
+const PT5 = `${ROOT}/touch-tree-extra`;
+for (const dir of [PT4, PT5]) {
+  write(`${dir}/mechanism_base.py`, '"""host marker"""\n');
+  write(`${dir}/train_rqvae.py`, 'ARM_NAME = "TIGER_touch"\nprint("baseline")\n');
+  write(`${dir}/distances/distance.py`, 'X = 2\n');   // 允许：touch 里写了它
+  write(`${dir}/model/layers.py`, 'Y = 1\n');
+}
+write(`${PT5}/model/layers.py`, 'Y = 2\n');           // 不允许：不在 touch 里
+function writeTouchIdea(dir, tree) {
+  write(`${dir}/touch_idea.json`, JSON.stringify({
+    schema: 'genrec.idea.v6',
+    arm: 'TIGER_touch',
+    sections: {
+      '1_goal': { idea: 'touch smoke' },
+      '4_method': {
+        new_files: [],
+        modified_files: [{ path: `${tree}/distances/distance.py`, what: 'only this file' }],
+        touch: [`${tree}/distances/distance.py`],
+      },
+    },
+  }, null, 2));
+  write(`${dir}/math.json`, JSON.stringify({ metrics: {} }));
+}
+writeTouchIdea(TD, PT4);
+writeTouchIdea(`${ROOT}/touch-idea-extra`, PT5);
+
+await test('touch：只改清单里的文件 → surface.ok', async () => {
+  const out = await call({ tree: PT4, baseline: PB, idea: TD });
+  assert.equal(out.surface.mode, 'touch');
+  assert.deepEqual(out.surface.allowed, ['distances/distance.py']);
+  assert.deepEqual(out.surface.unexpectedChanged, []);
+  assert.equal(out.surface.ok, true);
+});
+
+await test('touch：改了清单外的文件 → 被点名', async () => {
+  const out = await call({ tree: PT5, baseline: PB, idea: `${ROOT}/touch-idea-extra` });
+  assert.deepEqual(out.surface.unexpectedChanged.map((x) => x.file), ['model/layers.py']);
+  assert.equal(out.surface.ok, false);
 });
 
 rm(ROOT);

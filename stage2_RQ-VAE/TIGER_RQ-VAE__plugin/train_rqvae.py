@@ -39,6 +39,8 @@ from losses import build_loss
 from model import RQVAE
 from train_config import load_train_config
 
+import runtime_context
+
 # === 机制插件（可选）=======================================================
 # 这棵树里若存在 mechanism.py，就用它；没有时训练与冻结基线逐行为一致。
 # 机制只允许写这一个文件；路径、超参、DDP、导出都由本文件与框架负责。
@@ -52,18 +54,6 @@ def _mechanism_hook(name, default=None):
     if MECHANISM is None:
         return default
     return getattr(MECHANISM, name, default)
-
-
-def _mechanism_needs_item_ids() -> bool:
-    """机制的信号是否按 item id 索引（是则 DataLoader 多带一列 item_id）。"""
-    return bool(_mechanism_hook("needs_item_ids", False))
-
-
-def _mechanism_dataset(train_embeddings, train_item_ids):
-    """无机制时与基线完全一致：(embedding,) 单列数据集。"""
-    if _mechanism_needs_item_ids():
-        return TensorDataset(train_embeddings, train_item_ids)
-    return TensorDataset(train_embeddings)
 
 
 def _mechanism_prepare(train_ids, all_ids) -> dict:
@@ -348,9 +338,9 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
-    # 机制按 item id 索引时多带一列；没有机制时与基线一样是单列。
-    train_item_ids = torch.from_numpy(train_ids) if _mechanism_needs_item_ids() else None
-    train_dataset = _mechanism_dataset(train_embeddings, train_item_ids)
+    # 恒带 item id：任何机制文件都能从 runtime_context 读到行身份，不必改这里。
+    train_item_ids = torch.from_numpy(train_ids)
+    train_dataset = TensorDataset(train_embeddings, train_item_ids)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -394,6 +384,7 @@ def main() -> None:
         print("[RecBole RQ-VAE] initializing codebooks with KMeans", flush=True)
     raw_module = model.module if isinstance(model, DDP) else model
     with torch.no_grad():
+        runtime_context.set_item_ids(torch.from_numpy(train_ids).to(device), phase="init")
         raw_module.init_codebook(train_embeddings.to(device))
     if world_size > 1:
         dist.barrier()
@@ -411,15 +402,11 @@ def main() -> None:
         losses: list[float] = []
         recons: list[float] = []
         _epoch_t0 = time.time()
-        for batch_tuple in loader:
-            if _mechanism_needs_item_ids():
-                batch, batch_ids = batch_tuple
-                batch = batch.to(device, non_blocking=True)
-                batch_ids = batch_ids.to(device, non_blocking=True)
-                _mechanism_context(batch_ids, True)
-            else:
-                (batch,) = batch_tuple
-                batch = batch.to(device, non_blocking=True)
+        for batch, batch_ids in loader:
+            batch = batch.to(device, non_blocking=True)
+            batch_ids = batch_ids.to(device, non_blocking=True)
+            runtime_context.set_item_ids(batch_ids, phase="train")
+            _mechanism_context(batch_ids, True)
             optimizer.zero_grad(set_to_none=True)
             reconstructed, quant_parts, _, _ = model(batch)
             # 唯一接入点：损失项与权重在 losses/ 里，这里只拿到总损失与分项。
@@ -518,9 +505,9 @@ def main() -> None:
             layer._skip_ddp_reduce = True
         try:
             with torch.no_grad():
-                _mechanism_context(
-                    torch.arange(len(all_embeddings), device=device), False
-                )
+                _full_ids = torch.arange(len(all_embeddings), device=device)
+                runtime_context.set_item_ids(_full_ids, phase="eval")
+                _mechanism_context(_full_ids, False)
                 raw_tokens = raw_module.get_indices(
                     all_embeddings.to(device), infer_use_sk=False
                 ).cpu().numpy().astype(np.int64)

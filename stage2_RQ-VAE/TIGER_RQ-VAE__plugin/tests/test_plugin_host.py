@@ -12,7 +12,6 @@ from types import SimpleNamespace
 
 import pytest
 import torch
-from torch.utils.data import TensorDataset
 
 sys.path.insert(0, __file__.rsplit("/tests/", 1)[0])
 
@@ -21,19 +20,26 @@ import train_rqvae  # noqa: E402
 
 def test_without_mechanism_the_host_behaves_like_the_baseline(monkeypatch):
     monkeypatch.setattr(train_rqvae, "MECHANISM", None)
-    assert train_rqvae._mechanism_needs_item_ids() is False
-    embeddings = torch.zeros(4, 8)
-    dataset = train_rqvae._mechanism_dataset(embeddings, None)
-    assert isinstance(dataset, TensorDataset)
-    (row,) = dataset[0]
-    assert row.shape == (8,)
     assert train_rqvae._mechanism_prepare([0, 1], [0, 1, 2]) == {}
     assert train_rqvae._mechanism_readouts() == {}
     assert train_rqvae._mechanism_switches() == {}
     train_rqvae._mechanism_context(torch.tensor([0]), True)  # no-op, must not raise
+    assert train_rqvae.DISTANCE.__module__ == "distances.distance"
 
 
-def test_with_mechanism_the_dataset_carries_item_ids(monkeypatch):
+def test_runtime_context_publishes_item_ids():
+    import runtime_context
+
+    runtime_context.clear()
+    assert runtime_context.item_ids() is None
+    assert runtime_context.phase() == "train"
+    runtime_context.set_item_ids(torch.tensor([5, 6, 7]), phase="eval")
+    assert runtime_context.item_ids().tolist() == [5, 6, 7]
+    assert runtime_context.phase() == "eval"
+    runtime_context.clear()
+
+
+def test_with_mechanism_the_context_and_hooks_are_used(monkeypatch):
     seen = {}
 
     def prepare(train_ids, all_ids):
@@ -44,7 +50,6 @@ def test_with_mechanism_the_dataset_carries_item_ids(monkeypatch):
         seen.setdefault("context", []).append((list(item_ids), training))
 
     fake = SimpleNamespace(
-        needs_item_ids=True,
         prepare=prepare,
         set_context=set_context,
         readouts=lambda: {"ratio": 0.5},
@@ -53,14 +58,9 @@ def test_with_mechanism_the_dataset_carries_item_ids(monkeypatch):
     )
     monkeypatch.setattr(train_rqvae, "MECHANISM", fake)
 
-    embeddings = torch.zeros(4, 8)
-    item_ids = torch.tensor([7, 8, 9, 10])
-    dataset = train_rqvae._mechanism_dataset(embeddings, item_ids)
-    embedding_row, id_row = dataset[0]
-    assert embedding_row.shape == (8,) and int(id_row) == 7
     assert train_rqvae._mechanism_prepare([7, 8], [7, 8, 9, 10]) == {"items": 4}
     assert seen["prepare"] == ([7, 8], [7, 8, 9, 10])
-    train_rqvae._mechanism_context(item_ids, True)
+    train_rqvae._mechanism_context(torch.tensor([7, 8, 9, 10]), True)
     assert seen["context"] == [([7, 8, 9, 10], True)]
     assert train_rqvae._mechanism_readouts() == {"ratio": 0.5}
     assert train_rqvae._mechanism_switches() == {"behaviour_off": False}

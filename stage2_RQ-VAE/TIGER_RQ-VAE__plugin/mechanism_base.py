@@ -4,9 +4,10 @@ A candidate tree is a copy of this baseline plus exactly one new file, ``mechani
 Everything else — paths, hyper-parameters, DDP, the data pipeline, SID export — is
 host-owned. The trainer probes these optional hooks:
 
-``needs_item_ids: bool``
-    True when the signal is indexed by item id; the DataLoader then carries a second
-    column (``item_ids``) and the trainer hands each batch's ids to ``set_context``.
+``runtime_context.item_ids()``
+    The host always carries item ids with each batch and publishes the row identity
+    through ``runtime_context``: any mechanism file may read it directly. ``set_context``
+    below is only for mechanisms that want to pre-compute per-batch quantities.
 
 ``prepare(train_ids, all_ids) -> dict``
     Called once before training (rank 0) to build frozen tables / fit constants.
