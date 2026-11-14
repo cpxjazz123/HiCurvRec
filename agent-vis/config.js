@@ -908,7 +908,7 @@ export const AGENT_PROFILES = [
         '但它只是你自测用的 —— 准入仍然由框架跑的四套独立验证套件判定，runTests 的结果不算证据；' +
         '别把"我跑过了"当成"验证通过了"。',
       '',
-      '可用工具：ls、read、grep、treeDiff、specCheck（只读）、write/edit（写文件）、gitLog（读提交）、' +
+      '可用工具：ls、read、grep、treeDiff、specCheck、readDiff（只读）、write/edit（写文件）、gitLog（读提交）、' +
         'runTests（跑候选树 tests/ 自测）。' +
         '每步只调 1-2 个工具。回答用中文，结论先行；提到文件时给仓库相对路径与行号。',
     ].join('\n'),
@@ -925,11 +925,13 @@ export const AGENT_PROFILES = [
         instruction:
           '候选树是 idea 里 arm 字段指的目录（stage2_RQ-VAE/<arm>）；idea 没有这个字段时，' +
           '用 ls 列出 stage2_RQ-VAE/ 找出与当前方向对应的那个（冻结基线 TIGER_RQ-VAE 之外的目录）。' +
-          '先用 treeDiff({baseline: \'stage2_RQ-VAE/TIGER_RQ-VAE\', tree: 候选树}) 拿到增量：' +
-          '哪些文件逐字节相同、哪些改了（带 diff）、哪些是新增 —— 改动范围本身就是核对项。' +
-          '然后只读增量那部分：新增文件整读，改动文件读 diff 提到的位置，' +
-          '与基线逐字节相同的文件不必再读。再用 grep 定位常量与调用点。' +
-          '判"改得对不对"既要对冻结基线的接口，也要对 idea 与 math.json 的公式。',
+          '先 treeDiff({baseline: \'stage2_RQ-VAE/TIGER_RQ-VAE\', tree: 候选树}) 拿增量，' +
+          '再 readDiff({tree: 候选树}) 拿全部改动的 diff，再用 specCheck({tree: 候选树}) 拿机械项与' +
+          '规格常量/公式在树里的位置。三样到手后：treeDiff 里 identical 的文件一律不许再 read；' +
+          '改动文件只看 diff 命中的位置，需要上下文时用 read 的 offset/limit 读那一段。' +
+          '本步不写代码、不跑测试 —— 写与 runTests 都属于第 3 步，这里只判"改得对不对"（对基线接口、对 idea 与 math.json）。' +
+          '输出必须是表格，每条一行：`文件/符号 | PASS/FAIL/UNCHECKED | 文件:行 | 一句依据`；' +
+          '不贴代码、不重述规格，总共不超过 40 行。',
       },
       {
         title: '逐项核对',
@@ -985,7 +987,7 @@ export const PERMISSION_CATALOG = [
     label: '读（read）',
     description:
       '读仓库里的东西：列目录、读文件、按正则搜内容、找文件、校验 JSON、校验 idea 字段 —— 都限制在仓库根之内。',
-    tools: ['read', 'ls', 'grep', 'find', 'checkJson', 'checkIdea', 'treeDiff', 'specCheck'],
+    tools: ['read', 'ls', 'grep', 'find', 'checkJson', 'checkIdea', 'treeDiff', 'specCheck', 'readDiff'],
   },
   {
     id: 'write',

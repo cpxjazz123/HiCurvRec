@@ -65,6 +65,7 @@ const SKIP_DIRS = new Set([
   'node_modules',
   '.git',
   'results',
+  'logs',
   '__pycache__',
   '.pytest_cache',
   '.mypy_cache',
@@ -477,6 +478,25 @@ const treeDiffTool = piTool({
     ),
   }),
   impl: treeDiff,
+});
+
+const readDiffTool = piTool({
+  name: 'readDiff',
+  label: '读 diff',
+  description:
+    'Unified diff of one file (or of every changed file) between the frozen baseline and the candidate tree. ' +
+    'Use it instead of reading a whole file: the review surface is the changed lines plus their context.',
+  parameters: Type.Object({
+    tree: Type.String({ description: '候选树目录，例如 stage2_RQ-VAE/TIGER_xxx_rq' }),
+    file: Type.Optional(
+      Type.String({ description: '相对树根的单个文件，例如 train_rqvae.py；不给就列出全部改动文件' }),
+    ),
+    baseline: Type.Optional(Type.String({ description: '冻结基线目录，默认 stage2_RQ-VAE/TIGER_RQ-VAE' })),
+    maxLines: Type.Optional(
+      Type.Integer({ minimum: 1, maximum: 2000, description: '每个文件最多回多少行 diff，默认 200' }),
+    ),
+  }),
+  impl: readDiff,
 });
 
 const specCheckTool = piTool({
@@ -1055,6 +1075,79 @@ async function runTests({ tree, timeoutSeconds = 600 }) {
   }
 }
 
+/** 单个文件的 unified diff（缺口时返回空串，不抛）。 */
+async function unifiedDiff(baseFile, treeFile) {
+  try {
+    const { stdout } = await execFileAsync('diff', ['-u', baseFile, treeFile], {
+      maxBuffer: 4 * 1024 * 1024,
+    });
+    return stdout;
+  } catch (err) {
+    if (err && err.code === 1) return err.stdout || '';
+    throw err;
+  }
+}
+
+/**
+ * 两棵树里某个文件（或全部改动文件）的 diff。
+ *
+ * 审"改了哪里"不需要 71 KB 的整文件：+860/−10 的 diff 就是审查面。
+ * 只回 diff 行，正文由模型按需再 read。
+ */
+async function readDiff({ baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE', tree, file, maxLines = 200 }) {
+  const baseDir = stage2TreePath(baseline);
+  const treeDir = stage2TreePath(tree);
+  if (!fs.existsSync(baseDir)) return { ok: false, error: `基线不存在: ${baseline}` };
+  if (!fs.existsSync(treeDir)) return { ok: false, error: `候选树不存在: ${tree}` };
+  const limit = Math.max(1, Math.min(2000, maxLines));
+  const rels = [];
+  if (file !== undefined && file !== '') {
+    rels.push(file);
+  } else {
+    const baseFiles = listTextFiles(baseDir);
+    const treeFiles = listTextFiles(treeDir);
+    for (const rel of [...new Set([...baseFiles.keys(), ...treeFiles.keys()])].sort()) {
+      const a = baseFiles.get(rel);
+      const b = treeFiles.get(rel);
+      if (!a || !b) {
+        rels.push(rel);
+        continue;
+      }
+      if (!fs.readFileSync(a).equals(fs.readFileSync(b))) rels.push(rel);
+    }
+  }
+  const out = [];
+  for (const rel of rels.slice(0, 20)) {
+    const a = path.join(baseDir, rel);
+    const b = path.join(treeDir, rel);
+    const missing = [];
+    if (!fs.existsSync(a)) missing.push('baseline');
+    if (!fs.existsSync(b)) missing.push('tree');
+    if (missing.length > 0) {
+      out.push({ file: rel, onlyIn: missing.length === 2 ? 'neither' : missing[0] === 'baseline' ? 'tree' : 'baseline' });
+      continue;
+    }
+    const unified = await unifiedDiff(a, b);
+    if (unified === '') continue;
+    const lines = unified.split('\n');
+    const { added, removed } = countDiffLines(unified);
+    out.push({
+      file: rel,
+      added,
+      removed,
+      truncated: lines.length > limit,
+      diff: lines.slice(0, limit).join('\n'),
+    });
+  }
+  return {
+    ok: true,
+    baseline: relativeToRoot(baseDir),
+    tree: relativeToRoot(treeDir),
+    files: out,
+    hint: 'diff 的 `-` 是基线的写法、`+` 是当前的写法；需要上下文再 read 该文件的相关区间。',
+  };
+}
+
 /**
  * 一棵树里的文本文件（相对路径 → 绝对路径）。
  *
@@ -1372,10 +1465,28 @@ async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }
     ? Object.keys(ideaInfo.math.metrics)
     : [];
   const missingMetrics = [];
+  const escapeRe = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   for (const name of metricNames) {
-    const probe = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
-    if (grepFiles(treeFiles, probe, 1).total === 0) missingMetrics.push(name);
+    if (grepFiles(treeFiles, new RegExp(`\\b${escapeRe(name)}\\b`), 1).total === 0) missingMetrics.push(name);
   }
+
+  // 规格声明的常量与公式名，落在哪个文件哪一行 —— 省掉 step 1 的逐名 grep。
+  const declareLocations = (entries) => entries.map((entry) => {
+    const name = String(entry && entry.name ? entry.name : '').trim();
+    if (name === '') return null;
+    const found = grepFiles(treeFiles, new RegExp(`\\b${escapeRe(name)}\\b`), 2);
+    return {
+      name,
+      hits: found.total,
+      where: found.hits[0] ? found.hits[0].where : null,
+      text: found.hits[0] ? found.hits[0].text : null,
+    };
+  }).filter(Boolean);
+  const math = (ideaInfo && ideaInfo.math) || {};
+  const declarations = {
+    constants: declareLocations(Array.isArray(math.constants) ? math.constants : []),
+    formulas: declareLocations(Array.isArray(math.formulas) ? math.formulas : []),
+  };
 
   return {
     ok: true,
@@ -1397,12 +1508,14 @@ async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }
     frozen,
     assignment: { sinkhornCallsites: sinkhorn.total, argminCallsites: argmin.total, argminHits: argmin.hits },
     metrics: { declared: metricNames.length, missing: missingMetrics },
+    declarations,
     tests: { files: tests.length, suspicious: tests.filter((entry) => entry.suspicious) },
     hints: [
       'files.* 里剩下的条目就是问题：missing 的没写，differsFromBaseline=false 的声明改了却没改。',
       'paths.absolute / paths.parentsN 的 total 必须是 0；armNames 只允许一个值且等于候选树目录名。',
       'frozen.*.changed 必须为空；frozen.constants.added 是机制自己的常量，属正常。',
       'metrics.missing 是规格要求但树里没有的读数名。',
+      'declarations.constants/formulas 是规格声明的名字在树里的位置（hits=0 表示没找到，需要你判断是命名不同还是真缺）。',
       'tests.suspicious 是空断言或无断言的测试文件。',
       '公式语义与开关是否真退化，工具判不了 —— 这两类仍要你读代码。',
     ],
@@ -1434,6 +1547,7 @@ export const PI_TOOLS = {
   runTests: runTestsTool,
   treeDiff: treeDiffTool,
   specCheck: specCheckTool,
+  readDiff: readDiffTool,
   copyBaselineTree: copyBaselineTreeTool,
   deleteFile: deleteFileTool,
 };

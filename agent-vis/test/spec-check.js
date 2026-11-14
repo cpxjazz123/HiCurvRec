@@ -79,6 +79,8 @@ write(`${IDEA}/fixture_idea.json`, JSON.stringify({
 }, null, 2));
 write(`${IDEA}/math.json`, JSON.stringify({
   metrics: { good_metric: 'present', absent_metric: 'never implemented' },
+  constants: [{ name: 'EPOCHS', value: 1200 }, { name: 'NOT_A_CONSTANT', value: 1 }],
+  formulas: [{ name: 'sinkhorn' }, { name: 'never_named_formula' }],
 }, null, 2));
 
 const call = async (args) => {
@@ -119,6 +121,15 @@ await test('冻结超参：JSON 项与 Python 常量分别报变化', () => {
 await test('规格里的 metrics 没落地会被点名', () => {
   assert.deepEqual(out.metrics.missing, ['absent_metric']);
   assert.equal(out.metrics.declared, 2);
+});
+
+await test('规格声明的常量与公式名定位到文件:行', () => {
+  const constants = Object.fromEntries(out.declarations.constants.map((e) => [e.name, e]));
+  assert.match(constants.EPOCHS.where, /train_config\.py:\d+/);
+  assert.equal(constants.NOT_A_CONSTANT.hits, 0);
+  const formulas = Object.fromEntries(out.declarations.formulas.map((e) => [e.name, e]));
+  assert.ok(formulas.sinkhorn.hits >= 1, JSON.stringify(formulas.sinkhorn));
+  assert.equal(formulas.never_named_formula.hits, 0);
 });
 
 await test('无断言的测试文件进 suspicious', () => {

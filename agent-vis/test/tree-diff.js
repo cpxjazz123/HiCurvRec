@@ -112,6 +112,31 @@ await testAsync('越界的路径被拒', async () => {
   await assert.rejects(() => diff({ baseline: '../../../etc', tree: TREE }), /越界/);
 });
 
+const diffCall = async (args) => {
+  const result = await PI_TOOLS.readDiff.execute('call-2', args);
+  return JSON.parse(result.content[0].text);
+};
+
+await testAsync('readDiff 单文件：只回改动，不改的文件不进列表', async () => {
+  const out = await diffCall({ baseline: BASE, tree: TREE, file: 'mod.py' });
+  assert.equal(out.ok, true, out.error);
+  assert.equal(out.files.length, 1);
+  assert.equal(out.files[0].file, 'mod.py');
+  assert.match(out.files[0].diff, /\+b = 2/);
+  assert.equal(out.files[0].truncated, false);
+  const same = await diffCall({ baseline: BASE, tree: TREE, file: 'same.py' });
+  assert.deepEqual(same.files, []);
+});
+
+await testAsync('readDiff 全树：新增与删除的文件标 onlyIn', async () => {
+  const out = await diffCall({ baseline: BASE, tree: TREE });
+  const byFile = Object.fromEntries(out.files.map((entry) => [entry.file, entry]));
+  assert.equal(byFile['new.py'].onlyIn, 'tree');
+  assert.equal(byFile['gone.py'].onlyIn, 'baseline');
+  assert.ok(byFile['mod.py'], '改动文件必须出现');
+  assert.equal(byFile['same.py'], undefined, '相同文件不该出现');
+});
+
 rm(ROOT);
 console.log(`treeDiff: ${passed} 通过`);
 if (process.exitCode) process.exit(process.exitCode);
