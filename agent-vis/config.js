@@ -1188,6 +1188,18 @@ const WRITER_PROFILES = [
   writeScope: files.map((file) => `${WRITER_TREE}/${file}`),
   loopWatchFiles: files.map((file) => `${WRITER_TREE}/${file}`),
   instructions: writerInstructions(name, files),
+  // 页面上输入框的预填：这几栏没有固定步骤，任务就是"写这几份文件"。
+  // 不预填的话空输入框按运行会被拒（没有可执行的内容）。
+  defaultPrompt: [
+    `写你负责的文件：${files.map((file) => `${WRITER_TREE}/${file}`).join('、')}。`,
+    '先读 ideas/AF3_curvature_factor_mass_idea/*_idea.json 与同目录 math.json，' +
+      '再读这棵树里已有的机制文件（它们的签名就是契约，不许改）。',
+    '只写上面清单里的文件 —— 越界写会被工具直接拒绝；需要改别人的文件时，把"改哪个文件、改成什么"写进结论。',
+    '每写完一份用 read 读回确认。不跑训练、不 commit/push。',
+    '最后给一张表：文件 | 做了什么 | 还缺什么。',
+  ].join('\n'),
+  // 写完交给核对员：接口对不对由 AGENT FIX 统一判。
+  handoffTargets: ['agent-fix'],
   steps: [],
 }));
 

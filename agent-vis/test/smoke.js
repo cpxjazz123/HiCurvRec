@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 
 import { createServer, runStatus } from '../server.js';
 import { config } from '../server.js';
+import { readIdeaDoc } from '../idea-store.js';
 import { createStore, applyChunk, foldText, roundEnded, handoffRequested, ROUND_END_TOOL, ROUND_HANDOFF_TOOL } from '../public/protocol.js';
 import { scanIdeaFiles, archivedDirectionNames } from '../idea-store.js';
 import { runMockChunks } from '../mock-agent.js';
@@ -274,8 +275,17 @@ async function main() {
       watches.every((p) => p.startsWith('stage2_RQ-VAE/{arm}/')),
       `被审的应当只有当前方向那棵树：${JSON.stringify(watches)}`,
     );
+    // 指纹的内容取决于仓库里有没有当前方向的候选树 —— 测试不能绑定仓库状态：
+    // 树不在时指纹就该为空（那时闸门永远不会判"有改动"，也就不会空转）。
     const fp = await (await fetch(`${base}/api/ideas/fingerprint?agentId=agent-fix`)).json();
     const names = Object.keys(fp.files || {});
+    const arm = (readIdeaDoc().doc || {}).arm || '';
+    const hasCandidate = arm !== ''
+      && fs.existsSync(path.join(config.currentWorkdir(), 'stage2_RQ-VAE', arm));
+    if (!hasCandidate) {
+      assert.deepEqual(names, [], '没有候选树时指纹必须为空');
+      return;
+    }
     assert.ok(names.length > 0, 'AGENT FIX 的指纹不该是空的');
     const arms = new Set(names.map((n) => n.split('/')[1]));
     assert.equal(arms.size, 1, `指纹只该覆盖一棵候选树：${[...arms].join(', ')}`);
