@@ -252,7 +252,7 @@ export const TOOL_IMPLS = {
    * 复制一份、只改 ARM_NAME 这一个常量、其余逐文件一致。已经存在的目录不覆盖 ——
    * 候选树要是旧的，机制就说不清是哪一版的。
    */
-  async copyBaselineTree({ arm, from = 'stage2_RQ-VAE/TIGER_RQ-VAE' }) {
+  async copyBaselineTree({ arm, from = 'stage2_RQ-VAE/TIGER_RQ-VAE', renameArm = true }) {
     const name = typeof arm === 'string' ? arm.trim() : '';
     if (!/^TIGER_[A-Za-z0-9_]+$/.test(name)) {
       throw new Error(`arm 名字不对（要像 TIGER_af3_curvature_drive_rq）: ${arm}`);
@@ -285,9 +285,13 @@ export const TOOL_IMPLS = {
       try { fs.rmSync(target, { recursive: true, force: true }); } catch { /* 忽略 */ }
       throw err;
     }
-    // ARM_NAME 是唯一允许改的东西：候选树的产物目录由它推出来。
+    // 默认把 ARM_NAME 改成新树名（产物目录由它推出来）；renameArm=false 时整棵树
+    // 与基线逐字节相同，只换了目录名 —— 需要 pristine 副本时用这个。
     const oldArm = path.basename(source);
     let rewritten = 0;
+    if (renameArm === false) {
+      return { path: relativeToRoot(target), arm: name, files: null, renamed: 0, pristine: true };
+    }
     const walk = async (dir) => {
       const entries = await fs.promises.readdir(dir, { withFileTypes: true });
       for (const entry of entries) {
@@ -676,11 +680,17 @@ const copyBaselineTreeTool = piTool({
   label: '复制基线候选树',
   description:
     'Copy the frozen baseline tree into a new candidate tree (stage2_RQ-VAE/TIGER_<ARM>/). ' +
-    'Only ARM_NAME is rewritten; an existing target is never overwritten.',
+    'By default only ARM_NAME is rewritten; with renameArm:false every file stays byte-identical and ' +
+    'only the directory name differs. An existing target is never overwritten.',
   parameters: Type.Object({
     arm: Type.String({ description: '新候选树的名字，例如 TIGER_af3_curvature_drive_rq' }),
     from: Type.Optional(
       Type.String({ description: '基线树路径，默认 stage2_RQ-VAE/TIGER_RQ-VAE' }),
+    ),
+    renameArm: Type.Optional(
+      Type.Boolean({
+        description: '是否把 ARM_NAME 改成新树名；false = 除目录名外与基线逐字节相同，默认 true',
+      }),
     ),
   }),
   impl: TOOL_IMPLS.copyBaselineTree,
