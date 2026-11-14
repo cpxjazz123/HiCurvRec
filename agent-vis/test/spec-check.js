@@ -51,12 +51,17 @@ write(`${BASE}/model/layers.py`, 'def sinkhorn(x):\n    return x\n');
 // 候选：一个常量被改、一个 JSON 项被改、一个绝对路径、一个 parents[N]
 write(`${TREE}/config/train_config.json`, JSON.stringify({ epochs: 3000, secret: 0.01 }, null, 2));
 write(`${TREE}/train_config.py`, 'EPOCHS = 1200\nSK_EPSILON = 0.003\nNEW_CONST = 0.5\n');
-write(`${TREE}/model/layers.py`, 'ARM_NAME = "TIGER_fixture"\n\ndef sinkhorn(x):\n    return x\n');
 write(`${TREE}/af3_item_potential.py`, 'DATA = "/home/someone/data.npy"\n');
 write(`${TREE}/factor_share_geometry.py`, 'import pathlib\nROOT = pathlib.Path(__file__).resolve().parents[3]\n');
 // 声明"改过"但其实没改的文件
 write(`${BASE}/distances/distance.py`, 'X = 1\n');
 write(`${TREE}/distances/distance.py`, 'X = 1\n');
+// 跨臂引用：一行引用别的臂（错），一行引用本树与基线（对）
+write(`${TREE}/model/layers.py`,
+  'ARM_NAME = "TIGER_fixture"\n'
+  + '# depends on stage2_RQ-VAE/TIGER_other_rq/af3_potential.py (external!)\n'
+  + '# ok: stage2_RQ-VAE/TIGER_fixture/af3_potential.py and stage2_RQ-VAE/TIGER_RQ-VAE/train_config.py\n'
+  + '\ndef sinkhorn(x):\n    return x\n');
 // 测试：一个健康、一个无断言；metrics 名落地一个、缺一个
 write(`${TREE}/tests/test_ok.py`, 'def test_ok():\n    assert good_metric == 1\n');
 write(`${TREE}/tests/test_empty.py`, 'def test_nothing():\n    print("hi")\n');
@@ -106,6 +111,12 @@ await test('绝对路径与 parents[N] 都能抓出来', () => {
   assert.ok(out.paths.absolute.total >= 1, JSON.stringify(out.paths.absolute));
   assert.match(out.paths.absolute.hits[0].where, /af3_item_potential\.py:1/);
   assert.ok(out.paths.parentsN.total >= 1, JSON.stringify(out.paths.parentsN));
+});
+
+await test('跨臂引用被点名，本树与基线的引用不算', () => {
+  assert.equal(out.paths.crossArm.total, 1, JSON.stringify(out.paths.crossArm));
+  assert.equal(out.paths.crossArm.hits[0].arm, 'TIGER_other_rq');
+  assert.match(out.paths.crossArm.hits[0].where, /model\/layers\.py:2/);
 });
 
 await test('ARM_NAME 取值被抓出来', () => {

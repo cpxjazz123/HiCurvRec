@@ -1530,7 +1530,25 @@ async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }
     return { file: rel, present: !!inTree, differsFromBaseline: changed, inTree: declared.startsWith(treeRel) };
   });
 
-  // e) 路径与身份：绝对路径、parents[N]、ARM_NAME 的取值。
+  // e) 路径与身份：绝对路径、parents[N]、ARM_NAME 的取值、跨臂引用。
+  // 候选树必须自包含（只依赖冻结基线 + 本树）：引用别的臂就是外部依赖，树不完整。
+  const ownArm = (ideaInfo && ideaInfo.idea && typeof ideaInfo.idea.arm === 'string'
+    && ideaInfo.idea.arm.trim() !== '')
+    ? ideaInfo.idea.arm.trim()
+    : path.basename(treeDir);
+  const crossArmHits = [];
+  for (const [rel, abs] of treeFiles) {
+    const lines = fs.readFileSync(abs, 'utf8').split('\n');
+    for (let i = 0; i < lines.length; i += 1) {
+      for (const match of lines[i].matchAll(/stage2_RQ-VAE\/(TIGER_[A-Za-z0-9_-]+)\//g)) {
+        const arm = match[1];
+        if (arm === ownArm || arm === 'TIGER_RQ-VAE') continue;
+        if (crossArmHits.length < 20) {
+          crossArmHits.push({ where: `${rel}:${i + 1}`, arm, text: lines[i].trim().slice(0, 160) });
+        }
+      }
+    }
+  }
   const absolute = grepFiles(treeFiles, /(^|[^A-Za-z0-9_.])\/(home|fs[0-9]+|tmp|Users|scratch|var\/tmp)\//);
   const parents = grepFiles(treeFiles, /parents\[\s*\d+\s*\]/);
   const armNames = [];
@@ -1630,6 +1648,7 @@ async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }
       absolute: { total: absolute.total, hits: absolute.hits },
       parentsN: { total: parents.total, hits: parents.hits },
       armNames,
+      crossArm: { total: crossArmHits.length, hits: crossArmHits },
     },
     frozen,
     assignment: { sinkhornCallsites: sinkhorn.total, argminCallsites: argmin.total, argminHits: argmin.hits },
@@ -1639,6 +1658,7 @@ async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }
     hints: [
       'files.* 里剩下的条目就是问题：missing 的没写，differsFromBaseline=false 的声明改了却没改。',
       'paths.absolute / paths.parentsN 的 total 必须是 0；armNames 只允许一个值且等于候选树目录名。',
+      'paths.crossArm 必须为空：候选树只能依赖冻结基线与本树，引用别的臂就是外部依赖。',
       'frozen.*.changed 必须为空；frozen.constants.added 是机制自己的常量，属正常。',
       'metrics.missing 是规格要求但树里没有的读数名。',
       'declarations.constants/formulas 是规格声明的名字在树里的位置（hits=0 表示没找到，需要你判断是命名不同还是真缺）。',

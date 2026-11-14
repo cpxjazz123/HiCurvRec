@@ -1154,7 +1154,8 @@ const WRITER_PROFILES = [
   {
     id: 'agent-w1',
     name: 'AGENT W1 · AF3 表',
-    files: ['af3_item_potential.py', 'tests/test_af3_item_potential.py'],
+    // vendored AF3 实现也算它的一部分：树要自包含，这份文件由它维护。
+    files: ['af3_item_potential.py', 'af3_potential.py', 'tests/test_af3_item_potential.py'],
   },
   {
     id: 'agent-w2',

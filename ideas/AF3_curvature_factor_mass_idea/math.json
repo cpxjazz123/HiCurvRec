@@ -42,15 +42,15 @@
     "N_l": "RQ 层数（=config/train_config.json 的 CODEBOOK_NUM=3），与 symbols.N（结构势表的商品数）不是同一个量；分配公式里的 l<N_l 即「非末层」",
     "expmap0": "球心指数映射 expmap0(v,c)：tools/research/geometry/poincare_contract.py:85，等于 tanh(sqrt(c)|v|)/(sqrt(c)|v|)*v（||v||->0 走 tanhc 极限），c==0 分支直接返回 v，出口按 (1-BALL_EPS)/sqrt(c) 的 project 收回球内；不自写算子",
     "d_c": "曲率 c 球内的测地距离，poincare_contract.py:141 distance：(2/sqrt(c))*artanh(sqrt(c)|(-x)(+)y|)，c==0 分支返回 2|x-y|（故 d_c^2->4|x-y|^2）；squared_distance:153 是它的平方",
-    "m_i": "判否族 F 里商品 i 那行点的半径参数（逐行自由，每行 1 个）；只出现在 allocation_residual 的拟合族里，不进训练通路",
-    "w_i": "判否族 F 里商品 i 那行的标度参数（逐行自由，每行 1 个）；同上，只出现在 allocation_residual 里",
-    "F": "判否族 F(θ; r_i^E, h1_i, h2_i, tau^1) = 「单球 + 跨行共享曲率 c + 每行点半径 m_i + 每行标度 w_i」，θ=(c,{m_i,w_i})，自由度 1+2N；本文件只给这族的成员与自由度、未给解析式（见 allocation_residual 的 UNCHECKED 记录），它不进训练通路"
+    "m_i": "判否族 F 里商品 i 那行点的半径参数（逐行自由，每行 1 个）；只出现在 metrics.allocation_residual 描述的拟合族里（本文件已无该族的解析式，见 F），不进训练通路",
+    "w_i": "判否族 F 里商品 i 那行的标度参数（逐行自由，每行 1 个）；同上，只出现在 metrics.allocation_residual 里",
+    "F": "判否族 F(θ; r_i^E, h1_i, h2_i, tau^1) = 「单球 + 跨行共享曲率 c + 每行点半径 m_i + 每行标度 w_i」，θ=(c,{m_i,w_i})，自由度 1+2N；本文件只给这族的成员与自由度、未给解析式（原 formulas.allocation_residual 因 UNCHECKED 已删除，现存描述只在 metrics.allocation_residual），它不进训练通路"
   },
   "formulas": [
     {
       "name": "af3_potential",
-      "formula": "kappa_ij=4-d_i-d_j+3*T_ij；kappa_bar_i=mean_{j in N(i)} kappa_ij（未加权，度 0 取图均值）；u_i=(rank(kappa_bar_i)-0.5)/N",
-      "note": "结构信号的全部来源，训练前算一次冻结，单商品一个标量；训练通路内没有 (i,j) 项（kappa_ij 只在构图阶段用完就丢）。用秩而非原始值：kappa_ij 含 -d_i-d_j 项、重尾，秩映射对严格单调变换不变；structural_potentials（af3_potential.py:115）返回的本来就是未标准化的邻域均值，standardise 是 :136 的独立函数、只在 build() 里对另一份 potential 调用，故 rank 直接作用在未标准化值上，秩口径与是否标准化无关。全表秩保证同一商品在任何 batch 得到同一个 u_i；并列取平均秩，不按 item id 打破，避免注入 id 信息。缺 key 与度 0 商品取图均值势的秩位置 u_miss=(rank_of_graph_mean-0.5)/N：它在几何上有明确含义（「图里最典型的那个结构势」的位置），但不保证不等于 SHARE_REF——势表全并列时（三点路径图 kappa_bar 全为 1，平均秩 (N+1)/2）或图均值恰好落在中位位置时（四点路径图加一个度 0 商品：s=(1,0.5,0.5,1,0.75)，rank(0.75)=3，u_miss=0.5）u_miss 恰好等于 SHARE_REF；此时 |p_miss-SHARE_REF|=0 只反映并列，不能当作接线已通的读数。"
+      "formula": "kappa_ij=4-d_i-d_j+3*T_ij；kappa_bar_i=mean_{j in Adj(i)} kappa_ij（Adj(i) 为图中与 i 相邻的商品集，未加权，度 0 取图均值）；u_i=(rank(kappa_bar_i)-0.5)/N",
+      "note": "结构信号的全部来源，训练前算一次冻结，单商品一个标量；训练通路内没有 (i,j) 项（kappa_ij 只在构图阶段用完就丢）。用秩而非原始值：kappa_ij 含 -d_i-d_j 项、重尾，秩映射对严格单调变换不变；structural_potentials（af3_potential.py:115）返回的本来就是未标准化的邻域均值，standardise 是 :136 的独立函数、只在 build() 里对另一份 potential 调用，故 rank 直接作用在未标准化值上，秩口径与是否标准化无关。全表秩保证同一商品在任何 batch 得到同一个 u_i；并列取平均秩，不按 item id 打破，避免注入 id 信息。缺 key 与度 0 商品取图均值势的秩位置 u_miss=(rank_of_graph_mean-0.5)/N：它在几何上有明确含义（「图里最典型的那个结构势」的位置），但不保证不等于 SHARE_REF——势表全并列时（三点路径图 kappa_bar 全为 1，平均秩 (N+1)/2）或图均值恰好落在中位位置时（四点路径图加一个度 0 商品：kappa_bar=(1,0.5,0.5,1,0.75)，rank(0.75)=3，u_miss=0.5）u_miss 恰好等于 SHARE_REF；此时 |p_miss-SHARE_REF|=0 只反映并列，不能当作接线已通的读数。"
     },
     {
       "name": "share_map",
@@ -85,17 +85,12 @@
     {
       "name": "euclidean_degeneracy",
       "formula": "c->0 时 expmap0(v,c)->v 且 d_c^2->4|x-y|^2，故 SCALE_HYP=0.25 时 D_ik->||r_i^E-tau_k^E||^2+||h1_i-sqrt(p_i)tau_k^{l,h1}||^2+||h2_i-sqrt(1-p_i)tau_k^{l,h2}||^2（码字侧放缩仍在，故只是 32 维加权平方欧氏，不是基线代价）；仅当再显式去掉放缩（两个因子都不乘，即 geometry_off 分支）才退化为 ||r_i^{E,l}-tau_k^{E,l}||^2+||h1_i-tau_k^{l,h1}||^2+||h2_i-tau_k^{l,h2}||^2，即输入向量 (r_i^{E,l}, h1_i, h2_i) 上的 32 维平方欧氏（双曲两块不做残差递归，故这是同一输入向量上的逐元素一致，不等同于整条递归链与基线逐位相同）",
-      "note": "geometry_off 的数学依据，也是与基线逐元素可比的口子：geometry_off 同时丢掉 p 与两块放缩，直接走候选树 distances/distance.py 的展开式，故在同一 32 维输入向量上与基线 distances/distance.py:11-21 逐元素一致（l≥2 的输入是 (r_i^{E,l}, h1_i, h2_i)，双曲两块不参与残差递归）；仅把曲率取得很小做不到逐位相等（球距离在有限正曲率下不退化成欧氏）。算式：d_c(x,y)=(2/sqrt(c))artanh(sqrt(c)|(-x)(+)y|)（poincare_contract.py:141），小 c 时 artanh(z)->z，故 d_c^2->4|x-y|^2，乘 0.25 后还原平方欧氏；例如 h1=0.1、tau_h1=0.2、p=0.5，c->0 的极限是 |0.1-0.7071*0.2|^2=1.716e-3，而不是 |0.1-0.2|^2=1.0e-2——放缩不被丢掉时极限与基线差 5.8 倍。并如实记一条边界：c->0 但保留放缩时，本向退化成「逐商品块权重」（三项分别带 p^1、p^{1/2}、p^0，与 1_goal 的幂次一致），那条极限里本向与「逐商品距离尺度」不可区分，所以交付主张只在有限曲率下成立，判否量见 allocation_residual。"
+      "note": "geometry_off 的数学依据，也是与基线逐元素可比的口子：geometry_off 同时丢掉 p 与两块放缩，直接走候选树 distances/distance.py 的展开式，故在同一 32 维输入向量上与基线 distances/distance.py:11-21 逐元素一致（l≥2 的输入是 (r_i^{E,l}, h1_i, h2_i)，双曲两块不参与残差递归）；仅把曲率取得很小做不到逐位相等（球距离在有限正曲率下不退化成欧氏）。算式：d_c(x,y)=(2/sqrt(c))artanh(sqrt(c)|(-x)(+)y|)（poincare_contract.py:141），小 c 时 artanh(z)->z，故 d_c^2->4|x-y|^2，乘 0.25 后还原平方欧氏；例如 h1=0.1、tau_h1=0.2、p=0.5，c->0 的极限是 |0.1-0.7071*0.2|^2=1.716e-3，而不是 |0.1-0.2|^2=1.0e-2——放缩不被丢掉时极限与基线差 5.8 倍。并如实记一条边界：c->0 但保留放缩时，本向退化成「逐商品块权重」（||x||^2 带 p^0、-2<x,tau> 带 p^{1/2}、||tau||^2 带 p^1，与 1_goal 的幂次一致），那条极限里本向与「逐商品距离尺度」不可区分，所以交付主张只在有限曲率下成立，判否量见 allocation_residual。"
     },
     {
       "name": "no_pair_signal",
       "formula": "通路输入只有 (单商品标量 p_i) 与 (batch 的 item_ids)；D_ik、C_i、Q_i、g_hi、g_lo 里没有任何 (i,j) 项，也没有组间比值或组间对比项",
       "note": "对 must_hold#1 的逐项自检：不需要 InfoNCE / BCE / margin / 残差对比，也不需要按曲率符号、阈值、度数把边集或商品切成正组负组。p_i 是逐商品的连续占比，两块各自参与距离的求和，不是「两组之比」；SHARE_REF 是 behaviour_off 的常量占比、不是分组阈值；u_i 到 p_i 是恒等映射，无阈值无分段。所有指标里出现的边级统计都是只读的物化读数，不进损失、不进梯度。"
-    },
-    {
-      "name": "allocation_residual",
-      "formula": "对第 1 层的每行 i：min_{θ in Θ_shared} || D_i - F(θ; r_i^E, h1_i, h2_i, tau^1) || ，其中 F 取「单球 + 全局曲率 c（跨行共享）+ 每行点半径 m_i + 每行标度 w_i」这一族：自由度 1+2N，只有 c 跨行共享，m_i 与 w_i 逐行自由",
-      "note": "本向主张的判否量，而不是效应量：残差为零（在浮点容差内）即说明这套 D 完全能被「单球 + 全局曲率 + 逐行半径 + 逐行标度」这一类重参数化复现，本向就不是新几何，判不交付，也不用「效应小」解释。反过来，残差显著非零说明两因子测地代价的非线性与曲率耦合确实不可由逐商品标量尺度替代。判否族的自由度按 1_goal 定：全局曲率 1 个 + 每行 (m_i,w_i) 2N 个 = 1+2N，只有 c 跨行共享。本向自身的自由度计数只写 1：p_i 一条同时定 s_hi 与 s_lo，s 是 p 的确定性函数。"
     },
     {
       "name": "curvature_is_fixed_ladder",
@@ -137,7 +132,7 @@
     {
       "name": "c_lo",
       "value": 0.25,
-      "why": "同一测试曲率集合内最接近欧氏的一端（半径 2），作为「平」因子；与 c_hi 的曲率比 16、半径比 4，两个因子在几何上可辨而都不贴边界。取值与归档方向用的 c_min/c_max 同集合，使曲率阶梯不是本向相对归档的差异来源。"
+      "why": "同一测试曲率集合内偏平的一档（球半径 2；集合里还有更平的 0.1 与 0.01，本向不用，以免「平」因子退化成欧氏），作为「平」因子；与 c_hi 的曲率比 16、半径比 4，两个因子在几何上可辨而都不贴边界。取值与归档方向用的 c_min/c_max 同集合，使曲率阶梯不是本向相对归档的差异来源。"
     },
     {
       "name": "SCALE_HYP",
@@ -173,7 +168,7 @@
     "factor_cost_vs_share": "每行两块测地代价与 p 的 Spearman 秩相关（连续取值上的单调关联；不按 p 分位切组、不取两因子代价之比、不构成任何商品对信号）",
     "argmin_flip_vs_behaviour_off": "主臂与 behaviour_off 两套 D 的逐层逐行 argmin 翻转计数（argmin 层与 Sinkhorn 层分开报）：机制是否在分配上生效的接线读数",
     "sid_diff_rate": "冻结权重后 behaviour_off 与主臂重算 SID 的差异率；为零即 u->p 未接线",
-    "allocation_residual": "判否本向核心主张的残差读数：固定 u_i，对每行 D 用「单球逐商品曲率 + 逐商品模长 + 逐商品块权重」这一族逐行自由拟合，报告残差相对量；残差为零即本向只是逐商品距离尺度，判不交付。这条自己判否自己，不外包给仓库契约",
+    "allocation_residual": "判否本向核心主张的残差读数：固定 u_i，对每行 D 用「单球 + 跨行共享曲率 c + 每行点半径 m_i + 每行标度 w_i（自由度 1+2N，只有 c 跨行共享）」这一族逐行联立拟合，报告残差相对量；残差为零即本向只是逐商品距离尺度，判不交付。这条自己判否自己，不外包给仓库契约",
     "beta_effective_scale": "两项量化损失换成测地平方后的逐层量级与基线 F.mse_loss 量级的比值：只读报告 beta 有效值被几何改了多少，说明本向不重调 beta、也不把增益归给 beta",
     "structure_preservation": "两个全边集单一聚合量：邻接率（每条边两端是否共享 SID 前缀的 0/1 指示在边集上的均值）与边两端 SID 前缀距离对 AF3 边曲率取值的 Spearman 秩相关（只在边的连续取值上算秩相关，不分正负、不分箱）。判否读数与同组其它指标同口径：这两个量必须同时高于 behaviour_off 与 geometry_off 的两套同名统计，任一不高于即结构未被保留；全量只读——不进损失、不进梯度、不参与任何分配决策，故不构成 must_hold#1 所禁的成对信号（唯一的成对用途是事后统计，模型通路内仍只有单商品量）",
     "euclid_limit_rel_error": "c->0 极限重算的代价与基线 distances/distance.py:11-21 平方欧氏代价的逐元素相对误差",

@@ -9,7 +9,7 @@
       "new_files": [
         {
           "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/af3_item_potential.py",
-          "what": "训练前一次性算出并冻结、不训练：构图与势全部 from ... import 复用兄弟臂 stage2_RQ-VAE/TIGER_af3_curvature_drive_rq/af3_potential.py 的现有函数（repository_root、train_parquet、sequences、edge_arrays、adjacency、edge_curvatures、structural_potentials），不复制 AF3 实现，跨臂 import 用 try/except ImportError 包成带完整路径与函数名的 RuntimeError；standardise / huber / calibrate_lambda / build / potential_tensor 不调用。新增三样：(1) 全表秩 u_i=(rank(kappa_bar_i)-0.5)/N，升序秩、并列取平均秩；(2) 缺 key 与度 0 商品取图均值势的秩位置（数据相关取值，逐条打印 item_id，不静默兜底）；(3) 唯一产物 eval/af3_item_potential.npz，字段 item_ids/potential/u/rank/is_missing/rank_of_graph_mean 及 sha256 digest，训练与导出只读这一份、不重算；写盘前校验长度与取值区间，否则 RuntimeError。u->p 的映射不在本文件里算，只有一处实现（factor_share_geometry.share）。"
+          "what": "训练前一次性算出并冻结、不训练：构图与势直接调用同树自带的 af3_potential.py（vendor 自 commit 56cd229b，逐字节相同、无任何改动），用到它的 repository_root / train_parquet / sequences / edge_arrays / adjacency / edge_curvatures / structural_potentials；standardise / huber / calibrate_lambda / build / potential_tensor 不调用。AF3 实现不重复编写，也不从任何兄弟臂 import —— 候选树必须自包含（只依赖冻结基线 + 本树）；文件缺失或接口变化时抛带完整路径与函数名的 RuntimeError，不静默兜底。新增三样：(1) 全表秩 u_i=(rank(kappa_bar_i)-0.5)/N，升序秩、并列取平均秩；(2) 缺 key 与度 0 商品取图均值势的秩位置（数据相关取值，逐条打印 item_id，不静默兜底）；(3) 唯一产物 eval/af3_item_potential.npz，字段 item_ids/potential/u/rank/is_missing/rank_of_graph_mean 及 sha256 digest，训练与导出只读这一份、不重算；写盘前校验长度与取值区间，否则 RuntimeError。u->p 的映射不在本文件里算，只有一处实现（factor_share_geometry.share）。"
         },
         {
           "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/factor_share_geometry.py",
@@ -18,6 +18,10 @@
         {
           "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/distances/factor_share.py",
           "what": "注册表适配器，不含数值：NAME='factor_share'、distances(latent, codebook, p=None) 一行转调顶层 cost；p 为 None 或形状不符即 ValueError（fail loud，不静默回退成欧氏）；不得 import model 包子模块（同上的包级依赖方向）。"
+        },
+        {
+          "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/af3_potential.py",
+          "what": "AF3 实现的 vendored 副本（自 commit 56cd229b 逐字节复制，零改动）：只用 numpy/pandas/scipy，提供 repository_root/train_parquet/sequences/edge_arrays/adjacency/edge_curvatures/structural_potentials。候选树必须自包含 —— 只依赖冻结基线 + 本树，不依赖任何兄弟臂。"
         }
       ],
       "modified_files": [
