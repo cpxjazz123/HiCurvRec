@@ -78,63 +78,46 @@ def train_model(vectors: torch.Tensor, positives: torch.Tensor, negatives: torch
 
 
 def predict_graph(model: torch.nn.Module, vectors: torch.Tensor, n_items: int, budget: int,
-                  device: torch.device) -> np.ndarray:
-    """Score every pair, keep the globally most relation-like ones, and fill the edge budget.
+                  device: torch.device, per_item: int = 13) -> np.ndarray:
+    """Score every pair and give each item its ``per_item`` most relation-like partners.
 
-    Scoring all 605M pairs is a few passes of two matmuls; the selection afterwards is done per
-    item in numpy, so a dense item cannot take the whole budget: every item contributes its own
-    best partners first, and the leftover budget is filled with the next best pairs.
+    The behaviour graph has 315,391 edges over 24,587 items, so thirteen partners per item is the
+    degree the k-NN-style construction has to match; taking each item's best partners (rather than
+    the globally most probable pairs) keeps the degree profile of the graph tied to the model's
+    scores instead of letting a few hubs take the whole budget.
     """
-    per_chunk = 200_000
-    candidates: list[tuple[float, int, int]] = []
     weight = model[0].weight.detach()
     dimension = int(vectors.shape[1])
     first_difference = vectors @ weight[:, :dimension].T
     first_product = vectors @ weight[:, dimension:].T
     bias = model[0].bias.detach()
+    partners: list[list[int]] = [[] for _ in range(n_items)]
     block = 64
     torch.cuda.empty_cache()
     for start in range(0, n_items, block):
         rows = torch.arange(start, min(start + block, n_items), device=device)
         size = rows.numel()
         left = rows.repeat_interleave(n_items)
-        right = rows.repeat(n_items)
-        keep = left != right
-        left, right = left[keep], right[keep]
+        right = rows.repeat(n_items)          # the diagonal stays; it is excluded when ranking
         with torch.no_grad():
             hidden = torch.relu(first_difference[left] - first_difference[right]
                                 + first_product[left] * first_product[right] + bias)
-            hidden = torch.relu(model[2](hidden))          # the rest of the small MLP
+            hidden = torch.relu(model[2](hidden))
             probability = torch.sigmoid(model[4](hidden)).ravel()
-        take = min(per_chunk, probability.numel())
-        top = torch.topk(probability, take)
-        values = top.values.cpu().numpy()
-        index = top.indices.cpu().numpy()
-        a = left.cpu().numpy()[index]
-        b = right.cpu().numpy()[index]
-        candidates.extend(zip(values.tolist(), a.tolist(), b.tolist()))
-    candidates.sort(reverse=True)
-
-    by_item: dict[int, list[tuple[float, int]]] = {}
-    for value, a, b in candidates:
-        by_item.setdefault(a, []).append((value, b))
-    edges: set[tuple[int, int]] = set()
-    for item in sorted(by_item):
-        for value, partner in sorted(by_item[item], reverse=True):
+        # the row layout is (item0 with every item), (item1 with every item), ...
+        chunk = probability.view(size, n_items)
+        for row in range(size):
+            item = int(rows[row])
+            values = chunk[row].clone()
+            values[torch.arange(n_items, device=device) == item] = -1.0
+            top = torch.topk(values, per_item)
+            partners[item] = [int(value) for value in top.indices.cpu().tolist()]
+    edges = set()
+    for item in range(n_items):
+        for partner in partners[item]:
             if partner == item:
                 continue
-            key = (min(item, partner), max(item, partner))
-            if key in edges:
-                continue
-            edges.add(key)
-            break                      # one best partner per item first
-    for value, a, b in candidates:
-        key = (min(a, b), max(a, b))
-        if key in edges:
-            continue
-        edges.add(key)
-        if len(edges) >= budget:
-            break
+            edges.add((min(item, partner), max(item, partner)))
     return np.asarray(sorted(edges), dtype=np.int64)
 
 
@@ -158,6 +141,9 @@ def main() -> int:
     report = {"items": n_items, "edge_budget": budget, "graphs": {}}
 
     def build(name: str, vectors: np.ndarray) -> None:
+        path = GRAPHS / f"{name}_rel.in"
+        if path.is_file():
+            path.unlink()          # the earlier rule filled the budget with popular pairs; rebuild
         tensor = torch.tensor(vectors, dtype=torch.float32, device=device)
         model = train_model(tensor, train_positive, train_negative, device)
         with torch.no_grad():
@@ -174,7 +160,7 @@ def main() -> int:
                 handle.write(f"{a} {b}\n")
         # how many of the model's own held-out edges the predicted graph contains
         predicted_set = {tuple(row) for row in predicted_edges.tolist()}
-        recovered = sum(1 for a, b in test_positive.cpu().numpy().tolist()
+        recovered = sum(1 for a, b in test_positive.tolist()
                         if (min(a, b), max(a, b)) in predicted_set)
         report["graphs"][name] = {"edges": int(len(predicted_edges)), "file": str(path.relative_to(REPO)),
                                   "held_out_edges_recovered": int(recovered),
