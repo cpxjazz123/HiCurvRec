@@ -134,9 +134,9 @@ await test('四个 writer 的分片由当前 idea 算出来：覆盖全部声明
   // 每个实现文件都配一份同名测试，且跟它的实现同一栏
   for (const slice of slices) {
     for (const file of slice.filter((f) => !f.includes('/tests/'))) {
-      const dir = file.slice(0, file.lastIndexOf('/'));
+      const root = file.split('/').slice(0, 2).join('/');
       const stem = file.slice(file.lastIndexOf('/') + 1, -3);
-      const test = `${dir}/tests/test_${stem}.py`;
+      const test = `${root}/tests/test_${stem}.py`;
       assert.ok(slice.includes(test), `${file} 的测试不在同一栏：${test}`);
     }
   }

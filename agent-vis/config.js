@@ -1130,11 +1130,13 @@ export function buildPermissionPrompt(permissionIds) {
  */
 export function partitionWriterFiles(files, parts = 4) {
   const declared = [...new Set((files || []).filter((f) => typeof f === 'string' && f !== ''))];
+  // 测试目录在"树根/tests"，不是每个子目录各自的 tests：
+  //   stage2_RQ-VAE/<arm>/model/layers.py → stage2_RQ-VAE/<arm>/tests/test_layers.py
+  const treeRootOf = (file) => file.split('/').slice(0, 2).join('/');
   const derivedTest = (file) => {
     if (!file.endsWith('.py') || file.includes('/tests/')) return null;
-    const dir = file.slice(0, file.lastIndexOf('/'));
     const stem = file.slice(file.lastIndexOf('/') + 1, -3);
-    return `${dir}/tests/test_${stem}.py`;
+    return `${treeRootOf(file)}/tests/test_${stem}.py`;
   };
   // 按目录聚拢后再分配：一个目录的文件尽量落在同一栏，接口只发生在栏与栏之间。
   // "树根"（所有文件的最长公共目录）是异质的 —— 机制文件 + 训练入口 —— 所以逐个成组；
