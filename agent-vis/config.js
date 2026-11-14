@@ -1138,6 +1138,8 @@ function writerInstructions(title, files) {
     `你是 ${title}，只负责写下面这几份文件：`,
     ...files.map((file) => `  - ${WRITER_TREE}/${file}`),
     '',
+    `候选树不存在时，先用 copyBaselineTree({arm: '${WRITER_TREE.split('/')[1]}'}) 从冻结基线建树 —— ` +
+      '你们四个谁先跑谁建，建完别人再建会得到"已经存在"（不覆盖）。',
     '写之前先读：ideas/AF3_curvature_factor_mass_idea/*_idea.json 与同目录 math.json（12 条公式、9 个常量、三个开关），',
     '再读这棵树里已有的机制文件 —— 它们的函数签名就是契约：你调用它们时按实际签名写，不许改它们。',
     '基线是 stage2_RQ-VAE/TIGER_RQ-VAE：接口照它抄，config 的冻结超参一个字都不许动。',
@@ -1192,7 +1194,9 @@ const WRITER_PROFILES = [
   // 不预填的话空输入框按运行会被拒（没有可执行的内容）。
   defaultPrompt: [
     `写你负责的文件：${files.map((file) => `${WRITER_TREE}/${file}`).join('、')}。`,
-    '先读 ideas/AF3_curvature_factor_mass_idea/*_idea.json 与同目录 math.json，' +
+    `第一步：候选树不存在就先 copyBaselineTree({arm: '${WRITER_TREE.split('/')[1]}'}) 建树` +
+      '（谁先跑谁建，重复建会被拒，不会覆盖）。',
+    '然后读 ideas/AF3_curvature_factor_mass_idea/*_idea.json 与同目录 math.json，' +
       '再读这棵树里已有的机制文件（它们的签名就是契约，不许改）。',
     '只写上面清单里的文件 —— 越界写会被工具直接拒绝；需要改别人的文件时，把"改哪个文件、改成什么"写进结论。',
     '每写完一份用 read 读回确认。不跑训练、不 commit/push。',

@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { toolsForPermissions } from '../live-agent.js';
+import { scopeAllows, toolsForPermissions } from '../live-agent.js';
 import { currentWorkdir, resolveProfile } from '../config.js';
 
 const REPO = currentWorkdir();
@@ -110,6 +110,40 @@ await test('没有作用域时行为不变（整仓库根都可写）', async ()
   assert.equal(read(`${ROOT}/theirs.py`), 'b = 9\n');
 });
 
+await test('四个 writer 都能建自己那棵树（作用域覆盖树根），但建不了别人的树', () => {
+  const scope = resolveProfile('agent-w3').writeScope;
+  const treeRoot = 'stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq';
+  assert.equal(scopeAllows(scope, treeRoot, { isDir: true }), true);
+  assert.equal(scopeAllows(scope, 'stage2_RQ-VAE/TIGER_someone_else_rq', { isDir: true }), false);
+});
+
+// 建树是四个 writer 任意一个都能做的事：先复制冻结基线，再写自己的文件。
+const PROBE = 'TIGER_wscope_probe_rq';
+const probeScope = [`stage2_RQ-VAE/${PROBE}/probe.py`];
+
+await test('树还没建时，作用域内的写入被拒并提示先建树', async () => {
+  rm(`stage2_RQ-VAE/${PROBE}`);
+  const { call } = scoped(['write'], probeScope);
+  await assert.rejects(
+    () => call('write', { path: `stage2_RQ-VAE/${PROBE}/probe.py`, content: 'x = 1\n' }),
+    /copyBaselineTree/,
+  );
+  assert.equal(fs.existsSync(abs(`stage2_RQ-VAE/${PROBE}`)), false, '不能顺手造出空树');
+});
+
+await test('writer 自己 copyBaselineTree 建树，然后就能写自己的文件', async () => {
+  const { call } = scoped(['write'], probeScope);
+  await call('copyBaselineTree', { arm: PROBE });
+  assert.equal(fs.existsSync(abs(`stage2_RQ-VAE/${PROBE}/train_rqvae.py`)), true, '基线文件应当被复制过来');
+  await call('write', { path: `stage2_RQ-VAE/${PROBE}/probe.py`, content: 'x = 2\n' });
+  assert.equal(fs.readFileSync(abs(`stage2_RQ-VAE/${PROBE}/probe.py`), 'utf8'), 'x = 2\n');
+});
+
+await test('第二个人再建同一棵树会被拒（不覆盖）', async () => {
+  const { call } = scoped(['write'], probeScope);
+  await assert.rejects(() => call('copyBaselineTree', { arm: PROBE }), /已经存在/);
+});
+
 await test('四个 writer 的 writeScope 互不重叠，且都落在候选树里', () => {
   const scopes = ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4'].map(
     (id) => resolveProfile(id).writeScope,
@@ -120,5 +154,6 @@ await test('四个 writer 的 writeScope 互不重叠，且都落在候选树里
 });
 
 rm(ROOT);
+rm(`stage2_RQ-VAE/${PROBE}`);
 console.log(`writeScope: ${passed} 通过`);
 if (process.exitCode) process.exit(process.exitCode);

@@ -151,7 +151,7 @@ function literalPrefix(pattern) {
  *
  * 这是并行写同一棵树的硬前提：几个 agent 分文件写，谁都不能越界改别人的文件。
  */
-function scopeAllows(scope, relPosix, { isDir = false } = {}) {
+export function scopeAllows(scope, relPosix, { isDir = false } = {}) {
   if (!Array.isArray(scope) || scope.length === 0) return true;
   if (scope.some((pattern) => globToRegExp(pattern).test(relPosix))) return true;
   if (isDir) {
@@ -263,16 +263,28 @@ export const TOOL_IMPLS = {
     if (path.dirname(target) !== stageRoot) {
       throw new Error(`候选树必须建在 stage2_RQ-VAE 下面: ${name}`);
     }
-    if (fs.existsSync(target)) {
-      throw new Error(`候选树已经存在，不覆盖: ${name}`);
+    // 独占建目录就是锁：两个 writer 同时建同一棵树时，只有一个能拿到 EEXIST 之外的结果。
+    try {
+      fs.mkdirSync(target);
+    } catch (err) {
+      if (err && err.code === 'EEXIST') {
+        throw new Error(`候选树已经存在，不覆盖: ${name}`);
+      }
+      throw err;
     }
-    await fs.promises.cp(source, target, {
-      recursive: true,
-      filter: (src) => {
-        const base = path.basename(src);
-        return base !== '__pycache__' && base !== 'logs' && !base.endsWith('.pyc');
-      },
-    });
+    try {
+      await fs.promises.cp(source, target, {
+        recursive: true,
+        filter: (src) => {
+          const base = path.basename(src);
+          return base !== '__pycache__' && base !== 'logs' && !base.endsWith('.pyc');
+        },
+      });
+    } catch (err) {
+      // 复制失败就把占位目录删掉，别留下半棵树挡住下一次。
+      try { fs.rmSync(target, { recursive: true, force: true }); } catch { /* 忽略 */ }
+      throw err;
+    }
     // ARM_NAME 是唯一允许改的东西：候选树的产物目录由它推出来。
     const oldArm = path.basename(source);
     let rewritten = 0;
@@ -1023,10 +1035,35 @@ const sandboxReadOperations = {
   },
 };
 
+/** 作用域所属的树根：`stage2_RQ-VAE/<arm>`（作用域第一条通配的前两段）。 */
+function scopeTreeRoot(scope) {
+  if (!Array.isArray(scope) || scope.length === 0) return '';
+  const pattern = String(scope[0] || '');
+  if (!pattern.startsWith('stage2_RQ-VAE/')) return '';
+  return pattern.split('/').slice(0, 2).join('/');
+}
+
+/**
+ * 作用域内写入前先确认树根存在。
+ *
+ * 不确认的话，write 会自动 mkdir 出一条只有它自己文件的"树" —— 没有基线、
+ * 没有接口文件，后面所有审计都无从谈起。建树是 copyBaselineTree 的事。
+ */
+function requireTreeRoot(scope) {
+  const treeRoot = scopeTreeRoot(scope);
+  if (treeRoot === '') return;
+  if (!fs.existsSync(path.join(sandboxRoot(), treeRoot))) {
+    throw new Error(
+      `候选树还不存在：${treeRoot}。先用 copyBaselineTree({arm: '${path.basename(treeRoot)}'}) 从冻结基线建树，再写文件`,
+    );
+  }
+}
+
 /** 写操作按作用域生成：同一个进程里并行跑多个 agent 时，作用域不能是全局状态。 */
 function makeWriteOperations(scope) {
   return {
     writeFile: async (absolutePath, content) => {
+      requireTreeRoot(scope);
       const target = resolveMutableInSandbox(absolutePath, scope);
       const buf = Buffer.from(content);
       if (buf.byteLength > MAX_WRITE_BYTES) {
@@ -1037,6 +1074,7 @@ function makeWriteOperations(scope) {
       await fs.promises.writeFile(target, buf);
     },
     mkdir: async (dir) => {
+      requireTreeRoot(scope);
       const root = sandboxRoot();
       const abs = path.resolve(root, dir);
       const relPosix = path.relative(root, abs).split(path.sep).join('/');
@@ -1047,6 +1085,7 @@ function makeWriteOperations(scope) {
       await fs.promises.mkdir(target, { recursive: true });
     },
     access: async (absolutePath) => {
+      requireTreeRoot(scope);
       const target = resolveMutableInSandbox(absolutePath, scope);
       await fs.promises.access(target, fs.constants.R_OK | fs.constants.W_OK);
     },
