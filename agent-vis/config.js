@@ -1193,8 +1193,43 @@ const WRITER_PROFILES = [
   writeScope: files.map((file) => `${WRITER_TREE}/${file}`),
   loopWatchFiles: files.map((file) => `${WRITER_TREE}/${file}`),
   instructions: writerInstructions(name, files),
-  // 页面上输入框的预填：这几栏没有固定步骤，任务就是"写这几份文件"。
-  // 不预填的话空输入框按运行会被拒（没有可执行的内容）。
+  // 单次自由请求的模型会把输出预算全花在分析上（W2/W4 实测 0 次写入就结束了）。
+  // 拆成步骤就能强制"先写、再补测试、再自查"。
+  steps: [
+    {
+      title: '读契约',
+      instruction:
+        '读 ideas/AF3_curvature_factor_mass_idea/ 的 *_idea.json（4_method）与 math.json：' +
+        '只摘出你负责的那几份文件要提供什么（函数名/输入输出/常量/开关），不超过 20 行。',
+    },
+    {
+      title: '读参考实现',
+      instruction:
+        '读基线 stage2_RQ-VAE/TIGER_RQ-VAE 里与你文件对应的那份（接口照它抄），' +
+        '再读树里已经存在的机制文件（别人的签名就是契约，不许改）。' +
+        '列出你要调用的外部符号，每个一行，不超过 10 行。',
+    },
+    {
+      title: '写实现',
+      instruction:
+        '用 write 写你负责的实现文件（先写最主要的那一个），写完用 read 读回关键段确认；' +
+        '越界写会被工具直接拒绝。只写你清单里的文件。',
+    },
+    {
+      title: '写测试',
+      instruction:
+        '写你负责的测试文件：公式恒等式与定义域、开关两侧、路径与接口。' +
+        '断言必须真的会在实现写错时变红；写完读回一次。',
+    },
+    {
+      title: '自查并记状态',
+      instruction:
+        '用 treeDiff 确认你的文件出现在增量里、用 specCheck 看 paths.crossArm=0 与 files 齐缺；' +
+        '最后一张表：文件 | 做了什么 | 依赖谁 | 还缺什么。不跑训练、不 commit。',
+    },
+  ],
+  // 页面上输入框的预填：把工作单直接铺进输入框（空输入框按运行会被拒）。
+  // 步骤负责"先写、再补测试、再自查"；预填负责"一打开就知道写哪几份文件"。
   defaultPrompt: [
     `写你负责的文件：${files.map((file) => `${WRITER_TREE}/${file}`).join('、')}。`,
     '候选树已由 AGENT IDEA 建好（只换目录名、内容与基线一致）：不要自己建树；' +
@@ -1207,7 +1242,6 @@ const WRITER_PROFILES = [
   ].join('\n'),
   // 写完交给核对员：接口对不对由 AGENT FIX 统一判。
   handoffTargets: ['agent-fix'],
-  steps: [],
 }));
 
 AGENT_PROFILES.push(...WRITER_PROFILES);
