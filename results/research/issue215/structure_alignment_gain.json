@@ -1,0 +1,323 @@
+{
+ "seed": 42,
+ "null_draws": 5,
+ "structural_violations": {
+  "star4": 0,
+  "path3": 0,
+  "cycle4": 0,
+  "diamond": 0,
+  "triangle": 0,
+  "K4": 0,
+  "path4": 0,
+  "triangle_tail": 0
+ },
+ "note": "real support uses the real instances; null support uses the same role partition on degree-matched random node sets of the same size; gain = real - null; intervals come from resampling instances",
+ "arms": {
+  "TIGER": {
+   "star4": {
+    "instances": 1000,
+    "representations": {
+     "q": {
+      "instances_used": 1000,
+      "real_support": 0.702,
+      "null_support": 0.574,
+      "gain": 0.128,
+      "gain_ci95": [
+       0.09699500000000008,
+       0.1602
+      ],
+      "verdict": "GAIN"
+     },
+     "sid": {
+      "instances_used": 1000,
+      "real_support": 0.241,
+      "null_support": 0.0342,
+      "gain": 0.20679999999999998,
+      "gain_ci95": [
+       0.18080000000000002,
+       0.23540499999999998
+      ],
+      "verdict": "GAIN"
+     },
+     "fused": {
+      "instances_used": 1000,
+      "real_support": 0.69,
+      "null_support": 0.5688,
+      "gain": 0.12119999999999997,
+      "gain_ci95": [
+       0.08999500000000007,
+       0.1522
+      ],
+      "verdict": "GAIN"
+     }
+    }
+   },
+   "path3": {
+    "instances": 1000,
+    "representations": {
+     "q": {
+      "instances_used": 1000,
+      "real_support": 0.645,
+      "null_support": 0.5402,
+      "gain": 0.1048,
+      "gain_ci95": [
+       0.07258999999999989,
+       0.13720500000000008
+      ],
+      "verdict": "GAIN"
+     },
+     "sid": {
+      "instances_used": 1000,
+      "real_support": 0.16,
+      "null_support": 0.023,
+      "gain": 0.137,
+      "gain_ci95": [
+       0.11459499999999997,
+       0.1604
+      ],
+      "verdict": "GAIN"
+     },
+     "fused": {
+      "instances_used": 1000,
+      "real_support": 0.651,
+      "null_support": 0.5414,
+      "gain": 0.10960000000000003,
+      "gain_ci95": [
+       0.07699999999999996,
+       0.143005
+      ],
+      "verdict": "GAIN"
+     }
+    }
+   },
+   "cycle4": {
+    "instances": 1000,
+    "representations": {
+     "q": {
+      "instances_used": 1000,
+      "real_support": 0.708,
+      "null_support": 0.5674000000000001,
+      "gain": 0.14059999999999984,
+      "gain_ci95": [
+       0.10918999999999986,
+       0.17159999999999997
+      ],
+      "verdict": "GAIN"
+     },
+     "sid": {
+      "instances_used": 1000,
+      "real_support": 0.234,
+      "null_support": 0.05,
+      "gain": 0.184,
+      "gain_ci95": [
+       0.155,
+       0.21200000000000002
+      ],
+      "verdict": "GAIN"
+     },
+     "fused": {
+      "instances_used": 1000,
+      "real_support": 0.72,
+      "null_support": 0.5698,
+      "gain": 0.1502,
+      "gain_ci95": [
+       0.11940000000000006,
+       0.18100000000000005
+      ],
+      "verdict": "GAIN"
+     }
+    }
+   },
+   "diamond": {
+    "instances": 1000,
+    "representations": {
+     "q": {
+      "instances_used": 1000,
+      "real_support": 0.583,
+      "null_support": 0.501,
+      "gain": 0.08199999999999996,
+      "gain_ci95": [
+       0.04800000000000004,
+       0.11379999999999996
+      ],
+      "verdict": "GAIN"
+     },
+     "sid": {
+      "instances_used": 1000,
+      "real_support": 0.327,
+      "null_support": 0.057800000000000004,
+      "gain": 0.2692,
+      "gain_ci95": [
+       0.2402,
+       0.2986
+      ],
+      "verdict": "GAIN"
+     },
+     "fused": {
+      "instances_used": 1000,
+      "real_support": 0.642,
+      "null_support": 0.5127999999999999,
+      "gain": 0.1292000000000001,
+      "gain_ci95": [
+       0.09559999999999991,
+       0.15920000000000012
+      ],
+      "verdict": "GAIN"
+     }
+    }
+   },
+   "triangle": {
+    "instances": 1000,
+    "representations": {
+     "q": {
+      "instances_used": 1000,
+      "real_support": 0.764,
+      "null_support": 0.5838,
+      "gain": 0.18020000000000003,
+      "gain_ci95": [
+       0.15238999999999997,
+       0.20701000000000014
+      ],
+      "verdict": "GAIN"
+     },
+     "sid": {
+      "instances_used": 1000,
+      "real_support": 0.236,
+      "null_support": 0.033600000000000005,
+      "gain": 0.20239999999999997,
+      "gain_ci95": [
+       0.17679499999999998,
+       0.23080499999999998
+      ],
+      "verdict": "GAIN"
+     },
+     "fused": {
+      "instances_used": 1000,
+      "real_support": 0.768,
+      "null_support": 0.5678,
+      "gain": 0.20020000000000004,
+      "gain_ci95": [
+       0.17300000000000015,
+       0.22560000000000002
+      ],
+      "verdict": "GAIN"
+     }
+    }
+   },
+   "K4": {
+    "instances": 1000,
+    "representations": {
+     "q": {
+      "instances_used": 1000,
+      "real_support": 0.758,
+      "null_support": 0.5831999999999999,
+      "gain": 0.17480000000000007,
+      "gain_ci95": [
+       0.14600000000000002,
+       0.20340000000000014
+      ],
+      "verdict": "GAIN"
+     },
+     "sid": {
+      "instances_used": 1000,
+      "real_support": 0.335,
+      "null_support": 0.07840000000000001,
+      "gain": 0.2566,
+      "gain_ci95": [
+       0.225795,
+       0.2858
+      ],
+      "verdict": "GAIN"
+     },
+     "fused": {
+      "instances_used": 1000,
+      "real_support": 0.76,
+      "null_support": 0.5628,
+      "gain": 0.19720000000000004,
+      "gain_ci95": [
+       0.16959999999999997,
+       0.2230000000000001
+      ],
+      "verdict": "GAIN"
+     }
+    }
+   },
+   "path4": {
+    "instances": 1000,
+    "representations": {
+     "q": {
+      "instances_used": 1000,
+      "real_support": 0.462,
+      "null_support": 0.2886,
+      "gain": 0.1734,
+      "gain_ci95": [
+       0.13979999999999998,
+       0.20721499999999987
+      ],
+      "verdict": "GAIN"
+     },
+     "sid": {
+      "instances_used": 1000,
+      "real_support": 0.03,
+      "null_support": 0.0002,
+      "gain": 0.0298,
+      "gain_ci95": [
+       0.019,
+       0.0408
+      ],
+      "verdict": "GAIN"
+     },
+     "fused": {
+      "instances_used": 1000,
+      "real_support": 0.458,
+      "null_support": 0.287,
+      "gain": 0.17100000000000004,
+      "gain_ci95": [
+       0.13879499999999997,
+       0.20400499999999994
+      ],
+      "verdict": "GAIN"
+     }
+    }
+   },
+   "triangle_tail": {
+    "instances": 1000,
+    "representations": {
+     "q": {
+      "instances_used": 1000,
+      "real_support": 0.557,
+      "null_support": 0.514,
+      "gain": 0.04300000000000004,
+      "gain_ci95": [
+       0.01100000000000001,
+       0.07719999999999994
+      ],
+      "verdict": "GAIN"
+     },
+     "sid": {
+      "instances_used": 1000,
+      "real_support": 0.23,
+      "null_support": 0.043,
+      "gain": 0.187,
+      "gain_ci95": [
+       0.15879,
+       0.21380999999999994
+      ],
+      "verdict": "GAIN"
+     },
+     "fused": {
+      "instances_used": 1000,
+      "real_support": 0.591,
+      "null_support": 0.5232,
+      "gain": 0.06779999999999997,
+      "gain_ci95": [
+       0.034394999999999884,
+       0.10060499999999999
+      ],
+      "verdict": "GAIN"
+     }
+    }
+   }
+  }
+ }
+}
