@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { scopeAllows, toolsForPermissions } from '../live-agent.js';
-import { currentIdeaFiles, currentWorkdir, resolveProfile } from '../config.js';
+import { currentIdeaFiles, currentWorkdir, partitionWriterFiles, resolveProfile } from '../config.js';
 
 const REPO = currentWorkdir();
 const ROOT = 'agent-vis/.out/scope-fixture';
@@ -120,6 +120,25 @@ await test('writer 能写自己的文件，但工具表里没有 copyBaselineTre
     assert.equal(names.includes('copyBaselineTree'), false, `${id} 不该有建树工具`);
     assert.equal(names.includes('write'), true, `${id} 仍要能写文件`);
     assert.equal(names.includes('edit'), true, `${id} 仍要能改文件`);
+  }
+});
+
+await test('分片按 import 依赖聚类：互相依赖的文件落在同一栏', async () => {
+  const dir = 'agent-vis/.out/partition-fixture';
+  fs.mkdirSync(abs(dir), { recursive: true });
+  fs.writeFileSync(abs(`${dir}/core.py`), 'X = 1\n');
+  fs.writeFileSync(abs(`${dir}/consumer.py`), 'from core import X\n');
+  fs.writeFileSync(abs(`${dir}/other.py`), 'Y = 2\n');
+  try {
+    const slices = partitionWriterFiles(
+      [`${dir}/core.py`, `${dir}/consumer.py`, `${dir}/other.py`],
+      4,
+    );
+    const withCore = slices.find((slice) => slice.includes(`${dir}/core.py`));
+    assert.ok(withCore.includes(`${dir}/consumer.py`), 'core 与它的消费者必须同栏');
+    assert.equal(slices.flat().length, 3, '覆盖全部实现文件');
+  } finally {
+    fs.rmSync(abs(dir), { recursive: true, force: true });
   }
 });
 

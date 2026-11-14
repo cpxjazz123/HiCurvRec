@@ -1132,29 +1132,101 @@ export function partitionWriterFiles(files, parts = 4) {
   // 写手只负责实现：测试文件不分配给任何人。
   const declared = [...new Set((files || []).filter((f) => typeof f === 'string' && f !== ''))]
     .filter((file) => !file.includes('/tests/'));
-  // 按目录聚拢后再分配：一个目录的文件尽量落在同一栏，接口只发生在栏与栏之间。
-  // "树根"（声明文件最集中的那个目录）是异质的 —— 机制文件 + 训练入口 —— 所以逐个成组；
-  // 其余子目录（distances/、model/ …）保持整组不拆。
-  const dirOf = (file) => (file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : '.');
-  const dirCounts = new Map();
+
+  // 依赖聚类：谁 import 谁就属于同一栏 —— 与文件名/方向名无关，换 idea 自动成立。
+  // 只看已存在的文件（新文件还没写出来时没有 import 可读），把它们当独立点。
+  const byStem = new Map();
   for (const file of declared) {
-    const dir = dirOf(file);
-    dirCounts.set(dir, (dirCounts.get(dir) || 0) + 1);
+    const stem = file.replace(/\.py$/, '').split('/').pop();
+    if (!byStem.has(stem)) byStem.set(stem, []);
+    byStem.get(stem).push(file);
   }
-  const rootDir = [...dirCounts.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0]?.[0] || '.';
-  const byDir = new Map();
+  const parent = new Map(declared.map((file) => [file, file]));
+  const find = (x) => {
+    let root = x;
+    while (parent.get(root) !== root) root = parent.get(root);
+    while (parent.get(x) !== root) { const next = parent.get(x); parent.set(x, root); x = next; }
+    return root;
+  };
+  const union = (a, b) => {
+    const ra = find(a); const rb = find(b);
+    if (ra !== rb) parent.set(ra, rb);
+  };
   for (const file of declared) {
-    const dir = dirOf(file);
-    const key = dir === rootDir ? `.<${file}>` : dir;
-    if (!byDir.has(key)) byDir.set(key, []);
-    byDir.get(key).push(file);
+    let text = '';
+    try {
+      text = fs.readFileSync(path.join(currentWorkdir(), file), 'utf8');
+    } catch {
+      continue;
+    }
+    for (const match of text.matchAll(/^\s*(?:from|import)\s+([A-Za-z_][\w.]*)/gm)) {
+      for (const part of match[1].split('.')) {
+        for (const other of byStem.get(part) || []) {
+          if (other !== file) union(file, other);
+        }
+      }
+    }
   }
-  const groups = [...byDir.entries()]
-    .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+  const components = new Map();
+  for (const file of declared) {
+    const root = find(file);
+    if (!components.has(root)) components.set(root, []);
+    components.get(root).push(file);
+  }
+  // 没有任何 import 关系时（比如全是还没写的新文件），退回"按目录聚拢"。
+  const useDeps = [...components.values()].some((group) => group.length > 1);
+  let groups = [...components.values()];
+  if (!useDeps) {
+    const dirOf = (file) => (file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : '.');
+    const dirCounts = new Map();
+    for (const file of declared) {
+      const dir = dirOf(file);
+      dirCounts.set(dir, (dirCounts.get(dir) || 0) + 1);
+    }
+    const rootDir = [...dirCounts.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0]?.[0] || '.';
+    const byDir = new Map();
+    for (const file of declared) {
+      const dir = dirOf(file);
+      const key = dir === rootDir ? `.<${file}>` : dir;
+      if (!byDir.has(key)) byDir.set(key, []);
+      byDir.get(key).push(file);
+    }
+    groups = [...byDir.values()];
+  }
+  // 太肥的组件要拆开，否则一个 writer 吃掉整棵树：按目录（树根逐文件）切成不超过目标大小的块。
+  const maxSize = Math.max(2, Math.ceil(declared.length / parts));
+  const splitByDir = (group) => {
+    const dirOf = (file) => (file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : '.');
+    const dirCounts = new Map();
+    for (const file of group) {
+      const dir = dirOf(file);
+      dirCounts.set(dir, (dirCounts.get(dir) || 0) + 1);
+    }
+    const rootDir = [...dirCounts.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0]?.[0] || '.';
+    const buckets = new Map();
+    for (const file of group) {
+      const dir = dirOf(file);
+      const key = dir === rootDir ? `.<${file}>` : dir;
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key).push(file);
+    }
+    return [...buckets.values()];
+  };
+  const expanded = [];
+  for (const group of groups) {
+    if (group.length <= maxSize) {
+      expanded.push(group);
+      continue;
+    }
+    expanded.push(...splitByDir(group));
+  }
+  groups = expanded;
+  groups.sort((a, b) => b.length - a.length || a[0].localeCompare(b[0]));
   const slices = Array.from({ length: parts }, () => []);
   const load = new Array(parts).fill(0);
-  for (const [, group] of groups) {
+  for (const group of groups) {
     let slot = 0;
     for (let i = 1; i < parts; i += 1) if (load[i] < load[slot]) slot = i;
     slices[slot].push(...group);
