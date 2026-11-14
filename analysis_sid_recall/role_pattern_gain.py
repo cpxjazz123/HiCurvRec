@@ -217,6 +217,27 @@ def role_gain(per_pattern: dict, patterns_by_role: list[str], role: int,
     return float(np.mean(gains)) if gains else None
 
 
+def role_rate(per_pattern: dict, patterns_by_role: list[str], role: int,
+              role_of: np.ndarray) -> tuple[float | None, dict]:
+    """The share of instances that satisfy each graphlet's condition, per role and per pattern.
+
+    Grouping is by anchor: an instance counts for role r when the item being averaged belongs to r,
+    and averaging happens per item first, so a hub that appears in many graphlets counts once.
+    """
+    rates = {}
+    for name in patterns_by_role:
+        values_real, values_null, incidence = per_pattern[name]
+        if values_real.size == 0:
+            continue
+        scores = role_scores(values_real, values_null, incidence, role_of, role)
+        if scores is None:
+            continue
+        rates[name] = scores[0]
+    if not rates:
+        return None, {}
+    return float(np.mean(list(rates.values()))), rates
+
+
 def main() -> int:
     prepared = prepare()
     n = prepared["n"]
@@ -280,6 +301,12 @@ def main() -> int:
             per_pattern[name] = (np.array(values_real), np.array(values_null),
                                  incidences[name])
 
+        role_rates, role_rate_detail = {}, {}
+        for role in range(6):
+            rate, detail = role_rate(per_pattern, patterns_by_role[role], role, role_of)
+            role_rates[str(role)] = rate
+            role_rate_detail[str(role)] = detail
+
         role_gains = {}
         for role in range(6):
             gains, weights = [], []
@@ -298,13 +325,14 @@ def main() -> int:
             else:
                 role_gains[str(role)] = None
         rows.append({"number": arm["number"], "recall": arm["recall"],
-                     "l3_collision": collision, "role_gain": role_gains})
+                     "l3_collision": collision, "role_gain": role_gains,
+                     "role_rate": role_rates, "role_rate_detail": role_rate_detail})
         print(f"  [{count}/{len(arms)}] {arm['number']} recall {arm['recall']:.6f}  " +
               " ".join(f"r{role}:{role_gains[str(role)]:+.3f}" if role_gains[str(role)] is not None
                        else f"r{role}:n/a" for role in range(6)), flush=True)
 
-    def correlate(role: int) -> dict:
-        values = [(row["role_gain"][str(role)], row["recall"], row["l3_collision"]) for row in rows]
+    def correlate(role: int, key: str = "role_gain") -> dict:
+        values = [(row[key][str(role)], row["recall"], row["l3_collision"]) for row in rows]
         values = [triple for triple in values if triple[0] is not None]
         if len(values) < 5:
             return {"n": len(values), "spearman": None}
@@ -328,8 +356,17 @@ def main() -> int:
     print(f"  {'role':<8}{'patterns':<40}{'gain mean':>10}{'range':>16}{'rho':>8}{'p':>7}"
           f"{'r':>8}{'p':>7}{'partS':>9}{'partP':>9}")
     for role in range(6):
-        block = correlate(role)
-        result["roles"][str(role)] = {**block, "patterns": patterns_by_role[role]}
+        block = correlate(role, "role_gain")
+        rate = correlate(role, "role_rate")
+        detail = {}
+        for name in patterns_by_role[role]:
+            values = [row["role_rate_detail"][str(role)].get(name) for row in rows]
+            present = [value for value in values if value is not None]
+            detail[name] = {"mean": float(np.mean(present)) if present else None,
+                            "min": float(np.min(present)) if present else None,
+                            "max": float(np.max(present)) if present else None}
+        result["roles"][str(role)] = {**block, "patterns": patterns_by_role[role],
+                                      "rate": rate, "rate_by_pattern": detail}
         if block.get("spearman") is None:
             print(f"  Role {role + 1:<3}{'none':<40}")
             continue
