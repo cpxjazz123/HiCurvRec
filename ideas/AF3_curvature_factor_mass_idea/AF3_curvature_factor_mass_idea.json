@@ -45,7 +45,18 @@
           "path": "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/train_rqvae.py",
           "what": "TensorDataset 与 DataLoader 构造处扩成同时产出 (embedding, item_id)；开训前只读 eval/af3_item_potential.npz 并用 digest 与 item_ids 覆盖训练集做校验，缺失或校验失败直接 RuntimeError（不现场重算、不补默认占比）；随后调用 factor_share_geometry.share(u, 'struct') 一次得到 (N,) 的 p 并冻结为张量。init_codebook 调用处与导出 SID 的 get_indices 调用处都改成把对应 item_ids 一并传入。日志打印 p 的分位、两放缩因子平方和的相对误差、p 与 u 的秩相关、图均值势的秩位置与 miss 数、|p_miss-SHARE_REF| 这一实测读数、VQ_TYPE 断言结果。"
         }
-      ]
+      ],
+      "owners": {
+        "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/af3_item_potential.py": "af3-table",
+        "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/af3_potential.py": "af3-table",
+        "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/factor_share_geometry.py": "geometry-and-distance",
+        "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/distances/factor_share.py": "geometry-and-distance",
+        "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/distances/distance.py": "geometry-and-distance",
+        "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/distances/__init__.py": "geometry-and-distance",
+        "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/model/layers.py": "model",
+        "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/model/model.py": "model",
+        "stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/train_rqvae.py": "trainer"
+      }
     }
   }
 }

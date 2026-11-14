@@ -35,7 +35,10 @@ export const IDEA_SCHEMA_VERSION = 'genrec.idea.v6';
 const TOP_KEYS = ['schema', 'arm', 'sections'];
 const SECTION_KEYS = ['1_goal', '4_method'];
 const GOAL_KEYS = ['idea'];
-const METHOD_KEYS = ['new_files', 'modified_files'];
+// 4_method 里必须有的清单，以及可选的"谁写哪个文件"分工（owners：路径 → 角色）。
+const REQUIRED_METHOD_KEYS = ['new_files', 'modified_files'];
+const OPTIONAL_METHOD_KEYS = ['owners'];
+const METHOD_KEYS = [...REQUIRED_METHOD_KEYS, ...OPTIONAL_METHOD_KEYS];
 
 /**
  * 整份文档里都不许出现的写法：多种子计划。
@@ -168,11 +171,43 @@ function checkFiles(method, add, baselineRoot) {
         '数值约束与运行计划不写在这里。',
     );
   }
-  for (const key of METHOD_KEYS) {
+  for (const key of REQUIRED_METHOD_KEYS) {
     if (!(key in method)) add(`sections.4_method.${key}`, `必须有 ${key}`);
   }
   checkFileList(method.new_files, 'new_files', add, baselineRoot, 'new');
   checkFileList(method.modified_files, 'modified_files', add, baselineRoot, 'modified');
+  checkOwners(method.owners, add);
+}
+
+/**
+ * `4_method.owners`：文件 → 角色，决定四个 writer 谁写哪几份。
+ *
+ * 可选：没有它时框架按 import 依赖自己分片。有它时角色是规格的一部分，
+ * 换 idea 也不会因为文件名变化而把分工讲错。
+ */
+function checkOwners(owners, add) {
+  if (owners === undefined) return;
+  if (!isPlainObject(owners)) {
+    add('sections.4_method.owners', '必须是对象（路径 → 角色）');
+    return;
+  }
+  const entries = Object.entries(owners);
+  if (entries.length === 0) {
+    add('sections.4_method.owners', '给了就要至少一条');
+    return;
+  }
+  if (entries.length > 40) {
+    add('sections.4_method.owners', `最多 40 条（现在 ${entries.length} 条）`);
+  }
+  for (const [file, role] of entries) {
+    const at = `sections.4_method.owners[${JSON.stringify(file)}]`;
+    if (file.trim() === '' || file.startsWith('/')) {
+      add(at, '路径要是仓库相对路径');
+    }
+    if (typeof role !== 'string' || role.trim() === '') {
+      add(at, '角色必须是非空字符串');
+    }
+  }
 }
 
 /**

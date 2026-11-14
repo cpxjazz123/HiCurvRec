@@ -1128,13 +1128,49 @@ export function buildPermissionPrompt(permissionIds) {
  * 这样一栏改的是同一块地方，接口只在栏与栏之间发生。
  * 换 idea 时文件清单变了，切片跟着变，不需要改配置。
  */
-export function partitionWriterFiles(files, parts = 4) {
+export function partitionWriterFiles(files, parts = 4, owners = {}) {
   // 写手只负责实现：测试文件不分配给任何人。
   const declared = [...new Set((files || []).filter((f) => typeof f === 'string' && f !== ''))]
     .filter((file) => !file.includes('/tests/'));
 
-  // 依赖聚类：谁 import 谁就属于同一栏 —— 与文件名/方向名无关，换 idea 自动成立。
-  // 只看已存在的文件（新文件还没写出来时没有 import 可读），把它们当独立点。
+  // 规格里写了 owners：角色就是分片依据（换 idea 也不会把分工讲错）。
+  const ownerOf = new Map();
+  for (const [file, role] of Object.entries(owners || {})) {
+    if (typeof role === 'string' && role.trim() !== '') ownerOf.set(file, role.trim());
+  }
+  if (ownerOf.size > 0) {
+    const roleGroups = new Map();
+    const unowned = [];
+    for (const file of declared) {
+      const role = ownerOf.get(file);
+      if (role === undefined) {
+        unowned.push(file);
+        continue;
+      }
+      if (!roleGroups.has(role)) roleGroups.set(role, []);
+      roleGroups.get(role).push(file);
+    }
+    const slices = Array.from({ length: parts }, () => []);
+    const load = new Array(parts).fill(0);
+    const ordered = [...roleGroups.entries()]
+      .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+    for (const [, group] of ordered) {
+      let slot = 0;
+      for (let i = 1; i < parts; i += 1) if (load[i] < load[slot]) slot = i;
+      slices[slot].push(...group);
+      load[slot] += group.length;
+    }
+    // 没写 owner 的文件：按目录就近塞进最空的栏。
+    for (const file of unowned) {
+      let slot = 0;
+      for (let i = 1; i < parts; i += 1) if (load[i] < load[slot]) slot = i;
+      slices[slot].push(file);
+      load[slot] += 1;
+    }
+    return slices.map((slice) => slice.sort());
+  }
+
+  // 没有 owners：按 import 依赖自己聚。
   const byStem = new Map();
   for (const file of declared) {
     const stem = file.replace(/\.py$/, '').split('/').pop();
@@ -1173,57 +1209,22 @@ export function partitionWriterFiles(files, parts = 4) {
     if (!components.has(root)) components.set(root, []);
     components.get(root).push(file);
   }
-  // 没有任何 import 关系时（比如全是还没写的新文件），退回"按目录聚拢"。
   const useDeps = [...components.values()].some((group) => group.length > 1);
   let groups = [...components.values()];
   if (!useDeps) {
-    const dirOf = (file) => (file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : '.');
-    const dirCounts = new Map();
-    for (const file of declared) {
-      const dir = dirOf(file);
-      dirCounts.set(dir, (dirCounts.get(dir) || 0) + 1);
-    }
-    const rootDir = [...dirCounts.entries()]
-      .sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0]?.[0] || '.';
-    const byDir = new Map();
-    for (const file of declared) {
-      const dir = dirOf(file);
-      const key = dir === rootDir ? `.<${file}>` : dir;
-      if (!byDir.has(key)) byDir.set(key, []);
-      byDir.get(key).push(file);
-    }
-    groups = [...byDir.values()];
+    groups = groupByDirectory(declared);
   }
-  // 太肥的组件要拆开，否则一个 writer 吃掉整棵树：按目录（树根逐文件）切成不超过目标大小的块。
+  // 太肥的组件要拆开，否则一个 writer 吃掉整棵树。
   const maxSize = Math.max(2, Math.ceil(declared.length / parts));
-  const splitByDir = (group) => {
-    const dirOf = (file) => (file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : '.');
-    const dirCounts = new Map();
-    for (const file of group) {
-      const dir = dirOf(file);
-      dirCounts.set(dir, (dirCounts.get(dir) || 0) + 1);
-    }
-    const rootDir = [...dirCounts.entries()]
-      .sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0]?.[0] || '.';
-    const buckets = new Map();
-    for (const file of group) {
-      const dir = dirOf(file);
-      const key = dir === rootDir ? `.<${file}>` : dir;
-      if (!buckets.has(key)) buckets.set(key, []);
-      buckets.get(key).push(file);
-    }
-    return [...buckets.values()];
-  };
   const expanded = [];
   for (const group of groups) {
     if (group.length <= maxSize) {
       expanded.push(group);
       continue;
     }
-    expanded.push(...splitByDir(group));
+    expanded.push(...groupByDirectory(group));
   }
-  groups = expanded;
-  groups.sort((a, b) => b.length - a.length || a[0].localeCompare(b[0]));
+  groups = expanded.sort((a, b) => b.length - a.length || a[0].localeCompare(b[0]));
   const slices = Array.from({ length: parts }, () => []);
   const load = new Array(parts).fill(0);
   for (const group of groups) {
@@ -1233,6 +1234,59 @@ export function partitionWriterFiles(files, parts = 4) {
     load[slot] += group.length;
   }
   return slices.map((slice) => slice.sort());
+}
+
+/** 按目录聚拢："树根"（文件最多的目录）是异质的，逐个成组；子目录整组不拆。 */
+function groupByDirectory(files) {
+  const dirOf = (file) => (file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : '.');
+  const dirCounts = new Map();
+  for (const file of files) {
+    const dir = dirOf(file);
+    dirCounts.set(dir, (dirCounts.get(dir) || 0) + 1);
+  }
+  const rootDir = [...dirCounts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0]?.[0] || '.';
+  const byDir = new Map();
+  for (const file of files) {
+    const dir = dirOf(file);
+    const key = dir === rootDir ? `.<${file}>` : dir;
+    if (!byDir.has(key)) byDir.set(key, []);
+    byDir.get(key).push(file);
+  }
+  return [...byDir.values()];
+}
+
+/** 当前 idea 声明的"谁写哪个文件"（4_method.owners，可选）。 */
+export function currentIdeaOwners() {
+  const ideasDir = path.join(currentWorkdir(), 'ideas');
+  let entries = [];
+  try {
+    entries = fs.readdirSync(ideasDir, { withFileTypes: true });
+  } catch {
+    return {};
+  }
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.name === '_archive') continue;
+    const dir = path.join(ideasDir, entry.name);
+    let names = [];
+    try {
+      names = fs.readdirSync(dir);
+    } catch {
+      continue;
+    }
+    for (const name of names) {
+      if (!name.endsWith('.json') || name === 'math.json') continue;
+      let doc;
+      try {
+        doc = JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8'));
+      } catch {
+        continue;
+      }
+      const method = doc && doc.sections && doc.sections['4_method'];
+      if (method && method.owners && typeof method.owners === 'object') return method.owners;
+    }
+  }
+  return {};
 }
 
 /** 当前 idea 声明的文件（new_files + modified_files），仓库相对路径。 */
@@ -1607,7 +1661,7 @@ function publicProfile(profile) {
   const override = userConfigs[profile.id] || {};
   // 写手的分片是"按当前 idea 算"的：换方向时文件清单变了，作用域与工作单跟着变。
   const dynamicFiles = profile.dynamicWriter
-    ? (partitionWriterFiles(currentIdeaFiles(), 4)[profile.dynamicWriter - 1] || [])
+    ? (partitionWriterFiles(currentIdeaFiles(), 4, currentIdeaOwners())[profile.dynamicWriter - 1] || [])
     : null;
   const has = (key) => Object.prototype.hasOwnProperty.call(override, key);
   const storedPermissions = has('permissions') ? override.permissions : profile.permissions;

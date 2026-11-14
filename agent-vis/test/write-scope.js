@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { scopeAllows, toolsForPermissions } from '../live-agent.js';
-import { currentIdeaFiles, currentWorkdir, partitionWriterFiles, resolveProfile } from '../config.js';
+import { currentIdeaFiles, currentIdeaOwners, currentWorkdir, partitionWriterFiles, resolveProfile } from '../config.js';
 
 const REPO = currentWorkdir();
 const ROOT = 'agent-vis/.out/scope-fixture';
@@ -140,6 +140,41 @@ await test('分片按 import 依赖聚类：互相依赖的文件落在同一栏
   } finally {
     fs.rmSync(abs(dir), { recursive: true, force: true });
   }
+});
+
+await test('idea 写了 owners 时按角色分片（同角色同栏、测试除外）', () => {
+  const t = 'stage2_RQ-VAE/TIGER_x_rq/';
+  const files = [
+    `${t}a.py`, `${t}b.py`, `${t}c.py`, `${t}d.py`,
+    `${t}tests/test_a.py`,
+  ];
+  const owners = {
+    [`${t}a.py`]: 'geometry',
+    [`${t}b.py`]: 'geometry',
+    [`${t}c.py`]: 'model',
+    [`${t}d.py`]: 'trainer',
+    [`${t}tests/test_a.py`]: 'geometry',
+  };
+  const slices = partitionWriterFiles(files, 4, owners);
+  const flat = slices.flat();
+  assert.equal(flat.some((f) => f.includes('/tests/')), false, '测试不分配');
+  const withA = slices.find((slice) => slice.includes(`${t}a.py`));
+  assert.ok(withA.includes(`${t}b.py`), '同角色必须同栏');
+  assert.equal(withA.includes(`${t}c.py`), false, '不同角色不能混到一栏');
+  assert.equal(flat.length, 4);
+});
+
+await test('没有 owners 时退回 import 依赖分片', () => {
+  const t = 'stage2_RQ-VAE/TIGER_x_rq/';
+  const slices = partitionWriterFiles([`${t}a.py`, `${t}b.py`], 4, {});
+  assert.equal(slices.flat().length, 2);
+});
+
+await test('当前 idea 的 owners 覆盖全部实现文件（没有漏网）', () => {
+  const owners = currentIdeaOwners();
+  const files = currentIdeaFiles().filter((f) => !f.includes('/tests/'));
+  const missing = files.filter((f) => !owners[f]);
+  assert.deepEqual(missing, [], `这些文件没有 owner：${missing.join(', ')}`);
 });
 
 await test('writer 的运行命令只描述功能，不含具体文件名', () => {
