@@ -1143,6 +1143,9 @@ export function partitionWriterFiles(files, parts = 4, owners = {}) {
     const unowned = [];
     for (const file of declared) {
       const role = ownerOf.get(file);
+      // "provided"：随树带进来的只读文件（例如从冻结历史 vendor 的依赖），
+      // 不是任何 writer 的实现任务，不分配。
+      if (role === 'provided') continue;
       if (role === undefined) {
         unowned.push(file);
         continue;

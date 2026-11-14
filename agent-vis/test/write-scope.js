@@ -170,11 +170,16 @@ await test('没有 owners 时退回 import 依赖分片', () => {
   assert.equal(slices.flat().length, 2);
 });
 
-await test('当前 idea 的 owners 覆盖全部实现文件（没有漏网）', () => {
+await test('当前 idea 的 owners 覆盖全部实现文件（provided 的只读文件除外）', () => {
   const owners = currentIdeaOwners();
   const files = currentIdeaFiles().filter((f) => !f.includes('/tests/'));
   const missing = files.filter((f) => !owners[f]);
   assert.deepEqual(missing, [], `这些文件没有 owner：${missing.join(', ')}`);
+  const provided = files.filter((f) => owners[f] === 'provided');
+  const assigned = partitionWriterFiles(files, 4, owners).flat();
+  for (const file of provided) {
+    assert.equal(assigned.includes(file), false, `provided 文件不该分配给写手：${file}`);
+  }
 });
 
 await test('writer 的运行命令只描述功能，不含具体文件名', () => {
@@ -204,7 +209,10 @@ await test('四个 writer 的分片只含实现文件：覆盖、互斥、不含
   const flat = slices.flat();
   assert.equal(flat.length, new Set(flat).size, '同一份文件不能分给两栏');
   assert.equal(flat.some((file) => file.includes('/tests/')), false, '写手不负责测试文件');
-  const declared = currentIdeaFiles().filter((file) => !file.includes('/tests/'));
+  const owners = currentIdeaOwners();
+  const declared = currentIdeaFiles()
+    .filter((file) => !file.includes('/tests/'))
+    .filter((file) => owners[file] !== 'provided');
   const covered = new Set(flat);
   for (const file of declared) assert.ok(covered.has(file), `声明文件没被任何一栏覆盖：${file}`);
 });
