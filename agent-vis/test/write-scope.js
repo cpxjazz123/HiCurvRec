@@ -144,23 +144,15 @@ await test('assignedFiles 列出的就是这一栏的写入范围', async () => 
   }
 });
 
-await test('四个 writer 的分片由当前 idea 算出来：覆盖全部声明文件、互不重叠', () => {
+await test('四个 writer 的分片只含实现文件：覆盖、互斥、不含测试', () => {
   const slices = ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']
     .map((id) => resolveProfile(id).writeScope);
   const flat = slices.flat();
   assert.equal(flat.length, new Set(flat).size, '同一份文件不能分给两栏');
-  const declared = currentIdeaFiles();
+  assert.equal(flat.some((file) => file.includes('/tests/')), false, '写手不负责测试文件');
+  const declared = currentIdeaFiles().filter((file) => !file.includes('/tests/'));
   const covered = new Set(flat);
   for (const file of declared) assert.ok(covered.has(file), `声明文件没被任何一栏覆盖：${file}`);
-  // 每个实现文件都配一份同名测试，且跟它的实现同一栏
-  for (const slice of slices) {
-    for (const file of slice.filter((f) => !f.includes('/tests/'))) {
-      const root = file.split('/').slice(0, 2).join('/');
-      const stem = file.slice(file.lastIndexOf('/') + 1, -3);
-      const test = `${root}/tests/test_${stem}.py`;
-      assert.ok(slice.includes(test), `${file} 的测试不在同一栏：${test}`);
-    }
-  }
 });
 
 // 建树是四个 writer 任意一个都能做的事：先复制冻结基线，再写自己的文件。

@@ -1129,28 +1129,20 @@ export function buildPermissionPrompt(permissionIds) {
  * 换 idea 时文件清单变了，切片跟着变，不需要改配置。
  */
 export function partitionWriterFiles(files, parts = 4) {
-  const declared = [...new Set((files || []).filter((f) => typeof f === 'string' && f !== ''))];
-  // 测试目录在"树根/tests"，不是每个子目录各自的 tests：
-  //   stage2_RQ-VAE/<arm>/model/layers.py → stage2_RQ-VAE/<arm>/tests/test_layers.py
-  const treeRootOf = (file) => file.split('/').slice(0, 2).join('/');
-  const derivedTest = (file) => {
-    if (!file.endsWith('.py') || file.includes('/tests/')) return null;
-    const stem = file.slice(file.lastIndexOf('/') + 1, -3);
-    return `${treeRootOf(file)}/tests/test_${stem}.py`;
-  };
+  // 写手只负责实现：测试文件不分配给任何人。
+  const declared = [...new Set((files || []).filter((f) => typeof f === 'string' && f !== ''))]
+    .filter((file) => !file.includes('/tests/'));
   // 按目录聚拢后再分配：一个目录的文件尽量落在同一栏，接口只发生在栏与栏之间。
-  // "树根"（所有文件的最长公共目录）是异质的 —— 机制文件 + 训练入口 —— 所以逐个成组；
-  // 子目录（distances/、model/、tests/ …）保持整组不拆。
+  // "树根"（声明文件最集中的那个目录）是异质的 —— 机制文件 + 训练入口 —— 所以逐个成组；
+  // 其余子目录（distances/、model/ …）保持整组不拆。
   const dirOf = (file) => (file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : '.');
   const dirCounts = new Map();
   for (const file of declared) {
     const dir = dirOf(file);
     dirCounts.set(dir, (dirCounts.get(dir) || 0) + 1);
   }
-  // "树根"是声明文件最集中的那个目录（机制文件 + 训练入口都在这），它是异质的：
-  // 逐个成组，免得一栏吃掉整棵树；其余子目录保持整组不拆。
   const rootDir = [...dirCounts.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0][0];
+    .sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0]?.[0] || '.';
   const byDir = new Map();
   for (const file of declared) {
     const dir = dirOf(file);
@@ -1162,28 +1154,13 @@ export function partitionWriterFiles(files, parts = 4) {
     .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
   const slices = Array.from({ length: parts }, () => []);
   const load = new Array(parts).fill(0);
-  const assigned = new Set();
   for (const [, group] of groups) {
     let slot = 0;
     for (let i = 1; i < parts; i += 1) if (load[i] < load[slot]) slot = i;
-    for (const file of group) {
-      slices[slot].push(file);
-      assigned.add(file);
-    }
+    slices[slot].push(...group);
     load[slot] += group.length;
   }
-  // 每个实现文件的同名测试跟它自己走，而不要单独占一栏 —— 一栏负责"实现 + 它的测试"。
-  slices.forEach((slice) => {
-    for (const file of [...slice]) {
-      const test = derivedTest(file);
-      if (test && !assigned.has(test)) {
-        slice.push(test);
-        assigned.add(test);
-      }
-    }
-    slice.sort();
-  });
-  return slices;
+  return slices.map((slice) => slice.sort());
 }
 
 /** 当前 idea 声明的文件（new_files + modified_files），仓库相对路径。 */
@@ -1262,7 +1239,8 @@ export function buildWriterPrompt() {
     '候选树已由 AGENT IDEA 建好（只换目录名、内容与基线一致）：不要自己建树；若树不存在，就在结论里写"树缺失"并停下。',
     '然后读当前方向的 *_idea.json 与 math.json，再读这棵树里已有的机制文件（签名就是契约，不许改）。',
     '需要改别人的文件时，把"改哪个文件、改成什么"写进结论，不要动手。',
-    '每写完一份用 read 读回确认。不跑训练、不 commit/push。最后一张表：文件 | 做了什么 | 依赖谁 | 还缺什么。',
+    '只写实现，不写测试文件（测试由 AGENT FIX 负责）。每写完一份用 read 读回确认；不跑训练、不 commit/push。',
+    '最后一张表：文件 | 做了什么 | 依赖谁 | 还缺什么。',
   ].join('\n');
 }
 
@@ -1293,12 +1271,7 @@ const WRITER_PROFILES = [1, 2, 3, 4].map((index) => ({
       title: '写实现',
       instruction:
         '用 write 写你负责的实现文件（先写最主要的那一个），写完用 read 读回关键段确认；' +
-        '越界写会被工具直接拒绝。只写 assignedFiles 列出的文件。',
-    },
-    {
-      title: '写测试',
-      instruction:
-        '写你负责的测试文件：公式恒等式与定义域、开关两侧、路径与接口。断言必须真的会在实现写错时变红；写完读回一次。',
+        '越界写会被工具直接拒绝。只写 assignedFiles 列出的文件；不写任何测试文件。',
     },
     {
       title: '自查并记状态',
