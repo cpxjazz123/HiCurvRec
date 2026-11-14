@@ -110,3 +110,23 @@ def test_mechanism_distance_is_registered_lazily(tmp_path, monkeypatch):
         sys.modules.pop("mechanism", None)
         # 注册表是进程级的：把测试加进去的那条清掉，避免影响别的用例。
         distances.DISTANCES.pop("plugin_cost", None)
+
+def test_full_table_pass_publishes_ids_aligned_with_its_rows():
+    """A full-table pass must not inherit the last (short) training batch's fields."""
+    import inspect
+
+    import runtime_context
+
+    runtime_context.clear()
+    runtime_context.set_fields({"item_id": torch.arange(3)}, phase="train")  # last batch, short
+    train_rqvae.publish_full_table(torch.arange(7))
+    assert runtime_context.get("item_id").tolist() == list(range(7))
+    assert runtime_context.get("row").tolist() == list(range(7))
+    assert runtime_context.phase() == "eval"
+
+    # The eval pass over all_embeddings must publish before it calls get_indices.
+    source = inspect.getsource(train_rqvae.main)
+    publish_at = source.index("publish_full_table(torch.arange(len(all_embeddings))")
+    call_at = source.index("raw_module.get_indices(")
+    assert publish_at < call_at, "the full-table pass must publish its ids before get_indices"
+

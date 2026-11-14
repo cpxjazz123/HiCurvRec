@@ -71,6 +71,19 @@ def _mechanism_context(batch_fields, training: bool) -> None:
     if callable(setter):
         setter(batch_fields, training=training)
 
+def publish_full_table(ids, device=None, *, phase="eval"):
+    """Publish the row fields a full-table pass sees (init / eval / export).
+
+    The mechanism distance reads row identity from ``runtime_context``; every call that runs
+    the quantiser over the *whole* item table must publish ids aligned with those rows. A
+    training batch's fields must not leak into such a pass (the last batch can be short).
+    """
+    tensor = ids if torch.is_tensor(ids) else torch.as_tensor(ids, dtype=torch.long)
+    if device is not None:
+        tensor = tensor.to(device)
+    runtime_context.set_fields({"item_id": tensor, "row": tensor.clone()}, phase=phase)
+
+
 
 def _mechanism_readouts() -> dict:
     fn = _mechanism_hook("readouts")
@@ -385,11 +398,7 @@ def main() -> None:
         print("[RecBole RQ-VAE] initializing codebooks with KMeans", flush=True)
     raw_module = model.module if isinstance(model, DDP) else model
     with torch.no_grad():
-        runtime_context.set_fields(
-            {"item_id": torch.from_numpy(train_ids).to(device),
-             "row": torch.arange(len(train_ids), device=device)},
-            phase="init",
-        )
+        publish_full_table(train_ids, device, phase="init")
         raw_module.init_codebook(train_embeddings.to(device))
     if world_size > 1:
         dist.barrier()
@@ -456,6 +465,9 @@ def main() -> None:
         try:
             if rank == 0:
                 with torch.no_grad():
+                    # Full-table pass: publish the ids that align with all_embeddings
+                    # (not the last training batch's fields).
+                    publish_full_table(torch.arange(len(all_embeddings)), device)
                     raw_tokens = raw_module.get_indices(
                         all_embeddings.to(device), infer_use_sk=False
                     ).cpu().numpy().astype(np.int64)
@@ -511,7 +523,7 @@ def main() -> None:
         try:
             with torch.no_grad():
                 _full_ids = torch.arange(len(all_embeddings), device=device)
-                runtime_context.set_fields({"item_id": _full_ids, "row": _full_ids}, phase="eval")
+                publish_full_table(_full_ids)
                 _mechanism_context({"item_id": _full_ids, "row": _full_ids}, False)
                 raw_tokens = raw_module.get_indices(
                     all_embeddings.to(device), infer_use_sk=False
