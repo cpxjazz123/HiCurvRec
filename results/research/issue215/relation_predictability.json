@@ -1,0 +1,337 @@
+{
+ "edges": 323633,
+ "seed": 42,
+ "epochs": 600,
+ "predictors": {
+  "semantic 768d": {
+   "degree_matched": {
+    "pair_level": {
+     "roc_auc": 0.7670081560013322,
+     "pr_auc": 0.7650464166315674,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.5133836469066283,
+     "pr_auc": 0.22370007879352083,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   },
+   "random": {
+    "pair_level": {
+     "roc_auc": 0.8476886930952289,
+     "pr_auc": 0.8535950873644922,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.6477293804261397,
+     "pr_auc": 0.28365336979829675,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   }
+  },
+  "TIGER z (pre)": {
+   "degree_matched": {
+    "pair_level": {
+     "roc_auc": 0.7519374820328395,
+     "pr_auc": 0.7544979881718777,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.659885267082871,
+     "pr_auc": 0.3258532213219546,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   },
+   "random": {
+    "pair_level": {
+     "roc_auc": 0.8023516653576988,
+     "pr_auc": 0.8026347910370379,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.7439685187808187,
+     "pr_auc": 0.4033450269769127,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   }
+  },
+  "TIGER q (post)": {
+   "degree_matched": {
+    "pair_level": {
+     "roc_auc": 0.7479336211764973,
+     "pr_auc": 0.7518556588558484,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.650269601367205,
+     "pr_auc": 0.31869002512427336,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   },
+   "random": {
+    "pair_level": {
+     "roc_auc": 0.7970527558008367,
+     "pr_auc": 0.7978249664488405,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.7315436950808875,
+     "pr_auc": 0.38062898394631095,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   }
+  },
+  "F0 z (pre)": {
+   "degree_matched": {
+    "pair_level": {
+     "roc_auc": 0.7519614216381406,
+     "pr_auc": 0.7552753632765192,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.6815796948114763,
+     "pr_auc": 0.34674779846665293,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   },
+   "random": {
+    "pair_level": {
+     "roc_auc": 0.801128510420848,
+     "pr_auc": 0.8015360919181993,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.7477064251396173,
+     "pr_auc": 0.411719669808963,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   }
+  },
+  "F0 q (post)": {
+   "degree_matched": {
+    "pair_level": {
+     "roc_auc": 0.7462888864892502,
+     "pr_auc": 0.7474531644696396,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.6783487519407163,
+     "pr_auc": 0.34072012952891007,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   },
+   "random": {
+    "pair_level": {
+     "roc_auc": 0.790895650646031,
+     "pr_auc": 0.7878103102777292,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.7413482172960956,
+     "pr_auc": 0.3910147392529303,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   }
+  },
+  "B z (pre)": {
+   "degree_matched": {
+    "pair_level": {
+     "roc_auc": 0.7517827427035546,
+     "pr_auc": 0.7555846739516633,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.6790591445146353,
+     "pr_auc": 0.34365013030268887,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   },
+   "random": {
+    "pair_level": {
+     "roc_auc": 0.8003702602941323,
+     "pr_auc": 0.7993141302702835,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.7526388088954123,
+     "pr_auc": 0.4111834467074953,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   }
+  },
+  "B q (post)": {
+   "degree_matched": {
+    "pair_level": {
+     "roc_auc": 0.7468349856272825,
+     "pr_auc": 0.749699234268883,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.6860017760715608,
+     "pr_auc": 0.3480698365665501,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   },
+   "random": {
+    "pair_level": {
+     "roc_auc": 0.7916763457191007,
+     "pr_auc": 0.787984647187062,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.7554970661152127,
+     "pr_auc": 0.41601797256092377,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   }
+  },
+  "C z (pre)": {
+   "degree_matched": {
+    "pair_level": {
+     "roc_auc": 0.7525930352221807,
+     "pr_auc": 0.7550147937552526,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.6780190647798046,
+     "pr_auc": 0.34572379717155016,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   },
+   "random": {
+    "pair_level": {
+     "roc_auc": 0.8006562291036186,
+     "pr_auc": 0.7990967936754935,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.7475349783106964,
+     "pr_auc": 0.4046537421658226,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   }
+  },
+  "C q (post)": {
+   "degree_matched": {
+    "pair_level": {
+     "roc_auc": 0.7451602392529266,
+     "pr_auc": 0.7457461173986,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.6742099136995938,
+     "pr_auc": 0.3334841194719744,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   },
+   "random": {
+    "pair_level": {
+     "roc_auc": 0.7902937247312906,
+     "pr_auc": 0.7859789968245923,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.7415576428015859,
+     "pr_auc": 0.3850320610433706,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   }
+  },
+  "D z (pre)": {
+   "degree_matched": {
+    "pair_level": {
+     "roc_auc": 0.7509068658774398,
+     "pr_auc": 0.7521393189266516,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.6688104345898911,
+     "pr_auc": 0.3322990377515233,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   },
+   "random": {
+    "pair_level": {
+     "roc_auc": 0.7996035658933474,
+     "pr_auc": 0.7977372488995914,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.7438628465197936,
+     "pr_auc": 0.3995018846368994,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   }
+  },
+  "D q (post)": {
+   "degree_matched": {
+    "pair_level": {
+     "roc_auc": 0.7436273076565966,
+     "pr_auc": 0.7443999535418979,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.6669533226873953,
+     "pr_auc": 0.32458328182972784,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   },
+   "random": {
+    "pair_level": {
+     "roc_auc": 0.7888039267676034,
+     "pr_auc": 0.7856151489365657,
+     "n_test_positive": 64727,
+     "n_test_negative": 64727
+    },
+    "item_level": {
+     "roc_auc": 0.7376421083056177,
+     "pr_auc": 0.3849573410613353,
+     "n_test_positive": 13328,
+     "n_test_negative": 64727
+    }
+   }
+  }
+ }
+}
