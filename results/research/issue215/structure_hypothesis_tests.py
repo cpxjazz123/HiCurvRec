@@ -77,18 +77,23 @@ def load_behaviour() -> tuple[int, list[set[int]]]:
 
 
 def enumerate_cliques(n: int, adjacency: list[set[int]]) -> list[tuple[int, ...]]:
-    """Every four-clique in the graph, found by closing every triangle. No sampling, no cap."""
-    cliques: dict[tuple[int, ...], None] = {}
+    """Every four-clique in the graph, once, as an ascending tuple.
+
+    The first version keyed the result on the tuple as produced, and the pair order depended on the
+    iteration order of a set, so 2,341,056 tuples covered only 1,570,609 distinct cliques. The
+    ascending form is what the count and the downstream sampling both need.
+    """
+    cliques: set[tuple[int, ...]] = set()
     for u in range(n):
-        first = [w for w in adjacency[u] if w > u]
-        for index, v in enumerate(first):
-            for w in first[index + 1:]:
+        above = sorted(w for w in adjacency[u] if w > u)
+        for index, v in enumerate(above):
+            for w in above[index + 1:]:
                 if w not in adjacency[v]:
                     continue
                 for x in adjacency[v]:
                     if x > w and x in adjacency[u] and x in adjacency[w]:
-                        cliques[(u, v, w, x)] = None
-    return list(cliques)
+                        cliques.add((u, v, w, x))
+    return sorted(cliques)
 
 
 def sample_instances(adjacency: list[set[int]], rng: np.random.Generator) -> dict:
