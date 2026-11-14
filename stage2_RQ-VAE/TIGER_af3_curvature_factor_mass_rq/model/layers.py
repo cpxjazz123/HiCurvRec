@@ -25,26 +25,6 @@ from losses.commitment import commitment_loss
 from distances import build_distance
 
 
-#: The tree's ONE geometry implementation, imported lazily so that a candidate tree
-#: whose geometry module is missing fails where it is used, not at import time.
-_GEOMETRY = None
-
-
-def geometry_module():
-    """Return the top-level `factor_share_geometry` module, or fail loud."""
-    global _GEOMETRY
-    if _GEOMETRY is None:
-        try:
-            import factor_share_geometry as module
-        except ImportError as error:  # pragma: no cover - depends on sys.path
-            raise RuntimeError(
-                "the product-manifold geometry module factor_share_geometry is not "
-                "importable from the quantiser (%s); run from the candidate tree" % (error,)
-            ) from error
-        _GEOMETRY = module
-    return _GEOMETRY
-
-
 class MLP(nn.Module):
     """RecBole3.0's dropout/linear/ReLU MLP helper."""
 
@@ -127,36 +107,9 @@ class VQLayer(nn.Module):
         q *= batch_size
         return q
 
-    def _distances(self, latent, p=None, mode: str = "both_on") -> torch.Tensor:
-        """The metric is the object handed in; this layer owns no formula.
-
-        Every registry entry is called with the same positional shape
-        `(latent, codebook, p, mode)`: the Euclidean entry ignores the last two, and
-        the product entry uses them. `latent` is either the 32-vector
-        `(r^E | h1 | h2)` or the already charted triple `(r^E, x_hi, x_lo)`.
-        """
-        return self.distance(latent, self.get_code_embs(), p, mode)
-
-    def _product_blocks(self, latent: torch.Tensor, x_hi, x_lo, mode: str):
-        """The distance argument: the charted triple when we have one.
-
-        `geometry_off` is the tangent branch by definition, so it keeps the 32-vector.
-        """
-        if x_hi is None or x_lo is None or mode == "geometry_off":
-            return latent
-        return (latent[:, :geometry_module().D_E], x_hi, x_lo)
-
-    def _geometric_parts(self, latent, x_hi, x_lo, p, mode: str, index):
-        """The two geometric errors of `quantization`: E side, hyperbolic side, split."""
-        geometry = geometry_module()
-        rE, _, _ = geometry.split_tangent(latent)
-        if x_hi is None or x_lo is None:
-            x_hi, x_lo = geometry.item_chart_head(latent)
-        values = geometry.share(p, "ref" if mode == "behaviour_off" else "struct")
-        codebook = self.get_code_embs()
-        v_hi, v_lo = geometry.codeword_chart(codebook, values)
-        return geometry.quant_parts(rE, x_hi, x_lo, v_hi, v_lo,
-                                   codebook[:, :geometry.D_E], index)
+    def _distances(self, latent: torch.Tensor) -> torch.Tensor:
+        """The metric is the object handed in; this layer owns no formula."""
+        return self.distance(latent, self.get_code_embs())
 
     def _indices(self, distances: torch.Tensor, infer_use_sk: bool) -> torch.Tensor:
         if (self.training and self.use_sk) or (self.use_sk and infer_use_sk):
@@ -170,24 +123,10 @@ class VQLayer(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
-        p=None,
-        mode: str = "both_on",
-        x_hi=None,
-        x_lo=None,
         infer_use_sk: bool = False,
     ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
-        """One level of the product manifold.
-
-        `x` is `(r^E | h1 | h2)`; `p` is the per-item share `p_i` (mandatory for the
-        product metric); `x_hi`/`x_lo` are the charted product point when the caller
-        already ran the chart head. `x` itself is never updated here -- only
-        `RQLayer` advances the Euclidean block.
-        """
         latent = x.view(-1, self.dim)
-        embed_ind = self._indices(
-            self._distances(self._product_blocks(latent, x_hi, x_lo, mode), p, mode),
-            infer_use_sk,
-        )
+        embed_ind = self._indices(self._distances(latent), infer_use_sk)
         onehot = F.one_hot(embed_ind, self.n_embed)
         used = onehot.sum(0)
         # Skip the DDP all_reduce when running inference on rank 0 only:
@@ -198,33 +137,22 @@ class VQLayer(nn.Module):
         unused_codes = int((used == 0).sum().item())
 
         x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
-        if p is None or mode == "geometry_off":
-            # The baseline's two terms, unchanged: geometry_off has to be elementwise
-            # identical to the frozen Euclidean RQ-VAE.
-            quant_parts = (commitment_loss(latent, x_q), codebook_loss(latent, x_q))
-        else:
-            # The formula lives in factor_share_geometry.quant_parts; this layer only
-            # reports the two errors it measured.
-            quant_parts = self._geometric_parts(latent, x_hi, x_lo, p, mode, embed_ind)
+        # The formula lives in losses/quantization.py; this layer only reports the
+        # two mean squared errors the term is made of.
+        quant_parts = (commitment_loss(latent, x_q), codebook_loss(latent, x_q))
         x_q = x + (x_q - x).detach()
         return x_q, quant_parts, unused_codes, embed_ind.view(*x.shape[:-1])
 
     def embed_code(self, embed_id: torch.Tensor) -> torch.Tensor:
         return F.embedding(embed_id, self.get_code_embs())
 
-    def init_codebook(self, x: torch.Tensor, device: torch.device, p=None,
-                      mode: str = "both_on", x_hi=None, x_lo=None) -> torch.Tensor:
-        """KMeans centres, but the assignment that builds the residual uses the SAME D."""
+    def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
         kmeans = KMeans(n_clusters=self.n_embed, n_init="auto").fit(x.detach().cpu().numpy())
         centers = torch.tensor(kmeans.cluster_centers_, dtype=torch.float32, device=device)
         if distributed.is_initialized():
             distributed.broadcast(centers, 0)
         self._copy_init_embed(centers.clone())
-        latent = x.view(-1, self.dim)
-        embed_ind = torch.argmin(
-            self._distances(self._product_blocks(latent, x_hi, x_lo, mode), p, mode),
-            dim=-1,
-        ).view(*x.shape[:-1])
+        embed_ind = torch.argmin(self._distances(x), dim=-1).view(*x.shape[:-1])
         return x - self.embed_code(embed_ind)
 
 
@@ -341,14 +269,6 @@ class RQLayer(nn.Module):
                 raise ValueError("codebook_size must have one entry per quantization level")
         self.codebook_sizes = sizes
         self.vq_type = str(config.vq_type)
-        # The frozen config says 'vq'. EMA / SimVQ do not implement the product-side
-        # chart, so they would silently drop the mechanism: fail loud instead.
-        if self.vq_type != "vq":
-            raise ValueError(
-                "the factor_share arm requires vq_type='vq' (the frozen config's value); "
-                "got %r -- EMA/SimVQ have no product-side geometry and would train the "
-                "baseline silently" % (self.vq_type,)
-            )
         self.vq_beta = float(config.beta)
         self.sk_epsilon = float(config.sk_epsilon)
         self.sk_iters = int(config.sk_iters)
@@ -357,63 +277,33 @@ class RQLayer(nn.Module):
         for level, size in enumerate(self.codebook_sizes):
             epsilon = self.sk_epsilon if level == self.codebook_num - 1 else -1.0
             iterations = self.sk_iters if level == self.codebook_num - 1 else -1
-            layer = VQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations,
-                            distance=self.distance)
+            if self.vq_type == "vq":
+                layer = VQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations,
+                                distance=self.distance)
+            elif self.vq_type == "ema":
+                layer = EMAVQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations,
+                                   config.ema_decay, distance=self.distance)
+            elif self.vq_type == "simvq":
+                layer = SimVQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations,
+                                   config.fix_code_embs, distance=self.distance)
+            else:
+                raise ValueError(f"Unsupported vq_type: {self.vq_type}")
             layers.append(layer)
         self.vq_layers = nn.ModuleList(layers)
-
-    def _blocks(self, flat: torch.Tensor, p, mode: str, x_hi, x_lo):
-        """Split the 32-vector into the three blocks of `M`.
-
-        Returns `(geometric, rE, h1, h2, x_hi, x_lo)`. `geometric` is False for the
-        `geometry_off` branch (and for a caller that passes no share at all), where the
-        frozen baseline's single 32-dim residual chain is kept verbatim.
-        """
-        geometry = geometry_module()
-        geometric = p is not None and mode != "geometry_off"
-        if not geometric:
-            return (False, None, None, None, x_hi, x_lo)
-        rE = flat[:, :geometry.D_E]
-        h1 = flat[:, geometry.D_E:geometry.D_E + geometry.D_H1]
-        h2 = flat[:, geometry.D_E + geometry.D_H1:]
-        if x_hi is None or x_lo is None:
-            x_hi, x_lo = geometry.item_chart_head(flat)
-        return (True, rE, h1, h2, x_hi, x_lo)
 
     def forward(
         self,
         x: torch.Tensor,
-        p=None,
-        mode: str = "both_on",
-        x_hi=None,
-        x_lo=None,
         infer_use_sk: bool = False,
     ) -> tuple[torch.Tensor, torch.Tensor, float, torch.Tensor]:
-        """Quantize `(r^{E,l} | h1 | h2)`, advancing ONLY the Euclidean block.
-
-        The two hyperbolic blocks are one product point each, reused at every level
-        (`math.json` `geometric_quantization`): they are never part of the residual.
-        """
-        geometry = geometry_module()
-        flat = x.view(-1, self.codebook_dim)
-        geometric, rE, h1, h2, x_hi, x_lo = self._blocks(flat, p, mode, x_hi, x_lo)
-        quantized_x = torch.zeros(flat.shape[0], self.codebook_dim, device=flat.device)
+        quantized_x = torch.zeros(x.shape[0], self.codebook_dim, device=x.device)
         per_level_parts: list = []
         num_unused_codes = 0.0
-        output = torch.empty(flat.shape[0], self.codebook_num, dtype=torch.long,
-                             device=flat.device)
-        residual = flat
+        output = torch.empty(x.shape[0], self.codebook_num, dtype=torch.long, device=x.device)
+        residual = x
         for level, vq_layer in enumerate(self.vq_layers):
-            level_input = torch.cat([rE, h1, h2], dim=-1) if geometric else residual
-            quant, quant_parts, unused, indices = vq_layer(
-                level_input, p=p, mode=mode, x_hi=x_hi, x_lo=x_lo,
-                infer_use_sk=infer_use_sk,
-            )
-            if geometric:
-                # only the Euclidean block carries the level's residual
-                rE = rE - quant[:, :geometry.D_E]
-            else:
-                residual = residual - quant
+            quant, quant_parts, unused, indices = vq_layer(residual, infer_use_sk)
+            residual = residual - quant
             quantized_x = quantized_x + quant
             per_level_parts.append(quant_parts)
             num_unused_codes += unused
@@ -421,18 +311,8 @@ class RQLayer(nn.Module):
         # The levels are reported, not summed: the scalar belongs to the loss module.
         return quantized_x, per_level_parts, num_unused_codes, output
 
-    def init_codebook(self, x: torch.Tensor, device: torch.device, p=None,
-                      mode: str = "both_on", x_hi=None, x_lo=None) -> torch.Tensor:
-        geometry = geometry_module()
-        flat = x.view(-1, self.codebook_dim)
-        geometric, rE, h1, h2, x_hi, x_lo = self._blocks(flat, p, mode, x_hi, x_lo)
-        residual = flat
+    def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
+        residual = x
         for vq_layer in self.vq_layers:
-            level_input = torch.cat([rE, h1, h2], dim=-1) if geometric else residual
-            updated = vq_layer.init_codebook(level_input, device, p=p, mode=mode,
-                                             x_hi=x_hi, x_lo=x_lo)
-            if geometric:
-                rE = updated[:, :geometry.D_E]
-            else:
-                residual = updated
-        return torch.cat([rE, h1, h2], dim=-1) if geometric else residual
+            residual = vq_layer.init_codebook(residual, device)
+        return residual
