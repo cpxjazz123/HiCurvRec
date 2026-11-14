@@ -4576,46 +4576,62 @@
    "l1_codes": {
     "n": 67,
     "rho": -0.13379516836391023,
+    "pearson": -0.012217808269760143,
     "p_permutation": 0.2725727427257274,
+    "p_permutation_pearson": 0.9243075692430757,
     "ci95": [
      -0.39548264484408485,
      0.15584251560595838
     ],
     "rho_vs_collision": -0.6180566633111807,
-    "partial_rho_given_collision": -0.23702950884415944
+    "pearson_vs_collision": -0.5794976390625235,
+    "partial_rho_given_collision": -0.23702950884415944,
+    "partial_pearson_given_collision": -0.23020967226157277
    },
    "l2_prefixes": {
     "n": 67,
     "rho": 0.1328145266152868,
+    "pearson": 0.1327709541622843,
     "p_permutation": 0.2802719728027197,
+    "p_permutation_pearson": 0.2806719328067193,
     "ci95": [
      -0.17357266138407265,
      0.4266750261761857
     ],
     "rho_vs_collision": -0.9271290605794557,
-    "partial_rho_given_collision": 0.14724701278001437
+    "pearson_vs_collision": -0.7694227579084674,
+    "partial_rho_given_collision": 0.14724701278001437,
+    "partial_pearson_given_collision": -0.14634488253381361
    },
    "l3_distinct": {
     "n": 67,
     "rho": 0.08394692209593022,
+    "pearson": 0.2888688240783173,
     "p_permutation": 0.5025497450254974,
+    "p_permutation_pearson": 0.0187981201879812,
     "ci95": [
      -0.22433621402449758,
      0.37656143670666353
     ],
     "rho_vs_collision": -1.0,
-    "partial_rho_given_collision": -0.0015833859714132635
+    "pearson_vs_collision": -1.0000000000000002,
+    "partial_rho_given_collision": -0.0015833859714132635,
+    "partial_pearson_given_collision": -0.034147771534018705
    },
    "l3_collision": {
     "n": 67,
     "rho": -0.08394692209593022,
+    "pearson": -0.2888688240783174,
     "p_permutation": 0.5025497450254974,
+    "p_permutation_pearson": 0.0187981201879812,
     "ci95": [
      -0.37656143670666375,
      0.22433621402449716
     ],
     "rho_vs_collision": 1.0,
-    "partial_rho_given_collision": 0.1250773269128675
+    "pearson_vs_collision": 1.0,
+    "partial_rho_given_collision": 0.1250773269128675,
+    "partial_pearson_given_collision": 0.002997656840569515
    }
   },
   "structures": {
@@ -4623,192 +4639,256 @@
     "support": {
      "n": 67,
      "rho": 0.5297028716158498,
+     "pearson": 0.5524470166428619,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.3028135796336,
       0.6995130386837881
      ],
      "rho_vs_collision": 0.4474398375275747,
-     "partial_rho_given_collision": 0.636547625199454
+     "pearson_vs_collision": 0.32123095790178235,
+     "partial_rho_given_collision": 0.636547625199454,
+     "partial_pearson_given_collision": 0.7116920281955883
     },
     "gain": {
      "n": 67,
      "rho": 0.6101089515903739,
+     "pearson": 0.7529279287446258,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.377045392922983,
       0.7919883363272049
      ],
      "rho_vs_collision": -0.12311683131254801,
-     "partial_rho_given_collision": 0.6065124719924498
+     "pearson_vs_collision": -0.35933443746215143,
+     "partial_rho_given_collision": 0.6065124719924498,
+     "partial_pearson_given_collision": 0.726560663387349
     }
    },
    "path3": {
     "support": {
      "n": 67,
      "rho": 0.5472033206046274,
+     "pearson": 0.4851583809618594,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.3296750896122833,
       0.7047643824126757
      ],
      "rho_vs_collision": 0.4133375906232967,
-     "partial_rho_given_collision": 0.6413103396680131
+     "pearson_vs_collision": 0.3820089288660646,
+     "partial_rho_given_collision": 0.6413103396680131,
+     "partial_pearson_given_collision": 0.6730734774538928
     },
     "gain": {
      "n": 67,
      "rho": 0.618386263213355,
+     "pearson": 0.7250968880936456,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.3891234662749368,
       0.7985116456777837
      ],
      "rho_vs_collision": -0.16813497099191638,
-     "partial_rho_given_collision": 0.6151699165051437
+     "pearson_vs_collision": -0.424377135705157,
+     "partial_rho_given_collision": 0.6151699165051437,
+     "partial_pearson_given_collision": 0.6950271499571878
     }
    },
    "cycle4": {
     "support": {
      "n": 67,
      "rho": 0.27252953406123914,
+     "pearson": 0.2675627270662892,
      "p_permutation": 0.025097490250974904,
+     "p_permutation_pearson": 0.027797220277972202,
      "ci95": [
       -0.005769153572980138,
       0.510168786531861
      ],
      "rho_vs_collision": 0.6061301469564525,
-     "partial_rho_given_collision": 0.40806134853211906
+     "pearson_vs_collision": 0.39828044035777943,
+     "partial_rho_given_collision": 0.40806134853211906,
+     "partial_pearson_given_collision": 0.43569933641185926
     },
     "gain": {
      "n": 67,
      "rho": 0.5565821245096735,
+     "pearson": 0.5962066299182203,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.30276842106882745,
       0.753165194560614
      ],
      "rho_vs_collision": -0.17128946016753785,
-     "partial_rho_given_collision": 0.5522859068345592
+     "pearson_vs_collision": -0.37715698762205047,
+     "partial_rho_given_collision": 0.5522859068345592,
+     "partial_pearson_given_collision": 0.5495389753283845
     }
    },
    "diamond": {
     "support": {
      "n": 67,
      "rho": 0.3172062859989248,
+     "pearson": 0.3805140543263622,
      "p_permutation": 0.0091990800919908,
+     "p_permutation_pearson": 0.001999800019998,
      "ci95": [
       0.062176786120287805,
       0.5350884249314892
      ],
      "rho_vs_collision": 0.6059844161311473,
-     "partial_rho_given_collision": 0.4643514105173369
+     "pearson_vs_collision": 0.35403768789567164,
+     "partial_rho_given_collision": 0.4643514105173369,
+     "partial_pearson_given_collision": 0.5392065234366646
     },
     "gain": {
      "n": 67,
      "rho": 0.5528106480457294,
+     "pearson": 0.5715425176498896,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.29859699064946227,
       0.7660058756054113
      ],
      "rho_vs_collision": -0.2874446264810558,
-     "partial_rho_given_collision": 0.553930682691609
+     "pearson_vs_collision": -0.5365728488676079,
+     "partial_rho_given_collision": 0.553930682691609,
+     "partial_pearson_given_collision": 0.5156009060063693
     }
    },
    "triangle": {
     "support": {
      "n": 67,
      "rho": 0.3849438764508215,
+     "pearson": 0.3523162891312691,
      "p_permutation": 0.0007999200079992001,
+     "p_permutation_pearson": 0.0032996700329967,
      "ci95": [
       0.12968213794712904,
       0.5928533489120468
      ],
      "rho_vs_collision": 0.5533239553115313,
-     "partial_rho_given_collision": 0.519735210203926
+     "pearson_vs_collision": 0.46059255452907744,
+     "partial_rho_given_collision": 0.519735210203926,
+     "partial_pearson_given_collision": 0.5711735967255522
     },
     "gain": {
      "n": 67,
      "rho": 0.604609398504085,
+     "pearson": 0.6374225174911995,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.3916033812598503,
       0.7619093267786748
      ],
      "rho_vs_collision": 0.1609865112937984,
-     "partial_rho_given_collision": 0.6285112043455912
+     "pearson_vs_collision": 0.03041537492108306,
+     "partial_rho_given_collision": 0.6285112043455912,
+     "partial_pearson_given_collision": 0.6752964554854435
     }
    },
    "K4": {
     "support": {
      "n": 67,
      "rho": 0.19516088808942403,
+     "pearson": 0.1215716061452705,
      "p_permutation": 0.11528847115288471,
+     "p_permutation_pearson": 0.32736726327367266,
      "ci95": [
       -0.09901830976913961,
       0.45554654639338243
      ],
      "rho_vs_collision": 0.6363155644622637,
-     "partial_rho_given_collision": 0.32337155275859336
+     "pearson_vs_collision": 0.47420578915840295,
+     "partial_rho_given_collision": 0.32337155275859336,
+     "partial_pearson_given_collision": 0.3067514014569564
     },
     "gain": {
      "n": 67,
      "rho": 0.3279489968136567,
+     "pearson": 0.27714269049156603,
      "p_permutation": 0.006399360063993601,
+     "p_permutation_pearson": 0.024297570242975703,
      "ci95": [
       0.02431665459669736,
       0.5728614452128032
      ],
      "rho_vs_collision": 0.30605301754473907,
-     "partial_rho_given_collision": 0.3727820444721096
+     "pearson_vs_collision": 0.1838732719254461,
+     "partial_rho_given_collision": 0.3727820444721096,
+     "partial_pearson_given_collision": 0.3509479006726767
     }
    },
    "path4": {
     "support": {
      "n": 67,
      "rho": 0.37012903307731015,
+     "pearson": 0.20702522156513795,
      "p_permutation": 0.0016998300169983002,
+     "p_permutation_pearson": 0.0831916808319168,
      "ci95": [
       0.11683161006550744,
       0.5697544243853717
      ],
      "rho_vs_collision": 0.6246095928175389,
-     "partial_rho_given_collision": 0.5430141369332463
+     "pearson_vs_collision": 0.6077676498592848,
+     "partial_rho_given_collision": 0.5430141369332463,
+     "partial_pearson_given_collision": 0.5032356998431206
     },
     "gain": {
      "n": 67,
      "rho": 0.5862784628654024,
+     "pearson": 0.46407116814151456,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 0.00019998000199980003,
      "ci95": [
       0.38186732447252647,
       0.7246436310052248
      ],
      "rho_vs_collision": 0.2895314504753651,
-     "partial_rho_given_collision": 0.6401658563396988
+     "pearson_vs_collision": 0.14434257305255183,
+     "partial_rho_given_collision": 0.6401658563396988,
+     "partial_pearson_given_collision": 0.5338797946841536
     }
    },
    "triangle_tail": {
     "support": {
      "n": 67,
      "rho": 0.3518049209488579,
+     "pearson": 0.22936975351524277,
      "p_permutation": 0.0031996800319968005,
+     "p_permutation_pearson": 0.056694330566943306,
      "ci95": [
       0.07475340035279769,
       0.5788712608855112
      ],
      "rho_vs_collision": 0.5730534386173523,
-     "partial_rho_given_collision": 0.48971174173434107
+     "pearson_vs_collision": 0.5782293601929874,
+     "partial_rho_given_collision": 0.48971174173434107,
+     "partial_pearson_given_collision": 0.5074971337723391
     },
     "gain": {
      "n": 67,
      "rho": 0.5965938002272412,
+     "pearson": 0.6771339114668175,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.3594492439575992,
       0.7826283866316752
      ],
      "rho_vs_collision": -0.1498937454554753,
-     "partial_rho_given_collision": 0.5927765318668775
+     "pearson_vs_collision": -0.4081620166901239,
+     "partial_rho_given_collision": 0.5927765318668775,
+     "partial_pearson_given_collision": 0.6398562971998173
     }
    }
   }
@@ -4818,46 +4898,62 @@
    "l1_codes": {
     "n": 67,
     "rho": -0.13379516836391023,
+    "pearson": -0.012217808269760143,
     "p_permutation": 0.2725727427257274,
+    "p_permutation_pearson": 0.9243075692430757,
     "ci95": [
      -0.39548264484408485,
      0.15584251560595838
     ],
     "rho_vs_collision": -0.6180566633111807,
-    "partial_rho_given_collision": -0.23702950884415944
+    "pearson_vs_collision": -0.5794976390625235,
+    "partial_rho_given_collision": -0.23702950884415944,
+    "partial_pearson_given_collision": -0.23020967226157277
    },
    "l2_prefixes": {
     "n": 67,
     "rho": 0.1328145266152868,
+    "pearson": 0.1327709541622843,
     "p_permutation": 0.2802719728027197,
+    "p_permutation_pearson": 0.2806719328067193,
     "ci95": [
      -0.17357266138407265,
      0.4266750261761857
     ],
     "rho_vs_collision": -0.9271290605794557,
-    "partial_rho_given_collision": 0.14724701278001437
+    "pearson_vs_collision": -0.7694227579084674,
+    "partial_rho_given_collision": 0.14724701278001437,
+    "partial_pearson_given_collision": -0.14634488253381361
    },
    "l3_distinct": {
     "n": 67,
     "rho": 0.08394692209593022,
+    "pearson": 0.2888688240783173,
     "p_permutation": 0.5025497450254974,
+    "p_permutation_pearson": 0.0187981201879812,
     "ci95": [
      -0.22433621402449758,
      0.37656143670666353
     ],
     "rho_vs_collision": -1.0,
-    "partial_rho_given_collision": -0.0015833859714132635
+    "pearson_vs_collision": -1.0000000000000002,
+    "partial_rho_given_collision": -0.0015833859714132635,
+    "partial_pearson_given_collision": -0.034147771534018705
    },
    "l3_collision": {
     "n": 67,
     "rho": -0.08394692209593022,
+    "pearson": -0.2888688240783174,
     "p_permutation": 0.5025497450254974,
+    "p_permutation_pearson": 0.0187981201879812,
     "ci95": [
      -0.37656143670666375,
      0.22433621402449716
     ],
     "rho_vs_collision": 1.0,
-    "partial_rho_given_collision": 0.1250773269128675
+    "pearson_vs_collision": 1.0,
+    "partial_rho_given_collision": 0.1250773269128675,
+    "partial_pearson_given_collision": 0.002997656840569515
    }
   },
   "structures": {
@@ -4865,192 +4961,256 @@
     "support": {
      "n": 67,
      "rho": 0.5297028716158498,
+     "pearson": 0.5524470166428619,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.3028135796336,
       0.6995130386837881
      ],
      "rho_vs_collision": 0.4474398375275747,
-     "partial_rho_given_collision": 0.636547625199454
+     "pearson_vs_collision": 0.32123095790178235,
+     "partial_rho_given_collision": 0.636547625199454,
+     "partial_pearson_given_collision": 0.7116920281955883
     },
     "gain": {
      "n": 67,
      "rho": 0.6101089515903739,
+     "pearson": 0.7529279287446258,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.377045392922983,
       0.7919883363272049
      ],
      "rho_vs_collision": -0.12311683131254801,
-     "partial_rho_given_collision": 0.6065124719924498
+     "pearson_vs_collision": -0.35933443746215143,
+     "partial_rho_given_collision": 0.6065124719924498,
+     "partial_pearson_given_collision": 0.726560663387349
     }
    },
    "path3": {
     "support": {
      "n": 67,
      "rho": 0.5472033206046274,
+     "pearson": 0.4851583809618594,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.3296750896122833,
       0.7047643824126757
      ],
      "rho_vs_collision": 0.4133375906232967,
-     "partial_rho_given_collision": 0.6413103396680131
+     "pearson_vs_collision": 0.3820089288660646,
+     "partial_rho_given_collision": 0.6413103396680131,
+     "partial_pearson_given_collision": 0.6730734774538928
     },
     "gain": {
      "n": 67,
      "rho": 0.618386263213355,
+     "pearson": 0.7250968880936456,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.3891234662749368,
       0.7985116456777837
      ],
      "rho_vs_collision": -0.16813497099191638,
-     "partial_rho_given_collision": 0.6151699165051437
+     "pearson_vs_collision": -0.424377135705157,
+     "partial_rho_given_collision": 0.6151699165051437,
+     "partial_pearson_given_collision": 0.6950271499571878
     }
    },
    "cycle4": {
     "support": {
      "n": 67,
      "rho": 0.27252953406123914,
+     "pearson": 0.2675627270662892,
      "p_permutation": 0.025097490250974904,
+     "p_permutation_pearson": 0.027797220277972202,
      "ci95": [
       -0.005769153572980138,
       0.510168786531861
      ],
      "rho_vs_collision": 0.6061301469564525,
-     "partial_rho_given_collision": 0.40806134853211906
+     "pearson_vs_collision": 0.39828044035777943,
+     "partial_rho_given_collision": 0.40806134853211906,
+     "partial_pearson_given_collision": 0.43569933641185926
     },
     "gain": {
      "n": 67,
      "rho": 0.5565821245096735,
+     "pearson": 0.5962066299182203,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.30276842106882745,
       0.753165194560614
      ],
      "rho_vs_collision": -0.17128946016753785,
-     "partial_rho_given_collision": 0.5522859068345592
+     "pearson_vs_collision": -0.37715698762205047,
+     "partial_rho_given_collision": 0.5522859068345592,
+     "partial_pearson_given_collision": 0.5495389753283845
     }
    },
    "diamond": {
     "support": {
      "n": 67,
      "rho": 0.3172062859989248,
+     "pearson": 0.3805140543263622,
      "p_permutation": 0.0091990800919908,
+     "p_permutation_pearson": 0.001999800019998,
      "ci95": [
       0.062176786120287805,
       0.5350884249314892
      ],
      "rho_vs_collision": 0.6059844161311473,
-     "partial_rho_given_collision": 0.4643514105173369
+     "pearson_vs_collision": 0.35403768789567164,
+     "partial_rho_given_collision": 0.4643514105173369,
+     "partial_pearson_given_collision": 0.5392065234366646
     },
     "gain": {
      "n": 67,
      "rho": 0.5528106480457294,
+     "pearson": 0.5715425176498896,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.29859699064946227,
       0.7660058756054113
      ],
      "rho_vs_collision": -0.2874446264810558,
-     "partial_rho_given_collision": 0.553930682691609
+     "pearson_vs_collision": -0.5365728488676079,
+     "partial_rho_given_collision": 0.553930682691609,
+     "partial_pearson_given_collision": 0.5156009060063693
     }
    },
    "triangle": {
     "support": {
      "n": 67,
      "rho": 0.3849438764508215,
+     "pearson": 0.3523162891312691,
      "p_permutation": 0.0007999200079992001,
+     "p_permutation_pearson": 0.0032996700329967,
      "ci95": [
       0.12968213794712904,
       0.5928533489120468
      ],
      "rho_vs_collision": 0.5533239553115313,
-     "partial_rho_given_collision": 0.519735210203926
+     "pearson_vs_collision": 0.46059255452907744,
+     "partial_rho_given_collision": 0.519735210203926,
+     "partial_pearson_given_collision": 0.5711735967255522
     },
     "gain": {
      "n": 67,
      "rho": 0.604609398504085,
+     "pearson": 0.6374225174911995,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.3916033812598503,
       0.7619093267786748
      ],
      "rho_vs_collision": 0.1609865112937984,
-     "partial_rho_given_collision": 0.6285112043455912
+     "pearson_vs_collision": 0.03041537492108306,
+     "partial_rho_given_collision": 0.6285112043455912,
+     "partial_pearson_given_collision": 0.6752964554854435
     }
    },
    "K4": {
     "support": {
      "n": 67,
      "rho": 0.19516088808942403,
+     "pearson": 0.1215716061452705,
      "p_permutation": 0.11528847115288471,
+     "p_permutation_pearson": 0.32736726327367266,
      "ci95": [
       -0.09901830976913961,
       0.45554654639338243
      ],
      "rho_vs_collision": 0.6363155644622637,
-     "partial_rho_given_collision": 0.32337155275859336
+     "pearson_vs_collision": 0.47420578915840295,
+     "partial_rho_given_collision": 0.32337155275859336,
+     "partial_pearson_given_collision": 0.3067514014569564
     },
     "gain": {
      "n": 67,
      "rho": 0.3279489968136567,
+     "pearson": 0.27714269049156603,
      "p_permutation": 0.006399360063993601,
+     "p_permutation_pearson": 0.024297570242975703,
      "ci95": [
       0.02431665459669736,
       0.5728614452128032
      ],
      "rho_vs_collision": 0.30605301754473907,
-     "partial_rho_given_collision": 0.3727820444721096
+     "pearson_vs_collision": 0.1838732719254461,
+     "partial_rho_given_collision": 0.3727820444721096,
+     "partial_pearson_given_collision": 0.3509479006726767
     }
    },
    "path4": {
     "support": {
      "n": 67,
      "rho": 0.37012903307731015,
+     "pearson": 0.20702522156513795,
      "p_permutation": 0.0016998300169983002,
+     "p_permutation_pearson": 0.0831916808319168,
      "ci95": [
       0.11683161006550744,
       0.5697544243853717
      ],
      "rho_vs_collision": 0.6246095928175389,
-     "partial_rho_given_collision": 0.5430141369332463
+     "pearson_vs_collision": 0.6077676498592848,
+     "partial_rho_given_collision": 0.5430141369332463,
+     "partial_pearson_given_collision": 0.5032356998431206
     },
     "gain": {
      "n": 67,
      "rho": 0.5862784628654024,
+     "pearson": 0.46407116814151456,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 0.00019998000199980003,
      "ci95": [
       0.38186732447252647,
       0.7246436310052248
      ],
      "rho_vs_collision": 0.2895314504753651,
-     "partial_rho_given_collision": 0.6401658563396988
+     "pearson_vs_collision": 0.14434257305255183,
+     "partial_rho_given_collision": 0.6401658563396988,
+     "partial_pearson_given_collision": 0.5338797946841536
     }
    },
    "triangle_tail": {
     "support": {
      "n": 67,
      "rho": 0.3518049209488579,
+     "pearson": 0.22936975351524277,
      "p_permutation": 0.0031996800319968005,
+     "p_permutation_pearson": 0.056694330566943306,
      "ci95": [
       0.07475340035279769,
       0.5788712608855112
      ],
      "rho_vs_collision": 0.5730534386173523,
-     "partial_rho_given_collision": 0.48971174173434107
+     "pearson_vs_collision": 0.5782293601929874,
+     "partial_rho_given_collision": 0.48971174173434107,
+     "partial_pearson_given_collision": 0.5074971337723391
     },
     "gain": {
      "n": 67,
      "rho": 0.5965938002272412,
+     "pearson": 0.6771339114668175,
      "p_permutation": 9.999000099990002e-05,
+     "p_permutation_pearson": 9.999000099990002e-05,
      "ci95": [
       0.3594492439575992,
       0.7826283866316752
      ],
      "rho_vs_collision": -0.1498937454554753,
-     "partial_rho_given_collision": 0.5927765318668775
+     "pearson_vs_collision": -0.4081620166901239,
+     "partial_rho_given_collision": 0.5927765318668775,
+     "partial_pearson_given_collision": 0.6398562971998173
     }
    }
   }

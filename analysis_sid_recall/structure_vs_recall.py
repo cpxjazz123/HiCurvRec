@@ -200,13 +200,37 @@ def spearman(first: np.ndarray, second: np.ndarray) -> float:
     return float((rank_a * rank_b).sum() / denominator) if denominator else float("nan")
 
 
-def permutation_p(first: np.ndarray, second: np.ndarray, observed: float) -> float:
+def pearson(first: np.ndarray, second: np.ndarray) -> float:
+    if len(first) < 3:
+        return float("nan")
+    centred_a = first - first.mean()
+    centred_b = second - second.mean()
+    denominator = float(np.sqrt((centred_a ** 2).sum() * (centred_b ** 2).sum()))
+    return float((centred_a * centred_b).sum() / denominator) if denominator else float("nan")
+
+
+def partial_pearson(first: np.ndarray, second: np.ndarray, control: np.ndarray) -> float:
+    """Linear correlation of first and second after regressing the control out of both."""
+    design = np.column_stack([np.ones_like(control), control])
+    residual_a = first - design @ np.linalg.lstsq(design, first, rcond=None)[0]
+    residual_b = second - design @ np.linalg.lstsq(design, second, rcond=None)[0]
+    return pearson(residual_a, residual_b)
+
+
+def permutation_p(first: np.ndarray, second: np.ndarray,
+                  observed_spearman: float, observed_pearson: float) -> dict:
+    """Both statistics in one pass: one shuffle buys one p-value per statistic."""
     rng = np.random.default_rng(SEED)
-    beats = 0
+    beats_spearman = 0
+    beats_pearson = 0
     for _ in range(PERMUTATIONS):
-        if abs(spearman(first, rng.permutation(second))) >= abs(observed):
-            beats += 1
-    return (beats + 1) / (PERMUTATIONS + 1)
+        shuffled = rng.permutation(second)
+        if abs(spearman(first, shuffled)) >= abs(observed_spearman):
+            beats_spearman += 1
+        if abs(pearson(first, shuffled)) >= abs(observed_pearson):
+            beats_pearson += 1
+    return {"spearman": (beats_spearman + 1) / (PERMUTATIONS + 1),
+            "pearson": (beats_pearson + 1) / (PERMUTATIONS + 1)}
 
 
 def partial_spearman(first: np.ndarray, second: np.ndarray, control: np.ndarray) -> float:
@@ -301,12 +325,17 @@ def main() -> int:
         second = np.array([b for _, b, _ in values])
         control_values = np.array([c for _, _, c in values])
         rho = spearman(first, second)
+        linear = pearson(first, second)
         low, high = bootstrap_ci(first, second)
+        p_values = permutation_p(first, second, rho, linear)
         # a structure metric could simply track how fragmented the codebook is: report the partial
-        return {"n": len(values), "rho": rho, "p_permutation": permutation_p(first, second, rho),
+        return {"n": len(values), "rho": rho, "pearson": linear,
+                "p_permutation": p_values["spearman"], "p_permutation_pearson": p_values["pearson"],
                 "ci95": [low, high],
                 "rho_vs_collision": spearman(first, control_values),
-                "partial_rho_given_collision": partial_spearman(first, second, control_values)}
+                "pearson_vs_collision": pearson(first, control_values),
+                "partial_rho_given_collision": partial_spearman(first, second, control_values),
+                "partial_pearson_given_collision": partial_pearson(first, second, control_values)}
 
     unique: dict[str, dict] = {}
     for row in rows:
@@ -335,18 +364,24 @@ def main() -> int:
               f"(n={block['context']['l3_collision'].get('n')}) ===")
         for key, value in block["context"].items():
             if value.get("rho") is not None:
-                print(f"  {key:<14} rho {value['rho']:+.3f}  p {value['p_permutation']:.4f}  "
-                      f"CI [{value['ci95'][0]:+.3f}, {value['ci95'][1]:+.3f}]")
-        print(f"  {'structure':<14}{'support rho':>13}{'p':>8}{'gain rho':>11}{'p':>8}")
+                print(f"  {key:<14} spearman {value['rho']:+.3f} (p {value['p_permutation']:.4f})"
+                      f"  pearson {value['pearson']:+.3f} (p {value['p_permutation_pearson']:.4f})"
+                      f"  CI [{value['ci95'][0]:+.3f}, {value['ci95'][1]:+.3f}]")
+        print(f"  {'structure':<14}{'sup rho':>9}{'p':>7}{'sup r':>9}{'p':>7}"
+              f"{'gain rho':>10}{'p':>7}{'gain r':>9}{'p':>7}")
         for name in STRUCTURES:
             support = block["structures"][name]["support"]
             gain = block["structures"][name]["gain"]
-            support_text = (f"{support['rho']:+.3f}" if support.get("rho") is not None else "n/a")
-            support_p = (f"{support['p_permutation']:.3f}"
-                         if support.get("rho") is not None else "")
-            gain_text = f"{gain['rho']:+.3f}" if gain.get("rho") is not None else "n/a"
-            gain_p = f"{gain['p_permutation']:.3f}" if gain.get("rho") is not None else ""
-            print(f"  {name:<14}{support_text:>13}{support_p:>8}{gain_text:>11}{gain_p:>8}")
+            def cell(entry, key):
+                if entry.get(key) is None:
+                    return "n/a", ""
+                return f"{entry[key]:+.3f}", f"{entry.get('p_permutation' if key == 'rho' else 'p_permutation_pearson', 0):.3f}"
+            support_rho, support_rho_p = cell(support, "rho")
+            support_r, support_r_p = cell(support, "pearson")
+            gain_rho, gain_rho_p = cell(gain, "rho")
+            gain_r, gain_r_p = cell(gain, "pearson")
+            print(f"  {name:<14}{support_rho:>9}{support_rho_p:>7}{support_r:>9}{support_r_p:>7}"
+                  f"{gain_rho:>10}{gain_rho_p:>7}{gain_r:>9}{gain_r_p:>7}")
     return 0
 
 
