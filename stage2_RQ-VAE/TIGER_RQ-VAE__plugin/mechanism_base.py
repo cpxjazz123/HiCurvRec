@@ -1,8 +1,12 @@
-"""The one file a mechanism is allowed to add (``mechanism.py`` learns from this).
+"""Reference for the optional lifecycle hooks (``mechanism.py``).
 
-A candidate tree is a copy of this baseline plus exactly one new file, ``mechanism.py``.
-Everything else — paths, hyper-parameters, DDP, the data pipeline, SID export — is
-host-owned. The trainer probes these optional hooks:
+Candidate policy: a mechanism may only change **distances/ or losses/** — allocation
+(Sinkhorn), the quantiser internals, the model interface and the training entry are
+host-owned and must stay byte-identical. The hooks below remain available for host
+experiments, but they are not part of the candidate surface; a candidate that adds
+``mechanism.py`` is rejected by ``specCheck.surface``.
+
+The trainer probes these optional hooks:
 
 ``runtime_context.get(name)`` / ``fields()``
     The host publishes whatever fields the batches carry as a named mapping (default:

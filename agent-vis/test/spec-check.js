@@ -156,48 +156,82 @@ await test('树不存在时返回错误而不是抛栈', async () => {
 });
 
 
-// ---- 插件宿主：改动面只允许 mechanism.py + ARM_NAME --------------------------
+// ---- 改动面：只允许 distances/ 与 losses/ -----------------------------------
 const PB = `${ROOT}/plugin-base`;
-const PT = `${ROOT}/plugin-tree`;
-const PT2 = `${ROOT}/plugin-tree-extra-new`;
-const PT3 = `${ROOT}/plugin-tree-extra-changed`;
-
-write(`${PB}/mechanism_base.py`, '"""host marker"""\n');
-write(`${PB}/train_rqvae.py`, 'ARM_NAME = "TIGER_RQ-VAE"\nprint("baseline")\n');
-write(`${PB}/config/train_config.json`, JSON.stringify({ epochs: 3000 }, null, 2));
-write(`${PB}/distances/distance.py`, 'X = 1\n');
-write(`${PB}/model/layers.py`, 'Y = 1\n');
-for (const dir of [PT, PT2, PT3]) {
+const P_DIST = `${ROOT}/surface-distance`;
+const P_EXTRA = `${ROOT}/surface-extra-new`;
+const P_MODEL = `${ROOT}/surface-model`;
+const P_LOSS = `${ROOT}/surface-loss`;
+for (const dir of [P_DIST, P_EXTRA, P_MODEL, P_LOSS]) {
   write(`${dir}/mechanism_base.py`, '"""host marker"""\n');
-  write(`${dir}/train_rqvae.py`, 'ARM_NAME = "TIGER_rq_plugin"\nprint("baseline")\n');
+  write(`${dir}/train_rqvae.py`, 'ARM_NAME = "TIGER_surface"\nprint("baseline")\n');
   write(`${dir}/config/train_config.json`, JSON.stringify({ epochs: 3000 }, null, 2));
   write(`${dir}/distances/distance.py`, 'X = 1\n');
-  write(`${dir}/mechanism.py`, 'def distance(a, b):\n    return a\n');
+  write(`${dir}/losses/reconstruction.py`, 'L = 1\n');
+  write(`${dir}/model/layers.py`, 'Y = 1\n');
 }
-write(`${PT2}/extra_idea_file.py`, 'pass\n');
-write(`${PT3}/distances/distance.py`, 'X = 2\n');
+for (const dir of [PB]) {
+  write(`${dir}/mechanism_base.py`, '"""host marker"""\n');
+  write(`${dir}/train_rqvae.py`, 'ARM_NAME = "TIGER_RQ-VAE"\nprint("baseline")\n');
+  write(`${dir}/config/train_config.json`, JSON.stringify({ epochs: 3000 }, null, 2));
+  write(`${dir}/distances/distance.py`, 'X = 1\n');
+  write(`${dir}/losses/reconstruction.py`, 'L = 1\n');
+  write(`${dir}/model/layers.py`, 'Y = 1\n');
+}
+write(`${P_DIST}/distances/distance.py`, 'X = 2\n');      // 允许
+write(`${P_LOSS}/losses/reconstruction.py`, 'L = 2\n');   // 允许
+write(`${P_MODEL}/model/layers.py`, 'Y = 2\n');           // 不允许
+write(`${P_EXTRA}/extra_file.py`, 'pass\n');              // 不允许新增
+write(`${P_EXTRA}/mechanism.py`, 'pass\n');               // 不允许插件文件
 
-await test('插件宿主：只加 mechanism.py + 改 ARM_NAME → surface.ok', async () => {
-  const out = await call({ tree: PT, baseline: PB, idea: IDEA });
-  assert.ok(out.surface, 'surface 缺失');
-  assert.equal(out.surface.pluginHost, true);
-  assert.equal(out.surface.mechanism, true);
-  assert.deepEqual(out.surface.unexpectedNew, []);
+const ideaFor = (tree, touch) => {
+  const dir = `${ROOT}/idea-${tree.split('/').pop()}`;
+  write(`${dir}/x_idea.json`, JSON.stringify({
+    schema: 'genrec.idea.v6',
+    arm: 'TIGER_surface',
+    sections: {
+      '1_goal': { idea: 'surface smoke' },
+      '4_method': {
+        new_files: [],
+        modified_files: [{ path: `${tree}/distances/distance.py`, what: 'allowlisted' }],
+        ...(touch ? { touch: touch.map((rel) => `${tree}/${rel}`) } : {}),
+      },
+    },
+  }, null, 2));
+  write(`${dir}/math.json`, JSON.stringify({ metrics: {} }));
+  return dir;
+};
+
+await test('只改距离文件 → surface.ok', async () => {
+  const out = await call({ tree: P_DIST, baseline: PB, idea: ideaFor(P_DIST) });
+  assert.ok(out.surface);
   assert.deepEqual(out.surface.unexpectedChanged, []);
-  assert.equal(out.surface.armNameOnly.ok, true, JSON.stringify(out.surface.armNameOnly));
+  assert.deepEqual(out.surface.unexpectedNew, []);
   assert.equal(out.surface.ok, true);
 });
 
-await test('插件宿主：多出一个新文件 → 被点名', async () => {
-  const out = await call({ tree: PT2, baseline: PB, idea: IDEA });
-  assert.deepEqual(out.surface.unexpectedNew, ['extra_idea_file.py']);
+await test('只改 loss 文件 → surface.ok', async () => {
+  const out = await call({ tree: P_LOSS, baseline: PB, idea: ideaFor(P_LOSS) });
+  assert.equal(out.surface.ok, true, JSON.stringify(out.surface));
+});
+
+await test('改 model/ → 被点名（机制不改分配/量化层）', async () => {
+  const out = await call({ tree: P_MODEL, baseline: PB, idea: ideaFor(P_MODEL) });
+  assert.deepEqual(out.surface.unexpectedChanged.map((x) => x.file), ['model/layers.py']);
   assert.equal(out.surface.ok, false);
 });
 
-await test('插件宿主：改动别的文件 → 被点名', async () => {
-  const out = await call({ tree: PT3, baseline: PB, idea: IDEA });
-  assert.equal(out.surface.unexpectedChanged.length, 1);
-  assert.equal(out.surface.unexpectedChanged[0].file, 'distances/distance.py');
+await test('新增 mechanism.py / 其它文件 → 被点名', async () => {
+  const out = await call({ tree: P_EXTRA, baseline: PB, idea: ideaFor(P_EXTRA) });
+  assert.deepEqual(out.surface.unexpectedNew.sort(), ['extra_file.py', 'mechanism.py']);
+  assert.equal(out.surface.ok, false);
+});
+
+await test('touch 里点名 distances/losses 之外的文件 → outOfScope', async () => {
+  const dir = ideaFor(P_MODEL, ['model/layers.py']);
+  const out = await call({ tree: P_MODEL, baseline: PB, idea: dir });
+  assert.equal(out.surface.outOfScope.length, 1);
+  assert.equal(out.surface.outOfScope[0], 'model/layers.py');
   assert.equal(out.surface.ok, false);
 });
 
@@ -205,50 +239,7 @@ await test('非插件基线：surface 为 null（沿用原规则）', async () =
   assert.equal(out.surface, null);
 });
 
-
-// ---- touch：idea 直接声明"允许改哪些文件" ----------------------------------
-const TD = `${ROOT}/touch-idea`;
-const PT4 = `${ROOT}/touch-tree`;
-const PT5 = `${ROOT}/touch-tree-extra`;
-for (const dir of [PT4, PT5]) {
-  write(`${dir}/mechanism_base.py`, '"""host marker"""\n');
-  write(`${dir}/train_rqvae.py`, 'ARM_NAME = "TIGER_touch"\nprint("baseline")\n');
-  write(`${dir}/distances/distance.py`, 'X = 2\n');   // 允许：touch 里写了它
-  write(`${dir}/model/layers.py`, 'Y = 1\n');
-}
-write(`${PT5}/model/layers.py`, 'Y = 2\n');           // 不允许：不在 touch 里
-function writeTouchIdea(dir, tree) {
-  write(`${dir}/touch_idea.json`, JSON.stringify({
-    schema: 'genrec.idea.v6',
-    arm: 'TIGER_touch',
-    sections: {
-      '1_goal': { idea: 'touch smoke' },
-      '4_method': {
-        new_files: [],
-        modified_files: [{ path: `${tree}/distances/distance.py`, what: 'only this file' }],
-        touch: [`${tree}/distances/distance.py`],
-      },
-    },
-  }, null, 2));
-  write(`${dir}/math.json`, JSON.stringify({ metrics: {} }));
-}
-writeTouchIdea(TD, PT4);
-writeTouchIdea(`${ROOT}/touch-idea-extra`, PT5);
-
-await test('touch：只改清单里的文件 → surface.ok', async () => {
-  const out = await call({ tree: PT4, baseline: PB, idea: TD });
-  assert.equal(out.surface.mode, 'touch');
-  assert.deepEqual(out.surface.allowed, ['distances/distance.py']);
-  assert.deepEqual(out.surface.unexpectedChanged, []);
-  assert.equal(out.surface.ok, true);
-});
-
-await test('touch：改了清单外的文件 → 被点名', async () => {
-  const out = await call({ tree: PT5, baseline: PB, idea: `${ROOT}/touch-idea-extra` });
-  assert.deepEqual(out.surface.unexpectedChanged.map((x) => x.file), ['model/layers.py']);
-  assert.equal(out.surface.ok, false);
-});
-
 rm(ROOT);
+console.log(`specCheck: ${passed} 通过`);rm(ROOT);
 console.log(`specCheck: ${passed} 通过`);
 if (process.exitCode) process.exit(process.exitCode);

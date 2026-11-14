@@ -1632,7 +1632,10 @@ async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }
     formulas: declareLocations(Array.isArray(math.formulas) ? math.formulas : []),
   };
 
-  // 改动面：优先看 idea 声明的 touch；没有 touch 且基线是插件宿主时按"mechanism.py + ARM_NAME"。
+  // 改动面：机制只允许落在两类文件上 —— 距离与损失。分配规则、量化层、模型接口、
+  // 训练入口都归宿主；idea 的 touch 只能在这两类里点名。
+  const SURFACE_PATTERNS = [/^distances\/[^/]+\.py$/, /^losses\/[^/]+\.py$/];
+  const onSurface = (rel) => SURFACE_PATTERNS.some((re) => re.test(rel));
   const touch = Array.isArray(method.touch) && method.touch.length > 0
     ? method.touch.map((item) => String(item))
     : null;
@@ -1660,32 +1663,36 @@ async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }
           && !line.includes('ARM_NAME'));
       armNameOnly = { ok: extras.length === 0, extras: extras.slice(0, 10) };
     }
-    // touch 里写的是仓库相对路径（带树名），比对用的是树内相对路径。
+    // touch 里写的是仓库相对路径（带树名），比对用树内相对路径。
     const relOf = (item) => (item.startsWith(`${treeRel}/`) ? item.slice(treeRel.length + 1) : item);
-    const allowed = touch !== null ? new Set(touch.map(relOf)) : new Set(['mechanism.py']);
-    const unexpectedNew = newNames.filter((name) => !allowed.has(name));
+    const touched = touch !== null ? touch.map(relOf) : null;
+    const outOfScope = touched !== null ? touched.filter((rel) => !onSurface(rel)) : [];
+    const allowed = touched !== null ? new Set(touched.filter(onSurface)) : null;
+    const isAllowed = (rel) => (allowed !== null ? allowed.has(rel) : onSurface(rel));
+    const unexpectedNew = newNames.filter((name) => !isAllowed(name));
     const unexpectedChanged = [];
     for (const rel of changedNames) {
-      if (allowed.has(rel)) continue;
+      if (isAllowed(rel)) continue;
       if (rel === 'train_rqvae.py' && armNameOnly && armNameOnly.ok) continue;
       unexpectedChanged.push({
         file: rel,
-        reason: touch !== null
-          ? '不在 idea 的 touch 清单里（只允许改清单里的文件）'
-          : '插件宿主只允许新增 mechanism.py、并且只改 ARM_NAME',
+        reason: '机制只允许改 distances/ 或 losses/ 下的文件；其余归宿主'
+          + (touched !== null ? '，且必须在 idea.touch 清单里' : ''),
       });
     }
     surface = {
-      mode: touch !== null ? 'touch' : 'plugin',
+      mode: touched !== null ? 'touch' : 'plugin',
       pluginHost,
-      allowed: [...allowed],
+      patterns: SURFACE_PATTERNS.map((re) => re.source),
+      allowed: touched !== null ? [...allowed] : null,
+      outOfScope,
       mechanism: treeFiles.has('mechanism.py'),
       newFiles: newNames,
       changedFiles: changedNames,
       unexpectedNew,
       unexpectedChanged,
       armNameOnly,
-      ok: unexpectedNew.length === 0 && unexpectedChanged.length === 0,
+      ok: unexpectedNew.length === 0 && unexpectedChanged.length === 0 && outOfScope.length === 0,
     };
   }
 
@@ -1717,7 +1724,7 @@ async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }
       'files.* 里剩下的条目就是问题：missing 的没写，differsFromBaseline=false 的声明改了却没改。',
       'paths.absolute / paths.parentsN 的 total 必须是 0；armNames 只允许一个值且等于候选树目录名。',
       'paths.crossArm 必须为空：候选树只能依赖冻结基线与本树，引用别的臂就是外部依赖。',
-      'surface：必须 ok=true —— idea 有 touch 时只允许改 touch 里的文件；否则（插件宿主）只允许新增 mechanism.py；train_rqvae.py 只允许改 ARM_NAME。',
+      'surface：必须 ok=true —— 机制只允许改 distances/ 或 losses/ 下的文件（idea.touch 只能在这两类里点名）；train_rqvae.py 只允许改 ARM_NAME。',
       'frozen.*.changed 必须为空；frozen.constants.added 是机制自己的常量，属正常。',
       'metrics.missing 是规格要求但树里没有的读数名。',
       'declarations.constants/formulas 是规格声明的名字在树里的位置（hits=0 表示没找到，需要你判断是命名不同还是真缺）。',

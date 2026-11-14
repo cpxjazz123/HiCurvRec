@@ -211,7 +211,15 @@ function checkTouch(touch, add) {
       add(at, '必须是非空字符串');
       return;
     }
-    if (file.startsWith('/')) add(at, '路径要是仓库相对路径');
+    if (file.startsWith('/')) {
+      add(at, '路径要是仓库相对路径');
+      return;
+    }
+    // 机制只允许落在距离与损失两类文件上（分配规则/量化层/模型/入口归宿主）。
+    const rel = file.replace(/^stage2_RQ-VAE\/[^/]+\//, '');
+    if (!/^distances\/[^/]+\.py$/.test(rel) && !/^losses\/[^/]+\.py$/.test(rel)) {
+      add(at, '只能是 distances/*.py 或 losses/*.py（机制只改这两类）');
+    }
   });
 }
 
