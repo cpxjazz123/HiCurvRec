@@ -119,7 +119,52 @@ function resolveInSandbox(relPath) {
  *
  * 写与删共用这一套边界：越界、.git 一律当场报错，不做任何回退。
  */
-function resolveMutableInSandbox(relPath) {
+/** 一个 shell 风格的通配（`*` 单段、`**` 任意层）转正则。 */
+function globToRegExp(pattern) {
+  let out = '';
+  for (let i = 0; i < pattern.length; i += 1) {
+    const ch = pattern[i];
+    if (ch === '*') {
+      if (pattern[i + 1] === '*') {
+        out += '.*';
+        i += 1;
+      } else {
+        out += '[^/]*';
+      }
+    } else if ('\\^$.|?+()[]{}'.includes(ch)) {
+      out += `\\${ch}`;
+    } else {
+      out += ch;
+    }
+  }
+  return new RegExp(`^${out}$`);
+}
+
+/** 通配里第一个元字符之前的部分：用来判断"这个目录是不是某个允许路径的祖先"。 */
+function literalPrefix(pattern) {
+  const cut = pattern.search(/[*?[]/);
+  return cut < 0 ? pattern : pattern.slice(0, cut);
+}
+
+/**
+ * 写作用域：非空时，只有命中其中一条通配的路径才可写。
+ *
+ * 这是并行写同一棵树的硬前提：几个 agent 分文件写，谁都不能越界改别人的文件。
+ */
+function scopeAllows(scope, relPosix, { isDir = false } = {}) {
+  if (!Array.isArray(scope) || scope.length === 0) return true;
+  if (scope.some((pattern) => globToRegExp(pattern).test(relPosix))) return true;
+  if (isDir) {
+    const dir = relPosix.replace(/\/+$/, '');
+    return scope.some((pattern) => {
+      const prefix = literalPrefix(pattern).replace(/\/+$/, '');
+      return prefix === dir || prefix.startsWith(`${dir}/`);
+    });
+  }
+  return false;
+}
+
+function resolveMutableInSandbox(relPath, scope, { isDir = false } = {}) {
   const root = sandboxRoot();
   const target = path.resolve(root, relPath);
   if (target !== root && !target.startsWith(root + path.sep)) {
@@ -128,6 +173,12 @@ function resolveMutableInSandbox(relPath) {
   const rel = path.relative(root, target);
   if (rel.split(path.sep)[0] === '.git') {
     throw new Error(`不许动 .git 目录下的东西: ${relPath}`);
+  }
+  const relPosix = rel.split(path.sep).join('/');
+  if (!scopeAllows(scope, relPosix, { isDir })) {
+    throw new Error(
+      `写入越界：${relPosix} 不在这个 agent 的文件范围里（允许：${(scope || []).join('、')}）`,
+    );
   }
   return target;
 }
@@ -405,8 +456,8 @@ export const TOOL_IMPLS = {
     return { path: relativeToRoot(target), bytes, created: !existed };
   },
 
-  async deleteFile({ path: relPath }) {
-    const target = resolveMutableInSandbox(relPath);
+  async deleteFile({ path: relPath }, options = {}) {
+    const target = resolveMutableInSandbox(relPath, options.writeScope);
     if (target === sandboxRoot()) {
       throw new Error(`不许删仓库根目录: ${relPath}`);
     }
@@ -659,15 +710,19 @@ const gitLogTool = piTool({
   impl: TOOL_IMPLS.gitLog,
 });
 
-const deleteFileTool = piTool({
-  name: 'deleteFile',
-  label: '删文件',
-  description: 'Delete a file or a directory inside the repo. Path is relative to the repo root.',
-  parameters: Type.Object({
-    path: Type.String({ description: '仓库相对路径' }),
-  }),
-  impl: TOOL_IMPLS.deleteFile,
-});
+function makeDeleteTool(scope) {
+  return piTool({
+    name: 'deleteFile',
+    label: '删文件',
+    description: 'Delete a file or a directory inside the repo. Path is relative to the repo root.',
+    parameters: Type.Object({
+      path: Type.String({ description: '仓库相对路径' }),
+    }),
+    impl: (args) => TOOL_IMPLS.deleteFile(args, { writeScope: scope }),
+  });
+}
+
+const deleteFileTool = makeDeleteTool(undefined);
 
 /**
  * 轮次控制工具：本步判定"本轮不用继续"时调用它。
@@ -968,34 +1023,50 @@ const sandboxReadOperations = {
   },
 };
 
-const sandboxWriteOperations = {
-  writeFile: async (absolutePath, content) => {
-    const target = resolveMutableInSandbox(absolutePath);
-    const buf = Buffer.from(content);
-    if (buf.byteLength > MAX_WRITE_BYTES) {
-      throw new Error(
-        `要写的内容太大（${buf.byteLength} 字节，上限 ${MAX_WRITE_BYTES} 字节）: ${absolutePath}`,
-      );
-    }
-    await fs.promises.writeFile(target, buf);
-  },
-  mkdir: async (dir) => {
-    const target = resolveMutableInSandbox(dir);
-    await fs.promises.mkdir(target, { recursive: true });
-  },
-  access: async (absolutePath) => {
-    const target = resolveMutableInSandbox(absolutePath);
-    await fs.promises.access(target, fs.constants.R_OK | fs.constants.W_OK);
-  },
-};
+/** 写操作按作用域生成：同一个进程里并行跑多个 agent 时，作用域不能是全局状态。 */
+function makeWriteOperations(scope) {
+  return {
+    writeFile: async (absolutePath, content) => {
+      const target = resolveMutableInSandbox(absolutePath, scope);
+      const buf = Buffer.from(content);
+      if (buf.byteLength > MAX_WRITE_BYTES) {
+        throw new Error(
+          `要写的内容太大（${buf.byteLength} 字节，上限 ${MAX_WRITE_BYTES} 字节）: ${absolutePath}`,
+        );
+      }
+      await fs.promises.writeFile(target, buf);
+    },
+    mkdir: async (dir) => {
+      const root = sandboxRoot();
+      const abs = path.resolve(root, dir);
+      const relPosix = path.relative(root, abs).split(path.sep).join('/');
+      if (!scopeAllows(scope, relPosix, { isDir: true })) {
+        throw new Error(`建目录越界：${relPosix} 不在这个 agent 的文件范围里`);
+      }
+      const target = resolveMutableInSandbox(dir, scope, { isDir: true });
+      await fs.promises.mkdir(target, { recursive: true });
+    },
+    access: async (absolutePath) => {
+      const target = resolveMutableInSandbox(absolutePath, scope);
+      await fs.promises.access(target, fs.constants.R_OK | fs.constants.W_OK);
+    },
+  };
+}
+
+const sandboxWriteOperations = makeWriteOperations(undefined);
 
 const piReadTool = createReadToolDefinition(sandboxRoot(), {
   operations: sandboxReadOperations,
 });
 
-const piWriteTool = createWriteToolDefinition(sandboxRoot(), {
-  operations: sandboxWriteOperations,
-});
+/** 带作用域的写工具：多个 agent 并行写同一棵树时，各写各的文件。 */
+function makeWriteTool(scope) {
+  return createWriteToolDefinition(sandboxRoot(), {
+    operations: makeWriteOperations(scope),
+  });
+}
+
+const piWriteTool = makeWriteTool(undefined);
 
 const piLsTool = createLsToolDefinition(sandboxRoot());
 const piGrepTool = createGrepToolDefinition(sandboxRoot());
@@ -1005,22 +1076,27 @@ const piFindTool = createFindToolDefinition(sandboxRoot());
  * pi 自带的 edit 工具：按原文精确替换（一处找不到会试模糊匹配），
  * 一次调用可以改多处。
  */
-const piEditTool = createEditToolDefinition(sandboxRoot(), {
-  operations: {
-    readFile: async (absolutePath) => {
-      const target = resolveMutableInSandbox(absolutePath);
-      const buf = await fs.promises.readFile(target);
-      if (buf.byteLength > MAX_WRITE_BYTES) {
-        throw new Error(
-          `文件太大（${buf.byteLength} 字节，上限 ${MAX_WRITE_BYTES} 字节），改不动: ${absolutePath}`,
-        );
-      }
-      return buf;
+function makeEditTool(scope) {
+  const operations = makeWriteOperations(scope);
+  return createEditToolDefinition(sandboxRoot(), {
+    operations: {
+      readFile: async (absolutePath) => {
+        const target = resolveMutableInSandbox(absolutePath, scope);
+        const buf = await fs.promises.readFile(target);
+        if (buf.byteLength > MAX_WRITE_BYTES) {
+          throw new Error(
+            `文件太大（${buf.byteLength} 字节，上限 ${MAX_WRITE_BYTES} 字节），改不动: ${absolutePath}`,
+          );
+        }
+        return buf;
+      },
+      writeFile: operations.writeFile,
+      access: operations.access,
     },
-    writeFile: sandboxWriteOperations.writeFile,
-    access: sandboxWriteOperations.access,
-  },
-});
+  });
+}
+
+const piEditTool = makeEditTool(undefined);
 
 /**
  * 在 CPU 上跑候选树 tests/ 里的单元测试。
@@ -1197,7 +1273,7 @@ function countDiffLines(unified) {
  * 候选树是冻结基线的一份副本加上机制增量，所以"改了什么"本身就是核对项：
  * 判定只需要落在增量上，没变的文件不必重读。只读，两棵树都必须在仓库根之内。
  */
-async function treeDiff({ baseline, tree, maxHunkLines = 40, maxChangedFiles = 40 }) {
+async function treeDiff({ baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE', tree, maxHunkLines = 40, maxChangedFiles = 40 }) {
   const baseDir = stage2TreePath(baseline);
   const treeDir = stage2TreePath(tree);
   for (const [label, dir] of [['baseline', baseDir], ['tree', treeDir]]) {
@@ -1558,13 +1634,53 @@ export const PI_TOOLS = {
  * 没授的工具压根不进 pi 的工具表 —— 模型看不见它，也调不到它。
  * 这是权限的硬约束：提示词里写"你没写权限"只是补充说明，真正管用的是这张表。
  */
-export function toolsForPermissions(permissionIds) {
+/** 建树工具也受作用域约束：目标树必须落在允许的路径里。 */
+function makeCopyBaselineTool(scope) {
+  return piTool({
+    name: 'copyBaselineTree',
+    label: '建候选树',
+    description: 'Copy one frozen baseline tree into a new candidate tree under stage2_RQ-VAE (never overwrites).',
+    parameters: Type.Object({
+      arm: Type.String({ description: '新候选树的名字，例如 TIGER_xxx_rq' }),
+      from: Type.Optional(Type.String({ description: '冻结基线路径，默认 stage2_RQ-VAE/TIGER_RQ-VAE' })),
+    }),
+    impl: (args) => {
+      const arm = typeof args.arm === 'string' ? args.arm.trim() : '';
+      const target = `stage2_RQ-VAE/${arm}`;
+      if (!scopeAllows(scope, target, { isDir: true })) {
+        throw new Error(`建树越界：${target} 不在这个 agent 的文件范围里`);
+      }
+      return TOOL_IMPLS.copyBaselineTree(args);
+    },
+  });
+}
+
+const SCOPED_TOOL_NAMES = new Set(['write', 'edit', 'deleteFile', 'copyBaselineTree']);
+const scopedToolCache = new Map();
+
+/** 某个写作用域下的写工具集（read 工具不需要作用域，它们本来就只读）。 */
+function scopedTools(scope) {
+  const key = Array.isArray(scope) && scope.length > 0 ? scope.join('|') : '';
+  if (key === '') return null;
+  if (!scopedToolCache.has(key)) {
+    scopedToolCache.set(key, {
+      write: makeWriteTool(scope),
+      edit: makeEditTool(scope),
+      deleteFile: makeDeleteTool(scope),
+      copyBaselineTree: makeCopyBaselineTool(scope),
+    });
+  }
+  return scopedToolCache.get(key);
+}
+
+export function toolsForPermissions(permissionIds, options = {}) {
   const ids = normalizePermissions(permissionIds);
+  const scoped = scopedTools(options.writeScope);
   const picked = new Map();
   for (const id of ids) {
     const item = PERMISSION_CATALOG.find((entry) => entry.id === id);
     for (const name of item.tools) {
-      const tool = PI_TOOLS[name];
+      const tool = (scoped && SCOPED_TOOL_NAMES.has(name) ? scoped[name] : PI_TOOLS[name]);
       if (!tool) {
         throw new Error(`权限 ${id} 指向了不存在的工具 ${name}`);
       }
@@ -1696,7 +1812,11 @@ export async function createPiSession({ profile, instructions, permissionIds }) 
   const { modelRuntime, model } = await piRuntime();
   // 轮次控制工具始终可用：没有它，"本步判定本轮结束"就只能写在文字里，
   // 客户端读不到，后面的步骤照样会发出去。
-  const tools = [...toolsForPermissions(permissionIds), endRoundTool, requestHandoffTool];
+  const tools = [
+    ...toolsForPermissions(permissionIds, { writeScope: profile && profile.writeScope }),
+    endRoundTool,
+    requestHandoffTool,
+  ];
   const loader = new DefaultResourceLoader({
     cwd: sandboxRoot(),
     agentDir: path.join(piStateDir(), 'agent'),

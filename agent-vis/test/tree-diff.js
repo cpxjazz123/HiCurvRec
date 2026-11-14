@@ -102,6 +102,12 @@ await testAsync('缓存目录与二进制不进表', async () => {
   assert.equal(all.some((name) => name.endsWith('.npz')), false);
 });
 
+await testAsync('不给 baseline 时用冻结基线作默认值', async () => {
+  const out = await diff({ tree: TREE });
+  assert.equal(out.ok, true, out.error);
+  assert.equal(out.baseline, 'stage2_RQ-VAE/TIGER_RQ-VAE');
+});
+
 await testAsync('路径不存在时返回错误而不是抛栈', async () => {
   const out = await diff({ baseline: `${ROOT}/no-such-dir`, tree: TREE });
   assert.equal(out.ok, false);

@@ -1120,6 +1120,79 @@ export function buildPermissionPrompt(permissionIds) {
 }
 
 /** 默认人设（第一个 profile）的指令说明。 */
+
+/**
+ * 并行写同一棵候选树的四个 writer。
+ *
+ * 为什么要拆：AGENT Write 一次要写 3 个新机制文件 + 5 个改基线文件 + 测试，
+ * 这些文件之间只靠"签名"耦合。拆开的前提是**文件所有权互斥** ——
+ * writeScope 是机器强制的白名单（越界写直接报错），所以并行时不会互相覆盖。
+ *
+ * 契约不放新文件里：就是这棵树里已有的机制文件（函数签名）+ ideas/<方向>/math.json
+ * （公式、常量、开关）。需要动别人的文件时，只能写进结论，不许动手。
+ */
+const WRITER_TREE = 'stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq';
+
+function writerInstructions(title, files) {
+  return [
+    `你是 ${title}，只负责写下面这几份文件：`,
+    ...files.map((file) => `  - ${WRITER_TREE}/${file}`),
+    '',
+    '写之前先读：ideas/AF3_curvature_factor_mass_idea/*_idea.json 与同目录 math.json（12 条公式、9 个常量、三个开关），',
+    '再读这棵树里已有的机制文件 —— 它们的函数签名就是契约：你调用它们时按实际签名写，不许改它们。',
+    '基线是 stage2_RQ-VAE/TIGER_RQ-VAE：接口照它抄，config 的冻结超参一个字都不许动。',
+    '',
+    '硬约束（机器强制）：write/edit/deleteFile 只能写上面清单里的文件，越界会直接报错，不会落盘。',
+    '发现必须改别人的文件时，只在结论里写清"要改哪个文件、改成什么"，不要动手改。',
+    '不跑训练、不 commit/push。每写完一份读回一次，确认写对了、路径没写错。',
+  ].join('\n');
+}
+
+const WRITER_PROFILES = [
+  {
+    id: 'agent-w1',
+    name: 'AGENT W1 · AF3 表',
+    files: ['af3_item_potential.py', 'tests/test_af3_item_potential.py'],
+  },
+  {
+    id: 'agent-w2',
+    name: 'AGENT W2 · 几何与代价',
+    files: [
+      'factor_share_geometry.py',
+      'distances/factor_share.py',
+      'tests/test_factor_share_geometry.py',
+    ],
+  },
+  {
+    id: 'agent-w3',
+    name: 'AGENT W3 · 模型接线',
+    files: [
+      'model/layers.py',
+      'model/model.py',
+      'distances/distance.py',
+      'distances/__init__.py',
+      'tests/test_factor_share_wiring.py',
+    ],
+  },
+  {
+    id: 'agent-w4',
+    name: 'AGENT W4 · 训练入口',
+    files: ['train_rqvae.py', 'tests/test_factor_share_switches.py'],
+  },
+].map(({ id, name, files }) => ({
+  id,
+  name,
+  role: 'MECHANISM_WRITER',
+  // 只给读与写：并行阶段不跑训练、不删文件。
+  permissions: ['read', 'write'],
+  writeScope: files.map((file) => `${WRITER_TREE}/${file}`),
+  loopWatchFiles: files.map((file) => `${WRITER_TREE}/${file}`),
+  instructions: writerInstructions(name, files),
+  steps: [],
+}));
+
+AGENT_PROFILES.push(...WRITER_PROFILES);
+
 export const AGENT_INSTRUCTIONS = AGENT_PROFILES[0].instructions;
 
 /**
@@ -1428,6 +1501,10 @@ function publicProfile(profile) {
         ? Boolean(override.loopResetSession)
         : Boolean(profile.loopResetSession),
     defaultLoopResetSession: Boolean(profile.loopResetSession),
+    // 写作用域：非空时这个 agent 只能写命中这些通配的路径。
+    // 多个 agent 并行写同一棵候选树时，靠它各写各的文件（硬约束在 live-agent 里执行）。
+    writeScope: has('writeScope') ? [...override.writeScope] : [...(profile.writeScope || [])],
+    defaultWriteScope: [...(profile.writeScope || [])],
     // 这一栏被审的文件：循环闸（files 模式）看的就是它们。
     loopWatchFiles: has('loopWatchFiles')
       ? normalizeLoopWatchFiles(override.loopWatchFiles)
@@ -1676,6 +1753,17 @@ export function saveProfileConfig(profileId, patch) {
       delete next.permissions;
     } else {
       next.permissions = normalizePermissions(patch.permissions);
+    }
+  }
+  if (patch.writeScope !== undefined) {
+    if (patch.writeScope === null) {
+      delete next.writeScope;
+    } else if (!Array.isArray(patch.writeScope)) {
+      throw new Error('writeScope 必须是字符串数组');
+    } else {
+      next.writeScope = patch.writeScope
+        .map((item) => (typeof item === 'string' ? item.trim() : ''))
+        .filter((item) => item !== '');
     }
   }
   if (patch.steps !== undefined) {
