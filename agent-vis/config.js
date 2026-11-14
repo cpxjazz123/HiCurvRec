@@ -1138,8 +1138,8 @@ function writerInstructions(title, files) {
     `你是 ${title}，只负责写下面这几份文件：`,
     ...files.map((file) => `  - ${WRITER_TREE}/${file}`),
     '',
-    `候选树不存在时，先用 copyBaselineTree({arm: '${WRITER_TREE.split('/')[1]}'}) 从冻结基线建树 —— ` +
-      '你们四个谁先跑谁建，建完别人再建会得到"已经存在"（不覆盖）。',
+    '候选树由 AGENT IDEA 在建 idea 时复制好（只换目录名、内容与基线一致）：你只写文件，不建树、不复制树。' +
+      '如果这棵树不存在，就停下，在结论里写清"树缺失"，等上游把树建出来。',
     '写之前先读：ideas/AF3_curvature_factor_mass_idea/*_idea.json 与同目录 math.json（12 条公式、9 个常量、三个开关），',
     '再读这棵树里已有的机制文件 —— 它们的函数签名就是契约：你调用它们时按实际签名写，不许改它们。',
     '基线是 stage2_RQ-VAE/TIGER_RQ-VAE：接口照它抄，config 的冻结超参一个字都不许动。',
@@ -1187,6 +1187,8 @@ const WRITER_PROFILES = [
   role: 'MECHANISM_WRITER',
   // 只给读与写：并行阶段不跑训练、不删文件。
   permissions: ['read', 'write'],
+  // 树由 AGENT IDEA 建：writer 连"自己复制一棵树"的能力都没有。
+  denyTools: ['copyBaselineTree'],
   writeScope: files.map((file) => `${WRITER_TREE}/${file}`),
   loopWatchFiles: files.map((file) => `${WRITER_TREE}/${file}`),
   instructions: writerInstructions(name, files),
@@ -1194,8 +1196,8 @@ const WRITER_PROFILES = [
   // 不预填的话空输入框按运行会被拒（没有可执行的内容）。
   defaultPrompt: [
     `写你负责的文件：${files.map((file) => `${WRITER_TREE}/${file}`).join('、')}。`,
-    `第一步：候选树不存在就先 copyBaselineTree({arm: '${WRITER_TREE.split('/')[1]}'}) 建树` +
-      '（谁先跑谁建，重复建会被拒，不会覆盖）。',
+    '候选树已由 AGENT IDEA 建好（只换目录名、内容与基线一致）：不要自己建树；' +
+      '若树不存在，就在结论里写"树缺失"并停下。',
     '然后读 ideas/AF3_curvature_factor_mass_idea/*_idea.json 与同目录 math.json，' +
       '再读这棵树里已有的机制文件（它们的签名就是契约，不许改）。',
     '只写上面清单里的文件 —— 越界写会被工具直接拒绝；需要改别人的文件时，把"改哪个文件、改成什么"写进结论。',
@@ -1517,6 +1519,9 @@ function publicProfile(profile) {
         ? Boolean(override.loopResetSession)
         : Boolean(profile.loopResetSession),
     defaultLoopResetSession: Boolean(profile.loopResetSession),
+    // 工具黑名单：这些工具即使权限里有，也不进这一栏的工具表（例如 writer 不许自己建树）。
+    denyTools: has('denyTools') ? [...override.denyTools] : [...(profile.denyTools || [])],
+    defaultDenyTools: [...(profile.denyTools || [])],
     // 写作用域：非空时这个 agent 只能写命中这些通配的路径。
     // 多个 agent 并行写同一棵候选树时，靠它各写各的文件（硬约束在 live-agent 里执行）。
     writeScope: has('writeScope') ? [...override.writeScope] : [...(profile.writeScope || [])],
@@ -1769,6 +1774,17 @@ export function saveProfileConfig(profileId, patch) {
       delete next.permissions;
     } else {
       next.permissions = normalizePermissions(patch.permissions);
+    }
+  }
+  if (patch.denyTools !== undefined) {
+    if (patch.denyTools === null) {
+      delete next.denyTools;
+    } else if (!Array.isArray(patch.denyTools)) {
+      throw new Error('denyTools 必须是字符串数组');
+    } else {
+      next.denyTools = patch.denyTools
+        .map((item) => (typeof item === 'string' ? item.trim() : ''))
+        .filter((item) => item !== '');
     }
   }
   if (patch.writeScope !== undefined) {

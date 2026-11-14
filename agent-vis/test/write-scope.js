@@ -110,11 +110,21 @@ await test('没有作用域时行为不变（整仓库根都可写）', async ()
   assert.equal(read(`${ROOT}/theirs.py`), 'b = 9\n');
 });
 
-await test('四个 writer 都能建自己那棵树（作用域覆盖树根），但建不了别人的树', () => {
+await test('writer 能写自己的文件，但工具表里没有 copyBaselineTree（树由 AGENT IDEA 建）', () => {
+  for (const id of ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']) {
+    const profile = resolveProfile(id);
+    const names = toolsForPermissions(profile.permissions, {
+      writeScope: profile.writeScope,
+      denyTools: profile.denyTools,
+    }).map((tool) => tool.name);
+    assert.equal(names.includes('copyBaselineTree'), false, `${id} 不该有建树工具`);
+    assert.equal(names.includes('write'), true, `${id} 仍要能写文件`);
+    assert.equal(names.includes('edit'), true, `${id} 仍要能改文件`);
+  }
+  // 作用域本身仍只覆盖自己那棵树 —— 越界的写入照旧被拒。
   const scope = resolveProfile('agent-w3').writeScope;
-  const treeRoot = 'stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq';
-  assert.equal(scopeAllows(scope, treeRoot, { isDir: true }), true);
-  assert.equal(scopeAllows(scope, 'stage2_RQ-VAE/TIGER_someone_else_rq', { isDir: true }), false);
+  assert.equal(scopeAllows(scope, 'stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/model/layers.py'), true);
+  assert.equal(scopeAllows(scope, 'stage2_RQ-VAE/TIGER_someone_else_rq/model/layers.py'), false);
 });
 
 // 建树是四个 writer 任意一个都能做的事：先复制冻结基线，再写自己的文件。
@@ -126,22 +136,9 @@ await test('树还没建时，作用域内的写入被拒并提示先建树', as
   const { call } = scoped(['write'], probeScope);
   await assert.rejects(
     () => call('write', { path: `stage2_RQ-VAE/${PROBE}/probe.py`, content: 'x = 1\n' }),
-    /copyBaselineTree/,
+    /树缺失/,
   );
   assert.equal(fs.existsSync(abs(`stage2_RQ-VAE/${PROBE}`)), false, '不能顺手造出空树');
-});
-
-await test('writer 自己 copyBaselineTree 建树，然后就能写自己的文件', async () => {
-  const { call } = scoped(['write'], probeScope);
-  await call('copyBaselineTree', { arm: PROBE });
-  assert.equal(fs.existsSync(abs(`stage2_RQ-VAE/${PROBE}/train_rqvae.py`)), true, '基线文件应当被复制过来');
-  await call('write', { path: `stage2_RQ-VAE/${PROBE}/probe.py`, content: 'x = 2\n' });
-  assert.equal(fs.readFileSync(abs(`stage2_RQ-VAE/${PROBE}/probe.py`), 'utf8'), 'x = 2\n');
-});
-
-await test('第二个人再建同一棵树会被拒（不覆盖）', async () => {
-  const { call } = scoped(['write'], probeScope);
-  await assert.rejects(() => call('copyBaselineTree', { arm: PROBE }), /已经存在/);
 });
 
 await test('四个 writer 的 writeScope 互不重叠，且都落在候选树里', () => {

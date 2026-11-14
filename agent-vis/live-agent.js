@@ -1064,7 +1064,8 @@ function requireTreeRoot(scope) {
   if (treeRoot === '') return;
   if (!fs.existsSync(path.join(sandboxRoot(), treeRoot))) {
     throw new Error(
-      `候选树还不存在：${treeRoot}。先用 copyBaselineTree({arm: '${path.basename(treeRoot)}'}) 从冻结基线建树，再写文件`,
+      `候选树还不存在：${treeRoot}。它由 AGENT IDEA 在建 idea 时复制好（只换目录名）；` +
+        '你这边不建树 —— 停下，并在结论里写清"树缺失"',
     );
   }
 }
@@ -1725,10 +1726,12 @@ function scopedTools(scope) {
 export function toolsForPermissions(permissionIds, options = {}) {
   const ids = normalizePermissions(permissionIds);
   const scoped = scopedTools(options.writeScope);
+  const denied = new Set(Array.isArray(options.denyTools) ? options.denyTools : []);
   const picked = new Map();
   for (const id of ids) {
     const item = PERMISSION_CATALOG.find((entry) => entry.id === id);
     for (const name of item.tools) {
+      if (denied.has(name)) continue;
       const tool = (scoped && SCOPED_TOOL_NAMES.has(name) ? scoped[name] : PI_TOOLS[name]);
       if (!tool) {
         throw new Error(`权限 ${id} 指向了不存在的工具 ${name}`);
@@ -1862,7 +1865,10 @@ export async function createPiSession({ profile, instructions, permissionIds }) 
   // 轮次控制工具始终可用：没有它，"本步判定本轮结束"就只能写在文字里，
   // 客户端读不到，后面的步骤照样会发出去。
   const tools = [
-    ...toolsForPermissions(permissionIds, { writeScope: profile && profile.writeScope }),
+    ...toolsForPermissions(permissionIds, {
+      writeScope: profile && profile.writeScope,
+      denyTools: profile && profile.denyTools,
+    }),
     endRoundTool,
     requestHandoffTool,
   ];
