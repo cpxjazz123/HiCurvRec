@@ -1373,7 +1373,7 @@ export function buildWriterPrompt() {
   ].join('\n');
 }
 
-const WRITER_PROFILES = [1, 2, 3, 4].map((index) => ({
+const WRITER_PROFILES = [1, 2, 3].map((index) => ({
   id: `agent-w${index}`,
   name: `AGENT W${index}`,
   role: 'MECHANISM_WRITER',
@@ -1412,6 +1412,9 @@ const WRITER_PROFILES = [1, 2, 3, 4].map((index) => ({
 }));
 
 AGENT_PROFILES.push(...WRITER_PROFILES);
+
+/** 写手数量：分片按它切（角色多于它时会合并，少于它时会留空栏）。 */
+export const WRITER_COUNT = WRITER_PROFILES.length;
 
 export const AGENT_INSTRUCTIONS = AGENT_PROFILES[0].instructions;
 
@@ -1664,7 +1667,7 @@ function publicProfile(profile) {
   const override = userConfigs[profile.id] || {};
   // 写手的分片是"按当前 idea 算"的：换方向时文件清单变了，作用域与工作单跟着变。
   const dynamicFiles = profile.dynamicWriter
-    ? (partitionWriterFiles(currentIdeaFiles(), 4, currentIdeaOwners())[profile.dynamicWriter - 1] || [])
+    ? (partitionWriterFiles(currentIdeaFiles(), WRITER_COUNT, currentIdeaOwners())[profile.dynamicWriter - 1] || [])
     : null;
   // 分到了 0 份文件（角色数少于 4）：这一栏没有任务，也不许写任何东西。
   const emptySlice = profile.dynamicWriter !== undefined && dynamicFiles !== null && dynamicFiles.length === 0;

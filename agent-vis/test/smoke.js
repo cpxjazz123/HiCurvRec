@@ -481,10 +481,10 @@ async function main() {
     assert.notEqual(ids[0], ids[1], '两个静态面板必须是不同的 agent');
   });
 
-  await test('/api/health 列出九个 agent 的身份', async () => {
+  await test('/api/health 列出八个 agent 的身份', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.ok(Array.isArray(info.agents), 'health 没列出 agents');
-    assert.equal(info.agents.length, 9, `应为九个 agent，实际 ${info.agents.length}`);
+    assert.equal(info.agents.length, 8, `应为八个 agent，实际 ${info.agents.length}`);
     for (const agent of info.agents) {
       assert.equal(typeof agent.id, 'string');
       assert.equal(typeof agent.name, 'string');
@@ -553,15 +553,15 @@ async function main() {
     assert.equal(res.status, 400, '未知 agent 应该被拒掉');
   });
 
-  await test('九个 agent 各自有一份独立的人设', async () => {
+  await test('八个 agent 各自有一份独立的人设', async () => {
     assert.ok(Array.isArray(config.AGENT_PROFILES), 'config 没导出 AGENT_PROFILES');
-    assert.equal(config.AGENT_PROFILES.length, 9);
+    assert.equal(config.AGENT_PROFILES.length, 8);
     const texts = new Set(config.AGENT_PROFILES.map((profile) => profile.instructions));
     assert.equal(texts.size, config.AGENT_PROFILES.length,
                  '每个 agent 的人设说明必须不同，否则几栏做的是同一件事');
   });
 
-  await test('九个 agent 的名字分别是 Write / B / MATH / STAGE2 / FIX / W1-W4', async () => {
+  await test('八个 agent 的名字分别是 Write / B / MATH / STAGE2 / FIX / W1-W3', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.name),
@@ -574,7 +574,6 @@ async function main() {
         'AGENT W1',
         'AGENT W2',
         'AGENT W3',
-        'AGENT W4',
       ],
       '页面上三栏的 agent 名字不对',
     );
@@ -590,7 +589,6 @@ async function main() {
         'MATH_AUDITOR',
         'STAGE2_RUNNER',
         'MECHANISM_CHECKER',
-        'MECHANISM_WRITER',
         'MECHANISM_WRITER',
         'MECHANISM_WRITER',
         'MECHANISM_WRITER',
@@ -2037,7 +2035,7 @@ async function main() {
 
   await test('配置里写死的九个 agent 不能从服务端删除', async () => {
     for (const id of ['agent-a', 'agent-b', 'agent-math', 'agent-stage2', 'agent-fix',
-      'agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']) {
+      'agent-w1', 'agent-w2', 'agent-w3']) {
       const res = await fetch(`${base}/api/agents/${id}`, { method: 'DELETE' });
       assert.equal(res.status, 400, `${id} 应该被拒掉`);
     }

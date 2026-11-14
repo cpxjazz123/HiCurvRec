@@ -111,7 +111,7 @@ await test('没有作用域时行为不变（整仓库根都可写）', async ()
 });
 
 await test('writer 能写自己的文件，但工具表里没有 copyBaselineTree（树由 AGENT IDEA 建）', () => {
-  for (const id of ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']) {
+  for (const id of ['agent-w1', 'agent-w2', 'agent-w3']) {
     const profile = resolveProfile(id);
     if (profile.writeScope.length === 0) continue; // 空栏没有任务，另有用例覆盖
     const names = toolsForPermissions(profile.permissions, {
@@ -184,7 +184,7 @@ await test('当前 idea 的 owners 覆盖全部实现文件（provided 的只读
 });
 
 await test('没分到文件的 writer：没有写工具、预填说明无任务', () => {
-  const empty = ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']
+  const empty = ['agent-w1', 'agent-w2', 'agent-w3']
     .map((id) => resolveProfile(id))
     .find((profile) => profile.writeScope.length === 0);
   if (!empty) return; // 当前 idea 的角色数等于 4 时没有空栏
@@ -198,7 +198,7 @@ await test('没分到文件的 writer：没有写工具、预填说明无任务'
 });
 
 await test('writer 的运行命令只描述功能，不含具体文件名', () => {
-  for (const id of ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']) {
+  for (const id of ['agent-w1', 'agent-w2', 'agent-w3']) {
     const profile = resolveProfile(id);
     if (profile.writeScope.length === 0) continue;
     const prompt = profile.defaultPrompt || '';
@@ -208,7 +208,7 @@ await test('writer 的运行命令只描述功能，不含具体文件名', () =
 });
 
 await test('assignedFiles 列出的就是这一栏的写入范围', async () => {
-  for (const id of ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']) {
+  for (const id of ['agent-w1', 'agent-w2', 'agent-w3']) {
     const profile = resolveProfile(id);
     if (profile.writeScope.length === 0) continue;
     const tool = toolsForPermissions(profile.permissions, {
@@ -222,7 +222,7 @@ await test('assignedFiles 列出的就是这一栏的写入范围', async () => 
 });
 
 await test('四个 writer 的分片只含实现文件：覆盖、互斥、不含测试', () => {
-  const slices = ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']
+  const slices = ['agent-w1', 'agent-w2', 'agent-w3']
     .map((id) => resolveProfile(id).writeScope);
   const flat = slices.flat();
   assert.equal(flat.length, new Set(flat).size, '同一份文件不能分给两栏');
@@ -250,7 +250,7 @@ await test('树还没建时，作用域内的写入被拒并提示先建树', as
 });
 
 await test('四个 writer 的 writeScope 互不重叠，且都落在候选树里', () => {
-  const scopes = ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4'].map(
+  const scopes = ['agent-w1', 'agent-w2', 'agent-w3'].map(
     (id) => resolveProfile(id).writeScope,
   );
   const flat = scopes.flat();
