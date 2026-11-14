@@ -13,7 +13,24 @@
   "path4": "distance grows with the hop count",
   "triangle_tail": "inside the triangle closer than the tail to the core"
  },
- "note": "instances sampled without replacement; effect sizes in the representation's own distance spread; verdicts need a Wilson interval excluding 0.5 and at least 100 distinct instances",
+ "exhaustive": {
+  "K4": {
+   "exhaustive_count": 2341056,
+   "used": 1000,
+   "sampled": true
+  }
+ },
+ "structural_violations": {
+  "star4": 0,
+  "path3": 0,
+  "cycle4": 0,
+  "diamond": 0,
+  "triangle": 0,
+  "K4": 0,
+  "path4": 0,
+  "triangle_tail": 0
+ },
+ "note": "every structure uses one rule: value = mean(closer) - mean(farther), supported iff value < 0; instances sampled without replacement; instances re-validated against their definitions",
  "arms": {
   "TIGER": {
    "star4": {
@@ -34,8 +51,8 @@
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.12182333357807411,
-      "median_effect_sd": -0.22700371913687922,
+      "mean_effect_sd": -0.1224895684664195,
+      "median_effect_sd": -0.22824517094279473,
       "verdict": "SUPPORTED"
      },
      "sid": {
@@ -53,7 +70,7 @@
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.1911987441137003,
+      "mean_effect_sd": -0.19068699639192796,
       "median_effect_sd": 0.0,
       "verdict": "SUPPORTED"
      },
@@ -72,8 +89,8 @@
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.221340033796956,
-      "median_effect_sd": -0.19927318216193077,
+      "mean_effect_sd": -0.22144927272004605,
+      "median_effect_sd": -0.2003629795132961,
       "verdict": "SUPPORTED"
      }
     }
@@ -96,8 +113,8 @@
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.07625154484294265,
-      "median_effect_sd": -0.19701363226123794,
+      "mean_effect_sd": -0.07666855394926497,
+      "median_effect_sd": -0.19809107244808002,
       "verdict": "SUPPORTED"
      },
      "sid": {
@@ -115,7 +132,7 @@
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.1590020644054347,
+      "mean_effect_sd": -0.15857649181815767,
       "median_effect_sd": 0.0,
       "verdict": "SUPPORTED"
      },
@@ -134,8 +151,8 @@
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.1663494223981379,
-      "median_effect_sd": -0.16665224296659498,
+      "mean_effect_sd": -0.16634336710268427,
+      "median_effect_sd": -0.1675636409330133,
       "verdict": "SUPPORTED"
      }
     }
@@ -145,59 +162,59 @@
     "representations": {
      "q": {
       "instances_used": 1000,
-      "support_share": 0.68,
+      "support_share": 0.708,
       "strict_ci95": [
-       0.6504458220300267,
-       0.7081764944788729
+       0.679065218445592,
+       0.7353427917424696
       ],
       "tie_share": 0.0,
-      "tie_aware_share": 0.68,
+      "tie_aware_share": 0.708,
       "tie_aware_ci95": [
-       0.651,
-       0.708
+       0.679,
+       0.736
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.08572816277191657,
-      "median_effect_sd": -0.09643046825377502,
+      "mean_effect_sd": -0.09438447176058452,
+      "median_effect_sd": -0.11049109191878909,
       "verdict": "SUPPORTED"
      },
      "sid": {
       "instances_used": 1000,
-      "support_share": 0.239,
+      "support_share": 0.234,
       "strict_ci95": [
-       0.21359749233628916,
-       0.2664001487258067
+       0.20880755932590186,
+       0.26122835072205797
       ],
-      "tie_share": 0.701,
-      "tie_aware_share": 0.5895,
+      "tie_share": 0.721,
+      "tie_aware_share": 0.5945,
       "tie_aware_ci95": [
-       0.573,
-       0.605
+       0.579,
+       0.6095
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.12185204935743585,
+      "mean_effect_sd": -0.1452382822259761,
       "median_effect_sd": 0.0,
       "verdict": "SUPPORTED"
      },
      "fused": {
       "instances_used": 1000,
-      "support_share": 0.696,
+      "support_share": 0.72,
       "strict_ci95": [
-       0.6667846311336212,
-       0.7237152246205136
+       0.6913693871201185,
+       0.7469467775018697
       ],
       "tie_share": 0.0,
-      "tie_aware_share": 0.696,
+      "tie_aware_share": 0.72,
       "tie_aware_ci95": [
-       0.668,
-       0.725
+       0.6929749999999999,
+       0.746
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.14678137563680718,
-      "median_effect_sd": -0.09737488446943149,
+      "mean_effect_sd": -0.1694388742704929,
+      "median_effect_sd": -0.10351081438432544,
       "verdict": "SUPPORTED"
      }
     }
@@ -207,60 +224,60 @@
     "representations": {
      "q": {
       "instances_used": 1000,
-      "support_share": 0.41,
+      "support_share": 0.583,
       "strict_ci95": [
-       0.37991671320713805,
-       0.4407721285384123
+       0.5521788916695798,
+       0.6131858431650794
       ],
       "tie_share": 0.0,
-      "tie_aware_share": 0.41,
+      "tie_aware_share": 0.583,
       "tie_aware_ci95": [
-       0.379,
-       0.441
+       0.552,
+       0.6130249999999998
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.06269876121379835,
-      "median_effect_sd": -0.09003604707910587,
-      "verdict": "REJECTED"
+      "mean_effect_sd": -0.05869393829848137,
+      "median_effect_sd": -0.08322775435988358,
+      "verdict": "SUPPORTED"
      },
      "sid": {
       "instances_used": 1000,
-      "support_share": 0.049,
+      "support_share": 0.327,
       "strict_ci95": [
-       0.03726084730617148,
-       0.06419101521875278
+       0.2986340029941519,
+       0.3566901039167394
       ],
-      "tie_share": 0.623,
-      "tie_aware_share": 0.3605,
+      "tie_share": 0.619,
+      "tie_aware_share": 0.6365,
       "tie_aware_ci95": [
-       0.3439875,
-       0.3775
+       0.6195,
+       0.6545
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.18129207343423392,
+      "mean_effect_sd": -0.16005851510617777,
       "median_effect_sd": 0.0,
-      "verdict": "REJECTED"
+      "verdict": "SUPPORTED"
      },
      "fused": {
       "instances_used": 1000,
-      "support_share": 0.351,
+      "support_share": 0.642,
       "strict_ci95": [
-       0.32203905809600525,
-       0.3811013576827392
+       0.6117942411746614,
+       0.6711189196268038
       ],
       "tie_share": 0.0,
-      "tie_aware_share": 0.351,
+      "tie_aware_share": 0.642,
       "tie_aware_ci95": [
-       0.323,
-       0.381
+       0.613,
+       0.673
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.17252757372698932,
-      "median_effect_sd": -0.16777884842095725,
-      "verdict": "REJECTED"
+      "mean_effect_sd": -0.15468134320362883,
+      "median_effect_sd": -0.1762534318384329,
+      "verdict": "SUPPORTED"
      }
     }
    },
@@ -269,39 +286,101 @@
     "representations": {
      "q": {
       "instances_used": 1000,
-      "support_share": 0.769,
+      "support_share": 0.782,
       "strict_ci95": [
-       0.7418771517803808,
-       0.7940639767801412
+       0.7553560144909894,
+       0.8064856147062864
       ],
       "tie_share": 0.0,
-      "tie_aware_share": 0.769,
+      "tie_aware_share": 0.782,
       "tie_aware_ci95": [
-       0.743,
-       0.795
+       0.757,
+       0.809
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.36737191637198063,
-      "median_effect_sd": -0.5049891556457683,
+      "mean_effect_sd": -0.35691486673315226,
+      "median_effect_sd": -0.44721663470245016,
       "verdict": "SUPPORTED"
      },
      "sid": {
       "instances_used": 1000,
-      "support_share": 0.248,
+      "support_share": 0.236,
       "strict_ci95": [
-       0.2222317896325405,
-       0.27569696725500037
+       0.210722931040928,
+       0.2632976714126862
       ],
-      "tie_share": 0.618,
-      "tie_aware_share": 0.557,
+      "tie_share": 0.628,
+      "tie_aware_share": 0.55,
       "tie_aware_ci95": [
-       0.538,
-       0.575
+       0.531,
+       0.5685
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.3207779966011201,
+      "mean_effect_sd": -0.30371597249159926,
+      "median_effect_sd": 0.0,
+      "verdict": "SUPPORTED"
+     },
+     "fused": {
+      "instances_used": 1000,
+      "support_share": 0.774,
+      "strict_ci95": [
+       0.7470571078650102,
+       0.7988457517096478
+      ],
+      "tie_share": 0.0,
+      "tie_aware_share": 0.774,
+      "tie_aware_ci95": [
+       0.748,
+       0.8
+      ],
+      "hop_one_lt_two": null,
+      "hop_two_lt_three": null,
+      "mean_effect_sd": -0.4671365462767816,
+      "median_effect_sd": -0.33852557840817044,
+      "verdict": "SUPPORTED"
+     }
+    }
+   },
+   "K4": {
+    "instances": 1000,
+    "representations": {
+     "q": {
+      "instances_used": 1000,
+      "support_share": 0.75,
+      "strict_ci95": [
+       0.7222391934441553,
+       0.7758473572626495
+      ],
+      "tie_share": 0.0,
+      "tie_aware_share": 0.75,
+      "tie_aware_ci95": [
+       0.722,
+       0.776
+      ],
+      "hop_one_lt_two": null,
+      "hop_two_lt_three": null,
+      "mean_effect_sd": -0.30332094154603867,
+      "median_effect_sd": -0.35829515723580957,
+      "verdict": "SUPPORTED"
+     },
+     "sid": {
+      "instances_used": 1000,
+      "support_share": 0.334,
+      "strict_ci95": [
+       0.30545180767687063,
+       0.3638187226538111
+      ],
+      "tie_share": 0.461,
+      "tie_aware_share": 0.5645,
+      "tie_aware_ci95": [
+       0.541,
+       0.5865
+      ],
+      "hop_one_lt_two": null,
+      "hop_two_lt_three": null,
+      "mean_effect_sd": -0.20610003858733755,
       "median_effect_sd": 0.0,
       "verdict": "SUPPORTED"
      },
@@ -315,75 +394,13 @@
       "tie_share": 0.0,
       "tie_aware_share": 0.75,
       "tie_aware_ci95": [
-       0.722,
-       0.775
+       0.72,
+       0.776
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.4768033844714757,
-      "median_effect_sd": -0.3636617153587751,
-      "verdict": "SUPPORTED"
-     }
-    }
-   },
-   "K4": {
-    "instances": 109,
-    "representations": {
-     "q": {
-      "instances_used": 109,
-      "support_share": 0.7247706422018348,
-      "strict_ci95": [
-       0.6343560426173238,
-       0.7998809763544028
-      ],
-      "tie_share": 0.0,
-      "tie_aware_share": 0.7247706422018348,
-      "tie_aware_ci95": [
-       0.6330275229357798,
-       0.8073394495412844
-      ],
-      "hop_one_lt_two": null,
-      "hop_two_lt_three": null,
-      "mean_effect_sd": -0.34960141150293744,
-      "median_effect_sd": -0.45461108631831065,
-      "verdict": "SUPPORTED"
-     },
-     "sid": {
-      "instances_used": 109,
-      "support_share": 0.3302752293577982,
-      "strict_ci95": [
-       0.24908361228527495,
-       0.4230231284911763
-      ],
-      "tie_share": 0.44954128440366975,
-      "tie_aware_share": 0.555045871559633,
-      "tie_aware_ci95": [
-       0.48623853211009177,
-       0.6238532110091743
-      ],
-      "hop_one_lt_two": null,
-      "hop_two_lt_three": null,
-      "mean_effect_sd": -0.26629857881501245,
-      "median_effect_sd": 0.0,
-      "verdict": "INCONCLUSIVE"
-     },
-     "fused": {
-      "instances_used": 109,
-      "support_share": 0.6972477064220184,
-      "strict_ci95": [
-       0.6054937943428982,
-       0.7755713447547397
-      ],
-      "tie_share": 0.0,
-      "tie_aware_share": 0.6972477064220184,
-      "tie_aware_ci95": [
-       0.6055045871559633,
-       0.7798165137614679
-      ],
-      "hop_one_lt_two": null,
-      "hop_two_lt_three": null,
-      "mean_effect_sd": -0.4057741157835044,
-      "median_effect_sd": -0.24114806110586323,
+      "mean_effect_sd": -0.36021502953100787,
+      "median_effect_sd": -0.3129899023111402,
       "verdict": "SUPPORTED"
      }
     }
@@ -393,59 +410,59 @@
     "representations": {
      "q": {
       "instances_used": 1000,
-      "support_share": 0.449,
+      "support_share": 0.462,
       "strict_ci95": [
-       0.4184249106100216,
-       0.4799654330457903
+       0.4313035714780835,
+       0.4929872728144823
       ],
       "tie_share": 0.0,
-      "tie_aware_share": 0.449,
+      "tie_aware_share": 0.462,
       "tie_aware_ci95": [
-       0.417,
-       0.47902499999999987
+       0.43,
+       0.493
       ],
-      "hop_one_lt_two": 0.735,
-      "hop_two_lt_three": 0.565,
-      "mean_effect_sd": 0.2576380572316466,
-      "median_effect_sd": 0.2376226830658377,
+      "hop_one_lt_two": 0.724,
+      "hop_two_lt_three": 0.58,
+      "mean_effect_sd": 0.2554888325081684,
+      "median_effect_sd": 0.25748713341735463,
       "verdict": "REJECTED"
      },
      "sid": {
       "instances_used": 1000,
-      "support_share": 0.023,
+      "support_share": 0.03,
       "strict_ci95": [
-       0.015374164302931469,
-       0.0342766969484851
+       0.021093603189697094,
+       0.04250368148151
       ],
-      "tie_share": 0.735,
-      "tie_aware_share": 0.3905,
+      "tie_share": 0.739,
+      "tie_aware_share": 0.3995,
       "tie_aware_ci95": [
-       0.3755,
-       0.4045
+       0.385,
+       0.414
       ],
-      "hop_one_lt_two": 0.25,
-      "hop_two_lt_three": 0.057,
-      "mean_effect_sd": 0.24865743405460505,
+      "hop_one_lt_two": 0.246,
+      "hop_two_lt_three": 0.069,
+      "mean_effect_sd": 0.2805964091984846,
       "median_effect_sd": 0.0,
       "verdict": "REJECTED"
      },
      "fused": {
       "instances_used": 1000,
-      "support_share": 0.449,
+      "support_share": 0.458,
       "strict_ci95": [
-       0.4184249106100216,
-       0.4799654330457903
+       0.42733866245855345,
+       0.48898279702270353
       ],
       "tie_share": 0.0,
-      "tie_aware_share": 0.449,
+      "tie_aware_share": 0.458,
       "tie_aware_ci95": [
-       0.418,
-       0.48
+       0.426,
+       0.489
       ],
-      "hop_one_lt_two": 0.75,
-      "hop_two_lt_three": 0.57,
-      "mean_effect_sd": 0.35800497517268315,
-      "median_effect_sd": 0.2807972119219682,
+      "hop_one_lt_two": 0.727,
+      "hop_two_lt_three": 0.586,
+      "mean_effect_sd": 0.37906950970480374,
+      "median_effect_sd": 0.2630009875506293,
       "verdict": "REJECTED"
      }
     }
@@ -455,59 +472,59 @@
     "representations": {
      "q": {
       "instances_used": 1000,
-      "support_share": 0.539,
+      "support_share": 0.557,
       "strict_ci95": [
-       0.508013659504653,
-       0.5696878424056085
+       0.526051773464872,
+       0.5875119600962797
       ],
       "tie_share": 0.0,
-      "tie_aware_share": 0.539,
+      "tie_aware_share": 0.557,
       "tie_aware_ci95": [
-       0.507975,
-       0.571
+       0.526975,
+       0.588
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.17204139164588303,
-      "median_effect_sd": -0.04519398783509751,
+      "mean_effect_sd": -0.1539548486227855,
+      "median_effect_sd": -0.08683463012113687,
       "verdict": "SUPPORTED"
      },
      "sid": {
       "instances_used": 1000,
-      "support_share": 0.204,
+      "support_share": 0.227,
       "strict_ci95": [
-       0.18017859900704303,
-       0.23008692495610017
+       0.2021101870147211,
+       0.2539792996134482
       ],
-      "tie_share": 0.666,
-      "tie_aware_share": 0.537,
+      "tie_share": 0.697,
+      "tie_aware_share": 0.5755,
       "tie_aware_ci95": [
-       0.5195,
-       0.555
+       0.559,
+       0.592
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.14959072725994169,
+      "mean_effect_sd": -0.11164575436418579,
       "median_effect_sd": 0.0,
       "verdict": "SUPPORTED"
      },
      "fused": {
       "instances_used": 1000,
-      "support_share": 0.556,
+      "support_share": 0.591,
       "strict_ci95": [
-       0.5250485919968327,
-       0.5865227953614917
+       0.5602353853201139,
+       0.621068119137163
       ],
       "tie_share": 0.0,
-      "tie_aware_share": 0.556,
+      "tie_aware_share": 0.591,
       "tie_aware_ci95": [
-       0.526,
-       0.588
+       0.561,
+       0.622
       ],
       "hop_one_lt_two": null,
       "hop_two_lt_three": null,
-      "mean_effect_sd": -0.2274282523257066,
-      "median_effect_sd": -0.05963372990837117,
+      "mean_effect_sd": -0.1878079874593234,
+      "median_effect_sd": -0.12772218447625727,
       "verdict": "SUPPORTED"
      }
     }
