@@ -479,6 +479,26 @@ const treeDiffTool = piTool({
   impl: treeDiff,
 });
 
+const specCheckTool = piTool({
+  name: 'specCheck',
+  label: '机械预检',
+  description:
+    'Mechanical pre-checks for a candidate tree: declared files present, absolute paths / Path(__file__).parents[N] / ' +
+    'ARM_NAME values, frozen hyper-parameters against the baseline (JSON + Python constants), spec metrics that never ' +
+    'landed, and tests with no or vacuous assertions. Read-only; it does not judge formula semantics or switch ' +
+    'degeneration - those still need reading the code.',
+  parameters: Type.Object({
+    tree: Type.String({ description: '候选树目录，例如 stage2_RQ-VAE/TIGER_xxx_rq' }),
+    idea: Type.Optional(
+      Type.String({ description: 'idea 目录（含 *_idea.json 与 math.json）；不给就按 arm 名在 ideas/ 里找' }),
+    ),
+    baseline: Type.Optional(
+      Type.String({ description: '冻结基线目录，默认 stage2_RQ-VAE/TIGER_RQ-VAE' }),
+    ),
+  }),
+  impl: specCheck,
+});
+
 const stage2StartTool = piTool({
   name: 'stage2Start',
   label: '启动 Stage2 训练',
@@ -1155,6 +1175,240 @@ async function treeDiff({ baseline, tree, maxHunkLines = 40, maxChangedFiles = 4
   };
 }
 
+// ---------------------------------------------------------------------------
+// specCheck：能机器判的项，不让模型用眼睛判
+// ---------------------------------------------------------------------------
+
+/** 读 idea：按 arm 名在 ideas 下逐个目录找，取 4_method 的 new_files / modified_files。 */
+function findIdeaForArm(arm) {
+  const ideasDir = path.join(sandboxRoot(), 'ideas');
+  if (!fs.existsSync(ideasDir) || arm === '') return null;
+  for (const dir of fs.readdirSync(ideasDir, { withFileTypes: true })) {
+    if (!dir.isDirectory()) continue;
+    const dirPath = path.join(ideasDir, dir.name);
+    for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
+      if (!entry.isFile() || !entry.name.endsWith('.json') || entry.name === 'math.json') continue;
+      const file = path.join(dirPath, entry.name);
+      let parsed;
+      try {
+        parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+      } catch {
+        continue;
+      }
+      if (parsed && parsed.arm === arm) {
+        return {
+          file: relativeToRoot(file),
+          dir: relativeToRoot(dirPath),
+          idea: parsed,
+          math: readJsonIfExists(path.join(dirPath, 'math.json')),
+        };
+      }
+    }
+  }
+  return null;
+}
+
+function readJsonIfExists(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+/** 把嵌套 JSON 拍平成 `a.b.c` → 值，用来逐项比冻结配置。 */
+function flattenJson(value, prefix = '', out = new Map()) {
+  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    for (const [key, item] of Object.entries(value)) {
+      flattenJson(item, prefix === '' ? key : `${prefix}.${key}`, out);
+    }
+    return out;
+  }
+  out.set(prefix, Array.isArray(value) ? JSON.stringify(value) : String(value));
+  return out;
+}
+
+/** 模块级 `NAME = 值` 常量（只认全大写名字），用来比两棵树里的冻结超参。 */
+function pyConstants(text) {
+  const out = new Map();
+  for (const line of text.split('\n')) {
+    const match = line.match(/^([A-Z][A-Z0-9_]{2,})\s*=\s*(.+?)\s*(#.*)?$/);
+    if (match) out.set(match[1], match[2].trim());
+  }
+  return out;
+}
+
+/** `文件:行` 形式的命中清单，带条数上限。 */
+function grepFiles(files, pattern, limit = 20) {
+  const hits = [];
+  let total = 0;
+  for (const [rel, abs] of files) {
+    const text = fs.readFileSync(abs, 'utf8');
+    const lines = text.split('\n');
+    for (let i = 0; i < lines.length; i += 1) {
+      if (!pattern.test(lines[i])) continue;
+      total += 1;
+      if (hits.length < limit) {
+        hits.push({ where: `${rel}:${i + 1}`, text: lines[i].trim().slice(0, 160) });
+      }
+    }
+  }
+  return { total, hits };
+}
+
+/**
+ * 机械预检：只算能确定的事，不做判断。
+ *
+ * 文件的齐缺、路径违规、冻结超参有没有动、规格里的 metrics 名字有没有落地、
+ * 测试有没有空断言 —— 这些不需要模型，工具一次算完；模型只判公式语义与开关退化。
+ */
+async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }) {
+  const treeDir = stage2TreePath(tree);
+  const baseDir = stage2TreePath(baseline);
+  if (!fs.existsSync(treeDir) || !fs.statSync(treeDir).isDirectory()) {
+    return { ok: false, error: `候选树不存在: ${tree}` };
+  }
+  const arm = path.basename(treeDir);
+  const ideaInfo = idea !== undefined && idea !== ''
+    ? (() => {
+        const dir = stage2TreePath(idea);
+        const ideaFile = fs.readdirSync(dir)
+          .filter((name) => name.endsWith('.json') && name !== 'math.json')
+          .map((name) => path.join(dir, name))[0];
+        return {
+          file: relativeToRoot(ideaFile),
+          dir: relativeToRoot(dir),
+          idea: readJsonIfExists(ideaFile),
+          math: readJsonIfExists(path.join(dir, 'math.json')),
+        };
+      })()
+    : findIdeaForArm(arm);
+  const method = (ideaInfo && ideaInfo.idea && ideaInfo.idea.sections && ideaInfo.idea.sections['4_method']) || {};
+  const treeRel = relativeToRoot(treeDir);
+  const treeFiles = listTextFiles(treeDir);
+  const baseFiles = fs.existsSync(baseDir) ? listTextFiles(baseDir) : new Map();
+
+  // a) 声明的文件齐不齐；声明的"改过"是不是真的改了。
+  const declaredNew = (method.new_files || []).map((entry) => String(entry.path || ''));
+  const declaredModified = (method.modified_files || []).map((entry) => String(entry.path || ''));
+  const relOf = (declared) => {
+    const norm = declared.replace(/^\.\//, '');
+    const marker = `${treeRel}/`;
+    const cut = norm.indexOf(marker);
+    return cut >= 0 ? norm.slice(cut + marker.length) : norm;
+  };
+  const newFiles = declaredNew.map((declared) => {
+    const rel = relOf(declared);
+    const present = treeFiles.has(rel);
+    return { file: rel, present, inTree: declared.startsWith(treeRel) };
+  });
+  const modifiedFiles = declaredModified.map((declared) => {
+    const rel = relOf(declared);
+    const inTree = treeFiles.get(rel);
+    const inBase = baseFiles.get(rel);
+    let changed = null;
+    if (inTree && inBase) changed = !fs.readFileSync(inTree).equals(fs.readFileSync(inBase));
+    return { file: rel, present: !!inTree, differsFromBaseline: changed, inTree: declared.startsWith(treeRel) };
+  });
+
+  // e) 路径与身份：绝对路径、parents[N]、ARM_NAME 的取值。
+  const absolute = grepFiles(treeFiles, /(^|[^A-Za-z0-9_.])\/(home|fs[0-9]+|tmp|Users|scratch|var\/tmp)\//);
+  const parents = grepFiles(treeFiles, /parents\[\s*\d+\s*\]/);
+  const armNames = [];
+  const armPattern = /^\s*ARM_NAME\s*=\s*(['"])(.*?)\1/gm;
+  for (const [rel, abs] of treeFiles) {
+    const text = fs.readFileSync(abs, 'utf8');
+    for (const match of text.matchAll(armPattern)) armNames.push({ where: rel, value: match[2] });
+  }
+
+  // f) 冻结超参：JSON 逐项比，Python 常量逐名字比。
+  const frozen = { json: null, constants: null };
+  const baseConfigJson = path.join(baseDir, 'config', 'train_config.json');
+  const treeConfigJson = path.join(treeDir, 'config', 'train_config.json');
+  if (fs.existsSync(baseConfigJson) && fs.existsSync(treeConfigJson)) {
+    const a = flattenJson(readJsonIfExists(baseConfigJson) || {});
+    const b = flattenJson(readJsonIfExists(treeConfigJson) || {});
+    const changed = [];
+    for (const [key, value] of a) {
+      if (!b.has(key)) changed.push({ key, was: value, now: '(missing)' });
+      else if (b.get(key) !== value) changed.push({ key, was: value, now: b.get(key) });
+    }
+    for (const [key, value] of b) if (!a.has(key)) changed.push({ key, was: '(missing)', now: value });
+    frozen.json = { file: 'config/train_config.json', checked: a.size, changed };
+  }
+  const basePy = path.join(baseDir, 'train_config.py');
+  const treePy = path.join(treeDir, 'train_config.py');
+  if (fs.existsSync(basePy) && fs.existsSync(treePy)) {
+    const a = pyConstants(fs.readFileSync(basePy, 'utf8'));
+    const b = pyConstants(fs.readFileSync(treePy, 'utf8'));
+    const changed = [];
+    for (const [key, value] of a) {
+      if (!b.has(key)) changed.push({ key, was: value, now: '(missing)' });
+      else if (b.get(key) !== value) changed.push({ key, was: value, now: b.get(key) });
+    }
+    // 只在候选里出现的常量单独列：多半是机制自己的常量，要看是不是该冻结的。
+    const extra = [...b.keys()].filter((key) => !a.has(key));
+    frozen.constants = { file: 'train_config.py', checked: a.size, changed, added: extra };
+  }
+
+  // d) 分配规则：只给调用点，判读仍归模型。
+  const sinkhorn = grepFiles(treeFiles, /sinkhorn\s*\(/);
+  const argmin = grepFiles(treeFiles, /argmin\s*\(|\.argmin\s*\(|torch\.argmin/);
+
+  // g) 测试：有没有空断言、有没有断言数。
+  const tests = [];
+  for (const [rel, abs] of treeFiles) {
+    if (!/(^|\/)tests?\/.*\.py$/.test(rel)) continue;
+    const text = fs.readFileSync(abs, 'utf8');
+    const fn = (text.match(/^\s*def test_/gm) || []).length;
+    const asserts = (text.match(/^\s*assert\b/gm) || []).length;
+    const vacuous = (text.match(/^\s*assert\s+True\s*$/gm) || []).length;
+    if (fn === 0) continue;
+    tests.push({ file: rel, tests: fn, asserts, vacuous, suspicious: asserts === 0 || vacuous > 0 });
+  }
+
+  // b') 规格里的 metrics 名字有没有在树里落地。
+  const metricNames = ideaInfo && ideaInfo.math && ideaInfo.math.metrics
+    ? Object.keys(ideaInfo.math.metrics)
+    : [];
+  const missingMetrics = [];
+  for (const name of metricNames) {
+    const probe = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+    if (grepFiles(treeFiles, probe, 1).total === 0) missingMetrics.push(name);
+  }
+
+  return {
+    ok: true,
+    arm,
+    tree: treeRel,
+    baseline: relativeToRoot(baseDir),
+    idea: ideaInfo ? { file: ideaInfo.file, dir: ideaInfo.dir } : null,
+    files: {
+      newFiles: newFiles.filter((entry) => !entry.present || !entry.inTree),
+      newFilesChecked: newFiles.length,
+      modifiedFiles: modifiedFiles.filter((entry) => !entry.present || !entry.inTree || entry.differsFromBaseline === false),
+      modifiedFilesChecked: modifiedFiles.length,
+    },
+    paths: {
+      absolute: { total: absolute.total, hits: absolute.hits },
+      parentsN: { total: parents.total, hits: parents.hits },
+      armNames,
+    },
+    frozen,
+    assignment: { sinkhornCallsites: sinkhorn.total, argminCallsites: argmin.total, argminHits: argmin.hits },
+    metrics: { declared: metricNames.length, missing: missingMetrics },
+    tests: { files: tests.length, suspicious: tests.filter((entry) => entry.suspicious) },
+    hints: [
+      'files.* 里剩下的条目就是问题：missing 的没写，differsFromBaseline=false 的声明改了却没改。',
+      'paths.absolute / paths.parentsN 的 total 必须是 0；armNames 只允许一个值且等于候选树目录名。',
+      'frozen.*.changed 必须为空；frozen.constants.added 是机制自己的常量，属正常。',
+      'metrics.missing 是规格要求但树里没有的读数名。',
+      'tests.suspicious 是空断言或无断言的测试文件。',
+      '公式语义与开关是否真退化，工具判不了 —— 这两类仍要你读代码。',
+    ],
+  };
+}
+
 /** 取最后 n 行：测试输出前面一大截是噪声，结论在尾巴上。 */
 function tailLines(text, n) {
   const lines = String(text || '').trimEnd().split('\n');
@@ -1179,6 +1433,7 @@ export const PI_TOOLS = {
   gitLog: gitLogTool,
   runTests: runTestsTool,
   treeDiff: treeDiffTool,
+  specCheck: specCheckTool,
   copyBaselineTree: copyBaselineTreeTool,
   deleteFile: deleteFileTool,
 };

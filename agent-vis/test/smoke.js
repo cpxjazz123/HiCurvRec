@@ -915,7 +915,7 @@ async function main() {
     assert.deepEqual(web.tools, ['webSearch']);
     assert.ok(web.description.length > 0, 'web 权限要说得清自己管什么');
     const tools = toolsForPermissions(['read', 'web']).map((tool) => tool.name).sort();
-    assert.deepEqual(tools, ['checkIdea', 'checkJson', 'find', 'grep', 'ls', 'read', 'treeDiff', 'webSearch']);
+    assert.deepEqual(tools, ['checkIdea', 'checkJson', 'find', 'grep', 'ls', 'read', 'specCheck', 'treeDiff', 'webSearch']);
   });
 
   await test('全局设置可读可改，改完立刻对运行生效', async () => {
@@ -1749,7 +1749,7 @@ async function main() {
 
   await test('按权限裁剪出来的工具集正好是目录里写的那些', async () => {
     assert.deepEqual(toolNames([]), []);
-    assert.deepEqual(toolNames(['read']), ['checkIdea', 'checkJson', 'find', 'grep', 'ls', 'read', 'treeDiff']);
+    assert.deepEqual(toolNames(['read']), ['checkIdea', 'checkJson', 'find', 'grep', 'ls', 'read', 'specCheck', 'treeDiff']);
     // 写权限带三个工具：写文本文件、只改几处，以及从冻结基线复制一份候选树。
     assert.deepEqual(toolNames(['write']), ['copyBaselineTree', 'edit', 'write']);
     assert.deepEqual(toolNames(['delete']), ['deleteFile']);
@@ -1766,6 +1766,7 @@ async function main() {
       'read',
       'readIssue',
       'runTests',
+      'specCheck',
       'treeDiff',
     ]);
   });

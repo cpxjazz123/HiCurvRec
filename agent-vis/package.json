@@ -6,7 +6,7 @@
   "description": "Frontend visualisation of real pi agent turns (AI SDK v7 UI message stream protocol on the wire)",
   "scripts": {
     "start": "node server.js",
-    "test": "node test/pi-agent.js && node test/smoke.js && node test/tree-diff.js && node test/archive-ideas.js && node test/idea-schema.js && node test/handoff-reset.js",
+    "test": "node test/pi-agent.js && node test/smoke.js && node test/tree-diff.js && node test/spec-check.js && node test/archive-ideas.js && node test/idea-schema.js && node test/handoff-reset.js",
     "test:pi": "node test/pi-agent.js",
     "test:tools": "node test/tools.js",
     "test:browser": "node test/browser.js",

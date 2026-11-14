@@ -908,7 +908,7 @@ export const AGENT_PROFILES = [
         '但它只是你自测用的 —— 准入仍然由框架跑的四套独立验证套件判定，runTests 的结果不算证据；' +
         '别把"我跑过了"当成"验证通过了"。',
       '',
-      '可用工具：ls、read、grep、treeDiff（只读）、write/edit（写文件）、gitLog（读提交）、' +
+      '可用工具：ls、read、grep、treeDiff、specCheck（只读）、write/edit（写文件）、gitLog（读提交）、' +
         'runTests（跑候选树 tests/ 自测）。' +
         '每步只调 1-2 个工具。回答用中文，结论先行；提到文件时给仓库相对路径与行号。',
     ].join('\n'),
@@ -934,10 +934,13 @@ export const AGENT_PROFILES = [
       {
         title: '逐项核对',
         instruction:
-          '按上一轮列的清单逐项核对，每项给 PASS 或 FAIL 与依据（文件:行）：' +
-          '文件是否齐、公式是否照写（含系数与常量）、两个开关是否退化、分配是否仍是均衡 Sinkhorn、' +
-          '路径与 ARM_NAME 改动范围是否合规、冻结超参是否被动、测试是不是在验真东西。' +
-          '判不准的写 UNCHECKED 并说明缺什么。',
+          '先跑一次 specCheck({tree: 候选树})：文件齐缺、绝对路径、parents[N]、ARM_NAME、' +
+          '冻结超参、metrics 落地、空断言这七类它已经算好，直接引用它的字段，不要自己再逐个 grep。' +
+          '你只判它判不了的两类：公式是否照 math.json 写（系数与常量逐条对）、两个开关是否真退化' +
+          '（behaviour_off / geometry_off 不许是"小曲率"）；再按它给出的 argmin/sinkhorn 调用点确认' +
+          '分配仍是均衡 Sinkhorn。' +
+          '输出必须是表格，每条一行：`ID | PASS/FAIL/UNCHECKED | 文件:行 | 一句依据`；' +
+          '不重述规格、不写推理过程、每条不超过两行。判不准的写 UNCHECKED 并一句话说明缺哪份证据。',
       },
       {
         title: '改代码与测试',
@@ -982,7 +985,7 @@ export const PERMISSION_CATALOG = [
     label: '读（read）',
     description:
       '读仓库里的东西：列目录、读文件、按正则搜内容、找文件、校验 JSON、校验 idea 字段 —— 都限制在仓库根之内。',
-    tools: ['read', 'ls', 'grep', 'find', 'checkJson', 'checkIdea', 'treeDiff'],
+    tools: ['read', 'ls', 'grep', 'find', 'checkJson', 'checkIdea', 'treeDiff', 'specCheck'],
   },
   {
     id: 'write',

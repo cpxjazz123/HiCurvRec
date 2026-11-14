@@ -1,0 +1,138 @@
+/**
+ * specCheck 的自测。
+ *
+ * 它接手的是 step 2 里"本来就该机器判"的那七类：文件齐缺、路径违规、身份、
+ * 冻结超参、metrics 落地、空断言。所以每一条都必须真的能抓出来 ——
+ * 抓不到的预检等于把模型的眼睛换成了一个更不可靠的眼睛。
+ */
+
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+
+import { PI_TOOLS } from '../live-agent.js';
+import { currentWorkdir } from '../config.js';
+
+const REPO = currentWorkdir();
+const ROOT = 'agent-vis/.out/spec-check-fixture';
+const abs = (rel) => path.join(REPO, rel);
+
+function rm(rel) {
+  fs.rmSync(abs(rel), { recursive: true, force: true });
+}
+function write(rel, text) {
+  const target = abs(rel);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, text);
+}
+
+let passed = 0;
+async function test(name, fn) {
+  try {
+    await fn();
+    passed += 1;
+    console.log(`  ✓ ${name}`);
+  } catch (err) {
+    console.error(`  ✗ ${name}`);
+    console.error(`    ${err && err.message ? err.message : err}`);
+    process.exitCode = 1;
+  }
+}
+
+const BASE = `${ROOT}/base`;
+const TREE = `${ROOT}/tree`;
+const IDEA = `${ROOT}/idea`;
+
+rm(ROOT);
+// 基线
+write(`${BASE}/config/train_config.json`, JSON.stringify({ epochs: 3000, secret: 0.003 }, null, 2));
+write(`${BASE}/train_config.py`, 'EPOCHS = 3000\nSK_EPSILON = 0.003\n');
+write(`${BASE}/model/layers.py`, 'def sinkhorn(x):\n    return x\n');
+// 候选：一个常量被改、一个 JSON 项被改、一个绝对路径、一个 parents[N]
+write(`${TREE}/config/train_config.json`, JSON.stringify({ epochs: 3000, secret: 0.01 }, null, 2));
+write(`${TREE}/train_config.py`, 'EPOCHS = 1200\nSK_EPSILON = 0.003\nNEW_CONST = 0.5\n');
+write(`${TREE}/model/layers.py`, 'ARM_NAME = "TIGER_fixture"\n\ndef sinkhorn(x):\n    return x\n');
+write(`${TREE}/af3_item_potential.py`, 'DATA = "/home/someone/data.npy"\n');
+write(`${TREE}/factor_share_geometry.py`, 'import pathlib\nROOT = pathlib.Path(__file__).resolve().parents[3]\n');
+// 声明"改过"但其实没改的文件
+write(`${BASE}/distances/distance.py`, 'X = 1\n');
+write(`${TREE}/distances/distance.py`, 'X = 1\n');
+// 测试：一个健康、一个无断言；metrics 名落地一个、缺一个
+write(`${TREE}/tests/test_ok.py`, 'def test_ok():\n    assert good_metric == 1\n');
+write(`${TREE}/tests/test_empty.py`, 'def test_nothing():\n    print("hi")\n');
+write(`${TREE}/train_rqvae.py`, 'good_metric = 1\n');
+// idea
+write(`${IDEA}/fixture_idea.json`, JSON.stringify({
+  arm: 'TIGER_fixture',
+  sections: {
+    '4_method': {
+      new_files: [
+        { path: `${TREE}/af3_item_potential.py`, what: 'a' },
+        { path: `${TREE}/factor_share_geometry.py`, what: 'b' },
+        { path: `${TREE}/missing_module.py`, what: 'c' },
+      ],
+      modified_files: [
+        { path: `${TREE}/distances/distance.py`, what: 'declared changed but is not' },
+      ],
+    },
+  },
+}, null, 2));
+write(`${IDEA}/math.json`, JSON.stringify({
+  metrics: { good_metric: 'present', absent_metric: 'never implemented' },
+}, null, 2));
+
+const call = async (args) => {
+  const result = await PI_TOOLS.specCheck.execute('call-1', args);
+  return JSON.parse(result.content[0].text);
+};
+
+const out = await call({ tree: TREE, idea: IDEA, baseline: BASE });
+
+await test('声明的 new_files 缺哪个就报哪个', () => {
+  const missing = out.files.newFiles.map((entry) => entry.file);
+  assert.deepEqual(missing, ['missing_module.py']);
+  assert.equal(out.files.newFilesChecked, 3);
+});
+
+await test('声明改了但和基线逐字节相同 → 列出来', () => {
+  assert.equal(out.files.modifiedFiles.length, 1);
+  assert.equal(out.files.modifiedFiles[0].file, 'distances/distance.py');
+  assert.equal(out.files.modifiedFiles[0].differsFromBaseline, false);
+});
+
+await test('绝对路径与 parents[N] 都能抓出来', () => {
+  assert.ok(out.paths.absolute.total >= 1, JSON.stringify(out.paths.absolute));
+  assert.match(out.paths.absolute.hits[0].where, /af3_item_potential\.py:1/);
+  assert.ok(out.paths.parentsN.total >= 1, JSON.stringify(out.paths.parentsN));
+});
+
+await test('ARM_NAME 取值被抓出来', () => {
+  assert.deepEqual(out.paths.armNames, [{ where: 'model/layers.py', value: 'TIGER_fixture' }]);
+});
+
+await test('冻结超参：JSON 项与 Python 常量分别报变化', () => {
+  assert.deepEqual(out.frozen.json.changed.map((x) => x.key), ['secret']);
+  assert.deepEqual(out.frozen.constants.changed.map((x) => x.key), ['EPOCHS']);
+  assert.deepEqual(out.frozen.constants.added, ['NEW_CONST']);
+});
+
+await test('规格里的 metrics 没落地会被点名', () => {
+  assert.deepEqual(out.metrics.missing, ['absent_metric']);
+  assert.equal(out.metrics.declared, 2);
+});
+
+await test('无断言的测试文件进 suspicious', () => {
+  const flagged = out.tests.suspicious.map((entry) => entry.file);
+  assert.deepEqual(flagged, ['tests/test_empty.py']);
+  assert.equal(out.tests.files, 2, '只统计有 def test_ 的文件');
+});
+
+await test('树不存在时返回错误而不是抛栈', async () => {
+  const bad = await call({ tree: `${ROOT}/no-such-tree`, idea: IDEA, baseline: BASE });
+  assert.equal(bad.ok, false);
+  assert.match(bad.error, /不存在/);
+});
+
+rm(ROOT);
+console.log(`specCheck: ${passed} 通过`);
+if (process.exitCode) process.exit(process.exitCode);
