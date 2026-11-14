@@ -1,0 +1,508 @@
+{
+ "seed": 42,
+ "patterns": [
+  "K5",
+  "double_triangle",
+  "K4_tail",
+  "K2_3",
+  "P5_centre",
+  "C5",
+  "P5_hops",
+  "K1_4",
+  "T5"
+ ],
+ "null_draws": 5,
+ "buckets": 5,
+ "composition": {
+  "K5": {
+   "instances": 1000,
+   "intended_role": 0,
+   "majority_role_share": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "node_role_share": [
+    0.993,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.007
+   ],
+   "verified_role": 0
+  },
+  "double_triangle": {
+   "instances": 119,
+   "intended_role": 0,
+   "majority_role_share": [
+    0.605,
+    0.059,
+    0.059,
+    0.134,
+    0.0,
+    0.143
+   ],
+   "node_role_share": [
+    0.408,
+    0.069,
+    0.059,
+    0.185,
+    0.008,
+    0.271
+   ],
+   "verified_role": 0
+  },
+  "K4_tail": {
+   "instances": 1000,
+   "intended_role": 1,
+   "majority_role_share": [
+    0.996,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.004
+   ],
+   "node_role_share": [
+    0.802,
+    0.001,
+    0.001,
+    0.025,
+    0.008,
+    0.163
+   ],
+   "verified_role": 0
+  },
+  "K2_3": {
+   "instances": 1000,
+   "intended_role": 2,
+   "majority_role_share": [
+    0.831,
+    0.004,
+    0.007,
+    0.027,
+    0.002,
+    0.129
+   ],
+   "node_role_share": [
+    0.58,
+    0.013,
+    0.008,
+    0.075,
+    0.017,
+    0.307
+   ],
+   "verified_role": 0
+  },
+  "P5_centre": {
+   "instances": 1000,
+   "intended_role": 3,
+   "majority_role_share": [
+    0.336,
+    0.012,
+    0.088,
+    0.15,
+    0.002,
+    0.412
+   ],
+   "node_role_share": [
+    0.276,
+    0.028,
+    0.082,
+    0.18,
+    0.025,
+    0.41
+   ],
+   "verified_role": null
+  },
+  "C5": {
+   "instances": 1000,
+   "intended_role": 4,
+   "majority_role_share": [
+    0.608,
+    0.007,
+    0.025,
+    0.08,
+    0.0,
+    0.28
+   ],
+   "node_role_share": [
+    0.424,
+    0.015,
+    0.029,
+    0.15,
+    0.018,
+    0.363
+   ],
+   "verified_role": 0
+  },
+  "P5_hops": {
+   "instances": 1000,
+   "intended_role": 4,
+   "majority_role_share": [
+    0.336,
+    0.012,
+    0.088,
+    0.15,
+    0.002,
+    0.412
+   ],
+   "node_role_share": [
+    0.276,
+    0.028,
+    0.082,
+    0.18,
+    0.025,
+    0.41
+   ],
+   "verified_role": null
+  },
+  "K1_4": {
+   "instances": 1000,
+   "intended_role": 5,
+   "majority_role_share": [
+    0.284,
+    0.009,
+    0.083,
+    0.164,
+    0.005,
+    0.455
+   ],
+   "node_role_share": [
+    0.236,
+    0.027,
+    0.084,
+    0.196,
+    0.027,
+    0.43
+   ],
+   "verified_role": null
+  },
+  "T5": {
+   "instances": 1000,
+   "intended_role": 5,
+   "majority_role_share": [
+    0.318,
+    0.007,
+    0.085,
+    0.148,
+    0.004,
+    0.438
+   ],
+   "node_role_share": [
+    0.257,
+    0.025,
+    0.085,
+    0.186,
+    0.026,
+    0.421
+   ],
+   "verified_role": null
+  }
+ },
+ "per_role": {
+  "0": {
+   "patterns": {
+    "K5": {
+     "composition": {
+      "instances": 1000,
+      "intended_role": 0,
+      "majority_role_share": [
+       1.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "node_role_share": [
+       0.993,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.007
+      ],
+      "verified_role": 0
+     },
+     "z": {
+      "S": 0.6896,
+      "null": 0.5784,
+      "G": 0.11119999999999997,
+      "instances": 1000
+     },
+     "q": {
+      "S": 0.6826,
+      "null": 0.5798,
+      "G": 0.1028,
+      "instances": 1000
+     },
+     "SID": {
+      "S": 0.7047,
+      "null": 0.37770000000000004,
+      "G": 0.32699999999999996,
+      "instances": 1000
+     }
+    },
+    "double_triangle": {
+     "composition": {
+      "instances": 119,
+      "intended_role": 0,
+      "majority_role_share": [
+       0.605,
+       0.059,
+       0.059,
+       0.134,
+       0.0,
+       0.143
+      ],
+      "node_role_share": [
+       0.408,
+       0.069,
+       0.059,
+       0.185,
+       0.008,
+       0.271
+      ],
+      "verified_role": 0
+     },
+     "z": {
+      "S": 0.7142857142857143,
+      "null": 0.5798319327731091,
+      "G": 0.13445378151260523,
+      "instances": 119
+     },
+     "q": {
+      "S": 0.7226890756302521,
+      "null": 0.5478991596638656,
+      "G": 0.1747899159663865,
+      "instances": 119
+     },
+     "SID": {
+      "S": 0.6932773109243697,
+      "null": 0.5109243697478991,
+      "G": 0.1823529411764706,
+      "instances": 119
+     }
+    },
+    "K4_tail": {
+     "composition": {
+      "instances": 1000,
+      "intended_role": 1,
+      "majority_role_share": [
+       0.996,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.004
+      ],
+      "node_role_share": [
+       0.802,
+       0.001,
+       0.001,
+       0.025,
+       0.008,
+       0.163
+      ],
+      "verified_role": 0
+     },
+     "z": {
+      "S": 0.594,
+      "null": 0.428,
+      "G": 0.16599999999999998,
+      "instances": 1000
+     },
+     "q": {
+      "S": 0.596,
+      "null": 0.4308,
+      "G": 0.16519999999999996,
+      "instances": 1000
+     },
+     "SID": {
+      "S": 0.628,
+      "null": 0.5192,
+      "G": 0.10880000000000001,
+      "instances": 1000
+     }
+    },
+    "K2_3": {
+     "composition": {
+      "instances": 1000,
+      "intended_role": 2,
+      "majority_role_share": [
+       0.831,
+       0.004,
+       0.007,
+       0.027,
+       0.002,
+       0.129
+      ],
+      "node_role_share": [
+       0.58,
+       0.013,
+       0.008,
+       0.075,
+       0.017,
+       0.307
+      ],
+      "verified_role": 0
+     },
+     "z": {
+      "S": 0.624,
+      "null": 0.5352,
+      "G": 0.08879999999999999,
+      "instances": 1000,
+      "S_reverse_same_side_closer": 0.376
+     },
+     "q": {
+      "S": 0.623,
+      "null": 0.5336000000000001,
+      "G": 0.08939999999999992,
+      "instances": 1000,
+      "S_reverse_same_side_closer": 0.377
+     },
+     "SID": {
+      "S": 0.579,
+      "null": 0.5113,
+      "G": 0.06769999999999998,
+      "instances": 1000,
+      "S_reverse_same_side_closer": 0.42100000000000004
+     }
+    },
+    "C5": {
+     "composition": {
+      "instances": 1000,
+      "intended_role": 4,
+      "majority_role_share": [
+       0.608,
+       0.007,
+       0.025,
+       0.08,
+       0.0,
+       0.28
+      ],
+      "node_role_share": [
+       0.424,
+       0.015,
+       0.029,
+       0.15,
+       0.018,
+       0.363
+      ],
+      "verified_role": 0
+     },
+     "z": {
+      "S": 0.717,
+      "null": 0.507,
+      "G": 0.20999999999999996,
+      "instances": 1000
+     },
+     "q": {
+      "S": 0.718,
+      "null": 0.49860000000000004,
+      "G": 0.21939999999999993,
+      "instances": 1000
+     },
+     "SID": {
+      "S": 0.5985,
+      "null": 0.4995,
+      "G": 0.09900000000000003,
+      "instances": 1000
+     }
+    }
+   },
+   "gain": {},
+   "delta": {
+    "q_minus_z": 0.009399999999999964,
+    "SID_minus_z": -0.11099999999999993
+   }
+  },
+  "1": {
+   "patterns": {},
+   "gain": {},
+   "delta": {}
+  },
+  "2": {
+   "patterns": {},
+   "gain": {},
+   "delta": {}
+  },
+  "3": {
+   "patterns": {},
+   "gain": {},
+   "delta": {}
+  },
+  "4": {
+   "patterns": {},
+   "gain": {},
+   "delta": {}
+  },
+  "5": {
+   "patterns": {},
+   "gain": {},
+   "delta": {}
+  }
+ },
+ "summary": {
+  "0": {
+   "patterns": [
+    "K5",
+    "double_triangle",
+    "K4_tail",
+    "K2_3",
+    "C5"
+   ],
+   "G_z": 0.14209075630252102,
+   "G_q": 0.15031798319327724,
+   "G_SID": 0.15697058823529414,
+   "delta_quant": 0.008227226890756223,
+   "delta_SID": 0.014879831932773119
+  },
+  "1": {
+   "patterns": [],
+   "G_z": null,
+   "G_q": null,
+   "G_SID": null,
+   "delta_quant": null,
+   "delta_SID": null
+  },
+  "2": {
+   "patterns": [],
+   "G_z": null,
+   "G_q": null,
+   "G_SID": null,
+   "delta_quant": null,
+   "delta_SID": null
+  },
+  "3": {
+   "patterns": [],
+   "G_z": null,
+   "G_q": null,
+   "G_SID": null,
+   "delta_quant": null,
+   "delta_SID": null
+  },
+  "4": {
+   "patterns": [],
+   "G_z": null,
+   "G_q": null,
+   "G_SID": null,
+   "delta_quant": null,
+   "delta_SID": null
+  },
+  "5": {
+   "patterns": [],
+   "G_z": null,
+   "G_q": null,
+   "G_SID": null,
+   "delta_quant": null,
+   "delta_SID": null
+  }
+ },
+ "null_cells": "degree bucket x popularity bucket, five by five"
+}
