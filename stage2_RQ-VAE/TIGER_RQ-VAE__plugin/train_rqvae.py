@@ -39,6 +39,7 @@ from losses import build_loss
 from model import RQVAE
 from train_config import load_train_config
 
+import dataset_fields
 import runtime_context
 
 # === 机制插件（可选）=======================================================
@@ -64,11 +65,11 @@ def _mechanism_prepare(train_ids, all_ids) -> dict:
     return result if isinstance(result, dict) else {}
 
 
-def _mechanism_context(item_ids, training: bool) -> None:
-    """每个 batch 把 item id 交给机制（机制自己的 distance 从 context 取逐商品量）。"""
+def _mechanism_context(batch_fields, training: bool) -> None:
+    """每个 batch/推理前把当前字段交给机制（字段由 dataset_fields 决定，不假设 item id）。"""
     setter = _mechanism_hook("set_context")
     if callable(setter):
-        setter(item_ids=item_ids, training=training)
+        setter(batch_fields, training=training)
 
 
 def _mechanism_readouts() -> dict:
@@ -338,9 +339,8 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
-    # 恒带 item id：任何机制文件都能从 runtime_context 读到行身份，不必改这里。
-    train_item_ids = torch.from_numpy(train_ids)
-    train_dataset = TensorDataset(train_embeddings, train_item_ids)
+    # 数据集产出 (embedding, {字段}) —— 字段由 dataset_fields.py 决定，宿主只转发。
+    train_dataset = dataset_fields.build(train_embeddings, train_ids)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -348,6 +348,7 @@ def main() -> None:
         shuffle=(train_sampler is None),
         sampler=train_sampler,
         num_workers=NUM_WORKERS,
+        collate_fn=dataset_fields.collate,
         pin_memory=device.type == "cuda",
         persistent_workers=False,  # 2026-09-24: 关闭避免每个 epoch 都 fork 一次
     )
@@ -384,7 +385,11 @@ def main() -> None:
         print("[RecBole RQ-VAE] initializing codebooks with KMeans", flush=True)
     raw_module = model.module if isinstance(model, DDP) else model
     with torch.no_grad():
-        runtime_context.set_item_ids(torch.from_numpy(train_ids).to(device), phase="init")
+        runtime_context.set_fields(
+            {"item_id": torch.from_numpy(train_ids).to(device),
+             "row": torch.arange(len(train_ids), device=device)},
+            phase="init",
+        )
         raw_module.init_codebook(train_embeddings.to(device))
     if world_size > 1:
         dist.barrier()
@@ -402,11 +407,11 @@ def main() -> None:
         losses: list[float] = []
         recons: list[float] = []
         _epoch_t0 = time.time()
-        for batch, batch_ids in loader:
+        for batch, batch_fields in loader:
             batch = batch.to(device, non_blocking=True)
-            batch_ids = batch_ids.to(device, non_blocking=True)
-            runtime_context.set_item_ids(batch_ids, phase="train")
-            _mechanism_context(batch_ids, True)
+            batch_fields = {name: value.to(device, non_blocking=True) for name, value in batch_fields.items()}
+            runtime_context.set_fields(batch_fields, phase="train")
+            _mechanism_context(batch_fields, True)
             optimizer.zero_grad(set_to_none=True)
             reconstructed, quant_parts, _, _ = model(batch)
             # 唯一接入点：损失项与权重在 losses/ 里，这里只拿到总损失与分项。
@@ -506,8 +511,8 @@ def main() -> None:
         try:
             with torch.no_grad():
                 _full_ids = torch.arange(len(all_embeddings), device=device)
-                runtime_context.set_item_ids(_full_ids, phase="eval")
-                _mechanism_context(_full_ids, False)
+                runtime_context.set_fields({"item_id": _full_ids, "row": _full_ids}, phase="eval")
+                _mechanism_context({"item_id": _full_ids, "row": _full_ids}, False)
                 raw_tokens = raw_module.get_indices(
                     all_embeddings.to(device), infer_use_sk=False
                 ).cpu().numpy().astype(np.int64)

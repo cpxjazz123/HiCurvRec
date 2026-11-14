@@ -1,47 +1,53 @@
-"""Per-process view of the current item ids.
+"""Per-process channel for "the data the current rows carry".
 
-The host sets this before *any* call that may look at per-item data:
+The host does not decide what a mechanism needs. It publishes whatever fields the
+batches carry as a **named mapping** before every call that might look at row-level
+data, and any mechanism file reads what it wants:
 
-- the training loop sets the current batch's ids before every forward;
-- codebook initialisation sets the training ids (rows of ``train_embeddings``);
-- export/eval inference sets ``arange(len(all_embeddings))`` (rows of the full table).
+    from runtime_context import get, fields, phase
+    ids = get("item_id")        # None when the host did not publish that field
 
-Any mechanism file (``distances/distance.py``, ``losses/*.py``, ``model/layers.py``) can
-then say ``from runtime_context import item_ids`` and read the identity of each row
-without touching the trainer, the dataset or the model signature.
+The default batch fields are ``item_id`` (and ``row`` for the full-table passes).
+A mechanism that needs something else (user id, timestamp, per-item curvature, …)
+adds that field in the dataset file ``dataset_fields.py`` and reads it here — both
+are ordinary purpose files, no host change required.
 
-Process-local by design: under DDP every rank sets its own batch, so there is no
-cross-rank state to synchronise.
+Process-local by design: under DDP every rank publishes its own batch.
 """
 
 from __future__ import annotations
 
 import threading
-
-import torch
+from typing import Any, Mapping
 
 _state = threading.local()
 
 
-def set_item_ids(item_ids, *, phase: str = "train") -> None:
-    """Set the ids for the rows the next call will see. ``None`` clears them."""
-    if item_ids is None:
-        _state.item_ids = None
-    else:
-        _state.item_ids = torch.as_tensor(item_ids).reshape(-1).to(torch.int64)
+def set_fields(values: Mapping[str, Any] | None, *, phase: str = "train") -> None:
+    """Publish the fields aligned with the rows the next call will see."""
+    _state.values = dict(values) if values else {}
     _state.phase = phase
 
 
-def item_ids():
-    """The ids aligned with the current rows, or None when the host has not set them."""
-    return getattr(_state, "item_ids", None)
+def get(name: str, default: Any = None) -> Any:
+    """One published field, or ``default`` when the host did not provide it."""
+    return getattr(_state, "values", {}).get(name, default)
+
+
+def fields() -> dict[str, Any]:
+    """All published fields (a copy; mutating it does not affect the channel)."""
+    return dict(getattr(_state, "values", {}))
+
+
+def has(name: str) -> bool:
+    return name in getattr(_state, "values", {})
 
 
 def phase() -> str:
-    """``train``, ``init`` or ``eval`` — useful for mechanisms with phase-dependent reads."""
+    """``train``, ``init`` or ``eval``."""
     return getattr(_state, "phase", "train")
 
 
 def clear() -> None:
-    _state.item_ids = None
+    _state.values = {}
     _state.phase = "train"

@@ -4,10 +4,11 @@ A candidate tree is a copy of this baseline plus exactly one new file, ``mechani
 Everything else — paths, hyper-parameters, DDP, the data pipeline, SID export — is
 host-owned. The trainer probes these optional hooks:
 
-``runtime_context.item_ids()``
-    The host always carries item ids with each batch and publishes the row identity
-    through ``runtime_context``: any mechanism file may read it directly. ``set_context``
-    below is only for mechanisms that want to pre-compute per-batch quantities.
+``runtime_context.get(name)`` / ``fields()``
+    The host publishes whatever fields the batches carry as a named mapping (default:
+    ``item_id``) before every forward, codebook init and export pass. Any mechanism
+    file reads the fields it needs; a different field is added in ``dataset_fields.py``
+    (also a purpose file), not by editing the trainer.
 
 ``prepare(train_ids, all_ids) -> dict``
     Called once before training (rank 0) to build frozen tables / fit constants.
@@ -32,9 +33,9 @@ Minimal skeleton::
     def prepare(train_ids, all_ids):
         return {"items": int(len(all_ids))}
 
-    def set_context(item_ids, training):
-        global _current_ids
-        _current_ids = item_ids
+    def set_context(batch_fields, training):
+        global _current_fields
+        _current_fields = batch_fields
 
     def _cost(latent, codebook):
         # latent rows correspond to _current_ids

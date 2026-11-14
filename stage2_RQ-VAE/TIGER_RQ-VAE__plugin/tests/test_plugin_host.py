@@ -10,6 +10,8 @@ from __future__ import annotations
 import sys
 from types import SimpleNamespace
 
+import numpy as np
+
 import pytest
 import torch
 
@@ -27,16 +29,35 @@ def test_without_mechanism_the_host_behaves_like_the_baseline(monkeypatch):
     assert train_rqvae.DISTANCE.__module__ == "distances.distance"
 
 
-def test_runtime_context_publishes_item_ids():
+def test_runtime_context_publishes_named_fields():
     import runtime_context
 
     runtime_context.clear()
-    assert runtime_context.item_ids() is None
+    assert runtime_context.get("item_id") is None
+    assert runtime_context.fields() == {}
     assert runtime_context.phase() == "train"
-    runtime_context.set_item_ids(torch.tensor([5, 6, 7]), phase="eval")
-    assert runtime_context.item_ids().tolist() == [5, 6, 7]
+    runtime_context.set_fields({"item_id": torch.tensor([5, 6, 7]), "user_id": torch.tensor([1, 1, 2])}, phase="eval")
+    assert runtime_context.get("item_id").tolist() == [5, 6, 7]
+    assert runtime_context.has("user_id")
+    assert sorted(runtime_context.fields()) == ["item_id", "user_id"]
     assert runtime_context.phase() == "eval"
     runtime_context.clear()
+    assert runtime_context.fields() == {}
+
+
+def test_dataset_fields_default_view_and_collate():
+    import dataset_fields
+
+    embeddings = torch.arange(12, dtype=torch.float32).reshape(4, 3)
+    dataset = dataset_fields.build(embeddings, np.array([7, 8, 9, 10], dtype=np.int64))
+    embedding_row, row_fields = dataset[2]
+    assert embedding_row.tolist() == [6.0, 7.0, 8.0]
+    assert list(row_fields) == ["item_id"]
+    assert int(row_fields["item_id"]) == 9
+    batch = [dataset[i] for i in range(4)]
+    stacked_embeddings, stacked_fields = dataset_fields.collate(batch)
+    assert stacked_embeddings.shape == (4, 3)
+    assert stacked_fields["item_id"].tolist() == [7, 8, 9, 10]
 
 
 def test_with_mechanism_the_context_and_hooks_are_used(monkeypatch):
@@ -46,8 +67,8 @@ def test_with_mechanism_the_context_and_hooks_are_used(monkeypatch):
         seen["prepare"] = (list(train_ids), list(all_ids))
         return {"items": len(all_ids)}
 
-    def set_context(item_ids, training):
-        seen.setdefault("context", []).append((list(item_ids), training))
+    def set_context(batch_fields, *, training):
+        seen.setdefault("context", []).append((sorted(batch_fields), training))
 
     fake = SimpleNamespace(
         prepare=prepare,
@@ -60,8 +81,8 @@ def test_with_mechanism_the_context_and_hooks_are_used(monkeypatch):
 
     assert train_rqvae._mechanism_prepare([7, 8], [7, 8, 9, 10]) == {"items": 4}
     assert seen["prepare"] == ([7, 8], [7, 8, 9, 10])
-    train_rqvae._mechanism_context(torch.tensor([7, 8, 9, 10]), True)
-    assert seen["context"] == [([7, 8, 9, 10], True)]
+    train_rqvae._mechanism_context({'item_id': torch.tensor([7, 8, 9, 10])}, True)
+    assert seen["context"] == [(["item_id"], True)]
     assert train_rqvae._mechanism_readouts() == {"ratio": 0.5}
     assert train_rqvae._mechanism_switches() == {"behaviour_off": False}
 
