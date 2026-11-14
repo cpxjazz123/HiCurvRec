@@ -93,7 +93,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.31';
+const FRONTEND_VERSION = '2026-11-14.32';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -3367,9 +3367,47 @@ function renderGroupList() {
       members.appendChild(row);
     }
     details.appendChild(members);
+
+    // 组内群发：一句话发给组里每个人（留空则用各栏自己的预填工作单），
+    // 相当于替你把每栏的「运行」都按一遍 —— 走的是同一条 /api/run 路径。
+    const sendRow = document.createElement('div');
+    sendRow.className = 'group-send';
+    const sendInput = document.createElement('input');
+    sendInput.type = 'text';
+    sendInput.className = 'group-send-input';
+    sendInput.placeholder = '给这一组发一句话（留空 = 各栏自己的预填）';
+    const sendBtn = document.createElement('button');
+    sendBtn.type = 'button';
+    sendBtn.className = 'group-send-btn';
+    sendBtn.textContent = '发送给全组';
+    sendBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      sendToGroup(group, sendInput.value);
+    });
+    sendRow.append(sendInput, sendBtn);
+    details.appendChild(sendRow);
+
     item.appendChild(details);
     groupListEl.appendChild(item);
   }
+}
+
+/** 组内群发：把 text（可空）发给组里每个 agent，逐栏触发一次运行。 */
+function sendToGroup(group, text) {
+  const message = typeof text === 'string' ? text.trim() : '';
+  const started = [];
+  for (const member of group.members) {
+    const panel = panels.find((item) => item.profileId === member);
+    if (!panel) continue;
+    const form = panel.root && panel.root.querySelector('[data-role=form]');
+    const promptEl = panel.root && panel.root.querySelector('[data-role=prompt]');
+    if (!form || !promptEl) continue;
+    if (message !== '') promptEl.value = message;
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    started.push(member);
+  }
+  return started;
 }
 
 /**
