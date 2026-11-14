@@ -1674,6 +1674,24 @@ function tailLines(text, n) {
   return lines.slice(Math.max(0, lines.length - n)).join('\n');
 }
 
+/** 这一栏被分到哪些文件：只读，用来替代"把文件名写进运行命令"。 */
+function makeAssignedFilesTool(scope) {
+  return piTool({
+    name: 'assignedFiles',
+    label: '我这片的文件',
+    description:
+      'List the files this agent is allowed to write (its slice of the current idea). Read-only; ' +
+      'writes outside this list are refused by the tool layer.',
+    parameters: Type.Object({}),
+    impl: async () => ({
+      files: Array.isArray(scope) ? scope : [],
+      note: '只允许写这些文件；需要改别人的文件时，把"改哪个文件、改成什么"写进结论。',
+    }),
+  });
+}
+
+const assignedFilesTool = makeAssignedFilesTool([]);
+
 export const PI_TOOLS = {
   read: piReadTool,
   write: piWriteTool,
@@ -1694,6 +1712,7 @@ export const PI_TOOLS = {
   treeDiff: treeDiffTool,
   specCheck: specCheckTool,
   readDiff: readDiffTool,
+  assignedFiles: assignedFilesTool,
   copyBaselineTree: copyBaselineTreeTool,
   deleteFile: deleteFileTool,
 };
@@ -1725,7 +1744,8 @@ function makeCopyBaselineTool(scope) {
   });
 }
 
-const SCOPED_TOOL_NAMES = new Set(['write', 'edit', 'deleteFile', 'copyBaselineTree']);
+const SCOPED_TOOL_NAMES = new Set(['write', 'edit', 'deleteFile', 'copyBaselineTree', 'assignedFiles']);
+
 const scopedToolCache = new Map();
 
 /** 某个写作用域下的写工具集（read 工具不需要作用域，它们本来就只读）。 */
@@ -1738,6 +1758,7 @@ function scopedTools(scope) {
       edit: makeEditTool(scope),
       deleteFile: makeDeleteTool(scope),
       copyBaselineTree: makeCopyBaselineTool(scope),
+      assignedFiles: makeAssignedFilesTool(scope),
     });
   }
   return scopedToolCache.get(key);
@@ -1752,6 +1773,8 @@ export function toolsForPermissions(permissionIds, options = {}) {
     const item = PERMISSION_CATALOG.find((entry) => entry.id === id);
     for (const name of item.tools) {
       if (denied.has(name)) continue;
+      // assignedFiles 只在有写作用域的栏里存在：没有分片就没有"我这片"。
+      if (name === 'assignedFiles' && !scoped) continue;
       const tool = (scoped && SCOPED_TOOL_NAMES.has(name) ? scoped[name] : PI_TOOLS[name]);
       if (!tool) {
         throw new Error(`权限 ${id} 指向了不存在的工具 ${name}`);

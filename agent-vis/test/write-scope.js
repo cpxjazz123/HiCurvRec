@@ -123,6 +123,27 @@ await test('writer 能写自己的文件，但工具表里没有 copyBaselineTre
   }
 });
 
+await test('writer 的运行命令只描述功能，不含具体文件名', () => {
+  for (const id of ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']) {
+    const prompt = resolveProfile(id).defaultPrompt || '';
+    assert.equal(prompt.includes('stage2_RQ-VAE/'), false, `${id} 的预填里出现了文件路径`);
+    assert.ok(prompt.includes('assignedFiles'), `${id} 的预填要指向 assignedFiles`);
+  }
+});
+
+await test('assignedFiles 列出的就是这一栏的写入范围', async () => {
+  for (const id of ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']) {
+    const profile = resolveProfile(id);
+    const tool = toolsForPermissions(profile.permissions, {
+      writeScope: profile.writeScope,
+      denyTools: profile.denyTools,
+    }).find((item) => item.name === 'assignedFiles');
+    assert.ok(tool, `${id} 没有 assignedFiles 工具`);
+    const out = JSON.parse((await tool.execute('call-assigned', {})).content[0].text);
+    assert.deepEqual(out.files, profile.writeScope);
+  }
+});
+
 await test('四个 writer 的分片由当前 idea 算出来：覆盖全部声明文件、互不重叠', () => {
   const slices = ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']
     .map((id) => resolveProfile(id).writeScope);

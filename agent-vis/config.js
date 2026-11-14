@@ -987,7 +987,7 @@ export const PERMISSION_CATALOG = [
     label: '读（read）',
     description:
       '读仓库里的东西：列目录、读文件、按正则搜内容、找文件、校验 JSON、校验 idea 字段 —— 都限制在仓库根之内。',
-    tools: ['read', 'ls', 'grep', 'find', 'checkJson', 'checkIdea', 'treeDiff', 'specCheck', 'readDiff'],
+    tools: ['read', 'ls', 'grep', 'find', 'checkJson', 'checkIdea', 'treeDiff', 'specCheck', 'readDiff', 'assignedFiles'],
   },
   {
     id: 'write',
@@ -1246,7 +1246,7 @@ function writerInstructions(title) {
     '再读这棵树里已有的机制文件 —— 它们的函数签名就是契约：你调用它们时按实际签名写，不许改它们。',
     '基线是 stage2_RQ-VAE/TIGER_RQ-VAE：接口照它抄，config 的冻结超参一个字都不许动。',
     '',
-    '硬约束（机器强制）：write/edit/deleteFile 只能写工作单里列出的那些文件，越界会直接报错，不会落盘。',
+    '硬约束（机器强制）：write/edit/deleteFile 只能写 assignedFiles 列出的那些文件，越界会直接报错，不会落盘。',
     '树由 AGENT IDEA 建好（只换目录名、内容与基线一致）：不要自己建树；树不存在就停下并写"树缺失"。',
     '发现必须改别人的文件时，只在结论里写清"要改哪个文件、改成什么"，不要动手改。',
     '不跑训练、不 commit/push。每写完一份读回一次，确认写对了、路径没写错。',
@@ -1254,14 +1254,14 @@ function writerInstructions(title) {
 }
 
 /** 给某个 writer 的工作单：只列它分到的文件，不写死方向名。 */
-export function buildWriterPrompt(files) {
+export function buildWriterPrompt() {
   return [
-    `写你负责的文件（共 ${files.length} 份）：`,
-    ...files.map((file) => `  - ${file}`),
+    '实现你负责的那一片机制功能（这次 idea 的一部分）。',
     '',
+    '第一步：调 assignedFiles 看你这片包含哪些文件 —— 你的写入范围由工具强制，越界写会被直接拒绝。',
     '候选树已由 AGENT IDEA 建好（只换目录名、内容与基线一致）：不要自己建树；若树不存在，就在结论里写"树缺失"并停下。',
     '然后读当前方向的 *_idea.json 与 math.json，再读这棵树里已有的机制文件（签名就是契约，不许改）。',
-    '只写上面清单里的文件 —— 越界写会被工具直接拒绝；需要改别人的文件时，把"改哪个文件、改成什么"写进结论。',
+    '需要改别人的文件时，把"改哪个文件、改成什么"写进结论，不要动手。',
     '每写完一份用 read 读回确认。不跑训练、不 commit/push。最后一张表：文件 | 做了什么 | 依赖谁 | 还缺什么。',
   ].join('\n');
 }
@@ -1293,7 +1293,7 @@ const WRITER_PROFILES = [1, 2, 3, 4].map((index) => ({
       title: '写实现',
       instruction:
         '用 write 写你负责的实现文件（先写最主要的那一个），写完用 read 读回关键段确认；' +
-        '越界写会被工具直接拒绝。只写工作单里列出的文件。',
+        '越界写会被工具直接拒绝。只写 assignedFiles 列出的文件。',
     },
     {
       title: '写测试',
@@ -1646,7 +1646,7 @@ function publicProfile(profile) {
     // 挂载面板时输入框里预填的指令（只有配置里写了才会有；其余 agent 是空的）。
     defaultPrompt: has('defaultPrompt')
       ? override.defaultPrompt
-      : (dynamicFiles ? buildWriterPrompt(dynamicFiles) : profile.defaultPrompt || ''),
+      : (dynamicFiles ? buildWriterPrompt() : profile.defaultPrompt || ''),
     // 代码里写死的默认值：用户点「恢复默认」时要把它们铺回去，
     // 所以得单独给一份 —— 生效值可能已经被用户改过了。
     defaultInstructions: profile.instructions,
