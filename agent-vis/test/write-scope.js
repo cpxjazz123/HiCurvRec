@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { scopeAllows, toolsForPermissions } from '../live-agent.js';
-import { currentWorkdir, resolveProfile } from '../config.js';
+import { currentIdeaFiles, currentWorkdir, resolveProfile } from '../config.js';
 
 const REPO = currentWorkdir();
 const ROOT = 'agent-vis/.out/scope-fixture';
@@ -121,10 +121,25 @@ await test('writer 能写自己的文件，但工具表里没有 copyBaselineTre
     assert.equal(names.includes('write'), true, `${id} 仍要能写文件`);
     assert.equal(names.includes('edit'), true, `${id} 仍要能改文件`);
   }
-  // 作用域本身仍只覆盖自己那棵树 —— 越界的写入照旧被拒。
-  const scope = resolveProfile('agent-w3').writeScope;
-  assert.equal(scopeAllows(scope, 'stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq/model/layers.py'), true);
-  assert.equal(scopeAllows(scope, 'stage2_RQ-VAE/TIGER_someone_else_rq/model/layers.py'), false);
+});
+
+await test('四个 writer 的分片由当前 idea 算出来：覆盖全部声明文件、互不重叠', () => {
+  const slices = ['agent-w1', 'agent-w2', 'agent-w3', 'agent-w4']
+    .map((id) => resolveProfile(id).writeScope);
+  const flat = slices.flat();
+  assert.equal(flat.length, new Set(flat).size, '同一份文件不能分给两栏');
+  const declared = currentIdeaFiles();
+  const covered = new Set(flat);
+  for (const file of declared) assert.ok(covered.has(file), `声明文件没被任何一栏覆盖：${file}`);
+  // 每个实现文件都配一份同名测试，且跟它的实现同一栏
+  for (const slice of slices) {
+    for (const file of slice.filter((f) => !f.includes('/tests/'))) {
+      const dir = file.slice(0, file.lastIndexOf('/'));
+      const stem = file.slice(file.lastIndexOf('/') + 1, -3);
+      const test = `${dir}/tests/test_${stem}.py`;
+      assert.ok(slice.includes(test), `${file} 的测试不在同一栏：${test}`);
+    }
+  }
 });
 
 // 建树是四个 writer 任意一个都能做的事：先复制冻结基线，再写自己的文件。

@@ -1122,6 +1122,109 @@ export function buildPermissionPrompt(permissionIds) {
 /** 默认人设（第一个 profile）的指令说明。 */
 
 /**
+ * 把 idea 声明的文件切给 N 个 writer。
+ *
+ * 规则：按"目录"聚拢后顺序切片 —— 同一个目录的文件尽量落在同一栏，
+ * 这样一栏改的是同一块地方，接口只在栏与栏之间发生。
+ * 换 idea 时文件清单变了，切片跟着变，不需要改配置。
+ */
+export function partitionWriterFiles(files, parts = 4) {
+  const declared = [...new Set((files || []).filter((f) => typeof f === 'string' && f !== ''))];
+  const derivedTest = (file) => {
+    if (!file.endsWith('.py') || file.includes('/tests/')) return null;
+    const dir = file.slice(0, file.lastIndexOf('/'));
+    const stem = file.slice(file.lastIndexOf('/') + 1, -3);
+    return `${dir}/tests/test_${stem}.py`;
+  };
+  // 按目录聚拢后再分配：一个目录的文件尽量落在同一栏，接口只发生在栏与栏之间。
+  // "树根"（所有文件的最长公共目录）是异质的 —— 机制文件 + 训练入口 —— 所以逐个成组；
+  // 子目录（distances/、model/、tests/ …）保持整组不拆。
+  const dirOf = (file) => (file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : '.');
+  const dirCounts = new Map();
+  for (const file of declared) {
+    const dir = dirOf(file);
+    dirCounts.set(dir, (dirCounts.get(dir) || 0) + 1);
+  }
+  // "树根"是声明文件最集中的那个目录（机制文件 + 训练入口都在这），它是异质的：
+  // 逐个成组，免得一栏吃掉整棵树；其余子目录保持整组不拆。
+  const rootDir = [...dirCounts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0][0];
+  const byDir = new Map();
+  for (const file of declared) {
+    const dir = dirOf(file);
+    const key = dir === rootDir ? `.<${file}>` : dir;
+    if (!byDir.has(key)) byDir.set(key, []);
+    byDir.get(key).push(file);
+  }
+  const groups = [...byDir.entries()]
+    .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+  const slices = Array.from({ length: parts }, () => []);
+  const load = new Array(parts).fill(0);
+  const assigned = new Set();
+  for (const [, group] of groups) {
+    let slot = 0;
+    for (let i = 1; i < parts; i += 1) if (load[i] < load[slot]) slot = i;
+    for (const file of group) {
+      slices[slot].push(file);
+      assigned.add(file);
+    }
+    load[slot] += group.length;
+  }
+  // 每个实现文件的同名测试跟它自己走，而不要单独占一栏 —— 一栏负责"实现 + 它的测试"。
+  slices.forEach((slice) => {
+    for (const file of [...slice]) {
+      const test = derivedTest(file);
+      if (test && !assigned.has(test)) {
+        slice.push(test);
+        assigned.add(test);
+      }
+    }
+    slice.sort();
+  });
+  return slices;
+}
+
+/** 当前 idea 声明的文件（new_files + modified_files），仓库相对路径。 */
+export function currentIdeaFiles() {
+  const ideasDir = path.join(currentWorkdir(), 'ideas');
+  let entries = [];
+  try {
+    entries = fs.readdirSync(ideasDir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.name === '_archive') continue;
+    const dir = path.join(ideasDir, entry.name);
+    let names = [];
+    try {
+      names = fs.readdirSync(dir);
+    } catch {
+      continue;
+    }
+    for (const name of names) {
+      if (!name.endsWith('.json') || name === 'math.json') continue;
+      let doc;
+      try {
+        doc = JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8'));
+      } catch {
+        continue;
+      }
+      const method = doc && doc.sections && doc.sections['4_method'];
+      if (!method) continue;
+      const files = [];
+      for (const key of ['new_files', 'modified_files']) {
+        for (const item of Array.isArray(method[key]) ? method[key] : []) {
+          if (item && typeof item.path === 'string') files.push(item.path);
+        }
+      }
+      if (files.length > 0) return [...new Set(files)];
+    }
+  }
+  return [];
+}
+
+/**
  * 并行写同一棵候选树的四个 writer。
  *
  * 为什么要拆：AGENT Write 一次要写 3 个新机制文件 + 5 个改基线文件 + 测试，
@@ -1133,93 +1236,67 @@ export function buildPermissionPrompt(permissionIds) {
  */
 const WRITER_TREE = 'stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq';
 
-function writerInstructions(title, files) {
+function writerInstructions(title) {
   return [
-    `你是 ${title}，只负责写下面这几份文件：`,
-    ...files.map((file) => `  - ${WRITER_TREE}/${file}`),
+    `你是 ${title}，负责当前 idea 声明文件里分给你的那一片（具体文件写在输入框的工作单里）。`,
     '',
-    '候选树由 AGENT IDEA 在建 idea 时复制好（只换目录名、内容与基线一致）：你只写文件，不建树、不复制树。' +
-      '如果这棵树不存在，就停下，在结论里写清"树缺失"，等上游把树建出来。',
-    '写之前先读：ideas/AF3_curvature_factor_mass_idea/*_idea.json 与同目录 math.json（12 条公式、9 个常量、三个开关），',
+    '写之前先读：当前方向 ideas/<方向>/ 的 *_idea.json（4_method）与 math.json，',
     '再读这棵树里已有的机制文件 —— 它们的函数签名就是契约：你调用它们时按实际签名写，不许改它们。',
     '基线是 stage2_RQ-VAE/TIGER_RQ-VAE：接口照它抄，config 的冻结超参一个字都不许动。',
     '',
-    '硬约束（机器强制）：write/edit/deleteFile 只能写上面清单里的文件，越界会直接报错，不会落盘。',
+    '硬约束（机器强制）：write/edit/deleteFile 只能写工作单里列出的那些文件，越界会直接报错，不会落盘。',
+    '树由 AGENT IDEA 建好（只换目录名、内容与基线一致）：不要自己建树；树不存在就停下并写"树缺失"。',
     '发现必须改别人的文件时，只在结论里写清"要改哪个文件、改成什么"，不要动手改。',
     '不跑训练、不 commit/push。每写完一份读回一次，确认写对了、路径没写错。',
   ].join('\n');
 }
 
-const WRITER_PROFILES = [
-  {
-    id: 'agent-w1',
-    name: 'AGENT W1 · AF3 表',
-    // vendored AF3 实现也算它的一部分：树要自包含，这份文件由它维护。
-    files: ['af3_item_potential.py', 'af3_potential.py', 'tests/test_af3_item_potential.py'],
-  },
-  {
-    id: 'agent-w2',
-    name: 'AGENT W2 · 几何与代价',
-    files: [
-      'factor_share_geometry.py',
-      'distances/factor_share.py',
-      'tests/test_factor_share_geometry.py',
-    ],
-  },
-  {
-    id: 'agent-w3',
-    name: 'AGENT W3 · 模型接线',
-    files: [
-      'model/layers.py',
-      'model/model.py',
-      'distances/distance.py',
-      'distances/__init__.py',
-      'tests/test_factor_share_wiring.py',
-    ],
-  },
-  {
-    id: 'agent-w4',
-    name: 'AGENT W4 · 训练入口',
-    files: ['train_rqvae.py', 'tests/test_factor_share_switches.py'],
-  },
-].map(({ id, name, files }) => ({
-  id,
-  name,
+/** 给某个 writer 的工作单：只列它分到的文件，不写死方向名。 */
+export function buildWriterPrompt(files) {
+  return [
+    `写你负责的文件（共 ${files.length} 份）：`,
+    ...files.map((file) => `  - ${file}`),
+    '',
+    '候选树已由 AGENT IDEA 建好（只换目录名、内容与基线一致）：不要自己建树；若树不存在，就在结论里写"树缺失"并停下。',
+    '然后读当前方向的 *_idea.json 与 math.json，再读这棵树里已有的机制文件（签名就是契约，不许改）。',
+    '只写上面清单里的文件 —— 越界写会被工具直接拒绝；需要改别人的文件时，把"改哪个文件、改成什么"写进结论。',
+    '每写完一份用 read 读回确认。不跑训练、不 commit/push。最后一张表：文件 | 做了什么 | 依赖谁 | 还缺什么。',
+  ].join('\n');
+}
+
+const WRITER_PROFILES = [1, 2, 3, 4].map((index) => ({
+  id: `agent-w${index}`,
+  name: `AGENT W${index}`,
   role: 'MECHANISM_WRITER',
-  // 只给读与写：并行阶段不跑训练、不删文件。
+  dynamicWriter: index,
   permissions: ['read', 'write'],
   // 树由 AGENT IDEA 建：writer 连"自己复制一棵树"的能力都没有。
   denyTools: ['copyBaselineTree'],
-  writeScope: files.map((file) => `${WRITER_TREE}/${file}`),
-  loopWatchFiles: files.map((file) => `${WRITER_TREE}/${file}`),
-  instructions: writerInstructions(name, files),
-  // 单次自由请求的模型会把输出预算全花在分析上（W2/W4 实测 0 次写入就结束了）。
-  // 拆成步骤就能强制"先写、再补测试、再自查"。
+  instructions: writerInstructions(`AGENT W${index}`),
+  handoffTargets: ['agent-fix'],
   steps: [
     {
       title: '读契约',
       instruction:
-        '读 ideas/AF3_curvature_factor_mass_idea/ 的 *_idea.json（4_method）与 math.json：' +
-        '只摘出你负责的那几份文件要提供什么（函数名/输入输出/常量/开关），不超过 20 行。',
+        '读当前方向 ideas/<方向>/ 的 *_idea.json（4_method）与 math.json，只摘出你分到的文件要提供什么' +
+        '（函数名/输入输出/常量/开关），不超过 20 行。',
     },
     {
       title: '读参考实现',
       instruction:
         '读基线 stage2_RQ-VAE/TIGER_RQ-VAE 里与你文件对应的那份（接口照它抄），' +
-        '再读树里已经存在的机制文件（别人的签名就是契约，不许改）。' +
-        '列出你要调用的外部符号，每个一行，不超过 10 行。',
+        '再读树里已经存在的机制文件（别人的签名就是契约，不许改）。列出你要调用的外部符号，每个一行，≤10 行。',
     },
     {
       title: '写实现',
       instruction:
         '用 write 写你负责的实现文件（先写最主要的那一个），写完用 read 读回关键段确认；' +
-        '越界写会被工具直接拒绝。只写你清单里的文件。',
+        '越界写会被工具直接拒绝。只写工作单里列出的文件。',
     },
     {
       title: '写测试',
       instruction:
-        '写你负责的测试文件：公式恒等式与定义域、开关两侧、路径与接口。' +
-        '断言必须真的会在实现写错时变红；写完读回一次。',
+        '写你负责的测试文件：公式恒等式与定义域、开关两侧、路径与接口。断言必须真的会在实现写错时变红；写完读回一次。',
     },
     {
       title: '自查并记状态',
@@ -1228,20 +1305,6 @@ const WRITER_PROFILES = [
         '最后一张表：文件 | 做了什么 | 依赖谁 | 还缺什么。不跑训练、不 commit。',
     },
   ],
-  // 页面上输入框的预填：把工作单直接铺进输入框（空输入框按运行会被拒）。
-  // 步骤负责"先写、再补测试、再自查"；预填负责"一打开就知道写哪几份文件"。
-  defaultPrompt: [
-    `写你负责的文件：${files.map((file) => `${WRITER_TREE}/${file}`).join('、')}。`,
-    '候选树已由 AGENT IDEA 建好（只换目录名、内容与基线一致）：不要自己建树；' +
-      '若树不存在，就在结论里写"树缺失"并停下。',
-    '然后读 ideas/AF3_curvature_factor_mass_idea/*_idea.json 与同目录 math.json，' +
-      '再读这棵树里已有的机制文件（它们的签名就是契约，不许改）。',
-    '只写上面清单里的文件 —— 越界写会被工具直接拒绝；需要改别人的文件时，把"改哪个文件、改成什么"写进结论。',
-    '每写完一份用 read 读回确认。不跑训练、不 commit/push。',
-    '最后给一张表：文件 | 做了什么 | 还缺什么。',
-  ].join('\n'),
-  // 写完交给核对员：接口对不对由 AGENT FIX 统一判。
-  handoffTargets: ['agent-fix'],
 }));
 
 AGENT_PROFILES.push(...WRITER_PROFILES);
@@ -1495,6 +1558,10 @@ function splitKnownPermissions(list) {
  */
 function publicProfile(profile) {
   const override = userConfigs[profile.id] || {};
+  // 写手的分片是"按当前 idea 算"的：换方向时文件清单变了，作用域与工作单跟着变。
+  const dynamicFiles = profile.dynamicWriter
+    ? (partitionWriterFiles(currentIdeaFiles(), 4)[profile.dynamicWriter - 1] || [])
+    : null;
   const has = (key) => Object.prototype.hasOwnProperty.call(override, key);
   const storedPermissions = has('permissions') ? override.permissions : profile.permissions;
   const splitPermissions = splitKnownPermissions(storedPermissions);
@@ -1559,13 +1626,15 @@ function publicProfile(profile) {
     defaultDenyTools: [...(profile.denyTools || [])],
     // 写作用域：非空时这个 agent 只能写命中这些通配的路径。
     // 多个 agent 并行写同一棵候选树时，靠它各写各的文件（硬约束在 live-agent 里执行）。
-    writeScope: has('writeScope') ? [...override.writeScope] : [...(profile.writeScope || [])],
-    defaultWriteScope: [...(profile.writeScope || [])],
+    writeScope: has('writeScope')
+      ? [...override.writeScope]
+      : (dynamicFiles ? [...dynamicFiles] : [...(profile.writeScope || [])]),
+    defaultWriteScope: dynamicFiles ? [...dynamicFiles] : [...(profile.writeScope || [])],
     // 这一栏被审的文件：循环闸（files 模式）看的就是它们。
     loopWatchFiles: has('loopWatchFiles')
       ? normalizeLoopWatchFiles(override.loopWatchFiles)
-      : [...(profile.loopWatchFiles || [])],
-    defaultLoopWatchFiles: [...(profile.loopWatchFiles || [])],
+      : (dynamicFiles ? [...dynamicFiles] : [...(profile.loopWatchFiles || [])]),
+    defaultLoopWatchFiles: dynamicFiles ? [...dynamicFiles] : [...(profile.loopWatchFiles || [])],
     // 每轮之前要不要把这个 agent 的会话重置（它的上下文从零开始，聊天记录留着）。
     loopResetSession:
       has('loopResetSession')
@@ -1573,7 +1642,9 @@ function publicProfile(profile) {
         : Boolean(profile.loopResetSession),
     defaultLoopResetSession: Boolean(profile.loopResetSession),
     // 挂载面板时输入框里预填的指令（只有配置里写了才会有；其余 agent 是空的）。
-    defaultPrompt: profile.defaultPrompt || '',
+    defaultPrompt: has('defaultPrompt')
+      ? override.defaultPrompt
+      : (dynamicFiles ? buildWriterPrompt(dynamicFiles) : profile.defaultPrompt || ''),
     // 代码里写死的默认值：用户点「恢复默认」时要把它们铺回去，
     // 所以得单独给一份 —— 生效值可能已经被用户改过了。
     defaultInstructions: profile.instructions,
