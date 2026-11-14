@@ -155,6 +155,55 @@ await test('树不存在时返回错误而不是抛栈', async () => {
   assert.match(bad.error, /不存在/);
 });
 
+
+// ---- 插件宿主：改动面只允许 mechanism.py + ARM_NAME --------------------------
+const PB = `${ROOT}/plugin-base`;
+const PT = `${ROOT}/plugin-tree`;
+const PT2 = `${ROOT}/plugin-tree-extra-new`;
+const PT3 = `${ROOT}/plugin-tree-extra-changed`;
+
+write(`${PB}/mechanism_base.py`, '"""host marker"""\n');
+write(`${PB}/train_rqvae.py`, 'ARM_NAME = "TIGER_RQ-VAE"\nprint("baseline")\n');
+write(`${PB}/config/train_config.json`, JSON.stringify({ epochs: 3000 }, null, 2));
+write(`${PB}/distances/distance.py`, 'X = 1\n');
+for (const dir of [PT, PT2, PT3]) {
+  write(`${dir}/mechanism_base.py`, '"""host marker"""\n');
+  write(`${dir}/train_rqvae.py`, 'ARM_NAME = "TIGER_rq_plugin"\nprint("baseline")\n');
+  write(`${dir}/config/train_config.json`, JSON.stringify({ epochs: 3000 }, null, 2));
+  write(`${dir}/distances/distance.py`, 'X = 1\n');
+  write(`${dir}/mechanism.py`, 'def distance(a, b):\n    return a\n');
+}
+write(`${PT2}/extra_idea_file.py`, 'pass\n');
+write(`${PT3}/distances/distance.py`, 'X = 2\n');
+
+await test('插件宿主：只加 mechanism.py + 改 ARM_NAME → surface.ok', async () => {
+  const out = await call({ tree: PT, baseline: PB, idea: IDEA });
+  assert.ok(out.surface, 'surface 缺失');
+  assert.equal(out.surface.pluginHost, true);
+  assert.equal(out.surface.mechanism, true);
+  assert.deepEqual(out.surface.unexpectedNew, []);
+  assert.deepEqual(out.surface.unexpectedChanged, []);
+  assert.equal(out.surface.armNameOnly.ok, true, JSON.stringify(out.surface.armNameOnly));
+  assert.equal(out.surface.ok, true);
+});
+
+await test('插件宿主：多出一个新文件 → 被点名', async () => {
+  const out = await call({ tree: PT2, baseline: PB, idea: IDEA });
+  assert.deepEqual(out.surface.unexpectedNew, ['extra_idea_file.py']);
+  assert.equal(out.surface.ok, false);
+});
+
+await test('插件宿主：改动别的文件 → 被点名', async () => {
+  const out = await call({ tree: PT3, baseline: PB, idea: IDEA });
+  assert.equal(out.surface.unexpectedChanged.length, 1);
+  assert.equal(out.surface.unexpectedChanged[0].file, 'distances/distance.py');
+  assert.equal(out.surface.ok, false);
+});
+
+await test('非插件基线：surface 为 null（沿用原规则）', async () => {
+  assert.equal(out.surface, null);
+});
+
 rm(ROOT);
 console.log(`specCheck: ${passed} 通过`);
 if (process.exitCode) process.exit(process.exitCode);

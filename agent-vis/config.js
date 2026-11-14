@@ -1373,7 +1373,8 @@ export function buildWriterPrompt() {
   ].join('\n');
 }
 
-const WRITER_PROFILES = [1, 2, 3].map((index) => ({
+// 机制落成后只剩一个 mechanism.py，一个写手就够；分片逻辑仍按 WRITER_COUNT 自适应。
+const WRITER_PROFILES = [1].map((index) => ({
   id: `agent-w${index}`,
   name: `AGENT W${index}`,
   role: 'MECHANISM_WRITER',
