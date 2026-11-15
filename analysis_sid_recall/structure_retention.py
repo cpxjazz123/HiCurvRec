@@ -122,8 +122,21 @@ def role_assignment(gr, graph, degrees, adj, five=False, overlap_mode="mean",
     orbit_path = gr.ORCA_NODE5 if five else gr.ORCA_NODE4
     if not Path(orbit_path).exists():
         raise SystemExit(f"missing orbit table {orbit_path}")
-    matrix, info = study.build_features(n_items, adjacency_list, orbit_path, overlap_mode)
     nodes = np.asarray(sorted(graph.nodes()), dtype=np.int64)
+    fingerprint = study.feature_fingerprint(adjacency_list, orbit_path, overlap_mode)
+    key = f"{fingerprint[:16]}|k=6|seed={seeds[0]}|{scaling}|{int(normalise)}"
+    cache = ROLE_CACHE5 if five else ROLE_CACHE
+    if cache.exists():
+        cached = np.load(cache)
+        same_nodes = (cached["nodes"].shape[0] == nodes.shape[0]
+                      and np.array_equal(cached["nodes"], nodes))
+        if "fingerprint" in cached and same_nodes and str(cached["fingerprint"]) == key:
+            print(f"roles: {cache.name} reused (fingerprint matches)", flush=True)
+            return ({int(node): int(value) for node, value in zip(cached["nodes"], cached["role"])},
+                    {"cache_hit": True, "cache": cache.name, "fingerprint": fingerprint[:16],
+                     "role_sizes": {f"role{index + 1}": int(size) for index, size
+                                    in enumerate(np.bincount(np.asarray(cached["role"]), minlength=6))}})
+    matrix, info = study.build_features(n_items, adjacency_list, orbit_path, overlap_mode)
     block = matrix[nodes]
 
     role = study.fit_roles(block, 6, seeds[0], scaling, normalise)
@@ -131,21 +144,13 @@ def role_assignment(gr, graph, degrees, adj, five=False, overlap_mode="mean",
               "seeds": list(seeds), "items_without_a_role": n_items - nodes.shape[0],
               "role_sizes": np.bincount(role, minlength=6).tolist(), "cache_hit": False,
               "ari_variants": {}}
-    fingerprint = study.feature_fingerprint(adjacency_list, orbit_path, overlap_mode)
-    key = f"{fingerprint[:16]}|k=6|seed={seeds[0]}|{scaling}|{int(normalise)}"
     report["fingerprint"] = fingerprint[:16]
-    cache = ROLE_CACHE5 if five else ROLE_CACHE
     report["cache"] = cache.name
 
     if cache.exists():
         cached = np.load(cache)
         same_nodes = (cached["nodes"].shape[0] == nodes.shape[0]
                       and np.array_equal(cached["nodes"], nodes))
-        if "fingerprint" in cached and same_nodes and str(cached["fingerprint"]) == key:
-            report["cache_hit"] = True
-            print(f"roles: {cache.name} reused (fingerprint matches)", flush=True)
-            return ({int(node): int(value) for node, value in zip(cached["nodes"], cached["role"])},
-                    report)
         if "role" in cached and same_nodes:
             previous = np.asarray(cached["role"], dtype=np.int64)
             report["ari_vs_cached"] = study.adjusted_rand(previous, role)
@@ -186,7 +191,7 @@ def retention(tokens: np.ndarray, u, v, role_of_u, n_roles: int) -> dict:
     roles = {}
     for role in range(n_roles):
         mask = role_of_u == role
-        roles[role] = block(mask)
+        roles[role + 1] = block(mask)          # one-based, to match the report and analysis.py
     overall = block(np.ones(u.shape[0], dtype=bool))
     return {"overall": overall, "roles": roles}
 
@@ -352,7 +357,8 @@ def main() -> int:
         record(f"overall/{level}", lambda row, level=level: row["overall"][level])
     for role in range(n_roles):
         for level in LEVELS:
-            record(f"role{role}/{level}", lambda row, role=role, level=level: row["roles"][role][level])
+            record(f"role{role + 1}/{level}",
+                   lambda row, role=role, level=level: row["roles"][role + 1][level])
     for name, getter in (("contrast/role_gap", lambda row: row["role_gap"]),
                          ("contrast/role_spread", lambda row: row["role_spread"])):
         record(name, getter)
@@ -362,7 +368,7 @@ def main() -> int:
     degenerate = [row["number"] for row in rows if row["overall"]["prefix@1"] > COARSE_L1]
     print(f"pairs excluded from the robustness rows (level-1 share > {COARSE_L1}): {degenerate}", flush=True)
     kept = [row for row in rows if row["number"] not in degenerate]
-    for role in (1, 2, 4, 5):
+    for role in (2, 3, 5, 6):
         xs = [row["roles"][role]["prefix@1"] - row["overall"]["prefix@1"] for row in kept]
         ys = [row[RECALL] for row in kept]
         correlations[f"robust/centered/role{role}/prefix@1"] = {
@@ -374,9 +380,10 @@ def main() -> int:
         "n": len(xs), "rho": spearman(xs, ys), "ci95": list(bootstrap(xs, ys)), "excluded": degenerate}
 
     for role in range(n_roles):
-        record(f"centered/role{role}/prefix@1",
-               lambda row, role=role: (None if row["roles"][role]["prefix@1"] is None
-                                       else row["roles"][role]["prefix@1"] - row["overall"]["prefix@1"]))
+        record(f"centered/role{role + 1}/prefix@1",
+               lambda row, role=role: (None if row["roles"][role + 1]["prefix@1"] is None
+                                       else row["roles"][role + 1]["prefix@1"]
+                                       - row["overall"]["prefix@1"]))
 
     out = {
         "recall_metric": RECALL,
@@ -432,11 +439,11 @@ def main() -> int:
         "|---|---|---|---|---|",
     ]
     for role in range(n_roles):
-        vals = [row["roles"][role] for row in rows]
+        vals = [row["roles"][role + 1] for row in rows]
         p1 = [x["prefix@1"] for x in vals if x["prefix@1"] is not None]
         p3 = [x["prefix@3"] for x in vals if x["prefix@3"] is not None]
         members = out["roles"][role]["members"]
-        lines.append(f"| {role} | {members} | {np.mean(p1):.4f} | {np.mean(p3):.4f} | {len(p1)} |")
+        lines.append(f"| {role + 1} | {members} | {np.mean(p1):.4f} | {np.mean(p3):.4f} | {len(p1)} |")
     lines += ["", "## 边界", ""] + [f"- {item}" for item in out["limits"]] + [""]
     out_md.write_text("\n".join(lines))
 
