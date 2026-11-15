@@ -1289,13 +1289,20 @@ def cmd_profile(args):
     role_of = load_roles(n, adjacency, args.overlap_mode)
     members = {role: int((role_of == role).sum()) for role in range(6)}
     print("role sizes:", {f"Role {role + 1}": size for role, size in members.items()})
-    cliques4 = enumerate_cliques(adjacency, 4)
-    cliques5 = enumerate_cliques(adjacency, 5)
-    k4 = np.zeros(n, dtype=np.int64)
+    if args.skip_cliques:
+        # walking every 4- and 5-clique of a 315k-edge graph costs minutes; the rest of the profile does
+        # not need it, and the two counts are reported as unavailable rather than as zero.
+        k4 = np.full(n, np.nan)
+        k5 = np.full(n, np.nan)
+        cliques4 = cliques5 = []
+    else:
+        cliques4 = enumerate_cliques(adjacency, 4)
+        cliques5 = enumerate_cliques(adjacency, 5)
+        k4 = np.zeros(n, dtype=np.int64)
+        k5 = np.zeros(n, dtype=np.int64)
     for clique in cliques4:
         for node in clique:
             k4[node] += 1
-    k5 = np.zeros(n, dtype=np.int64)
     for clique in cliques5:
         for node in clique:
             k5[node] += 1
@@ -1358,11 +1365,14 @@ def cmd_profile(args):
     patterns, nulls, incidences = prepare_instances(args, n, adjacency)
     print(f"\n=== pattern participation: share of Role {args.role + 1}'s items in the sampled instances ===")
     participation = {}
-    of_role = np.flatnonzero(role_of == args.role)
+    for role in range(6):
+        of_role = np.flatnonzero(role_of == role)
+        participation[f"role{role + 1}"] = {
+            name: (sum(1 for node in of_role if node in incidence) / max(of_role.size, 1))
+            for name, incidence in incidences.items()}
     for name, incidence in incidences.items():
-        touched = sum(1 for node in of_role if node in incidence)
-        participation[name] = touched / max(of_role.size, 1)
-        print(f"  {name:<16}{participation[name]:.3f}")
+        share = participation[f"role{args.role + 1}"][name]
+        print(f"  {name:<16}{share:.3f}")
     path = output_path(args, args.command)
     path.write_text(json.dumps({"profile": table, "orbits": top,
                                 "participation": participation, "sizes": members},
@@ -1389,6 +1399,7 @@ def main() -> int:
         block.add_argument("--in", dest="in_path", type=str, default=None)
         block.add_argument("--representations", action="store_true")
         block.add_argument("--measure", default="gain", choices=("gain", "rate"))
+        block.add_argument("--skip-cliques", dest="skip_cliques", action="store_true")
         block.add_argument("--k-n", dest="k_n", type=int, default=6)
         block.add_argument("--overlap-mode", dest="overlap_mode", default="mean",
                            choices=("mean", "old"))
