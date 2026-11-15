@@ -1,17 +1,31 @@
 #!/bin/sh
 # omp-local — run oh-my-pi with ALL state on local disk (ext4 /var), never on NFS/Lustre.
 #
-# Why: oh-my-pi keeps SQLite databases in WAL mode. SQLite mmaps the "-shm"
-# file; if that file lives on NFS/Lustre and is truncated/replaced (or the page
-# cannot be re-fetched), touching the mapping raises SIGBUS/BUS_ADRERR and the
+# Why local disk: oh-my-pi keeps SQLite databases in WAL mode.  SQLite mmaps the
+# "-shm" file; if that file lives on NFS/Lustre and is truncated/replaced (or the
+# page cannot be re-fetched), touching the mapping raises SIGBUS/BUS_ADRERR and the
 # whole agent dies (exit 135).  Evidence: 7 cores on 2026-11-08, fault address
 # == mmap base of ~/.omp/cache/legacy-pi-extension-cache.db-shm on NFS.
 #
+# Concurrency (2026-11-15): ANY number of instances may run at the same time on
+# the same profile.  Two rules keep them from stepping on each other:
+#
+#   1. No two live processes ever open the same SQLite file.  The first instance
+#      of a profile owns the canonical agent dir  roots/<profile>/agent; every
+#      further instance transparently gets a private slot
+#      roots/<profile>/agents/<slot>/  with its own agent.db / history.db /
+#      models.db / skill-descriptions.db / sessions / cache.
+#   2. What is meant to be shared stays shared, by symlink into the slot:
+#      config.yml, settings.json, auth.json, models-store.json, keybindings.json
+#      and the rooms directory.  The plugin store and the logs live under the
+#      profile root itself, so they are shared by construction.
+#
+# The per-profile flock is therefore a ROLE SELECTOR, not a barrier: it never
+# refuses a start.  A second `omp` on the same profile simply lands in a slot.
+# Set OMP_LOCAL_STRICT=1 to restore the old fail-closed behaviour (exit 3).
+#
 # Usage:  omp-local <profile> [omp args...]
-#   profile = directory name under /var/tmp/omp_local/roots (one per profile,
-#             e.g. "default" for omp, "b" for omp-b).  One live process per
-#             profile: the wrapper holds a lock so two agents can never share
-#             the same SQLite files.
+
 set -e
 
 LOCAL=/var/tmp/omp_local
@@ -27,27 +41,155 @@ home_link=$HOME/omp_local_$prof
 mkdir -p "$root" "$LOCAL/locks" "$LOCAL/bin"
 
 # PI_CONFIG_DIR is a dirname under $HOME, so expose the local root through a symlink.
-if [ ! -L "$home_link" ]; then
-  [ -e "$home_link" ] && { echo "omp-local: $home_link exists and is not a symlink" >&2; exit 2; }
-  ln -s "$root" "$home_link"
+# `ln -sfn` replaces an existing symlink atomically, so concurrent starters
+# cannot collide on it (a plain `ln -s` fails with "File exists" and, under
+# `set -e`, kills the second instance).
+if [ -L "$home_link" ]; then
+  if [ "$(readlink "$home_link")" != "$root" ]; then
+    ln -sfn "$root" "$home_link"
+  fi
+elif [ -e "$home_link" ]; then
+  echo "omp-local: $home_link exists and is not a symlink" >&2
+  exit 2
+else
+  ln -sfn "$root" "$home_link"
 fi
 
-# One live agent per profile: the SQLite files must never be opened concurrently.
+shared_agent=$root/agent
+slots=$root/agents
+owners=$slots/.owners
+mypid=$$
+
+# Shared between the canonical agent dir and every slot: the configuration, the
+# credentials, the package list and the rooms.  Copied into a slot as symlinks,
+# so all instances read and write one copy.
+SHARED_FILES="config.yml settings.json auth.json models-store.json keybindings.json"
+SHARED_DIRS="rooms"
+
+slot_owner() {  # slot_owner <slotdir> -> pid of the owning process, or empty
+  # The bookkeeping lives outside the agent dir: that directory belongs to omp.
+  if [ -f "$owners/$(basename "$1")" ]; then
+    cat "$owners/$(basename "$1")" 2>/dev/null || echo ""
+    return 0
+  fi
+  # Slots minted by an older wrapper carry the pid in their name.
+  base=${1##*/}
+  pid=${base#p}
+  pid=${pid%%-*}
+  case $pid in
+    ''|*[!0-9]*) echo "" ;;
+    *) echo "$pid" ;;
+  esac
+}
+
+alloc_slot() {  # alloc_slot -> path of a slot dir this instance may use
+  mkdir -p "$slots" "$owners"
+  # Serialise the claim: without it, N concurrent starters all see the same
+  # stale slot and pile into one agent dir, sharing one set of SQLite files.
+  exec 8>"$slots/.alloc.lock"
+  flock 8
+  chosen=""
+  for d in "$slots"/*; do
+    [ -d "$d" ] || continue
+    owner=$(slot_owner "$d")
+    case $owner in
+      ''|*[!0-9]*) continue ;;
+    esac
+    if [ -d "/proc/$owner" ]; then continue; fi
+    chosen=$d
+    break
+  done
+  if [ -z "$chosen" ]; then
+    n=1
+    while [ -e "$slots/p$mypid-$n" ]; do n=$((n + 1)); done
+    chosen=$slots/p$mypid-$n
+    mkdir -p "$chosen"
+  fi
+  printf '%s\n' "$mypid" >"$owners/$(basename "$chosen")"
+  flock -u 8
+  exec 8>&-
+  printf '%s\n' "$chosen"
+}
+
+seed_slot() {  # seed_slot <slotdir> -> link the shared config into the slot
+  slot=$1
+  mkdir -p "$slot"
+  for f in $SHARED_FILES; do
+    src=$shared_agent/$f
+    [ -e "$src" ] || continue
+    dst=$slot/$f
+    if [ -L "$dst" ]; then
+      if [ "$(readlink "$dst")" = "$src" ]; then continue; fi
+      rm -f "$dst"
+    elif [ -e "$dst" ]; then
+      continue   # a real file in the slot wins (a local edit)
+    fi
+    ln -s "$src" "$dst"
+  done
+  for d in $SHARED_DIRS; do
+    src=$shared_agent/$d
+    [ -e "$src" ] || continue
+    dst=$slot/$d
+    if [ -L "$dst" ]; then
+      if [ "$(readlink "$dst")" = "$src" ]; then continue; fi
+      rm -f "$dst"
+    elif [ -e "$dst" ]; then
+      continue
+    fi
+    ln -s "$src" "$dst"
+  done
+}
+
+# --- role selection --------------------------------------------------------
+# fd 9 carries the lock through exec, so it is held for the whole life of the
+# omp process.  Winning the lock makes this instance the primary; losing it
+# only means "somebody else is primary", which is not an error.
 exec 9>"$LOCAL/locks/$prof.lock"
-if ! flock -n 9; then
-  echo "omp-local: profile '$prof' is already in use by another omp process" >&2
-  exit 3
+if flock -n 9; then
+  agent_dir=$shared_agent
+  role=primary
+else
+  if [ "${OMP_LOCAL_STRICT:-0}" = "1" ]; then
+    echo "omp-local: profile '$prof' is already in use by another omp process" >&2
+    exit 3
+  fi
+  agent_dir=$(alloc_slot)
+  role=slot
 fi
 
-# Prefer the local copy of the binary: a 284 MB executable paged from NFS is
-# itself a SIGBUS risk (faulty page-in => SIGBUS delivered to the process).
+if [ "$role" = "slot" ]; then
+  seed_slot "$agent_dir"
+  echo "omp-local: profile '$prof' is busy -> private slot '${agent_dir##*/}'" >&2
+fi
+mkdir -p "$agent_dir"
+
+# --- the binary ------------------------------------------------------------
+# A 284 MB executable paged from NFS is itself a SIGBUS risk (faulty page-in
+# => SIGBUS delivered to the process), so seed a local copy instead of running
+# the NFS one.
 bin=$LOCAL/bin/omp
-[ -x "$bin" ] || bin=$HOME/.local/bin/omp
+if [ ! -x "$bin" ]; then
+  if [ -x "$HOME/.local/bin/omp" ]; then
+    tmp=$LOCAL/bin/.omp.tmp.$$
+    if cp "$HOME/.local/bin/omp" "$tmp" 2>/dev/null; then
+      chmod +x "$tmp"
+      mv -f "$tmp" "$bin"
+    else
+      rm -f "$tmp"
+      echo "omp-local: cannot seed $bin from $HOME/.local/bin/omp" >&2
+      echo "omp-local: run \$HOME/bin/omp-bootstrap $prof instead" >&2
+      exit 2
+    fi
+  else
+    echo "omp-local: no omp binary at $bin nor $HOME/.local/bin/omp" >&2
+    echo "omp-local: run \$HOME/bin/omp-bootstrap $prof instead" >&2
+    exit 2
+  fi
+fi
 
 export PI_CONFIG_DIR=omp_local_$prof
 # An inherited PI_CODING_AGENT_DIR (e.g. from an `omp-b` alias) outranks the
 # config root and silently puts the SQLite files back on the network FS.
-export PI_CODING_AGENT_DIR="$root/agent"
+export PI_CODING_AGENT_DIR="$agent_dir"
 unset PI_CODING_AGENT_SESSION_DIR PI_SESSION_FILE PI_SESSION_ID PI_TOOL_CALL_ID
-mkdir -p "$root/agent"
 exec "$bin" "$@"
