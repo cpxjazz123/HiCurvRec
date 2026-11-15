@@ -48,7 +48,6 @@ def knn_edges(vectors, k):
     for start in range(0, n, CHUNK):
         stop = min(start + CHUNK, n)
         block = squared[start:stop, None] + squared[None, :] - 2.0 * vectors[start:stop] @ vectors.T
-        np.fill_diagonal(block[:, start:stop], np.inf) if stop - start > 1 else None
         block[np.arange(stop - start), np.arange(start, stop)] = np.inf
         neighbours[start:stop] = np.argpartition(block, k, axis=1)[:, :k]
     edges = set()
@@ -149,7 +148,7 @@ def deltacon(first_edges, second_edges, n, seeds=10, seed=42):
     truncated series); the sampled columns are then compared entry by entry.
     """
     from scipy.sparse import coo_matrix, diags, identity
-    from scipy.sparse.linalg import spsolve
+    from scipy.sparse.linalg import cg
 
     def affinity(edges):
         adjacency = coo_matrix((np.ones(len(edges)), (edges[:, 0], edges[:, 1])), shape=(n, n))
@@ -158,6 +157,8 @@ def deltacon(first_edges, second_edges, n, seeds=10, seed=42):
         epsilon = 1.0 / (1.0 + degree.max())
         return identity(n, format="csr") + epsilon ** 2 * diags(degree) - epsilon * adjacency
 
+    # sparse Cholesky/LU on a 24,587-node system fills in badly (minutes), while conjugate gradients
+    # on this well-conditioned affinity converge in well under a second per seed
     first_affinity = affinity(first_edges)
     second_affinity = affinity(second_edges)
     rng = np.random.default_rng(seed)
@@ -166,8 +167,10 @@ def deltacon(first_edges, second_edges, n, seeds=10, seed=42):
     for pick in picks:
         target = np.zeros(n)
         target[pick] = 1.0
-        left = spsolve(first_affinity, target)
-        right = spsolve(second_affinity, target)
+        left, info_left = cg(first_affinity, target, rtol=1e-8, maxiter=500)
+        right, info_right = cg(second_affinity, target, rtol=1e-8, maxiter=500)
+        if info_left or info_right:
+            raise RuntimeError(f"DeltaCon solve did not converge ({info_left}, {info_right})")
         total += float(((np.sqrt(np.clip(left, 0, None)) - np.sqrt(np.clip(right, 0, None))) ** 2).sum())
     return float(np.sqrt(total / len(picks)))
 
@@ -182,76 +185,102 @@ def edge_overlap(first_edges, second_edges):
             "jaccard": intersection / max(union, 1)}
 
 
-def main() -> int:
-    limit = int(sys.argv[1]) if len(sys.argv) > 1 else 67
-    QGRAPHS.mkdir(parents=True, exist_ok=True)
-    n, adjacency, behaviour_edges = study.load_graph()
-    orbit_b5 = np.loadtxt(ORBIT_B5, dtype=np.float64)
-    orbit_b4 = np.loadtxt(ORBIT_B4, dtype=np.float64)
-    degrees_b = np.array([len(adjacency[i]) for i in range(n)], dtype=np.float64)
-    rng = np.random.default_rng(42)
-    stars = sample_stars(adjacency, n, rng, STARS)
-    print(f"behaviour graph: {n} items, {len(behaviour_edges)} edges, {len(stars)} sampled stars",
-          flush=True)
+# per-worker globals, filled by the initialiser so the big tables are shared once, not per task
+WORKER = {}
 
-    rows = []
-    for arm in study.load_arms(limit):
-        tokens = study.tokens_of(arm["sid_path"], n)
-        vectors, geometry = study.quantised_vectors(arm["number"], tokens, n)
-        if vectors is None:
-            rows.append({"number": arm["number"], "reason": geometry.get("reason", "no codebook")})
-            print(f"  {arm['number']}: skipped ({geometry.get('reason')})", flush=True)
-            continue
-        vectors = vectors[:n]
-        edges_q = knn_edges(vectors, K)
-        in_path = QGRAPHS / f"{arm['number']}.in"
-        out_path = QGRAPHS / f"{arm['number']}.out"
+
+def _initialise():
+    import os
+    for key in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+        os.environ[key] = "1"
+    n, adjacency, behaviour_edges = study.load_graph()
+    WORKER.update(n=n, adjacency=adjacency, behaviour_edges=behaviour_edges,
+                  orbit_b5=np.loadtxt(ORBIT_B5, dtype=np.float64),
+                  orbit_b4=np.loadtxt(ORBIT_B4, dtype=np.float64),
+                  degrees_b=np.array([len(adjacency[i]) for i in range(n)], dtype=np.float64),
+                  stars=sample_stars(adjacency, n, np.random.default_rng(42), STARS),
+                  behaviour_pairs={(int(a), int(b)) if a < b else (int(b), int(a))
+                                   for a, b in behaviour_edges.tolist()})
+    print(f"worker ready: {n} items, {len(behaviour_edges)} behaviour edges", flush=True)
+
+
+def _one_arm(task):
+    number, sid_path, recall = task
+    n = WORKER["n"]
+    cache = QGRAPHS / f"{number}.npz"
+    tokens = study.tokens_of(sid_path, n)
+    vectors, geometry = study.quantised_vectors(number, tokens, n)
+    if vectors is None:
+        return {"number": number, "reason": geometry.get("reason", "no codebook")}
+    vectors = vectors[:n]
+    edges_q = knn_edges(vectors, K)
+    if cache.exists():
+        stored = np.load(cache)
+        orbit_q5, orbit_q4 = stored["orbit5"], stored["orbit4"]
+    else:
+        in_path = QGRAPHS / f"{number}.in"
+        out_path = QGRAPHS / f"{number}.out"
         write_graph(in_path, n, edges_q)
         orbit_q5 = orbits(in_path, out_path)
-        orbit_in4 = QGRAPHS / f"{arm['number']}_4.in"
-        orbit_out4 = QGRAPHS / f"{arm['number']}_4.out"
-        write_graph(orbit_in4, n, edges_q)
-        subprocess.run([str(ORCA), "node", "4", str(orbit_in4), str(orbit_out4)], check=True,
-                       capture_output=True)
-        orbit_q4 = np.loadtxt(orbit_out4, dtype=np.float64).reshape(n, -1)
+        in4 = QGRAPHS / f"{number}_4.in"
+        out4 = QGRAPHS / f"{number}_4.out"
+        write_graph(in4, n, edges_q)
+        subprocess.run([str(ORCA), "node", "4", str(in4), str(out4)], check=True, capture_output=True)
+        orbit_q4 = np.loadtxt(out4, dtype=np.float64).reshape(n, -1)
+        np.savez(cache, orbit5=orbit_q5, orbit4=orbit_q4)
 
-        degree_q = np.bincount(edges_q.ravel(), minlength=n).astype(np.float64)
-        both = (degrees_b > 0) & (degree_q > 0)
-        degree_rank = float(spearman_rows(degrees_b[:, None], degree_q[:, None])[0])
-        orbit_rho = spearman_rows(orbit_b5, orbit_q5)
-        profile_cosine = cosine_rows(orbit_b5, orbit_q5)
-        overlap = edge_overlap(behaviour_edges, edges_q)
+    degree_q = np.bincount(edges_q.ravel(), minlength=n).astype(np.float64)
+    both = (WORKER["degrees_b"] > 0) & (degree_q > 0)
+    orbit_rho = spearman_rows(WORKER["orbit_b5"], orbit_q5)
+    cosine = cosine_rows(WORKER["orbit_b5"], orbit_q5)
+    overlap = edge_overlap(WORKER["behaviour_edges"], edges_q)
+    knn_pairs = {(int(a), int(b)) for a, b in edges_q.tolist()}
+    recovered, hub = [], []
+    for centre, leaves in WORKER["stars"]:
+        hits = [leaf in knn_pairs or (centre, leaf) in knn_pairs or (leaf, centre) in knn_pairs
+                for leaf in leaves]
+        recovered.append(sum(hits) / 4.0)
+        hub.append(float(degree_q[centre] > max(degree_q[leaf] for leaf in leaves)))
+    row = {"number": number, "recall": recall,
+           "geometry": {key: geometry[key] for key in ("mixed", "width") if key in geometry},
+           "gcd73": gcd(WORKER["orbit_b5"], orbit_q5),
+           "gcd15": gcd(WORKER["orbit_b4"], orbit_q4),
+           "deltacon": deltacon(WORKER["behaviour_edges"], edges_q, n),
+           "edge_recall": overlap["recall"], "edge_precision": overlap["precision"],
+           "edge_jaccard": overlap["jaccard"],
+           "degree_rank": float(spearman_rows(WORKER["degrees_b"][:, None], degree_q[:, None])[0]),
+           "orbit_rho_median": float(np.nanmedian(orbit_rho)),
+           "profile_cosine": float(np.nanmean(cosine[both])),
+           "star_role_kept": float(np.mean(hub)),
+           "star_leaves_recovered": float(np.mean(recovered)),
+           "star_full_kept": float(np.mean([value == 1.0 for value in recovered]))}
+    return row
 
-        knn_pairs = {(int(a), int(b)) for a, b in edges_q.tolist()}
-        recovered_leaves, hub_kept = [], []
-        for centre, leaves in stars:
-            in_knn = [leaf in knn_pairs or (centre, leaf) in knn_pairs or (leaf, centre) in knn_pairs
-                      for leaf in leaves]
-            recovered_leaves.append(sum(in_knn) / 4.0)
-            hub_kept.append(float(degree_q[centre] > max(degree_q[leaf] for leaf in leaves)))
 
-        row = {"number": arm["number"], "recall": arm["recall"],
-               "geometry": {key: geometry[key] for key in ("mixed", "width") if key in geometry},
-               "gcd73": gcd(orbit_b5, orbit_q5),
-               "gcd15": gcd(orbit_b4, orbit_q4),
-               "deltacon": deltacon(behaviour_edges, edges_q, n),
-               "edge_recall": overlap["recall"], "edge_precision": overlap["precision"],
-               "edge_jaccard": overlap["jaccard"],
-               "degree_rank": degree_rank,
-               "orbit_rho_median": float(np.nanmedian(orbit_rho)),
-               "profile_cosine": float(np.nanmean(profile_cosine[both])),
-               "star_role_kept": float(np.mean(hub_kept)),
-               "star_leaves_recovered": float(np.mean(recovered_leaves)),
-               "star_full_kept": float(np.mean([value == 1.0 for value in recovered_leaves]))}
-        rows.append(row)
-        print(f"  {arm['number']} recall {arm['recall']:.5f} | gcd73 {row['gcd73']:.3f} "
-              f"gcd15 {row['gcd15']:.3f} | dc {row['deltacon']:.3f} | edge rec {row['edge_recall']:.3f} "
-              f"jac {row['edge_jaccard']:.3f} | orbit rho {row['orbit_rho_median']:+.3f} | "
-              f"star role {row['star_role_kept']:.3f} full {row['star_full_kept']:.3f}", flush=True)
-
+def main() -> int:
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+    limit = int(sys.argv[1]) if len(sys.argv) > 1 else 67
+    workers = int(sys.argv[2]) if len(sys.argv) > 2 else 16
+    QGRAPHS.mkdir(parents=True, exist_ok=True)
+    tasks = [(arm["number"], arm["sid_path"], arm["recall"]) for arm in study.load_arms(limit)]
+    rows = []
+    with ProcessPoolExecutor(max_workers=workers, initializer=_initialise) as pool:
+        futures = {pool.submit(_one_arm, task): task[0] for task in tasks}
+        for future in as_completed(futures):
+            row = future.result()
+            rows.append(row)
+            if "reason" in row:
+                print(f"  {row['number']}: skipped ({row['reason']})", flush=True)
+                continue
+            print(f"  {row['number']} recall {row['recall']:.5f} | gcd73 {row['gcd73']:.3f} "
+                  f"gcd15 {row['gcd15']:.3f} | dc {row['deltacon']:.3f} | "
+                  f"edge rec {row['edge_recall']:.3f} jac {row['edge_jaccard']:.3f} | "
+                  f"orbit rho {row['orbit_rho_median']:+.3f} | cos {row['profile_cosine']:.3f} | "
+                  f"star role {row['star_role_kept']:.3f} full {row['star_full_kept']:.3f}", flush=True)
+    rows.sort(key=lambda row: row["number"])
     path = OUT / "quantised_structure_all.json"
-    path.write_text(json.dumps({"k": K, "stars": len(stars), "rows": rows}, indent=1, default=float))
-    print(f"\nwritten {path}")
+    path.write_text(json.dumps({"k": K, "stars": STARS, "rows": rows}, indent=1, default=float))
+    print(f"\nwritten {path} ({len(rows)} arms)")
     return 0
 
 
