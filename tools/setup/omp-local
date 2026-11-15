@@ -1,39 +1,39 @@
 #!/bin/sh
-# omp-local — run oh-my-pi with its state in the home directory (NFS).
+# omp-local — run oh-my-pi so that any number of instances can share one profile.
 #
-# Everything a node needs lives in $HOME, which is shared by every node of the
-# cluster (172.23.236.2:/m3-home).  There is no node-local installation step:
-# `omp` works the same on every node, and a profile's state, sessions and
-# configuration are the same everywhere.
+# The state lives where oh-my-pi keeps it: $HOME/.omp, which is on NFS
+# (172.23.236.2:/m3-home) and therefore visible from every node of the
+# cluster.  There is no node-local installation step: `omp` behaves the same on
+# every node, and a profile's state, sessions and configuration are the same
+# everywhere.
 #
-# Layout:
-#   $HOME/omp_local_<profile>/agent/             canonical agent dir (first instance)
-#   $HOME/omp_local_<profile>/agents/<slot>/     private agent dir (extra instances)
-#   $HOME/omp_local_<profile>/agents/.locks/     ownership locks of the slots
-#   $HOME/omp_local_<profile>/plugins -> shared plugin store
-#   $HOME/omp_local_<profile>/logs/
-#   $HOME/omp_local_<profile>/.lock              role lock of the canonical dir
+# oh-my-pi already gives every profile its own agent directory:
 #
-# Concurrency (2026-11-15): ANY number of instances may run at once on the same
-# profile, on this node or on any other.  Two rules keep them from stepping on
-# each other:
+#   $HOME/.omp/agent/                       the default profile
+#   $HOME/.omp/profiles/<profile>/agent/    every other profile (omp --profile)
 #
-#   1. No two live processes ever open the same SQLite file.  The first instance
-#      of a profile owns the canonical agent dir and holds .lock; every further
-#      instance transparently gets a private slot with its own agent.db /
-#      history.db / models.db / sessions / cache.
-#   2. What is meant to be shared stays shared, by symlink into the slot:
-#      config.yml, settings.json, auth.json, models-store.json, keybindings.json
-#      and the rooms directory.  The plugin store and the logs live under the
-#      profile root, so they are shared by construction.
+# This wrapper keeps that layout untouched -- the canonical agent directory of
+# the default profile IS $HOME/.omp/agent, with the model roles in its
+# config.yml -- and adds exactly one thing: when a profile is already busy,
+# the next instance gets a PRIVATE agent directory of its own, because two
+# live processes must never open the same SQLite file.
+#
+#   $HOME/.omp/omp-slots/<profile>/<slot>/   private agent dir of instance 2+
+#   $HOME/.omp/omp-slots/<profile>/.locks/   ownership locks of the slots
+#   $HOME/.omp/omp-slots/<profile>/.role.lock role lock of the canonical dir
+#
+# The slot links the configuration of the canonical agent directory by
+# symlink, so every instance of a profile reads and writes one config, one set
+# of credentials and one set of user agents, while keeping its own databases
+# and sessions.
 #
 # Ownership is expressed with flock(2), which the NFS server arbitrates
 # across nodes (mount option local_lock=none).  A lock is therefore held for
-# exactly as long as its owner lives: when an instance exits -- or when its node
-# dies -- the server releases the lock and the slot becomes reusable.  There is
-# no owner file to go stale and no cross-node liveness guess to make.  The lock
-# files live in agents/.locks/, NOT inside the agent dir, because omp owns that
-# directory and may clean unknown files out of it.
+# exactly as long as its owner lives: when an instance exits -- or when its
+# node dies -- the server releases the lock and the slot becomes reusable.
+# There is no owner file to go stale and no cross-node liveness guess to
+# make.  The lock files live next to the slots, NOT inside the agent dir,
+# because omp owns that directory and may clean unknown files out of it.
 #
 # The lock is a ROLE SELECTOR, not a barrier: it never refuses a start.  Set
 # OMP_LOCAL_STRICT=1 to restore the old fail-closed behaviour (exit 3).
@@ -57,56 +57,40 @@ esac
 
 : "${HOME:?omp-local: HOME is not set}"
 
-# PI_CONFIG_DIR is a dirname under $HOME, so the profile root lives there too.
-root=$HOME/omp_local_$prof
-agent=$root/agent
-slots=$root/agents
+# oh-my-pi's own home directory.  PI_CONFIG_DIR names it (".omp" is the
+# default), and every profile's agent directory lives inside it.
+omp_home=$HOME/.omp
+
+# The agent directory of this profile, exactly as oh-my-pi lays it out.
+case $prof in
+  default) agent=$omp_home/agent ;;
+  *)      agent=$omp_home/profiles/$prof/agent ;;
+esac
+
+# Private agent directories of the additional instances of this profile.
+slots=$omp_home/omp-slots/$prof
 slotlocks=$slots/.locks
-
-# Shared, node-independent stores (not node-local, so no per-node install).
-PLUGIN_STORE=${OMP_PLUGIN_STORE:-/fs04/ar57/wenyu/omp_plugins}
-ROOM_STORE=${OMP_ROOM_STORE:-/fs04/ar57/wenyu/omp_rooms}
-SNAPSHOT_STORE=${OMP_SNAPSHOT_STORE:-/fs04/ar57/wenyu/omp_state}
-
-# Shared between the canonical agent dir and every slot: the configuration, the
-# credentials, the package list and the rooms.  Copied into a slot as symlinks,
-# so all instances read and write one copy.
-SHARED_FILES="config.yml settings.json auth.json models-store.json keybindings.json"
-SHARED_DIRS="rooms"
-
-mypid=$$
-myhost=$(hostname -s 2>/dev/null || hostname 2>/dev/null || echo unknown)
-
-mkdir -p "$agent" "$slots" "$slotlocks" "$root/logs"
-
-# The plugin store and the rooms are node-independent; link them in once.
-# The links are created with ln -sfn (atomic replace): several instances may
-# start at the same time, and plain ln -s would fail with "File exists" on
-# all but the first one, killing the others.
-for d in "$PLUGIN_STORE/$prof" "$ROOM_STORE"; do
-  [ -d "$d" ] && continue
-  mkdir -p "$d" || { echo "omp-local: cannot create the shared store $d" >&2; exit 2; }
-done
-if [ ! -L "$root/plugins" ]; then
-  if [ -e "$root/plugins" ]; then
-    rm -rf "$root/plugins"
-  fi
-  ln -sfn "$PLUGIN_STORE/$prof" "$root/plugins"
-fi
-if [ ! -L "$agent/rooms" ]; then
-  if [ -e "$agent/rooms" ]; then
-    rm -rf "$agent/rooms"
-  fi
-  ln -sfn "$ROOM_STORE" "$agent/rooms"
-fi
+lock=$slots/.role.lock
 
 # A brand new profile gets its configuration from the shared snapshot.  Having
 # no snapshot yet is the normal case for a new profile; a snapshot that exists
 # but cannot be restored is a real failure and must not be papered over.
+SNAPSHOT_STORE=${OMP_SNAPSHOT_STORE:-/fs04/ar57/wenyu/omp_state}
 if [ ! -f "$agent/config.yml" ] && [ -d "$SNAPSHOT_STORE/$prof/agent" ]; then
   "$HOME/bin/omp-state" restore "$prof" ||
     { echo "omp-local: cannot restore the configuration snapshot of profile '$prof'" >&2; exit 4; }
 fi
+
+# Shared between the canonical agent dir and every slot: the configuration, the
+# credentials and the user-level agents.  Copied into a slot as symlinks, so
+# all instances read and write one copy.
+SHARED_FILES="config.yml settings.json auth.json models-store.json keybindings.json"
+SHARED_DIRS="agents rooms"
+
+mypid=$$
+myhost=$(hostname -s 2>/dev/null || hostname 2>/dev/null || echo unknown)
+
+mkdir -p "$agent" "$slots" "$slotlocks"
 
 claim_slot() {  # claim_slot <slotname> -> 0 when this process owns the slot
   lockf=$slotlocks/$1.lock
@@ -183,8 +167,8 @@ seed_slot() {  # seed_slot <slotdir> -> link the shared config into the slot
 # so both nodes would believe they own the profile and would write the same
 # SQLite files.  Measured on this cluster: O_RDWR excludes correctly across
 # nodes, O_WRONLY/O_TRUNC/O_APPEND does not.
-touch "$root/.lock"
-exec 9<>"$root/.lock"
+touch "$lock"
+exec 9<>"$lock"
 if flock -n 9; then
   agent_dir=$agent
   role=primary
@@ -213,7 +197,7 @@ if [ ! -x "$bin" ]; then
   exit 2
 fi
 
-export PI_CONFIG_DIR=omp_local_$prof
+export PI_CONFIG_DIR=.omp
 # An inherited PI_CODING_AGENT_DIR (e.g. from an `omp-b` alias) outranks the
 # config root and silently puts the SQLite files in the wrong place.
 export PI_CODING_AGENT_DIR="$agent_dir"

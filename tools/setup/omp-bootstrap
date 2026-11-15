@@ -1,10 +1,11 @@
 #!/bin/sh
 # omp-bootstrap — the historical entry point, kept working.
 #
-# Since 2026-11-15 the profile state lives in $HOME (NFS), so there is no
-# node-local installation to provision any more: `omp-local` creates the
-# profile root, links the shared plugin store and the rooms, restores the
-# configuration snapshot and then runs omp.
+# The profile state lives in oh-my-pi's own home directory $HOME/.omp (NFS),
+# so there is no node-local installation to provision any more: `omp-local`
+# picks the agent directory of the profile, hands out a private slot when the
+# profile is already busy, restores the configuration snapshot of a brand new
+# profile and then runs omp.
 #
 # The two verbs that operate on the shared configuration snapshot are kept:
 #

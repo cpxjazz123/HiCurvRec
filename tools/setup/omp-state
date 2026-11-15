@@ -1,10 +1,15 @@
 #!/bin/sh
-# Carry an omp profile's configuration (and optionally its databases) across nodes.
+# Keep a snapshot of an oh-my-pi profile's configuration in a shared store.
 #
-# Why this is needed: the profile root lives on /var/tmp, which is node-local on
-# purpose (SQLite WAL on NFS raises SIGBUS).  So a new node starts from defaults:
-# model roles, providers, package list and history are all gone.  Config files are
-# small and safe to share; the databases are copied with sqlite3's own backup so a
+# The live profile state lives in $HOME/.omp (NFS), so every node already sees
+# the same configuration and this script is no longer needed to move a profile
+# between nodes.  What it still does is keep a SNAPSHOT of a profile's
+# configuration in a shared store: a brand new profile -- or one whose
+# configuration was reset -- is seeded from that snapshot instead of starting
+# from bare defaults, so the model roles, the providers and the package list
+# survive.
+#
+# The databases are optional and are copied with sqlite3's own backup, so a
 # running WAL never yields a half-written copy.
 #
 # Usage:
@@ -18,9 +23,12 @@ action=${1:?usage: omp-state push|pull|restore <profile> [--with-db]}
 prof=${2:?usage: omp-state push|pull|restore <profile> [--with-db]}
 with_db=no
 for arg in "$@"; do [ "$arg" = "--with-db" ] && with_db=yes; done
-SHARED=/fs04/ar57/wenyu/omp_state/$prof/agent
-root=$HOME/omp_local_$prof
-local=$(readlink -f "$root")/agent
+SHARED=${OMP_SNAPSHOT_STORE:-/fs04/ar57/wenyu/omp_state}/$prof/agent
+# The agent directory of the profile, in oh-my-pi's own layout.
+case $prof in
+  default) local=$HOME/.omp/agent ;;
+  *)      local=$HOME/.omp/profiles/$prof/agent ;;
+esac
 CONFIG_FILES="config.yml settings.json auth.json models-store.json keybindings.json"
 DB_FILES="agent.db history.db models.db skill-descriptions.db"
 

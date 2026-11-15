@@ -1,27 +1,31 @@
 #!/bin/sh
-# Regression test for omp-local: how many concurrent omp instances may run on
-# one profile, and where their state lives.
+# Regression test for omp-local: where oh-my-pi's state lives, and how many
+# instances may run on one profile at the same time.
 #
-# History:
-#   * Originally the wrapper took a per-profile flock and refused the second
-#     start with exit 3 ("profile 'x' is already in use"), so a second `omp` on
-#     the same profile simply could not start.
-#   * The lock then became a role selector: the first instance owns the
-#     canonical agent directory, every further instance transparently lands in
-#     a private slot with its own SQLite files, and the shared configuration
-#     is symlinked into that slot.
-#   * Since 2026-11-15 the state lives in $HOME (NFS), NOT on node-local disk.
-#     There is no per-node installation step: `omp` behaves the same on every
-#     node.  Cases 0 and 3 guard that.
-#   * Slot ownership is expressed with flock(2), which the NFS server
-#     arbitrates across nodes, so a slot is released when its owner exits or
-#     when its node dies.  Cases 6, 7 and 9 guard that.
+# The state lives in oh-my-pi's OWN home directory, $HOME/.omp, which is on NFS
+# and therefore visible from every node of the cluster.  There is no
+# node-local installation step.
+#
+#   $HOME/.omp/agent/                       the default profile's agent dir
+#   $HOME/.omp/profiles/<profile>/agent/    every other profile's agent dir
+#   $HOME/.omp/omp-slots/<profile>/<slot>/  private agent dir of a 2nd+
+#                                           instance of that profile
+#   $HOME/.omp/omp-slots/<profile>/.locks/  ownership locks of the slots
+#
+# Two invariants are guarded:
+#
+#   * No two live processes may open the same SQLite file.  The databases live
+#     in the agent dir, so each live instance needs one of its own.
+#   * The CONFIGURATION must not be lost: the canonical agent dir of the
+#     default profile is $HOME/.omp/agent, and its config.yml carries the
+#     model roles.  A wrapper that keeps its own copy of the profile tree
+#     silently starts omp without any modelRoles (cases 1 and 5).
 #
 # Every case below must pass; the script exits non-zero if any fails.
 #
 # Usage:  tools/setup/test_omp_local.sh [profile-name]
 #
-# Optional: set OMP_TEST_PEER=<host> to also run the cross-node case (case 10).
+# Optional: set OMP_TEST_PEER=<host> to also run the cross-node case (case 11).
 
 set -u
 
@@ -29,11 +33,12 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 REPO_WRAPPER=$HERE/omp-local
 WRAPPER=${OMP_LOCAL_WRAPPER:-$REPO_WRAPPER}
 PROF=${1:-selftest_conc}
-ROOT=$HOME/omp_local_$PROF
+OMP_HOME=$HOME/.omp
+ROOT=$OMP_HOME/profiles/$PROF
 AGENT=$ROOT/agent
-SLOTS=$ROOT/agents
+SLOTS=$OMP_HOME/omp-slots/$PROF
 SLOTLOCKS=$SLOTS/.locks
-LOCK=$ROOT/.lock
+LOCK=$SLOTS/.role.lock
 TMP=$HERE/.omp_local_test_tmp
 N=4
 PEER=${OMP_TEST_PEER:-}
@@ -43,7 +48,9 @@ fail=0
 skip=0
 
 cleanup() {
-  /bin/rm -rf "$ROOT" "$TMP"
+  # Only the test's own profile is removed.  $HOME/.omp/agent (the default
+  # profile) is read-only for this test and must survive it.
+  /bin/rm -rf "$ROOT" "$SLOTS" "$TMP"
 }
 trap cleanup EXIT INT TERM
 
@@ -121,28 +128,45 @@ if grep -nE 'exec [89]>{1,2}"' "$REPO_WRAPPER" >/dev/null 2>&1; then
 else
   ok "锁文件以 O_RDWR 打开，不含 O_TRUNC/O_APPEND"
 fi
-# 两处共享软链（插件库、rooms）必须用 ln -sfn 原子替换：并发启动时，普通
-# ln -s 会让除第一个之外的全部实例死于 "File exists"。
-# seed_slot 里往本实例自己槽位内链的 ln -s 不共享，没有竞态，不在此列。
-if grep -nE 'ln -s "\$(PLUGIN_STORE|ROOM_STORE)' "$REPO_WRAPPER" >/dev/null 2>&1; then
-  bad "共享软链仍用非原子的 ln -s（并发启动会互相杀死）: $(grep -nE 'ln -s \"\$(PLUGIN_STORE|ROOM_STORE)' "$REPO_WRAPPER" | head -3)"
+# wrapper 必须留在 omp 自己的家目录里，不能另造一套 profile 树：另造的那套
+# 不会带上 $HOME/.omp/agent/config.yml 里的 modelRoles，omp 启动就没有模型。
+if grep -nE 'PI_CONFIG_DIR=' "$REPO_WRAPPER" | grep -v 'PI_CONFIG_DIR=\.omp' >/dev/null 2>&1; then
+  bad "wrapper 把 PI_CONFIG_DIR 指到了 omp 之外: $(grep -nE 'PI_CONFIG_DIR=' "$REPO_WRAPPER" | head -3)"
 else
-  ok "共享软链用 ln -sfn 原子创建"
+  ok "wrapper 使用 omp 自己的家目录（PI_CONFIG_DIR=.omp）"
 fi
 
-echo "== 用例 1: 没有竞争时，第一个实例使用规范 agent 目录 =="
+echo "== 用例 1: default profile 用 omp 自己的 agent 目录，且模型配置还在 =="
+if [ -d "$OMP_HOME/agent" ]; then
+  ok "default profile 的 agent 目录是 $OMP_HOME/agent"
+else
+  bad "缺少 $OMP_HOME/agent"
+fi
+if [ -f "$OMP_HOME/agent/config.yml" ] && grep -q 'modelRoles' "$OMP_HOME/agent/config.yml"; then
+  ok "default profile 的 config.yml 仍在（modelRoles 未丢）"
+else
+  bad "default profile 的 config.yml 丢了 modelRoles: $(cat "$OMP_HOME/agent/config.yml" 2>&1 | head -3)"
+fi
+d=$(agent_dir_of default)
+case "$d" in
+  "$OMP_HOME/agent") ok "default 实例使用规范 agent 目录" ;;
+  "$OMP_HOME"/omp-slots/default/*) ok "default 已被占用，实例落入私有 slot: $d" ;;
+  *) bad "default 实例的 agent 目录不对: $d" ;;
+esac
+
+echo "== 用例 2: 其它 profile 用 omp 自己的 profile 目录 =="
 mkdir -p "$AGENT" "$SLOTS" "$SLOTLOCKS"
 d=$(agent_dir_of "$PROF")
 if [ "$d" = "$AGENT" ]; then
-  ok "primary 使用 $d"
+  ok "profile $PROF 使用 $d"
 else
-  bad "primary 目录不对: $d（期望 $AGENT）"
+  bad "profile $PROF 的目录不对: $d（期望 $AGENT）"
 fi
 # Marker config, written before any slot exists so that every slot created
 # below inherits it through the symlink.
 printf 'setupVersion: 3\nmodelRoles:\n  default: selftest-marker-model\n' >"$AGENT/config.yml"
 
-echo "== 用例 2: 规范实例存活时，第二个实例不再被拒绝 =="
+echo "== 用例 3: 规范实例存活时，第二个实例不再被拒绝 =="
 hold_lock 6
 sleep 1
 out=$("$WRAPPER" "$PROF" config path 2>"$TMP/err2")
@@ -163,7 +187,7 @@ case "$err" in
   *) bad "stderr 没有 slot 提示: $err" ;;
 esac
 
-echo "== 用例 3: $N 个真正重叠的并发实例全部成功，且 agent 目录互不相同 =="
+echo "== 用例 4: $N 个真正重叠的并发实例全部成功，且 agent 目录互不相同 =="
 # `omp bash -c ... sleep` keeps each instance alive for the whole window, so the
 # $N instances really do overlap -- this is the invariant that matters: no two
 # live instances may share one agent directory (and therefore one SQLite file).
@@ -206,18 +230,18 @@ if grep -q "^$SLOTS/" "$TMP/dirs" && ! grep -qx "$AGENT" "$TMP/dirs"; then
 else
   bad "并发实例落到了规范目录，槽位隔离失效"
 fi
-if grep -qv "^$ROOT/" "$TMP/dirs"; then
-  bad "有 agent 目录不在 \$HOME 下: $(grep -v "^$ROOT/" "$TMP/dirs" | head -3)"
+if grep -qv "^$OMP_HOME/" "$TMP/dirs"; then
+  bad "有 agent 目录不在 \$HOME 下: $(grep -v "^$OMP_HOME/" "$TMP/dirs" | head -3)"
 else
-  ok "所有 agent 目录都在 \$HOME（$ROOT）之下"
+  ok "所有 agent 目录都在 \$HOME（$OMP_HOME）之下"
 fi
 
-echo "== 用例 4: 槽位里的配置与规范目录共享 =="
+echo "== 用例 5: 槽位与规范目录共享配置（软链，不是复制）=="
 slot=$(head -1 "$TMP/dirs")
 if [ -L "$slot/config.yml" ] && [ "$(readlink "$slot/config.yml")" = "$AGENT/config.yml" ]; then
   ok "槽位 config.yml 软链到规范目录"
 else
-  bad "槽位 config.yml 不是指向规范目录的软链"
+  bad "槽位 config.yml 不是指向规范目录的软链: $(ls -l "$slot/config.yml" 2>&1)"
 fi
 hold_lock 8
 sleep 1
@@ -228,7 +252,7 @@ case "$listing" in
   *) bad "槽位实例没有读到共享配置" ;;
 esac
 
-echo "== 用例 5: SQLite 文件不被两个实例共用 =="
+echo "== 用例 6: SQLite 文件不被两个实例共用 =="
 if [ -f "$AGENT/agent.db" ] && [ -f "$slot/agent.db" ]; then
   i1=$(ls -i "$AGENT/agent.db" | cut -d' ' -f1)
   i2=$(ls -i "$slot/agent.db" | cut -d' ' -f1)
@@ -241,7 +265,7 @@ else
   bad "缺少 agent.db，无法校验隔离"
 fi
 
-echo "== 用例 6: 存活实例持有的槽位不会被抢占 =="
+echo "== 用例 7: 存活实例持有的槽位不会被抢占 =="
 mkdir -p "$SLOTS/live-owner" "$SLOTLOCKS"
 hold_slot_lock live-owner 8
 sleep 1
@@ -254,7 +278,7 @@ case "$d" in
   *) ok "存活实例的槽位未被抢占（选到了 $d）" ;;
 esac
 
-echo "== 用例 7: 空闲（陈旧）的槽位被复用，而不是无限堆积 =="
+echo "== 用例 8: 空闲（陈旧）的槽位被复用，而不是无限堆积 =="
 # 先把其它槽位清掉，只留 live-owner 和本用例新建的空闲槽位，
 # 这样 wrapper 只有一个可选目标，断言才是确定的。
 for d in "$SLOTS"/*; do
@@ -282,7 +306,7 @@ else
   bad "槽位数量增长（$before -> $after），没有复用空闲槽位"
 fi
 
-echo "== 用例 8: 槽位的归属锁不放在 omp 的 agent 目录里 =="
+echo "== 用例 9: 槽位的归属锁不放在 omp 的 agent 目录里 =="
 # omp 自己拥有 agent 目录，会清理它不认识的文件；锁文件必须放在别处，
 # 否则锁文件被删后重新创建会换 inode，新来的实例就拿不到同一把锁。
 if [ -d "$SLOTLOCKS" ]; then
@@ -296,7 +320,7 @@ else
   ok "agent 目录内没有 .lock 文件"
 fi
 
-echo "== 用例 9: 活着的实例确实持有自己的槽位锁 =="
+echo "== 用例 10: 活着的实例确实持有自己的槽位锁 =="
 # 挡住规范目录，逼这个实例进 slot，然后验证它真的持有那把槽位锁
 # （锁必须跟着进程活过 exec，否则别的实例就能抢走同一个槽位）。
 hold_lock 30
@@ -320,7 +344,7 @@ fi
 wait "$CHECK_PID" 2>/dev/null
 release_lock
 
-echo "== 用例 10: 跨节点并发（可选，需要 OMP_TEST_PEER）=="
+echo "== 用例 11: 跨节点并发（可选，需要 OMP_TEST_PEER）=="
 if [ -z "$PEER" ]; then
   skipt "未设置 OMP_TEST_PEER，跳过跨节点用例"
 else
