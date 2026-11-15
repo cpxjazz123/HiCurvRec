@@ -1,0 +1,86 @@
+#!/bin/sh
+# omp — the single entry point for oh-my-pi.
+#
+# Why this wrapper exists:
+#
+# oh-my-pi's state lives in $HOME/.omp, which is on NFS and therefore shared by
+# every node of the cluster.  Its databases are SQLite in WAL mode, and WAL
+# maps the "<db>-shm" file into the process.  When a second process opens the
+# same database, SQLite rebuilds that file and the first process takes SIGBUS:
+#
+#     panic (main thread): Bus error at address 0x7F...
+#
+# Two live processes must therefore never use the same agent directory.  The
+# role lock of omp-local enforces that for the instances it starts, but a bare
+# "omp" -- invoked by absolute path, from a script, or from a shell whose alias
+# is not loaded -- would open $HOME/.omp/agent directly and break that rule.
+# That is exactly what happened on the other node: two bare omp instances
+# killed each other with SIGBUS while sharing $HOME/.omp/agent/models.db.
+#
+# So both ~/bin/omp and ~/.local/bin/omp are this wrapper; the real binary
+# lives at ~/.local/bin/omp.bin.  omp's self-update writes the new binary to
+# ~/.local/bin/omp, so the wrapper repairs itself: it moves the fresh binary
+# to omp.bin and puts the wrapper back.  Nothing has to be done by hand after
+# an update.
+#
+# omp's own "--profile <name>" is mapped onto the same mechanism: the profile
+# becomes the profile whose agent directory omp-local hands out, so
+# "omp --profile work" gets the same isolation as "omp-local work" instead of
+# letting omp open its profile directory directly.
+#
+# Usage:  omp [omp args...]            (the default profile)
+#         omp --profile <name> ...      (the profile <name>)
+
+set -e
+
+real=$HOME/.local/bin/omp.bin
+entry=$HOME/.local/bin/omp
+
+# omp's self-update overwrites ~/.local/bin/omp with the fresh binary.  Move it
+# back to omp.bin and restore the wrapper.  Two instances may do this at the
+# same time, so every step tolerates losing the race.
+if [ -f "$entry" ] && [ "$(head -c 2 "$entry" 2>/dev/null)" != '#!' ]; then
+  /bin/mv "$entry" "$real.new.$$" 2>/dev/null || true
+  /bin/mv "$real.new.$$" "$real" 2>/dev/null || true
+  /bin/cp "$HOME/bin/omp" "$entry" 2>/dev/null || true
+fi
+
+if [ ! -x "$real" ]; then
+  echo "omp: no oh-my-pi binary at $real" >&2
+  exit 2
+fi
+
+# A process that is already inside the wrapper must not be wrapped again.
+if [ "${OMP_ENTRY_ACTIVE:-}" = "1" ]; then
+  exec "$real" "$@"
+fi
+
+prof=default
+
+# Split off --profile <name> / --profile=<name>; everything else is passed on
+# unchanged.  The remaining arguments are re-appended with "set --", so no
+# quoting or word splitting is lost.
+count=$#
+i=0
+while [ "$i" -lt "$count" ]; do
+  arg=$1
+  shift
+  case $arg in
+    --profile)
+      [ $# -ge 1 ] || { echo "omp: --profile needs a profile name" >&2; exit 2; }
+      prof=$1
+      shift
+      i=$((i + 2))
+      ;;
+    --profile=*)
+      prof=${arg#--profile=}
+      i=$((i + 1))
+      ;;
+    *)
+      set -- "$@" "$arg"
+      i=$((i + 1))
+      ;;
+  esac
+done
+
+OMP_ENTRY_ACTIVE=1 exec "$HOME/bin/omp-local" "$prof" "$@"

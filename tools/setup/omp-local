@@ -191,12 +191,17 @@ fi
 mkdir -p "$agent_dir"
 
 # --- the binary ------------------------------------------------------------
-bin=${OMP_BINARY:-$HOME/.local/bin/omp}
+# The real binary is omp.bin: ~/.local/bin/omp is the wrapper that routes every
+# invocation through this script (see tools/setup/omp-entry).
+bin=${OMP_BINARY:-$HOME/.local/bin/omp.bin}
 if [ ! -x "$bin" ]; then
   echo "omp-local: no omp binary at $bin" >&2
   exit 2
 fi
 
+# Mark the process as already inside the wrapper, so that a nested call of
+# "~/.local/bin/omp" (the self-update, for instance) does not wrap itself.
+export OMP_ENTRY_ACTIVE=1
 export PI_CONFIG_DIR=.omp
 # An inherited PI_CODING_AGENT_DIR (e.g. from an `omp-b` alias) outranks the
 # config root and silently puts the SQLite files in the wrong place.

@@ -25,7 +25,7 @@
 #
 # Usage:  tools/setup/test_omp_local.sh [profile-name]
 #
-# Optional: set OMP_TEST_PEER=<host> to also run the cross-node case (case 11).
+# Optional: set OMP_TEST_PEER=<host> to also run the cross-node case (case 12).
 
 set -u
 
@@ -105,7 +105,7 @@ agent_dir_of() {
 
 mkdir -p "$TMP"
 
-echo "== 用例 0: wrapper 副本一致，且不含节点本地路径 =="
+echo "== 用例 1: wrapper 副本一致，且不含节点本地路径 =="
 h_repo=$(sha256sum "$REPO_WRAPPER" | cut -d' ' -f1)
 for copy in "$HOME/bin/omp-local"; do
   if [ ! -f "$copy" ]; then
@@ -116,6 +116,16 @@ for copy in "$HOME/bin/omp-local"; do
     bad "$copy 与仓库副本不一致（源码漂移）"
   fi
 done
+if [ -f "$HERE/omp-entry" ]; then
+  h_entry=$(sha256sum "$HERE/omp-entry" | cut -d' ' -f1)
+  if [ ! -f "$HOME/bin/omp" ]; then
+    bad "缺少 $HOME/bin/omp（PATH 里的 omp 必须是 wrapper，否则裸 omp 会与别的实例共用 agent 目录）"
+  elif [ "$(sha256sum "$HOME/bin/omp" | cut -d' ' -f1)" = "$h_entry" ]; then
+    ok "$HOME/bin/omp 与仓库副本一致"
+  else
+    bad "$HOME/bin/omp 与仓库副本不一致（源码漂移）"
+  fi
+fi
 if grep -n '/var/tmp' "$REPO_WRAPPER" >/dev/null 2>&1; then
   bad "wrapper 里仍有 /var/tmp 字面量：$(grep -n '/var/tmp' "$REPO_WRAPPER" | head -3)"
 else
@@ -136,7 +146,33 @@ else
   ok "wrapper 使用 omp 自己的家目录（PI_CONFIG_DIR=.omp）"
 fi
 
-echo "== 用例 1: default profile 用 omp 自己的 agent 目录，且模型配置还在 =="
+echo "== 用例 2: PATH 里的 omp 也是 wrapper（裸 omp 是 SIGBUS 的破口）=="
+# SQLite 在 WAL 模式下把 "<db>-shm" mmap 进进程；第二个进程打开同一个库时会
+# 重建那个文件，先前那个进程随即收到 SIGBUS（"Bus error at address ..."）。
+# 因此两个实例绝不能共用一个 agent 目录 —— 裸 omp 不受 slot 隔离保护，必须
+# 从 PATH 上就把它挡掉。
+for entry in "$HOME/bin/omp" "$HOME/.local/bin/omp"; do
+  if [ ! -f "$entry" ]; then
+    bad "缺少 $entry（裸 omp 会与别的实例共用同一个 agent 目录）"
+  elif [ "$(head -c 2 "$entry" 2>/dev/null)" = '#!' ]; then
+    ok "$entry 是 shell wrapper"
+  else
+    bad "$entry 不是 wrapper：裸 omp 会与别的实例共用同一个 agent 目录"
+  fi
+done
+if [ -f "$HOME/.local/bin/omp.bin" ] && [ "$(head -c 2 "$HOME/.local/bin/omp.bin" 2>/dev/null)" != '#!' ]; then
+  ok "真二进制在 $HOME/.local/bin/omp.bin"
+else
+  bad "缺少真二进制 $HOME/.local/bin/omp.bin"
+fi
+mkdir -p "$AGENT"
+d=$("$HOME/bin/omp" --profile "$PROF" config path 2>/dev/null | grep -E '^/' | tail -1)
+case "$d" in
+  "$AGENT") ok "--profile 被映射到 omp 的 profile 目录: $d" ;;
+  *) bad "--profile 处理不对: $d（期望 $AGENT）" ;;
+esac
+
+echo "== 用例 3: default profile 用 omp 自己的 agent 目录，且模型配置还在 =="
 if [ -d "$OMP_HOME/agent" ]; then
   ok "default profile 的 agent 目录是 $OMP_HOME/agent"
 else
@@ -154,7 +190,7 @@ case "$d" in
   *) bad "default 实例的 agent 目录不对: $d" ;;
 esac
 
-echo "== 用例 2: 其它 profile 用 omp 自己的 profile 目录 =="
+echo "== 用例 4: 其它 profile 用 omp 自己的 profile 目录 =="
 mkdir -p "$AGENT" "$SLOTS" "$SLOTLOCKS"
 d=$(agent_dir_of "$PROF")
 if [ "$d" = "$AGENT" ]; then
@@ -166,7 +202,7 @@ fi
 # below inherits it through the symlink.
 printf 'setupVersion: 3\nmodelRoles:\n  default: selftest-marker-model\n' >"$AGENT/config.yml"
 
-echo "== 用例 3: 规范实例存活时，第二个实例不再被拒绝 =="
+echo "== 用例 5: 规范实例存活时，第二个实例不再被拒绝 =="
 hold_lock 6
 sleep 1
 out=$("$WRAPPER" "$PROF" config path 2>"$TMP/err2")
@@ -187,7 +223,7 @@ case "$err" in
   *) bad "stderr 没有 slot 提示: $err" ;;
 esac
 
-echo "== 用例 4: $N 个真正重叠的并发实例全部成功，且 agent 目录互不相同 =="
+echo "== 用例 6: $N 个真正重叠的并发实例全部成功，且 agent 目录互不相同 =="
 # `omp bash -c ... sleep` keeps each instance alive for the whole window, so the
 # $N instances really do overlap -- this is the invariant that matters: no two
 # live instances may share one agent directory (and therefore one SQLite file).
@@ -236,7 +272,7 @@ else
   ok "所有 agent 目录都在 \$HOME（$OMP_HOME）之下"
 fi
 
-echo "== 用例 5: 槽位与规范目录共享配置（软链，不是复制）=="
+echo "== 用例 7: 槽位与规范目录共享配置（软链，不是复制）=="
 slot=$(head -1 "$TMP/dirs")
 if [ -L "$slot/config.yml" ] && [ "$(readlink "$slot/config.yml")" = "$AGENT/config.yml" ]; then
   ok "槽位 config.yml 软链到规范目录"
@@ -252,7 +288,7 @@ case "$listing" in
   *) bad "槽位实例没有读到共享配置" ;;
 esac
 
-echo "== 用例 6: SQLite 文件不被两个实例共用 =="
+echo "== 用例 8: SQLite 文件不被两个实例共用 =="
 if [ -f "$AGENT/agent.db" ] && [ -f "$slot/agent.db" ]; then
   i1=$(ls -i "$AGENT/agent.db" | cut -d' ' -f1)
   i2=$(ls -i "$slot/agent.db" | cut -d' ' -f1)
@@ -265,7 +301,7 @@ else
   bad "缺少 agent.db，无法校验隔离"
 fi
 
-echo "== 用例 7: 存活实例持有的槽位不会被抢占 =="
+echo "== 用例 9: 存活实例持有的槽位不会被抢占 =="
 mkdir -p "$SLOTS/live-owner" "$SLOTLOCKS"
 hold_slot_lock live-owner 8
 sleep 1
@@ -278,7 +314,7 @@ case "$d" in
   *) ok "存活实例的槽位未被抢占（选到了 $d）" ;;
 esac
 
-echo "== 用例 8: 空闲（陈旧）的槽位被复用，而不是无限堆积 =="
+echo "== 用例 10: 空闲（陈旧）的槽位被复用，而不是无限堆积 =="
 # 先把其它槽位清掉，只留 live-owner 和本用例新建的空闲槽位，
 # 这样 wrapper 只有一个可选目标，断言才是确定的。
 for d in "$SLOTS"/*; do
@@ -306,7 +342,7 @@ else
   bad "槽位数量增长（$before -> $after），没有复用空闲槽位"
 fi
 
-echo "== 用例 9: 槽位的归属锁不放在 omp 的 agent 目录里 =="
+echo "== 用例 11: 槽位的归属锁不放在 omp 的 agent 目录里 =="
 # omp 自己拥有 agent 目录，会清理它不认识的文件；锁文件必须放在别处，
 # 否则锁文件被删后重新创建会换 inode，新来的实例就拿不到同一把锁。
 if [ -d "$SLOTLOCKS" ]; then
@@ -320,7 +356,7 @@ else
   ok "agent 目录内没有 .lock 文件"
 fi
 
-echo "== 用例 10: 活着的实例确实持有自己的槽位锁 =="
+echo "== 用例 12: 活着的实例确实持有自己的槽位锁 =="
 # 挡住规范目录，逼这个实例进 slot，然后验证它真的持有那把槽位锁
 # （锁必须跟着进程活过 exec，否则别的实例就能抢走同一个槽位）。
 hold_lock 30
@@ -344,7 +380,7 @@ fi
 wait "$CHECK_PID" 2>/dev/null
 release_lock
 
-echo "== 用例 11: 跨节点并发（可选，需要 OMP_TEST_PEER）=="
+echo "== 用例 13: 跨节点并发（可选，需要 OMP_TEST_PEER）=="
 if [ -z "$PEER" ]; then
   skipt "未设置 OMP_TEST_PEER，跳过跨节点用例"
 else
