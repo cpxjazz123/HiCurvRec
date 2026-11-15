@@ -516,6 +516,18 @@ NEAR_FAR = {"double_triangle": ("inside", "cross"), "K4_tail": ("core", "tail"),
             "C5": ("adjacent", "skip"), "K1_4": ("spoke", "leaf"), "T5": ("hop1", "hop2")}
 
 
+def group_pairs(pattern, instance, nodes):
+    """The node pairs of each group, so a distance can be applied in one vectorised call."""
+    if pattern == "K5":
+        return {"all": [(nodes[a], nodes[b]) for a, b in combinations(range(5), 2)]}
+    if pattern == "P5_hops":
+        return {key: [(nodes[a], nodes[b]) for a, b in instance[key]]
+                for key in ("D1", "D2", "D3", "D4")}
+    near_key, far_key = NEAR_FAR[pattern]
+    return {"near": [(nodes[a], nodes[b]) for a, b in instance[near_key]],
+            "far": [(nodes[a], nodes[b]) for a, b in instance[far_key]]}
+
+
 def instance_distances(pattern, instance, nodes, distance):
     """Pair distances for one instance, taken from the groups its builder stored.
 
@@ -637,6 +649,102 @@ def role_patterns(incidence, role_of, role, n):
 
 
 # ---------------------------------------------------------------- arms
+
+# ---------------------------------------------------------------- quantised space
+
+CODEBOOK_ROOT = HERE / "r2"
+
+
+def load_codebooks(number):
+    """The three codebooks of one arm and the geometry its checkpoint declares.
+
+    Three layouts exist in the archive: a joint ``rq.vq_layers.{l}.embed.weight``, a joint
+    ``rq.levels.{l}.embed.weight``, and a factorised ``rq.levels.{l}.e_embed`` + ``h_embed`` pair.
+    ``rq._extra_state`` carries ``schema: mixed-rq-state/1`` and the curvature for mixed arms; the
+    legacy layouts have no such record and are treated as Euclidean.
+    """
+    import torch
+
+    matches = sorted((CODEBOOK_ROOT / number).glob("**/rqvae_best.pth"))
+    if not matches:
+        return None
+    state = torch.load(matches[0], map_location="cpu")["state_dict"]
+    books = []
+    for level in range(3):
+        joint = state.get(f"rq.vq_layers.{level}.embed.weight")
+        if joint is None:
+            joint = state.get(f"rq.levels.{level}.embed.weight")
+        if joint is None:
+            euclid = state.get(f"rq.levels.{level}.e_embed.weight")
+            hyperbolic = state.get(f"rq.levels.{level}.h_embed.weight")
+            if euclid is None or hyperbolic is None:
+                return None
+            if euclid.shape[0] < 256 and hyperbolic.shape[0] < 256:
+                # the factorised arm stores 16 x 16 halves and indexes the joint table as 16*k_E + k_H
+                joint = torch.cat([euclid.repeat_interleave(hyperbolic.shape[0], 0),
+                                   hyperbolic.repeat(euclid.shape[0], 1)], dim=1)
+            else:
+                joint = torch.cat([euclid, hyperbolic], dim=1)
+        books.append(joint.numpy().astype(np.float64))
+    extra = state.get("rq._extra_state")
+    mixed = isinstance(extra, dict) and str(extra.get("schema", "")).startswith("mixed-rq")
+    curvature = float(extra.get("curvature", 1.0)) if mixed else None
+    return books, {"mixed": mixed, "curvature": curvature}
+
+
+def quantised_vectors(number, tokens, n):
+    """The RQ-VAE's continuous quantised representation: the sum of the three codebook lookups.
+
+    This is the vector the decoder consumes -- a point in the model's latent space -- not the discrete
+    SID.  Its distance has no four-level ties, which is why the strict readings of the structures are
+    measurable here and nearly degenerate on the LCP distance.
+    """
+    loaded = load_codebooks(number)
+    if loaded is None:
+        return None, {"available": False}
+    books, geometry = loaded
+    codes_by_level = tokens.T if tokens.shape[0] != 3 else tokens   # (n, 3) -> (3, n)
+    vectors = np.zeros((max(n, tokens.shape[1]), books[0].shape[1]))
+    for level, book in enumerate(books):
+        codes = codes_by_level[level]
+        if codes.max() >= book.shape[0]:
+            return None, {**geometry, "available": False,
+                          "reason": f"level {level}: code {int(codes.max())} exceeds "
+                                    f"{book.shape[0]} codebook rows"}
+        items = np.flatnonzero(codes >= 0)
+        vectors[items] += book[codes[items]]
+    return vectors, {"available": True, **geometry,
+                     "width": books[0].shape[1],
+                     "second_half_max_norm": float(np.linalg.norm(
+                         books[0][:, books[0].shape[1] // 2:], axis=1).max())}
+
+
+def poincare_distance(left, right, curvature=1.0):
+    """Poincare ball distance at curvature c: arccosh(1 + 2c|u-v|^2 / ((1-c|u|^2)(1-c|v|^2)))."""
+    left_norm = float(np.dot(left, left))
+    right_norm = float(np.dot(right, right))
+    diff = float(np.dot(left - right, left - right))
+    denominator = max((1.0 - curvature * left_norm) * (1.0 - curvature * right_norm), 1e-12)
+    return float(np.arccosh(max(1.0 + 2.0 * curvature * diff / denominator, 1.0)))
+
+
+def quantised_distance(vectors, geometry, space):
+    """Distance in the quantised representation: Euclidean on the joint vector, or the model's mixed cost."""
+    width = vectors.shape[1]
+    half = width // 2
+    if space == "mixed" and geometry.get("mixed"):
+        curvature = geometry.get("curvature") or 1.0
+
+        def distance(left, right):
+            euclid = float(np.linalg.norm(vectors[left, :half] - vectors[right, :half]))
+            hyperbolic = poincare_distance(vectors[left, half:], vectors[right, half:], curvature)
+            return 0.5 * euclid + 0.5 * hyperbolic
+        return distance
+
+    def distance(left, right):
+        return float(np.linalg.norm(vectors[left] - vectors[right]))
+    return distance
+
 
 def load_arms(limit=None):
     ledger = json.loads(LEDGER.read_text())
@@ -993,6 +1101,172 @@ def instance_scores(pattern, instance, draws, distance):
             strict_real, float(np.mean(strict)))
 
 
+def psi_array(left, right):
+    """Elementwise psi: 1 when the first is smaller, 0.5 on a tie, 0 otherwise."""
+    return np.where(left < right, 1.0, np.where(left == right, 0.5, 0.0))
+
+
+def score_arm_vectors(patterns, nulls, vectors, n):
+    """Loose, conjunction and all-pairs scores in one batched pass per pattern.
+
+    The scalar path (``score_arm`` with a distance callable) makes millions of tiny numpy calls, which
+    dominates everything else once a pair distance is a norm instead of a lookup.  Here every pair the
+    instances and their draws need is gathered once, one vectorised expression gives all distances, and
+    the per-instance group summaries are built with bincount.  The definitions are the ones in
+    ``instance_scores`` -- this function must agree with it exactly.
+    """
+    norms = np.einsum("ij,ij->i", vectors, vectors)
+    loose_arrays, conj_arrays, strict_arrays = {}, {}, {}
+
+    for name, instances in patterns.items():
+        size = len(instances)
+        n_draws = max((len(draws) for draws in nulls[name]), default=0)
+        loose_real = np.full(size, np.nan)
+        loose_null = np.full(size, np.nan)
+        conj_real = np.full(size, np.nan)
+        conj_null = np.full(size, np.nan)
+        strict_real = np.full(size, np.nan)
+        strict_null = np.full(size, np.nan)
+
+        group_names = []
+        left, right, slots = [], [], []
+        for index, (instance, draws) in enumerate(zip(instances, nulls[name])):
+            if not draws:
+                continue
+            nodes = tuple(instance["nodes"])
+            pairs_real = group_pairs(name, instance, nodes)
+            groups = list(pairs_real)
+            for group in groups:
+                if group not in group_names:
+                    group_names.append(group)
+            drawn_pairs = [group_pairs(name, instance, tuple(draw)) for draw in draws]
+            for group in groups:
+                gid = group_names.index(group)
+                for a, b in pairs_real[group]:
+                    left.append(a); right.append(b); slots.append((index, -1, gid))
+                for position, pairs in enumerate(drawn_pairs):
+                    for a, b in pairs[group]:
+                        left.append(a); right.append(b)
+                        slots.append((index, position, gid))
+        if not left:
+            loose_arrays[name] = (loose_real, loose_null)
+            conj_arrays[name] = (conj_real, conj_null)
+            strict_arrays[name] = (strict_real, strict_null)
+            continue
+
+        left = np.asarray(left, dtype=np.int64)
+        right = np.asarray(right, dtype=np.int64)
+        squared = norms[left] + norms[right] - 2.0 * np.einsum(
+            "ij,ij->i", vectors[left], vectors[right])
+        distances = np.sqrt(np.clip(squared, 0.0, None))
+        slots = np.asarray(slots, dtype=np.int64)
+        instance_ids, draw_ids, group_ids = slots[:, 0], slots[:, 1], slots[:, 2]
+        n_groups = len(group_names)
+
+        def summarise(mask, reducer):
+            keys = instance_ids[mask] * n_groups + group_ids[mask]
+            values = distances[mask]
+            if reducer == "mean":
+                total = np.bincount(keys, weights=values, minlength=size * n_groups)
+                count = np.bincount(keys, minlength=size * n_groups)
+                return (total / np.maximum(count, 1)).reshape(size, n_groups)
+            if reducer == "max":
+                out = np.full(size * n_groups, -np.inf)
+                np.maximum.at(out, keys, values)
+                return out.reshape(size, n_groups)
+            out = np.full(size * n_groups, np.inf)
+            np.minimum.at(out, keys, values)
+            return out.reshape(size, n_groups)
+
+        real_mask = draw_ids == -1
+        real_mean = summarise(real_mask, "mean")
+        real_max = summarise(real_mask, "max")
+        real_min = summarise(real_mask, "min")
+        draw_mean = [summarise(draw_ids == position, "mean") for position in range(n_draws)]
+        draw_max = [summarise(draw_ids == position, "max") for position in range(n_draws)]
+        draw_min = [summarise(draw_ids == position, "min") for position in range(n_draws)]
+        present = np.isfinite(real_mean[:, 0]) & (real_mean[:, 0] > -np.inf)
+        present = np.isfinite(summarise(real_mask, "mean")[:, 0])
+        present = np.array([bool(nulls[name][i]) for i in range(size)])
+
+        if name == "K5":
+            means_real = real_mean[:, 0]
+            means_draw = np.array([means[:, 0] for means in draw_mean])
+            for index in np.flatnonzero(present):
+                loose_real[index] = float(np.mean(
+                    psi_array(means_real[index], means_draw[:, index])))
+                if n_draws > 1:
+                    comparisons = [
+                        float(psi_array(means_draw[a, index], means_draw[b, index]))
+                        for a in range(n_draws) for b in range(n_draws) if a != b]
+                    loose_null[index] = float(np.mean(comparisons))
+                mu = float(np.mean(means_draw[:, index]))
+                strict_real[index] = float(real_max[index, 0] < mu)
+                # the null side compares each draw with the mean of the *other* draws, so the draw
+                # cannot help define its own baseline
+                strict_null[index] = float(np.mean([
+                    float(draw_max[position][index, 0]
+                          < ((mu * n_draws - means_draw[position, index]) / (n_draws - 1)))
+                    for position in range(n_draws)])) if n_draws > 1 else np.nan
+                # K5 asserts a single ordering, so its conjunction is the loose comparison itself
+                conj_real[index] = loose_real[index]
+                conj_null[index] = loose_null[index]
+            loose_arrays[name] = (loose_real, loose_null)
+            conj_arrays[name] = (conj_real, conj_null)
+            strict_arrays[name] = (strict_real, strict_null)
+            continue
+
+        order = ("D1", "D2", "D3", "D4") if name == "P5_hops" else ("near", "far")
+        columns = [group_names.index(key) for key in order]
+
+        def chain(values, reducer):
+            """The pattern's comparisons: consecutive means, or the all-pairs domination test."""
+            if name == "P5_hops":
+                if reducer == "mean":
+                    return [(0, 1), (1, 2), (2, 3)]
+                return [("max", 0, "min", 1), ("max", 1, "min", 2), ("max", 2, "min", 3)]
+            return [(0, 1)] if reducer == "mean" else [("max", 0, "min", 1)]
+
+        for index in np.flatnonzero(present):
+            means_real = real_mean[index, columns]
+            means_draw = [draw_mean[position][index, columns] for position in range(n_draws)]
+            if name == "P5_hops":
+                loose_real[index] = float(np.mean([
+                    float(psi_array(means_real[a], means_real[b])) for a, b in ((0, 1), (1, 2), (2, 3))]))
+                loose_null[index] = float(np.mean([
+                    np.mean([float(psi_array(draw[a], draw[b])) for a, b in ((0, 1), (1, 2), (2, 3))])
+                    for draw in means_draw]))
+                conj_real[index] = float(all(
+                    psi_array(means_real[a], means_real[b]) == 1.0 for a, b in ((0, 1), (1, 2), (2, 3))))
+                conj_null[index] = float(np.mean([
+                    float(all(psi_array(draw[a], draw[b]) == 1.0 for a, b in ((0, 1), (1, 2), (2, 3))))
+                    for draw in means_draw]))
+                strict_real[index] = float(all(
+                    real_max[index, columns[i]] < real_min[index, columns[i + 1]] for i in range(3)))
+                strict_null[index] = float(np.mean([
+                    float(all(draw_max[position][index, columns[i]] < draw_min[position][index, columns[i + 1]]
+                              for i in range(3)))
+                    for position in range(n_draws)]))
+            else:
+                loose_real[index] = float(psi_array(means_real[0], means_real[1]))
+                loose_null[index] = float(np.mean([
+                    float(psi_array(draw[0], draw[1])) for draw in means_draw]))
+                conj_real[index] = float(psi_array(means_real[0], means_real[1]) == 1.0)
+                conj_null[index] = float(np.mean([
+                    float(psi_array(draw[0], draw[1]) == 1.0) for draw in means_draw]))
+                strict_real[index] = float(
+                    real_max[index, columns[0]] < real_min[index, columns[1]])
+                strict_null[index] = float(np.mean([
+                    float(draw_max[position][index, columns[0]]
+                          < draw_min[position][index, columns[1]])
+                    for position in range(n_draws)]))
+        loose_arrays[name] = (loose_real, loose_null)
+        conj_arrays[name] = (conj_real, conj_null)
+        strict_arrays[name] = (strict_real, strict_null)
+
+    return loose_arrays, conj_arrays, strict_arrays
+
+
 def score_arm(patterns, nulls, incidences, distance, n):
     """Per-instance loose and strict scores, NaN where a null was unavailable.
 
@@ -1049,10 +1323,24 @@ def cmd_patterns(args):
     print("instances with no usable null:", unusable(patterns, nulls), flush=True)
     arms = load_arms(args.arms)
     rows = []
+    skipped_arms = []
     for arm in arms:
         tokens = tokens_of(arm["sid_path"], n)
-        arrays, conj, strict = score_arm(patterns, nulls, incidences, lcp_distance(tokens), n)
-        entry = {"number": arm["number"], "recall": arm["recall"],
+        vectors = None
+        if args.space == "sid":
+            distance, geometry = lcp_distance(tokens), {"space": "sid"}
+        else:
+            vectors, geometry = quantised_vectors(arm["number"], tokens, n)
+            if vectors is None:
+                skipped_arms.append({"number": arm["number"], "arm": arm["arm"],
+                                     "reason": geometry.get("reason", "no readable codebook")})
+                continue
+            geometry = {"space": args.space, **geometry}
+        if vectors is None:
+            arrays, conj, strict = score_arm(patterns, nulls, incidences, distance, n)
+        else:
+            arrays, conj, strict = score_arm_vectors(patterns, nulls, vectors, n)
+        entry = {"number": arm["number"], "recall": arm["recall"], "geometry": geometry,
                  "collision": collision_of(tokens), "gain": {}, "rate": {},
                  "strict_gain": {}, "strict_rate": {},
                  "conj_gain": {}, "conj_rate": {}}
@@ -1086,7 +1374,12 @@ def cmd_patterns(args):
     recalls = np.array([row["recall"] for row in rows])
     collisions = np.array([row["collision"] if "collision" in row else row["l3_collision"]
                            for row in rows])
-    result = {"n_arms": len(rows), "metric": RECALL, "roles": {}, "per_pattern": {}, "rows": rows}
+    result = {"n_arms": len(rows), "metric": RECALL, "space": args.space,
+              "skipped_arms": skipped_arms, "roles": {}, "per_pattern": {}, "rows": rows}
+    if args.space != "sid":
+        mixed = sum(1 for row in rows if row["geometry"].get("mixed"))
+        print(f"space: {args.space}; arms with a mixed checkpoint {mixed}/{len(rows)}"
+              f"{f'; skipped {len(skipped_arms)}' if skipped_arms else ''}", flush=True)
     print("\n=== per-role rate and gain across arms, and the correlation with recall ===")
     print(f"  {'role':<7}{'rate':>8}{'gain':>8}{'rho(g)':>9}{'r(g)':>8}"
           f" | {'conj':>7}{'cgain':>7}{'rho(cg)':>9}{'r(cg)':>8}"
@@ -1532,6 +1825,8 @@ def main() -> int:
                            choices=("gain", "rate", "conj_gain", "conj_rate",
                                     "strict_gain", "strict_rate"))
         block.add_argument("--skip-cliques", dest="skip_cliques", action="store_true")
+        block.add_argument("--space", default="euclid",
+                           choices=("euclid", "mixed", "sid"))
         block.add_argument("--k-n", dest="k_n", type=int, default=6)
         block.add_argument("--overlap-mode", dest="overlap_mode", default="mean",
                            choices=("mean", "old"))
