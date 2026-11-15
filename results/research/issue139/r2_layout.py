@@ -8,6 +8,10 @@ and each of those holds exactly four things --
     item_sids.json         the identifier table
     rqvae_best.pth         the checkpoint that exported it
     recall.json            every key of the Stage 3 result
+    HG_Rec_best.pth        the Stage 3 weights that recall was measured with
+                           (added 2026-11-15 at the owner's request: the recall
+                           block named this file but the archive did not hold it,
+                           so an archived recall could not be reproduced)
 
 No issue names, no arm names, no nesting beyond that. What a number refers to is
 recorded here, in a ledger that lives in the repository, so the bucket stays
