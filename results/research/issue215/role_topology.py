@@ -35,6 +35,21 @@ study = tools.study
 PATTERNS = ("K5", "double_triangle", "K4_tail", "K2_3", "P5_centre", "C5", "P5_hops", "K1_4", "T5")
 
 
+def graal_similarity(first, second, weights):
+    """GRAAL's signature similarity, term for term.
+
+    D_i = w_i |log2(a+1) - log2(b+1)| / log2(max(a,b)+2), D = sum_i D_i / sum_i w_i, S = 1 - D.
+    The weights are the derived orbit dependency weights (orbit_weights.py), whose construction reproduces
+    the paper's two worked statements.
+    """
+    left = np.log2(np.clip(first, 0, None) + 1.0)
+    right = np.log2(np.clip(second, 0, None) + 1.0)
+    denominator = np.log2(np.maximum(np.clip(first, 0, None), np.clip(second, 0, None)) + 2.0)
+    distance = np.abs(left - right) / np.maximum(denominator, 1e-12)
+    total = (distance * weights).sum(axis=1) / weights.sum()
+    return 1.0 - total
+
+
 def gdv_similarity(first, second, weights):
     """GRAAL's per-orbit similarity, averaged over orbits with the given weights.
 
@@ -74,6 +89,8 @@ def main() -> int:
     role_of = study.load_roles(n, adjacency, "mean")
     orbit_b = np.loadtxt(ORBIT_B, dtype=np.float64)
     weights = 1.0 / np.log1p(orbit_b.sum(axis=0).clip(min=1.0))
+    derived = json.loads((OUT / "orbit_weights.json").read_text())["orbits"]
+    graal_weights = np.array([derived[str(index)]["w"] for index in range(orbit_b.shape[1])])
     behaviour_set = {(int(a), int(b)) if a < b else (int(b), int(a))
                      for a, b in behaviour_edges.tolist()}
     instances = np.load(OUT / "graphlet_instances.npz", allow_pickle=True)
@@ -86,10 +103,19 @@ def main() -> int:
         if not stored.exists():
             rows.append({"number": number, "reason": "no orbit table"})
             continue
-        orbit_q = np.load(stored)["orbit5"]
-        edges = np.load(stored)["edges"]
+        block = np.load(stored)
+        edges = block["edges"]
+        digest = tools.edge_digest(edges)
+        if "edge_sha" not in block.files or str(block["edge_sha"]) != digest:
+            # the cached table belongs to a different graph; rebuild both from the current construction
+            vectors, _ = study.quantised_vectors(number, study.tokens_of(arm["sid_path"], n), n)
+            edges, _graph = tools.budget_edges(vectors[:n], len(behaviour_set), n)
+            orbit_q = tools.orbits_for(number, edges, n, TOPO)
+        else:
+            orbit_q = block["orbit5"]
         edge_set = {(int(a), int(b)) for a, b in edges.tolist()}
         plain, weighted, plain_log, weighted_log = gdv_similarity(orbit_b, orbit_q, weights)
+        graal = graal_similarity(orbit_b, orbit_q, graal_weights)
         row = {"number": number, "recall": arm["recall"],
                "edge_recall": len(edge_set & behaviour_set) / max(len(behaviour_set), 1)}
         for role in range(6):
@@ -99,6 +125,7 @@ def main() -> int:
             row[f"{key}_gdv_weighted"] = float(np.nanmean(weighted[mask]))
             row[f"{key}_gdv_log"] = float(np.nanmean(plain_log[mask]))
             row[f"{key}_gdv_log_weighted"] = float(np.nanmean(weighted_log[mask]))
+            row[f"{key}_gdv_graal"] = float(np.nanmean(graal[mask]))
             row[f"{key}_graphlet"] = {}
             for name in PATTERNS:
                 shares = []

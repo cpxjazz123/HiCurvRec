@@ -23,7 +23,14 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[3]
 OUT = REPO / "results" / "research" / "issue215"
 QGRAPHS = OUT / "structure_graphs_all"
-ORCA = REPO / "results" / "research" / "issue213" / "orca" / "orca"
+# Two binaries of the same program: the serial one and an OpenMP/CUDA build. On a 315k-edge quantised
+# graph the parallel build takes 26 s where the serial one needs minutes, and its counts were verified
+# bit-identical on the behaviour graph; the serial binary stays available for verification runs.
+ORCA_SERIAL = REPO / "results" / "research" / "issue213" / "orca" / "orca"
+ORCA_PARALLEL = REPO / "results" / "research" / "issue213" / "orca" / "orca_gpu"
+import os as _os
+ORCA = Path(_os.environ["ORCA_BIN"]) if _os.environ.get("ORCA_BIN") else (
+    ORCA_PARALLEL if ORCA_PARALLEL.is_file() else ORCA_SERIAL)
 ORBIT_B5 = REPO / "results" / "research" / "issue213" / "orca" / "node5.out"
 ORBIT_B4 = REPO / "results" / "research" / "issue213" / "orca" / "node4.out"
 

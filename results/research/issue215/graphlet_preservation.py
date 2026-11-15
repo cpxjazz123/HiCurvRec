@@ -147,6 +147,44 @@ def budget_edges(vectors, target_edges, n):
                    "mean_degree": float(degree.mean()), "max_degree": int(degree.max())}
 
 
+def edge_digest(edges):
+    """A stable fingerprint of an edge set, so a cached orbit table cannot outlive its graph."""
+    import hashlib
+    array = np.ascontiguousarray(np.sort(edges, axis=1))
+    array = array[np.lexsort((array[:, 1], array[:, 0]))]
+    return hashlib.sha256(array.astype(np.int64).tobytes()).hexdigest()
+
+
+def orbits_for(number, edges, n, cache_dir=None):
+    """ORCA orbit table for this exact edge set, from the cache only when the fingerprint matches.
+
+    The first version trusted any existing ``<number>.npz``; an arm whose graph was rebuilt at a different
+    density then kept the old orbit counts, which is how number 01 ended up described by a table for a
+    graph it no longer had.
+    """
+    import subprocess
+    cache = (Path(cache_dir) if cache_dir else tools_topology_dir()) / f"{number}.npz"
+    digest = edge_digest(edges)
+    if cache.exists():
+        stored = np.load(cache)
+        if "edge_sha" in stored.files and str(stored["edge_sha"]) == digest:
+            return stored["orbit5"]
+        print(f"  {number}: cached orbits do not match the current edges; recomputing", flush=True)
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    in_path = cache.with_suffix(".in")
+    out_path = cache.with_suffix(".out")
+    tools.write_graph(in_path, n, edges)
+    subprocess.run([str(tools.ORCA), "node", "5", str(in_path), str(out_path)], check=True,
+                   capture_output=True)
+    orbit = np.loadtxt(out_path, dtype=np.float64)
+    np.savez(cache, orbit5=orbit, edges=edges, edge_sha=digest)
+    return orbit
+
+
+def tools_topology_dir():
+    return Path(__file__).resolve().parent / "topology_graphs"
+
+
 def work(number):
     """One arm: build its quantised k-NN graph and score every structure on the same items."""
     arm = next(entry for entry in study.load_arms(67) if entry["number"] == number)
