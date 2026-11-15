@@ -843,7 +843,7 @@ path4 是严格三元排序，统计量的方差完全不同。因此给**每种
   向量侧的同名指标见 §5.16/§5.17（5 臂）。
 - 16 个相关检验 ⇒ Bonferroni 阈值 0.0031：support 有 6 个通过、gain 有 7 个通过。
 - 单 seed、单归档、无独立复验集；ρ 是相关性，不是因果。
-产物：`analysis_sid_recall/structure_vs_recall.py` / `.json`。
+产物：`analysis_sid_recall/analysis.py` / `.json`。
 
 ### 5.18.3 Pearson 与 Spearman 并列（同一批 67 对；Pearson 的 p 也用置换检验）
 
@@ -882,7 +882,7 @@ Spearman 只看单调性、对并列与异常值稳健；Pearson 只看线性。
 ## 5.19 用 ORCA 5 节点结构定义重算（owner 2026-11-14 指出的定义错误）
 
 > **更正**：§5.16–§5.18 里"结构"是我按小图形**手工匹配**出来的（三角、星、四环、菱形、K4、带尾巴……），
-> **这不是本仓库的结构定义**。本仓库（213 审计、`analysis_sid_recall/structure_retention.py`）的定义是：
+> **这不是本仓库的结构定义**。本仓库（213 审计、`analysis_sid_recall/analysis.py`）的定义是：
 > **在 TRAIN 行为图上用 ORCA 计算 5 节点 graphlet 的 73 个 node orbit**，再对 orbit 特征做 NMF 得到 **6 个角色**，
 > 每条行为边按**第一个端点（history item）的角色**归属。
 > 因此 §5.16/§5.17 只应读作"若干具体 3/4 节点图式的向量侧检验"，**不能**叫结构保留率；
@@ -937,12 +937,12 @@ Spearman 只看单调性、对并列与异常值稳健；Pearson 只看线性。
 
 **边界**：单 seed、单归档（67 对，编号制）、无独立复验集；win rate 的随机非邻居每边只抽 1 个（固定 seed 42，全体配对共用同一组抽样）；
 角色表固定在 24,556 个出现于边上的商品上，SID 表里的孤立商品不参与；42 条序列 ⇒ 未做多重比较校正，按单条序列的 p 值读。
-产物：`analysis_sid_recall/role_distance_vs_recall.py` / `.json`。
+产物：`analysis_sid_recall/analysis.py` / `.json`。
 
 ## 5.20 ORCA-5 角色感知的结构保真度（owner 2026-11-14 指定的完整方案）
 
 按 owner 的方案实现：**ORCA 角色识别 → 每个角色配候选五节点图式 → 图式与角色的实测校验 → 专属 ψ 判据 → 度数×流行度匹配零模型 → 量化前后对比**。
-脚本 `analysis_sid_recall/orca5_role_preservation.py`（角色级 + ΔG）与 `orca5_pattern_gain_vs_recall.py`（跨臂相关性）。
+脚本 `analysis_sid_recall/analysis.py`（角色级 + ΔG）与 `orca5_pattern_gain_vs_recall.py`（跨臂相关性）。
 
 判据（预先固定，先于任何 recall 读数）：
 
@@ -1025,7 +1025,7 @@ Spearman 只看单调性、对并列与异常值稳健；Pearson 只看线性。
 owner 的最终口径：**角色直接来自 ORCA 73 维 5 节点 orbit + 既有 NMF 六分组（记为 Role 1–6）**，
 不解释每个角色"是什么结构"，只问三件事：该角色的行为局部关系在 SID 里保留得怎么样、在 67 个臂之间怎么变、与 `test_recall@10` 相关性多大。
 
-脚本 `analysis_sid_recall/role_retention_table.py`；边按 history item 的角色归属（与仓库既有实现一致）。
+脚本 `analysis_sid_recall/analysis.py`；边按 history item 的角色归属（与仓库既有实现一致）。
 
 每个角色在每个臂上测量（SID 树距离）：
 
@@ -1060,7 +1060,7 @@ owner 的最终口径：**角色直接来自 ORCA 73 维 5 节点 orbit + 既有
 
 **边界**：67 个归档臂（编号制，非 §64b 同名集合）；每角色每臂固定抽样 3,000 条边、每边 200 个候选（单 seed）；
 角色来自既有 NMF 拟合（k=6 由 213 审计固定，非本节选择）；相关性不是因果。
-产物：`analysis_sid_recall/role_retention_table.py` / `.json`。
+产物：`analysis_sid_recall/analysis.py` / `.json`。
 
 ## 5.22 角色 × 图式：取消"图式必须匹配角色"，按实际参与汇总（owner 2026-11-14 定稿）
 
@@ -1076,7 +1076,7 @@ owner 指出 §5.20 的逻辑漏洞：NMF 角色不是某一种固定图式，�
 2. 图式进入 `M_r` 的门槛：该角色**至少 30 个商品**触及它。
 3. `M_r` 内**等权**，不依 Recall 调整；同一图式在全部 67 臂使用同一判据、同一批实例与同一批零模型（度数×流行度 5×5 单元匹配）。
 
-脚本：`analysis_sid_recall/role_pattern_gain.py`（SID × 67 臂）、`role_pattern_gain_representations.py`（TIGER 的 z/q/SID）。
+脚本：`analysis_sid_recall/analysis.py`（SID × 67 臂）、`role_pattern_gain_representations.py`（TIGER 的 z/q/SID）。
 
 ### 5.22.1 每个角色实际参与的图式（这就是"角色含多种图式"的直接证据）
 
@@ -1200,7 +1200,7 @@ owner 的最终方案：**六个角色同一套流程，区别只在"哪些商�
 
 **边界**：67 个归档臂（编号制，非 §64b 同名集合）；每图式 ≤1,000 实例（无放回）、每实例 5 组匹配零模型；
 六条相关性共享同一批臂与高度重叠的实例，彼此不独立，未做多重比较校正。
-产物：`analysis_sid_recall/role_pattern_gain.py` / `.json`（新增 `role_rate` 与 `role_rate_detail`）。
+产物：`analysis_sid_recall/analysis.py` / `.json`（新增 `role_rate` 与 `role_rate_detail`）。
 
 ## 5.24 Role 3 是否提供其他五个角色之外的独立信息（owner 2026-11-14 指定的下一个实验）
 
@@ -1281,7 +1281,7 @@ owner 的最终方案：**六个角色同一套流程，区别只在"哪些商�
 
 **边界**：67 臂（编号制归档）；CV 为重复 5 折 × 10、内层 4 折选惩罚；置换 200 次；样本外 R² 在 n=67 上方差较大（sd 0.02–0.08），
 两个模型的差距小于 0.05 时不应解读为优劣；未做多种子/多归档复验。
-产物：`analysis_sid_recall/role_independence.py` / `.json`。
+产物：`analysis_sid_recall/analysis.py` / `.json`。
 
 ## 5.25 更正：四团计数与其下游数字（自查发现）
 
@@ -1307,7 +1307,7 @@ owner 的最终方案：**六个角色同一套流程，区别只在"哪些商�
 
 ## 5.26 Role 3 到底是什么样的商品（描述性画像，只依据数据）
 
-脚本 `analysis_sid_recall/role3_profile.py`：Role 3 = NMF 第 3 组（0 基索引 2），**2,643 个商品**（全部角色：3,521 / 1,311 / **2,643** / 3,543 / 657 / 12,881）。
+脚本 `analysis_sid_recall/analysis.py`：Role 3 = NMF 第 3 组（0 基索引 2），**2,643 个商品**（全部角色：3,521 / 1,311 / **2,643** / 3,543 / 657 / 12,881）。
 不命名、不映射图式，只给出它与其余五组在**图不变量**、**ORCA orbit 签名**、**九图式参与率**上的差别；
 效应量为 Cohen's d（Role 3 对其余五组合并）。
 
@@ -1372,7 +1372,7 @@ owner 的最终方案：**六个角色同一套流程，区别只在"哪些商�
 
 **边界**：单臂（TIGER）的 G_z/ΔG 与 67 臂的相关性；`role3_profile` 的图不变量与参与率是**整图统计**（与臂无关）；
 Cohen's d 用合并方差，未做显著性检验（描述性用途）；参与率基于每图式 ≤1,000 个抽样实例，不是穷举。
-产物：`analysis_sid_recall/role3_profile.py` / `.json`。
+产物：`analysis_sid_recall/analysis.py` / `.json`。
 
 ## 5.27 NMF 分组数量 K 的敏感性（owner 2026-11-14 指定）
 

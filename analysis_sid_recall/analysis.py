@@ -39,6 +39,7 @@ from pathlib import Path
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
+RESULTS = HERE / "results"        # every table and artifact this script writes lands here
 REPO = HERE.parent
 MIRROR = HERE / "r2"
 LEDGER = REPO / "results" / "research" / "issue139" / "r2_ledger.json"
@@ -189,6 +190,17 @@ def cross_validate(matrix, target, rng, repeats):
         total = float(np.sum((target - target.mean()) ** 2))
         scores.append(1.0 - residual / total)
     return {"r2_mean": float(np.mean(scores)), "r2_sd": float(np.std(scores))}
+
+
+
+
+def output_path(args, name):
+    """Where a command writes: --out when given, otherwise results/<command>.json."""
+    path = Path(args.out) if args.out else RESULTS / f"{name}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 
 
 # ---------------------------------------------------------------- graph, roles, features
@@ -675,9 +687,9 @@ def cmd_roles(args):
               f"{first['spearman']:>+8.3f}{first['p_spearman']:>7.3f}"
               f"{first['pearson']:>+8.3f}{first['p_pearson']:>7.3f}"
               f"{block['prefix@2']['spearman']:>+15.3f}{block['prefix@3']['spearman']:>+15.3f}")
-    if args.out:
-        Path(args.out).write_text(json.dumps(result, indent=1, default=float))
-        print(f"\nwritten {args.out}")
+    path = output_path(args, args.command)
+    path.write_text(json.dumps(result, indent=1, default=float))
+    print(f"\nwritten {path}")
     return 0
 
 
@@ -753,9 +765,9 @@ def cmd_distance(args):
         print(f"  Role {role + 1:<2}{block['mean']:>11.3f}{block['min']:>7.3f}{block['max']:>7.3f}"
               f"{block['spearman']:>+8.3f}{block['p_spearman']:>7.3f}"
               f"{block['pearson']:>+8.3f}{block['p_pearson']:>7.3f}")
-    if args.out:
-        Path(args.out).write_text(json.dumps(result, indent=1, default=float))
-        print(f"\nwritten {args.out}")
+    path = output_path(args, args.command)
+    path.write_text(json.dumps(result, indent=1, default=float))
+    print(f"\nwritten {path}")
     return 0
 
 
@@ -788,9 +800,9 @@ def cmd_sid(args):
             continue
         print(f"  {name:<12}{np.mean(values):>10.2f}{block['spearman']:>+9.3f}"
               f"{block['p_spearman']:>8.3f}{block['pearson']:>+9.3f}{block['p_pearson']:>8.3f}")
-    if args.out:
-        Path(args.out).write_text(json.dumps(result, indent=1, default=float))
-        print(f"\nwritten {args.out}")
+    path = output_path(args, args.command)
+    path.write_text(json.dumps(result, indent=1, default=float))
+    print(f"\nwritten {path}")
     return 0
 
 
@@ -940,16 +952,22 @@ def cmd_patterns(args):
         result["per_pattern"][name] = {
             "real_mean": float(np.nanmean(real)), "null_mean": float(np.nanmean(null)),
             "gain": correlate(real - null, recalls, collisions, args.permutations)}
-    if args.out:
-        Path(args.out).write_text(json.dumps(result, indent=1, default=float))
-        print(f"\nwritten {args.out}")
+    path = output_path(args, args.command)
+    path.write_text(json.dumps(result, indent=1, default=float))
+    print(f"\nwritten {path}")
     return 0
 
 
 def cmd_independence(args):
-    if not args.in_path:
-        raise SystemExit("independence reads the per-arm role rates: pass --in <patterns.json>")
-    payload = json.loads(Path(args.in_path).read_text())
+    in_path = Path(args.in_path) if args.in_path else None
+    if in_path is None:
+        for candidate in (RESULTS / "patterns.json", RESULTS / "role_pattern_gain.json"):
+            if candidate.exists():
+                in_path = candidate
+                break
+    if in_path is None:
+        raise SystemExit("independence needs per-arm role rates: run `patterns` first, or pass --in")
+    payload = json.loads(in_path.read_text())
     rows = payload["rows"]
     recalls = np.array([row["recall"] for row in rows])
     collisions = np.array([row["collision"] if "collision" in row else row["l3_collision"]
@@ -990,9 +1008,9 @@ def cmd_independence(args):
         result["marginal"][f"Role {int(role) + 1}"] = {"without": without["r2_mean"],
                                                        "drop": drop, "p": p_value}
         print(f"  Role {int(role) + 1:<4}{without['r2_mean']:>10.4f}{drop:>+9.4f}{p_value:>8.3f}")
-    if args.out:
-        Path(args.out).write_text(json.dumps(result, indent=1, default=float))
-        print(f"\nwritten {args.out}")
+    path = output_path(args, args.command)
+    path.write_text(json.dumps(result, indent=1, default=float))
+    print(f"\nwritten {path}")
     return 0
 
 
@@ -1088,9 +1106,9 @@ def cmd_k(args):
         print(f"K={key}: kept {len(kept)} roles, CV R^2 {full['r2_mean']:+.4f}, "
               f"strongest marginal role {best} ({best_drop:+.4f}), "
               f"cached Role 3 largest share {max(split) / max(len(base), 1):.3f}")
-    if args.out:
-        Path(args.out).write_text(json.dumps(result, indent=1, default=float))
-        print(f"\nwritten {args.out}")
+    path = output_path(args, args.command)
+    path.write_text(json.dumps(result, indent=1, default=float))
+    print(f"\nwritten {path}")
     return 0
 
 
@@ -1107,9 +1125,9 @@ def cmd_split(args):
         result["splits"][str(k)] = {"sizes": sizes,
                                     "shares": [value / max(len(base), 1) for value in sizes]}
         print(f"K={k}: cached Role {args.role + 1} splits as {sizes}")
-    if args.out:
-        Path(args.out).write_text(json.dumps(result, indent=1, default=float))
-        print(f"\nwritten {args.out}")
+    path = output_path(args, args.command)
+    path.write_text(json.dumps(result, indent=1, default=float))
+    print(f"\nwritten {path}")
     return 0
 
 
@@ -1196,11 +1214,11 @@ def cmd_profile(args):
         touched = sum(1 for node in of_role if node in incidence)
         participation[name] = touched / max(of_role.size, 1)
         print(f"  {name:<16}{participation[name]:.3f}")
-    if args.out:
-        Path(args.out).write_text(json.dumps({"profile": table, "orbits": top,
-                                              "participation": participation, "sizes": members},
-                                             indent=1, default=float))
-        print(f"\nwritten {args.out}")
+    path = output_path(args, args.command)
+    path.write_text(json.dumps({"profile": table, "orbits": top,
+                                "participation": participation, "sizes": members},
+                               indent=1, default=float))
+    print(f"\nwritten {path}")
     return 0
 
 

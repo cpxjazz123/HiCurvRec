@@ -1,14 +1,22 @@
 # analysis_sid_recall — one script, every structure-retention method
 
-`analysis.py` is the **only** analysis script in this directory. Every method that used to live in its
-own file (fifteen of them) now sits behind one entry point, sharing one definition of structure.
+`analysis.py` is the **only** analysis script in this directory, and `results/` is where every artifact
+it writes goes (`results/<command>.json`, or `--out <path>`). Every method that used to live in its own
+file now sits behind one entry point, sharing one definition of structure.
+
+    analysis_sid_recall/
+    ├── analysis.py          the script
+    ├── README.md            this file
+    ├── results/             every JSON/Markdown artifact, historical and regenerated
+    ├── r2/                  the archived SID+recall mirror (input: one numbered directory per arm)
+    ├── structure_roles*.npz the frozen ORCA role caches (input)
+    └── __pycache__/
 
     python3 analysis_sid_recall/analysis.py --help
     python3 analysis_sid_recall/analysis.py roles
     python3 analysis_sid_recall/analysis.py distance --arms 67
-    python3 analysis_sid_recall/analysis.py patterns --out /tmp/patterns.json     # no: use a repo path
-    python3 analysis_sid_recall/analysis.py patterns --representations
-    python3 analysis_sid_recall/analysis.py independence --in analysis_sid_recall/role_pattern_gain.json
+        python3 analysis_sid_recall/analysis.py patterns --representations
+    python3 analysis_sid_recall/analysis.py independence      # reads results/patterns.json, else results/role_pattern_gain.json
     python3 analysis_sid_recall/analysis.py k --k 3,4,5,6,8,10
     python3 analysis_sid_recall/analysis.py split --k 6,8,10 --role 2
     python3 analysis_sid_recall/analysis.py profile --role 2
@@ -62,12 +70,12 @@ identical for every arm.
 Each file here is the record produced by the command in the bracket; the historical records are kept
 as they were and are not regenerated.
 
-| file | command |
+All rows are under `results/`. | file (in `results/`) | command |
 |---|---|
 | `report.json`, `report.md`, `rank_arm_comparison.json`, `ranking_auc.json`, `sid_retention.json` | `sid` (the bootstrap-interval detail of the old `analyze.py` is in git history) |
 | `structure_retention.json`, `structure_retention_5node.json`, `STRUCTURE_RETENTION*.md` | `roles` |
 | `role_distance_vs_recall.json`, `role_retention_table.json` | `distance` |
-| `role_pattern_gain.json`, `role_pattern_gain_representations.json`, `orca5_pattern_gain_vs_recall.json`, `structure_vs_recall.json`, `orca5_role_preservation.json` | `patterns` |
+| `role_pattern_gain.json`, `role_pattern_gain_representations.json`, `orca5_pattern_gain_vs_recall.json`, `structure_vs_recall.json`, `orca5_role_preservation.json` | `patterns` (new runs write `patterns.json`) |
 | `role_independence.json` | `independence` |
 | `nmf_k_sensitivity.json`, `role3_split_by_k.json` | `k` / `split` |
 | `role3_profile.json` | `profile` |
