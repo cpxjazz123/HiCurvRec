@@ -1,0 +1,40 @@
+{
+  "train_rows": 396958,
+  "users": 57439,
+  "items": 24587,
+  "nodes_with_edges": 24556,
+  "edges": 315391,
+  "mean_degree": 25.65510228982796,
+  "max_degree": 2220,
+  "mean_session_length": 6.910949006772402,
+  "max_session_length": 286,
+  "communities": 37,
+  "bridges": 51,
+  "test_rows": 57439,
+  "test_users_with_history": 57439,
+  "train_transitions": 339519,
+  "cooc_pairs": 2351185,
+  "test_pairs": 441593,
+  "prefix_rates": {
+    "prefix1": 0.08110884584531582,
+    "prefix2": 0.007983740816954193,
+    "prefix3": 0.0016646004483323875,
+    "mean_lcp": 0.09075718711060239
+  },
+  "sem_cos": {
+    "mean": 0.7256693035876494,
+    "p10": 0.5682168006896973,
+    "p50": 0.7437776327133179,
+    "p90": 0.8523266315460205
+  },
+  "title_jaccard": {
+    "mean": 0.04387484157220216,
+    "p10": 0.0,
+    "p50": 0.0,
+    "p90": 0.11538461538461539
+  },
+  "categories": {
+    "available": false,
+    "note": "items.parquet carries categories=None for every item; category was not recoverable from the shipped artifacts"
+  }
+}
