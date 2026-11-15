@@ -1,62 +1,76 @@
-# analysis_sid_recall — one script, one report
+# analysis_sid_recall — one script, every structure-retention method
 
-`analyze.py` is the only analysis entrypoint in this directory. It reads the
-mirror of the Cloudflare R2 archive (`r2/<NN>/`, one numbered directory per
-archived mechanism) and writes `report.json` + `report.md` for every pair.
+`analysis.py` is the **only** analysis script in this directory. Every method that used to live in its
+own file (fifteen of them) now sits behind one entry point, sharing one definition of structure.
 
-    python3 analysis_sid_recall/analyze.py            # analyse r2/<NN>/
-    python3 analysis_sid_recall/analyze.py --download # refresh the mirror from r2:genrec
-    python3 analysis_sid_recall/analyze.py --check    # verify the mirror against the ledger
+    python3 analysis_sid_recall/analysis.py --help
+    python3 analysis_sid_recall/analysis.py roles
+    python3 analysis_sid_recall/analysis.py distance --arms 67
+    python3 analysis_sid_recall/analysis.py patterns --out /tmp/patterns.json     # no: use a repo path
+    python3 analysis_sid_recall/analysis.py patterns --representations
+    python3 analysis_sid_recall/analysis.py independence --in analysis_sid_recall/role_pattern_gain.json
+    python3 analysis_sid_recall/analysis.py k --k 3,4,5,6,8,10
+    python3 analysis_sid_recall/analysis.py split --k 6,8,10 --role 2
+    python3 analysis_sid_recall/analysis.py profile --role 2
+    python3 analysis_sid_recall/analysis.py sid
 
-Provenance of each number (arm identity, R@10, per-file sha256) is the
-repository-side ledger `results/research/issue139/r2_ledger.json`; the mirror is
-verified file-by-file against it. `r2/INDEX.md` lists what every number holds.
+## What "structure" means here, fixed once
 
-Per pair the report records, from the SID table alone: level-1 codes used,
-effective number (`exp` of entropy, `l1_er`), largest level-1 share, distinct
-level-2 prefixes, distinct level-3 triples, L3 collision (`1 - triples/items`),
-L3 gain bits (`log2(items/triples)`), and prefix-overlap gaps (observed TRAIN
-transitions minus random item pairs) at levels 1–3, next to the Stage 3 recall
-from `recall.json`. Pairs archived before Stage 3 (`stage2_record.json`) are
-listed without a recall and excluded from the correlations.
+* **Roles**: ORCA's 73 node orbits of graphlets up to five nodes on the TRAIN behaviour graph, grouped
+  into six NMF roles (`structure_roles5.npz`, the 213 audit's fit). No role is named or mapped to a
+  graphlet.
+* **Patterns**: nine five-node shapes with their own distance conditions — K5, double triangle sharing a
+  centre, K4 with a tail, K2,3 fan-out, P5 by centre and by hop count, C5, K1,4, and the T5 branch tree.
+  Each instance is built strictly (all missing edges verified).
+* **Nulls**: degree-bucket × popularity-bucket matched random groups (5 × 5), distinct members, five
+  draws per instance, shared by every representation.
+* **Aggregation**: a pattern's score reaches every role that owns one of its five nodes, but the average
+  is taken **per item first** and then over the role's items, so a hub that sits in many graphlets counts
+  once; a pattern enters a role's set only when at least 30 of the role's items touch it; weights inside a
+  role are equal and were fixed before any recall was read.
+* **Ties**: `psi(a,b)` scores a strict win 1, a tie 0.5, a loss 0; the discrete SID distance is never
+  punished for a tie.
 
-The cross-pair table is Spearman rho of each metric against `test_recall@10`
-with a percentile bootstrap interval over pairs; n is printed with every row.
-Twenty-odd arms from a handful of families are not a population — the intervals
-say so, and no metric here is an admission gate (Stage 3 `test_recall@10` is the
-only verdict, per CLAUDE.md §19/§25).
+## Commands
 
-`graph_shape.py` -> `graph_shape.json` / `GRAPH_SHAPE.md`: the shape of the
-TRAIN behaviour graph itself (tree-like branches next to dense communities).
-
-## structure_retention.py — 每个结构的保留度 vs 下游 recall
-
-`structure_retention.py` 复用 `results/research/issue213/graphlet_roles.py` 的 ORCA 4-节点轨道与
-`features_and_roles`（6 个角色的 NMF 分配，缓存在 `structure_roles.npz`，因为特征构建是唯一贵的一步），
-对 `r2/<NN>/` 里每个有 `test_recall@10` 的配对计算逐角色保留度：
-
-| 列 | 定义 |
+| command | what it computes |
 |---|---|
-| `prefix@1` | 行为边两端共享一级码 |
-| `prefix@2` | 两端共享一级与二级码 |
-| `prefix@3` | 两端共享全部三级码 |
+| `roles` | level-1/2/3 prefix retention per role on behaviour edges, and its correlation with recall |
+| `distance` | where a role's behaviour neighbours sit in the SID ordering: win rate against one random item, and a score over 200 candidates (0.5 = chance) |
+| `patterns` | per-pattern SID structure gain per arm, per-role aggregated rate and gain, and their correlations; `--representations` adds the z / q / SID comparison on TIGER, the only arm with a pre-quantization vector |
+| `independence` | out-of-sample ridge on the six role rates: repeated 5-fold CV, marginal contribution of each role, permutation p-values, collinearity |
+| `k` | the same rates under other NMF granularities, with marginals and how the cached Role 3 is cut |
+| `split` | the cached Role 3's membership under each K |
+| `profile` | graph invariants, the ORCA orbits that separate one role, and the patterns its items join |
+| `sid` | arm-level SID quantities (codes, prefixes, triples, collision, gain bits) against recall |
 
-只比较**同一层级**的码：一方的一级码不会因为等于另一方的二级码而算作匹配（早先的 `any` 列允许跨层匹配，已删除）。
-定义经独立复核：对配对 01 用逐边暴力循环重算 6 个角色 × 3 个前缀层级，与脚本向量化结果逐位相同。
+Shared flags: `--arms N` (limit the archived pairs), `--instances N`, `--null-draws N`,
+`--permutations N`, `--repeats N`, `--edges N`, `--k 3,4,6`, `--role R`, `--seed 42`, `--in`, `--out`.
+The limits exist so a smoke run is cheap; every table prints to stdout and `--out` writes the JSON.
 
-边归给**第一个端点**（历史商品）的角色，与 213 审计同口径，两张表可并读。
+## Data and provenance
 
-相关系数：每条序列对 `test_recall@10` 做 Spearman，配 2000 次 percentile bootstrap（seed 20261109，与 `analyze.py` 相同）；
-`centered/*` 行是「该角色保留度减去该配对总体保留度」，用来去掉配对自身的粗细尺度，否则一个角色可能只是跟着整体粗细分变。
+The pairs are the archived mirror `r2/<NN>/` (a Stage2 `item_sids.json` next to the Stage3 `recall.json`
+produced from it). Arm identity and per-file sha256 live in
+`results/research/issue139/r2_ledger.json`; every arm is verified against it before use, and `r2/INDEX.md`
+lists what each number holds. Structure itself is computed on
+`results/research/issue215/graphs/behaviour.in` with the role cache and ORCA table above, so it is
+identical for every arm.
 
-**SID 的 sha256 以 `results/research/issue139/r2_ledger.json` 为准**，不按 `report.json`：51–56 六个配对的
-`report.json` 记录与镜像文件不一致（镜像与账本一致），说明 `report.json` 在这几个号上是陈旧的派生值。
-脚本对镜像文件按账本验证，并把这类配对标成 `record_disagrees_with_archive`，不静默丢弃。
+## JSON artifacts
 
-`--five` 换成 **ORCA 5-节点轨道（标准 73 维）** 学出的 6 个角色（角色缓存 `structure_roles5.npz`，结果写
-`structure_retention_5node.json` / `STRUCTURE_RETENTION_5NODE.md`）。5-节点轨道由加速版 ORCA 生成：
-`results/research/issue213/orca/orca_gpu`（GPU 建表 + 32 线程 stage 3，**34.9 s**，输出与原版逐字节相同；
-原版单线程 951 s）。两个版本共用同一套角色定义与查表口径，因此两张表可直接并读。
+Each file here is the record produced by the command in the bracket; the historical records are kept
+as they were and are not regenerated.
 
-**特征维度**：`node5.out` 的前 15 列与 `node4.out` 的 15 列**逐字节相同**（24,587 节点全对），
-所以五节点特征只取标准的 73 维，不再拼接成 88 维——拼接会让标准化后的矩阵秩亏，并把四节点信息加权两次。
+| file | command |
+|---|---|
+| `report.json`, `report.md`, `rank_arm_comparison.json`, `ranking_auc.json`, `sid_retention.json` | `sid` (the bootstrap-interval detail of the old `analyze.py` is in git history) |
+| `structure_retention.json`, `structure_retention_5node.json`, `STRUCTURE_RETENTION*.md` | `roles` |
+| `role_distance_vs_recall.json`, `role_retention_table.json` | `distance` |
+| `role_pattern_gain.json`, `role_pattern_gain_representations.json`, `orca5_pattern_gain_vs_recall.json`, `structure_vs_recall.json`, `orca5_role_preservation.json` | `patterns` |
+| `role_independence.json` | `independence` |
+| `nmf_k_sensitivity.json`, `role3_split_by_k.json` | `k` / `split` |
+| `role3_profile.json` | `profile` |
+| `graph_shape.json`, `closure_regions.json`, `community_retention.json`, `structure_predictability.json`, `retention_ceiling.json` | graph-shape studies from earlier rounds; **not** regenerated by `analysis.py`, their code is in git history |
+
+No metric here is an admission gate: Stage 3 `test_recall@10` stays the only verdict (CLAUDE.md §19/§25).
