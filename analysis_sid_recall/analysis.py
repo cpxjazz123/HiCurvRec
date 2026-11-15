@@ -538,6 +538,38 @@ def instance_distances(pattern, instance, nodes, distance):
     return out
 
 
+def comparisons(pattern, groups):
+    """The orderings the pattern asserts, as psi values on group means (1 = holds, 0.5 = tie, 0 = not).
+
+    These are exactly the comparisons the loose score averages, so their conjunction is the strict
+    reading of the same hypothesis: every ordering the structure asserts has to hold at once.
+    """
+    if pattern == "P5_hops":
+        keys = ("D1", "D2", "D3", "D4")
+        return [psi(float(np.mean(groups[keys[index]])), float(np.mean(groups[keys[index + 1]])))
+                for index in range(3)]
+    return [psi(float(np.mean(groups["near"])), float(np.mean(groups["far"])))]
+
+
+def conj_indicator(pattern, groups):
+    """1 when every asserted ordering holds (no 2/3 credit), 0 otherwise."""
+    return float(all(value == 1.0 for value in comparisons(pattern, groups)))
+
+
+def strict_indicator(pattern, groups):
+    """1 when the *whole* ordering holds pair by pair, 0 otherwise.
+
+    The loose score compares group means (near mean < far mean, or the three consecutive hops of a
+    P5), so an instance where two of three orderings hold earns two thirds.  This asks the strict
+    question the review raised: no pair at a farther level may be closer than any pair at a nearer one.
+    """
+    if pattern == "P5_hops":
+        keys = ("D1", "D2", "D3", "D4")
+        return float(all(max(groups[keys[index]]) < min(groups[keys[index + 1]])
+                         for index in range(3)))
+    return float(max(groups["near"]) < min(groups["far"]))
+
+
 def per_instance(pattern, instance, draws, distance):
     """The pattern's psi on the real instance and on its matched groups, both per instance.
 
@@ -913,26 +945,77 @@ def prepare_instances(args, n, adjacency):
     return patterns, nulls, incidences
 
 
-def score_arm(patterns, nulls, incidences, distance, n):
-    """Per-instance psi on the real instances and their nulls, NaN where a null was unavailable.
+def instance_scores(pattern, instance, draws, distance):
+    """Loose and strict scores for one instance, on the real group and on its matched draws.
 
-    The arrays keep one slot per instance -- the same index the incidence map uses -- so an instance
+    Both metrics come from the same distance evaluation, so the strict column costs no extra
+    measuring:
+
+    * loose -- ``psi`` on group means (the published metric; a partial ordering can score 2/3);
+    * strict -- the full ordering must hold pair by pair (see ``strict_indicator``).  For K5, whose
+      single group has no levels, the strict analogue is that its *widest* pair is still closer than
+      the mean random pair distance, so nine tight pairs out of ten do not earn a pass.
+
+    The null side is the average over the matched draws, so both gains are ``real - matched null``.
+    """
+    nodes = tuple(instance["nodes"])
+    if pattern == "K5":
+        def pairs(group):
+            return [distance(group[a], group[b]) for a, b in combinations(range(5), 2)]
+
+        inside_real = float(np.mean(pairs(nodes)))
+        draw_means = [float(np.mean(pairs(draw))) for draw in draws]
+        loose_real = float(np.mean([psi(inside_real, value) for value in draw_means]))
+        loose_null = float(np.mean([psi(draw_means[i], draw_means[j])
+                                    for i in range(len(draws)) for j in range(len(draws)) if i != j]))
+        # strict K5: the *widest* pair of the clique must still be closer than a random group's mean
+        # pair distance -- every one of the ten pairs has to be tight, not nine of ten.
+        mu = float(np.mean(draw_means))
+        strict_real = float(max(pairs(nodes)) < mu)
+        strict_null = float(np.mean([
+            float(max(pairs(draw)) < float(np.mean(np.delete(draw_means, index))))
+            for index, draw in enumerate(draws)]))
+        # K5 asserts one ordering (clique inside closer than random pairs), so its conjunction is the
+        # loose comparison itself; the all-pairs form above stays as the stricter diagnostic.
+        return loose_real, loose_null, loose_real, loose_null, strict_real, strict_null
+
+    groups_real = instance_distances(pattern, instance, nodes, distance)
+    loose_real = hypothesis(pattern, groups_real)
+    conj_real = conj_indicator(pattern, groups_real)
+    strict_real = strict_indicator(pattern, groups_real)
+    loose, conj, strict = [], [], []
+    for draw in draws:
+        groups = instance_distances(pattern, instance, tuple(draw), distance)
+        loose.append(hypothesis(pattern, groups))
+        conj.append(conj_indicator(pattern, groups))
+        strict.append(strict_indicator(pattern, groups))
+    return (loose_real, float(np.mean(loose)), conj_real, float(np.mean(conj)),
+            strict_real, float(np.mean(strict)))
+
+
+def score_arm(patterns, nulls, incidences, distance, n):
+    """Per-instance loose and strict scores, NaN where a null was unavailable.
+
+    Each array keeps one slot per instance -- the same index the incidence map uses -- so an instance
     without a usable null cannot shift the scores of the instances after it.
     """
-    arrays, skipped = {}, {}
+    loose_arrays, conj_arrays, strict_arrays = {}, {}, {}
     for name, instances in patterns.items():
-        real = np.full(len(instances), np.nan)
-        null = np.full(len(instances), np.nan)
+        size = len(instances)
+        real, null = np.full(size, np.nan), np.full(size, np.nan)
+        conj_real, conj_null = np.full(size, np.nan), np.full(size, np.nan)
+        strict_real, strict_null = np.full(size, np.nan), np.full(size, np.nan)
         for index, (instance, draws) in enumerate(zip(instances, nulls[name])):
             if not draws:
                 continue
-            computed = per_instance(name, instance, draws, distance)
-            if computed is None:
-                continue
-            real[index], null[index] = computed
-        arrays[name] = (real, null)
-        skipped[name] = int(np.isnan(real).sum())
-    return arrays
+            scored = instance_scores(name, instance, draws, distance)
+            (real[index], null[index]) = scored[0], scored[1]
+            (conj_real[index], conj_null[index]) = scored[2], scored[3]
+            (strict_real[index], strict_null[index]) = scored[4], scored[5]
+        loose_arrays[name] = (real, null)
+        conj_arrays[name] = (conj_real, conj_null)
+        strict_arrays[name] = (strict_real, strict_null)
+    return loose_arrays, conj_arrays, strict_arrays
 
 
 def unusable(patterns, nulls):
@@ -968,16 +1051,32 @@ def cmd_patterns(args):
     rows = []
     for arm in arms:
         tokens = tokens_of(arm["sid_path"], n)
-        arrays = score_arm(patterns, nulls, incidences, lcp_distance(tokens), n)
+        arrays, conj, strict = score_arm(patterns, nulls, incidences, lcp_distance(tokens), n)
         entry = {"number": arm["number"], "recall": arm["recall"],
-                 "collision": collision_of(tokens), "gain": {}, "rate": {}}
+                 "collision": collision_of(tokens), "gain": {}, "rate": {},
+                 "strict_gain": {}, "strict_rate": {},
+                 "conj_gain": {}, "conj_rate": {}}
         for role in range(6):
             rate, gain = role_scores(arrays, incidences, role_of, role, n)
             entry["gain"][str(role)] = gain
             entry["rate"][str(role)] = rate
+            strict_rate, strict_gain = role_scores(strict, incidences, role_of, role, n)
+            entry["strict_gain"][str(role)] = strict_gain
+            entry["strict_rate"][str(role)] = strict_rate
+            conj_rate, conj_gain = role_scores(conj, incidences, role_of, role, n)
+            entry["conj_gain"][str(role)] = conj_gain
+            entry["conj_rate"][str(role)] = conj_rate
         entry["patterns"] = {name: {"real": float(np.nanmean(values[0])) if values[0].size else None,
                                     "null": float(np.nanmean(values[1])) if values[1].size else None}
                              for name, values in arrays.items()}
+        entry["patterns_conj"] = {
+            name: {"real": float(np.nanmean(values[0])) if values[0].size else None,
+                   "null": float(np.nanmean(values[1])) if values[1].size else None}
+            for name, values in conj.items()}
+        entry["patterns_strict"] = {
+            name: {"real": float(np.nanmean(values[0])) if values[0].size else None,
+                   "null": float(np.nanmean(values[1])) if values[1].size else None}
+            for name, values in strict.items()}
         rows.append(entry)
         print(f"  {arm['number']} recall {arm['recall']:.6f}  " +
               " ".join(f"r{role}:{entry['gain'][str(role)]:+.3f}"
@@ -989,24 +1088,54 @@ def cmd_patterns(args):
                            for row in rows])
     result = {"n_arms": len(rows), "metric": RECALL, "roles": {}, "per_pattern": {}, "rows": rows}
     print("\n=== per-role rate and gain across arms, and the correlation with recall ===")
-    print(f"  {'role':<7}{'rate mean':>10}{'gain mean':>10}{'rho(rate)':>11}{'rho(gain)':>11}"
-          f"{'r(gain)':>9}{'p':>7}")
+    print(f"  {'role':<7}{'rate':>8}{'gain':>8}{'rho(g)':>9}{'r(g)':>8}"
+          f" | {'conj':>7}{'cgain':>7}{'rho(cg)':>9}{'r(cg)':>8}"
+          f" | {'pair':>6}{'pgain':>7}{'rho(pg)':>9}{'r(pg)':>8}")
     for role in range(6):
         rate = np.array([row["rate"][str(role)] if row["rate"][str(role)] is not None else np.nan
                          for row in rows])
         gain = np.array([row["gain"][str(role)] if row["gain"][str(role)] is not None else np.nan
                          for row in rows])
+        strict_rate = np.array([row["strict_rate"][str(role)]
+                                if row["strict_rate"][str(role)] is not None else np.nan
+                                for row in rows])
+        strict_gain = np.array([row["strict_gain"][str(role)]
+                                if row["strict_gain"][str(role)] is not None else np.nan
+                                for row in rows])
+        conj_rate = np.array([row["conj_rate"][str(role)]
+                              if row["conj_rate"][str(role)] is not None else np.nan for row in rows])
+        conj_gain = np.array([row["conj_gain"][str(role)]
+                              if row["conj_gain"][str(role)] is not None else np.nan for row in rows])
         result["roles"][str(role)] = {"rate": correlate(rate, recalls, collisions, args.permutations),
+                                      "conj_rate": correlate(conj_rate, recalls, collisions,
+                                                             args.permutations),
+                                      "conj_gain": correlate(conj_gain, recalls, collisions,
+                                                             args.permutations),
+                                      "conj_rate_mean": (float(np.nanmean(conj_rate))
+                                                          if np.isfinite(conj_rate).any() else None),
+                                      "conj_gain_mean": (float(np.nanmean(conj_gain))
+                                                          if np.isfinite(conj_gain).any() else None),
                                       "gain": correlate(gain, recalls, collisions, args.permutations),
+                                      "strict_rate": correlate(strict_rate, recalls, collisions,
+                                                               args.permutations),
+                                      "strict_gain": correlate(strict_gain, recalls, collisions,
+                                                               args.permutations),
                                       "rate_mean": float(np.nanmean(rate)) if np.isfinite(rate).any() else None,
-                                      "gain_mean": float(np.nanmean(gain)) if np.isfinite(gain).any() else None}
+                                      "gain_mean": float(np.nanmean(gain)) if np.isfinite(gain).any() else None,
+                                      "strict_rate_mean": (float(np.nanmean(strict_rate))
+                                                           if np.isfinite(strict_rate).any() else None),
+                                      "strict_gain_mean": (float(np.nanmean(strict_gain))
+                                                           if np.isfinite(strict_gain).any() else None)}
         block = result["roles"][str(role)]
-        if block["rate"].get("spearman") is None or block["gain"].get("spearman") is None:
-            print(f"  Role {role + 1:<2}  n={block['rate']['n']} arms with a rate, too few to correlate")
+        if block["gain"].get("spearman") is None or block["strict_gain"].get("spearman") is None:
+            print(f"  Role {role + 1:<2}  n={block['gain']['n']} arms with a gain, too few to correlate")
             continue
-        print(f"  Role {role + 1:<2}{block['rate_mean']:>10.3f}{block['gain_mean']:>10.3f}"
-              f"{block['rate']['spearman']:>+11.3f}{block['gain']['spearman']:>+11.3f}"
-              f"{block['gain']['pearson']:>+9.3f}{block['gain']['p_pearson']:>7.3f}")
+        print(f"  Role {role + 1:<2}{block['rate_mean']:>8.3f}{block['gain_mean']:>+8.3f}"
+              f"{block['gain']['spearman']:>+9.3f}{block['gain']['pearson']:>+8.3f}"
+              f" | {block['conj_rate_mean']:>7.3f}{block['conj_gain_mean']:>+7.3f}"
+              f"{block['conj_gain']['spearman']:>+9.3f}{block['conj_gain']['pearson']:>+8.3f}"
+              f" | {block['strict_rate_mean']:>6.3f}{block['strict_gain_mean']:>+7.3f}"
+              f"{block['strict_gain']['spearman']:>+9.3f}{block['strict_gain']['pearson']:>+8.3f}")
     if args.representations:
         import torch  # only needed to read the frozen codebooks
 
@@ -1027,7 +1156,7 @@ def cmd_patterns(args):
         for role in range(6):
             cell = {}
             for label, distance in distances.items():
-                arrays = score_arm(patterns, nulls, incidences, distance, n)
+                arrays, _, _ = score_arm(patterns, nulls, incidences, distance, n)
                 rate, gain = role_scores(arrays, incidences, role_of, role, n)
                 cell[label] = {"rate": rate, "gain": gain}
             result["representations"][str(role)] = cell
@@ -1067,7 +1196,8 @@ def cmd_independence(args):
     roles = [str(role) for role in range(6)]
     key = args.measure
     if key not in rows[0]:
-        key = "gain" if "gain" in rows[0] else "rate" if "rate" in rows[0] else "role_rate"
+        raise SystemExit(f"--measure {key} is not in {args.in_path}; the file has "
+                         f"{[name for name in rows[0] if name in ('rate', 'gain', 'strict_rate', 'strict_gain')]}")
     print(f"independence is measured on `{key}` (use --measure rate|gain to switch)", flush=True)
     rates = np.array([[row[key].get(role) if row[key].get(role) is not None else np.nan
                        for role in roles] for row in rows])
@@ -1398,7 +1528,9 @@ def main() -> int:
         block.add_argument("--seed", type=int, default=SEED)
         block.add_argument("--in", dest="in_path", type=str, default=None)
         block.add_argument("--representations", action="store_true")
-        block.add_argument("--measure", default="gain", choices=("gain", "rate"))
+        block.add_argument("--measure", default="gain",
+                           choices=("gain", "rate", "conj_gain", "conj_rate",
+                                    "strict_gain", "strict_rate"))
         block.add_argument("--skip-cliques", dest="skip_cliques", action="store_true")
         block.add_argument("--k-n", dest="k_n", type=int, default=6)
         block.add_argument("--overlap-mode", dest="overlap_mode", default="mean",
