@@ -54,9 +54,15 @@ file now sits behind one entry point, sharing one definition of structure.
 | `split` | the cached Role 3's membership under each K |
 | `profile` | graph invariants, the ORCA orbits that separate one role, and the patterns its items join |
 | `sid` | arm-level SID quantities (codes, prefixes, triples, collision, gain bits) against recall |
+| `cache` | rebuild the six-role cache: ORCA features over the edge-bearing items, NMF, argmax; writes `structure_roles5.npz` with a fingerprint of the graph, the orbit table and the overlap mode |
 
 Shared flags: `--arms N` (limit the archived pairs), `--instances N`, `--null-draws N`,
 `--permutations N`, `--repeats N`, `--edges N`, `--k 3,4,6`, `--role R`, `--seed 42`, `--in`, `--out`.
+Role-construction flags (`cache`): `--overlap-mode mean|old`, `--nmf-scaling clip|shift`,
+`--normalise` for component-scale-normalised assignment. `mean` imputes an undefined neighbour
+overlap (fewer than two neighbours) at the mean of the defined values; `old` reproduces the published
+tables by using 1.0. `structure_retention.py` reports the same diagnostics plus an adjusted Rand index
+against the previous cache.
 The limits exist so a smoke run is cheap. Every table prints to stdout and is written to
 `results/<command>.json`, or wherever `--out` points.
 
