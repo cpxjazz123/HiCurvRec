@@ -61,10 +61,15 @@ def main() -> int:
         exact = np.array([row[name]["exact"] for row in rows])
         share = np.array([row[name]["share"] for row in rows])
         keep = np.isfinite(exact) & np.isfinite(share)
-        rho_exact = spearman(exact[keep], recall[keep])
-        rho_share = spearman(share[keep], recall[keep])
-        p_exact = permutation_p(exact[keep], recall[keep], rho_exact, 500)
-        p_share = permutation_p(share[keep], recall[keep], rho_share, 500)
+        # a constant column has no rank correlation; report it as undefined rather than as a number
+        rho_exact = (float("nan") if np.ptp(exact[keep]) == 0
+                     else spearman(exact[keep], recall[keep]))
+        rho_share = (float("nan") if np.ptp(share[keep]) == 0
+                     else spearman(share[keep], recall[keep]))
+        p_exact = (float("nan") if np.isnan(rho_exact)
+                   else permutation_p(exact[keep], recall[keep], rho_exact, 500))
+        p_share = (float("nan") if np.isnan(rho_share)
+                   else permutation_p(share[keep], recall[keep], rho_share, 500))
         partial_share = partial(share[keep & usable], recall[keep & usable], control[keep & usable])
         summary["structures"][name] = {"exact_mean": float(exact[keep].mean()),
                                        "exact_rho": rho_exact, "exact_p": p_exact,
