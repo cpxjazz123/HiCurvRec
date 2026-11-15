@@ -1131,6 +1131,24 @@ def cmd_split(args):
     return 0
 
 
+def cmd_cache(args):
+    """Rebuild the frozen role cache: ORCA features over the edge-bearing items, NMF, argmax."""
+    n, adjacency, _ = load_graph()
+    nodes = np.array([node for node in range(n) if adjacency[node]], dtype=np.int64)
+    sub = [set() for _ in range(n)]
+    for node in nodes:
+        sub[int(node)] = adjacency[int(node)]
+    matrix = build_features(n, sub)[nodes]
+    matrix = (matrix - matrix.mean(0)) / matrix.std(0).clip(min=1e-9)
+    role = fit_roles(matrix, args.k_n, args.seed)
+    path = Path(args.out) if args.out else ROLE_CACHE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez(path, nodes=nodes, role=role.astype(np.int64))
+    print(f"wrote {len(nodes)} role assignments to {path}")
+    print("role sizes:", dict(zip(*np.unique(role, return_counts=True))))
+    return 0
+
+
 def cmd_profile(args):
     import itertools
 
@@ -1226,7 +1244,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("roles", "distance", "patterns", "independence", "k", "profile", "split", "sid"):
+    for name in ("roles", "distance", "patterns", "independence", "k", "profile", "split", "sid",
+                 "cache"):
         block = sub.add_parser(name)
         block.add_argument("--arms", type=int, default=None)
         block.add_argument("--instances", type=int, default=1000)
@@ -1239,11 +1258,12 @@ def main() -> int:
         block.add_argument("--seed", type=int, default=SEED)
         block.add_argument("--in", dest="in_path", type=str, default=None)
         block.add_argument("--representations", action="store_true")
+        block.add_argument("--k-n", dest="k_n", type=int, default=6)
         block.add_argument("--out", type=str, default=None)
     args = parser.parse_args()
     handlers = {"roles": cmd_roles, "distance": cmd_distance, "patterns": cmd_patterns,
                 "independence": cmd_independence, "k": cmd_k, "profile": cmd_profile,
-                "split": cmd_split, "sid": cmd_sid}
+                "split": cmd_split, "sid": cmd_sid, "cache": cmd_cache}
     return handlers[args.command](args)
 
 
