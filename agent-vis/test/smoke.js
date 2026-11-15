@@ -481,10 +481,10 @@ async function main() {
     assert.notEqual(ids[0], ids[1], '两个静态面板必须是不同的 agent');
   });
 
-  await test('/api/health 列出七个 agent 的身份', async () => {
+  await test('/api/health 列出八个 agent 的身份', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.ok(Array.isArray(info.agents), 'health 没列出 agents');
-    assert.equal(info.agents.length, 7, `应为七个 agent，实际 ${info.agents.length}`);
+    assert.equal(info.agents.length, 8, `应为八个 agent，实际 ${info.agents.length}`);
     for (const agent of info.agents) {
       assert.equal(typeof agent.id, 'string');
       assert.equal(typeof agent.name, 'string');
@@ -553,15 +553,15 @@ async function main() {
     assert.equal(res.status, 400, '未知 agent 应该被拒掉');
   });
 
-  await test('七个 agent 各自有一份独立的人设', async () => {
+  await test('八个 agent 各自有一份独立的人设', async () => {
     assert.ok(Array.isArray(config.AGENT_PROFILES), 'config 没导出 AGENT_PROFILES');
-    assert.equal(config.AGENT_PROFILES.length, 7);
+    assert.equal(config.AGENT_PROFILES.length, 8);
     const texts = new Set(config.AGENT_PROFILES.map((profile) => profile.instructions));
     assert.equal(texts.size, config.AGENT_PROFILES.length,
                  '每个 agent 的人设说明必须不同，否则几栏做的是同一件事');
   });
 
-  await test('七个 agent 的名字分别是 IDEA / B / MATH / STAGE2 / FIX / DISTANCE / LOSS', async () => {
+  await test('八个 agent 的名字分别是 IDEA / B / MATH / STAGE2 / STAGE3 / FIX / DISTANCE / LOSS', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.name),
@@ -570,6 +570,7 @@ async function main() {
         'AGENT B',
         'AGENT MATH',
         'AGENT STAGE2',
+        'AGENT STAGE3',
         'AGENT FIX',
         'AGENT WRITE DISTANCE',
         'AGENT LOSS',
@@ -578,7 +579,7 @@ async function main() {
     );
   });
 
-  await test('七个 agent 的角色：构思/控制/公式/训练/核对 + 距离写手 + 损失写手', async () => {
+  await test('八个 agent 的角色：构思/控制/公式/Stage2/Stage3/核对 + 距离写手 + 损失写手', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
     assert.deepEqual(
       info.agents.map((agent) => agent.role),
@@ -587,6 +588,7 @@ async function main() {
         'ISSUE_CONTROLLER',
         'MATH_AUDITOR',
         'STAGE2_RUNNER',
+        'STAGE3_RUNNER',
         'MECHANISM_CHECKER',
         'MECHANISM_WRITER',
         'MECHANISM_WRITER',
