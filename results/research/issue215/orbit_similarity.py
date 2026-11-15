@@ -103,6 +103,9 @@ def arm_metrics(orbit_b, orbit_q, groups, degree_b, degree_q):
             continue
         group_cos = cosine_rows(log_b[:, columns], log_q[:, columns])[active]
         row[f"sim_{name}"] = float(np.nanmean(group_cos))
+        # a cosine over log-counts is dominated by the many shared near-zero orbits; the per-orbit rank
+        # correlation within the group is the discriminating reading of the same question
+        row[f"rho_{name}"] = float(np.nanmedian(per_orbit_rho[columns]))
         argmax_b = np.argmax(orbit_b[:, columns], axis=1)
         argmax_q = np.argmax(orbit_q[:, columns], axis=1)
         row[f"role_{name}"] = float(np.mean(argmax_b[active] == argmax_q[active]))

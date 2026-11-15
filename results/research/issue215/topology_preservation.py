@@ -132,8 +132,15 @@ def work(number):
     # the orbit totals must come from *this* edge set, not from the earlier density-matched run:
     # mixing graphs would make the motif comparison describe one graph and the degree statistics another
     topo = TOPO / f"{number}.npz"
+    skip_orbits = graph["max_degree"] > 200
     if topo.exists():
         orbit_q5 = np.load(topo)["orbit5"]
+    elif skip_orbits:
+        # ORCA's triple enumeration grows with the cube of the maximum degree: above 200 the counting of a
+        # 315k-edge graph did not finish in twenty minutes (arms 34 and 42 at 245 and 320, the collapsed
+        # arms higher still).  Their non-orbit metrics are computed; the orbit ones are recorded as
+        # unavailable rather than being dropped or faked.
+        orbit_q5 = None
     else:
         in_path = TOPO / f"{number}.in"
         out_path = TOPO / f"{number}.out"
@@ -143,10 +150,14 @@ def work(number):
                        capture_output=True)
         orbit_q5 = np.loadtxt(out_path, dtype=np.float64)
         np.savez(topo, orbit5=orbit_q5, edges=edges)
-    total_b = WORKER["orbit5"].sum(axis=0)
-    total_q = orbit_q5.sum(axis=0)
-    cos = float(total_b @ total_q / (np.linalg.norm(total_b) * np.linalg.norm(total_q) + 1e-12))
-    l1 = float(np.abs(total_b / total_b.sum() - total_q / total_q.sum()).sum())
+    if orbit_q5 is None:
+        cos = float("nan")
+        l1 = float("nan")
+    else:
+        total_b = WORKER["orbit5"].sum(axis=0)
+        total_q = orbit_q5.sum(axis=0)
+        cos = float(total_b @ total_q / (np.linalg.norm(total_b) * np.linalg.norm(total_q) + 1e-12))
+        l1 = float(np.abs(total_b / total_b.sum() - total_q / total_q.sum()).sum())
 
     degree_rho = spearman(WORKER["degrees"], degrees_q)
     clustering_rho = spearman(WORKER["clustering"], clustering_q)
@@ -162,6 +173,7 @@ def work(number):
 
     row = {"number": number, "recall": arm["recall"], "graph": graph,
            "orbit_total_cos": cos, "orbit_total_l1": l1,
+           "orbit_skipped": bool(orbit_q5 is None),
            "community_ari": associated_rand(WORKER["labels"], labels_q),
            "community_nmi": normalised_mutual(WORKER["labels"], labels_q),
            "degree_rho": degree_rho, "clustering_rho": clustering_rho, "core_rho": core_rho,
