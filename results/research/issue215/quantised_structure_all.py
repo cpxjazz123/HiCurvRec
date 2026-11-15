@@ -32,16 +32,24 @@ spec = importlib.util.spec_from_file_location(
 study = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(study)
 
-# Each direction takes 13 neighbours, so the union's mean degree is about 26 -- the behaviour graph's
-# mean degree (315,391 edges over 24,556 items).  Taking 26 per direction doubled both the density and
-# ORCA's cost, and made the two graphs unmatched.
-K = 13
+# The behaviour graph has mean degree 25.7.  A single k cannot match that for every arm: arms whose
+# quantised vectors collapse to a few distinct points produce one-sided ties and, with k fixed, a hub
+# of degree 22k (arm 37).  The k is therefore chosen per arm from this grid so the union's mean degree
+# lands closest to the behaviour graph, and the chosen k and the resulting degrees are recorded.
+# Mutual k-NN: a pair is an edge only when each side picks the other.  Under the union an item with
+# thousands of exact ties (identical quantised vectors) became a degree-22,307 hub and ORCA never
+# finished; mutual selection bounds every degree by the k, at the cost of a lower density, so k is
+# chosen per arm from this grid to come as close to the behaviour graph's mean degree as the cap allows.
+K_GRID = (5, 8, 10, 13, 16, 20, 26, 32, 40, 60)
+K_MAX = max(K_GRID)
+K = 13                      # fallback; each arm records the k it actually used
+TARGET_DEGREE = 25.7
 STARS = 400
 CHUNK = 2048
 
 
-def knn_edges(vectors, k):
-    """Union of the directed k-NN lists, as the graph files ORCA reads."""
+def nearest(vectors, k):
+    """The k nearest neighbours of every item (self excluded), as an (n, k) index array."""
     n = vectors.shape[0]
     squared = np.einsum("ij,ij->i", vectors, vectors)
     neighbours = np.full((n, k), -1, dtype=np.int64)
@@ -50,12 +58,40 @@ def knn_edges(vectors, k):
         block = squared[start:stop, None] + squared[None, :] - 2.0 * vectors[start:stop] @ vectors.T
         block[np.arange(stop - start), np.arange(start, stop)] = np.inf
         neighbours[start:stop] = np.argpartition(block, k, axis=1)[:, :k]
-    edges = set()
-    for node in range(n):
-        for other in neighbours[node]:
-            a, b = (node, int(other)) if node < other else (int(other), node)
-            edges.add((a, b))
-    return np.asarray(sorted(edges), dtype=np.int64)
+    return neighbours
+
+
+def mutual_edges(neighbours, k, n):
+    """Pairs that select each other within k, as ORCA's graph file needs."""
+    rows = np.repeat(np.arange(n), k)
+    columns = neighbours[:, :k].ravel()
+    forward = np.unique(rows.astype(np.int64) * n + columns)
+    backward = np.unique(columns.astype(np.int64) * n + rows)
+    codes = np.intersect1d(forward, backward)
+    low = codes // n
+    high = codes % n
+    keep = low < high
+    return np.stack([low[keep], high[keep]], axis=1).astype(np.int64)
+
+
+def knn_edges(vectors, target=TARGET_DEGREE):
+    """Pick the k whose union matches the behaviour graph's mean degree, and return its edges.
+
+    Records the chosen k, the resulting mean and maximum degree -- a collapsed arm will still show a
+    huge hub, and that has to be visible rather than smoothed away.
+    """
+    n = vectors.shape[0]
+    neighbours = nearest(vectors, K_MAX)
+    best = None
+    for k in K_GRID:
+        edges = mutual_edges(neighbours, k, n)
+        degree = np.bincount(edges.ravel(), minlength=n)
+        mean_degree = float(degree.mean())
+        entry = (abs(mean_degree - target), k, edges, mean_degree, int(degree.max()))
+        if best is None or entry[0] < best[0]:
+            best = entry
+    _, k, edges, mean_degree, max_degree = best
+    return edges, {"k": k, "mean_degree": mean_degree, "max_degree": max_degree}
 
 
 def write_graph(path, n, edges):
@@ -213,7 +249,7 @@ def _one_arm(task):
     if vectors is None:
         return {"number": number, "reason": geometry.get("reason", "no codebook")}
     vectors = vectors[:n]
-    edges_q = knn_edges(vectors, K)
+    edges_q, graph_stats = knn_edges(vectors)
     if cache.exists():
         stored = np.load(cache)
         orbit_q5, orbit_q4 = stored["orbit5"], stored["orbit4"]
@@ -241,7 +277,7 @@ def _one_arm(task):
                 for leaf in leaves]
         recovered.append(sum(hits) / 4.0)
         hub.append(float(degree_q[centre] > max(degree_q[leaf] for leaf in leaves)))
-    row = {"number": number, "recall": recall,
+    row = {"number": number, "recall": recall, "graph": graph_stats,
            "geometry": {key: geometry[key] for key in ("mixed", "width") if key in geometry},
            "gcd73": gcd(WORKER["orbit_b5"], orbit_q5),
            "gcd15": gcd(WORKER["orbit_b4"], orbit_q4),
