@@ -80,6 +80,9 @@ myhost=$(hostname -s 2>/dev/null || hostname 2>/dev/null || echo unknown)
 mkdir -p "$agent" "$slots" "$slotlocks" "$root/logs"
 
 # The plugin store and the rooms are node-independent; link them in once.
+# The links are created with ln -sfn (atomic replace): several instances may
+# start at the same time, and plain ln -s would fail with "File exists" on
+# all but the first one, killing the others.
 for d in "$PLUGIN_STORE/$prof" "$ROOM_STORE"; do
   [ -d "$d" ] && continue
   mkdir -p "$d" || { echo "omp-local: cannot create the shared store $d" >&2; exit 2; }
@@ -88,13 +91,13 @@ if [ ! -L "$root/plugins" ]; then
   if [ -e "$root/plugins" ]; then
     rm -rf "$root/plugins"
   fi
-  ln -s "$PLUGIN_STORE/$prof" "$root/plugins"
+  ln -sfn "$PLUGIN_STORE/$prof" "$root/plugins"
 fi
 if [ ! -L "$agent/rooms" ]; then
   if [ -e "$agent/rooms" ]; then
     rm -rf "$agent/rooms"
   fi
-  ln -s "$ROOM_STORE" "$agent/rooms"
+  ln -sfn "$ROOM_STORE" "$agent/rooms"
 fi
 
 # A brand new profile gets its configuration from the shared snapshot.  Having
@@ -125,11 +128,14 @@ pick_slot() {  # pick_slot -> sets $chosen to the slot this instance may use
   done
   # Nothing reusable: mint a new one.  The name carries the host and the pid,
   # so two nodes -- or two processes -- can never mint the same name.
+  # The lock is taken BEFORE the directory appears: a directory that exists is
+  # therefore always a slot whose lock is already held, so a concurrent
+  # instance can never take it in the window between the mkdir and the lock.
   n=1
   while [ -e "$slots/$myhost-$mypid-$n" ]; do n=$((n + 1)); done
   name="$myhost-$mypid-$n"
-  mkdir -p "$slots/$name"
   if claim_slot "$name"; then
+    mkdir -p "$slots/$name"
     chosen=$slots/$name
     return 0
   fi

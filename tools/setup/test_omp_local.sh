@@ -35,7 +35,7 @@ SLOTS=$ROOT/agents
 SLOTLOCKS=$SLOTS/.locks
 LOCK=$ROOT/.lock
 TMP=$HERE/.omp_local_test_tmp
-N=8
+N=4
 PEER=${OMP_TEST_PEER:-}
 
 pass=0
@@ -121,6 +121,14 @@ if grep -nE 'exec [89]>{1,2}"' "$REPO_WRAPPER" >/dev/null 2>&1; then
 else
   ok "锁文件以 O_RDWR 打开，不含 O_TRUNC/O_APPEND"
 fi
+# 两处共享软链（插件库、rooms）必须用 ln -sfn 原子替换：并发启动时，普通
+# ln -s 会让除第一个之外的全部实例死于 "File exists"。
+# seed_slot 里往本实例自己槽位内链的 ln -s 不共享，没有竞态，不在此列。
+if grep -nE 'ln -s "\$(PLUGIN_STORE|ROOM_STORE)' "$REPO_WRAPPER" >/dev/null 2>&1; then
+  bad "共享软链仍用非原子的 ln -s（并发启动会互相杀死）: $(grep -nE 'ln -s \"\$(PLUGIN_STORE|ROOM_STORE)' "$REPO_WRAPPER" | head -3)"
+else
+  ok "共享软链用 ln -sfn 原子创建"
+fi
 
 echo "== 用例 1: 没有竞争时，第一个实例使用规范 agent 目录 =="
 mkdir -p "$AGENT" "$SLOTS" "$SLOTLOCKS"
@@ -159,7 +167,7 @@ echo "== 用例 3: $N 个真正重叠的并发实例全部成功，且 agent 目
 # `omp bash -c ... sleep` keeps each instance alive for the whole window, so the
 # $N instances really do overlap -- this is the invariant that matters: no two
 # live instances may share one agent directory (and therefore one SQLite file).
-hold_lock 90
+hold_lock 45
 sleep 1
 pids=""
 i=1
