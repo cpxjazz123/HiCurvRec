@@ -759,6 +759,7 @@ export const AGENT_PROFILES = [
      * AGENT FIX 的活。
      */
     permissions: ['read', 'train'],
+    denyTools: ['stage3Start', 'stage3Status'],
     handoffTargets: ['agent-fix'],
     instructions: [
       '你是 AGENT STAGE2（STAGE2_RUNNER），负责把一个候选树的 Stage2 训练跑起来、盯住它，' +
@@ -845,6 +846,7 @@ export const AGENT_PROFILES = [
      * beam 20、NO_EVAL、SKIP_TEST）由 server.py 强制，不在这个 agent 手里。
      */
     permissions: ['read', 'train'],
+    denyTools: ['stage2Start', 'stage2Status', 'stage2Stop'],
     handoffTargets: ['agent-fix'],
     instructions: [
       '你是 AGENT STAGE3（STAGE3_RUNNER），负责把一个已导出的 Stage2 SID 的 Stage3 训练跑起来、' +
@@ -1086,9 +1088,9 @@ export const PERMISSION_CATALOG = [
     id: 'train',
     label: '训练（train）',
     description:
-      '跑 Stage2 训练并盯住它：启动、看状态、暂停。训练只走仓库那个 MCP 接口' +
-      '（tools/genrec-mcp/server.py），不另起一套调度。',
-    tools: ['stage2Start', 'stage2Status', 'stage2Stop'],
+      '跑 Stage2 / Stage3 训练并盯住它：启动、看状态、暂停（Stage3 只有启动与状态）。' +
+      '训练只走仓库那个 MCP 接口（tools/genrec-mcp/server.py），不另起一套调度。',
+    tools: ['stage2Start', 'stage2Status', 'stage2Stop', 'stage3Start', 'stage3Status'],
   },
   {
     id: 'execute',

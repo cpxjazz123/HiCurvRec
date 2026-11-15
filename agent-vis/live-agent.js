@@ -637,6 +637,44 @@ const stage2StopTool = piTool({
   },
 });
 
+const stage3StartTool = piTool({
+  name: 'stage3Start',
+  label: '启动 Stage3 训练',
+  description:
+    'Start the Stage3 run for one exported Stage2 SID through the repository MCP server. The only ' +
+    'argument is the item_sids.json path (a directory containing it is accepted); the server enforces ' +
+    'the L3 collision gate, the frozen protocol and the single-instance guard.',
+  parameters: Type.Object({
+    sid: Type.String({
+      description: 'Stage2 的 item_sids.json 路径（或它所在目录），例如 results/stage2_RQ-VAE/TIGER_x_rq/item_sids.json',
+    }),
+  }),
+  impl: async ({ sid }) => {
+    return callGenrecMcp('stage3_start', { item_sids: stage3SidPath(sid) });
+  },
+});
+
+const stage3StatusTool = piTool({
+  name: 'stage3Status',
+  label: '看 Stage3 训练状态',
+  description:
+    'Read where the Stage3 run for one SID stands (status, live processes, GPU usage, latest epoch, ' +
+    'log tails, the final test result when it exists). Calls for the same SID are spaced one minute ' +
+    'apart, so calling it repeatedly is how you watch the training.',
+  parameters: Type.Object({
+    sid: Type.String({ description: 'Stage2 的 item_sids.json 路径（或它所在目录）' }),
+  }),
+  impl: async ({ sid }) => {
+    const target = stage3SidPath(sid);
+    const previous = lastStage3StatusAt.get(target) || 0;
+    const wait = Math.max(0, STAGE3_STATUS_INTERVAL_MS - (Date.now() - previous));
+    if (wait > 0) await sleepMs(wait);
+    lastStage3StatusAt.set(target, Date.now());
+    const status = await callGenrecMcp('stage3_status', { item_sids: target });
+    return { waited_seconds: Math.round(wait / 1000), ...status };
+  },
+});
+
 const webSearchTool = piTool({
   name: 'webSearch',
   label: '检索文献',
@@ -877,10 +915,25 @@ async function callGenrecMcp(toolName, args, { timeoutMs = 180000 } = {}) {
  * 模型能看见自己等了多久。
  */
 const STAGE2_STATUS_INTERVAL_MS = 60000;
+const STAGE3_STATUS_INTERVAL_MS = 60000;
 const lastStage2StatusAt = new Map();
+const lastStage3StatusAt = new Map();
 
 function sleepMs(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Stage3 只有一个入口：SID 的 item_sids.json。路径同样只允许仓库根之内；
+ * 它还必须位于 Stage2 结果树下（那条由 MCP 强制，这里只挡越界）。
+ */
+function stage3SidPath(relPath) {
+  const target = path.resolve(currentWorkdir(), String(relPath || ''));
+  const root = currentWorkdir();
+  if (target !== root && !target.startsWith(root + path.sep)) {
+    throw new Error(`路径越界（只允许仓库根 ${root} 之内）: ${relPath}`);
+  }
+  return target;
 }
 
 function stage2TreePath(relPath) {
@@ -1777,6 +1830,8 @@ export const PI_TOOLS = {
   stage2Start: stage2StartTool,
   stage2Status: stage2StatusTool,
   stage2Stop: stage2StopTool,
+  stage3Start: stage3StartTool,
+  stage3Status: stage3StatusTool,
   listIssues: listIssuesTool,
   readIssue: readIssueTool,
   gitLog: gitLogTool,

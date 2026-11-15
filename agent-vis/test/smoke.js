@@ -1027,7 +1027,27 @@ async function main() {
     // 训练这一项权限带的就是这三个工具。
     const train = (info.permissionCatalog || []).find((item) => item.id === 'train');
     assert.ok(train, '权限目录里没有 train');
-    assert.deepEqual(train.tools, ['stage2Start', 'stage2Status', 'stage2Stop']);
+    assert.deepEqual(
+      train.tools,
+      ['stage2Start', 'stage2Status', 'stage2Stop', 'stage3Start', 'stage3Status'],
+    );
+    assert.deepEqual(runner.denyTools, ['stage3Start', 'stage3Status'],
+                     'AGENT STAGE2 不该能启动 Stage3');
+  });
+
+  await test('AGENT STAGE3 只跑 Stage3：能启动、能看状态、拿不到写工具', async () => {
+    const info = await (await fetch(`${base}/api/health`)).json();
+    const runner = info.agents.find((agent) => agent.id === 'agent-stage3');
+    assert.ok(runner, 'health 里没有 agent-stage3');
+    assert.deepEqual(runner.permissions, ['read', 'train']);
+    assert.deepEqual(runner.denyTools, ['stage2Start', 'stage2Status', 'stage2Stop']);
+    assert.equal(runner.steps.length, 5, `步骤数不对: ${runner.steps.length}`);
+    const text = runner.steps.map((step) => step.instruction).join('\n');
+    assert.ok(text.includes('stage3Start'), '它该会启动 Stage3');
+    assert.ok(text.includes('stage3Status'), '它该会看 Stage3 状态');
+    assert.ok(text.includes('test_final.json'), '它该确认 test_final.json');
+    assert.ok(text.includes('每分钟'), '它的步骤里没写明每分钟检查一次');
+    assert.deepEqual(runner.handoffTargets, ['agent-fix']);
   });
 
   await test('Group：建组、改组、整组交接、删组', async () => {
