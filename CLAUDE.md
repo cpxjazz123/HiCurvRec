@@ -210,3 +210,14 @@ genrec/<NN>/recall.json      ← Stage3 结果的全部键值
 88. **Stage2 机器一致性准入只保留真实入口检查（2026-11-10 owner 指令）。** `run_all` 只执行 `check_entry`（真实入口跑通 1 epoch 并导出 SID）；`check_names`、`check_collectives`、`check_constants`、`check_geometry_contract`、`check_identifier`、`check_four_rank`、`check_assignment_rule`、`check_encoder_gradient` 不再作为准入条件，仅保留为独立诊断函数，不阻断训练。
 
 89. **Stage3 入场门槛：三层码字碰撞率必须 < 0.40（2026-11-10 owner 指令）。** 该门槛由 `tools/genrec-mcp/server.py::tool_stage3_start` 强制执行：读 `item_sids.json` 前三码，`collision = 1 − 不同三元组数 / 商品数`，`collision ≥ 0.40` 直接拒绝并返回实测值，不启动 Stage3。这一条**覆盖**第 19 条里"Stage3 启动不作任何准入检查"的旧措辞；其余诊断（L1/L2 使用率、Hard ER、二级前缀数、码使用率等）仍只记录、不阻断。第 63 条的 `l3_collision`（三码 item-weighted 重复占比）继续照记，报告时必须与门槛所用的 `collision` 并列、带名字，不得互相替代。实测：`TIGER_af3_cost_side_rq` 的 `collision=0.9700248098588685`，已被拒绝进入 Stage3。
+
+## 17. Stage2 目录唯一性（2026-11-15 owner 指令）
+
+90. **`stage2_RQ-VAE/` 顶层只允许保留一个 Stage2 目录**。除下面两类容器目录外，任何旧的、实验完毕的、
+    或与当前实验无关的 Stage2 源码树都必须移动到 `stage2_RQ-VAE/_archive/`：
+    - `stage2_RQ-VAE/baseline/`：**冻结基线与模板**（`TIGER_RQ-VAE`、`TIGER_BEHAVIOR_SAMPLE_RQ-VAE`、
+      插件宿主模板 `TIGER_RQ-VAE__plugin`），只读、供复制；
+    - `stage2_RQ-VAE/_archive/`：历史树归档，不参与任何训练或准入。
+    活跃臂只能有一个，且必须是 `stage2_RQ-VAE/<ARM>/` 的直接子目录（MCP 的 `stage2_start` / `stage2_status`
+    只接受这一层）。归档用 `git mv`，保持历史可追溯；移动后必须同步所有引用该树路径的常量、提示词与文档
+    （回归测试见 `tools/research/tests/test_baseline_location.py`）。
