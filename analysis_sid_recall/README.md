@@ -54,7 +54,8 @@ file now sits behind one entry point, sharing one definition of structure.
 
 Shared flags: `--arms N` (limit the archived pairs), `--instances N`, `--null-draws N`,
 `--permutations N`, `--repeats N`, `--edges N`, `--k 3,4,6`, `--role R`, `--seed 42`, `--in`, `--out`.
-The limits exist so a smoke run is cheap; every table prints to stdout and `--out` writes the JSON.
+The limits exist so a smoke run is cheap. Every table prints to stdout and is written to
+`results/<command>.json`, or wherever `--out` points.
 
 ## Data and provenance
 
