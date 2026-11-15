@@ -71,7 +71,9 @@ identical for every arm.
 Each file here is the record produced by the command in the bracket; the historical records are kept
 as they were and are not regenerated.
 
-All rows are under `results/`. | file (in `results/`) | command |
+All rows are under `results/`.
+
+| file (in `results/`) | command |
 |---|---|
 | `report.json`, `report.md`, `rank_arm_comparison.json`, `ranking_auc.json`, `sid_retention.json` | `sid` (the bootstrap-interval detail of the old `analyze.py` is in git history) |
 | `structure_retention.json`, `structure_retention_5node.json`, `STRUCTURE_RETENTION*.md` | `roles` |
