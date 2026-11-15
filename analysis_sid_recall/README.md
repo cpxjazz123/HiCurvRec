@@ -121,3 +121,5 @@ into `structure_roles_4node_refit.npz`.
   land in the same matching cell; bucketing by sorted position could split a tie by item id.
 * `patterns` prints how many instances actually received a null group per structure; an instance
   without one is left out of that structure's statistics instead of being scored against nothing.
+* `profile` reports participation for all six roles and takes `--skip-cliques`, because enumerating the
+  4- and 5-cliques of a 315k-edge graph costs about five minutes and only two columns need them.
