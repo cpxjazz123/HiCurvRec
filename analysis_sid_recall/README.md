@@ -5,7 +5,10 @@ it writes goes (`results/<command>.json`, or `--out <path>`). Every method that 
 file now sits behind one entry point, sharing one definition of structure.
 
     analysis_sid_recall/
-    ├── analysis.py          the script
+    ├── analysis.py          the analysis script (8 subcommands)
+    ├── structure_retention.py   the retention/cache builder restored from history on request:
+    │                           `python structure_retention.py --five` writes the five-node tables
+    │                           and `python analysis.py cache` rebuilds the role cache
     ├── README.md            this file
     ├── results/             every JSON/Markdown artifact, historical and regenerated
     ├── r2/                  the archived SID+recall mirror (input: one numbered directory per arm)
