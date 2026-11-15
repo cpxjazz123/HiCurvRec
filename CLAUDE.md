@@ -215,8 +215,10 @@ genrec/<NN>/recall.json      ← Stage3 结果的全部键值
 
 90. **`stage2_RQ-VAE/` 顶层只允许保留一个 Stage2 目录**。除下面两类容器目录外，任何旧的、实验完毕的、
     或与当前实验无关的 Stage2 源码树都必须移动到 `stage2_RQ-VAE/_archive/`：
-    - `stage2_RQ-VAE/baseline/`：**冻结基线与模板**（`TIGER_RQ-VAE`、`TIGER_BEHAVIOR_SAMPLE_RQ-VAE`、
-      插件宿主模板 `TIGER_RQ-VAE__plugin`），只读、供复制；
+    - `stage2_RQ-VAE/baseline/`：**冻结基线**。新臂的**唯一**复制来源是 `baseline/TIGER_RQ-VAE`；
+      `baseline/TIGER_BEHAVIOR_SAMPLE_RQ-VAE` 只作历史样例保留，不作模板。二者均只读。
+      （2026-11-15 owner 指令：删除插件宿主模板 `TIGER_RQ-VAE__plugin` —— 机制只允许改 `distances/` 或
+      `losses/` 下的文件，`mechanism.py` 单文件插件面不是本仓库的机制面，留着会与准入规则冲突。）
     - `stage2_RQ-VAE/_archive/`：历史树归档，不参与任何训练或准入。
     活跃臂只能有一个，且必须是 `stage2_RQ-VAE/<ARM>/` 的直接子目录（MCP 的 `stage2_start` / `stage2_status`
     只接受这一层）。归档用 `git mv`，保持历史可追溯；移动后必须同步所有引用该树路径的常量、提示词与文档
