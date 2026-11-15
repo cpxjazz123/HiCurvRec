@@ -1,4 +1,13 @@
-"""Does a structure's retention predict the arm's Stage 3 recall?
+"""How much of a role's behaviour edges survive as a shared SID prefix, per arm.
+
+What this measures, stated plainly: ORCA plus NMF put every item into one of six roles, and a
+behaviour edge is attributed to the role of its history item; the table then asks whether the two ends
+of that edge share the level-1, level-2 or all three codes.  It is *not* the per-graphlet distance test
+-- that lives in ``analysis.py patterns`` -- and it does not subtract a random baseline.  The question
+here is narrower: do different structural roles keep their behaviour connections differently, and does
+that pattern track the arm's recall.
+
+Does a structure's retention predict the arm's Stage 3 recall?
 
 Every archived pair in `r2/` carries a SID table and a recall.  This script asks a
 narrower question than `analyze.py` does: not "how well does the SID keep behaviour
@@ -13,8 +22,11 @@ Structure, fixed once for all arms and independent of any SID:
   * six roles from NMF over those orbits plus four cheap invariants -- the same
     role assignment `results/research/issue213/graphlet_roles.py` reports, reused
     here through `features_and_roles` so the two analyses cannot drift apart;
-  * the assignment is cached in `structure_roles.npz`, because the feature build
-    is the expensive part and it does not depend on which arms are analysed.
+  * the assignment is cached in `structure_roles5.npz` (or `structure_roles.npz` for four-node
+    orbits) behind a fingerprint of the graph, the orbit table and the overlap mode, because a cache
+    keyed only on the node count can silently survive a graph change;
+  * items with no behaviour edge (31 of 24,587 in the current graph) have no role and never appear in
+    an edge, so they cannot enter this table; the count is written into the output.
 
 Retention of one pair, per role:
 
@@ -88,35 +100,72 @@ def train_graph(gr):
     return edges, graph, degrees, adj
 
 
-def role_assignment(gr, graph, degrees, adj, five=False):
-    """The six roles of the 213 audit, cached: they depend on the graph and the orbits only.
+def role_assignment(gr, graph, degrees, adj, five=False, overlap_mode="mean",
+                    scaling="clip", normalise=False, seeds=(42,)):
+    """The six roles, rebuilt with the corrected feature definitions and a validated cache.
 
-    The cache is keyed on the number of nodes the roles were fitted on (the graph's), not on the
-    item count a SID table implies -- those differ by the isolated items that never appear in an
-    edge, and comparing against the larger number silently threw the cache away every run.
+    Three review findings are addressed here:
+
+    * ``overlap`` is undefined for a node with fewer than two neighbours -- there is no pair of
+      neighbours to compare -- so those nodes are imputed at the mean of the defined values
+      (``overlap_mode="mean"``).  The historical builder gave them 1.0, the maximum, which made a
+      one-neighbour item look like a maximally closed cluster.  ``"old"`` reproduces that table.
+    * the cache is keyed on a fingerprint of the adjacency, the orbit table and the overlap mode, so a
+      graph change that keeps the node count can no longer be reused silently;
+    * component scale and seed sensitivity are reported as adjusted Rand indices, because a single
+      argmax on an unnormalised NMF cannot by itself establish that the partition is stable.
     """
-    n_nodes = graph.number_of_nodes()
+    import analysis as study
+
+    n_items = (int(max(graph.nodes())) + 1) if graph.number_of_nodes() else 0
+    adjacency_list = [set(adj.get(node, ())) for node in range(n_items)]
+    orbit_path = gr.ORCA_NODE5 if five else gr.ORCA_NODE4
+    if not Path(orbit_path).exists():
+        raise SystemExit(f"missing orbit table {orbit_path}")
+    matrix, info = study.build_features(n_items, adjacency_list, orbit_path, overlap_mode)
+    nodes = np.asarray(sorted(graph.nodes()), dtype=np.int64)
+    block = matrix[nodes]
+
+    role = study.fit_roles(block, 6, seeds[0], scaling, normalise)
+    report = {"features": info, "scaling": scaling, "normalise_components": normalise,
+              "seeds": list(seeds), "items_without_a_role": n_items - nodes.shape[0],
+              "role_sizes": np.bincount(role, minlength=6).tolist(), "cache_hit": False,
+              "ari_variants": {}}
+    fingerprint = study.feature_fingerprint(adjacency_list, orbit_path, overlap_mode)
+    key = f"{fingerprint[:16]}|k=6|seed={seeds[0]}|{scaling}|{int(normalise)}"
+    report["fingerprint"] = fingerprint[:16]
     cache = ROLE_CACHE5 if five else ROLE_CACHE
+    report["cache"] = cache.name
+
     if cache.exists():
         cached = np.load(cache)
-        if "role" in cached and cached["nodes"].shape[0] == n_nodes:
-            print(f"roles: {cache.name} (cached)", flush=True)
-            return {int(node): int(role) for node, role in zip(cached["nodes"], cached["role"])}
-    orbits4, used4 = gr.orca_orbits(gr.ORCA_NODE4, 15)
-    if used4 is None:
-        raise SystemExit("no node4.out: run make_orca_input.py and orca node 4 first")
-    orbits5 = np.zeros((0, 15), dtype=np.int64)
-    used5 = None
-    if five:
-        orbits5, used5 = gr.orca_orbits(gr.ORCA_NODE5, 73)
-        if used5 is None:
-            raise SystemExit("no node5.out: build it with the accelerated ORCA first")
-    nodes, role_of, profiles = gr.features_and_roles(graph, degrees, adj, orbits5 if five else orbits4)
-    np.savez(cache, nodes=np.asarray(nodes, dtype=np.int64),
-             role=np.asarray([role_of[node] for node in nodes], dtype=np.int64))
-    print(f"roles: {len(profiles)} fitted from {used4}" + (f" + {used5}" if used5 else "") +
-          f", cached to {cache.name}", flush=True)
-    return role_of
+        same_nodes = (cached["nodes"].shape[0] == nodes.shape[0]
+                      and np.array_equal(cached["nodes"], nodes))
+        if "fingerprint" in cached and same_nodes and str(cached["fingerprint"]) == key:
+            report["cache_hit"] = True
+            print(f"roles: {cache.name} reused (fingerprint matches)", flush=True)
+            return ({int(node): int(value) for node, value in zip(cached["nodes"], cached["role"])},
+                    report)
+        if "role" in cached and same_nodes:
+            previous = np.asarray(cached["role"], dtype=np.int64)
+            report["ari_vs_cached"] = study.adjusted_rand(previous, role)
+            report["cache_replaced"] = True
+    for seed in seeds[1:]:
+        report["ari_variants"][f"seed={seed}"] = study.adjusted_rand(
+            role, study.fit_roles(block, 6, seed, scaling, normalise))
+    if not normalise:
+        report["ari_variants"]["normalised_components"] = study.adjusted_rand(
+            role, study.fit_roles(block, 6, seeds[0], scaling, True))
+
+    np.savez(cache, nodes=nodes, role=role.astype(np.int64), fingerprint=key)
+    print(f"roles: fitted on {nodes.shape[0]} items from {matrix.shape[1]} features "
+          f"({info['orbit_width']} orbits, overlap mode {overlap_mode}); sizes {report['role_sizes']}",
+          flush=True)
+    if "ari_vs_cached" in report:
+        print(f"roles: adjusted Rand against the previous cache {report['ari_vs_cached']:.3f}",
+              flush=True)
+    print(f"roles: stability {report['ari_variants']}", flush=True)
+    return {int(node): int(value) for node, value in zip(nodes, role)}, report
 
 
 def retention(tokens: np.ndarray, u, v, role_of_u, n_roles: int) -> dict:
@@ -142,8 +191,22 @@ def retention(tokens: np.ndarray, u, v, role_of_u, n_roles: int) -> dict:
     return {"overall": overall, "roles": roles}
 
 
+def parse_options():
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--five", action="store_true", help="use the 73 five-node orbits")
+    parser.add_argument("--overlap-mode", default="mean", choices=("mean", "old"))
+    parser.add_argument("--nmf-scaling", default="clip", choices=("clip", "shift"))
+    parser.add_argument("--normalise-components", action="store_true")
+    parser.add_argument("--seeds", default="42", help="comma separated; the first one is used")
+    return parser.parse_args()
+
+
 def main() -> int:
-    five = "--five" in sys.argv
+    options = parse_options()
+    five = options.five
     out_json = OUT_JSON5 if five else OUT_JSON
     out_md = OUT_MD5 if five else OUT_MD
     gr = load_roles_module()
@@ -209,7 +272,10 @@ def main() -> int:
     edges, graph, degrees, adj = train_graph(gr)
     u, v = edges[:, 0], edges[:, 1]
     n_nodes = int(max(edges.max(), u.max()) + 1)
-    role_of = role_assignment(gr, graph, degrees, adj, five=five)
+    role_of, routing = role_assignment(
+        gr, graph, degrees, adj, five=five, overlap_mode=options.overlap_mode,
+        scaling=options.nmf_scaling, normalise=options.normalise_components,
+        seeds=tuple(int(value) for value in options.seeds.split(",")))
     role_arr = np.full(n_nodes, -1, dtype=np.int64)
     for node, role in role_of.items():
         role_arr[node] = role
@@ -322,6 +388,7 @@ def main() -> int:
         "roles": json.loads((REPO / "results" / "research" / "issue213" /
                              ("graphlet_roles.json" if five else "graphlet_roles_4node.json")).read_text())["role_profiles"],
         "pairs": rows,
+        "routing": routing,
         "correlations": correlations,
         "report_coverage": {"pairs_in_mirror": len(rows), "pairs_in_report": len(in_report)},
         "limits": [

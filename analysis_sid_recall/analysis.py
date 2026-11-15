@@ -57,6 +57,13 @@ BUCKETS = 5
 CANDS = 200
 
 
+def output_path(args, name):
+    """Where a command writes: --out when given, otherwise results/<command>.json."""
+    path = Path(args.out) if args.out else RESULTS / f"{name}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 # ---------------------------------------------------------------- statistics
 
 def average_ranks(values: np.ndarray) -> np.ndarray:
@@ -150,17 +157,22 @@ def predict_ridge(matrix, intercept, coefficients):
     return intercept + matrix @ coefficients
 
 
-def folds(size, count, rng):
-    order = rng.permutation(size)
-    return [order[index::count] for index in range(count)]
+def fold_plan(size, repeats, count, seed):
+    """One fixed split per repeat, reused by every model so the comparison is paired."""
+    rng = np.random.default_rng(seed)
+    plan = []
+    for _ in range(repeats):
+        order = rng.permutation(size)
+        plan.append([order[index::count] for index in range(count)])
+    return plan
 
 
 def inner_penalty(matrix, target, rng, lambdas=(0.01, 0.1, 1.0, 10.0, 100.0)):
     best, best_error = lambdas[0], float("inf")
-    splits = folds(len(target), 4, rng)
+    split = fold_plan(len(target), 1, 4, int(rng.integers(1 << 30)))[0]
     for penalty in lambdas:
         errors = []
-        for test in splits:
+        for test in split:
             train = np.setdiff1d(np.arange(len(target)), test)
             scaled, mean, scale = standardise(matrix[train])
             intercept, coefficients = fit_ridge(scaled, target[train], penalty)
@@ -172,16 +184,17 @@ def inner_penalty(matrix, target, rng, lambdas=(0.01, 0.1, 1.0, 10.0, 100.0)):
     return best
 
 
-def cross_validate(matrix, target, rng, repeats):
+def cross_validate(matrix, target, plan, seed):
+    """Out-of-fold R^2 with a fixed split plan and a deterministic penalty search inside each fold."""
     scores = []
-    for _ in range(repeats):
-        splits = folds(len(target), 5, rng)
+    for repeat_index, splits in enumerate(plan):
         predicted = np.full(len(target), np.nan)
-        for test in splits:
+        for fold_index, test in enumerate(splits):
             train = np.setdiff1d(np.arange(len(target)), test)
             if matrix.shape[1] == 0:
                 predicted[test] = float(target[train].mean())
                 continue
+            rng = np.random.default_rng(seed + 1_000_003 * repeat_index + 97 * fold_index)
             penalty = inner_penalty(matrix[train], target[train], rng)
             scaled, mean, scale = standardise(matrix[train])
             intercept, coefficients = fit_ridge(scaled, target[train], penalty)
@@ -190,17 +203,6 @@ def cross_validate(matrix, target, rng, repeats):
         total = float(np.sum((target - target.mean()) ** 2))
         scores.append(1.0 - residual / total)
     return {"r2_mean": float(np.mean(scores)), "r2_sd": float(np.std(scores))}
-
-
-
-
-def output_path(args, name):
-    """Where a command writes: --out when given, otherwise results/<command>.json."""
-    path = Path(args.out) if args.out else RESULTS / f"{name}.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    return path
-
-
 
 
 # ---------------------------------------------------------------- graph, roles, features
@@ -325,6 +327,8 @@ def build_patterns(adjacency, rng, cliques4, cliques5, max_instances):
             continue
         picks = rng.choice(len(neighbours[a]), size=3, replace=False)
         shared = [neighbours[a][int(index)] for index in picks]
+        if any(adjacent(x, y) for x, y in combinations(shared, 2)):
+            continue                      # the same side must be an independent set
         candidates = [w for w in neighbours[shared[0]]
                       if w != a and all(adjacent(w, other) for other in shared[1:])
                       and not adjacent(w, a)]
@@ -409,9 +413,11 @@ def build_patterns(adjacency, rng, cliques4, cliques5, max_instances):
         arm = [neighbours[centre][int(index)] for index in picks]
         if any(adjacent(x, y) for x, y in combinations(arm, 2)):
             continue
-        extension = [w for w in neighbours[arm[0]] if w != centre and not adjacent(w, centre)]
+        extension = [w for w in neighbours[arm[0]]
+                     if w != centre and not adjacent(w, centre)
+                     and not adjacent(w, arm[1]) and not adjacent(w, arm[2])]
         if not extension:
-            continue
+            continue                     # a tip touching a second arm is not a T5 tree
         keep("T5", [centre] + arm + [pick(extension)], {
             "hop1": [(0, 1), (0, 2), (0, 3)], "hop2": [(0, 4)]})
 
@@ -462,46 +468,42 @@ def hypothesis(pattern, distances):
     raise KeyError(pattern)
 
 
-def instance_distances(pattern, nodes, distance):
+#: which stored group plays "closer" and which "farther" for each pattern
+NEAR_FAR = {"double_triangle": ("inside", "cross"), "K4_tail": ("core", "tail"),
+            "K2_3": ("cross", "same"), "P5_centre": ("hop1", "hop2"),
+            "C5": ("adjacent", "skip"), "K1_4": ("spoke", "leaf"), "T5": ("hop1", "hop2")}
+
+
+def instance_distances(pattern, instance, nodes, distance):
+    """Pair distances for one instance, taken from the groups its builder stored.
+
+    The groups are stored as *positions inside this instance*, so a pattern whose shape varies --
+    K4 with the tail on any of the four corners, for instance -- is scored on its own topology instead
+    of on a fixed template.
+    """
     if pattern == "K5":
         return {"near": [distance(nodes[a], nodes[b]) for a, b in combinations(range(5), 2)]}
-    if pattern == "K4_tail":
-        return {"near": [distance(nodes[a], nodes[b]) for a, b in combinations(range(4), 2)],
-                "far": [distance(nodes[4], nodes[a]) for a in range(3)]}
-    if pattern == "double_triangle":
-        return {"near": [distance(nodes[a], nodes[b])
-                         for a, b in [(0, 1), (0, 2), (1, 2), (0, 3), (0, 4), (3, 4)]],
-                "far": [distance(nodes[a], nodes[b]) for a, b in [(1, 3), (1, 4), (2, 3), (2, 4)]]}
-    if pattern == "K2_3":
-        return {"near": [distance(nodes[a], nodes[b]) for a, b in
-                         [(0, 2), (0, 3), (0, 4), (1, 2), (1, 3), (1, 4)]],
-                "far": [distance(nodes[a], nodes[b]) for a, b in
-                        [(0, 1), (2, 3), (2, 4), (3, 4)]]}
-    if pattern == "P5_centre":
-        return {"near": [distance(nodes[2], nodes[1]), distance(nodes[2], nodes[3])],
-                "far": [distance(nodes[2], nodes[0]), distance(nodes[2], nodes[4])]}
+    groups = instance            # the builder stores each role group as a top-level key
     if pattern == "P5_hops":
-        return {"near": [distance(nodes[a], nodes[b]) for a, b in [(0, 1), (1, 2), (2, 3), (3, 4)]],
-                "far": [distance(nodes[a], nodes[b]) for a, b in [(0, 2), (1, 3), (2, 4)]],
-                "D1": [distance(nodes[a], nodes[b]) for a, b in [(0, 1), (1, 2), (2, 3), (3, 4)]],
-                "D2": [distance(nodes[a], nodes[b]) for a, b in [(0, 2), (1, 3), (2, 4)]],
-                "D3": [distance(nodes[a], nodes[b]) for a, b in [(0, 3), (1, 4)]],
-                "D4": [distance(nodes[0], nodes[4])]}
-    if pattern == "C5":
-        return {"near": [distance(nodes[a], nodes[b])
-                         for a, b in [(0, 1), (1, 2), (2, 3), (3, 4), (4, 0)]],
-                "far": [distance(nodes[a], nodes[b])
-                        for a, b in [(0, 2), (1, 3), (2, 4), (3, 0), (4, 1)]]}
-    if pattern == "K1_4":
-        return {"near": [distance(nodes[0], nodes[i]) for i in range(1, 5)],
-                "far": [distance(nodes[i], nodes[j]) for i in range(1, 5) for j in range(i + 1, 5)]}
-    if pattern == "T5":
-        return {"near": [distance(nodes[0], nodes[i]) for i in (1, 2, 3)],
-                "far": [distance(nodes[0], nodes[4])]}
-    raise KeyError(pattern)
+        return {key: [distance(nodes[a], nodes[b]) for a, b in groups[key]]
+                for key in ("D1", "D2", "D3", "D4")}
+    near_key, far_key = NEAR_FAR[pattern]
+    out = {"near": [distance(nodes[a], nodes[b]) for a, b in groups[near_key]],
+           "far": [distance(nodes[a], nodes[b]) for a, b in groups[far_key]]}
+    for key in ("D1", "D2", "D3", "D4"):
+        if key in groups:
+            out[key] = [distance(nodes[a], nodes[b]) for a, b in groups[key]]
+    return out
 
 
 def per_instance(pattern, instance, draws, distance):
+    """The pattern's psi on the real instance and on its matched groups, both per instance.
+
+    Both sides use one comparison rule: a group is compared against every other group individually
+    and the results are averaged.  For K5 that makes the null a symmetric comparison between random
+    groups -- 0.5 by construction -- instead of comparing each random group with the mean of the rest,
+    which drifts with the spread of the draws.
+    """
     nodes = tuple(instance["nodes"])
     if pattern == "K5":
         inside_real = float(np.mean([distance(nodes[a], nodes[b])
@@ -511,15 +513,13 @@ def per_instance(pattern, instance, draws, distance):
         if not inside_null:
             return None
         real = float(np.mean([psi(inside_real, value) for value in inside_null]))
-        substituted = [psi(value, float(np.mean([item for index, item in enumerate(inside_null)
-                                                 if index != position])))
-                       for position, value in enumerate(inside_null)
-                       if len(inside_null) > 1]
-        if not substituted:
+        null_scores = [psi(inside_null[i], inside_null[j])
+                       for i in range(len(inside_null)) for j in range(len(inside_null)) if i != j]
+        if not null_scores:
             return None
-        return real, float(np.mean(substituted))
-    real = hypothesis(pattern, instance_distances(pattern, nodes, distance))
-    responses = [hypothesis(pattern, instance_distances(pattern, drawn, distance))
+        return real, float(np.mean(null_scores))
+    real = hypothesis(pattern, instance_distances(pattern, instance, nodes, distance))
+    responses = [hypothesis(pattern, instance_distances(pattern, instance, drawn, distance))
                  for drawn in draws]
     if not responses:
         return None
@@ -538,13 +538,16 @@ def lcp_distance(tokens):
 
 
 def item_means(values, incidence, n):
+    """Mean over the instances an item takes part in, ignoring instances whose null was unavailable."""
     items = sorted(incidence)
     if not items:
         return np.full(n, np.nan)
     item_index = np.concatenate([np.full(len(incidence[item]), item, dtype=np.int64) for item in items])
     inst_index = np.concatenate([np.asarray(incidence[item], dtype=np.int64) for item in items])
-    counts = np.bincount(item_index, minlength=n)
-    sums = np.bincount(item_index, weights=values[inst_index], minlength=n)
+    sampled = values[inst_index]
+    finite = np.isfinite(sampled)
+    sums = np.bincount(item_index[finite], weights=sampled[finite], minlength=n)
+    counts = np.bincount(item_index[finite], minlength=n)
     means = np.full(n, np.nan)
     present = counts > 0
     means[present] = sums[present] / counts[present]
@@ -699,14 +702,39 @@ def cmd_distance(args):
     u, v = behaviour_edges(adjacency, n)
     role_of_u = role_of[u]
     rng = np.random.default_rng(args.seed)
+
+    popularity = load_popularity(n)
+    degree_bucket = bucketise(np.array([len(adjacency[i]) for i in range(n)], dtype=np.float64),
+                              BUCKETS)
+    popularity_bucket = bucketise(popularity, BUCKETS)
+    cell_of = degree_bucket * BUCKETS + popularity_bucket
+    cell_pool = [np.flatnonzero(cell_of == c) for c in range(BUCKETS * BUCKETS)]
+
+    def matched(anchor, count, exclude_neighbours=True):
+        """Random items from the anchor's degree x popularity cell, never a neighbour or the anchor."""
+        pool = cell_pool[int(cell_of[anchor])]
+        chosen = []
+        if pool.size == 0:
+            return chosen
+        for _ in range(16):
+            draw = pool[rng.integers(pool.size, size=count)]
+            for cand in draw:
+                candidate = int(cand)
+                if candidate == anchor:
+                    continue
+                if exclude_neighbours and candidate in adjacency[anchor]:
+                    continue
+                chosen.append(candidate)
+                if len(chosen) >= count:
+                    return chosen
+        return chosen
+
     partner = np.full(u.shape[0], -1, dtype=np.int64)
     for index in range(u.shape[0]):
-        anchor = int(u[index])
-        for _ in range(32):
-            candidate = int(rng.integers(n))
-            if candidate != anchor and candidate not in adjacency[anchor]:
-                partner[index] = candidate
-                break
+        chosen = matched(int(u[index]), 1)
+        if chosen:
+            partner[index] = chosen[0]
+
     keep_roles = {}
     for role in range(6):
         indices = np.flatnonzero(role_of_u == role)
@@ -714,8 +742,16 @@ def cmd_distance(args):
             picks = np.sort(rng.choice(indices.size, size=args.edges, replace=False))
             indices = indices[picks]
         keep_roles[role] = indices
-    candidates = {role: rng.integers(0, n, size=(indices.size, CANDS))
-                  for role, indices in keep_roles.items()}
+
+    candidates = {}
+    for role, indices in keep_roles.items():
+        rows = np.full((indices.size, CANDS), -1, dtype=np.int64)
+        for row, index in enumerate(indices):
+            picked = matched(int(u[index]), CANDS)
+            if picked:
+                rows[row, :len(picked)] = picked[:CANDS]
+        candidates[role] = rows
+
     arms = load_arms(args.arms)
     rows = []
     for arm in arms:
@@ -735,19 +771,23 @@ def cmd_distance(args):
             anchors = u[indices][mask]
             truth = v[indices][mask]
             truth_distance = 1.0 - lcp_arrays(tokens, anchors, truth) / 3.0
+            valid = draws >= 0
+            safe = np.where(valid, draws, 0)
             candidate_distance = 1.0 - lcp_arrays(tokens, np.repeat(anchors[:, None], CANDS, axis=1),
-                                                  draws) / 3.0
-            closer = (candidate_distance < truth_distance[:, None]).sum(axis=1)
-            equal = (candidate_distance == truth_distance[:, None]).sum(axis=1)
+                                                  safe) / 3.0
+            closer = ((candidate_distance < truth_distance[:, None]) & valid).sum(axis=1)
+            equal = ((candidate_distance == truth_distance[:, None]) & valid).sum(axis=1)
+            counts = np.maximum(valid.sum(axis=1), 1)
+            percentile = (closer + 0.5 * equal) / counts
             entry["roles"][str(role)] = {
                 "edges": int(mask.sum()),
                 "win_rate": float(win[indices][mask].mean()),
-                "score": float(1.0 - np.mean((closer + 0.5 * equal) / CANDS))}
+                "score": float(1.0 - np.mean(percentile)),
+                "candidates_per_edge": float(valid.sum(axis=1).mean())}
         rows.append(entry)
         print(f"  {arm['number']} recall {arm['recall']:.6f}", flush=True)
     recalls = np.array([row["recall"] for row in rows])
-    collisions = np.array([row["collision"] if "collision" in row else row["l3_collision"]
-                           for row in rows])
+    collisions = np.array([row["collision"] for row in rows])
     result = {"n_arms": len(rows), "candidates": CANDS, "roles": {}, "rows": rows}
     print("\n=== per-role retention score across arms, and its correlation with recall ===")
     print(f"  {'role':<7}{'score mean':>11}{'min':>7}{'max':>7}{'rho':>8}{'p':>7}{'r':>8}{'p':>7}")
@@ -830,36 +870,43 @@ def prepare_instances(args, n, adjacency):
 
 
 def score_arm(patterns, nulls, incidences, distance, n):
-    arrays = {}
-    for name in patterns:
-        real_values, null_values = [], []
-        for instance, draws in zip(patterns[name], nulls[name]):
+    """Per-instance psi on the real instances and their nulls, NaN where a null was unavailable.
+
+    The arrays keep one slot per instance -- the same index the incidence map uses -- so an instance
+    without a usable null cannot shift the scores of the instances after it.
+    """
+    arrays, skipped = {}, {}
+    for name, instances in patterns.items():
+        real = np.full(len(instances), np.nan)
+        null = np.full(len(instances), np.nan)
+        for index, (instance, draws) in enumerate(zip(instances, nulls[name])):
             if not draws:
                 continue
             computed = per_instance(name, instance, draws, distance)
             if computed is None:
                 continue
-            real_values.append(computed[0])
-            null_values.append(computed[1])
-        arrays[name] = (np.asarray(real_values), np.asarray(null_values))
+            real[index], null[index] = computed
+        arrays[name] = (real, null)
+        skipped[name] = int(np.isnan(real).sum())
     return arrays
 
 
+def unusable(patterns, nulls):
+    """How many instances of each pattern have no matched group at all."""
+    return {name: sum(1 for draws in nulls[name] if not draws) for name in patterns}
+
+
 def role_scores(arrays, incidences, role_of, role, n):
+    """Role-level rate and gain: per item first, then over the role's items (NaN-aware)."""
     rates, gains = [], []
     for name, (real_values, null_values) in arrays.items():
         if real_values.size == 0:
             continue
         incidence = incidences[name]
-        items = [item for item in incidence if role_of[item] == role]
-        if len(items) < MIN_ITEMS:
-            continue
         real_means = item_means(real_values, incidence, n)
         null_means = item_means(null_values, incidence, n)
-        mask = np.zeros(n, dtype=bool)
-        mask[items] = True
-        mask &= np.isfinite(real_means)
-        if not mask.any():
+        mask = (role_of == role) & np.isfinite(real_means)
+        if int(mask.sum()) < MIN_ITEMS:
             continue
         rates.append(float(np.nanmean(real_means[mask])))
         gains.append(float(np.nanmean(real_means[mask]) - np.nanmean(null_means[mask])))
@@ -872,6 +919,7 @@ def cmd_patterns(args):
     n, adjacency, _ = load_graph()
     role_of = load_roles(n)
     patterns, nulls, incidences = prepare_instances(args, n, adjacency)
+    print("instances with no usable null:", unusable(patterns, nulls), flush=True)
     arms = load_arms(args.arms)
     rows = []
     for arm in arms:
@@ -883,8 +931,8 @@ def cmd_patterns(args):
             rate, gain = role_scores(arrays, incidences, role_of, role, n)
             entry["gain"][str(role)] = gain
             entry["rate"][str(role)] = rate
-        entry["patterns"] = {name: {"real": float(np.mean(values[0])) if values[0].size else None,
-                                    "null": float(np.mean(values[1])) if values[1].size else None}
+        entry["patterns"] = {name: {"real": float(np.nanmean(values[0])) if values[0].size else None,
+                                    "null": float(np.nanmean(values[1])) if values[1].size else None}
                              for name, values in arrays.items()}
         rows.append(entry)
         print(f"  {arm['number']} recall {arm['recall']:.6f}  " +
@@ -985,8 +1033,8 @@ def cmd_independence(args):
     print(f"collinearity: mean |rho| {np.mean(off):.3f}, max {max(off):.3f}, "
           f"first component {eigenvalues[-1] / eigenvalues.sum():.1%}")
     features = rates
-    rng = np.random.default_rng(args.seed)
-    full = cross_validate(features, recalls, rng, args.repeats)
+    plan = fold_plan(len(recalls), args.repeats, 5, args.seed)
+    full = cross_validate(features, recalls, plan, args.seed)
     print(f"all six roles: CV R^2 {full['r2_mean']:+.4f} (sd {full['r2_sd']:.4f})")
     result = {"n_arms": len(rows), "collinearity": {"mean": float(np.mean(off)),
                                                     "max": float(max(off)),
@@ -995,14 +1043,14 @@ def cmd_independence(args):
     print(f"  {'removed':<9}{'without':>10}{'drop':>9}{'p':>8}")
     for position, role in enumerate(roles):
         keep = [index for index in range(6) if index != position]
-        without = cross_validate(features[:, keep], recalls, rng, args.repeats)
+        without = cross_validate(features[:, keep], recalls, plan, args.seed)
         drop = full["r2_mean"] - without["r2_mean"]
         shuffle_rng = np.random.default_rng(args.seed + 101 * (position + 1))
         null_drops = []
         for _ in range(args.permutations):
             shuffled = features.copy()
             shuffled[:, position] = shuffle_rng.permutation(features[:, position])
-            null_drops.append(cross_validate(shuffled, recalls, rng, args.repeats)["r2_mean"]
+            null_drops.append(cross_validate(shuffled, recalls, plan, args.seed)["r2_mean"]
                               - without["r2_mean"])
         p_value = float((np.sum(np.array(null_drops) >= drop) + 1) / (args.permutations + 1))
         result["marginal"][f"Role {int(role) + 1}"] = {"without": without["r2_mean"],
@@ -1014,11 +1062,20 @@ def cmd_independence(args):
     return 0
 
 
-def build_features(n, adjacency):
+def build_features(n, adjacency, orbit_path=None, overlap_mode="mean"):
+    """The ORCA feature block: four invariants plus log1p orbit counts, standardised.
+
+    ``overlap`` is the mean Jaccard overlap between pairs of a node's neighbours.  It is undefined when
+    a node has fewer than two neighbours -- there is no pair to compare -- so those nodes are imputed at
+    the mean of the defined values (``overlap_mode="mean"``), which standardises to zero.  The old
+    definition gave them 1.0, the maximum, which made a one-neighbour item look maximally closed; the
+    ``"old"`` mode exists only to reproduce the published tables.
+    """
     import itertools
 
     import networkx as nx
 
+    orbit_path = Path(orbit_path) if orbit_path else ORBITS
     graph = nx.Graph()
     graph.add_nodes_from(range(n))
     for node in range(n):
@@ -1030,32 +1087,81 @@ def build_features(n, adjacency):
     core = nx.core_number(graph)
     mean_neighbour_degree = {node: float(np.mean([degrees[other] for other in adjacency[node]]))
                              if adjacency[node] else 0.0 for node in range(n)}
-    overlap = {}
+    defined, undefined = {}, []
     for node in range(n):
         near = list(adjacency[node])
         if len(near) < 2:
-            overlap[node] = 1.0
+            undefined.append(node)
             continue
         total = 0.0
         for first, second in itertools.combinations(near, 2):
             union = len(adjacency[first] | adjacency[second])
             total += len(adjacency[first] & adjacency[second]) / union if union else 0.0
-        overlap[node] = total / (len(near) * (len(near) - 1) / 2)
-    orbits = np.loadtxt(ORBITS, dtype=np.float64)
+        defined[node] = total / (len(near) * (len(near) - 1) / 2)
+    imputed = float(np.mean(list(defined.values()))) if defined else 0.0
+    overlap = {node: defined.get(node, 1.0 if overlap_mode == "old" else imputed)
+               for node in range(n)}
+    orbits = np.loadtxt(orbit_path, dtype=np.float64)
     rows = []
     for node in range(n):
         rows.append([np.log1p(degrees[node]), clustering.get(node, 0.0), core.get(node, 0),
                      np.log1p(mean_neighbour_degree[node]), overlap[node],
                      *[np.log1p(value) for value in orbits[node]]])
     matrix = np.asarray(rows, dtype=np.float64)
-    return (matrix - matrix.mean(0)) / matrix.std(0).clip(min=1e-9)
+    matrix = (matrix - matrix.mean(0)) / matrix.std(0).clip(min=1e-9)
+    info = {"orbit_width": int(orbits.shape[1]), "overlap_mode": overlap_mode,
+            "overlap_undefined": len(undefined), "overlap_imputed_value": imputed,
+            "features": 5 + int(orbits.shape[1])}
+    return matrix, info
 
 
-def fit_roles(matrix, k, seed):
+def fit_roles(matrix, k, seed, scaling="clip", normalise_components=False):
+    """NMF over the non-negative part of the standardised features, then one role per item.
+
+    ``scaling="clip"`` drops the below-average part (RolX's convention, what the published tables used);
+    ``"shift"`` keeps the whole ordering by shifting the block to be non-negative.  Components differ in
+    scale, so ``normalise_components`` divides each weight column by its norm before the argmax -- the
+    assignment then cannot be driven by a component's magnitude alone.
+    """
     from sklearn.decomposition import NMF
 
+    block = matrix.clip(min=0.0) if scaling == "clip" else matrix - matrix.min()
     model = NMF(n_components=k, init="nndsvda", random_state=seed, max_iter=800)
-    return np.argmax(model.fit_transform(matrix.clip(min=0.0)), axis=1)
+    weights = model.fit_transform(block)
+    if normalise_components:
+        weights = weights / np.linalg.norm(weights, axis=0, keepdims=True).clip(min=1e-12)
+    return np.argmax(weights, axis=1)
+
+
+def adjusted_rand(first, second):
+    """Adjusted Rand index between two label vectors, the usual way to say how much a partition moved."""
+    from math import comb
+
+    first = np.asarray(first)
+    second = np.asarray(second)
+    table = {}
+    for a, b in zip(first, second):
+        table[(int(a), int(b))] = table.get((int(a), int(b)), 0) + 1
+    index = sum(comb(value, 2) for value in table.values())
+    rows = sum(comb(int(count), 2) for count in np.bincount(first - first.min()))
+    columns = sum(comb(int(count), 2) for count in np.bincount(second - second.min()))
+    total = comb(len(first), 2)
+    expected = rows * columns / total if total else 0.0
+    maximum = 0.5 * (rows + columns)
+    return float((index - expected) / (maximum - expected)) if maximum != expected else 1.0
+
+
+def feature_fingerprint(adjacency, orbit_path, overlap_mode):
+    """A digest of everything that determines the roles, so a stale cache cannot be reused silently."""
+    import hashlib
+
+    digest = hashlib.sha256()
+    for node in range(len(adjacency)):
+        digest.update(b";".join(str(other).encode() for other in sorted(adjacency[node])))
+        digest.update(b"|")
+    digest.update(Path(orbit_path).read_bytes())
+    digest.update(overlap_mode.encode())
+    return digest.hexdigest()
 
 
 def cmd_k(args):
@@ -1086,13 +1192,13 @@ def cmd_k(args):
                 rate, _ = role_scores(arrays, incidences, assignment, role, n)
                 table[row, column] = rate if rate is not None else np.nan
         rates = np.where(np.isnan(table), np.nanmean(table, axis=0), table)
-        rng = np.random.default_rng(args.seed)
-        full = cross_validate(rates, recalls, rng, args.repeats)
+        plan = fold_plan(len(recalls), args.repeats, 5, args.seed)
+        full = cross_validate(rates, recalls, plan, args.seed)
         marginals = {}
         best, best_drop = None, -np.inf
         for column, role in enumerate(kept):
             keep = [index for index in range(len(kept)) if index != column]
-            without = cross_validate(rates[:, keep], recalls, rng, args.repeats)
+            without = cross_validate(rates[:, keep], recalls, plan, args.seed)
             drop = full["r2_mean"] - without["r2_mean"]
             marginals[role + 1] = {"without": without["r2_mean"], "drop": drop}
             if drop > best_drop:
@@ -1138,9 +1244,10 @@ def cmd_cache(args):
     sub = [set() for _ in range(n)]
     for node in nodes:
         sub[int(node)] = adjacency[int(node)]
-    matrix = build_features(n, sub)[nodes]
-    matrix = (matrix - matrix.mean(0)) / matrix.std(0).clip(min=1e-9)
-    role = fit_roles(matrix, args.k_n, args.seed)
+    matrix, info = build_features(n, sub, overlap_mode=args.overlap_mode)
+    matrix = matrix[nodes]
+    print(f"features: {info}")
+    role = fit_roles(matrix, args.k_n, args.seed, args.nmf_scaling, args.normalise)
     path = Path(args.out) if args.out else ROLE_CACHE
     path.parent.mkdir(parents=True, exist_ok=True)
     np.savez(path, nodes=nodes, role=role.astype(np.int64))
@@ -1259,6 +1366,11 @@ def main() -> int:
         block.add_argument("--in", dest="in_path", type=str, default=None)
         block.add_argument("--representations", action="store_true")
         block.add_argument("--k-n", dest="k_n", type=int, default=6)
+        block.add_argument("--overlap-mode", dest="overlap_mode", default="mean",
+                           choices=("mean", "old"))
+        block.add_argument("--nmf-scaling", dest="nmf_scaling", default="clip",
+                           choices=("clip", "shift"))
+        block.add_argument("--normalise", action="store_true")
         block.add_argument("--out", type=str, default=None)
     args = parser.parse_args()
     handlers = {"roles": cmd_roles, "distance": cmd_distance, "patterns": cmd_patterns,
