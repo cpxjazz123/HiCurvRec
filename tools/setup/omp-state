@@ -1,13 +1,18 @@
 #!/bin/sh
-# Keep a snapshot of an oh-my-pi profile's configuration in a shared store.
+# Keep a snapshot of an oh-my-pi configuration in a shared store.
 #
-# The live profile state lives in $HOME/.omp (NFS), so every node already sees
-# the same configuration and this script is no longer needed to move a profile
-# between nodes.  What it still does is keep a SNAPSHOT of a profile's
-# configuration in a shared store: a brand new profile -- or one whose
-# configuration was reset -- is seeded from that snapshot instead of starting
-# from bare defaults, so the model roles, the providers and the package list
-# survive.
+# The live state lives in $HOME/.omp (NFS), so every node already sees the same
+# configuration and this script is no longer needed to move it between nodes.
+# What it still does is keep a SNAPSHOT of it in a shared store: a fresh
+# installation -- or one whose configuration was reset -- is seeded from that
+# snapshot instead of starting from bare defaults, so the model roles, the
+# providers and the package list survive.
+#
+# There is ONE configuration now: $HOME/.omp/agent.  It is what every omp
+# instance reads, whatever namespace it was started with.  The directories
+# $HOME/.omp/profiles/<name>/agent are left over from the time when a profile
+# was a tree of its own; they are still addressed here so that an old snapshot
+# can be restored, but nothing starts there any more.
 #
 # The databases are optional and are copied with sqlite3's own backup, so a
 # running WAL never yields a half-written copy.
@@ -22,7 +27,9 @@ set -e
 action=${1:?usage: omp-state push|pull|restore <profile> [--with-db]}
 prof=${2:?usage: omp-state push|pull|restore <profile> [--with-db]}
 with_db=no
-for arg in "$@"; do [ "$arg" = "--with-db" ] && with_db=yes; done
+for arg in "$@"; do
+  if [ "$arg" = "--with-db" ]; then with_db=yes; fi
+done
 SHARED=${OMP_SNAPSHOT_STORE:-/fs04/ar57/wenyu/omp_state}/$prof/agent
 # The agent directory of the profile, in oh-my-pi's own layout.
 case $prof in

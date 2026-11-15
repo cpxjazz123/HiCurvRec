@@ -1,16 +1,18 @@
 #!/bin/sh
 # omp-bootstrap — the historical entry point, kept working.
 #
-# The profile state lives in oh-my-pi's own home directory $HOME/.omp (NFS),
-# so there is no node-local installation to provision any more: `omp-local`
-# picks the agent directory of the profile, hands out a private slot when the
-# profile is already busy, restores the configuration snapshot of a brand new
-# profile and then runs omp.
+# The state lives in oh-my-pi's own home directory $HOME/.omp (NFS), so there
+# is no node-local installation to provision any more: `omp-local` hands out
+# the canonical agent directory or a private slot, restores the configuration
+# snapshot of a brand new installation and then runs omp.
+#
+# There is ONE configuration now, $HOME/.omp/agent: every instance reads it,
+# and the namespace only names the private slot.
 #
 # The two verbs that operate on the shared configuration snapshot are kept:
 #
 # Usage:
-#   omp-bootstrap <profile> [omp args...]      run omp on that profile
+#   omp-bootstrap <namespace> [omp args...]    run omp in that namespace
 #   omp-bootstrap push|pull <profile> [--with-db]   snapshot handling
 set -e
 

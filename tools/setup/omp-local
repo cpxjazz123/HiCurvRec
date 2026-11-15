@@ -1,58 +1,70 @@
 #!/bin/sh
-# omp-local — run oh-my-pi so that any number of instances can share one profile.
+# omp-local — run oh-my-pi so that any number of instances can share one
+# configuration.
 #
 # The state lives where oh-my-pi keeps it: $HOME/.omp, which is on NFS
 # (172.23.236.2:/m3-home) and therefore visible from every node of the
-# cluster.  There is no node-local installation step: `omp` behaves the same on
-# every node, and a profile's state, sessions and configuration are the same
-# everywhere.
+# cluster.  There is no node-local installation step: `omp` behaves the same
+# on every node.
 #
-# oh-my-pi already gives every profile its own agent directory:
+# ONE CONFIGURATION, PRIVATE STATE
+# -------------------------------
+# The configuration (model roles, credentials, settings, user agents) has a
+# single source of truth:
 #
-#   $HOME/.omp/agent/                       the default profile
-#   $HOME/.omp/profiles/<profile>/agent/    every other profile (omp --profile)
+#   $HOME/.omp/agent/            <- the configuration; shared by every instance
 #
-# This wrapper keeps that layout untouched -- the canonical agent directory of
-# the default profile IS $HOME/.omp/agent, with the model roles in its
-# config.yml -- and adds exactly one thing: when a profile is already busy,
-# the next instance gets a PRIVATE agent directory of its own, because two
-# live processes must never open the same SQLite file.
+# The state (the SQLite databases, the sessions, the caches) is per instance,
+# because two live processes must never open the same SQLite file:
 #
-#   $HOME/.omp/omp-slots/<profile>/<slot>/   private agent dir of instance 2+
-#   $HOME/.omp/omp-slots/<profile>/.locks/   ownership locks of the slots
-#   $HOME/.omp/omp-slots/<profile>/.role.lock role lock of the canonical dir
+#   $HOME/.omp/agent/                     the canonical instance (one only)
+#   $HOME/.omp/omp-slots/<ns>/<slot>/    every further instance
 #
-# The slot links the configuration of the canonical agent directory by
-# symlink, so every instance of a profile reads and writes one config, one set
-# of credentials and one set of user agents, while keeping its own databases
-# and sessions.
+# The namespace (<ns>: default, a, b, c, ...) only NAMES the slot directory.
+# It does not select a configuration any more: `omp-a` and `omp-b` read the
+# same config.yml, the same credentials and the same user agents as `omp`.
+# A profile used to be a second tree of its own -- $HOME/.omp/profiles/<p>/
+# agent -- which meant a second copy of the configuration, and the copies
+# drifted apart (a stale database from an older omp version in one of them
+# crashed with SIGBUS: sqlite rewrites the main database file while it
+# migrates the schema, and on NFS that invalidates the mapping of every
+# process that has the file open -> "Bus error (core dumped)").
 #
-# Ownership is expressed with flock(2), which the NFS server arbitrates
-# across nodes (mount option local_lock=none).  A lock is therefore held for
-# exactly as long as its owner lives: when an instance exits -- or when its
-# node dies -- the server releases the lock and the slot becomes reusable.
-# There is no owner file to go stale and no cross-node liveness guess to
-# make.  The lock files live next to the slots, NOT inside the agent dir,
-# because omp owns that directory and may clean unknown files out of it.
+# So: no profile tree any more.  One configuration, one canonical instance,
+# any number of private slots.  The canonical instance keeps the existing
+# sessions and credentials in $HOME/.omp/agent; a slot gets its own databases
+# (created fresh by the running omp) and a copy of the credentials.
+#
+# CONCURRENCY
+# -----------
+# Ownership is expressed with flock(2), which the NFS server arbitrates across
+# nodes (mount option local_lock=none).  A lock is held for exactly as long as
+# its owner lives: when an instance exits -- or when its node dies -- the
+# server releases the lock and the slot becomes reusable.  There is no owner
+# file to go stale and no cross-node liveness guess to make.
 #
 # The lock is a ROLE SELECTOR, not a barrier: it never refuses a start.  Set
-# OMP_LOCAL_STRICT=1 to restore the old fail-closed behaviour (exit 3).
+# OMP_LOCAL_STRICT=1 to fail closed instead (exit 3).
 #
-# Note: the SQLite databases live on NFS.  SQLite mmaps the "-shm" file, so if
-# that file is truncated or replaced under the mapping the kernel raises SIGBUS
-# and omp dies with "Bus error at address ..." (exit 135).  The slot isolation
-# above keeps two writers away from one database; the remaining exposure is a
-# foreign process truncating the same file.
+# The lock files live next to the slots, NOT inside the agent dir, because omp
+# owns that directory and may clean unknown files out of it.
 #
-# Usage:  omp-local <profile> [omp args...]
+# The lock is opened read-write WITHOUT O_TRUNC and WITHOUT O_APPEND, and
+# that detail is load-bearing: over NFS a contender that opens the file with
+# O_TRUNC or O_APPEND does not conflict with the lock the holder already has,
+# so both nodes would believe they own the profile and would write the same
+# SQLite files.  Measured on this cluster: O_RDWR excludes correctly across
+# nodes, O_WRONLY/O_TRUNC/O_APPEND does not.
+#
+# Usage:  omp-local <namespace> [omp args...]
 
 set -e
 
-prof=${1:?usage: omp-local <profile> [omp args...]}
+ns=${1:?usage: omp-local <namespace> [omp args...]}
 shift || true
 
-case $prof in
-  *[!A-Za-z0-9_-]*|'') echo "omp-local: bad profile name: $prof" >&2; exit 2 ;;
+case $ns in
+  *[!A-Za-z0-9_-]*|'') echo "omp-local: bad namespace: $ns" >&2; exit 2 ;;
 esac
 
 : "${HOME:?omp-local: HOME is not set}"
@@ -61,28 +73,30 @@ esac
 # default), and every profile's agent directory lives inside it.
 omp_home=$HOME/.omp
 
-# The agent directory of this profile, exactly as oh-my-pi lays it out.
-case $prof in
-  default) agent=$omp_home/agent ;;
-  *)      agent=$omp_home/profiles/$prof/agent ;;
-esac
+# The configuration's single source of truth, and at the same time the agent
+# directory of the ONE canonical instance.
+canonical=$omp_home/agent
 
-# Private agent directories of the additional instances of this profile.
-slots=$omp_home/omp-slots/$prof
-slotlocks=$slots/.locks
-lock=$slots/.role.lock
+# Private agent directories of the additional instances.
+slots=$omp_home/omp-slots
+nsslots=$slots/$ns
+slotlocks=$nsslots/.locks
 
-# A brand new profile gets its configuration from the shared snapshot.  Having
-# no snapshot yet is the normal case for a new profile; a snapshot that exists
-# but cannot be restored is a real failure and must not be papered over.
+# One lock for the canonical instance, for the whole cluster: the namespace
+# only names the slots, it does not create a second canonical instance.
+lock=$slots/.canonical.lock
+
+# A brand new installation gets its configuration from the shared snapshot.
+# Having no snapshot yet is the normal case; a snapshot that exists but cannot
+# be restored is a real failure and must not be papered over.
 SNAPSHOT_STORE=${OMP_SNAPSHOT_STORE:-/fs04/ar57/wenyu/omp_state}
-if [ ! -f "$agent/config.yml" ] && [ -d "$SNAPSHOT_STORE/$prof/agent" ]; then
-  "$HOME/bin/omp-state" restore "$prof" ||
-    { echo "omp-local: cannot restore the configuration snapshot of profile '$prof'" >&2; exit 4; }
+if [ ! -f "$canonical/config.yml" ] && [ -d "$SNAPSHOT_STORE/default/agent" ]; then
+  "$HOME/bin/omp-state" restore default ||
+    { echo "omp-local: cannot restore the configuration snapshot" >&2; exit 4; }
 fi
 
 # Shared between the canonical agent dir and every slot: the configuration, the
-# credentials and the user-level agents.  Copied into a slot as symlinks, so
+# credentials and the user-level agents.  Linked into a slot as symlinks, so
 # all instances read and write one copy.
 SHARED_FILES="config.yml settings.json auth.json models-store.json keybindings.json"
 SHARED_DIRS="agents rooms"
@@ -90,7 +104,7 @@ SHARED_DIRS="agents rooms"
 mypid=$$
 myhost=$(hostname -s 2>/dev/null || hostname 2>/dev/null || echo unknown)
 
-mkdir -p "$agent" "$slots" "$slotlocks"
+mkdir -p "$canonical" "$slots" "$nsslots" "$slotlocks"
 
 claim_slot() {  # claim_slot <slotname> -> 0 when this process owns the slot
   lockf=$slotlocks/$1.lock
@@ -100,11 +114,18 @@ claim_slot() {  # claim_slot <slotname> -> 0 when this process owns the slot
 }
 
 pick_slot() {  # pick_slot -> sets $chosen to the slot this instance may use
-  for d in "$slots"/*; do
+  for d in "$nsslots"/*; do
     [ -d "$d" ] || continue
     name=${d##*/}
     case $name in .*) continue ;; esac
     if claim_slot "$name"; then
+      # A slot of an older layout carries a database without the credentials
+      # of the canonical instance.  It cannot be repaired in place -- the file
+      # may be mapped by a process -- so such a slot is not reused.
+      if [ "$CANON_HAS_CREDENTIALS" = "1" ] && ! slot_has_credentials "$d"; then
+        exec 8>&-   # no credentials in this slot; try the next one
+        continue
+      fi
       chosen=$d
       return 0
     fi
@@ -116,65 +137,115 @@ pick_slot() {  # pick_slot -> sets $chosen to the slot this instance may use
   # therefore always a slot whose lock is already held, so a concurrent
   # instance can never take it in the window between the mkdir and the lock.
   n=1
-  while [ -e "$slots/$myhost-$mypid-$n" ]; do n=$((n + 1)); done
+  while [ -e "$nsslots/$myhost-$mypid-$n" ]; do n=$((n + 1)); done
   name="$myhost-$mypid-$n"
   if claim_slot "$name"; then
-    mkdir -p "$slots/$name"
-    chosen=$slots/$name
+    mkdir -p "$nsslots/$name"
+    chosen=$nsslots/$name
     return 0
   fi
   echo "omp-local: cannot claim the new slot $name" >&2
   exit 5
 }
 
-seed_slot() {  # seed_slot <slotdir> -> link the shared config into the slot
+link_shared() {  # link_shared <slotdir> -> point the shared configuration at the canonical one
   slot=$1
   mkdir -p "$slot"
   for f in $SHARED_FILES; do
-    src=$agent/$f
+    src=$canonical/$f
     [ -e "$src" ] || continue
     dst=$slot/$f
-    if [ -L "$dst" ]; then
-      if [ "$(readlink "$dst")" = "$src" ]; then continue; fi
-      rm -f "$dst"
-    elif [ -e "$dst" ]; then
-      continue   # a real file in the slot wins (a local edit)
-    fi
-    ln -s "$src" "$dst"
+    # Always re-point the link: omp may have replaced the symlink with a real
+    # file when it rewrote its configuration, and a slot that drifts away from
+    # the shared configuration is exactly what this design forbids.
+    ln -sfn "$src" "$dst"
   done
   for d in $SHARED_DIRS; do
-    src=$agent/$d
+    src=$canonical/$d
     [ -e "$src" ] || continue
     dst=$slot/$d
-    if [ -L "$dst" ]; then
-      if [ "$(readlink "$dst")" = "$src" ]; then continue; fi
-      rm -f "$dst"
-    elif [ -e "$dst" ]; then
-      continue
-    fi
-    ln -s "$src" "$dst"
+    ln -sfn "$src" "$dst"
   done
 }
 
+seed_state() {  # seed_state <slotdir> -> give the slot its own copy of the canonical database
+  src=$canonical/agent.db
+  dst=$1/agent.db
+  [ -f "$src" ] || return 0       # the canonical instance has no database yet
+  if [ -e "$dst" ]; then
+    return 0                     # the slot already has its own database
+  fi
+  # The database is copied as a whole, with the backup API, so that the slot
+  # gets the SAME SCHEMA as the canonical instance -- the credentials in it
+  # and every other table.  A database that carries only the credentials would
+  # be an incomplete schema: omp would find the missing tables, rename the
+  # file to ".corrupt-<timestamp>-<uuid>" and rebuild it -- and that rename
+  # unlinks the file under the mapping of the running process, which dies with
+  # SIGBUS ("Bus error at address ...", exit 135).
+  #
+  # The source is opened READ-ONLY: a writer would create or rebuild the
+  # "<db>-shm" file of the canonical instance, and the live instance maps that
+  # file.  The backup only reads the source and writes the destination.
+  python3 - "$src" "$dst" <<'PY' || { echo "omp-local: cannot copy the canonical database" >&2; exit 6; }
+import sqlite3, sys
+
+src_path, dst_path = sys.argv[1], sys.argv[2]
+src = sqlite3.connect("file:%s?mode=ro" % src_path, uri=True)
+dst = sqlite3.connect(dst_path)
+try:
+    src.backup(dst)
+    dst.commit()
+finally:
+    dst.close()
+    src.close()
+PY
+}
+
+# Does this database hold credentials?  The file is opened read-only and
+# immutable: no shared-memory file is created, so a database that a live
+# instance holds open is never touched.
+has_credentials() {  # has_credentials <dbfile> -> 0 when it holds credentials
+  db=$1
+  [ -f "$db" ] || return 1
+  python3 - "$db" <<'PY' 2>/dev/null
+import sqlite3, sys
+try:
+    conn = sqlite3.connect("file:%s?mode=ro&immutable=1" % sys.argv[1], uri=True)
+    try:
+        n = conn.execute("SELECT count(*) FROM auth_credentials").fetchone()[0]
+    finally:
+        conn.close()
+except Exception:
+    sys.exit(1)
+sys.exit(0 if n > 0 else 1)
+PY
+}
+
+slot_has_credentials() {  # slot_has_credentials <slotdir> -> 0 when the slot can be used
+  db=$1/agent.db
+  if [ ! -f "$db" ]; then
+    return 0            # a fresh slot: the credentials are seeded into it
+  fi
+  has_credentials "$db"
+}
+
+CANON_HAS_CREDENTIALS=0
+if has_credentials "$canonical/agent.db"; then
+  CANON_HAS_CREDENTIALS=1
+fi
+
 # --- role selection --------------------------------------------------------
 # fd 9 carries the lock through exec, so it is held for the whole life of the
-# omp process.  Winning the lock makes this instance the primary; losing it
-# only means "somebody else is primary", which is not an error.
-#
-# The lock file is opened read-write WITHOUT O_TRUNC and WITHOUT O_APPEND, and
-# that detail is load-bearing: over NFS a contender that opens the file with
-# O_TRUNC or O_APPEND does not conflict with the lock the holder already has,
-# so both nodes would believe they own the profile and would write the same
-# SQLite files.  Measured on this cluster: O_RDWR excludes correctly across
-# nodes, O_WRONLY/O_TRUNC/O_APPEND does not.
+# omp process.  Winning the lock makes this instance the canonical one; losing
+# it only means "somebody else is canonical", which is not an error.
 touch "$lock"
 exec 9<>"$lock"
 if flock -n 9; then
-  agent_dir=$agent
-  role=primary
+  agent_dir=$canonical
+  role=canonical
 else
   if [ "${OMP_LOCAL_STRICT:-0}" = "1" ]; then
-    echo "omp-local: profile '$prof' is already in use by another omp process" >&2
+    echo "omp-local: another omp instance is already using $canonical" >&2
     exit 3
   fi
   # NOT in a command substitution: the slot lock must stay open in this shell
@@ -185,15 +256,16 @@ else
 fi
 
 if [ "$role" = "slot" ]; then
-  seed_slot "$agent_dir"
-  echo "omp-local: profile '$prof' is busy -> private slot '${agent_dir##*/}'" >&2
+  link_shared "$agent_dir"
+  seed_state "$agent_dir"
+  echo "omp-local: canonical instance busy -> private slot '${agent_dir##*/}'" >&2
 fi
 mkdir -p "$agent_dir"
 
 # --- the binary ------------------------------------------------------------
-# The real binary is omp.bin: ~/.local/bin/omp is the wrapper that routes every
-# invocation through this script (see tools/setup/omp-entry).
-bin=${OMP_BINARY:-$HOME/.local/bin/omp.bin}
+# The real binary is omp.real: ~/.local/bin/omp is the wrapper that routes
+# every invocation through this script (see tools/setup/omp-entry).
+bin=${OMP_BINARY:-$HOME/.omp/bin/omp.real}
 if [ ! -x "$bin" ]; then
   echo "omp-local: no omp binary at $bin" >&2
   exit 2
