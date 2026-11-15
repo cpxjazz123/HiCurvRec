@@ -71,6 +71,7 @@ LEDGER = REPO / "results" / "research" / "issue139" / "r2_ledger.json"
 MIRROR = HERE / "r2"
 ROLE_CACHE = HERE / "structure_roles.npz"
 ROLE_CACHE5 = HERE / "structure_roles5.npz"
+ROLE_CACHE_4NODE_REFIT = HERE / "structure_roles_4node_refit.npz"
 OUT_JSON = RESULTS / "structure_retention.json"
 OUT_MD = RESULTS / "STRUCTURE_RETENTION.md"
 OUT_JSON5 = RESULTS / "structure_retention_5node.json"
@@ -102,75 +103,86 @@ def train_graph(gr):
 
 def role_assignment(gr, graph, degrees, adj, five=False, overlap_mode="mean",
                     scaling="clip", normalise=False, seeds=(42,)):
-    """The six roles, rebuilt with the corrected feature definitions and a validated cache.
+    """The six roles the arm analyses use, read from the one cache ``analysis.py cache`` writes.
 
-    Three review findings are addressed here:
+    Fitting a second partition here would let this table and the pattern/independence analyses
+    describe different role systems under the same labels -- the review caught exactly that, with a
+    Role 1 of 3,521 items in the profile and 2,448 in the retention rates.  The 5-node path therefore
+    reads the shared cache and refuses a stale one (the fingerprint covers the behaviour adjacency,
+    the orbit table and the overlap mode).  Only the 4-node audit refits, into its own file, because
+    nothing else writes a 4-node partition.
 
-    * ``overlap`` is undefined for a node with fewer than two neighbours -- there is no pair of
-      neighbours to compare -- so those nodes are imputed at the mean of the defined values
-      (``overlap_mode="mean"``).  The historical builder gave them 1.0, the maximum, which made a
-      one-neighbour item look like a maximally closed cluster.  ``"old"`` reproduces that table.
-    * the cache is keyed on a fingerprint of the adjacency, the orbit table and the overlap mode, so a
-      graph change that keeps the node count can no longer be reused silently;
-    * component scale and seed sensitivity are reported as adjusted Rand indices, because a single
-      argmax on an unnormalised NMF cannot by itself establish that the partition is stable.
+    Two review findings also live here: ``overlap`` is undefined for a node with fewer than two
+    neighbours and is imputed at the mean of the defined values (``overlap_mode="mean"``; ``"old"``
+    reproduces the historical 1.0), and the cache is keyed on that fingerprint so a changed graph
+    cannot be reused silently.
     """
     import analysis as study
 
-    n_items = (int(max(graph.nodes())) + 1) if graph.number_of_nodes() else 0
-    adjacency_list = [set(adj.get(node, ())) for node in range(n_items)]
-    orbit_path = gr.ORCA_NODE5 if five else gr.ORCA_NODE4
-    if not Path(orbit_path).exists():
-        raise SystemExit(f"missing orbit table {orbit_path}")
-    nodes = np.asarray(sorted(graph.nodes()), dtype=np.int64)
-    fingerprint = study.feature_fingerprint(adjacency_list, orbit_path, overlap_mode)
-    key = f"{fingerprint[:16]}|k=6|seed={seeds[0]}|{scaling}|{int(normalise)}"
-    cache = ROLE_CACHE5 if five else ROLE_CACHE
-    if cache.exists():
-        cached = np.load(cache)
-        same_nodes = (cached["nodes"].shape[0] == nodes.shape[0]
-                      and np.array_equal(cached["nodes"], nodes))
-        if "fingerprint" in cached and same_nodes and str(cached["fingerprint"]) == key:
-            print(f"roles: {cache.name} reused (fingerprint matches)", flush=True)
-            return ({int(node): int(value) for node, value in zip(cached["nodes"], cached["role"])},
-                    {"cache_hit": True, "cache": cache.name, "fingerprint": fingerprint[:16],
-                     "role_sizes": {f"role{index + 1}": int(size) for index, size
-                                    in enumerate(np.bincount(np.asarray(cached["role"]), minlength=6))}})
-    matrix, info = study.build_features(n_items, adjacency_list, orbit_path, overlap_mode)
-    block = matrix[nodes]
+    n_items, behaviour_adjacency, _ = study.load_graph()
+    role_of = {}
+    if five:
+        role_arr = study.load_roles(n_items, behaviour_adjacency, overlap_mode,
+                                    scaling=scaling, normalise=normalise, seed=seeds[0])
+        fingerprint = study.feature_fingerprint(behaviour_adjacency, study.ORBITS, overlap_mode)[:16]
+        cached = np.load(study.ROLE_CACHE)
+        variants = json.loads(str(cached["variants"])) if "variants" in cached.files else {}
+        source = {"cache": study.ROLE_CACHE.name, "fingerprint": fingerprint, "refit": False,
+                  "variants": variants}
+        print(f"roles: read {int((role_arr >= 0).sum())} assignments from {study.ROLE_CACHE.name} "
+              f"(fingerprint {fingerprint}); stability {variants}", flush=True)
+    else:
+        orbit_path = gr.ORCA_NODE4
+        if not Path(orbit_path).exists():
+            raise SystemExit(f"missing orbit table {orbit_path}")
+        adjacency_list = [set(behaviour_adjacency[node]) for node in range(n_items)]
+        nodes = np.asarray(sorted(graph.nodes()), dtype=np.int64)
+        fingerprint = study.feature_fingerprint(adjacency_list, orbit_path, overlap_mode)
+        key = f"{fingerprint[:16]}|k=6|seed={seeds[0]}|{scaling}|{int(normalise)}"
+        refit_path = ROLE_CACHE_4NODE_REFIT
+        role_arr = None
+        if refit_path.exists():
+            cached = np.load(refit_path)
+            if (cached["nodes"].shape[0] == nodes.shape[0]
+                    and np.array_equal(cached["nodes"], nodes)
+                    and str(cached["fingerprint"]) == key):
+                print(f"roles: {refit_path.name} reused (fingerprint matches)", flush=True)
+                role_arr = np.full(n_items, -1, dtype=np.int64)
+                role_arr[cached["nodes"]] = cached["role"]
+        if role_arr is None:
+            matrix, info = study.build_features(n_items, adjacency_list, orbit_path, overlap_mode)
+            block = matrix[nodes]
+            fitted = study.fit_roles(block, 6, seeds[0], scaling, normalise)
+            print(f"roles: refit on {nodes.shape[0]} items from {matrix.shape[1]} features "
+                  f"({info['orbit_width']} orbits, overlap mode {overlap_mode}); "
+                  f"sizes {np.bincount(fitted, minlength=6).tolist()}", flush=True)
+            variant = {}
+            for seed in seeds[1:]:
+                variant[f"seed={seed}"] = study.adjusted_rand(
+                    fitted, study.fit_roles(block, 6, seed, scaling, normalise))
+            if not normalise:
+                variant["normalised_components"] = study.adjusted_rand(
+                    fitted, study.fit_roles(block, 6, seeds[0], scaling, True))
+            if variant:
+                print(f"roles: stability {variant}", flush=True)
+            np.savez(refit_path, nodes=nodes, role=fitted.astype(np.int64), fingerprint=key)
+            role_arr = np.full(n_items, -1, dtype=np.int64)
+            role_arr[nodes] = fitted
+        source = {"cache": refit_path.name, "fingerprint": fingerprint[:16], "refit": True}
 
-    role = study.fit_roles(block, 6, seeds[0], scaling, normalise)
-    report = {"features": info, "scaling": scaling, "normalise_components": normalise,
-              "seeds": list(seeds), "items_without_a_role": n_items - nodes.shape[0],
-              "role_sizes": np.bincount(role, minlength=6).tolist(), "cache_hit": False,
-              "ari_variants": {}}
-    report["fingerprint"] = fingerprint[:16]
-    report["cache"] = cache.name
-
-    if cache.exists():
-        cached = np.load(cache)
-        same_nodes = (cached["nodes"].shape[0] == nodes.shape[0]
-                      and np.array_equal(cached["nodes"], nodes))
-        if "role" in cached and same_nodes:
-            previous = np.asarray(cached["role"], dtype=np.int64)
-            report["ari_vs_cached"] = study.adjusted_rand(previous, role)
-            report["cache_replaced"] = True
-    for seed in seeds[1:]:
-        report["ari_variants"][f"seed={seed}"] = study.adjusted_rand(
-            role, study.fit_roles(block, 6, seed, scaling, normalise))
-    if not normalise:
-        report["ari_variants"]["normalised_components"] = study.adjusted_rand(
-            role, study.fit_roles(block, 6, seeds[0], scaling, True))
-
-    np.savez(cache, nodes=nodes, role=role.astype(np.int64), fingerprint=key)
-    print(f"roles: fitted on {nodes.shape[0]} items from {matrix.shape[1]} features "
-          f"({info['orbit_width']} orbits, overlap mode {overlap_mode}); sizes {report['role_sizes']}",
-          flush=True)
-    if "ari_vs_cached" in report:
-        print(f"roles: adjusted Rand against the previous cache {report['ari_vs_cached']:.3f}",
-              flush=True)
-    print(f"roles: stability {report['ari_variants']}", flush=True)
-    return {int(node): int(value) for node, value in zip(nodes, role)}, report
+    # restricted to the items the train graph has, so an item that carries a role from the behaviour
+    # graph but no train edge is not counted here (it could make items_without_a_role negative)
+    train_nodes = {int(node) for node in graph.nodes()}
+    role_of = {int(node): int(value) for node, value in enumerate(role_arr)
+               if value >= 0 and int(node) in train_nodes}
+    sizes = np.bincount(np.asarray(list(role_of.values()), dtype=np.int64), minlength=6).tolist()
+    routing = {"cache_hit": True, **source,
+               "role_sizes": {f"role{index + 1}": int(size) for index, size in enumerate(sizes)},
+               "items_without_a_role": int(graph.number_of_nodes()) - len(role_of),
+               "items_in_assignment": len(role_of)}
+    print(f"roles: sizes {routing['role_sizes']} | train items without a role "
+          f"{routing['items_without_a_role']}", flush=True)
+    return role_of, routing
 
 
 def retention(tokens: np.ndarray, u, v, role_of_u, n_roles: int) -> dict:
@@ -385,15 +397,38 @@ def main() -> int:
                                        else row["roles"][role + 1]["prefix@1"]
                                        - row["overall"]["prefix@1"]))
 
+    # The role profile comes from this run's assignment and graph, never from an older fit: the 213
+    # file describes a different partition, so pairing it with these retention rates mislabels the roles.
+    import networkx as nx
+
+    clustering = nx.clustering(graph)
+    core_number = nx.core_number(graph)
+    role_profiles = {}
+    for role in range(6):
+        members = [node for node, value in role_of.items() if value == role]
+        if not members:
+            role_profiles[str(role + 1)] = {"members": 0}
+            continue
+        role_profiles[str(role + 1)] = {
+            "members": len(members),
+            "mean_degree": float(np.mean([degrees[node] for node in members])),
+            "mean_clustering": float(np.mean([clustering[node] for node in members])),
+            "mean_core": float(np.mean([core_number[node] for node in members])),
+            "mean_neighbour_degree": float(np.mean([
+                np.mean([degrees[other] for other in adj[node]]) if adj[node] else 0.0
+                for node in members]))}
+    covered = sum(entry["members"] for entry in role_profiles.values())
+    assert covered == len(role_of), f"profile covers {covered} of {len(role_of)} items"
+    assert [role_profiles[str(role + 1)]["members"] for role in range(6)] == \
+        list(routing["role_sizes"].values()), "profile and routing disagree on role sizes"
+
     out = {
         "recall_metric": RECALL,
         "n_pairs": len(rows),
         "n_skipped": len(skipped),
         "skipped": skipped,
-        # the profile table has to be the one this run fitted: the 4-node audit and the 4+5-node audit
-        # keep separate files, and reporting the wrong one made a five-node run look like a four-node one
-        "roles": json.loads((REPO / "results" / "research" / "issue213" /
-                             ("graphlet_roles.json" if five else "graphlet_roles_4node.json")).read_text())["role_profiles"],
+        # the profile table is the one this run fitted, asserted against the routing sizes below
+        "roles": role_profiles,
         "pairs": rows,
         "routing": routing,
         "correlations": correlations,
@@ -435,15 +470,19 @@ def main() -> int:
         "",
         "## 各角色的平均保留度（跨臂均值，`prefix@1`）",
         "",
-        "| 角色 | 成员 | 平均 prefix@1 | 平均 prefix@3 | 臂数 |",
-        "|---|---|---|---|---|",
+        "| 角色 | 成员 | 平均度 | 平均聚类 | 平均 core | 平均 prefix@1 | 平均 prefix@3 | 臂数 |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for role in range(n_roles):
         vals = [row["roles"][role + 1] for row in rows]
         p1 = [x["prefix@1"] for x in vals if x["prefix@1"] is not None]
         p3 = [x["prefix@3"] for x in vals if x["prefix@3"] is not None]
-        members = out["roles"][role]["members"]
-        lines.append(f"| {role + 1} | {members} | {np.mean(p1):.4f} | {np.mean(p3):.4f} | {len(p1)} |")
+        profile = out["roles"][str(role + 1)]
+        lines.append(f"| {role + 1} | {profile['members']} "
+                     f"| {profile.get('mean_degree', float('nan')):.1f} "
+                     f"| {profile.get('mean_clustering', float('nan')):.3f} "
+                     f"| {profile.get('mean_core', float('nan')):.1f} "
+                     f"| {np.mean(p1):.4f} | {np.mean(p3):.4f} | {len(p1)} |")
     lines += ["", "## 边界", ""] + [f"- {item}" for item in out["limits"]] + [""]
     out_md.write_text("\n".join(lines))
 

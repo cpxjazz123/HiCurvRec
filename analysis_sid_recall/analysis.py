@@ -46,7 +46,11 @@ LEDGER = REPO / "results" / "research" / "issue139" / "r2_ledger.json"
 VECTORS = REPO / "results" / "research" / "issue215" / "vectors"
 BEHAVIOUR = REPO / "results" / "research" / "issue215" / "graphs" / "behaviour.in"
 ROLE_CACHE = HERE / "structure_roles5.npz"
+FEATURE_BLOCK = HERE / "feature_block.npz"
 ORBITS = REPO / "results" / "research" / "issue213" / "orca" / "node5.out"
+# The role system is K=6 and nothing else: a k sweep asked the arms to be explained under partitions
+# the report never uses.  materialised from the single cache below.
+ROLE_K = 6
 TRAIN = REPO / "results" / "stage0_build_parquet" / "train.parquet"
 RECALL = "test_recall@10"
 
@@ -218,9 +222,35 @@ def load_graph():
     return n, adjacency, edges
 
 
-def load_roles(n):
+def load_roles(n, adjacency=None, overlap_mode="mean", cache=None,
+               scaling=None, normalise=None, seed=None):
+    """Read the six-role cache, refusing one that does not match the graph and settings it claims.
+
+    A cache keyed only on the node count can survive a changed graph or a different overlap mode, and
+    then every analysis silently reports roles from another configuration.  When the adjacency is
+    available the fingerprint is recomputed and compared; a mismatch stops the run instead.
+    """
+    cache = Path(cache) if cache else ROLE_CACHE
+    if not cache.exists():
+        raise SystemExit(f"no role cache at {cache}; run: analysis.py cache")
+    cached = np.load(cache)
+    if adjacency is not None:
+        if "fingerprint" not in cached:
+            raise SystemExit(f"role cache {cache.name} predates the fingerprint; run: analysis.py cache")
+        expected = feature_fingerprint(adjacency, ORBITS, overlap_mode)[:16]
+        if str(cached["fingerprint"]) != expected:
+            raise SystemExit(
+                f"role cache {cache.name} is stale: fingerprint {cached['fingerprint']} != {expected}; "
+                f"run: analysis.py cache (or pass the matching --overlap-mode)")
+        for key, wanted in (("scaling", scaling), ("normalise", normalise), ("seed", seed)):
+            if wanted is None or key not in cached:
+                continue
+            stored = str(cached[key]) if key != "normalise" else int(cached[key])
+            have = str(wanted) if key != "normalise" else int(bool(wanted))
+            if stored != have:
+                raise SystemExit(f"role cache {cache.name} was fitted with {key}={stored}, "
+                                 f"not {have}; refit with: analysis.py cache --{key}")
     role_of = np.full(n, -1, dtype=np.int64)
-    cached = np.load(ROLE_CACHE)
     for node, role in zip(cached["nodes"], cached["role"]):
         if 0 <= int(node) < n:
             role_of[int(node)] = int(role)
@@ -239,10 +269,22 @@ def load_popularity(n):
 
 
 def bucketise(values, buckets):
-    order = np.argsort(values, kind="mergesort")
-    rank = np.empty(len(values), dtype=np.int64)
-    rank[order] = np.arange(len(values))
-    return np.minimum((rank * buckets) // max(len(values), 1), buckets - 1)
+    """Quantile buckets cut on the *values*, so two items with the same degree and popularity always
+    land in the same cell.  The earlier version bucketed by sorted position, which could split a tie
+    purely because of item id."""
+    values = np.asarray(values, dtype=np.float64)
+    if values.size == 0:
+        return np.zeros(0, dtype=np.int64)
+    sorted_values = np.sort(values)
+    edges = []
+    for quantile in range(1, buckets):
+        position = int(round(quantile * values.size / buckets))
+        position = min(max(position, 0), values.size - 1)
+        edges.append(sorted_values[position])
+    edges = np.unique(np.asarray(edges, dtype=np.float64))
+    if edges.size == 0:
+        return np.zeros(values.size, dtype=np.int64)
+    return np.searchsorted(edges, values, side="right").astype(np.int64)
 
 
 def enumerate_cliques(adjacency, size):
@@ -637,7 +679,7 @@ def behaviour_edges(adjacency, n):
 
 def cmd_roles(args):
     n, adjacency, _ = load_graph()
-    role_of = load_roles(n)
+    role_of = load_roles(n, adjacency, args.overlap_mode)
     u, v = behaviour_edges(adjacency, n)
     role_of_u = role_of[u]
     arms = load_arms(args.arms)
@@ -698,7 +740,7 @@ def cmd_roles(args):
 
 def cmd_distance(args):
     n, adjacency, _ = load_graph()
-    role_of = load_roles(n)
+    role_of = load_roles(n, adjacency, args.overlap_mode)
     u, v = behaviour_edges(adjacency, n)
     role_of_u = role_of[u]
     rng = np.random.default_rng(args.seed)
@@ -865,7 +907,9 @@ def prepare_instances(args, n, adjacency):
             for node in instance["nodes"]:
                 incidence[node].append(index)
         incidences[name] = dict(incidence)
-        print(f"  {name:<16} instances {len(instances):>5} distinct items {len(incidence):>5}", flush=True)
+        available = sum(1 for draws in nulls[name] if draws)
+        print(f"  {name:<16} instances {len(instances):>5} with a null {available:>5} "
+              f"distinct items {len(incidence):>5}", flush=True)
     return patterns, nulls, incidences
 
 
@@ -917,7 +961,7 @@ def role_scores(arrays, incidences, role_of, role, n):
 
 def cmd_patterns(args):
     n, adjacency, _ = load_graph()
-    role_of = load_roles(n)
+    role_of = load_roles(n, adjacency, args.overlap_mode)
     patterns, nulls, incidences = prepare_instances(args, n, adjacency)
     print("instances with no usable null:", unusable(patterns, nulls), flush=True)
     arms = load_arms(args.arms)
@@ -1021,7 +1065,10 @@ def cmd_independence(args):
     collisions = np.array([row["collision"] if "collision" in row else row["l3_collision"]
                            for row in rows])
     roles = [str(role) for role in range(6)]
-    key = "rate" if "rate" in rows[0] else "role_rate"
+    key = args.measure
+    if key not in rows[0]:
+        key = "gain" if "gain" in rows[0] else "rate" if "rate" in rows[0] else "role_rate"
+    print(f"independence is measured on `{key}` (use --measure rate|gain to switch)", flush=True)
     rates = np.array([[row[key].get(role) if row[key].get(role) is not None else np.nan
                        for role in roles] for row in rows])
     if np.isnan(rates).any():
@@ -1115,7 +1162,7 @@ def build_features(n, adjacency, orbit_path=None, overlap_mode="mean"):
     return matrix, info
 
 
-def fit_roles(matrix, k, seed, scaling="clip", normalise_components=False):
+def fit_roles(matrix, k=ROLE_K, seed=SEED, scaling="clip", normalise_components=False):
     """NMF over the non-negative part of the standardised features, then one role per item.
 
     ``scaling="clip"`` drops the below-average part (RolX's convention, what the published tables used);
@@ -1164,77 +1211,48 @@ def feature_fingerprint(adjacency, orbit_path, overlap_mode):
     return digest.hexdigest()
 
 
-def cmd_k(args):
-    ks = [int(value) for value in args.k.split(",")]
-    n, adjacency, _ = load_graph()
-    print("building the ORCA feature block ...", flush=True)
-    matrix = build_features(n, adjacency)
-    assignments = {k: fit_roles(matrix, k, args.seed) for k in ks}
-    cached = load_roles(n)
-    assignments["cached"] = cached
-    patterns, nulls, incidences = prepare_instances(args, n, adjacency)
-    arms = load_arms(args.arms)
-    scored = []
-    for arm in arms:
-        tokens = tokens_of(arm["sid_path"], n)
-        arrays = score_arm(patterns, nulls, incidences, lcp_distance(tokens), n)
-        scored.append((arm, arrays))
-        print(f"  scored {arm['number']}", flush=True)
-    recalls = np.array([arm["recall"] for arm, _ in scored])
-    result = {"ks": ks, "n_arms": len(scored), "granularities": {}}
-    for key, assignment in assignments.items():
-        roles = int(assignment.max()) + 1
-        sizes = np.bincount(assignment[assignment >= 0], minlength=roles)
-        kept = [role for role in range(roles) if sizes[role] >= MIN_ITEMS]
-        table = np.zeros((len(scored), len(kept)))
-        for row, (_, arrays) in enumerate(scored):
-            for column, role in enumerate(kept):
-                rate, _ = role_scores(arrays, incidences, assignment, role, n)
-                table[row, column] = rate if rate is not None else np.nan
-        rates = np.where(np.isnan(table), np.nanmean(table, axis=0), table)
-        plan = fold_plan(len(recalls), args.repeats, 5, args.seed)
-        full = cross_validate(rates, recalls, plan, args.seed)
-        marginals = {}
-        best, best_drop = None, -np.inf
-        for column, role in enumerate(kept):
-            keep = [index for index in range(len(kept)) if index != column]
-            without = cross_validate(rates[:, keep], recalls, plan, args.seed)
-            drop = full["r2_mean"] - without["r2_mean"]
-            marginals[role + 1] = {"without": without["r2_mean"], "drop": drop}
-            if drop > best_drop:
-                best, best_drop = role + 1, drop
-        base = np.flatnonzero(assignments["cached"] == 2)
-        split = np.bincount(assignment[base][assignment[base] >= 0], minlength=roles).tolist()
-        result["granularities"][str(key)] = {"sizes": sizes.tolist(), "kept": [role + 1 for role in kept],
-                                             "cv": full, "marginal": marginals,
-                                             "best_role": best, "best_drop": best_drop,
-                                             "cached_role3_split": split}
-        print(f"K={key}: kept {len(kept)} roles, CV R^2 {full['r2_mean']:+.4f}, "
-              f"strongest marginal role {best} ({best_drop:+.4f}), "
-              f"cached Role 3 largest share {max(split) / max(len(base), 1):.3f}")
-    path = output_path(args, args.command)
-    path.write_text(json.dumps(result, indent=1, default=float))
-    print(f"\nwritten {path}")
-    return 0
-
-
 def cmd_split(args):
-    ks = [int(value) for value in args.k.split(",")]
+    """Integrity check: a fresh K=6 fit must reproduce the cached partition exactly.
+
+    With the role system fixed at K=6 there is no k to compare against, so this now verifies the one
+    thing that matters -- that the cache on disk is a K=6 fit of this graph, and that `args.role` is
+    one of its six roles.
+    """
     n, adjacency, _ = load_graph()
-    cached = load_roles(n)
-    base = np.flatnonzero(cached == args.role)
-    matrix = build_features(n, adjacency)
-    result = {"cached_role": args.role + 1, "size": int(len(base)), "splits": {}}
-    for k in ks:
-        assignment = fit_roles(matrix, k, args.seed)
-        sizes = np.bincount(assignment[base][assignment[base] >= 0], minlength=k).tolist()
-        result["splits"][str(k)] = {"sizes": sizes,
-                                    "shares": [value / max(len(base), 1) for value in sizes]}
-        print(f"K={k}: cached Role {args.role + 1} splits as {sizes}")
+    cached = load_roles(n, adjacency, args.overlap_mode)
+    nodes = np.flatnonzero(cached >= 0)
+    matrix, _ = cached_features(adjacency, overlap_mode=args.overlap_mode)
+    fresh = fit_roles(matrix[nodes], ROLE_K, args.seed)
+    identical = bool(np.array_equal(fresh, cached[nodes]))
+    sizes = np.bincount(cached[nodes], minlength=ROLE_K).tolist()
+    result = {"k": ROLE_K, "cached_role": args.role + 1,
+              "size": int((cached == args.role).sum()), "role_sizes": sizes,
+              "fresh_fit_matches_cache": identical}
+    print(f"K={ROLE_K}: a fresh fit {'reproduces' if identical else 'DIFFERS FROM'} the cache "
+          f"(roles {sizes})")
     path = output_path(args, args.command)
     path.write_text(json.dumps(result, indent=1, default=float))
     print(f"\nwritten {path}")
     return 0
+
+
+def cached_features(adjacency, orbit_path=None, overlap_mode="mean"):
+    """The ORCA feature block, rebuilt only when the graph or the settings change.
+
+    The build costs about two and a half minutes and every role-bearing command needs it, so it is
+    persisted next to the role cache under the same fingerprint discipline.
+    """
+    orbit_path = orbit_path or ORBITS
+    fingerprint = feature_fingerprint(adjacency, orbit_path, overlap_mode)[:16]
+    n = len(adjacency)
+    if FEATURE_BLOCK.exists():
+        cached = np.load(FEATURE_BLOCK)
+        if "fingerprint" in cached and str(cached["fingerprint"]) == fingerprint:
+            print(f"features: {FEATURE_BLOCK.name} reused (fingerprint {fingerprint})", flush=True)
+            return cached["matrix"], json.loads(str(cached["info"]))
+    matrix, info = build_features(n, adjacency, orbit_path, overlap_mode)
+    np.savez(FEATURE_BLOCK, matrix=matrix, fingerprint=fingerprint, info=json.dumps(info))
+    return matrix, info
 
 
 def cmd_cache(args):
@@ -1244,13 +1262,19 @@ def cmd_cache(args):
     sub = [set() for _ in range(n)]
     for node in nodes:
         sub[int(node)] = adjacency[int(node)]
-    matrix, info = build_features(n, sub, overlap_mode=args.overlap_mode)
+    matrix, info = cached_features(sub, overlap_mode=args.overlap_mode)
     matrix = matrix[nodes]
     print(f"features: {info}")
-    role = fit_roles(matrix, args.k_n, args.seed, args.nmf_scaling, args.normalise)
+    if args.k_n != ROLE_K:
+        raise SystemExit(f"the role system is K={ROLE_K} only; --k-n {args.k_n} is not supported")
+    role = fit_roles(matrix, ROLE_K, args.seed, args.nmf_scaling, args.normalise)
     path = Path(args.out) if args.out else ROLE_CACHE
     path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez(path, nodes=nodes, role=role.astype(np.int64))
+    np.savez(path, nodes=nodes, role=role.astype(np.int64),
+             fingerprint=feature_fingerprint([set(adjacency[i]) for i in range(n)], ORBITS,
+                                             args.overlap_mode)[:16],
+             overlap_mode=args.overlap_mode, scaling=args.nmf_scaling,
+             normalise=int(args.normalise), seed=args.seed)
     print(f"wrote {len(nodes)} role assignments to {path}")
     print("role sizes:", dict(zip(*np.unique(role, return_counts=True))))
     return 0
@@ -1262,7 +1286,7 @@ def cmd_profile(args):
     import networkx as nx
 
     n, adjacency, edges = load_graph()
-    role_of = load_roles(n)
+    role_of = load_roles(n, adjacency, args.overlap_mode)
     members = {role: int((role_of == role).sum()) for role in range(6)}
     print("role sizes:", {f"Role {role + 1}": size for role, size in members.items()})
     cliques4 = enumerate_cliques(adjacency, 4)
@@ -1351,7 +1375,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("roles", "distance", "patterns", "independence", "k", "profile", "split", "sid",
+    for name in ("roles", "distance", "patterns", "independence", "profile", "split", "sid",
                  "cache"):
         block = sub.add_parser(name)
         block.add_argument("--arms", type=int, default=None)
@@ -1360,11 +1384,11 @@ def main() -> int:
         block.add_argument("--permutations", type=int, default=2000)
         block.add_argument("--repeats", type=int, default=5)
         block.add_argument("--edges", type=int, default=None)
-        block.add_argument("--k", type=str, default="6")
         block.add_argument("--role", type=int, default=2)
         block.add_argument("--seed", type=int, default=SEED)
         block.add_argument("--in", dest="in_path", type=str, default=None)
         block.add_argument("--representations", action="store_true")
+        block.add_argument("--measure", default="gain", choices=("gain", "rate"))
         block.add_argument("--k-n", dest="k_n", type=int, default=6)
         block.add_argument("--overlap-mode", dest="overlap_mode", default="mean",
                            choices=("mean", "old"))
@@ -1372,9 +1396,10 @@ def main() -> int:
                            choices=("clip", "shift"))
         block.add_argument("--normalise", action="store_true")
         block.add_argument("--out", type=str, default=None)
+
     args = parser.parse_args()
     handlers = {"roles": cmd_roles, "distance": cmd_distance, "patterns": cmd_patterns,
-                "independence": cmd_independence, "k": cmd_k, "profile": cmd_profile,
+                "independence": cmd_independence, "profile": cmd_profile,
                 "split": cmd_split, "sid": cmd_sid, "cache": cmd_cache}
     return handlers[args.command](args)
 
