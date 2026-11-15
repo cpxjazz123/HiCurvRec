@@ -204,7 +204,7 @@ function fingerprintWatchedFiles(patterns = [], arm = '') {
       for (const name of listFilesRecursive(root)) {
         const rel = path.relative(root, name).split(path.sep).join('/');
         // 冻结基线一个字都不许动，也就不该算进"有没有进展"。
-        if (rel.startsWith('stage2_RQ-VAE/TIGER_RQ-VAE/')) continue;
+        if (rel.startsWith('stage2_RQ-VAE/baseline/')) continue;
         if (re.test(rel)) hashFile(name);
       }
     }

@@ -248,17 +248,21 @@ export const TOOL_IMPLS = {
   /**
    * 从冻结基线复制一份候选树。
    *
-   * 每一轮的新机制都从 stage2_RQ-VAE/TIGER_RQ-VAE 起步（仓库规则 19b）：
+   * 每一轮的新机制都从 stage2_RQ-VAE/baseline/TIGER_RQ-VAE 起步（仓库规则 19b）：
    * 复制一份、只改 ARM_NAME 这一个常量、其余逐文件一致。已经存在的目录不覆盖 ——
    * 候选树要是旧的，机制就说不清是哪一版的。
    */
-  async copyBaselineTree({ arm, from = 'stage2_RQ-VAE/TIGER_RQ-VAE', renameArm = true }) {
+  async copyBaselineTree({ arm, from = 'stage2_RQ-VAE/baseline/TIGER_RQ-VAE', renameArm = true }) {
     const name = typeof arm === 'string' ? arm.trim() : '';
     if (!/^TIGER_[A-Za-z0-9_]+$/.test(name)) {
       throw new Error(`arm 名字不对（要像 TIGER_af3_curvature_drive_rq）: ${arm}`);
     }
     const source = resolveInSandbox(from);
-    const stageRoot = path.dirname(source);
+    // 候选树建在基线所在的 stage2_RQ-VAE/ 下面（跟基线同一层目录）。
+    // 冻结基线现在住在 stage2_RQ-VAE/baseline/TIGER_RQ-VAE —— 那层 baseline/ 是收纳
+    // 目录，候选树不该跟着进去，所以往上退一层。
+    const parent = path.dirname(source);
+    const stageRoot = path.basename(parent) === 'baseline' ? path.dirname(parent) : parent;
     const target = path.join(stageRoot, name);
     if (path.dirname(target) !== stageRoot) {
       throw new Error(`候选树必须建在 stage2_RQ-VAE 下面: ${name}`);
@@ -533,7 +537,7 @@ const treeDiffTool = piTool({
     'Use it instead of walking both trees by hand - the review only has to look at the delta.',
   parameters: Type.Object({
     baseline: Type.String({
-      description: '冻结基线目录（仓库内相对路径），例如 stage2_RQ-VAE/TIGER_RQ-VAE',
+      description: '冻结基线目录（仓库内相对路径），例如 stage2_RQ-VAE/baseline/TIGER_RQ-VAE',
     }),
     tree: Type.String({ description: '候选树目录，例如 stage2_RQ-VAE/TIGER_xxx_rq' }),
     maxHunkLines: Type.Optional(
@@ -558,7 +562,7 @@ const readDiffTool = piTool({
     file: Type.Optional(
       Type.String({ description: '相对树根的单个文件，例如 train_rqvae.py；不给就列出全部改动文件' }),
     ),
-    baseline: Type.Optional(Type.String({ description: '冻结基线目录，默认 stage2_RQ-VAE/TIGER_RQ-VAE' })),
+    baseline: Type.Optional(Type.String({ description: '冻结基线目录，默认 stage2_RQ-VAE/baseline/TIGER_RQ-VAE' })),
     maxLines: Type.Optional(
       Type.Integer({ minimum: 1, maximum: 2000, description: '每个文件最多回多少行 diff，默认 200' }),
     ),
@@ -580,7 +584,7 @@ const specCheckTool = piTool({
       Type.String({ description: 'idea 目录（含 *_idea.json 与 math.json）；不给就按 arm 名在 ideas/ 里找' }),
     ),
     baseline: Type.Optional(
-      Type.String({ description: '冻结基线目录，默认 stage2_RQ-VAE/TIGER_RQ-VAE' }),
+      Type.String({ description: '冻结基线目录，默认 stage2_RQ-VAE/baseline/TIGER_RQ-VAE' }),
     ),
   }),
   impl: specCheck,
@@ -723,7 +727,7 @@ const copyBaselineTreeTool = piTool({
   parameters: Type.Object({
     arm: Type.String({ description: '新候选树的名字，例如 TIGER_af3_curvature_drive_rq' }),
     from: Type.Optional(
-      Type.String({ description: '基线树路径，默认 stage2_RQ-VAE/TIGER_RQ-VAE' }),
+      Type.String({ description: '基线树路径，默认 stage2_RQ-VAE/baseline/TIGER_RQ-VAE' }),
     ),
     renameArm: Type.Optional(
       Type.Boolean({
@@ -1273,7 +1277,7 @@ async function unifiedDiff(baseFile, treeFile) {
  * 审"改了哪里"不需要 71 KB 的整文件：+860/−10 的 diff 就是审查面。
  * 只回 diff 行，正文由模型按需再 read。
  */
-async function readDiff({ baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE', tree, file, maxLines = 200 }) {
+async function readDiff({ baseline = 'stage2_RQ-VAE/baseline/TIGER_RQ-VAE', tree, file, maxLines = 200 }) {
   const baseDir = stage2TreePath(baseline);
   const treeDir = stage2TreePath(tree);
   if (!fs.existsSync(baseDir)) return { ok: false, error: `基线不存在: ${baseline}` };
@@ -1376,7 +1380,7 @@ function countDiffLines(unified) {
  * 候选树是冻结基线的一份副本加上机制增量，所以"改了什么"本身就是核对项：
  * 判定只需要落在增量上，没变的文件不必重读。只读，两棵树都必须在仓库根之内。
  */
-async function treeDiff({ baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE', tree, maxHunkLines = 40, maxChangedFiles = 40 }) {
+async function treeDiff({ baseline = 'stage2_RQ-VAE/baseline/TIGER_RQ-VAE', tree, maxHunkLines = 40, maxChangedFiles = 40 }) {
   const baseDir = stage2TreePath(baseline);
   const treeDir = stage2TreePath(tree);
   for (const [label, dir] of [['baseline', baseDir], ['tree', treeDir]]) {
@@ -1534,7 +1538,7 @@ function grepFiles(files, pattern, limit = 20) {
  * 文件的齐缺、路径违规、冻结超参有没有动、规格里的 metrics 名字有没有落地、
  * 测试有没有空断言 —— 这些不需要模型，工具一次算完；模型只判公式语义与开关退化。
  */
-async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/TIGER_RQ-VAE' }) {
+async function specCheck({ tree, idea, baseline = 'stage2_RQ-VAE/baseline/TIGER_RQ-VAE' }) {
   const treeDir = stage2TreePath(tree);
   const baseDir = stage2TreePath(baseline);
   if (!fs.existsSync(treeDir) || !fs.statSync(treeDir).isDirectory()) {
@@ -1858,7 +1862,7 @@ function makeCopyBaselineTool(scope) {
     description: 'Copy one frozen baseline tree into a new candidate tree under stage2_RQ-VAE (never overwrites).',
     parameters: Type.Object({
       arm: Type.String({ description: '新候选树的名字，例如 TIGER_xxx_rq' }),
-      from: Type.Optional(Type.String({ description: '冻结基线路径，默认 stage2_RQ-VAE/TIGER_RQ-VAE' })),
+      from: Type.Optional(Type.String({ description: '冻结基线路径，默认 stage2_RQ-VAE/baseline/TIGER_RQ-VAE' })),
     }),
     impl: (args) => {
       const arm = typeof args.arm === 'string' ? args.arm.trim() : '';

@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-14.32';
+export const FRONTEND_VERSION = '2026-11-15.34';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -123,7 +123,7 @@ export const STAGE2_PYTHON =
  * 用它来判断一份 idea 的文件清单：基线里没有的才是新文件，基线里有的就是改动 ——
  * "把基线那个文件原样复制一份"不算新文件。
  */
-export const FROZEN_BASELINE_TREE = 'stage2_RQ-VAE/TIGER_RQ-VAE';
+export const FROZEN_BASELINE_TREE = 'stage2_RQ-VAE/baseline/TIGER_RQ-VAE';
 
 /** 主机名是否满足要求：允许带域名后缀（m3g104.massive.org.au 也算对）。 */
 export function agentHostOk(hostname = os.hostname(), want = currentHost()) {
@@ -447,7 +447,7 @@ export const AGENT_PROFILES = [
       '一轮只做一件事，六步：',
       '1. 读机制定义：ideas/<方向>/*_idea.json（1_goal、4_method、new_files）与同目录 math.json' +
         '（symbols、formulas、constants、switches）。以它们为准 —— 机制不是你自己发明的。',
-      '2. 读基线：stage2_RQ-VAE/TIGER_RQ-VAE 里的 distances/、losses/、model/、config/、train_rqvae.py，' +
+      '2. 读基线：stage2_RQ-VAE/baseline/TIGER_RQ-VAE 里的 distances/、losses/、model/、config/、train_rqvae.py，' +
         '看清真实接口：距离函数怎么注入、损失模块怎么注册（NAME/SPEC/DESCRIPTION）、' +
         '量化层怎么分配、config 有哪几项。math.json 的每条公式都要落在这些接口上。',
       '3. 建候选树：用 copyBaselineTree 从冻结基线复制 stage2_RQ-VAE/TIGER_<ARM>/。' +
@@ -489,7 +489,7 @@ export const AGENT_PROFILES = [
       {
         title: '读基线实现',
         instruction:
-          '用 read 读 stage2_RQ-VAE/TIGER_RQ-VAE 的这些文件：distances/distance.py、distances/__init__.py、' +
+          '用 read 读 stage2_RQ-VAE/baseline/TIGER_RQ-VAE 的这些文件：distances/distance.py、distances/__init__.py、' +
           'losses/__init__.py、losses/reconstruction.py、model/model.py、model/layers.py、' +
           'config/train_config.json、train_rqvae.py。' +
           '记下真实接口：距离函数的签名与注册表怎么写、损失模块要带哪些字段（NAME/SPEC/DESCRIPTION）、' +
@@ -500,7 +500,7 @@ export const AGENT_PROFILES = [
         title: '建候选树',
         instruction:
           '用 copyBaselineTree 建候选树：arm 用 idea 里的 arm 字段（没有这个字段就按机制名取一个），' +
-          'from 用默认的 stage2_RQ-VAE/TIGER_RQ-VAE。' +
+          'from 用默认的 stage2_RQ-VAE/baseline/TIGER_RQ-VAE。' +
           '工具会复制整棵树并只改 ARM_NAME。' +
           '它报「已经存在」就换一个名字再试，不要去删旧树。' +
           '建完把返回的 path 与文件数记下来。',
@@ -962,7 +962,7 @@ export const AGENT_PROFILES = [
       '1. 读规格：ideas/<方向>/*_idea.json（1_goal、4_method 的 new_files）与同目录 math.json' +
         '（symbols、formulas、constants、switches）。这是唯一的标准。',
       '2. 读实现：候选树就是 idea 里 arm 字段指的那个目录（stage2_RQ-VAE/<arm>）；' +
-        '读它的代码，并与冻结基线 stage2_RQ-VAE/TIGER_RQ-VAE 逐文件比对，看清到底改了哪些地方。' +
+        '读它的代码，并与冻结基线 stage2_RQ-VAE/baseline/TIGER_RQ-VAE 逐文件比对，看清到底改了哪些地方。' +
         'idea 没有 arm 字段时，在 stage2_RQ-VAE/ 下找与当前方向对应的那个候选树。',
       '3. 逐项核对（缺一条都不算查完）：',
       '   a. new_files 列出的文件是否都在，各自做的事是否与 idea 写的一致；',
@@ -1007,7 +1007,7 @@ export const AGENT_PROFILES = [
         instruction:
           '候选树是 idea 里 arm 字段指的目录（stage2_RQ-VAE/<arm>）；idea 没有这个字段时，' +
           '用 ls 列出 stage2_RQ-VAE/ 找出与当前方向对应的那个（冻结基线 TIGER_RQ-VAE 之外的目录）。' +
-          '先 treeDiff({baseline: \'stage2_RQ-VAE/TIGER_RQ-VAE\', tree: 候选树}) 拿增量，' +
+          '先 treeDiff({baseline: \'stage2_RQ-VAE/baseline/TIGER_RQ-VAE\', tree: 候选树}) 拿增量，' +
           '再 readDiff({tree: 候选树}) 拿全部改动的 diff，再用 specCheck({tree: 候选树}) 拿机械项与' +
           '规格常量/公式在树里的位置。三样到手后：treeDiff 里 identical 的文件一律不许再 read；' +
           '改动文件只看 diff 命中的位置，需要上下文时用 read 的 offset/limit 读那一段。' +
@@ -1433,7 +1433,7 @@ function writerInstructions(title, kind) {
     '',
     '写之前先读：当前方向 ideas/<方向>/ 的 *_idea.json（4_method）与 math.json，',
     '再读这棵树里已有的实现（签名就是契约，不许改别人的文件）。',
-    '基线是 stage2_RQ-VAE/TIGER_RQ-VAE：接口照它抄，config 的冻结超参一个字都不许动。',
+    '基线是 stage2_RQ-VAE/baseline/TIGER_RQ-VAE：接口照它抄，config 的冻结超参一个字都不许动。',
     '',
     '硬约束（机器强制）：write/edit/deleteFile 只能写 assignedFiles 列出的文件，越界会直接报错。',
     '分配规则（Sinkhorn）、量化层、模型接口、训练入口、数据管线都不归你改；需要时写进结论。',
@@ -1483,7 +1483,7 @@ const WRITER_PROFILES = WRITER_KINDS.map((entry) => ({
     {
       title: '读参考实现',
       instruction:
-        '读基线 stage2_RQ-VAE/TIGER_RQ-VAE 里与你文件对应的那份（接口照它抄），' +
+        '读基线 stage2_RQ-VAE/baseline/TIGER_RQ-VAE 里与你文件对应的那份（接口照它抄），' +
         '再读树里已经存在的机制文件（别人的签名就是契约，不许改）。列出你要调用的外部符号，每个一行，≤10 行。',
     },
     {

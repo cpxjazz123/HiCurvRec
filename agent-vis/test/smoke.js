@@ -6,6 +6,7 @@ import http from 'node:http';
 import { spawnSync } from 'node:child_process';
 
 import { createServer, runStatus } from '../server.js';
+import { findUnfinishedRound } from '../public/round-resume.js';
 import { config } from '../server.js';
 import { readIdeaDoc } from '../idea-store.js';
 import { createStore, applyChunk, foldText, roundEnded, handoffRequested, ROUND_END_TOOL, ROUND_HANDOFF_TOOL } from '../public/protocol.js';
@@ -291,6 +292,36 @@ async function main() {
     assert.equal(arms.size, 1, `指纹只该覆盖一棵候选树：${[...arms].join(', ')}`);
     assert.ok(!arms.has('TIGER_RQ-VAE'), '冻结基线混进指纹了');
     assert.ok(!arms.has('{arm}'), '{arm} 没有被填上');
+  });
+
+  await test('页面刷新打断的多步轮次：从记录里认得出该从下一步接上', async () => {
+    // 干净起点：这一栏之前跑过的轮次不该影响判断。
+    await fetch(`${base}/api/agents/agent-b/chats`, { method: 'DELETE' });
+    const roundId = 'round-resume-smoke-1';
+    const res = await fetch(`${base}/api/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        v: config.FRONTEND_VERSION,
+        profile: 'agent-b',
+        prompt: '第 0 步',
+        roundId,
+        stepIndex: 0,
+        stepTitle: '准备',
+        stepInstruction: '准备',
+        totalSteps: 3,
+        roundPrompt: '跑这一轮',
+      }),
+    });
+    assert.equal(res.status, 200);
+    await res.text();
+    const chats = await (await fetch(`${base}/api/agents/agent-b/chats`)).json();
+    const found = findUnfinishedRound(chats.records || []);
+    assert.ok(found, '应当认出这轮没跑完');
+    assert.equal(found.roundId, roundId);
+    assert.equal(found.nextIndex, 1);
+    assert.equal(found.totalSteps, 3);
+    assert.equal(found.auto, true, '步骤本身是好的，下一步只是没发出去 → 自动接上');
   });
 
   await test('重置会话就是把对话记录一起清掉（不留"只清上下文"这一说）', async () => {

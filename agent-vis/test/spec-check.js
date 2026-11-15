@@ -60,7 +60,7 @@ write(`${TREE}/distances/distance.py`, 'X = 1\n');
 write(`${TREE}/model/layers.py`,
   'ARM_NAME = "TIGER_fixture"\n'
   + '# depends on stage2_RQ-VAE/TIGER_other_rq/af3_potential.py (external!)\n'
-  + '# ok: stage2_RQ-VAE/TIGER_fixture/af3_potential.py and stage2_RQ-VAE/TIGER_RQ-VAE/train_config.py\n'
+  + '# ok: stage2_RQ-VAE/TIGER_fixture/af3_potential.py and stage2_RQ-VAE/baseline/TIGER_RQ-VAE/train_config.py\n'
   + '\ndef sinkhorn(x):\n    return x\n');
 // 测试：一个健康、一个无断言；metrics 名落地一个、缺一个
 write(`${TREE}/tests/test_ok.py`, 'def test_ok():\n    assert good_metric == 1\n');

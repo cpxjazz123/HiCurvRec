@@ -1,6 +1,7 @@
 import { createStore, applyChunk, roundEnded, handoffRequested } from './protocol.js?v=__ASSET_V__';
 import { buildRunRequestBody } from './run-request.js?v=__ASSET_V__';
 import { handoffResetsReceiver } from './handoff-rules.js?v=__ASSET_V__';
+import { findUnfinishedRound } from './round-resume.js?v=__ASSET_V__';
 
 /**
  * 前端渲染器。
@@ -93,7 +94,7 @@ let activeView = 'chat';
  * 服务端回报的号对不上，就说明浏览器里跑的是旧版 JS —— 直接提示硬刷新，
  * 而不是让旧版把新协议分片画成看不懂的卡片。
  */
-const FRONTEND_VERSION = '2026-11-14.32';
+const FRONTEND_VERSION = '2026-11-15.34';
 
 /**
  * 接口调用的根前缀，由服务端在首页里注入。
@@ -468,6 +469,9 @@ function createPanel(root) {
    * 画出来的东西跟当时跑的时候一模一样。
    */
   const runs = [];
+  // 已经试过接着跑的多步轮次：同一轮只自动接一次，别把自己接成死循环。
+  const resumeAttemptedRounds = new Set();
+
   // 每轮（roundId）的累计耗时：多步轮次里每一步是一次请求，
   // 「总耗时」要把这几步加起来，而不是每换一步就从头算。
   const roundTotals = new Map();
@@ -2145,6 +2149,9 @@ function createPanel(root) {
    * 某一步出错就停在那里：不接着往下跑，也不把半截结果交出去。
    */
   async function runRound(options, mySeq) {
+    // 接着上一次没跑完的轮次：步骤清单与轮次编号都用上一次那份，
+    // 从断掉的那一步往下走（页面刷新过一次之后，多步轮次就靠这条路接上）。
+    const resume = options.resume && typeof options.resume === 'object' ? options.resume : null;
     // 开跑前先把这一栏的步骤跟服务端对齐。
     //
     // 步骤是服务端那份为准（配置页改的就是它，脚本也能批量刷），
@@ -2152,14 +2159,17 @@ function createPanel(root) {
     // 这一轮就会照着旧的步骤跑（写出来的稿子带着已经被取消的字段）。
     await syncStepsFromServer();
     // 抄一份：跑的过程中用户改了配置，这一轮也不跟着变。
-    const plan = steps.map((step) => ({
-      title: step.title,
-      instruction: step.instruction,
-    }));
+    const plan = resume
+      ? resume.plan.map((step) => ({ title: step.title, instruction: step.instruction }))
+      : steps.map((step) => ({
+          title: step.title,
+          instruction: step.instruction,
+        }));
     // 交接是这一轮的最后一步：默认无条件交；配了交接条件，就由这一步的模型判定。
     // 一条步骤都没配的 agent（单次运行）不插这一步，交接保持原来的自动行为。
+    // 接上上一轮时不插：那一轮已经决定过要不要交。
     const handoffTargets = api.targets();
-    const hasHandoffStep = plan.length > 0 && handoffTargets.length > 0;
+    const hasHandoffStep = plan.length > 0 && handoffTargets.length > 0 && !resume;
     if (hasHandoffStep) {
       plan.push({
         title: '交接结论',
@@ -2181,9 +2191,9 @@ function createPanel(root) {
       typeof options.handoffFrom === 'string' && options.handoffFrom.trim() !== ''
         ? options.handoffFrom.trim()
         : DEFAULT_HANDOFF_SOURCE;
-    const roundInput = (
-      options.instruction !== undefined ? options.instruction : els.prompt.value
-    ).trim();
+    const roundInput = resume
+      ? (typeof resume.roundPrompt === 'string' ? resume.roundPrompt : '').trim()
+      : (options.instruction !== undefined ? options.instruction : els.prompt.value).trim();
 
     // 预期内的缺失：没有输入、上游也没交来东西、步骤里也没写指令 —— 没活可干。
     const hasInstruction = plan.some((step) => step.instruction.trim() !== '');
@@ -2195,7 +2205,10 @@ function createPanel(root) {
     }
 
     // 整轮的编号：这几步在服务端是同一个轮次里的几步。
-    const roundId = `round-${Date.now()}-${++roundSeq}`;
+    // 接上上一轮时沿用那一轮的编号 —— 服务端按 roundId 把几步归成一轮。
+    const roundId = resume && typeof resume.roundId === 'string' && resume.roundId !== ''
+      ? resume.roundId
+      : `round-${Date.now()}-${++roundSeq}`;
     // 开跑前记一份指纹：收尾时比一比，就知道**这一轮**有没有改到东西。
     //
     // 每一轮都要重新取：续轮沿用上一轮的起点的话，"这一轮改没改"就会被算成
@@ -2203,7 +2216,8 @@ function createPanel(root) {
     // 也永远判成"有进展"，循环就停不下来。
     roundStartFingerprint = await fetchFingerprint();
     const outputs = [];
-    for (let index = 0; index < plan.length; index += 1) {
+    const startIndex = resume && Number.isInteger(resume.startIndex) ? resume.startIndex : 0;
+    for (let index = startIndex; index < plan.length; index += 1) {
       // 被新的一轮顶掉了：这一轮到此为止。
       if (mySeq !== runSeq) return;
       const step = plan[index];
@@ -2586,6 +2600,38 @@ function createPanel(root) {
     // 回放完了没有"正在跑的那一轮"：往后的提示落在最外层，
     // 不落进最后一块历史里。
     currentRun = null;
+    // 多步轮次是浏览器一步一步发请求的：页面一刷新，浏览器里的那个循环就没了，
+    // 剩下的步骤再也不会被发出去 —— 面板看上去"卡住"。这里把那种轮次认出来，
+    // 步骤都好好的（最后一条是 done）就自动接上；人为中止或真出错的，等人决定。
+    const unfinished = findUnfinishedRound(records);
+    if (!unfinished) return;
+    if (!unfinished.auto) {
+      showNote(
+        `上一轮在第 ${unfinished.nextIndex + 1} 步停住了（${
+          unfinished.reason === 'aborted' ? '人为中止' : '出错'
+        }）：按「运行」会从头再跑一轮。`,
+      );
+      return;
+    }
+    if (resumeAttemptedRounds.has(unfinished.roundId)) return;
+    resumeAttemptedRounds.add(unfinished.roundId);
+    const resumePlan = steps.map((step) => ({
+      title: step.title,
+      instruction: step.instruction,
+    }));
+    if (resumePlan.length <= unfinished.nextIndex) {
+      showNote(`上一轮在第 ${unfinished.nextIndex + 1} 步断着，但这一步已经不在步骤清单里了。`);
+      return;
+    }
+    showNote(`上一轮在第 ${unfinished.nextIndex + 1} 步被页面刷新打断了，已经接着往下跑。`);
+    void run({
+      resume: {
+        roundId: unfinished.roundId,
+        startIndex: unfinished.nextIndex,
+        roundPrompt: unfinished.roundPrompt,
+        plan: resumePlan,
+      },
+    });
   }
 
   /**

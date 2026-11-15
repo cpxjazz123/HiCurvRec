@@ -47,7 +47,7 @@ await test('renameArm:false —— 目录名换了，内容与基线逐字节相
   assert.equal(fs.existsSync(abs(`stage2_RQ-VAE/${PRISTINE}`)), true);
   const diff = JSON.parse(
     (await PI_TOOLS.treeDiff.execute('c', {
-      baseline: 'stage2_RQ-VAE/TIGER_RQ-VAE',
+      baseline: 'stage2_RQ-VAE/baseline/TIGER_RQ-VAE',
       tree: `stage2_RQ-VAE/${PRISTINE}`,
     })).content[0].text,
   );

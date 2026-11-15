@@ -23,7 +23,7 @@ import {
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.join(HERE, '..', '..');
 /** 冻结基线树：用来分辨"新文件"与"基线里已有、这次要改的文件"。 */
-const BASELINE_ROOT = path.join(REPO, 'stage2_RQ-VAE', 'TIGER_RQ-VAE');
+const BASELINE_ROOT = path.join(REPO, 'stage2_RQ-VAE', 'baseline', 'TIGER_RQ-VAE');
 
 let passed = 0;
 const failures = [];
