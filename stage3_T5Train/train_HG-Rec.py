@@ -192,6 +192,12 @@ LOG_PATH      = "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/" + RQ
 SAVE_PATH     = "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/" + RQVAE_VARIANT + "/ckpt/"
 SEED          = 42
 
+# 2026-11-15: 逐行记录预测用的 top-k SID（owner 要求）。
+# 之前只记 target_rank（目标在第几名），丢掉了模型实际给出的商品与 SID，因此无法回答
+# "错成了哪个 SID"。开启后 final test 会写 predictions/rank<r>.jsonl，每行一个测试样本：
+#   global_row 全局测试行号；target_item/target_sid；target_rank；
+#   topk[].item 预测商品；topk[].sid_generated 模型实际生成的 SID；topk[].sid_canonical 该商品的规范 SID。
+SID_PREDICTION_DUMP = True
 PER_USER_DUMP = False
 
 class RunDirectoryNotPublishedError(RuntimeError):
@@ -386,6 +392,31 @@ def train(model, train_loader, optimizer, device, epoch, *, use_bf16=False):
     return total_loss / max(batches, 1)
 
 
+def sid_prediction_line(global_row, target_item, target_sid, target_rank, selected,
+                        generated_sids, canonical_sids):
+    """One JSON-serialisable dump line for a single test row.
+
+    Kept as a plain function so the format can be checked without a GPU: the evaluator hands it the
+    items it kept, the SID tuple each item was generated from (None for the deterministic fallback
+    fill), and the item -> canonical SID table from the dataset.
+    """
+    def as_list(tokens):
+        return None if tokens is None else [int(token) for token in tokens]
+
+    return {
+        "global_row": int(global_row),
+        "target_item": int(target_item),
+        "target_sid": as_list(target_sid),
+        "target_rank": None if target_rank is None else int(target_rank),
+        "topk": [
+            {"item": int(item),
+             "sid_generated": as_list(generated),
+             "sid_canonical": as_list(canonical_sids.get(int(item)))}
+            for item, generated in zip(selected, generated_sids)
+        ],
+    }
+
+
 def evaluate(
     model,
     eval_loader,
@@ -396,6 +427,9 @@ def evaluate(
     *,
     exclude_history=True,
     use_bf16=False,
+    sid_dump_path=None,
+    sid_dump_rank=0,
+    sid_dump_world=1,
 ):
     """Evaluate with RecBole's full item-level TIGER semantics.
 
@@ -421,6 +455,11 @@ def evaluate(
     recall_sums = {k: 0.0 for k in topk_list}
     ndcg_sums = {k: 0.0 for k in topk_list}
     per_user = [] if PER_USER_DUMP else None
+    sid_dump = None
+    if sid_dump_path:
+        from pathlib import Path as _Path
+        _Path(sid_dump_path).parent.mkdir(parents=True, exist_ok=True)
+        sid_dump = open(sid_dump_path, "w", encoding="utf-8")
     n_eval = 0
     with torch.inference_mode():
         for batch in tqdm(
@@ -474,6 +513,7 @@ def evaluate(
             seen_items = batch.get("seen_item_ids")
             seen_mask = batch.get("seen_mask")
             selected_rows = []
+            selected_sid_rows = []
             for row_index in range(batch_size):
                 excluded = set()
                 if exclude_history and seen_items is not None and seen_mask is not None:
@@ -486,6 +526,7 @@ def evaluate(
                         if keep
                     }
                 selected = []
+                selected_sids = []
                 selected_set = set()
                 for beam_index in range(beam_size):
                     token_tuple = tuple(
@@ -495,6 +536,7 @@ def evaluate(
                     if item_id is None or item_id in selected_set or item_id in excluded:
                         continue
                     selected.append(item_id)
+                    selected_sids.append(token_tuple)
                     selected_set.add(item_id)
                     if len(selected) == max_k:
                         break
@@ -503,6 +545,7 @@ def evaluate(
                         if item_id in selected_set or item_id in excluded:
                             continue
                         selected.append(item_id)
+                        selected_sids.append(None)
                         selected_set.add(item_id)
                         if len(selected) == max_k:
                             break
@@ -511,9 +554,11 @@ def evaluate(
                         f"Could not produce {max_k} item predictions for eval row {row_index}"
                     )
                 selected_rows.append(selected)
+                selected_sid_rows.append(selected_sids)
 
             target_items_cpu = target_items.detach().cpu().tolist()
             for row_index, selected in enumerate(selected_rows):
+                generated_for_row = selected_sid_rows[row_index]
                 target_item = int(target_items_cpu[row_index])
                 try:
                     rank_value = selected.index(target_item)
@@ -526,12 +571,25 @@ def evaluate(
                             "target_rank": rank_value,
                         }
                     )
+                if sid_dump is not None:
+                    sid_dump.write(json.dumps(sid_prediction_line(
+                        global_row_index(sid_dump_rank, n_eval + row_index, sid_dump_world),
+                        target_item,
+                        eval_dataset.item_to_code.get(target_item),
+                        rank_value,
+                        selected,
+                        generated_for_row,
+                        eval_dataset.item_to_code,
+                    )) + "\n")
                 for k in topk_list:
                     if rank_value is not None and rank_value < k:
                         recall_sums[k] += 1.0
                         ndcg_sums[k] += 1.0 / math.log2(rank_value + 2.0)
             n_eval += batch_size
 
+    if sid_dump is not None:
+        sid_dump.flush()
+        sid_dump.close()
     if n_eval == 0:
         raise ValueError("Cannot evaluate an empty split")
     if PER_USER_DUMP:
@@ -1280,6 +1338,14 @@ def main():
     if best_checkpoint is not None and os.path.exists(best_checkpoint):
         raw_model.load_state_dict(torch.load(best_checkpoint, map_location=device))
     _t_test_start = time.time()
+    # 逐行 SID 预测落盘：每个 rank 一个文件，目录与 _test_shards 同级，避免跨 rank 写同一文件
+    _prediction_path = None
+    if SID_PREDICTION_DUMP:
+        _prediction_dir = os.path.join(
+            config["log_path"], config["dataset_name"], cur_time, "predictions"
+        )
+        os.makedirs(_prediction_dir, exist_ok=True)
+        _prediction_path = os.path.join(_prediction_dir, f"rank{rank}.jsonl")
     _test_eval = evaluate(
         raw_model,
         test_loader,
@@ -1289,6 +1355,9 @@ def main():
         device,
         exclude_history=config["exclude_history"],
         use_bf16=config["bf16"],
+        sid_dump_path=_prediction_path,
+        sid_dump_rank=rank,
+        sid_dump_world=world_size,
     )
     if PER_USER_DUMP:
         shard_recalls, shard_ndcgs, shard_n, shard_per_user = _test_eval
@@ -1365,6 +1434,7 @@ def main():
         )
         test_result = {
             "best_checkpoint": best_checkpoint,
+            "predictions": _prediction_path,
             "n_eval": n_eval_total,
             **{f"test_{key}": value for key, value in recalls.items()},
             **{f"test_{key}": value for key, value in ndcgs.items()},
