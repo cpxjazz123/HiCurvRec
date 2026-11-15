@@ -1,104 +1,29 @@
 #!/bin/sh
-# Make `omp-<profile>` work on ANY node, with the same plugins everywhere.
+# omp-bootstrap — the historical entry point, kept working.
 #
-# The reason this exists: an omp profile keeps its databases under
-# /var/tmp/omp_local/roots/<profile> (node-local ext4, on purpose -- SQLite WAL on
-# NFS raises SIGBUS), while $HOME is NFS.  So on a fresh node the profile root,
-# the wrapper and the plugins are all missing, and /room never appears.
+# Since 2026-11-15 the profile state lives in $HOME (NFS), so there is no
+# node-local installation to provision any more: `omp-local` creates the
+# profile root, links the shared plugin store and the rooms, restores the
+# configuration snapshot and then runs omp.
 #
-# This script is idempotent and cheap: it provisions the local root, copies the
-# binary from the shared copy, and points the profile's plugin directory at a
-# SHARED plugin store, so a plugin installed once is visible on every node.
+# The two verbs that operate on the shared configuration snapshot are kept:
 #
-# Usage:  tools/env/omp-bootstrap <profile> [omp args...]
+# Usage:
+#   omp-bootstrap <profile> [omp args...]      run omp on that profile
+#   omp-bootstrap push|pull <profile> [--with-db]   snapshot handling
 set -e
+
 prof=${1:?usage: omp-bootstrap <profile> [omp args...]}
 shift || true
-case $prof in *[!A-Za-z0-9_-]*|'') echo "omp-bootstrap: bad profile name: $prof" >&2; exit 2 ;; esac
-[ "$#" -gt 0 ] || true
 
-LOCAL=/var/tmp/omp_local
-STATE=$HOME/bin/omp-state
-SHARED=/fs04/ar57/wenyu/omp_plugins          # shared, node-independent plugin store
-HERE=$(cd "$(dirname "$0")" && pwd)
-REPO_SHARED=/fs04/ar57/wenyu/GeneRec
+case $prof in
+  *[!A-Za-z0-9_-]*|'') echo "omp-bootstrap: bad profile name: $prof" >&2; exit 2 ;;
+esac
 
-mkdir -p "$LOCAL/bin" "$LOCAL/roots" "$LOCAL/logs" "$LOCAL/locks"
-
-# 1) the binary: copy once per node (running it from NFS is slow and can block)
-if [ ! -x "$LOCAL/bin/omp" ]; then
-  if [ -x "$HOME/.local/bin/omp" ]; then
-    echo "omp-bootstrap: seeding $LOCAL/bin/omp from ~/.local/bin/omp"
-    cp "$HOME/.local/bin/omp" "$LOCAL/bin/omp"
-  else
-    echo "omp-bootstrap: no omp binary to seed from" >&2; exit 2
-  fi
+if [ "${1:-}" = push ] || [ "${1:-}" = pull ]; then
+  action=$1
+  shift
+  exec "$HOME/bin/omp-state" "$action" "$prof" "$@"
 fi
 
-# 2) the wrapper itself: prefer the copy that sits next to this script (both on
-#    NFS, so one copy serves every node), fall back to the repository checkout.
-# Refresh, do not just install-if-missing: a stale wrapper on the node may be an
-# older revision that execs the NFS copy of the binary, and that copy faults with
-# SIGBUS ("error (core dumped)") exactly like the bug the wrapper exists to stop.
-for candidate in "$HERE/omp-local" "$REPO_SHARED/tools/setup/omp-local"; do
-  if [ -x "$candidate" ]; then
-    if ! cmp -s "$candidate" "$LOCAL/bin/omp-local" 2>/dev/null; then
-      cp "$candidate" "$LOCAL/bin/omp-local"
-      chmod +x "$LOCAL/bin/omp-local"
-      echo "omp-bootstrap: refreshed $LOCAL/bin/omp-local"
-    fi
-    break
-  fi
-done
-[ -x "$LOCAL/bin/omp-local" ] || { echo "omp-bootstrap: cannot find omp-local to install" >&2; exit 2; }
-
-# 3) the profile root and its home-facing symlink
-root=$LOCAL/roots/$prof
-mkdir -p "$root"
-link=$HOME/omp_local_$prof
-if [ ! -L "$link" ]; then
-  [ -e "$link" ] && { echo "omp-bootstrap: $link exists and is not a symlink" >&2; exit 2; }
-  ln -s "$root" "$link"
-fi
-
-# 4) plugins: one shared store, linked into this node's profile.  Symlinking the
-#    directory (not its contents) keeps `omp plugin install` working anywhere.
-mkdir -p "$SHARED/$prof"
-shared_plugins=$SHARED/$prof
-local_plugins=$root/plugins
-if [ ! -L "$local_plugins" ]; then
-  if [ -d "$local_plugins" ]; then
-    cp -an "$local_plugins/." "$shared_plugins/" 2>/dev/null || true
-    rm -rf "$local_plugins"
-  fi
-  ln -s "$shared_plugins" "$local_plugins"
-fi
-
-# 4b) configuration that must follow the user across nodes (model roles,
-#     providers, package list, optionally history).  Databases live on the local
-#     disk for a reason, so only a missing file is restored by default.
-if [ -x "$STATE" ]; then
-  if [ "${1:-}" = push ] || [ "${1:-}" = pull ]; then
-    action=$1; shift
-    exec "$STATE" "$action" "$prof" "$@"
-  fi
-  "$STATE" restore "$prof" >/dev/null 2>&1 || true
-fi
-
-# 4c) rooms are shared too.  The extension keeps them under <agentDir>/rooms, and
-#     the agent directory is node-local, so rooms opened on one node were invisible
-#     on the others.  One shared directory fixes that; it holds only small JSON
-#     files (no SQLite, no mmap), so NFS is safe here.
-SHARED_ROOMS=/fs04/ar57/wenyu/omp_rooms
-mkdir -p "$SHARED_ROOMS"
-local_rooms=$root/agent/rooms
-if [ ! -L "$local_rooms" ]; then
-  if [ -d "$local_rooms" ] && [ "$(ls -A "$local_rooms" 2>/dev/null)" ]; then
-    cp -an "$local_rooms/." "$SHARED_ROOMS/" 2>/dev/null || true
-  fi
-  [ -d "$local_rooms" ] && rm -rf "$local_rooms"
-  ln -s "$SHARED_ROOMS" "$local_rooms"
-fi
-
-# 5) hand over to the wrapper (which holds the per-profile lock and runs omp)
-exec "$LOCAL/bin/omp-local" "$prof" "$@"
+exec "$HOME/bin/omp-local" "$prof" "$@"
