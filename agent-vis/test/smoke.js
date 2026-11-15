@@ -351,14 +351,24 @@ async function main() {
   });
 
   await test('循环闸的指纹：agent 算自己被审的文件', async () => {
-    const all = await (await fetch(`${base}/api/ideas/fingerprint`)).json();
-    assert.ok(Object.keys(all.files || {}).length > 1, '默认要覆盖一摊文件');
+    // ideas/ 里可能一个待做方向都没有（跑完的都归档了）：那时没有 math.json 可审，
+    // 指纹规则也就无从验证。测试自己摆一个临时方向，验完拆掉。
+    const probeDir = path.join(config.SANDBOX_ROOT, 'ideas', 'ZZ_probe_fingerprint_idea');
+    fs.rmSync(probeDir, { recursive: true, force: true });
+    fs.mkdirSync(probeDir, { recursive: true });
+    fs.writeFileSync(path.join(probeDir, 'math.json'), '{"formulas":[]}\n', 'utf8');
+    try {
+      const all = await (await fetch(`${base}/api/ideas/fingerprint`)).json();
+      assert.ok(Object.keys(all.files || {}).length > 1, '默认要覆盖一摊文件');
 
-    const math = await (await fetch(`${base}/api/ideas/fingerprint?agentId=agent-math`)).json();
-    const names = Object.keys(math.files || {});
-    assert.equal(names.length, 1, `AGENT MATH 只该看一份 math.json，实际 ${names.length} 份`);
-    assert.match(names[0], /^ideas\/.+\/math\.json$/, `看的不是 math.json：${names[0]}`);
-    assert.equal(typeof math.fingerprint, 'string');
+      const math = await (await fetch(`${base}/api/ideas/fingerprint?agentId=agent-math`)).json();
+      const names = Object.keys(math.files || {});
+      assert.equal(names.length, 1, `AGENT MATH 只该看一份 math.json，实际 ${names.length} 份`);
+      assert.match(names[0], /^ideas\/.+\/math\.json$/, `看的不是 math.json：${names[0]}`);
+      assert.equal(typeof math.fingerprint, 'string');
+    } finally {
+      fs.rmSync(probeDir, { recursive: true, force: true });
+    }
   });
 
   await test('runTests 在 CPU 上跑候选树 tests/（自测用）', async () => {

@@ -39,68 +39,6 @@ from losses import build_loss
 from model import RQVAE
 from train_config import load_train_config
 
-import dataset_fields
-import runtime_context
-
-# === 机制插件（可选）=======================================================
-# 这棵树里若存在 mechanism.py，就用它；没有时训练与冻结基线逐行为一致。
-# 机制只允许写这一个文件；路径、超参、DDP、导出都由本文件与框架负责。
-try:
-    import mechanism as MECHANISM
-except ImportError:  # 冻结基线没有 mechanism.py —— 正常路径
-    MECHANISM = None
-
-
-def _mechanism_hook(name, default=None):
-    if MECHANISM is None:
-        return default
-    return getattr(MECHANISM, name, default)
-
-
-def _mechanism_prepare(train_ids, all_ids) -> dict:
-    prepare = _mechanism_hook("prepare")
-    if not callable(prepare):
-        return {}
-    result = prepare(train_ids=train_ids, all_ids=all_ids)
-    return result if isinstance(result, dict) else {}
-
-
-def _mechanism_context(batch_fields, training: bool) -> None:
-    """每个 batch/推理前把当前字段交给机制（字段由 dataset_fields 决定，不假设 item id）。"""
-    setter = _mechanism_hook("set_context")
-    if callable(setter):
-        setter(batch_fields, training=training)
-
-def publish_full_table(ids, device=None, *, phase="eval"):
-    """Publish the row fields a full-table pass sees (init / eval / export).
-
-    The mechanism distance reads row identity from ``runtime_context``; every call that runs
-    the quantiser over the *whole* item table must publish ids aligned with those rows. A
-    training batch's fields must not leak into such a pass (the last batch can be short).
-    """
-    tensor = ids if torch.is_tensor(ids) else torch.as_tensor(ids, dtype=torch.long)
-    if device is not None:
-        tensor = tensor.to(device)
-    runtime_context.set_fields({"item_id": tensor, "row": tensor.clone()}, phase=phase)
-
-
-
-def _mechanism_readouts() -> dict:
-    fn = _mechanism_hook("readouts")
-    if not callable(fn):
-        return {}
-    out = fn()
-    return out if isinstance(out, dict) else {}
-
-
-def _mechanism_switches() -> dict:
-    fn = _mechanism_hook("switches")
-    if not callable(fn):
-        return {}
-    out = fn()
-    return out if isinstance(out, dict) else {}
-
-
 
 # === 路径常量（无绝对路径；由文件自身向上找仓库标记推导）===
 # Stage0 emits user-event parquet directly into results/stage0_build_parquet/.
@@ -140,10 +78,6 @@ CONFIG = load_train_config(CONFIG_FILE)
 # 损失与距离都由注册表给出；训练文件只负责导入并把它们接到模型上。
 CRITERION = build_loss(CONFIG)
 DISTANCE = build_distance(CONFIG)
-# 机制自带距离时用它（名字由 mechanism.py 的 DISTANCE["name"] 给出）。
-_mechanism_distance = _mechanism_hook("DISTANCE")
-if isinstance(_mechanism_distance, dict) and isinstance(_mechanism_distance.get("name"), str):
-    DISTANCE = build_distance(name=_mechanism_distance["name"])
 
 EPOCHS              = CONFIG.EPOCHS
 BATCH_SIZE_PER_RANK = CONFIG.BATCH_SIZE_PER_RANK     # 每卡 batch, 总 batch = 每卡 * world_size
@@ -352,8 +286,7 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
-    # 数据集产出 (embedding, {字段}) —— 字段由 dataset_fields.py 决定，宿主只转发。
-    train_dataset = dataset_fields.build(train_embeddings, train_ids)
+    train_dataset = TensorDataset(train_embeddings)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -361,7 +294,6 @@ def main() -> None:
         shuffle=(train_sampler is None),
         sampler=train_sampler,
         num_workers=NUM_WORKERS,
-        collate_fn=dataset_fields.collate,
         pin_memory=device.type == "cuda",
         persistent_workers=False,  # 2026-09-24: 关闭避免每个 epoch 都 fork 一次
     )
@@ -385,12 +317,6 @@ def main() -> None:
     if rank == 0:
         print(f"[RecBole RQ-VAE] device={device} all_items={len(all_embeddings)} train_items={len(train_embeddings)} world_size={world_size}", flush=True)
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
-        _mech_state = _mechanism_prepare(
-            train_ids=np.asarray(train_ids, dtype=np.int64),
-            all_ids=np.arange(len(embeddings), dtype=np.int64),
-        )
-        if _mech_state or _mechanism_switches():
-            _record(rank, "mechanism", state=_mech_state, switches=_mechanism_switches())
         _record(rank, "train_start", config_sha256=CONFIG.sha256, config_path=CONFIG.path, epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size)
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
@@ -398,7 +324,6 @@ def main() -> None:
         print("[RecBole RQ-VAE] initializing codebooks with KMeans", flush=True)
     raw_module = model.module if isinstance(model, DDP) else model
     with torch.no_grad():
-        publish_full_table(train_ids, device, phase="init")
         raw_module.init_codebook(train_embeddings.to(device))
     if world_size > 1:
         dist.barrier()
@@ -416,11 +341,8 @@ def main() -> None:
         losses: list[float] = []
         recons: list[float] = []
         _epoch_t0 = time.time()
-        for batch, batch_fields in loader:
+        for (batch,) in loader:
             batch = batch.to(device, non_blocking=True)
-            batch_fields = {name: value.to(device, non_blocking=True) for name, value in batch_fields.items()}
-            runtime_context.set_fields(batch_fields, phase="train")
-            _mechanism_context(batch_fields, True)
             optimizer.zero_grad(set_to_none=True)
             reconstructed, quant_parts, _, _ = model(batch)
             # 唯一接入点：损失项与权重在 losses/ 里，这里只拿到总损失与分项。
@@ -465,9 +387,6 @@ def main() -> None:
         try:
             if rank == 0:
                 with torch.no_grad():
-                    # Full-table pass: publish the ids that align with all_embeddings
-                    # (not the last training batch's fields).
-                    publish_full_table(torch.arange(len(all_embeddings)), device)
                     raw_tokens = raw_module.get_indices(
                         all_embeddings.to(device), infer_use_sk=False
                     ).cpu().numpy().astype(np.int64)
@@ -522,9 +441,6 @@ def main() -> None:
             layer._skip_ddp_reduce = True
         try:
             with torch.no_grad():
-                _full_ids = torch.arange(len(all_embeddings), device=device)
-                publish_full_table(_full_ids)
-                _mechanism_context({"item_id": _full_ids, "row": _full_ids}, False)
                 raw_tokens = raw_module.get_indices(
                     all_embeddings.to(device), infer_use_sk=False
                 ).cpu().numpy().astype(np.int64)
@@ -539,7 +455,7 @@ def main() -> None:
         payload = {str(item_id): [int(value) for value in row] for item_id, row in enumerate(sid)}
         OUTPUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         print(f"[RecBole RQ-VAE] exported raw_shape={raw_tokens.shape} sid_shape={sid.shape} unique={len(np.unique(sid, axis=0))} -> {OUTPUT_SID}", flush=True)
-        _record(rank, "train_end", total_wall_time_s=round(time.time() - _T0, 3), **_mechanism_readouts(), final_collision=final_collision, checkpoint_selection="final_epoch", sid_shape=list(sid.shape), output_sid=str(OUTPUT_SID), output_json=str(OUTPUT_JSON), unique_after_extend=len(np.unique(sid, axis=0)))
+        _record(rank, "train_end", total_wall_time_s=round(time.time() - _T0, 3), final_collision=final_collision, checkpoint_selection="final_epoch", sid_shape=list(sid.shape), output_sid=str(OUTPUT_SID), output_json=str(OUTPUT_JSON), unique_after_extend=len(np.unique(sid, axis=0)))
 
     if world_size > 1:
         dist.barrier()

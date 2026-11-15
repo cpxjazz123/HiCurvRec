@@ -220,7 +220,10 @@ function fingerprintWatchedFiles(patterns = [], arm = '') {
   }
   for (const entry of candidates) {
     if (!entry.isDirectory()) continue;
-    if (entry.name === 'TIGER_RQ-VAE') continue; // 冻结基线：不该变，也不该算
+    // 容器目录不是活跃臂：baseline/ 是冻结基线（只读，不该算进"有没有进展"），
+    // _archive/ 是历史树归档（同样不算）。顶层只留一个活跃臂 stage2_RQ-VAE/<ARM>/。
+    if (entry.name === 'baseline' || entry.name === '_archive') continue;
+    if (entry.name === 'TIGER_RQ-VAE') continue; // 旧位置的冻结基线
     walk(path.join(stage2, entry.name), null);
   }
   return files;

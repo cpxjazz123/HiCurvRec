@@ -24,7 +24,9 @@ import { currentWorkdir, ideasArchiveDir, IDEAS_ARCHIVE_NAME } from './config.js
 export const ACTIVE_STATUS = 'not_run';
 
 /** 归档规则，出现在输出与文档里，跑的时候只用这一份。 */
-export const ARCHIVE_RULE = `result.status 不是 ${ACTIVE_STATUS} 就归档到 ideas/${IDEAS_ARCHIVE_NAME}/`;
+export const ARCHIVE_RULE =
+  `result.status（idea 文档里的 result 字段，或同目录 result.json）不是 ${ACTIVE_STATUS} ` +
+  `就归档到 ideas/${IDEAS_ARCHIVE_NAME}/`;
 
 /**
  * 扫描一份目录并按规则搬文件。
@@ -76,26 +78,46 @@ export function archiveReady({ ideasDir, archiveDir, dryRun = false } = {}) {
       broken.push({ name, error: err && err.message ? err.message : String(err) });
       continue;
     }
+    // 状态有两个来源：idea 文档里的 result 字段（老写法），或者同目录的 result.json
+    //（genrec.idea.v6 的顶层只有 schema / arm / sections，状态归轮次登记，写在旁挂文件里）。
+    const sidecar = path.join(path.dirname(from), 'result.json');
+    let sidecarStatus = null;
+    try {
+      const sideDoc = JSON.parse(fs.readFileSync(sidecar, 'utf8'));
+      if (sideDoc && typeof sideDoc.status === 'string') sidecarStatus = sideDoc.status;
+    } catch {
+      sidecarStatus = null; // 没有旁挂文件不是错：状态本来就可能还没写
+    }
     const status =
-      doc && doc.result && typeof doc.result.status === 'string' ? doc.result.status : null;
+      doc && doc.result && typeof doc.result.status === 'string' ? doc.result.status : sidecarStatus;
     if (!status || status === ACTIVE_STATUS) {
       kept.push({ name, status });
       continue;
     }
     if (!dryRun) {
-      const to = path.join(target, relative);
-      fs.mkdirSync(path.dirname(to), { recursive: true });
-      fs.renameSync(from, to);
-      // 方向目录空了就删掉，ideas/ 里不留空壳。
-      let parent = path.dirname(from);
-      while (parent !== source && parent.startsWith(source)) {
-        try {
-          if (fs.readdirSync(parent).length > 0) break;
-          fs.rmdirSync(parent);
-        } catch {
-          break;
+      // 方向目录整目录搬走（idea + math.json + result.json 一起）：
+      // 只搬 idea 文档的话，同目录的公式与状态会留在 ideas/ 里，方向就被拆散了。
+      const dir = path.dirname(from);
+      // 方向目录（ideas/ 的直接子目录）整目录搬走：公式、状态、参考件都跟着走。
+      if (path.dirname(dir) === source) {
+        const toDir = path.join(target, path.dirname(relative));
+        fs.mkdirSync(path.dirname(toDir), { recursive: true });
+        fs.renameSync(dir, toDir);
+      } else {
+        const to = path.join(target, relative);
+        fs.mkdirSync(path.dirname(to), { recursive: true });
+        fs.renameSync(from, to);
+        // 方向目录空了就删掉，ideas/ 里不留空壳。
+        let parent = path.dirname(from);
+        while (parent !== source && parent.startsWith(source)) {
+          try {
+            if (fs.readdirSync(parent).length > 0) break;
+            fs.rmdirSync(parent);
+          } catch {
+            break;
+          }
+          parent = path.dirname(parent);
         }
-        parent = path.dirname(parent);
       }
     }
     moved.push({ name, status });

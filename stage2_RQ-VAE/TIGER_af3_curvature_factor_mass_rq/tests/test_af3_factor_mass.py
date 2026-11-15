@@ -11,6 +11,9 @@ from __future__ import annotations
 
 import math
 import sys
+import types
+
+sys.path.insert(0, __file__.rsplit("/tests/", 1)[0])
 
 import numpy as np
 import pandas as pd
@@ -19,7 +22,24 @@ import torch
 
 sys.path.insert(0, __file__.rsplit("/tests/", 1)[0])
 
-import runtime_context  # noqa: E402
+# The per-row item-id channel belongs to the HOST (`runtime_context`), not to the
+# candidate tree: the idea's touch list is distances/ only. Tests install a tiny
+# stand-in module here, and `distances/distance.py` imports it lazily.
+_RUNTIME = types.ModuleType("runtime_context")
+_CONTEXT: dict = {}
+
+
+def _set_fields(values, *, phase: str = "train") -> None:
+    _CONTEXT["values"] = dict(values or {})
+    _CONTEXT["phase"] = phase
+
+
+_RUNTIME.set_fields = _set_fields
+_RUNTIME.get = lambda name, default=None: _CONTEXT.get("values", {}).get(name, default)
+_RUNTIME.clear = lambda: _CONTEXT.clear()
+sys.modules.setdefault("runtime_context", _RUNTIME)
+runtime_context = _RUNTIME  # noqa: E402
+
 from distances import DEFAULT, DISTANCES, build_distance  # noqa: E402
 from distances import distance as D  # noqa: E402
 
@@ -472,9 +492,9 @@ def test_table_is_built_from_train_only_and_cached_atomically(tmp_path, monkeypa
         "history": [[0, 1, 2], [1, 2, 3], [2, 3, 4], [4, 5], [5, 6, 7]],
         "target": [5, 6, 7, 8, 9],
     })
-    built = D.build_p_table(frame)
+    built = D.build_p_table(frame, num_items=11)
     shares = built["p"]
-    assert shares.size == int(max(max(seq) for seq in D.sequences(frame))) + 1
+    assert shares.size == 11
     assert np.all(shares > 0.0) and np.all(shares < 1.0)
     assert np.allclose(shares, (D.average_ranks(built["kappa_bar"]) - 0.5) / shares.size)
     assert built["digest"] == D._split_digest(split)
@@ -482,7 +502,7 @@ def test_table_is_built_from_train_only_and_cached_atomically(tmp_path, monkeypa
     target = tmp_path / "af3_factor_mass_p.npz"
     D.write_p_table(built, target)
     assert target.is_file() and not target.with_name(target.name + ".tmp").exists()
-    loaded = D.read_p_table(target)
+    loaded = D.read_p_table(target, num_items=11)
     assert np.allclose(loaded["p"], shares)
     assert np.allclose(loaded["kappa_bar"], built["kappa_bar"])
     assert loaded["num_items"] == shares.size
@@ -490,4 +510,45 @@ def test_table_is_built_from_train_only_and_cached_atomically(tmp_path, monkeypa
     # a cache built from another split is refused, never silently rebuilt
     split.write_bytes(b"another-split")
     with pytest.raises(ValueError):
-        D.read_p_table(target)
+        D.read_p_table(target, num_items=11)
+
+
+def test_table_covers_the_full_item_space(tmp_path, monkeypatch):
+    """`N` is the FULL item table size, never the largest train-graph id (math.json N)."""
+    split = tmp_path / "train.parquet"
+    split.write_bytes(b"unit-test-train-split")
+    monkeypatch.setattr(D, "train_parquet", lambda: split)
+
+    frame = pd.DataFrame({"history": [[0, 1, 2], [2, 3]], "target": [3, 4]})
+    built = D.build_p_table(frame, num_items=12)
+    assert built["num_items"] == 12
+    assert built["item_ids"].tolist() == list(range(12))
+    assert built["p"].size == 12
+    assert np.allclose(built["p"],
+                       (D.average_ranks(built["kappa_bar"]) - 0.5) / 12.0)
+
+    # ids absent from the train graph keep a row (graph-mean potential), not a hole
+    seen = np.unique(np.concatenate(D.sequences(frame)))
+    absent = np.setdiff1d(np.arange(12), seen)
+    assert absent.size > 0
+    assert np.allclose(built["kappa_bar"][absent],
+                       float(np.mean(built["kappa_bar"][built["degrees"] > 0])))
+
+    target = tmp_path / "full.npz"
+    D.write_p_table(built, target)
+    assert D.read_p_table(target, num_items=12)["num_items"] == 12
+    # a cache covering fewer items than the full item table is refused
+    with pytest.raises(ValueError):
+        D.read_p_table(target, num_items=13)
+
+    # an edge id outside the full item table is a hard error, not a silent truncation
+    with pytest.raises(ValueError):
+        D.build_p_table(frame, num_items=4)
+
+
+def test_missing_item_id_channel_fails_loud(monkeypatch):
+    """No host channel means no `item_id`: fail loud, never fall back to 0.5."""
+    latent, words = make_pair(rows=2, seed=10)
+    monkeypatch.setitem(sys.modules, "runtime_context", None)
+    with pytest.raises(ValueError):
+        D.distances(latent, words)

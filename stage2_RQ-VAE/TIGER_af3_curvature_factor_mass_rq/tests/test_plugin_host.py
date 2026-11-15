@@ -1,132 +1,90 @@
-"""The plugin host: no mechanism == the frozen baseline; one mechanism == one file.
+"""Regression: the candidate ships NO plug-in host (the idea's touch list is distances/).
 
-These tests never train. They check the seams the host offers (dataset shape, context
-hand-off, prepare/readouts/switches, lazy distance registration) and the default path
-that must stay identical to the baseline.
+Earlier revisions let a tree-local ``mechanism.py`` register itself through
+``distances/__init__.py`` and edited ``train_rqvae.py`` / added ``dataset_fields.py`` /
+``runtime_context.py`` to publish row fields. The frozen surface allows neither: the
+trainer, the dataset and the row-field channel are host-owned. These checks pin the
+removed plug-in surface so it cannot come back, and pin that the trainer is the frozen
+baseline with only ``ARM_NAME`` changed.
+
+Everything here is source-level on purpose: it must not depend on how pytest put the
+tree on ``sys.path``.
 """
 
 from __future__ import annotations
 
 import sys
-from types import SimpleNamespace
-
-import numpy as np
+from pathlib import Path
 
 import pytest
-import torch
-
-sys.path.insert(0, __file__.rsplit("/tests/", 1)[0])
-
-import train_rqvae  # noqa: E402
 
 
-def test_without_mechanism_the_host_behaves_like_the_baseline(monkeypatch):
-    monkeypatch.setattr(train_rqvae, "MECHANISM", None)
-    assert train_rqvae._mechanism_prepare([0, 1], [0, 1, 2]) == {}
-    assert train_rqvae._mechanism_readouts() == {}
-    assert train_rqvae._mechanism_switches() == {}
-    train_rqvae._mechanism_context(torch.tensor([0]), True)  # no-op, must not raise
-    assert train_rqvae.DISTANCE.__module__ == "distances.distance"
+def _find_tree():
+    """The candidate root: probe from this file and from the entries pytest put on sys.path."""
+    candidates = [Path(__file__).absolute().parent.parent]
+    for entry in list(sys.path):
+        start = Path(entry).absolute()
+        candidates.append(start)
+    for candidate in candidates:
+        for parent in [candidate, *candidate.parents]:
+            if (parent / "distances" / "distance.py").is_file():
+                return parent
+    return None
 
 
-def test_runtime_context_publishes_named_fields():
-    import runtime_context
-
-    runtime_context.clear()
-    assert runtime_context.get("item_id") is None
-    assert runtime_context.fields() == {}
-    assert runtime_context.phase() == "train"
-    runtime_context.set_fields({"item_id": torch.tensor([5, 6, 7]), "user_id": torch.tensor([1, 1, 2])}, phase="eval")
-    assert runtime_context.get("item_id").tolist() == [5, 6, 7]
-    assert runtime_context.has("user_id")
-    assert sorted(runtime_context.fields()) == ["item_id", "user_id"]
-    assert runtime_context.phase() == "eval"
-    runtime_context.clear()
-    assert runtime_context.fields() == {}
+TREE = _find_tree()
+pytestmark = pytest.mark.skipif(
+    TREE is None,
+    reason="the tree root is not reachable from this interpreter's cwd; "
+           "source-level regression checks need it",
+)
 
 
-def test_dataset_fields_default_view_and_collate():
-    import dataset_fields
-
-    embeddings = torch.arange(12, dtype=torch.float32).reshape(4, 3)
-    dataset = dataset_fields.build(embeddings, np.array([7, 8, 9, 10], dtype=np.int64))
-    embedding_row, row_fields = dataset[2]
-    assert embedding_row.tolist() == [6.0, 7.0, 8.0]
-    assert list(row_fields) == ["item_id"]
-    assert int(row_fields["item_id"]) == 9
-    batch = [dataset[i] for i in range(4)]
-    stacked_embeddings, stacked_fields = dataset_fields.collate(batch)
-    assert stacked_embeddings.shape == (4, 3)
-    assert stacked_fields["item_id"].tolist() == [7, 8, 9, 10]
+def _repository_root() -> Path:
+    for parent in [TREE, *TREE.parents]:
+        if (parent / "stage2_RQ-VAE").is_dir():
+            return parent
+    raise AssertionError("cannot locate the repository root above " + str(TREE))
 
 
-def test_with_mechanism_the_context_and_hooks_are_used(monkeypatch):
-    seen = {}
+def test_registry_is_static_and_trains_the_mechanism():
+    source = (TREE / "distances" / "__init__.py").read_text(encoding="utf-8")
+    assert "_register_from_mechanism" not in source
+    assert "import mechanism" not in source
+    assert 'DISTANCES.get(name)' in source
+    assert '"af3_factor_mass"' in source and '"euclidean"' in source
+    assert 'DEFAULT = "af3_factor_mass"' in source
+    assert "raise DistanceError" in source
 
-    def prepare(train_ids, all_ids):
-        seen["prepare"] = (list(train_ids), list(all_ids))
-        return {"items": len(all_ids)}
 
-    def set_context(batch_fields, *, training):
-        seen.setdefault("context", []).append((sorted(batch_fields), training))
+def test_mechanism_files_do_not_reference_a_plug_in_host():
+    for name in ("distances/distance.py", "distances/__init__.py"):
+        source = (TREE / name).read_text(encoding="utf-8")
+        assert "import mechanism" not in source, name
+        assert "mechanism_base" not in source, name
+        assert "dataset_fields" not in source, name
 
-    fake = SimpleNamespace(
-        prepare=prepare,
-        set_context=set_context,
-        readouts=lambda: {"ratio": 0.5},
-        switches=lambda: {"behaviour_off": False},
-        DISTANCE={"name": "fake_cost"},
+
+def test_train_entry_is_the_frozen_baseline_plus_arm_name():
+    tree_source = (TREE / "train_rqvae.py").read_text(encoding="utf-8")
+    for banned in ("import mechanism", "mechanism_base", "dataset_fields",
+                   "publish_full_table", "_mechanism_"):
+        assert banned not in tree_source, banned
+
+    baseline = (_repository_root() / "stage2_RQ-VAE" / "baseline" / "TIGER_RQ-VAE"
+                / "train_rqvae.py").read_text(encoding="utf-8")
+    normalised = tree_source.replace(
+        'ARM_NAME = "TIGER_af3_curvature_factor_mass_rq"',
+        'ARM_NAME = "TIGER_RQ-VAE"',
     )
-    monkeypatch.setattr(train_rqvae, "MECHANISM", fake)
-
-    assert train_rqvae._mechanism_prepare([7, 8], [7, 8, 9, 10]) == {"items": 4}
-    assert seen["prepare"] == ([7, 8], [7, 8, 9, 10])
-    train_rqvae._mechanism_context({'item_id': torch.tensor([7, 8, 9, 10])}, True)
-    assert seen["context"] == [(["item_id"], True)]
-    assert train_rqvae._mechanism_readouts() == {"ratio": 0.5}
-    assert train_rqvae._mechanism_switches() == {"behaviour_off": False}
+    assert normalised == baseline
 
 
-def test_mechanism_distance_is_registered_lazily(tmp_path, monkeypatch):
-    import importlib
-    import distances
-
-    module = tmp_path / "mechanism.py"
-    module.write_text(
-        "def _cost(latent, codebook):\n"
-        "    return latent @ codebook.t()\n"
-        "DISTANCE = {'name': 'plugin_cost', 'function': _cost, 'description': 'from a test'}\n",
-        encoding="utf-8",
-    )
-    monkeypatch.syspath_prepend(str(tmp_path))
-    sys.modules.pop("mechanism", None)
-    try:
-        with pytest.raises(distances.DistanceError):
-            distances.build_distance(name="missing_metric")
-        fn = distances.build_distance(name="plugin_cost")
-        assert callable(fn)
-        assert fn(torch.ones(1, 3), torch.ones(2, 3)).shape == (1, 2)
-    finally:
-        sys.modules.pop("mechanism", None)
-        # 注册表是进程级的：把测试加进去的那条清掉，避免影响别的用例。
-        distances.DISTANCES.pop("plugin_cost", None)
-
-def test_full_table_pass_publishes_ids_aligned_with_its_rows():
-    """A full-table pass must not inherit the last (short) training batch's fields."""
-    import inspect
-
-    import runtime_context
-
-    runtime_context.clear()
-    runtime_context.set_fields({"item_id": torch.arange(3)}, phase="train")  # last batch, short
-    train_rqvae.publish_full_table(torch.arange(7))
-    assert runtime_context.get("item_id").tolist() == list(range(7))
-    assert runtime_context.get("row").tolist() == list(range(7))
-    assert runtime_context.phase() == "eval"
-
-    # The eval pass over all_embeddings must publish before it calls get_indices.
-    source = inspect.getsource(train_rqvae.main)
-    publish_at = source.index("publish_full_table(torch.arange(len(all_embeddings))")
-    call_at = source.index("raw_module.get_indices(")
-    assert publish_at < call_at, "the full-table pass must publish its ids before get_indices"
-
+def test_the_item_id_channel_is_read_lazily_from_the_host():
+    """`distances/distance.py` reads `runtime_context.get("item_id")` lazily, not at import."""
+    source = (TREE / "distances" / "distance.py").read_text(encoding="utf-8")
+    top_level = source.split("\ndef ", 1)[0]
+    assert "import runtime_context" not in top_level
+    assert "def _runtime_context()" in source
+    assert "def published_item_ids()" in source
+    assert 'runtime_context.get("item_id")' in source or 'get("item_id")' in source

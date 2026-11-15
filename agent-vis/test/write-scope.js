@@ -221,7 +221,47 @@ await test('assignedFiles 列出的就是这一栏的写入范围', async () => 
   }
 });
 
+// 作用域来自"当前方向"（ideas/ 下唯一那个还没归档的方向）。归档之后 ideas/ 里
+// 可能一个待做方向都没有 —— 那时这条规则就没有东西可分。测试自己造一个临时方向，
+// 测完拆掉：规则的形状（按类别分、互斥、不含测试）不能因为当前方向空了而失去覆盖。
+const PROBE_IDEA_DIR = 'ZZ_probe_scope_idea';
+const PROBE_ARM = 'TIGER_wscope_probe_rq';
+const PROBE_TREE = `stage2_RQ-VAE/${PROBE_ARM}`;
+
+function writeProbeIdea() {
+  const dir = path.join(currentWorkdir(), 'ideas', PROBE_IDEA_DIR);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, `${PROBE_IDEA_DIR}.json`),
+    JSON.stringify({
+      schema: 'genrec.idea.v6',
+      arm: PROBE_ARM,
+      sections: {
+        '1_goal': { idea: 'probe' },
+        '4_method': {
+          new_files: [],
+          modified_files: [
+            { path: `${PROBE_TREE}/distances/distance.py`, what: 'probe' },
+            { path: `${PROBE_TREE}/losses/reconstruction.py`, what: 'probe' },
+            { path: `${PROBE_TREE}/model/layers.py`, what: 'probe' },
+          ],
+          owners: {
+            [`${PROBE_TREE}/distances/distance.py`]: 'distance',
+            [`${PROBE_TREE}/losses/reconstruction.py`]: 'loss',
+            [`${PROBE_TREE}/model/layers.py`]: 'model',
+          },
+        },
+      },
+    }),
+  );
+}
+
+function rmProbeIdea() {
+  fs.rmSync(path.join(currentWorkdir(), 'ideas', PROBE_IDEA_DIR), { recursive: true, force: true });
+}
+
 await test('两个写手按类别分工：w1=distances/、w2=losses/，互斥且不含测试', () => {
+  writeProbeIdea();
   const w1 = resolveProfile('agent-w1').writeScope;
   const w2 = resolveProfile('agent-w2').writeScope;
   const flat = [...w1, ...w2];
@@ -240,6 +280,7 @@ await test('两个写手按类别分工：w1=distances/、w2=losses/，互斥且
       assert.ok(covered.has(file), `声明文件没被对应写手覆盖：${file}`);
     }
   }
+  rmProbeIdea();
 });
 
 // 建树是四个 writer 任意一个都能做的事：先复制冻结基线，再写自己的文件。
@@ -257,12 +298,14 @@ await test('树还没建时，作用域内的写入被拒并提示先建树', as
 });
 
 await test('两个写手的 writeScope 互不重叠，且都落在候选树里', () => {
+  writeProbeIdea();
   const scopes = ['agent-w1', 'agent-w2'].map(
     (id) => resolveProfile(id).writeScope,
   );
   const flat = scopes.flat();
   assert.equal(new Set(flat).size, flat.length, '同一个文件不能有两个 owner');
-  for (const entry of flat) assert.match(entry, /^stage2_RQ-VAE\/TIGER_af3_curvature_factor_mass_rq\/(distances|losses)\//);
+  for (const entry of flat) assert.match(entry, /^stage2_RQ-VAE\/TIGER_wscope_probe_rq\/(distances|losses)\//);
+  rmProbeIdea();
 });
 
 rm(ROOT);

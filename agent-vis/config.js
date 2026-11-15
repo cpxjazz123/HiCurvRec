@@ -33,7 +33,7 @@ export const MODE = 'live';
  *   - 对不上（或没带）就说明浏览器里跑的是旧版 JS —— 旧版解析不了新协议，
  *     会把分片画成 "input-start" 这种看不懂的卡片。这时服务端直接拦下并给出提示。
  */
-export const FRONTEND_VERSION = '2026-11-15.34';
+export const FRONTEND_VERSION = '2026-11-15.35';
 
 /** 后端吐的协议版本。 */
 export const PROTOCOL_VERSION = 'ui-message-stream-v1';
@@ -1424,7 +1424,6 @@ export function currentIdeaFiles() {
  * 契约不放新文件里：就是这棵树里已有的机制文件（函数签名）+ ideas/<方向>/math.json
  * （公式、常量、开关）。需要动别人的文件时，只能写进结论，不许动手。
  */
-const WRITER_TREE = 'stage2_RQ-VAE/TIGER_af3_curvature_factor_mass_rq';
 
 function writerInstructions(title, kind) {
   const scope = kind === 'distance' ? '距离/度量（distances/*.py）' : '损失/目标（losses/*.py）';

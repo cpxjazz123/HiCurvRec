@@ -44,33 +44,6 @@ class DistanceError(RuntimeError):
     """The requested metric does not exist; training must not start."""
 
 
-def _register_from_mechanism() -> None:
-    """Let a tree-local ``mechanism.py`` add its distance without editing this registry.
-
-    The mechanism module is optional: the frozen baseline has no ``mechanism.py`` and
-    behaves exactly as before. When the file exists it may export
-
-        DISTANCE = {"name": "...", "function": callable, "description": "..."}
-
-    and that entry is registered on first lookup. Importing the mechanism lazily (inside
-    build_distance) keeps the import direction one-way: mechanism -> distances.
-    """
-    try:
-        import mechanism as _mechanism
-    except ImportError:
-        return
-    entry = getattr(_mechanism, "DISTANCE", None)
-    if not isinstance(entry, dict):
-        return
-    name = entry.get("name")
-    function = entry.get("function")
-    if isinstance(name, str) and callable(function):
-        DISTANCES.setdefault(name, {
-            "description": entry.get("description", "registered by mechanism.py"),
-            "function": function,
-        })
-
-
 def build_distance(config=None, name: str | None = None):
     """Return the distance callable named by `name`, then `config`, then the default."""
     if name is None and config is not None:
@@ -81,9 +54,6 @@ def build_distance(config=None, name: str | None = None):
                 name = getattr(config, key) or name
     name = name or DEFAULT
     entry = DISTANCES.get(name)
-    if entry is None:
-        _register_from_mechanism()
-        entry = DISTANCES.get(name)
     if entry is None:
         raise DistanceError("unknown distance %r; the registry holds %s"
                             % (name, ", ".join(sorted(DISTANCES))))

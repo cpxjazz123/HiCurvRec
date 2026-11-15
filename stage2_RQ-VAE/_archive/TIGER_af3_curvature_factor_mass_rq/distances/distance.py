@@ -146,6 +146,26 @@ def train_parquet() -> Path:
     return repository_root() / "results" / "stage0_build_parquet" / "train.parquet"
 
 
+def items_parquet() -> Path:
+    """The frozen FULL item table; its row count is `N` (math.json: 全表商品数)."""
+    return repository_root() / "results" / "stage0_build_parquet" / "items.parquet"
+
+
+def item_count() -> int:
+    """`N`, the denominator of `u_i=(rank-0.5)/N`: rows of the frozen item table.
+
+    This is the full item space the embedding table is indexed by (baseline
+    `train_rqvae.py` uses `arange(len(embeddings))`), not the largest id that happens
+    to occur in the train split. Only the ROW COUNT is taken from this file; the
+    structure (curvature / potential / rank) is still built from the train split alone,
+    so valid/test are never read.
+    """
+    path = items_parquet()
+    if not path.is_file():
+        raise FileNotFoundError("the frozen item table is missing: " + str(path))
+    return int(len(pd.read_parquet(path)))
+
+
 def sequences(frame: pd.DataFrame) -> list[np.ndarray]:
     """`history ++ [target]` per row, as integer arrays (rows too short are skipped)."""
     columns = set(frame.columns)
@@ -276,7 +296,10 @@ def build_p_table(frame: pd.DataFrame | None = None, *, digest: str | None = Non
     """Build the frozen table: `kappa_bar_i`, its rank share `p_i`, and its digest.
 
     Formula `af3_potential`: `kappa_ij = 4 - d_i - d_j + 3 T_ij`, then the
-    neighbourhood mean, then the global rank. Built from the TRAIN split only.
+    neighbourhood mean, then the global rank. The graph is built from the TRAIN split
+    only; `num_items` is ``N``, the number of rows of the frozen FULL item table, so
+    every item id the host publishes has a row (ids absent from the train graph fall
+    back to the graph-mean potential, exactly as the formula says).
     """
     source = train_parquet()
     if frame is None:
@@ -287,10 +310,15 @@ def build_p_table(frame: pd.DataFrame | None = None, *, digest: str | None = Non
         digest = _split_digest(source) if source.is_file() else ""
     items = sequences(frame)
     rows, cols = edge_arrays(items)
-    if len(rows) == 0:
-        num_items = 0
-    else:
-        num_items = int(max(rows.max(), cols.max())) + 1
+    if num_items is None:
+        num_items = item_count()
+    num_items = int(num_items)
+    if num_items <= 0:
+        raise ValueError("the item table is empty; N must be positive")
+    if len(rows) and int(max(rows.max(), cols.max())) >= num_items:
+        raise ValueError(
+            "the train split references item %d outside the full item table (N=%d)"
+            % (int(max(rows.max(), cols.max())), num_items))
     matrix = adjacency(rows, cols, num_items)
     curvature = edge_curvatures(matrix, rows, cols)
     kappa_bar = structural_potentials(matrix, rows, cols, curvature)
@@ -334,8 +362,8 @@ def write_p_table(table: dict, path: Path | None = None) -> Path:
     return target
 
 
-def read_p_table(path: Path | None = None) -> dict:
-    """Load a cached table and verify its digest and item coverage (fail loud)."""
+def read_p_table(path: Path | None = None, *, num_items: int | None = None) -> dict:
+    """Load a cached table and verify its digest and FULL item coverage (fail loud)."""
     target = Path(path) if path is not None else Path(P_TABLE_CACHE)
     with np.load(target, allow_pickle=False) as payload:
         item_ids = np.asarray(payload["item_ids"], dtype=np.int64)
@@ -357,6 +385,11 @@ def read_p_table(path: Path | None = None) -> dict:
             "the cached AF3 table at %s has inconsistent coverage "
             "(num_items=%d, item_ids=%d, p=%d)"
             % (target, num_items, item_ids.size, shares.size))
+    expected = int(num_items) if num_items is not None else item_count()
+    if expected != num_items:
+        raise ValueError(
+            "the cached AF3 table at %s covers %d items but the full item table has %d"
+            % (target, num_items, expected))
     if not np.isfinite(shares).all() or shares.min() < 0.0 or shares.max() > 1.0:
         raise ValueError("the cached AF3 share table is not in [0, 1]: " + str(target))
     return {
@@ -373,21 +406,46 @@ def read_p_table(path: Path | None = None) -> dict:
 _TABLE: dict | None = None
 
 
-def table(path: Path | None = None) -> dict:
+def table(path: Path | None = None, *, num_items: int | None = None) -> dict:
     """The frozen table: read the cache when it validates, build and cache it otherwise."""
     global _TABLE
     target = Path(path) if path is not None else Path(P_TABLE_CACHE)
-    if _TABLE is not None and _TABLE.get("_path") == str(target):
+    expected = int(num_items) if num_items is not None else None
+    if (_TABLE is not None and _TABLE.get("_path") == str(target)
+            and _TABLE.get("_num_items") == expected):
         return _TABLE
     if target.is_file():
-        loaded = read_p_table(target)
+        loaded = read_p_table(target, num_items=expected)
     else:
-        built = build_p_table()
+        built = build_p_table(num_items=expected)
         write_p_table(built, target)
         loaded = dict(built)
     loaded["_path"] = str(target)
+    loaded["_num_items"] = expected
     _TABLE = loaded
     return _TABLE
+
+
+def _runtime_context():
+    """The host's row-field channel (`runtime_context`), imported lazily.
+
+    The spec reads the per-row item id from `runtime_context.get("item_id")`. The
+    channel belongs to the host, so this file never ships its own: when it is absent
+    the cost cannot be evaluated and the call fails on the next line (`shares_for`
+    raises on a missing `item_id`), never silently falling back to a constant share.
+    """
+    try:
+        import runtime_context
+    except ImportError as error:
+        raise ValueError(
+            "af3_factor_mass needs the host-published `item_id` field, but the "
+            "`runtime_context` channel is not installed") from error
+    return runtime_context
+
+
+def published_item_ids():
+    """`runtime_context.get("item_id")`, or None when the host published nothing."""
+    return _runtime_context().get("item_id")
 
 
 def shares_for(item_ids) -> np.ndarray:
@@ -582,8 +640,6 @@ def distances(latent: torch.Tensor, codebook: torch.Tensor) -> torch.Tensor:
             "the product manifold is %d-dimensional (16|8|8), got %s / %s"
             % (D_TOTAL, tuple(latent.shape), tuple(codebook.shape)))
 
-    import runtime_context
-
     total = latent.shape[0]
     if BEHAVIOUR_OFF:
         # formula `share_map`: behaviour_off pins p_i to SHARE_REF (the geometry, i.e. the
@@ -592,7 +648,7 @@ def distances(latent: torch.Tensor, codebook: torch.Tensor) -> torch.Tensor:
         share = torch.full((total, 1, 1), SHARE_REF, dtype=latent.dtype,
                            device=latent.device)
     else:
-        shares_np = shares_for(runtime_context.get("item_id"))
+        shares_np = shares_for(published_item_ids())
         if shares_np.size != total:
             raise ValueError(
                 "the AF3 share table gave %d rows for %d latents"
