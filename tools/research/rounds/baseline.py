@@ -1,7 +1,7 @@
 """The one permitted starting tree, and the copies made from it (Issue #121).
 
 Issue #121 fixes the baseline: every new mechanism starts from
-``/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE`` and from
+``/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/baseline/TIGER_RQ-VAE`` and from
 nothing else. This module copies that tree for a candidate, records the
 provenance of both the baseline and the copy, refuses to continue when the
 source is missing or unreadable, and refuses a candidate whose output paths
@@ -15,8 +15,10 @@ import re
 import shutil
 from pathlib import Path
 
-#: The only tree a new mechanism may be built from.
-CANONICAL_BASELINE = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE")
+#: The only tree a new mechanism may be built from. The owner moved the frozen samples under
+#: ``stage2_RQ-VAE/baseline/`` on 2026-11-15; the path is absolute on purpose so a stale copy cannot
+#: be picked up by accident.
+CANONICAL_BASELINE = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/baseline/TIGER_RQ-VAE")
 
 #: Files that belong to a run, not to a source tree.
 _RUN_ARTIFACTS = ("logs", "results", "dataset", "__pycache__", "ckpt")

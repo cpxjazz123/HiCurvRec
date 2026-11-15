@@ -20,7 +20,7 @@ from . import rubric as rubric_module
 DATA_CONTRACT = {
     "stage2_train": "results/stage0_build_parquet/train.parquet",
     "stage1_embeddings": "stage1_GeneEmbedding/output/sentence_t5.npy",
-    "baseline_tree": "stage2_RQ-VAE/TIGER_RQ-VAE",
+    "baseline_tree": "stage2_RQ-VAE/baseline/TIGER_RQ-VAE",
     "valid_pairs": "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
     "stage2_epochs": 3000,
     "stage2_recipe": "4 GPU DDP, total batch 4096, 0.12-0.16 s/epoch",

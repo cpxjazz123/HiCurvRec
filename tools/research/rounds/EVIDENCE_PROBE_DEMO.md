@@ -87,7 +87,7 @@ decision.json  schema 2
 
 `successor_entropy_curvature` is the one mechanism that earned the slot. It now
 goes through the unchanged path: implement on a fresh copy of
-`stage2_RQ-VAE/TIGER_RQ-VAE`, one verifier, then Stage 2 on the frozen 4-GPU
+`stage2_RQ-VAE/baseline/TIGER_RQ-VAE`, one verifier, then Stage 2 on the frozen 4-GPU
 recipe and Stage 3 on a technically valid SID. **The probe says nothing about
 whether that mechanism will beat 0.063354** — it says the hypothesis is
 measurable, the geometry is non-Euclidean, and the operator already exists in

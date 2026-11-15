@@ -237,7 +237,7 @@ IMPLEMENT_PROMPT = (
     "trains, so a parent count is correct here and wrong there. Your smoke test must "
     "pass in that promoted location, not only in this one. OUTPUT_SID, OUTPUT_JSON, CHECKPOINT, "
     "METRICS_PATH and LOG_DIR must all derive from it. The baseline tree "
-    "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE and its result "
+    "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/baseline/TIGER_RQ-VAE and its result "
     "directory are read-only: never write into them, never into the source tree and "
     "never into another candidate's directory.\n"
     "  6. Record every deviation from the idea and every assumption you had to make, "

@@ -326,7 +326,7 @@ absolute literal, a `parents[N]` anchor, an artifact inside the source tree, or
 a result directory outside the arm.
 
 `rounds/baseline.py` holds the one permitted source tree,
-`stage2_RQ-VAE/TIGER_RQ-VAE`. Every selected idea gets a **fresh copy** of it,
+`stage2_RQ-VAE/baseline/TIGER_RQ-VAE`. Every selected idea gets a **fresh copy** of it,
 with the resolved path and the source digest of both the baseline and the copy
 recorded. The baseline is read-only: a missing or unreadable source fails
 closed, and a candidate whose output paths would write into the baseline's
