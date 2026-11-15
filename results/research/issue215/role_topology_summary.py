@@ -81,6 +81,9 @@ def main() -> int:
                                       dtype=float),
             "gdv": np.array([row[f"{role}_gdv"] for row in rows], dtype=float),
             "gdv_weighted": np.array([row[f"{role}_gdv_weighted"] for row in rows], dtype=float),
+            "gdv_log": np.array([row[f"{role}_gdv_log"] for row in rows], dtype=float),
+            "gdv_log_weighted": np.array([row[f"{role}_gdv_log_weighted"] for row in rows],
+                                         dtype=float),
         }
         for name in PATTERNS:
             candidates[f"graphlet_{name}"] = np.array(

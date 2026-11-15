@@ -36,16 +36,37 @@ PATTERNS = ("K5", "double_triangle", "K4_tail", "K2_3", "P5_centre", "C5", "P5_h
 
 
 def gdv_similarity(first, second, weights):
-    """GRAAL's per-orbit relative similarity, averaged over orbits with the given weights."""
+    """GRAAL's per-orbit similarity, averaged over orbits with the given weights.
+
+    Two readings of the per-orbit term are reported:
+
+    * linear -- ``1 - |a - b| / max(a, b)`` on the raw counts (the first implementation);
+    * log -- GRAAL's own scaling, ``1 - |ln(a+1) - ln(b+1)| / max(ln(a+1), ln(b+1))``, which is what
+      Kuchaiev et al. use so that a node at 5 and a node at 50 are not treated as far apart as 5 and 95.
+
+    Weights are ``1 / log1p`` of the orbit's total count in the behaviour graph, so frequent orbits do not
+    dominate, again following GRAAL.
+    """
     both_zero = (first == 0) & (second == 0)
     maximum = np.maximum(first, second).astype(float)
     with np.errstate(invalid="ignore", divide="ignore"):
         relative = np.where(maximum > 0, 1.0 - np.abs(first - second) / np.maximum(maximum, 1e-12), 1.0)
     weighted = (relative * weights).sum(axis=1) / weights.sum()
     plain = relative.mean(axis=1)
+
+    left = np.log1p(np.clip(first, 0, None))
+    right = np.log1p(np.clip(second, 0, None))
+    largest = np.maximum(left, right)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        relative_log = np.where(largest > 0, 1.0 - np.abs(left - right) / np.maximum(largest, 1e-12), 1.0)
+    weighted_log = (relative_log * weights).sum(axis=1) / weights.sum()
+    plain_log = relative_log.mean(axis=1)
+
     weighted[both_zero.all(axis=1)] = 1.0
     plain[both_zero.all(axis=1)] = 1.0
-    return plain, weighted
+    weighted_log[both_zero.all(axis=1)] = 1.0
+    plain_log[both_zero.all(axis=1)] = 1.0
+    return plain, weighted, plain_log, weighted_log
 
 
 def main() -> int:
@@ -68,7 +89,7 @@ def main() -> int:
         orbit_q = np.load(stored)["orbit5"]
         edges = np.load(stored)["edges"]
         edge_set = {(int(a), int(b)) for a, b in edges.tolist()}
-        plain, weighted = gdv_similarity(orbit_b, orbit_q, weights)
+        plain, weighted, plain_log, weighted_log = gdv_similarity(orbit_b, orbit_q, weights)
         row = {"number": number, "recall": arm["recall"],
                "edge_recall": len(edge_set & behaviour_set) / max(len(behaviour_set), 1)}
         for role in range(6):
@@ -76,6 +97,8 @@ def main() -> int:
             key = f"role{role + 1}"
             row[f"{key}_gdv"] = float(np.nanmean(plain[mask]))
             row[f"{key}_gdv_weighted"] = float(np.nanmean(weighted[mask]))
+            row[f"{key}_gdv_log"] = float(np.nanmean(plain_log[mask]))
+            row[f"{key}_gdv_log_weighted"] = float(np.nanmean(weighted_log[mask]))
             row[f"{key}_graphlet"] = {}
             for name in PATTERNS:
                 shares = []
