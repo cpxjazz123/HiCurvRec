@@ -5,9 +5,9 @@ them; 24 has its recall block only in the bucket.  This pulls the objects a numb
 downloaded file against the ledger's sha256, so the local mirror is the same archive rather than a
 partial copy.
 
-    python3 results/research/issue139/download_archive.py --numbers 69-74
-    python3 results/research/issue139/download_archive.py --numbers 24 --files recall.json
-    python3 results/research/issue139/download_archive.py --numbers all --dry-run
+    python3 analysis_sid_recall/download_archive.py --numbers 69-74
+    python3 analysis_sid_recall/download_archive.py --numbers 24 --files recall.json
+    python3 analysis_sid_recall/download_archive.py --numbers all --dry-run
 """
 from __future__ import annotations
 
@@ -15,9 +15,9 @@ import argparse
 import sys
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[3]
-RESEARCH = Path(__file__).resolve().parent
-sys.path.insert(0, str(RESEARCH))
+REPO = Path(__file__).resolve().parents[1]
+ARCHIVE_HELPERS = REPO / "results" / "research" / "issue139"
+sys.path.insert(0, str(ARCHIVE_HELPERS))
 
 from r2_layout import BUCKET, Ledger, rclone, sha256  # noqa: E402
 
@@ -61,18 +61,17 @@ def main() -> int:
                 continue
             destination = target_dir / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
+            if args.dry_run:
+                pulled += 1
+                continue
             command = ["copyto", "%s/%s/%s" % (BUCKET, number, relative), str(destination),
                        "--s3-no-check-bucket"]
-            if args.dry_run:
-                command.append("--dry-run")
             done = rclone(command, timeout=1800)
             if done.returncode != 0:
                 print(f"  {number}/{relative}: download failed: "
                       f"{(done.stderr or done.stdout)[-160:]}", flush=True)
                 continue
             pulled += 1
-            if args.dry_run:
-                continue
             digest = sha256(destination)
             expected = recorded.get(relative)
             if expected is not None and digest != expected:
