@@ -1,0 +1,625 @@
+{
+  "behavior_graph": {
+    "nodes": 24587,
+    "edges": 315391,
+    "communities": 37,
+    "active_communities": 6,
+    "active_nodes": 24556,
+    "isolated_nodes": 31,
+    "community_sizes": [
+      5856,
+      5543,
+      5540,
+      3244,
+      2309,
+      2064,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "multi_role_fraction": 0.30991987635742463,
+    "role_groups": [
+      "K5",
+      "K4_tail",
+      "K2_3",
+      "C5",
+      "T5",
+      "P5",
+      "K1_4",
+      "K4",
+      "triangle"
+    ]
+  },
+  "arms": {
+    "pure_euclidean_TIGER": {
+      "before": {
+        "communities": 37,
+        "sizes": [
+          5540.0,
+          1.0,
+          5543.0,
+          1.0,
+          1.0,
+          1.0,
+          5856.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          2064.0,
+          3244.0,
+          1.0,
+          1.0,
+          1.0,
+          2309.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "pairs": {
+          "weighted_mae": 0.0,
+          "lift_mae": 0.0,
+          "spearman_pairs": 1.0,
+          "pairs_used": 3,
+          "zero_count_pairs": 78,
+          "before_global_same": 0.5979498463811587,
+          "after_global_same": 0.5979498463811587,
+          "within_role_pair_jsd": 0.0,
+          "cross_role_pair_jsd": 0.0,
+          "within_edges": 188588,
+          "after_within_edges": 188588
+        }
+      },
+      "depths": {
+        "L1": {
+          "sid_clusters": 249,
+          "ari": 0.034984553950139954,
+          "nmi": 0.244273526631153,
+          "forward": {
+            "coverage_weighted": 0.08789197543417253,
+            "coverage_median": 1.0,
+            "role_jsd_weighted": 0.0021529592858949725,
+            "role_jsd_valid_communities": 6,
+            "role_jsd_skipped_items": 31,
+            "boundary_jsd_weighted": 0.0030689880786880677,
+            "boundary_jsd_valid_communities": 6,
+            "multi_role_mae_weighted": 0.019046792432895178
+          },
+          "reverse": {
+            "coverage_weighted": 0.6648635457762232,
+            "coverage_median": 0.7142857142857143,
+            "role_jsd_weighted": 0.005137545238286071,
+            "role_jsd_valid_clusters": 249,
+            "role_jsd_skipped_items": 0
+          },
+          "pairs": {
+            "weighted_mae": 0.5168410005358428,
+            "lift_mae": 0.15637712030468642,
+            "spearman_pairs": 1.0,
+            "pairs_used": 3,
+            "zero_count_pairs": 78,
+            "before_global_same": 0.5979498463811587,
+            "after_global_same": 0.08110884584531582,
+            "within_role_pair_jsd": 0.005390161112978533,
+            "cross_role_pair_jsd": 0.004455263270731249,
+            "within_edges": 188588,
+            "after_within_edges": 25581
+          },
+          "top_pair_deltas": [
+            {
+              "left": "K1_4",
+              "right": "K1_4",
+              "count": 204492,
+              "before_within": 0.569939166324355,
+              "after_within": 0.06752831406607593,
+              "before_lift": 0.9531554690977403,
+              "after_lift": 0.8325641101447853,
+              "delta_fraction": -0.5024108522582791,
+              "delta_lift": -0.12059135895295503
+            },
+            {
+              "left": "P5",
+              "right": "P5",
+              "count": 24866,
+              "before_within": 0.8094989141800049,
+              "after_within": 0.15559398375291564,
+              "before_lift": 1.3537906549841237,
+              "after_lift": 1.9183355666242843,
+              "delta_fraction": -0.6539049304270892,
+              "delta_lift": 0.5645449116401606
+            },
+            {
+              "left": "P5",
+              "right": "K1_4",
+              "count": 86033,
+              "before_within": 0.6033847477130868,
+              "after_within": 0.09186010019411156,
+              "before_lift": 1.0090892260694113,
+              "after_lift": 1.1325534130925703,
+              "delta_fraction": -0.5115246475189752,
+              "delta_lift": 0.12346418702315898
+            }
+          ],
+          "after_pairs": {
+            "global_same": 0.08110884584531582,
+            "n_edges": 315391
+          }
+        },
+        "L2": {
+          "sid_clusters": 7374,
+          "ari": 0.0016524835258557213,
+          "nmi": 0.24222561753291583,
+          "forward": {
+            "coverage_weighted": 0.011876194737056167,
+            "coverage_median": 1.0,
+            "role_jsd_weighted": 0.017242995287511168,
+            "role_jsd_valid_communities": 6,
+            "role_jsd_skipped_items": 31,
+            "boundary_jsd_weighted": 0.016144008362575648,
+            "boundary_jsd_valid_communities": 6,
+            "multi_role_mae_weighted": 0.0934881451995205
+          },
+          "reverse": {
+            "coverage_weighted": 0.7734168463008907,
+            "coverage_median": 1.0,
+            "role_jsd_weighted": 0.03078421912788019,
+            "role_jsd_valid_clusters": 7368,
+            "role_jsd_skipped_items": 7
+          },
+          "pairs": {
+            "weighted_mae": 0.5899661055642045,
+            "lift_mae": 0.23282940805709793,
+            "spearman_pairs": 1.0,
+            "pairs_used": 3,
+            "zero_count_pairs": 78,
+            "before_global_same": 0.5979498463811587,
+            "after_global_same": 0.007983740816954193,
+            "within_role_pair_jsd": 0.013093265205011015,
+            "cross_role_pair_jsd": 0.005799545573235596,
+            "within_edges": 188588,
+            "after_within_edges": 2518
+          },
+          "top_pair_deltas": [
+            {
+              "left": "K1_4",
+              "right": "K1_4",
+              "count": 204492,
+              "before_within": 0.569939166324355,
+              "after_within": 0.0061762807346986675,
+              "before_lift": 0.9531554690977403,
+              "after_lift": 0.7736073698162619,
+              "delta_fraction": -0.5637628855896564,
+              "delta_lift": -0.1795480992814784
+            },
+            {
+              "left": "P5",
+              "right": "P5",
+              "count": 24866,
+              "before_within": 0.8094989141800049,
+              "after_within": 0.018861095471728463,
+              "before_lift": 1.3537906549841237,
+              "after_lift": 2.3624383486592184,
+              "delta_fraction": -0.7906378187082764,
+              "delta_lift": 1.0086476936750948
+            },
+            {
+              "left": "P5",
+              "right": "K1_4",
+              "count": 86033,
+              "before_within": 0.6033847477130868,
+              "after_within": 0.009136029198098404,
+              "before_lift": 1.0090892260694113,
+              "after_lift": 1.1443293823738896,
+              "delta_fraction": -0.5942487185149884,
+              "delta_lift": 0.13524015630447828
+            }
+          ],
+          "after_pairs": {
+            "global_same": 0.007983740816954193,
+            "n_edges": 315391
+          }
+        },
+        "L3": {
+          "sid_clusters": 20425,
+          "ari": 0.00014534963240639485,
+          "nmi": 0.28119189880785916,
+          "forward": {
+            "coverage_weighted": 0.005043315573270427,
+            "coverage_median": 1.0,
+            "role_jsd_weighted": 0.008242822883040346,
+            "role_jsd_valid_communities": 6,
+            "role_jsd_skipped_items": 31,
+            "boundary_jsd_weighted": 0.020436583015598288,
+            "boundary_jsd_valid_communities": 6,
+            "multi_role_mae_weighted": 0.08890546468813118
+          },
+          "reverse": {
+            "coverage_weighted": 0.9475739211778582,
+            "coverage_median": 1.0,
+            "role_jsd_weighted": 0.08032182819172946,
+            "role_jsd_valid_clusters": 20400,
+            "role_jsd_skipped_items": 25
+          },
+          "pairs": {
+            "weighted_mae": 0.5962852459328263,
+            "lift_mae": 0.19600653275924243,
+            "spearman_pairs": 1.0,
+            "pairs_used": 3,
+            "zero_count_pairs": 78,
+            "before_global_same": 0.5979498463811587,
+            "after_global_same": 0.0016646004483323875,
+            "within_role_pair_jsd": 0.01211542582921779,
+            "cross_role_pair_jsd": 0.005972047256226167,
+            "within_edges": 188588,
+            "after_within_edges": 525
+          },
+          "top_pair_deltas": [
+            {
+              "left": "K1_4",
+              "right": "K1_4",
+              "count": 204492,
+              "before_within": 0.569939166324355,
+              "after_within": 0.0013350155507305908,
+              "before_lift": 0.9531554690977403,
+              "after_lift": 0.8020035991628034,
+              "delta_fraction": -0.5686041507736245,
+              "delta_lift": -0.1511518699349369
+            },
+            {
+              "left": "P5",
+              "right": "P5",
+              "count": 24866,
+              "before_within": 0.8094989141800049,
+              "after_within": 0.0040617710930587955,
+              "before_lift": 1.3537906549841237,
+              "after_lift": 2.4400877082112506,
+              "delta_fraction": -0.805437143086946,
+              "delta_lift": 1.086297053227127
+            },
+            {
+              "left": "P5",
+              "right": "K1_4",
+              "count": 86033,
+              "before_within": 0.6033847477130868,
+              "after_within": 0.0017551404693547826,
+              "before_lift": 1.0090892260694113,
+              "after_lift": 1.0543914433719508,
+              "delta_fraction": -0.601629607243732,
+              "delta_lift": 0.04530221730253947
+            }
+          ],
+          "after_pairs": {
+            "global_same": 0.0016646004483323875,
+            "n_edges": 315391
+          }
+        }
+      }
+    },
+    "mixed_F0": {
+      "before": {
+        "communities": 37,
+        "sizes": [
+          5540.0,
+          1.0,
+          5543.0,
+          1.0,
+          1.0,
+          1.0,
+          5856.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          2064.0,
+          3244.0,
+          1.0,
+          1.0,
+          1.0,
+          2309.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "pairs": {
+          "weighted_mae": 0.0,
+          "lift_mae": 0.0,
+          "spearman_pairs": 1.0,
+          "pairs_used": 3,
+          "zero_count_pairs": 78,
+          "before_global_same": 0.5979498463811587,
+          "after_global_same": 0.5979498463811587,
+          "within_role_pair_jsd": 0.0,
+          "cross_role_pair_jsd": 0.0,
+          "within_edges": 188588,
+          "after_within_edges": 188588
+        }
+      },
+      "depths": {
+        "L1": {
+          "sid_clusters": 79,
+          "ari": 0.08210257852583641,
+          "nmi": 0.26396767524191644,
+          "forward": {
+            "coverage_weighted": 0.16870704030585268,
+            "coverage_median": 1.0,
+            "role_jsd_weighted": 0.006446386714926177,
+            "role_jsd_valid_communities": 6,
+            "role_jsd_skipped_items": 31,
+            "boundary_jsd_weighted": 0.0015679580907677821,
+            "boundary_jsd_valid_communities": 6,
+            "multi_role_mae_weighted": 0.043547641525720465
+          },
+          "reverse": {
+            "coverage_weighted": 0.6442835644852971,
+            "coverage_median": 0.6490196078431373,
+            "role_jsd_weighted": 0.004724787591244152,
+            "role_jsd_valid_clusters": 79,
+            "role_jsd_skipped_items": 0
+          },
+          "pairs": {
+            "weighted_mae": 0.4533674074402884,
+            "lift_mae": 0.12065565556625996,
+            "spearman_pairs": 1.0,
+            "pairs_used": 3,
+            "zero_count_pairs": 78,
+            "before_global_same": 0.5979498463811587,
+            "after_global_same": 0.14458243894087022,
+            "within_role_pair_jsd": 0.0029772203346171257,
+            "cross_role_pair_jsd": 0.003731138586323176,
+            "within_edges": 188588,
+            "after_within_edges": 45600
+          },
+          "top_pair_deltas": [
+            {
+              "left": "K1_4",
+              "right": "K1_4",
+              "count": 204492,
+              "before_within": 0.569939166324355,
+              "after_within": 0.12435694305889718,
+              "before_lift": 0.9531554690977403,
+              "after_lift": 0.8601109786905403,
+              "delta_fraction": -0.4455822232654579,
+              "delta_lift": -0.09304449040719998
+            },
+            {
+              "left": "P5",
+              "right": "K1_4",
+              "count": 86033,
+              "before_within": 0.6033847477130868,
+              "after_within": 0.16253065684097961,
+              "before_lift": 1.0090892260694113,
+              "after_lift": 1.124138298064329,
+              "delta_fraction": -0.4408540908721072,
+              "delta_lift": 0.11504907199491776
+            },
+            {
+              "left": "P5",
+              "right": "P5",
+              "count": 24866,
+              "before_within": 0.8094989141800049,
+              "after_within": 0.24881364111638382,
+              "before_lift": 1.3537906549841237,
+              "after_lift": 1.7209119097661711,
+              "delta_fraction": -0.560685273063621,
+              "delta_lift": 0.3671212547820475
+            }
+          ],
+          "after_pairs": {
+            "global_same": 0.14458243894087022,
+            "n_edges": 315391
+          }
+        },
+        "L2": {
+          "sid_clusters": 4151,
+          "ari": 0.004623125432395283,
+          "nmi": 0.2346386287096086,
+          "forward": {
+            "coverage_weighted": 0.026030015862040914,
+            "coverage_median": 1.0,
+            "role_jsd_weighted": 0.0009730182366102667,
+            "role_jsd_valid_communities": 6,
+            "role_jsd_skipped_items": 31,
+            "boundary_jsd_weighted": 0.007108588917148785,
+            "boundary_jsd_valid_communities": 6,
+            "multi_role_mae_weighted": 0.017172980664508095
+          },
+          "reverse": {
+            "coverage_weighted": 0.731280758124212,
+            "coverage_median": 1.0,
+            "role_jsd_weighted": 0.01902996042861427,
+            "role_jsd_valid_clusters": 4147,
+            "role_jsd_skipped_items": 5
+          },
+          "pairs": {
+            "weighted_mae": 0.5791921773290931,
+            "lift_mae": 0.23397813519331953,
+            "spearman_pairs": 1.0,
+            "pairs_used": 3,
+            "zero_count_pairs": 78,
+            "before_global_same": 0.5979498463811587,
+            "after_global_same": 0.01875766905206553,
+            "within_role_pair_jsd": 0.014317068776379378,
+            "cross_role_pair_jsd": 0.00546923620822415,
+            "within_edges": 188588,
+            "after_within_edges": 5916
+          },
+          "top_pair_deltas": [
+            {
+              "left": "K1_4",
+              "right": "K1_4",
+              "count": 204492,
+              "before_within": 0.569939166324355,
+              "after_within": 0.014494454550789272,
+              "before_lift": 0.9531554690977403,
+              "after_lift": 0.7727215204915449,
+              "delta_fraction": -0.5554447117735658,
+              "delta_lift": -0.18043394860619544
+            },
+            {
+              "left": "P5",
+              "right": "P5",
+              "count": 24866,
+              "before_within": 0.8094989141800049,
+              "after_within": 0.046288104238719534,
+              "before_lift": 1.3537906549841237,
+              "after_lift": 2.467689567943542,
+              "delta_fraction": -0.7632108099412853,
+              "delta_lift": 1.1138989129594183
+            },
+            {
+              "left": "P5",
+              "right": "K1_4",
+              "count": 86033,
+              "before_within": 0.6033847477130868,
+              "after_within": 0.02093382771727128,
+              "before_lift": 1.0090892260694113,
+              "after_lift": 1.1160143437420396,
+              "delta_fraction": -0.5824509199958156,
+              "delta_lift": 0.10692511767262824
+            }
+          ],
+          "after_pairs": {
+            "global_same": 0.01875766905206553,
+            "n_edges": 315391
+          }
+        },
+        "L3": {
+          "sid_clusters": 18264,
+          "ari": 0.00024792759708982187,
+          "nmi": 0.2758603604055885,
+          "forward": {
+            "coverage_weighted": 0.0059787692683125225,
+            "coverage_median": 1.0,
+            "role_jsd_weighted": 0.01200759205279248,
+            "role_jsd_valid_communities": 6,
+            "role_jsd_skipped_items": 31,
+            "boundary_jsd_weighted": 0.013304017065189081,
+            "boundary_jsd_valid_communities": 6,
+            "multi_role_mae_weighted": 0.09220708021798586
+          },
+          "reverse": {
+            "coverage_weighted": 0.9182088095334933,
+            "coverage_median": 1.0,
+            "role_jsd_weighted": 0.07227688930107763,
+            "role_jsd_valid_clusters": 18239,
+            "role_jsd_skipped_items": 25
+          },
+          "pairs": {
+            "weighted_mae": 0.5955242857278743,
+            "lift_mae": 0.34973202295532085,
+            "spearman_pairs": 1.0,
+            "pairs_used": 3,
+            "zero_count_pairs": 78,
+            "before_global_same": 0.5979498463811587,
+            "after_global_same": 0.002425560653284336,
+            "within_role_pair_jsd": 0.03234147785474094,
+            "cross_role_pair_jsd": 0.005915202510808015,
+            "within_edges": 188588,
+            "after_within_edges": 765
+          },
+          "top_pair_deltas": [
+            {
+              "left": "K1_4",
+              "right": "K1_4",
+              "count": 204492,
+              "before_within": 0.569939166324355,
+              "after_within": 0.0016577665629951294,
+              "before_lift": 0.9531554690977403,
+              "after_lift": 0.6834570641432638,
+              "delta_fraction": -0.5682813997613599,
+              "delta_lift": -0.2696984049544765
+            },
+            {
+              "left": "P5",
+              "right": "P5",
+              "count": 24866,
+              "before_within": 0.8094989141800049,
+              "after_within": 0.007681171076972573,
+              "before_lift": 1.3537906549841237,
+              "after_lift": 3.166761081225433,
+              "delta_fraction": -0.8018177431030323,
+              "delta_lift": 1.8129704262413096
+            },
+            {
+              "left": "P5",
+              "right": "K1_4",
+              "count": 86033,
+              "before_within": 0.6033847477130868,
+              "after_within": 0.002731510001975986,
+              "before_lift": 1.0090892260694113,
+              "after_lift": 1.1261355176904682,
+              "delta_fraction": -0.6006532377111108,
+              "delta_lift": 0.11704629162105684
+            }
+          ],
+          "after_pairs": {
+            "global_same": 0.002425560653284336,
+            "n_edges": 315391
+          }
+        }
+      }
+    }
+  }
+}
