@@ -81,6 +81,8 @@ src,dst,triangle,2-star,4-clique,4-chordal-cycle,4-tailed-triangle,4-cycle,3-sta
 ## 5. 对 Issue 215 / 后续设计的含义
 
 1. 现有 PGD 结果不能支持“稠密结构保留是 SID 结构的独立有效信号”。去掉退化臂后没有可重复的正向增量。
+   精确 K1,3 的修复与复算见 `analysis_sid_recall/QKNN_K13_AUDIT.md`；精确 K1,3 同样不支持
+   “K1,3 富集边恢复更好”，其 top 类匹配 excess 为负。
 2. 不能把 PGD 的 4-node motif 直接当成 Edge-ORCA 或 5-node 结构；它只是边级 4-node 计数。
 3. 后续若继续做“Graphlet Role × 商品关系 × SID 前缀”，结构统计应先经过：合成图单测、自排除 kNN、逐边一一映射、匹配覆盖率、高碰撞敏感性、分组 CV 六项检查；否则很容易把码本退化当成结构规律。
 4. 当前可保留的结论只有：高碰撞臂会制造“结构恢复 vs recall”的伪相关；正常碰撞臂内没有证据表明 PGD 的 4-node 结构保留预测 recall。
