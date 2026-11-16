@@ -10,6 +10,7 @@ agent-vis 自己只保留 HTTP/SSE、沙箱工具实现和 dsh 事件 → UI mes
 | 文件 | 职责 |
 |---|---|
 | `plugin.js` | dsh 插件入口：`name` / `inject` / `apply`，起 HTTP 服务并登记 harness 上下文 |
+| `dsh-toolset.js` | 只注册工具与提示词的插件（不起端口），供 Harness Web 会话使用 |
 | `server.js` | 静态资源、`/api/*`、UI message stream（SSE） |
 | `live-agent.js` | 权限 → 工具表、`ctx.agents.create` 会话适配、dsh 事件翻译、沙箱工具实现 |
 | `config.js` | 仓库边界、权限目录、人设与提示词规则、模型路由常量 |
@@ -42,6 +43,24 @@ DeepSeek V4.1 Flash），agent 创建时用同一组值选 provider/model。
 按本轮权限裁出来的沙箱工具（`read` / `ls` / `grep` / `find` / `write` / `edit` /
 `deleteFile` / Stage2/3 工具……），全部限制在 `AGENT_WORKDIR` 之内。
 
+## 在 Harness Web 里使用工具集
+
+`dsh-toolset.js` 是同一个仓库工具集的"无页面"版本：只注册工具与提示词，不起 8123。
+在 Web profile 的 `cordis.patch.yml` 里插入：
+
+```yaml
+- insert:
+    - id: agent-vis-toolset
+      name: file:///abs/path/agent-vis/dsh-toolset.js
+      config:
+        permissions: [read, network, web]   # 默认只读；write/delete/execute/train 需显式列出
+```
+
+它会跳过 `read` / `write` / `edit` / `ls` / `grep` / `find`（宿主已有同名工具），
+只注册 `checkIdea`、`checkJson`、`treeDiff`、`specCheck`、`readDiff`、`stage2*`、
+`stage3*`、`runTests`、`copyBaselineTree`、`deleteFile`、`listIssues`、`readIssue`、
+`gitLog`、`webSearch` 中权限允许的部分，并把权限说明/语言约束/idea 规则挂进系统提示词。
+
 ## 运行主机
 
 `config.js` 的 `AGENT_HOST = 'm3d102'` 是硬约束；面板「全局设置」可以覆盖（同一目录下的
@@ -53,6 +72,6 @@ DeepSeek V4.1 Flash），agent 创建时用同一组值选 provider/model。
 npm test
 ```
 
-覆盖：插件接线（`test/plugin.js`，假 harness）、dsh 事件翻译与多步轮次
+覆盖：插件接线（`test/plugin.js`、`test/toolset-plugin.js`，假 harness）、dsh 事件翻译与多步轮次
 （`test/dsh-agent.js`）、静态资源/协议/权限/沙箱（`test/smoke.js`）、工具与 idea 规则
 （其余文件）。`test/browser.js` 是真实浏览器 + 真实模型的端到端检查，需要先启动本插件。

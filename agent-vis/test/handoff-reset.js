@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { createServer } from '../server.js';
+import { setGlobalSettings } from '../config.js';
 import { buildRunRequestBody } from '../public/run-request.js';
 import { handoffResetsReceiver } from '../public/handoff-rules.js';
 
@@ -87,6 +89,8 @@ await test('轮次里的那一步带上它在整轮里的位置', () => {
 await test('服务端收到发送方身份时不报错（重置代码曾经撞上暂时性死区）', async () => {
   fs.rmSync(SCRATCH, { recursive: true, force: true });
   const server = createServer({ mode: 'mock', publicPath: '', dataDir: SCRATCH });
+  // 运行主机是硬约束；测试数据目录跟着当前节点走。
+  setGlobalSettings({ agentHost: os.hostname() });
   const port = await listen(server);
   const base = `http://127.0.0.1:${port}`;
 
@@ -140,6 +144,7 @@ await test('交接时要不要清接收方，看发送方的那一个开关', ()
 await test('接收方收到交接时，它存着的对话记录也一起清掉（否则刷新又冒出来）', async () => {
   fs.rmSync(SCRATCH, { recursive: true, force: true });
   const server = createServer({ mode: 'mock', publicPath: '', dataDir: SCRATCH });
+  setGlobalSettings({ agentHost: os.hostname() });
   const port = await listen(server);
   const base = `http://127.0.0.1:${port}`;
   const version = (await import('../config.js')).FRONTEND_VERSION;

@@ -13,7 +13,7 @@
   "scripts": {
     "start": "./dsh/start.sh",
     "plugin:install": "node dsh/install.mjs",
-    "test": "node test/dsh-agent.js && node test/smoke.js && node test/tree-diff.js && node test/spec-check.js && node test/write-scope.js && node test/copy-baseline.js && node test/stage3-tools.js && node test/archive-ideas.js && node test/idea-schema.js && node test/handoff-reset.js && node test/plugin.js",
+    "test": "node test/dsh-agent.js && node test/smoke.js && node test/tree-diff.js && node test/spec-check.js && node test/write-scope.js && node test/copy-baseline.js && node test/stage3-tools.js && node test/archive-ideas.js && node test/idea-schema.js && node test/handoff-reset.js && node test/plugin.js && node test/toolset-plugin.js",
     "test:agent": "node test/dsh-agent.js",
     "test:tools": "node test/tools.js",
     "test:browser": "node test/browser.js",

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import http from 'node:http';
 import { spawnSync } from 'node:child_process';
@@ -18,6 +19,7 @@ import {
   buildPermissionPrompt,
   normalizePermissions,
   resolvePermissions,
+  setDataDir,
 } from '../config.js';
 import { DSH_TOOLS, TOOL_IMPLS, toolsForPermissions } from '../live-agent.js';
 
@@ -143,6 +145,17 @@ async function main() {
   const server = createServer({ mode: 'mock', publicPath: '', dataDir: SCRATCH_DATA });
   const port = await listen(server);
   const base = `http://127.0.0.1:${port}`;
+
+  // 出站检查绑定部署主机；测试机可能被调度到别的节点，先把测试数据目录的
+  // 设置指向当前主机。判据本身（主机不符就拒绝）仍由专门用例验证。
+  const initial = await (await fetch(`${base}/api/settings`)).json();
+  if (initial.settings && initial.settings.agentHost !== os.hostname()) {
+    await fetch(`${base}/api/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentHost: os.hostname() }),
+    });
+  }
 
   /** PUT 一个 agent 的配置，返回 {status, json}。 */
   const putAgentConfig = (id, patch) =>
@@ -973,6 +986,9 @@ async function main() {
       gated.closeAllConnections();
       await new Promise((resolve) => gated.close(resolve));
       fs.rmSync(scratch, { recursive: true, force: true });
+      // 这个服务器用自己的 dataDir，会把进程级设置切走；后面的用例还在主
+      // 服务器上跑，必须切回主测试目录，否则工作目录/主机都跟着变。
+      setDataDir(SCRATCH_DATA);
     }
   });
 
