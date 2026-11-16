@@ -590,112 +590,114 @@
     "Musical Instruments > Instrument Accessories > Keyboard Accessories > Music Wire": 1,
     "Musical Instruments > Instrument Accessories > Drum & Percussion Accessories > Cymbal & Gong Accessories > Cymbal Felts, Sleeves & Washers": 1
   },
+  "tree_tie_policy": "uniform random within each exact-distance tier; 20 seeds",
+  "tree_seeds": 20,
   "bands": {
     "text": {
       "1-5": {
         "total": 118485,
-        "counts": {
-          "same_fine": 75031,
-          "same_coarse_diff_fine": 30312,
-          "cross_coarse": 13142
-        },
-        "rates": {
+        "rates_mean": {
           "same_fine": 0.6332531544077309,
           "same_coarse_diff_fine": 0.2558298518799848,
           "cross_coarse": 0.11091699371228425
+        },
+        "rates_sd": {
+          "same_fine": 0.0,
+          "same_coarse_diff_fine": 0.0,
+          "cross_coarse": 0.0
         }
       },
       "6-10": {
         "total": 118485,
-        "counts": {
-          "same_fine": 66930,
-          "same_coarse_diff_fine": 35292,
-          "cross_coarse": 16263
-        },
-        "rates": {
+        "rates_mean": {
           "same_fine": 0.5648816305861502,
           "same_coarse_diff_fine": 0.2978604886694518,
           "cross_coarse": 0.13725788074439801
+        },
+        "rates_sd": {
+          "same_fine": 0.0,
+          "same_coarse_diff_fine": 0.0,
+          "cross_coarse": 0.0
         }
       },
       "11-15": {
         "total": 118485,
-        "counts": {
-          "same_fine": 62150,
-          "same_coarse_diff_fine": 37792,
-          "cross_coarse": 18543
-        },
-        "rates": {
+        "rates_mean": {
           "same_fine": 0.5245389711777863,
           "same_coarse_diff_fine": 0.3189602059332405,
           "cross_coarse": 0.1565008228889733
+        },
+        "rates_sd": {
+          "same_fine": 0.0,
+          "same_coarse_diff_fine": 0.0,
+          "cross_coarse": 0.0
         }
       },
       "16-20": {
         "total": 118485,
-        "counts": {
-          "same_fine": 59041,
-          "same_coarse_diff_fine": 39351,
-          "cross_coarse": 20093
-        },
-        "rates": {
+        "rates_mean": {
           "same_fine": 0.49829936278853865,
           "same_coarse_diff_fine": 0.3321179896189391,
           "cross_coarse": 0.16958264759252226
+        },
+        "rates_sd": {
+          "same_fine": 0.0,
+          "same_coarse_diff_fine": 0.0,
+          "cross_coarse": 0.0
         }
       }
     },
     "ideal_tree": {
       "1-5": {
         "total": 118485,
-        "counts": {
-          "same_fine": 117095,
-          "same_coarse_diff_fine": 1381,
-          "cross_coarse": 9
+        "rates_mean": {
+          "same_fine": 0.9882685572013334,
+          "same_coarse_diff_fine": 0.011655483816516857,
+          "cross_coarse": 7.595898214963921e-05
         },
-        "rates": {
-          "same_fine": 0.9882685572013336,
-          "same_coarse_diff_fine": 0.011655483816516859,
-          "cross_coarse": 7.59589821496392e-05
+        "rates_sd": {
+          "same_fine": 1.1390647892519134e-16,
+          "same_coarse_diff_fine": 1.7797887332061147e-18,
+          "cross_coarse": 1.390459947817277e-20
         }
       },
       "6-10": {
         "total": 118485,
-        "counts": {
-          "same_fine": 114351,
-          "same_coarse_diff_fine": 4119,
-          "cross_coarse": 15
-        },
-        "rates": {
+        "rates_mean": {
           "same_fine": 0.965109507532599,
           "same_coarse_diff_fine": 0.034763894163818206,
-          "cross_coarse": 0.000126598303582732
+          "cross_coarse": 0.00012659830358273204
+        },
+        "rates_sd": {
+          "same_fine": 0.0,
+          "same_coarse_diff_fine": 0.0,
+          "cross_coarse": 5.561839791269109e-20
         }
       },
       "11-15": {
         "total": 118485,
-        "counts": {
-          "same_fine": 111820,
-          "same_coarse_diff_fine": 6650,
-          "cross_coarse": 15
-        },
-        "rates": {
-          "same_fine": 0.9437481537747394,
+        "rates_mean": {
+          "same_fine": 0.9437481537747392,
           "same_coarse_diff_fine": 0.05612524792167785,
-          "cross_coarse": 0.000126598303582732
+          "cross_coarse": 0.00012659830358273204
+        },
+        "rates_sd": {
+          "same_fine": 2.278129578503827e-16,
+          "same_coarse_diff_fine": 0.0,
+          "cross_coarse": 5.561839791269109e-20
         }
       },
       "16-20": {
         "total": 118485,
-        "counts": {
-          "same_fine": 109590,
-          "same_coarse_diff_fine": 8880,
-          "cross_coarse": 15
-        },
-        "rates": {
+        "rates_mean": {
           "same_fine": 0.92492720597544,
-          "same_coarse_diff_fine": 0.07494619572097734,
-          "cross_coarse": 0.000126598303582732
+          "same_coarse_diff_fine": 0.07494619572097735,
+          "cross_coarse": 0.00012659830358273204
+        },
+        "rates_sd": {
+          "same_fine": 0.0,
+          "same_coarse_diff_fine": 1.4238309865648918e-17,
+          "cross_coarse": 5.561839791269109e-20
         }
       }
     }
@@ -703,59 +705,39 @@
   "violations": {
     "text": {
       "cross_before_same_coarse": {
-        "comparable": 11497,
-        "violations": 1852,
-        "rate": 0.1610855005653649
+        "rate_mean": 0.1610855005653649,
+        "rate_sd": 0.0
       },
       "diff_fine_before_same_fine": {
-        "comparable": 16238,
-        "violations": 4368,
-        "rate": 0.268998645153344
+        "rate_mean": 0.268998645153344,
+        "rate_sd": 0.0
       },
       "first_cross_rank": {
-        "n": 11804,
-        "median": 6.0,
-        "p90": 16.0,
-        "fraction_le_5": 0.48178583531006436,
-        "fraction_le_10": 0.7085733649610302,
-        "fraction_le_15": 0.8792782107760081,
-        "fraction_le_20": 1.0
+        "n_mean": 11804.0,
+        "median_mean": 6.0,
+        "fraction_le_5_mean": 0.48178583531006436
       }
     },
     "ideal_tree": {
       "cross_before_same_coarse": {
-        "comparable": 3,
-        "violations": 0,
-        "rate": 0.0
+        "rate_mean": 0.0,
+        "rate_sd": 0.0
       },
       "diff_fine_before_same_fine": {
-        "comparable": 1909,
-        "violations": 0,
-        "rate": 0.0
+        "rate_mean": 0.0,
+        "rate_sd": 0.0
       },
       "first_cross_rank": {
-        "n": 3,
-        "median": 3.0,
-        "p90": 3.0,
-        "fraction_le_5": 1.0,
-        "fraction_le_10": 1.0,
-        "fraction_le_15": 1.0,
-        "fraction_le_20": 1.0
+        "n_mean": 3.0,
+        "median_mean": 3.0,
+        "fraction_le_5_mean": 1.0
       }
     }
   },
   "graphlets": {
     "text": {
-      "text_k5": {
-        "counts": {
-          "K4": 32675,
-          "diamond": 172419,
-          "C4": 43301,
-          "paw": 1135803,
-          "K1,3": 1836822,
-          "P4": 3486575
-        },
-        "shares": {
+      "k5": {
+        "shares_mean": {
           "K4": 0.00487134360378049,
           "diamond": 0.025705040331147004,
           "C4": 0.006455517961355747,
@@ -763,21 +745,18 @@
           "K1,3": 0.27384211479673415,
           "P4": 0.5197950979449415
         },
-        "total_connected_4node": 6707595,
-        "triangles": 80445,
-        "wedges": 611034,
-        "triangle_share_3node": 0.1163375894278785
-      },
-      "text_k10": {
-        "counts": {
-          "K4": 408704,
-          "diamond": 1783664,
-          "C4": 384250,
-          "paw": 10505902,
-          "K1,3": 14162164,
-          "P4": 28441551
+        "shares_sd": {
+          "K4": 0.0,
+          "diamond": 0.0,
+          "C4": 0.0,
+          "paw": 0.0,
+          "K1,3": 0.0,
+          "P4": 0.0
         },
-        "shares": {
+        "triangle_share_3node_mean": 0.1163375894278785
+      },
+      "k10": {
+        "shares_mean": {
           "K4": 0.007339408024263088,
           "diamond": 0.03203060864143536,
           "C4": 0.006900268980296477,
@@ -785,21 +764,18 @@
           "K1,3": 0.2543207311465751,
           "P4": 0.5107465247021997
         },
-        "total_connected_4node": 55686235,
-        "triangles": 369721,
-        "wedges": 2486214,
-        "triangle_share_3node": 0.12945707797971592
-      },
-      "text_k15": {
-        "counts": {
-          "K4": 1596235,
-          "diamond": 6618502,
-          "C4": 1356000,
-          "paw": 37278590,
-          "K1,3": 47412365,
-          "P4": 96129222
+        "shares_sd": {
+          "K4": 0.0,
+          "diamond": 0.0,
+          "C4": 0.0,
+          "paw": 0.0,
+          "K1,3": 0.0,
+          "P4": 0.0
         },
-        "shares": {
+        "triangle_share_3node_mean": 0.12945707797971592
+      },
+      "k15": {
+        "shares_mean": {
           "K4": 0.008383987273678407,
           "diamond": 0.03476269881240236,
           "C4": 0.007122188614526006,
@@ -807,21 +783,18 @@
           "K1,3": 0.2490264057453918,
           "P4": 0.5049044619849874
         },
-        "total_connected_4node": 190390914,
-        "triangles": 875989,
-        "wedges": 5632048,
-        "triangle_share_3node": 0.1346011093667722
-      },
-      "text_k20": {
-        "counts": {
-          "K4": 4093238,
-          "diamond": 16457234,
-          "C4": 3280224,
-          "paw": 90404984,
-          "K1,3": 110751976,
-          "P4": 227366378
+        "shares_sd": {
+          "K4": 0.0,
+          "diamond": 0.0,
+          "C4": 0.0,
+          "paw": 0.0,
+          "K1,3": 0.0,
+          "P4": 0.0
         },
-        "shares": {
+        "triangle_share_3node_mean": 0.1346011093667722
+      },
+      "k20": {
+        "shares_mean": {
           "K4": 0.009048748750630132,
           "diamond": 0.036381313668134546,
           "C4": 0.007251452962614677,
@@ -829,111 +802,104 @@
           "K1,3": 0.24483472606767998,
           "P4": 0.5026292702410166
         },
-        "total_connected_4node": 452354034,
-        "triangles": 1602364,
-        "wedges": 10028717,
-        "triangle_share_3node": 0.13776569864830276
+        "shares_sd": {
+          "K4": 0.0,
+          "diamond": 0.0,
+          "C4": 0.0,
+          "paw": 0.0,
+          "K1,3": 0.0,
+          "P4": 0.0
+        },
+        "triangle_share_3node_mean": 0.13776569864830276
       }
     },
     "ideal_tree": {
-      "tree_k5": {
-        "counts": {
-          "K4": 217136,
-          "diamond": 22532221,
-          "C4": 11789,
-          "paw": 537901,
-          "K1,3": 1387547480,
-          "P4": 146957
+      "k5": {
+        "shares_mean": {
+          "K4": 0.0011043006300939507,
+          "diamond": 0.007780713415307729,
+          "C4": 0.013343002588133757,
+          "paw": 0.051383312402971656,
+          "K1,3": 0.2277288701796348,
+          "P4": 0.698659800783858
         },
-        "shares": {
-          "K4": 0.00015388873333733977,
-          "diamond": 0.015969046813826392,
-          "C4": 8.355105912027018e-06,
-          "paw": 0.0003812214628200225,
-          "K1,3": 0.9833833364463644,
-          "P4": 0.00010415143773973657
+        "shares_sd": {
+          "K4": 6.6536698745665415e-06,
+          "diamond": 6.0278586661577344e-05,
+          "C4": 6.26138014476801e-05,
+          "paw": 0.00026001652720567317,
+          "K1,3": 0.00018967872854368126,
+          "P4": 0.000219292458337539
         },
-        "total_connected_4node": 1410993484,
-        "triangles": 219862,
-        "wedges": 11381281,
-        "triangle_share_3node": 0.018951753288447525
+        "triangle_share_3node_mean": 0.04018559116742064
       },
-      "tree_k10": {
-        "counts": {
-          "K4": 2474536,
-          "diamond": 97934601,
-          "C4": 101096,
-          "paw": 6305146,
-          "K1,3": 2755924392,
-          "P4": 1408090
+      "k10": {
+        "shares_mean": {
+          "K4": 0.0022762225682292276,
+          "diamond": 0.013586372686169057,
+          "C4": 0.02098074908078467,
+          "paw": 0.08435497589577753,
+          "K1,3": 0.21548567530511517,
+          "P4": 0.6633160044639244
         },
-        "shares": {
-          "K4": 0.0008639693619504793,
-          "diamond": 0.03419327693710852,
-          "C4": 3.5297060384551144e-05,
-          "paw": 0.0022014038052485868,
-          "K1,3": 0.9622144266803968,
-          "P4": 0.0004916261549110017
+        "shares_sd": {
+          "K4": 1.8872761531430084e-05,
+          "diamond": 7.097263003964521e-05,
+          "C4": 4.0569638395340095e-05,
+          "paw": 0.00017366181122959763,
+          "K1,3": 0.00011245910930042294,
+          "P4": 0.00018833692359675438
         },
-        "total_connected_4node": 2864147861,
-        "triangles": 946871,
-        "wedges": 22354113,
-        "triangle_share_3node": 0.0406365241914247
+        "triangle_share_3node_mean": 0.06737507189129158
       },
-      "tree_k15": {
-        "counts": {
-          "K4": 8921997,
-          "diamond": 221157659,
-          "C4": 893092,
-          "paw": 25018050,
-          "K1,3": 4218389859,
-          "P4": 7839593
+      "k15": {
+        "shares_mean": {
+          "K4": 0.004048556916499667,
+          "diamond": 0.01999282592825834,
+          "C4": 0.025320512269625544,
+          "paw": 0.10485870510912705,
+          "K1,3": 0.2080555205820987,
+          "P4": 0.6377238791943907
         },
-        "shares": {
-          "K4": 0.001990530697370349,
-          "diamond": 0.04934109585534089,
-          "C4": 0.0001992521451840748,
-          "paw": 0.005581619957207591,
-          "K1,3": 0.9411384590036601,
-          "P4": 0.0017490423412370242
+        "shares_sd": {
+          "K4": 3.066857531441235e-05,
+          "diamond": 5.2400244479185783e-05,
+          "C4": 3.073847230599367e-05,
+          "paw": 0.00018601238469150708,
+          "K1,3": 0.00011243546021247315,
+          "P4": 0.00015373697852582425
         },
-        "total_connected_4node": 4482220250,
-        "triangles": 2119143,
-        "wedges": 33303208,
-        "triangle_share_3node": 0.05982502403637748
+        "triangle_share_3node_mean": 0.08969971601585432
       },
-      "tree_k20": {
-        "counts": {
-          "K4": 21282490,
-          "diamond": 386727222,
-          "C4": 5217604,
-          "paw": 65576694,
-          "K1,3": 5889898601,
-          "P4": 25150562
+      "k20": {
+        "shares_mean": {
+          "K4": 0.005978843642500798,
+          "diamond": 0.025199239582022148,
+          "C4": 0.028407323446190996,
+          "paw": 0.12068076541667912,
+          "K1,3": 0.20172343341441343,
+          "P4": 0.6180103944981935
         },
-        "shares": {
-          "K4": 0.003328585975335158,
-          "diamond": 0.06048422000571955,
-          "C4": 0.0008160343784610082,
-          "paw": 0.010256208928431081,
-          "K1,3": 0.9211813974508982,
-          "P4": 0.003933553261154938
+        "shares_sd": {
+          "K4": 3.0195339035707327e-05,
+          "diamond": 4.852775575379436e-05,
+          "C4": 2.5667197505753702e-05,
+          "paw": 0.0001408480252259211,
+          "K1,3": 0.00010388971771550903,
+          "P4": 0.00010763763845079752
         },
-        "total_connected_4node": 6393853173,
-        "triangles": 3686425,
-        "wedges": 44463234,
-        "triangle_share_3node": 0.07656180908778606
+        "triangle_share_3node_mean": 0.10798399194423469
       }
     }
   },
   "four_point": {
-    "text_cosine": {
+    "text_euclidean": {
       "n": 200000,
-      "mean": 0.05423741787672043,
-      "median": 0.045887067914009094,
-      "p95": 0.1328746378421783,
-      "fraction_gt_0_05": 0.46277,
-      "fraction_gt_0_10": 0.14363
+      "mean": 0.029103145003318787,
+      "median": 0.024423817172646523,
+      "p95": 0.07210435941815371,
+      "fraction_gt_0_05": 0.174215,
+      "fraction_gt_0_10": 0.006355
     },
     "ideal_tree": {
       "n": 200000,
@@ -945,13 +911,13 @@
     }
   },
   "ultrametric": {
-    "text_cosine": {
+    "text_euclidean": {
       "n": 200000,
-      "mean": 0.11516617983579636,
-      "median": 0.09898510575294495,
-      "p95": 0.27646188288927076,
-      "fraction_gt_0_05": 0.735055,
-      "fraction_gt_0_10": 0.495665
+      "mean": 0.06045805290341377,
+      "median": 0.05078195407986641,
+      "p95": 0.14938952550292015,
+      "fraction_gt_0_05": 0.506365,
+      "fraction_gt_0_10": 0.19056
     },
     "ideal_tree": {
       "n": 200000,
@@ -961,5 +927,93 @@
       "fraction_gt_0_05": 0.0,
       "fraction_gt_0_10": 0.0
     }
+  },
+  "cross_coarse_pairs": {
+    "total_pairs": 13142,
+    "sampled_pairs": 100,
+    "category_pair_counts": {
+      "Amplifiers & Effects <> Instrument Accessories": 1783,
+      "Drums & Percussion <> Instrument Accessories": 1370,
+      "Guitars <> Instrument Accessories": 1269,
+      "Electronic Music, DJ & Karaoke <> Studio Recording Equipment": 853,
+      "Live Sound & Stage <> Studio Recording Equipment": 843,
+      "Instrument Accessories <> Live Sound & Stage": 646,
+      "Electronic Music, DJ & Karaoke <> Live Sound & Stage": 543,
+      "Microphones & Accessories <> Studio Recording Equipment": 515,
+      "Instrument Accessories <> Microphones & Accessories": 503,
+      "Instrument Accessories <> Studio Recording Equipment": 390,
+      "Instrument Accessories <> Ukuleles, Mandolins & Banjos": 380,
+      "Amplifiers & Effects <> Studio Recording Equipment": 361,
+      "Live Sound & Stage <> Microphones & Accessories": 345,
+      "Band & Orchestra <> Instrument Accessories": 306,
+      "Drum & Percussion Accessories <> Instrument Accessories": 284,
+      "Amplifiers & Effects <> Live Sound & Stage": 240,
+      "Bass Guitars <> Guitars": 217,
+      "Electronic Music, DJ & Karaoke <> Instrument Accessories": 216,
+      "Electronic Music, DJ & Karaoke <> Microphones & Accessories": 204,
+      "Amplifiers & Effects <> Guitars": 198,
+      "Electronic Music, DJ & Karaoke <> Keyboards & MIDI": 166,
+      "Keyboards & MIDI <> Studio Recording Equipment": 132,
+      "Instrument Accessories <> Keyboards & MIDI": 128,
+      "Drum & Percussion Accessories <> Drums & Percussion": 114,
+      "Instrument Accessories <> Wind & Woodwind Instruments": 103,
+      "Guitars <> Ukuleles, Mandolins & Banjos": 82,
+      "Band & Orchestra <> Wind & Woodwind Instruments": 77,
+      "Drums & Percussion <> Electronic Music, DJ & Karaoke": 77,
+      "Bass Guitars <> Instrument Accessories": 75,
+      "Amplifiers & Effects <> Microphones & Accessories": 57,
+      "Drums & Percussion <> Wind & Woodwind Instruments": 57,
+      "Amplifiers & Effects <> Keyboards & MIDI": 54,
+      "Instrument Accessories <> Stringed Instruments": 45,
+      "Guitars <> Stringed Instruments": 41,
+      "Amplifiers & Effects <> Electronic Music, DJ & Karaoke": 38,
+      "Drums & Percussion <> Studio Recording Equipment": 32,
+      "Guitars <> Studio Recording Equipment": 30,
+      "Drums & Percussion <> Keyboards & MIDI": 28,
+      "Live Sound & Stage <> Wind & Woodwind Instruments": 27,
+      "Drums & Percussion <> Live Sound & Stage": 27,
+      "Guitars <> Live Sound & Stage": 24,
+      "Keyboards & MIDI <> Wind & Woodwind Instruments": 23,
+      "Drums & Percussion <> Microphones & Accessories": 22,
+      "Drums & Percussion <> Ukuleles, Mandolins & Banjos": 21,
+      "Band & Orchestra <> Keyboards & MIDI": 17,
+      "Microphones & Accessories <> Wind & Woodwind Instruments": 16,
+      "Keyboards & MIDI <> Live Sound & Stage": 12,
+      "Pro & DJ Headphones <> Studio Recording Equipment": 12,
+      "Band & Orchestra <> Drums & Percussion": 11,
+      "Stringed Instruments <> Ukuleles, Mandolins & Banjos": 10,
+      "Bass Guitars <> Ukuleles, Mandolins & Banjos": 10,
+      "Amplifiers & Effects <> Drums & Percussion": 9,
+      "Keyboards & MIDI <> Microphones & Accessories": 9,
+      "Electronic Music, DJ & Karaoke <> Pro & DJ Headphones": 8,
+      "Amplifiers & Effects <> Bass Guitars": 8,
+      "Drums & Percussion <> Guitars": 7,
+      "Band & Orchestra <> Bass Guitars": 5,
+      "Amplifiers & Effects <> Ukuleles, Mandolins & Banjos": 5,
+      "Guitars <> Keyboards & MIDI": 4,
+      "Band & Orchestra <> Studio Recording Equipment": 4,
+      "Drums & Percussion <> Stringed Instruments": 4,
+      "Microphones & Accessories <> Stringed Instruments": 4,
+      "Guitars <> Microphones & Accessories": 4,
+      "Guitars <> Wind & Woodwind Instruments": 3,
+      "Amplifiers & Effects <> Drum & Percussion Accessories": 3,
+      "Electronic Music, DJ & Karaoke <> Guitars": 3,
+      "Stringed Instruments <> Wind & Woodwind Instruments": 3,
+      "Band & Orchestra <> Stringed Instruments": 3,
+      "Electronic Music, DJ & Karaoke <> Wind & Woodwind Instruments": 3,
+      "Band & Orchestra <> Ukuleles, Mandolins & Banjos": 2,
+      "Band & Orchestra <> Guitars": 2,
+      "Bass Guitars <> Wind & Woodwind Instruments": 2,
+      "Band & Orchestra <> Microphones & Accessories": 2,
+      "Ukuleles, Mandolins & Banjos <> Wind & Woodwind Instruments": 2,
+      "Bass Guitars <> Drums & Percussion": 2,
+      "Bass Guitars <> Keyboards & MIDI": 2,
+      "Band & Orchestra <> Live Sound & Stage": 1,
+      "Bass Guitars <> Live Sound & Stage": 1,
+      "Microphones & Accessories <> Pro & DJ Headphones": 1,
+      "Amplifiers & Effects <> Wind & Woodwind Instruments": 1,
+      "Amplifiers & Effects <> Band & Orchestra": 1
+    },
+    "file": "cross_coarse_top5_pairs.csv"
   }
 }

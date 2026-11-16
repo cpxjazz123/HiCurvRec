@@ -32,8 +32,8 @@ Ideal tree distance: same fine = 1, same coarse different fine = 2, cross coarse
 
 | graph | cross before same coarse | diff-fine before same-fine | first cross n | first cross median | first cross <=5 |
 |---|---:|---:|---:|---:|---:|
-| text | 0.1611 | 0.2690 | 11804 | 6.0 | 0.4818 |
-| ideal_tree | 0.0000 | 0.0000 | 3 | 3.0 | 1.0000 |
+| text | 0.1611 | 0.2690 | 11804.0 | 6.0 | 0.4818 |
+| ideal_tree | 0.0000 | 0.0000 | 3.0 | 3.0 | 1.0000 |
 
 ## Graphlets
 
@@ -43,18 +43,40 @@ Ideal tree distance: same fine = 1, same coarse different fine = 2, cross coarse
 | text k=10 | 0.2543 | 0.5107 | 0.1887 | 0.0320 | 0.0073 | 0.0069 |
 | text k=15 | 0.2490 | 0.5049 | 0.1958 | 0.0348 | 0.0084 | 0.0071 |
 | text k=20 | 0.2448 | 0.5026 | 0.1999 | 0.0364 | 0.0090 | 0.0073 |
-| ideal_tree k=5 | 0.9834 | 0.0001 | 0.0004 | 0.0160 | 0.0002 | 0.0000 |
-| ideal_tree k=10 | 0.9622 | 0.0005 | 0.0022 | 0.0342 | 0.0009 | 0.0000 |
-| ideal_tree k=15 | 0.9411 | 0.0017 | 0.0056 | 0.0493 | 0.0020 | 0.0002 |
-| ideal_tree k=20 | 0.9212 | 0.0039 | 0.0103 | 0.0605 | 0.0033 | 0.0008 |
+| ideal_tree k=5 | 0.2277 | 0.6987 | 0.0514 | 0.0078 | 0.0011 | 0.0133 |
+| ideal_tree k=10 | 0.2155 | 0.6633 | 0.0844 | 0.0136 | 0.0023 | 0.0210 |
+| ideal_tree k=15 | 0.2081 | 0.6377 | 0.1049 | 0.0200 | 0.0040 | 0.0253 |
+| ideal_tree k=20 | 0.2017 | 0.6180 | 0.1207 | 0.0252 | 0.0060 | 0.0284 |
+
+## Cross-coarse top-5 pairs
+
+Total cross-coarse pairs in text top-5: **13142**; sampled **100** for manual audit in `cross_coarse_top5_pairs.csv`.
+
+| category pair | pairs |
+|---|---:|
+| Amplifiers & Effects <> Instrument Accessories | 1783 |
+| Drums & Percussion <> Instrument Accessories | 1370 |
+| Guitars <> Instrument Accessories | 1269 |
+| Electronic Music, DJ & Karaoke <> Studio Recording Equipment | 853 |
+| Live Sound & Stage <> Studio Recording Equipment | 843 |
+| Instrument Accessories <> Live Sound & Stage | 646 |
+| Electronic Music, DJ & Karaoke <> Live Sound & Stage | 543 |
+| Microphones & Accessories <> Studio Recording Equipment | 515 |
+| Instrument Accessories <> Microphones & Accessories | 503 |
+| Instrument Accessories <> Studio Recording Equipment | 390 |
+| Instrument Accessories <> Ukuleles, Mandolins & Banjos | 380 |
+| Amplifiers & Effects <> Studio Recording Equipment | 361 |
+| Live Sound & Stage <> Microphones & Accessories | 345 |
+| Band & Orchestra <> Instrument Accessories | 306 |
+| Drum & Percussion Accessories <> Instrument Accessories | 284 |
 
 ## Ultrametric / four-point residuals
 
 | test | data | mean | median | p95 | >0.05 | >0.10 |
 |---|---|---:|---:|---:|---:|---:|
-| four-point | text_cosine | 0.0542 | 0.0459 | 0.1329 | 0.4628 | 0.1436 |
+| four-point | text_euclidean | 0.0291 | 0.0244 | 0.0721 | 0.1742 | 0.0064 |
 | four-point | ideal_tree | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
-| ultrametric | text_cosine | 0.1152 | 0.0990 | 0.2765 | 0.7351 | 0.4957 |
+| ultrametric | text_euclidean | 0.0605 | 0.0508 | 0.1494 | 0.5064 | 0.1906 |
 | ultrametric | ideal_tree | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
 
 Residuals are relative: (largest two-point sum minus second largest) / largest.

@@ -47,6 +47,7 @@ EXCLUDED_COARSE = {
 }
 K_VALUES = (5, 10, 15, 20)
 K_MAX = max(K_VALUES)
+TREE_SEEDS = 20
 BANDS = ((1, 5), (6, 10), (11, 15), (16, 20))
 RELATIONS = ("same_fine", "same_coarse_diff_fine", "cross_coarse")
 GRAPHLETS = ("K4", "diamond", "C4", "paw", "K1,3", "P4")
@@ -106,12 +107,15 @@ def build_text_knn(embedding: np.ndarray) -> np.ndarray:
     return neighbors
 
 
-def build_tree_knn(fine: np.ndarray, coarse: np.ndarray) -> np.ndarray:
+def build_tree_knn(fine: np.ndarray, coarse: np.ndarray, seed: int = 0) -> np.ndarray:
     """Top-K under d(same fine)=1, d(same coarse)=2, d(cross coarse)=3.
 
-    Ties are broken by ascending item index.  Candidate groups are already sorted,
-    so the first K concatenated candidates are exactly the lexicographic top K.
+    All candidates at the same tree distance are exact ties.  Ties are broken
+    uniformly at random, not by item id: choosing by id makes a few low-id items
+    into artificial hubs and inflates K1,3.  Different seeds give the tie
+    ensemble reported by main().
     """
+    rng = np.random.default_rng(seed)
     nodes = len(fine)
     fine_groups: dict[str, list[int]] = {}
     coarse_groups: dict[str, list[int]] = {}
@@ -127,22 +131,18 @@ def build_tree_knn(fine: np.ndarray, coarse: np.ndarray) -> np.ndarray:
     neighbors = np.empty((nodes, K_MAX), dtype=np.int64)
     for index in range(nodes):
         chosen: list[int] = []
-        for candidate in fine_groups[str(fine[index])]:
-            if candidate != index:
-                chosen.append(candidate)
-                if len(chosen) == K_MAX:
-                    break
-        if len(chosen) < K_MAX:
-            for candidate in coarse_groups[str(coarse[index])]:
-                if candidate != index and str(fine[candidate]) != str(fine[index]):
-                    chosen.append(candidate)
-                    if len(chosen) == K_MAX:
-                        break
-        if len(chosen) < K_MAX:
-            for candidate in cross_groups[str(coarse[index])]:
-                chosen.append(candidate)
-                if len(chosen) == K_MAX:
-                    break
+        same_fine = [candidate for candidate in fine_groups[str(fine[index])] if candidate != index]
+        same_coarse = [candidate for candidate in coarse_groups[str(coarse[index])]
+                       if candidate != index and str(fine[candidate]) != str(fine[index])]
+        cross = cross_groups[str(coarse[index])]
+        for candidates in (same_fine, same_coarse, cross):
+            need = K_MAX - len(chosen)
+            if need <= 0:
+                break
+            if len(candidates) <= need:
+                chosen.extend(candidates)
+            else:
+                chosen.extend(rng.choice(candidates, size=need, replace=False).tolist())
         if len(chosen) < K_MAX:
             raise ValueError(f"not enough tree candidates for item {index}")
         neighbors[index] = chosen
@@ -251,7 +251,9 @@ def _tree_distances(fine: np.ndarray, coarse: np.ndarray, indices: np.ndarray) -
 def _text_distances(embedding: np.ndarray, indices: np.ndarray) -> np.ndarray:
     vectors = embedding[indices]
     dots = np.einsum("ijk,ilk->ijl", vectors, vectors)
-    distance = np.clip(1.0 - dots, 0.0, 2.0)
+    # The embedding is L2-normalised, so this is Euclidean distance, not the
+    # non-metric 1-cosine quantity.
+    distance = np.sqrt(np.clip(2.0 - 2.0 * dots, 0.0, 4.0))
     diagonal = np.arange(indices.shape[1])
     distance[:, diagonal, diagonal] = 0.0
     return distance
@@ -283,7 +285,7 @@ def four_point(embedding: np.ndarray, fine: np.ndarray, coarse: np.ndarray,
             "fraction_gt_0_10": float(np.mean(residual > 0.10)),
         }
 
-    return {"text_cosine": summarize(text), "ideal_tree": summarize(tree)}
+    return {"text_euclidean": summarize(text), "ideal_tree": summarize(tree)}
 
 
 def ultrametric(embedding: np.ndarray, fine: np.ndarray, coarse: np.ndarray,
@@ -309,7 +311,108 @@ def ultrametric(embedding: np.ndarray, fine: np.ndarray, coarse: np.ndarray,
             "fraction_gt_0_10": float(np.mean(residual > 0.10)),
         }
 
-    return {"text_cosine": summarize(text), "ideal_tree": summarize(tree)}
+    return {"text_euclidean": summarize(text), "ideal_tree": summarize(tree)}
+
+
+def average_bands(bands: list[dict]) -> dict:
+    output = {}
+    for key in bands[0]:
+        rates = {relation: np.array([band[key]["rates"][relation] for band in bands])
+                 for relation in RELATIONS}
+        output[key] = {
+            "total": int(np.mean([band[key]["total"] for band in bands])),
+            "rates_mean": {name: float(values.mean()) for name, values in rates.items()},
+            "rates_sd": {name: float(values.std(ddof=1)) if len(values) > 1 else 0.0
+                         for name, values in rates.items()},
+        }
+    return output
+
+
+def average_violations(values: list[dict]) -> dict:
+    def scalar(path):
+        return np.array([item[path[0]][path[1]] for item in values], dtype=float)
+
+    return {
+        "cross_before_same_coarse": {
+            "rate_mean": float(scalar(("cross_before_same_coarse", "rate")).mean()),
+            "rate_sd": float(scalar(("cross_before_same_coarse", "rate")).std(ddof=1))
+            if len(values) > 1 else 0.0,
+        },
+        "diff_fine_before_same_fine": {
+            "rate_mean": float(scalar(("diff_fine_before_same_fine", "rate")).mean()),
+            "rate_sd": float(scalar(("diff_fine_before_same_fine", "rate")).std(ddof=1))
+            if len(values) > 1 else 0.0,
+        },
+        "first_cross_rank": {
+            "n_mean": float(scalar(("first_cross_rank", "n")).mean()),
+            "median_mean": float(np.nanmean([
+                item["first_cross_rank"]["median"] for item in values
+            ])),
+            "fraction_le_5_mean": float(np.nanmean([
+                item["first_cross_rank"]["fraction_le_5"] for item in values
+            ])),
+        },
+    }
+
+
+def average_graphlets(entries: dict[str, list[dict]]) -> dict:
+    output = {}
+    for key, summaries in entries.items():
+        shares = {name: np.array([summary["shares"][name] for summary in summaries])
+                  for name in GRAPHLETS}
+        output[key] = {
+            "shares_mean": {name: float(values.mean()) for name, values in shares.items()},
+            "shares_sd": {name: float(values.std(ddof=1)) if len(values) > 1 else 0.0
+                          for name, values in shares.items()},
+            "triangle_share_3node_mean": float(np.mean([
+                summary["triangle_share_3node"] for summary in summaries
+            ])),
+        }
+    return output
+
+
+def cross_pairs(neighbors: np.ndarray, fine: np.ndarray, coarse: np.ndarray,
+                embedding: np.ndarray, labels: pd.DataFrame, sample: int = 100) -> dict:
+    pairs = []
+    for source in range(len(neighbors)):
+        for rank in range(5):
+            target = int(neighbors[source, rank])
+            if coarse[source] == coarse[target]:
+                continue
+            pairs.append((source, target, rank + 1,
+                          float(np.dot(embedding[source], embedding[target]))))
+    category_counts = Counter(tuple(sorted((str(coarse[source]), str(coarse[target]))))
+                              for source, target, _, _ in pairs)
+    rng = np.random.default_rng(20261119)
+    chosen = pairs if len(pairs) <= sample else [
+        pairs[index] for index in rng.choice(len(pairs), sample, replace=False)
+    ]
+    rows = []
+    for source, target, rank, cosine in chosen:
+        source_row, target_row = labels.iloc[source], labels.iloc[target]
+        rows.append({
+            "source_item_id": int(source_row.item_id),
+            "source_title": source_row.title,
+            "source_coarse": source_row.coarse,
+            "source_path": source_row.path,
+            "target_item_id": int(target_row.item_id),
+            "target_title": target_row.title,
+            "target_coarse": target_row.coarse,
+            "target_path": target_row.path,
+            "rank": int(rank),
+            "cosine": cosine,
+            "category_pair": " <> ".join(sorted((str(source_row.coarse), str(target_row.coarse)))),
+        })
+    frame = pd.DataFrame(rows).sort_values(["category_pair", "rank"]).reset_index(drop=True)
+    frame.to_csv(OUT_DIR / "cross_coarse_top5_pairs.csv", index=False)
+    return {
+        "total_pairs": len(pairs),
+        "sampled_pairs": len(frame),
+        "category_pair_counts": {
+            " <> ".join(key): int(value) for key, value in category_counts.most_common()
+        },
+        "file": "cross_coarse_top5_pairs.csv",
+    }
 
 
 def label_samples(labels: pd.DataFrame, count: int = 5) -> pd.DataFrame:
@@ -341,13 +444,25 @@ def main() -> int:
     label_samples(labels).to_csv(SAMPLES_CSV, index=False)
 
     text_neighbors = build_text_knn(embedding)
-    tree_neighbors = build_tree_knn(fine, coarse)
     print("labeled", len(labels), "coarse", len(set(coarse)), "fine", len(set(fine)), flush=True)
 
-    text_graphlets, tree_graphlets = {}, {}
-    for k in K_VALUES:
-        text_graphlets[f"text_k{k}"] = graphlet_summary(run_pgd(undirected(text_neighbors, k), f"text_k{k}"))
-        tree_graphlets[f"tree_k{k}"] = graphlet_summary(run_pgd(undirected(tree_neighbors, k), f"tree_k{k}"))
+    text_bands = average_bands([band_mix(text_neighbors, fine, coarse)])
+    text_violations = average_violations([violation_summary(text_neighbors, fine, coarse)])
+    text_graphlet_entries = {f"k{k}": [
+        graphlet_summary(run_pgd(undirected(text_neighbors, k), f"text_k{k}"))
+    ] for k in K_VALUES}
+
+    tree_band_entries, tree_violation_entries = [], []
+    tree_graphlet_entries = {f"k{k}": [] for k in K_VALUES}
+    for seed in range(TREE_SEEDS):
+        tree_neighbors = build_tree_knn(fine, coarse, seed=seed)
+        tree_band_entries.append(band_mix(tree_neighbors, fine, coarse))
+        tree_violation_entries.append(violation_summary(tree_neighbors, fine, coarse))
+        for k in K_VALUES:
+            tree_graphlet_entries[f"k{k}"].append(
+                graphlet_summary(run_pgd(undirected(tree_neighbors, k), f"tree_k{k}_s{seed}"))
+            )
+        print("tree seed", seed, "done", flush=True)
 
     result = {
         "items_total": 24587,
@@ -356,17 +471,23 @@ def main() -> int:
         "label_source": "Amazon Reviews 2023 meta_Musical_Instruments categories, exact normalised title match; ambiguous titles dropped",
         "coarse_counts": {name: int(value) for name, value in Counter(coarse).items()},
         "fine_counts": {name: int(value) for name, value in Counter(fine).items()},
+        "tree_tie_policy": f"uniform random within each exact-distance tier; {TREE_SEEDS} seeds",
+        "tree_seeds": TREE_SEEDS,
         "bands": {
-            "text": band_mix(text_neighbors, fine, coarse),
-            "ideal_tree": band_mix(tree_neighbors, fine, coarse),
+            "text": text_bands,
+            "ideal_tree": average_bands(tree_band_entries),
         },
         "violations": {
-            "text": violation_summary(text_neighbors, fine, coarse),
-            "ideal_tree": violation_summary(tree_neighbors, fine, coarse),
+            "text": text_violations,
+            "ideal_tree": average_violations(tree_violation_entries),
         },
-        "graphlets": {"text": text_graphlets, "ideal_tree": tree_graphlets},
+        "graphlets": {
+            "text": average_graphlets(text_graphlet_entries),
+            "ideal_tree": average_graphlets(tree_graphlet_entries),
+        },
         "four_point": four_point(embedding, fine, coarse),
         "ultrametric": ultrametric(embedding, fine, coarse),
+        "cross_coarse_pairs": cross_pairs(text_neighbors, fine, coarse, embedding, labels),
     }
     OUT_JSON.write_text(json.dumps(result, indent=2))
 
@@ -389,9 +510,9 @@ def main() -> int:
         "|---|---:|---:|---:|",
     ]
     for key, value in result["bands"]["text"].items():
-        lines.append(f"| {key} | {value['rates']['same_fine']:.4f} | "
-                     f"{value['rates']['same_coarse_diff_fine']:.4f} | "
-                     f"{value['rates']['cross_coarse']:.4f} |")
+        lines.append(f"| {key} | {value['rates_mean']['same_fine']:.4f} | "
+                     f"{value['rates_mean']['same_coarse_diff_fine']:.4f} | "
+                     f"{value['rates_mean']['cross_coarse']:.4f} |")
     lines += [
         "",
         "## New neighbours by K band (ideal tree)",
@@ -400,9 +521,9 @@ def main() -> int:
         "|---|---:|---:|---:|",
     ]
     for key, value in result["bands"]["ideal_tree"].items():
-        lines.append(f"| {key} | {value['rates']['same_fine']:.4f} | "
-                     f"{value['rates']['same_coarse_diff_fine']:.4f} | "
-                     f"{value['rates']['cross_coarse']:.4f} |")
+        lines.append(f"| {key} | {value['rates_mean']['same_fine']:.4f} | "
+                     f"{value['rates_mean']['same_coarse_diff_fine']:.4f} | "
+                     f"{value['rates_mean']['cross_coarse']:.4f} |")
     lines += [
         "",
         "## Hierarchy violations",
@@ -412,11 +533,11 @@ def main() -> int:
     ]
     for name in ("text", "ideal_tree"):
         value = result["violations"][name]
-        lines.append(f"| {name} | {value['cross_before_same_coarse']['rate']:.4f} | "
-                     f"{value['diff_fine_before_same_fine']['rate']:.4f} | "
-                     f"{value['first_cross_rank']['n']} | "
-                     f"{value['first_cross_rank']['median']:.1f} | "
-                     f"{value['first_cross_rank']['fraction_le_5']:.4f} |")
+        lines.append(f"| {name} | {value['cross_before_same_coarse']['rate_mean']:.4f} | "
+                     f"{value['diff_fine_before_same_fine']['rate_mean']:.4f} | "
+                     f"{value['first_cross_rank']['n_mean']:.1f} | "
+                     f"{value['first_cross_rank']['median_mean']:.1f} | "
+                     f"{value['first_cross_rank']['fraction_le_5_mean']:.4f} |")
     lines += [
         "",
         "## Graphlets",
@@ -427,10 +548,23 @@ def main() -> int:
     for name in ("text", "ideal_tree"):
         prefix = "text" if name == "text" else "tree"
         for k in K_VALUES:
-            value = result["graphlets"][name][f"{prefix}_k{k}"]["shares"]
+            value = result["graphlets"][name][f"k{k}"]["shares_mean"]
             lines.append(f"| {name} k={k} | {value['K1,3']:.4f} | {value['P4']:.4f} | "
                          f"{value['paw']:.4f} | {value['diamond']:.4f} | "
                          f"{value['K4']:.4f} | {value['C4']:.4f} |")
+    lines += [
+        "",
+        "## Cross-coarse top-5 pairs",
+        "",
+        f"Total cross-coarse pairs in text top-5: **{result['cross_coarse_pairs']['total_pairs']}**; "
+        f"sampled **{result['cross_coarse_pairs']['sampled_pairs']}** for manual audit in "
+        f"`{result['cross_coarse_pairs']['file']}`.",
+        "",
+        "| category pair | pairs |",
+        "|---|---:|",
+    ]
+    for pair, count in list(result["cross_coarse_pairs"]["category_pair_counts"].items())[:15]:
+        lines.append(f"| {pair} | {count} |")
     lines += [
         "",
         "## Ultrametric / four-point residuals",
@@ -439,7 +573,7 @@ def main() -> int:
         "|---|---|---:|---:|---:|---:|---:|",
     ]
     for test_name, test in (("four-point", result["four_point"]), ("ultrametric", result["ultrametric"])):
-        for data_name in ("text_cosine", "ideal_tree"):
+        for data_name in ("text_euclidean", "ideal_tree"):
             value = test[data_name]
             lines.append(f"| {test_name} | {data_name} | {value['mean']:.4f} | "
                          f"{value['median']:.4f} | {value['p95']:.4f} | "
