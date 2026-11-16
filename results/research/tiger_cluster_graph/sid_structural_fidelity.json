@@ -1,0 +1,728 @@
+{
+  "behavior_graph": {
+    "nodes": 24587,
+    "edges": 315391,
+    "communities": 37,
+    "community_sizes": [
+      5856,
+      5543,
+      5540,
+      3244,
+      2309,
+      2064,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "multi_role_fraction": 0.30991987635742463,
+    "role_groups": [
+      "K5",
+      "K4_tail",
+      "K2_3",
+      "C5",
+      "T5",
+      "P5",
+      "K1_4",
+      "K4",
+      "triangle"
+    ]
+  },
+  "arms": {
+    "pure_euclidean_TIGER": {
+      "edges": {
+        "n_edges": 315391,
+        "global_edge_density": 0.0010434841897758057,
+        "lcp_mean": 0.09075718711060239,
+        "lcp_distribution": [
+          289810,
+          23063,
+          1993,
+          525
+        ],
+        "prefix1": 0.08110884584531582,
+        "prefix1_se": 0.0004861177712497982,
+        "prefix2": 0.007983740816954193,
+        "prefix2_se": 0.00015846668098173081,
+        "prefix3": 0.0016646004483323875,
+        "prefix3_se": 7.258862852183372e-05,
+        "random_prefix1": 0.01083945085746123,
+        "prefix1_lift": 7.482744920558899,
+        "prefix1_excess": 0.07026939498785459,
+        "random_prefix2": 0.00047453637594918624,
+        "prefix2_lift": 16.824296769630784,
+        "prefix2_excess": 0.007509204441005007,
+        "random_prefix3": 7.353099675918552e-05,
+        "prefix3_lift": 22.638078112608273,
+        "prefix3_excess": 0.001591069451573202
+      },
+      "clusters": {
+        "L1": {
+          "clusters": 249,
+          "max_cluster_share": 0.029202424045227153,
+          "entropy": 6.958990494049653,
+          "within_edge_share_weighted": 0.042268601671180316,
+          "within_edge_share_max": 0.23426212590299278,
+          "within_edges": 25581,
+          "within_edge_density": 0.007837215329949798,
+          "within_density_lift": 7.510622016835384,
+          "random_prefix": 0.01083945085746123,
+          "prefix_lift": 7.482744920558899
+        },
+        "L2": {
+          "clusters": 7374,
+          "max_cluster_share": 0.0034571114816773093,
+          "entropy": 11.938311020717222,
+          "within_edge_share_weighted": 0.004007869303350184,
+          "within_edge_share_max": 0.17647058823529413,
+          "within_edges": 2518,
+          "within_edge_density": 0.019200854049107825,
+          "within_density_lift": 18.40071391329193,
+          "random_prefix": 0.00047453637594918624,
+          "prefix_lift": 16.824296769630784
+        },
+        "L3": {
+          "clusters": 20425,
+          "max_cluster_share": 0.0009761255948265344,
+          "entropy": 14.141738309010865,
+          "within_edge_share_weighted": 0.0008329935248636667,
+          "within_edge_share_max": 0.16666666666666666,
+          "within_edges": 525,
+          "within_edge_density": 0.05285944422070077,
+          "within_density_lift": 50.656679553580695,
+          "random_prefix": 7.353099675918552e-05,
+          "prefix_lift": 22.638078112608273
+        }
+      },
+      "community": {
+        "n_communities": 37,
+        "edge_same_community_rate": 0.5979498463811587,
+        "within": {
+          "n_edges": 188588,
+          "prefix1": 0.11699047659448109,
+          "prefix1_lift": 10.793026153529894,
+          "prefix2": 0.011824718433834602,
+          "prefix2_lift": 24.918465755512077,
+          "prefix3": 0.0024709949731690243,
+          "prefix3_lift": 33.60480725239654
+        },
+        "cross": {
+          "n_edges": 126803,
+          "prefix1": 0.027743823095668082,
+          "prefix1_lift": 2.559522937139467,
+          "prefix2": 0.0022712396394407074,
+          "prefix2_lift": 4.786228737254726,
+          "prefix3": 0.00046528867613542267,
+          "prefix3_lift": 6.327789594084329
+        },
+        "random_prefix1": 0.01083945085746123,
+        "random_prefix2": 0.00047453637594918624,
+        "random_prefix3": 7.353099675918552e-05,
+        "gap_prefix1": 0.089246653498813,
+        "gap_prefix2": 0.009553478794393895,
+        "gap_prefix3": 0.0020057062970336016,
+        "gap_lift1": 8.233503216390426,
+        "gap_lift2": 20.13223701825735,
+        "gap_lift3": 27.27701765831221,
+        "L1": {
+          "community": {
+            "purity": 0.6648635457762232,
+            "purity_baseline": 0.19159700254963538,
+            "purity_lift": 3.470114547350409,
+            "normalized_purity": 0.5854339292645263,
+            "entropy": 1.3278414857256395,
+            "n_target_classes": 37
+          },
+          "nmi": 0.2453179452770031,
+          "ari": 0.03497301936702649
+        }
+      },
+      "roles": {
+        "multi_role_fraction": 0.30991987635742463,
+        "multi_role_edges": {
+          "n_edges": 178083,
+          "both_multi_n_edges": 44076,
+          "prefix1": 0.08081063324404912,
+          "prefix2": 0.007732349522413706,
+          "prefix3": 0.0015723005564820898
+        },
+        "single_role_edges": {
+          "n_edges": 137308,
+          "prefix1": 0.08149561569609928,
+          "prefix2": 0.008309785300201008,
+          "prefix3": 0.0017843097270370263
+        },
+        "top_role_nmi_L1": 0.017496173841371903,
+        "top_role_ari_L1": 0.0015772538506099595,
+        "role_L1": {
+          "purity": 0.6361491845284093,
+          "purity_baseline": 0.5070111204106935,
+          "purity_lift": 1.2547045990098014,
+          "normalized_purity": 0.261949243612344,
+          "entropy": 0.9310895690054295,
+          "n_target_classes": 7
+        },
+        "top_role_nmi_L2": 0.05440273869330608,
+        "top_role_ari_L2": 9.328393623528995e-05,
+        "role_L2": {
+          "purity": 0.7515353642168626,
+          "purity_baseline": 0.5070111204106935,
+          "purity_lift": 1.482285760533413,
+          "normalized_purity": 0.4960035691066187,
+          "entropy": 0.6487624128255212,
+          "n_target_classes": 7
+        },
+        "top_role_nmi_L3": 0.11277144634300992,
+        "top_role_ari_L3": 1.1244873046888934e-05,
+        "role_L3": {
+          "purity": 0.9380566966282995,
+          "purity_baseline": 0.5070111204106935,
+          "purity_lift": 1.8501698658373542,
+          "normalized_purity": 0.874351520011357,
+          "entropy": 0.14690325902095314,
+          "n_target_classes": 7
+        },
+        "top_role_pairs": [
+          {
+            "left": "K1_4",
+            "right": "K1_4",
+            "count": 204492,
+            "prefix1": 0.06752831406607593,
+            "prefix2": 0.0061762807346986675,
+            "prefix3": 0.0013350155507305908
+          },
+          {
+            "left": "P5",
+            "right": "K1_4",
+            "count": 86033,
+            "prefix1": 0.09186010019411156,
+            "prefix2": 0.009136029198098404,
+            "prefix3": 0.0017551404693547826
+          },
+          {
+            "left": "P5",
+            "right": "P5",
+            "count": 24866,
+            "prefix1": 0.15559398375291564,
+            "prefix2": 0.018861095471728463,
+            "prefix3": 0.0040617710930587955
+          }
+        ]
+      },
+      "graphlets": {
+        "K5": {
+          "instances": 300,
+          "induced_edges": 3000,
+          "prefix1": 0.07233333333333333,
+          "prefix1_se": 0.004952805885453395,
+          "all_prefix1": 0.0,
+          "prefix1_lift": 6.673154782886755,
+          "prefix2": 0.0033333333333333335,
+          "prefix2_se": 0.0010381070730216607,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 7.024400029746655,
+          "prefix3": 0.0006666666666666668,
+          "prefix3_se": 0.000470615558697011,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 9.066471230493507
+        },
+        "double_triangle": {
+          "instances": 119,
+          "induced_edges": 714,
+          "prefix1": 0.15406162464985995,
+          "prefix1_se": 0.01990653593858597,
+          "all_prefix1": 0.025210084033613446,
+          "prefix1_lift": 14.213047014629264,
+          "prefix2": 0.019607843137254898,
+          "prefix2_se": 0.0069408071087683374,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 41.320000174980315,
+          "prefix3": 0.0028011204481792717,
+          "prefix3_se": 0.0019722806472192325,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 38.094416934846656
+        },
+        "K4_tail": {
+          "instances": 300,
+          "induced_edges": 2100,
+          "prefix1": 0.06142857142857144,
+          "prefix1_se": 0.005593768126160401,
+          "all_prefix1": 0.0,
+          "prefix1_lift": 5.667129473287633,
+          "prefix2": 0.0028571428571428567,
+          "prefix2_se": 0.0011566298639324802,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 6.020914311211417,
+          "prefix3": 0.0019047619047619048,
+          "prefix3_se": 0.0009475910764878524,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 25.904203515695727
+        },
+        "K2_3": {
+          "instances": 300,
+          "induced_edges": 1800,
+          "prefix1": 0.06,
+          "prefix1_se": 0.005759540149831419,
+          "all_prefix1": 0.0,
+          "prefix1_lift": 5.535335764606524,
+          "prefix2": 0.0061111111111111106,
+          "prefix2_se": 0.0019750602418240237,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 12.878066721202199,
+          "prefix3": 0.0011111111111111111,
+          "prefix3_se": 0.0007843592644950182,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 15.110785384155841
+        },
+        "P5_centre": {
+          "instances": 300,
+          "induced_edges": 1200,
+          "prefix1": 0.08666666666666667,
+          "prefix1_se": 0.009515384870734413,
+          "all_prefix1": 0.006666666666666667,
+          "prefix1_lift": 7.995484993320535,
+          "prefix2": 0.009166666666666667,
+          "prefix2_se": 0.0027172426566552327,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 19.3171000818033,
+          "prefix3": 0.0008333333333333334,
+          "prefix3_se": 0.0008333333333333333,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 11.333089038116881
+        },
+        "C5": {
+          "instances": 300,
+          "induced_edges": 1500,
+          "prefix1": 0.07866666666666668,
+          "prefix1_se": 0.007660193088742543,
+          "all_prefix1": 0.0,
+          "prefix1_lift": 7.2574402247063325,
+          "prefix2": 0.006,
+          "prefix2_se": 0.001973062743206298,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 12.643920053543978,
+          "prefix3": 0.002666666666666667,
+          "prefix3_se": 0.0013266275070829934,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 36.26588492197403
+        },
+        "P5_hops": {
+          "instances": 300,
+          "induced_edges": 1200,
+          "prefix1": 0.08666666666666667,
+          "prefix1_se": 0.009515384870734413,
+          "all_prefix1": 0.006666666666666667,
+          "prefix1_lift": 7.995484993320535,
+          "prefix2": 0.009166666666666667,
+          "prefix2_se": 0.0027172426566552327,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 19.3171000818033,
+          "prefix3": 0.0008333333333333334,
+          "prefix3_se": 0.0008333333333333333,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 11.333089038116881
+        },
+        "K1_4": {
+          "instances": 300,
+          "induced_edges": 1200,
+          "prefix1": 0.08916666666666667,
+          "prefix1_se": 0.009175783446553506,
+          "all_prefix1": 0.0,
+          "prefix1_lift": 8.226123983512474,
+          "prefix2": 0.008333333333333333,
+          "prefix2_se": 0.002851131064391752,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 17.561000074366635,
+          "prefix3": 0.0016666666666666668,
+          "prefix3_se": 0.001176538896742527,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 22.666178076233763
+        },
+        "T5": {
+          "instances": 300,
+          "induced_edges": 1200,
+          "prefix1": 0.09083333333333334,
+          "prefix1_se": 0.008322038052913686,
+          "all_prefix1": 0.0,
+          "prefix1_lift": 8.3798833103071,
+          "prefix2": 0.0125,
+          "prefix2_se": 0.0033648868878635337,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 26.341500111549955,
+          "prefix3": 0.0025,
+          "prefix3_se": 0.0018608954821646194,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 33.999267114350644
+        }
+      }
+    },
+    "mixed_F0": {
+      "edges": {
+        "n_edges": 315391,
+        "global_edge_density": 0.0010434841897758057,
+        "lcp_mean": 0.16576566864622008,
+        "lcp_distribution": [
+          269791,
+          39684,
+          5151,
+          765
+        ],
+        "prefix1": 0.14458243894087022,
+        "prefix1_se": 0.0006262131829234623,
+        "prefix2": 0.01875766905206553,
+        "prefix2_se": 0.000241575520674032,
+        "prefix3": 0.002425560653284336,
+        "prefix3_se": 8.758990954116865e-05,
+        "random_prefix1": 0.02981461661397993,
+        "prefix1_lift": 4.8493811211067595,
+        "prefix1_excess": 0.11476782232689028,
+        "random_prefix2": 0.0013317445944506811,
+        "prefix2_lift": 14.085034870971416,
+        "prefix2_excess": 0.017425924457614848,
+        "random_prefix3": 9.81951699314304e-05,
+        "prefix3_lift": 24.701425283729364,
+        "prefix3_excess": 0.002327365483352906
+      },
+      "clusters": {
+        "L1": {
+          "clusters": 79,
+          "max_cluster_share": 0.05885223898808313,
+          "entropy": 5.462326749064776,
+          "within_edge_share_weighted": 0.07792447477878676,
+          "within_edge_share_max": 0.3143661971830986,
+          "within_edges": 45600,
+          "within_edge_density": 0.005066958861294334,
+          "within_density_lift": 4.855807985344732,
+          "random_prefix": 0.02981461661397993,
+          "prefix_lift": 4.8493811211067595
+        },
+        "L2": {
+          "clusters": 4151,
+          "max_cluster_share": 0.007280270061414569,
+          "entropy": 10.640213028821659,
+          "within_edge_share_weighted": 0.00946762985984195,
+          "within_edge_share_max": 0.12486064659977704,
+          "within_edges": 5916,
+          "within_edge_density": 0.01515990159901599,
+          "within_density_lift": 14.528156485315911,
+          "random_prefix": 0.0013317445944506811,
+          "prefix_lift": 14.085034870971416
+        },
+        "L3": {
+          "clusters": 18264,
+          "max_cluster_share": 0.0018709073900841909,
+          "entropy": 13.88486586472836,
+          "within_edge_share_weighted": 0.001214252948729955,
+          "within_edge_share_max": 0.12269938650306748,
+          "within_edges": 765,
+          "within_edge_density": 0.04399838960142635,
+          "within_density_lift": 42.16488379270938,
+          "random_prefix": 9.81951699314304e-05,
+          "prefix_lift": 24.701425283729364
+        }
+      },
+      "community": {
+        "n_communities": 37,
+        "edge_same_community_rate": 0.5979498463811587,
+        "within": {
+          "n_edges": 188588,
+          "prefix1": 0.20218147496129127,
+          "prefix1_lift": 6.781287097500001,
+          "prefix2": 0.027530913949986212,
+          "prefix2_lift": 20.672818245109664,
+          "prefix3": 0.0036534668165524847,
+          "prefix3_lift": 37.20617642500846
+        },
+        "cross": {
+          "n_edges": 126803,
+          "prefix1": 0.0589181643967414,
+          "prefix1_lift": 1.9761503278601595,
+          "prefix2": 0.0057096440935940004,
+          "prefix2_lift": 4.287341670006266,
+          "prefix3": 0.0005993549048524089,
+          "prefix3_lift": 6.103710653700563
+        },
+        "random_prefix1": 0.02981461661397993,
+        "random_prefix2": 0.0013317445944506811,
+        "random_prefix3": 9.81951699314304e-05,
+        "gap_prefix1": 0.14326331056454988,
+        "gap_prefix2": 0.02182126985639221,
+        "gap_prefix3": 0.0030541119117000757,
+        "gap_lift1": 4.805136769639841,
+        "gap_lift2": 16.385476575103397,
+        "gap_lift3": 31.102465771307894,
+        "L1": {
+          "community": {
+            "purity": 0.6442835644852971,
+            "purity_baseline": 0.19159700254963538,
+            "purity_lift": 3.362701691110163,
+            "normalized_purity": 0.5599763525907218,
+            "entropy": 1.4341887292148658,
+            "n_target_classes": 37
+          },
+          "nmi": 0.2647504805402775,
+          "ari": 0.08205456339582949
+        }
+      },
+      "roles": {
+        "multi_role_fraction": 0.30991987635742463,
+        "multi_role_edges": {
+          "n_edges": 178083,
+          "both_multi_n_edges": 44076,
+          "prefix1": 0.14365773263029036,
+          "prefix2": 0.01740199794477856,
+          "prefix3": 0.002060836800817596
+        },
+        "single_role_edges": {
+          "n_edges": 137308,
+          "prefix1": 0.14578174614734757,
+          "prefix2": 0.020515920412503278,
+          "prefix3": 0.0028985929443295366
+        },
+        "top_role_nmi_L1": 0.016947287758603564,
+        "top_role_ari_L1": 0.0034966940253231514,
+        "role_L1": {
+          "purity": 0.6250457558872575,
+          "purity_baseline": 0.5070111204106935,
+          "purity_lift": 1.2328048256238493,
+          "normalized_purity": 0.2394265679479321,
+          "entropy": 0.9459562522446647,
+          "n_target_classes": 7
+        },
+        "top_role_nmi_L2": 0.03840373705595234,
+        "top_role_ari_L2": 0.00025153830383011394,
+        "role_L2": {
+          "purity": 0.698946597795583,
+          "purity_baseline": 0.5070111204106935,
+          "purity_lift": 1.3785626580131345,
+          "normalized_purity": 0.389330237113634,
+          "entropy": 0.7771941236383672,
+          "n_target_classes": 7
+        },
+        "top_role_nmi_L3": 0.10425904325678408,
+        "top_role_ari_L3": 2.137797716327616e-05,
+        "role_L3": {
+          "purity": 0.9080408345873836,
+          "purity_baseline": 0.5070111204106935,
+          "purity_lift": 1.7909682806401654,
+          "normalized_purity": 0.8134660451383312,
+          "entropy": 0.22474325884653928,
+          "n_target_classes": 7
+        },
+        "top_role_pairs": [
+          {
+            "left": "K1_4",
+            "right": "K1_4",
+            "count": 204492,
+            "prefix1": 0.12435694305889718,
+            "prefix2": 0.014494454550789272,
+            "prefix3": 0.0016577665629951294
+          },
+          {
+            "left": "P5",
+            "right": "K1_4",
+            "count": 86033,
+            "prefix1": 0.16253065684097961,
+            "prefix2": 0.02093382771727128,
+            "prefix3": 0.002731510001975986
+          },
+          {
+            "left": "P5",
+            "right": "P5",
+            "count": 24866,
+            "prefix1": 0.24881364111638382,
+            "prefix2": 0.046288104238719534,
+            "prefix3": 0.007681171076972573
+          }
+        ]
+      },
+      "graphlets": {
+        "K5": {
+          "instances": 300,
+          "induced_edges": 3000,
+          "prefix1": 0.09266666666666667,
+          "prefix1_se": 0.005670108470141778,
+          "all_prefix1": 0.0,
+          "prefix1_lift": 3.10809519593875,
+          "prefix2": 0.015,
+          "prefix2_se": 0.002270699409488125,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 11.263420976142358,
+          "prefix3": 0.0006666666666666668,
+          "prefix3_se": 0.0004706155586970111,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 6.789200193168356
+        },
+        "double_triangle": {
+          "instances": 119,
+          "induced_edges": 714,
+          "prefix1": 0.2296918767507003,
+          "prefix1_se": 0.02169738569303875,
+          "all_prefix1": 0.03361344537815126,
+          "prefix1_lift": 7.704002359802234,
+          "prefix2": 0.049019607843137254,
+          "prefix2_se": 0.012477795432264707,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 36.80856528151097,
+          "prefix3": 0.007002801120448179,
+          "prefix3_se": 0.0030782097710235685,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 71.31512807949952
+        },
+        "K4_tail": {
+          "instances": 300,
+          "induced_edges": 2100,
+          "prefix1": 0.0980952380952381,
+          "prefix1_se": 0.007210961622829359,
+          "all_prefix1": 0.0033333333333333335,
+          "prefix1_lift": 3.2901727151252955,
+          "prefix2": 0.010952380952380951,
+          "prefix2_se": 0.0021981074269124537,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 8.224085157183309,
+          "prefix3": 0.0009523809523809524,
+          "prefix3_se": 0.0006723079409957298,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 9.698857418811935
+        },
+        "K2_3": {
+          "instances": 300,
+          "induced_edges": 1800,
+          "prefix1": 0.12222222222222222,
+          "prefix1_se": 0.009902701846496505,
+          "all_prefix1": 0.01,
+          "prefix1_lift": 4.099406133732164,
+          "prefix2": 0.012777777777777777,
+          "prefix2_se": 0.0029042199605782467,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 9.59476601671386,
+          "prefix3": 0.0027777777777777775,
+          "prefix3_se": 0.0012339225779448358,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 28.288334138201474
+        },
+        "P5_centre": {
+          "instances": 300,
+          "induced_edges": 1200,
+          "prefix1": 0.15833333333333333,
+          "prefix1_se": 0.011556254088025606,
+          "all_prefix1": 0.01,
+          "prefix1_lift": 5.310594309607576,
+          "prefix2": 0.020833333333333332,
+          "prefix2_se": 0.004166666666666666,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 15.643640244642164,
+          "prefix3": 0.0,
+          "prefix3_se": 0.0,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 0.0
+        },
+        "C5": {
+          "instances": 300,
+          "induced_edges": 1500,
+          "prefix1": 0.146,
+          "prefix1_se": 0.009748910124032634,
+          "all_prefix1": 0.0033333333333333335,
+          "prefix1_lift": 4.896926963385512,
+          "prefix2": 0.020666666666666663,
+          "prefix2_se": 0.004212666924423035,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 15.518491122685024,
+          "prefix3": 0.005333333333333334,
+          "prefix3_se": 0.0018634149093771455,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 54.31360154534685
+        },
+        "P5_hops": {
+          "instances": 300,
+          "induced_edges": 1200,
+          "prefix1": 0.15833333333333333,
+          "prefix1_se": 0.011556254088025606,
+          "all_prefix1": 0.01,
+          "prefix1_lift": 5.310594309607576,
+          "prefix2": 0.020833333333333332,
+          "prefix2_se": 0.004166666666666666,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 15.643640244642164,
+          "prefix3": 0.0,
+          "prefix3_se": 0.0,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 0.0
+        },
+        "K1_4": {
+          "instances": 300,
+          "induced_edges": 1200,
+          "prefix1": 0.15,
+          "prefix1_se": 0.011445182227015325,
+          "all_prefix1": 0.0033333333333333335,
+          "prefix1_lift": 5.03108934594402,
+          "prefix2": 0.020833333333333332,
+          "prefix2_se": 0.004488672311003602,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 15.643640244642164,
+          "prefix3": 0.004166666666666667,
+          "prefix3_se": 0.001850883866917254,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 42.43250120730222
+        },
+        "T5": {
+          "instances": 300,
+          "induced_edges": 1200,
+          "prefix1": 0.15833333333333333,
+          "prefix1_se": 0.011794962677173977,
+          "all_prefix1": 0.0033333333333333335,
+          "prefix1_lift": 5.310594309607576,
+          "prefix2": 0.025,
+          "prefix2_se": 0.00464755602812485,
+          "all_prefix2": 0.0,
+          "prefix2_lift": 18.772368293570597,
+          "prefix3": 0.005,
+          "prefix3_se": 0.00262374883916401,
+          "all_prefix3": 0.0,
+          "prefix3_lift": 50.919001448762664
+        }
+      }
+    }
+  },
+  "paired_mixed_minus_pure": {
+    "prefix1": {
+      "delta": 0.0634735930955544,
+      "se": 0.0005056832291510933
+    },
+    "prefix2": {
+      "delta": 0.010773928235111339,
+      "se": 0.00023991308605883578
+    },
+    "prefix3": {
+      "delta": 0.0007609602049519485,
+      "se": 9.199417596918905e-05
+    }
+  }
+}

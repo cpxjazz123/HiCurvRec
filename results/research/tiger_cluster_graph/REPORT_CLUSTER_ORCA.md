@@ -1,3 +1,5 @@
+> 注意：本报告是 KMeans 量化前后分析，不是“行为图 → SID”保真度。主评估已改为 `REPORT_SID_FIDELITY.md`；本报告保留为量化前后 cluster 稳定性的辅助证据。
+
 # Cluster-Level ORCA Structural Fidelity：纯欧氏 TIGER vs 混合曲率 F0
 
 日期：2026-11-16  
