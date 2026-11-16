@@ -1,0 +1,322 @@
+{
+  "embedding": "stage1_GeneEmbedding/output/sentence_t5.npy",
+  "embedding_shape": [
+    24587,
+    768
+  ],
+  "distance": "cosine",
+  "graph_construction": "top-K directed kNN, symmetrised as undirected union",
+  "k_values": [
+    5,
+    10,
+    15,
+    20
+  ],
+  "semantic_partitions": {
+    "coarse": {
+      "method": "KMeans",
+      "clusters": 16,
+      "seed": 42
+    },
+    "fine": {
+      "method": "KMeans",
+      "clusters": 256,
+      "seed": 42
+    },
+    "note": "parquet categories are null; cluster partitions are semantic proxies"
+  },
+  "pgd_selftest": {
+    "nodes": 14,
+    "edges": 21,
+    "pgd": {
+      "K4": 0,
+      "diamond": 1,
+      "C4": 7,
+      "paw": 9,
+      "K1,3": 19,
+      "P4": 60
+    },
+    "brute_force": {
+      "K4": 0,
+      "diamond": 1,
+      "C4": 7,
+      "paw": 9,
+      "K1,3": 19,
+      "P4": 60
+    }
+  },
+  "behavior_reference": {
+    "name": "behavior_reference",
+    "graph_stats": {
+      "nodes": 24587,
+      "undirected_edges": 315391,
+      "mean_degree": 25.65510228982796,
+      "max_degree": 2220,
+      "triangles": 546438,
+      "wedges": 40566929,
+      "triangle_share_3node": 0.013291005818132093,
+      "components_note": "not recomputed; graphlet counts are the primary structural result"
+    },
+    "graphlets": {
+      "counts": {
+        "K4": 1570609,
+        "diamond": 25923551,
+        "C4": 19874008,
+        "paw": 598520634,
+        "K1,3": 8003048991,
+        "P4": 4161397500
+      },
+      "shares": {
+        "K4": 0.00012260483149556856,
+        "diamond": 0.0020236434415706124,
+        "C4": 0.0015514042017978897,
+        "paw": 0.04672169933967707,
+        "K1,3": 0.6247337644138898,
+        "P4": 0.32484688377156906
+      },
+      "total_connected_4node": 12810335293
+    },
+    "semantic": {
+      "coarse": {
+        "clusters": 16,
+        "rate": 0.24372604164354722,
+        "expected_random": 0.0754513499440579,
+        "lift": 3.230240967514215
+      },
+      "fine": {
+        "clusters": 256,
+        "rate": 0.05354306242093148,
+        "expected_random": 0.005316743821168474,
+        "lift": 10.07064929623865
+      },
+      "cosine": {
+        "mean": 0.7256692051887512,
+        "median": 0.7437776327133179,
+        "p05": 0.5085585415363312,
+        "p95": 0.8807744979858398
+      }
+    }
+  },
+  "rows": [
+    {
+      "name": "knn_k5",
+      "k": 5,
+      "directed_edges": 122935,
+      "mutual_directed_fraction": 0.3967625167771587,
+      "graph_stats": {
+        "nodes": 24587,
+        "undirected_edges": 98547,
+        "mean_degree": 8.016187416114207,
+        "max_degree": 81,
+        "triangles": 83210,
+        "wedges": 634470,
+        "triangle_share_3node": 0.11594303868019173,
+        "components_note": "not recomputed; graphlet counts are the primary structural result"
+      },
+      "graphlets": {
+        "counts": {
+          "K4": 33782,
+          "diamond": 178017,
+          "C4": 44659,
+          "paw": 1173803,
+          "K1,3": 1895852,
+          "P4": 3631649
+        },
+        "shares": {
+          "K4": 0.004855296861260848,
+          "diamond": 0.0255853821961717,
+          "C4": 0.006418586896188746,
+          "paw": 0.16870410341716202,
+          "K1,3": 0.27248014519611335,
+          "P4": 0.5219564854331034
+        },
+        "total_connected_4node": 6957762
+      },
+      "semantic": {
+        "coarse": {
+          "clusters": 16,
+          "rate": 0.7964321592742549,
+          "expected_random": 0.0754513499440579,
+          "lift": 10.555572032372591
+        },
+        "fine": {
+          "clusters": 256,
+          "rate": 0.7178300709306219,
+          "expected_random": 0.005316743821168474,
+          "lift": 135.01310107750547
+        },
+        "cosine": {
+          "mean": 0.8992500901222229,
+          "median": 0.9187167286872864,
+          "p05": 0.7498506665229797,
+          "p95": 0.9735501945018769
+        }
+      }
+    },
+    {
+      "name": "knn_k10",
+      "k": 10,
+      "directed_edges": 245870,
+      "mutual_directed_fraction": 0.3860170008541099,
+      "graph_stats": {
+        "nodes": 24587,
+        "undirected_edges": 198415,
+        "mean_degree": 16.1398299914589,
+        "max_degree": 125,
+        "triangles": 382051,
+        "wedges": 2588234,
+        "triangle_share_3node": 0.12862435759531493,
+        "components_note": "not recomputed; graphlet counts are the primary structural result"
+      },
+      "graphlets": {
+        "counts": {
+          "K4": 420759,
+          "diamond": 1840155,
+          "C4": 397410,
+          "paw": 10891286,
+          "K1,3": 14715735,
+          "P4": 29761138
+        },
+        "shares": {
+          "K4": 0.007251154615040171,
+          "diamond": 0.03171233038542074,
+          "C4": 0.00684876938000878,
+          "paw": 0.18769509087772906,
+          "K1,3": 0.25360377260844846,
+          "P4": 0.5128888821333528
+        },
+        "total_connected_4node": 58026483
+      },
+      "semantic": {
+        "coarse": {
+          "clusters": 16,
+          "rate": 0.780596225083789,
+          "expected_random": 0.0754513499440579,
+          "lift": 10.3456893171898
+        },
+        "fine": {
+          "clusters": 256,
+          "rate": 0.6799385127132526,
+          "expected_random": 0.005316743821168474,
+          "lift": 127.88626565118588
+        },
+        "cosine": {
+          "mean": 0.8885619044303894,
+          "median": 0.9092568159103394,
+          "p05": 0.7330286562442779,
+          "p95": 0.9661746501922608
+        }
+      }
+    },
+    {
+      "name": "knn_k15",
+      "k": 15,
+      "directed_edges": 368805,
+      "mutual_directed_fraction": 0.3805696777429807,
+      "graph_stats": {
+        "nodes": 24587,
+        "undirected_edges": 298627,
+        "mean_degree": 24.29145483385529,
+        "max_degree": 175,
+        "triangles": 904515,
+        "wedges": 5870507,
+        "triangle_share_3node": 0.13350731554820044,
+        "components_note": "not recomputed; graphlet counts are the primary structural result"
+      },
+      "graphlets": {
+        "counts": {
+          "K4": 1642129,
+          "diamond": 6829320,
+          "C4": 1402568,
+          "paw": 38695542,
+          "K1,3": 49390418,
+          "P4": 100772060
+        },
+        "shares": {
+          "K4": 0.008263031088439957,
+          "diamond": 0.0343644643465311,
+          "C4": 0.007057583775483567,
+          "paw": 0.19471214900293102,
+          "K1,3": 0.24852770970188365,
+          "P4": 0.5070750620847307
+        },
+        "total_connected_4node": 198732037
+      },
+      "semantic": {
+        "coarse": {
+          "clusters": 16,
+          "rate": 0.769876802834305,
+          "expected_random": 0.0754513499440579,
+          "lift": 10.203618668255993
+        },
+        "fine": {
+          "clusters": 256,
+          "rate": 0.65114339962562,
+          "expected_random": 0.005316743821168474,
+          "lift": 122.47033551496497
+        },
+        "cosine": {
+          "mean": 0.8820689916610718,
+          "median": 0.9035117626190186,
+          "p05": 0.7233093738555908,
+          "p95": 0.9618398666381837
+        }
+      }
+    },
+    {
+      "name": "knn_k20",
+      "k": 20,
+      "directed_edges": 491740,
+      "mutual_directed_fraction": 0.37689836092243867,
+      "graph_stats": {
+        "nodes": 24587,
+        "undirected_edges": 399072,
+        "mean_degree": 32.46203278155123,
+        "max_degree": 221,
+        "triangles": 1654443,
+        "wedges": 10460630,
+        "triangle_share_3node": 0.13656071242822887,
+        "components_note": "not recomputed; graphlet counts are the primary structural result"
+      },
+      "graphlets": {
+        "counts": {
+          "K4": 4205342,
+          "diamond": 16993658,
+          "C4": 3393843,
+          "paw": 93911602,
+          "K1,3": 115410754,
+          "P4": 238651223
+        },
+        "shares": {
+          "K4": 0.008898943734093744,
+          "diamond": 0.0359603586054195,
+          "C4": 0.007181726931923233,
+          "paw": 0.19872677707939224,
+          "K1,3": 0.244221232459889,
+          "P4": 0.5050109611892823
+        },
+        "total_connected_4node": 472566422
+      },
+      "semantic": {
+        "coarse": {
+          "clusters": 16,
+          "rate": 0.7622383930719269,
+          "expected_random": 0.0754513499440579,
+          "lift": 10.102382444278007
+        },
+        "fine": {
+          "clusters": 256,
+          "rate": 0.6258695172800898,
+          "expected_random": 0.005316743821168474,
+          "lift": 117.71669622075959
+        },
+        "cosine": {
+          "mean": 0.8773037195205688,
+          "median": 0.8992674350738525,
+          "p05": 0.7162286907434464,
+          "p95": 0.9587074398994446
+        }
+      }
+    }
+  ]
+}

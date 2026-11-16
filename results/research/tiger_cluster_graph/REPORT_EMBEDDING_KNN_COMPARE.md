@@ -119,7 +119,7 @@ q-kNN recall **1.07%–1.13%**；相对 z 损失约 **28%–31%**，绝对损失
 
 ## 6. 方法限制
 
-- k=10，z/q 欧氏距离；未做 k 敏感性扫描。
+- k=10，z/q 欧氏距离；z/q 未做 k 敏感性扫描。原始 sentence-T5 文本 embedding 的 K=5/10/15/20 扫描见 `results/research/embedding_knn_k_sweep/REPORT_EMBEDDING_KNN_K_SWEEP.md`。
 - z 图被裁剪到 q 图边数；裁剪会去掉 z 的部分边，但保留了最短的 z 边；q 图未裁剪。
 - z 图的连通分量远多于 q 图（1,098/486 vs 10/12）；ORCA 角色对图密度和连通性敏感。
 - 行为图本身很稀疏；precision/recall 受图密度影响，已同时报告 Jaccard 与 degree Spearman。
