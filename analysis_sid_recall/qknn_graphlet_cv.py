@@ -68,6 +68,11 @@ def recovery(values: np.ndarray, indices: np.ndarray) -> float:
 
 
 def cv_scores(features: np.ndarray, target: np.ndarray, seed: int = 42) -> dict:
+    usable = np.isfinite(features).all(axis=1) & np.isfinite(target)
+    features = features[usable]
+    target = target[usable]
+    if len(target) < 10:
+        return {"r2_mean": float("nan"), "r2_sd": float("nan"), "mae_mean": float("nan"), "mae_sd": float("nan"), "folds": 0}
     folds = list(RepeatedKFold(n_splits=5, n_repeats=20, random_state=seed).split(features))
     r2_values = []
     mae_values = []
