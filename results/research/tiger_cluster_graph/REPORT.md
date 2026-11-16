@@ -94,7 +94,15 @@
 
 ---
 
-## 4. ORCA 4 节点 orbit
+## 4. ORCA orbit 对比
+
+ORCA 已从上游源码重新编译，并用历史 issue213 的 GPU stage-1 加速版跑 5-node：
+
+- 4-node CPU 精确 orbit；
+- 5-node GPU 精确 orbit（`results/orca_build/orca/orca_gpu`）；
+- 先用 4-node 输出做了 **GPU 与 CPU 逐字节一致**校验，再使用 5-node 输出。
+
+### 4.1 4-node orbit（15 维）
 
 | 比较 | median Spearman | mean | p10 | p90 | profile cosine |
 |---|---:|---:|---:|---:|---:|
@@ -102,10 +110,17 @@
 | q vs behaviour | 0.0139 | 0.0132 | −0.0035 | 0.0257 | 0.8375 |
 | z vs q | **0.5479** | **0.5705** | 0.5133 | 0.6360 | **0.9813** |
 
-- 对行为图的 4-node orbit，z 和 q 都几乎不相关（median ρ 0.006 / 0.014，mean 0.013）；profile cosine 都在 0.84 左右。
-- **q 与 z 彼此非常接近**（median ρ 0.548、cosine 0.981）：量化保留了“节点 orbit 画像”的大部分，但这两张图都没有复现行为图的 orbit 结构。
-- ORCA 的 4-node orbit 主要被度数/三角形数量驱动；它看不到 cluster 内近邻边被替换造成的局部损失。因此 ORCA 与 graphlet edge share 给出不同侧面，不能互相替代。
-- **5-node ORCA 未完成**：串行 ORCA 在 31.5 万边的行为图上跑了 6 分钟仍无输出（99% CPU、RSS 2.7G），为避免超时/伪造，报告只使用精确 4-node orbit。5-node 需要 GPU/并行 ORCA 另行补。
+### 4.2 5-node orbit（73 维，GPU）
+
+| 比较 | median Spearman | mean | p10 | p90 | profile cosine |
+|---|---:|---:|---:|---:|---:|
+| z vs behaviour | 0.0058 | 0.0091 | −0.0073 | 0.0332 | 0.8064 |
+| q vs behaviour | 0.0139 | 0.0129 | −0.0050 | 0.0258 | 0.8045 |
+| z vs q | **0.5503** | **0.5655** | 0.4762 | 0.6754 | **0.9722** |
+
+- GPU 5-node 用时：behaviour **90.95s**、z **6.87s**、q **6.17s**；4-node GPU 与 CPU 输出逐字节一致。
+- 4-node 与 5-node 给出同一个结论：z/q 各自与行为图的逐 orbit 相关都接近 0（median 0.006–0.014），但 z 与 q 的 orbit 画像高度相似（median 0.55、cosine 0.97）。
+- **量化保留了大部分“节点 orbit 画像”，但没有复现行为图的 orbit 结构**。ORCA 的 orbit 计数由度数/三角形/局部邻域规模主导，看不到 cluster 内近邻边被替换造成的局部损失；因此它与 graphlet edge share 是两个不同侧面，不能互相替代。
 
 ---
 
@@ -113,7 +128,7 @@
 
 1. **量化保留了粗粒度簇归属，但损失了局部图结构。** ARI 0.73/NMI 0.89 说明“同簇”关系很稳定；但行为边 recall 从 2.08% 降到 1.64%（−21% 相对），degree 秩相关从 0.037 降到 0.019。
 2. **在 9 类 graphlet 中，z 全面优于或等于 q。** 量化对 K5/K4_tail/路径类损失最大，对 K2_3 无损。这与“量化主要破坏簇内精细近邻，而不是粗簇”一致。
-3. **ORCA 4-node orbit 与 graphlet edge share 结论不同**：orbit 画像在 z/q 之间高度相似（0.98 cosine），但两者对行为图的 orbit 相关都接近 0。不要用 orbit 画像代替 induced edge 结构保留。
+3. **ORCA 4/5-node orbit 与 graphlet edge share 结论不同**：orbit 画像在 z/q 之间高度相似（4-node cosine 0.981、5-node 0.972），但两者对行为图的 orbit 相关都接近 0。不要用 orbit 画像代替 induced edge 结构保留。
 4. **这张图的绝对行为边保留很低是方法性质**：KMeans 簇是语义簇，行为边跨簇；本实验只做 z vs q 的受控比较。不能据此说 TIGER 的 SID 没有行为信息，也不能据此预测 Stage3 Recall。
 
 ---
@@ -125,7 +140,7 @@
 3. z 图 321,260 边、q 图 309,677 边，目标 315,391；离散 m 使边数无法精确相等，差异 3.7%。
 4. q 使用导出 SID 的码本和，不使用 `model.rq` 的 argmin 路径；这是实际部署口径，但和训练时 Sinkhorn 分配的内部路径不完全相同。
 5. graphlet 实例最多 500/类（双三角 119），不是全量枚举；edge share 是抽样估计。
-6. 5-node ORCA 未完成；只有 4-node orbit。没有 ORCA 角色表/NMF 重拟合。
+6. 5-node ORCA 已用 GPU 完成；4-node GPU 与 CPU 输出逐字节一致。没有 ORCA 角色表/NMF 重拟合；graphlet edge share 仍是抽样估计。
 7. 行为图来自 TRAIN；没有用 TEST 验证，也没有与 Stage3 Recall 关联。
 
 ---
@@ -148,6 +163,10 @@
 # 4) ORCA 4-node orbit（ORCA 源码/二进制在 results/orca_build/，已忽略）
 /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 \
   results/research/tiger_cluster_graph/orca_structure.py
+
+# 5) ORCA 5-node orbit on GPU（先编译 results/orca_build/orca/orca_gpu）
+/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 \
+  results/research/tiger_cluster_graph/orca5_structure.py
 ```
 
 产物：
@@ -157,4 +176,5 @@
 | `tiger_vectors_meta.json` | TIGER checkpoint/SID SHA、z/q 形状、q 来源 |
 | `cluster_graphs_meta.json` | K、m、边数、recall/precision/Jaccard、degree ρ、ARI/NMI |
 | `structure_retention.json/.md` | 9 类 graphlet 的 edge share/exact |
-| `orca_structure.json/.md` | 4-node ORCA orbit 对比与 5-node 跳过原因 |
+| `orca_structure.json/.md` | 4-node ORCA orbit 对比 |
+| `orca5_structure.json/.md` | 5-node ORCA orbit 对比（GPU） |

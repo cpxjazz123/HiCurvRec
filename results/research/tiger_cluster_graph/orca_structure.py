@@ -80,8 +80,8 @@ def main() -> int:
         "graphs": {},
         "sizes": {},
         "five_node_status": (
-            "skipped: serial ORCA node-5 on the 315,391-edge behaviour graph was still running "
-            "after 6 minutes with no output; the 4-node exact orbit comparison is reported instead"
+            "completed separately in orca5_structure.py with the GPU build; this file covers "
+            "exact 4-node orbits"
         ),
     }
     for size in (4,):
