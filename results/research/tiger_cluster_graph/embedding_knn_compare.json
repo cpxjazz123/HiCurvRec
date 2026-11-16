@@ -1,0 +1,163 @@
+{
+  "nodes": 24587,
+  "behaviour_edges": 315391,
+  "k_candidates": 10,
+  "behaviour": {
+    "graph": {
+      "edges": 315391,
+      "behavior_recall": 1.0,
+      "precision": 1.0,
+      "jaccard": 1.0,
+      "degree_spearman": 1.0,
+      "components": 32,
+      "triangles": 546438.0
+    },
+    "multi_role_fraction": 0.30991987635742463
+  },
+  "arms": {
+    "pure_euclidean_TIGER": {
+      "z_edges_raw": 199094,
+      "q_edges_raw": 186044,
+      "matched_edges": 186044,
+      "z_trimmed": 13050,
+      "q_trimmed": 0,
+      "z": {
+        "graph": {
+          "edges": 186044,
+          "behavior_recall": 0.01641771642183829,
+          "precision": 0.027832125733697404,
+          "jaccard": 0.010434109745555226,
+          "degree_spearman": 0.04860845707912884,
+          "components": 1098,
+          "triangles": 323124.0
+        },
+        "roles_vs_behavior": {
+          "top_role_ari": -0.00024869510836119247,
+          "top_role_nmi": 0.00020365888932016645,
+          "top_role_agreement": 0.41489404970106153,
+          "role_distribution_jsd_mean": 0.32367463303676536,
+          "role_distribution_jsd_median": 0.27325028849497934,
+          "multi_before": 0.30991987635742463,
+          "multi_after": 0.010086631146540855,
+          "multi_agreement": 0.685606214666287,
+          "role_pair_jsd": 0.796548393504336
+        }
+      },
+      "q": {
+        "graph": {
+          "edges": 186044,
+          "behavior_recall": 0.011312941713618968,
+          "precision": 0.019178258906495237,
+          "jaccard": 0.00716657259870608,
+          "degree_spearman": 0.0172256712175643,
+          "components": 10,
+          "triangles": 390495.0
+        },
+        "roles_vs_behavior": {
+          "top_role_ari": -0.00026313825430014523,
+          "top_role_nmi": 0.0002132670199865374,
+          "top_role_agreement": 0.42868182372798636,
+          "role_distribution_jsd_mean": 0.33262463871328535,
+          "role_distribution_jsd_median": 0.28392590678323976,
+          "multi_before": 0.30991987635742463,
+          "multi_after": 0.09025094562166999,
+          "multi_agreement": 0.6548175865294668,
+          "role_pair_jsd": 0.7004910599445512
+        }
+      },
+      "z_vs_q": {
+        "graph": {
+          "edges_a": 186044,
+          "edges_b": 186044,
+          "intersection": 56713,
+          "jaccard": 0.1798271898533492,
+          "only_a": 129331,
+          "only_b": 129331
+        },
+        "roles": {
+          "top_role_ari": 0.24859088728311227,
+          "top_role_nmi": 0.11668344306988927,
+          "top_role_agreement": 0.9225607028104282,
+          "role_distribution_jsd_mean": 0.035837475073924555,
+          "role_distribution_jsd_median": 0.015352548022694089,
+          "multi_before": 0.010086631146540855,
+          "multi_after": 0.09025094562166999,
+          "multi_agreement": 0.903729613210233,
+          "role_pair_jsd": 0.029949097277485758
+        }
+      }
+    },
+    "mixed_F0": {
+      "z_edges_raw": 190846,
+      "q_edges_raw": 184398,
+      "matched_edges": 184398,
+      "z_trimmed": 6448,
+      "q_trimmed": 0,
+      "z": {
+        "graph": {
+          "edges": 184398,
+          "behavior_recall": 0.014867260004248695,
+          "precision": 0.025428692285165783,
+          "jaccard": 0.009470813976974348,
+          "degree_spearman": 0.03661189830779624,
+          "components": 486,
+          "triangles": 323737.0
+        },
+        "roles_vs_behavior": {
+          "top_role_ari": -0.0013667987311250431,
+          "top_role_nmi": 0.0006101075519702018,
+          "top_role_agreement": 0.42567210314393783,
+          "role_distribution_jsd_mean": 0.3457449727401692,
+          "role_distribution_jsd_median": 0.30170693623592043,
+          "multi_before": 0.30991987635742463,
+          "multi_after": 0.004229877577581649,
+          "multi_agreement": 0.6883719038516289,
+          "role_pair_jsd": 0.7964643088749256
+        }
+      },
+      "q": {
+        "graph": {
+          "edges": 184398,
+          "behavior_recall": 0.01066295487188918,
+          "precision": 0.01823772492109459,
+          "jaccard": 0.006774423579748039,
+          "degree_spearman": 0.006096307101361663,
+          "components": 12,
+          "triangles": 383166.0
+        },
+        "roles_vs_behavior": {
+          "top_role_ari": -0.00028636289546676483,
+          "top_role_nmi": 0.0001969624929316644,
+          "top_role_agreement": 0.43161020051246596,
+          "role_distribution_jsd_mean": 0.3571053444398601,
+          "role_distribution_jsd_median": 0.31728379201670154,
+          "multi_before": 0.30991987635742463,
+          "multi_after": 0.016634807011835524,
+          "multi_agreement": 0.6825558221824541,
+          "role_pair_jsd": 0.7833823524706497
+        }
+      },
+      "z_vs_q": {
+        "graph": {
+          "edges_a": 184398,
+          "edges_b": 184398,
+          "intersection": 62721,
+          "jaccard": 0.20492036265621172,
+          "only_a": 121677,
+          "only_b": 121677
+        },
+        "roles": {
+          "top_role_ari": 0.3122860095966888,
+          "top_role_nmi": 0.16086707307867937,
+          "top_role_agreement": 0.9709602635539106,
+          "role_distribution_jsd_mean": 0.018621656210405006,
+          "role_distribution_jsd_median": 0.00826351050986219,
+          "multi_before": 0.004229877577581649,
+          "multi_after": 0.016634807011835524,
+          "multi_agreement": 0.9806808476023915,
+          "role_pair_jsd": 0.004571563890830437
+        }
+      }
+    }
+  }
+}
