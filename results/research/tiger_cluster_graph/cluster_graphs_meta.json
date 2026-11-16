@@ -1,0 +1,36 @@
+{
+  "k_clusters": 256,
+  "seed": 42,
+  "nodes": 24587,
+  "behaviour_edges": 315391,
+  "z": {
+    "clusters": 256,
+    "max_cluster": 612,
+    "within_cluster_m": 17,
+    "max_m": 64,
+    "graph": {
+      "edges": 321260,
+      "behaviour_recall": 0.02081860294047706,
+      "precision": 0.02043827429496358,
+      "jaccard": 0.010420816239078855
+    },
+    "degree_spearman_vs_behaviour": 0.03669843877096587
+  },
+  "q": {
+    "clusters": 256,
+    "max_cluster": 586,
+    "within_cluster_m": 17,
+    "max_m": 64,
+    "graph": {
+      "edges": 309677,
+      "behaviour_recall": 0.016398692416714492,
+      "precision": 0.01670127261630667,
+      "jaccard": 0.00834333501103411
+    },
+    "degree_spearman_vs_behaviour": 0.01873035165308229
+  },
+  "cluster_agreement_z_q": {
+    "ari": 0.7297896161991052,
+    "nmi": 0.8866281363866202
+  }
+}

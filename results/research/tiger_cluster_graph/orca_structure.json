@@ -1,0 +1,53 @@
+{
+  "orca": "results/orca_build/orca/orca",
+  "nodes": 24587,
+  "graphs": {
+    "behaviour": {
+      "4": [
+        24587,
+        15
+      ]
+    },
+    "z": {
+      "4": [
+        24587,
+        15
+      ]
+    },
+    "q": {
+      "4": [
+        24587,
+        15
+      ]
+    }
+  },
+  "sizes": {
+    "4": {
+      "z_vs_behaviour": {
+        "columns": 15,
+        "median_spearman": 0.005774380343007589,
+        "mean_spearman": 0.012609038948404207,
+        "p10_spearman": -0.01059562437794639,
+        "p90_spearman": 0.03616392446768993,
+        "profile_cosine_mean": 0.840335411121246
+      },
+      "q_vs_behaviour": {
+        "columns": 15,
+        "median_spearman": 0.013850251815843,
+        "mean_spearman": 0.013231284841452874,
+        "p10_spearman": -0.003529930634679518,
+        "p90_spearman": 0.025732998436450688,
+        "profile_cosine_mean": 0.8375350296740065
+      },
+      "z_vs_q": {
+        "columns": 15,
+        "median_spearman": 0.547870538076282,
+        "mean_spearman": 0.5705246874979493,
+        "p10_spearman": 0.5132791542667435,
+        "p90_spearman": 0.63597725699243,
+        "profile_cosine_mean": 0.9812994170679873
+      }
+    }
+  },
+  "five_node_status": "skipped: serial ORCA node-5 on the 315,391-edge behaviour graph was still running after 6 minutes with no output; the 4-node exact orbit comparison is reported instead"
+}
