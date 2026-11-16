@@ -1,0 +1,61 @@
+# Single semantic hierarchy tree hypothesis test
+
+Labels: Amazon Reviews 2023 `meta_Musical_Instruments` category paths, matched to
+the local items by normalised title. Coarse = category level 2; fine = full
+category path (the leaf name alone can repeat under different coarse branches).
+Ambiguous and missing titles were dropped; this is an independent semantic hierarchy,
+not KMeans on the embedding.
+
+Labeled items: **23697 / 24,587**; coarse categories: **16**; fine categories: **567**.
+
+Ideal tree distance: same fine = 1, same coarse different fine = 2, cross coarse = 3.
+
+## New neighbours by K band (text kNN)
+
+| ranks | same fine | same coarse, diff fine | cross coarse |
+|---|---:|---:|---:|
+| 1-5 | 0.6333 | 0.2558 | 0.1109 |
+| 6-10 | 0.5649 | 0.2979 | 0.1373 |
+| 11-15 | 0.5245 | 0.3190 | 0.1565 |
+| 16-20 | 0.4983 | 0.3321 | 0.1696 |
+
+## New neighbours by K band (ideal tree)
+
+| ranks | same fine | same coarse, diff fine | cross coarse |
+|---|---:|---:|---:|
+| 1-5 | 0.9883 | 0.0117 | 0.0001 |
+| 6-10 | 0.9651 | 0.0348 | 0.0001 |
+| 11-15 | 0.9437 | 0.0561 | 0.0001 |
+| 16-20 | 0.9249 | 0.0749 | 0.0001 |
+
+## Hierarchy violations
+
+| graph | cross before same coarse | diff-fine before same-fine | first cross n | first cross median | first cross <=5 |
+|---|---:|---:|---:|---:|---:|
+| text | 0.1611 | 0.2690 | 11804 | 6.0 | 0.4818 |
+| ideal_tree | 0.0000 | 0.0000 | 3 | 3.0 | 1.0000 |
+
+## Graphlets
+
+| graph | K1,3 | P4 | paw | diamond | K4 | C4 |
+|---|---:|---:|---:|---:|---:|---:|
+| text k=5 | 0.2738 | 0.5198 | 0.1693 | 0.0257 | 0.0049 | 0.0065 |
+| text k=10 | 0.2543 | 0.5107 | 0.1887 | 0.0320 | 0.0073 | 0.0069 |
+| text k=15 | 0.2490 | 0.5049 | 0.1958 | 0.0348 | 0.0084 | 0.0071 |
+| text k=20 | 0.2448 | 0.5026 | 0.1999 | 0.0364 | 0.0090 | 0.0073 |
+| ideal_tree k=5 | 0.9834 | 0.0001 | 0.0004 | 0.0160 | 0.0002 | 0.0000 |
+| ideal_tree k=10 | 0.9622 | 0.0005 | 0.0022 | 0.0342 | 0.0009 | 0.0000 |
+| ideal_tree k=15 | 0.9411 | 0.0017 | 0.0056 | 0.0493 | 0.0020 | 0.0002 |
+| ideal_tree k=20 | 0.9212 | 0.0039 | 0.0103 | 0.0605 | 0.0033 | 0.0008 |
+
+## Ultrametric / four-point residuals
+
+| test | data | mean | median | p95 | >0.05 | >0.10 |
+|---|---|---:|---:|---:|---:|---:|
+| four-point | text_cosine | 0.0542 | 0.0459 | 0.1329 | 0.4628 | 0.1436 |
+| four-point | ideal_tree | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
+| ultrametric | text_cosine | 0.1152 | 0.0990 | 0.2765 | 0.7351 | 0.4957 |
+| ultrametric | ideal_tree | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
+
+Residuals are relative: (largest two-point sum minus second largest) / largest.
+The ideal tree is exact by construction; sampling gives 0.
