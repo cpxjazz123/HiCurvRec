@@ -1,5 +1,9 @@
 # PGD 4-node edge motifs vs q-kNN recovery and Recall@10
 
+> **2026-11-16 审计更新：本文结论已被取代。** PGD 的 `4-tailed-triangle` 从未赋值，
+> 依赖它的 `3-star` 也错误；此外高碰撞臂主导了正 CV。修正后的统计与结论见
+> `analysis_sid_recall/QKNN_PGD_AUDIT.md`；本文只保留为缺陷与历史记录，不得引用其相关性结论。
+
 日期：2026-11-16  
 对象：48 个标准 `3×(256,32)` VQ 码本 TIGER arm；q 从 checkpoint 码本 + 导出 SID 重建，k=10 全局 q-KNN。  
 工具：PGD（Parallel Graphlet Decomposition），`--micro` 输出每条边的 4-node motif 计数。

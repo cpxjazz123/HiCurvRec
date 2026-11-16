@@ -86,7 +86,13 @@ def qknn_edges(q: np.ndarray, k: int = K) -> np.ndarray:
     else:
         model = NearestNeighbors(n_neighbors=k + 1, algorithm="auto", metric="euclidean", n_jobs=-1)
         model.fit(q)
-        indices = model.kneighbors(q, return_distance=False)[:, 1:]
+        raw = model.kneighbors(q, return_distance=False)
+        indices = np.empty((len(q), k), dtype=np.int64)
+        for row_index, neighbours in enumerate(raw):
+            neighbours = neighbours[neighbours != row_index]
+            if len(neighbours) < k:
+                raise ValueError(f"only {len(neighbours)} non-self neighbours for item {row_index}")
+            indices[row_index] = neighbours[:k]
     left = np.repeat(np.arange(n, dtype=np.int64), k)
     right = indices.reshape(-1).astype(np.int64)
     low = np.minimum(left, right)
