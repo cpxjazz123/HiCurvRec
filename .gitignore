@@ -922,3 +922,9 @@ results/research/issue213/orca/
 # derived role cache (npz family is not committed, CLAUDE.md §46); rebuilt by structure_retention.py
 analysis_sid_recall/structure_roles.npz
 analysis_sid_recall/feature_block.npz
+
+# ORCA graph caches from issue215: 7.8 GB of generated .in/.out files, not evidence and not committed.
+# Keeping them out of `git status` also keeps `commit.draft()` from scanning them (it otherwise
+# attributes every untracked file and can spike memory).
+results/research/issue215/structure_graphs_all/
+results/research/issue215/topology_graphs/
