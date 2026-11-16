@@ -1,20 +1,29 @@
 {
   "name": "agent-vis",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "Frontend visualisation of real pi agent turns (AI SDK v7 UI message stream protocol on the wire)",
+  "description": "DeepSeek Harness plugin: live visualisation of dsh agent turns (AI SDK v7 UI message stream protocol on the wire)",
+  "engines": {
+    "dsh": ">=0.2.2-rc.1"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh": ">=0.2.2-rc.1"
+  },
   "scripts": {
-    "start": "node server.js",
-    "test": "node test/pi-agent.js && node test/smoke.js && node test/tree-diff.js && node test/spec-check.js && node test/write-scope.js && node test/copy-baseline.js && node test/stage3-tools.js && node test/archive-ideas.js && node test/idea-schema.js && node test/handoff-reset.js",
-    "test:pi": "node test/pi-agent.js",
+    "start": "./dsh/start.sh",
+    "plugin:install": "node dsh/install.mjs",
+    "test": "node test/dsh-agent.js && node test/smoke.js && node test/tree-diff.js && node test/spec-check.js && node test/write-scope.js && node test/copy-baseline.js && node test/stage3-tools.js && node test/archive-ideas.js && node test/idea-schema.js && node test/handoff-reset.js && node test/plugin.js",
+    "test:agent": "node test/dsh-agent.js",
     "test:tools": "node test/tools.js",
     "test:browser": "node test/browser.js",
     "archive": "node archive-ideas.js",
     "idea:config": "node apply-idea-schema-config.mjs"
   },
   "dependencies": {
-    "@earendil-works/pi-coding-agent": "^0.87.0",
     "typebox": "^1.3.27"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh": "0.2.2-rc.1"
   }
 }

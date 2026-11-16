@@ -77,8 +77,8 @@ export const PUBLIC_PATH_PREFIX = DEFAULT_PUBLIC_PATH ? `/${DEFAULT_PUBLIC_PATH}
  */
 export const AGENT_WORKDIR = '/home/wlia0047/ar57/wenyu/GeneRec';
 
-/** 所有 agent 必须运行在这台主机上（owner 指定）。 */
-export const AGENT_HOST = 'm3g104';
+/** 所有 agent 必须运行在这台主机上（owner 指定，2026-11-16 起为 m3d102）。 */
+export const AGENT_HOST = 'm3d102';
 
 /**
  * 全局设置（面板可改）：运行环境主机与工作目录。
@@ -125,7 +125,7 @@ export const STAGE2_PYTHON =
  */
 export const FROZEN_BASELINE_TREE = 'stage2_RQ-VAE/baseline/TIGER_RQ-VAE';
 
-/** 主机名是否满足要求：允许带域名后缀（m3g104.massive.org.au 也算对）。 */
+/** 主机名是否满足要求：允许带域名后缀（m3d102.massive.org.au 也算对）。 */
 export function agentHostOk(hostname = os.hostname(), want = currentHost()) {
   const name = String(hostname || '').trim().toLowerCase();
   const target = String(want || '').trim().toLowerCase();
@@ -329,33 +329,34 @@ export function setGlobalSettings(patch) {
 }
 
 /**
- * 模型后端：pi agent 的自定义 provider（OpenAI 兼容的 commandcode 通道）。
+ * 模型路由：commandcode 的 OpenAI 兼容通道（跑的是 DeepSeek V4.1 Flash）。
  *
- * 这些常量同时是 agent-vis 派生给 pi 的 models.json 的内容 —— pi 读那个文件建模型目录，
- * 我们不在仓库里再存一份模型配置，改这里就是改 pi 看到的模型。
+ * 这些常量是唯一来源：dsh/install.mjs 生成 profile patch 时读它们，写进
+ * harness 的 llm-pi-ai 路由；agent 创建时也用同一组值选 provider/model。
+ * 改这里就是改 agent-vis 实际调用的模型。
  */
 export const PROVIDER_NAME = 'commandcode';
 export const BASE_URL = 'https://api.commandcode.ai/provider/v1';
 export const MODEL_ID = 'deepseek/deepseek-v4.1-flash';
 
 /**
- * 给 pi 声明的上下文窗口。
+ * 路由声明的上下文窗口。
  *
  * 这个端点的真实上下文长度没有可核验的公开值，取一个保守值：窗口估小了
- * 只会让 pi 更早触发压缩（安全），估大了会在请求时被后端直接拒掉。
+ * 只会让 harness 更早触发压缩（安全），估大了会在请求时被后端直接拒掉。
  */
 export const CONTEXT_WINDOW = 131072;
 
 /**
- * 多步轮次的 pi 会话能闲置多久。
+ * 多步轮次的 dsh agent 能闲置多久。
  *
- * 一轮的每一步共用一个 pi 会话（会话本身带着上一步的上下文，不用把前文重发）；
+ * 一轮的每一步共用一个 dsh 会话（会话本身带着上一步的上下文，不用把前文重发）；
  * 走完最后一步、出错或被中止就立刻释放。这个超时只兜住"用户中间不跑了"的残局 ——
  * 半小时足够一个人读完一步的产出再决定要不要继续。
  */
 export const ROUND_SESSION_TTL_MS = 30 * 60 * 1000;
 
-/** API key 只在运行时从 OpenCode 的密钥文件读，绝不写进仓库、日志或提交。 */
+/** 模型凭证文件：dsh/start.sh 在启动前把它读进进程环境，绝不写进仓库、日志或提交。 */
 export const API_KEY_FILE = path.join(
   os.homedir(),
   '.config',
@@ -1556,7 +1557,7 @@ export function listProfiles() {
  */
 let persistence = createPersistence({ dataDir: DEFAULT_DATA_DIR });
 
-/** 当前生效的数据目录。pi 的派生配置（models.json）与临时凭证路径都挂在它下面。 */
+/** 当前生效的数据目录。页面配置、对话记录与插件运行状态都挂在它下面。 */
 let currentDataDir = DEFAULT_DATA_DIR;
 
 /** 换数据目录之后要跟着走的派生物也走这里，不要另起一套路径。 */

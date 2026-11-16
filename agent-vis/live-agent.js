@@ -1,17 +1,17 @@
 /**
- * 真实 agent：跑的是 pi（@earendil-works/pi-coding-agent）自己的 agent 会话。
+ * 真实 agent：跑在 DeepSeek Harness（dsh）里，agent-vis 只是它的一个插件。
  *
- * 一个 agent = 一个 pi AgentSession：模型调用、工具循环、事件流、压缩、abort 全部由 pi 负责，
- * 我们只做三件它不管的事：
+ * 一个 agent = dsh 的一个 Agent（ctx.agents.create）：模型调用、工具循环、
+ * 会话日志、压缩与取消全部由 harness 负责，我们只做三件它不管的事：
  *
- *   1. 工具：pi 的内置工具（bash / edit / write …）没有仓库边界，所以这里关掉它们，
- *      把 agent-vis 自己的 8 个沙箱工具注册成 pi 的自定义工具（权限怎么裁表见下）；
- *   2. 提示词：人设提示词与权限说明追加在 pi 的默认 harness 提示词之后，不整体替换；
- *   3. 协议：把 pi 的事件流翻成页面认识的 UI message stream 分片。
+ *   1. 工具：关闭 harness 自带工具（bash / edit / write … 没有仓库边界），
+ *      把 agent-vis 的沙箱工具按本轮权限注册成该 agent 的 scoped 工具；
+ *   2. 提示词：人设与权限说明作为 system-prompt section 追加在 harness 身份之后；
+ *   3. 协议：把 dsh 的 assistant-stream 与会话事件翻成页面的 UI message stream 分片。
  *
  * 给模型哪些工具由这一轮的权限决定（read / write / delete / execute / network 五项基础权限，
- * 每项绑一组真实工具）；没授的工具压根不进 pi 的工具表。所有会动仓库的工具都限制在仓库根
- * 下面；越界或读不到就直接报错，错误会变成协议里的 tool-output-error，正好在时间轴上显示出来。
+ * 每项绑一组真实工具）；没授的工具压根不注册。所有会动仓库的工具都限制在仓库根下面；
+ * 越界或读不到就直接报错，错误会变成协议里的 tool-output-error。
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -19,27 +19,11 @@ import crypto from 'node:crypto';
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 
-import {
-  DefaultResourceLoader,
-  ModelRuntime,
-  SessionManager,
-  createAgentSession,
-  createEditToolDefinition,
-  createFindToolDefinition,
-  createGrepToolDefinition,
-  createLsToolDefinition,
-  createReadToolDefinition,
-  createWriteToolDefinition,
-  defineTool,
-} from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
 
 import { IDEA_SCHEMA_VERSION, validateIdeaDoc } from './idea-schema.js';
 
 import {
-  API_KEY_FILE,
-  BASE_URL,
-  CONTEXT_WINDOW,
   FROZEN_BASELINE_TREE,
   IDEA_RULE,
   LANGUAGE_RULE,
@@ -80,18 +64,6 @@ const MAX_SEARCH_FILE_BYTES = 512 * 1024;
 const MAX_WRITE_BYTES = 1024 * 1024;
 
 /**
- * API key 只在运行时从 OpenCode 的密钥文件读；任何日志、错误信息都不含它。
- */
-export function loadApiKey() {
-  const raw = fs.readFileSync(API_KEY_FILE, 'utf8');
-  const key = raw.trim();
-  if (key.length === 0) {
-    throw new Error(`API key 文件为空: ${API_KEY_FILE}`);
-  }
-  return key;
-}
-
-/**
  * 当前的工作目录（面板上「全局设置」可改，改完立刻生效）。
  *
  * 会话的 cwd、只读命令的 cwd、文件工具的边界都取它 —— 三者必须是同一个目录，
@@ -126,8 +98,14 @@ function globToRegExp(pattern) {
     const ch = pattern[i];
     if (ch === '*') {
       if (pattern[i + 1] === '*') {
-        out += '.*';
-        i += 1;
+        // `**/` 匹配零层或多层目录：`**/*.txt` 也要能命中根下的 a.txt。
+        if (pattern[i + 2] === '/') {
+          out += '(?:.*/)?';
+          i += 2;
+        } else {
+          out += '.*';
+          i += 1;
+        }
       } else {
         out += '[^/]*';
       }
@@ -491,28 +469,30 @@ export const TOOL_IMPLS = {
 };
 
 /**
- * 把一份工具实现包成 pi 的工具定义。
+ * 把一个工具声明成 dsh 的 ToolDefinition。
  *
- * pi 的工具结果要分两半：content 是给模型读的文本，details 是给界面画的结构化结果。
- * 页面要的是后者 —— 与切到 pi 之前完全一样的那个对象。
+ * dsh 不要求 import：注册时只看结构（name / description / parameters /
+ * output / execute）。参数用 TypeBox 生成普通 JSON Schema；输出统一声明成
+ * 任意 JSON，并把工具返回的 details 原样作为 presentationMeta 落到
+ * `tool/result` 事件里，页面就能显示结构化结果，而不是一段拼好的文本。
  */
-function piTool({ name, label, description, parameters, impl, callArgs = (params) => params }) {
-  return defineTool({
+function dshTool({ name, description, parameters, impl, callArgs = (params) => params }) {
+  return {
     name,
-    label,
     description,
-    parameters,
-    execute: async (toolCallId, params, signal, onUpdate, ctx) => {
-      const details = await impl(callArgs(params, ctx));
-      return {
-        content: [{ type: 'text', text: JSON.stringify(details) }],
-        details,
-      };
+    parameters: JSON.parse(JSON.stringify(parameters)),
+    output: {
+      schema: {},
+      render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }],
+      presentationMeta: (_args, value) => value,
     },
-  });
+    async execute(args) {
+      return await impl(callArgs(args));
+    },
+  };
 }
 
-const runTestsTool = piTool({
+const runTestsTool = dshTool({
   name: 'runTests',
   label: '跑候选树的单元测试',
   description:
@@ -528,7 +508,7 @@ const runTestsTool = piTool({
   impl: runTests,
 });
 
-const treeDiffTool = piTool({
+const treeDiffTool = dshTool({
   name: 'treeDiff',
   label: '比两棵树',
   description:
@@ -551,7 +531,7 @@ const treeDiffTool = piTool({
   impl: treeDiff,
 });
 
-const readDiffTool = piTool({
+const readDiffTool = dshTool({
   name: 'readDiff',
   label: '读 diff',
   description:
@@ -570,7 +550,7 @@ const readDiffTool = piTool({
   impl: readDiff,
 });
 
-const specCheckTool = piTool({
+const specCheckTool = dshTool({
   name: 'specCheck',
   label: '机械预检',
   description:
@@ -590,7 +570,7 @@ const specCheckTool = piTool({
   impl: specCheck,
 });
 
-const stage2StartTool = piTool({
+const stage2StartTool = dshTool({
   name: 'stage2Start',
   label: '启动 Stage2 训练',
   description:
@@ -605,7 +585,7 @@ const stage2StartTool = piTool({
   },
 });
 
-const stage2StatusTool = piTool({
+const stage2StatusTool = dshTool({
   name: 'stage2Status',
   label: '看 Stage2 训练状态',
   description:
@@ -627,7 +607,7 @@ const stage2StatusTool = piTool({
   },
 });
 
-const stage2StopTool = piTool({
+const stage2StopTool = dshTool({
   name: 'stage2Stop',
   label: '暂停 Stage2 训练',
   description:
@@ -641,7 +621,7 @@ const stage2StopTool = piTool({
   },
 });
 
-const stage3StartTool = piTool({
+const stage3StartTool = dshTool({
   name: 'stage3Start',
   label: '启动 Stage3 训练',
   description:
@@ -658,7 +638,7 @@ const stage3StartTool = piTool({
   },
 });
 
-const stage3StatusTool = piTool({
+const stage3StatusTool = dshTool({
   name: 'stage3Status',
   label: '看 Stage3 训练状态',
   description:
@@ -679,7 +659,7 @@ const stage3StatusTool = piTool({
   },
 });
 
-const webSearchTool = piTool({
+const webSearchTool = dshTool({
   name: 'webSearch',
   label: '检索文献',
   description:
@@ -692,7 +672,7 @@ const webSearchTool = piTool({
   impl: searchLiterature,
 });
 
-const checkJsonTool = piTool({
+const checkJsonTool = dshTool({
   name: 'checkJson',
   label: '校验 JSON',
   description:
@@ -704,7 +684,7 @@ const checkJsonTool = piTool({
   impl: checkJson,
 });
 
-const checkIdeaTool = piTool({
+const checkIdeaTool = dshTool({
   name: 'checkIdea',
   label: '校验 idea 字段',
   description:
@@ -717,7 +697,7 @@ const checkIdeaTool = piTool({
   impl: checkIdea,
 });
 
-const copyBaselineTreeTool = piTool({
+const copyBaselineTreeTool = dshTool({
   name: 'copyBaselineTree',
   label: '复制基线候选树',
   description:
@@ -738,7 +718,7 @@ const copyBaselineTreeTool = piTool({
   impl: TOOL_IMPLS.copyBaselineTree,
 });
 
-const listIssuesTool = piTool({
+const listIssuesTool = dshTool({
   name: 'listIssues',
   label: '列 Issue',
   description:
@@ -751,7 +731,7 @@ const listIssuesTool = piTool({
   impl: TOOL_IMPLS.listIssues,
 });
 
-const readIssueTool = piTool({
+const readIssueTool = dshTool({
   name: 'readIssue',
   label: '读 Issue',
   description: 'Read one GitHub issue in full: its body, labels, state and comments (read-only).',
@@ -761,7 +741,7 @@ const readIssueTool = piTool({
   impl: TOOL_IMPLS.readIssue,
 });
 
-const gitLogTool = piTool({
+const gitLogTool = dshTool({
   name: 'gitLog',
   label: '读 commit',
   description:
@@ -775,7 +755,7 @@ const gitLogTool = piTool({
 });
 
 function makeDeleteTool(scope) {
-  return piTool({
+  return dshTool({
     name: 'deleteFile',
     label: '删文件',
     description: 'Delete a file or a directory inside the repo. Path is relative to the repo root.',
@@ -795,7 +775,7 @@ const deleteFileTool = makeDeleteTool(undefined);
  * 是轮次机制自己的控件。客户端只能看见工具调用这种结构化信号，
  * 看不见模型在文字里写的"本轮结束"，所以这个信号必须是工具。
  */
-const endRoundTool = defineTool({
+const endRoundTool = dshTool({
   name: ROUND_END_TOOL,
   label: '结束本轮',
   description:
@@ -803,10 +783,7 @@ const endRoundTool = defineTool({
   parameters: Type.Object({
     reason: Type.String({ description: '为什么本轮到此为止' }),
   }),
-  execute: async (toolCallId, { reason }) => ({
-    content: [{ type: 'text', text: `本轮到此结束：${reason}` }],
-    details: { reason },
-  }),
+  impl: async ({ reason }) => ({ reason }),
 });
 
 /**
@@ -816,7 +793,7 @@ const endRoundTool = defineTool({
  * 工具调用这种结构化信号，看不见模型在文字里写的"该交/不该交"。
  * 交接条件（人写的一句话）由最后一步的模型判定：判定该交才调用它。
  */
-const requestHandoffTool = defineTool({
+const requestHandoffTool = dshTool({
   name: ROUND_HANDOFF_TOOL,
   label: '交接结论',
   description:
@@ -825,10 +802,7 @@ const requestHandoffTool = defineTool({
   parameters: Type.Object({
     summary: Type.String({ description: '一句话说明这次交的是什么' }),
   }),
-  execute: async (toolCallId, { summary }) => ({
-    content: [{ type: 'text', text: `已交接：${summary}` }],
-    details: { summary },
-  }),
+  impl: async ({ summary }) => ({ summary }),
 });
 
 /**
@@ -1067,12 +1041,13 @@ async function checkIdea({ path: relPath }) {
  *
  * 不带任何工具权限、不记轮次：跑一次，把文字收回来就够了。
  */
-export async function askOnce(prompt, { profileId, instructions } = {}) {
+export async function askOnce(prompt, { profileId, instructions, ctx } = {}) {
   let text = '';
   for await (const chunk of runLiveChunks(prompt, {
     profileId,
     instructions,
     permissions: [],
+    ctx,
   })) {
     if (chunk && chunk.type === 'text-delta' && typeof chunk.delta === 'string') {
       text += chunk.delta;
@@ -1080,27 +1055,6 @@ export async function askOnce(prompt, { profileId, instructions } = {}) {
   }
   return text.trim();
 }
-
-/**
- * pi 自己的文件工具：read / write / edit / ls / grep / find。
- *
- * 引擎全是 pi 的 —— 不重复实现它已经有的能力。
- * 但"能碰哪些文件"由我们说了算：这些工具的文件操作被换成我们的实现，
- * 于是仓库根之外、.git 之内这些仍然被挡着（pi 的工具不认识仓库的规矩）。
- *
- * 只读的那几个（read/ls/grep/find）用 pi 的默认实现即可：它们只读，
- * 而会话的 cwd 就是仓库根，边界天然是仓库根。
- */
-const sandboxReadOperations = {
-  readFile: async (absolutePath) => {
-    const target = resolveInSandbox(absolutePath);
-    return fs.promises.readFile(target);
-  },
-  access: async (absolutePath) => {
-    const target = resolveInSandbox(absolutePath);
-    await fs.promises.access(target, fs.constants.R_OK);
-  },
-};
 
 /** 作用域所属的树根：`stage2_RQ-VAE/<arm>`（作用域第一条通配的前两段）。 */
 function scopeTreeRoot(scope) {
@@ -1160,50 +1114,249 @@ function makeWriteOperations(scope) {
   };
 }
 
-const sandboxWriteOperations = makeWriteOperations(undefined);
+const MAX_READ_LINES = 400;
+const MAX_LS_ENTRIES = 200;
+const MAX_GREP_MATCHES = 50;
+const MAX_FIND_RESULTS = 200;
 
-const piReadTool = createReadToolDefinition(sandboxRoot(), {
-  operations: sandboxReadOperations,
+/** read：按行区间读一个仓库内的文本文件。 */
+const readTool = dshTool({
+  name: 'read',
+  label: '读文件',
+  description:
+    'Read a text file inside the repo. Returns the requested line range plus the total line count. ' +
+    'Path is relative to the repo root.',
+  parameters: Type.Object({
+    path: Type.String({ description: '仓库相对路径' }),
+    offset: Type.Optional(
+      Type.Integer({ minimum: 1, description: '从第几行开始（1 起），默认 1' }),
+    ),
+    limit: Type.Optional(
+      Type.Integer({ minimum: 1, maximum: MAX_READ_LINES, description: `最多读几行，默认 ${MAX_READ_LINES}` }),
+    ),
+  }),
+  impl: async ({ path: relPath, offset = 1, limit = MAX_READ_LINES }) => {
+    const target = resolveInSandbox(relPath);
+    const stat = await fs.promises.stat(target);
+    if (stat.isDirectory()) throw new Error(`这是目录不是文件，请改用 ls: ${relPath}`);
+    if (stat.size > MAX_WRITE_BYTES) throw new Error(`文件太大，读不动: ${relPath}`);
+    const content = await fs.promises.readFile(target, 'utf8');
+    const lines = content.split('\n');
+    const start = Math.max(0, offset - 1);
+    const end = Math.min(lines.length, start + limit);
+    return {
+      path: relativeToRoot(target),
+      totalLines: lines.length,
+      offset: start + 1,
+      truncated: end < lines.length,
+      content: lines.slice(start, end).join('\n'),
+    };
+  },
 });
 
-/** 带作用域的写工具：多个 agent 并行写同一棵树时，各写各的文件。 */
+/** write：整文件写入（新文件或完整重写），仍受作用域与树根约束。 */
 function makeWriteTool(scope) {
-  return createWriteToolDefinition(sandboxRoot(), {
-    operations: makeWriteOperations(scope),
-  });
-}
-
-const piWriteTool = makeWriteTool(undefined);
-
-const piLsTool = createLsToolDefinition(sandboxRoot());
-const piGrepTool = createGrepToolDefinition(sandboxRoot());
-const piFindTool = createFindToolDefinition(sandboxRoot());
-
-/**
- * pi 自带的 edit 工具：按原文精确替换（一处找不到会试模糊匹配），
- * 一次调用可以改多处。
- */
-function makeEditTool(scope) {
   const operations = makeWriteOperations(scope);
-  return createEditToolDefinition(sandboxRoot(), {
-    operations: {
-      readFile: async (absolutePath) => {
-        const target = resolveMutableInSandbox(absolutePath, scope);
-        const buf = await fs.promises.readFile(target);
-        if (buf.byteLength > MAX_WRITE_BYTES) {
-          throw new Error(
-            `文件太大（${buf.byteLength} 字节，上限 ${MAX_WRITE_BYTES} 字节），改不动: ${absolutePath}`,
-          );
-        }
-        return buf;
-      },
-      writeFile: operations.writeFile,
-      access: operations.access,
+  return dshTool({
+    name: 'write',
+    label: '写文件',
+    description: 'Create or overwrite one text file inside the repo. Path is relative to the repo root.',
+    parameters: Type.Object({
+      path: Type.String({ description: '仓库相对路径' }),
+      content: Type.String({ description: '完整文件内容' }),
+    }),
+    impl: async ({ path: relPath, content }) => {
+      const target = resolveMutableInSandbox(relPath, scope);
+      await operations.mkdir(path.dirname(target));
+      await operations.writeFile(target, content);
+      return { path: relativeToRoot(target), bytes: Buffer.byteLength(content) };
     },
   });
 }
 
-const piEditTool = makeEditTool(undefined);
+const writeTool = makeWriteTool(undefined);
+
+/** ls：列一个目录的直接子项。 */
+const lsTool = dshTool({
+  name: 'ls',
+  label: '列目录',
+  description: 'List the direct children of a directory inside the repo, with type and size.',
+  parameters: Type.Object({
+    path: Type.Optional(Type.String({ description: '仓库相对目录，默认仓库根' })),
+    limit: Type.Optional(
+      Type.Integer({ minimum: 1, maximum: MAX_LS_ENTRIES, description: `最多列几项，默认 ${MAX_LS_ENTRIES}` }),
+    ),
+  }),
+  impl: async ({ path: relPath = '.', limit = MAX_LS_ENTRIES }) => {
+    const dir = resolveInSandbox(relPath);
+    const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+    const items = [];
+    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      if (SKIP_DIRS.has(entry.name)) continue;
+      const full = path.join(dir, entry.name);
+      let size = null;
+      if (entry.isFile()) size = (await fs.promises.stat(full)).size;
+      items.push({
+        name: entry.name,
+        type: entry.isDirectory() ? 'dir' : entry.isFile() ? 'file' : 'other',
+        size,
+      });
+      if (items.length >= limit) break;
+    }
+    return { path: relativeToRoot(dir), count: items.length, truncated: items.length >= limit, items };
+  },
+});
+
+/** grep：在文本文件里按行搜（大小写/字面量/glob 可调）。 */
+const grepTool = dshTool({
+  name: 'grep',
+  label: '搜内容',
+  description:
+    'Search file contents inside the repo (respects the repo skip rules for caches and binaries). ' +
+    'Returns file:line matches.',
+  parameters: Type.Object({
+    pattern: Type.String({ description: '检索表达式（默认正则）' }),
+    path: Type.Optional(Type.String({ description: '搜索目录，默认仓库根' })),
+    glob: Type.Optional(Type.String({ description: '只搜匹配这个 glob 的文件，例如 **/*.py' })),
+    ignoreCase: Type.Optional(Type.Boolean({ description: '忽略大小写，默认 false' })),
+    literal: Type.Optional(Type.Boolean({ description: '按字面量而不是正则，默认 false' })),
+    limit: Type.Optional(
+      Type.Integer({ minimum: 1, maximum: 500, description: `最多返回多少条命中，默认 ${MAX_GREP_MATCHES}` }),
+    ),
+  }),
+  impl: async ({ pattern, path: relPath = '.', glob, ignoreCase = false, literal = false, limit = MAX_GREP_MATCHES }) => {
+    const root = resolveInSandbox(relPath);
+    const stat = await fs.promises.stat(root);
+    if (!stat.isDirectory()) throw new Error(`grep 的 path 必须是目录: ${relPath}`);
+    let regex;
+    try {
+      regex = new RegExp(literal ? escapeRegExp(pattern) : pattern, ignoreCase ? 'i' : '');
+    } catch (err) {
+      throw new Error(`正则不合法：${err && err.message ? err.message : String(err)}`);
+    }
+    const globRegex = glob ? globToRegExp(glob) : null;
+    const files = listTextFiles(root);
+    const matches = [];
+    let total = 0;
+    for (const [rel, abs] of files) {
+      const relPosix = rel.split(path.sep).join('/');
+      if (globRegex && !globRegex.test(relPosix) && !globRegex.test(path.posix.basename(relPosix))) {
+        continue;
+      }
+      let text;
+      try {
+        text = fs.readFileSync(abs, 'utf8');
+      } catch {
+        continue;
+      }
+      const lines = text.split('\n');
+      for (let i = 0; i < lines.length; i += 1) {
+        if (!regex.test(lines[i])) continue;
+        total += 1;
+        if (matches.length < limit) {
+          matches.push({
+            file: path.posix.join(relativeToRoot(root), relPosix),
+            line: i + 1,
+            text: lines[i].trim().slice(0, 240),
+          });
+        }
+      }
+    }
+    return { pattern, matches, total, truncated: total > matches.length };
+  },
+});
+
+/** find：按 glob 找文件。 */
+const findTool = dshTool({
+  name: 'find',
+  label: '找文件',
+  description: 'Find files by glob pattern inside the repo, e.g. **/*.py or tests/test_*.py.',
+  parameters: Type.Object({
+    pattern: Type.String({ description: 'glob 模式' }),
+    path: Type.Optional(Type.String({ description: '搜索目录，默认仓库根' })),
+    limit: Type.Optional(
+      Type.Integer({ minimum: 1, maximum: 1000, description: `最多返回多少条，默认 ${MAX_FIND_RESULTS}` }),
+    ),
+  }),
+  impl: async ({ pattern, path: relPath = '.', limit = MAX_FIND_RESULTS }) => {
+    const root = resolveInSandbox(relPath);
+    const regex = globToRegExp(pattern);
+    const files = [...listTextFiles(root).keys()]
+      .map((rel) => rel.split(path.sep).join('/'))
+      .filter((rel) => regex.test(rel) || regex.test(path.posix.basename(rel)))
+      .sort();
+    return {
+      pattern,
+      files: files.slice(0, limit),
+      total: files.length,
+      truncated: files.length > limit,
+    };
+  },
+});
+
+/** 把字符串转义成字面量正则。 */
+function escapeRegExp(text) {
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * edit：按原文精确替换，一次调用可以改多处。
+ *
+ * 语义与宿主工具一致：每处 oldText 都对着**原始文件**匹配，先检查互不重叠，
+ * 再把所有替换一次性应用到原文上 —— 前一处改动不会把后一处的定位文本挪走。
+ */
+function makeEditTool(scope) {
+  const operations = makeWriteOperations(scope);
+  return dshTool({
+    name: 'edit',
+    label: '改文件',
+    description:
+      'Make precise edits to one file with exact text replacement. Each oldText is matched against the ' +
+      'original file, not after earlier edits; overlapping edits are rejected.',
+    parameters: Type.Object({
+      path: Type.String({ description: '仓库相对路径' }),
+      edits: Type.Array(
+        Type.Object({
+          oldText: Type.String({ description: '要替换的原文（必须在原文件中唯一出现）' }),
+          newText: Type.String({ description: '替换成什么' }),
+        }),
+        { minItems: 1, description: '一处或多处改动' },
+      ),
+    }),
+    impl: async ({ path: relPath, edits }) => {
+      const target = resolveMutableInSandbox(relPath, scope);
+      await operations.access(target);
+      const original = await fs.promises.readFile(target, 'utf8');
+      const spans = [];
+      for (const change of edits) {
+        const oldText = String(change.oldText);
+        if (oldText === '') throw new Error('oldText 不能为空');
+        const first = original.indexOf(oldText);
+        if (first < 0) {
+          throw new Error(`原文找不到（edit 不猜）：${JSON.stringify(oldText.slice(0, 120))}`);
+        }
+        if (original.indexOf(oldText, first + 1) >= 0) {
+          throw new Error(`原文出现多次，请扩大上下文让它唯一：${JSON.stringify(oldText.slice(0, 120))}`);
+        }
+        spans.push({ start: first, end: first + oldText.length, newText: String(change.newText) });
+      }
+      spans.sort((a, b) => a.start - b.start);
+      for (let i = 1; i < spans.length; i += 1) {
+        if (spans[i].start < spans[i - 1].end) {
+          throw new Error('改动互相重叠：each oldText 必须对原始文件互不重叠');
+        }
+      }
+      let text = original;
+      for (const span of spans.reverse()) {
+        text = text.slice(0, span.start) + span.newText + text.slice(span.end);
+      }
+      await operations.writeFile(target, text);
+      return { path: relativeToRoot(target), edits: edits.length, bytes: Buffer.byteLength(text) };
+    },
+  });
+}
+
+const editTool = makeEditTool(undefined);
 
 /**
  * 在 CPU 上跑候选树 tests/ 里的单元测试。
@@ -1805,7 +1958,7 @@ function tailLines(text, n) {
 
 /** 这一栏被分到哪些文件：只读，用来替代"把文件名写进运行命令"。 */
 function makeAssignedFilesTool(scope) {
-  return piTool({
+  return dshTool({
     name: 'assignedFiles',
     label: '我这片的文件',
     description:
@@ -1821,13 +1974,13 @@ function makeAssignedFilesTool(scope) {
 
 const assignedFilesTool = makeAssignedFilesTool([]);
 
-export const PI_TOOLS = {
-  read: piReadTool,
-  write: piWriteTool,
-  edit: piEditTool,
-  ls: piLsTool,
-  grep: piGrepTool,
-  find: piFindTool,
+export const DSH_TOOLS = {
+  read: readTool,
+  write: writeTool,
+  edit: editTool,
+  ls: lsTool,
+  grep: grepTool,
+  find: findTool,
   checkJson: checkJsonTool,
   checkIdea: checkIdeaTool,
   webSearch: webSearchTool,
@@ -1851,12 +2004,12 @@ export const PI_TOOLS = {
 /**
  * 按权限裁出这一轮真正能用的工具。
  *
- * 没授的工具压根不进 pi 的工具表 —— 模型看不见它，也调不到它。
+ * 没授的工具压根不注册到该 agent —— 模型看不见它，也调不到它。
  * 这是权限的硬约束：提示词里写"你没写权限"只是补充说明，真正管用的是这张表。
  */
 /** 建树工具也受作用域约束：目标树必须落在允许的路径里。 */
 function makeCopyBaselineTool(scope) {
-  return piTool({
+  return dshTool({
     name: 'copyBaselineTree',
     label: '建候选树',
     description: 'Copy one frozen baseline tree into a new candidate tree under stage2_RQ-VAE (never overwrites).',
@@ -1906,7 +2059,7 @@ export function toolsForPermissions(permissionIds, options = {}) {
       if (denied.has(name)) continue;
       // assignedFiles 只在有写作用域的栏里存在：没有分片就没有"我这片"。
       if (name === 'assignedFiles' && !scoped) continue;
-      const tool = (scoped && SCOPED_TOOL_NAMES.has(name) ? scoped[name] : PI_TOOLS[name]);
+      const tool = (scoped && SCOPED_TOOL_NAMES.has(name) ? scoped[name] : DSH_TOOLS[name]);
       if (!tool) {
         throw new Error(`权限 ${id} 指向了不存在的工具 ${name}`);
       }
@@ -1917,90 +2070,392 @@ export function toolsForPermissions(permissionIds, options = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// pi 运行时：模型目录 + 凭证 + 会话
+// dsh 运行时：插件上下文 + agent 创建 + 事件桥
 // ---------------------------------------------------------------------------
 
-/** pi 的派生配置挂在数据目录下，测试换目录时跟着走，不碰用户自己的 pi 配置。 */
-function piStateDir() {
-  return path.join(dataDir(), 'pi');
+/**
+ * 当前进程里的 harness 上下文。
+ *
+ * agent-vis 是 dsh 的插件：插件 apply 时登记，卸载时清空。单进程只挂一个
+ * 插件实例，所以这里不需要按 key 分发；测试可以直接塞一个假上下文。
+ */
+let harnessContext = null;
+
+export function setHarnessContext(ctx) {
+  harnessContext = ctx ?? null;
+}
+
+export function getHarnessContext() {
+  return harnessContext;
+}
+
+function requireHarness(ctx) {
+  const target = ctx ?? harnessContext;
+  if (!target || !target.agents || !target.tools) {
+    throw new Error('agent-vis 没有 harness 上下文：必须以 DeepSeek Harness 插件的方式加载（见 dsh/ 目录）');
+  }
+  return target;
+}
+
+/** dsh 的 turn 结束原因 → 页面认识的 finishReason。 */
+const FINISH_REASONS = {
+  completed: 'stop',
+  aborted: 'aborted',
+  'max-tokens': 'length',
+  error: 'error',
+  blocked: 'stop',
+  interrupted: 'aborted',
+};
+
+/** 从 assistant/message 的 usage 里取页面要的四个数。 */
+function usageOf(usage) {
+  if (!usage) return null;
+  return {
+    inputTokens: usage.inputTokens ?? 0,
+    outputTokens: usage.outputTokens ?? 0,
+    reasoningTokens: usage.reasoningTokens ?? 0,
+    totalTokens: usage.totalTokens ?? (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0),
+  };
+}
+
+function errorTextOf(error) {
+  if (error === undefined || error === null) return '未知错误';
+  if (typeof error === 'string') return error;
+  if (typeof error.message === 'string') return error.message;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
 }
 
 /**
- * 把 config.js 里的模型常量写成 pi 认识的 models.json。
+ * 按「身份 + 提示词 + 权限」在 harness 里建一个 agent，并把它包装成
+ * translateSession 认的那个小接口（subscribe / prompt / abort / dispose）。
  *
- * 内容变了才写，避免每次运行都改文件时间戳。这个文件是派生物，不是配置源 ——
- * 要换模型改 config.js，不要改它。
+ * 工具与提示词都是该 agent 的 scoped 注册：卸载这个 agent 时一起撤销，
+ * 不影响 harness 里别的 agent。
  */
-export function ensurePiModelsFile() {
-  const dir = piStateDir();
-  fs.mkdirSync(dir, { recursive: true });
-  const file = path.join(dir, 'models.json');
-  const config = {
-    providers: {
-      [PROVIDER_NAME]: {
-        baseUrl: BASE_URL,
-        api: 'openai-completions',
-        models: [
-          {
-            id: MODEL_ID,
-            name: `${MODEL_ID}（${PROVIDER_NAME}）`,
-            reasoning: false,
-            input: ['text'],
-            contextWindow: CONTEXT_WINDOW,
-            // 不写 maxTokens：这个字段会作为 max_tokens 发给 provider，由它按模型
-            // 真实上限截断。我们以前手写 8192，结果响应正好在 8192 处被切
-            // （finishReason=length），把"我们自己设的栏杆"当成了模型的限制。
-            // 不设它，就只剩模型自己的上限与上下文窗口。
-            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-          },
-        ],
-      },
+export async function createDshSession(ctx, { profile, instructions, permissionIds } = {}) {
+  const harness = requireHarness(ctx);
+  const listeners = new Set();
+  const disposers = [];
+  const toolNames = new Map();
+  const toolNamesThisSession = new Set();
+  let runError = null;
+  let finishReason = 'stop';
+  let usage = null;
+  let agent = null;
+  let sessionId = '';
+
+  const emit = (event) => {
+    for (const listener of [...listeners]) {
+      try {
+        listener(event);
+      } catch (err) {
+        process.stderr.write(`[agent-vis] 事件监听器出错：${errorTextOf(err)}\n`);
+      }
+    }
+  };
+
+  // 轮次控制工具始终可用：没有它，"本步判定本轮结束"就只能写在文字里，
+  // 客户端读不到，后面的步骤照样会发出去。
+  const tools = [
+    ...toolsForPermissions(permissionIds, {
+      writeScope: profile && profile.writeScope,
+      denyTools: profile && profile.denyTools,
+    }),
+    endRoundTool,
+    requestHandoffTool,
+  ];
+
+  // 增量块 → 规范化事件。id 用「消息序号:内容块下标」，与协议的 part id 对齐。
+  let messageSeq = 0;
+  const startedBlocks = new Set();
+  const toolInputStarted = new Set();
+  const availableCalls = new Set();
+
+  const handle = await harness.agents.create({
+    sessionId: crypto.randomUUID(),
+    meta: { cwd: sandboxRoot() },
+    agentOptions: { provider: PROVIDER_NAME, model: MODEL_ID },
+    setup: async (agentCtx, createdAgent) => {
+      agent = createdAgent;
+      sessionId = String(createdAgent.id);
+
+      // 1) 工具：只注册这一轮授过的；同名 scoped 工具会遮住 harness 的同名工具。
+      for (const def of tools) {
+        toolNamesThisSession.add(def.name);
+        disposers.push(agentCtx.tools.register(def));
+      }
+      // 2) harness 自带工具（bash / read / write …）对这个 agent 一律隐身。
+      const hostNames = agentCtx.tools
+        .definitions()
+        .map((def) => def.name)
+        .filter((name) => !toolNamesThisSession.has(name));
+      if (hostNames.length > 0) disposers.push(agentCtx.tools.restrict({ deny: hostNames }));
+
+      // 3) 提示词：人设 + 权限说明追加在 harness 身份之后。
+      const parts = buildSystemPromptParts(profile, instructions, permissionIds);
+      parts.forEach((text, index) => {
+        if (typeof text !== 'string' || text.trim() === '') return;
+        disposers.push(
+          agentCtx.systemPrompt.section({
+            name: `agent-vis:${index}`,
+            order: 1000 + index,
+            text: text.trim(),
+          }),
+        );
+      });
+
+      // 4) 事件桥：assistant-stream 给逐块增量，session/event 给工具与 turn 边界。
+      disposers.push(
+        agentCtx.on('agent/assistant-stream', ({ agent: subject, frame }) => {
+          if (subject === createdAgent) bridgeFrame(frame);
+        }),
+      );
+      disposers.push(
+        agentCtx.on('session/event', (session, event) => {
+          if (String(session.id) === sessionId) bridgeSessionEvent(event);
+        }),
+      );
+      disposers.push(
+        agentCtx.on('agent/error', ({ agent: subject, error }) => {
+          if (subject !== createdAgent) return;
+          runError = error instanceof Error ? error : new Error(errorTextOf(error));
+          emit({ type: 'error', error: runError });
+        }),
+      );
+    },
+  });
+
+  function startBlock(kind, index) {
+    if (startedBlocks.has(index)) return;
+    startedBlocks.add(index);
+    const id = `${messageSeq}:${kind}:${index}`;
+    emit({
+      type: kind === 'reasoning' ? 'reasoning-start' : kind === 'text' ? 'text-start' : 'tool-start',
+      id,
+      index,
+    });
+  }
+
+  function bridgeFrame(frame) {
+    if (!frame) return;
+    if (frame.type === 'start') {
+      messageSeq += 1;
+      startedBlocks.clear();
+      emit({ type: 'message-start' });
+      return;
+    }
+    if (frame.type === 'end') {
+      // 消息的收尾以 durable 的 assistant/message 为准：那里带 usage，
+      // 而且被丢弃的重试不会漏到这里。
+      return;
+    }
+    const chunk = frame.chunk;
+    if (!chunk) return;
+    switch (chunk.type) {
+      case 'block-start': {
+        if (chunk.blockType === 'text' || chunk.blockType === 'reasoning' || chunk.blockType === 'tool-call') {
+          startBlock(
+            chunk.blockType === 'tool-call' ? 'tool' : chunk.blockType,
+            chunk.index,
+          );
+        }
+        return;
+      }
+      case 'text-delta': {
+        startBlock('text', chunk.index);
+        emit({ type: 'text-delta', id: `${messageSeq}:text:${chunk.index}`, delta: chunk.text });
+        return;
+      }
+      case 'reasoning-delta': {
+        startBlock('reasoning', chunk.index);
+        emit({
+          type: 'reasoning-delta',
+          id: `${messageSeq}:reasoning:${chunk.index}`,
+          delta: chunk.text,
+        });
+        return;
+      }
+      case 'tool-call-delta': {
+        const callId = String(chunk.id);
+        if (!toolInputStarted.has(callId)) {
+          toolInputStarted.add(callId);
+          toolNames.set(callId, chunk.name ?? '');
+          emit({ type: 'tool-input-start', toolCallId: callId, toolName: chunk.name ?? '' });
+        }
+        if (chunk.argumentsDelta) {
+          emit({ type: 'tool-input-delta', toolCallId: callId, delta: chunk.argumentsDelta });
+        }
+        return;
+      }
+      case 'block-end': {
+        const block = chunk.block || {};
+        if (block.type === 'text') {
+          emit({ type: 'text-end', id: `${messageSeq}:text:${chunk.index}` });
+        } else if (block.type === 'reasoning') {
+          emit({ type: 'reasoning-end', id: `${messageSeq}:reasoning:${chunk.index}` });
+        } else if (block.type === 'tool-call') {
+          const callId = String(block.id ?? '');
+          if (callId !== '') {
+            toolNames.set(callId, block.name ?? toolNames.get(callId) ?? '');
+            if (!availableCalls.has(callId)) {
+              availableCalls.add(callId);
+              let input = block.arguments ?? {};
+              if (typeof input === 'string') {
+                try {
+                  input = input === '' ? {} : JSON.parse(input);
+                } catch {
+                  input = { raw: input };
+                }
+              }
+              emit({
+                type: 'tool-input-available',
+                toolCallId: callId,
+                toolName: block.name ?? '',
+                input,
+              });
+            }
+          }
+        }
+        return;
+      }
+      case 'usage': {
+        usage = usageOf(chunk.usage) ?? usage;
+        return;
+      }
+      case 'finish': {
+        if (chunk.reason && FINISH_REASONS[chunk.reason.kind]) {
+          finishReason = FINISH_REASONS[chunk.reason.kind];
+        }
+        return;
+      }
+      default:
+        return;
+    }
+  }
+
+  function bridgeSessionEvent(event) {
+    switch (event.type) {
+      case 'step/start':
+        emit({ type: 'step-start' });
+        return;
+      case 'step/end':
+        emit({ type: 'step-end' });
+        return;
+      case 'turn/end': {
+        const reason = event.data && event.data.reason ? event.data.reason : { kind: 'completed' };
+        finishReason = FINISH_REASONS[reason.kind] ?? finishReason;
+        if (reason.kind === 'error') {
+          runError = new Error(errorTextOf(reason.error));
+        }
+        emit({ type: 'turn-end', reason: reason.kind });
+        return;
+      }
+      case 'assistant/message': {
+        const data = event.data || {};
+        usage = usageOf(data.usage) ?? usage;
+        if (usage) emit({ type: 'usage', usage });
+        if (data.interrupted) finishReason = 'aborted';
+        emit({ type: 'message-end' });
+        return;
+      }
+      case 'tool/call': {
+        const data = event.data || {};
+        const callId = String(data.callId ?? '');
+        if (callId === '') return;
+        toolNames.set(callId, data.name ?? '');
+        // block-end 可能已经先给出完整参数：同一 call 只报一次 available。
+        if (availableCalls.has(callId)) return;
+        availableCalls.add(callId);
+        let input = {};
+        try {
+          input = data.arguments ? JSON.parse(data.arguments) : {};
+        } catch {
+          input = { raw: data.arguments };
+        }
+        emit({ type: 'tool-input-available', toolCallId: callId, toolName: data.name ?? '', input });
+        return;
+      }
+      case 'tool/result': {
+        const data = event.data || {};
+        const message = data.message || {};
+        const callId = String(message.toolCallId ?? (message.source && message.source.callId) ?? '');
+        if (callId === '') return;
+        const toolName = toolNames.get(callId) ?? '';
+        const output = data.meta === undefined
+          ? (message.content || [])
+              .filter((part) => part && part.type === 'text')
+              .map((part) => part.text)
+              .join('\n')
+          : data.meta;
+        emit({
+          type: 'tool-result',
+          toolCallId: callId,
+          toolName,
+          isError: message.isError === true,
+          output,
+        });
+        return;
+      }
+      default:
+        return;
+    }
+  }
+
+  const session = {
+    id: sessionId,
+    get isStreaming() {
+      return Boolean(agent) && agent.status === 'running';
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    async prompt(text) {
+      runError = null;
+      finishReason = 'stop';
+      usage = null;
+      messageSeq = 0;
+      startedBlocks.clear();
+      toolInputStarted.clear();
+      availableCalls.clear();
+      const message = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: [{ type: 'text', text: String(text) }],
+        source: { kind: 'user' },
+      };
+      agent.followup(message);
+      await agent.whenIdle();
+      if (runError) throw runError;
+    },
+    abort() {
+      if (agent && agent.status === 'running') agent.cancel({ kind: 'user' });
+    },
+    dispose() {
+      for (const dispose of disposers.splice(0)) {
+        try {
+          dispose();
+        } catch {
+          // scoped 注册大多随 agent 一起卸载，这里的失败不影响结论。
+        }
+      }
+      listeners.clear();
+      void handle.dispose().catch(() => {});
+    },
+    outcome() {
+      return { finishReason, usage };
     },
   };
-  const text = `${JSON.stringify(config, null, 2)}\n`;
-  let existing = null;
-  try {
-    existing = fs.readFileSync(file, 'utf8');
-  } catch {
-    existing = null;
-  }
-  if (existing !== text) fs.writeFileSync(file, text, 'utf8');
-  return file;
+  return session;
 }
 
-let cachedRuntime = null;
-let cachedRuntimeDir = null;
-
-/**
- * 建 pi 的模型/凭证运行时。
- *
- * API key 只留在内存里（setRuntimeApiKey 不落盘）：凭证文件那个位置只是给 pi
- * 一个合法的读路径，里面没有我们的 key。
- */
-export async function createPiRuntime() {
-  const modelsPath = ensurePiModelsFile();
-  const authPath = path.join(piStateDir(), 'auth.json');
-  const modelRuntime = await ModelRuntime.create({
-    authPath,
-    modelsPath,
-    allowModelNetwork: false,
-  });
-  await modelRuntime.setRuntimeApiKey(PROVIDER_NAME, loadApiKey());
-  const model = modelRuntime.getModel(PROVIDER_NAME, MODEL_ID);
-  if (!model) {
-    throw new Error(`pi 的模型目录里没有 ${PROVIDER_NAME}/${MODEL_ID}（看 ${modelsPath}）`);
-  }
-  return { modelRuntime, model, modelsPath, authPath };
-}
-
-/** 同一个进程里复用运行时；换了数据目录就重建。 */
-async function piRuntime() {
-  const dir = piStateDir();
-  if (cachedRuntime && cachedRuntimeDir === dir) return cachedRuntime;
-  cachedRuntime = await createPiRuntime();
-  cachedRuntimeDir = dir;
-  return cachedRuntime;
-}
+// ---------------------------------------------------------------------------
+// dsh 事件流 → UI message stream 分片
+// ---------------------------------------------------------------------------
 
 /**
  * 这次运行实际要用人设提示词。
@@ -2029,75 +2484,11 @@ export function buildSystemPromptParts(profile, instructions, permissionIds) {
 }
 
 /**
- * 按「身份 + 提示词 + 权限」建一个 pi 会话。
+ * 跑一个 dsh agent，把规范化事件流翻成页面认识的 UI message stream 分片。
  *
- * 内置工具全关（noTools: 'builtin'）：pi 的 bash / edit / write 没有仓库边界，
- * 挂到公网入口上等于给任何拿到链接的人一个 shell。这一轮的工具有哪些，只看权限表。
- */
-export async function createPiSession({ profile, instructions, permissionIds }) {
-  const { modelRuntime, model } = await piRuntime();
-  // 轮次控制工具始终可用：没有它，"本步判定本轮结束"就只能写在文字里，
-  // 客户端读不到，后面的步骤照样会发出去。
-  const tools = [
-    ...toolsForPermissions(permissionIds, {
-      writeScope: profile && profile.writeScope,
-      denyTools: profile && profile.denyTools,
-    }),
-    endRoundTool,
-    requestHandoffTool,
-  ];
-  const loader = new DefaultResourceLoader({
-    cwd: sandboxRoot(),
-    agentDir: path.join(piStateDir(), 'agent'),
-    noExtensions: true,
-    noSkills: true,
-    noPromptTemplates: true,
-    noThemes: true,
-    noContextFiles: true,
-    appendSystemPrompt: buildSystemPromptParts(profile, instructions, permissionIds),
-  });
-  await loader.reload();
-
-  const { session } = await createAgentSession({
-    cwd: sandboxRoot(),
-    modelRuntime,
-    model,
-    noTools: 'builtin',
-    tools: tools.map((tool) => tool.name),
-    customTools: tools,
-    resourceLoader: loader,
-    sessionManager: SessionManager.inMemory(sandboxRoot()),
-    thinkingLevel: 'off',
-  });
-  return session;
-}
-
-// ---------------------------------------------------------------------------
-// pi 事件流 → UI message stream 分片
-// ---------------------------------------------------------------------------
-
-/** pi 的 stopReason → 页面认识的 finishReason。 */
-const FINISH_REASONS = {
-  stop: 'stop',
-  toolUse: 'tool-calls',
-  length: 'length',
-  error: 'error',
-  aborted: 'aborted',
-};
-
-function textOf(result) {
-  const content = result && Array.isArray(result.content) ? result.content : [];
-  return content
-    .filter((part) => part && part.type === 'text' && typeof part.text === 'string')
-    .map((part) => part.text)
-    .join('\n');
-}
-
-/**
- * 跑一个 pi 会话，把事件流翻成页面认识的 UI message stream 分片。
- *
- * session 只要求实现 pi AgentSession 的那几个方法（subscribe / prompt / abort / dispose），
- * 测试因此可以拿一个假会话把整条翻译路径跑一遍，不用打真实模型。
+ * session 只需要 subscribe / prompt / abort / dispose / outcome 五个成员：
+ * 真实实现是 createDshSession 返回的适配器，测试可以拿假会话把整条翻译路径
+ * 跑一遍，不用打真实模型。
  *
  * 收尾契约：正常结束是 finish + data-usage；被 abort 是 abort；出错是 error。
  * 三者都只出一个，不会既有 error 又有 finish 让人分不清这次到底成没成。
@@ -2144,11 +2535,9 @@ export async function* translateSession(
 
   const usage = { inputTokens: 0, outputTokens: 0, reasoningTokens: 0, totalTokens: 0 };
   let turns = 0;
-  let messageSeq = 0;
-  let finishReason = 'stop';
-  const toolCallsByContent = new Map();
   // 这一步有没有调用 endRound（本步判定"本轮到此结束"）。
   let roundEnded = false;
+  let finishReason = 'stop';
 
   try {
     yield { type: 'start', messageId };
@@ -2164,120 +2553,125 @@ export async function* translateSession(
       }
       const event = queue[index];
 
-      if (event.type === 'turn_start') {
-        yield { type: 'start-step' };
-        continue;
-      }
+      switch (event.type) {
+        case 'step-start':
+          yield { type: 'start-step' };
+          break;
 
-      if (event.type === 'turn_end') {
-        yield { type: 'finish-step' };
-        continue;
-      }
+        case 'step-end':
+          yield { type: 'finish-step' };
+          break;
 
-      if (event.type === 'message_start') {
-        if (event.message && event.message.role === 'assistant') messageSeq += 1;
-        continue;
-      }
-
-      if (event.type === 'message_end') {
-        const message = event.message || {};
-        if (message.role !== 'assistant') continue;
-        turns += 1;
-        if (message.usage) {
-          usage.inputTokens += message.usage.input ?? 0;
-          usage.outputTokens += message.usage.output ?? 0;
-          usage.reasoningTokens += message.usage.reasoning ?? 0;
-          usage.totalTokens += message.usage.totalTokens ?? 0;
-        }
-        finishReason = FINISH_REASONS[message.stopReason] ?? 'stop';
-        continue;
-      }
-
-      if (event.type === 'message_update') {
-        const delta = event.assistantMessageEvent;
-        if (!delta) continue;
-        const contentIndex = delta.contentIndex ?? 0;
-        const textId = `${messageSeq}:text:${contentIndex}`;
-        const reasoningId = `${messageSeq}:reasoning:${contentIndex}`;
-        const contentKey = `${messageSeq}:${contentIndex}`;
-        const toolCallId = toolCallsByContent.get(contentKey);
-
-        switch (delta.type) {
-          case 'text_start':
-            yield { type: 'text-start', id: textId };
-            break;
-          case 'text_delta':
-            yield { type: 'text-delta', id: textId, delta: delta.delta ?? '' };
-            break;
-          case 'text_end':
-            yield { type: 'text-end', id: textId };
-            break;
-          case 'thinking_start':
-            yield { type: 'reasoning-start', id: reasoningId };
-            break;
-          case 'thinking_delta':
-            yield { type: 'reasoning-delta', id: reasoningId, delta: delta.delta ?? '' };
-            break;
-          case 'thinking_end':
-            yield { type: 'reasoning-end', id: reasoningId };
-            break;
-          case 'toolcall_start': {
-            const content =
-              delta.partial && Array.isArray(delta.partial.content)
-                ? delta.partial.content[contentIndex]
-                : null;
-            if (content) {
-              toolCallsByContent.set(contentKey, content.id);
-              yield {
-                type: 'tool-input-start',
-                toolCallId: content.id,
-                toolName: content.name,
-              };
-            }
-            break;
+        case 'turn-end':
+          if (event.reason === 'error') {
+            // turn 已经以错误结束：结束原因由下面的 runError 分支统一报。
+          } else if (event.reason === 'aborted') {
+            finishReason = 'aborted';
+          } else if (event.reason === 'max-tokens') {
+            finishReason = 'length';
           }
-          case 'toolcall_delta':
-            yield {
-              type: 'tool-input-delta',
-              toolCallId: toolCallId ?? contentKey,
-              inputTextDelta: delta.delta ?? '',
-            };
-            break;
-          case 'toolcall_end': {
-            const call = delta.toolCall || {};
-            toolCallsByContent.set(contentKey, call.id);
-            yield {
-              type: 'tool-input-available',
-              toolCallId: call.id ?? toolCallId,
-              toolName: call.name,
-              input: call.arguments ?? {},
-            };
-            break;
-          }
-          default:
-            break;
-        }
-        continue;
-      }
+          break;
 
-      if (event.type === 'tool_execution_end') {
-        // 结束本轮是轮次控件，不是仓库能力：调用成功就把"本轮结束"记下来，
-        // 让外层释放这一轮的会话（后面的步骤不会再来了）。
-        if (event.toolName === ROUND_END_TOOL && !event.isError) roundEnded = true;
-        if (event.isError) {
+        case 'message-start':
+          break;
+
+        case 'message-end':
+          turns += 1;
+          break;
+
+        case 'usage':
+          if (event.usage) {
+            usage.inputTokens += event.usage.inputTokens ?? 0;
+            usage.outputTokens += event.usage.outputTokens ?? 0;
+            usage.reasoningTokens += event.usage.reasoningTokens ?? 0;
+            usage.totalTokens += event.usage.totalTokens ?? 0;
+          }
+          break;
+
+        case 'text-start':
+          yield { type: 'text-start', id: event.id };
+          break;
+
+        case 'text-delta':
+          yield { type: 'text-delta', id: event.id, delta: event.delta ?? '' };
+          break;
+
+        case 'text-end':
+          yield { type: 'text-end', id: event.id };
+          break;
+
+        case 'reasoning-start':
+          yield { type: 'reasoning-start', id: event.id };
+          break;
+
+        case 'reasoning-delta':
+          yield { type: 'reasoning-delta', id: event.id, delta: event.delta ?? '' };
+          break;
+
+        case 'reasoning-end':
+          yield { type: 'reasoning-end', id: event.id };
+          break;
+
+        case 'tool-input-start':
           yield {
-            type: 'tool-output-error',
+            type: 'tool-input-start',
             toolCallId: event.toolCallId,
-            errorText: textOf(event.result) || '工具执行失败（没有给出原因）',
+            toolName: event.toolName,
           };
-        } else {
-          const details = event.result ? event.result.details : undefined;
+          break;
+
+        case 'tool-input-delta':
           yield {
-            type: 'tool-output-available',
+            type: 'tool-input-delta',
             toolCallId: event.toolCallId,
-            output: details === undefined ? textOf(event.result) : details,
+            inputTextDelta: event.delta ?? '',
           };
+          break;
+
+        case 'tool-input-available':
+          yield {
+            type: 'tool-input-available',
+            toolCallId: event.toolCallId,
+            toolName: event.toolName,
+            input: event.input ?? {},
+          };
+          break;
+
+        case 'tool-result': {
+          // 结束本轮是轮次控件，不是仓库能力：调用成功就把"本轮结束"记下来，
+          // 让外层释放这一轮的会话（后面的步骤不会再来了）。
+          if (event.toolName === ROUND_END_TOOL && !event.isError) roundEnded = true;
+          if (event.isError) {
+            const detail = typeof event.output === 'string'
+              ? event.output
+              : (() => {
+                  try {
+                    return JSON.stringify(event.output);
+                  } catch {
+                    return '';
+                  }
+                })();
+            yield {
+              type: 'tool-output-error',
+              toolCallId: event.toolCallId,
+              errorText: detail || '工具执行失败（没有给出原因）',
+            };
+          } else {
+            yield {
+              type: 'tool-output-available',
+              toolCallId: event.toolCallId,
+              output: event.output,
+            };
+          }
+          break;
         }
+
+        case 'error':
+          if (!runError) runError = event.error;
+          break;
+
+        default:
+          break;
       }
     }
 
@@ -2295,6 +2689,8 @@ export async function* translateSession(
       return 'error';
     }
 
+    const outcome = typeof session.outcome === 'function' ? session.outcome() : null;
+    if (outcome && outcome.finishReason) finishReason = outcome.finishReason;
     yield { type: 'finish', finishReason };
     yield {
       type: 'data-usage',
@@ -2322,14 +2718,14 @@ export async function* translateSession(
 }
 
 // ---------------------------------------------------------------------------
-// 多步轮次的 pi 会话：一轮 = 一个会话，每一步只发自己的指令
+// 多步轮次的 dsh 会话：一轮 = 一个会话，每一步只发自己的指令
 // ---------------------------------------------------------------------------
 
 /**
  * 轮次会话表：key = `${roundId}:${profileId}`。
  *
- * pi 的会话本身就带着前面的对话，所以第二步不需要把第一步的产出重新贴一遍 ——
- * 客户端只发这一步的指令，上下文由会话带着。这也是切到 pi 之后最该利用的东西。
+ * dsh 的会话本身就带着前面的对话，所以第二步不需要把第一步的产出重新贴一遍 ——
+ * 客户端只发这一步的指令，上下文由会话带着。这是把 agent-vis 接到 harness 上最该利用的东西。
  */
 const roundSessions = new Map();
 
@@ -2383,7 +2779,7 @@ export function disposeRoundSession(key) {
 /**
  * 重置某个 agent 的会话：丢掉它挂着的轮次会话与本轮输入。
  *
- * pi 的会话本身记着前面的对话，所以"重置会话"要动的是这里：
+ * dsh 的会话本身记着前面的对话，所以"重置会话"要动的是这里：
  * 丢掉之后下一次运行从空白上下文开始。返回丢掉了几个会话。
  */
 export function resetAgentSessions(profileId) {
@@ -2427,7 +2823,7 @@ export function sweepRoundSessions(now = Date.now()) {
 }
 
 /**
- * 取这一轮这一步该用的 pi 会话。
+ * 取这一轮这一步该用的 dsh agent。
  *
  * - 同一轮、同一身份 → 复用已有的会话（reused=true）；
  * - 没有会话（第一步、服务重启、过期回收）→ 新建；
@@ -2440,7 +2836,8 @@ export async function acquireRoundSession({
   profile,
   instructions,
   permissionIds,
-  createSession = createPiSession,
+  ctx,
+  createSession = (args) => createDshSession(ctx, args),
 }) {
   const args = { profile, instructions, permissionIds };
   if (!round || typeof round.roundId !== 'string' || round.roundId === '') {
@@ -2471,7 +2868,7 @@ export async function acquireRoundSession({
  * 下游 agent 就能接着上游的结论往下做。
  *
  * 多步轮次（round 给了 roundId / stepIndex / totalSteps）：
- *   - 同一轮的每一步共享一个 pi 会话，客户端只发这一步的指令；
+ *   - 同一轮的每一步共享一个 dsh agent，客户端只发这一步的指令；
  *   - 走完最后一步、出错、被中止 → 立刻释放会话；
  *   - 会话真的丢了（服务重启 / 过期回收）时，把本轮输入补在指令前面 ——
  *     至少让模型知道它在做什么，不指望它记得上一步。
@@ -2489,7 +2886,8 @@ export async function* runLiveChunks(
     permissions,
     signal,
     round,
-    createSession = createPiSession,
+    ctx,
+    createSession,
   } = {},
 ) {
   const profile = resolveProfile(profileId);
@@ -2501,7 +2899,8 @@ export async function* runLiveChunks(
     profile,
     instructions,
     permissionIds,
-    createSession,
+    ctx,
+    ...(createSession ? { createSession } : {}),
   });
 
   let message = buildHandoffPrompt(prompt, handoff, handoffFrom);

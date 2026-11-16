@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { PI_TOOLS } from '../live-agent.js';
+import { DSH_TOOLS } from '../live-agent.js';
 import { currentWorkdir } from '../config.js';
 
 const REPO = currentWorkdir();
@@ -21,8 +21,8 @@ function rm(rel) {
   fs.rmSync(abs(rel), { recursive: true, force: true });
 }
 const call = async (args) => {
-  const result = await PI_TOOLS.copyBaselineTree.execute('call-copy', args);
-  return JSON.parse(result.content[0].text);
+  const result = await DSH_TOOLS.copyBaselineTree.execute(args);
+  return result;
 };
 
 let passed = 0;
@@ -45,12 +45,10 @@ await test('renameArm:false —— 目录名换了，内容与基线逐字节相
   const out = await call({ arm: PRISTINE, renameArm: false });
   assert.equal(out.pristine, true);
   assert.equal(fs.existsSync(abs(`stage2_RQ-VAE/${PRISTINE}`)), true);
-  const diff = JSON.parse(
-    (await PI_TOOLS.treeDiff.execute('c', {
-      baseline: 'stage2_RQ-VAE/baseline/TIGER_RQ-VAE',
-      tree: `stage2_RQ-VAE/${PRISTINE}`,
-    })).content[0].text,
-  );
+  const diff = await DSH_TOOLS.treeDiff.execute({
+    baseline: 'stage2_RQ-VAE/baseline/TIGER_RQ-VAE',
+    tree: `stage2_RQ-VAE/${PRISTINE}`,
+  });
   assert.equal(diff.summary.changed, 0, '内容不许有任何改动');
   assert.equal(diff.summary.onlyInTree, 0);
   assert.equal(diff.summary.onlyInBaseline, 0);

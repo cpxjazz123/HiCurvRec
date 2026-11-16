@@ -671,7 +671,7 @@ async function handleRun(req, res, url, mode, { viaPublicPath = false } = {}) {
 
   // 多步轮次的第一步：本轮输入由服务端拼在最前面。
   // 前端不再把它塞进 prompt —— 否则同一个请求里 prompt 与 roundPrompt 各有一份，
-  // 而且后面几步也会各自重复一遍。后面几步靠同一个 pi 会话带着上下文。
+  // 而且后面几步也会各自重复一遍。后面几步靠同一个 dsh 会话带着上下文。
   if (
     request.round &&
     request.round.stepIndex === 0 &&
@@ -805,7 +805,7 @@ async function handleRun(req, res, url, mode, { viaPublicPath = false } = {}) {
           instructions,
           permissions: request.permissions,
           signal: controller.signal,
-          // 这一轮的第几步：服务端据此复用同一个 pi 会话（步骤之间不用重发上文）。
+          // 这一轮的第几步：服务端据此复用同一个 dsh 会话（步骤之间不用重发上文）。
           round: request.round,
         });
 
@@ -1034,7 +1034,7 @@ export function createServer({
     // 重置会话：把 agent 拉回"没说过话"的状态。
     //
     // 一次重置做两件事：清掉服务端存的对话记录，并丢掉内存里挂着的模型会话
-    // （pi 的会话带着前面的对话，不丢掉它就还是接着上次说）。页面上的时间轴
+    // （dsh 的会话带着前面的对话，不丢掉它就还是接着上次说）。页面上的时间轴
     // 由前端自己清 —— 服务端管不了浏览器里的东西。
     if (url.pathname === '/api/session/reset') {
       if (req.method !== 'POST') {
@@ -1370,18 +1370,6 @@ export function createServer({
     }
 
     serveStatic(req, res, url, prefix);
-  });
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  createServer().listen(config.PORT, config.HOST, () => {
-    const problem = config.agentEnvProblem();
-    process.stdout.write(
-      `agent-vis (${config.MODE}) listening on http://${config.HOST}:${config.PORT}\n` +
-        `  agent workdir ${config.AGENT_WORKDIR} on ${os.hostname()}`
-        + ` (required host ${config.AGENT_HOST})`
-        + (problem ? `\n  REFUSING RUNS: ${problem}` : '\n'),
-    );
   });
 }
 

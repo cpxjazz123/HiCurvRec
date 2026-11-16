@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { PI_TOOLS } from '../live-agent.js';
+import { DSH_TOOLS } from '../live-agent.js';
 import { currentWorkdir } from '../config.js';
 
 const REPO = currentWorkdir();
@@ -89,8 +89,7 @@ write(`${IDEA}/math.json`, JSON.stringify({
 }, null, 2));
 
 const call = async (args) => {
-  const result = await PI_TOOLS.specCheck.execute('call-1', args);
-  return JSON.parse(result.content[0].text);
+  return await DSH_TOOLS.specCheck.execute(args);
 };
 
 const out = await call({ tree: TREE, idea: IDEA, baseline: BASE });

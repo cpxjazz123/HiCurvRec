@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { PI_TOOLS } from '../live-agent.js';
+import { DSH_TOOLS } from '../live-agent.js';
 import { currentWorkdir } from '../config.js';
 
 // 夹具放仓库内的临时目录（不放 /tmp）；工具按"仓库根相对路径"解析，所以两边都要换算。
@@ -66,8 +66,7 @@ write(`${BASE}/weights.npz`, 'not text\n');
 write(`${TREE}/weights.npz`, 'not text\n');
 
 const diff = async (args) => {
-  const result = await PI_TOOLS.treeDiff.execute('call-1', args);
-  return JSON.parse(result.content[0].text);
+  return await DSH_TOOLS.treeDiff.execute(args);
 };
 
 await testAsync('相同 / 改动 / 只在一边 分别归位', async () => {
@@ -119,8 +118,7 @@ await testAsync('越界的路径被拒', async () => {
 });
 
 const diffCall = async (args) => {
-  const result = await PI_TOOLS.readDiff.execute('call-2', args);
-  return JSON.parse(result.content[0].text);
+  return await DSH_TOOLS.readDiff.execute(args);
 };
 
 await testAsync('readDiff 单文件：只回改动，不改的文件不进列表', async () => {

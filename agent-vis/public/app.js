@@ -1714,7 +1714,7 @@ function createPanel(root) {
  * 同一个请求里会既有 prompt 里的那段、又有 roundPrompt 字段，白白重复一遍。
    *
    * 每一步仍然是一次独立请求（顺序由谁来调决定，不由模型自觉决定），
-   * 但**不再把前面几步的产出重新贴一遍** —— 一轮的每一步共用同一个 pi 会话，
+   * 但**不再把前面几步的产出重新贴一遍** —— 一轮的每一步共用同一个 dsh 会话，
    * 会话本身带着前面的对话，重发只会让上下文按平方增长。
    *
    * 上游 agent 交来的结果不在这里拼：它跟着请求的 handoff 字段走，
@@ -2224,7 +2224,7 @@ function createPanel(root) {
       // 进度条上这一步标成"正在做"，后面几步还是"没轮到"。
       setPlanChipState(index, 'active');
       const prompt = buildStepPrompt(step, index, plan.length);
-      // 上游的结果只接给第一步：后面每一步的上下文由同一个 pi 会话带着。
+      // 上游的结果只接给第一步：后面每一步的上下文由同一个 dsh 会话带着。
       const stepOptions = {
         ...options,
         instruction: prompt,

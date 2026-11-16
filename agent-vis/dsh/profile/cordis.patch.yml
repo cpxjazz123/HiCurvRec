@@ -1,0 +1,86 @@
+# agent-vis 的 dsh profile 补丁层（由 dsh/install.mjs 复制到
+# $DSH_HOME/profiles/agent-vis/cordis.patch.yml 并替换 __PLUGIN_URL__）。
+#
+# 1) 模型路由：commandcode 的 OpenAI 兼容通道 + DeepSeek V4.1 Flash。
+#    key 从进程环境读（dsh/start.sh 从 ~/.config/opencode/commandcode.key 导出），
+#    不写进任何 patch 文件。
+# 2) 宿主自带工具全部关闭：agent-vis 的 agent 只允许自己那套沙箱工具，
+#    bash / edit / write 这种没有仓库边界的工具连提示词都不该出现。
+# 3) 挂载 agent-vis 插件：HTTP 服务 + dsh agent 运行器。
+
+- id: llm-pi-ai
+  config:
+    providers:
+      __PROVIDER_NAME__:
+        displayName: CommandCode (DeepSeek)
+        api: openai-completions
+        baseURL: __BASE_URL__
+        apiKeyEnv: COMMANDCODE_API_KEY
+        models:
+          - id: __MODEL_ID__
+            name: DeepSeek V4.1 Flash
+            contextWindow: __CONTEXT_WINDOW__
+            input: [text]
+            reasoningEfforts: false
+
+- id: tool-bash
+  disabled: true
+- id: tool-pwsh
+  disabled: true
+- id: tool-jobs
+  disabled: true
+- id: tool-fs
+  disabled: true
+- id: tool-fs-search
+  disabled: true
+- id: tool-skill
+  disabled: true
+- id: tool-agent-team
+  disabled: true
+- id: tool-subagent
+  disabled: true
+- id: tool-subagent-control
+  disabled: true
+- id: tool-subagent-fork
+  disabled: true
+- id: tool-subagent-report
+  disabled: true
+- id: tool-workflow
+  disabled: true
+- id: tool-goal
+  disabled: true
+- id: tool-ralph
+  disabled: true
+- id: tool-todo
+  disabled: true
+- id: tool-web
+  disabled: true
+- id: tool-cordis
+  disabled: true
+- id: tool-ask-user
+  disabled: true
+- id: tool-present
+  disabled: true
+- id: tool-schedule
+  disabled: true
+- id: tool-str-replace-editor
+  disabled: true
+- id: tool-working-directory
+  disabled: true
+- id: tool-plugin-manager
+  disabled: true
+- id: plan-mode
+  disabled: true
+- id: goal
+  disabled: true
+- id: goal-round-driver
+  disabled: true
+- id: command-goal
+  disabled: true
+
+- insert:
+    - id: agent-vis
+      name: __PLUGIN_URL__
+      config:
+        host: 127.0.0.1
+        port: 8123

@@ -2636,12 +2636,12 @@ async function main() {
       stepReqsL.length > 2 ? stepReqsL[2].prompt.slice(0, 300) : '（没有请求）',
     );
 
-    // 三步共用一个 pi 会话：请求里必须带同一个 roundId，服务端据此复用会话。
+    // 三步共用一个 dsh 会话：请求里必须带同一个 roundId，服务端据此复用会话。
     const roundIds = stepReqsL
       .map((body) => (typeof body.roundId === 'string' ? body.roundId : ''))
       .filter((id) => id !== '');
     check(
-      '三步属于同一个 roundId（共用一个 pi 会话）',
+      '三步属于同一个 roundId（共用一个 dsh 会话）',
       roundIds.length === stepReqsL.length && new Set(roundIds).size === 1,
       `roundId: ${JSON.stringify(roundIds)}`,
     );

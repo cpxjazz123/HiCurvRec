@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 
 import { PERMISSION_CATALOG, resolvePermissions, resolveProfile } from '../config.js';
-import { PI_TOOLS, toolsForPermissions } from '../live-agent.js';
+import { DSH_TOOLS, toolsForPermissions } from '../live-agent.js';
 
 let passed = 0;
 
@@ -29,9 +29,9 @@ test('train 权限同时包含 Stage2 与 Stage3 工具', () => {
 
 test('两个 Stage3 工具都有实现', () => {
   for (const name of ['stage3Start', 'stage3Status']) {
-    assert.equal(typeof PI_TOOLS[name], 'object', `PI_TOOLS 缺 ${name}`);
-    assert.equal(PI_TOOLS[name].name, name);
-    assert.ok(PI_TOOLS[name].parameters, `${name} 没有参数 schema`);
+    assert.equal(typeof DSH_TOOLS[name], 'object', `DSH_TOOLS 缺 ${name}`);
+    assert.equal(DSH_TOOLS[name].name, name);
+    assert.ok(DSH_TOOLS[name].parameters, `${name} 没有参数 schema`);
   }
 });
 

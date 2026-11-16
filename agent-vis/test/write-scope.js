@@ -45,7 +45,7 @@ fs.writeFileSync(abs(`${ROOT}/theirs.py`), 'b = 1\n');
 const scoped = (perms, scope) => {
   const tools = toolsForPermissions(perms, { writeScope: scope });
   const byName = Object.fromEntries(tools.map((tool) => [tool.name, tool]));
-  const call = (name, args) => byName[name].execute(`call-${name}`, args);
+  const call = (name, args) => byName[name].execute(args);
   return { byName, call };
 };
 
@@ -216,7 +216,7 @@ await test('assignedFiles 列出的就是这一栏的写入范围', async () => 
       denyTools: profile.denyTools,
     }).find((item) => item.name === 'assignedFiles');
     assert.ok(tool, `${id} 没有 assignedFiles 工具`);
-    const out = JSON.parse((await tool.execute('call-assigned', {})).content[0].text);
+    const out = await tool.execute({});
     assert.deepEqual(out.files, profile.writeScope);
   }
 });

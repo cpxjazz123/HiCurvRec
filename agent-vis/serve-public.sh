@@ -30,8 +30,8 @@ public_path() {
 }
 
 service_pid() {
-  # 用 ^ 锚定命令行开头，免得把"命令行里恰好提到 server.js 的 bash"也当成服务。
-  pgrep -f "^node .*agent-vis/server\.js" | head -1 || true
+  # dsh 运行的是 profile 进程：只认真正的 harness 启动命令。
+  pgrep -f "dsh/lib/bin\.js --profile agent-vis" | head -1 || true
 }
 
 tunnel_pid() {
@@ -59,8 +59,8 @@ start() {
   fi
 
   if [ -z "$(service_pid)" ]; then
-    echo "启动本地服务 (127.0.0.1:$PORT) ..."
-    nohup node "$PWD/server.js" >> "$SERVICE_LOG" 2>&1 &
+    echo "启动本地服务 (dsh profile agent-vis, 127.0.0.1:$PORT) ..."
+    nohup "$PWD/dsh/start.sh" >> "$SERVICE_LOG" 2>&1 &
     disown || true
     for _ in $(seq 1 30); do
       sleep 0.5

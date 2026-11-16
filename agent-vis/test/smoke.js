@@ -19,7 +19,7 @@ import {
   normalizePermissions,
   resolvePermissions,
 } from '../config.js';
-import { PI_TOOLS, TOOL_IMPLS, toolsForPermissions } from '../live-agent.js';
+import { DSH_TOOLS, TOOL_IMPLS, toolsForPermissions } from '../live-agent.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -372,7 +372,7 @@ async function main() {
   });
 
   await test('runTests 在 CPU 上跑候选树 tests/（自测用）', async () => {
-    const { PI_TOOLS } = await import('../live-agent.js');
+    const { DSH_TOOLS } = await import('../live-agent.js');
     // 造一棵最小的候选树：一个通过的测试、一个失败的测试。
     const tree = 'stage2_RQ-VAE/TIGER_probe_runtests_rq';
     const dir = path.join(config.REPO_ROOT, tree, 'tests');
@@ -384,8 +384,7 @@ async function main() {
       'utf8',
     );
     try {
-      const pass = await PI_TOOLS.runTests.execute('rt1', { tree, timeoutSeconds: 180 });
-      const passDoc = JSON.parse((pass.content || [])[0].text);
+      const passDoc = await DSH_TOOLS.runTests.execute({ tree, timeoutSeconds: 180 });
       assert.equal(passDoc.ok, true, `该通过的没通过：${passDoc.error || passDoc.output}`);
       assert.equal(passDoc.exitCode, 0);
 
@@ -394,8 +393,7 @@ async function main() {
         'def test_bad():\n    assert 1 + 1 == 3\n',
         'utf8',
       );
-      const fail = await PI_TOOLS.runTests.execute('rt2', { tree, timeoutSeconds: 180 });
-      const failDoc = JSON.parse((fail.content || [])[0].text);
+      const failDoc = await DSH_TOOLS.runTests.execute({ tree, timeoutSeconds: 180 });
       assert.equal(failDoc.ok, false, '失败的测试应当报 ok:false');
       assert.notEqual(failDoc.exitCode, 0);
     } finally {
@@ -668,17 +666,17 @@ async function main() {
 
   await test('每个 agent 的工作目录与运行主机是硬约束', async () => {
     const info = await (await fetch(`${base}/api/health`)).json();
-    assert.equal(info.workdir, config.AGENT_WORKDIR, `workdir 不对: ${info.workdir}`);
-    assert.equal(info.requiredHost, config.AGENT_HOST, `requiredHost 不对: ${info.requiredHost}`);
+    assert.equal(info.workdir, config.currentWorkdir(), `workdir 不对: ${info.workdir}`);
+    assert.equal(info.requiredHost, config.currentHost(), `requiredHost 不对: ${info.requiredHost}`);
     assert.equal(typeof info.host, 'string');
     assert.ok(info.host.length > 0, 'health 没报当前主机名');
     assert.equal(info.envProblem, null, `本机不该有环境问题: ${info.envProblem}`);
     // 目录就是那个仓库：三个标记目录都在。
     assert.equal(config.agentWorkdirOk(), true,
-                 `${config.AGENT_WORKDIR} 下缺仓库目录`);
+                 `${config.currentWorkdir()} 下缺仓库目录`);
     // 主机名判定：本名、带域名后缀都算对，别的主机不算。
-    assert.equal(config.agentHostOk(config.AGENT_HOST), true);
-    assert.equal(config.agentHostOk(`${config.AGENT_HOST}.massive.org.au`), true);
+    assert.equal(config.agentHostOk(config.currentHost()), true);
+    assert.equal(config.agentHostOk(`${config.currentHost()}.massive.org.au`), true);
     assert.equal(config.agentHostOk('m3g105'), false, '别的主机不能算通过');
     assert.equal(config.agentEnvProblem(), null);
   });
@@ -687,7 +685,7 @@ async function main() {
     // 判定函数带上假的主机名/目录：必须给出可执行的原因，而不是静默放行。
     const wrongHost = config.agentEnvProblem({ hostname: 'm3g999' });
     assert.equal(typeof wrongHost, 'string');
-    assert.ok(wrongHost.includes(config.AGENT_HOST),
+    assert.ok(wrongHost.includes(config.currentHost()),
               `原因里要点名要求的主机: ${wrongHost}`);
     const wrongDir = config.agentEnvProblem({ workdir: '/proc' });
     assert.equal(typeof wrongDir, 'string');
@@ -1829,7 +1827,7 @@ async function main() {
         `权限 ${item.id} 没有对应工具`,
       );
       for (const name of item.tools) {
-        assert.ok(PI_TOOLS[name], `权限 ${item.id} 指向了不存在的工具 ${name}`);
+        assert.ok(DSH_TOOLS[name], `权限 ${item.id} 指向了不存在的工具 ${name}`);
       }
     }
   });
@@ -1944,13 +1942,7 @@ async function main() {
     const abs = path.join(config.REPO_ROOT, rel);
     const content = '权限测试写入\n';
     try {
-      await PI_TOOLS.write.execute(
-        'test-write',
-        { path: rel, content },
-        undefined,
-        undefined,
-        undefined,
-      );
+      await DSH_TOOLS.write.execute({ path: rel, content });
       assert.equal(fs.readFileSync(abs, 'utf8'), content, '文件内容不对');
     } finally {
       fs.rmSync(abs, { force: true });
@@ -1958,8 +1950,7 @@ async function main() {
   });
 
   await test('写权限也不许越界、不许写 .git 目录', async () => {
-    const call = (input) =>
-      PI_TOOLS.write.execute('test-write', input, undefined, undefined, undefined);
+    const call = (input) => DSH_TOOLS.write.execute(input);
     await assert.rejects(() => call({ path: '../outside.txt', content: 'x' }), /越界/);
     await assert.rejects(
       () => call({ path: '.git/config', content: 'x' }),
@@ -1976,14 +1967,8 @@ async function main() {
     const abs = path.join(config.REPO_ROOT, rel);
     fs.writeFileSync(abs, '待删\n', 'utf8');
     try {
-      const result = await PI_TOOLS.deleteFile.execute(
-        'test-delete',
-        { path: rel },
-        undefined,
-        undefined,
-        undefined,
-      );
-      assert.equal(result.details.path, rel, `删的是 ${result.details.path}`);
+      const result = await DSH_TOOLS.deleteFile.execute({ path: rel });
+      assert.equal(result.path, rel, `删的是 ${result.path}`);
       assert.equal(fs.existsSync(abs), false, '文件还在');
     } finally {
       fs.rmSync(abs, { force: true });
@@ -1991,8 +1976,7 @@ async function main() {
   });
 
   await test('删除权限不许删 .git、不许删仓库根、不许删不存在的东西', async () => {
-    const call = (input) =>
-      PI_TOOLS.deleteFile.execute('test-delete', input, undefined, undefined, undefined);
+    const call = (input) => DSH_TOOLS.deleteFile.execute(input);
     await assert.rejects(() => call({ path: '.git/config' }), /\.git/);
     await assert.rejects(() => call({ path: '.' }), /仓库根/);
     await assert.rejects(
