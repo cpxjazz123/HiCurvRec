@@ -78,6 +78,7 @@
 - 原声琴弦（p=0.114）和换弦工具（p=0.609）没有通过 TEST 显著性；不能把结论推广到所有商品。
 - 效应量是**小到中等**：Cramér V 0.11–0.12，TEST 加权 JSD 0.021–0.041，log-loss 改善 0.024–0.060 nats。统计显著不等于“分布明显不同”。
 - Train→test 的逐上下文分布 JSD 只有 0.004–0.007（`analysis.json` 的 `profile_jsd_train_test`），说明通过显著性检验的那几个目标，其上下文→未来关系是**稳定复现**的，而不是一次性的抽样噪声。
+- **排除“下一次买同类”后仍然成立**：把 `next` 与 `predecessor` 属于同一文本簇的事件删掉，只保留跨簇的下一次购买，6/6 个目标的原始 20 簇 MI 仍在 **0.202–0.300**，置换 p=0.002（500 次）。所以上下文差异不只是“同类耗材继续买”，也预测了**不同功能类型**的下一次购买。该检验使用原始 20 簇标签，主表使用合并后的有效簇，两者口径不同。
 
 ### 2.2 具体案例：线材 20159
 
@@ -209,6 +210,10 @@
 # 2) 统计检验与表格
 /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 \
   results/research/context_structure_validation/validate.py
+
+# 3) 排除同类后续的跨簇稳健性检验
+/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 \
+  results/research/context_structure_validation/cross_cluster_check.py
 ```
 
 产物：
@@ -220,3 +225,4 @@
 | `targets.json` | 目标商品、训练/测试事件数、上下文/结果覆盖 |
 | `analysis.json` | 全部 MI、p 值、JSD、log-loss、置换零分布、上下文/结构签名 |
 | `tables.md` | 汇总表、上下文签名、上下文对比、结构签名、pooled 结构签名 |
+| `cross_cluster.json` | 排除同类后续后的 raw-20-cluster MI/p（6 个目标） |
