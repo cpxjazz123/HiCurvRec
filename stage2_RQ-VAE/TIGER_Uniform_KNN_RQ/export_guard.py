@@ -78,5 +78,6 @@ def export_tokens_from_checkpoint(
         "items": int(len(exported)),
         "assignment": "argmin",
         "model_mode": "eval",
+        "export_device": str(device),
     }
     return exported, reencoded, metadata

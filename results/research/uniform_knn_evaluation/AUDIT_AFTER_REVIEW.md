@@ -135,6 +135,8 @@ re-encodes to exactly the same tokens.
 
 ## 3. 当前判断
 
+> 2026-11-17 正式重训后补充：训练出口改为 **CPU canonical**；同一 checkpoint 的外部 CPU 重编码与导出 SID mismatch 为 **0**，`build_vectors.tokens_match_export=true`。旧 2.89% 差异是 GPU 导出与 CPU 重编码的 canonical 设备差异；新训练结果见 `REPORT_UNIFORM_KNN_FIXED.md`。
+
 - q memory 独立/陈旧问题：**已修**；
 - 训练/导出 Sinkhorn 不一致：**已修**（本臂统一 argmin）；
 - tau 梯度泄漏：**已修**；

@@ -526,7 +526,9 @@ def main() -> None:
             embeddings=all_embeddings,
             in_dim=embeddings.shape[1],
             distance=DISTANCE,
-            device=device,
+            # CPU is the canonical comparison device: offline re-encoding (build_vectors,
+            # audits) runs on CPU, and GPU/CPU argmin near-ties otherwise disagree.
+            device=torch.device("cpu"),
         )
         if not np.array_equal(raw_tokens, reencoded_tokens):
             raise RuntimeError("checkpoint re-encoding does not match exported tokens")
@@ -553,6 +555,7 @@ def main() -> None:
             "items": int(len(raw_tokens)),
             "assignment": "argmin",
             "model_mode": "eval",
+            "export_device": "cpu",
             "sid_shape": list(sid.shape),
             "unique_after_extend": int(len(np.unique(sid, axis=0))),
         }

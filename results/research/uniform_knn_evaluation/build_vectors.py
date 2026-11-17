@@ -24,7 +24,9 @@ SID_JSON = REPO / "results" / "stage2_RQ-VAE" / "TIGER_Uniform_KNN_RQ" / "item_s
 EMBEDDING = REPO / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
 OUT = HERE / "uniform_knn_vectors.npz"
 META = HERE / "uniform_knn_vectors_meta.json"
-BATCH = 2048
+# Export and offline verification must use the same batch rule.  The checkpoint export
+# encodes all items in one pass; a chunked 2048 re-encode can change argmin near ties.
+BATCH = 1_000_000
 
 
 def load_model():

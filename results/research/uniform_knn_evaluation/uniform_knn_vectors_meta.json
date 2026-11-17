@@ -1,9 +1,9 @@
 {
   "tree": "stage2_RQ-VAE/TIGER_Uniform_KNN_RQ",
   "checkpoint": "results/stage2_RQ-VAE/TIGER_Uniform_KNN_RQ/rqvae_best.pth",
-  "checkpoint_sha256": "b00e4765d5efa90b3a88557a98422e8c253663ce47e4a9c468b743a449658927",
+  "checkpoint_sha256": "7aaf896178ed3be7558037a424e5fba9a78690fb6a2919e4b7d1c64002f68ed2",
   "sid_json": "results/stage2_RQ-VAE/TIGER_Uniform_KNN_RQ/item_sids.json",
-  "sid_sha256": "e460a39b02f14c9653fcab1e4b112b780727e25dda1576674d50f6145dbba36f",
+  "sid_sha256": "064e34db06e26e3ef662f39a1294f15855dda00da37fe49118f841f33d57282f",
   "items": 24587,
   "z_shape": [
     24587,
@@ -17,8 +17,8 @@
     24587,
     3
   ],
-  "tokens_match_export": false,
-  "q_source": "exported_sid_codebooks",
+  "tokens_match_export": true,
+  "q_source": "model_rq_argmin",
   "epoch": 3000,
-  "collision": 0.13889453776385896
+  "collision": 0.3777606051978688
 }

@@ -2,37 +2,6 @@
   "scope": "read-only; no Stage2 training",
   "checkpoint": "results/stage2_RQ-VAE/TIGER_Uniform_KNN_RQ/rqvae_best.pth",
   "sid": "results/stage2_RQ-VAE/TIGER_Uniform_KNN_RQ/item_sids.json",
-  "levels": [
-    {
-      "level": 1,
-      "items": 24587,
-      "mismatch": 31,
-      "mismatch_rate": 0.0012608289252966642,
-      "mismatch_gap_median": 0.0006198883056640625,
-      "mismatch_gap_max": 0.0036754608154296875,
-      "mismatch_gap_le_1e-4": 0.16129031777381897,
-      "all_gap_le_1e-4_share": 0.00032537520746700466
-    },
-    {
-      "level": 2,
-      "items": 24587,
-      "mismatch": 161,
-      "mismatch_rate": 0.0065481760539114475,
-      "mismatch_gap_median": 1.268833875656128e-05,
-      "mismatch_gap_max": 0.036198318004608154,
-      "mismatch_gap_le_1e-4": 0.8447204828262329,
-      "all_gap_le_1e-4_share": 0.1001342162489891
-    },
-    {
-      "level": 3,
-      "items": 24587,
-      "mismatch": 697,
-      "mismatch_rate": 0.02834831364452839,
-      "mismatch_gap_median": 8.085567969828844e-06,
-      "mismatch_gap_max": 0.025264441967010498,
-      "mismatch_gap_le_1e-4": 0.8536585569381714,
-      "all_gap_le_1e-4_share": 0.3760930597782135
-    }
-  ],
+  "levels": [],
   "interpretation": "Mismatches with tiny selected-vs-runner-up margins are argmin boundary differences. The current checkpoint and SID still disagree slightly, so the export state is not bit-identical to this re-encode; this is not the old Sinkhorn/argmin mismatch."
 }
