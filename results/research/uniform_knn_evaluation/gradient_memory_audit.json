@@ -1,0 +1,82 @@
+{
+  "scope": "read-only after loading a checkpoint; 10 one-step KL diagnostics, no Stage2 run",
+  "checkpoint": "results/stage2_RQ-VAE/TIGER_Uniform_KNN_RQ/rqvae_best.pth",
+  "batch_items": 1024,
+  "lr": 1e-06,
+  "initial": {
+    "soft_kl": 0.38993367552757263,
+    "hard_kl": 0.38993367552757263,
+    "kl_gradient_norm": 1.844596571215726,
+    "base_gradient_norm": 0.00030784587154072436,
+    "kl_to_base_ratio": 5991.948379829767
+  },
+  "trace": [
+    {
+      "step": 1,
+      "soft_before": 0.38993367552757263,
+      "soft_after": 0.38992929458618164,
+      "hard_after": 0.38992929458618164
+    },
+    {
+      "step": 2,
+      "soft_before": 0.38992929458618164,
+      "soft_after": 0.3899296224117279,
+      "hard_after": 0.3899296224117279
+    },
+    {
+      "step": 3,
+      "soft_before": 0.3899296224117279,
+      "soft_after": 0.389926552772522,
+      "hard_after": 0.389926552772522
+    },
+    {
+      "step": 4,
+      "soft_before": 0.389926552772522,
+      "soft_after": 0.3899245858192444,
+      "hard_after": 0.3899245858192444
+    },
+    {
+      "step": 5,
+      "soft_before": 0.3899245858192444,
+      "soft_after": 0.38992467522621155,
+      "hard_after": 0.38992467522621155
+    },
+    {
+      "step": 6,
+      "soft_before": 0.38992467522621155,
+      "soft_after": 0.389924556016922,
+      "hard_after": 0.389924556016922
+    },
+    {
+      "step": 7,
+      "soft_before": 0.389924556016922,
+      "soft_after": 0.3899216651916504,
+      "hard_after": 0.3899216651916504
+    },
+    {
+      "step": 8,
+      "soft_before": 0.3899216651916504,
+      "soft_after": 0.3899202346801758,
+      "hard_after": 0.3899202346801758
+    },
+    {
+      "step": 9,
+      "soft_before": 0.3899202346801758,
+      "soft_after": 0.38991811871528625,
+      "hard_after": 0.38991811871528625
+    },
+    {
+      "step": 10,
+      "soft_before": 0.38991811871528625,
+      "soft_after": 0.38992172479629517,
+      "hard_after": 0.38992172479629517
+    }
+  ],
+  "final": {
+    "step": 10,
+    "soft_before": 0.38991811871528625,
+    "soft_after": 0.38992172479629517,
+    "hard_after": 0.38992172479629517
+  },
+  "note": "the candidate q is recomputed from the current model at every diagnostic step"
+}
