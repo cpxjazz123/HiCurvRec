@@ -9,9 +9,9 @@
 | 主张 | 判定 | 关键证据 |
 |---|---|---|
 | **混合曲率更适合** | **成立**（匹配臂内 + 两个 train-only 结构指标同向） | F0（E16×H16，α=1/2）比纯欧氏 E（E16×E16）高 **+0.00303** recall@10，逐用户配对 95% CI **[+0.00152, +0.00456]**，McNemar p = **1.06e-4**；kNN 行为边恢复在 α=0.4 达 0.01067，高于只用双曲半 0.01004 与只用欧氏半 0.00945 |
-| **不同 graphlet 需要不同几何偏置** | **未获支持**（五条独立操作化，全部落在零附近；一条还被显著拒绝） | ROLE vs GLOBAL +0.00016（p=0.855）且 ROLE 比无路由 F0 **低** 0.00185（p=0.016）；角色条件 α 异质性 p=0.31；边类 α 交互 CI 跨零且半样本不复现；kNN 每类最优 α 的 held-out 增益 ≤0 且 CI 全跨零；码本 cell 的密度交互在 cell 聚类 bootstrap 下 CI 跨零 |
+| **不同 graphlet 需要不同几何偏置** | **未获支持**（六条独立操作化，全部落在零附近；一条还被显著拒绝） | ROLE vs GLOBAL +0.00016（p=0.855）且 ROLE 比无路由 F0 **低** 0.00185（p=0.016）；角色条件 α 异质性 p=0.31；边类 α 交互 CI 跨零且半样本不复现；kNN 每类最优 α 的 held-out 增益 ≤0 且 CI 全跨零；码本 cell 的密度交互在 cell 聚类 bootstrap 下 CI 跨零；两个匹配臂之间**没有逐类交叉**（F0 在每一类都不低于 E） |
 
-第一句可以做结论；第二句按现有证据**不能**写成结论（这是“五条独立操作化都没有支持”，不是“逻辑上已被证伪”）。下面把证据线逐条摊开，并给出要推翻这个判定需要什么。
+第一句可以做结论；第二句按现有证据**不能**写成结论（这是“六条独立操作化都没有支持”，不是“逻辑上已被证伪”）。下面把证据线逐条摊开，并给出要推翻这个判定需要什么。
 
 另外一条必须写进任何结论的限制：这些几何臂的绝对水平是 0.054–0.057，低于仓库现有最好 SID（resample 0.0633）与 0.065 的采纳线。几何结论只在**匹配臂之间**成立，不能外推成“该 SID 更好”。
 
@@ -141,6 +141,22 @@ $$d_\alpha^2=\alpha\,d_E^2+(1-\alpha)\,d_H^2/4,$$
 
 这条记录了本报告最重要的方法学教训：在 code cell 上做 item 级 bootstrap 会把 CI 压窄 3–5 倍，把一个不存在的交互变成“显著”。JSON 里两个区间都保留，并标注 item 级那条不作准入。
 
+## 4d. 证据 F：两个匹配臂之间的逐类交叉（是不是互相交换）
+
+前面的探针都在**一个** q 上移动几何。这里用真正训练出来的两个臂：F0（E16×H16，α=½）与 E（同配方，曲率 0）。它们的 SID 几乎完全不同（同 L3 token 的商品占比 **0.0000**），所以这是“两种几何各自训练一遍”的对照。每个臂用**自己的**度量建 k=10 图（F0：$0.5d_E^2+0.5d_H^2/4$；E：32 维平方欧氏），再看每类行为边的恢复率。
+
+| 边类 | F0（混合） | E（纯欧氏） | F0−E | 95% CI |
+|---|---:|---:|---:|---|
+| triangles=0 | 0.00999 | 0.00993 | +0.00005 | [−0.00052, +0.00065] |
+| triangles=1–2 | 0.01300 | 0.01293 | +0.00007 | [−0.00072, +0.00090] |
+| triangles=3–5 | 0.01193 | 0.01110 | **+0.00083** | [−0.00033, +0.00197] |
+| triangles≥6 | 0.00806 | 0.00800 | +0.00006 | [−0.00077, +0.00088] |
+| 全部边 | 0.01065 | 0.01049 | +0.00016 | — |
+
+**没有交叉**：F0 在每一类上都不低于 E，没有哪一类“更需要欧氏”。唯一的相对集中是 3–5 三角形那一类（+0.00083，约为其他类的 10 倍），但 CI 仍跨零。这不支持“不同 graphlet 需要不同几何”，只支持“混合几何的收益在中等密度结构上更大”。
+
+同时值得记一笔：纯欧氏的 E32 冻结基线 kNN 恢复率最高（0.01130，每一类都最高），但它的 recall 最低（0.055537）。**行为边恢复率不能当单臂排序指标用**——仓库里 `QKNN_GRAPHLET_RECALL` 的相关性是跨 48 个臂的统计，不是“恢复率高 ⇒ recall 高”的逐臂保证。
+
 ## 5. 判定与解读
 
 **主张 1（混合曲率更适合）：成立，但只在匹配臂之内。**
@@ -150,14 +166,15 @@ $$d_\alpha^2=\alpha\,d_E^2+(1-\alpha)\,d_H^2/4,$$
 - 但它明显劣于 resample（−0.00608），所以这是**机制结论**，不是**模型录用结论**。
 
 **主张 2（不同 graphlet 需要不同几何偏置）：未获支持。**
-五条互相独立的操作化：
+六条互相独立的操作化：
 - 训练臂里，按角色路由 vs 全局路由 +0.00016（p=0.86），并且**比不路由更差** −0.00185（p=0.016）——有功效的负结果；
 - 角色条件 α 的异质性 p=0.31，逐角色增益上限 +0.0011；
 - 边 graphlet 类的 α 交互点估计 +0.0070（方向符合预期），但 CI 跨零，半样本拟合把 α 从 0.1 拉到 0.5、held-out 增益 ≈0；
 - kNN 恢复口径下，每类最优 α 的 held-out 增益四个类全部 ≤0、CI 全跨零；
-- 码本 cell 口径下，cell 级聚类 bootstrap 的密度交互 CI 跨零（item 级那条 CI 是聚类伪影）。
+- 码本 cell 口径下，cell 级聚类 bootstrap 的密度交互 CI 跨零（item 级那条 CI 是聚类伪影）；
+- 真正训练出来的两个几何臂之间没有交叉：F0−E 在四个类上是 +0.00005 / +0.00007 / +0.00083 / +0.00006，没有一类反转符号。
 
-五条合起来：没有任何一条能支撑“按 graphlet 给不同几何偏置会更好”的结论；其中训练臂那条还给出了反向的显著证据，而 kNN 口径进一步说明**同一个混合区间对所有类都最好**。
+六条合起来：没有任何一条能支撑“按 graphlet 给不同几何偏置会更好”的结论；其中训练臂那条还给出了反向的显著证据，而 kNN 口径进一步说明**同一个混合区间对所有类都最好**。
 
 这与仓库已有的离线结论一致：`QKNN_GRAPHLET_RECALL` 里三角/K4 的恢复率有独立预测力（ΔR² 0.14/0.13），P5/C5 没有；但“按几何去区分 graphlet”并不带来下游收益。
 
@@ -187,7 +204,11 @@ python3 results/research/graphlet_geometry_conclusion/paired_rank_analysis.py
 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 \
   results/research/graphlet_geometry_conclusion/readout_knn_geometry.py
 
-# 5) 码本 cell 口径（含 cell 级聚类 bootstrap）
+# 5) 两个匹配臂的逐类交叉（重建 E 的 readout，各自用自己的度量建图）
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 \
+  results/research/graphlet_geometry_conclusion/arm_geometry_crossover.py
+
+# 6) 码本 cell 口径（含 cell 级聚类 bootstrap）
 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 \
   results/research/graphlet_geometry_conclusion/cell_geometry_preference.py
 ```
@@ -201,6 +222,7 @@ python3 results/research/graphlet_geometry_conclusion/paired_rank_analysis.py
 | `edge_class_geometry.json` | 每边类的 α/曲率曲线、bootstrap 选中率、半样本拟合、交互项、密度对比 |
 | `readout_knn_geometry.json` | 每个 α 的 q-kNN 恢复率、每类的拟合/评估增益与 CI |
 | `cell_geometry_preference.json` | 71 个码本 cell 的 α 曲线、密度相关与 item/cell 两级交互区间 |
+| `arm_geometry_crossover.json` | 三个臂（F0 / E / E32 基线）每类的 kNN 恢复率与 F0−E 的逐类配对区间 |
 
 冻结输入：
 - 角色表 `results/research/issue215/orca_roles_frozen.csv`，sha256 `c7a29e6559aed1385c5ce514e506be22d88bf6e85eb61120b6dbf69375ea251c`。它在 2026-11-16 的 `results/research` 清理里被删掉，本轮**从 git 历史恢复并改为入库**（`.gitignore` 显式放行），否则 #215 的三个臂无法复跑。
