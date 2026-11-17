@@ -47,6 +47,7 @@ from losses.knn import (
     soft_quantized_readout,
 )
 from model import RQVAE
+from export_guard import export_tokens_from_checkpoint, sha256_file
 from train_config import load_train_config
 
 
@@ -76,6 +77,7 @@ TRAIN_FILE     = REPO_ROOT / "results" / "stage0_build_parquet" / "train.parquet
 OUTPUT_SID     = RESULT_DIR / "sids_for_hgrec.npy"
 OUTPUT_JSON    = RESULT_DIR / "item_sids.json"
 CHECKPOINT     = RESULT_DIR / "rqvae_best.pth"
+EXPORT_MANIFEST = RESULT_DIR / "export_manifest.json"
 LOG_DIR        = REPO_ROOT / "stage2_RQ-VAE" / ARM_NAME / "logs"
 METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 
@@ -515,28 +517,58 @@ def main() -> None:
             reason="final_epoch", collision=final_collision,
             raw_unique=final_raw_unique,
         )
-        raw_module.eval()
-        # Skip DDP all_reduce inside VQLayer.forward during the export
-        # inference pass — rank 1-3 are stuck in barrier, would deadlock.
-        for layer in raw_module.rq.vq_layers:
-            layer._skip_ddp_reduce = True
-        try:
-            with torch.no_grad():
-                raw_tokens = raw_module.get_indices(
-                    all_embeddings.to(device), infer_use_sk=False
-                ).cpu().numpy().astype(np.int64)
-        finally:
-            for layer in raw_module.rq.vq_layers:
-                layer._skip_ddp_reduce = False
+        # A fresh load from the saved bytes is the export authority.  The second
+        # fresh load is the verifier; a mismatch must fail the run rather than
+        # publish a SID that its own checkpoint cannot reproduce.
+        raw_tokens, reencoded_tokens, export_identity = export_tokens_from_checkpoint(
+            CHECKPOINT,
+            config=config,
+            embeddings=all_embeddings,
+            in_dim=embeddings.shape[1],
+            distance=DISTANCE,
+            device=device,
+        )
+        if not np.array_equal(raw_tokens, reencoded_tokens):
+            raise RuntimeError("checkpoint re-encoding does not match exported tokens")
         sid = _extend_collisions(raw_tokens, codebook_sizes)
         if len(np.unique(sid, axis=0)) != len(sid):
             raise RuntimeError("RecBole SID extension failed to make item codes unique")
+        final_raw_unique = int(len(np.unique(raw_tokens, axis=0)))
+        final_collision = 1.0 - final_raw_unique / len(raw_tokens)
         OUTPUT_SID.parent.mkdir(parents=True, exist_ok=True)
         np.save(OUTPUT_SID, sid)
         payload = {str(item_id): [int(value) for value in row] for item_id, row in enumerate(sid)}
         OUTPUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        manifest = {
+            "schema": "stage2_export_manifest_v1",
+            "checkpoint": str(CHECKPOINT),
+            "checkpoint_sha256": export_identity["checkpoint_sha256"],
+            "output_sid": str(OUTPUT_SID),
+            "output_json": str(OUTPUT_JSON),
+            "sid_sha256": sha256_file(OUTPUT_SID),
+            "item_sids_sha256": sha256_file(OUTPUT_JSON),
+            "export_tokens_sha256": export_identity["export_tokens_sha256"],
+            "reencoded_tokens_sha256": export_identity["reencoded_tokens_sha256"],
+            "tokens_match": export_identity["tokens_match"],
+            "items": int(len(raw_tokens)),
+            "assignment": "argmin",
+            "model_mode": "eval",
+            "sid_shape": list(sid.shape),
+            "unique_after_extend": int(len(np.unique(sid, axis=0))),
+        }
+        EXPORT_MANIFEST.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
         print(f"[RecBole RQ-VAE] exported raw_shape={raw_tokens.shape} sid_shape={sid.shape} unique={len(np.unique(sid, axis=0))} -> {OUTPUT_SID}", flush=True)
-        _record(rank, "train_end", total_wall_time_s=round(time.time() - _T0, 3), final_collision=final_collision, checkpoint_selection="final_epoch", sid_shape=list(sid.shape), output_sid=str(OUTPUT_SID), output_json=str(OUTPUT_JSON), unique_after_extend=len(np.unique(sid, axis=0)))
+        _record(
+            rank, "train_end", total_wall_time_s=round(time.time() - _T0, 3),
+            final_collision=final_collision, checkpoint_selection="final_epoch",
+            sid_shape=list(sid.shape), output_sid=str(OUTPUT_SID),
+            output_json=str(OUTPUT_JSON), unique_after_extend=len(np.unique(sid, axis=0)),
+            checkpoint_sha256=export_identity["checkpoint_sha256"],
+            export_tokens_sha256=export_identity["export_tokens_sha256"],
+            reencoded_tokens_sha256=export_identity["reencoded_tokens_sha256"],
+            tokens_match=export_identity["tokens_match"],
+            export_manifest=str(EXPORT_MANIFEST),
+        )
 
     if world_size > 1:
         dist.barrier()

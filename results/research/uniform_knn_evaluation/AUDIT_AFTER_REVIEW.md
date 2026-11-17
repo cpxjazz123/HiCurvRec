@@ -105,6 +105,34 @@
 CPU 和 GPU 重编码结果完全相同；`sids_for_hgrec.npy` 与 `item_sids.json` 的前三码完全一致。  
 因此该差异不是 Sinkhorn，也不是 CPU/GPU 取舍；它集中在 **较小 margin 的 argmin 边界**，但仍有约 15% 的 mismatch 不在 1e-4 内，不能仅用“并列”解释。当前判断是**导出时的模型状态与该 checkpoint 的重编码状态不完全 bit-identical**，需要在下一次导出时记录 token manifest/checkpoint hash 才能最终定位。
 
+### 2.5 checkpoint-bound export guard
+
+`export_guard.py` now makes the saved checkpoint, not the live training module, the
+export authority:
+
+1. save the final checkpoint;
+2. load it into a fresh model;
+3. compute argmin tokens with the export assignment and write SID;
+4. load the checkpoint **again** into a second fresh model and recompute tokens;
+5. fail the run if the two token arrays differ;
+6. write `export_manifest.json` with:
+   - checkpoint SHA-256,
+   - export and re-encoded token SHA-256,
+   - `tokens_match`,
+   - SID and `item_sids.json` SHA-256,
+   - assignment/model mode/items.
+
+Dry run on the current checkpoint (no training):
+
+- `checkpoint_sha256 = b00e4765...`
+- `export_tokens_sha256 = 2b79a5f9...`
+- `reencoded_tokens_sha256 = 2b79a5f9...`
+- `tokens_match = true`
+
+This does **not** rewrite the old SID; the old 2.89% mismatch is from the pre-guard export
+and remains diagnostic. Future exports cannot publish a SID unless the same checkpoint
+re-encodes to exactly the same tokens.
+
 ## 3. 当前判断
 
 - q memory 独立/陈旧问题：**已修**；

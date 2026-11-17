@@ -168,3 +168,23 @@ def test_hard_readout_matches_selected_codebooks():
     from losses.knn import hard_quantized_from_tokens
     actual = hard_quantized_from_tokens(model, tokens)
     assert torch.allclose(actual, expected, atol=1e-6)
+
+
+def test_checkpoint_export_roundtrip_is_exact_and_hashed():
+    from export_guard import export_tokens_from_checkpoint
+    model = _model(seed=41)
+    x = torch.randn(9, 8)
+    checkpoint = __import__("pathlib").Path(__file__).with_name("_export_guard_test.pth")
+    try:
+        torch.save({"state_dict": model.state_dict(), "epoch": 1}, checkpoint)
+        exported, reencoded, meta = export_tokens_from_checkpoint(
+            checkpoint, config=model.config, embeddings=x, in_dim=8,
+            distance=None, device=torch.device("cpu"),
+        )
+        assert exported.shape == (9, 3)
+        assert torch.equal(torch.from_numpy(exported), torch.from_numpy(reencoded))
+        assert meta["tokens_match"] is True
+        assert len(meta["checkpoint_sha256"]) == 64
+        assert meta["export_tokens_sha256"] == meta["reencoded_tokens_sha256"]
+    finally:
+        checkpoint.unlink(missing_ok=True)
