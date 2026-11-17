@@ -63,24 +63,26 @@ def main() -> int:
         for start in range(0, len(embeddings), BATCH):
             batch = embeddings[start:start + BATCH]
             z = model.encoder(batch)
-            q, _, _, code = model.rq(z, infer_use_sk=False)
+            # The forward q carries the STE and therefore a small dependence on z.
+            # It is diagnostic only; the canonical quantised vector is the sum of the
+            # three codebook rows named by the exported SID.
+            q_model, _, _, code = model.rq(z, infer_use_sk=False)
             zs.append(z.cpu())
-            qs.append(q.cpu())
+            qs.append(q_model.cpu())
             codes.append(code.cpu())
     z = torch.cat(zs).numpy()
-    q = torch.cat(qs).numpy()
+    model_q = torch.cat(qs).numpy()
     code = torch.cat(codes).numpy()
     matches = bool(np.array_equal(code[:, :3], expected))
-    q_source = "model_rq_argmin" if matches else "exported_sid_codebooks"
-    if not matches:
-        codebooks = np.stack([
-            model.rq.vq_layers[level].embed.weight.detach().numpy()
-            for level in range(3)
-        ]).astype(np.float32)
-        q = sum(codebooks[level][expected[:, level]] for level in range(3))
-        code = expected
+    codebooks = np.stack([
+        model.rq.vq_layers[level].embed.weight.detach().numpy()
+        for level in range(3)
+    ]).astype(np.float32)
+    q = sum(codebooks[level][expected[:, level]] for level in range(3))
+    q_source = "exported_sid_codebooks"
 
-    np.savez(OUT, z=z.astype(np.float32), q=q.astype(np.float32), tokens=code.astype(np.int64))
+    np.savez(OUT, z=z.astype(np.float32), q=q.astype(np.float32),
+             model_q=model_q.astype(np.float32), tokens=expected.astype(np.int64))
     meta = {
         "tree": str(TREE.relative_to(REPO)),
         "checkpoint": str(CHECKPOINT.relative_to(REPO)),
@@ -90,7 +92,9 @@ def main() -> int:
         "items": int(len(z)),
         "z_shape": list(z.shape),
         "q_shape": list(q.shape),
-        "tokens_shape": list(code.shape),
+        "q_unique": int(len(np.unique(q, axis=0))),
+        "sid_unique": int(len(np.unique(expected, axis=0))),
+        "tokens_shape": list(expected.shape),
         "tokens_match_export": matches,
         "q_source": q_source,
         "epoch": payload.get("epoch"),
