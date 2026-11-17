@@ -40,8 +40,9 @@ from losses.knn import (
     KNN_NEGATIVES,
     KNN_NEIGHBOURS,
     KNN_WEIGHT,
+    QuantizedMemory,
     build_knn_targets,
-    hard_quantized_from_tokens,
+    hard_quantized_from_embeddings,
     knn_neighbourhood_kl,
     soft_quantized_readout,
 )
@@ -87,6 +88,8 @@ CONFIG = load_train_config(CONFIG_FILE)
 # 损失与距离都由注册表给出；训练文件只负责导入并把它们接到模型上。
 CRITERION = build_loss(CONFIG)
 DISTANCE = build_distance(CONFIG)
+#: This arm optimises the same hard assignment it exports: no training-only Sinkhorn.
+EXPORT_CONSISTENT_ASSIGNMENT = True
 
 EPOCHS              = CONFIG.EPOCHS
 BATCH_SIZE_PER_RANK = CONFIG.BATCH_SIZE_PER_RANK     # 每卡 batch, 总 batch = 每卡 * world_size
@@ -296,6 +299,13 @@ def main() -> None:
     knn_log_target = torch.from_numpy(knn_log_target).to(device)
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1], distance=DISTANCE).to(device)
+    # P0 fix: the baseline trains L3 with Sinkhorn but exports with argmin.  For this
+    # arm the hard q, q memory and export must be the same object, so Sinkhorn is
+    # disabled.  This is a candidate-level assignment choice, not a silent baseline
+    # change; any comparison arm must keep the same setting.
+    if EXPORT_CONSISTENT_ASSIGNMENT:
+        for layer in model.rq.vq_layers:
+            layer.use_sk = False
     if XAVIER_INIT:
         initialize_tiger_weights(model)
     if world_size > 1:
@@ -332,7 +342,7 @@ def main() -> None:
     if rank == 0:
         print(f"[RecBole RQ-VAE] device={device} all_items={len(all_embeddings)} train_items={len(train_embeddings)} world_size={world_size}", flush=True)
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
-        _record(rank, "train_start", config_sha256=CONFIG.sha256, config_path=CONFIG.path, epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, knn_weight=KNN_WEIGHT, knn_neighbours=KNN_NEIGHBOURS, knn_negatives=KNN_NEGATIVES, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size)
+        _record(rank, "train_start", config_sha256=CONFIG.sha256, config_path=CONFIG.path, epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, knn_weight=KNN_WEIGHT, knn_neighbours=KNN_NEIGHBOURS, knn_negatives=KNN_NEGATIVES, export_consistent_assignment=EXPORT_CONSISTENT_ASSIGNMENT, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size)
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
@@ -344,13 +354,15 @@ def main() -> None:
         dist.barrier()
 
     # A detached hard-q memory makes the fixed semantic neighbours available even when
-    # they are not in the current mini-batch.  The anchor q in the loss is still the
-    # straight-through soft readout below.
+    # they are not in the current mini-batch.  It follows the argmin export path, is
+    # fully refreshed at every epoch start, and is recomputed for the batch *after* the
+    # optimizer step, so staleness never exceeds one epoch and is reported.
+    raw_module.eval()
     with torch.no_grad():
-        all_tokens = raw_module.get_indices(
-            all_embeddings.to(device), infer_use_sk=False
+        q_memory = QuantizedMemory.from_model(
+            raw_module, all_embeddings.to(device), step=0
         )
-        q_memory = hard_quantized_from_tokens(raw_module, all_tokens).detach().clone()
+    raw_module.train()
     if rank == 0:
         print(
             f"[Uniform-KNN] candidates={tuple(knn_candidates.shape)} "
@@ -369,6 +381,10 @@ def main() -> None:
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
         model.train()
+        raw_module.eval()
+        with torch.no_grad():
+            q_memory.refresh(raw_module, all_embeddings.to(device), step=epoch)
+        raw_module.train()
         losses: list[float] = []
         recons: list[float] = []
         knn_losses: list[float] = []
@@ -387,8 +403,8 @@ def main() -> None:
             # reaches both the encoder and the codebook while the forward q stays hard.
             target_log = knn_log_target[batch_ids]
             candidates = knn_candidates[batch_ids]
-            q_candidates = q_memory[candidates]
-            q_proxy, q_hard = soft_quantized_readout(raw_module, batch, tokens)
+            q_candidates = q_memory.index(candidates)
+            q_proxy, q_hard = soft_quantized_readout(raw_module, batch, assignment="export")
             knn_loss = knn_neighbourhood_kl(q_proxy, q_candidates, target_log)
             total_loss = loss + KNN_WEIGHT * knn_loss
             if not torch.isfinite(total_loss):
@@ -398,8 +414,21 @@ def main() -> None:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIP_NORM)
             optimizer.step()
             scheduler.step()
+            # Recompute the batch with the updated parameters, not with the pre-step
+            # q_hard.  All ranks then exchange their updated rows so every rank's
+            # memory is the same object; a local-only writeback would leave the four
+            # DDP caches on different model states.
             with torch.no_grad():
-                q_memory.index_copy_(0, batch_ids, q_hard.detach())
+                q_batch, _ = hard_quantized_from_embeddings(raw_module, batch)
+                if world_size > 1:
+                    gathered = [None] * world_size
+                    dist.all_gather_object(
+                        gathered,
+                        (batch_ids.detach().cpu(), q_batch.detach().cpu()),
+                    )
+                    batch_ids = torch.cat([item[0] for item in gathered]).to(device)
+                    q_batch = torch.cat([item[1] for item in gathered]).to(device)
+                q_memory.update_items(batch_ids, q_batch, step=epoch)
             losses.append(float(total_loss.detach()))
             recons.append(float(recon_loss.detach()))
             knn_losses.append(float(knn_loss.detach()))
@@ -417,12 +446,13 @@ def main() -> None:
         avg_recon = float(local_recon.item()) / max(world_size, 1)
         avg_knn = float(local_knn.item()) / max(world_size, 1)
         cur_lr = optimizer.param_groups[0]["lr"]
+        memory_stats = q_memory.stats()
 
         # === 非 eval 间隔: 只 log train 行 ===
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} knn={avg_knn:.6f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, knn=avg_knn, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, knn=avg_knn, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), memory_mean_age=memory_stats["mean_age"], memory_max_age=memory_stats["max_age"], memory_stale_items=memory_stats["stale_items"])
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -454,6 +484,8 @@ def main() -> None:
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
+                    memory_mean_age=memory_stats["mean_age"], memory_max_age=memory_stats["max_age"],
+                    memory_stale_items=memory_stats["stale_items"],
                 )
         finally:
             for layer in raw_module.rq.vq_layers:

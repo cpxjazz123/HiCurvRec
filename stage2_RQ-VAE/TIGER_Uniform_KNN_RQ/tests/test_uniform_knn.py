@@ -15,7 +15,9 @@ import torch
 from losses.knn import (
     KNN_NEGATIVES,
     KNN_NEIGHBOURS,
+    QuantizedMemory,
     build_knn_targets,
+    hard_quantized_from_embeddings,
     knn_neighbourhood_kl,
     soft_quantized_readout,
 )
@@ -116,8 +118,41 @@ def test_soft_readout_uses_the_supplied_hard_tokens():
             torch.nn.functional.embedding(tokens[:, level], layer.get_code_embs())
             for level, layer in enumerate(model.rq.vq_layers)
         )
-    _, q_hard = soft_quantized_readout(model, x, tokens)
+    _, q_hard = soft_quantized_readout(model, x, tokens, assignment="model")
     assert torch.allclose(q_hard, expected, atol=1e-6)
+
+
+def test_export_readout_matches_argmin_path():
+    model = _model(seed=23)
+    x = torch.randn(5, 8)
+    expected_q, expected_tokens = hard_quantized_from_embeddings(model, x)
+    q_proxy, q_hard = soft_quantized_readout(model, x, assignment="export")
+    assert torch.allclose(q_hard, expected_q, atol=1e-6)
+    # The export path must not depend on the model's training-time Sinkhorn tokens.
+    with torch.no_grad():
+        encoded = model.encoder(x)
+        _, _, _, train_tokens = model.rq(encoded)
+    assert not torch.equal(expected_tokens, train_tokens), "the fixture must exercise the mismatch"
+
+
+def test_memory_refresh_and_post_step_update_are_export_consistent():
+    model = _model(seed=31)
+    x = torch.randn(12, 8)
+    memory = QuantizedMemory.from_model(model, x, step=0)
+    assert memory.stats()["max_age"] == 0
+    with torch.no_grad():
+        for layer in model.rq.vq_layers:
+            layer.embed.weight.add_(0.05)
+    memory.refresh(model, x, step=4)
+    expected, _ = hard_quantized_from_embeddings(model, x)
+    assert torch.allclose(memory.vectors, expected, atol=1e-6)
+    assert memory.stats()["step"] == 4
+    # Updating a subset after a parameter change keeps the rest stale but reports it.
+    ids = torch.tensor([1, 4, 7])
+    memory.update_batch(model, x[ids], ids, step=5)
+    stats = memory.stats()
+    assert stats["max_age"] >= 0
+    assert stats["stale_items"] == len(x) - len(ids)
 
 
 def test_hard_readout_matches_selected_codebooks():

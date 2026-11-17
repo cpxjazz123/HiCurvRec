@@ -1,5 +1,8 @@
 # Experiment 1：Uniform-KNN 结构保持 Stage2 实验
 
+> 2026-11-17 post-review：本报告对应**修复前**代码的实际训练结果。P0/P1 修复与只读审计见
+> `results/research/uniform_knn_evaluation/AUDIT_AFTER_REVIEW.md`；修复后尚未重新训练。
+
 日期：2026-11-17  
 范围：Stage2 单次正式训练 + 离线硬 q 评估；**不运行 Stage3**。
 
