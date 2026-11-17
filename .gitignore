@@ -958,3 +958,8 @@ results/research/**/*.bin
 results/research/**/*.h5
 results/research/**/*.out
 results/research/**/*.in
+
+# The frozen ORCA role table is an INPUT, not a generated output: the role-geometry
+# arms verify its sha256 on every load, and it was lost once when the whole
+# results/research tree was deleted. Tracked so the arms stay reproducible.
+!results/research/issue215/orca_roles_frozen.csv
