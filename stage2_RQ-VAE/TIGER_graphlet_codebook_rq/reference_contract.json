@@ -1,51 +1,18 @@
 {
-  "mechanism": "AF3-selected native mixed quantization: one joint E16 x H16 codeword, the curvature weight chosen by the structural distortion of the resulting hard SIDs",
+  "mechanism": "Native mixed quantization with one Euclidean/hyperbolic weight per codeword, allocated from the TRAIN structural density of the items each codeword covers",
   "calls": [
     {
       "name": "mixed cost of one joint codeword",
       "callable": "model.mixed_rq:point_cost",
-      "note": "The continuous surface of the mechanism: the cost the assignment is taken over, with the curved codeword already mapped into the ball. It is the only differentiable place the weight alpha lives. The two-dimensional width is a slice of the sixteen-dimensional halves; the formula is dimension-free.",
-      "symbols": [
-        "x0",
-        "x1",
-        "h0",
-        "h1",
-        "k0",
-        "k1",
-        "y0",
-        "y1",
-        "a",
-        "c"
-      ],
+      "note": "The continuous surface is unchanged from the F0 recipe: the cost the assignment is taken over, with the curved codeword already mapped into the ball. What this mechanism changes is where the scalar weight comes from -- a per-codeword table instead of a per-item table -- not the formula. The two-dimensional width is a slice of the sixteen-dimensional halves; the formula is dimension-free.",
+      "symbols": ["x0", "x1", "h0", "h1", "k0", "k1", "y0", "y1", "a", "c"],
       "args": [
-        {
-          "name": "residual_e",
-          "width": 2,
-          "radius": 0.2
-        },
-        {
-          "name": "residual_h",
-          "width": 2,
-          "radius": 0.2
-        },
-        {
-          "name": "code_e",
-          "width": 2,
-          "radius": 0.2
-        },
-        {
-          "name": "code_h",
-          "width": 2,
-          "radius": 0.2
-        },
-        {
-          "name": "alpha",
-          "scalar": 0.5
-        },
-        {
-          "name": "curvature",
-          "scalar": 1.0
-        }
+        {"name": "residual_e", "width": 2, "radius": 0.2},
+        {"name": "residual_h", "width": 2, "radius": 0.2},
+        {"name": "code_e", "width": 2, "radius": 0.2},
+        {"name": "code_h", "width": 2, "radius": 0.2},
+        {"name": "alpha", "scalar": 0.5},
+        {"name": "curvature", "scalar": 1.0}
       ],
       "statements": [
         "xy = -(h0*y0 + h1*y1)",
@@ -67,46 +34,22 @@
   ],
   "coupling": {
     "callable": "model.mixed_rq:mixed_cost",
-    "behaviour_arguments": [
-      "alpha"
-    ],
+    "behaviour_arguments": ["code_alpha"],
     "control_argument": "codes_e",
-    "note": "The weight enters the cost matrix the assignment rule consumes, and the two halves of every codeword disagree, so moving the weight can change which joint code is nearest. The measured counterexample: with a Euclidean cost of [1, 4] and a curved cost of [4, 1] the weight 1/4 picks the second code and 3/4 the first.",
+    "note": "The codeword table enters the cost matrix as a [K] vector broadcast over the batch, so two codewords can be scored with different weights in the same forward pass. A constant table is arithmetic-identical to the per-item path; the measured counterexample for the weight's effect is the same as F0's: with a Euclidean cost of [1, 4] and a curved cost of [4, 1] the weight 1/4 picks the second code and 3/4 the first.",
     "args": [
-      {
-        "name": "residual_e",
-        "width": 16
-      },
-      {
-        "name": "residual_h",
-        "width": 16
-      },
-      {
-        "name": "codes_e",
-        "width": 16
-      },
-      {
-        "name": "codes_h",
-        "width": 16
-      },
-      {
-        "name": "alpha",
-        "width": 1
-      },
-      {
-        "name": "curvature",
-        "scalar": 1.0
-      }
+      {"name": "residual_e", "width": 16},
+      {"name": "residual_h", "width": 16},
+      {"name": "codes_e", "width": 16},
+      {"name": "codes_h", "width": 16},
+      {"name": "code_alpha", "width": 256},
+      {"name": "curvature", "scalar": 1.0}
     ]
   },
   "excluded": [
     {
       "surface": "the chosen index k_l = argmin_k C, or the balanced Sinkhorn argmax on the last level",
       "reason": "discrete: the assignment rule is the baseline's and carries no gradient"
-    },
-    {
-      "surface": "the assignment itself, taken with torch.argmin inside the baseline's own rule",
-      "reason": "the mechanism supplies the cost matrix only; the rule is not part of the surface this contract describes and is not differentiable"
     },
     {
       "surface": "the residual update rE - sg(eE) and (-sg(eH)) (+) rH",
@@ -117,12 +60,12 @@
       "reason": "its backward is the identity on phi by construction"
     },
     {
-      "surface": "the weight alpha itself",
-      "reason": "updated by the discrete outer loop from a measured distortion, never by an optimizer step"
+      "surface": "the codeword table itself",
+      "reason": "written by a deterministic allocation from measured TRAIN structural density, never by an optimizer step; the gradient with respect to it is never taken"
     },
     {
-      "surface": "the structural distortion, its Bernoulli surrogate and the readout calibration",
-      "reason": "evaluated on frozen hard SIDs outside the differentiable path; the surrogate is checked against the exact enumeration instead"
+      "surface": "the per-item structural density and the rank-to-weight schedule",
+      "reason": "computed outside the differentiable path from exact triangle counts on the TRAIN behaviour graph"
     }
   ]
 }

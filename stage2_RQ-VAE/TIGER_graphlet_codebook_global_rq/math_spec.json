@@ -1,166 +1,86 @@
 {
-  "schema": "issue139-math-spec/1",
-  "mechanism": "AF3-selected native mixed quantization: one joint E16 x H16 codeword per token, the curvature weight chosen per prefix by the structural distortion of the resulting hard SIDs",
+  "schema": "genrec-codeword-alpha-math-spec/1",
+  "mechanism": "Native mixed quantization (E16 x H16) with one Euclidean/hyperbolic weight per codeword, allocated by the TRAIN structural density of the items each codeword covers",
   "computations": [
     {
-      "name": "mixed cost of a joint codeword",
-      "inputs": ["residual_e", "residual_h", "code_e", "code_h", "alpha", "curvature"],
-      "definition": "C = 2 * [ alpha * ||rE - eE||^2 + (1 - alpha) * d_c(rH, eH)^2 / 4 ]",
-      "output": "cost",
-      "gradient": "the cost is differentiable in the residuals and in the weight; the discrete assignment is not part of this surface"
+      "name": "codeword cost",
+      "text": "For a residual (rE, rH) with rH in the ball and codeword k with halves (eE,k, eH,k): C_k = 2*(alpha_k*||rE - eE,k||^2 + (1 - alpha_k)*d_c(rH, eH,k)^2/4), with c = 1 and alpha_k from the codeword table.",
+      "surface": "model.mixed_rq:mixed_cost"
     },
     {
-      "name": "native residual update",
-      "inputs": ["residual_e", "residual_h", "code_e", "code_h"],
-      "definition": "rE_next = rE - sg(eE); rH_next = (-sg(eH)) (+) rH, where (+) is the Moebius addition of the canonical contract",
-      "output": "the next residual",
-      "gradient": "only the chosen code is detached, so the next level's commitment term still reaches the encoder while the codebook of this level is updated by this level's term"
+      "name": "commitment and codebook terms",
+      "text": "Both use the chosen codeword's own weight, alpha_{k*}: commitment = C_{k*}(rE, rH; sg(eE), sg(eH)) and codebook = C_{k*}(sg(rE), sg(rH); eE, eH); quant_loss = (codebook + beta*commitment).mean()/32.",
+      "surface": "model.mixed_rq:MixedVQLevel._cost_of"
     },
     {
-      "name": "readout of a complete code",
-      "inputs": ["codes_e[1..3]", "codes_h[1..3]"],
-      "definition": "phi(q) = [ sum_l eE_l , log_0(eH_1 (+) (eH_2 (+) eH_3))) ], right-nested because Moebius addition is not associative",
-      "output": "phi",
-      "gradient": "the readout is differentiable in the codewords; the decoder consumes it through the straight-through path z + sg(phi - z)"
+      "name": "residual update",
+      "text": "rE' = rE - sg(eE,k*) and rH' = project((-sg(eH,k*)) (+) rH); the readout is phi(q) = [sum_k eE,k, log_0(eH,1 (+) (eH,2 (+) eH,3))].",
+      "surface": "model.mixed_rq:quantized_readout"
     },
     {
-      "name": "the inner loss",
-      "inputs": ["reconstruction", "quant_loss"],
-      "definition": "L_base = MSE(D(u_ST), x) + (1/3) * sum_l E_i [ ( C(sg(r_{l-1}), e_{l,k}) + beta * C(r_{l-1}, sg(e_{l,k})) ) / 32 ] with beta = 0.25",
-      "output": "the loss and the reconstruction term",
-      "gradient": "the commitment term carries the code's gradient to the residual, the codebook term carries the residual's gradient to the code"
+      "name": "per-item structural density",
+      "text": "On the TRAIN behaviour graph (consecutive history pairs plus history-tail to target, undirected, self-loops dropped) let t_e be the number of triangles through edge e and deg(i) the edge degree of item i. Then rho_i = (sum_{e incident to i} t_e) / deg(i).",
+      "surface": "train_rqvae:_item_density"
     },
     {
-      "name": "the AF3 target of a pair",
-      "inputs": ["degree_i", "degree_j", "triangles_ij"],
-      "definition": "kappa_ij = 4 - d_i - d_j + 3 * T_ij, computed on the training co-occurrence graph only",
-      "output": "kappa",
-      "gradient": "none: it is a frozen quantity of the graph"
-    },
-    {
-      "name": "the structural distortion",
-      "inputs": ["the readout of the complete hard SIDs", "the frozen support", "tau", "the intercept"],
-      "definition": "D_AF3 = 0.5 * mean_E Huber_1((mu_ij - kappa_ij)/s_kappa) + 0.5 * mean_{S\\E} Huber_1(mu_ij/s_kappa), with mu_ij = p_ij * (2 - sum_k p_ik - sum_k p_jk + 3 sum_k p_ik p_jk), p_ij = sigmoid(b - (1 - cos(phi_i, phi_j))/tau) and p = 0 outside the support",
-      "output": "the distortion",
-      "gradient": "none: the outer loop reads it, it never backpropagates through it"
+      "name": "codeword allocation",
+      "text": "At level l and epoch e in {1, 101, 201, ...}: assign every TRAIN item with the current table, let d_k be the mean rho of the items assigned to codeword k, and let R_k be the average rank of d_k among the used codewords. Then alpha_k = ALPHA_MIN + (ALPHA_MAX - ALPHA_MIN) * R_k / (n_used - 1) for a used codeword, and POPULATION_ALPHA otherwise. Ties share a rank and therefore a weight.",
+      "surface": "model.graphlet_allocation:allocate"
     }
   ],
   "inputs": {
-    "embeddings": "the frozen stage1 sentence embeddings, one row per item",
-    "graph": "the frozen training co-occurrence graph (315,391 edges, 24,556 nodes)",
-    "support": "the frozen support S (947,197 pairs), built once with seed 42",
-    "readout": "the shared tau and intercept, calibrated once on the F0 snapshot at epoch 1500"
+    "embeddings": "stage1_GeneEmbedding/output/sentence_t5.npy, 24587 x 768",
+    "behaviour": "results/stage0_build_parquet/train.parquet; only TRAIN rows are read",
+    "density": "per-item scalar rho_i over the 24556 training items"
   },
   "outputs": {
-    "identifiers": "the three-token hard SIDs of every item, globally consistent",
-    "alpha_table": "the discrete weight of every level and prefix",
-    "readout": "phi(q) of every item, used by the outer loop and by the diagnostics"
+    "identifiers": "three hard tokens per item, exported with the codeword table read from the checkpoint",
+    "code_alpha": "3 x 256 table, saved in the checkpoint (buffer and extra state) and used by the export"
   },
   "parameters": {
-    "curvature": {
-      "value": 1.0,
-      "frozen": true,
-      "note": "the E arm runs it at zero; nothing learns or scans it"
-    },
-    "alpha_candidates": {
-      "value": [0.25, 0.5, 0.75],
-      "frozen": true,
-      "note": "a bounded symmetric set, not a tuned hyper-parameter"
-    },
-    "beta": {
-      "value": 0.25,
-      "frozen": true
-    },
-    "outer_loop_epochs": {
-      "value": [1500, 2000, 2500, 3000],
-      "frozen": true
-    },
-    "min_prefix_items": {
-      "value": 32,
-      "frozen": true,
-      "note": "a prefix below this inherits its nearest ancestor; at the measured SID size the third level has no qualifying prefix, which is reported rather than glossed"
-    },
-    "min_prefix_probes": {
-      "value": 64,
-      "frozen": true,
-      "note": "observed and unobserved supported pairs a prefix needs"
-    },
-    "outer_loop_seconds": {
-      "value": 150.0,
-      "frozen": true,
-      "note": "the declared wall-clock ceiling of one round; every prefix it defers is recorded by name"
-    }
+    "curvature": 1.0,
+    "alpha_min": 0.3,
+    "alpha_max": 0.7,
+    "population_alpha": 0.5,
+    "alpha_update_every": 100,
+    "beta": 0.25,
+    "levels": 3,
+    "codebook_size": 256
   },
   "dimensions": {
-    "embedding": 768,
-    "encoder_hidden": [512, 256, 128],
     "euclidean_half": 16,
     "hyperbolic_half": 16,
-    "joint_codeword": 32,
-    "levels": 3,
-    "codes_per_level": 256,
-    "tokens": 3
+    "codeword": 32,
+    "table": [3, 256]
   },
   "gradient_rules": [
-    "the residual update detaches only the chosen code: rE - sg(eE) and (-sg(eH)) (+) rH",
-    "the decoder consumes the readout through the straight-through path z + sg(phi(q) - z)",
-    "the commitment term detaches the residual and the codebook term detaches the code",
-    "the weight is not an optimizer parameter: it is changed by the discrete outer loop",
-    "the assignment rule is the baseline's: argmin, and the balanced Sinkhorn on the last level in training"
+    "The cost is differentiable in (rE, rH) and in the codeword halves; alpha_k is a constant with respect to every gradient.",
+    "The commitment term detaches the codeword and the codebook term detaches the residual, so the encoder and the codebook receive their own terms and nothing else.",
+    "The residual update detaches the chosen codeword."
   ],
   "training_integration": {
-    "entry_point": "train_rqvae.py",
-    "loss": "MSE(D(u_ST), x) plus the mean of the three levels' mixed commitment terms",
-    "optimizer": "AdamW, lr 1e-3, weight decay 1e-4, 50 warm-up epochs, gradient clip 1",
-    "schedule": "3000 epochs, four ranks, per-rank batch 1024, no early stop",
-    "outer_loop": "at epochs 1500, 2000, 2500 and 3000, on rank 0, with the table broadcast to the other ranks"
+    "epochs": 3000,
+    "global_batch": 4096,
+    "seed": 42,
+    "weight": "the codeword table is refreshed at epoch 1 and every 100 epochs from the current hard assignment over the TRAIN items; no validation or test interaction is read",
+    "export": "model.get_indices uses the same table the last refresh wrote"
   },
-  "conventions": [
-    "the canonical Poincare contract owns every hyperbolic operation; the candidate does not re-derive the geometry",
-    "the curved half of a codebook is a tangent-space parameter mapped with exp_0 into the ball of curvature c",
-    "at c = 0 the canonical distance is 2||u - v||, so d^2/4 is the squared Euclidean distance and the cost of a weight 1/2 is the plain 32-dimensional squared distance",
-    "the assignment rule is unchanged: the mechanism supplies the cost matrix only",
-    "the graph, the support, the readout and the target never touch the validation or the test split",
-    "a new prefix inherits its nearest ancestor, at training and at inference alike"
-  ],
+  "conventions": {
+    "curvature": "kappa = -c, c = 1; the ball is {x : |x| < 1}",
+    "readout": "q = [sum eE, log_0(qH)], the same convention as the frozen F0 recipe",
+    "assignment": "the baseline's own rule: nearest code on levels 1 and 2, balanced Sinkhorn on level 3 during training"
+  },
   "switches": {
-    "behaviour_off": "the weight is fixed at 1/2 for every level and prefix; the outer loop does not run",
-    "geometry_off": "the curvature is zero, so both halves are Euclidean and the same local outer loop runs",
-    "both_on": "the full method: the mixed space and the per-prefix outer loop"
+    "geometry_off": "ALPHA_MODE = \"global\" keeps one constant weight for every codeword (the control tree TIGER_graphlet_codebook_global_rq); its arithmetic is identical to the frozen F0 recipe",
+    "behaviour_off": "a permutation of rho across items before the rank allocation destroys the structural signal while keeping the table's shape; it is defined by the same allocate() call on permuted input",
+    "both_on": "ALPHA_MODE = \"codebook\" on the measured rho (the trained arm)"
   },
   "excluded": [
-    {
-      "surface": "the chosen index at any level",
-      "reason": "discrete; it carries no gradient"
-    },
-    {
-      "surface": "the balanced Sinkhorn assignment of the last level",
-      "reason": "the baseline's rule; it is not the mechanism's surface"
-    },
-    {
-      "surface": "the straight-through estimator of the decoded vector",
-      "reason": "its backward is the identity by construction, not the derivative of its forward value"
-    },
-    {
-      "surface": "the weight itself and the outer loop",
-      "reason": "updated from a measured distortion on frozen hard SIDs, never by an optimizer step"
-    },
-    {
-      "surface": "the structural distortion and its Bernoulli surrogate",
-      "reason": "a function of discrete identifiers; it is checked against the exact enumeration instead of a gradient"
-    }
+    "the argmin / Sinkhorn choice: discrete, the baseline's rule",
+    "the straight-through decoder path: identity backward by construction",
+    "the codeword table and the density ranking: deterministic, no optimizer gradient"
   ],
   "continuous_surface": {
-    "name": "mixed cost of one joint codeword",
-    "symbols": ["x0", "x1", "h0", "h1", "k0", "k1", "y0", "y1", "a", "c"],
-    "args": [
-      {"name": "residual_e", "width": 2, "radius": 0.2},
-      {"name": "residual_h", "width": 2, "radius": 0.2},
-      {"name": "code_e", "width": 2, "radius": 0.2},
-      {"name": "code_h", "width": 2, "radius": 0.2},
-      {"name": "alpha", "scalar": 0.5},
-      {"name": "curvature", "scalar": 1.0}
-    ],
     "statements": [
       "xy = -(h0*y0 + h1*y1)",
       "hn = h0**2 + h1**2",
@@ -176,6 +96,7 @@
       "curved = d**2",
       "cost = 2*(a*euclidean + (1 - a)*curved/4)"
     ],
+    "symbols": ["x0", "x1", "h0", "h1", "k0", "k1", "y0", "y1", "a", "c"],
     "output": "cost"
   }
 }
