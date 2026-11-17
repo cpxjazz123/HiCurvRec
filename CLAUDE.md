@@ -223,3 +223,16 @@ genrec/<NN>/recall.json      ← Stage3 结果的全部键值
     活跃臂只能有一个，且必须是 `stage2_RQ-VAE/<ARM>/` 的直接子目录（MCP 的 `stage2_start` / `stage2_status`
     只接受这一层）。归档用 `git mv`，保持历史可追溯；移动后必须同步所有引用该树路径的常量、提示词与文档
     （回归测试见 `tools/research/tests/test_baseline_location.py`）。
+
+## 18. 提交预检与大文件（2026-11-18）
+
+91. **任何 `commit.draft()` 之前必须先运行 `python3 tools/commit_guard.py`。** `commit.draft()` 会先构造
+    `HEAD -> 工作区` 的完整 diff（包括未跟踪文件），`.only()`/`take()` 在 draft **之后**才生效；因此大文件
+    会让每次 draft 都占用大量内存。guard 返回非零时，必须先把大文件加入 `.gitignore`、移出工作区，或对
+    确属证据的路径显式使用 `--allow`，并在提交说明中留下理由；不得直接忽略 guard 的失败。
+92. **`results/research/` 下的生成数据默认不入库**：`*.csv`、`*.tsv`、`*.micro`、`*.npy`、`*.npz`、`*.pth`、
+    `*.pt`、`*.bin`、`*.h5`、`*.out`、`*.in` 已在 `.gitignore` 中被整体忽略。需要入库的小型证据用 `!`
+    显式放行，且只提交报告/小型 JSON/必要样本；大体积产物按 §6b 去 R2。
+93. **不要用 `d.show()` 查看大 draft**。先 `d.print()` 看摘要，确认路径后再对小子集 `show()`；已跟踪的大文件
+    即使没有被新忽略规则覆盖，修改后仍会被 diff，guard 会报告，必须显式处理或 `--allow`。
+

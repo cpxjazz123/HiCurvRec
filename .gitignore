@@ -942,3 +942,19 @@ results/research/q_graphlet_multi_role/*.micro
 results/research/tiger_cluster_graph/k13_exact
 results/research/tiger_cluster_graph/*.csv
 results/research/tiger_cluster_graph/*.micro
+
+# Default-deny generated data under results/research. Sweep outputs are data, not evidence;
+# curated reports stay as Markdown/JSON, and a small CSV that must be tracked gets an explicit
+# ! negation below. This stops a new sweep directory from entering `git status` and forcing
+# commit.draft() to diff hundreds of megabytes.
+results/research/**/*.csv
+results/research/**/*.tsv
+results/research/**/*.micro
+results/research/**/*.npy
+results/research/**/*.npz
+results/research/**/*.pth
+results/research/**/*.pt
+results/research/**/*.bin
+results/research/**/*.h5
+results/research/**/*.out
+results/research/**/*.in
