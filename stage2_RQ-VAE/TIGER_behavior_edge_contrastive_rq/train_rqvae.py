@@ -108,6 +108,7 @@ EVAL_INTERVAL       = CONFIG.EVAL_INTERVAL
 STRUCT_GRADIENT_RATIO = 0.05
 BEHAVIOR_NEGATIVES = 4
 BEHAVIOR_TEMPERATURE = 0.07
+BEHAVIOR_HOLDOUT_FRACTION = 0.2
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
 # 候选是否采用完全交由下游 stage3 test_R@10 裁决.
 # 保留 best-collision checkpoint 仅作为导出用的最后一次快照.
@@ -294,8 +295,12 @@ def main() -> None:
         train_ids,
         embeddings,
         negatives_per_positive=BEHAVIOR_NEGATIVES,
+        holdout_fraction=BEHAVIOR_HOLDOUT_FRACTION,
         seed=SEED,
     )
+    RESULT_DIR.mkdir(parents=True, exist_ok=True)
+    np.save(RESULT_DIR / "behavior_holdout_edges.npy",
+            train_ids[pair_set.holdout_edges])
     pair_dataset = PairDataset(pair_set)
     pair_sampler = (
         DistributedSampler(pair_dataset, num_replicas=world_size, rank=rank,
@@ -314,6 +319,7 @@ def main() -> None:
     if rank == 0:
         print(
             f"[B1] behaviour edges={pair_set.positive_edges} "
+            f"holdout={len(pair_set.holdout_edges)} "
             f"pairs={len(pair_set.positives)} negatives={BEHAVIOR_NEGATIVES} "
             f"target_grad_ratio={STRUCT_GRADIENT_RATIO}",
             flush=True,

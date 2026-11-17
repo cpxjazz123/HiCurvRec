@@ -30,7 +30,8 @@ class BehaviourPairs:
     negatives: np.ndarray       # (N, K) int64
     degree: np.ndarray         # (items,) int64
     degree_bin: np.ndarray      # (items,) int64
-    positive_edges: int         # edges before the both-direction expansion
+    positive_edges: int         # fit edges before the both-direction expansion
+    holdout_edges: np.ndarray   # (H, 2) int64, never used by the loss
 
 
 def longest_sessions(
@@ -76,18 +77,23 @@ def build_behaviour_pairs(
     *,
     negatives_per_positive: int = 4,
     semantic_candidates: int = 32,
+    holdout_fraction: float = 0.2,
     seed: int = 42,
 ) -> BehaviourPairs:
-    """Build undirected train edges, both orientations, and matched negatives.
+    """Build a train/held-out edge split, orientations, and matched negatives.
 
     `valid_items` are global item ids in a stable order; each becomes a local row.
     `embeddings` is aligned with the global item ids (the same rows the trainer
     encodes). The returned indices are local rows, ready for `all_embeddings[idx]`.
+    Held-out edges are never used for the loss, degree strata, or negatives; they
+    are returned so the evaluator can report them separately.
     """
     if negatives_per_positive < 1:
         raise ValueError("negatives_per_positive must be positive")
     if semantic_candidates < negatives_per_positive:
         raise ValueError("semantic_candidates must be >= negatives_per_positive")
+    if not 0.0 <= holdout_fraction < 1.0:
+        raise ValueError("holdout_fraction must be in [0, 1)")
 
     valid_ids = np.asarray(valid_items, dtype=np.int64)
     if valid_ids.ndim != 1 or valid_ids.size == 0:
@@ -97,7 +103,15 @@ def build_behaviour_pairs(
         raise ValueError("valid_items contains duplicates")
 
     sessions = longest_sessions(users, histories, targets)
-    edges = _undirected_edges(sessions, valid)
+    all_edges = _undirected_edges(sessions, valid)
+    rng = np.random.default_rng(seed)
+    order = rng.permutation(len(all_edges))
+    holdout_count = int(round(len(all_edges) * holdout_fraction))
+    holdout_edges = all_edges[order[:holdout_count]]
+    edges = all_edges[order[holdout_count:]]
+    if len(edges) == 0:
+        raise ValueError("the held-out split consumed every behaviour edge")
+
     items = len(valid_ids)
     degree = np.zeros(items, dtype=np.int64)
     np.add.at(degree, edges[:, 0], 1)
@@ -105,14 +119,15 @@ def build_behaviour_pairs(
     # Eight degree strata keep the negative pool close to the anchor's popularity.
     degree_bin = np.digitize(degree, np.quantile(degree, np.linspace(0, 1, 9)[1:-1]))
 
-    edge_set = {tuple(edge) for edge in edges.tolist()}
+    # Exclude both fit and held-out behaviour neighbours from the negative pool:
+    # a held-out edge is still a true relation, not a negative.
+    edge_set = {tuple(edge) for edge in all_edges.tolist()}
     embedding = np.asarray(embeddings, dtype=np.float32)
     if embedding.shape[0] <= int(valid_ids.max()):
         raise ValueError("embeddings do not cover every valid item id")
     normalized = embedding / np.maximum(np.linalg.norm(embedding, axis=1, keepdims=True), 1e-12)
     semantic = normalized[valid_ids]
 
-    rng = np.random.default_rng(seed)
     degree_pools = {
         int(bucket): np.flatnonzero(degree_bin == bucket)
         for bucket in np.unique(degree_bin).tolist()
@@ -164,6 +179,7 @@ def build_behaviour_pairs(
         degree=degree,
         degree_bin=degree_bin,
         positive_edges=int(len(edges)),
+        holdout_edges=holdout_edges,
     )
 
 

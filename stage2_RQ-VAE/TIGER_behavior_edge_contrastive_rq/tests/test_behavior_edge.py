@@ -46,7 +46,8 @@ class BehaviourPairsTest(unittest.TestCase):
         embeddings = np.eye(5, dtype=np.float32)
         pairs = build_behaviour_pairs(
             users, histories, targets, valid, embeddings,
-            negatives_per_positive=2, semantic_candidates=4, seed=7,
+            negatives_per_positive=2, semantic_candidates=4,
+            holdout_fraction=0.0, seed=7,
         )
         # The longest sessions add the 0-4 edge, so five distinct undirected
         # edges are expanded to both directions.
@@ -66,6 +67,28 @@ class BehaviourPairsTest(unittest.TestCase):
                 self.assertNotIn((min(anchor, negative), max(anchor, negative)),
                                  edge_set)
                 self.assertEqual(degrees[anchor], degrees[negative])
+
+    def test_holdout_edges_are_disjoint_and_never_used(self):
+        valid = np.arange(20, dtype=np.int64)
+        embeddings = np.eye(20, dtype=np.float32)
+        users = [0]
+        histories = [list(range(20))]
+        targets = [0]
+        pairs = build_behaviour_pairs(
+            users, histories, targets, valid, embeddings,
+            negatives_per_positive=2, semantic_candidates=8,
+            holdout_fraction=0.4, seed=11,
+        )
+        fit = {(min(int(left), int(right)), max(int(left), int(right)))
+               for left, right in pairs.positives.tolist()}
+        held = {tuple(edge) for edge in pairs.holdout_edges.tolist()}
+        self.assertTrue(fit.isdisjoint(held))
+        self.assertEqual(len(fit | held), 20)
+        # A held-out edge is still a true relation and must not be sampled as a
+        # negative for its own endpoints.
+        for anchor, row_negatives in zip(pairs.positives[:, 0], pairs.negatives):
+            for negative in row_negatives.tolist():
+                self.assertNotIn((min(anchor, negative), max(anchor, negative)), held)
 
     def test_contrastive_gradient_reaches_all_pair_sides(self):
         torch.manual_seed(0)
