@@ -284,7 +284,10 @@ int main(int argc, char **argv) {
     if (argc > 1 && std::string(argv[1]) == "--selftest") {
         return self_test() ? 0 : 1;
     }
-    const Graph graph = read_graph(kInput);
+    const std::string input_path = argc > 1 ? argv[1] : kInput;
+    const std::string output_path = argc > 2 ? argv[2] : kOutput;
+    const std::string summary_path = argc > 3 ? argv[3] : kSummary;
+    const Graph graph = read_graph(input_path);
     const auto counts = exact_counts(graph);
     long long total = 0;
     for (long long value : counts) {
@@ -294,18 +297,18 @@ int main(int argc, char **argv) {
         std::cerr << "K1,3 total is not divisible by 3: " << total << "\n";
         return 1;
     }
-    std::ofstream output(kOutput);
+    std::ofstream output(output_path);
     output << "src,dst,k13\n";
     for (size_t index = 0; index < graph.edges.size(); ++index) {
         output << graph.edges[index].first << "," << graph.edges[index].second
                << "," << counts[index] << "\n";
     }
-    std::ofstream summary(kSummary);
+    std::ofstream summary(summary_path);
     summary << "nodes," << graph.n << "\n";
     summary << "edges," << graph.edges.size() << "\n";
     summary << "sum_edge_counts," << total << "\n";
     summary << "stars," << total / 3 << "\n";
     summary << "max_edge_count," << *std::max_element(counts.begin(), counts.end()) << "\n";
-    std::cout << "wrote " << kOutput << " and " << kSummary << "\n";
+    std::cout << "wrote " << output_path << " and " << summary_path << "\n";
     return 0;
 }

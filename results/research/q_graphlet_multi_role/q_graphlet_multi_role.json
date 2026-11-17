@@ -1,0 +1,400 @@
+{
+  "q_graph_edges": 186041,
+  "behaviour_graph_edges": 315391,
+  "retained_edges": 3569,
+  "retention_rate": 0.0113161123811396,
+  "roles": {
+    "triangle": "triangle",
+    "k4": "K4",
+    "cycle": "4-cycle",
+    "star": "K1,3 star",
+    "chain": "4-path"
+  },
+  "q_role_summary": {
+    "edges": 186041,
+    "role_count_histogram": {
+      "0": 0,
+      "1": 0,
+      "2": 6911,
+      "3": 14422,
+      "4": 31025,
+      "5": 133683
+    },
+    "multi_role_edges": 186041,
+    "at_least_three_roles": 179130,
+    "top_combinations": [
+      {
+        "roles": "triangle + K4 + 4-cycle + K1,3 star + 4-path",
+        "edges": 133683
+      },
+      {
+        "roles": "triangle + K4 + K1,3 star + 4-path",
+        "edges": 17371
+      },
+      {
+        "roles": "triangle + 4-cycle + K1,3 star + 4-path",
+        "edges": 13186
+      },
+      {
+        "roles": "triangle + K4 + K1,3 star",
+        "edges": 7796
+      },
+      {
+        "roles": "triangle + K4",
+        "edges": 6045
+      },
+      {
+        "roles": "4-cycle + K1,3 star + 4-path",
+        "edges": 3392
+      },
+      {
+        "roles": "triangle + K1,3 star + 4-path",
+        "edges": 1507
+      },
+      {
+        "roles": "triangle + K4 + 4-path",
+        "edges": 1316
+      },
+      {
+        "roles": "K1,3 star + 4-path",
+        "edges": 866
+      },
+      {
+        "roles": "triangle + K4 + 4-cycle + 4-path",
+        "edges": 411
+      },
+      {
+        "roles": "triangle + K4 + 4-cycle",
+        "edges": 411
+      },
+      {
+        "roles": "triangle + K4 + 4-cycle + K1,3 star",
+        "edges": 57
+      }
+    ]
+  },
+  "behavior_role_summary": {
+    "edges": 315391,
+    "role_count_histogram": {
+      "0": 0,
+      "1": 52,
+      "2": 8262,
+      "3": 122202,
+      "4": 80457,
+      "5": 104418
+    },
+    "multi_role_edges": 315339,
+    "at_least_three_roles": 307077,
+    "top_combinations": [
+      {
+        "roles": "4-cycle + K1,3 star + 4-path",
+        "edges": 121379
+      },
+      {
+        "roles": "triangle + K4 + 4-cycle + K1,3 star + 4-path",
+        "edges": 104418
+      },
+      {
+        "roles": "triangle + 4-cycle + K1,3 star + 4-path",
+        "edges": 80435
+      },
+      {
+        "roles": "K1,3 star + 4-path",
+        "edges": 8249
+      },
+      {
+        "roles": "triangle + K1,3 star + 4-path",
+        "edges": 822
+      },
+      {
+        "roles": "K1,3 star",
+        "edges": 51
+      },
+      {
+        "roles": "triangle + K4 + K1,3 star + 4-path",
+        "edges": 22
+      },
+      {
+        "roles": "triangle + K1,3 star",
+        "edges": 13
+      },
+      {
+        "roles": "triangle + K4 + K1,3 star",
+        "edges": 1
+      },
+      {
+        "roles": "4-path",
+        "edges": 1
+      }
+    ]
+  },
+  "retention_by_behavior_role_count": {
+    "0": {
+      "n": 0,
+      "retained": 0,
+      "rate": NaN
+    },
+    "1": {
+      "n": 52,
+      "retained": 1,
+      "rate": 0.019230769230769232
+    },
+    "2": {
+      "n": 8262,
+      "retained": 136,
+      "rate": 0.01646090534979424
+    },
+    "3": {
+      "n": 122202,
+      "retained": 1332,
+      "rate": 0.010899985270290175
+    },
+    "4": {
+      "n": 80457,
+      "retained": 1124,
+      "rate": 0.01397019525957965
+    },
+    "5": {
+      "n": 104418,
+      "retained": 976,
+      "rate": 0.009347047443927291
+    }
+  },
+  "retention_by_behavior_role": {
+    "triangle": {
+      "n": 185711,
+      "retained": 2134,
+      "rate": 0.011490972532590961
+    },
+    "k4": {
+      "n": 104441,
+      "retained": 979,
+      "rate": 0.009373713388420257
+    },
+    "cycle": {
+      "n": 306232,
+      "retained": 3395,
+      "rate": 0.011086365892525927
+    },
+    "star": {
+      "n": 315390,
+      "retained": 3569,
+      "rate": 0.011316148260883351
+    },
+    "chain": {
+      "n": 315326,
+      "retained": 3568,
+      "rate": 0.011315273716724913
+    }
+  },
+  "high_role_q": {
+    "role_count_histogram": {
+      "0": 58761,
+      "1": 43187,
+      "2": 64929,
+      "3": 17880,
+      "4": 894,
+      "5": 390
+    },
+    "multi_role_edges": 84093,
+    "at_least_three_roles": 19164,
+    "top_combinations": [
+      {
+        "roles": "none",
+        "edges": 58761
+      },
+      {
+        "roles": "triangle + K4",
+        "edges": 36621
+      },
+      {
+        "roles": "K1,3 star + 4-path",
+        "edges": 19156
+      },
+      {
+        "roles": "4-cycle",
+        "edges": 19049
+      },
+      {
+        "roles": "4-cycle + K1,3 star + 4-path",
+        "edges": 14478
+      },
+      {
+        "roles": "K1,3 star",
+        "edges": 7144
+      },
+      {
+        "roles": "4-path",
+        "edges": 6977
+      },
+      {
+        "roles": "K4",
+        "edges": 5138
+      },
+      {
+        "roles": "triangle",
+        "edges": 4879
+      },
+      {
+        "roles": "4-cycle + K1,3 star",
+        "edges": 3834
+      },
+      {
+        "roles": "4-cycle + 4-path",
+        "edges": 3423
+      },
+      {
+        "roles": "triangle + K4 + 4-cycle",
+        "edges": 2120
+      }
+    ]
+  },
+  "high_role_behavior": {
+    "role_count_histogram": {
+      "0": 166206,
+      "1": 56305,
+      "2": 30215,
+      "3": 25574,
+      "4": 21037,
+      "5": 16054
+    },
+    "multi_role_edges": 92880,
+    "at_least_three_roles": 62665,
+    "top_combinations": [
+      {
+        "roles": "none",
+        "edges": 166206
+      },
+      {
+        "roles": "K1,3 star",
+        "edges": 27217
+      },
+      {
+        "roles": "triangle + K4 + 4-cycle + K1,3 star + 4-path",
+        "edges": 16054
+      },
+      {
+        "roles": "4-cycle + K1,3 star + 4-path",
+        "edges": 14330
+      },
+      {
+        "roles": "triangle + K4 + 4-cycle + 4-path",
+        "edges": 14165
+      },
+      {
+        "roles": "4-cycle",
+        "edges": 11275
+      },
+      {
+        "roles": "triangle",
+        "edges": 9018
+      },
+      {
+        "roles": "triangle + K4",
+        "edges": 8179
+      },
+      {
+        "roles": "K1,3 star + 4-path",
+        "edges": 7875
+      },
+      {
+        "roles": "4-cycle + 4-path",
+        "edges": 7072
+      },
+      {
+        "roles": "4-path",
+        "edges": 6080
+      },
+      {
+        "roles": "triangle + 4-cycle + K1,3 star + 4-path",
+        "edges": 4220
+      }
+    ]
+  },
+  "retention_by_high_role_count": {
+    "0": {
+      "n": 166206,
+      "retained": 1626,
+      "rate": 0.009783040323454027
+    },
+    "1": {
+      "n": 56305,
+      "retained": 739,
+      "rate": 0.01312494449871237
+    },
+    "2": {
+      "n": 30215,
+      "retained": 472,
+      "rate": 0.015621380109217277
+    },
+    "3": {
+      "n": 25574,
+      "retained": 328,
+      "rate": 0.012825525924767342
+    },
+    "4": {
+      "n": 21037,
+      "retained": 247,
+      "rate": 0.011741217854256785
+    },
+    "5": {
+      "n": 16054,
+      "retained": 157,
+      "rate": 0.009779494207051202
+    }
+  },
+  "retained_count_comparison": {
+    "triangle": {
+      "n": 3569,
+      "behavior_mean": 3.6562062202297563,
+      "q_mean": 7.513028859624544,
+      "behavior_median": 1.0,
+      "q_median": 7.0,
+      "spearman": -0.018307440496140855,
+      "q_presence_rate": 0.9876716166993555,
+      "behavior_presence_rate": 0.5979265900812553
+    },
+    "k4": {
+      "n": 3569,
+      "behavior_mean": 16.373774166433176,
+      "q_mean": 21.591762398430934,
+      "behavior_median": 0.0,
+      "q_median": 15.0,
+      "spearman": -0.02840923723524847,
+      "q_presence_rate": 0.938918464555898,
+      "behavior_presence_rate": 0.2743065284393387
+    },
+    "cycle": {
+      "n": 3569,
+      "behavior_mean": 126.9985990473522,
+      "q_mean": 6.347156066124965,
+      "behavior_median": 21.0,
+      "q_median": 4.0,
+      "spearman": 0.019317201822585693,
+      "q_presence_rate": 0.7105631829644158,
+      "behavior_presence_rate": 0.9512468478565425
+    },
+    "star": {
+      "n": 3569,
+      "behavior_mean": 20628.04342953208,
+      "q_mean": 83.5203138133931,
+      "behavior_median": 1078.0,
+      "q_median": 39.0,
+      "spearman": 0.06572049256543815,
+      "q_presence_rate": 0.8730736901092743,
+      "behavior_presence_rate": 1.0
+    },
+    "chain": {
+      "n": 3569,
+      "behavior_mean": 5368.020734099187,
+      "q_mean": 70.36424768842814,
+      "behavior_median": 646.0,
+      "q_median": 43.0,
+      "spearman": 0.07542644570708809,
+      "q_presence_rate": 0.8257214906136172,
+      "behavior_presence_rate": 0.9997198094704399
+    }
+  },
+  "q_counts_file": "results/research/q_graphlet_multi_role/q_knn_k10_edge_graphlet_counts.csv.gz",
+  "retained_file": "results/research/q_graphlet_multi_role/retained_behaviour_graphlet_counts.csv"
+}
