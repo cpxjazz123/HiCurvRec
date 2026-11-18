@@ -109,20 +109,20 @@ EUCLID = Family(
         ("        embed_ind = self._indices(self._distances(latent), infer_use_sk)\n"
          "        onehot = F.one_hot(embed_ind, self.n_embed)",
          "        cost = self._distances(latent)\n"
+         "        verify_codebook(self.get_code_embs(), distance=False)\n"
          "        verify_margins(cost)\n"
          "        embed_ind = self._indices(cost, infer_use_sk)\n"
          "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"
-         "        verify_codebook(self.get_code_embs(), distance=False)\n"
          "        onehot = F.one_hot(embed_ind, self.n_embed)"),
         # `EMAVQLayer.forward` reaches the same line with a different next line, so it
         # needs its own anchor: a candidate that sets VQ_TYPE="ema" trains through this one
         ("        embed_ind = self._indices(self._distances(latent), infer_use_sk)\n"
          "        x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)",
          "        cost = self._distances(latent)\n"
+         "        verify_codebook(self.get_code_embs(), distance=False)\n"
          "        verify_margins(cost)\n"
          "        embed_ind = self._indices(cost, infer_use_sk)\n"
          "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"
-         "        verify_codebook(self.get_code_embs(), distance=False)\n"
          "        x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)"),
         ("        embed_ind = torch.argmin(self._distances(x), dim=-1).view(*x.shape[:-1])",
          "        embed_ind, _ = constrained_assignment(self._distances(x), ASSIGNMENT_FLOOR)\n"

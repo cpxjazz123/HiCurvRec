@@ -403,7 +403,6 @@ else:
 
 EMA_FORWARD = ("        embed_ind = self._indices(cost, infer_use_sk)\n"
                "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"
-               "        verify_codebook(self.get_code_embs(), distance=False)\n"
                "        x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)")
 
 
@@ -414,6 +413,7 @@ def test_the_ema_quantiser_is_guarded_too(scratch):
     text = (tree / "model" / "layers.py").read_text(encoding="utf-8")
     assert EMA_FORWARD in text
     assert text.count("verify_margins(cost)") == 2        # VQLayer and EMAVQLayer
+    assert text.count("verify_codebook(self.get_code_embs(), distance=False)") == 2
     verdict = verify_tree(tree)
     assert verdict["ok"] is True
     assert set(verdict["layers"]) == {"VQLayer", "EMAVQLayer"}
