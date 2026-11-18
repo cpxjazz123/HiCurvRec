@@ -966,3 +966,11 @@ results/research/**/*.in
 
 # Downloaded R2 copies used by the export-consistency audit; regenerable with rclone.
 results/research/issue139/_r2_download/
+
+# QDA: the analysis table is regenerable in seconds from the committed observation
+# summaries (`analyze.py`); only the report, the scripts and the summaries are tracked.
+results/research/qda/analysis_*.json
+
+# The two inertness controls are byte-identical to trees/F0_seed42 except for the
+# single `QDA_MONITOR = False` line; only their SID tables are worth keeping.
+results/research/qda/trees/F0_seed42_nomonitor*/

@@ -1,0 +1,29 @@
+{
+  "communities": 37,
+  "edges": 315391,
+  "inside_share": 0.5979498463811587,
+  "items": 24587,
+  "negatives": 315391,
+  "roles_labelled": 24556,
+  "rule": "positives: TRAIN consecutive history pairs + history-tail to target, undirected; negatives: one per edge on the same degree quintile of the target endpoint, not adjacent; split: sha256(u:v) % 2",
+  "seed": 42,
+  "sha256": {
+    "community": "cb209ae8ce44d2c70433bdf320ef158292b279a4f9d42803fd2eee26b0badaf5",
+    "degree": "50f166328cec93db6ce75da15ea8aeaf18cda603b6eaefa3b9827cad55bf3a48",
+    "edges": "136b521126cb1dd59c5feb47597659716b774e7b9eb071d2ddb5af267b4c58e1",
+    "inside": "d98501da4aa1b3488fa0b6408ff713a9467bbf9f7b3cf87f799bf446684b3f49",
+    "negatives": "98734405189b431390fdf4e46ce95751d9651582bb0a1c89c561703ef08a7a57",
+    "role": "ff9814c126080b2484b7d35ebf69c03de4e024077cf83ee325b9fde11f070145",
+    "split": "952e06453ef2d76fe12f0c730f576bcb355e6b60d87f9316f69e40045f3edc96",
+    "star": "6f16b95cebbc536a09f8989680abd7531b5fb2c311db82719688a9b179628c64",
+    "triangles": "53e5a50ccd879f437367b3302d7c45477788981a974e6eafb9ea8baa87e4a22e"
+  },
+  "sources": {
+    "roles": "results/research/issue215/orca_roles_frozen.csv",
+    "train_parquet": "results/stage0_build_parquet/train.parquet"
+  },
+  "split_final": 157522,
+  "split_selection": 157869,
+  "star_share": 0.9999746346598349,
+  "triangles_mean": 5.197719655919161
+}

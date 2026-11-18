@@ -1,0 +1,68 @@
+{
+  "last_rows": {
+    "QDA_F0_seed42": {
+      "collision": 0.31785089681539025,
+      "cumulative_time_s": 1227.48,
+      "epoch": 3000,
+      "epoch_time_s": 0.396,
+      "event": "train",
+      "loss": 0.00016502942889928818,
+      "lr": 0.0,
+      "raw_total": 24587,
+      "raw_unique": 16772,
+      "recon": 7.258085679495707e-05,
+      "timestamp": 1794987558.0628479,
+      "wall_time_s": 1227.48
+    },
+    "QDA_F0_seed42_nomonitor": {
+      "collision": 0.293732460243218,
+      "cumulative_time_s": 1775.782,
+      "epoch": 3000,
+      "epoch_time_s": 0.563,
+      "event": "train",
+      "loss": 0.00016175044584088027,
+      "lr": 0.0,
+      "raw_total": 24587,
+      "raw_unique": 17365,
+      "recon": 7.149195880629122e-05,
+      "timestamp": 1794986005.023868,
+      "wall_time_s": 1775.782
+    },
+    "QDA_F0_seed42_nomonitor2": {
+      "collision": 0.26172367511286454,
+      "cumulative_time_s": 1782.052,
+      "epoch": 3000,
+      "epoch_time_s": 0.483,
+      "event": "train",
+      "loss": 0.00015563788474537432,
+      "lr": 0.0,
+      "raw_total": 24587,
+      "raw_unique": 18152,
+      "recon": 7.084036042215303e-05,
+      "timestamp": 1794986013.659725,
+      "wall_time_s": 1782.052
+    }
+  },
+  "loss_trajectory": {
+    "common_epochs": 3000,
+    "mean_abs_off_vs_off": 5.391738392063416e-06,
+    "mean_abs_on_vs_off": 2.4683674710104242e-06
+  },
+  "pairs": {
+    "monitor vs off-1": {
+      "max_abs": 0.9596816003322601,
+      "relative_l2": 1.0274594064904972,
+      "tensors": 19
+    },
+    "monitor vs off-2": {
+      "max_abs": 1.0606208443641663,
+      "relative_l2": 1.0995975027914484,
+      "tensors": 19
+    },
+    "off-1 vs off-2": {
+      "max_abs": 1.1993090212345123,
+      "relative_l2": 1.1012031828692905,
+      "tensors": 19
+    }
+  }
+}
