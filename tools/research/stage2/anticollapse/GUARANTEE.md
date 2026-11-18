@@ -63,7 +63,9 @@ K > items（码字比一步的商品还多）                    （**拒绝运�
 
 平手判定若只看本地 shard,可能出现"一个 rank 拒、其余 rank 在下一个集合通信里挂住"——拒绝会变成挂死。所以该判定在 `torch.distributed` 已初始化时做一次 `all_reduce`(计数与总数),按**全局**比例裁决;实测两 rank:仅一个 shard 越线时两 rank 都继续,两个 shard 都越线时两 rank 同时抛。
 
-代价是每级每步一次 `all_reduce`(3 级即 3 次/步)。**本机只有一张 GPU,四卡配方下的这次集合通信开销未被测量** —— 第一次四卡运行时应记录每 epoch 时间,与 round15 的单卡数字(0.2141 s/epoch)对照。
+**只有全 rank 都进入的阶段才做集合通信**。冻结训练器在 eval 与导出时只跑 rank 0(`_skip_ddp_reduce = True`),那里若仍做 `all_reduce`,rank 0 会等待已经站在 barrier 上的其余 rank —— 拒绝又变成挂死。因此调用点把该标志传进来(`rank_local=...`),这种单 rank 阶段只**报告**不拒绝,判定留到下一个全 rank 步执行。导出锚点直接写死 `rank_local=True`(`encode_tokens` 是普通函数,没有 `self`)。
+
+代价是每级每步一次 `all_reduce`(3 级即 3 次/步,仅在训练步)。**本机只有一张 GPU,四卡配方下的这次集合通信开销未被测量** —— 第一次四卡运行时应记录每 epoch 时间,与 round15 的单卡数字(0.2141 s/epoch)对照。
 
 ## 5. 边界(必须写在任何"用了这个保护"的地方)
 

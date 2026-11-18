@@ -418,7 +418,7 @@ def test_the_ema_quantiser_is_guarded_too(scratch):
     apply_floor(tree)
     text = (tree / "model" / "layers.py").read_text(encoding="utf-8")
     assert EMA_FORWARD in text
-    assert text.count("verify_margins(cost)") == 2        # VQLayer and EMAVQLayer
+    assert text.count("verify_margins(cost,") == 2        # VQLayer and EMAVQLayer
     assert text.count("verify_codebook(self.get_code_embs(), distance=False)") == 2
     verdict = verify_tree(tree)
     assert verdict["ok"] is True
@@ -553,3 +553,48 @@ def test_the_margin_verdict_agrees_across_ranks(scratch):
         [torchrun, "--standalone", "--nproc_per_node=2", str(probe), "both"],
         capture_output=True, text=True, timeout=900)
     assert "both raised" in both_tied.stdout, (both_tied.stdout, both_tied.stderr[-800:])
+
+    # The frozen trainer runs rank-0-only eval with `_skip_ddp_reduce = True`; a collective
+    # in that phase would wait for ranks that are already at a barrier.
+    rank_local = subprocess.run(
+        [torchrun, "--standalone", "--nproc_per_node=2", str(probe), "rank0_only"],
+        capture_output=True, text=True, timeout=900)
+    assert rank_local.returncode == 0, rank_local.stderr[-1500:]
+    assert rank_local.stdout.count("continued") == 2, rank_local.stdout
+    assert "enforced False" in rank_local.stdout
+
+
+def test_an_older_install_is_migrated_to_the_rank_local_form(scratch):
+    """A tree patched by an older guard must receive the call-site fix, not keep it stale."""
+    import sys as _sys
+
+    tree = scratch("migrate", BASELINE)
+    apply_floor(tree)
+    module = tree / "model" / "layers.py"
+    text = module.read_text(encoding="utf-8")
+    text = text.replace('verify_margins(cost, rank_local=getattr(self, "_skip_ddp_reduce", False))',
+                        "verify_margins(cost)")
+    module.write_text(text, encoding="utf-8")
+    assert "rank_local" not in module.read_text(encoding="utf-8")
+
+    _sys.path.insert(0, str(REPO / "tools" / "research"))
+    apply_floor(tree)
+    assert module.read_text(encoding="utf-8").count("rank_local=") == 2
+
+
+def test_the_export_call_site_is_migrated_without_self(scratch):
+    """`encode_tokens` is a plain function: the export anchor must not reference `self`."""
+    tree = scratch("migrate_export", MIXED)
+    apply_floor(tree)
+    module = tree / "model" / "mixed_rq.py"
+    text = module.read_text(encoding="utf-8")
+    text = text.replace("\n            verify_margins(cost, rank_local=True)\n",
+                        "\n            verify_margins(cost)\n")
+    module.write_text(text, encoding="utf-8")
+    apply_floor(tree)
+    migrated = module.read_text(encoding="utf-8")
+    assert "\n            verify_margins(cost, rank_local=True)\n" in migrated
+    assert "encode_tokens" in migrated            # the anchor lives in this function
+    for line in migrated.splitlines():
+        if "verify_margins(cost" in line and line.startswith("            ") and not line.startswith("             "):
+            assert "self" not in line, line

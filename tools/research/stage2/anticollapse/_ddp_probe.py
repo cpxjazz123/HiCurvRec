@@ -32,6 +32,17 @@ def main() -> None:
         verify_margins(shard(tied=(rank == 0)))
         dist.barrier()                      # both ranks reach here: no rank raised alone
         print(f"rank {rank}: continued")
+    elif phase == "rank0_only":
+        # The frozen trainer runs rank-0-only eval with `_skip_ddp_reduce = True`. A
+        # collective in that phase would wait for ranks that are already at a barrier.
+        if rank == 0:
+            report = verify_margins(shard(tied=True), rank_local=True)
+            print("rank_local report:", report["tie_fraction"], "enforced", report["enforced"])
+            dist.barrier()                  # rank 1 has been waiting here all along
+        else:
+            dist.barrier()
+            print("rank 1: released by rank 0")
+        print(f"rank {rank}: continued")
     else:
         failed = []
         try:

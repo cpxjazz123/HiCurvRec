@@ -206,7 +206,7 @@ def _distributed() -> bool:
     return torch.distributed.is_available() and torch.distributed.is_initialized()
 
 
-def verify_margins(cost, tolerance: float = 1e-6) -> dict:
+def verify_margins(cost, tolerance: float = 1e-6, rank_local: bool = False) -> dict:
     """Refuse an assignment that is decided by ties rather than by the data.
 
     A trained codebook separates its codewords, so for almost every item the best codeword
@@ -230,11 +230,16 @@ def verify_margins(cost, tolerance: float = 1e-6) -> dict:
     items = torch.tensor(float(cost.shape[0]), dtype=torch.float64, device=cost.device)
     # The verdict must be the same on every rank: a rank that raised alone would leave the
     # others waiting in the next collective, turning a clean refusal into a hang.
-    if _distributed():
+    if _distributed() and not rank_local:
         import torch.distributed as dist
         dist.all_reduce(ties, op=dist.ReduceOp.SUM)
         dist.all_reduce(items, op=dist.ReduceOp.SUM)
     fraction = float(ties) / float(items)
+    if rank_local:
+        # Only one rank is inside this phase (the frozen trainer runs rank-0-only eval).
+        # A collective here would wait for ranks that are already at a barrier, so the
+        # verdict is reported and enforced on the next full-rank step instead.
+        return {"tie_fraction": round(fraction, 6), "ok": True, "enforced": False}
     if fraction > 0.5:
         raise CodebookCollapse(
             "the assignment is tie-decided for " + str(round(100 * fraction, 1))

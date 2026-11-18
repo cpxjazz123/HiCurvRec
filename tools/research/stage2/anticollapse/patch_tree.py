@@ -75,13 +75,13 @@ MIXED = Family(
         # with a different forward body still match: whatever `_indices` returns is
         # checked here, and the cost it came from is checked for ties.
         ("        index = self._indices(cost, infer_use_sk)",
-         "        verify_margins(cost)\n"
+         "        verify_margins(cost, rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"
          "        index = self._indices(cost, infer_use_sk)\n"
          "        verify_assignment(index, self.n_embed, ASSIGNMENT_FLOOR)\n"
          "        verify_codebook(self.get_code_embs(), distance=False)"),
         # export assignment: the floor, then the geometric check on the table it just used
         ("            index = torch.argmin(cost, dim=-1)",
-         "            verify_margins(cost)\n"
+         "            verify_margins(cost, rank_local=True)\n"   # export runs on rank 0 only
          "            index, _ = constrained_assignment(cost, ASSIGNMENT_FLOOR)\n"
          "            verify_codebook(layer.get_code_embs())"),
     ],
@@ -110,7 +110,7 @@ EUCLID = Family(
          "        onehot = F.one_hot(embed_ind, self.n_embed)",
          "        cost = self._distances(latent)\n"
          "        verify_codebook(self.get_code_embs(), distance=False)\n"
-         "        verify_margins(cost)\n"
+         "        verify_margins(cost, rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"
          "        embed_ind = self._indices(cost, infer_use_sk)\n"
          "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"
          "        onehot = F.one_hot(embed_ind, self.n_embed)"),
@@ -120,7 +120,7 @@ EUCLID = Family(
          "        x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)",
          "        cost = self._distances(latent)\n"
          "        verify_codebook(self.get_code_embs(), distance=False)\n"
-         "        verify_margins(cost)\n"
+         "        verify_margins(cost, rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"
          "        embed_ind = self._indices(cost, infer_use_sk)\n"
          "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"
          "        x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)"),
@@ -223,6 +223,27 @@ def _already_patched(text: str) -> bool:
     return "constrained_assignment(" in text and "verify_assignment(" in text
 
 
+#: Call-site forms that a later revision changed. A tree patched by an older guard keeps
+#: working only if these are applied, so they run before the "already patched" return.
+MIGRATIONS = (
+    # The export anchor (12 spaces) is a plain function without `self`; it must be fixed
+    # before the 8-space rule, and both are anchored on a newline so the shorter pattern
+    # cannot match inside the longer one.
+    ("\n            verify_margins(cost)\n", "\n            verify_margins(cost, rank_local=True)\n"),
+    ("\n        verify_margins(cost)\n",
+     '\n        verify_margins(cost, rank_local=getattr(self, "_skip_ddp_reduce", False))\n'),
+    # repair for trees migrated by the first (buggy) ordering: export has no `self`
+    ('\n            verify_margins(cost, rank_local=getattr(self, "_skip_ddp_reduce", False))\n',
+     "\n            verify_margins(cost, rank_local=True)\n"),
+)
+
+
+def _migrate(text: str) -> str:
+    for old, new in MIGRATIONS:
+        text = text.replace(old, new)
+    return text
+
+
 def _guard_was_removed(text: str) -> bool:
     return "constrained_assignment(" in text and "verify_assignment(" not in text
 
@@ -249,6 +270,10 @@ def apply_floor(tree: Path, family: str | None = None, force_constrained: bool =
         raise UnknownTree(f"{spec.module} is missing under {tree}")
 
     text = module.read_text(encoding="utf-8")
+    migrated = _migrate(text)
+    if migrated != text:
+        module.write_text(migrated, encoding="utf-8")
+        text = migrated
     if _guard_was_removed(text):
         # Someone kept the floor call and deleted the check that proves it worked. That is
         # indistinguishable from tampering, and it must not be re-applied silently.

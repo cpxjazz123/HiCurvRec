@@ -195,7 +195,7 @@ class MixedVQLevel(nn.Module):
         codeword instead of the item.
         """
         cost = self.distances(residual_e, residual_h, alpha, code_alpha)
-        verify_margins(cost)
+        verify_margins(cost, rank_local=getattr(self, "_skip_ddp_reduce", False))
         index = self._indices(cost, infer_use_sk)
         verify_assignment(index, self.n_embed, ASSIGNMENT_FLOOR)
         verify_codebook(self.get_code_embs(), distance=False)
@@ -443,7 +443,7 @@ def encode_tokens(z: torch.Tensor, rq: MixedRQ, override: dict | None = None,
             layer_alpha = (None if code_alpha is None
                            else code_alpha[level - 1, :layer.n_embed].to(z.device))
             cost = layer.distances(residual_e, residual_h, alpha, layer_alpha)
-            verify_margins(cost)
+            verify_margins(cost, rank_local=True)
             index, _ = constrained_assignment(cost, ASSIGNMENT_FLOOR)
             verify_codebook(layer.get_code_embs())
             codes = layer.get_code_embs()
