@@ -476,3 +476,37 @@ def test_a_declared_non_assignment_use_is_allowed(scratch):
         assert patch_tree.unguarded_sites(tree, "euclid") == []
     finally:
         patch_tree.ALLOWED_SITES.pop("model/layers.py", None)
+
+
+def test_a_zeroed_floor_constant_is_refused(scratch):
+    """`ASSIGNMENT_FLOOR = 0` leaves every guard call in place and disables the floor."""
+    tree = scratch("zero_floor", BASELINE)
+    apply_floor(tree)
+    module = tree / "model" / "layers.py"
+    module.write_text(
+        module.read_text(encoding="utf-8").replace("ASSIGNMENT_FLOOR = 1",
+                                                   "ASSIGNMENT_FLOOR = 0"),
+        encoding="utf-8")
+    with pytest.raises(UnknownTree) as error:
+        apply_floor(tree)
+    assert "the floor was disabled" in str(error.value)
+
+
+def test_an_assignment_through_min_dim_is_refused(scratch):
+    """The same collapse through a different spelling: `cost.min(dim=-1)[1]`."""
+    tree = scratch("min_dim", BASELINE)
+    apply_floor(tree)
+    module = tree / "model" / "layers.py"
+    source = module.read_text(encoding="utf-8")
+    source += "\n".join([
+        "",
+        "class Alternate(VQLayer):",
+        "    def pick(self, cost):",
+        "        return cost.min(dim=-1)[1]",
+        "",
+    ])
+    module.write_text(source, encoding="utf-8")
+    with pytest.raises(UnknownTree) as error:
+        apply_floor(tree)
+    assert "still assigns without the guard" in str(error.value)
+    assert "min(dim=" in str(error.value)

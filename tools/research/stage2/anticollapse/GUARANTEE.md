@@ -32,8 +32,11 @@
 | 调用点(`forward` 内) | `verify_margins(cost)`:平手判定的商品占比 > 50% 即拒(编码器未分离) | `CodebookCollapse`,该步死 |
 | 调用点与导出 | `verify_codebook(codes)`:拒绝两行完全相同(行字节哈希,每步都跑);近邻只报告(混合度量下 L3 实测 1e-4,属正常) | `CodebookCollapse` |
 | 产物 | `audit_sid`:每级至少 2 个码字;三级码字重复率记录 | `check_entry` FAIL |
-| 安装/准入(静态) | `unguarded_sites`:量化器模块、`model/model.py`、`train_rqvae.py` 里**不允许残留**任何 `argmin`/`argmax`(补丁会把它们替换掉);确非分配的用法必须在 `ALLOWED_SITES` 里带理由声明 | `UnknownTree`:报出文件与行号 |
+| 安装/准入(静态) | `floor_constant`:模块里的 `ASSIGNMENT_FLOOR` 必须存在且 ≥ 1。把它改成 0 会让所有守卫"通过"而分配退回裸 `argmin` —— 这是用一种整数写法删除保护 | `UnknownTree`: the floor was disabled |
+| 安装/准入(静态) | `unguarded_sites`:量化器模块、`model/model.py`、`train_rqvae.py` 里**不允许残留**任何选码写法(`argmin` / `argmax` / `topk` / `.min(dim=)` / `.max(dim=)`;补丁会把它们替换掉);确非分配的用法必须在 `ALLOWED_SITES` 里带理由声明 | `UnknownTree`:报出文件与行号 |
 | 准入 | `verify_tree`:对树里**每一个**量化器类(`VQLayer`、`EMAVQLayer`)各跑 **argmin / 平衡 argmax / 完整 forward** 三条通路,都要求 K/K | 准入 FAIL |
+
+完整性检查对**已打过补丁的树也执行**:树只装一次,却要训练很多次,装完之后把常量改成 0、或再加一处分配,都必须被拒。
 
 静态扫描是"任何机制"这一侧的通用化:它不枚举通路,而是要求**补丁后不再有任何未受保护的分配点**。上一版 EMA 那个洞(同文件第二个 `forward`)正是这条扫描会当场报出的东西,行号精确到 `model/layers.py:216`。
 

@@ -138,11 +138,38 @@ FAMILIES = {family.name: family for family in (MIXED, EUCLID)}
 #: declared here with a reason: `{"model/xxx.py": {"the line to allow": "why"}}`.
 ALLOWED_SITES: dict[str, dict[str, str]] = {}
 
+#: The spellings that pick a codeword. `argmin` is the one the baseline uses; the others
+#: reach the same result and would otherwise slip past the scan.
+ASSIGNMENT_PATTERNS = ("argmin(", "argmax(", "torch.topk(", ".topk(", ".min(dim=", ".max(dim=")
+
 #: The files a mechanism can assign codewords in *through the path this family patches*:
 #: the quantiser module itself, the model wrapper, and the trainer. Other quantiser modules
 #: may exist as dead code in a derived tree (`model/layers.py` sits next to a mixed arm) and
 #: are deliberately not scanned -- a false refusal there would block a legitimate run.
 SCANNED = ("model/model.py", "train_rqvae.py")
+
+
+def floor_constant(tree: Path, family: str) -> dict:
+    """The floor is a number, and a zero floor proves nothing: check it, do not read it.
+
+    Setting `ASSIGNMENT_FLOOR = 0` leaves every guard call in place -- `verify_assignment`
+    passes trivially, the probe sees all codewords -- while the assignment silently goes
+    back to a bare `argmin`. That is a guard removal spelled as an integer.
+    """
+    import re
+
+    module = Path(tree) / FAMILIES[family].module
+    if not module.is_file():
+        raise UnknownTree("no quantiser module at " + str(module))
+    values = re.findall(r"^\s*ASSIGNMENT_FLOOR\s*=\s*(\d+)", module.read_text(encoding="utf-8"),
+                        flags=re.MULTILINE)
+    if not values:
+        raise UnknownTree("the floor constant is missing from " + str(module))
+    value = min(int(entry) for entry in values)
+    if value < 1:
+        raise UnknownTree("the floor was disabled (ASSIGNMENT_FLOOR = " + str(value)
+                          + ") in " + str(module))
+    return {"ASSIGNMENT_FLOOR": value}
 
 
 def unguarded_sites(tree: Path, family: str | None = None) -> list[dict]:
@@ -166,7 +193,7 @@ def unguarded_sites(tree: Path, family: str | None = None) -> list[dict]:
             continue
         allowed = ALLOWED_SITES.get(relative, {})
         for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-            if "argmin(" not in line and "argmax(" not in line:
+            if not any(pattern in line for pattern in ASSIGNMENT_PATTERNS):
                 continue
             if any(pattern in line for pattern in allowed):
                 continue
@@ -229,6 +256,15 @@ def apply_floor(tree: Path, family: str | None = None, force_constrained: bool =
             "the assignment check was removed from " + str(module)
             + "; restore the tree from its baseline copy")
     if _already_patched(text):
+        # A tree that is already patched must still pass the integrity checks: the guards
+        # can be weakened afterwards (a zeroed constant, a second assignment site), and a
+        # tree is installed once but trained many times.
+        floor_constant(tree, family)
+        sites = unguarded_sites(tree, family)
+        if sites:
+            raise UnknownTree(
+                "the tree still assigns without the guard: " + "; ".join(
+                    f"{site['file']}:{site['line']} {site['text']}" for site in sites[:4]))
         # The quantiser edits are idempotent, but the installed module is a copy: a tree
         # patched before the algorithm changed would keep running the old code forever.
         import hashlib
@@ -267,6 +303,7 @@ def apply_floor(tree: Path, family: str | None = None, force_constrained: bool =
         text = text.replace(old, new)
         applied.append(old.splitlines()[0][:80])
     module.write_text(text, encoding="utf-8")
+    floor_constant(tree, family)
     sites = unguarded_sites(tree, family)
     if sites:
         raise UnknownTree(
@@ -344,6 +381,11 @@ def verify_tree(tree: Path, family: str | None = None, python: str | None = None
         else:
             raise UnknownTree(f"no known quantiser under {tree}")
     spec = FAMILIES[family]
+    try:
+        floor_constant(tree, family)
+    except UnknownTree as error:
+        return {"ok": False, "used": 0, "used_forward": 0, "layers": {}, "codewords": 8,
+                "tree": str(tree), "family": family, "reason": str(error)}
     sites = unguarded_sites(tree, family)
     if sites:
         return {"ok": False, "used": 0, "used_forward": 0, "layers": {},
