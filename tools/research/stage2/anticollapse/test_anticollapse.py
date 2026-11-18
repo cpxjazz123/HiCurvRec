@@ -49,18 +49,18 @@ def test_floor_is_free_when_the_assignment_already_satisfies_it():
     assert report["moves"] == 0 and torch.equal(assignment, torch.argmin(cost, dim=-1))
 
 
-def test_a_codebook_larger_than_the_batch_falls_back_to_coverage():
-    """A mechanism may use more codewords than a batch has items; that must not crash.
+def test_a_codebook_larger_than_the_batch_is_refused():
+    """With K > batch some codeword must be empty, so the configuration is not admissible.
 
-    No assignment can cover 256 codewords with 100 items, so the guarantee becomes the
-    strongest available one: no two items share a codeword.
+    No stateless assignment fixes this: a rotating one needs per-codeword history, which
+    would make the assignment depend on call order. Refusing keeps the guarantee total --
+    a mechanism is either protected, or it does not train.
     """
-    cost = torch.rand(100, 256) + 10.0
-    cost[:, :5] = torch.rand(100, 5)
-    index, report = constrained_assignment(cost, 1)
-    assert report["mode"] == "coverage"
-    assert int(torch.unique(index).numel()) == 100
-    assert verify_assignment(index, 256, 1)["mode"] == "coverage"
+    with pytest.raises(InfeasibleFloor) as error:
+        constrained_assignment(torch.rand(100, 256), 1)
+    message = str(error.value)
+    assert "256 codewords need 256 items" in message
+    assert "the batch has 100" in message
     with pytest.raises(CodebookCollapse):
         verify_assignment(torch.zeros(100, dtype=torch.long), 256, 1)
 
@@ -338,7 +338,7 @@ def test_an_installed_floor_older_than_the_source_is_refreshed(scratch):
     installed.write_text("def constrained_assignment(): pass\n", encoding="utf-8")
     report = apply_floor(tree)
     assert report["changed"] == "module"
-    assert "def _coverage_assignment" in installed.read_text(encoding="utf-8")
+    assert "def verify_margins" in installed.read_text(encoding="utf-8")
 
 
 def test_the_balancing_rule_is_not_switched_off(scratch):
@@ -516,20 +516,11 @@ def test_an_assignment_through_min_dim_is_refused(scratch):
     assert "min(dim=" in str(error.value)
 
 
-def test_coverage_does_not_rotate_and_the_documents_say_so():
-    """Coverage guarantees distinctness inside a step, nothing across steps.
-
-    8192 codewords, 4096 items, unchanged cost matrix: ten calls touch the same 4096
-    codewords. That is why `floor.py` and `GUARANTEE.md` state the limitation instead of
-    claiming rotation -- the claim has to match the measurement.
-    """
-    cost = torch.rand(4096, 8192) + 10.0
+def test_the_feasible_regime_is_the_one_the_guard_guarantees():
+    """`items >= K * floor` is the admissible regime, and there every codeword is filled."""
+    cost = torch.rand(4096, 256) + 10.0
     cost[:, :8] = torch.rand(4096, 8)
-    seen: set[int] = set()
-    for _ in range(10):
-        index, report = constrained_assignment(cost, 1)
-        assert report["mode"] == "coverage"
-        seen.update(index.tolist())
-    assert len(seen) == 4096, "coverage started rotating; update the documents"
-    source = (Path(__file__).resolve().parent / "floor.py").read_text(encoding="utf-8")
-    assert "it does **not** rotate" in source
+    index, report = constrained_assignment(cost, 1)
+    assert report["satisfied"] is True
+    assert int(torch.bincount(index, minlength=256).min()) >= 1
+    assert verify_assignment(index, 256, 1)["min_count"] >= 1
