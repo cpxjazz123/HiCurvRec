@@ -168,6 +168,18 @@ def apply_floor(tree: Path, family: str | None = None, force_constrained: bool =
             "the assignment check was removed from " + str(module)
             + "; restore the tree from its baseline copy")
     if _already_patched(text):
+        # The quantiser edits are idempotent, but the installed module is a copy: a tree
+        # patched before the algorithm changed would keep running the old code forever.
+        import hashlib
+
+        installed = tree / TARGET_NAME
+        stale = (not installed.is_file()
+                 or hashlib.sha256(installed.read_bytes()).hexdigest()
+                 != hashlib.sha256(FLOOR_MODULE.read_bytes()).hexdigest())
+        if stale:
+            shutil.copy2(FLOOR_MODULE, installed)
+            return {"family": family, "module": spec.module, "changed": "module",
+                    "reason": "the installed floor was older than the source"}
         return {"family": family, "module": spec.module, "changed": False,
                 "reason": "already patched"}
 

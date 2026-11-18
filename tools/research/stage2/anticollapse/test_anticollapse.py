@@ -49,9 +49,20 @@ def test_floor_is_free_when_the_assignment_already_satisfies_it():
     assert report["moves"] == 0 and torch.equal(assignment, torch.argmin(cost, dim=-1))
 
 
-def test_infeasible_batch_raises():
-    with pytest.raises(InfeasibleFloor):
-        constrained_assignment(torch.rand(100, 256), 1)
+def test_a_codebook_larger_than_the_batch_falls_back_to_coverage():
+    """A mechanism may use more codewords than a batch has items; that must not crash.
+
+    No assignment can cover 256 codewords with 100 items, so the guarantee becomes the
+    strongest available one: no two items share a codeword.
+    """
+    cost = torch.rand(100, 256) + 10.0
+    cost[:, :5] = torch.rand(100, 5)
+    index, report = constrained_assignment(cost, 1)
+    assert report["mode"] == "coverage"
+    assert int(torch.unique(index).numel()) == 100
+    assert verify_assignment(index, 256, 1)["mode"] == "coverage"
+    with pytest.raises(CodebookCollapse):
+        verify_assignment(torch.zeros(100, dtype=torch.long), 256, 1)
 
 
 @pytest.fixture()
@@ -305,3 +316,13 @@ def test_a_tree_whose_check_was_deleted_is_refused(scratch):
     with pytest.raises(UnknownTree) as error:
         apply_floor(tree)
     assert "assignment check was removed" in str(error.value)
+
+
+def test_an_installed_floor_older_than_the_source_is_refreshed(scratch):
+    tree = scratch("stale", BASELINE)
+    apply_floor(tree)
+    installed = tree / "assignment_floor.py"
+    installed.write_text("def constrained_assignment(): pass\n", encoding="utf-8")
+    report = apply_floor(tree)
+    assert report["changed"] == "module"
+    assert "def _coverage_assignment" in installed.read_text(encoding="utf-8")

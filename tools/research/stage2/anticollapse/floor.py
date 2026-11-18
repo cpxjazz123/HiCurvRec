@@ -50,8 +50,12 @@ def constrained_assignment(cost, floor: int):
     if floor <= 0:
         return torch.argmin(cost, dim=-1), {"floor": floor, "moves": 0, "satisfied": True}
     if items < codewords * floor:
-        raise InfeasibleFloor(
-            f"{items} items cannot give {codewords} codewords {floor} each")
+        # A mechanism may legitimately use more codewords than one batch has items (a large
+        # codebook, a small batch on one card). No assignment can cover every codeword in
+        # that batch, so the strongest guarantee available is that **no two items share a
+        # codeword**, which keeps the codewords that do appear distinct and rotates coverage
+        # across steps. Crashing here would make the guard unusable for those mechanisms.
+        return _coverage_assignment(cost)
 
     costs = cost.detach().double()
     assignment = torch.argmin(costs, dim=-1)
@@ -90,6 +94,37 @@ def constrained_assignment(cost, floor: int):
             {"floor": floor, "moves": moves, "min_count": min(counts), "satisfied": True})
 
 
+def _coverage_assignment(cost):
+    """Every item on its own codeword, chosen by cost; the best available when K > items."""
+    import torch
+
+    items, codewords = cost.shape
+    costs = cost.detach().double()
+    best_cost, best_item = costs.min(dim=0)
+    assignment = torch.full((items,), -1, dtype=torch.long, device=costs.device)
+    taken = torch.zeros(codewords, dtype=torch.bool, device=costs.device)
+    for code in torch.argsort(best_cost).tolist():
+        item = int(best_item[code])
+        if int(assignment[item]) == -1:
+            assignment[item] = code
+            taken[code] = True
+        if int((assignment >= 0).sum()) == items:
+            break
+    leftover = (assignment < 0).nonzero().flatten()
+    free = (~taken).nonzero().flatten()
+    for item in leftover.tolist():
+        if free.numel() == 0:
+            raise InfeasibleFloor("no free codeword for a leftover item")
+        pick = int(torch.argmin(costs[item, free]))
+        assignment[item] = int(free[pick])
+        free = torch.cat([free[:pick], free[pick + 1:]])
+    return assignment, {"floor": 0, "mode": "coverage", "items": items,
+                        "codewords": codewords,
+                        "min_count": int(torch.bincount(assignment,
+                                                        minlength=codewords).min()),
+                        "satisfied": True}
+
+
 def describe(cost, floor: int) -> dict:
     """What the floor would cost on this batch, without changing anything."""
     import torch
@@ -112,7 +147,18 @@ def verify_assignment(index, codewords: int, floor: int) -> dict:
     """
     import torch
 
-    counts = torch.bincount(index.detach().long().reshape(-1), minlength=int(codewords))
+    flat = index.detach().long().reshape(-1)
+    counts = torch.bincount(flat, minlength=int(codewords))
+    if flat.numel() < int(codewords) * int(floor):
+        # Coverage regime: the batch cannot cover every codeword, so the contract is that
+        # no two items share one instead of a per-codeword count.
+        distinct = int(torch.unique(flat).numel())
+        if distinct < min(flat.numel(), int(codewords)):
+            raise CodebookCollapse(
+                "coverage regime: " + str(flat.numel() - distinct)
+                + " items share a codeword with " + str(int(codewords))
+                + " codewords available")
+        return {"codewords": int(codewords), "floor": 0, "min_count": 1, "mode": "coverage"}
     low = int(counts.min())
     if low < int(floor):
         raise CodebookCollapse(
