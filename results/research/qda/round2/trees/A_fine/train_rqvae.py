@@ -42,6 +42,7 @@ from qda_observer import gradient_snapshot, observe, update_snapshot, weights_sn
 from model.af3_runtime import (input_identity, resolve_shared_readout,
                                snapshot_sha256, snapshot_state)
 from qda_telemetry import EpochTelemetry
+from qda_gradsrc import measure
 
 
 # === 路径常量（无绝对路径；由文件自身向上找仓库标记推导）===
@@ -96,6 +97,9 @@ QDA_MONITOR = True
 #: dead codes still receive gradient.  One extra probe forward per epoch.
 QDA_TELEMETRY = True
 QDA_PROBE_ROWS = 4096
+#: Gradient attribution (round 3): split the encoder's gradient by loss term.
+QDA_GRADSRC = False
+QDA_GRADSRC_EPOCHS = 60
 #: The dense points keep only the summary; these keep the full npz snapshot.
 QDA_FULL_OBSERVATIONS = (0, 50, 100, 200, 300, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000)
 #: The diagnostic round writes beside the first QDA round, never into an arm tree.

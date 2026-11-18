@@ -12,8 +12,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 RUNS = HERE / "runs"
-KEEP = ("epoch", "used", "z_norm", "z_var", "z_move_rel", "codebook_move_rel",
-        "grad_norm_used", "grad_norm_unused")
+KEEP = ("epoch", "used", "z_norm", "z_var", "z_move_rel", "encoder_param_move_rel",
+        "codebook_move_rel", "grad_norm_used", "grad_norm_unused")
 
 
 def main() -> None:
@@ -22,17 +22,23 @@ def main() -> None:
         if not source.exists():
             print(f"{arm}: no metrics")
             continue
-        epochs, lifecycle = [], None
+        epochs, lifecycle, gradsrc = [], None, []
         for line in source.read_text(encoding="utf-8").splitlines():
             if not line.strip():
                 continue
             row = json.loads(line)
             if row["event"] == "qda_epoch":
                 epochs.append({key: row[key] for key in KEEP if key in row})
+            elif row["event"] == "qda_gradsrc":
+                gradsrc.append({key: row[key] for key in
+                                ("epoch", "grad_norm", "cosines", "displacement",
+                                 "loss", "z_norm") if key in row})
             elif row["event"] == "qda_lifecycle":
                 lifecycle = {key: row[key] for key in ("level_1", "level_2", "level_3")
                              if key in row}
         payload = {"arm": arm, "epochs": epochs, "lifecycle": lifecycle}
+        if gradsrc:
+            payload["gradsrc"] = gradsrc
         target = RUNS / arm / "qda_epochs.json"
         target.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
         print(f"{arm}: {len(epochs)} epochs -> {target.name} ({target.stat().st_size // 1024} KiB)")

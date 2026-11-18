@@ -38,6 +38,9 @@ COMMON = [
 #: dead codes still receive gradient.  One extra probe forward per epoch.
 QDA_TELEMETRY = True
 QDA_PROBE_ROWS = 4096
+#: Gradient attribution (round 3): split the encoder's gradient by loss term.
+QDA_GRADSRC = {gradsrc!r}
+QDA_GRADSRC_EPOCHS = 60
 #: The dense points keep only the summary; these keep the full npz snapshot.
 QDA_FULL_OBSERVATIONS = {full!r}
 #: The diagnostic round writes beside the first QDA round, never into an arm tree.
@@ -49,7 +52,8 @@ QDA_ROUND2 = QDA_ROOT / "round2"
                                snapshot_sha256, snapshot_state)""",
      """from model.af3_runtime import (input_identity, resolve_shared_readout,
                                snapshot_sha256, snapshot_state)
-from qda_telemetry import EpochTelemetry"""),
+from qda_telemetry import EpochTelemetry
+from qda_gradsrc import measure"""),
     # ---- telemetry construction ----------------------------------------
     ("""    final_collision = float("inf")
     final_raw_unique = 0""",
@@ -121,6 +125,19 @@ SCREEN = (0, 50, 100, 200, 300)
 FULL_FINE = (0, 50, 100, 200, 300, 500, 750, 1000, 1500, 2000, 2500, 3000)
 FULL_SCREEN = SCREEN
 
+#: Which levels get the baseline's own Sinkhorn during training. F0 = {2}; B3 = {0, 2};
+#: C1 = {0, 1, 2}; C2 = {1, 2} -- the last level has always been balanced.
+def balanced_patch(levels):
+    condition = "index in %r" % (tuple(levels),)
+    return ("""                sk_epsilon=sk_epsilon if last else -1.0,
+                sk_iters=sk_iters if last else -1,""",
+            f"""                # Round 3: the balanced levels are {sorted(levels)} (index 2 is the
+                # last level, which the baseline always balanced). The rule itself is
+                # the baseline's Sinkhorn; only its coverage changes.
+                sk_epsilon=sk_epsilon if ({condition}) else -1.0,
+                sk_iters=sk_iters if ({condition}) else -1,""")
+
+
 ARMS = {
     # A_fine ran with the observer's stock schedule (the fine points live in
     # A_window); its spec says so, so the manifest describes the tree that produced
@@ -168,7 +185,23 @@ ARMS = {
 }
 
 ARMS.update({
+    # Round 3: which loss term moves the encoder. 60 epochs covers the whole
+    # collapse window (complete by epoch 10) with an order of magnitude of margin.
+    # 3000 epochs on purpose: the LR schedule must be F0's, otherwise the first 60
+    # epochs are a different optimisation. Attribution stops at QDA_GRADSRC_EPOCHS.
+    "G1_gradsrc": dict(epochs=3000, observations=(0, 5, 10, 20, 40, 60),
+                       full=(0, 60), extra="", gradsrc=True),
+})
+ARMS.update({
+    "C1_all_balanced": dict(epochs=300, observations=SCREEN, full=FULL_SCREEN, extra="",
+                            mixed_rq=balanced_patch((0, 1, 2))),
+    "C2_l2_balanced": dict(epochs=300, observations=SCREEN, full=FULL_SCREEN, extra="",
+                           mixed_rq=balanced_patch((1, 2))),
+})
+ARMS.update({
     f"{base}_s{seed}": dict(ARMS[base], seed=seed)
+    # C1 is not a candidate after the 300-epoch screen (worse than B3 on both L3 and
+    # the encoder), so it gets no seed replicates.
     for base in ("B0_replay", "B3_l1_balanced")
     for seed in (43, 44)
 })
@@ -254,7 +287,9 @@ def main() -> None:
         trainer = target / "train_rqvae.py"
         pairs = list(COMMON)
         # the common block carries the per-arm full-observation set
-        pairs[0] = (pairs[0][0], pairs[0][1].replace("{full!r}", repr(spec["full"])))
+        pairs[0] = (pairs[0][0],
+                    pairs[0][1].replace("{full!r}", repr(spec["full"]))
+                               .replace("{gradsrc!r}", repr(bool(spec.get("gradsrc")))))
         pairs += [
             (f'ARM_NAME = "QDA_F0_seed42"', f'ARM_NAME = "{name}"'),
             ('EPOCHS              = 3000', f'EPOCHS              = {spec["epochs"]}'),
@@ -269,6 +304,16 @@ REVIVE_EVERY = {REVIVE_EVERY}"""),
         if spec.get("seed"):
             pairs.append(('SEED                = 42',
                           f'SEED                = {spec["seed"]}'))
+        if spec.get("gradsrc"):
+            pairs.append(("""            batch = batch.to(device, non_blocking=True)""",
+                          """            batch = batch.to(device, non_blocking=True)
+            if QDA_GRADSRC and epoch <= QDA_GRADSRC_EPOCHS and batch_index == 0:
+                # Attribution runs on the epoch's first batch only, on the model the
+                # training step is about to update; `measure` restores every parameter
+                # and clears the gradients it creates.
+                _record(rank, "qda_gradsrc", epoch=epoch,
+                        **measure(raw_module, batch, BETA,
+                                  optimizer.param_groups[0]["lr"], CURVATURE))"""))
         if spec["extra"]:
             pairs.append(("""        if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)""",
@@ -291,6 +336,8 @@ REVIVE_EVERY = {REVIVE_EVERY}"""),
             target / "qda_observer.py",
             [schedule_patch(spec["observations"])] + OBSERVER, name)
         shutil.copy2(HERE / "telemetry_src.py", target / "qda_telemetry.py")
+        shutil.copy2(HERE.parent / "round3" / "gradsrc_src.py", target / "qda_gradsrc.py")
+        patches["qda_gradsrc.py"] = ["installed from round3/gradsrc_src.py"]
         patches["qda_telemetry.py"] = ["installed from round2/telemetry_src.py"]
 
         if "mixed_rq" in spec:

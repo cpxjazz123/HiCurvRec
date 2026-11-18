@@ -31,6 +31,8 @@ class EpochTelemetry:
         self.size = int(self.levels[0].n_embed)
         self.reset()
         self.previous_codes = [layer.get_code_embs().detach().clone() for layer in self.levels]
+        #: Encoder parameter displacement per epoch, the quantity AdamW actually sets.
+        self.previous_encoder = [p.detach().clone() for p in model.encoder.parameters()]
         with torch.no_grad():
             self.previous_z = model.encoder(probe)
         #: first/last epoch an assignment landed on each code, and how many epochs
@@ -123,6 +125,14 @@ class EpochTelemetry:
                 grad_used.append(0.0)
                 grad_unused.append(0.0)
 
+        encoder_move = 0.0
+        encoder_norm = 0.0
+        for parameter, before in zip(model.encoder.parameters(), self.previous_encoder):
+            encoder_move += float((parameter.detach() - before).norm())
+            encoder_norm += float(before.norm())
+        record["encoder_param_move"] = encoder_move
+        record["encoder_param_move_rel"] = encoder_move / (encoder_norm + 1e-12)
+        self.previous_encoder = [p.detach().clone() for p in model.encoder.parameters()]
         record["codebook_norm"] = norms
         record["codebook_move"] = moves
         record["codebook_move_rel"] = move_rel
