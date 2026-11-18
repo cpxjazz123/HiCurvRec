@@ -17,6 +17,7 @@ import torch
 REPO = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from anticollapse import (CodebookCollapse, InfeasibleFloor, ReadOnlyBaseline,  # noqa: E402
+                          audit_sid,
                           UnknownTree,
                           apply_floor, constrained_assignment, verify_assignment,
                           verify_codebook, verify_tree)
@@ -248,3 +249,23 @@ def test_the_frozen_baseline_is_refused_and_stays_byte_identical():
         apply_floor(BASELINE)
     assert hashlib.sha256(module.read_bytes()).hexdigest() == before
     assert not (BASELINE / "assignment_floor.py").exists()
+
+
+def test_the_artifact_audit_refuses_a_level_that_uses_one_codeword(tmp_path):
+    import json
+
+    live = {str(i): [i % 64, (i // 64) % 64, i % 7] for i in range(4096)}
+    path = tmp_path / "live.json"
+    path.write_text(json.dumps(live))
+    report = audit_sid(path)
+    assert report["status"] == "PASS", report
+    assert [entry["distinct"] for entry in report["levels"]] == [64, 64, 7]
+
+    for level in range(3):
+        dead = {key: list(value) for key, value in live.items()}
+        for value in dead.values():
+            value[level] = 1
+        path.write_text(json.dumps(dead))
+        report = audit_sid(path)
+        assert report["status"] == "FAIL"
+        assert "level(s) " + str(level + 1) in report["detail"]

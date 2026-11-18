@@ -231,7 +231,14 @@ def check_entry(tree: Path | str) -> dict:
     sid = scratch / "item_sids.json"
     if not sid.is_file():
         return {"status": "FAIL", "name": "entry", "detail": "one epoch wrote no item_sids.json"}
-    return {"status": "PASS", "name": "entry", "detail": "one epoch runs and exports the identifier"}
+    from .anticollapse import audit_sid
+
+    artifact = audit_sid(sid)
+    if artifact["status"] != "PASS":
+        return {"status": "FAIL", "name": "entry",
+                "detail": "the exported identifier is degenerate: " + artifact["detail"]}
+    return {"status": "PASS", "name": "entry",
+            "detail": "one epoch runs and exports the identifier (" + artifact["detail"] + ")"}
 
 
 def check_identifier(tree: Path | str) -> dict:
