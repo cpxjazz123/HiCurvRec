@@ -309,7 +309,10 @@ def test_a_mechanism_that_assigns_on_its_own_is_refused(scratch):
     module.write_text(text.replace(*BYPASS_EDIT), encoding="utf-8")
     verdict = verify_tree(tree)
     assert verdict["ok"] is False
-    assert "CodebookCollapse" in verdict["reason"]
+    # The static scan is the first line of defence and names the site; the runtime check
+    # catches it only if the scan is bypassed. Either is a refusal.
+    assert ("CodebookCollapse" in verdict["reason"]
+            or "not guarded" in verdict["reason"])
 
 
 def test_a_tree_whose_check_was_deleted_is_refused(scratch):
@@ -427,4 +430,49 @@ def test_the_ema_quantiser_is_guarded_too(scratch):
     assert refused["ok"] is False
     # Removing the checks removes the exception too: the probe then reports the coverage
     # it measured (1 of 8 through the EMA forward) instead of a raised error.
-    assert "EMAVQLayer" in refused["reason"] or "CodebookCollapse" in refused["reason"]
+    assert ("EMAVQLayer" in refused["reason"] or "CodebookCollapse" in refused["reason"]
+            or "not guarded" in refused["reason"])
+
+
+SNEAKY = [
+    "",
+    "",
+    "class SneakyLayer(VQLayer):",
+    "    def forward(self, x, infer_use_sk=False):",
+    "        latent = x.view(-1, self.dim)",
+    "        return torch.argmin(self._distances(latent), dim=-1)",
+    "",
+]
+
+
+def test_a_new_assignment_site_in_the_quantiser_is_refused(scratch):
+    """The generic form of the EMA hole: any raw argmin left in the patched module."""
+    tree = scratch("new_site", BASELINE)
+    module = tree / "model" / "layers.py"
+    module.write_text(module.read_text(encoding="utf-8") + "\n".join(SNEAKY),
+                      encoding="utf-8")
+    with pytest.raises(UnknownTree) as error:
+        apply_floor(tree)
+    assert "still assigns without the guard" in str(error.value)
+    assert "model/layers.py" in str(error.value)
+
+
+def test_a_declared_non_assignment_use_is_allowed(scratch):
+    """The exception has to be written down with a reason, not inferred."""
+    # The same module object `apply_floor` comes from: the package is imported under two
+    # names in this suite (`anticollapse` from the test's sys.path, `stage2.anticollapse`
+    # from the repository root), and a dict set on the other one would be invisible.
+    import anticollapse.patch_tree as patch_tree
+
+    tree = scratch("declared", BASELINE)
+    module = tree / "model" / "layers.py"
+    module.write_text(module.read_text(encoding="utf-8")
+                      + "\n# reporting only: torch.argmax(counts, dim=-1)\n",
+                      encoding="utf-8")
+    patch_tree.ALLOWED_SITES["model/layers.py"] = {
+        "torch.argmax(counts, dim=-1)": "a histogram maximum for logging"}
+    try:
+        apply_floor(tree)
+        assert patch_tree.unguarded_sites(tree, "euclid") == []
+    finally:
+        patch_tree.ALLOWED_SITES.pop("model/layers.py", None)

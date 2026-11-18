@@ -134,6 +134,45 @@ EUCLID = Family(
 
 FAMILIES = {family.name: family for family in (MIXED, EUCLID)}
 
+#: A mechanism may keep a `argmin`/`argmax` that is *not* an assignment, but it has to be
+#: declared here with a reason: `{"model/xxx.py": {"the line to allow": "why"}}`.
+ALLOWED_SITES: dict[str, dict[str, str]] = {}
+
+#: The files a mechanism can assign codewords in *through the path this family patches*:
+#: the quantiser module itself, the model wrapper, and the trainer. Other quantiser modules
+#: may exist as dead code in a derived tree (`model/layers.py` sits next to a mixed arm) and
+#: are deliberately not scanned -- a false refusal there would block a legitimate run.
+SCANNED = ("model/model.py", "train_rqvae.py")
+
+
+def unguarded_sites(tree: Path, family: str | None = None) -> list[dict]:
+    """Every `argmin`/`argmax` left in the paths that decide a codeword.
+
+    The floor works by replacing the assignment, so a patched tree contains no raw
+    `argmin`/`argmax` over a cost matrix at all. Any that appears afterwards is either a
+    new assignment the guard does not see -- exactly how `EMAVQLayer` escaped for one
+    revision -- or a use that must be declared in `ALLOWED_SITES` with a reason.
+    """
+    tree = Path(tree)
+    found: list[dict] = []
+    scanned = list(SCANNED)
+    if family in FAMILIES:
+        scanned.insert(0, FAMILIES[family].module)
+    else:
+        scanned = [spec.module for spec in FAMILIES.values()] + scanned
+    for relative in scanned:
+        path = tree / relative
+        if not path.is_file():
+            continue
+        allowed = ALLOWED_SITES.get(relative, {})
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if "argmin(" not in line and "argmax(" not in line:
+                continue
+            if any(pattern in line for pattern in allowed):
+                continue
+            found.append({"file": relative, "line": number, "text": line.strip()[:120]})
+    return found
+
 
 class UnknownTree(RuntimeError):
     """The tree's quantiser is not one this patcher knows; it was not protected."""
@@ -228,6 +267,11 @@ def apply_floor(tree: Path, family: str | None = None, force_constrained: bool =
         text = text.replace(old, new)
         applied.append(old.splitlines()[0][:80])
     module.write_text(text, encoding="utf-8")
+    sites = unguarded_sites(tree, family)
+    if sites:
+        raise UnknownTree(
+            "the tree still assigns without the guard: "
+            + "; ".join(f"{site['file']}:{site['line']} {site['text']}" for site in sites[:4]))
     return {"family": family, "module": spec.module, "changed": True,
             "edits": applied, "installed": TARGET_NAME}
 
@@ -300,6 +344,12 @@ def verify_tree(tree: Path, family: str | None = None, python: str | None = None
         else:
             raise UnknownTree(f"no known quantiser under {tree}")
     spec = FAMILIES[family]
+    sites = unguarded_sites(tree, family)
+    if sites:
+        return {"ok": False, "used": 0, "used_forward": 0, "layers": {},
+                "codewords": 8, "tree": str(tree), "family": family,
+                "reason": "an assignment site is not guarded: " + "; ".join(
+                    f"{site['file']}:{site['line']}" for site in sites[:4])}
     module = spec.module[len("model/"):-len(".py")]
     setup, pick = FORWARD_PROBE[family]
     expressions = [spec.layer_expr] + list(spec.extra_layer_exprs)
