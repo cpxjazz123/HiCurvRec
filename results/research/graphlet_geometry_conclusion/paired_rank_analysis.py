@@ -18,6 +18,8 @@ import json
 import math
 import os
 import random
+
+import numpy as np
 import sys
 from collections import defaultdict
 
@@ -94,6 +96,7 @@ def collect():
 
     runs = {}
     rejected = []
+    all_runs = {}
     for arm, dirs in sorted(candidates.items()):
         accepted = []
         for run_dir in sorted(dirs):
@@ -126,7 +129,8 @@ def collect():
         if accepted:
             # Several verified runs of one arm: the largest full-split run, newest on ties.
             runs[arm] = sorted(accepted, key=lambda c: (c["n"], c["run"]))[-1]
-    return runs, rejected
+            all_runs[arm] = accepted
+    return runs, rejected, all_runs
 
 
 def paired(a, b):
@@ -190,8 +194,7 @@ def bootstrap(ra, rb):
     weight vector is the count of times each user is drawn.  Chunked so the
     weight matrix stays small.
     """
-    import numpy as np
-
+    
     ha = np.array([1.0 if gain(r, 10) else 0.0 for r in ra])
     hb = np.array([1.0 if gain(r, 10) else 0.0 for r in rb])
     diff = ha - hb
@@ -225,11 +228,14 @@ PAIRS = [
     ("mixed-f0-vs-baseline", "TIGER_mixed_rq_F0", "TIGER_RQ-VAE"),
     ("mixed-f0-vs-resample", "TIGER_mixed_rq_F0", "TIGER_BEHAVIOR_SAMPLE_RQ-VAE__resample"),
     ("role-vs-resample", "TIGER_role_geom_rq", "TIGER_BEHAVIOR_SAMPLE_RQ-VAE__resample"),
+    ("codeword-vs-global", "TIGER_graphlet_codebook_rq", "TIGER_graphlet_codebook_global_rq"),
+    ("codeword-vs-f0", "TIGER_graphlet_codebook_rq", "TIGER_mixed_rq_F0"),
+    ("global-vs-f0", "TIGER_graphlet_codebook_global_rq", "TIGER_mixed_rq_F0"),
 ]
 
 
 def main():
-    runs, rejected = collect()
+    runs, rejected, all_runs = collect()
     arms = sorted(runs)
     print(f"rebuilt {len(arms)} arms from recorded per-user ranks; "
           f"{len(rejected)} run(s) rejected")
@@ -238,6 +244,27 @@ def main():
 
     table = {"schema": "genrec.paired_rank_analysis.v1", "arms": {}, "pairs": {},
              "rejected": rejected}
+
+    # The noise floor: arms that were trained and evaluated more than once, with the
+    # same recipe, differ in recall by more than the mechanism effects this report
+    # discusses.  The spread is the honest scale against which a delta must be read.
+    spreads = []
+    for arm, candidates_runs in sorted(all_runs.items()):
+        values = sorted({round(run["recall"][10], 12) for run in candidates_runs
+                         if run["n"] == max(r["n"] for r in candidates_runs)})
+        if len(values) > 1:
+            spreads.append({"arm": arm, "runs": len(values), "min": values[0],
+                            "max": values[-1], "spread": values[-1] - values[0]})
+    table["rerun_spread"] = {
+        "arms_with_several_runs": len(spreads),
+        "median_spread": float(np.median([s["spread"] for s in spreads])) if spreads else None,
+        "max_spread": float(max(s["spread"] for s in spreads)) if spreads else None,
+        "per_arm": spreads,
+    }
+    if spreads:
+        print(f"same-recipe rerun spread over {len(spreads)} arms: "
+              f"median={np.median([s['spread'] for s in spreads]):.5f} "
+              f"max={max(s['spread'] for s in spreads):.5f}")
     for arm in arms:
         run = runs[arm]
         table["arms"][arm] = {
