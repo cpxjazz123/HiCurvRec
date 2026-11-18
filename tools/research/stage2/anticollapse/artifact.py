@@ -25,6 +25,9 @@ from pathlib import Path
 #: constant, and the floor cannot make it informative because there is nothing to choose.
 MIN_CODES_PER_LEVEL = 2
 
+#: Stage3 refuses an identifier whose three-code collision reaches this (CLAUDE.md 89).
+COLLISION_GATE = 0.40
+
 #: The identifier is `CODEBOOK_NUM` codes followed by the collision-disambiguation column
 #: (`train_rqvae.py::_extend_collisions`), which is not a quantiser level: auditing it would
 #: fail a perfectly fine SID whose suffix happens to be constant.
@@ -60,6 +63,10 @@ def audit_sid(path: Path | str, levels: int | None = CODEBOOK_NUM) -> dict:
     triples = {tuple(int(value) for value in row[:width]) for row in rows}
     report["distinct_sids"] = len(triples)
     report["collision"] = round(1.0 - len(triples) / len(rows), 6)
+    # The same constant the Stage3 admission uses (CLAUDE.md 89). Reported here so the
+    # number is visible at the earliest stage; the refusal itself stays at stage3_start.
+    report["collision_gate"] = ("REFUSED" if report["collision"] >= COLLISION_GATE
+                               else "allowed")
 
     dead = [entry["level"] for entry in report["levels"]
             if entry["distinct"] < MIN_CODES_PER_LEVEL]

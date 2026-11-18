@@ -243,7 +243,9 @@ def check_entry(tree: Path | str) -> dict:
         return {"status": "FAIL", "name": "entry",
                 "detail": "the exported identifier is degenerate: " + artifact["detail"]}
     return {"status": "PASS", "name": "entry",
-            "detail": "one epoch runs and exports the identifier (" + artifact["detail"] + ")"}
+            "detail": ("one epoch runs and exports the identifier (" + artifact["detail"]
+                       + ", collision " + str(artifact["collision"]) + ", "
+                       + artifact["collision_gate"] + " at the stage3 gate)")}
 
 
 def check_identifier(tree: Path | str) -> dict:
