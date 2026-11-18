@@ -23,6 +23,8 @@ from losses.commitment import commitment_loss
 
 # The metric is its own module; the quantiser only calls what it was handed.
 from distances import build_distance
+from assignment_floor import (constrained_assignment, verify_assignment,
+                                     verify_codebook, verify_margins)
 
 
 class MLP(nn.Module):
@@ -48,6 +50,14 @@ class MLP(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.mlp(x)
 
+
+#: The shared anti-collapse floor. Every assignment -- training and export -- must give
+#: each codeword at least this many items. 1 is the smallest value that makes the
+#: absorbing state unreachable; a batch of 4096 affords it for 256 codewords.
+ASSIGNMENT_FLOOR = 1
+#: The baseline's balancing rule is never switched off (CLAUDE.md 19h): the floor is
+#: applied to the assignment the Sinkhorn produces, not to a replaced rule.
+FORCE_CONSTRAINED_ALL = True
 
 class VQLayer(nn.Module):
     """Trainable vector quantizer from RecBole3.0."""
@@ -117,8 +127,10 @@ class VQLayer(nn.Module):
             q = self.sinkhorn(centered, self.sk_epsilon, self.sk_iters)
             if torch.isnan(q).any() or torch.isinf(q).any():
                 raise RuntimeError("Sinkhorn assignment returned NaN or infinity.")
-            return torch.argmax(q, dim=-1)
-        return torch.argmin(distances, dim=-1)
+            index, _ = constrained_assignment(-q, ASSIGNMENT_FLOOR)
+            return index.to(q.device)
+        index, _ = constrained_assignment(distances, ASSIGNMENT_FLOOR)
+        return index.to(distances.device)
 
     def forward(
         self,
@@ -126,7 +138,11 @@ class VQLayer(nn.Module):
         infer_use_sk: bool = False,
     ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
         latent = x.view(-1, self.dim)
-        embed_ind = self._indices(self._distances(latent), infer_use_sk)
+        cost = self._distances(latent)
+        verify_codebook(self.get_code_embs(), distance=False)
+        verify_margins(cost)
+        embed_ind = self._indices(cost, infer_use_sk)
+        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)
         onehot = F.one_hot(embed_ind, self.n_embed)
         used = onehot.sum(0)
         # Skip the DDP all_reduce when running inference on rank 0 only:
@@ -152,7 +168,8 @@ class VQLayer(nn.Module):
         if distributed.is_initialized():
             distributed.broadcast(centers, 0)
         self._copy_init_embed(centers.clone())
-        embed_ind = torch.argmin(self._distances(x), dim=-1).view(*x.shape[:-1])
+        embed_ind, _ = constrained_assignment(self._distances(x), ASSIGNMENT_FLOOR)
+        embed_ind = embed_ind.view(*x.shape[:-1])
         return x - self.embed_code(embed_ind)
 
 
@@ -194,7 +211,11 @@ class EMAVQLayer(VQLayer):
         infer_use_sk: bool = False,
     ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
         latent = x.view(-1, self.dim)
-        embed_ind = self._indices(self._distances(latent), infer_use_sk)
+        cost = self._distances(latent)
+        verify_codebook(self.get_code_embs(), distance=False)
+        verify_margins(cost)
+        embed_ind = self._indices(cost, infer_use_sk)
+        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)
         x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
 
         if self.training:
