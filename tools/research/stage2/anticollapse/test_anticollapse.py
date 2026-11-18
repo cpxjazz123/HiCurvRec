@@ -396,3 +396,35 @@ else:
     assert done.returncode == 0, done.stderr[-1200:]
     assert "CodebookCollapse" in done.stdout
     assert "tie-decided" in done.stdout
+
+
+EMA_FORWARD = ("        embed_ind = self._indices(cost, infer_use_sk)\n"
+               "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"
+               "        verify_codebook(self.get_code_embs(), distance=False)\n"
+               "        x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)")
+
+
+def test_the_ema_quantiser_is_guarded_too(scratch):
+    """VQ_TYPE="ema" trains through a second forward; leaving it unpatched would be a hole."""
+    tree = scratch("ema", BASELINE)
+    apply_floor(tree)
+    text = (tree / "model" / "layers.py").read_text(encoding="utf-8")
+    assert EMA_FORWARD in text
+    assert text.count("verify_margins(cost)") == 2        # VQLayer and EMAVQLayer
+    verdict = verify_tree(tree)
+    assert verdict["ok"] is True
+    assert set(verdict["layers"]) == {"VQLayer", "EMAVQLayer"}
+    assert all(entry["used"] == entry["used_forward"] == 8
+               for entry in verdict["layers"].values())
+
+    # and a tree that replaces the EMA assignment is refused, like the default one
+    module = tree / "model" / "layers.py"
+    module.write_text(text.replace(EMA_FORWARD,
+                                   "        embed_ind = torch.argmin(cost, dim=-1)\n"
+                                   "        x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)"),
+                      encoding="utf-8")
+    refused = verify_tree(tree)
+    assert refused["ok"] is False
+    # Removing the checks removes the exception too: the probe then reports the coverage
+    # it measured (1 of 8 through the EMA forward) instead of a raised error.
+    assert "EMAVQLayer" in refused["reason"] or "CodebookCollapse" in refused["reason"]

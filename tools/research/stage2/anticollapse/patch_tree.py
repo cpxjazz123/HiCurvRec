@@ -47,6 +47,9 @@ class Family:
     force_edit: tuple[str, str] | None = None
     #: The construction used by the verifier: a fresh layer of the patched class.
     layer_expr: str = ""
+    #: Every other quantiser class in the same module; a candidate may train through it
+    #: (VQ_TYPE="ema"), so the probe must cover it too rather than assume the default.
+    extra_layer_exprs: list[str] = field(default_factory=list)
 
 
 MIXED = Family(
@@ -111,11 +114,22 @@ EUCLID = Family(
          "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"
          "        verify_codebook(self.get_code_embs(), distance=False)\n"
          "        onehot = F.one_hot(embed_ind, self.n_embed)"),
+        # `EMAVQLayer.forward` reaches the same line with a different next line, so it
+        # needs its own anchor: a candidate that sets VQ_TYPE="ema" trains through this one
+        ("        embed_ind = self._indices(self._distances(latent), infer_use_sk)\n"
+         "        x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)",
+         "        cost = self._distances(latent)\n"
+         "        verify_margins(cost)\n"
+         "        embed_ind = self._indices(cost, infer_use_sk)\n"
+         "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"
+         "        verify_codebook(self.get_code_embs(), distance=False)\n"
+         "        x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)"),
         ("        embed_ind = torch.argmin(self._distances(x), dim=-1).view(*x.shape[:-1])",
          "        embed_ind, _ = constrained_assignment(self._distances(x), ASSIGNMENT_FLOOR)\n"
          "        embed_ind = embed_ind.view(*x.shape[:-1])"),
     ],
     layer_expr="VQLayer(8, 4)",
+    extra_layer_exprs=["EMAVQLayer(8, 4)"],
 )
 
 FAMILIES = {family.name: family for family in (MIXED, EUCLID)}
@@ -219,37 +233,41 @@ def apply_floor(tree: Path, family: str | None = None, force_constrained: bool =
 
 
 VERIFY_TEMPLATE = """import json, sys, torch
-from {module} import {cls}
-layer = {expr}
+from {module} import {imports}
 
 def unique(index):
     return int(torch.unique(index.reshape(-1)).numel())
 
-# 1. `_indices` on a collapsed cost: only three codewords are cheap. Both assignment
-#    regimes are exercised, because the baseline balances with Sinkhorn (CLAUDE.md 19h)
-#    and a guard that only holds for `argmin` would not be a guard at all.
-cost = torch.rand(4096, 8) + 10.0
-cost[:, :3] = torch.rand(4096, 3)
-used_indices = unique(layer._indices(cost, False))
-layer.use_sk = True
-layer.sk_epsilon = 0.003
-layer.sk_iters = 5
-used_balanced = unique(layer._indices(cost, False))
-
-# 2. `forward` on a collapsed *codebook*: five of eight codewords are unreachable.
-#    A mechanism that replaces `forward` and assigns itself is caught here, since the
-#    floor lives in the path it no longer takes.
-codes = layer.get_code_embs()
-with torch.no_grad():
-    # unreachable, but still distinct from each other: a constant block would be a
-    # duplicate codebook, which the call-site check rightly refuses
-    codes[3:] = 1000.0 + torch.arange(codes.shape[0] - 3,
-                                      dtype=codes.dtype).unsqueeze(1)
+def probe(layer):
+    # 1. `_indices` on a collapsed cost: only three codewords are cheap.
+    cost = torch.rand(4096, 8) + 10.0
+    cost[:, :3] = torch.rand(4096, 3)
+    used_indices = unique(layer._indices(cost, False))
+    # 2. the baseline balances with Sinkhorn (CLAUDE.md 19h): the floor must hold on the
+    #    assignment that balancing produces, not only on a bare argmin.
+    layer.use_sk = True
+    layer.sk_epsilon = 0.003
+    layer.sk_iters = 5
+    used_balanced = unique(layer._indices(cost, False))
+    # 3. `forward` on a collapsed *codebook*: five of eight codewords are unreachable, but
+    #    distinct from each other. A mechanism that replaced the assignment inside forward
+    #    is caught here, because the floor lives in the path it no longer takes.
+    codes = layer.get_code_embs()
+    with torch.no_grad():
+        codes[3:] = 1000.0 + torch.arange(codes.shape[0] - 3,
+                                          dtype=codes.dtype).unsqueeze(1)
 {forward_call}
-used_forward = unique(index)
+    return {{"used": used_indices, "used_balanced": used_balanced,
+            "used_forward": unique(index), "codewords": 8}}
 
-print(json.dumps({{"used": used_indices, "used_balanced": used_balanced,
-                 "used_forward": used_forward, "codewords": 8}}))
+report = {{}}
+for name, layer in [{layers}]:
+    try:
+        report[name] = probe(layer)
+    except Exception as error:
+        print("GUARD " + name + ": " + type(error).__name__ + ": " + str(error)[:200])
+        raise
+print(json.dumps({{"layers": report, "codewords": 8}}))
 """
 
 #: How each family drives `forward` in the probe: (setup, call).
@@ -283,10 +301,15 @@ def verify_tree(tree: Path, family: str | None = None, python: str | None = None
             raise UnknownTree(f"no known quantiser under {tree}")
     spec = FAMILIES[family]
     module = spec.module[len("model/"):-len(".py")]
-    cls = spec.layer_expr.split("(")[0]
     setup, pick = FORWARD_PROBE[family]
-    script = VERIFY_TEMPLATE.format(module=f"model.{module}", cls=cls,
-                                    expr=spec.layer_expr, forward_call=setup + "\n" + pick)
+    expressions = [spec.layer_expr] + list(spec.extra_layer_exprs)
+    names = [expression.split("(")[0] for expression in expressions]
+    script = VERIFY_TEMPLATE.format(
+        module=f"model.{module}", imports=", ".join(names),
+        layers=", ".join(f'("{name}", {expression})'
+                         for name, expression in zip(names, expressions)),
+        forward_call="\n".join("    " + line
+                               for line in (setup + "\n" + pick).splitlines()))
     result = subprocess.run([python or sys.executable, "-c", script], cwd=str(tree),
                             capture_output=True, text=True, timeout=600)
     if result.returncode != 0:
@@ -295,13 +318,24 @@ def verify_tree(tree: Path, family: str | None = None, python: str | None = None
         if "CodebookCollapse" in result.stderr:
             reason = [line for line in result.stderr.splitlines()
                       if "CodebookCollapse" in line][-1]
-            return {"ok": False, "used": 0, "used_forward": 0,
+            return {"ok": False, "used": 0, "used_forward": 0, "layers": {},
                     "codewords": 8, "reason": reason.strip(), "tree": str(tree),
                     "family": family}
         raise UnknownTree(f"verification failed in {tree}:\n{result.stderr[-2000:]}")
     payload = json.loads(result.stdout.strip().splitlines()[-1])
-    payload["ok"] = all(payload[key] == payload["codewords"]
+    payload["ok"] = all(entry[key] == payload["codewords"]
+                        for entry in payload["layers"].values()
                         for key in ("used", "used_balanced", "used_forward"))
+    if not payload["ok"]:
+        short = [name + " (" + str(entry.get("used_forward")) + "/"
+                 + str(payload["codewords"]) + " through forward)"
+                 for name, entry in payload["layers"].items()
+                 if entry.get("used_forward") != payload["codewords"]]
+        payload["reason"] = ("the probe did not cover every codeword: "
+                             + "; ".join(short or [str(payload["layers"])]))
+    # The worst layer is the tree's answer: a per-class view stays available in `layers`.
+    for key in ("used", "used_balanced", "used_forward"):
+        payload[key] = min(entry[key] for entry in payload["layers"].values())
     payload["tree"] = str(tree)
     payload["family"] = family
     return payload

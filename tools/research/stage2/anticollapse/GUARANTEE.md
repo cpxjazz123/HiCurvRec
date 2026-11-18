@@ -32,7 +32,9 @@
 | 调用点(`forward` 内) | `verify_margins(cost)`:平手判定的商品占比 > 50% 即拒(编码器未分离) | `CodebookCollapse`,该步死 |
 | 调用点与导出 | `verify_codebook(codes)`:拒绝两行完全相同(行字节哈希,每步都跑);近邻只报告(混合度量下 L3 实测 1e-4,属正常) | `CodebookCollapse` |
 | 产物 | `audit_sid`:每级至少 2 个码字;三级码字重复率记录 | `check_entry` FAIL |
-| 准入 | `verify_tree`:坍缩代价矩阵下跑 **argmin / 平衡 argmax / 完整 forward** 三条通路,都要求 K/K | 准入 FAIL |
+| 准入 | `verify_tree`:对树里**每一个**量化器类(`VQLayer`、`EMAVQLayer`)各跑 **argmin / 平衡 argmax / 完整 forward** 三条通路,都要求 K/K | 准入 FAIL |
+
+`VQ_TYPE` 允许 `vq`/`ema`/`simvq` 三种;`EMAVQLayer` 是同一个文件里的**第二个 forward**,必须单独打补丁并单独探测 —— 否则一个把 `VQ_TYPE` 设成 `ema` 的候选会在准入显示 PASS 的同时完全失去保护(实测:`EMAVQLayer` 的 forward 覆盖 1/8,被探测拒绝)。
 
 配套:创建候选时安装(`copy_baseline`)、唯一启动路径兜底安装(`launch`)、安装文件过期自动刷新、删掉校验行拒绝重装(`the assignment check was removed`)、冻结基线拒绝改写(`ReadOnlyBaseline`)。
 
