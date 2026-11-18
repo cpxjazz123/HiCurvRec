@@ -229,3 +229,22 @@ def test_the_collapse_watch_reads_the_stream_and_the_gate(tmp_path):
     missing = subprocess.run([_sys.executable, str(script), str(empty)],
                              capture_output=True, text=True, timeout=120)
     assert missing.returncode == 1        # NOT_RUN is not a pass
+
+
+def test_isolation_classifies_targets_against_the_allowed_root(tmp_path):
+    """A diagnostic must not keep a target outside the directory it was given.
+
+    Three times a run wrote into a published directory because a path constant is derived
+    at import time; the classification is what turns that into a refusal.
+    """
+    from tools.research.stage2.isolation import outside_root
+
+    inside = tmp_path / "run"
+    targets = {"RESULT_DIR": str(inside), "LOG_DIR": str(inside / "logs")}
+    assert outside_root(targets, inside) == {}
+
+    poisoned = dict(targets)
+    poisoned["EXPORT_MANIFEST"] = str(tmp_path / "elsewhere" / "export_manifest.json")
+    outside = outside_root(poisoned, inside)
+    assert list(outside) == ["EXPORT_MANIFEST"]
+    assert outside["EXPORT_MANIFEST"].endswith("export_manifest.json")
