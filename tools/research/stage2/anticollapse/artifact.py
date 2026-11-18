@@ -25,8 +25,13 @@ from pathlib import Path
 #: constant, and the floor cannot make it informative because there is nothing to choose.
 MIN_CODES_PER_LEVEL = 2
 
+#: The identifier is `CODEBOOK_NUM` codes followed by the collision-disambiguation column
+#: (`train_rqvae.py::_extend_collisions`), which is not a quantiser level: auditing it would
+#: fail a perfectly fine SID whose suffix happens to be constant.
+CODEBOOK_NUM = 3
 
-def audit_sid(path: Path | str, levels: int | None = None) -> dict:
+
+def audit_sid(path: Path | str, levels: int | None = CODEBOOK_NUM) -> dict:
     """Per-level usage of an exported identifier, and whether any level is degenerate."""
     path = Path(path)
     if not path.is_file():
@@ -37,8 +42,9 @@ def audit_sid(path: Path | str, levels: int | None = None) -> dict:
     rows = [value for value in raw.values() if isinstance(value, list) and value]
     if not rows:
         return {"status": "FAIL", "detail": "the identifier holds no code lists"}
-    width = levels or min(len(row) for row in rows)
-    width = max(1, min(width, min(len(row) for row in rows)))
+    available = min(len(row) for row in rows)
+    width = levels or available
+    width = max(1, min(int(width), available))
 
     report = {"items": len(rows), "levels": []}
     for level in range(width):

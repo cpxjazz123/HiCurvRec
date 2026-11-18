@@ -272,6 +272,12 @@ def test_the_artifact_audit_refuses_a_level_that_uses_one_codeword(tmp_path):
     assert report["status"] == "PASS", report
     assert [entry["distinct"] for entry in report["levels"]] == [64, 64, 7]
 
+    # the fourth column is the collision-disambiguation suffix, not a level: a constant
+    # suffix must not fail a healthy identifier
+    suffixed = {key: list(value) + [0] for key, value in live.items()}
+    path.write_text(json.dumps(suffixed))
+    assert audit_sid(path)["status"] == "PASS"
+
     for level in range(3):
         dead = {key: list(value) for key, value in live.items()}
         for value in dead.values():
@@ -326,3 +332,14 @@ def test_an_installed_floor_older_than_the_source_is_refreshed(scratch):
     report = apply_floor(tree)
     assert report["changed"] == "module"
     assert "def _coverage_assignment" in installed.read_text(encoding="utf-8")
+
+
+def test_the_balancing_rule_is_not_switched_off(scratch):
+    """CLAUDE.md 19h: the baseline's Sinkhorn stays; the floor applies to its output."""
+    tree = scratch("balancing", BASELINE)
+    apply_floor(tree)
+    text = (tree / "model" / "layers.py").read_text(encoding="utf-8")
+    assert "self.use_sk = sk_epsilon > 0 and sk_iters > 0" in text
+    assert "not FORCE_CONSTRAINED_ALL" not in text
+    index, _ = constrained_assignment(-torch.rand(4096, 8), 1)
+    assert int(torch.bincount(index, minlength=8).min()) >= 1

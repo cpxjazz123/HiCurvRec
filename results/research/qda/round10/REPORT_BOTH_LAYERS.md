@@ -48,3 +48,15 @@ cd results/research/qda/round10/trees/K1_floor_bounded && <genrec_env_v2>/python
 ```
 
 产物:`geometry_src.py`(原型、有界偏移、混合最小距离)、`build_k_arms.py`、`arm_manifest.json`、`runs/K1_floor_bounded/{logs,qda_epochs.json,observations}`、`report_k.json`。
+
+
+## 更正(后续轮次发现)
+
+本轮用的保护补丁当时自带 `FORCE_CONSTRAINED_ALL = True`,它把基线的 **Sinkhorn 平衡分配关掉了**(`use_sk = ... and not FORCE_CONSTRAINED_ALL`)。冻结配置里 `SK_EPSILON = 0.003`、`SK_ITERS ≥ 1`,也就是说**基线本来开着平衡分配**。
+
+因此本表的两个结论要分开看:
+
+- **几何结论不受影响**:码字两两距离的实测(0.0056 / 2e-4 / 1e-4,始终 > 0)与平衡分配无关,`2ρ < δ` 的构造也不受影响。
+- **质量对比被污染**:`K1_floor_bounded` 与 F0 的差异同时包含"下限""有界几何""关掉 Sinkhorn"三件事,L3 AUC 的 1.5 pp 不能全部归因于几何约束。要归因必须重跑一个保留 Sinkhorn 的臂。
+
+保护补丁此后已改为**在 Sinkhorn 的输出上施加下限**(不再关闭它),并在准入探测中同时验证 `argmin` 与 `argmax(q)` 两条通路。第 8、9 轮的树未受影响(它们的 `use_sk` 行保持原样)。

@@ -30,7 +30,8 @@ CONSTANTS = '''#: The shared anti-collapse floor. Every assignment -- training a
 #: each codeword at least this many items. 1 is the smallest value that makes the
 #: absorbing state unreachable; a batch of 4096 affords it for 256 codewords.
 ASSIGNMENT_FLOOR = 1
-#: True disables the Sinkhorn path as well, so training and export share one rule.
+#: The baseline's balancing rule is never switched off (CLAUDE.md 19h): the floor is
+#: applied to the assignment the Sinkhorn produces, not to a replaced rule.
 FORCE_CONSTRAINED_ALL = {force!r}
 '''
 
@@ -62,6 +63,9 @@ MIXED = Family(
         ("        return torch.argmin(distances, dim=-1)",
          "        index, _ = constrained_assignment(distances, ASSIGNMENT_FLOOR)\n"
          "        return index.to(distances.device)"),
+        ("            return torch.argmax(q, dim=-1)",
+         "            index, _ = constrained_assignment(-q, ASSIGNMENT_FLOOR)\n"
+         "            return index.to(q.device)"),
         # the call site: whatever `_indices` returned is checked, so a mechanism that
         # assigns somewhere else (e.g. re-enables the Sinkhorn branch) is caught here
         ("        index = self._indices(cost, infer_use_sk)\n"
@@ -76,8 +80,6 @@ MIXED = Family(
          "            index, _ = constrained_assignment(cost, ASSIGNMENT_FLOOR)\n"
          "            verify_codebook(layer.get_code_embs())"),
     ],
-    force_edit=("        self.use_sk = sk_epsilon > 0 and sk_iters > 0",
-                "        self.use_sk = (sk_epsilon > 0 and sk_iters > 0) and not FORCE_CONSTRAINED_ALL"),
     layer_expr="MixedVQLevel(8)",
 )
 
@@ -94,6 +96,9 @@ EUCLID = Family(
         ("        return torch.argmin(distances, dim=-1)",
          "        index, _ = constrained_assignment(distances, ASSIGNMENT_FLOOR)\n"
          "        return index.to(distances.device)"),
+        ("            return torch.argmax(q, dim=-1)",
+         "            index, _ = constrained_assignment(-q, ASSIGNMENT_FLOOR)\n"
+         "            return index.to(q.device)"),
         ("        embed_ind = self._indices(self._distances(latent), infer_use_sk)\n"
          "        onehot = F.one_hot(embed_ind, self.n_embed)",
          "        embed_ind = self._indices(self._distances(latent), infer_use_sk)\n"
@@ -105,8 +110,6 @@ EUCLID = Family(
          "        embed_ind, _ = constrained_assignment(self._distances(x), ASSIGNMENT_FLOOR)\n"
          "        embed_ind = embed_ind.view(*x.shape[:-1])"),
     ],
-    force_edit=("        self.use_sk = sk_epsilon > 0 and sk_iters > 0",
-                "        self.use_sk = (sk_epsilon > 0 and sk_iters > 0) and not FORCE_CONSTRAINED_ALL"),
     layer_expr="VQLayer(8, 4)",
 )
 
@@ -195,8 +198,6 @@ def apply_floor(tree: Path, family: str | None = None, force_constrained: bool =
     text = text.replace(anchor, constants + "\n" + anchor, 1)
 
     edits = list(spec.edits)
-    if force_constrained and spec.force_edit is not None:
-        edits.append(spec.force_edit)
     edits.append(spec.import_anchor)
 
     applied = []
@@ -219,10 +220,16 @@ layer = {expr}
 def unique(index):
     return int(torch.unique(index.reshape(-1)).numel())
 
-# 1. `_indices` on a collapsed cost: only three codewords are cheap.
+# 1. `_indices` on a collapsed cost: only three codewords are cheap. Both assignment
+#    regimes are exercised, because the baseline balances with Sinkhorn (CLAUDE.md 19h)
+#    and a guard that only holds for `argmin` would not be a guard at all.
 cost = torch.rand(4096, 8) + 10.0
 cost[:, :3] = torch.rand(4096, 3)
 used_indices = unique(layer._indices(cost, False))
+layer.use_sk = True
+layer.sk_epsilon = 0.003
+layer.sk_iters = 5
+used_balanced = unique(layer._indices(cost, False))
 
 # 2. `forward` on a collapsed *codebook*: five of eight codewords are unreachable.
 #    A mechanism that replaces `forward` and assigns itself is caught here, since the
@@ -233,7 +240,8 @@ with torch.no_grad():
 {forward_call}
 used_forward = unique(index)
 
-print(json.dumps({{"used": used_indices, "used_forward": used_forward, "codewords": 8}}))
+print(json.dumps({{"used": used_indices, "used_balanced": used_balanced,
+                 "used_forward": used_forward, "codewords": 8}}))
 """
 
 #: How each family drives `forward` in the probe: (setup, call).
@@ -283,8 +291,8 @@ def verify_tree(tree: Path, family: str | None = None, python: str | None = None
                     "family": family}
         raise UnknownTree(f"verification failed in {tree}:\n{result.stderr[-2000:]}")
     payload = json.loads(result.stdout.strip().splitlines()[-1])
-    payload["ok"] = (payload["used"] == payload["codewords"]
-                     and payload["used_forward"] == payload["codewords"])
+    payload["ok"] = all(payload[key] == payload["codewords"]
+                        for key in ("used", "used_balanced", "used_forward"))
     payload["tree"] = str(tree)
     payload["family"] = family
     return payload
