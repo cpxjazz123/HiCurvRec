@@ -42,7 +42,7 @@ OUT = HERE / "trees"
 #: relative squared drift is (0.105)^2 = 1.1e-2, so lambda = 0.042, rounded to 0.04.
 #: The penalty then equals the reconstruction term at the observed initial drift and
 #: decays quadratically as the drift falls.  No outcome enters the choice.
-def dynamics(enc_lr_scale: float, cb_lr_scale: float) -> str:
+def dynamics(enc_lr_scale: float, cb_lr_scale: float, tau: float = 0.0) -> str:
     """The per-arm constants.  Only D1 lowers the encoder's learning rate; D2/D3 must
     leave it alone so the drift penalty is the only thing acting on the encoder."""
     return f"""
@@ -51,12 +51,16 @@ LAMBDA_DRIFT = 0.04
 ENC_LR_EPOCHS = 20
 ENC_LR_SCALE = {enc_lr_scale!r}
 CB_LR_SCALE = {cb_lr_scale!r}
+#: Hinge threshold: 0 means the plain quadratic penalty (D2/D3).
+DRIFT_TAU = {tau!r}
 """
 
 ARMS = {
     "D1_enc_lr": {"enc_lr": (20, 0.1), "drift": False, "cb_lr": 1.0},
     "D2_drift": {"enc_lr": None, "drift": True, "cb_lr": 1.0},
     "D3_drift_cb_lr": {"enc_lr": None, "drift": True, "cb_lr": 3.0},
+    #: Only the displacement above the codebook's measured tracking limit is penalised.
+    "E1_hinge_tau": {"enc_lr": None, "drift": "hinge", "cb_lr": 1.0, "tau": 0.01},
 }
 
 GROUPED_OPTIMIZER = (
@@ -107,7 +111,7 @@ GROUPED_SCHEDULER = (
 DRIFT_IMPORT = (
     """from qda_gradsrc import measure""",
     """from qda_gradsrc import measure
-from qda_drift import drift_loss, snapshot""",
+from qda_drift import drift_loss, hinge_drift_loss, snapshot""",
 )
 
 DRIFT_DATASET = (
@@ -129,8 +133,12 @@ DRIFT_LOSS = (
             if LAMBDA_DRIFT > 0:
                 # One extra encoder pass: the quantiser stays argmin, only the output's
                 # epoch-to-epoch displacement is penalised.
-                loss = loss + LAMBDA_DRIFT * drift_loss(
-                    raw_module.encoder(batch), z_prev[item_index.to(device)])""",
+                if DRIFT_TAU > 0:
+                    loss = loss + LAMBDA_DRIFT * hinge_drift_loss(
+                        raw_module.encoder(batch), z_prev[item_index.to(device)], DRIFT_TAU)
+                else:
+                    loss = loss + LAMBDA_DRIFT * drift_loss(
+                        raw_module.encoder(batch), z_prev[item_index.to(device)])""",
 )
 
 DRIFT_INIT = (
@@ -179,7 +187,8 @@ def main() -> None:
             # constants first: the patches below reference them
             ("QDA_GRADSRC_EPOCHS = 60",
              "QDA_GRADSRC_EPOCHS = 60" + dynamics(
-                 spec["enc_lr"][1] if spec["enc_lr"] else 1.0, spec["cb_lr"])),
+                 spec["enc_lr"][1] if spec["enc_lr"] else 1.0, spec["cb_lr"],
+                 spec.get("tau", 0.0))),
             DRIFT_IMPORT,
         ]
         if spec["enc_lr"] or spec["cb_lr"] != 1.0:
