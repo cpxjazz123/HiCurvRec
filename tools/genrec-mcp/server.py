@@ -716,6 +716,54 @@ def tree_entrypoint(tree: Path) -> tuple[Path | None, list[dict]]:
     return accepted, verdicts
 
 
+def stage3_export_gate(sid: Path) -> dict:
+    """Make the SID the checkpoint's own table before Stage 3 reads it.
+
+    A SID exported from the live in-memory module is not what the saved
+    checkpoint produces: the 2026-11-18 audit found 12 of 14 checkable arms
+    differ on 0.3-0.5% of the items, and 12 of the 65 archived numbers differ on
+    thousands.  The framework owns the export (CLAUDE.md 66), so a fresh SID is
+    re-exported here from the checkpoint and the original is kept beside it as
+    ``item_sids.trainer.json``.  Numbers already in the R2 ledger predate the
+    guard, are already measured, and pass as UNVERIFIED.
+    """
+    if str(REPO) not in sys.path:
+        sys.path.insert(0, str(REPO))
+    from tools.research.stage2.export_policy import (archived_sids, decide,
+                                                    manifest_path, read_manifest)
+
+    sid_sha = hashlib.sha256(sid.read_bytes()).hexdigest()
+    archived = archived_sids(REPO)
+    manifest = read_manifest(sid)
+    ran_check = False
+    if manifest is None and sid_sha not in archived:
+        tree, _ = resolve_stage2_tree(sid.parent.name)
+        python = tree_python(tree) if tree is not None else PY3
+        command = [python, "-m", "tools.research.stage2.export_check",
+                   "--sid", str(sid), "--rewrite"]
+        try:
+            completed = subprocess.run(
+                command, cwd=str(REPO), capture_output=True, text=True, timeout=1800,
+                env={**os.environ, "PYTHONPATH": str(REPO)})
+        except (OSError, subprocess.SubprocessError) as exc:
+            return {"allow": False, "state": "REFUSED", "sid_sha256": sid_sha,
+                    "reason": "the export check could not run: %r" % (exc,),
+                    "ran_check": False, "manifest": str(manifest_path(sid))}
+        ran_check = True
+        manifest = read_manifest(sid)
+        if manifest is None:
+            tail = (completed.stderr or completed.stdout or "").strip()[-500:]
+            return {"allow": False, "state": "REFUSED", "sid_sha256": sid_sha,
+                    "reason": "the export check wrote no manifest: " + tail,
+                    "ran_check": True, "manifest": str(manifest_path(sid))}
+        sid_sha = hashlib.sha256(sid.read_bytes()).hexdigest()
+    verdict = decide(sid_sha, manifest, archived)
+    return {**verdict, "sid_sha256": sid_sha, "manifest": str(manifest_path(sid)),
+            "ran_check": ran_check,
+            "differing_items": (manifest or {}).get("original_differing_items"),
+            "rewritten_from_checkpoint": bool((manifest or {}).get("rewritten_from_checkpoint"))}
+
+
 def tree_python(tree: Path) -> str:
     """Interpreter the tree itself launches with, else the default Stage2 env."""
     sources = [tree / "train_rqvae.py"]
@@ -2413,6 +2461,13 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         }
     if not sid.is_file():
         return {"started": False, "refused": f"no item_sids file at {given}"}
+    # The export gate runs first: it may rewrite the table from the checkpoint,
+    # and everything below (layer record, collision, variant) must read that one.
+    export_gate = stage3_export_gate(sid)
+    if not export_gate["allow"]:
+        return {"started": False, "refused": "export gate: " + export_gate["reason"],
+                "export_gate": export_gate}
+
     # Owner policy (updated 2026-11-10): Stage 3 entry now requires the
     # three-level collision to be strictly below 40%.  Other quality metrics
     # stay diagnostic.  The mandatory layer record is still written before any
@@ -2455,6 +2510,7 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
     chosen_variant = derive_stage3_variant(sid_logical)
     context = {
         "sid": sid_info,
+        "export_gate": export_gate,
         "variant": chosen_variant,
         "per_user_dump": STAGE3_PER_USER_DUMP,
         "layer_record": layer_record,

@@ -96,3 +96,25 @@ L1 层面 12 个臂也在 0.9997–1.0000，说明差异集中在**近并列（n
 3. **不能用归档 checkpoint 反推 SID**：轻则换掉几十个近并列商品（落在同配方重训噪声内），重则整张表不相关。
 4. 修复面：4 个 size mismatch 说明 checkpoint 与源码不是同一次运行的产物；7 个缺模块、5 个缺文件说明上传器的白名单（排除 `dataset/`）与部分 trainer 的实际依赖不匹配。这两类是**可以重传修好的**——只要本地或历史上还有对应的树。
 5. 对未来的臂：`e26043af` 引入的 `export_guard`（从磁盘 checkpoint 重新加载导出、两次编码必须一致、写 `export_manifest.json`）应当成为**所有**树的默认导出路径，而不只是被重跑的 Uniform-KNN。两个 Uniform-KNN 臂 100.00% 一致，就是这条路径有效的证据。
+
+---
+
+# 已接入：Stage 3 入口现在强制复核导出
+
+审计之后的修复（2026-11-18）：
+
+| 组件 | 作用 |
+|---|---|
+| `tools/research/stage2/export_check.py` | 在**新进程**里从磁盘 checkpoint 重新导出，与 `item_sids.json` 逐项比对，写 `export_manifest.json`（两个 sha256、`tokens_match`、`differing_items`、`checked_at`）。`--rewrite` 时才用 checkpoint 的表替换 SID，并把训练器那张留成 `item_sids.trainer.json`。 |
+| `tools/research/stage2/export_policy.py` | 纯标准库的判决：manifest 指同一张表且 `tokens_match` → `VERIFIED`；指别的表/不可读/不匹配 → `REFUSED`；无 manifest 但在 R2 账本里 → `UNVERIFIED` 放行；无 manifest 且不在账本 → `REFUSED`。 |
+| `tools/genrec-mcp/server.py::stage3_export_gate` | `stage3_start` 的**第一步**：没有 manifest 且不在账本时，用树的解释器跑 `export_check --rewrite`，把 SID 变成 checkpoint 自己的表；失败就拒绝启动，并把原因写进返回。 |
+
+实测（本轮）：
+
+- 拿 `TIGER_graphlet_codebook_rq` 的真实权重跑 `export_check --rewrite`：**89 / 24,587** 个商品与训练器那张表不同（与审计数字一致），SID 被替换为 checkpoint 的表，训练器那张存为 `item_sids.trainer.json`，manifest 记 `rewritten_from_checkpoint=true`。
+- MCP 重载后用一个没有源码树的探针 SID 调 `stage3_start`：被拒，返回 `export gate: the export check wrote no manifest: cannot find the Stage 2 source tree of ...`。
+- 两个已归档臂（F0、76）过闸门得到 `UNVERIFIED`（放行，不重跑），因为它们已在 R2 账本里、recall 已按原表测过。
+
+测试：`tools/research/stage2/tests/test_export_policy.py`（9 个判决用例，含「归档表 + 已记录不匹配 → UNVERIFIED 而非拒绝」）与 `test_export_check.py`（4 个端到端用例：匹配放行、不匹配如实报告且默认不改表、`--rewrite` 替换并留底、checkpoint 与模型不匹配时报错）。14 个全过。
+
+仍未覆盖：**已归档的 77 个编号不会被自动修**——它们放行但标 `UNVERIFIED`；要修只能重跑导出并重新测 recall。
