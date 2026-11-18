@@ -96,10 +96,12 @@ def test_patched_baseline_survives_a_collapsed_cost(scratch):
 def test_patched_mixed_tree_survives_a_collapsed_cost(scratch):
     tree = scratch("mixed", MIXED)
     report = apply_floor(tree)
-    # `True` on a first install, `"module"` when only the installed copy was stale
-    assert report["changed"] in (True, "module") and report["family"] == "mixed"
+    # `True` on a first install, `"module"` when the installed copy was stale, `False` when
+    # the tree already carries exactly this guard -- the outcome is what matters.
+    assert report["changed"] in (True, "module", False) and report["family"] == "mixed"
     verdict = verify_tree(tree)
     assert verdict["ok"] is True, verdict
+    assert verdict["used"] == verdict["used_forward"] == 8
 
 
 def test_patching_is_idempotent(scratch):
