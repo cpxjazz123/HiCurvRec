@@ -608,6 +608,30 @@ def check_encoder_gradient(tree: Path | str) -> dict:
             "detail": str(report.get("reason") or report.get("detail"))[:300]}
 
 
+def check_assignment_floor(tree: Path | str) -> dict:
+    """The candidate must carry the assignment floor (stage2/anticollapse).
+
+    Machine-made: the tree's own quantiser is imported in a fresh interpreter and given a
+    cost matrix where only a few codewords are reachable. A tree without the floor -- or
+    with a quantiser the patcher does not recognise -- FAILs, because nothing then prevents
+    the absorbing state that killed 193 of 256 codewords in round 1.
+    """
+    from .anticollapse import UnknownTree, verify_tree
+    tree = Path(tree).resolve()
+    python = getattr(contract, "STAGE2_PYTHON", None)
+    try:
+        verdict = verify_tree(tree, python=python)
+    except UnknownTree as error:
+        return {"status": "FAIL", "name": "assignment_floor", "detail": str(error)[:400]}
+    if not verdict.get("ok"):
+        return {"status": "FAIL", "name": "assignment_floor",
+                "detail": "%s/%s codewords survived a collapsed cost"
+                          % (verdict.get("used"), verdict.get("codewords"))}
+    return {"status": "PASS", "name": "assignment_floor",
+            "detail": "%s: %s/%s codewords" % (verdict["family"], verdict["used"],
+                                               verdict["codewords"])}
+
+
 def run_all(tree: Path | str) -> dict:
     """The conformance report of one candidate tree."""
     tree = Path(tree).resolve()
@@ -615,7 +639,7 @@ def run_all(tree: Path | str) -> dict:
     # must not run an epoch before it is refused.
     # The owner kept only the real-entry check in the admission on 2026-11-10:
     # the other conformance probes stay as standalone diagnostics, not gates.
-    checks = [check_entry(tree)]
+    checks = [check_entry(tree), check_assignment_floor(tree)]
     passed = all(check["status"] == "PASS" for check in checks)
     admissible = passed
     _discard_admission_tree(tree)

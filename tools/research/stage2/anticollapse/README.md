@@ -41,6 +41,12 @@ FORCE_CONSTRAINED_ALL = True  # True: 关闭 Sinkhorn,训练与导出共用一�
 
 `FORCE_CONSTRAINED_ALL = True` 很关键:只给训练侧加下限、导出仍走原来的规则,会得到"训练时 256 个码字、导出时仍在空码"的分裂(第 8 轮实测 H1 的 L3 训练/导出一致率只有 0.48)。
 
+## 它现在是强制的
+
+- **候选创建时自动安装**:`tools/research/rounds/baseline.py::copy_baseline` 在"副本与基线一致"的证明**之后**安装这一层,并把 `assignment_floor` 与安装后的源码摘要写进 provenance。经此创建的每个候选树天生带保护。
+- **准入时机器检查**:`tools/research/stage2/checks.py::check_assignment_floor` 已进入 `run_all`;没有这一层的树、或量化器不被识别的树一律 `FAIL`,不会被派发。
+- 因此"任何新机制都不坍缩"不再依赖作者记得跑命令,而是框架的属性。
+
 ## 幂等与失败关闭
 
 - 已经装过的树再调用一次是 no-op(`changed: false`)。

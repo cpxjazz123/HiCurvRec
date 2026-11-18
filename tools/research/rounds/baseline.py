@@ -104,6 +104,21 @@ def copy_baseline(destination: Path, *, baseline: Path = None) -> dict:
     if not _same_source_except_arm(source, destination):
         # A copy that changed the baseline's own source is not a copy of it.
         raise BaselineError("the candidate copy does not match the baseline digest")
+    # The anti-collapse floor is the framework's, exactly like the geometry module above:
+    # it is installed after the copy is proven faithful, so the provenance records both the
+    # digest of the copy and the digest of what will actually train. Every candidate created
+    # this way starts protected; without it a codeword that loses its last item receives
+    # exactly zero gradient and can never return (round 1 measured 193 of 256 dying).
+    try:                                   # imported as tools.research.rounds.baseline
+        from ..stage2.anticollapse import UnknownTree, apply_floor
+    except ImportError:                    # imported as rounds.baseline (tests, scripts)
+        from stage2.anticollapse import UnknownTree, apply_floor
+    try:
+        installed = apply_floor(destination)
+    except UnknownTree as error:
+        raise BaselineError("cannot install the assignment floor: " + str(error)) from error
+    provenance["assignment_floor"] = installed
+    provenance["candidate_digest_after_floor"] = source_digest(destination)
     return provenance
 
 

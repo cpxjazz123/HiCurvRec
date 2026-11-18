@@ -18,15 +18,16 @@ assignment.
 """
 from __future__ import annotations
 
-import torch
+# `torch` is imported inside the functions: the MCP server and the round bookkeeping run
+# on the stdlib-only interpreter, and they import this package to install the layer into a
+# candidate. Only the training process needs torch.
 
 
 class InfeasibleFloor(RuntimeError):
     """The batch is too small to give every codeword `floor` items."""
 
 
-@torch.no_grad()
-def constrained_assignment(cost: torch.Tensor, floor: int) -> tuple[torch.Tensor, dict]:
+def constrained_assignment(cost, floor: int):
     """Cheapest assignment with `counts >= floor` for every codeword.
 
     Greedy repair, processed one *pass* per round rather than one codeword at a time: within
@@ -34,6 +35,10 @@ def constrained_assignment(cost: torch.Tensor, floor: int) -> tuple[torch.Tensor
     matrix operation, and duplicate picks are dropped so the loop can only shrink the
     deficit. `items >= codewords * floor` is checked up front and an infeasible call raises.
     """
+    # No autograd wrapper: every tensor below is detached or built from plain lists, so the
+    # call is gradient-free by construction and the module stays importable without torch.
+    import torch
+
     if cost.dim() != 2:
         raise ValueError("cost must be (items, codewords)")
     items, codewords = cost.shape
@@ -81,8 +86,10 @@ def constrained_assignment(cost: torch.Tensor, floor: int) -> tuple[torch.Tensor
             {"floor": floor, "moves": moves, "min_count": min(counts), "satisfied": True})
 
 
-def describe(cost: torch.Tensor, floor: int) -> dict:
+def describe(cost, floor: int) -> dict:
     """What the floor would cost on this batch, without changing anything."""
+    import torch
+
     items, codewords = cost.shape
     if items < codewords * floor:
         return {"feasible": False, "items": int(items), "codewords": int(codewords)}

@@ -22,8 +22,12 @@ mechanism-agnostic -- it consumes only the cost matrix the candidate's own metri
 -- and it is proven on both quantiser families in the repository (the frozen baseline's
 `VQLayer` and the mixed `MixedVQLevel`) by running the patched class in a fresh interpreter
 on a cost matrix where all but a few codewords are unreachable. `python -m anticollapse
-<tree>` installs it and prints the verification; the guarantee is occupancy, not quality, so
-a degenerate encoder still has to be refused by the certification gate.
+<tree>` installs it and prints the verification. It is installed automatically when a
+candidate is created (`rounds/baseline.py::copy_baseline`, recorded in the provenance) and
+`stage2/checks.py::check_assignment_floor` fails admission for any tree that lacks it, so the
+guarantee is a property of the framework rather than of the author's diligence. The guarantee
+is occupancy, not quality: a degenerate encoder still has to be refused by the certification
+gate.
 
 **Issue #117 surface, still mounted by the MCP:** `mcp/` (the async handlers and
 the detached workers behind `research_start` and `research_verify_*`),

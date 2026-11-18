@@ -166,7 +166,7 @@ print(json.dumps({{"used": int(torch.unique(index).numel()), "codewords": 8}}))
 """
 
 
-def verify_tree(tree: Path, family: str | None = None) -> dict:
+def verify_tree(tree: Path, family: str | None = None, python: str | None = None) -> dict:
     """Run the patched quantiser on a collapsed cost matrix in a fresh interpreter.
 
     A fresh process is the point: it proves the patched module imports and behaves the way
@@ -185,7 +185,7 @@ def verify_tree(tree: Path, family: str | None = None) -> dict:
     cls = spec.layer_expr.split("(")[0]
     script = VERIFY_TEMPLATE.format(module=f"model.{module}", cls=cls,
                                     expr=spec.layer_expr)
-    result = subprocess.run([sys.executable, "-c", script], cwd=str(tree),
+    result = subprocess.run([python or sys.executable, "-c", script], cwd=str(tree),
                             capture_output=True, text=True, timeout=600)
     if result.returncode != 0:
         raise UnknownTree(f"verification failed in {tree}:\n{result.stderr[-2000:]}")

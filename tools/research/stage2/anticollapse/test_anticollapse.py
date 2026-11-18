@@ -106,6 +106,34 @@ def test_an_unrecognised_quantiser_fails_closed(scratch):
         apply_floor(tree)
 
 
+def test_copy_baseline_installs_the_floor_and_records_it(scratch):
+    """The framework's own candidate-creation path must produce a protected tree."""
+    sys.path.insert(0, str(REPO / "tools" / "research"))
+    from rounds.baseline import copy_baseline
+
+    destination = SCRATCH / "created_by_framework"
+    if destination.exists():
+        shutil.rmtree(destination)
+    try:
+        provenance = copy_baseline(destination)
+        assert provenance["assignment_floor"]["changed"] is True
+        assert (destination / "assignment_floor.py").is_file()
+        assert provenance["candidate_digest"] != provenance["candidate_digest_after_floor"]
+        assert verify_tree(destination)["ok"] is True
+    finally:
+        shutil.rmtree(destination, ignore_errors=True)
+
+
+def test_the_admission_check_passes_a_protected_tree_and_fails_the_bare_baseline(scratch):
+    sys.path.insert(0, str(REPO / "tools" / "research"))
+    from stage2 import checks
+
+    protected = scratch("admission", BASELINE)
+    apply_floor(protected)
+    assert checks.check_assignment_floor(protected)["status"] == "PASS"
+    assert checks.check_assignment_floor(BASELINE)["status"] == "FAIL"
+
+
 def test_a_tree_without_a_quantiser_fails_closed(scratch):
     empty = SCRATCH / "empty"
     empty.mkdir(parents=True, exist_ok=True)
