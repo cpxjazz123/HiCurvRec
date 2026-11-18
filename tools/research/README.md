@@ -16,6 +16,15 @@ everything else about running it belongs to `stage2/`.
 helpers) and `science/` (train-only measurements, the SID layer record and the
 forensics study). Both are used by the live path.
 
+**Anti-collapse layer:** `stage2/anticollapse/` replaces a candidate's assignment step
+with the cheapest assignment that gives every codeword at least one item. It is
+mechanism-agnostic -- it consumes only the cost matrix the candidate's own metric produces
+-- and it is proven on both quantiser families in the repository (the frozen baseline's
+`VQLayer` and the mixed `MixedVQLevel`) by running the patched class in a fresh interpreter
+on a cost matrix where all but a few codewords are unreachable. `python -m anticollapse
+<tree>` installs it and prints the verification; the guarantee is occupancy, not quality, so
+a degenerate encoder still has to be refused by the certification gate.
+
 **Issue #117 surface, still mounted by the MCP:** `mcp/` (the async handlers and
 the detached workers behind `research_start` and `research_verify_*`),
 `workflows/` (DATA, LITERATURE, GEOMETRY, REVIEW), `verification/` (independent
