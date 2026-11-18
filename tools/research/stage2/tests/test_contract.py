@@ -199,3 +199,33 @@ def test_the_entry_check_redirects_every_module_level_output_path(monkeypatch):
         assert f"t.{name} =" in script or f"'{name}'" in script, (
             name + " is derived at import time and must be redirected explicitly")
     assert "EXPORT_MANIFEST" in script
+
+
+def test_the_collapse_watch_reads_the_stream_and_the_gate(tmp_path):
+    """The trainer already records the collision; the watcher turns it into an exit code."""
+    import json
+    import subprocess
+    import sys as _sys
+
+    from tools.research.stage2 import collapse_watch
+
+    metrics = tmp_path / "training_metrics.jsonl"
+    rows = [{"event": "train", "epoch": 1},
+            {"event": "ckpt_saved", "epoch": 10, "collision": 0.12}]
+    metrics.write_text("\n".join(json.dumps(row) for row in rows) + "\n")
+    script = Path(collapse_watch.__file__)
+    allowed = subprocess.run([_sys.executable, str(script), str(metrics)],
+                             capture_output=True, text=True, timeout=120)
+    assert allowed.returncode == 0 and "allowed" in allowed.stdout
+
+    rows.append({"event": "ckpt_saved", "epoch": 20, "collision": 0.93})
+    metrics.write_text("\n".join(json.dumps(row) for row in rows) + "\n")
+    refused = subprocess.run([_sys.executable, str(script), str(metrics)],
+                             capture_output=True, text=True, timeout=120)
+    assert refused.returncode == 2 and "REFUSED" in refused.stdout
+
+    empty = tmp_path / "empty.jsonl"
+    empty.write_text("")
+    missing = subprocess.run([_sys.executable, str(script), str(empty)],
+                             capture_output=True, text=True, timeout=120)
+    assert missing.returncode == 1        # NOT_RUN is not a pass
