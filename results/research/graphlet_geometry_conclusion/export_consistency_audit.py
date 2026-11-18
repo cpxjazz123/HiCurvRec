@@ -6,22 +6,27 @@ a SID that a post-processing step rewrote, or one exported from a different
 checkpoint than the one stored beside it, would make the archived recall
 unreproducible.
 
-This script reloads each locally available (tree, checkpoint, SID) triple, calls
-the tree's own export path -- `model.get_indices`, which is exactly what the
-trainer used for `item_sids.json` -- and compares the first three tokens item by
-item.  It reports the match rate and, when they differ, how many items differ.
+This script reloads a (tree, checkpoint, SID) triple, calls the tree's own export
+path -- `model.get_indices`, which is exactly what the trainer used for
+`item_sids.json` -- and compares the first three tokens item by item.
 
-    /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 \
-        results/research/graphlet_geometry_conclusion/export_consistency_audit.py
+Two modes:
+
+    # the arms that still have local artifacts
+    python3 .../export_consistency_audit.py
+
+    # a directory of downloaded archives, <root>/<NN>/{mechanism/,item_sids.json,rqvae_best.pth}
+    python3 .../export_consistency_audit.py --archive-root results/research/issue139/_r2_download
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import importlib.util
+import inspect
 import json
 import sys
 from pathlib import Path
-from types import SimpleNamespace
 
 import numpy as np
 import torch
@@ -75,6 +80,23 @@ ARMS = [
 ]
 
 
+def archive_specs(root: Path) -> list[dict]:
+    """Downloaded archives: <root>/<NN>/{<mechanism>/train_rqvae.py, item_sids.json, rqvae_best.pth}."""
+    specs = []
+    for number_dir in sorted(p for p in root.iterdir() if p.is_dir()):
+        sid = number_dir / "item_sids.json"
+        checkpoint = number_dir / "rqvae_best.pth"
+        trees = sorted(p for p in number_dir.iterdir()
+                       if p.is_dir() and (p / "train_rqvae.py").is_file())
+        if not sid.is_file() or not checkpoint.is_file() or not trees:
+            specs.append({"name": number_dir.name, "tree": None,
+                          "checkpoint": checkpoint, "sid": sid,
+                          "error": "missing sid/checkpoint/source"})
+            continue
+        specs.append(arm(f"{number_dir.name}:{trees[0].name}", trees[0], checkpoint, sid))
+    return specs
+
+
 def sha256_of(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
@@ -125,63 +147,74 @@ def build_model(tree: Path, trainer, n_items: int, device):
     return package.RQVAE(config, in_dim=768)
 
 
+def audit_one(spec, embeddings, device) -> dict:
+    if spec.get("tree") is None:
+        return {"verdict": "AUDIT_FAILED", "error": spec.get("error", "no source tree")}
+    if not spec["checkpoint"].is_file() or not spec["sid"].is_file():
+        return {"verdict": "AUDIT_FAILED", "error": "missing checkpoint or sid"}
+    trainer = load_trainer(spec["tree"])
+    model = build_model(spec["tree"], trainer, len(embeddings), device)
+    payload = torch.load(spec["checkpoint"], map_location="cpu", weights_only=False)
+    state = payload["state_dict"] if "state_dict" in payload else payload
+    missing, unexpected = model.load_state_dict(state, strict=False)
+    if missing or unexpected:
+        return {"verdict": "AUDIT_FAILED", "error": "state mismatch",
+                "missing": list(missing)[:5], "unexpected": list(unexpected)[:5]}
+    model.to(device).eval()
+    kwargs = {}
+    if "item_ids" in inspect.signature(model.get_indices).parameters:
+        kwargs["item_ids"] = torch.arange(len(embeddings), dtype=torch.long, device=device)
+    with torch.no_grad():
+        tokens = model.get_indices(embeddings.to(device), **kwargs).cpu().numpy().astype(np.int64)
+    del model
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
+    exported = json.loads(spec["sid"].read_text(encoding="utf-8"))
+    expected = np.array([[int(v) for v in exported[str(i)][:3]] for i in range(len(exported))])
+    same_l1 = float((tokens[:, 0] == expected[:, 0]).mean())
+    same_l3 = float((tokens[:, :3] == expected).all(axis=1).mean())
+    return {
+        "items": int(tokens.shape[0]), "same_l1": same_l1, "same_l3": same_l3,
+        "differing_items": int(round((1 - same_l3) * tokens.shape[0])),
+        "checkpoint_sha256": sha256_of(spec["checkpoint"]),
+        "sid_sha256": sha256_of(spec["sid"]),
+        "verdict": "REPRODUCIBLE" if same_l3 > 0.9999 else "NOT_REPRODUCIBLE",
+    }
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--archive-root", default="")
+    parser.add_argument("--out", default="")
+    args = parser.parse_args()
+    if args.archive_root:
+        specs = archive_specs(Path(args.archive_root))
+        print(f"{len(specs)} archive numbers under {args.archive_root}")
+    else:
+        specs = ARMS
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     embeddings = torch.from_numpy(np.load(EMBEDDING).astype(np.float32))
-    report = {"schema": "genrec.export_consistency_audit.v1", "arms": {}}
-    print(f"{'arm':40s} {'items':>6s} {'same L1':>8s} {'same L1-3':>10s} {'sid sha':>14s}")
-    for spec in ARMS:
-        if not spec["checkpoint"].is_file() or not spec["sid"].is_file():
-            print(f"{spec['name']:40s} missing checkpoint or sid")
-            continue
+    report = {"schema": "genrec.export_consistency_audit.v1", "mode": args.archive_root or "local",
+              "arms": {}}
+    print(f"{'number/arm':52s} {'same L1':>8s} {'same L3':>8s} {'diff':>5s}  verdict")
+    for spec in specs:
         try:
-            trainer = load_trainer(spec["tree"])
-            model = build_model(spec["tree"], trainer, len(embeddings), device)
+            entry = audit_one(spec, embeddings, device)
         except Exception as exc:  # noqa: BLE001 - reported, never hidden
-            report["arms"][spec["name"]] = {"verdict": "AUDIT_FAILED", "error": repr(exc)}
-            print(f"{spec['name']:40s} AUDIT_FAILED {exc!r}", flush=True)
-            continue
-        payload = torch.load(spec["checkpoint"], map_location="cpu", weights_only=False)
-        state = payload["state_dict"] if "state_dict" in payload else payload
-        missing, unexpected = model.load_state_dict(state, strict=False)
-        if missing or unexpected:
-            report["arms"][spec["name"]] = {"error": "state mismatch",
-                                            "missing": list(missing)[:5],
-                                            "unexpected": list(unexpected)[:5]}
-            print(f"{spec['name']:40s} state mismatch missing={list(missing)[:3]}")
-            continue
-        model.to(device).eval()
-        import inspect
-        kwargs = {}
-        if "item_ids" in inspect.signature(model.get_indices).parameters:
-            # The role arms route per item; their trainer exports with these ids.
-            kwargs["item_ids"] = torch.arange(len(embeddings), dtype=torch.long, device=device)
-        with torch.no_grad():
-            tokens = model.get_indices(embeddings.to(device), **kwargs).cpu().numpy().astype(np.int64)
-        exported = json.loads(spec["sid"].read_text(encoding="utf-8"))
-        expected = np.array([[int(v) for v in exported[str(i)][:3]] for i in range(len(exported))])
-        same_l1 = float((tokens[:, 0] == expected[:, 0]).mean())
-        same_l3 = float((tokens[:, :3] == expected).all(axis=1).mean())
-        report["arms"][spec["name"]] = {
-            "items": int(tokens.shape[0]),
-            "same_l1": same_l1, "same_l3": same_l3,
-            "differing_items": int(round((1 - same_l3) * tokens.shape[0])),
-            "checkpoint_sha256": sha256_of(spec["checkpoint"]),
-            "sid_sha256": sha256_of(spec["sid"]),
-            "verdict": "REPRODUCIBLE" if same_l3 > 0.9999 else "NOT_REPRODUCIBLE",
-        }
-        print(f"{spec['name']:40s} {tokens.shape[0]:6d} {same_l1:8.4f} {same_l3:10.4f} "
-              f"{sha256_of(spec['sid'])[:12]:>14s}", flush=True)
-        del model
-        if device.type == "cuda":
-            torch.cuda.empty_cache()
+            entry = {"verdict": "AUDIT_FAILED", "error": repr(exc)}
+        report["arms"][spec["name"]] = entry
+        print(f"{spec['name']:52s} {entry.get('same_l1', 0):8.4f} {entry.get('same_l3', 0):8.4f} "
+              f"{entry.get('differing_items', '-'):>5}  {entry['verdict']}"
+              + (f"  {entry['error'][:60]}" if entry.get("error") else ""), flush=True)
 
-    out = HERE / "export_consistency_audit.json"
+    out = Path(args.out) if args.out else (HERE / ("export_consistency_audit.json" if not args.archive_root
+                                                   else "export_consistency_archive.json"))
     out.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
-    bad = [name for name, entry in report["arms"].items()
-           if entry.get("verdict") == "NOT_REPRODUCIBLE"]
-    print(f"\nnot reproducible from the archived checkpoint: {len(bad)} {bad}")
-    print(f"wrote {out.relative_to(REPO)}")
+    verdicts = [entry["verdict"] for entry in report["arms"].values()]
+    print(f"\nreproducible {verdicts.count('REPRODUCIBLE')} / {len(verdicts)}; "
+          f"failed {verdicts.count('AUDIT_FAILED')}; "
+          f"not reproducible {verdicts.count('NOT_REPRODUCIBLE')}")
+    print(f"wrote {out}")
 
 
 if __name__ == "__main__":

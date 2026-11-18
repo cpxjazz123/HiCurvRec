@@ -963,3 +963,6 @@ results/research/**/*.in
 # arms verify its sha256 on every load, and it was lost once when the whole
 # results/research tree was deleted. Tracked so the arms stay reproducible.
 !results/research/issue215/orca_roles_frozen.csv
+
+# Downloaded R2 copies used by the export-consistency audit; regenerable with rclone.
+results/research/issue139/_r2_download/
