@@ -53,8 +53,12 @@ def constrained_assignment(cost, floor: int):
         # A mechanism may legitimately use more codewords than one batch has items (a large
         # codebook, a small batch on one card). No assignment can cover every codeword in
         # that batch, so the strongest guarantee available is that **no two items share a
-        # codeword**, which keeps the codewords that do appear distinct and rotates coverage
-        # across steps. Crashing here would make the guard unusable for those mechanisms.
+        # codeword**. That keeps the codewords that do appear distinct, and nothing more:
+        # it does **not** rotate, because the choice is a pure function of the cost matrix
+        # (measured: ten calls with an unchanged matrix over 8192 codewords and 4096 items
+        # touch the same 4096). Long-run occupancy when K > items is therefore not
+        # guaranteed by this layer, and a mechanism in that regime must not rely on it.
+        # Crashing here would make the guard unusable for those mechanisms.
         return _coverage_assignment(cost)
 
     costs = cost.detach().double()

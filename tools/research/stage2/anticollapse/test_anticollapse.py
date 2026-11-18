@@ -86,7 +86,8 @@ def scratch():
 def test_patched_baseline_survives_a_collapsed_cost(scratch):
     tree = scratch("euclid", BASELINE)
     report = apply_floor(tree)
-    assert report["changed"] is True and report["family"] == "euclid"
+    # `True` on a first install, `"module"` when only the installed copy was stale
+    assert report["changed"] in (True, "module") and report["family"] == "euclid"
     verdict = verify_tree(tree)
     assert verdict["ok"] is True, verdict
     assert verdict["used"] == verdict["codewords"] == 8
@@ -95,7 +96,8 @@ def test_patched_baseline_survives_a_collapsed_cost(scratch):
 def test_patched_mixed_tree_survives_a_collapsed_cost(scratch):
     tree = scratch("mixed", MIXED)
     report = apply_floor(tree)
-    assert report["changed"] is True and report["family"] == "mixed"
+    # `True` on a first install, `"module"` when only the installed copy was stale
+    assert report["changed"] in (True, "module") and report["family"] == "mixed"
     verdict = verify_tree(tree)
     assert verdict["ok"] is True, verdict
 
@@ -110,9 +112,11 @@ def test_patching_is_idempotent(scratch):
 
 
 def test_an_unrecognised_quantiser_fails_closed(scratch):
-    tree = scratch("unknown", MIXED)
-    original = (tree / "model" / "mixed_rq.py").read_text(encoding="utf-8")
-    (tree / "model" / "mixed_rq.py").write_text(
+    # The frozen baseline is the only tree known to be unpatched: every trainable tree in
+    # this repository now carries the guard, so their anchors no longer match.
+    tree = scratch("unknown", BASELINE)
+    original = (tree / "model" / "layers.py").read_text(encoding="utf-8")
+    (tree / "model" / "layers.py").write_text(
         original.replace("return torch.argmin(distances, dim=-1)",
                          "return torch.argmin(distances, dim=-2)"),
         encoding="utf-8")
@@ -510,3 +514,22 @@ def test_an_assignment_through_min_dim_is_refused(scratch):
         apply_floor(tree)
     assert "still assigns without the guard" in str(error.value)
     assert "min(dim=" in str(error.value)
+
+
+def test_coverage_does_not_rotate_and_the_documents_say_so():
+    """Coverage guarantees distinctness inside a step, nothing across steps.
+
+    8192 codewords, 4096 items, unchanged cost matrix: ten calls touch the same 4096
+    codewords. That is why `floor.py` and `GUARANTEE.md` state the limitation instead of
+    claiming rotation -- the claim has to match the measurement.
+    """
+    cost = torch.rand(4096, 8192) + 10.0
+    cost[:, :8] = torch.rand(4096, 8)
+    seen: set[int] = set()
+    for _ in range(10):
+        index, report = constrained_assignment(cost, 1)
+        assert report["mode"] == "coverage"
+        seen.update(index.tolist())
+    assert len(seen) == 4096, "coverage started rotating; update the documents"
+    source = (Path(__file__).resolve().parent / "floor.py").read_text(encoding="utf-8")
+    assert "it does **not** rotate" in source
