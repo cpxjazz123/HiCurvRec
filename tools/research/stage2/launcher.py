@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 from . import contract
+from .anticollapse import patch_tree
 
 
 def launch(entry: Path | str, result_dir: Path | str, *, port: int | None = None,
@@ -34,6 +35,12 @@ def launch(entry: Path | str, result_dir: Path | str, *, port: int | None = None
     result_dir.mkdir(parents=True, exist_ok=True)
     logs = result_dir / "logs"
     logs.mkdir(parents=True, exist_ok=True)
+    # The floor is installed here, at the only permitted launch path, so no candidate can
+    # reach training without it -- no cooperation from the mechanism's own code is needed.
+    # Fails closed on a quantiser this repository does not know.
+    installed = patch_tree.apply_floor(entry.parent)
+    (result_dir / "assignment_floor.json").write_text(
+        __import__("json").dumps(installed, indent=1, sort_keys=True), encoding="utf-8")
     interpreter = python or sys.executable
     torchrun = Path(interpreter).with_name("torchrun")
     if not torchrun.is_file():

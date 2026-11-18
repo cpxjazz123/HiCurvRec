@@ -54,16 +54,27 @@ MIXED = Family(
     import_anchor=(
         "from .poincare_contract import expmap0, logmap0, mobius_add, project, squared_distance",
         "from .poincare_contract import expmap0, logmap0, mobius_add, project, squared_distance\n"
-        f"from {TARGET_NAME[:-3]} import constrained_assignment",
+        f"from {TARGET_NAME[:-3]} import (constrained_assignment, verify_assignment,\n"
+        f"                                     verify_codebook)",
     ),
     edits=[
         # training assignment
         ("        return torch.argmin(distances, dim=-1)",
          "        index, _ = constrained_assignment(distances, ASSIGNMENT_FLOOR)\n"
          "        return index.to(distances.device)"),
-        # export assignment
+        # the call site: whatever `_indices` returned is checked, so a mechanism that
+        # assigns somewhere else (e.g. re-enables the Sinkhorn branch) is caught here
+        ("        index = self._indices(cost, infer_use_sk)\n"
+         "        codes = self.get_code_embs()",
+         "        index = self._indices(cost, infer_use_sk)\n"
+         "        verify_assignment(index, self.n_embed, ASSIGNMENT_FLOOR)\n"
+         "        codes = self.get_code_embs()\n"
+         "        if not self.training:\n"
+         "            verify_codebook(codes)"),
+        # export assignment: the floor, then the geometric check on the table it just used
         ("            index = torch.argmin(cost, dim=-1)",
-         "            index, _ = constrained_assignment(cost, ASSIGNMENT_FLOOR)"),
+         "            index, _ = constrained_assignment(cost, ASSIGNMENT_FLOOR)\n"
+         "            verify_codebook(layer.get_code_embs())"),
     ],
     force_edit=("        self.use_sk = sk_epsilon > 0 and sk_iters > 0",
                 "        self.use_sk = (sk_epsilon > 0 and sk_iters > 0) and not FORCE_CONSTRAINED_ALL"),
@@ -76,12 +87,20 @@ EUCLID = Family(
     import_anchor=(
         "from distances import build_distance",
         "from distances import build_distance\n"
-        f"from {TARGET_NAME[:-3]} import constrained_assignment",
+        f"from {TARGET_NAME[:-3]} import (constrained_assignment, verify_assignment,\n"
+        f"                                     verify_codebook)",
     ),
     edits=[
         ("        return torch.argmin(distances, dim=-1)",
          "        index, _ = constrained_assignment(distances, ASSIGNMENT_FLOOR)\n"
          "        return index.to(distances.device)"),
+        ("        embed_ind = self._indices(self._distances(latent), infer_use_sk)\n"
+         "        onehot = F.one_hot(embed_ind, self.n_embed)",
+         "        embed_ind = self._indices(self._distances(latent), infer_use_sk)\n"
+         "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"
+         "        if not self.training:\n"
+         "            verify_codebook(self.get_code_embs())\n"
+         "        onehot = F.one_hot(embed_ind, self.n_embed)"),
         ("        embed_ind = torch.argmin(self._distances(x), dim=-1).view(*x.shape[:-1])",
          "        embed_ind, _ = constrained_assignment(self._distances(x), ASSIGNMENT_FLOOR)\n"
          "        embed_ind = embed_ind.view(*x.shape[:-1])"),
@@ -98,6 +117,19 @@ class UnknownTree(RuntimeError):
     """The tree's quantiser is not one this patcher knows; it was not protected."""
 
 
+class ReadOnlyBaseline(RuntimeError):
+    """The frozen baseline is the copy source, never a target: it must stay byte-identical."""
+
+
+def _refuse_frozen_baseline(tree: Path) -> None:
+    """A baseline tree is read-only (CLAUDE.md 19b); patching it would destroy provenance."""
+    parts = Path(tree).resolve().parts
+    for index in range(len(parts) - 1):
+        if parts[index] == "stage2_RQ-VAE" and parts[index + 1] == "baseline":
+            raise ReadOnlyBaseline(
+                "refusing to modify the frozen baseline: " + str(tree))
+
+
 def _already_patched(text: str) -> bool:
     return "constrained_assignment" in text
 
@@ -110,6 +142,7 @@ def apply_floor(tree: Path, family: str | None = None, force_constrained: bool =
     from which quantiser file exists when it is not given.
     """
     tree = Path(tree).resolve()
+    _refuse_frozen_baseline(tree)
     if family is None:
         for name, candidate in FAMILIES.items():
             if (tree / candidate.module).is_file():
@@ -173,6 +206,7 @@ def verify_tree(tree: Path, family: str | None = None, python: str | None = None
     training will see it, not the way this test process happens to have cached it.
     """
     tree = Path(tree).resolve()
+    _refuse_frozen_baseline(tree)
     if family is None:
         for name, candidate in FAMILIES.items():
             if (tree / candidate.module).is_file():

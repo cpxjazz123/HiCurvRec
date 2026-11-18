@@ -616,12 +616,12 @@ def check_assignment_floor(tree: Path | str) -> dict:
     with a quantiser the patcher does not recognise -- FAILs, because nothing then prevents
     the absorbing state that killed 193 of 256 codewords in round 1.
     """
-    from .anticollapse import UnknownTree, verify_tree
+    from .anticollapse import ReadOnlyBaseline, UnknownTree, verify_tree
     tree = Path(tree).resolve()
     python = getattr(contract, "STAGE2_PYTHON", None)
     try:
         verdict = verify_tree(tree, python=python)
-    except UnknownTree as error:
+    except (UnknownTree, ReadOnlyBaseline) as error:
         return {"status": "FAIL", "name": "assignment_floor", "detail": str(error)[:400]}
     if not verdict.get("ok"):
         return {"status": "FAIL", "name": "assignment_floor",
@@ -639,7 +639,11 @@ def run_all(tree: Path | str) -> dict:
     # must not run an epoch before it is refused.
     # The owner kept only the real-entry check in the admission on 2026-11-10:
     # the other conformance probes stay as standalone diagnostics, not gates.
-    checks = [check_entry(tree), check_assignment_floor(tree)]
+    # Section 88 (owner, 2026-11-10): the admission runs the real entry, nothing else.
+    # The floor is not a gate here -- it is installed by `copy_baseline` and by `launch`,
+    # so a tree without it cannot reach a real run; `check_assignment_floor` stays as a
+    # standalone diagnostic.
+    checks = [check_entry(tree)]
     passed = all(check["status"] == "PASS" for check in checks)
     admissible = passed
     _discard_admission_tree(tree)

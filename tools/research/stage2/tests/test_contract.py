@@ -10,12 +10,15 @@ from __future__ import annotations
 
 import os
 import sys
+import shutil
 import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 
 from tools.research.stage2 import checks, contract, launcher
+
+REPO = Path(__file__).resolve().parents[4]
 
 
 def test_root_marker_is_unambiguous() -> str:
@@ -77,6 +80,12 @@ def test_launcher_working_directory_is_stable() -> str:
         result.mkdir()
         tree = Path(raw) / "tree"
         tree.mkdir()
+        # `launch` installs the assignment floor before it spawns anything and refuses a
+        # tree whose quantiser it cannot recognise, so the stub tree carries the baseline
+        # quantiser: the working-directory invariant is what this test is about.
+        (tree / "model").mkdir()
+        shutil.copy2(REPO / "stage2_RQ-VAE" / "baseline" / "TIGER_RQ-VAE" / "model"
+                     / "layers.py", tree / "model" / "layers.py")
         entry = tree / "entry.py"
         # The entry writes where it is running from; the test then asks where
         # that was. torchrun passes the script path only, so the entry must not

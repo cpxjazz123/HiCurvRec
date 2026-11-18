@@ -27,6 +27,10 @@ class InfeasibleFloor(RuntimeError):
     """The batch is too small to give every codeword `floor` items."""
 
 
+class CodebookCollapse(RuntimeError):
+    """A codeword ended up empty, or two codewords became the same vector."""
+
+
 def constrained_assignment(cost, floor: int):
     """Cheapest assignment with `counts >= floor` for every codeword.
 
@@ -97,3 +101,47 @@ def describe(cost, floor: int) -> dict:
     counts = torch.bincount(cheapest, minlength=codewords)
     return {"feasible": True, "items": int(items), "codewords": int(codewords),
             "dead_before": int((counts == 0).sum()), "min_count_before": int(counts.min())}
+
+
+def verify_assignment(index, codewords: int, floor: int) -> dict:
+    """Assert that the assignment actually produced satisfies the floor.
+
+    The floor is a claim about the indices the quantiser returns. A mechanism can return
+    indices from anywhere, so the claim is checked on the produced tensor rather than
+    trusted from the code path: if `min(count) < floor` the call raises and the step dies.
+    """
+    import torch
+
+    counts = torch.bincount(index.detach().long().reshape(-1), minlength=int(codewords))
+    low = int(counts.min())
+    if low < int(floor):
+        raise CodebookCollapse(
+            "assignment left " + str(int((counts < int(floor)).sum())) + " of "
+            + str(int(codewords)) + " codewords below the floor " + str(int(floor))
+            + " (min " + str(low) + ")")
+    return {"codewords": int(codewords), "floor": int(floor), "min_count": low}
+
+
+def verify_codebook(codes) -> dict:
+    """Assert that no two codewords are the same vector, and report their spacing.
+
+    Distinctness is exact and metric-free: two identical rows are the degenerate state the
+    geometry layer exists to exclude, and no metric can call them different. Near-duplicates
+    are *not* refused -- the mixed metric legitimately puts some codewords close together
+    (measured: 1e-4 at level 3) -- they are returned as a diagnostic.
+    """
+    import torch
+
+    codes = codes.detach()
+    rows = int(codes.shape[0])
+    distinct = int(torch.unique(codes, dim=0).shape[0])
+    if distinct < rows:
+        raise CodebookCollapse(
+            str(rows - distinct) + " of " + str(rows) + " codewords are duplicate rows")
+    flat = codes.reshape(rows, -1).float()
+    gram = flat @ flat.t()
+    norm = flat.pow(2).sum(dim=1)
+    distance = (norm[:, None] + norm[None, :] - 2.0 * gram).clamp_min(0).sqrt()
+    distance.fill_diagonal_(float("inf"))
+    return {"codewords": rows, "distinct": distinct,
+            "min_distance": float(distance.min())}

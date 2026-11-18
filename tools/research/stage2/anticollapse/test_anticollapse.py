@@ -16,8 +16,10 @@ import torch
 
 REPO = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from anticollapse import (InfeasibleFloor, UnknownTree, apply_floor,  # noqa: E402
-                          constrained_assignment, verify_tree)
+from anticollapse import (CodebookCollapse, InfeasibleFloor, ReadOnlyBaseline,  # noqa: E402
+                          UnknownTree,
+                          apply_floor, constrained_assignment, verify_assignment,
+                          verify_codebook, verify_tree)
 
 BASELINE = REPO / "stage2_RQ-VAE" / "baseline" / "TIGER_RQ-VAE"
 MIXED = REPO / "results" / "research" / "qda" / "trees" / "F0_seed42"
@@ -143,3 +145,106 @@ def test_a_tree_without_a_quantiser_fails_closed(scratch):
             apply_floor(empty)
     finally:
         shutil.rmtree(empty, ignore_errors=True)
+
+
+def test_the_floor_is_checked_on_what_the_quantiser_actually_returned():
+    """A mechanism can return indices from anywhere; the claim is checked, not trusted."""
+    good = torch.cat([torch.zeros(4, dtype=torch.long), torch.arange(1, 5)])
+    assert verify_assignment(good, 5, 1)["min_count"] == 1
+    bad = torch.tensor([0, 0, 0, 1], dtype=torch.long)
+    with pytest.raises(CodebookCollapse) as error:
+        verify_assignment(bad, 4, 1)
+    assert "2 of 4 codewords" in str(error.value)
+
+
+def test_duplicate_codewords_are_refused_and_close_ones_are_only_reported():
+    distinct = torch.eye(8)
+    report = verify_codebook(distinct)
+    assert report["distinct"] == 8 and report["min_distance"] == pytest.approx(2 ** 0.5)
+    duplicated = torch.eye(8)
+    duplicated[3] = duplicated[0]
+    with pytest.raises(CodebookCollapse) as error:
+        verify_codebook(duplicated)
+    assert "duplicate rows" in str(error.value)
+    close = torch.eye(8)
+    close[3] = close[0] + 1e-6            # near-duplicates are legitimate in this metric
+    assert verify_codebook(close)["distinct"] == 8
+
+
+def test_the_admission_runs_only_the_real_entry():
+    """Section 88: the floor is not a gate -- it is structural, installed before the run."""
+    sys.path.insert(0, str(REPO / "tools" / "research"))
+    from stage2 import checks
+    import inspect
+
+    source = inspect.getsource(checks.run_all)
+    assert "checks = [check_entry(tree)]" in source
+
+
+def test_launch_installs_the_floor_before_the_run(scratch, monkeypatch):
+    """`launch` is the only permitted start path, so it is the choke point for the floor."""
+    sys.path.insert(0, str(REPO / "tools" / "research"))
+    from stage2 import launcher
+
+    tree = scratch("launched", BASELINE)
+    assert not (tree / "assignment_floor.py").is_file()      # raw baseline: unprotected
+
+    calls = {}
+
+    class Done:
+        returncode = 0
+
+    def fake_run(command, **kwargs):
+        calls["patched"] = (tree / "assignment_floor.py").is_file()
+        calls["has_floor"] = "constrained_assignment" in (
+            tree / "model" / "layers.py").read_text(encoding="utf-8")
+        return Done()
+
+    monkeypatch.setattr(launcher.subprocess, "run", fake_run)
+    assert launcher.launch(tree / "train_rqvae.py", tree / "result",
+                           python=sys.executable) == 0
+    assert calls == {"patched": True, "has_floor": True}
+    assert (tree / "result" / "assignment_floor.json").is_file()
+
+
+DUPLICATE_SCRIPT = """
+import torch
+from model.layers import VQLayer
+layer = VQLayer(8, 4)
+layer.eval()
+codes = layer.get_code_embs()
+with torch.no_grad():
+    codes[1] = codes[0]                     # the degenerate table: two codewords equal
+x = torch.randn(64, 4)
+try:
+    layer(x)
+except Exception as error:
+    print(type(error).__name__ + ": " + str(error)[:80])
+else:
+    print("NO_ERROR")
+"""
+
+
+def test_a_duplicated_codebook_is_refused_by_the_patched_layer(scratch):
+    """Distinctness is checked in the layer, at export time, on the table it used."""
+    import subprocess
+
+    tree = scratch("duplicated", BASELINE)
+    apply_floor(tree)
+    done = subprocess.run([sys.executable, "-c", DUPLICATE_SCRIPT], cwd=str(tree),
+                          capture_output=True, text=True, timeout=600)
+    assert done.returncode == 0, done.stderr[-1500:]
+    assert "CodebookCollapse" in done.stdout, done.stdout[-1500:]
+    assert "duplicate rows" in done.stdout
+
+
+def test_the_frozen_baseline_is_refused_and_stays_byte_identical():
+    """The baseline is the copy source for every candidate; patching it destroys provenance."""
+    import hashlib
+
+    module = BASELINE / "model" / "layers.py"
+    before = hashlib.sha256(module.read_bytes()).hexdigest()
+    with pytest.raises(ReadOnlyBaseline):
+        apply_floor(BASELINE)
+    assert hashlib.sha256(module.read_bytes()).hexdigest() == before
+    assert not (BASELINE / "assignment_floor.py").exists()

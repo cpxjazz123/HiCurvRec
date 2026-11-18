@@ -44,7 +44,9 @@ FORCE_CONSTRAINED_ALL = True  # True: 关闭 Sinkhorn,训练与导出共用一�
 ## 它现在是强制的
 
 - **候选创建时自动安装**:`tools/research/rounds/baseline.py::copy_baseline` 在"副本与基线一致"的证明**之后**安装这一层,并把 `assignment_floor` 与安装后的源码摘要写进 provenance。经此创建的每个候选树天生带保护。
-- **准入时机器检查**:`tools/research/stage2/checks.py::check_assignment_floor` 已进入 `run_all`;没有这一层的树、或量化器不被识别的树一律 `FAIL`,不会被派发。
+- **启动时兜底安装**:`stage2/launcher.py::launch`(§68 的唯一启动路径)在 spawn 之前再装一次,并把结果写进 `result_dir/assignment_floor.json`。即使树是旧的、或绕过 `copy_baseline` 生成的,也进不了训练。
+- **调用点自检(不是信任)**:`verify_assignment` 在量化器的**返回处**检查真正返回的索引(`min(count) >= floor`),`verify_codebook` 在导出时拒绝两行完全相同的码本。机制若把分配改到别处(例如重新打开 Sinkhorn 分支),会在这一步被抓到,而不是静默失去保护。
+- **§88 保持原样**:`run_all` 只跑 `check_entry`;`check_assignment_floor` 是独立诊断,不是准入闸门。保护是结构性的(创建时安装 + 启动时兜底),不靠新闸门。
 - 因此"任何新机制都不坍缩"不再依赖作者记得跑命令,而是框架的属性。
 
 ## 幂等与失败关闭
@@ -52,6 +54,7 @@ FORCE_CONSTRAINED_ALL = True  # True: 关闭 Sinkhorn,训练与导出共用一�
 - 已经装过的树再调用一次是 no-op(`changed: false`)。
 - 树里存在量化器文件但锚点对不上 → 抛 `UnknownTree`,**绝不静默跳过**。
 - 没有任何已知量化器的目录 → 抛 `UnknownTree`。
+- 目标是冻结基线(`stage2_RQ-VAE/baseline/...`)→ 抛 `ReadOnlyBaseline`,文件保持逐字节不变(§19b)。
 
 ## 边界
 
@@ -62,7 +65,7 @@ FORCE_CONSTRAINED_ALL = True  # True: 关闭 Sinkhorn,训练与导出共用一�
 ## 测试
 
 ```bash
-<python3.9> -m pytest tools/research/stage2/anticollapse/test_anticollapse.py -q   # 8 项
+<python3.9> -m pytest tools/research/stage2/anticollapse/test_anticollapse.py -q   # 16 项
 ```
 
-其中两项对**真实树**做端到端验证:复制冻结基线(`VQLayer` / 欧氏)与 F0 混合量化器,打补丁,在全新解释器里跑坍缩代价矩阵,要求 8/8。
+其中对**真实树**做端到端验证的有:复制冻结基线(`VQLayer` / 欧氏)与混合量化器、打补丁、在新解释器里跑坍缩代价矩阵要求 8/8;把码本改成两行相同后,打补丁的层在 eval 下抛 `CodebookCollapse`;`launch` 在 spawn 前确实安装了这一层;冻结基线被拒绝且 SHA 不变。
