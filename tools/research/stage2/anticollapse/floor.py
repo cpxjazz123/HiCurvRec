@@ -168,7 +168,7 @@ def verify_assignment(index, codewords: int, floor: int) -> dict:
     return {"codewords": int(codewords), "floor": int(floor), "min_count": low}
 
 
-def verify_codebook(codes) -> dict:
+def verify_codebook(codes, distance: bool = True) -> dict:
     """Assert that no two codewords are the same vector, and report their spacing.
 
     Distinctness is exact and metric-free: two identical rows are the degenerate state the
@@ -180,14 +180,58 @@ def verify_codebook(codes) -> dict:
 
     codes = codes.detach()
     rows = int(codes.shape[0])
-    distinct = int(torch.unique(codes, dim=0).shape[0])
-    if distinct < rows:
+    # Hashing the row bytes is exact and O(K*D): `torch.unique(dim=0)` sorts and costs
+    # ~0.5 ms, which is why this check used to be limited to export. The hash is cheap
+    # enough to run on every step, so the check no longer depends on `self.training`.
+    flat = codes.reshape(rows, -1).float().cpu().contiguous()
+    seen: set[bytes] = set()
+    duplicates = 0
+    for row in flat:
+        key = row.numpy().tobytes()
+        if key in seen:
+            duplicates += 1
+        else:
+            seen.add(key)
+    if duplicates:
         raise CodebookCollapse(
-            str(rows - distinct) + " of " + str(rows) + " codewords are duplicate rows")
-    flat = codes.reshape(rows, -1).float()
-    gram = flat @ flat.t()
-    norm = flat.pow(2).sum(dim=1)
-    distance = (norm[:, None] + norm[None, :] - 2.0 * gram).clamp_min(0).sqrt()
-    distance.fill_diagonal_(float("inf"))
-    return {"codewords": rows, "distinct": distinct,
-            "min_distance": float(distance.min())}
+            str(duplicates) + " of " + str(rows) + " codewords are duplicate rows")
+    if distance:
+        gram = flat @ flat.t()
+        norm = flat.pow(2).sum(dim=1)
+        spread = (norm[:, None] + norm[None, :] - 2.0 * gram).clamp_min(0).sqrt()
+        spread.fill_diagonal_(float("inf"))
+        report = {"codewords": rows, "distinct": len(seen),
+                  "min_distance": float(spread.min())}
+    else:
+        report = {"codewords": rows, "distinct": len(seen)}
+    return report
+
+
+def verify_margins(cost, tolerance: float = 1e-6) -> dict:
+    """Refuse an assignment that is decided by ties rather than by the data.
+
+    A trained codebook separates its codewords, so for almost every item the best codeword
+    is strictly better than the second. When the encoder maps every item onto the same
+    vector the costs become equal, the floor still gives all 256 codewords an item, and the
+    usage statistics look perfectly healthy while the identifier carries no information.
+
+    The rule is a majority rule, not a tuned threshold: if more than half of the items are
+    decided by a tie, the assignment is not a function of the data. `tolerance` is the
+    float32 resolution relative to the cost scale, so it is a numerical statement rather
+    than a hyper-parameter.
+    """
+    import torch
+
+    if cost.dim() != 2 or cost.shape[1] < 2:
+        return {"tie_fraction": 0.0, "ok": True}
+    two = torch.topk(-cost.detach().float(), 2, dim=-1).values   # (-c1, -c2), c1 <= c2
+    margin = (two[:, 0] - two[:, 1]).clamp_min(0)                # = c2 - c1 >= 0
+    scale = two[:, 0].abs().clamp_min(1.0)
+    ties = int((margin <= float(tolerance) * scale).sum())
+    fraction = ties / float(cost.shape[0])
+    if fraction > 0.5:
+        raise CodebookCollapse(
+            "the assignment is tie-decided for " + str(round(100 * fraction, 1))
+            + "% of " + str(int(cost.shape[0])) + " items: the encoder is not separating "
+            "them, so the codewords carry no information")
+    return {"tie_fraction": round(fraction, 6), "ok": True}

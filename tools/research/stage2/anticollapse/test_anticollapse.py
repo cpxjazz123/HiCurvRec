@@ -360,10 +360,39 @@ def test_the_selfcheck_command_separates_a_protected_tree_from_a_broken_one(scra
     apply_floor(bad)
     module = bad / "model" / "layers.py"
     text = module.read_text(encoding="utf-8")
-    text = text.replace("        embed_ind = self._indices(self._distances(latent), infer_use_sk)",
-                        "        embed_ind = torch.argmin(self._distances(latent), dim=-1)")
+    text = text.replace("        embed_ind = self._indices(cost, infer_use_sk)",
+                        "        embed_ind = torch.argmin(cost, dim=-1)")
     module.write_text(text, encoding="utf-8")
     done = subprocess.run([sys.executable, str(script), str(bad)],
                           capture_output=True, text=True, timeout=600)
     assert done.returncode == 1
     assert "NOT PROTECTED" in done.stdout
+
+
+def test_identical_encoder_output_is_refused_only_when_it_makes_the_costs_tie(scratch):
+    """What is refused is a tie-decided assignment, not an input that happens to repeat."""
+    tree = scratch("tie", BASELINE)
+    apply_floor(tree)
+    probe = """
+import math, torch
+from model.layers import VQLayer
+layer = VQLayer(8, 4)
+codes = layer.get_code_embs()
+with torch.no_grad():
+    for k in range(codes.shape[0]):
+        angle = 2 * math.pi * k / codes.shape[0]
+        codes[k] = torch.tensor([math.cos(angle), math.sin(angle), 0.0, 0.0])
+try:
+    with torch.no_grad():
+        layer(torch.zeros(4096, 4))
+except Exception as error:
+    print(type(error).__name__ + ": " + str(error)[:60])
+else:
+    print("NO_ERROR")
+"""
+    import subprocess
+    done = subprocess.run([sys.executable, "-c", probe], cwd=str(tree),
+                          capture_output=True, text=True, timeout=600)
+    assert done.returncode == 0, done.stderr[-1200:]
+    assert "CodebookCollapse" in done.stdout
+    assert "tie-decided" in done.stdout

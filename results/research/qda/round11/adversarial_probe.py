@@ -112,13 +112,26 @@ elif mode == "duplicate_codebook":
         report["verdict"] = "SURVIVED"
 
 elif mode == "encoder_collapse":
-    x = torch.zeros(4096, 32)                                     # every item identical
+    # Every codeword equidistant from every item: the assignment is decided by tie-breaking.
+    # (A constant *input* alone is not collapse -- with distinct codewords its costs differ.)
+    import math
+    codes = layer.get_code_embs()
     with torch.no_grad():
-        _, _, _, index = layer(x)
-    report["used"] = used(index)
-    report["verdict"] = "SURVIVED" if report["used"] == 256 else "REFUSED"
-    report["note"] = "all 256 codes used, all of them by tie-breaking"
-    report["artifact"] = sid_from(index)
+        for k in range(codes.shape[0]):
+            angle = 2 * math.pi * k / codes.shape[0]
+            codes[k] = 0.0
+            codes[k, 0] = math.cos(angle)
+            codes[k, 1] = math.sin(angle)
+    try:
+        with torch.no_grad():
+            _, _, _, index = layer(torch.zeros(4096, 32))
+    except Exception as error:
+        report["verdict"] = "REFUSED"
+        report["reason"] = type(error).__name__ + ": " + str(error)[:90]
+    else:
+        report["used"] = used(index)
+        report["verdict"] = "SURVIVED"
+        report["artifact"] = sid_from(index)
 
 elif mode == "frozen_codebook":
     before = layer.get_code_embs().detach().clone()
@@ -170,8 +183,8 @@ def bypass_tree(patched: Path) -> dict:
     shutil.copytree(patched, hostile, symlinks=True)
     module = hostile / "model" / "layers.py"
     text = module.read_text(encoding="utf-8")
-    text = text.replace("        embed_ind = self._indices(self._distances(latent), infer_use_sk)",
-                        "        embed_ind = torch.argmin(self._distances(latent), dim=-1)")
+    text = text.replace("        embed_ind = self._indices(cost, infer_use_sk)",
+                        "        embed_ind = torch.argmin(cost, dim=-1)")
     module.write_text(text, encoding="utf-8")
     verdict = verify_tree(hostile)
     shutil.rmtree(hostile, ignore_errors=True)

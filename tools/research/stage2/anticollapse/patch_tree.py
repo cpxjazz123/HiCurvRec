@@ -56,7 +56,7 @@ MIXED = Family(
         "from .poincare_contract import expmap0, logmap0, mobius_add, project, squared_distance",
         "from .poincare_contract import expmap0, logmap0, mobius_add, project, squared_distance\n"
         f"from {TARGET_NAME[:-3]} import (constrained_assignment, verify_assignment,\n"
-        f"                                     verify_codebook)",
+        f"                                     verify_codebook, verify_margins)",
     ),
     edits=[
         # training assignment
@@ -68,15 +68,17 @@ MIXED = Family(
          "            return index.to(q.device)"),
         # the call site: whatever `_indices` returned is checked, so a mechanism that
         # assigns somewhere else (e.g. re-enables the Sinkhorn branch) is caught here
-        ("        index = self._indices(cost, infer_use_sk)\n"
-         "        codes = self.get_code_embs()",
+        # The call site is anchored on the single line that consumes the cost, so trees
+        # with a different forward body still match: whatever `_indices` returns is
+        # checked here, and the cost it came from is checked for ties.
+        ("        index = self._indices(cost, infer_use_sk)",
+         "        verify_margins(cost)\n"
          "        index = self._indices(cost, infer_use_sk)\n"
          "        verify_assignment(index, self.n_embed, ASSIGNMENT_FLOOR)\n"
-         "        codes = self.get_code_embs()\n"
-         "        if not self.training:\n"
-         "            verify_codebook(codes)"),
+         "        verify_codebook(self.get_code_embs(), distance=False)"),
         # export assignment: the floor, then the geometric check on the table it just used
         ("            index = torch.argmin(cost, dim=-1)",
+         "            verify_margins(cost)\n"
          "            index, _ = constrained_assignment(cost, ASSIGNMENT_FLOOR)\n"
          "            verify_codebook(layer.get_code_embs())"),
     ],
@@ -90,7 +92,7 @@ EUCLID = Family(
         "from distances import build_distance",
         "from distances import build_distance\n"
         f"from {TARGET_NAME[:-3]} import (constrained_assignment, verify_assignment,\n"
-        f"                                     verify_codebook)",
+        f"                                     verify_codebook, verify_margins)",
     ),
     edits=[
         ("        return torch.argmin(distances, dim=-1)",
@@ -99,12 +101,15 @@ EUCLID = Family(
         ("            return torch.argmax(q, dim=-1)",
          "            index, _ = constrained_assignment(-q, ASSIGNMENT_FLOOR)\n"
          "            return index.to(q.device)"),
+        # `layers.py` reaches this line from two places, so the anchor carries the line
+        # that follows it in `forward`; both must stay in step.
         ("        embed_ind = self._indices(self._distances(latent), infer_use_sk)\n"
          "        onehot = F.one_hot(embed_ind, self.n_embed)",
-         "        embed_ind = self._indices(self._distances(latent), infer_use_sk)\n"
+         "        cost = self._distances(latent)\n"
+         "        verify_margins(cost)\n"
+         "        embed_ind = self._indices(cost, infer_use_sk)\n"
          "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"
-         "        if not self.training:\n"
-         "            verify_codebook(self.get_code_embs())\n"
+         "        verify_codebook(self.get_code_embs(), distance=False)\n"
          "        onehot = F.one_hot(embed_ind, self.n_embed)"),
         ("        embed_ind = torch.argmin(self._distances(x), dim=-1).view(*x.shape[:-1])",
          "        embed_ind, _ = constrained_assignment(self._distances(x), ASSIGNMENT_FLOOR)\n"
@@ -236,7 +241,10 @@ used_balanced = unique(layer._indices(cost, False))
 #    floor lives in the path it no longer takes.
 codes = layer.get_code_embs()
 with torch.no_grad():
-    codes[3:] = 1000.0
+    # unreachable, but still distinct from each other: a constant block would be a
+    # duplicate codebook, which the call-site check rightly refuses
+    codes[3:] = 1000.0 + torch.arange(codes.shape[0] - 3,
+                                      dtype=codes.dtype).unsqueeze(1)
 {forward_call}
 used_forward = unique(index)
 
@@ -246,11 +254,12 @@ print(json.dumps({{"used": used_indices, "used_balanced": used_balanced,
 
 #: How each family drives `forward` in the probe: (setup, call).
 FORWARD_PROBE = {
-    "mixed": ("e = torch.zeros(4096, 16)\nh = torch.zeros(4096, 16)\n"
+    "mixed": ("e = torch.randn(4096, 16) * 0.01\nh = torch.randn(4096, 16) * 0.01\n"
               "a = torch.full((4096,), 0.5)\nout = layer(e, h, a)",
               "index = [value for value in out if torch.is_tensor(value)"
               " and value.dtype in (torch.int64, torch.int32) and value.numel() == 4096][-1]"),
-    "euclid": ("dim = layer.get_code_embs().shape[1]\nx = torch.zeros(4096, dim)\n"
+    "euclid": ("dim = layer.get_code_embs().shape[1]\n"
+               "x = torch.randn(4096, dim) * 0.01\n"
                "out = layer(x)",
                "index = [value for value in out if torch.is_tensor(value)"
                " and value.dtype in (torch.int64, torch.int32) and value.numel() == 4096][-1]"),
