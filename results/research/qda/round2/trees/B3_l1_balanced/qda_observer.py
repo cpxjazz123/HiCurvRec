@@ -104,6 +104,8 @@ def observe(model, embeddings: torch.Tensor, epoch: int, out_dir: Path,
             picked_e.append(chosen_e)
             picked_h.append(chosen_h)
             tokens.append(index)
+            record[f"train_code_{level}"] = layer._indices(
+                cost, infer_use_sk=True).cpu().numpy().astype(np.int16)
             record[f"readout_{level}"] = quantized_readout(
                 picked_e, picked_h, curvature).cpu().numpy().astype(np.float16)
             residual_e = residual_e - chosen_e

@@ -103,6 +103,12 @@ def schedule_patch(points):
 
 #: `observe(..., light=True)` must not write the 8.7 MB snapshot.
 OBSERVER = [
+    # Round 4: the assignment the training rule makes at every level.  `codes` is the
+    # export rule (argmin); without this the L1/L2 train-vs-export gap is unmeasurable.
+    ("""            record[f"readout_{level}"] = quantized_readout(""",
+     """            record[f"train_code_{level}"] = layer._indices(
+                cost, infer_use_sk=True).cpu().numpy().astype(np.int16)
+            record[f"readout_{level}"] = quantized_readout("""),
     ("""def observe(model, embeddings: torch.Tensor, epoch: int, out_dir: Path,
             curvature: float = 1.0) -> dict:""",
      """def observe(model, embeddings: torch.Tensor, epoch: int, out_dir: Path,

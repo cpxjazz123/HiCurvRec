@@ -974,3 +974,13 @@ results/research/qda/analysis_*.json
 # The two inertness controls are byte-identical to trees/F0_seed42 except for the
 # single `QDA_MONITOR = False` line; only their SID tables are worth keeping.
 results/research/qda/trees/F0_seed42_nomonitor*/
+
+# A pretty-printed SID table is 147,523 lines / 1.26 MB; `commit.draft()` models every
+# one of those lines for every draft, including untracked files a later `take()` skips.
+# Keep the identity (sha256, item count, token count) in a digest instead -- the table
+# itself is one export away from the checkpoint.  Official arm SIDs stay tracked under
+# results/stage2_RQ-VAE/.
+results/research/**/item_sids.json
+# Generated arm trees: `arm_manifest.json` carries every file's sha256 and
+# build_arms.py regenerates them from the frozen F0 tree plus the patch list.
+results/research/qda/**/trees/

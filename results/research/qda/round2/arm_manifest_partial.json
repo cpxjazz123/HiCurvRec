@@ -1,6 +1,6 @@
 {
   "arms": {
-    "G1_gradsrc": {
+    "B3_l1_balanced": {
       "digests": {
         "math_spec.json": "ebd4ddf6477d8206950c69d813a101a3bbdd251d0ff5b9cda70ab1db9cea7290",
         "model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
@@ -11,35 +11,41 @@
         "model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
         "model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
         "model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
-        "model/mixed_rq.py": "687475c1a238ac3c35073b736bb42aaae054f2eecaca5fba32b6d193429829a6",
+        "model/mixed_rq.py": "936d3505f9e71478e1987d6912d691771376edcd231bdad96ed074db9b142889",
         "model/model.py": "559752236ffb9521cf40a64ecf563cbdfcbed775d12feb391d825ec256d61843",
         "model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
         "model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
         "qda_gradsrc.py": "1b7659777ff1a12676a2d640ba043155d8174edae7f6f9a93fb2851d6e957ede",
-        "qda_observer.py": "9533ced1a7f3bb2418265084b7a8e7b036d29e2991039b1e22a35b50c9ee2a47",
+        "qda_observer.py": "a39e48e8579cbaf871ec5d99f195547565e5ed8ff2c26b7c5110d8f12bb71ba2",
         "qda_telemetry.py": "c61c5728fdc0219ff1f47bde41da98b7054939aaafcfbb32047247748fa7590d",
         "reference_contract.json": "219ceebc63668a860491d186c12d7c25916aba6ca19d471455b598e51f80ac34",
-        "train_rqvae.py": "5b7166f38893a7ba6ca27a5ec3499e1651ac7978027033b3cc9575f523304bd6"
+        "train_rqvae.py": "d978c3b04ab4e55df904e1ca20b748ae3884cd47a33e33c205d1ffb833ab678f"
       },
-      "epochs": 3000,
+      "epochs": 300,
       "full_observations": [
         0,
-        60
+        50,
+        100,
+        200,
+        300
       ],
       "observations": [
         0,
-        5,
-        10,
-        20,
-        40,
-        60
+        50,
+        100,
+        200,
+        300
       ],
       "patches": {
+        "model/mixed_rq.py": [
+          "                sk_epsilon=sk_epsilon if last else -1.0,"
+        ],
         "qda_gradsrc.py": [
           "installed from round3/gradsrc_src.py"
         ],
         "qda_observer.py": [
           "OBSERVATIONS = (0, 50, 100, 200, 300, 500, 750, 1000, 1250, 1500, 1750, 2000,",
+          "            record[f\"readout_{level}\"] = quantized_readout(",
           "def observe(model, embeddings: torch.Tensor, epoch: int, out_dir: Path,",
           "    out_dir.mkdir(parents=True, exist_ok=True)"
         ],
@@ -59,8 +65,145 @@
           "        _record(rank, \"train_end\",",
           "ARM_NAME = \"QDA_F0_seed42\"",
           "EPOCHS              = 3000",
-          "OBSERVATIONS   = (0, 50, 100, 200, 300, 500, 750, 1000, 1250, 1500, 1750, 2000,",
-          "            batch = batch.to(device, non_blocking=True)"
+          "OBSERVATIONS   = (0, 50, 100, 200, 300, 500, 750, 1000, 1250, 1500, 1750, 2000,"
+        ]
+      }
+    },
+    "C1_all_balanced": {
+      "digests": {
+        "math_spec.json": "ebd4ddf6477d8206950c69d813a101a3bbdd251d0ff5b9cda70ab1db9cea7290",
+        "model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+        "model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+        "model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+        "model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+        "model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
+        "model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
+        "model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
+        "model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+        "model/mixed_rq.py": "893d0f6ef9fce9ab1fa425cc63a3b8becf624b3fa9b66fbcd6b75ab4e1a85a79",
+        "model/model.py": "559752236ffb9521cf40a64ecf563cbdfcbed775d12feb391d825ec256d61843",
+        "model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+        "model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+        "qda_gradsrc.py": "1b7659777ff1a12676a2d640ba043155d8174edae7f6f9a93fb2851d6e957ede",
+        "qda_observer.py": "a39e48e8579cbaf871ec5d99f195547565e5ed8ff2c26b7c5110d8f12bb71ba2",
+        "qda_telemetry.py": "c61c5728fdc0219ff1f47bde41da98b7054939aaafcfbb32047247748fa7590d",
+        "reference_contract.json": "219ceebc63668a860491d186c12d7c25916aba6ca19d471455b598e51f80ac34",
+        "train_rqvae.py": "3bc2f763bc271516531dd74e95c498ea377571f251ff43323e8fd8e5274b815c"
+      },
+      "epochs": 300,
+      "full_observations": [
+        0,
+        50,
+        100,
+        200,
+        300
+      ],
+      "observations": [
+        0,
+        50,
+        100,
+        200,
+        300
+      ],
+      "patches": {
+        "model/mixed_rq.py": [
+          "                sk_epsilon=sk_epsilon if last else -1.0,"
+        ],
+        "qda_gradsrc.py": [
+          "installed from round3/gradsrc_src.py"
+        ],
+        "qda_observer.py": [
+          "OBSERVATIONS = (0, 50, 100, 200, 300, 500, 750, 1000, 1250, 1500, 1750, 2000,",
+          "            record[f\"readout_{level}\"] = quantized_readout(",
+          "def observe(model, embeddings: torch.Tensor, epoch: int, out_dir: Path,",
+          "    out_dir.mkdir(parents=True, exist_ok=True)"
+        ],
+        "qda_telemetry.py": [
+          "installed from round2/telemetry_src.py"
+        ],
+        "train_rqvae.py": [
+          "QDA_MONITOR = True",
+          "RESULT_DIR = QDA_ROOT / \"runs\" / ARM_NAME",
+          "from model.af3_runtime import (input_identity, resolve_shared_readout,",
+          "    final_collision = float(\"inf\")",
+          "            reconstructed, quant_loss, _, _ = model(batch)",
+          "            loss.backward()",
+          "        epoch_time_s = round(time.time() - _epoch_t0, 3)",
+          "            summary = observe(raw_module, all_embeddings.to(device), 0, QDA_DIR, CURVATURE)",
+          "                summary = observe(raw_module, all_embeddings.to(device), epoch, QDA_DIR, CURVATURE)",
+          "        _record(rank, \"train_end\",",
+          "ARM_NAME = \"QDA_F0_seed42\"",
+          "EPOCHS              = 3000",
+          "OBSERVATIONS   = (0, 50, 100, 200, 300, 500, 750, 1000, 1250, 1500, 1750, 2000,"
+        ]
+      }
+    },
+    "C2_l2_balanced": {
+      "digests": {
+        "math_spec.json": "ebd4ddf6477d8206950c69d813a101a3bbdd251d0ff5b9cda70ab1db9cea7290",
+        "model/__init__.py": "017a67bf5df45b9000528e736e9e562dfa8cda95eb3517eccba0f65f7fecd28d",
+        "model/af3_auxiliary.py": "8ef24489f7a90fb951f779a59bb1306bc6849d0a4a589c4cef03b8f8baa57432",
+        "model/af3_engine.py": "9cbe64b9cc9951983db2a875c8e83e73111376f09297ddf710dbff7597c1a091",
+        "model/af3_hierarchy.py": "8f21943e2da5de5ff2dbd82f736b42bd5ded753fcbe3e1dfe2cc7716f45d0db5",
+        "model/af3_runtime.py": "9464380eba5d2add9d9f3fc06d043d630d8ea96c81a5ae862731c88029046d3d",
+        "model/af3_selector.py": "ddd78083aa3b375a5ca264718c7822a625fe5d5c0ead175181234e35b913dd25",
+        "model/af3_structure.py": "4f3c52715f113d167864dadf81f0f5ab97acc5da5cf01887de68ff97447192c4",
+        "model/layers.py": "068e7f15d3c55dd400abf3fb9d619e8ff61b5cef5d556223232f80666dea2db7",
+        "model/mixed_rq.py": "21b752ecf39fb86111d81177919645ef1a7b74f7995ae786eafd541e887a7849",
+        "model/model.py": "559752236ffb9521cf40a64ecf563cbdfcbed775d12feb391d825ec256d61843",
+        "model/poincare_contract.py": "46791369db959f91b188ffb884c1987fbccf9df017893b020c0d389b91d6153c",
+        "model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+        "qda_gradsrc.py": "1b7659777ff1a12676a2d640ba043155d8174edae7f6f9a93fb2851d6e957ede",
+        "qda_observer.py": "a39e48e8579cbaf871ec5d99f195547565e5ed8ff2c26b7c5110d8f12bb71ba2",
+        "qda_telemetry.py": "c61c5728fdc0219ff1f47bde41da98b7054939aaafcfbb32047247748fa7590d",
+        "reference_contract.json": "219ceebc63668a860491d186c12d7c25916aba6ca19d471455b598e51f80ac34",
+        "train_rqvae.py": "1be7527f966f44a9d9198362192ec9370bba67d34bf544aad32d21082581c857"
+      },
+      "epochs": 300,
+      "full_observations": [
+        0,
+        50,
+        100,
+        200,
+        300
+      ],
+      "observations": [
+        0,
+        50,
+        100,
+        200,
+        300
+      ],
+      "patches": {
+        "model/mixed_rq.py": [
+          "                sk_epsilon=sk_epsilon if last else -1.0,"
+        ],
+        "qda_gradsrc.py": [
+          "installed from round3/gradsrc_src.py"
+        ],
+        "qda_observer.py": [
+          "OBSERVATIONS = (0, 50, 100, 200, 300, 500, 750, 1000, 1250, 1500, 1750, 2000,",
+          "            record[f\"readout_{level}\"] = quantized_readout(",
+          "def observe(model, embeddings: torch.Tensor, epoch: int, out_dir: Path,",
+          "    out_dir.mkdir(parents=True, exist_ok=True)"
+        ],
+        "qda_telemetry.py": [
+          "installed from round2/telemetry_src.py"
+        ],
+        "train_rqvae.py": [
+          "QDA_MONITOR = True",
+          "RESULT_DIR = QDA_ROOT / \"runs\" / ARM_NAME",
+          "from model.af3_runtime import (input_identity, resolve_shared_readout,",
+          "    final_collision = float(\"inf\")",
+          "            reconstructed, quant_loss, _, _ = model(batch)",
+          "            loss.backward()",
+          "        epoch_time_s = round(time.time() - _epoch_t0, 3)",
+          "            summary = observe(raw_module, all_embeddings.to(device), 0, QDA_DIR, CURVATURE)",
+          "                summary = observe(raw_module, all_embeddings.to(device), epoch, QDA_DIR, CURVATURE)",
+          "        _record(rank, \"train_end\",",
+          "ARM_NAME = \"QDA_F0_seed42\"",
+          "EPOCHS              = 3000",
+          "OBSERVATIONS   = (0, 50, 100, 200, 300, 500, 750, 1000, 1250, 1500, 1750, 2000,"
         ]
       }
     }
