@@ -1,0 +1,91 @@
+{
+  "arms": [
+    {
+      "arm": "TIGER_mixed_rq_F0",
+      "items": 24587,
+      "l1_distinct": 79,
+      "l2_distinct": 4151,
+      "l3_distinct": 18264,
+      "l3_collision": 0.2571684223370073,
+      "sid_sha256": "afa89a10b1b197a7b56da4ad322c6ddd96a3c26c04238af326d88747378bb848"
+    },
+    {
+      "arm": "TIGER_graphlet_codebook_rq",
+      "items": 24587,
+      "l1_distinct": 83,
+      "l2_distinct": 3558,
+      "l3_distinct": 17292,
+      "l3_collision": 0.29670150892748204,
+      "sid_sha256": "85d6b791aa9292bb1bc131a7c35830afc6784c9a77bd20264bf2c3a2d10922cb"
+    },
+    {
+      "arm": "TIGER_graphlet_codebook_global_rq",
+      "items": 24587,
+      "l1_distinct": 79,
+      "l2_distinct": 4114,
+      "l3_distinct": 18072,
+      "l3_collision": 0.26497742709561967,
+      "sid_sha256": "e612b738273fc2b5537d8a6133cb1a627cc6c684a8b2893c5d544015354503c4"
+    }
+  ],
+  "stage3_gate": {
+    "TIGER_mixed_rq_F0": true,
+    "TIGER_graphlet_codebook_rq": true,
+    "TIGER_graphlet_codebook_global_rq": true
+  },
+  "codeword_table": {
+    "TIGER_mixed_rq_F0": null,
+    "TIGER_graphlet_codebook_rq": {
+      "mode": "codebook",
+      "levels": [
+        {
+          "level": 1,
+          "codes_used": 83,
+          "alpha_min": 0.30000001192092896,
+          "alpha_max": 0.699999988079071,
+          "spearman_density_alpha": 0.9997271315226061
+        },
+        {
+          "level": 2,
+          "codes_used": 224,
+          "alpha_min": 0.30000001192092896,
+          "alpha_max": 0.699999988079071,
+          "spearman_density_alpha": 0.9853779628443308
+        },
+        {
+          "level": 3,
+          "codes_used": 256,
+          "alpha_min": 0.30000001192092896,
+          "alpha_max": 0.699999988079071,
+          "spearman_density_alpha": 0.8389419775692377
+        }
+      ]
+    },
+    "TIGER_graphlet_codebook_global_rq": {
+      "mode": "global",
+      "levels": [
+        {
+          "level": 1,
+          "codes_used": 79,
+          "alpha_min": 0.5,
+          "alpha_max": 0.5,
+          "spearman_density_alpha": 0.16438656280428435
+        },
+        {
+          "level": 2,
+          "codes_used": 221,
+          "alpha_min": 0.5,
+          "alpha_max": 0.5,
+          "spearman_density_alpha": -0.017030028794734677
+        },
+        {
+          "level": 3,
+          "codes_used": 256,
+          "alpha_min": 0.5,
+          "alpha_max": 0.5,
+          "spearman_density_alpha": 0.04570840009155412
+        }
+      ]
+    }
+  }
+}
