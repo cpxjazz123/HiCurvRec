@@ -17,17 +17,24 @@ helpers) and `science/` (train-only measurements, the SID layer record and the
 forensics study). Both are used by the live path.
 
 **Anti-collapse layer:** `stage2/anticollapse/` replaces a candidate's assignment step
-with the cheapest assignment that gives every codeword at least one item. It is
-mechanism-agnostic -- it consumes only the cost matrix the candidate's own metric produces
--- and it is proven on both quantiser families in the repository (the frozen baseline's
-`VQLayer` and the mixed `MixedVQLevel`) by running the patched class in a fresh interpreter
-on a cost matrix where all but a few codewords are unreachable. `python -m anticollapse
-<tree>` installs it and prints the verification. It is installed automatically when a
-candidate is created (`rounds/baseline.py::copy_baseline`, recorded in the provenance) and
-`stage2/checks.py::check_assignment_floor` fails admission for any tree that lacks it, so the
-guarantee is a property of the framework rather than of the author's diligence. The guarantee
-is occupancy, not quality: a degenerate encoder still has to be refused by the certification
-gate.
+with the cheapest assignment that gives every codeword at least one item, and then checks
+that claim in five places: the quantiser's call site (the assignment it returned, the
+contract for the same state, the codebook's distinctness, and whether the assignment is
+decided by ties), the export path, the exported identifier, the admission probe (three
+regimes -- plain `argmin`, the baseline's balanced `argmax`, and the full `forward` -- for
+every quantiser class the module exposes), and a static scan that refuses a tree which
+still contains a selection idiom or a disabled floor constant. A configuration that cannot
+be protected (a codebook larger than the batch, a quantiser the patcher does not
+recognise) is refused rather than guaranteed to a weaker standard; that is why the claim is
+"every admissible mechanism keeps every codeword non-empty at every step", not "any code".
+It is installed automatically when a candidate is created (`rounds/baseline.py::copy_baseline`,
+recorded in the provenance) and again by `stage2/launcher.py::launch` before it spawns
+anything, so the guarantee is a property of the framework rather than of the author's
+diligence. Run `python tools/research/stage2/anticollapse/selfcheck.py <tree>` to install
+and verify a tree in one step; `GUARANTEE.md` in the same directory states what is checked,
+the measured evidence (including a full 3000-epoch run) and the four boundaries. The
+guarantee is occupancy, not quality: a degenerate encoder still has to be refused by the
+certification gate.
 
 **Issue #117 surface, still mounted by the MCP:** `mcp/` (the async handlers and
 the detached workers behind `research_start` and `research_verify_*`),
