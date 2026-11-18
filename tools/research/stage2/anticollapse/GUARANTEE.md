@@ -30,7 +30,7 @@ K > items（码字比一步的商品还多）                    （**拒绝运�
 | 位置 | 检查 | 失败时 |
 |---|---|---|
 | 调用点(`forward` 内) | `verify_assignment(index, K, floor)`:看**真正返回的索引**;`items < K*floor` 本身就是失败 | `CodebookCollapse`,该步死 |
-| 调用点(`forward` 内) | `verify_margins(cost)`:平手判定的商品占比 > 50% 即拒(编码器未分离) | `CodebookCollapse`,该步死 |
+| 调用点(`forward` 内) | `verify_margins(cost)`:平手判定的商品占比 > 50% 即拒(编码器未分离)。**DDP 下判定是全局的**:本地计数 `all_reduce` 后按全局比例决定,所有 rank 同时拒或同时继续 | `CodebookCollapse`,该步死 |
 | 调用点与导出 | `verify_codebook(codes)`:拒绝两行完全相同(行字节哈希,每步都跑);近邻只报告(混合度量下 L3 实测 1e-4,属正常) | `CodebookCollapse` |
 | 产物 | `audit_sid`:每级至少 2 个码字;三级码字重复率记录 | `check_entry` FAIL |
 | 安装/准入(静态) | `floor_constant`:模块里的 `ASSIGNMENT_FLOOR` 必须存在且 ≥ 1。把它改成 0 会让所有守卫"通过"而分配退回裸 `argmin` —— 这是用一种整数写法删除保护 | `UnknownTree`: the floor was disabled |
@@ -58,6 +58,12 @@ K > items（码字比一步的商品还多）                    （**拒绝运�
 | 编码器坍缩(全商品同向量) | SURVIVED —— 见边界 |
 
 真实运行:`copy_baseline` → 一轮真训练(平衡开着)→ `PASS`,产物 `256/256/256`;混合族与欧氏族在三条探测通路上都是 `8/8`。
+
+## 4b. 多卡
+
+平手判定若只看本地 shard,可能出现"一个 rank 拒、其余 rank 在下一个集合通信里挂住"——拒绝会变成挂死。所以该判定在 `torch.distributed` 已初始化时做一次 `all_reduce`(计数与总数),按**全局**比例裁决;实测两 rank:仅一个 shard 越线时两 rank 都继续,两个 shard 都越线时两 rank 同时抛。
+
+代价是每级每步一次 `all_reduce`(3 级即 3 次/步)。**本机只有一张 GPU,四卡配方下的这次集合通信开销未被测量** —— 第一次四卡运行时应记录每 epoch 时间,与 round15 的单卡数字(0.2141 s/epoch)对照。
 
 ## 5. 边界(必须写在任何"用了这个保护"的地方)
 

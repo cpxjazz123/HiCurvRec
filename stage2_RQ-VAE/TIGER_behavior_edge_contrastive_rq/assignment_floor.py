@@ -200,6 +200,12 @@ def verify_codebook(codes, distance: bool = True) -> dict:
     return report
 
 
+def _distributed() -> bool:
+    import torch
+
+    return torch.distributed.is_available() and torch.distributed.is_initialized()
+
+
 def verify_margins(cost, tolerance: float = 1e-6) -> dict:
     """Refuse an assignment that is decided by ties rather than by the data.
 
@@ -220,11 +226,18 @@ def verify_margins(cost, tolerance: float = 1e-6) -> dict:
     two = torch.topk(-cost.detach().float(), 2, dim=-1).values   # (-c1, -c2), c1 <= c2
     margin = (two[:, 0] - two[:, 1]).clamp_min(0)                # = c2 - c1 >= 0
     scale = two[:, 0].abs().clamp_min(1.0)
-    ties = int((margin <= float(tolerance) * scale).sum())
-    fraction = ties / float(cost.shape[0])
+    ties = (margin <= float(tolerance) * scale).sum().to(torch.float64)
+    items = torch.tensor(float(cost.shape[0]), dtype=torch.float64, device=cost.device)
+    # The verdict must be the same on every rank: a rank that raised alone would leave the
+    # others waiting in the next collective, turning a clean refusal into a hang.
+    if _distributed():
+        import torch.distributed as dist
+        dist.all_reduce(ties, op=dist.ReduceOp.SUM)
+        dist.all_reduce(items, op=dist.ReduceOp.SUM)
+    fraction = float(ties) / float(items)
     if fraction > 0.5:
         raise CodebookCollapse(
             "the assignment is tie-decided for " + str(round(100 * fraction, 1))
-            + "% of " + str(int(cost.shape[0])) + " items: the encoder is not separating "
-            "them, so the codewords carry no information")
+            + "% of the items" + ("" if not _distributed() else " (all ranks)")
+            + ": the encoder is not separating them, so the codewords carry no information")
     return {"tie_fraction": round(fraction, 6), "ok": True}

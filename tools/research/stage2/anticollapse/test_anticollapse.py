@@ -526,3 +526,30 @@ def test_the_feasible_regime_is_the_one_the_guard_guarantees():
     assert report["satisfied"] is True
     assert int(torch.bincount(index, minlength=256).min()) >= 1
     assert verify_assignment(index, 256, 1)["min_count"] >= 1
+
+
+def _torchrun_available() -> str | None:
+    """`torchrun` sits next to the interpreter, which is not necessarily on PATH."""
+    candidate = Path(sys.executable).with_name("torchrun")
+    return str(candidate) if candidate.is_file() else None
+
+
+def test_the_margin_verdict_agrees_across_ranks(scratch):
+    """A rank that raised alone would leave the others hanging in the next collective."""
+    import subprocess
+
+    torchrun = _torchrun_available()
+    if torchrun is None:
+        pytest.skip("torchrun is not available")
+    probe = Path(__file__).resolve().parent / "_ddp_probe.py"
+
+    only_one_rank_tied = subprocess.run(
+        [torchrun, "--standalone", "--nproc_per_node=2", str(probe), "one_rank"],
+        capture_output=True, text=True, timeout=900)
+    assert only_one_rank_tied.returncode == 0, only_one_rank_tied.stderr[-1500:]
+    assert only_one_rank_tied.stdout.count("continued") == 2, only_one_rank_tied.stdout
+
+    both_tied = subprocess.run(
+        [torchrun, "--standalone", "--nproc_per_node=2", str(probe), "both"],
+        capture_output=True, text=True, timeout=900)
+    assert "both raised" in both_tied.stdout, (both_tied.stdout, both_tied.stderr[-800:])
