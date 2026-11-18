@@ -636,3 +636,35 @@ def test_the_probe_reports_the_wired_quantiser(scratch):
     mixed_verdict = verify_tree(mixed)
     assert mixed_verdict["ok"] is True
     assert "wiring_warning" in mixed_verdict       # reported, not silently ignored
+
+
+def test_a_codebook_that_collapses_relative_to_its_start_is_refused():
+    """The reference is the layer's own initial spacing, so no absolute constant is set."""
+    codes = torch.randn(64, 8)
+    cost = torch.cdist(torch.randn(256, 8), codes)
+    from anticollapse.floor import SEPARATION_STRIKES, verify_separation
+
+    key = 9001
+    assert verify_separation(codes, cost, key=key)["ok"] is True   # establishes reference
+    for _ in range(20):
+        assert verify_separation(codes, cost, key=key)["ok"] is True
+
+    collapsed = codes * 1e-3                                        # 1000x tighter
+    refused_at = None
+    for step in range(SEPARATION_STRIKES + 5):
+        try:
+            verify_separation(collapsed, cost, key=key)
+        except CodebookCollapse:
+            refused_at = step + 1
+            break
+    assert refused_at == SEPARATION_STRIKES
+
+
+def test_a_stable_codebook_never_trips_the_relative_check():
+    codes = torch.randn(64, 8)
+    cost = torch.cdist(torch.randn(256, 8), codes)
+    from anticollapse.floor import verify_separation
+
+    key = 9002
+    for _ in range(200):
+        assert verify_separation(codes * 0.8, cost, key=key)["ok"] is True   # 20% tighter

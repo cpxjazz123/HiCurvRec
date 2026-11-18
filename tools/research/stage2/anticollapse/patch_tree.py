@@ -59,7 +59,8 @@ MIXED = Family(
         "from .poincare_contract import expmap0, logmap0, mobius_add, project, squared_distance",
         "from .poincare_contract import expmap0, logmap0, mobius_add, project, squared_distance\n"
         f"from {TARGET_NAME[:-3]} import (constrained_assignment, verify_assignment,\n"
-        f"                                     verify_codebook, verify_margins)",
+        f"                                     verify_codebook, verify_margins,\n"
+        f"                                     verify_separation)",
     ),
     edits=[
         # training assignment
@@ -78,7 +79,8 @@ MIXED = Family(
          "        verify_margins(cost, rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"
          "        index = self._indices(cost, infer_use_sk)\n"
          "        verify_assignment(index, self.n_embed, ASSIGNMENT_FLOOR)\n"
-         "        verify_codebook(self.get_code_embs(), distance=False)"),
+         "        verify_codebook(self.get_code_embs(), distance=False)\n"
+         "        verify_separation(self.get_code_embs(), cost, key=id(self))"),
         # export assignment: the floor, then the geometric check on the table it just used
         ("            index = torch.argmin(cost, dim=-1)",
          "            verify_margins(cost, rank_local=True)\n"   # export runs on rank 0 only
@@ -95,7 +97,8 @@ EUCLID = Family(
         "from distances import build_distance",
         "from distances import build_distance\n"
         f"from {TARGET_NAME[:-3]} import (constrained_assignment, verify_assignment,\n"
-        f"                                     verify_codebook, verify_margins)",
+        f"                                     verify_codebook, verify_margins,\n"
+        f"                                     verify_separation)",
     ),
     edits=[
         ("        return torch.argmin(distances, dim=-1)",
@@ -110,6 +113,7 @@ EUCLID = Family(
          "        onehot = F.one_hot(embed_ind, self.n_embed)",
          "        cost = self._distances(latent)\n"
          "        verify_codebook(self.get_code_embs(), distance=False)\n"
+         "        verify_separation(self.get_code_embs(), cost, key=id(self))\n"
          "        verify_margins(cost, rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"
          "        embed_ind = self._indices(cost, infer_use_sk)\n"
          "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"
@@ -120,6 +124,7 @@ EUCLID = Family(
          "        x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)",
          "        cost = self._distances(latent)\n"
          "        verify_codebook(self.get_code_embs(), distance=False)\n"
+         "        verify_separation(self.get_code_embs(), cost, key=id(self))\n"
          "        verify_margins(cost, rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"
          "        embed_ind = self._indices(cost, infer_use_sk)\n"
          "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"

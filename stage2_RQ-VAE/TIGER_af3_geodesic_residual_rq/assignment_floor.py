@@ -246,3 +246,58 @@ def verify_margins(cost, tolerance: float = 1e-6, rank_local: bool = False) -> d
             + "% of the items" + ("" if not _distributed() else " (all ranks)")
             + ": the encoder is not separating them, so the codewords carry no information")
     return {"tie_fraction": round(fraction, 6), "ok": True}
+
+
+#: The ratio may not fall more than an order of magnitude below its own initial value.
+#: Measured over 60 epochs: a healthy run keeps 0.51-0.75 of its initial ratio, while a
+#: codebook pulled toward its mean falls to 0.000 of it.
+SEPARATION_DROP = 0.1
+
+#: Consecutive violated steps before the run stops -- one noisy step must not kill a run.
+SEPARATION_STRIKES = 50
+
+_SEPARATION: dict[int, dict] = {}
+
+
+def verify_separation(codes, cost, key: int | None = None,
+                      drop: float = SEPARATION_DROP,
+                      strikes: int = SEPARATION_STRIKES) -> dict:
+    """The codebook must not lose an order of magnitude of its own resolution.
+
+    `ratio = min pairwise codeword distance / quantiser resolution`, where the resolution
+    is the root of the mean distance from an item to the codeword it was assigned. The
+    reference is the ratio this layer *started* with, so no absolute constant is imposed
+    on a mechanism: what is refused is a codebook that collapsed relative to itself.
+
+    Measured (round20, 60 epochs, three levels): healthy min/initial 0.506 / 0.691 / 0.754;
+    a codebook pulled toward its mean by an auxiliary loss 0.000 / 0.000 / 0.000. The
+    boundary is `drop = 0.1` -- one order of magnitude, which leaves a factor of five
+    between the healthy floor and the rule.
+    """
+    import torch
+
+    flat = codes.detach().float().reshape(codes.shape[0], -1)
+    pairwise = torch.cdist(flat, flat)
+    pairwise.fill_diagonal_(float("inf"))
+    min_pair = float(pairwise.min())
+    resolution = float(cost.detach().float().min(dim=-1).values.mean().clamp_min(0).sqrt())
+    ratio = min_pair / resolution if resolution > 0 else float("inf")
+    if key is None:
+        return {"ratio": ratio, "ok": True, "reference": ratio}
+
+    state = _SEPARATION.setdefault(key, {"reference": ratio, "strikes": 0})
+    if "reference" not in state:
+        state["reference"] = ratio
+    reference = state["reference"]
+    if ratio >= drop * reference:
+        state["strikes"] = 0
+        return {"ratio": ratio, "reference": reference, "ok": True}
+    state["strikes"] += 1
+    if state["strikes"] >= int(strikes):
+        raise CodebookCollapse(
+            "the codeword spacing fell to " + f"{ratio:.3e}" + " from an initial "
+            + f"{reference:.3e}" + " (x" + f"{ratio / reference:.3f}"
+            + ") for " + str(state["strikes"]) + " consecutive steps: the codebook has "
+            "collapsed relative to its own resolution")
+    return {"ratio": ratio, "reference": reference, "ok": False,
+            "strikes": state["strikes"]}
