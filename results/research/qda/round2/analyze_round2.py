@@ -199,7 +199,12 @@ def main() -> None:
     parser.add_argument("--reference", default="B0_replay")
     parser.add_argument("--no-strata", action="store_true")
     parser.add_argument("--out", default="report_round2.json")
+    parser.add_argument("--runs", type=Path, default=None,
+                        help="run root to read (default: round2/runs)")
     args = parser.parse_args()
+    global RUNS
+    if args.runs is not None:
+        RUNS = args.runs
     arms = args.arms or sorted(p.name for p in RUNS.iterdir() if p.is_dir())
 
     report = {"arms": {}, "strata": {}, "velocity": {}}

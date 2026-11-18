@@ -17,13 +17,13 @@ KEEP = ("epoch", "used", "z_norm", "z_var", "z_move_rel", "encoder_param_move_re
         "codebook_move_rel", "grad_norm_used", "grad_norm_unused")
 
 
-def sid_digest(arm: str) -> dict | None:
+def sid_digest(arm: str, runs: Path) -> dict | None:
     """Identity of the exported SID, without the 147k-line table.
 
     `results/research/**/item_sids.json` is ignored because every draft models all of
     its lines; the sha256 is what the reports cite, so it is recorded here instead.
     """
-    path = RUNS / arm / "item_sids.json"
+    path = runs / arm / "item_sids.json"
     if not path.exists():
         return None
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -34,9 +34,13 @@ def sid_digest(arm: str) -> dict | None:
 
 
 def main() -> None:
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--runs", type=Path, default=RUNS)
+    runs = parser.parse_args().runs
     digests = {}
-    for arm in sorted(p.name for p in RUNS.iterdir() if p.is_dir()):
-        source = RUNS / arm / "logs" / "training_metrics.jsonl"
+    for arm in sorted(p.name for p in runs.iterdir() if p.is_dir()):
+        source = runs / arm / "logs" / "training_metrics.jsonl"
         if not source.exists():
             print(f"{arm}: no metrics")
             continue
@@ -54,18 +58,22 @@ def main() -> None:
             elif row["event"] == "qda_lifecycle":
                 lifecycle = {key: row[key] for key in ("level_1", "level_2", "level_3")
                              if key in row}
-        digest = sid_digest(arm)
+        digest = sid_digest(arm, runs)
         if digest:
             digests[arm] = digest
         payload = {"arm": arm, "epochs": epochs, "lifecycle": lifecycle}
         if gradsrc:
             payload["gradsrc"] = gradsrc
-        target = RUNS / arm / "qda_epochs.json"
+        target = runs / arm / "qda_epochs.json"
         target.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
         print(f"{arm}: {len(epochs)} epochs -> {target.name} ({target.stat().st_size // 1024} KiB)")
     if digests:
-        (HERE.parent / "sid_digests.json").write_text(
-            json.dumps(digests, indent=2, sort_keys=True), encoding="utf-8")
+        # One digest for every round: merge rather than overwrite, so exporting one
+        # round's runs does not drop the others.
+        target = HERE.parent / "sid_digests.json"
+        merged = json.loads(target.read_text(encoding="utf-8")) if target.exists() else {}
+        merged.update(digests)
+        target.write_text(json.dumps(merged, indent=2, sort_keys=True), encoding="utf-8")
         print(f"wrote sid_digests.json ({len(digests)} arms)")
 
 
