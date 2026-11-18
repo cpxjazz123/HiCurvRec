@@ -60,41 +60,56 @@ def constrained_assignment(cost, floor: int):
             f"the batch has {items}: a codebook larger than the batch cannot be protected "
             "-- reduce the codebook or raise the batch")
 
-    costs = cost.detach().double()
+    # float32 matches the baseline's own numerics (`argmin` on the same tensor) and halves
+    # the traffic of the repair rounds; the double copy was caution, not a requirement.
+    costs = cost.detach().float()
     assignment = torch.argmin(costs, dim=-1)
-    counts = torch.bincount(assignment, minlength=codewords).tolist()
-    assign_list = assignment.tolist()
-    row = torch.arange(items, device=costs.device)
+    counts_tensor = torch.bincount(assignment, minlength=codewords)
+    # The healthy case is the normal case: one sync, no host round trip for the items.
+    if int(counts_tensor.min()) >= floor:
+        return assignment, {"floor": floor, "moves": 0, "min_count": floor,
+                            "satisfied": True}
     moves = 0
-    for _ in range(codewords * floor + 1):
-        deficit = [k for k, count in enumerate(counts) if count < floor]
-        if not deficit:
+    # Repair for the case the floor exists for (`floor == 1`): hand every empty codeword the
+    # item it likes most, resolving a contested item in favour of the codeword that wants it
+    # more. Two host transfers (the per-code best item and the ordering), one Python pass
+    # over the codewords, then a single scatter -- the loop this replaced cost ~15 ms/step.
+    for _ in range(codewords):
+        counts_t = torch.bincount(assignment, minlength=codewords)
+        deficit = (counts_t < floor).nonzero().flatten()
+        if deficit.numel() == 0:
             break
-        donors = {k for k, count in enumerate(counts) if count > floor}
-        if not donors:
-            raise InfeasibleFloor("no codeword has surplus to donate")
-        donor_mask = torch.tensor([code in donors for code in assign_list],
-                                  dtype=torch.bool, device=costs.device)
-        if not bool(donor_mask.any()):
-            raise InfeasibleFloor("no donor item available")
-        base = costs[row, torch.tensor(assign_list, device=costs.device)]
-        regret = costs[:, deficit] - base[:, None]
-        regret[~donor_mask] = float("inf")
-        picks = regret.argmin(dim=0).tolist()
-        used: set[int] = set()
-        for code, item in zip(deficit, picks):
-            if item in used or assign_list[item] in {code}:
+        # An item may move only if the codeword it sits on can spare it: its count must
+        # stay at or above the floor after the donation.
+        donatable = counts_t[assignment] > floor
+        sub = costs[:, deficit].masked_fill(~donatable.unsqueeze(1), float("inf"))
+        best_cost, best_item = sub.min(dim=0)
+        order = torch.argsort(best_cost)
+        wanted = best_item[order].tolist()
+        codes = deficit[order].tolist()
+        feasible = torch.isfinite(best_cost[order]).tolist()
+        seen: set[int] = set()
+        chosen_codes: list[int] = []
+        chosen_items: list[int] = []
+        for code, item, ok in zip(codes, wanted, feasible):
+            if not ok or item in seen:
                 continue
-            used.add(item)
-            counts[assign_list[item]] -= 1
-            assign_list[item] = code
-            counts[code] += 1
-            moves += 1
+            seen.add(item)
+            chosen_codes.append(code)
+            chosen_items.append(item)
+        if not chosen_codes:
+            raise InfeasibleFloor("no droppable item for the empty codewords")
+        assignment[torch.tensor(chosen_items, device=costs.device)] = torch.tensor(
+            chosen_codes, device=costs.device)
+        moves += len(chosen_codes)
     else:
-        raise InfeasibleFloor("repair did not converge")
+        remaining = int((torch.bincount(assignment, minlength=codewords) < floor).sum())
+        if remaining:
+            raise InfeasibleFloor("repair did not converge")
+    counts = torch.bincount(assignment, minlength=codewords)
+    return (assignment, {"floor": floor, "moves": moves,
+                         "min_count": int(counts.min()), "satisfied": True})
 
-    return (torch.tensor(assign_list, dtype=torch.long, device=cost.device),
-            {"floor": floor, "moves": moves, "min_count": min(counts), "satisfied": True})
 
 
 def describe(cost, floor: int) -> dict:
@@ -150,7 +165,18 @@ def verify_codebook(codes, distance: bool = True) -> dict:
     # Hashing the row bytes is exact and O(K*D): `torch.unique(dim=0)` sorts and costs
     # ~0.5 ms, which is why this check used to be limited to export. The hash is cheap
     # enough to run on every step, so the check no longer depends on `self.training`.
-    flat = codes.reshape(rows, -1).float().cpu().contiguous()
+    flat = codes.reshape(rows, -1).float()
+    if not distance:
+        # On the device, no host round trip: equality of every pair of rows, diagonal
+        # excluded. One sync for the answer, which the caller needs anyway.
+        equal = (flat[:, None, :] == flat[None, :, :]).all(-1)
+        equal.fill_diagonal_(False)
+        if bool(equal.any()):
+            raise CodebookCollapse(
+                str(int(equal.any(dim=1).sum())) + " of " + str(rows)
+                + " codewords are duplicate rows")
+        return {"codewords": rows}
+    flat = flat.cpu().contiguous()
     seen: set[bytes] = set()
     duplicates = 0
     for row in flat:
