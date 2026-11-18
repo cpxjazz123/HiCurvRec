@@ -217,6 +217,11 @@ def check_entry(tree: Path | str) -> dict:
                # evidence for its report, and the stream became one row.
                "setattr(t, 'METRICS_PATH', t.LOG_DIR / 'training_metrics.jsonl')"
                " if hasattr(t, 'METRICS_PATH') else None;"
+               # `EXPORT_MANIFEST` is derived from RESULT_DIR at import time, so the same
+               # trap as METRICS_PATH: patching RESULT_DIR afterwards left the one-epoch
+               # check writing a conformance manifest over a published arm's manifest.
+               "setattr(t, 'EXPORT_MANIFEST', t.RESULT_DIR / 'export_manifest.json')"
+               " if hasattr(t, 'EXPORT_MANIFEST') else None;"
                "t.main()"]
     try:
         done = subprocess.run(command, cwd=str(tree), capture_output=True, text=True,

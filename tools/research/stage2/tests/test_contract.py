@@ -169,3 +169,33 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+def test_the_entry_check_redirects_every_module_level_output_path(monkeypatch):
+    """A one-epoch check must not write into a published result directory.
+
+    The trainer derives `METRICS_PATH` and `EXPORT_MANIFEST` from `RESULT_DIR` at import
+    time, so patching `RESULT_DIR` afterwards is not enough: the check wrote a conformance
+    manifest over the manifest of a published arm.
+    """
+    from tools.research.stage2 import checks
+
+    captured = {}
+
+    class Done:
+        returncode = 1          # stop before the artifact audit; the command is the object
+        stdout = ""
+        stderr = ""
+
+    def fake_run(command, **kwargs):
+        captured["command"] = command
+        return Done()
+
+    monkeypatch.setattr(checks.subprocess, "run", fake_run)
+    checks.check_entry(Path("stage2_RQ-VAE/TIGER_Uniform_KNN_RQ"))
+    script = captured["command"][-1]
+    for name in ("RESULT_DIR", "CHECKPOINT", "OUTPUT_SID", "OUTPUT_JSON", "LOG_DIR",
+                 "METRICS_PATH", "EXPORT_MANIFEST"):
+        assert f"t.{name} =" in script or f"'{name}'" in script, (
+            name + " is derived at import time and must be redirected explicitly")
+    assert "EXPORT_MANIFEST" in script

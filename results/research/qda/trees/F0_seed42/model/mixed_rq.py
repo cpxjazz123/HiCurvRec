@@ -42,8 +42,18 @@ import torch.nn.functional as F
 from torch import nn
 
 from .poincare_contract import expmap0, logmap0, mobius_add, project, squared_distance
+from assignment_floor import (constrained_assignment, verify_assignment,
+                                     verify_codebook, verify_margins)
 
 #: The curvature of the mixed space. Fixed: the mechanism never learns or scans it.
+#: The shared anti-collapse floor. Every assignment -- training and export -- must give
+#: each codeword at least this many items. 1 is the smallest value that makes the
+#: absorbing state unreachable; a batch of 4096 affords it for 256 codewords.
+ASSIGNMENT_FLOOR = 1
+#: The baseline's balancing rule is never switched off (CLAUDE.md 19h): the floor is
+#: applied to the assignment the Sinkhorn produces, not to a replaced rule.
+FORCE_CONSTRAINED_ALL = True
+
 CURVATURE = 1.0
 #: The width of each half.
 EUCLIDEAN_DIM = 16
@@ -148,8 +158,10 @@ class MixedVQLevel(nn.Module):
             q = self.sinkhorn(centered, self.sk_epsilon, self.sk_iters)
             if torch.isnan(q).any() or torch.isinf(q).any():
                 raise RuntimeError("Sinkhorn assignment returned NaN or infinity.")
-            return torch.argmax(q, dim=-1)
-        return torch.argmin(distances, dim=-1)
+            index, _ = constrained_assignment(-q, ASSIGNMENT_FLOOR)
+            return index.to(q.device)
+        index, _ = constrained_assignment(distances, ASSIGNMENT_FLOOR)
+        return index.to(distances.device)
 
     # -- the mixed cost ----------------------------------------------------
     def get_code_embs(self) -> torch.Tensor:
@@ -169,7 +181,10 @@ class MixedVQLevel(nn.Module):
         ``alpha`` is ``[B]``.
         """
         cost = self.distances(residual_e, residual_h, alpha)
+        verify_margins(cost)
         index = self._indices(cost, infer_use_sk)
+        verify_assignment(index, self.n_embed, ASSIGNMENT_FLOOR)
+        verify_codebook(self.get_code_embs(), distance=False)
         codes = self.get_code_embs()
         codes_e, codes_h_tangent = split(codes)
         picked_e = codes_e[index]
@@ -384,7 +399,9 @@ def encode_tokens(z: torch.Tensor, rq: MixedRQ, override: dict | None = None) ->
             else:
                 alpha = rq.alpha_table.lookups(level, tokens).to(z.device)
             cost = layer.distances(residual_e, residual_h, alpha)
-            index = torch.argmin(cost, dim=-1)
+            verify_margins(cost)
+            index, _ = constrained_assignment(cost, ASSIGNMENT_FLOOR)
+            verify_codebook(layer.get_code_embs())
             codes = layer.get_code_embs()
             codes_e, codes_h_tangent = split(codes)
             picked_e = codes_e[index]
