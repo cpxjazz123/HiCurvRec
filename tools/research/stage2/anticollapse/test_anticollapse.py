@@ -343,3 +343,27 @@ def test_the_balancing_rule_is_not_switched_off(scratch):
     assert "not FORCE_CONSTRAINED_ALL" not in text
     index, _ = constrained_assignment(-torch.rand(4096, 8), 1)
     assert int(torch.bincount(index, minlength=8).min()) >= 1
+
+
+def test_the_selfcheck_command_separates_a_protected_tree_from_a_broken_one(scratch):
+    """The one command an author runs before training; it must not be optimistic."""
+    import subprocess
+
+    script = Path(__file__).resolve().parent / "selfcheck.py"
+    good = scratch("selfcheck_good", BASELINE)
+    done = subprocess.run([sys.executable, str(script), str(good)],
+                          capture_output=True, text=True, timeout=600)
+    assert done.returncode == 0, done.stderr[-1200:]
+    assert "PROTECTED" in done.stdout
+
+    bad = scratch("selfcheck_bad", BASELINE)
+    apply_floor(bad)
+    module = bad / "model" / "layers.py"
+    text = module.read_text(encoding="utf-8")
+    text = text.replace("        embed_ind = self._indices(self._distances(latent), infer_use_sk)",
+                        "        embed_ind = torch.argmin(self._distances(latent), dim=-1)")
+    module.write_text(text, encoding="utf-8")
+    done = subprocess.run([sys.executable, str(script), str(bad)],
+                          capture_output=True, text=True, timeout=600)
+    assert done.returncode == 1
+    assert "NOT PROTECTED" in done.stdout

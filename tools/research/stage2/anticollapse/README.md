@@ -50,6 +50,14 @@ FORCE_CONSTRAINED_ALL = True  # True: 关闭 Sinkhorn,训练与导出共用一�
 - **§88 保持原样**:`run_all` 只跑 `check_entry`;`check_assignment_floor` 是独立诊断,不是准入闸门。保护是结构性的(创建时安装 + 启动时兜底),不靠新闸门。
 - 因此"任何新机制都不坍缩"不再依赖作者记得跑命令,而是框架的属性。
 
+## 一条命令检查一棵树
+
+```bash
+<python3.9> tools/research/stage2/anticollapse/selfcheck.py <tree> [--sid <item_sids.json>]
+```
+
+退出码 0 = 安装、三通路探测、产物审计全过;1 = 第一处失败的原因。完整的保证与边界见 `GUARANTEE.md`。
+
 ## 幂等与失败关闭
 
 - 已经装过的树再调用一次是 no-op(`changed: false`)。

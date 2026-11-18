@@ -1,0 +1,79 @@
+# 通用的码本防坍缩保证
+
+一句话:**分配这一步被替换成"每个码字至少 1 个商品"的最便宜分配,并且这个声明在调用点、导出处、产物处和准入处被检查四次;机制不需要做任何配合。**
+
+## 1. 什么算"码本坍缩"
+
+| 形态 | 定义 | 为什么致命 |
+|---|---|---|
+| 空码字 | 某个码字在某一步一个商品都没有 | 该码字的码本项拿到**恰好为零**的梯度(码本项对残差 detach),再也回不来 —— round 1 实测 50 epoch 内 193/256 |
+| 重复码字 | 两个码字的向量完全相同 | 两个码字对模型不可区分,容量凭空损失 |
+| 共码 | `K > batch` 时多个商品被迫共享一个码字 | 该步可用的码字少于商品数,覆盖无法展开 |
+| 单码层 | 某一级在整个导出里只用一个码字 | 该级是常数,等价于没有这一级 |
+
+## 2. 机制
+
+```
+分配 = argmin over { a : counts(a) >= floor }          （可行区,K <= items）
+分配 = 每个商品独占一个码字,按代价选                    （覆盖区,K > items）
+```
+
+- 只改分配。损失、距离、曲率、码本初始化、编码器、超参一行不动。
+- 平衡分配(Sinkhorn,`SK_EPSILON=0.003`)保持基线原样,下限施加在**它的输出**上(§19h)。
+- 可行区的可行性由 `items >= K * floor` 保证;覆盖区由 `items <= K` 保证。两者都不成立时(商品数少于码字数且要 floor ≥ 2)抛 `InfeasibleFloor`,不静默降级。
+
+**不可达性(构造性,不是惩罚项)**:第 `t` 步分配后必有 `counts >= floor >= 1`,因此"某码字没有商品"这个状态在每一步都被排除;吸收态无法被进入,也就不需要逃离。
+
+## 3. 四处检查
+
+| 位置 | 检查 | 失败时 |
+|---|---|---|
+| 调用点(`forward` 内) | `verify_assignment(index, K, floor)`:看**真正返回的索引**,并区分可行区/覆盖区两种契约 | `CodebookCollapse`,该步死 |
+| 导出 | `verify_codebook(codes)`:拒绝两行完全相同;近邻只报告(混合度量下 L3 实测 1e-4,属正常) | `CodebookCollapse` |
+| 产物 | `audit_sid`:每级至少 2 个码字;三级码字重复率记录 | `check_entry` FAIL |
+| 准入 | `verify_tree`:坍缩代价矩阵下跑 **argmin / 平衡 argmax / 完整 forward** 三条通路,都要求 K/K | 准入 FAIL |
+
+配套:创建候选时安装(`copy_baseline`)、唯一启动路径兜底安装(`launch`)、安装文件过期自动刷新、删掉校验行拒绝重装(`the assignment check was removed`)、冻结基线拒绝改写(`ReadOnlyBaseline`)。
+
+## 4. 实测证据
+
+敌手(全部经过受保护的**真实树**,全新解释器):
+
+| 敌手 | 判定 |
+|---|---|
+| 坍缩代价矩阵 + 普通 argmin | REPAIRED 8 → 256 |
+| 整树替换 `forward` 的分配 | REFUSED(调用点自检) |
+| 重复码字 | REFUSED(导出检查) |
+| 码本不动(对照) | SURVIVED(不误伤) |
+| 编码器坍缩(全商品同向量) | SURVIVED —— 见边界 |
+
+真实运行:`copy_baseline` → 一轮真训练(平衡开着)→ `PASS`,产物 `256/256/256`;混合族与欧氏族在三条探测通路上都是 `8/8`。
+
+## 5. 边界(必须写在任何"用了这个保护"的地方)
+
+1. **它保证占用,不保证质量。** 退化编码器仍可满足下限(把商品硬塞进去),此时 SID 无信息量。
+2. **编码器坍缩不在本保护内。** 所有商品向量相同 → 代价处处相等 → 256 个码全靠平手分配:码本形状健康、信息量为零。它由第 7 轮认证闸门(最近/次近代价间隔趋近 0)拒绝,那是另一层。
+3. **协议要求离散索引。** 纯软分配量化器会被准入以 `UnknownTree` **拒绝**(失败关闭),而不是静默失去保护。
+4. **导出处检查依赖 `.eval()`。** 冻结基线的导出前有 `model.eval()`;若某机制在训练模式下导出,欧氏族的重复码字检查不会触发(混合族在导出锚点上无条件检查)。
+
+## 6. 如何使用
+
+```bash
+# 新建候选:自动安装并记录 provenance
+from rounds.baseline import copy_baseline
+copy_baseline(destination)
+
+# 任何既有树:一条命令给出 PROTECTED / NOT PROTECTED
+python tools/research/stage2/anticollapse/selfcheck.py <tree> [--sid <item_sids.json>]
+```
+
+`selfcheck.py` 退出码 0 表示安装、三通路探测、产物审计全部通过;1 表示第一处失败的原因。
+
+## 7. 测试
+
+```bash
+<python3.9> -m pytest tools/research/stage2/anticollapse/test_anticollapse.py -q   # 21 项
+<python3.9> -m pytest tools/research/stage2/tests/test_contract.py -q              # 7 项
+```
+
+覆盖:可行区/覆盖区契约、两族真实树的端到端、重复码字端到端、整树绕过被拒、删校验被拒、基线只读、平衡规则不被改动、产物审计(含后缀列)、安装刷新、`launch` 兜底。
