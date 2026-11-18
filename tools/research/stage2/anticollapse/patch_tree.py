@@ -131,7 +131,12 @@ def _refuse_frozen_baseline(tree: Path) -> None:
 
 
 def _already_patched(text: str) -> bool:
-    return "constrained_assignment" in text
+    """Both halves must be there: the repair *and* the check on what it returned."""
+    return "constrained_assignment(" in text and "verify_assignment(" in text
+
+
+def _guard_was_removed(text: str) -> bool:
+    return "constrained_assignment(" in text and "verify_assignment(" not in text
 
 
 def apply_floor(tree: Path, family: str | None = None, force_constrained: bool = True,
@@ -156,6 +161,12 @@ def apply_floor(tree: Path, family: str | None = None, force_constrained: bool =
         raise UnknownTree(f"{spec.module} is missing under {tree}")
 
     text = module.read_text(encoding="utf-8")
+    if _guard_was_removed(text):
+        # Someone kept the floor call and deleted the check that proves it worked. That is
+        # indistinguishable from tampering, and it must not be re-applied silently.
+        raise UnknownTree(
+            "the assignment check was removed from " + str(module)
+            + "; restore the tree from its baseline copy")
     if _already_patched(text):
         return {"family": family, "module": spec.module, "changed": False,
                 "reason": "already patched"}
@@ -192,11 +203,38 @@ def apply_floor(tree: Path, family: str | None = None, force_constrained: bool =
 VERIFY_TEMPLATE = """import json, sys, torch
 from {module} import {cls}
 layer = {expr}
+
+def unique(index):
+    return int(torch.unique(index.reshape(-1)).numel())
+
+# 1. `_indices` on a collapsed cost: only three codewords are cheap.
 cost = torch.rand(4096, 8) + 10.0
-cost[:, :3] = torch.rand(4096, 3)          # only three codewords are cheap
-index = layer._indices(cost, False)
-print(json.dumps({{"used": int(torch.unique(index).numel()), "codewords": 8}}))
+cost[:, :3] = torch.rand(4096, 3)
+used_indices = unique(layer._indices(cost, False))
+
+# 2. `forward` on a collapsed *codebook*: five of eight codewords are unreachable.
+#    A mechanism that replaces `forward` and assigns itself is caught here, since the
+#    floor lives in the path it no longer takes.
+codes = layer.get_code_embs()
+with torch.no_grad():
+    codes[3:] = 1000.0
+{forward_call}
+used_forward = unique(index)
+
+print(json.dumps({{"used": used_indices, "used_forward": used_forward, "codewords": 8}}))
 """
+
+#: How each family drives `forward` in the probe: (setup, call).
+FORWARD_PROBE = {
+    "mixed": ("e = torch.zeros(4096, 16)\nh = torch.zeros(4096, 16)\n"
+              "a = torch.full((4096,), 0.5)\nout = layer(e, h, a)",
+              "index = [value for value in out if torch.is_tensor(value)"
+              " and value.dtype in (torch.int64, torch.int32) and value.numel() == 4096][-1]"),
+    "euclid": ("dim = layer.get_code_embs().shape[1]\nx = torch.zeros(4096, dim)\n"
+               "out = layer(x)",
+               "index = [value for value in out if torch.is_tensor(value)"
+               " and value.dtype in (torch.int64, torch.int32) and value.numel() == 4096][-1]"),
+}
 
 
 def verify_tree(tree: Path, family: str | None = None, python: str | None = None) -> dict:
@@ -217,14 +255,24 @@ def verify_tree(tree: Path, family: str | None = None, python: str | None = None
     spec = FAMILIES[family]
     module = spec.module[len("model/"):-len(".py")]
     cls = spec.layer_expr.split("(")[0]
+    setup, pick = FORWARD_PROBE[family]
     script = VERIFY_TEMPLATE.format(module=f"model.{module}", cls=cls,
-                                    expr=spec.layer_expr)
+                                    expr=spec.layer_expr, forward_call=setup + "\n" + pick)
     result = subprocess.run([python or sys.executable, "-c", script], cwd=str(tree),
                             capture_output=True, text=True, timeout=600)
     if result.returncode != 0:
+        # A guard refusal is a verdict, not a broken tree: the patched call site noticed
+        # that the assignment it was handed violates the floor and stopped the step.
+        if "CodebookCollapse" in result.stderr:
+            reason = [line for line in result.stderr.splitlines()
+                      if "CodebookCollapse" in line][-1]
+            return {"ok": False, "used": 0, "used_forward": 0,
+                    "codewords": 8, "reason": reason.strip(), "tree": str(tree),
+                    "family": family}
         raise UnknownTree(f"verification failed in {tree}:\n{result.stderr[-2000:]}")
     payload = json.loads(result.stdout.strip().splitlines()[-1])
-    payload["ok"] = payload["used"] == payload["codewords"]
+    payload["ok"] = (payload["used"] == payload["codewords"]
+                     and payload["used_forward"] == payload["codewords"])
     payload["tree"] = str(tree)
     payload["family"] = family
     return payload

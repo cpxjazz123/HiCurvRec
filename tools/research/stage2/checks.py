@@ -631,9 +631,9 @@ def check_assignment_floor(tree: Path | str) -> dict:
     except (UnknownTree, ReadOnlyBaseline) as error:
         return {"status": "FAIL", "name": "assignment_floor", "detail": str(error)[:400]}
     if not verdict.get("ok"):
-        return {"status": "FAIL", "name": "assignment_floor",
-                "detail": "%s/%s codewords survived a collapsed cost"
-                          % (verdict.get("used"), verdict.get("codewords"))}
+        detail = verdict.get("reason") or ("%s/%s codewords survived a collapsed cost"
+                                           % (verdict.get("used"), verdict.get("codewords")))
+        return {"status": "FAIL", "name": "assignment_floor", "detail": detail[:400]}
     return {"status": "PASS", "name": "assignment_floor",
             "detail": "%s: %s/%s codewords" % (verdict["family"], verdict["used"],
                                                verdict["codewords"])}

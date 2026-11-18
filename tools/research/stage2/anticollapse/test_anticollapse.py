@@ -269,3 +269,39 @@ def test_the_artifact_audit_refuses_a_level_that_uses_one_codeword(tmp_path):
         report = audit_sid(path)
         assert report["status"] == "FAIL"
         assert "level(s) " + str(level + 1) in report["detail"]
+
+
+BYPASS_EDIT = ("        index = self._indices(cost, infer_use_sk)",
+               "        index = torch.argmin(cost, dim=-1)")
+
+
+def test_a_mechanism_that_assigns_on_its_own_is_refused(scratch):
+    """The escape from round 11: replace `forward`'s assignment, keep the rest."""
+    source = REPO / "stage2_RQ-VAE" / "TIGER_graphlet_codebook_rq"
+    if not (source / "model" / "mixed_rq.py").is_file():
+        pytest.skip("the mixed arm is not present")
+    tree = scratch("bypass", source)
+    apply_floor(tree)
+    healthy = verify_tree(tree)
+    assert healthy["ok"] is True
+    assert healthy["used"] == healthy["used_forward"] == healthy["codewords"]
+
+    module = tree / "model" / "mixed_rq.py"
+    text = module.read_text(encoding="utf-8")
+    assert BYPASS_EDIT[0] in text
+    module.write_text(text.replace(*BYPASS_EDIT), encoding="utf-8")
+    verdict = verify_tree(tree)
+    assert verdict["ok"] is False
+    assert "CodebookCollapse" in verdict["reason"]
+
+
+def test_a_tree_whose_check_was_deleted_is_refused(scratch):
+    tree = scratch("deleted", BASELINE)
+    apply_floor(tree)
+    module = tree / "model" / "layers.py"
+    text = module.read_text(encoding="utf-8")
+    text = text.replace("        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n", "")
+    module.write_text(text, encoding="utf-8")
+    with pytest.raises(UnknownTree) as error:
+        apply_floor(tree)
+    assert "assignment check was removed" in str(error.value)

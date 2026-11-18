@@ -48,6 +48,16 @@ report = {"mode": mode}
 def used(index):
     return int(torch.unique(index).numel())
 
+def inspect_tree():
+    """What the admission probe says about this module's own assignment path."""
+    try:
+        from assignment_floor import verify_assignment
+        cost = collapse_cost()
+        verify_assignment(torch.argmin(cost, dim=-1), 256, 1)
+    except Exception as error:
+        return type(error).__name__ + ": " + str(error)[:90]
+    return "PASS"
+
 def sid_from(index):
     """The identifier this assignment would export, read back under the artifact rule."""
     import json, os, tempfile
@@ -85,6 +95,7 @@ elif mode == "bypass_indices":
     report["after"] = used(index)
     report["verdict"] = "REPAIRED" if report["after"] > 8 else "SURVIVED"
     report["artifact"] = sid_from(index)
+    report["tree_inspection"] = inspect_tree()
 
 elif mode == "duplicate_codebook":
     codes = layer.get_code_embs()
@@ -134,7 +145,7 @@ def run() -> dict:
     shutil.copy2(REPO / "tools" / "research" / "stage2" / "anticollapse" / "artifact.py",
                  SCRATCH / "qda_artifact_probe.py")
     rows = []
-    for mode in ("classic_collapse", "bypass_indices", "duplicate_codebook",
+    for mode in ("classic_collapse", "duplicate_codebook",
                  "encoder_collapse", "frozen_codebook"):
         done = subprocess.run([sys.executable, "-c", PROBE, mode], cwd=str(SCRATCH),
                               capture_output=True, text=True, timeout=900)
@@ -144,8 +155,28 @@ def run() -> dict:
                          "error": (done.stderr or done.stdout)[-300:]})
             continue
         rows.append(json.loads(line[-1][len("VERDICT "):]))
+    rows.insert(1, bypass_tree(SCRATCH))
     shutil.rmtree(SCRATCH, ignore_errors=True)
     return {"rows": rows}
+
+
+def bypass_tree(patched: Path) -> dict:
+    """A whole tree that assigns on its own: the admission probe must refuse it."""
+    from stage2.anticollapse import verify_tree
+
+    hostile = patched.parent / "adversarial_bypass"
+    if hostile.exists():
+        shutil.rmtree(hostile)
+    shutil.copytree(patched, hostile, symlinks=True)
+    module = hostile / "model" / "layers.py"
+    text = module.read_text(encoding="utf-8")
+    text = text.replace("        embed_ind = self._indices(self._distances(latent), infer_use_sk)",
+                        "        embed_ind = torch.argmin(self._distances(latent), dim=-1)")
+    module.write_text(text, encoding="utf-8")
+    verdict = verify_tree(hostile)
+    shutil.rmtree(hostile, ignore_errors=True)
+    return {"mode": "bypass_tree", "verdict": "REFUSED" if not verdict["ok"] else "SURVIVED",
+            "reason": verdict.get("reason", "the tree passed the admission probe")}
 
 
 if __name__ == "__main__":
@@ -153,7 +184,7 @@ if __name__ == "__main__":
     print(json.dumps(result, indent=1))
     width = max(len(row["mode"]) for row in result["rows"])
     for row in result["rows"]:
-        extra = row.get("error") or row.get("note") or (
+        extra = row.get("error") or row.get("reason") or row.get("note") or (
             "used %s -> %s" % (row.get("before"), row.get("after"))
             if "before" in row else "")
         print("%-*s  %-9s  %s" % (width, row["mode"], row["verdict"], extra))
