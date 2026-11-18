@@ -368,12 +368,25 @@ def probe(layer):
 
 report = {{}}
 for name, layer in [{layers}]:
+    # (each family class is probed below)
     try:
         report[name] = probe(layer)
     except Exception as error:
         print("GUARD " + name + ": " + type(error).__name__ + ": " + str(error)[:200])
         raise
-print(json.dumps({{"layers": report, "codewords": 8}}))
+# 4. the *wired* model: a mechanism may add a quantiser module and connect it through
+#    model.py. Nothing static can see that, but the constructed model can.
+wiring = {{}}
+try:
+    import train_rqvae as trainer
+    model = trainer.RQVAE(trainer._tokenizer_config(), in_dim=32, distance=trainer.DISTANCE)
+    levels = [module for module in model.rq.modules() if hasattr(module, "_indices")]
+    wiring = {{"levels": len(levels),
+               "modules": sorted({{type(module).__module__ for module in levels}}),
+               "classes": sorted({{type(module).__name__ for module in levels}})}}
+except Exception as error:                     # noqa: BLE001
+    wiring = {{"error": type(error).__name__ + ": " + str(error)[:120]}}
+print(json.dumps({{"layers": report, "codewords": 8, "wiring": wiring}}))
 """
 
 #: How each family drives `forward` in the probe: (setup, call).
@@ -440,6 +453,20 @@ def verify_tree(tree: Path, family: str | None = None, python: str | None = None
                     "family": family}
         raise UnknownTree(f"verification failed in {tree}:\n{result.stderr[-2000:]}")
     payload = json.loads(result.stdout.strip().splitlines()[-1])
+    wiring = payload.get("wiring", {})
+    expected = "model." + spec.module[len("model/"):-len(".py")]
+    # Best effort, reported not enforced: a tree whose model class cannot be built from
+    # the config alone (the mixed family builds `MixedRQVAE` with a curvature argument) is
+    # not evidence of a hole, and refusing every such tree would be wrong. What the check
+    # does catch -- a quantiser from an unpatched module wired into a buildable model --
+    # is reported as a warning the caller can act on.
+    if "error" in wiring:
+        payload["wiring_warning"] = ("not inspected: " + str(wiring["error"]))
+    else:
+        foreign = [name for name in wiring.get("modules", []) if name != expected]
+        if foreign:
+            payload["wiring_warning"] = ("a quantiser from another module is wired in: "
+                                         + ", ".join(foreign))
     payload["ok"] = all(entry[key] == payload["codewords"]
                         for entry in payload["layers"].values()
                         for key in ("used", "used_balanced", "used_forward"))

@@ -614,3 +614,25 @@ def test_a_floor_above_one_is_reached_and_checked():
     short = torch.cat([torch.zeros(3, dtype=torch.long), torch.arange(1, 256)])
     with pytest.raises(CodebookCollapse):
         verify_assignment(short, 256, 2)
+
+
+def test_the_probe_reports_the_wired_quantiser(scratch):
+    """A quantiser wired in from another module is invisible to a static scan.
+
+    The probe builds the tree's own model where the config allows it and reports which
+    modules the quantiser levels come from; where the model class needs arguments the
+    config does not carry, the skip is reported rather than silently passed.
+    """
+    tree = scratch("wired", BASELINE)
+    apply_floor(tree)
+    verdict = verify_tree(tree)
+    assert verdict["ok"] is True
+    wiring = verdict.get("wiring", {})
+    assert wiring.get("modules") == ["model.layers"]
+    assert wiring.get("levels") == 3
+
+    mixed = scratch("wired_mixed", MIXED)
+    apply_floor(mixed)
+    mixed_verdict = verify_tree(mixed)
+    assert mixed_verdict["ok"] is True
+    assert "wiring_warning" in mixed_verdict       # reported, not silently ignored
