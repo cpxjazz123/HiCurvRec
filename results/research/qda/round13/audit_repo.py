@@ -36,7 +36,9 @@ def main() -> int:
             continue
         except UnknownTree as error:
             text = str(error).splitlines()[0]
-            rows.append((tree.name, "NOT PROTECTED", text[:110]))
+            # A directory that is not a tree at all (a leftover log dir) is not a candidate.
+            status = "NOT A TREE" if "no known quantiser" in text else "NOT PROTECTED"
+            rows.append((tree.name, status, text[:110]))
             continue
         if verdict["ok"]:
             rows.append((tree.name, "PROTECTED",

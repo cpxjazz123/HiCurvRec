@@ -598,3 +598,19 @@ def test_the_export_call_site_is_migrated_without_self(scratch):
     for line in migrated.splitlines():
         if "verify_margins(cost" in line and line.startswith("            ") and not line.startswith("             "):
             assert "self" not in line, line
+
+
+def test_a_floor_above_one_is_reached_and_checked():
+    """`ASSIGNMENT_FLOOR` may be raised; the repair and the check must agree on 2 and 4."""
+    cost = torch.rand(4096, 256) + 10.0
+    cost[:, :8] = torch.rand(4096, 8)
+    for floor in (2, 4):
+        index, report = constrained_assignment(cost, floor)
+        counts = torch.bincount(index, minlength=256)
+        assert int(counts.min()) == floor, (floor, int(counts.min()))
+        assert report["moves"] >= 256 * (floor - 1)
+        assert verify_assignment(index, 256, floor)["min_count"] == floor
+
+    short = torch.cat([torch.zeros(3, dtype=torch.long), torch.arange(1, 256)])
+    with pytest.raises(CodebookCollapse):
+        verify_assignment(short, 256, 2)
