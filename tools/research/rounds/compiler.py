@@ -39,8 +39,17 @@ BLOCKING = ("FAIL", "INCOMPARABLE", "NOT_RUN", "TIMEOUT", "SKIPPED")
 
 
 def _check(name: str, status: str, detail: str = "") -> dict:
-    return {"name": name, "status": "PASS" if status == "PASS" else "BLOCKED",
-            "detail": detail, "raw_status": status}
+    # NOT_APPLICABLE means the check does not constrain this candidate (for example
+    # the one-undirected-graph rule on a tree that uses no graph, rule 89b).  It is
+    # carried through as "N/A" -- not as SKIPPED, which keeps its blocking meaning --
+    # and it does not block.
+    if status == "PASS":
+        outcome = "PASS"
+    elif status == "NOT_APPLICABLE":
+        outcome = "N/A"
+    else:
+        outcome = "BLOCKED"
+    return {"name": name, "status": outcome, "detail": detail, "raw_status": status}
 
 
 def mathematical_verdict(tree: Path, state: dict) -> dict:
@@ -113,7 +122,7 @@ def mathematical_verdict(tree: Path, state: dict) -> dict:
             else:
                 checks.append(_check("contract", "PASS",
                                      "the contract states the frozen statements"))
-    blocked = [entry for entry in checks if entry["status"] != "PASS"]
+    blocked = [entry for entry in checks if entry["status"] not in ("PASS", "N/A")]
     return {"stage": "mathematical", "status": "BLOCKED" if blocked else "PASS",
             "checks": checks, "blocked_by": [entry["name"] for entry in blocked]}
 
@@ -133,7 +142,7 @@ def training_verdict(tree: Path, state: dict) -> dict:
         raw = str(entry.get("status") or "NOT_RUN")
         checks.append(_check(str(entry.get("name")), raw,
                              str(entry.get("detail"))[:200]))
-    blocked = [entry for entry in checks if entry["status"] != "PASS"]
+    blocked = [entry for entry in checks if entry["status"] not in ("PASS", "N/A")]
     return {"stage": "training", "status": "BLOCKED" if blocked else "PASS",
             "checks": checks, "blocked_by": [entry["name"] for entry in blocked]}
 

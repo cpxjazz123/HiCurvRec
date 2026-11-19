@@ -2803,7 +2803,8 @@ def machine_admission(tree: Path) -> dict:
     checks = importlib.import_module("tools.research.stage2.checks")
     report = checks.run_all(tree)
     failing = [check["name"] + ": " + str(check["detail"])[:200]
-               for check in report.get("checks", []) if check.get("status") != "PASS"]
+               for check in report.get("checks", [])
+               if check.get("status") not in ("PASS", "NOT_APPLICABLE")]
     return {"passed": bool(report.get("passed")),
             "refused": "; ".join(failing) if failing else None,
             "checks": report.get("checks", []),

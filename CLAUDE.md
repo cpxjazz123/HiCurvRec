@@ -213,6 +213,7 @@ genrec/<NN>/recall.json      ← Stage3 结果的全部键值
 
 ## 17. Stage2 目录唯一性（2026-11-15 owner 指令）
 
+89b. **统一无向行为图(2026-11-19 owner 指令)**：HiCurvRec 只维护**一份无向**商品行为图 `results/research/behavior_graph/`，AF3、graphlet、结构保真度与一切结构监督实验都必须读它，禁止各自重建。四个文件即契约：`edges.parquet`（每条无向边一行，`source < target`，`weight` = 双向转移次数之和）、`graph.npz`（与 `af3_structure.load_graph` 兼容的 `nodes/rows/cols/af3/median/p90`，外加**对称** CSR、`degree`、每边与每节点三角数）、`node_features.npy`（第 k 行 = 商品 k 的 stage1 embedding）、`metadata.json`（构图规则、`policy` 块、源文件与输出 sha256）。方向不是建模变量：三角形、开放楔形、社区/桥接边与 AF3 都定义在无向图上；有序序列保留在 `train.parquet`，确需有向图时从它重建，不得另存。**强制执行**：`tools/research/stage2/graph_contract.py` 的 `check_behavior_graph` 已并入 `checks.run_all` —— 候选树若从 `train.parquet` 自建邻接/CSR 即 FAIL；读取非规范的 `graph.npz` 即 FAIL；读取规范图但文件与 `metadata.json` 的 sha256/size 不符即 FAIL；完全不涉及图的树记 `NOT_APPLICABLE`（不阻断）。构建脚本 `analysis_sid_recall/build_behavior_graph.py`，重建具有确定性（同输入同 sha256）。
 90. **`stage2_RQ-VAE/` 顶层只允许保留一个 Stage2 目录**。除下面两类容器目录外，任何旧的、实验完毕的、
     或与当前实验无关的 Stage2 源码树都必须移动到 `stage2_RQ-VAE/_archive/`：
     - `stage2_RQ-VAE/baseline/`：**冻结基线**。新臂的**唯一**复制来源是 `baseline/TIGER_RQ-VAE`；

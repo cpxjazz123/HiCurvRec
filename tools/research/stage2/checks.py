@@ -653,6 +653,20 @@ def check_assignment_floor(tree: Path | str) -> dict:
                                                verdict["codewords"])}
 
 
+def check_behavior_graph(tree: Path | str) -> dict:
+    """The candidate reads the one undirected graph, and that graph verifies.
+
+    Owner decision (2026-11-19): one undirected behaviour graph under
+    results/research/behavior_graph, no per-experiment copy, hashes checked
+    against metadata.json.  A tree that touches no graph is NOT_APPLICABLE, not a
+    failure -- the rule constrains the arms that use the graph, not every arm.
+    """
+    from . import graph_contract
+    verdict = graph_contract.inspect_tree(tree)
+    return {"status": verdict["status"], "name": "behavior_graph",
+            "detail": verdict["detail"]}
+
+
 def run_all(tree: Path | str) -> dict:
     """The conformance report of one candidate tree."""
     tree = Path(tree).resolve()
@@ -664,8 +678,11 @@ def run_all(tree: Path | str) -> dict:
     # The floor is not a gate here -- it is installed by `copy_baseline` and by `launch`,
     # so a tree without it cannot reach a real run; `check_assignment_floor` stays as a
     # standalone diagnostic.
-    checks = [check_entry(tree)]
-    passed = all(check["status"] == "PASS" for check in checks)
+    # Section 89b (owner, 2026-11-19): the one-undirected-graph rule is enforced --
+    # a tree that builds its own graph, or reads one whose hashes do not match, is
+    # refused; a tree that uses no graph is NOT_APPLICABLE and does not block.
+    checks = [check_entry(tree), check_behavior_graph(tree)]
+    passed = all(check["status"] in ("PASS", "NOT_APPLICABLE") for check in checks)
     admissible = passed
     _discard_admission_tree(tree)
     return {"tree": str(tree), "passed": passed, "admissible": admissible,

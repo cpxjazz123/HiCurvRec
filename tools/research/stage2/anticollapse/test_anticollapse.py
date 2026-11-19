@@ -196,7 +196,12 @@ def test_the_admission_runs_only_the_real_entry():
     import inspect
 
     source = inspect.getsource(checks.run_all)
-    assert "checks = [check_entry(tree)]" in source
+    # The intent of section 88: the floor is not a gate.  The entry check is the
+    # gate, and the one-undirected-graph check joined it in section 89b; neither
+    # of those is the floor.  Pinning the exact list would make every admitted
+    # check look like a regression, so the floor is what is asserted absent.
+    assert "check_entry(tree)" in source
+    assert "check_assignment_floor(tree)" not in source
 
 
 def test_launch_installs_the_floor_before_the_run(scratch, monkeypatch):
@@ -763,3 +768,35 @@ def test_the_collision_gate_switch_is_off_by_default_and_works_when_on(tmp_path)
     enforced = audit_sid(path, enforce_gate=True)
     assert enforced["status"] == "FAIL"
     assert "stage3 gate" in enforced["detail"]
+
+
+def test_the_spacing_criterion_is_metric_agnostic():
+    """A mechanism may assign by an angular cost; the criterion still tracks drift.
+
+    `verify_separation` compares the codebook's own spacing with the assignment's
+    resolution and then compares *that ratio* to its own initial value, so a metric
+    mismatch between the two cancels: only drift shows up. Measured here with a cosine
+    cost while the codewords drift toward their mean.
+    """
+    import torch as _torch
+
+    from anticollapse.floor import SEPARATION_STRIKES, verify_separation
+
+    codes = _torch.nn.functional.normalize(_torch.randn(256, 32), dim=-1)
+    items = _torch.nn.functional.normalize(_torch.randn(2048, 32), dim=-1)
+    angular = 1.0 - items @ codes.t()
+
+    key = 9100
+    start = verify_separation(codes, angular, key=key)["ratio"]
+    assert start > 0.5
+
+    mean = codes.mean(0, keepdim=True)
+    drifted = mean + 0.01 * (codes - mean)
+    refused = False
+    for _ in range(SEPARATION_STRIKES + 2):
+        try:
+            verify_separation(drifted, angular, key=key)
+        except CodebookCollapse:
+            refused = True
+            break
+    assert refused, "angular-cost drift went unnoticed"
