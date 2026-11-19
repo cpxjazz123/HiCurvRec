@@ -84,9 +84,13 @@ def load_graph(folder: Path | str | None = None) -> dict:
         rows = np.asarray(payload["rows"], dtype=np.int64)
         cols = np.asarray(payload["cols"], dtype=np.int64)
         triangles = np.asarray(payload["triangles"], dtype=np.int64)
+        af3 = np.asarray(payload["af3"], dtype=np.float64)
+        af3_median = float(payload["median"])
+        af3_p90 = float(payload["p90"])
         n_nodes = int(payload["nodes"])
     degree = np.bincount(np.concatenate([rows, cols]), minlength=n_nodes)
-    return {"rows": rows, "cols": cols, "triangles": triangles,
+    return {"rows": rows, "cols": cols, "triangles": triangles, "af3": af3,
+            "af3_median": af3_median, "af3_p90": af3_p90,
             "degree": degree, "n_nodes": n_nodes}
 
 
@@ -181,6 +185,52 @@ class TripletSampler:
         return None
 
 
+def _af3_matrices(graph: dict):
+    """Sparse (kappa, support) matrices, built once and cached on the graph dict."""
+    cache = graph.get("_af3_cache")
+    if cache is None:
+        import scipy.sparse as sparse
+        rows, cols = graph["rows"], graph["cols"]
+        af3 = np.asarray(graph["af3"], dtype=np.float64)
+        n = graph["n_nodes"]
+        # The edge list stores each undirected edge once, so both directions go in.
+        both_rows = np.concatenate([rows, cols])
+        both_cols = np.concatenate([cols, rows])
+        kappa = sparse.csr_matrix((np.concatenate([af3, af3]), (both_rows, both_cols)), shape=(n, n))
+        support = sparse.csr_matrix((np.ones(len(both_rows), dtype=bool), (both_rows, both_cols)),
+                                    shape=(n, n))
+        cache = (kappa, support, float(graph["af3_median"]),
+                 max(float(graph["af3_p90"]) - float(graph["af3_median"]), 1e-6))
+        graph["_af3_cache"] = cache
+    return cache
+
+
+def _mean_kappa(kappa, support, triples: np.ndarray) -> np.ndarray:
+    first, second, third = triples[:, 0], triples[:, 1], triples[:, 2]
+    values = np.stack([np.asarray(kappa[first, second]).ravel(),
+                       np.asarray(kappa[first, third]).ravel(),
+                       np.asarray(kappa[second, third]).ravel()])
+    present = np.stack([np.asarray(support[first, second]).ravel(),
+                        np.asarray(support[first, third]).ravel(),
+                        np.asarray(support[second, third]).ravel()])
+    total = (values * present).sum(axis=0)
+    count = present.sum(axis=0)
+    return np.where(count > 0, total / np.maximum(count, 1), 0.0)
+
+
+def af3_target(graph: dict, triangles: np.ndarray, wedges: np.ndarray) -> np.ndarray:
+    """Mean AF3 curvature over the edges each triple has, standardised by the graph.
+
+    A triangle contributes three edges, an open wedge two.  The two sparse lookups
+    are built once: a per-triple Python loop over 315k edges made an epoch five times
+    slower.
+    """
+    kappa, support, median, scale = _af3_matrices(graph)
+    tri = (_mean_kappa(kappa, support, triangles) - median) / scale
+    wed = (_mean_kappa(kappa, support, wedges) - median) / scale
+    return np.concatenate([tri, wed]).astype(np.float32)
+
+
 class TripletPredictor(nn.Module):
     """Permutation-invariant triangle/wedge classifier over three item vectors.
 
@@ -189,20 +239,26 @@ class TripletPredictor(nn.Module):
     the head uses.
     """
 
-    def __init__(self, dim: int = 32, hidden: int = 64, interaction: bool = True):
+    def __init__(self, dim: int = 32, hidden: int = 64, interaction: bool = True,
+                 af3: bool = False):
         super().__init__()
         self.interaction = interaction
+        self.af3 = af3
         self.node = nn.Sequential(nn.Linear(dim, hidden), nn.ReLU())
         self.pair = nn.Sequential(nn.Linear(dim, hidden), nn.ReLU()) if interaction else None
         width = hidden * 2 if interaction else hidden
-        self.head = nn.Sequential(nn.Linear(width, hidden), nn.ReLU(), nn.Linear(hidden, 1))
+        self.head = nn.Sequential(nn.Linear(width, hidden), nn.ReLU(),
+                                  nn.Linear(hidden, 2 if af3 else 1))
 
-    def forward(self, first: torch.Tensor, second: torch.Tensor, third: torch.Tensor) -> torch.Tensor:
+    def forward(self, first: torch.Tensor, second: torch.Tensor, third: torch.Tensor):
         nodes = self.node(torch.stack([first, second, third], dim=1)).mean(dim=1)
         if self.pair is not None:
             product = (first * second + first * third + second * third) / 3.0
             nodes = torch.cat([nodes, self.pair(product)], dim=1)
-        return self.head(nodes).squeeze(1)
+        out = self.head(nodes)
+        if self.af3:
+            return out[:, 0], out[:, 1]
+        return out.squeeze(1)
 
 
 def graphlet_loss(logits_triangle: torch.Tensor, logits_wedge: torch.Tensor) -> torch.Tensor:
@@ -211,6 +267,11 @@ def graphlet_loss(logits_triangle: torch.Tensor, logits_wedge: torch.Tensor) -> 
     targets_wedge = torch.zeros_like(logits_wedge)
     return (F.binary_cross_entropy_with_logits(logits_triangle, targets_triangle)
             + F.binary_cross_entropy_with_logits(logits_wedge, targets_wedge)) / 2.0
+
+
+def af3_loss(prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    """Huber on the standardised curvature, delta = one inter-quantile step."""
+    return F.huber_loss(prediction, target, delta=1.0)
 
 
 def calibrate_share(recon: float, term: float, share: float = GRAPHLET_SHARE) -> float:

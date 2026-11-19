@@ -43,7 +43,8 @@ from distances import build_distance
 from losses import build_loss
 from model import RQVAE
 from graphlet_sup import (CALIBRATION_STEPS, GRAPHLET_SHARE, TripletPredictor, TripletSampler,
-                          accuracy, calibrate_share, graphlet_loss, load_graph)
+                          accuracy, af3_loss, af3_target, calibrate_share, graphlet_loss,
+                          load_graph)
 from train_config import load_train_config
 
 
@@ -296,7 +297,7 @@ def main() -> None:
     sampler = TripletSampler(graph) if graph is not None else None
     # The supervisor head is trained jointly and discarded at export; its error is
     # what forces the item vectors to carry the local structure.
-    predictor = TripletPredictor(dim=CODEBOOK_DIM).to(device) if graph is not None else None
+    predictor = TripletPredictor(dim=CODEBOOK_DIM, af3=True).to(device) if graph is not None else None
     graph_weight = None
     graph_calibration: list = []
     config = _tokenizer_config()
@@ -365,6 +366,7 @@ def main() -> None:
         recons: list[float] = []
         graph_terms: list[float] = []
         graph_accuracy: list[float] = []
+        graph_mae: list[float] = []
         graph_generator = torch.Generator()
         graph_generator.manual_seed(SEED + rank * 100003 + epoch)
         _epoch_t0 = time.time()
@@ -386,9 +388,19 @@ def main() -> None:
                 count = len(triangles)
                 tri = latent[:count * 3].reshape(count, 3, -1)
                 wed = latent[count * 3:].reshape(count, 3, -1)
-                logit_tri = predictor(tri[:, 0], tri[:, 1], tri[:, 2])
-                logit_wed = predictor(wed[:, 0], wed[:, 1], wed[:, 2])
-                graph_term = graphlet_loss(logit_tri, logit_wed)
+                logit_tri, kappa_tri = predictor(tri[:, 0], tri[:, 1], tri[:, 2])
+                logit_wed, kappa_wed = predictor(wed[:, 0], wed[:, 1], wed[:, 2])
+                targets = torch.as_tensor(
+                    af3_target(graph, triangles, wedges), device=device)
+                kappa_target_tri, kappa_target_wed = targets[:count], targets[count:]
+                classify = graphlet_loss(logit_tri, logit_wed)
+                curvature = 0.5 * (af3_loss(kappa_tri, kappa_target_tri)
+                                   + af3_loss(kappa_wed, kappa_target_wed))
+                # One auxiliary objective, one calibrated weight: the AF3 head does not
+                # get a second slice of the budget, so B and C stay comparable.
+                graph_term = classify + curvature
+                af3_mae = 0.5 * (float((kappa_tri - kappa_target_tri).abs().mean())
+                                 + float((kappa_wed - kappa_target_wed).abs().mean()))
                 if graph_weight is None:
                     graph_calibration.append((float(recon_loss.detach()),
                                               float(graph_term.detach())))
@@ -406,6 +418,7 @@ def main() -> None:
                     loss = loss + graph_weight * graph_term
                     graph_terms.append(float(graph_term.detach()))
                     graph_accuracy.append(accuracy(logit_tri.detach(), logit_wed.detach()))
+                    graph_mae.append(af3_mae)
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
@@ -430,6 +443,7 @@ def main() -> None:
             dist.all_reduce(local_graph, op=dist.ReduceOp.SUM)
         avg_graph = float(local_graph.item()) / max(world_size, 1)
         avg_graph_accuracy = float(np.mean(graph_accuracy)) if graph_accuracy else 0.0
+        avg_graph_mae = float(np.mean(graph_mae)) if graph_mae else 0.0
         cur_lr = optimizer.param_groups[0]["lr"]
 
         # === 非 eval 间隔: 只 log train 行 ===
@@ -438,7 +452,7 @@ def main() -> None:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
                 _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon,
                         graph=avg_graph, graph_weight=graph_weight,
-                        graph_accuracy=avg_graph_accuracy, lr=cur_lr,
+                        graph_accuracy=avg_graph_accuracy, graph_af3_mae=avg_graph_mae, lr=cur_lr,
                         epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
             continue
 
@@ -472,7 +486,7 @@ def main() -> None:
                 _record(
                     rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon,
                     graph=avg_graph, graph_weight=graph_weight,
-                    graph_accuracy=avg_graph_accuracy, lr=cur_lr,
+                    graph_accuracy=avg_graph_accuracy, graph_af3_mae=avg_graph_mae, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
