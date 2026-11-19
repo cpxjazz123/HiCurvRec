@@ -1,39 +1,46 @@
-"""Level-1 behaviour structure: adjacent items share their encoder neighbourhood.
+"""Graph contrastive structure: neighbours are not just near, they are nearer than controls.
 
-    L = L_RQVAE + lambda * L_graph^(1)
-    L_graph^(1) = mean ||z_i - z_j||^2 / mean ||z||^2      over behaviour edges
+    L_contrast = -log  exp(s(z_i, z_j)/tau)
+                    / (exp(s(z_i, z_j)/tau) + sum_k exp(s(z_i, z_k)/tau))
 
-The edges come from the project's single undirected graph
-(``results/research/behavior_graph``, rule 89b) and the file's sha256 is checked
-against ``metadata.json`` before a single edge is read -- a rebuilt or edited
-graph is refused instead of silently changing the target.
+``j`` is a behaviour-graph neighbour (positive), ``k`` runs over degree-matched
+non-neighbours (negatives).  Cosine similarity is used, so the term is bounded
+and cannot be minimised by shrinking every vector to zero.  Compared with the
+unbounded squared-distance pull this replaces, it carries both attraction and
+separation -- the earlier pull drove the codebook to collapse
+(``assignment_floor.CodebookCollapse`` at epoch ~150).
 
-``lambda`` is not tuned.  ``GRAPH_SHARE`` fixes the share of the total loss the
-term takes at the first step, and ``calibrate_share`` turns that share into the
-weight from the two measured values at that step:
+Nothing here is tuned by hand:
 
-    lambda = share * L_recon(step 0) / ((1 - share) * L_graph(step 0))
+* ``tau`` is set once from the first step's own logits, so the positive/negative
+  logit gap is exactly one nat at initialisation, and is then fixed;
+* ``lambda`` is set once from the first step's reconstruction loss, so the
+  contrastive term is a fixed share of the total there (``GRAPH_SHARE``);
+* negatives are degree-matched non-edges, drawn from the same degree bucket as the
+  anchor and rejected if the pair is an edge.
 
-so the graph term is exactly 10% of the total loss at initialisation, whatever
-the scale of the reconstruction loss happens to be, and every later step uses the
-same weight.  The weight, the term and the reconstruction are written to the
-metrics stream, so the run can be audited without recomputation.
+The edges, degrees and triangle counts come from the project's single undirected
+graph, and ``graph.npz``'s sha256 is checked against ``metadata.json`` before an
+edge is read (CLAUDE.md 89b).
 """
 from __future__ import annotations
 
 import hashlib
 import json
+from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
 import torch
 
 SCHEMA_PREFIX = "genrec.behavior_graph"
-#: Share of the total loss the graph term takes at the first step (switch: 0.0 = off).
+#: Share of the total loss the contrastive term takes at the first step (0.0 = off).
 GRAPH_SHARE = 0.1
-#: Edges drawn per optimisation step; one edge per vector slot of the batch.
-EDGE_SAMPLES = 4096
-#: The numeric floor of the normaliser and of the calibrated weight.
+#: Anchors per step and negatives per anchor.
+ANCHOR_SAMPLES = 1024
+NEGATIVES_PER_ANCHOR = 8
+#: Draws before an adjacent candidate is kept as a negative (then the slot is dropped).
+NEGATIVE_RETRIES = 6
 EPS = 1e-12
 
 
@@ -55,8 +62,8 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def load_edges(folder: Path | str | None = None) -> np.ndarray:
-    """The graph's undirected edges, after the metadata contract verifies."""
+def load_graph(folder: Path | str | None = None) -> dict:
+    """Edges, degrees and triangle counts, after the metadata contract verifies."""
     folder = Path(folder) if folder is not None else GRAPH_DIR
     metadata_path = folder / "metadata.json"
     graph_path = folder / "graph.npz"
@@ -81,30 +88,128 @@ def load_edges(folder: Path | str | None = None) -> np.ndarray:
     with np.load(graph_path, allow_pickle=False) as payload:
         rows = np.asarray(payload["rows"], dtype=np.int64)
         cols = np.asarray(payload["cols"], dtype=np.int64)
-    return np.stack([rows, cols], axis=1)
+        triangles = np.asarray(payload["triangles"], dtype=np.int64)
+        n_nodes = int(payload["nodes"])
+    degree = np.bincount(np.concatenate([rows, cols]), minlength=n_nodes)
+    return {"rows": rows, "cols": cols, "triangles": triangles,
+            "degree": degree, "n_nodes": n_nodes}
 
 
-def sample_edges(edges: np.ndarray, count: int, generator: torch.Generator) -> np.ndarray:
-    """A bounded, reproducible draw from the edge set."""
-    if len(edges) <= count:
-        return edges
-    index = torch.randint(0, len(edges), (count,), generator=generator).numpy()
-    return edges[index]
+def _degree_bucket(value: int) -> int:
+    for limit in (1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000):
+        if value <= limit:
+            return limit
+    return 10_000
 
 
-def graph_level1_loss(left: torch.Tensor, right: torch.Tensor) -> torch.Tensor:
-    """Dimensionless squared distance between neighbouring encoded items."""
-    distance = (left - right).pow(2).sum(dim=1).mean()
-    scale = 0.5 * (left.pow(2).sum(dim=1).mean() + right.pow(2).sum(dim=1).mean())
-    return distance / (scale + EPS)
+def _neighbour_table(graph: dict):
+    """CSR neighbour lists, so one neighbour per anchor is a vectorised draw."""
+    rows, cols = graph["rows"], graph["cols"]
+    left = np.concatenate([rows, cols])
+    right = np.concatenate([cols, rows])
+    order = np.lexsort((right, left))
+    left, right = left[order], right[order]
+    indptr = np.zeros(graph["n_nodes"] + 1, dtype=np.int64)
+    np.add.at(indptr, left + 1, 1)
+    indptr = np.cumsum(indptr)
+    return indptr, right
+
+
+class NegativeSampler:
+    """Neighbours as positives, degree-matched non-neighbours as negatives."""
+
+    def __init__(self, graph: dict):
+        import scipy.sparse as sparse
+
+        self.graph = graph
+        self.degree = graph["degree"]
+        self.n_nodes = graph["n_nodes"]
+        self.indptr, self.neighbours = _neighbour_table(graph)
+        rows, cols = graph["rows"], graph["cols"]
+        left = np.concatenate([rows, cols])
+        right = np.concatenate([cols, rows])
+        self.adjacency = sparse.csr_matrix(
+            (np.ones(len(left), dtype=bool), (left, right)),
+            shape=(self.n_nodes, self.n_nodes))
+        buckets = defaultdict(list)
+        for node in range(self.n_nodes):
+            if self.degree[node] > 0:
+                buckets[_degree_bucket(int(self.degree[node]))].append(node)
+        self.buckets = {key: np.asarray(values, dtype=np.int64) for key, values in buckets.items()}
+        self.anchors = np.asarray([node for node in range(self.n_nodes) if self.degree[node] > 0],
+                                  dtype=np.int64)
+        self.anchor_bucket = np.asarray([_degree_bucket(int(self.degree[node]))
+                                         for node in self.anchors], dtype=np.int64)
+
+    def _neighbour(self, anchors: np.ndarray, rng) -> np.ndarray:
+        start = self.indptr[anchors]
+        length = self.indptr[anchors + 1] - start
+        offset = (rng.random(len(anchors)) * length).astype(np.int64)
+        return self.neighbours[start + offset]
+
+    def _is_edge(self, left: np.ndarray, right: np.ndarray) -> np.ndarray:
+        return np.asarray(self.adjacency[left, right]).ravel().astype(bool)
+
+    def sample(self, generator: torch.Generator, count: int = ANCHOR_SAMPLES,
+               negatives: int = NEGATIVES_PER_ANCHOR):
+        """Anchors, one neighbour each, and degree-matched non-neighbour negatives."""
+        rng = np.random.default_rng(int(torch.randint(0, 2 ** 31 - 1, (1,), generator=generator).item()))
+        index = rng.choice(len(self.anchors), size=min(count, len(self.anchors)), replace=False)
+        anchors = self.anchors[index]
+        buckets = self.anchor_bucket[index]
+        positive = self._neighbour(anchors, rng)
+        picked = np.full((len(anchors), negatives), -1, dtype=np.int64)
+        filled = np.zeros(len(anchors), dtype=np.int64)
+        for _ in range(negatives * NEGATIVE_RETRIES):
+            open_rows = np.nonzero(filled < negatives)[0]
+            if not len(open_rows):
+                break
+            candidates = np.empty(len(open_rows), dtype=np.int64)
+            open_buckets = buckets[open_rows]
+            for bucket in np.unique(open_buckets):
+                mask = open_buckets == bucket
+                pool = self.buckets[int(bucket)]
+                candidates[mask] = pool[rng.integers(0, len(pool), size=int(mask.sum()))]
+            bad = (candidates == anchors[open_rows]) | self._is_edge(anchors[open_rows], candidates)
+            accepted = open_rows[~bad]
+            if len(accepted):
+                picked[accepted, filled[accepted]] = candidates[~bad]
+                filled[accepted] += 1
+        return anchors, positive, picked
+
+
+def cosine(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+    a = a / a.norm(dim=1, keepdim=True).clamp_min(EPS)
+    b = b / b.norm(dim=1, keepdim=True).clamp_min(EPS)
+    return (a * b).sum(dim=1)
+
+
+def contrastive_loss(anchor: torch.Tensor, positive: torch.Tensor, negative: torch.Tensor,
+                     temperature: float) -> torch.Tensor:
+    """InfoNCE with one positive and one row of negatives per anchor.
+
+    ``negative`` is ``(M, K, D)``; entries whose rows are entirely missing are
+    dropped by the caller.
+    """
+    similarity = cosine(anchor, positive) / temperature
+    negatives = torch.einsum("md,mkd->mk", anchor / anchor.norm(dim=1, keepdim=True).clamp_min(EPS),
+                             negative / negative.norm(dim=2, keepdim=True).clamp_min(EPS))
+    logits = torch.cat([similarity.unsqueeze(1), negatives / temperature], dim=1)
+    return torch.nn.functional.cross_entropy(logits, torch.zeros(len(logits), dtype=torch.long,
+                                                                 device=logits.device))
+
+
+def calibrate_temperature(positive_similarity: float, negative_similarity: float) -> float:
+    """The temperature that makes the initial logit gap one nat.
+
+    The logit is ``similarity / tau``, so the gap is one nat exactly when
+    ``tau`` equals the measured similarity gap.
+    """
+    gap = float(positive_similarity) - float(negative_similarity)
+    return max(gap, 1e-3)
 
 
 def calibrate_share(recon: float, graph: float, share: float = GRAPH_SHARE) -> float:
-    """The weight that makes the graph term ``share`` of the *total* at this step.
-
-    ``lambda * g = share * (r + lambda * g)`` gives ``lambda = share * r / ((1 - share) * g)``;
-    using ``share * r / g`` instead would make the term a share of the
-    reconstruction alone and overshoot the total by ``1 / (1 - share)``.
-    """
+    """The weight that makes the contrastive term ``share`` of the total at this step."""
     share = float(share)
     return share * float(recon) / max((1.0 - share) * float(graph), EPS)

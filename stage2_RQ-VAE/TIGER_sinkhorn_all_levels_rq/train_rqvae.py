@@ -42,8 +42,8 @@ from tqdm import tqdm
 from distances import build_distance
 from losses import build_loss
 from model import RQVAE
-from structure_loss import (EDGE_SAMPLES, GRAPH_SHARE, calibrate_share, graph_level1_loss,
-                            load_edges, sample_edges)
+from structure_loss import (GRAPH_SHARE, NegativeSampler, calibrate_share,
+                            calibrate_temperature, contrastive_loss, cosine, load_graph)
 from train_config import load_train_config
 
 
@@ -292,8 +292,10 @@ def main() -> None:
     # Level-1 behaviour structure: the edges of the single undirected graph, with the
     # file's sha256 checked against metadata.json before a single edge is read
     # (CLAUDE.md 89b).  GRAPH_SHARE = 0 switches the term off.
-    graph_edges = load_edges() if GRAPH_SHARE > 0 else None
+    graph = load_graph() if GRAPH_SHARE > 0 else None
+    sampler = NegativeSampler(graph) if graph is not None else None
     graph_weight = None
+    graph_temperature = None
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1], distance=DISTANCE).to(device)
     if XAVIER_INIT:
@@ -366,14 +368,29 @@ def main() -> None:
             # 唯一接入点：损失项与权重在 losses/ 里，这里只拿到总损失与分项。
             loss, components = CRITERION(reconstructed, batch, quant_parts)
             recon_loss = components["reconstruction"]
-            if graph_edges is not None:
-                # L_graph^(1): neighbours in the training behaviour graph are pulled
-                # together in the encoder space.  The weight is calibrated once, on
-                # the first step, so the term is GRAPH_SHARE of the total there.
-                sampled = sample_edges(graph_edges, EDGE_SAMPLES, graph_generator)
-                pairs = all_embeddings[torch.as_tensor(sampled).reshape(-1)].to(device)
+            if sampler is not None:
+                # L_contrast: a neighbour (positive) must score higher than degree-matched
+                # non-neighbours (negatives).  Temperature and weight are calibrated once,
+                # on the first step, from that step's own measured quantities.
+                anchors, positives, negatives = sampler.sample(graph_generator)
+                # Keep only rows whose every negative slot was filled; a clipped
+                # placeholder would be a real neighbour posing as a negative.
+                usable = (negatives >= 0).all(axis=1)
+                anchors, positives, negatives = anchors[usable], positives[usable], negatives[usable]
                 encoder = model.module.encoder if isinstance(model, DDP) else model.encoder
-                graph_term = graph_level1_loss(encoder(pairs[0::2]), encoder(pairs[1::2]))
+                z_anchor = encoder(all_embeddings[torch.as_tensor(anchors)].to(device))
+                z_positive = encoder(all_embeddings[torch.as_tensor(positives)].to(device))
+                clipped = torch.as_tensor(np.clip(negatives, 0, None)).reshape(-1)
+                z_negative = encoder(all_embeddings[clipped].to(device)).reshape(
+                    len(anchors), negatives.shape[1], -1)
+                if graph_temperature is None:
+                    with torch.no_grad():
+                        flat_anchor = z_anchor.unsqueeze(1).expand(-1, negatives.shape[1], -1)
+                        graph_temperature = calibrate_temperature(
+                            float(cosine(z_anchor, z_positive).mean()),
+                            float(cosine(flat_anchor.reshape(-1, z_anchor.shape[-1]),
+                                         z_negative.reshape(-1, z_negative.shape[-1])).mean()))
+                graph_term = contrastive_loss(z_anchor, z_positive, z_negative, graph_temperature)
                 if graph_weight is None:
                     if world_size > 1:
                         # The weight must agree across ranks, or the four ranks optimise
