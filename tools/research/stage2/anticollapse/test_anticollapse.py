@@ -731,3 +731,17 @@ def test_a_soft_quantiser_is_protected_through_the_helper_or_refused(scratch):
     with pytest.raises(UnknownTree) as error:
         apply_floor(bad)
     assert "still assigns without the guard" in str(error.value)
+
+
+def test_the_checks_stay_memory_bounded_at_large_codebooks():
+    """K = 8192 must not allocate a K x K matrix: that is 2 GB, and it is a real regime."""
+    from anticollapse.floor import verify_codebook, verify_separation
+
+    codes = torch.randn(8192, 32)
+    cost = torch.rand(1024, 8192) * 0.01
+    assert verify_codebook(codes, distance=False)["distinct"] == 8192
+    report = verify_separation(codes, cost)
+    assert report["ok"] is True and report["ratio"] > 1.0
+    codes[1] = codes[0]
+    with pytest.raises(CodebookCollapse):
+        verify_codebook(codes, distance=False)

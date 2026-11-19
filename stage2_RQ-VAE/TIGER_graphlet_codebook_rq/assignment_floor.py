@@ -211,15 +211,13 @@ def verify_codebook(codes, distance: bool = True) -> dict:
     # enough to run on every step, so the check no longer depends on `self.training`.
     flat = codes.reshape(rows, -1).float()
     if not distance:
-        # On the device, no host round trip: equality of every pair of rows, diagonal
-        # excluded. One sync for the answer, which the caller needs anyway.
-        equal = (flat[:, None, :] == flat[None, :, :]).all(-1)
-        equal.fill_diagonal_(False)
-        if bool(equal.any()):
+        # `unique(dim=0)` keeps memory at O(K*D): the pairwise form this replaced needed
+        # O(K^2*D), which is 2 GB at K = 8192 -- exactly the regime that must stay usable.
+        distinct = int(torch.unique(flat, dim=0).shape[0])
+        if distinct < rows:
             raise CodebookCollapse(
-                str(int(equal.any(dim=1).sum())) + " of " + str(rows)
-                + " codewords are duplicate rows")
-        return {"codewords": rows}
+                str(rows - distinct) + " of " + str(rows) + " codewords are duplicate rows")
+        return {"codewords": rows, "distinct": distinct}
     flat = flat.cpu().contiguous()
     seen: set[bytes] = set()
     duplicates = 0
@@ -303,6 +301,25 @@ SEPARATION_STRIKES = 50
 _SEPARATION: dict[int, dict] = {}
 
 
+def _min_pairwise_distance(flat, block: int = 512) -> float:
+    """Smallest distance between two rows, in bounded memory.
+
+    A full `cdist` needs O(K^2) memory (268 MB at K = 8192); this walks the rows in blocks
+    and keeps one block of distances at a time, so the cost is O(block * K).
+    """
+    import torch
+
+    rows = flat.shape[0]
+    best = float("inf")
+    for start in range(0, rows, block):
+        chunk = flat[start:start + block]
+        distance = torch.cdist(chunk, flat)
+        for offset in range(chunk.shape[0]):
+            distance[offset, start + offset] = float("inf")
+        best = min(best, float(distance.min()))
+    return best
+
+
 def verify_separation(codes, cost, key: int | None = None,
                       drop: float = SEPARATION_DROP,
                       strikes: int = SEPARATION_STRIKES,
@@ -322,9 +339,7 @@ def verify_separation(codes, cost, key: int | None = None,
     import torch
 
     flat = codes.detach().float().reshape(codes.shape[0], -1)
-    pairwise = torch.cdist(flat, flat)
-    pairwise.fill_diagonal_(float("inf"))
-    min_pair = float(pairwise.min())
+    min_pair = _min_pairwise_distance(flat)
     resolution = float(cost.detach().float().min(dim=-1).values.mean().clamp_min(0).sqrt())
     ratio = min_pair / resolution if resolution > 0 else float("inf")
     # The codebook is replicated but the resolution is per-rank, so the verdict must be the
