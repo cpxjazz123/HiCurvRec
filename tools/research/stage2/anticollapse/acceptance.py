@@ -122,6 +122,23 @@ def case_residual_site(root: Path) -> str:
             if sites else "FAIL not refused")
 
 
+def case_soft_helper(root: Path) -> str:
+    """A soft quantiser is protected when its argmax goes through the helper."""
+    tree = _fresh(root, "soft_helper")
+    module = tree / "model" / "layers.py"
+    module.write_text(module.read_text(encoding="utf-8") + "\n" + "\n".join([
+        "class SoftLayer(VQLayer):",
+        "    def _indices(self, distances, infer_use_sk):",
+        "        q = torch.softmax(-distances, dim=-1)",
+        "        index, _ = constrained_assignment(-q, ASSIGNMENT_FLOOR)",
+        "        return index.to(distances.device)",
+    ]) + "\n", encoding="utf-8")
+    apply_floor(tree)
+    verdict = verify_tree(tree)
+    return ("PROTECTED soft+helper" if verdict["ok"]
+            else "FAIL " + verdict.get("reason", "")[:40])
+
+
 def case_healthy(root: Path) -> str:
     tree = _fresh(root, "healthy")
     apply_floor(tree)
@@ -139,11 +156,12 @@ CASES = (
     ("bypass forward", case_bypass_forward),
     ("zero floor constant", case_zero_floor),
     ("residual selection site", case_residual_site),
+    ("soft assignment via helper", case_soft_helper),
     ("healthy control", case_healthy),
 )
 
 EXPECTED = ("REPAIRED", "REFUSED", "REFUSED", "REFUSED", "REFUSED", "REFUSED", "REFUSED",
-            "PROTECTED")
+            "PROTECTED", "PROTECTED")
 
 
 def main(argv: list[str] | None = None) -> int:

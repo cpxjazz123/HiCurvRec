@@ -688,10 +688,11 @@ def test_the_acceptance_matrix_refuses_every_collapse_mode():
     done = subprocess.run([sys.executable, str(script), "--tree", str(scratch)],
                           capture_output=True, text=True, timeout=1200)
     assert done.returncode == 0, done.stdout[-2000:] + done.stderr[-800:]
-    assert "8/8 cases as expected" in done.stdout, done.stdout
+    assert "9/9 cases as expected" in done.stdout, done.stdout
     for expected in ("REPAIRED 8 -> 256", "REFUSED duplicate rows", "REFUSED tie-decided",
                      "REFUSED spacing fell", "not guarded", "floor was disabled",
-                     "model/layers.py", "PROTECTED 8/8/8"):
+                     "model/layers.py", "PROTECTED soft+helper",
+                     "PROTECTED 8/8/8"):
         assert expected in done.stdout, expected + " missing from the matrix"
 
 
