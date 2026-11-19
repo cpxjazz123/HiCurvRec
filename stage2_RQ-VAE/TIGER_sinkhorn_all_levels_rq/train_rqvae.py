@@ -7,9 +7,9 @@
 - 输出路径由 ARM_NAME 推导到 results/stage2_RQ-VAE/<ARM_NAME>/
 
 Mechanism (this tree only, copied from stage2_RQ-VAE/baseline/TIGER_RQ-VAE):
-- every residual level balances its assignment with Sinkhorn and the export uses
-  the same balanced rule; the baseline balances the last level only and exports
-  with plain argmin.
+- training: every residual level balances its assignment with Sinkhorn (the
+  baseline balances the last level only and leaves levels 1-2 on argmin);
+- export: unchanged from the baseline, plain argmin at every level.
 
 2026-10-01 改造 (CLAUDE.md §2):
 - 删除 PATIENCE / stale 计数与 early-stop 分支, 固定跑满 EPOCHS
@@ -65,7 +65,7 @@ REPO_ROOT = _repository_root()
 # The arm name is this tree's promoted name; a candidate copy changes only this line.
 # Provenance: copied from stage2_RQ-VAE/baseline/TIGER_RQ-VAE.  The one mechanism this
 # tree carries is that *every* residual level balances its assignment with Sinkhorn
-# (the baseline balances only the last level), in training and in the export.
+# during training; the export keeps the baseline's argmin rule.
 ARM_NAME = "TIGER_sinkhorn_all_levels_rq"
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
 
@@ -395,11 +395,11 @@ def main() -> None:
         try:
             if rank == 0:
                 with torch.no_grad():
-                    # Mechanism: the exported identifier is produced by the same
-                    # balanced assignment the levels train under, so the SID keeps
-                    # the all-level balance instead of falling back to argmin here.
+                    # Export stays on the baseline's rule: plain argmin.  The
+                    # mechanism lives in training only (all three levels balanced),
+                    # so the identifier is generated exactly as the baseline's is.
                     raw_tokens = raw_module.get_indices(
-                        all_embeddings.to(device), infer_use_sk=True
+                        all_embeddings.to(device), infer_use_sk=False
                     ).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
@@ -453,7 +453,7 @@ def main() -> None:
         try:
             with torch.no_grad():
                 raw_tokens = raw_module.get_indices(
-                    all_embeddings.to(device), infer_use_sk=True
+                    all_embeddings.to(device), infer_use_sk=False
                 ).cpu().numpy().astype(np.int64)
         finally:
             for layer in raw_module.rq.vq_layers:
