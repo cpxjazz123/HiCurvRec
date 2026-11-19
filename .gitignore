@@ -987,3 +987,9 @@ results/research/qda/**/trees/
 
 # Admission scratch trees: created and removed by check_entry / verify_tree.
 stage2_RQ-VAE/_admission_*/
+
+# Issue #216: four-arm SID tables and checkpoints are rebuildable artifacts, the
+# hashes live in results/research/g4_closure/MANIFEST.json (commit_guard: 147k lines each).
+results/stage2_RQ-VAE/TIGER_g4_closure_*/
+stage2_RQ-VAE/TIGER_g4_closure_rq/logs/
+stage2_RQ-VAE/TIGER_g4_closure_rq/__pycache__/

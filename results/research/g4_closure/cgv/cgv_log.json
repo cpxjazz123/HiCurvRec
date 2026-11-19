@@ -1,0 +1,123 @@
+{
+ "1_toy_and_labels": {
+  "passed": true,
+  "label_mismatches": 0,
+  "unsorted_triples": 0,
+  "toy_degrees": [
+   2,
+   2,
+   2
+  ],
+  "chain_degrees": [
+   2,
+   2,
+   2
+  ],
+  "af3_cycle": 0,
+  "af3_chain": 0,
+  "label_cycle": 1,
+  "label_chain": 0,
+  "swap_invariant": true,
+  "finite_loss": true
+ },
+ "2_gradient_propagation": {
+  "passed": true,
+  "A": {
+   "aux": 0.04858746752142906,
+   "encoder_grad_norm": 0.00019608241564128548,
+   "head_grad": 0.0,
+   "codebook_touched": false
+  },
+  "B": {
+   "aux": 0.6931481957435608,
+   "encoder_grad_norm": 0.0020672730170190334,
+   "head_grad": 0.0,
+   "codebook_touched": false
+  },
+  "C": {
+   "aux": 0.6947828531265259,
+   "encoder_grad_norm": 0.001951033715158701,
+   "head_grad": 0.4035157343605533,
+   "codebook_touched": false
+  },
+  "D": {
+   "aux": 0.6947828531265259,
+   "encoder_grad_norm": 0.001951033715158701,
+   "head_grad": 0.4035157343605533,
+   "codebook_touched": false
+  }
+ },
+ "3_gradient_direction": {
+  "passed": true,
+  "B_margin": {
+   "before": 0.0,
+   "after": 0.05384254455566406
+  },
+  "CD_bce": {
+   "before": 0.87314772605896,
+   "after": 0.5016022324562073,
+   "shuffled": 0.87314772605896
+  },
+  "swap_invariant": true
+ },
+ "4_ddp_head_sync": {
+  "passed": true,
+  "max_abs_spread": {
+   "init": 0.0,
+   "step1": 0.0,
+   "step10": 0.0,
+   "step100": 0.0
+  },
+  "tolerance": 1e-06
+ },
+ "5_export_identity": {
+  "passed": true,
+  "A": {
+   "deterministic_in_process": true,
+   "sha256": "c0a2f560018345243d709ba58a205d7be8347cf1e5efd8c5287baa8b2350bad3",
+   "extension_mismatches": 0,
+   "cross_process_mismatches": 113,
+   "items": 24587
+  },
+  "B": {
+   "deterministic_in_process": true,
+   "sha256": "0565cc4efd5a3b86cc245410ef2c26a2afc02376326ccc9b33c3dc610867582e",
+   "extension_mismatches": 0,
+   "cross_process_mismatches": 148,
+   "items": 24587
+  },
+  "C": {
+   "deterministic_in_process": true,
+   "sha256": "87f441e17e8f582276e6bd02996da414b5e6ed7c669a14c4b9c952507da7c8d2",
+   "extension_mismatches": 0,
+   "cross_process_mismatches": 1100,
+   "items": 24587
+  },
+  "D": {
+   "deterministic_in_process": true,
+   "sha256": "5c73c7109ce03e12002ef4a1a29e86eb5f3d2262f2259a2c345140986e26c3a4",
+   "extension_mismatches": 0,
+   "cross_process_mismatches": 130,
+   "items": 24587
+  }
+ },
+ "6_failure_injection": {
+  "passed": true,
+  "graph_sha_detected": true,
+  "pool_overlap": 0,
+  "pollution_detected": true,
+  "synced_spread": {
+   "init": 0.0,
+   "step1": 0.0,
+   "step10": 0.0,
+   "step100": 0.0
+  },
+  "unsynced_spread": {
+   "init": 0.0,
+   "step1": 0.001999981701374054,
+   "step10": 0.01600911095738411,
+   "step100": 0.045870475471019745
+  },
+  "unsync_detected": true
+ }
+}
