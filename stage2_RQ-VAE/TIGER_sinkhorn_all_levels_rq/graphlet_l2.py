@@ -33,6 +33,10 @@ GRAPHLET2_SHARE = 0.1
 PAIRS_PER_STEP = 512
 POOL_TARGET = 20000
 REFRESH_EPOCHS = 50
+#: Steps whose reconstruction/term medians calibrate the weight.  A single first
+#: step can be an initialisation outlier (it made lambda 60x too small once), so the
+#: weight is taken from the median of the first steps instead.
+CALIBRATION_STEPS = 20
 EPS = 1e-12
 
 

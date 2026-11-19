@@ -42,7 +42,8 @@ from tqdm import tqdm
 from distances import build_distance
 from losses import build_loss
 from model import RQVAE
-from graphlet_l2 import (GRAPHLET2_SHARE, REFRESH_EPOCHS, GroupPairSampler, calibrate_share,
+from graphlet_l2 import (CALIBRATION_STEPS, GRAPHLET2_SHARE, REFRESH_EPOCHS, GroupPairSampler,
+                         calibrate_share,
                          calibrate_temperature, graphlet2_infonce, load_graph,
                          shared_probability, soft_assignment)
 from train_config import load_train_config
@@ -297,6 +298,7 @@ def main() -> None:
     sampler = GroupPairSampler(graph) if graph is not None else None
     graph_weight = None
     graph_temperature = None
+    graph_calibration: list = []
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1], distance=DISTANCE).to(device)
     if XAVIER_INIT:
@@ -399,17 +401,24 @@ def main() -> None:
                                                                   float(s_negative.mean()))
                 graph_term = graphlet2_infonce(s_positive, s_negative, graph_temperature)
                 if graph_weight is None:
-                    if world_size > 1:
-                        stats = torch.tensor([float(recon_loss.detach()),
-                                              float(graph_term.detach())], device=device)
-                        dist.all_reduce(stats, op=dist.ReduceOp.SUM)
-                        graph_weight = calibrate_share(float(stats[0]) / world_size,
-                                                       float(stats[1]) / world_size)
-                    else:
-                        graph_weight = calibrate_share(float(recon_loss.detach()),
-                                                       float(graph_term.detach()))
-                loss = loss + graph_weight * graph_term
-                graph_terms.append(float(graph_term.detach()))
+                    # Calibrate on the median of the first steps: a single first step
+                    # can be an initialisation outlier and once made lambda 60x too
+                    # small, which turned the term into a no-op.
+                    graph_calibration.append((float(recon_loss.detach()),
+                                              float(graph_term.detach())))
+                    if len(graph_calibration) >= CALIBRATION_STEPS:
+                        recon_median = float(np.median([r for r, _ in graph_calibration]))
+                        term_median = float(np.median([t for _, t in graph_calibration]))
+                        if world_size > 1:
+                            stats = torch.tensor([recon_median, term_median], device=device)
+                            dist.all_reduce(stats, op=dist.ReduceOp.SUM)
+                            recon_median = float(stats[0]) / world_size
+                            term_median = float(stats[1]) / world_size
+                        graph_weight = calibrate_share(recon_median, term_median)
+                        graph_calibration.clear()
+                if graph_weight is not None:
+                    loss = loss + graph_weight * graph_term
+                    graph_terms.append(float(graph_term.detach()))
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
