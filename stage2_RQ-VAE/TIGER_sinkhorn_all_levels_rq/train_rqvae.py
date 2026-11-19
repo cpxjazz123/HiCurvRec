@@ -45,6 +45,10 @@ from model import RQVAE
 from graphlet_sup import (CALIBRATION_STEPS, GRAPHLET_SHARE, TripletPredictor, TripletSampler,
                           accuracy, af3_loss, af3_target, calibrate_share, graphlet_loss,
                           load_graph)
+                          accuracy, calibrate_share, graphlet_loss, load_graph)
+from uniqueness import (PAIRS_PER_STEP, REFRESH_EPOCHS, UNIQUE_SHARE, group_pairs,
+                        soft_assignment, uniqueness_loss)
+from assignment_floor import constrained_assignment
 from train_config import load_train_config
 
 
@@ -298,6 +302,7 @@ def main() -> None:
     # The supervisor head is trained jointly and discarded at export; its error is
     # what forces the item vectors to carry the local structure.
     predictor = TripletPredictor(dim=CODEBOOK_DIM, af3=True).to(device) if graph is not None else None
+    predictor = TripletPredictor(dim=CODEBOOK_DIM).to(device) if graph is not None else None
     graph_weight = None
     graph_calibration: list = []
     config = _tokenizer_config()
@@ -381,6 +386,7 @@ def main() -> None:
                 # L_graphlet: a triplet classifier must tell a closed triangle from a
                 # degree-matched open wedge using only the three item vectors; its
                 # error is what pushes that information into the encoder.
+                # degree-matched open wedge using only the three item vectors.
                 triangles, wedges = sampler.sample(graph_generator)
                 items = np.concatenate([triangles.reshape(-1), wedges.reshape(-1)])
                 raw = model.module if isinstance(model, DDP) else model
@@ -401,6 +407,9 @@ def main() -> None:
                 graph_term = classify + curvature
                 af3_mae = 0.5 * (float((kappa_tri - kappa_target_tri).abs().mean())
                                  + float((kappa_wed - kappa_target_wed).abs().mean()))
+                logit_tri = predictor(tri[:, 0], tri[:, 1], tri[:, 2])
+                logit_wed = predictor(wed[:, 0], wed[:, 1], wed[:, 2])
+                graph_term = graphlet_loss(logit_tri, logit_wed)
                 if graph_weight is None:
                     graph_calibration.append((float(recon_loss.detach()),
                                               float(graph_term.detach())))
@@ -419,6 +428,25 @@ def main() -> None:
                     graph_terms.append(float(graph_term.detach()))
                     graph_accuracy.append(accuracy(logit_tri.detach(), logit_wed.detach()))
                     graph_mae.append(af3_mae)
+            if prefix_pairs is not None and len(prefix_pairs):
+                # L_unique: two different items that already share L1 and L2 must not
+                # also point at the same level-3 codeword -- that is the collision.
+                draw = torch.randint(0, len(prefix_pairs), (PAIRS_PER_STEP,), generator=graph_generator)
+                pairs = torch.as_tensor(prefix_pairs[draw.numpy()]).reshape(-1)
+                latent_pairs = raw.encoder(all_embeddings[pairs].to(device))
+                soft = soft_assignment(raw.rq.vq_layers[2]._distances(latent_pairs), SK_EPSILON)
+                unique_term = uniqueness_loss(soft[0::2], soft[1::2])
+                if unique_weight is None:
+                    unique_calibration.append((float(recon_loss.detach()),
+                                               float(unique_term.detach())))
+                    if len(unique_calibration) >= CALIBRATION_STEPS:
+                        recon_median = float(np.median([r for r, _ in unique_calibration]))
+                        term_median = float(np.median([t for _, t in unique_calibration]))
+                        unique_weight = calibrate_share(recon_median, term_median, UNIQUE_SHARE)
+                        unique_calibration.clear()
+                if unique_weight is not None:
+                    loss = loss + unique_weight * unique_term
+                    unique_terms.append(float(unique_term.detach()))
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
