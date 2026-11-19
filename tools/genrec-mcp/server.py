@@ -2432,6 +2432,29 @@ def record_sid_layers(sid: Path) -> dict:
     return {"passed": True, "report": str(target), "reused": False}
 
 
+def stage3_sid_quality(sid: Path) -> dict:
+    """Run the two-number Stage 3 entry gate in the project interpreter.
+
+    The gate needs numpy and torch, which the MCP server (stdlib only) does not
+    have, so it runs as its own process; a failed or unparsable measurement is a
+    refusal, never a pass.
+    """
+    done = subprocess.run(
+        [PY2, "-m", "tools.research.stage2.sid_quality", str(sid)],
+        cwd=str(REPO), capture_output=True, text=True, timeout=1800,
+        env={**os.environ, "PYTHONPATH": str(REPO)})
+    text = (done.stdout or "").strip()
+    try:
+        verdict = json.loads(text.splitlines()[-1]) if text else {}
+    except ValueError:
+        verdict = {}
+    if not isinstance(verdict, dict) or not verdict:
+        tail = (done.stderr or done.stdout or "").strip().splitlines()[-6:]
+        return {"allow": False,
+                "reason": "the SID quality measurement failed: " + " | ".join(tail)[:600]}
+    return verdict
+
+
 def tool_stage3_start(item_sids: str | None = None) -> dict:
     """Start Stage3 for the SID path given by the caller -- the only argument.
 
@@ -2468,10 +2491,12 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         return {"started": False, "refused": "export gate: " + export_gate["reason"],
                 "export_gate": export_gate}
 
-    # Owner policy (updated 2026-11-10): Stage 3 entry now requires the
-    # three-level collision to be strictly below 40%.  Other quality metrics
-    # stay diagnostic.  The mandatory layer record is still written before any
-    # Stage 3 result exists and is reported alongside the collision gate.
+    # Owner policy (updated 2026-11-19): Stage 3 entry requires two numbers
+    # measured on the arm itself -- three-level collision strictly below 5% and
+    # quantisation error inside [0.20, 0.60].  Both are computed by
+    # tools/research/stage2/sid_quality.py; the other quality metrics stay
+    # diagnostic.  The mandatory layer record is still written before any
+    # Stage 3 result exists and is reported alongside the gate.
     try:
         layer_record = record_sid_layers(sid)
     except Exception as exc:  # noqa: BLE001 - the reason is reported, never hidden
@@ -2500,12 +2525,13 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
     }
     triples = {tuple(value[:3]) for value in payload.values() if hasattr(value, "__len__")}
     collision = 1.0 - (len(triples) / max(len(payload), 1))
-    if collision >= 0.40:
+    quality = stage3_sid_quality(sid)
+    if not quality.get("allow"):
         return {
             "started": False,
-            "refused": ("three-level collision %.6f is not below the 0.40 Stage3 entry gate"
-                        % collision),
+            "refused": "SID quality gate: " + str(quality.get("reason")),
             "collision": collision,
+            "sid_quality": quality,
         }
     chosen_variant = derive_stage3_variant(sid_logical)
     context = {
@@ -2515,6 +2541,7 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         "per_user_dump": STAGE3_PER_USER_DUMP,
         "layer_record": layer_record,
         "collision": collision,
+        "sid_quality": quality,
     }
     protocol = frozen_protocol_check()
     context["protocol"] = protocol
