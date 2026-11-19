@@ -108,6 +108,17 @@ K > items（码字比一步的商品还多）                    轮转覆盖:�
 | 软分配 + `constrained_assignment(-q)` | 安装通过,下限成立,`verify_separation` 正常 |
 | 软分配 + 自己的 `argmax` | 拒绝安装,并报出行号 |
 
+## 5c. 两个默认关闭的开关(位置由 owner 决定)
+
+这两条不改变保证,只改变判定**发生在哪里**;默认保持现状,打开即生效。
+
+| 开关 | 位置 | 默认 | 打开后 |
+|---|---|---|---|
+| `checks.CHECK_ENTRY_ENFORCE_COLLISION` | 准入 | `False` | `check_entry` 用 §89 的 0.40 拒绝一 epoch 产物(通常过早,需要早期豁免规则) |
+| `collapse_watch.py --stop <pid>` | 训练期 | 关 | 碰撞率越线即 terminate 该进程,省下剩余预算 |
+
+实测:接近坍缩的产物默认 `PASS` 且报 `gate REFUSED`;打开开关后 `FAIL: three-code collision 0.930166 reaches the stage3 gate 0.4`。
+
 ## 6. 如何使用
 
 ```bash

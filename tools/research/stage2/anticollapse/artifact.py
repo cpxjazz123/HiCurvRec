@@ -34,7 +34,8 @@ COLLISION_GATE = 0.40
 CODEBOOK_NUM = 3
 
 
-def audit_sid(path: Path | str, levels: int | None = CODEBOOK_NUM) -> dict:
+def audit_sid(path: Path | str, levels: int | None = CODEBOOK_NUM,
+              enforce_gate: bool = False) -> dict:
     """Per-level usage of an exported identifier, and whether any level is degenerate."""
     path = Path(path)
     if not path.is_file():
@@ -67,6 +68,12 @@ def audit_sid(path: Path | str, levels: int | None = CODEBOOK_NUM) -> dict:
     # number is visible at the earliest stage; the refusal itself stays at stage3_start.
     report["collision_gate"] = ("REFUSED" if report["collision"] >= COLLISION_GATE
                                else "allowed")
+
+    if enforce_gate and report["collision"] >= COLLISION_GATE:
+        report["status"] = "FAIL"
+        report["detail"] = ("three-code collision " + str(report["collision"])
+                            + " reaches the stage3 gate " + str(COLLISION_GATE))
+        return report
 
     dead = [entry["level"] for entry in report["levels"]
             if entry["distinct"] < MIN_CODES_PER_LEVEL]

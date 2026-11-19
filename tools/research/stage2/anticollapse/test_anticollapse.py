@@ -745,3 +745,21 @@ def test_the_checks_stay_memory_bounded_at_large_codebooks():
     codes[1] = codes[0]
     with pytest.raises(CodebookCollapse):
         verify_codebook(codes, distance=False)
+
+
+def test_the_collision_gate_switch_is_off_by_default_and_works_when_on(tmp_path):
+    """Moving a judgement location is the owner's call: the capability exists, off."""
+    import json
+
+    from anticollapse.artifact import audit_sid
+
+    collapsed = {str(i): [i % 3, i % 5, i % 7] for i in range(4096)}
+    path = tmp_path / "collapsed.json"
+    path.write_text(json.dumps(collapsed))
+
+    relaxed = audit_sid(path)
+    assert relaxed["status"] == "PASS" and relaxed["collision_gate"] == "REFUSED"
+
+    enforced = audit_sid(path, enforce_gate=True)
+    assert enforced["status"] == "FAIL"
+    assert "stage3 gate" in enforced["detail"]

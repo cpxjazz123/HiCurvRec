@@ -191,6 +191,10 @@ def _discard_admission_tree(tree: Path) -> None:
         if target.is_dir():
             shutil.rmtree(target, ignore_errors=True)
 
+#: Off by default: the collision gate belongs to `stage3_start` (CLAUDE.md 89).
+CHECK_ENTRY_ENFORCE_COLLISION = False
+
+
 def check_entry(tree: Path | str) -> dict:
     """The real entry point runs one epoch in this process and exports a SID."""
     tree = _admission_tree(Path(tree).resolve())
@@ -238,7 +242,10 @@ def check_entry(tree: Path | str) -> dict:
         return {"status": "FAIL", "name": "entry", "detail": "one epoch wrote no item_sids.json"}
     from .anticollapse import audit_sid
 
-    artifact = audit_sid(sid)
+    # Both switches exist and are OFF, because moving a judgement location is the owner's
+    # call (CLAUDE.md 19/89). Flip the constant to gate a one-epoch artifact on the same
+    # collision threshold the Stage3 admission uses.
+    artifact = audit_sid(sid, enforce_gate=CHECK_ENTRY_ENFORCE_COLLISION)
     if artifact["status"] != "PASS":
         return {"status": "FAIL", "name": "entry",
                 "detail": "the exported identifier is degenerate: " + artifact["detail"]}
