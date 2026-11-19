@@ -620,9 +620,12 @@ def test_a_floor_above_one_is_reached_and_checked():
         assert report["moves"] >= 256 * (floor - 1)
         assert verify_assignment(index, 256, floor)["min_count"] == floor
 
-    short = torch.cat([torch.zeros(3, dtype=torch.long), torch.arange(1, 256)])
+    # in the rotating regime the per-step contract is distinctness, not counts
+    shared = torch.zeros(100, dtype=torch.long)
     with pytest.raises(CodebookCollapse):
-        verify_assignment(short, 256, 2)
+        verify_assignment(shared, 256, 2)
+    distinct = torch.arange(100)
+    assert verify_assignment(distinct, 256, 2)["mode"] == "rotation"
 
 
 def test_the_probe_reports_the_wired_quantiser(scratch):

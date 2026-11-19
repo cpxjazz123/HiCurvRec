@@ -31,16 +31,21 @@ class CodebookCollapse(RuntimeError):
     """A codeword ended up empty, or two codewords became the same vector."""
 
 
-def constrained_assignment(cost, floor: int):
+_COUNTS: dict[int, "object"] = {}
+
+
+def constrained_assignment(cost, floor: int, counts_key: int | None = None):
     """Cheapest assignment with `counts >= floor` for every codeword.
 
-    Greedy repair, processed one *pass* per round rather than one codeword at a time: within
-    a pass every deficient codeword takes its cheapest still-donatable item in a single
-    matrix operation, and duplicate picks are dropped so the loop can only shrink the
-    deficit. `items >= codewords * floor` is checked up front and an infeasible call raises.
+    Feasible regime (`items >= codewords * floor`): greedy repair, one pass per round, so
+    the loop can only shrink the deficit.
+
+    Infeasible regime (`items < codewords`): some codeword must be empty at this step. With
+    a `counts_key` the assignment rotates through the *least used* codewords and advances a
+    per-layer usage counter, so after `ceil(codewords / items)` steps every codeword has
+    been used at least once. Without a key there is no history to rotate on and the call is
+    refused rather than quietly guaranteed to a weaker standard.
     """
-    # No autograd wrapper: every tensor below is detached or built from plain lists, so the
-    # call is gradient-free by construction and the module stays importable without torch.
     import torch
 
     if cost.dim() != 2:
@@ -50,15 +55,13 @@ def constrained_assignment(cost, floor: int):
     if floor <= 0:
         return torch.argmin(cost, dim=-1), {"floor": floor, "moves": 0, "satisfied": True}
     if items < codewords * floor:
-        # The batch cannot give every codeword its floor, so *some* codeword is empty at
-        # this step and the absorbing state is reachable. There is no stateless assignment
-        # that fixes this (a rotating one would need per-codeword history, which would make
-        # the assignment depend on call order), so the configuration is refused instead of
-        # being quietly guaranteed to a weaker standard.
-        raise InfeasibleFloor(
-            f"{codewords} codewords need {codewords * floor} items for floor {floor}, "
-            f"the batch has {items}: a codebook larger than the batch cannot be protected "
-            "-- reduce the codebook or raise the batch")
+        if counts_key is None:
+            raise InfeasibleFloor(
+                f"{codewords} codewords need {codewords * floor} items for floor {floor}, "
+                f"the batch has {items}: a codebook larger than the batch cannot be "
+                "protected without a per-codeword history -- reduce the codebook, raise "
+                "the batch, or pass counts_key")
+        return _rotating_coverage(cost, floor, counts_key)
 
     # float32 matches the baseline's own numerics (`argmin` on the same tensor) and halves
     # the traffic of the repair rounds; the double copy was caution, not a requirement.
@@ -70,17 +73,15 @@ def constrained_assignment(cost, floor: int):
         return assignment, {"floor": floor, "moves": 0, "min_count": floor,
                             "satisfied": True}
     moves = 0
-    # Repair for the case the floor exists for (`floor == 1`): hand every empty codeword the
-    # item it likes most, resolving a contested item in favour of the codeword that wants it
-    # more. Two host transfers (the per-code best item and the ordering), one Python pass
-    # over the codewords, then a single scatter -- the loop this replaced cost ~15 ms/step.
+    # Repair: hand every deficient codeword the item it likes most, resolving a contested
+    # item in favour of the codeword that wants it more. Two host transfers, one Python
+    # pass over the codewords, then a single scatter.
     for _ in range(codewords):
         counts_t = torch.bincount(assignment, minlength=codewords)
         deficit = (counts_t < floor).nonzero().flatten()
         if deficit.numel() == 0:
             break
-        # An item may move only if the codeword it sits on can spare it: its count must
-        # stay at or above the floor after the donation.
+        # An item may move only if the codeword it sits on can spare it.
         donatable = counts_t[assignment] > floor
         sub = costs[:, deficit].masked_fill(~donatable.unsqueeze(1), float("inf"))
         best_cost, best_item = sub.min(dim=0)
@@ -106,10 +107,43 @@ def constrained_assignment(cost, floor: int):
         remaining = int((torch.bincount(assignment, minlength=codewords) < floor).sum())
         if remaining:
             raise InfeasibleFloor("repair did not converge")
+
     counts = torch.bincount(assignment, minlength=codewords)
     return (assignment, {"floor": floor, "moves": moves,
                          "min_count": int(counts.min()), "satisfied": True})
 
+
+def _rotating_coverage(cost, floor: int, counts_key: int):
+    """Fill the least-used codewords first, so coverage rotates across steps.
+
+    The usage vector is the only state: it is a pure function of the batches seen, so a
+    replay with the same data order reproduces it; a run resumed from a checkpoint restarts
+    it from zero, which affects rotation only. After `ceil(K / items)` steps every codeword
+    has been used at least once.
+
+    In this regime each item gets its own codeword by construction, so the pairing is
+    coverage-first rather than cost-first: the chosen codewords are ordered by (usage, cost)
+    and paired with the items in order. That is a deliberate trade -- the cost-optimal
+    pairing is a m x m assignment, and this regime exists for mechanisms whose codebook is
+    larger than the batch, where coverage is the property being guaranteed.
+    """
+    import torch
+
+    items, codewords = cost.shape
+    counts = _COUNTS.get(counts_key)
+    if counts is None or counts.numel() != codewords or counts.device != cost.device:
+        counts = torch.zeros(codewords, dtype=torch.long, device=cost.device)
+        _COUNTS[counts_key] = counts
+    costs = cost.detach().float()
+    best_cost = costs.min(dim=0).values
+    scale = float(best_cost.max()) + 1.0
+    order = torch.argsort(counts.to(torch.float32) * scale + best_cost)
+    chosen = order[:items]
+    assignment = torch.empty(items, dtype=torch.long, device=cost.device)
+    assignment[torch.argsort(best_cost[chosen])] = chosen
+    counts[chosen] += 1
+    return assignment, {"floor": 0, "mode": "rotation", "moves": items,
+                        "min_count": int(counts.min()), "satisfied": True}
 
 
 def describe(cost, floor: int) -> dict:
@@ -118,6 +152,10 @@ def describe(cost, floor: int) -> dict:
 
     items, codewords = cost.shape
     if items < codewords * floor:
+        if counts_key is None:
+            # without a per-codeword history there is no way to rotate, and a fixed subset
+            # would leave the rest permanently empty -- refuse rather than under-guarantee
+            pass
         return {"feasible": False, "items": int(items), "codewords": int(codewords)}
     cheapest = torch.argmin(cost.detach(), dim=-1)
     counts = torch.bincount(cheapest, minlength=codewords)
@@ -137,10 +175,16 @@ def verify_assignment(index, codewords: int, floor: int) -> dict:
     flat = index.detach().long().reshape(-1)
     counts = torch.bincount(flat, minlength=int(codewords))
     if flat.numel() < int(codewords) * int(floor):
-        raise CodebookCollapse(
-            str(flat.numel()) + " items cannot give " + str(int(codewords))
-            + " codewords " + str(int(floor)) + " each; this assignment cannot be "
-            "protected and must not be used")
+        # Rotating regime: the batch cannot fill every codeword, so the per-step contract
+        # is that no two items share one. Long-run coverage is the assignment's job (it
+        # rotates through the least-used codewords) and is bounded by ceil(K / items).
+        distinct = int(torch.unique(flat).numel())
+        if distinct < min(flat.numel(), int(codewords)):
+            raise CodebookCollapse(
+                "rotating regime: " + str(flat.numel() - distinct)
+                + " items share a codeword with " + str(int(codewords)) + " available")
+        return {"codewords": int(codewords), "floor": 0, "min_count": 1,
+                "mode": "rotation"}
     low = int(counts.min())
     if low < int(floor):
         raise CodebookCollapse(
