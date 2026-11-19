@@ -42,6 +42,8 @@ from tqdm import tqdm
 from distances import build_distance
 from losses import build_loss
 from model import RQVAE
+from structure_loss import (EDGE_SAMPLES, GRAPH_SHARE, calibrate_share, graph_level1_loss,
+                            load_edges, sample_edges)
 from train_config import load_train_config
 
 
@@ -287,6 +289,11 @@ def main() -> None:
 
     all_embeddings = torch.from_numpy(embeddings)
     train_embeddings = all_embeddings[torch.from_numpy(train_ids)]
+    # Level-1 behaviour structure: the edges of the single undirected graph, with the
+    # file's sha256 checked against metadata.json before a single edge is read
+    # (CLAUDE.md 89b).  GRAPH_SHARE = 0 switches the term off.
+    graph_edges = load_edges() if GRAPH_SHARE > 0 else None
+    graph_weight = None
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1], distance=DISTANCE).to(device)
     if XAVIER_INIT:
@@ -348,6 +355,9 @@ def main() -> None:
         model.train()
         losses: list[float] = []
         recons: list[float] = []
+        graph_terms: list[float] = []
+        graph_generator = torch.Generator()
+        graph_generator.manual_seed(SEED + rank * 100003 + epoch)
         _epoch_t0 = time.time()
         for (batch,) in loader:
             batch = batch.to(device, non_blocking=True)
@@ -356,6 +366,28 @@ def main() -> None:
             # 唯一接入点：损失项与权重在 losses/ 里，这里只拿到总损失与分项。
             loss, components = CRITERION(reconstructed, batch, quant_parts)
             recon_loss = components["reconstruction"]
+            if graph_edges is not None:
+                # L_graph^(1): neighbours in the training behaviour graph are pulled
+                # together in the encoder space.  The weight is calibrated once, on
+                # the first step, so the term is GRAPH_SHARE of the total there.
+                sampled = sample_edges(graph_edges, EDGE_SAMPLES, graph_generator)
+                pairs = all_embeddings[torch.as_tensor(sampled).reshape(-1)].to(device)
+                encoder = model.module.encoder if isinstance(model, DDP) else model.encoder
+                graph_term = graph_level1_loss(encoder(pairs[0::2]), encoder(pairs[1::2]))
+                if graph_weight is None:
+                    if world_size > 1:
+                        # The weight must agree across ranks, or the four ranks optimise
+                        # different objectives that DDP then averages into neither.
+                        stats = torch.tensor([float(recon_loss.detach()),
+                                              float(graph_term.detach())], device=device)
+                        dist.all_reduce(stats, op=dist.ReduceOp.SUM)
+                        graph_weight = calibrate_share(float(stats[0]) / world_size,
+                                                       float(stats[1]) / world_size)
+                    else:
+                        graph_weight = calibrate_share(float(recon_loss.detach()),
+                                                       float(graph_term.detach()))
+                loss = loss + graph_weight * graph_term
+                graph_terms.append(float(graph_term.detach()))
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
@@ -375,13 +407,19 @@ def main() -> None:
             dist.all_reduce(local_recon, op=dist.ReduceOp.SUM)
         avg_loss = float(local_loss.item()) / max(world_size, 1)
         avg_recon = float(local_recon.item()) / max(world_size, 1)
+        local_graph = torch.tensor(float(np.mean(graph_terms)) if graph_terms else 0.0, device=device)
+        if world_size > 1:
+            dist.all_reduce(local_graph, op=dist.ReduceOp.SUM)
+        avg_graph = float(local_graph.item()) / max(world_size, 1)
         cur_lr = optimizer.param_groups[0]["lr"]
 
         # === 非 eval 间隔: 只 log train 行 ===
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon,
+                        graph=avg_graph, graph_weight=graph_weight, lr=cur_lr,
+                        epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -412,7 +450,8 @@ def main() -> None:
                     flush=True,
                 )
                 _record(
-                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, lr=cur_lr,
+                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon,
+                    graph=avg_graph, graph_weight=graph_weight, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
