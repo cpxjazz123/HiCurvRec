@@ -149,6 +149,19 @@ def main() -> None:
         "definition": "E = {{i_t, i_{t+1}} | (i_1..i_T) in S_train}; undirected, deduplicated",
         "node_id": "equals the stage 0 item id; node_features.npy row k is item k",
         "af3": "kappa_ij = 4 - d_i - d_j + 3 * T_ij, d and T on this graph",
+        # Owner decision (2026-11-19): one undirected behaviour graph is the only
+        # stored graph.  Direction is not a modelled variable: triangles, open
+        # wedges, communities/bridges and AF3 are all defined on the undirected
+        # graph, and the ordered sequences stay available in train.parquet if a
+        # directed graph is ever needed.  No experiment keeps its own copy.
+        "policy": {
+            "single_undirected_graph": True,
+            "directed_graph_stored": False,
+            "directed_source": "results/stage0_build_parquet/train.parquet (sequences, in order)",
+            "consumers": ["analysis_sid_recall/triangle_sid_fidelity.py",
+                          "analysis_sid_recall/local_structure_fidelity.py"],
+            "rebuild": "analysis_sid_recall/build_behavior_graph.py",
+        },
         "sources": {str(TRAIN.relative_to(REPO)): sha256(TRAIN),
                     str(ITEMS.relative_to(REPO)): sha256(ITEMS),
                     str(FEATURES.relative_to(REPO)): sha256(FEATURES)},
