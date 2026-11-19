@@ -269,7 +269,15 @@ def _migrate(text: str) -> str:
 
 
 def _guard_was_removed(text: str) -> bool:
-    return "constrained_assignment(" in text and "verify_assignment(" not in text
+    """Only a *patched* file that lost its check counts as tampering.
+
+    A mechanism may legitimately call `constrained_assignment` in its own quantiser before
+    the guard is installed -- that is the documented way to protect a custom assignment --
+    so the marker for "this file was patched" is the guard's own verification call, not the
+    helper it shares.
+    """
+    return ("constrained_assignment(" in text and "verify_codebook(" in text
+            and "verify_assignment(" not in text)
 
 
 def apply_floor(tree: Path, family: str | None = None, force_constrained: bool = True,

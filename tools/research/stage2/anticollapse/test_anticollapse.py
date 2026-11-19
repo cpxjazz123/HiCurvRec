@@ -693,3 +693,37 @@ def test_the_acceptance_matrix_refuses_every_collapse_mode():
                      "REFUSED spacing fell", "not guarded", "floor was disabled",
                      "model/layers.py", "PROTECTED 8/8/8"):
         assert expected in done.stdout, expected + " missing from the matrix"
+
+
+def test_a_soft_quantiser_is_protected_through_the_helper_or_refused(scratch):
+    """Guards do not know families: a soft assignment is protectable via the helper.
+
+    Both directions are checked, because "soft quantisers are refused" was a protocol
+    statement, not a limitation -- a soft mechanism that routes its argmax through
+    `constrained_assignment` gets the same floor as the Sinkhorn branch of the baseline.
+    """
+    helper = [
+        "",
+        "class SoftLayer(VQLayer):",
+        "    def _indices(self, distances, infer_use_sk):",
+        "        q = torch.softmax(-distances, dim=-1)",
+        "        index, _ = constrained_assignment(-q, ASSIGNMENT_FLOOR)",
+        "        return index.to(distances.device)",
+        "",
+    ]
+    tree = scratch("soft_ok", BASELINE)
+    module = tree / "model" / "layers.py"
+    module.write_text(module.read_text(encoding="utf-8") + "\n".join(helper), encoding="utf-8")
+    apply_floor(tree)
+    assert verify_tree(tree)["ok"] is True
+
+    # the same soft quantiser that keeps its own argmax is refused by the static scan
+    own = [line.replace("constrained_assignment(-q, ASSIGNMENT_FLOOR)", "q.argmax(dim=-1)")
+           for line in helper]
+    bad = scratch("soft_bad", BASELINE)
+    bad_module = bad / "model" / "layers.py"
+    bad_module.write_text(bad_module.read_text(encoding="utf-8") + "\n".join(own),
+                          encoding="utf-8")
+    with pytest.raises(UnknownTree) as error:
+        apply_floor(bad)
+    assert "still assigns without the guard" in str(error.value)
