@@ -677,3 +677,19 @@ def test_a_stable_codebook_never_trips_the_relative_check():
     key = 9002
     for _ in range(200):
         assert verify_separation(codes * 0.8, cost, key=key)["ok"] is True   # 20% tighter
+
+
+def test_the_acceptance_matrix_refuses_every_collapse_mode():
+    """One command, eight cases, each refused by the check that owns it."""
+    import subprocess
+
+    script = Path(__file__).resolve().parent / "acceptance.py"
+    scratch = SCRATCH.parent / "acceptance_check"
+    done = subprocess.run([sys.executable, str(script), "--tree", str(scratch)],
+                          capture_output=True, text=True, timeout=1200)
+    assert done.returncode == 0, done.stdout[-2000:] + done.stderr[-800:]
+    assert "8/8 cases as expected" in done.stdout, done.stdout
+    for expected in ("REPAIRED 8 -> 256", "REFUSED duplicate rows", "REFUSED tie-decided",
+                     "REFUSED spacing fell", "not guarded", "floor was disabled",
+                     "model/layers.py", "PROTECTED 8/8/8"):
+        assert expected in done.stdout, expected + " missing from the matrix"
