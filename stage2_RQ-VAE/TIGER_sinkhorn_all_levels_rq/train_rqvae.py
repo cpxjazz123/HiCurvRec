@@ -42,9 +42,8 @@ from tqdm import tqdm
 from distances import build_distance
 from losses import build_loss
 from model import RQVAE
-from graphlet_l2 import (CALIBRATION_STEPS, GRAPHLET2_SHARE, REFRESH_EPOCHS, GroupPairSampler,
-                         calibrate_share, calibrate_temperature, graphlet2_infonce, l2_soft,
-                         load_graph, role_slices, shared_probability)
+from graphlet_sup import (CALIBRATION_STEPS, GRAPHLET_SHARE, TripletPredictor, TripletSampler,
+                          accuracy, calibrate_share, graphlet_loss, load_graph)
 from train_config import load_train_config
 
 
@@ -293,10 +292,12 @@ def main() -> None:
     # Level-1 behaviour structure: the edges of the single undirected graph, with the
     # file's sha256 checked against metadata.json before a single edge is read
     # (CLAUDE.md 89b).  GRAPH_SHARE = 0 switches the term off.
-    graph = load_graph() if GRAPHLET2_SHARE > 0 else None
-    sampler = GroupPairSampler(graph) if graph is not None else None
+    graph = load_graph() if GRAPHLET_SHARE > 0 else None
+    sampler = TripletSampler(graph) if graph is not None else None
+    # The supervisor head is trained jointly and discarded at export; its error is
+    # what forces the item vectors to carry the local structure.
+    predictor = TripletPredictor(dim=CODEBOOK_DIM).to(device) if graph is not None else None
     graph_weight = None
-    graph_temperature = None
     graph_calibration: list = []
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1], distance=DISTANCE).to(device)
@@ -317,10 +318,13 @@ def main() -> None:
         persistent_workers=False,  # 2026-09-24: 关闭避免每个 epoch 都 fork 一次
     )
 
+    parameters = list(model.parameters())
+    if predictor is not None:
+        parameters += list(predictor.parameters())
     if OPTIMIZER.lower() == "adagrad":
-        optimizer = torch.optim.Adagrad(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+        optimizer = torch.optim.Adagrad(parameters, lr=LR, weight_decay=WEIGHT_DECAY)
     else:
-        optimizer = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+        optimizer = torch.optim.AdamW(parameters, lr=LR, weight_decay=WEIGHT_DECAY)
     total_steps = max(1, EPOCHS * len(loader))
     warmup_steps = max(0, WARMUP_EPOCHS * len(loader))
 
@@ -360,17 +364,9 @@ def main() -> None:
         losses: list[float] = []
         recons: list[float] = []
         graph_terms: list[float] = []
+        graph_accuracy: list[float] = []
         graph_generator = torch.Generator()
         graph_generator.manual_seed(SEED + rank * 100003 + epoch)
-        if sampler is not None and (epoch - 1) % REFRESH_EPOCHS == 0:
-            # The L1 groups move while the codebook is young, so the hard negatives are
-            # rebuilt from the model's current L1 assignment instead of frozen once.
-            raw = model.module if isinstance(model, DDP) else model
-            with torch.no_grad():
-                latent_all = raw.encoder(all_embeddings.to(device))
-                layer1 = raw.rq.vq_layers[0]
-                codes = layer1._indices(layer1._distances(latent_all), False).cpu().numpy()
-            sampler.rebuild(codes)
         _epoch_t0 = time.time()
         for (batch,) in loader:
             batch = batch.to(device, non_blocking=True)
@@ -379,37 +375,26 @@ def main() -> None:
             # 唯一接入点：损失项与权重在 losses/ 里，这里只拿到总损失与分项。
             loss, components = CRITERION(reconstructed, batch, quant_parts)
             recon_loss = components["reconstruction"]
-            if sampler is not None and sampler.pool is not None:
-                # E2: inside one L1 group, a behaviour neighbour must share the L2 code
-                # more strongly than a degree-matched non-neighbour that sits in the
-                # same group.  The soft assignment uses the level-2 quantiser's own
-                # distances, centred as VQLayer centres them.
-                triples = sampler.sample(graph_generator)
-                items = triples.reshape(-1)
+            if sampler is not None:
+                # L_graphlet: a triplet classifier must tell a closed triangle from a
+                # degree-matched open wedge using only the three item vectors; its
+                # error is what pushes that information into the encoder.
+                triangles, wedges = sampler.sample(graph_generator)
+                items = np.concatenate([triangles.reshape(-1), wedges.reshape(-1)])
                 raw = model.module if isinstance(model, DDP) else model
                 latent = raw.encoder(all_embeddings[torch.as_tensor(items)].to(device))
-                # Level 2 quantises the level-1 residual, not the raw encoder output.
-                soft = l2_soft(raw.rq.vq_layers[0], raw.rq.vq_layers[1], latent, SK_EPSILON)
-                anchor, positive, negative = role_slices(soft, len(triples))
-                s_positive = shared_probability(anchor, positive)
-                s_negative = shared_probability(anchor, negative)
-                graph_term = None
+                count = len(triangles)
+                tri = latent[:count * 3].reshape(count, 3, -1)
+                wed = latent[count * 3:].reshape(count, 3, -1)
+                logit_tri = predictor(tri[:, 0], tri[:, 1], tri[:, 2])
+                logit_wed = predictor(wed[:, 0], wed[:, 1], wed[:, 2])
+                graph_term = graphlet_loss(logit_tri, logit_wed)
                 if graph_weight is None:
-                    # Both the temperature and the weight are taken from a window of
-                    # the first steps: a single first step can be an initialisation
-                    # outlier (it once made lambda 60x too small and the term a no-op).
                     graph_calibration.append((float(recon_loss.detach()),
-                                              s_positive.detach(), s_negative.detach()))
+                                              float(graph_term.detach())))
                     if len(graph_calibration) >= CALIBRATION_STEPS:
-                        positives = torch.cat([p for _, p, _ in graph_calibration])
-                        negatives = torch.cat([n for _, _, n in graph_calibration])
-                        graph_temperature = calibrate_temperature(positives, negatives)
-                        terms = [float(torch.nn.functional.cross_entropy(
-                            torch.stack([p / graph_temperature, n / graph_temperature], dim=1),
-                            torch.zeros(len(p), dtype=torch.long, device=p.device)))
-                            for _, p, n in graph_calibration]
-                        recon_median = float(np.median([r for r, _, _ in graph_calibration]))
-                        term_median = float(np.median(terms))
+                        recon_median = float(np.median([r for r, _ in graph_calibration]))
+                        term_median = float(np.median([t for _, t in graph_calibration]))
                         if world_size > 1:
                             stats = torch.tensor([recon_median, term_median], device=device)
                             dist.all_reduce(stats, op=dist.ReduceOp.SUM)
@@ -418,9 +403,9 @@ def main() -> None:
                         graph_weight = calibrate_share(recon_median, term_median)
                         graph_calibration.clear()
                 if graph_weight is not None:
-                    graph_term = graphlet2_infonce(s_positive, s_negative, graph_temperature)
                     loss = loss + graph_weight * graph_term
                     graph_terms.append(float(graph_term.detach()))
+                    graph_accuracy.append(accuracy(logit_tri.detach(), logit_wed.detach()))
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
@@ -444,6 +429,7 @@ def main() -> None:
         if world_size > 1:
             dist.all_reduce(local_graph, op=dist.ReduceOp.SUM)
         avg_graph = float(local_graph.item()) / max(world_size, 1)
+        avg_graph_accuracy = float(np.mean(graph_accuracy)) if graph_accuracy else 0.0
         cur_lr = optimizer.param_groups[0]["lr"]
 
         # === 非 eval 间隔: 只 log train 行 ===
@@ -451,7 +437,8 @@ def main() -> None:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
                 _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon,
-                        graph=avg_graph, graph_weight=graph_weight, lr=cur_lr,
+                        graph=avg_graph, graph_weight=graph_weight,
+                        graph_accuracy=avg_graph_accuracy, lr=cur_lr,
                         epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
             continue
 
@@ -484,7 +471,8 @@ def main() -> None:
                 )
                 _record(
                     rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon,
-                    graph=avg_graph, graph_weight=graph_weight, lr=cur_lr,
+                    graph=avg_graph, graph_weight=graph_weight,
+                    graph_accuracy=avg_graph_accuracy, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
