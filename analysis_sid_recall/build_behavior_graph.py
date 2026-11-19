@@ -117,7 +117,18 @@ def main() -> None:
 
     pd.DataFrame({"source": rows, "target": cols, "weight": weights}).to_parquet(
         OUT / "edges.parquet", index=False)
-    adjacency = sparse.coo_matrix((af3, (rows, cols)), shape=(n_nodes, n_nodes)).tocsr()
+    # The graph is undirected, so the sparse matrix must carry both directions:
+    # a CSR built from the upper triangle alone answers "who does i point to" and
+    # misses the neighbours that sit below the diagonal (querying C for B returns
+    # nothing when the stored edge is B->C).
+    both_rows = np.concatenate([rows, cols])
+    both_cols = np.concatenate([cols, rows])
+    both_af3 = np.concatenate([af3, af3])
+    adjacency = sparse.coo_matrix((both_af3, (both_rows, both_cols)),
+                                  shape=(n_nodes, n_nodes)).tocsr()
+    asymmetric = int((adjacency != adjacency.transpose()).nnz)
+    if asymmetric:
+        raise RuntimeError("CSR is not symmetric over an undirected graph: %d entries" % asymmetric)
     np.savez_compressed(
         OUT / "graph.npz",
         nodes=np.array(n_nodes, dtype=np.int64),
@@ -128,7 +139,8 @@ def main() -> None:
         triangles=triangles,
         triangles_per_node=node_triangles,
         indptr=adjacency.indptr, indices=adjacency.indices, data=adjacency.data,
-        format=np.array("csr"))
+        format=np.array("csr"),
+        symmetric=np.array(True))
     features = np.load(FEATURES)
     np.save(OUT / "node_features.npy", np.asarray(features, dtype=np.float32))
 
