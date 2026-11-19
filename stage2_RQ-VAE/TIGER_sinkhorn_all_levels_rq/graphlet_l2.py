@@ -167,8 +167,20 @@ def graphlet2_infonce(positive_s2: torch.Tensor, negative_s2: torch.Tensor,
         logits, torch.zeros(len(logits), dtype=torch.long, device=logits.device))
 
 
-def calibrate_temperature(positive_mean: float, negative_mean: float) -> float:
-    return max(float(positive_mean) - float(negative_mean), 1e-3)
+def calibrate_temperature(positive: torch.Tensor, negative: torch.Tensor,
+                          floor: float = 1e-6) -> float:
+    """A data-derived temperature: the median gap, else the spread of the scores.
+
+    A fixed floor of 1e-3 was a bug: while the gap is still zero it turns the
+    absolute S2 scale into logits of +-80 and the loss into ~80, which then
+    corrupts the weight calibration.  When the gap has not emerged, the spread of
+    the scores across the batch is the right scale, so the logits stay O(1).
+    """
+    positive = positive.detach().float()
+    negative = negative.detach().float()
+    gap = float((positive - negative).abs().median())
+    spread = float(torch.cat([positive, negative]).std())
+    return max(gap, spread, floor)
 
 
 def calibrate_share(recon: float, term: float, share: float = GRAPHLET2_SHARE) -> float:

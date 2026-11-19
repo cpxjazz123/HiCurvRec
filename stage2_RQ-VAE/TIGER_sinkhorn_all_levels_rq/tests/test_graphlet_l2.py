@@ -98,7 +98,12 @@ def test_empty_group_pool_is_reported(tmp_path):
 
 
 def test_calibrations():
-    assert calibrate_temperature(0.7, 0.2) == pytest.approx(0.5)
+    positive = torch.tensor([0.7, 0.7])
+    negative = torch.tensor([0.2, 0.2])
+    assert calibrate_temperature(positive, negative) == pytest.approx(0.5)
+    # While the gap is zero the spread carries the scale instead of a fixed floor.
+    flat = calibrate_temperature(torch.full((8,), 0.3), torch.full((8,), 0.3))
+    assert 0 < flat < 1e-3
     weight = calibrate_share(recon=1e-4, term=2.0, share=0.1)
     assert (weight * 2.0) / (1e-4 + weight * 2.0) == pytest.approx(0.1, abs=1e-6)
 

@@ -395,20 +395,23 @@ def main() -> None:
                                               soft[2 * count:])
                 s_positive = shared_probability(anchor, positive)
                 s_negative = shared_probability(anchor, negative)
-                if graph_temperature is None:
-                    with torch.no_grad():
-                        graph_temperature = calibrate_temperature(float(s_positive.mean()),
-                                                                  float(s_negative.mean()))
-                graph_term = graphlet2_infonce(s_positive, s_negative, graph_temperature)
+                graph_term = None
                 if graph_weight is None:
-                    # Calibrate on the median of the first steps: a single first step
-                    # can be an initialisation outlier and once made lambda 60x too
-                    # small, which turned the term into a no-op.
+                    # Both the temperature and the weight are taken from a window of
+                    # the first steps: a single first step can be an initialisation
+                    # outlier (it once made lambda 60x too small and the term a no-op).
                     graph_calibration.append((float(recon_loss.detach()),
-                                              float(graph_term.detach())))
+                                              s_positive.detach(), s_negative.detach()))
                     if len(graph_calibration) >= CALIBRATION_STEPS:
-                        recon_median = float(np.median([r for r, _ in graph_calibration]))
-                        term_median = float(np.median([t for _, t in graph_calibration]))
+                        positives = torch.cat([p for _, p, _ in graph_calibration])
+                        negatives = torch.cat([n for _, _, n in graph_calibration])
+                        graph_temperature = calibrate_temperature(positives, negatives)
+                        terms = [float(torch.nn.functional.cross_entropy(
+                            torch.stack([p / graph_temperature, n / graph_temperature], dim=1),
+                            torch.zeros(len(p), dtype=torch.long, device=p.device)))
+                            for _, p, n in graph_calibration]
+                        recon_median = float(np.median([r for r, _, _ in graph_calibration]))
+                        term_median = float(np.median(terms))
                         if world_size > 1:
                             stats = torch.tensor([recon_median, term_median], device=device)
                             dist.all_reduce(stats, op=dist.ReduceOp.SUM)
@@ -417,6 +420,7 @@ def main() -> None:
                         graph_weight = calibrate_share(recon_median, term_median)
                         graph_calibration.clear()
                 if graph_weight is not None:
+                    graph_term = graphlet2_infonce(s_positive, s_negative, graph_temperature)
                     loss = loss + graph_weight * graph_term
                     graph_terms.append(float(graph_term.detach()))
             if not torch.isfinite(loss):
