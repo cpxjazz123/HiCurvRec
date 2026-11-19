@@ -261,7 +261,8 @@ _SEPARATION: dict[int, dict] = {}
 
 def verify_separation(codes, cost, key: int | None = None,
                       drop: float = SEPARATION_DROP,
-                      strikes: int = SEPARATION_STRIKES) -> dict:
+                      strikes: int = SEPARATION_STRIKES,
+                      rank_local: bool = False) -> dict:
     """The codebook must not lose an order of magnitude of its own resolution.
 
     `ratio = min pairwise codeword distance / quantiser resolution`, where the resolution
@@ -282,9 +283,21 @@ def verify_separation(codes, cost, key: int | None = None,
     min_pair = float(pairwise.min())
     resolution = float(cost.detach().float().min(dim=-1).values.mean().clamp_min(0).sqrt())
     ratio = min_pair / resolution if resolution > 0 else float("inf")
+    # The codebook is replicated but the resolution is per-rank, so the verdict must be the
+    # same everywhere: a rank that refused alone would leave the others in the next
+    # collective. The worst rank decides; single-rank phases only report.
+    if _distributed() and not rank_local:
+        import torch.distributed as dist
+
+        worst = torch.tensor([ratio], dtype=torch.float64, device=flat.device)
+        dist.all_reduce(worst, op=dist.ReduceOp.MIN)
+        ratio = float(worst)
     if key is None:
         return {"ratio": ratio, "ok": True, "reference": ratio}
 
+    if rank_local:
+        # one rank inside (rank-0-only eval/export): report, do not judge
+        return {"ratio": ratio, "ok": True, "enforced": False}
     state = _SEPARATION.setdefault(key, {"reference": ratio, "strikes": 0})
     if "reference" not in state:
         state["reference"] = ratio

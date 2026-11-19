@@ -43,7 +43,8 @@ from torch import nn
 
 from .poincare_contract import expmap0, logmap0, mobius_add, project, squared_distance
 from assignment_floor import (constrained_assignment, verify_assignment,
-                                     verify_codebook, verify_margins)
+                                     verify_codebook, verify_margins,
+                                     verify_separation)
 
 #: The curvature of the mixed space. Fixed: the mechanism never learns or scans it.
 #: The shared anti-collapse floor. Every assignment -- training and export -- must give
@@ -199,6 +200,8 @@ class MixedVQLevel(nn.Module):
         index = self._indices(cost, infer_use_sk)
         verify_assignment(index, self.n_embed, ASSIGNMENT_FLOOR)
         verify_codebook(self.get_code_embs(), distance=False)
+
+        verify_separation(self.get_code_embs(), cost, key=id(self), rank_local=getattr(self, "_skip_ddp_reduce", False))
         codes = self.get_code_embs()
         codes_e, codes_h_tangent = split(codes)
         picked_e = codes_e[index]

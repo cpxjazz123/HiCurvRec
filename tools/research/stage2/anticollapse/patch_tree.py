@@ -113,7 +113,8 @@ EUCLID = Family(
          "        onehot = F.one_hot(embed_ind, self.n_embed)",
          "        cost = self._distances(latent)\n"
          "        verify_codebook(self.get_code_embs(), distance=False)\n"
-         "        verify_separation(self.get_code_embs(), cost, key=id(self))\n"
+         "        verify_separation(self.get_code_embs(), cost, key=id(self), "
+         "rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"
          "        verify_margins(cost, rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"
          "        embed_ind = self._indices(cost, infer_use_sk)\n"
          "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"
@@ -124,7 +125,8 @@ EUCLID = Family(
          "        x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)",
          "        cost = self._distances(latent)\n"
          "        verify_codebook(self.get_code_embs(), distance=False)\n"
-         "        verify_separation(self.get_code_embs(), cost, key=id(self))\n"
+         "        verify_separation(self.get_code_embs(), cost, key=id(self), "
+         "rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"
          "        verify_margins(cost, rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"
          "        embed_ind = self._indices(cost, infer_use_sk)\n"
          "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"
@@ -237,15 +239,32 @@ MIGRATIONS = (
     ("\n            verify_margins(cost)\n", "\n            verify_margins(cost, rank_local=True)\n"),
     ("\n        verify_margins(cost)\n",
      '\n        verify_margins(cost, rank_local=getattr(self, "_skip_ddp_reduce", False))\n'),
+    # the spacing check itself was added after the first installs: give it both the import
+    # and its call site, or an already-patched tree never receives the new check
+    ("verify_codebook, verify_margins)",
+     "verify_codebook, verify_margins,\n                                     verify_separation)"),
+    # the spacing check gained the rank-local flag after the first installs
+    ("\n        verify_separation(self.get_code_embs(), cost, key=id(self))\n",
+     "\n        verify_separation(self.get_code_embs(), cost, key=id(self), "
+     "rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"),
     # repair for trees migrated by the first (buggy) ordering: export has no `self`
     ('\n            verify_margins(cost, rank_local=getattr(self, "_skip_ddp_reduce", False))\n',
      "\n            verify_margins(cost, rank_local=True)\n"),
 )
 
 
+CB_ANCHOR = "\n        verify_codebook(self.get_code_embs(), distance=False)\n"
+SEP_CALL = ("\n        verify_separation(self.get_code_embs(), cost, key=id(self), "
+            "rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n")
+
+
 def _migrate(text: str) -> str:
     for old, new in MIGRATIONS:
         text = text.replace(old, new)
+    # A check added after the first installs has to reach them too -- once. The guard is
+    # the call itself: a second pass must not stack another check on the same line.
+    if "verify_separation(self" not in text and CB_ANCHOR in text:
+        text = text.replace(CB_ANCHOR, CB_ANCHOR + SEP_CALL, 1)
     return text
 
 

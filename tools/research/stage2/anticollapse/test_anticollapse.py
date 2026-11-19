@@ -563,6 +563,13 @@ def test_the_margin_verdict_agrees_across_ranks(scratch):
     assert rank_local.stdout.count("continued") == 2, rank_local.stdout
     assert "enforced False" in rank_local.stdout
 
+    # the spacing verdict is global too: one collapsed shard refuses on every rank
+    separation = subprocess.run(
+        [torchrun, "--standalone", "--nproc_per_node=2", str(probe), "separation"],
+        capture_output=True, text=True, timeout=900)
+    assert separation.returncode == 0, separation.stderr[-1500:]
+    assert "both refused" in separation.stdout, separation.stdout
+
 
 def test_an_older_install_is_migrated_to_the_rank_local_form(scratch):
     """A tree patched by an older guard must receive the call-site fix, not keep it stale."""
@@ -575,11 +582,13 @@ def test_an_older_install_is_migrated_to_the_rank_local_form(scratch):
     text = text.replace('verify_margins(cost, rank_local=getattr(self, "_skip_ddp_reduce", False))',
                         "verify_margins(cost)")
     module.write_text(text, encoding="utf-8")
-    assert "rank_local" not in module.read_text(encoding="utf-8")
+    assert "verify_margins(cost)\n" in module.read_text(encoding="utf-8")
 
     _sys.path.insert(0, str(REPO / "tools" / "research"))
     apply_floor(tree)
-    assert module.read_text(encoding="utf-8").count("rank_local=") == 2
+    migrated = module.read_text(encoding="utf-8")
+    assert migrated.count("verify_margins(cost, rank_local=") == 2
+    assert "verify_margins(cost)\n" not in migrated
 
 
 def test_the_export_call_site_is_migrated_without_self(scratch):

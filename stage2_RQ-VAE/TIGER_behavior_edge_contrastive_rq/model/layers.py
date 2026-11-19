@@ -24,7 +24,8 @@ from losses.commitment import commitment_loss
 # The metric is its own module; the quantiser only calls what it was handed.
 from distances import build_distance
 from assignment_floor import (constrained_assignment, verify_assignment,
-                                     verify_codebook, verify_margins)
+                                     verify_codebook, verify_margins,
+                                     verify_separation)
 
 
 class MLP(nn.Module):
@@ -140,6 +141,8 @@ class VQLayer(nn.Module):
         latent = x.view(-1, self.dim)
         cost = self._distances(latent)
         verify_codebook(self.get_code_embs(), distance=False)
+
+        verify_separation(self.get_code_embs(), cost, key=id(self), rank_local=getattr(self, "_skip_ddp_reduce", False))
         verify_margins(cost, rank_local=getattr(self, "_skip_ddp_reduce", False))
         embed_ind = self._indices(cost, infer_use_sk)
         verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)

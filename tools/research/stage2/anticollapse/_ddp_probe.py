@@ -43,6 +43,24 @@ def main() -> None:
             dist.barrier()
             print("rank 1: released by rank 0")
         print(f"rank {rank}: continued")
+    elif phase == "separation":
+        from anticollapse.floor import SEPARATION_STRIKES, verify_separation
+        codes = torch.randn(64, 8)
+        cost = torch.cdist(torch.randn(256, 8), codes)
+        key = 7000 + rank
+        verify_separation(codes, cost, key=key)                  # reference, global
+        shard_codes = codes * (1e-3 if rank == 0 else 1.0)             # only rank 0 collapses
+        failed = []
+        for _ in range(SEPARATION_STRIKES + 2):
+            try:
+                verify_separation(shard_codes, cost, key=key)
+            except Exception as error:                            # noqa: BLE001
+                failed.append(type(error).__name__)
+                break
+        flags = [None, None]
+        dist.all_gather_object(flags, failed)
+        if rank == 0:
+            print("both refused" if all(flags) else f"disagreement: {flags}")
     else:
         failed = []
         try:
