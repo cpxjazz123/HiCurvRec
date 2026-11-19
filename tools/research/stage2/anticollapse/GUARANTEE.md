@@ -1,6 +1,6 @@
 # 通用的码本防坍缩保证
 
-一句话:**分配这一步被替换成"每个码字至少 1 个商品"的最便宜分配,并且这个声明在调用点、导出处、产物处和准入处被检查四次;机制不需要做任何配合。**
+一句话:**分配这一步被替换成"每个码字至少 1 个商品"的最便宜分配(码本大于 batch 时改为轮转覆盖),这个声明在调用点、导出处、产物处、准入处和静态扫描里被检查,机制不需要做任何配合。**
 
 ## 1. 什么算"码本坍缩"
 
@@ -27,14 +27,14 @@ K > items（码字比一步的商品还多）                    轮转覆盖:�
 
 **不可达性(构造性,不是惩罚项)**:第 `t` 步分配后必有 `counts >= floor >= 1`,因此"某码字没有商品"这个状态在每一步都被排除;吸收态无法被进入,也就不需要逃离。
 
-## 3. 四处检查
+## 3. 检查点
 
 | 位置 | 检查 | 失败时 |
 |---|---|---|
-| 调用点(`forward` 内) | `verify_assignment(index, K, floor)`:看**真正返回的索引**;`items < K*floor` 本身就是失败 | `CodebookCollapse`,该步死 |
+| 调用点(`forward` 内) | `verify_assignment(index, K, floor)`:看**真正返回的索引**。可行区要求每码 ≥ floor;轮转区(`items < K*floor`)要求商品互不共码,并报 `mode: rotation` | `CodebookCollapse`,该步死 |
 | 调用点(`forward` 内) | `verify_margins(cost)`:平手判定的商品占比 > 50% 即拒(编码器未分离)。**DDP 下判定是全局的**:本地计数 `all_reduce` 后按全局比例决定,所有 rank 同时拒或同时继续 | `CodebookCollapse`,该步死 |
 | 调用点(每步) | `verify_separation(codes, cost)`:码字间距相对**自身初始值**不得掉一个数量级(实测健康运行保有 0.51–0.75,被拉向均值的码本掉到 0.000)。DDP 下取各 rank 的**最小**比值再裁决,单 rank 阶段只报告 | `CodebookCollapse`,连续 50 步后 | 
-| 调用点与导出 | `verify_codebook(codes)`:拒绝两行完全相同(行字节哈希,每步都跑);近邻只报告(混合度量下 L3 实测 1e-4,属正常) | `CodebookCollapse` |
+| 调用点与导出 | `verify_codebook(codes)`:拒绝两行完全相同(`unique(dim=0)`,内存 O(K·D),每步都跑);近邻只报告(混合度量下 L3 实测 1e-4,属正常) | `CodebookCollapse` |
 | 产物 | `audit_sid`:每级至少 2 个码字;三级码字重复率记录 | `check_entry` FAIL |
 | 安装/准入(静态) | `floor_constant`:模块里的 `ASSIGNMENT_FLOOR` 必须存在且 ≥ 1。把它改成 0 会让所有守卫"通过"而分配退回裸 `argmin` —— 这是用一种整数写法删除保护 | `UnknownTree`: the floor was disabled |
 | 安装/准入(静态) | `unguarded_sites`:量化器模块、`model/model.py`、`train_rqvae.py` 里**不允许残留**任何选码写法(`argmin` / `argmax` / `topk` / `.min(dim=)` / `.max(dim=)`;补丁会把它们替换掉);确非分配的用法必须在 `ALLOWED_SITES` 里带理由声明 | `UnknownTree`:报出文件与行号 |
@@ -50,17 +50,30 @@ K > items（码字比一步的商品还多）                    轮转覆盖:�
 
 ## 4. 实测证据
 
-敌手(全部经过受保护的**真实树**,全新解释器):
+一条命令跑完九种形态(`acceptance.py`,约 10 秒,任一行不符即非零退出):
 
-| 敌手 | 判定 |
+| 形态 | 判定 |
 |---|---|
 | 坍缩代价矩阵 + 普通 argmin | REPAIRED 8 → 256 |
-| 整树替换 `forward` 的分配 | REFUSED(调用点自检) |
-| 重复码字 | REFUSED(导出检查) |
-| 码本不动(对照) | SURVIVED(不误伤) |
-| 编码器坍缩(全商品同向量) | SURVIVED —— 见边界 |
+| 重复码字 | REFUSED duplicate rows |
+| 平手分配 | REFUSED tie-decided |
+| 间距跌到 1/1000 | REFUSED spacing fell |
+| 整树替换 `forward` 的分配 | REFUSED not guarded |
+| 下限常量被改成 0 | REFUSED floor was disabled |
+| 残留选码写法 `min(dim=)` | REFUSED model/layers.py:346 |
+| 软分配 + 配方 helper | **PROTECTED** |
+| 健康对照 | PROTECTED 8/8/8 |
 
-真实运行:`copy_baseline` → 一轮真训练(平衡开着)→ `PASS`,产物 `256/256/256`;混合族与欧氏族在三条探测通路上都是 `8/8`。
+训练级证据:
+
+| 运行 | 结果 |
+|---|---|
+| 欧氏族,冻结预算 3000 epoch | 零拒绝,L1 死码 0,碰撞 0.1565,0.2089 s/epoch |
+| 混合族(Sinkhorn 保留下限),300 epoch | 零拒绝,256/256/256,碰撞 0.0861 |
+| 每层容量 [512,256,64],60 epoch | 零拒绝,512/256/64 全用 |
+| 码本维度 16,60 epoch | 零拒绝,碰撞 0.0440 |
+| 轮转区(`items < K`),10 epoch | 零拒绝,**该层 512 码字全用** |
+| 注入坍缩(第 10 epoch 复制码字) | 下一步 `CodebookCollapse: 255 of 256` |
 
 ## 4b. 多卡
 
@@ -72,11 +85,12 @@ K > items（码字比一步的商品还多）                    轮转覆盖:�
 
 ## 5. 边界(必须写在任何"用了这个保护"的地方)
 
-1. **它保证占用,不保证质量。** 退化编码器仍可满足下限(把商品硬塞进去),此时 SID 无信息量。
-2. **接近坍缩现在由 `verify_separation` 判定,判据是相对的**:码字最小间距 ÷ 量化器分辨率,与**该层自己的初始值**比较,跌破一个数量级(0.1×)并连续 50 步即拒绝。实测:健康 60 epoch 保有 0.506/0.691/0.754,被辅助损失拉向均值的码本为 0.000/0.000/0.000。局限:若某层的**初始**码本就已退化,参考值本身接近 0,相对判据无从触发 —— 那种情况由精确检查(空码字、重复行)负责。
-3. **编码器坍缩按"平手"判定,不是按"输入相同"判定。** 调用点 `verify_margins` 在**超过半数商品的最近/次近代价差落在浮点分辨率内**时拒绝:此时分配由平手而非数据决定,码本形状再健康也没有信息量。输入恒定但码字可分(代价不平手)不会被拒,这是正确的 —— 那确实不是坍缩。**接近**坍缩(间隔极小但非零)不在内,由第 7 轮认证闸门负责。
-3. **协议要求离散索引。** 纯软分配量化器会被准入以 `UnknownTree` **拒绝**(失败关闭),而不是静默失去保护。
-5. ~~导出处检查依赖 `.eval()`~~ **已闭合**:重复码字改用行字节哈希(`O(K·D)`,约 0.05 ms),现在在每一步都无条件检查,不再依赖训练/评估模式。
+1. **它保证占用与区分性,不保证质量。** 退化编码器仍可满足下限(把商品硬塞进去),此时 SID 无信息量;判据是"码字有归属、互不相同、归属不靠平手、间距不塌",不是"表示有用"。
+2. **接近坍缩由 `verify_separation` 判定,判据相对自身初始值**:码字最小间距 ÷ 量化器分辨率,跌破该层初始值的 0.1 倍并连续 50 步即拒绝。实测:健康 60 epoch 保有 0.506/0.691/0.754;3000 epoch 末态为 2.168/1.370/1.603(触发点约 0.030–0.044,**余量 ×42–×53**);被辅助损失拉向均值的码本为 0.000。局限:若某层**初始**码本就已退化,参考值接近 0,相对判据无从触发 —— 那种情况由精确检查(空码字、重复行)负责。
+3. **编码器坍缩按"平手"判定,不是按"输入相同"判定。** 超过半数商品的最近/次近代价差落在浮点分辨率内时拒绝:此时分配由平手而非数据决定。输入恒定但码字可分(代价不平手)不会被拒 —— 那确实不是坍缩。
+4. **软分配可以受保护,但不是自动的**:按 5b 的配方(得分矩阵 + 经 `constrained_assignment` 出索引 + 可读码本)即可;自写 `argmax` 会被静态扫描以行号拒绝。
+5. **`K > batch` 走轮转覆盖**,需要调用方传用量计数(`counts_key`);不传则抛 `InfeasibleFloor` —— 没有历史就无法轮转,不假装有保证。
+6. ~~导出处检查依赖 `.eval()`~~ **已闭合**:重复码字检查是 `unique(dim=0)`,在每一步无条件执行。
 
 ## 5b. 怎么写一个能被保护的自定义量化器(含软分配)
 
@@ -110,8 +124,9 @@ python tools/research/stage2/anticollapse/selfcheck.py <tree> [--sid <item_sids.
 ## 7. 测试
 
 ```bash
-<python3.9> -m pytest tools/research/stage2/anticollapse/test_anticollapse.py -q   # 21 项
-<python3.9> -m pytest tools/research/stage2/tests/test_contract.py -q              # 7 项
+<python3.9> tools/research/stage2/anticollapse/acceptance.py                       # 9 形态矩阵
+<python3.9> -m pytest tools/research/stage2/anticollapse/test_anticollapse.py -q   # 39 项
+<python3.9> -m pytest tools/research/stage2/tests/test_contract.py -q              # 10 项
 ```
 
 覆盖:可行性契约、两族真实树的端到端、重复码字端到端、整树绕过被拒、删校验被拒、基线只读、平衡规则不被改动、产物审计(含后缀列)、安装刷新、`launch` 兜底。
