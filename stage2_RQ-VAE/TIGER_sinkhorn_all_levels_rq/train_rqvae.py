@@ -42,9 +42,9 @@ from tqdm import tqdm
 from distances import build_distance
 from losses import build_loss
 from model import RQVAE
-from graphlet_loss import (GRAPHLET_SHARE, TripletSampler, calibrate_share,
-                           calibrate_temperature, graphlet_infonce, load_graph,
-                           shared_probability, soft_assignment)
+from graphlet_l2 import (GRAPHLET2_SHARE, REFRESH_EPOCHS, GroupPairSampler, calibrate_share,
+                         calibrate_temperature, graphlet2_infonce, load_graph,
+                         shared_probability, soft_assignment)
 from train_config import load_train_config
 
 
@@ -293,8 +293,8 @@ def main() -> None:
     # Level-1 behaviour structure: the edges of the single undirected graph, with the
     # file's sha256 checked against metadata.json before a single edge is read
     # (CLAUDE.md 89b).  GRAPH_SHARE = 0 switches the term off.
-    graph = load_graph() if GRAPHLET_SHARE > 0 else None
-    sampler = TripletSampler(graph) if graph is not None else None
+    graph = load_graph() if GRAPHLET2_SHARE > 0 else None
+    sampler = GroupPairSampler(graph) if graph is not None else None
     graph_weight = None
     graph_temperature = None
     config = _tokenizer_config()
@@ -361,6 +361,15 @@ def main() -> None:
         graph_terms: list[float] = []
         graph_generator = torch.Generator()
         graph_generator.manual_seed(SEED + rank * 100003 + epoch)
+        if sampler is not None and (epoch - 1) % REFRESH_EPOCHS == 0:
+            # The L1 groups move while the codebook is young, so the hard negatives are
+            # rebuilt from the model's current L1 assignment instead of frozen once.
+            raw = model.module if isinstance(model, DDP) else model
+            with torch.no_grad():
+                latent_all = raw.encoder(all_embeddings.to(device))
+                layer1 = raw.rq.vq_layers[0]
+                codes = layer1._indices(layer1._distances(latent_all), False).cpu().numpy()
+            sampler.rebuild(codes)
         _epoch_t0 = time.time()
         for (batch,) in loader:
             batch = batch.to(device, non_blocking=True)
@@ -369,41 +378,38 @@ def main() -> None:
             # 唯一接入点：损失项与权重在 losses/ 里，这里只拿到总损失与分项。
             loss, components = CRITERION(reconstructed, batch, quant_parts)
             recon_loss = components["reconstruction"]
-            if sampler is not None:
-                # L_graphlet: a closed triangle's three items must share a level-1
-                # codeword more strongly than a degree-matched open wedge's do.  The
-                # soft assignment is the quantiser's own distances, centred as
-                # VQLayer centres them, so the term sees the same geometry the
-                # assignment does.
-                triangles, wedges = sampler.sample(graph_generator)
-                if len(triangles):
-                    items = np.concatenate([triangles.reshape(-1), wedges.reshape(-1)])
-                    encoder = model.module.encoder if isinstance(model, DDP) else model.encoder
-                    latent = encoder(all_embeddings[torch.as_tensor(items)].to(device))
-                    layer = (model.module if isinstance(model, DDP) else model).rq.vq_layers[0]
-                    soft = soft_assignment(layer._distances(latent), SK_EPSILON)
-                    count = len(triangles)
-                    tri = soft[:count * 3].reshape(count, 3, -1)
-                    wedge = soft[count * 3:].reshape(count, 3, -1)
-                    s_tri = shared_probability(tri[:, 0], tri[:, 1], tri[:, 2])
-                    s_wedge = shared_probability(wedge[:, 0], wedge[:, 1], wedge[:, 2])
-                    if graph_temperature is None:
-                        with torch.no_grad():
-                            graph_temperature = calibrate_temperature(float(s_tri.mean()),
-                                                                      float(s_wedge.mean()))
-                    graph_term = graphlet_infonce(s_tri, s_wedge, graph_temperature)
-                    if graph_weight is None:
-                        if world_size > 1:
-                            stats = torch.tensor([float(recon_loss.detach()),
-                                                  float(graph_term.detach())], device=device)
-                            dist.all_reduce(stats, op=dist.ReduceOp.SUM)
-                            graph_weight = calibrate_share(float(stats[0]) / world_size,
-                                                           float(stats[1]) / world_size)
-                        else:
-                            graph_weight = calibrate_share(float(recon_loss.detach()),
-                                                           float(graph_term.detach()))
-                    loss = loss + graph_weight * graph_term
-                    graph_terms.append(float(graph_term.detach()))
+            if sampler is not None and sampler.pool is not None:
+                # E2: inside one L1 group, a behaviour neighbour must share the L2 code
+                # more strongly than a degree-matched non-neighbour that sits in the
+                # same group.  The soft assignment uses the level-2 quantiser's own
+                # distances, centred as VQLayer centres them.
+                triples = sampler.sample(graph_generator)
+                items = triples.reshape(-1)
+                raw = model.module if isinstance(model, DDP) else model
+                latent = raw.encoder(all_embeddings[torch.as_tensor(items)].to(device))
+                soft = soft_assignment(raw.rq.vq_layers[1]._distances(latent), SK_EPSILON)
+                count = len(triples)
+                anchor, positive, negative = (soft[:count], soft[count:2 * count],
+                                              soft[2 * count:])
+                s_positive = shared_probability(anchor, positive)
+                s_negative = shared_probability(anchor, negative)
+                if graph_temperature is None:
+                    with torch.no_grad():
+                        graph_temperature = calibrate_temperature(float(s_positive.mean()),
+                                                                  float(s_negative.mean()))
+                graph_term = graphlet2_infonce(s_positive, s_negative, graph_temperature)
+                if graph_weight is None:
+                    if world_size > 1:
+                        stats = torch.tensor([float(recon_loss.detach()),
+                                              float(graph_term.detach())], device=device)
+                        dist.all_reduce(stats, op=dist.ReduceOp.SUM)
+                        graph_weight = calibrate_share(float(stats[0]) / world_size,
+                                                       float(stats[1]) / world_size)
+                    else:
+                        graph_weight = calibrate_share(float(recon_loss.detach()),
+                                                       float(graph_term.detach()))
+                loss = loss + graph_weight * graph_term
+                graph_terms.append(float(graph_term.detach()))
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
