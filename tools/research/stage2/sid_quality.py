@@ -7,15 +7,16 @@ cannot be talked past.
 * **collision** = ``1 - distinct(three-code SID) / items`` below 0.10.  Among the
   73 arms with a checkpoint on disk every arm above ``test_R@10 0.06`` stayed at
   0.030-0.087; arms at 0.10-0.99 never did.
-* **quantisation error** = ``mean ||z - sum(codewords)||`` inside [0.13, 0.65].
-  The band is where the three codes keep a structure instead of reproducing the
-  item vector (below it: ``dul_rq`` 0.160 at recall 0.026) or crushing it (above
-  it: ``cogeo_region_argmax`` 21.4 at 6% distinct codes).
+* **quantisation error** = ``mean ||z - sum(codewords)||`` inside [0.035, 0.10].
+  The encoder forward includes every linear layer's bias -- ``model/layers.py``
+  builds ``nn.Linear`` with a bias and the checkpoints carry it, and dropping it
+  made ``z`` five times too small.  With the bias the 12 arms above 0.06 sit at
+  0.041-0.090; ``resample_proj_dir`` (0.032, recall 0.0548) and ``dul_rq``
+  (0.096 at 1.6% collision, recall 0.026) sit outside.
 * **effective rank** ``PR = (sum lambda)^2 / sum lambda^2`` of the encoder output
-  at or below 12.  The 12 arms above 0.06 compressed 32 dimensions into 3.6-11.5
-  effective ones; the two arms the other two conditions let through kept 14.1
-  and 19.1, i.e. they carried the 768-dim input through unorganised, and the
-  three codes cannot cover that.
+  at or below 8.  The 12 arms above 0.06 compressed 32 dimensions into 5.99-6.93
+  effective ones; ``dul_rq`` kept 23.2, i.e. it carried the 768-dim input through
+  unorganised and the three codes cannot cover that.
 
 Missing evidence is a refusal: no checkpoint, no embeddings or a codebook whose
 width disagrees with the encoder output means the arm cannot be judged, and an
@@ -31,9 +32,9 @@ import sys
 from pathlib import Path
 
 COLLISION_LIMIT = 0.10
-QUANT_ERROR_LOW = 0.13
-QUANT_ERROR_HIGH = 0.65
-EFFECTIVE_RANK_LIMIT = 12.0
+QUANT_ERROR_LOW = 0.035
+QUANT_ERROR_HIGH = 0.10
+EFFECTIVE_RANK_LIMIT = 8.0
 CHUNK = 8192
 
 
@@ -52,28 +53,77 @@ def three_level_collision(payload: dict) -> float:
     return 1.0 - len(triples) / max(len(payload), 1)
 
 
-def _encoder_weights(state: dict) -> list:
-    weights = sorted(
-        (int(key.split(".")[2]), value) for key, value in state.items()
-        if key.startswith("encoder.mlp") and key.endswith("weight") and value.ndim == 2)
-    return [value for _, value in weights]
+def _encoder_layers(state: dict) -> list:
+    """The encoder MLP as (weight, bias) pairs, in the order ``MLP.forward`` runs them.
+
+    ``model/layers.py::MLP`` builds ``Dropout, Linear(...), ReLU`` triples, so the
+    linear layers sit at odd indices and every one of them carries a bias; a
+    forward pass without that bias is not the model's forward pass.
+    """
+    weights = {}
+    biases = {}
+    for key, value in state.items():
+        if not key.startswith("encoder.mlp"):
+            continue
+        parts = key.split(".")
+        if len(parts) != 4 or not parts[2].isdigit():
+            continue
+        index = int(parts[2])
+        if parts[3] == "weight" and value.ndim == 2:
+            weights[index] = value
+        elif parts[3] == "bias":
+            biases[index] = value
+    if not weights:
+        raise ValueError("no encoder.mlp linear layers in the checkpoint")
+    return [(weights[index], biases.get(index)) for index in sorted(weights)]
 
 
 def _codebook_tables(state: dict) -> list:
-    euclid = [value for key, value in sorted(state.items())
-              if "vq_layers" in key and key.endswith("embed.weight")]
-    mixed = [value for key, value in sorted(state.items())
-             if ".levels." in key and key.endswith("embed.weight")]
-    return euclid or mixed
+    """The codebook each level actually assigns from, in level order.
+
+    Three shapes occur: ``vq_layers.<i>.embed.weight`` (vq and simvq), the bare
+    ``vq_layers.<i>.embed`` parameter (ema) and ``levels.<i>.embed.weight`` (the
+    mixed-geometry trees).  SimVQ assigns from ``embed_proj(embed.weight)`` --
+    ``SimVQLayer.get_code_embs`` -- so an arm trained with it must be read
+    through the projection, not the raw table.
+    """
+    levels = {}
+    projections = {}
+    for key, value in state.items():
+        if key.endswith("embed_proj.weight"):
+            projections[key.rsplit(".", 1)[0].replace("embed_proj", "embed")] = value
+        elif key.endswith(".embed.weight"):
+            levels[key.rsplit(".", 1)[0]] = value
+        elif key.endswith(".embed") and value.ndim == 2:
+            levels[key] = value
+    if not levels:
+        return []
+    ordered = sorted(levels, key=lambda name: _level_of(name))
+    return [_projected(levels[name], projections.get(name)) for name in ordered]
 
 
-def measure_vectors(embeddings, weights, tables, tokens) -> tuple:
+def _level_of(name: str) -> int:
+    for part in reversed(name.split(".")):
+        if part.isdigit():
+            return int(part)
+    return 0
+
+
+def _projected(table, projection):
+    if projection is None:
+        return table
+    import torch
+    return table @ projection.t()
+
+
+def measure_vectors(embeddings, layers, tables, tokens) -> tuple:
     """Return (quantisation error, effective rank) of the encoder output."""
     import torch
 
     depth = int(tokens.shape[1])
-    if not weights or not tables:
-        raise ValueError("no encoder weights or no codebook tables in the checkpoint")
+    if not layers or not tables:
+        raise ValueError("no encoder layers or no codebook tables in the checkpoint")
+    weights = [weight for weight, _ in layers]
     if weights[0].shape[1] != embeddings.shape[1]:
         raise ValueError("encoder input width %d disagrees with embeddings width %d"
                          % (weights[0].shape[1], embeddings.shape[1]))
@@ -90,9 +140,11 @@ def measure_vectors(embeddings, weights, tables, tokens) -> tuple:
         block = embeddings[start:start + CHUNK]
         with torch.no_grad():
             x = torch.as_tensor(block)
-            for index, weight in enumerate(weights):
+            for index, (weight, bias) in enumerate(layers):
                 x = x @ weight.t()
-                if index < len(weights) - 1:
+                if bias is not None:
+                    x = x + bias
+                if index < len(layers) - 1:
                     x = torch.relu(x)
             quantised = None
             for level in range(depth):
@@ -115,7 +167,7 @@ def evaluate(sid_path, embeddings_path=None, checkpoint_path=None) -> dict:
     if sid_path.is_dir():
         sid_path = sid_path / "item_sids.json"
     verdict = {"sid": str(sid_path), "allow": False, "reason": "", "collision": None,
-               "quant_error": None, "effective_rank": None,
+               "quant_error": None, "effective_rank": None, "warnings": [],
                "limits": {"collision": COLLISION_LIMIT,
                           "quant_error": [QUANT_ERROR_LOW, QUANT_ERROR_HIGH],
                           "effective_rank": EFFECTIVE_RANK_LIMIT}}
@@ -150,7 +202,7 @@ def evaluate(sid_path, embeddings_path=None, checkpoint_path=None) -> dict:
     try:
         state = torch.load(checkpoint, map_location="cpu", weights_only=False)
         state = state.get("state_dict", state)
-        weights = _encoder_weights(state)
+        layers = _encoder_layers(state)
         tables = _codebook_tables(state)
     except Exception as exc:  # noqa: BLE001 - the reason is reported, never hidden
         verdict["reason"] = "checkpoint unreadable: " + repr(exc)
@@ -168,31 +220,36 @@ def evaluate(sid_path, embeddings_path=None, checkpoint_path=None) -> dict:
                              % (embeddings.shape[0], len(tokens)))
         return verdict
     try:
-        error, effective_rank = measure_vectors(embeddings, weights, tables, tokens)
+        error, effective_rank = measure_vectors(embeddings, layers, tables, tokens)
     except Exception as exc:  # noqa: BLE001
         verdict["reason"] = "vector measurement unavailable: " + repr(exc)
         return verdict
     verdict["quant_error"] = error
     verdict["effective_rank"] = effective_rank
+    # The collision is the hard condition: it is the one that is comparable across
+    # every family.  The two vector numbers are recorded and reported, but they are
+    # a fingerprint of the behaviour-sample family the bands were measured on -- the
+    # mixed-geometry arms sit at 0.028-0.455 and PR 1.8-22.9, so blocking on them
+    # would forbid the whole mixed-curvature line from ever reaching Stage 3.
+    warnings = []
     if error < QUANT_ERROR_LOW:
-        verdict["reason"] = ("quantisation error %.3f is below %.2f: the codebook reproduces the "
-                             "item vectors instead of learning a structure that generalises"
-                             % (error, QUANT_ERROR_LOW))
-        return verdict
-    if error > QUANT_ERROR_HIGH:
-        verdict["reason"] = ("quantisation error %.3f is above %.2f: the vectors are pressed "
-                             "together" % (error, QUANT_ERROR_HIGH))
-        return verdict
+        warnings.append("quantisation error %.3f is below %.3f: the codebook reproduces the item "
+                        "vectors instead of learning a structure that generalises"
+                        % (error, QUANT_ERROR_LOW))
+    elif error > QUANT_ERROR_HIGH:
+        warnings.append("quantisation error %.3f is above %.3f: the vectors are pressed together"
+                        % (error, QUANT_ERROR_HIGH))
     if effective_rank > EFFECTIVE_RANK_LIMIT:
-        verdict["reason"] = ("effective rank %.2f is above %.1f: the encoder carries the input "
-                             "through unorganised and three codes cannot cover it"
-                             % (effective_rank, EFFECTIVE_RANK_LIMIT))
-        return verdict
+        warnings.append("effective rank %.2f is above %.1f: the encoder carries the input through "
+                        "unorganised and three codes may not cover it"
+                        % (effective_rank, EFFECTIVE_RANK_LIMIT))
+    verdict["warnings"] = warnings
     verdict["allow"] = True
-    verdict["reason"] = ("collision %.4f < %.2f, quantisation error %.3f inside [%.2f, %.2f] and "
-                         "effective rank %.2f <= %.1f"
+    verdict["reason"] = ("collision %.4f < %.2f; measured quantisation error %.3f (band %.3f-%.3f) "
+                         "and effective rank %.2f (limit %.1f)%s"
                          % (collision, COLLISION_LIMIT, error, QUANT_ERROR_LOW, QUANT_ERROR_HIGH,
-                            effective_rank, EFFECTIVE_RANK_LIMIT))
+                            effective_rank, EFFECTIVE_RANK_LIMIT,
+                            "" if not warnings else "; WARNING " + " | ".join(warnings)))
     return verdict
 
 

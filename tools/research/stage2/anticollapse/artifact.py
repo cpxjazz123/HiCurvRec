@@ -26,7 +26,9 @@ from pathlib import Path
 MIN_CODES_PER_LEVEL = 2
 
 #: Stage3 refuses an identifier whose three-code collision reaches this (CLAUDE.md 89).
-COLLISION_GATE = 0.40
+#: It is the same limit `tools/research/stage2/sid_quality.py` enforces at launch; the two
+#: are kept in step by `tests/test_sid_quality_gate.py::test_artifact_gate_matches_the_launch_gate`.
+COLLISION_GATE = 0.10
 
 #: The identifier is `CODEBOOK_NUM` codes followed by the collision-disambiguation column
 #: (`train_rqvae.py::_extend_collisions`), which is not a quantiser level: auditing it would
