@@ -125,8 +125,11 @@ class GroupPairSampler:
                 inside = [int(n) for n in self.adjacency[anchor] if n in members]
                 if not inside:
                     continue
+                bucket_anchor = _degree_bucket(int(self.degree[anchor]))
                 outside = [node for node in ordered
-                           if node != anchor and node not in self.adjacency[anchor]]
+                           if node != anchor
+                           and node not in self.adjacency[anchor]
+                           and _degree_bucket(int(self.degree[node])) == bucket_anchor]
                 if not outside:
                     continue
                 positive = inside[len(pool) % len(inside)]
@@ -152,6 +155,31 @@ def soft_assignment(distances: torch.Tensor, epsilon: float) -> torch.Tensor:
     middle = (maximum + minimum) / 2
     amplitude = (maximum - middle) + 1e-5
     return torch.softmax(-((distances - middle) / amplitude) / epsilon, dim=1)
+
+
+def role_slices(soft: torch.Tensor, count: int):
+    """Anchors, positives and negatives out of a (3N, K) batch laid out a1,p1,n1,a2,...
+
+    Slicing contiguous thirds of the flattened batch silently compares the wrong
+    rows: the first third is (a1,p1,n1,a2,...), not the anchors.
+    """
+    if soft.shape[0] != 3 * count:
+        raise ValueError("expected 3N rows for N triples, got %d for %d" % (soft.shape[0], count))
+    return soft[0::3], soft[1::3], soft[2::3]
+
+
+def l2_soft(level1, level2, latent: torch.Tensor, epsilon: float) -> torch.Tensor:
+    """The level-2 soft assignment on the level-1 residual the quantiser produces.
+
+    RQ-VAE quantises the residual ``z - q1(z)`` at level 2; feeding the raw encoder
+    output to the level-2 distances supervises an assignment the model never makes.
+    ``q1`` is used detached, exactly like the straight-through codeword in
+    ``RQLayer.forward``.
+    """
+    index = level1._distances(latent).argmin(dim=1)
+    quantised = level1.get_code_embs()[index].detach()
+    residual = latent - quantised
+    return soft_assignment(level2._distances(residual), epsilon)
 
 
 def shared_probability(first: torch.Tensor, second: torch.Tensor) -> torch.Tensor:

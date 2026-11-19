@@ -43,9 +43,8 @@ from distances import build_distance
 from losses import build_loss
 from model import RQVAE
 from graphlet_l2 import (CALIBRATION_STEPS, GRAPHLET2_SHARE, REFRESH_EPOCHS, GroupPairSampler,
-                         calibrate_share,
-                         calibrate_temperature, graphlet2_infonce, load_graph,
-                         shared_probability, soft_assignment)
+                         calibrate_share, calibrate_temperature, graphlet2_infonce, l2_soft,
+                         load_graph, role_slices, shared_probability)
 from train_config import load_train_config
 
 
@@ -389,10 +388,9 @@ def main() -> None:
                 items = triples.reshape(-1)
                 raw = model.module if isinstance(model, DDP) else model
                 latent = raw.encoder(all_embeddings[torch.as_tensor(items)].to(device))
-                soft = soft_assignment(raw.rq.vq_layers[1]._distances(latent), SK_EPSILON)
-                count = len(triples)
-                anchor, positive, negative = (soft[:count], soft[count:2 * count],
-                                              soft[2 * count:])
+                # Level 2 quantises the level-1 residual, not the raw encoder output.
+                soft = l2_soft(raw.rq.vq_layers[0], raw.rq.vq_layers[1], latent, SK_EPSILON)
+                anchor, positive, negative = role_slices(soft, len(triples))
                 s_positive = shared_probability(anchor, positive)
                 s_negative = shared_probability(anchor, negative)
                 graph_term = None

@@ -14,7 +14,8 @@ import sys
 sys.path.insert(0, str(TREE))
 
 from graphlet_l2 import (GroupPairSampler, calibrate_share, calibrate_temperature,  # noqa: E402
-                         graphlet2_infonce, load_graph, shared_probability, soft_assignment)
+                         graphlet2_infonce, l2_soft, load_graph, role_slices,
+                         shared_probability, soft_assignment)
 
 
 def _graph_dir(tmp_path: Path, corrupt: bool = False) -> Path:
@@ -112,3 +113,58 @@ def test_corrupted_graph_is_refused(tmp_path):
     with pytest.raises(RuntimeError) as error:
         load_graph(_graph_dir(tmp_path, corrupt=True))
     assert "sha256" in str(error.value) or "metadata" in str(error.value)
+
+
+def test_roles_are_split_by_stride_not_by_contiguous_thirds():
+    soft = torch.arange(9, dtype=torch.float).reshape(3, 3)   # rows a1,p1,n1
+    anchor, positive, negative = role_slices(soft, count=1)
+    assert anchor.tolist() == [[0.0, 1.0, 2.0]]
+    assert positive.tolist() == [[3.0, 4.0, 5.0]]
+    assert negative.tolist() == [[6.0, 7.0, 8.0]]
+    # three triples: rows a1 p1 n1 a2 p2 n2 a3 p3 n3
+    soft = torch.arange(9 * 2, dtype=torch.float).reshape(9, 2)
+    anchor, positive, negative = role_slices(soft, count=3)
+    assert anchor.shape == (3, 2) and positive.shape == (3, 2)
+    assert anchor[:, 0].tolist() == [0.0, 6.0, 12.0]
+    with pytest.raises(ValueError):
+        role_slices(soft, count=2)
+
+
+class _Level:
+    """A level with a fixed codebook, standing in for a VQLayer."""
+
+    def __init__(self, codes):
+        self.codes = torch.as_tensor(codes, dtype=torch.float)
+
+    def get_code_embs(self):
+        return self.codes
+
+    def _distances(self, latent):
+        return ((latent[:, None, :] - self.codes[None, :, :]) ** 2).sum(dim=2)
+
+
+def test_level2_probabilities_use_the_level1_residual():
+    level1 = _Level([[0.0], [10.0]])
+    level2 = _Level([[0.0], [1.0]])
+    latent = torch.tensor([[9.9], [10.1]])
+    on_residual = l2_soft(level1, level2, latent, epsilon=0.5)
+    quantised = torch.tensor([[10.0], [10.0]])
+    residual = latent - quantised
+    expected = soft_assignment(level2._distances(residual), 0.5)
+    on_latent = soft_assignment(level2._distances(latent), 0.5)
+    assert torch.allclose(on_residual, expected, atol=1e-6)
+    assert not torch.allclose(on_residual, on_latent, atol=1e-3)
+
+
+def test_negatives_must_share_the_anchor_degree_bucket(tmp_path):
+    graph = load_graph(_graph_dir(tmp_path))
+    sampler = GroupPairSampler(graph)
+    one_group = np.zeros(graph["n_nodes"], dtype=np.int64)
+    sampler.rebuild(one_group)
+    triples = sampler.sample(torch.Generator().manual_seed(5), count=32)
+    for anchor, _positive, negative in triples:
+        assert sampler.degree[int(anchor)] > 0
+        # the fixture's degrees span 1..2, which fall in different buckets
+        from graphlet_l2 import _degree_bucket
+        assert _degree_bucket(int(sampler.degree[int(negative)])) == _degree_bucket(
+            int(sampler.degree[int(anchor)]))
