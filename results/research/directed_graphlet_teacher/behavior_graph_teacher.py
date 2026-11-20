@@ -44,6 +44,39 @@ CAPABILITY_CHECKS = {
 CAPABILITY_KEYS = tuple(CAPABILITY_CHECKS)
 SEVERITY = {"PASS": 0, "NOT_ESTABLISHED": 1, "FAIL": 2}
 
+BOUNDARY_KEYS = ("rqvae_input_changed", "rqvae_encoder_input",
+                 "teacher_inference_needs_graph", "used_only_in_training_loss")
+EXPECTED_BOUNDARY = {"rqvae_input_changed": False,
+                     "teacher_inference_needs_graph": False,
+                     "used_only_in_training_loss": True}
+
+
+def _read_contract(path):
+    return json.loads(Path(path).read_text())
+
+
+def _boundary_report(meta) -> dict:
+    """Read the frozen contract instead of restating its claims."""
+    candidates = []
+    if meta.get("contract_source"):
+        candidates.append(HERE.parents[2] / str(meta["contract_source"]))
+    candidates.append(stb.BUNDLE_DIR / "structure_teacher_bundle_contract.json")
+    for path in candidates:
+        path = Path(path)
+        if not path.is_file():
+            continue
+        contract = _read_contract(path)
+        recorded = contract.get("boundary") or {
+            key: contract[key] for key in BOUNDARY_KEYS if key in contract}
+        boundary = dict(recorded)
+        root = HERE.parents[2]
+        boundary["recorded_from"] = (str(path.relative_to(root))
+                                     if path.is_relative_to(root) else str(path))
+        boundary["matches_expected"] = all(
+            boundary.get(key) is value for key, value in EXPECTED_BOUNDARY.items())
+        return boundary
+    return {"recorded_from": None, "matches_expected": False}
+
 
 class BehaviorGraphTeacher:
     def __init__(self, bundle, joint=None):
@@ -121,9 +154,7 @@ class BehaviorGraphTeacher:
                 "other_checks": other,
                 "declared_not_established": audit["declared_not_established"],
                 "weights": self.bundle.weights,
-                "boundary": {"rqvae_input_changed": False,
-                             "teacher_inference_needs_graph": False,
-                             "used_only_in_training_loss": True}}
+                "boundary": _boundary_report(self.bundle.meta)}
 
 
 def main() -> None:

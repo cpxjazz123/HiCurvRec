@@ -67,3 +67,19 @@ def test_describe_reports_every_capability_and_no_check_is_dropped():
     mapped = {name for evidence in description["evidence"].values()
               for name in evidence} | set(description["other_checks"])
     assert set(conformance["checks"]) <= mapped
+
+
+def test_boundary_is_read_from_the_frozen_contract_not_hardcoded(monkeypatch):
+    teacher = bgt.BehaviorGraphTeacher.load(joint=False)
+    contract = json.loads(
+        (TEACHER / "teacher" / "structure" / "bundle"
+         / "structure_teacher_bundle_contract.json").read_text())
+    boundary = teacher.describe()["boundary"]
+    for key, value in contract["boundary"].items():
+        assert key in boundary, key
+        assert boundary[key] == value, key
+    assert boundary["matches_expected"] is True
+
+    tampered = dict(contract["boundary"], rqvae_input_changed=True)
+    monkeypatch.setattr(bgt, "_read_contract", lambda path: {"boundary": tampered})
+    assert teacher.describe()["boundary"]["matches_expected"] is False
