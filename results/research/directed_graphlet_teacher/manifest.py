@@ -12,6 +12,7 @@ INPUTS = (
     "results/research/directed_graphlet_role/instances.npz",
     "results/research/directed_graphlet_role/subtypes.json",
     "results/research/behavior_graph/graph.npz",
+    "results/research/behavior_graph_directed/graph.npz",
     "stage1_GeneEmbedding/output/sentence_t5.npy",
     "results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth",
     "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
@@ -46,6 +47,14 @@ ANALYSIS = (
     "teacher_controls.json", "gate.json",
     "tests/test_teacher_contract.py", "tests/test_student_interface.py",
     "tests/test_trainable_student.py",
+    "graph_teacher3.py", "tests/test_teacher_optimization.py",
+    "teacher/opt/graph_teacher3_report.json", "REPORT_GRAPH_TEACHER_OPTIMIZATION.md",
+    "issue228_close_comment.md",
+    "structure_teacher.py", "tests/test_structure_teacher.py",
+    "teacher/structure/teacher_structure_contract.json",
+    "teacher/structure/teacher_structure_manifest.json",
+    "REPORT_STRUCTURE_TEACHER.md", "structure_teacher_report.json",
+    "issue229_close_comment.md",
 )
 
 

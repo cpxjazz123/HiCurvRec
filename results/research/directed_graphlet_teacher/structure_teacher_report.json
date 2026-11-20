@@ -1,0 +1,261 @@
+{
+ "issue": 229,
+ "version": "structure-teacher-v1",
+ "build_sha": "ba66a98a0865681be05353ca9ca8dc301da3ca2a08806f182b6f6fe5a9ea6607",
+ "artifacts": {
+  "structure_targets_v1.npz": {
+   "sha256": "c0962cd20f6957fd4bc6cd0e57593c84af073f0175127f18bd78f656a1f10fdd",
+   "bytes": 12082975,
+   "tracked_in_git": false
+  },
+  "teacher_structure_v1.pth": {
+   "sha256": "ec465a7d81e71ce0675d8ba7a79c416b8f0397e68f0c45dedba0d181066b8580",
+   "bytes": 7103169,
+   "tracked_in_git": false
+  },
+  "teacher_structure_contract.json": {
+   "sha256": "b970eaf2d8f8c49d2a0b84928b2ba57f9de8f1ac66d61a1166c275c569a9bf2c",
+   "bytes": 8096,
+   "tracked_in_git": true
+  }
+ },
+ "targets": {
+  "items": 24587,
+  "covered_items": 12266,
+  "coverage_fraction": 0.49888152275592795,
+  "mean_roles_per_covered_item": 2.075493233327898,
+  "multi_role_fraction": 0.46111201695744336,
+  "relation_dim": 128,
+  "positive_pairs": 32637,
+  "negative_pairs": 32637,
+  "confidence": {
+   "mean_covered": 0.9435927867889404,
+   "zero_items": 12321
+  },
+  "distinctness": {
+   "mean_offdiagonal_cosine": 0.20032905042171478,
+   "fraction_near_identical": 0.0,
+   "sample": 1024
+  }
+ },
+ "capabilities": {
+  "recognition": {
+   "orbit_target": "observed directed-graphlet orbit distribution per item, several roles per item",
+   "mean_roles_per_covered_item": 2.075493233327898,
+   "items_with_multiple_roles": 0.46111201695744336,
+   "with_adjacency_subtype_macro_f1": 0.7121,
+   "with_adjacency_orbit_macro_f1": 0.6101,
+   "without_adjacency_predictor_subtype_macro_f1": 0.0206,
+   "without_adjacency_predictor_orbit_macro_f1": 0.344,
+   "note": "recognition given the induced adjacency is established; recognition from the item embedding alone is weak and is reported as such"
+  },
+  "prediction": {
+   "verdict": "GRAPH_SIGNAL",
+   "reason": "C beats A and D with a positive CI on every seed",
+   "test_auc": {
+    "A_embedding": {
+     "seed226": 0.7107761836893044,
+     "seed227": 0.7089125696153781
+    },
+    "B_graph": {
+     "seed226": 0.6780415112489369,
+     "seed227": 0.6698946832154311
+    },
+    "C_residual": {
+     "seed226": 0.747255457578413,
+     "seed227": 0.7474857553585366
+    },
+    "D_shuffled": {
+     "seed226": 0.7140714746551424,
+     "seed227": 0.7119611165800322
+    },
+    "E_nograph": {
+     "seed226": 0.7200954999952457,
+     "seed227": 0.7191470210725374
+    }
+   },
+   "comparisons": {
+    "edge:seed226:B_minus_A": {
+     "mean": -0.03275046633612885,
+     "low": -0.036013483859574244,
+     "high": -0.029573050938286966,
+     "n": 1000
+    },
+    "edge:seed226:C_minus_D": {
+     "mean": 0.03315635829894741,
+     "low": 0.031030173948246215,
+     "high": 0.035332510728382435,
+     "n": 1000
+    },
+    "edge:seed226:C_minus_A": {
+     "mean": 0.03643855000718082,
+     "low": 0.034161241125880905,
+     "high": 0.038761003465326745,
+     "n": 1000
+    },
+    "edge:seed226:C_minus_E": {
+     "mean": 0.027136658292174567,
+     "low": 0.02489160524013277,
+     "high": 0.029433241868783246,
+     "n": 1000
+    },
+    "edge:seed227:B_minus_A": {
+     "mean": -0.039015461209110154,
+     "low": -0.04221911147825117,
+     "high": -0.036041231918678716,
+     "n": 1000
+    },
+    "edge:seed227:C_minus_D": {
+     "mean": 0.0354946840597557,
+     "low": 0.03332388971744773,
+     "high": 0.037732247418174374,
+     "n": 1000
+    },
+    "edge:seed227:C_minus_A": {
+     "mean": 0.03853229738312329,
+     "low": 0.036302083337845105,
+     "high": 0.040894392239999786,
+     "n": 1000
+    },
+    "edge:seed227:C_minus_E": {
+     "mean": 0.028333364875550344,
+     "low": 0.02630969113369728,
+     "high": 0.030580559163599894,
+     "n": 1000
+    },
+    "edge:seed_average:C_minus_A": {
+     "mean": 0.03949888027279901,
+     "low": 0.03723894673247012,
+     "high": 0.041755109907580676,
+     "n": 1000
+    },
+    "edge:seed_average:C_minus_D": {
+     "mean": 0.03425462883908433,
+     "low": 0.032215306003321655,
+     "high": 0.03634555628009607,
+     "n": 1000
+    },
+    "edge:seed_average:B_minus_A": {
+     "mean": -0.03504621451313281,
+     "low": -0.03821279777847864,
+     "high": -0.031970457424219195,
+     "n": 1000
+    }
+   },
+   "report": "REPORT_GRAPH_TEACHER_OPTIMIZATION.md"
+  },
+  "direction": {
+   "status": "NOT_ESTABLISHED",
+   "metric": "balanced accuracy on one-way held-out pairs",
+   "per_variant": {
+    "A_embedding": {
+     "seed226": {
+      "balanced_accuracy": 0.5002382619534489,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.6051939584917961
+     },
+     "seed227": {
+      "balanced_accuracy": 0.5000244313833326,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5314571335434097
+     }
+    },
+    "B_graph": {
+     "seed226": {
+      "balanced_accuracy": 0.5079133378131538,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5569488210366185
+     },
+     "seed227": {
+      "balanced_accuracy": 0.5099353089462668,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5589699011192003
+     }
+    },
+    "C_residual": {
+     "seed226": {
+      "balanced_accuracy": 0.5110598534528079,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5175920895360209
+     },
+     "seed227": {
+      "balanced_accuracy": 0.5076464184563055,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5227643159839183
+     }
+    },
+    "D_shuffled": {
+     "seed226": {
+      "balanced_accuracy": 0.49841736020781846,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5113984570248832
+     },
+     "seed227": {
+      "balanced_accuracy": 0.49788065660389763,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5137455177659459
+     }
+    },
+    "E_nograph": {
+     "seed226": {
+      "balanced_accuracy": 0.4969540086637832,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5091165924155167
+     },
+     "seed227": {
+      "balanced_accuracy": 0.500692253068953,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5520156470716071
+     }
+    }
+   },
+   "note": "a constant prediction is never counted as direction learning"
+  },
+  "carrier": {
+   "train_items": 9812,
+   "eval_items": 2454,
+   "ce": 3.4955966472625732,
+   "target_entropy": 0.4793812334537506,
+   "kl": 3.0162154138088226,
+   "constant_ce": 3.49125337600708,
+   "constant_kl": 3.0118721425533295,
+   "relation_cosine": 0.8464767336845398
+  },
+  "coverage": {
+   "covered_items": 12266,
+   "items": 24587,
+   "fraction": 0.49888152275592795,
+   "uncovered_rule": "orbit_target is zero and confidence is zero; the orbit loss skips these ids"
+  },
+  "distinctness": {
+   "mean_offdiagonal_cosine": 0.20032905042171478,
+   "fraction_near_identical": 0.0
+  }
+ },
+ "stability": {
+  "spearman_two_seeds": 0.9673400583350144,
+  "sign_agreement": 0.9385,
+  "pairs": 2000,
+  "note": "pair geometry only; embeddings of different seeds are not aligned"
+ },
+ "boundary": {
+  "rqvae_input_changed": false,
+  "rqvae_encoder_input": "the original 768-d Stage1 item embedding only",
+  "teacher_inference_needs_graph": false,
+  "used_only_in_training_loss": true
+ },
+ "not_established": [
+  "direction prediction: balanced accuracy 0.4969-0.5111 vs majority 0.5016",
+  "orbit distribution from the frozen item embedding: carrier CE 3.4956 vs constant 3.4913",
+  "any SID collision / Recall effect: not trained here by contract"
+ ],
+ "done_checklist": {
+  "recognition": "PASS (with induced adjacency: subtype 0.7121, orbit 0.6101; multi-role 2.08/item, 46.1% multi-role)",
+  "prediction": "PASS (C-A +0.0395 [0.0372,0.0418], C-D +0.0343 [0.0322,0.0363], 2 seeds)",
+  "item_carrier": "PASS (relation target: held-out carrier cosine 0.8465; two-seed Spearman 0.967; distinctness 0.200)",
+  "supervision": "PASS (target table + losses; no graph at inference; no RQ-VAE change)",
+  "evidence": "PASS (zero leak/alignment violations; degree-preserving control; 40-step control at chance)",
+  "artifacts": "PASS (teacher, targets, contract, manifest, report, tests)",
+  "not_established": "direction, orbit-from-embedding, SID/Recall effects"
+ }
+}

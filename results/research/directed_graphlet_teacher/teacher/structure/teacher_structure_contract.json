@@ -1,0 +1,258 @@
+{
+ "version": "structure-teacher-v1",
+ "build_sha": "ba66a98a0865681be05353ca9ca8dc301da3ca2a08806f182b6f6fe5a9ea6607",
+ "targets_file": "structure_targets_v1.npz",
+ "teacher_file": "teacher_structure_v1.pth",
+ "item_alignment": "row i is item i of the Stage1/Stage2 item universe",
+ "rqvae_input_changed": false,
+ "rqvae_encoder_input": "the original 768-d Stage1 item embedding only",
+ "teacher_inference_needs_graph": false,
+ "used_only_in_training_loss": true,
+ "graph_used_when": "only while building the table from the TRAIN message graph",
+ "target_semantics": {
+  "orbit_target": "directed-graphlet orbit distribution; multi-role by design",
+  "relation": "item-level relation vector; pairwise cosine is the relation target and carries inter-item structure",
+  "coverage": "1 where the observed graph supports an orbit distribution",
+  "confidence": "coverage scaled by log-degree evidence; 0 means no structure",
+  "positive_pairs/negative_pairs": "item pairs and degree-matched negatives for the relation ranking loss"
+ },
+ "losses": {
+  "orbit_loss": "cross-entropy over covered ids",
+  "relation_ranking_loss": "margin ranking on the supplied pairs",
+  "relation_distill_loss": "MSE to the Teacher's pairwise cosine"
+ },
+ "build": {
+  "seed": 226,
+  "synthetic": false,
+  "n_items": 24587,
+  "graph_sha": "1ffe2f5aa9f70214844dc17b4b8c7e3d4b7b135156bd2665d0302c159b3eecb4",
+  "split_sha": "734fe5139a591efc63caa101179eaf9dcab9c4047e148a3dcd12a93718c5ba63",
+  "roles": 376,
+  "in_dim": 768,
+  "relation_dim": 128,
+  "source_checkpoint": "C_residual_edge_main_seed226.pth",
+  "source_checkpoint_sha256": "ce77953c1beb83425bbda41f0f0987865259fca6e8969b63482f85556693d2dc",
+  "source_checkpoint_step": "best valid step as recorded in the checkpoint",
+  "orbit_coverage": {
+   "instances_kept": 9095,
+   "instances_dropped": 30905,
+   "item_coverage": 0.49888152275592795
+  },
+  "carrier": {
+   "train_items": 9812,
+   "eval_items": 2454,
+   "ce": 3.4955966472625732,
+   "target_entropy": 0.4793812334537506,
+   "kl": 3.0162154138088226,
+   "constant_ce": 3.49125337600708,
+   "constant_kl": 3.0118721425533295,
+   "relation_cosine": 0.8464767336845398
+  },
+  "degrees": {
+   "zero_degree_items": 133,
+   "median_covered_degree": 8.0
+  },
+  "stability": {
+   "status": "OK",
+   "other_seed": 227,
+   "pairs": 2000,
+   "spearman": 0.9673400583350144,
+   "sign_agreement": 0.9385,
+   "note": "pair geometry only; embeddings of different seeds are not aligned"
+  }
+ },
+ "capabilities": {
+  "recognition": {
+   "orbit_target": "observed directed-graphlet orbit distribution per item, several roles per item",
+   "mean_roles_per_covered_item": 2.075493233327898,
+   "items_with_multiple_roles": 0.46111201695744336,
+   "with_adjacency_subtype_macro_f1": 0.7121,
+   "with_adjacency_orbit_macro_f1": 0.6101,
+   "without_adjacency_predictor_subtype_macro_f1": 0.0206,
+   "without_adjacency_predictor_orbit_macro_f1": 0.344,
+   "note": "recognition given the induced adjacency is established; recognition from the item embedding alone is weak and is reported as such"
+  },
+  "prediction": {
+   "verdict": "GRAPH_SIGNAL",
+   "reason": "C beats A and D with a positive CI on every seed",
+   "test_auc": {
+    "A_embedding": {
+     "seed226": 0.7107761836893044,
+     "seed227": 0.7089125696153781
+    },
+    "B_graph": {
+     "seed226": 0.6780415112489369,
+     "seed227": 0.6698946832154311
+    },
+    "C_residual": {
+     "seed226": 0.747255457578413,
+     "seed227": 0.7474857553585366
+    },
+    "D_shuffled": {
+     "seed226": 0.7140714746551424,
+     "seed227": 0.7119611165800322
+    },
+    "E_nograph": {
+     "seed226": 0.7200954999952457,
+     "seed227": 0.7191470210725374
+    }
+   },
+   "comparisons": {
+    "edge:seed226:B_minus_A": {
+     "mean": -0.03275046633612885,
+     "low": -0.036013483859574244,
+     "high": -0.029573050938286966,
+     "n": 1000
+    },
+    "edge:seed226:C_minus_D": {
+     "mean": 0.03315635829894741,
+     "low": 0.031030173948246215,
+     "high": 0.035332510728382435,
+     "n": 1000
+    },
+    "edge:seed226:C_minus_A": {
+     "mean": 0.03643855000718082,
+     "low": 0.034161241125880905,
+     "high": 0.038761003465326745,
+     "n": 1000
+    },
+    "edge:seed226:C_minus_E": {
+     "mean": 0.027136658292174567,
+     "low": 0.02489160524013277,
+     "high": 0.029433241868783246,
+     "n": 1000
+    },
+    "edge:seed227:B_minus_A": {
+     "mean": -0.039015461209110154,
+     "low": -0.04221911147825117,
+     "high": -0.036041231918678716,
+     "n": 1000
+    },
+    "edge:seed227:C_minus_D": {
+     "mean": 0.0354946840597557,
+     "low": 0.03332388971744773,
+     "high": 0.037732247418174374,
+     "n": 1000
+    },
+    "edge:seed227:C_minus_A": {
+     "mean": 0.03853229738312329,
+     "low": 0.036302083337845105,
+     "high": 0.040894392239999786,
+     "n": 1000
+    },
+    "edge:seed227:C_minus_E": {
+     "mean": 0.028333364875550344,
+     "low": 0.02630969113369728,
+     "high": 0.030580559163599894,
+     "n": 1000
+    },
+    "edge:seed_average:C_minus_A": {
+     "mean": 0.03949888027279901,
+     "low": 0.03723894673247012,
+     "high": 0.041755109907580676,
+     "n": 1000
+    },
+    "edge:seed_average:C_minus_D": {
+     "mean": 0.03425462883908433,
+     "low": 0.032215306003321655,
+     "high": 0.03634555628009607,
+     "n": 1000
+    },
+    "edge:seed_average:B_minus_A": {
+     "mean": -0.03504621451313281,
+     "low": -0.03821279777847864,
+     "high": -0.031970457424219195,
+     "n": 1000
+    }
+   },
+   "report": "REPORT_GRAPH_TEACHER_OPTIMIZATION.md"
+  },
+  "direction": {
+   "status": "NOT_ESTABLISHED",
+   "metric": "balanced accuracy on one-way held-out pairs",
+   "per_variant": {
+    "A_embedding": {
+     "seed226": {
+      "balanced_accuracy": 0.5002382619534489,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.6051939584917961
+     },
+     "seed227": {
+      "balanced_accuracy": 0.5000244313833326,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5314571335434097
+     }
+    },
+    "B_graph": {
+     "seed226": {
+      "balanced_accuracy": 0.5079133378131538,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5569488210366185
+     },
+     "seed227": {
+      "balanced_accuracy": 0.5099353089462668,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5589699011192003
+     }
+    },
+    "C_residual": {
+     "seed226": {
+      "balanced_accuracy": 0.5110598534528079,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5175920895360209
+     },
+     "seed227": {
+      "balanced_accuracy": 0.5076464184563055,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5227643159839183
+     }
+    },
+    "D_shuffled": {
+     "seed226": {
+      "balanced_accuracy": 0.49841736020781846,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5113984570248832
+     },
+     "seed227": {
+      "balanced_accuracy": 0.49788065660389763,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5137455177659459
+     }
+    },
+    "E_nograph": {
+     "seed226": {
+      "balanced_accuracy": 0.4969540086637832,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5091165924155167
+     },
+     "seed227": {
+      "balanced_accuracy": 0.500692253068953,
+      "majority": 0.5015973052265565,
+      "prediction_frequency_max": 0.5520156470716071
+     }
+    }
+   },
+   "note": "a constant prediction is never counted as direction learning"
+  },
+  "carrier": {
+   "train_items": 9812,
+   "eval_items": 2454,
+   "ce": 3.4955966472625732,
+   "target_entropy": 0.4793812334537506,
+   "kl": 3.0162154138088226,
+   "constant_ce": 3.49125337600708,
+   "constant_kl": 3.0118721425533295,
+   "relation_cosine": 0.8464767336845398
+  },
+  "coverage": {
+   "covered_items": 12266,
+   "items": 24587,
+   "fraction": 0.49888152275592795,
+   "uncovered_rule": "orbit_target is zero and confidence is zero; the orbit loss skips these ids"
+  },
+  "distinctness": {
+   "mean_offdiagonal_cosine": 0.20032905042171478,
+   "fraction_near_identical": 0.0
+  }
+ }
+}

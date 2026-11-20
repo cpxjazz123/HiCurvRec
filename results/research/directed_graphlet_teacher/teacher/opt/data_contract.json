@@ -1,0 +1,32 @@
+{
+ "graph_sha": "1ffe2f5aa9f70214844dc17b4b8c7e3d4b7b135156bd2665d0302c159b3eecb4",
+ "seed": 226,
+ "split_sha": "734fe5139a591efc63caa101179eaf9dcab9c4047e148a3dcd12a93718c5ba63",
+ "n_items": 24587,
+ "message_edges": 192528,
+ "negative_success": {
+  "train": {
+   "sampled": 32637,
+   "attempted": 33116,
+   "failures": 479,
+   "rate": 0.9855356927165116
+  },
+  "valid": {
+   "sampled": 46612,
+   "attempted": 47308,
+   "failures": 696,
+   "rate": 0.9852879005665004
+  },
+  "test": {
+   "sampled": 46586,
+   "attempted": 47308,
+   "failures": 722,
+   "rate": 0.9847383106451341
+  }
+ },
+ "target_pairs": {
+  "train": 33116,
+  "valid": 47308,
+  "test": 47308
+ }
+}
