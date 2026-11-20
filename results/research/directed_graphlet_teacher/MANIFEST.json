@@ -1,0 +1,91 @@
+{
+ "issue": 222,
+ "inputs": {
+  "results/research/directed_graphlet_role/instances.npz": {
+   "sha256": "9d0661e9412b965c410c6e4b0fd7b5539f9b4af8aeb88332b2918b6b0dfd71f0",
+   "bytes": 79451145
+  },
+  "results/research/directed_graphlet_role/subtypes.json": {
+   "sha256": "ae500b4629be8f69a7875f9fb0fbe081c359ee663274dc060904f2b5e13ea1d2",
+   "bytes": 1245
+  },
+  "results/research/behavior_graph/graph.npz": {
+   "sha256": "6dbac4545f23779c26f95e3f128daeb916079f53fad7ec159dd8bfb08e7121e8",
+   "bytes": 4319971
+  },
+  "stage1_GeneEmbedding/output/sentence_t5.npy": {
+   "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+   "bytes": 75531392
+  },
+  "results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth": {
+   "sha256": "af8efc29a8bcbbe5394cc5e358acf7b14c0e78ae99d8a8b9e5faf03fdddd97a8",
+   "bytes": 4604533
+  },
+  "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json": {
+   "sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+   "bytes": 1256863
+  },
+  "teacher/teacher_directed_v1.pth": {
+   "sha256": "25addae9f7ff98f05148016e95d8f87383b128c013564ea60518e37dd5547e4b",
+   "bytes": 1477571
+  },
+  "teacher/teacher_metadata.json": {
+   "sha256": "4483d5e47568e4042e7c35769f4f5e72367a8b52b18675f74b3fdbb9fd97ab71",
+   "bytes": 5444
+  },
+  "teacher/teacher_probe.pt": {
+   "sha256": "4d338a04ca767bfdceea2f333afa8195694dd1c0152f890e8f9827cd99a1dc92",
+   "bytes": 53401
+  }
+ },
+ "analysis": {
+  "REPORT_TEACHER_DISTILL_INTERFACE.md": {
+   "sha256": "a212671f41143e6c67e4de9aa96fafdcf8198081af0d9e0a241346e2bfe028a7",
+   "bytes": 8927
+  },
+  "teacher_model.py": {
+   "sha256": "2afbd905cb05376faf45852225276b905bb304934aaedc561819a47d4d57f730",
+   "bytes": 9384
+  },
+  "frozen_sid.py": {
+   "sha256": "33179dcfccd178c7f66d0a3d8117853c4e3baa3ed983bd188a99cb9daae53f95",
+   "bytes": 6273
+  },
+  "student_head.py": {
+   "sha256": "3f88cae4f7206d962c146ccdf9ad12dcefcca61f3d64d1a61d62e584471b5057",
+   "bytes": 5832
+  },
+  "kdistill.py": {
+   "sha256": "87fb39b44c369c63ad8fcbd789cfbebec3e089e61674e28fcebb51aaf51f117b",
+   "bytes": 2951
+  },
+  "fit_teacher.py": {
+   "sha256": "a9f917935418b12aa10fe80b6176d5fe6361cf837b8789c8cff0649fa852a0d4",
+   "bytes": 12203
+  },
+  "gate.py": {
+   "sha256": "821408f29d8268628afffa87130b201d3fccce8dd4d69e11e815de20879cfefb",
+   "bytes": 25345
+  },
+  "manifest.py": {
+   "sha256": "96d244a930d1efe286e18de78a8fbb771f07392d06b6aecaf599169e90056ba9",
+   "bytes": 2074
+  },
+  "teacher_controls.json": {
+   "sha256": "e3db91163e124baa6c7c1ab4abdeee6a09d8fba7cc1b16d8c5c1f36fe2a5083c",
+   "bytes": 4144
+  },
+  "gate.json": {
+   "sha256": "c9670d5ca3954a857dadea430fdc84a2d99d2df59af007586531c42abbb891ae",
+   "bytes": 49317
+  },
+  "tests/test_teacher_contract.py": {
+   "sha256": "04ca3b89129d6118a78648407bbb813bd869e376145c7169dc03afc53f44e81d",
+   "bytes": 5745
+  },
+  "tests/test_student_interface.py": {
+   "sha256": "255d9f2fc5af9a28a619c247aa9221ac88bbc27d6b3b50e1a41652b793bf8d70",
+   "bytes": 5838
+  }
+ }
+}
