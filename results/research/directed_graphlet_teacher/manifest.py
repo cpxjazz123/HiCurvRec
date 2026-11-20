@@ -74,6 +74,9 @@ ANALYSIS = (
     "verify_conformance_229.py", "conformance_229.json",
     "tests/test_conformance_229.py", "REPORT_STRUCTURE_TEACHER_CONFORMANCE.md",
     "issue229_conformance_comment.md",
+    "sid_capacity_32d.py", "tests/test_sid_capacity.py",
+    "REPORT_STRUCTURE_TEACHER_SID_CAPACITY.md", "issue229_capacity_comment.md",
+    "teacher/opt/sid_capacity_32d.json",
 )
 
 

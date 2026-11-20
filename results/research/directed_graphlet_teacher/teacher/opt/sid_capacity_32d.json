@@ -1,0 +1,30 @@
+{
+ "train_items": 19275,
+ "eval_items": 4819,
+ "test_pairs": 46586,
+ "bundle_targets": {
+  "relation_decode_cosine": 0.8278619647026062,
+  "orbit_rank": 0.59290611743927,
+  "link_auc": 0.7057072811904208,
+  "final_loss": 1.3172723054885864,
+  "first_loss": 2.2922909259796143
+ },
+ "shuffled_targets": {
+  "relation_decode_cosine": 0.7967092990875244,
+  "orbit_rank": 0.5898630619049072,
+  "link_auc": 0.6940653840908593,
+  "final_loss": 1.3499269485473633
+ },
+ "raw_semantic_768": {
+  "link_auc": 0.6100346908203241
+ },
+ "bottleneck_32d": {
+  "real_topology": {
+   "decode_cosine_vs_real": 0.8893702030181885
+  },
+  "shuffled_topology": {
+   "decode_cosine_vs_real": 0.3975468575954437
+  }
+ },
+ "seconds": 13.520944833755493
+}

@@ -103,7 +103,7 @@
    "detail": {
     "teacher_loss": 0.09947130084037781,
     "first": 0.40428102016448975,
-    "after_40_steps": 0.40305811166763306
+    "after_40_steps": 0.40305814146995544
    }
   },
   "integrity": {
@@ -125,6 +125,18 @@
     "requires_graph_for_supervision": false
    }
   },
+  "sid_capacity_32d": {
+   "status": "PASS",
+   "detail": {
+    "real_topology_decode_cosine": 0.8893702030181885,
+    "shuffled_topology_decode_cosine": 0.3975468575954437,
+    "student_link_auc": 0.7057072811904208,
+    "raw_semantic_link_auc": 0.6100346908203241,
+    "shuffled_target_link_auc": 0.6940653840908593,
+    "student_orbit_rank": 0.59290611743927,
+    "orbit_rank_is_not_target_specific": true
+   }
+  },
   "coverage": {
    "status": "PASS",
    "detail": {
@@ -133,6 +145,6 @@
    }
   }
  },
- "seconds": 3.907893180847168,
- "at": "2026-11-21T03:09:51"
+ "seconds": 3.8970186710357666,
+ "at": "2026-11-21T03:16:15"
 }

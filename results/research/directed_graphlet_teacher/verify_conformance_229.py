@@ -156,7 +156,30 @@ def main() -> None:
         "detail": {"structure_loss_parameters": list(sign),
                    "requires_graph_for_supervision": False}}
 
-    # 10. coverage
+    # 10. SID-capacity: can a 32-d bottleneck carry the real topology target?
+    capacity_path = gt3.OUT / "sid_capacity_32d.json"
+    if capacity_path.is_file():
+        capacity = json.loads(capacity_path.read_text())
+        bottleneck = capacity["bottleneck_32d"]
+        real = bottleneck["real_topology"]["decode_cosine_vs_real"]
+        shuffled = bottleneck["shuffled_topology"]["decode_cosine_vs_real"]
+        student = capacity["bundle_targets"]
+        control = capacity["shuffled_targets"]
+        capacity_ok = real >= 0.7 and (real - shuffled) >= 0.1
+        checks["sid_capacity_32d"] = {
+            "status": "PASS" if capacity_ok else "FAIL",
+            "detail": {"real_topology_decode_cosine": real,
+                       "shuffled_topology_decode_cosine": shuffled,
+                       "student_link_auc": student["link_auc"],
+                       "raw_semantic_link_auc": capacity["raw_semantic_768"]["link_auc"],
+                       "shuffled_target_link_auc": control["link_auc"],
+                       "student_orbit_rank": student["orbit_rank"],
+                       "orbit_rank_is_not_target_specific": abs(
+                           student["orbit_rank"] - control["orbit_rank"]) < 0.02}}
+    else:
+        checks["sid_capacity_32d"] = {"status": "FAIL", "detail": {"missing": True}}
+
+    # 11. coverage
     fraction = float((targets["coverage_neighbour"] > 0).mean())
     checks["coverage"] = {"status": "PASS" if fraction > 0.9 else "FAIL",
                           "detail": {"neighbourhood_fraction": fraction,
