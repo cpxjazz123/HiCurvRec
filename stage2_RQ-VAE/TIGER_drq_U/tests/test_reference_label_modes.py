@@ -97,3 +97,23 @@ def test_joint_loss_survives_unknown_subtypes():
                 for family, row in draws.items()}
     loss, _diagnostics = drq.joint_loss(head, features, draws, vocab, targets)
     assert torch.isfinite(loss)
+
+
+def test_heldout_scores_runs_in_the_arms_own_label_space():
+    """The post-training evaluation must not crash on the undirected vocabulary."""
+    from directed_role import DirectedTypeRoleHead
+
+    # heldout_scores takes the numpy pool (the trainer passes load_pool output),
+    # not the tensor draws used during training.
+    vocab = load_vocabulary("undirected" if drq.LABEL_MODE == "undirected" else "directed")
+    families = load_pool("train", vocab, max_instances=8)
+    head = DirectedTypeRoleHead(dim=32, n_subtypes=vocab["n_subtypes"],
+                                n_orbits=vocab["n_orbits"])
+
+    def encoder(x):
+        return torch.zeros(len(x), 32)
+
+    embeddings = torch.zeros(30000, 8)   # room for every real item id
+    scores = drq.heldout_scores(head, encoder, embeddings, "cpu", families, vocab)
+    assert set(scores) == {"subtype", "role"}
+    assert scores["role"]["macro_over_families"] == scores["role"]["macro_over_families"]

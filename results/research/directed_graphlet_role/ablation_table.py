@@ -70,8 +70,8 @@ def main() -> None:
             row["test_ndcg@10"] = final.get("test_ndcg@10")
         rows.append(row)
 
-    lines = ["| arm | L1 | L2 | L3 | collision | subtype F1 | orbit F1 | test_R@10 |",
-             "|---|---:|---:|---:|---:|---:|---:|---:|"]
+    lines = ["| arm | L1 | L2 | L3 | collision | subtype F1 | orbit F1 | test_R@10 | test_NDCG@10 |",
+             "|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
     def fmt(value, digits=4):
         if value is None:
             return "—"
@@ -79,11 +79,26 @@ def main() -> None:
             return f"{value:.{digits}f}"
         return str(value)
     for row in rows:
-        lines.append("| {arm} | {L1} | {L2} | {L3} | {collision} | {sub} | {orb} | {rec} |".format(
+        lines.append("| {arm} | {L1} | {L2} | {L3} | {collision} | {sub} | {orb} | {rec} | {ndcg} |".format(
             arm=row["arm"], L1=fmt(row.get("L1")), L2=fmt(row.get("L2")), L3=fmt(row.get("L3")),
             collision=fmt(row.get("collision")), sub=fmt(row.get("subtype_macro_f1")),
-            orb=fmt(row.get("orbit_macro_f1")), rec=fmt(row.get("test_recall@10"))))
-    (HERE / "ABLATION.md").write_text("# Issue #221 ablation\n\n" + "\n".join(lines) + "\n")
+            orb=fmt(row.get("orbit_macro_f1")), rec=fmt(row.get("test_recall@10")),
+            ndcg=fmt(row.get("test_ndcg@10"))))
+    retention = []
+    evaluation = read_json(HERE / "evaluation.json") or {}
+    if evaluation:
+        families = list(next(iter(evaluation.values()))["families"])
+        header = "| arm | " + " | ".join(f"{family} L1 / L1+L2 / full" for family in families) + " |"
+        retention = ["", "Per-family prefix retention (all_share, code-frequency null already removed):",
+                     "", header, "|---" * (len(families) + 1) + "|"]
+        for arm, record in evaluation.items():
+            cells = []
+            for family in families:
+                row = record["families"][family]
+                cells.append("{:.4f} / {:.5f} / {:.6f}".format(
+                    row["L1"]["all_share"], row["L1L2"]["all_share"], row["full"]["all_share"]))
+            retention.append(f"| {arm} | " + " | ".join(cells) + " |")
+    (HERE / "ABLATION.md").write_text("# Issue #221 ablation\n\n" + "\n".join(lines + retention) + "\n")
     (HERE / "ablation.json").write_text(json.dumps(rows, indent=1))
     print("\n".join(lines))
 

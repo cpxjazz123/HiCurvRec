@@ -1,0 +1,64 @@
+[
+ {
+  "arm": "D0 (no aux)",
+  "name": "TIGER_drq_D0",
+  "items": 24587,
+  "L1": 256,
+  "L2": 7964,
+  "L3": 20596,
+  "collision": 0.16232155203969578,
+  "subtype_macro_f1": null,
+  "orbit_macro_f1": null,
+  "aux_collision": 0.16232155203969578
+ },
+ {
+  "arm": "D1 (directed, head on z)",
+  "name": "TIGER_drq_D1",
+  "items": 24587,
+  "L1": 256,
+  "L2": 10887,
+  "L3": 23964,
+  "collision": 0.025338593565705447,
+  "subtype_macro_f1": 0.07741496351726385,
+  "orbit_macro_f1": 0.5070924032816674,
+  "aux_collision": 0.02509456216699879,
+  "stage3_run": "results/stage3_T5Train/TIGER_drq_D1/logs/Amazon_2023_Instruments/Nov-20-2026_16-46-32/test_final.json",
+  "test_recall@5": 0.029666254635352288,
+  "test_recall@10": 0.044377513536099165,
+  "test_ndcg@10": 0.02423227443945116
+ },
+ {
+  "arm": "U (undirected labels)",
+  "name": "TIGER_drq_U"
+ },
+ {
+  "arm": "S (shuffled directions)",
+  "name": "TIGER_drq_S"
+ },
+ {
+  "arm": "frozen baseline",
+  "name": "TIGER_RQ-VAE",
+  "items": 24587,
+  "L1": 249,
+  "L2": 7374,
+  "L3": 20425,
+  "collision": 0.16927644690283483,
+  "stage3_run": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-12-2026_21-04-04/test_final.json",
+  "test_recall@5": 0.036717213043402565,
+  "test_recall@10": 0.05545012970281516,
+  "test_ndcg@10": 0.0303775316056419
+ },
+ {
+  "arm": "mixed F0 (reference)",
+  "name": "TIGER_mixed_rq_F0",
+  "items": 24587,
+  "L1": 79,
+  "L2": 4151,
+  "L3": 18264,
+  "collision": 0.2571684223370073,
+  "stage3_run": "results/stage3_T5Train/TIGER_mixed_rq_F0/logs/Amazon_2023_Instruments/Nov-12-2026_17-01-43/test_final.json",
+  "test_recall@5": 0.03870192726196487,
+  "test_recall@10": 0.05722592663521301,
+  "test_ndcg@10": 0.031254079031055926
+ }
+]

@@ -29,7 +29,7 @@ ARM_JOINT_Q_STE = "D2"
 ARM_JOINT_Q_CODEBOOK = "D3"
 ARM_FROZEN_HEAD_Q = "D4"
 ARMS = (ARM_NO_AUX, ARM_JOINT_Z, ARM_JOINT_Q_STE, ARM_JOINT_Q_CODEBOOK, ARM_FROZEN_HEAD_Q)
-ARM_VARIANT = "D3"
+ARM_VARIANT = "D1"
 #: What the head is asked to predict (Issue #221 section 5 ablations):
 #:   directed   -- the true canonical directed subtype and directed orbits
 #:   undirected -- the undirected skeleton and #217's undirected orbit labels
@@ -270,7 +270,14 @@ def heldout_scores(head, encoder, embeddings, device, families, vocab) -> dict:
         index = torch.from_numpy(nodes.reshape(-1)).long()
         features = encoder(gather(embeddings, index).to(device)).view(count, width, -1)
         type_logits, role_logits = head(features)
-        targets = instance_targets(family, subtypes, orbits, vocab)
+        # Evaluate in the arm's OWN label space: the undirected and shuffled arms
+        # must not be scored against the directed labels they never saw (and the
+        # undirected vocabulary cannot even key them: it raised KeyError on
+        # 'K3:000100110' after the export, which is why these arms had no
+        # trq_metrics.json).
+        draws = {family: (torch.from_numpy(nodes), torch.from_numpy(orbits),
+                          torch.from_numpy(subtypes))}
+        targets = targets_for(draws, vocab)[family]
         valid = targets["subtype"] >= 0
         subtype_predictions.append(type_logits[torch.from_numpy(valid)].argmax(-1).cpu())
         subtype_targets.append(torch.from_numpy(targets["subtype"][valid]))
@@ -280,8 +287,10 @@ def heldout_scores(head, encoder, embeddings, device, families, vocab) -> dict:
             -1, role_logits.shape[1], -1).clone()
         mask[subtype_ids < 0] = True
         masked = role_logits.masked_fill(~mask, float("-inf"))
-        predictions = masked.argmax(-1).cpu()
-        role_rows[family] = (predictions.reshape(-1), torch.from_numpy(targets["orbit"]).reshape(-1))
+        keep = torch.from_numpy(valid)
+        predictions = masked.argmax(-1).cpu()[keep]
+        role_rows[family] = (predictions.reshape(-1),
+                             torch.from_numpy(targets["orbit"])[keep].reshape(-1))
     scores = {"subtype": macro_f1(torch.cat(subtype_predictions), torch.cat(subtype_targets),
                                   vocab["n_subtypes"])}
     per_family = {}
