@@ -82,9 +82,9 @@ def split_pairs(edge_rows: np.ndarray, edge_cols: np.ndarray, seed: int = SEED) 
     observed_pairs = np.delete(train, masked_index, axis=0)
     return {"train": train, "valid": valid, "test": test,
             "masked": masked, "observed_pairs": observed_pairs,
-            "split_sha": digest({"train": len(train), "valid": len(valid), "test": len(test),
-                                 "masked": len(masked), "seed": seed,
-                                 "first_test": test[0].tolist()})}
+            "split_sha": digest({"seed": seed,
+                                 "train": train.tolist(), "valid": valid.tolist(),
+                                 "test": test.tolist(), "masked": masked.tolist()})}
 
 
 def materialise(payload: dict, edge_rows: np.ndarray, edge_cols: np.ndarray) -> dict:
@@ -101,20 +101,78 @@ def materialise(payload: dict, edge_rows: np.ndarray, edge_cols: np.ndarray) -> 
             "forbidden": forbidden}
 
 
-def degree_matched_negative(positive: int, degrees: np.ndarray, forbidden: set, rng) -> int | None:
-    """A non-edge whose degree matches the positive's; None when no candidate exists."""
+def degree_matched_negative(anchor: int, positive: int, degrees: np.ndarray,
+                            forbidden: set, rng) -> int | None:
+    """A target whose degree matches `positive`'s, for the pair actually scored `(anchor, d)`.
+
+    The old sampler checked `(positive, d)` while the head scored `(anchor, d)`, so a
+    true `(anchor, d)` edge could be handed in as a negative.  Every rejection is on
+    the scored pair, and the anchor and the positive are never candidates.
+    """
     target = degrees[positive]
     candidates = np.flatnonzero(np.abs(degrees - target) <= max(1.0, 0.05 * target))
-    candidates = candidates[candidates != positive]
+    candidates = candidates[(candidates != anchor) & (candidates != positive)]
     if len(candidates) == 0:
         return None
     order = rng.permutation(len(candidates))
     for index in order[:200]:
         candidate = int(candidates[index])
-        if (positive, candidate) in forbidden or (candidate, positive) in forbidden:
+        if (anchor, candidate) in forbidden or (candidate, anchor) in forbidden:
             continue
         return candidate
     return None
+
+
+def sample_negatives(pairs: np.ndarray, degrees: np.ndarray, forbidden: set, rng,
+                     matcher=None, directed: set | None = None) -> tuple:
+    """Aligned (positives, negative targets, failed row indices).
+
+    A failed row is dropped from **both** arrays through one mask; the old code
+    filtered only the negatives and then sliced the positives by count, which shifted
+    every subsequent pair once a sample failed mid-list.
+    """
+    matcher = matcher or (lambda a, p, d, f, r: degree_matched_negative(a, p, d, f, r))
+    positives, negatives, failures = [], [], []
+    for index, (a, b) in enumerate(np.asarray(pairs).tolist()):
+        # the split stores unordered pairs; orient each one along the direction that
+        # actually exists in the TRAIN graph, otherwise half the "positives" are not
+        # edges at all (this is what the first corrected run's assertion caught)
+        a, b = int(a), int(b)
+        if directed is not None and (a, b) not in directed and (b, a) in directed:
+            a, b = b, a
+        candidate = matcher(a, b, degrees, forbidden, rng)
+        if candidate is None or int(candidate) in (int(a), int(b)):
+            failures.append(index)
+            continue
+        positives.append([a, b])
+        negatives.append(int(candidate))
+    return (np.array(positives, dtype=np.int64),
+            np.array(negatives, dtype=np.int64), failures)
+
+
+def direction_metrics(confusion: np.ndarray) -> dict:
+    """Balanced accuracy, macro F1 and both majority baselines.
+
+    `majority_baseline` is the largest **true** class frequency (rows); the previous
+    code used the largest prediction frequency (columns), which reported 0.95-1.00 for
+    a nearly balanced test set.
+    """
+    confusion = np.asarray(confusion)
+    total = confusion.sum()
+    per_class = []
+    for label in (0, 1):
+        tp = confusion[label, label]
+        fn = confusion[label].sum() - tp
+        fp = confusion[:, label].sum() - tp
+        precision = tp / max(tp + fp, 1)
+        recall = tp / max(tp + fn, 1)
+        per_class.append(0.0 if precision + recall == 0 else 2 * precision * recall / (precision + recall))
+    return {"balanced_accuracy": float(np.mean([confusion[0, 0] / max(confusion[0].sum(), 1),
+                                                confusion[1, 1] / max(confusion[1].sum(), 1)])),
+            "macro_f1": float(np.mean(per_class)),
+            "majority_baseline": float(max(confusion.sum(1)) / max(total, 1)),
+            "prediction_frequency_max": float(max(confusion.sum(0)) / max(total, 1)),
+            "confusion": confusion.tolist(), "n": int(total)}
 
 
 def direction_examples(masked_pairs: np.ndarray, full_directed: set, rng) -> dict:
@@ -174,7 +232,8 @@ class PairHeads(nn.Module):
         return torch.cat([a, b, a * b], dim=-1)
 
 
-def shuffled_adjacency(adjacency: torch.Tensor, degrees: np.ndarray, seed: int) -> torch.Tensor:
+def shuffled_adjacency(adjacency: torch.Tensor, degrees: np.ndarray, seed: int,
+                       forbidden: set | None = None) -> tuple:
     """Rewire targets to nodes with the same degree class: same size, different topology."""
     index = adjacency.indices().cpu().numpy()
     targets = []
@@ -190,21 +249,36 @@ def shuffled_adjacency(adjacency: torch.Tensor, degrees: np.ndarray, seed: int) 
         new_cols.append(int(rng.choice(bucket[bucket != source])) if len(bucket) > 1 else int(source))
     new_index = np.stack([index[0], np.array(new_cols)])
     keep = new_index[0] != new_index[1]
+    if forbidden is not None:
+        blocked = np.array([(min(int(a), int(b)), max(int(a), int(b))) in forbidden
+                            for a, b in new_index.T.tolist()])
+        keep &= ~blocked
+    skipped = int((~keep).sum())
     new_index = new_index[:, keep]
-    return torch.sparse_coo_tensor(torch.from_numpy(new_index),
-                                   torch.ones(new_index.shape[1]),
-                                   size=adjacency.shape).coalesce()
+    tensor = torch.sparse_coo_tensor(torch.from_numpy(new_index),
+                                     torch.ones(new_index.shape[1]),
+                                     size=adjacency.shape).coalesce()
+    return tensor, skipped
 
 
-def bootstrap_ci(scores_a: np.ndarray, scores_b: np.ndarray, labels: np.ndarray,
+def bootstrap_ci(scores_a: np.ndarray, scores_b: np.ndarray,
                  n_boot: int = 1000, seed: int = SEED) -> dict:
+    """Cluster bootstrap: one resample unit is a positive pair with its negative.
+
+    `scores_*` are (n_pairs, 2) with column 0 the positive and column 1 the negative,
+    so resampling rows keeps each pair's two observations together instead of treating
+    them as independent points.
+    """
     rng = np.random.default_rng(seed)
     differences = []
+    n_pairs = scores_a.shape[0]
+    flat_labels = np.array([1.0, 0.0])
     for _ in range(n_boot):
-        pick = rng.integers(0, len(labels), len(labels))
-        if labels[pick].min() == labels[pick].max():
-            continue
-        differences.append(auc(scores_b[pick], labels[pick]) - auc(scores_a[pick], labels[pick]))
+        pick = rng.integers(0, n_pairs, n_pairs)
+        a = scores_a[pick].reshape(-1)
+        b = scores_b[pick].reshape(-1)
+        differences.append(auc(b, np.tile(flat_labels, n_pairs))
+                           - auc(a, np.tile(flat_labels, n_pairs)))
     differences = np.array(differences)
     return {"mean": float(differences.mean()), "low": float(np.quantile(differences, 0.025)),
             "high": float(np.quantile(differences, 0.975)), "n": int(len(differences))}
@@ -315,22 +389,7 @@ def evaluate(state, heads, test_positive: np.ndarray, test_negative: np.ndarray,
             confusion = np.zeros((2, 2), dtype=np.int64)
             for truth, predicted in zip(target, prediction):
                 confusion[truth, predicted] += 1
-            per_class = []
-            for label in (0, 1):
-                tp = confusion[label, label]
-                fn = confusion[label].sum() - tp
-                fp = confusion[:, label].sum() - tp
-                precision = tp / max(tp + fp, 1)
-                recall = tp / max(tp + fn, 1)
-                f1 = 0.0 if precision + recall == 0 else 2 * precision * recall / (precision + recall)
-                per_class.append(f1)
-            metrics["direction"] = {
-                "balanced_accuracy": float(np.mean([confusion[0, 0] / max(confusion[0].sum(), 1),
-                                                    confusion[1, 1] / max(confusion[1].sum(), 1)])),
-                "macro_f1": float(np.mean(per_class)),
-                "majority_baseline": float(max(confusion.sum(0)) / confusion.sum()),
-                "confusion": confusion.tolist(),
-                "n": int(len(target))}
+            metrics["direction"] = direction_metrics(confusion)
         orbit_logits = heads.orbit(state)
         ce = float(-(role_target * F.log_softmax(orbit_logits, -1)).sum(-1).mean())
         entropy = float(-(role_target * torch.log(role_target.clamp_min(1e-12))).sum(-1).mean())
@@ -362,22 +421,29 @@ def main() -> None:
 
     rng = np.random.default_rng(SEED)
 
-    def negatives_for(pairs):
-        chosen, failures = [], 0
-        for a, b in pairs.tolist():
-            candidate = degree_matched_negative(int(b), degrees, full, rng)
-            if candidate is None:
-                failures += 1
-                candidate = -1
-            chosen.append(candidate)
-        valid = [pair for pair, candidate in zip(pairs.tolist(), chosen) if candidate >= 0]
-        kept = [candidate for candidate in chosen if candidate >= 0]
-        return np.array(kept, dtype=np.int64), len(valid), failures
+    def validate(positives, negatives):
+        """Every row must be a true positive and a genuinely absent negative pair."""
+        violations = {"positive_not_edge": 0, "negative_is_edge": 0, "degenerate": 0,
+                      "misaligned": int(len(negatives) != len(positives))}
+        for (a, b), d in zip(positives.tolist(), negatives.tolist()):
+            if (int(a), int(b)) not in materialised["full_directed"]:
+                violations["positive_not_edge"] += 1
+            if (int(a), int(d)) in materialised["full_directed"] or \
+                    (int(d), int(a)) in materialised["full_directed"]:
+                violations["negative_is_edge"] += 1
+            if int(d) in (int(a), int(b)):
+                violations["degenerate"] += 1
+        return violations
 
-    train_negative, train_kept, train_failures = negatives_for(payload["masked"])
-    test_negative, test_kept, test_failures = negatives_for(payload["test"])
-    train_positive = payload["masked"][:train_kept]
-    test_positive = payload["test"][:test_kept]
+    train_positive, train_negative, train_failures = sample_negatives(
+        payload["masked"], degrees, full, rng, directed=materialised["full_directed"])
+    test_positive, test_negative, test_failures = sample_negatives(
+        payload["test"], degrees, full, rng, directed=materialised["full_directed"])
+    train_check = validate(train_positive, train_negative)
+    test_check = validate(test_positive, test_negative)
+    assert not any(train_check[key] or test_check[key] for key in
+                   ("positive_not_edge", "negative_is_edge", "degenerate", "misaligned")), \
+        f"pair validation failed: train={train_check} test={test_check}"
     direction_train = direction_examples(payload["masked"], materialised["full_directed"], rng)
     direction_test = direction_examples(payload["test"], materialised["full_directed"], rng)
 
@@ -386,16 +452,25 @@ def main() -> None:
                  for family in FAMILIES]
     profile, coverage = observed_orbit_profile(instances, materialised["observed_pairs"], n_items)
     role_target = torch.from_numpy(profile.astype(np.float32)).to(device)
-    print("orbit coverage", coverage, "negatives kept", train_kept, test_kept, flush=True)
+    print("orbit coverage", coverage, "kept", len(train_positive), len(test_positive), flush=True)
 
-    shuffled = shuffled_adjacency(adjacency, degrees, SEED + 2).to(device)
+    forbidden_pairs = {(min(int(a), int(b)), max(int(a), int(b)))
+                       for a, b in payload["test"].tolist() + payload["valid"].tolist()}
+    shuffled_raw, shuffled_skipped = shuffled_adjacency(adjacency, degrees, SEED + 2,
+                                                        forbidden=forbidden_pairs)
+    shuffled = shuffled_raw.to(device)
     results = {"config": {"seed": SEED, "test_fraction": TEST_FRACTION, "valid_fraction": VALID_FRACTION,
                           "train_mask": TRAIN_MASK, "epochs": EPOCHS, "batches": BATCHES,
                           "pairs_per_batch": PAIRS_PER_BATCH, "split_sha": payload["split_sha"],
                           "orbit_coverage": coverage, "observed_edges": int(len(index)),
                           "masked_pairs": int(len(payload["masked"])),
                           "test_pairs": int(len(test_positive)),
-                          "negative_failures": {"train": train_failures, "test": test_failures},
+                          "negative_failures": {"train": len(train_failures),
+                                                "test": len(test_failures)},
+                          "negative_failure_indices": {"train": train_failures[:50],
+                                                       "test": test_failures[:50]},
+                          "pair_validation": {"train": train_check, "test": test_check},
+                          "shuffled_skipped_edges": shuffled_skipped,
                           "direction_train": {"n": int(len(direction_train["rows"])),
                                               "class_counts": np.bincount(
                                                   direction_train["labels"], minlength=2).tolist()},
@@ -437,17 +512,20 @@ def main() -> None:
         print(name, json.dumps(metrics), flush=True)
 
     scores = {}
-    labels = np.concatenate([np.ones(len(test_positive)), np.zeros(len(test_positive))])
     for name, (encode_fn, heads, used_adjacency, _state) in trained.items():
         with torch.no_grad():
             state = encode_fn(features, used_adjacency)
-            left = torch.from_numpy(np.concatenate([test_positive[:, 0], test_positive[:, 0]])).to(device)
-            right = torch.from_numpy(np.concatenate([test_positive[:, 1], test_negative])).to(device)
-            scores[name] = heads.edge(heads.pair(state, left, right)).squeeze(-1).cpu().numpy()
+            positive_scores = heads.edge(heads.pair(
+                state, torch.from_numpy(test_positive[:, 0]).to(device),
+                torch.from_numpy(test_positive[:, 1]).to(device))).squeeze(-1).cpu().numpy()
+            negative_scores = heads.edge(heads.pair(
+                state, torch.from_numpy(test_positive[:, 0]).to(device),
+                torch.from_numpy(test_negative).to(device))).squeeze(-1).cpu().numpy()
+            scores[name] = np.stack([positive_scores, negative_scores], axis=1)
     results["comparisons"] = {
-        "B_minus_A": bootstrap_ci(scores["A_embedding"], scores["B_graph"], labels),
-        "B_minus_C": bootstrap_ci(scores["C_shuffled"], scores["B_graph"], labels)}
-    (HERE / "graph_teacher2_report.json").write_text(json.dumps(results, indent=1))
+        "B_minus_A": bootstrap_ci(scores["A_embedding"], scores["B_graph"]),
+        "B_minus_C": bootstrap_ci(scores["C_shuffled"], scores["B_graph"])}
+    (HERE / "graph_teacher2_corrected_report.json").write_text(json.dumps(results, indent=1))
     print(json.dumps(results["comparisons"], indent=1))
 
 

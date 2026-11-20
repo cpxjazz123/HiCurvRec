@@ -77,15 +77,14 @@ def test_negatives_are_not_true_edges_in_either_direction():
         degrees[a] += 1
         degrees[b] += 1
     rng = np.random.default_rng(7)
-    sampled = 0
-    for a, b in payload["masked"][:200].tolist():
-        candidate = gt.degree_matched_negative(int(b), degrees, materialised["forbidden"], rng)
-        if candidate is None:
-            continue
-        sampled += 1
-        assert (int(b), candidate) not in full and (candidate, int(b)) not in full
-        assert candidate != int(b)
-    assert sampled > 0, "no negative could be sampled; the test would be vacuous"
+    positives, negatives, failures = gt.sample_negatives(
+        payload["masked"], degrees, materialised["forbidden"], rng,
+        directed=materialised["full_directed"])
+    assert len(negatives) > 0, "no negative could be sampled; the test would be vacuous"
+    for (a, b), d in zip(positives.tolist(), negatives.tolist()):
+        assert (int(a), int(d)) not in full and (int(d), int(a)) not in full
+        assert int(d) not in (int(a), int(b))
+        assert (int(a), int(b)) in full
 
 
 def test_direction_examples_contain_both_classes_and_are_balanced():
@@ -118,8 +117,8 @@ def test_shuffled_control_keeps_the_edge_count_and_drops_self_loops():
     index = torch.tensor([[0, 1, 2, 3, 4], [1, 2, 3, 4, 0]])
     adjacency = torch.sparse_coo_tensor(index, torch.ones(5), size=(6, 6)).coalesce()
     degrees = np.array([1, 2, 2, 2, 2, 1], dtype=np.float64)
-    shuffled = gt.shuffled_adjacency(adjacency, degrees, seed=3)
-    assert shuffled._nnz() == adjacency._nnz()
+    shuffled, skipped = gt.shuffled_adjacency(adjacency, degrees, seed=3)
+    assert shuffled._nnz() == adjacency._nnz() - skipped
     new_index = shuffled.indices()
     assert bool((new_index[0] != new_index[1]).all()), "a self-loop appeared"
 

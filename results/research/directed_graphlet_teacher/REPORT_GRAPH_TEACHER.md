@@ -1,3 +1,8 @@
+> **本文件的数字已被 Issue #227 修正作废,不得再引用。**
+> 负采样锚点错配与正负配对移位使 #226 的 AUC/AP/CI 失真;修正后的结果见
+> `REPORT_GRAPH_TEACHER_CORRECTED.md` 与 `graph_teacher2_corrected_report.json`。
+> 本文件保留为历史证据。
+
 # 无泄漏 Graph Teacher 对照:结构表示是否超越语义基线(Issue #226)
 
 日期:2026-11-21
