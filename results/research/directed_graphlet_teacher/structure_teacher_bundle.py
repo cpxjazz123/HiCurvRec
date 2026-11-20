@@ -87,25 +87,50 @@ class StructureTeacherBundle:
     # -- supervision ------------------------------------------------------
     def structure_loss(self, student_vectors: torch.Tensor, item_ids=None,
                        role_logits=None, weights: dict | None = None):
-        """Losses ready to add to an RQ-VAE training step.
+        """Losses ready to add to an RQ-VAE training step, full table or one batch.
 
-        `student_vectors` (n_items, d) covers the whole item universe, exactly like
-        the target table: the pair tables index into it.  `item_ids` optionally
-        restricts the orbit term; `role_logits` (n_items, 376) is optional and, when
-        absent, the neighbourhood-orbit term is skipped and reported as `None`.
+        Two accepted shapes, so the same function works in a full-batch probe and
+        in a mini-batch training loop:
+
+          * `student_vectors` (n_items, d) with `item_ids=None`: the whole universe,
+            the pair tables index it directly;
+          * `student_vectors` (len(item_ids), d): a batch; pairs whose endpoints are
+            not all in the batch are dropped and the rest are re-indexed locally.
+
+        `role_logits` follows the same rows; without it the neighbourhood-orbit term
+        is skipped and reported as `None`.
         """
         total_items = len(self.targets["relation"])
-        if student_vectors.shape[0] != total_items:
-            raise ValueError(f"student_vectors must have {total_items} rows")
         ids = np.arange(total_items) if item_ids is None else self._rows(item_ids)
+        if student_vectors.shape[0] == total_items and item_ids is None:
+            local = None
+        elif student_vectors.shape[0] == len(ids):
+            local = {int(item): row for row, item in enumerate(ids)}
+        else:
+            raise ValueError(f"student_vectors must have {total_items} rows or "
+                             f"{len(ids)} rows aligned with item_ids")
         weights = weights or self.weights
         pairs = self.targets["positive_pairs"]
         negatives = self.targets["negative_pairs"]
         relation = torch.from_numpy(self.targets["relation"]).float()
-        rank = st.relation_ranking_loss(student_vectors, pairs, negatives)
-        distill = st.relation_distill_loss(student_vectors, pairs, relation)
+        if local is None:
+            local_pairs, local_negatives, teacher = pairs, negatives, relation
+        else:
+            keep = np.asarray([index for index, (a, b, d) in
+                               enumerate(zip(pairs[:, 0], pairs[:, 1], negatives))
+                               if int(a) in local and int(b) in local and int(d) in local],
+                              dtype=np.int64)
+            local_pairs = np.stack([[local[int(a)], local[int(b)]]
+                                    for a, b in pairs[keep]]).astype(np.int64) \
+                if len(keep) else np.zeros((0, 2), dtype=np.int64)
+            local_negatives = np.asarray([local[int(d)] for d in negatives[keep]],
+                                         dtype=np.int64)
+            teacher = relation[torch.from_numpy(ids)]
+        rank = st.relation_ranking_loss(student_vectors, local_pairs, local_negatives)
+        distill = st.relation_distill_loss(student_vectors, local_pairs, teacher)
         result = {"relation_ranking": float(rank.detach()),
-                  "relation_distill": float(distill.detach()), "orbit": None}
+                  "relation_distill": float(distill.detach()),
+                  "pairs_used": int(len(local_pairs)), "orbit": None}
         total = weights.get("relation", 1.0) * rank + 0.1 * distill
         if role_logits is not None and weights.get("neighbour_orbit", 0.0) > 0:
             target = torch.from_numpy(self.targets["neighbour_orbit"]).float()

@@ -17,7 +17,8 @@ teacher.predict_targets(embeddings)       # 768 维载体(无图回退)
 metrics, loss = teacher.structure_loss(student_vectors, role_logits=logits)
 ```
 
-`structure_loss` 的权重来自 v3 契约:
+`structure_loss` 既接受**全体商品**的 `(24,587, d)` 表示,也接受**一个 mini-batch** 的
+`(len(item_ids), d)` 表示(端点不在批内的 pair 自动丢弃);权重来自 v3 契约:
 `relation 1.0 / neighbour_relation 0.5 / neighbour_orbit 0.5 / neighbour_family 0.0 /
 own_orbit 0.0 / own_subtype 0.0`。
 

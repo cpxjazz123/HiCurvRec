@@ -98,3 +98,17 @@ def test_bundle_contract_states_the_boundary():
     assert contract["boundary"]["used_only_in_training_loss"] is True
     assert contract["weights"]["relation"] == 1.0
     assert "identify" not in contract["api"]
+
+
+def test_structure_loss_accepts_a_mini_batch(bundle):
+    rng = np.random.default_rng(0)
+    ids = rng.choice(len(bundle.targets["relation"]), 2048, replace=False)
+    rows = torch.from_numpy(bundle.targets["relation"])[torch.from_numpy(ids)].float()
+    metrics, loss = bundle.structure_loss(rows, item_ids=ids)
+    assert metrics["pairs_used"] > 0
+    assert np.isfinite(metrics["total"])
+    zeros = torch.zeros_like(rows)
+    _, zero_loss = bundle.structure_loss(zeros, item_ids=ids)
+    assert float(loss) < float(zero_loss)
+    with pytest.raises(ValueError):
+        bundle.structure_loss(rows[:10], item_ids=ids)
