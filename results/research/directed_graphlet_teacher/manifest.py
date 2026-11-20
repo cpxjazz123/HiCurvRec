@@ -31,6 +31,7 @@ ANALYSIS = (
     "relation_reference.py", "relation_ceiling.py", "REPORT_RELATIONAL_DISTILL.md",
     "relation_stability.json", "relation_gate.json", "relation_reference.json",
     "relation_ceiling.json", "tests/test_relational_distill.py",
+    "issue224_close_comment.md",
     "teacher_controls.json", "gate.json",
     "tests/test_teacher_contract.py", "tests/test_student_interface.py",
     "tests/test_trainable_student.py",
