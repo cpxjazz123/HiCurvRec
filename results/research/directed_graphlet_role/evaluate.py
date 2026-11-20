@@ -45,41 +45,68 @@ def prefix_features(codes: np.ndarray, nodes: np.ndarray, depth: int = 1) -> np.
     return out.reshape(len(nodes), -1)
 
 
-def role_probe(codes: np.ndarray, families: dict, vocab: dict) -> dict:
-    """Linear probe: SID prefix one-hot -> directed orbit of the first node.
+def role_probe(codes: np.ndarray, families: dict, vocab: dict,
+               split: str = "instance", seed: int = 221, depth: int = 1) -> dict:
+    """Linear probe: an item's L1 SID code -> that item's directed orbit.
 
     A hard SID can only carry direction if some checkable readout recovers it;
-    prefix equality is symmetric, so this probe is the readout.  It is a
-    measurement, not a gate: a capped sample and a linear model keep it cheap
-    and identical across arms.
+    prefix equality is symmetric, so this probe is the readout.  Features are
+    the one-hot of the *target node's own* L1 code -- including the other nodes
+    of the instance would leak the instance identity into the label.  Labels are
+    the global orbit ids from ``instance_targets`` (local orbit indices are not
+    valid keys into the global vocabulary).
+
+    ``split='instance'`` holds out 30 % of instances, so an item can sit on both
+    sides; ``split='node'`` holds out 30 % of the items themselves, which is the
+    only split that measures generalisation rather than memorisation.
     """
     from sklearn.linear_model import SGDClassifier
 
+    from directed_role import instance_targets
+
+    rng = np.random.default_rng(seed)
     report = {}
     for family, (nodes, orbits, subtypes) in families.items():
-        labels = np.array([vocab["orbits_of"].get(int(s), [-1])[int(o)]
-                           if int(s) in vocab["orbits_of"] else -1
-                           for s, o in zip(subtypes, orbits[:, 0])])
-        valid = labels >= 0
-        if valid.sum() < 200:
+        targets = instance_targets(family, subtypes, orbits, vocab)
+        keep = targets["subtype"] >= 0
+        features = prefix_features(codes, nodes[:, :1], depth=depth)[keep]
+        target = targets["orbit"][:, 0][keep]
+        items = nodes[keep, 0]
+        if len(target) < 200 or len(np.unique(target)) < 2:
             report[family] = None
             continue
-        features = prefix_features(codes, nodes)[valid]
-        target = labels[valid]
-        rng = np.random.default_rng(221)
-        order = rng.permutation(len(target))
-        cut = int(0.7 * len(order))
-        train, test = order[:cut], order[cut:]
-        if len(np.unique(target[train])) < 2:
+        if split == "node":
+            unique = np.unique(items)
+            held = rng.permutation(unique)[: int(0.3 * len(unique))]
+            is_test = np.isin(items, held)
+        elif split == "instance":
+            order = rng.permutation(len(target))
+            is_test = np.zeros(len(target), dtype=bool)
+            is_test[order[int(0.7 * len(order)):]] = True
+        else:
+            raise ValueError(f"unknown split {split!r}")
+        if is_test.sum() < 200 or (~is_test).sum() < 200:
             report[family] = None
             continue
-        model = SGDClassifier(loss="log_loss", alpha=1e-4, max_iter=10, random_state=221)
-        model.fit(features[train], target[train])
-        report[family] = {"probe_accuracy": float(model.score(features[test], target[test])),
-                          "train": int(len(train)), "test": int(len(test)),
-                          "chance": float(1.0 / len(np.unique(target)))}
+        if len(np.unique(target[~is_test])) < 2 or len(np.unique(target[is_test])) < 2:
+            report[family] = None
+            continue
+        model = SGDClassifier(loss="log_loss", alpha=1e-4, max_iter=20, random_state=seed)
+        model.fit(features[~is_test], target[~is_test])
+        _, counts = np.unique(target[is_test], return_counts=True)
+        report[family] = {
+            "probe_accuracy": float(model.score(features[is_test], target[is_test])),
+            "majority_class": float(counts.max() / counts.sum()),
+            "chance": float(1.0 / len(np.unique(target[is_test]))),
+            "train": int((~is_test).sum()), "test": int(is_test.sum()),
+            "classes": int(len(np.unique(target[is_test]))),
+        }
     values = [row["probe_accuracy"] for row in report.values() if row]
-    return {"per_family": report, "mean": float(np.mean(values)) if values else None}
+    floors = [row["majority_class"] for row in report.values() if row]
+    return {"per_family": report,
+            "mean": float(np.mean(values)) if values else None,
+            "majority_floor_mean": float(np.mean(floors)) if floors else None,
+            "split": split, "depth": depth}
 
 
 def family_retention(codes: np.ndarray, families: dict) -> dict:

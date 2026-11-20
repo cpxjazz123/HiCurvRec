@@ -1,0 +1,86 @@
+{
+ "family": "P3",
+ "subtypes": [
+  1,
+  3
+ ],
+ "layers": 2,
+ "hidden": 64,
+ "steps": 600,
+ "items": 24587,
+ "fit_edges": 205025,
+ "runs": [
+  {
+   "variant": "directed",
+   "graph": true,
+   "directional": true,
+   "train_accuracy": 0.8004741668701172,
+   "heldout_accuracy": 0.5148497223854065,
+   "heldout_instances": 10943,
+   "item_disjoint_accuracy": 0.5542522072792053,
+   "item_disjoint_instances": 341,
+   "loss": 0.4326901137828827,
+   "chance": 0.5
+  },
+  {
+   "variant": "directed_no_graph",
+   "graph": false,
+   "directional": true,
+   "train_accuracy": 0.6519241333007812,
+   "heldout_accuracy": 0.5123823881149292,
+   "heldout_instances": 10943,
+   "item_disjoint_accuracy": 0.507331371307373,
+   "item_disjoint_instances": 341,
+   "loss": 0.6047641634941101,
+   "chance": 0.5
+  },
+  {
+   "variant": "undirected",
+   "graph": true,
+   "directional": false,
+   "train_accuracy": 0.6997081637382507,
+   "heldout_accuracy": 0.5079960227012634,
+   "heldout_instances": 10943,
+   "item_disjoint_accuracy": 0.507331371307373,
+   "item_disjoint_instances": 341,
+   "loss": 0.5520721673965454,
+   "chance": 0.5
+  },
+  {
+   "variant": "undirected_no_graph",
+   "graph": false,
+   "directional": false,
+   "train_accuracy": 0.6254787445068359,
+   "heldout_accuracy": 0.506076991558075,
+   "heldout_instances": 10943,
+   "item_disjoint_accuracy": 0.5395894646644592,
+   "item_disjoint_instances": 341,
+   "loss": 0.6113008260726929,
+   "chance": 0.5
+  },
+  {
+   "variant": "shuffled",
+   "graph": true,
+   "directional": true,
+   "train_accuracy": 0.7957322597503662,
+   "heldout_accuracy": 0.5111030340194702,
+   "heldout_instances": 10943,
+   "item_disjoint_accuracy": 0.5161290168762207,
+   "item_disjoint_instances": 341,
+   "loss": 0.4332564175128937,
+   "chance": 0.5
+  },
+  {
+   "variant": "shuffled_no_graph",
+   "graph": false,
+   "directional": true,
+   "train_accuracy": 0.6519241333007812,
+   "heldout_accuracy": 0.5123823881149292,
+   "heldout_instances": 10943,
+   "item_disjoint_accuracy": 0.507331371307373,
+   "item_disjoint_instances": 341,
+   "loss": 0.6047641634941101,
+   "chance": 0.5
+  }
+ ]
+}
