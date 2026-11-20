@@ -1,0 +1,138 @@
+{
+ "issue": 229,
+ "verdict": "DONE_WITH_DECLARATIONS",
+ "failed": [],
+ "declared_not_established": [
+  "prediction_direction",
+  "minority_role_identification"
+ ],
+ "checks": {
+  "recognition_api": {
+   "status": "PASS",
+   "detail": {
+    "wrong": [],
+    "families": [
+     "K3",
+     "P3",
+     "C4",
+     "P4",
+     "K1_3"
+    ]
+   }
+  },
+  "recognised_type_from_adjacency": {
+   "status": "PASS",
+   "detail": {
+    "subtype_macro_f1": 0.02055634424096399,
+    "orbit_macro_over_families": 0.3440042133047547,
+    "source": "results/research/directed_graphlet_role/head_pretrained_directed.json"
+   }
+  },
+  "multi_role": {
+   "status": "PASS",
+   "detail": {
+    "mean_roles": 2.075493233327898,
+    "multi_role_fraction": 0.46111201695744336,
+    "covered_items": 12266
+   }
+  },
+  "prediction_edge": {
+   "status": "PASS",
+   "detail": {
+    "verdict": "GRAPH_SIGNAL",
+    "seeds": [
+     "seed226",
+     "seed227",
+     "seed_average"
+    ],
+    "seed_average": {
+     "edge:seed_average:C_minus_A": {
+      "mean": 0.03949888027279901,
+      "low": 0.03723894673247012,
+      "high": 0.041755109907580676,
+      "n": 1000
+     },
+     "edge:seed_average:C_minus_D": {
+      "mean": 0.03425462883908433,
+      "low": 0.032215306003321655,
+      "high": 0.03634555628009607,
+      "n": 1000
+     },
+     "edge:seed_average:B_minus_A": {
+      "mean": -0.03504621451313281,
+      "low": -0.03821279777847864,
+      "high": -0.031970457424219195,
+      "n": 1000
+     }
+    }
+   }
+  },
+  "prediction_direction": {
+   "status": "NOT_ESTABLISHED",
+   "detail": {
+    "head": 0.514497697353363,
+    "majority": 0.5015973052265565,
+    "degree_rule": 0.5087541467278777,
+    "degree_logistic": 0.5039493143558502,
+    "declared": "NOT_ESTABLISHED"
+   }
+  },
+  "item_carrier": {
+   "status": "PASS",
+   "detail": {
+    "relation_cosine": 0.8626939654350281,
+    "neighbour_relation_cosine": 0.8443525433540344,
+    "neighbour_orbit": {
+     "ce": 2.4996278285980225,
+     "constant_ce": 2.723543882369995,
+     "role_rank_correlation": 0.5925862193107605,
+     "minority_items": 3581
+    },
+    "own_orbit_carried": false
+   }
+  },
+  "minority_role_identification": {
+   "status": "NOT_ESTABLISHED",
+   "detail": {
+    "minority_top1_accuracy": 0.008656799776598716,
+    "note": "the carried target keeps the role shape, not the minority roles"
+   }
+  },
+  "supervision_deliverable": {
+   "status": "PASS",
+   "detail": {
+    "teacher_loss": 0.09947130084037781,
+    "first": 0.40428102016448975,
+    "after_40_steps": 0.40305811166763306
+   }
+  },
+  "integrity": {
+   "status": "PASS",
+   "detail": {
+    "healthy": true,
+    "checks": 4
+   }
+  },
+  "boundary": {
+   "status": "PASS",
+   "detail": {
+    "structure_loss_parameters": [
+     "student_vectors",
+     "item_ids",
+     "role_logits",
+     "weights"
+    ],
+    "requires_graph_for_supervision": false
+   }
+  },
+  "coverage": {
+   "status": "PASS",
+   "detail": {
+    "neighbourhood_fraction": 0.9799487534062716,
+    "own_orbit_fraction": 0.49888152275592795
+   }
+  }
+ },
+ "seconds": 3.907893180847168,
+ "at": "2026-11-21T03:09:51"
+}

@@ -71,6 +71,9 @@ ANALYSIS = (
     "REPORT_STRUCTURE_TEACHER_BUNDLE.md", "issue229_bundle_comment.md",
     "teacher/structure/bundle/structure_teacher_bundle_contract.json",
     "teacher/structure/bundle/structure_teacher_bundle_manifest.json",
+    "verify_conformance_229.py", "conformance_229.json",
+    "tests/test_conformance_229.py", "REPORT_STRUCTURE_TEACHER_CONFORMANCE.md",
+    "issue229_conformance_comment.md",
 )
 
 
