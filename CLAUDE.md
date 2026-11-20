@@ -1,11 +1,11 @@
 # CLAUDE.md — 当前仓库执行规则
 
-## 0. 当前研究主线：有向商品行为图上的 Graphlet subtype + Directed Orbit 预测（2026-11-20，Issue #221）
+## 0. 当前有向图结构角色监督研究主线（2026-11-20，Issue #221）
 
-- 研究目标以 `ideas/main_line.json` 和 [Issue #221](https://github.com/cpxjazz123/HiCurvRec/issues/221) 为准：**有向行为图 → 严格诱导有向 Graphlet subtype（同一无向骨架上的不同方向是不同类别）+ 每个节点的 Directed Orbit 角色 → 联合 CE Loss → 真实 RQ-VAE 量化（hard 前向 / soft 反向到实际码本）→ 硬 SID → Stage3 Recall**。禁止把主任务改为 P4 边/非边分类、链接预测、pairwise 排序或仅提高 head 准确率。#220 已关闭，其无向 Type+Role 结果作为历史对照。
-- 唯一主训练结构是**有向**图 `results/research/behavior_graph_directed/`（`source→target` 有序边、反向不折叠、CSR 与 CSC 分开、`directed=true`）。`results/research/behavior_graph/` 的**无向**图保留为历史对照，只允许在明确标注的对照臂中使用，不再作为任何新实验的主图。
-- 旧 Issue #121 的“行为信号 × 双曲几何”自动轮次契约、以及原“不允许 BCE/CE”的范围描述都是历史规则：AF3、双曲、混合曲率是可选后续假设，不是 #221 的强制条件；`tools/research/rounds/scope.py::check_mainline_scope` 是当前提案门禁。
-- 其余 Stage2 数据隔离、冻结训练/Stage3 协议、CGV、反坍缩、导出复现、一臂一卡（`tools/research/stage2/gpu_alloc.py`）规则继续有效。
+- 当前研究目标以 `ideas/main_line.json` 和 [Issue #221](https://github.com/cpxjazz123/HiCurvRec/issues/221) 为准：正式将 TRAIN-only 商品行为图由无向图**迁移为有向图**，分别保留 `A→B`/`B→A` 的有序转移与计数，构造严格诱导 **Directed Graphlet Type + Directed Node Orbit** 标签；由类型 CE + 实例内角色 CE 的联合预测 Loss 监督 RQ-VAE 真实量化及硬 SID，最后检验 Stage3 Recall。原 #220 已按 `not_planned` 关闭，#217/#218 为历史参照。
+- **工程迁移状态：目标已改、旧代码尚待完成迁移。** 本文件 §89b、`analysis_sid_recall/build_behavior_graph.py`、`tools/research/stage2/graph_contract.py` 及无向采样/统计消费者仍是历史**单一无向图契约**；#221 必须经过显式 schema 升级、来源 SHA、Graphlet directed-orbit 标签检验和消费者迁移后，才能替换规范图和启动新研究。不得简单绕过现有校验、直接对称化新图、静默覆盖旧实验图/产物，或同时维护多个未声明的主规范图。
+- 保留原来的预测器目标：**整组结构类型 + 每个节点在该实例内的方向敏感 Orbit 角色**。不把主任务改成链接预测、P4 六对边 BCE、距离排序或普通 InfoNCE。AF3、GraphWave、混合曲率均非本轮强制项。
+- 下文 §19 和 `tools/research/rounds/` 内的 Issue #121 行为 × 双曲几何强制门是历史研究框架，若仍阻挡 #221，须迁移并验证新的 Type+DirectedRole 范围判定，而不是关闭保护或只改文档。其他 TRAIN-only、冻结 Stage2/Stage3 协议、DDP、CGV、码本反坍缩、SID 重编码零差异约束继续有效。
 
 > 以下每个编号项均是一条独立规则，以当前 `main` 的实际源码和路径为准。
 
@@ -220,17 +220,7 @@ genrec/<NN>/recall.json      ← Stage3 结果的全部键值
 
 ## 17. Stage2 目录唯一性（2026-11-15 owner 指令）
 
-89b. **【历史，已被 89c 取代】统一无向行为图(2026-11-19 owner 指令)**：HiCurvRec 只维护**一份无向**商品行为图 `results/research/behavior_graph/`，AF3、graphlet、结构保真度与一切结构监督实验都必须读它，禁止各自重建。四个文件即契约：`edges.parquet`（每条无向边一行，`source < target`，`weight` = 双向转移次数之和）、`graph.npz`（与 `af3_structure.load_graph` 兼容的 `nodes/rows/cols/af3/median/p90`，外加**对称** CSR、`degree`、每边与每节点三角数）、`node_features.npy`（第 k 行 = 商品 k 的 stage1 embedding）、`metadata.json`（构图规则、`policy` 块、源文件与输出 sha256）。方向不是建模变量：三角形、开放楔形、社区/桥接边与 AF3 都定义在无向图上；有序序列保留在 `train.parquet`，确需有向图时从它重建，不得另存。**强制执行**：`tools/research/stage2/graph_contract.py` 的 `check_behavior_graph` 已并入 `checks.run_all` —— 候选树若从 `train.parquet` 自建邻接/CSR 即 FAIL；读取非规范的 `graph.npz` 即 FAIL；读取规范图但文件与 `metadata.json` 的 sha256/size 不符即 FAIL；完全不涉及图的树记 `NOT_APPLICABLE`（不阻断）。构建脚本 `analysis_sid_recall/build_behavior_graph.py`，重建具有确定性（同输入同 sha256）。
-89c. **统一有向行为图(2026-11-20, Issue #221)**：主训练结构只有**一份有向**商品行为图
-     `results/research/behavior_graph_directed/`，由 TRAIN 序列相邻转移 `i_t→i_{t+1}` 构成：每个有序对一行，
-    `A→B` 与 `B→A` 两条边权重各自独立，禁止折叠、禁止对称化 CSR。四个文件即契约：`edges.parquet`
-    (`source,target,weight`)、`graph.npz`（有向 COO + out/in CSR + in/out degree 与加权度、`directed=true`）、
-    `node_features.npy`、`metadata.json`（schema `genrec.behavior_graph.directed.v1`、构图规则、方向统计、
-    源与输出 sha256）。构建脚本 `analysis_sid_recall/build_directed_behavior_graph.py`，验证
-    `tools/research/stage2/graph_contract.py::verify_graph`（无向图只能经 `verify_historical` 读取）。
-    Graphlet 标签由有向诱导子图的**规范标号**（字典序最小邻接位串）给出 subtype，节点角色由该 subtype
-    自同构群的轨道给出；旧无向 `instances.npz` 不得直接当作有向标签使用。
-
+89b. **统一无向行为图(2026-11-19 owner 指令)**：HiCurvRec 只维护**一份无向**商品行为图 `results/research/behavior_graph/`，AF3、graphlet、结构保真度与一切结构监督实验都必须读它，禁止各自重建。四个文件即契约：`edges.parquet`（每条无向边一行，`source < target`，`weight` = 双向转移次数之和）、`graph.npz`（与 `af3_structure.load_graph` 兼容的 `nodes/rows/cols/af3/median/p90`，外加**对称** CSR、`degree`、每边与每节点三角数）、`node_features.npy`（第 k 行 = 商品 k 的 stage1 embedding）、`metadata.json`（构图规则、`policy` 块、源文件与输出 sha256）。方向不是建模变量：三角形、开放楔形、社区/桥接边与 AF3 都定义在无向图上；有序序列保留在 `train.parquet`，确需有向图时从它重建，不得另存。**强制执行**：`tools/research/stage2/graph_contract.py` 的 `check_behavior_graph` 已并入 `checks.run_all` —— 候选树若从 `train.parquet` 自建邻接/CSR 即 FAIL；读取非规范的 `graph.npz` 即 FAIL；读取规范图但文件与 `metadata.json` 的 sha256/size 不符即 FAIL；完全不涉及图的树记 `NOT_APPLICABLE`（不阻断）。构建脚本 `analysis_sid_recall/build_behavior_graph.py`，重建具有确定性（同输入同 sha256）。
 90. **`stage2_RQ-VAE/` 顶层只允许保留一个 Stage2 目录**。除下面两类容器目录外，任何旧的、实验完毕的、
     或与当前实验无关的 Stage2 源码树都必须移动到 `stage2_RQ-VAE/_archive/`：
     - `stage2_RQ-VAE/baseline/`：**冻结基线**。新臂的**唯一**复制来源是 `baseline/TIGER_RQ-VAE`；
