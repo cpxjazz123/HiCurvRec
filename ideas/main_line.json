@@ -1,75 +1,58 @@
 {
   "schema": "genrec.main_line.v1",
-  "statement": "以 AF3 图曲率为核心结构信息，研究如何将行为图中的结构关系融入 RQ-VAE 的表示学习与离散量化过程，使最终生成的 Semantic ID（SID）更好地保留商品之间的行为关系，并提升下游生成式推荐性能。表示空间不再默认是单一欧氏空间：研究对象是**混合曲率空间**（欧氏因子 × 双曲因子构成的产品流形，各因子可以有自己的曲率），研究怎么把这种空间真正接进 RQ-VAE 的计算通路（编码器输出、距离与分配、码本、损失），以及 AF3 曲率如何参与决定几何 —— 例如按结构势给商品或码字分配不同的曲率或分量。两个问题必须同时回答：混合曲率怎么计算，AF3 怎么用它；只换一个看起来更像双曲的度量、或只给 embedding 叠一层双曲表示，不算。具体实现机制不受限制。",
+  "active_issue": "#220",
+  "updated": "2026-11-20",
+  "statement": "当前研究主线（Issue #220）：从唯一 TRAIN-only 无向商品行为图采样严格诱导 Graphlet 实例，以联合预测器同时预测 Graphlet 结构类型和每个节点在当前 Graphlet 内的拓扑位置（Orbit 角色），由 Type CE + Role CE 形成主要辅助监督 Loss。研究如何使这一预测 Loss 经实际 RQ-VAE 三层残差量化/码本与可验证的梯度代理，最终改善硬 SID 的 Graphlet 结构保真度和 Stage3 Recall@10。不得把核心任务改成 P4 边/非边分类，也不能仅以预测器准确率或低碰撞率作为成功证据。AF3、双曲 Transformer、混合曲率均为可选后续扩展，不再是主线硬要求。",
   "must_hold": [
-    "不允许使用正负样本的形式：结构信息不许靠「这一对相似、那一对不相似」的成对信号进入模型。InfoNCE、BCE、margin、源-目标残差对比这类把商品两两组成正负样本做对比式学习的写法一律不许出现；结构信号必须能以单商品的方式进入（结构势、掩码、量化代价、分配约束、损失项）。",
-    "不允许只把欧氏距离换成双曲距离就宣称用了混合曲率：混合曲率空间必须真的参与计算通路（编码器输出落在产品流形上、距离与分配在其上计算、码本或损失按几何定义），并且 AF3 结构信息要参与决定这个几何（哪些商品或码字在哪个分量、曲率取多少），而不是几何与结构各算各的。"
+    "预测器保持联合预测 Graphlet 类型 y_type(S) 和实例内每个节点的 Orbit y_role(v|S)。损失为 L_pred=CE(y_type)+alpha*CE(y_role)。不得将核心监督换成 P4 6 对边的 BCE、独立边级 InfoNCE、仅 P4 拓扑 margin。",
+    "采用 K3、P3、C4、P4、K1,3 五类严格诱导子图；图与标签来自 results/research/behavior_graph 唯一 TRAIN-only 无向图，复用 #217 已审计实例池。同一商品可在不同 Graphlet 实例中承担不同角色。",
+    "Graphlet 类型 readout 对节点置换不变，逐节点角色 readout 对置换等变；K3/C4 的节点拓扑角色等价，不得人为划分。原图邻接、标签、固定节点顺序不得泄露到预测 head。",
+    "比较连续 Encoder z 上的联合预测、真实量化 q 的旧 STE（辅助 codebook 梯度 0）、和可审计 hard-forward/soft-backward 预测 Loss（辅助梯度真实进入 Encoder+Codebook）。任何 soft proxy 必须审计与真实训练 constrained assignment、Sinkhorn、导出 SID 的一致性，不得另造 argmin 选码。",
+    "对照包括无辅助项、联合预测 z、联合预测 q-STE、联合预测 q-codebook、预训练冻结预测头后在 q-codebook 上计算同一 Loss。保持 Stage2 容量、初始化、计算预算、数据和 Stage3 冻结协议一致。",
+    "CGV 全项验证：前向数值/标签、梯度路径与方向、真实参数更新及多卡 DDP、真实训练与重编码、失败注入与来源审计；防止 #217 的 codebook 距离收缩、SID 重编码不一致、真实边结构保真退化。",
+    "核心验收是实际导出的整数 SID 在五种 Graphlet 中的分层前缀保真、真实行为边与匹配非边保留、码本利用/碰撞/重建和 Stage3 Recall；分类精度、软概率或 codebook 非零梯度本身不能证明成功。",
+    "原先 AF3×混合曲率耦合及禁止所有 BCE/CE 的研究范围限制不再适用于这条新主线。Graphlet 标签的多类和角色交叉熵允许；双曲/AF3 仅为之后经消融验证的可选假设，旧研究作为历史保留。"
   ],
   "definitions": {
-    "af3": {
-      "name": "AF3 图曲率",
-      "meaning": "Augmented Forman–Ricci Curvature，是一种用于描述图中边的局部结构特征的离散曲率指标。",
-      "role": "帮助识别行为图中的不同局部连接模式，例如社区内部的密集连接、稀疏连接以及跨社区的桥梁关系。"
-    },
     "behavior_graph": {
-      "name": "行为图",
-      "meaning": "根据用户与商品的历史交互行为构建的图结构。节点代表商品，边代表商品之间由用户行为形成的关联。",
-      "role": "提供商品语义信息之外的行为关系和拓扑结构信息。"
+      "name": "唯一 TRAIN-only 行为图",
+      "meaning": "商品为节点、合法历史交互为无向边的固定图；Graphlet 标签唯一来源。"
     },
-    "structural_relationships": {
-      "name": "行为图结构关系",
-      "meaning": "商品在行为图中的连接模式及相互关系，包括局部邻域、社区结构、连接强度、桥梁关系和层次性等。",
-      "role": "是我们希望 RQ-VAE 学习并保留的信息。"
+    "graphlet_type": {
+      "name": "Graphlet 类型",
+      "meaning": "严格诱导 K3 三角形、P3 楔形、C4 四环、P4 四节点路径、K1,3 三叉星形。"
     },
-    "representation_learning": {
-      "name": "RQ-VAE 表示学习",
-      "meaning": "RQ-VAE 在离散量化之前，通过编码器学习商品连续潜在表示的过程。",
-      "role": "研究如何使商品的连续表示包含有价值的行为图结构信息。"
+    "node_role": {
+      "name": "节点位置/Orbit",
+      "meaning": "一个节点在某个 Graphlet 实例中的拓扑角色，如 P4 内部/端点；同一商品可随实例变换角色。"
+    },
+    "predictor": {
+      "name": "联合预测器 TypeRoleHead",
+      "meaning": "接收该实例的商品向量，输出置换不变的结构类型概率与置换等变的逐节点位置概率；可进行可复核架构消融。"
+    },
+    "prediction_loss": {
+      "name": "联合预测 Loss",
+      "meaning": "类型交叉熵加节点 Orbit 角色交叉熵，是主线核心结构监督目标；不得替换成边存在概率预测。"
     },
     "discrete_quantization": {
-      "name": "离散量化",
-      "meaning": "RQ-VAE 通过多层残差量化，将商品的连续潜在表示映射为有限码本中的离散码字。",
-      "role": "研究行为结构信息如何影响离散表示的生成，以及这些信息能否在量化之后继续保留。"
+      "name": "RQ-VAE 真实离散量化",
+      "meaning": "从 Encoder z 进入三层残差码本，用实际选码规则形成硬整数 SID；研究辅助预测梯度如何真实更新码本/选码。"
     },
     "semantic_id": {
-      "name": "Semantic ID（SID）",
-      "meaning": "由 RQ-VAE 多层量化码字组成的离散商品标识，用于下游生成式推荐模型。",
-      "role": "是本研究最终关注的表示对象，而不仅仅是量化前的连续 Embedding。"
+      "name": "Semantic ID",
+      "meaning": "用于生成式推荐的每商品固定三层离散码字，评价其 L1/L1+L2/full 结构保真。"
     },
     "structure_preservation": {
-      "name": "行为结构保留",
-      "meaning": "最终 SID 仍然能够反映商品在原始行为图中的重要结构关系，而不是仅仅保留商品语义相似性。",
-      "role": "是本研究希望改善的核心表示能力。"
+      "name": "Graphlet 结构保真",
+      "meaning": "在各图结构的实例角色关系和真实行为边上检验硬 SID 分层保留与 null-adjusted gain，并防止无意义的过度分散。"
     },
-    "downstream_recommendation": {
-      "name": "下游生成式推荐",
-      "meaning": "利用商品 SID 表示用户历史交互序列，并通过生成模型预测用户下一步可能交互的商品。",
-      "role": "是最终 SID 的实际应用场景。"
+    "downstream": {
+      "name": "Stage3 生成式推荐",
+      "meaning": "在冻结协议下比较 Recall@10/NDCG 的实际应用收益。"
     },
-    "mechanism_freedom": {
-      "name": "具体实现机制不受限制",
-      "meaning": "研究不预设必须采用某一种 Loss、Transformer、Encoder、几何空间、距离函数、码本更新方法或量化算法。",
-      "role": "允许围绕同一研究主线探索不同方法，不将某个具体机制视为研究目标本身。"
-    },
-    "no_positive_negative_pairs": {
-      "name": "不使用正负样本对",
-      "meaning": "不允许把商品两两组成「正样本 / 负样本」来做对比式学习：InfoNCE、BCE、margin、源-目标残差对比这类以「这一对相似、那一对不相似」为信号的写法都不允许。",
-      "role": "划定机制的可行范围：结构信息必须能以单商品的方式进入模型（结构势、掩码、量化代价、分配约束、损失项），而不是靠成对的相对信号。"
-    },
-    "mixed_curvature_space": {
-      "name": "混合曲率空间",
-      "meaning": "由若干不同曲率的因子构成的产品流形（例如 16 维欧氏 × 16 维双曲；双曲因子可取 Lorentz 或 Poincaré 模型），各因子的曲率可以固定、也可以按结构决定。向量在其中表示为分量向量的组合，距离按因子分别计算再合成。",
-      "role": "是本轮研究要引入的表示空间：它比单一欧氏空间多出「曲率」这一自由度，让不同结构角色的商品可以在不同几何里被量化。"
-    },
-    "curvature_allocation": {
-      "name": "曲率分配",
-      "meaning": "把 AF3 结构信息变成几何参数的那一步：例如按结构势 s_i 决定商品走哪个因子（桥梁商品偏双曲、社区内部偏欧氏），或按码字覆盖的结构角色决定该码字的曲率或分量。分配规则本身要写清楚、可复算。",
-      "role": "是「AF3 参与决定几何」的落点：没有这一步，混合曲率就只是换了个空间，跟结构无关。"
-    },
-    "euclidean_baseline_note": {
-      "name": "欧氏基线",
-      "meaning": "冻结基线 TIGER_RQ-VAE 用的是单一欧氏空间（平方欧氏距离）。混合曲率机制必须在欧氏退化时与它逐位一致（曲率取 0，或全部分量退化为欧氏），作为自检。",
-      "role": "给出可比性：机制的新增自由度来自几何，而不是来自换了别的超参或预算。"
+    "optional_geometry": {
+      "name": "可选非欧几何扩展",
+      "meaning": "AF3、双曲 Transformer、混合曲率均为后续对照选择，不是新主线的预设前提。"
     }
   }
 }
