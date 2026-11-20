@@ -46,7 +46,8 @@ def test_definitions_are_the_type_role_schema(mainline):
 def test_objective_and_contract_follow_the_new_mainline():
     assert "TYPE" in agents.RESEARCH_OBJECTIVE and "ROLE" in agents.RESEARCH_OBJECTIVE
     contract = agents.SCOPE_CONTRACT.lower()
-    assert "hyperbolic" not in contract, "the new contract still demands hyperbolic geometry"
+    assert "names an explicit curved operation" not in contract, \
+        "the new contract still demands a curved operation"
     assert "sinkhorn" in contract, "the assignment rule must still be pinned"
 
 

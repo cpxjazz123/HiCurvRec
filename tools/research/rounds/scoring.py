@@ -104,7 +104,7 @@ def build_matrix(ideas: list, reports: list) -> dict:
         positions = {reviewer: int(entries[identifier]["position"])
                      for reviewer, entries in by_reviewer.items()}
         idea = next((entry for entry in ideas if entry["idea_id"] == identifier), {})
-        verdict = scope_module.check_scope(idea)
+        verdict = scope_module.check_mainline_scope(idea)
         total = sum(positions.values())
         first_places = sum(1 for value in positions.values() if value == 1)
         row = {

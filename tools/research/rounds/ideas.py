@@ -19,7 +19,7 @@ from . import scope as scope_module
 REQUIRED_FIELDS = (
     "idea_id", "title", "motivation", "novelty", "key_change", "specification",
     "cost_estimate", "falsifiable_hypothesis", "risks",
-) + scope_module.REQUIRED_SCOPE_FIELDS
+) + scope_module.MAINLINE_REQUIRED_FIELDS
 
 MAX_IDEA_ID_LEN = 64
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
@@ -56,7 +56,7 @@ def validate_idea(idea: dict, *, agent: str = "") -> dict:
     # The scope gate is a check on the content the agent wrote, not on a flag
     # it set: an idea that does not couple behaviour and geometry is rejected
     # with the reasons, and it is never reinterpreted as acceptable.
-    verdict = scope_module.check_scope(record)
+    verdict = scope_module.check_mainline_scope(record)
     record["scope_verdict"] = "IN_SCOPE" if verdict["in_scope"] else "OUT_OF_SCOPE"
     record["scope_reasons"] = verdict["reasons"]
     if not verdict["in_scope"]:

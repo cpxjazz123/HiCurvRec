@@ -41,6 +41,16 @@ def _coupled(identifier="coupled", **overrides):
         "spec_equations": "z = exp_0^poincare(log_0(v) + w * delta)",
         "spec_inputs_outputs": "takes item vectors and transitions, returns codes",
         "safeguards": "clamp the weight and check the loss is finite",
+        # Issue #220 mainline fields, judged by scope.check_mainline_scope
+        "supervision_target": "instance-level joint cross-entropy over the Graphlet type "
+                              "label and the per-node role/orbit labels",
+        "predictor_input": "the quantized representation q_full of the instance's nodes",
+        "quantizer_path": "hard code indices forward, soft-backward code assignment; the "
+                          "gradient reaches the encoder and the selected codebook entries",
+        "assignment_rule": "the baseline Sinkhorn-balanced assignment is kept; the score "
+                           "enters its cost matrix",
+        "effect_observables": "heldout type and role macro-F1, hard SID prefix retention, "
+                              "collision, Stage3 recall",
     }
     idea.update(overrides)
     return idea
@@ -301,10 +311,11 @@ class NoFallbackTests(unittest.TestCase):
     def test_an_out_of_scope_proposal_is_never_selected(self):
         ideas = _round_ideas(2)
         # b is out of scope: a behaviour suffix on an unchanged quantiser
-        ideas[1]["coupling_path"] = "a behaviour suffix is appended after the quantiser"
-        ideas[1]["coupling_equation"] = "L = L_rec + lambda_b * L_behaviour"
+        ideas[1]["supervision_target"] = ("pairwise BCE over the six P4 edge and non-edge "
+                                          "pairs of each instance")
+        ideas[1]["quantizer_path"] = "a constant representation; no codebook is touched"
         idea_index = {idea["idea_id"]: idea for idea in ideas}
-        verdict = scope_module.check_scope(idea_index[ideas[1]["idea_id"]])
+        verdict = scope_module.check_mainline_scope(idea_index[ideas[1]["idea_id"]])
         self.assertFalse(verdict["in_scope"])
         order = _order(ideas, ideas[1]["idea_id"])
         reports = _reports(ideas, order=order)
