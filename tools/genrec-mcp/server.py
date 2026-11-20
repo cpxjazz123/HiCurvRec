@@ -247,6 +247,92 @@ def probe_gpu_layout(required: int = STAGE2_NPROC) -> dict:
     }
 
 
+# --- Issue #220: one Stage2 arm per card -------------------------------------
+def _smi(query: str) -> str | None:
+    """One nvidia-smi query, or None when the tool is unavailable."""
+    try:
+        done = subprocess.run(["nvidia-smi", f"--query-{query}", "--format=csv,noheader"],
+                              capture_output=True, text=True, timeout=20)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return done.stdout if done.returncode == 0 else None
+
+
+def probe_card_usage() -> dict:
+    """Which cards already carry a compute process, per nvidia-smi.
+
+    Every process counts -- ours, another tree's, another tenant's. A card with
+    any of them is not free for a new arm.
+    """
+    from tools.research.stage2 import gpu_alloc
+
+    inventory_text = _smi("gpu=index,uuid")
+    apps_text = _smi("compute-apps=gpu_uuid,pid")
+    if inventory_text is None or apps_text is None:
+        return {"usage": {}, "source": "unavailable"}
+    inventory = gpu_alloc.parse_inventory(inventory_text)
+    apps = gpu_alloc.parse_compute_apps(apps_text)
+    return {"usage": gpu_alloc.card_usage(inventory, apps), "source": "nvidia-smi"}
+
+
+def stage2_tracked_cards() -> dict[int, str]:
+    """Cards claimed by live Stage2 runs, card -> tree name."""
+    tracked: dict[int, str] = {}
+    for path in sorted(STATE_DIR.glob("stage2__*.json")):
+        try:
+            state = json.loads(path.read_text())
+        except (OSError, ValueError):
+            continue
+        card = state.get("assigned_card")
+        if card is None:
+            continue
+        tree_name = path.stem.split("stage2__", 1)[-1]
+        live = (state_process_live(state.get("pid"), Path("train_rqvae.py"))
+                or (state.get("status") in {"starting", "smoke_pending"}
+                    and state_process_live(state.get("worker_pid"),
+                                           HARNESS_DIR / "stage2_worker.py")))
+        if live:
+            tracked[int(card)] = tree_name
+    return tracked
+
+
+def card_conflicts() -> dict[int, list[str]]:
+    """Cards claimed by more than one live Stage2 run (must always be empty)."""
+    from tools.research.stage2 import gpu_alloc
+
+    return gpu_alloc.conflicts(list(stage2_tracked_cards().items()))
+
+
+def allocate_stage2_card(visible: list) -> dict:
+    """Pick the lowest card nobody holds; refuse when every card is taken."""
+    from tools.research.stage2 import gpu_alloc
+
+    indices = []
+    for entry in visible:
+        try:
+            indices.append(int(entry))
+        except (TypeError, ValueError):
+            continue
+    usage = probe_card_usage()
+    tracked = stage2_tracked_cards()
+    busy = {index: list(pids) for index, pids in usage["usage"].items()}
+    for index, tree_name in tracked.items():
+        busy.setdefault(index, []).append("stage2:" + tree_name)
+    card = gpu_alloc.choose_card(indices, busy)
+    if card is None:
+        return {
+            "card": None,
+            "tracked": tracked,
+            "usage_source": usage["source"],
+            "refusal": (
+                "every visible card already carries work, so this arm was not "
+                "launched (one arm per card): " + gpu_alloc.describe(indices, busy)
+            ),
+        }
+    return {"card": card, "tracked": tracked, "usage_source": usage["source"],
+            "refusal": None, "busy": {k: v for k, v in busy.items() if v}}
+
+
 def stage2_child_env(cwd: Path, layout: dict) -> dict:
     """Child environment: ``logical_env`` plus the mode this host was probed as.
 
@@ -255,6 +341,9 @@ def stage2_child_env(cwd: Path, layout: dict) -> dict:
     """
     env = logical_env(cwd)
     env["GENREC_STAGE2_MODE"] = str(layout.get("mode") or "none")
+    if layout.get("assigned_card") is not None:
+        # One arm, one card: the smoke and the training both see only this index.
+        env["CUDA_VISIBLE_DEVICES"] = str(int(layout["assigned_card"]))
     if layout.get("mode") == "single-gpu":
         env["GENREC_SINGLE_GPU"] = "1"
     else:
@@ -1676,6 +1765,15 @@ def tool_stage2_start(source_dir: str, verification_id: str = "") -> dict:
     # the other trees keep a launcher that unconditionally forks 4 ranks, so a
     # single-card promise has to be refused rather than attempted.
     gpu_probe["entrypoint_supports_single_gpu"] = tree_supports_single_gpu(tree)
+    allocation = None
+    if gpu_probe.get("mode") in {"ddp", "single-gpu"}:
+        allocation = allocate_stage2_card(gpu_probe.get("visible") or [])
+        gpu_probe["allocation"] = allocation
+        if allocation["card"] is None:
+            return {"started": False, "refused": allocation["refusal"], "gpu_probe": gpu_probe,
+                    "tree": str(tree), "arm": arm, "result_dir": str(result_dir)}
+        gpu_probe.update({"mode": "single-gpu", "visible": [str(allocation["card"])],
+                          "visible_count": 1, "assigned_card": allocation["card"]})
     context = {
         "tree": str(tree),
         "arm": arm,
@@ -1781,6 +1879,7 @@ def tool_stage2_start(source_dir: str, verification_id: str = "") -> dict:
         "result_dir": str(result_dir),
         "archived_artifacts": archived,
         "gpu_probe": gpu_probe,
+        "assigned_card": gpu_probe.get("assigned_card"),
         **logs,
     }
     # Claim the tree before spawning so a worker that finishes early cannot have
@@ -2238,6 +2337,10 @@ def tool_stage2_status(source_dir: str) -> dict:
         "refused": state.get("refused"),
         "traceback": state.get("traceback"),
         "artifacts": artifacts,
+        # One arm per card (Issue #220): the card this run was given, and whether
+        # any two live runs claim the same one -- that must always be empty.
+        "assigned_card": state.get("assigned_card"),
+        "card_conflicts": card_conflicts(),
         **logs,
     }
 
