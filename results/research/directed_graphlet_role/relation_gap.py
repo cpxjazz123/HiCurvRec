@@ -31,6 +31,8 @@ CHUNK = 4096
 ARMS = {
     "base": REPO / "results" / "stage2_RQ-VAE" / "TIGER_RQ-VAE" / "rqvae_best.pth",
     "D1": REPO / "results" / "stage2_RQ-VAE" / "TIGER_drq_D1" / "rqvae_best.pth",
+    "U": REPO / "results" / "stage2_RQ-VAE" / "TIGER_drq_U" / "rqvae_best.pth",
+    "S": REPO / "results" / "stage2_RQ-VAE" / "TIGER_drq_S" / "rqvae_best.pth",
 }
 
 

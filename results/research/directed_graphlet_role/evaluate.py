@@ -25,7 +25,7 @@ from directed_graphlets import load_adjacency  # noqa: E402
 from directed_role import load_pool, load_vocabulary  # noqa: E402
 
 REPO = HERE.parents[2]
-ARMS = ("D0", "D1", "D2", "D3", "D4")
+ARMS = ("D0", "D1", "U", "S")   # the arms that exported a SID table
 FAMILIES = ("K3", "P3", "C4", "P4", "K1_3")
 
 
