@@ -1,58 +1,63 @@
 {
   "schema": "genrec.main_line.v1",
-  "active_issue": "#220",
+  "active_issue": "#221",
   "updated": "2026-11-20",
-  "statement": "当前研究主线（Issue #220）：从唯一 TRAIN-only 无向商品行为图采样严格诱导 Graphlet 实例，以联合预测器同时预测 Graphlet 结构类型和每个节点在当前 Graphlet 内的拓扑位置（Orbit 角色），由 Type CE + Role CE 形成主要辅助监督 Loss。研究如何使这一预测 Loss 经实际 RQ-VAE 三层残差量化/码本与可验证的梯度代理，最终改善硬 SID 的 Graphlet 结构保真度和 Stage3 Recall@10。不得把核心任务改成 P4 边/非边分类，也不能仅以预测器准确率或低碰撞率作为成功证据。AF3、双曲 Transformer、混合曲率均为可选后续扩展，不再是主线硬要求。",
+  "statement": "当前研究主线（Issue #221）：将商品行为图由无向图正式迁移为仅使用 TRAIN 交互序列相邻转移构建的有向行为图（保留 A→B 与 B→A 的方向和各自计数）；在有向图上枚举严格诱导的三、四节点 Directed Graphlet 类型，并根据有向子图自同构计算实例内每个节点的 Directed Orbit 角色；通过图类型 CE + 逐节点角色 CE 联合预测 Loss 监督真实三层 RQ-VAE 的 Encoder、量化选择、Codebook，让最终硬整数 SID 尽可能保留有用的有向行为结构信息并改善 Stage3 生成式推荐 Recall@10。无向图仅保留为历史/消融参照；不改变预测目标为边分类或对比学习。GraphWave、AF3、混合曲率等不是主线硬要求。",
   "must_hold": [
-    "预测器保持联合预测 Graphlet 类型 y_type(S) 和实例内每个节点的 Orbit y_role(v|S)。损失为 L_pred=CE(y_type)+alpha*CE(y_role)。不得将核心监督换成 P4 6 对边的 BCE、独立边级 InfoNCE、仅 P4 拓扑 margin。",
-    "采用 K3、P3、C4、P4、K1,3 五类严格诱导子图；图与标签来自 results/research/behavior_graph 唯一 TRAIN-only 无向图，复用 #217 已审计实例池。同一商品可在不同 Graphlet 实例中承担不同角色。",
-    "Graphlet 类型 readout 对节点置换不变，逐节点角色 readout 对置换等变；K3/C4 的节点拓扑角色等价，不得人为划分。原图邻接、标签、固定节点顺序不得泄露到预测 head。",
-    "比较连续 Encoder z 上的联合预测、真实量化 q 的旧 STE（辅助 codebook 梯度 0）、和可审计 hard-forward/soft-backward 预测 Loss（辅助梯度真实进入 Encoder+Codebook）。任何 soft proxy 必须审计与真实训练 constrained assignment、Sinkhorn、导出 SID 的一致性，不得另造 argmin 选码。",
-    "对照包括无辅助项、联合预测 z、联合预测 q-STE、联合预测 q-codebook、预训练冻结预测头后在 q-codebook 上计算同一 Loss。保持 Stage2 容量、初始化、计算预算、数据和 Stage3 冻结协议一致。",
-    "CGV 全项验证：前向数值/标签、梯度路径与方向、真实参数更新及多卡 DDP、真实训练与重编码、失败注入与来源审计；防止 #217 的 codebook 距离收缩、SID 重编码不一致、真实边结构保真退化。",
-    "核心验收是实际导出的整数 SID 在五种 Graphlet 中的分层前缀保真、真实行为边与匹配非边保留、码本利用/碰撞/重建和 Stage3 Recall；分类精度、软概率或 codebook 非零梯度本身不能证明成功。",
-    "原先 AF3×混合曲率耦合及禁止所有 BCE/CE 的研究范围限制不再适用于这条新主线。Graphlet 标签的多类和角色交叉熵允许；双曲/AF3 仅为之后经消融验证的可选假设，旧研究作为历史保留。"
+    "必须将 results/research/behavior_graph 唯一规范图从无向升级为有向：保留 TRAIN-only 历史相邻转移的有序边及权重，不合并反向边；迁移 graph.npz/metadata/CSR、graph_contract、Graphlet 采样和相关调用方，旧无向图/实验版本可追溯，不允许破坏历史校验或只是增加方向特征冒充替换。迁移工程完成前旧代码仍执行旧无向规则，任何有向正式训练不得绕过图契约。",
+    "有向 Graphlet Type 标签依据完整有向诱导邻接（含双向互惠边），Directed Orbit 依据子图自同构类，必须区分 chain、converging wedge、diverging wedge 等；输出 type 对节点置换不变、node role 对置换等变，并对稀有类做预注册统计、采样与处理。",
+    "核心辅助目标继续是 L_pred=CE(directed_graphlet_type)+alpha*CE(directed_node_orbit_per_instance)。禁止把任务替换为链接预测、单纯边级 InfoNCE、P4 六对边 BCE 或纯几何距离排序。节点在不同实例内可有不同有向角色。",
+    "预测头输入是 graphlet 中各商品的 Encoder/量化表示，不允许直接输入真实有向邻接、角色标签、固定节点顺序或节点 ID 作为捷径；训练与 heldout 只使用 TRAIN 图衍生标签。",
+    "依照 #220 量化路径经验比较 z、真实 q 的传统 STE、与真实 constrained assignment/hard 索引一致的可审计 soft-backward 码本代理、冻结预训练预测器等公平对照；Codebook 必须有可验证辅助梯度、真实参数更新和最终 hard SID 变化，不能仅看 head accuracy。",
+    "同一 TRAIN 商品行为数据与训练预算中对比无向 Type+Orbit、正确有向 Type+Directed Orbit、方向打乱/方向移除控制，校验双向边、方向支持、deg/popularity confounds，证明方向带来的增量不只是更多标签、更大 head 或不同采样。",
+    "需通过 CGV: 图 schema/方向/sha/泄漏审计、directed 同构与 Orbit 计算、梯度/参数/DDP、真实训练入口与 checkpoint 0 mismatch 重编码、反坍缩及失败注入；历史无向 AF3、ORCA、GraphWave 不得未经重新定义直接当成有向指标。",
+    "最终验收包括 directed subtype/orbit heldout 指标、硬 SID 中方向可读性与分层结构保真、整体行为关系/原无向结构不退化、码本利用率/collision/重建，以及统一 Stage3 Recall@10/NDCG；不能把预测准确率或 codebook 梯度非零直接当成功。",
+    "新的有向主线以 Issue #221 为准，关闭的 #220 和 #217/#218 为历史对照。旧 Issue #121 的强制 AF3×双曲耦合及相关 legacy prompt/scope 不再是该任务准入范围；如仍硬编码，需正式迁移验证，禁止跳过。"
   ],
   "definitions": {
     "behavior_graph": {
-      "name": "唯一 TRAIN-only 行为图",
-      "meaning": "商品为节点、合法历史交互为无向边的固定图；Graphlet 标签唯一来源。"
+      "name": "规范 TRAIN-only 有向行为图",
+      "meaning": "根据每用户训练序列相邻商品的有序转移构建；有序对 A→B 和 B→A 分别计数和存储；节点与 Stage1 商品 ID 对齐。"
     },
-    "graphlet_type": {
-      "name": "Graphlet 类型",
-      "meaning": "严格诱导 K3 三角形、P3 楔形、C4 四环、P4 四节点路径、K1,3 三叉星形。"
+    "directed_graphlet": {
+      "name": "Directed Induced Graphlet Type",
+      "meaning": "三/四节点弱连通诱导有向子图的有向同构类别，单向、双向、缺边及每个箭头均参与标签，优先沿用旧骨架形成可比细分。"
     },
-    "node_role": {
-      "name": "节点位置/Orbit",
-      "meaning": "一个节点在某个 Graphlet 实例中的拓扑角色，如 P4 内部/端点；同一商品可随实例变换角色。"
+    "directed_node_orbit": {
+      "name": "Directed Orbit 角色",
+      "meaning": "一个节点在某个有向 Graphlet 实例中的自同构等价类，例如 chain source、sink、内部；实例级非永久角色。"
     },
     "predictor": {
-      "name": "联合预测器 TypeRoleHead",
-      "meaning": "接收该实例的商品向量，输出置换不变的结构类型概率与置换等变的逐节点位置概率；可进行可复核架构消融。"
+      "name": "DirectedTypeRoleHead 联合预测器",
+      "meaning": "仅由 Graphlet 商品连续或量化表示，预测实例的有向结构类型（置换不变）与逐节点有向 Orbit（置换等变）。"
     },
     "prediction_loss": {
-      "name": "联合预测 Loss",
-      "meaning": "类型交叉熵加节点 Orbit 角色交叉熵，是主线核心结构监督目标；不得替换成边存在概率预测。"
+      "name": "有向图结构类型与角色联合 CE",
+      "meaning": "图级 Directed Type CE 加逐节点 Directed Orbit CE 是主监督目标；不使用边分类替换该任务。"
     },
     "discrete_quantization": {
-      "name": "RQ-VAE 真实离散量化",
-      "meaning": "从 Encoder z 进入三层残差码本，用实际选码规则形成硬整数 SID；研究辅助预测梯度如何真实更新码本/选码。"
+      "name": "真实三层 RQ-VAE 量化",
+      "meaning": "保留实际 Sinkhorn/assignment floor 与导出 tie-grid，对硬选码和可微代理单独审计，争取联合监督梯度进入 Encoder 和真实 Codebook。"
     },
     "semantic_id": {
-      "name": "Semantic ID",
-      "meaning": "用于生成式推荐的每商品固定三层离散码字，评价其 L1/L1+L2/full 结构保真。"
+      "name": "硬整数 SID",
+      "meaning": "每商品固定的三层码字；需要通过可验证 readout 测试有向结构是否可从 SID 解码，不能认为前缀相同就编码了箭头。"
     },
     "structure_preservation": {
-      "name": "Graphlet 结构保真",
-      "meaning": "在各图结构的实例角色关系和真实行为边上检验硬 SID 分层保留与 null-adjusted gain，并防止无意义的过度分散。"
+      "name": "有向角色及结构保真",
+      "meaning": "依据同一 TRAIN directed graph，评估各层 SID 的定向结构可读性、null-adjusted 保留增益及无向历史结构退化。"
     },
     "downstream": {
       "name": "Stage3 生成式推荐",
-      "meaning": "在冻结协议下比较 Recall@10/NDCG 的实际应用收益。"
+      "meaning": "冻结正式训练/评估协议，比较 test Recall@10 与 NDCG，检验有向结构监督是否产生真实推荐收益。"
+    },
+    "historical_undirected_reference": {
+      "name": "无向对照",
+      "meaning": "仅作为旧 #217/#218/#220 历史和公平消融投影，不作为新主线规范行为图；原始旧哈希、模型和实验结论保留。"
     },
     "optional_geometry": {
-      "name": "可选非欧几何扩展",
-      "meaning": "AF3、双曲 Transformer、混合曲率均为后续对照选择，不是新主线的预设前提。"
+      "name": "后续可选几何",
+      "meaning": "AF3、GraphWave、双曲/混合曲率需单独做研究和消融，不在新主线强制加入。"
     }
   }
 }
