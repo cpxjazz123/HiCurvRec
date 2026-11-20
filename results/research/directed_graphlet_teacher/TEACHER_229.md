@@ -67,3 +67,9 @@ $PY sid_capacity_32d.py              # 32 维容量(约 15 秒)
 $PY train_teacher.py                 # 联合训练对照(约 30 秒)
 $PY structure_teacher_bundle.py      # 重建 bundle(如目标表更新)
 ```
+
+## 验收
+
+```bash
+$PY accept_teacher_229.py   # 9 项检查,退出码 0
+```
