@@ -1,0 +1,1232 @@
+{
+ "source_head": "results/research/directed_graphlet_role/head_pretrained_directed.json",
+ "n_subtypes": 47,
+ "settings_note": "the per-class F1 and role macro-F1 in this file come from the frozen-z predictor (no adjacency); the 0.7121 / 0.6101 numbers in REPORT_DIRECTED_GRAPHLET_ROLE.md come from the with-adjacency experiment and are a different capability, not the same measurement",
+ "family_metrics": {
+  "K3": {
+   "subtypes": 7,
+   "heldout_instances": 20000,
+   "no_adjacency_subtype_macro_f1": 0.043790151288098926,
+   "with_adjacency_orbit_macro_f1": 0.5156590678935538,
+   "orientation_signatures": 7
+  },
+  "P3": {
+   "subtypes": 6,
+   "heldout_instances": 19986,
+   "no_adjacency_subtype_macro_f1": 0.05108850983611541,
+   "with_adjacency_orbit_macro_f1": 0.34500312587993537,
+   "orientation_signatures": 6
+  },
+  "C4": {
+   "subtypes": 14,
+   "heldout_instances": 41705,
+   "no_adjacency_subtype_macro_f1": 0.03878953985175089,
+   "with_adjacency_orbit_macro_f1": 0.3132274506847081,
+   "orientation_signatures": 14
+  },
+  "P4": {
+   "subtypes": 11,
+   "heldout_instances": 39849,
+   "no_adjacency_subtype_macro_f1": 0.049368505265864775,
+   "with_adjacency_orbit_macro_f1": 0.3015410587898864,
+   "orientation_signatures": 11
+  },
+  "K1_3": {
+   "subtypes": 9,
+   "heldout_instances": 34765,
+   "no_adjacency_subtype_macro_f1": 0.06033928421383472,
+   "with_adjacency_orbit_macro_f1": 0.24459036327569003,
+   "orientation_signatures": 9
+  }
+ },
+ "shape_mapping": {
+  "triangle": {
+   "family": "K3",
+   "subtypes": 7,
+   "present": true
+  },
+  "chain/fork/converge": {
+   "family": "P3",
+   "subtypes": 6,
+   "present": true
+  },
+  "4-cycle": {
+   "family": "C4",
+   "subtypes": 14,
+   "present": true
+  },
+  "path": {
+   "family": "P4",
+   "subtypes": 11,
+   "present": true
+  },
+  "star": {
+   "family": "K1_3",
+   "subtypes": 9,
+   "present": true
+  }
+ },
+ "orientation_rows": [
+  {
+   "family": "K3",
+   "subtype": 0,
+   "key": "000100110",
+   "signature": [
+    [
+     0,
+     1,
+     2
+    ],
+    [
+     2,
+     1,
+     0
+    ]
+   ],
+   "f1": 0.3065310590166925,
+   "support": 11288
+  },
+  {
+   "family": "K3",
+   "subtype": 1,
+   "key": "000101110",
+   "signature": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     2,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 1034
+  },
+  {
+   "family": "K3",
+   "subtype": 2,
+   "key": "001100010",
+   "signature": [
+    [
+     1,
+     1,
+     1
+    ],
+    [
+     1,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 4050
+  },
+  {
+   "family": "K3",
+   "subtype": 3,
+   "key": "001100110",
+   "signature": [
+    [
+     1,
+     1,
+     2
+    ],
+    [
+     2,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 2284
+  },
+  {
+   "family": "K3",
+   "subtype": 4,
+   "key": "001101100",
+   "signature": [
+    [
+     1,
+     2,
+     1
+    ],
+    [
+     2,
+     0,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 1036
+  },
+  {
+   "family": "K3",
+   "subtype": 5,
+   "key": "001101110",
+   "signature": [
+    [
+     1,
+     2,
+     2
+    ],
+    [
+     2,
+     1,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 294
+  },
+  {
+   "family": "K3",
+   "subtype": 6,
+   "key": "011101110",
+   "signature": [
+    [
+     2,
+     2,
+     2
+    ],
+    [
+     2,
+     2,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 14
+  },
+  {
+   "family": "P3",
+   "subtype": 0,
+   "key": "000000110",
+   "signature": [
+    [
+     0,
+     0,
+     2
+    ],
+    [
+     1,
+     1,
+     0
+    ]
+   ],
+   "f1": 0.3065310590166925,
+   "support": 11288
+  },
+  {
+   "family": "P3",
+   "subtype": 1,
+   "key": "000001100",
+   "signature": [
+    [
+     0,
+     1,
+     1
+    ],
+    [
+     1,
+     0,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 1034
+  },
+  {
+   "family": "P3",
+   "subtype": 2,
+   "key": "000001110",
+   "signature": [
+    [
+     0,
+     1,
+     2
+    ],
+    [
+     1,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 4050
+  },
+  {
+   "family": "P3",
+   "subtype": 3,
+   "key": "000100100",
+   "signature": [
+    [
+     0,
+     1,
+     1
+    ],
+    [
+     2,
+     0,
+     0
+    ]
+   ],
+   "f1": 0.0,
+   "support": 2284
+  },
+  {
+   "family": "P3",
+   "subtype": 4,
+   "key": "001001010",
+   "signature": [
+    [
+     1,
+     1,
+     1
+    ],
+    [
+     0,
+     1,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 1036
+  },
+  {
+   "family": "P3",
+   "subtype": 5,
+   "key": "001001110",
+   "signature": [
+    [
+     1,
+     1,
+     2
+    ],
+    [
+     1,
+     1,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 294
+  },
+  {
+   "family": "C4",
+   "subtype": 0,
+   "key": "0000000011001100",
+   "signature": [
+    [
+     0,
+     0,
+     2,
+     2
+    ],
+    [
+     2,
+     2,
+     0,
+     0
+    ]
+   ],
+   "f1": 0.3065310590166925,
+   "support": 11288
+  },
+  {
+   "family": "C4",
+   "subtype": 1,
+   "key": "0000000111001000",
+   "signature": [
+    [
+     0,
+     1,
+     2,
+     1
+    ],
+    [
+     2,
+     1,
+     0,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 1034
+  },
+  {
+   "family": "C4",
+   "subtype": 2,
+   "key": "0000000111001100",
+   "signature": [
+    [
+     0,
+     1,
+     2,
+     2
+    ],
+    [
+     2,
+     2,
+     0,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 4050
+  },
+  {
+   "family": "C4",
+   "subtype": 3,
+   "key": "0000001110001000",
+   "signature": [
+    [
+     0,
+     2,
+     1,
+     1
+    ],
+    [
+     2,
+     0,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 2284
+  },
+  {
+   "family": "C4",
+   "subtype": 4,
+   "key": "0000001110001100",
+   "signature": [
+    [
+     0,
+     2,
+     1,
+     2
+    ],
+    [
+     2,
+     1,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 1036
+  },
+  {
+   "family": "C4",
+   "subtype": 5,
+   "key": "0000001111001100",
+   "signature": [
+    [
+     0,
+     2,
+     2,
+     2
+    ],
+    [
+     2,
+     2,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 294
+  },
+  {
+   "family": "C4",
+   "subtype": 6,
+   "key": "0001000111000100",
+   "signature": [
+    [
+     1,
+     1,
+     2,
+     1
+    ],
+    [
+     1,
+     2,
+     0,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 14
+  },
+  {
+   "family": "C4",
+   "subtype": 7,
+   "key": "0001000111001100",
+   "signature": [
+    [
+     1,
+     1,
+     2,
+     2
+    ],
+    [
+     2,
+     2,
+     0,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 4298
+  },
+  {
+   "family": "C4",
+   "subtype": 8,
+   "key": "0001001010000100",
+   "signature": [
+    [
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     1,
+     1,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.23652249890782,
+   "support": 10467
+  },
+  {
+   "family": "C4",
+   "subtype": 9,
+   "key": "0001001010001100",
+   "signature": [
+    [
+     1,
+     1,
+     1,
+     2
+    ],
+    [
+     2,
+     1,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 141
+  },
+  {
+   "family": "C4",
+   "subtype": 10,
+   "key": "0001001011001100",
+   "signature": [
+    [
+     1,
+     1,
+     2,
+     2
+    ],
+    [
+     2,
+     2,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 4943
+  },
+  {
+   "family": "C4",
+   "subtype": 11,
+   "key": "0001001110001100",
+   "signature": [
+    [
+     1,
+     2,
+     1,
+     2
+    ],
+    [
+     2,
+     1,
+     1,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 151
+  },
+  {
+   "family": "C4",
+   "subtype": 12,
+   "key": "0001001111001000",
+   "signature": [
+    [
+     1,
+     2,
+     2,
+     1
+    ],
+    [
+     2,
+     1,
+     1,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 0
+  },
+  {
+   "family": "C4",
+   "subtype": 13,
+   "key": "0001001111001100",
+   "signature": [
+    [
+     1,
+     2,
+     2,
+     2
+    ],
+    [
+     2,
+     2,
+     1,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 1705
+  },
+  {
+   "family": "P4",
+   "subtype": 0,
+   "key": "0000000001001010",
+   "signature": [
+    [
+     0,
+     0,
+     1,
+     2
+    ],
+    [
+     1,
+     1,
+     1,
+     0
+    ]
+   ],
+   "f1": 0.3065310590166925,
+   "support": 11288
+  },
+  {
+   "family": "P4",
+   "subtype": 1,
+   "key": "0000000001001100",
+   "signature": [
+    [
+     0,
+     0,
+     1,
+     2
+    ],
+    [
+     1,
+     2,
+     0,
+     0
+    ]
+   ],
+   "f1": 0.0,
+   "support": 1034
+  },
+  {
+   "family": "P4",
+   "subtype": 2,
+   "key": "0000000001011010",
+   "signature": [
+    [
+     0,
+     0,
+     2,
+     2
+    ],
+    [
+     1,
+     1,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 4050
+  },
+  {
+   "family": "P4",
+   "subtype": 3,
+   "key": "0000000101001000",
+   "signature": [
+    [
+     0,
+     1,
+     1,
+     1
+    ],
+    [
+     1,
+     1,
+     0,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 2284
+  },
+  {
+   "family": "P4",
+   "subtype": 4,
+   "key": "0000000101001100",
+   "signature": [
+    [
+     0,
+     1,
+     1,
+     2
+    ],
+    [
+     1,
+     2,
+     0,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 1036
+  },
+  {
+   "family": "P4",
+   "subtype": 5,
+   "key": "0000000110000110",
+   "signature": [
+    [
+     0,
+     1,
+     1,
+     2
+    ],
+    [
+     1,
+     1,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 294
+  },
+  {
+   "family": "P4",
+   "subtype": 6,
+   "key": "0000000110001000",
+   "signature": [
+    [
+     0,
+     1,
+     1,
+     1
+    ],
+    [
+     2,
+     0,
+     0,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 14
+  },
+  {
+   "family": "P4",
+   "subtype": 7,
+   "key": "0000000110001100",
+   "signature": [
+    [
+     0,
+     1,
+     1,
+     2
+    ],
+    [
+     2,
+     1,
+     0,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 4298
+  },
+  {
+   "family": "P4",
+   "subtype": 8,
+   "key": "0000000110010100",
+   "signature": [
+    [
+     0,
+     1,
+     2,
+     1
+    ],
+    [
+     1,
+     1,
+     0,
+     2
+    ]
+   ],
+   "f1": 0.23652249890782,
+   "support": 10467
+  },
+  {
+   "family": "P4",
+   "subtype": 9,
+   "key": "0001000101000100",
+   "signature": [
+    [
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     0,
+     2,
+     0,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 141
+  },
+  {
+   "family": "P4",
+   "subtype": 10,
+   "key": "0001000101001000",
+   "signature": [
+    [
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     1,
+     1,
+     0,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 4943
+  },
+  {
+   "family": "K1_3",
+   "subtype": 0,
+   "key": "0000000000001110",
+   "signature": [
+    [
+     0,
+     0,
+     0,
+     3
+    ],
+    [
+     1,
+     1,
+     1,
+     0
+    ]
+   ],
+   "f1": 0.3065310590166925,
+   "support": 11288
+  },
+  {
+   "family": "K1_3",
+   "subtype": 1,
+   "key": "0000000000011100",
+   "signature": [
+    [
+     0,
+     0,
+     1,
+     2
+    ],
+    [
+     1,
+     1,
+     0,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 1034
+  },
+  {
+   "family": "K1_3",
+   "subtype": 2,
+   "key": "0000000000011110",
+   "signature": [
+    [
+     0,
+     0,
+     1,
+     3
+    ],
+    [
+     1,
+     1,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 4050
+  },
+  {
+   "family": "K1_3",
+   "subtype": 3,
+   "key": "0000000100011000",
+   "signature": [
+    [
+     0,
+     1,
+     1,
+     1
+    ],
+    [
+     1,
+     0,
+     0,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 2284
+  },
+  {
+   "family": "K1_3",
+   "subtype": 4,
+   "key": "0000000100011010",
+   "signature": [
+    [
+     0,
+     1,
+     1,
+     2
+    ],
+    [
+     1,
+     0,
+     1,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 1036
+  },
+  {
+   "family": "K1_3",
+   "subtype": 5,
+   "key": "0000000100011110",
+   "signature": [
+    [
+     0,
+     1,
+     1,
+     3
+    ],
+    [
+     1,
+     1,
+     1,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 294
+  },
+  {
+   "family": "K1_3",
+   "subtype": 6,
+   "key": "0000100010001000",
+   "signature": [
+    [
+     0,
+     1,
+     1,
+     1
+    ],
+    [
+     3,
+     0,
+     0,
+     0
+    ]
+   ],
+   "f1": 0.0,
+   "support": 14
+  },
+  {
+   "family": "K1_3",
+   "subtype": 7,
+   "key": "0001000100010010",
+   "signature": [
+    [
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     0,
+     0,
+     1,
+     3
+    ]
+   ],
+   "f1": 0.0,
+   "support": 4298
+  },
+  {
+   "family": "K1_3",
+   "subtype": 8,
+   "key": "0001000100010110",
+   "signature": [
+    [
+     1,
+     1,
+     1,
+     2
+    ],
+    [
+     0,
+     1,
+     1,
+     3
+    ]
+   ],
+   "f1": 0.23652249890782,
+   "support": 10467
+  }
+ ],
+ "best_subtypes": [
+  {
+   "family": "K3",
+   "subtype": 0,
+   "key": "000100110",
+   "signature": [
+    [
+     0,
+     1,
+     2
+    ],
+    [
+     2,
+     1,
+     0
+    ]
+   ],
+   "f1": 0.3065310590166925,
+   "support": 11288
+  },
+  {
+   "family": "P3",
+   "subtype": 0,
+   "key": "000000110",
+   "signature": [
+    [
+     0,
+     0,
+     2
+    ],
+    [
+     1,
+     1,
+     0
+    ]
+   ],
+   "f1": 0.3065310590166925,
+   "support": 11288
+  },
+  {
+   "family": "C4",
+   "subtype": 0,
+   "key": "0000000011001100",
+   "signature": [
+    [
+     0,
+     0,
+     2,
+     2
+    ],
+    [
+     2,
+     2,
+     0,
+     0
+    ]
+   ],
+   "f1": 0.3065310590166925,
+   "support": 11288
+  },
+  {
+   "family": "P4",
+   "subtype": 0,
+   "key": "0000000001001010",
+   "signature": [
+    [
+     0,
+     0,
+     1,
+     2
+    ],
+    [
+     1,
+     1,
+     1,
+     0
+    ]
+   ],
+   "f1": 0.3065310590166925,
+   "support": 11288
+  },
+  {
+   "family": "K1_3",
+   "subtype": 0,
+   "key": "0000000000001110",
+   "signature": [
+    [
+     0,
+     0,
+     0,
+     3
+    ],
+    [
+     1,
+     1,
+     1,
+     0
+    ]
+   ],
+   "f1": 0.3065310590166925,
+   "support": 11288
+  }
+ ],
+ "worst_subtypes": [
+  {
+   "family": "K3",
+   "subtype": 1,
+   "key": "000101110",
+   "signature": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     2,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 1034
+  },
+  {
+   "family": "K3",
+   "subtype": 2,
+   "key": "001100010",
+   "signature": [
+    [
+     1,
+     1,
+     1
+    ],
+    [
+     1,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 4050
+  },
+  {
+   "family": "K3",
+   "subtype": 3,
+   "key": "001100110",
+   "signature": [
+    [
+     1,
+     1,
+     2
+    ],
+    [
+     2,
+     1,
+     1
+    ]
+   ],
+   "f1": 0.0,
+   "support": 2284
+  },
+  {
+   "family": "K3",
+   "subtype": 4,
+   "key": "001101100",
+   "signature": [
+    [
+     1,
+     2,
+     1
+    ],
+    [
+     2,
+     0,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 1036
+  },
+  {
+   "family": "K3",
+   "subtype": 5,
+   "key": "001101110",
+   "signature": [
+    [
+     1,
+     2,
+     2
+    ],
+    [
+     2,
+     1,
+     2
+    ]
+   ],
+   "f1": 0.0,
+   "support": 294
+  }
+ ]
+}

@@ -82,6 +82,9 @@ ANALYSIS = (
     "teacher/opt/joint_teacher_report.json",
     "TEACHER_229.md", "accept_teacher_229.py",
     "tests/test_acceptance_229.py",
+    "recognition_coverage.py", "tests/test_recognition_coverage.py",
+    "REPORT_RECOGNITION_COVERAGE.md",
+    "teacher/opt/recognition_coverage.json",
 )
 
 
