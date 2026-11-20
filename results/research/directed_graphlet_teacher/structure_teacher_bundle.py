@@ -97,8 +97,9 @@ class StructureTeacherBundle:
           * `student_vectors` (len(item_ids), d): a batch; pairs whose endpoints are
             not all in the batch are dropped and the rest are re-indexed locally.
 
-        `role_logits` follows the same rows; without it the neighbourhood-orbit term
-        is skipped and reported as `None`.
+        `role_logits` accepts the same two shapes as `student_vectors` (the full
+        table or `len(item_ids)` batch rows); without it the neighbourhood-orbit
+        term is skipped and reported as `None`.
         """
         total_items = len(self.targets["relation"])
         ids = np.arange(total_items) if item_ids is None else self._rows(item_ids)
@@ -151,9 +152,16 @@ class StructureTeacherBundle:
         if role_logits is not None and weights.get("neighbour_orbit", 0.0) > 0:
             target = torch.from_numpy(self.targets["neighbour_orbit"]).float()
             coverage = torch.from_numpy(self.targets["coverage_neighbour"]).float()
+            if role_logits.shape[0] == len(ids):
+                logit_rows = torch.arange(len(ids))
+            elif role_logits.shape[0] == total_items:
+                logit_rows = torch.from_numpy(ids)
+            else:
+                raise ValueError(f"role_logits must have {total_items} rows or "
+                                 f"{len(ids)} rows aligned with item_ids")
             mask = coverage[torch.from_numpy(ids)] > 0
             if bool(mask.any()):
-                chosen = role_logits[torch.from_numpy(ids)][mask]
+                chosen = role_logits[logit_rows][mask]
                 orbit = -(target[torch.from_numpy(ids)][mask]
                           * F.log_softmax(chosen, -1)).sum(-1).mean()
                 total = total + weights["neighbour_orbit"] * orbit

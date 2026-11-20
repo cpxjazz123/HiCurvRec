@@ -154,3 +154,19 @@ def test_structure_loss_applies_the_documented_neighbour_relation_weight(bundle)
     assert abs(metrics["total"] - float(expected.detach())) < 1e-4
     assert abs(metrics["neighbour_relation_distill"]
                - float(neighbour.detach())) < 1e-6
+
+
+def test_structure_loss_accepts_batch_aligned_role_logits(bundle):
+    """The docstring says role_logits follows student_vectors; a mini-batch must obey it."""
+    coverage = bundle.targets["coverage_neighbour"]
+    rng = np.random.default_rng(3)
+    candidates = np.flatnonzero(coverage > 0)
+    ids = rng.choice(candidates, 256, replace=False)
+    rows = torch.randn(len(ids), 4)
+    logits = torch.randn(len(ids), 376, requires_grad=True)
+    metrics, loss = bundle.structure_loss(rows, item_ids=ids, role_logits=logits)
+    assert metrics["orbit"] is not None
+    assert np.isfinite(metrics["orbit"])
+    assert torch.isfinite(loss)
+    loss.backward()
+    assert torch.isfinite(logits.grad).all()
