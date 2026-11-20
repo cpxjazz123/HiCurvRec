@@ -1,0 +1,41 @@
+{
+ "1_measurement": {
+  "passed": true,
+  "all_share": 0.5,
+  "pair_share": 0.5,
+  "monotone": true,
+  "permutation_invariant": true
+ },
+ "2_provenance": {
+  "passed": true,
+  "number": "01",
+  "sha_matches_ledger": true,
+  "tamper_detected": true,
+  "recall_presence_note": true
+ },
+ "3_statistics": {
+  "passed": true,
+  "rho_pos": 0.9956848030018761,
+  "rho_neg": -0.9986866791744841,
+  "rho_null": -0.038461538461538464,
+  "p_pos": 0.0,
+  "p_null": 0.821,
+  "bh_ordered": true
+ },
+ "4_pool": {
+  "passed": true,
+  "heldout_counts": {
+   "K3": 25242,
+   "P3": 91010,
+   "C4": 50275,
+   "P4": 20367,
+   "K1_3": 56636
+  },
+  "chorded_C4": 0
+ },
+ "5_injection": {
+  "passed": true,
+  "graph_sha_matches": true,
+  "short_sid_rejected": true
+ }
+}
