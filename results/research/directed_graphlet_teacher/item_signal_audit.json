@@ -1,0 +1,46 @@
+{
+ "teacher": {
+  "pool": "results/research/directed_graphlet_role/instances.npz",
+  "pool_sha256": "9d0661e9412b965c410c6e4b0fd7b5539f9b4af8aeb88332b2918b6b0dfd71f0",
+  "subtypes": "results/research/directed_graphlet_role/subtypes.json",
+  "subtypes_sha256": "ae500b4629be8f69a7875f9fb0fbe081c359ee663274dc060904f2b5e13ea1d2",
+  "graph_sha256": "6dbac4545f23779c26f95e3f128daeb916079f53fad7ec159dd8bfb08e7121e8",
+  "seed": 20261120,
+  "steps": 1500,
+  "batch": 512,
+  "hidden": 128,
+  "layers": 2,
+  "train_cap": 20000,
+  "test_cap": 5000,
+  "torch": "2.8.0+cu128"
+ },
+ "items": 21383,
+ "occurrences": 355760,
+ "min_occurrences": 3,
+ "hidden": {
+  "icc_median": 0.7636441195287484,
+  "icc_p90": 0.785415026260365,
+  "dims_icc_above_half": 128,
+  "dims": 128,
+  "mean_cosine_between_items": {
+   "mean": 0.8243195414543152,
+   "median": 0.8606539964675903,
+   "p10": 0.6378383636474609,
+   "p90": 0.9587199687957764
+  },
+  "verdict": "usable"
+ },
+ "role_distribution": {
+  "within_item_tv": {
+   "mean": 0.7335672637099825,
+   "median": 0.7321428571428572,
+   "n": 4000
+  },
+  "between_item_tv": {
+   "mean": 0.8706338011110784,
+   "median": 0.8888888888888888,
+   "n": 4000
+  },
+  "verdict": "usable"
+ }
+}
