@@ -43,7 +43,7 @@ own_orbit 0.0 / own_subtype 0.0`。
 | 冻结 bundle | `teacher/structure/bundle/`(`.pth` + contract + manifest) |
 | 商品级目标表 v3 | `teacher/structure/v3/structure_targets_v3.npz` |
 | 目标契约 v3 | `teacher/structure/v3/teacher_structure_contract_v3.json` |
-| 联合训练 checkpoint(参考) | `teacher/structure/joint/teacher_joint_v1.pth` |
+| 联合训练模型(可加载,`joint_teacher_model.py`) | `teacher/structure/joint/teacher_joint_v1.pth`(+ manifest 参数摘要) |
 | 边预测 Teacher(#228) | `teacher/opt/`(报告与 checkpoint) |
 | 符合性审计 | `verify_conformance_229.py` → `conformance_229.json` |
 | 全部报告 | `REPORT_STRUCTURE_TEACHER*.md`、`REPORT_GRAPH_TEACHER_OPTIMIZATION.md` |

@@ -85,6 +85,9 @@ ANALYSIS = (
     "recognition_coverage.py", "tests/test_recognition_coverage.py",
     "REPORT_RECOGNITION_COVERAGE.md",
     "teacher/opt/recognition_coverage.json",
+    "joint_teacher_model.py", "tests/test_joint_teacher_model.py",
+    "teacher/structure/joint/teacher_joint_v1_manifest.json",
+    "teacher/opt/joint_teacher_reload.json",
 )
 
 

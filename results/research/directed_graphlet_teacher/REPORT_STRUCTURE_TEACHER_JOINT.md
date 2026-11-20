@@ -42,3 +42,26 @@ loss = edge + 0.5·direction + 0.2·orbit + 0.1·subtype
 
 这一结果写进符合性审计的 `joint_role_training` 检查:状态为 **NOT_ESTABLISHED**,
 与 `minority_role_identification` 并列,不再作为待办。
+
+## 可加载模型(不是只有一张表)
+
+`joint_teacher_model.py` 把该 checkpoint 作为**模型**加载并复算:
+
+```python
+from joint_teacher_model import load_joint_teacher
+teacher = load_joint_teacher()      # teacher/structure/joint/teacher_joint_v1.pth
+teacher.verify()                    # 参数摘要 ed9bccc7…
+state = teacher.encode(features, adjacency)
+scores = teacher.score_pairs(state, positives, negatives)
+teacher.recognise(matrix)
+```
+
+复算结果(`teacher/opt/joint_teacher_reload.json`):
+
+| 指标 | 加载后复算 | 训练时记录 |
+|---|---:|---:|
+| edge test AUC | 0.6946952832 | 0.6946952724 |
+| direction balanced acc | 0.5035671435 | 0.5035671435 |
+| 参数摘要 | `ed9bccc7…` | 同 |
+
+⇒ 模型权重、头部与评估通路可逐位重载并复现记录值(测试 `tests/test_joint_teacher_model.py`)。
