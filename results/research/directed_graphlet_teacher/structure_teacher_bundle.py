@@ -113,8 +113,10 @@ class StructureTeacherBundle:
         pairs = self.targets["positive_pairs"]
         negatives = self.targets["negative_pairs"]
         relation = torch.from_numpy(self.targets["relation"]).float()
+        neighbour = torch.from_numpy(self.targets["neighbour_relation"]).float()
         if local is None:
-            local_pairs, local_negatives, teacher = pairs, negatives, relation
+            local_pairs, local_negatives = pairs, negatives
+            teacher, teacher_neighbour = relation, neighbour
         else:
             keep = np.asarray([index for index, (a, b, d) in
                                enumerate(zip(pairs[:, 0], pairs[:, 1], negatives))
@@ -126,19 +128,25 @@ class StructureTeacherBundle:
             local_negatives = np.asarray([local[int(d)] for d in negatives[keep]],
                                          dtype=np.int64)
             teacher = relation[torch.from_numpy(ids)]
+            teacher_neighbour = neighbour[torch.from_numpy(ids)]
         if len(local_pairs):
             rank = st.relation_ranking_loss(student_vectors, local_pairs,
                                             local_negatives)
             distill = st.relation_distill_loss(student_vectors, local_pairs, teacher)
-            total = weights.get("relation", 1.0) * rank + 0.1 * distill
+            n_distill = st.relation_distill_loss(student_vectors, local_pairs,
+                                                 teacher_neighbour)
+            total = (weights.get("relation", 1.0) * rank + 0.1 * distill
+                     + weights.get("neighbour_relation", 0.0) * n_distill)
             result = {"relation_ranking": float(rank.detach()),
                       "relation_distill": float(distill.detach()),
+                      "neighbour_relation_distill": float(n_distill.detach()),
                       "pairs_used": int(len(local_pairs)), "orbit": None}
         else:
             # no observed pair survives inside this batch: report the absence
             # instead of the NaN that mean()/mse_loss() over an empty set gives
             total = student_vectors.sum() * 0.0
             result = {"relation_ranking": None, "relation_distill": None,
+                      "neighbour_relation_distill": None,
                       "pairs_used": 0, "orbit": None}
         if role_logits is not None and weights.get("neighbour_orbit", 0.0) > 0:
             target = torch.from_numpy(self.targets["neighbour_orbit"]).float()

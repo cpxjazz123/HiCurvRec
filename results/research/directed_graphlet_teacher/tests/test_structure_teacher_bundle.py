@@ -134,3 +134,23 @@ def test_structure_loss_is_finite_when_a_batch_has_no_internal_pairs(bundle):
     assert float(loss.detach()) == 0.0
     loss.backward()
     assert torch.isfinite(rows.grad).all()
+
+
+def test_structure_loss_applies_the_documented_neighbour_relation_weight(bundle):
+    """The frozen weight map says relation 1.0 / neighbour_relation 0.5; both must be used."""
+    import structure_teacher as st
+    n = len(bundle.targets["relation"])
+    torch.manual_seed(0)
+    vectors = torch.randn(n, 4)
+    metrics, _ = bundle.structure_loss(vectors)
+    pairs = bundle.targets["positive_pairs"]
+    negatives = bundle.targets["negative_pairs"]
+    rank = st.relation_ranking_loss(vectors, pairs, negatives)
+    own = st.relation_distill_loss(
+        vectors, pairs, torch.from_numpy(bundle.targets["relation"]).float())
+    neighbour = st.relation_distill_loss(
+        vectors, pairs, torch.from_numpy(bundle.targets["neighbour_relation"]).float())
+    expected = 1.0 * rank + 0.1 * own + 0.5 * neighbour
+    assert abs(metrics["total"] - float(expected.detach())) < 1e-4
+    assert abs(metrics["neighbour_relation_distill"]
+               - float(neighbour.detach())) < 1e-6

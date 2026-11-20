@@ -46,7 +46,9 @@ metrics, loss = teacher.structure_loss(student_vectors, role_logits=logits)
 `structure_loss(student_vectors, item_ids=None, role_logits=None)`:
 
 - `student_vectors` 必须是 **(24,587, d)** 的全体商品表示(与目标表同序),pair 表按全局 id 索引;
-- relation 项 = `1.0 × relation_ranking_loss + 0.1 × relation_distill_loss`;
+- relation 项 = `1.0 × relation_ranking_loss + 0.1 × relation_distill_loss`
+  `+ 0.5 × relation_distill_loss(neighbour_relation)`(邻居聚合关系几何);
+- 批内没有任何观测 pair 时,两项关系损失记为 `None`、总损失为可微零,不产生 NaN;
 - `role_logits`(可选,376 维)给出时,加 `0.5 × orbit_loss`(仅 `coverage_neighbour>0` 的行);
 - 返回 `(metrics_dict, total_tensor)`,`metrics` 里逐项记录数值,便于日志。
 
