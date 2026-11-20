@@ -161,3 +161,19 @@ python3 analysis_sid_recall/build_graphlet_roles.py          # 诱导实例与 o
   analysis_sid_recall/evaluate_graphlet_roles.py             # heldout 前缀/角色/头
 python3 results/research/graphlet_roles/secondary.py         # 结构保真次指标
 ```
+
+## 8. 附录：SID 的框架重导出（2026-11-20，Stage3 前）
+
+Stage3 的 export gate 会用 checkpoint 重新导出一份 SID（`export_check --rewrite`，原表留作
+`item_sids.trainer.json`）。五臂各有 220/466/304/508/212 行（≤2%）与训练进程内的导出不同，
+全部落在近似并列的码字上；本文所有指标已在**重导出后的 SID** 上重算：
+
+| arm | 真实边 L1（重导出） | 训练导出 | 三角形 L1（重导出） | 训练导出 | 碰撞率（重导出） |
+|---|---|---|---|---|---|
+| E | 0.0638 | 0.0638 | 0.0602 | 0.0605 | 0.1221 |
+| T | 0.0103 | 0.0103 | 0.0044 | 0.0044 | 0.0108 |
+| R | 0.0117 | 0.0117 | 0.0096 | 0.0096 | 0.0107 |
+| Q | 0.0095 | 0.0095 | 0.0107 | 0.0107 | 0.0102 |
+| QR | 0.0623 | 0.0623 | 0.0587 | 0.0588 | 0.1127 |
+
+差异在 1e-3 以内，结论不变；两个表与各自 sha256 记录在 `MANIFEST.json`。

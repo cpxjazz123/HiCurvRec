@@ -1000,3 +1000,9 @@ results/stage2_RQ-VAE/TIGER_graphlet_role_*/
 stage2_RQ-VAE/TIGER_graphlet_role_rq/logs/
 stage2_RQ-VAE/TIGER_graphlet_role_rq/__pycache__/
 results/research/graphlet_roles/cgv/*.npy
+
+# Stage3 export gate keeps the trainer's own table beside the re-exported one; both are
+# generated (147k lines each) and the SID sha256 of every arm is in the R2 ledger.
+results/stage2_RQ-VAE/*/item_sids.trainer.json
+results/research/stage3_sweep/__pycache__/
+results/research/stage3_sweep/*.stdout.log

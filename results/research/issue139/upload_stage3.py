@@ -64,7 +64,7 @@ def archive_key(arm: str, sid_path: Path) -> str:
     return "%s/%s" % (arm.replace("/", "__"), sha256(Path(sid_path))[:12])
 
 
-def stage(arm: str, staging: Path) -> tuple[dict, str]:
+def stage(arm: str, staging: Path, tree: Path | None = None) -> tuple[dict, str]:
     """Stage the four entries; return the checksums and the ledger key."""
     result = RESULTS / "stage2_RQ-VAE" / arm
     sid = result / "item_sids.json"
@@ -72,8 +72,8 @@ def stage(arm: str, staging: Path) -> tuple[dict, str]:
     if not checkpoint.is_file():
         found = sorted(result.rglob("rqvae_best.pth"))
         checkpoint = found[0] if found else checkpoint
-    source = TREES / arm
-    if not source.is_dir():
+    source = Path(tree) if tree is not None else TREES / arm
+    if tree is None and not source.is_dir():
         source = TREES / arm.split("/")[0]
     if not source.is_dir():
         for candidate in sorted(TREES.glob("*/" + arm)):
@@ -131,12 +131,15 @@ def main() -> int:
     parser.add_argument("arm")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--keep", action="store_true")
+    parser.add_argument("--tree", default="",
+                        help="Stage 2 source tree, for arms whose tree no longer "
+                             "carries the arm name (shared four/five-arm trees)")
     args = parser.parse_args()
 
     staging = RESEARCH / "_stage" / ("r2_arm_%s" % args.arm.replace("/", "__"))
     shutil.rmtree(staging, ignore_errors=True)
     try:
-        files, key = stage(args.arm, staging)
+        files, key = stage(args.arm, staging, Path(args.tree).resolve() if args.tree else None)
         ledger = Ledger()
         number = ledger.assign(key)
         target = upload_directory(staging, number, dry_run=args.dry_run)

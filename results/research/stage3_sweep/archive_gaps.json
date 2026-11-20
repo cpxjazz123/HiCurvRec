@@ -1,0 +1,30 @@
+{
+ "policy": "CLAUDE.md 6b: source + SID + checkpoint + recall must all be present.",
+ "already_uploaded": {
+  "TIGER_graphlet_role_Q": 78,
+  "TIGER_RQ-VAE": 69,
+  "TIGER_graphlet_codebook_rq": 79,
+  "TIGER_graphlet_codebook_global_rq": 80,
+  "TIGER_af3_curvature_factor_mass_rq": 74,
+  "TIGER_mixed_rq_F0": 75,
+  "TIGER_role_geom_rq": 70,
+  "TIGER_role_geom_global_rq": 71,
+  "TIGER_role_geom_shuffled_rq": 72,
+  "TIGER_RQ-VAE__canonical": 73
+ },
+ "archivable_with_tree": [
+  "TIGER_RQ-VAE",
+  "TIGER_af3_curvature_factor_mass_rq",
+  "TIGER_graphlet_codebook_global_rq",
+  "TIGER_graphlet_codebook_rq",
+  "TIGER_graphlet_role_Q"
+ ],
+ "missing_source": [
+  "TIGER_RQ-VAE__canonical",
+  "TIGER_mixed_rq_F0",
+  "TIGER_role_geom_global_rq",
+  "TIGER_role_geom_rq",
+  "TIGER_role_geom_shuffled_rq"
+ ],
+ "missing_source_note": "these arms were archived in an earlier session, before their Stage2 source trees were removed from the worktree; no new upload is possible for a fresh run, but the historical four-piece archive exists"
+}
