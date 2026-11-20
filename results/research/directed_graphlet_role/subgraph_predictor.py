@@ -92,10 +92,22 @@ def adjacency_tensor(nodes: np.ndarray, edge_keys: np.ndarray, n_items: int) -> 
 
 
 def shuffle_directions(a: np.ndarray, seed: int) -> np.ndarray:
+    """Reverse the direction of each unordered pair with probability 1/2.
+
+    The decision is made once per unordered pair, not once per matrix cell: an
+    elementwise mask would let (i,j) flip while (j,i) does not, which creates a
+    reciprocal pair out of a single edge, or removes an edge when both cells
+    flip.  Here the undirected skeleton -- every pair's edge count -- is
+    preserved exactly, so the control changes direction and nothing else.
+    """
     rng = np.random.default_rng(seed)
-    flip = rng.random((len(a), a.shape[1], a.shape[2])) < 0.5
-    flipped = np.transpose(a, (0, 2, 1))
-    return np.where(flip, flipped, a)
+    out = a.copy()
+    for i in range(a.shape[1]):
+        for j in range(i + 1, a.shape[2]):
+            flip = rng.random(len(a)) < 0.5
+            out[:, i, j] = np.where(flip, a[:, j, i], a[:, i, j])
+            out[:, j, i] = np.where(flip, a[:, i, j], a[:, j, i])
+    return out
 
 
 def macro_f1(prediction: np.ndarray, target: np.ndarray, n_classes: int) -> float:
@@ -181,11 +193,10 @@ def main() -> None:
             target_sub = torch.from_numpy(targets["subtype"]).to(device)[pick]
             target_orbit = torch.from_numpy(targets["orbit"]).to(device)[pick]
             loss_type = F.cross_entropy(type_logits, target_sub.clamp(min=0))
-            subtype_ids = target_sub.clamp(min=0)
-            mask = allowed[subtype_ids].unsqueeze(1).expand(-1, role_logits.shape[1], -1).clone()
-            mask[target_sub < 0] = True
-            masked = role_logits.masked_fill(~mask, float("-inf"))
-            loss_role = F.cross_entropy(masked.reshape(-1, masked.shape[-1]),
+            # Unconditional orbit CE: the head is NOT told the true subtype, so the
+            # number that comes out is end-to-end orbit recognition, not a readout
+            # conditioned on the answer.
+            loss_role = F.cross_entropy(role_logits.reshape(-1, role_logits.shape[-1]),
                                         target_orbit.reshape(-1))
             loss = loss_type + loss_role
             optimizer.zero_grad(set_to_none=True)
@@ -204,18 +215,24 @@ def main() -> None:
                 subtype_ids = torch.from_numpy(target_sub).to(device).clamp(min=0)
                 mask = allowed[subtype_ids].unsqueeze(1).expand(-1, role_logits.shape[1], -1).clone()
                 mask[torch.from_numpy(target_sub < 0).to(device)] = True
+                unconditional = role_logits.argmax(-1).cpu().numpy()
                 masked = role_logits.masked_fill(~mask, float("-inf"))
-                orbit_prediction = masked.argmax(-1).cpu().numpy()
+                conditioned = masked.argmax(-1).cpu().numpy()
                 orbit_target = targets["orbit"]
                 keep = kept
                 subtype_f1 = macro_f1(prediction[keep], target_sub[keep], vocab["n_subtypes"])
-                orbit_f1 = macro_f1(orbit_prediction[keep].reshape(-1),
+                orbit_f1 = macro_f1(unconditional[keep].reshape(-1),
                                     orbit_target[keep].reshape(-1), vocab["n_orbits"])
+                orbit_f1_conditioned = macro_f1(conditioned[keep].reshape(-1),
+                                                orbit_target[keep].reshape(-1), vocab["n_orbits"])
                 row["per_family"][family] = {
                     "subtype_macro_f1": subtype_f1,
                     "orbit_macro_f1": orbit_f1,
-                    "instances": int(keep.sum()),
-                    "majority_subtype": float(np.bincount(target_sub[keep]).max() / keep.sum()),
+                    "orbit_macro_f1_conditioned": orbit_f1_conditioned,
+                    "instances": int(len(keep)),
+                    "majority_subtype": float(np.bincount(target_sub[keep]).max() / len(keep)),
+                    "majority_orbit": float(np.bincount(orbit_target[keep].reshape(-1)).max()
+                                            / orbit_target[keep].size),
                 }
         row["subtype_macro_f1"] = float(np.mean([v["subtype_macro_f1"] for v in row["per_family"].values()]))
         row["orbit_macro_f1"] = float(np.mean([v["orbit_macro_f1"] for v in row["per_family"].values()]))

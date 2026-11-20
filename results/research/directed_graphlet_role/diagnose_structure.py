@@ -119,10 +119,10 @@ def main() -> None:
         train_z = encode(nodes)
         train_moments = {name: standardise(block, nodes) for name, block in blocks.items()}
         for variant, sources in VARIANTS:
-            parts_train, parts_held = [train_z], [held_all]
+            use_z = "no_z" not in sources
+            parts_train, parts_held = ([train_z], [held_all]) if use_z else ([], [])
             for source in sources:
                 if source == "no_z":
-                    parts_train, parts_held = [], []
                     continue
                 mean, std = train_moments[source]
                 parts_train.append((np.log1p(np.asarray(blocks[source],
