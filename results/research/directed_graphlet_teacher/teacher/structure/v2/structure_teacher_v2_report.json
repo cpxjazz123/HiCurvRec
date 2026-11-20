@@ -1,0 +1,78 @@
+{
+ "root": "/fs04/ar57/wenyu/GeneRec/results/research/directed_graphlet_teacher/teacher/structure/v2",
+ "targets": "/fs04/ar57/wenyu/GeneRec/results/research/directed_graphlet_teacher/teacher/structure/v2/structure_targets_v2.npz",
+ "teacher": "/fs04/ar57/wenyu/GeneRec/results/research/directed_graphlet_teacher/teacher/structure/v2/teacher_structure_v2.pth",
+ "contract": "/fs04/ar57/wenyu/GeneRec/results/research/directed_graphlet_teacher/teacher/structure/v2/teacher_structure_contract_v2.json",
+ "manifest": "/fs04/ar57/wenyu/GeneRec/results/research/directed_graphlet_teacher/teacher/structure/v2/teacher_structure_manifest_v2.json",
+ "build_sha": "401d091213f6025af6cce04fe4dd80f9ace7174440efd090a5cc28859d451893",
+ "carrier": {
+  "subtype": {
+   "ce": 1.6195921897888184,
+   "kl": 0.6845991611480713,
+   "target_entropy": 0.9349930286407471,
+   "constant_ce": 1.5957326889038086,
+   "constant_kl": 0.6607396602630615,
+   "macro_f1": 0.09185037029607576,
+   "majority_f1": 0.06690085129276242,
+   "carried": false
+  },
+  "family": {
+   "ce": 0.14214195311069489,
+   "kl": 0.06428173184394836,
+   "target_entropy": 0.07786022126674652,
+   "constant_ce": 0.13988307118415833,
+   "constant_kl": 0.062022849917411804,
+   "macro_f1": 0.4995921696574225,
+   "majority_f1": 0.4995921696574225,
+   "carried": false
+  },
+  "orbit": {
+   "ce": 3.9150445461273193,
+   "kl": 3.4356633126735687,
+   "target_entropy": 0.4793812334537506,
+   "constant_ce": 3.49125337600708,
+   "constant_kl": 3.0118721425533295,
+   "macro_f1": 0.027051319619228777,
+   "majority_f1": 0.0037023201759847258,
+   "carried": false
+  },
+  "relation": {
+   "cosine": 0.8809465169906616,
+   "constant_cosine": 0.15327481925487518,
+   "carried": true
+  }
+ },
+ "weights": {
+  "relation": 1.0,
+  "family": 0.0,
+  "subtype": 0.0,
+  "orbit": 0.0
+ },
+ "direction": {
+  "status": "NOT_ESTABLISHED",
+  "metric": "balanced accuracy on one-way held-out pairs",
+  "head": {
+   "test_balanced_accuracy": 0.514497697353363,
+   "best_valid": 0.5197519958019257,
+   "best_step": 50,
+   "prediction_frequency": [
+    0.5109203520591111,
+    0.4890796479408888
+   ]
+  },
+  "baselines": {
+   "in_degree_rule": 0.5087541467278777,
+   "degree_logistic": 0.5039493143558502,
+   "majority": 0.5015973052265565
+  },
+  "test_pairs": 46015,
+  "rule": "must beat both the majority and the degree baselines by >= 0.02; 0.5145 vs 0.5016 / 0.5088 / 0.5039 does not",
+  "evidence": "results/research/directed_graphlet_teacher/teacher/opt/structure_probe_v2.json",
+  "evidence_sha256": "d9b2d483c7357411463de4831f6ac8ce758f1c53a0a365295823b391bd6022ea"
+ },
+ "role_relation_alignment": {
+  "items": 1000,
+  "spearman": 0.012482860237439353,
+  "note": "relation cosine vs orbit-profile cosine over item pairs"
+ }
+}

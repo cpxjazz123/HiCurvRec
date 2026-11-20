@@ -1,0 +1,62 @@
+{
+ "coverage": {
+  "instances_kept": 9095,
+  "instances_dropped": 30905,
+  "item_coverage": 0.49888152275592795
+ },
+ "items": 12266,
+ "train_items": 9812,
+ "eval_items": 2454,
+ "target_entropy": {
+  "orbit": 0.47439810633659363,
+  "subtype": 0.9543514251708984
+ },
+ "recognition_subtype": {
+  "ce": 1.6177642345428467,
+  "kl": 0.6634128093719482,
+  "entropy": 0.9543514251708984,
+  "macro_f1": 0.0836162835886203,
+  "constant_ce": 1.6063501834869385,
+  "constant_kl": 0.65199875831604
+ },
+ "recognition_orbit": {
+  "ce": 3.615715742111206,
+  "kl": 3.1413176357746124,
+  "entropy": 0.47439810633659363,
+  "macro_f1": 0.02109462267594754,
+  "constant_ce": 3.503094434738159,
+  "constant_kl": 3.0286963284015656
+ },
+ "carrier": {
+  "subtype": {
+   "ce": 1.6301090717315674,
+   "kl": 0.675757646560669,
+   "constant_ce": 1.6063501834869385,
+   "constant_kl": 0.65199875831604
+  },
+  "orbit": {
+   "ce": 3.9072654247283936,
+   "kl": 3.4328673183918,
+   "constant_ce": 3.503094434738159,
+   "constant_kl": 3.0286963284015656
+  },
+  "relation_cosine": 0.8810268044471741
+ },
+ "direction": {
+  "head": {
+   "test_balanced_accuracy": 0.514497697353363,
+   "best_valid": 0.5197519958019257,
+   "best_step": 50,
+   "prediction_frequency": [
+    0.5109203520591111,
+    0.4890796479408888
+   ]
+  },
+  "baselines": {
+   "in_degree_rule": 0.5087541467278777,
+   "degree_logistic": 0.5039493143558502,
+   "majority": 0.5015973052265565
+  },
+  "test_pairs": 46015
+ }
+}

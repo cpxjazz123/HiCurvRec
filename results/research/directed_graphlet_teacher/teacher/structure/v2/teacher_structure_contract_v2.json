@@ -1,0 +1,194 @@
+{
+ "version": "structure-teacher-v2",
+ "build_sha": "401d091213f6025af6cce04fe4dd80f9ace7174440efd090a5cc28859d451893",
+ "targets_file": "structure_targets_v2.npz",
+ "teacher_file": "teacher_structure_v2.pth",
+ "item_alignment": "row i is item i of the Stage1/Stage2 item universe",
+ "rqvae_input_changed": false,
+ "rqvae_encoder_input": "the original 768-d Stage1 item embedding only",
+ "teacher_inference_needs_graph": false,
+ "used_only_in_training_loss": true,
+ "graph_used_when": "only while building the table from the TRAIN message graph",
+ "target_semantics": {
+  "relation": "128-d item relation vector; pairwise cosine is the relation target",
+  "subtype": "47-dim directed-subtype distribution (multi-role)",
+  "family": "5-dim graphlet-family distribution (coarsest multi-role view)",
+  "orbit": "376-dim directed-orbit distribution (full fidelity, coverage-masked)",
+  "coverage": "1 where the observed graph supports an orbit distribution",
+  "confidence": "coverage scaled by log-degree evidence; 0 for unsupported items"
+ },
+ "carrier": {
+  "subtype": {
+   "ce": 1.6195921897888184,
+   "kl": 0.6845991611480713,
+   "target_entropy": 0.9349930286407471,
+   "constant_ce": 1.5957326889038086,
+   "constant_kl": 0.6607396602630615,
+   "macro_f1": 0.09185037029607576,
+   "majority_f1": 0.06690085129276242,
+   "carried": false
+  },
+  "family": {
+   "ce": 0.14214195311069489,
+   "kl": 0.06428173184394836,
+   "target_entropy": 0.07786022126674652,
+   "constant_ce": 0.13988307118415833,
+   "constant_kl": 0.062022849917411804,
+   "macro_f1": 0.4995921696574225,
+   "majority_f1": 0.4995921696574225,
+   "carried": false
+  },
+  "orbit": {
+   "ce": 3.9150445461273193,
+   "kl": 3.4356633126735687,
+   "target_entropy": 0.4793812334537506,
+   "constant_ce": 3.49125337600708,
+   "constant_kl": 3.0118721425533295,
+   "macro_f1": 0.027051319619228777,
+   "majority_f1": 0.0037023201759847258,
+   "carried": false
+  },
+  "relation": {
+   "cosine": 0.8809465169906616,
+   "constant_cosine": 0.15327481925487518,
+   "carried": true
+  }
+ },
+ "supervision_recommendation": {
+  "weights": {
+   "relation": 1.0,
+   "family": 0.0,
+   "subtype": 0.0,
+   "orbit": 0.0
+  },
+  "rule": "a component gets loss weight only when the frozen carrier beats the constant profile by >=2% CE (or relation cosine > 0.8)",
+  "primary": "relation"
+ },
+ "direction": {
+  "status": "NOT_ESTABLISHED",
+  "metric": "balanced accuracy on one-way held-out pairs",
+  "head": {
+   "test_balanced_accuracy": 0.514497697353363,
+   "best_valid": 0.5197519958019257,
+   "best_step": 50,
+   "prediction_frequency": [
+    0.5109203520591111,
+    0.4890796479408888
+   ]
+  },
+  "baselines": {
+   "in_degree_rule": 0.5087541467278777,
+   "degree_logistic": 0.5039493143558502,
+   "majority": 0.5015973052265565
+  },
+  "test_pairs": 46015,
+  "rule": "must beat both the majority and the degree baselines by >= 0.02; 0.5145 vs 0.5016 / 0.5088 / 0.5039 does not",
+  "evidence": "results/research/directed_graphlet_teacher/teacher/opt/structure_probe_v2.json",
+  "evidence_sha256": "d9b2d483c7357411463de4831f6ac8ce758f1c53a0a365295823b391bd6022ea"
+ },
+ "role_relation_alignment": {
+  "items": 1000,
+  "spearman": 0.012482860237439353,
+  "note": "relation cosine vs orbit-profile cosine over item pairs"
+ },
+ "prediction": {
+  "verdict": "GRAPH_SIGNAL",
+  "reason": "C beats A and D with a positive CI on every seed",
+  "test_auc": {
+   "A_embedding": {
+    "seed226": 0.7107761836893044,
+    "seed227": 0.7089125696153781
+   },
+   "B_graph": {
+    "seed226": 0.6780415112489369,
+    "seed227": 0.6698946832154311
+   },
+   "C_residual": {
+    "seed226": 0.747255457578413,
+    "seed227": 0.7474857553585366
+   },
+   "D_shuffled": {
+    "seed226": 0.7140714746551424,
+    "seed227": 0.7119611165800322
+   },
+   "E_nograph": {
+    "seed226": 0.7200954999952457,
+    "seed227": 0.7191470210725374
+   }
+  },
+  "comparisons": {
+   "edge:seed226:B_minus_A": {
+    "mean": -0.03275046633612885,
+    "low": -0.036013483859574244,
+    "high": -0.029573050938286966,
+    "n": 1000
+   },
+   "edge:seed226:C_minus_D": {
+    "mean": 0.03315635829894741,
+    "low": 0.031030173948246215,
+    "high": 0.035332510728382435,
+    "n": 1000
+   },
+   "edge:seed226:C_minus_A": {
+    "mean": 0.03643855000718082,
+    "low": 0.034161241125880905,
+    "high": 0.038761003465326745,
+    "n": 1000
+   },
+   "edge:seed226:C_minus_E": {
+    "mean": 0.027136658292174567,
+    "low": 0.02489160524013277,
+    "high": 0.029433241868783246,
+    "n": 1000
+   },
+   "edge:seed227:B_minus_A": {
+    "mean": -0.039015461209110154,
+    "low": -0.04221911147825117,
+    "high": -0.036041231918678716,
+    "n": 1000
+   },
+   "edge:seed227:C_minus_D": {
+    "mean": 0.0354946840597557,
+    "low": 0.03332388971744773,
+    "high": 0.037732247418174374,
+    "n": 1000
+   },
+   "edge:seed227:C_minus_A": {
+    "mean": 0.03853229738312329,
+    "low": 0.036302083337845105,
+    "high": 0.040894392239999786,
+    "n": 1000
+   },
+   "edge:seed227:C_minus_E": {
+    "mean": 0.028333364875550344,
+    "low": 0.02630969113369728,
+    "high": 0.030580559163599894,
+    "n": 1000
+   },
+   "edge:seed_average:C_minus_A": {
+    "mean": 0.03949888027279901,
+    "low": 0.03723894673247012,
+    "high": 0.041755109907580676,
+    "n": 1000
+   },
+   "edge:seed_average:C_minus_D": {
+    "mean": 0.03425462883908433,
+    "low": 0.032215306003321655,
+    "high": 0.03634555628009607,
+    "n": 1000
+   },
+   "edge:seed_average:B_minus_A": {
+    "mean": -0.03504621451313281,
+    "low": -0.03821279777847864,
+    "high": -0.031970457424219195,
+    "n": 1000
+   }
+  },
+  "report": "REPORT_GRAPH_TEACHER_OPTIMIZATION.md"
+ },
+ "coverage": {
+  "covered_items": 12266,
+  "items": 24587,
+  "fraction": 0.4988815188407898
+ }
+}
