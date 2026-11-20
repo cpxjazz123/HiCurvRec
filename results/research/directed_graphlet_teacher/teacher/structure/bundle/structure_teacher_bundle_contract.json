@@ -1,0 +1,112 @@
+{
+ "version": "structure-teacher-bundle-v1",
+ "bundle_file": "structure_teacher_bundle.pth",
+ "targets_source": "results/research/directed_graphlet_teacher/teacher/structure/v3/structure_targets_v3.npz",
+ "teacher_source": "results/research/directed_graphlet_teacher/teacher/structure/v3/teacher_structure_v3.pth",
+ "source_contract": "results/research/directed_graphlet_teacher/teacher/structure/v3/teacher_structure_contract_v3.json",
+ "shas": {
+  "results/research/directed_graphlet_teacher/teacher/structure/v3/teacher_structure_v3.pth": "3872ceb9b5ac6cbb7a37c6114f60018c0aa5f84d756b1eb2bea158401271ab3e",
+  "results/research/directed_graphlet_teacher/teacher/structure/v3/structure_targets_v3.npz": "7af2d16537329a0934a80a97afcadc39afc2676a359d009fcf2e182deb1a37d5",
+  "results/research/directed_graphlet_teacher/teacher/structure/v3/teacher_structure_contract_v3.json": "740f078a4ead0af6ac815e6bee974428c558ae65c8d46ce08ebf57caeb6b94cf"
+ },
+ "api": {
+  "load": "structure_teacher_bundle.load_structure_teacher(path)",
+  "recognise": "induced adjacency matrix -> {family, key, orbits}",
+  "targets_for": "item ids -> graph-derived supervision rows",
+  "predict_targets": "768-d embeddings -> carrier prediction (portable fallback)",
+  "structure_loss": "student vectors (+ optional role logits) -> losses"
+ },
+ "capabilities": {
+  "neighbour_family": {
+   "ce": 0.17283767461776733,
+   "kl": -0.020034000277519226,
+   "target_entropy": 0.19287167489528656,
+   "constant_ce": 0.21118368208408356,
+   "constant_kl": 0.018312007188796997,
+   "macro_f1": 0.49994811663380717,
+   "majority_f1": 0.49994811663380717,
+   "carried": true,
+   "top1_accuracy": 0.9997924880680639,
+   "minority_items": 1,
+   "minority_top1_accuracy": 0.0,
+   "role_rank_correlation": 0.9987006187438965
+  },
+  "neighbour_orbit": {
+   "ce": 2.4996278285980225,
+   "kl": 0.6255617141723633,
+   "target_entropy": 1.8740661144256592,
+   "constant_ce": 2.723543882369995,
+   "constant_kl": 0.8494777679443359,
+   "macro_f1": 0.012365892014288535,
+   "majority_f1": 0.009506586651615852,
+   "carried": true,
+   "top1_accuracy": 0.25461714048557793,
+   "minority_items": 3581,
+   "minority_top1_accuracy": 0.008656799776598716,
+   "role_rank_correlation": 0.5925862193107605
+  },
+  "own_orbit": {
+   "ce": 3.8695192337036133,
+   "kl": 3.389574944972992,
+   "target_entropy": 0.47994428873062134,
+   "constant_ce": 3.5004048347473145,
+   "constant_kl": 3.020460546016693,
+   "macro_f1": 0.01816815301394196,
+   "majority_f1": 0.003650026838432635,
+   "carried": false,
+   "top1_accuracy": 0.06194331983805668,
+   "minority_items": 2249,
+   "minority_top1_accuracy": 0.04979991107158737,
+   "role_rank_correlation": 0.2117188721895218
+  },
+  "own_subtype": {
+   "ce": 1.624205470085144,
+   "kl": 0.6861110329627991,
+   "target_entropy": 0.938094437122345,
+   "constant_ce": 1.6024222373962402,
+   "constant_kl": 0.6643278002738953,
+   "macro_f1": 0.1041103197795398,
+   "majority_f1": 0.07741755170486306,
+   "carried": false,
+   "top1_accuracy": 0.42874493927125507,
+   "minority_items": 1362,
+   "minority_top1_accuracy": 0.06901615271659324,
+   "role_rank_correlation": 0.7534407377243042
+  },
+  "relation": {
+   "cosine": 0.8626939654350281,
+   "constant_cosine": 0.38026392459869385,
+   "carried": true
+  },
+  "neighbour_relation": {
+   "cosine": 0.8443525433540344,
+   "constant_cosine": 0.6070494651794434,
+   "carried": true
+  }
+ },
+ "weights": {
+  "relation": 1.0,
+  "neighbour_relation": 0.5,
+  "neighbour_orbit": 0.5,
+  "neighbour_family": 0.0,
+  "own_orbit": 0.0,
+  "own_subtype": 0.0
+ },
+ "boundary": {
+  "rqvae_input_changed": false,
+  "rqvae_encoder_input": "the original 768-d Stage1 item embedding only",
+  "teacher_inference_needs_graph": false,
+  "used_only_in_training_loss": true
+ },
+ "not_established": [
+  "direction prediction",
+  "per-role identification of minority roles",
+  "any SID collision or Recall effect"
+ ],
+ "coverage": {
+  "neighbourhood_items": 24094,
+  "family_items": 24426,
+  "own_orbit_items": 12266,
+  "items": 24587
+ }
+}

@@ -67,6 +67,10 @@ ANALYSIS = (
     "teacher/structure/v3/teacher_structure_contract_v3.json",
     "teacher/structure/v3/teacher_structure_manifest_v3.json",
     "teacher/structure/v3/structure_teacher_v3_report.json",
+    "structure_teacher_bundle.py", "tests/test_structure_teacher_bundle.py",
+    "REPORT_STRUCTURE_TEACHER_BUNDLE.md", "issue229_bundle_comment.md",
+    "teacher/structure/bundle/structure_teacher_bundle_contract.json",
+    "teacher/structure/bundle/structure_teacher_bundle_manifest.json",
 )
 
 
