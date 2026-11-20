@@ -34,7 +34,13 @@ SEED = 20261120
 
 
 def heldout_edge_pairs() -> set[tuple[int, int]]:
-    """Ordered node pairs that sit inside any held-out instance."""
+    """Unordered node pairs that sit inside any held-out instance.
+
+    Stored as ``(min, max)``: direction is not part of the key, because a held-out
+    instance must lose *both* directions of a pair it sits on.  The earlier order-
+    sensitive comparison let ``b -> a`` survive when only ``(a, b)`` was recorded,
+    which leaked the held-out edges back into the counts.
+    """
     import itertools
 
     vocab = load_vocabulary()
@@ -48,13 +54,14 @@ def heldout_edge_pairs() -> set[tuple[int, int]]:
 
 
 def reduce_graph(matrix, pairs: set[tuple[int, int]]):
-    """Drop every edge whose endpoints share a held-out instance."""
+    """Drop both directions of every edge whose endpoints share a held-out instance."""
     from scipy import sparse
 
     matrix = matrix.tocsr().copy()
     matrix.data[:] = True
     rows, cols = matrix.nonzero()
-    keep = np.array([(int(a), int(b)) not in pairs for a, b in zip(rows, cols)])
+    keep = np.array([(min(int(a), int(b)), max(int(a), int(b))) not in pairs
+                     for a, b in zip(rows, cols)])
     return sparse.csr_matrix((np.ones(int(keep.sum()), dtype=bool),
                               (rows[keep], cols[keep])), shape=matrix.shape)
 
