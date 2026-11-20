@@ -1,0 +1,30 @@
+{
+ "family": "K3",
+ "instances": 512,
+ "steps": 3000,
+ "readout": "linear",
+ "train": {
+  "ce": 0.46697288751602173,
+  "kl": 0.0015576481819152832,
+  "uniform_kl": 0.22773192822933197
+ },
+ "heldout": {
+  "ce": 1.137326955795288,
+  "kl": 0.6657639145851135,
+  "uniform_kl": 0.22158417105674744,
+  "top1": 0.5078125
+ },
+ "target_entropy": {
+  "train": 0.46541523933410645,
+  "heldout": 0.47156304121017456
+ },
+ "reference": {
+  "note": "relation_gate.json, held-out KL at step 200 on the same instances; uniform is the no-information score",
+  "uniform_kl": 0.22158417105674744,
+  "none_kl": 0.2858,
+  "teacher_rel_kl": 0.2495,
+  "shuffled_rel_kl": 0.244,
+  "init_kl": 0.5065,
+  "shuffled_value_kl": 0.4865
+ }
+}

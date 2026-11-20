@@ -1,0 +1,42 @@
+{
+ "teacher": {
+  "pool": "results/research/directed_graphlet_role/instances.npz",
+  "pool_sha256": "9d0661e9412b965c410c6e4b0fd7b5539f9b4af8aeb88332b2918b6b0dfd71f0",
+  "subtypes": "results/research/directed_graphlet_role/subtypes.json",
+  "subtypes_sha256": "ae500b4629be8f69a7875f9fb0fbe081c359ee663274dc060904f2b5e13ea1d2",
+  "graph_sha256": "6dbac4545f23779c26f95e3f128daeb916079f53fad7ec159dd8bfb08e7121e8",
+  "seed": 20261120,
+  "steps": 1500,
+  "batch": 512,
+  "hidden": 128,
+  "layers": 2,
+  "train_cap": 20000,
+  "test_cap": 5000,
+  "torch": "2.8.0+cu128"
+ },
+ "instances": 360000,
+ "distinct_items": 23977,
+ "items_with_at_least": 3,
+ "repeated_items": 21383,
+ "within_item_cosine": {
+  "mean": 0.4771603128827472,
+  "median": 0.4518186151981354,
+  "p10": 0.37092134952545164,
+  "p90": 0.6162830114364624,
+  "n": 21383
+ },
+ "between_item_cosine": {
+  "mean": 0.4431806885846425,
+  "median": 0.3870006203651428,
+  "p10": 0.04363872669637203,
+  "p90": 0.9903534233570099,
+  "n": 20000
+ },
+ "embedding_probe": {
+  "r2_heldout": -4.0851272717467175,
+  "train_items": 17106,
+  "test_items": 4277,
+  "target_dim": 128
+ },
+ "verdict": "unstable"
+}
