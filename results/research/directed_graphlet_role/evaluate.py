@@ -86,9 +86,14 @@ def family_retention(codes: np.ndarray, families: dict) -> dict:
     out = {}
     for family, (nodes, _orbits, _subtypes) in families.items():
         row = {}
-        counts = np.bincount(codes[:, 0], minlength=256).astype(np.float64)
-        null = float(((counts / counts.sum()) ** 2).sum())
         for depth, label in ((1, "L1"), (2, "L1L2"), (3, "full")):
+            # The null is the chance that two random items share the PREFIX of
+            # this depth, from that depth's own prefix counts -- using the L1
+            # frequency for every depth (the earlier version) made the deep
+            # gains meaningless.
+            _, prefix_counts = np.unique(codes[:, :depth], axis=0, return_counts=True)
+            frequencies = prefix_counts.astype(np.float64) / prefix_counts.sum()
+            null = float((frequencies ** 2).sum())
             sliced = codes[nodes, :depth]
             equal = (sliced[:, :, None, :] == sliced[:, None, :, :]).all(-1)
             pairs = np.triu_indices(nodes.shape[1], 1)

@@ -1,0 +1,47 @@
+{
+ "family": "P3",
+ "steps": 600,
+ "top_k": {
+  "k": 4,
+  "subtypes": [
+   1,
+   3,
+   0,
+   4
+  ],
+  "support": [
+   31556,
+   14626,
+   12957,
+   447
+  ],
+  "real": {
+   "control": "real_labels",
+   "final_loss": 1.2304930686950684,
+   "train_f1": 0.33346044467768415,
+   "heldout_f1": 0.23858563704579522,
+   "chance": 0.25
+  },
+  "shuffled": {
+   "control": "shuffled_labels",
+   "final_loss": 1.2457325458526611,
+   "train_f1": 0.31814958261428017,
+   "heldout_f1": 0.2223977148839399,
+   "chance": 0.25
+  }
+ },
+ "top_two": {
+  "subtypes": [
+   1,
+   3
+  ],
+  "support": [
+   31556,
+   14626
+  ],
+  "loss": 0.6600964069366455,
+  "train_accuracy": 0.5887500047683716,
+  "heldout_accuracy": 0.49500003457069397,
+  "chance": 0.5
+ }
+}
