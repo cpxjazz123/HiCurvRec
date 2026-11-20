@@ -1,0 +1,25 @@
+{
+ "family": "K1_3",
+ "steps": 1500,
+ "hidden": 256,
+ "representations": {
+  "semantic": {
+   "dim": 3072,
+   "train_pairs": 24000,
+   "heldout_pairs": 24000,
+   "positive_rate": 0.5,
+   "auc_before_training": 0.5027427847222222,
+   "auc_heldout": 0.5966092326388889,
+   "train_loss_at_step_400": 0.6066811482478531
+  },
+  "teacher": {
+   "dim": 512,
+   "train_pairs": 24000,
+   "heldout_pairs": 24000,
+   "positive_rate": 0.5,
+   "auc_before_training": 0.6003433541666666,
+   "auc_heldout": 0.9999999722222223,
+   "train_loss_at_step_400": 5.01522202592261e-06
+  }
+ }
+}

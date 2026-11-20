@@ -1,0 +1,95 @@
+{
+ "config": {
+  "family": "K1_3",
+  "steps": 300,
+  "instances": 512,
+  "heldout": 512,
+  "weight": 2.2134797250293595e-06,
+  "aux_share": 0.1,
+  "seed": 225,
+  "positive_rate": 0.5
+ },
+ "runs": {
+  "none": {
+   "arm": "none",
+   "init_sha": "e3890c57d77a09aac9ddb7931553aa020b75170b3e2ad5d1e205ba8e7df80634",
+   "trace": [
+    {
+     "step": 150,
+     "main": 0.00014503480633720756,
+     "aux": 0.0,
+     "heldout_auc": 0.5753587086995443,
+     "l1_used": 256,
+     "l3_used": 1827,
+     "collision": 0.10791015625,
+     "spacing": 0.07706748838336017
+    },
+    {
+     "step": 300,
+     "main": 0.00018243097292724997,
+     "aux": 0.0,
+     "heldout_auc": 0.5795296563042535,
+     "l1_used": 256,
+     "l3_used": 1838,
+     "collision": 0.1025390625,
+     "spacing": 0.09473111723656523
+    }
+   ],
+   "final_sha": "a1f5619801a515e13f1e1e1ca1c0fe40d06ad21236ff51c3e1af993d0904834e"
+  },
+  "affinity": {
+   "arm": "affinity",
+   "init_sha": "e3890c57d77a09aac9ddb7931553aa020b75170b3e2ad5d1e205ba8e7df80634",
+   "trace": [
+    {
+     "step": 150,
+     "main": 0.0001559488446218893,
+     "aux": 2.24515962600708,
+     "heldout_auc": 0.5492791069878472,
+     "l1_used": 256,
+     "l3_used": 1788,
+     "collision": 0.126953125,
+     "spacing": 0.10676010175632086
+    },
+    {
+     "step": 300,
+     "main": 0.00017615017713978887,
+     "aux": 1.9401190280914307,
+     "heldout_auc": 0.5637567308213975,
+     "l1_used": 256,
+     "l3_used": 1839,
+     "collision": 0.10205078125,
+     "spacing": 0.10242626493193915
+    }
+   ],
+   "final_sha": "c929cd1ececa08a2d2603f54cf68e10435475206e8a9a32379535ce29b5042db"
+  },
+  "shuffled": {
+   "arm": "shuffled",
+   "init_sha": "e3890c57d77a09aac9ddb7931553aa020b75170b3e2ad5d1e205ba8e7df80634",
+   "trace": [
+    {
+     "step": 150,
+     "main": 0.00015406188322231174,
+     "aux": 2.48319149017334,
+     "heldout_auc": 0.5502861870659722,
+     "l1_used": 256,
+     "l3_used": 1801,
+     "collision": 0.12060546875,
+     "spacing": 0.10445161845548491
+    },
+    {
+     "step": 300,
+     "main": 0.00018269011343363672,
+     "aux": 2.1036574840545654,
+     "heldout_auc": 0.563727060953776,
+     "l1_used": 256,
+     "l3_used": 1830,
+     "collision": 0.1064453125,
+     "spacing": 0.10224999490556756
+    }
+   ],
+   "final_sha": "014b4bb4e30e24e53bab50c4c6ccb5ed38e3bf14fbab1d3ebc13bfe48e984562"
+  }
+ }
+}

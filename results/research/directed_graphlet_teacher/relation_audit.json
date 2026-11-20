@@ -1,0 +1,215 @@
+{
+ "teacher": {
+  "pool": "results/research/directed_graphlet_role/instances.npz",
+  "pool_sha256": "9d0661e9412b965c410c6e4b0fd7b5539f9b4af8aeb88332b2918b6b0dfd71f0",
+  "subtypes": "results/research/directed_graphlet_role/subtypes.json",
+  "subtypes_sha256": "ae500b4629be8f69a7875f9fb0fbe081c359ee663274dc060904f2b5e13ea1d2",
+  "graph_sha256": "6dbac4545f23779c26f95e3f128daeb916079f53fad7ec159dd8bfb08e7121e8",
+  "seed": 20261120,
+  "steps": 1500,
+  "batch": 512,
+  "hidden": 128,
+  "layers": 2,
+  "train_cap": 20000,
+  "test_cap": 5000,
+  "torch": "2.8.0+cu128"
+ },
+ "families": {
+  "train": {
+   "K3": {
+    "instances": 4000,
+    "pairs": 24000,
+    "positive_rate": 1.0,
+    "semantic": {
+     "auc": NaN,
+     "top1": 1.0
+    },
+    "teacher": {
+     "auc": NaN,
+     "top1": 1.0
+    },
+    "sid": {
+     "auc": NaN,
+     "top1": 1.0
+    }
+   },
+   "P3": {
+    "instances": 4000,
+    "pairs": 24000,
+    "positive_rate": 0.6666666666666666,
+    "semantic": {
+     "auc": 0.565512515625,
+     "top1": 0.77
+    },
+    "teacher": {
+     "auc": 0.5174744375,
+     "top1": 0.5315
+    },
+    "sid": {
+     "auc": 0.5245251875,
+     "top1": 0.699
+    }
+   },
+   "C4": {
+    "instances": 4000,
+    "pairs": 48000,
+    "positive_rate": 0.6666666666666666,
+    "semantic": {
+     "auc": 0.5341949921875,
+     "top1": 0.7465
+    },
+    "teacher": {
+     "auc": 0.46767040625,
+     "top1": 0.58875
+    },
+    "sid": {
+     "auc": 0.5119520546875,
+     "top1": 0.69225
+    }
+   },
+   "P4": {
+    "instances": 4000,
+    "pairs": 48000,
+    "positive_rate": 0.5,
+    "semantic": {
+     "auc": 0.5742215208333333,
+     "top1": 0.68125
+    },
+    "teacher": {
+     "auc": 0.4511129409722222,
+     "top1": 0.29775
+    },
+    "sid": {
+     "auc": 0.53565971875,
+     "top1": 0.5835
+    }
+   },
+   "K1_3": {
+    "instances": 4000,
+    "pairs": 48000,
+    "positive_rate": 0.5,
+    "semantic": {
+     "auc": 0.5698514131944444,
+     "top1": 0.66475
+    },
+    "teacher": {
+     "auc": 0.5302928402777778,
+     "top1": 0.00975
+    },
+    "sid": {
+     "auc": 0.5242404583333333,
+     "top1": 0.56075
+    }
+   }
+  },
+  "heldout": {
+   "K3": {
+    "instances": 4000,
+    "pairs": 24000,
+    "positive_rate": 1.0,
+    "semantic": {
+     "auc": NaN,
+     "top1": 1.0
+    },
+    "teacher": {
+     "auc": NaN,
+     "top1": 1.0
+    },
+    "sid": {
+     "auc": NaN,
+     "top1": 1.0
+    }
+   },
+   "P3": {
+    "instances": 4000,
+    "pairs": 24000,
+    "positive_rate": 0.6666666666666666,
+    "semantic": {
+     "auc": 0.571669453125,
+     "top1": 0.77475
+    },
+    "teacher": {
+     "auc": 0.526719875,
+     "top1": 0.5425
+    },
+    "sid": {
+     "auc": 0.530829078125,
+     "top1": 0.708
+    }
+   },
+   "C4": {
+    "instances": 4000,
+    "pairs": 48000,
+    "positive_rate": 0.6666666666666666,
+    "semantic": {
+     "auc": 0.5328671484375,
+     "top1": 0.747
+    },
+    "teacher": {
+     "auc": 0.4730705546875,
+     "top1": 0.58525
+    },
+    "sid": {
+     "auc": 0.51302741796875,
+     "top1": 0.6985
+    }
+   },
+   "P4": {
+    "instances": 4000,
+    "pairs": 48000,
+    "positive_rate": 0.5,
+    "semantic": {
+     "auc": 0.5723121597222223,
+     "top1": 0.682
+    },
+    "teacher": {
+     "auc": 0.46195735069444444,
+     "top1": 0.3075
+    },
+    "sid": {
+     "auc": 0.5201418298611111,
+     "top1": 0.55425
+    }
+   },
+   "K1_3": {
+    "instances": 4000,
+    "pairs": 48000,
+    "positive_rate": 0.5,
+    "semantic": {
+     "auc": 0.5688578576388889,
+     "top1": 0.65525
+    },
+    "teacher": {
+     "auc": 0.5276260694444445,
+     "top1": 0.0085
+    },
+    "sid": {
+     "auc": 0.5245483263888889,
+     "top1": 0.5555
+    }
+   }
+  }
+ },
+ "pooled": {
+  "semantic": {
+   "auc": 0.5796845438657408,
+   "top1": 0.77215,
+   "auc_degree_band": 0.5796893699433031,
+   "pairs_in_band": 193486
+  },
+  "teacher": {
+   "auc": 0.4947983726851852,
+   "top1": 0.48715,
+   "auc_degree_band": 0.49401093326837303,
+   "pairs_in_band": 193486
+  },
+  "sid": {
+   "auc": 0.5278658110532407,
+   "top1": 0.705175,
+   "auc_degree_band": 0.527895862389529,
+   "pairs_in_band": 193486
+  },
+  "positive_rate": 0.625,
+  "pairs": 384000
+ }
+}
