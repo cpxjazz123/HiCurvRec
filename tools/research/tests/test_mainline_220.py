@@ -23,22 +23,24 @@ def mainline():
 
 def test_statement_is_the_type_role_mainline(mainline):
     statement = mainline["statement"]
+    assert mainline["active_issue"] == "#220"
     assert "Type" in statement and "Role" in statement
     assert "量化" in statement and "SID" in statement
 
 
 def test_must_hold_forbids_recasting_the_target_as_pairs(mainline):
     joined = " ".join(mainline["must_hold"])
-    assert "单实例" in joined and "交叉熵" in joined
-    assert "pairwise" in joined.lower() or "两两" in joined
-    assert "真实量化器" in joined and "码本" in joined
+    assert "CE" in joined and ("Role" in joined or "y_role" in joined)
+    assert "P4" in joined and "BCE" in joined
+    assert "量化" in joined and "码本" in joined
 
 
-def test_curvature_definitions_are_historical(mainline):
+def test_definitions_are_the_type_role_schema(mainline):
     definitions = mainline["definitions"]
-    assert definitions["af3"]["status"] == "historical"
-    assert definitions["mixed_curvature_space"]["status"] == "historical"
-    assert definitions["graphlet_type_role"]["status"] if "status" in definitions["graphlet_type_role"] else True
+    for key in ("graphlet_type", "node_role", "predictor"):
+        assert key in definitions, key
+    joined = " ".join(str(value) for value in definitions.values())
+    assert "可选" in joined or "历史" in joined
 
 
 def test_objective_and_contract_follow_the_new_mainline():
