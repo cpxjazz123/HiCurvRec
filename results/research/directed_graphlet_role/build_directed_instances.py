@@ -56,9 +56,12 @@ def main() -> None:
             orbits.append(orbit_ids)
         kept_keys = sorted({key for key in keys if key is not None})
         support = {key: sum(1 for value in keys if value == key) for key in kept_keys}
-        indexed = {key: position for position, key in enumerate(kept_keys)
-                   if support[key] >= MIN_SUPPORT}
-        other = len(indexed)
+        # Number only the subtypes that survive min-support: a gap in the
+        # enumeration let a kept subtype share the `other` id (P4 did: subtype 11
+        # and other=11), which trained the type head on a false class.
+        kept = [key for key in kept_keys if support[key] >= MIN_SUPPORT]
+        indexed = {key: position for position, key in enumerate(kept)}
+        other = len(kept)
         subtype_index[family] = {**indexed, "__other__": other}
         subtype_array = np.array([indexed.get(key, other) for key in keys], dtype=np.int64)
         roles_array = np.array(orbits, dtype=np.int64)
@@ -72,6 +75,7 @@ def main() -> None:
             "skeleton_mismatch": int(dropped.sum()),
             "subtypes_seen": len(kept_keys),
             "subtypes_kept": len(indexed),
+            "other_id": other,
             "other_instances": int((subtype_array == other).sum()),
             "train": int((split == 0).sum()),
             "heldout": int((split == 1).sum()),

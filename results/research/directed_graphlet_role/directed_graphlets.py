@@ -99,10 +99,15 @@ def _permutations(n: int):
 def canonical(matrix: np.ndarray) -> tuple[str, tuple[int, ...], np.ndarray]:
     """(canonical bit key, per-node orbit id, canonical matrix) for one pattern.
 
-    All n! permutations are evaluated at once, so the pattern classification that
-    runs over every sampled instance is a handful of array operations instead of a
-    Python loop.  The orbit of a node is its class under the pattern's automorphism
-    group: permutations that preserve the adjacency exchange nodes of equal role.
+    The key is the lexicographically smallest row-major bit string over all node
+    permutations, so it does not depend on the order the caller listed the nodes in.
+
+    The orbit id is the node's **canonical position** class, not its position in the
+    caller's ordering: two nodes share an id exactly when an automorphism of the
+    pattern exchanges them, and the ids are the smallest canonical position in each
+    class.  Labelling by input position (the earlier version) gave the same
+    structural role different ids for different orderings, which is inconsistent
+    supervision for the head.
     """
     n = matrix.shape[0]
     order, weights = _permutations(n)
@@ -111,10 +116,12 @@ def canonical(matrix: np.ndarray) -> tuple[str, tuple[int, ...], np.ndarray]:
     value = bits.astype(object) @ weights                             # (P,)
     best = int(np.argmin(value))
     best_matrix = permuted[best]
+    best_order = order[best]
     best_key = "".join("1" if best_matrix[i, j] else "0" for i in range(n) for j in range(n))
-    # automorphisms of the pattern as given: permutations that leave the
-    # adjacency unchanged, i.e. those that send nodes to nodes of equal role
-    automorphisms = order[np.all(permuted == matrix, axis=(1, 2))]
+
+    # automorphisms of the canonical form: permutations that leave it unchanged
+    canonical_permuted = best_matrix[order[:, :, None], order[:, None, :]]
+    automorphisms = order[np.all(canonical_permuted == best_matrix, axis=(1, 2))]
     parent = list(range(n))
 
     def find(x: int) -> int:
@@ -124,11 +131,16 @@ def canonical(matrix: np.ndarray) -> tuple[str, tuple[int, ...], np.ndarray]:
         return x
 
     for mapping in automorphisms:
-        for node, image in enumerate(mapping.tolist()):
-            a, b = find(node), find(image)
+        for canonical_position, image in enumerate(mapping.tolist()):
+            a, b = find(canonical_position), find(image)
             if a != b:
                 parent[max(a, b)] = min(a, b)
-    orbit_ids = tuple(find(node) for node in range(n))
+    canonical_orbit = [find(position) for position in range(n)]
+    # original node i sits at canonical position pos[i]
+    pos = [0] * n
+    for canonical_position, original in enumerate(best_order.tolist()):
+        pos[original] = canonical_position
+    orbit_ids = tuple(canonical_orbit[pos[node]] for node in range(n))
     return best_key, orbit_ids, best_matrix
 
 

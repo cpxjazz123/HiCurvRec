@@ -64,8 +64,15 @@ def load_vocabulary(mode: str = "directed") -> dict:
                 orbit_vocab[(family, key, orbit)] = len(orbit_vocab)
                 orbit_ids.append(orbit_vocab[(family, key, orbit)])
             orbits_of[subtype_id] = orbit_ids
+    # One (subtype x orbit) boolean table instead of a Python loop that built
+    # thousands of tiny GPU tensors per step: the loop was both slow and a
+    # plausible source of the silent death the aux arms hit around step 10,560.
+    allowed = torch.zeros(len(subtype_of), len(orbit_vocab), dtype=torch.bool)
+    for subtype_id, orbits in orbits_of.items():
+        allowed[subtype_id, orbits] = True
     return {"mode": mode, "subtype_of": subtype_of, "orbits_of": orbits_of,
-            "n_subtypes": len(subtype_of), "n_orbits": len(orbit_vocab), "raw": raw}
+            "n_subtypes": len(subtype_of), "n_orbits": len(orbit_vocab),
+            "allowed": allowed, "raw": raw}
 
 
 def load_pool(split: str, vocabulary: dict, max_instances: int | None = None) -> dict:
@@ -176,13 +183,11 @@ def joint_loss(head: DirectedTypeRoleHead, features: dict, draws: dict,
         logits, role_logits = head(features[family])
         type_logits.append(logits[valid])
         type_ids.append(torch.from_numpy(targets["subtype"][valid]).to(logits.device))
-        mask = torch.zeros_like(role_logits, dtype=torch.bool)
-        for row, subtype_id in enumerate(targets["subtype"]):
-            if subtype_id < 0:
-                continue
-            allowed = torch.tensor(vocabulary["orbits_of"][int(subtype_id)],
-                                   device=mask.device)
-            mask[row][:, allowed] = True
+        subtype_ids = torch.from_numpy(targets["subtype"]).to(role_logits.device)
+        allowed_table = vocabulary["allowed"].to(role_logits.device)
+        mask = allowed_table[subtype_ids.clamp(min=0)].unsqueeze(1).expand(
+            -1, role_logits.shape[1], -1).clone()                # (N, k, n_orbits)
+        mask[subtype_ids < 0] = True                             # nothing to mask off
         masked = role_logits.masked_fill(~mask, float("-inf"))
         target_orbits = torch.from_numpy(targets["orbit"]).to(role_logits.device)
         loss_role = F.cross_entropy(masked.reshape(-1, masked.shape[-1]),

@@ -92,3 +92,48 @@ def test_the_pool_file_carries_directed_labels():
         # role ids are orbit classes inside the subtype, never random
         assert (roles >= 0).all()
         assert (subtypes >= 0).all()
+
+
+def test_orbit_ids_do_not_depend_on_the_input_node_order():
+    """The same structural role gets the same id whatever order the caller used.
+
+    This is the defect the review found: labeling by input position gave the
+    source of a directed path a different id depending on the node order, so the
+    head was trained on inconsistent supervision.
+    """
+    path = np.zeros((4, 4), dtype=bool)
+    path[0, 1] = path[1, 2] = path[2, 3] = True
+    base = classify(path)
+    for perm in ([3, 2, 1, 0], [1, 0, 3, 2], [2, 0, 3, 1], [0, 2, 3, 1]):
+        permuted = path[np.ix_(perm, perm)]
+        got = classify(permuted)
+        assert got[0] == base[0]
+        mapped = [0] * 4
+        for position, original in enumerate(perm):
+            mapped[original] = got[2][position]
+        assert tuple(mapped) == base[2], (perm, mapped, base[2])
+
+
+def test_source_and_sink_roles_are_stable_under_reversal():
+    path = np.zeros((4, 4), dtype=bool)
+    path[0, 1] = path[1, 2] = path[2, 3] = True
+    forward = classify(path)[2]
+    backward = classify(path[::-1, ::-1])[2]
+    assert forward[0] == backward[3], "the source role must stay the source role"
+    assert forward[3] == backward[0], "the sink role must stay the sink role"
+
+
+def test_the_pool_never_uses_the_other_id_for_a_kept_subtype():
+    import json
+    coverage = json.loads((HERE / "coverage.json").read_text())
+    payload = np.load(HERE / "instances.npz", allow_pickle=False)
+    for family in ("K3", "P3", "C4", "P4", "K1_3"):
+        row = coverage["families"][family]
+        kept = row["subtypes_kept"]
+        other = row["other_id"]
+        assert other == kept, (family, kept, other)
+        subtypes = payload[f"{family}_subtype"]
+        assert subtypes.min() >= 0
+        # the `other` id only ever holds instances whose subtype was merged
+        merged = int((subtypes == other).sum())
+        assert merged == row["other_instances"], (family, merged, row["other_instances"])

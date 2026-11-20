@@ -256,11 +256,11 @@ def heldout_scores(head, encoder, embeddings, device, families, vocab) -> dict:
         valid = targets["subtype"] >= 0
         subtype_predictions.append(type_logits[torch.from_numpy(valid)].argmax(-1).cpu())
         subtype_targets.append(torch.from_numpy(targets["subtype"][valid]))
-        mask = torch.zeros_like(role_logits, dtype=torch.bool)
-        for row, subtype_id in enumerate(targets["subtype"]):
-            if subtype_id >= 0:
-                allowed = torch.tensor(vocab["orbits_of"][int(subtype_id)], device=mask.device)
-                mask[row][:, allowed] = True
+        subtype_ids = torch.from_numpy(targets["subtype"]).to(role_logits.device)
+        allowed_table = vocab["allowed"].to(role_logits.device)
+        mask = allowed_table[subtype_ids.clamp(min=0)].unsqueeze(1).expand(
+            -1, role_logits.shape[1], -1).clone()
+        mask[subtype_ids < 0] = True
         masked = role_logits.masked_fill(~mask, float("-inf"))
         predictions = masked.argmax(-1).cpu()
         role_rows[family] = (predictions.reshape(-1), torch.from_numpy(targets["orbit"]).reshape(-1))
