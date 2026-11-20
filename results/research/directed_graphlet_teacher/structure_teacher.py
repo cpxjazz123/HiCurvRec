@@ -168,6 +168,8 @@ def relation_ranking_loss(vectors: torch.Tensor, positive_pairs, negative_pairs,
     unit = _unit(vectors.float())
     positive = torch.as_tensor(np.asarray(positive_pairs), dtype=torch.long)
     negative = torch.as_tensor(np.asarray(negative_pairs), dtype=torch.long)
+    if positive.numel() == 0:
+        return vectors.sum() * 0.0
     pos = (unit[positive[:, 0]] * unit[positive[:, 1]]).sum(-1)
     neg = (unit[positive[:, 0]] * unit[negative]).sum(-1)
     return F.relu(margin - pos + neg).mean()
@@ -179,6 +181,8 @@ def relation_distill_loss(vectors: torch.Tensor, pairs, teacher_relation: torch.
     student = _unit(vectors.float())
     teacher = _unit(teacher_relation.float())
     index = torch.as_tensor(np.asarray(pairs), dtype=torch.long)
+    if index.numel() == 0:
+        return vectors.sum() * 0.0
     predicted = (student[index[:, 0]] * student[index[:, 1]]).sum(-1)
     target = (teacher[index[:, 0]] * teacher[index[:, 1]]).sum(-1)
     return F.mse_loss(predicted, target)

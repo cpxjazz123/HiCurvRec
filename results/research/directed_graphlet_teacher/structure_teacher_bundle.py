@@ -126,12 +126,20 @@ class StructureTeacherBundle:
             local_negatives = np.asarray([local[int(d)] for d in negatives[keep]],
                                          dtype=np.int64)
             teacher = relation[torch.from_numpy(ids)]
-        rank = st.relation_ranking_loss(student_vectors, local_pairs, local_negatives)
-        distill = st.relation_distill_loss(student_vectors, local_pairs, teacher)
-        result = {"relation_ranking": float(rank.detach()),
-                  "relation_distill": float(distill.detach()),
-                  "pairs_used": int(len(local_pairs)), "orbit": None}
-        total = weights.get("relation", 1.0) * rank + 0.1 * distill
+        if len(local_pairs):
+            rank = st.relation_ranking_loss(student_vectors, local_pairs,
+                                            local_negatives)
+            distill = st.relation_distill_loss(student_vectors, local_pairs, teacher)
+            total = weights.get("relation", 1.0) * rank + 0.1 * distill
+            result = {"relation_ranking": float(rank.detach()),
+                      "relation_distill": float(distill.detach()),
+                      "pairs_used": int(len(local_pairs)), "orbit": None}
+        else:
+            # no observed pair survives inside this batch: report the absence
+            # instead of the NaN that mean()/mse_loss() over an empty set gives
+            total = student_vectors.sum() * 0.0
+            result = {"relation_ranking": None, "relation_distill": None,
+                      "pairs_used": 0, "orbit": None}
         if role_logits is not None and weights.get("neighbour_orbit", 0.0) > 0:
             target = torch.from_numpy(self.targets["neighbour_orbit"]).float()
             coverage = torch.from_numpy(self.targets["coverage_neighbour"]).float()

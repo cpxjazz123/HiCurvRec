@@ -112,3 +112,25 @@ def test_structure_loss_accepts_a_mini_batch(bundle):
     assert float(loss) < float(zero_loss)
     with pytest.raises(ValueError):
         bundle.structure_loss(rows[:10], item_ids=ids)
+
+
+def test_structure_loss_is_finite_when_a_batch_has_no_internal_pairs(bundle):
+    """A mini-batch of unrelated items has no relation pair; it must not yield NaN."""
+    pairs = {tuple(int(x) for x in row) for row in bundle.targets["positive_pairs"]}
+    ids = []
+    for item in range(len(bundle.targets["relation"])):
+        if all((item, other) not in pairs and (other, item) not in pairs
+               for other in ids):
+            ids.append(item)
+        if len(ids) == 4:
+            break
+    assert len(ids) == 4
+    rows = torch.zeros((4, 4), requires_grad=True)
+    metrics, loss = bundle.structure_loss(rows, item_ids=np.asarray(ids))
+    assert metrics["pairs_used"] == 0
+    assert metrics["relation_ranking"] is None
+    assert metrics["relation_distill"] is None
+    assert torch.isfinite(loss)
+    assert float(loss.detach()) == 0.0
+    loss.backward()
+    assert torch.isfinite(rows.grad).all()
