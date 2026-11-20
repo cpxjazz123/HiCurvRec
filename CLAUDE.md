@@ -1,5 +1,12 @@
 # CLAUDE.md — 当前仓库执行规则
 
+## 0. 当前 Graphlet 预测监督研究主线（2026-11-20，Issue #220）
+
+- 新的研究目标以 `ideas/main_line.json` 和 [Issue #220](https://github.com/cpxjazz123/HiCurvRec/issues/220) 为准：**Graphlet 类型分类 + 实例内逐节点 Orbit 角色预测产生联合 CE Loss，经真实 RQ-VAE 量化路径监督硬 SID**。禁止把主预测任务改为 P4 边/非边分类、pairwise 排序或单独边预测。旧 #219 已按 `not_planned` 关闭。
+- 下文第 19 条、`tools/research/rounds/{agents.py,scope.py}` 中强制“行为信号 × 双曲几何”的规则，是原 Issue #121 的**历史自动轮次契约**，不再定义 Issue #220 的研究目标。AF3、双曲 Transformer、混合曲率为可选后续假设，非 #220 的强制条件；原先“不允许 BCE/CE”的旧范围描述不得误用于拒绝 #220 的 **Type/Role CE**。
+- **工程迁移尚未完成**：上述 `rounds/` 代码仍硬编码旧范围检查。任何 #220 的新候选必须先按 #220 迁移并验证其准入及提示词路径；**不得简单绕过代码检查或在旧硬门禁下强行开训**。其余 Stage2 数据隔离、冻结训练/Stage3 协议、CGV、反坍缩、导出复现规则继续有效。
+
+
 > 以下每个编号项均是一条独立规则，以当前 `main` 的实际源码和路径为准。
 
 ## 1. 仓库边界
