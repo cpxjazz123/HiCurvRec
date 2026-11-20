@@ -1,0 +1,400 @@
+{
+ "teacher": {
+  "pool": "results/research/directed_graphlet_role/instances.npz",
+  "pool_sha256": "9d0661e9412b965c410c6e4b0fd7b5539f9b4af8aeb88332b2918b6b0dfd71f0",
+  "subtypes": "results/research/directed_graphlet_role/subtypes.json",
+  "subtypes_sha256": "ae500b4629be8f69a7875f9fb0fbe081c359ee663274dc060904f2b5e13ea1d2",
+  "graph_sha256": "6dbac4545f23779c26f95e3f128daeb916079f53fad7ec159dd8bfb08e7121e8",
+  "seed": 20261120,
+  "steps": 1500,
+  "batch": 512,
+  "hidden": 128,
+  "layers": 2,
+  "train_cap": 20000,
+  "test_cap": 5000,
+  "torch": "2.8.0+cu128"
+ },
+ "config": {
+  "steps": 300,
+  "items_per_step": 128,
+  "train_items": 21737,
+  "heldout_items": 21746,
+  "weights": {
+   "encoder_only": 0.0013045218382378135,
+   "capped": 0.00044968059573422664
+  },
+  "aux_share": 0.1,
+  "collapse_margin": 0.1,
+  "seed": 227,
+  "eval_every": 50
+ },
+ "gradient_calibration": {
+  "main": [
+   0.00021346980065573007,
+   7.014792208792642e-05,
+   0.00015686287952121347,
+   8.341187640326098e-05
+  ],
+  "aux": [
+   0.016363834962248802,
+   0.015599499456584454,
+   0.015787791460752487,
+   0.016126560047268867
+  ]
+ },
+ "runs": {
+  "A_none": {
+   "arm": "A_none",
+   "source": null,
+   "pathway": "teacher",
+   "weight": 0.0,
+   "init_sha": "9855664c90bcfd9b056831f13ad105f7b6e1263662e88af32bf8687381e2bee7",
+   "trace": [
+    {
+     "consistent": true,
+     "collision": 0.29200772555872345,
+     "l1_used": 256,
+     "l2_used": 4689,
+     "l3_used": 15396,
+     "edge_auc": 0.5425563038194444,
+     "l1_lift": 0.012458333333333332,
+     "spacing": 0.04334252197774559,
+     "step": 50,
+     "aux": 0.0,
+     "main": 0.00021011366334278136,
+     "role_kl_teacher": 5.927924156188965,
+     "role_kl_labels": 5.928177356719971
+    },
+    {
+     "consistent": true,
+     "collision": 0.09679941138600201,
+     "l1_used": 256,
+     "l2_used": 8873,
+     "l3_used": 19641,
+     "edge_auc": 0.5552001736111111,
+     "l1_lift": 0.008624999999999999,
+     "spacing": 0.053469383112395935,
+     "step": 100,
+     "aux": 0.0,
+     "main": 0.0001871871791081503,
+     "role_kl_teacher": 5.928003787994385,
+     "role_kl_labels": 5.928258895874023
+    },
+    {
+     "consistent": true,
+     "collision": 0.07927894785247858,
+     "l1_used": 256,
+     "l2_used": 9961,
+     "l3_used": 20022,
+     "edge_auc": 0.5713622942708333,
+     "l1_lift": 0.008,
+     "spacing": 0.06731400153923484,
+     "step": 150,
+     "aux": 0.0,
+     "main": 0.0001924024982145056,
+     "role_kl_teacher": 5.927908897399902,
+     "role_kl_labels": 5.928163528442383
+    },
+    {
+     "consistent": true,
+     "collision": 0.06318403384530491,
+     "l1_used": 256,
+     "l2_used": 11085,
+     "l3_used": 20372,
+     "edge_auc": 0.5759773802083333,
+     "l1_lift": 0.011166666666666665,
+     "spacing": 0.0755820645059643,
+     "step": 200,
+     "aux": 0.0,
+     "main": 0.00017353883595205843,
+     "role_kl_teacher": 5.927901744842529,
+     "role_kl_labels": 5.928160667419434
+    },
+    {
+     "consistent": true,
+     "collision": 0.05081394279407703,
+     "l1_used": 256,
+     "l2_used": 11977,
+     "l3_used": 20641,
+     "edge_auc": 0.5782408246527778,
+     "l1_lift": 0.013666666666666667,
+     "spacing": 0.08115709799898845,
+     "step": 250,
+     "aux": 0.0,
+     "main": 0.0001625729346415028,
+     "role_kl_teacher": 5.927889347076416,
+     "role_kl_labels": 5.928133964538574
+    },
+    {
+     "consistent": true,
+     "collision": 0.04267451485330631,
+     "l1_used": 256,
+     "l2_used": 12621,
+     "l3_used": 20818,
+     "edge_auc": 0.5816205954861111,
+     "l1_lift": 0.012416666666666666,
+     "spacing": 0.08590702061557068,
+     "step": 300,
+     "aux": 0.0,
+     "main": 0.0001903521770145744,
+     "role_kl_teacher": 5.927761077880859,
+     "role_kl_labels": 5.928017616271973
+    }
+   ],
+   "gradients": [],
+   "final_sha": "cc2249cf8503687338d0d08287cd20b681922367de01e072e530c08de7e1a2b8"
+  },
+  "B_role_teacher_enc": {
+   "arm": "B_role_teacher_enc",
+   "source": "teacher",
+   "pathway": "encoder",
+   "weight": 0.0013045218382378135,
+   "init_sha": "9855664c90bcfd9b056831f13ad105f7b6e1263662e88af32bf8687381e2bee7",
+   "trace": [
+    {
+     "consistent": true,
+     "collision": 0.8461786075600111,
+     "l1_used": 256,
+     "l2_used": 679,
+     "l3_used": 3345,
+     "edge_auc": 0.5134094392361112,
+     "l1_lift": 0.018666666666666665,
+     "spacing": 0.03208444528187302,
+     "step": 50,
+     "aux": 5.802033424377441,
+     "main": 0.000306813046336174,
+     "role_kl_teacher": 5.76387357711792,
+     "role_kl_labels": 5.763915538787842
+    }
+   ],
+   "gradients": [
+    {
+     "step": 1,
+     "encoder": 0.025651944801211357,
+     "codebooks": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "step": 2,
+     "encoder": 0.007496753707528114,
+     "codebooks": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "step": 3,
+     "encoder": 0.008983327075839043,
+     "codebooks": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "step": 50,
+     "encoder": 0.3693036437034607,
+     "codebooks": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "final_sha": "142e67d6c40d1849eee7f21ce52e66901ebe1b03faaec0290c2446440410c2b5"
+  },
+  "C_role_teacher_enc_cb": {
+   "arm": "C_role_teacher_enc_cb",
+   "source": "teacher",
+   "pathway": "both",
+   "weight": 0.00044968059573422664,
+   "init_sha": "9855664c90bcfd9b056831f13ad105f7b6e1263662e88af32bf8687381e2bee7",
+   "trace": [
+    {
+     "consistent": true,
+     "collision": 0.7262485054722707,
+     "l1_used": 256,
+     "l2_used": 1119,
+     "l3_used": 5953,
+     "edge_auc": 0.5308601961805556,
+     "l1_lift": 0.01770833333333334,
+     "spacing": 0.030678771243267726,
+     "step": 50,
+     "aux": 5.814116954803467,
+     "main": 0.00022322300355881453,
+     "role_kl_teacher": 5.801715850830078,
+     "role_kl_labels": 5.8018479347229
+    }
+   ],
+   "gradients": [
+    {
+     "step": 1,
+     "encoder": 0.025651944801211357,
+     "codebooks": [
+      0.03567081689834595,
+      0.035681989043951035,
+      0.03566514328122139
+     ]
+    },
+    {
+     "step": 2,
+     "encoder": 0.00871338415890932,
+     "codebooks": [
+      0.03361200913786888,
+      0.033582501113414764,
+      0.03358202427625656
+     ]
+    },
+    {
+     "step": 3,
+     "encoder": 0.008101440034806728,
+     "codebooks": [
+      0.036106038838624954,
+      0.03598599508404732,
+      0.03597980737686157
+     ]
+    },
+    {
+     "step": 50,
+     "encoder": 0.3679765462875366,
+     "codebooks": [
+      0.05901506915688515,
+      0.05257243290543556,
+      0.04224700480699539
+     ]
+    }
+   ],
+   "final_sha": "95763c56c777574df4b3037b26b9421569b831441020e66d4935773ed6bc9525"
+  },
+  "D_role_teacher_shuffled": {
+   "arm": "D_role_teacher_shuffled",
+   "source": "shuffled",
+   "pathway": "encoder",
+   "weight": 0.0013045218382378135,
+   "init_sha": "9855664c90bcfd9b056831f13ad105f7b6e1263662e88af32bf8687381e2bee7",
+   "trace": [
+    {
+     "consistent": true,
+     "collision": 0.8219442656120666,
+     "l1_used": 256,
+     "l2_used": 711,
+     "l3_used": 3872,
+     "edge_auc": 0.516390578125,
+     "l1_lift": 0.017458333333333353,
+     "spacing": 0.03019922686326014,
+     "step": 50,
+     "aux": 5.805449485778809,
+     "main": 0.00033950438955798745,
+     "role_kl_teacher": 5.761837005615234,
+     "role_kl_labels": 5.761910915374756
+    }
+   ],
+   "gradients": [
+    {
+     "step": 1,
+     "encoder": 0.02074515074491501,
+     "codebooks": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "step": 2,
+     "encoder": 0.0068266307935118675,
+     "codebooks": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "step": 3,
+     "encoder": 0.007544395048171282,
+     "codebooks": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "step": 50,
+     "encoder": 0.29244810342788696,
+     "codebooks": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "final_sha": "e9e6706269f42e2f0af3cb4adb5003d3c4689586376476d7bb68f02ed00f6648"
+  },
+  "E_role_labels_enc": {
+   "arm": "E_role_labels_enc",
+   "source": "labels",
+   "pathway": "encoder",
+   "weight": 0.0013045218382378135,
+   "init_sha": "9855664c90bcfd9b056831f13ad105f7b6e1263662e88af32bf8687381e2bee7",
+   "trace": [
+    {
+     "consistent": true,
+     "collision": 0.91304147889267,
+     "l1_used": 256,
+     "l2_used": 559,
+     "l3_used": 1891,
+     "edge_auc": 0.5147959826388889,
+     "l1_lift": 0.024500000000000022,
+     "spacing": 0.03108074051417647,
+     "step": 50,
+     "aux": 5.800887107849121,
+     "main": 0.00034671108005568385,
+     "role_kl_teacher": 5.7581939697265625,
+     "role_kl_labels": 5.757815837860107
+    }
+   ],
+   "gradients": [
+    {
+     "step": 1,
+     "encoder": 0.02668525092303753,
+     "codebooks": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "step": 2,
+     "encoder": 0.007450770121067762,
+     "codebooks": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "step": 3,
+     "encoder": 0.009829675778746605,
+     "codebooks": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "step": 50,
+     "encoder": 0.2935255169868469,
+     "codebooks": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "final_sha": "a3f6af02eddf75a493d9b73040c8d76be29a257c8feb762f62c3ca1087aee602"
+  }
+ }
+}

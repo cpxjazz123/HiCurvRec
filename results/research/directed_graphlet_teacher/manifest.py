@@ -37,6 +37,8 @@ ANALYSIS = (
     "affinity_gate.py", "affinity_gate.json",
     "item_signal_audit.py", "item_signal_audit.json",
     "item_gate.py", "item_gate.json",
+    "collapse_gate.py", "collapse_gate.json",
+    "graph_teacher.py", "graph_teacher_eval.py", "graph_teacher_report.json",
     "teacher_controls.json", "gate.json",
     "tests/test_teacher_contract.py", "tests/test_student_interface.py",
     "tests/test_trainable_student.py",
