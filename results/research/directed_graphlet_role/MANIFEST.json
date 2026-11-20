@@ -217,17 +217,25 @@
      "sha256": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
      "bytes": 5570
     },
+    "teacher.py": {
+     "sha256": "64943eeb7cd5a86185f2e75f3278307e5e8d002365298becca69fc7911d9923a",
+     "bytes": 5170
+    },
     "tests/test_directed_arms.py": {
      "sha256": "449696c1364023c5cb70e5df6bc290f2c321c41b6b3fc52d1b06fa2e05ab98de",
      "bytes": 7246
+    },
+    "tests/test_teacher_contract.py": {
+     "sha256": "0eaaa204140aa9b2d03afc21b42dda7dd5820035587e5da7db3b8824834b1c38",
+     "bytes": 5686
     },
     "train_config.py": {
      "sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
      "bytes": 6213
     },
     "train_rqvae.py": {
-     "sha256": "b83582816a8331e4816e58b18997697254a6514fdacfbe8b1ff607a9c620df86",
-     "bytes": 35554
+     "sha256": "ba6e36a6f478c2e6fa36a2f2496e4c3d615f4cc0527219c696fa585a01c44bf6",
+     "bytes": 36077
     }
    },
    "artifacts": {
@@ -570,8 +578,8 @@
      "bytes": 6355
     },
     "directed_role.py": {
-     "sha256": "cc2be9b5f0356e9b6bd30ae735ece284572be565429911f94b15e1add3f82d2e",
-     "bytes": 9832
+     "sha256": "88b7cfc69482101030b8cc85f99dde7fc37619c096d1abe84260b464877ba999",
+     "bytes": 10481
     },
     "distances/__init__.py": {
      "sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
@@ -582,8 +590,12 @@
      "bytes": 695
     },
     "drq.py": {
-     "sha256": "b2cc62b167624227de96667971709be3815012c2895a77f1c11125d6b62cd318",
-     "bytes": 11965
+     "sha256": "c6c1afa814937d4f5ed0ef13b99e50393f7a8dd770172d5938ececda75ed2374",
+     "bytes": 13698
+    },
+    "logs/training_metrics.jsonl": {
+     "sha256": "0bd8a28672c329fe7d7458fb7aa67d970bcab59cb5812bb32ae9c0ef178ad89a",
+     "bytes": 1138839
     },
     "losses/__init__.py": {
      "sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
@@ -626,19 +638,36 @@
      "bytes": 5570
     },
     "tests/test_directed_arms.py": {
-     "sha256": "449696c1364023c5cb70e5df6bc290f2c321c41b6b3fc52d1b06fa2e05ab98de",
-     "bytes": 7246
+     "sha256": "07efe365fb541b406c0d2e5395a9f8b5c3122a11af83cd8c351d1476293f5f62",
+     "bytes": 7457
+    },
+    "tests/test_reference_label_modes.py": {
+     "sha256": "999c7deaa899d88b19c6f44db32e17b91a4b57e863d13ee736d9afb24ecf187d",
+     "bytes": 5086
     },
     "train_config.py": {
      "sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
      "bytes": 6213
     },
     "train_rqvae.py": {
-     "sha256": "cace22766819de51148d4f4d09af7a8bbcf60d89430b8512f001d63b88d97ca6",
-     "bytes": 35553
+     "sha256": "b176a9db804341298e2fc6b21c9a502406c90400ff8c46aa07cf27527ccde1a5",
+     "bytes": 36076
     }
    },
-   "artifacts": {}
+   "artifacts": {
+    "rqvae_best.pth": {
+     "sha256": "77a415ab11b55d4b9fea034e6d4aecf52cc8fb7f5fdd69fdad8cbb82aaf06049",
+     "bytes": 4604533
+    },
+    "item_sids.json": {
+     "sha256": "c334368fe45cc4af9888bcfe429da3a3730a6afc4307efd58ef865193d2bf285",
+     "bytes": 1254904
+    },
+    "trq_metrics.json": {
+     "sha256": "4317cdc724c47cc29637ad0c695beb79e86c445dd3cbe2d8500572095f23ceac",
+     "bytes": 2726
+    }
+   }
   },
   "S": {
    "tree": "stage2_RQ-VAE/TIGER_drq_S",
@@ -652,8 +681,8 @@
      "bytes": 6355
     },
     "directed_role.py": {
-     "sha256": "cc2be9b5f0356e9b6bd30ae735ece284572be565429911f94b15e1add3f82d2e",
-     "bytes": 9832
+     "sha256": "88b7cfc69482101030b8cc85f99dde7fc37619c096d1abe84260b464877ba999",
+     "bytes": 10481
     },
     "distances/__init__.py": {
      "sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
@@ -664,8 +693,12 @@
      "bytes": 695
     },
     "drq.py": {
-     "sha256": "46b19cdd9db887812ef6aa23e681d97f80d953a1d8b4426e6755747420ddf052",
-     "bytes": 11963
+     "sha256": "464e9d3e5e61966f9c6150cdfb630b821c0831e98c70f31130d0ac2035752faa",
+     "bytes": 13696
+    },
+    "logs/training_metrics.jsonl": {
+     "sha256": "fff56066b36a494ad1450fe08704fdf0783548ff0f97c75b3d2702a84c0f7364",
+     "bytes": 1136366
     },
     "losses/__init__.py": {
      "sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
@@ -708,25 +741,42 @@
      "bytes": 5570
     },
     "tests/test_directed_arms.py": {
-     "sha256": "449696c1364023c5cb70e5df6bc290f2c321c41b6b3fc52d1b06fa2e05ab98de",
-     "bytes": 7246
+     "sha256": "07efe365fb541b406c0d2e5395a9f8b5c3122a11af83cd8c351d1476293f5f62",
+     "bytes": 7457
+    },
+    "tests/test_reference_label_modes.py": {
+     "sha256": "414acd960c09d400715d80a4789066f362dae64fcbfc6f51d57272b0816c9c26",
+     "bytes": 4037
     },
     "train_config.py": {
      "sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
      "bytes": 6213
     },
     "train_rqvae.py": {
-     "sha256": "3a8f2d0b2f36fac01814c3fa11a72aed9fb4db5f891435a9eff1b60e3a82bf1c",
-     "bytes": 35553
+     "sha256": "589b5754be07507d3a93008ceba08a18018054ef1de19141003fdb117c15c6a0",
+     "bytes": 36076
     }
    },
-   "artifacts": {}
+   "artifacts": {
+    "rqvae_best.pth": {
+     "sha256": "1723c9db0dd7f138ce67b7b672751f4c81d13bb223ede54daf538b1cc3f956ad",
+     "bytes": 4604533
+    },
+    "item_sids.json": {
+     "sha256": "ea4916c55c5ded1192e26b8ea3bd58a6dd9ef5c4bd68c2a4b4ccd928f92bb5f7",
+     "bytes": 1260114
+    },
+    "trq_metrics.json": {
+     "sha256": "bad3ae71e3656f029cace5c2282db43528b5351b84e79f7fe813d689e6e8738b",
+     "bytes": 26993
+    }
+   }
   }
  },
  "analysis": {
   "REPORT_DIRECTED_GRAPHLET_ROLE.md": {
-   "sha256": "50961748b63720af41e814520330d4ab9411c8525f479bec9f4e3e165bcd7340",
-   "bytes": 23536
+   "sha256": "00d27332561ce94eeb5ed880499ca6797a9abd7807b296876c2cc4e5d1e712eb",
+   "bytes": 29587
   },
   "directed_graphlets.py": {
    "sha256": "7834e413d7899e49497ca0411c0afc051c94b56bc9a486f4a952171c780d1ce8",
@@ -737,8 +787,8 @@
    "bytes": 9832
   },
   "evaluate.py": {
-   "sha256": "a13a260584f5354334c80f93573f3f40054bab2f46cd58223550b65452bf41bc",
-   "bytes": 8688
+   "sha256": "dfc2110d86f98ab759e6172088739960002b647f9042536d8594c18efc32a1c3",
+   "bytes": 8719
   },
   "probe_panel.py": {
    "sha256": "242258fb03d92c4e00412e1cfdb0cd1906a6846939c48a5963dc5ffdf8de0db1",
@@ -821,20 +871,20 @@
    "bytes": 4873
   },
   "relation_gap.py": {
-   "sha256": "9ad59165e1240da4d4a2ccbde8755f875007b85daf050ca8e5da4d4725ea4b7d",
-   "bytes": 4618
+   "sha256": "31b8e026a3e49eedd8fde2f324ebf12d97e3066b8747185bd9e28695bc75ab72",
+   "bytes": 4778
   },
   "relation_gap.json": {
-   "sha256": "c8338dda4dc248b03563ee8163b9caf52e0953a6562f3cb8a11dbf0271712614",
-   "bytes": 490
+   "sha256": "cc2812b94cfde59ee3fb2662bb36b7e19a5050bab1ffcb9db8d8d97d87f356ec",
+   "bytes": 934
   },
   "directed_edge_predictor.py": {
-   "sha256": "2bb15db8bfbb612d5a24d491536bfbf6295791fe17e0f43769f6233cc743e579",
-   "bytes": 11023
+   "sha256": "b3f31324edd68d73f54d7d91b96dabd7420788f8d990fc4f74bae7e3890ad161",
+   "bytes": 11183
   },
   "directed_edge_predictor.json": {
-   "sha256": "82771e9df70ef703d3a6ac2b807b80777e278edcdab12702d5b15adc37b1e7a4",
-   "bytes": 3851
+   "sha256": "a42930b34226f6b404aaedb5a5948915af3d67de0084cbfc2cf29b5a51bcf79c",
+   "bytes": 7193
   },
   "head_pretrained_directed.json": {
    "sha256": "93cd47db93bc1ea0505fe317860c7ad0f6ba12327d7766abfbb47bf96a038dff",

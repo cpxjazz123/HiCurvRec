@@ -116,6 +116,118 @@
      "lambda": 10.0
     }
    }
+  },
+  "U": {
+   "z": {
+    "lambda_1.0": {
+     "auc": 0.7009455796841934,
+     "direction_accuracy": 0.5037929350480221,
+     "final_direction_loss": 0.693230390548706,
+     "final_edge_loss": 0.6400608420372009,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 1.0
+    },
+    "lambda_10.0": {
+     "auc": 0.6748912668077487,
+     "direction_accuracy": 0.5030603939443269,
+     "final_direction_loss": 0.6941543817520142,
+     "final_edge_loss": 0.6499322652816772,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 10.0
+    }
+   },
+   "q": {
+    "lambda_1.0": {
+     "auc": 0.6882190527429595,
+     "direction_accuracy": 0.5034836399153508,
+     "final_direction_loss": 0.6929846405982971,
+     "final_edge_loss": 0.6461927890777588,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 1.0
+    },
+    "lambda_10.0": {
+     "auc": 0.6676279959303272,
+     "direction_accuracy": 0.5040045580335341,
+     "final_direction_loss": 0.6937856674194336,
+     "final_edge_loss": 0.653465747833252,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 10.0
+    }
+   },
+   "sid_onehot": {
+    "lambda_1.0": {
+     "auc": 0.7075491816701938,
+     "direction_accuracy": 0.5000813934559661,
+     "final_direction_loss": 0.6007571816444397,
+     "final_edge_loss": 0.5686652660369873,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 1.0
+    },
+    "lambda_10.0": {
+     "auc": 0.6050037032394595,
+     "direction_accuracy": 0.49706983558521894,
+     "final_direction_loss": 0.5760645866394043,
+     "final_edge_loss": 0.6279925107955933,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 10.0
+    }
+   }
+  },
+  "S": {
+   "z": {
+    "lambda_1.0": {
+     "auc": 0.6944063200390689,
+     "direction_accuracy": 0.507992837375875,
+     "final_direction_loss": 0.6934542655944824,
+     "final_edge_loss": 0.6427875757217407,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 1.0
+    },
+    "lambda_10.0": {
+     "auc": 0.6131098349340713,
+     "direction_accuracy": 0.50670682077161,
+     "final_direction_loss": 0.693446695804596,
+     "final_edge_loss": 0.6624992489814758,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 10.0
+    }
+   },
+   "q": {
+    "lambda_1.0": {
+     "auc": 0.6768691500895329,
+     "direction_accuracy": 0.5062998534917793,
+     "final_direction_loss": 0.6930015683174133,
+     "final_edge_loss": 0.6490656137466431,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 1.0
+    },
+    "lambda_10.0": {
+     "auc": 0.6060773092951327,
+     "direction_accuracy": 0.5047696565196158,
+     "final_direction_loss": 0.6933650970458984,
+     "final_edge_loss": 0.6634774208068848,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 10.0
+    }
+   },
+   "sid_onehot": {
+    "lambda_1.0": {
+     "auc": 0.7019561593683867,
+     "direction_accuracy": 0.5003581312062511,
+     "final_direction_loss": 0.57781982421875,
+     "final_edge_loss": 0.5701811909675598,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 1.0
+    },
+    "lambda_10.0": {
+     "auc": 0.5940899010255576,
+     "direction_accuracy": 0.5001953442943188,
+     "final_direction_loss": 0.5620675086975098,
+     "final_edge_loss": 0.632581353187561,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 10.0
+    }
+   }
   }
  },
  "baselines": {
