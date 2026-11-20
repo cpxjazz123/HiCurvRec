@@ -218,3 +218,35 @@ def test_bundle_verify_detects_tampered_carrier_weights(bundle):
 
 def test_bundle_verify_is_healthy_again_after_restoring(bundle):
     assert bundle.verify()["healthy"] is True
+
+
+def test_targets_are_context_invariant(bundle):
+    """§2.3: an item's target must not depend on which batch it is asked from."""
+    ids = [7, 900, 24001]
+    together = bundle.targets_for(ids)
+    for row, item in enumerate(ids):
+        alone = bundle.targets_for([item])
+        for key in ("relation", "neighbour_relation", "neighbour_orbit",
+                    "own_orbit", "own_subtype", "coverage", "confidence"):
+            assert np.array_equal(alone[key][0], together[key][row]), (item, key)
+    reversed_rows = bundle.targets_for(list(reversed(ids)))
+    for key in ("relation", "neighbour_orbit"):
+        assert np.array_equal(reversed_rows[key], together[key][::-1]), key
+
+
+def test_multi_role_items_keep_more_than_one_role_in_the_target(bundle):
+    """§2.1: a multi-role item must not be collapsed to a single Graphlet type/orbit."""
+    own = bundle.targets["own_orbit"]
+    multi = np.flatnonzero((own > 0.1).sum(1) >= 2)
+    assert len(multi) > 0
+    item = int(multi[0])
+    row = bundle.targets_for([item])["own_orbit"][0]
+    assert int((row > 0.1).sum()) >= 2
+    assert np.isclose(row.sum(), own[item].sum())
+
+    neighbour = bundle.targets["neighbour_orbit"]
+    multi_neighbour = np.flatnonzero((neighbour > 0.05).sum(1) >= 2)
+    assert len(multi_neighbour) > 0
+    probe = int(multi_neighbour[0])
+    profile = bundle.targets_for([probe])["neighbour_orbit"][0]
+    assert int((profile > 0.05).sum()) >= 2
