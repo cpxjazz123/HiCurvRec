@@ -3,7 +3,7 @@
 ## 0. 当前有向图结构角色监督研究主线（2026-11-20，Issue #221）
 
 - 当前研究目标以 `ideas/main_line.json` 和 [Issue #221](https://github.com/cpxjazz123/HiCurvRec/issues/221) 为准：正式将 TRAIN-only 商品行为图由无向图**迁移为有向图**，分别保留 `A→B`/`B→A` 的有序转移与计数，构造严格诱导 **Directed Graphlet Type + Directed Node Orbit** 标签；由类型 CE + 实例内角色 CE 的联合预测 Loss 监督 RQ-VAE 真实量化及硬 SID，最后检验 Stage3 Recall。原 #220 已按 `not_planned` 关闭，#217/#218 为历史参照。
-- **工程迁移状态：目标已改、旧代码尚待完成迁移。** 本文件 §89b、`analysis_sid_recall/build_behavior_graph.py`、`tools/research/stage2/graph_contract.py` 及无向采样/统计消费者仍是历史**单一无向图契约**；#221 必须经过显式 schema 升级、来源 SHA、Graphlet directed-orbit 标签检验和消费者迁移后，才能替换规范图和启动新研究。不得简单绕过现有校验、直接对称化新图、静默覆盖旧实验图/产物，或同时维护多个未声明的主规范图。
+- **工程迁移状态(2026-11-20 更新：已完成图侧迁移)。** 有向图 `results/research/behavior_graph_directed/`(schema `genrec.behavior_graph.directed.v1`) 已由 `analysis_sid_recall/build_directed_behavior_graph.py` 生成并通过 `tools/research/stage2/graph_contract.py::verify_graph`；无向图只经 `verify_historical` 读取；有向 subtype/orbit 池在 `results/research/directed_graphlet_role/`。以下描述保留为迁移当时的历史记录: 本文件 §89b、`analysis_sid_recall/build_behavior_graph.py`、`tools/research/stage2/graph_contract.py` 及无向采样/统计消费者仍是历史**单一无向图契约**；#221 必须经过显式 schema 升级、来源 SHA、Graphlet directed-orbit 标签检验和消费者迁移后，才能替换规范图和启动新研究。不得简单绕过现有校验、直接对称化新图、静默覆盖旧实验图/产物，或同时维护多个未声明的主规范图。
 - 保留原来的预测器目标：**整组结构类型 + 每个节点在该实例内的方向敏感 Orbit 角色**。不把主任务改成链接预测、P4 六对边 BCE、距离排序或普通 InfoNCE。AF3、GraphWave、混合曲率均非本轮强制项。
 - 下文 §19 和 `tools/research/rounds/` 内的 Issue #121 行为 × 双曲几何强制门是历史研究框架，若仍阻挡 #221，须迁移并验证新的 Type+DirectedRole 范围判定，而不是关闭保护或只改文档。其他 TRAIN-only、冻结 Stage2/Stage3 协议、DDP、CGV、码本反坍缩、SID 重编码零差异约束继续有效。
 

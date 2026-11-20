@@ -293,7 +293,10 @@ def stage2_tracked_cards() -> dict[int, str]:
         # status, or a claim older than the frozen-run budget, frees the card.
         status = str(state.get("status") or "")
         terminal = status in {"stopped", "refused", "finished", "exited_incomplete"}
-        recent = (time.time() - float(state.get("launched_at") or 0)) < 2 * 3600
+        # The pre-worker claim carries no launched_at; its file mtime is the
+        # claim time, so a fresh state file blocks the card just the same.
+        stamp = state.get("launched_at") or path.stat().st_mtime
+        recent = (time.time() - float(stamp)) < 2 * 3600
         if not terminal and recent:
             tracked[int(card)] = tree_name
     return tracked

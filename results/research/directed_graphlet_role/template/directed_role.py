@@ -38,8 +38,18 @@ HERE = _issue_dir()
 FAMILIES = ("K3", "P3", "C4", "P4", "K1_3")
 
 
-def load_vocabulary() -> dict:
+UNDIRECTED_POOL = "results/research/graphlet_roles/instances.npz"
+
+
+def load_vocabulary(mode: str = "directed") -> dict:
     raw = json.loads((HERE / "subtypes.json").read_text())
+    if mode == "undirected":
+        # one class per family, and the undirected orbit inside that family: the
+        # "direction removed" control reads exactly the labels #217's head read
+        subtype_of = {family: index for index, family in enumerate(FAMILIES)}
+        orbits_of = {index: list(range(4)) for index in subtype_of.values()}
+        return {"mode": mode, "subtype_of": subtype_of, "orbits_of": orbits_of,
+                "n_subtypes": len(FAMILIES), "n_orbits": 4, "raw": raw}
     subtype_of: dict[str, int] = {}
     orbits_of: dict[int, list[int]] = {}
     orbit_vocab: dict[tuple[str, str, int], int] = {}
@@ -54,8 +64,8 @@ def load_vocabulary() -> dict:
                 orbit_vocab[(family, key, orbit)] = len(orbit_vocab)
                 orbit_ids.append(orbit_vocab[(family, key, orbit)])
             orbits_of[subtype_id] = orbit_ids
-    return {"subtype_of": subtype_of, "orbits_of": orbits_of, "n_subtypes": len(subtype_of),
-            "n_orbits": len(orbit_vocab), "raw": raw}
+    return {"mode": mode, "subtype_of": subtype_of, "orbits_of": orbits_of,
+            "n_subtypes": len(subtype_of), "n_orbits": len(orbit_vocab), "raw": raw}
 
 
 def load_pool(split: str, vocabulary: dict, max_instances: int | None = None) -> dict:

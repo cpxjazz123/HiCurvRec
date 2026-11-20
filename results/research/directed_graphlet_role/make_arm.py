@@ -13,6 +13,8 @@ HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE / "template"
 REPO = HERE.parents[2]
 ARMS = ("D0", "D1", "D2", "D3", "D4")
+#: direction ablations: same D3 quantizer path, different label source
+ABLATIONS = {"U": ("D3", "undirected"), "S": ("D3", "shuffled")}
 
 
 def digest(root: Path) -> dict:
@@ -24,8 +26,9 @@ def digest(root: Path) -> dict:
 
 
 def main(arm: str) -> None:
-    if arm not in ARMS:
-        raise SystemExit(f"arm must be one of {ARMS}")
+    if arm not in ARMS and arm not in ABLATIONS:
+        raise SystemExit(f"arm must be one of {ARMS} or {sorted(ABLATIONS)}")
+    variant, label_mode = (arm, "directed") if arm in ARMS else ABLATIONS[arm]
     name = f"TIGER_drq_{arm}"
     target = REPO / "stage2_RQ-VAE" / name
     if target.exists():
@@ -35,7 +38,8 @@ def main(arm: str) -> None:
     text = trainer.read_text().replace('ARM_NAME = "TIGER_RQ-VAE"', f'ARM_NAME = "{name}"')
     trainer.write_text(text)
     module = target / "drq.py"
-    text = module.read_text().replace('ARM_VARIANT = "D0"', f'ARM_VARIANT = "{arm}"')
+    text = module.read_text().replace('ARM_VARIANT = "D0"', f'ARM_VARIANT = "{variant}"')
+    text = text.replace('LABEL_MODE = "directed"', f'LABEL_MODE = "{label_mode}"')
     module.write_text(text)
     reference, produced = digest(TEMPLATE), digest(target)
     differing = sorted(key for key in reference if reference[key] != produced.get(key))

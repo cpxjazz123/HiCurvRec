@@ -18,6 +18,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from directed_graphlets import classify, load_adjacency  # noqa: F401
 from directed_role import (FAMILIES, DirectedTypeRoleHead, InstanceSampler,  # noqa: F401
                            instance_targets, joint_loss as directed_joint_loss,
                            load_pool, load_vocabulary)
@@ -29,8 +30,13 @@ ARM_JOINT_Q_CODEBOOK = "D3"
 ARM_FROZEN_HEAD_Q = "D4"
 ARMS = (ARM_NO_AUX, ARM_JOINT_Z, ARM_JOINT_Q_STE, ARM_JOINT_Q_CODEBOOK, ARM_FROZEN_HEAD_Q)
 ARM_VARIANT = "D0"
+#: What the head is asked to predict (Issue #221 section 5 ablations):
+#:   directed   -- the true canonical directed subtype and directed orbits
+#:   undirected -- the undirected skeleton and #217's undirected orbit labels
+#:   shuffled   -- the same instance, edges re-oriented at random (seeded)
+LABEL_MODE = "directed"
 
-PER_TYPE = 64
+PER_TYPE = 16
 AUX_SHARE = 0.10
 CALIBRATION_STEPS = 20
 
@@ -40,11 +46,11 @@ COLLISION_CEILING = 0.98
 
 
 def vocabulary():
-    return load_vocabulary()
+    return load_vocabulary(LABEL_MODE)
 
 
 def make_sampler(split: str, seed: int, max_instances: int | None = None):
-    vocab = load_vocabulary()
+    vocab = load_vocabulary(LABEL_MODE)
     families = load_pool(split, vocab, max_instances)
     sampler = InstanceSampler(families, PER_TYPE, seed=seed)
     return sampler, vocab
@@ -60,10 +66,57 @@ def joint_loss(head, features, draws, vocab, masks):
 
 
 def targets_for(draws, vocab) -> dict:
+    """Labels for the arm's LABEL_MODE: directed, undirected or shuffled directions."""
+    if LABEL_MODE == "directed":
+        return {family: instance_targets(family, subtypes.numpy(), orbits.numpy(), vocab)
+                for family, (_nodes, orbits, subtypes) in draws.items()}
+    if LABEL_MODE == "undirected":
+        source = np.load(_undirected_pool(), allow_pickle=False)
+        out = {}
+        for family, (_nodes, orbits, _subtypes) in draws.items():
+            roles = source[f"{family}_roles"]
+            out[family] = {
+                "subtype": np.full(len(orbits), vocab["subtype_of"][family], dtype=np.int64),
+                "orbit": roles[: len(orbits)].astype(np.int64),
+            }
+        return out
+    # shuffled: the instance's own induced matrix with its edges re-oriented
+    adjacency = load_adjacency()
     out = {}
-    for family, (_nodes, orbits, subtypes) in draws.items():
-        out[family] = instance_targets(family, subtypes.numpy(), orbits.numpy(), vocab)
+    for family, (nodes, _orbits, _subtypes) in draws.items():
+        keys, role_rows = [], []
+        for instance in nodes.numpy():
+            matrix = np.asarray(adjacency[instance][:, instance].todense(), dtype=bool)
+            shuffled = _shuffle_directions(matrix, instance)
+            skeleton, key, orbit_ids = classify(shuffled)
+            keys.append(vocab["subtype_of"].get(f"{skeleton}:{key}", -1))
+            role_rows.append(orbit_ids)
+        out[family] = {"subtype": np.asarray(keys, dtype=np.int64),
+                       "orbit": np.asarray(role_rows, dtype=np.int64)}
     return out
+
+
+def _undirected_pool() -> str:
+    from directed_role import HERE, UNDIRECTED_POOL
+    return str(HERE.parents[2] / UNDIRECTED_POOL)
+
+
+def _shuffle_directions(matrix: np.ndarray, instance, seed: int = 221) -> np.ndarray:
+    """Re-orient every undirected edge at random; edge count and skeleton stay put."""
+    import hashlib
+
+    key = ",".join(str(int(v)) for v in sorted(int(x) for x in instance))
+    rng = np.random.default_rng(int.from_bytes(
+        hashlib.blake2b(key.encode(), digest_size=8).digest(), "little") ^ seed)
+    shuffled = np.zeros_like(matrix)
+    for left in range(matrix.shape[0]):
+        for right in range(left + 1, matrix.shape[0]):
+            if matrix[left, right] or matrix[right, left]:
+                if rng.random() < 0.5:
+                    shuffled[left, right] = True
+                else:
+                    shuffled[right, left] = True
+    return shuffled
 
 
 def hard_cumulative(tokens: torch.Tensor, codebooks: list) -> torch.Tensor:
@@ -152,6 +205,19 @@ def health_verdict(codes: np.ndarray, codebook: torch.Tensor, initial_spacing: f
     if verdict["collision"] > COLLISION_CEILING:
         problems.append(f"three-code collision is {verdict['collision']:.3f}")
     if problems:
+        # A stopped arm must leave evidence of which bound it crossed: the
+        # traceback is swallowed by the detached launcher, so the verdict goes to
+        # disk before the raise.
+        import json
+        from pathlib import Path as _Path
+        report = {**verdict, "problems": problems}
+        for parent in _Path(__file__).resolve().parents:
+            if (parent / "stage2_RQ-VAE").is_dir() and (parent / "results").is_dir():
+                arm = _Path(__file__).resolve().parent.name
+                out = parent / "results" / "stage2_RQ-VAE" / arm / "health_stop.json"
+                out.parent.mkdir(parents=True, exist_ok=True)
+                out.write_text(json.dumps(report, indent=1))
+                break
         raise RuntimeError("drq health stop: " + "; ".join(problems))
     return verdict
 

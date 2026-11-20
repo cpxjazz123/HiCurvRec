@@ -1,0 +1,665 @@
+{
+ "issue": 221,
+ "inputs": {
+  "results/research/behavior_graph_directed/graph.npz": {
+   "sha256": "ef97a2bdc555259d402065026b00cf62bc1e91c3bc58a66da4d6f8f8df407fdd",
+   "bytes": 14256700
+  },
+  "results/research/behavior_graph_directed/metadata.json": {
+   "sha256": "6fc152e48216df28359399f921fce49fd583e0bf2c528f58d19fa4905605e376",
+   "bytes": 2029
+  },
+  "results/research/directed_graphlet_role/instances.npz": {
+   "sha256": "0c32154cad8bb992014e7b153089779d5d5f7f1feefb72600f35aac3dfcfeced",
+   "bytes": 79451145
+  },
+  "results/research/directed_graphlet_role/coverage.json": {
+   "sha256": "4d1f9aa3bbab1fc57c179627108e11f6953bca6a80c88c38c46b90685b19fc9f",
+   "bytes": 3011
+  },
+  "results/research/directed_graphlet_role/subtypes.json": {
+   "sha256": "e44c25818ee97a3c47b4e43b656742e11e1bf4acc64141086ccc79cdd09757bc",
+   "bytes": 1246
+  },
+  "stage1_GeneEmbedding/output/sentence_t5.npy": {
+   "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+   "bytes": 75531392
+  },
+  "results/stage0_build_parquet/train.parquet": {
+   "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+   "bytes": 11152937
+  }
+ },
+ "arms": {
+  "D0": {
+   "tree": "stage2_RQ-VAE/TIGER_drq_D0",
+   "source": {
+    "assignment_floor.py": {
+     "sha256": "29ce6083bd8ceafa297d610f5780bea014e0af2417431fe82c3d8ed12f0c85b6",
+     "bytes": 18260
+    },
+    "config/train_config.json": {
+     "sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+     "bytes": 476
+    },
+    "directed_graphlets.py": {
+     "sha256": "c898b5d2e3a37eb1be64b755216b95f8e86642a26f7c38bcdd471b108226ee0d",
+     "bytes": 5735
+    },
+    "directed_role.py": {
+     "sha256": "28c5726ff826945e5db63586d915e722cc19463531df0d47d11863b5d62f7e2e",
+     "bytes": 8751
+    },
+    "distances/__init__.py": {
+     "sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+     "bytes": 1933
+    },
+    "distances/distance.py": {
+     "sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+     "bytes": 695
+    },
+    "drq.py": {
+     "sha256": "eafa884df37a2bd7f3a029e5c67133e2685af9f30d3b3699a5537bf553bb2b6a",
+     "bytes": 8612
+    },
+    "logs/train_run.log": {
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "bytes": 0
+    },
+    "logs/training_metrics.jsonl": {
+     "sha256": "14e91385cab88b753af29523b2e8aaa4315f05b0cb51cf2166c61a11c64f4ff4",
+     "bytes": 417242
+    },
+    "losses/__init__.py": {
+     "sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+     "bytes": 5108
+    },
+    "losses/_pairs.py": {
+     "sha256": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+     "bytes": 1164
+    },
+    "losses/codebook.py": {
+     "sha256": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+     "bytes": 1202
+    },
+    "losses/commitment.py": {
+     "sha256": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+     "bytes": 1198
+    },
+    "losses/quantization.py": {
+     "sha256": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+     "bytes": 2367
+    },
+    "losses/reconstruction.py": {
+     "sha256": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+     "bytes": 827
+    },
+    "model/__init__.py": {
+     "sha256": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+     "bytes": 236
+    },
+    "model/layers.py": {
+     "sha256": "fb6d83b6f86891c7d8df28ea88818dde7dabe1a6623e1bf456a70a40c0854b23",
+     "bytes": 15469
+    },
+    "model/model.py": {
+     "sha256": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+     "bytes": 2851
+    },
+    "model/utils.py": {
+     "sha256": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+     "bytes": 5570
+    },
+    "tests/test_directed_arms.py": {
+     "sha256": "449696c1364023c5cb70e5df6bc290f2c321c41b6b3fc52d1b06fa2e05ab98de",
+     "bytes": 7246
+    },
+    "train_config.py": {
+     "sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+     "bytes": 6213
+    },
+    "train_rqvae.py": {
+     "sha256": "287beb204af632dbdab2ff54a32ad8f290e81a6a3f8a65f9b3668aa08e063389",
+     "bytes": 35554
+    }
+   },
+   "artifacts": {
+    "trq_metrics.json": {
+     "sha256": "5900e5a2f6468bd500c40cd10aa92de53c59abeeee80705af8124fac7d9a8e23",
+     "bytes": 200
+    }
+   }
+  },
+  "D1": {
+   "tree": "stage2_RQ-VAE/TIGER_drq_D1",
+   "source": {
+    "assignment_floor.py": {
+     "sha256": "29ce6083bd8ceafa297d610f5780bea014e0af2417431fe82c3d8ed12f0c85b6",
+     "bytes": 18260
+    },
+    "config/train_config.json": {
+     "sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+     "bytes": 476
+    },
+    "directed_graphlets.py": {
+     "sha256": "c898b5d2e3a37eb1be64b755216b95f8e86642a26f7c38bcdd471b108226ee0d",
+     "bytes": 5735
+    },
+    "directed_role.py": {
+     "sha256": "28c5726ff826945e5db63586d915e722cc19463531df0d47d11863b5d62f7e2e",
+     "bytes": 8751
+    },
+    "distances/__init__.py": {
+     "sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+     "bytes": 1933
+    },
+    "distances/distance.py": {
+     "sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+     "bytes": 695
+    },
+    "drq.py": {
+     "sha256": "e40edce848f87d8835497f27e8b54b343d36ab19a824764773e20c5961f7a6fd",
+     "bytes": 8612
+    },
+    "logs/train_run.log": {
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "bytes": 0
+    },
+    "logs/training_metrics.jsonl": {
+     "sha256": "38cb937a79972e72cc17ba047c5f26bca3725ce019570cc907585588422c1eba",
+     "bytes": 6298
+    },
+    "losses/__init__.py": {
+     "sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+     "bytes": 5108
+    },
+    "losses/_pairs.py": {
+     "sha256": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+     "bytes": 1164
+    },
+    "losses/codebook.py": {
+     "sha256": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+     "bytes": 1202
+    },
+    "losses/commitment.py": {
+     "sha256": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+     "bytes": 1198
+    },
+    "losses/quantization.py": {
+     "sha256": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+     "bytes": 2367
+    },
+    "losses/reconstruction.py": {
+     "sha256": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+     "bytes": 827
+    },
+    "model/__init__.py": {
+     "sha256": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+     "bytes": 236
+    },
+    "model/layers.py": {
+     "sha256": "fb6d83b6f86891c7d8df28ea88818dde7dabe1a6623e1bf456a70a40c0854b23",
+     "bytes": 15469
+    },
+    "model/model.py": {
+     "sha256": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+     "bytes": 2851
+    },
+    "model/utils.py": {
+     "sha256": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+     "bytes": 5570
+    },
+    "tests/test_directed_arms.py": {
+     "sha256": "449696c1364023c5cb70e5df6bc290f2c321c41b6b3fc52d1b06fa2e05ab98de",
+     "bytes": 7246
+    },
+    "train_config.py": {
+     "sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+     "bytes": 6213
+    },
+    "train_rqvae.py": {
+     "sha256": "b83582816a8331e4816e58b18997697254a6514fdacfbe8b1ff607a9c620df86",
+     "bytes": 35554
+    }
+   },
+   "artifacts": {
+    "trq_metrics.json": {
+     "sha256": "af04c908b13af2bdfc2349a956d788b78bf7b5f6664ea103ad429e18575dde2b",
+     "bytes": 23521
+    }
+   }
+  },
+  "D2": {
+   "tree": "stage2_RQ-VAE/TIGER_drq_D2",
+   "source": {
+    "assignment_floor.py": {
+     "sha256": "29ce6083bd8ceafa297d610f5780bea014e0af2417431fe82c3d8ed12f0c85b6",
+     "bytes": 18260
+    },
+    "config/train_config.json": {
+     "sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+     "bytes": 476
+    },
+    "directed_graphlets.py": {
+     "sha256": "c898b5d2e3a37eb1be64b755216b95f8e86642a26f7c38bcdd471b108226ee0d",
+     "bytes": 5735
+    },
+    "directed_role.py": {
+     "sha256": "28c5726ff826945e5db63586d915e722cc19463531df0d47d11863b5d62f7e2e",
+     "bytes": 8751
+    },
+    "distances/__init__.py": {
+     "sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+     "bytes": 1933
+    },
+    "distances/distance.py": {
+     "sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+     "bytes": 695
+    },
+    "drq.py": {
+     "sha256": "d6d965cdb60bd76e692470ac74e4c5c9eea99bcc79358af4cf34a009bedb2cd3",
+     "bytes": 8612
+    },
+    "logs/train_run.log": {
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "bytes": 0
+    },
+    "logs/training_metrics.jsonl": {
+     "sha256": "5fc6aef5a63de3524347c7bc2430bb419125e917f638c252c25b42bb49c76d6d",
+     "bytes": 24926
+    },
+    "losses/__init__.py": {
+     "sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+     "bytes": 5108
+    },
+    "losses/_pairs.py": {
+     "sha256": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+     "bytes": 1164
+    },
+    "losses/codebook.py": {
+     "sha256": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+     "bytes": 1202
+    },
+    "losses/commitment.py": {
+     "sha256": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+     "bytes": 1198
+    },
+    "losses/quantization.py": {
+     "sha256": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+     "bytes": 2367
+    },
+    "losses/reconstruction.py": {
+     "sha256": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+     "bytes": 827
+    },
+    "model/__init__.py": {
+     "sha256": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+     "bytes": 236
+    },
+    "model/layers.py": {
+     "sha256": "fb6d83b6f86891c7d8df28ea88818dde7dabe1a6623e1bf456a70a40c0854b23",
+     "bytes": 15469
+    },
+    "model/model.py": {
+     "sha256": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+     "bytes": 2851
+    },
+    "model/utils.py": {
+     "sha256": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+     "bytes": 5570
+    },
+    "tests/test_directed_arms.py": {
+     "sha256": "449696c1364023c5cb70e5df6bc290f2c321c41b6b3fc52d1b06fa2e05ab98de",
+     "bytes": 7246
+    },
+    "train_config.py": {
+     "sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+     "bytes": 6213
+    },
+    "train_rqvae.py": {
+     "sha256": "35fcdc127d14ffaded2c24afab204b35ebb81d16256ca403445ca9f0307a088e",
+     "bytes": 35554
+    }
+   },
+   "artifacts": {
+    "trq_metrics.json": {
+     "sha256": "449ac13f57188abfa251d0a40ed0bb0bbdffc23673afba29dbcccd2cf82908fd",
+     "bytes": 23586
+    }
+   }
+  },
+  "D3": {
+   "tree": "stage2_RQ-VAE/TIGER_drq_D3",
+   "source": {
+    "config/train_config.json": {
+     "sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+     "bytes": 476
+    },
+    "directed_graphlets.py": {
+     "sha256": "c898b5d2e3a37eb1be64b755216b95f8e86642a26f7c38bcdd471b108226ee0d",
+     "bytes": 5735
+    },
+    "directed_role.py": {
+     "sha256": "28c5726ff826945e5db63586d915e722cc19463531df0d47d11863b5d62f7e2e",
+     "bytes": 8751
+    },
+    "distances/__init__.py": {
+     "sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+     "bytes": 1933
+    },
+    "distances/distance.py": {
+     "sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+     "bytes": 695
+    },
+    "drq.py": {
+     "sha256": "a95cb50f3fca32c246f0b2a13e2ad14a16e1c888156a3b0cd396f771c9163eb4",
+     "bytes": 8612
+    },
+    "losses/__init__.py": {
+     "sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+     "bytes": 5108
+    },
+    "losses/_pairs.py": {
+     "sha256": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+     "bytes": 1164
+    },
+    "losses/codebook.py": {
+     "sha256": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+     "bytes": 1202
+    },
+    "losses/commitment.py": {
+     "sha256": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+     "bytes": 1198
+    },
+    "losses/quantization.py": {
+     "sha256": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+     "bytes": 2367
+    },
+    "losses/reconstruction.py": {
+     "sha256": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+     "bytes": 827
+    },
+    "model/__init__.py": {
+     "sha256": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+     "bytes": 236
+    },
+    "model/layers.py": {
+     "sha256": "3cfaff02fe4dbbf562fbde6674cdbee122e110aa4b3437a8e4f142ac25503e43",
+     "bytes": 13878
+    },
+    "model/model.py": {
+     "sha256": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+     "bytes": 2851
+    },
+    "model/utils.py": {
+     "sha256": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+     "bytes": 5570
+    },
+    "tests/test_directed_arms.py": {
+     "sha256": "449696c1364023c5cb70e5df6bc290f2c321c41b6b3fc52d1b06fa2e05ab98de",
+     "bytes": 7246
+    },
+    "train_config.py": {
+     "sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+     "bytes": 6213
+    },
+    "train_rqvae.py": {
+     "sha256": "6008ea8015068ece7a26e33f1b7c3f809edae4541c0a11fe436cf26f02be99bd",
+     "bytes": 35554
+    }
+   },
+   "artifacts": {
+    "trq_metrics.json": {
+     "sha256": "192224b30e9755759f97341b2ad04ece9dd8d55e701923e763e530351e8763b1",
+     "bytes": 23598
+    }
+   }
+  },
+  "D4": {
+   "tree": "stage2_RQ-VAE/TIGER_drq_D4",
+   "source": {
+    "config/train_config.json": {
+     "sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+     "bytes": 476
+    },
+    "directed_graphlets.py": {
+     "sha256": "c898b5d2e3a37eb1be64b755216b95f8e86642a26f7c38bcdd471b108226ee0d",
+     "bytes": 5735
+    },
+    "directed_role.py": {
+     "sha256": "28c5726ff826945e5db63586d915e722cc19463531df0d47d11863b5d62f7e2e",
+     "bytes": 8751
+    },
+    "distances/__init__.py": {
+     "sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+     "bytes": 1933
+    },
+    "distances/distance.py": {
+     "sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+     "bytes": 695
+    },
+    "drq.py": {
+     "sha256": "1e556dd6d29bf2ca3487e0b9bc82f6e48d30da3c7035b1c62c4f0d0ae389f12a",
+     "bytes": 8612
+    },
+    "losses/__init__.py": {
+     "sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+     "bytes": 5108
+    },
+    "losses/_pairs.py": {
+     "sha256": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+     "bytes": 1164
+    },
+    "losses/codebook.py": {
+     "sha256": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+     "bytes": 1202
+    },
+    "losses/commitment.py": {
+     "sha256": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+     "bytes": 1198
+    },
+    "losses/quantization.py": {
+     "sha256": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+     "bytes": 2367
+    },
+    "losses/reconstruction.py": {
+     "sha256": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+     "bytes": 827
+    },
+    "model/__init__.py": {
+     "sha256": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+     "bytes": 236
+    },
+    "model/layers.py": {
+     "sha256": "3cfaff02fe4dbbf562fbde6674cdbee122e110aa4b3437a8e4f142ac25503e43",
+     "bytes": 13878
+    },
+    "model/model.py": {
+     "sha256": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+     "bytes": 2851
+    },
+    "model/utils.py": {
+     "sha256": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+     "bytes": 5570
+    },
+    "tests/test_directed_arms.py": {
+     "sha256": "449696c1364023c5cb70e5df6bc290f2c321c41b6b3fc52d1b06fa2e05ab98de",
+     "bytes": 7246
+    },
+    "train_config.py": {
+     "sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+     "bytes": 6213
+    },
+    "train_rqvae.py": {
+     "sha256": "21ba046312dde7d9a24abbc176cb8c498b6636b85903b087be585c7d84b1ac08",
+     "bytes": 35554
+    }
+   },
+   "artifacts": {}
+  },
+  "U": {
+   "tree": "stage2_RQ-VAE/TIGER_drq_U",
+   "source": {
+    "config/train_config.json": {
+     "sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+     "bytes": 476
+    },
+    "directed_graphlets.py": {
+     "sha256": "c898b5d2e3a37eb1be64b755216b95f8e86642a26f7c38bcdd471b108226ee0d",
+     "bytes": 5735
+    },
+    "directed_role.py": {
+     "sha256": "a0df4fb6578441c36b240a23c59fe5297511abaf5c0664889f3487a9c597aae1",
+     "bytes": 9352
+    },
+    "distances/__init__.py": {
+     "sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+     "bytes": 1933
+    },
+    "distances/distance.py": {
+     "sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+     "bytes": 695
+    },
+    "drq.py": {
+     "sha256": "453a109dda2a7c40e755d4d47fa297ebe407608ca7260e7e155ef26df8007b0d",
+     "bytes": 11217
+    },
+    "losses/__init__.py": {
+     "sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+     "bytes": 5108
+    },
+    "losses/_pairs.py": {
+     "sha256": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+     "bytes": 1164
+    },
+    "losses/codebook.py": {
+     "sha256": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+     "bytes": 1202
+    },
+    "losses/commitment.py": {
+     "sha256": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+     "bytes": 1198
+    },
+    "losses/quantization.py": {
+     "sha256": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+     "bytes": 2367
+    },
+    "losses/reconstruction.py": {
+     "sha256": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+     "bytes": 827
+    },
+    "model/__init__.py": {
+     "sha256": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+     "bytes": 236
+    },
+    "model/layers.py": {
+     "sha256": "3cfaff02fe4dbbf562fbde6674cdbee122e110aa4b3437a8e4f142ac25503e43",
+     "bytes": 13878
+    },
+    "model/model.py": {
+     "sha256": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+     "bytes": 2851
+    },
+    "model/utils.py": {
+     "sha256": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+     "bytes": 5570
+    },
+    "tests/test_directed_arms.py": {
+     "sha256": "449696c1364023c5cb70e5df6bc290f2c321c41b6b3fc52d1b06fa2e05ab98de",
+     "bytes": 7246
+    },
+    "train_config.py": {
+     "sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+     "bytes": 6213
+    },
+    "train_rqvae.py": {
+     "sha256": "cace22766819de51148d4f4d09af7a8bbcf60d89430b8512f001d63b88d97ca6",
+     "bytes": 35553
+    }
+   },
+   "artifacts": {}
+  },
+  "S": {
+   "tree": "stage2_RQ-VAE/TIGER_drq_S",
+   "source": {
+    "config/train_config.json": {
+     "sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+     "bytes": 476
+    },
+    "directed_graphlets.py": {
+     "sha256": "c898b5d2e3a37eb1be64b755216b95f8e86642a26f7c38bcdd471b108226ee0d",
+     "bytes": 5735
+    },
+    "directed_role.py": {
+     "sha256": "a0df4fb6578441c36b240a23c59fe5297511abaf5c0664889f3487a9c597aae1",
+     "bytes": 9352
+    },
+    "distances/__init__.py": {
+     "sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+     "bytes": 1933
+    },
+    "distances/distance.py": {
+     "sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+     "bytes": 695
+    },
+    "drq.py": {
+     "sha256": "6eb2e93ba1dd3c4cbf0b43a00951a06bdd8828d0a427f59e7a77d374be7b61dd",
+     "bytes": 11215
+    },
+    "losses/__init__.py": {
+     "sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+     "bytes": 5108
+    },
+    "losses/_pairs.py": {
+     "sha256": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+     "bytes": 1164
+    },
+    "losses/codebook.py": {
+     "sha256": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+     "bytes": 1202
+    },
+    "losses/commitment.py": {
+     "sha256": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+     "bytes": 1198
+    },
+    "losses/quantization.py": {
+     "sha256": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+     "bytes": 2367
+    },
+    "losses/reconstruction.py": {
+     "sha256": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+     "bytes": 827
+    },
+    "model/__init__.py": {
+     "sha256": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+     "bytes": 236
+    },
+    "model/layers.py": {
+     "sha256": "3cfaff02fe4dbbf562fbde6674cdbee122e110aa4b3437a8e4f142ac25503e43",
+     "bytes": 13878
+    },
+    "model/model.py": {
+     "sha256": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+     "bytes": 2851
+    },
+    "model/utils.py": {
+     "sha256": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+     "bytes": 5570
+    },
+    "tests/test_directed_arms.py": {
+     "sha256": "449696c1364023c5cb70e5df6bc290f2c321c41b6b3fc52d1b06fa2e05ab98de",
+     "bytes": 7246
+    },
+    "train_config.py": {
+     "sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+     "bytes": 6213
+    },
+    "train_rqvae.py": {
+     "sha256": "3a8f2d0b2f36fac01814c3fa11a72aed9fb4db5f891435a9eff1b60e3a82bf1c",
+     "bytes": 35553
+    }
+   },
+   "artifacts": {}
+  }
+ }
+}

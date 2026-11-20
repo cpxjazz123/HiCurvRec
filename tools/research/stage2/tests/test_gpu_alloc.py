@@ -83,6 +83,11 @@ def test_a_claim_without_a_pid_already_blocks_its_card():
         return (not terminal) and recent
 
     assert blocks("starting", time.time())
+    # a claim written before the worker exists has no launched_at: the state
+    # file's mtime stands in for it
+    import os
+
+    assert blocks("starting", os.path.getmtime(__file__))
     assert blocks("smoke_pending", time.time())
     assert blocks("running", time.time())
     assert not blocks("stopped", time.time())
