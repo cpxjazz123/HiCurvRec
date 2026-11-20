@@ -1,0 +1,24 @@
+{
+ "teacher": "results/research/directed_graphlet_role/head_pretrained_directed.teacher.pt",
+ "sha256": "8efcdc8dfad49478d53d88ad4c7a67ff2e42e2f8fd3cc946434e25f6425810dc",
+ "source": "results/research/directed_graphlet_role/head_pretrained_directed.pt",
+ "source_sha256": "5de4b4bb7791e52d6c574c109e5010ae9ce2ff4ddb0626ea1403734910937979",
+ "config": {
+  "dim": 32,
+  "hidden": 96,
+  "n_subtypes": 47,
+  "n_orbits": 376,
+  "interaction": true
+ },
+ "vocab": {
+  "mode": "directed",
+  "n_subtypes": 47,
+  "n_orbits": 376
+ },
+ "predictions_identical": true,
+ "frozen": true,
+ "heldout": {
+  "subtype_macro_f1": 0.02055634424096399,
+  "orbit_macro_over_families": 0.3440042133047547
+ }
+}
