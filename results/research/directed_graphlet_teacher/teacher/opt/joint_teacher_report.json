@@ -1,0 +1,46 @@
+{
+ "steps": 1200,
+ "accum": 3,
+ "micro": 4096,
+ "lr": 0.0003,
+ "final_loss": 0.8175800442695618,
+ "first_loss": 2.628150224685669,
+ "edge": {
+  "test_auc": 0.6946952723991753
+ },
+ "direction": {
+  "test_balanced_accuracy": 0.5035671434885549,
+  "majority": 0.5015973052265565,
+  "prediction_frequency_max": 0.5111594045419972
+ },
+ "orbit": {
+  "ce": 4.3014984130859375,
+  "constant_ce": 3.503094434738159,
+  "kl": 3.827100306749344,
+  "target_entropy": 0.47439810633659363,
+  "relative_improvement": -0.22791391817202195,
+  "carried": false,
+  "role_rank_correlation": 0.17521992325782776,
+  "macro_f1": 0.033320664490352016,
+  "majority_f1": 0.0038388351121039135
+ },
+ "subtype": {
+  "ce": 1.6670002937316895,
+  "constant_ce": 1.6063501834869385,
+  "kl": 0.712648868560791,
+  "target_entropy": 0.9543514251708984,
+  "relative_improvement": -0.03775646858837249,
+  "carried": false,
+  "role_rank_correlation": 0.7386530041694641,
+  "macro_f1": 0.11078738397870433,
+  "majority_f1": 0.06869369369369369
+ },
+ "frozen_probe_reference": {
+  "orbit_ce": 3.5488,
+  "orbit_constant_ce": 3.5163,
+  "source": "teacher/opt graph_teacher3 orbit probe"
+ },
+ "checkpoint": "teacher_joint_v1.pth",
+ "checkpoint_sha256": "9a812aa0dbf2a43a9e9e304715842de9b5fde238adc7e528a59e47bb632875d7",
+ "seconds": 25.72776484489441
+}

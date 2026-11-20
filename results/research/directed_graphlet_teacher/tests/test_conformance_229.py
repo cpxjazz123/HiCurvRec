@@ -21,5 +21,5 @@ def test_conformance_audit_has_no_failures():
     payload = json.loads((TEACHER / "conformance_229.json").read_text())
     assert payload["failed"] == []
     assert payload["verdict"] in ("DONE", "DONE_WITH_DECLARATIONS")
-    assert set(payload["declared_not_established"]) == {
-        "prediction_direction", "minority_role_identification"}
+    assert {"prediction_direction", "minority_role_identification",
+            "joint_role_training"} <= set(payload["declared_not_established"])

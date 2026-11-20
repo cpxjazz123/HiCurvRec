@@ -179,7 +179,24 @@ def main() -> None:
     else:
         checks["sid_capacity_32d"] = {"status": "FAIL", "detail": {"missing": True}}
 
-    # 11. coverage
+    # 11. joint training did not fix role recognition (declared, not pending)
+    joint_path = gt3.OUT / "joint_teacher_report.json"
+    if joint_path.is_file():
+        joint = json.loads(joint_path.read_text())
+        orbit = joint["orbit"]
+        checks["joint_role_training"] = {
+            "status": "PASS" if orbit["carried"] else "NOT_ESTABLISHED",
+            "detail": {"orbit_ce": orbit["ce"],
+                       "orbit_constant_ce": orbit["constant_ce"],
+                       "orbit_rank_correlation": orbit["role_rank_correlation"],
+                       "edge_test_auc_joint": joint["edge"]["test_auc"],
+                       "direction_balanced_accuracy": joint["direction"]["test_balanced_accuracy"],
+                       "checkpoint": joint["checkpoint"],
+                       "checkpoint_sha256": joint["checkpoint_sha256"]}}
+    else:
+        checks["joint_role_training"] = {"status": "FAIL", "detail": {"missing": True}}
+
+    # 12. coverage
     fraction = float((targets["coverage_neighbour"] > 0).mean())
     checks["coverage"] = {"status": "PASS" if fraction > 0.9 else "FAIL",
                           "detail": {"neighbourhood_fraction": fraction,

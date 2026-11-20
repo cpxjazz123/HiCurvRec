@@ -77,6 +77,9 @@ ANALYSIS = (
     "sid_capacity_32d.py", "tests/test_sid_capacity.py",
     "REPORT_STRUCTURE_TEACHER_SID_CAPACITY.md", "issue229_capacity_comment.md",
     "teacher/opt/sid_capacity_32d.json",
+    "train_teacher.py", "tests/test_joint_teacher.py",
+    "REPORT_STRUCTURE_TEACHER_JOINT.md", "issue229_joint_comment.md",
+    "teacher/opt/joint_teacher_report.json",
 )
 
 

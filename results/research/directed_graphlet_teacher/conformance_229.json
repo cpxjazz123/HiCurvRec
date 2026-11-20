@@ -4,7 +4,8 @@
  "failed": [],
  "declared_not_established": [
   "prediction_direction",
-  "minority_role_identification"
+  "minority_role_identification",
+  "joint_role_training"
  ],
  "checks": {
   "recognition_api": {
@@ -103,7 +104,7 @@
    "detail": {
     "teacher_loss": 0.09947130084037781,
     "first": 0.40428102016448975,
-    "after_40_steps": 0.40305814146995544
+    "after_40_steps": 0.40305811166763306
    }
   },
   "integrity": {
@@ -137,6 +138,18 @@
     "orbit_rank_is_not_target_specific": true
    }
   },
+  "joint_role_training": {
+   "status": "NOT_ESTABLISHED",
+   "detail": {
+    "orbit_ce": 4.3014984130859375,
+    "orbit_constant_ce": 3.503094434738159,
+    "orbit_rank_correlation": 0.17521992325782776,
+    "edge_test_auc_joint": 0.6946952723991753,
+    "direction_balanced_accuracy": 0.5035671434885549,
+    "checkpoint": "teacher_joint_v1.pth",
+    "checkpoint_sha256": "9a812aa0dbf2a43a9e9e304715842de9b5fde238adc7e528a59e47bb632875d7"
+   }
+  },
   "coverage": {
    "status": "PASS",
    "detail": {
@@ -145,6 +158,6 @@
    }
   }
  },
- "seconds": 3.8970186710357666,
- "at": "2026-11-21T03:16:15"
+ "seconds": 3.446653366088867,
+ "at": "2026-11-21T03:19:38"
 }
