@@ -120,6 +120,15 @@ def stage(arm: str, staging: Path, tree: Path | None = None) -> tuple[dict, str]
     shutil.copy2(checkpoint, staging / "rqvae_best.pth")
     block = json.loads(stage3.read_text())
     (staging / "recall.json").write_text(json.dumps(block, indent=2, sort_keys=True) + "\n")
+    # The layout docstring (2026-11-15) says the Stage 3 weights travel with the recall
+    # block, because the block names this file and an archived recall must be
+    # reproducible.  They are copied when present and noted in the ledger otherwise.
+    # `best_checkpoint` is the weights file in the newer runs and its directory in the
+    # older ones, so both shapes are accepted.
+    named = Path(block.get("best_checkpoint", ""))
+    stage3_weights = named if named.suffix == ".pth" else named / "HG_Rec_best.pth"
+    if stage3_weights.is_file():
+        shutil.copy2(stage3_weights, staging / "HG_Rec_best.pth")
 
     files = {str(path.relative_to(staging)): sha256(path)
              for path in sorted(staging.rglob("*")) if path.is_file()}
