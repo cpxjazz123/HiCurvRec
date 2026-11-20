@@ -50,6 +50,7 @@ own_orbit 0.0 / own_subtype 0.0`。
 | 邻域多角色可承载 | **成立** | CE −8.2%,秩相关 0.593,3,581 少数角色商品 | `REPORT_STRUCTURE_TEACHER_V3.md` |
 | 监督可交付 | **成立** | 4 维 student 40 步损失下降;bundle 测试 | `tests/test_structure_teacher_bundle.py` |
 | 方向 | **未成立,已声明** | 0.5145 vs 多数类 0.5016 / 度数规则 0.5088 | `verify_conformance_229.py` |
+| 高阶结构/角色(无真值邻接) | **未成立,已声明** | subtype macro-F1 0.0206、role 0.3440;orbit probe CE 3.5488 vs 常数 3.5163 | `verify_conformance_229.py` |
 | 少数角色识别 | **未成立,已声明** | 少数角色 top-1 ≈ 0.03 | 同上 |
 | 联合训练能救角色识别吗 | **否** | orbit CE 4.3015 vs 常数 3.5031 | `REPORT_STRUCTURE_TEACHER_JOINT.md` |
 | SID / Recall 改善 | **不在范围** | 契约不训练 RQ-VAE/Stage2/Stage3 | 契约 `not_established` |

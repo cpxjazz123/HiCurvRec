@@ -239,7 +239,23 @@ def main() -> None:
     else:
         checks["edge_vs_heuristic"] = {"status": "FAIL", "detail": {"missing": True}}
 
-    # 14. coverage
+    # 14. high-order / role judgement without the observed adjacency (§2.2 row 3)
+    graph_report = json.loads((gt3.OUT / "graph_teacher3_report.json").read_text())
+    without = graph_report["recognition"]["without_adjacency"]
+    probe = graph_report["orbit_probe"]["C_residual"]
+    established = (without["subtype_macro_f1"] >= 0.10
+                   and probe["ce"] < probe["constant_ce"])
+    checks["prediction_structure_without_adjacency"] = {
+        "status": "PASS" if established else "NOT_ESTABLISHED",
+        "detail": {"subtype_macro_f1": without["subtype_macro_f1"],
+                   "role_macro_over_families": without["role_macro_over_families"],
+                   "orbit_probe_ce": probe["ce"],
+                   "constant_ce": probe["constant_ce"],
+                   "note": "measured without the true induced adjacency; subtype "
+                           "macro-F1 is near chance and the orbit probe is worse "
+                           "than the constant predictor"}}
+
+    # 15. coverage
     fraction = float((targets["coverage_neighbour"] > 0).mean())
     checks["coverage"] = {"status": "PASS" if fraction > 0.9 else "FAIL",
                           "detail": {"neighbourhood_fraction": fraction,

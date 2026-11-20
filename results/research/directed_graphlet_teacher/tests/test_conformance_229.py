@@ -24,3 +24,19 @@ def test_conformance_audit_has_no_failures():
     assert {"prediction_direction", "minority_role_identification",
             "joint_role_training"} <= set(payload["declared_not_established"])
     assert payload["checks"]["structure_environment"]["status"] == "PASS"
+
+
+def test_structure_prediction_without_adjacency_is_declared_not_established():
+    """""高阶 Graphlet/节点角色是否可判断"" must be a separate, honest status."""
+    import verify_conformance_229 as audit
+    with pytest.raises(SystemExit) as exit_info:
+        audit.main()
+    assert exit_info.value.code == 0
+    payload = json.loads((TEACHER / "conformance_229.json").read_text())
+    check = payload["checks"]["prediction_structure_without_adjacency"]
+    assert check["status"] == "NOT_ESTABLISHED"
+    detail = check["detail"]
+    assert detail["subtype_macro_f1"] < 0.1
+    assert detail["role_macro_over_families"] < 0.5
+    assert detail["orbit_probe_ce"] >= detail["constant_ce"]
+    assert "prediction_structure_without_adjacency" in payload["declared_not_established"]

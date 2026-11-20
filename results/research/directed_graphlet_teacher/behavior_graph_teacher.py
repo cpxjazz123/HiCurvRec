@@ -36,6 +36,7 @@ CAPABILITY_CHECKS = {
     "recognition": ("recognition_api", "recognised_type_from_adjacency", "multi_role"),
     "prediction_edge": ("prediction_edge", "structure_environment", "edge_vs_heuristic"),
     "prediction_direction": ("prediction_direction",),
+    "prediction_structure": ("prediction_structure_without_adjacency",),
     "item_carrier": ("item_carrier", "coverage"),
     "sid_capacity_32d": ("sid_capacity_32d",),
     "supervision_deliverable": ("supervision_deliverable",),

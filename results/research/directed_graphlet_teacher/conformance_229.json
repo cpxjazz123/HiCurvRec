@@ -5,7 +5,8 @@
  "declared_not_established": [
   "prediction_direction",
   "minority_role_identification",
-  "joint_role_training"
+  "joint_role_training",
+  "prediction_structure_without_adjacency"
  ],
  "checks": {
   "recognition_api": {
@@ -104,7 +105,7 @@
    "detail": {
     "teacher_loss": 0.09947130084037781,
     "first": 0.40428102016448975,
-    "after_40_steps": 0.40305811166763306
+    "after_40_steps": 0.40305814146995544
    }
   },
   "integrity": {
@@ -254,6 +255,16 @@
     }
    }
   },
+  "prediction_structure_without_adjacency": {
+   "status": "NOT_ESTABLISHED",
+   "detail": {
+    "subtype_macro_f1": 0.02055634424096399,
+    "role_macro_over_families": 0.3440042133047547,
+    "orbit_probe_ce": 3.5487771034240723,
+    "constant_ce": 3.5163180828094482,
+    "note": "measured without the true induced adjacency; subtype macro-F1 is near chance and the orbit probe is worse than the constant predictor"
+   }
+  },
   "coverage": {
    "status": "PASS",
    "detail": {
@@ -262,6 +273,6 @@
    }
   }
  },
- "seconds": 3.8842239379882812,
- "at": "2026-11-21T03:40:01"
+ "seconds": 2.0496766567230225,
+ "at": "2026-11-21T03:42:09"
 }
