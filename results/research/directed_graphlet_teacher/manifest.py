@@ -80,6 +80,7 @@ ANALYSIS = (
     "train_teacher.py", "tests/test_joint_teacher.py",
     "REPORT_STRUCTURE_TEACHER_JOINT.md", "issue229_joint_comment.md",
     "teacher/opt/joint_teacher_report.json",
+    "TEACHER_229.md",
 )
 
 
