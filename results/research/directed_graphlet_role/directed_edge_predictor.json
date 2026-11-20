@@ -1,41 +1,134 @@
 {
  "edges": 323633,
- "fit": 258906,
- "test": 64727,
+ "one_way_edges": 307149,
+ "fit": 245719,
+ "test": 61430,
+ "loss": "BCE(edge) + 1.0 * -log sigmoid(s(u,v) - s(v,u))",
  "arms": {
   "base": {
    "z": {
-    "auc": 0.7227185316792065,
-    "direction_accuracy": 0.507052698255751,
-    "direction_chance": 0.5
+    "lambda_1.0": {
+     "auc": 0.698643031417874,
+     "direction_accuracy": 0.5065114764772912,
+     "final_direction_loss": 0.6928520202636719,
+     "final_edge_loss": 0.6401858925819397,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 1.0
+    },
+    "lambda_10.0": {
+     "auc": 0.6936513149926746,
+     "direction_accuracy": 0.5056649845352433,
+     "final_direction_loss": 0.6921613216400146,
+     "final_edge_loss": 0.6428868174552917,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 10.0
+    }
    },
    "q": {
-    "auc": 0.7230877429820631,
-    "direction_accuracy": 0.5039627975960573,
-    "direction_chance": 0.5
+    "lambda_1.0": {
+     "auc": 0.697087964838027,
+     "direction_accuracy": 0.5028324922676217,
+     "final_direction_loss": 0.6932608485221863,
+     "final_edge_loss": 0.6395090818405151,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 1.0
+    },
+    "lambda_10.0": {
+     "auc": 0.6921553389223506,
+     "direction_accuracy": 0.505778935373596,
+     "final_direction_loss": 0.6925437450408936,
+     "final_edge_loss": 0.6420173645019531,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 10.0
+    }
    },
    "sid_onehot": {
-    "auc": 0.8015394674556213,
-    "direction_accuracy": 0.49487848965655756,
-    "direction_chance": 0.5
+    "lambda_1.0": {
+     "auc": 0.7281354911281133,
+     "direction_accuracy": 0.49746052417385644,
+     "final_direction_loss": 0.5818753838539124,
+     "final_edge_loss": 0.548340916633606,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 1.0
+    },
+    "lambda_10.0": {
+     "auc": 0.6456148770958815,
+     "direction_accuracy": 0.49856747517499594,
+     "final_direction_loss": 0.5657552480697632,
+     "final_edge_loss": 0.6060218811035156,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 10.0
+    }
    }
   },
   "D1": {
    "z": {
-    "auc": 0.779088276453412,
-    "direction_accuracy": 0.5019852611738532,
-    "direction_chance": 0.5
+    "lambda_1.0": {
+     "auc": 0.6934195275923816,
+     "direction_accuracy": 0.50978349340713,
+     "final_direction_loss": 0.6933744549751282,
+     "final_edge_loss": 0.640238881111145,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 1.0
+    },
+    "lambda_10.0": {
+     "auc": 0.6560134102230181,
+     "direction_accuracy": 0.5062021813446199,
+     "final_direction_loss": 0.6944423913955688,
+     "final_edge_loss": 0.6542155742645264,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 10.0
+    }
    },
    "q": {
-    "auc": 0.7735413308202141,
-    "direction_accuracy": 0.5007493009099757,
-    "direction_chance": 0.5
+    "lambda_1.0": {
+     "auc": 0.6868615578707472,
+     "direction_accuracy": 0.5086277063324108,
+     "final_direction_loss": 0.6935330629348755,
+     "final_edge_loss": 0.6440173387527466,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 1.0
+    },
+    "lambda_10.0": {
+     "auc": 0.6310390299527918,
+     "direction_accuracy": 0.5050463942699007,
+     "final_direction_loss": 0.6940699815750122,
+     "final_edge_loss": 0.6599627733230591,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 10.0
+    }
    },
    "sid_onehot": {
-    "auc": 0.822748056143495,
-    "direction_accuracy": 0.4958981568742565,
-    "direction_chance": 0.5
+    "lambda_1.0": {
+     "auc": 0.7034203968744913,
+     "direction_accuracy": 0.5026208692821097,
+     "final_direction_loss": 0.570281982421875,
+     "final_edge_loss": 0.5609438419342041,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 1.0
+    },
+    "lambda_10.0": {
+     "auc": 0.5902150713006674,
+     "direction_accuracy": 0.4990069998372131,
+     "final_direction_loss": 0.5595654249191284,
+     "final_edge_loss": 0.6316202878952026,
+     "direction_loss_floor": 0.6931471805599453,
+     "lambda": 10.0
+    }
    }
+  }
+ },
+ "baselines": {
+  "in_degree_rule": {
+   "direction_accuracy": 0.513136903792935,
+   "direction_chance": 0.5
+  },
+  "degree_scorer": {
+   "auc": 0.5352998902816214,
+   "direction_accuracy": 0.5222041347875631,
+   "final_direction_loss": 4.418883323669434,
+   "final_edge_loss": 9.471056938171387,
+   "direction_loss_floor": 0.6931471805599453
   }
  }
 }
