@@ -67,3 +67,23 @@ def test_two_runs_on_one_card_are_reported_as_a_conflict():
     assert gpu_alloc.conflicts([(1, "TIGER_a"), (2, "TIGER_b")]) == {}
     conflicts = gpu_alloc.conflicts([(1, "TIGER_a"), (1, "TIGER_b")])
     assert set(conflicts[1]) == {"TIGER_a", "TIGER_b"}
+
+
+def test_a_claim_without_a_pid_already_blocks_its_card():
+    """The race that put D3 next to D0: the state exists before the worker's pid.
+
+    The server's rule is "active status and recent launch blocks the card"; this
+    test pins the decision the allocator consumes.
+    """
+    import time
+
+    def blocks(status: str, launched_at: float) -> bool:
+        terminal = status in {"stopped", "refused", "finished", "exited_incomplete"}
+        recent = (time.time() - launched_at) < 2 * 3600
+        return (not terminal) and recent
+
+    assert blocks("starting", time.time())
+    assert blocks("smoke_pending", time.time())
+    assert blocks("running", time.time())
+    assert not blocks("stopped", time.time())
+    assert not blocks("running", time.time() - 3 * 3600)

@@ -1,0 +1,123 @@
+{
+ "min_support": 30,
+ "source_pool": "results/research/graphlet_roles/instances.npz",
+ "graph": "results/research/behavior_graph_directed",
+ "families": {
+  "K3": {
+   "instances": 126384,
+   "skeleton_mismatch": 0,
+   "subtypes_seen": 7,
+   "subtypes_kept": 7,
+   "other_instances": 0,
+   "train": 101142,
+   "heldout": 25242,
+   "min_support": 30,
+   "support": {
+    "000100110": 71106,
+    "000101110": 6533,
+    "001100010": 25623,
+    "001100110": 14614,
+    "001101100": 6567,
+    "001101110": 1865,
+    "011101110": 76
+   },
+   "source": "results/research/graphlet_roles/instances.npz"
+  },
+  "P3": {
+   "instances": 457068,
+   "skeleton_mismatch": 0,
+   "subtypes_seen": 6,
+   "subtypes_kept": 6,
+   "other_instances": 0,
+   "train": 366058,
+   "heldout": 91010,
+   "min_support": 30,
+   "support": {
+    "000000110": 97721,
+    "000001100": 240140,
+    "000001110": 3168,
+    "000100100": 112465,
+    "001001010": 3531,
+    "001001110": 43
+   },
+   "source": "results/research/graphlet_roles/instances.npz"
+  },
+  "C4": {
+   "instances": 250128,
+   "skeleton_mismatch": 0,
+   "subtypes_seen": 14,
+   "subtypes_kept": 14,
+   "other_instances": 0,
+   "train": 199853,
+   "heldout": 50275,
+   "min_support": 30,
+   "support": {
+    "0000000011001100": 22378,
+    "0000000111001000": 102461,
+    "0000000111001100": 9705,
+    "0000001110001000": 51133,
+    "0000001110001100": 11399,
+    "0000001111001100": 476,
+    "0001000111000100": 10455,
+    "0001000111001100": 464,
+    "0001001010000100": 28296,
+    "0001001010001100": 11944,
+    "0001001011001100": 150,
+    "0001001110001100": 1101,
+    "0001001111001000": 130,
+    "0001001111001100": 36
+   },
+   "source": "results/research/graphlet_roles/instances.npz"
+  },
+  "P4": {
+   "instances": 101710,
+   "skeleton_mismatch": 0,
+   "subtypes_seen": 14,
+   "subtypes_kept": 11,
+   "other_instances": 734,
+   "train": 81343,
+   "heldout": 20367,
+   "min_support": 30,
+   "support": {
+    "0000000001001010": 24888,
+    "0000000001001100": 22026,
+    "0000000001011010": 226,
+    "0000000101001000": 26944,
+    "0000000101001100": 531,
+    "0000000110000110": 752,
+    "0000000110001000": 24009,
+    "0000000110001100": 683,
+    "0000000110010100": 655,
+    "0000000110010110": 22,
+    "0001000101000100": 262,
+    "0001000101001000": 689,
+    "0001000101001100": 14,
+    "0001001001001010": 9
+   },
+   "source": "results/research/graphlet_roles/instances.npz"
+  },
+  "K1_3": {
+   "instances": 280893,
+   "skeleton_mismatch": 0,
+   "subtypes_seen": 10,
+   "subtypes_kept": 9,
+   "other_instances": 2,
+   "train": 224257,
+   "heldout": 56636,
+   "min_support": 30,
+   "support": {
+    "0000000000001110": 23264,
+    "0000000000011100": 104899,
+    "0000000000011110": 1106,
+    "0000000100011000": 115631,
+    "0000000100011010": 2989,
+    "0000000100011110": 52,
+    "0000100010001000": 31403,
+    "0001000100010010": 1490,
+    "0001000100010110": 57,
+    "0001000100011110": 2
+   },
+   "source": "results/research/graphlet_roles/instances.npz"
+  }
+ }
+}

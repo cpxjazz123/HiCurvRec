@@ -287,11 +287,14 @@ def stage2_tracked_cards() -> dict[int, str]:
         if card is None:
             continue
         tree_name = path.stem.split("stage2__", 1)[-1]
-        live = (state_process_live(state.get("pid"), Path("train_rqvae.py"))
-                or (state.get("status") in {"starting", "smoke_pending"}
-                    and state_process_live(state.get("worker_pid"),
-                                           HARNESS_DIR / "stage2_worker.py")))
-        if live:
+        # A claim blocks its card from the moment it is written: the worker's pid
+        # does not exist yet, and waiting for it let a second arm take the same
+        # card (observed on TIGER_drq_D3 against TIGER_drq_D0).  Only a terminal
+        # status, or a claim older than the frozen-run budget, frees the card.
+        status = str(state.get("status") or "")
+        terminal = status in {"stopped", "refused", "finished", "exited_incomplete"}
+        recent = (time.time() - float(state.get("launched_at") or 0)) < 2 * 3600
+        if not terminal and recent:
             tracked[int(card)] = tree_name
     return tracked
 

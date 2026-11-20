@@ -1,0 +1,64 @@
+{
+ "schema": "genrec.behavior_graph.directed.v1",
+ "definition": "E = {(i_t -> i_{t+1})} over the TRAIN sequences, ordered pairs only",
+ "directed": true,
+ "policy": {
+  "source": "results/stage0_build_parquet/train.parquet, training histories only",
+  "sequence": "one per user: longest history plus its target (same rule as the undirected build)",
+  "edge": "consecutive distinct items; self-loops dropped and counted",
+  "weight": "count of that ordered transition; reverse counts are never folded in",
+  "symmetry": "none: out CSR and in CSC are stored separately and are not symmetric",
+  "validation_test": "not read"
+ },
+ "sources": {
+  "train.parquet": {
+   "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+  },
+  "items.parquet": {
+   "sha256": "6408e3c0f98a65d817747477a22092c0848f7ed105dc9bf7b7327e9544a99af3"
+  },
+  "sentence_t5.npy": {
+   "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+  }
+ },
+ "counts": {
+  "nodes": 24587,
+  "directed_edges": 323633,
+  "self_loops_dropped": 0,
+  "total_transitions": 339519,
+  "reciprocal_edges": 16484,
+  "reciprocal_pairs": 8242,
+  "reciprocity_rate": 0.050934237237858934,
+  "one_way_edges": 307149,
+  "undirected_reference_edges": 315391,
+  "asymmetry_note": "a directed edge count is expected to exceed the undirected one by exactly the non-reciprocal pairs"
+ },
+ "degree": {
+  "out_max": 1295,
+  "out_mean": 13.162768942937324,
+  "in_max": 1226,
+  "in_mean": 13.162768942937324,
+  "out_median": 6.0,
+  "in_median": 6.0
+ },
+ "weight": {
+  "max": 37.0,
+  "mean": 1.0490864652244982,
+  "median": 1.0,
+  "p90": 1.0
+ },
+ "outputs": {
+  "edges.parquet": {
+   "bytes": 1033360,
+   "sha256": "beff59ca4c7e1cb914e037d5ba476029260fdf09497c106b815f9d93eecf06c0"
+  },
+  "graph.npz": {
+   "bytes": 14256700,
+   "sha256": "ef97a2bdc555259d402065026b00cf62bc1e91c3bc58a66da4d6f8f8df407fdd"
+  },
+  "node_features.npy": {
+   "bytes": 75531392,
+   "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+  }
+ }
+}

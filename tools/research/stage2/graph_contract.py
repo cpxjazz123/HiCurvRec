@@ -1,4 +1,8 @@
-"""One undirected behaviour graph, verified rather than assumed.
+"""One DIRECTED behaviour graph, verified rather than assumed (Issue #221).
+
+The undirected graph of #218/#220 is kept as a historical reference; it is no
+longer the canonical structure.  Everything below verifies the directed copy and
+refuses a folder whose metadata still claims an undirected single graph.
 
 Owner decision (2026-11-19): triangles, open wedges, communities/bridges and AF3
 are defined on a single undirected graph under ``results/research/behavior_graph``;
@@ -26,7 +30,9 @@ import sys
 from pathlib import Path
 
 SCHEMA_PREFIX = "genrec.behavior_graph"
-CANONICAL = Path("results") / "research" / "behavior_graph"
+SCHEMA_DIRECTED = "genrec.behavior_graph.directed.v1"
+CANONICAL = Path("results") / "research" / "behavior_graph_directed"
+HISTORICAL = Path("results") / "research" / "behavior_graph"
 BUILD_TOKENS = re.compile(r"adjacency|coo_matrix|csr_matrix|csgraph|neighbou?rs?\b|edge_index|torch_geometric|networkx")
 
 
@@ -61,10 +67,13 @@ def verify_graph(folder: Path | str | None = None) -> dict:
         return {"status": "FAIL", "graph": str(folder),
                 "detail": "schema %r is not %s.*" % (schema, SCHEMA_PREFIX)}
     policy = metadata.get("policy") or {}
-    if policy.get("single_undirected_graph") is not True or policy.get("directed_graph_stored") is not False:
+    if schema != SCHEMA_DIRECTED or metadata.get("directed") is not True:
         return {"status": "FAIL", "graph": str(folder),
-                "detail": "policy block must declare one undirected graph and no stored directed copy; got %r"
-                          % (policy,)}
+                "detail": "expected a directed graph (%s, directed=true); got schema %r, directed %r"
+                          % (SCHEMA_DIRECTED, schema, metadata.get("directed"))}
+    if "symmetry" not in policy:
+        return {"status": "FAIL", "graph": str(folder),
+                "detail": "the policy block must state the symmetry rule; got %r" % (policy,)}
     outputs = metadata.get("outputs") or {}
     if not outputs:
         return {"status": "FAIL", "graph": str(folder), "detail": "metadata lists no outputs to verify"}
@@ -83,6 +92,25 @@ def verify_graph(folder: Path | str | None = None) -> dict:
         return {"status": "FAIL", "graph": str(folder), "detail": "; ".join(problems)}
     return {"status": "PASS", "graph": str(folder),
             "detail": "%d files match metadata.json" % len(outputs)}
+
+
+def verify_historical(folder: Path | str | None = None) -> dict:
+    """The undirected graph of #218/#220: still readable, explicitly historical."""
+    folder = Path(folder) if folder is not None else repo_root() / HISTORICAL
+    metadata_path = folder / "metadata.json"
+    if not metadata_path.is_file():
+        return {"status": "MISSING", "graph": str(folder), "detail": "no historical metadata.json"}
+    metadata = json.loads(metadata_path.read_text())
+    policy = metadata.get("policy") or {}
+    if policy.get("single_undirected_graph") is not True:
+        return {"status": "FAIL", "graph": str(folder),
+                "detail": "the historical folder does not declare the undirected rule"}
+    problems = [name for name, record in (metadata.get("outputs") or {}).items()
+                if not (folder / name).is_file() or _sha256(folder / name) != record.get("sha256")]
+    if problems:
+        return {"status": "FAIL", "graph": str(folder), "detail": "; ".join(problems)}
+    return {"status": "PASS", "graph": str(folder), "historical": True,
+            "detail": "undirected reference verified; not the canonical graph"}
 
 
 def _sources(tree: Path):
