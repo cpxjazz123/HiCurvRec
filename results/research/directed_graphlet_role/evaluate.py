@@ -35,40 +35,49 @@ def load_sids(arm: str) -> np.ndarray:
     return np.array([payload[str(i)] for i in range(len(payload))], dtype=np.int64)
 
 
-def prefix_features(codes: np.ndarray, nodes: np.ndarray) -> np.ndarray:
-    """(instances, k, 3*256) one-hot of the three prefix levels, per node."""
+def prefix_features(codes: np.ndarray, nodes: np.ndarray, depth: int = 1) -> np.ndarray:
+    """(instances*k, depth*256) one-hot of the prefix levels, per node."""
     width = nodes.shape[1]
-    out = np.zeros((len(nodes), width, 3 * 256), dtype=np.float32)
-    for level in range(3):
-        slice_codes = codes[nodes, level]
+    out = np.zeros((len(nodes), width, depth * 256), dtype=np.float32)
+    for level in range(depth):
         np.put_along_axis(out[:, :, level * 256:(level + 1) * 256],
-                          slice_codes[:, :, None], 1.0, axis=2)
+                          codes[nodes, level][:, :, None], 1.0, axis=2)
     return out.reshape(len(nodes), -1)
 
 
 def role_probe(codes: np.ndarray, families: dict, vocab: dict) -> dict:
-    """Linear probe: SID prefix one-hot -> directed orbit, train on train split."""
-    from sklearn.linear_model import LogisticRegression
+    """Linear probe: SID prefix one-hot -> directed orbit of the first node.
+
+    A hard SID can only carry direction if some checkable readout recovers it;
+    prefix equality is symmetric, so this probe is the readout.  It is a
+    measurement, not a gate: a capped sample and a linear model keep it cheap
+    and identical across arms.
+    """
+    from sklearn.linear_model import SGDClassifier
 
     report = {}
     for family, (nodes, orbits, subtypes) in families.items():
-        probe = LogisticRegression(max_iter=200, multi_class="multinomial", n_jobs=1)
-        features = prefix_features(codes, nodes)
-        labels = np.array([vocab["orbits_of"][int(s)][int(o)] if int(s) in vocab["orbits_of"]
-                           else -1 for s, o in zip(subtypes, orbits[:, 0])])
-        # one label per instance is not enough: use the first node's orbit only as a
-        # smoke probe, and record it as such
-        mask = labels >= 0
-        split = np.zeros(len(nodes), dtype=bool)
-        split[: len(nodes) // 2] = True
-        train, test = mask & split, mask & ~split
-        if train.sum() < 50 or test.sum() < 50 or len(np.unique(labels[train])) < 2:
+        labels = np.array([vocab["orbits_of"].get(int(s), [-1])[int(o)]
+                           if int(s) in vocab["orbits_of"] else -1
+                           for s, o in zip(subtypes, orbits[:, 0])])
+        valid = labels >= 0
+        if valid.sum() < 200:
             report[family] = None
             continue
-        probe.fit(features[train], labels[train])
-        accuracy = float(probe.score(features[test], labels[test]))
-        report[family] = {"probe_accuracy": accuracy, "train": int(train.sum()),
-                          "test": int(test.sum()), "classes": int(len(np.unique(labels)))}
+        features = prefix_features(codes, nodes)[valid]
+        target = labels[valid]
+        rng = np.random.default_rng(221)
+        order = rng.permutation(len(target))
+        cut = int(0.7 * len(order))
+        train, test = order[:cut], order[cut:]
+        if len(np.unique(target[train])) < 2:
+            report[family] = None
+            continue
+        model = SGDClassifier(loss="log_loss", alpha=1e-4, max_iter=10, random_state=221)
+        model.fit(features[train], target[train])
+        report[family] = {"probe_accuracy": float(model.score(features[test], target[test])),
+                          "train": int(len(train)), "test": int(len(test)),
+                          "chance": float(1.0 / len(np.unique(target)))}
     values = [row["probe_accuracy"] for row in report.values() if row]
     return {"per_family": report, "mean": float(np.mean(values)) if values else None}
 
