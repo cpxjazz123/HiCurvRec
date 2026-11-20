@@ -58,6 +58,9 @@ LOSS_KEYS = ("orbit_target", "relation", "coverage", "confidence",
              "positive_pairs", "negative_pairs")
 LOSS_KEYS_V2 = ("relation", "subtype", "family", "orbit", "coverage", "confidence",
                 "positive_pairs", "negative_pairs")
+LOSS_KEYS_V3 = ("relation", "neighbour_relation", "neighbour_family", "neighbour_orbit",
+                "own_orbit", "own_subtype", "coverage", "coverage_neighbour",
+                "coverage_family", "confidence", "positive_pairs", "negative_pairs")
 
 
 # ------------------------------------------------------------------- carrier
@@ -132,6 +135,14 @@ def load_targets_v2(path: Path) -> dict:
     missing = [key for key in LOSS_KEYS_V2 if key not in stored.files]
     if missing:
         raise KeyError(f"v2 target table is missing {missing}")
+    return {key: stored[key] for key in stored.files}
+
+
+def load_targets_v3(path: Path) -> dict:
+    stored = np.load(Path(path))
+    missing = [key for key in LOSS_KEYS_V3 if key not in stored.files]
+    if missing:
+        raise KeyError(f"v3 target table is missing {missing}")
     return {key: stored[key] for key in stored.files}
 
 
@@ -744,3 +755,284 @@ def _direction_evidence() -> dict:
             "rule": "must beat both the majority and the degree baselines by >= 0.02; "
                     "0.5145 vs 0.5016 / 0.5088 / 0.5039 does not",
             "evidence": str(path.relative_to(REPO)), "evidence_sha256": _sha(path)}
+
+
+# ---------------------------------------------------------------- v3 artifact
+
+V3_VERSION = "structure-teacher-v3"
+
+
+class CarrierV3(nn.Module):
+    """768 -> the carried components plus the fidelity-only role profiles."""
+
+    WIDTHS = (("relation", 128), ("neighbour_relation", 128), ("neighbour_family", 5),
+              ("neighbour_orbit", 376), ("own_orbit", 376), ("own_subtype", 47))
+
+    def __init__(self, in_dim: int = 768, hidden: int = 1024,
+                 widths: tuple = WIDTHS):
+        super().__init__()
+        self.in_dim = in_dim
+        self.hidden = hidden
+        self.widths = tuple(widths)
+        self.trunk = nn.Sequential(
+            nn.Linear(in_dim, hidden), nn.GELU(), nn.Dropout(0.1),
+            nn.Linear(hidden, sum(width for _name, width in self.widths)))
+
+    def components(self, output: torch.Tensor) -> dict:
+        parts, offset = {}, 0
+        for name, width in self.widths:
+            parts[name] = output[..., offset:offset + width]
+            offset += width
+        return parts
+
+    def forward(self, features: torch.Tensor) -> torch.Tensor:
+        return self.trunk(features)
+
+
+def load_carrier_v3(path: Path) -> CarrierV3:
+    payload = torch.load(Path(path), map_location="cpu")
+    carrier = CarrierV3(payload["in_dim"], payload["hidden"], tuple(payload["widths"]))
+    carrier.load_state_dict(payload["carrier"])
+    carrier.eval()
+    carrier.requires_grad_(False)
+    carrier.meta = payload["meta"]
+    carrier.build_sha = payload["build_sha"]
+    return carrier
+
+
+def recognise_subgraph(matrix) -> dict:
+    """Deterministic recognition API: induced adjacency -> family/key/orbits."""
+    import numpy as np
+    from directed_graphlets import classify
+    result = classify(np.asarray(matrix, dtype=bool))
+    if result is None:
+        return {"family": None, "key": None, "orbits": None}
+    family, key, orbits = result
+    return {"family": family, "key": key, "orbits": list(orbits)}
+
+
+def _neighbourhood_targets(data, n: int, orbit: np.ndarray, family: np.ndarray,
+                           relation: np.ndarray) -> dict:
+    import scipy.sparse as sp
+    edges = data["message_edges"]
+    adjacency = sp.csr_matrix(
+        (np.ones(2 * len(edges)),
+         (np.concatenate([edges[:, 0], edges[:, 1]]),
+          np.concatenate([edges[:, 1], edges[:, 0]]))), shape=(n, n))
+    adjacency.data[:] = 1.0
+    adjacency.setdiag(0)
+    adjacency.eliminate_zeros()
+    degree = np.asarray(adjacency.sum(1)).ravel()
+    scale = np.clip(degree, 1.0, None)[:, None]
+    neighbour_orbit = (adjacency @ orbit) / scale
+    neighbour_family = (adjacency @ family) / scale
+    neighbour_relation = (adjacency @ relation) / scale
+    neighbour_relation /= np.clip(np.linalg.norm(neighbour_relation, axis=1, keepdims=True),
+                                  1e-9, None)
+    active = degree > 0
+    return {"degree": degree,
+            "neighbour_orbit": neighbour_orbit.astype(np.float32),
+            "neighbour_family": neighbour_family.astype(np.float32),
+            "neighbour_relation": neighbour_relation.astype(np.float32),
+            "coverage_neighbour": (active & (neighbour_orbit.sum(1) > 1e-9)).astype(np.float32),
+            "coverage_family": (active & (neighbour_family.sum(1) > 1e-9)).astype(np.float32)}
+
+
+def _distribution_report(logits, target, mean_profile) -> dict:
+    metrics = _distribution_metrics(logits, target, mean_profile)
+    probabilities = F.softmax(logits, -1).cpu().numpy()
+    truth = target.cpu().numpy()
+    label = truth.argmax(-1)
+    majority = np.bincount(label).argmax()
+    minority = label != majority
+    metrics["top1_accuracy"] = float((probabilities.argmax(-1) == label).mean())
+    metrics["minority_items"] = int(minority.sum())
+    metrics["minority_top1_accuracy"] = (float((probabilities.argmax(-1)[minority]
+                                                == label[minority]).mean())
+                                         if minority.any() else None)
+    p = probabilities - probabilities.mean(1, keepdims=True)
+    t = truth - truth.mean(1, keepdims=True)
+    denominator = np.sqrt((p * p).sum(1) * (t * t).sum(1))
+    metrics["role_rank_correlation"] = float(
+        np.mean((p * t).sum(1) / np.clip(denominator, 1e-12, None)))
+    return metrics
+
+
+def build_structure_teacher_v3(device, out_dir: Path | None = None, seed: int = 226,
+                               steps: int = 1200) -> dict:
+    """v3: relation + neighbourhood relation/orbit are carried; own roles are not."""
+    out_dir = Path(out_dir) if out_dir is not None else HERE / "teacher" / "structure" / "v3"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    data = gt3.prepare_data(device)
+    n = data["n_items"]
+    checkpoint = gt3.OUT / f"C_residual_edge_main_seed{seed}.pth"
+    variant = gt3.build_variant("C_residual")
+    gt3.load_checkpoint(checkpoint, variant)
+    variant.to(device).eval()
+    with torch.no_grad():
+        relation = F.normalize(variant.encode(data["features"], data["adjacency"]).float(),
+                               dim=1)
+    orbit, orbit_coverage = gt3.cached_orbit_profile(data)
+    own_subtype, own_family, subtype_count = _subtype_family_profiles(data, n)
+    relation_np = relation.cpu().numpy()
+    neighbourhood = _neighbourhood_targets(data, n, orbit, own_family, relation_np)
+    own_coverage = (orbit.sum(1) > 0).astype(np.float32)
+    neighbour_coverage = neighbourhood["coverage_neighbour"]
+    degrees = neighbourhood["degree"]
+    observed = degrees[degrees > 0]
+    reference = float(np.median(observed)) if len(observed) else 1.0
+    confidence = neighbour_coverage * np.clip(
+        np.log1p(degrees) / max(np.log1p(reference), 1e-9), 0.0, 1.0)
+
+    targets = {
+        "relation": relation,
+        "neighbour_relation": torch.from_numpy(neighbourhood["neighbour_relation"]).to(device),
+        "neighbour_family": torch.from_numpy(neighbourhood["neighbour_family"]).to(device),
+        "neighbour_orbit": torch.from_numpy(neighbourhood["neighbour_orbit"]).to(device),
+        "own_orbit": torch.from_numpy(orbit.astype(np.float32)).to(device),
+        "own_subtype": torch.from_numpy(own_subtype).to(device)}
+    coverages = {
+        "relation": neighbour_coverage,
+        "neighbour_relation": neighbour_coverage,
+        "neighbour_family": neighbourhood["coverage_family"],
+        "neighbour_orbit": neighbour_coverage,
+        "own_orbit": own_coverage,
+        "own_subtype": own_coverage}
+    split_coverage = neighbour_coverage
+    items = np.flatnonzero(split_coverage > 0)
+    rng = np.random.default_rng(seed)
+    order = rng.permutation(len(items))
+    cut = max(1, int(0.8 * len(order)))
+    train_items, eval_items = items[order[:cut]], items[order[cut:]]
+    train = torch.from_numpy(train_items).to(device)
+    evaluate = torch.from_numpy(eval_items).to(device)
+    carrier = CarrierV3(widths=(("relation", 128), ("neighbour_relation", 128),
+                                ("neighbour_family", 5), ("neighbour_orbit", 376),
+                                ("own_orbit", 376),
+                                ("own_subtype", subtype_count))).to(device)
+    optimizer = torch.optim.AdamW(carrier.parameters(), lr=1e-3, weight_decay=1e-4)
+    for _ in range(steps):
+        optimizer.zero_grad()
+        parts = carrier.components(carrier(data["features"][train]))
+        loss = F.mse_loss(F.normalize(parts["relation"], dim=1), targets["relation"][train])
+        loss = loss + F.mse_loss(F.normalize(parts["neighbour_relation"], dim=1),
+                                 targets["neighbour_relation"][train])
+        for name in ("neighbour_family", "neighbour_orbit", "own_orbit", "own_subtype"):
+            mask = torch.from_numpy(coverages[name][train_items]).to(device) > 0
+            if bool(mask.any()):
+                loss = loss - (targets[name][train][mask]
+                               * F.log_softmax(parts[name][mask], -1)).sum(-1).mean()
+        loss.backward()
+        optimizer.step()
+    carrier.eval()
+    carrier.requires_grad_(False)
+    with torch.no_grad():
+        parts = carrier.components(carrier(data["features"][evaluate]))
+        metrics = {}
+        for name in ("neighbour_family", "neighbour_orbit", "own_orbit", "own_subtype"):
+            mask = torch.from_numpy(coverages[name][eval_items]).to(device) > 0
+            if not bool(mask.any()):
+                metrics[name] = {"carried": False, "missing": True}
+                continue
+            train_mask = torch.from_numpy(coverages[name][train_items]).to(device) > 0
+            # the constant profile must average covered training items only, otherwise
+            # zero rows dilute it and every component looks carried
+            mean_profile = targets[name][train][train_mask].mean(0)
+            metrics[name] = _distribution_report(
+                parts[name][mask], targets[name][evaluate][mask], mean_profile)
+        for name, cosine_key in (("relation", "relation"), ("neighbour_relation",
+                                                            "neighbour_relation")):
+            predicted = F.normalize(parts[name], dim=1)
+            cosine = float((predicted * targets[cosine_key][evaluate]).sum(-1).mean())
+            metrics[name] = {"cosine": cosine,
+                             "constant_cosine": float(
+                                 (F.normalize(targets[cosine_key][train].mean(0), dim=0)
+                                  * targets[cosine_key][evaluate]).sum(-1).mean()),
+                             "carried": bool(cosine > 0.8)}
+    weights = {"relation": 1.0}
+    for name in ("neighbour_relation", "neighbour_orbit", "neighbour_family",
+                 "own_orbit", "own_subtype"):
+        component = metrics[name]
+        if name in ("relation", "neighbour_relation"):
+            weights[name] = 0.5 if component["carried"] else 0.0
+        else:
+            non_degenerate = (component.get("minority_items") or 0) >= 50
+            weights[name] = 0.5 if (component["carried"] and non_degenerate) else 0.0
+    direction = _direction_evidence()
+    alignment = _role_relation_alignment(relation_np, orbit.astype(np.float32), own_coverage)
+
+    target_path = out_dir / "structure_targets_v3.npz"
+    np.savez_compressed(
+        target_path, relation=relation_np.astype(np.float32),
+        neighbour_relation=neighbourhood["neighbour_relation"],
+        neighbour_family=neighbourhood["neighbour_family"],
+        neighbour_orbit=neighbourhood["neighbour_orbit"],
+        own_orbit=orbit.astype(np.float32), own_subtype=own_subtype,
+        coverage=own_coverage, coverage_neighbour=neighbour_coverage,
+        coverage_family=neighbourhood["coverage_family"],
+        confidence=confidence.astype(np.float32),
+        positive_pairs=data["train_positive"].astype(np.int64),
+        negative_pairs=data["train_negative"].astype(np.int64))
+    teacher_path = out_dir / "teacher_structure_v3.pth"
+    meta = {"seed": seed, "steps": steps, "subtype_count": subtype_count,
+            "graph_sha": data["meta"]["graph_sha"], "split_sha": data["split_sha"],
+            "source_checkpoint": checkpoint.name,
+            "source_checkpoint_sha256": _sha(checkpoint), "orbit_coverage": orbit_coverage,
+            "train_items": int(len(train_items)), "eval_items": int(len(eval_items)),
+            "degrees": {"zero_degree_items": int((degrees == 0).sum()),
+                        "median_covered_degree": reference}}
+    build_sha = hashlib.sha256(json.dumps(meta, sort_keys=True, default=str).encode()).hexdigest()
+    torch.save({"carrier": carrier.state_dict(), "in_dim": carrier.in_dim,
+                "hidden": carrier.hidden, "widths": list(carrier.widths),
+                "meta": meta, "build_sha": build_sha}, teacher_path)
+    contract = {
+        "version": V3_VERSION, "build_sha": build_sha,
+        "targets_file": target_path.name, "teacher_file": teacher_path.name,
+        "item_alignment": "row i is item i of the Stage1/Stage2 item universe",
+        "rqvae_input_changed": False,
+        "rqvae_encoder_input": "the original 768-d Stage1 item embedding only",
+        "teacher_inference_needs_graph": False,
+        "used_only_in_training_loss": True,
+        "graph_used_when": "only while building the table from the TRAIN message graph",
+        "target_semantics": {
+            "relation": "own 128-d relation vector; pairwise cosine is the relation target",
+            "neighbour_relation": "mean relation vector of the observed neighbours",
+            "neighbour_orbit": "mean orbit profile of the observed neighbours (multi-role)",
+            "neighbour_family": "mean family profile of the observed neighbours",
+            "own_orbit": "own orbit distribution (fidelity; not carried)",
+            "own_subtype": "own subtype distribution (fidelity; not carried)",
+            "coverage": "own orbit support",
+            "coverage_neighbour": "neighbourhood orbit support",
+            "coverage_family": "neighbourhood family support",
+            "confidence": "neighbour coverage scaled by log-degree evidence"},
+        "carrier": metrics,
+        "supervision_recommendation": {
+            "weights": weights,
+            "rule": "relation/neighbour_relation need cosine > 0.8; a role component needs "
+                    "CE < constant * 0.98 AND >= 50 minority-role items at evaluation, so a "
+                    "single dominant class cannot be sold as multi-role",
+            "primary": "relation"},
+        "api": {"recognise_subgraph": "deterministic induced-adjacency -> family/key/orbits",
+                "load": "structure_teacher.load_carrier_v3",
+                "losses": ["orbit_loss", "relation_ranking_loss", "relation_distill_loss"]},
+        "direction": direction,
+        "role_relation_alignment": alignment,
+        "prediction": _prediction_summary(),
+        "coverage": {"neighbourhood_items": int(neighbour_coverage.sum()),
+                     "family_items": int(neighbourhood["coverage_family"].sum()),
+                     "own_orbit_items": int(own_coverage.sum()),
+                     "items": int(n)}}
+    contract_path = out_dir / "teacher_structure_contract_v3.json"
+    contract_path.write_text(json.dumps(contract, indent=1, default=str))
+    manifest = {"version": V3_VERSION,
+                "files": {path.name: {"sha256": _sha(path), "bytes": path.stat().st_size}
+                          for path in (target_path, teacher_path, contract_path)}}
+    manifest_path = out_dir / "teacher_structure_manifest_v3.json"
+    manifest_path.write_text(json.dumps(manifest, indent=1))
+    result = {"root": str(out_dir), "targets": str(target_path), "teacher": str(teacher_path),
+              "contract": str(contract_path), "manifest": str(manifest_path),
+              "build_sha": build_sha, "carrier": metrics, "weights": weights,
+              "direction": direction, "coverage": contract["coverage"]}
+    (out_dir / "structure_teacher_v3_report.json").write_text(
+        json.dumps(result, indent=1, default=str))
+    return result

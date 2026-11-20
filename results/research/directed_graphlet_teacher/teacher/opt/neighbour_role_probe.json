@@ -1,0 +1,71 @@
+{
+ "coverage": {
+  "instances_kept": 9095,
+  "instances_dropped": 30905,
+  "item_coverage": 0.49888152275592795
+ },
+ "degree": {
+  "zero": 133,
+  "median": 8.0
+ },
+ "own_orbit": {
+  "items": 12266,
+  "train": 9812,
+  "eval": 2454,
+  "ce": 4.046952724456787,
+  "kl": 3.5725546181201935,
+  "target_entropy": 0.47439810633659363,
+  "constant_ce": 3.503094434738159,
+  "constant_kl": 3.0286963284015656,
+  "improvement": -0.15525082176646457,
+  "carried": false,
+  "macro_f1": 0.02554883502898368,
+  "majority_f1": 0.0038388351121039135,
+  "top1_accuracy": 0.06316218418907905,
+  "minority_items": 2222,
+  "minority_top1_accuracy": 0.050855085508550855,
+  "role_rank_correlation": 0.19776847958564758
+ },
+ "neighbour_orbit": {
+  "items": 12266,
+  "train": 9812,
+  "eval": 2454,
+  "ce": 2.6529393196105957,
+  "kl": 0.5444996356964111,
+  "target_entropy": 2.1084396839141846,
+  "constant_ce": 2.833437442779541,
+  "constant_kl": 0.7249977588653564,
+  "improvement": 0.06370287921087135,
+  "carried": true,
+  "macro_f1": 0.015857270428661627,
+  "majority_f1": 0.010020792422317201,
+  "top1_accuracy": 0.26079869600651995,
+  "minority_items": 1760,
+  "minority_top1_accuracy": 0.026704545454545453,
+  "role_rank_correlation": 0.6329724788665771
+ },
+ "neighbour_family": {
+  "items": 21704,
+  "train": 17363,
+  "eval": 4341,
+  "ce": 0.16998650133609772,
+  "kl": -0.020753905177116394,
+  "target_entropy": 0.1907404065132141,
+  "constant_ce": 0.20699596405029297,
+  "constant_kl": 0.016255557537078857,
+  "improvement": 0.1787931609391341,
+  "carried": true,
+  "macro_f1": 0.4999424029489691,
+  "majority_f1": 0.4999424029489691,
+  "top1_accuracy": 0.9997696383321816,
+  "minority_items": 1,
+  "minority_top1_accuracy": 0.0,
+  "role_rank_correlation": 0.9987865686416626
+ },
+ "neighbour_relation": {
+  "count": 12266,
+  "cosine": 0.9072527289390564,
+  "constant_cosine": 0.15363962948322296,
+  "carried": true
+ }
+}

@@ -1,0 +1,112 @@
+{
+ "root": "/fs04/ar57/wenyu/GeneRec/results/research/directed_graphlet_teacher/teacher/structure/v3",
+ "targets": "/fs04/ar57/wenyu/GeneRec/results/research/directed_graphlet_teacher/teacher/structure/v3/structure_targets_v3.npz",
+ "teacher": "/fs04/ar57/wenyu/GeneRec/results/research/directed_graphlet_teacher/teacher/structure/v3/teacher_structure_v3.pth",
+ "contract": "/fs04/ar57/wenyu/GeneRec/results/research/directed_graphlet_teacher/teacher/structure/v3/teacher_structure_contract_v3.json",
+ "manifest": "/fs04/ar57/wenyu/GeneRec/results/research/directed_graphlet_teacher/teacher/structure/v3/teacher_structure_manifest_v3.json",
+ "build_sha": "1fd2b39c95377a2ff5f94c997add6518a02ef7d9787691d91f88311b21835093",
+ "carrier": {
+  "neighbour_family": {
+   "ce": 0.17283767461776733,
+   "kl": -0.020034000277519226,
+   "target_entropy": 0.19287167489528656,
+   "constant_ce": 0.21118368208408356,
+   "constant_kl": 0.018312007188796997,
+   "macro_f1": 0.49994811663380717,
+   "majority_f1": 0.49994811663380717,
+   "carried": true,
+   "top1_accuracy": 0.9997924880680639,
+   "minority_items": 1,
+   "minority_top1_accuracy": 0.0,
+   "role_rank_correlation": 0.9987006187438965
+  },
+  "neighbour_orbit": {
+   "ce": 2.4996278285980225,
+   "kl": 0.6255617141723633,
+   "target_entropy": 1.8740661144256592,
+   "constant_ce": 2.723543882369995,
+   "constant_kl": 0.8494777679443359,
+   "macro_f1": 0.012365892014288535,
+   "majority_f1": 0.009506586651615852,
+   "carried": true,
+   "top1_accuracy": 0.25461714048557793,
+   "minority_items": 3581,
+   "minority_top1_accuracy": 0.008656799776598716,
+   "role_rank_correlation": 0.5925862193107605
+  },
+  "own_orbit": {
+   "ce": 3.8695192337036133,
+   "kl": 3.389574944972992,
+   "target_entropy": 0.47994428873062134,
+   "constant_ce": 3.5004048347473145,
+   "constant_kl": 3.020460546016693,
+   "macro_f1": 0.01816815301394196,
+   "majority_f1": 0.003650026838432635,
+   "carried": false,
+   "top1_accuracy": 0.06194331983805668,
+   "minority_items": 2249,
+   "minority_top1_accuracy": 0.04979991107158737,
+   "role_rank_correlation": 0.2117188721895218
+  },
+  "own_subtype": {
+   "ce": 1.624205470085144,
+   "kl": 0.6861110329627991,
+   "target_entropy": 0.938094437122345,
+   "constant_ce": 1.6024222373962402,
+   "constant_kl": 0.6643278002738953,
+   "macro_f1": 0.1041103197795398,
+   "majority_f1": 0.07741755170486306,
+   "carried": false,
+   "top1_accuracy": 0.42874493927125507,
+   "minority_items": 1362,
+   "minority_top1_accuracy": 0.06901615271659324,
+   "role_rank_correlation": 0.7534407377243042
+  },
+  "relation": {
+   "cosine": 0.8626939654350281,
+   "constant_cosine": 0.38026392459869385,
+   "carried": true
+  },
+  "neighbour_relation": {
+   "cosine": 0.8443525433540344,
+   "constant_cosine": 0.6070494651794434,
+   "carried": true
+  }
+ },
+ "weights": {
+  "relation": 1.0,
+  "neighbour_relation": 0.5,
+  "neighbour_orbit": 0.5,
+  "neighbour_family": 0.0,
+  "own_orbit": 0.0,
+  "own_subtype": 0.0
+ },
+ "direction": {
+  "status": "NOT_ESTABLISHED",
+  "metric": "balanced accuracy on one-way held-out pairs",
+  "head": {
+   "test_balanced_accuracy": 0.514497697353363,
+   "best_valid": 0.5197519958019257,
+   "best_step": 50,
+   "prediction_frequency": [
+    0.5109203520591111,
+    0.4890796479408888
+   ]
+  },
+  "baselines": {
+   "in_degree_rule": 0.5087541467278777,
+   "degree_logistic": 0.5039493143558502,
+   "majority": 0.5015973052265565
+  },
+  "test_pairs": 46015,
+  "rule": "must beat both the majority and the degree baselines by >= 0.02; 0.5145 vs 0.5016 / 0.5088 / 0.5039 does not",
+  "evidence": "results/research/directed_graphlet_teacher/teacher/opt/structure_probe_v2.json",
+  "evidence_sha256": "d9b2d483c7357411463de4831f6ac8ce758f1c53a0a365295823b391bd6022ea"
+ },
+ "coverage": {
+  "neighbourhood_items": 24094,
+  "family_items": 24426,
+  "own_orbit_items": 12266,
+  "items": 24587
+ }
+}

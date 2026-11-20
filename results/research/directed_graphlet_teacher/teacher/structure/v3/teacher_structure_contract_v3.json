@@ -1,0 +1,241 @@
+{
+ "version": "structure-teacher-v3",
+ "build_sha": "1fd2b39c95377a2ff5f94c997add6518a02ef7d9787691d91f88311b21835093",
+ "targets_file": "structure_targets_v3.npz",
+ "teacher_file": "teacher_structure_v3.pth",
+ "item_alignment": "row i is item i of the Stage1/Stage2 item universe",
+ "rqvae_input_changed": false,
+ "rqvae_encoder_input": "the original 768-d Stage1 item embedding only",
+ "teacher_inference_needs_graph": false,
+ "used_only_in_training_loss": true,
+ "graph_used_when": "only while building the table from the TRAIN message graph",
+ "target_semantics": {
+  "relation": "own 128-d relation vector; pairwise cosine is the relation target",
+  "neighbour_relation": "mean relation vector of the observed neighbours",
+  "neighbour_orbit": "mean orbit profile of the observed neighbours (multi-role)",
+  "neighbour_family": "mean family profile of the observed neighbours",
+  "own_orbit": "own orbit distribution (fidelity; not carried)",
+  "own_subtype": "own subtype distribution (fidelity; not carried)",
+  "coverage": "own orbit support",
+  "coverage_neighbour": "neighbourhood orbit support",
+  "coverage_family": "neighbourhood family support",
+  "confidence": "neighbour coverage scaled by log-degree evidence"
+ },
+ "carrier": {
+  "neighbour_family": {
+   "ce": 0.17283767461776733,
+   "kl": -0.020034000277519226,
+   "target_entropy": 0.19287167489528656,
+   "constant_ce": 0.21118368208408356,
+   "constant_kl": 0.018312007188796997,
+   "macro_f1": 0.49994811663380717,
+   "majority_f1": 0.49994811663380717,
+   "carried": true,
+   "top1_accuracy": 0.9997924880680639,
+   "minority_items": 1,
+   "minority_top1_accuracy": 0.0,
+   "role_rank_correlation": 0.9987006187438965
+  },
+  "neighbour_orbit": {
+   "ce": 2.4996278285980225,
+   "kl": 0.6255617141723633,
+   "target_entropy": 1.8740661144256592,
+   "constant_ce": 2.723543882369995,
+   "constant_kl": 0.8494777679443359,
+   "macro_f1": 0.012365892014288535,
+   "majority_f1": 0.009506586651615852,
+   "carried": true,
+   "top1_accuracy": 0.25461714048557793,
+   "minority_items": 3581,
+   "minority_top1_accuracy": 0.008656799776598716,
+   "role_rank_correlation": 0.5925862193107605
+  },
+  "own_orbit": {
+   "ce": 3.8695192337036133,
+   "kl": 3.389574944972992,
+   "target_entropy": 0.47994428873062134,
+   "constant_ce": 3.5004048347473145,
+   "constant_kl": 3.020460546016693,
+   "macro_f1": 0.01816815301394196,
+   "majority_f1": 0.003650026838432635,
+   "carried": false,
+   "top1_accuracy": 0.06194331983805668,
+   "minority_items": 2249,
+   "minority_top1_accuracy": 0.04979991107158737,
+   "role_rank_correlation": 0.2117188721895218
+  },
+  "own_subtype": {
+   "ce": 1.624205470085144,
+   "kl": 0.6861110329627991,
+   "target_entropy": 0.938094437122345,
+   "constant_ce": 1.6024222373962402,
+   "constant_kl": 0.6643278002738953,
+   "macro_f1": 0.1041103197795398,
+   "majority_f1": 0.07741755170486306,
+   "carried": false,
+   "top1_accuracy": 0.42874493927125507,
+   "minority_items": 1362,
+   "minority_top1_accuracy": 0.06901615271659324,
+   "role_rank_correlation": 0.7534407377243042
+  },
+  "relation": {
+   "cosine": 0.8626939654350281,
+   "constant_cosine": 0.38026392459869385,
+   "carried": true
+  },
+  "neighbour_relation": {
+   "cosine": 0.8443525433540344,
+   "constant_cosine": 0.6070494651794434,
+   "carried": true
+  }
+ },
+ "supervision_recommendation": {
+  "weights": {
+   "relation": 1.0,
+   "neighbour_relation": 0.5,
+   "neighbour_orbit": 0.5,
+   "neighbour_family": 0.0,
+   "own_orbit": 0.0,
+   "own_subtype": 0.0
+  },
+  "rule": "relation/neighbour_relation need cosine > 0.8; a role component needs CE < constant * 0.98 AND >= 50 minority-role items at evaluation, so a single dominant class cannot be sold as multi-role",
+  "primary": "relation"
+ },
+ "api": {
+  "recognise_subgraph": "deterministic induced-adjacency -> family/key/orbits",
+  "load": "structure_teacher.load_carrier_v3",
+  "losses": [
+   "orbit_loss",
+   "relation_ranking_loss",
+   "relation_distill_loss"
+  ]
+ },
+ "direction": {
+  "status": "NOT_ESTABLISHED",
+  "metric": "balanced accuracy on one-way held-out pairs",
+  "head": {
+   "test_balanced_accuracy": 0.514497697353363,
+   "best_valid": 0.5197519958019257,
+   "best_step": 50,
+   "prediction_frequency": [
+    0.5109203520591111,
+    0.4890796479408888
+   ]
+  },
+  "baselines": {
+   "in_degree_rule": 0.5087541467278777,
+   "degree_logistic": 0.5039493143558502,
+   "majority": 0.5015973052265565
+  },
+  "test_pairs": 46015,
+  "rule": "must beat both the majority and the degree baselines by >= 0.02; 0.5145 vs 0.5016 / 0.5088 / 0.5039 does not",
+  "evidence": "results/research/directed_graphlet_teacher/teacher/opt/structure_probe_v2.json",
+  "evidence_sha256": "d9b2d483c7357411463de4831f6ac8ce758f1c53a0a365295823b391bd6022ea"
+ },
+ "role_relation_alignment": {
+  "items": 1000,
+  "spearman": 0.012482859914544162,
+  "note": "relation cosine vs orbit-profile cosine over item pairs"
+ },
+ "prediction": {
+  "verdict": "GRAPH_SIGNAL",
+  "reason": "C beats A and D with a positive CI on every seed",
+  "test_auc": {
+   "A_embedding": {
+    "seed226": 0.7107761836893044,
+    "seed227": 0.7089125696153781
+   },
+   "B_graph": {
+    "seed226": 0.6780415112489369,
+    "seed227": 0.6698946832154311
+   },
+   "C_residual": {
+    "seed226": 0.747255457578413,
+    "seed227": 0.7474857553585366
+   },
+   "D_shuffled": {
+    "seed226": 0.7140714746551424,
+    "seed227": 0.7119611165800322
+   },
+   "E_nograph": {
+    "seed226": 0.7200954999952457,
+    "seed227": 0.7191470210725374
+   }
+  },
+  "comparisons": {
+   "edge:seed226:B_minus_A": {
+    "mean": -0.03275046633612885,
+    "low": -0.036013483859574244,
+    "high": -0.029573050938286966,
+    "n": 1000
+   },
+   "edge:seed226:C_minus_D": {
+    "mean": 0.03315635829894741,
+    "low": 0.031030173948246215,
+    "high": 0.035332510728382435,
+    "n": 1000
+   },
+   "edge:seed226:C_minus_A": {
+    "mean": 0.03643855000718082,
+    "low": 0.034161241125880905,
+    "high": 0.038761003465326745,
+    "n": 1000
+   },
+   "edge:seed226:C_minus_E": {
+    "mean": 0.027136658292174567,
+    "low": 0.02489160524013277,
+    "high": 0.029433241868783246,
+    "n": 1000
+   },
+   "edge:seed227:B_minus_A": {
+    "mean": -0.039015461209110154,
+    "low": -0.04221911147825117,
+    "high": -0.036041231918678716,
+    "n": 1000
+   },
+   "edge:seed227:C_minus_D": {
+    "mean": 0.0354946840597557,
+    "low": 0.03332388971744773,
+    "high": 0.037732247418174374,
+    "n": 1000
+   },
+   "edge:seed227:C_minus_A": {
+    "mean": 0.03853229738312329,
+    "low": 0.036302083337845105,
+    "high": 0.040894392239999786,
+    "n": 1000
+   },
+   "edge:seed227:C_minus_E": {
+    "mean": 0.028333364875550344,
+    "low": 0.02630969113369728,
+    "high": 0.030580559163599894,
+    "n": 1000
+   },
+   "edge:seed_average:C_minus_A": {
+    "mean": 0.03949888027279901,
+    "low": 0.03723894673247012,
+    "high": 0.041755109907580676,
+    "n": 1000
+   },
+   "edge:seed_average:C_minus_D": {
+    "mean": 0.03425462883908433,
+    "low": 0.032215306003321655,
+    "high": 0.03634555628009607,
+    "n": 1000
+   },
+   "edge:seed_average:B_minus_A": {
+    "mean": -0.03504621451313281,
+    "low": -0.03821279777847864,
+    "high": -0.031970457424219195,
+    "n": 1000
+   }
+  },
+  "report": "REPORT_GRAPH_TEACHER_OPTIMIZATION.md"
+ },
+ "coverage": {
+  "neighbourhood_items": 24094,
+  "family_items": 24426,
+  "own_orbit_items": 12266,
+  "items": 24587
+ }
+}

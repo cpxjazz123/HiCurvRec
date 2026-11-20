@@ -61,6 +61,12 @@ ANALYSIS = (
     "teacher/structure/v2/teacher_structure_contract_v2.json",
     "teacher/structure/v2/teacher_structure_manifest_v2.json",
     "teacher/structure/v2/structure_teacher_v2_report.json",
+    "probe_neighbour_roles.py", "tests/test_structure_teacher_v3.py",
+    "REPORT_STRUCTURE_TEACHER_V3.md", "issue229_v3_comment.md",
+    "teacher/opt/neighbour_role_probe.json",
+    "teacher/structure/v3/teacher_structure_contract_v3.json",
+    "teacher/structure/v3/teacher_structure_manifest_v3.json",
+    "teacher/structure/v3/structure_teacher_v3_report.json",
 )
 
 
