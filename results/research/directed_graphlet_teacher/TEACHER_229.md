@@ -2,6 +2,21 @@
 
 本页是 #229 交付的**唯一入口**。所有数字都有机器可读产物;所有“未成立”都逐条声明。
 
+## 0. 一个类拿到全部能力
+
+```python
+from behavior_graph_teacher import BehaviorGraphTeacher
+
+teacher = BehaviorGraphTeacher.load()      # bundle + 训练好的图模型
+teacher.verify()                           # 两件产物的 SHA/参数摘要
+teacher.recognise(matrix)                  # 识别
+state = teacher.encode(features, adjacency)
+teacher.score_pairs(state, positives, negatives)   # 预测
+teacher.targets_for(item_ids)              # 商品级监督行
+teacher.structure_loss(student_vectors, item_ids=batch)
+teacher.describe()                         # 每项能力的 PASS / NOT_ESTABLISHED
+```
+
 ## 1. 加载与使用
 
 ```python

@@ -88,6 +88,7 @@ ANALYSIS = (
     "joint_teacher_model.py", "tests/test_joint_teacher_model.py",
     "teacher/structure/joint/teacher_joint_v1_manifest.json",
     "teacher/opt/joint_teacher_reload.json",
+    "behavior_graph_teacher.py", "tests/test_behavior_graph_teacher.py",
 )
 
 
