@@ -188,3 +188,33 @@ def test_non_finite_students_are_rejected(bundle):
     n = len(bundle.targets["relation"])
     with pytest.raises(ValueError, match="finite"):
         bundle.structure_loss(torch.full((n, 4), float("nan")))
+
+
+def test_bundle_verify_detects_a_tampered_artifact_digest(bundle):
+    """The frozen gate must fail closed, not only pass on the untouched files."""
+    original = dict(bundle.meta["shas"])
+    name = next(iter(original))
+    tampered = dict(original)
+    tampered[name] = "0" * 64
+    bundle.meta["shas"] = tampered
+    try:
+        report = bundle.verify()
+    finally:
+        bundle.meta["shas"] = original
+    assert report["healthy"] is False
+    assert report["checks"][name]["ok"] is False
+
+
+def test_bundle_verify_detects_tampered_carrier_weights(bundle):
+    original = bundle.meta["carrier_sha"]
+    bundle.meta["carrier_sha"] = "f" * 64
+    try:
+        report = bundle.verify()
+    finally:
+        bundle.meta["carrier_sha"] = original
+    assert report["healthy"] is False
+    assert report["checks"]["carrier_sha"]["ok"] is False
+
+
+def test_bundle_verify_is_healthy_again_after_restoring(bundle):
+    assert bundle.verify()["healthy"] is True
