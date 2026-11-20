@@ -1,11 +1,11 @@
 # CLAUDE.md — 当前仓库执行规则
 
-## 0. 当前 Graphlet 预测监督研究主线（2026-11-20，Issue #220）
+## 0. 当前有向图结构角色监督研究主线（2026-11-20，Issue #221）
 
-- 新的研究目标以 `ideas/main_line.json` 和 [Issue #220](https://github.com/cpxjazz123/HiCurvRec/issues/220) 为准：**Graphlet 类型分类 + 实例内逐节点 Orbit 角色预测产生联合 CE Loss，经真实 RQ-VAE 量化路径监督硬 SID**。禁止把主预测任务改为 P4 边/非边分类、pairwise 排序或单独边预测。旧 #219 已按 `not_planned` 关闭。
-- 下文第 19 条、`tools/research/rounds/{agents.py,scope.py}` 中强制“行为信号 × 双曲几何”的规则，是原 Issue #121 的**历史自动轮次契约**，不再定义 Issue #220 的研究目标。AF3、双曲 Transformer、混合曲率为可选后续假设，非 #220 的强制条件；原先“不允许 BCE/CE”的旧范围描述不得误用于拒绝 #220 的 **Type/Role CE**。
-- **工程迁移尚未完成**：上述 `rounds/` 代码仍硬编码旧范围检查。任何 #220 的新候选必须先按 #220 迁移并验证其准入及提示词路径；**不得简单绕过代码检查或在旧硬门禁下强行开训**。其余 Stage2 数据隔离、冻结训练/Stage3 协议、CGV、反坍缩、导出复现规则继续有效。
-
+- 当前研究目标以 `ideas/main_line.json` 和 [Issue #221](https://github.com/cpxjazz123/HiCurvRec/issues/221) 为准：正式将 TRAIN-only 商品行为图由无向图**迁移为有向图**，分别保留 `A→B`/`B→A` 的有序转移与计数，构造严格诱导 **Directed Graphlet Type + Directed Node Orbit** 标签；由类型 CE + 实例内角色 CE 的联合预测 Loss 监督 RQ-VAE 真实量化及硬 SID，最后检验 Stage3 Recall。原 #220 已按 `not_planned` 关闭，#217/#218 为历史参照。
+- **工程迁移状态：目标已改、旧代码尚待完成迁移。** 本文件 §89b、`analysis_sid_recall/build_behavior_graph.py`、`tools/research/stage2/graph_contract.py` 及无向采样/统计消费者仍是历史**单一无向图契约**；#221 必须经过显式 schema 升级、来源 SHA、Graphlet directed-orbit 标签检验和消费者迁移后，才能替换规范图和启动新研究。不得简单绕过现有校验、直接对称化新图、静默覆盖旧实验图/产物，或同时维护多个未声明的主规范图。
+- 保留原来的预测器目标：**整组结构类型 + 每个节点在该实例内的方向敏感 Orbit 角色**。不把主任务改成链接预测、P4 六对边 BCE、距离排序或普通 InfoNCE。AF3、GraphWave、混合曲率均非本轮强制项。
+- 下文 §19 和 `tools/research/rounds/` 内的 Issue #121 行为 × 双曲几何强制门是历史研究框架，若仍阻挡 #221，须迁移并验证新的 Type+DirectedRole 范围判定，而不是关闭保护或只改文档。其他 TRAIN-only、冻结 Stage2/Stage3 协议、DDP、CGV、码本反坍缩、SID 重编码零差异约束继续有效。
 
 > 以下每个编号项均是一条独立规则，以当前 `main` 的实际源码和路径为准。
 
