@@ -26,7 +26,7 @@ ANALYSIS = (
     "fit_teacher.py", "gate.py", "manifest.py", "close_comment.py", "report_sections.py",
     "trainable_student.py", "evidence_backprop.py", "smoke_trainable_student.py",
     "REPORT_STUDENT_RQVAE_BACKPROP.md", "backprop_evidence.json",
-    "smoke_trainable_student.json", "health_stop.json",
+    "smoke_trainable_student.json", "health_stop.json", "issue223_close_comment.md",
     "teacher_controls.json", "gate.json",
     "tests/test_teacher_contract.py", "tests/test_student_interface.py",
     "tests/test_trainable_student.py",
