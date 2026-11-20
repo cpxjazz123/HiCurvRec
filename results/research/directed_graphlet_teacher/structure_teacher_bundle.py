@@ -43,6 +43,20 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def pairs_with_evidence(targets) -> tuple[np.ndarray, np.ndarray, int]:
+    """Drop supervision pairs that would make a claim about an unsupported item.
+
+    An item with no observed neighbour has no relation evidence; using it as a
+    contrastive negative would train its representation on an invented "not
+    related" claim.  Both endpoints and the negative must be supported.
+    """
+    has = targets["coverage_neighbour"] > 0
+    pairs = targets["positive_pairs"]
+    negatives = targets["negative_pairs"]
+    keep = has[pairs[:, 0]] & has[pairs[:, 1]] & has[negatives]
+    return pairs[keep], negatives[keep], int((~keep).sum())
+
+
 class StructureTeacherBundle:
     """Frozen teacher: recognition, graph-derived targets, carrier and losses."""
 
@@ -115,8 +129,7 @@ class StructureTeacherBundle:
             raise ValueError(f"student_vectors must have {total_items} rows or "
                              f"{len(ids)} rows aligned with item_ids")
         weights = weights or self.weights
-        pairs = self.targets["positive_pairs"]
-        negatives = self.targets["negative_pairs"]
+        pairs, negatives, dropped = pairs_with_evidence(self.targets)
         relation = torch.from_numpy(self.targets["relation"]).float()
         neighbour = torch.from_numpy(self.targets["neighbour_relation"]).float()
         if local is None:
@@ -145,14 +158,16 @@ class StructureTeacherBundle:
             result = {"relation_ranking": float(rank.detach()),
                       "relation_distill": float(distill.detach()),
                       "neighbour_relation_distill": float(n_distill.detach()),
-                      "pairs_used": int(len(local_pairs)), "orbit": None}
+                      "pairs_used": int(len(local_pairs)),
+                      "pairs_no_evidence": dropped, "orbit": None}
         else:
             # no observed pair survives inside this batch: report the absence
             # instead of the NaN that mean()/mse_loss() over an empty set gives
             total = student_vectors.sum() * 0.0
             result = {"relation_ranking": None, "relation_distill": None,
                       "neighbour_relation_distill": None,
-                      "pairs_used": 0, "orbit": None}
+                      "pairs_used": 0, "pairs_no_evidence": dropped,
+                      "orbit": None}
         if role_logits is not None and weights.get("neighbour_orbit", 0.0) > 0:
             target = torch.from_numpy(self.targets["neighbour_orbit"]).float()
             coverage = torch.from_numpy(self.targets["coverage_neighbour"]).float()

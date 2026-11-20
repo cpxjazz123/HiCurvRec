@@ -143,8 +143,8 @@ def test_structure_loss_applies_the_documented_neighbour_relation_weight(bundle)
     torch.manual_seed(0)
     vectors = torch.randn(n, 4)
     metrics, _ = bundle.structure_loss(vectors)
-    pairs = bundle.targets["positive_pairs"]
-    negatives = bundle.targets["negative_pairs"]
+    pairs, negatives, dropped = stb.pairs_with_evidence(bundle.targets)
+    assert metrics["pairs_no_evidence"] == dropped
     rank = st.relation_ranking_loss(vectors, pairs, negatives)
     own = st.relation_distill_loss(
         vectors, pairs, torch.from_numpy(bundle.targets["relation"]).float())
@@ -250,3 +250,17 @@ def test_multi_role_items_keep_more_than_one_role_in_the_target(bundle):
     probe = int(multi_neighbour[0])
     profile = bundle.targets_for([probe])["neighbour_orbit"][0]
     assert int((profile > 0.05).sum()) >= 2
+
+
+def test_items_with_no_graph_evidence_receive_no_supervision(bundle):
+    """§3: an item the graph cannot support must not be trained on invented structure."""
+    coverage = bundle.targets["coverage_neighbour"]
+    isolated = np.flatnonzero(coverage <= 0)
+    assert len(isolated) > 0
+    n = len(bundle.targets["relation"])
+    torch.manual_seed(0)
+    vectors = torch.randn(n, 4, requires_grad=True)
+    _, loss = bundle.structure_loss(vectors, role_logits=torch.zeros(n, 376))
+    loss.backward()
+    norms = vectors.grad.norm(dim=1)
+    assert float(norms[torch.from_numpy(isolated)].max()) == 0.0

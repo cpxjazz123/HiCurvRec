@@ -50,6 +50,7 @@ metrics, loss = teacher.structure_loss(student_vectors, role_logits=logits)
   `+ w_neighbour_relation × relation_distill_loss(neighbour_relation)`(邻居聚合关系几何);把 `w_relation` 置 0 会同时关掉这两项;
 - 批内没有任何观测 pair 时,两项关系损失记为 `None`、总损失为可微零,不产生 NaN;
 - `student_vectors` 或 `role_logits` 含非有限值时直接 `ValueError`,不把 NaN 传进梯度;
+- pair 表里 anchor / positive / negative 任一商品没有观测邻居(`coverage_neighbour == 0`)时,该 pair 被丢弃、不进入任何关系损失;`metrics["pairs_no_evidence"]` 记录丢弃数(当前 480 / 32,637),这些商品(493 个)因此完全不受结构监督,不再被对比负样本捏造关系;
 - `role_logits`(可选,376 维)与 `student_vectors` 接受同样的两种形状:全体表或 `len(item_ids)` 行批内对齐;给出时加 `0.5 × orbit_loss`(仅 `coverage_neighbour>0` 的行);
 - 返回 `(metrics_dict, total_tensor)`,`metrics` 里逐项记录数值,便于日志。
 
