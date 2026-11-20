@@ -287,3 +287,18 @@ $$s(u,v)=h_u^{\top} W h_v + a\cdot h_u + b\cdot h_v + c,\qquad W \text{ 不对�
 `heldout_edge_pairs()` 把 (a, b) 以 `a < b` 存成有序对，而 `reduce_graph()` 拿**有序**的 `(source, target)` 去比对，于是 `b → a` 存活、只有 `a → b` 被删掉——heldout 实例的边以反向形式漏回计数图。修正为按 `(min, max)` 的无序键比对，两条方向一起删除；`tests/test_dgdv_leakage.py` 断言双向删除且无关边保留。
 
 修复后 §5b 的 DGDV 表需要重算（`dgdv.npz` 重新生成），无向 0.5170 与有向 0.5175 的差是否稳定要按新结果重读。同一泄漏也存在于 `dirgnn_predictor.py`（它复用 `reduce_graph`）；那一组结论是「机会线附近」，泄漏只会让被泄漏的版本更乐观，因此修正不会把否定结论翻成肯定。
+
+## 11. 结项清单（issue #221 §5–§7）
+
+| 项 | 状态 |
+|---|---|
+| 有向图契约 + TRAIN-only + SHA（§1、#7.1） | 完成（7 个图测试 + `MANIFEST.json`） |
+| 有向 subtype/orbit 标签与池（§2） | 完成（10 个标签测试 + coverage.json） |
+| CGV6 六类可执行证据（§6） | 完成，索引见 `CGV.md`（25 + 7 + 13 + 5 + 4 项通过） |
+| 五臂 D0–D4（§4） | 完成；D1 存活，D2/D3/D4 触发 assignment floor |
+| **U 无向参照 / S 打乱方向参照（§5）** | 两条参照臂原本**从未跑通**（词表缺 `allowed`、无向标签切错行、打乱把局部 orbit 当全局 id）。修好后按 D1 配方重跑，`ABLATION.md` 记录 |
+| 五组 DGDV/度数输入消融（§3 补充） | **不启动**：无泄漏数据上离线闸门为 0（§5b），按 §19g 不使用唯一预算 |
+| 完整消融表 + SID/codebook/Recall（§7.3） | `ABLATION.md`（由 `ablation_table.py` 从磁盘产物直接生成） |
+| 复现命令 | 各节末尾 + `CGV.md` |
+
+**注意**：U/S 的第一版以 `ARM_VARIANT="D3"`（头读 q_ST、梯度进码本）建树，在 epoch 49 触发码本健康门（L1 最大桶 0.988、三级碰撞 0.995），与 D2/D3/D4 的塌缩完全同型。参照臂必须与 D1（头读 z）同配方，故改为 `D1` 后重跑——这是「只差标签模式」的对照，不是「顺便换了个配方」。
