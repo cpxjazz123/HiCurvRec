@@ -1,0 +1,67 @@
+{
+ "structure_only": {
+  "loss": 0.04443714767694473,
+  "gradient_norms": {
+   "encoder": 0.0014726758717793875,
+   "codebooks": [
+    0.001286419164907919,
+    0.0012330385651145583,
+    0.0009197531531302531
+   ],
+   "head": 0.13600565395241404,
+   "teacher": 0.0
+  },
+  "teacher_parameters_unchanged": true,
+  "student_bundle_keys": [
+   "q"
+  ],
+  "supervision": "teacher_kd"
+ },
+ "main_loss_reference": {
+  "loss": 2.5695085525512695,
+  "gradient_norms": {
+   "encoder": 0.07622252144208655,
+   "codebooks": [
+    0.05518068865667581,
+    0.06683344383760265,
+    0.07153258469870862
+   ],
+   "head": 0.0,
+   "teacher": 0.0
+  },
+  "encoder_step_after_one_adamw": 0.001002490520477295,
+  "codebook_step_after_one_adamw": 0.0010285377502441406
+ },
+ "lambda_zero": {
+  "changed": {
+   "encoder": true,
+   "codebooks": true
+  },
+  "lambda": 0.0
+ },
+ "lambda_positive": {
+  "changed": {
+   "encoder": true,
+   "codebooks": true
+  },
+  "lambda": 0.5,
+  "structure_grad_norms": {
+   "encoder": 0.008300579602517406,
+   "codebooks": [
+    0.008478708110337718,
+    0.00837713599400093,
+    0.006288029746684901
+   ]
+  }
+ },
+ "update_divergence": {
+  "encoder": 0.001999802887439728,
+  "codebooks": 0.0019999146461486816
+ },
+ "checks": {
+  "learning_path": "pass",
+  "update_proof": "pass",
+  "teacher_frozen": "pass",
+  "bundle_has_no_structure": "pass"
+ }
+}

@@ -23,9 +23,13 @@ INPUTS = (
 ANALYSIS = (
     "REPORT_TEACHER_DISTILL_INTERFACE.md",
     "teacher_model.py", "frozen_sid.py", "student_head.py", "kdistill.py",
-    "fit_teacher.py", "gate.py", "manifest.py",
+    "fit_teacher.py", "gate.py", "manifest.py", "close_comment.py", "report_sections.py",
+    "trainable_student.py", "evidence_backprop.py", "smoke_trainable_student.py",
+    "REPORT_STUDENT_RQVAE_BACKPROP.md", "backprop_evidence.json",
+    "smoke_trainable_student.json", "health_stop.json",
     "teacher_controls.json", "gate.json",
     "tests/test_teacher_contract.py", "tests/test_student_interface.py",
+    "tests/test_trainable_student.py",
 )
 
 
