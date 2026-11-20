@@ -44,6 +44,7 @@ own_orbit 0.0 / own_subtype 0.0`。
 | 识别:给诱导邻接的 family/type/orbit | **成立** | 五 family 全对;subtype 0.7121 / orbit 0.6101 | `REPORT_STRUCTURE_TEACHER.md` §3.1、`head_pretrained_directed.json` |
 | 多角色 | **成立** | 2.08 角色/商品,46.1% 多角色 | `structure_targets_v3.npz` |
 | 预测:边存在性 | **成立** | C−A **+0.0395** [0.0372,0.0418];C−D **+0.0343** [0.0322,0.0363],双 seed | `REPORT_GRAPH_TEACHER_OPTIMIZATION.md` |
+| 有用环境 / 无证据环境 | **成立** | 闭合/开放、四个度数段 C 均高于 A 与 D;跨连通分量(126 对)无证据 | `REPORT_STRUCTURE_ENVIRONMENT.md` |
 | 商品级可承载(32 维) | **成立** | 真实拓扑解码 **0.889** vs 重接线 **0.398** | `REPORT_STRUCTURE_TEACHER_SID_CAPACITY.md` |
 | 邻域多角色可承载 | **成立** | CE −8.2%,秩相关 0.593,3,581 少数角色商品 | `REPORT_STRUCTURE_TEACHER_V3.md` |
 | 监督可交付 | **成立** | 4 维 student 40 步损失下降;bundle 测试 | `tests/test_structure_teacher_bundle.py` |

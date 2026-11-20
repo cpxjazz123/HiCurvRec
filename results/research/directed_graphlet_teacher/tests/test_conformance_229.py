@@ -23,3 +23,4 @@ def test_conformance_audit_has_no_failures():
     assert payload["verdict"] in ("DONE", "DONE_WITH_DECLARATIONS")
     assert {"prediction_direction", "minority_role_identification",
             "joint_role_training"} <= set(payload["declared_not_established"])
+    assert payload["checks"]["structure_environment"]["status"] == "PASS"

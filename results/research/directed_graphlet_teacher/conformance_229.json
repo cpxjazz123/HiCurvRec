@@ -104,7 +104,7 @@
    "detail": {
     "teacher_loss": 0.09947130084037781,
     "first": 0.40428102016448975,
-    "after_40_steps": 0.40305811166763306
+    "after_40_steps": 0.40305814146995544
    }
   },
   "integrity": {
@@ -150,6 +150,64 @@
     "checkpoint_sha256": "9a812aa0dbf2a43a9e9e304715842de9b5fde238adc7e528a59e47bb632875d7"
    }
   },
+  "structure_environment": {
+   "status": "PASS",
+   "detail": {
+    "slices": {
+     "closure:cn0": {
+      "pairs": 27809,
+      "c_minus_a": 0.036475008994130254,
+      "c_minus_d": 0.0359229074159898
+     },
+     "closure:cn>=1": {
+      "pairs": 18777,
+      "c_minus_a": 0.03889683654316434,
+      "c_minus_d": 0.030825306752751636
+     },
+     "degree:q1": {
+      "pairs": 12000,
+      "c_minus_a": 0.0529213819444444,
+      "c_minus_d": 0.05251777083333331
+     },
+     "degree:q2": {
+      "pairs": 11549,
+      "c_minus_a": 0.03037832281163122,
+      "c_minus_d": 0.026319195270640083
+     },
+     "degree:q3": {
+      "pairs": 11554,
+      "c_minus_a": 0.031261014464400994,
+      "c_minus_d": 0.026616807639326168
+     },
+     "degree:q4": {
+      "pairs": 11483,
+      "c_minus_a": 0.024342555039865266,
+      "c_minus_d": 0.01979871892074292
+     },
+     "community:same": {
+      "pairs": 46460,
+      "c_minus_a": 0.03656675144343491,
+      "c_minus_d": 0.033347146041318054
+     },
+     "community:different": {
+      "pairs": 126,
+      "c_minus_a": -0.001196775006298778,
+      "c_minus_d": -0.03716301335348959
+     },
+     "direction:one_way": {
+      "pairs": 46586,
+      "c_minus_a": 0.036479275041046755,
+      "c_minus_d": 0.03318397992823141
+     }
+    },
+    "no_evidence": {
+     "slice": "community:different",
+     "pairs": 126,
+     "c_minus_a": -0.001196775006298778,
+     "c_minus_d": -0.03716301335348959
+    }
+   }
+  },
   "coverage": {
    "status": "PASS",
    "detail": {
@@ -158,6 +216,6 @@
    }
   }
  },
- "seconds": 3.4588632583618164,
- "at": "2026-11-21T03:20:55"
+ "seconds": 3.4283347129821777,
+ "at": "2026-11-21T03:32:41"
 }

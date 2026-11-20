@@ -196,7 +196,30 @@ def main() -> None:
     else:
         checks["joint_role_training"] = {"status": "FAIL", "detail": {"missing": True}}
 
-    # 12. coverage
+    # 12. where the teacher helps (structural environments)
+    env_path = gt3.OUT / "structure_environment.json"
+    if env_path.is_file():
+        env = json.loads(env_path.read_text())
+        major = {name: entry for name, entry in env["slices"].items()
+                 if not entry.get("skipped") and name != "community:different"}
+        supports = all(entry["C_minus_A"] > 0 and entry["C_minus_D"] > 0
+                       for entry in major.values())
+        cross = env["slices"].get("community:different", {})
+        checks["structure_environment"] = {
+            "status": "PASS" if supports else "FAIL",
+            "detail": {"slices": {name: {"pairs": entry["pairs"],
+                                         "c_minus_a": entry["C_minus_A"],
+                                         "c_minus_d": entry["C_minus_D"]}
+                                  for name, entry in env["slices"].items()
+                                  if not entry.get("skipped")},
+                       "no_evidence": {"slice": "community:different",
+                                       "pairs": cross.get("pairs"),
+                                       "c_minus_a": cross.get("C_minus_A"),
+                                       "c_minus_d": cross.get("C_minus_D")}}}
+    else:
+        checks["structure_environment"] = {"status": "FAIL", "detail": {"missing": True}}
+
+    # 13. coverage
     fraction = float((targets["coverage_neighbour"] > 0).mean())
     checks["coverage"] = {"status": "PASS" if fraction > 0.9 else "FAIL",
                           "detail": {"neighbourhood_fraction": fraction,
