@@ -45,6 +45,7 @@ own_orbit 0.0 / own_subtype 0.0`。
 | 多角色 | **成立** | 2.08 角色/商品,46.1% 多角色 | `structure_targets_v3.npz` |
 | 预测:边存在性 | **成立** | C−A **+0.0395** [0.0372,0.0418];C−D **+0.0343** [0.0322,0.0363],双 seed | `REPORT_GRAPH_TEACHER_OPTIMIZATION.md` |
 | 有用环境 / 无证据环境 | **成立** | 闭合/开放、四个度数段 C 均高于 A 与 D;跨连通分量(126 对)无证据 | `REPORT_STRUCTURE_ENVIRONMENT.md` |
+| 非学习启发式对照 | **成立** | CN 0.5455 / AA 0.5488 / RA 0.5525 / Jaccard 0.5555 / 启发式栈 0.5734,Teacher **0.7473**;C−栈 **+0.1739** [0.1701,0.1781] | `REPORT_STRUCTURE_HEURISTICS.md` |
 | 商品级可承载(32 维) | **成立** | 真实拓扑解码 **0.889** vs 重接线 **0.398** | `REPORT_STRUCTURE_TEACHER_SID_CAPACITY.md` |
 | 邻域多角色可承载 | **成立** | CE −8.2%,秩相关 0.593,3,581 少数角色商品 | `REPORT_STRUCTURE_TEACHER_V3.md` |
 | 监督可交付 | **成立** | 4 维 student 40 步损失下降;bundle 测试 | `tests/test_structure_teacher_bundle.py` |
@@ -83,6 +84,7 @@ $PY -m pytest tests/ -q              # 94 passed
 $PY sid_capacity_32d.py              # 32 维容量(约 15 秒)
 $PY train_teacher.py                 # 联合训练对照(约 30 秒)
 $PY structure_teacher_bundle.py      # 重建 bundle(如目标表更新)
+$PY structure_heuristics.py           # 非学习启发式对照(约 40 秒)
 ```
 
 ## 验收

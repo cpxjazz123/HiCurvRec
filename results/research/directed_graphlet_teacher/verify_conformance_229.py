@@ -219,7 +219,27 @@ def main() -> None:
     else:
         checks["structure_environment"] = {"status": "FAIL", "detail": {"missing": True}}
 
-    # 13. coverage
+    # 13. non-learned structural heuristics (#229 §4 control)
+    heur_path = gt3.OUT / "structure_heuristics.json"
+    if heur_path.is_file():
+        heur = json.loads(heur_path.read_text())
+        deltas = heur["delta_vs_teacher"]
+        beats = all(entry["low"] > 0.0 for entry in deltas.values())
+        checks["edge_vs_heuristic"] = {
+            "status": "PASS" if beats and heur["teacher"]["auc"] > max(
+                [entry["auc"] for entry in heur["heuristics"].values()]
+                + [heur["heuristic_stack"]["auc"]]) else "FAIL",
+            "detail": {"teacher_auc": heur["teacher"]["auc"],
+                       "heuristics": {name: entry["auc"]
+                                      for name, entry in heur["heuristics"].items()},
+                       "heuristic_stack": heur["heuristic_stack"]["auc"],
+                       "best_heuristic": heur["best_heuristic"],
+                       "delta_ci": {name: [entry["low"], entry["high"]]
+                                    for name, entry in deltas.items()}}}
+    else:
+        checks["edge_vs_heuristic"] = {"status": "FAIL", "detail": {"missing": True}}
+
+    # 14. coverage
     fraction = float((targets["coverage_neighbour"] > 0).mean())
     checks["coverage"] = {"status": "PASS" if fraction > 0.9 else "FAIL",
                           "detail": {"neighbourhood_fraction": fraction,
