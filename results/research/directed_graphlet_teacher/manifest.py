@@ -39,6 +39,8 @@ ANALYSIS = (
     "item_gate.py", "item_gate.json",
     "collapse_gate.py", "collapse_gate.json",
     "graph_teacher.py", "graph_teacher_eval.py", "graph_teacher_report.json",
+    "graph_teacher2.py", "graph_teacher2_report.json", "REPORT_GRAPH_TEACHER.md",
+    "tests/test_graph_teacher_leakage.py", "issue226_close_comment.md",
     "teacher_controls.json", "gate.json",
     "tests/test_teacher_contract.py", "tests/test_student_interface.py",
     "tests/test_trainable_student.py",
