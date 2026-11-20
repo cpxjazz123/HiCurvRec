@@ -32,8 +32,16 @@ import joint_teacher_model as jtm  # noqa: E402
 import structure_teacher_bundle as stb  # noqa: E402
 
 CONFORMANCE = HERE / "conformance_229.json"
-CAPABILITY_KEYS = ("recognition", "prediction_edge", "prediction_direction",
-                   "item_carrier", "sid_capacity_32d", "supervision_deliverable")
+CAPABILITY_CHECKS = {
+    "recognition": ("recognition_api", "recognised_type_from_adjacency", "multi_role"),
+    "prediction_edge": ("prediction_edge", "structure_environment", "edge_vs_heuristic"),
+    "prediction_direction": ("prediction_direction",),
+    "item_carrier": ("item_carrier", "coverage"),
+    "sid_capacity_32d": ("sid_capacity_32d",),
+    "supervision_deliverable": ("supervision_deliverable",),
+}
+CAPABILITY_KEYS = tuple(CAPABILITY_CHECKS)
+SEVERITY = {"PASS": 0, "NOT_ESTABLISHED": 1, "FAIL": 2}
 
 
 class BehaviorGraphTeacher:
@@ -93,12 +101,24 @@ class BehaviorGraphTeacher:
     def describe(self) -> dict:
         if CONFORMANCE.is_file():
             audit = json.loads(CONFORMANCE.read_text())
-            statuses = {name: audit["checks"][name]["status"]
-                        for name in CAPABILITY_KEYS if name in audit["checks"]}
-            declared = audit["declared_not_established"]
         else:
-            statuses, declared = {}, []
-        return {"capabilities": statuses, "declared_not_established": declared,
+            audit = {"checks": {}, "declared_not_established": []}
+        checks = audit["checks"]
+        capabilities, evidence, mapped = {}, {}, set()
+        for group, names in CAPABILITY_CHECKS.items():
+            present = {name: checks[name]["status"] for name in names if name in checks}
+            evidence[group] = present
+            mapped.update(present)
+            if not present:
+                capabilities[group] = "NOT_RUN"
+            else:
+                capabilities[group] = max(
+                    present.values(), key=lambda status: SEVERITY.get(status, 1))
+        other = {name: entry["status"] for name, entry in checks.items()
+                 if name not in mapped}
+        return {"capabilities": capabilities, "evidence": evidence,
+                "other_checks": other,
+                "declared_not_established": audit["declared_not_established"],
                 "weights": self.bundle.weights,
                 "boundary": {"rqvae_input_changed": False,
                              "teacher_inference_needs_graph": False,

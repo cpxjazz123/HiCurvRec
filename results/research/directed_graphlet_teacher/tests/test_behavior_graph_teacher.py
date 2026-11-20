@@ -29,11 +29,41 @@ def test_teacher_facade_exposes_the_capabilities():
     assert description["boundary"]["rqvae_input_changed"] is False
 
     conformance = json.loads((TEACHER / "conformance_229.json").read_text())
-    for key, status in description["capabilities"].items():
-        assert status == conformance["checks"][key]["status"], key
+    for group, evidence in description["evidence"].items():
+        for name, status in evidence.items():
+            assert status == conformance["checks"][name]["status"], (group, name)
 
 
 def test_graph_model_is_optional_and_lazy():
     teacher = bgt.BehaviorGraphTeacher.load(joint=False)
     with pytest.raises(RuntimeError):
         teacher.encode(None, None)
+
+
+def test_describe_reports_every_capability_and_no_check_is_dropped():
+    """The capability report must not silently omit a conformance check."""
+    teacher = bgt.BehaviorGraphTeacher.load(joint=False)
+    description = teacher.describe()
+    conformance = json.loads((TEACHER / "conformance_229.json").read_text())
+
+    assert set(description["capabilities"]) == set(bgt.CAPABILITY_KEYS)
+    assert set(description["evidence"]) == set(bgt.CAPABILITY_KEYS)
+
+    # recognition is the first Done bullet; it must not vanish because the
+    # audit calls it recognition_api
+    assert description["capabilities"]["recognition"] == "PASS"
+    assert "recognition_api" in description["evidence"]["recognition"]
+
+    # a PASS on edge prediction is only meaningful with its controls visible
+    assert "edge_vs_heuristic" in description["evidence"]["prediction_edge"]
+    assert "structure_environment" in description["evidence"]["prediction_edge"]
+
+    severity = {"PASS": 0, "NOT_ESTABLISHED": 1, "FAIL": 2}
+    for group, evidence in description["evidence"].items():
+        assert evidence, group
+        worst = max(evidence.values(), key=lambda status: severity.get(status, 1))
+        assert description["capabilities"][group] == worst, group
+
+    mapped = {name for evidence in description["evidence"].values()
+              for name in evidence} | set(description["other_checks"])
+    assert set(conformance["checks"]) <= mapped
