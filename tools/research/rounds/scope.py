@@ -291,3 +291,90 @@ def scope_summary(idea: dict) -> str:
     if verdict["in_scope"]:
         return ("IN_SCOPE: " + _text(idea, "coupling_path")[:200])
     return "OUT_OF_SCOPE: " + "; ".join(verdict["reasons"][:6])
+
+
+# ---------------------------------------------------------------------------
+# Issue #220 mainline gate: Graphlet Type+Role prediction through the real
+# quantizer.  `check_scope` above is the historical #121 behaviour x hyperbolic
+# gate; new proposals are judged by `check_mainline_scope`.
+# ---------------------------------------------------------------------------
+MAINLINE_REQUIRED_FIELDS = (
+    "supervision_target",   # the instance-level Type+Role joint CE
+    "predictor_input",      # z / q_L1 / q_L1+L2 / q_full
+    "quantizer_path",       # hard forward + codebook backward through the real quantizer
+    "assignment_rule",      # the baseline's balanced assignment stays
+    "effect_observables",   # heldout type/role F1, SID retention, Stage3
+    "specification",
+)
+
+PAIRWISE_ONLY_TERMS = ("pairwise", "pair-wise", "bce", "infonce", "contrastive",
+                       "edge-nonedge", "margin loss", "positive and negative")
+TYPE_TERMS = ("type", "graphlet", "k3", "p3", "c4", "p4", "k1,3", "k1_3")
+ROLE_TERMS = ("role", "orbit", "端", "中心", "内部", "叶子", "endpoint", "centre",
+              "center", "internal", "leaf")
+QUANT_TERMS = ("hard", "硬", "量化", "quantiz", "code index", "codeword", "码字")
+CODEBOOK_TERMS = ("codebook", "码本", "embedding", "码字")
+INPUT_TERMS = ("z", "encoder", "latent", "q_l1", "q_l1l2", "q_full", "quantized",
+               "量化", "前缀", "prefix")
+
+
+def check_mainline_scope(idea: dict) -> dict:
+    """Judge a proposal against Issue #220's mainline.
+
+    Returns ``{"in_scope": bool, "reasons": [...], "checks": {...}}`` with the
+    same shape as `check_scope`, so callers can switch gates without changing
+    their result handling.
+    """
+    reasons: list[str] = []
+    checks: dict[str, bool] = {}
+    for field in MAINLINE_REQUIRED_FIELDS:
+        text = _text(idea, field).strip()
+        checks[field] = bool(text)
+        if not text:
+            reasons.append(field + " is missing")
+
+    target = _text(idea, "supervision_target").lower()
+    if target:
+        if not _has_any(target, TYPE_TERMS):
+            reasons.append("supervision_target does not name the Graphlet type label")
+        if not _has_any(target, ROLE_TERMS):
+            reasons.append("supervision_target does not name the per-node role label")
+        if not _has_any(target, ("ce", "cross-entropy", "cross entropy", "交叉熵")):
+            reasons.append("supervision_target does not name the joint cross-entropy")
+        if (_has_any(target, PAIRWISE_ONLY_TERMS)
+                and not _has_any(target, ("instance", "实例", "single-instance"))):
+            reasons.append("supervision_target is a pairwise/contrastive objective, "
+                           "not the instance-level Type+Role cross-entropy")
+
+    predictor_input = _text(idea, "predictor_input").lower()
+    if predictor_input and not _has_any(predictor_input, INPUT_TERMS):
+        reasons.append("predictor_input does not name which representation the head reads")
+
+    path = _text(idea, "quantizer_path").lower()
+    if path:
+        if not _has_any(path, QUANT_TERMS):
+            reasons.append("quantizer_path never mentions the hard quantized index")
+        if not _has_any(path, CODEBOOK_TERMS):
+            reasons.append("quantizer_path never mentions the codebook the gradient must reach")
+        if not _has_any(path, ("gradient", "梯度", "backward", "回传", "ste", "st ")):
+            reasons.append("quantizer_path does not say how the gradient returns")
+
+    rule = _text(idea, "assignment_rule").lower()
+    if rule and not _has_any(rule, ("sinkhorn", "balanced", "均衡")):
+        reasons.append("assignment_rule does not keep the baseline's balanced assignment")
+    if rule and (_has_any(rule, ("argmin", "arg min", "arg-min"))
+                 and _has_any(rule, ("replace", "instead", "取代", "替换", "代替",
+                                     "no sinkhorn", "not sinkhorn"))):
+        reasons.append("assignment_rule replaces the balanced assignment with an argmin")
+
+    observables = _text(idea, "effect_observables").lower()
+    if observables and not _has_any(observables, ("f1", "recall", "retention", "保留",
+                                                  "collision", "stage3", "prefix", "前缀")):
+        reasons.append("effect_observables names no SID-level or downstream observable")
+
+    if _replaces_the_balanced_assignment(idea):
+        reasons.append(
+            "the proposal replaces the baseline's Sinkhorn-balanced level assignment "
+            "with a plain argmin over the mechanism's score (CLAUDE.md 19h)")
+
+    return {"in_scope": not reasons, "reasons": reasons, "checks": checks}
