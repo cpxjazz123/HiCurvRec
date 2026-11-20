@@ -102,6 +102,10 @@ class StructureTeacherBundle:
         term is skipped and reported as `None`.
         """
         total_items = len(self.targets["relation"])
+        if not bool(torch.isfinite(student_vectors).all()):
+            raise ValueError("student_vectors must be finite")
+        if role_logits is not None and not bool(torch.isfinite(role_logits).all()):
+            raise ValueError("role_logits must be finite")
         ids = np.arange(total_items) if item_ids is None else self._rows(item_ids)
         if student_vectors.shape[0] == total_items and item_ids is None:
             local = None
@@ -136,7 +140,7 @@ class StructureTeacherBundle:
             distill = st.relation_distill_loss(student_vectors, local_pairs, teacher)
             n_distill = st.relation_distill_loss(student_vectors, local_pairs,
                                                  teacher_neighbour)
-            total = (weights.get("relation", 1.0) * rank + 0.1 * distill
+            total = (weights.get("relation", 1.0) * (rank + 0.1 * distill)
                      + weights.get("neighbour_relation", 0.0) * n_distill)
             result = {"relation_ranking": float(rank.detach()),
                       "relation_distill": float(distill.detach()),

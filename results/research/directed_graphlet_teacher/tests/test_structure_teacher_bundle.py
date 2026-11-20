@@ -170,3 +170,21 @@ def test_structure_loss_accepts_batch_aligned_role_logits(bundle):
     assert torch.isfinite(loss)
     loss.backward()
     assert torch.isfinite(logits.grad).all()
+
+
+def test_zero_relation_weight_disables_the_whole_relation_term(bundle):
+    """The documented `relation` weight must govern ranking and distill together."""
+    n = len(bundle.targets["relation"])
+    torch.manual_seed(1)
+    vectors = torch.randn(n, 4)
+    metrics, _ = bundle.structure_loss(
+        vectors, weights={"relation": 0.0, "neighbour_relation": 0.0,
+                          "neighbour_orbit": 0.0})
+    assert metrics["relation_ranking"] is not None
+    assert metrics["total"] == 0.0
+
+
+def test_non_finite_students_are_rejected(bundle):
+    n = len(bundle.targets["relation"])
+    with pytest.raises(ValueError, match="finite"):
+        bundle.structure_loss(torch.full((n, 4), float("nan")))
