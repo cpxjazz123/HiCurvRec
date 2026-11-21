@@ -18,8 +18,9 @@
   "A_none": {
    "trained": false,
    "probe_before": {
-    "accuracy": 0.5367684960365295,
-    "pairs": 9723
+    "accuracy": 0.5080562233924866,
+    "pairs_eval": 2917,
+    "pairs_train": 6806
    },
    "probe_after": null
   },
@@ -28,126 +29,83 @@
    "trace": [
     {
      "step": 0,
-     "loss": 1.3887755870819092
+     "loss": 1.3894398212432861,
+     "rqvae": 0.0003103199414908886,
+     "directed": 1.3891295194625854
     },
     {
      "step": 250,
-     "loss": 1.1214618682861328
+     "loss": 1.1366019248962402,
+     "rqvae": 0.006240347400307655,
+     "directed": 1.130361557006836
     },
     {
      "step": 500,
-     "loss": 1.1141412258148193
+     "loss": 1.1163215637207031,
+     "rqvae": 0.0060523939318954945,
+     "directed": 1.1102691888809204
     },
     {
      "step": 750,
-     "loss": 1.105644941329956
+     "loss": 1.1027370691299438,
+     "rqvae": 0.006698406767100096,
+     "directed": 1.0960386991500854
     },
     {
      "step": 1000,
-     "loss": 1.0857288837432861
+     "loss": 1.0797480344772339,
+     "rqvae": 0.006785781122744083,
+     "directed": 1.0729622840881348
     },
     {
      "step": 1250,
-     "loss": 1.085907220840454
+     "loss": 1.1263344287872314,
+     "rqvae": 0.0073723806999623775,
+     "directed": 1.118962049484253
     },
     {
      "step": 1499,
-     "loss": 1.0768587589263916
+     "loss": 1.1323081254959106,
+     "rqvae": 0.008615311235189438,
+     "directed": 1.1236928701400757
     }
    ],
    "probe_before": {
-    "accuracy": 0.537077009677887,
-    "pairs": 9723
+    "accuracy": 0.5118272304534912,
+    "pairs_eval": 2917,
+    "pairs_train": 6806
    },
    "probe_after": {
-    "accuracy": 0.5326545238494873,
-    "pairs": 9723
+    "accuracy": 0.5118272304534912,
+    "pairs_eval": 2917,
+    "pairs_train": 6806
    },
-   "q_moved_l2": 0.011213021352887154
+   "q_moved_l2": 0.01042309869080782,
+   "sid_collision": 0.6846300890714605,
+   "level1_codes_used": 256,
+   "codeword_spacing": 0.06743272393941879
   },
   "C_directed": {
-   "trained": true,
-   "trace": [
-    {
-     "step": 0,
-     "loss": 1.4348969459533691
-    },
-    {
-     "step": 250,
-     "loss": 1.1849068403244019
-    },
-    {
-     "step": 500,
-     "loss": 1.13954496383667
-    },
-    {
-     "step": 750,
-     "loss": 1.1178773641586304
-    },
-    {
-     "step": 1000,
-     "loss": 1.091437816619873
-    },
-    {
-     "step": 1250,
-     "loss": 1.1328482627868652
-    },
-    {
-     "step": 1499,
-     "loss": 1.1038341522216797
-    }
-   ],
+   "trained": false,
    "probe_before": {
-    "accuracy": 0.5366656184196472,
-    "pairs": 9723
+    "accuracy": 0.5128557085990906,
+    "pairs_eval": 2917,
+    "pairs_train": 6806
    },
-   "probe_after": {
-    "accuracy": 0.5235009789466858,
-    "pairs": 9723
-   },
-   "q_moved_l2": 0.02986982837319374
+   "probe_after": null,
+   "codebook_collapsed": true,
+   "reason": "the codeword spacing fell to 2.334e-02 from an initial 4.100e-01 (x0.057) for 50 consecutive steps: the codebook has collapsed relative to its own resolution"
   },
-  "D_direction_shuffled": {
-   "trained": true,
-   "trace": [
-    {
-     "step": 0,
-     "loss": 1.3931021690368652
-    },
-    {
-     "step": 250,
-     "loss": 1.172325611114502
-    },
-    {
-     "step": 500,
-     "loss": 1.1269391775131226
-    },
-    {
-     "step": 750,
-     "loss": 1.11612069606781
-    },
-    {
-     "step": 1000,
-     "loss": 1.0884730815887451
-    },
-    {
-     "step": 1250,
-     "loss": 1.1303846836090088
-    },
-    {
-     "step": 1499,
-     "loss": 1.099806547164917
-    }
-   ],
+  "D_direction_random": {
+   "trained": false,
    "probe_before": {
-    "accuracy": 0.5373855829238892,
-    "pairs": 9723
+    "accuracy": 0.5190263986587524,
+    "pairs_eval": 2917,
+    "pairs_train": 6806
    },
-   "probe_after": {
-    "accuracy": 0.5218554139137268,
-    "pairs": 9723
-   },
-   "q_moved_l2": 0.030207259580492973
+   "probe_after": null,
+   "codebook_collapsed": true,
+   "reason": "the codeword spacing fell to 1.142e-02 from an initial 4.100e-01 (x0.028) for 50 consecutive steps: the codebook has collapsed relative to its own resolution"
   }
  }
 }

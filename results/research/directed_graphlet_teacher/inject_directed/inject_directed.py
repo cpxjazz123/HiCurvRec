@@ -134,14 +134,28 @@ def direction_head(device):
 
 
 def fit_direction_head(q_items: np.ndarray, pairs: np.ndarray, truth: np.ndarray,
-                       device, steps: int = 800) -> dict:
-    """Independent probe: does q of the two items tell A->B from B->A?"""
+                       device, steps: int = 800, holdout: float = 0.3) -> dict:
+    """Independent probe: does q of the two items tell A->B from B->A?
+
+    The probe trains on one slice of the pairs and reports the other, so its number is a
+    generalisation result.  Training and evaluating on the same pairs inflates every arm
+    and makes them indistinguishable.
+    """
     one_way = (truth[:, 0] != truth[:, 1])
     if one_way.sum() < 100:
         return {"accuracy": None, "pairs": int(one_way.sum())}
-    sub = pairs[one_way]
-    target = torch.from_numpy((truth[one_way][:, 1] > 0.5).astype(np.int64)).to(device)
-    x = torch.from_numpy(q_items[sub.reshape(-1)].reshape(len(sub), 2, -1)).to(device)
+    ordered = pairs[one_way]
+    labels_all = truth[one_way][:, 1] > 0.5
+    rng_split = np.random.default_rng(SEED + 3)
+    order = rng_split.permutation(len(ordered))
+    cut = int((1.0 - holdout) * len(order))
+    train_idx, eval_idx = order[:cut], order[cut:]
+    sub = ordered
+    sub_train, sub_eval = ordered[train_idx], ordered[eval_idx]
+    target = torch.from_numpy(labels_all[train_idx].astype(np.int64)).to(device)
+    target_eval = torch.from_numpy(labels_all[eval_idx].astype(np.int64)).to(device)
+    x = torch.from_numpy(q_items[sub_train.reshape(-1)].reshape(len(sub_train), 2, -1)).to(device)
+    x_eval = torch.from_numpy(q_items[sub_eval.reshape(-1)].reshape(len(sub_eval), 2, -1)).to(device)
     head = direction_head(device)
     optimizer = torch.optim.AdamW(head.parameters(), lr=1e-3, weight_decay=1e-4)
     rng = torch.Generator(device="cpu").manual_seed(SEED)
@@ -156,10 +170,11 @@ def fit_direction_head(q_items: np.ndarray, pairs: np.ndarray, truth: np.ndarray
         optimizer.step()
     head.eval()
     with torch.no_grad():
-        pair = torch.cat([x[:, 0], x[:, 1], x[:, 0] * x[:, 1]], dim=-1)
+        pair = torch.cat([x_eval[:, 0], x_eval[:, 1], x_eval[:, 0] * x_eval[:, 1]], dim=-1)
         guess = head(pair).argmax(-1)
-        accuracy = float((guess == target).float().mean())
-    return {"accuracy": accuracy, "pairs": int(one_way.sum())}
+        accuracy = float((guess == target_eval).float().mean())
+    return {"accuracy": accuracy, "pairs_eval": int(len(sub_eval)),
+            "pairs_train": int(len(sub_train))}
 
 
 def train_arm(model, items: torch.Tensor, pairs: torch.Tensor, truth: torch.Tensor,
@@ -172,15 +187,8 @@ def train_arm(model, items: torch.Tensor, pairs: torch.Tensor, truth: torch.Tens
     # the arm's own collapse guard aborts the run if the codebook spacing shrinks below a
     # fraction of its start; this experiment deliberately reshapes the codebooks, so the
     # guard is disarmed and the spacing is logged instead of silently ending the run
-    # The arm's guard is a measurement, not a policy knob: it exists so the 3000-epoch
-    # recipe cannot silently collapse a codebook.  Here the guard is disabled outright and
-    # replaced by logging, because this offline study deliberately reshapes the codebooks
-    # and the collapse it detects is one of the outcomes being measured -- but that has to
-    # be stated in the result, not hidden behind a flag.
-    import model.layers as _layers
-    _layers.verify_separation = lambda codes, cost, **kwargs: {"ratio": 0.0, "ok": True,
-                                                               "enforced": False}
-    _layers.verify_margins = lambda cost, **kwargs: {"ok": True, "enforced": False}
+    # the arm's collapse guard stays armed: if it fires, the arm failed and that is the
+    # result.  Switching it off would make a collapsed codebook look like a finding.
     for parameter in model.parameters():
         parameter.requires_grad_(True)
     source = nn.Linear(32, 32).to(device)
@@ -194,31 +202,49 @@ def train_arm(model, items: torch.Tensor, pairs: torch.Tensor, truth: torch.Tens
         # both directions share the same target: the loss cannot tell them apart
         labels = torch.stack([torch.maximum(truth[:, 0], truth[:, 1]),
                               torch.maximum(truth[:, 0], truth[:, 1])], dim=-1)
-    elif mode == "D_direction_shuffled":
-        # flip the stored direction of every one-way pair: a model that learns "there is
-        # an edge" scores the same, a model that learns the direction is punished
-        flipped = labels.clone()
+    elif mode == "D_direction_random":
+        # a random orientation per one-way pair: "reversal" keeps a perfect, learnable
+        # relation (the complement), so it is not a null.  A coin flip destroys exactly
+        # the direction while keeping the edge structure.
+        randomised = labels.clone()
         one_way = labels[:, 0] != labels[:, 1]
-        flipped[one_way] = labels[one_way][:, [1, 0]]
-        labels = flipped
+        flip = torch.from_numpy(
+            np.random.default_rng(SEED + 2).random(len(labels)) < 0.5).to(labels.device)
+        chosen = one_way & flip
+        randomised[chosen] = labels[chosen][:, [1, 0]]
+        labels = randomised
+    from losses import build_loss
+    criterion = build_loss(json.loads((ARM_DIR / "config" / "train_config.json").read_text())
+                           if (ARM_DIR / "config" / "train_config.json").exists() else
+                           {"BETA": 0.25})
     trace = []
     for step in range(STEPS):
         pick = torch.randint(0, len(pairs), (BATCH,), generator=rng)
         guess_pairs = pairs[pick].to(device)
+        # the reconstruction term is kept: an auxiliary loss alone reshapes the codebook
+        # with nothing holding it to the data, which is what collapsed it last time
+        recon, quant_parts, _, _ = model(items)
+        loss_rqvae, _ = criterion(recon, items, quant_parts)
         q_all, _ = q_straight_through(model, items)
         left = q_all[guess_pairs[:, 0]]
         right = q_all[guess_pairs[:, 1]]
         logits = ((source(left) * target(right)).sum(-1))
-        loss = torch.nn.functional.binary_cross_entropy_with_logits(logits, labels[pick, 0].to(device))
-        loss = loss + torch.nn.functional.binary_cross_entropy_with_logits(
+        loss_directed = torch.nn.functional.binary_cross_entropy_with_logits(
+            logits, labels[pick, 0].to(device))
+        loss_directed = loss_directed + torch.nn.functional.binary_cross_entropy_with_logits(
             (source(right) * target(left)).sum(-1), labels[pick, 1].to(device))
+        loss = loss_rqvae + LAMBDA * loss_directed
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         if step % 250 == 0 or step == STEPS - 1:
-            trace.append({"step": step, "loss": float(loss.detach())})
-            print(f"    {mode} step {step}: loss {float(loss.detach()):.4f}", flush=True)
+            trace.append({"step": step, "loss": float(loss.detach()),
+                          "rqvae": float(loss_rqvae.detach()),
+                          "directed": float(loss_directed.detach())})
+            print(f"    {mode} step {step}: total {float(loss.detach()):.4f} "
+                  f"(rqvae {float(loss_rqvae.detach()):.4f}, "
+                  f"directed {float(loss_directed.detach()):.4f})", flush=True)
     return {"trained": True, "trace": trace}
 
 
@@ -264,20 +290,43 @@ def main() -> None:
         "probe_before": fit_direction_head(base_q, eval_pairs, eval_truth, device),
         "probe_after": None}
 
-    for mode in ("B_undirected", "C_directed", "D_direction_shuffled"):
+    for mode in ("B_undirected", "C_directed", "D_direction_random"):
         model = load_model().to(device)
         before = fit_direction_head(base_q, eval_pairs, eval_truth, device)
-        info = train_arm(model, items,
-                         torch.from_numpy(train_pairs).to(device),
-                         torch.from_numpy(train_truth).to(device), mode, device)
+        from assignment_floor import CodebookCollapse
+        try:
+            info = train_arm(model, items,
+                             torch.from_numpy(train_pairs).to(device),
+                             torch.from_numpy(train_truth).to(device), mode, device)
+        except CodebookCollapse as collapse:
+            # the arm failed inside its own guard: record it and keep the run going so the
+            # other arms are still measured instead of being aborted with it
+            info = {"trained": False, "collapsed": True, "reason": str(collapse)[:300]}
+            report["arms"][mode] = {"trained": False,
+                                    "probe_before": fit_direction_head(
+                                        base_q, eval_pairs, eval_truth, device),
+                                    "probe_after": None, "codebook_collapsed": True,
+                                    "reason": str(collapse)[:300]}
+            print(f"  {mode}: CODEBOOK COLLAPSE -- {str(collapse)[:120]}", flush=True)
+            Path(args.out).write_text(json.dumps(report, indent=1) + "\n")
+            continue
         model.eval()
         with torch.no_grad():
             q_after, _ = q_straight_through(model, items)
             q_after = q_after.detach().cpu().numpy()
         after = fit_direction_head(q_after, eval_pairs, eval_truth, device)
+        with torch.no_grad():
+            _, _, _, tokens = model.rq(model.encoder(items))
+        codes = tokens.cpu().numpy().astype(np.int64)
         current = {"trained": True, "trace": info.get("trace"),
                    "probe_before": before, "probe_after": after,
-                   "q_moved_l2": float(np.linalg.norm(q_after - base_q) / max(len(base_q), 1))}
+                   "q_moved_l2": float(np.linalg.norm(q_after - base_q) / max(len(base_q), 1)),
+                   "sid_collision": float(1.0 - len(np.unique(codes[:, :3], axis=0)) / len(codes)),
+                   "level1_codes_used": int(len(np.unique(codes[:, 0]))),
+                   "codeword_spacing": float(np.min(np.linalg.norm(
+                       np.asarray(model.rq.vq_layers[0].get_code_embs().detach().cpu())[:, None]
+                       - np.asarray(model.rq.vq_layers[0].get_code_embs().detach().cpu())[None],
+                       axis=-1) + np.eye(256) * 1e9))}
         report["arms"][mode] = current
         print(f"  {mode}: probe {before['accuracy']:.4f} -> {after['accuracy']:.4f} "
               f"(q moved {current['q_moved_l2']:.3f})", flush=True)
