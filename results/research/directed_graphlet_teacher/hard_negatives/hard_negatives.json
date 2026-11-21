@@ -1,0 +1,38 @@
+{
+ "split": {
+  "message_edges": 291262,
+  "held_edges": 32371,
+  "held_one_way_for_probe": 30709
+ },
+ "protocol": {
+  "steps": 1200,
+  "batch": 4096,
+  "seed": 0,
+  "aggregation": "unweighted mean",
+  "deterministic": "torch.use_deterministic_algorithms(True) and cudnn deterministic",
+  "negatives": {
+   "regular": "degree-matched non-neighbour",
+   "hard": "reverse of a true one-way edge"
+  },
+  "probe": "every held-out one-way edge in both orders, item-disjoint, fixed initialisation"
+ },
+ "arms": {
+  "A_regular_negatives": {
+   "positive_share": 0.6666666865348816,
+   "edge_head_direction": 0.4724022448062897,
+   "probe": 0.5175915956497192,
+   "probe_pairs_eval": 5514
+  },
+  "B_plus_hard_negatives": {
+   "positive_share": 0.4083113968372345,
+   "edge_head_direction": 0.4796639680862427,
+   "probe": 0.5154153108596802,
+   "probe_pairs_eval": 5514
+  }
+ },
+ "readings": {
+  "se": 0.0067,
+  "B_minus_A": -0.0022,
+  "B_minus_A_sigma": -0.32
+ }
+}
