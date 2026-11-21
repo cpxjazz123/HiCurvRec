@@ -66,6 +66,11 @@ def build_model(in_dim: int):
             # step 0 sees no committed edge, step 1 sees one
             self.gru = nn.GRU(3 * HIDDEN + 1, HIDDEN, batch_first=True)
             self.step = nn.Linear(4 * HIDDEN, 1)
+            # an explicit direction head: given that exactly one direction holds, which
+            # one?  The sequence decoder can hide the answer in its prefix; this head
+            # cannot, so it measures direction on its own.
+            self.direction = nn.Sequential(nn.Linear(3 * HIDDEN, HIDDEN), nn.GELU(),
+                                           nn.Linear(HIDDEN, 2))
 
         def encode(self, tokens):
             import torch
@@ -102,7 +107,8 @@ def build_model(in_dim: int):
                 else:
                     chosen = (torch.sigmoid(score.squeeze(-1)) > 0.5).float()
                 committed = chosen.unsqueeze(-1)
-            return torch.stack(logits, dim=-1)
+            pair_vector = torch.cat([h[:, 0], h[:, 1], h[:, 0] * h[:, 1]], dim=-1)
+            return torch.stack(logits, dim=-1), self.direction(pair_vector)
 
     return TwoNodeRNN()
 
@@ -140,10 +146,12 @@ def main() -> None:
                         dtype=np.int64)
         rng_local = np.random.default_rng(seed)
         rows = []
-        for a, b in unit[rng_local.permutation(len(unit))][: target // 2].tolist():
+        # a quarter of the pool is negative pairs: without them "there is an edge" is free
+        # and the direction decision is never contrasted with "no relation at all"
+        for a, b in unit[rng_local.permutation(len(unit))][: 3 * target // 8].tolist():
             rows.append((a, b))
             rows.append((b, a))
-        # degree-matched negatives inside the same pool
+        # degree-matched negatives inside the same pool (the remaining quarter)
         buckets = pr.degree_calipers_within(local)
         while len(rows) < target:
             a = int(rng_local.choice(allowed))
@@ -174,8 +182,10 @@ def main() -> None:
     payload = np.load(pr.STATES)
     tables = {"semantics": payload["semantics"], "z": payload["z"], "q": payload["q"]}
     from sklearn.decomposition import PCA
-    tables["z_pca32"] = PCA(n_components=32, whiten=True,
-                            random_state=SEED).fit_transform(payload["z"]).astype(np.float32)
+    # the control is the same width from the *semantic* side; a 32->32 whitening of z is
+    # a reparametrisation, not a dimensionality control
+    tables["semantics_pca32"] = PCA(n_components=32, whiten=True, random_state=SEED).fit_transform(
+        payload["semantics"]).astype(np.float32)
     tables["random"] = rng.normal(size=payload["z"].shape).astype(np.float32)
     tables["zero"] = np.zeros_like(payload["z"])
 
@@ -222,8 +232,15 @@ def main() -> None:
         for _ in range(STEPS):
             model.train()
             pick = torch.randint(0, len(x), (BATCH,), generator=generator)
-            logits = model(x[pick], y[pick])
+            logits, direction_logits = model(x[pick], y[pick])
             loss = torch.nn.functional.binary_cross_entropy_with_logits(logits, y[pick])
+            # direction loss on the one-way rows only: both edges present says nothing
+            # about which direction, so those rows are excluded rather than guessed
+            one_way = (y[pick][:, 0] != y[pick][:, 1])
+            if bool(one_way.any()):
+                target_direction = (y[pick][:, 1] > 0.5).long()[one_way]
+                loss = loss + torch.nn.functional.cross_entropy(
+                    direction_logits[one_way], target_direction)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -232,8 +249,19 @@ def main() -> None:
         with torch.no_grad():
             held_x = torch.from_numpy(table[held_pairs.reshape(-1)].reshape(
                 len(held_pairs), 2, table.shape[1]).astype(np.float32)).to(device)
-            guess = (torch.sigmoid(model(held_x)) > 0.5).cpu().numpy().astype(np.float32)
-        report["runs"][name] = structure_accuracy(guess, held_y)
+            held_logits, held_direction = model(held_x)
+            guess = (torch.sigmoid(held_logits) > 0.5).cpu().numpy().astype(np.float32)
+            direction_guess = held_direction.argmax(-1).cpu().numpy()
+        row = structure_accuracy(guess, held_y)
+        one_way_held = (held_y[:, 0] != held_y[:, 1])
+        if one_way_held.any():
+            # 1 == B->A is the positive class of the dedicated head
+            truth_direction = (held_y[one_way_held][:, 1] > 0.5).astype(np.int64)
+            row["direction_head_accuracy"] = float(
+                (direction_guess[one_way_held] == truth_direction).mean())
+        else:
+            row["direction_head_accuracy"] = None
+        report["runs"][name] = row
         row = report["runs"][name]
         print(f"  {name}: edge0 {row['edge_0_accuracy']:.3f} edge1 "
               f"{row['edge_1_accuracy']:.3f} exact {row['exact_outcome']:.3f} "
