@@ -121,6 +121,8 @@ ANALYSIS = (
     "edge_reconstruction/REPORT_EDGE_RECONSTRUCTION.md",
     "edge_rnn/edge_rnn.py", "edge_rnn/edge_rnn.json",
     "edge_rnn/REPORT_EDGE_RNN.md",
+    "capability/capability.py", "capability/capability.json",
+    "capability/REPORT_CAPABILITY.md",
 )
 
 

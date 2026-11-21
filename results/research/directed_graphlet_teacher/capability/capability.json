@@ -1,0 +1,126 @@
+{
+ "inputs": {
+  "instances": "9d0661e9412b965c410c6e4b0fd7b5539f9b4af8aeb88332b2918b6b0dfd71f0",
+  "states": "5c1f080f384ff893d85384fb4553e3669c37d42662aa564ebf2b97b1e2067111",
+  "full_graph": "ef97a2bdc555259d402065026b00cf62bc1e91c3bc58a66da4d6f8f8df407fdd"
+ },
+ "labels": {
+  "width": 3,
+  "isolation": "instance_only",
+  "dropped_for_item_overlap": 116252,
+  "train_rows": 200000,
+  "held_rows": 6000
+ },
+ "protocol": {
+  "steps": 6000,
+  "batch": 512,
+  "seed": 0,
+  "encoder": "2-layer, 4-head transformer over member tokens",
+  "decoder": "GRU over the given/committed prefix plus a known mask",
+  "modes": {
+   "A_given_all": "every pair except the asked one is given",
+   "B_leave_one_out": "same as A; the asked pair is the only thing missing",
+   "C_embedding_only": "no adjacency, own prefix fed back",
+   "D_random_embedding": "C with random member vectors"
+  },
+  "leakage_rule": "the asked pair is removed from both the prefix and the known mask at every step"
+ },
+ "runs": {
+  "A_given_all:z": {
+   "threshold_chosen_on_train": 0.7,
+   "train_edge_f1": 0.9884549277949408,
+   "heldout": {
+    "threshold": 0.7,
+    "edge_precision": 0.9960905805119127,
+    "edge_recall": 0.9790473428550714,
+    "edge_f1": 0.9874954296160878,
+    "adjacency_exact": 0.943,
+    "classifiable_share": 0.9996666666666667,
+    "family_accuracy_overall": 0.957,
+    "family_macro_f1": 0.9360405166093883,
+    "orbit_accuracy_overall": 0.943,
+    "instances": 6000
+   }
+  },
+  "B_leave_one_out:z": {
+   "threshold_chosen_on_train": 0.7,
+   "train_edge_f1": 0.9884549277949408,
+   "heldout": {
+    "threshold": 0.7,
+    "edge_precision": 0.9960905805119127,
+    "edge_recall": 0.9790473428550714,
+    "edge_f1": 0.9874954296160878,
+    "adjacency_exact": 0.943,
+    "classifiable_share": 0.9996666666666667,
+    "family_accuracy_overall": 0.957,
+    "family_macro_f1": 0.9360405166093883,
+    "orbit_accuracy_overall": 0.943,
+    "instances": 6000
+   }
+  },
+  "C_embedding_only:semantics": {
+   "threshold_chosen_on_train": 0.3,
+   "train_edge_f1": 0.6303552846249043,
+   "heldout": {
+    "threshold": 0.3,
+    "edge_precision": 0.4687160783292085,
+    "edge_recall": 0.7826433698252737,
+    "edge_f1": 0.5863024114707799,
+    "adjacency_exact": 0.0265,
+    "classifiable_share": 0.9761666666666666,
+    "family_accuracy_overall": 0.5991666666666666,
+    "family_macro_f1": 0.5861379406317083,
+    "orbit_accuracy_overall": 0.03133333333333333,
+    "instances": 6000
+   }
+  },
+  "C_embedding_only:z": {
+   "threshold_chosen_on_train": 0.3,
+   "train_edge_f1": 0.5900971921326773,
+   "heldout": {
+    "threshold": 0.3,
+    "edge_precision": 0.44924431750565275,
+    "edge_recall": 0.8210686580149351,
+    "edge_f1": 0.5807394492590123,
+    "adjacency_exact": 0.0028333333333333335,
+    "classifiable_share": 0.9671666666666666,
+    "family_accuracy_overall": 0.6631666666666667,
+    "family_macro_f1": 0.645508695355164,
+    "orbit_accuracy_overall": 0.0033888888888888888,
+    "instances": 6000
+   }
+  },
+  "C_embedding_only:q": {
+   "threshold_chosen_on_train": 0.3,
+   "train_edge_f1": 0.5843576870138724,
+   "heldout": {
+    "threshold": 0.3,
+    "edge_precision": 0.44618525935524406,
+    "edge_recall": 0.8238236786775901,
+    "edge_f1": 0.578858889454916,
+    "adjacency_exact": 0.0016666666666666668,
+    "classifiable_share": 0.9751666666666666,
+    "family_accuracy_overall": 0.6371666666666667,
+    "family_macro_f1": 0.6186255528325351,
+    "orbit_accuracy_overall": 0.002,
+    "instances": 6000
+   }
+  },
+  "D_random_embedding:random": {
+   "threshold_chosen_on_train": 0.5,
+   "train_edge_f1": 0.8010015054131773,
+   "heldout": {
+    "threshold": 0.5,
+    "edge_precision": 0.5909445745511319,
+    "edge_recall": 0.5488291162183716,
+    "edge_f1": 0.5691087471337818,
+    "adjacency_exact": 0.147,
+    "classifiable_share": 0.7743333333333333,
+    "family_accuracy_overall": 0.5205,
+    "family_macro_f1": 0.5098248818167821,
+    "orbit_accuracy_overall": 0.15916666666666668,
+    "instances": 6000
+   }
+  }
+ }
+}
