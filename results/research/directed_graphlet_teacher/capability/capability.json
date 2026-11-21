@@ -27,34 +27,34 @@
  },
  "runs": {
   "A_given_all:z": {
-   "threshold_chosen_on_train": 0.7,
-   "train_edge_f1": 0.9884549277949408,
+   "threshold_chosen_on_train": 0.5,
+   "train_edge_f1": 0.9275971215174974,
    "heldout": {
-    "threshold": 0.7,
-    "edge_precision": 0.9960905805119127,
-    "edge_recall": 0.9790473428550714,
-    "edge_f1": 0.9874954296160878,
-    "adjacency_exact": 0.943,
-    "classifiable_share": 0.9996666666666667,
-    "family_accuracy_overall": 0.957,
-    "family_macro_f1": 0.9360405166093883,
-    "orbit_accuracy_overall": 0.943,
+    "threshold": 0.5,
+    "edge_precision": 0.9543818466353677,
+    "edge_recall": 0.8842891321684913,
+    "edge_f1": 0.9179994731494374,
+    "adjacency_exact": 0.8023333333333333,
+    "classifiable_share": 0.9378333333333333,
+    "family_accuracy_overall": 0.8303333333333334,
+    "family_macro_f1": 0.7441286824780851,
+    "orbit_accuracy_overall": 0.8024444444444444,
     "instances": 6000
    }
   },
   "B_leave_one_out:z": {
-   "threshold_chosen_on_train": 0.7,
-   "train_edge_f1": 0.9884549277949408,
+   "threshold_chosen_on_train": 0.3,
+   "train_edge_f1": 0.5900219440983393,
    "heldout": {
-    "threshold": 0.7,
-    "edge_precision": 0.9960905805119127,
-    "edge_recall": 0.9790473428550714,
-    "edge_f1": 0.9874954296160878,
-    "adjacency_exact": 0.943,
-    "classifiable_share": 0.9996666666666667,
-    "family_accuracy_overall": 0.957,
-    "family_macro_f1": 0.9360405166093883,
-    "orbit_accuracy_overall": 0.943,
+    "threshold": 0.3,
+    "edge_precision": 0.4511517077045274,
+    "edge_recall": 0.8236061770463279,
+    "edge_f1": 0.5829676955841223,
+    "adjacency_exact": 0.003833333333333333,
+    "classifiable_share": 0.975,
+    "family_accuracy_overall": 0.6596666666666666,
+    "family_macro_f1": 0.6371817466561762,
+    "orbit_accuracy_overall": 0.0045,
     "instances": 6000
    }
   },
@@ -119,6 +119,22 @@
     "family_accuracy_overall": 0.5205,
     "family_macro_f1": 0.5098248818167821,
     "orbit_accuracy_overall": 0.15916666666666668,
+    "instances": 6000
+   }
+  },
+  "E_zero_embedding:zero": {
+   "threshold_chosen_on_train": 0.3,
+   "train_edge_f1": 0.5508208995779266,
+   "heldout": {
+    "threshold": 0.3,
+    "edge_precision": 0.38313888888888886,
+    "edge_recall": 1.0,
+    "edge_f1": 0.5540136163717791,
+    "adjacency_exact": 0.00016666666666666666,
+    "classifiable_share": 1.0,
+    "family_accuracy_overall": 0.225,
+    "family_macro_f1": 0.18367346938775508,
+    "orbit_accuracy_overall": 0.00016666666666666666,
     "instances": 6000
    }
   }

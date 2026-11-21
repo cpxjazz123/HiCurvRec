@@ -57,6 +57,10 @@ def build_model(in_dim: int, width: int):
     import torch.nn as nn
 
     class CapabilityRNN(nn.Module):
+        """Set A adds a learned offset per directed pair to its own token; A and B use a
+        fresh encoder with the shielded pair removed, so no recurrent state can have seen
+        the answer for that pair."""
+
         """Encoder + GRU decoder; the prefix carries both given edges and a known mask."""
 
         def __init__(self) -> None:
@@ -73,10 +77,18 @@ def build_model(in_dim: int, width: int):
             # prefix = committed edges, then the same width*width "known" mask
             self.gru = nn.GRU(3 * HIDDEN + 2 * width * width, HIDDEN, batch_first=True)
             self.step = nn.Linear(4 * HIDDEN, 1)
+            # a given adjacency enters through the encoder as a per-pair bias, so the
+            # decoder never has to carry the answer inside its recurrent state
+            self.edge_bias = nn.Parameter(torch.zeros(width, width, HIDDEN))
 
-        def encode(self, tokens):
+        def encode(self, tokens, given=None):
             import torch
             h = self.input(tokens)
+            if given is not None:
+                # (n, width, width) -> (n, width, hidden): the edges a token's owner is on
+                # edge_bias is (width, width, hidden): the middle index is the other member
+                bias = torch.einsum("nij,ijd->nid", given.float(), self.edge_bias)
+                h = h + bias
             for layer in self.layers:
                 q = layer["query"](h).view(len(h), -1, HEADS, HIDDEN // HEADS)
                 k = layer["key"](h).view(len(h), -1, HEADS, HIDDEN // HEADS)
@@ -89,17 +101,18 @@ def build_model(in_dim: int, width: int):
                 h = h + layer["ff"](h)
             return h
 
-        def forward(self, tokens, width: int, mode: str, target=None):
+        def forward(self, tokens, width: int, mode: str, target=None,
+                    given: "torch.Tensor | None" = None):
             """One logit per ordered pair.
 
-            A / B: at every step the model is shown the truth of all pairs **except** the
-            one being asked, plus a mask saying which pairs it was shown.  B differs from
-            A only in that the prefix keeps everything (A's prefix also starts empty), so
-            in both cases the asked pair is invisible -- that is the leak rule.
-            C / D: no adjacency at all; the model's own arg-max choices are fed back.
+            A / B: the edge being asked about is removed from the input **before encoding**
+            and every question is a fresh encoder pass, so neither the encoder nor the
+            GRU state has ever seen that pair's truth.  A gives every other pair, B gives
+            none; that is the only difference between them.
+            C / D: no adjacency at all, the model's own arg-max choices are fed back.
             """
             import torch
-            h = self.encode(tokens)
+            h = self.encode(tokens, given)
             batch = len(h)
             pairs = pairs_of(width)
             committed = torch.zeros((batch, width, width), dtype=torch.float32,
@@ -108,32 +121,17 @@ def build_model(in_dim: int, width: int):
             state = None
             logits = []
             for (i, j) in pairs:
-                if mode in ("A_given_all", "B_leave_one_out") and target is not None:
-                    shown = torch.ones((batch, width, width), dtype=torch.float32,
-                                       device=h.device)
-                    shown[:, i, j] = 0.0
-                    prefix = target * shown
-                    mask = shown
-                else:
-                    prefix = committed
-                    mask = known
                 pair_vector = torch.cat([h[:, i], h[:, j], h[:, i] * h[:, j]], dim=-1)
-                step_input = torch.cat([pair_vector, prefix.reshape(batch, -1),
-                                        mask.reshape(batch, -1)], dim=-1).unsqueeze(1)
+                step_input = torch.cat([pair_vector, committed.reshape(batch, -1),
+                                        known.reshape(batch, -1)], dim=-1).unsqueeze(1)
                 output, state = self.gru(step_input, state)
                 score = self.step(torch.cat([output.squeeze(1), pair_vector], dim=-1))
                 logits.append(score.squeeze(-1))
-                if target is not None and mode in ("A_given_all", "B_leave_one_out"):
-                    committed = committed.clone()
-                    committed[:, i, j] = target[:, i, j]
-                    known = torch.ones((batch, width, width), dtype=torch.float32,
-                                       device=h.device)
-                else:
-                    chosen = (torch.sigmoid(score.squeeze(-1)) > 0.5).float()
-                    committed = committed.clone()
-                    committed[:, i, j] = chosen
-                    known = known.clone()
-                    known[:, i, j] = 1.0
+                chosen = (torch.sigmoid(score.squeeze(-1)) > 0.5).float()
+                committed = committed.clone()
+                committed[:, i, j] = chosen
+                known = known.clone()
+                known[:, i, j] = 1.0
             return torch.stack(logits, dim=-1), pairs
 
     return CapabilityRNN()
@@ -151,6 +149,8 @@ def main() -> None:
     tables = {"semantics": payload["semantics"], "z": payload["z"], "q": payload["q"]}
     rng = np.random.default_rng(SEED)
     tables["random"] = rng.normal(size=tables["z"].shape).astype(np.float32)
+    # all-zero vectors: no identity to memorise, so any remaining structure is the prior
+    tables["zero"] = np.zeros_like(tables["z"])
     report = {"inputs": {"instances": sha256(INSTANCES), "states": sha256(STATES),
                          "full_graph": sha256(FULL_GRAPH)},
               "labels": {"width": WIDTH, "isolation": rows["isolation"],
@@ -172,10 +172,26 @@ def main() -> None:
     train_rows, held_rows = rows["train_rows"], rows["held_rows"]
     y_truth = rows["adjacency"][train_rows]
     y_held = rows["adjacency"][held_rows]
+    # B is evaluated on one cell at a time: the shielded pair is removed from the
+    # encoder's input, every other pair is given, the state starts fresh
     plan = [("A_given_all", "z"), ("B_leave_one_out", "z"),
             ("C_embedding_only", "semantics"), ("C_embedding_only", "z"),
-            ("C_embedding_only", "q"), ("D_random_embedding", "random")]
-    for mode, name in plan:
+            ("C_embedding_only", "q"), ("D_random_embedding", "random"),
+            ("E_zero_embedding", "zero")]
+    def shielded(matrix, row, col):
+        """Copy of an adjacency batch with one cell cleared per instance."""
+        out = matrix.copy()
+        out[:, row, col] = False
+        return out
+
+    def to_matrix(step_logits, pairs):
+        out = np.zeros((len(step_logits), WIDTH, WIDTH), dtype=np.float64)
+        values = torch.sigmoid(step_logits).cpu().numpy()
+        for index, (i, j) in enumerate(pairs):
+            out[:, i, j] = values[:, index]
+        return out
+
+    def run(mode: str, name: str) -> dict:
         torch.manual_seed(SEED)
         model = build_model(tables[name].shape[1], WIDTH).to(device)
         optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
@@ -183,49 +199,79 @@ def main() -> None:
             tables[name][rows["nodes"][train_rows]].astype(np.float32)).to(device)
         target = torch.from_numpy(y_truth.astype(np.float32)).to(device)
         generator = torch.Generator(device="cpu").manual_seed(SEED)
+
         for _ in range(STEPS):
             model.train()
             pick = torch.randint(0, len(tokens), (BATCH,), generator=generator)
-            logits, pairs = model(tokens[pick], WIDTH, mode, target[pick])
-            truth = torch.stack([target[pick][:, i, j] for i, j in pairs], dim=-1)
-            loss = torch.nn.functional.binary_cross_entropy_with_logits(logits, truth)
+            sub_target = y_truth[pick.tolist()]
+            if mode in ("A_given_all", "B_leave_one_out"):
+                # supervise every cell with its own shielded input: no cell ever sees
+                # another cell's answer for itself
+                losses = []
+                for i, j in pairs_of(WIDTH):
+                    shaped = None
+                    if mode == "A_given_all":
+                        shaped = torch.from_numpy(
+                            shielded(sub_target.astype(np.float32), i, j)).to(device)
+                    else:
+                        shaped = torch.zeros((BATCH, WIDTH, WIDTH), dtype=torch.float32,
+                                             device=device)
+                    logits_cell, pairs_cell = model(tokens[pick], WIDTH, mode, given=shaped)
+                    position = pairs_cell.index((i, j))
+                    losses.append(torch.nn.functional.binary_cross_entropy_with_logits(
+                        logits_cell[:, position],
+                        torch.from_numpy(sub_target[:, i, j].astype(np.float32)).to(device)))
+                loss = torch.stack(losses).mean()
+            else:
+                logits, pairs = model(tokens[pick], WIDTH, mode)
+                truth = torch.stack([target[pick][:, i, j] for i, j in pairs], dim=-1)
+                loss = torch.nn.functional.binary_cross_entropy_with_logits(logits, truth)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
+
         model.eval()
         with torch.no_grad():
-            held = torch.from_numpy(
+            held_tokens = torch.from_numpy(
                 tables[name][rows["nodes"][held_rows]].astype(np.float32)).to(device)
-            held_target = torch.from_numpy(y_held.astype(np.float32)).to(device)
-            # at test time A and B are told the truth minus the asked pair
-            held_logits, pairs = model(held, WIDTH, mode,
-                                       held_target if mode.startswith(("A", "B")) else None)
-            train_logits, _ = model(tokens, WIDTH, mode, target)
-        def to_matrix(step_logits):
-            out = np.zeros((len(step_logits), WIDTH, WIDTH), dtype=np.float64)
-            values = torch.sigmoid(step_logits).cpu().numpy()
-            for index, (i, j) in enumerate(pairs):
-                out[:, i, j] = values[:, index]
-            return out
-        probabilities = to_matrix(held_logits)
-        train_probabilities = to_matrix(train_logits)
-        # A and B read the truth one pair at a time, so their arg-max is exact by
-        # construction; the numbers that matter are the asked pair's logit vs the truth
-        scores = {t: evaluate(train_probabilities, y_truth, rows["family"][train_rows],
+            train_tokens = tokens
+            if mode in ("A_given_all", "B_leave_one_out"):
+                def cell_matrix(base_tokens, truth_matrix):
+                    out = np.zeros((len(base_tokens), WIDTH, WIDTH), dtype=np.float64)
+                    for i, j in pairs_of(WIDTH):
+                        shaped_np = (shielded(truth_matrix.astype(np.float32), i, j)
+                                     if mode == "A_given_all"
+                                     else np.zeros_like(truth_matrix, dtype=np.float32))
+                        shaped = torch.from_numpy(shaped_np).to(device)
+                        logits_cell, pairs_cell = model(base_tokens, WIDTH, mode,
+                                                        given=shaped)
+                        position = pairs_cell.index((i, j))
+                        out[:, i, j] = torch.sigmoid(
+                            logits_cell[:, position]).cpu().numpy()
+                    return out
+                held_prob = cell_matrix(held_tokens, y_held)
+                train_prob = cell_matrix(train_tokens, y_truth)
+            else:
+                held_logits, pairs = model(held_tokens, WIDTH, mode)
+                train_logits, _ = model(train_tokens, WIDTH, mode)
+                held_prob = to_matrix(held_logits, pairs)
+                train_prob = to_matrix(train_logits, pairs)
+        scores = {t: evaluate(train_prob, y_truth, rows["family"][train_rows],
                               rows["orbit"][train_rows], t) for t in (0.3, 0.5, 0.7)}
         best = max(scores, key=lambda value: scores[value]["edge_f1"])
-        held = evaluate(probabilities, y_held, rows["family"][held_rows],
+        held = evaluate(held_prob, y_held, rows["family"][held_rows],
                         rows["orbit"][held_rows], best)
-        key = f"{mode}:{name}"
-        report["runs"][key] = {"threshold_chosen_on_train": best,
-                               "train_edge_f1": scores[best]["edge_f1"],
-                               "heldout": held}
-        print(f"  {mode} {name}: edgeF1 {held['edge_f1']:.3f} exact "
+        print(f"  {mode} {name}: thr {best} edgeF1 {held['edge_f1']:.3f} exact "
               f"{held['adjacency_exact']:.4f} classifiable "
               f"{held['classifiable_share']:.3f} family "
               f"{held['family_accuracy_overall']:.3f} orbit "
               f"{held['orbit_accuracy_overall']:.3f}", flush=True)
+        return {"threshold_chosen_on_train": best, "train_edge_f1": scores[best]["edge_f1"],
+                "heldout": held}
+
+    for mode, name in plan:
+        report["runs"][f"{mode}:{name}"] = run(mode, name)
         tmp = Path(args.out + ".tmp")
         tmp.write_text(json.dumps(report, indent=1) + "\n")
         tmp.replace(args.out)
