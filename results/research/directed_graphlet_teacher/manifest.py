@@ -145,6 +145,8 @@ ANALYSIS = (
     "hard_negatives/repeat.json", "hard_negatives/REPORT_HARD_NEGATIVES.md",
     "edge_prediction/edge_prediction.py", "edge_prediction/edge_prediction.json",
     "edge_prediction/REPORT_EDGE_PREDICTION.md",
+    "diage/diage_repro.py", "diage/diage_repro.json",
+    "diage/REPORT_DIAGE_REPRO.md", "diage/REPORT_DIRECTION_IS_TEMPORAL.md",
 )
 
 
