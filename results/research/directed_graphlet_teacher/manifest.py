@@ -154,6 +154,8 @@ ANALYSIS = (
     "local_pairs/REPORT_LOCAL_PAIRS.md",
     "decomposed/decomposed.py", "decomposed/decomposed.json",
     "decomposed/REPORT_DECOMPOSED.md",
+    "graph_loss/graph_loss.py", "graph_loss/graph_loss.json",
+    "graph_loss/REPORT_GRAPH_LOSS.md",
 )
 
 

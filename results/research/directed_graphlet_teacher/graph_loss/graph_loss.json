@@ -1,0 +1,166 @@
+{
+ "split": {
+  "message_edges": 291262,
+  "held_edges": 32371,
+  "held_one_way": 30709
+ },
+ "protocol": {
+  "loss": "weighted BCE on sigmoid(Q W Q^T), diagonal and held-out edges masked, positives and reverse non-edges weight 1, ordinary negatives 0.1",
+  "lambda": "calibrated from encoder-gradient norms",
+  "codebook": "frozen",
+  "steps": 1000,
+  "batch_items": 512,
+  "seed": 0,
+  "eval": "direction probe with null, neighbour recall@5, SID collision, semantic probe"
+ },
+ "arms": {
+  "A_none": {
+   "lambda": null,
+   "trace": [
+    {
+     "step": 0,
+     "rqvae": 0.004234603140503168,
+     "graph": 0.0
+    },
+    {
+     "step": 250,
+     "rqvae": 0.001088460674509406,
+     "graph": 0.0
+    },
+    {
+     "step": 500,
+     "rqvae": 0.0010867939563468099,
+     "graph": 0.0
+    },
+    {
+     "step": 750,
+     "rqvae": 0.0010809991508722305,
+     "graph": 0.0
+    },
+    {
+     "step": 999,
+     "rqvae": 0.0012895003892481327,
+     "graph": 0.0
+    }
+   ],
+   "q_shift": 0.004926946945488453,
+   "direction_probe": 0.4952847361564636,
+   "direction_probe_null": 0.5023576617240906,
+   "neighbour_recall_at_5": 0.0015,
+   "sid_collision": 0.13035343880912675,
+   "level1_codes_used": 256,
+   "semantic_probe_r2": 0.2664384416785833
+  },
+  "B_undirected": {
+   "lambda": 0.031209419588621185,
+   "trace": [
+    {
+     "step": 0,
+     "rqvae": 0.004234603140503168,
+     "graph": 0.6898021697998047
+    },
+    {
+     "step": 250,
+     "rqvae": 0.03562605008482933,
+     "graph": 0.39951613545417786
+    },
+    {
+     "step": 500,
+     "rqvae": 0.046517133712768555,
+     "graph": 0.3836947977542877
+    },
+    {
+     "step": 750,
+     "rqvae": 0.03505288437008858,
+     "graph": 0.3465496897697449
+    },
+    {
+     "step": 999,
+     "rqvae": 0.03636926785111427,
+     "graph": 0.3577914834022522
+    }
+   ],
+   "q_shift": 0.013094251975417137,
+   "direction_probe": 0.49782371520996094,
+   "direction_probe_null": 0.49963727593421936,
+   "neighbour_recall_at_5": 0.003,
+   "sid_collision": 0.8266563631187213,
+   "level1_codes_used": 256,
+   "semantic_probe_r2": 0.13196317299504357
+  },
+  "C_random": {
+   "lambda": 0.02005688559545375,
+   "trace": [
+    {
+     "step": 0,
+     "rqvae": 0.004234603140503168,
+     "graph": 0.6977742910385132
+    },
+    {
+     "step": 250,
+     "rqvae": 0.030378781259059906,
+     "graph": 0.32235974073410034
+    },
+    {
+     "step": 500,
+     "rqvae": 0.0280012134462595,
+     "graph": 0.2856122553348541
+    },
+    {
+     "step": 750,
+     "rqvae": 0.02579055353999138,
+     "graph": 0.25448325276374817
+    },
+    {
+     "step": 999,
+     "rqvae": 0.028906041756272316,
+     "graph": 0.28222283720970154
+    }
+   ],
+   "q_shift": 0.008873052895069122,
+   "direction_probe": 0.5074356198310852,
+   "direction_probe_null": 0.48730504512786865,
+   "neighbour_recall_at_5": 0.005,
+   "sid_collision": 0.9144263228535405,
+   "level1_codes_used": 256,
+   "semantic_probe_r2": 0.15890992576577212
+  },
+  "D_directed": {
+   "lambda": 0.021024490825198718,
+   "trace": [
+    {
+     "step": 0,
+     "rqvae": 0.004234603140503168,
+     "graph": 0.6961742043495178
+    },
+    {
+     "step": 250,
+     "rqvae": 0.028308171778917313,
+     "graph": 0.354547381401062
+    },
+    {
+     "step": 500,
+     "rqvae": 0.026839209720492363,
+     "graph": 0.3031832277774811
+    },
+    {
+     "step": 750,
+     "rqvae": 0.021190516650676727,
+     "graph": 0.2531476616859436
+    },
+    {
+     "step": 999,
+     "rqvae": 0.01953837461769581,
+     "graph": 0.2583712637424469
+    }
+   ],
+   "q_shift": 0.007462823297828436,
+   "direction_probe": 0.508886456489563,
+   "direction_probe_null": 0.4900254011154175,
+   "neighbour_recall_at_5": 0.0065,
+   "sid_collision": 0.8750559238622035,
+   "level1_codes_used": 256,
+   "semantic_probe_r2": 0.1716471596800213
+  }
+ }
+}
