@@ -52,11 +52,15 @@ def main() -> None:
     # 2. learned recognition numbers (carried by the v1 contract, evidence file present)
     role_head = HERE.parent / "directed_graphlet_role" / "head_pretrained_directed.json"
     head = json.loads(role_head.read_text())
+    structure_report = json.loads((HERE / "structure_teacher_report.json").read_text())
+    adjacency = structure_report["capabilities"]["recognition"]
     checks["recognised_type_from_adjacency"] = {
-        "status": "PASS",
-        "detail": {"subtype_macro_f1": head["heldout"]["subtype"]["macro_f1"],
-                   "orbit_macro_over_families": head["heldout"]["role"]["macro_over_families"],
-                   "source": str(role_head.relative_to(HERE.parents[2]))}}
+        "status": "PASS" if (adjacency["with_adjacency_subtype_macro_f1"] > 0.5
+                             and adjacency["with_adjacency_orbit_macro_f1"] > 0.5) else "FAIL",
+        "detail": {"subtype_macro_f1": adjacency["with_adjacency_subtype_macro_f1"],
+                   "orbit_macro_over_families": adjacency["with_adjacency_orbit_macro_f1"],
+                   "source": "results/research/directed_graphlet_teacher/structure_teacher_report.json",
+                   "condition": "true induced adjacency given"}}
 
     # 3. multi-role
     targets = bundle.targets
