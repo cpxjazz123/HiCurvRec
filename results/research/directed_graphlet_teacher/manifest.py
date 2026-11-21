@@ -182,6 +182,8 @@ ANALYSIS = (
     "graph_loss/DESIGN_PER_GRAPHLET.md",
     "graph_loss/arm_alignment_survey.json",
     "graph_loss/REPORT_ARM_SURVEY.md",
+    "graph_loss/arm_alignment.json",
+    "graph_loss/REPORT_CHAIN_ARM_RESULT.md",
     "graph_loss/prototype_chain_l2local.json",
     "graph_loss/prototype_chain_l2local_control.json",
     "graph_loss/REPORT_CHAIN_L2LOCAL.md",

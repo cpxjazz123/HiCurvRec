@@ -61,6 +61,22 @@ def semantic_probe(vectors: np.ndarray, semantics: np.ndarray) -> float:
                  / ((semantics[evaluate] - semantics[evaluate].mean(0)) ** 2).mean())
 
 
+def structure_delta(codes: np.ndarray, bank: np.ndarray, kind: str) -> dict:
+    """Same definition as the survey: cumulative three-code sharing, adjacent minus far."""
+    a, b, c = bank[:, 0], bank[:, 1], bank[:, 2]
+    cumulative = lambda left, right: np.cumprod(codes[left] == codes[right], axis=1).sum(1)
+    if kind == "chain":
+        near = (cumulative(a, b) + cumulative(b, c)) / 2.0
+        far = cumulative(a, c)
+    elif kind == "fork":
+        near = cumulative(b, c)
+        far = (cumulative(a, b) + cumulative(a, c)) / 2.0
+    else:
+        near = cumulative(b, c)
+        far = (cumulative(b, a) + cumulative(c, a)) / 2.0
+    return {"delta": float(near.mean() - far.mean())}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--arm", required=True, help="results/stage2_RQ-VAE/<arm>")
@@ -92,7 +108,7 @@ def main() -> None:
         entry = {"sid": str(directory.relative_to(root)),
                  "collision": float(1.0 - len(np.unique(codes, axis=0)) / len(codes))}
         for kind, bank in evaluation.items():
-            entry[kind] = proto.eval_structure(codes, bank, rng, kind)
+            entry[kind] = structure_delta(codes, bank, kind)
         checkpoint = directory / "rqvae_best.pth"
         if checkpoint.is_file():
             vectors = quantised_vectors(directory, codes, 32)
