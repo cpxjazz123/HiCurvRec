@@ -177,12 +177,37 @@ def fit_direction_head(q_items: np.ndarray, pairs: np.ndarray, truth: np.ndarray
             "pairs_train": int(len(sub_train))}
 
 
+def grad_norm(parameters, loss) -> float:
+    """Gradient norm of one loss term w.r.t. a parameter group, without touching .grad."""
+    import torch
+    grads = torch.autograd.grad(loss, [p for p in parameters if p.requires_grad],
+                                retain_graph=True, allow_unused=True)
+    total = sum(float(g.pow(2).sum()) for g in grads if g is not None)
+    return total ** 0.5
+
+
 def train_arm(model, items: torch.Tensor, pairs: torch.Tensor, truth: torch.Tensor,
-              mode: str, device) -> dict:
+              mode: str, device, freeze_codebook: bool = False) -> dict:
     """One arm: only the auxiliary head and the encoder/codebooks move."""
     import torch.nn as nn
     if mode == "A_none":
-        return {"trained": False}
+        # the control receives the same optimisation budget, recomputing the RQ-VAE loss
+        # each step; otherwise "trained vs untrained" would be confounded with the loss
+        from losses import build_loss
+        criterion = build_loss(json.loads((ARM_DIR / "config" / "train_config.json").read_text()))
+        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+        trace = []
+        for step in range(STEPS):
+            model.train()
+            recon, quant_parts, _, _ = model(items)
+            loss_rqvae, _ = criterion(recon, items, quant_parts)
+            optimizer.zero_grad(set_to_none=True)
+            loss_rqvae.backward()
+            optimizer.step()
+            if step % 250 == 0 or step == STEPS - 1:
+                trace.append({"step": step, "rqvae": float(loss_rqvae.detach())})
+        return {"trained": True, "trace": trace, "freeze_codebook": False,
+                "calibration": None}
     model.train()
     # the arm's own collapse guard aborts the run if the codebook spacing shrinks below a
     # fraction of its start; this experiment deliberately reshapes the codebooks, so the
@@ -191,6 +216,12 @@ def train_arm(model, items: torch.Tensor, pairs: torch.Tensor, truth: torch.Tens
     # result.  Switching it off would make a collapsed codebook look like a finding.
     for parameter in model.parameters():
         parameter.requires_grad_(True)
+    if freeze_codebook:
+        # only the encoder moves: the three codebooks keep the geometry the frozen SID
+        # was built on, so an auxiliary loss cannot drag them into collapse
+        for layer in model.rq.vq_layers:
+            layer.embed.requires_grad_(False)
+            layer.embed_proj.requires_grad_(False) if hasattr(layer, "embed_proj") else None
     source = nn.Linear(32, 32).to(device)
     target = nn.Linear(32, 32).to(device)
     optimizer = torch.optim.AdamW(
@@ -218,6 +249,8 @@ def train_arm(model, items: torch.Tensor, pairs: torch.Tensor, truth: torch.Tens
                            if (ARM_DIR / "config" / "train_config.json").exists() else
                            {"BETA": 0.25})
     trace = []
+    lam = None
+    calibration = None
     for step in range(STEPS):
         pick = torch.randint(0, len(pairs), (BATCH,), generator=rng)
         guess_pairs = pairs[pick].to(device)
@@ -233,7 +266,19 @@ def train_arm(model, items: torch.Tensor, pairs: torch.Tensor, truth: torch.Tens
             logits, labels[pick, 0].to(device))
         loss_directed = loss_directed + torch.nn.functional.binary_cross_entropy_with_logits(
             (source(right) * target(left)).sum(-1), labels[pick, 1].to(device))
-        loss = loss_rqvae + LAMBDA * loss_directed
+        if step == 0 and lam is None:
+            # the two terms differ by ~4500x at initialisation, so a fixed lambda=1 is an
+            # uncalibrated choice.  lambda is set once, from the encoder-gradient norms of
+            # the two terms, so the auxiliary signal is neither drowned nor dominant.
+            encoder_parameters = [p for p in model.encoder.parameters()]
+            norm_rq = grad_norm(encoder_parameters, loss_rqvae)
+            norm_aux = grad_norm(encoder_parameters, loss_directed)
+            lam = float(norm_rq / max(norm_aux, 1e-12))
+            calibration = {"grad_rqvae": norm_rq, "grad_directed": norm_aux,
+                           "lambda": lam}
+            print(f"    {mode}: lambda calibrated {lam:.3e} "
+                  f"(grad rqvae {norm_rq:.3e}, directed {norm_aux:.3e})", flush=True)
+        loss = loss_rqvae + (lam if lam is not None else 1.0) * loss_directed
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -245,7 +290,8 @@ def train_arm(model, items: torch.Tensor, pairs: torch.Tensor, truth: torch.Tens
             print(f"    {mode} step {step}: total {float(loss.detach()):.4f} "
                   f"(rqvae {float(loss_rqvae.detach()):.4f}, "
                   f"directed {float(loss_directed.detach()):.4f})", flush=True)
-    return {"trained": True, "trace": trace}
+    return {"trained": True, "trace": trace, "calibration": calibration,
+            "freeze_codebook": freeze_codebook}
 
 
 def main() -> None:
@@ -285,19 +331,16 @@ def main() -> None:
     with torch.no_grad():
         base_q, _ = q_straight_through(base_model, items)
         base_q = base_q.detach().cpu().numpy()
-    report["arms"]["A_none"] = {
-        "trained": False,
-        "probe_before": fit_direction_head(base_q, eval_pairs, eval_truth, device),
-        "probe_after": None}
-
-    for mode in ("B_undirected", "C_directed", "D_direction_random"):
+    for mode in ("A_none", "B_undirected", "C_directed", "D_direction_random"):
         model = load_model().to(device)
         before = fit_direction_head(base_q, eval_pairs, eval_truth, device)
+        freeze = mode != "A_none"      # every supervised arm keeps its codebooks fixed
         from assignment_floor import CodebookCollapse
         try:
             info = train_arm(model, items,
                              torch.from_numpy(train_pairs).to(device),
-                             torch.from_numpy(train_truth).to(device), mode, device)
+                             torch.from_numpy(train_truth).to(device), mode, device,
+                             freeze_codebook=freeze)
         except CodebookCollapse as collapse:
             # the arm failed inside its own guard: record it and keep the run going so the
             # other arms are still measured instead of being aborted with it
@@ -319,6 +362,8 @@ def main() -> None:
             _, _, _, tokens = model.rq(model.encoder(items))
         codes = tokens.cpu().numpy().astype(np.int64)
         current = {"trained": True, "trace": info.get("trace"),
+                   "calibration": info.get("calibration"),
+                   "freeze_codebook": info.get("freeze_codebook"),
                    "probe_before": before, "probe_after": after,
                    "q_moved_l2": float(np.linalg.norm(q_after - base_q) / max(len(base_q), 1)),
                    "sid_collision": float(1.0 - len(np.unique(codes[:, :3], axis=0)) / len(codes)),

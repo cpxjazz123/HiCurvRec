@@ -16,96 +16,254 @@
  },
  "arms": {
   "A_none": {
-   "trained": false,
+   "trained": true,
+   "trace": [
+    {
+     "step": 0,
+     "rqvae": 0.0003103199414908886
+    },
+    {
+     "step": 250,
+     "rqvae": 0.00022906562662683427
+    },
+    {
+     "step": 500,
+     "rqvae": 0.000205840784474276
+    },
+    {
+     "step": 750,
+     "rqvae": 0.00019352324306964874
+    },
+    {
+     "step": 1000,
+     "rqvae": 0.00018557196017354727
+    },
+    {
+     "step": 1250,
+     "rqvae": 0.00018101438763551414
+    },
+    {
+     "step": 1499,
+     "rqvae": 0.00017616049444768578
+    }
+   ],
+   "calibration": null,
+   "freeze_codebook": false,
    "probe_before": {
-    "accuracy": 0.5080562233924866,
+    "accuracy": 0.5135413408279419,
     "pairs_eval": 2917,
     "pairs_train": 6806
    },
-   "probe_after": null
+   "probe_after": {
+    "accuracy": 0.5107988119125366,
+    "pairs_eval": 2917,
+    "pairs_train": 6806
+   },
+   "q_moved_l2": 0.0015437720576301217,
+   "sid_collision": 0.0569813315979989,
+   "level1_codes_used": 256,
+   "codeword_spacing": 0.03788219392299652
   },
   "B_undirected": {
    "trained": true,
    "trace": [
     {
      "step": 0,
-     "loss": 1.3894398212432861,
+     "loss": 0.0014504308346658945,
      "rqvae": 0.0003103199414908886,
-     "directed": 1.3891295194625854
+     "directed": 1.3839412927627563
     },
     {
      "step": 250,
-     "loss": 1.1366019248962402,
-     "rqvae": 0.006240347400307655,
-     "directed": 1.130361557006836
+     "loss": 0.0012950352393090725,
+     "rqvae": 0.0003477823920547962,
+     "directed": 1.1498374938964844
     },
     {
      "step": 500,
-     "loss": 1.1163215637207031,
-     "rqvae": 0.0060523939318954945,
-     "directed": 1.1102691888809204
+     "loss": 0.0012588643003255129,
+     "rqvae": 0.0003313078195787966,
+     "directed": 1.1259288787841797
     },
     {
      "step": 750,
-     "loss": 1.1027370691299438,
-     "rqvae": 0.006698406767100096,
-     "directed": 1.0960386991500854
+     "loss": 0.0012309456942602992,
+     "rqvae": 0.00032319227466359735,
+     "directed": 1.1018905639648438
     },
     {
      "step": 1000,
-     "loss": 1.0797480344772339,
-     "rqvae": 0.006785781122744083,
-     "directed": 1.0729622840881348
+     "loss": 0.001221856800839305,
+     "rqvae": 0.00031474235584028065,
+     "directed": 1.1011149883270264
     },
     {
      "step": 1250,
-     "loss": 1.1263344287872314,
-     "rqvae": 0.0073723806999623775,
-     "directed": 1.118962049484253
+     "loss": 0.0012543204938992858,
+     "rqvae": 0.0003108099917881191,
+     "directed": 1.1452949047088623
     },
     {
      "step": 1499,
-     "loss": 1.1323081254959106,
-     "rqvae": 0.008615311235189438,
-     "directed": 1.1236928701400757
+     "loss": 0.0012134476564824581,
+     "rqvae": 0.0003038691938854754,
+     "directed": 1.1041059494018555
     }
    ],
-   "probe_before": {
-    "accuracy": 0.5118272304534912,
-    "pairs_eval": 2917,
-    "pairs_train": 6806
+   "calibration": {
+    "grad_rqvae": 7.024145938883691e-05,
+    "grad_directed": 0.08526368419737705,
+    "lambda": 0.0008238145002769859
    },
-   "probe_after": {
-    "accuracy": 0.5118272304534912,
-    "pairs_eval": 2917,
-    "pairs_train": 6806
-   },
-   "q_moved_l2": 0.01042309869080782,
-   "sid_collision": 0.6846300890714605,
-   "level1_codes_used": 256,
-   "codeword_spacing": 0.06743272393941879
-  },
-  "C_directed": {
-   "trained": false,
+   "freeze_codebook": true,
    "probe_before": {
     "accuracy": 0.5128557085990906,
     "pairs_eval": 2917,
     "pairs_train": 6806
    },
-   "probe_after": null,
-   "codebook_collapsed": true,
-   "reason": "the codeword spacing fell to 2.334e-02 from an initial 4.100e-01 (x0.057) for 50 consecutive steps: the codebook has collapsed relative to its own resolution"
-  },
-  "D_direction_random": {
-   "trained": false,
-   "probe_before": {
-    "accuracy": 0.5190263986587524,
+   "probe_after": {
+    "accuracy": 0.507027804851532,
     "pairs_eval": 2917,
     "pairs_train": 6806
    },
-   "probe_after": null,
-   "codebook_collapsed": true,
-   "reason": "the codeword spacing fell to 1.142e-02 from an initial 4.100e-01 (x0.028) for 50 consecutive steps: the codebook has collapsed relative to its own resolution"
+   "q_moved_l2": 0.002762074815109372,
+   "sid_collision": 0.06214666287062265,
+   "level1_codes_used": 256,
+   "codeword_spacing": 0.07681084424257278
+  },
+  "C_directed": {
+   "trained": true,
+   "trace": [
+    {
+     "step": 0,
+     "loss": 0.0007954519242048264,
+     "rqvae": 0.0003103199414908886,
+     "directed": 1.4489552974700928
+    },
+    {
+     "step": 250,
+     "loss": 0.0007134643383324146,
+     "rqvae": 0.00029568892205134034,
+     "directed": 1.2477798461914062
+    },
+    {
+     "step": 500,
+     "loss": 0.0006568976095877588,
+     "rqvae": 0.00029266849742271006,
+     "directed": 1.0878517627716064
+    },
+    {
+     "step": 750,
+     "loss": 0.0006412740331143141,
+     "rqvae": 0.000281076441751793,
+     "directed": 1.0758107900619507
+    },
+    {
+     "step": 1000,
+     "loss": 0.0006211125291883945,
+     "rqvae": 0.0002746673417277634,
+     "directed": 1.0347360372543335
+    },
+    {
+     "step": 1250,
+     "loss": 0.0006336334627121687,
+     "rqvae": 0.00026991291088052094,
+     "directed": 1.0863327980041504
+    },
+    {
+     "step": 1499,
+     "loss": 0.0006163525395095348,
+     "rqvae": 0.00026657248963601887,
+     "directed": 1.04469633102417
+    }
+   ],
+   "calibration": {
+    "grad_rqvae": 7.024145938883691e-05,
+    "grad_directed": 0.20979183742396543,
+    "lambda": 0.000334815025462058
+   },
+   "freeze_codebook": true,
+   "probe_before": {
+    "accuracy": 0.5087418556213379,
+    "pairs_eval": 2917,
+    "pairs_train": 6806
+   },
+   "probe_after": {
+    "accuracy": 0.5104559659957886,
+    "pairs_eval": 2917,
+    "pairs_train": 6806
+   },
+   "q_moved_l2": 0.003197590820491314,
+   "sid_collision": 0.13649489567657702,
+   "level1_codes_used": 256,
+   "codeword_spacing": 0.07681084424257278
+  },
+  "D_direction_random": {
+   "trained": true,
+   "trace": [
+    {
+     "step": 0,
+     "loss": 0.0007059831405058503,
+     "rqvae": 0.0003103199414908886,
+     "directed": 1.3984136581420898
+    },
+    {
+     "step": 250,
+     "loss": 0.0006545186624862254,
+     "rqvae": 0.00031624280381947756,
+     "directed": 1.1955866813659668
+    },
+    {
+     "step": 500,
+     "loss": 0.0006066916976124048,
+     "rqvae": 0.0002947004686575383,
+     "directed": 1.1026873588562012
+    },
+    {
+     "step": 750,
+     "loss": 0.000592465337831527,
+     "rqvae": 0.00028170563746243715,
+     "directed": 1.098334789276123
+    },
+    {
+     "step": 1000,
+     "loss": 0.0005716658197343349,
+     "rqvae": 0.0002742419601418078,
+     "directed": 1.051201343536377
+    },
+    {
+     "step": 1250,
+     "loss": 0.0005827656714245677,
+     "rqvae": 0.0002692010020837188,
+     "directed": 1.1082484722137451
+    },
+    {
+     "step": 1499,
+     "loss": 0.0005679321475327015,
+     "rqvae": 0.00026556733064353466,
+     "directed": 1.0686644315719604
+    }
+   ],
+   "calibration": {
+    "grad_rqvae": 7.024145938883691e-05,
+    "grad_directed": 0.24825817158645877,
+    "lambda": 0.00028293714941977053
+   },
+   "freeze_codebook": true,
+   "probe_before": {
+    "accuracy": 0.5166267156600952,
+    "pairs_eval": 2917,
+    "pairs_train": 6806
+   },
+   "probe_after": {
+    "accuracy": 0.5231402516365051,
+    "pairs_eval": 2917,
+    "pairs_train": 6806
+   },
+   "q_moved_l2": 0.004163876175880432,
+   "sid_collision": 0.2721763533574654,
+   "level1_codes_used": 256,
+   "codeword_spacing": 0.07681084424257278
   }
  }
 }
