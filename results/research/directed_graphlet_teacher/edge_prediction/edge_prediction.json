@@ -1,0 +1,56 @@
+{
+ "split": {
+  "message_edges": 291262,
+  "held_edges": 32371,
+  "eval_positives": 8000,
+  "eval_negatives": 8000
+ },
+ "protocol": {
+  "augmenter_steps": 1200,
+  "head_steps": 1500,
+  "head": "P(A->B)=sigmoid(f_s(x_A).f_t(x_B)), dim 64",
+  "positives": "60,000 training edges",
+  "hard_negatives": "the reverse of those edges",
+  "regular_negatives": "degree-matched unrelated pairs",
+  "metrics": "ROC-AUC (pos vs unrelated), AP, direction accuracy (pos vs its own reverse)"
+ },
+ "arms": {
+  "A_raw_semantics": {
+   "roc_auc": 0.7195823046875001,
+   "average_precision": 0.7009226684695307,
+   "direction_accuracy": 0.5465,
+   "mean_positive": 0.35849830508232117,
+   "mean_reverse": 0.3544250428676605,
+   "mean_unrelated": 0.29371708631515503
+  },
+  "B_undirected": {
+   "roc_auc": 0.782841890625,
+   "average_precision": 0.7351985804267623,
+   "direction_accuracy": 0.4815,
+   "mean_positive": 0.33362647891044617,
+   "mean_reverse": 0.3481081426143646,
+   "mean_unrelated": 0.11755851656198502
+  },
+  "C_random_direction": {
+   "roc_auc": 0.8051510546874999,
+   "average_precision": 0.7662964571310206,
+   "direction_accuracy": 0.49175,
+   "mean_positive": 0.35725656151771545,
+   "mean_reverse": 0.3644016683101654,
+   "mean_unrelated": 0.1272425651550293
+  },
+  "D_directed": {
+   "roc_auc": 0.7841805000000001,
+   "average_precision": 0.7408354895094085,
+   "direction_accuracy": 0.479375,
+   "mean_positive": 0.33461901545524597,
+   "mean_reverse": 0.3484903872013092,
+   "mean_unrelated": 0.1165912076830864
+  }
+ },
+ "readings": {
+  "direction_se": 0.0056,
+  "D_minus_A_direction_sigma": -12.01,
+  "D_minus_C_direction_sigma": -2.21
+ }
+}

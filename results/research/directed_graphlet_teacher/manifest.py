@@ -143,6 +143,8 @@ ANALYSIS = (
     "rrwp/rrwp_ablation.py", "rrwp/rrwp_ablation.json", "rrwp/REPORT_RRWP.md",
     "hard_negatives/hard_negatives.py", "hard_negatives/hard_negatives.json",
     "hard_negatives/repeat.json", "hard_negatives/REPORT_HARD_NEGATIVES.md",
+    "edge_prediction/edge_prediction.py", "edge_prediction/edge_prediction.json",
+    "edge_prediction/REPORT_EDGE_PREDICTION.md",
 )
 
 
