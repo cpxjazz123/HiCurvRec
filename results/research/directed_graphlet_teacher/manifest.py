@@ -123,6 +123,8 @@ ANALYSIS = (
     "edge_rnn/REPORT_EDGE_RNN.md",
     "capability/capability.py", "capability/capability.json",
     "capability/REPORT_CAPABILITY.md",
+    "pair_relations/pair_relations.py", "pair_relations/pair_relations.json",
+    "pair_relations/REPORT_PAIR_RELATIONS.md",
 )
 
 

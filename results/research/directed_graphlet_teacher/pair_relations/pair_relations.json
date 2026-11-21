@@ -1,0 +1,117 @@
+{
+ "inputs": {
+  "states": "5c1f080f384ff893d85384fb4553e3669c37d42662aa564ebf2b97b1e2067111",
+  "full_graph": "ef97a2bdc555259d402065026b00cf62bc1e91c3bc58a66da4d6f8f8df407fdd",
+  "checkpoint": {
+   "arm": "TIGER_drq_D1",
+   "checkpoint_sha256": "b12374b7caeada13bfc8af88965d792eceb23a5e696edb43c4382f0c055ae75a",
+   "sid_sha256": "a47b78967d0b8580370b1227ef8b5c9fdd66bfa399ae5dd62e687296c3c19ecd",
+   "semantics_sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+   "infer_use_sk": false,
+   "codes_match_stored_sid": 1.0,
+   "q_rebuilt_from_sid_max_abs_diff_to_model_q": 5.960464477539063e-08,
+   "states_file": "results/research/directed_graphlet_teacher/fidelity/fidelity_states.npz",
+   "states_sha256": "5c1f080f384ff893d85384fb4553e3669c37d42662aa564ebf2b97b1e2067111",
+   "widths": {
+    "semantics": 768,
+    "z": 32,
+    "q": 32,
+    "decoder": 768
+   },
+   "collision": 0.025338593565705447,
+   "note": "the SID match is on the full three-level code of every item; a partial match would mean the checkpoint and the table are not the same run"
+  }
+ },
+ "labels": {
+  "source": "behavior_graph_directed/graph.npz",
+  "classes": {
+   "0": "no edge",
+   "1": "A->B",
+   "2": "B->A",
+   "3": "mutual"
+  },
+  "train_pairs": 300000,
+  "held_pairs": 30000,
+  "train_class_counts": [
+   200061,
+   94927,
+   0,
+   5012
+  ],
+  "held_class_counts": [
+   19939,
+   9528,
+   0,
+   533
+  ],
+  "negatives_per_positive": 2,
+  "half_negatives_degree_matched": true,
+  "item_isolation": "held-out pairs share no item with training",
+  "held_pairs_reusing_train_items": 19129
+ },
+ "protocol": {
+  "steps": 6000,
+  "batch": 512,
+  "hidden": 128,
+  "seed": 0,
+  "features": "[u, v, u*v, |u-v|] which flips 1<->2 under a swap",
+  "metrics": "4-class accuracy and macro-F1 on held-out pairs"
+ },
+ "runs": {
+  "semantics": {
+   "accuracy": 0.6834666666666667,
+   "macro_f1": 0.37153146673017207,
+   "per_class_recall": {
+    "0": 0.9220121370179046,
+    "1": 0.2225020990764064,
+    "2": null,
+    "3": 0.0
+   },
+   "swap_consistency": 0.7470612930310663
+  },
+  "z": {
+   "accuracy": 0.7196666666666667,
+   "macro_f1": 0.4887804481748211,
+   "per_class_recall": {
+    "0": 0.9309393650634435,
+    "1": 0.31024349286314024,
+    "2": null,
+    "3": 0.1350844277673546
+   },
+   "swap_consistency": 0.6801007556675063
+  },
+  "q": {
+   "accuracy": 0.7186333333333333,
+   "macro_f1": 0.4859096624882127,
+   "per_class_recall": {
+    "0": 0.9308390591303476,
+    "1": 0.3074097397145256,
+    "2": null,
+    "3": 0.13133208255159476
+   },
+   "swap_consistency": 0.6832493702770781
+  },
+  "random": {
+   "accuracy": 0.6178,
+   "macro_f1": 0.2795116453334941,
+   "per_class_recall": {
+    "0": 0.9059631877225538,
+    "1": 0.04932829554995802,
+    "2": null,
+    "3": 0.0
+   },
+   "swap_consistency": 0.9109991603694374
+  },
+  "zero": {
+   "accuracy": 0.6646333333333333,
+   "macro_f1": 0.26617807057944026,
+   "per_class_recall": {
+    "0": 1.0,
+    "1": 0.0,
+    "2": null,
+    "3": 0.0
+   },
+   "swap_consistency": 1.0
+  }
+ }
+}
