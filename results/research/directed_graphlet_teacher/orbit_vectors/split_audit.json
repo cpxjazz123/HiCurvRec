@@ -1,0 +1,91 @@
+{
+ "graph": {
+  "path": "results/research/behavior_graph_directed/graph.npz",
+  "sha256": "ef97a2bdc555259d402065026b00cf62bc1e91c3bc58a66da4d6f8f8df407fdd",
+  "metadata_sha256": "6fc152e48216df28359399f921fce49fd583e0bf2c528f58d19fa4905605e376",
+  "edges": 323633,
+  "nodes": 24587,
+  "policy": "TRAIN transitions only; validation/test parquet is not read",
+  "is_symmetric": false
+ },
+ "rebuild": {
+  "train_transitions_from_parquet": 323633,
+  "graph_edges": 323633,
+  "set_equal": true,
+  "weight_equal": true
+ },
+ "overlap_with_heldout": {
+  "valid_edges_in_graph": 323633,
+  "test_edges_in_graph": 323633,
+  "valid_edges_not_in_train": 52855,
+  "test_edges_not_in_train": 105696,
+  "graph_edges_not_in_train": 0,
+  "note": "overlap is an edge observed in both splits, not leakage: the graph is rebuilt from train.parquet and its edge/weight set equals the train transitions"
+ },
+ "instance_pool": {
+  "path": "results/research/directed_graphlet_role/instances.npz",
+  "sha256": "9d0661e9412b965c410c6e4b0fd7b5539f9b4af8aeb88332b2918b6b0dfd71f0",
+  "train_instances": 972653,
+  "heldout_instances": 243530,
+  "heldout_instances_used_in_counts": 0
+ },
+ "stored_roles_spotcheck": {
+  "checked": 125,
+  "mismatched": 0
+ },
+ "counting": {
+  "train": {
+   "K3": {
+    "instances": 101142,
+    "merged_other_dropped": 0
+   },
+   "P3": {
+    "instances": 366058,
+    "merged_other_dropped": 0
+   },
+   "C4": {
+    "instances": 199853,
+    "merged_other_dropped": 0
+   },
+   "P4": {
+    "instances": 81343,
+    "merged_other_dropped": 40
+   },
+   "K1_3": {
+    "instances": 224257,
+    "merged_other_dropped": 2
+   }
+  },
+  "heldout": {
+   "K3": {
+    "instances": 25242,
+    "merged_other_dropped": 0
+   },
+   "P3": {
+    "instances": 91010,
+    "merged_other_dropped": 0
+   },
+   "C4": {
+    "instances": 50275,
+    "merged_other_dropped": 0
+   },
+   "P4": {
+    "instances": 20367,
+    "merged_other_dropped": 5
+   },
+   "K1_3": {
+    "instances": 56636,
+    "merged_other_dropped": 0
+   }
+  },
+  "coverage": {
+   "items_with_any_role": 24532,
+   "fraction": 0.9977630455118559,
+   "items_reliable": 24437,
+   "reliable_fraction": 0.9938992150323341,
+   "instances_median": 76.0,
+   "instances_max": 14711
+  },
+  "unused_dimensions": 236
+ }
+}

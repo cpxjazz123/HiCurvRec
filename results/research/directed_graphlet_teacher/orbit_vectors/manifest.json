@@ -1,0 +1,19 @@
+{
+ "issue": 229,
+ "phase": 1,
+ "inputs": {
+  "results/research/directed_graphlet_role/instances.npz": "9d0661e9412b965c410c6e4b0fd7b5539f9b4af8aeb88332b2918b6b0dfd71f0",
+  "results/research/directed_graphlet_role/subtypes.json": "ae500b4629be8f69a7875f9fb0fbe081c359ee663274dc060904f2b5e13ea1d2",
+  "results/research/behavior_graph_directed/graph.npz": "ef97a2bdc555259d402065026b00cf62bc1e91c3bc58a66da4d6f8f8df407fdd",
+  "results/research/behavior_graph_directed/metadata.json": "6fc152e48216df28359399f921fce49fd583e0bf2c528f58d19fa4905605e376",
+  "stage1_GeneEmbedding/output/sentence_t5.npy": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+ },
+ "outputs": {
+  "orbit_vectors.npz": "338df20841db4411449067e13fa1d24470aab856b5b8db0512f2914a491d6d10",
+  "orbit_vocab.json": "5cb059ff3049b1b616378a02d848182e5063d3227a80067a0351deedd1954fb7",
+  "split_audit.json": "0e16a061bf07756de37e0adc62e14189e59e287abca7ccee3b1f08f278060f46",
+  "reliability.json": "cd13c5c111c87fdebd79f9f50830016059ba69ca6c60ad62bee04a13ba36f21f",
+  "learnability.json": "7b1f952a72ea15874c948ef2565345838b6c404c5887f011ac8f70f1bd055313"
+ },
+ "regenerate": "python3 build_orbit_vectors.py (the .npz is git-ignored; every other artifact is committed)"
+}

@@ -92,6 +92,12 @@ ANALYSIS = (
     "structure_environment.py", "tests/test_structure_environment.py",
     "REPORT_STRUCTURE_ENVIRONMENT.md",
     "teacher/opt/structure_environment.json",
+    "structure_heuristics.py", "tests/test_structure_heuristics.py",
+    "REPORT_STRUCTURE_HEURISTICS.md", "teacher/opt/structure_heuristics.json",
+    "orbit_vectors/build_orbit_vectors.py", "tests/test_orbit_vectors.py",
+    "orbit_vectors/REPORT_ORBIT_VECTORS.md", "orbit_vectors/orbit_vocab.json",
+    "orbit_vectors/split_audit.json", "orbit_vectors/reliability.json",
+    "orbit_vectors/learnability.json", "orbit_vectors/manifest.json",
 )
 
 

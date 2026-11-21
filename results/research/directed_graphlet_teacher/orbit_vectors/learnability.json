@@ -1,0 +1,25 @@
+{
+ "features": "stage1_GeneEmbedding/output/sentence_t5.npy (768-d, unchanged)",
+ "target": "log1p counts (376 dims)",
+ "items": 24587,
+ "eval_items": 4980,
+ "items_with_any_role": 24532,
+ "eval_items_with_any_role": 4970,
+ "active_dimensions": 140,
+ "r2": {
+  "mean": -0.019359308146061998,
+  "median": -0.01925630740420059,
+  "fraction_above_null_p95": 0.6571428571428571,
+  "max": 0.0418941263458118,
+  "scope": "dimensions with non-zero evaluation variance"
+ },
+ "null": {
+  "reps": 10,
+  "r2_mean": -0.04511769541932068,
+  "r2_p95_mean": -0.03453071236839355,
+  "scope": "same active dimensions"
+ },
+ "learnable": false,
+ "trace_only": true,
+ "note": "a dimension counts as beating the null when its held-out R^2 exceeds the permutation null's 95th percentile; learnable additionally requires the mean R^2 over active dimensions to reach 0.05, so a detectable trace with no usable effect size is reported as trace_only"
+}
