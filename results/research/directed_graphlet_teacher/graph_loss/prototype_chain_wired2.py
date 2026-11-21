@@ -74,9 +74,11 @@ def evaluate(codes, bank, rng, semantics, q_np) -> dict:
     far = cumulative_share(codes, a, c)
     delta = float(adjacent.mean() - far.mean())
     s1 = codes
-    level1 = ((s1[a, 0] == s1[b, 0]) + (s1[b, 0] == s1[c, 0])).mean() / 2.0
+    level1 = ((s1[a, 0] == s1[b, 0]).astype(np.float64)
+              + (s1[b, 0] == s1[c, 0]).astype(np.float64)).mean() / 2.0
     level1_far = float((s1[a, 0] == s1[c, 0]).mean())
-    level2 = ((s1[a, :2] == s1[b, :2]).all(1) + (s1[b, :2] == s1[c, :2]).all(1)).mean() / 2.0
+    level2 = ((s1[a, :2] == s1[b, :2]).all(1).astype(np.float64)
+              + (s1[b, :2] == s1[c, :2]).all(1).astype(np.float64)).mean() / 2.0
     level2_far = float((s1[a, :2] == s1[c, :2]).all(1).mean())
     null = []
     for _ in range(100):
@@ -229,7 +231,10 @@ def main() -> None:
                 centered = PENDING_OFFSET - PENDING_OFFSET.mean(dim=1, keepdim=True)
                 centered = centered / centered.std(dim=1, keepdim=True).clamp(min=1e-6)
                 shifted = plain + args.align * centered * plain.std(dim=1, keepdim=True).clamp(min=1e-6)
-                changed = float((plain.argmin(-1) != shifted.argmin(-1)).float().mean())
+                # the real assignment, not argmin: the layer's own Sinkhorn + floor path
+                assigned_plain = layers[0]._indices(plain, True)
+                assigned_shift = layers[0]._indices(shifted, True)
+                changed = float((assigned_plain != assigned_shift).float().mean())
         else:
             PENDING_OFFSET = None
             changed = 0.0

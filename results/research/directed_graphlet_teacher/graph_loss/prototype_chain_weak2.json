@@ -1,0 +1,162 @@
+{
+ "protocol": {
+  "arm": "wired",
+  "steps": 400,
+  "seed": 42,
+  "align": 0.001,
+  "margin": 0.5,
+  "budget": 0.1,
+  "assignment": "the arm's own constrained_assignment with the floor ON; the offset is added inside _distances",
+  "L3": "discrete tokens of this forward, items de-duplicated",
+  "neighbours": "looked up by item id from the chain bank through a global item -> code table"
+ },
+ "before": {
+  "chain_delta_L1L2L3": -0.0007711225042724354,
+  "chain_delta_null": [
+   -0.002839606519111333,
+   0.003220478512775624
+  ],
+  "adjacent_mean": 0.007857113084073193,
+  "far_mean": 0.008628235588345629,
+  "L1_adjacent": 0.0076070192989037555,
+  "L1_far": 0.008253094910591471,
+  "L2_adjacent": 0.00022925263640531865,
+  "L2_far": 0.0003751406777541578,
+  "collision": 0.025338593565705447,
+  "semantic_r2": 0.27997608722826817
+ },
+ "after": {
+  "chain_delta_L1L2L3": 0.020591054978950443,
+  "chain_delta_null": [
+   -0.004910695677545747,
+   0.004926847567837937
+  ],
+  "adjacent_mean": 0.04530865741319662,
+  "far_mean": 0.024717602434246175,
+  "L1_adjacent": 0.042349214288691595,
+  "L1_far": 0.024092367971322578,
+  "L2_adjacent": 0.002938601975740903,
+  "L2_far": 0.0006252344629235964,
+  "collision": 0.11920933826819047,
+  "semantic_r2": 0.27504131772419815
+ },
+ "log": [
+  {
+   "step": 0,
+   "rq_norm": 0.0020537456073143126,
+   "discrete_margin": 0.49609375,
+   "grad_scale": 0.04609916532709864,
+   "l2_loss": 0.4999731183052063,
+   "temperature": [
+    0.007635727524757385,
+    0.002223481424152851
+   ],
+   "seen_items": 665,
+   "offset_changes_choice": 0.0
+  },
+  {
+   "step": 50,
+   "rq_norm": 0.0006274048726360509,
+   "discrete_margin": 0.4765625,
+   "grad_scale": 0.005792000616656387,
+   "l2_loss": 0.4998730421066284,
+   "temperature": [
+    0.00472621712833643,
+    0.0022441393230110407
+   ],
+   "seen_items": 7889,
+   "offset_changes_choice": 0.2408854216337204
+  },
+  {
+   "step": 100,
+   "rq_norm": 0.0004262924053699976,
+   "discrete_margin": 0.50390625,
+   "grad_scale": 0.004810715217782756,
+   "l2_loss": 0.5000565052032471,
+   "temperature": [
+    0.0056266020983457565,
+    0.0028904173523187637
+   ],
+   "seen_items": 10059,
+   "offset_changes_choice": 0.21484375
+  },
+  {
+   "step": 150,
+   "rq_norm": 0.00042978898129332683,
+   "discrete_margin": 0.48828125,
+   "grad_scale": 0.001415287739772058,
+   "l2_loss": 0.4996868371963501,
+   "temperature": [
+    0.0038880754727870226,
+    0.0026471044402569532
+   ],
+   "seen_items": 11290,
+   "offset_changes_choice": 0.24609375
+  },
+  {
+   "step": 200,
+   "rq_norm": 0.00031822862943971117,
+   "discrete_margin": 0.46484375,
+   "grad_scale": 0.0012716757717016853,
+   "l2_loss": 0.4994969367980957,
+   "temperature": [
+    0.0029501800891011953,
+    0.002687842585146427
+   ],
+   "seen_items": 11974,
+   "offset_changes_choice": 0.24609375
+  },
+  {
+   "step": 250,
+   "rq_norm": 0.0004466099970426131,
+   "discrete_margin": 0.474609375,
+   "grad_scale": 2.0677372020203907e-05,
+   "l2_loss": 0.49982041120529175,
+   "temperature": [
+    0.0041738590225577354,
+    0.0028799506835639477
+   ],
+   "seen_items": 12399,
+   "offset_changes_choice": 0.25390625
+  },
+  {
+   "step": 300,
+   "rq_norm": 0.0003371484153116591,
+   "discrete_margin": 0.49609375,
+   "grad_scale": 0.002429919918145844,
+   "l2_loss": 0.49968910217285156,
+   "temperature": [
+    0.004794209264218807,
+    0.003033451968804002
+   ],
+   "seen_items": 12717,
+   "offset_changes_choice": 0.23046875
+  },
+  {
+   "step": 350,
+   "rq_norm": 0.0003354458071573076,
+   "discrete_margin": 0.509765625,
+   "grad_scale": 0.0010537679196519873,
+   "l2_loss": 0.4996746778488159,
+   "temperature": [
+    0.004163219127804041,
+    0.0030787959694862366
+   ],
+   "seen_items": 12919,
+   "offset_changes_choice": 0.234375
+  },
+  {
+   "step": 399,
+   "rq_norm": 0.0003331969729645603,
+   "discrete_margin": 0.458984375,
+   "grad_scale": 0.0004952123957533583,
+   "l2_loss": 0.49967607855796814,
+   "temperature": [
+    0.0005747741088271141,
+    0.0028621437959372997
+   ],
+   "seen_items": 13060,
+   "offset_changes_choice": 0.2278645932674408
+  }
+ ]
+}
