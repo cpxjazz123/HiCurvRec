@@ -162,11 +162,20 @@ def within_anchor_contrast(name: str, representations: dict,
         return forward, reverse
 
     forward, reverse = score(representations[name])
-    return {"forward": int(len(pick)),
+    swing = forward - reverse
+    boot = np.empty(200, dtype=np.float64)
+    rng = np.random.default_rng(SEED)
+    for i in range(boot.size):
+        pick_rows = rng.integers(0, swing.size, swing.size)
+        boot[i] = swing[pick_rows].mean()
+    return {"pairs": int(len(pick)),
             "forward_win_rate": float((forward > 0).mean()),
             "reverse_win_rate": float((reverse > 0).mean()),
             "mean_forward_margin": float(forward.mean()),
-            "mean_reverse_margin": float(reverse.mean())}
+            "mean_reverse_margin": float(reverse.mean()),
+            "mean_swing": float(swing.mean()),
+            "swing_p05": float(np.quantile(boot, 0.05)),
+            "swing_p95": float(np.quantile(boot, 0.95))}
 
 
 def paired_auc_difference(positive: np.ndarray, negative: np.ndarray,
@@ -463,8 +472,10 @@ def main() -> None:
         entry["margin_points"] = float(entry["paired_auc"] * 100.0)
         entry["mean_cosine_margin_difference"] = float(
             ((pos - neg) - (tri_relation[0] - tri_relation[1])).mean())
-        entry["item_split"] = within_anchor_contrast(name, representations,
+        entry["item_split"] = within_anchor_contrast("relation", representations,
                                                      positives, negatives, anchor)
+        entry["item_split_own_space"] = within_anchor_contrast(
+            name, representations, positives, negatives, anchor)
         paired[name] = entry
     report["paired_delta_vs_relation"] = paired
     report["ridge"] = {"r2_variance_explained": float(variance),

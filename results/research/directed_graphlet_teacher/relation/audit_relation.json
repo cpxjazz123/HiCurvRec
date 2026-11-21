@@ -12,11 +12,11 @@
  "provenance": {
   "226": {
    "checkpoint_sha256": "ce77953c1beb83425bbda41f0f0987865259fca6e8969b63482f85556693d2dc",
-   "cosine_to_stored_relation": 0.9999999999999925
+   "cosine_to_stored_relation": 0.9999999999999926
   },
   "227": {
    "checkpoint_sha256": "d924369ef5ef420b576d307754e01202296bdd308a3072bea49f8902d4419ed4",
-   "cosine_to_stored_relation": 0.07097967547764811
+   "cosine_to_stored_relation": 0.0709796767757365
   },
   "carrier_file": {
    "sha256": "3872ceb9b5ac6cbb7a37c6114f60018c0aa5f84d756b1eb2bea158401271ab3e",
@@ -29,17 +29,17 @@
  },
  "stability": {
   "items": 24094,
-  "cosine_mean": 0.07064256594146665,
-  "cosine_median": 0.06013364096359915,
-  "cosine_p10": -0.02301754857290255,
+  "cosine_mean": 0.07064256603000348,
+  "cosine_median": 0.0601336314890641,
+  "cosine_p10": -0.023017535296336235,
   "top10_jaccard_mean": 0.2704859313373245,
   "top10_overlap_fraction_mean": 0.40700000000000003,
   "top10_overlap_fraction_median": 0.4,
-  "procrustes_cosine_mean": 0.9618652074420948,
-  "procrustes_cosine_median": 0.9671734877730773,
+  "procrustes_cosine_mean": 0.9618652073911654,
+  "procrustes_cosine_median": 0.9671734872363691,
   "per_seed_pair_auc": {
-   "226": 0.7394124388735541,
-   "227": 0.7397390650044133
+   "226": 0.7394124412500194,
+   "227": 0.7397390664302925
   }
  },
  "pair_auc": {
@@ -95,11 +95,24 @@
    "margin_points": -12.984490573510977,
    "mean_cosine_margin_difference": -0.27998559144134777,
    "item_split": {
-    "forward": 38590,
-    "forward_win_rate": 0.638922000518269,
-    "reverse_win_rate": 0.3761077999481731,
-    "mean_forward_margin": 0.03874207000148978,
-    "mean_reverse_margin": -0.03443453828331684
+    "pairs": 42676,
+    "forward_win_rate": 0.7318633423938513,
+    "reverse_win_rate": 0.730879182678789,
+    "mean_forward_margin": 0.3162358456303998,
+    "mean_reverse_margin": 0.3200032748812782,
+    "mean_swing": -0.0037674292508783833,
+    "swing_p05": -0.007803940124315952,
+    "swing_p95": 0.0004815604689301511
+   },
+   "item_split_own_space": {
+    "pairs": 42676,
+    "forward_win_rate": 0.6407582716280814,
+    "reverse_win_rate": 0.6353219608210704,
+    "mean_forward_margin": 0.03982363223831915,
+    "mean_reverse_margin": 0.038608856227087776,
+    "mean_swing": 0.0012147760112313684,
+    "swing_p05": -0.0002759696639307617,
+    "swing_p95": 0.002768533710437547
    }
   },
   "residual_after_ridge": {
@@ -110,11 +123,24 @@
    "margin_points": -17.395736478166903,
    "mean_cosine_margin_difference": -0.2328608383978623,
    "item_split": {
-    "forward": 38590,
-    "forward_win_rate": 0.5637211712878984,
-    "reverse_win_rate": 0.4520601192018658,
-    "mean_forward_margin": 0.0842921286164767,
-    "mean_reverse_margin": -0.06677343264641965
+    "pairs": 42676,
+    "forward_win_rate": 0.7318633423938513,
+    "reverse_win_rate": 0.730879182678789,
+    "mean_forward_margin": 0.3162358456303998,
+    "mean_reverse_margin": 0.3200032748812782,
+    "mean_swing": -0.0037674292508783833,
+    "swing_p05": -0.007803940124315952,
+    "swing_p95": 0.0004815604689301511
+   },
+   "item_split_own_space": {
+    "pairs": 42676,
+    "forward_win_rate": 0.5638063548598744,
+    "reverse_win_rate": 0.5700627987627707,
+    "mean_forward_margin": 0.08596632073570655,
+    "mean_reverse_margin": 0.09408413521007304,
+    "mean_swing": -0.008117814474366507,
+    "swing_p05": -0.012972512137417519,
+    "swing_p95": -0.003101393635086911
    }
   }
  },
@@ -129,7 +155,7 @@
  "learned_readout": {
   "C_residual": {
    "checkpoint": "C_residual_edge_main_seed226.pth",
-   "pair_head_auc": 0.7469328174393663,
+   "pair_head_auc": 0.7469328183899524,
    "triplets": 45869
   },
   "A_embedding": {
@@ -214,7 +240,7 @@
   }
  },
  "readings": {
-  "relation_beats_semantics": true,
+  "relation_auc_above_semantics_interval": true,
   "residual_above_chance": true,
   "relation_beats_semantics_paired": false,
   "relation_beats_residual_paired": false,
@@ -224,5 +250,24 @@
    "TIGER_RQ-VAE__canonical": 0.469,
    "TIGER_mixed_rq_F0": 0.607
   }
+ },
+ "withdrawn": {
+  "values": [
+   "pair_auc.relation",
+   "pair_auc.semantics_768",
+   "pair_auc.residual_after_ridge",
+   "stability.per_seed_pair_auc",
+   "graph_precision.points",
+   "stability.top10_jaccard_mean as a share",
+   "ridge.r2_* as a capacity argument"
+  ],
+  "reason": "v1 scored the negative side as positive_scores[negative_item_id], which reads an unrelated positive pair instead of cos(h[anchor], h[negative]); the per-item R^2 divide-by-zero was removed in the same pass, and the kNN baseline was quoted as a probability while it is the chance that one of ten near neighbours is a structural neighbour",
+  "still_standing": [
+   "provenance",
+   "stability.procrustes_*",
+   "stability.top10_overlap_fraction_*",
+   "learned_readout",
+   "sid_retention"
+  ]
  }
 }

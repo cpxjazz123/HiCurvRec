@@ -220,13 +220,16 @@ def test_within_anchor_contrast_separates_direction():
     anchors = np.zeros(5, dtype=np.int64)
     negatives = np.array([5, 5, 5, 5, 5])
     got = ar.within_anchor_contrast("x", {"x": states}, positives, negatives, anchors)
-    assert got["forward"] >= 1
+    assert got["pairs"] >= 1
     # forward: cos(0,5)=0 beats cos(0,b)=0.6 -> loses, so the win rate is not 1
     assert got["forward_win_rate"] < 1.0
     # the reverse direction is the control: it uses item 5's own held-out partner, and
     # for a candidate that is orthogonal to the anchor the control loses
     assert got["reverse_win_rate"] == 0.0
     assert got["mean_forward_margin"] > got["mean_reverse_margin"]
+    assert got["mean_swing"] == pytest.approx(got["mean_forward_margin"]
+                                              - got["mean_reverse_margin"])
+    assert got["swing_p05"] <= got["mean_swing"] <= got["swing_p95"]
 
 
 def test_graph_precision_reports_mean_degree_not_a_fake_chance():
