@@ -1,0 +1,57 @@
+{
+ "inputs": {
+  "full_graph": "ef97a2bdc555259d402065026b00cf62bc1e91c3bc58a66da4d6f8f8df407fdd",
+  "semantics": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+ },
+ "split": {
+  "message_edges": 291262,
+  "held_edges": 32371,
+  "held_one_way": 30709
+ },
+ "rrwp": {
+  "steps": [
+   1,
+   2
+  ],
+  "source": "training edges only",
+  "features": "P[a,b], P[b,a], P2[a,b], P2[b,a], log out-degree of both"
+ },
+ "probe": {
+  "steps": 1500,
+  "batch": 2048,
+  "item_disjoint": true,
+  "note": "one-step features are zero for the held-out edge itself; only two-step can answer"
+ },
+ "arms": {
+  "z": {
+   "direction_accuracy": 0.507072925567627,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  },
+  "z_plus_rrwp": {
+   "direction_accuracy": 0.5230323076248169,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  },
+  "semantics": {
+   "direction_accuracy": 0.49709829688072205,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  },
+  "semantics_plus_rrwp": {
+   "direction_accuracy": 0.5041711926460266,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  },
+  "rrwp_only": {
+   "direction_accuracy": 0.5141457915306091,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  }
+ },
+ "readings": {
+  "se": 0.0067,
+  "z_plus_rrwp_minus_z_sigma": 2.37,
+  "rrwp_only_minus_chance_sigma": 2.1
+ }
+}

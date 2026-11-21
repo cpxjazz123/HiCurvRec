@@ -137,6 +137,9 @@ ANALYSIS = (
     "augment_gnn/REPORT_DUAL_PROPAGATION.md",
     "augment_gnn/direction_arms.py", "augment_gnn/direction_arms.json",
     "augment_gnn/REPORT_DIRECTION_ARMS.md",
+    "augment_gnn/dir_ablation.py", "augment_gnn/dir_ablation.json",
+    "augment_gnn/REPORT_DIR_ABLATION.md",
+    "rrwp/rrwp_direction.py", "rrwp/rrwp_direction.json", "rrwp/REPORT_RRWP.md",
 )
 
 
