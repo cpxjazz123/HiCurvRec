@@ -129,3 +129,12 @@ L2 规则只有在"两两已共享 L1"时才有决策空间。按结构、按臂
 因此分叉规则应改成**只罚远端**:对共享 L1(ε-ball)的父子对,惩罚其继续共享 L2
 (`max(0, m - S₂(parent-child))` 限定在 L1 共享子集),而不是在几乎不存在的兄弟对上做"拉近"。
 这条规则的目标量可测(远的条件 L2 共享率 0.1115 → 低于 0.0654),且不需要触碰分配规则(§19h)。
+
+## 12. 运行身份核对(三结构臂)
+
+`stage2_RQ-VAE/TIGER_graphlet_align_rq/` 是实际训练树;其 `losses/chain_align.py` SHA-256 =
+`fd573ed639e0e9a6c34e6765005eecb2e1a10f5a1a042dcb357e087b38811ef5`,`BUDGET = 0.10`,
+`WEIGHTS = {"chain": 1.0, "fork": 1.0, "merge": 0.5}`,**不含 cycle 规则**。
+`staging/TIGER_graphlet_align_rq/` 在本轮复制之后又加入了环规则(SHA-256 =
+`b4a1bdb657a57df1276d9e936565b5e71fbda2a37bf564a85e70010b4d99d3fd`,`WEIGHTS` 多 `"cycle": 0.5`),
+因此本轮判据(`verdict.json` 的五项)只覆盖链/分叉/汇合,与运行树一致;环规则已实现、未参与本轮训练。
