@@ -19,74 +19,74 @@
    "trace": [
     {
      "step": 0,
-     "loss": 0.8761860529581705
+     "loss": 0.8761262694994608
     },
     {
      "step": 400,
-     "loss": 0.5457608153422674
+     "loss": 0.546709214647611
     },
     {
      "step": 800,
-     "loss": 0.48475530246893567
+     "loss": 0.48787274459997815
     },
     {
      "step": 1199,
-     "loss": 0.44554590185483295
+     "loss": 0.44601668914159137
     }
    ],
    "readouts": {
     "diage_direct_no_head": {
-     "roc_auc": 0.61290866796875,
-     "average_precision": 0.41331641681018033,
-     "direction_accuracy": 0.474625
+     "roc_auc": 0.6106294101562499,
+     "average_precision": 0.41063477518995006,
+     "direction_accuracy": 0.46675
     },
     "with_asymmetric_head": {
-     "roc_auc": 0.6021780195312499,
-     "average_precision": 0.4018744697005502,
-     "direction_accuracy": 0.46425
+     "roc_auc": 0.6029116328124999,
+     "average_precision": 0.4017186735109709,
+     "direction_accuracy": 0.467
     }
    },
-   "semantic_linear_probe_r2": 0.7481196218999386
+   "semantic_linear_probe_r2": 0.7482981475281315
   },
   "C_concat_plus_semantic": {
    "trace": [
     {
      "step": 0,
-     "loss": 0.8769057989120483
+     "loss": 0.8768464922904968
     },
     {
      "step": 400,
-     "loss": 0.5455454736948013
+     "loss": 0.5463889290889105
     },
     {
      "step": 800,
-     "loss": 0.48376285036404926
+     "loss": 0.4869460463523865
     },
     {
      "step": 1199,
-     "loss": 0.44485129912694293
+     "loss": 0.44557127356529236
     }
    ],
    "readouts": {
     "diage_direct_no_head": {
-     "roc_auc": 0.61300241015625,
-     "average_precision": 0.41344241960208344,
-     "direction_accuracy": 0.47425
+     "roc_auc": 0.6107309414062501,
+     "average_precision": 0.41080543866111996,
+     "direction_accuracy": 0.466
     },
     "with_asymmetric_head": {
-     "roc_auc": 0.60258846875,
-     "average_precision": 0.40229906929482884,
-     "direction_accuracy": 0.4645
+     "roc_auc": 0.6028943984375,
+     "average_precision": 0.40182996545673777,
+     "direction_accuracy": 0.467875
     }
    },
-   "semantic_linear_probe_r2": 0.7528536137169382
+   "semantic_linear_probe_r2": 0.7530906884521966
   },
   "A_raw_semantics": {
    "readouts": {
     "with_asymmetric_head": {
-     "roc_auc": 0.6146935546875001,
-     "average_precision": 0.41531324921126983,
-     "direction_accuracy": 0.535375
+     "roc_auc": 0.6147100898437499,
+     "average_precision": 0.41494272377981284,
+     "direction_accuracy": 0.53575
     }
    },
    "semantic_linear_probe_r2": 0.9999525086422657

@@ -1,0 +1,27 @@
+{
+ "sampling": {
+  "local_samples": 1176518,
+  "global_samples": 231742
+ },
+ "protocol": {
+  "encoder": "dual DiGAE (from direction_arms), unweighted mean",
+  "steps": 1200,
+  "batch": 4096,
+  "seed": 0,
+  "local": "positives, reverses and non-edges from one 3-node instance; held-out pairs excluded",
+  "global": "random negatives over the catalogue, degree-matched",
+  "eval": "8,000 held-out one-way edges, direct s.t and probe"
+ },
+ "arms": {
+  "A_global": {
+   "direct_direction": 0.4045,
+   "probe_direction": 0.6579731702804565,
+   "probe_pairs_eval": 1342
+  },
+  "B_local_subgraph": {
+   "direct_direction": 0.494,
+   "probe_direction": 0.5938897132873535,
+   "probe_pairs_eval": 1342
+  }
+ }
+}

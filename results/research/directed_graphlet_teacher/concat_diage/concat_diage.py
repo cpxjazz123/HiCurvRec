@@ -159,7 +159,9 @@ def main() -> None:
     neg = []
     while len(neg) < len(rev):
         a, b = int(rng.integers(0, n_items)), int(rng.integers(0, n_items))
-        if a == b or (min(a, b), max(a, b)) in train_unit:
+        # a training negative must not be a training edge, and must not be a held-out edge
+        # either: otherwise the sampler can present a test edge as an easy negative
+        if a == b or (min(a, b), max(a, b)) in train_unit or (min(a, b), max(a, b)) in held_unit:
             continue
         neg.append((a, b))
     neg = np.array(neg, dtype=np.int64)
@@ -169,8 +171,8 @@ def main() -> None:
 
     held_pairs = np.stack([held_rows, held_cols], axis=1)
     held_directed = set(map(tuple, held_pairs.tolist()))
-    # held-out edges are excluded from training negatives by construction: `neg` is drawn
-    # only from pairs absent in the message graph, and `held_unit` is disjoint from it
+    # held-out edges are excluded from both training positives and training negatives; the
+    # evaluation negatives additionally exclude train_unit and held_unit
     eval_pos = held_pairs[np.array([(b, a) not in held_directed
                                     for a, b in held_pairs.tolist()])][:8000]
     eval_rev = np.ascontiguousarray(eval_pos[:, ::-1])

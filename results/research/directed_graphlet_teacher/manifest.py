@@ -150,6 +150,8 @@ ANALYSIS = (
     "diage/item_time_direction.py", "diage/item_time_direction.json",
     "concat_diage/concat_diage.py", "concat_diage/concat_diage.json",
     "concat_diage/REPORT_CONCAT_DIAGE.md",
+    "local_pairs/local_pairs.py", "local_pairs/local_pairs.json",
+    "local_pairs/REPORT_LOCAL_PAIRS.md",
 )
 
 
