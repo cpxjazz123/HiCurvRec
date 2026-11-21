@@ -110,6 +110,8 @@ ANALYSIS = (
     "quantisation/REPORT_QUANTISATION.md",
     "fidelity/fidelity_study.py", "fidelity/fidelity.json",
     "fidelity/fidelity_states.json", "fidelity/REPORT_FIDELITY.md",
+    "structure/structure_transformer.py", "structure/structure_transformer.json",
+    "structure/REPORT_STRUCTURE_TRANSFORMER.md",
 )
 
 
