@@ -1,0 +1,46 @@
+{
+ "protocol": {
+  "arm": "control",
+  "steps": 400,
+  "seed": 42,
+  "split": "pair-disjoint",
+  "batch": "chains without replacement, items de-duplicated per step",
+  "loss": "max(0, m + S2(A,C) - (S2(A,B)+S2(B,C))/2) with S2 = <p2,p2> only (no L1 product); the L1 gate is reported but not applied, because only 1/13,076 train chains has all three items in one L1 cell",
+  "margin": 0.5,
+  "budget": 0.1,
+  "chains": {
+   "train": 13076,
+   "eval": 3809
+  },
+  "eligible_chains_mean": 0.0
+ },
+ "curve": {
+  "0": {
+   "chain_delta": 0.00039380414807036,
+   "chain_delta_null": [
+    -0.00420714098188501,
+    0.006376345497505904
+   ],
+   "L1_adjacent": 0.007482278813336834,
+   "L1_far": 0.007088474665266474,
+   "L2_adjacent": 0.0,
+   "L2_far": 0.0,
+   "collision": 0.025338593565705447,
+   "semantic_r2": 0.27997608722826817
+  },
+  "400": {
+   "chain_delta": 0.00039380414807035913,
+   "chain_delta_null": [
+    -0.005975977946967708,
+    0.004075872932528221
+   ],
+   "L1_adjacent": 0.009713835652402206,
+   "L1_far": 0.009188763454975058,
+   "L2_adjacent": 0.00013126804935678657,
+   "L2_far": 0.00026253609871357313,
+   "collision": 0.08293000366047099,
+   "semantic_r2": 0.2732533857080027,
+   "unique_items": 635
+  }
+ }
+}
