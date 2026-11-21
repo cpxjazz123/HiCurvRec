@@ -140,9 +140,10 @@ def neighbour_offset(code_table, flat, partners, codes: int = 256):
 def main() -> None:
     global PENDING_OFFSET
     parser = argparse.ArgumentParser()
-    parser.add_argument("--arm", required=True, choices=("control", "wired"))
+    parser.add_argument("--arm", required=True, choices=("control", "wired", "l2only"))
     parser.add_argument("--out", required=True)
     parser.add_argument("--steps", type=int, default=STEPS)
+    parser.add_argument("--budget", type=float, default=BUDGET)
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.manual_seed(SEED)
@@ -187,7 +188,7 @@ def main() -> None:
                            "split": "pair-disjoint by hash of the unordered item pair",
                            "batch": "256 chains sampled without replacement, replayed "
                                     "identically for both arms",
-                           "align": ALIGN, "budget": BUDGET, "margin": MARGIN,
+                           "align": ALIGN, "budget": args.budget, "margin": MARGIN,
                            "codebook": "frozen"}, "curve": {}}
     report["curve"]["0"] = snapshot("step 0")
     optimizer = torch.optim.AdamW(model.encoder.parameters(), lr=LR, weight_decay=1e-4)
@@ -221,7 +222,7 @@ def main() -> None:
         loss_rq.backward(retain_graph=True)
         rq_norm = float(sum(float(p.grad.pow(2).sum()) for p in encoder_parameters
                             if p.grad is not None) ** 0.5)
-        if args.arm == "wired":
+        if args.arm != "control":
             z = model.encoder(items[flat_tensor])
             temperature = measure_temperature(layers[0], z)
             p1 = level_softmax(layers[0], z, temperature)
@@ -236,7 +237,7 @@ def main() -> None:
                                             allow_unused=True)
             norm = float(sum(float(g.pow(2).sum()) for g in gradients
                              if g is not None) ** 0.5)
-            scale = min(1.0, BUDGET * rq_norm / max(norm, 1e-12))
+            scale = min(1.0, args.budget * rq_norm / max(norm, 1e-12))
             for parameter, grad in zip(encoder_parameters, gradients):
                 if grad is None:
                     continue

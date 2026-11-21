@@ -1,0 +1,53 @@
+{
+ "protocol": {
+  "arm": "l2only",
+  "steps": 400,
+  "seed": 42,
+  "chains": {
+   "total": 60000,
+   "train": 13076,
+   "eval": 3809
+  },
+  "split": "pair-disjoint by hash of the unordered item pair",
+  "batch": "256 chains sampled without replacement, replayed identically for both arms",
+  "align": 0.001,
+  "budget": 0.1,
+  "margin": 0.5,
+  "codebook": "frozen"
+ },
+ "curve": {
+  "0": {
+   "chain_delta": 0.00039380414807036,
+   "chain_delta_null": [
+    -0.00420714098188501,
+    0.006376345497505904
+   ],
+   "L1_adjacent": 0.007482278813336834,
+   "L1_far": 0.007088474665266474,
+   "L2_adjacent": 0.0,
+   "L2_far": 0.0,
+   "collision": 0.025338593565705447,
+   "semantic_r2": 0.27997608722826817
+  },
+  "400": {
+   "chain_delta": 0.0035442373326332374,
+   "chain_delta_null": [
+    -0.005713441848254135,
+    0.006789839852979774
+   ],
+   "L1_adjacent": 0.01260173273825151,
+   "L1_far": 0.009713835652402206,
+   "L2_adjacent": 0.0009188763454975059,
+   "L2_far": 0.00026253609871357313,
+   "collision": 0.07117582462276817,
+   "semantic_r2": 0.2748660089334466,
+   "l2_loss": 0.4999142289161682,
+   "grad_scale": 0.00593320995027007,
+   "changed": 0.0,
+   "temperature": [
+    0.005682498216629028,
+    0.0022656889632344246
+   ]
+  }
+ }
+}
