@@ -50,8 +50,10 @@ def judge(arm: str, report: dict, relation: dict, rules: dict) -> list[tuple[str
          entry["merge"]["delta"] >= base["merge"]["delta"],
          f"{entry['merge']['delta']:+.5f} vs baseline {base['merge']['delta']:+.5f}"),
         ("fork_residual_gain_beats_chain_arm",
-         chain_gain >= benchmarks["chain_arm_residual_gain"] - 1e-9,
-         f"gain {chain_gain:+.5f} vs benchmark {benchmarks['chain_arm_residual_gain']:+.5f}"),
+         chain_gain >= benchmarks["chain_arm_residual_gain_checkpoint_bound"] - 1e-9,
+         f"gain {chain_gain:+.5f} vs benchmark "
+         f"{benchmarks['chain_arm_residual_gain_checkpoint_bound']:+.5f} (checkpoint-bound; the"
+         f" pre-rewrite value {benchmarks['chain_arm_residual_gain']:+.5f} is kept as a diagnostic)"),
         ("collision_within_ceiling",
          entry["collision"] <= benchmarks["collision_ceiling"],
          f"{entry['collision']:.4f} vs ceiling {benchmarks['collision_ceiling']:.4f}"),

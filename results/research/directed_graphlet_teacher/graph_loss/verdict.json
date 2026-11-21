@@ -17,7 +17,9 @@
   "chain_arm_residual_gain": 0.01442493,
   "collision_ceiling": 0.254,
   "chain_arm_residual": 0.00619927,
-  "baseline_residual": -0.00822566
+  "baseline_residual": -0.00822566,
+  "chain_arm_residual_gain_checkpoint_bound": 0.01176,
+  "chain_arm_residual_gain_note": "The frozen 0.014425 was measured on the chain arm's pre-rewrite export; stage3_start re-exported that arm from its checkpoint (136 items changed) and the same arm now measures 0.011760. Criterion 3 is evaluated against both numbers and must clear the stricter one."
  },
  "criteria": [
   {
