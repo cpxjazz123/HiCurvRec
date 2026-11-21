@@ -188,6 +188,8 @@ ANALYSIS = (
     "graph_loss/verdict.py",
     "graph_loss/verdict.json",
     "graph_loss/fork_decision.py",
+    "graph_loss/arm_levels.py",
+    "graph_loss/arm_levels.json",
     "graph_loss/fork_decision_volume.json",
     "graph_loss/test_arm_output_paths.py",
     "graph_loss/REPORT_CHAIN_ARM_RESULT.md",
