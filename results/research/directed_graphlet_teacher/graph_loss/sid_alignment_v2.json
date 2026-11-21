@@ -1,0 +1,863 @@
+{
+ "protocol": {
+  "graph": "results/research/behavior_graph_directed (Issue #221, TRAIN ordered pairs)",
+  "directed": true,
+  "inducement": "every required edge must exist and every other ordered pair inside the instance must be absent (chain4 checks nine forbidden pairs)",
+  "S": "number of leading codes two items agree on (0..3)",
+  "instances": {
+   "chain3": 60000,
+   "chain4": 60000,
+   "fork3": 60000,
+   "merge3": 60000
+  },
+  "hypotheses": {
+   "chain3": "S(A,B), S(B,C) > S(A,C)",
+   "chain4": "S(adjacent) > S(2-hop) > S(3-hop)",
+   "fork3": "S(B,C) > S(A,B), S(A,C)",
+   "merge3": "S(B,C) > S(B,A), S(C,A)"
+  },
+  "null": "item-to-SID permutation, 200 rounds"
+ },
+ "arms": {
+  "baseline": {
+   "sid": "results/stage2_RQ-VAE/TIGER_drq_D1/item_sids.json",
+   "chain3": {
+    "hypothesis": "S(A,B), S(B,C) > S(A,C)",
+    "delta": -0.0012250000000000004,
+    "ordered_share": 0.007058333333333333,
+    "first_mean": 0.007358333333333333,
+    "second_mean": 0.008583333333333333,
+    "pairs": {
+     "A-B": 0.0055,
+     "B-C": 0.009216666666666666,
+     "A-C": 0.008583333333333333
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.002333541666666667,
+     "high": 0.003693333333333333,
+     "mean": 0.00022000000000000003
+    },
+    "beats_null": false
+   },
+   "chain4": {
+    "hypothesis": "S(adjacent) > S(2-hop) > S(3-hop)",
+    "delta": 0.0033916666666666652,
+    "delta_far": -0.0010750000000000004,
+    "ordered_share": 0.023883333333333333,
+    "first_mean": 0.011149999999999998,
+    "second_mean": 0.007758333333333333,
+    "far_mean": 0.008833333333333334,
+    "pairs": {
+     "A-B": 0.014133333333333333,
+     "B-C": 0.009833333333333333,
+     "C-D": 0.009483333333333333,
+     "A-C": 0.00715,
+     "B-D": 0.008366666666666666,
+     "A-D": 0.008833333333333334
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0057647916666666655,
+     "high": 0.009507569444444443,
+     "mean": -0.0004935000000000013
+    },
+    "beats_null": false
+   },
+   "fork3": {
+    "hypothesis": "S(B,C) > S(A,B), S(A,C)",
+    "delta": -0.0014166666666666668,
+    "ordered_share": 0.0084,
+    "first_mean": 0.008733333333333333,
+    "second_mean": 0.01015,
+    "pairs": {
+     "sibling": 0.008733333333333333,
+     "parent": 0.010133333333333333,
+     "parent2": 0.010166666666666666
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.002669791666666668,
+     "high": 0.0022266666666666676,
+     "mean": -0.0001472499999999999
+    },
+    "beats_null": false
+   },
+   "merge3": {
+    "hypothesis": "S(B,C) > S(B,A), S(C,A)",
+    "delta": -0.0026999999999999993,
+    "ordered_share": 0.0061,
+    "first_mean": 0.006266666666666667,
+    "second_mean": 0.008966666666666666,
+    "pairs": {
+     "sibling": 0.006266666666666667,
+     "parent": 0.0087,
+     "parent2": 0.009233333333333333
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0023195833333333332,
+     "high": 0.0025839583333333335,
+     "mean": -8.575000000000009e-05
+    },
+    "beats_null": false
+   }
+  },
+  "A_none": {
+   "sid": "results/research/directed_graphlet_teacher/graph_loss/sids/A_none.json",
+   "chain3": {
+    "hypothesis": "S(A,B), S(B,C) > S(A,C)",
+    "delta": 0.0017833333333333347,
+    "ordered_share": 0.009491666666666667,
+    "first_mean": 0.010466666666666668,
+    "second_mean": 0.008683333333333333,
+    "pairs": {
+     "A-B": 0.010216666666666667,
+     "B-C": 0.010716666666666666,
+     "A-C": 0.008683333333333333
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.002325,
+     "high": 0.0032081250000000018,
+     "mean": 6.400000000000002e-05
+    },
+    "beats_null": false
+   },
+   "chain4": {
+    "hypothesis": "S(adjacent) > S(2-hop) > S(3-hop)",
+    "delta": 0.013255555555555555,
+    "delta_far": -0.0014666666666666673,
+    "ordered_share": 0.035508333333333336,
+    "first_mean": 0.01997222222222222,
+    "second_mean": 0.006716666666666667,
+    "far_mean": 0.008183333333333334,
+    "pairs": {
+     "A-B": 0.0354,
+     "B-C": 0.01405,
+     "C-D": 0.010466666666666668,
+     "A-C": 0.005366666666666666,
+     "B-D": 0.008066666666666666,
+     "A-D": 0.008183333333333334
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.005536250000000001,
+     "high": 0.008360972222222224,
+     "mean": -4.7250000000000796e-05
+    },
+    "beats_null": true
+   },
+   "fork3": {
+    "hypothesis": "S(B,C) > S(A,B), S(A,C)",
+    "delta": -0.004366666666666666,
+    "ordered_share": 0.00785,
+    "first_mean": 0.0086,
+    "second_mean": 0.012966666666666666,
+    "pairs": {
+     "sibling": 0.0086,
+     "parent": 0.013233333333333333,
+     "parent2": 0.0127
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0025289583333333327,
+     "high": 0.002617083333333334,
+     "mean": 6.395833333333328e-05
+    },
+    "beats_null": false
+   },
+   "merge3": {
+    "hypothesis": "S(B,C) > S(B,A), S(C,A)",
+    "delta": -0.00042500000000000003,
+    "ordered_share": 0.009066666666666667,
+    "first_mean": 0.010616666666666667,
+    "second_mean": 0.011041666666666667,
+    "pairs": {
+     "sibling": 0.010616666666666667,
+     "parent": 0.008783333333333334,
+     "parent2": 0.0133
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.002235416666666667,
+     "high": 0.0025447916666666683,
+     "mean": -7.812499999999999e-05
+    },
+    "beats_null": false
+   }
+  },
+  "B_undirected": {
+   "sid": "results/research/directed_graphlet_teacher/graph_loss/sids/B_undirected.json",
+   "chain3": {
+    "hypothesis": "S(A,B), S(B,C) > S(A,C)",
+    "delta": 0.001966666666666667,
+    "ordered_share": 0.0118,
+    "first_mean": 0.012216666666666667,
+    "second_mean": 0.01025,
+    "pairs": {
+     "A-B": 0.010133333333333333,
+     "B-C": 0.0143,
+     "A-C": 0.01025
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0020706249999999995,
+     "high": 0.002673750000000001,
+     "mean": 6.291666666666719e-06
+    },
+    "beats_null": false
+   },
+   "chain4": {
+    "hypothesis": "S(adjacent) > S(2-hop) > S(3-hop)",
+    "delta": 0.005238888888888883,
+    "delta_far": 0.0032833333333333343,
+    "ordered_share": 0.03994166666666667,
+    "first_mean": 0.018872222222222217,
+    "second_mean": 0.013633333333333334,
+    "far_mean": 0.01035,
+    "pairs": {
+     "A-B": 0.023466666666666667,
+     "B-C": 0.018216666666666666,
+     "C-D": 0.014933333333333333,
+     "A-C": 0.015066666666666667,
+     "B-D": 0.0122,
+     "A-D": 0.01035
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.004268333333333334,
+     "high": 0.008974930555555554,
+     "mean": 4.8416666666665915e-05
+    },
+    "beats_null": false
+   },
+   "fork3": {
+    "hypothesis": "S(B,C) > S(A,B), S(A,C)",
+    "delta": -0.003774999999999999,
+    "ordered_share": 0.009266666666666666,
+    "first_mean": 0.01025,
+    "second_mean": 0.014025,
+    "pairs": {
+     "sibling": 0.01025,
+     "parent": 0.0154,
+     "parent2": 0.01265
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0025595833333333334,
+     "high": 0.002325208333333333,
+     "mean": 1.1500000000000017e-05
+    },
+    "beats_null": false
+   },
+   "merge3": {
+    "hypothesis": "S(B,C) > S(B,A), S(C,A)",
+    "delta": 0.001691666666666666,
+    "ordered_share": 0.011633333333333334,
+    "first_mean": 0.01265,
+    "second_mean": 0.010958333333333334,
+    "pairs": {
+     "sibling": 0.01265,
+     "parent": 0.009683333333333334,
+     "parent2": 0.012233333333333334
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0018854166666666674,
+     "high": 0.0024668750000000008,
+     "mean": 6.700000000000003e-05
+    },
+    "beats_null": false
+   }
+  },
+  "C_random": {
+   "sid": "results/research/directed_graphlet_teacher/graph_loss/sids/C_random.json",
+   "chain3": {
+    "hypothesis": "S(A,B), S(B,C) > S(A,C)",
+    "delta": 0.0030083333333333333,
+    "ordered_share": 0.013833333333333333,
+    "first_mean": 0.014825,
+    "second_mean": 0.011816666666666666,
+    "pairs": {
+     "A-B": 0.01575,
+     "B-C": 0.0139,
+     "A-C": 0.011816666666666666
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0034006249999999983,
+     "high": 0.00427479166666667,
+     "mean": 3.737500000000005e-05
+    },
+    "beats_null": false
+   },
+   "chain4": {
+    "hypothesis": "S(adjacent) > S(2-hop) > S(3-hop)",
+    "delta": 0.006194444444444443,
+    "delta_far": -0.003383333333333332,
+    "ordered_share": 0.025233333333333333,
+    "first_mean": 0.014694444444444444,
+    "second_mean": 0.0085,
+    "far_mean": 0.011883333333333333,
+    "pairs": {
+     "A-B": 0.016,
+     "B-C": 0.013933333333333334,
+     "C-D": 0.01415,
+     "A-C": 0.0064,
+     "B-D": 0.0106,
+     "A-D": 0.011883333333333333
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.00839902777777778,
+     "high": 0.011265624999999987,
+     "mean": -0.00017959722222222387
+    },
+    "beats_null": false
+   },
+   "fork3": {
+    "hypothesis": "S(B,C) > S(A,B), S(A,C)",
+    "delta": -0.004725000000000002,
+    "ordered_share": 0.011716666666666667,
+    "first_mean": 0.013316666666666666,
+    "second_mean": 0.018041666666666668,
+    "pairs": {
+     "sibling": 0.013316666666666666,
+     "parent": 0.01845,
+     "parent2": 0.017633333333333334
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.004094583333333332,
+     "high": 0.0035131250000000032,
+     "mean": 6.195833333333337e-05
+    },
+    "beats_null": false
+   },
+   "merge3": {
+    "hypothesis": "S(B,C) > S(B,A), S(C,A)",
+    "delta": 0.006416666666666668,
+    "ordered_share": 0.0198,
+    "first_mean": 0.021983333333333334,
+    "second_mean": 0.015566666666666666,
+    "pairs": {
+     "sibling": 0.021983333333333334,
+     "parent": 0.0132,
+     "parent2": 0.017933333333333332
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.002717708333333334,
+     "high": 0.0032260416666666657,
+     "mean": -8.78333333333333e-05
+    },
+    "beats_null": true
+   }
+  },
+  "D_directed": {
+   "sid": "results/research/directed_graphlet_teacher/graph_loss/sids/D_directed.json",
+   "chain3": {
+    "hypothesis": "S(A,B), S(B,C) > S(A,C)",
+    "delta": 0.0032916666666666667,
+    "ordered_share": 0.012166666666666666,
+    "first_mean": 0.012808333333333333,
+    "second_mean": 0.009516666666666666,
+    "pairs": {
+     "A-B": 0.012633333333333333,
+     "B-C": 0.012983333333333333,
+     "A-C": 0.009516666666666666
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0033179166666666656,
+     "high": 0.004537500000000002,
+     "mean": 0.00013716666666666668
+    },
+    "beats_null": false
+   },
+   "chain4": {
+    "hypothesis": "S(adjacent) > S(2-hop) > S(3-hop)",
+    "delta": 0.006166666666666666,
+    "delta_far": -0.000700000000000001,
+    "ordered_share": 0.034058333333333336,
+    "first_mean": 0.01718333333333333,
+    "second_mean": 0.011016666666666666,
+    "far_mean": 0.011716666666666667,
+    "pairs": {
+     "A-B": 0.02585,
+     "B-C": 0.0141,
+     "C-D": 0.0116,
+     "A-C": 0.011,
+     "B-D": 0.011033333333333332,
+     "A-D": 0.011716666666666667
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.007741319444444443,
+     "high": 0.01458770833333333,
+     "mean": 0.00032888888888888676
+    },
+    "beats_null": false
+   },
+   "fork3": {
+    "hypothesis": "S(B,C) > S(A,B), S(A,C)",
+    "delta": -0.0051583333333333325,
+    "ordered_share": 0.0107,
+    "first_mean": 0.011633333333333334,
+    "second_mean": 0.016791666666666667,
+    "pairs": {
+     "sibling": 0.011633333333333334,
+     "parent": 0.01665,
+     "parent2": 0.016933333333333335
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0038595833333333342,
+     "high": 0.003152499999999999,
+     "mean": -0.0002764166666666667
+    },
+    "beats_null": false
+   },
+   "merge3": {
+    "hypothesis": "S(B,C) > S(B,A), S(C,A)",
+    "delta": 0.005091666666666666,
+    "ordered_share": 0.01675,
+    "first_mean": 0.018933333333333333,
+    "second_mean": 0.013841666666666667,
+    "pairs": {
+     "sibling": 0.018933333333333333,
+     "parent": 0.011216666666666666,
+     "parent2": 0.016466666666666668
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.003036458333333334,
+     "high": 0.003241875000000002,
+     "mean": 0.00016391666666666665
+    },
+    "beats_null": true
+   }
+  },
+  "role_E": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_E/item_sids.json",
+   "chain3": {
+    "hypothesis": "S(A,B), S(B,C) > S(A,C)",
+    "delta": 0.03721666666666666,
+    "ordered_share": 0.04885833333333333,
+    "first_mean": 0.05853333333333333,
+    "second_mean": 0.021316666666666668,
+    "pairs": {
+     "A-B": 0.06273333333333334,
+     "B-C": 0.05433333333333333,
+     "A-C": 0.021316666666666668
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0019950000000000007,
+     "high": 0.0026527083333333337,
+     "mean": 5.0249999999999954e-05
+    },
+    "beats_null": true
+   },
+   "chain4": {
+    "hypothesis": "S(adjacent) > S(2-hop) > S(3-hop)",
+    "delta": 0.03319166666666667,
+    "delta_far": 0.004925000000000002,
+    "ordered_share": 0.08413333333333334,
+    "first_mean": 0.051133333333333336,
+    "second_mean": 0.017941666666666668,
+    "far_mean": 0.013016666666666666,
+    "pairs": {
+     "A-B": 0.05096666666666667,
+     "B-C": 0.05015,
+     "C-D": 0.052283333333333334,
+     "A-C": 0.01675,
+     "B-D": 0.019133333333333332,
+     "A-D": 0.013016666666666666
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.004560833333333333,
+     "high": 0.01062534722222222,
+     "mean": 0.0004524999999999991
+    },
+    "beats_null": true
+   },
+   "fork3": {
+    "hypothesis": "S(B,C) > S(A,B), S(A,C)",
+    "delta": -0.042975,
+    "ordered_share": 0.017133333333333334,
+    "first_mean": 0.0243,
+    "second_mean": 0.067275,
+    "pairs": {
+     "sibling": 0.0243,
+     "parent": 0.06955,
+     "parent2": 0.065
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.002456458333333334,
+     "high": 0.0023964583333333346,
+     "mean": 0.00013020833333333336
+    },
+    "beats_null": false
+   },
+   "merge3": {
+    "hypothesis": "S(B,C) > S(B,A), S(C,A)",
+    "delta": 0.02579166666666667,
+    "ordered_share": 0.058133333333333335,
+    "first_mean": 0.07356666666666667,
+    "second_mean": 0.047775,
+    "pairs": {
+     "sibling": 0.07356666666666667,
+     "parent": 0.02493333333333333,
+     "parent2": 0.07061666666666666
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0022625,
+     "high": 0.0023416666666666664,
+     "mean": 3.0916666666666695e-05
+    },
+    "beats_null": true
+   }
+  },
+  "role_T": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_T/item_sids.json",
+   "chain3": {
+    "hypothesis": "S(A,B), S(B,C) > S(A,C)",
+    "delta": 0.006966666666666668,
+    "ordered_share": 0.014708333333333334,
+    "first_mean": 0.0159,
+    "second_mean": 0.008933333333333333,
+    "pairs": {
+     "A-B": 0.018266666666666667,
+     "B-C": 0.013533333333333333,
+     "A-C": 0.008933333333333333
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0018774999999999998,
+     "high": 0.0024445833333333338,
+     "mean": 6.291666666666676e-06
+    },
+    "beats_null": true
+   },
+   "chain4": {
+    "hypothesis": "S(adjacent) > S(2-hop) > S(3-hop)",
+    "delta": -0.0009277777777777774,
+    "delta_far": 0.0035333333333333336,
+    "ordered_share": 0.025141666666666666,
+    "first_mean": 0.010155555555555557,
+    "second_mean": 0.011083333333333334,
+    "far_mean": 0.00755,
+    "pairs": {
+     "A-B": 0.0,
+     "B-C": 0.0169,
+     "C-D": 0.013566666666666666,
+     "A-C": 0.008833333333333334,
+     "B-D": 0.013333333333333334,
+     "A-D": 0.00755
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.003739166666666667,
+     "high": 0.008847291666666666,
+     "mean": 0.00024179166666666606
+    },
+    "beats_null": false
+   },
+   "fork3": {
+    "hypothesis": "S(B,C) > S(A,B), S(A,C)",
+    "delta": 0.0033166666666666665,
+    "ordered_share": 0.0073,
+    "first_mean": 0.007516666666666666,
+    "second_mean": 0.0042,
+    "pairs": {
+     "sibling": 0.007516666666666666,
+     "parent": 0.0035833333333333333,
+     "parent2": 0.004816666666666667
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0018260416666666668,
+     "high": 0.0016183333333333334,
+     "mean": -6.699999999999996e-05
+    },
+    "beats_null": true
+   },
+   "merge3": {
+    "hypothesis": "S(B,C) > S(B,A), S(C,A)",
+    "delta": 0.0012583333333333335,
+    "ordered_share": 0.005933333333333333,
+    "first_mean": 0.00625,
+    "second_mean": 0.004991666666666667,
+    "pairs": {
+     "sibling": 0.00625,
+     "parent": 0.006533333333333334,
+     "parent2": 0.00345
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0019002083333333332,
+     "high": 0.0016958333333333343,
+     "mean": -0.00015254166666666666
+    },
+    "beats_null": false
+   }
+  },
+  "role_R": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_R/item_sids.json",
+   "chain3": {
+    "hypothesis": "S(A,B), S(B,C) > S(A,C)",
+    "delta": 0.007191666666666667,
+    "ordered_share": 0.016216666666666667,
+    "first_mean": 0.016791666666666667,
+    "second_mean": 0.0096,
+    "pairs": {
+     "A-B": 0.019016666666666668,
+     "B-C": 0.014566666666666667,
+     "A-C": 0.0096
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.001768958333333333,
+     "high": 0.0020706250000000004,
+     "mean": 1.670833333333332e-05
+    },
+    "beats_null": true
+   },
+   "chain4": {
+    "hypothesis": "S(adjacent) > S(2-hop) > S(3-hop)",
+    "delta": 0.0012833333333333342,
+    "delta_far": 0.007233333333333333,
+    "ordered_share": 0.04331666666666667,
+    "first_mean": 0.018516666666666667,
+    "second_mean": 0.017233333333333333,
+    "far_mean": 0.01,
+    "pairs": {
+     "A-B": 0.025066666666666668,
+     "B-C": 0.016233333333333332,
+     "C-D": 0.01425,
+     "A-C": 0.019733333333333332,
+     "B-D": 0.014733333333333333,
+     "A-D": 0.01
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.003778819444444445,
+     "high": 0.008270000000000007,
+     "mean": 7.941666666666618e-05
+    },
+    "beats_null": false
+   },
+   "fork3": {
+    "hypothesis": "S(B,C) > S(A,B), S(A,C)",
+    "delta": 0.0036999999999999993,
+    "ordered_share": 0.01005,
+    "first_mean": 0.010366666666666666,
+    "second_mean": 0.006666666666666667,
+    "pairs": {
+     "sibling": 0.010366666666666666,
+     "parent": 0.005583333333333333,
+     "parent2": 0.00775
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0015425000000000003,
+     "high": 0.0017675000000000008,
+     "mean": 7.220833333333337e-05
+    },
+    "beats_null": true
+   },
+   "merge3": {
+    "hypothesis": "S(B,C) > S(B,A), S(C,A)",
+    "delta": 0.002641666666666667,
+    "ordered_share": 0.011016666666666666,
+    "first_mean": 0.0114,
+    "second_mean": 0.008758333333333333,
+    "pairs": {
+     "sibling": 0.0114,
+     "parent": 0.009766666666666667,
+     "parent2": 0.00775
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.001725208333333333,
+     "high": 0.00206125,
+     "mean": -4.6666666666666665e-05
+    },
+    "beats_null": true
+   }
+  },
+  "role_Q": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_Q/item_sids.json",
+   "chain3": {
+    "hypothesis": "S(A,B), S(B,C) > S(A,C)",
+    "delta": 0.0037166666666666667,
+    "ordered_share": 0.01205,
+    "first_mean": 0.012316666666666667,
+    "second_mean": 0.0086,
+    "pairs": {
+     "A-B": 0.0105,
+     "B-C": 0.014133333333333333,
+     "A-C": 0.0086
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0019274999999999995,
+     "high": 0.0024350000000000014,
+     "mean": -8.17083333333333e-05
+    },
+    "beats_null": true
+   },
+   "chain4": {
+    "hypothesis": "S(adjacent) > S(2-hop) > S(3-hop)",
+    "delta": -0.0003472222222222227,
+    "delta_far": 0.006108333333333334,
+    "ordered_share": 0.034308333333333337,
+    "first_mean": 0.014061111111111111,
+    "second_mean": 0.014408333333333334,
+    "far_mean": 0.0083,
+    "pairs": {
+     "A-B": 0.009583333333333333,
+     "B-C": 0.020266666666666665,
+     "C-D": 0.012333333333333333,
+     "A-C": 0.0177,
+     "B-D": 0.011116666666666667,
+     "A-D": 0.0083
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.004128125,
+     "high": 0.010308819444444443,
+     "mean": 8.880555555555482e-05
+    },
+    "beats_null": false
+   },
+   "fork3": {
+    "hypothesis": "S(B,C) > S(A,B), S(A,C)",
+    "delta": 0.002400000000000001,
+    "ordered_share": 0.009383333333333334,
+    "first_mean": 0.009616666666666667,
+    "second_mean": 0.007216666666666666,
+    "pairs": {
+     "sibling": 0.009616666666666667,
+     "parent": 0.0057666666666666665,
+     "parent2": 0.008666666666666666
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.002213541666666666,
+     "high": 0.0021316666666666676,
+     "mean": 5.4541666666666694e-05
+    },
+    "beats_null": true
+   },
+   "merge3": {
+    "hypothesis": "S(B,C) > S(B,A), S(C,A)",
+    "delta": -0.000575,
+    "ordered_share": 0.006116666666666667,
+    "first_mean": 0.006266666666666667,
+    "second_mean": 0.006841666666666667,
+    "pairs": {
+     "sibling": 0.006266666666666667,
+     "parent": 0.009066666666666667,
+     "parent2": 0.0046166666666666665
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.001991875,
+     "high": 0.001926458333333334,
+     "mean": -0.00010525000000000001
+    },
+    "beats_null": false
+   }
+  },
+  "role_QR": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_QR/item_sids.json",
+   "chain3": {
+    "hypothesis": "S(A,B), S(B,C) > S(A,C)",
+    "delta": 0.03713333333333334,
+    "ordered_share": 0.047966666666666664,
+    "first_mean": 0.05853333333333333,
+    "second_mean": 0.0214,
+    "pairs": {
+     "A-B": 0.06563333333333334,
+     "B-C": 0.05143333333333333,
+     "A-C": 0.0214
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.002512708333333334,
+     "high": 0.002466875,
+     "mean": -0.00010962499999999993
+    },
+    "beats_null": true
+   },
+   "chain4": {
+    "hypothesis": "S(adjacent) > S(2-hop) > S(3-hop)",
+    "delta": 0.03260277777777777,
+    "delta_far": 0.006491666666666665,
+    "ordered_share": 0.08324166666666667,
+    "first_mean": 0.05136111111111111,
+    "second_mean": 0.01875833333333333,
+    "far_mean": 0.012266666666666667,
+    "pairs": {
+     "A-B": 0.04931666666666667,
+     "B-C": 0.05358333333333333,
+     "C-D": 0.05118333333333333,
+     "A-C": 0.019033333333333333,
+     "B-D": 0.018483333333333334,
+     "A-D": 0.012266666666666667
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.004348541666666667,
+     "high": 0.01018145833333333,
+     "mean": 0.00014755555555555477
+    },
+    "beats_null": true
+   },
+   "fork3": {
+    "hypothesis": "S(B,C) > S(A,B), S(A,C)",
+    "delta": -0.04148333333333333,
+    "ordered_share": 0.01745,
+    "first_mean": 0.024333333333333332,
+    "second_mean": 0.06581666666666666,
+    "pairs": {
+     "sibling": 0.024333333333333332,
+     "parent": 0.06925,
+     "parent2": 0.06238333333333333
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.002479374999999999,
+     "high": 0.0019593749999999997,
+     "mean": -0.00014854166666666664
+    },
+    "beats_null": false
+   },
+   "merge3": {
+    "hypothesis": "S(B,C) > S(B,A), S(C,A)",
+    "delta": 0.023116666666666667,
+    "ordered_share": 0.05625,
+    "first_mean": 0.06818333333333333,
+    "second_mean": 0.045066666666666665,
+    "pairs": {
+     "sibling": 0.06818333333333333,
+     "parent": 0.023016666666666668,
+     "parent2": 0.06711666666666667
+    },
+    "instances": 60000,
+    "null": {
+     "low": -0.0019606249999999993,
+     "high": 0.0028514583333333347,
+     "mean": 3.341666666666669e-05
+    },
+    "beats_null": true
+   }
+  }
+ }
+}
