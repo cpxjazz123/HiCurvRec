@@ -1,0 +1,499 @@
+{
+ "protocol": {
+  "S": "number of leading codes two items agree on (0..3)",
+  "instances": {
+   "chain": 120000,
+   "fork": 120000,
+   "merge": 120000
+  },
+  "hypotheses": {
+   "chain": "S(A,B) > S(A,C)",
+   "fork": "S(B,C) > S(A,B)",
+   "merge": "S(B,C) > S(B,A)"
+  },
+  "null": "item-to-SID permutation, 200 rounds: keeps code frequencies and the collision rate, destroys which item holds which code",
+  "graph": "directed train edges of results/research/behavior_graph/graph.npz"
+ },
+ "arms": {
+  "baseline": {
+   "sid": "results/stage2_RQ-VAE/TIGER_drq_D1/item_sids.json",
+   "chain": {
+    "hypothesis": "S(A,B) > S(A,C)",
+    "delta": -0.002783333333333333,
+    "ordered_share": 0.49864166666666665,
+    "first_mean": 0.0049833333333333335,
+    "second_mean": 0.0077666666666666665,
+    "instances": 120000,
+    "null": {
+     "mean": -0.00014941666666666668,
+     "percentile_of_observed": null,
+     "low": -0.006051875,
+     "high": 0.00843
+    },
+    "beats_null": false
+   },
+   "fork": {
+    "hypothesis": "S(B,C) > S(A,B)",
+    "delta": -0.0018499999999999992,
+    "ordered_share": 0.499225,
+    "first_mean": 0.009716666666666667,
+    "second_mean": 0.011566666666666666,
+    "instances": 120000,
+    "null": {
+     "mean": -0.00012083333333333335,
+     "percentile_of_observed": null,
+     "low": -0.002064791666666667,
+     "high": 0.0016335416666666655
+    },
+    "beats_null": false
+   },
+   "merge": {
+    "hypothesis": "S(B,C) > S(B,A)",
+    "delta": 0.0017666666666666664,
+    "ordered_share": 0.5008375,
+    "first_mean": 0.009966666666666667,
+    "second_mean": 0.0082,
+    "instances": 120000,
+    "null": {
+     "mean": 9.208333333333404e-06,
+     "percentile_of_observed": null,
+     "low": -0.0018935416666666664,
+     "high": 0.0018004166666666663
+    },
+    "beats_null": false
+   }
+  },
+  "A_none": {
+   "sid": "results/research/directed_graphlet_teacher/graph_loss/sids/A_none.json",
+   "chain": {
+    "hypothesis": "S(A,B) > S(A,C)",
+    "delta": 0.0005083333333333329,
+    "ordered_share": 0.5003208333333333,
+    "first_mean": 0.008083333333333333,
+    "second_mean": 0.007575,
+    "instances": 120000,
+    "null": {
+     "mean": 0.0002556666666666667,
+     "percentile_of_observed": null,
+     "low": -0.005028749999999999,
+     "high": 0.009397083333333335
+    },
+    "beats_null": false
+   },
+   "fork": {
+    "hypothesis": "S(B,C) > S(A,B)",
+    "delta": -0.004508333333333333,
+    "ordered_share": 0.49809583333333335,
+    "first_mean": 0.010775,
+    "second_mean": 0.015283333333333333,
+    "instances": 120000,
+    "null": {
+     "mean": -3.9124999999999996e-05,
+     "percentile_of_observed": null,
+     "low": -0.0019931249999999992,
+     "high": 0.0016510416666666672
+    },
+    "beats_null": false
+   },
+   "merge": {
+    "hypothesis": "S(B,C) > S(B,A)",
+    "delta": -0.0012166666666666662,
+    "ordered_share": 0.49946666666666667,
+    "first_mean": 0.009758333333333334,
+    "second_mean": 0.010975,
+    "instances": 120000,
+    "null": {
+     "mean": 2.9958333333333426e-05,
+     "percentile_of_observed": null,
+     "low": -0.0021622916666666665,
+     "high": 0.0017668750000000015
+    },
+    "beats_null": false
+   }
+  },
+  "B_undirected": {
+   "sid": "results/research/directed_graphlet_teacher/graph_loss/sids/B_undirected.json",
+   "chain": {
+    "hypothesis": "S(A,B) > S(A,C)",
+    "delta": 0.00575,
+    "ordered_share": 0.5026583333333333,
+    "first_mean": 0.014958333333333334,
+    "second_mean": 0.009208333333333334,
+    "instances": 120000,
+    "null": {
+     "mean": -0.000257,
+     "percentile_of_observed": null,
+     "low": -0.005075833333333333,
+     "high": 0.006744583333333334
+    },
+    "beats_null": false
+   },
+   "fork": {
+    "hypothesis": "S(B,C) > S(A,B)",
+    "delta": -0.003208333333333334,
+    "ordered_share": 0.49861666666666665,
+    "first_mean": 0.0117,
+    "second_mean": 0.014908333333333334,
+    "instances": 120000,
+    "null": {
+     "mean": 3.5999999999999953e-05,
+     "percentile_of_observed": null,
+     "low": -0.0015758333333333334,
+     "high": 0.0015918750000000008
+    },
+    "beats_null": false
+   },
+   "merge": {
+    "hypothesis": "S(B,C) > S(B,A)",
+    "delta": -0.002816666666666667,
+    "ordered_share": 0.49885833333333335,
+    "first_mean": 0.010541666666666666,
+    "second_mean": 0.013358333333333333,
+    "instances": 120000,
+    "null": {
+     "mean": -3.2916666666666596e-06,
+     "percentile_of_observed": null,
+     "low": -0.001800416666666667,
+     "high": 0.0017097916666666678
+    },
+    "beats_null": false
+   }
+  },
+  "C_random": {
+   "sid": "results/research/directed_graphlet_teacher/graph_loss/sids/C_random.json",
+   "chain": {
+    "hypothesis": "S(A,B) > S(A,C)",
+    "delta": -0.00042500000000000003,
+    "ordered_share": 0.4998708333333333,
+    "first_mean": 0.009975,
+    "second_mean": 0.0104,
+    "instances": 120000,
+    "null": {
+     "mean": -0.00016733333333333316,
+     "percentile_of_observed": null,
+     "low": -0.008003958333333333,
+     "high": 0.008765833333333337
+    },
+    "beats_null": false
+   },
+   "fork": {
+    "hypothesis": "S(B,C) > S(A,B)",
+    "delta": -0.007249999999999998,
+    "ordered_share": 0.49692916666666664,
+    "first_mean": 0.0151,
+    "second_mean": 0.02235,
+    "instances": 120000,
+    "null": {
+     "mean": -1.666666666666752e-06,
+     "percentile_of_observed": null,
+     "low": -0.0023758333333333322,
+     "high": 0.00263
+    },
+    "beats_null": false
+   },
+   "merge": {
+    "hypothesis": "S(B,C) > S(B,A)",
+    "delta": -0.001933333333333332,
+    "ordered_share": 0.499475,
+    "first_mean": 0.013925,
+    "second_mean": 0.015858333333333332,
+    "instances": 120000,
+    "null": {
+     "mean": -8.204166666666684e-05,
+     "percentile_of_observed": null,
+     "low": -0.002572708333333335,
+     "high": 0.0030172916666666677
+    },
+    "beats_null": false
+   }
+  },
+  "D_directed": {
+   "sid": "results/research/directed_graphlet_teacher/graph_loss/sids/D_directed.json",
+   "chain": {
+    "hypothesis": "S(A,B) > S(A,C)",
+    "delta": 0.007783333333333333,
+    "ordered_share": 0.5039916666666666,
+    "first_mean": 0.01745,
+    "second_mean": 0.009666666666666667,
+    "instances": 120000,
+    "null": {
+     "mean": -0.00021341666666666666,
+     "percentile_of_observed": null,
+     "low": -0.007875625000000002,
+     "high": 0.012743125000000004
+    },
+    "beats_null": false
+   },
+   "fork": {
+    "hypothesis": "S(B,C) > S(A,B)",
+    "delta": -0.004108333333333332,
+    "ordered_share": 0.49825833333333336,
+    "first_mean": 0.0142,
+    "second_mean": 0.018308333333333333,
+    "instances": 120000,
+    "null": {
+     "mean": 5.9041666666666654e-05,
+     "percentile_of_observed": null,
+     "low": -0.00258625,
+     "high": 0.002528125
+    },
+    "beats_null": false
+   },
+   "merge": {
+    "hypothesis": "S(B,C) > S(B,A)",
+    "delta": -0.0017416666666666657,
+    "ordered_share": 0.49933333333333335,
+    "first_mean": 0.011966666666666667,
+    "second_mean": 0.013708333333333333,
+    "instances": 120000,
+    "null": {
+     "mean": -0.00018912500000000003,
+     "percentile_of_observed": null,
+     "low": -0.002839583333333335,
+     "high": 0.002573333333333335
+    },
+    "beats_null": false
+   }
+  },
+  "role_E": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_E/item_sids.json",
+   "chain": {
+    "hypothesis": "S(A,B) > S(A,C)",
+    "delta": 0.026558333333333333,
+    "ordered_share": 0.5102958333333333,
+    "first_mean": 0.043041666666666666,
+    "second_mean": 0.016483333333333332,
+    "instances": 120000,
+    "null": {
+     "mean": 0.0001315833333333333,
+     "percentile_of_observed": null,
+     "low": -0.004979583333333333,
+     "high": 0.008210625000000003
+    },
+    "beats_null": true
+   },
+   "fork": {
+    "hypothesis": "S(B,C) > S(A,B)",
+    "delta": -0.056874999999999995,
+    "ordered_share": 0.47575833333333334,
+    "first_mean": 0.029741666666666666,
+    "second_mean": 0.08661666666666666,
+    "instances": 120000,
+    "null": {
+     "mean": -6.708333333333341e-05,
+     "percentile_of_observed": null,
+     "low": -0.0018085416666666668,
+     "high": 0.0018675000000000002
+    },
+    "beats_null": false
+   },
+   "merge": {
+    "hypothesis": "S(B,C) > S(B,A)",
+    "delta": -0.042249999999999996,
+    "ordered_share": 0.4810291666666667,
+    "first_mean": 0.030608333333333335,
+    "second_mean": 0.07285833333333333,
+    "instances": 120000,
+    "null": {
+     "mean": 0.00021583333333333329,
+     "percentile_of_observed": null,
+     "low": -0.001961666666666666,
+     "high": 0.0018533333333333334
+    },
+    "beats_null": false
+   }
+  },
+  "role_T": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_T/item_sids.json",
+   "chain": {
+    "hypothesis": "S(A,B) > S(A,C)",
+    "delta": 0.009316666666666668,
+    "ordered_share": 0.5043041666666667,
+    "first_mean": 0.017158333333333334,
+    "second_mean": 0.007841666666666667,
+    "instances": 120000,
+    "null": {
+     "mean": -6.416666666666723e-06,
+     "percentile_of_observed": null,
+     "low": -0.0036999999999999997,
+     "high": 0.00757729166666667
+    },
+    "beats_null": true
+   },
+   "fork": {
+    "hypothesis": "S(B,C) > S(A,B)",
+    "delta": 0.005875,
+    "ordered_share": 0.5028083333333333,
+    "first_mean": 0.012775,
+    "second_mean": 0.0069,
+    "instances": 120000,
+    "null": {
+     "mean": -0.00011220833333333335,
+     "percentile_of_observed": null,
+     "low": -0.001369166666666666,
+     "high": 0.0011835416666666665
+    },
+    "beats_null": true
+   },
+   "merge": {
+    "hypothesis": "S(B,C) > S(B,A)",
+    "delta": 0.0023416666666666664,
+    "ordered_share": 0.5011583333333334,
+    "first_mean": 0.006483333333333333,
+    "second_mean": 0.004141666666666667,
+    "instances": 120000,
+    "null": {
+     "mean": 2.4791666666666712e-05,
+     "percentile_of_observed": null,
+     "low": -0.0014008333333333336,
+     "high": 0.0014089583333333337
+    },
+    "beats_null": true
+   }
+  },
+  "role_R": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_R/item_sids.json",
+   "chain": {
+    "hypothesis": "S(A,B) > S(A,C)",
+    "delta": 0.0066749999999999995,
+    "ordered_share": 0.5033875,
+    "first_mean": 0.012791666666666666,
+    "second_mean": 0.006116666666666667,
+    "instances": 120000,
+    "null": {
+     "mean": 8.804166666666662e-05,
+     "percentile_of_observed": null,
+     "low": -0.0038514583333333335,
+     "high": 0.006887708333333335
+    },
+    "beats_null": false
+   },
+   "fork": {
+    "hypothesis": "S(B,C) > S(A,B)",
+    "delta": 0.002483333333333332,
+    "ordered_share": 0.5012875,
+    "first_mean": 0.016483333333333332,
+    "second_mean": 0.014,
+    "instances": 120000,
+    "null": {
+     "mean": -7.5833333333333655e-06,
+     "percentile_of_observed": null,
+     "low": -0.001316875,
+     "high": 0.0012089583333333332
+    },
+    "beats_null": true
+   },
+   "merge": {
+    "hypothesis": "S(B,C) > S(B,A)",
+    "delta": 0.006958333333333334,
+    "ordered_share": 0.5033833333333333,
+    "first_mean": 0.011608333333333333,
+    "second_mean": 0.00465,
+    "instances": 120000,
+    "null": {
+     "mean": -2.7250000000000022e-05,
+     "percentile_of_observed": null,
+     "low": -0.0014297916666666667,
+     "high": 0.0011762500000000002
+    },
+    "beats_null": true
+   }
+  },
+  "role_Q": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_Q/item_sids.json",
+   "chain": {
+    "hypothesis": "S(A,B) > S(A,C)",
+    "delta": 0.011216666666666666,
+    "ordered_share": 0.5054541666666666,
+    "first_mean": 0.016533333333333334,
+    "second_mean": 0.005316666666666667,
+    "instances": 120000,
+    "null": {
+     "mean": 0.0001001249999999999,
+     "percentile_of_observed": null,
+     "low": -0.0043774999999999994,
+     "high": 0.005962083333333335
+    },
+    "beats_null": true
+   },
+   "fork": {
+    "hypothesis": "S(B,C) > S(A,B)",
+    "delta": 0.003275,
+    "ordered_share": 0.5018375,
+    "first_mean": 0.014625,
+    "second_mean": 0.01135,
+    "instances": 120000,
+    "null": {
+     "mean": 3.4333333333333366e-05,
+     "percentile_of_observed": null,
+     "low": -0.0014510416666666673,
+     "high": 0.0013833333333333328
+    },
+    "beats_null": true
+   },
+   "merge": {
+    "hypothesis": "S(B,C) > S(B,A)",
+    "delta": 0.0069833333333333344,
+    "ordered_share": 0.5033875,
+    "first_mean": 0.010075,
+    "second_mean": 0.0030916666666666666,
+    "instances": 120000,
+    "null": {
+     "mean": 8.020833333333331e-05,
+     "percentile_of_observed": null,
+     "low": -0.0014175000000000001,
+     "high": 0.0015002083333333339
+    },
+    "beats_null": true
+   }
+  },
+  "role_QR": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_QR/item_sids.json",
+   "chain": {
+    "hypothesis": "S(A,B) > S(A,C)",
+    "delta": 0.021208333333333336,
+    "ordered_share": 0.5101083333333334,
+    "first_mean": 0.03791666666666667,
+    "second_mean": 0.016708333333333332,
+    "instances": 120000,
+    "null": {
+     "mean": 0.00047041666666666683,
+     "percentile_of_observed": null,
+     "low": -0.0050531249999999995,
+     "high": 0.00834541666666667
+    },
+    "beats_null": true
+   },
+   "fork": {
+    "hypothesis": "S(B,C) > S(A,B)",
+    "delta": -0.05170833333333334,
+    "ordered_share": 0.47735,
+    "first_mean": 0.02965,
+    "second_mean": 0.08135833333333334,
+    "instances": 120000,
+    "null": {
+     "mean": 9.958333333333326e-06,
+     "percentile_of_observed": null,
+     "low": -0.0017258333333333333,
+     "high": 0.0016685416666666673
+    },
+    "beats_null": false
+   },
+   "merge": {
+    "hypothesis": "S(B,C) > S(B,A)",
+    "delta": -0.039933333333333335,
+    "ordered_share": 0.48215,
+    "first_mean": 0.028875,
+    "second_mean": 0.06880833333333333,
+    "instances": 120000,
+    "null": {
+     "mean": 9.333333333333346e-06,
+     "percentile_of_observed": null,
+     "low": -0.0016854166666666669,
+     "high": 0.0016920833333333336
+    },
+    "beats_null": false
+   }
+  }
+ }
+}
