@@ -64,3 +64,16 @@
 
 因此链臂可以作为正式候选进入 Stage3（`test_R@10 > 0.4` 判定）；三结构臂需等训练结束后用同一
 评估函数给出三结构 Δ、残差与碰撞率再决定。
+
+## 8. 证据落盘(工程修正)
+
+评估器原先把所有臂写进同一个 `arm_alignment.json`,并把臂键固定为 `chain_align`;一次对尚无 SID 的
+臂的调用就把链臂已测好的证据覆盖成 `{"missing": ...}`,盘上无法复原判据数字。现改为:
+
+- 每个臂独占 `arm_alignment_<arm>.json`(`evaluate_arm.py::output_path`);
+- 报告键就是臂名(`arm_key`),不再复用 `chain_align`;
+- 写入走 `write_report`,逐臂落盘;
+- 回归测试 `test_arm_output_paths.py`(先红后绿)钉住"两臂路径不同 / 键为臂名 / 写一个臂不改另一个臂"。
+
+链臂证据已按新名重算并落盘:`arm_alignment_TIGER_chain_align_rq.json`
+(链 +0.04148、分叉 −0.05252、汇合 +0.03529、碰撞 0.15207、语义 R² 0.40303),与先前报告一致。

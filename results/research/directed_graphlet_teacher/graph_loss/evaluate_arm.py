@@ -21,8 +21,21 @@ sys.path.insert(0, str(HERE.parent / "augment_gnn"))
 import sid_alignment_v2 as chains  # noqa: E402
 import prototype_chain_long as proto  # noqa: E402
 
-OUT = HERE / "arm_alignment.json"
 BASELINE = Path(__file__).resolve().parents[4] / "results" / "stage2_RQ-VAE" / "TIGER_RQ-VAE"
+
+
+def output_path(arm: str) -> Path:
+    """Each arm owns its evidence file; a re-run can never replace another arm's result."""
+    return HERE / f"arm_alignment_{arm}.json"
+
+
+def arm_key(arm: str) -> str:
+    return arm
+
+
+def write_report(path: Path, report: dict) -> None:
+    Path(path).write_text(json.dumps(report, indent=1) + "\n")
+
 
 
 def load_codes(directory: Path) -> np.ndarray:
@@ -80,8 +93,10 @@ def structure_delta(codes: np.ndarray, bank: np.ndarray, kind: str) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--arm", required=True, help="results/stage2_RQ-VAE/<arm>")
-    parser.add_argument("--out", default=str(OUT))
+    parser.add_argument("--out", default=None,
+                        help="defaults to arm_alignment_<arm>.json beside this script")
     args = parser.parse_args()
+    out_path = Path(args.out) if args.out else output_path(args.arm)
     root = Path(__file__).resolve().parents[4]
     rng = np.random.default_rng(42)
     rows, cols, _ = chains.loaded_edges()
@@ -99,7 +114,7 @@ def main() -> None:
     semantics = np.load(root / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy").astype(
         np.float32)
     report = {}
-    for name, directory in (("chain_align", root / "results" / "stage2_RQ-VAE" / args.arm),
+    for name, directory in ((arm_key(args.arm), root / "results" / "stage2_RQ-VAE" / args.arm),
                             ("baseline", BASELINE)):
         if not (directory / "item_sids.json").is_file():
             report[name] = {"missing": str(directory)}
@@ -118,8 +133,8 @@ def main() -> None:
             f"{kind} {entry[kind]['delta']:+.4f}" for kind in evaluation)
               + (f" semR2 {entry['semantic_r2']:.3f}" if "semantic_r2" in entry else ""),
               flush=True)
-        Path(args.out).write_text(json.dumps(report, indent=1) + "\n")
-    print("written", args.out)
+        write_report(out_path, report)
+    print("written", out_path)
 
 
 if __name__ == "__main__":
