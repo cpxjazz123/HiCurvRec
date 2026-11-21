@@ -125,6 +125,8 @@ ANALYSIS = (
     "capability/REPORT_CAPABILITY.md",
     "pair_relations/pair_relations.py", "pair_relations/pair_relations.json",
     "pair_relations/REPORT_PAIR_RELATIONS.md",
+    "two_node_rnn/two_node_rnn.py", "two_node_rnn/two_node_rnn.json",
+    "two_node_rnn/REPORT_TWO_NODE_RNN.md",
 )
 
 

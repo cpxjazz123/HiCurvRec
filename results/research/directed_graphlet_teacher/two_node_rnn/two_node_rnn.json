@@ -1,0 +1,75 @@
+{
+ "inputs": {
+  "states": "5c1f080f384ff893d85384fb4553e3669c37d42662aa564ebf2b97b1e2067111",
+  "full_graph": "ef97a2bdc555259d402065026b00cf62bc1e91c3bc58a66da4d6f8f8df407fdd"
+ },
+ "labels": {
+  "train_pairs": 300000,
+  "held_pairs": 30000,
+  "train_edge_counts": {
+   "both": 7750,
+   "forward": 146125,
+   "backward": 146125,
+   "none": 0
+  },
+  "held_edge_counts": {
+   "both": 726,
+   "forward": 12174,
+   "backward": 12174,
+   "none": 4926
+  },
+  "isolation": "pairs sampled inside one item pool per split"
+ },
+ "protocol": {
+  "decoder": "two sequential edges; step 1 reads step 0",
+  "steps": 6000,
+  "batch": 512,
+  "hidden": 128,
+  "seed": 0,
+  "metrics": "per-edge accuracy, direction accuracy on one-way pairs, and 4-outcome exact match"
+ },
+ "runs": {
+  "semantics": {
+   "edge_0_accuracy": 0.47756666666666664,
+   "edge_1_accuracy": 0.5314666666666666,
+   "exact_outcome": 0.41013333333333335,
+   "one_way_direction_accuracy": 0.505339247576803,
+   "one_way_pairs": 24348
+  },
+  "z": {
+   "edge_0_accuracy": 0.5528,
+   "edge_1_accuracy": 0.4634333333333333,
+   "exact_outcome": 0.4145,
+   "one_way_direction_accuracy": 0.507187448661081,
+   "one_way_pairs": 24348
+  },
+  "q": {
+   "edge_0_accuracy": 0.5407333333333333,
+   "edge_1_accuracy": 0.47153333333333336,
+   "exact_outcome": 0.4125,
+   "one_way_direction_accuracy": 0.5045588960078856,
+   "one_way_pairs": 24348
+  },
+  "z_pca32": {
+   "edge_0_accuracy": 0.5061,
+   "edge_1_accuracy": 0.5044,
+   "exact_outcome": 0.4102,
+   "one_way_direction_accuracy": 0.5001642845408247,
+   "one_way_pairs": 24348
+  },
+  "random": {
+   "edge_0_accuracy": 0.4934,
+   "edge_1_accuracy": 0.5067,
+   "exact_outcome": 0.4049333333333333,
+   "one_way_direction_accuracy": 0.4985625102677838,
+   "one_way_pairs": 24348
+  },
+  "zero": {
+   "edge_0_accuracy": 0.43,
+   "edge_1_accuracy": 0.57,
+   "exact_outcome": 0.4058,
+   "one_way_direction_accuracy": 0.5,
+   "one_way_pairs": 24348
+  }
+ }
+}
