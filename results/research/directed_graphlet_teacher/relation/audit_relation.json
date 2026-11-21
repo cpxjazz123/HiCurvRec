@@ -5,16 +5,18 @@
   "covered_items": 24094,
   "own_orbit_covered_items": 12266,
   "test_pairs": 46586,
-  "test_pairs_both_covered": 46057
+  "test_pairs_both_covered": 46057,
+  "triplets_usable": 45869,
+  "triplets_dropped_by_coverage": 717
  },
  "provenance": {
   "226": {
    "checkpoint_sha256": "ce77953c1beb83425bbda41f0f0987865259fca6e8969b63482f85556693d2dc",
-   "cosine_to_stored_relation": 0.9999999999999926
+   "cosine_to_stored_relation": 0.9999999999999925
   },
   "227": {
    "checkpoint_sha256": "d924369ef5ef420b576d307754e01202296bdd308a3072bea49f8902d4419ed4",
-   "cosine_to_stored_relation": 0.07097967568195866
+   "cosine_to_stored_relation": 0.07097967547764811
   },
   "carrier_file": {
    "sha256": "3872ceb9b5ac6cbb7a37c6114f60018c0aa5f84d756b1eb2bea158401271ab3e",
@@ -27,15 +29,93 @@
  },
  "stability": {
   "items": 24094,
-  "cosine_mean": 0.07064256604707148,
-  "cosine_median": 0.06013364102104925,
-  "cosine_p10": -0.023017550139159144,
+  "cosine_mean": 0.07064256594146665,
+  "cosine_median": 0.06013364096359915,
+  "cosine_p10": -0.02301754857290255,
   "top10_jaccard_mean": 0.2704859313373245,
-  "procrustes_cosine_mean": 0.9618652074780166,
-  "procrustes_cosine_median": 0.9671734902552357,
+  "top10_overlap_fraction_mean": 0.40700000000000003,
+  "top10_overlap_fraction_median": 0.4,
+  "procrustes_cosine_mean": 0.9618652074420948,
+  "procrustes_cosine_median": 0.9671734877730773,
   "per_seed_pair_auc": {
-   "226": 0.4963812521722213,
-   "227": 0.49875828761676305
+   "226": 0.7394124388735541,
+   "227": 0.7397390650044133
+  }
+ },
+ "pair_auc": {
+  "relation": {
+   "auc": 0.7394124383982611,
+   "p05": 0.7366182345259851,
+   "p95": 0.7419612999713544,
+   "triplets": 45869,
+   "positive_cosine_mean": 0.5244320585323202,
+   "negative_cosine_mean": 0.20398176619151842,
+   "mean_cosine_margin": 0.3204502923408017,
+   "within_anchor_auc": 0.6915144429927998,
+   "anchors_used": 691
+  },
+  "semantics_768": {
+   "auc": 0.6095675326631513,
+   "p05": 0.6073653872874182,
+   "p95": 0.6118876849120982,
+   "triplets": 45869,
+   "positive_cosine_mean": 0.7257675572762636,
+   "negative_cosine_mean": 0.6853028563768095,
+   "mean_cosine_margin": 0.04046470089945394,
+   "within_anchor_auc": 0.6057798086589056,
+   "anchors_used": 691
+  },
+  "residual_after_ridge": {
+   "auc": 0.5654550736165921,
+   "p05": 0.5627837729438525,
+   "p95": 0.5689034579741313,
+   "triplets": 45869,
+   "positive_cosine_mean": 0.11208146258315364,
+   "negative_cosine_mean": 0.02449200864021424,
+   "mean_cosine_margin": 0.08758945394293939,
+   "within_anchor_auc": 0.5579842441440517,
+   "anchors_used": 691
+  },
+  "neighbour_relation": {
+   "auc": 0.7294732519575213,
+   "positive_cosine_mean": 0.7510926527824897,
+   "negative_cosine_mean": 0.48949962762702154,
+   "mean_cosine_margin": 0.2615930251554683,
+   "within_anchor_auc": 0.6943992221750583,
+   "anchors_used": 691,
+   "triplets": 45869
+  }
+ },
+ "paired_delta_vs_relation": {
+  "semantics_768": {
+   "delta_auc": 0.12984490573510976,
+   "p05": 0.12720738544586568,
+   "p95": 0.13225053271212422,
+   "paired_auc": -0.12984490573510976,
+   "margin_points": -12.984490573510977,
+   "mean_cosine_margin_difference": -0.27998559144134777,
+   "item_split": {
+    "forward": 38590,
+    "forward_win_rate": 0.638922000518269,
+    "reverse_win_rate": 0.3761077999481731,
+    "mean_forward_margin": 0.03874207000148978,
+    "mean_reverse_margin": -0.03443453828331684
+   }
+  },
+  "residual_after_ridge": {
+   "delta_auc": 0.173957364781669,
+   "p05": 0.1701934607509406,
+   "p95": 0.17736737547623294,
+   "paired_auc": -0.173957364781669,
+   "margin_points": -17.395736478166903,
+   "mean_cosine_margin_difference": -0.2328608383978623,
+   "item_split": {
+    "forward": 38590,
+    "forward_win_rate": 0.5637211712878984,
+    "reverse_win_rate": 0.4520601192018658,
+    "mean_forward_margin": 0.0842921286164767,
+    "mean_reverse_margin": -0.06677343264641965
+   }
   }
  },
  "ridge": {
@@ -43,46 +123,28 @@
   "lam_frac": 0.001,
   "relation_norm_kept": 1.0,
   "r2_heldout": 0.6495179975437553,
+  "note": "pooled R^2 is measured on the residual of the target mean; a per-item R^2 is degenerate because a single 128-d row has no variance of its own",
   "heldout_items": 4819
- },
- "pair_auc": {
-  "relation": {
-   "auc": 0.49638123005500867,
-   "p05": 0.4927952418508812,
-   "p95": 0.49930720551241514,
-   "auc_both_covered": 0.5049489139019268
-  },
-  "semantics_768": {
-   "auc": 0.5027491547819656,
-   "p05": 0.4999239438937444,
-   "p95": 0.5061301323680709,
-   "auc_both_covered": 0.500331032603734
-  },
-  "residual_after_ridge": {
-   "auc": 0.500353585113261,
-   "p05": 0.4975748578901356,
-   "p95": 0.5030680280819816,
-   "auc_both_covered": 0.4990973876331943
-  },
-  "neighbour_relation": {
-   "auc": 0.4980474136786802,
-   "auc_both_covered": 0.5022262661753486
-  }
  },
  "learned_readout": {
   "C_residual": {
    "checkpoint": "C_residual_edge_main_seed226.pth",
-   "pair_head_auc": 0.7472554518187222
+   "pair_head_auc": 0.7469328174393663,
+   "triplets": 45869
   },
   "A_embedding": {
    "checkpoint": "A_embedding_edge_main_seed226.pth",
-   "pair_head_auc": 0.7107761836893044
+   "pair_head_auc": 0.7105176077580497,
+   "triplets": 45869
   }
  },
  "graph_precision": {
   "k": 10,
   "probes": 2000,
   "probe_pool": 22842,
+  "mean_degree": 15.264896083296051,
+  "distractors_per_item": 16.26489608329605,
+  "note": "the cut draws one distractor per purchased item, so 6.148% of items act as distractors; ten independent draws hit a structural neighbour about 1-(1-p)^10 of the time even with no structure at all",
   "points": {
    "relation": 0.0239,
    "neighbour_relation": 0.02765,
@@ -94,7 +156,8 @@
   "TIGER_RQ-VAE": {
    "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
    "items": 24587,
-   "prefix_auc": 0.5346098939039339,
+   "prefix_auc": 0.5341360110572667,
+   "prefix_triplets": 45869,
    "first_code_purity_relation_top": 0.3417,
    "first_code_purity_semantics_top": 0.73345,
    "first_code_chance": 0.010891202668076624,
@@ -103,7 +166,8 @@
   "TIGER_RQ-VAE__canonical": {
    "sid_sha256": "53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85",
    "items": 24587,
-   "prefix_auc": 0.5350036079348147,
+   "prefix_auc": 0.5346126812600772,
+   "prefix_triplets": 45869,
    "first_code_purity_relation_top": 0.3529,
    "first_code_purity_semantics_top": 0.75195,
    "first_code_chance": 0.01190899662423232,
@@ -112,16 +176,48 @@
   "TIGER_mixed_rq_F0": {
    "sid_sha256": "afa89a10b1b197a7b56da4ad322c6ddd96a3c26c04238af326d88747378bb848",
    "items": 24587,
-   "prefix_auc": 0.557478338139333,
+   "prefix_auc": 0.5570067322041555,
+   "prefix_triplets": 45869,
    "first_code_purity_relation_top": 0.4899,
    "first_code_purity_semantics_top": 0.8073,
    "first_code_chance": 0.030544047667466552,
    "probes": 2000
   }
  },
+ "negative_score_cross_check": {
+  "relation": {
+   "triplets": 45869,
+   "positive_max_abs_diff": 7.771561172376096e-16,
+   "negative_max_abs_diff": 6.661338147750939e-16,
+   "negative_mean_audit": 0.20398176619151842,
+   "negative_mean_reference": 0.20398176619151842,
+   "superseded_reading_mean": 0.5297310328551691,
+   "superseded_reading_max_abs_diff": 1.7614161996339102
+  },
+  "semantics_768": {
+   "triplets": 45869,
+   "positive_max_abs_diff": 1.5543122344752192e-15,
+   "negative_max_abs_diff": 1.4432899320127035e-15,
+   "negative_mean_audit": 0.6853028563768095,
+   "negative_mean_reference": 0.6853028563768095,
+   "superseded_reading_mean": 0.728091808407692,
+   "superseded_reading_max_abs_diff": 0.657575603751116
+  },
+  "residual_after_ridge": {
+   "triplets": 45869,
+   "positive_max_abs_diff": 5.551115123125783e-16,
+   "negative_max_abs_diff": 4.440892098500626e-16,
+   "negative_mean_audit": 0.02449200864021424,
+   "negative_mean_reference": 0.02449200864021424,
+   "superseded_reading_mean": 0.11403033493009514,
+   "superseded_reading_max_abs_diff": 1.7871307601109216
+  }
+ },
  "readings": {
-  "relation_beats_semantics": false,
-  "residual_above_chance": false,
+  "relation_beats_semantics": true,
+  "residual_above_chance": true,
+  "relation_beats_semantics_paired": false,
+  "relation_beats_residual_paired": false,
   "seed_stable": false,
   "sid_relation_group_gap": {
    "TIGER_RQ-VAE": 0.466,
