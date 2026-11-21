@@ -148,6 +148,8 @@ ANALYSIS = (
     "diage/diage_repro.py", "diage/diage_repro.json",
     "diage/REPORT_DIAGE_REPRO.md", "diage/REPORT_DIRECTION_IS_TEMPORAL.md",
     "diage/item_time_direction.py", "diage/item_time_direction.json",
+    "concat_diage/concat_diage.py", "concat_diage/concat_diage.json",
+    "concat_diage/REPORT_CONCAT_DIAGE.md",
 )
 
 

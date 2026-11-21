@@ -1,0 +1,76 @@
+{
+ "split": {
+  "message_edges": 291262,
+  "held_edges": 32371,
+  "eval_positives": 8000,
+  "training_positives": 80000,
+  "training_reverse_negatives": 75968
+ },
+ "protocol": {
+  "architecture": "DiGAE-1L, two 384-d halves concatenated to 768",
+  "edge_loss": "BCE on positives, reverse hard negatives and random negatives",
+  "semantic_loss": "MSE(decoder([s||t]), x), weight 1.0 in arm C",
+  "steps": 1200,
+  "head_steps": 1500,
+  "seed": 0
+ },
+ "arms": {
+  "B_concat_edge_only": {
+   "trace": [
+    {
+     "step": 0,
+     "loss": 0.8761860529581705
+    },
+    {
+     "step": 400,
+     "loss": 0.5457608302434286
+    },
+    {
+     "step": 800,
+     "loss": 0.48475530246893567
+    },
+    {
+     "step": 1199,
+     "loss": 0.4455459217230479
+    }
+   ],
+   "roc_auc": 0.7330985937500001,
+   "average_precision": 0.7118573345012102,
+   "direction_accuracy": 0.46425,
+   "semantic_linear_probe_r2": 0.748119847451769,
+   "raw_cosine_to_input": -0.007499309256672859
+  },
+  "C_concat_plus_semantic": {
+   "trace": [
+    {
+     "step": 0,
+     "loss": 0.8769057989120483
+    },
+    {
+     "step": 400,
+     "loss": 0.5455454438924789
+    },
+    {
+     "step": 800,
+     "loss": 0.483762855331103
+    },
+    {
+     "step": 1199,
+     "loss": 0.44485142330328625
+    }
+   ],
+   "roc_auc": 0.7335731484375001,
+   "average_precision": 0.7128354488791415,
+   "direction_accuracy": 0.4645,
+   "semantic_linear_probe_r2": 0.752853774191625,
+   "raw_cosine_to_input": -0.007989519275724888
+  },
+  "A_raw_semantics": {
+   "roc_auc": 0.7194125859375,
+   "average_precision": 0.6990487804630149,
+   "direction_accuracy": 0.535375,
+   "semantic_linear_probe_r2": 0.9999525086422657,
+   "raw_cosine_to_input": 1.0
+  }
+ }
+}
