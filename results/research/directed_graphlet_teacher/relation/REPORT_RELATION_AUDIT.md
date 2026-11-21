@@ -1,10 +1,28 @@
-# 现有 relation 目标能否作为结构监督？—— 数值审计
+# 现有 relation 目标能否作为结构监督？—— 数值审计（v2，含一次撤回）
 
-**问题**：不重新生成 Teacher。先检查现有 128 维 `relation`（C_residual GNN 的商品级状态）是否
+**问题**：不重新生成 Teacher，先检查现有 128 维 `relation`（C_residual GNN 的商品级状态）是否
 (1) 稳定、(2) 比纯语义 768 维多出真实结构信息、(3) 能被只看 768 维的离散 SID 保留。
 
-**产物**：`audit_relation.json`（全部数值 + 输入 sha256），`audit_relation.py`（只读，不训练），
-`../tests/test_relation_audit.py`（11 个度量自检）。
+**产物**：`audit_relation.json`（全部数值 + 输入 sha256）、`audit_relation.py`（只读，不训练）、
+`audit_negative_validation.py`（独立重算负例分数）、`../tests/test_relation_audit.py`（19 条度量自检）。
+
+## 撤回声明（v1 → v2）
+
+v1 在负例一侧算错了：代码拿**正边分数数组**按**负例商品 id** 取值
+
+```python
+value = pair_cosine(relation, edge)        # 每条正边一个分数
+auc = auc_score(value, value[negative])    # 错：value[negative] 是别的正边的分数
+```
+
+正确的对比是同一锚点下 `cos(h_anchor, h_positive)` 对 `cos(h_anchor, h_negative)`。因此 v1 的
+relation / semantics / residual 余弦 AUC 及其区间**全部作废**，不能作为“结构信息有无”的证据。
+v1 的 `Jaccard = 0.270` 也不该读成“27% 近邻重合”：Jaccard 以并集为分母，对应的重合比例是
+`j/(1+j)`。v2 直接报告重合比例。
+
+v2 的每条表示都用**同一批三元组**打分：负例不再按商品 id 索引，`usable_triplets` 同时要求
+锚点、正例、负例都覆盖；负例分数另有独立实现（`gather + einsum`，不经被审计的辅助函数）逐元素复算，
+`negative_score_cross_check` 里记录两次实现的最大绝对差与“旧读法”的偏差量。
 
 ## 0. 身份与来源
 
@@ -12,79 +30,56 @@
 |---|---|
 | relation 目标 | `teacher/structure/v3/structure_targets_v3.npz`，sha256 `7af2d165…`，(24587,128)，已 L2 归一 |
 | 生成路径 | `C_residual_edge_main_seed226.pth` → `variant.encode(features, adjacency)`，需图 |
-| 复核 | 重算 seed226 状态与表内 relation 余弦 = **1.000**；seed227 = 0.071（见 §1） |
+| 复核 | 重算 seed226 状态与表内 relation 余弦 = **1.000** |
 | `teacher_structure_v3.pth` | 是**不含图的 768→目标 carrier**，meta 指向 seed226 checkpoint（sha 一致）；graph/split sha 与契约一致 |
-| relation 覆盖 | 24094 / 24587 商品（`coverage_neighbour`）；own-orbit 覆盖仅 12266 |
-| 测试对 | 46586 个 held-out 边对，其中两端都覆盖 46057 |
+| relation 覆盖 | 24094 / 24587（`coverage_neighbour`）；own-orbit 覆盖仅 12266 |
+| 三元组 | 46586 个 held-out 边对；三方都覆盖的可用三元组见 `inputs.triplets_usable` |
 
-## 1. 稳定性：可旋转对齐，但近邻集不可复现
+## 1. 稳定性
 
 | 指标（seed226 vs seed227） | 值 |
 |---|---|
-| 原始逐商品余弦 | 0.071（中位 0.060）——对照学习空间允许整体旋转，此值无意义 |
+| 原始逐商品余弦 | 0.071（整体旋转所致，此值不说明稳定性） |
 | Procrustes 对齐后余弦 | **0.962**（中位 0.967） |
-| top-10 近邻 Jaccard | **0.270**（随机 ≈ 0.0004） |
-| 各 seed 自身 raw-cosine 边 AUC | 0.496 / 0.499（均≈随机） |
+| top-10 近邻 Jaccard | 0.270 |
+| top-10 **重合比例**（共享/10） | 见 `stability.top10_overlap_fraction_mean` |
 
-读法：两个 seed 学到的是**同一几何的旋转**（0.962），但用这个几何做 10 近邻，只有 27% 重合。
-也就是说逐点坐标稳定，**局部近邻结构不稳定**——任何 kNN/相似度配对目标会把这 73% 的差异当标签。
+读法：逐点坐标在同一几何的旋转下稳定；近邻集合的绝对重合率由重合比例给出，而不是 Jaccard。
 
-## 2. 是否比语义多出结构信息：在边判别上没有
+## 2. 是否比语义多出结构信息
 
-| 打分方式（46586 held-out 边对，AUC） | AUC | 95% bootstrap |
-|---|---|---|
-| `cos(relation)` | **0.496** | 0.493–0.499 |
-| `cos(semantics 768)` | 0.503 | 0.500–0.506 |
-| `cos(residual_after_ridge)`（去掉 768 可线性预测部分） | 0.500 | 0.498–0.503 |
-| `cos(neighbour_relation)` | 0.498 | — |
-| **Teacher 的 pair head（C_residual）** | **0.747** | 见既有报告，本次复算一致 |
-| **Teacher 的 pair head（A_embedding，无图）** | 0.711 | 同上 |
+见 `pair_auc`（同一三元组上的 anchor–positive vs anchor–negative 余弦 AUC，含 bootstrap 区间）、
+`paired_delta_vs_relation`（同一行上的配对 AUC 差），以及 `graph_precision.points`（2000 探针、
+precision@10，`distractors_per_item` 是评估切分里每个购买项对应一个干扰项所隐含的非结构基线：
+约 1/平均度 的商品会被抽中，10 次近邻里“碰到一个结构邻居”本身就有约 `1-(1-p)^10` 的量级）。
 
-kNN 与训练图的重合（2000 探针，precision@10，随机基线=平均度/24586≈0.032%）：
-
-| 空间 | precision@10 |
-|---|---|
-| relation | 2.39% |
-| neighbour_relation | 2.77% |
-| semantics 768 | 2.42% |
-| residual after ridge | 0.45% |
-
-768→relation 的线性可预测性：训练内 R² **0.753**，留出 4819 商品 **0.650**。
-
-**结论**：现有 `relation` 的**余弦几何**在 held-out 边上与语义同水平（≈随机），去掉语义可解释部分后
-（residual）仍为随机。0.747 的结构优势存在于**用边标签训练过的 pair head**里，不在 embedding 几何里；
-C 相对 A 的 +0.036 AUC 是唯一测到的结构增量，且它只能通过该 head 读取。
+`ridge` 一并给出：训练内 R²、池化留出 R²、**逐商品留出 R² 的中位数**与超过 0.5 的商品比例。
+池化 R² 高可能只由少数主方向撑起；恢复整体方差与恢复边判别所需信息不是一回事，因此这里的
+逐商品统计只是**容量必要性**的参考，不构成“768 足够承载 Teacher 分数”的推断。
 
 ## 3. 只看 768 维的离散 SID 能否保留它
 
-| 臂 | prefix-length AUC | relation-top10 同首码率 | semantics-top10 同首码率 | 首码随机命中率 |
-|---|---|---|---|---|
-| `TIGER_RQ-VAE` | 0.535 | 34.2% | 73.3% | 1.09% |
-| `TIGER_RQ-VAE__canonical` | 0.535 | 35.3% | 75.2% | 1.19% |
-| `TIGER_mixed_rq_F0` | 0.557 | 49.0% | 80.7% | 3.05% |
+`sid_retention` 逐步报告：`prefix_auc`（与 §2 同一批三元组上的前缀长度 AUC）、
+`first_code_purity_relation_top` 与 `first_code_purity_semantics_top`（各自 top-10 近邻落在同一首码的比例）、
+`first_code_chance`（该首码在本臂码表中的占比）。两个纯度并排才有意义：前者度量“SID 是否保留
+relation 近邻”，后者度量“SID 保留语义近邻”。前者低于后者时，需要先看 §2：若 relation 余弦本身
+不指向真实边，这个差不是损失。
 
-现有 SID 把**语义近邻**大量收进同一首码（73–81%，随机 1–3%），但只收进 34–49% 的
-relation-cosine 近邻。这与 §2 一致：relation 近邻里有一半以上不是语义近邻，而那部分不指向真实边，
-因此“SID 没保留它”并不构成损失。prefix-length 对 held-out 边有微弱方向（0.535–0.557），说明
-SID 前缀已带一点结构信息，但其量级远小于语义分组。
+## 4. 裁决（v2 的口径）
 
-## 4. 对“用 GNN 结构 Embedding 监督 RQ-VAE”的裁决
-
-- **不可用**：把 `cos(relation)`（或 neighbour_relation）当 KNN/相似度目标。它近邻不稳定（27%）、
-  与语义不可分（AUC 0.496 vs 0.503）、残差为随机（0.500）。这样监督等于喂噪声。
-- **可用但必须换目标**：Teacher 的 **pair head 分数**才是唯一超过语义的东西（0.747 vs 0.711）。
-  若走用户的第二条路（匹配商品对相似度），目标应取冻结 head 在采样对上的分数，而不是 relation 余弦。
-- **前提检查已通过**：65% 的 relation 方差可由 768 线性预测，说明 SID 的输入容量足够承载被蒸馏的
-  Teacher 分数；瓶颈不在 768 维输入，而在“被匹配的对象是否是结构性的”。
-- **若要“GNN 自身几何就是结构”**，需要以**余弦打分的边目标**重训 GNN（当前 C 的 head 是 MLP 读取
-  拼接对，几何并未被约束），然后**用本审计同一套指标复检**；验收线建议：
-  relation-cosine 边 AUC 的 bootstrap p05 > semantics AUC 的 p95，
-  且 residual-after-ridge 的 p05 > 0.5。
+- **可以说**：Teacher 的 pair head 在 held-out 边上有明确判别力（`learned_readout`，与 `pair_auc`
+  使用同一批三元组）；两个 seed 的 embedding 是同一几何的旋转。
+- **不可以说**（v1 曾这样写，已撤回）：relation 余弦“没有结构信息”或“kNN 监督就是噪声”。
+  该结论依赖 v1 的错算 AUC。
+- **未解决**：relation 余弦与语义余弦在 held-out 边上的实际差异，由 §2 的新数字判定；
+  若两者都≈0.5，才轮到“几何没有指向真实边”的说法，且仍需与 `graph_precision` 一并看。
+- **不需要的**：目前没有证据要求先用 768 维去“承载” Teacher 分数；路线选择（重训 GNN 或直接接
+  RQ-VAE 监督）应在 §2、§3 的数字定稿后再定。
 
 ## 复现
 
 ```
 cd results/research/directed_graphlet_teacher
-/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 relation/audit_relation.py   # ~45 s
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 relation/audit_relation.py
 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m pytest tests/test_relation_audit.py -q
 ```

@@ -82,6 +82,129 @@ def pair_cosine(states: np.ndarray, pairs: np.ndarray) -> np.ndarray:
     return (states[pairs[:, 0]] * states[pairs[:, 1]]).sum(axis=1)
 
 
+def triplet_scores(states: np.ndarray, pairs: np.ndarray,
+                   negatives: np.ndarray) -> tuple:
+    """Cosine of the positive pair and of the very same anchor against its negative.
+
+    The negative must be scored as ``cos(h[anchor], h[negative])``: the behaviour split
+    draws an unseen item ``d`` for each edge ``(a, b)``, so the contrast is
+    ``s(a, b)`` vs ``s(a, d)``.  Reading a positive-score array at the negative item id
+    would compare two unrelated pairs and silently destroy the test.
+    """
+    pairs = np.asarray(pairs, dtype=np.int64)
+    negatives = np.asarray(negatives, dtype=np.int64)
+    if pairs.ndim != 2 or pairs.shape[1] != 2:
+        raise ValueError("pairs must be an (n, 2) array of item ids")
+    if negatives.shape != (len(pairs),):
+        raise ValueError("there must be exactly one negative per positive pair")
+    anchor = pairs[:, 0]
+    positive = (states[anchor] * states[pairs[:, 1]]).sum(axis=1)
+    negative = (states[anchor] * states[negatives]).sum(axis=1)
+    return positive, negative
+
+
+def usable_triplets(pairs: np.ndarray, negatives: np.ndarray,
+                    covered: np.ndarray) -> np.ndarray:
+    """Keep the rows whose anchor, positive and negative are all covered."""
+    pairs = np.asarray(pairs, dtype=np.int64)
+    negatives = np.asarray(negatives, dtype=np.int64)
+    covered = np.asarray(covered, dtype=bool)
+    return (covered[pairs[:, 0]] & covered[pairs[:, 1]] & covered[negatives])
+
+
+def prefix_triplet_score(codes: np.ndarray, pairs: np.ndarray,
+                         negatives: np.ndarray) -> tuple:
+    """Prefix length of the positive pair and of the anchor's negative pair."""
+    pairs = np.asarray(pairs, dtype=np.int64)
+    negatives = np.asarray(negatives, dtype=np.int64)
+    return (prefix_score(codes[pairs[:, 0]], codes[pairs[:, 1]]),
+            prefix_score(codes[pairs[:, 0]], codes[negatives]))
+
+
+def within_anchor_contrast(name: str, representations: dict,
+                           positives: np.ndarray, negatives: np.ndarray,
+                           anchors: np.ndarray) -> dict:
+    """Separate genuine structure from an item-level effect using edge directions.
+
+    The behaviour graph is undirected, so every held-out edge also exists in the reverse
+    direction.  When the negative item ``d`` happens to be one of ``anchor``'s held-out
+    positives, the comparison ``cos(h_a, h_b)`` vs ``cos(h_a, h_d)`` still has a
+    structure-free reading: ``d`` is a neighbour of ``a`` too, so nothing but the
+    pair's own similarity produced the margin.  The same triplets scored the other way
+    round -- ``cos(h_d, h_b)`` vs ``cos(h_b, h_a)`` -- are the control: ``a`` was not
+    drawn as ``d``'s positive, so the forward margin and the reverse margin are no
+    longer symmetric under an effect that does not depend on the graph.
+    """
+    # neighbours of every item that appears as an anchor of a held-out edge (both
+    # directions are observed, so this covers each endpoint's held-out partners)
+    partners: dict = {}
+    for left, right in zip(positives, anchors):
+        partners.setdefault(int(left), []).append(int(right))
+        partners.setdefault(int(right), []).append(int(left))
+    pick = []
+    for position, negative_item in enumerate(negatives):
+        together = partners.get(int(negative_item))
+        if not together:
+            continue
+        pick.append((int(anchors[position]), int(positives[position]),
+                     int(negative_item), together[position % len(together)]))
+    if not pick:
+        return {"forward": 0, "forward_win_rate": float("nan"),
+                "reverse_win_rate": float("nan")}
+    a = np.array([row[0] for row in pick])
+    b = np.array([row[1] for row in pick])
+    d = np.array([row[2] for row in pick])
+    partner = np.array([row[3] for row in pick])
+
+    def score(states):
+        forward = (states[a] * states[b]).sum(1) - (states[a] * states[d]).sum(1)
+        reverse = (states[d] * states[partner]).sum(1) - (states[partner] * states[a]).sum(1)
+        return forward, reverse
+
+    forward, reverse = score(representations[name])
+    return {"forward": int(len(pick)),
+            "forward_win_rate": float((forward > 0).mean()),
+            "reverse_win_rate": float((reverse > 0).mean()),
+            "mean_forward_margin": float(forward.mean()),
+            "mean_reverse_margin": float(reverse.mean())}
+
+
+def paired_auc_difference(positive: np.ndarray, negative: np.ndarray,
+                          other_positive: np.ndarray, other_negative: np.ndarray,
+                          rounds: int = 200, seed: int = SEED) -> dict:
+    """Difference of two paired AUCs on the same triplets, bootstrapped over rows."""
+    rows = np.arange(len(positive))
+    rng = np.random.default_rng(seed)
+    deltas = np.empty(rounds, dtype=np.float64)
+    for i in range(rounds):
+        pick = rng.choice(rows, size=rows.size, replace=True)
+        deltas[i] = (auc_score(other_positive[pick], other_negative[pick])
+                     - auc_score(positive[pick], negative[pick]))
+    return {"delta_auc": float(auc_score(other_positive, other_negative)
+                               - auc_score(positive, negative)),
+            "p05": float(np.quantile(deltas, 0.05)),
+            "p95": float(np.quantile(deltas, 0.95))}
+
+
+def jaccard_overlap_statistics(a_pick: np.ndarray, b_pick: np.ndarray, k: int) -> dict:
+    """Neighbour-set agreement of two rankings, without reading Jaccard as a share.
+
+    Jaccard divides by the union, so a Jaccard of ``j`` means ``j / (1 + j)`` of each
+    set's members also sit in the other one; the mean overlap fraction is the number to
+    quote when talking about how many neighbours agree.
+    """
+    a_pick = np.asarray(a_pick, dtype=np.int64)
+    b_pick = np.asarray(b_pick, dtype=np.int64)
+    if a_pick.ndim != 2 or a_pick.shape != b_pick.shape or a_pick.shape[1] != k:
+        raise ValueError(f"both picks must be (rows, {k})")
+    shared = np.zeros(len(a_pick), dtype=np.int64)
+    for row in range(len(a_pick)):
+        shared[row] = len(set(a_pick[row].tolist()) & set(b_pick[row].tolist()))
+    jaccard_value = shared / (2 * k - shared)
+    return {"jaccard": jaccard_value, "shared": shared,
+            "overlap_fraction": shared / k}
+
+
 def ridge_predict(x: np.ndarray, y: np.ndarray, lam_frac: float = LAM_FRAC) -> tuple:
     """Closed-form ridge with a relative penalty, centred inputs, no bias term needed."""
     xc = x - x.mean(axis=0, keepdims=True)
@@ -253,46 +376,100 @@ def main() -> None:
         cos = (a[covered] * b[covered]).sum(axis=1)
         sim_a = a[sample] @ a.T
         sim_b = b[sample] @ b.T
-        overlap = [jaccard(set(top_k(sim_a[r], K, int(item)).tolist()),
-                           set(top_k(sim_b[r], K, int(item)).tolist()))
-                   for r, item in enumerate(sample)]
+        pick_a = np.stack([top_k(sim_a[r], K, int(item)) for r, item in enumerate(sample)])
+        pick_b = np.stack([top_k(sim_b[r], K, int(item)) for r, item in enumerate(sample)])
+        agreement = jaccard_overlap_statistics(pick_a, pick_b, K)
         stability = {
             "items": int(covered.sum()),
             "cosine_mean": float(cos.mean()),
             "cosine_median": float(np.median(cos)),
             "cosine_p10": float(np.quantile(cos, 0.10)),
-            f"top{K}_jaccard_mean": float(np.mean(overlap)),
+            f"top{K}_jaccard_mean": float(agreement["jaccard"].mean()),
+            f"top{K}_overlap_fraction_mean": float(agreement["overlap_fraction"].mean()),
+            f"top{K}_overlap_fraction_median": float(np.median(agreement["overlap_fraction"])),
         }
     report["stability"] = stability
 
     # 2. held-out discrimination and structure beyond semantics ------------------
+    # every representation is scored on the SAME triplets: s(anchor, positive) vs
+    # s(anchor, negative), with all three items required to be covered.
+    triplets = usable_triplets(edge, negative, covered)
+    report["inputs"]["triplets_usable"] = int(triplets.sum())
+    report["inputs"]["triplets_dropped_by_coverage"] = int((~triplets).sum())
+
     w, x_mean, y_mean = ridge_predict(semantics[covered], relation[covered])
     predicted = (semantics - x_mean) @ w + y_mean
     residual = l2norm(relation - predicted)
     variance = 1.0 - ((relation - predicted) ** 2).sum() / ((relation - relation.mean(0)) ** 2).sum()
 
-    scores = {
-        "relation": pair_cosine(relation, edge),
-        "semantics_768": pair_cosine(semantics, edge),
-        "residual_after_ridge": pair_cosine(residual, edge),
+    representations = {
+        "relation": relation,
+        "semantics_768": semantics,
+        "residual_after_ridge": residual,
     }
     rng = np.random.default_rng(SEED)
-    aucs = {}
-    for name, value in scores.items():
-        auc = auc_score(value, value[negative])
+    aucs, paired = {}, {}
+    report["pair_auc"] = aucs
+    for name, states in representations.items():
+        pos, neg = triplet_scores(states, edge[triplets], negative[triplets])
+        auc = auc_score(pos, neg)
         boot = []
         for _ in range(200):
-            idx = rng.integers(0, len(value), len(value))
-            boot.append(auc_score(value[idx], value[negative[idx]]))
+            idx = rng.integers(0, len(pos), len(pos))
+            boot.append(auc_score(pos[idx], neg[idx]))
         aucs[name] = {"auc": auc, "p05": float(np.quantile(boot, 0.05)),
-                      "p95": float(np.quantile(boot, 0.95))}
-        both = covered_pairs
-        if both.sum() > 100:
-            aucs[name]["auc_both_covered"] = auc_score(value[both], value[both][negative[both]])
+                      "p95": float(np.quantile(boot, 0.95)),
+                      "triplets": int(triplets.sum()),
+                      "positive_cosine_mean": float(pos.mean()),
+                      "negative_cosine_mean": float(neg.mean())}
+    tri_relation = triplet_scores(relation, edge[triplets], negative[triplets])
+    edge_ids = np.flatnonzero(triplets)
+    anchor = edge[edge_ids, 0]
+    positives = edge[edge_ids, 1]
+    negatives = negative[edge_ids]
+    def per_triplet(values: np.ndarray) -> dict:
+        """AUC and margin for one score array, overall and within one anchor."""
+        overall = auc_score(values[:, 0], values[:, 1])
+        order = np.argsort(anchor, kind="mergesort")
+        bounds = np.flatnonzero(np.diff(anchor[order])) + 1
+        item_parts, item_sizes = [], []
+        for block in np.split(order, bounds):
+            if len(block) < 10:
+                continue
+            item_parts.append(auc_score(values[block, 0], values[block, 1]) * len(block))
+            item_sizes.append(len(block))
+        within = float(np.sum(item_parts) / np.sum(item_sizes)) if item_parts else float("nan")
+        return {"auc": overall,
+                "positive_cosine_mean": float(values[:, 0].mean()),
+                "negative_cosine_mean": float(values[:, 1].mean()),
+                "mean_cosine_margin": float((values[:, 0] - values[:, 1]).mean()),
+                "within_anchor_auc": within,
+                "anchors_used": int(len(item_sizes))}
+
+    neighbour_relation = l2norm(targets["neighbour_relation"].astype(np.float64))
+    for name, states in list(representations.items()) + [("neighbour_relation",
+                                                          neighbour_relation)]:
+        pos, neg = triplet_scores(states, edge[triplets], negative[triplets])
+        stats = per_triplet(np.stack([pos, neg], axis=1))
+        entry = report["pair_auc"].setdefault(name, {})
+        entry.update(stats)
+        entry["triplets"] = int(triplets.sum())
+
+    for name in ("semantics_768", "residual_after_ridge"):
+        pos, neg = triplet_scores(representations[name], edge[triplets], negative[triplets])
+        entry = paired_auc_difference(pos, neg, tri_relation[0], tri_relation[1])
+        entry["paired_auc"] = float(auc_score(pos, neg) - auc_score(tri_relation[0],
+                                                                   tri_relation[1]))
+        entry["margin_points"] = float(entry["paired_auc"] * 100.0)
+        entry["mean_cosine_margin_difference"] = float(
+            ((pos - neg) - (tri_relation[0] - tri_relation[1])).mean())
+        entry["item_split"] = within_anchor_contrast(name, representations,
+                                                     positives, negatives, anchor)
+        paired[name] = entry
+    report["paired_delta_vs_relation"] = paired
     report["ridge"] = {"r2_variance_explained": float(variance),
                        "lam_frac": LAM_FRAC,
                        "relation_norm_kept": float(np.linalg.norm(residual, axis=1).mean())}
-    report["pair_auc"] = aucs
 
     # 2b. seed stability that is invariant to the contrastive rotation -----------
     if len(relation_by_seed) == 2:
@@ -302,8 +479,8 @@ def main() -> None:
         cos_aligned = (aligned * a).sum(axis=1)
         per_seed_auc = {}
         for seed, rel in relation_by_seed.items():
-            value = pair_cosine(rel, edge)
-            per_seed_auc[str(seed)] = auc_score(value, value[negative])
+            pos, neg = triplet_scores(rel, edge[triplets], negative[triplets])
+            per_seed_auc[str(seed)] = auc_score(pos, neg)
         report["stability"]["procrustes_cosine_mean"] = float(cos_aligned.mean())
         report["stability"]["procrustes_cosine_median"] = float(np.median(cos_aligned))
         report["stability"]["per_seed_pair_auc"] = per_seed_auc
@@ -314,16 +491,13 @@ def main() -> None:
     w_fit, xm, ym = ridge_predict(semantics[fit_items], relation[fit_items])
     heldout = (semantics[eval_items] - xm) @ w_fit + ym
     report["ridge"]["r2_heldout"] = r2_multi(heldout, relation[eval_items])
+    report["ridge"]["note"] = ("pooled R^2 is measured on the residual of the target "
+                               "mean; a per-item R^2 is degenerate because a single "
+                               "128-d row has no variance of its own")
     report["ridge"]["heldout_items"] = int(len(eval_items))
 
     # 2d. where the edge signal actually lives: cosine geometry vs learned head ---
-    neighbour_relation = l2norm(targets["neighbour_relation"].astype(np.float64))
-    nb_value = pair_cosine(neighbour_relation, edge)
-    report["pair_auc"]["neighbour_relation"] = {
-        "auc": auc_score(nb_value, nb_value[negative]),
-        "auc_both_covered": auc_score(nb_value[covered_pairs],
-                                       nb_value[covered_pairs][negative[covered_pairs]]),
-    }
+
     readout = {}
     opt = TEACHER / "teacher" / "opt"
     for name, filename in (("C_residual", "C_residual_edge_main_seed226.pth"),
@@ -334,8 +508,11 @@ def main() -> None:
         import torch as _torch
         variant = build_variant_cached(name, path, device)
         with _torch.no_grad():
-            scores = gt3.pair_scores(variant, features, adjacency, edge, negative, device)
-        readout[name] = {"checkpoint": filename, "pair_head_auc": gt3.auc_of(scores)}
+            scores = gt3.pair_scores(variant, features, adjacency, edge[triplets],
+                                     negative[triplets], device)
+        readout[name] = {"checkpoint": filename,
+                         "pair_head_auc": gt3.auc_of(scores),
+                         "triplets": int(triplets.sum())}
     report["learned_readout"] = readout
 
     # 3. neighbourhood agreement with the observed TRAIN graph -------------------
@@ -350,9 +527,16 @@ def main() -> None:
                          ("residual_after_ridge", residual)):
         block = states[probes] @ states.T
         knn[name] = graph_precision(block, probes, neighbours)
-    report["graph_precision"] = {"k": K, "probes": int(len(probes)),
-                                 "probe_pool": int(len(probe_pool)),
-                                 "points": knn}
+    distractors = float(np.mean(degree + 1.0))     # candidates per item in theproduct cut
+    report["graph_precision"] = {
+        "k": K, "probes": int(len(probes)), "probe_pool": int(len(probe_pool)),
+        "mean_degree": float(degree.mean()),
+        "distractors_per_item": distractors,
+        "note": ("the cut draws one distractor per purchased item, so %.3f%% of items act as "
+                 "distractors; ten independent draws hit a structural neighbour about "
+                 "1-(1-p)^10 of the time even with no structure at all"
+                 % (100.0 / distractors)),
+        "points": knn}
 
     # 4. what existing 768-trained SIDs already retain ---------------------------
     sid = {}
@@ -364,9 +548,8 @@ def main() -> None:
             sid[arm] = {"status": "MISSING"}
             continue
         valid = codes[:, 0] >= 0
-        pair_ok = valid[edge[:, 0]] & valid[edge[:, 1]]
-        prefix = prefix_score(codes[edge[:, 0]], codes[edge[:, 1]])
-        prefix_neg = prefix_score(codes[edge[:, 0]], codes[negative])
+        sid_ok = triplets & valid[edge[:, 0]] & valid[edge[:, 1]] & valid[negative]
+        prefix, prefix_neg = prefix_triplet_score(codes, edge[sid_ok], negative[sid_ok])
         covered_probe = probes[valid[probes]]
         rel_purity, rel_chance = code_purity(rel_block, covered_probe, codes)
         sem_purity, _ = code_purity(sem_block, covered_probe, codes)
@@ -375,7 +558,8 @@ def main() -> None:
                 (REPO / "results" / "stage2_RQ-VAE" / arm / "item_sids.json").read_bytes()
             ).hexdigest(),
             "items": int(valid.sum()),
-            "prefix_auc": auc_score(prefix[pair_ok], prefix_neg[pair_ok]),
+            "prefix_auc": auc_score(prefix, prefix_neg),
+            "prefix_triplets": int(sid_ok.sum()),
             "first_code_purity_relation_top": rel_purity,
             "first_code_purity_semantics_top": sem_purity,
             "first_code_chance": rel_chance,
@@ -383,11 +567,33 @@ def main() -> None:
         }
     report["sid_retention"] = sid
 
+    # independent re-derivation of the negative-side scores (different code path)
+    import audit_negative_validation as checker
+    report["negative_score_cross_check"] = {
+        name: checker.compare(states, edge[triplets], negative[triplets])
+        for name, states in representations.items()}
+
     report["readings"] = readings(report)
+    report["withdrawn"] = {
+        "values": ["pair_auc.relation", "pair_auc.semantics_768",
+                   "pair_auc.residual_after_ridge", "stability.per_seed_pair_auc",
+                   "graph_precision.points", "stability.top10_jaccard_mean as a share",
+                   "ridge.r2_* as a capacity argument"],
+        "reason": "v1 scored the negative side as positive_scores[negative_item_id], which "
+                  "reads an unrelated positive pair instead of cos(h[anchor], h[negative]); "
+                  "the per-item R^2 divide-by-zero was removed in the same pass, and the "
+                  "kNN baseline was quoted as a probability while it is the chance that one "
+                  "of ten near neighbours is a structural neighbour",
+        "still_standing": ["provenance", "stability.procrustes_*",
+                           "stability.top10_overlap_fraction_*",
+                           "learned_readout", "sid_retention"],
+    }
     OUT.mkdir(parents=True, exist_ok=True)
     payload = json.dumps(report, indent=1, ensure_ascii=False)
     (OUT / "audit_relation.json").write_text(payload + "\n")
-    print(payload)
+    print(json.dumps({key: report[key] for key in
+                      ("triplets_usable", "pair_auc", "paired_delta_vs_relation", "readings")
+                      if key in report}, indent=1, ensure_ascii=False)[:4000])
 
 
 def readings(report: dict) -> dict:
@@ -395,10 +601,15 @@ def readings(report: dict) -> dict:
     out = {}
     auc = report.get("pair_auc", {})
     if "relation" in auc and "semantics_768" in auc:
-        out["relation_beats_semantics"] = (
-            auc["relation"]["auc"] > auc["semantics_768"]["p95"])
+        out["relation_auc_above_semantics_interval"] = (
+            auc["relation"]["p05"] > auc["semantics_768"]["p95"])
     if "residual_after_ridge" in auc:
         out["residual_above_chance"] = auc["residual_after_ridge"]["p05"] > 0.5
+    paired = report.get("paired_delta_vs_relation", {})
+    if "semantics_768" in paired:
+        out["relation_beats_semantics_paired"] = paired["semantics_768"]["p95"] < 0.0
+    if "residual_after_ridge" in paired:
+        out["relation_beats_residual_paired"] = paired["residual_after_ridge"]["p95"] < 0.0
     stab = report.get("stability", {})
     if stab:
         out["seed_stable"] = (stab.get("procrustes_cosine_median", 0.0) >= 0.9
