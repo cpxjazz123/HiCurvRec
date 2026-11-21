@@ -139,7 +139,8 @@ ANALYSIS = (
     "augment_gnn/REPORT_DIRECTION_ARMS.md",
     "augment_gnn/dir_ablation.py", "augment_gnn/dir_ablation.json",
     "augment_gnn/REPORT_DIR_ABLATION.md",
-    "rrwp/rrwp_direction.py", "rrwp/rrwp_direction.json", "rrwp/REPORT_RRWP.md",
+    "rrwp/rrwp_direction.py", "rrwp/rrwp_direction.json",
+    "rrwp/rrwp_ablation.py", "rrwp/rrwp_ablation.json", "rrwp/REPORT_RRWP.md",
 )
 
 

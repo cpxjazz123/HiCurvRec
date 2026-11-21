@@ -1,0 +1,51 @@
+{
+ "split": {
+  "message_edges": 291262,
+  "held_edges": 32371,
+  "one_way_share_in_supervision": 0.47455555479259226,
+  "one_way_requires_forward_edge": true,
+  "one_way_held_for_probe": 30709
+ },
+ "protocol": {
+  "steps": 1200,
+  "batch": 4096,
+  "seed": 0,
+  "alpha": 1.0,
+  "aggregation": "unweighted mean in both arms",
+  "direction_loss": "-log sigmoid(s_A.t_B - s_B.t_A), applied only to pairs whose reverse is absent from the directed training edge set",
+  "probe": "seeded, item-isolated"
+ },
+ "arms": {
+  "A_bce_only": {
+   "edge_head_direction": 0.46530336141586304,
+   "shift_l2": 0.023279959335923195,
+   "probe": {
+    "direction_accuracy": 0.5226695537567139,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
+    "label_balance": {
+     "forward": 2757,
+     "backward": 2757
+    }
+   }
+  },
+  "B_plus_direction_loss": {
+   "edge_head_direction": 0.45934417843818665,
+   "shift_l2": 0.025186846032738686,
+   "probe": {
+    "direction_accuracy": 0.5252085328102112,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
+    "label_balance": {
+     "forward": 2757,
+     "backward": 2757
+    }
+   }
+  }
+ },
+ "readings": {
+  "se": 0.0067,
+  "B_minus_A": 0.0025,
+  "B_minus_A_sigma": 0.38
+ }
+}

@@ -2,7 +2,8 @@
  "split": {
   "message_edges": 291262,
   "held_edges": 32371,
-  "one_way_share_in_supervision": 0.9745555547925923,
+  "one_way_share_in_supervision": 0.47455555479259226,
+  "one_way_requires_forward_edge": true,
   "one_way_held_for_probe": 30709
  },
  "protocol": {
@@ -16,10 +17,10 @@
  },
  "arms": {
   "A_bce_only": {
-   "edge_head_direction": 0.4690481722354889,
-   "shift_l2": 0.019693365320563316,
+   "edge_head_direction": 0.4648800194263458,
+   "shift_l2": 0.02446163259446621,
    "probe": {
-    "direction_accuracy": 0.5174102187156677,
+    "direction_accuracy": 0.5262966752052307,
     "pairs_eval": 5514,
     "pairs_train": 29628,
     "label_balance": {
@@ -29,10 +30,10 @@
    }
   },
   "B_plus_direction_loss": {
-   "edge_head_direction": 0.458204448223114,
-   "shift_l2": 0.01961221545934677,
+   "edge_head_direction": 0.4604513645172119,
+   "shift_l2": 0.024869265034794807,
    "probe": {
-    "direction_accuracy": 0.5048966407775879,
+    "direction_accuracy": 0.5076169967651367,
     "pairs_eval": 5514,
     "pairs_train": 29628,
     "label_balance": {
@@ -44,7 +45,7 @@
  },
  "readings": {
   "se": 0.0067,
-  "B_minus_A": -0.0125,
-  "B_minus_A_sigma": -1.86
+  "B_minus_A": -0.0187,
+  "B_minus_A_sigma": -2.77
  }
 }

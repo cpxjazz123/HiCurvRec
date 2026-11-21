@@ -65,7 +65,10 @@ def main() -> None:
     pairs = torch.from_numpy(np.concatenate([pos, neg]).astype(np.int64)).to(device)
     labels = torch.cat([torch.ones(len(pos)), torch.zeros(len(neg))]).to(device)
     # true one-way pairs only: the reverse direction is absent from the DIRECTED edge set
-    is_one_way = np.array([(b, a) not in msg_directed for a, b in pairs.tolist()])
+    # a pair carries a direction to rank only when the forward edge exists AND the reverse
+    # does not; testing the reverse alone let unrelated (negative) pairs into the margin
+    is_one_way = np.array([(a, b) in msg_directed and (b, a) not in msg_directed
+                           for a, b in pairs.tolist()])
     one_way_mask = torch.from_numpy(is_one_way).to(device)
 
     held_pairs = np.stack([held_rows, held_cols], axis=1)
@@ -75,6 +78,7 @@ def main() -> None:
     report = {"split": {"message_edges": int(len(msg_rows)),
                         "held_edges": int(len(held_rows)),
                         "one_way_share_in_supervision": float(is_one_way.mean()),
+                        "one_way_requires_forward_edge": True,
                         "one_way_held_for_probe": int(len(one_way_held))},
               "protocol": {"steps": STEPS, "batch": BATCH, "seed": base.SEED, "alpha": ALPHA,
                            "aggregation": "unweighted mean in both arms",

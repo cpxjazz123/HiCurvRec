@@ -1,0 +1,76 @@
+{
+ "split": {
+  "message_edges": 291262,
+  "held_edges": 32371,
+  "held_one_way": 30709
+ },
+ "protocol": {
+  "probe": "seeded, item-disjoint, 5,514 eval pairs",
+  "rrwp": "from training edges only",
+  "random_control": "same endpoints, orientations permuted"
+ },
+ "arms": {
+  "z:E": {
+   "direction_accuracy": 0.507072925567627,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  },
+  "z:E+deg": {
+   "direction_accuracy": 0.5262966752052307,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  },
+  "z:E+deg+P2": {
+   "direction_accuracy": 0.5331882238388062,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  },
+  "z:E+deg+P1+P2": {
+   "direction_accuracy": 0.5266594290733337,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  },
+  "z:E+deg+P2random": {
+   "direction_accuracy": 0.5324628353118896,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  },
+  "semantics:E": {
+   "direction_accuracy": 0.49709829688072205,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  },
+  "semantics:E+deg": {
+   "direction_accuracy": 0.5175915956497192,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  },
+  "semantics:E+deg+P2": {
+   "direction_accuracy": 0.5076169967651367,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  },
+  "semantics:E+deg+P1+P2": {
+   "direction_accuracy": 0.5161407589912415,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  },
+  "semantics:E+deg+P2random": {
+   "direction_accuracy": 0.507072925567627,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  },
+  "rrwp_only_no_degree": {
+   "direction_accuracy": 0.4883931875228882,
+   "pairs_eval": 5514,
+   "pairs_train": 29628
+  }
+ },
+ "readings": {
+  "se": 0.0067,
+  "z:E+deg_minus_E_sigma": 2.85,
+  "z:E+deg+P2_minus_E_sigma": 3.88,
+  "z:E+deg+P2random_minus_E_sigma": 3.77,
+  "z_P2_minus_P2random_sigma": 0.11
+ }
+}
