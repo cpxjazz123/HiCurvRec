@@ -4,9 +4,12 @@ Three numbers are measured on the arm itself -- its SID table, its checkpoint an
 the stage 1 embeddings -- and nothing is passed in by the caller, so the gate
 cannot be talked past.
 
-* **collision** = ``1 - distinct(three-code SID) / items`` below 0.10.  Among the
-  73 arms with a checkpoint on disk every arm above ``test_R@10 0.06`` stayed at
-  0.030-0.087; arms at 0.10-0.99 never did.
+* **collision** = ``1 - distinct(three-code SID) / items`` below 0.40 (owner
+  instruction 2026-11-21; it was 0.10 before).  The measurement is unchanged: among
+  the 73 arms with a checkpoint on disk every arm above ``test_R@10 0.06`` stayed at
+  0.030-0.087; arms at 0.10-0.99 never did.  The higher limit is a deliberate
+  loosening by the owner, not a new measurement, so older refusals stay on record as
+  such rather than being re-read as passes.
 * **quantisation error** = ``mean ||z - sum(codewords)||`` inside [0.035, 0.10].
   The encoder forward includes every linear layer's bias -- ``model/layers.py``
   builds ``nn.Linear`` with a bias and the checkpoints carry it, and dropping it
@@ -31,7 +34,7 @@ import json
 import sys
 from pathlib import Path
 
-COLLISION_LIMIT = 0.10
+COLLISION_LIMIT = 0.4
 QUANT_ERROR_LOW = 0.035
 QUANT_ERROR_HIGH = 0.10
 EFFECTIVE_RANK_LIMIT = 8.0

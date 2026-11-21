@@ -2601,7 +2601,7 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
                 "export_gate": export_gate}
 
     # Owner policy (updated 2026-11-19): Stage 3 entry requires two numbers
-    # measured on the arm itself -- three-level collision strictly below 5% and
+    # measured on the arm itself -- three-level collision strictly below 40% and
     # quantisation error inside [0.20, 0.60].  Both are computed by
     # tools/research/stage2/sid_quality.py; the other quality metrics stay
     # diagnostic.  The mandatory layer record is still written before any

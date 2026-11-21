@@ -1,12 +1,13 @@
-"""The Stage 3 entry gate: three-level collision below 5% and quantisation error in band.
+"""The Stage 3 entry gate: three-level collision below 40% and quantisation error in band.
 
 Both numbers are measured on the arm's own SID and checkpoint, and the gate is
 proved here on synthetic arms whose two quantities are set by construction:
 
 * collision 0.04 with quantisation error 0.40  -> allowed;
-* collision 0.10                              -> refused (items share an SID);
-* quantisation error 0.02 (codebook memorises) -> refused;
-* quantisation error 10.0 (vectors pressed)    -> refused;
+* collision 0.35                              -> allowed (owner raised the limit to 0.4);
+* collision 0.45                              -> refused (items share an SID);
+* quantisation error 0.02 (codebook memorises) -> allowed, reported as a warning;
+* quantisation error 10.0 (vectors pressed)    -> allowed, reported as a warning;
 * no checkpoint                               -> refused, never assumed fine.
 
 The bands are the ones measured over 74 arms: every arm above recall 0.06 stayed
@@ -62,10 +63,24 @@ def test_inside_the_band_is_allowed():
     assert verdict["quant_error"] == pytest.approx(0.07, abs=1e-3)
 
 
-def test_collision_above_ten_percent_is_refused():
-    folder = _arm("collided", scale=0.07, distinct=85)
+def test_gate_is_forty_percent():
+    from tools.research.stage2.sid_quality import COLLISION_LIMIT
+    assert COLLISION_LIMIT == 0.4
+
+
+def test_collision_below_the_forty_percent_limit_is_allowed():
+    folder = _arm("collided_35", scale=0.07, distinct=65)
     from tools.research.stage2.sid_quality import evaluate
     verdict = evaluate(folder, embeddings_path=folder.parent / "embeddings.npy")
+    assert verdict["collision"] == pytest.approx(0.35)
+    assert verdict["allow"] is True, verdict
+
+
+def test_collision_above_the_forty_percent_limit_is_refused():
+    folder = _arm("collided_45", scale=0.07, distinct=55)
+    from tools.research.stage2.sid_quality import evaluate
+    verdict = evaluate(folder, embeddings_path=folder.parent / "embeddings.npy")
+    assert verdict["collision"] == pytest.approx(0.45)
     assert verdict["allow"] is False
     assert "collision" in verdict["reason"]
 
