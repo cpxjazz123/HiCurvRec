@@ -181,6 +181,7 @@ ANALYSIS = (
     "graph_loss/prototype_multi_control.json",
     "graph_loss/DESIGN_PER_GRAPHLET.md",
     "graph_loss/SUMMARY_PER_GRAPHLET_RULES.md",
+    "graph_loss/DECISION_BRIEF_PER_GRAPHLET.md",
     "graph_loss/arm_alignment_survey.json",
     "graph_loss/REPORT_ARM_SURVEY.md",
     "graph_loss/arm_alignment_TIGER_chain_align_rq.json",
