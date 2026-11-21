@@ -156,6 +156,8 @@ ANALYSIS = (
     "decomposed/REPORT_DECOMPOSED.md",
     "graph_loss/graph_loss.py", "graph_loss/graph_loss.json",
     "graph_loss/REPORT_GRAPH_LOSS.md",
+    "graph_loss/graph_loss_v2.py", "graph_loss/graph_loss_v2.json",
+    "graph_loss/REPORT_GRAPH_LOSS_V2.md",
 )
 
 
