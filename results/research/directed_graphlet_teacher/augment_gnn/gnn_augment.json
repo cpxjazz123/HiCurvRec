@@ -1,0 +1,90 @@
+{
+ "inputs": {
+  "semantics": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+  "full_graph": "ef97a2bdc555259d402065026b00cf62bc1e91c3bc58a66da4d6f8f8df407fdd"
+ },
+ "split": {
+  "message_edges": 291262,
+  "held_edges": 32371,
+  "held_unordered_pairs": 31540,
+  "held_one_way_for_probe": 15521
+ },
+ "protocol": {
+  "steps": 1200,
+  "batch": 4096,
+  "hidden": 128,
+  "layers": 2,
+  "alpha": 1.0,
+  "seed": 0,
+  "message_passing": "directed in/out neighbourhood mean",
+  "fuse_trained_by": "second edge head on the fused vector",
+  "leakage": "held-out edges absent from the graph and the loss"
+ },
+ "arms": {
+  "C_directed": {
+   "edge_head_direction": 0.4571225941181183,
+   "shift_l2": 0.02873857691884041,
+   "probe": {
+    "direction_accuracy": 0.5844666957855225,
+    "pairs_eval": 2794,
+    "pairs_train": 15290,
+    "label_balance": {
+     "forward": 1397,
+     "backward": 1397
+    }
+   }
+  },
+  "B_undirected": {
+   "edge_head_direction": 0.5030603408813477,
+   "shift_l2": 0.1395435482263565,
+   "probe": {
+    "direction_accuracy": 0.5433070659637451,
+    "pairs_eval": 2794,
+    "pairs_train": 15290,
+    "label_balance": {
+     "forward": 1397,
+     "backward": 1397
+    }
+   }
+  },
+  "D_random_direction": {
+   "edge_head_direction": 0.5113072395324707,
+   "shift_l2": 0.0027259113267064095,
+   "probe": {
+    "direction_accuracy": 0.5658553838729858,
+    "pairs_eval": 2794,
+    "pairs_train": 15290,
+    "label_balance": {
+     "forward": 1397,
+     "backward": 1397
+    }
+   }
+  },
+  "E_alpha_zero": {
+   "edge_head_direction": 0.47993040084838867,
+   "shift_l2": 0.0,
+   "probe": {
+    "direction_accuracy": 0.5697923898696899,
+    "pairs_eval": 2794,
+    "pairs_train": 15290,
+    "label_balance": {
+     "forward": 1397,
+     "backward": 1397
+    }
+   }
+  }
+ },
+ "probe_validation": {
+  "null_control_half_reversed": 0.4982,
+  "note": "randomly reversing half the held pairs drops the probe to 0.4982, so the 0.54-0.58 readings are not an artefact of the probe; stored orientation has no id ordering (a<b share 0.52)"
+ },
+ "readings": {
+  "raw_semantics": 0.5698,
+  "directed": 0.5845,
+  "undirected": 0.5433,
+  "random_direction": 0.5659,
+  "alpha_zero": 0.5698,
+  "se": 0.0052,
+  "directed_minus_random_sigma": 3.59
+ }
+}

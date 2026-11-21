@@ -131,6 +131,8 @@ ANALYSIS = (
     "inject_directed/REPORT_INJECT_DIRECTED.md",
     "augment/augment_embedding.py", "augment/augmented_manifest.json",
     "augment/REPORT_AUGMENT.md",
+    "augment_gnn/augment_gnn.py", "augment_gnn/gnn_augment.json",
+    "augment_gnn/REPORT_AUGMENT_GNN.md",
 )
 
 
