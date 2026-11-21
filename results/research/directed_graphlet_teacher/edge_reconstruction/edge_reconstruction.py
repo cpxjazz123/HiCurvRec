@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
-"""Predict the directed edges of a candidate subgraph, then classify with the repo's own rule.
+"""Edge reconstruction against the **complete** behaviour graph, with the classifier in the loop.
 
-Instead of asking for one of 376 orbits, the model predicts each ordered pair of members:
+The previous version trained against `message_edges`, which is the behaviour graph with
+the held-out pairs removed: an instance's label could itself be part of the test split, and
+a P3 whose middle edge is held out is an empty graph.  That makes the training target
+inconsistent with the question being asked.
 
-    p(A->B), p(B->A), p(B->C), p(C->B), p(A->C), p(C->A)
+Here the target is the complete directed graph
+(`behavior_graph_directed/graph.npz`, 323633 edges), so every instance's truth classifies
+back to the family the instance pool named it by -- the script asserts this before
+training and stops otherwise.
 
-The predicted matrix is thresholded and handed to `directed_graphlets.classify`, the same
-deterministic classifier that produced the labels, so the graphlet family and every
-member's orbit are derived from the reconstruction and cannot disagree with it.
-
-Labels come from the real training graph; the model never sees the true adjacency.
-Three inputs share one architecture, split and budget: 768-d semantics, `z` and `q`.
+Also fixed here: the diagonal is excluded from the loss, the degree control now uses both
+endpoints, every reported number is computed over **all** held-out instances (an
+unclassifiable prediction counts as wrong, never as excluded), orbit ids are the global
+ones from `directed_role.instance_targets`, and both widths are covered.
 """
 from __future__ import annotations
 
@@ -26,77 +30,101 @@ HERE = Path(__file__).resolve().parent
 TEACHER = HERE.parent
 REPO = next(parent for parent in HERE.parents
             if (parent / "stage2_RQ-VAE").is_dir() and (parent / "results").is_dir())
-sys.path.insert(0, str(REPO / "results" / "research" / "directed_graphlet_role"))
+ROLE_REPO = REPO / "results" / "research" / "directed_graphlet_role"
+sys.path.insert(0, str(ROLE_REPO))
+sys.path.insert(0, str(HERE.parent / "full_attention"))
 
-from directed_graphlets import classify, load_adjacency  # noqa: E402
+from directed_graphlets import classify  # noqa: E402
+from directed_role import FAMILIES, instance_targets, load_vocabulary  # noqa: E402
+from full_attention import build_labels  # noqa: E402
 
-CONTRACT = TEACHER / "teacher" / "opt" / "data_contract.npz"
-INSTANCES = REPO / "results" / "research" / "directed_graphlet_role" / "instances.npz"
+FULL_GRAPH = REPO / "results" / "research" / "behavior_graph_directed" / "graph.npz"
+INSTANCES = ROLE_REPO / "instances.npz"
 STATES = TEACHER / "fidelity" / "fidelity_states.npz"
 STATES_META = TEACHER / "fidelity" / "fidelity_states.json"
-
-FAMILIES = ("P3", "K3", "C4", "P4", "K1_3")
 WIDTHS = {"P3": 3, "K3": 3, "C4": 4, "P4": 4, "K1_3": 4}
-SECTION = ("P3", "K3")                 # width 3, both skeletons of that width
+N_FAMILIES = len(FAMILIES)
 SEED = 0
-EPOCHS = 60
+EPOCHS = 40      # 200k rows x 40 epochs on a 3- or 4-token graph
 HIDDEN = 128
 HEADS = 4
 LAYERS = 2
-TRAIN_ROWS = 60000
+TRAIN_ROWS = 200000
 HELD_ROWS = 6000
-THRESHOLDS = (0.3, 0.5, 0.7)
 
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def build_rows() -> dict:
-    """Width-3 instances of the training graph, with every ordered pair's truth."""
+def full_adjacency(nodes: np.ndarray, edges: set) -> np.ndarray:
+    width = nodes.shape[1]
+    out = np.zeros((len(nodes), width, width), dtype=bool)
+    for index, members in enumerate(nodes.tolist()):
+        for i in range(width):
+            for j in range(width):
+                if i != j and (members[i], members[j]) in edges:
+                    out[index, i, j] = True
+    return out
+
+
+def build_rows(width: int) -> dict:
+    """Instances with the complete-graph truth, the classifier's own labels, and a split."""
     payload = np.load(INSTANCES)
-    contract = np.load(CONTRACT)
-    observed = set(map(tuple, contract["message_edges"].tolist()))
-    nodes, family, part, adjacency = [], [], [], []
-    for name in SECTION:
+    graph = np.load(FULL_GRAPH)
+    edges = set(zip(graph["rows"].tolist(), graph["cols"].tolist()))
+    vocabulary = load_vocabulary("directed")
+    nodes, family_local, family_global, orbit_global, part = [], [], [], [], []
+    members = [name for name in FAMILIES if WIDTHS[name] == width]
+    for name in members:
         block = payload[f"{name}_nodes"]
         split = payload[f"{name}_split"]
-        rows = np.concatenate([np.flatnonzero(split == 0), np.flatnonzero(split == 1)])
-        pieces = np.concatenate([np.zeros(int((split == 0).sum()), dtype=np.int8),
-                                 np.ones(int((split == 1).sum()), dtype=np.int8)])
+        targets = instance_targets(name, payload[f"{name}_subtype"],
+                                   payload[f"{name}_roles"], vocabulary)
+        keep = targets["subtype"] >= 0
+        rows = np.concatenate([np.flatnonzero((split == 0) & keep),
+                               np.flatnonzero((split == 1) & keep)])
+        mask = np.concatenate([np.zeros(int(((split == 0) & keep).sum()), dtype=np.int8),
+                               np.ones(int(((split == 1) & keep).sum()), dtype=np.int8)])
         nodes.append(block[rows])
-        family.append(np.full(len(rows), FAMILIES.index(name), dtype=np.int64))
-        part.append(pieces)
-        edges = np.zeros((len(rows), 3, 3), dtype=bool)
-        for index, members in enumerate(block[rows].tolist()):
-            for i in range(3):
-                for j in range(3):
-                    if i != j and (members[i], members[j]) in observed:
-                        edges[index, i, j] = True
-        adjacency.append(edges)
+        family_local.append(np.full(len(rows), FAMILIES.index(name), dtype=np.int64))
+        orbit_global.append(targets["orbit"][rows])
+        part.append(mask)
     nodes = np.concatenate(nodes)
-    family = np.concatenate(family)
     part = np.concatenate(part)
-    adjacency = np.concatenate(adjacency)
-    # held-out rows must not share a member with any training row
-    train_items = set(nodes[part == 0].ravel().tolist())
-    pure = np.array([not (set(row.tolist()) & train_items) for row in nodes])
+    adjacency = full_adjacency(nodes, edges)
+
+    # the classifier must reproduce each instance's own family before anything is trained
+    mismatched = 0
+    for row in range(len(nodes)):
+        result = classify(adjacency[row].copy())
+        if result is None or result[0] != FAMILIES[int(np.concatenate(family_local)[row])]:
+            mismatched += 1
+    if mismatched:
+        raise SystemExit(f"{mismatched} instances do not classify back to their family; "
+                         "the label source is still inconsistent with the question")
+
     train_rows = np.flatnonzero(part == 0)
-    held_rows = np.flatnonzero((part == 1) & pure)
+    held_rows = np.flatnonzero(part == 1)
+    train_items = set(nodes[train_rows].ravel().tolist())
+    pure = np.array([not (set(row.tolist()) & train_items) for row in nodes])
+    dropped = int(((part == 1) & ~pure).sum())
     isolation = "item"
-    if len(held_rows) < 500:
-        held_rows = np.flatnonzero(part == 1)
+    if ((part == 1) & pure).sum() < 500:
         isolation = "instance_only"
+        pure = np.ones(len(nodes), dtype=bool)
+    held_rows = np.flatnonzero((part == 1) & pure)
     rng = np.random.default_rng(SEED)
     if len(train_rows) > TRAIN_ROWS:
         train_rows = np.sort(rng.choice(train_rows, TRAIN_ROWS, replace=False))
     if len(held_rows) > HELD_ROWS:
         held_rows = np.sort(rng.choice(held_rows, HELD_ROWS, replace=False))
-    return {"nodes": nodes, "family": family, "adjacency": adjacency,
-            "train_rows": train_rows, "held_rows": held_rows,
-            "isolation": isolation,
-            "dropped_for_item_overlap": int(((part == 1) & ~pure).sum()),
-            "train_items": len(train_items)}
+    return {"nodes": nodes, "part": part, "adjacency": adjacency,
+            "family": np.concatenate(family_local), "orbit": np.concatenate(orbit_global),
+            "width": width,
+            "train_rows": train_rows, "held_rows": held_rows, "isolation": isolation,
+            "dropped_for_item_overlap": dropped, "train_items": len(train_items),
+            "label_header_mismatch": mismatched}
 
 
 def build_model(in_dim: int):
@@ -115,7 +143,6 @@ def build_model(in_dim: int):
                     "out": nn.Linear(HIDDEN, HIDDEN),
                     "ff": nn.Sequential(nn.Linear(HIDDEN, 2 * HIDDEN), nn.GELU(),
                                         nn.Linear(2 * HIDDEN, HIDDEN))}) for _ in range(LAYERS))
-            # every ordered pair is scored from its two endpoints: (u, v, u*v)
             self.pair = nn.Sequential(nn.Linear(3 * HIDDEN, HIDDEN), nn.GELU(),
                                       nn.Linear(HIDDEN, 1))
 
@@ -133,10 +160,13 @@ def build_model(in_dim: int):
                 h = h + layer["ff"](h)
             left = h.unsqueeze(2).expand(-1, -1, h.shape[1], -1)
             right = h.unsqueeze(1).expand(-1, h.shape[1], -1, -1)
-            logits = self.pair(torch.cat([left, right, left * right], dim=-1)).squeeze(-1)
-            return logits
+            return self.pair(torch.cat([left, right, left * right], dim=-1)).squeeze(-1)
 
     return EdgeNet()
+
+
+def orbit_pairs(width: int):
+    return [(i, j) for i in range(width) for j in range(width) if i != j]
 
 
 def macro_f1(truth, guess, n_classes: int) -> float:
@@ -155,14 +185,11 @@ def macro_f1(truth, guess, n_classes: int) -> float:
 
 
 def evaluate(probabilities: np.ndarray, adjacency: np.ndarray, family: np.ndarray,
-             threshold: float, family_bands: dict) -> dict:
-    """Threshold the predicted edges and let the deterministic classifier decide."""
+             orbit_global: np.ndarray, threshold: float) -> dict:
+    """Every held-out instance is scored; an unclassifiable prediction counts as wrong."""
     predicted = probabilities > threshold
-    # the candidate matrix is what a degree-only control gives as well: any pair of busy
-    # items is predicted connected.  Diagonal entries are never counted as edges.
-    predicted = np.broadcast_to(predicted[:, :, None], adjacency.shape).copy() \
-        if predicted.ndim == 2 else predicted
-    off_diagonal = ~np.eye(adjacency.shape[1], dtype=bool)[None]
+    width = adjacency.shape[1]
+    off_diagonal = ~np.eye(width, dtype=bool)[None]
     truth_edges = adjacency & off_diagonal
     guess_edges = predicted & off_diagonal
     tp = int((truth_edges & guess_edges).sum())
@@ -172,34 +199,34 @@ def evaluate(probabilities: np.ndarray, adjacency: np.ndarray, family: np.ndarra
     recall = tp / max(tp + fn, 1)
     edge_f1 = 0.0 if precision + recall == 0 else 2 * precision * recall / (precision + recall)
     exact = float((guess_edges == truth_edges).all(axis=(1, 2)).mean())
-    filled = float(guess_edges.sum() / truth_edges.sum()) if truth_edges.sum() else float("nan")
 
-    predicted_family, predicted_orbit, truth_orbit, truth_family = [], [], [], []
+    predicted_family, predicted_orbit = [], []
     for row in range(len(predicted)):
         result = classify(guess_edges[row].copy())
         predicted_family.append(FAMILIES.index(result[0]) if result else -1)
-        predicted_orbit.append(result[2] if result else (None,) * adjacency.shape[1])
-        true_result = classify(truth_edges[row].copy())
-        truth_family.append(FAMILIES.index(true_result[0]) if true_result else -1)
-        truth_orbit.append(true_result[2] if true_result else (None,) * adjacency.shape[1])
+        predicted_orbit.append(result[2] if result else None)
     predicted_family = np.array(predicted_family)
-    truth_family = np.array(truth_family)
-    # orbit ids are local per subtype; compare only where both sides produced one
+    family_correct = predicted_family == family
+    # family score over the full instance, unclassifiable = wrong
+    family_overall = float(family_correct.mean())
+    # orbit score over the full instance: pair the predicted matrix's own orbit ids with
+    # the global orbit ids of the same subtype; unmatched/None counts as wrong
     orbit_hits, orbit_total = 0, 0
-    for guess_row, truth_row in zip(predicted_orbit, truth_orbit):
-        if guess_row[0] is None or truth_row[0] is None:
+    for row, ids in enumerate(predicted_orbit):
+        orbit_total += width
+        if ids is None:
             continue
-        for guess, truth in zip(guess_row, truth_row):
-            orbit_hits += int(guess == truth)
-            orbit_total += 1
+        truth_ids = orbit_global[row]
+        for position in range(width):
+            orbit_hits += int(int(ids[position]) == int(truth_ids[position]))
     return {"threshold": threshold,
             "edge_precision": precision, "edge_recall": recall, "edge_f1": edge_f1,
-            "adjacency_exact": exact, "predicted_edge_share": filled,
+            "adjacency_exact": exact,
             "classifiable_share": float((predicted_family >= 0).mean()),
-            "family_accuracy": float((predicted_family == truth_family).mean()),
-            "family_macro_f1": macro_f1(truth_family, predicted_family, len(FAMILIES)),
-            "orbit_accuracy": orbit_hits / max(orbit_total, 1),
-            "orbit_positions_compared": orbit_total}
+            "family_accuracy_overall": family_overall,
+            "family_macro_f1": macro_f1(family, predicted_family, N_FAMILIES),
+            "orbit_accuracy_overall": orbit_hits / max(orbit_total, 1),
+            "instances": int(len(predicted))}
 
 
 def main() -> None:
@@ -209,109 +236,98 @@ def main() -> None:
     parser.add_argument("--out", default=str(HERE / "edge_reconstruction.json"))
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    rows = build_rows()
-    payload = np.load(STATES)
-    states = {key: payload[key] for key in ("semantics", "z", "q")}
+    states = {key: np.load(STATES)[key] for key in ("semantics", "z", "q")}
     report = {"inputs": {"instances": sha256(INSTANCES), "states": sha256(STATES),
-                         "contract": sha256(CONTRACT),
-                         "classifier": "directed_graphlets.classify on the predicted matrix"},
-              "labels": {"section": list(SECTION), "isolation": rows["isolation"],
-                         "dropped_for_item_overlap": rows["dropped_for_item_overlap"],
-                         "train_rows": int(len(rows["train_rows"])),
-                         "held_rows": int(len(rows["held_rows"])),
-                         "train_items": rows["train_items"]},
+                         "full_graph": sha256(FULL_GRAPH),
+                         "checkpoint": json.loads(STATES_META.read_text())},
+              "labels": {"source": "behavior_graph_directed/graph.npz (complete graph)",
+                         "widths": {}},
               "protocol": {"seed": SEED, "epochs": EPOCHS, "heads": HEADS, "layers": LAYERS,
-                           "hidden": HIDDEN, "thresholds": list(THRESHOLDS),
-                           "prediction": "one logit per ordered pair of members",
-                           "supervision": "real training-graph edges, never given as input",
-                           "threshold_rule": "chosen on the training split by edge F1; the "
-                                             "held-out rows are only reported",
-                           "baseline": "degree-only: predict a connection whenever both "
-                                       "members are above the same degree threshold"},
-              "runs": {},
-              "controls": {}}
+                           "hidden": HIDDEN, "widths": sorted(set(WIDTHS.values())),
+                           "loss": "BCE over ordered pairs, diagonal excluded",
+                           "inputs": "item representations only, no degree feature",
+                           "threshold": "chosen on the training split by edge F1",
+                           "scoring": "every held-out instance is scored; an unclassifiable "
+                                      "prediction counts as wrong",
+                           "orbit_ids": "global, via directed_role.instance_targets"},
+              "runs": {}, "controls": {}}
 
-    # behaviour degree: how many directed message edges touch an item.  A subgraph of
-    # busy items looks "well connected" whatever its shape, so the score is normalised
-    # by this quantity and a degree-only baseline is reported next to every run.
-    degree = np.bincount(np.load(CONTRACT)["message_edges"].ravel(),
-                         minlength=len(states["z"])).astype(np.float64)
-    degree = degree / max(degree.max(), 1.0)
-    member_degree = degree[rows["nodes"]]
-    x_train_idx = rows["train_rows"]
-    x_held_idx = rows["held_rows"]
-    held_degree = member_degree[x_held_idx]
-    degree_baseline = {
-        f"threshold_{threshold}": evaluate(
-            held_degree.astype(np.float64), rows["adjacency"][x_held_idx],
-            rows["family"][x_held_idx], threshold, {})
-        for threshold in THRESHOLDS}
-    train_degree = member_degree[x_train_idx].astype(np.float64)
-    train_scores = {threshold: evaluate(train_degree, rows["adjacency"][x_train_idx],
-                                        rows["family"][x_train_idx], threshold, {})
-                    for threshold in THRESHOLDS}
-    best_degree = max(train_scores, key=lambda value: train_scores[value]["edge_f1"])
-    degree_baseline["threshold_chosen_on_train"] = {
-        "threshold": best_degree, "train_edge_f1": train_scores[best_degree]["edge_f1"],
-        "heldout": degree_baseline[f"threshold_{best_degree}"]}
-    report["controls"]["degree_only"] = degree_baseline
-    for name, value in degree_baseline.items():
-        if "edge_f1" not in value:
-            continue
-        print(f"  degree-only {name}: edgeF1 {value['edge_f1']:.3f} "
-              f"exact {value['adjacency_exact']:.3f}", flush=True)
-    print(f"  degree-only chosen threshold {best_degree}: held-out edgeF1 "
-          f"{degree_baseline[f'threshold_{best_degree}']['edge_f1']:.3f}", flush=True)
-    y_train = torch.from_numpy(rows["adjacency"][x_train_idx]).float().to(device)
-    degree_scaled = float(np.linalg.norm(states["z"], axis=1).mean())
-    for name in ("semantics", "z", "q"):
-        torch.manual_seed(SEED)
-        model = build_model(states[name].shape[1] + 1).to(device)
-        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
-        def features(index: np.ndarray) -> np.ndarray:
-            base = states[name][rows["nodes"][index]].astype(np.float32)
-            extra = member_degree[index].astype(np.float32)[..., None]
-            return np.concatenate([base, degree_scaled * extra], axis=-1)
+    graph = np.load(FULL_GRAPH)
+    degree_out = np.bincount(graph["rows"], minlength=len(states["z"])).astype(np.float64)
+    degree_in = np.bincount(graph["cols"], minlength=len(states["z"])).astype(np.float64)
+    both = np.minimum(degree_out, degree_in)
+    both = both / max(both.max(), 1.0)
 
-        tokens = torch.from_numpy(features(x_train_idx)).to(device)
-        weight = torch.tensor(1.0).to(device)
-        for _ in range(EPOCHS):
-            model.train()
-            logits = model(tokens)
-            loss = torch.nn.functional.binary_cross_entropy_with_logits(
-                logits, y_train, pos_weight=weight)
-            optimizer.zero_grad(set_to_none=True)
-            loss.backward()
-            optimizer.step()
-        model.eval()
-        with torch.no_grad():
-            held_tokens = torch.from_numpy(features(x_held_idx)).to(device)
-            probabilities = torch.sigmoid(model(held_tokens)).cpu().numpy()
-        with torch.no_grad():
-            train_probabilities = torch.sigmoid(model(tokens)).cpu().numpy()
-        # the threshold is picked on the training split; the held-out rows only report
-        scores = {threshold: evaluate(train_probabilities, rows["adjacency"][x_train_idx],
-                                      rows["family"][x_train_idx], threshold, {})
-                  for threshold in THRESHOLDS}
-        best = max(scores, key=lambda value: scores[value]["edge_f1"])
-        report["runs"][name] = {
-            f"threshold_{threshold}": evaluate(
-                probabilities, rows["adjacency"][x_held_idx], rows["family"][x_held_idx],
-                threshold, {})
-            for threshold in THRESHOLDS}
-        report["runs"][name]["threshold_chosen_on_train"] = {
-            "threshold": best, "train_edge_f1": scores[best]["edge_f1"],
-            "heldout": report["runs"][name][f"threshold_{best}"]}
-        chosen = report["runs"][name]["threshold_chosen_on_train"]
-        print(f"  {name}: threshold {chosen['threshold']} chosen on train "
-              f"(edgeF1 {chosen['train_edge_f1']:.3f}) -> held-out edgeF1 "
-              f"{chosen['heldout']['edge_f1']:.3f}, exact "
-              f"{chosen['heldout']['adjacency_exact']:.3f}, family "
-              f"{chosen['heldout']['family_accuracy']:.3f}, orbit "
-              f"{chosen['heldout']['orbit_accuracy']:.3f}", flush=True)
-        tmp = Path(args.out + ".tmp")
-        tmp.write_text(json.dumps(report, indent=1) + "\n")
-        tmp.replace(args.out)
+    for width in (3, 4):
+        rows = build_rows(width)
+        report["labels"]["widths"][str(width)] = {
+            "classifier_reproduces_family": rows["label_header_mismatch"] == 0,
+            "isolation": rows["isolation"],
+            "dropped_for_item_overlap": rows["dropped_for_item_overlap"],
+            "train_rows": int(len(rows["train_rows"])),
+            "held_rows": int(len(rows["held_rows"]))}
+        train_rows, held_rows = rows["train_rows"], rows["held_rows"]
+        y_truth = rows["adjacency"][train_rows]
+        keep_mask = np.broadcast_to(~np.eye(width, dtype=bool)[None],
+                                    (len(train_rows), width, width)).copy()
+        report["runs"][str(width)] = {}
+        for name in ("semantics", "z", "q"):
+            torch.manual_seed(SEED)
+            model = build_model(states[name].shape[1]).to(device)
+            optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
+            tokens = torch.from_numpy(
+                states[name][rows["nodes"][train_rows]].astype(np.float32)).to(device)
+            target = torch.from_numpy(y_truth.astype(np.float32)).to(device)
+            keep = torch.from_numpy(keep_mask).to(device)
+            for _ in range(EPOCHS):
+                model.train()
+                logits = model(tokens)
+                # the diagonal is never a prediction target
+                loss = torch.nn.functional.binary_cross_entropy_with_logits(
+                    logits[keep], target[keep])
+                optimizer.zero_grad(set_to_none=True)
+                loss.backward()
+                optimizer.step()
+            model.eval()
+            with torch.no_grad():
+                held_tokens = torch.from_numpy(
+                    states[name][rows["nodes"][held_rows]].astype(np.float32)).to(device)
+                probabilities = torch.sigmoid(model(held_tokens)).cpu().numpy()
+                train_probabilities = torch.sigmoid(model(tokens)).cpu().numpy()
+            train_scores = {t: evaluate(train_probabilities, y_truth,
+                                        rows["family"][train_rows],
+                                        rows["orbit"][train_rows], t)
+                            for t in (0.3, 0.5, 0.7)}
+            best = max(train_scores, key=lambda value: train_scores[value]["edge_f1"])
+            report["runs"][str(width)][name] = {
+                "threshold_chosen_on_train": best,
+                "train_edge_f1": train_scores[best]["edge_f1"],
+                "heldout": evaluate(probabilities, rows["adjacency"][held_rows],
+                                    rows["family"][held_rows], rows["orbit"][held_rows], best)}
+            row = report["runs"][str(width)][name]["heldout"]
+            print(f"  w{width} {name} thr {best}: edgeF1 {row['edge_f1']:.3f} "
+                  f"exact {row['adjacency_exact']:.3f} "
+                  f"classifiable {row['classifiable_share']:.3f} "
+                  f"family {row['family_accuracy_overall']:.3f} "
+                  f"orbit {row['orbit_accuracy_overall']:.3f}", flush=True)
+
+        train_members = both[rows["nodes"][train_rows]]
+        held_members = both[rows["nodes"][held_rows]]
+        pair_train = train_members[:, :, None] * train_members[:, None, :]
+        pair_held = held_members[:, :, None] * held_members[:, None, :]
+        train_scores = {t: evaluate(pair_train, y_truth, rows["family"][train_rows],
+                                    rows["orbit"][train_rows], t)
+                        for t in (0.3, 0.5, 0.7)}
+        best = max(train_scores, key=lambda value: train_scores[value]["edge_f1"])
+        report["controls"].setdefault("both_endpoint_degree", {})[str(width)] = {
+            "threshold_chosen_on_train": best,
+            "heldout": evaluate(pair_held, rows["adjacency"][held_rows],
+                                rows["family"][held_rows], rows["orbit"][held_rows], best)}
+        print(f"  w{width} both-endpoint degree thr {best}: edgeF1 "
+              f"{report['controls']['both_endpoint_degree'][str(width)]['heldout']['edge_f1']:.3f}",
+              flush=True)
+
+    Path(args.out).write_text(json.dumps(report, indent=1) + "\n")
     print("written", args.out)
 
 
