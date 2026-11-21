@@ -187,6 +187,8 @@ ANALYSIS = (
     "graph_loss/evaluate_arm.py",
     "graph_loss/verdict.py",
     "graph_loss/verdict.json",
+    "graph_loss/fork_decision.py",
+    "graph_loss/fork_decision_volume.json",
     "graph_loss/test_arm_output_paths.py",
     "graph_loss/REPORT_CHAIN_ARM_RESULT.md",
     "graph_loss/prototype_chain_l2local.json",
