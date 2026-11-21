@@ -7,7 +7,9 @@
   "message_edges": 291262,
   "held_edges": 32371,
   "held_unordered_pairs": 31540,
-  "held_one_way_for_probe": 15521
+  "held_one_way_for_probe": 30709,
+  "one_way_share_of_held": 0.9487,
+  "labelled_edges_used_for_supervision": 291262
  },
  "protocol": {
   "steps": 1200,
@@ -22,69 +24,77 @@
  },
  "arms": {
   "C_directed": {
-   "edge_head_direction": 0.4571225941181183,
-   "shift_l2": 0.02873857691884041,
+   "edge_head_direction": 0.4751375913619995,
+   "shift_l2": 0.02980896830558777,
    "probe": {
-    "direction_accuracy": 0.5844666957855225,
-    "pairs_eval": 2794,
-    "pairs_train": 15290,
+    "direction_accuracy": 0.5266594290733337,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
     "label_balance": {
-     "forward": 1397,
-     "backward": 1397
+     "forward": 2757,
+     "backward": 2757
     }
    }
   },
   "B_undirected": {
-   "edge_head_direction": 0.5030603408813477,
-   "shift_l2": 0.1395435482263565,
+   "edge_head_direction": 0.47328147292137146,
+   "shift_l2": 0.02831447310745716,
    "probe": {
-    "direction_accuracy": 0.5433070659637451,
-    "pairs_eval": 2794,
-    "pairs_train": 15290,
+    "direction_accuracy": 0.5243017673492432,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
     "label_balance": {
-     "forward": 1397,
-     "backward": 1397
+     "forward": 2757,
+     "backward": 2757
     }
    }
   },
   "D_random_direction": {
-   "edge_head_direction": 0.5113072395324707,
-   "shift_l2": 0.0027259113267064095,
+   "edge_head_direction": 0.5073431730270386,
+   "shift_l2": 0.022549845278263092,
    "probe": {
-    "direction_accuracy": 0.5658553838729858,
-    "pairs_eval": 2794,
-    "pairs_train": 15290,
+    "direction_accuracy": 0.5201305747032166,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
     "label_balance": {
-     "forward": 1397,
-     "backward": 1397
+     "forward": 2757,
+     "backward": 2757
     }
    }
   },
   "E_alpha_zero": {
-   "edge_head_direction": 0.47993040084838867,
+   "edge_head_direction": 0.5057149529457092,
    "shift_l2": 0.0,
    "probe": {
-    "direction_accuracy": 0.5697923898696899,
-    "pairs_eval": 2794,
-    "pairs_train": 15290,
+    "direction_accuracy": 0.4951033592224121,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
     "label_balance": {
-     "forward": 1397,
-     "backward": 1397
+     "forward": 2757,
+     "backward": 2757
     }
    }
   }
  },
- "probe_validation": {
-  "null_control_half_reversed": 0.4982,
-  "note": "randomly reversing half the held pairs drops the probe to 0.4982, so the 0.54-0.58 readings are not an artefact of the probe; stored orientation has no id ordering (a<b share 0.52)"
- },
  "readings": {
-  "raw_semantics": 0.5698,
-  "directed": 0.5845,
-  "undirected": 0.5433,
-  "random_direction": 0.5659,
-  "alpha_zero": 0.5698,
-  "se": 0.0052,
-  "directed_minus_random_sigma": 3.59
+  "C_directed": {
+   "probe": 0.5266594290733337,
+   "shift": 0.02980896830558777
+  },
+  "B_undirected": {
+   "probe": 0.5243017673492432,
+   "shift": 0.02831447310745716
+  },
+  "D_random_direction": {
+   "probe": 0.5201305747032166,
+   "shift": 0.022549845278263092
+  },
+  "E_alpha_zero": {
+   "probe": 0.4951033592224121,
+   "shift": 0.0
+  },
+  "se": 0.0067,
+  "directed_minus_random_sigma": 0.97,
+  "graph_minus_raw_sigma": 4.69
  }
 }

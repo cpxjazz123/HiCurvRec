@@ -217,15 +217,21 @@ def main() -> None:
     labels = torch.cat([torch.ones(len(pos)), torch.zeros(len(neg))]).to(device)
 
     held_pairs = np.stack([held_rows, held_cols], axis=1)
-    # direction pairs for the probe: held-out one-way edges, both orders as features
-    reverse = {(b, a) for a, b in held_unit}
-    one_way = held_pairs[np.array([(b, a) not in reverse for a, b in held_pairs.tolist()])]
+    # direction pairs for the probe: held-out edges whose *directed* reverse is also absent.
+    # Testing against the unordered pair (as before) selected almost every edge by the id
+    # ordering and let the probe learn item numbering instead of behaviour direction.
+    held_directed = set(map(tuple, held_pairs.tolist()))
+    is_one_way = np.array([(b, a) not in held_directed for a, b in held_pairs.tolist()])
+    one_way = held_pairs[is_one_way]
+    one_way_share = float(is_one_way.mean())
 
     report = {"inputs": {"semantics": sha256(SEMANTICS), "full_graph": sha256(FULL_GRAPH)},
               "split": {"message_edges": int(len(msg_rows)),
                         "held_edges": int(len(held_rows)),
                         "held_unordered_pairs": int(len(held_unit)),
-                        "held_one_way_for_probe": int(len(one_way))},
+                        "held_one_way_for_probe": int(len(one_way)),
+                        "one_way_share_of_held": round(one_way_share, 4),
+                        "labelled_edges_used_for_supervision": int(len(pos))},
               "protocol": {"steps": STEPS, "batch": BATCH, "hidden": HIDDEN,
                            "layers": LAYERS, "alpha": ALPHA, "seed": SEED,
                            "message_passing": "directed in/out neighbourhood mean",
@@ -241,22 +247,30 @@ def main() -> None:
         alpha = 0.0 if arm == "E_alpha_zero" else ALPHA
         label_pairs = labels.clone()
         if arm == "B_undirected":
-            # an undirected target cannot distinguish the two orders: the same label is
-            # used for (i, j) and (j, i)
-            label_pairs = torch.ones_like(labels)
+            # undirected supervision: a positive pair is positive in BOTH orders and a
+            # negative pair is negative in both.  The earlier version wrote 1 everywhere,
+            # which teaches "every pair is connected" instead of "the edge is undirected".
+            undirected = {}
+            for a, b in np.concatenate([pos, neg]).tolist():
+                undirected[(a, b)] = 1.0 if (min(a, b), max(a, b)) in train_unit else 0.0
+            label_pairs = torch.tensor(
+                [undirected[(int(a), int(b))] for a, b in pairs.tolist()],
+                dtype=torch.float32, device=device)
         for step in range(STEPS):
             model.train()
             pick = torch.randint(0, len(pairs), (BATCH,), generator=generator)
             out = model(x, out_adj, in_adj, out_deg, in_deg, alpha)
             left, right = pairs[pick, 0], pairs[pick, 1]
-            logits = (out["s"][left] * out["t"][right]).sum(-1)
-            logits_fused = (out["s2"][left] * out["t2"][right]).sum(-1)
             target = label_pairs[pick]
             if arm == "D_random_direction":
-                # randomly oriented edges: the edge exists, its direction is coin-flipped
+                # a coin flip decides which endpoint is presented first, so the *existence*
+                # of the edge stays learnable and its direction does not.  Flipping the
+                # labels (as before) turned negatives into positives and destroyed both.
                 flip = torch.from_numpy(
                     np.random.default_rng(SEED + step).random(len(pick)) < 0.5).to(device)
-                target = torch.where(flip, 1.0 - target, target)
+                left, right = torch.where(flip, right, left), torch.where(flip, left, right)
+            logits = (out["s"][left] * out["t"][right]).sum(-1)
+            logits_fused = (out["s2"][left] * out["t2"][right]).sum(-1)
             loss = torch.nn.functional.binary_cross_entropy_with_logits(logits, target)
             loss = loss + torch.nn.functional.binary_cross_entropy_with_logits(
                 logits_fused, target)
