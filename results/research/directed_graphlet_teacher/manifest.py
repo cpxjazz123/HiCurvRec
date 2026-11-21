@@ -135,6 +135,8 @@ ANALYSIS = (
     "augment_gnn/REPORT_AUGMENT_GNN.md",
     "augment_gnn/dual_augment.py", "augment_gnn/dual_augment.json",
     "augment_gnn/REPORT_DUAL_PROPAGATION.md",
+    "augment_gnn/direction_arms.py", "augment_gnn/direction_arms.json",
+    "augment_gnn/REPORT_DIRECTION_ARMS.md",
 )
 
 

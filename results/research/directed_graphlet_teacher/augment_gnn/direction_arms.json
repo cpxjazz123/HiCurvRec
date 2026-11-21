@@ -1,0 +1,89 @@
+{
+ "split": {
+  "message_edges": 291262,
+  "held_edges": 32371,
+  "held_one_way_for_probe": 30709,
+  "weighted_message_edges_share": 0.03217378168109812
+ },
+ "protocol": {
+  "steps": 1200,
+  "batch": 4096,
+  "seed": 0,
+  "alpha": 1.0,
+  "dir_lambda": 1.0,
+  "direction_loss": "-log sigmoid(s_A.t_B - s_B.t_A) on one-way edges",
+  "probe": "seeded, item-isolated direction head"
+ },
+ "arms": {
+  "A_dual_bce": {
+   "edge_head_direction": 0.4676479399204254,
+   "shift_l2": 0.020892752334475517,
+   "probe": {
+    "direction_accuracy": 0.5077983140945435,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
+    "label_balance": {
+     "forward": 2757,
+     "backward": 2757
+    }
+   }
+  },
+  "B_plus_direction_loss": {
+   "edge_head_direction": 0.4733791649341583,
+   "shift_l2": 0.02490241266787052,
+   "probe": {
+    "direction_accuracy": 0.5065288543701172,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
+    "label_balance": {
+     "forward": 2757,
+     "backward": 2757
+    }
+   }
+  },
+  "C_plus_edge_weights": {
+   "edge_head_direction": 0.47080662846565247,
+   "shift_l2": 0.025367289781570435,
+   "probe": {
+    "direction_accuracy": 0.5186797380447388,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
+    "label_balance": {
+     "forward": 2757,
+     "backward": 2757
+    }
+   }
+  },
+  "D_plus_attention": {
+   "edge_head_direction": 0.4754958152770996,
+   "shift_l2": 0.02146892435848713,
+   "probe": {
+    "direction_accuracy": 0.5239390730857849,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
+    "label_balance": {
+     "forward": 2757,
+     "backward": 2757
+    }
+   }
+  },
+  "E_plus_role_features": {
+   "edge_head_direction": 0.47328147292137146,
+   "shift_l2": 0.02135934866964817,
+   "probe": {
+    "direction_accuracy": 0.519949197769165,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
+    "label_balance": {
+     "forward": 2757,
+     "backward": 2757
+    }
+   }
+  }
+ },
+ "readings": {
+  "se": 0.0067,
+  "B_minus_A_sigma": -0.19,
+  "E_minus_B_sigma": 1.99
+ }
+}
