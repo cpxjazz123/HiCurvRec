@@ -1,0 +1,2308 @@
+{
+ "protocol": {
+  "instances": "results/research/graphlet_roles/instances.npz",
+  "orbit_definitions": "analysis_sid_recall/build_graphlet_roles.py (induced undirected graphlets; P3 and K1_3 have centre/leaf orbits, P4 has middle/end orbits)",
+  "directed_roles": "merge centre = in-degree >= 3 (train edges), fork centre = out-degree >= 3; 400 / 400 centres used",
+  "share": "P(two nodes agree on the first k codes), k = 1, 2, 3",
+  "no_training": true,
+  "sid_tables_sha256": {
+   "A_none": "0b79847e35f9a42693bc5c82fddc737868e35c1c08d110f037cab745d8a3817c",
+   "B_undirected": "5afd2b7bf2cdf59731a88140ac9ca55ab5544ad2b243c3050aa271e5470a996f",
+   "C_random": "dab5c0ba058a80e7c3bc14636dba87669560314f4f876f756125e49e4fcfc053",
+   "D_directed": "cb2c5623cb1bda60f1b976b843f224d776d92baefbda5a1455dbe811571a284a"
+  },
+  "sid_tables_note": "regenerated deterministically by graph_loss_v3.py (seed 42, 800 steps); not committed as data"
+ },
+ "arms": {
+  "baseline": {
+   "sid": "results/stage2_RQ-VAE/TIGER_drq_D1/item_sids.json",
+   "items": 24587,
+   "collision": 0.025338593565705447,
+   "K3": {
+    "prefix@1": {
+     "same_orbit_share": 0.011515199535166257,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0006074531864881282,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 1.3205504054089745e-05,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.009970997099709972,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00017335066840017336,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     }
+    },
+    "all_nodes_share@1": 0.011515199535166255
+   },
+   "P3": {
+    "prefix@1": {
+     "same_orbit_share": 0.007010218657290407,
+     "different_orbit_share": 0.007955169761564664,
+     "role_gap": -0.0009449511042742562
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0002197560707614548,
+     "different_orbit_share": 0.0004889572574442369,
+     "role_gap": -0.0002692011866827821
+    },
+    "prefix@3": {
+     "same_orbit_share": 3.296341061421822e-05,
+     "different_orbit_share": 4.395121415229096e-05,
+     "role_gap": -1.0987803538072738e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.009869158399672095,
+      "different_orbit_share": 0.00963543839159089,
+      "role_gap": 0.0002337200080812056,
+      "role_gap_ci95": [
+       -0.0005021348795504778,
+       0.0009113426823182566
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00012808771446686692,
+      "different_orbit_share": 0.00012513556352715442,
+      "role_gap": 2.9521509397124922e-06,
+      "role_gap_ci95": [
+       -7.62539640624031e-05,
+       8.398251969402742e-05
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     }
+    },
+    "all_nodes_share@1": 0.007640186060139911
+   },
+   "C4": {
+    "prefix@1": {
+     "same_orbit_share": 0.007449030333167578,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.00033482512846013594,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 3.315100281783524e-05,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.009740487024351218,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.0001266730003166825,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     }
+    },
+    "all_nodes_share@1": 0.0074490303331675774
+   },
+   "P4": {
+    "prefix@1": {
+     "same_orbit_share": 0.0036824274561791134,
+     "different_orbit_share": 0.005400893602396033,
+     "role_gap": -0.0017184661462169193
+    },
+    "prefix@2": {
+     "same_orbit_share": 9.819806549810969e-05,
+     "different_orbit_share": 0.0002700446801198016,
+     "role_gap": -0.00017184661462169194
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.0,
+     "different_orbit_share": 3.6824274561791134e-05,
+     "role_gap": -3.6824274561791134e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.009298608132870678,
+      "different_orbit_share": 0.008940184280061884,
+      "role_gap": 0.00035842385280879414,
+      "role_gap_ci95": [
+       -0.00024675449103379464,
+       0.0009810877331612783
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.000162449478212276,
+      "different_orbit_share": 6.845470352267904e-05,
+      "role_gap": 9.399477468959694e-05,
+      "role_gap_ci95": [
+       1.4833685710839405e-05,
+       0.00016664219907940316
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     }
+    },
+    "all_nodes_share@1": 0.004828071553657059
+   },
+   "K1_3": {
+    "prefix@1": {
+     "same_orbit_share": 0.008416319419921369,
+     "different_orbit_share": 0.00822209666407703,
+     "role_gap": 0.00019422275584433935
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.00024719259834734094,
+     "different_orbit_share": 0.0005473550391976834,
+     "role_gap": -0.0003001624408503425
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.0,
+     "different_orbit_share": 8.239753278244698e-05,
+     "role_gap": -8.239753278244698e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.009706266847140758,
+      "different_orbit_share": 0.010604737517012422,
+      "role_gap": -0.0008984706698716635,
+      "role_gap_ci95": [
+       -0.0015528339860132444,
+       -0.00015995151728927703
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00013304179826235843,
+      "different_orbit_share": 0.0001888083830922093,
+      "role_gap": -5.576658482985087e-05,
+      "role_gap_ci95": [
+       -0.00014942572924811745,
+       2.9969156918954377e-05
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     }
+    },
+    "all_nodes_share@1": 0.008319208041999199
+   },
+   "merge": {
+    "observed": 0.01662971175166297,
+    "control": 0.01179157427937916,
+    "delta": 0.004628650793650793,
+    "delta_ci95": [
+     -0.0008356952561327556,
+     0.010181022276334776
+    ],
+    "centre_vs_partner": 0.010421286031042129,
+    "centre_vs_random": 0.013325942350332597,
+    "centres": 400,
+    "control_pool": "items that are in-neighbours of some merge centre"
+   },
+   "fork": {
+    "observed": 0.009589467136636947,
+    "control": 0.00880675927845739,
+    "delta": 0.0004404942279942282,
+    "delta_ci95": [
+     -0.001076319264069264,
+     0.0020262271825396824
+    ],
+    "centre_vs_partner": 0.002488077959776073,
+    "centre_vs_random": 0.0027135600248807796,
+    "centres": 400,
+    "control_pool": "items that are out-neighbours of some fork centre"
+   }
+  },
+  "A_none": {
+   "sid": "results/research/directed_graphlet_teacher/graph_loss/sids/A_none.json",
+   "items": 24587,
+   "collision": 0.10481148574449917,
+   "K3": {
+    "prefix@1": {
+     "same_orbit_share": 0.013931806777064681,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0013601669175712437,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.00015846604864907694,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.008614194752808614,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.0001866853352001867,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     }
+    },
+    "all_nodes_share@1": 0.01393180677706468
+   },
+   "P3": {
+    "prefix@1": {
+     "same_orbit_share": 0.008757279419843974,
+     "different_orbit_share": 0.01366333369959345,
+     "role_gap": -0.004906054279749477
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0003186463026041094,
+     "different_orbit_share": 0.0009889023184265465,
+     "role_gap": -0.000670256015822437
+    },
+    "prefix@3": {
+     "same_orbit_share": 4.395121415229096e-05,
+     "different_orbit_share": 0.00021426216899241842,
+     "role_gap": -0.00017031095484012747
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.009497704027718181,
+      "different_orbit_share": 0.009260031701009426,
+      "role_gap": 0.00023767232670875507,
+      "role_gap_ci95": [
+       -0.00046347954958106006,
+       0.0009557612388149553
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.0002625798146570772,
+      "different_orbit_share": 0.00016684741803620588,
+      "role_gap": 9.57323966208713e-05,
+      "role_gap_ci95": [
+       -2.661448299424036e-06,
+       0.00019079863244634765
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     }
+    },
+    "all_nodes_share@1": 0.012027982273010291
+   },
+   "C4": {
+    "prefix@1": {
+     "same_orbit_share": 0.009882313939996685,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0007492126636830765,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 8.950770760815514e-05,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.00890711202226778,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00018667600046669001,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     }
+    },
+    "all_nodes_share@1": 0.009882313939996683
+   },
+   "P4": {
+    "prefix@1": {
+     "same_orbit_share": 0.00648107232287524,
+     "different_orbit_share": 0.00929199194775863,
+     "role_gap": -0.00281091962488339
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0004909903274905484,
+     "different_orbit_share": 0.000552364118426867,
+     "role_gap": -6.137379093631859e-05
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.0,
+     "different_orbit_share": 9.819806549810969e-05,
+     "role_gap": -9.819806549810969e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.008668304157407046,
+      "different_orbit_share": 0.008741665639846114,
+      "role_gap": -7.336148243906881e-05,
+      "role_gap_ci95": [
+       -0.0007630393430472691,
+       0.000553619786207619
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00019493937385473117,
+      "different_orbit_share": 0.0001916731698635013,
+      "role_gap": 3.266203991229865e-06,
+      "role_gap_ci95": [
+       -0.00010347627071720341,
+       0.00011185904509302274
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     }
+    },
+    "all_nodes_share@1": 0.008355018739464164
+   },
+   "K1_3": {
+    "prefix@1": {
+     "same_orbit_share": 0.009246180285801727,
+     "different_orbit_share": 0.013371942462979966,
+     "role_gap": -0.004125762177178239
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.00029427690279445345,
+     "different_orbit_share": 0.0010947100783953668,
+     "role_gap": -0.0008004331756009134
+    },
+    "prefix@3": {
+     "same_orbit_share": 4.708430444711255e-05,
+     "different_orbit_share": 0.00023542152223556277,
+     "role_gap": -0.0001883372177884502
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.009179884080102731,
+      "different_orbit_share": 0.008755988765901206,
+      "role_gap": 0.0004238953142015247,
+      "role_gap_ci95": [
+       -0.00022816854691874437,
+       0.0010928837767330852
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00017931720635361352,
+      "different_orbit_share": 0.0001180052394326308,
+      "role_gap": 6.131196692098272e-05,
+      "role_gap_ci95": [
+       -2.622657971896353e-05,
+       0.00015107144493802736
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     }
+    },
+    "all_nodes_share@1": 0.011309061374390847
+   },
+   "merge": {
+    "observed": 0.011751662971175166,
+    "control": 0.008505543237250553,
+    "delta": 0.0041376226551226546,
+    "delta_ci95": [
+     -0.0006562530663780661,
+     0.00926548638167388
+    ],
+    "centre_vs_partner": 0.014745011086474502,
+    "centre_vs_random": 0.007583148558758315,
+    "centres": 400,
+    "control_pool": "items that are in-neighbours of some merge centre"
+   },
+   "fork": {
+    "observed": 0.010055981754094962,
+    "control": 0.007771096827700602,
+    "delta": 0.00323569264069264,
+    "delta_ci95": [
+     0.0009582812049062052,
+     0.005986957070707071
+    ],
+    "centre_vs_partner": 0.007490151358075886,
+    "centre_vs_random": 0.003942048517520216,
+    "centres": 400,
+    "control_pool": "items that are out-neighbours of some fork centre"
+   }
+  },
+  "B_undirected": {
+   "sid": "results/research/directed_graphlet_teacher/graph_loss/sids/B_undirected.json",
+   "items": 24587,
+   "collision": 0.11725708707853744,
+   "K3": {
+    "prefix@1": {
+     "same_orbit_share": 0.018236801098697936,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0009243852837862821,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.00019808256081134618,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.007467413408007467,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00016334966830016336,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     }
+    },
+    "all_nodes_share@1": 0.018236801098697936
+   },
+   "P3": {
+    "prefix@1": {
+     "same_orbit_share": 0.008812218437534337,
+     "different_orbit_share": 0.013069992308537523,
+     "role_gap": -0.004257773871003186
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0004834633556752005,
+     "different_orbit_share": 0.0009779145148884737,
+     "role_gap": -0.0004944511592132732
+    },
+    "prefix@3": {
+     "same_orbit_share": 6.592682122843644e-05,
+     "different_orbit_share": 0.00019228656191627293,
+     "role_gap": -0.0001263597406878365
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.007928629525499062,
+      "different_orbit_share": 0.008335418926058786,
+      "role_gap": -0.0004067894005597237,
+      "role_gap_ci95": [
+       -0.0010589839306714682,
+       0.00017872329358072905
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.0002113447288703304,
+      "different_orbit_share": 0.00018770334529073164,
+      "role_gap": 2.3641383579598775e-05,
+      "role_gap_ci95": [
+       -8.493796335853179e-05,
+       0.00013268522478978543
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     }
+    },
+    "all_nodes_share@1": 0.01165073435153646
+   },
+   "C4": {
+    "prefix@1": {
+     "same_orbit_share": 0.012448201558097132,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0006464445549477872,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 9.61379081717222e-05,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.007527043018817608,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00021334400053336,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     }
+    },
+    "all_nodes_share@1": 0.012448201558097133
+   },
+   "P4": {
+    "prefix@1": {
+     "same_orbit_share": 0.009009672509451564,
+     "different_orbit_share": 0.010175774537241616,
+     "role_gap": -0.001166102027790052
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.00036824274561791134,
+     "different_orbit_share": 0.0005400893602396032,
+     "role_gap": -0.0001718466146216919
+    },
+    "prefix@3": {
+     "same_orbit_share": 2.454951637452742e-05,
+     "different_orbit_share": 0.0001227475818726371,
+     "role_gap": -9.819806549810969e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.007394700248222803,
+      "different_orbit_share": 0.006790706589449761,
+      "role_gap": 0.0006039936587730419,
+      "role_gap_ci95": [
+       4.650431933689013e-05,
+       0.0012599226146158906
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00012346160344132976,
+      "different_orbit_share": 0.000143754877397626,
+      "role_gap": -2.0293273956296237e-05,
+      "role_gap_ci95": [
+       -0.00010096239672168616,
+       5.408038716912994e-05
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     }
+    },
+    "all_nodes_share@1": 0.009787073861311599
+   },
+   "K1_3": {
+    "prefix@1": {
+     "same_orbit_share": 0.009758222096664076,
+     "different_orbit_share": 0.012977611413235397,
+     "role_gap": -0.003219389316571321
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.000423758740024013,
+     "different_orbit_share": 0.0010064270075570308,
+     "role_gap": -0.0005826682675330178
+    },
+    "prefix@3": {
+     "same_orbit_share": 7.65119947265579e-05,
+     "different_orbit_share": 0.00022953598417967372,
+     "role_gap": -0.0001530239894531158
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.007612304631011465,
+      "different_orbit_share": 0.007638872499272301,
+      "role_gap": -2.6567868260836403e-05,
+      "role_gap_ci95": [
+       -0.0006908666799841345,
+       0.0005914946178081453
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00017931720635361352,
+      "different_orbit_share": 0.00021240943097873547,
+      "role_gap": -3.3092224625121944e-05,
+      "role_gap_ci95": [
+       -0.00013184567271774247,
+       6.108306304474863e-05
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     }
+    },
+    "all_nodes_share@1": 0.011367916754949737
+   },
+   "merge": {
+    "observed": 0.016186252771618625,
+    "control": 0.008567627494456763,
+    "delta": 0.009982709235209235,
+    "delta_ci95": [
+     0.004162139700577202,
+     0.01624075081168831
+    ],
+    "centre_vs_partner": 0.021729490022172948,
+    "centre_vs_random": 0.00950110864745011,
+    "centres": 400,
+    "control_pool": "items that are in-neighbours of some merge centre"
+   },
+   "fork": {
+    "observed": 0.010522496371552975,
+    "control": 0.0071625544267053705,
+    "delta": 0.003969462481962482,
+    "delta_ci95": [
+     0.0021776015512265513,
+     0.005865506854256855
+    ],
+    "centre_vs_partner": 0.011611030478955007,
+    "centre_vs_random": 0.005512647729628863,
+    "centres": 400,
+    "control_pool": "items that are out-neighbours of some fork centre"
+   }
+  },
+  "C_random": {
+   "sid": "results/research/directed_graphlet_teacher/graph_loss/sids/C_random.json",
+   "items": 24587,
+   "collision": 0.12075487045999922,
+   "K3": {
+    "prefix@1": {
+     "same_orbit_share": 0.014975041597337771,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.001294139397300795,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.00015846604864907694,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.014458112477914458,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.0002366903357002367,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     }
+    },
+    "all_nodes_share@1": 0.014975041597337771
+   },
+   "P3": {
+    "prefix@1": {
+     "same_orbit_share": 0.011350401054829139,
+     "different_orbit_share": 0.017882650258213385,
+     "role_gap": -0.006532249203384246
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0006482804087462916,
+     "different_orbit_share": 0.0016536644324799473,
+     "role_gap": -0.0010053840237336557
+    },
+    "prefix@3": {
+     "same_orbit_share": 8.790242830458192e-05,
+     "different_orbit_share": 0.00022524997253049115,
+     "role_gap": -0.00013734754422590925
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.016606572180629296,
+      "different_orbit_share": 0.016559606240093436,
+      "role_gap": 4.6965940535860506e-05,
+      "role_gap_ci95": [
+       -0.0008150938063819082,
+       0.00092073448389077
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.0004226894577406608,
+      "different_orbit_share": 0.0003754066905814633,
+      "role_gap": 4.728276715919755e-05,
+      "role_gap_ci95": [
+       -8.810110568768651e-05,
+       0.00019950522203047167
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     }
+    },
+    "all_nodes_share@1": 0.015705233857085298
+   },
+   "C4": {
+    "prefix@1": {
+     "same_orbit_share": 0.011602850986242334,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0008851317752362009,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.00010276810873528925,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.015764121539410304,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.0003133490007833725,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     }
+    },
+    "all_nodes_share@1": 0.011602850986242332
+   },
+   "P4": {
+    "prefix@1": {
+     "same_orbit_share": 0.009328816222320421,
+     "different_orbit_share": 0.011255953257720823,
+     "role_gap": -0.001927137035400402
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.00036824274561791134,
+     "different_orbit_share": 0.0006260126675504493,
+     "role_gap": -0.00025776992193253794
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.0,
+     "different_orbit_share": 8.592330731084597e-05,
+     "role_gap": -8.592330731084597e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.014217578333138393,
+      "different_orbit_share": 0.01332813077586561,
+      "role_gap": 0.0008894475572727833,
+      "role_gap_ci95": [
+       2.652455007763348e-05,
+       0.0016488444144778789
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.0002469232068826595,
+      "different_orbit_share": 0.00026012787338618035,
+      "role_gap": -1.3204666503520836e-05,
+      "role_gap_ci95": [
+       -0.00011495953509406733,
+       9.36281133601611e-05
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     }
+    },
+    "all_nodes_share@1": 0.010613574245920689
+   },
+   "K1_3": {
+    "prefix@1": {
+     "same_orbit_share": 0.011829931492337029,
+     "different_orbit_share": 0.01835699319631801,
+     "role_gap": -0.00652706170398098
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0006297525719801304,
+     "different_orbit_share": 0.001789203568990277,
+     "role_gap": -0.0011594509970101466
+    },
+    "prefix@3": {
+     "same_orbit_share": 7.062645667066883e-05,
+     "different_orbit_share": 0.00029427690279445345,
+     "role_gap": -0.0002236504461237846
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.01567001006490126,
+      "different_orbit_share": 0.016796079079244453,
+      "role_gap": -0.0011260690143431937,
+      "role_gap_ci95": [
+       -0.0022139823735700384,
+       -0.00016028518371385416
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.0002950057265817513,
+      "different_orbit_share": 0.00034614870233571704,
+      "role_gap": -5.114297575396575e-05,
+      "role_gap_ci95": [
+       -0.00016475174084660404,
+       7.97084717771156e-05
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     }
+    },
+    "all_nodes_share@1": 0.015093462344327516
+   },
+   "merge": {
+    "observed": 0.009312638580931265,
+    "control": 0.007450110864745011,
+    "delta": 0.001695382395382396,
+    "delta_ci95": [
+     -0.0020249323593073596,
+     0.0061188079004329
+    ],
+    "centre_vs_partner": 0.010310421286031043,
+    "centre_vs_random": 0.00696230598669623,
+    "centres": 400,
+    "control_pool": "items that are in-neighbours of some merge centre"
+   },
+   "fork": {
+    "observed": 0.011403690648973668,
+    "control": 0.01115488285299606,
+    "delta": 0.0008278715728715733,
+    "delta_ci95": [
+     -0.0013175666486291487,
+     0.003184574855699856
+    ],
+    "centre_vs_partner": 0.006012855069458843,
+    "centre_vs_random": 0.005535973460501763,
+    "centres": 400,
+    "control_pool": "items that are out-neighbours of some fork centre"
+   }
+  },
+  "D_directed": {
+   "sid": "results/research/directed_graphlet_teacher/graph_loss/sids/D_directed.json",
+   "items": 24587,
+   "collision": 0.14385650953756046,
+   "K3": {
+    "prefix@1": {
+     "same_orbit_share": 0.016176742466259938,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0009111797797321924,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.00018487705675725643,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.01345134513451345,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.0002566923359002567,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     }
+    },
+    "all_nodes_share@1": 0.016176742466259938
+   },
+   "P3": {
+    "prefix@1": {
+     "same_orbit_share": 0.010251620701021865,
+     "different_orbit_share": 0.01675640039556093,
+     "role_gap": -0.006504779694539064
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0005384023733655643,
+     "different_orbit_share": 0.0010383474343478739,
+     "role_gap": -0.0004999450609823096
+    },
+    "prefix@3": {
+     "same_orbit_share": 4.395121415229096e-05,
+     "different_orbit_share": 0.0001977804636853093,
+     "role_gap": -0.00015382924953301835
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.01558187046489436,
+      "different_orbit_share": 0.016017352131475766,
+      "role_gap": -0.0004354816665814061,
+      "role_gap_ci95": [
+       -0.0013431519246860258,
+       0.00040930695031333677
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00030100612899713723,
+      "different_orbit_share": 0.0003406468118239204,
+      "role_gap": -3.9640682826783146e-05,
+      "role_gap_ci95": [
+       -0.0001555362784284436,
+       6.93157002897656e-05
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     }
+    },
+    "all_nodes_share@1": 0.014588140497381242
+   },
+   "C4": {
+    "prefix@1": {
+     "same_orbit_share": 0.010933200729322062,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0006729653572020553,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.00014586441239847504,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.015234095038085238,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.000333350000833375,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     }
+    },
+    "all_nodes_share@1": 0.010933200729322062
+   },
+   "P4": {
+    "prefix@1": {
+     "same_orbit_share": 0.008346835567339323,
+     "different_orbit_share": 0.009611135660627485,
+     "role_gap": -0.0012643000932881614
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.000466440811116021,
+     "different_orbit_share": 0.0005891883929886581,
+     "role_gap": -0.00012274758187263713
+    },
+    "prefix@3": {
+     "same_orbit_share": 9.819806549810969e-05,
+     "different_orbit_share": 8.592330731084597e-05,
+     "role_gap": 1.2274758187263716e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.013593772336803254,
+      "different_orbit_share": 0.01297216631754768,
+      "role_gap": 0.0006216060192555748,
+      "role_gap_ci95": [
+       -0.00016709965507776512,
+       0.0013868489482343697
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.0002144333112402043,
+      "different_orbit_share": 0.00027381881409071617,
+      "role_gap": -5.938550285051187e-05,
+      "role_gap_ci95": [
+       -0.00017695997635867145,
+       5.140734956017271e-05
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     }
+    },
+    "all_nodes_share@1": 0.009189702296198097
+   },
+   "K1_3": {
+    "prefix@1": {
+     "same_orbit_share": 0.01043505897309132,
+     "different_orbit_share": 0.01656778962732773,
+     "role_gap": -0.006132730654236411
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.00043552981613579115,
+     "different_orbit_share": 0.0013124749864632625,
+     "role_gap": -0.0008769451703274714
+    },
+    "prefix@3": {
+     "same_orbit_share": 4.119876639122349e-05,
+     "different_orbit_share": 0.00026484921251500814,
+     "role_gap": -0.00022365044612378466
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.015097351889771978,
+      "different_orbit_share": 0.01644206336094656,
+      "role_gap": -0.0013447114711745822,
+      "role_gap_ci95": [
+       -0.002234400334541513,
+       -0.0005221917049482655
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.0003470655606844133,
+      "different_orbit_share": 0.00033041467041136624,
+      "role_gap": 1.6650890273047067e-05,
+      "role_gap_ci95": [
+       -0.00012113532487790015,
+       0.0001295136324812464
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     }
+    },
+    "all_nodes_share@1": 0.013501424300209524
+   },
+   "merge": {
+    "observed": 0.010643015521064302,
+    "control": 0.0076186252771618624,
+    "delta": 0.003168917748917749,
+    "delta_ci95": [
+     -0.0010170138888888887,
+     0.008053135461760461
+    ],
+    "centre_vs_partner": 0.00853658536585366,
+    "centre_vs_random": 0.005931263858093126,
+    "centres": 400,
+    "control_pool": "items that are in-neighbours of some merge centre"
+   },
+   "fork": {
+    "observed": 0.010159651669085631,
+    "control": 0.01025088119427742,
+    "delta": -8.234126984126941e-05,
+    "delta_ci95": [
+     -0.001868786075036075,
+     0.0020643595779220774
+    ],
+    "centre_vs_partner": 0.005701845324486834,
+    "centre_vs_random": 0.004369686916856729,
+    "centres": 400,
+    "control_pool": "items that are out-neighbours of some fork centre"
+   }
+  },
+  "role_E": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_E/item_sids.json",
+   "items": 24587,
+   "collision": 0.12213771505267013,
+   "K3": {
+    "prefix@1": {
+     "same_orbit_share": 0.07367350711776668,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.007144177693262552,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.001399783429733513,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.007974130746407975,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00026335966930026333,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     }
+    },
+    "all_nodes_share@1": 0.07367350711776667
+   },
+   "P3": {
+    "prefix@1": {
+     "same_orbit_share": 0.028711130644984068,
+     "different_orbit_share": 0.07310185693879794,
+     "role_gap": -0.04439072629381387
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0014394022634875289,
+     "different_orbit_share": 0.00800461487748599,
+     "role_gap": -0.006565212613998461
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.00017580485660916384,
+     "different_orbit_share": 0.0017470607625535656,
+     "role_gap": -0.0015712559059444017
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.007800541811032195,
+      "different_orbit_share": 0.007223102805817413,
+      "role_gap": 0.0005774390052147816,
+      "role_gap_ci95": [
+       1.8900858944821572e-05,
+       0.0011565430441672752
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00026898420038042053,
+      "different_orbit_share": 0.0003267428603209032,
+      "role_gap": -5.775865994048267e-05,
+      "role_gap_ci95": [
+       -0.00017406712819839233,
+       8.944453733315787e-05
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     }
+    },
+    "all_nodes_share@1": 0.05830494817419331
+   },
+   "C4": {
+    "prefix@1": {
+     "same_orbit_share": 0.05141057516989889,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.004283109564064313,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.0006862257583291894,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.00778705601946764,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00030334850075837123,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     }
+    },
+    "all_nodes_share@1": 0.05141057516989889
+   },
+   "P4": {
+    "prefix@1": {
+     "same_orbit_share": 0.051185741640889675,
+     "different_orbit_share": 0.05912751018804929,
+     "role_gap": -0.007941768547159618
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.004443462463789463,
+     "different_orbit_share": 0.006873864584867678,
+     "role_gap": -0.002430402121078215
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.001227475818726371,
+     "different_orbit_share": 0.001571169047969755,
+     "role_gap": -0.000343693229243384
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.007446684081250731,
+      "different_orbit_share": 0.006790706589449761,
+      "role_gap": 0.00065597749180097,
+      "role_gap_ci95": [
+       9.182852706888253e-05,
+       0.0012665060884374296
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.000324898956424552,
+      "different_orbit_share": 0.00022590052162484083,
+      "role_gap": 9.899843479971114e-05,
+      "role_gap_ci95": [
+       -2.496844626403874e-05,
+       0.00021278224117172512
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     }
+    },
+    "all_nodes_share@1": 0.05648025400566275
+   },
+   "K1_3": {
+    "prefix@1": {
+     "same_orbit_share": 0.0314993996751183,
+     "different_orbit_share": 0.07438731548838194,
+     "role_gap": -0.04288791581326364
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0020775949337288415,
+     "different_orbit_share": 0.008122042517126915,
+     "role_gap": -0.006044447583398074
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.00025307813640322997,
+     "different_orbit_share": 0.0019363420203875037,
+     "role_gap": -0.0016832638839842737
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.007253670218304238,
+      "different_orbit_share": 0.008095159425078473,
+      "role_gap": -0.0008414892067742357,
+      "role_gap_ci95": [
+       -0.0015208513615066045,
+       -0.00025782031130676446
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00016196392831939287,
+      "different_orbit_share": 0.0002989466065626647,
+      "role_gap": -0.00013698267824327183,
+      "role_gap_ci95": [
+       -0.00024798299212076775,
+       -2.9117967317630875e-05
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     }
+    },
+    "all_nodes_share@1": 0.052943357581750124
+   },
+   "merge": {
+    "observed": 0.04966740576496674,
+    "control": 0.01149889135254989,
+    "delta": 0.069074613997114,
+    "delta_ci95": [
+     0.05403949458874459,
+     0.08478539294733044
+    ],
+    "centre_vs_partner": 0.09467849223946785,
+    "centre_vs_random": 0.01197339246119734,
+    "centres": 400,
+    "control_pool": "items that are in-neighbours of some merge centre"
+   },
+   "fork": {
+    "observed": 0.03146381919966826,
+    "control": 0.007995023844080448,
+    "delta": 0.02429335137085137,
+    "delta_ci95": [
+     0.01915400216450216,
+     0.02964073430735931
+    ],
+    "centre_vs_partner": 0.07135081899232842,
+    "centre_vs_random": 0.009765705992121086,
+    "centres": 400,
+    "control_pool": "items that are out-neighbours of some fork centre"
+   }
+  },
+  "role_T": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_T/item_sids.json",
+   "items": 24587,
+   "collision": 0.0107780534428763,
+   "K3": {
+    "prefix@1": {
+     "same_orbit_share": 0.024205688931146503,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0024034017378443337,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.0006998917148667565,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.005887255392205888,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     },
+     "prefix@2": {
+      "same_orbit_share": 5.333866720005334e-05,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     }
+    },
+    "all_nodes_share@1": 0.024205688931146503
+   },
+   "P3": {
+    "prefix@1": {
+     "same_orbit_share": 0.0036589385781782223,
+     "different_orbit_share": 0.0020712009669267115,
+     "role_gap": 0.0015877376112515109
+    },
+    "prefix@2": {
+     "same_orbit_share": 4.395121415229096e-05,
+     "different_orbit_share": 9.889023184265465e-05,
+     "role_gap": -5.493901769036369e-05
+    },
+    "prefix@3": {
+     "same_orbit_share": 1.098780353807274e-05,
+     "different_orbit_share": 3.296341061421822e-05,
+     "role_gap": -2.1975607076145483e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.006161019065856298,
+      "different_orbit_share": 0.005603292455715915,
+      "role_gap": 0.0005577266101403832,
+      "role_gap_ci95": [
+       -4.190964589333085e-06,
+       0.0010954571231876215
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     },
+     "prefix@2": {
+      "same_orbit_share": 8.966140012680683e-05,
+      "different_orbit_share": 8.342370901810294e-05,
+      "role_gap": 6.23769110870389e-06,
+      "role_gap_ci95": [
+       -5.7372206764649075e-05,
+       7.079004181471318e-05
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     }
+    },
+    "all_nodes_share@1": 0.002600446837343882
+   },
+   "C4": {
+    "prefix@1": {
+     "same_orbit_share": 0.011211669152991878,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0009613790817172219,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.0002055362174705785,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.005270263513175659,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     },
+     "prefix@2": {
+      "same_orbit_share": 5.333600013334e-05,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     }
+    },
+    "all_nodes_share@1": 0.011211669152991877
+   },
+   "P4": {
+    "prefix@1": {
+     "same_orbit_share": 0.0017430156625914469,
+     "different_orbit_share": 0.0020498846172730396,
+     "role_gap": -0.00030686895468159275
+    },
+    "prefix@2": {
+     "same_orbit_share": 2.454951637452742e-05,
+     "different_orbit_share": 0.00015957185643442824,
+     "role_gap": -0.0001350223400599008
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.0,
+     "different_orbit_share": 1.227475818726371e-05,
+     "role_gap": -1.227475818726371e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.005633747904401731,
+      "different_orbit_share": 0.003847154337974562,
+      "role_gap": 0.001786593566427169,
+      "role_gap_ci95": [
+       0.0013067639438165632,
+       0.0022923866992815892
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     },
+     "prefix@2": {
+      "same_orbit_share": 6.497979128491039e-05,
+      "different_orbit_share": 3.422735176133952e-05,
+      "role_gap": 3.0752439523570865e-05,
+      "role_gap_ci95": [
+       -1.7394396734084078e-05,
+       8.218963463130603e-05
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     }
+    },
+    "all_nodes_share@1": 0.0019475949657125086
+   },
+   "K1_3": {
+    "prefix@1": {
+     "same_orbit_share": 0.005014478423617487,
+     "different_orbit_share": 0.0021305647762318433,
+     "role_gap": 0.0028839136473856435
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.00014125291334133767,
+     "different_orbit_share": 0.000170680603620783,
+     "role_gap": -2.942769027944534e-05
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.0,
+     "different_orbit_share": 4.708430444711255e-05,
+     "role_gap": -4.708430444711255e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.005281180948414489,
+      "different_orbit_share": 0.005302368758506211,
+      "role_gap": -2.118781009172177e-05,
+      "role_gap_ci95": [
+       -0.0005675120704877855,
+       0.00047169181175666264
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     },
+     "prefix@2": {
+      "same_orbit_share": 3.470655606844133e-05,
+      "different_orbit_share": 4.7202095773052324e-05,
+      "role_gap": -1.2495539704610994e-05,
+      "role_gap_ci95": [
+       -6.553281291362932e-05,
+       3.0156208571150918e-05
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     }
+    },
+    "all_nodes_share@1": 0.0035725215999246654
+   },
+   "merge": {
+    "observed": 0.012638580931263858,
+    "control": 0.008452328159645233,
+    "delta": 0.0013148484848484851,
+    "delta_ci95": [
+     -0.0022541745129870134,
+     0.005466788149350648
+    ],
+    "centre_vs_partner": 0.008425720620842573,
+    "centre_vs_random": 0.008669623059866963,
+    "centres": 400,
+    "control_pool": "items that are in-neighbours of some merge centre"
+   },
+   "fork": {
+    "observed": 0.009796806966618287,
+    "control": 0.0070868753887621825,
+    "delta": 0.0024448953823953826,
+    "delta_ci95": [
+     0.0006350466269841271,
+     0.00440555744949495
+    ],
+    "centre_vs_partner": 0.00171055359734605,
+    "centre_vs_random": 0.001119635081899233,
+    "centres": 400,
+    "control_pool": "items that are out-neighbours of some fork centre"
+   }
+  },
+  "role_R": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_R/item_sids.json",
+   "items": 24587,
+   "collision": 0.01069670964330749,
+   "K3": {
+    "prefix@1": {
+     "same_orbit_share": 0.021419327575733567,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0011224678445976282,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 5.282201621635898e-05,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.005743907724105744,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     },
+     "prefix@2": {
+      "same_orbit_share": 5.000500050005001e-05,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     }
+    },
+    "all_nodes_share@1": 0.021419327575733563
+   },
+   "P3": {
+    "prefix@1": {
+     "same_orbit_share": 0.005900450499945061,
+     "different_orbit_share": 0.0034666520162619494,
+     "role_gap": 0.0024337984836831114
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0001977804636853093,
+     "different_orbit_share": 0.00012086583891880013,
+     "role_gap": 7.691462476650917e-05
+    },
+    "prefix@3": {
+     "same_orbit_share": 3.296341061421822e-05,
+     "different_orbit_share": 2.197560707614548e-05,
+     "role_gap": 1.0987803538072741e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.006148210294409612,
+      "different_orbit_share": 0.004734295486777342,
+      "role_gap": 0.0014139148076322697,
+      "role_gap_ci95": [
+       0.0009115990187406311,
+       0.0019872772755308112
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     },
+     "prefix@2": {
+      "same_orbit_share": 6.404385723343346e-05,
+      "different_orbit_share": 3.475987875754289e-05,
+      "role_gap": 2.9283978475890566e-05,
+      "role_gap_ci95": [
+       -2.309384891900753e-05,
+       7.903149729697112e-05
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     }
+    },
+    "all_nodes_share@1": 0.004277918177489653
+   },
+   "C4": {
+    "prefix@1": {
+     "same_orbit_share": 0.01252113376429637,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0004840046411403945,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 5.635670479031991e-05,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.005190259512975649,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     },
+     "prefix@2": {
+      "same_orbit_share": 4.333550010833875e-05,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     }
+    },
+    "all_nodes_share@1": 0.012521133764296368
+   },
+   "P4": {
+    "prefix@1": {
+     "same_orbit_share": 0.0038788235871753327,
+     "different_orbit_share": 0.01256935238375804,
+     "role_gap": -0.008690528796582707
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0002209456473707468,
+     "different_orbit_share": 0.00020867088918348308,
+     "role_gap": 1.227475818726373e-05
+    },
+    "prefix@3": {
+     "same_orbit_share": 2.454951637452742e-05,
+     "different_orbit_share": 3.6824274561791134e-05,
+     "role_gap": -1.2274758187263713e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.00675140031450219,
+      "different_orbit_share": 0.00411412768171301,
+      "role_gap": 0.00263727263278918,
+      "role_gap_ci95": [
+       0.0021705508353242983,
+       0.003169647391735327
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     },
+     "prefix@2": {
+      "same_orbit_share": 9.097170779887454e-05,
+      "different_orbit_share": 5.476376281814324e-05,
+      "role_gap": 3.620794498073131e-05,
+      "role_gap_ci95": [
+       -3.0206032889710342e-05,
+       9.573212254983272e-05
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     }
+    },
+    "all_nodes_share@1": 0.009672509451563803
+   },
+   "K1_3": {
+    "prefix@1": {
+     "same_orbit_share": 0.010711679261718106,
+     "different_orbit_share": 0.00297219671822398,
+     "role_gap": 0.007739482543494125
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.00025896367445911905,
+     "different_orbit_share": 0.00012948183722955953,
+     "role_gap": 0.00012948183722955953
+    },
+    "prefix@3": {
+     "same_orbit_share": 5.296984250300162e-05,
+     "different_orbit_share": 3.531322833533442e-05,
+     "role_gap": 1.7656614167667205e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.005298534226448709,
+      "different_orbit_share": 0.0045550022420995494,
+      "role_gap": 0.0007435319843491599,
+      "role_gap_ci95": [
+       0.00019979001018269706,
+       0.001216830705457778
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     },
+     "prefix@2": {
+      "same_orbit_share": 6.362868612547577e-05,
+      "different_orbit_share": 2.3601047886526162e-05,
+      "role_gap": 4.002763823894961e-05,
+      "role_gap_ci95": [
+       -4.6880206634581524e-06,
+       7.896559963168964e-05
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     }
+    },
+    "all_nodes_share@1": 0.006841937989971043
+   },
+   "merge": {
+    "observed": 0.038580931263858094,
+    "control": 0.021458980044345898,
+    "delta": 0.01686401875901876,
+    "delta_ci95": [
+     0.008582166035353533,
+     0.025738952561327556
+    ],
+    "centre_vs_partner": 0.025942350332594236,
+    "centre_vs_random": 0.016740576496674056,
+    "centres": 400,
+    "control_pool": "items that are in-neighbours of some merge centre"
+   },
+   "fork": {
+    "observed": 0.027835372174994818,
+    "control": 0.01161932407215426,
+    "delta": 0.014425021645021645,
+    "delta_ci95": [
+     0.011189506313131314,
+     0.018489242604617605
+    ],
+    "centre_vs_partner": 0.004561476259589467,
+    "centre_vs_random": 0.001904934687953556,
+    "centres": 400,
+    "control_pool": "items that are out-neighbours of some fork centre"
+   }
+  },
+  "role_Q": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_Q/item_sids.json",
+   "items": 24587,
+   "collision": 0.01016797494610977,
+   "K3": {
+    "prefix@1": {
+     "same_orbit_share": 0.017087922245992128,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0007659192351372052,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 6.602752027044872e-05,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.006320632063206321,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     },
+     "prefix@2": {
+      "same_orbit_share": 8.334166750008334e-05,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     }
+    },
+    "all_nodes_share@1": 0.017087922245992128
+   },
+   "P3": {
+    "prefix@1": {
+     "same_orbit_share": 0.004559938468300187,
+     "different_orbit_share": 0.0024777496978354028,
+     "role_gap": 0.0020821887704647844
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.00016481705307109108,
+     "different_orbit_share": 6.592682122843644e-05,
+     "role_gap": 9.889023184265464e-05
+    },
+    "prefix@3": {
+     "same_orbit_share": 1.098780353807274e-05,
+     "different_orbit_share": 2.197560707614548e-05,
+     "role_gap": -1.098780353807274e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.006673369923723766,
+      "different_orbit_share": 0.005193125886376908,
+      "role_gap": 0.0014802440373468577,
+      "role_gap_ci95": [
+       0.0009890935681456045,
+       0.002053625763214661
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     },
+     "prefix@2": {
+      "same_orbit_share": 7.685262868012014e-05,
+      "different_orbit_share": 5.561580601206863e-05,
+      "role_gap": 2.1236822668051518e-05,
+      "role_gap_ci95": [
+       -3.902015036154427e-05,
+       6.80896740710461e-05
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     }
+    },
+    "all_nodes_share@1": 0.0031718126213236644
+   },
+   "C4": {
+    "prefix@1": {
+     "same_orbit_share": 0.009948615945632355,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.00037460633184153823,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 2.9835902536051715e-05,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.0060336350150840875,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     },
+     "prefix@2": {
+      "same_orbit_share": 5.666950014167375e-05,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     }
+    },
+    "all_nodes_share@1": 0.009948615945632355
+   },
+   "P4": {
+    "prefix@1": {
+     "same_orbit_share": 0.004492561496538519,
+     "different_orbit_share": 0.013207639809495754,
+     "role_gap": -0.008715078312957234
+    },
+    "prefix@2": {
+     "same_orbit_share": 9.819806549810969e-05,
+     "different_orbit_share": 0.00015957185643442824,
+     "role_gap": -6.137379093631855e-05
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.0,
+     "different_orbit_share": 1.227475818726371e-05,
+     "role_gap": -1.227475818726371e-05
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.006738404356245208,
+      "different_orbit_share": 0.003936145452554045,
+      "role_gap": 0.002802258903691163,
+      "role_gap_ci95": [
+       0.0022112579260792223,
+       0.0032584460918241446
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     },
+     "prefix@2": {
+      "same_orbit_share": 9.097170779887454e-05,
+      "different_orbit_share": 2.738188140907162e-05,
+      "role_gap": 6.358982638980293e-05,
+      "role_gap_ci95": [
+       1.1878728559045664e-05,
+       0.00011656704164056016
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     }
+    },
+    "all_nodes_share@1": 0.010302613705176674
+   },
+   "K1_3": {
+    "prefix@1": {
+     "same_orbit_share": 0.009004873225510275,
+     "different_orbit_share": 0.0022600466134614027,
+     "role_gap": 0.006744826612048872
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0003649033594651223,
+     "different_orbit_share": 6.474091861477976e-05,
+     "role_gap": 0.00030016244085034254
+    },
+    "prefix@3": {
+     "same_orbit_share": 4.119876639122349e-05,
+     "different_orbit_share": 3.531322833533442e-05,
+     "role_gap": 5.885538055889071e-06
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.006351299760524763,
+      "different_orbit_share": 0.005428241013901017,
+      "role_gap": 0.0009230587466237464,
+      "role_gap_ci95": [
+       0.0003439762876074333,
+       0.0014379667620952376
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     },
+     "prefix@2": {
+      "same_orbit_share": 8.676639017110333e-05,
+      "different_orbit_share": 6.29361276974031e-05,
+      "role_gap": 2.3830262473700225e-05,
+      "role_gap_ci95": [
+       -4.175649114895562e-05,
+       8.52213842570908e-05
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     }
+    },
+    "all_nodes_share@1": 0.005632459919485839
+   },
+   "merge": {
+    "observed": 0.03215077605321508,
+    "control": 0.01930820399113082,
+    "delta": 0.01144493867243867,
+    "delta_ci95": [
+     0.002988735028860029,
+     0.020594244949494946
+    ],
+    "centre_vs_partner": 0.02671840354767184,
+    "centre_vs_random": 0.013569844789356985,
+    "centres": 400,
+    "control_pool": "items that are in-neighbours of some merge centre"
+   },
+   "fork": {
+    "observed": 0.022133526850507984,
+    "control": 0.010864607091022183,
+    "delta": 0.008714520202020203,
+    "delta_ci95": [
+     0.005837433261183262,
+     0.011738819173881674
+    ],
+    "centre_vs_partner": 0.007775243624300228,
+    "centre_vs_random": 0.002933858594235953,
+    "centres": 400,
+    "control_pool": "items that are out-neighbours of some fork centre"
+   }
+  },
+  "role_QR": {
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_QR/item_sids.json",
+   "items": 24587,
+   "collision": 0.11270183430268033,
+   "K3": {
+    "prefix@1": {
+     "same_orbit_share": 0.07156062646911232,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0071969997094789104,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.0012149063729762564,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.007734106744007734,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00031336466980031336,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 12245,
+      "pairs": 299970
+     }
+    },
+    "all_nodes_share@1": 0.07156062646911232
+   },
+   "P3": {
+    "prefix@1": {
+     "same_orbit_share": 0.028952862322821668,
+     "different_orbit_share": 0.07103065597187122,
+     "role_gap": -0.04207779364904955
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0016811339413251292,
+     "different_orbit_share": 0.007235468629820899,
+     "role_gap": -0.005554334688495769
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.00023074387429952752,
+     "different_orbit_share": 0.0015657620041753654,
+     "role_gap": -0.0013350181298758378
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.007441896210524967,
+      "different_orbit_share": 0.007160535024053836,
+      "role_gap": 0.000281361186471131,
+      "role_gap_ci95": [
+       -0.0002726662120280357,
+       0.0008535937332524579
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00023055788604036043,
+      "different_orbit_share": 0.0002572231028058174,
+      "role_gap": -2.6665216765456973e-05,
+      "role_gap_ci95": [
+       -0.0001381233719218482,
+       8.6463178766093e-05
+      ],
+      "nodes": 24231,
+      "pairs": 299987
+     }
+    },
+    "all_nodes_share@1": 0.057004724755521374
+   },
+   "C4": {
+    "prefix@1": {
+     "same_orbit_share": 0.049225924084203544,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.004094148848002652,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.0005536217470578485,
+     "different_orbit_share": null,
+     "role_gap": null
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.007323699518309249,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.00024001200060003001,
+      "different_orbit_share": null,
+      "role_gap": null,
+      "role_gap_ci95": null,
+      "nodes": 22490,
+      "pairs": 299985
+     }
+    },
+    "all_nodes_share@1": 0.049225924084203544
+   },
+   "P4": {
+    "prefix@1": {
+     "same_orbit_share": 0.05020376098590858,
+     "different_orbit_share": 0.06077232778514263,
+     "role_gap": -0.010568566799234055
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.004639858594785683,
+     "different_orbit_share": 0.006640644179309667,
+     "role_gap": -0.0020007855845239845
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.0013502234005990082,
+     "different_orbit_share": 0.0010801787204792065,
+     "role_gap": 0.0002700446801198017
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.007349214394323365,
+      "different_orbit_share": 0.006831779411563369,
+      "role_gap": 0.0005174349827599964,
+      "role_gap_ci95": [
+       -4.729134363323851e-05,
+       0.0011027598248726368
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.0002794131025251147,
+      "different_orbit_share": 0.00017798222915896552,
+      "role_gap": 0.00010143087336614919,
+      "role_gap_ci95": [
+       -9.95145142171262e-06,
+       0.0002125473145875507
+      ],
+      "nodes": 13665,
+      "pairs": 299976
+     }
+    },
+    "all_nodes_share@1": 0.05724947218539795
+   },
+   "K1_3": {
+    "prefix@1": {
+     "same_orbit_share": 0.030716623113685053,
+     "different_orbit_share": 0.07186241966240554,
+     "role_gap": -0.04114579654872049
+    },
+    "prefix@2": {
+     "same_orbit_share": 0.0021835346187348446,
+     "different_orbit_share": 0.0075629164018174546,
+     "role_gap": -0.00537938178308261
+    },
+    "prefix@3": {
+     "same_orbit_share": 0.00028250582668267534,
+     "different_orbit_share": 0.0016597217317607176,
+     "role_gap": -0.0013772159050780422
+    },
+    "cross_instance": {
+     "prefix@1": {
+      "same_orbit_share": 0.0072594546443156445,
+      "different_orbit_share": 0.007961420153721492,
+      "role_gap": -0.0007019655094058479,
+      "role_gap_ci95": [
+       -0.001290344684959345,
+       -7.196272935000192e-05
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     },
+     "prefix@2": {
+      "same_orbit_share": 0.0002429458924790893,
+      "different_orbit_share": 0.0003697497502222432,
+      "role_gap": -0.00012680385774315391,
+      "role_gap_ci95": [
+       -0.0002495822360766682,
+       -3.0015682002189733e-06
+      ],
+      "nodes": 23895,
+      "pairs": 299991
+     }
+    },
+    "all_nodes_share@1": 0.05128952138804529
+   },
+   "merge": {
+    "observed": 0.050110864745011086,
+    "control": 0.011707317073170732,
+    "delta": 0.06711872294372294,
+    "delta_ci95": [
+     0.05259537599206349,
+     0.08231387725468975
+    ],
+    "centre_vs_partner": 0.09933481152993348,
+    "centre_vs_random": 0.010288248337028827,
+    "centres": 400,
+    "control_pool": "items that are in-neighbours of some merge centre"
+   },
+   "fork": {
+    "observed": 0.029960605432303545,
+    "control": 0.007803234501347708,
+    "delta": 0.022575025252525253,
+    "delta_ci95": [
+     0.018316863365800868,
+     0.02720952840909091
+    ],
+    "centre_vs_partner": 0.06813705162761767,
+    "centre_vs_random": 0.008780841799709725,
+    "centres": 400,
+    "control_pool": "items that are out-neighbours of some fork centre"
+   }
+  }
+ }
+}

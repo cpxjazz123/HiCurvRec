@@ -159,6 +159,8 @@ ANALYSIS = (
     "graph_loss/graph_loss_v2.py", "graph_loss/graph_loss_v2.json",
     "graph_loss/REPORT_GRAPH_LOSS_V2.md",
     "graph_loss/graph_loss_v3.py", "graph_loss/graph_loss_v3.json",
+    "graph_loss/sid_structure.py", "graph_loss/sid_structure.json",
+    "graph_loss/REPORT_SID_STRUCTURE.md",
     "graph_loss/REPORT_GRAPH_LOSS_V3.md",
 )
 

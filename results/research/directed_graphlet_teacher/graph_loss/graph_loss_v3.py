@@ -159,6 +159,7 @@ def main() -> None:
     parser.add_argument("--out", default=str(OUT))
     parser.add_argument("--qdir", default=str(HERE / "q"))
     parser.add_argument("--reuse", action="store_true")
+    parser.add_argument("--siddir", default=str(HERE / "sids"))
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     graph = np.load(FULL_GRAPH)
@@ -330,6 +331,11 @@ def main() -> None:
             "sid_collision": (float(1.0 - len(np.unique(codes[:, :3], axis=0)) / len(codes))
                               if codes is not None else None),
             "semantic_probe_r2": sem_r2}
+        if codes is not None:
+            Path(args.siddir).mkdir(parents=True, exist_ok=True)
+            (Path(args.siddir) / f"{arm}.json").write_text(json.dumps(
+                {str(index): [int(value) for value in row[:3]]
+                 for index, row in enumerate(codes.tolist())}))
         collision_text = (f"{report['arms'][arm]['sid_collision']:.4f}"
                           if report["arms"][arm]["sid_collision"] is not None else "cached")
         print(f"  {arm}: dir {probe['direction_accuracy']:.4f} "
