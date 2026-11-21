@@ -56,6 +56,10 @@ def build_diage(in_dim: int, dim: int = DIM, layers: int = LAYERS):
             # a fusion head exists only for read-out B; it is not used by read-out A
             self.fuse = nn.Sequential(nn.Linear(2 * dim, 256), nn.GELU(),
                                       nn.Linear(256, in_dim), nn.Tanh())
+            # heads that read the fused vector: without them `fuse` never appears in a
+            # loss, which is exactly the defect the reviewer found in the previous run
+            self.source_fused = nn.Linear(in_dim, dim)
+            self.target_fused = nn.Linear(in_dim, dim)
 
         def forward(self, x, out_adj, in_adj, out_norm, in_norm):
             s = self.act(self.source_in(x))
@@ -67,6 +71,9 @@ def build_diage(in_dim: int, dim: int = DIM, layers: int = LAYERS):
                 s = self.act(layer["ss"](s) + layer["st"](s_msg))
                 t = self.act(layer["tt"](t) + layer["ts"](t_msg))
             return s, t
+
+        def fuse_state(self, s, t):
+            return self.fuse(torch.cat([s, t], dim=-1))
 
     return DiGAE()
 
@@ -134,16 +141,24 @@ def main() -> None:
     triples = [(torch.from_numpy(pos).to(device), 1.0),
                (torch.from_numpy(rev).to(device), 0.0),
                (torch.from_numpy(neg).to(device), 0.0)]
+    RECON = 0.1
     for step in range(STEPS):
         model.train()
         loss_total = 0.0
         for pairs, label in triples:
             pick = torch.randint(0, len(pairs), (BATCH,), generator=generator)
             s, t = model(x, out_adj, in_adj, out_norm, in_norm)
+            fused = model.fuse_state(s, t)
             chosen = pairs[pick]
             logits = (s[chosen[:, 0]] * t[chosen[:, 1]]).sum(-1)
+            logits_fused = (model.source_fused(fused)[chosen[:, 0]]
+                            * model.target_fused(fused)[chosen[:, 1]]).sum(-1)
             loss = torch.nn.functional.binary_cross_entropy_with_logits(
                 logits, torch.full_like(logits, label))
+            loss = loss + torch.nn.functional.binary_cross_entropy_with_logits(
+                logits_fused, torch.full_like(logits_fused, label))
+            # semantic reconstruction: the fused state must stay a usable 768-d item vector
+            loss = loss + RECON * torch.nn.functional.mse_loss(fused, x)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             optimizer.step()
@@ -153,8 +168,10 @@ def main() -> None:
     model.eval()
     with torch.no_grad():
         s, t = model(x, out_adj, in_adj, out_norm, in_norm)
-        fused = model.fuse(torch.cat([s, t], dim=-1)).cpu().numpy().astype(np.float32)
-        s_np, t_np = s.cpu().numpy(), t.cpu().numpy()
+        fused_t = model.fuse_state(s, t)
+        fused = fused_t.cpu().numpy().astype(np.float32)
+        source_fused = model.source_fused
+        target_fused = model.target_fused
 
     from sklearn.metrics import average_precision_score, roc_auc_score
 
@@ -170,31 +187,15 @@ def main() -> None:
         with torch.no_grad():
             return (s[chosen[:, 0]] * t[chosen[:, 1]]).sum(-1).cpu().numpy()
 
-    # read-out A: DiGAE's own vectors, no fusion, no extra head
-    a = metrics(diage_scores(eval_pos), diage_scores(eval_neg), diage_scores(eval_rev))
+    def fused_scores(pairs):
+        chosen = torch.from_numpy(pairs).to(device)
+        with torch.no_grad():
+            return (source_fused(fused_t)[chosen[:, 0]]
+                    * target_fused(fused_t)[chosen[:, 1]]).sum(-1).cpu().numpy()
 
-    # read-out B: the fused 768-d state with a fresh asymmetric head
-    source, target = head(fused.shape[1])
-    source, target = source.to(device), target.to(device)
-    optimizer = torch.optim.AdamW(list(source.parameters()) + list(target.parameters()),
-                                  lr=1e-3, weight_decay=1e-4)
-    with torch.no_grad():
-        xf = torch.from_numpy(fused).to(device)
-    for _ in range(STEPS):
-        source.train(), target.train()
-        for pairs, label in triples:
-            pick = torch.randint(0, len(pairs), (BATCH,), generator=generator)
-            chosen = pairs[pick]
-            logits = (source(xf[chosen[:, 0]]) * target(xf[chosen[:, 1]])).sum(-1)
-            loss = torch.nn.functional.binary_cross_entropy_with_logits(
-                logits, torch.full_like(logits, label))
-            optimizer.zero_grad(set_to_none=True)
-            loss.backward()
-            optimizer.step()
-    source.eval(), target.eval()
-    b = metrics(score_head(fused, source, target, eval_pos, device),
-                score_head(fused, source, target, eval_neg, device),
-                score_head(fused, source, target, eval_rev, device))
+    a = metrics(diage_scores(eval_pos), diage_scores(eval_neg), diage_scores(eval_rev))
+    b = metrics(fused_scores(eval_pos), fused_scores(eval_neg), fused_scores(eval_rev))
+    reconstruction_mse = float(np.mean((fused - semantics) ** 2))
 
     report = {"split": {"message_edges": int(len(msg_rows)),
                         "held_edges": int(len(held_rows)),
@@ -205,8 +206,12 @@ def main() -> None:
                                           "with 1/(d_in+1), ELU, 2 layers, dim 128",
                            "loss": "BCE on positives, reversed edges and random negatives",
                            "kl_term": "omitted (regulariser only; stated, not hidden)",
+                           "fusion": "trained: edge head on the fused vector plus a 0.1 "
+                                     "weighted reconstruction of the 768-d semantics",
+                           "readout_B": "the trained fused heads, not a fresh head",
                            "steps": STEPS, "batch": BATCH, "seed": base.SEED},
-              "readouts": {"A_diage_vectors": a, "B_fused_768_head": b}}
+              "readouts": {"A_diage_vectors": a, "B_fused_768_head": b},
+              "fusion_reconstruction_mse": reconstruction_mse}
     Path(args.out).write_text(json.dumps(report, indent=1) + "\n")
     for key, value in report["readouts"].items():
         print(f"  {key}: AUC {value['roc_auc']:.4f} AP {value['average_precision']:.4f} "

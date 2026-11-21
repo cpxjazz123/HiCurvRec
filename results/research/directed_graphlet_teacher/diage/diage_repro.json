@@ -10,20 +10,23 @@
   "propagation": "DiGAE: sum over Out with 1/(d_out+1), sum over In with 1/(d_in+1), ELU, 2 layers, dim 128",
   "loss": "BCE on positives, reversed edges and random negatives",
   "kl_term": "omitted (regulariser only; stated, not hidden)",
+  "fusion": "trained: edge head on the fused vector plus a 0.1 weighted reconstruction of the 768-d semantics",
+  "readout_B": "the trained fused heads, not a fresh head",
   "steps": 1500,
   "batch": 4096,
   "seed": 0
  },
  "readouts": {
   "A_diage_vectors": {
-   "roc_auc": 0.768895984375,
-   "average_precision": 0.7401068084175397,
-   "direction_accuracy": 0.471
+   "roc_auc": 0.7959669921874999,
+   "average_precision": 0.7994217582345164,
+   "direction_accuracy": 0.467875
   },
   "B_fused_768_head": {
-   "roc_auc": 0.7615078984375,
-   "average_precision": 0.7313539691813314,
-   "direction_accuracy": 0.468875
+   "roc_auc": 0.7998747421874999,
+   "average_precision": 0.7755669008782345,
+   "direction_accuracy": 0.49125
   }
- }
+ },
+ "fusion_reconstruction_mse": 0.005751579534262419
 }
