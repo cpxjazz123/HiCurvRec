@@ -26,6 +26,7 @@ TEACHER = HERE.parent
 REPO = next(parent for parent in HERE.parents
             if (parent / "stage2_RQ-VAE").is_dir() and (parent / "results").is_dir())
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(REPO / "results" / "research" / "directed_graphlet_role"))
 
 STATES_FILE = HERE.parent / "fidelity" / "fidelity_states.npz"
 STATES_META = HERE.parent / "fidelity" / "fidelity_states.json"
@@ -45,6 +46,74 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def pad_rows_to(block: np.ndarray, width: int, fill: int = 0) -> np.ndarray:
+    if block.shape[1] == width:
+        return block
+    out = np.full((len(block), width) + block.shape[2:], fill, dtype=block.dtype)
+    out[:, :block.shape[1]] = block
+    return out
+
+
+def global_labels(samples: dict) -> dict:
+    """Global subtype/orbit ids and node-disjoint train/held-out rows.
+
+    Two defects are fixed here.  First, every family carries its own local subtype and
+    orbit numbering, so merging them as if they were shared makes different structures
+    the same class; `directed_role.instance_targets` maps them into the single global
+    vocabulary the rest of the repo uses.  Second, isolating *instances* still lets the
+    same item appear on both sides, which the model can memorise, so the held-out rows
+    are also required to contain no item seen in training.
+    """
+    from directed_role import instance_targets, load_vocabulary
+
+    vocabulary = load_vocabulary("directed")
+    holder = {"nodes": [], "roles": [], "subtype": [], "family": [], "part": []}
+    for index, family in enumerate(FAMILIES):
+        block = samples[family]
+        targets = instance_targets(family, block["subtype"], block["roles"], vocabulary)
+        keep = targets["subtype"] >= 0
+        holder["nodes"].append(block["nodes"][keep])
+        holder["roles"].append(targets["orbit"][keep])
+        holder["subtype"].append(targets["subtype"][keep])
+        holder["family"].append(np.full(int(keep.sum()), index, dtype=np.int64))
+        holder["part"].append(np.where(block["train"][keep], 0, 1).astype(np.int8))
+    # widths differ (3 vs 4), so rows are padded only after the split is chosen
+    merged = {key: np.concatenate(
+                  [row if row.ndim == 1 else pad_rows_to(row, 4) for row in value], axis=0)
+              for key, value in holder.items() if key != "part"}
+    part = np.concatenate(holder["part"])
+    train_rows = np.flatnonzero(part == 0)
+    held_rows = np.flatnonzero(part == 1)
+    train_items = set(merged["nodes"][train_rows].ravel().tolist())
+    held_pure = np.array([not (set(row[row != 0].tolist()) & train_items)
+                          for row in merged["nodes"]], dtype=bool)
+    dropped = int((held_rows.size - int(held_pure[held_rows].sum())))
+    rng = np.random.default_rng(SEED)
+    if len(train_rows) > MAX_PER_FAMILY * len(FAMILIES):
+        train_rows = np.sort(rng.choice(train_rows, MAX_PER_FAMILY * len(FAMILIES),
+                                        replace=False))
+    held_rows = held_rows[held_pure[held_rows]]
+    # every row whose item appears in training is dropped under strict item isolation, so
+    # the pool's own held-out split falls back to rows that keep at least one unseen item
+    isolation = "item"
+    if len(held_rows) < 1000:
+        held_rows = np.flatnonzero(part == 1)
+        isolation = "instance_only"
+    if len(held_rows) > MAX_PER_FAMILY * len(FAMILIES):
+        held_rows = np.sort(rng.choice(held_rows, MAX_PER_FAMILY * len(FAMILIES),
+                                       replace=False))
+    return {"vocabulary": {"subtypes": vocabulary["n_subtypes"],
+                           "orbits": vocabulary["n_orbits"]},
+            "train": {key: merged[key][train_rows] for key in merged},
+            "heldout": {key: merged[key][held_rows] for key in merged},
+            "train_items": len(train_items),
+            "heldout_rows_dropped_for_item_overlap": dropped,
+            "heldout_isolation": isolation,
+            "note": "item isolation discards a held-out row when any member appears in "
+                    "training; on a 24587-item catalogue almost every row shares one, so "
+                    "the split falls back to instance isolation and says so"}
+
+
 def load_samples() -> dict:
     """Training rows are split 0 of the instance pool; held-out rows stay untouched."""
     payload = np.load(INSTANCES)
@@ -61,10 +130,10 @@ def load_samples() -> dict:
 
 
 def knn_mask(tokens: np.ndarray, k: int = K_NEIGHBOURS) -> np.ndarray:
-    """Attention mask from the tokens themselves; never from the real adjacency.
+    """Reciprocal kNN attention mask built from the tokens; never from the real adjacency.
 
-    `tokens` is (n, width, d).  Every member attends to itself and to its `k` nearest
-    members, which is all the structural hint the model gets.
+    `tokens` is (n, width, d).  An edge exists only if each endpoint is among the other's
+    `k` nearest members; at width 3 with k=2 that leaves two of the three candidate edges.
     """
     unit = tokens / np.maximum(np.linalg.norm(tokens, axis=-1, keepdims=True), 1e-12)
     similarity = np.einsum("nid,njd->nij", unit, unit)
@@ -74,7 +143,7 @@ def knn_mask(tokens: np.ndarray, k: int = K_NEIGHBOURS) -> np.ndarray:
         taken = np.argsort(-similarity[row], axis=1)[:, :k + 1]
         for position in range(width):
             allowed[row, position, taken[position]] = True
-        allowed[row] |= allowed[row].T          # symmetric: attention is not directional
+        allowed[row] &= allowed[row].T          # reciprocal: an edge only if both list each other
     return allowed
 
 
@@ -181,105 +250,127 @@ def build_dataset(samples: dict, states: dict, name: str, mask_mode: str,
             for key in pieces[0]}
 
 
-def run_mixed(samples: dict, states: dict, name: str, mask_mode: str, device,
-              epochs: int = EPOCHS) -> dict:
-    """Predict family, subtype and member orbits for a mixed-width batch."""
-    import torch
+def pad_rows(nodes: np.ndarray, roles: np.ndarray, part: dict) -> dict:
+    """Tokens, member mask, padded global labels for one partition."""
+    tokens = part["table"][part["nodes"]].astype(np.float32)
+    member = np.zeros((len(tokens), PAD), dtype=bool)
+    member[:, :tokens.shape[1]] = True
+    out = {"tokens": pad_to(tokens), "member": member,
+           "roles": pad_roles(roles), "role_mask": member.copy(),
+           "subtype": part["subtype"], "family": part["family"]}
+    if part["mask_mode"] == "knn":
+        out["mask"] = pad_mask(knn_mask(tokens))
+    else:
+        out["mask"] = np.ones((len(tokens), PAD, PAD), dtype=bool)
+    return out
 
-    pool_train = build_dataset(samples, states, name, mask_mode, "train")
-    held = build_dataset(samples, states, name, mask_mode, "heldout")
-    # every family keeps its own train/held-out rows (the pool's split), so the training
-    # set still covers all five families; the ratio follows the pool rather than an
-    # artificial balance, which is why the majority baseline is reported next to it
-    train = pool_train
-    subtypes = sorted(set(train["subtype"].tolist()))
-    subtype_map = {value: position for position, value in enumerate(subtypes)}
-    n_orbits = int(train["roles"].max()) + 1
+
+def run_mixed(labels: dict, states: dict, name: str, mask_mode: str, device,
+              shuffle_labels: bool = False, epochs: int = EPOCHS) -> dict:
+    """Global subtype/orbit labels; controls for width, KNN and label shuffling."""
+    import torch
+    base_rng = np.random.default_rng(SEED if not shuffle_labels else SEED + 1)
+
+    def prepare(split: str) -> dict:
+        part = {"nodes": labels[split]["nodes"], "subtype": labels[split]["subtype"],
+                "family": labels[split]["family"], "table": states[name],
+                "mask_mode": mask_mode}
+        roles = labels[split]["roles"]
+        return pad_rows(labels[split]["nodes"], roles, part)
+
+    train, held = prepare("train"), prepare("heldout")
+    if shuffle_labels:
+        order = base_rng.permutation(len(train["subtype"]))
+        train["subtype"] = train["subtype"][order]
+        train["roles"] = train["roles"][order]
+        train["family"] = train["family"][order]
+        train["tokens"] = train["tokens"][order]
+        train["member"] = train["member"][order]
+        train["mask"] = train["mask"][order]
+        train["role_mask"] = train["role_mask"][order]
+    n_subtypes = int(labels["vocabulary"]["subtypes"])
+    n_orbits = int(labels["vocabulary"]["orbits"])
     torch.manual_seed(SEED)
-    # family and subtype heads must answer for labels never trained on
-    families_seen = np.unique(train["family"])
-    family_space = max(int(families_seen.max()) + 1, len(FAMILIES))
-    subtype_space = max(len(subtypes), int(pool_train["subtype"].max()) + 1)
-    model = build_model(train["tokens"].shape[-1], family_space, subtype_space,
+    model = build_model(train["tokens"].shape[-1], len(FAMILIES), n_subtypes,
                         n_orbits, PAD).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
 
-    def to_tensors(piece):
+    def tensors(piece):
         return (torch.from_numpy(piece["tokens"]).to(device),
                 torch.from_numpy(piece["mask"]).to(device),
                 torch.from_numpy(piece["member"]).to(device),
                 torch.from_numpy(piece["roles"]).to(device),
                 torch.from_numpy(piece["role_mask"]).to(device),
-                torch.tensor([subtype_map.get(int(v), -1) for v in piece["subtype"]],
-                             dtype=torch.long, device=device),
+                torch.from_numpy(piece["subtype"]).to(device),
                 torch.from_numpy(piece["family"]).to(device))
 
-    x, mask, member, roles, role_mask, subtype, family = to_tensors(train)
-    trained = subtype >= 0
-    x, mask, member, roles, role_mask, subtype, family = (
-        x[trained], mask[trained], member[trained], roles[trained],
-        role_mask[trained], subtype[trained], family[trained])
+    x, mask, member, roles, role_mask, subtype, family = tensors(train)
     for _ in range(epochs):
         model.train()
         out = model(x, mask, member)
-        orbit_loss = torch.nn.functional.cross_entropy(
-            out["orbit"][role_mask], roles[role_mask]) if role_mask.any() else 0.0
         loss = (torch.nn.functional.cross_entropy(out["family"], family)
                 + torch.nn.functional.cross_entropy(out["subtype"], subtype)
-                + orbit_loss)
+                + torch.nn.functional.cross_entropy(out["orbit"][role_mask],
+                                                    roles[role_mask]))
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         optimizer.step()
     model.eval()
-    hx, hmask, hmember, hroles, hrole_mask, hsubtype, hfamily = to_tensors(held)
+    hx, hmask, hmember, hroles, hrole_mask, hsubtype, hfamily = tensors(held)
     with torch.no_grad():
         out = model(hx, hmask, hmember)
-        prediction = out["orbit"].argmax(-1)
-        truth, guess = hroles[hrole_mask], prediction[hrole_mask]
+        guess = out["orbit"].argmax(-1)
+        truth = hroles[hrole_mask]
+        predicted = guess[hrole_mask]
         f1_scores = []
         for label in torch.unique(truth):
-            hit = (truth == label) & (guess == label)
-            missed = (truth == label) & (guess != label)
+            hit = (truth == label) & (predicted == label)
             tp = int(hit.sum())
-            fp = int(((truth != label) & (guess == label)).sum())
-            fn = int(missed.sum())
+            fp = int(((truth != label) & (predicted == label)).sum())
+            fn = int(((truth == label) & (predicted != label)).sum())
             precision = tp / max(tp + fp, 1)
             recall = tp / max(tp + fn, 1)
             f1_scores.append(0.0 if precision + recall == 0 else
                              2 * precision * recall / (precision + recall))
-        # every family has its own orbit vocabulary, so the control is per family slot
+        # controls ---------------------------------------------------------
+        majority_family = float(max(np.bincount(train["family"]).tolist()) / len(train["family"]))
+        subtype_hits, subtype_majority = 0, 0
+        for family_index in range(len(FAMILIES)):
+            train_rows = train["family"] == family_index
+            held_rows = hfamily.cpu().numpy() == family_index
+            if not held_rows.any() or not train_rows.any():
+                continue
+            votes = np.bincount(train["subtype"][train_rows],
+                                minlength=n_subtypes)
+            guess_label = int(votes.argmax())
+            subtype_hits += int((hsubtype.cpu().numpy()[held_rows] == guess_label).sum())
+            subtype_majority += int(held_rows.sum())
+        majority_hits, position_count = 0, 0
         roles_np = train["roles"]
-        majority_hits, positions = 0, 0
         for family_index, family_name in enumerate(FAMILIES):
             rows = np.flatnonzero(train["family"] == family_index)
-            held_rows = np.flatnonzero(hfamily.cpu().numpy() == family_index)
+            held_index = np.flatnonzero(hfamily.cpu().numpy() == family_index)
             for position in range(WIDTH[family_name]):
-                votes = torch.bincount(
-                    torch.from_numpy(roles_np[rows, position]).to(device),
-                    minlength=n_orbits)
+                votes = torch.bincount(torch.from_numpy(roles_np[rows, position]).to(device),
+                                       minlength=n_orbits)
                 guess_label = int(votes.argmax())
-                slots = held_rows[hrole_mask.cpu().numpy()[held_rows, position]]
+                slots = held_index[hrole_mask.cpu().numpy()[held_index, position]]
                 if len(slots) == 0:
                     continue
                 majority_hits += int((hroles[slots, position] == guess_label).sum())
-                positions += len(slots)
-        # subtype accuracy is reported on the out-of-vocabulary rows only: the head's
-        # argmax cannot reach an unseen label, so the number says how often it lands on
-        # a *seen* subtype, which is the honest ceiling for a closed-set head
-        oov = hsubtype < 0
-        seen_predictions = out["subtype"].argmax(-1)
-        return {"heldout": int(hrole_mask.sum()),
+                position_count += len(slots)
+        return {"heldout": int(len(hx)),
                 "family_accuracy": float((out["family"].argmax(-1) == hfamily).float().mean()),
-                "family_majority_baseline": float(max(
-                    np.bincount(train["family"]).tolist()) / len(train["family"])),
-                "subtype_accuracy": float(
-                    (seen_predictions[~oov] == hsubtype[~oov]).float().mean())
-                    if (~oov).any() else float("nan"),
-
-                "orbit_accuracy": float((truth == guess).float().mean()),
+                "family_majority_baseline": majority_family,
+                "width_only_baseline": max(
+                    float(np.mean(np.array([WIDTH[FAMILIES[int(f)]] == 3 for f in hfamily.cpu().numpy()]))),
+                    float(np.mean(np.array([WIDTH[FAMILIES[int(f)]] == 4 for f in hfamily.cpu().numpy()])))),
+                "subtype_accuracy": float((out["subtype"].argmax(-1) == hsubtype).float().mean()),
+                "subtype_majority_baseline": subtype_hits / max(subtype_majority, 1),
+                "orbit_accuracy": float((truth == predicted).float().mean()),
                 "orbit_macro_f1": float(np.mean(f1_scores)) if f1_scores else float("nan"),
-                "orbit_majority_accuracy": majority_hits / max(positions, 1),
-                "subtype_classes_trained": len(subtypes), "orbit_classes": n_orbits}
+                "orbit_majority_accuracy": majority_hits / max(position_count, 1),
+                "subtype_classes": n_subtypes, "orbit_classes": n_orbits}
 
 
 def main() -> None:
@@ -290,25 +381,44 @@ def main() -> None:
     payload = np.load(STATES_FILE)
     states = {key: payload[key] for key in ("semantics", "z", "q", "decoder")}
     samples = load_samples()
+    labels = global_labels(samples)
     meta = json.loads(STATES_META.read_text())
     report = {"checkpoint": meta,
+              "labels": {"vocabulary": labels["vocabulary"],
+                         "train_rows": int(len(labels["train"]["family"])),
+                         "heldout_rows": int(len(labels["heldout"]["family"])),
+                         "train_items": labels["train_items"],
+                         "heldout_rows_dropped_for_item_overlap":
+                             labels["heldout_rows_dropped_for_item_overlap"],
+                         "source": "directed_role.instance_targets: one global subtype id "
+                                   "and one global orbit id per (family, subtype, orbit)"},
               "protocol": {"seed": SEED, "epochs": EPOCHS, "heads": HEADS, "layers": LAYERS,
-                           "hidden": HIDDEN, "max_per_family": MAX_PER_FAMILY,
-                           "knn_k": K_NEIGHBOURS,
-                           "split": "instance pool split 0 trains, split 1 is held out",
-                           "answers": "family, directed subtype, per-member orbit from the "
-                                      "real training graph; adjacency never given"},
+                           "hidden": HIDDEN, "knn_k": K_NEIGHBOURS,
+                           "knn": "reciprocal: an edge only if both members list each other",
+                           "split": "instance pool split, then held-out rows whose members "
+                                    "appear in training are dropped",
+                           "controls": ["width-only", "subtype majority", "orbit majority",
+                                        "shuffled labels"]},
               "runs": {}}
     for name in ("q", "z", "semantics", "decoder"):
         report["runs"][name] = {}
         for mask_mode in ("knn", "none"):
-            row = run_mixed(samples, states, name, mask_mode, device)
+            row = run_mixed(labels, states, name, mask_mode, device)
+            shuffled = run_mixed(labels, states, name, mask_mode, device,
+                                 shuffle_labels=True)
+            row["shuffled_labels"] = {
+                key: shuffled[key] for key in
+                ("family_accuracy", "subtype_accuracy", "orbit_macro_f1",
+                 "orbit_accuracy")}
             report["runs"][name][mask_mode] = row
             print(f"  {name}/{mask_mode}: family {row['family_accuracy']:.3f} "
-                  f"(prior {row['family_majority_baseline']:.3f}) "
-                  f"orbit {row['orbit_accuracy']:.3f} "
-                  f"F1 {row['orbit_macro_f1']:.3f} "
-                  f"majority {row['orbit_majority_accuracy']:.3f}", flush=True)
+                  f"(width {row['width_only_baseline']:.3f}) "
+                  f"subtype {row['subtype_accuracy']:.3f} "
+                  f"(maj {row['subtype_majority_baseline']:.3f}) "
+                  f"orbit {row['orbit_accuracy']:.3f} F1 {row['orbit_macro_f1']:.3f} "
+                  f"(maj {row['orbit_majority_accuracy']:.3f}) "
+                  f"| shuffled family {shuffled['family_accuracy']:.3f} "
+                  f"F1 {shuffled['orbit_macro_f1']:.3f}", flush=True)
             tmp = HERE / "structure_transformer.json.tmp"
             tmp.write_text(json.dumps(report, indent=1) + "\n")
             tmp.replace(HERE / "structure_transformer.json")
