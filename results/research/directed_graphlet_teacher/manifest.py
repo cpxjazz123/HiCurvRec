@@ -158,6 +158,8 @@ ANALYSIS = (
     "graph_loss/REPORT_GRAPH_LOSS.md",
     "graph_loss/graph_loss_v2.py", "graph_loss/graph_loss_v2.json",
     "graph_loss/REPORT_GRAPH_LOSS_V2.md",
+    "graph_loss/graph_loss_v3.py", "graph_loss/graph_loss_v3.json",
+    "graph_loss/REPORT_GRAPH_LOSS_V3.md",
 )
 
 

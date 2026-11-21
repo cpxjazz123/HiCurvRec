@@ -1,0 +1,197 @@
+{
+ "protocol": {
+  "masking": "every batch pair that is a held-out edge (either direction) is excluded from the loss; the sampler brings held partners into the batch so the mask fires",
+  "orientation_control": "one fixed orientation per train edge, shared by every batch and drawn once",
+  "batch_sequence": "drawn once and replayed identically for every arm",
+  "gradient_budget": "graph encoder-grad norm <= 0.5 x RQ-VAE norm; the relation matrix trains unscaled",
+  "codebook": "frozen",
+  "steps": 800,
+  "seed": 0
+ },
+ "arms": {
+  "A_none": {
+   "gradient_log": [
+    {
+     "step": 0,
+     "rq_norm": 0.0009413218594139323,
+     "graph_norm": 0.0,
+     "scale": 0.0,
+     "blocked_pairs": 0
+    },
+    {
+     "step": 200,
+     "rq_norm": 0.00039991261912908913,
+     "graph_norm": 0.0,
+     "scale": 0.0,
+     "blocked_pairs": 0
+    },
+    {
+     "step": 400,
+     "rq_norm": 0.00033029870071354516,
+     "graph_norm": 0.0,
+     "scale": 0.0,
+     "blocked_pairs": 0
+    },
+    {
+     "step": 600,
+     "rq_norm": 0.0005272510526553003,
+     "graph_norm": 0.0,
+     "scale": 0.0,
+     "blocked_pairs": 0
+    },
+    {
+     "step": 799,
+     "rq_norm": 0.00033832334204970927,
+     "graph_norm": 0.0,
+     "scale": 0.0,
+     "blocked_pairs": 0
+    }
+   ],
+   "masked_pairs_mean": 0.0,
+   "direction_probe": 0.5003626942634583,
+   "direction_probe_null": 0.5034457445144653,
+   "existence_auc": 0.6787855718845324,
+   "existence_auc_null": 0.634684930903383,
+   "sid_collision": 0.10481148574449917,
+   "semantic_probe_r2": 0.2612404105474173
+  },
+  "B_undirected": {
+   "gradient_log": [
+    {
+     "step": 0,
+     "rq_norm": 0.0009413218594139323,
+     "graph_norm": 1.0397453289561227,
+     "scale": 0.00045266943413874004,
+     "blocked_pairs": 183
+    },
+    {
+     "step": 200,
+     "rq_norm": 0.0003946460383829669,
+     "graph_norm": 1.0211238170040917,
+     "scale": 0.00019324103101464802,
+     "blocked_pairs": 181
+    },
+    {
+     "step": 400,
+     "rq_norm": 0.0006849405661048253,
+     "graph_norm": 0.7769469978101468,
+     "scale": 0.0004407897630310402,
+     "blocked_pairs": 177
+    },
+    {
+     "step": 600,
+     "rq_norm": 0.0009930724401402663,
+     "graph_norm": 0.23787756427038728,
+     "scale": 0.0020873604519749387,
+     "blocked_pairs": 207
+    },
+    {
+     "step": 799,
+     "rq_norm": 0.0003747689071932741,
+     "graph_norm": 0.3548337488566045,
+     "scale": 0.0005280908431073813,
+     "blocked_pairs": 189
+    }
+   ],
+   "masked_pairs_mean": 180.83875,
+   "direction_probe": 0.5090678334236145,
+   "direction_probe_null": 0.5014508366584778,
+   "existence_auc": 0.7295463649918214,
+   "existence_auc_null": 0.6631556780885977,
+   "sid_collision": 0.11725708707853744,
+   "semantic_probe_r2": 0.2582852057448227
+  },
+  "C_random": {
+   "gradient_log": [
+    {
+     "step": 0,
+     "rq_norm": 0.0009413218594139323,
+     "graph_norm": 0.7906562349688704,
+     "scale": 0.0005952788441938954,
+     "blocked_pairs": 183
+    },
+    {
+     "step": 200,
+     "rq_norm": 0.0006935049137982045,
+     "graph_norm": 0.2307376114150307,
+     "scale": 0.0015027998893314108,
+     "blocked_pairs": 181
+    },
+    {
+     "step": 400,
+     "rq_norm": 0.000498337259394135,
+     "graph_norm": 0.2604290688561575,
+     "scale": 0.0009567619728145268,
+     "blocked_pairs": 177
+    },
+    {
+     "step": 600,
+     "rq_norm": 0.0013053782735022192,
+     "graph_norm": 0.16590758754488147,
+     "scale": 0.003934052362581329,
+     "blocked_pairs": 207
+    },
+    {
+     "step": 799,
+     "rq_norm": 0.00037033982274638406,
+     "graph_norm": 0.1842557504164312,
+     "scale": 0.001004961370023431,
+     "blocked_pairs": 189
+    }
+   ],
+   "masked_pairs_mean": 180.83875,
+   "direction_probe": 0.5036271214485168,
+   "direction_probe_null": 0.4853101074695587,
+   "existence_auc": 0.7005024011812967,
+   "existence_auc_null": 0.6609132313716355,
+   "sid_collision": 0.12075487045999922,
+   "semantic_probe_r2": 0.2609457196572995
+  },
+  "D_directed": {
+   "gradient_log": [
+    {
+     "step": 0,
+     "rq_norm": 0.0009413218594139323,
+     "graph_norm": 0.7906563059748069,
+     "scale": 0.0005952787907340906,
+     "blocked_pairs": 183
+    },
+    {
+     "step": 200,
+     "rq_norm": 0.0006052632704414905,
+     "graph_norm": 0.20605275606034368,
+     "scale": 0.0014687094752186566,
+     "blocked_pairs": 181
+    },
+    {
+     "step": 400,
+     "rq_norm": 0.0005534342478364727,
+     "graph_norm": 0.31624056936150347,
+     "scale": 0.0008750209515399437,
+     "blocked_pairs": 177
+    },
+    {
+     "step": 600,
+     "rq_norm": 0.0004031262338327644,
+     "graph_norm": 0.2591236659997366,
+     "scale": 0.0007778645618443323,
+     "blocked_pairs": 207
+    },
+    {
+     "step": 799,
+     "rq_norm": 0.00045824592831004193,
+     "graph_norm": 0.3305787433008302,
+     "scale": 0.000693096482451434,
+     "blocked_pairs": 189
+    }
+   ],
+   "masked_pairs_mean": 180.83875,
+   "direction_probe": 0.5123322606086731,
+   "direction_probe_null": 0.5081610679626465,
+   "existence_auc": 0.6992669409185531,
+   "existence_auc_null": 0.6471688450936384,
+   "sid_collision": 0.14385650953756046,
+   "semantic_probe_r2": 0.2586135731628698
+  }
+ }
+}
