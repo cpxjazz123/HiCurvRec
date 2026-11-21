@@ -98,6 +98,8 @@ ANALYSIS = (
     "orbit_vectors/REPORT_ORBIT_VECTORS.md", "orbit_vectors/orbit_vocab.json",
     "orbit_vectors/split_audit.json", "orbit_vectors/reliability.json",
     "orbit_vectors/learnability.json", "orbit_vectors/manifest.json",
+    "relation/audit_relation.py",
+    "relation/REPORT_RELATION_AUDIT.md", "tests/test_relation_audit.py",
 )
 
 
@@ -129,3 +131,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
