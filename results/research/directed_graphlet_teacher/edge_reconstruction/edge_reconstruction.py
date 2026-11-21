@@ -36,6 +36,22 @@ sys.path.insert(0, str(HERE.parent / "full_attention"))
 
 from directed_graphlets import classify  # noqa: E402
 from directed_role import FAMILIES, instance_targets, load_vocabulary  # noqa: E402
+
+VOCABULARY = load_vocabulary("directed")
+
+
+def global_orbit(local_ids, family: str, key: str):
+    """`classify` returns per-subtype local orbit ids; compare only global ones.
+
+    The label side went through `instance_targets`, which maps (family, subtype key,
+    local orbit) into the single global vocabulary.  Reading `classify`'s local ids
+    against those global ids compares two different numberings and every hit is chance.
+    """
+    subtype_id = VOCABULARY["subtype_of"].get(f"{family}:{key}")
+    if subtype_id is None:
+        return None
+    mapping = VOCABULARY["orbits_of"][subtype_id]
+    return [int(mapping[int(value)]) for value in local_ids]
 from full_attention import build_labels  # noqa: E402
 
 FULL_GRAPH = REPO / "results" / "research" / "behavior_graph_directed" / "graph.npz"
@@ -45,11 +61,13 @@ STATES_META = TEACHER / "fidelity" / "fidelity_states.json"
 WIDTHS = {"P3": 3, "K3": 3, "C4": 4, "P4": 4, "K1_3": 4}
 N_FAMILIES = len(FAMILIES)
 SEED = 0
-EPOCHS = 40      # 200k rows x 40 epochs on a 3- or 4-token graph
+EPOCHS = 40      # legacy constant, unused: training is counted in steps now
 HIDDEN = 128
 HEADS = 4
 LAYERS = 2
 TRAIN_ROWS = 200000
+BATCH = 512
+STEPS = 6000
 HELD_ROWS = 6000
 
 
@@ -204,7 +222,8 @@ def evaluate(probabilities: np.ndarray, adjacency: np.ndarray, family: np.ndarra
     for row in range(len(predicted)):
         result = classify(guess_edges[row].copy())
         predicted_family.append(FAMILIES.index(result[0]) if result else -1)
-        predicted_orbit.append(result[2] if result else None)
+        predicted_orbit.append(global_orbit(result[2], result[0], result[1])
+                               if result else None)
     predicted_family = np.array(predicted_family)
     family_correct = predicted_family == family
     # family score over the full instance, unclassifiable = wrong
@@ -246,6 +265,8 @@ def main() -> None:
                            "hidden": HIDDEN, "widths": sorted(set(WIDTHS.values())),
                            "loss": "BCE over ordered pairs, diagonal excluded",
                            "inputs": "item representations only, no degree feature",
+                           "optimisation": f"{STEPS} shuffled mini-batches of {BATCH} "
+                                           f"(legacy EPOCHS={EPOCHS} is unused)",
                            "threshold": "chosen on the training split by edge F1",
                            "scoring": "every held-out instance is scored; an unclassifiable "
                                       "prediction counts as wrong",
@@ -255,8 +276,9 @@ def main() -> None:
     graph = np.load(FULL_GRAPH)
     degree_out = np.bincount(graph["rows"], minlength=len(states["z"])).astype(np.float64)
     degree_in = np.bincount(graph["cols"], minlength=len(states["z"])).astype(np.float64)
+    # min(out, in) degree already separates hubs from cold items; no max-normalisation,
+    # because a score compressed into a tiny range makes any fixed threshold empty
     both = np.minimum(degree_out, degree_in)
-    both = both / max(both.max(), 1.0)
 
     for width in (3, 4):
         rows = build_rows(width)
@@ -279,12 +301,21 @@ def main() -> None:
                 states[name][rows["nodes"][train_rows]].astype(np.float32)).to(device)
             target = torch.from_numpy(y_truth.astype(np.float32)).to(device)
             keep = torch.from_numpy(keep_mask).to(device)
-            for _ in range(EPOCHS):
+            generator = torch.Generator(device="cpu").manual_seed(SEED)
+            # one full-batch update per "epoch" is 60 updates in total; a shuffled
+            # mini-batch loop with a fixed step budget is what the number of epochs stood
+            # for.  The step count is reported so the optimisation is comparable.
+            for _ in range(STEPS):
                 model.train()
-                logits = model(tokens)
+                pick = torch.randint(0, len(tokens), (BATCH,), generator=generator)
+                logits = model(tokens[pick])
+                off_diagonal = torch.ones((BATCH, width, width), dtype=torch.bool,
+                                          device=device)
+                for position in range(width):
+                    off_diagonal[:, position, position] = False
                 # the diagonal is never a prediction target
                 loss = torch.nn.functional.binary_cross_entropy_with_logits(
-                    logits[keep], target[keep])
+                    logits[off_diagonal], target[pick][off_diagonal])
                 optimizer.zero_grad(set_to_none=True)
                 loss.backward()
                 optimizer.step()
@@ -315,17 +346,41 @@ def main() -> None:
         held_members = both[rows["nodes"][held_rows]]
         pair_train = train_members[:, :, None] * train_members[:, None, :]
         pair_held = held_members[:, :, None] * held_members[:, None, :]
+        # The degree score is an unbounded product, so a fixed threshold is meaningless
+        # and the two degenerate ends collapse it: "nothing connected" scores 0 on every
+        # candidate and "everything connected" scores the share of true edges.  Both are
+        # reported next to the quantiles.
+        quantiles = [float(np.quantile(pair_train, q)) for q in (0.5, 0.75, 0.9)]
+        candidates = quantiles + [float("inf")]
         train_scores = {t: evaluate(pair_train, y_truth, rows["family"][train_rows],
-                                    rows["orbit"][train_rows], t)
-                        for t in (0.3, 0.5, 0.7)}
-        best = max(train_scores, key=lambda value: train_scores[value]["edge_f1"])
+                                    rows["orbit"][train_rows], t) for t in candidates}
+        train_scores["none_connected"] = evaluate(
+            np.zeros_like(pair_train), y_truth, rows["family"][train_rows],
+            rows["orbit"][train_rows], 0.5)
+        best = max(quantiles, key=lambda value: train_scores[value]["edge_f1"])
+        train_edge_share = float(y_truth.sum() / (len(y_truth) * width * (width - 1)))
         report["controls"].setdefault("both_endpoint_degree", {})[str(width)] = {
+            "threshold_scale": "min(out_degree, in_degree) of the two endpoints, product",
+            "train_quantiles_tried": quantiles,
+            "train_f1_by_threshold": {
+                ("inf" if t == float("inf") else round(t, 3)): round(v["edge_f1"], 4)
+                for t, v in train_scores.items() if not isinstance(t, str)},
             "threshold_chosen_on_train": best,
             "heldout": evaluate(pair_held, rows["adjacency"][held_rows],
-                                rows["family"][held_rows], rows["orbit"][held_rows], best)}
-        print(f"  w{width} both-endpoint degree thr {best}: edgeF1 "
-              f"{report['controls']['both_endpoint_degree'][str(width)]['heldout']['edge_f1']:.3f}",
-              flush=True)
+                                rows["family"][held_rows], rows["orbit"][held_rows], best),
+            "everything_connected_baseline": evaluate(
+                np.ones_like(pair_held), rows["adjacency"][held_rows],
+                rows["family"][held_rows], rows["orbit"][held_rows], -1.0),
+            "nothing_connected_baseline": evaluate(
+                np.zeros_like(pair_held), rows["adjacency"][held_rows],
+                rows["family"][held_rows], rows["orbit"][held_rows], 0.5),
+            "true_edge_share": train_edge_share}
+        control = report["controls"]["both_endpoint_degree"][str(width)]
+        print(f"  w{width} degree: quantile thr {best} -> edgeF1 "
+              f"{control['heldout']['edge_f1']:.3f}; everything-connected "
+              f"{control['everything_connected_baseline']['edge_f1']:.3f}; "
+              f"nothing-connected {control['nothing_connected_baseline']['edge_f1']:.3f}; "
+              f"true edge share {train_edge_share:.3f}", flush=True)
 
     Path(args.out).write_text(json.dumps(report, indent=1) + "\n")
     print("written", args.out)

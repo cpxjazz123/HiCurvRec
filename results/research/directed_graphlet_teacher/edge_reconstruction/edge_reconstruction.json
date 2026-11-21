@@ -54,6 +54,7 @@
   ],
   "loss": "BCE over ordered pairs, diagonal excluded",
   "inputs": "item representations only, no degree feature",
+  "optimisation": "6000 shuffled mini-batches of 512 (legacy EPOCHS=40 is unused)",
   "threshold": "chosen on the training split by edge F1",
   "scoring": "every held-out instance is scored; an unclassifiable prediction counts as wrong",
   "orbit_ids": "global, via directed_role.instance_targets"
@@ -62,49 +63,49 @@
   "3": {
    "semantics": {
     "threshold_chosen_on_train": 0.3,
-    "train_edge_f1": 0.5508208995779266,
+    "train_edge_f1": 0.5945877678380339,
     "heldout": {
      "threshold": 0.3,
-     "edge_precision": 0.38313888888888886,
-     "edge_recall": 1.0,
-     "edge_f1": 0.5540136163717791,
-     "adjacency_exact": 0.00016666666666666666,
-     "classifiable_share": 1.0,
-     "family_accuracy_overall": 0.225,
-     "family_macro_f1": 0.18367346938775508,
-     "orbit_accuracy_overall": 0.03922222222222222,
+     "edge_precision": 0.44137694680324435,
+     "edge_recall": 0.8403538026535199,
+     "edge_f1": 0.5787686623058871,
+     "adjacency_exact": 0.010666666666666666,
+     "classifiable_share": 0.983,
+     "family_accuracy_overall": 0.4745,
+     "family_macro_f1": 0.4761908104144487,
+     "orbit_accuracy_overall": 0.011833333333333333,
      "instances": 6000
     }
    },
    "z": {
     "threshold_chosen_on_train": 0.3,
-    "train_edge_f1": 0.5500285786125267,
+    "train_edge_f1": 0.5685873019899759,
     "heldout": {
      "threshold": 0.3,
-     "edge_precision": 0.3972216055060421,
-     "edge_recall": 0.9079968099760748,
-     "edge_f1": 0.5526675786593707,
-     "adjacency_exact": 0.00016666666666666666,
-     "classifiable_share": 0.9605,
-     "family_accuracy_overall": 0.461,
-     "family_macro_f1": 0.4698004486274592,
-     "orbit_accuracy_overall": 0.03933333333333333,
+     "edge_precision": 0.426241261874888,
+     "edge_recall": 0.8620314652359893,
+     "edge_f1": 0.5704279408942621,
+     "adjacency_exact": 0.0006666666666666666,
+     "classifiable_share": 0.9743333333333334,
+     "family_accuracy_overall": 0.5405,
+     "family_macro_f1": 0.5360343154873066,
+     "orbit_accuracy_overall": 0.0010555555555555555,
      "instances": 6000
     }
    },
    "q": {
     "threshold_chosen_on_train": 0.3,
-    "train_edge_f1": 0.5499787503327558,
+    "train_edge_f1": 0.5652010203641463,
     "heldout": {
      "threshold": 0.3,
-     "edge_precision": 0.39778532220706286,
-     "edge_recall": 0.9089393170448778,
-     "edge_f1": 0.553387773118517,
-     "adjacency_exact": 0.00016666666666666666,
-     "classifiable_share": 0.9601666666666666,
-     "family_accuracy_overall": 0.4598333333333333,
-     "family_macro_f1": 0.46873092802010413,
-     "orbit_accuracy_overall": 0.03944444444444444,
+     "edge_precision": 0.42460533478497553,
+     "edge_recall": 0.8482563619227145,
+     "edge_f1": 0.5659282190190578,
+     "adjacency_exact": 0.0005,
+     "classifiable_share": 0.9605,
+     "family_accuracy_overall": 0.5533333333333333,
+     "family_macro_f1": 0.5514218944888583,
+     "orbit_accuracy_overall": 0.0006111111111111111,
      "instances": 6000
     }
    }
@@ -112,49 +113,49 @@
   "4": {
    "semantics": {
     "threshold_chosen_on_train": 0.3,
-    "train_edge_f1": 0.29670288471764533,
+    "train_edge_f1": 0.5863129720613037,
     "heldout": {
      "threshold": 0.3,
-     "edge_precision": 0.31763789169032114,
-     "edge_recall": 0.2717360251404628,
-     "edge_f1": 0.2928994842053941,
-     "adjacency_exact": 0.0,
-     "classifiable_share": 0.03133333333333333,
-     "family_accuracy_overall": 0.0125,
-     "family_macro_f1": 0.017869907076483203,
-     "orbit_accuracy_overall": 0.0,
+     "edge_precision": 0.4783684433762194,
+     "edge_recall": 0.6444148176364156,
+     "edge_f1": 0.5491134823710796,
+     "adjacency_exact": 0.0235,
+     "classifiable_share": 0.2708333333333333,
+     "family_accuracy_overall": 0.1205,
+     "family_macro_f1": 0.19901515188979976,
+     "orbit_accuracy_overall": 0.025041666666666667,
      "instances": 6000
     }
    },
    "z": {
     "threshold_chosen_on_train": 0.3,
-    "train_edge_f1": 0.38745177368301065,
+    "train_edge_f1": 0.49723252346766456,
     "heldout": {
      "threshold": 0.3,
-     "edge_precision": 0.3460011133791056,
-     "edge_recall": 0.44391010379963813,
-     "edge_f1": 0.3888877302020982,
-     "adjacency_exact": 0.0,
-     "classifiable_share": 0.031,
-     "family_accuracy_overall": 0.013,
-     "family_macro_f1": 0.022964562177248505,
-     "orbit_accuracy_overall": 0.0,
+     "edge_precision": 0.4109811346270877,
+     "edge_recall": 0.5788020188553471,
+     "edge_f1": 0.4806642941874258,
+     "adjacency_exact": 0.004333333333333333,
+     "classifiable_share": 0.2885,
+     "family_accuracy_overall": 0.14,
+     "family_macro_f1": 0.2189307591448851,
+     "orbit_accuracy_overall": 0.004791666666666666,
      "instances": 6000
     }
    },
    "q": {
     "threshold_chosen_on_train": 0.3,
-    "train_edge_f1": 0.38636896667912035,
+    "train_edge_f1": 0.4846612299812352,
     "heldout": {
      "threshold": 0.3,
-     "edge_precision": 0.3454511488884738,
-     "edge_recall": 0.4402437863060661,
-     "edge_f1": 0.3871291896078883,
-     "adjacency_exact": 0.0,
-     "classifiable_share": 0.030166666666666668,
-     "family_accuracy_overall": 0.013166666666666667,
-     "family_macro_f1": 0.02369556555726592,
-     "orbit_accuracy_overall": 0.0,
+     "edge_precision": 0.3998539952216618,
+     "edge_recall": 0.5737548804875726,
+     "edge_f1": 0.4712738081270288,
+     "adjacency_exact": 0.0025,
+     "classifiable_share": 0.2975,
+     "family_accuracy_overall": 0.16083333333333333,
+     "family_macro_f1": 0.2435085863639871,
+     "orbit_accuracy_overall": 0.0034583333333333332,
      "instances": 6000
     }
    }
@@ -163,12 +164,18 @@
  "controls": {
   "both_endpoint_degree": {
    "3": {
-    "threshold_chosen_on_train": 0.3,
+    "threshold_scale": "min(out_degree, in_degree) of the two endpoints, product",
+    "train_quantiles_tried": [
+     231.0,
+     1408.0,
+     8280.0
+    ],
+    "threshold_chosen_on_train": Infinity,
     "heldout": {
-     "threshold": 0.3,
-     "edge_precision": 0.9444444444444444,
-     "edge_recall": 0.0012325092438193286,
-     "edge_f1": 0.002461805806965462,
+     "threshold": Infinity,
+     "edge_precision": 0.0,
+     "edge_recall": 0.0,
+     "edge_f1": 0.0,
      "adjacency_exact": 0.0,
      "classifiable_share": 0.0,
      "family_accuracy_overall": 0.0,
@@ -178,12 +185,18 @@
     }
    },
    "4": {
-    "threshold_chosen_on_train": 0.3,
+    "threshold_scale": "min(out_degree, in_degree) of the two endpoints, product",
+    "train_quantiles_tried": [
+     290.0,
+     1620.0,
+     8281.0
+    ],
+    "threshold_chosen_on_train": Infinity,
     "heldout": {
-     "threshold": 0.3,
-     "edge_precision": 1.0,
-     "edge_recall": 0.000666603180649462,
-     "edge_f1": 0.0013323182337266844,
+     "threshold": Infinity,
+     "edge_precision": 0.0,
+     "edge_recall": 0.0,
+     "edge_f1": 0.0,
      "adjacency_exact": 0.0,
      "classifiable_share": 0.0,
      "family_accuracy_overall": 0.0,
