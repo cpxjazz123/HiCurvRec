@@ -1,0 +1,32 @@
+{
+ "sampling": {
+  "local_samples": 1288506,
+  "connection_share": 0.5401946306228638,
+  "direction_defined_share": 0.5251384377479553
+ },
+ "protocol": {
+  "encoder": "dual DiGAE (direction_arms), unweighted mean",
+  "steps": 1200,
+  "batch": 4096,
+  "seed": 0,
+  "existence": "symmetric MLP on [x_A, x_B, x_A*x_B, |x_A-x_B|]",
+  "direction": "sigmoid((s_A.t_B - s_B.t_A)/2), ranking loss on one-way pairs",
+  "eval": "held-out one-way edges, direct and probe with null"
+ },
+ "arms": {
+  "A_single_inner_product": {
+   "existence_auc": 0.6242063828125001,
+   "existence_ap": 0.5713281002818702,
+   "direct_direction": 0.49175,
+   "probe_direction": 0.6058122515678406,
+   "probe_null": 0.5059612393379211
+  },
+  "B_decomposed": {
+   "existence_auc": 0.6925720234375,
+   "existence_ap": 0.6386695860818352,
+   "direct_direction": 0.49825,
+   "probe_direction": 0.6140089631080627,
+   "probe_null": 0.4895678162574768
+  }
+ }
+}

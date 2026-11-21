@@ -152,6 +152,8 @@ ANALYSIS = (
     "concat_diage/REPORT_CONCAT_DIAGE.md",
     "local_pairs/local_pairs.py", "local_pairs/local_pairs.json",
     "local_pairs/REPORT_LOCAL_PAIRS.md",
+    "decomposed/decomposed.py", "decomposed/decomposed.json",
+    "decomposed/REPORT_DECOMPOSED.md",
 )
 
 
