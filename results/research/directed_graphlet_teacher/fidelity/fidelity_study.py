@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""What survives quantisation, measured on one fixed checkpoint and five paired seeds.
+"""What survives quantisation, measured on one fixed checkpoint and one seed.
+
+Every arm, split and model start uses the same single seed: no seed replications, so
+the numbers are single-run measurements and seed variance is not estimated.
 
 Two tasks, both fed only by item representations (never by adjacency):
 
@@ -46,7 +49,7 @@ ORBIT_PROFILE = TEACHER / "teacher" / "opt" / "orbit_profile.npz"
 CONTRACT = TEACHER / "teacher" / "opt" / "data_contract.npz"
 SEMANTICS = REPO / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
 K_NEIGHBOURS = 10
-SEEDS = (0, 1, 2, 3, 4)
+SEED = 0                     # one run per configuration; no seed replication
 EPOCHS = 300
 MAX_INSTANCES = 60000
 HIDDEN = 256
@@ -300,7 +303,7 @@ def role_task(states: dict, targets: np.ndarray, covered: np.ndarray, degree: np
     for name, table in states.items():
         per_seed = []
         neighbours = mutual_knn(table)
-        for seed in SEEDS:
+        for seed in (SEED,):
             train_items, eval_items = split_items(covered, seed)
             train_y = torch.from_numpy(targets[train_items]).to(device)
             eval_y = torch.from_numpy(targets[eval_items]).to(device)
@@ -392,7 +395,7 @@ def instance_task(states: dict, pool: dict, device) -> dict:
             continue
         total = len(nodes)
         if total > MAX_INSTANCES:
-            keep = np.random.default_rng(SEEDS[0]).choice(total, MAX_INSTANCES, replace=False)
+            keep = np.random.default_rng(SEED).choice(total, MAX_INSTANCES, replace=False)
             keep.sort()
             nodes, orbits, subtypes = nodes[keep], orbits[keep], subtypes[keep]
         mapping = type_mapping(subtypes)
@@ -402,7 +405,7 @@ def instance_task(states: dict, pool: dict, device) -> dict:
         for name, table in states.items():
             per_seed = []
             unit = _unit(table.astype(np.float64)).astype(np.float32)
-            for seed in SEEDS:
+            for seed in (SEED,):
                 train_mask, eval_mask = family_split(subtypes, seed)
                 x = torch.from_numpy(unit[nodes]).to(device)      # (n, width, d)
                 y_type = torch.from_numpy(
@@ -498,7 +501,10 @@ def main() -> None:
     degree = np.bincount(contract["message_edges"].ravel(),
                          minlength=len(targets)).astype(np.float32)
     report = {"checkpoint": meta,
-              "protocol": {"seeds": list(SEEDS), "epochs": EPOCHS, "hidden": HIDDEN,
+              "protocol": {"seed": SEED,
+                           "seed_replication": "none: one run per configuration, so the "
+                                               "numbers carry no seed-variance estimate",
+                           "epochs": EPOCHS, "hidden": HIDDEN,
                            "role_split": "items, 80/20 by seed",
                            "instance_split": "by instance, 70/30 by seed "
                                              f"(at most {MAX_INSTANCES} instances per family, "
