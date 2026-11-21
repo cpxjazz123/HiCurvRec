@@ -184,6 +184,7 @@ ANALYSIS = (
     "graph_loss/arm_alignment_survey.json",
     "graph_loss/REPORT_ARM_SURVEY.md",
     "graph_loss/arm_alignment_TIGER_chain_align_rq.json",
+    "graph_loss/arm_alignment_TIGER_graphlet_align_rq.json",
     "graph_loss/evaluate_arm.py",
     "graph_loss/verdict.py",
     "graph_loss/verdict.json",
