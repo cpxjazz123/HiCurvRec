@@ -170,9 +170,39 @@
      1408.0,
      8280.0
     ],
-    "threshold_chosen_on_train": Infinity,
+    "train_f1_by_threshold": {
+     "231.0": 0.4408,
+     "1408.0": 0.3258,
+     "8280.0": 0.1767,
+     "inf": 0.0
+    },
+    "threshold_chosen_on_train": 231.0,
     "heldout": {
-     "threshold": Infinity,
+     "threshold": 231.0,
+     "edge_precision": 0.38873494617926035,
+     "edge_recall": 0.5288914666860002,
+     "edge_f1": 0.4481095856752358,
+     "adjacency_exact": 0.00016666666666666666,
+     "classifiable_share": 0.5565,
+     "family_accuracy_overall": 0.42283333333333334,
+     "family_macro_f1": 0.5879457676865026,
+     "orbit_accuracy_overall": 0.00016666666666666666,
+     "instances": 6000
+    },
+    "everything_connected_baseline": {
+     "threshold": -1.0,
+     "edge_precision": 0.38313888888888886,
+     "edge_recall": 1.0,
+     "edge_f1": 0.5540136163717791,
+     "adjacency_exact": 0.00016666666666666666,
+     "classifiable_share": 1.0,
+     "family_accuracy_overall": 0.225,
+     "family_macro_f1": 0.18367346938775508,
+     "orbit_accuracy_overall": 0.00016666666666666666,
+     "instances": 6000
+    },
+    "nothing_connected_baseline": {
+     "threshold": 0.5,
      "edge_precision": 0.0,
      "edge_recall": 0.0,
      "edge_f1": 0.0,
@@ -182,7 +212,8 @@
      "family_macro_f1": 0.0,
      "orbit_accuracy_overall": 0.0,
      "instances": 6000
-    }
+    },
+    "true_edge_share": 0.38009166666666666
    },
    "4": {
     "threshold_scale": "min(out_degree, in_degree) of the two endpoints, product",
@@ -191,9 +222,39 @@
      1620.0,
      8281.0
     ],
-    "threshold_chosen_on_train": Infinity,
+    "train_f1_by_threshold": {
+     "290.0": 0.355,
+     "1620.0": 0.2757,
+     "8281.0": 0.1851,
+     "inf": 0.0
+    },
+    "threshold_chosen_on_train": 290.0,
     "heldout": {
-     "threshold": Infinity,
+     "threshold": 290.0,
+     "edge_precision": 0.2782438174093039,
+     "edge_recall": 0.4864298638224931,
+     "edge_f1": 0.3539970199937628,
+     "adjacency_exact": 0.0,
+     "classifiable_share": 0.14133333333333334,
+     "family_accuracy_overall": 0.08033333333333334,
+     "family_macro_f1": 0.09292461924040872,
+     "orbit_accuracy_overall": 0.0,
+     "instances": 6000
+    },
+    "everything_connected_baseline": {
+     "threshold": -1.0,
+     "edge_precision": 0.2916944444444444,
+     "edge_recall": 1.0,
+     "edge_f1": 0.4516462011569643,
+     "adjacency_exact": 0.0,
+     "classifiable_share": 0.0,
+     "family_accuracy_overall": 0.0,
+     "family_macro_f1": 0.0,
+     "orbit_accuracy_overall": 0.0,
+     "instances": 6000
+    },
+    "nothing_connected_baseline": {
+     "threshold": 0.5,
      "edge_precision": 0.0,
      "edge_recall": 0.0,
      "edge_f1": 0.0,
@@ -203,7 +264,8 @@
      "family_macro_f1": 0.0,
      "orbit_accuracy_overall": 0.0,
      "instances": 6000
-    }
+    },
+    "true_edge_share": 0.2905945833333333
    }
   }
  }

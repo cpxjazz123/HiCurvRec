@@ -119,6 +119,8 @@ ANALYSIS = (
     "edge_reconstruction/edge_reconstruction.py",
     "edge_reconstruction/edge_reconstruction.json",
     "edge_reconstruction/REPORT_EDGE_RECONSTRUCTION.md",
+    "edge_rnn/edge_rnn.py", "edge_rnn/edge_rnn.json",
+    "edge_rnn/REPORT_EDGE_RNN.md",
 )
 
 
