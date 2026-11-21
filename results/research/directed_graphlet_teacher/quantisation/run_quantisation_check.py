@@ -226,30 +226,32 @@ def train_engine(matrix: np.ndarray, train_rows: np.ndarray, config, optim: dict
     return model, float(total / max(1, rows // batch))
 
 
-def quantise(model, matrix: np.ndarray, device) -> dict:
-    """Codes, the quantised vector q = decoder(tokens) and the plain reconstruction.
+def quantise(model, matrix: np.ndarray, device, infer_use_sk: bool = False) -> dict:
+    """Everything the quantiser produces, kept apart and with its real width.
 
-    `q` is the product that reaches Stage 3: it is what the decoder can say about an
-    item from its three codes alone.  The reconstruction below it is the same quantity,
-    computed by the model's own forward pass, and is used as a cross-check.
+    * ``latent``  -- the encoder's 32-d ``z`` the quantiser sees;
+    * ``q``       -- the **hard** 32-d quantised vector (the sum of the selected codes);
+    * ``decoder`` -- what the decoder makes of ``q``; it has the input's width, not 32;
+    * ``tokens``  -- the three codes, i.e. what Stage 3 actually reads.
+
+    ``infer_use_sk`` defaults to False because that is the path the trainer exports its
+    SID table with; using the Sinkhorn assignment here would describe a different table.
     """
     import torch
     with torch.no_grad():
         x = torch.from_numpy(matrix).to(device)
         encoded = model.encoder(x)
-        quantized, _, _, tokens = model.rq(encoded, infer_use_sk=True)
-        latent = encoded.cpu().numpy().astype(np.float32)
-        forwarded = model.decoder(quantized).cpu().numpy().astype(np.float32)
-        codes = tokens.cpu().numpy().astype(np.int64)
-    recon = forwarded
-    mse = float(((recon - matrix) ** 2).mean())
+        hard_q, _, _, tokens = model.rq(encoded, infer_use_sk=infer_use_sk)
+        decoded = model.decoder(hard_q)
+    latent = encoded.cpu().numpy().astype(np.float32)
+    q = hard_q.cpu().numpy().astype(np.float32)
+    decoder_out = decoded.cpu().numpy().astype(np.float32)
+    codes = tokens.cpu().numpy().astype(np.int64)
+    mse = float(((decoder_out - matrix) ** 2).mean())
     var = float(matrix.var(axis=0).mean())
-    # `q` is the decoder applied to the quantised latent, and that is also the plain
-    # reconstruction, because the baseline's encoder resets and the rq forward keeps the
-    # straight-through gradient only.  Calling the model's forward twice would draw a new
-    # skeleton-ordered assignment, so it is not used here at all.
-    return {"tokens": codes, "quantised": forwarded,
-            "latent": latent, "recon_mse": mse, "recon_r2": 1.0 - mse / max(var, 1e-12)}
+    return {"tokens": codes, "latent": latent, "q": q, "decoder": decoder_out,
+            "recon_mse": mse, "recon_r2": 1.0 - mse / max(var, 1e-12),
+            "infer_use_sk": bool(infer_use_sk)}
 
 
 def code_statistics(tokens: np.ndarray, sizes: list[int]) -> dict:
@@ -268,15 +270,36 @@ def code_statistics(tokens: np.ndarray, sizes: list[int]) -> dict:
     return out
 
 
-def behaviour_probe(states: np.ndarray, triplets: tuple, covered: np.ndarray) -> dict:
-    """Anchor-positive vs anchor-negative cosine AUC on held-out behaviour edges."""
+def l2_normalise(states: np.ndarray) -> np.ndarray:
+    """Rows on the unit sphere, so the probe is a cosine and not a length-weighted dot."""
+    states = np.asarray(states, dtype=np.float64)
+    norms = np.linalg.norm(states, axis=1, keepdims=True)
+    if not np.isfinite(norms).all():
+        raise ValueError("state matrix holds non-finite values")
+    if (norms == 0).any():
+        raise ValueError("state matrix holds a zero row; cosine is undefined")
+    return states / norms
+
+
+def behaviour_probe(states: np.ndarray, triplets: tuple, allowed: np.ndarray) -> dict:
+    """Anchor-positive vs anchor-negative **cosine** AUC on held-out behaviour edges.
+
+    `allowed` masks the items the probe may use; every triplet must have its anchor,
+    positive and negative inside it, and the states are normalised first.  The earlier
+    version fed raw vectors to the dot product, so a long vector could win a comparison
+    it does not win under cosine -- every number produced that way is withdrawn.
+    """
     from audit_relation import auc_score, triplet_scores, usable_triplets
     pairs, negatives = triplets
-    keep = usable_triplets(pairs, negatives, covered)
-    pos, neg = triplet_scores(states.astype(np.float64), pairs[keep], negatives[keep])
+    keep = usable_triplets(pairs, negatives, allowed)
+    if not keep.any():
+        return {"auc": float("nan"), "triplets": 0}
+    unit = l2_normalise(states)
+    pos, neg = triplet_scores(unit, pairs[keep], negatives[keep])
     return {"auc": auc_score(pos, neg), "triplets": int(keep.sum()),
             "positive_cosine_mean": float(pos.mean()),
-            "negative_cosine_mean": float(neg.mean())}
+            "negative_cosine_mean": float(neg.mean()),
+            "normalised": True}
 
 
 def nearest_neighbours(states: np.ndarray, probes: np.ndarray, k: int = 10) -> np.ndarray:
@@ -289,7 +312,6 @@ def nearest_neighbours(states: np.ndarray, probes: np.ndarray, k: int = 10) -> n
 def sweep_main(argv: list[str] | None = None) -> None:
     import torch
     from distances import build_distance
-    from train_config import load_train_config
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--arms", default=",".join(ARMS))
@@ -297,16 +319,20 @@ def sweep_main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    frozen = load_train_config(CONFIG_FILE) if CONFIG_FILE.exists() else None
     distance = build_distance(SimpleNamespace(
         DISTANCE=json.loads(CONFIG_FILE.read_text()).get("DISTANCE", "euclidean")))
     contract = np.load(CONTRACT)
-    pairs, negatives = contract["test_positive"], contract["test_negative"]
+    triplets = (contract["test_positive"], contract["test_negative"])
     covered = np.load(COVERAGE)["coverage_neighbour"] > 0
     n_items = len(covered)
     train_rows, held_rows = item_split(n_items, SWEEP_SEED)
-    train_covered = covered.copy()
-    train_covered[held_rows] = False
+    # every arm keeps its real vector for every item; the split only decides which items
+    # the optimiser iterates over.  Masking held-out rows with the mean replaced their
+    # real representation by a constant *and* skewed the collision statistics.
+    held_mask = np.zeros(n_items, dtype=bool)
+    held_mask[held_rows] = True
+    covered_holdout = covered & held_mask
+    covered_train = covered & ~held_mask
 
     results = {"inputs": {"contract": sha256(CONTRACT), "coverage": sha256(COVERAGE),
                           "train_file": str(TRAIN_FILE.relative_to(REPO)),
@@ -314,13 +340,14 @@ def sweep_main(argv: list[str] | None = None) -> None:
                           "epoch_grid": list(EPOCH_GRID), "seed": SWEEP_SEED,
                           "split": {"train_items": int(len(train_rows)),
                                     "held_items": int(len(held_rows)),
-                                    "held_covered": int(covered[held_rows].sum())},
-                          "frozen_config_loaded": bool(frozen is not None)},
+                                    "held_covered": int(covered[held_rows].sum()),
+                                    "held_used_in_probe": int(covered_holdout.sum()),
+                                    "train_used_in_probe": int(covered_train.sum())},
+                          "frozen_config_loaded": CONFIG_FILE.is_file()},
                "arms": {}}
-    reference_states = {}
     for key in args.arms.split(","):
         arm = arm_from_key(key)
-        matrix, record = load_table(arm, train_covered)
+        matrix, record = load_table(arm, covered)
         results["arms"][key] = {"input": record, "epochs": {}}
         print(f"[{arm.name}] input {matrix.shape}", flush=True)
         for epochs in EPOCH_GRID:
@@ -332,15 +359,27 @@ def sweep_main(argv: list[str] | None = None) -> None:
             stats = code_statistics(out["tokens"], list(config.codebook_size))
             entry = {"trained_loss": loss, "recon_mse": out["recon_mse"],
                      "recon_r2": out["recon_r2"], "codes": stats,
-                     "probe_q": behaviour_probe(out["quantised"], (pairs, negatives), covered),
-                     "probe_recon": behaviour_probe(out["quantised"], (pairs, negatives),
-                                                    covered),
-                     "probe_latent": behaviour_probe(out["latent"], (pairs, negatives), covered),
-                     "probe_input": behaviour_probe(matrix, (pairs, negatives), covered)}
-            probe_rows = held_rows[covered[held_rows]][:2000]
+                     "widths": {"input": int(matrix.shape[1]),
+                                "latent": int(out["latent"].shape[1]),
+                                "q": int(out["q"].shape[1]),
+                                "decoder": int(out["decoder"].shape[1])},
+                     "probes": {
+                         "input": behaviour_probe(matrix, triplets, covered),
+                         "latent_z": behaviour_probe(out["latent"], triplets, covered),
+                         "hard_q": behaviour_probe(out["q"], triplets, covered),
+                         "decoder": behaviour_probe(out["decoder"], triplets, covered),
+                     },
+                     "probes_holdout_only": {
+                         "input": behaviour_probe(matrix, triplets, covered_holdout),
+                         "latent_z": behaviour_probe(out["latent"], triplets, covered_holdout),
+                         "hard_q": behaviour_probe(out["q"], triplets, covered_holdout),
+                         "decoder": behaviour_probe(out["decoder"], triplets, covered_holdout),
+                     }}
             results["arms"][key]["epochs"][str(epochs)] = entry
             print(f"[{arm.name}] {epochs:4d} epochs  R2 {out['recon_r2']:.3f}  "
-                  f"collision {stats['collision']:.3f}  probe q {entry['probe_q']['auc']:.3f}",
+                  f"collision {stats['collision']:.3f}  "
+                  "cos " + " ".join(f"{name} {value['auc']:.3f}"
+                                    for name, value in entry["probes"].items()),
                   flush=True)
             Path(args.out).write_text(json.dumps(results, indent=1) + "\n")
     print("written", args.out)

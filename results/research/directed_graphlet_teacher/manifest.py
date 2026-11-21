@@ -105,7 +105,7 @@ ANALYSIS = (
     "representation/role_probe.py", "representation/role_probe.json",
     "representation/export_latent_q.py", "representation/rqvae_latent.json",
     "representation/checkpoint_sid_pairs.py", "representation/checkpoint_sid_pairs.json",
-    "representation/REPORT_REPRESENTATION.md",
+    "representation/REPORT_REPRESENTATION.md", "representation/RETRACTIONS.md",
     "quantisation/run_quantisation_check.py", "quantisation/sweep.json",
     "quantisation/REPORT_QUANTISATION.md",
 )

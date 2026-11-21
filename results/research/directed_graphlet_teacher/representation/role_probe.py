@@ -134,10 +134,13 @@ def build_graph_only(n_roles: int):
 
 
 def fit_and_score(states: np.ndarray, targets: np.ndarray, covered: np.ndarray,
-                  neighbours: list[set[int]], epochs: int = 300, device=None) -> dict:
+                  neighbours: list[set[int]], epochs: int = 300, device=None,
+                  clip: float = 1.0) -> dict:
     import torch
 
     train_items, eval_items = split_items(covered)
+    # one graph for all items; a training subgraph drops edges to held-out items, which
+    # is unavoidable, so the shrunken neighbourhood is recorded instead of hidden
     edges = pair_lists(neighbours)
     y = torch.from_numpy(targets[covered].astype(np.float32)).to(device)
 
@@ -166,9 +169,9 @@ def fit_and_score(states: np.ndarray, targets: np.ndarray, covered: np.ndarray,
 
     torch.manual_seed(MODEL_SEED)
     model = build_model(states.shape[1], targets.shape[1]).to(device)
-    # every row the network can read is an input; only the target table is constant
-    for parameter in model.parameters():
-        parameter.requires_grad_(True)
+    # the shuffled control must start from exactly the same weights, otherwise the two
+    # runs differ in initialisation as well as in the labels
+    initial = {key: value.detach().clone() for key, value in model.state_dict().items()}
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
     x_train = torch.from_numpy(unit(states.astype(np.float32))[train_items]).to(device)
     x_eval = torch.from_numpy(unit(states.astype(np.float32))[eval_items]).to(device)
@@ -178,7 +181,7 @@ def fit_and_score(states: np.ndarray, targets: np.ndarray, covered: np.ndarray,
         loss = -(train_y * torch.log_softmax(logits, -1)).sum(-1).mean()
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
         optimizer.step()
     model.eval()
     with torch.no_grad():
@@ -196,6 +199,7 @@ def fit_and_score(states: np.ndarray, targets: np.ndarray, covered: np.ndarray,
                           generator=torch.Generator().manual_seed(MODEL_SEED))
     shuffled = train_y[perm].clone()
     base = build_model(states.shape[1], targets.shape[1]).to(device)
+    base.load_state_dict(initial)
     opt2 = torch.optim.AdamW(base.parameters(), lr=1e-3, weight_decay=1e-4)
     base_rows, base_cols, base_count = graph_rows(train_rows_np, train_cols_np, len(train_items))
     for _ in range(epochs):
@@ -204,6 +208,7 @@ def fit_and_score(states: np.ndarray, targets: np.ndarray, covered: np.ndarray,
         loss_s = -(shuffled * torch.log_softmax(logits_s, -1)).sum(-1).mean()
         opt2.zero_grad(set_to_none=True)
         loss_s.backward()
+        torch.nn.utils.clip_grad_norm_(base.parameters(), clip)
         opt2.step()
     base.eval()
     with torch.no_grad():
@@ -211,30 +216,42 @@ def fit_and_score(states: np.ndarray, targets: np.ndarray, covered: np.ndarray,
             base(x_eval, *graph_rows(eval_rows_np, eval_cols_np, len(eval_items)))[0], -1)
         ce_shuffled = float(-(eval_y * base_logp).sum(-1).mean())
     return {"items_train": int(len(train_items)), "items_eval": int(len(eval_items)),
+            "train_mean_degree": float(np.mean([len(neighbours[i]) for i in train_items])),
+            "eval_mean_degree": float(np.mean([len(neighbours[i]) for i in eval_items])),
+            "initialisation_shared_with_control": True, "gradient_clip": clip,
             "ce": ce, "ce_constant_prior": ce_const, "ce_shuffled_targets": ce_shuffled,
             "improvement_over_prior_nats": ce_const - ce,
             "neighbour_graph_density": float(len(edges[0]) / (len(states) * K_NEIGHBOURS)),
             "predicted_role_top_share": spread}
 
 
-def role_headroom(targets: np.ndarray, covered: np.ndarray) -> dict:
-    """The known weakness of the stored own-orbit target, stated as a number."""
-    sub = targets[covered]
-    rowsum = np.maximum(sub.sum(1, keepdims=True), 1e-12)
-    p = sub / rowsum
-    entropy = -(p * np.log2(p + 1e-12)).sum(1)
-    train_items, _ = split_items(covered)
-    position = {int(item): i for i, item in enumerate(np.flatnonzero(covered).tolist())}
-    prior = p[[position[int(i)] for i in train_items]].mean(0)
-    oracle = float(-(sub * np.log2(np.maximum(prior, 1e-12))).sum(1).mean() / np.log(2))
-    return {"items": int(sub.shape[0]), "median_effective_roles": float(np.median(2.0 ** entropy)),
-            "share_with_two_or_more": float((entropy > 0.5).mean()),
-            "constant_prior_ce_nats": float(
-                -(p * np.log(np.maximum(prior, 1e-12))).sum(1).mean()),
-            "oracle_ce_nats_from_stored_table": oracle,
-            "note": "the stored table's own prior is already worse than a constant prior, so "
-                    "absolute accuracy is capped by the target, not by the representation; "
-                    "only the *relative order* between states is interpretable"}
+def role_target_diagnostics(targets: np.ndarray, covered: np.ndarray) -> dict:
+    """Describe the stored target directly.  No oracle is inferred from it.
+
+    The previous version scored the table against its own class prior and reported the
+    gap as an "oracle", which mixed a log base and could not say anything about whether
+    the rows are valid distributions.  What is reported here is what the table is:
+    row sums, negatives, non-finite entries, and the entropy of the *normalised* target.
+    """
+    sub = np.asarray(targets[covered], dtype=np.float64)
+    rowsum = sub.sum(axis=1)
+    positive = np.clip(sub, 0.0, None)
+    norm = positive / np.maximum(positive.sum(axis=1, keepdims=True), 1e-12)
+    entropy_bits = -(norm * np.log2(np.maximum(norm, 1e-12))).sum(axis=1)
+    return {
+        "items": int(len(sub)),
+        "row_sum_min": float(rowsum.min()), "row_sum_max": float(rowsum.max()),
+        "row_sum_mean": float(rowsum.mean()),
+        "rows_sum_to_one_within_1e-3": float(np.mean(np.abs(rowsum - 1.0) <= 1e-3)),
+        "entries_negative": int((sub < 0).sum()),
+        "entries_non_finite": int((~np.isfinite(sub)).sum()),
+        "normalised_entropy_bits_mean": float(entropy_bits.mean()),
+        "normalised_entropy_bits_median": float(np.median(entropy_bits)),
+        "share_with_two_or_more_effective_roles": float((entropy_bits > 0.5).mean()),
+        "read": "the table is a diagnostic, not a validated label; whether the roles are "
+                "predictable is only answered by the cross-entropy below, compared with "
+                "the constant prior on the same split",
+    }
 
 
 STATE_FILES = {
@@ -280,7 +297,7 @@ def main() -> None:
                          "target": "own_orbit (376 roles), real behaviour graph only",
                          "note": "the KNN graph comes from the state under test; the "
                                  "answers come from the real graph, never from it"},
-              "headroom": role_headroom(targets, covered),
+              "target_diagnostics": role_target_diagnostics(targets, covered),
               "states": {}}
     n_items = len(targets)
     for name in args.states.split(","):

@@ -43,7 +43,9 @@
   "split": {
    "train_items": 19669,
    "held_items": 4918,
-   "held_covered": 4818
+   "held_covered": 4818,
+   "held_used_in_probe": 4818,
+   "train_used_in_probe": 19276
   },
   "frozen_config_loaded": true
  },
@@ -61,161 +63,287 @@
      768
     ],
     "dtype": "float32",
-    "masked_rows": 5311,
+    "masked_rows": 493,
     "masked_row_value": "mean of covered rows"
    },
    "epochs": {
     "50": {
-     "trained_loss": 0.00017457743065039578,
-     "recon_mse": 9.060094453161582e-05,
-     "recon_r2": 0.43652340965970027,
+     "trained_loss": 0.0001635944469231426,
+     "recon_mse": 0.0001139142332249321,
+     "recon_r2": 0.439233741193218,
      "codes": {
       "L1": {
-       "used": 110,
+       "used": 100,
        "size": 256,
-       "entropy_bits": 5.448645796957265,
-       "max_share": 0.22101110342864116
+       "entropy_bits": 5.869359034339356,
+       "max_share": 0.04193272867775654
       },
       "L2": {
-       "used": 171,
+       "used": 143,
        "size": 256,
-       "entropy_bits": 5.451526493698889,
-       "max_share": 0.23117907837475088
-      },
-      "L3": {
-       "used": 245,
-       "size": 256,
-       "entropy_bits": 6.317704492824269,
-       "max_share": 0.21682189775084393
-      },
-      "collision": 0.3624679708789198,
-      "unique_triples": 15675
-     },
-     "probe_q": {
-      "auc": 0.5545438309185007,
-      "triplets": 45869,
-      "positive_cosine_mean": 0.2017995640626939,
-      "negative_cosine_mean": 0.19566832494782205
-     },
-     "probe_recon": {
-      "auc": 0.5545438309185007,
-      "triplets": 45869,
-      "positive_cosine_mean": 0.2017995640626939,
-      "negative_cosine_mean": 0.19566832494782205
-     },
-     "probe_latent": {
-      "auc": 0.5793739778089415,
-      "triplets": 45869,
-      "positive_cosine_mean": 0.007731413656731858,
-      "negative_cosine_mean": 0.006673322716748346
-     },
-     "probe_input": {
-      "auc": 0.5665581230125701,
-      "triplets": 45869,
-      "positive_cosine_mean": 0.20113355609079572,
-      "negative_cosine_mean": 0.19339163101743406
-     }
-    },
-    "150": {
-     "trained_loss": 0.00020141912912214664,
-     "recon_mse": 6.888868665555492e-05,
-     "recon_r2": 0.5715589669581438,
-     "codes": {
-      "L1": {
-       "used": 189,
-       "size": 256,
-       "entropy_bits": 5.92902372202877,
-       "max_share": 0.21983161833489243
-      },
-      "L2": {
-       "used": 237,
-       "size": 256,
-       "entropy_bits": 5.750097151938887,
-       "max_share": 0.24183511611827388
+       "entropy_bits": 5.80394900230629,
+       "max_share": 0.05210070362386627
       },
       "L3": {
        "used": 255,
        "size": 256,
-       "entropy_bits": 6.881771578743539,
-       "max_share": 0.21600845975515517
+       "entropy_bits": 7.805491150854558,
+       "max_share": 0.02700614145686745
       },
-      "collision": 0.3086997193638915,
-      "unique_triples": 16997
+      "collision": 0.2171472729491195,
+      "unique_triples": 19248
      },
-     "probe_q": {
-      "auc": 0.5631523541658112,
-      "triplets": 45869,
-      "positive_cosine_mean": 0.20118563543501997,
-      "negative_cosine_mean": 0.19435159826740614
+     "widths": {
+      "input": 768,
+      "latent": 32,
+      "q": 32,
+      "decoder": 768
      },
-     "probe_recon": {
-      "auc": 0.5631523541658112,
-      "triplets": 45869,
-      "positive_cosine_mean": 0.20118563543501997,
-      "negative_cosine_mean": 0.19435159826740614
+     "probes": {
+      "input": {
+       "auc": 0.6095675326631513,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.7257675572762636,
+       "negative_cosine_mean": 0.6853028563768095,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6763334884897364,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.6772696516390655,
+       "negative_cosine_mean": 0.5339708640266192,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.673532151467027,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.6848740520615915,
+       "negative_cosine_mean": 0.5449706280016784,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6361872624182677,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.8714125438134138,
+       "negative_cosine_mean": 0.8331287077496563,
+       "normalised": true
+      }
      },
-     "probe_latent": {
-      "auc": 0.6106042544399337,
-      "triplets": 45869,
-      "positive_cosine_mean": 0.006423944987835521,
-      "negative_cosine_mean": 0.004653887920469035
+     "probes_holdout_only": {
+      "input": {
+       "auc": 0.5799020152929403,
+       "triplets": 391,
+       "positive_cosine_mean": 0.7106852490013461,
+       "negative_cosine_mean": 0.6811430863452504,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.631563111177975,
+       "triplets": 391,
+       "positive_cosine_mean": 0.6417875926476924,
+       "negative_cosine_mean": 0.5376817052198469,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6343038049201667,
+       "triplets": 391,
+       "positive_cosine_mean": 0.654759560725885,
+       "negative_cosine_mean": 0.5493408609687379,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6038683682079526,
+       "triplets": 391,
+       "positive_cosine_mean": 0.8592101996518837,
+       "negative_cosine_mean": 0.8301706072395385,
+       "normalised": true
+      }
+     }
+    },
+    "150": {
+     "trained_loss": 0.00018480480924297713,
+     "recon_mse": 9.335390495834872e-05,
+     "recon_r2": 0.5404461887995269,
+     "codes": {
+      "L1": {
+       "used": 159,
+       "size": 256,
+       "entropy_bits": 6.416278162275921,
+       "max_share": 0.03164273803229349
+      },
+      "L2": {
+       "used": 224,
+       "size": 256,
+       "entropy_bits": 6.315337315624437,
+       "max_share": 0.048074185545206816
+      },
+      "L3": {
+       "used": 256,
+       "size": 256,
+       "entropy_bits": 7.764855451441541,
+       "max_share": 0.03046325293854476
+      },
+      "collision": 0.19221539838125834,
+      "unique_triples": 19861
      },
-     "probe_input": {
-      "auc": 0.5665581230125701,
-      "triplets": 45869,
-      "positive_cosine_mean": 0.20113355609079572,
-      "negative_cosine_mean": 0.19339163101743406
+     "widths": {
+      "input": 768,
+      "latent": 32,
+      "q": 32,
+      "decoder": 768
+     },
+     "probes": {
+      "input": {
+       "auc": 0.6095675326631513,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.7257675572762636,
+       "negative_cosine_mean": 0.6853028563768095,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6819572641203064,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.5090611296248131,
+       "negative_cosine_mean": 0.3135175047540198,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6799978039180089,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.5188298157049281,
+       "negative_cosine_mean": 0.3237696201376755,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6379758067676483,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.8486245019333457,
+       "negative_cosine_mean": 0.8070474734275764,
+       "normalised": true
+      }
+     },
+     "probes_holdout_only": {
+      "input": {
+       "auc": 0.5799020152929403,
+       "triplets": 391,
+       "positive_cosine_mean": 0.7106852490013461,
+       "negative_cosine_mean": 0.6811430863452504,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6365670030939097,
+       "triplets": 391,
+       "positive_cosine_mean": 0.4646597746131054,
+       "negative_cosine_mean": 0.31804507559455303,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6392880737305486,
+       "triplets": 391,
+       "positive_cosine_mean": 0.4818545538268272,
+       "negative_cosine_mean": 0.33191452128851223,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6145171734878762,
+       "triplets": 391,
+       "positive_cosine_mean": 0.8390912447826213,
+       "negative_cosine_mean": 0.805683518320294,
+       "normalised": true
+      }
      }
     },
     "400": {
-     "trained_loss": 0.00021946350170765072,
-     "recon_mse": 5.746693568653427e-05,
-     "recon_r2": 0.6425945320398514,
+     "trained_loss": 0.000217181820373394,
+     "recon_mse": 8.009932207642123e-05,
+     "recon_r2": 0.6056946010858689,
      "codes": {
       "L1": {
-       "used": 191,
+       "used": 203,
        "size": 256,
-       "entropy_bits": 5.940032694354947,
-       "max_share": 0.21926221173791027
+       "entropy_bits": 6.688929628048609,
+       "max_share": 0.029487127343718226
       },
       "L2": {
-       "used": 253,
+       "used": 249,
        "size": 256,
-       "entropy_bits": 5.860028400738752,
-       "max_share": 0.2382966608370277
+       "entropy_bits": 6.502071785531362,
+       "max_share": 0.06975230813031277
       },
       "L3": {
-       "used": 253,
+       "used": 256,
        "size": 256,
-       "entropy_bits": 6.877199570420117,
-       "max_share": 0.21600845975515517
+       "entropy_bits": 7.7390914457950615,
+       "max_share": 0.03322894212388661
       },
-      "collision": 0.3184203034123724,
-      "unique_triples": 16758
+      "collision": 0.18949038109570093,
+      "unique_triples": 19928
      },
-     "probe_q": {
-      "auc": 0.5632192257578926,
-      "triplets": 45869,
-      "positive_cosine_mean": 0.19800892986502805,
-      "negative_cosine_mean": 0.19151889377200515
+     "widths": {
+      "input": 768,
+      "latent": 32,
+      "q": 32,
+      "decoder": 768
      },
-     "probe_recon": {
-      "auc": 0.5632192257578926,
-      "triplets": 45869,
-      "positive_cosine_mean": 0.19800892986502805,
-      "negative_cosine_mean": 0.19151889377200515
+     "probes": {
+      "input": {
+       "auc": 0.6095675326631513,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.7257675572762636,
+       "negative_cosine_mean": 0.6853028563768095,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6848630527299877,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.3997859410573744,
+       "negative_cosine_mean": 0.1862776905798798,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.683730952948037,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.397460089045259,
+       "negative_cosine_mean": 0.17697591896631734,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6291018038392319,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.8384194590094468,
+       "negative_cosine_mean": 0.798510554900191,
+       "normalised": true
+      }
      },
-     "probe_latent": {
-      "auc": 0.6199730906570843,
-      "triplets": 45869,
-      "positive_cosine_mean": 0.004715903143141861,
-      "negative_cosine_mean": 0.0026273996399619175
-     },
-     "probe_input": {
-      "auc": 0.5665581230125701,
-      "triplets": 45869,
-      "positive_cosine_mean": 0.20113355609079572,
-      "negative_cosine_mean": 0.19339163101743406
+     "probes_holdout_only": {
+      "input": {
+       "auc": 0.5799020152929403,
+       "triplets": 391,
+       "positive_cosine_mean": 0.7106852490013461,
+       "negative_cosine_mean": 0.6811430863452504,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.638411575015862,
+       "triplets": 391,
+       "positive_cosine_mean": 0.34703810530589574,
+       "negative_cosine_mean": 0.18532750356950473,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6299932627337602,
+       "triplets": 391,
+       "positive_cosine_mean": 0.339801243581301,
+       "negative_cosine_mean": 0.18111570408186586,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6013435286268405,
+       "triplets": 391,
+       "positive_cosine_mean": 0.829589486192805,
+       "negative_cosine_mean": 0.8004313318111165,
+       "normalised": true
+      }
      }
     }
    }
@@ -234,161 +362,287 @@
      128
     ],
     "dtype": "float32",
-    "masked_rows": 5311,
+    "masked_rows": 493,
     "masked_row_value": "mean of covered rows"
    },
    "epochs": {
     "50": {
-     "trained_loss": 1.1508798536501432,
-     "recon_mse": 0.11726930737495422,
-     "recon_r2": 0.8866731098951193,
+     "trained_loss": 1.162773753467359,
+     "recon_mse": 0.14755770564079285,
+     "recon_r2": 0.885832536816774,
      "codes": {
       "L1": {
-       "used": 84,
+       "used": 83,
        "size": 256,
-       "entropy_bits": 5.1001449363079505,
-       "max_share": 0.2161711473542929
+       "entropy_bits": 5.522098572168932,
+       "max_share": 0.06064180257859845
       },
       "L2": {
-       "used": 92,
+       "used": 103,
        "size": 256,
-       "entropy_bits": 5.309082844367435,
-       "max_share": 0.21600845975515517
+       "entropy_bits": 5.884053789962175,
+       "max_share": 0.027250172855574083
       },
       "L3": {
-       "used": 245,
+       "used": 256,
        "size": 256,
-       "entropy_bits": 6.865144775100255,
-       "max_share": 0.21600845975515517
+       "entropy_bits": 7.857673925714889,
+       "max_share": 0.02017326229308171
       },
-      "collision": 0.314027738235653,
-      "unique_triples": 16866
+      "collision": 0.15752226786513202,
+      "unique_triples": 20714
      },
-     "probe_q": {
-      "auc": 0.6615125301497329,
-      "triplets": 45869,
-      "positive_cosine_mean": 72.51064285817178,
-      "negative_cosine_mean": 34.20893933564287
+     "widths": {
+      "input": 128,
+      "latent": 32,
+      "q": 32,
+      "decoder": 128
      },
-     "probe_recon": {
-      "auc": 0.6615125301497329,
-      "triplets": 45869,
-      "positive_cosine_mean": 72.51064285817178,
-      "negative_cosine_mean": 34.20893933564287
+     "probes": {
+      "input": {
+       "auc": 0.7394124417253124,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.5244320584644903,
+       "negative_cosine_mean": 0.20398176583066155,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.7163437607891074,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.386908310979507,
+       "negative_cosine_mean": 0.14051210292209687,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.7192947096047471,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.4165323969334019,
+       "negative_cosine_mean": 0.15493281844755483,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.733463270497567,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.5439596308530771,
+       "negative_cosine_mean": 0.2255222650556736,
+       "normalised": true
+      }
      },
-     "probe_latent": {
-      "auc": 0.6481060700415276,
-      "triplets": 45869,
-      "positive_cosine_mean": 18.302227851560872,
-      "negative_cosine_mean": 7.099051447092326
-     },
-     "probe_input": {
-      "auc": 0.6639321980674184,
-      "triplets": 45869,
-      "positive_cosine_mean": 75.54451249356475,
-      "negative_cosine_mean": 33.62946824883609
+     "probes_holdout_only": {
+      "input": {
+       "auc": 0.7196773961447138,
+       "triplets": 391,
+       "positive_cosine_mean": 0.4876704144004414,
+       "negative_cosine_mean": 0.1882422422929448,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6885551507381559,
+       "triplets": 391,
+       "positive_cosine_mean": 0.35061301241414866,
+       "negative_cosine_mean": 0.13452529095394614,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.689477436699132,
+       "triplets": 391,
+       "positive_cosine_mean": 0.37069147667776436,
+       "negative_cosine_mean": 0.13635993365240776,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.7086230466833681,
+       "triplets": 391,
+       "positive_cosine_mean": 0.5009586652789555,
+       "negative_cosine_mean": 0.2019229679056058,
+       "normalised": true
+      }
      }
     },
     "150": {
-     "trained_loss": 0.8203151853461015,
-     "recon_mse": 0.08577622473239899,
-     "recon_r2": 0.9171074425912722,
+     "trained_loss": 0.7887380499588815,
+     "recon_mse": 0.1061268076300621,
+     "recon_r2": 0.917888202786552,
      "codes": {
       "L1": {
-       "used": 97,
+       "used": 100,
        "size": 256,
-       "entropy_bits": 5.342675055406828,
-       "max_share": 0.21608980355472404
+       "entropy_bits": 5.970554010054667,
+       "max_share": 0.04372229226827185
       },
       "L2": {
-       "used": 249,
+       "used": 247,
        "size": 256,
-       "entropy_bits": 6.848733910697571,
-       "max_share": 0.21600845975515517
+       "entropy_bits": 7.777407365013916,
+       "max_share": 0.020051246593728395
       },
       "L3": {
-       "used": 246,
+       "used": 256,
        "size": 256,
-       "entropy_bits": 6.899975241829769,
-       "max_share": 0.21600845975515517
+       "entropy_bits": 7.933633773494666,
+       "max_share": 0.0220441696831659
       },
-      "collision": 0.2332940171635417,
-      "unique_triples": 18851
+      "collision": 0.04595924675641594,
+      "unique_triples": 23457
      },
-     "probe_q": {
-      "auc": 0.661043003601332,
-      "triplets": 45869,
-      "positive_cosine_mean": 72.8139573554873,
-      "negative_cosine_mean": 33.028834330111664
+     "widths": {
+      "input": 128,
+      "latent": 32,
+      "q": 32,
+      "decoder": 128
      },
-     "probe_recon": {
-      "auc": 0.661043003601332,
-      "triplets": 45869,
-      "positive_cosine_mean": 72.8139573554873,
-      "negative_cosine_mean": 33.028834330111664
+     "probes": {
+      "input": {
+       "auc": 0.7394124417253124,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.5244320584644903,
+       "negative_cosine_mean": 0.20398176583066155,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.7261949101257005,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.40855653866387015,
+       "negative_cosine_mean": 0.1348533728577087,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.7246870610135545,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.42710025649121364,
+       "negative_cosine_mean": 0.14702289249696995,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.7365879805079149,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.53894321700012,
+       "negative_cosine_mean": 0.21022024335666253,
+       "normalised": true
+      }
      },
-     "probe_latent": {
-      "auc": 0.6453058996255879,
-      "triplets": 45869,
-      "positive_cosine_mean": 19.940047777839858,
-      "negative_cosine_mean": 6.775814037189196
-     },
-     "probe_input": {
-      "auc": 0.6639321980674184,
-      "triplets": 45869,
-      "positive_cosine_mean": 75.54451249356475,
-      "negative_cosine_mean": 33.62946824883609
+     "probes_holdout_only": {
+      "input": {
+       "auc": 0.7196773961447138,
+       "triplets": 391,
+       "positive_cosine_mean": 0.4876704144004414,
+       "negative_cosine_mean": 0.1882422422929448,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.7060393377855979,
+       "triplets": 391,
+       "positive_cosine_mean": 0.3744305369716898,
+       "negative_cosine_mean": 0.12333902178417008,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.7115992176921919,
+       "triplets": 391,
+       "positive_cosine_mean": 0.38986195660390144,
+       "negative_cosine_mean": 0.12427261958554639,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.7217509042981142,
+       "triplets": 391,
+       "positive_cosine_mean": 0.4962941722146083,
+       "negative_cosine_mean": 0.18602784247131368,
+       "normalised": true
+      }
      }
     },
     "400": {
-     "trained_loss": 0.7746056694733469,
-     "recon_mse": 0.07094752788543701,
-     "recon_r2": 0.9314376210121363,
+     "trained_loss": 0.783076989023309,
+     "recon_mse": 0.09632351249456406,
+     "recon_r2": 0.9254731495136368,
      "codes": {
       "L1": {
        "used": 121,
        "size": 256,
-       "entropy_bits": 5.823431891300714,
-       "max_share": 0.21600845975515517
+       "entropy_bits": 6.447647016277271,
+       "max_share": 0.043112213771505266
       },
       "L2": {
        "used": 256,
        "size": 256,
-       "entropy_bits": 6.887663376525811,
-       "max_share": 0.22361410501484524
+       "entropy_bits": 7.8229963247095515,
+       "max_share": 0.02781957945255623
       },
       "L3": {
-       "used": 251,
+       "used": 256,
        "size": 256,
-       "entropy_bits": 6.948331905247535,
-       "max_share": 0.21600845975515517
+       "entropy_bits": 7.924115445646683,
+       "max_share": 0.021596778785537073
       },
-      "collision": 0.22503762150730056,
-      "unique_triples": 19054
+      "collision": 0.03762150730060598,
+      "unique_triples": 23662
      },
-     "probe_q": {
-      "auc": 0.663409196536596,
-      "triplets": 45869,
-      "positive_cosine_mean": 71.37491969265571,
-      "negative_cosine_mean": 32.03701288603448
+     "widths": {
+      "input": 128,
+      "latent": 32,
+      "q": 32,
+      "decoder": 128
      },
-     "probe_recon": {
-      "auc": 0.663409196536596,
-      "triplets": 45869,
-      "positive_cosine_mean": 71.37491969265571,
-      "negative_cosine_mean": 32.03701288603448
+     "probes": {
+      "input": {
+       "auc": 0.7394124417253124,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.5244320584644903,
+       "negative_cosine_mean": 0.20398176583066155,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.7299925666402229,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.4127506226002408,
+       "negative_cosine_mean": 0.12202659461758698,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.7288863263644126,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.4248975577576714,
+       "negative_cosine_mean": 0.12338240440509739,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.7373653655285027,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.5413621511402384,
+       "negative_cosine_mean": 0.21374271878094908,
+       "normalised": true
+      }
      },
-     "probe_latent": {
-      "auc": 0.6546653697180682,
-      "triplets": 45869,
-      "positive_cosine_mean": 22.509716552368506,
-      "negative_cosine_mean": 6.091217331922136
-     },
-     "probe_input": {
-      "auc": 0.6639321980674184,
-      "triplets": 45869,
-      "positive_cosine_mean": 75.54451249356475,
-      "negative_cosine_mean": 33.62946824883609
+     "probes_holdout_only": {
+      "input": {
+       "auc": 0.7196773961447138,
+       "triplets": 391,
+       "positive_cosine_mean": 0.4876704144004414,
+       "negative_cosine_mean": 0.1882422422929448,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.7064121767910989,
+       "triplets": 391,
+       "positive_cosine_mean": 0.3729856964058105,
+       "negative_cosine_mean": 0.10871586663400282,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.7091201653573694,
+       "triplets": 391,
+       "positive_cosine_mean": 0.3880859629849513,
+       "negative_cosine_mean": 0.10920366410192811,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.7192326057521864,
+       "triplets": 391,
+       "positive_cosine_mean": 0.5063629341372844,
+       "negative_cosine_mean": 0.1967934745613899,
+       "normalised": true
+      }
      }
     }
    }
@@ -414,161 +668,287 @@
      128
     ],
     "dtype": "float32",
-    "masked_rows": 5311,
+    "masked_rows": 493,
     "masked_row_value": "mean of covered rows"
    },
    "epochs": {
     "50": {
-     "trained_loss": 2.7940924418599984,
-     "recon_mse": 0.5962668657302856,
-     "recon_r2": 0.23668727230691222,
+     "trained_loss": 2.7848744266911556,
+     "recon_mse": 0.7551413178443909,
+     "recon_r2": 0.22627768742621823,
      "codes": {
       "L1": {
-       "used": 202,
+       "used": 207,
        "size": 256,
-       "entropy_bits": 6.143911431560502,
-       "max_share": 0.2160491316549396
+       "entropy_bits": 6.850264911868374,
+       "max_share": 0.03892300809370806
       },
       "L2": {
-       "used": 246,
+       "used": 249,
        "size": 256,
-       "entropy_bits": 6.787980469910744,
-       "max_share": 0.21600845975515517
+       "entropy_bits": 7.668740855107318,
+       "max_share": 0.020051246593728395
       },
       "L3": {
        "used": 256,
        "size": 256,
-       "entropy_bits": 6.9865970690124195,
-       "max_share": 0.21600845975515517
+       "entropy_bits": 7.902774135022276,
+       "max_share": 0.027860251352340666
       },
-      "collision": 0.23341603286289503,
-      "unique_triples": 18848
+      "collision": 0.05323951681783057,
+      "unique_triples": 23278
      },
-     "probe_q": {
-      "auc": 0.6008721073114766,
-      "triplets": 45869,
-      "positive_cosine_mean": 2.132856038734605,
-      "negative_cosine_mean": 0.2111571501554335
+     "widths": {
+      "input": 128,
+      "latent": 32,
+      "q": 32,
+      "decoder": 128
      },
-     "probe_recon": {
-      "auc": 0.6008721073114766,
-      "triplets": 45869,
-      "positive_cosine_mean": 2.132856038734605,
-      "negative_cosine_mean": 0.2111571501554335
+     "probes": {
+      "input": {
+       "auc": 0.6293387759190182,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.06583788033240165,
+       "negative_cosine_mean": 0.004364666323528691,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6618120108691287,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.17279952797161896,
+       "negative_cosine_mean": 0.041101663071080034,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6623330446867604,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.22198919336137293,
+       "negative_cosine_mean": 0.08148533760299922,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6421310053241894,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.1197733213664958,
+       "negative_cosine_mean": 0.010258111498560558,
+       "normalised": true
+      }
      },
-     "probe_latent": {
-      "auc": 0.5998206469351324,
-      "triplets": 45869,
-      "positive_cosine_mean": 7.376874968737259,
-      "negative_cosine_mean": 2.3982842009212453
-     },
-     "probe_input": {
-      "auc": 0.586611744755977,
-      "triplets": 45869,
-      "positive_cosine_mean": 3.7161547841544103,
-      "negative_cosine_mean": 0.2551061073195338
+     "probes_holdout_only": {
+      "input": {
+       "auc": 0.5796992432022292,
+       "triplets": 391,
+       "positive_cosine_mean": 0.040633710109791325,
+       "negative_cosine_mean": 0.002157999766662085,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6374173376678594,
+       "triplets": 391,
+       "positive_cosine_mean": 0.1501035931766503,
+       "negative_cosine_mean": 0.040965673623047025,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6409167914914214,
+       "triplets": 391,
+       "positive_cosine_mean": 0.19006344471787298,
+       "negative_cosine_mean": 0.0739012062726014,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6260163133417495,
+       "triplets": 391,
+       "positive_cosine_mean": 0.09235373915242975,
+       "negative_cosine_mean": 0.004874859833160715,
+       "normalised": true
+      }
      }
     },
     "150": {
-     "trained_loss": 2.7088592052459717,
-     "recon_mse": 0.5442470908164978,
-     "recon_r2": 0.30328053543380384,
+     "trained_loss": 2.7252514362335205,
+     "recon_mse": 0.6994533538818359,
+     "recon_r2": 0.28333590850545765,
      "codes": {
       "L1": {
-       "used": 231,
+       "used": 237,
        "size": 256,
-       "entropy_bits": 6.479187277887143,
-       "max_share": 0.2160491316549396
+       "entropy_bits": 7.2756328669315256,
+       "max_share": 0.031439378533371296
       },
       "L2": {
        "used": 256,
        "size": 256,
-       "entropy_bits": 6.831448597893466,
-       "max_share": 0.22821002969048684
+       "entropy_bits": 7.794569794979819,
+       "max_share": 0.035262537113108554
       },
       "L3": {
        "used": 256,
        "size": 256,
-       "entropy_bits": 6.9271934019008565,
-       "max_share": 0.21600845975515517
+       "entropy_bits": 7.837653456647759,
+       "max_share": 0.04144466588034327
       },
-      "collision": 0.22902346768617565,
-      "unique_triples": 18956
+      "collision": 0.046528653353398175,
+      "unique_triples": 23443
      },
-     "probe_q": {
-      "auc": 0.6038861672006555,
-      "triplets": 45869,
-      "positive_cosine_mean": 2.330389436203264,
-      "negative_cosine_mean": 0.16933402158839134
+     "widths": {
+      "input": 128,
+      "latent": 32,
+      "q": 32,
+      "decoder": 128
      },
-     "probe_recon": {
-      "auc": 0.6038861672006555,
-      "triplets": 45869,
-      "positive_cosine_mean": 2.330389436203264,
-      "negative_cosine_mean": 0.16933402158839134
+     "probes": {
+      "input": {
+       "auc": 0.6293387759190182,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.06583788033240165,
+       "negative_cosine_mean": 0.004364666323528691,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6742920948965276,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.18296821143278424,
+       "negative_cosine_mean": 0.026783259526088645,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6742514635203125,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.20366829589481814,
+       "negative_cosine_mean": 0.03773956421062457,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6460710059257487,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.1159211492811377,
+       "negative_cosine_mean": 0.009055105862543248,
+       "normalised": true
+      }
      },
-     "probe_latent": {
-      "auc": 0.6125607119784433,
-      "triplets": 45869,
-      "positive_cosine_mean": 9.146703409204406,
-      "negative_cosine_mean": 1.9450056954580348
-     },
-     "probe_input": {
-      "auc": 0.586611744755977,
-      "triplets": 45869,
-      "positive_cosine_mean": 3.7161547841544103,
-      "negative_cosine_mean": 0.2551061073195338
+     "probes_holdout_only": {
+      "input": {
+       "auc": 0.5796992432022292,
+       "triplets": 391,
+       "positive_cosine_mean": 0.040633710109791325,
+       "negative_cosine_mean": 0.002157999766662085,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6638234967065888,
+       "triplets": 391,
+       "positive_cosine_mean": 0.16264544116994664,
+       "negative_cosine_mean": 0.019969852850787905,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6453516133463282,
+       "triplets": 391,
+       "positive_cosine_mean": 0.17378049716191069,
+       "negative_cosine_mean": 0.0380481271139221,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6528672627730064,
+       "triplets": 391,
+       "positive_cosine_mean": 0.09425856134843862,
+       "negative_cosine_mean": -0.0007845593978181239,
+       "normalised": true
+      }
      }
     },
     "400": {
-     "trained_loss": 2.903620330910934,
-     "recon_mse": 0.508350670337677,
-     "recon_r2": 0.3492334404246723,
+     "trained_loss": 2.9098905889611495,
+     "recon_mse": 0.6698077917098999,
+     "recon_r2": 0.3137109288879959,
      "codes": {
       "L1": {
        "used": 256,
        "size": 256,
-       "entropy_bits": 6.662924292808507,
-       "max_share": 0.21613047545450847
+       "entropy_bits": 7.527439081327519,
+       "max_share": 0.022247529182088097
       },
       "L2": {
        "used": 256,
        "size": 256,
-       "entropy_bits": 6.692684586407962,
-       "max_share": 0.23227721966893072
+       "entropy_bits": 7.632715234894414,
+       "max_share": 0.03888233619392362
       },
       "L3": {
        "used": 256,
        "size": 256,
-       "entropy_bits": 6.957601311422559,
-       "max_share": 0.21600845975515517
+       "entropy_bits": 7.811073965404356,
+       "max_share": 0.042380119575385365
       },
-      "collision": 0.22776263879285796,
-      "unique_triples": 18987
+      "collision": 0.0470980599503803,
+      "unique_triples": 23429
      },
-     "probe_q": {
-      "auc": 0.6055210312486728,
-      "triplets": 45869,
-      "positive_cosine_mean": 2.5375329611788504,
-      "negative_cosine_mean": 0.2129932785441847
+     "widths": {
+      "input": 128,
+      "latent": 32,
+      "q": 32,
+      "decoder": 128
      },
-     "probe_recon": {
-      "auc": 0.6055210312486728,
-      "triplets": 45869,
-      "positive_cosine_mean": 2.5375329611788504,
-      "negative_cosine_mean": 0.2129932785441847
+     "probes": {
+      "input": {
+       "auc": 0.6293387759190182,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.06583788033240165,
+       "negative_cosine_mean": 0.004364666323528691,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6839336989382782,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.20463548655757904,
+       "negative_cosine_mean": 0.029585503785090412,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6849175716935743,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.2199214802807352,
+       "negative_cosine_mean": 0.030244145388733195,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6505779783679603,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.11204992081893328,
+       "negative_cosine_mean": 0.007274723382071391,
+       "normalised": true
+      }
      },
-     "probe_latent": {
-      "auc": 0.6223024474310676,
-      "triplets": 45869,
-      "positive_cosine_mean": 12.20119093555162,
-      "negative_cosine_mean": 2.008510245257206
-     },
-     "probe_input": {
-      "auc": 0.586611744755977,
-      "triplets": 45869,
-      "positive_cosine_mean": 3.7161547841544103,
-      "negative_cosine_mean": 0.2551061073195338
+     "probes_holdout_only": {
+      "input": {
+       "auc": 0.5796992432022292,
+       "triplets": 391,
+       "positive_cosine_mean": 0.040633710109791325,
+       "negative_cosine_mean": 0.002157999766662085,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6572301332408867,
+       "triplets": 391,
+       "positive_cosine_mean": 0.1734972054635255,
+       "negative_cosine_mean": 0.02438009646819288,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6423361961263989,
+       "triplets": 391,
+       "positive_cosine_mean": 0.17314933664742868,
+       "negative_cosine_mean": 0.02698737882440202,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6153020977099836,
+       "triplets": 391,
+       "positive_cosine_mean": 0.08499631907965235,
+       "negative_cosine_mean": 0.006046907347963032,
+       "normalised": true
+      }
      }
     }
    }
@@ -593,161 +973,287 @@
      128
     ],
     "dtype": "float32",
-    "masked_rows": 5311,
+    "masked_rows": 493,
     "masked_row_value": "mean of covered rows"
    },
    "epochs": {
     "50": {
-     "trained_loss": 7.200730574758429,
-     "recon_mse": 0.5387639403343201,
-     "recon_r2": 0.30689962735430143,
+     "trained_loss": 7.801486241190057,
+     "recon_mse": 0.6969611644744873,
+     "recon_r2": 0.2905649140552877,
      "codes": {
       "L1": {
-       "used": 247,
+       "used": 243,
        "size": 256,
-       "entropy_bits": 6.318588275932964,
-       "max_share": 0.21735063244804165
+       "entropy_bits": 7.0336674147638485,
+       "max_share": 0.02326432667669907
       },
       "L2": {
        "used": 256,
        "size": 256,
-       "entropy_bits": 6.691337099438655,
-       "max_share": 0.2296335461829422
+       "entropy_bits": 7.606208946261831,
+       "max_share": 0.03444909911741977
       },
       "L3": {
-       "used": 77,
+       "used": 250,
        "size": 256,
-       "entropy_bits": 5.137440399551344,
-       "max_share": 0.24264855411396266
+       "entropy_bits": 7.380137916394843,
+       "max_share": 0.020051246593728395
       },
-      "collision": 0.33582787652011226,
-      "unique_triples": 16330
+      "collision": 0.15642412657095217,
+      "unique_triples": 20741
      },
-     "probe_q": {
-      "auc": 0.578532774478769,
-      "triplets": 45869,
-      "positive_cosine_mean": 1.74420670469592,
-      "negative_cosine_mean": 0.17200364926363793
+     "widths": {
+      "input": 128,
+      "latent": 32,
+      "q": 32,
+      "decoder": 128
      },
-     "probe_recon": {
-      "auc": 0.578532774478769,
-      "triplets": 45869,
-      "positive_cosine_mean": 1.74420670469592,
-      "negative_cosine_mean": 0.17200364926363793
+     "probes": {
+      "input": {
+       "auc": 0.6083704843247639,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.06595021829605605,
+       "negative_cosine_mean": 0.003558394322347684,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6256584968233702,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.17584075976379582,
+       "negative_cosine_mean": 0.0521000785398664,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6201187691624519,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.18496143032559534,
+       "negative_cosine_mean": 0.06079096133836574,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6198159842058335,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.12562232020667483,
+       "negative_cosine_mean": 0.021896276153895482,
+       "normalised": true
+      }
      },
-     "probe_latent": {
-      "auc": 0.571149519856522,
-      "triplets": 45869,
-      "positive_cosine_mean": 5.760590437459666,
-      "negative_cosine_mean": 1.994084542543454
-     },
-     "probe_input": {
-      "auc": 0.5735846975367288,
-      "triplets": 45869,
-      "positive_cosine_mean": 3.2356611275357023,
-      "negative_cosine_mean": 0.08045589109029162
+     "probes_holdout_only": {
+      "input": {
+       "auc": 0.5804907084595208,
+       "triplets": 391,
+       "positive_cosine_mean": 0.0495895553039542,
+       "negative_cosine_mean": 0.004910536828421152,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.5790713038245433,
+       "triplets": 391,
+       "positive_cosine_mean": 0.1372817464840763,
+       "negative_cosine_mean": 0.06058992161812239,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.5854030258828762,
+       "triplets": 391,
+       "positive_cosine_mean": 0.15372335975640194,
+       "negative_cosine_mean": 0.06602241332282639,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.5936185660742669,
+       "triplets": 391,
+       "positive_cosine_mean": 0.09082317468984008,
+       "negative_cosine_mean": 0.022704805872511873,
+       "normalised": true
+      }
      }
     },
     "150": {
-     "trained_loss": 4.81277416881762,
-     "recon_mse": 0.4238906502723694,
-     "recon_r2": 0.45467997081895406,
+     "trained_loss": 5.919621116236637,
+     "recon_mse": 0.5777373313903809,
+     "recon_r2": 0.41192256578966524,
      "codes": {
       "L1": {
-       "used": 245,
+       "used": 252,
        "size": 256,
-       "entropy_bits": 6.283591858344817,
-       "max_share": 0.22414283971204296
+       "entropy_bits": 7.136428308877571,
+       "max_share": 0.02395574897303453
       },
       "L2": {
        "used": 256,
        "size": 256,
-       "entropy_bits": 6.3311064515973,
-       "max_share": 0.24232317891568717
+       "entropy_bits": 7.210585710266903,
+       "max_share": 0.046650669052751455
       },
       "L3": {
-       "used": 72,
+       "used": 238,
        "size": 256,
-       "entropy_bits": 5.092408188932918,
-       "max_share": 0.22971488998251108
+       "entropy_bits": 7.232316306708339,
+       "max_share": 0.020051246593728395
       },
-      "collision": 0.334323016228088,
-      "unique_triples": 16367
+      "collision": 0.1444259161345427,
+      "unique_triples": 21036
      },
-     "probe_q": {
-      "auc": 0.5846730220643611,
-      "triplets": 45869,
-      "positive_cosine_mean": 2.1754672523505976,
-      "negative_cosine_mean": 0.19417595737168655
+     "widths": {
+      "input": 128,
+      "latent": 32,
+      "q": 32,
+      "decoder": 128
      },
-     "probe_recon": {
-      "auc": 0.5846730220643611,
-      "triplets": 45869,
-      "positive_cosine_mean": 2.1754672523505976,
-      "negative_cosine_mean": 0.19417595737168655
+     "probes": {
+      "input": {
+       "auc": 0.6083704843247639,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.06595021829605605,
+       "negative_cosine_mean": 0.003558394322347684,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6353432669791247,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.16469186267585817,
+       "negative_cosine_mean": 0.027323224029364043,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6376192721092305,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.18173213747091255,
+       "negative_cosine_mean": 0.03353387992988741,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6301859049651821,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.11703200651788541,
+       "negative_cosine_mean": 0.012840077231610725,
+       "normalised": true
+      }
      },
-     "probe_latent": {
-      "auc": 0.593170375457562,
-      "triplets": 45869,
-      "positive_cosine_mean": 5.412820032992965,
-      "negative_cosine_mean": 0.9517257823820653
-     },
-     "probe_input": {
-      "auc": 0.5735846975367288,
-      "triplets": 45869,
-      "positive_cosine_mean": 3.2356611275357023,
-      "negative_cosine_mean": 0.08045589109029162
+     "probes_holdout_only": {
+      "input": {
+       "auc": 0.5804907084595208,
+       "triplets": 391,
+       "positive_cosine_mean": 0.0495895553039542,
+       "negative_cosine_mean": 0.004910536828421152,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.5949463962166652,
+       "triplets": 391,
+       "positive_cosine_mean": 0.11812588722752199,
+       "negative_cosine_mean": 0.022484321167785443,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6042608303190062,
+       "triplets": 391,
+       "positive_cosine_mean": 0.1399265635684583,
+       "negative_cosine_mean": 0.03162280733895501,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6132678357676886,
+       "triplets": 391,
+       "positive_cosine_mean": 0.08931805806168952,
+       "negative_cosine_mean": 0.011249089550984522,
+       "normalised": true
+      }
      }
     },
     "400": {
-     "trained_loss": 2.2249266662095724,
-     "recon_mse": 0.33324146270751953,
-     "recon_r2": 0.5712968803363948,
+     "trained_loss": 2.235630562430934,
+     "recon_mse": 0.49096572399139404,
+     "recon_r2": 0.5002471753811863,
      "codes": {
       "L1": {
-       "used": 254,
+       "used": 252,
        "size": 256,
-       "entropy_bits": 6.192244231031237,
-       "max_share": 0.2328872981656973
+       "entropy_bits": 7.0398184828859875,
+       "max_share": 0.03310692642453329
       },
       "L2": {
        "used": 256,
        "size": 256,
-       "entropy_bits": 6.121772839281018,
-       "max_share": 0.24476349290275348
+       "entropy_bits": 6.938757095113937,
+       "max_share": 0.06108919347622727
       },
       "L3": {
-       "used": 129,
+       "used": 202,
        "size": 256,
-       "entropy_bits": 5.987569146699528,
-       "max_share": 0.21600845975515517
+       "entropy_bits": 7.03229922267839,
+       "max_share": 0.020457965591572782
       },
-      "collision": 0.32956440395330866,
-      "unique_triples": 16484
+      "collision": 0.17391304347826086,
+      "unique_triples": 20311
      },
-     "probe_q": {
-      "auc": 0.5895412673613183,
-      "triplets": 45869,
-      "positive_cosine_mean": 2.320084413996224,
-      "negative_cosine_mean": 0.09995792572917032
+     "widths": {
+      "input": 128,
+      "latent": 32,
+      "q": 32,
+      "decoder": 128
      },
-     "probe_recon": {
-      "auc": 0.5895412673613183,
-      "triplets": 45869,
-      "positive_cosine_mean": 2.320084413996224,
-      "negative_cosine_mean": 0.09995792572917032
+     "probes": {
+      "input": {
+       "auc": 0.6083704843247639,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.06595021829605605,
+       "negative_cosine_mean": 0.003558394322347684,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6477550119471774,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.21416697083259423,
+       "negative_cosine_mean": 0.06783072533135186,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6486108122395854,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.22907761490002962,
+       "negative_cosine_mean": 0.0728557384113098,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6284846201405329,
+       "triplets": 45869,
+       "positive_cosine_mean": 0.10638243832235536,
+       "negative_cosine_mean": 0.007556625811755724,
+       "normalised": true
+      }
      },
-     "probe_latent": {
-      "auc": 0.5943500969881317,
-      "triplets": 45869,
-      "positive_cosine_mean": 7.739457905421306,
-      "negative_cosine_mean": 2.303031141017832
-     },
-     "probe_input": {
-      "auc": 0.5735846975367288,
-      "triplets": 45869,
-      "positive_cosine_mean": 3.2356611275357023,
-      "negative_cosine_mean": 0.08045589109029162
+     "probes_holdout_only": {
+      "input": {
+       "auc": 0.5804907084595208,
+       "triplets": 391,
+       "positive_cosine_mean": 0.0495895553039542,
+       "negative_cosine_mean": 0.004910536828421152,
+       "normalised": true
+      },
+      "latent_z": {
+       "auc": 0.6095786919237839,
+       "triplets": 391,
+       "positive_cosine_mean": 0.18433623472357386,
+       "negative_cosine_mean": 0.07222857394829135,
+       "normalised": true
+      },
+      "hard_q": {
+       "auc": 0.6143863527841916,
+       "triplets": 391,
+       "positive_cosine_mean": 0.18891944524958526,
+       "negative_cosine_mean": 0.07033887237004299,
+       "normalised": true
+      },
+      "decoder": {
+       "auc": 0.6289794022802049,
+       "triplets": 391,
+       "positive_cosine_mean": 0.08250681303399586,
+       "negative_cosine_mean": 0.004925516923218582,
+       "normalised": true
+      }
      }
     }
    }

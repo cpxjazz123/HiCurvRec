@@ -10,24 +10,33 @@
   "target": "own_orbit (376 roles), real behaviour graph only",
   "note": "the KNN graph comes from the state under test; the answers come from the real graph, never from it"
  },
- "headroom": {
+ "target_diagnostics": {
   "items": 12266,
-  "median_effective_roles": 1.0,
-  "share_with_two_or_more": 0.46111201695744336,
-  "constant_prior_ce_nats": 3.486788272857666,
-  "oracle_ce_nats_from_stored_table": 7.257292944231644,
-  "note": "the stored table's own prior is already worse than a constant prior, so absolute accuracy is capped by the target, not by the representation; only the *relative order* between states is interpretable"
+  "row_sum_min": 0.9999999664723873,
+  "row_sum_max": 1.0000000521540642,
+  "row_sum_mean": 1.0000000052573106,
+  "rows_sum_to_one_within_1e-3": 1.0,
+  "entries_negative": 0,
+  "entries_non_finite": 0,
+  "normalised_entropy_bits_mean": 0.6945570530246069,
+  "normalised_entropy_bits_median": 0.0,
+  "share_with_two_or_more_effective_roles": 0.46111201695744336,
+  "read": "the table is a diagnostic, not a validated label; whether the roles are predictable is only answered by the cross-entropy below, compared with the constant prior on the same split"
  },
  "states": {
   "random_control": {
    "items_train": 9812,
    "items_eval": 2454,
-   "ce": 3.621987819671631,
+   "train_mean_degree": 8.297085201793722,
+   "eval_mean_degree": 8.23960880195599,
+   "initialisation_shared_with_control": true,
+   "gradient_clip": 1.0,
+   "ce": 3.6219873428344727,
    "ce_constant_prior": 3.479393482208252,
-   "ce_shuffled_targets": 3.60550594329834,
-   "improvement_over_prior_nats": -0.1425943374633789,
+   "ce_shuffled_targets": 3.6079792976379395,
+   "improvement_over_prior_nats": -0.1425938606262207,
    "neighbour_graph_density": 0.8269085288973848,
-   "predicted_role_top_share": 0.07497604936361313,
+   "predicted_role_top_share": 0.07497504353523254,
    "shape": [
     24587,
     32
@@ -37,12 +46,16 @@
   "semantics_768": {
    "items_train": 9812,
    "items_eval": 2454,
-   "ce": 3.469052314758301,
+   "train_mean_degree": 3.8431512433754587,
+   "eval_mean_degree": 3.863080684596577,
+   "initialisation_shared_with_control": true,
+   "gradient_clip": 1.0,
+   "ce": 3.469073534011841,
    "ce_constant_prior": 3.479393482208252,
-   "ce_shuffled_targets": 3.5326638221740723,
-   "improvement_over_prior_nats": 0.010341167449951172,
+   "ce_shuffled_targets": 3.541672468185425,
+   "improvement_over_prior_nats": 0.010319948196411133,
    "neighbour_graph_density": 0.3860170008541099,
-   "predicted_role_top_share": 0.08180496841669083,
+   "predicted_role_top_share": 0.08181937783956528,
    "shape": [
     24587,
     768
@@ -52,12 +65,16 @@
   "gnn_frozen_128": {
    "items_train": 9812,
    "items_eval": 2454,
-   "ce": 3.4776253700256348,
+   "train_mean_degree": 4.317876070118222,
+   "eval_mean_degree": 4.32559087204564,
+   "initialisation_shared_with_control": true,
+   "gradient_clip": 1.0,
+   "ce": 3.4776244163513184,
    "ce_constant_prior": 3.479393482208252,
-   "ce_shuffled_targets": 3.51501202583313,
-   "improvement_over_prior_nats": 0.0017681121826171875,
+   "ce_shuffled_targets": 3.5138046741485596,
+   "improvement_over_prior_nats": 0.0017690658569335938,
    "neighbour_graph_density": 0.39729938585431324,
-   "predicted_role_top_share": 0.08421845734119415,
+   "predicted_role_top_share": 0.08422137796878815,
    "shape": [
     24587,
     128

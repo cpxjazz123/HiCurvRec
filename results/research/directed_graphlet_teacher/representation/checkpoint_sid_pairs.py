@@ -59,6 +59,49 @@ def codes_of(model, features: np.ndarray, device) -> np.ndarray:
     return tokens.cpu().numpy().astype(np.int64)[:, :3]
 
 
+def strict_match(recomputed: np.ndarray, stored: np.ndarray) -> dict:
+    """Token-agreement and full-SID agreement reported separately.
+
+    Token agreement counts all three levels at once; a full SID only matches when every
+    item's three codes match exactly.  A 99.9% token rate can still leave many items with
+    a different SID, so both numbers are given and MATCH requires 100%.
+    """
+    per_item = (recomputed == stored).all(axis=1)
+    return {"token_agree_fraction": float((recomputed == stored).mean()),
+            "full_sid_agree_fraction": float(per_item.mean()),
+            "items_exactly_matching": int(per_item.sum()),
+            "items": int(len(recomputed))}
+
+
+def arm_space(arm_dir: Path) -> dict:
+    """How far the stored SID's first-level code space can be verified at all.
+
+    The baseline model is rebuilt with the frozen config; an arm whose own run used a
+    different metric, width or codebook cannot be reproduced that way, so the check says
+    which part of the comparison is not established rather than assuming it.
+    """
+    notes = {"metric": "euclidean (baseline default; the arm's real metric is not "
+                       "recovered by this script)"}
+    config = arm_dir / "export_manifest.json"
+    if config.is_file():
+        try:
+            notes["export_manifest"] = json.loads(config.read_text())
+        except json.JSONDecodeError:
+            notes["export_manifest"] = "UNREADABLE"
+    else:
+        notes["export_manifest"] = "ABSENT"
+    ckpt = arm_dir / "rqvae_best.pth"
+    if ckpt.is_file():
+        try:
+            payload = torch.load(ckpt, map_location="cpu")
+            held = payload.get("selection") or {}
+            notes["checkpoint_selection"] = held
+            notes["checkpoint_keys"] = sorted(payload)[:8]
+        except Exception as exc:  # noqa: BLE001
+            notes["checkpoint_read"] = f"{type(exc).__name__}"
+    return notes
+
+
 def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     features = np.load(SEMANTICS).astype(np.float32)
@@ -85,13 +128,16 @@ def main() -> None:
                                             "sid_sha256": sha256(table),
                                             "checkpoint_sha256": sha256(checkpoint)}
             continue
-        agree = float((recomputed == stored).mean())
+        agreement = strict_match(recomputed, stored)
+        exact = agreement["full_sid_agree_fraction"] == 1.0
         report["arms"][arm_dir.name] = {
-            "status": "MATCH" if agree > 0.999 else "MISMATCH",
-            "codes_agree_fraction": agree,
+            "status": "MATCH" if exact else "MISMATCH",
+            **agreement,
             "checkpoint_sha256": sha256(checkpoint),
-            "sid_sha256": sha256(table)}
-        print(f"{arm_dir.name}: {agree:.4f}", flush=True)
+            "sid_sha256": sha256(table),
+            "arm_space": arm_space(arm_dir)}
+        print(f"{arm_dir.name}: tokens {agreement['token_agree_fraction']:.4f} "
+              f"full SID {agreement['full_sid_agree_fraction']:.4f}", flush=True)
         OUT.write_text(json.dumps(report, indent=1) + "\n")
     OUT.write_text(json.dumps(report, indent=1) + "\n")
     matched = sum(1 for v in report["arms"].values() if v.get("status") == "MATCH")

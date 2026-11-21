@@ -3,105 +3,479 @@
  "arms": {
   "TIGER_RQ-VAE": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.0029961632841203345,
+   "token_agree_fraction": 0.0029961632841203345,
+   "full_sid_agree_fraction": 0.0,
+   "items_exactly_matching": 0,
+   "items": 24587,
    "checkpoint_sha256": "af8efc29a8bcbbe5394cc5e358acf7b14c0e78ae99d8a8b9e5faf03fdddd97a8",
-   "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059"
+   "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": "ABSENT",
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_RQ-VAE__canonical": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9982917802090535,
+   "token_agree_fraction": 0.9982917802090535,
+   "full_sid_agree_fraction": 0.9963395290194005,
+   "items_exactly_matching": 24497,
+   "items": 24587,
    "checkpoint_sha256": "018ef7b19d471714da3055395cd49f1920cd12efa14c72dd9ac8f0e04f6f54fb",
-   "sid_sha256": "53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85"
+   "sid_sha256": "53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": "ABSENT",
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_Uniform_KNN_RQ": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9917842762435434,
+   "token_agree_fraction": 0.9917842762435434,
+   "full_sid_agree_fraction": 0.9868223044698418,
+   "items_exactly_matching": 24263,
+   "items": 24587,
    "checkpoint_sha256": "7aaf896178ed3be7558037a424e5fba9a78690fb6a2919e4b7d1c64002f68ed2",
-   "sid_sha256": "13decf4263fd64c82cb23965687f88767a025f36175023b8c7a79e27a1a67960"
+   "sid_sha256": "13decf4263fd64c82cb23965687f88767a025f36175023b8c7a79e27a1a67960",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": {
+     "checked_at": "2026-11-19T15:54:47+00:00",
+     "checkpoint": "results/stage2_RQ-VAE/TIGER_Uniform_KNN_RQ/rqvae_best.pth",
+     "checkpoint_sha256": "7aaf896178ed3be7558037a424e5fba9a78690fb6a2919e4b7d1c64002f68ed2",
+     "differing_items": 324,
+     "items": 24587,
+     "original_differing_items": 324,
+     "original_sid_sha256": "064e34db06e26e3ef662f39a1294f15855dda00da37fe49118f841f33d57282f",
+     "rewritten_from_checkpoint": true,
+     "same_l1": 1.0,
+     "same_l3": 1.0,
+     "schema": "genrec.stage2.export_manifest/1",
+     "sid": "results/stage2_RQ-VAE/TIGER_Uniform_KNN_RQ/item_sids.json",
+     "sid_sha256": "13decf4263fd64c82cb23965687f88767a025f36175023b8c7a79e27a1a67960",
+     "tokens_match": true,
+     "tokens_sha256": "9d6a6c85745c8592bf3efd105299077e6208453c2edb88eb235d5ed89a2c94f8",
+     "tree": "stage2_RQ-VAE/_archive/TIGER_Uniform_KNN_RQ"
+    },
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_Uniform_KNN_control": {
-   "status": "MATCH",
-   "codes_agree_fraction": 0.9995254945025149,
+   "status": "MISMATCH",
+   "token_agree_fraction": 0.9995254945025149,
+   "full_sid_agree_fraction": 0.9995119372025867,
+   "items_exactly_matching": 24575,
+   "items": 24587,
    "checkpoint_sha256": "094e38068ae533ebfbe5ec9fa79f82cc8eb9c3454a3d7f41fe7c42351c842bf2",
-   "sid_sha256": "b49c2b484065ea09ecb0354160abb03ab3ae447c090c1a1ae7a9b0e8dfb7e84b"
+   "sid_sha256": "b49c2b484065ea09ecb0354160abb03ab3ae447c090c1a1ae7a9b0e8dfb7e84b",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": {
+     "checked_at": "2026-11-19T15:54:31+00:00",
+     "checkpoint": "results/stage2_RQ-VAE/TIGER_Uniform_KNN_control/rqvae_best.pth",
+     "checkpoint_sha256": "094e38068ae533ebfbe5ec9fa79f82cc8eb9c3454a3d7f41fe7c42351c842bf2",
+     "differing_items": 12,
+     "items": 24587,
+     "original_differing_items": 12,
+     "original_sid_sha256": "851fb474137848a70728ec4860e845cd926120f78d2e6f38b2f566482263b030",
+     "rewritten_from_checkpoint": true,
+     "same_l1": 1.0,
+     "same_l3": 1.0,
+     "schema": "genrec.stage2.export_manifest/1",
+     "sid": "results/stage2_RQ-VAE/TIGER_Uniform_KNN_control/item_sids.json",
+     "sid_sha256": "b49c2b484065ea09ecb0354160abb03ab3ae447c090c1a1ae7a9b0e8dfb7e84b",
+     "tokens_match": true,
+     "tokens_sha256": "cb38d6b8ed728c27380844513e8f124f71bd51859ad5aa50caea6344b20636c5",
+     "tree": "stage2_RQ-VAE/_archive/TIGER_Uniform_KNN_control"
+    },
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_af3_curvature_drive_rq": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.998156207209772,
+   "token_agree_fraction": 0.998156207209772,
+   "full_sid_agree_fraction": 0.9957701224224184,
+   "items_exactly_matching": 24483,
+   "items": 24587,
    "checkpoint_sha256": "474f70657c590ee1ba36f9f083163a4438c3bb3b5394897a3e427190f118d32a",
-   "sid_sha256": "e911c9fc93843068c9d2304ccb57cf6d64d096ddf4d62183d356abe4c949e271"
+   "sid_sha256": "e911c9fc93843068c9d2304ccb57cf6d64d096ddf4d62183d356abe4c949e271",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": "ABSENT",
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_af3_curvature_factor_mass_rq": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.8389392768536218,
+   "token_agree_fraction": 0.8389392768536218,
+   "full_sid_agree_fraction": 0.6845487452718917,
+   "items_exactly_matching": 16831,
+   "items": 24587,
    "checkpoint_sha256": "c392ceb467e2da1a4f9c88f966ab1491b47900fbfe2e2b863b2b90f3574fc297",
-   "sid_sha256": "5e26c174c808cea65c0a7f7ae7f17bfd0c256136769917730e1cd0c5caa0d840"
+   "sid_sha256": "5e26c174c808cea65c0a7f7ae7f17bfd0c256136769917730e1cd0c5caa0d840",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": "ABSENT",
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_behavior_edge_contrastive_rq": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9915402448448367,
+   "token_agree_fraction": 0.9915402448448367,
+   "full_sid_agree_fraction": 0.9915402448448367,
+   "items_exactly_matching": 24379,
+   "items": 24587,
    "checkpoint_sha256": "9cccd7757c88104fe08d16e650fffdd5d5393fe6a13af4e6c5165d2e202f534a",
-   "sid_sha256": "de83e2b29ff6865cc7df515279947f43e9f94a5dbf281ca83dbc6f70d6db8dc1"
+   "sid_sha256": "de83e2b29ff6865cc7df515279947f43e9f94a5dbf281ca83dbc6f70d6db8dc1",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": {
+     "checked_at": "2026-11-19T15:54:37+00:00",
+     "checkpoint": "results/stage2_RQ-VAE/TIGER_behavior_edge_contrastive_rq/rqvae_best.pth",
+     "checkpoint_sha256": "9cccd7757c88104fe08d16e650fffdd5d5393fe6a13af4e6c5165d2e202f534a",
+     "differing_items": 345,
+     "items": 24587,
+     "original_differing_items": 345,
+     "original_sid_sha256": "4a9c0b551bcb4619fc9a55a87d12b52558159613177eab3c6167f801d9c9be17",
+     "rewritten_from_checkpoint": true,
+     "same_l1": 1.0,
+     "same_l3": 1.0,
+     "schema": "genrec.stage2.export_manifest/1",
+     "sid": "results/stage2_RQ-VAE/TIGER_behavior_edge_contrastive_rq/item_sids.json",
+     "sid_sha256": "de83e2b29ff6865cc7df515279947f43e9f94a5dbf281ca83dbc6f70d6db8dc1",
+     "tokens_match": true,
+     "tokens_sha256": "3f563bfa350632ff4ae5321f2ba79c432a129aadc47cc4cbf7ef8c014b32ae66",
+     "tree": "stage2_RQ-VAE/_archive/TIGER_behavior_edge_contrastive_rq"
+    },
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_drq_D0": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9988747441059639,
+   "token_agree_fraction": 0.9988747441059639,
+   "full_sid_agree_fraction": 0.997315654614227,
+   "items_exactly_matching": 24521,
+   "items": 24587,
    "checkpoint_sha256": "bb4319004abd2742ff21c9febd9f96b9d451234190c72b4edecee171745e993f",
-   "sid_sha256": "6ff4be87b987c87ff95cf5417dd81d3f159fd4a9880f49c1cc5191ea487b5596"
+   "sid_sha256": "6ff4be87b987c87ff95cf5417dd81d3f159fd4a9880f49c1cc5191ea487b5596",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": "ABSENT",
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_drq_D1": {
    "status": "MATCH",
-   "codes_agree_fraction": 1.0,
+   "token_agree_fraction": 1.0,
+   "full_sid_agree_fraction": 1.0,
+   "items_exactly_matching": 24587,
+   "items": 24587,
    "checkpoint_sha256": "b12374b7caeada13bfc8af88965d792eceb23a5e696edb43c4382f0c055ae75a",
-   "sid_sha256": "a47b78967d0b8580370b1227ef8b5c9fdd66bfa399ae5dd62e687296c3c19ecd"
+   "sid_sha256": "a47b78967d0b8580370b1227ef8b5c9fdd66bfa399ae5dd62e687296c3c19ecd",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": {
+     "checked_at": "2026-11-20T05:39:17+00:00",
+     "checkpoint": "results/stage2_RQ-VAE/TIGER_drq_D1/rqvae_best.pth",
+     "checkpoint_sha256": "b12374b7caeada13bfc8af88965d792eceb23a5e696edb43c4382f0c055ae75a",
+     "differing_items": 311,
+     "items": 24587,
+     "original_differing_items": 311,
+     "original_sid_sha256": "a83f82727ea618a3fa917a2341eef243fa5bc2befc3ff219b41cdd4eef1590ca",
+     "rewritten_from_checkpoint": true,
+     "same_l1": 1.0,
+     "same_l3": 1.0,
+     "schema": "genrec.stage2.export_manifest/1",
+     "sid": "results/stage2_RQ-VAE/TIGER_drq_D1/item_sids.json",
+     "sid_sha256": "a47b78967d0b8580370b1227ef8b5c9fdd66bfa399ae5dd62e687296c3c19ecd",
+     "tokens_match": true,
+     "tokens_sha256": "44dbfba7aba6c3cb21062476b418cfed194d0a9abd723012add172622cd51a52",
+     "tree": "stage2_RQ-VAE/TIGER_drq_D1"
+    },
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_drq_D2": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9886118680603571,
+   "token_agree_fraction": 0.9886118680603571,
+   "full_sid_agree_fraction": 0.9785659088136007,
+   "items_exactly_matching": 24060,
+   "items": 24587,
    "checkpoint_sha256": "3fb861f3615c9a86d9101201edd212ddb0de94ffc7e92ff07529b824614ba87c",
-   "sid_sha256": "5c38293042ac329bc74a0dd6c376cc76f84076f39c421377c8117ae41f419afe"
+   "sid_sha256": "5c38293042ac329bc74a0dd6c376cc76f84076f39c421377c8117ae41f419afe",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": "ABSENT",
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_drq_D4": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9986984992068979,
+   "token_agree_fraction": 0.9986984992068979,
+   "full_sid_agree_fraction": 0.9971529670150893,
+   "items_exactly_matching": 24517,
+   "items": 24587,
    "checkpoint_sha256": "31add989f9fc9b321fbb2aa49d857b50d1f4a52ac1f354cd4e6766f9bdaa09e0",
-   "sid_sha256": "21e9e4a7e5bfe9c899a893165a889722a195317c90efab5d63d44dd72cea94e9"
+   "sid_sha256": "21e9e4a7e5bfe9c899a893165a889722a195317c90efab5d63d44dd72cea94e9",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": "ABSENT",
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_drq_S": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9944550643293881,
+   "token_agree_fraction": 0.9944550643293881,
+   "full_sid_agree_fraction": 0.9896286655549681,
+   "items_exactly_matching": 24332,
+   "items": 24587,
    "checkpoint_sha256": "1723c9db0dd7f138ce67b7b672751f4c81d13bb223ede54daf538b1cc3f956ad",
-   "sid_sha256": "ea4916c55c5ded1192e26b8ea3bd58a6dd9ef5c4bd68c2a4b4ccd928f92bb5f7"
+   "sid_sha256": "ea4916c55c5ded1192e26b8ea3bd58a6dd9ef5c4bd68c2a4b4ccd928f92bb5f7",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": "ABSENT",
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_drq_U": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9957023359227776,
+   "token_agree_fraction": 0.9957023359227776,
+   "full_sid_agree_fraction": 0.9919876357424655,
+   "items_exactly_matching": 24390,
+   "items": 24587,
    "checkpoint_sha256": "77a415ab11b55d4b9fea034e6d4aecf52cc8fb7f5fdd69fdad8cbb82aaf06049",
-   "sid_sha256": "c334368fe45cc4af9888bcfe429da3a3730a6afc4307efd58ef865193d2bf285"
+   "sid_sha256": "c334368fe45cc4af9888bcfe429da3a3730a6afc4307efd58ef865193d2bf285",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": "ABSENT",
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_g4_closure_A": {
    "status": "MATCH",
-   "codes_agree_fraction": 1.0,
+   "token_agree_fraction": 1.0,
+   "full_sid_agree_fraction": 1.0,
+   "items_exactly_matching": 24587,
+   "items": 24587,
    "checkpoint_sha256": "8c98646fbe58ca8b1e294712bd57292e775f1e16a30e8b659575207f20b022b3",
-   "sid_sha256": "dfd3caf996646e98709099ec3e46490bb7d2b9a1b7bba3d43793c384d3bb2c12"
+   "sid_sha256": "dfd3caf996646e98709099ec3e46490bb7d2b9a1b7bba3d43793c384d3bb2c12",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": {
+     "checked_at": "2026-11-19T15:53:35+00:00",
+     "checkpoint": "results/stage2_RQ-VAE/TIGER_g4_closure_A/rqvae_best.pth",
+     "checkpoint_sha256": "8c98646fbe58ca8b1e294712bd57292e775f1e16a30e8b659575207f20b022b3",
+     "differing_items": 113,
+     "items": 24587,
+     "original_differing_items": 113,
+     "original_sid_sha256": "83c6b1eb509041e6e8e1f1c7c8d3bb526ee14f1956f30741436602822b1abfb4",
+     "rewritten_from_checkpoint": true,
+     "same_l1": 1.0,
+     "same_l3": 1.0,
+     "schema": "genrec.stage2.export_manifest/1",
+     "sid": "results/stage2_RQ-VAE/TIGER_g4_closure_A/item_sids.json",
+     "sid_sha256": "dfd3caf996646e98709099ec3e46490bb7d2b9a1b7bba3d43793c384d3bb2c12",
+     "tokens_match": true,
+     "tokens_sha256": "c0a2f560018345243d709ba58a205d7be8347cf1e5efd8c5287baa8b2350bad3",
+     "tree": "stage2_RQ-VAE/_archive/TIGER_g4_closure_rq"
+    },
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_g4_closure_B": {
    "status": "MATCH",
-   "codes_agree_fraction": 1.0,
+   "token_agree_fraction": 1.0,
+   "full_sid_agree_fraction": 1.0,
+   "items_exactly_matching": 24587,
+   "items": 24587,
    "checkpoint_sha256": "21052830776c1f6b283ba61b0bc6c1d6a8aec3ba08f8584e8531855fce4e5654",
-   "sid_sha256": "103857faac7a3369bd708c7c431f08c2e15adecfa098de0fed79a13d4a682d81"
+   "sid_sha256": "103857faac7a3369bd708c7c431f08c2e15adecfa098de0fed79a13d4a682d81",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": {
+     "checked_at": "2026-11-19T15:53:41+00:00",
+     "checkpoint": "results/stage2_RQ-VAE/TIGER_g4_closure_B/rqvae_best.pth",
+     "checkpoint_sha256": "21052830776c1f6b283ba61b0bc6c1d6a8aec3ba08f8584e8531855fce4e5654",
+     "differing_items": 148,
+     "items": 24587,
+     "original_differing_items": 148,
+     "original_sid_sha256": "8e791bc40901a1efbbd41d4a2c81eecf95e14d79562b97987d4712f25cd7ae49",
+     "rewritten_from_checkpoint": true,
+     "same_l1": 1.0,
+     "same_l3": 1.0,
+     "schema": "genrec.stage2.export_manifest/1",
+     "sid": "results/stage2_RQ-VAE/TIGER_g4_closure_B/item_sids.json",
+     "sid_sha256": "103857faac7a3369bd708c7c431f08c2e15adecfa098de0fed79a13d4a682d81",
+     "tokens_match": true,
+     "tokens_sha256": "0565cc4efd5a3b86cc245410ef2c26a2afc02376326ccc9b33c3dc610867582e",
+     "tree": "stage2_RQ-VAE/_archive/TIGER_g4_closure_rq"
+    },
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_g4_closure_C": {
    "status": "MATCH",
-   "codes_agree_fraction": 1.0,
+   "token_agree_fraction": 1.0,
+   "full_sid_agree_fraction": 1.0,
+   "items_exactly_matching": 24587,
+   "items": 24587,
    "checkpoint_sha256": "b1f98db131a81c1ed5d66ff59aafdaddebed391994048e8ee96666bb7bc35f07",
-   "sid_sha256": "68699907173c4add5b7b35d73806e5eefca3bec27f903d54d64426abee86da9a"
+   "sid_sha256": "68699907173c4add5b7b35d73806e5eefca3bec27f903d54d64426abee86da9a",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": {
+     "checked_at": "2026-11-19T15:53:47+00:00",
+     "checkpoint": "results/stage2_RQ-VAE/TIGER_g4_closure_C/rqvae_best.pth",
+     "checkpoint_sha256": "b1f98db131a81c1ed5d66ff59aafdaddebed391994048e8ee96666bb7bc35f07",
+     "differing_items": 1100,
+     "items": 24587,
+     "original_differing_items": 1100,
+     "original_sid_sha256": "0973e94a1468a658703807efb495e7878c0a5b082a47cae7cf062a368ee1350f",
+     "rewritten_from_checkpoint": true,
+     "same_l1": 1.0,
+     "same_l3": 1.0,
+     "schema": "genrec.stage2.export_manifest/1",
+     "sid": "results/stage2_RQ-VAE/TIGER_g4_closure_C/item_sids.json",
+     "sid_sha256": "68699907173c4add5b7b35d73806e5eefca3bec27f903d54d64426abee86da9a",
+     "tokens_match": true,
+     "tokens_sha256": "87f441e17e8f582276e6bd02996da414b5e6ed7c669a14c4b9c952507da7c8d2",
+     "tree": "stage2_RQ-VAE/_archive/TIGER_g4_closure_rq"
+    },
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_g4_closure_D": {
    "status": "MATCH",
-   "codes_agree_fraction": 1.0,
+   "token_agree_fraction": 1.0,
+   "full_sid_agree_fraction": 1.0,
+   "items_exactly_matching": 24587,
+   "items": 24587,
    "checkpoint_sha256": "0359630203f3675249335f3f1f2442c4df349790ca89fa3e6ba2935acc2d912d",
-   "sid_sha256": "fb909f7b0c878e0c2c45e56082bb836f1ca534424467f544e91e5647dbc9b650"
+   "sid_sha256": "fb909f7b0c878e0c2c45e56082bb836f1ca534424467f544e91e5647dbc9b650",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": {
+     "checked_at": "2026-11-19T15:53:52+00:00",
+     "checkpoint": "results/stage2_RQ-VAE/TIGER_g4_closure_D/rqvae_best.pth",
+     "checkpoint_sha256": "0359630203f3675249335f3f1f2442c4df349790ca89fa3e6ba2935acc2d912d",
+     "differing_items": 130,
+     "items": 24587,
+     "original_differing_items": 130,
+     "original_sid_sha256": "84e5af2d35a3f00e32812b2689c87a4781e6568fb8c5bb395f3763563e7c297d",
+     "rewritten_from_checkpoint": true,
+     "same_l1": 1.0,
+     "same_l3": 1.0,
+     "schema": "genrec.stage2.export_manifest/1",
+     "sid": "results/stage2_RQ-VAE/TIGER_g4_closure_D/item_sids.json",
+     "sid_sha256": "fb909f7b0c878e0c2c45e56082bb836f1ca534424467f544e91e5647dbc9b650",
+     "tokens_match": true,
+     "tokens_sha256": "5c73c7109ce03e12002ef4a1a29e86eb5f3d2262f2259a2c345140986e26c3a4",
+     "tree": "stage2_RQ-VAE/_archive/TIGER_g4_closure_rq"
+    },
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_graphlet_codebook_global_rq": {
    "status": "CHECKPOINT_UNUSABLE",
@@ -117,33 +491,203 @@
   },
   "TIGER_graphlet_role_E": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9942245902306097,
+   "token_agree_fraction": 0.9942245902306097,
+   "full_sid_agree_fraction": 0.9856021474763086,
+   "items_exactly_matching": 24233,
+   "items": 24587,
    "checkpoint_sha256": "ffbbcb7be96057d4aef2e265877a4c2a28171514b021da97eadfa36fc5bf8255",
-   "sid_sha256": "1143f6f832cbcb231a03c45f88181f6970b7ce115247f74ece3880ab262943a5"
+   "sid_sha256": "1143f6f832cbcb231a03c45f88181f6970b7ce115247f74ece3880ab262943a5",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": {
+     "checked_at": "2026-11-19T15:41:18+00:00",
+     "checkpoint": "results/stage2_RQ-VAE/TIGER_graphlet_role_E/rqvae_best.pth",
+     "checkpoint_sha256": "ffbbcb7be96057d4aef2e265877a4c2a28171514b021da97eadfa36fc5bf8255",
+     "differing_items": 220,
+     "items": 24587,
+     "original_differing_items": 220,
+     "original_sid_sha256": "20feb81c158de11ab42150c838921fda05783c029ed1a95de89ec5e1a07a2a23",
+     "rewritten_from_checkpoint": true,
+     "same_l1": 1.0,
+     "same_l3": 1.0,
+     "schema": "genrec.stage2.export_manifest/1",
+     "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_E/item_sids.json",
+     "sid_sha256": "1143f6f832cbcb231a03c45f88181f6970b7ce115247f74ece3880ab262943a5",
+     "tokens_match": true,
+     "tokens_sha256": "9ecfd07ad2d823baa08f01e121723eb906706728641abe25dda806992e04d2bb",
+     "tree": "stage2_RQ-VAE/TIGER_graphlet_role_rq"
+    },
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "aux_head",
+     "collision",
+     "epoch",
+     "graph_arm",
+     "graph_config",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_graphlet_role_Q": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9953362888247177,
+   "token_agree_fraction": 0.9953362888247177,
+   "full_sid_agree_fraction": 0.9890999308577704,
+   "items_exactly_matching": 24319,
+   "items": 24587,
    "checkpoint_sha256": "3f47881752adc4b97ce549e2d31aaa511fcb46cc65598928ff4e369d7c2dc6d9",
-   "sid_sha256": "69e6c04729d8337091cb0bd82fb7b1052aa60e074d3bf249e58dcd00a6f82b96"
+   "sid_sha256": "69e6c04729d8337091cb0bd82fb7b1052aa60e074d3bf249e58dcd00a6f82b96",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": {
+     "checked_at": "2026-11-19T15:41:32+00:00",
+     "checkpoint": "results/stage2_RQ-VAE/TIGER_graphlet_role_Q/rqvae_best.pth",
+     "checkpoint_sha256": "3f47881752adc4b97ce549e2d31aaa511fcb46cc65598928ff4e369d7c2dc6d9",
+     "differing_items": 508,
+     "items": 24587,
+     "original_differing_items": 508,
+     "original_sid_sha256": "b1292b8d54f786d4ef773ec7819807ca098df1473df21c8dca8b9dbfd321f504",
+     "rewritten_from_checkpoint": true,
+     "same_l1": 1.0,
+     "same_l3": 1.0,
+     "schema": "genrec.stage2.export_manifest/1",
+     "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_Q/item_sids.json",
+     "sid_sha256": "69e6c04729d8337091cb0bd82fb7b1052aa60e074d3bf249e58dcd00a6f82b96",
+     "tokens_match": true,
+     "tokens_sha256": "72833584e76908f40310492b512c5ec1e32dcb78f21ccfe05cb3ad535b874bfd",
+     "tree": "stage2_RQ-VAE/TIGER_graphlet_role_rq"
+    },
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "aux_head",
+     "collision",
+     "epoch",
+     "graph_arm",
+     "graph_config",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_graphlet_role_QR": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9938449858326216,
+   "token_agree_fraction": 0.9938449858326216,
+   "full_sid_agree_fraction": 0.9851140846788954,
+   "items_exactly_matching": 24221,
+   "items": 24587,
    "checkpoint_sha256": "6c044428c0844200172785315b038d60f54aa0e329b790b447132985ea4c58f6",
-   "sid_sha256": "05d8bfdab885f30ee2baae44fe8a055a7152eaf109c1b16ded2c5ef22de30259"
+   "sid_sha256": "05d8bfdab885f30ee2baae44fe8a055a7152eaf109c1b16ded2c5ef22de30259",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": {
+     "checked_at": "2026-11-19T15:41:37+00:00",
+     "checkpoint": "results/stage2_RQ-VAE/TIGER_graphlet_role_QR/rqvae_best.pth",
+     "checkpoint_sha256": "6c044428c0844200172785315b038d60f54aa0e329b790b447132985ea4c58f6",
+     "differing_items": 212,
+     "items": 24587,
+     "original_differing_items": 212,
+     "original_sid_sha256": "b41602676571257a9484bb7b4310807bd2290df7c3e011057ce3f1f55440bdfa",
+     "rewritten_from_checkpoint": true,
+     "same_l1": 1.0,
+     "same_l3": 1.0,
+     "schema": "genrec.stage2.export_manifest/1",
+     "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_QR/item_sids.json",
+     "sid_sha256": "05d8bfdab885f30ee2baae44fe8a055a7152eaf109c1b16ded2c5ef22de30259",
+     "tokens_match": true,
+     "tokens_sha256": "2d186ff47f3eeb4baf69505dee4d9a14302be71e3ea38c1837dbac8671c3d319",
+     "tree": "stage2_RQ-VAE/TIGER_graphlet_role_rq"
+    },
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "aux_head",
+     "collision",
+     "epoch",
+     "graph_arm",
+     "graph_config",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_graphlet_role_R": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9950380282262985,
+   "token_agree_fraction": 0.9950380282262985,
+   "full_sid_agree_fraction": 0.9885711961605727,
+   "items_exactly_matching": 24306,
+   "items": 24587,
    "checkpoint_sha256": "b06230405d06614dd37faeec2b9047f9b8806a41a4f52704cfa077839ecf30e7",
-   "sid_sha256": "cb0bb662cdd1d3bce7d6c2ddd18810ad8eb51bd91ae693344bc1ae0dddf8fe91"
+   "sid_sha256": "cb0bb662cdd1d3bce7d6c2ddd18810ad8eb51bd91ae693344bc1ae0dddf8fe91",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": {
+     "checked_at": "2026-11-19T15:41:27+00:00",
+     "checkpoint": "results/stage2_RQ-VAE/TIGER_graphlet_role_R/rqvae_best.pth",
+     "checkpoint_sha256": "b06230405d06614dd37faeec2b9047f9b8806a41a4f52704cfa077839ecf30e7",
+     "differing_items": 304,
+     "items": 24587,
+     "original_differing_items": 304,
+     "original_sid_sha256": "1ebea45ee3607b0f30eb83f8f7e544a4100c087ff82ebee58d7c13ba1a0bebd3",
+     "rewritten_from_checkpoint": true,
+     "same_l1": 1.0,
+     "same_l3": 1.0,
+     "schema": "genrec.stage2.export_manifest/1",
+     "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_R/item_sids.json",
+     "sid_sha256": "cb0bb662cdd1d3bce7d6c2ddd18810ad8eb51bd91ae693344bc1ae0dddf8fe91",
+     "tokens_match": true,
+     "tokens_sha256": "26eb3dbdfe6ff42756425aa06e8a1d64b8ac0a4d34238d6b3af45871ee13e388",
+     "tree": "stage2_RQ-VAE/TIGER_graphlet_role_rq"
+    },
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "aux_head",
+     "collision",
+     "epoch",
+     "graph_arm",
+     "graph_config",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_graphlet_role_T": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9958785808218436,
+   "token_agree_fraction": 0.9958785808218436,
+   "full_sid_agree_fraction": 0.9899947126530281,
+   "items_exactly_matching": 24341,
+   "items": 24587,
    "checkpoint_sha256": "cf3edc80144c5e768288cff12de40f65e9fc200b244a8e6af3258935d09f5136",
-   "sid_sha256": "5be85adad0458e7c61a7a0446f1cb5a9887eb47a9b4f0518947bb018f63ae28f"
+   "sid_sha256": "5be85adad0458e7c61a7a0446f1cb5a9887eb47a9b4f0518947bb018f63ae28f",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": {
+     "checked_at": "2026-11-19T15:41:23+00:00",
+     "checkpoint": "results/stage2_RQ-VAE/TIGER_graphlet_role_T/rqvae_best.pth",
+     "checkpoint_sha256": "cf3edc80144c5e768288cff12de40f65e9fc200b244a8e6af3258935d09f5136",
+     "differing_items": 466,
+     "items": 24587,
+     "original_differing_items": 466,
+     "original_sid_sha256": "0d837bbaa4b912ac9fb16408a0356dee45054787dd416a76580f4e70653dbe55",
+     "rewritten_from_checkpoint": true,
+     "same_l1": 1.0,
+     "same_l3": 1.0,
+     "schema": "genrec.stage2.export_manifest/1",
+     "sid": "results/stage2_RQ-VAE/TIGER_graphlet_role_T/item_sids.json",
+     "sid_sha256": "5be85adad0458e7c61a7a0446f1cb5a9887eb47a9b4f0518947bb018f63ae28f",
+     "tokens_match": true,
+     "tokens_sha256": "26b011c6afd28edba3985ed08972371ee13e8515c1c906652d06b2b4289d8137",
+     "tree": "stage2_RQ-VAE/TIGER_graphlet_role_rq"
+    },
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "aux_head",
+     "collision",
+     "epoch",
+     "graph_arm",
+     "graph_config",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_mixed_rq_F0": {
    "status": "CHECKPOINT_UNUSABLE",
@@ -153,9 +697,23 @@
   },
   "TIGER_p4_topoq_A": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9987798430064668,
+   "token_agree_fraction": 0.9987798430064668,
+   "full_sid_agree_fraction": 0.9969902794159515,
+   "items_exactly_matching": 24513,
+   "items": 24587,
    "checkpoint_sha256": "2349e90442c08fe1e19a70a954d4a15fbbb58ad9781986112ee54cb49c00920a",
-   "sid_sha256": "02deeedd2e4699342af6b679f2ab5551c3e911500864a089af269d60ff09672d"
+   "sid_sha256": "02deeedd2e4699342af6b679f2ab5551c3e911500864a089af269d60ff09672d",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": "ABSENT",
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_role_geom_global_rq": {
    "status": "CHECKPOINT_UNUSABLE",
@@ -177,15 +735,60 @@
   },
   "TIGER_sinkhorn_all_levels_rq": {
    "status": "MATCH",
-   "codes_agree_fraction": 1.0,
+   "token_agree_fraction": 1.0,
+   "full_sid_agree_fraction": 1.0,
+   "items_exactly_matching": 24587,
+   "items": 24587,
    "checkpoint_sha256": "3ec29d0e47fb2e80ebe0195e81437daa642188be703097ad1d23991821d86ebe",
-   "sid_sha256": "77212dcd5b6a897aab30b463052c65f6bd113c030f04f53d364cbf39896cebac"
+   "sid_sha256": "77212dcd5b6a897aab30b463052c65f6bd113c030f04f53d364cbf39896cebac",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": {
+     "checked_at": "2026-11-19T15:54:05+00:00",
+     "checkpoint": "results/stage2_RQ-VAE/TIGER_sinkhorn_all_levels_rq/rqvae_best.pth",
+     "checkpoint_sha256": "3ec29d0e47fb2e80ebe0195e81437daa642188be703097ad1d23991821d86ebe",
+     "differing_items": 110,
+     "items": 24587,
+     "original_differing_items": 110,
+     "original_sid_sha256": "30486cba7a203f38eeaaefddee8b8c7b88d4cc7d8e56f9199517e67967640a0f",
+     "rewritten_from_checkpoint": true,
+     "same_l1": 1.0,
+     "same_l3": 1.0,
+     "schema": "genrec.stage2.export_manifest/1",
+     "sid": "results/stage2_RQ-VAE/TIGER_sinkhorn_all_levels_rq/item_sids.json",
+     "sid_sha256": "77212dcd5b6a897aab30b463052c65f6bd113c030f04f53d364cbf39896cebac",
+     "tokens_match": true,
+     "tokens_sha256": "123e1ef830adcefc160391cee8220046e036c064f53f845a815d69d07bb725f6",
+     "tree": "stage2_RQ-VAE/TIGER_sinkhorn_all_levels_rq"
+    },
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   },
   "TIGER_trq_A": {
    "status": "MISMATCH",
-   "codes_agree_fraction": 0.9983188948089099,
+   "token_agree_fraction": 0.9983188948089099,
+   "full_sid_agree_fraction": 0.9956887786228494,
+   "items_exactly_matching": 24481,
+   "items": 24587,
    "checkpoint_sha256": "d303258f638b4b999c90336e74fdf62feb30c0236bf8693ec5fb19421152c2b5",
-   "sid_sha256": "ff407ef3486d415fb52ae15b0d7361b4a6ae2a66ab5d86f7e4e067f61603ffd7"
+   "sid_sha256": "ff407ef3486d415fb52ae15b0d7361b4a6ae2a66ab5d86f7e4e067f61603ffd7",
+   "arm_space": {
+    "metric": "euclidean (baseline default; the arm's real metric is not recovered by this script)",
+    "export_manifest": "ABSENT",
+    "checkpoint_selection": "final_epoch",
+    "checkpoint_keys": [
+     "collision",
+     "epoch",
+     "selection",
+     "state_dict"
+    ]
+   }
   }
  }
 }

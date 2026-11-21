@@ -27,6 +27,8 @@ BASELINE = REPO / "stage2_RQ-VAE" / "baseline" / "TIGER_RQ-VAE"
 sys.path.insert(0, str(BASELINE))
 
 SEMANTICS = REPO / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
+# the trainer exports its SID table with infer_use_sk=False
+INFER_USE_SK = False
 
 
 def engine_config(epochs: int = 0):
@@ -67,17 +69,21 @@ def main() -> None:
     with torch.no_grad():
         x = torch.from_numpy(features).to(device)
         encoded = model.encoder(x)
-        # the trainer exports its SID with infer_use_sk=False; using the Sinkhorn
-        # assignment here would produce a different, better-looking table
-        quantized, _, _, tokens = model.rq(encoded, infer_use_sk=False)
+        # the trainer exports its SID with infer_use_sk=False; the Sinkhorn assignment
+        # would describe a different table and could not be compared with item_sids.json
+        quantized, _, _, tokens = model.rq(encoded, infer_use_sk=INFER_USE_SK)
         q = model.decoder(quantized)
     codes = tokens.cpu().numpy().astype(np.int64)
     exported = json.loads((result_dir / "item_sids.json").read_text())
     stored = np.array([[int(v) for v in exported[str(item)][:3]]
                        for item in range(len(features))], dtype=np.int64)
     agreement = float((stored == codes[:, :3]).mean())
-    np.savez_compressed(out, latent=encoded.cpu().numpy().astype(np.float32),
-                        quantised=q.cpu().numpy().astype(np.float32), codes=codes)
+    np.savez_compressed(
+        out,
+        latent=encoded.cpu().numpy().astype(np.float32),     # 32-d z
+        q_hard=quantized.cpu().numpy().astype(np.float32),  # 32-d hard quantised vector
+        decoder_out=q.cpu().numpy().astype(np.float32),     # decoder(q_hard): input width
+        codes=codes)
     manifest = {
         "result_dir": str(result_dir.relative_to(REPO)),
         "checkpoint_sha256": hashlib.sha256((result_dir / "rqvae_best.pth").read_bytes()).hexdigest(),
@@ -85,8 +91,12 @@ def main() -> None:
         "output": str(out.relative_to(REPO)),
         "output_sha256": hashlib.sha256(out.read_bytes()).hexdigest(),
         "codes_match_exported_sid_fraction": agreement,
-        "note": "codes recomputed at inference; a mismatch against the exported SID "
-                "file means the checkpoint and the SID table do not belong together",
+        "infer_use_sk": INFER_USE_SK,
+        "keys": {"latent": "32-d encoder output (z)",
+                 "q_hard": "32-d quantised vector, the sum of the selected codes",
+                 "decoder_out": "decoder applied to q_hard; input width, not 32"},
+        "note": "codes recomputed through the trainer's own inference path; a mismatch "
+                "against the exported SID file means the two files do not belong together",
     }
     out.with_suffix(".json").write_text(json.dumps(manifest, indent=1) + "\n")
     print(json.dumps(manifest, indent=1))
