@@ -1,0 +1,65 @@
+{
+ "protocol": {
+  "arm": "control",
+  "steps": 400,
+  "seed": 42,
+  "batch": "128 chains + 64 forks + 64 merges, sampled without replacement, items de-duplicated",
+  "loss": "three per-structure margins on S2 = <p2,p2> (no L1 product), margin 0.5, budget split evenly",
+  "margin": 0.5,
+  "budget": 0.1,
+  "chrome": "no L1 structural offset; guards on; codebook frozen"
+ },
+ "curve": {
+  "0": {
+   "collision": 0.025338593565705447,
+   "semantic_r2": 0.27997608722826817,
+   "chain": {
+    "delta": 0.00039380414807036,
+    "null": [
+     -0.005651089524809661,
+     0.004925833552113414
+    ]
+   },
+   "fork": {
+    "delta": 0.001444327731092437,
+    "null": [
+     -0.004283744747899159,
+     0.00526523109243697
+    ]
+   },
+   "merge": {
+    "delta": -0.004345535949433764,
+    "null": [
+     -0.0047471688174874896,
+     0.005682117461153535
+    ]
+   }
+  },
+  "400": {
+   "collision": 0.07361613860983451,
+   "semantic_r2": 0.27331228238135785,
+   "chain": {
+    "delta": 0.0014439485429246519,
+    "null": [
+     -0.005250721974271462,
+     0.005720005250721971
+    ]
+   },
+   "fork": {
+    "delta": -0.003019957983193277,
+    "null": [
+     -0.005196297268907563,
+     0.005064994747899156
+    ]
+   },
+   "merge": {
+    "delta": 0.0025019752436133795,
+    "null": [
+     -0.004414669475902027,
+     0.0052739004477218845
+    ]
+   },
+   "unique_items": 711
+  }
+ }
+}
