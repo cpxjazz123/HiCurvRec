@@ -1,0 +1,46 @@
+{
+ "frozen_before_three_structure_result": true,
+ "frozen_at": "2026-11-22",
+ "arm_under_test": "TIGER_graphlet_align_rq",
+ "relation": {
+  "definition": "fork_residual = fork - (slope * chain + intercept)",
+  "slope": -1.418076,
+  "intercept": 0.000103,
+  "r": -0.981894,
+  "residual_sd": 0.006969,
+  "n_arms": 31,
+  "source": "arm_alignment_survey.json"
+ },
+ "benchmarks": {
+  "baseline_arm": "TIGER_RQ-VAE",
+  "chain_arm": "TIGER_chain_align_rq",
+  "chain_arm_residual_gain": 0.01442493,
+  "collision_ceiling": 0.254,
+  "chain_arm_residual": 0.00619927,
+  "baseline_residual": -0.00822566
+ },
+ "criteria": [
+  {
+   "name": "chain_not_below_baseline",
+   "rule": "chain(arm) >= chain(baseline)"
+  },
+  {
+   "name": "merge_not_below_baseline",
+   "rule": "merge(arm) >= merge(baseline)"
+  },
+  {
+   "name": "fork_residual_gain_beats_chain_arm",
+   "rule": "residual(arm) - residual(baseline) >= 0.01443"
+  },
+  {
+   "name": "collision_within_ceiling",
+   "rule": "collision(arm) <= 0.254"
+  },
+  {
+   "name": "semantic_r2_kept",
+   "rule": "semantic_r2(arm) >= 0.95 * semantic_r2(baseline)"
+  }
+ ],
+ "verdict_rule": "PASS only when all five criteria hold; any failure is reported with the measured number",
+ "note": "Numbers are read from arm_alignment_<arm>.json; slope and intercept are refitted from the 31-arm survey at verdict time and must match the frozen values above within 1e-4."
+}

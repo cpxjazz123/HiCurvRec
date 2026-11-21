@@ -185,6 +185,8 @@ ANALYSIS = (
     "graph_loss/REPORT_ARM_SURVEY.md",
     "graph_loss/arm_alignment_TIGER_chain_align_rq.json",
     "graph_loss/evaluate_arm.py",
+    "graph_loss/verdict.py",
+    "graph_loss/verdict.json",
     "graph_loss/test_arm_output_paths.py",
     "graph_loss/REPORT_CHAIN_ARM_RESULT.md",
     "graph_loss/prototype_chain_l2local.json",
