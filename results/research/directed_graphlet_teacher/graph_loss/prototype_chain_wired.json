@@ -1,0 +1,107 @@
+{
+ "protocol": {
+  "arm": "wired",
+  "steps": 400,
+  "seed": 42,
+  "align": 0.1,
+  "margin": 0.5,
+  "budget": 0.4,
+  "assignment": "the arm's own constrained_assignment with the floor ON; the offset is added inside _distances",
+  "L3": "discrete tokens of this forward, items de-duplicated"
+ },
+ "before": {
+  "chain_delta_L1L2L3": -0.0007711225042724354,
+  "chain_delta_null": [
+   -0.002839606519111333,
+   0.003220478512775624
+  ],
+  "adjacent_mean": 0.007857113084073193,
+  "far_mean": 0.008628235588345629,
+  "L1_adjacent": 0.007565337001375516,
+  "L1_far": 0.008253094910591471,
+  "L2_adjacent": 0.00022925263640531865,
+  "L2_far": 0.0003751406777541578,
+  "collision": 0.025338593565705447,
+  "semantic_r2": 0.27997608722826817
+ },
+ "after": {
+  "chain_delta_L1L2L3": 0.0022300029177608274,
+  "chain_delta_null": [
+   -0.0033298945437872534,
+   0.003761827351923635
+  ],
+  "adjacent_mean": 0.012525530407236047,
+  "far_mean": 0.01029552748947522,
+  "L1_adjacent": 0.011900295944312451,
+  "L1_far": 0.01012879829936226,
+  "L2_adjacent": 0.00041682297528239755,
+  "L2_far": 0.00012504689258471927,
+  "collision": 0.07048440232643272,
+  "semantic_r2": 0.2737751057212323
+ },
+ "log": [
+  {
+   "step": 0,
+   "rq_norm": 0.023478960675674718,
+   "discrete_margin": 0.41015625,
+   "grad_scale": 1.0,
+   "l2_loss": 0.49999988079071045
+  },
+  {
+   "step": 50,
+   "rq_norm": 0.0003081122360565184,
+   "discrete_margin": 0.505859375,
+   "grad_scale": 1.0,
+   "l2_loss": 0.5000004172325134
+  },
+  {
+   "step": 100,
+   "rq_norm": 0.0003035341032294549,
+   "discrete_margin": 0.498046875,
+   "grad_scale": 1.0,
+   "l2_loss": 0.5000001192092896
+  },
+  {
+   "step": 150,
+   "rq_norm": 0.0003551393594147797,
+   "discrete_margin": 0.484375,
+   "grad_scale": 1.0,
+   "l2_loss": 0.5
+  },
+  {
+   "step": 200,
+   "rq_norm": 0.00046940561120672005,
+   "discrete_margin": 0.5,
+   "grad_scale": 1.0,
+   "l2_loss": 0.49999991059303284
+  },
+  {
+   "step": 250,
+   "rq_norm": 0.0002637820794100159,
+   "discrete_margin": 0.5078125,
+   "grad_scale": 1.0,
+   "l2_loss": 0.5000003576278687
+  },
+  {
+   "step": 300,
+   "rq_norm": 0.0002621008384997062,
+   "discrete_margin": 0.494140625,
+   "grad_scale": 1.0,
+   "l2_loss": 0.5000001788139343
+  },
+  {
+   "step": 350,
+   "rq_norm": 0.0003505979092239676,
+   "discrete_margin": 0.498046875,
+   "grad_scale": 1.0,
+   "l2_loss": 0.5000001192092896
+  },
+  {
+   "step": 399,
+   "rq_norm": 0.0004584010192254661,
+   "discrete_margin": 0.501953125,
+   "grad_scale": 1.0,
+   "l2_loss": 0.5000002980232239
+  }
+ ]
+}

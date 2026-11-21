@@ -1,0 +1,80 @@
+{
+ "protocol": {
+  "arm": "control",
+  "steps": 400,
+  "seed": 42,
+  "align": 0.1,
+  "margin": 0.5,
+  "budget": 0.4,
+  "assignment": "the arm's own constrained_assignment with the floor ON; the offset is added inside _distances",
+  "L3": "discrete tokens of this forward, items de-duplicated"
+ },
+ "before": {
+  "chain_delta_L1L2L3": -0.0007711225042724354,
+  "chain_delta_null": [
+   -0.002839606519111333,
+   0.003220478512775624
+  ],
+  "adjacent_mean": 0.007857113084073193,
+  "far_mean": 0.008628235588345629,
+  "L1_adjacent": 0.007565337001375516,
+  "L1_far": 0.008253094910591471,
+  "L2_adjacent": 0.00022925263640531865,
+  "L2_far": 0.0003751406777541578,
+  "collision": 0.025338593565705447,
+  "semantic_r2": 0.27997608722826817
+ },
+ "after": {
+  "chain_delta_L1L2L3": 0.0017923387937143088,
+  "chain_delta_null": [
+   -0.002938080947021799,
+   0.002743216206077278
+  ],
+  "adjacent_mean": 0.01196281939060481,
+  "far_mean": 0.010170480596890501,
+  "L1_adjacent": 0.011400108373973573,
+  "L1_far": 0.009837022216664583,
+  "L2_adjacent": 0.00043766412404651746,
+  "L2_far": 0.0002917760826976783,
+  "collision": 0.07288404441371454,
+  "semantic_r2": 0.27699912897013856
+ },
+ "log": [
+  {
+   "step": 0,
+   "rq_norm": 0.0020537456073143126
+  },
+  {
+   "step": 50,
+   "rq_norm": 0.00026486845668674563
+  },
+  {
+   "step": 100,
+   "rq_norm": 0.0002297256765863572
+  },
+  {
+   "step": 150,
+   "rq_norm": 0.0003423890881723585
+  },
+  {
+   "step": 200,
+   "rq_norm": 0.00022940999561928127
+  },
+  {
+   "step": 250,
+   "rq_norm": 0.00038514017783703185
+  },
+  {
+   "step": 300,
+   "rq_norm": 0.0004050581191906985
+  },
+  {
+   "step": 350,
+   "rq_norm": 0.00031196672778580694
+  },
+  {
+   "step": 399,
+   "rq_norm": 0.0003436412155391433
+  }
+ ]
+}
