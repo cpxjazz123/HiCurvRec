@@ -1,0 +1,81 @@
+{
+ "inputs": {},
+ "variant": "dual (DiGAE-style source/target propagation)",
+ "split": {
+  "message_edges": 291262,
+  "held_edges": 32371,
+  "held_one_way_for_probe": 30709
+ },
+ "protocol": {
+  "steps": 1200,
+  "batch": 4096,
+  "hidden": 128,
+  "layers": 2,
+  "alpha": 1.0,
+  "seed": 0,
+  "propagation": "source reads out-neighbours' targets; target reads in-neighbours' sources",
+  "fuse_trained_by": "second edge head on the fused vector",
+  "controls": "undirected labels, randomised orientation, alpha=0"
+ },
+ "arms": {
+  "C_directed": {
+   "edge_head_direction": 0.4648149013519287,
+   "shift_l2": 0.02336842007935047,
+   "probe": {
+    "direction_accuracy": 0.5259339809417725,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
+    "label_balance": {
+     "forward": 2757,
+     "backward": 2757
+    }
+   }
+  },
+  "B_undirected": {
+   "edge_head_direction": 0.46514052152633667,
+   "shift_l2": 0.026856085285544395,
+   "probe": {
+    "direction_accuracy": 0.5076169967651367,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
+    "label_balance": {
+     "forward": 2757,
+     "backward": 2757
+    }
+   }
+  },
+  "D_random_direction": {
+   "edge_head_direction": 0.46683382987976074,
+   "shift_l2": 0.016683924943208694,
+   "probe": {
+    "direction_accuracy": 0.5136017203330994,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
+    "label_balance": {
+     "forward": 2757,
+     "backward": 2757
+    }
+   }
+  },
+  "E_alpha_zero": {
+   "edge_head_direction": 0.46865740418434143,
+   "shift_l2": 0.0,
+   "probe": {
+    "direction_accuracy": 0.49709829688072205,
+    "pairs_eval": 5514,
+    "pairs_train": 29628,
+    "label_balance": {
+     "forward": 2757,
+     "backward": 2757
+    }
+   }
+  }
+ },
+ "readings": {
+  "se": 0.0067,
+  "dual_directed_minus_shared_directed": 0.0129,
+  "dual_directed_minus_dual_random_sigma": 1.83,
+  "shared_directed_minus_shared_random_sigma": 0.59,
+  "probe_reproducibility_note": "the probe's own initialisation was unseeded, which moved identical inputs by up to 0.014; it is now seeded"
+ }
+}

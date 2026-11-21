@@ -24,10 +24,10 @@
  },
  "arms": {
   "C_directed": {
-   "edge_head_direction": 0.4751375913619995,
-   "shift_l2": 0.02980896830558777,
+   "edge_head_direction": 0.4746165871620178,
+   "shift_l2": 0.028784113004803658,
    "probe": {
-    "direction_accuracy": 0.5266594290733337,
+    "direction_accuracy": 0.5130576491355896,
     "pairs_eval": 5514,
     "pairs_train": 29628,
     "label_balance": {
@@ -37,10 +37,10 @@
    }
   },
   "B_undirected": {
-   "edge_head_direction": 0.47328147292137146,
-   "shift_l2": 0.02831447310745716,
+   "edge_head_direction": 0.47539812326431274,
+   "shift_l2": 0.029219413176178932,
    "probe": {
-    "direction_accuracy": 0.5243017673492432,
+    "direction_accuracy": 0.5195865035057068,
     "pairs_eval": 5514,
     "pairs_train": 29628,
     "label_balance": {
@@ -50,10 +50,10 @@
    }
   },
   "D_random_direction": {
-   "edge_head_direction": 0.5073431730270386,
-   "shift_l2": 0.022549845278263092,
+   "edge_head_direction": 0.5075711011886597,
+   "shift_l2": 0.022679368034005165,
    "probe": {
-    "direction_accuracy": 0.5201305747032166,
+    "direction_accuracy": 0.5090678334236145,
     "pairs_eval": 5514,
     "pairs_train": 29628,
     "label_balance": {
@@ -63,10 +63,10 @@
    }
   },
   "E_alpha_zero": {
-   "edge_head_direction": 0.5057149529457092,
+   "edge_head_direction": 0.5039891004562378,
    "shift_l2": 0.0,
    "probe": {
-    "direction_accuracy": 0.4951033592224121,
+    "direction_accuracy": 0.49709829688072205,
     "pairs_eval": 5514,
     "pairs_train": 29628,
     "label_balance": {
@@ -75,26 +75,5 @@
     }
    }
   }
- },
- "readings": {
-  "C_directed": {
-   "probe": 0.5266594290733337,
-   "shift": 0.02980896830558777
-  },
-  "B_undirected": {
-   "probe": 0.5243017673492432,
-   "shift": 0.02831447310745716
-  },
-  "D_random_direction": {
-   "probe": 0.5201305747032166,
-   "shift": 0.022549845278263092
-  },
-  "E_alpha_zero": {
-   "probe": 0.4951033592224121,
-   "shift": 0.0
-  },
-  "se": 0.0067,
-  "directed_minus_random_sigma": 0.97,
-  "graph_minus_raw_sigma": 4.69
  }
 }

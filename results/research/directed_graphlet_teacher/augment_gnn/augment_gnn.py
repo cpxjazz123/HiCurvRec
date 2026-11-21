@@ -159,6 +159,10 @@ def probe(x: np.ndarray, held_pairs: np.ndarray, device, holdout: float = 0.3,
                    if a in train_items and b in train_items], dtype=np.int64)
     ev = np.array([i for i, (a, b) in enumerate(both.tolist())
                    if a in eval_items and b in eval_items], dtype=np.int64)
+    # the probe itself must be deterministic: its initialisation was previously drawn from
+    # whatever RNG state the training loop left behind, so two identical inputs could be
+    # scored 0.007 apart -- the same size as the effects being compared
+    torch.manual_seed(SEED)
     head = nn.Sequential(nn.LayerNorm(3 * x.shape[1]), nn.Linear(3 * x.shape[1], 256),
                          nn.GELU(), nn.Linear(256, 2)).to(device)
     optimizer = torch.optim.AdamW(head.parameters(), lr=1e-3, weight_decay=1e-4)

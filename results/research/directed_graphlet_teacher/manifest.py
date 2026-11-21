@@ -133,6 +133,8 @@ ANALYSIS = (
     "augment/REPORT_AUGMENT.md",
     "augment_gnn/augment_gnn.py", "augment_gnn/gnn_augment.json",
     "augment_gnn/REPORT_AUGMENT_GNN.md",
+    "augment_gnn/dual_augment.py", "augment_gnn/dual_augment.json",
+    "augment_gnn/REPORT_DUAL_PROPAGATION.md",
 )
 
 
