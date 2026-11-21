@@ -127,6 +127,8 @@ ANALYSIS = (
     "pair_relations/REPORT_PAIR_RELATIONS.md",
     "two_node_rnn/two_node_rnn.py", "two_node_rnn/two_node_rnn.json",
     "two_node_rnn/REPORT_TWO_NODE_RNN.md",
+    "inject_directed/inject_directed.py", "inject_directed/result.json",
+    "inject_directed/REPORT_INJECT_DIRECTED.md",
 )
 
 
