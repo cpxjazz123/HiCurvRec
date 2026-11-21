@@ -100,6 +100,14 @@ ANALYSIS = (
     "orbit_vectors/learnability.json", "orbit_vectors/manifest.json",
     "relation/audit_relation.py",
     "relation/REPORT_RELATION_AUDIT.md", "tests/test_relation_audit.py",
+    "relation/audit_negative_validation.py",
+    "representation/build_gnn_embedding.py", "representation/manifest.json",
+    "representation/role_probe.py", "representation/role_probe.json",
+    "representation/export_latent_q.py", "representation/rqvae_latent.json",
+    "representation/checkpoint_sid_pairs.py", "representation/checkpoint_sid_pairs.json",
+    "representation/REPORT_REPRESENTATION.md",
+    "quantisation/run_quantisation_check.py", "quantisation/sweep.json",
+    "quantisation/REPORT_QUANTISATION.md",
 )
 
 

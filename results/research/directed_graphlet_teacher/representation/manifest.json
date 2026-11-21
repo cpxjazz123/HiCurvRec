@@ -1,0 +1,47 @@
+{
+ "version": "gnn-item-embedding-v1",
+ "checkpoint": {
+  "path": "results/research/directed_graphlet_teacher/teacher/opt/C_residual_edge_main_seed226.pth",
+  "sha256": "ce77953c1beb83425bbda41f0f0987865259fca6e8969b63482f85556693d2dc"
+ },
+ "semantics": {
+  "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+  "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+  "shape": [
+   24587,
+   768
+  ]
+ },
+ "graph": {
+  "source_sha": "1ffe2f5aa9f70214844dc17b4b8c7e3d4b7b135156bd2665d0302c159b3eecb4",
+  "message_rows": 192528,
+  "directed": true,
+  "self_loop_rows": 0
+ },
+ "output": {
+  "path": "results/research/directed_graphlet_teacher/representation/gnn_item_embedding.npz",
+  "sha256": "13dc755f314e830f58c4c8f7a23b861fc05bc1c7990674ff77a1f0c5efc5b948",
+  "shape": [
+   24587,
+   128
+  ],
+  "dtype": "float32",
+  "bytes": 11720737
+ },
+ "coverage": {
+  "items": 24587,
+  "isolated_items": 133,
+  "degree_median": 8.0,
+  "degree_max": 1497,
+  "items_with_edge": 24454
+ },
+ "value_statistics": {
+  "norm_mean": 13.895647048950195,
+  "norm_median": 13.841803550720215,
+  "components_std_mean": 1.0685651302337646,
+  "components_std_max": 2.626420736312866,
+  "components_std_min": 0.4200536012649536
+ },
+ "graph_needed_after_this": false,
+ "rqvae_encoder_input": "the 128-d table above (control arm only)"
+}
