@@ -1,0 +1,139 @@
+{
+ "inputs": {
+  "instances": "9d0661e9412b965c410c6e4b0fd7b5539f9b4af8aeb88332b2918b6b0dfd71f0",
+  "states": "5c1f080f384ff893d85384fb4553e3669c37d42662aa564ebf2b97b1e2067111",
+  "full_graph": "ef97a2bdc555259d402065026b00cf62bc1e91c3bc58a66da4d6f8f8df407fdd",
+  "checkpoint": {
+   "arm": "TIGER_drq_D1",
+   "checkpoint_sha256": "b12374b7caeada13bfc8af88965d792eceb23a5e696edb43c4382f0c055ae75a",
+   "sid_sha256": "a47b78967d0b8580370b1227ef8b5c9fdd66bfa399ae5dd62e687296c3c19ecd",
+   "semantics_sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+   "infer_use_sk": false,
+   "codes_match_stored_sid": 1.0,
+   "q_rebuilt_from_sid_max_abs_diff_to_model_q": 5.960464477539063e-08,
+   "states_file": "results/research/directed_graphlet_teacher/fidelity/fidelity_states.npz",
+   "states_sha256": "5c1f080f384ff893d85384fb4553e3669c37d42662aa564ebf2b97b1e2067111",
+   "widths": {
+    "semantics": 768,
+    "z": 32,
+    "q": 32,
+    "decoder": 768
+   },
+   "collision": 0.025338593565705447,
+   "note": "the SID match is on the full three-level code of every item; a partial match would mean the checkpoint and the table are not the same run"
+  }
+ },
+ "protocol": {
+  "model": "GraphRNN-style autoregressive edge decoder",
+  "encoder": "same transformer as edge_reconstruction.py",
+  "feed": "true prefix while training, own arg-max prefix at test",
+  "optimisation": "6000 shuffled mini-batches of 512",
+  "pairs_per_instance": "6 at width 3, 12 at width 4",
+  "seed": 0,
+  "train_rows": 200000,
+  "held_rows": 6000
+ },
+ "runs": {
+  "3": {
+   "semantics": {
+    "threshold_chosen_on_train": 0.3,
+    "train_edge_f1": 0.5618559694200054,
+    "heldout": {
+     "threshold": 0.3,
+     "edge_precision": 0.4387863733144074,
+     "edge_recall": 0.7171753788153411,
+     "edge_f1": 0.5444588160827806,
+     "adjacency_exact": 0.0405,
+     "classifiable_share": 0.9998333333333334,
+     "family_accuracy_overall": 0.5483333333333333,
+     "family_macro_f1": 0.5354743805904039,
+     "orbit_accuracy_overall": 0.050722222222222224,
+     "instances": 6000
+    }
+   },
+   "z": {
+    "threshold_chosen_on_train": 0.3,
+    "train_edge_f1": 0.5244339702855456,
+    "heldout": {
+     "threshold": 0.3,
+     "edge_precision": 0.4112835570469799,
+     "edge_recall": 0.7108678315087363,
+     "edge_f1": 0.5210852177610077,
+     "adjacency_exact": 0.030833333333333334,
+     "classifiable_share": 1.0,
+     "family_accuracy_overall": 0.42083333333333334,
+     "family_macro_f1": 0.42075672841066564,
+     "orbit_accuracy_overall": 0.03905555555555556,
+     "instances": 6000
+    }
+   },
+   "q": {
+    "threshold_chosen_on_train": 0.3,
+    "train_edge_f1": 0.5266136798728815,
+    "heldout": {
+     "threshold": 0.3,
+     "edge_precision": 0.4079484511326343,
+     "edge_recall": 0.7389980424853186,
+     "edge_f1": 0.5256968978055133,
+     "adjacency_exact": 0.025333333333333333,
+     "classifiable_share": 1.0,
+     "family_accuracy_overall": 0.3888333333333333,
+     "family_macro_f1": 0.38848597638141735,
+     "orbit_accuracy_overall": 0.03177777777777778,
+     "instances": 6000
+    }
+   }
+  },
+  "4": {
+   "semantics": {
+    "threshold_chosen_on_train": 0.3,
+    "train_edge_f1": 0.4924687166379814,
+    "heldout": {
+     "threshold": 0.3,
+     "edge_precision": 0.3845801246791346,
+     "edge_recall": 0.5992286448909627,
+     "edge_f1": 0.46848825522093585,
+     "adjacency_exact": 0.012166666666666666,
+     "classifiable_share": 0.3735,
+     "family_accuracy_overall": 0.26266666666666666,
+     "family_macro_f1": 0.35919125001908897,
+     "orbit_accuracy_overall": 0.016375,
+     "instances": 6000
+    }
+   },
+   "z": {
+    "threshold_chosen_on_train": 0.3,
+    "train_edge_f1": 0.4568307951321453,
+    "heldout": {
+     "threshold": 0.3,
+     "edge_precision": 0.3504513916793914,
+     "edge_recall": 0.6228930578040187,
+     "edge_f1": 0.4485436560319556,
+     "adjacency_exact": 0.004,
+     "classifiable_share": 0.25516666666666665,
+     "family_accuracy_overall": 0.18966666666666668,
+     "family_macro_f1": 0.289941808582517,
+     "orbit_accuracy_overall": 0.005458333333333333,
+     "instances": 6000
+    }
+   },
+   "q": {
+    "threshold_chosen_on_train": 0.3,
+    "train_edge_f1": 0.45398122337980185,
+    "heldout": {
+     "threshold": 0.3,
+     "edge_precision": 0.34860520968039904,
+     "edge_recall": 0.6289401009427673,
+     "edge_f1": 0.4485762314706332,
+     "adjacency_exact": 0.0026666666666666666,
+     "classifiable_share": 0.23633333333333334,
+     "family_accuracy_overall": 0.1745,
+     "family_macro_f1": 0.26486276287452176,
+     "orbit_accuracy_overall": 0.003833333333333333,
+     "instances": 6000
+    }
+   }
+  }
+ },
+ "controls": {}
+}
