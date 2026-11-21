@@ -23,7 +23,7 @@
     },
     {
      "step": 400,
-     "loss": 0.5457608302434286
+     "loss": 0.5457608153422674
     },
     {
      "step": 800,
@@ -31,14 +31,22 @@
     },
     {
      "step": 1199,
-     "loss": 0.4455459217230479
+     "loss": 0.44554590185483295
     }
    ],
-   "roc_auc": 0.7330985937500001,
-   "average_precision": 0.7118573345012102,
-   "direction_accuracy": 0.46425,
-   "semantic_linear_probe_r2": 0.748119847451769,
-   "raw_cosine_to_input": -0.007499309256672859
+   "readouts": {
+    "diage_direct_no_head": {
+     "roc_auc": 0.61290866796875,
+     "average_precision": 0.41331641681018033,
+     "direction_accuracy": 0.474625
+    },
+    "with_asymmetric_head": {
+     "roc_auc": 0.6021780195312499,
+     "average_precision": 0.4018744697005502,
+     "direction_accuracy": 0.46425
+    }
+   },
+   "semantic_linear_probe_r2": 0.7481196218999386
   },
   "C_concat_plus_semantic": {
    "trace": [
@@ -48,29 +56,40 @@
     },
     {
      "step": 400,
-     "loss": 0.5455454438924789
+     "loss": 0.5455454736948013
     },
     {
      "step": 800,
-     "loss": 0.483762855331103
+     "loss": 0.48376285036404926
     },
     {
      "step": 1199,
-     "loss": 0.44485142330328625
+     "loss": 0.44485129912694293
     }
    ],
-   "roc_auc": 0.7335731484375001,
-   "average_precision": 0.7128354488791415,
-   "direction_accuracy": 0.4645,
-   "semantic_linear_probe_r2": 0.752853774191625,
-   "raw_cosine_to_input": -0.007989519275724888
+   "readouts": {
+    "diage_direct_no_head": {
+     "roc_auc": 0.61300241015625,
+     "average_precision": 0.41344241960208344,
+     "direction_accuracy": 0.47425
+    },
+    "with_asymmetric_head": {
+     "roc_auc": 0.60258846875,
+     "average_precision": 0.40229906929482884,
+     "direction_accuracy": 0.4645
+    }
+   },
+   "semantic_linear_probe_r2": 0.7528536137169382
   },
   "A_raw_semantics": {
-   "roc_auc": 0.7194125859375,
-   "average_precision": 0.6990487804630149,
-   "direction_accuracy": 0.535375,
-   "semantic_linear_probe_r2": 0.9999525086422657,
-   "raw_cosine_to_input": 1.0
+   "readouts": {
+    "with_asymmetric_head": {
+     "roc_auc": 0.6146935546875001,
+     "average_precision": 0.41531324921126983,
+     "direction_accuracy": 0.535375
+    }
+   },
+   "semantic_linear_probe_r2": 0.9999525086422657
   }
  }
 }

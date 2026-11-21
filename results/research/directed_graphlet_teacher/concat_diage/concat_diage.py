@@ -100,7 +100,8 @@ def train_state(arm: str, x, out_adj, in_adj, out_norm, in_norm, triples, device
     model.eval()
     with torch.no_grad():
         s, t = model(x, out_adj, in_adj, out_norm, in_norm)
-    return model.state(s, t).cpu().numpy().astype(np.float32), trace
+    return (model.state(s, t).cpu().numpy().astype(np.float32),
+            s.cpu().numpy().astype(np.float32), t.cpu().numpy().astype(np.float32), trace)
 
 
 def train_head(state, triples, device):
@@ -195,22 +196,40 @@ def main() -> None:
               "arms": {}}
 
     states = {"A_raw_semantics": semantics}
+    halves = {}
     for arm in ("B_concat_edge_only", "C_concat_plus_semantic"):
-        states[arm], trace = train_state(arm, x, out_adj, in_adj, out_norm, in_norm,
-                                         triples, device)
+        states[arm], s_np, t_np, trace = train_state(
+            arm, x, out_adj, in_adj, out_norm, in_norm, triples, device)
+        halves[arm] = (s_np, t_np)
         report["arms"].setdefault(arm, {})["trace"] = trace
         print(f"  trained {arm}", flush=True)
 
     for arm, state in states.items():
+        labels_set = {}
+        # A has no pair-specific vectors, so it is read through the same small head; B and C
+        # are read BOTH ways -- directly from their trained 384-d halves (no extra
+        # projection) and through the head -- so a loss caused by the head is visible.
+        if arm in halves:
+            s_np, t_np = halves[arm]
+            direct = lambda pairs, s_np=s_np, t_np=t_np: (s_np[pairs[:, 0]]
+                                                          * t_np[pairs[:, 1]]).sum(-1)
+            pos_score = direct(eval_pos)
+            neg_score = direct(eval_neg)
+            rev_score = direct(eval_rev)
+            labels = np.concatenate([np.ones(len(pos_score)),
+                                     np.zeros(len(neg_score) + len(rev_score))])
+            values = np.concatenate([pos_score, neg_score, rev_score])
+            labels_set["diage_direct_no_head"] = {
+                "roc_auc": float(roc_auc_score(labels, values)),
+                "average_precision": float(average_precision_score(labels, values)),
+                "direction_accuracy": float((pos_score > rev_score).mean())}
         source, target = train_head(state, triples, device)
         pos_score = scores(state, source, target, eval_pos, device)
         neg_score = scores(state, source, target, eval_neg, device)
         rev_score = scores(state, source, target, eval_rev, device)
-        labels = np.concatenate([np.ones(len(pos_score)), np.zeros(len(neg_score))])
-        values = np.concatenate([pos_score, neg_score])
-        # semantic preservation has to be measured through a read-out, not by comparing
-        # coordinates: arms B and C live in their own 768-d space, so a raw cosine against
-        # the input is meaningless (it was -0.007 with a destroyed variance)
+        labels = np.concatenate([np.ones(len(pos_score)),
+                                 np.zeros(len(neg_score) + len(rev_score))])
+        values = np.concatenate([pos_score, neg_score, rev_score])
         rng_probe = np.random.default_rng(base.SEED)
         order = rng_probe.permutation(len(state))
         cut = int(0.8 * len(order))
@@ -224,18 +243,17 @@ def main() -> None:
             + semantics[train_idx].mean(0)
         variance = float(1.0 - np.mean((predicted - semantics[eval_idx]) ** 2)
                          / np.mean((semantics[eval_idx] - semantics[eval_idx].mean(0)) ** 2))
-        cosine = float(np.mean(np.sum(state * semantics, axis=1)
-                               / (np.linalg.norm(state, axis=1)
-                                  * np.linalg.norm(semantics, axis=1) + 1e-9)))
+        labels_set["with_asymmetric_head"] = {
+            "roc_auc": float(roc_auc_score(labels, values)),
+            "average_precision": float(average_precision_score(labels, values)),
+            "direction_accuracy": float((pos_score > rev_score).mean())}
         entry = report["arms"].setdefault(arm, {})
-        entry.update({"roc_auc": float(roc_auc_score(labels, values)),
-                      "average_precision": float(average_precision_score(labels, values)),
-                      "direction_accuracy": float((pos_score > rev_score).mean()),
-                      "semantic_linear_probe_r2": variance,
-                      "raw_cosine_to_input": cosine})
-        print(f"  {arm}: AUC {entry['roc_auc']:.4f} AP {entry['average_precision']:.4f} "
-              f"dir {entry['direction_accuracy']:.4f} probe-R2 {variance:.3f}",
-              flush=True)
+        entry.update({"readouts": labels_set,
+                      "semantic_linear_probe_r2": variance})
+        print(f"  {arm}: " + " | ".join(
+            f"{k} AUC {v['roc_auc']:.4f} AP {v['average_precision']:.4f} "
+            f"dir {v['direction_accuracy']:.4f}" for k, v in labels_set.items())
+              + f" | probe R2 {variance:.3f}", flush=True)
         Path(args.out).write_text(json.dumps(report, indent=1) + "\n")
     print("written", args.out)
 
