@@ -1,0 +1,91 @@
+{
+ "inputs": {
+  "instances": "9d0661e9412b965c410c6e4b0fd7b5539f9b4af8aeb88332b2918b6b0dfd71f0",
+  "states": "5c1f080f384ff893d85384fb4553e3669c37d42662aa564ebf2b97b1e2067111",
+  "contract": "409b98d9eb5acd44df46f6c2d341e86b51abc7d3a2214ac0b6dee12334069752"
+ },
+ "protocol": {
+  "width": 3,
+  "epochs": 40,
+  "heads": 4,
+  "layers": 2,
+  "hidden": 128,
+  "seed": 0,
+  "attention": "full, no adjacency unless stated",
+  "unit": "item x two subgraphs with different orbits",
+  "held_items": 337,
+  "held_row_cap": 20000,
+  "train_instances": 16000,
+  "held_instances": 6000,
+  "role_groups": 4,
+  "item_head": "roles grouped by frequency, 8 per group"
+ },
+ "sets": {
+  "A_per_instance_orbit_z": {
+   "first_accuracy": 0.10039564787339268,
+   "second_accuracy": 0.11226508407517309,
+   "both_accuracy": 0.0,
+   "distinct_possible": 1.0,
+   "predicted_distinct_rate": 0.4159248269040554,
+   "mean_macro_f1": 0.021626804494891398
+  },
+  "B_context_ablation_z": {
+   "first_accuracy": 0.09742828882294757,
+   "second_accuracy": 0.1172106824925816,
+   "both_accuracy": 0.0,
+   "distinct_possible": 1.0,
+   "predicted_distinct_rate": 0.0,
+   "mean_macro_f1": 0.008899531771831538
+  },
+  "E_switch_rate_z": {
+   "predicted_distinct_rate": 0.4159248269040554,
+   "context_ablation_distinct_rate": 0.0,
+   "note": "how often the same item is given two different orbits in its two contexts; with ablation it is structurally 0"
+  },
+  "D_context_free_item_head_z": {
+   "agreement_between_contexts": 0.9881305637982196,
+   "note": "the item head names one group per item, so it cannot separate two contexts of the same item; this is the ceiling a context-free model has on set A"
+  },
+  "C_item_mix_z": {
+   "item_head_groups": 4,
+   "per_instance_accuracy_using_item_head": 0.0
+  },
+  "A_per_instance_orbit_q": {
+   "first_accuracy": 0.09940652818991098,
+   "second_accuracy": 0.1102868447082097,
+   "both_accuracy": 0.0,
+   "distinct_possible": 1.0,
+   "predicted_distinct_rate": 0.41543026706231456,
+   "mean_macro_f1": 0.02146678002692814
+  },
+  "B_context_ablation_q": {
+   "first_accuracy": 0.09742828882294757,
+   "second_accuracy": 0.1172106824925816,
+   "both_accuracy": 0.0,
+   "distinct_possible": 1.0,
+   "predicted_distinct_rate": 0.0,
+   "mean_macro_f1": 0.008899531771831538
+  },
+  "E_switch_rate_q": {
+   "predicted_distinct_rate": 0.41543026706231456,
+   "context_ablation_distinct_rate": 0.0,
+   "note": "how often the same item is given two different orbits in its two contexts; with ablation it is structurally 0"
+  },
+  "D_context_free_item_head_q": {
+   "agreement_between_contexts": 0.9881305637982196,
+   "note": "the item head names one group per item, so it cannot separate two contexts of the same item; this is the ceiling a context-free model has on set A"
+  },
+  "C_item_mix_q": {
+   "item_head_groups": 4,
+   "per_instance_accuracy_using_item_head": 0.0
+  },
+  "E_true_adjacency_ceiling_z": {
+   "first_accuracy": 0.1102868447082097,
+   "second_accuracy": 0.12858555885262116,
+   "both_accuracy": 0.002967359050445104,
+   "distinct_possible": 1.0,
+   "predicted_distinct_rate": 0.3857566765578635,
+   "mean_macro_f1": 0.025455935244820038
+  }
+ }
+}

@@ -114,6 +114,8 @@ ANALYSIS = (
     "structure/REPORT_STRUCTURE_TRANSFORMER.md",
     "full_attention/full_attention.py", "full_attention/full_attention.json",
     "full_attention/REPORT_FULL_ATTENTION.md",
+    "role_context/role_context.py", "role_context/role_context.json",
+    "role_context/REPORT_ROLE_CONTEXT.md",
 )
 
 
