@@ -116,6 +116,9 @@ ANALYSIS = (
     "full_attention/REPORT_FULL_ATTENTION.md",
     "role_context/role_context.py", "role_context/role_context.json",
     "role_context/REPORT_ROLE_CONTEXT.md",
+    "edge_reconstruction/edge_reconstruction.py",
+    "edge_reconstruction/edge_reconstruction.json",
+    "edge_reconstruction/REPORT_EDGE_RECONSTRUCTION.md",
 )
 
 

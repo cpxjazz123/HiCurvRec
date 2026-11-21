@@ -1,0 +1,271 @@
+{
+ "inputs": {
+  "instances": "9d0661e9412b965c410c6e4b0fd7b5539f9b4af8aeb88332b2918b6b0dfd71f0",
+  "states": "5c1f080f384ff893d85384fb4553e3669c37d42662aa564ebf2b97b1e2067111",
+  "contract": "409b98d9eb5acd44df46f6c2d341e86b51abc7d3a2214ac0b6dee12334069752",
+  "classifier": "directed_graphlets.classify on the predicted matrix"
+ },
+ "labels": {
+  "section": [
+   "P3",
+   "K3"
+  ],
+  "isolation": "instance_only",
+  "dropped_for_item_overlap": 116252,
+  "train_rows": 60000,
+  "held_rows": 6000,
+  "train_items": 24526
+ },
+ "protocol": {
+  "seed": 0,
+  "epochs": 60,
+  "heads": 4,
+  "layers": 2,
+  "hidden": 128,
+  "thresholds": [
+   0.3,
+   0.5,
+   0.7
+  ],
+  "prediction": "one logit per ordered pair of members",
+  "supervision": "real training-graph edges, never given as input",
+  "threshold_rule": "chosen on the training split by edge F1; the held-out rows are only reported",
+  "baseline": "degree-only: predict a connection whenever both members are above the same degree threshold"
+ },
+ "runs": {
+  "semantics": {
+   "threshold_0.3": {
+    "threshold": 0.3,
+    "edge_precision": 0.0,
+    "edge_recall": 0.0,
+    "edge_f1": 0.0,
+    "adjacency_exact": 0.14583333333333334,
+    "predicted_edge_share": 0.0,
+    "classifiable_share": 0.0,
+    "family_accuracy": 0.5795,
+    "family_macro_f1": 0.0,
+    "orbit_accuracy": 0.0,
+    "orbit_positions_compared": 0
+   },
+   "threshold_0.5": {
+    "threshold": 0.5,
+    "edge_precision": 0.0,
+    "edge_recall": 0.0,
+    "edge_f1": 0.0,
+    "adjacency_exact": 0.14583333333333334,
+    "predicted_edge_share": 0.0,
+    "classifiable_share": 0.0,
+    "family_accuracy": 0.5795,
+    "family_macro_f1": 0.0,
+    "orbit_accuracy": 0.0,
+    "orbit_positions_compared": 0
+   },
+   "threshold_0.7": {
+    "threshold": 0.7,
+    "edge_precision": 0.0,
+    "edge_recall": 0.0,
+    "edge_f1": 0.0,
+    "adjacency_exact": 0.14583333333333334,
+    "predicted_edge_share": 0.0,
+    "classifiable_share": 0.0,
+    "family_accuracy": 0.5795,
+    "family_macro_f1": 0.0,
+    "orbit_accuracy": 0.0,
+    "orbit_positions_compared": 0
+   },
+   "threshold_chosen_on_train": {
+    "threshold": 0.3,
+    "train_edge_f1": 0.0,
+    "heldout": {
+     "threshold": 0.3,
+     "edge_precision": 0.0,
+     "edge_recall": 0.0,
+     "edge_f1": 0.0,
+     "adjacency_exact": 0.14583333333333334,
+     "predicted_edge_share": 0.0,
+     "classifiable_share": 0.0,
+     "family_accuracy": 0.5795,
+     "family_macro_f1": 0.0,
+     "orbit_accuracy": 0.0,
+     "orbit_positions_compared": 0
+    }
+   }
+  },
+  "z": {
+   "threshold_0.3": {
+    "threshold": 0.3,
+    "edge_precision": 0.27869453612027867,
+    "edge_recall": 0.09306882194464854,
+    "edge_f1": 0.139539153584871,
+    "adjacency_exact": 0.131,
+    "predicted_edge_share": 0.33394562821454815,
+    "classifiable_share": 0.05633333333333333,
+    "family_accuracy": 0.5803333333333334,
+    "family_macro_f1": 0.05269275474622239,
+    "orbit_accuracy": 0.33816425120772947,
+    "orbit_positions_compared": 621
+   },
+   "threshold_0.5": {
+    "threshold": 0.5,
+    "edge_precision": 0.0,
+    "edge_recall": 0.0,
+    "edge_f1": 0.0,
+    "adjacency_exact": 0.14583333333333334,
+    "predicted_edge_share": 0.0,
+    "classifiable_share": 0.0,
+    "family_accuracy": 0.5795,
+    "family_macro_f1": 0.0,
+    "orbit_accuracy": 0.0,
+    "orbit_positions_compared": 0
+   },
+   "threshold_0.7": {
+    "threshold": 0.7,
+    "edge_precision": 0.0,
+    "edge_recall": 0.0,
+    "edge_f1": 0.0,
+    "adjacency_exact": 0.14583333333333334,
+    "predicted_edge_share": 0.0,
+    "classifiable_share": 0.0,
+    "family_accuracy": 0.5795,
+    "family_macro_f1": 0.0,
+    "orbit_accuracy": 0.0,
+    "orbit_positions_compared": 0
+   },
+   "threshold_chosen_on_train": {
+    "threshold": 0.3,
+    "train_edge_f1": 0.13400758533501897,
+    "heldout": {
+     "threshold": 0.3,
+     "edge_precision": 0.27869453612027867,
+     "edge_recall": 0.09306882194464854,
+     "edge_f1": 0.139539153584871,
+     "adjacency_exact": 0.131,
+     "predicted_edge_share": 0.33394562821454815,
+     "classifiable_share": 0.05633333333333333,
+     "family_accuracy": 0.5803333333333334,
+     "family_macro_f1": 0.05269275474622239,
+     "orbit_accuracy": 0.33816425120772947,
+     "orbit_positions_compared": 621
+    }
+   }
+  },
+  "q": {
+   "threshold_0.3": {
+    "threshold": 0.3,
+    "edge_precision": 0.2780806979280262,
+    "edge_recall": 0.09368111682586333,
+    "edge_f1": 0.14014839241549876,
+    "adjacency_exact": 0.13033333333333333,
+    "predicted_edge_share": 0.33688464364437914,
+    "classifiable_share": 0.05683333333333333,
+    "family_accuracy": 0.581,
+    "family_macro_f1": 0.05456656346749226,
+    "orbit_accuracy": 0.3253588516746411,
+    "orbit_positions_compared": 627
+   },
+   "threshold_0.5": {
+    "threshold": 0.5,
+    "edge_precision": 0.0,
+    "edge_recall": 0.0,
+    "edge_f1": 0.0,
+    "adjacency_exact": 0.14583333333333334,
+    "predicted_edge_share": 0.0,
+    "classifiable_share": 0.0,
+    "family_accuracy": 0.5795,
+    "family_macro_f1": 0.0,
+    "orbit_accuracy": 0.0,
+    "orbit_positions_compared": 0
+   },
+   "threshold_0.7": {
+    "threshold": 0.7,
+    "edge_precision": 0.0,
+    "edge_recall": 0.0,
+    "edge_f1": 0.0,
+    "adjacency_exact": 0.14583333333333334,
+    "predicted_edge_share": 0.0,
+    "classifiable_share": 0.0,
+    "family_accuracy": 0.5795,
+    "family_macro_f1": 0.0,
+    "orbit_accuracy": 0.0,
+    "orbit_positions_compared": 0
+   },
+   "threshold_chosen_on_train": {
+    "threshold": 0.3,
+    "train_edge_f1": 0.13475242602242804,
+    "heldout": {
+     "threshold": 0.3,
+     "edge_precision": 0.2780806979280262,
+     "edge_recall": 0.09368111682586333,
+     "edge_f1": 0.14014839241549876,
+     "adjacency_exact": 0.13033333333333333,
+     "predicted_edge_share": 0.33688464364437914,
+     "classifiable_share": 0.05683333333333333,
+     "family_accuracy": 0.581,
+     "family_macro_f1": 0.05456656346749226,
+     "orbit_accuracy": 0.3253588516746411,
+     "orbit_positions_compared": 627
+    }
+   }
+  }
+ },
+ "controls": {
+  "degree_only": {
+   "threshold_0.3": {
+    "threshold": 0.3,
+    "edge_precision": 0.3397058823529412,
+    "edge_recall": 0.05657604702424688,
+    "edge_f1": 0.09699769053117784,
+    "adjacency_exact": 0.14183333333333334,
+    "predicted_edge_share": 0.16654420769042372,
+    "classifiable_share": 0.106,
+    "family_accuracy": 0.577,
+    "family_macro_f1": 0.12821869488536156,
+    "orbit_accuracy": 0.39162112932604737,
+    "orbit_positions_compared": 1098
+   },
+   "threshold_0.5": {
+    "threshold": 0.5,
+    "edge_precision": 0.35431654676258995,
+    "edge_recall": 0.024124418319862846,
+    "edge_f1": 0.04517312542994726,
+    "adjacency_exact": 0.14366666666666666,
+    "predicted_edge_share": 0.06808719079108498,
+    "classifiable_share": 0.04533333333333334,
+    "family_accuracy": 0.5796666666666667,
+    "family_macro_f1": 0.04963947969129316,
+    "orbit_accuracy": 0.3943089430894309,
+    "orbit_positions_compared": 492
+   },
+   "threshold_0.7": {
+    "threshold": 0.7,
+    "edge_precision": 0.326271186440678,
+    "edge_recall": 0.009429341170707813,
+    "edge_f1": 0.01832896929302547,
+    "adjacency_exact": 0.14566666666666667,
+    "predicted_edge_share": 0.02890031839333823,
+    "classifiable_share": 0.019666666666666666,
+    "family_accuracy": 0.5776666666666667,
+    "family_macro_f1": 0.01736552308343922,
+    "orbit_accuracy": 0.3939393939393939,
+    "orbit_positions_compared": 198
+   },
+   "threshold_chosen_on_train": {
+    "threshold": 0.3,
+    "train_edge_f1": 0.08828177199885459,
+    "heldout": {
+     "threshold": 0.3,
+     "edge_precision": 0.3397058823529412,
+     "edge_recall": 0.05657604702424688,
+     "edge_f1": 0.09699769053117784,
+     "adjacency_exact": 0.14183333333333334,
+     "predicted_edge_share": 0.16654420769042372,
+     "classifiable_share": 0.106,
+     "family_accuracy": 0.577,
+     "family_macro_f1": 0.12821869488536156,
+     "orbit_accuracy": 0.39162112932604737,
+     "orbit_positions_compared": 1098
+    }
+   }
+  }
+ }
+}
