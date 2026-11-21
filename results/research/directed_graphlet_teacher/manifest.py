@@ -162,6 +162,8 @@ ANALYSIS = (
     "graph_loss/sid_structure.py", "graph_loss/sid_structure.json",
     "graph_loss/sid_alignment.py", "graph_loss/sid_alignment.json",
     "graph_loss/sid_alignment_v2.py", "graph_loss/sid_alignment_v2.json",
+    "graph_loss/prototype_chain.py", "graph_loss/prototype_chain.json",
+    "graph_loss/REPORT_CHAIN_PROTOTYPE.md",
     "graph_loss/REPORT_SID_ALIGNMENT_V2.md",
     "graph_loss/REPORT_SID_ALIGNMENT.md",
     "graph_loss/REPORT_SID_STRUCTURE.md",
