@@ -1,0 +1,214 @@
+{
+ "inputs": {
+  "states": "5c1f080f384ff893d85384fb4553e3669c37d42662aa564ebf2b97b1e2067111",
+  "instances": "9d0661e9412b965c410c6e4b0fd7b5539f9b4af8aeb88332b2918b6b0dfd71f0",
+  "contract": "409b98d9eb5acd44df46f6c2d341e86b51abc7d3a2214ac0b6dee12334069752",
+  "checkpoint": {
+   "arm": "TIGER_drq_D1",
+   "checkpoint_sha256": "b12374b7caeada13bfc8af88965d792eceb23a5e696edb43c4382f0c055ae75a",
+   "sid_sha256": "a47b78967d0b8580370b1227ef8b5c9fdd66bfa399ae5dd62e687296c3c19ecd",
+   "semantics_sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+   "infer_use_sk": false,
+   "codes_match_stored_sid": 1.0,
+   "q_rebuilt_from_sid_max_abs_diff_to_model_q": 5.960464477539063e-08,
+   "states_file": "results/research/directed_graphlet_teacher/fidelity/fidelity_states.npz",
+   "states_sha256": "5c1f080f384ff893d85384fb4553e3669c37d42662aa564ebf2b97b1e2067111",
+   "widths": {
+    "semantics": 768,
+    "z": 32,
+    "q": 32,
+    "decoder": 768
+   },
+   "collision": 0.025338593565705447,
+   "note": "the SID match is on the full three-level code of every item; a partial match would mean the checkpoint and the table are not the same run"
+  }
+ },
+ "labels": {
+  "vocabulary": {
+   "subtypes": 47,
+   "orbits": 376
+  },
+  "isolation": "instance_only",
+  "dropped_for_item_overlap": 243506,
+  "train_items": 21805,
+  "observed_edges": 192528
+ },
+ "protocol": {
+  "seed": 0,
+  "epochs": 150,
+  "heads": 4,
+  "layers": 2,
+  "hidden": 128,
+  "attention": "full: every member attends to every member",
+  "widths_trained_separately": true,
+  "train_per_family": 8000,
+  "heldout_per_family": 3000
+ },
+ "runs": {
+  "A_semantics": {
+   "table": "semantics",
+   "adjacency": false,
+   "shuffled_labels": false,
+   "widths": {
+    "3": {
+     "width": 3,
+     "instances_train": 16000,
+     "instances_held": 6000,
+     "family_accuracy": 0.7126666666666667,
+     "family_macro_f1": 0.7107056042454905,
+     "family_majority_baseline": 0.5,
+     "subtype_accuracy": 0.38,
+     "subtype_macro_f1": 0.08262131578567837,
+     "subtype_majority_baseline": 0.542,
+     "orbit_accuracy": 0.13555555555555557,
+     "orbit_macro_f1": 0.03191388069534394
+    },
+    "4": {
+     "width": 4,
+     "instances_train": 24000,
+     "instances_held": 9000,
+     "family_accuracy": 0.5283333333333333,
+     "family_macro_f1": 0.5270984155048485,
+     "family_majority_baseline": 0.3333333333333333,
+     "subtype_accuracy": 0.18088888888888888,
+     "subtype_macro_f1": 0.030898849665856754,
+     "subtype_majority_baseline": 0.36333333333333334,
+     "orbit_accuracy": 0.07280555555555555,
+     "orbit_macro_f1": 0.004667030842419631
+    }
+   }
+  },
+  "B_z": {
+   "table": "z",
+   "adjacency": false,
+   "shuffled_labels": false,
+   "widths": {
+    "3": {
+     "width": 3,
+     "instances_train": 16000,
+     "instances_held": 6000,
+     "family_accuracy": 0.8271666666666667,
+     "family_macro_f1": 0.826406670246971,
+     "family_majority_baseline": 0.5,
+     "subtype_accuracy": 0.45016666666666666,
+     "subtype_macro_f1": 0.11421157106552711,
+     "subtype_majority_baseline": 0.542,
+     "orbit_accuracy": 0.17305555555555555,
+     "orbit_macro_f1": 0.06165412955880369
+    },
+    "4": {
+     "width": 4,
+     "instances_train": 24000,
+     "instances_held": 9000,
+     "family_accuracy": 0.6642222222222223,
+     "family_macro_f1": 0.661372440364993,
+     "family_majority_baseline": 0.3333333333333333,
+     "subtype_accuracy": 0.231,
+     "subtype_macro_f1": 0.047321847375752846,
+     "subtype_majority_baseline": 0.36333333333333334,
+     "orbit_accuracy": 0.08502777777777777,
+     "orbit_macro_f1": 0.017227072504239722
+    }
+   }
+  },
+  "C_q": {
+   "table": "q",
+   "adjacency": false,
+   "shuffled_labels": false,
+   "widths": {
+    "3": {
+     "width": 3,
+     "instances_train": 16000,
+     "instances_held": 6000,
+     "family_accuracy": 0.8288333333333333,
+     "family_macro_f1": 0.8282655362626015,
+     "family_majority_baseline": 0.5,
+     "subtype_accuracy": 0.45,
+     "subtype_macro_f1": 0.11403152698669261,
+     "subtype_majority_baseline": 0.542,
+     "orbit_accuracy": 0.174,
+     "orbit_macro_f1": 0.061908555927496056
+    },
+    "4": {
+     "width": 4,
+     "instances_train": 24000,
+     "instances_held": 9000,
+     "family_accuracy": 0.6642222222222223,
+     "family_macro_f1": 0.6605579940298295,
+     "family_majority_baseline": 0.3333333333333333,
+     "subtype_accuracy": 0.23222222222222222,
+     "subtype_macro_f1": 0.05118772913164839,
+     "subtype_majority_baseline": 0.36333333333333334,
+     "orbit_accuracy": 0.08502777777777777,
+     "orbit_macro_f1": 0.016199451405024615
+    }
+   }
+  },
+  "D_shuffled_labels": {
+   "table": "z",
+   "adjacency": false,
+   "shuffled_labels": true,
+   "widths": {
+    "3": {
+     "width": 3,
+     "instances_train": 16000,
+     "instances_held": 6000,
+     "family_accuracy": 0.6483333333333333,
+     "family_macro_f1": 0.6448997108148514,
+     "family_majority_baseline": 0.5,
+     "subtype_accuracy": 0.2806666666666667,
+     "subtype_macro_f1": 0.03662008577693685,
+     "subtype_majority_baseline": 0.542,
+     "orbit_accuracy": 0.08366666666666667,
+     "orbit_macro_f1": 0.017548898215791704
+    },
+    "4": {
+     "width": 4,
+     "instances_train": 24000,
+     "instances_held": 9000,
+     "family_accuracy": 0.41255555555555556,
+     "family_macro_f1": 0.3889886874811525,
+     "family_majority_baseline": 0.3333333333333333,
+     "subtype_accuracy": 0.18766666666666668,
+     "subtype_macro_f1": 0.019293773181960523,
+     "subtype_majority_baseline": 0.36333333333333334,
+     "orbit_accuracy": 0.06594444444444444,
+     "orbit_macro_f1": 0.001533586656585152
+    }
+   }
+  },
+  "E_true_adjacency_plus_z": {
+   "table": "z",
+   "adjacency": true,
+   "shuffled_labels": false,
+   "widths": {
+    "3": {
+     "width": 3,
+     "instances_train": 16000,
+     "instances_held": 6000,
+     "family_accuracy": 0.8441666666666666,
+     "family_macro_f1": 0.8440399881470391,
+     "family_majority_baseline": 0.5,
+     "subtype_accuracy": 0.5228333333333334,
+     "subtype_macro_f1": 0.265041830618113,
+     "subtype_majority_baseline": 0.542,
+     "orbit_accuracy": 0.36038888888888887,
+     "orbit_macro_f1": 0.2064816278721214
+    },
+    "4": {
+     "width": 4,
+     "instances_train": 24000,
+     "instances_held": 9000,
+     "family_accuracy": 0.6732222222222223,
+     "family_macro_f1": 0.6681420632845866,
+     "family_majority_baseline": 0.3333333333333333,
+     "subtype_accuracy": 0.304,
+     "subtype_macro_f1": 0.11928594282381047,
+     "subtype_majority_baseline": 0.36333333333333334,
+     "orbit_accuracy": 0.18766666666666668,
+     "orbit_macro_f1": 0.07121442838008017
+    }
+   }
+  }
+ }
+}

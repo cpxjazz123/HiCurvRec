@@ -112,6 +112,8 @@ ANALYSIS = (
     "fidelity/fidelity_states.json", "fidelity/REPORT_FIDELITY.md",
     "structure/structure_transformer.py", "structure/structure_transformer.json",
     "structure/REPORT_STRUCTURE_TRANSFORMER.md",
+    "full_attention/full_attention.py", "full_attention/full_attention.json",
+    "full_attention/REPORT_FULL_ATTENTION.md",
 )
 
 

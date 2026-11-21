@@ -390,6 +390,7 @@ def main() -> None:
                          "train_items": labels["train_items"],
                          "heldout_rows_dropped_for_item_overlap":
                              labels["heldout_rows_dropped_for_item_overlap"],
+                         "heldout_isolation": labels["heldout_isolation"],
                          "source": "directed_role.instance_targets: one global subtype id "
                                    "and one global orbit id per (family, subtype, orbit)"},
               "protocol": {"seed": SEED, "epochs": EPOCHS, "heads": HEADS, "layers": LAYERS,
