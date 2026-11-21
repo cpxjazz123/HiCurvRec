@@ -108,6 +108,8 @@ ANALYSIS = (
     "representation/REPORT_REPRESENTATION.md", "representation/RETRACTIONS.md",
     "quantisation/run_quantisation_check.py", "quantisation/sweep.json",
     "quantisation/REPORT_QUANTISATION.md",
+    "fidelity/fidelity_study.py", "fidelity/fidelity.json",
+    "fidelity/fidelity_states.json", "fidelity/REPORT_FIDELITY.md",
 )
 
 
