@@ -1,0 +1,153 @@
+{
+ "protocol": {
+  "arm": "wired",
+  "steps": 400,
+  "seed": 42,
+  "align": 0.1,
+  "margin": 0.5,
+  "budget": 0.4,
+  "assignment": "the arm's own constrained_assignment with the floor ON; the offset is added inside _distances",
+  "L3": "discrete tokens of this forward, items de-duplicated",
+  "neighbours": "looked up by item id from the chain bank through a global item -> code table"
+ },
+ "before": {
+  "chain_delta_L1L2L3": -0.0007711225042724354,
+  "chain_delta_null": [
+   -0.002839606519111333,
+   0.003220478512775624
+  ],
+  "adjacent_mean": 0.007857113084073193,
+  "far_mean": 0.008628235588345629,
+  "L1_adjacent": 0.007565337001375516,
+  "L1_far": 0.008253094910591471,
+  "L2_adjacent": 0.00022925263640531865,
+  "L2_far": 0.0003751406777541578,
+  "collision": 0.025338593565705447,
+  "semantic_r2": 0.27997608722826817
+ },
+ "after": {
+  "chain_delta_L1L2L3": 0.06858822058271849,
+  "chain_delta_null": [
+   -0.008629798674502942,
+   0.011523071151681866
+  ],
+  "adjacent_mean": 0.2807094327039306,
+  "far_mean": 0.21212121212121213,
+  "L1_adjacent": 0.198887082655996,
+  "L1_far": 0.19624025676295279,
+  "L2_adjacent": 0.021445542078279353,
+  "L2_far": 0.013880205076903839,
+  "collision": 0.5369097490543784,
+  "semantic_r2": 0.25459449504851916
+ },
+ "log": [
+  {
+   "step": 0,
+   "rq_norm": 0.0020537456073143126,
+   "discrete_margin": 0.49609375,
+   "grad_scale": 0.18439666130839455,
+   "l2_loss": 0.4999731183052063,
+   "temperature": [
+    0.007635727524757385,
+    0.002223481424152851
+   ],
+   "seen_items": 665
+  },
+  {
+   "step": 50,
+   "rq_norm": 0.0009395088324657049,
+   "discrete_margin": 0.427734375,
+   "grad_scale": 0.0010505730136892016,
+   "l2_loss": 0.5042364597320557,
+   "temperature": [
+    1e-06,
+    0.01258825697004795
+   ],
+   "seen_items": 7889
+  },
+  {
+   "step": 100,
+   "rq_norm": 0.0014874257563580748,
+   "discrete_margin": 0.412109375,
+   "grad_scale": 0.0009042858951449881,
+   "l2_loss": 0.49590417742729187,
+   "temperature": [
+    1e-06,
+    0.012892079539597034
+   ],
+   "seen_items": 10059
+  },
+  {
+   "step": 150,
+   "rq_norm": 0.0011427577633382918,
+   "discrete_margin": 0.44140625,
+   "grad_scale": 0.0011293470501503422,
+   "l2_loss": 0.47449731826782227,
+   "temperature": [
+    1e-06,
+    0.012328358367085457
+   ],
+   "seen_items": 11290
+  },
+  {
+   "step": 200,
+   "rq_norm": 0.0007169123485215733,
+   "discrete_margin": 0.44140625,
+   "grad_scale": 0.0004893799296154283,
+   "l2_loss": 0.4587452709674835,
+   "temperature": [
+    1e-06,
+    0.010455360636115074
+   ],
+   "seen_items": 11974
+  },
+  {
+   "step": 250,
+   "rq_norm": 0.001112673979718825,
+   "discrete_margin": 0.48046875,
+   "grad_scale": 0.0012188072859296208,
+   "l2_loss": 0.477736234664917,
+   "temperature": [
+    1e-06,
+    0.009892653673887253
+   ],
+   "seen_items": 12399
+  },
+  {
+   "step": 300,
+   "rq_norm": 0.0013614996742831703,
+   "discrete_margin": 0.41796875,
+   "grad_scale": 0.001007333072991868,
+   "l2_loss": 0.46590372920036316,
+   "temperature": [
+    1e-06,
+    0.010728171095252037
+   ],
+   "seen_items": 12717
+  },
+  {
+   "step": 350,
+   "rq_norm": 0.0010162535781579366,
+   "discrete_margin": 0.453125,
+   "grad_scale": 0.0011864114642119257,
+   "l2_loss": 0.4546729028224945,
+   "temperature": [
+    1e-06,
+    0.010172576643526554
+   ],
+   "seen_items": 12919
+  },
+  {
+   "step": 399,
+   "rq_norm": 0.0007075915930448946,
+   "discrete_margin": 0.431640625,
+   "grad_scale": 0.0004120719492395002,
+   "l2_loss": 0.4609462022781372,
+   "temperature": [
+    1e-06,
+    0.009905626997351646
+   ],
+   "seen_items": 13060
+  }
+ ]
+}
