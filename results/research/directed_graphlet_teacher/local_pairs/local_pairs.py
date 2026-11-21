@@ -69,6 +69,9 @@ def main() -> None:
     rng.shuffle(instances)
     local = []
     for members in instances[:200000].tolist():
+        # a pair from the held-out slice is never used, in either direction
+        if any((min(a, b), max(a, b)) in held_unit for a in members for b in members if a != b):
+            continue
         edges_here = [(a, b) for a in members for b in members
                       if a != b and (a, b) in directed]
         for a, b in edges_here:
@@ -98,8 +101,11 @@ def main() -> None:
         neg.append((a, b))
     global_pairs = torch.tensor(
         [tuple(x) for x in np.concatenate([pos, rev, neg])], dtype=torch.long, device=device)
-    global_labels = torch.cat([torch.ones(len(pos) + len(rev)),
-                               torch.zeros(len(neg))]).to(device)
+    # positives only for real edges; the reversed pair and the random pair are both
+    # negatives.  The previous line marked the reversed edges positive as well, so the
+    # control arm was trained to call a direction-less pair "an edge".
+    global_labels = torch.cat([torch.ones(len(pos)),
+                               torch.zeros(len(rev) + len(neg))]).to(device)
 
     held_pairs = np.stack([held_rows, held_cols], axis=1)
     held_directed = set(map(tuple, held_pairs.tolist()))
@@ -147,12 +153,22 @@ def main() -> None:
             fused = out["fused"].cpu().numpy().astype(np.float32)
         direct = lambda p: (s_np[p[:, 0]] * t_np[p[:, 1]]).sum(-1)
         probe = base.probe(fused, one_way, device, steps=2500)
+        # null control for the probe itself: permuting the direction labels of the
+        # evaluation pairs must bring it back to chance; if it does not, the probe is
+        # measuring something other than direction and its column cannot be quoted
+        rng_null = np.random.default_rng(base.SEED + 31)
+        shuffled = one_way.copy()
+        flip = rng_null.random(len(shuffled)) < 0.5
+        shuffled[flip] = shuffled[flip][:, ::-1]
+        probe_null = base.probe(fused, shuffled, device, steps=2500)
         report["arms"][arm] = {
             "direct_direction": float((direct(eval_pos) > direct(eval_rev)).mean()),
             "probe_direction": probe["direction_accuracy"],
+            "probe_null_control": probe_null["direction_accuracy"],
             "probe_pairs_eval": probe["pairs_eval"]}
         print(f"  {arm}: direct dir {report['arms'][arm]['direct_direction']:.4f} "
-              f"probe {probe['direction_accuracy']:.4f}", flush=True)
+              f"probe {probe['direction_accuracy']:.4f} "
+              f"(null {probe_null['direction_accuracy']:.4f})", flush=True)
         Path(args.out).write_text(json.dumps(report, indent=1) + "\n")
     print("written", args.out)
 
