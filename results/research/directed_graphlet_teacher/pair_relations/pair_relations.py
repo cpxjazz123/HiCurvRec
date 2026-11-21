@@ -97,15 +97,21 @@ def build_pairs(unit_edges: np.ndarray, buckets: list[list[int]], train_items_sh
     """
     labels_of = {}
 
-    def add(a: int, b: int, label: int, bucket: int) -> None:
-        # the *unordered* pair is the sample: asking the same two items twice with the
-        # two possible orientations is the only way classes 1 and 2 can both exist
-        key = (min(a, b), max(a, b))
+    def add(first: int, second: int, wanted: int, bucket: int) -> None:
+        """Store the unordered pair and derive the label from the *given* order.
+
+        The previous version computed the class from the canonical storage orientation and
+        then stored the pair in that orientation, so the two were always read as class 1:
+        a reverse edge was "A->B" whose endpoints had been swapped.  Here the class is
+        recomputed from (first, second) itself, so 1 and 2 depend only on which item is
+        written first.
+        """
+        key = (min(first, second), max(first, second))
         if key in labels_of:
             return
-        labels_of[key] = label
+        labels_of[key] = relation_class((first, second) in EDGES, (second, first) in EDGES)
         buckets_of.append(bucket)
-        ordered.append((a, b) if a <= b else (a, b))
+        ordered.append((first, second))
 
     ordered: list[tuple[int, int]] = []
     buckets_of: list[int] = []
@@ -115,37 +121,51 @@ def build_pairs(unit_edges: np.ndarray, buckets: list[list[int]], train_items_sh
     for index, (a, b) in enumerate(UNIT_EDGES[rng.permutation(len(UNIT_EDGES))]):
         if len(labels_of) >= target_pairs:
             break
-        kind = relation_class((a, b) in EDGES, (b, a) in EDGES)
-        if kind == 3:
+        if (a, b) in EDGES and (b, a) in EDGES:
             add(a, b, 3, bucket_of(a))
-    counts = {1: 0, 2: 0, 0: 0}
-    for index, (a, b) in enumerate(UNIT_EDGES[rng.permutation(len(UNIT_EDGES))]):
-        if sum(counts.values()) >= 3 * target_pairs // 4:
+    # Classes 1 and 2 are defined by the *input order*, not by the graph: either item may
+    # be written first.  Sampling both orders gives both classes from the same edges and
+    # removes the asymmetry that a fixed canonical orientation would create.
+    counts = {1: 0, 2: 0, 0: 0, 3: len(labels_of)}
+    one_way = [(a, b) for a, b in UNIT_EDGES.tolist()
+               if ((a, b) in EDGES) != ((b, a) in EDGES)]
+    rng.shuffle(one_way)
+    for a, b in one_way:
+        if counts[1] >= target_pairs // 4 and counts[2] >= target_pairs // 4:
             break
-        forward, backward = (a, b) in EDGES, (b, a) in EDGES
-        if forward and backward:
-            continue
-        if forward:
-            orientation, wanted = (a, b), 1
-        elif backward:
-            orientation, wanted = (b, a), 2
-        else:
-            continue
-        if counts[wanted] < target_pairs // 4:
-            add(*orientation, wanted, bucket_of(orientation[0]))
+        forward_first = rng.random() < 0.5
+        first, second = (a, b) if forward_first else (b, a)
+        wanted = relation_class((first, second) in EDGES, (second, first) in EDGES)
+        if wanted in (1, 2) and counts[wanted] < target_pairs // 4:
+            add(first, second, wanted, bucket_of(first))
             counts[wanted] += 1
-    # class 0: degree-matched negatives, both endpoints from the positive's bucket
+            # the mirrored pair of the *same* evidence: the model must learn that the
+            # class depends on the order, so the same two items are also offered in the
+            # other order with the other label (class 0 rows are what keeps it honest)
+            mirror_label = relation_class((second, first) in EDGES, (first, second) in EDGES)
+            if mirror_label in (1, 2) and counts[mirror_label] < target_pairs // 4:
+                add(second, first, mirror_label, bucket_of(second))
+                counts[mirror_label] += 1
+    # class 0: degree-matched negatives; both endpoints must come from the same bucket,
+    # which is itself restricted to this split's item pool
+    pool = np.array(sorted({item for bucket in buckets for item in bucket}), dtype=np.int64)
     while counts[0] < target_pairs // 2 and len(labels_of) < target_pairs:
-        a = int(rng.choice(all_items))
-        bucket = bucket_of(a)
-        pool = buckets[bucket]
-        if len(pool) < 8:
+        first = int(rng.choice(pool))
+        candidates = [item for item in buckets[bucket_of(first)]
+                      if item != first and (first, item) not in EDGES
+                      and (item, first) not in EDGES]
+        if not candidates:
             continue
-        b = int(rng.choice(pool))
-        if a == b or (a, b) in EDGES or (b, a) in EDGES:
-            continue
-        add(a, b, 0, bucket)
+        second = int(rng.choice(candidates))
+        add(first, second, 0, bucket_of(first))
         counts[0] += 1
+    mismatched = 0
+    for first, second in ordered:
+        expected = relation_class((first, second) in EDGES, (second, first) in EDGES)
+        if labels_of[(min(first, second), max(first, second))] != expected:
+            mismatched += 1
+    if mismatched:
+        raise SystemExit(f"{mismatched} stored labels disagree with the adjacency matrix")
     order = rng.permutation(len(ordered))
     return (np.array([ordered[i] for i in order], dtype=np.int64),
             np.array([labels_of[(min(a, b), max(a, b))] for a, b in
@@ -161,7 +181,10 @@ def pair_features(table: np.ndarray, pairs: np.ndarray) -> np.ndarray:
     """
     u = table[pairs[:, 0]]
     v = table[pairs[:, 1]]
-    return np.concatenate([u, v, u * v, np.abs(u - v)], axis=1).astype(np.float32)
+    # u and v appear in a fixed order, so a linear layer legitimately reads direction;
+    # the extra antisymmetric channel (u - v) makes that signal explicit instead of
+    # forcing the model to learn a difference from two 768-wide blocks.
+    return np.concatenate([u, v, u * v, np.abs(u - v), u - v], axis=1).astype(np.float32)
 
 
 def build_model(in_dim: int):
@@ -236,7 +259,9 @@ def main() -> None:
                                              np.random.default_rng(seed), target)
         bad = int(sum(not (local[a] and local[b]) for a, b in pairs.tolist()))
         EDGES, BEHAVIOUR, UNIT_EDGES = saved
-        return pairs, labels, buckets, bad
+        if bad:
+            raise SystemExit(f"{bad} sampled pairs leave the split's item pool")
+        return pairs, labels, buckets, 0
 
     train_pairs, train_y, train_bucket, train_bad = build_within(
         unit_train, train_items, TRAIN_PAIRS, SEED)
