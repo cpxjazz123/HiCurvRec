@@ -110,7 +110,7 @@ def semantic_probe(codes, semantics) -> float:
                  / ((semantics[evaluate_rows] - semantics[evaluate_rows].mean(0)) ** 2).mean())
 
 
-def install_offset(layers) -> None:
+def install_offset(layers, align: float) -> None:
     """Route the pending structural offset into the arm's own level-1 assignment."""
     first = layers[0]
     original = first._distances
@@ -123,7 +123,7 @@ def install_offset(layers) -> None:
         offset = PENDING_OFFSET
         offset = (offset - offset.mean(dim=1, keepdim=True)) / offset.std(
             dim=1, keepdim=True).clamp(min=1e-6)
-        return base + ALIGN * offset * spread
+        return base + align * offset * spread
 
     first._distances = patched
 
@@ -165,6 +165,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", default=str(OUT))
     parser.add_argument("--arm", default="wired", choices=("wired", "control"))
+    parser.add_argument("--align", type=float, default=ALIGN)
+    parser.add_argument("--budget", type=float, default=BUDGET)
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.manual_seed(SEED)
@@ -182,7 +184,7 @@ def main() -> None:
         parameter.requires_grad_(True)
     layers = list(model.rq.vq_layers)
     if args.arm == "wired":
-        install_offset(layers)
+        install_offset(layers, args.align)
     from drq import level_softmax, measure_temperature
     from losses import build_loss
     criterion = build_loss(json.loads((ARM_DIR / "config" / "train_config.json").read_text()))
@@ -219,8 +221,18 @@ def main() -> None:
         middle, right = left + 1, left + 2
         if args.arm == "wired":
             PENDING_OFFSET = neighbour_offset(code_table, flat, partners).to(device)
+            with torch.no_grad():
+                # how much does the offset actually move the code choice?  Compare the
+                # nearest codeword of the plain distance with the one after the offset.
+                probe = model.encoder(items[flat_tensor])
+                plain = layers[0].distance(probe, layers[0].get_code_embs())
+                centered = PENDING_OFFSET - PENDING_OFFSET.mean(dim=1, keepdim=True)
+                centered = centered / centered.std(dim=1, keepdim=True).clamp(min=1e-6)
+                shifted = plain + args.align * centered * plain.std(dim=1, keepdim=True).clamp(min=1e-6)
+                changed = float((plain.argmin(-1) != shifted.argmin(-1)).float().mean())
         else:
             PENDING_OFFSET = None
+            changed = 0.0
         model.train()
         recon, quant_parts, _, tokens_batch = model(items[flat_tensor])
         tokens_np = tokens_batch.detach().cpu().numpy().astype(np.int64)
@@ -259,7 +271,7 @@ def main() -> None:
                                             allow_unused=True)
             norm = float(sum(float(g.pow(2).sum()) for g in gradients
                              if g is not None) ** 0.5)
-            scale = min(1.0, BUDGET * rq_norm / max(norm, 1e-12))
+            scale = min(1.0, args.budget * rq_norm / max(norm, 1e-12))
             for parameter, grad in zip(encoder_parameters, gradients):
                 if grad is None:
                     continue
@@ -268,14 +280,16 @@ def main() -> None:
             detail = {"discrete_margin": margin_value, "grad_scale": scale,
                       "l2_loss": float(loss_l2.detach()),
                       "temperature": [float(temperature), float(temperature2)],
-                      "seen_items": int((code_table[:, 0] >= 0).sum())}
+                      "seen_items": int((code_table[:, 0] >= 0).sum()),
+                      "offset_changes_choice": changed}
         optimizer.step()
         if step % 50 == 0 or step == STEPS - 1:
             log.append({"step": step, "rq_norm": rq_norm, **detail})
             print(f"    step {step}: rq {rq_norm:.3e} {detail}", flush=True)
     after, codes_after = snapshot("after")
     report = {"protocol": {"arm": args.arm, "steps": STEPS, "seed": SEED,
-                           "align": ALIGN, "margin": MARGIN, "budget": BUDGET,
+                           "align": args.align, "margin": MARGIN,
+                           "budget": args.budget,
                            "assignment": "the arm's own constrained_assignment with the "
                                          "floor ON; the offset is added inside _distances",
                            "L3": "discrete tokens of this forward, items de-duplicated",

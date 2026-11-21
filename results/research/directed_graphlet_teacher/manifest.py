@@ -167,6 +167,8 @@ ANALYSIS = (
     "graph_loss/prototype_chain_three.py",
     "graph_loss/prototype_chain_wired.py",
     "graph_loss/prototype_chain_wired2.py",
+    "graph_loss/prototype_chain_weak.json",
+    "graph_loss/REPORT_CHAIN_STRENGTH.md",
     "graph_loss/prototype_chain_wired2.json",
     "graph_loss/prototype_chain_wired2_control.json",
     "graph_loss/REPORT_CHAIN_WIRED2.md",
