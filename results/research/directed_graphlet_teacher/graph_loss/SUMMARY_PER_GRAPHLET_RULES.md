@@ -52,3 +52,15 @@
    （链 3% / 分叉 6% / 汇合 1%），这是唯一仍自由的旋钮；
 3. 若要真正改 L1 组织（兄弟分组），必须作为**新的研究问题**提出（改分配规则或码本布局），
    不能在本框架内以偏移实现。
+
+## 7. 链臂的 Stage3 入口状态
+
+| 门槛（§89） | 要求 | `TIGER_chain_align_rq` |
+|---|---|---|
+| 三层码字碰撞率 | < 0.40 | **0.1521** ✓ |
+| checkpoint | 存在 | `results/stage2_RQ-VAE/TIGER_chain_align_rq/rqvae_best.pth` ✓ |
+| stage1 embedding | 存在 | `stage1_GeneEmbedding/output/sentence_t5.npy` ✓ |
+| 码本宽度与编码器输出 | 一致 | 256×32 × 3 层 ✓ |
+
+因此链臂可以作为正式候选进入 Stage3（`test_R@10 > 0.4` 判定）；三结构臂需等训练结束后用同一
+评估函数给出三结构 Δ、残差与碰撞率再决定。
