@@ -129,6 +129,8 @@ ANALYSIS = (
     "two_node_rnn/REPORT_TWO_NODE_RNN.md",
     "inject_directed/inject_directed.py", "inject_directed/result.json",
     "inject_directed/REPORT_INJECT_DIRECTED.md",
+    "augment/augment_embedding.py", "augment/augmented_manifest.json",
+    "augment/REPORT_AUGMENT.md",
 )
 
 

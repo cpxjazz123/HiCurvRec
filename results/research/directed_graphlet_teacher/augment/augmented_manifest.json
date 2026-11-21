@@ -1,0 +1,61 @@
+{
+ "inputs": {
+  "semantics": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+  "full_graph": "ef97a2bdc555259d402065026b00cf62bc1e91c3bc58a66da4d6f8f8df407fdd"
+ },
+ "isolation": {
+  "level": "pair",
+  "eval_pairs": 20000
+ },
+ "protocol": {
+  "steps": 3000,
+  "batch": 1024,
+  "hidden": 256,
+  "alpha": 1.0,
+  "seed": 0,
+  "edge_task": "sigmoid(s_i . t_j), asymmetric",
+  "augment": "x + alpha * fuse([s, t]), width unchanged",
+  "probe": "held-out direction probe on the 768-d state, 70/30",
+  "pass_rule": "C must beat B and D by more than the probe SE"
+ },
+ "arms": {
+  "A_raw": {
+   "probe": {
+    "accuracy": 0.49331507086753845,
+    "pairs_eval": 2917,
+    "pairs_train": 6806
+   },
+   "state_shift_l2": 0.0
+  },
+  "B_undirected": {
+   "probe": {
+    "accuracy": 0.5053136944770813,
+    "pairs_eval": 2917,
+    "pairs_train": 6806,
+    "edge_head_direction": 0.494086187390723,
+    "edge_head_pairs": 9723
+   },
+   "state_shift_l2": 0.019898787140846252
+  },
+  "C_directed": {
+   "probe": {
+    "accuracy": 0.5035995841026306,
+    "pairs_eval": 2917,
+    "pairs_train": 6806,
+    "edge_head_direction": 0.49758305049881724,
+    "edge_head_pairs": 9723
+   },
+   "state_shift_l2": 0.012722966261208057
+  },
+  "D_alpha_zero": {
+   "probe": {
+    "accuracy": 0.49331507086753845,
+    "pairs_eval": 2917,
+    "pairs_train": 6806,
+    "edge_head_direction": 0.49758305049881724,
+    "edge_head_pairs": 9723
+   },
+   "state_shift_l2": 0.0
+  }
+ }
+}
