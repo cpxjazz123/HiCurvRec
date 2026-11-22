@@ -71,6 +71,7 @@ ATTR_WEIGHT = 0.5
 NEAR_TARGET = 0.20
 ATTR_WEIGHT = 0.5
 
+
                 continue
             # Capacity side: the near pair of this structure must actually share the first
             # code, so the term pulls it up to NEAR_TARGET instead of only separating it

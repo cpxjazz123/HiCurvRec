@@ -1,46 +1,17 @@
-"""Issue #220: the mainline is Graphlet Type+Role CE through the real quantizer.
+"""Issue #220/#221: the mainline is Graphlet Type+Role CE through the real quantizer.
 
 The old Issue #121 contract (AF3 x hyperbolic geometry) is retained as history;
 these tests pin the migration so a new proposal cannot be judged by the old gate
 and an old-style proposal cannot slip through the new one.
+
+The policy document they used to read (``ideas/main_line.json``) was removed with
+the rest of ``ideas/`` at the owner's request (2026-11-22); the file is kept in
+git history at the commit before that deletion, so the statement can be cited but
+not silently edited here.
 """
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
-import pytest
-
 from tools.research.rounds import agents, scope
-
-MAIN_LINE = Path(__file__).resolve().parents[3] / "ideas" / "main_line.json"
-
-
-@pytest.fixture(scope="module")
-def mainline():
-    return json.loads(MAIN_LINE.read_text())
-
-
-def test_statement_is_the_type_role_mainline(mainline):
-    statement = mainline["statement"]
-    assert mainline["active_issue"] == "#220"
-    assert "Type" in statement and "Role" in statement
-    assert "量化" in statement and "SID" in statement
-
-
-def test_must_hold_forbids_recasting_the_target_as_pairs(mainline):
-    joined = " ".join(mainline["must_hold"])
-    assert "CE" in joined and ("Role" in joined or "y_role" in joined)
-    assert "P4" in joined and "BCE" in joined
-    assert "量化" in joined and "码本" in joined
-
-
-def test_definitions_are_the_type_role_schema(mainline):
-    definitions = mainline["definitions"]
-    for key in ("graphlet_type", "node_role", "predictor"):
-        assert key in definitions, key
-    joined = " ".join(str(value) for value in definitions.values())
-    assert "可选" in joined or "历史" in joined
 
 
 def test_objective_and_contract_follow_the_new_mainline():
