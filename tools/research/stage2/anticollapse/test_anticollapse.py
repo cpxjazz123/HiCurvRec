@@ -227,7 +227,9 @@ def test_launch_installs_the_floor_before_the_run(scratch, monkeypatch):
     assert launcher.launch(tree / "train_rqvae.py", tree / "result",
                            python=sys.executable) == 0
     assert calls == {"patched": True, "has_floor": True}
-    assert (tree / "result" / "assignment_floor.json").is_file()
+    # Owner, 2026-11-22: the installation record must not become an artifact file.
+    # The floor is proven by the patched source, the launcher only reports it.
+    assert not (tree / "result" / "assignment_floor.json").exists()
 
 
 DUPLICATE_SCRIPT = """

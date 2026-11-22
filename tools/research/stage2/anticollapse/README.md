@@ -44,7 +44,7 @@ FORCE_CONSTRAINED_ALL = True  # True: 关闭 Sinkhorn,训练与导出共用一�
 ## 它现在是强制的
 
 - **候选创建时自动安装**:`tools/research/rounds/baseline.py::copy_baseline` 在"副本与基线一致"的证明**之后**安装这一层,并把 `assignment_floor` 与安装后的源码摘要写进 provenance。经此创建的每个候选树天生带保护。
-- **启动时兜底安装**:`stage2/launcher.py::launch`(§68 的唯一启动路径)在 spawn 之前再装一次,并把结果写进 `result_dir/assignment_floor.json`。即使树是旧的、或绕过 `copy_baseline` 生成的,也进不了训练。
+- **启动时兜底安装**:`stage2/launcher.py::launch`(§68 的唯一启动路径)在 spawn 之前再装一次,并把安装结果打到启动日志(`[stage2-launch] assignment_floor …`),**不写任何文件**(owner 2026-11-22)。即使树是旧的、或绕过 `copy_baseline` 生成的,也进不了训练。
 - **调用点自检(不是信任)**:`verify_assignment` 在量化器的**返回处**检查真正返回的索引(`min(count) >= floor`),`verify_codebook` 在导出时拒绝两行完全相同的码本。机制若把分配改到别处(例如重新打开 Sinkhorn 分支),会在这一步被抓到,而不是静默失去保护。
 - **平衡分配不关**:基线用 Sinkhorn(`SK_EPSILON=0.003`)时,下限施加在它的输出上(`argmax(q)` 取反后做受限分配),`use_sk` 保持基线原样(§19h)。校准:第 8、9 轮的树本来就没动这一行;第 10 轮改过,已在报告里更正。
 - **§88 保持原样**:`run_all` 只跑 `check_entry`;`check_assignment_floor` 是独立诊断,不是准入闸门。保护是结构性的(创建时安装 + 启动时兜底),不靠新闸门。
