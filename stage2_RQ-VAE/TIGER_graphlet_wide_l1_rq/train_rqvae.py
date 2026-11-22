@@ -36,7 +36,7 @@ from tqdm import tqdm
 
 from distances import build_distance
 from losses import build_loss
-from losses.chain_align import ChainAlignment
+from losses.hard_prefix import HardPrefixAlignment
 from model import RQVAE
 from train_config import load_train_config
 
@@ -61,8 +61,10 @@ REPO_ROOT = _repository_root()
 # The arm name is this tree's promoted name; a candidate copy changes only this line.
 ARM_NAME = "TIGER_graphlet_wide_l1_rq"
 CHAIN_BUDGET = 0.10
-CHAIN_ALIGNMENT = None
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
+# A short smoke run writes beside the arm, never over the frozen result directory.
+if os.environ.get("ISSUE230_SMOKE_EPOCHS"):
+    RESULT_DIR = REPO_ROOT / "results" / "research" / "issue230" / "smoke" / ARM_NAME
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
 TRAIN_FILE     = REPO_ROOT / "results" / "stage0_build_parquet" / "train.parquet"
@@ -82,7 +84,7 @@ CONFIG = load_train_config(CONFIG_FILE)
 CRITERION = build_loss(CONFIG)
 DISTANCE = build_distance(CONFIG)
 
-EPOCHS              = CONFIG.EPOCHS
+EPOCHS              = int(os.environ.get("ISSUE230_SMOKE_EPOCHS", CONFIG.EPOCHS))
 BATCH_SIZE_PER_RANK = CONFIG.BATCH_SIZE_PER_RANK     # 每卡 batch, 总 batch = 每卡 * world_size
 LR                  = CONFIG.LR
 WEIGHT_DECAY        = CONFIG.WEIGHT_DECAY
@@ -243,6 +245,33 @@ def _tokenizer_config() -> SimpleNamespace:
     )
 
 
+def _prefix_adjust(alignment: HardPrefixAlignment, ids: torch.Tensor):
+    """The closure the quantizer calls on the level-1 cost matrix.
+
+    It runs *inside* the forward pass, so its output stays on the live graph: the graphlet term
+    is a function of the encoder output, and the tensor returned here is added to ``cost``
+    before the assignment. Two effects, in the order the issue asks for them:
+
+    * **assignment** — the returned tensor shifts the cost, so the Sinkhorn / floor rule assigns
+      different codewords (the mechanism lives in the cost matrix);
+    * **gradient** — because the tensor is differentiable in the cost, the encoder receives the
+      term's gradient as part of the ordinary backward pass; no second backward is needed.
+    """
+    def adjust(latent: torch.Tensor, cost: torch.Tensor) -> torch.Tensor:
+        value, report = alignment.loss(cost, ids)
+        if value is None:
+            return torch.zeros_like(cost)
+        gradient, = torch.autograd.grad(value, cost, retain_graph=True, allow_unused=True)
+        if gradient is None:
+            return torch.zeros_like(cost)
+        # the budget is a scale on the *step*, not a detach: the term stays differentiable
+        with torch.no_grad():
+            scale = torch.clamp(CHAIN_BUDGET * cost.detach().abs().mean()
+                                / gradient.detach().abs().mean().clamp(min=1e-12), max=1.0)
+        return -scale * gradient
+    return adjust
+
+
 def main() -> None:
     # === DDP 初始化 ===
     if _single_card_mode():
@@ -333,7 +362,10 @@ def main() -> None:
 
     # Stage3 only consumes the final-epoch weights, so tracking the best
     # collision across epochs would be misleading; keep the last evaluation.
-    CHAIN_ALIGNMENT = ChainAlignment()
+    # Issue #230: hard-prefix graphlet supervision on the level-1 cost matrix.
+    # The measured bias is built at level 1 (87-92% of the three-level delta), so the
+    # term adds to that cost before the Sinkhorn / floor assignment sees it.
+    PREFIX_ALIGNMENT = HardPrefixAlignment()
     final_collision = float("inf")
     final_raw_unique = 0
     codebook_sizes = list(config.codebook_size)
@@ -348,38 +380,15 @@ def main() -> None:
         for ids, batch in loader:
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_parts, _, _ = model(batch)
+            # build the level-1 cost, add the graphlet term to it, then assign
+            adjust = _prefix_adjust(PREFIX_ALIGNMENT, ids) if PREFIX_ALIGNMENT else None
+            reconstructed, quant_parts, _, _ = model(batch, cost_adjust=adjust)
             # 唯一接入点：损失项与权重在 losses/ 里，这里只拿到总损失与分项。
             loss, components = CRITERION(reconstructed, batch, quant_parts)
             recon_loss = components["reconstruction"]
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
-            # --- behaviour coupling (chain alignment) --------------------------------
-            # The term never enters the reported loss: it adds its own encoder gradient,
-            # capped at CHAIN_BUDGET of the RQ-VAE gradient measured on this batch, so the
-            # optimisation recipe does not move.
-            if CHAIN_ALIGNMENT is not None:
-                raw = model.module if isinstance(model, DDP) else model
-                encoder_parameters = [parameter for parameter in raw.encoder.parameters()
-                                      if parameter.requires_grad]
-                reference = sum(float(parameter.grad.pow(2).sum())
-                                for parameter in encoder_parameters
-                                if parameter.grad is not None) ** 0.5
-                chain_loss, chain_count = CHAIN_ALIGNMENT.loss(raw, ids, batch)
-                if chain_loss is not None:
-                    gradients = torch.autograd.grad(chain_loss, encoder_parameters,
-                                                    retain_graph=False, allow_unused=True)
-                    scale = min(1.0, CHAIN_BUDGET * float(reference)
-                                / max(sum(float(grad.pow(2).sum()) for grad in gradients
-                                          if grad is not None) ** 0.5, 1e-12))
-                    for parameter, gradient in zip(encoder_parameters, gradients):
-                        if gradient is None:
-                            continue
-                        if parameter.grad is None:
-                            parameter.grad = scale * gradient
-                        else:
-                            parameter.grad = parameter.grad + scale * gradient
             if GRADIENT_CLIP_NORM > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIP_NORM)
             optimizer.step()
