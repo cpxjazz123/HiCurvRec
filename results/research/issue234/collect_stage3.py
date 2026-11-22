@@ -26,12 +26,26 @@ WAIVED = {"TIGER_i234_A6"}
 
 
 def stage2_numbers(arm: str) -> dict:
-    path = ISSUE / f"metrics_{arm}_validation.json"
-    if not path.is_file():
-        return {}
-    data = json.loads(path.read_text(encoding="utf-8"))
-    return {"collision": data["technical"]["collision"],
-            "quant_error": data["technical"].get("quant_error")}
+    """The numbers of the SID table Stage3 actually read, not the pre-export one.
+
+    ``stage3_start``'s export gate re-exports each arm from its checkpoint and can
+    rotate a handful of near-tie items (observed: 122-291 of 24587).  The collision of
+    the shipped table therefore differs slightly from the one recorded at Stage2 export
+    time, and this table must report the former or the two arms are not comparable.
+    """
+    sid = REPO / "results" / "stage2_RQ-VAE" / arm / "item_sids.json"
+    numbers: dict = {}
+    if sid.is_file():
+        payload = json.loads(sid.read_text(encoding="utf-8"))
+        triples = {tuple(value[:3]) for value in payload.values() if hasattr(value, "__len__")}
+        numbers["collision"] = 1.0 - len(triples) / max(len(payload), 1)
+        numbers["items"] = len(payload)
+    recorded = ISSUE / f"metrics_{arm}_validation.json"
+    if recorded.is_file():
+        data = json.loads(recorded.read_text(encoding="utf-8"))
+        numbers["collision_at_stage2_export"] = data["technical"]["collision"]
+        numbers["quant_error"] = data["technical"].get("quant_error")
+    return numbers
 
 
 def stage3_result(arm: str) -> dict | None:

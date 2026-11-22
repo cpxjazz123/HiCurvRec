@@ -120,6 +120,24 @@ def test_the_mcp_gate_forwards_the_waiver_and_records_it():
     assert "0.40" not in str(result.get("refused", "")), result.get("refused")
 
 
+def test_the_launch_state_carries_the_waiver_and_the_measured_collision():
+    """The persisted launch state must carry the waiver, not just the return value.
+
+    A6 entered Stage 3 outside the gate; the only durable trace is
+    ``.cache/genrec-mcp/stage3__<variant>.json``.  If the waiver is missing there the
+    run cannot be told apart from a normal pass after the fact, so
+    ``tool_stage3_start`` must copy it into the state it saves.
+    """
+    source = Path(server.__file__).read_text(encoding="utf-8")
+    start = source.index("    state = {")
+    end = source.index("\n    }", start)
+    block = source[start:end]
+    # The saved state must name both the waiver and the collision it waives; a bare
+    # pid/variant record cannot distinguish an out-of-gate run from a normal pass.
+    assert "collision_gate_waived" in block, block
+    assert '"collision": collision' in block or '"collision": collision,' in block, block
+
+
 if __name__ == "__main__":
     test_a_sid_above_the_forty_percent_limit_is_refused()
     test_a_sid_below_the_forty_percent_limit_passes_the_quality_gate()

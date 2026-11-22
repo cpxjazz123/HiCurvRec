@@ -2709,6 +2709,12 @@ def tool_stage3_start(item_sids: str | None = None, waive_collision: bool = Fals
         "harness": str(harness),
         "mode": launch_mode,
         "gpu_probe": stage3_probe,
+        # The waiver is part of the run's identity: without it in the saved state an
+        # out-of-gate launch (collision at or above the limit) is indistinguishable
+        # from a normal pass once the process is gone.
+        "collision": collision,
+        "collision_gate_waived": waived,
+        "sid_quality": quality,
     }
     save_state(f"stage3__{chosen_variant}", state)
     return {"started": True, **state, "protocol": protocol}
