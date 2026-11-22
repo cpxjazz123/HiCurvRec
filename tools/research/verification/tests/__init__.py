@@ -1,0 +1,1 @@
+"""Offline verification admission tests."""

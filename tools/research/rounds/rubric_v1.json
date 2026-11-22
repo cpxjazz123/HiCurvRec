@@ -1,0 +1,10 @@
+{
+  "version": "rank-2026-10-v1",
+  "description": "The reviewers rank the proposals instead of scoring them. Every reviewer orders the in-scope proposals, best first; the proposal with the best aggregate order is the round's mechanism. The order of the policy is a file, not code, so a decision can be reproduced later and a change of policy can never be mistaken for a change of evidence.",
+  "selection": {
+    "max_selected": 1,
+    "min_reviewers": 2,
+    "tie_break_order": ["scope", "total_rank", "first_places", "idea_id"],
+    "declared_hours_budget": 72.0
+  }
+}

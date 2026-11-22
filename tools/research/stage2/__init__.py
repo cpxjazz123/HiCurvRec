@@ -1,11 +1,8 @@
-"""The launch kernel the frozen baseline and every candidate import.
+"""The parts of a Stage 2 candidate that are not research.
 
-Only three things survive here after the 2026-11-22 retirement of the research
-orchestration: the repository-root/result-directory contract, the single four-rank
-launcher, and the anti-collapse assignment floor the launcher installs. The
-trainers import ``contract`` and ``launcher``; nothing else is needed to run a
-Stage 2 training, so nothing else is kept.
+The frozen contract (data, results, launcher, ports, hyperparameters) lives
+here, so that a candidate only carries the mechanism it studies.
 """
-from . import contract, launcher
+from . import checks, contract, launcher
 
-__all__ = ["contract", "launcher"]
+__all__ = ["checks", "contract", "launcher"]
