@@ -165,7 +165,16 @@ def measure_vectors(embeddings, layers, tables, tokens) -> tuple:
     return error / max(count, 1), effective_rank
 
 
-def evaluate(sid_path, embeddings_path=None, checkpoint_path=None) -> dict:
+def evaluate(sid_path, embeddings_path=None, checkpoint_path=None,
+             waive_collision: bool = False) -> dict:
+    """Judge one SID table for Stage 3 entry.
+
+    ``waive_collision`` exists for one purpose: the owner may deliberately run an arm
+    whose three-level collision is at or above ``COLLISION_LIMIT``, and the run has to
+    be measurable rather than silently impossible.  The waiver never turns the number
+    into a pass -- the verdict keeps the measured collision and adds
+    ``collision_gate_waived`` so every reader can see the arm entered outside the gate.
+    """
     sid_path = Path(sid_path)
     if sid_path.is_dir():
         sid_path = sid_path / "item_sids.json"
@@ -185,10 +194,19 @@ def evaluate(sid_path, embeddings_path=None, checkpoint_path=None) -> dict:
     collision = three_level_collision(payload)
     verdict["collision"] = collision
     if collision >= COLLISION_LIMIT:
-        verdict["reason"] = ("three-level collision %.6f is not below %.2f: %.1f%% of the items "
-                             "share an SID with another item"
-                             % (collision, COLLISION_LIMIT, 100 * collision))
-        return verdict
+        if not waive_collision:
+            verdict["reason"] = ("three-level collision %.6f is not below %.2f: %.1f%% of the items "
+                                 "share an SID with another item"
+                                 % (collision, COLLISION_LIMIT, 100 * collision))
+            return verdict
+        # Explicit owner waiver: the run continues so the arm can be measured, and the
+        # record keeps both the real number and the fact that the gate was stepped over.
+        verdict["collision_gate_waived"] = True
+        waiver_note = ("collision %.4f is NOT below %.2f -- waived by the caller; "
+                       "this arm enters Stage 3 outside the collision gate"
+                       % (collision, COLLISION_LIMIT))
+    else:
+        waiver_note = None
 
     checkpoint = Path(checkpoint_path) if checkpoint_path else sid_path.parent / "rqvae_best.pth"
     if not checkpoint.is_file():
@@ -248,19 +266,28 @@ def evaluate(sid_path, embeddings_path=None, checkpoint_path=None) -> dict:
                         % (effective_rank, EFFECTIVE_RANK_LIMIT))
     verdict["warnings"] = warnings
     verdict["allow"] = True
-    verdict["reason"] = ("collision %.4f < %.2f; measured quantisation error %.3f (band %.3f-%.3f) "
+    verdict["reason"] = ("%scollision %.4f < %.2f; measured quantisation error %.3f (band %.3f-%.3f) "
                          "and effective rank %.2f (limit %.1f)%s"
-                         % (collision, COLLISION_LIMIT, error, QUANT_ERROR_LOW, QUANT_ERROR_HIGH,
+                         % ("" if waiver_note is None else waiver_note + "; ",
+                            collision, COLLISION_LIMIT, error, QUANT_ERROR_LOW, QUANT_ERROR_HIGH,
                             effective_rank, EFFECTIVE_RANK_LIMIT,
                             "" if not warnings else "; WARNING " + " | ".join(warnings)))
     return verdict
 
 
 def main(argv: list) -> int:
-    if len(argv) != 2:
-        print(json.dumps({"allow": False, "reason": "usage: sid_quality <item_sids.json>"}))
+    """CLI: ``sid_quality <item_sids.json> [--waive-collision]``.
+
+    ``--waive-collision`` is the explicit owner override for an arm that must be
+    measured even though its three-level collision is at or above the limit.
+    """
+    args = [item for item in argv[1:] if item != "--waive-collision"]
+    waive = "--waive-collision" in argv[1:]
+    if len(args) != 1:
+        print(json.dumps({"allow": False,
+                          "reason": "usage: sid_quality <item_sids.json> [--waive-collision]"}))
         return 2
-    print(json.dumps(evaluate(argv[1])))
+    print(json.dumps(evaluate(args[0], waive_collision=waive)))
     return 0
 
 

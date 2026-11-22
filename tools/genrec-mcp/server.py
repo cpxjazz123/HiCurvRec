@@ -2541,15 +2541,18 @@ def record_sid_layers(sid: Path) -> dict:
     return {"passed": True, "report": str(target), "reused": False}
 
 
-def stage3_sid_quality(sid: Path) -> dict:
+def stage3_sid_quality(sid: Path, waive_collision: bool = False) -> dict:
     """Run the two-number Stage 3 entry gate in the project interpreter.
 
     The gate needs numpy and torch, which the MCP server (stdlib only) does not
     have, so it runs as its own process; a failed or unparsable measurement is a
     refusal, never a pass.
     """
+    command = [PY2, "-m", "tools.research.stage2.sid_quality", str(sid)]
+    if waive_collision:
+        command.append("--waive-collision")
     done = subprocess.run(
-        [PY2, "-m", "tools.research.stage2.sid_quality", str(sid)],
+        command,
         cwd=str(REPO), capture_output=True, text=True, timeout=1800,
         env={**os.environ, "PYTHONPATH": str(REPO)})
     text = (done.stdout or "").strip()
@@ -2564,7 +2567,7 @@ def stage3_sid_quality(sid: Path) -> dict:
     return verdict
 
 
-def tool_stage3_start(item_sids: str | None = None) -> dict:
+def tool_stage3_start(item_sids: str | None = None, waive_collision: bool = False) -> dict:
     """Start Stage3 for the SID path given by the caller -- the only argument.
 
     Nothing about the SID is hardcoded and nothing else is configurable: the path
@@ -2634,12 +2637,14 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
     }
     triples = {tuple(value[:3]) for value in payload.values() if hasattr(value, "__len__")}
     collision = 1.0 - (len(triples) / max(len(payload), 1))
-    quality = stage3_sid_quality(sid)
+    quality = stage3_sid_quality(sid, waive_collision=bool(waive_collision))
+    waived = bool(quality.get("collision_gate_waived"))
     if not quality.get("allow"):
         return {
             "started": False,
             "refused": "SID quality gate: " + str(quality.get("reason")),
             "collision": collision,
+            "collision_gate_waived": waived,
             "sid_quality": quality,
         }
     chosen_variant = derive_stage3_variant(sid_logical)
@@ -2650,6 +2655,7 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         "per_user_dump": STAGE3_PER_USER_DUMP,
         "layer_record": layer_record,
         "collision": collision,
+        "collision_gate_waived": waived,
         "sid_quality": quality,
     }
     protocol = frozen_protocol_check()
@@ -3207,9 +3213,9 @@ TOOLS: dict[str, dict] = {
     },
     "stage3_start": {
         "fn": tool_stage3_start,
-        "args": {"item_sids": "string"},
+        "args": {"item_sids": "string", "waive_collision": "boolean optional"},
         "description": "Start the Stage3 run for one Stage2 SID. The tool takes exactly one "
-        "argument: the item_sids.json path (a directory containing it is also accepted). The path "
+        "required argument: the item_sids.json path (a directory containing it is also accepted). The path "
         "must live under results/stage2_RQ-VAE/; the variant directory name is derived from its own "
         "location, and the launcher is generated for that call outside the repository, so nothing "
         "about the SID is hardcoded and the trainer receives no command-line arguments. The visible "
@@ -3217,7 +3223,10 @@ TOOLS: dict[str, dict] = {
         "single-card branch (train batch stays 4096 per process and the infer batch shrinks, so the "
         "global train batch is 4096 against the 4-card 16384). Refuses when the path is outside the "
         "Stage2 results root, when the frozen protocol differs, when no card is visible, or when a "
-        "stage3 process is already live.",
+        "stage3 process is already live. ``waive_collision`` is the explicit owner override for an arm "
+        "whose three-level collision is at or above the 0.40 gate: the run proceeds, the verdict keeps "
+        "the measured number and reports collision_gate_waived, so the arm is on record as an "
+        "out-of-gate measurement rather than a pass.",
     },
 }
 
