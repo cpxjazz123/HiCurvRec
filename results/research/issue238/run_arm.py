@@ -71,7 +71,10 @@ def test_final(arm: str):
 def main() -> int:
     arm = sys.argv[1]
     print(f"[{arm}] stage2_start", flush=True)
-    print(json.dumps(call("stage2_start", repr(str(REPO / "stage2_RQ-VAE" / arm)))), flush=True)
+    started = call("stage2_start", repr(str(REPO / "stage2_RQ-VAE" / arm)))
+    print(json.dumps(started), flush=True)
+    if not started.get("started"):
+        raise SystemExit(f"{arm}: stage2 refused: {started.get('refused')}")
     wait_sid(arm)
     print(f"[{arm}] stage3_start", flush=True)
     print(json.dumps(call("stage3_start", repr(str(sid_path(arm))))), flush=True)

@@ -1,0 +1,19 @@
+[
+ {
+  "arm": "TIGER_g237_struct_rq",
+  "refused": "SID quality gate: three-level collision 0.965470 is not below 0.40: 96.5% of the items share an SID with another item"
+ },
+ {
+  "arm": "TIGER_g237_sem_rq",
+  "collision": 0.17379102777890754,
+  "test": {
+   "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_g237_sem_rq/ckpt/Amazon_2023_Instruments/Nov-23-2026_02-51-10/HG_Rec_best.pth",
+   "predictions": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_g237_sem_rq/logs/Amazon_2023_Instruments/Nov-23-2026_02-51-10/predictions/rank0.jsonl",
+   "n_eval": 57439,
+   "test_recall@5": 0.03471508905099323,
+   "test_recall@10": 0.05278643430421839,
+   "test_ndcg@5": 0.02275545280293341,
+   "test_ndcg@10": 0.028583609727625456
+  }
+ }
+]
