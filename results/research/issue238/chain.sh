@@ -1,0 +1,31 @@
+#!/bin/bash
+# Wait for H's Stage2 to export, run its Stage3, then run J end to end.
+cd /fs04/ar57/wenyu/GeneRec || exit 1
+PY=/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9
+LOG=results/research/issue238/chain.log
+SID=results/stage2_RQ-VAE/TIGER_kappa_cost_rq/item_sids.json
+
+echo "=== wait H stage2 $(date -Iseconds)" >> "$LOG"
+for i in $(seq 240); do [ -f "$SID" ] && break; sleep 15; done
+[ -f "$SID" ] || { echo "H: no SID" >> "$LOG"; exit 1; }
+echo "=== H SID ready $(date -Iseconds)" >> "$LOG"
+
+"$PY" - "$SID" >> "$LOG" 2>&1 <<'PY'
+import json, subprocess, sys
+from pathlib import Path
+REPO = Path("/home/wlia0047/ar57/wenyu/GeneRec")
+code = ("import json,sys;sys.path.insert(0,%r);sys.path.insert(0,%r);import server;"
+        "print(json.dumps(server.tool_stage3_start(%r)))" % (str(REPO), str(REPO/"tools"/"genrec-mcp"), sys.argv[1]))
+done = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=3600)
+print("STAGE3_START", done.stdout[-600:], done.stderr[-400:])
+PY
+for i in $(seq 200); do
+  F=$(find results/stage3_T5Train/TIGER_kappa_cost_rq -name test_final.json 2>/dev/null | head -1)
+  [ -n "$F" ] && { cp "$F" results/research/issue238/TIGER_kappa_cost_rq_stage3_result.json; echo "H RESULT $(cat "$F")" >> "$LOG"; break; }
+  sleep 15
+done
+
+echo "=== J stage2+stage3 $(date -Iseconds)" >> "$LOG"
+"$PY" results/research/issue238/run_arm.py TIGER_kappa_sk_only_rq >> "$LOG" 2>&1
+echo "=== J exit=$? $(date -Iseconds)" >> "$LOG"
+echo "=== CHAIN COMPLETE ===" >> "$LOG"

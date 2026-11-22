@@ -366,3 +366,53 @@ smoke 日志确认 `per-process batch 4096`。全局 batch、seed、3000 epoch �
 
 **顺带修正的驱动缺陷**:`run_arm.py` 原先把 `started:false` 一律当失败,而 `smoke_pending` 也是
 `started:false`;现改为只在**真的被拒**(有 `refused`)时报错。
+
+## 17. 框架缺陷:正式启动模块被删,smoke 却被记为 PASS
+
+H 的第一次正式派发失败了,而工具返回的是 `smoke_pending` + 事后 `SMOKE_PASS`:
+
+```
+train_run.log:  /usr/bin/python3: No module named tools.research.stage2.bootstrap
+```
+
+### 根因
+
+`tools/genrec-mcp/server.py:2052` 的启动链是
+
+```python
+cmd = [sys.executable, "-m", "tools.research.stage2.bootstrap", "--entry", ..., "--port", ...]
+```
+
+而 `tools/research/stage2/bootstrap.py` 在 §94 的清理提交 `9ba91c7b` 中被删除。
+`git ls-files` 确认它从未被恢复,`git log -- tools/research/stage2/bootstrap.py` 只显示三处删除/恢复历史。
+**后果**:任何候选都会通过 smoke(单 epoch 真实梯度)然后什么都不启动;失败只落在
+`logs/train_run.log`,而 smoke 日志里的 `SMOKE_PASS` 会把这件事掩盖掉。
+
+### 修复
+
+补回 `bootstrap.py`,只负责 exec,不承担任何决策(树、卡、模式、端口都由 server 决定):
+
+| 布局 | 命令 |
+|---|---|
+| 单卡 | `<python> <entry>`,子进程环境带 `CUDA_VISIBLE_DEVICES=<card>` |
+| 四卡 | `<python> -m torch.distributed.run --standalone --nproc_per_node=4 --master_port=<port> <entry>` |
+
+回归测试 `tools/research/stage2/tests/test_bootstrap_launch.py`(5 项)钉住:模块可按 server
+实际传参 `-m` 调起、两种布局的 argv、子进程环境、缺入口时返回 2 而不是静默启动。
+
+### 修复后的实测
+
+epoch 305/3000 → 372/3000,`0.13–0.22 s/epoch`,3000 epoch 约 10 分钟完成。
+smoke 的 `cost_projection_hint` 曾给出 **26.9 小时**(上界),说明该外推把启动开销算了进去,
+不能当作真实预算。
+
+### 规则冲突(需记录,不擅自统一)
+
+| 出处 | 规则 |
+|---|---|
+| `launcher.py`(2026-11-22 owner) | Stage2 必须四卡 DDP;`assert_four_cards` 拒绝单卡 |
+| MCP Issue #220「一臂一卡」 | 分配单卡、`CUDA_VISIBLE_DEVICES=<card>`、全局 batch 仍 4096 |
+| CLAUDE.md §19d0b | 单卡分支允许,但全局 batch 必须 4096 |
+
+实际走的是单卡分支,且 `launcher` 那条路径当前不可达(它在 `bootstrap` 之后才会被用到)。
+本报告按**实际发生的运行方式**记录,不把它描述为 DDP4。
