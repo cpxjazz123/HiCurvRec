@@ -1,0 +1,537 @@
+{
+ "arm": "results/stage2_RQ-VAE/TIGER_sid_graphlet_rq",
+ "baseline": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE",
+ "control": "results/stage2_RQ-VAE/TIGER_sid_graphlet_rq",
+ "kinds": {
+  "chain": {
+   "test": {
+    "arm": {
+     "by_level": {
+      "1": 0.056291390728476824
+     },
+     "delta": 0.056291390728476824,
+     "far_share": 0.013245033112582781,
+     "instances": 151,
+     "kind": "chain",
+     "near_share": 0.0695364238410596,
+     "pairs": {
+      "AB": 0.09271523178807947,
+      "AC": 0.013245033112582781,
+      "BC": 0.046357615894039736
+     },
+     "satisfy_rate": 0.11920529801324503,
+     "tie_rate": 0.8675496688741722,
+     "violate_rate": 0.013245033112582781
+    },
+    "arm_minus_baseline": {
+     "ci_high": 0.018407748239036594,
+     "ci_low": -0.05417304421768707,
+     "difference": -0.016556291390728478,
+     "rounds": 4000,
+     "seed": 42
+    },
+    "arm_minus_control": {
+     "ci_high": 0.0,
+     "ci_low": 0.0,
+     "difference": 0.0,
+     "rounds": 4000,
+     "seed": 42
+    },
+    "baseline": {
+     "by_level": {
+      "1": 0.0728476821192053
+     },
+     "delta": 0.0728476821192053,
+     "far_share": 0.026490066225165563,
+     "instances": 151,
+     "kind": "chain",
+     "near_share": 0.09933774834437085,
+     "pairs": {
+      "AB": 0.11258278145695365,
+      "AC": 0.026490066225165563,
+      "BC": 0.08609271523178808
+     },
+     "satisfy_rate": 0.16556291390728478,
+     "tie_rate": 0.8079470198675497,
+     "violate_rate": 0.026490066225165563
+    },
+    "control": {
+     "by_level": {
+      "1": 0.056291390728476824
+     },
+     "delta": 0.056291390728476824,
+     "far_share": 0.013245033112582781,
+     "instances": 151,
+     "kind": "chain",
+     "near_share": 0.0695364238410596,
+     "pairs": {
+      "AB": 0.09271523178807947,
+      "AC": 0.013245033112582781,
+      "BC": 0.046357615894039736
+     },
+     "satisfy_rate": 0.11920529801324503,
+     "tie_rate": 0.8675496688741722,
+     "violate_rate": 0.013245033112582781
+    },
+    "delta_above_baseline": false,
+    "delta_above_control": false,
+    "instances": 151,
+    "level_gains_arm": {
+     "1": 0.046357615894039736,
+     "2": -0.026490066225165563,
+     "3": -0.019867549668874173
+    },
+    "level_gains_baseline": {
+     "1": 0.056291390728476824,
+     "2": -0.02980132450331126,
+     "3": -0.016556291390728478
+    },
+    "lower_bound_positive": false,
+    "near_not_below_baseline": false,
+    "satisfy_above_baseline": false
+   },
+   "validation": {
+    "arm": {
+     "by_level": {
+      "1": 0.0390625
+     },
+     "delta": 0.0390625,
+     "far_share": 0.010416666666666666,
+     "instances": 192,
+     "kind": "chain",
+     "near_share": 0.049479166666666664,
+     "pairs": {
+      "AB": 0.03125,
+      "AC": 0.010416666666666666,
+      "BC": 0.06770833333333333
+     },
+     "satisfy_rate": 0.08333333333333333,
+     "tie_rate": 0.9114583333333334,
+     "violate_rate": 0.005208333333333333
+    },
+    "arm_minus_baseline": {
+     "ci_high": 0.0391101670127819,
+     "ci_low": -0.02657069071847055,
+     "difference": 0.005208333333333333,
+     "rounds": 4000,
+     "seed": 42
+    },
+    "arm_minus_control": {
+     "ci_high": 0.0,
+     "ci_low": 0.0,
+     "difference": 0.0,
+     "rounds": 4000,
+     "seed": 42
+    },
+    "baseline": {
+     "by_level": {
+      "1": 0.033854166666666664
+     },
+     "delta": 0.033854166666666664,
+     "far_share": 0.036458333333333336,
+     "instances": 192,
+     "kind": "chain",
+     "near_share": 0.0703125,
+     "pairs": {
+      "AB": 0.0625,
+      "AC": 0.036458333333333336,
+      "BC": 0.078125
+     },
+     "satisfy_rate": 0.09895833333333333,
+     "tie_rate": 0.8802083333333334,
+     "violate_rate": 0.020833333333333332
+    },
+    "control": {
+     "by_level": {
+      "1": 0.0390625
+     },
+     "delta": 0.0390625,
+     "far_share": 0.010416666666666666,
+     "instances": 192,
+     "kind": "chain",
+     "near_share": 0.049479166666666664,
+     "pairs": {
+      "AB": 0.03125,
+      "AC": 0.010416666666666666,
+      "BC": 0.06770833333333333
+     },
+     "satisfy_rate": 0.08333333333333333,
+     "tie_rate": 0.9114583333333334,
+     "violate_rate": 0.005208333333333333
+    },
+    "delta_above_baseline": true,
+    "delta_above_control": false,
+    "instances": 192,
+    "level_gains_arm": {
+     "1": 0.036458333333333336,
+     "2": -0.03125,
+     "3": -0.005208333333333333
+    },
+    "level_gains_baseline": {
+     "1": 0.028645833333333332,
+     "2": -0.018229166666666664,
+     "3": -0.010416666666666666
+    },
+    "lower_bound_positive": false,
+    "near_not_below_baseline": false,
+    "satisfy_above_baseline": false
+   }
+  },
+  "fork": {
+   "test": {
+    "arm": {
+     "by_level": {
+      "1": -0.018292682926829267
+     },
+     "delta": -0.018292682926829267,
+     "far_share": 0.036585365853658534,
+     "instances": 164,
+     "kind": "fork",
+     "near_share": 0.018292682926829267,
+     "pairs": {
+      "AB": 0.03048780487804878,
+      "AC": 0.042682926829268296,
+      "BC": 0.018292682926829267
+     },
+     "satisfy_rate": 0.018292682926829267,
+     "tie_rate": 0.9146341463414634,
+     "violate_rate": 0.06707317073170732
+    },
+    "arm_minus_baseline": {
+     "ci_high": 0.04386113086770982,
+     "ci_low": 0.002940746474028208,
+     "difference": 0.021341463414634148,
+     "rounds": 4000,
+     "seed": 42
+    },
+    "arm_minus_control": {
+     "ci_high": 0.0,
+     "ci_low": 0.0,
+     "difference": 0.0,
+     "rounds": 4000,
+     "seed": 42
+    },
+    "baseline": {
+     "by_level": {
+      "1": -0.039634146341463415
+     },
+     "delta": -0.039634146341463415,
+     "far_share": 0.051829268292682924,
+     "instances": 164,
+     "kind": "fork",
+     "near_share": 0.012195121951219513,
+     "pairs": {
+      "AB": 0.04878048780487805,
+      "AC": 0.054878048780487805,
+      "BC": 0.012195121951219513
+     },
+     "satisfy_rate": 0.012195121951219513,
+     "tie_rate": 0.8841463414634146,
+     "violate_rate": 0.10365853658536585
+    },
+    "control": {
+     "by_level": {
+      "1": -0.018292682926829267
+     },
+     "delta": -0.018292682926829267,
+     "far_share": 0.036585365853658534,
+     "instances": 164,
+     "kind": "fork",
+     "near_share": 0.018292682926829267,
+     "pairs": {
+      "AB": 0.03048780487804878,
+      "AC": 0.042682926829268296,
+      "BC": 0.018292682926829267
+     },
+     "satisfy_rate": 0.018292682926829267,
+     "tie_rate": 0.9146341463414634,
+     "violate_rate": 0.06707317073170732
+    },
+    "delta_above_baseline": true,
+    "delta_above_control": false,
+    "instances": 164,
+    "level_gains_arm": {
+     "1": -0.01524390243902439,
+     "2": 0.009146341463414634,
+     "3": 0.006097560975609756
+    },
+    "level_gains_baseline": {
+     "1": -0.039634146341463415,
+     "2": 0.039634146341463415,
+     "3": 0.0
+    },
+    "lower_bound_positive": true,
+    "near_not_below_baseline": true,
+    "satisfy_above_baseline": true
+   },
+   "validation": {
+    "arm": {
+     "by_level": {
+      "1": -0.050335570469798654
+     },
+     "delta": -0.050335570469798654,
+     "far_share": 0.050335570469798654,
+     "instances": 149,
+     "kind": "fork",
+     "near_share": 0.0,
+     "pairs": {
+      "AB": 0.06711409395973154,
+      "AC": 0.03355704697986577,
+      "BC": 0.0
+     },
+     "satisfy_rate": 0.0,
+     "tie_rate": 0.912751677852349,
+     "violate_rate": 0.087248322147651
+    },
+    "arm_minus_baseline": {
+     "ci_high": 0.0,
+     "ci_low": -0.06177017501215362,
+     "difference": -0.030201342281879196,
+     "rounds": 4000,
+     "seed": 42
+    },
+    "arm_minus_control": {
+     "ci_high": 0.0,
+     "ci_low": 0.0,
+     "difference": 0.0,
+     "rounds": 4000,
+     "seed": 42
+    },
+    "baseline": {
+     "by_level": {
+      "1": -0.020134228187919462
+     },
+     "delta": -0.020134228187919462,
+     "far_share": 0.04697986577181208,
+     "instances": 149,
+     "kind": "fork",
+     "near_share": 0.026845637583892617,
+     "pairs": {
+      "AB": 0.053691275167785234,
+      "AC": 0.040268456375838924,
+      "BC": 0.026845637583892617
+     },
+     "satisfy_rate": 0.026845637583892617,
+     "tie_rate": 0.8859060402684564,
+     "violate_rate": 0.087248322147651
+    },
+    "control": {
+     "by_level": {
+      "1": -0.050335570469798654
+     },
+     "delta": -0.050335570469798654,
+     "far_share": 0.050335570469798654,
+     "instances": 149,
+     "kind": "fork",
+     "near_share": 0.0,
+     "pairs": {
+      "AB": 0.06711409395973154,
+      "AC": 0.03355704697986577,
+      "BC": 0.0
+     },
+     "satisfy_rate": 0.0,
+     "tie_rate": 0.912751677852349,
+     "violate_rate": 0.087248322147651
+    },
+    "delta_above_baseline": false,
+    "delta_above_control": false,
+    "instances": 149,
+    "level_gains_arm": {
+     "1": -0.0436241610738255,
+     "2": 0.030201342281879193,
+     "3": 0.013422818791946308
+    },
+    "level_gains_baseline": {
+     "1": -0.016778523489932886,
+     "2": 0.010067114093959731,
+     "3": 0.006711409395973154
+    },
+    "lower_bound_positive": false,
+    "near_not_below_baseline": false,
+    "satisfy_above_baseline": false
+   }
+  },
+  "merge": {
+   "test": {
+    "arm": {
+     "by_level": {
+      "1": -0.009433962264150943
+     },
+     "delta": -0.009433962264150943,
+     "far_share": 0.04716981132075472,
+     "instances": 159,
+     "kind": "merge",
+     "near_share": 0.03773584905660377,
+     "pairs": {
+      "AB": 0.025157232704402517,
+      "AC": 0.06918238993710692,
+      "BC": 0.03773584905660377
+     },
+     "satisfy_rate": 0.031446540880503145,
+     "tie_rate": 0.8867924528301887,
+     "violate_rate": 0.08176100628930817
+    },
+    "arm_minus_baseline": {
+     "ci_high": 0.06967451391536408,
+     "ci_low": -0.02108632944476318,
+     "difference": 0.025157232704402517,
+     "rounds": 4000,
+     "seed": 42
+    },
+    "arm_minus_control": {
+     "ci_high": 0.0,
+     "ci_low": 0.0,
+     "difference": 0.0,
+     "rounds": 4000,
+     "seed": 42
+    },
+    "baseline": {
+     "by_level": {
+      "1": -0.03459119496855346
+     },
+     "delta": -0.03459119496855346,
+     "far_share": 0.09119496855345911,
+     "instances": 159,
+     "kind": "merge",
+     "near_share": 0.05660377358490566,
+     "pairs": {
+      "AB": 0.06289308176100629,
+      "AC": 0.11949685534591195,
+      "BC": 0.05660377358490566
+     },
+     "satisfy_rate": 0.0440251572327044,
+     "tie_rate": 0.8176100628930818,
+     "violate_rate": 0.13836477987421383
+    },
+    "control": {
+     "by_level": {
+      "1": -0.009433962264150943
+     },
+     "delta": -0.009433962264150943,
+     "far_share": 0.04716981132075472,
+     "instances": 159,
+     "kind": "merge",
+     "near_share": 0.03773584905660377,
+     "pairs": {
+      "AB": 0.025157232704402517,
+      "AC": 0.06918238993710692,
+      "BC": 0.03773584905660377
+     },
+     "satisfy_rate": 0.031446540880503145,
+     "tie_rate": 0.8867924528301887,
+     "violate_rate": 0.08176100628930817
+    },
+    "delta_above_baseline": true,
+    "delta_above_control": false,
+    "instances": 159,
+    "level_gains_arm": {
+     "1": -0.009433962264150943,
+     "2": 0.009433962264150943,
+     "3": 0.0
+    },
+    "level_gains_baseline": {
+     "1": -0.025157232704402517,
+     "2": 0.012578616352201259,
+     "3": 0.0031446540880503155
+    },
+    "lower_bound_positive": false,
+    "near_not_below_baseline": false,
+    "satisfy_above_baseline": false
+   },
+   "validation": {
+    "arm": {
+     "by_level": {
+      "1": -0.024691358024691357
+     },
+     "delta": -0.024691358024691357,
+     "far_share": 0.06172839506172839,
+     "instances": 162,
+     "kind": "merge",
+     "near_share": 0.037037037037037035,
+     "pairs": {
+      "AB": 0.07407407407407407,
+      "AC": 0.04938271604938271,
+      "BC": 0.037037037037037035
+     },
+     "satisfy_rate": 0.018518518518518517,
+     "tie_rate": 0.8950617283950617,
+     "violate_rate": 0.08641975308641975
+    },
+    "arm_minus_baseline": {
+     "ci_high": 0.031092130829015557,
+     "ci_low": -0.04093567251461988,
+     "difference": -0.0030864197530864196,
+     "rounds": 4000,
+     "seed": 42
+    },
+    "arm_minus_control": {
+     "ci_high": 0.0,
+     "ci_low": 0.0,
+     "difference": 0.0,
+     "rounds": 4000,
+     "seed": 42
+    },
+    "baseline": {
+     "by_level": {
+      "1": -0.021604938271604937
+     },
+     "delta": -0.021604938271604937,
+     "far_share": 0.05864197530864197,
+     "instances": 162,
+     "kind": "merge",
+     "near_share": 0.037037037037037035,
+     "pairs": {
+      "AB": 0.06172839506172839,
+      "AC": 0.05555555555555555,
+      "BC": 0.037037037037037035
+     },
+     "satisfy_rate": 0.018518518518518517,
+     "tie_rate": 0.9135802469135802,
+     "violate_rate": 0.06790123456790123
+    },
+    "control": {
+     "by_level": {
+      "1": -0.024691358024691357
+     },
+     "delta": -0.024691358024691357,
+     "far_share": 0.06172839506172839,
+     "instances": 162,
+     "kind": "merge",
+     "near_share": 0.037037037037037035,
+     "pairs": {
+      "AB": 0.07407407407407407,
+      "AC": 0.04938271604938271,
+      "BC": 0.037037037037037035
+     },
+     "satisfy_rate": 0.018518518518518517,
+     "tie_rate": 0.8950617283950617,
+     "violate_rate": 0.08641975308641975
+    },
+    "delta_above_baseline": false,
+    "delta_above_control": false,
+    "instances": 162,
+    "level_gains_arm": {
+     "1": -0.030864197530864196,
+     "2": 0.043209876543209874,
+     "3": -0.012345679012345678
+    },
+    "level_gains_baseline": {
+     "1": -0.012345679012345678,
+     "2": -0.006172839506172839,
+     "3": 0.018518518518518517
+    },
+    "lower_bound_positive": false,
+    "near_not_below_baseline": true,
+    "satisfy_above_baseline": false
+   }
+  }
+ },
+ "test_summary": {
+  "all_deltas_above_baseline": false,
+  "all_deltas_above_control": false,
+  "all_near_not_below_baseline": false,
+  "all_satisfy_above_baseline": false,
+  "fork_reversed": false,
+  "simultaneous_lower_bounds_positive": false
+ }
+}
