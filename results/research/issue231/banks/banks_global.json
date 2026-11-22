@@ -1,0 +1,70 @@
+{
+ "audit": {
+  "cross_structure": {
+   "chain\u2229fork": 0,
+   "chain\u2229merge": 0,
+   "fork\u2229merge": 0
+  },
+  "isolated": true,
+  "supervision_vs_eval": {
+   "chain": 0,
+   "fork": 0,
+   "merge": 0
+  },
+  "within_split": {
+   "chain": {
+    "validation\u2229test": 0
+   },
+   "fork": {
+    "validation\u2229test": 0
+   },
+   "merge": {
+    "validation\u2229test": 0
+   }
+  }
+ },
+ "counts": {
+  "chain": {
+   "supervision": 1138,
+   "test": 151,
+   "validation": 192
+  },
+  "fork": {
+   "supervision": 1059,
+   "test": 164,
+   "validation": 149
+  },
+  "merge": {
+   "supervision": 1189,
+   "test": 159,
+   "validation": 162
+  }
+ },
+ "dropped": {
+  "chain": 15373,
+  "fork": 15441,
+  "merge": 15244
+ },
+ "hashes": {
+  "chain_supervision": "fc3792d78db807188982dee18ff1f556be9a5b64af6b1a1975ee2d6cc20e2dfc",
+  "chain_test": "6e2e4401d88a05c84b02e2a5ecc57289b1fadc223a75e4aa8efb8cec187bccb1",
+  "chain_validation": "d182e12ed236a8f23b962af0683e511763088abc63d6d2c0b44597fdda19ae8e",
+  "fork_supervision": "c1f972f28d52d1912285c53e0e047c25e7d999bfc73dee540a0ecd7b5257afa7",
+  "fork_test": "c635b83eb47e6e1968fc31c57476f5d044df7dd1a0235c1996efb1d333e05b01",
+  "fork_validation": "0df1a03821fb7348f185701181a338a2177ed3f00a38baecc0dcae76f9559ab9",
+  "merge_supervision": "7a1f1bae22dddc9c28a2d5bbf45d4a45f7e76bdf8980bc6dc00adc5d10b866b0",
+  "merge_test": "dae24ce62036d9d4c09f436d35392321f3aef58644e8ad4548358f3b34491a99",
+  "merge_validation": "ffdcf5ccc7398a763ba8b0e2264af043d015e698c5d41869ff344d1108a504ac"
+ },
+ "removed_by_claim": {
+  "chain": 3146,
+  "fork": 3187,
+  "merge": 3246
+ },
+ "seed": 42,
+ "shares": [
+  0.6,
+  0.2,
+  0.2
+ ]
+}
