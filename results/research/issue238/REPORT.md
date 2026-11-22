@@ -98,3 +98,12 @@ $PY results/research/issue238_run_g1.py    # Stage2 G1(四卡 3000 epoch)
 $PY results/research/issue238_run_g2.py    # Stage2 G2
 $PY results/research/issue238/run_stage3.py  # 两个 Stage3 串行
 ```
+
+## 7. 证据哈希
+
+| 臂 | 表 | sha256(前16) | 字节 |
+|---|---|---|---|
+| TIGER_g237_struct_rq | item_sids.json | b76cd843b70cce01 | 1317553 |
+| TIGER_g237_struct_rq | item_sids.trainer.json | d41a8877b7ca5a18 | 1259084 |
+| TIGER_g237_sem_rq | item_sids.json | e992b716bbf95d68 | 1258845 |
+| TIGER_g237_sem_rq | item_sids.trainer.json | 60dfafcefb8ece11 | 1261237 |
