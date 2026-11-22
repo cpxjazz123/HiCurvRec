@@ -1,0 +1,64 @@
+{
+ "embedding": {
+  "path": "enhanced_768.npy",
+  "sha256": "d7a3153468bc4221b770550b5fc8c70e5ffc95dd1291b4d1ac1e9116ddd4be5e",
+  "shape": [
+   24587,
+   768
+  ],
+  "dtype": "float32"
+ },
+ "expert_tangent": {
+  "sha256": "7dbf3de2ad91cac2da763dedd12dfb471fc1fc4a0086db28d2268b2b62061a5d",
+  "shape": [
+   24587,
+   640
+  ]
+ },
+ "gating_weights": {
+  "sha256": "fd5e0831116d36caa567f1847e8df2898dfc772d35c3d9088799bcaad9e4085f",
+  "shape": [
+   24587,
+   5
+  ]
+ },
+ "item_ids": {
+  "sha256": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+  "rows": 24587
+ },
+ "checkpoint": {
+  "path": "best_checkpoint.pt",
+  "sha256": "c6a0109fa8e76075f04b036a52a742c38e66c02524766ccee243c535a58fb138"
+ },
+ "original_embedding": {
+  "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+  "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+  "note": "read only; the enhanced vector is written to a separate file"
+ },
+ "graph": {
+  "sha256": "6dbac4545f23779c26f95e3f128daeb916079f53fad7ec159dd8bfb08e7121e8"
+ },
+ "curvatures": [
+  -3.1417016983032227,
+  -1.140128493309021,
+  0.0,
+  1.2830818891525269,
+  3.387448787689209
+ ],
+ "how_it_is_built": {
+  "per_expert": "two \u03ba-GCN layers; encode() returns logmap0(z), the tangent coordinates at the origin, which is the common space",
+  "concat": "5 experts x 128 dims = 640, layer-normalised by Experts.norm",
+  "projection": "Linear(640 -> 768) trained jointly with the link-prediction and distortion objectives, so it is supervised, not a random drop of structure"
+ },
+ "checks": {
+  "rows": 24587,
+  "dim": 768,
+  "expected_rows": 24587,
+  "all_finite": true,
+  "item_order_matches": true,
+  "unique_rows": 24587,
+  "max_recompute_delta": 0.0,
+  "original_untouched": true,
+  "passed": true
+ }
+}

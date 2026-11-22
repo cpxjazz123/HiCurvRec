@@ -1,0 +1,44 @@
+{
+ "best_epoch": 400,
+ "best_val_ap": 0.5901961578142959,
+ "test": {
+  "auc": 0.6321125626564026,
+  "ap": 0.5968254887340969,
+  "pos_mean": 0.6523786783218384,
+  "neg_mean": 0.5182201266288757
+ },
+ "curvatures_final": [
+  -3.1417019367218018,
+  -1.1401286125183105,
+  0.0,
+  1.2830818891525269,
+  3.387448787689209
+ ],
+ "config": {
+  "hidden_dim": 256,
+  "expert_dim": 128,
+  "gating_hidden": 64,
+  "gating_out": 32,
+  "out_dim": 768,
+  "learning_rate": 0.001,
+  "weight_decay": 1e-06,
+  "coef_dis": 0.1,
+  "coef_sem": 1.0,
+  "epochs": 400,
+  "eval_every": 5,
+  "patience": 60,
+  "decoder_r": 2.0,
+  "decoder_t": 1.0,
+  "seed": 42
+ },
+ "split_sizes": {
+  "train": 264929,
+  "val": 25231,
+  "test": 25231
+ },
+ "graph_sha256": "6dbac4545f23779c26f95e3f128daeb916079f53fad7ec159dd8bfb08e7121e8",
+ "epochs_run": 400,
+ "train_s": 64.2,
+ "peak_rss_mb": 4245.5,
+ "device": "cuda"
+}
