@@ -73,7 +73,9 @@ def main() -> int:
     print(f"[{arm}] stage2_start", flush=True)
     started = call("stage2_start", repr(str(REPO / "stage2_RQ-VAE" / arm)))
     print(json.dumps(started), flush=True)
-    if not started.get("started"):
+    # `smoke_pending` is a launch: the worker is running the one-epoch smoke and the formal
+    # training follows it.  Only an explicit refusal stops the chain.
+    if not started.get("started") and started.get("refused"):
         raise SystemExit(f"{arm}: stage2 refused: {started.get('refused')}")
     wait_sid(arm)
     print(f"[{arm}] stage3_start", flush=True)

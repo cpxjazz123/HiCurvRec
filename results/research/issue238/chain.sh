@@ -4,11 +4,14 @@ cd /fs04/ar57/wenyu/GeneRec || exit 1
 PY=/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9
 LOG=results/research/issue238/chain.log
 SID=results/stage2_RQ-VAE/TIGER_kappa_cost_rq/item_sids.json
+MANIFEST=results/stage2_RQ-VAE/TIGER_kappa_cost_rq/export_manifest.json
 
 echo "=== wait H stage2 $(date -Iseconds)" >> "$LOG"
-for i in $(seq 240); do [ -f "$SID" ] && break; sleep 15; done
-[ -f "$SID" ] || { echo "H: no SID" >> "$LOG"; exit 1; }
-echo "=== H SID ready $(date -Iseconds)" >> "$LOG"
+# Wait for the export gate, not the trainer: the gate rewrites item_sids.json from the
+# checkpoint and Stage 3 must read the rewritten table (CLAUDE.md 67).
+for i in $(seq 240); do [ -f "$MANIFEST" ] && [ -f "$SID" ] && break; sleep 15; done
+[ -f "$MANIFEST" ] || { echo "H: no export manifest" >> "$LOG"; exit 1; }
+echo "=== H export ready: $(python3 -c 'import json;d=json.load(open("results/stage2_RQ-VAE/TIGER_kappa_cost_rq/export_manifest.json"));print("tokens_match",d.get("tokens_match"),"differing",d.get("original_differing_items"))') $(date -Iseconds)" >> "$LOG"
 
 "$PY" - "$SID" >> "$LOG" 2>&1 <<'PY'
 import json, subprocess, sys
