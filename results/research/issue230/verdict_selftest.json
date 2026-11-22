@@ -1,0 +1,311 @@
+{
+ "all_deltas_above_baseline": false,
+ "all_deltas_above_control": false,
+ "all_near_not_below_baseline": true,
+ "all_satisfy_rates_above_baseline": false,
+ "arm": "results/stage2_RQ-VAE/TIGER_RQ-VAE",
+ "baseline": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE",
+ "collision_not_above_baseline": true,
+ "control": "results/stage2_RQ-VAE/TIGER_RQ-VAE",
+ "fork_reversed": false,
+ "kinds": {
+  "chain": {
+   "arm": {
+    "by_level": {
+     "1": 0.042962356792144024
+    },
+    "delta": 0.042962356792144024,
+    "far_share": 0.031914893617021274,
+    "instances": 1222,
+    "kind": "chain",
+    "near_share": 0.0748772504091653,
+    "pairs": {
+     "AB": 0.06710310965630115,
+     "AC": 0.031914893617021274,
+     "BC": 0.08265139116202946
+    },
+    "satisfy_rate": 0.11783960720130933,
+    "tie_rate": 0.8600654664484452,
+    "violate_rate": 0.0220949263502455
+   },
+   "arm_minus_baseline": {
+    "ci_high": 0.0,
+    "ci_low": 0.0,
+    "difference": 0.0,
+    "rounds": 4000,
+    "seed": 42
+   },
+   "arm_minus_control": {
+    "ci_high": 0.0,
+    "ci_low": 0.0,
+    "difference": 0.0,
+    "rounds": 4000,
+    "seed": 42
+   },
+   "baseline": {
+    "by_level": {
+     "1": 0.042962356792144024
+    },
+    "delta": 0.042962356792144024,
+    "far_share": 0.031914893617021274,
+    "instances": 1222,
+    "kind": "chain",
+    "near_share": 0.0748772504091653,
+    "pairs": {
+     "AB": 0.06710310965630115,
+     "AC": 0.031914893617021274,
+     "BC": 0.08265139116202946
+    },
+    "satisfy_rate": 0.11783960720130933,
+    "tie_rate": 0.8600654664484452,
+    "violate_rate": 0.0220949263502455
+   },
+   "control": {
+    "by_level": {
+     "1": 0.042962356792144024
+    },
+    "delta": 0.042962356792144024,
+    "far_share": 0.031914893617021274,
+    "instances": 1222,
+    "kind": "chain",
+    "near_share": 0.0748772504091653,
+    "pairs": {
+     "AB": 0.06710310965630115,
+     "AC": 0.031914893617021274,
+     "BC": 0.08265139116202946
+    },
+    "satisfy_rate": 0.11783960720130933,
+    "tie_rate": 0.8600654664484452,
+    "violate_rate": 0.0220949263502455
+   },
+   "delta_above_baseline": false,
+   "delta_above_control": false,
+   "instances": 1222,
+   "lower_bound_positive": false,
+   "near_not_below_baseline": true,
+   "satisfy_above_baseline": false
+  },
+  "fork": {
+   "arm": {
+    "by_level": {
+     "1": -0.06535532994923858
+    },
+    "delta": -0.06535532994923858,
+    "far_share": 0.08819796954314721,
+    "instances": 788,
+    "kind": "fork",
+    "near_share": 0.02284263959390863,
+    "pairs": {
+     "AB": 0.09517766497461928,
+     "AC": 0.08121827411167512,
+     "BC": 0.02284263959390863
+    },
+    "satisfy_rate": 0.015228426395939087,
+    "tie_rate": 0.8401015228426396,
+    "violate_rate": 0.1446700507614213
+   },
+   "arm_minus_baseline": {
+    "ci_high": 0.0,
+    "ci_low": 0.0,
+    "difference": 0.0,
+    "rounds": 4000,
+    "seed": 42
+   },
+   "arm_minus_control": {
+    "ci_high": 0.0,
+    "ci_low": 0.0,
+    "difference": 0.0,
+    "rounds": 4000,
+    "seed": 42
+   },
+   "baseline": {
+    "by_level": {
+     "1": -0.06535532994923858
+    },
+    "delta": -0.06535532994923858,
+    "far_share": 0.08819796954314721,
+    "instances": 788,
+    "kind": "fork",
+    "near_share": 0.02284263959390863,
+    "pairs": {
+     "AB": 0.09517766497461928,
+     "AC": 0.08121827411167512,
+     "BC": 0.02284263959390863
+    },
+    "satisfy_rate": 0.015228426395939087,
+    "tie_rate": 0.8401015228426396,
+    "violate_rate": 0.1446700507614213
+   },
+   "control": {
+    "by_level": {
+     "1": -0.06535532994923858
+    },
+    "delta": -0.06535532994923858,
+    "far_share": 0.08819796954314721,
+    "instances": 788,
+    "kind": "fork",
+    "near_share": 0.02284263959390863,
+    "pairs": {
+     "AB": 0.09517766497461928,
+     "AC": 0.08121827411167512,
+     "BC": 0.02284263959390863
+    },
+    "satisfy_rate": 0.015228426395939087,
+    "tie_rate": 0.8401015228426396,
+    "violate_rate": 0.1446700507614213
+   },
+   "delta_above_baseline": false,
+   "delta_above_control": false,
+   "instances": 788,
+   "lower_bound_positive": false,
+   "near_not_below_baseline": true,
+   "satisfy_above_baseline": false
+  },
+  "merge": {
+   "arm": {
+    "by_level": {
+     "1": -0.05214723926380368
+    },
+    "delta": -0.05214723926380368,
+    "far_share": 0.081799591002045,
+    "instances": 978,
+    "kind": "merge",
+    "near_share": 0.02965235173824131,
+    "pairs": {
+     "AB": 0.07259713701431493,
+     "AC": 0.09100204498977506,
+     "BC": 0.02965235173824131
+    },
+    "satisfy_rate": 0.019427402862985686,
+    "tie_rate": 0.84560327198364,
+    "violate_rate": 0.13496932515337423
+   },
+   "arm_minus_baseline": {
+    "ci_high": 0.0,
+    "ci_low": 0.0,
+    "difference": 0.0,
+    "rounds": 4000,
+    "seed": 42
+   },
+   "arm_minus_control": {
+    "ci_high": 0.0,
+    "ci_low": 0.0,
+    "difference": 0.0,
+    "rounds": 4000,
+    "seed": 42
+   },
+   "baseline": {
+    "by_level": {
+     "1": -0.05214723926380368
+    },
+    "delta": -0.05214723926380368,
+    "far_share": 0.081799591002045,
+    "instances": 978,
+    "kind": "merge",
+    "near_share": 0.02965235173824131,
+    "pairs": {
+     "AB": 0.07259713701431493,
+     "AC": 0.09100204498977506,
+     "BC": 0.02965235173824131
+    },
+    "satisfy_rate": 0.019427402862985686,
+    "tie_rate": 0.84560327198364,
+    "violate_rate": 0.13496932515337423
+   },
+   "control": {
+    "by_level": {
+     "1": -0.05214723926380368
+    },
+    "delta": -0.05214723926380368,
+    "far_share": 0.081799591002045,
+    "instances": 978,
+    "kind": "merge",
+    "near_share": 0.02965235173824131,
+    "pairs": {
+     "AB": 0.07259713701431493,
+     "AC": 0.09100204498977506,
+     "BC": 0.02965235173824131
+    },
+    "satisfy_rate": 0.019427402862985686,
+    "tie_rate": 0.84560327198364,
+    "violate_rate": 0.13496932515337423
+   },
+   "delta_above_baseline": false,
+   "delta_above_control": false,
+   "instances": 978,
+   "lower_bound_positive": false,
+   "near_not_below_baseline": true,
+   "satisfy_above_baseline": false
+  }
+ },
+ "recon_ratio_vs_baseline": null,
+ "recon_within_5pct": null,
+ "reconstruction": {
+  "arm": {
+   "epochs": 0,
+   "recon_final": null
+  },
+  "baseline": {
+   "epochs": 0,
+   "recon_final": null
+  },
+  "control": {
+   "epochs": 0,
+   "recon_final": null
+  }
+ },
+ "sid_health": {
+  "arm": {
+   "collision": 0.16927644690283483,
+   "conditional_entropy_bits": {
+    "1": 6.958990494049653,
+    "2": 3.98581438131777,
+    "3": 0.8532637226593431
+   },
+   "duplicate_item_share": 0.16927644690283483,
+   "effective_codes_per_level": {
+    "1": 1,
+    "2": 249,
+    "3": 7374
+   },
+   "items": 24587,
+   "largest_bucket": 24,
+   "unique_sid": 20425
+  },
+  "baseline": {
+   "collision": 0.16927644690283483,
+   "conditional_entropy_bits": {
+    "1": 6.958990494049653,
+    "2": 3.98581438131777,
+    "3": 0.8532637226593431
+   },
+   "duplicate_item_share": 0.16927644690283483,
+   "effective_codes_per_level": {
+    "1": 1,
+    "2": 249,
+    "3": 7374
+   },
+   "items": 24587,
+   "largest_bucket": 24,
+   "unique_sid": 20425
+  },
+  "control": {
+   "collision": 0.16927644690283483,
+   "conditional_entropy_bits": {
+    "1": 6.958990494049653,
+    "2": 3.98581438131777,
+    "3": 0.8532637226593431
+   },
+   "duplicate_item_share": 0.16927644690283483,
+   "effective_codes_per_level": {
+    "1": 1,
+    "2": 249,
+    "3": 7374
+   },
+   "items": 24587,
+   "largest_bucket": 24,
+   "unique_sid": 20425
+  }
+ },
+ "simultaneous_lower_bounds_positive": false
+}

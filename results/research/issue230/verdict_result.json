@@ -1,0 +1,311 @@
+{
+ "all_deltas_above_baseline": false,
+ "all_deltas_above_control": false,
+ "all_near_not_below_baseline": false,
+ "all_satisfy_rates_above_baseline": false,
+ "arm": "results/stage2_RQ-VAE/TIGER_graphlet_wide_l1_rq",
+ "baseline": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE",
+ "collision_not_above_baseline": true,
+ "control": "results/stage2_RQ-VAE/TIGER_graphlet_prefix_shuffled_rq",
+ "fork_reversed": false,
+ "kinds": {
+  "chain": {
+   "arm": {
+    "by_level": {
+     "1": 0.013911620294599018
+    },
+    "delta": 0.013911620294599018,
+    "far_share": 0.006546644844517185,
+    "instances": 1222,
+    "kind": "chain",
+    "near_share": 0.020458265139116204,
+    "pairs": {
+     "AB": 0.011456628477905073,
+     "AC": 0.006546644844517185,
+     "BC": 0.029459901800327332
+    },
+    "satisfy_rate": 0.03764320785597381,
+    "tie_rate": 0.955810147299509,
+    "violate_rate": 0.006546644844517185
+   },
+   "arm_minus_baseline": {
+    "ci_high": -0.011235757934161246,
+    "ci_low": -0.047492821812716614,
+    "difference": -0.02905073649754501,
+    "rounds": 4000,
+    "seed": 42
+   },
+   "arm_minus_control": {
+    "ci_high": -0.0023528582485625826,
+    "ci_low": -0.013623218552213087,
+    "difference": -0.007774140752864157,
+    "rounds": 4000,
+    "seed": 42
+   },
+   "baseline": {
+    "by_level": {
+     "1": 0.042962356792144024
+    },
+    "delta": 0.042962356792144024,
+    "far_share": 0.031914893617021274,
+    "instances": 1222,
+    "kind": "chain",
+    "near_share": 0.0748772504091653,
+    "pairs": {
+     "AB": 0.06710310965630115,
+     "AC": 0.031914893617021274,
+     "BC": 0.08265139116202946
+    },
+    "satisfy_rate": 0.11783960720130933,
+    "tie_rate": 0.8600654664484452,
+    "violate_rate": 0.0220949263502455
+   },
+   "control": {
+    "by_level": {
+     "1": 0.021685761047463174
+    },
+    "delta": 0.021685761047463174,
+    "far_share": 0.0032733224222585926,
+    "instances": 1222,
+    "kind": "chain",
+    "near_share": 0.02495908346972177,
+    "pairs": {
+     "AB": 0.013911620294599018,
+     "AC": 0.0032733224222585926,
+     "BC": 0.03600654664484452
+    },
+    "satisfy_rate": 0.0425531914893617,
+    "tie_rate": 0.9541734860883797,
+    "violate_rate": 0.0032733224222585926
+   },
+   "delta_above_baseline": false,
+   "delta_above_control": false,
+   "instances": 1222,
+   "lower_bound_positive": false,
+   "near_not_below_baseline": false,
+   "satisfy_above_baseline": false
+  },
+  "fork": {
+   "arm": {
+    "by_level": {
+     "1": -0.030456852791878174
+    },
+    "delta": -0.030456852791878174,
+    "far_share": 0.03426395939086294,
+    "instances": 788,
+    "kind": "fork",
+    "near_share": 0.0038071065989847717,
+    "pairs": {
+     "AB": 0.03426395939086294,
+     "AC": 0.03426395939086294,
+     "BC": 0.0038071065989847717
+    },
+    "satisfy_rate": 0.0,
+    "tie_rate": 0.9403553299492385,
+    "violate_rate": 0.05964467005076142
+   },
+   "arm_minus_baseline": {
+    "ci_high": 0.05668139730639732,
+    "ci_low": 0.013923679967381433,
+    "difference": 0.03489847715736041,
+    "rounds": 4000,
+    "seed": 42
+   },
+   "arm_minus_control": {
+    "ci_high": 0.007308472865465998,
+    "ci_low": -0.014215080346106305,
+    "difference": -0.0038071065989847717,
+    "rounds": 4000,
+    "seed": 42
+   },
+   "baseline": {
+    "by_level": {
+     "1": -0.06535532994923858
+    },
+    "delta": -0.06535532994923858,
+    "far_share": 0.08819796954314721,
+    "instances": 788,
+    "kind": "fork",
+    "near_share": 0.02284263959390863,
+    "pairs": {
+     "AB": 0.09517766497461928,
+     "AC": 0.08121827411167512,
+     "BC": 0.02284263959390863
+    },
+    "satisfy_rate": 0.015228426395939087,
+    "tie_rate": 0.8401015228426396,
+    "violate_rate": 0.1446700507614213
+   },
+   "control": {
+    "by_level": {
+     "1": -0.0266497461928934
+    },
+    "delta": -0.0266497461928934,
+    "far_share": 0.030456852791878174,
+    "instances": 788,
+    "kind": "fork",
+    "near_share": 0.0038071065989847717,
+    "pairs": {
+     "AB": 0.027918781725888325,
+     "AC": 0.03299492385786802,
+     "BC": 0.0038071065989847717
+    },
+    "satisfy_rate": 0.0012690355329949238,
+    "tie_rate": 0.949238578680203,
+    "violate_rate": 0.04949238578680203
+   },
+   "delta_above_baseline": true,
+   "delta_above_control": false,
+   "instances": 788,
+   "lower_bound_positive": true,
+   "near_not_below_baseline": false,
+   "satisfy_above_baseline": false
+  },
+  "merge": {
+   "arm": {
+    "by_level": {
+     "1": -0.01278118609406953
+    },
+    "delta": -0.01278118609406953,
+    "far_share": 0.023006134969325152,
+    "instances": 978,
+    "kind": "merge",
+    "near_share": 0.010224948875255624,
+    "pairs": {
+     "AB": 0.018404907975460124,
+     "AC": 0.027607361963190184,
+     "BC": 0.010224948875255624
+    },
+    "satisfy_rate": 0.0081799591002045,
+    "tie_rate": 0.9498977505112475,
+    "violate_rate": 0.041922290388548056
+   },
+   "arm_minus_baseline": {
+    "ci_high": 0.05737039418780759,
+    "ci_low": 0.021275768933965385,
+    "difference": 0.03936605316973415,
+    "rounds": 4000,
+    "seed": 42
+   },
+   "arm_minus_control": {
+    "ci_high": 0.007063213113767051,
+    "ci_low": -0.007194834683434355,
+    "difference": 0.0,
+    "rounds": 4000,
+    "seed": 42
+   },
+   "baseline": {
+    "by_level": {
+     "1": -0.05214723926380368
+    },
+    "delta": -0.05214723926380368,
+    "far_share": 0.081799591002045,
+    "instances": 978,
+    "kind": "merge",
+    "near_share": 0.02965235173824131,
+    "pairs": {
+     "AB": 0.07259713701431493,
+     "AC": 0.09100204498977506,
+     "BC": 0.02965235173824131
+    },
+    "satisfy_rate": 0.019427402862985686,
+    "tie_rate": 0.84560327198364,
+    "violate_rate": 0.13496932515337423
+   },
+   "control": {
+    "by_level": {
+     "1": -0.01278118609406953
+    },
+    "delta": -0.01278118609406953,
+    "far_share": 0.023006134969325152,
+    "instances": 978,
+    "kind": "merge",
+    "near_share": 0.010224948875255624,
+    "pairs": {
+     "AB": 0.016359918200409,
+     "AC": 0.02965235173824131,
+     "BC": 0.010224948875255624
+    },
+    "satisfy_rate": 0.0081799591002045,
+    "tie_rate": 0.950920245398773,
+    "violate_rate": 0.0408997955010225
+   },
+   "delta_above_baseline": true,
+   "delta_above_control": false,
+   "instances": 978,
+   "lower_bound_positive": true,
+   "near_not_below_baseline": false,
+   "satisfy_above_baseline": false
+  }
+ },
+ "recon_ratio_vs_baseline": 0.9398443808506058,
+ "recon_within_5pct": true,
+ "reconstruction": {
+  "arm": {
+   "epoch": 3000,
+   "recon_final": 6.258266512304544e-05
+  },
+  "baseline": {
+   "epoch": 3000,
+   "recon_final": 6.65883271722123e-05
+  },
+  "control": {
+   "epoch": 3000,
+   "recon_final": 6.280764500843361e-05
+  }
+ },
+ "sid_health": {
+  "arm": {
+   "collision": 0.05511042420791475,
+   "conditional_entropy_bits": {
+    "1": 9.513077358737158,
+    "2": 3.5381948962600047,
+    "3": 0.3764293310085252
+   },
+   "duplicate_item_share": 0.05511042420791479,
+   "effective_codes_per_level": {
+    "1": 1,
+    "2": 1024,
+    "3": 15499
+   },
+   "items": 24587,
+   "largest_bucket": 9,
+   "unique_sid": 23232
+  },
+  "baseline": {
+   "collision": 0.16927644690283483,
+   "conditional_entropy_bits": {
+    "1": 6.958990494049653,
+    "2": 3.98581438131777,
+    "3": 0.8532637226593431
+   },
+   "duplicate_item_share": 0.16927644690283483,
+   "effective_codes_per_level": {
+    "1": 1,
+    "2": 249,
+    "3": 7374
+   },
+   "items": 24587,
+   "largest_bucket": 24,
+   "unique_sid": 20425
+  },
+  "control": {
+   "collision": 0.052263391223004024,
+   "conditional_entropy_bits": {
+    "1": 9.505261872339139,
+    "2": 3.5310817181539713,
+    "3": 0.38089561596008775
+   },
+   "duplicate_item_share": 0.05226339122300405,
+   "effective_codes_per_level": {
+    "1": 1,
+    "2": 1024,
+    "3": 15436
+   },
+   "items": 24587,
+   "largest_bucket": 11,
+   "unique_sid": 23302
+  }
+ },
+ "simultaneous_lower_bounds_positive": false
+}

@@ -1,1018 +1,877 @@
-tools/__pycache__/
-tools/renumber/__pycache__/
-tools/organize/__pycache__/
-*.pyc
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
 
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.pybuilder/
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
-
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
-
-# UV
-#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#uv.lock
-
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#poetry.lock
-
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#pdm.lock
-#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
-#   in version control.
-#   https://pdm.fming.dev/latest/usage/project/#working-with-version-control
-.pdm.toml
-.pdm-python
-.pdm-build/
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
-
-# Abstra
-# Abstra is an AI-powered process automation framework.
-# Ignore directories containing user credentials, local state, and settings.
-# Learn more at https://abstra.io/docs
-.abstra/
-
-# Visual Studio Code
-#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
-#  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#  and can be added to the global gitignore or merged into this file. However, if you prefer, 
-#  you could uncomment the following to ignore the enitre vscode folder
-# .vscode/
-
-# Ruff stuff:
-.ruff_cache/
-
-# PyPI configuration file
-.pypirc
-
-# Cursor
-#  Cursor is an AI-powered code editor. `.cursorignore` specifies files/directories to
-#  exclude from AI features like autocomplete and code analysis. Recommended for sensitive data
-#  refer to https://docs.cursor.com/context/ignore-files
-.cursorignore
-.cursorindexingignore
-
-# === Project-specific exclusions (Task #117) ===
-
-# Large binary dataset CSVs / tfrecords (regeneratable from upstream sources)
-data/amazon_data/
-data/*.csv
-data/*.csv.gz
-data/*.tfrecord
-data/*.tfrecord.gz
-
-# Run logs (transient, regeneratable from reruns)
-logs/
-# Iter audit logs + Stage3 results logs (CLAUDE §13; parent `logs/` must be re-included explicitly)
-log_tensorboard/
-
-# Training artifacts: model checkpoints, pickle files, etc.
-products/
-
-# Temporary task artifacts (diagnostic outputs, not deliverables)
-task_artifacts/
-
-# Process ID files (transient, regenerated on training start)
-scripts/pids/
-
-# Reference paper auxiliary files (transient or localized)
-papers/notes/
-papers/logs/
-papers/grid_paper.txt
-
-# Output results directory (regeneratable). Wholesale ignore is **not** used here
-# because git's whitelist (`!pattern`) is shadowed by a parent directory ignore; instead
-# we ignore by extension/path under results/ and never ignore a bare file.
-# 大文件不推 (.pth / .parquet / *.npy inputs / *_launcher.log); 小产物需要推送.
-# The community-guided level-1 arm (issue 121): the identifiers, the layer
-# record and the Stage 3 result are the evidence of a negative result -- the
-# coarse level improved (Hard ER 6.47 -> 5.49, positive hit 0.0864 -> 0.0989)
-# and the final recall did not (0.05263 against the baseline's 0.05554). The
-# checkpoints and arrays stay out; the small records travel.
-!stage2_RQ-VAE/TIGER_community-l1-rq/
-!stage2_RQ-VAE/TIGER_community-l1-rq/model/
-!stage2_RQ-VAE/TIGER_community-l1-rq/tests/
-!stage2_RQ-VAE/TIGER_community-l1-rq/logs/
-!stage2_RQ-VAE/TIGER_community-l1-rq/logs/training_metrics.jsonl
-!results/stage2_RQ-VAE/TIGER_community-l1-rq/
-!results/stage2_RQ-VAE/TIGER_community-l1-rq/logs/
-!results/stage2_RQ-VAE/TIGER_community-l1-rq/logs/**
-!results/stage3_T5Train/TIGER_community-l1-rq/
-!results/stage3_T5Train/TIGER_community-l1-rq/logs/
-!results/stage3_T5Train/TIGER_community-l1-rq/logs/**
-# Runtime scratch the broad re-inclusion above would otherwise pull in.
-**/logs/_ddp_sync/
-**/logs/tensorboard/
-
-# The community-pair arm (issue 121): a stopped negative result. Its metrics
-# stream is the evidence that the contrastive shape collapses the code space
-# from the fiftieth epoch (collision 0.42-0.58 against the 0.35 gate), so the
-# records travel and no checkpoint does.
-!stage2_RQ-VAE/TIGER_community-pairs-rq/
-!stage2_RQ-VAE/TIGER_community-pairs-rq/model/
-!stage2_RQ-VAE/TIGER_community-pairs-rq/tests/
-!stage2_RQ-VAE/TIGER_community-pairs-rq/logs/
-!stage2_RQ-VAE/TIGER_community-pairs-rq/logs/training_metrics.jsonl
-
-# The bounded community-pair arm (issue 121): the metrics stream is the evidence
-# that bounding the grouping force by the encoder gradient cuts the collapse
-# (0.42-0.58 -> 0.38-0.49) without removing it, against the 0.35 gate.
-!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/
-!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/model/
-!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/tests/
-!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/logs/
-!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/logs/training_metrics.jsonl
-
-# The guarded community-pair arm (issue 121): the community contrast with the
-# repository's own anti-collapse guard. Its identifiers, both metrics streams and
-# its layer record travel; the checkpoints and arrays stay out.
-!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/
-!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/model/
-!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/tests/
-!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/logs/
-!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/logs/training_metrics.jsonl
-!results/stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/
-!results/stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/logs/
-!results/stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/logs/**
-
-# The Stage 3 result of the guarded community-pair arm: the worst recall of the
-# campaign next to the best level-1 error rate, which is the campaign's clearest
-# finding. The records travel; the checkpoints stay out.
-!results/stage3_T5Train/TIGER_community-pairs-guarded-rq/
-!results/stage3_T5Train/TIGER_community-pairs-guarded-rq/logs/
-!results/stage3_T5Train/TIGER_community-pairs-guarded-rq/logs/**
-
-# The community-repulsion arm (issue 121): the community term with the opposite
-# sign, the causal test of the campaign's relation between the level-1 hard
-# error rate and the recall. Its identifiers, both metrics streams and its layer
-# record travel.
-!stage2_RQ-VAE/TIGER_community-repulse-l1-rq/
-!stage2_RQ-VAE/TIGER_community-repulse-l1-rq/model/
-!stage2_RQ-VAE/TIGER_community-repulse-l1-rq/tests/
-!stage2_RQ-VAE/TIGER_community-repulse-l1-rq/logs/
-!stage2_RQ-VAE/TIGER_community-repulse-l1-rq/logs/training_metrics.jsonl
-!results/stage2_RQ-VAE/TIGER_community-repulse-l1-rq/
-!results/stage2_RQ-VAE/TIGER_community-repulse-l1-rq/logs/
-!results/stage2_RQ-VAE/TIGER_community-repulse-l1-rq/logs/**
-
-# The Stage 3 result of the community-repulsion arm and the campaign summary.
-!results/stage3_T5Train/TIGER_community-repulse-l1-rq/
-!results/stage3_T5Train/TIGER_community-repulse-l1-rq/logs/
-!results/stage3_T5Train/TIGER_community-repulse-l1-rq/logs/**
-
-# The behaviour-pair arm with the curved kernel (issue 121): refused by the
-# owner's collision gate, and its metrics stream is the evidence of why -- the
-# contrast on the encoder's output spends the code space on the behaviour
-# structure. The tree and the records travel; the checkpoints stay out.
-!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/
-!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/model/
-!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/tests/
-!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/logs/
-!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/logs/training_metrics.jsonl
+!.claude/
+!.claude/skills/
+!.claude/skills/curvature-rqvae-iter/
+!.claude/skills/curvature-rqvae-iter/SKILL.md
+!results/bench_semantic_cones/**
+!results/research/issue215/orca_roles_frozen.csv
+!results/stage0_build_parquet/
+!results/stage0_build_parquet/*.parquet
+!results/stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/**
+!results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/**
+!results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/**
+!results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/**
+!results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_*/**
+!results/stage2_RQ-VAE/TIGER_RQ-VAE/**
 !results/stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/
 !results/stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/logs/
 !results/stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/logs/**
-
-# The behaviour-pair arm aimed at the later levels' residuals (issue 121):
-# refused by the owner's collision gate (0.4490), and its record is the evidence
-# that moving the contrast off the encoder's output does not protect the code
-# space.
-!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/
-!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/model/
-!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/tests/
-!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/logs/
-!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/logs/training_metrics.jsonl
 !results/stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/
 !results/stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/logs/
 !results/stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/logs/**
-
-# The community arm with the baseline's balanced plan at level 1 (issue 121):
-# every level-1 code receives a balanced share, and the community term repels
-# inside that balance. Its identifiers, both metrics streams and its layer
-# record travel.
-!stage2_RQ-VAE/TIGER_community-balance-l1-rq/
-!stage2_RQ-VAE/TIGER_community-balance-l1-rq/model/
-!stage2_RQ-VAE/TIGER_community-balance-l1-rq/tests/
-!stage2_RQ-VAE/TIGER_community-balance-l1-rq/logs/
-!stage2_RQ-VAE/TIGER_community-balance-l1-rq/logs/training_metrics.jsonl
-!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/
-!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/model/
-!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/tests/
-!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/logs/
-!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/logs/training_metrics.jsonl
 !results/stage2_RQ-VAE/TIGER_community-balance-l1-rq/
 !results/stage2_RQ-VAE/TIGER_community-balance-l1-rq/logs/
 !results/stage2_RQ-VAE/TIGER_community-balance-l1-rq/logs/**
 !results/stage2_RQ-VAE/TIGER_community-balance-repulse-rq/
 !results/stage2_RQ-VAE/TIGER_community-balance-repulse-rq/logs/
 !results/stage2_RQ-VAE/TIGER_community-balance-repulse-rq/logs/**
-
-# The Stage 3 result of the balanced-plan repulsion arm (issue 121): every SID
-# diagnostic improved and the recall fell, which is the campaign's cleanest test
-# that the cross-sectional correlation does not transfer to a new arm.
-!results/stage3_T5Train/TIGER_community-balance-repulse-rq/
-!results/stage3_T5Train/TIGER_community-balance-repulse-rq/logs/
-!results/stage3_T5Train/TIGER_community-balance-repulse-rq/logs/**
-
-results/**/*.pth
-results/**/*.parquet
-results/stage1_GeneEmbedding/*.npy
-results/stage2_RQ-VAE/_input/*.npy
-results/**/_stage3_launcher.log
-
-# 显式覆盖 baseline 目录, 完整保留 logs / ckpt (含 .pth) 用于审计.
-!results/stage2_RQ-VAE/TIGER_RQ-VAE/**
-!results/stage3_T5Train/curvature_RQ-VAE_repaired/**
-!results/stage3_T5Train/tiger/**
-!results/stage3_T5Train/unknown_variant/**
-
-# Claude session data (settings, locks, scheduled tasks)
-.claude/
-!.claude/
-.claude/*
-!.claude/skills/
-.claude/skills/*
-!.claude/skills/curvature-rqvae-iter/
-.claude/skills/curvature-rqvae-iter/*
-!.claude/skills/curvature-rqvae-iter/SKILL.md
-
-# Project root marker (used by tooling, not a deliverable)
-.project-root
-# Slurm job stdout (transient cluster logs, regenerated on each job)
-slurm-*.out
-
-# === Paper reference framework clones (foreign git repos, Phase 4-7 baseline work) ===
-
-# Top-level paper reference clones (~13 GB total, each has own .git/)
-BLOGER/
-DECOR/
-ETEGRec/
-HG-Rec/
-LETTER/
-RecBole/
-RippleNet/
-knowledge_graph_attention_network/
-genrec/
-# Phase 8 reference clones (foreign git repos with own origin)
-# HKBU-LAGAS/Awesome-Item-ID-Gen-RecSys.git (head 1025129)
-# snap-research/GRID.git (head 2fe3475)
-Awesome-Item-ID-Gen-RecSys/
-GRID-handbook/
-
-# External framework sub-clones (paper baselines, ~15 GB)
-/external/
-
-# === Legacy analysis outputs (regeneratable, not reviewer-facing) ===
-reports/
-result/
-
-# === Large binary data (RecBole framework data, 573M) ===
-data/recbole/
-
-# === Orphan cleanup (Task #131) ===
-# Empty orphan dir from failed git clone attempt (https://github.com/zar123123)
-https:/
-# Singular 'log/' baseline experiment logs (HGN/SASRec, already *.log covered)
-log/
-# Per-curvature transient experiment logs (Task #88)
-logs_curv_*/
-
-# === HMamba upstream clone (sub-repo with own .git/, 936 MB, Task #145) ===
-# External repo: https://github.com/CoderPowerBeyond/HMamba.git
-# To reproduce: git clone https://github.com/CoderPowerBeyond/HMamba.git HMamba
-HMamba/
-products/task338/stage1/*.pth
-products/task338/t5_out/**/*.pth
-HG-Rec/dataset/Instruments/Instruments_t5_rqvae_issue51_combined.npy
-HG-Rec/dataset/Instruments/Instruments_t5_hrqvae_issue51_combined.npy
-
-# === taskA/taskB 训练产物 (二进制可再生成, 不入库; 目录整理 Task #39 延续) ===
-taskA/_ckpt/
-taskB/_ckpt/
-taskA/_data/
-taskB/_data/
-taskA/_logs/
-taskB/_logs/
-# _history 只跟踪 json/md 文本产物, 忽略二进制
-taskA/_history/**/*.pth
-taskA/_history/**/*.pt
-taskA/_history/**/*.ckpt
-taskA/_history/**/*.npy
-taskA/_history/**/*.bin
-taskA/_history/**/*.h5
-taskB/_history/**/*.pth
-taskB/_history/**/*.pt
-taskB/_history/**/*.ckpt
-taskB/_history/**/*.npy
-taskB/_history/**/*.bin
-taskB/_history/**/*.h5
-# PID 标记 (训练时动态生成, 瞬态)
-*_TRAINING_PID
-*.pid
-
-# === SquashFS root (Obsidian AppImage 提取, 351M, 误提交 cfdf319 后移除) ===
-squashfs-root/
-appimage-extracted/
-
-# === Local experiment outputs (re-generable; keep source and small JSON reports) ===
-# 2026-09-25 规则: 除了 .parquet 之外全部推, 其余 (.json / .log / .jsonl / ckpt / npy) 全部进 git
-# 留审计痕迹.
-# 2026-10-26 修订: checkpoint(.pth/.pt) 与数组(.npy) 不再忽略 —— 它们经 .gitattributes 的
-# LFS 规则入库。原规则把资产静默丢弃, 历史上因此丢了 127 个 Stage3 运行的 item_sids,
-# 使 SID↔recall 无法复现; 现在新资产默认入库并走 LFS。
-**/__pycache__/
-**/*.parquet
-**/*.npz
-**/*.out
-**/rqvae_runs/
-# 2026-10-09 规则: semantic-cone 研究的 per-positive AUC 向量是配对 bootstrap 的
-# 唯一证据，必须随代码一起进 git，否则 summary.json 的置信区间无法复算。
-!results/bench_semantic_cones/**
-# 2026-09-25 user instruction: `results/stage3_T5Train/**/logs/_stage3_launcher.log`
-# IS pushed. We don't ignore the bare `logs/` directory; only specific transient
-# sub-dirs that we want to keep out of git.
-**/logs/tensorboard/
-**/logs/_ddp_sync/
-**/logs/wait_*.log
-**/logs/_stage3_run*.log
-
-# Independent working repositories in this workspace; commit them in their own repo.
-ETEGRec_amazon2023/
-LETTER_amazon2023/
-RecBole3.0/
-
-# Local OpenCode toolchain cache (node_modules, generated config, never pushed)
-.opencode/
-
-!results/stage2_RQ-VAE/curvature_RQ-VAE/**
-
-# 2026-10-09: the broad re-inclusion above would also pull every checkpoint
-# and .npy back in. The project rule is that large weights stay out of git and
-# regenerate from the run, so the ablation arm trees are re-excluded for those
-# two extensions only; their metrics, SIDs and summaries still land in git.
-results/stage2_RQ-VAE/curvature_RQ-VAE/category_cone_arms/**/*.pth
-results/stage2_RQ-VAE/curvature_RQ-VAE/category_cone_arms/**/*.npy
-results/stage2_RQ-VAE/curvature_RQ-VAE/l2_assignment_arms/**/*.pth
-results/stage2_RQ-VAE/curvature_RQ-VAE/l2_assignment_arms/**/*.npy
-results/stage2_RQ-VAE/curvature_RQ-VAE/l2_capacity_arms/**/*.pth
-results/stage2_RQ-VAE/curvature_RQ-VAE/l2_capacity_arms/**/*.npy
-results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/**/*.pth
-results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/**/*.npy
-results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms_fixed_rejection/**/*.pth
-results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms_fixed_rejection/**/*.npy
-results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms_fixed_radius/**/*.pth
-results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms_fixed_radius/**/*.npy
-!results/stage3_T5Train/curvature_RQ-VAE/ckpt/
-!results/stage3_T5Train/curvature_RQ-VAE/**
-results/stage2_RQ-VAE/curvature_RQ-VAE/**/__pycache__/
-results/stage2_RQ-VAE/curvature_RQ-VAE/dataset/Instruments/item_emb.npy
-results/stage2_RQ-VAE/curvature_RQ-VAE/logs/_ddp_sync/
-results/stage2_RQ-VAE/curvature_RQ-VAE/logs/tensorboard/
-results/stage2_RQ-VAE/curvature_RQ-VAE/logs/wait_*.log
-results/stage2_RQ-VAE/curvature_RQ-VAE/logs/_stage3_run*.log
-results/stage3_T5Train/curvature_RQ-VAE/**/__pycache__/
-results/stage3_T5Train/curvature_RQ-VAE/logs/_ddp_sync/
-results/stage3_T5Train/curvature_RQ-VAE/logs/*/_ddp_sync/
-results/stage3_T5Train/curvature_RQ-VAE/logs/ablation/*/_ddp_sync/
-results/stage3_T5Train/curvature_RQ-VAE/logs/tensorboard/
-results/stage3_T5Train/curvature_RQ-VAE/logs/wait_*.log
-results/stage3_T5Train/curvature_RQ-VAE/logs/_stage3_run*.log
-
-# TIGER baseline (full 3000-epoch Stage2 budget, no early stop) outputs are
-# mandatory Stage2/Stage3 deliverables. Re-included after the global
-# **/*.pth / **/*.npy / **/ckpt*/ rules above.
-!results/stage2_RQ-VAE/TIGER_RQ-VAE/**
-!results/stage3_T5Train/tiger/ckpt/
-!results/stage3_T5Train/tiger/**
-results/stage2_RQ-VAE/TIGER_RQ-VAE/**/__pycache__/
-results/stage2_RQ-VAE/TIGER_RQ-VAE/logs/_ddp_sync/
-results/stage2_RQ-VAE/TIGER_RQ-VAE/logs/tensorboard/
-results/stage3_T5Train/tiger/**/__pycache__/
-results/stage3_T5Train/tiger/logs/_ddp_sync/
-results/stage3_T5Train/tiger/logs/*/_ddp_sync/
-results/stage3_T5Train/tiger/logs/tensorboard/
-results/stage3_T5Train/tiger/logs/wait_*.log
-results/stage3_T5Train/tiger/logs/_stage3_run*.log
-
-# TIGER + behaviour supervision: the iter48 three-level residual contrastive
-# mechanism ported onto the current TIGER recipe. Same deliverables as the TIGER
-# baseline above; re-included for the same reason after the global
-# **/*.pth / **/*.npy / **/ckpt* / logs/ rules.
-!results/stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/**
-!results/stage3_T5Train/tiger_behavior/ckpt/
-!results/stage3_T5Train/tiger_behavior/**
-results/stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/**/__pycache__/
-results/stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/logs/_ddp_sync/
-results/stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/logs/tensorboard/
-results/stage3_T5Train/tiger_behavior/**/__pycache__/
-results/stage3_T5Train/tiger_behavior/logs/_ddp_sync/
-results/stage3_T5Train/tiger_behavior/logs/*/_ddp_sync/
-results/stage3_T5Train/tiger_behavior/logs/tensorboard/
-results/stage3_T5Train/tiger_behavior/logs/wait_*.log
-results/stage3_T5Train/tiger_behavior/logs/_stage3_run*.log
-# The Stage2 behaviour trajectory is the direct evidence for this arm's verdict,
-# so its native metrics stream is kept even though the TIGER baseline tree never
-# tracked its own. The parent `logs/` rule shadows a bare `!file` pattern, so the
-# directory has to be re-included first.
-!stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/logs/
-!stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/logs/training_metrics.jsonl
-
-# 2026-10-10: the Stage3 arm trees under results/stage3_T5Train/ carry the native
-# deliverables the project rule requires in git: test_final.json and
-# training_metrics.jsonl under logs/, and HG_Rec_best.pth under ckpt/. The broad
-# logs/ and ckpt*/ rules earlier in this file drop all three silently, so the arm
-# trees are re-included the same way the unified curvature_RQ-VAE tree already
-# is. Only these arm trees are re-included; nothing else changes.
-!results/stage3_T5Train/sidarm_*/
-!results/stage3_T5Train/sidarm_*/ckpt*/
-!results/stage3_T5Train/sidarm_*/logs/
-!results/stage3_T5Train/sidarm_*/**
-
-# Behaviour-sampling arms (Exp1: per-epoch pair resampling, false-negative mask)
-# and behaviour-geometry arms (Exp2-5: Poincare vs parameter-matched Euclidean).
-# Same deliverables as the TIGER baseline: Stage2 SID/ckpt/metrics and Stage3
-# test_final.json / training_metrics.jsonl / HG_Rec_best.pth / launcher log.
-!results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/**
-!results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/**
-!results/stage3_T5Train/tiger_sample_*/
-!results/stage3_T5Train/tiger_hyp_*/
-results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/**/__pycache__/
-results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs/**/_ddp_sync/
-results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs/**/tensorboard/
-results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/**/__pycache__/
-results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/**/_ddp_sync/
-results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/**/tensorboard/
-results/stage3_T5Train/tiger_sample_*/**/__pycache__/
-results/stage3_T5Train/tiger_sample_*/logs/_ddp_sync/
-results/stage3_T5Train/tiger_sample_*/logs/*/_ddp_sync/
-results/stage3_T5Train/tiger_sample_*/logs/tensorboard/
-results/stage3_T5Train/tiger_hyp_*/**/__pycache__/
-results/stage3_T5Train/tiger_hyp_*/logs/_ddp_sync/
-results/stage3_T5Train/tiger_hyp_*/logs/*/_ddp_sync/
-results/stage3_T5Train/tiger_hyp_*/logs/tensorboard/
-!stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs/
-!stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs/**
-!stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/
-!stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/**
-
-# Repaired hyperbolic-behaviour arms (Exp1-4 repair round): fixed training-set
-# ball normalizer, gradient-path switch, single-threaded reproducible init.
-!results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_*/**
-!results/stage3_T5Train/tiger_hyp_fix_*/
-!stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/fix_*/
-!stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/fix_*/**
-results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_*/**/__pycache__/
-results/stage3_T5Train/tiger_hyp_fix_*/**/__pycache__/
-results/stage3_T5Train/tiger_hyp_fix_*/logs/_ddp_sync/
-results/stage3_T5Train/tiger_hyp_fix_*/logs/*/_ddp_sync/
-
-# Behaviour-fork-aware arms (creative Exp2): radial hierarchy + angular sibling
-# coherence, hyperbolic grouping vs its matched Euclidean control.
-!results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/**
-!results/stage3_T5Train/tiger_fork_*/
-!stage2_RQ-VAE/TIGER_FORK_RQ-VAE/logs/
-!stage2_RQ-VAE/TIGER_FORK_RQ-VAE/logs/**
-# The `!` above only re-includes the directory itself; the generic `logs/` and
-# `**/ckpt*/` rules still drop the Stage3 native outputs, which CLAUDE.md §13
-# requires in the repository. Re-include their contents.
-!results/stage3_T5Train/tiger_fork_*/logs/
-!results/stage3_T5Train/tiger_fork_*/logs/**
-!results/stage3_T5Train/tiger_fork_*/ckpt/
-!results/stage3_T5Train/tiger_fork_*/ckpt/**
-
-# TIGER behaviour-supervision sample arms and the hyperbolic repair arms.
-# These two families were missing an un-ignore block entirely, so the generic
-# `logs/` rule above shadowed every one of their Stage 3 native outputs. The
-# effect was that Exp1a resample -- the best model in the repository at
-# test_R@10 = 0.063633 -- had its SID tracked while its own test_final.json,
-# checkpoint and metrics stream were silently dropped, which is exactly what
-# CLAUDE.md section 13 forbids. Same shape as the tiger_fork_* block above:
-# un-ignore the directory itself first, because git does not descend into an
-# excluded directory, then its contents, then the binaries the global
-# **/*.pth and **/*.npy rules would otherwise drop.
-!results/stage3_T5Train/tiger_sample_resample*/
-!results/stage3_T5Train/tiger_sample_resample*/logs/
-!results/stage3_T5Train/tiger_sample_resample*/logs/**
-!results/stage3_T5Train/tiger_sample_resample*/ckpt/
-!results/stage3_T5Train/tiger_sample_resample*/ckpt/**
-!results/stage3_T5Train/tiger_hyp_*/
-!results/stage3_T5Train/tiger_hyp_*/logs/
-!results/stage3_T5Train/tiger_hyp_*/logs/**
-!results/stage3_T5Train/tiger_hyp_*/ckpt/
-!results/stage3_T5Train/tiger_hyp_*/ckpt/**
-# Binaries inside these two families are deliverables, not build products.
-!results/stage3_T5Train/tiger_sample_resample*/**/*.pth
-!results/stage3_T5Train/tiger_sample_resample*/**/*.npy
-!results/stage3_T5Train/tiger_hyp_*/**/*.pth
-!results/stage3_T5Train/tiger_hyp_*/**/*.npy
-# Runtime noise stays ignored, after the rules above so it still wins.
-results/stage3_T5Train/tiger_sample_resample*/logs/_ddp_sync/
-results/stage3_T5Train/tiger_sample_resample*/logs/tensorboard/
-results/stage3_T5Train/tiger_sample_resample*/logs/wait_*.log
-results/stage3_T5Train/tiger_sample_resample*/logs/_stage3_run*.log
-results/stage3_T5Train/tiger_hyp_*/logs/_ddp_sync/
-results/stage3_T5Train/tiger_hyp_*/logs/tensorboard/
-results/stage3_T5Train/tiger_hyp_*/logs/wait_*.log
-results/stage3_T5Train/tiger_hyp_*/logs/_stage3_run*.log
-
-# The anti-collapse arms from the MARGIN/DIGER round. Same shadowing problem as the
-# resample block above: the generic `logs/` rule matched first, so `git add` staged
-# nothing for MARGIN or B_E_nocb and their test_final.json would have been dropped the
-# moment it was written. Un-ignore the directory itself first, because git does not
-# descend into an excluded directory, then logs and ckpt, then the binaries.
-!results/stage3_T5Train/tiger_sample_MARGIN*/
-!results/stage3_T5Train/tiger_sample_MARGIN*/logs/
-!results/stage3_T5Train/tiger_sample_MARGIN*/logs/**
-!results/stage3_T5Train/tiger_sample_MARGIN*/ckpt/
-!results/stage3_T5Train/tiger_sample_MARGIN*/ckpt/**
-!results/stage3_T5Train/tiger_sample_B_E_nocb*/
-!results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/
-!results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/**
-!results/stage3_T5Train/tiger_sample_B_E_nocb*/ckpt/
-!results/stage3_T5Train/tiger_sample_B_E_nocb*/ckpt/**
-!results/stage3_T5Train/tiger_sample_MARGIN*/**/*.pth
-!results/stage3_T5Train/tiger_sample_MARGIN*/**/*.npy
-!results/stage3_T5Train/tiger_sample_B_E_nocb*/**/*.pth
-!results/stage3_T5Train/tiger_sample_B_E_nocb*/**/*.npy
-# Runtime noise stays ignored, after the rules above so it still wins.
-results/stage3_T5Train/tiger_sample_MARGIN*/logs/_ddp_sync/
-results/stage3_T5Train/tiger_sample_MARGIN*/logs/tensorboard/
-results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/_ddp_sync/
-results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/tensorboard/
-
-# E1 conditional-supervision arms. Same shadowing problem as the blocks above.
-!results/stage3_T5Train/tiger_sample_L2COND*/
-!results/stage3_T5Train/tiger_sample_L2COND*/logs/
-!results/stage3_T5Train/tiger_sample_L2COND*/logs/**
-!results/stage3_T5Train/tiger_sample_L2COND*/ckpt/
-!results/stage3_T5Train/tiger_sample_L2COND*/ckpt/**
-!results/stage3_T5Train/tiger_sample_L2COND*/**/*.pth
-!results/stage3_T5Train/tiger_sample_L2COND*/**/*.npy
-results/stage3_T5Train/tiger_sample_L2COND*/logs/_ddp_sync/
-results/stage3_T5Train/tiger_sample_L2COND*/logs/tensorboard/
-
-# The STE repair arm. Same shadowing problem as the blocks above.
-!results/stage3_T5Train/tiger_sample_STE_FIX*/
-!results/stage3_T5Train/tiger_sample_STE_FIX*/logs/
-!results/stage3_T5Train/tiger_sample_STE_FIX*/logs/**
-!results/stage3_T5Train/tiger_sample_STE_FIX*/ckpt/
-!results/stage3_T5Train/tiger_sample_STE_FIX*/ckpt/**
-!results/stage3_T5Train/tiger_sample_STE_FIX*/**/*.pth
-!results/stage3_T5Train/tiger_sample_STE_FIX*/**/*.npy
-results/stage3_T5Train/tiger_sample_STE_FIX*/logs/_ddp_sync/
-results/stage3_T5Train/tiger_sample_STE_FIX*/logs/tensorboard/
-
-# E5 anchor arms. Same shadowing problem as the blocks above.
-!results/stage3_T5Train/tiger_sample_ANCHOR*/
-!results/stage3_T5Train/tiger_sample_ANCHOR*/logs/
-!results/stage3_T5Train/tiger_sample_ANCHOR*/logs/**
-!results/stage3_T5Train/tiger_sample_ANCHOR*/ckpt/
-!results/stage3_T5Train/tiger_sample_ANCHOR*/ckpt/**
-!results/stage3_T5Train/tiger_sample_ANCHOR*/**/*.pth
-!results/stage3_T5Train/tiger_sample_ANCHOR*/**/*.npy
-results/stage3_T5Train/tiger_sample_ANCHOR*/logs/_ddp_sync/
-results/stage3_T5Train/tiger_sample_ANCHOR*/logs/tensorboard/
-
-# The stage-0 split files are the data every Stage 2 and Stage 3 result in this
-# repository is built from, and the offline behaviour analysis reads them
-# directly. Without them no committed metric can be recomputed from a clone.
-# Re-included after the global **/*.parquet rule above.
-!results/stage0_build_parquet/
-!results/stage0_build_parquet/*.parquet
-
-# The frozen positive/negative pair index for the behaviour analysis. It is the
-# input every published sharing rate, gap and enrichment ratio was computed
-# from, so it has to travel with the reports or those numbers cannot be checked.
-# Re-included after the global **/*.npz rule, scoped to this one directory.
-!results/stage3_T5Train/monotonicity/behavior_pairs.npz
-
-# The canonical seed-42 behaviour pair set the whole programme shares. Every
-# arm is measured on exactly these pairs, so the file has to travel with the
-# results or the sharing rates cannot be recomputed. Scoped to this one path.
-!results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz
-
-# The Louvain behaviour partition the step 4 cluster-consistency term supervises.
-# Recorded so the clustering cannot drift between the diagnostic and a run.
-# Scoped to this one path, after the global **/*.npz rule.
-!results/stage3_T5Train/monotonicity/behaviour_clusters_s42.npz
-
-# The INDEPENDENT validation pair set (step 7): the positives come from
-# valid.parquet and every one of them is a held-out interaction, so the scored
-# relations never entered training. It travels with the results for the same
-# reason as the train-based set: the reported sharing rates and enrichment
-# ratios cannot be recomputed without it. Scoped to this one path.
-!results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz
-
-# 2026-10-19 (issue #71): the R4/R5 gradient-integrity audit must publish its small run logs and
-# manifests as evidence, while the blanket logs/ rule above stays in force everywhere else.
-!results/stage2_RQ-VAE/r45_gradient_integrity_audit/logs/
-!results/stage2_RQ-VAE/r45_gradient_integrity_audit/logs/**
-# 2026-10-19 (issue #71): the DDP audit persists its per-rank tensors only so the parent process can
-# read them back; they are multi-MB scratch, the small JSON summaries are the evidence.
-results/stage2_RQ-VAE/r45_gradient_integrity_audit/logs/ddp_artifacts/*.pt
-
-# 2026-10-19: CGV is stateless -- it persists no certificate and no verdict. Everything under
-# _cgv is the payload one G5 run hands to its own parent process, regenerated on every check.
-results/stage2_RQ-VAE/_cgv/
-
-# R7 track-A frozen replay bundles: large intermediates, reproducible from tools/r7_a_frozen_replay.py
-results/stage2_RQ-VAE/r7_a_parity/*/step_*/bundle.pt
-results/stage2_RQ-VAE/r7_c_geometry/*/step_*/bundle.pt
-
-results/stage2_RQ-VAE/r7_c_geometry/*/step_*/bundle.pt
-
-results/stage2_RQ-VAE/r7_f_end_to_end/*.jsonl
-results/stage2_RQ-VAE/r7_f_end_to_end/production_snapshots/
-results/stage2_RQ-VAE/r7_f_end_to_end/production_stdout.log
-
-results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_steps.jsonl
-results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_snapshots/
-results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_stdout.log
-
-# Native research state (not source code)
-/results/research/issue117/
-
-# Archived issue #116 runs stay untracked and remain isolated
-/results/research/issue116/
-
-# === 2026-11-01: LFS 配额已尽 (2.9 GB 被跟踪, 免费额度 1 GiB) ===
-# Stage2/Stage3 的 checkpoint 与数组产物不再入库: 它们可由 item_sids.json
-# (仍入库) 与一次 22 分钟的 Stage2 重跑重建, 而 LFS 对象不可变, 每次重跑
-# 都会永久新增一份配额。段末规则优先级最高, 覆盖上面的 ! 重新包含。
-# The behaviour-adjusted level-1 arm (round_20261105_144909_130, issue 121).
-# Its exported identifiers, its metrics stream and its layer record are the
-# evidence of a negative result: the owner's learned three-level-collision gate
-# refused the Stage 3 launch. The checkpoints and arrays stay out (the rules
-# below win), so the SID and the measurements travel without the weights.
+!results/stage2_RQ-VAE/TIGER_community-l1-rq/
+!results/stage2_RQ-VAE/TIGER_community-l1-rq/logs/
+!results/stage2_RQ-VAE/TIGER_community-l1-rq/logs/**
+!results/stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/
+!results/stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/logs/
+!results/stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/logs/**
+!results/stage2_RQ-VAE/TIGER_community-repulse-l1-rq/
+!results/stage2_RQ-VAE/TIGER_community-repulse-l1-rq/logs/
+!results/stage2_RQ-VAE/TIGER_community-repulse-l1-rq/logs/**
+!results/stage2_RQ-VAE/TIGER_community_graph_recon/logs/
+!results/stage2_RQ-VAE/TIGER_community_graph_recon/logs/**
+!results/stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/
+!results/stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/logs/
+!results/stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/logs/**
+!results/stage2_RQ-VAE/TIGER_curvature-embedding-rq/logs/
+!results/stage2_RQ-VAE/TIGER_curvature-embedding-rq/logs/**
+!results/stage2_RQ-VAE/TIGER_curvature-stratum-sinkhorn-v1/logs/
+!results/stage2_RQ-VAE/TIGER_curvature-stratum-sinkhorn-v1/logs/**
 !results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/logs/
 !results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/logs/**
-
-# The collapse's timeline: the weight snapshots and the per-layer diagnosis of the
-# diagnostic re-run of the collapsed arm (a separate tree; the arm's own results
-# are untouched). The snapshots stay out - the rules below win - and the
-# diagnosis JSONs travel, they are the evidence.
+!results/stage2_RQ-VAE/_ablation_affinity_weights/logs/
+!results/stage2_RQ-VAE/_ablation_affinity_weights/logs/**
 !results/stage2_RQ-VAE/_diag_collapse_timeline/
 !results/stage2_RQ-VAE/_diag_collapse_timeline/diagnosis_epoch_*.json
 !results/stage2_RQ-VAE/_diag_collapse_timeline/logs/
 !results/stage2_RQ-VAE/_diag_collapse_timeline/logs/training_metrics.jsonl
-results/stage2_RQ-VAE/_diag_collapse_timeline/**/*.pth
-results/stage2_RQ-VAE/_diag_collapse_timeline/**/*.npy
-
-# The stage-3 result of the curvature-aware embedding arm: the test record and
-# the metrics stream are the comparison's evidence; the checkpoints stay out.
+!results/stage2_RQ-VAE/_reference_baseline_deterministic/logs/
+!results/stage2_RQ-VAE/_reference_baseline_deterministic/logs/training_metrics.jsonl
+!results/stage2_RQ-VAE/curvature_RQ-VAE/**
+!results/stage2_RQ-VAE/r45_gradient_integrity_audit/logs/
+!results/stage2_RQ-VAE/r45_gradient_integrity_audit/logs/**
+!results/stage3_T5Train/TIGER_community-balance-repulse-rq/
+!results/stage3_T5Train/TIGER_community-balance-repulse-rq/logs/
+!results/stage3_T5Train/TIGER_community-balance-repulse-rq/logs/**
+!results/stage3_T5Train/TIGER_community-l1-rq/
+!results/stage3_T5Train/TIGER_community-l1-rq/logs/
+!results/stage3_T5Train/TIGER_community-l1-rq/logs/**
+!results/stage3_T5Train/TIGER_community-pairs-guarded-rq/
+!results/stage3_T5Train/TIGER_community-pairs-guarded-rq/logs/
+!results/stage3_T5Train/TIGER_community-pairs-guarded-rq/logs/**
+!results/stage3_T5Train/TIGER_community-repulse-l1-rq/
+!results/stage3_T5Train/TIGER_community-repulse-l1-rq/logs/
+!results/stage3_T5Train/TIGER_community-repulse-l1-rq/logs/**
+!results/stage3_T5Train/TIGER_curriculum-behaviour-rq/
+!results/stage3_T5Train/TIGER_curriculum-behaviour-rq/logs/
+!results/stage3_T5Train/TIGER_curriculum-behaviour-rq/logs/**
 !results/stage3_T5Train/TIGER_curvature-embedding-rq/
 !results/stage3_T5Train/TIGER_curvature-embedding-rq/logs/
 !results/stage3_T5Train/TIGER_curvature-embedding-rq/logs/**
 !results/stage3_T5Train/TIGER_curvature-embedding-rq/logs/**/test_final.json
-results/stage3_T5Train/TIGER_curvature-embedding-rq/logs/_ddp_sync/
-results/stage3_T5Train/TIGER_curvature-embedding-rq/**/*.pth
-results/stage3_T5Train/TIGER_curvature-embedding-rq/**/*.npy
-
-# The curvature-aware embedding arm (Plan A, TIGER_curvature-embedding-rq): the
-# quantizer is the frozen baseline's and the work happened upstream, in the
-# embedding. Its identifiers, its metrics stream and its layer record are the
-# evidence of the comparison; the checkpoints and the embedding matrix stay out
-# (the rules below win).
-!stage2_RQ-VAE/TIGER_curvature-embedding-rq/logs/
-!stage2_RQ-VAE/TIGER_curvature-embedding-rq/logs/training_metrics.jsonl
-!results/stage2_RQ-VAE/TIGER_curvature-embedding-rq/logs/
-!results/stage2_RQ-VAE/TIGER_curvature-embedding-rq/logs/**
-
-# The behaviour-stratified level-1 arm (round_20261106_020541_888, issue 121).
-# Its identifiers, its metrics stream and its layer record are the evidence of a
-# negative result: the coarse level improved and the identifier collapsed, and
-# the owner's learned three-level-collision gate refused the Stage 3 launch. The
-# checkpoints and arrays stay out (the rules below win), so the SID and the
-# measurements travel without the weights. The generic `logs/` rule above would
-# otherwise drop both metrics streams.
-!stage2_RQ-VAE/TIGER_curvature-stratum-sinkhorn-v1/logs/
-!stage2_RQ-VAE/TIGER_curvature-stratum-sinkhorn-v1/logs/training_metrics.jsonl
-!results/stage2_RQ-VAE/TIGER_curvature-stratum-sinkhorn-v1/logs/
-!results/stage2_RQ-VAE/TIGER_curvature-stratum-sinkhorn-v1/logs/**
-
-# The conformance scratch of the admission runs: the one-epoch exports and the
-# probe reports of the CHECKS, regenerable by rerunning the checks, and three
-# copies of the same 24587-row identifier file. The reports under
-# results/research/_conformance/ are the evidence and stay.
-results/stage2_RQ-VAE/_conformance/
-
-# The three-stage curriculum arm: the geometry first, the behaviour ramped in,
-# then both. The candidate tree travels (the mechanism, its tests and its
-# continuous-surface contract) together with its identifiers, both metrics
-# streams and its layer record, because together they are the evidence of a
-# negative result: every SID level came out at the frozen baseline's level and
-# the Stage 3 recall did not follow. Its checkpoints and arrays stay out -- the
-# rules immediately below win.
-!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/
-!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/model/
-!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/tests/
-!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/logs/
-!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/logs/training_metrics.jsonl
-!results/stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/
-!results/stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/logs/
-!results/stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/logs/**
-!results/stage3_T5Train/TIGER_curriculum-behaviour-rq/
-!results/stage3_T5Train/TIGER_curriculum-behaviour-rq/logs/
-!results/stage3_T5Train/TIGER_curriculum-behaviour-rq/logs/**
-# Runtime scratch the broad re-inclusion above would otherwise pull in.
-**/logs/_ddp_sync/
-**/logs/tensorboard/
-
-results/**/*.pth
-results/**/*.pt
-results/**/*.npy
-stage2_RQ-VAE/**/*.pth
-stage2_RQ-VAE/**/*.npy
-results/research/**/*.npz
-stage1_GeneEmbedding/output/*.npy
-
-# The community-guided graph reconstruction arm (issue 121). Its identifiers,
-# its metrics stream and its layer record are the evidence for the three
-# questions the experiment asked: whether the community weight moves the target
-# (it moves it by 0.2% of its entropy), whether the term reaches the encoder
-# and the codebook (both gradient paths are non-zero at every logged epoch),
-# and whether the exported hierarchy changed (collision 0.1775 -> 0.1672, the
-# neighbour shares did not move). The checkpoints and arrays stay out: the two
-# rules at the end of the file win.
-!stage2_RQ-VAE/TIGER_community_graph_recon/logs/
-!stage2_RQ-VAE/TIGER_community_graph_recon/logs/training_metrics.jsonl
-!results/stage2_RQ-VAE/TIGER_community_graph_recon/logs/
-!results/stage2_RQ-VAE/TIGER_community_graph_recon/logs/**
-
-# The deterministic baseline reference: the Stage-2 re-run of the FROZEN
-# trainer whose Stage-3 number this round's arm is compared against, and its
-# test record. Without it the comparison in
-# results/research/issue121/community_curvature/REPORT_community_graph_recon.md
-# cannot be checked. Checkpoints and arrays stay out.
-!results/stage2_RQ-VAE/_reference_baseline_deterministic/logs/
-!results/stage2_RQ-VAE/_reference_baseline_deterministic/logs/training_metrics.jsonl
 !results/stage3_T5Train/_reference_baseline_deterministic/
 !results/stage3_T5Train/_reference_baseline_deterministic/logs/
 !results/stage3_T5Train/_reference_baseline_deterministic/logs/**
-
-# The controlled weight-mapping experiment: the same arm with the community
-# affinity used directly as the edge weight instead of 1 + s. Its identifiers,
-# metrics stream and layer record are the evidence that the target's spread
-# became 35x larger, that the representation learned the ordering, and that the
-# held-out behaviour did not improve while unrelated pairs contracted.
-!results/stage2_RQ-VAE/_ablation_affinity_weights/logs/
-!results/stage2_RQ-VAE/_ablation_affinity_weights/logs/**
-r2_apikey
-
-# The R2 mirror is a download cache: regenerate with analyze.py --download.
-analysis_sid_recall/r2/
-
-# Staging area of archive_retrained.py: the bucket, not the repo, is the archive.
-results/research/stage3_queue/_stage/
-
-# Staging area of the R2 uploaders and reconcilers (CLAUDE.md 86: never /tmp).
-results/research/issue139/_stage/
-
-# Stage 2 training logs stay out of git; evidence is in results/ and R2.
-stage2_RQ-VAE/*/logs/
-
-# third-party ORCA clone; the orbit files it produces are regenerated by make_orca_input.py
-results/research/issue213/orca/
-
-# derived role cache (npz family is not committed, CLAUDE.md §46); rebuilt by structure_retention.py
-analysis_sid_recall/structure_roles.npz
-analysis_sid_recall/feature_block.npz
-
-# ORCA graph caches from issue215: 7.8 GB of generated .in/.out files, not evidence and not committed.
-# Keeping them out of `git status` also keeps `commit.draft()` from scanning them (it otherwise
-# attributes every untracked file and can spike memory).
-results/research/issue215/structure_graphs_all/
-results/research/issue215/topology_graphs/
-
-# Rebuilt ORCA binary/source and raw orbit runs for tiger_cluster_graph (third-party, not committed).
-results/orca_build/
-
-# Generated kNN/sweep tables (100 MB+ across seeds). They are regenerated by their scripts and
-# must stay out of `git status`; `commit.draft()` otherwise attributes every untracked CSV and
-# its diff objects dominate memory.
-results/research/embedding_knn_k_sweep/*.csv
-results/research/semantic_tree_hypothesis/*.csv
-results/research/q_graphlet_multi_role/*.csv
-results/research/q_graphlet_multi_role/*.micro
-results/research/tiger_cluster_graph/k13_exact
-results/research/tiger_cluster_graph/*.csv
-results/research/tiger_cluster_graph/*.micro
-
-# Default-deny generated data under results/research. Sweep outputs are data, not evidence;
-# curated reports stay as Markdown/JSON, and a small CSV that must be tracked gets an explicit
+!results/stage3_T5Train/curvature_RQ-VAE/**
+!results/stage3_T5Train/curvature_RQ-VAE/ckpt/
+!results/stage3_T5Train/curvature_RQ-VAE_repaired/**
+!results/stage3_T5Train/monotonicity/behavior_pairs.npz
+!results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz
+!results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz
+!results/stage3_T5Train/monotonicity/behaviour_clusters_s42.npz
+!results/stage3_T5Train/sidarm_*/
+!results/stage3_T5Train/sidarm_*/**
+!results/stage3_T5Train/sidarm_*/ckpt*/
+!results/stage3_T5Train/sidarm_*/logs/
+!results/stage3_T5Train/tiger/**
+!results/stage3_T5Train/tiger/ckpt/
+!results/stage3_T5Train/tiger_behavior/**
+!results/stage3_T5Train/tiger_behavior/ckpt/
+!results/stage3_T5Train/tiger_fork_*/
+!results/stage3_T5Train/tiger_fork_*/ckpt/
+!results/stage3_T5Train/tiger_fork_*/ckpt/**
+!results/stage3_T5Train/tiger_fork_*/logs/
+!results/stage3_T5Train/tiger_fork_*/logs/**
+!results/stage3_T5Train/tiger_hyp_*/
+!results/stage3_T5Train/tiger_hyp_*/**/*.npy
+!results/stage3_T5Train/tiger_hyp_*/**/*.pth
+!results/stage3_T5Train/tiger_hyp_*/ckpt/
+!results/stage3_T5Train/tiger_hyp_*/ckpt/**
+!results/stage3_T5Train/tiger_hyp_*/logs/
+!results/stage3_T5Train/tiger_hyp_*/logs/**
+!results/stage3_T5Train/tiger_hyp_fix_*/
+!results/stage3_T5Train/tiger_sample_*/
+!results/stage3_T5Train/tiger_sample_ANCHOR*/
+!results/stage3_T5Train/tiger_sample_ANCHOR*/**/*.npy
+!results/stage3_T5Train/tiger_sample_ANCHOR*/**/*.pth
+!results/stage3_T5Train/tiger_sample_ANCHOR*/ckpt/
+!results/stage3_T5Train/tiger_sample_ANCHOR*/ckpt/**
+!results/stage3_T5Train/tiger_sample_ANCHOR*/logs/
+!results/stage3_T5Train/tiger_sample_ANCHOR*/logs/**
+!results/stage3_T5Train/tiger_sample_B_E_nocb*/
+!results/stage3_T5Train/tiger_sample_B_E_nocb*/**/*.npy
+!results/stage3_T5Train/tiger_sample_B_E_nocb*/**/*.pth
+!results/stage3_T5Train/tiger_sample_B_E_nocb*/ckpt/
+!results/stage3_T5Train/tiger_sample_B_E_nocb*/ckpt/**
+!results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/
+!results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/**
+!results/stage3_T5Train/tiger_sample_L2COND*/
+!results/stage3_T5Train/tiger_sample_L2COND*/**/*.npy
+!results/stage3_T5Train/tiger_sample_L2COND*/**/*.pth
+!results/stage3_T5Train/tiger_sample_L2COND*/ckpt/
+!results/stage3_T5Train/tiger_sample_L2COND*/ckpt/**
+!results/stage3_T5Train/tiger_sample_L2COND*/logs/
+!results/stage3_T5Train/tiger_sample_L2COND*/logs/**
+!results/stage3_T5Train/tiger_sample_MARGIN*/
+!results/stage3_T5Train/tiger_sample_MARGIN*/**/*.npy
+!results/stage3_T5Train/tiger_sample_MARGIN*/**/*.pth
+!results/stage3_T5Train/tiger_sample_MARGIN*/ckpt/
+!results/stage3_T5Train/tiger_sample_MARGIN*/ckpt/**
+!results/stage3_T5Train/tiger_sample_MARGIN*/logs/
+!results/stage3_T5Train/tiger_sample_MARGIN*/logs/**
+!results/stage3_T5Train/tiger_sample_STE_FIX*/
+!results/stage3_T5Train/tiger_sample_STE_FIX*/**/*.npy
+!results/stage3_T5Train/tiger_sample_STE_FIX*/**/*.pth
+!results/stage3_T5Train/tiger_sample_STE_FIX*/ckpt/
+!results/stage3_T5Train/tiger_sample_STE_FIX*/ckpt/**
+!results/stage3_T5Train/tiger_sample_STE_FIX*/logs/
+!results/stage3_T5Train/tiger_sample_STE_FIX*/logs/**
+!results/stage3_T5Train/tiger_sample_resample*/
+!results/stage3_T5Train/tiger_sample_resample*/**/*.npy
+!results/stage3_T5Train/tiger_sample_resample*/**/*.pth
+!results/stage3_T5Train/tiger_sample_resample*/ckpt/
+!results/stage3_T5Train/tiger_sample_resample*/ckpt/**
+!results/stage3_T5Train/tiger_sample_resample*/logs/
+!results/stage3_T5Train/tiger_sample_resample*/logs/**
+!results/stage3_T5Train/unknown_variant/**
+!stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/logs/
+!stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/logs/training_metrics.jsonl
+!stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs/
+!stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs/**
+!stage2_RQ-VAE/TIGER_FORK_RQ-VAE/logs/
+!stage2_RQ-VAE/TIGER_FORK_RQ-VAE/logs/**
+!stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/
+!stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/**
+!stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/fix_*/
+!stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/fix_*/**
+!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/logs/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/logs/training_metrics.jsonl
+!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/model/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-curved-rq/tests/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/logs/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/logs/training_metrics.jsonl
+!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/model/
+!stage2_RQ-VAE/TIGER_behaviour-pairs-levels-rq/tests/
+!stage2_RQ-VAE/TIGER_community-balance-l1-rq/
+!stage2_RQ-VAE/TIGER_community-balance-l1-rq/logs/
+!stage2_RQ-VAE/TIGER_community-balance-l1-rq/logs/training_metrics.jsonl
+!stage2_RQ-VAE/TIGER_community-balance-l1-rq/model/
+!stage2_RQ-VAE/TIGER_community-balance-l1-rq/tests/
+!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/
+!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/logs/
+!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/logs/training_metrics.jsonl
+!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/model/
+!stage2_RQ-VAE/TIGER_community-balance-repulse-rq/tests/
+!stage2_RQ-VAE/TIGER_community-l1-rq/
+!stage2_RQ-VAE/TIGER_community-l1-rq/logs/
+!stage2_RQ-VAE/TIGER_community-l1-rq/logs/training_metrics.jsonl
+!stage2_RQ-VAE/TIGER_community-l1-rq/model/
+!stage2_RQ-VAE/TIGER_community-l1-rq/tests/
+!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/
+!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/logs/
+!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/logs/training_metrics.jsonl
+!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/model/
+!stage2_RQ-VAE/TIGER_community-pairs-bounded-rq/tests/
+!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/
+!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/logs/
+!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/logs/training_metrics.jsonl
+!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/model/
+!stage2_RQ-VAE/TIGER_community-pairs-guarded-rq/tests/
+!stage2_RQ-VAE/TIGER_community-pairs-rq/
+!stage2_RQ-VAE/TIGER_community-pairs-rq/logs/
+!stage2_RQ-VAE/TIGER_community-pairs-rq/logs/training_metrics.jsonl
+!stage2_RQ-VAE/TIGER_community-pairs-rq/model/
+!stage2_RQ-VAE/TIGER_community-pairs-rq/tests/
+!stage2_RQ-VAE/TIGER_community-repulse-l1-rq/
+!stage2_RQ-VAE/TIGER_community-repulse-l1-rq/logs/
+!stage2_RQ-VAE/TIGER_community-repulse-l1-rq/logs/training_metrics.jsonl
+!stage2_RQ-VAE/TIGER_community-repulse-l1-rq/model/
+!stage2_RQ-VAE/TIGER_community-repulse-l1-rq/tests/
+!stage2_RQ-VAE/TIGER_community_graph_recon/logs/
+!stage2_RQ-VAE/TIGER_community_graph_recon/logs/training_metrics.jsonl
+!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/
+!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/logs/
+!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/logs/training_metrics.jsonl
+!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/model/
+!stage2_RQ-VAE/TIGER_curriculum-behaviour-rq/tests/
+!stage2_RQ-VAE/TIGER_curvature-embedding-rq/logs/
+!stage2_RQ-VAE/TIGER_curvature-embedding-rq/logs/training_metrics.jsonl
+!stage2_RQ-VAE/TIGER_curvature-stratum-sinkhorn-v1/logs/
+!stage2_RQ-VAE/TIGER_curvature-stratum-sinkhorn-v1/logs/training_metrics.jsonl
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   For a library or package, you might want to ignore these files since the code is
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
+#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
+#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   https://pdm.fming.dev/latest/usage/project/#working-with-version-control
+#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
+#   in version control.
+#   install all needed dependencies.
+#   intended to run in multiple environments; otherwise, check them in:
+#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
+#  Cursor is an AI-powered code editor. `.cursorignore` specifies files/directories to
+#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+#  Usually these files are written by a python script from a template
+#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
+#  and can be added to the global gitignore or merged into this file.  For a more nuclear
+#  and can be added to the global gitignore or merged into this file. However, if you prefer, 
+#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+#  exclude from AI features like autocomplete and code analysis. Recommended for sensitive data
+#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
+#  refer to https://docs.cursor.com/context/ignore-files
+#  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
+#  you could uncomment the following to ignore the enitre vscode folder
 # ! negation below. This stops a new sweep directory from entering `git status` and forcing
+# (0.42-0.58 -> 0.38-0.49) without removing it, against the 0.35 gate.
+# (it moves it by 0.2% of its entropy), whether the term reaches the encoder
+# (the rules below win).
+# (仍入库) 与一次 22 分钟的 Stage2 重跑重建, 而 LFS 对象不可变, 每次重跑
+# **/*.pth / **/*.npy / **/ckpt* / logs/ rules.
+# **/*.pth / **/*.npy / **/ckpt*/ rules above.
+# **/*.pth and **/*.npy rules would otherwise drop.
+# .python-version
+# .vscode/
+# 2026-09-25 user instruction: `results/stage3_T5Train/**/logs/_stage3_launcher.log`
+# 2026-09-25 规则: 除了 .parquet 之外全部推, 其余 (.json / .log / .jsonl / ckpt / npy) 全部进 git
+# 2026-10-09 规则: semantic-cone 研究的 per-positive AUC 向量是配对 bootstrap 的
+# 2026-10-09: the broad re-inclusion above would also pull every checkpoint
+# 2026-10-10: the Stage3 arm trees under results/stage3_T5Train/ carry the native
+# 2026-10-19 (issue #71): the DDP audit persists its per-rank tensors only so the parent process can
+# 2026-10-19 (issue #71): the R4/R5 gradient-integrity audit must publish its small run logs and
+# 2026-10-19: CGV is stateless -- it persists no certificate and no verdict. Everything under
+# 2026-10-26 修订: checkpoint(.pth/.pt) 与数组(.npy) 不再忽略 —— 它们经 .gitattributes 的
+# === 2026-11-01: LFS 配额已尽 (2.9 GB 被跟踪, 免费额度 1 GiB) ===
+# === HMamba upstream clone (sub-repo with own .git/, 936 MB, Task #145) ===
+# === Large binary data (RecBole framework data, 573M) ===
+# === Legacy analysis outputs (regeneratable, not reviewer-facing) ===
+# === Local experiment outputs (re-generable; keep source and small JSON reports) ===
+# === Orphan cleanup (Task #131) ===
+# === Paper reference framework clones (foreign git repos, Phase 4-7 baseline work) ===
+# === Project-specific exclusions (Task #117) ===
+# === SquashFS root (Obsidian AppImage 提取, 351M, 误提交 cfdf319 后移除) ===
+# === taskA/taskB 训练产物 (二进制可再生成, 不入库; 目录整理 Task #39 延续) ===
+# A pretty-printed SID table is 147,523 lines / 1.26 MB; `commit.draft()` models every
+# Abstra
+# Abstra is an AI-powered process automation framework.
+# Admission scratch trees: created and removed by check_entry / verify_tree.
+# Archived issue #116 runs stay untracked and remain isolated
+# Behaviour-fork-aware arms (creative Exp2): radial hierarchy + angular sibling
+# Behaviour-sampling arms (Exp1: per-epoch pair resampling, false-negative mask)
+# Binaries inside these two families are deliverables, not build products.
+# Byte-compiled / optimized / DLL files
+# C extensions
+# CLAUDE.md section 13 forbids. Same shape as the tiger_fork_* block above:
+# Celery stuff
+# Claude session data (settings, locks, scheduled tasks)
+# Cursor
+# Cython debug symbols
+# Default-deny generated data under results/research. Sweep outputs are data, not evidence;
+# Distribution / packaging
+# Django stuff:
+# Downloaded R2 copies used by the export-consistency audit; regenerable with rclone.
+# E1 conditional-supervision arms. Same shadowing problem as the blocks above.
+# E5 anchor arms. Same shadowing problem as the blocks above.
+# Empty orphan dir from failed git clone attempt (https://github.com/zar123123)
+# Environments
+# External framework sub-clones (paper baselines, ~15 GB)
+# External repo: https://github.com/CoderPowerBeyond/HMamba.git
+# Flask stuff:
+# Generated arm trees: `arm_manifest.json` carries every file's sha256 and
+# Generated kNN/sweep tables (100 MB+ across seeds). They are regenerated by their scripts and
+# HKBU-LAGAS/Awesome-Item-ID-Gen-RecSys.git (head 1025129)
+# IPython
+# IS pushed. We don't ignore the bare `logs/` directory; only specific transient
+# Ignore directories containing user credentials, local state, and settings.
+# Independent working repositories in this workspace; commit them in their own repo.
+# Installer logs
+# Issue #216: four-arm SID tables and checkpoints are rebuildable artifacts, the
+# Issue #217: five-arm SID tables and checkpoints are rebuildable artifacts; their
+# Issue #230 formal run logs (regenerable, kept out of the tree)
+# Iter audit logs + Stage3 results logs (CLAUDE §13; parent `logs/` must be re-included explicitly)
+# Its exported identifiers, its metrics stream and its layer record are the
+# Its identifiers, its metrics stream and its layer record are the evidence of a
+# Jupyter Notebook
+# Keep the identity (sha256, item count, token count) in a digest instead -- the table
+# Keeping them out of `git status` also keeps `commit.draft()` from scanning them (it otherwise
+# LFS 规则入库。原规则把资产静默丢弃, 历史上因此丢了 127 个 Stage3 运行的 item_sids,
+# Large binary dataset CSVs / tfrecords (regeneratable from upstream sources)
+# Learn more at https://abstra.io/docs
+# Local OpenCode toolchain cache (node_modules, generated config, never pushed)
+# Native research state (not source code)
+# ORCA graph caches from issue215: 7.8 GB of generated .in/.out files, not evidence and not committed.
+# Output results directory (regeneratable). Wholesale ignore is **not** used here
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+# PID 标记 (训练时动态生成, 瞬态)
+# Per-curvature transient experiment logs (Task #88)
+# Phase 8 reference clones (foreign git repos with own origin)
+# Process ID files (transient, regenerated on training start)
+# Project root marker (used by tooling, not a deliverable)
+# PyBuilder
+# PyCharm
+# PyInstaller
+# PyPI configuration file
+# Pyre type checker
+# QDA: the analysis table is regenerable in seconds from the committed observation
+# R7 track-A frozen replay bundles: large intermediates, reproducible from tools/r7_a_frozen_replay.py
+# Re-included after the global **/*.npz rule, scoped to this one directory.
+# Re-included after the global **/*.parquet rule above.
+# Rebuilt ORCA binary/source and raw orbit runs for tiger_cluster_graph (third-party, not committed).
+# Recorded so the clustering cannot drift between the diagnostic and a run.
+# Reference paper auxiliary files (transient or localized)
+# Repaired hyperbolic-behaviour arms (Exp1-4 repair round): fixed training-set
+# Rope project settings
+# Ruff stuff:
+# Run logs (transient, regeneratable from reruns)
+# Runtime noise stays ignored, after the rules above so it still wins.
+# Runtime scratch the broad re-inclusion above would otherwise pull in.
+# SageMath parsed files
+# Same deliverables as the TIGER baseline: Stage2 SID/ckpt/metrics and Stage3
+# Scoped to this one path, after the global **/*.npz rule.
+# Scrapy stuff:
+# Singular 'log/' baseline experiment logs (HGN/SASRec, already *.log covered)
+# Slurm job stdout (transient cluster logs, regenerated on each job)
+# Sphinx documentation
+# Spyder project settings
+# Stage 2 training logs stay out of git; evidence is in results/ and R2.
+# Stage2/Stage3 的 checkpoint 与数组产物不再入库: 它们可由 item_sids.json
+# Stage3 export gate keeps the trainer's own table beside the re-exported one; both are
+# Staging area of archive_retrained.py: the bucket, not the repo, is the archive.
+# Staging area of the R2 uploaders and reconcilers (CLAUDE.md 86: never /tmp).
+# TIGER + behaviour supervision: the iter48 three-level residual contrastive
+# TIGER baseline (full 3000-epoch Stage2 budget, no early stop) outputs are
+# TIGER behaviour-supervision sample arms and the hyperbolic repair arms.
+# Temporary task artifacts (diagnostic outputs, not deliverables)
+# The INDEPENDENT validation pair set (step 7): the positives come from
+# The Louvain behaviour partition the step 4 cluster-consistency term supervises.
+# The R2 mirror is a download cache: regenerate with analyze.py --download.
+# The STE repair arm. Same shadowing problem as the blocks above.
+# The Stage 3 result of the balanced-plan repulsion arm (issue 121): every SID
+# The Stage 3 result of the community-repulsion arm and the campaign summary.
+# The Stage 3 result of the guarded community-pair arm: the worst recall of the
+# The Stage2 behaviour trajectory is the direct evidence for this arm's verdict,
+# The `!` above only re-includes the directory itself; the generic `logs/` and
+# The anti-collapse arms from the MARGIN/DIGER round. Same shadowing problem as the
+# The behaviour-adjusted level-1 arm (round_20261105_144909_130, issue 121).
+# The behaviour-pair arm aimed at the later levels' residuals (issue 121):
+# The behaviour-pair arm with the curved kernel (issue 121): refused by the
+# The behaviour-stratified level-1 arm (round_20261106_020541_888, issue 121).
+# The bounded community-pair arm (issue 121): the metrics stream is the evidence
+# The canonical seed-42 behaviour pair set the whole programme shares. Every
+# The collapse's timeline: the weight snapshots and the per-layer diagnosis of the
+# The community arm with the baseline's balanced plan at level 1 (issue 121):
+# The community-guided graph reconstruction arm (issue 121). Its identifiers,
+# The community-guided level-1 arm (issue 121): the identifiers, the layer
+# The community-pair arm (issue 121): a stopped negative result. Its metrics
+# The community-repulsion arm (issue 121): the community term with the opposite
+# The conformance scratch of the admission runs: the one-epoch exports and the
+# The controlled weight-mapping experiment: the same arm with the community
+# The curvature-aware embedding arm (Plan A, TIGER_curvature-embedding-rq): the
+# The deterministic baseline reference: the Stage-2 re-run of the FROZEN
+# The frozen ORCA role table is an INPUT, not a generated output: the role-geometry
+# The frozen positive/negative pair index for the behaviour analysis. It is the
+# The guarded community-pair arm (issue 121): the community contrast with the
+# The stage-0 split files are the data every Stage 2 and Stage 3 result in this
+# The stage-3 result of the curvature-aware embedding arm: the test record and
+# The three-stage curriculum arm: the geometry first, the behaviour ramped in,
+# The two inertness controls are byte-identical to trees/F0_seed42 except for the
+# These two families were missing an un-ignore block entirely, so the generic
+# To reproduce: git clone https://github.com/CoderPowerBeyond/HMamba.git HMamba
+# Top-level paper reference clones (~13 GB total, each has own .git/)
+# Training artifacts: model checkpoints, pickle files, etc.
+# Translations
+# UV
+# Unit test / coverage reports
+# Visual Studio Code
+# _cgv is the payload one G5 run hands to its own parent process, regenerated on every check.
+# _history 只跟踪 json/md 文本产物, 忽略二进制
+# `**/ckpt*/` rules still drop the Stage3 native outputs, which CLAUDE.md §13
+# `logs/` rule above shadowed every one of their Stage 3 native outputs. The
+# affinity used directly as the edge weight instead of 1 + s. Its identifiers,
+# and .npy back in. The project rule is that large weights stay out of git and
+# and behaviour-geometry arms (Exp2-5: Poincare vs parameter-matched Euclidean).
+# and the codebook (both gradient paths are non-zero at every logged epoch),
+# and the final recall did not (0.05263 against the baseline's 0.05554). The
+# and whether the exported hierarchy changed (collision 0.1775 -> 0.1672, the
+# are untouched). The snapshots stay out - the rules below win - and the
+# arm is measured on exactly these pairs, so the file has to travel with the
+# arms verify its sha256 on every load, and it was lost once when the whole
+# attributes every untracked file and can spike memory).
+# ball normalizer, gradient-path switch, single-threaded reproducible init.
+# baseline above; re-included for the same reason after the global
+# became 35x larger, that the representation learned the ordering, and that the
+# because git's whitelist (`!pattern`) is shadowed by a parent directory ignore; instead
+# below win), so the SID and the measurements travel without the weights.
+# build_arms.py regenerates them from the frozen F0 tree plus the patch list.
+# campaign next to the best level-1 error rate, which is the campaign's clearest
+# cannot be checked. Checkpoints and arrays stay out.
+# checkpoint and metrics stream were silently dropped, which is exactly what
+# checkpoints and arrays stay out (the rules below win), so the SID and the
+# checkpoints and arrays stay out; the small records travel.
+# coarse level improved (Hard ER 6.47 -> 5.49, positive hit 0.0864 -> 0.0989)
+# coherence, hyperbolic grouping vs its matched Euclidean control.
 # commit.draft() to diff hundreds of megabytes.
+# continuous-surface contract) together with its identifiers, both metrics
+# contrast on the encoder's output spends the code space on the behaviour
+# copies of the same 24587-row identifier file. The reports under
+# curated reports stay as Markdown/JSON, and a small CSV that must be tracked gets an explicit
+# deliverables the project rule requires in git: test_final.json and
+# derived role cache (npz family is not committed, CLAUDE.md §46); rebuilt by structure_retention.py
+# descend into an excluded directory, then logs and ckpt, then the binaries.
+# diagnosis JSONs travel, they are the evidence.
+# diagnostic improved and the recall fell, which is the campaign's cleanest test
+# diagnostic re-run of the collapsed arm (a separate tree; the arm's own results
+# directly. Without them no committed metric can be recomputed from a clone.
+# directory has to be re-included first.
+# effect was that Exp1a resample -- the best model in the repository at
+# embedding. Its identifiers, its metrics stream and its layer record are the
+# error rate and the recall. Its identifiers, both metrics streams and its layer
+# every level-1 code receives a balanced share, and the community term repels
+# evidence of a negative result: the owner's learned three-level-collision gate
+# evidence of the comparison; the checkpoints and the embedding matrix stay out
+# excluded directory, then its contents, then the binaries the global
+# finding. The records travel; the checkpoints stay out.
+# from the fiftieth epoch (collision 0.42-0.58 against the 0.35 gate), so the
+# from, so it has to travel with the reports or those numbers cannot be checked.
+# generated (147k lines each) and the SID sha256 of every arm is in the R2 ledger.
+# hashes live in results/research/g4_closure/MANIFEST.json (commit_guard: 147k lines each).
+# hashes live in results/research/graphlet_roles/MANIFEST.json.
+# held-out behaviour did not improve while unrelated pairs contracted.
+# input every published sharing rate, gap and enrichment ratio was computed
+# inside that balance. Its identifiers, both metrics streams and its layer
+# is. Only these arm trees are re-included; nothing else changes.
+# its diff objects dominate memory.
+# its layer record travel; the checkpoints and arrays stay out.
+# its metrics stream and its layer record are the evidence for the three
+# itself is one export away from the checkpoint.  Official arm SIDs stay tracked under
+# logs/ and ckpt*/ rules earlier in this file drop all three silently, so the arm
+# mandatory Stage2/Stage3 deliverables. Re-included after the global
+# manifests as evidence, while the blanket logs/ rule above stays in force everywhere else.
+# measurements travel without the weights. The generic `logs/` rule above would
+# mechanism ported onto the current TIGER recipe. Same deliverables as the TIGER
+# metrics stream and layer record are the evidence that the target's spread
+# mkdocs documentation
+# moment it was written. Un-ignore the directory itself first, because git does not
+# must stay out of `git status`; `commit.draft()` otherwise attributes every untracked CSV and
+# mypy
+# negative result: every SID level came out at the frozen baseline's level and
+# negative result: the coarse level improved and the identifier collapsed, and
+# neighbour shares did not move). The checkpoints and arrays stay out: the two
+# nothing for MARGIN or B_E_nocb and their test_final.json would have been dropped the
+# one of those lines for every draft, including untracked files a later `take()` skips.
+# otherwise drop both metrics streams.
+# owner's collision gate, and its metrics stream is the evidence of why -- the
+# pdm
+# pipenv
+# poetry
+# probe reports of the CHECKS, regenerable by rerunning the checks, and three
+# pyenv
+# pytype static type analyzer
+# quantizer is the frozen baseline's and the work happened upstream, in the
+# questions the experiment asked: whether the community weight moves the target
+# ratios cannot be recomputed without it. Scoped to this one path.
+# read them back; they are multi-MB scratch, the small JSON summaries are the evidence.
+# reason as the train-based set: the reported sharing rates and enrichment
+# record and the Stage 3 result are the evidence of a negative result -- the
+# record travel.
+# records travel and no checkpoint does.
+# refused by the owner's collision gate (0.4490), and its record is the evidence
+# refused the Stage 3 launch. The checkpoints and arrays stay out (the rules
+# regenerate from the run, so the ablation arm trees are re-excluded for those
+# relations never entered training. It travels with the results for the same
+# repository is built from, and the offline behaviour analysis reads them
+# repository's own anti-collapse guard. Its identifiers, both metrics streams and
+# requires in the repository. Re-include their contents.
+# resample block above: the generic `logs/` rule matched first, so `git add` staged
+# results or the sharing rates cannot be recomputed. Scoped to this one path.
+# results/research tree was deleted. Tracked so the arms stay reproducible.
+# results/research/_conformance/ are the evidence and stay.
+# results/research/issue121/community_curvature/REPORT_community_graph_recon.md
+# results/stage2_RQ-VAE/.
+# rules at the end of the file win.
+# rules immediately below win.
+# sign, the causal test of the campaign's relation between the level-1 hard
+# single `QDA_MONITOR = False` line; only their SID tables are worth keeping.
+# snap-research/GRID.git (head 2fe3475)
+# so its native metrics stream is kept even though the TIGER baseline tree never
+# space.
+# stream is the evidence that the contrastive shape collapses the code space
+# streams and its layer record, because together they are the evidence of a
+# structure. The tree and the records travel; the checkpoints stay out.
+# sub-dirs that we want to keep out of git.
+# summaries (`analyze.py`); only the report, the scripts and the summaries are tracked.
+# test record. Without it the comparison in
+# test_R@10 = 0.063633 -- had its SID tracked while its own test_final.json,
+# test_final.json / training_metrics.jsonl / HG_Rec_best.pth / launcher log.
+# that bounding the grouping force by the encoder gradient cuts the collapse
+# that moving the contrast off the encoder's output does not protect the code
+# that the cross-sectional correlation does not transfer to a new arm.
+# the Stage 3 recall did not follow. Its checkpoints and arrays stay out -- the
+# the metrics stream are the comparison's evidence; the checkpoints stay out.
+# the owner's learned three-level-collision gate refused the Stage 3 launch. The
+# then both. The candidate tree travels (the mechanism, its tests and its
+# third-party ORCA clone; the orbit files it produces are regenerated by make_orca_input.py
+# tracked its own. The parent `logs/` rule shadows a bare `!file` pattern, so the
+# trainer whose Stage-3 number this round's arm is compared against, and its
+# training_metrics.jsonl under logs/, and HG_Rec_best.pth under ckpt/. The broad
+# trees are re-included the same way the unified curvature_RQ-VAE tree already
+# two extensions only; their metrics, SIDs and summaries still land in git.
+# un-ignore the directory itself first, because git does not descend into an
+# valid.parquet and every one of them is a held-out interaction, so the scored
+# we ignore by extension/path under results/ and never ignore a bare file.
+# 使 SID↔recall 无法复现; 现在新资产默认入库并走 LFS。
+# 唯一证据，必须随代码一起进 git，否则 summary.json 的置信区间无法复算。
+# 大文件不推 (.pth / .parquet / *.npy inputs / *_launcher.log); 小产物需要推送.
+# 显式覆盖 baseline 目录, 完整保留 logs / ckpt (含 .pth) 用于审计.
+# 留审计痕迹.
+# 都会永久新增一份配额。段末规则优先级最高, 覆盖上面的 ! 重新包含。
+#.idea/
+#Pipfile.lock
+#pdm.lock
+#poetry.lock
+#uv.lock
+*$py.class
+**/*.npz
+**/*.out
+**/*.parquet
+**/__pycache__/
+**/logs/_ddp_sync/
+**/logs/_stage3_run*.log
+**/logs/tensorboard/
+**/logs/wait_*.log
+**/rqvae_runs/
+*.cover
+*.egg
+*.egg-info/
+*.log
+*.manifest
+*.mo
+*.pid
+*.pot
+*.py,cover
+*.py[cod]
+*.pyc
+*.sage.py
+*.so
+*.spec
+*_TRAINING_PID
+.Python
+.abstra/
+.cache
+.claude/
+.claude/*
+.claude/skills/*
+.claude/skills/curvature-rqvae-iter/*
+.coverage
+.coverage.*
+.cursorignore
+.cursorindexingignore
+.dmypy.json
+.eggs/
+.env
+.hypothesis/
+.installed.cfg
+.ipynb_checkpoints
+.mypy_cache/
+.nox/
+.opencode/
+.pdm-build/
+.pdm-python
+.pdm.toml
+.project-root
+.pybuilder/
+.pypirc
+.pyre/
+.pytest_cache/
+.pytype/
+.ropeproject
+.ruff_cache/
+.scrapy
+.spyderproject
+.spyproject
+.tox/
+.venv
+.webassets-cache
+/external/
+/results/research/issue116/
+/results/research/issue117/
+/site
+Awesome-Item-ID-Gen-RecSys/
+BLOGER/
+DECOR/
+ENV/
+ETEGRec/
+ETEGRec_amazon2023/
+GRID-handbook/
+HG-Rec/
+HG-Rec/dataset/Instruments/Instruments_t5_hrqvae_issue51_combined.npy
+HG-Rec/dataset/Instruments/Instruments_t5_rqvae_issue51_combined.npy
+HMamba/
+LETTER/
+LETTER_amazon2023/
+MANIFEST
+RecBole/
+RecBole3.0/
+RippleNet/
+__pycache__/
+__pypackages__/
+analysis_sid_recall/feature_block.npz
+analysis_sid_recall/r2/
+analysis_sid_recall/structure_roles.npz
+appimage-extracted/
+build/
+celerybeat-schedule
+celerybeat.pid
+cover/
+coverage.xml
+cython_debug/
+data/*.csv
+data/*.csv.gz
+data/*.tfrecord
+data/*.tfrecord.gz
+data/amazon_data/
+data/recbole/
+db.sqlite3
+db.sqlite3-journal
+develop-eggs/
+dist/
+dmypy.json
+docs/_build/
+downloads/
+eggs/
+env.bak/
+env/
+genrec/
+htmlcov/
+https:/
+instance/
+ipython_config.py
+knowledge_graph_attention_network/
+lib/
+lib64/
+local_settings.py
+log/
+log_tensorboard/
+logs/
+logs_curv_*/
+nosetests.xml
+papers/grid_paper.txt
+papers/logs/
+papers/notes/
+parts/
+pip-delete-this-directory.txt
+pip-log.txt
+products/
+products/task338/stage1/*.pth
+products/task338/t5_out/**/*.pth
+profile_default/
+r2_apikey
+reports/
+result/
+results/**/*.npy
+results/**/*.parquet
+results/**/*.pt
+results/**/*.pth
+results/**/_stage3_launcher.log
+results/orca_build/
+results/research/**/*.bin
 results/research/**/*.csv
-results/research/**/*.tsv
+results/research/**/*.h5
+results/research/**/*.in
 results/research/**/*.micro
 results/research/**/*.npy
 results/research/**/*.npz
-results/research/**/*.pth
-results/research/**/*.pt
-results/research/**/*.bin
-results/research/**/*.h5
 results/research/**/*.out
-results/research/**/*.in
-
-# The frozen ORCA role table is an INPUT, not a generated output: the role-geometry
-# arms verify its sha256 on every load, and it was lost once when the whole
-# results/research tree was deleted. Tracked so the arms stay reproducible.
-!results/research/issue215/orca_roles_frozen.csv
-
-# Downloaded R2 copies used by the export-consistency audit; regenerable with rclone.
-results/research/issue139/_r2_download/
-
-# QDA: the analysis table is regenerable in seconds from the committed observation
-# summaries (`analyze.py`); only the report, the scripts and the summaries are tracked.
-results/research/qda/analysis_*.json
-
-# The two inertness controls are byte-identical to trees/F0_seed42 except for the
-# single `QDA_MONITOR = False` line; only their SID tables are worth keeping.
-results/research/qda/trees/F0_seed42_nomonitor*/
-
-# A pretty-printed SID table is 147,523 lines / 1.26 MB; `commit.draft()` models every
-# one of those lines for every draft, including untracked files a later `take()` skips.
-# Keep the identity (sha256, item count, token count) in a digest instead -- the table
-# itself is one export away from the checkpoint.  Official arm SIDs stay tracked under
-# results/stage2_RQ-VAE/.
+results/research/**/*.pt
+results/research/**/*.pth
+results/research/**/*.tsv
 results/research/**/item_sids.json
-# Generated arm trees: `arm_manifest.json` carries every file's sha256 and
-# build_arms.py regenerates them from the frozen F0 tree plus the patch list.
-results/research/qda/**/trees/
-
-# Admission scratch trees: created and removed by check_entry / verify_tree.
-stage2_RQ-VAE/_admission_*/
-
-# Issue #216: four-arm SID tables and checkpoints are rebuildable artifacts, the
-# hashes live in results/research/g4_closure/MANIFEST.json (commit_guard: 147k lines each).
-results/stage2_RQ-VAE/TIGER_g4_closure_*/
-stage2_RQ-VAE/TIGER_g4_closure_rq/logs/
-stage2_RQ-VAE/TIGER_g4_closure_rq/__pycache__/
-
-# Issue #217: five-arm SID tables and checkpoints are rebuildable artifacts; their
-# hashes live in results/research/graphlet_roles/MANIFEST.json.
-results/stage2_RQ-VAE/TIGER_graphlet_role_*/
-stage2_RQ-VAE/TIGER_graphlet_role_rq/logs/
-stage2_RQ-VAE/TIGER_graphlet_role_rq/__pycache__/
-results/research/graphlet_roles/cgv/*.npy
-
-# Stage3 export gate keeps the trainer's own table beside the re-exported one; both are
-# generated (147k lines each) and the SID sha256 of every arm is in the R2 ledger.
-results/stage2_RQ-VAE/*/item_sids.trainer.json
-results/research/stage3_sweep/__pycache__/
-results/research/stage3_sweep/*.stdout.log
-results/research/directed_graphlet_teacher/conformance_229.json
-results/research/directed_graphlet_teacher/representation/*.npz
 results/research/directed_graphlet_teacher/**/__pycache__/
-results/research/directed_graphlet_teacher/fidelity/*.npz
-results/research/directed_graphlet_teacher/augment/state_*.npz
 results/research/directed_graphlet_teacher/augment/augmented_states.npz
+results/research/directed_graphlet_teacher/augment/state_*.npz
 results/research/directed_graphlet_teacher/augment_gnn/gnn_state_*.npz
-# Issue #230 formal run logs (regenerable, kept out of the tree)
-results/research/issue230/run_*.log
+results/research/directed_graphlet_teacher/conformance_229.json
+results/research/directed_graphlet_teacher/fidelity/*.npz
+results/research/directed_graphlet_teacher/representation/*.npz
+results/research/embedding_knn_k_sweep/*.csv
+results/research/graphlet_roles/cgv/*.npy
+results/research/issue139/_r2_download/
+results/research/issue139/_stage/
+results/research/issue213/orca/
+results/research/issue215/structure_graphs_all/
+results/research/issue215/topology_graphs/
 results/research/issue230/old_soft_loss/
+results/research/issue230/run_*.log
+results/research/q_graphlet_multi_role/*.csv
+results/research/q_graphlet_multi_role/*.micro
+results/research/qda/**/trees/
+results/research/qda/analysis_*.json
+results/research/qda/trees/F0_seed42_nomonitor*/
+results/research/semantic_tree_hypothesis/*.csv
+results/research/stage3_queue/_stage/
+results/research/stage3_sweep/*.stdout.log
+results/research/stage3_sweep/__pycache__/
+results/research/tiger_cluster_graph/*.csv
+results/research/tiger_cluster_graph/*.micro
+results/research/tiger_cluster_graph/k13_exact
+results/stage1_GeneEmbedding/*.npy
+results/stage2_RQ-VAE/*/item_sids.trainer.json
+results/stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/**/__pycache__/
+results/stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/logs/_ddp_sync/
+results/stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/logs/tensorboard/
+results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/**/__pycache__/
+results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs/**/_ddp_sync/
+results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs/**/tensorboard/
+results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/**/__pycache__/
+results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_*/**/__pycache__/
+results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/**/_ddp_sync/
+results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/**/tensorboard/
+results/stage2_RQ-VAE/TIGER_RQ-VAE/**/__pycache__/
+results/stage2_RQ-VAE/TIGER_RQ-VAE/logs/_ddp_sync/
+results/stage2_RQ-VAE/TIGER_RQ-VAE/logs/tensorboard/
+results/stage2_RQ-VAE/TIGER_g4_closure_*/
+results/stage2_RQ-VAE/TIGER_graphlet_role_*/
+results/stage2_RQ-VAE/_cgv/
+results/stage2_RQ-VAE/_conformance/
+results/stage2_RQ-VAE/_diag_collapse_timeline/**/*.npy
+results/stage2_RQ-VAE/_diag_collapse_timeline/**/*.pth
+results/stage2_RQ-VAE/_input/*.npy
+results/stage2_RQ-VAE/curvature_RQ-VAE/**/__pycache__/
+results/stage2_RQ-VAE/curvature_RQ-VAE/category_cone_arms/**/*.npy
+results/stage2_RQ-VAE/curvature_RQ-VAE/category_cone_arms/**/*.pth
+results/stage2_RQ-VAE/curvature_RQ-VAE/dataset/Instruments/item_emb.npy
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_assignment_arms/**/*.npy
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_assignment_arms/**/*.pth
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_capacity_arms/**/*.npy
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_capacity_arms/**/*.pth
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/**/*.npy
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/**/*.pth
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms_fixed_radius/**/*.npy
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms_fixed_radius/**/*.pth
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms_fixed_rejection/**/*.npy
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms_fixed_rejection/**/*.pth
+results/stage2_RQ-VAE/curvature_RQ-VAE/logs/_ddp_sync/
+results/stage2_RQ-VAE/curvature_RQ-VAE/logs/_stage3_run*.log
+results/stage2_RQ-VAE/curvature_RQ-VAE/logs/tensorboard/
+results/stage2_RQ-VAE/curvature_RQ-VAE/logs/wait_*.log
+results/stage2_RQ-VAE/r45_gradient_integrity_audit/logs/ddp_artifacts/*.pt
+results/stage2_RQ-VAE/r7_a_parity/*/step_*/bundle.pt
+results/stage2_RQ-VAE/r7_c_geometry/*/step_*/bundle.pt
+results/stage2_RQ-VAE/r7_f_end_to_end/*.jsonl
+results/stage2_RQ-VAE/r7_f_end_to_end/production_snapshots/
+results/stage2_RQ-VAE/r7_f_end_to_end/production_stdout.log
+results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_snapshots/
+results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_stdout.log
+results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_steps.jsonl
+results/stage3_T5Train/TIGER_curvature-embedding-rq/**/*.npy
+results/stage3_T5Train/TIGER_curvature-embedding-rq/**/*.pth
+results/stage3_T5Train/TIGER_curvature-embedding-rq/logs/_ddp_sync/
+results/stage3_T5Train/curvature_RQ-VAE/**/__pycache__/
+results/stage3_T5Train/curvature_RQ-VAE/logs/*/_ddp_sync/
+results/stage3_T5Train/curvature_RQ-VAE/logs/_ddp_sync/
+results/stage3_T5Train/curvature_RQ-VAE/logs/_stage3_run*.log
+results/stage3_T5Train/curvature_RQ-VAE/logs/ablation/*/_ddp_sync/
+results/stage3_T5Train/curvature_RQ-VAE/logs/tensorboard/
+results/stage3_T5Train/curvature_RQ-VAE/logs/wait_*.log
+results/stage3_T5Train/tiger/**/__pycache__/
+results/stage3_T5Train/tiger/logs/*/_ddp_sync/
+results/stage3_T5Train/tiger/logs/_ddp_sync/
+results/stage3_T5Train/tiger/logs/_stage3_run*.log
+results/stage3_T5Train/tiger/logs/tensorboard/
+results/stage3_T5Train/tiger/logs/wait_*.log
+results/stage3_T5Train/tiger_behavior/**/__pycache__/
+results/stage3_T5Train/tiger_behavior/logs/*/_ddp_sync/
+results/stage3_T5Train/tiger_behavior/logs/_ddp_sync/
+results/stage3_T5Train/tiger_behavior/logs/_stage3_run*.log
+results/stage3_T5Train/tiger_behavior/logs/tensorboard/
+results/stage3_T5Train/tiger_behavior/logs/wait_*.log
+results/stage3_T5Train/tiger_hyp_*/**/__pycache__/
+results/stage3_T5Train/tiger_hyp_*/logs/*/_ddp_sync/
+results/stage3_T5Train/tiger_hyp_*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_hyp_*/logs/_stage3_run*.log
+results/stage3_T5Train/tiger_hyp_*/logs/tensorboard/
+results/stage3_T5Train/tiger_hyp_*/logs/wait_*.log
+results/stage3_T5Train/tiger_hyp_fix_*/**/__pycache__/
+results/stage3_T5Train/tiger_hyp_fix_*/logs/*/_ddp_sync/
+results/stage3_T5Train/tiger_hyp_fix_*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_sample_*/**/__pycache__/
+results/stage3_T5Train/tiger_sample_*/logs/*/_ddp_sync/
+results/stage3_T5Train/tiger_sample_*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_sample_*/logs/tensorboard/
+results/stage3_T5Train/tiger_sample_ANCHOR*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_sample_ANCHOR*/logs/tensorboard/
+results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/tensorboard/
+results/stage3_T5Train/tiger_sample_L2COND*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_sample_L2COND*/logs/tensorboard/
+results/stage3_T5Train/tiger_sample_MARGIN*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_sample_MARGIN*/logs/tensorboard/
+results/stage3_T5Train/tiger_sample_STE_FIX*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_sample_STE_FIX*/logs/tensorboard/
+results/stage3_T5Train/tiger_sample_resample*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_sample_resample*/logs/_stage3_run*.log
+results/stage3_T5Train/tiger_sample_resample*/logs/tensorboard/
+results/stage3_T5Train/tiger_sample_resample*/logs/wait_*.log
+scripts/pids/
+sdist/
+share/python-wheels/
+slurm-*.out
+squashfs-root/
+stage1_GeneEmbedding/output/*.npy
+stage2_RQ-VAE/**/*.npy
+stage2_RQ-VAE/**/*.pth
+stage2_RQ-VAE/*/logs/
+stage2_RQ-VAE/TIGER_g4_closure_rq/__pycache__/
+stage2_RQ-VAE/TIGER_g4_closure_rq/logs/
+stage2_RQ-VAE/TIGER_graphlet_role_rq/__pycache__/
+stage2_RQ-VAE/TIGER_graphlet_role_rq/logs/
+stage2_RQ-VAE/_admission_*/
+target/
+taskA/_ckpt/
+taskA/_data/
+taskA/_history/**/*.bin
+taskA/_history/**/*.ckpt
+taskA/_history/**/*.h5
+taskA/_history/**/*.npy
+taskA/_history/**/*.pt
+taskA/_history/**/*.pth
+taskA/_logs/
+taskB/_ckpt/
+taskB/_data/
+taskB/_history/**/*.bin
+taskB/_history/**/*.ckpt
+taskB/_history/**/*.h5
+taskB/_history/**/*.npy
+taskB/_history/**/*.pt
+taskB/_history/**/*.pth
+taskB/_logs/
+task_artifacts/
+tools/__pycache__/
+tools/organize/__pycache__/
+tools/renumber/__pycache__/
+var/
+venv.bak/
+venv/
+wheels/
