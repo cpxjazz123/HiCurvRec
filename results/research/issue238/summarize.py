@@ -13,6 +13,7 @@ ARMS = [
     ("TIGER_g237_sem_rq", "structure as residual"),
     ("TIGER_kappa_cost_rq", "curved cost, all three levels"),
     ("TIGER_kappa_sk_only_rq", "curved cost, Sinkhorn level only"),
+    ("TIGER_af3_graphgeo_rq", "per-item geometry from AF3 curvature (19h coupling)"),
 ]
 
 
