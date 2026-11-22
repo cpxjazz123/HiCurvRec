@@ -342,3 +342,27 @@ G2 是唯一通过全部量化诊断的臂(量化误差 0.075 带内、有效秩
 
 SHA-256 与完整键值见 `results/research/issue238/TIGER_g237_sem_rq_stage3_result.json`;
 R2 归档按 §6b 执行。
+
+## 15. G2 的 R2 归档(§6b 完成)
+
+`upload_stage3.py TIGER_g237_sem_rq` → **`r2:genrec/93/`**,20 个文件,`recall.json` 含 7 个键
+(`test_recall@5/@10`、`test_ndcg@5/@10`、`n_eval`、`best_checkpoint`、`predictions`)。
+四件齐全:Stage2 源码、`item_sids.json`、`rqvae_best.pth`、完整 recall 块。
+
+## 16. H 的派发与单卡分支
+
+第一次派发恰逢 G2 的 Stage3 进程正在退出,`stage2_start` 依次给出两种结果:
+
+| 尝试 | 结果 | 原因 |
+|---|---|---|
+| 1 | 拒绝 `every visible card already carries work` | Stage3 尚未退出 |
+| 2 | `smoke_pending`,`world_size=1` | 只有卡 0 空闲 |
+| 3(停后重派) | 拒绝/单卡 | 卡 0 残留 smoke 子进程 |
+| 4(清残留后) | `smoke_pending`,`world_size=1` | 四卡全空但探测仍报 `visible_count=1` |
+
+**判定**:工具在这一主机上始终走单卡分支(§19d0b:「单卡主机……单卡分支仍保持全局 batch 4096」),
+smoke 日志确认 `per-process batch 4096`。全局 batch、seed、3000 epoch 均未改变,因此该分支是被授权的,
+且与基线可比的只是「全局 batch」而非「梯度归约方式」——这一点在报告里必须写明,不能假装是 DDP4。
+
+**顺带修正的驱动缺陷**:`run_arm.py` 原先把 `started:false` 一律当失败,而 `smoke_pending` 也是
+`started:false`;现改为只在**真的被拒**(有 `refused`)时报错。
