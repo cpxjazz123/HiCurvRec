@@ -125,4 +125,4 @@ PGD 只能证明 **4-node edge motif 可用**，不能回答：
 - `analysis_sid_recall/qknn_pgd_motifs.py`
 - `analysis_sid_recall/results/qknn_pgd_motifs.json`
 - `analysis_sid_recall/results/qknn_pgd_motifs.md`
-- PGD 外部源码在 `tools/research/third_party/PGD`（未入库）；PGD 输出在 `results/research/tiger_cluster_graph/pgd_behavior.micro`。
+- PGD 外部源码曾置于 `tools/research/third_party/PGD`（未入库，owner 2026-11-22 指令删除）；上游为 Ahmed et al., ICDM 2015 的 PGD，需要复算时从上游重新获取。PGD 输出仍保留在 `results/research/tiger_cluster_graph/pgd_behavior.micro`。
