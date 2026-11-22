@@ -84,10 +84,12 @@ MIXED = Family(
          "        verify_codebook(self.get_code_embs(), distance=False)\n"
          "        verify_separation(self.get_code_embs(), cost, key=id(self))"),
         # export assignment: the floor, then the geometric check on the table it just used
+        # optional: #232-style export assigns from a hoisted `cost`; the frozen baseline
+        # exports through `embed_ind = torch.argmin(self._distances(x), ...)` below
         ("            index = torch.argmin(cost, dim=-1)",
          "            verify_margins(cost, rank_local=True)\n"   # export runs on rank 0 only
          "            index, _ = constrained_assignment(cost, ASSIGNMENT_FLOOR)\n"
-         "            verify_codebook(layer.get_code_embs())"),
+         "            verify_codebook(layer.get_code_embs())", True),
     ],
     layer_expr="MixedVQLevel(8)",
 )
@@ -115,8 +117,22 @@ EUCLID = Family(
         # that follows it in `forward`; both must stay in step.
         # the anchor reads whatever the tree already computed as its cost, so a candidate that
         # hoists the metric into `cost` (issue #232: the supervision branch needs it) matches too
+        # optional: only a tree that hoists the metric into `cost` (issue #232) has this
+        # anchor. The frozen baseline calls `self._distances(latent)` inline instead, which
+        # the next edit covers; `unguarded_sites` is what proves neither was missed.
         ("        embed_ind = self._indices(cost, infer_use_sk)\n"
          "        onehot = F.one_hot(embed_ind, self.n_embed)",
+         "        verify_codebook(self.get_code_embs(), distance=False)\n"
+         "        verify_separation(self.get_code_embs(), cost, key=id(self), "
+         "rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"
+         "        verify_margins(cost, rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"
+         "        embed_ind = self._indices(cost, infer_use_sk)\n"
+         "        verify_assignment(embed_ind, self.n_embed, ASSIGNMENT_FLOOR)\n"
+         "        onehot = F.one_hot(embed_ind, self.n_embed)", True),
+        # the frozen baseline's VQLayer.forward: inline metric, `onehot` as the next line
+        ("        embed_ind = self._indices(self._distances(latent), infer_use_sk)\n"
+         "        onehot = F.one_hot(embed_ind, self.n_embed)",
+         "        cost = self._distances(latent)\n"
          "        verify_codebook(self.get_code_embs(), distance=False)\n"
          "        verify_separation(self.get_code_embs(), cost, key=id(self), "
          "rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"
@@ -365,8 +381,14 @@ def apply_floor(tree: Path, family: str | None = None, force_constrained: bool =
     edits.append(spec.import_anchor)
 
     applied = []
-    for old, new in edits:
+    for edit in edits:
+        old, new = edit[0], edit[1]
+        optional = len(edit) > 2 and bool(edit[2])
         count = text.count(old)
+        if count == 0 and optional:
+            # this anchor belongs to another revision of the same quantiser; the
+            # unguarded-site scan below still runs, so nothing is silently left open
+            continue
         if count != 1:
             raise UnknownTree(
                 f"{spec.module}: anchor appears {count} times, expected 1:\n{old[:100]}")
