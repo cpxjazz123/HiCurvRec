@@ -84,10 +84,11 @@ def test_a_claim_without_a_pid_already_blocks_its_card():
 
     assert blocks("starting", time.time())
     # a claim written before the worker exists has no launched_at: the state
-    # file's mtime stands in for it
-    import os
-
-    assert blocks("starting", os.path.getmtime(__file__))
+    # file's mtime stands in for it. Pin the *shape* (an hour-old timestamp is
+    # still recent), not this file's mtime: the mtime test turned red every time
+    # the checkout sat unedited for two hours.
+    assert blocks("starting", time.time() - 3600)
+    assert not blocks("starting", time.time() - 3 * 3600)
     assert blocks("smoke_pending", time.time())
     assert blocks("running", time.time())
     assert not blocks("stopped", time.time())
