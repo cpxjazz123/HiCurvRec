@@ -337,12 +337,26 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
+    # Issue #230: the framework may hand down an epoch order that keeps graphlet instances
+    # together. It changes only the ARRANGEMENT of the epoch, never its size or step count.
+    order_path = os.environ.get("GENREC_GRAPH_BATCH_ORDER")
+    if order_path and os.path.isfile(order_path):
+        order = np.load(order_path).astype(np.int64)
+        # keep only items this rank trains on, in the handed-down order
+        keep = np.isin(order, train_ids)
+        train_ids = order[keep]
+        train_embeddings = all_embeddings[torch.from_numpy(train_ids)]
+        if rank == 0:
+            print("[graph batch] epoch order applied: %d items" % len(train_ids), flush=True)
     train_dataset = TensorDataset(torch.from_numpy(train_ids), train_embeddings)
-    train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
+    ordered = bool(order_path and os.path.isfile(order_path))
+    train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank,
+                                       shuffle=not ordered, seed=SEED, drop_last=False) \
+        if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
         batch_size=BATCH_SIZE_PER_RANK,
-        shuffle=(train_sampler is None),
+        shuffle=(train_sampler is None and not ordered),
         sampler=train_sampler,
         num_workers=NUM_WORKERS,
         pin_memory=device.type == "cuda",

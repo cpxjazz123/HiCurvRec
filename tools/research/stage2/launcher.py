@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 from . import contract
+from . import graph_batches
 from .anticollapse import patch_tree
 
 
@@ -42,6 +43,13 @@ def launch(entry: Path | str, result_dir: Path | str, *, port: int | None = None
     installed = patch_tree.apply_floor(entry.parent)
     (result_dir / "assignment_floor.json").write_text(
         json.dumps(installed, indent=1, sort_keys=True), encoding="utf-8")
+    # Issue #230: hand the trainer an epoch order that carries whole graphlet instances.
+    # The framework owns batching (§66); a tree that does not read the file is unaffected.
+    order = graph_batches.install(result_dir, universe=_universe(entry))
+    if order is not None:
+        (result_dir / "graph_batch_order.json").write_text(
+            json.dumps({"path": str(order), "seed": graph_batches.DEFAULT_SEED}, indent=1),
+            encoding="utf-8")
     interpreter = python or sys.executable
     torchrun = Path(interpreter).with_name("torchrun")
     if not torchrun.is_file():
@@ -49,6 +57,9 @@ def launch(entry: Path | str, result_dir: Path | str, *, port: int | None = None
     command = [str(torchrun), "--standalone", "--nproc_per_node=" + str(int(world_size)),
                "--master_port=" + str(int(port if port is not None else contract.STAGE2_PORT)),
                str(entry)]
+    if order is not None:
+        env_extra = dict(env_extra or {})
+        env_extra["GENREC_GRAPH_BATCH_ORDER"] = str(order)
     env = contract.launch_env(env_extra)
     log_path = logs / log_name
     with log_path.open("w", encoding="utf-8") as sink:
@@ -65,3 +76,16 @@ def in_single_card_mode() -> bool:
 def is_child_rank() -> bool:
     """Whether this process is one of the ranks the launcher started."""
     return int(os.environ.get("RANK", -1)) >= 0
+
+
+def _universe(entry: Path) -> int:
+    """The number of items the trainer will iterate: its own embedding row count."""
+    import numpy as np
+    root = entry.parent
+    for parent in entry.parents:
+        if (parent / "stage1_GeneEmbedding").is_dir():
+            root = parent
+            break
+    array = np.load(Path(root) / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy",
+                    mmap_mode="r")
+    return int(array.shape[0])
