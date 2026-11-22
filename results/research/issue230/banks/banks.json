@@ -1,0 +1,202 @@
+{
+ "cap": 20000,
+ "kinds": {
+  "chain": {
+   "bank": 20000,
+   "degree": {
+    "graph_in_degree_mean": 13.162768942937324,
+    "graph_out_degree_mean": 13.162768942937324,
+    "in_degree_mean": 22.986698045635936,
+    "in_degree_median": 11.0,
+    "nodes": 9773,
+    "out_degree_max": 1295,
+    "out_degree_mean": 22.844878747569837,
+    "out_degree_median": 11.0
+   },
+   "dropped": 9842,
+   "dropped_sample": [
+    {
+     "instance": [
+      12152,
+      10407,
+      16571
+     ],
+     "reason": "pairs split across supervision,validation"
+    },
+    {
+     "instance": [
+      8075,
+      2312,
+      21478
+     ],
+     "reason": "pairs split across supervision,test,validation"
+    },
+    {
+     "instance": [
+      14161,
+      14707,
+      23602
+     ],
+     "reason": "pairs split across supervision,validation"
+    }
+   ],
+   "hash": "10ba4a6e7ae3bf0f39d69d80b947fb15c0d5431677440c01a4e63702db789e1d",
+   "partition": {
+    "instances": {
+     "supervision": 7651,
+     "test": 1222,
+     "validation": 1285
+    },
+    "isolated": true,
+    "kind": "chain",
+    "overlap": {
+     "supervision\u2229test": 0,
+     "supervision\u2229validation": 0,
+     "validation\u2229test": 0
+    },
+    "pairs": {
+     "supervision": 16100,
+     "test": 2887,
+     "validation": 3006
+    }
+   },
+   "partitions": {
+    "supervision": "7b563a0abf72255308bcb49e797f85553334db42e0ae78bdb2ddf33f244210a1",
+    "test": "10477eaae060ba4960fad3315f1cfe0c760682809d6a8bf1b03b20cc93095666",
+    "validation": "5597f8ae88cafdf2e33beb4b04ed72531c5be5709617c462c1c10e208848c195"
+   }
+  },
+  "fork": {
+   "bank": 20000,
+   "degree": {
+    "graph_in_degree_mean": 13.162768942937324,
+    "graph_out_degree_mean": 13.162768942937324,
+    "in_degree_mean": 32.601885924563014,
+    "in_degree_median": 14.0,
+    "nodes": 4348,
+    "out_degree_max": 1295,
+    "out_degree_mean": 32.47539098436062,
+    "out_degree_median": 14.0
+   },
+   "dropped": 11538,
+   "dropped_sample": [
+    {
+     "instance": [
+      9695,
+      4513,
+      22397
+     ],
+     "reason": "pairs split across supervision,validation"
+    },
+    {
+     "instance": [
+      507,
+      336,
+      6390
+     ],
+     "reason": "pairs split across supervision,test"
+    },
+    {
+     "instance": [
+      22721,
+      16343,
+      20443
+     ],
+     "reason": "pairs split across supervision,test"
+    }
+   ],
+   "hash": "6a37e669c37ddc79c62aa32542f6a28606e0f9c12bac34e21bc1cb0df7f6d2e9",
+   "partition": {
+    "instances": {
+     "supervision": 6854,
+     "test": 788,
+     "validation": 820
+    },
+    "isolated": true,
+    "kind": "fork",
+    "overlap": {
+     "supervision\u2229test": 0,
+     "supervision\u2229validation": 0,
+     "validation\u2229test": 0
+    },
+    "pairs": {
+     "supervision": 10184,
+     "test": 1721,
+     "validation": 1745
+    }
+   },
+   "partitions": {
+    "supervision": "69580f468653542b5b22c2481591506529f03e17c9351cf39558529d3be8b5bb",
+    "test": "f486f68680dff3de1e6c556da9592f66ae91c5de002c6ef220139ea5bb323e74",
+    "validation": "f905eeac19f4db7860d82c19535c0a84f00fc6a460bab761ad8a58e0528f9440"
+   }
+  },
+  "merge": {
+   "bank": 20000,
+   "degree": {
+    "graph_in_degree_mean": 13.162768942937324,
+    "graph_out_degree_mean": 13.162768942937324,
+    "in_degree_mean": 29.294690603514134,
+    "in_degree_median": 13.0,
+    "nodes": 5236,
+    "out_degree_max": 1295,
+    "out_degree_mean": 29.43945760122231,
+    "out_degree_median": 13.0
+   },
+   "dropped": 11743,
+   "dropped_sample": [
+    {
+     "instance": [
+      18351,
+      11563,
+      13180
+     ],
+     "reason": "pairs split across supervision,test"
+    },
+    {
+     "instance": [
+      12164,
+      8362,
+      23488
+     ],
+     "reason": "pairs split across supervision,validation"
+    },
+    {
+     "instance": [
+      3661,
+      3370,
+      23654
+     ],
+     "reason": "pairs split across supervision,validation"
+    }
+   ],
+   "hash": "6821afbec1c13533d1d54915b992e3ab747c529fabd151a2547886c3093a70e1",
+   "partition": {
+    "instances": {
+     "supervision": 6322,
+     "test": 978,
+     "validation": 957
+    },
+    "isolated": true,
+    "kind": "merge",
+    "overlap": {
+     "supervision\u2229test": 0,
+     "supervision\u2229validation": 0,
+     "validation\u2229test": 0
+    },
+    "pairs": {
+     "supervision": 10133,
+     "test": 2181,
+     "validation": 2109
+    }
+   },
+   "partitions": {
+    "supervision": "d1c4a527afa841a4ba59d01b9433b7654e042b2ad117b2b4a87b5ca13ad55b05",
+    "test": "33358f5d73daa0b86801c22c8ef48b447036dc03a210483b7a2294582ba43c88",
+    "validation": "7c51ab680cd99a5d41dbab3f8a6850c411cf6eeed9df8f9bb253b0439baf896f"
+   }
+  }
+ },
+ "seed": 42,
+ "source": "results/research/behavior_graph_directed"
+}

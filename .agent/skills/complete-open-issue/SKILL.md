@@ -11,8 +11,10 @@ description: Use when the task is an open GitHub issue that must be finished end
 
 **训练不是固定步骤**:跑不跑由 issue 的验收条件决定(见 §4),不由"skill 有第四步"决定。
 
-**issue 关闭之前不允许暂停。** 一旦开始,就必须在同一个 turn 内推进到 `gh issue view <N>` 返回 `CLOSED`;
-不许中途停下、不许把"下一步计划"当交付、不许等确认。这不是"尽量做完",而是本 skill 的完成定义。
+**issue 关闭之前不允许暂停,但每个关键节点必须立刻评论到 issue。** 一旦开始,就必须推进到
+`gh issue view <N>` 返回 `CLOSED`;不许停下、不许把"下一步计划"当交付、不许等确认。
+同时,进度不是留在本地的:每完成一个关键节点或拿到一条关键结论,先 `gh issue comment` 再继续
+(节点清单与格式见下节)。这不是"尽量做完",而是本 skill 的完成定义。
 
 | 会被误当成"该停了"的瞬间 | 必须改成 |
 |---|---|
@@ -21,11 +23,33 @@ description: Use when the task is an open GitHub issue that must be finished end
 | 训练在跑 | 轮询(≤60 秒/次)直到出结果,然后进 §5 |
 | 训练失败/指标低 | 按 §4 分类回对应步骤,或按 §5 出负结论并写进 `VERDICT.md` |
 | 遇到需要授权的例外(如 `git push --force`) | 该例外单独处理,但 issue 的其余部分继续推进 |
-| 想先汇报进度再继续 | 只在 `out://` 里贴进度,然后**继续同一个 turn 干活** |
+| 想先汇报进度再继续 | 先 `gh issue comment` 贴该节点证据,再用 `out://` 说明,然后**继续干活** |
 
 唯一合法的终止点是 §6 关闭成功。确实被外部条件卡死(缺数据且无法补齐、需要 owner 改 issue 判据)时,
 不得静默停止:在 issue 下评论写明阻塞点与本轮证据,保持 OPEN,并把阻塞原因写进 `VERDICT.md`——
 这是"报告阻塞",不是"暂停"。
+
+## 进度必须回写到 issue(不是只写本地)
+
+每完成一个关键节点、或得到一条关键结论,**立刻**在 issue 下 `gh issue comment <N> --body-file <文件>`,
+然后才继续。本地文件(`RUN_LOG.md`/`CHECK_k.json`/`VERDICT.md`)是证据,issue 评论是给别人看的结论;
+只写本地而不评论,视为这一节点没交付。
+
+必须评论的节点:
+
+| 节点 | 评论里至少写 |
+|---|---|
+| 冻结验收清单后 | 清单条数、正文 sha256、**是否需要训练及依据** |
+| infra 完成 / 出现 infra FAIL | 数据与基线哈希、缺什么、修复到哪一步 |
+| 每条 `C` 从 FAIL→PASS,或出现新的 FAIL | 编号、命令、关键输出、证据文件路径 |
+| 每轮检查结束(`CHECK_k`) | 本轮 PASS/FAIL/NOT_RUN 计数、FAIL 的具体证据、下一轮要修什么 |
+| 训练启动 / 训练结束 | run 名、pid、epoch 范围、最终碰撞率与产物路径 |
+| §5 结论对账 | 逐条对照表、整体判定、`VERDICT.md` 路径 + commit sha |
+| §7 不可满足判定 | 互斥规模、计算脚本路径、为什么该主张在预算内不可满足 |
+| 关闭 issue | 结果、证据路径、commit sha(就是 `gh issue close` 的 comment) |
+
+评论用 ``gh issue comment <N> --body-file results/research/issue<N>/COMMENT_<序号>.md``,文件本身入库,
+保证"issue 上说了什么"和"仓库里有什么证据"一一对应。一次评论只讲一件事,附上路径与数字,不要复述猜测。
 
 ## 0. 读 issue 并冻结验收清单
 
@@ -130,7 +154,21 @@ gh issue view <N> --json state      # 必须 CLOSED
 ```
 
 关闭前确认:代码已推送(§43)、本地与远端 `main` 同 SHA(§45)、R2 归档完成(若 issue 要求)、
-`VERDICT.md` 里没有遗留 FAIL。issue 未满足时**保持 open**,在评论里贴本轮证据与阻塞点。
+`VERDICT.md` 里没有遗留 FAIL、**每个 C 的 PASS 都已评论到 issue**。issue 未满足时**保持 open**,
+并在评论里贴本轮证据与阻塞点(评论文件同时入库)。
+
+## 7. 合同不能证明 issue 的机制主张时
+
+§1–§3 全绿只说明"测量与隔离是对的"。如果测量给出的分布让 issue 的机制主张**在数学上不可满足**,
+再训练就是把预算花在一个已知为空的目标上。判据:
+
+- 主张要求"某些对更近";实测这些对同时又必须更远(互斥质量 > 0) → 在该预算下不可满足。
+- 主张依赖若干结构同时靠拢,而这些结构共享的单元对彼此施加相反要求 → 单一监督项无法同时满足。
+
+这时不得把"未达成"写进 `VERDICT.md` 当结论,也不得硬训:
+①在 issue 下贴出测量、互斥规模与计算脚本,说明为什么该主张在此预算下不可满足;
+②提出最小可判定的替代主张(通常是"换成能同时满足这些约束的显式表示"),请 owner 决定是否改判据或关 issue;
+③保持 OPEN,把证据与数学判据写进 `VERDICT.md`。这是"报告阻塞"的一种,不是暂停。
 
 ## 反模式
 
@@ -143,3 +181,4 @@ gh issue view <N> --json state      # 必须 CLOSED
 - issue 没满足就关闭,或把关闭当作完成。
 - 在 issue 仍 OPEN 时停下来:贴一份"下一步计划"当交付、等 owner 确认、或因为某条检查 FAIL 就收工。
   除 §6 关闭与"报告外部阻塞"两种情况外,任何形式的暂停都算本轮失败。
+- 只写本地 RUN_LOG/CHECK/VERDICT 而不同步评论 issue:进度没到达读者手里。关键节点必须落到 issue 评论。
