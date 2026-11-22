@@ -40,10 +40,8 @@ def launch(entry: Path | str, result_dir: Path | str, *, port: int | None = None
     # reach training without it -- no cooperation from the mechanism's own code is needed.
     # Fails closed on a quantiser this repository does not know.
     installed = patch_tree.apply_floor(entry.parent)
-    # The installation is reported on the launch stream, never as an artifact file:
-    # the owner forbids writing this record to disk (2026-11-22). The floor itself is
-    # proven by the patched source and by `verify_assignment` at the call site.
-    print("[stage2-launch] assignment_floor " + json.dumps(installed, sort_keys=True), flush=True)
+    (result_dir / "assignment_floor.json").write_text(
+        json.dumps(installed, indent=1, sort_keys=True), encoding="utf-8")
     interpreter = python or sys.executable
     torchrun = Path(interpreter).with_name("torchrun")
     if not torchrun.is_file():

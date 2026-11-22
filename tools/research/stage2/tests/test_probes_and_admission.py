@@ -4,8 +4,9 @@ Three engineering faults of the first candidate are reproduced here, because a
 fix without a test that fails on the old behaviour is a fix that can be undone:
 
 * the entry point derives the repository root from the stage2_RQ-VAE marker, so
-  a tree under results/ resolves a DIFFERENT root than the promoted tree; the
-  admission therefore runs the promoted copy;
+  the tree is judged where it stands; the owner refused the promoted copy
+  (2026-11-22), and the marker resolves from results/ and from stage2_RQ-VAE/
+  alike because the walk reaches the repository root either way;
 * the gradient and the four-rank probes demanded a model interface the frozen
   baseline does not have (a forward taking the item ids and returning five
   values), so the baseline itself could not be probed;
@@ -27,11 +28,15 @@ sys.path.insert(0, str(REPO))
 from tools.research.stage2 import checks, contract  # noqa: E402
 
 
-def test_the_admission_runs_the_tree_where_it_will_train(tmp_path):
-    """The promoted copy resolves the repository root, the round tree does not."""
-    tree = tmp_path / "candidate"
+def test_a_candidate_is_judged_where_it_stands():
+    """The marker resolves in place, and judging leaves no ``_admission_`` copy."""
+    import uuid
+
+    root = contract.resolve_root()
+    tree = root / "stage2_RQ-VAE" / ("_tmp_probe_" + uuid.uuid4().hex[:8])
     (tree / "model").mkdir(parents=True)
-    (tree / "train_rqvae.py").write_text(
+    entry = tree / "train_rqvae.py"
+    entry.write_text(
         "from pathlib import Path\n"
         "def _repository_root() -> Path:\n"
         "    here = Path(__file__).resolve()\n"
@@ -40,17 +45,13 @@ def test_the_admission_runs_the_tree_where_it_will_train(tmp_path):
         "            return parent\n"
         "    raise RuntimeError('no root')\n"
         "REPO_ROOT = _repository_root()\n", encoding="utf-8")
-    promoted = checks._admission_tree(tree)
     try:
-        assert promoted.parent.name == "stage2_RQ-VAE"
-        assert promoted.is_dir()
-        namespace = {"__file__": str(promoted / "train_rqvae.py"), "__name__": "tree"}
-        exec(compile((promoted / "train_rqvae.py").read_text(encoding="utf-8"),
-                     str(promoted / "train_rqvae.py"), "exec"), namespace)
-        assert Path(namespace["REPO_ROOT"]).resolve() == contract.resolve_root()
+        namespace = {"__file__": str(entry), "__name__": "tree"}
+        exec(compile(entry.read_text(encoding="utf-8"), str(entry), "exec"), namespace)
+        assert Path(namespace["REPO_ROOT"]).resolve() == root
+        assert sorted(p.name for p in (root / "stage2_RQ-VAE").glob("_admission_*")) == []
     finally:
-        checks._discard_admission_tree(tree)
-    assert not promoted.exists()
+        shutil.rmtree(tree, ignore_errors=True)
 
 
 def test_the_probes_adapt_to_the_model_interface():
