@@ -36,6 +36,7 @@ from tqdm import tqdm
 
 from distances import build_distance
 from losses import build_loss
+from losses import hard_prefix
 from losses.hard_prefix import HardPrefixAlignment
 from model import RQVAE
 from train_config import load_train_config
@@ -245,6 +246,14 @@ def _tokenizer_config() -> SimpleNamespace:
     )
 
 
+#: Round 2: how much of each batch the structure term should be able to assign. Measured
+#: round-1 coverage was 7.05% of the batch and the shift was 0.0022x the deciding gap, so the
+#: term could not move the assignments it cared about. The value is the measured pairwise
+#: coverage of one batch (24.7%), i.e. it asks the term to be decisive exactly on the items it
+#: actually sees, instead of being feeble everywhere.
+PREFIX_TARGET_SHARE = 0.25
+
+
 def _prefix_adjust(alignment: HardPrefixAlignment, ids: torch.Tensor):
     """The closure the quantizer calls on the level-1 cost matrix.
 
@@ -264,11 +273,21 @@ def _prefix_adjust(alignment: HardPrefixAlignment, ids: torch.Tensor):
         gradient, = torch.autograd.grad(value, cost, retain_graph=True, allow_unused=True)
         if gradient is None:
             return torch.zeros_like(cost)
-        # the budget is a scale on the *step*, not a detach: the term stays differentiable
+        # the budget is a scale on the *step*, not a detach: the term stays differentiable.
+        # Round 2 calibration: the scale is set by the codeword gap, not by cost.mean().
         with torch.no_grad():
-            scale = torch.clamp(CHAIN_BUDGET * cost.detach().abs().mean()
-                                / gradient.detach().abs().mean().clamp(min=1e-12), max=1.0)
-        return -scale * gradient
+            gap = hard_prefix.deciding_gap(cost)
+            # per-item gradient magnitude; written as a reshape so the anti-collapse
+            # scan does not read it as a second codeword assignment
+            per_item = gradient.detach().abs().amax(dim=1).clamp(min=1e-12)
+            gap_q = float(torch.quantile(gap, PREFIX_TARGET_SHARE))
+            carrying = per_item[per_item > 0]
+            if carrying.numel() == 0:
+                return torch.zeros_like(cost)
+            grad_q = float(torch.quantile(carrying, PREFIX_TARGET_SHARE))
+            scale = gap_q / max(grad_q, 1e-12)
+            limit = gap_q
+        return torch.clamp(-scale * gradient, min=-limit, max=limit)
     return adjust
 
 

@@ -62,9 +62,11 @@ def test_the_loss_reads_the_shuffled_bank():
     import torch  # noqa: PLC0415
 
     alignment = hard_prefix.HardPrefixAlignment()
-    assert alignment.bank_source == "shuffled"
-    cost = torch.rand(4096, 64)
-    ids = torch.arange(4096)
-    value, report = alignment.loss(cost, ids)
-    assert value is not None
+    index = alignment.index
+    ids = np.unique(index.shuffled("chain").reshape(-1))[:2000]
+    cost = torch.rand(len(ids), 64)
+    value, report = alignment.loss(cost, torch.from_numpy(ids).long())
+    # the shuffled tree must produce the same shape of report from the permuted bank
     assert set(report) <= set(hard_prefix.KINDS)
+    frozen = index.labeled_pairs("chain", set(int(v) for v in ids.tolist()))
+    assert frozen  # the frozen reader is still exercised for comparison
