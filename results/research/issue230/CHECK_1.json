@@ -1,0 +1,136 @@
+{
+ "audit": {
+  "cap": 20000,
+  "directory": "results/research/behavior_graph_directed",
+  "edges": 323633,
+  "kinds": {
+   "chain": {
+    "banked": 20000,
+    "sample": [
+     [
+      21892,
+      20987,
+      18470
+     ],
+     [
+      16846,
+      10541,
+      10949
+     ],
+     [
+      8882,
+      16483,
+      22188
+     ]
+    ],
+    "share_of_cap": 1.0
+   },
+   "fork": {
+    "banked": 20000,
+    "sample": [
+     [
+      22879,
+      496,
+      4873
+     ],
+     [
+      4550,
+      2150,
+      15359
+     ],
+     [
+      15948,
+      11733,
+      14132
+     ]
+    ],
+    "share_of_cap": 1.0
+   },
+   "merge": {
+    "banked": 20000,
+    "sample": [
+     [
+      14300,
+      6116,
+      21613
+     ],
+     [
+      8459,
+      7662,
+      11729
+     ],
+     [
+      9431,
+      3660,
+      4612
+     ]
+    ],
+    "share_of_cap": 1.0
+   }
+  },
+  "nodes": 24587
+ },
+ "check_round": 1,
+ "contract_module_sha256": "9ae2fca67a2434bc915e455b40783e42a72697398e03264b003d7cbf218b8682",
+ "contract_test_sha256": "4fa13784a74a82aff17c97077e0bfa780433a2cf8dfd95ecf016e79fa77bf864",
+ "date": "2026-11-22",
+ "decision": "round not clean: C3 and C4 FAIL; \u00a74 not entered",
+ "issue": 230,
+ "issue_body_sha256": "301c5a9a93d73ee778bbc7135522ddb8a7d5fe72adc6d640ca312748bfc7b0a0",
+ "tests": {
+  "command": "pytest analysis_sid_recall/tests/test_graphlet_contract.py",
+  "failed": 0,
+  "passed": 13
+ },
+ "verdict": {
+  "C1": "PASS",
+  "C10": "NOT_RUN",
+  "C11": "PARTIAL",
+  "C12": "NOT_RUN",
+  "C13": "PARTIAL",
+  "C14": "NOT_RUN",
+  "C15": "PASS",
+  "C16": "PASS",
+  "C17": "PASS",
+  "C18": "PASS",
+  "C19": "PASS",
+  "C2": "PASS",
+  "C20": "PARTIAL",
+  "C21": "PASS",
+  "C22": "NOT_RUN",
+  "C23": "NOT_RUN",
+  "C24": "NOT_RUN",
+  "C25": "NOT_RUN",
+  "C26": "NOT_RUN",
+  "C27": "NOT_RUN",
+  "C28": "NOT_RUN",
+  "C29": "NOT_RUN",
+  "C3": "FAIL",
+  "C30": "NOT_RUN",
+  "C31": "NOT_RUN",
+  "C32": "NOT_RUN",
+  "C33": "NOT_RUN",
+  "C34": "NOT_RUN",
+  "C35": "NOT_RUN",
+  "C36": "NOT_RUN",
+  "C37": "NOT_RUN",
+  "C38": "NOT_RUN",
+  "C39": "NOT_RUN",
+  "C4": "FAIL",
+  "C40": "NOT_RUN",
+  "C41": "NOT_RUN",
+  "C42": "NOT_RUN",
+  "C43": "NOT_RUN",
+  "C44": "NOT_RUN",
+  "C45": "NOT_RUN",
+  "C46": "NOT_RUN",
+  "C47": "NOT_RUN",
+  "C48": "NOT_RUN",
+  "C49": "NOT_RUN",
+  "C5": "PASS",
+  "C6": "NOT_RUN",
+  "C7": "NOT_RUN",
+  "C8": "NOT_RUN",
+  "C9": "NOT_RUN"
+ }
+}
