@@ -244,3 +244,21 @@ genrec/<NN>/recall.json      ← Stage3 结果的全部键值
 93. **不要用 `d.show()` 查看大 draft**。先 `d.print()` 看摘要，确认路径后再对小子集 `show()`；已跟踪的大文件
     即使没有被新忽略规则覆盖，修改后仍会被 diff，guard 会报告，必须显式处理或 `--allow`。
 
+
+## 19. 研究编排层退役（2026-11-22 owner 指令）
+
+94. **`tools/research/` 的编排层与 `tools/genrec-mcp/` 已删除，只保留启动内核。** owner 2026-11-22 要求删除
+    `tools/research`；执行时发现**冻结基线与每个候选的 `train_rqvae.py` 都 import
+    `tools.research.stage2.{contract,launcher}`**（§19b/§68 的唯一启动路径），整包删除会让包括冻结基线在内的
+    全部 Stage2 训练无法启动。因此保留且只保留 `tools/research/stage2/{contract,launcher}.py` 与
+    `tools/research/stage2/anticollapse/{floor,artifact,patch_tree}.py`（合计约 28 KB），其余全部删除:
+    `rounds/`、`science/`、`geometry/`、`verification/`、`agents/`、`core/`、`mcp/`、`pipeline_v2/`、
+    `integrations/`、`stage2/checks.py` 及其余 stage2 模块、`stage2/tests/`、`tools/genrec-mcp/`。
+    训练改为**手工入口**:`cd stage2_RQ-VAE/<ARM> && python train_rqvae.py`（入口仍经 `launcher.launch`
+    自启四卡、端口 50202、安装分配 floor）。
+
+    **随之废止的条款**（已无代码执行它们）:§3 第 3 项、§19d/§19d2 的轮次工具面、§19e/§19f/§71/§83–§85 的
+    机器准入闸门、§33–§40 的模块职责、§47–§58 的 MCP 科研调度与重载、§63 的自动分层指标记录、§89 的
+    Stage3 门槛执行。仍有效但需人工执行的:§19b/§19b0/§19g 的起点与预算规则、§21–§25 的 Stage3 冻结协议、
+    §6b 的 R2 归档、§91–§93 的提交预检（`tools/commit_guard.py` 独立、不受影响）。
+    已删除组件的历史记录保留在 git 历史中；`results/research/` 下引用已删模块的分析脚本不再可运行，其产物按原样保留。
