@@ -136,3 +136,82 @@ def test_role_index_refuses_a_bank_whose_wiring_disagrees():
     index = hard_prefix.RoleIndex()
     assert index.partitions()["test"] > 0
     assert index.reads_validation_or_test is False
+
+
+# --- round 2: coverage and budget ---------------------------------------------------
+def _bank_ids(hard_prefix, kind="chain", limit=2000):
+    index = hard_prefix.RoleIndex()
+    return np.unique(index.banks[kind].reshape(-1))[:limit]
+
+
+def test_pairwise_coverage_beats_triple_coverage():
+    """Round 1 supervised only triples whose three items shared a batch: p**3 = 4.6e-3.
+
+    Pairwise constraints need only two items in the batch, so coverage rises to ~1-(1-p)**2.
+    The measured round-1 coverage was 7.05% of each batch; the pairwise form must exceed it.
+    """
+    hard_prefix = _align()
+    index = hard_prefix.RoleIndex()
+    batch = set(int(v) for v in _bank_ids(hard_prefix, "chain", 4000))
+    triples = index.present("chain", batch)
+    pairs = index.pairwise("chain", batch)
+    assert len(pairs) > len(triples), (len(pairs), len(triples))
+    # every pair must be a real near-or-far relation of some bank instance
+    allowed = set()
+    for row in index.banks["chain"].tolist():
+        for i, j in hard_prefix.NEAR["chain"] + hard_prefix.FAR["chain"]:
+            allowed.add((min(row[i], row[j]), max(row[i], row[j])))
+    for left, right in pairs[:500]:
+        assert (min(left, right), max(left, right)) in allowed
+
+
+def test_pairwise_keeps_the_near_and_far_labels():
+    """A pair carries which side of the delta it belongs to; dropping that loses the term."""
+    hard_prefix = _align()
+    index = hard_prefix.RoleIndex()
+    batch = set(int(v) for v in _bank_ids(hard_prefix, "fork", 4000))
+    labelled = index.labeled_pairs("fork", batch)
+    assert labelled
+    sides = {side for entry in labelled.values() for side in entry if entry[side]}
+    assert sides <= {"near", "far"}
+    assert "near" in sides
+    assert all(set(entry) == {"near", "far"} for entry in labelled.values())
+
+
+def test_the_budget_is_calibrated_against_the_codeword_gap():
+    """The shift must be able to move the entry that decides `argmin`.
+
+    Measured: the round-1 budget produced 9.2e-6 against a 4.13e-3 median gap, a ratio of
+    0.0022, so it could not change an assignment it cared about.
+    """
+    hard_prefix = _align()
+    index, = (_bank_ids(hard_prefix, "chain", 4000),)
+    torch.manual_seed(0)
+    cost = torch.zeros(len(index), 8)
+    gaps = torch.linspace(1e-4, 1e-2, len(index))
+    cost[:, 1] = gaps
+    cost[:, 2:] = 0.5
+    shift = hard_prefix.budgeted_shift(cost, torch.from_numpy(index).long(),
+                                       target_share=0.5,
+                                       alignment=hard_prefix.HardPrefixAlignment())
+    assert float(shift.abs().max()) > 0.0
+    flippable = (shift.abs() >= gaps[:, None]).any(1).float().mean()
+    assert float(flippable) > 0.005, float(flippable)
+
+
+def test_the_budget_scales_with_the_gap():
+    """The scale is derived from the gaps, not from a cost percentage."""
+    hard_prefix = _align()
+    ids = _bank_ids(hard_prefix, "chain", 4000)
+    tensor_ids = torch.from_numpy(ids).long()
+    alignment = hard_prefix.HardPrefixAlignment()
+
+    def run(scale):
+        cost = torch.zeros(len(ids), 8)
+        cost[:, 1] = torch.linspace(1e-4, 1e-2, len(ids)) * scale
+        cost[:, 2:] = 0.5 * scale
+        return hard_prefix.budgeted_shift(cost, tensor_ids, target_share=0.5,
+                                          alignment=alignment)
+
+    ratio = float(run(10.0).abs().max()) / max(float(run(1.0).abs().max()), 1e-12)
+    assert 5.0 < ratio < 20.0, ratio

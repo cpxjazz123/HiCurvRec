@@ -1,0 +1,8 @@
+<stdin>:16: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+term value 3.048363208770752 report {"chain": {"instances": 40, "near": 0.0, "far": 0.0, "hinge": 1.0}, "fork": {"instances": 96, "near": 0.010416666977107525, "far": 0.0052083334885537624, "hinge": 0.9947916865348816}, "merge": {"instances": 56, "near": 0.0, "far": 0.0535714291036129, "hinge": 1.0535714626312256}}
+cost mean_abs 0.06525087356567383 grad mean_abs 9.200712156598456e-06 scale 1.0
+shift mean_abs 9.200712156598456e-06 shift max 3.436061382293701
+gap median 0.004128137603402138 gap q10 0.0010880259796977043
+shift_mean / gap_median 0.0022287803945817693
+items where any |shift| exceeds own gap: 0.17639398574829102

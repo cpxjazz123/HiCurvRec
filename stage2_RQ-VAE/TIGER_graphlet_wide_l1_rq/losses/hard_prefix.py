@@ -150,6 +150,59 @@ def prefix_margin(logits: torch.Tensor, roles: torch.Tensor, kind: str, *, margi
     return value.mean(), info
 
 
+def deciding_gap(cost: torch.Tensor) -> torch.Tensor:
+    """Per item: the distance between its nearest and its second-nearest codeword.
+
+    This is the only quantity that decides whether a perturbation to ``cost`` changes an
+    ``argmin``: an entry must move by at least this much to flip the assignment. The budget is
+    expressed against it instead of against ``cost.mean()``, which has no such meaning --
+    measured, that older calibration produced a shift 0.0022x the median gap.
+    """
+    two = torch.topk(cost.detach(), 2, dim=1, largest=False).values
+    return (two[:, 1] - two[:, 0]).clamp(min=1e-12)
+
+
+def budgeted_shift(cost: torch.Tensor, ids: torch.Tensor, *, target_share: float,
+                   alignment: "HardPrefixAlignment | None" = None) -> torch.Tensor:
+    """The cost perturbation the graphlet term asks for, scaled so it can decide assignments.
+
+    ``target_share`` is the fraction of items for which the deciding entry should be moved far
+    enough to flip the assignment; it is derived from how many items of the batch the structure
+    banks actually cover (``HardPrefixAlignment.coverage``), not chosen. The returned scale is
+    set so that the ``target_share`` quantile of per-item maximum movement reaches that item's
+    own deciding gap, and is never larger than one gap: beyond that the term would be rewriting
+    the quantizer rather than expressing a preference.
+    """
+    alignment = alignment if alignment is not None else HardPrefixAlignment()
+    # the term needs a differentiable input; the caller may hand us a plain cost matrix
+    cost = cost if cost.requires_grad else cost.detach().requires_grad_(True)
+    value, report = alignment.loss(cost, ids)
+    if value is None:
+        return torch.zeros_like(cost)
+    gradient, = torch.autograd.grad(value, cost, retain_graph=True, allow_unused=True)
+    if gradient is None:
+        return torch.zeros_like(cost)
+    gradient = gradient.detach()
+    gap = deciding_gap(cost)
+    per_item = gradient.abs().max(dim=1).values.clamp(min=1e-12)
+    share = min(max(float(target_share), 1e-3), 1.0)
+    # match the same quantile on both sides: using the gradient's maximum let a single
+    # outlier set the scale for every item (measured: 0.75% flippable instead of 50%).
+    gap_q = float(torch.quantile(gap, share))
+    # the gradient is zero on items no pair covers: the quantile must be taken over the items
+    # that DO carry a gradient, or it collapses to 0 and the scale divides by ~0 (measured).
+    carrying = per_item[per_item > 0]
+    if carrying.numel() == 0:
+        return torch.zeros_like(cost)
+    grad_q = float(torch.quantile(carrying, share))
+    scale = gap_q / max(grad_q, 1e-12)
+    # never move an entry by more than one gap: beyond that the term stops expressing a
+    # preference and starts rewriting the quantizer (measured unbounded shift: 6.4e3 vs gap
+    # 1.4e-3, which flipped a third of the batch).
+    limit = gap_q
+    return torch.clamp(-scale * gradient, min=-limit, max=limit)
+
+
 class RoleIndex:
     """The training-side reader of the frozen banks; it never reads validation or test.
 
@@ -214,6 +267,39 @@ class RoleIndex:
             raise RuntimeError("%s: %d loss pairs also sit in an evaluation bank"
                                % (kind, len(clash)))
 
+    def labeled_pairs(self, kind: str, members: set) -> dict:
+        """Pairwise constraints whose two items are both in the batch, with their side.
+
+        Round 1 supervised whole triples, which requires all three items in one batch:
+        (4096/24587)**3 = 4.6e-3, measured 96 instances and 7.05% of the batch per step. A pair
+        needs only two, so coverage rises to ~1-(1-p)**2 while the delta the issue defines is
+        unchanged -- near and far are still the positions of §2, only the third item is free.
+        """
+        out: dict = {}
+        bank = self.banks[kind]
+        inside = np.isin(bank, np.fromiter(members, dtype=np.int64, count=len(members)))
+        for row, present in zip(bank.tolist(), inside.tolist()):
+            for side, positions in (("near", NEAR[kind]), ("far", FAR[kind])):
+                for i, j in positions:
+                    if not (present[i] and present[j]):
+                        continue
+                    key = (min(row[i], row[j]), max(row[i], row[j]))
+                    entry = out.setdefault(key, {"near": 0, "far": 0})
+                    entry[side] += 1
+        return out
+
+    def assert_isolated_pairs(self, kind: str, labelled: dict) -> None:
+        """C9 for pairwise constraints: no loss pair may sit in an evaluation bank."""
+        evaluation = self.evaluation_pairs(kind)
+        clash = set(labelled) & evaluation
+        if clash:
+            raise RuntimeError("%s: %d loss pairs also sit in an evaluation bank"
+                               % (kind, len(clash)))
+
+    def pairwise(self, kind: str, members: set) -> list:
+        """The constraints of ``labeled_pairs`` as a list, for the coverage audit."""
+        return list(self.labeled_pairs(kind, members))
+
     def present(self, kind: str, members: set) -> np.ndarray:
         """The instances of this structure whose three items all sit in the batch."""
         bank = self.banks[kind]
@@ -246,19 +332,32 @@ class HardPrefixAlignment:
         position = {int(value): row for row, value in enumerate(ids.tolist())}
         parts, report = [], {}
         for kind in KINDS:
-            present = self.index.present(kind, members)
-            if len(present) == 0:
+            labelled = self.index.labeled_pairs(kind, members)
+            if not labelled:
                 continue
-            self.index.assert_isolated(kind, present)
-            roles = torch.tensor([[position[int(a)], position[int(b)], position[int(c)]]
-                                  for a, b, c in present.tolist()], dtype=torch.long,
+            # isolation is asserted on the pairs that actually enter the loss (C9)
+            self.index.assert_isolated_pairs(kind, labelled)
+            left = torch.tensor([position[int(a)] for a, _b in labelled], dtype=torch.long,
+                                device=cost.device)
+            right = torch.tensor([position[int(b)] for _a, b in labelled], dtype=torch.long,
                                  device=cost.device)
-            value, info = prefix_margin(cost, roles, kind, margin=self.margin)
+            coded = torch.softmax(-cost.float() / _temperature(cost), dim=-1)
+            share = (coded[left] * coded[right]).sum(-1)
+            hard = (hard_codes(cost)[left] == hard_codes(cost)[right]).float()
+            # near pairs want the share up, far pairs want it down; one hinge per pair,
+            # weighted by how many instances asked for that side
+            weight = torch.tensor([entry["near"] - entry["far"] for entry in labelled.values()],
+                                  dtype=cost.dtype, device=cost.device)
+            target = (weight > 0).float()
+            hinge = target * (1.0 - share) + (1.0 - target) * share
+            gate = (hinge.detach() > 0).float()
+            value = (gate * hinge).sum() / gate.sum().clamp(min=1.0)
             parts.append(value)
-            report[kind] = {"instances": int(len(present)),
-                            "near": float(info["near"].mean()),
-                            "far": float(info["far"].mean()),
-                            "hinge": float(info["hinge"].mean())}
+            report[kind] = {"pairs": int(len(labelled)),
+                            "near": int(sum(entry["near"] > entry["far"]
+                                            for entry in labelled.values())),
+                            "hard_shared": float(hard.mean()),
+                            "scale": float(share.mean())}
         if not parts:
             return None, {}
         return torch.stack(parts).sum(), report
