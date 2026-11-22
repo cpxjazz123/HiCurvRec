@@ -192,7 +192,7 @@ def test_the_entry_check_redirects_every_module_level_output_path(monkeypatch):
         return Done()
 
     monkeypatch.setattr(checks.subprocess, "run", fake_run)
-    checks.check_entry(Path("stage2_RQ-VAE/TIGER_sinkhorn_all_levels_rq"))
+    checks.check_entry(Path("stage2_RQ-VAE/_archive/TIGER_sinkhorn_all_levels_rq"))
     script = captured["command"][-1]
     for name in ("RESULT_DIR", "CHECKPOINT", "OUTPUT_SID", "OUTPUT_JSON", "LOG_DIR",
                  "METRICS_PATH", "EXPORT_MANIFEST"):

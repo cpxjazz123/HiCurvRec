@@ -43,8 +43,6 @@ from distances import build_distance
 from losses import build_loss
 from model import RQVAE
 from graphlet_sup import (CALIBRATION_STEPS, GRAPHLET_SHARE, TripletPredictor, TripletSampler,
-                          accuracy, af3_loss, af3_target, calibrate_share, graphlet_loss,
-                          load_graph)
                           accuracy, calibrate_share, graphlet_loss, load_graph)
 from uniqueness import (PAIRS_PER_STEP, REFRESH_EPOCHS, UNIQUE_SHARE, group_pairs,
                         soft_assignment, uniqueness_loss)
@@ -301,10 +299,12 @@ def main() -> None:
     sampler = TripletSampler(graph) if graph is not None else None
     # The supervisor head is trained jointly and discarded at export; its error is
     # what forces the item vectors to carry the local structure.
-    predictor = TripletPredictor(dim=CODEBOOK_DIM, af3=True).to(device) if graph is not None else None
     predictor = TripletPredictor(dim=CODEBOOK_DIM).to(device) if graph is not None else None
     graph_weight = None
     graph_calibration: list = []
+    unique_weight = None
+    unique_calibration: list = []
+    prefix_pairs = None
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1], distance=DISTANCE).to(device)
     if XAVIER_INIT:
@@ -371,9 +371,26 @@ def main() -> None:
         recons: list[float] = []
         graph_terms: list[float] = []
         graph_accuracy: list[float] = []
-        graph_mae: list[float] = []
+        unique_terms: list[float] = []
         graph_generator = torch.Generator()
         graph_generator.manual_seed(SEED + rank * 100003 + epoch)
+        if (epoch - 1) % REFRESH_EPOCHS == 0:
+            # Prefixes move while the codebook is young, so the (L1, L2) groups that
+            # feed the uniqueness term are rebuilt from the current model.
+            raw = model.module if isinstance(model, DDP) else model
+            with torch.no_grad():
+                latent_all = raw.encoder(all_embeddings.to(device))
+                first = raw.rq.vq_layers[0]
+                # Every assignment goes through the anti-collapse guard (CLAUDE.md:
+                # a tree that assigns without it is refused at launch).
+                codes1, _ = constrained_assignment(first._distances(latent_all), 1,
+                                                  counts_key=id(first))
+                residual = latent_all - first.get_code_embs()[codes1].detach()
+                second_layer = raw.rq.vq_layers[1]
+                codes2, _ = constrained_assignment(second_layer._distances(residual), 1,
+                                                   counts_key=id(second_layer))
+                prefix = (codes1 * 256 + codes2).cpu().numpy()
+            prefix_pairs = group_pairs(prefix)
         _epoch_t0 = time.time()
         for (batch,) in loader:
             batch = batch.to(device, non_blocking=True)
@@ -384,8 +401,6 @@ def main() -> None:
             recon_loss = components["reconstruction"]
             if sampler is not None:
                 # L_graphlet: a triplet classifier must tell a closed triangle from a
-                # degree-matched open wedge using only the three item vectors; its
-                # error is what pushes that information into the encoder.
                 # degree-matched open wedge using only the three item vectors.
                 triangles, wedges = sampler.sample(graph_generator)
                 items = np.concatenate([triangles.reshape(-1), wedges.reshape(-1)])
@@ -394,19 +409,6 @@ def main() -> None:
                 count = len(triangles)
                 tri = latent[:count * 3].reshape(count, 3, -1)
                 wed = latent[count * 3:].reshape(count, 3, -1)
-                logit_tri, kappa_tri = predictor(tri[:, 0], tri[:, 1], tri[:, 2])
-                logit_wed, kappa_wed = predictor(wed[:, 0], wed[:, 1], wed[:, 2])
-                targets = torch.as_tensor(
-                    af3_target(graph, triangles, wedges), device=device)
-                kappa_target_tri, kappa_target_wed = targets[:count], targets[count:]
-                classify = graphlet_loss(logit_tri, logit_wed)
-                curvature = 0.5 * (af3_loss(kappa_tri, kappa_target_tri)
-                                   + af3_loss(kappa_wed, kappa_target_wed))
-                # One auxiliary objective, one calibrated weight: the AF3 head does not
-                # get a second slice of the budget, so B and C stay comparable.
-                graph_term = classify + curvature
-                af3_mae = 0.5 * (float((kappa_tri - kappa_target_tri).abs().mean())
-                                 + float((kappa_wed - kappa_target_wed).abs().mean()))
                 logit_tri = predictor(tri[:, 0], tri[:, 1], tri[:, 2])
                 logit_wed = predictor(wed[:, 0], wed[:, 1], wed[:, 2])
                 graph_term = graphlet_loss(logit_tri, logit_wed)
@@ -416,18 +418,12 @@ def main() -> None:
                     if len(graph_calibration) >= CALIBRATION_STEPS:
                         recon_median = float(np.median([r for r, _ in graph_calibration]))
                         term_median = float(np.median([t for _, t in graph_calibration]))
-                        if world_size > 1:
-                            stats = torch.tensor([recon_median, term_median], device=device)
-                            dist.all_reduce(stats, op=dist.ReduceOp.SUM)
-                            recon_median = float(stats[0]) / world_size
-                            term_median = float(stats[1]) / world_size
                         graph_weight = calibrate_share(recon_median, term_median)
                         graph_calibration.clear()
                 if graph_weight is not None:
                     loss = loss + graph_weight * graph_term
                     graph_terms.append(float(graph_term.detach()))
                     graph_accuracy.append(accuracy(logit_tri.detach(), logit_wed.detach()))
-                    graph_mae.append(af3_mae)
             if prefix_pairs is not None and len(prefix_pairs):
                 # L_unique: two different items that already share L1 and L2 must not
                 # also point at the same level-3 codeword -- that is the collision.
@@ -471,7 +467,7 @@ def main() -> None:
             dist.all_reduce(local_graph, op=dist.ReduceOp.SUM)
         avg_graph = float(local_graph.item()) / max(world_size, 1)
         avg_graph_accuracy = float(np.mean(graph_accuracy)) if graph_accuracy else 0.0
-        avg_graph_mae = float(np.mean(graph_mae)) if graph_mae else 0.0
+        avg_unique = float(np.mean(unique_terms)) if unique_terms else 0.0
         cur_lr = optimizer.param_groups[0]["lr"]
 
         # === 非 eval 间隔: 只 log train 行 ===
@@ -480,7 +476,8 @@ def main() -> None:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
                 _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon,
                         graph=avg_graph, graph_weight=graph_weight,
-                        graph_accuracy=avg_graph_accuracy, graph_af3_mae=avg_graph_mae, lr=cur_lr,
+                        graph_accuracy=avg_graph_accuracy, unique=avg_unique,
+                        unique_weight=unique_weight, lr=cur_lr,
                         epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
             continue
 
@@ -514,7 +511,8 @@ def main() -> None:
                 _record(
                     rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon,
                     graph=avg_graph, graph_weight=graph_weight,
-                    graph_accuracy=avg_graph_accuracy, graph_af3_mae=avg_graph_mae, lr=cur_lr,
+                    graph_accuracy=avg_graph_accuracy, unique=avg_unique,
+                    unique_weight=unique_weight, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
