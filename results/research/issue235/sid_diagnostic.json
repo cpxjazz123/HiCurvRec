@@ -1,0 +1,93 @@
+{
+ "sid_path": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+ "items_with_curvature": 24500,
+ "groups": {
+  "negative": {
+   "items": 875,
+   "sharing": {
+    "pairs": 20000,
+    "exact_pairs": 382375,
+    "sampled": true,
+    "l1_share": 0.01995,
+    "l2_share": 0.0008,
+    "l3_share": 5e-05
+   },
+   "collision": {
+    "distinct_buckets": 849,
+    "duplicated_buckets": 24,
+    "items_in_collision": 50,
+    "collision_fraction": 0.029714285714285693,
+    "largest_bucket": 3
+   }
+  },
+  "positive": {
+   "items": 23625,
+   "sharing": {
+    "pairs": 20000,
+    "exact_pairs": 279058500,
+    "sampled": true,
+    "l1_share": 0.01095,
+    "l2_share": 0.00025,
+    "l3_share": 0.0
+   },
+   "collision": {
+    "distinct_buckets": 19753,
+    "duplicated_buckets": 2224,
+    "items_in_collision": 6096,
+    "collision_fraction": 0.16389417989417987,
+    "largest_bucket": 24
+   }
+  },
+  "bottom_decile": {
+   "items": 2451,
+   "sharing": {
+    "pairs": 20000,
+    "exact_pairs": 3002475,
+    "sampled": true,
+    "l1_share": 0.01395,
+    "l2_share": 0.0009,
+    "l3_share": 0.0001
+   },
+   "collision": {
+    "distinct_buckets": 2321,
+    "duplicated_buckets": 101,
+    "items_in_collision": 231,
+    "collision_fraction": 0.05303957568339457,
+    "largest_bucket": 6
+   }
+  },
+  "top_decile": {
+   "items": 2451,
+   "sharing": {
+    "pairs": 20000,
+    "exact_pairs": 3002475,
+    "sampled": true,
+    "l1_share": 0.0119,
+    "l2_share": 0.0004,
+    "l3_share": 5e-05
+   },
+   "collision": {
+    "distinct_buckets": 2354,
+    "duplicated_buckets": 72,
+    "items_in_collision": 169,
+    "collision_fraction": 0.03957568339453288,
+    "largest_bucket": 8
+   }
+  }
+ },
+ "whole_catalogue": {
+  "pairs": 20000,
+  "exact_pairs": 302247991,
+  "sampled": true,
+  "l1_share": 0.0102,
+  "l2_share": 0.0007,
+  "l3_share": 0.0
+ },
+ "seed": 42,
+ "pairs_per_group": 20000,
+ "notes": [
+  "descriptive only: curvature is not used to fit anything and no model is trained",
+  "sharing is per group and must be read against the whole-catalogue column, because a small group shares more by construction",
+  "the SID is the frozen TIGER baseline (CLAUDE.md 25); it is not retrained here"
+ ]
+}

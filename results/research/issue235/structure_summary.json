@@ -1,0 +1,98 @@
+{
+ "items": 24500,
+ "spearman": {
+  "degree_vs_kappa": -0.8325785180415761,
+  "clustering_vs_kappa": -0.3384034004524566,
+  "triangles_vs_kappa": -0.7706951423999205
+ },
+ "closure_strata": [
+  {
+   "structure": "open (0 triangles)",
+   "items": 5862,
+   "mean_kappa": 3.6541379518935515,
+   "median_kappa": 3.6050655000000003,
+   "negative_fraction": 0.0040941658137154556,
+   "mixed_fraction": 0.19481405663596044,
+   "median_degree": 7.0,
+   "median_clustering": 0.0
+  },
+  {
+   "structure": "closed (>=1 triangle)",
+   "items": 18638,
+   "mean_kappa": 1.9040257711127802,
+   "median_kappa": 1.8930764999999998,
+   "negative_fraction": 0.04565940551561326,
+   "mixed_fraction": 0.6967485781736238,
+   "median_degree": 17.0,
+   "median_clustering": 0.09090909090909091
+  }
+ ],
+ "degree_strata": [
+  {
+   "degree_range": "1-4",
+   "items": 1070,
+   "mean_kappa": 4.919716492523364,
+   "median_triangles": 0.0,
+   "median_clustering": 0.0,
+   "mixed_fraction": 0.02897196261682243
+  },
+  {
+   "degree_range": "5-12",
+   "items": 10963,
+   "mean_kappa": 3.087919365684576,
+   "median_triangles": 1.0,
+   "median_clustering": 0.05555555555555555,
+   "mixed_fraction": 0.28596187175043325
+  },
+  {
+   "degree_range": "13-49",
+   "items": 9992,
+   "mean_kappa": 1.7103273724979984,
+   "median_triangles": 8.0,
+   "median_clustering": 0.0761904761904762,
+   "mixed_fraction": 0.8493795036028823
+  },
+  {
+   "degree_range": "50-199",
+   "items": 2186,
+   "mean_kappa": 0.44552562305580967,
+   "median_triangles": 140.0,
+   "median_clustering": 0.09071751279200777,
+   "mixed_fraction": 1.0
+  },
+  {
+   "degree_range": "200+",
+   "items": 289,
+   "mean_kappa": -0.9435217128027682,
+   "median_triangles": 2017.0,
+   "median_clustering": 0.08832009118642932,
+   "mixed_fraction": 1.0
+  }
+ ],
+ "graphlet_banks": {
+  "path": "results/research/issue231/banks/banks_global.json",
+  "counts": {
+   "chain": {
+    "supervision": 1138,
+    "test": 151,
+    "validation": 192
+   },
+   "fork": {
+    "supervision": 1059,
+    "test": 164,
+    "validation": 149
+   },
+   "merge": {
+    "supervision": 1189,
+    "test": 159,
+    "validation": 162
+   }
+  },
+  "note": "the banks hold supervision samples, not a per-node role table; the structural variables above are computed exactly for every node"
+ },
+ "caveats": [
+  "curvature is a function of the open wedge count and the distances inside each wedge, so any correlation with degree is partly algebraic",
+  "the graph is an undirected projection: nothing here identifies a directed chain/fork/merge type, and curvature cannot uniquely identify a graphlet"
+ ],
+ "elapsed_s": 1.3
+}

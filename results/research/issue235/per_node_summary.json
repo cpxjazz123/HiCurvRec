@@ -1,0 +1,200 @@
+{
+ "items_total": 24587,
+ "items_with_triples": 24500,
+ "items_without_triples": 87,
+ "mixed_sign_items": 14128,
+ "mixed_sign_fraction_of_scored": 0.5766530612244898,
+ "node_mean_mean": 2.322766899860687,
+ "node_mean_median": 2.246884202303011,
+ "node_mean_std": 1.3722620529969023,
+ "node_positive_mean_items": 23625,
+ "node_negative_mean_items": 875,
+ "node_mean_quantiles": {
+  "p05": 0.20894273959160115,
+  "p25": 1.3920994503862154,
+  "p75": 3.1873039215686276,
+  "p95": 4.692442577030811,
+  "min": -3.091754201680671,
+  "max": 8.964705882352941
+ },
+ "degree_strata": [
+  {
+   "degree_range": "1-4",
+   "items": 1070,
+   "mean_of_means": 4.919716510903426,
+   "median_of_means": 5.007271241830065,
+   "negative_mean_items": 0,
+   "mixed_sign_items": 31
+  },
+  {
+   "degree_range": "5-12",
+   "items": 10963,
+   "mean_of_means": 3.0879193699877967,
+   "median_of_means": 3.0838779956427014,
+   "negative_mean_items": 45,
+   "mixed_sign_items": 3135
+  },
+  {
+   "degree_range": "13-49",
+   "items": 9992,
+   "mean_of_means": 1.7103273708235127,
+   "median_of_means": 1.7120260090717758,
+   "negative_mean_items": 162,
+   "mixed_sign_items": 8487
+  },
+  {
+   "degree_range": "50-199",
+   "items": 2186,
+   "mean_of_means": 0.44552561895566933,
+   "median_of_means": 0.48018879431919964,
+   "negative_mean_items": 379,
+   "mixed_sign_items": 2186
+  },
+  {
+   "degree_range": "200+",
+   "items": 289,
+   "mean_of_means": -0.9435216801442665,
+   "median_of_means": -0.814815220249793,
+   "negative_mean_items": 289,
+   "mixed_sign_items": 289
+  }
+ ],
+ "examples": {
+  "most_negative": [
+   {
+    "item": 23702,
+    "degree": 27,
+    "n_triples": 336,
+    "mean": -3.0918,
+    "positive": 32,
+    "negative": 304
+   },
+   {
+    "item": 24272,
+    "degree": 66,
+    "n_triples": 2062,
+    "mean": -2.8605,
+    "positive": 147,
+    "negative": 1915
+   },
+   {
+    "item": 20159,
+    "degree": 2220,
+    "n_triples": 2426956,
+    "mean": -2.7689,
+    "positive": 30,
+    "negative": 2426926
+   },
+   {
+    "item": 24446,
+    "degree": 22,
+    "n_triples": 228,
+    "mean": -2.6524,
+    "positive": 39,
+    "negative": 189
+   },
+   {
+    "item": 22372,
+    "degree": 1680,
+    "n_triples": 1387430,
+    "mean": -2.575,
+    "positive": 410,
+    "negative": 1387019
+   }
+  ],
+  "most_positive": [
+   {
+    "item": 23020,
+    "degree": 2,
+    "n_triples": 1,
+    "mean": 8.9647,
+    "positive": 1,
+    "negative": 0
+   },
+   {
+    "item": 23740,
+    "degree": 2,
+    "n_triples": 1,
+    "mean": 8.6784,
+    "positive": 1,
+    "negative": 0
+   },
+   {
+    "item": 21217,
+    "degree": 2,
+    "n_triples": 1,
+    "mean": 8.2324,
+    "positive": 1,
+    "negative": 0
+   },
+   {
+    "item": 23175,
+    "degree": 3,
+    "n_triples": 3,
+    "mean": 7.7608,
+    "positive": 3,
+    "negative": 0
+   },
+   {
+    "item": 22230,
+    "degree": 2,
+    "n_triples": 1,
+    "mean": 7.601,
+    "positive": 1,
+    "negative": 0
+   }
+  ],
+  "most_mixed": [
+   {
+    "item": 20159,
+    "degree": 2220,
+    "n_triples": 2426956,
+    "mean": -2.7689,
+    "positive": 30,
+    "negative": 2426926
+   },
+   {
+    "item": 22372,
+    "degree": 1680,
+    "n_triples": 1387430,
+    "mean": -2.575,
+    "positive": 410,
+    "negative": 1387019
+   },
+   {
+    "item": 23516,
+    "degree": 1497,
+    "n_triples": 1096533,
+    "mean": -2.3152,
+    "positive": 1385,
+    "negative": 1095140
+   },
+   {
+    "item": 23238,
+    "degree": 1459,
+    "n_triples": 1041357,
+    "mean": -2.4273,
+    "positive": 841,
+    "negative": 1040514
+   },
+   {
+    "item": 23244,
+    "degree": 1212,
+    "n_triples": 717906,
+    "mean": -2.2616,
+    "positive": 1966,
+    "negative": 715932
+   }
+  ]
+ },
+ "triple_coverage": {
+  "exact_neighbour_pairs": 42206243,
+  "sampled_neighbour_pairs": 42206243,
+  "coverage": 1.0,
+  "centres_capped": 0,
+  "cap_per_centre": 1000000000
+ },
+ "near_zero_tolerance": 1e-09,
+ "seed": 42,
+ "elapsed_s": 286.5
+}
