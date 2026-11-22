@@ -4439,6 +4439,12 @@ TOOLS.update({
 
 
 
+#: Every tool this module defines, before the server-specific trimming below.
+#: The split stage servers (tools/stage2, tools/stage3) build their own tool list
+#: from this snapshot, so the implementation exists once and is served twice.
+ALL_TOOLS = dict(TOOLS)
+
+
 # No tool may start a sub-agent: the main agent does the work directly.
 for _removed in tuple(TOOLS):
     if (_removed.startswith(("research_round_", "research_metric_", "research_verify_",
@@ -4446,6 +4452,15 @@ for _removed in tuple(TOOLS):
             or _removed in ("research_start", "research_resume", "research_status",
                             "research_cancel", "research_results")):
         TOOLS.pop(_removed, None)
+
+# The two training stages have their own servers (owner, 2026-11-22):
+# tools/stage2/server.py and tools/stage3/server.py. Serving them here as well
+# would put the same tool name on two mount points, so this server keeps only the
+# research and verification surface. The functions stay in this module: the round
+# tools call them directly.
+for _moved in ("stage2_start", "stage2_status", "stage2_stop",
+               "stage3_start", "stage3_status"):
+    TOOLS.pop(_moved, None)
 
 if __name__ == "__main__":
     main()
