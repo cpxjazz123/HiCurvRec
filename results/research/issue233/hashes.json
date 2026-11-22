@@ -1,0 +1,53 @@
+{
+ "arm_ckpt_sha256": "731a19a778e0c06a6c6c7b50291dc35153f2ccc883b36d32d31cb475b2b24a30",
+ "arm_metrics_sha256": "0325300270481360bdcc2e7c863d4001461f095e8f60bb37f2d3438fe22e70d0",
+ "arm_sid_sha256": "5d7dc92a9f3952c4a5e31a5fa69cffb50a4ccf100b822efd25232dcce2962843",
+ "bank_sha256": {
+  "chain_supervision.npy": "21c36cd2db03e41315abc2fa09c072e3c408012162a678f92c24b9c423c71b98",
+  "fork_supervision.npy": "18f62431427eed7727d79e897189ba5c093dbe47b2c7e31bae9520f4d5b8bf03",
+  "merge_supervision.npy": "06dc5af4ec7f0407b9fbf271850638164cbfce4d363cc499eb0e762038b9ee0a"
+ },
+ "baseline_ckpt_sha256": "af8efc29a8bcbbe5394cc5e358acf7b14c0e78ae99d8a8b9e5faf03fdddd97a8",
+ "baseline_sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+ "config": {
+  "BATCH_SIZE_PER_RANK": 1024,
+  "BETA": 0.25,
+  "CODEBOOK_DIM": 32,
+  "CODEBOOK_NUM": 3,
+  "CODEBOOK_SIZE": [
+   256,
+   256,
+   256
+  ],
+  "EMA_DECAY": 0.99,
+  "EPOCHS": 3000,
+  "EVAL_INTERVAL": 50,
+  "GRADIENT_CLIP_NORM": 1.0,
+  "HIDDEN_SIZES": [
+   512,
+   256,
+   128
+  ],
+  "LR": 0.001,
+  "NUM_WORKERS": 0,
+  "OPTIMIZER": "AdamW",
+  "PCA_DIM": 0,
+  "SEED": 42,
+  "SK_EPSILON": 0.003,
+  "SK_ITERS": 50,
+  "VQ_TYPE": "vq",
+  "WARMUP_EPOCHS": 50,
+  "WEIGHT_DECAY": 0.0001,
+  "XAVIER_INIT": true
+ },
+ "source_sha256": {
+  "losses/collision.py": "d1468a71e4461bdf496778689ff255ca5f61d430b4a33cc44439bd9f85c67591",
+  "losses/layered_graphlet.py": "75415daa6818d84fa3e3ca84d69616eb4f1ee5913639a29729654ba03a79e8f8",
+  "losses/layered_wiring.py": "31709fa23e6d2351366e3d817ab098edc9253591202906a21259a9507429705f",
+  "model/layers.py": "5dbfba4bd6bf8a52e38b16c9fdce45338c85f27cb864051bc2667f77f15af246",
+  "model/model.py": "2351d9a2bc32d7f4e2b8f6d7e1226ffd0671247d60396f1826f3c2046e3c5f7d",
+  "tests/test_collision.py": "4efaacd37eee2e95f52e99c6d6f90ffd7462e27e97f9e416c355d8f891dd2199",
+  "tests/test_layered_graphlet.py": "7c2292212e31df4da6b88a4e6bf219ac6341b6e9801a8edd60a1846bc310fb15",
+  "train_rqvae.py": "6b565782625ceb1b9f2aa89bf90c195a6fb55881e47bb005471a3c5b188d549b"
+ }
+}

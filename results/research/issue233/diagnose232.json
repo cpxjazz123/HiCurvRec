@@ -1,0 +1,165 @@
+{
+ "arm": {
+  "layers": {
+   "1": {
+    "conditional_entropy_bits": null,
+    "distinct": 256,
+    "duplicate_share": 0.9977630455118559,
+    "entropy_bits": 3.8381975495754435,
+    "largest_bucket": 10700,
+    "mean_bucket": 96.04296875,
+    "used_codes": 256
+   },
+   "2": {
+    "conditional_entropy_bits": 3.5241845592317973,
+    "distinct": 3091,
+    "duplicate_share": 0.9300036604709806,
+    "entropy_bits": 7.362382108807253,
+    "largest_bucket": 4862,
+    "mean_bucket": 7.954383694597218,
+    "used_codes": 256
+   },
+   "3": {
+    "conditional_entropy_bits": 2.922784663456336,
+    "distinct": 7859,
+    "duplicate_share": 0.7619880424614633,
+    "entropy_bits": 10.28516677226342,
+    "largest_bucket": 1561,
+    "mean_bucket": 3.128515078254231,
+    "used_codes": 256
+   }
+  },
+  "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue233/run232_archive/item_sids.json",
+  "structural": {
+   "chain": {
+    "delta": 0.11589403973509933,
+    "far_share": 0.33774834437086093,
+    "layer_increments": {
+     "1": 0.12582781456953643,
+     "2": -0.13245033112582782,
+     "3": 0.0033112582781456954
+    },
+    "near_share": 0.45364238410596025,
+    "satisfy_rate": 0.46357615894039733,
+    "tie_rate": 0.3973509933774834,
+    "violate_rate": 0.1390728476821192
+   },
+   "fork": {
+    "delta": 0.4725609756097561,
+    "far_share": 0.051829268292682924,
+    "layer_increments": {
+     "1": 0.3201219512195122,
+     "2": -0.19817073170731708,
+     "3": -0.09146341463414634
+    },
+    "near_share": 0.524390243902439,
+    "satisfy_rate": 0.3475609756097561,
+    "tie_rate": 0.5853658536585366,
+    "violate_rate": 0.06707317073170732
+   },
+   "merge": {
+    "delta": 0.27044025157232704,
+    "far_share": 0.13836477987421383,
+    "layer_increments": {
+     "1": 0.18553459119496854,
+     "2": -0.11320754716981132,
+     "3": -0.059748427672955975
+    },
+    "near_share": 0.4088050314465409,
+    "satisfy_rate": 0.25157232704402516,
+    "tie_rate": 0.6226415094339622,
+    "violate_rate": 0.12578616352201258
+   }
+  }
+ },
+ "baseline": {
+  "layers": {
+   "1": {
+    "conditional_entropy_bits": null,
+    "distinct": 249,
+    "duplicate_share": 0.9997152967015089,
+    "entropy_bits": 6.958990494049654,
+    "largest_bucket": 718,
+    "mean_bucket": 98.7429718875502,
+    "used_codes": 249
+   },
+   "2": {
+    "conditional_entropy_bits": 4.9793205266675225,
+    "distinct": 7374,
+    "duplicate_share": 0.8428031073331436,
+    "entropy_bits": 11.938311020717222,
+    "largest_bucket": 85,
+    "mean_bucket": 3.334282614591809,
+    "used_codes": 256
+   },
+   "3": {
+    "conditional_entropy_bits": 2.203427288293822,
+    "distinct": 20425,
+    "duplicate_share": 0.26530280229389513,
+    "entropy_bits": 14.141738309010867,
+    "largest_bucket": 24,
+    "mean_bucket": 1.2037698898408813,
+    "used_codes": 256
+   }
+  },
+  "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+  "structural": {
+   "chain": {
+    "delta": 0.0728476821192053,
+    "far_share": 0.026490066225165563,
+    "layer_increments": {
+     "1": 0.056291390728476824,
+     "2": -0.04304635761589404,
+     "3": -0.009933774834437087
+    },
+    "near_share": 0.09933774834437085,
+    "satisfy_rate": 0.16556291390728478,
+    "tie_rate": 0.8079470198675497,
+    "violate_rate": 0.026490066225165563
+   },
+   "fork": {
+    "delta": -0.039634146341463415,
+    "far_share": 0.051829268292682924,
+    "layer_increments": {
+     "1": -0.039634146341463415,
+     "2": 0.039634146341463415,
+     "3": 0.0
+    },
+    "near_share": 0.012195121951219513,
+    "satisfy_rate": 0.012195121951219513,
+    "tie_rate": 0.8841463414634146,
+    "violate_rate": 0.10365853658536585
+   },
+   "merge": {
+    "delta": -0.03459119496855346,
+    "far_share": 0.09119496855345911,
+    "layer_increments": {
+     "1": -0.025157232704402517,
+     "2": 0.018867924528301886,
+     "3": 0.0031446540880503146
+    },
+    "near_share": 0.05660377358490566,
+    "satisfy_rate": 0.0440251572327044,
+    "tie_rate": 0.8176100628930818,
+    "violate_rate": 0.13836477987421383
+   }
+  }
+ },
+ "collapse_onset": {
+  "level_1": {
+   "a": 8.0,
+   "b": 7.960001932068081,
+   "lost_ratio": 1.00502488168637
+  },
+  "level_2": {
+   "a": 3.5241845592317973,
+   "b": 4.9793205266675225,
+   "lost_ratio": 0.7077641498187315
+  },
+  "level_3": {
+   "a": 2.922784663456336,
+   "b": 2.203427288293822,
+   "lost_ratio": 1.3264720279104527
+  }
+ }
+}

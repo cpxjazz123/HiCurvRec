@@ -35,7 +35,7 @@ from losses import layered_graphlet as LG
 #: (median top-2 cost gap on the frozen checkpoint), NOT tuned: it is the only value at which
 #: `p` resolves the quantizer's own decision boundary. Measured under it: `p_max = 0.496`,
 #: pair mass 0.090, entropy 1.88 nats -- a distribution that still carries a gradient.
-TAU = 0.0016
+TAU = 0.001
 
 
 class StructureBranch:
@@ -80,19 +80,24 @@ def level_probability(costs, tau: float = TAU):
 
 
 def structure_forward(model, embeddings, captured, *, draw: dict, export_style: bool,
-                      tau: float = TAU):
-    """The three level objectives for one draw, over the costs a real forward produced.
+                      tau: float = TAU, latents=None):
+    """The three level objectives for one draw, over costs that carry the encoder's graph.
 
-    `captured` is `(tokens, costs)` as recorded by `RQLayer.forward`; the branch never runs the
-    quantizer again, so its probabilities are exactly the ones the assignment was made from.
+    `captured` is `(tokens, costs)` as recorded by `RQLayer.forward`; `latents` is the same
+    forward's per-level residual. The cost is RECOMPUTED from the latent with the metric the
+    quantizer was handed, so the objective's graph reaches the encoder -- a detached clone of the
+    recorded cost would be a leaf with no path back to `encoder`, and `route_cost_gradient` would
+    then find `cost.grad` populated while the encoder received exactly zero.
     """
     tokens, captured_costs = captured
     union = np.unique(np.concatenate([d.reshape(-1).numpy() for d in draw.values()]))
     roles = {kind: torch.from_numpy(np.searchsorted(union, d.numpy())).long()
              for kind, d in draw.items()}
-    # the captured costs are detached; the objective reads a graph-carrying clone so that
-    # `route_cost_gradient` can consume `cost.grad` right after this forward
-    costs = [c.detach().clone().requires_grad_(True) for c in captured_costs]
+    costs = captured_costs
+    if latents is not None:
+        # the quantizer's own metric, applied to the graph-carrying latent
+        costs = [model.rq.distance(latent, layer.get_code_embs())
+                 for latent, layer in zip(latents, model.rq.vq_layers)]
     probs = level_probability(costs, tau)
     hard = tokens.long()
     if export_style:
@@ -102,7 +107,7 @@ def structure_forward(model, embeddings, captured, *, draw: dict, export_style: 
     objective = torch.stack([p["l1"] + p["l2"] + p["l3"] for p in per_kind.values()]).mean()
     diagnostics = {
         "coverage": float(len(union)) / float(len(embeddings)),
-        "levels": {kind: {k: float(v) for k, v in p.items()} for kind, p in per_kind.items()},
+        "levels": {kind: {k: float(v.detach()) for k, v in p.items()} for kind, p in per_kind.items()},
         "export_style": bool(export_style),
     }
     return objective, diagnostics, costs
@@ -120,33 +125,24 @@ def cost_slopes(latent: torch.Tensor, tokens: torch.Tensor, codebook: torch.Tens
 
 def route_cost_gradient(model, latent: torch.Tensor, costs, tokens: torch.Tensor,
                         tau: float = TAU) -> dict:
-    """Backward the structure objective into the ENCODER only (issue #232, owner's option 2).
+    """Report where the structure gradient landed; the encoder is reached through the metric.
 
-    The codebook is left entirely to the reconstruction loss. Measured reason: `p = softmax(-cost/T)`
-    is differentiable in the codewords with a slope proportional to `1/T`, so at the temperature
-    that makes `p` resolve the assignment (T=0.0016), the codeword gradient carried two orders of
-    magnitude more signal than the objective's own scale. One step of it cut L1's codeword spacing
-    from 0.521 to 0.238 of resolution and `assignment_floor.verify_separation` raised
-    `CodebookCollapse` in 16 epochs -- lowering the step size to 3e-5 did not help, so the first
-    step's DIRECTION was the problem, not its length.
-
-    The encoder gradient is the one the objective is defined on: `cost = |z - c|^2`, so
-    `dObj/dz = 2 * sum_k g_k (z - c_k)`. The codewords stay in `dObj/dcost`'s reference frame but
-    receive nothing.
+    The cost is now `metric(latent, codebook)`, so `backward()` on the objective already carries
+    the gradient into the encoder -- there is no detached leaf to route. The codebook is frozen for
+    this term (issue #232 option 2, the measured `CodebookCollapse`), so it is reported as zero and
+    its accumulated gradient is cleared.
     """
-    latent = latent.detach().requires_grad_(True)
-    latent_grad = torch.zeros_like(latent)
-    for level, cost in enumerate(costs):
-        g = cost.grad if tau == 1.0 else cost.grad / tau
-        if g is None:
-            continue
-        codebook = model.rq.vq_layers[level].get_code_embs().detach()
-        latent_grad = latent_grad + 2.0 * (g.sum(-1).unsqueeze(1) * latent.detach() - g @ codebook)
-    return {"latent_grad": latent_grad,
+    encoder_norm = float(sum(float(p.grad.detach().pow(2).sum())
+                             for p in model.encoder.parameters()
+                             if p.grad is not None) ** 0.5)
+    for layer in model.rq.vq_layers:
+        layer.embed.weight.grad = None
+    return {"latent_grad": None,
             "codebook_grads": [torch.zeros_like(layer.get_code_embs().detach())
                                for layer in model.rq.vq_layers],
-            "latent_grad_norm": float(latent_grad.norm()),
+            "latent_grad_norm": encoder_norm,
             "codebook_grad_norms": [0.0, 0.0, 0.0],
+            "encoder_grad_norm": encoder_norm,
             "codebook_frozen": True}
 
 
@@ -226,17 +222,19 @@ def run_structure_step(model, embeddings, draw, *, export_style: bool = False,
     # rows are the same ids, so `structure_forward` indexes straight into the cached embeddings
     union = np.unique(np.concatenate([d.reshape(-1).numpy() for d in draw.values()]))
     rows = torch.from_numpy(union.astype(np.int64))
-    latent, tokens, costs = model.quantize_items(embeddings, rows)
+    latent, tokens, costs, latents = model.quantize_items(embeddings, rows)
     indexed = {kind: torch.from_numpy(np.searchsorted(union, d.numpy())).long()
                for kind, d in draw.items()}
     # the objective must reach `costs`, so it reads the SAME tensors the gradient is routed from
     objective, diagnostics, costs = structure_forward(
-        model, embeddings, (tokens, costs), draw=indexed, export_style=export_style, tau=tau)
+        model, embeddings, (tokens, costs), draw=indexed, export_style=export_style, tau=tau,
+        latents=latents)
     if not torch.isfinite(objective):
         raise RuntimeError("structure objective is not finite")
+    # ONE backward reaches the encoder directly now that the cost is rebuilt from the latent --
+    # there is no detached leaf to route through, and a second backward would hit freed buffers
     objective.backward()
     routed = route_cost_gradient(model, latent, costs, tokens, tau)
-    latent.backward(routed["latent_grad"])
     # issue #232 option 2: the codebook is left to the reconstruction loss. Its gradient is
     # explicitly cleared, because the encoder and decoder both consume the codebook table and
     # autograd would otherwise leave a zero-valued `.grad` there that the step still acts on

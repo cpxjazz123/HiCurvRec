@@ -170,9 +170,10 @@ def test_c30_kind_weighted_average_does_not_double_count():
 
 
 # --- C42/C35/C16: the base path is untouched ---------------------------------------------------
-def test_c42_the_structure_step_is_separate():
+def test_c42_the_term_joins_the_single_backward():
+    """Owner's joint contract: one scalar, one backward, the original clip, one step."""
     source = (TREE / "train_rqvae.py").read_text()
-    assert "_structure_step(epoch, model, raw_module" in source
+    assert "loss = (loss + aux_scale[\"graphlet\"] * graphlet_value" in source
     assert "GRAPHLET_ALIGNMENT" not in source
     assert "GRAPHLET_SHARE" not in source
 
@@ -233,14 +234,11 @@ def test_c39_c40_structure_step_reaches_encoder_and_codebooks():
     # gradient was ~1e-8, because `softmax(-cost)` was flat at the real cost scale.
     assert report["latent_grad_norm"] > 1e-3, report["latent_grad_norm"]
     assert report["encoder_grad_norm"] > 1e-3, report["encoder_grad_norm"]
-    # issue #232, owner's option 2: the codebook is NOT updated by the structure term. It was,
-    # and the codeword spacing fell 0.521 -> 0.238 of resolution in one step, raising
-    # CodebookCollapse inside 16 epochs.
+    # the codebook is not routed from the structure term: its only gradient is reconstruction's.
+    # (Under the joint backward the term is an addend of the same scalar, so the codebook's
+    # gradient comes from recon and the routing reports nothing for it.)
     assert report["codebook_frozen"] is True
     assert all(norm == 0.0 for norm in report["codebook_grad_norms"])
-    assert all(
-        model.rq.vq_layers[level].embed.weight.grad is None
-        for level in range(len(model.rq.vq_layers))), "the codebook must receive no structure grad"
 
 
 def test_c39b_the_temperature_resolves_the_real_cost_scale():
@@ -293,7 +291,29 @@ def _hard_delta(model, embeddings, draw):
         for level, items in draw.items():
             union = np.unique(items.reshape(-1).numpy())
             rows = torch.from_numpy(union.astype(np.int64))
-            _, tokens, _ = model.quantize_items(embeddings, rows)
+            _, tokens, _, _ = model.quantize_items(embeddings, rows)
             roles = torch.from_numpy(np.searchsorted(union, items.numpy())).long()
             values.append(float(LG.structure_value(tokens, roles, level).mean()))
     return float(np.mean(values))
+
+
+# --- owner's schedule: half the budget plain, then a linear ramp -------------------------------
+def test_c232_ramp_is_zero_until_half_and_reaches_the_max_at_the_end():
+    from losses.layered_graphlet import ramp_weight
+
+    assert ramp_weight(1, 3000, 1500, 0.20) == 0.0
+    assert ramp_weight(1499, 3000, 1500, 0.20) == 0.0
+    assert ramp_weight(1500, 3000, 1500, 0.20) == 0.0
+    assert ramp_weight(2250, 3000, 1500, 0.20) == pytest.approx(0.10)
+    assert ramp_weight(3000, 3000, 1500, 0.20) == pytest.approx(0.20)
+    # monotone over the ramped half
+    values = [ramp_weight(e, 3000, 1500, 0.20) for e in range(1500, 3001, 100)]
+    assert all(b >= a for a, b in zip(values, values[1:]))
+
+
+def test_c232_the_term_is_an_addend_of_the_same_scalar():
+    source = (TREE / "train_rqvae.py").read_text()
+    assert "loss = (loss + aux_scale[\"graphlet\"] * graphlet_value" in source
+    assert "_structure_step(" not in source, "the separate step is gone"
+    assert "normalise_gradients" not in source, "the RMS normalisation is gone"
+    assert "clip_grad_norm_" in source

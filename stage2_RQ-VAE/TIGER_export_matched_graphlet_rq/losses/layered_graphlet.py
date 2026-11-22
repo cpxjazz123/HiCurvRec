@@ -55,6 +55,18 @@ L3_WIDTH = 2
 GRAPHLET_LR_RATIO = 1.0
 
 
+def ramp_weight(epoch: int, epochs: int, start: int, weight_max: float) -> float:
+    """Iter48's delayed ramp over the epoch budget (TIGER_BEHAVIOR_SAMPLE, `RAMP_START_EPOCH=1500`).
+
+    Linear from 0 at ``start`` to ``weight_max`` at the last epoch; exactly 0 before ``start``, so
+    the first half of training is the unmodified RQ-VAE objective and the codebook is already
+    stable when the structure signal first arrives.
+    """
+    span = max(int(epochs) - int(start), 1)
+    alpha = min(max((int(epoch) - int(start)) / span, 0.0), 1.0)
+    return float(weight_max) * alpha
+
+
 def bucket_of(tokens: torch.Tensor, width: int) -> torch.Tensor:
     """Export bucket index `t_0 + width*t_1 + width^2*t_2`; the occurrence disambiguator is
     excluded because it never merges two items and cannot change the unique count."""
@@ -170,6 +182,6 @@ def graphlet_objective(probs, tokens, roles_by_kind) -> torch.Tensor:
     return torch.stack(parts).mean()
 
 
-__all__ = ["bucket_of", "hard_one_hot", "ste", "gated_hinge", "structure_value",
+__all__ = ["ramp_weight", "bucket_of", "hard_one_hot", "ste", "gated_hinge", "structure_value",
            "level_objectives", "graphlet_objective", "SUBBATCH", "L3_TARGET", "L3_WIDTH",
            "MARGIN_L1", "MARGIN_L2", "INSTANCE_SCALE", "GRAPHLET_LR_RATIO", "CODES", "KINDS"]
