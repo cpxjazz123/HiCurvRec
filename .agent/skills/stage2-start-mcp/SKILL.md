@@ -23,7 +23,7 @@ description: Use when starting or watching a Stage2 RQ-VAE run in this repo. Sta
 MCP 在 `stage2_start` 里会探测本机可见的 CUDA 卡数并据此选布局，但**布局能不能兑现取决于那棵树自己的 trainer**，所以先读一次环境再决定要不要派发：
 
 ```
-write xd://mcp__genrec_stage2_status
+write xd://mcp__stage2_stage2_status
 {"source_dir": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/<树目录>"}
 ```
 
@@ -47,7 +47,7 @@ write xd://mcp__genrec_stage2_status
 ## 1. 启动
 
 ```
-write xd://mcp__genrec_stage2_start
+write xd://mcp__stage2_stage2_start
 {"source_dir": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/<树目录>"}
 ```
 
@@ -63,7 +63,7 @@ write xd://mcp__genrec_stage2_start
 `smoke_pending` 既不是拒绝也不是成功——它表示 worker 正在跑单 epoch smoke。**必须查一次状态**：
 
 ```
-write xd://mcp__genrec_stage2_status
+write xd://mcp__stage2_stage2_status
 {"source_dir": "同一个树目录"}
 ```
 

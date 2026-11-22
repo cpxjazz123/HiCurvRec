@@ -30,7 +30,7 @@ Stage3 有**两种布局，都由 trainer 自己实现**，MCP 按探测到的�
 所以先确认环境：
 
 ```
-write xd://mcp__genrec_stage3_status
+write xd://mcp__stage3_stage3_status
 {"item_sids": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/<树>/<机制>/item_sids.json"}
 ```
 
@@ -54,7 +54,7 @@ write xd://mcp__genrec_stage3_status
 ## 1. 启动
 
 ```
-write xd://mcp__genrec_stage3_start
+write xd://mcp__stage3_stage3_start
 {"item_sids": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/<树>/<机制>/item_sids.json"}
 ```
 

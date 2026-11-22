@@ -84,7 +84,7 @@ print('arm', T.EXPERIMENT_ARM, '| out', T._OUT, '| log', T.LOG_DIR)
 再用只读 MCP 状态工具确认服务器认得这棵树（应回 `idle` 而不是 `unknown`）：
 
 ```
-write xd://mcp__genrec_stage2_status
+write xd://mcp__stage2_stage2_status
 {"source_dir": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_<名>"}
 ```
 
