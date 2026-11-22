@@ -155,6 +155,13 @@ def verdict(arm: Path, control: Path) -> dict:
             "satisfy_above_baseline": bool(mine["satisfy_rate"] > base["satisfy_rate"]),
             "delta_above_control": bool(mine["delta"] > shuffled["delta"]),
             "near_not_below_baseline": bool(mine["near_share"] >= base["near_share"]),
+            # C20/C44: the per-level split for every arm, so a gain concentrated in one level
+            # cannot be read as a gain in the structure's ordering
+            "level_delta": {
+                "arm": contract.level_measure(arm_codes, kind, instances),
+                "baseline": contract.level_measure(base_codes, kind, instances),
+                "control": contract.level_measure(control_codes, kind, instances),
+            },
             "lower_bound_positive": bool(vs_base["ci_low"] > 0.0),
         }
     out["simultaneous_lower_bounds_positive"] = all(
