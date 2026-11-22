@@ -107,3 +107,45 @@ $PY results/research/issue238/run_stage3.py  # 两个 Stage3 串行
 | TIGER_g237_struct_rq | item_sids.trainer.json | d41a8877b7ca5a18 | 1259084 |
 | TIGER_g237_sem_rq | item_sids.json | e992b716bbf95d68 | 1258845 |
 | TIGER_g237_sem_rq | item_sids.trainer.json | 60dfafcefb8ece11 | 1261237 |
+
+## 8. 第三条机制:测地代价进 Sinkhorn(H,`TIGER_kappa_cost_rq`)
+
+### 为什么是这里
+
+§19h 规定机制创新必须进 Sinkhorn 的代价矩阵,分配规则仍是基线的均衡分配;`distances/__init__.py`
+自己的约定是「换度量 = 换实验,选择写在源码里」。所以 H 的改动只有三处:
+
+| 文件 | 改动 |
+|---|---|
+| `distances/curved.py` | 新增:κ=−1 球面平方测地距离 |
+| `distances/__init__.py` | 注册 `"curved"` |
+| `train_rqvae.py` | `build_distance(CONFIG, name="curved")` |
+
+输入嵌入、损失、训练超参全部未动,所以量化稳定性应当接近 TIGER 基线(与 G1 的 0.9655 崩塌对比)。
+
+### 定义
+
+```
+u = 0.9 · tanh(r/τ) · x/r ,  r=|x| ,  τ = mean‖c‖(当前 step)
+d(u,v)² = ( arcosh(1 + 2‖u−v‖² / ((1−‖u‖²)(1−‖v‖²))) )²        (κ = −1)
+```
+
+- κ 取 #236 实测 −1.0188 的整数点 −1,**不是搜索变量**(§19g 不做调参)。
+- τ 取当前码本平均范数,使映射尺度等变,**没有自由超参**。
+- 半径上界 0.9 是数值条件数要求,不是拟合参数:不加时 `(1−‖u‖²)` 极小,展开式
+  `‖u−v‖²` 的浮点误差被放大,自距离实测 **14 而非 0**。这是本轮真实踩到的坑,已写进模块注释。
+
+### 数学验证(`results/research/issue238/tests/test_curved_cost.py`,7/7 通过)
+
+| 性质 | 结果 |
+|---|---|
+| 映射后半径 < 1 | 通过(50× 放大输入仍封在球内) |
+| 自距离 = 0 | 通过(≤1e-5) |
+| 非负、有限、形状 (B,K) | 通过 |
+| 沿穿过码字的射线单峰(近侧单调降、远侧单调升) | 通过 |
+| 两个点集间对称 | 通过 |
+| 与欧氏代价不同(机制未退化为基线) | 通过 |
+| 梯度流向 latent 与 codebook | 通过 |
+
+**为什么可能有收益**:负曲率球上靠近边界的点距离增长更快,把紧簇拆到不同码字的代价高于欧氏;
+Sinkhorn 仍保证均衡(§19h 的分配规则不变)。
