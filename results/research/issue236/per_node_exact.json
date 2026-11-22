@@ -1,0 +1,125 @@
+{
+ "geodesic": {
+  "items_total": 24587,
+  "items_with_triples": 24500,
+  "items_without_triples": 87,
+  "mixed_sign_items": 14030,
+  "mixed_sign_fraction": 0.5726530612244898,
+  "node_mean_mean": 2.3252938139992287,
+  "node_mean_median": 2.2576508952368295,
+  "node_mean_std": 1.3568769744487001,
+  "node_positive_mean_items": 23608,
+  "node_negative_mean_items": 892,
+  "spearman_degree_vs_mean": -0.8355297119823528,
+  "degree_strata": [
+   {
+    "degree_range": "1-4",
+    "items": 1070,
+    "mean_of_means": 4.918966060283596,
+    "negative_mean_items": 0,
+    "mixed_fraction": 0.0308411214953271
+   },
+   {
+    "degree_range": "5-12",
+    "items": 10963,
+    "mean_of_means": 3.077937656206234,
+    "negative_mean_items": 45,
+    "mixed_fraction": 0.27939432637051903
+   },
+   {
+    "degree_range": "13-49",
+    "items": 9992,
+    "mean_of_means": 1.7272872526333956,
+    "negative_mean_items": 157,
+    "mixed_fraction": 0.8465772618094476
+   },
+   {
+    "degree_range": "50-199",
+    "items": 2186,
+    "mean_of_means": 0.4516833921827214,
+    "negative_mean_items": 401,
+    "mixed_fraction": 1.0
+   },
+   {
+    "degree_range": "200+",
+    "items": 289,
+    "mean_of_means": -0.9808300696733189,
+    "negative_mean_items": 289,
+    "mixed_fraction": 1.0
+   }
+  ],
+  "vs_issue235": {
+   "paired_items": 24500,
+   "mean_abs_error": 0.08134841392639923,
+   "max_abs_error": 0.4701223793777487,
+   "mean_signed_error": 0.0025269162033108227,
+   "sign_flip_items": 91,
+   "sign_flip_fraction": 0.0037142857142857142,
+   "mixed_235": 0.5766530612244898
+  },
+  "csv": "results/research/issue236/node_curvature_exact_geodesic.csv"
+ },
+ "neighbour": {
+  "items_total": 24587,
+  "items_with_triples": 24505,
+  "items_without_triples": 82,
+  "mixed_sign_items": 14098,
+  "mixed_sign_fraction": 0.5753111609875535,
+  "node_mean_mean": 2.3563519426829815,
+  "node_mean_median": 2.30187572463421,
+  "node_mean_std": 1.3409965300236955,
+  "node_positive_mean_items": 23669,
+  "node_negative_mean_items": 836,
+  "spearman_degree_vs_mean": -0.8409156500273921,
+  "degree_strata": [
+   {
+    "degree_range": "1-4",
+    "items": 1075,
+    "mean_of_means": 4.926931077328707,
+    "negative_mean_items": 0,
+    "mixed_fraction": 0.03162790697674418
+   },
+   {
+    "degree_range": "5-12",
+    "items": 10963,
+    "mean_of_means": 3.101787852010317,
+    "negative_mean_items": 48,
+    "mixed_fraction": 0.2833166104168567
+   },
+   {
+    "degree_range": "13-49",
+    "items": 9992,
+    "mean_of_means": 1.762871029137339,
+    "negative_mean_items": 159,
+    "mixed_fraction": 0.8489791833466773
+   },
+   {
+    "degree_range": "50-199",
+    "items": 2186,
+    "mean_of_means": 0.501709460553991,
+    "negative_mean_items": 340,
+    "mixed_fraction": 1.0
+   },
+   {
+    "degree_range": "200+",
+    "items": 289,
+    "mean_of_means": -0.9352629002848064,
+    "negative_mean_items": 289,
+    "mixed_fraction": 1.0
+   }
+  ],
+  "vs_issue235": {
+   "paired_items": 24500,
+   "mean_abs_error": 0.103812938383264,
+   "max_abs_error": 1.1550576391920515,
+   "mean_signed_error": 0.03296529592762141,
+   "sign_flip_items": 97,
+   "sign_flip_fraction": 0.003959183673469388,
+   "mixed_235": 0.5766530612244898
+  },
+  "csv": "results/research/issue236/node_curvature_exact_neighbour.csv"
+ },
+ "timing": {
+  "total_s": 86.0
+ }
+}

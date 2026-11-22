@@ -875,3 +875,17 @@ var/
 venv.bak/
 venv/
 wheels/
+
+# Issue 232: stage2 structure-term scratch
+results/stage2_RQ-VAE/_probe_anchor/
+stage2_RQ-VAE/TIGER_export_matched_graphlet_rq/logs/training_metrics.jsonl
+
+# issue234: archive-extracted copy of #232 source; provenance is archive_hashes.json
+results/research/issue234/restore/
+
+# issue235: the per-item curvature table is the deliverable of C19
+!results/research/issue235/node_curvature.csv
+
+# issue236: the per-item curvature CSVs are the deliverable of C19
+!results/research/issue236/node_curvature_exact_geodesic.csv
+!results/research/issue236/node_curvature_exact_neighbour.csv
