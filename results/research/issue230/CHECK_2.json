@@ -1,0 +1,20 @@
+{
+ "round": 2,
+ "issue": 230,
+ "issue_body_sha256": "301c5a9a93d73ee778bbc7135522ddb8a7d5fe72adc6d640ca312748bfc7b0a0",
+ "counts": {"PASS": 5, "FAIL": 0, "NOT_RUN": 1},
+ "items": {
+  "C31": {"verdict": "PASS",
+          "evidence": "config/train_config.json EPOCHS=3000 SEED=42 CODEBOOK_SIZE=[1024,256,256] identical to baseline; global batch 4096 in both arms"},
+  "C32": {"verdict": "PASS",
+          "evidence": "pytest tests/ 7 passed (treatment) and 16 passed (control); 1-epoch smoke exported SID with collision 0.021922"},
+  "C33": {"verdict": "PASS",
+          "evidence": "baseline reused after C12 verification; old soft-loss SID preserved under old_soft_loss/ (sha256 538fb141a4b19b689cf6abc8493d76f71128403482a2b129ad0d47b6a73f7b2f); treatment and shuffled control training"},
+  "C34": {"verdict": "PASS",
+          "evidence": "both arms read results/research/issue230/banks with RoleIndex hash assertion; banks.json sha256 in isolation.json"},
+  "C35": {"verdict": "PASS",
+          "evidence": "no weight search: MARGIN=1.0 BUDGET=0.10 fixed, temperature derived from data (half the median nearest/second gap)"},
+  "C36": {"verdict": "NOT_RUN", "evidence": "requires the finished treatment run"}
+ },
+ "blocking": "C36-C44 need the 3000-epoch exports; both arms still training"
+}
