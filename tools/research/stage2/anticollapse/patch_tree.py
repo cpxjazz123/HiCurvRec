@@ -113,9 +113,10 @@ EUCLID = Family(
          "            return index.to(q.device)"),
         # `layers.py` reaches this line from two places, so the anchor carries the line
         # that follows it in `forward`; both must stay in step.
-        ("        embed_ind = self._indices(self._distances(latent), infer_use_sk)\n"
+        # the anchor reads whatever the tree already computed as its cost, so a candidate that
+        # hoists the metric into `cost` (issue #232: the supervision branch needs it) matches too
+        ("        embed_ind = self._indices(cost, infer_use_sk)\n"
          "        onehot = F.one_hot(embed_ind, self.n_embed)",
-         "        cost = self._distances(latent)\n"
          "        verify_codebook(self.get_code_embs(), distance=False)\n"
          "        verify_separation(self.get_code_embs(), cost, key=id(self), "
          "rank_local=getattr(self, \"_skip_ddp_reduce\", False))\n"
