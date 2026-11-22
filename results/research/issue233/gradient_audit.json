@@ -1,0 +1,47 @@
+{
+ "baseline_untouched_inference_note": "baseline checkpoint loaded only for reference; not trained",
+ "budget_scale_applied": {
+  "collision": 1.6767279120123555e-07,
+  "graphlet": 8.282674452127454e-06
+ },
+ "budget_share_of_recon": {
+  "collision": 0.1,
+  "graphlet": 0.10000000000000002
+ },
+ "c34_per_rank_reference": {
+  "per_rank_norms": [
+   0.00010083778033731505,
+   8.222646283684298e-05,
+   9.279084770241752e-05,
+   0.0001264076418010518
+  ],
+  "spread_over_mean": 0.43932661414146423
+ },
+ "diagnostics": {
+  "candidates": 1024,
+  "capacity": 3.3156003952026367,
+  "duplicate": 0.005196654237806797
+ },
+ "encoder_grad_norms": {
+  "collision": 45.185726165771484,
+  "graphlet": 0.9147307276725769,
+  "reconstruction": 7.576416828669608e-05
+ },
+ "hard_codes_changed_by_one_step": {
+  "changed": 0,
+  "items": 276,
+  "share": 0.0
+ },
+ "kind": "offline replay on the final checkpoint (not the training-time ledger)",
+ "pairwise_cosine": {
+  "collision_vs_reconstruction": 0.4251202940940857,
+  "graphlet_vs_collision": 0.22640609741210938,
+  "graphlet_vs_reconstruction": -0.1580183357000351
+ },
+ "step": {
+  "applied_norm": 1.1865770829899702e-05,
+  "clip": 1.0,
+  "clipped": false,
+  "unclipped_norm": 1.1865770829899702e-05
+ }
+}
