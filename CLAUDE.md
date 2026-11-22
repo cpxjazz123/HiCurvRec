@@ -244,3 +244,18 @@ genrec/<NN>/recall.json      ← Stage3 结果的全部键值
 93. **不要用 `d.show()` 查看大 draft**。先 `d.print()` 看摘要，确认路径后再对小子集 `show()`；已跟踪的大文件
     即使没有被新忽略规则覆盖，修改后仍会被 diff，guard 会报告，必须显式处理或 `--allow`。
 
+
+## 20. tools/research 缩减为启动内核（2026-11-22 owner 指令）
+
+94. **`tools/research/` 只保留 Stage2/Stage3 启动、状态与准入门槛所需的代码，其余删除。** owner 明确要求
+    "`tools/research` 可以删掉，但不要动 stage2/stage3 的训练启动"。执行范围:
+    **保留** `stage2/{contract,launcher,checks,gpu_alloc,graph_contract,export_policy,export_check,sid_quality,ddp_probe,collapse_watch}.py`、
+    `stage2/anticollapse/{floor,artifact,patch_tree}.py`、`rounds/baseline.py`（`checks.py` 的常量检查惰性引用）、
+    `stage2/tests/{test_collectives,test_trainer_names}.py`（同上，诊断辅助）、
+    `verification/{admission,run_suites}.py`（`verification_check` 的子进程）、`settings.py`。
+    **删除** `rounds/` 其余、`science/`、`geometry/`、`agents/`、`core/`、`mcp/`、`pipeline_v2/`、`integrations/`、
+    `tests/`、`stage2/{bootstrap,isolation,reference,run_metrics}.py`、`stage2/tests/` 其余（共 153 个文件）。
+    **不变**: `stage2_start/status/stop`、`stage3_start/status`、训练入口（`train_rqvae.py` → `launcher.launch`）。
+    **随之失效**: 全部 `research_round_*` 工具（实现依赖已删的 `rounds/agents/core`）与 `mcp/handlers.py` 的
+    验证执行分支（它 import 的 `workflows.paths` 已在同日早先删除）。§33–§40、§47–§51 中引用已删模块的
+    条款不再适用；§3 第 3 项仍可用，四套测试由保留的 `verification/run_suites.py` 执行。
