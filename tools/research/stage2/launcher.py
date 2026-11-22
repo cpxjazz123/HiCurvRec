@@ -20,6 +20,75 @@ from . import graph_batches
 from .anticollapse import patch_tree
 
 
+class LaunchRefused(contract.ContractError):
+    """The host cannot satisfy the frozen launch contract; nothing was started."""
+
+
+#: Owner rule (2026-11-22): Stage2 is always four-card DDP and always serial. The two properties
+#: are enforced here, at the only launch path, so no candidate and no operator flag can pick a
+#: different regime: a single-card Stage2 changes the optimisation (one rank against a four-rank
+#: batch) and two concurrent Stage2 runs change what the GPU timings and the comparisons mean.
+SERIAL_LOCK = Path(__file__).resolve().parents[3] / "results" / "research" / "stage2_serial.lock"
+
+
+def required_world_size() -> int:
+    return int(contract.WORLD_SIZE)
+
+
+def assert_four_cards(visible: int, required: int | None = None) -> None:
+    required = required_world_size() if required is None else int(required)
+    visible = int(visible)
+    if visible < required:
+        raise LaunchRefused(
+            "Stage2 needs %d visible cards for four-rank DDP and this host shows %d; "
+            "a single-card run is not an accepted Stage2 regime" % (required, visible))
+
+
+def _pid_alive(pid: int) -> bool:
+    if int(pid) <= 0:
+        return False
+    try:
+        os.kill(int(pid), 0)
+    except OSError:
+        return False
+    return True
+
+
+def acquire_serial(lock: Path, pid: int, alive=_pid_alive) -> Path:
+    """Take the one Stage2 slot; refuse when a live run already holds it.
+
+    A lock whose pid is gone is stale (a killed or crashed run) and is replaced rather than
+    blocking the host forever.
+    """
+    lock = Path(lock)
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    if lock.is_file():
+        text = lock.read_text(encoding="utf-8").strip()
+        try:
+            holder = int(text.split()[0])
+        except (ValueError, IndexError):
+            holder = 0
+        if holder and alive(holder):
+            raise LaunchRefused(
+                "a Stage2 run is already live (pid %d, lock %s); Stage2 is serial by owner rule"
+                % (holder, lock))
+    lock.write_text("%d\n" % int(pid), encoding="utf-8")
+    return lock
+
+
+def release_serial(lock: Path, pid: int) -> None:
+    lock = Path(lock)
+    if not lock.is_file():
+        return
+    text = lock.read_text(encoding="utf-8").strip()
+    try:
+        holder = int(text.split()[0])
+    except (ValueError, IndexError):
+        holder = -1
+    if holder in (int(pid), -1):
+        lock.unlink()
+
+
 def launch(entry: Path | str, result_dir: Path | str, *, port: int | None = None,
            world_size: int = contract.WORLD_SIZE, env_extra: dict | None = None,
            python: str | None = None, log_name: str = "train_migrated.log") -> int:
@@ -34,6 +103,13 @@ def launch(entry: Path | str, result_dir: Path | str, *, port: int | None = None
     result_dir = Path(result_dir).resolve()
     if not entry.is_file():
         raise contract.ContractError("the entry point does not exist: " + str(entry))
+    # Owner rule: four-card DDP, and one Stage2 at a time. Both are checked before anything is
+    # written into the result directory, so a refused launch leaves no partial state.
+    assert_four_cards(_visible_cards(env_extra))
+    if int(world_size) != required_world_size():
+        raise LaunchRefused(
+            "Stage2 runs at world_size=%d; %d was requested" % (required_world_size(), int(world_size)))
+    lock = acquire_serial(SERIAL_LOCK, os.getpid())
     result_dir.mkdir(parents=True, exist_ok=True)
     logs = result_dir / "logs"
     logs.mkdir(parents=True, exist_ok=True)
@@ -62,9 +138,12 @@ def launch(entry: Path | str, result_dir: Path | str, *, port: int | None = None
         env_extra["GENREC_GRAPH_BATCH_ORDER"] = str(order)
     env = contract.launch_env(env_extra)
     log_path = logs / log_name
-    with log_path.open("w", encoding="utf-8") as sink:
-        completed = subprocess.run(command, cwd=str(result_dir), env=env,
-                                   stdout=sink, stderr=subprocess.STDOUT)
+    try:
+        with log_path.open("w", encoding="utf-8") as sink:
+            completed = subprocess.run(command, cwd=str(result_dir), env=env,
+                                       stdout=sink, stderr=subprocess.STDOUT)
+    finally:
+        release_serial(SERIAL_LOCK, os.getpid())
     return int(completed.returncode)
 
 
@@ -89,3 +168,15 @@ def _universe(entry: Path) -> int:
     array = np.load(Path(root) / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy",
                     mmap_mode="r")
     return int(array.shape[0])
+
+
+def _visible_cards(env_extra: dict | None) -> int:
+    """How many cards this launch will actually see, honouring CUDA_VISIBLE_DEVICES."""
+    override = (env_extra or {}).get("CUDA_VISIBLE_DEVICES", os.environ.get("CUDA_VISIBLE_DEVICES"))
+    if override is not None and str(override).strip() != "":
+        return len([part for part in str(override).split(",") if part.strip() != ""])
+    try:
+        import torch
+        return int(torch.cuda.device_count())
+    except Exception:  # noqa: BLE001 - a host without torch cannot give four cards
+        return 0

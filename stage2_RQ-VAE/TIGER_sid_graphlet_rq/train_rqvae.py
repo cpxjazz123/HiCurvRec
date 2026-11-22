@@ -514,7 +514,8 @@ def _visible_card_count() -> int:
 
 
 def _single_card_mode() -> bool:
-    return os.environ.get(SINGLE_GPU_ENV) == "1"
+    """Kept as a named constant for the DDP block; never true under the four-card rule."""
+    return os.environ.get(SINGLE_GPU_ENV) == "1" and False
 
 
 def _launch_via_torchrun() -> None:
@@ -528,9 +529,12 @@ def _launch_via_torchrun() -> None:
     """
     if int(os.environ.get("RANK", -1)) >= 0:
         return  # 已经在 torchrun 启动的子进程里
-    if _visible_card_count() <= 1:
-        os.environ[SINGLE_GPU_ENV] = "1"
-        return
+    # Owner rule (2026-11-22): Stage2 is four-card DDP only. A host that shows fewer cards is a
+    # configuration error, not a reason to train one rank against a four-rank batch.
+    if _visible_card_count() < 4:
+        raise SystemExit(
+            "Stage2 requires 4 visible cards for four-rank DDP; this host shows %d"
+            % _visible_card_count())
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
     env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["visible_dev"]
@@ -548,7 +552,7 @@ def _launch_via_torchrun() -> None:
     rc = stage2_launcher.launch(
         entry=_LAUNCHER["script"], result_dir=RESULT_DIR,
         port=stage2_contract.STAGE2_PORT,
-        world_size=1 if _SMOKE else int(_LAUNCHER["nproc"]),
+        world_size=int(_LAUNCHER["nproc"]),
         python=_LAUNCHER["torchrun"].rsplit("/", 1)[0] + "/python3.9",
         env_extra={k: env[k] for k in ("CUDA_VISIBLE_DEVICES", "NCCL_IB_DISABLE",
                                        "NCCL_P2P_DISABLE", "NCCL_SHM_DISABLE",
