@@ -36,6 +36,7 @@ from tqdm import tqdm
 
 from distances import build_distance
 from losses import build_loss
+from losses import sid_graphlet
 from model import RQVAE
 from train_config import load_train_config
 
@@ -60,6 +61,25 @@ REPO_ROOT = _repository_root()
 # The arm name is this tree's promoted name; a candidate copy changes only this line.
 ARM_NAME = "TIGER_sid_graphlet_rq"
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
+# A one-epoch smoke writes beside the arm, never into the formal result directory.
+_SMOKE = os.environ.get("ISSUE231_SMOKE_EPOCHS")
+if _SMOKE:
+    RESULT_DIR = REPO_ROOT / "results" / "research" / "issue231" / "smoke" / ARM_NAME
+
+# Issue #231 §4: weight of the structure term in L_total = L_RQVAE + lambda * L_graphlet.
+#
+# Derived, not chosen (§19g forbids value-picking). Measured in the first smoke: the raw
+# structure loss starts near its ceiling (2.83 of 3.0, because almost no pair shares a code yet)
+# while reconstruction is 4.6e-4, so lambda=0.05 made the term 305x the reconstruction it must
+# accompany. The term is therefore normalised by its own ceiling (3 structures x margin) and
+# weighted by GRAPHLET_SHARE of reconstruction: the structure signal is asked to be a fixed
+# FRACTION of the objective, which is the only scale-free choice available.
+GRAPHLET_SHARE = 0.10
+GRAPHLET_CEILING = float(len(("chain", "fork", "merge")) * sid_graphlet.MARGIN)
+# Issue #231 C32/C33: the frozen, globally isolated banks.
+GRAPHLET_BANKS = REPO_ROOT / "results" / "research" / "issue231" / "banks"
+# Per-epoch record of the raw structure loss, so C29's logging is real.
+GRAPHLET_STATS: list = []
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
 TRAIN_FILE     = REPO_ROOT / "results" / "stage0_build_parquet" / "train.parquet"
@@ -79,7 +99,7 @@ CONFIG = load_train_config(CONFIG_FILE)
 CRITERION = build_loss(CONFIG)
 DISTANCE = build_distance(CONFIG)
 
-EPOCHS              = CONFIG.EPOCHS
+EPOCHS              = int(_SMOKE) if _SMOKE else CONFIG.EPOCHS
 BATCH_SIZE_PER_RANK = CONFIG.BATCH_SIZE_PER_RANK     # 每卡 batch, 总 batch = 每卡 * world_size
 LR                  = CONFIG.LR
 WEIGHT_DECAY        = CONFIG.WEIGHT_DECAY
@@ -286,7 +306,10 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
-    train_dataset = TensorDataset(train_embeddings)
+    # Issue #231: the item ids ride with the embeddings so the structure term can look up the
+    # bank instances of this batch. They are NOT given to the model (§1: the graph is training
+    # supervision only, never an encoder input).
+    train_dataset = TensorDataset(torch.from_numpy(train_ids), train_embeddings)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -334,6 +357,7 @@ def main() -> None:
     final_raw_unique = 0
     codebook_sizes = list(config.codebook_size)
 
+    GRAPHLET_ALIGNMENT = sid_graphlet.SidGraphletAlignment(GRAPHLET_BANKS)
     for epoch in range(1, EPOCHS + 1):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
@@ -341,13 +365,23 @@ def main() -> None:
         losses: list[float] = []
         recons: list[float] = []
         _epoch_t0 = time.time()
-        for (batch,) in loader:
+        for ids, batch in loader:
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_parts, _, _ = model(batch)
+            reconstructed, quant_parts, _, tokens, level_logits = model(batch)
             # 唯一接入点：损失项与权重在 losses/ 里，这里只拿到总损失与分项。
             loss, components = CRITERION(reconstructed, batch, quant_parts)
             recon_loss = components["reconstruction"]
+            # Issue #231 §3: the structure term is an ADDEND of this same scalar, so one
+            # backward() carries both. No autograd.grad, no patched distance matrix.
+            graphlet_value = GRAPHLET_ALIGNMENT.loss(level_logits, ids, tokens)
+            if graphlet_value is not None:
+                # normalised by the term's ceiling, then scaled to a fixed share of
+                # reconstruction with the RECONSTRUCTION GRADIENT DETACHED from the scale:
+                # the scale itself must not back-propagate into the objective it measures.
+                scale = GRAPHLET_SHARE * float(recon_loss.detach()) / GRAPHLET_CEILING
+                loss = loss + graphlet_value * scale
+                GRAPHLET_STATS.append(float(graphlet_value.detach()))
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
@@ -513,7 +547,8 @@ def _launch_via_torchrun() -> None:
     from tools.research.stage2 import launcher as stage2_launcher
     rc = stage2_launcher.launch(
         entry=_LAUNCHER["script"], result_dir=RESULT_DIR,
-        port=stage2_contract.STAGE2_PORT, world_size=int(_LAUNCHER["nproc"]),
+        port=stage2_contract.STAGE2_PORT,
+        world_size=1 if _SMOKE else int(_LAUNCHER["nproc"]),
         python=_LAUNCHER["torchrun"].rsplit("/", 1)[0] + "/python3.9",
         env_extra={k: env[k] for k in ("CUDA_VISIBLE_DEVICES", "NCCL_IB_DISABLE",
                                        "NCCL_P2P_DISABLE", "NCCL_SHM_DISABLE",

@@ -32,14 +32,16 @@ class RQVAE(nn.Module):
         model does not turn them into a scalar. That is `losses/quantization.py`.
         """
         encoded = self.encoder(embeddings)
-        quantized, quant_parts, unused_codes, tokens = self.rq(encoded)
+        quantized, quant_parts, unused_codes, tokens, logits = self.rq(encoded)
         reconstructed = self.decoder(quantized)
-        return reconstructed, quant_parts, int(unused_codes), tokens
+        # Issue #231: the per-level cost matrices travel with the tokens so the structure
+        # term differentiates the assignment the quantizer actually made.
+        return reconstructed, quant_parts, int(unused_codes), tokens, logits
 
     @torch.no_grad()
     def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
         encoded = self.encoder(embeddings)
-        _, _, _, tokens = self.rq(encoded, infer_use_sk=infer_use_sk)
+        _, _, _, tokens, _logits = self.rq(encoded, infer_use_sk=infer_use_sk)
         return tokens
 
     @torch.no_grad()

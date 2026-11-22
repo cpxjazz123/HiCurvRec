@@ -88,7 +88,9 @@ def structure_loss(soft_codes, hard_codes_list, roles, kind: str, *, margin: flo
     """
     hard = hard_codes_list
     if hard is None:
-        hard = soft_codes
+        # the hard code of each level is the argmax of its STE one-hot, which is the same
+        # assignment the quantizer made (the STE forward equals the hard one-hot)
+        hard = torch.stack([level.argmax(dim=-1) for level in soft_codes], dim=1)
     value = (-delta(hard, roles, kind) + margin).clamp(min=0.0)
     if weight is not None:
         value = value * weight.to(value.dtype)
@@ -136,3 +138,57 @@ def combine(*, base: torch.Tensor, graphlet: torch.Tensor, weight: float):
     """
     weighted = graphlet * float(weight)
     return base + weighted, {"graphlet": float(graphlet.detach()), "graphlet_weighted": weighted}
+
+
+def _repo_root():
+    import pathlib
+    for parent in pathlib.Path(__file__).resolve().parents:
+        if (parent / "stage2_RQ-VAE").is_dir() and (parent / "results").is_dir():
+            return parent
+    raise RuntimeError("cannot locate the repository root above " + __file__)
+
+
+class SidGraphletAlignment:
+    """The batch-local structure term over the frozen, globally isolated banks.
+
+    An instance is supervised only when the batch holds all three of its items; the trainer's
+    batch also contains that instance's own codes, so the gradient reaches the encoder and the
+    codebooks through the same `backward()` as reconstruction (C19).
+    """
+
+    def __init__(self, directory=None):
+        from pathlib import Path
+        import numpy as np
+        self.directory = Path(directory) if directory is not None else (
+            _repo_root() / "results" / "research" / "issue231" / "banks")
+        self.banks = {}
+        for kind in KINDS:
+            path = self.directory / f"{kind}_supervision.npy"
+            self.banks[kind] = np.load(path) if path.is_file() else np.zeros((0, 3), np.int64)
+        self._eval = None
+
+    def counts(self):
+        return {kind: int(len(bank)) for kind, bank in self.banks.items()}
+
+    def loss(self, level_logits, ids, tokens=None):
+        """Sum of the three structures' hinges over the instances present in this batch."""
+        members = set(int(v) for v in ids.tolist())
+        if not members:
+            return None
+        position = {int(v): row for row, v in enumerate(ids.tolist())}
+        soft = [ste_one_hot(cost) for cost in level_logits]
+        parts = []
+        for kind, bank in self.banks.items():
+            if len(bank) == 0:
+                continue
+            rows = [row for row in bank.tolist()
+                    if row[0] in members and row[1] in members and row[2] in members]
+            if not rows:
+                continue
+            roles = torch.tensor([[position[row[0]], position[row[1]], position[row[2]]]
+                                  for row in rows], dtype=torch.long,
+                                 device=level_logits[0].device)
+            parts.append(structure_loss(soft, None, roles, kind, margin=MARGIN))
+        if not parts:
+            return None
+        return torch.stack(parts).sum()
