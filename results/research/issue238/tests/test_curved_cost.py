@@ -11,9 +11,10 @@ from pathlib import Path
 import pytest
 import torch
 
-ROOT = Path(__file__).resolve().parents[4]
-sys.path.insert(0, str(ROOT / "stage2_RQ-VAE" / "TIGER_kappa_cost_rq"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _armloader import load_arm  # noqa: E402
 
+load_arm("TIGER_kappa_cost_rq")
 import distances.curved as curved  # noqa: E402
 
 

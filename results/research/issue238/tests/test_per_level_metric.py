@@ -11,13 +11,15 @@ from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _armloader import ROOT, load_arm  # noqa: E402
+
 ARM = ROOT / "stage2_RQ-VAE" / "TIGER_kappa_sk_only_rq"
 
 
 @pytest.fixture(scope="module")
 def stack():
-    sys.path.insert(0, str(ARM))
+    load_arm("TIGER_kappa_sk_only_rq")
     import train_rqvae as entry
     from model.layers import RQLayer
     import distances

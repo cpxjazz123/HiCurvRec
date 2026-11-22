@@ -12,10 +12,10 @@ from pathlib import Path
 import numpy as np
 import torch
 
-ROOT = Path(__file__).resolve().parents[4]
-ARM = ROOT / "stage2_RQ-VAE" / "TIGER_degree_temp_rq"
-sys.path.insert(0, str(ARM))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _armloader import ROOT, load_arm  # noqa: E402
 
+load_arm("TIGER_degree_temp_rq")
 from distances import graphlet  # noqa: E402
 from model.layers import VQLayer  # noqa: E402
 

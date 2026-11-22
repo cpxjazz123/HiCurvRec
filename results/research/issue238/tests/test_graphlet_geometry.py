@@ -13,10 +13,10 @@ from pathlib import Path
 import pytest
 import torch
 
-ROOT = Path(__file__).resolve().parents[4]
-ARM = ROOT / "stage2_RQ-VAE" / "TIGER_af3_graphgeo_rq"
-sys.path.insert(0, str(ARM))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _armloader import load_arm  # noqa: E402
 
+load_arm("TIGER_af3_graphgeo_rq")
 from distances import graphlet  # noqa: E402
 
 
