@@ -1,9 +1,9 @@
 {
   "enabled": true,
   "rank": 0,
-  "world_size": 4,
-  "steps_recorded": 96,
-  "overhead_s": 2.576385021209717,
+  "world_size": 1,
+  "steps_recorded": 18000,
+  "overhead_s": 759.8226187229156,
   "probe_seed": 20240101,
   "probe_items": 2048,
   "param_groups": {
@@ -15,7 +15,7 @@
     "all": 1149472
   },
   "raw": "/fs04/ar57/wenyu/GeneRec/results/research/issue240/raw/steps.jsonl",
-  "epochs": 1,
+  "epochs": 3000,
   "behavior_weight_max": 0.2,
   "ramp_start_epoch": 1500,
   "beta": 0.25,
@@ -24,7 +24,7 @@
   "lr": 0.001,
   "weight_decay": 0.0001,
   "seed": 42,
-  "global_item_batch": 256,
-  "global_pair_batch": 128,
-  "steps_per_epoch": 96
+  "global_item_batch": 4096,
+  "global_pair_batch": 2048,
+  "steps_per_epoch": 6
 }

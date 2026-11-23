@@ -26,9 +26,18 @@ ARM = "TIGER_BEHAVIOR_SAMPLE_RQ-VAE_diag"
 
 
 def load(path: Path) -> list[dict]:
+    """Read a JSONL stream, tolerating a partially written final line."""
     if not path.exists():
         return []
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    rows = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue  # the trainer may be mid-append
+    return rows
 
 
 def get(row: dict, *path, default=None):
@@ -58,7 +67,11 @@ def quantiles(values) -> dict:
 
 def main() -> int:
     steps = load(RAW / "steps.jsonl")
-    epochs = load(HERE / "epochs.jsonl")
+    # epochs.jsonl is appended across re-runs, so keep the last record per epoch: the
+    # final run's rows are the ones on disk last, and epoch numbering restarts at 1.
+    raw_epochs = load(HERE / "epochs.jsonl")
+    epochs = list({int(row["epoch"]): row for row in raw_epochs}.values())
+    epochs.sort(key=lambda row: int(row["epoch"]))
     if not steps:
         raise SystemExit("no raw/steps.jsonl: run the instrumented Stage2 first")
     report: dict = {"steps": len(steps), "epochs": len({row["epoch"] for row in steps})}
@@ -87,7 +100,8 @@ def main() -> int:
         conflicts = [c for c in cosines if c < 0]
         preclip = [get(row, "clip", "pre_norm_reported") for row in rows]
         identity = [get(row, "identity", "rel_error") for row in rows]
-        shift = [row["assignment_change"] for row in epochs if int(row["epoch"]) == epoch]
+        shift = [row.get("assignment_change") for row in epochs
+                 if int(row["epoch"]) == epoch and row.get("assignment_change") is not None]
         values = [
             epoch,
             len(rows),
@@ -210,10 +224,15 @@ def main() -> int:
     sid = REPO / "results" / "stage2_RQ-VAE" / ARM / "resample" / "item_sids.json"
     if sid.exists():
         payload = json.loads(sid.read_text(encoding="utf-8"))
-        rows = payload.get("items", payload)
+        # item_sids.json is {str(item_id): [c1, c2, c3, collision_counter]}
+        rows = list(payload.values())
         triples = {tuple(entry[:3]) for entry in rows}
         report["sid"] = {"items": len(rows), "distinct_triples": len(triples),
-                         "collision": 1.0 - len(triples) / len(rows)}
+                         "collision": 1.0 - len(triples) / len(rows),
+                         "sha256": __import__("hashlib").sha256(sid.read_bytes()).hexdigest()}
+    (HERE / "epochs.jsonl").write_text(
+        "\n".join(json.dumps(row) for row in epochs) + "\n", encoding="utf-8",
+    )
     (HERE / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(json.dumps({k: v for k, v in report.items() if k != "epochs_trajectory"}, indent=2)[:4000])
     return 0
