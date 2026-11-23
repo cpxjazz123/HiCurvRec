@@ -1,6 +1,6 @@
 ---
 name: complete-open-issue
-description: Use when the task is an open GitHub issue that must be finished end to end. Reads the issue, freezes a machine-checkable acceptance checklist, prepares data and infrastructure, implements with TDD, runs a check loop that re-reads the issue every round, trains when the issue needs it, judges the result against the issue's own criteria, and keeps working until `gh issue view` reports CLOSED. Only two terminal states are allowed: completed (every criterion passes, including negative results) or blocked (a genuine external blockage proven with evidence). Workload, context or round budget, long training, failing tests and implementation errors are explicitly not reasons to stop; PROGRESS.json is only a crash-recovery checkpoint, never an exit. Enforces seven mandatory mechanisms (frozen maths contract, paper cross-check, independent reference implementation, known-answer tests, mutation tests, per-module verification, conclusion re-check) before any result may be claimed.
+description: Use when the task is an open GitHub issue that must be finished end to end. Reads the issue, freezes a machine-checkable acceptance checklist, prepares data and infrastructure, implements with TDD, runs a check loop that re-reads the issue every round, trains when the issue needs it, judges the result against the issue's own criteria, and keeps working until `gh issue view` reports CLOSED. Only two terminal states are allowed: completed (every criterion passes, including negative results) or blocked (a genuine external blockage proven with evidence). Workload, context or round budget, long training, failing tests and implementation errors are explicitly not reasons to stop; PROGRESS.json is only a crash-recovery checkpoint, never an exit. Enforces seven mandatory mechanisms (frozen maths contract, paper cross-check, independent reference implementation, known-answer tests, mutation tests, per-module verification, conclusion re-check) before any result may be claimed. The infra step always begins by reading the shared asset tree /home/wlia0047/ar57/wenyu/GeneRec/assets: assets that already exist there are reused by immutable hash and never rebuilt, and anything genuinely new is created there.
 ---
 
 # 按 open issue 完成任务的闭环
@@ -372,7 +372,7 @@ gh issue view <N> --json state      # 必须 CLOSED
 
 ## 6.4 关闭前强制检查
 
-关闭前必须逐条回答。**前三项必须为"是",第四项必须为"否"**,任何一项不符都不允许关闭:
+关闭前必须逐条回答。**前四项必须为"是",第五项必须为"否"**,任何一项不符都不允许关闭:
 
 1. **所有生产代码是否已经实现?**(应为**是**)—— 不是参考实现、不是骨架、不是打桩。
 2. **所有必要测试是否实际执行?**(应为**是**)—— 有输出与退出码,不是"应该能过"。
@@ -382,7 +382,7 @@ gh issue view <N> --json state      # 必须 CLOSED
    没有把已有资产重算一份、改名或复制到别处(§1.0)。
 5. **是否仍然存在可执行的未完成任务?**(应为**否**)—— 若为"是",**不得关闭,继续执行**(断点只用来防外部中断)。
 
-四条答案连同证据写进 `VERDICT.md` 的关闭段。
+五条答案连同证据写进 `VERDICT.md` 的关闭段。
 
 ## 6.5 证据必须绑定最终生产代码
 

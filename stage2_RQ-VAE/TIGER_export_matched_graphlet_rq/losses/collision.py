@@ -138,4 +138,7 @@ def collision_candidates(tokens: torch.Tensor):
 
 __all__ = ["capacity_term", "duplicate_term", "collision_candidates",
            "candidate_pairs_from_prefix", "budget_scale",
-           "encoder_grad_norm", "GRAPHLET_GRAD_BUDGET", "COLLISION_GRAD_BUDGET", "MAX_UPSCALE"]
+           "candidate_pairs_from_prefix", "budget_scale", "absolute_budget_scale",
+           "encoder_grad_norm", "encoder_parameter_rms", "BUDGET_REFERENCE",
+           "ABSOLUTE_STEP_FRACTION", "GRAPHLET_GRAD_BUDGET", "COLLISION_GRAD_BUDGET",
+           "MAX_UPSCALE"]
