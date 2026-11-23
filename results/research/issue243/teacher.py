@@ -45,6 +45,9 @@ OUT = REPO / "results" / "research" / "issue243" / "teacher"
 FEATURES = REPO / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
 SEED = 243002
 CURVATURES = (-3.0, -1.0, 0.0, 1.0, 3.0)
+# Frozen by calibrate.py on the initialisation (CONTRACT §8).  1.0 means "not yet solved".
+EXPERT_ALPHA = (2.273279, 2.145578, 0.252206, 0.548780, 1.000072)  # calibrate.py, frozen before training (CONTRACT §8)
+# target median distance 0.074222; post-scale spread 1.000082
 NODE_OUT = 16
 HIDDEN = 64
 T_DIM = 128
@@ -213,13 +216,15 @@ class Gate(nn.Module):
 class Expert(nn.Module):
     """One curvature expert, now a real kappa-GCN stack (CONTRACT §2)."""
 
-    def __init__(self, semantic_dim: int, structural_dim: int, curvature: float):
+    def __init__(self, semantic_dim: int, structural_dim: int, curvature: float, alpha: float = 1.0):
         super().__init__()
         self.curvature = float(curvature)
+        self.alpha = float(alpha)
         self.stack = kappa_gcn.KappaExpert(semantic_dim + structural_dim, HIDDEN, NODE_OUT, curvature)
 
     def forward(self, x, in_edges, out_edges):
-        return self.stack(x, in_edges, out_edges)
+        z = self.stack(x, in_edges, out_edges)
+        return manifold.rescale(z, self.alpha, self.curvature)
 
 
 class MixedGeometryTeacher(nn.Module):
@@ -228,7 +233,8 @@ class MixedGeometryTeacher(nn.Module):
         self.descriptor = TopologyDescriptor(semantic_dim, structural_dim)
         self.gate = Gate()
         self.experts = nn.ModuleList([
-            Expert(semantic_dim, structural_dim, c) for c in CURVATURES
+            Expert(semantic_dim, structural_dim, c, a)
+            for c, a in zip(CURVATURES, EXPERT_ALPHA)
         ])
 
     def weights_for(self, descriptors):

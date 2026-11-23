@@ -118,6 +118,13 @@ def dist(x: torch.Tensor, y: torch.Tensor, k: float) -> torch.Tensor:
     return 2.0 * tan_k_inv(moved.norm(dim=-1), k)
 
 
+def rescale(z: torch.Tensor, alpha: float, k: float) -> torch.Tensor:
+    """Legal tangent-space rescaling exp(alpha * log(z)): stays inside the same manifold."""
+    if alpha == 1.0:
+        return z
+    return expmap0(alpha * logmap0(z, k), k)
+
+
 def project_to_manifold(x: torch.Tensor, k: float, eps: float = 1e-3) -> torch.Tensor:
     """Map a raw vector into the manifold; the zero vector maps to the origin."""
     return proju(x, k, eps)

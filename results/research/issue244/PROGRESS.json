@@ -9,22 +9,22 @@
     "C7",
     "C8",
     "C9",
-    "C10"
+    "C10",
+    "C12",
+    "C13"
   ],
   "partial": {
-    "C1": "no geoopt runtime dependency; independence comes from the definitional 3-D route instead",
-    "C6": "kappa-GCN layers + Eq.9-10 implemented and tested; Eq.8 node mixture unused because distances come from Eq.10",
-    "C11": "production metrics and both-direction exclusion are in evaluate_teacher.py; the frozen unseen bank is recomputed each run rather than stored"
+    "C1": "no geoopt runtime dependency; independence comes from the definitional 3-D route",
+    "C6": "kappa-GCN + Eq.9-10 implemented and tested; Eq.8 node mixture unused because distances come from Eq.10",
+    "C11": "production metrics and both-direction exclusion are in evaluate_teacher.py",
+    "C14": "expert probe and calibration done on the initialisation; post-training probe pending the formal run",
+    "C15": "calibrated formal 400-step teacher training is running",
+    "C19": "RQ-VAE candidate tree + topo_loss implemented and unit-tested; lambda_max not yet calibrated and the bank not yet built"
   },
   "not_run": [
-    "C12",
-    "C13",
-    "C14",
-    "C15",
     "C16",
     "C17",
     "C18",
-    "C19",
     "C20",
     "C21",
     "C22",
@@ -35,9 +35,10 @@
   "failed": [],
   "running": [
     {
-      "name": "formal teacher",
+      "name": "calibrated formal teacher",
       "steps": 400,
       "pair_batch": 192,
+      "checkpoint": "results/research/issue243/teacher/teacher.pt",
       "log": "results/research/issue243/teacher/train_log.json"
     }
   ],
@@ -56,12 +57,17 @@
       "spearman_semantic_gap": 0.0493,
       "spearman_jaccard_gap": 0.8938,
       "note": "60-step smoke checkpoint, not the formal run; the geometry beats semantics but loses to plain Jaccard"
-    }
+    },
+    "calibration": "alpha = [2.273279, 2.145578, 0.252206, 0.548780, 1.000072]; spread 16.12x -> 1.00008x",
+    "expert_gradients_after_calibration": "1.30e-2 .. 8.50e-3 (was 4.2e-4 .. 1.4e-1)",
+    "topo_loss_tests": "5/5"
   },
   "next_commands": [
-    "CUDA_VISIBLE_DEVICES=0 python3 results/research/issue243/teacher.py",
     "CUDA_VISIBLE_DEVICES=0 python3 results/research/issue243/evaluate_teacher.py",
-    "python3 results/research/issue243/tests/test_mutation.py"
+    "CUDA_VISIBLE_DEVICES=0 python3 results/research/issue243/overlap.py",
+    "CUDA_VISIBLE_DEVICES=0 python3 results/research/issue243/build_bank.py",
+    "CUDA_VISIBLE_DEVICES=0 python3 results/research/issue243/calibrate_topo.py",
+    "CUDA_VISIBLE_DEVICES=0 python3 stage2_RQ-VAE/TIGER_topo_distill_rq/train_rqvae.py"
   ],
   "resume_order": [
     "1. step 2: production ego sampler -> unique node set then full induced directed edges; hand-checked triangle/fork/merge/chain/reciprocal/isolated",
@@ -72,7 +78,7 @@
     "6. step 5-6: S_G, RQ-VAE, one 3000-epoch Stage2, SID evaluation, one Stage3"
   ],
   "blocked_by": null,
-  "updated_at": "2026-11-23T20:30:00Z",
-  "commit": "a828444d",
+  "updated_at": "2026-11-23T18:30:00Z",
+  "commit": "3fbc81d6",
   "commit_note": "HEAD when the checkpoint was written; the checkpoint is committed immediately after"
 }
