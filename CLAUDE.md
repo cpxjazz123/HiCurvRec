@@ -76,6 +76,7 @@
 **不复制进 `assets/`**,以保持训练侧与评估侧隔离。
 
 ## 4. 训练预算与机制范围
+## 6b. Stage3 完成后必须归档到 R2(2026-11-08 owner 指令)
 
 18. Stage2 保持 3000 epochs 的完整训练预算,禁止重新加入基于训练损失或验证指标的提前停止。
 19. **机制范围门(Issue #121,文本仍有效)**:新机制必须是**训练只行为信号**与**显式曲线运算**在同一条
@@ -126,20 +127,16 @@
 32. 科研工具不得自行启动 GPU 作业;唯一启动路径是 `launcher.launch`(§68)。
 32b. **TDD 是实现与修复的强制形式**:先写一个当前代码会失败的测试(红),再写实现使其通过(绿),最后连同
     候选树既有测试一起跑全量。禁止先写实现再补测试,也禁止同义反复的测试。修复缺陷同样先补复现测试。
-
 ## 6b. Stage3 完成后必须归档到 R2(2026-11-08 owner 指令)
-
 每次 Stage3 跑完,必须把该次结果所需的一切上传到 Cloudflare R2,缺一不可:①该次 Stage3 所用的 Stage2 源码
 (`train_rqvae.py`、`model/`,打包为 `stage2_source.tar.gz`);②`item_sids.json`;③导出该 SID 的
 `rqvae_best.pth`;④完整 Stage3 recall 记录(`test_final.json` 全部键值 + `HG_Rec.log` + `training_metrics.jsonl`)。
-
 实现:`results/research/issue139/upload_stage3.py <ARM>`;凭证从仓库根 `r2_apikey` 读取(已 gitignore,禁止入库);
 rclone 通过环境变量配置。目标桶 `genrec`,第一层是 `01`、`02`……编号,每个编号目录下只有四项:
 `<机制名>/`(Stage2 源码)、`item_sids.json`、`rqvae_best.pth`、`recall.json`。编号与每个文件的 SHA-256 记在
 `results/research/issue139/r2_ledger.json`。**只归档四件齐全的**,缺任一件不上传并在缺口统计里注明原因;
 `upload_stage3.py` 默认要求 `test_final.json` 存在(`--allow-incomplete` 才放宽)。`r2_apikey` 的内容不得出现在
 任何日志、manifest 或提交中。
-
 ## 7. Git 与交付
 
 41. Git 远端只允许使用 `https://github.com/cpxjazz123/HiCurvRec.git`。
