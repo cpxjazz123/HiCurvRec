@@ -5,18 +5,18 @@
     "C2",
     "C3",
     "C4",
-    "C7"
-  ],
-  "partial": {
-    "C1": "did not adopt geoopt as a runtime dependency; instead the reference now uses a definitional route (inverse stereographic projection + 3D angle), so the two implementations are no longer the same formula",
-    "C5": "manifold.py replaced and teacher.py calls manifold.dist; the old duplicate helpers in results/research/issue242/teacher.py are still present for history and must be confirmed unused",
-    "C6": "kappa-GCN layers implemented and tested; Eq.9-10 (pair weight + W-weighted squared distance) implemented; Eq.8 node-level mixture is not used because distances come from Eq.10"
-  },
-  "not_run": [
+    "C5",
+    "C7",
     "C8",
     "C9",
-    "C10",
-    "C11",
+    "C10"
+  ],
+  "partial": {
+    "C1": "no geoopt runtime dependency; independence comes from the definitional 3-D route instead",
+    "C6": "kappa-GCN layers + Eq.9-10 implemented and tested; Eq.8 node mixture unused because distances come from Eq.10",
+    "C11": "production metrics and both-direction exclusion are in evaluate_teacher.py; the frozen unseen bank is recomputed each run rather than stored"
+  },
+  "not_run": [
     "C12",
     "C13",
     "C14",
@@ -33,19 +33,35 @@
     "C25"
   ],
   "failed": [],
-  "running": [],
+  "running": [
+    {
+      "name": "formal teacher",
+      "steps": 400,
+      "pair_batch": 192,
+      "log": "results/research/issue243/teacher/train_log.json"
+    }
+  ],
   "evidence": {
     "known_answers": "17/17",
     "production_vs_reference": "12/12",
-    "mutations": "9/9 caught",
-    "sphere_case": "x=0.9,y=-0.9,k=1 -> 2.93126 == 4*atan(0.9)",
-    "mobius_vs_3d": "agree to 1e-15 on random points for k=0.5/1/3"
+    "topology": "8/8",
+    "pairs": "7/7",
+    "metrics": "7/7",
+    "wiring": "4/4",
+    "mutations": "12/12 caught",
+    "sphere_case": "0.9/-0.9 k=1 -> 2.93126 == 4*atan(0.9)",
+    "smoke_teacher_eval": {
+      "pairs": 1496,
+      "spearman_d_geo_gap": 0.4133,
+      "spearman_semantic_gap": 0.0493,
+      "spearman_jaccard_gap": 0.8938,
+      "note": "60-step smoke checkpoint, not the formal run; the geometry beats semantics but loses to plain Jaccard"
+    }
   },
   "next_commands": [
-    "python3 results/research/issue243/tests/test_known_answers.py",
-    "python3 results/research/issue243/tests/test_reference.py",
-    "python3 results/research/issue243/tests/test_mutation.py",
-    "python3 results/research/issue243/module_checks.py"
+    "CUDA_VISIBLE_DEVICES=0 python3 results/research/issue243/teacher.py",
+    "CUDA_VISIBLE_DEVICES=0 python3 results/research/issue243/evaluate_teacher.py",
+    "python3 results/research/issue243/tests/test_mutation.py"
   ],
   "resume_order": [
     "1. step 2: production ego sampler -> unique node set then full induced directed edges; hand-checked triangle/fork/merge/chain/reciprocal/isolated",
@@ -56,7 +72,7 @@
     "6. step 5-6: S_G, RQ-VAE, one 3000-epoch Stage2, SID evaluation, one Stage3"
   ],
   "blocked_by": null,
-  "updated_at": "2026-11-23T19:10:00Z",
-  "commit": "490d1e56",
+  "updated_at": "2026-11-23T20:30:00Z",
+  "commit": "a828444d",
   "commit_note": "HEAD when the checkpoint was written; the checkpoint is committed immediately after"
 }
