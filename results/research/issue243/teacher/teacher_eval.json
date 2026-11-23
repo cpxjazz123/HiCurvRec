@@ -1,0 +1,113 @@
+{
+  "pairs": 1496,
+  "unseen_eval_edges": 29520,
+  "distance_buckets": {
+    "2.0": 490,
+    "3.0": 842,
+    "4.0": 159,
+    "5.0": 5
+  },
+  "overall": {
+    "d_geo_mean": 1.3388335862182041,
+    "gap_mean": 2.785427807486631,
+    "distortion_mean": 0.7395540632408095,
+    "distortion_median": 0.7964823069734694,
+    "spearman_d_geo_gap": 0.41327417775945247,
+    "spearman_semantic_gap": 0.04931532535488948,
+    "spearman_jaccard_gap": 0.8937985773879554,
+    "spearman_d_geo_semantic": 0.19263766385990375
+  },
+  "by_distance": {
+    "2": {
+      "pairs": 490,
+      "d_geo_mean": 1.0793126185937805,
+      "distortion_mean": 0.6790684125288122
+    },
+    "3": {
+      "pairs": 842,
+      "d_geo_mean": 1.3814714169063365,
+      "distortion_mean": 0.7710457069873107
+    },
+    "4": {
+      "pairs": 159,
+      "d_geo_mean": 1.8909987439899325,
+      "distortion_mean": 0.7564063566637637
+    },
+    "5": {
+      "pairs": 5,
+      "d_geo_mean": 2.0328257083892822,
+      "distortion_mean": 0.8280520952558623
+    }
+  },
+  "by_degree_quintile": {
+    "0": {
+      "pairs": 182,
+      "distortion_mean": 0.6398167884811703,
+      "spearman_d_geo_gap": 0.24273427763132452
+    },
+    "1": {
+      "pairs": 402,
+      "distortion_mean": 0.7267040112500545,
+      "spearman_d_geo_gap": 0.20055530086928094
+    },
+    "2": {
+      "pairs": 295,
+      "distortion_mean": 0.7506948287232637,
+      "spearman_d_geo_gap": 0.31070842091412365
+    },
+    "3": {
+      "pairs": 311,
+      "distortion_mean": 0.7654568045616742,
+      "spearman_d_geo_gap": 0.32353694739398
+    },
+    "4": {
+      "pairs": 306,
+      "distortion_mean": 0.7786900976801079,
+      "spearman_d_geo_gap": 0.4353362958138206
+    }
+  },
+  "expert_usage": {
+    "curvatures": [
+      -3.0,
+      -1.0,
+      0.0,
+      1.0,
+      3.0
+    ],
+    "pair_weight_mean": [
+      0.19684113562107086,
+      0.20129002630710602,
+      0.20299819111824036,
+      0.20220190286636353,
+      0.19666866958141327
+    ],
+    "per_expert_distance_mean": [
+      2.3315796852111816,
+      0.17608116567134857,
+      1.624223232269287,
+      0.4105091989040375,
+      0.12552116811275482
+    ],
+    "per_expert_distance_std": [
+      0.6810891628265381,
+      0.11962580680847168,
+      1.312391996383667,
+      0.2753433883190155,
+      0.07659713923931122
+    ]
+  },
+  "direction_sensitivity": {
+    "root": 39,
+    "t_shape": [
+      1,
+      128
+    ],
+    "t_l2_drift": 1.516883373260498,
+    "t_cosine": 0.8656408786773682,
+    "gate_l1_drift": 0.014892622828483582
+  },
+  "verdict": {
+    "beats_semantic": true,
+    "beats_jaccard": false
+  }
+}

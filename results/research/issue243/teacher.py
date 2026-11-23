@@ -26,6 +26,7 @@ import math
 
 import kappa_gcn
 import manifold
+import topology
 import time
 from collections import deque
 from pathlib import Path
@@ -48,8 +49,8 @@ NODE_OUT = 16
 HIDDEN = 64
 T_DIM = 128
 K1, K2_PER, K2_CAP = 8, 4, 24
-PAIR_BATCH = 128
-STEPS = 60
+PAIR_BATCH = 192
+STEPS = 400
 LR = 1e-3
 EPS = 1e-7
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -65,57 +66,6 @@ def sha256(path: Path) -> str:
 
 
 # --------------------------------------------------------------------------- manifolds
-def project_hyperbolic(x: torch.Tensor, curvature: float) -> torch.Tensor:
-    c = abs(float(curvature))
-    scale = math.sqrt(c)
-    norm = x.norm(dim=-1, keepdim=True).clamp(min=EPS)
-    radius = (1.0 - 1e-3) / scale
-    mapped = torch.tanh(scale * norm) / (scale * norm) * x
-    return mapped * (radius / mapped.norm(dim=-1, keepdim=True).clamp(min=EPS)).clamp(max=1.0)
-
-
-def dist_hyperbolic(u: torch.Tensor, v: torch.Tensor, curvature: float) -> torch.Tensor:
-    c = abs(float(curvature))
-    scale = math.sqrt(c)
-    uu = (u * u).sum(-1).clamp(max=(1.0 - 1e-3))
-    vv = (v * v).sum(-1).clamp(max=(1.0 - 1e-3))
-    diff = ((u - v) ** 2).sum(-1)
-    inner = 1.0 + 2.0 * c * diff / ((1.0 - c * uu) * (1.0 - c * vv))
-    return (2.0 / scale) * torch.acosh(inner.clamp(min=1.0 + 1e-7))
-
-
-def project_spherical(x: torch.Tensor, curvature: float) -> torch.Tensor:
-    c = float(curvature)
-    return F.normalize(x, dim=-1) / math.sqrt(c)
-
-
-def dist_spherical(u: torch.Tensor, v: torch.Tensor, curvature: float) -> torch.Tensor:
-    c = float(curvature)
-    cosine = (u * v).sum(-1) * c
-    return torch.acos(cosine.clamp(-1.0 + 1e-6, 1.0 - 1e-6)) / math.sqrt(c)
-
-
-def dist_euclidean(u: torch.Tensor, v: torch.Tensor, curvature: float) -> torch.Tensor:
-    return (u - v).norm(dim=-1)
-
-
-def expert_distance(u, v, curvature):
-    if curvature < 0:
-        return dist_hyperbolic(u, v, curvature)
-    if curvature > 0:
-        return dist_spherical(u, v, curvature)
-    return dist_euclidean(u, v, curvature)
-
-
-def project_expert(x, curvature):
-    if curvature < 0:
-        return project_hyperbolic(x, curvature)
-    if curvature > 0:
-        return project_spherical(x, curvature)
-    return x
-
-
-# --------------------------------------------------------------------------- graph utils
 def load_all():
     blob = np.load(GRAPH / "ego_csr.npz")
     ego = sp.csr_matrix((blob["data"], blob["indices"], blob["indptr"]),
@@ -149,47 +99,6 @@ def neighbours(csr, node: int, k: int, rng) -> np.ndarray:
         return cols.astype(np.int64)
     pick = rng.choice(len(cols), size=k, replace=False)
     return cols[pick].astype(np.int64)
-
-
-def ego_sample(root: int, out_csr, in_csr, rng, radius: int = 2) -> dict:
-    """Directed ego sample.  direction: 0 root, 1 out-neighbour, 2 in-neighbour, 3 deeper."""
-    nodes = [root]
-    role = [0]
-    direction = [0]
-    edges = []
-    for node in neighbours(out_csr, root, K1, rng):
-        edges.append((0, len(nodes)))
-        nodes.append(int(node))
-        role.append(1)
-        direction.append(1)
-    for node in neighbours(in_csr, root, K1, rng):
-        edges.append((len(nodes), 0))
-        nodes.append(int(node))
-        role.append(1)
-        direction.append(2)
-    if radius >= 2:
-        for src in range(1, len(nodes)):
-            if len(nodes) >= K2_CAP + 1:
-                break
-            for csr, forward in ((out_csr, True), (in_csr, False)):
-                for node in neighbours(csr, nodes[src], K2_PER, rng):
-                    if len(nodes) >= K2_CAP + 1:
-                        break
-                    if int(node) in nodes:
-                        continue
-                    role.append(2)
-                    direction.append(3)
-                    if forward:
-                        edges.append((src, len(nodes)))
-                    else:
-                        edges.append((len(nodes), src))
-                    nodes.append(int(node))
-    return {
-        "nodes": np.array(nodes, dtype=np.int64),
-        "role": np.array(role, dtype=np.int64),
-        "direction": np.array(direction, dtype=np.int64),
-        "edges": np.array(edges, dtype=np.int64).reshape(-1, 2),
-    }
 
 
 def bfs_distances(csr: sp.csr_matrix, undirected: sp.csr_matrix, root: int, depth: int):
@@ -279,9 +188,13 @@ class TopologyDescriptor(nn.Module):
         return torch.cat([root, mean_in, mean_out, mean_all], dim=1)  # (B, 4*NODE_OUT)
 
     def encode_two_scales(self, roots, out_csr, in_csr, rng, semantic, structural):
-        """T_i is the concatenation of the 1-hop and 2-hop descriptors: 2 x 64 = 128."""
-        one_hop = [ego_sample(int(r), out_csr, in_csr, rng, radius=1) for r in roots]
-        two_hop = [ego_sample(int(r), out_csr, in_csr, rng, radius=2) for r in roots]
+        """T_i is the concatenation of the 1-hop and 2-hop descriptors: 2 x 64 = 128.
+
+        The sampler is the induced-edge one from ``topology`` (issue #244 §2): decide the
+        node set first, then keep every directed edge among those nodes.
+        """
+        one_hop = [topology.ego_induced(int(r), out_csr, in_csr, rng, radius=1) for r in roots]
+        two_hop = [topology.ego_induced(int(r), out_csr, in_csr, rng, radius=2) for r in roots]
         return torch.cat([
             self.encode(one_hop, semantic, structural),
             self.encode(two_hop, semantic, structural),

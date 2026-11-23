@@ -59,6 +59,21 @@ MUTATIONS = [
      "        mapped = 2.0 * radius * torch.atan(norm / radius)  # theta = 2R*arctan(r/R)",
      "        mapped = 2.0 * torch.atan(norm / radius)",
      "tests/test_reference.py"),
+    # issue #244 §2: the #243 ego sampler kept only traversal edges; dropping induced edges
+    # again must be caught by the topology suite
+    # issue #244 §2: production metrics and pair typing
+    ("metrics-spearman-as-pearson", "routing", "metrics.py",
+     "    rx = average_ranks(x)\n    ry = average_ranks(y)",
+     "    rx = x - x.mean()\n    ry = y - y.mean()",
+     "tests/test_metrics.py"),
+    ("pairs-bucket-by-source", "structural", "pairs.py",
+     "            buckets[target].append(node)",
+     "            buckets[node].append(target)",
+     "tests/test_pairs.py"),
+    ("ego-drops-induced-edges", "structural", "topology.py",
+     "            if target in local:\n                edges.append((local[int(node)], local[target]))",
+     "            if target in local and int(node) < target:\n                edges.append((local[int(node)], local[target]))",
+     "tests/test_topology.py"),
     ("sphere-proju-hyperbolic-clamp", "structural", "manifold.py",
      "    if k > 0:\n        guard = 1e6 / math.sqrt(k)\n        scale = torch.where(norm > guard, guard / norm.clamp(min=EPS), torch.ones_like(norm))\n        return x * scale",
      "    if k > 0:\n        maxnorm = (1.0 - eps) / math.sqrt(abs(k))\n        scale = torch.where(norm > maxnorm, maxnorm / norm.clamp(min=EPS), torch.ones_like(norm))\n        return x * scale",

@@ -1,6 +1,6 @@
 # Issue #243 变异测试
 
-共 9 个变异；被抓到 9 个。
+共 12 个变异；被抓到 12 个。
 
 | 变异 | 类别 | 结果 | 抓到的测试 |
 |---|---|---|---|
@@ -12,4 +12,7 @@
 | `mobius-add-sign` | numeric | **CAUGHT** | FAIL test_distance_matches_reference_and_known_answers: dist k=-3.0 |
 | `sphere-distance-halved` | numeric | **CAUGHT** | FAIL test_distance_matches_reference_and_known_answers: dist k=1.0 |
 | `sphere-logmap-drops-radius` | numeric | **CAUGHT** | FAIL test_exp_log_match_reference: |
+| `metrics-spearman-as-pearson` | routing | **CAUGHT** | FAIL test_spearman_perfect_and_tied: monotone: 0.9569321102069627 != 1.0 |
+| `pairs-bucket-by-source` | structural | **CAUGHT** | FAIL test_shared_successor_is_not_a_chain: {(4, 5), (1, 2)} |
+| `ego-drops-induced-edges` | structural | **CAUGHT** | FAIL test_merge: |
 | `sphere-proju-hyperbolic-clamp` | structural | **CAUGHT** | FAIL test_exp_log_match_reference: |
