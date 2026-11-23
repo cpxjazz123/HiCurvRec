@@ -1,0 +1,1 @@
+冻结 C1–C10（原文见 RUN_LOG.md），正文 sha256 `4f027cbed0d19c13f276faa2eb6302ff5ee8db90ac0e6fa36b41c6f5cfa152e3`。本轮不训练、不计算或依赖 PPR；仅复用冻结资产与确定性数据构建。数学契约见 results/research/issue247/CONTRACT.md。GraphMoRE A.1 采用无向最短路，输出不称有向截面曲率。官方公开代码未包含曲率估计器，数值对照将明确使用独立的论文公式参考实现，不伪称官方曲率代码。

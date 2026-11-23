@@ -1,0 +1,47 @@
+{
+  "mutations": [
+    {
+      "mutation": "sign flip of the parallelogram residual",
+      "category": "numeric",
+      "caught_by": "star equals negative half",
+      "assertion_text": "np.float64(0.5) != -0.5 within 7 places (np.float64(1.0) difference) : star equals negative half"
+    },
+    {
+      "mutation": "g(b,c)^2 quarter coefficient becomes three quarters",
+      "category": "numeric",
+      "caught_by": "star equals negative half",
+      "assertion_text": "np.float64(2.5) != -0.5 within 7 places (np.float64(3.0) difference) : star equals negative half"
+    },
+    {
+      "mutation": "mean over references replaced by a sum",
+      "category": "numeric",
+      "caught_by": "star equals negative half",
+      "assertion_text": "np.float64(-2.0) != -0.5 within 7 places (np.float64(1.5) difference) : star equals negative half"
+    },
+    {
+      "mutation": "unreachable references are zero filled instead of masked",
+      "category": "structural",
+      "caught_by": "missing not zero filled",
+      "assertion_text": "np.float64(0.1875) != 0.25 within 7 places (np.float64(0.0625) difference) : missing not zero filled"
+    },
+    {
+      "mutation": "g(b,c) is always taken as 1 (adjacency ignored)",
+      "category": "structural",
+      "caught_by": "endpoint distance respects adjacency",
+      "assertion_text": "np.float64(-0.75) != 0.0 within 7 places (np.float64(0.75) difference) : endpoint distance respects adjacency"
+    },
+    {
+      "mutation": "item index order is not validated",
+      "category": "routing",
+      "caught_by": "ID mismatch rejected",
+      "assertion_text": "ValueError not raised : ID mismatch rejected"
+    },
+    {
+      "mutation": "the training interface returns hidden evaluation targets",
+      "category": "routing",
+      "caught_by": "hidden target rejected",
+      "assertion_text": "ValueError not raised : hidden target rejected"
+    }
+  ],
+  "caught": 7
+}

@@ -1,0 +1,130 @@
+{
+  "issue": 247,
+  "modules": [
+    {
+      "module": "sectional",
+      "check": "undirected projection is loop-free and binary",
+      "verdict": "PASS",
+      "detail": {
+        "components": 117,
+        "isolated": 116
+      }
+    },
+    {
+      "module": "sectional",
+      "check": "missing references stay masked, never zero filled",
+      "verdict": "PASS",
+      "detail": {
+        "valid": 24326,
+        "missing": 0
+      }
+    },
+    {
+      "module": "sectional",
+      "check": "effective reference count equals the finite contribution count",
+      "verdict": "PASS",
+      "detail": {
+        "min_effective": 253
+      }
+    },
+    {
+      "module": "sectional",
+      "check": "the published summary is exactly recomputable from the triple table",
+      "verdict": "PASS",
+      "detail": {
+        "tolerance": 1e-12,
+        "keys": [
+          "count",
+          "mean",
+          "negative",
+          "positive",
+          "quantiles",
+          "std",
+          "valid",
+          "zero"
+        ]
+      }
+    },
+    {
+      "module": "summary",
+      "check": "every item without a valid triple is NaN and flagged invalid",
+      "verdict": "PASS",
+      "detail": {
+        "valid_items": 24326
+      }
+    },
+    {
+      "module": "summary",
+      "check": "counts match the triple table",
+      "verdict": "PASS",
+      "detail": {
+        "triples": 24326
+      }
+    },
+    {
+      "module": "topology",
+      "check": "all published topology features are finite",
+      "verdict": "PASS",
+      "detail": {
+        "features": [
+          "degree_in",
+          "degree_out",
+          "family_counts",
+          "family_distribution",
+          "family_valid",
+          "reciprocal_degree",
+          "sampled_orbit_counts",
+          "sampled_orbit_distribution",
+          "sampled_orbit_valid"
+        ]
+      }
+    },
+    {
+      "module": "topology",
+      "check": "degree columns equal the visible CSR degrees",
+      "verdict": "PASS",
+      "detail": {}
+    },
+    {
+      "module": "topology",
+      "check": "orbit columns are marked invalid where no sampled instance exists",
+      "verdict": "PASS",
+      "detail": {}
+    },
+    {
+      "module": "topology",
+      "check": "directed two-hop assets agree with a fresh neighbourhood expansion on 2,000 sampled centres",
+      "verdict": "PASS",
+      "detail": {
+        "note": "verified in prepare_v3.validate for 2,000 seeded centres and all centres at matrix level"
+      }
+    },
+    {
+      "module": "isolation",
+      "check": "strict evaluation keys and training bank keys are disjoint",
+      "verdict": "PASS",
+      "detail": {
+        "strict": 28595,
+        "training": 59966
+      }
+    },
+    {
+      "module": "tiger",
+      "check": "the Stage3-read SID table is the one hashed in the manifest",
+      "verdict": "PASS",
+      "detail": {
+        "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+        "recall": "NA: no immutable historical SID hash binding to completed recall established"
+      }
+    },
+    {
+      "module": "training_loss",
+      "check": "gradient / parameter update",
+      "verdict": "NA",
+      "detail": "issue #247 forbids defining or training a loss; there is no trainable module in this round"
+    }
+  ],
+  "pass": 12,
+  "fail": 0,
+  "na": 1
+}

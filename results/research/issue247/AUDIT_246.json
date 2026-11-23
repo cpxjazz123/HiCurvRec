@@ -1,0 +1,59 @@
+{
+  "v2_manifest_sha256": "eacb1fded35a67dd2fde442f8da7eec273af586b156ce2897260953f374ec91f",
+  "verified_assets": 47,
+  "splits": {
+    "visible": {
+      "users": 45951,
+      "directed_edges": 261132,
+      "weight": 272244
+    },
+    "struct_val": {
+      "users": 5744,
+      "directed_edges": 33279,
+      "weight": 33559
+    },
+    "struct_test": {
+      "users": 5744,
+      "directed_edges": 33477,
+      "weight": 33716
+    }
+  },
+  "banks": {
+    "probe": 62,
+    "relaxed_struct_test_degree_matched": 60,
+    "relaxed_struct_test_direct": 271,
+    "relaxed_struct_test_shared_in": 123,
+    "relaxed_struct_test_shared_out": 123,
+    "relaxed_struct_test_two_hop": 93,
+    "relaxed_struct_val_degree_matched": 62,
+    "relaxed_struct_val_direct": 274,
+    "relaxed_struct_val_shared_in": 119,
+    "relaxed_struct_val_shared_out": 124,
+    "relaxed_struct_val_two_hop": 74,
+    "strict_struct_test_degree_matched": 2940,
+    "strict_struct_test_direct": 2729,
+    "strict_struct_test_shared_in": 2877,
+    "strict_struct_test_shared_out": 2877,
+    "strict_struct_test_two_hop": 2907,
+    "strict_struct_val_degree_matched": 2938,
+    "strict_struct_val_direct": 2726,
+    "strict_struct_val_shared_in": 2881,
+    "strict_struct_val_shared_out": 2876,
+    "strict_struct_val_two_hop": 2926,
+    "train_degree_matched": 12000,
+    "train_direct": 12000,
+    "train_shared_in": 12000,
+    "train_shared_out": 12000,
+    "train_two_hop": 12000
+  },
+  "strict_train_intersection": 0,
+  "actual_probe": 62,
+  "curvature_files": [],
+  "motif_instances": 28391948,
+  "corrections": [
+    "Visible users are 45951, not 51695. Three sets: 45951/5744/5744.",
+    "Probe has 62 pairs, not 64. Strict group sizes include 2940, not maximum 2938.",
+    "No v2 curvature files exist. Ricci implementation is not sectional A.1.",
+    "Historical comments disagree with final files; final files and recomputation govern."
+  ]
+}

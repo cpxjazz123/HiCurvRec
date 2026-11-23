@@ -1,0 +1,3070 @@
+{
+  "version": "v3-sectional-247",
+  "issue": 247,
+  "source_commit": "7a24c919875aa088ff1c2a016fd97e75fa01476a",
+  "official_commit": "1948d3c5f19f7251cadd8d1118c06f0e294f96b3",
+  "source_hashes": {
+    "tools/graph_infra/__init__.py": "b86861c93434621cff070d024b12f8c6f9d5a5e77a8deea54089645a3a7226ff",
+    "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+    "tools/graph_infra/audit_v2.py": "26ebad864b6380dc4e78045567b95493c3484055612212a5daed8a09d4a1cc49",
+    "tools/graph_infra/bank_features.py": "b6dca9667b16738410c2756119f4bed44044acc9a24eefe7b3081a9fcb5af00e",
+    "tools/graph_infra/baseline_report.py": "1dd4e4022ba720ebd1e4f014484ca40247917719f81381f0145b16be351faa0d",
+    "tools/graph_infra/baseline_v2.py": "b7d02eeb9c156c1c7b9c1891a48d0e7748fb85cd25d79538fac0c9491e5c9fd8",
+    "tools/graph_infra/build_assets.py": "1d1a8ad3cb974b203296baa7346023d21e92c796b86ea67bbb2050b77554cf00",
+    "tools/graph_infra/build_assets_v2.py": "8f322bde05063cef7a140307e60436826c32258b6fc03e31155a0410b195e30a",
+    "tools/graph_infra/config.py": "1e16a5dd7438a054f8705942d0fe552181a99eb2d2201d3f65df67aa53ff6722",
+    "tools/graph_infra/curvature.py": "7396bee70e5d6bf46d880f9a8593f7cd4f9285212deff11b1e51d78ec984d903",
+    "tools/graph_infra/graph_build.py": "6a3544d28985f5c2341e9706129c0fbe995750c185848ab7b13a3ac5dbda7ca4",
+    "tools/graph_infra/graph_distance.py": "bfb44a74bff51f6310c78ed353c27ea3ad86501e967b7f1401ab99ceb94066da",
+    "tools/graph_infra/graphlet.py": "2550a7c8f0268374a9eec1a98cfb9b1324fa1459f0831064a8595cb626188d16",
+    "tools/graph_infra/interfaces_v3.py": "e8d262e59468077fd6667d908a8cbd4eb0a01cee4d503714faaafe93f1320507",
+    "tools/graph_infra/isolation.py": "149f3ec3f06c7f7529fb223444121a59e5d4846d1c8c6bb4225d74f14ef25c72",
+    "tools/graph_infra/kappa_gcn.py": "895d70e2c72103d981ce9957aa96f8b64bddc504fc55ff9e984f6ef76ca59b81",
+    "tools/graph_infra/manifold.py": "8d995e3d3ed1d4ac04dbc3f08139d134b47be4ae012b189ff651e235449aa25c",
+    "tools/graph_infra/metrics.py": "dd9938d66adf57e718a07a9f61b36ad265bd9d38a9910911f0d82d19b8bf446e",
+    "tools/graph_infra/module_checks.py": "3a767b0650d0d3a8fea4f2d3c388f60a42d834def31e5d7d32658358e3b67f05",
+    "tools/graph_infra/module_checks_v3.py": "66ee15a9a54b51cb572b9717b6c09f4b329b2e87111df22fcbcfbfdcf4b95521",
+    "tools/graph_infra/pairs.py": "a107d071cffc3fa521aec22dca170605ccb911454ab53595097ad9fb8a333e22",
+    "tools/graph_infra/ppr.py": "ef30717129ebebce369a822c51b00bd23ea05ca48be0e1ef9a87c2b6f895364f",
+    "tools/graph_infra/prepare_v3.py": "b1157c4c6c579cb1f6e90cf01e2a8c41a4863b94563160380ba9aa68e06991cf",
+    "tools/graph_infra/reference.py": "f14637c8b3e877b01502dcb7a68c12c02062842b36985a975f5ff6d591d469ff",
+    "tools/graph_infra/sectional.py": "3d4052c1441454dce2d51a92288ce5b3b194c1562dd77e89de0d47578e839286",
+    "tools/graph_infra/splits.py": "48d9b9e34610b50d22259dc88aa48751690ccb9f262d1ecad442c31e98f25191",
+    "tools/graph_infra/tiger_audit.py": "16d259c4f4c8a719cb1b08dfd76293ac77c59c4440259c2621e6000bae1a2253",
+    "tools/graph_infra/topology.py": "6443a74fea1c06f9944105aa033c95d30b7b63d28622c8e6ade5cdcefedb0818",
+    "tools/graph_infra/verify_assets.py": "7d345ce3307d88ba0357c20e7ee110deaf3a4d57241fd131f448789836e99420",
+    "tools/graph_infra/write_manifest_v2.py": "9dfa64280b18cde21b65da21db8609ed69d35a481270a90cfa629fdaf4c9248a"
+  },
+  "inputs": {
+    "results/stage0_build_parquet/items.parquet": "6408e3c0f98a65d817747477a22092c0848f7ed105dc9bf7b7327e9544a99af3",
+    "results/stage0_build_parquet/train.parquet": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "stage1_GeneEmbedding/output/sentence_t5.npy": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+    "results/research/infra246/assets/manifest.json": "eacb1fded35a67dd2fde442f8da7eec273af586b156ce2897260953f374ec91f"
+  },
+  "seed": 247001,
+  "reference_sizes": [
+    16,
+    64,
+    256
+  ],
+  "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+  "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3",
+  "runtime_seconds": 18.82022860273719,
+  "assets": [
+    {
+      "name": "coverage",
+      "path": "results/research/issue247/assets/coverage.json",
+      "use": "training",
+      "schema": "json",
+      "shape": null,
+      "dtype": "json/text",
+      "sha256": "74d79b18f2ea96c07250202d0e94a9f39a973525eb4b55f38c0fdeafa7a261f5",
+      "bytes": 2964,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "directed_edges",
+      "path": "results/research/issue247/assets/directed_edges.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "source": [
+          261132
+        ],
+        "target": [
+          261132
+        ],
+        "weight": [
+          261132
+        ],
+        "reciprocal": [
+          261132
+        ]
+      },
+      "dtype": {
+        "source": "int32",
+        "target": "int32",
+        "weight": "int64",
+        "reciprocal": "bool"
+      },
+      "sha256": "9c8c2574c58ab4dfc64cac8adaeafb63c501f0de70dd9fc100b664bf679d5a8c",
+      "bytes": 682020,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "directed_in_within2",
+      "path": "results/research/issue247/assets/directed_in_within2.npz",
+      "use": "training",
+      "schema": "csr",
+      "shape": [
+        24587,
+        24587
+      ],
+      "dtype": "int8",
+      "sha256": "b980ae6414723b1bc81f3093e58fc671de8053c9beff2b46dfd2f581c99bdf3c",
+      "bytes": 23205096,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "directed_out_within2",
+      "path": "results/research/issue247/assets/directed_out_within2.npz",
+      "use": "training",
+      "schema": "csr",
+      "shape": [
+        24587,
+        24587
+      ],
+      "dtype": "int8",
+      "sha256": "4ba9b1209634d533234ce15b08c9d5ea25310579cb66fea241550a806fbd4d65",
+      "bytes": 23417332,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "item_ids",
+      "path": "results/research/issue247/assets/item_ids.npy",
+      "use": "training",
+      "schema": "npy",
+      "shape": [
+        24587
+      ],
+      "dtype": "int64",
+      "sha256": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+      "bytes": 196824,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "orbit_schema",
+      "path": "results/research/issue247/assets/orbit_schema.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "graphlet_orbit_keys": [
+          20,
+          2
+        ]
+      },
+      "dtype": {
+        "graphlet_orbit_keys": "int64"
+      },
+      "sha256": "5f1a4a4ff1ffc8737af7d9db044300f9c94392dbd6680a6c352abf1f0e583c9b",
+      "bytes": 300,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "reference_distances",
+      "path": "results/research/issue247/assets/reference_distances.npy",
+      "use": "training",
+      "schema": "npy",
+      "shape": [
+        256,
+        24587
+      ],
+      "dtype": "float64",
+      "sha256": "159b2b76e7bb08f55808c2ab1aab7e73875f2a18a6f7a764b7c4d3a39e40bb4d",
+      "bytes": 50354304,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "sectional_summary",
+      "path": "results/research/issue247/assets/sectional_summary.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "count": [
+          24587
+        ],
+        "valid": [
+          24587
+        ],
+        "mean": [
+          24587
+        ],
+        "std": [
+          24587
+        ],
+        "negative": [
+          24587
+        ],
+        "zero": [
+          24587
+        ],
+        "positive": [
+          24587
+        ],
+        "quantiles": [
+          24587,
+          5
+        ]
+      },
+      "dtype": {
+        "count": "int64",
+        "valid": "bool",
+        "mean": "float64",
+        "std": "float64",
+        "negative": "float64",
+        "zero": "float64",
+        "positive": "float64",
+        "quantiles": "float64"
+      },
+      "sha256": "af41ddac19f8e7edf0a3f8323b7803dd875f8d423b339e3c7fb49b6c35cc461d",
+      "bytes": 182014,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "sectional_triples",
+      "path": "results/research/issue247/assets/sectional_triples.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "triples": [
+          24326,
+          3
+        ],
+        "references": [
+          256
+        ],
+        "value": [
+          24326
+        ],
+        "effective_references": [
+          24326
+        ],
+        "valid": [
+          24326
+        ],
+        "invalid_reason": [
+          24326
+        ],
+        "endpoint_distance": [
+          24326
+        ],
+        "directed_graphlet": [
+          24326
+        ],
+        "neighbor_pair_population": [
+          24587
+        ],
+        "reference_contributions": [
+          24326,
+          256
+        ]
+      },
+      "dtype": {
+        "triples": "int64",
+        "references": "int64",
+        "value": "float64",
+        "effective_references": "int64",
+        "valid": "bool",
+        "invalid_reason": "<U22",
+        "endpoint_distance": "float64",
+        "directed_graphlet": "int64",
+        "neighbor_pair_population": "int64",
+        "reference_contributions": "float64"
+      },
+      "sha256": "cc3b9c79f027cde3f9ded26070e666e2a7e03d4db830c2819abf3bf9f2ef3587",
+      "bytes": 4292830,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "tiger",
+      "path": "results/research/issue247/assets/tiger.json",
+      "use": "description",
+      "schema": "json",
+      "shape": null,
+      "dtype": "json/text",
+      "sha256": "45b122b1af3b2fbb6efb969c2614181784141c0445a6e7b2345c94f4c74026cc",
+      "bytes": 9299,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "topology_features",
+      "path": "results/research/issue247/assets/topology_features.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "degree_out": [
+          24587
+        ],
+        "degree_in": [
+          24587
+        ],
+        "reciprocal_degree": [
+          24587
+        ],
+        "family_counts": [
+          24587,
+          16
+        ],
+        "family_distribution": [
+          24587,
+          16
+        ],
+        "family_valid": [
+          24587
+        ],
+        "sampled_orbit_counts": [
+          24587,
+          20
+        ],
+        "sampled_orbit_distribution": [
+          24587,
+          20
+        ],
+        "sampled_orbit_valid": [
+          24587
+        ]
+      },
+      "dtype": {
+        "degree_out": "int32",
+        "degree_in": "int32",
+        "reciprocal_degree": "int32",
+        "family_counts": "int64",
+        "family_distribution": "float64",
+        "family_valid": "bool",
+        "sampled_orbit_counts": "int64",
+        "sampled_orbit_distribution": "float64",
+        "sampled_orbit_valid": "bool"
+      },
+      "sha256": "1cbbab0b7d24f06c2a8cabc5e33f1fd613c6dd7468908efdd0139b6bd5e271b3",
+      "bytes": 814211,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "visible_forward",
+      "path": "results/research/infra246/assets/graph/visible_forward.npz",
+      "use": "training",
+      "schema": "csr",
+      "shape": [
+        24587,
+        24587
+      ],
+      "dtype": "int64",
+      "sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "bytes": 650620,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "visible_reverse",
+      "path": "results/research/infra246/assets/graph/visible_reverse.npz",
+      "use": "training",
+      "schema": "csr",
+      "shape": [
+        24587,
+        24587
+      ],
+      "dtype": "int64",
+      "sha256": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6",
+      "bytes": 651122,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "split_users",
+      "path": "results/research/infra246/assets/graph/split_users.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "visible": [
+          45951
+        ],
+        "struct_val": [
+          5744
+        ],
+        "struct_test": [
+          5744
+        ]
+      },
+      "dtype": {
+        "visible": "int64",
+        "struct_val": "int64",
+        "struct_test": "int64"
+      },
+      "sha256": "acfd8bdb89052646e751bc78a0050bb71d8242a88916f01214e0e4fd05d8fb68",
+      "bytes": 88503,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "held_out_support",
+      "path": "results/research/infra246/assets/graph/held_out_support.npz",
+      "use": "evaluation",
+      "schema": "csr",
+      "shape": [
+        24587,
+        24587
+      ],
+      "dtype": "int8",
+      "sha256": "fea02c56eaee7df9fae22628c6da363ebf8a89fe3c76c762f0b4e0fc5799792e",
+      "bytes": 318772,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "ego_full_1hop",
+      "path": "results/research/infra246/assets/ego/ego_full_1hop_visible.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "nodes": [
+          535051
+        ],
+        "edges": [
+          1716410,
+          2
+        ],
+        "hop": [
+          535051
+        ],
+        "traversal_depth": [
+          535051
+        ],
+        "role_out": [
+          535051
+        ],
+        "role_in": [
+          535051
+        ],
+        "root_local": [
+          24587
+        ],
+        "empty": [
+          24587
+        ],
+        "roots": [
+          24587
+        ],
+        "node_offsets": [
+          24588
+        ],
+        "edge_offsets": [
+          24588
+        ],
+        "cap": [],
+        "cap_includes_root": [],
+        "mode": []
+      },
+      "dtype": {
+        "nodes": "int64",
+        "edges": "int64",
+        "hop": "int8",
+        "traversal_depth": "int8",
+        "role_out": "bool",
+        "role_in": "bool",
+        "root_local": "int64",
+        "empty": "bool",
+        "roots": "int64",
+        "node_offsets": "int64",
+        "edge_offsets": "int64",
+        "cap": "object",
+        "cap_includes_root": "bool",
+        "mode": "<U5"
+      },
+      "sha256": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5",
+      "bytes": 5282707,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "ego_sampled",
+      "path": "results/research/infra246/assets/ego/ego_sampled_visible.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "nodes": [
+          789852
+        ],
+        "edges": [
+          1215575,
+          2
+        ],
+        "hop": [
+          789852
+        ],
+        "traversal_depth": [
+          789852
+        ],
+        "role_out": [
+          789852
+        ],
+        "role_in": [
+          789852
+        ],
+        "root_local": [
+          24587
+        ],
+        "empty": [
+          24587
+        ],
+        "roots": [
+          24587
+        ],
+        "node_offsets": [
+          24588
+        ],
+        "edge_offsets": [
+          24588
+        ],
+        "cap": [],
+        "cap_includes_root": [],
+        "mode": []
+      },
+      "dtype": {
+        "nodes": "int64",
+        "edges": "int64",
+        "hop": "int8",
+        "traversal_depth": "int8",
+        "role_out": "bool",
+        "role_in": "bool",
+        "root_local": "int64",
+        "empty": "bool",
+        "roots": "int64",
+        "node_offsets": "int64",
+        "edge_offsets": "int64",
+        "cap": "int64",
+        "cap_includes_root": "bool",
+        "mode": "<U7"
+      },
+      "sha256": "1386f987ae90be1310371352aeb6ad5d58a739690a4586065b4f175c05b47b1a",
+      "bytes": 4888050,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "motif_counts",
+      "path": "results/research/infra246/assets/motifs/motif_counts.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "counts": [
+          24587,
+          16
+        ],
+        "names": [
+          16
+        ],
+        "instances": [
+          24587
+        ]
+      },
+      "dtype": {
+        "counts": "int64",
+        "names": "<U30",
+        "instances": "int64"
+      },
+      "sha256": "79e1adee8461751c5b4cdfa78a78ab0fa22ac23d8ad296c4b881d1167dfca7c9",
+      "bytes": 254494,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "motif_instances3",
+      "path": "results/research/infra246/assets/motifs/motif_instances_visible.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "centers": [
+          59385
+        ],
+        "nodes": [
+          59385,
+          3
+        ],
+        "codes": [
+          59385
+        ],
+        "graphlets": [
+          59385
+        ],
+        "families": [
+          59385
+        ],
+        "family_names": [
+          16
+        ],
+        "orbits": [
+          59385
+        ],
+        "center_roles": [
+          59385,
+          2
+        ],
+        "edges": [
+          122304,
+          2
+        ],
+        "edge_offsets": [
+          59386
+        ],
+        "vertices": []
+      },
+      "dtype": {
+        "centers": "int64",
+        "nodes": "int64",
+        "codes": "int64",
+        "graphlets": "int64",
+        "families": "int64",
+        "family_names": "<U30",
+        "orbits": "int64",
+        "center_roles": "int64",
+        "edges": "int64",
+        "edge_offsets": "int64",
+        "vertices": "int64"
+      },
+      "sha256": "68855edef787ae292108f3a415381be6427f1f575acaf9126c9a933214fa5349",
+      "bytes": 653792,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "motif_instances4",
+      "path": "results/research/infra246/assets/motifs/motif_instances_4node_visible.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "centers": [
+          4549
+        ],
+        "nodes": [
+          4549,
+          4
+        ],
+        "codes": [
+          4549
+        ],
+        "graphlets": [
+          4549
+        ],
+        "families": [
+          4549
+        ],
+        "family_names": [
+          0
+        ],
+        "orbits": [
+          4549
+        ],
+        "center_roles": [
+          4549,
+          2
+        ],
+        "edges": [
+          14321,
+          2
+        ],
+        "edge_offsets": [
+          4550
+        ],
+        "vertices": []
+      },
+      "dtype": {
+        "centers": "int64",
+        "nodes": "int64",
+        "codes": "int64",
+        "graphlets": "int64",
+        "families": "int64",
+        "family_names": "float64",
+        "orbits": "int64",
+        "center_roles": "int64",
+        "edges": "int64",
+        "edge_offsets": "int64",
+        "vertices": "int64"
+      },
+      "sha256": "dc96eede3cc0fbe51b6117c597365ee4c3e44d4307881023c15945c6d77bc027",
+      "bytes": 72666,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "semantic",
+      "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+      "use": "training",
+      "schema": "npy",
+      "shape": [
+        24587,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+      "bytes": 75531392,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "items_source",
+      "path": "results/stage0_build_parquet/items.parquet",
+      "use": "training",
+      "schema": "parquet",
+      "shape": null,
+      "dtype": "json/text",
+      "sha256": "6408e3c0f98a65d817747477a22092c0848f7ed105dc9bf7b7327e9544a99af3",
+      "bytes": 10968789,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "train_source",
+      "path": "results/stage0_build_parquet/train.parquet",
+      "use": "evaluation",
+      "schema": "parquet",
+      "shape": null,
+      "dtype": "json/text",
+      "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+      "bytes": 11152937,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "tiger_sid",
+      "path": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+      "use": "description",
+      "schema": "json",
+      "shape": null,
+      "dtype": "json/text",
+      "sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+      "bytes": 1256863,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "probe",
+      "path": "results/research/infra246/assets/pairs/probe.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          62,
+          2
+        ],
+        "graph_hops": [
+          62
+        ],
+        "seed": [],
+        "alpha": []
+      },
+      "dtype": {
+        "pairs": "int64",
+        "graph_hops": "int64",
+        "seed": "int64",
+        "alpha": "float64"
+      },
+      "sha256": "f6bde7e27622af24d2a2e462a023d60fe0e2d9d0f3ce683cd7e6264115417286",
+      "bytes": 1169,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "relaxed_struct_test_degree_matched",
+      "path": "results/research/infra246/assets/pairs/relaxed_struct_test_degree_matched.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          60,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          60
+        ],
+        "hop_full_visible": [
+          60
+        ],
+        "reachable_undirected": [
+          60
+        ],
+        "hop_directed_src_dst": [
+          60
+        ],
+        "reachable_directed": [
+          60
+        ],
+        "hop_subgraph": [
+          60
+        ],
+        "reachable_in_subgraph": [
+          60
+        ],
+        "two_hop_count": [
+          60
+        ],
+        "jaccard_out": [
+          60
+        ],
+        "jaccard_in": [
+          60
+        ],
+        "jaccard_out_missing": [
+          60
+        ],
+        "jaccard_in_missing": [
+          60
+        ],
+        "bhattacharyya_out": [
+          60
+        ],
+        "bhattacharyya_out_missing": [
+          60
+        ],
+        "witness": [
+          60,
+          2
+        ],
+        "label_kind": [
+          60
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U14",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "47f34ce9f08d1c40aeef79f952ca6bb29c3c57665f4ebe59c87553e1a7a2fb2e",
+      "bytes": 5795,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "relaxed_struct_test_direct",
+      "path": "results/research/infra246/assets/pairs/relaxed_struct_test_direct.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          271,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          271
+        ],
+        "hop_full_visible": [
+          271
+        ],
+        "reachable_undirected": [
+          271
+        ],
+        "hop_directed_src_dst": [
+          271
+        ],
+        "reachable_directed": [
+          271
+        ],
+        "hop_subgraph": [
+          271
+        ],
+        "reachable_in_subgraph": [
+          271
+        ],
+        "two_hop_count": [
+          271
+        ],
+        "jaccard_out": [
+          271
+        ],
+        "jaccard_in": [
+          271
+        ],
+        "jaccard_out_missing": [
+          271
+        ],
+        "jaccard_in_missing": [
+          271
+        ],
+        "bhattacharyya_out": [
+          271
+        ],
+        "bhattacharyya_out_missing": [
+          271
+        ],
+        "witness": [
+          271,
+          2
+        ],
+        "label_kind": [
+          271
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U6",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "a216700f021d23ef8a007dd5afc526b031e1e179e784779847f1d50afdaeaf0a",
+      "bytes": 12630,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "relaxed_struct_test_shared_in",
+      "path": "results/research/infra246/assets/pairs/relaxed_struct_test_shared_in.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          123,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          123
+        ],
+        "hop_full_visible": [
+          123
+        ],
+        "reachable_undirected": [
+          123
+        ],
+        "hop_directed_src_dst": [
+          123
+        ],
+        "reachable_directed": [
+          123
+        ],
+        "hop_subgraph": [
+          123
+        ],
+        "reachable_in_subgraph": [
+          123
+        ],
+        "two_hop_count": [
+          123
+        ],
+        "jaccard_out": [
+          123
+        ],
+        "jaccard_in": [
+          123
+        ],
+        "jaccard_out_missing": [
+          123
+        ],
+        "jaccard_in_missing": [
+          123
+        ],
+        "bhattacharyya_out": [
+          123
+        ],
+        "bhattacharyya_out_missing": [
+          123
+        ],
+        "witness": [
+          123,
+          2
+        ],
+        "label_kind": [
+          123
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U9",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "1e1d63becb8d4542825351029cf57115edf4188612cfb1ae6b3dc5df19d55a68",
+      "bytes": 7740,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "relaxed_struct_test_shared_out",
+      "path": "results/research/infra246/assets/pairs/relaxed_struct_test_shared_out.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          123,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          123
+        ],
+        "hop_full_visible": [
+          123
+        ],
+        "reachable_undirected": [
+          123
+        ],
+        "hop_directed_src_dst": [
+          123
+        ],
+        "reachable_directed": [
+          123
+        ],
+        "hop_subgraph": [
+          123
+        ],
+        "reachable_in_subgraph": [
+          123
+        ],
+        "two_hop_count": [
+          123
+        ],
+        "jaccard_out": [
+          123
+        ],
+        "jaccard_in": [
+          123
+        ],
+        "jaccard_out_missing": [
+          123
+        ],
+        "jaccard_in_missing": [
+          123
+        ],
+        "bhattacharyya_out": [
+          123
+        ],
+        "bhattacharyya_out_missing": [
+          123
+        ],
+        "witness": [
+          123,
+          2
+        ],
+        "label_kind": [
+          123
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U10",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "3014c44743e51ace596878c75dc3ec66dba11fc0a38354e4567eef63028bd262",
+      "bytes": 7634,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "relaxed_struct_test_two_hop",
+      "path": "results/research/infra246/assets/pairs/relaxed_struct_test_two_hop.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          93,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          93
+        ],
+        "hop_full_visible": [
+          93
+        ],
+        "reachable_undirected": [
+          93
+        ],
+        "hop_directed_src_dst": [
+          93
+        ],
+        "reachable_directed": [
+          93
+        ],
+        "hop_subgraph": [
+          93
+        ],
+        "reachable_in_subgraph": [
+          93
+        ],
+        "two_hop_count": [
+          93
+        ],
+        "jaccard_out": [
+          93
+        ],
+        "jaccard_in": [
+          93
+        ],
+        "jaccard_out_missing": [
+          93
+        ],
+        "jaccard_in_missing": [
+          93
+        ],
+        "bhattacharyya_out": [
+          93
+        ],
+        "bhattacharyya_out_missing": [
+          93
+        ],
+        "witness": [
+          93,
+          2
+        ],
+        "label_kind": [
+          93
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U7",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "f3be301a575ccc7a295aac2a6e5824014fdcefbde1763ea831bde0af308baa08",
+      "bytes": 6767,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "relaxed_struct_val_degree_matched",
+      "path": "results/research/infra246/assets/pairs/relaxed_struct_val_degree_matched.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          62,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          62
+        ],
+        "hop_full_visible": [
+          62
+        ],
+        "reachable_undirected": [
+          62
+        ],
+        "hop_directed_src_dst": [
+          62
+        ],
+        "reachable_directed": [
+          62
+        ],
+        "hop_subgraph": [
+          62
+        ],
+        "reachable_in_subgraph": [
+          62
+        ],
+        "two_hop_count": [
+          62
+        ],
+        "jaccard_out": [
+          62
+        ],
+        "jaccard_in": [
+          62
+        ],
+        "jaccard_out_missing": [
+          62
+        ],
+        "jaccard_in_missing": [
+          62
+        ],
+        "bhattacharyya_out": [
+          62
+        ],
+        "bhattacharyya_out_missing": [
+          62
+        ],
+        "witness": [
+          62,
+          2
+        ],
+        "label_kind": [
+          62
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U14",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "51ffe7cad12f64d545913413bbe560259bee0b09ab1946e91bdeb0c5b46a1a49",
+      "bytes": 5820,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "relaxed_struct_val_direct",
+      "path": "results/research/infra246/assets/pairs/relaxed_struct_val_direct.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          274,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          274
+        ],
+        "hop_full_visible": [
+          274
+        ],
+        "reachable_undirected": [
+          274
+        ],
+        "hop_directed_src_dst": [
+          274
+        ],
+        "reachable_directed": [
+          274
+        ],
+        "hop_subgraph": [
+          274
+        ],
+        "reachable_in_subgraph": [
+          274
+        ],
+        "two_hop_count": [
+          274
+        ],
+        "jaccard_out": [
+          274
+        ],
+        "jaccard_in": [
+          274
+        ],
+        "jaccard_out_missing": [
+          274
+        ],
+        "jaccard_in_missing": [
+          274
+        ],
+        "bhattacharyya_out": [
+          274
+        ],
+        "bhattacharyya_out_missing": [
+          274
+        ],
+        "witness": [
+          274,
+          2
+        ],
+        "label_kind": [
+          274
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U6",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "64ed4a57f3ef11cdfe6da94e63395bc281b4c51ca36448704f086ef480499d26",
+      "bytes": 12862,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "relaxed_struct_val_shared_in",
+      "path": "results/research/infra246/assets/pairs/relaxed_struct_val_shared_in.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          119,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          119
+        ],
+        "hop_full_visible": [
+          119
+        ],
+        "reachable_undirected": [
+          119
+        ],
+        "hop_directed_src_dst": [
+          119
+        ],
+        "reachable_directed": [
+          119
+        ],
+        "hop_subgraph": [
+          119
+        ],
+        "reachable_in_subgraph": [
+          119
+        ],
+        "two_hop_count": [
+          119
+        ],
+        "jaccard_out": [
+          119
+        ],
+        "jaccard_in": [
+          119
+        ],
+        "jaccard_out_missing": [
+          119
+        ],
+        "jaccard_in_missing": [
+          119
+        ],
+        "bhattacharyya_out": [
+          119
+        ],
+        "bhattacharyya_out_missing": [
+          119
+        ],
+        "witness": [
+          119,
+          2
+        ],
+        "label_kind": [
+          119
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U9",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "52934f9ef5e7dca28909df08828b90f1cf09e489cc48324fc8c21904bfa68fd7",
+      "bytes": 7558,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "relaxed_struct_val_shared_out",
+      "path": "results/research/infra246/assets/pairs/relaxed_struct_val_shared_out.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          124,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          124
+        ],
+        "hop_full_visible": [
+          124
+        ],
+        "reachable_undirected": [
+          124
+        ],
+        "hop_directed_src_dst": [
+          124
+        ],
+        "reachable_directed": [
+          124
+        ],
+        "hop_subgraph": [
+          124
+        ],
+        "reachable_in_subgraph": [
+          124
+        ],
+        "two_hop_count": [
+          124
+        ],
+        "jaccard_out": [
+          124
+        ],
+        "jaccard_in": [
+          124
+        ],
+        "jaccard_out_missing": [
+          124
+        ],
+        "jaccard_in_missing": [
+          124
+        ],
+        "bhattacharyya_out": [
+          124
+        ],
+        "bhattacharyya_out_missing": [
+          124
+        ],
+        "witness": [
+          124,
+          2
+        ],
+        "label_kind": [
+          124
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U10",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "1a14bb00d1440358dff2f2072ed2c191b64c76671639b260e4d194b70f98b272",
+      "bytes": 7917,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "relaxed_struct_val_two_hop",
+      "path": "results/research/infra246/assets/pairs/relaxed_struct_val_two_hop.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          74,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          74
+        ],
+        "hop_full_visible": [
+          74
+        ],
+        "reachable_undirected": [
+          74
+        ],
+        "hop_directed_src_dst": [
+          74
+        ],
+        "reachable_directed": [
+          74
+        ],
+        "hop_subgraph": [
+          74
+        ],
+        "reachable_in_subgraph": [
+          74
+        ],
+        "two_hop_count": [
+          74
+        ],
+        "jaccard_out": [
+          74
+        ],
+        "jaccard_in": [
+          74
+        ],
+        "jaccard_out_missing": [
+          74
+        ],
+        "jaccard_in_missing": [
+          74
+        ],
+        "bhattacharyya_out": [
+          74
+        ],
+        "bhattacharyya_out_missing": [
+          74
+        ],
+        "witness": [
+          74,
+          2
+        ],
+        "label_kind": [
+          74
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U7",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "4736a3ecdc1a85c7326cf9cd117be91f14a254567bf70c0e367a575c541e5e42",
+      "bytes": 6246,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "strict_struct_test_degree_matched",
+      "path": "results/research/infra246/assets/pairs/strict_struct_test_degree_matched.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          2940,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          2940
+        ],
+        "hop_full_visible": [
+          2940
+        ],
+        "reachable_undirected": [
+          2940
+        ],
+        "hop_directed_src_dst": [
+          2940
+        ],
+        "reachable_directed": [
+          2940
+        ],
+        "hop_subgraph": [
+          2940
+        ],
+        "reachable_in_subgraph": [
+          2940
+        ],
+        "two_hop_count": [
+          2940
+        ],
+        "jaccard_out": [
+          2940
+        ],
+        "jaccard_in": [
+          2940
+        ],
+        "jaccard_out_missing": [
+          2940
+        ],
+        "jaccard_in_missing": [
+          2940
+        ],
+        "bhattacharyya_out": [
+          2940
+        ],
+        "bhattacharyya_out_missing": [
+          2940
+        ],
+        "witness": [
+          2940,
+          2
+        ],
+        "label_kind": [
+          2940
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U14",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "7742e34d49f18c287b33cfbc67dc92ba876a69724d730d90492ec3b87f6ae8ca",
+      "bytes": 39428,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "strict_struct_test_direct",
+      "path": "results/research/infra246/assets/pairs/strict_struct_test_direct.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          2729,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          2729
+        ],
+        "hop_full_visible": [
+          2729
+        ],
+        "reachable_undirected": [
+          2729
+        ],
+        "hop_directed_src_dst": [
+          2729
+        ],
+        "reachable_directed": [
+          2729
+        ],
+        "hop_subgraph": [
+          2729
+        ],
+        "reachable_in_subgraph": [
+          2729
+        ],
+        "two_hop_count": [
+          2729
+        ],
+        "jaccard_out": [
+          2729
+        ],
+        "jaccard_in": [
+          2729
+        ],
+        "jaccard_out_missing": [
+          2729
+        ],
+        "jaccard_in_missing": [
+          2729
+        ],
+        "bhattacharyya_out": [
+          2729
+        ],
+        "bhattacharyya_out_missing": [
+          2729
+        ],
+        "witness": [
+          2729,
+          2
+        ],
+        "label_kind": [
+          2729
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U6",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "80fe725722ff618cb352761f9280d3d89e2b80cef117c9ae65f8196c4fcecbbd",
+      "bytes": 52955,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "strict_struct_test_shared_in",
+      "path": "results/research/infra246/assets/pairs/strict_struct_test_shared_in.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          2877,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          2877
+        ],
+        "hop_full_visible": [
+          2877
+        ],
+        "reachable_undirected": [
+          2877
+        ],
+        "hop_directed_src_dst": [
+          2877
+        ],
+        "reachable_directed": [
+          2877
+        ],
+        "hop_subgraph": [
+          2877
+        ],
+        "reachable_in_subgraph": [
+          2877
+        ],
+        "two_hop_count": [
+          2877
+        ],
+        "jaccard_out": [
+          2877
+        ],
+        "jaccard_in": [
+          2877
+        ],
+        "jaccard_out_missing": [
+          2877
+        ],
+        "jaccard_in_missing": [
+          2877
+        ],
+        "bhattacharyya_out": [
+          2877
+        ],
+        "bhattacharyya_out_missing": [
+          2877
+        ],
+        "witness": [
+          2877,
+          2
+        ],
+        "label_kind": [
+          2877
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U9",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "ccb5e503da7eb255d9d73b391669657a0990923219658ac04ea1474defd625ab",
+      "bytes": 38035,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "strict_struct_test_shared_out",
+      "path": "results/research/infra246/assets/pairs/strict_struct_test_shared_out.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          2877,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          2877
+        ],
+        "hop_full_visible": [
+          2877
+        ],
+        "reachable_undirected": [
+          2877
+        ],
+        "hop_directed_src_dst": [
+          2877
+        ],
+        "reachable_directed": [
+          2877
+        ],
+        "hop_subgraph": [
+          2877
+        ],
+        "reachable_in_subgraph": [
+          2877
+        ],
+        "two_hop_count": [
+          2877
+        ],
+        "jaccard_out": [
+          2877
+        ],
+        "jaccard_in": [
+          2877
+        ],
+        "jaccard_out_missing": [
+          2877
+        ],
+        "jaccard_in_missing": [
+          2877
+        ],
+        "bhattacharyya_out": [
+          2877
+        ],
+        "bhattacharyya_out_missing": [
+          2877
+        ],
+        "witness": [
+          2877,
+          2
+        ],
+        "label_kind": [
+          2877
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U10",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "6ea0bda9b4feedd9c7403ee9336505bfb59d168c085fe3e50aa77504b7620b1e",
+      "bytes": 37068,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "strict_struct_test_two_hop",
+      "path": "results/research/infra246/assets/pairs/strict_struct_test_two_hop.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          2907,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          2907
+        ],
+        "hop_full_visible": [
+          2907
+        ],
+        "reachable_undirected": [
+          2907
+        ],
+        "hop_directed_src_dst": [
+          2907
+        ],
+        "reachable_directed": [
+          2907
+        ],
+        "hop_subgraph": [
+          2907
+        ],
+        "reachable_in_subgraph": [
+          2907
+        ],
+        "two_hop_count": [
+          2907
+        ],
+        "jaccard_out": [
+          2907
+        ],
+        "jaccard_in": [
+          2907
+        ],
+        "jaccard_out_missing": [
+          2907
+        ],
+        "jaccard_in_missing": [
+          2907
+        ],
+        "bhattacharyya_out": [
+          2907
+        ],
+        "bhattacharyya_out_missing": [
+          2907
+        ],
+        "witness": [
+          2907,
+          2
+        ],
+        "label_kind": [
+          2907
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U7",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "fedd4ffe3b5e541d36e8f590f59fbfb3ffeb53e1bd23b6ff24c650808fd84d4c",
+      "bytes": 32952,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "strict_struct_val_degree_matched",
+      "path": "results/research/infra246/assets/pairs/strict_struct_val_degree_matched.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          2938,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          2938
+        ],
+        "hop_full_visible": [
+          2938
+        ],
+        "reachable_undirected": [
+          2938
+        ],
+        "hop_directed_src_dst": [
+          2938
+        ],
+        "reachable_directed": [
+          2938
+        ],
+        "hop_subgraph": [
+          2938
+        ],
+        "reachable_in_subgraph": [
+          2938
+        ],
+        "two_hop_count": [
+          2938
+        ],
+        "jaccard_out": [
+          2938
+        ],
+        "jaccard_in": [
+          2938
+        ],
+        "jaccard_out_missing": [
+          2938
+        ],
+        "jaccard_in_missing": [
+          2938
+        ],
+        "bhattacharyya_out": [
+          2938
+        ],
+        "bhattacharyya_out_missing": [
+          2938
+        ],
+        "witness": [
+          2938,
+          2
+        ],
+        "label_kind": [
+          2938
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U14",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "542719e36e441fc71624413c25dc0335c2ca4eea38e3cdb349c4c678ddb4991c",
+      "bytes": 39250,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "strict_struct_val_direct",
+      "path": "results/research/infra246/assets/pairs/strict_struct_val_direct.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          2726,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          2726
+        ],
+        "hop_full_visible": [
+          2726
+        ],
+        "reachable_undirected": [
+          2726
+        ],
+        "hop_directed_src_dst": [
+          2726
+        ],
+        "reachable_directed": [
+          2726
+        ],
+        "hop_subgraph": [
+          2726
+        ],
+        "reachable_in_subgraph": [
+          2726
+        ],
+        "two_hop_count": [
+          2726
+        ],
+        "jaccard_out": [
+          2726
+        ],
+        "jaccard_in": [
+          2726
+        ],
+        "jaccard_out_missing": [
+          2726
+        ],
+        "jaccard_in_missing": [
+          2726
+        ],
+        "bhattacharyya_out": [
+          2726
+        ],
+        "bhattacharyya_out_missing": [
+          2726
+        ],
+        "witness": [
+          2726,
+          2
+        ],
+        "label_kind": [
+          2726
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U6",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "bc65baff19071f1497f295261ccf8d92c7450d30d0cac41d86e6cd1e97f0d530",
+      "bytes": 52847,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "strict_struct_val_shared_in",
+      "path": "results/research/infra246/assets/pairs/strict_struct_val_shared_in.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          2881,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          2881
+        ],
+        "hop_full_visible": [
+          2881
+        ],
+        "reachable_undirected": [
+          2881
+        ],
+        "hop_directed_src_dst": [
+          2881
+        ],
+        "reachable_directed": [
+          2881
+        ],
+        "hop_subgraph": [
+          2881
+        ],
+        "reachable_in_subgraph": [
+          2881
+        ],
+        "two_hop_count": [
+          2881
+        ],
+        "jaccard_out": [
+          2881
+        ],
+        "jaccard_in": [
+          2881
+        ],
+        "jaccard_out_missing": [
+          2881
+        ],
+        "jaccard_in_missing": [
+          2881
+        ],
+        "bhattacharyya_out": [
+          2881
+        ],
+        "bhattacharyya_out_missing": [
+          2881
+        ],
+        "witness": [
+          2881,
+          2
+        ],
+        "label_kind": [
+          2881
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U9",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "66b2d85abf63a5674b2e8fd32fd18ea29072204bdc6793d167cecbaf6e8e8a87",
+      "bytes": 38201,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "strict_struct_val_shared_out",
+      "path": "results/research/infra246/assets/pairs/strict_struct_val_shared_out.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          2876,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          2876
+        ],
+        "hop_full_visible": [
+          2876
+        ],
+        "reachable_undirected": [
+          2876
+        ],
+        "hop_directed_src_dst": [
+          2876
+        ],
+        "reachable_directed": [
+          2876
+        ],
+        "hop_subgraph": [
+          2876
+        ],
+        "reachable_in_subgraph": [
+          2876
+        ],
+        "two_hop_count": [
+          2876
+        ],
+        "jaccard_out": [
+          2876
+        ],
+        "jaccard_in": [
+          2876
+        ],
+        "jaccard_out_missing": [
+          2876
+        ],
+        "jaccard_in_missing": [
+          2876
+        ],
+        "bhattacharyya_out": [
+          2876
+        ],
+        "bhattacharyya_out_missing": [
+          2876
+        ],
+        "witness": [
+          2876,
+          2
+        ],
+        "label_kind": [
+          2876
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U10",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "78b5fe7114b9d9fd3465c4b4656b9cad195f10c2560ad25485b3f11f72e6af96",
+      "bytes": 38108,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "strict_struct_val_two_hop",
+      "path": "results/research/infra246/assets/pairs/strict_struct_val_two_hop.npz",
+      "use": "evaluation",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          2926,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          2926
+        ],
+        "hop_full_visible": [
+          2926
+        ],
+        "reachable_undirected": [
+          2926
+        ],
+        "hop_directed_src_dst": [
+          2926
+        ],
+        "reachable_directed": [
+          2926
+        ],
+        "hop_subgraph": [
+          2926
+        ],
+        "reachable_in_subgraph": [
+          2926
+        ],
+        "two_hop_count": [
+          2926
+        ],
+        "jaccard_out": [
+          2926
+        ],
+        "jaccard_in": [
+          2926
+        ],
+        "jaccard_out_missing": [
+          2926
+        ],
+        "jaccard_in_missing": [
+          2926
+        ],
+        "bhattacharyya_out": [
+          2926
+        ],
+        "bhattacharyya_out_missing": [
+          2926
+        ],
+        "witness": [
+          2926,
+          2
+        ],
+        "label_kind": [
+          2926
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U7",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "d282477c65d03572ae8605d3e7a9303ea78cae9b12e47a16874bab05c640e64c",
+      "bytes": 32553,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "train_degree_matched",
+      "path": "results/research/infra246/assets/pairs/train_degree_matched.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          12000,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          12000
+        ],
+        "hop_full_visible": [
+          12000
+        ],
+        "reachable_undirected": [
+          12000
+        ],
+        "hop_directed_src_dst": [
+          12000
+        ],
+        "reachable_directed": [
+          12000
+        ],
+        "hop_subgraph": [
+          12000
+        ],
+        "reachable_in_subgraph": [
+          12000
+        ],
+        "two_hop_count": [
+          12000
+        ],
+        "jaccard_out": [
+          12000
+        ],
+        "jaccard_in": [
+          12000
+        ],
+        "jaccard_out_missing": [
+          12000
+        ],
+        "jaccard_in_missing": [
+          12000
+        ],
+        "bhattacharyya_out": [
+          12000
+        ],
+        "bhattacharyya_out_missing": [
+          12000
+        ],
+        "witness": [
+          12000,
+          2
+        ],
+        "label_kind": [
+          12000
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U14",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "c2c85c1052e65aa61964ab0dec6ce84772862489f1cced28025a139c215d69dd",
+      "bytes": 94783,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "train_direct",
+      "path": "results/research/infra246/assets/pairs/train_direct.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          12000,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          12000
+        ],
+        "hop_full_visible": [
+          12000
+        ],
+        "reachable_undirected": [
+          12000
+        ],
+        "hop_directed_src_dst": [
+          12000
+        ],
+        "reachable_directed": [
+          12000
+        ],
+        "hop_subgraph": [
+          12000
+        ],
+        "reachable_in_subgraph": [
+          12000
+        ],
+        "two_hop_count": [
+          12000
+        ],
+        "jaccard_out": [
+          12000
+        ],
+        "jaccard_in": [
+          12000
+        ],
+        "jaccard_out_missing": [
+          12000
+        ],
+        "jaccard_in_missing": [
+          12000
+        ],
+        "bhattacharyya_out": [
+          12000
+        ],
+        "bhattacharyya_out_missing": [
+          12000
+        ],
+        "witness": [
+          12000,
+          2
+        ],
+        "label_kind": [
+          12000
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U6",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "22d0cf789730e0f26397fed14a7cdc3576ed0544c7bf05cd56e2e6a6c97a997c",
+      "bytes": 205962,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "train_shared_in",
+      "path": "results/research/infra246/assets/pairs/train_shared_in.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          12000,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          12000
+        ],
+        "hop_full_visible": [
+          12000
+        ],
+        "reachable_undirected": [
+          12000
+        ],
+        "hop_directed_src_dst": [
+          12000
+        ],
+        "reachable_directed": [
+          12000
+        ],
+        "hop_subgraph": [
+          12000
+        ],
+        "reachable_in_subgraph": [
+          12000
+        ],
+        "two_hop_count": [
+          12000
+        ],
+        "jaccard_out": [
+          12000
+        ],
+        "jaccard_in": [
+          12000
+        ],
+        "jaccard_out_missing": [
+          12000
+        ],
+        "jaccard_in_missing": [
+          12000
+        ],
+        "bhattacharyya_out": [
+          12000
+        ],
+        "bhattacharyya_out_missing": [
+          12000
+        ],
+        "witness": [
+          12000,
+          2
+        ],
+        "label_kind": [
+          12000
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U9",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "a6510127dca2ba3dd013f9b25709f43d98e8ecaa8897c60d9aacedb93902bc91",
+      "bytes": 135491,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "train_shared_out",
+      "path": "results/research/infra246/assets/pairs/train_shared_out.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          12000,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          12000
+        ],
+        "hop_full_visible": [
+          12000
+        ],
+        "reachable_undirected": [
+          12000
+        ],
+        "hop_directed_src_dst": [
+          12000
+        ],
+        "reachable_directed": [
+          12000
+        ],
+        "hop_subgraph": [
+          12000
+        ],
+        "reachable_in_subgraph": [
+          12000
+        ],
+        "two_hop_count": [
+          12000
+        ],
+        "jaccard_out": [
+          12000
+        ],
+        "jaccard_in": [
+          12000
+        ],
+        "jaccard_out_missing": [
+          12000
+        ],
+        "jaccard_in_missing": [
+          12000
+        ],
+        "bhattacharyya_out": [
+          12000
+        ],
+        "bhattacharyya_out_missing": [
+          12000
+        ],
+        "witness": [
+          12000,
+          2
+        ],
+        "label_kind": [
+          12000
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U10",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "9d8253cc8a045e3c4341b0d9a12ca5640d4557df2d13c9877fe18b40f34294e4",
+      "bytes": 158588,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    },
+    {
+      "name": "train_two_hop",
+      "path": "results/research/infra246/assets/pairs/train_two_hop.npz",
+      "use": "training",
+      "schema": "npz",
+      "shape": {
+        "pairs": [
+          12000,
+          2
+        ],
+        "group": [],
+        "direct_weight_visible": [
+          12000
+        ],
+        "hop_full_visible": [
+          12000
+        ],
+        "reachable_undirected": [
+          12000
+        ],
+        "hop_directed_src_dst": [
+          12000
+        ],
+        "reachable_directed": [
+          12000
+        ],
+        "hop_subgraph": [
+          12000
+        ],
+        "reachable_in_subgraph": [
+          12000
+        ],
+        "two_hop_count": [
+          12000
+        ],
+        "jaccard_out": [
+          12000
+        ],
+        "jaccard_in": [
+          12000
+        ],
+        "jaccard_out_missing": [
+          12000
+        ],
+        "jaccard_in_missing": [
+          12000
+        ],
+        "bhattacharyya_out": [
+          12000
+        ],
+        "bhattacharyya_out_missing": [
+          12000
+        ],
+        "witness": [
+          12000,
+          2
+        ],
+        "label_kind": [
+          12000
+        ],
+        "kind_names": [
+          6
+        ]
+      },
+      "dtype": {
+        "pairs": "int64",
+        "group": "<U7",
+        "direct_weight_visible": "int64",
+        "hop_full_visible": "float64",
+        "reachable_undirected": "int8",
+        "hop_directed_src_dst": "float64",
+        "reachable_directed": "int8",
+        "hop_subgraph": "float64",
+        "reachable_in_subgraph": "int8",
+        "two_hop_count": "int64",
+        "jaccard_out": "float64",
+        "jaccard_in": "float64",
+        "jaccard_out_missing": "int8",
+        "jaccard_in_missing": "int8",
+        "bhattacharyya_out": "float64",
+        "bhattacharyya_out_missing": "int8",
+        "witness": "int64",
+        "label_kind": "int64",
+        "kind_names": "<U18"
+      },
+      "sha256": "3edc9796ae2db4db1691468dc624f77b796e47cee91775421388af27ffdc4f23",
+      "bytes": 86237,
+      "dependencies": {},
+      "coverage": null,
+      "generation_command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.prepare_v3"
+    }
+  ],
+  "storage_bytes": 103157194,
+  "reused_bytes": 112935303
+}

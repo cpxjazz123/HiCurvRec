@@ -1,0 +1,234 @@
+{
+  "sid_path": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+  "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+  "structure": {
+    "total": 24587,
+    "distinct_prefix3": 20425,
+    "distinct_full": 24587,
+    "collision_prefix3": 0.16927644690283483,
+    "duplicate_prefix3": 0.26530280229389513,
+    "collision_full": 0.0,
+    "duplicate_full": 0.0,
+    "policy": "prefix-3 and full-length (including the disambiguation token) are reported separately; they answer different questions"
+  },
+  "codebooks": [
+    {
+      "level": 0,
+      "used": 249,
+      "entropy": 6.9589904940496545,
+      "entropy_unit": "bits",
+      "max_share": 0.029202424045227153
+    },
+    {
+      "level": 1,
+      "used": 256,
+      "entropy": 6.553546559233901,
+      "entropy_unit": "bits",
+      "max_share": 0.03855696099564811
+    },
+    {
+      "level": 2,
+      "used": 256,
+      "entropy": 7.944733248437092,
+      "entropy_unit": "bits",
+      "max_share": 0.006873551063570179
+    }
+  ],
+  "prefix_by_structure_bank": {
+    "probe": {
+      "1": 0.11290322580645161,
+      "2": 0.03225806451612903,
+      "3": 0.0
+    },
+    "relaxed_struct_test_degree_matched": {
+      "1": 0.08333333333333333,
+      "2": 0.0,
+      "3": 0.0
+    },
+    "relaxed_struct_test_direct": {
+      "1": 0.22509225092250923,
+      "2": 0.04059040590405904,
+      "3": 0.01845018450184502
+    },
+    "relaxed_struct_test_shared_in": {
+      "1": 0.15447154471544716,
+      "2": 0.0,
+      "3": 0.0
+    },
+    "relaxed_struct_test_shared_out": {
+      "1": 0.08943089430894309,
+      "2": 0.0,
+      "3": 0.0
+    },
+    "relaxed_struct_test_two_hop": {
+      "1": 0.07526881720430108,
+      "2": 0.0,
+      "3": 0.0
+    },
+    "relaxed_struct_val_degree_matched": {
+      "1": 0.06451612903225806,
+      "2": 0.0,
+      "3": 0.0
+    },
+    "relaxed_struct_val_direct": {
+      "1": 0.17883211678832117,
+      "2": 0.0364963503649635,
+      "3": 0.010948905109489052
+    },
+    "relaxed_struct_val_shared_in": {
+      "1": 0.13445378151260504,
+      "2": 0.008403361344537815,
+      "3": 0.0
+    },
+    "relaxed_struct_val_shared_out": {
+      "1": 0.056451612903225805,
+      "2": 0.0,
+      "3": 0.0
+    },
+    "relaxed_struct_val_two_hop": {
+      "1": 0.06756756756756757,
+      "2": 0.0,
+      "3": 0.0
+    },
+    "strict_struct_test_degree_matched": {
+      "1": 0.013605442176870748,
+      "2": 0.0013605442176870747,
+      "3": 0.0003401360544217687
+    },
+    "strict_struct_test_direct": {
+      "1": 0.07768413338219128,
+      "2": 0.011359472334188348,
+      "3": 0.00036643459142543056
+    },
+    "strict_struct_test_shared_in": {
+      "1": 0.04449078901633646,
+      "2": 0.004866180048661801,
+      "3": 0.0003475842891901286
+    },
+    "strict_struct_test_shared_out": {
+      "1": 0.04031977754605492,
+      "2": 0.0045185957594716716,
+      "3": 0.0006951685783802572
+    },
+    "strict_struct_test_two_hop": {
+      "1": 0.02476780185758514,
+      "2": 0.0006879944960440316,
+      "3": 0.0
+    },
+    "strict_struct_val_degree_matched": {
+      "1": 0.01531654186521443,
+      "2": 0.0010211027910142954,
+      "3": 0.0
+    },
+    "strict_struct_val_direct": {
+      "1": 0.07776962582538519,
+      "2": 0.009170946441672781,
+      "3": 0.0022010271460014674
+    },
+    "strict_struct_val_shared_in": {
+      "1": 0.040263797292606734,
+      "2": 0.0017355085039916696,
+      "3": 0.0
+    },
+    "strict_struct_val_shared_out": {
+      "1": 0.03477051460361613,
+      "2": 0.0027816411682892906,
+      "3": 0.0006954102920723226
+    },
+    "strict_struct_val_two_hop": {
+      "1": 0.019138755980861243,
+      "2": 0.0003417634996582365,
+      "3": 0.0
+    },
+    "train_degree_matched": {
+      "1": 0.013583333333333333,
+      "2": 0.00075,
+      "3": 0.0
+    },
+    "train_direct": {
+      "1": 0.08775,
+      "2": 0.009166666666666667,
+      "3": 0.00175
+    },
+    "train_shared_in": {
+      "1": 0.0435,
+      "2": 0.00275,
+      "3": 0.0004166666666666667
+    },
+    "train_shared_out": {
+      "1": 0.040916666666666664,
+      "2": 0.0026666666666666666,
+      "3": 0.0004166666666666667
+    },
+    "train_two_hop": {
+      "1": 0.013916666666666667,
+      "2": 0.00025,
+      "3": 0.0
+    }
+  },
+  "hash_proven_stage3_bindings": [],
+  "historical_path_evidence": {
+    "references": [
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-01-2026_10-15-01/HG_Rec.log",
+        "line": "2026-11-01 10:15:01,961 - INFO - Configuration: {'batch_size': 4096, 'infer_size': 512, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'fas"
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-01-2026_10-15-01/training_metrics.jsonl",
+        "line": "{\"event\": \"train_start\", \"timestamp\": 1793488504.9694989, \"wall_time_s\": 0.003, \"num_epochs\": 150, \"no_eval\": true, \"batch_size\": 4096, \"infer_size\": 512, \"global_train_batch\": 4096, \"launch_mode\": \"s"
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-12-2026_21-04-04/HG_Rec.log",
+        "line": "2026-11-12 21:04:04,845 - INFO - Configuration: {'batch_size': 4096, 'infer_size': 1024, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'fa"
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-12-2026_21-04-04/training_metrics.jsonl",
+        "line": "{\"event\": \"train_start\", \"timestamp\": 1794477851.0270538, \"wall_time_s\": 0.009, \"num_epochs\": 150, \"no_eval\": true, \"batch_size\": 4096, \"infer_size\": 1024, \"global_train_batch\": 16384, \"launch_mode\": "
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_10-18-36/HG_Rec.log",
+        "line": "2026-11-23 10:18:36,972 - INFO - Configuration: {'batch_size': 4096, 'infer_size': 1024, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'fa"
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_10-18-36/training_metrics.jsonl",
+        "line": "{\"event\": \"train_start\", \"timestamp\": 1795389520.8893466, \"wall_time_s\": 0.023, \"num_epochs\": 150, \"no_eval\": true, \"batch_size\": 4096, \"infer_size\": 1024, \"global_train_batch\": 16384, \"launch_mode\": "
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_10-57-48/HG_Rec.log",
+        "line": "2026-11-23 10:57:48,990 - INFO - Configuration: {'batch_size': 4096, 'infer_size': 1024, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'fa"
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_10-57-48/training_metrics.jsonl",
+        "line": "{\"event\": \"train_start\", \"timestamp\": 1795391871.8938441, \"wall_time_s\": 0.019, \"num_epochs\": 150, \"no_eval\": true, \"batch_size\": 4096, \"infer_size\": 1024, \"global_train_batch\": 16384, \"launch_mode\": "
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_11-37-36/HG_Rec.log",
+        "line": "2026-11-23 11:37:36,200 - INFO - Configuration: {'batch_size': 4096, 'infer_size': 1024, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'fa"
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_11-37-36/training_metrics.jsonl",
+        "line": "{\"event\": \"train_start\", \"timestamp\": 1795394258.7701716, \"wall_time_s\": 0.002, \"num_epochs\": 150, \"no_eval\": true, \"batch_size\": 4096, \"infer_size\": 1024, \"global_train_batch\": 16384, \"launch_mode\": "
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Oct-26-2026_06-26-20/HG_Rec.log",
+        "line": "2026-10-26 06:26:20,846 - INFO - Configuration: {'batch_size': 4096, 'infer_size': 1024, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'fa"
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Oct-26-2026_06-26-20/training_metrics.jsonl",
+        "line": "{\"event\": \"train_start\", \"timestamp\": 1792956383.9832406, \"wall_time_s\": 0.0, \"num_epochs\": 150, \"no_eval\": true, \"batch_size\": 4096, \"infer_size\": 1024, \"global_train_batch\": 16384, \"launch_mode\": \"d"
+      }
+    ],
+    "count": 12
+  },
+  "recall": null,
+  "recall_reason": "NA: no immutable historical SID hash binding to completed recall established",
+  "reconstruction_mse": null,
+  "reconstruction_reason": "NA: frozen checkpoint belongs to another SID generation",
+  "separate_checkpoint": {
+    "epoch": 300,
+    "collision": 0.11038353601496731,
+    "selection": "final_epoch",
+    "sha256": "af8efc29a8bcbbe5394cc5e358acf7b14c0e78ae99d8a8b9e5faf03fdddd97a8"
+  },
+  "separate_npy_sha256": "6f2682c18d20ba8880a5c105820024ea59ca53a79523e058f8f8e47721507c72"
+}

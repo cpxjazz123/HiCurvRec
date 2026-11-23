@@ -1,0 +1,68 @@
+{
+  "items": 24587,
+  "components": 117,
+  "isolated": 116,
+  "triple_centers": 24326,
+  "triple_center_fraction": 0.9893846341562614,
+  "eligible_pair_population": 28391948,
+  "sampled_pair_fraction": 0.0008567922144686938,
+  "valid_curvature_item_fraction": 0.9893846341562614,
+  "reference_sampling": "uniform without replacement global permutation, seed 247002, nested 16/64/256",
+  "triple_sampling": "one uniform unordered neighbor pair per eligible center, seed 247001",
+  "disconnected_estimand": "finite references in same component; no imputation; small components may have no references",
+  "four_node": {
+    "instances": 4549,
+    "centers": 481,
+    "center_coverage": 0.019563183796315126,
+    "neighbor_triple_population": 4873358066,
+    "instance_fraction": 9.334425951044001e-07,
+    "sampling": "v2: 500 centers; first 12 sorted neighbors; at most 10 triples per center; ID-biased, not population uniform",
+    "uncertainty": "NA: selection has zero inclusion probability outside first12; no unbiased population estimate or confidence interval justified"
+  },
+  "orbit_scope": "center orbit participation in sampled 3-node instances, not full exact orbit totals",
+  "graph_build_rules": {
+    "source": "results/stage0_build_parquet/train.parquet: one sequence per user = longest history plus its target",
+    "edges": "adjacent transitions (i -> i+1) inside each user sequence; self-loops dropped",
+    "weight": "number of users contributing the transition",
+    "visible_users": "frozen v2 split (seed 246001, ratios 0.8/0.1/0.1): 45951/5744/5744, pairwise disjoint",
+    "undirected_projection": "visible directed support symmetrised, unweighted, loop-free",
+    "curvature_inputs": "visible graph only; struct_val/struct_test edges and full-description graph never read",
+    "ppr": "not computed, not read, not referenced"
+  },
+  "ego": "exact induced radius1/2 on demand from frozen visible CSR; sampled v2 separately retained",
+  "distance_seconds": 2.0523789590224624,
+  "sensitivity": [
+    {
+      "references": 16,
+      "valid_triples": 24326,
+      "effective_reference_min": 16,
+      "seconds": 0.03874486591666937,
+      "change_from_previous": null
+    },
+    {
+      "references": 64,
+      "valid_triples": 24326,
+      "effective_reference_min": 62,
+      "seconds": 0.05582092795521021,
+      "change_from_previous": {
+        "common_valid": 24326,
+        "mean_absolute_change": 0.4754024135864189,
+        "max_absolute_change": 2.811491935483871,
+        "sign_change_fraction": 0.04665789690043575
+      }
+    },
+    {
+      "references": 256,
+      "valid_triples": 24326,
+      "effective_reference_min": 253,
+      "seconds": 0.17132397834211588,
+      "change_from_previous": {
+        "common_valid": 24326,
+        "mean_absolute_change": 0.23336831773862135,
+        "max_absolute_change": 1.2432742572995028,
+        "sign_change_fraction": 0.02178738797993916
+      }
+    }
+  ],
+  "zero_tolerance": 1e-12
+}
