@@ -2778,27 +2778,30 @@ def _checks_fingerprint() -> str:
 
 
 def _conformance_report(tree: Path, digest: str) -> dict:
-    """The frozen engineering checks of one tree, cached by its source digest."""
+    """Cache a real entry only for its source, policy and graph generation."""
+    import hashlib
     import importlib
     stage2_checks = importlib.import_module("tools.research.stage2.checks")
+    graph = stage2_checks.check_behavior_graph(tree)
+    graph_identity = graph.get("identity")
+    fingerprint = _checks_fingerprint()
+    if graph.get("status") not in ("PASS", "NOT_APPLICABLE"):
+        return {"tree": str(tree), "passed": False, "admissible": False,
+                "checks": [graph], "digest": digest,
+                "checks_fingerprint": fingerprint, "graph_identity": graph_identity}
 
     cache_root = REPO / "results" / "research" / "_conformance"
     cache_root.mkdir(parents=True, exist_ok=True)
-    # The report is a verdict of the CHECKS as well as of the tree: a cached
-    # report from an older checks module described an older policy and would keep
-    # refusing a candidate long after the check was fixed. The key therefore
-    # carries the checks' own fingerprint.
-    key = (digest or "unknown")[:32] + "__" + tree.name + "__" + _checks_fingerprint() + ".json"
+    graph_key = hashlib.sha256((graph_identity or "unnamed").encode("utf-8")).hexdigest()[:16]
+    key = (digest or "unknown")[:32] + "__" + tree.name + "__" + fingerprint + "__" + graph_key + ".json"
     cache = cache_root / key
     if cache.is_file():
         try:
             cached = json.loads(cache.read_text(encoding="utf-8"))
             if (cached.get("passed") is not None and cached.get("digest") == digest
-                    and cached.get("checks_fingerprint") == _checks_fingerprint()
+                    and cached.get("checks_fingerprint") == fingerprint
+                    and cached.get("graph_identity") == graph_identity
                     and any(c.get("name") == "behavior_graph" for c in cached.get("checks", []))):
-                # Graph artifacts can change without changing trainer source.
-                # Reuse the expensive entry, never the mutable graph verdict.
-                graph = stage2_checks.check_behavior_graph(tree)
                 cached["checks"] = [graph if c.get("name") == "behavior_graph" else c
                                     for c in cached["checks"]]
                 cached["passed"] = all(c.get("status") in ("PASS", "NOT_APPLICABLE")
@@ -2814,7 +2817,18 @@ def _conformance_report(tree: Path, digest: str) -> dict:
                   "checks": [{"status": "FAIL", "name": "conformance",
                               "detail": "the checks could not run: " + str(exc)[:200]}]}
     report["digest"] = digest
-    report["checks_fingerprint"] = _checks_fingerprint()
+    report["checks_fingerprint"] = fingerprint
+    report["graph_identity"] = graph_identity
+    final_graph = stage2_checks.check_behavior_graph(tree)
+    if (final_graph.get("identity") != graph_identity
+            or _checks_fingerprint() != fingerprint):
+        report["checks"].append({"status": "NOT_RUN", "name": "generation_binding",
+                                 "detail": "graph or admission source changed during the real entry"})
+        report["passed"] = report["admissible"] = False
+    elif final_graph.get("status") not in ("PASS", "NOT_APPLICABLE"):
+        report["checks"] = [final_graph if c.get("name") == "behavior_graph" else c
+                            for c in report.get("checks", [])]
+        report["passed"] = report["admissible"] = False
     # A check that could not run is not a verdict: caching NOT_RUN would turn a
     # missing probe into a permanent refusal.
     if any(check.get("status") == "NOT_RUN" for check in report.get("checks", [])):
@@ -2942,6 +2956,7 @@ def machine_admission(tree: Path) -> dict:
             "checks": report.get("checks", []),
             "source_digest": report.get("digest"),
             "checks_fingerprint": report.get("checks_fingerprint"),
+            "graph_identity": report.get("graph_identity"),
             "tree": str(tree)}
 
 

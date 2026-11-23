@@ -591,33 +591,25 @@ def check_assignment_floor(tree: Path | str) -> dict:
 
 
 def check_behavior_graph(tree: Path | str) -> dict:
-    """The candidate reads the one undirected graph, and that graph verifies.
+    """Verify the canonical graph or the source-bound named visible contract.
 
-    Owner decision (2026-11-19): one undirected behaviour graph under
-    results/research/behavior_graph, no per-experiment copy, hashes checked
-    against metadata.json.  A tree that touches no graph is NOT_APPLICABLE, not a
-    failure -- the rule constrains the arms that use the graph, not every arm.
+    Issue252 authorizes an audited visible-user graph when the canonical graph
+    contains structural held-out behavior. Graph-free trees remain NOT_APPLICABLE.
     """
     from . import graph_contract
     verdict = graph_contract.inspect_tree(tree)
-    return {"status": verdict["status"], "name": "behavior_graph",
-            "detail": verdict["detail"]}
+    result = {"status": verdict["status"], "name": "behavior_graph",
+              "detail": verdict["detail"]}
+    if "identity" in verdict:
+        result["identity"] = verdict["identity"]
+    return result
 
 
 def run_all(tree: Path | str) -> dict:
     """The conformance report of one candidate tree."""
     tree = Path(tree).resolve()
-    # The static contract comes FIRST: a candidate that redefines the geometry
-    # must not run an epoch before it is refused.
-    # The owner kept only the real-entry check in the admission on 2026-11-10:
-    # the other conformance probes stay as standalone diagnostics, not gates.
-    # Section 88 (owner, 2026-11-10): the admission runs the real entry, nothing else.
-    # The floor is not a gate here -- it is installed by `copy_baseline` and by `launch`,
-    # so a tree without it cannot reach a real run; `check_assignment_floor` stays as a
-    # standalone diagnostic.
-    # Section 89b (owner, 2026-11-19): the one-undirected-graph rule is enforced --
-    # a tree that builds its own graph, or reads one whose hashes do not match, is
-    # refused; a tree that uses no graph is NOT_APPLICABLE and does not block.
+    # Entry and graph integrity are the two machine gates (§88/§89b, Issue252).
+    # The other diagnostics remain standalone checks.
     checks = [check_entry(tree), check_behavior_graph(tree)]
     passed = all(check["status"] in ("PASS", "NOT_APPLICABLE") for check in checks)
     admissible = passed

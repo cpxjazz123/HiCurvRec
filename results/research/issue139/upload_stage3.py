@@ -5,8 +5,8 @@ archived together -- the Stage 2 code it used, the SID table, the checkpoint tha
 exported that table, and the complete recall block. The bucket's first level is a
 two-digit number and each number holds exactly those four entries:
 
-    r2:genrec/<NN>/<mechanism>/        train_rqvae.py, model/, math_spec.json,
-                                       reference_contract.json
+    r2:genrec/<NN>/<mechanism>/        complete bound source/config,
+                                       stage2_source.tar.gz, archive_binding.json
     r2:genrec/<NN>/item_sids.json
     r2:genrec/<NN>/rqvae_best.pth
     r2:genrec/<NN>/recall.json         every key of test_final.json
@@ -20,14 +20,21 @@ What the number refers to, and the checksum of every uploaded file, goes into
 from __future__ import annotations
 
 import argparse
+import gzip
+import hashlib
+import io
 import json
 import shutil
 import sys
+import tarfile
 from pathlib import Path
 
 RESEARCH = Path(__file__).resolve().parent
 REPO = RESEARCH.parents[2]
 sys.path.insert(0, str(RESEARCH))
+sys.path.insert(0, str(REPO))
+
+from tools.issue252.archive_audit import validate_binding  # noqa: E402
 
 from r2_layout import Ledger, sha256, upload_directory  # noqa: E402
 
@@ -35,22 +42,20 @@ RESULTS = REPO / "results"
 TREES = REPO / "stage2_RQ-VAE"
 STAGE3_LOGS = RESULTS / "stage3_T5Train"
 
-#: Entries of a Stage2 tree that are run artifacts, not the mechanism's source.
-_NOT_SOURCE = {"logs", "__pycache__", "dataset", "ckpt", "results", ".git"}
-_NOT_SOURCE_SUFFIXES = {".pth", ".pt", ".npy", ".npz", ".parquet", ".log", ".pyc", ".tmp"}
 
 
 def _latest_test_final(arm: str) -> Path | None:
-    """Newest test_final.json of this arm; nested arms are stored with ``__``."""
+    """Resolve one exact completed run; never pick a generation by timestamp."""
+    found = set()
     for name in (arm, arm.replace("/", "__")):
         flat = STAGE3_LOGS / name / "test_final.json"
         if flat.is_file():
-            return flat
-        nested = sorted((STAGE3_LOGS / name).glob("logs/*/*/test_final.json"),
-                        key=lambda path: path.stat().st_mtime, reverse=True)
-        if nested:
-            return nested[0]
-    return None
+            found.add(flat.resolve())
+        found.update(path.resolve() for path in
+                     (STAGE3_LOGS / name).glob("logs/*/*/test_final.json"))
+    if len(found) > 1:
+        raise ValueError("ambiguous Stage3 generations for " + arm)
+    return next(iter(found), None)
 
 
 def archive_key(arm: str, sid_path: Path) -> str:
@@ -64,72 +69,102 @@ def archive_key(arm: str, sid_path: Path) -> str:
     return "%s/%s" % (arm.replace("/", "__"), sha256(Path(sid_path))[:12])
 
 
+def _required(path: Path, label: str) -> Path:
+    if not path.is_file():
+        raise ValueError("missing necessary %s: %s" % (label, path))
+    return path
+
+
+def _input_path(block: dict, field: str) -> Path:
+    if not block.get(field):
+        raise ValueError("Stage3 final record is missing input provenance: " + field)
+    path = Path(block[field])
+    return path.resolve() if path.is_absolute() else (REPO / path).resolve()
+
+
+def _source_tar(path: Path, files: dict[str, Path]) -> None:
+    """Stable tar order, metadata and gzip header; no source mtimes/UIDs leak in."""
+    with path.open("wb") as raw:
+        with gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0) as compressed:
+            with tarfile.open(fileobj=compressed, mode="w", format=tarfile.PAX_FORMAT) as bundle:
+                for name, source in sorted(files.items()):
+                    data = source.read_bytes()
+                    info = tarfile.TarInfo(name)
+                    info.size = len(data)
+                    info.mode = 0o644
+                    bundle.addfile(info, io.BytesIO(data))
+
+
 def stage(arm: str, staging: Path, tree: Path | None = None) -> tuple[dict, str]:
-    """Stage the four entries; return the checksums and the ledger key."""
-    result = RESULTS / "stage2_RQ-VAE" / arm
-    sid = result / "item_sids.json"
-    checkpoint = result / "rqvae_best.pth"
-    if not checkpoint.is_file():
-        found = sorted(result.rglob("rqvae_best.pth"))
-        checkpoint = found[0] if found else checkpoint
-    source = Path(tree) if tree is not None else TREES / arm
-    if tree is None and not source.is_dir():
-        source = TREES / arm.split("/")[0]
-    if not source.is_dir():
-        for candidate in sorted(TREES.glob("*/" + arm)):
-            if candidate.is_dir():
-                source = candidate
-                break
-    if not source.is_dir():
-        # The older arms keep their source in the analysis archive / the baseline /
-        # the archive container after the 2026-11-15 tree move.
-        for pattern in ("analysis_sid_recall/r2/*/" + arm,
-                        "stage2_RQ-VAE/_archive/" + arm,
-                        "stage2_RQ-VAE/baseline/" + arm):
-            found = [p for p in sorted(REPO.glob(pattern)) if p.is_dir()]
-            if found:
-                source = found[0]
-                break
+    """Stage exactly four entries after verifying the actual Stage3 input generation.
+
+    The final record names exact inputs; directory names, mtimes, nearby checkpoints
+    and ``--tree`` never substitute for their source/checkpoint/SID identities.
+    Missing provenance from old runs requires independent evidence, not guessing.
+    """
     stage3 = _latest_test_final(arm)
-
-    missing = [name for name, path in (("item_sids.json", sid),
-                                       ("rqvae_best.pth", checkpoint),
-                                       ("stage2 source tree", source if source.is_dir() else None),
-                                       ("stage3 test_final.json", stage3)) if path is None]
-    if missing:
-        raise SystemExit("%s is incomplete, not archiving: %s" % (arm, ", ".join(missing)))
-
+    if stage3 is None:
+        raise ValueError("missing necessary Stage3 test_final.json for " + arm)
+    _required(stage3, "Stage3 test_final.json")
+    block = json.loads(stage3.read_text(encoding="utf-8"))
+    sid = _required(_input_path(block, "sid_path"), "SID")
+    checkpoint = _required(_input_path(block, "stage2_checkpoint"), "Stage2 checkpoint")
+    if block.get("sid_sha256") != sha256(sid):
+        raise ValueError("Stage3 SID sha256 mismatch")
+    if block.get("stage2_checkpoint_sha256") != sha256(checkpoint):
+        raise ValueError("Stage3 checkpoint sha256 mismatch")
+    binding = _required(_input_path(block, "archive_binding"), "archive binding")
+    if block.get("archive_binding_sha256") != sha256(binding):
+        raise ValueError("Stage3 archive binding sha256 mismatch")
+    receipt, sources = validate_binding(binding, sid, checkpoint, tree)
+    if block.get("stage2_run_id") != receipt["run_id"]:
+        raise ValueError("Stage3 Stage2 run identity mismatch")
+    evidence_key = "stage3_archive_evidence"
+    if evidence_key in block:
+        raise ValueError("refusing to overwrite existing final-test key: " + evidence_key)
+    evidence = {}
+    for name in ("HG_Rec.log", "training_metrics.jsonl"):
+        path = _required(stage3.parent / name, "Stage3 " + name)
+        data = path.read_bytes()
+        if not data:
+            raise ValueError("missing necessary nonempty Stage3 " + name)
+        content = data.decode("utf-8")
+        if name == "training_metrics.jsonl":
+            records = [json.loads(line) for line in content.splitlines() if line.strip()]
+            if not records or records[-1].get("event") != "train_end":
+                raise ValueError("Stage3 metrics stream has no final train_end")
+        evidence[name] = {"content": content,
+                          "sha256": hashlib.sha256(data).hexdigest()}
+    block[evidence_key] = evidence
+    staging = Path(staging)
+    if staging.exists() and any(staging.iterdir()):
+        raise ValueError("staging must be empty to preserve the four-entry layout")
     staging.mkdir(parents=True, exist_ok=True)
     code = staging / arm.replace("/", "__")
-    code.mkdir(exist_ok=True)
-    # The mechanism's source is whatever the tree imports: copying a fixed three-file
-    # list archived a trainer whose `losses/`, `distances/` and `train_config.py` were
-    # missing, so the archived copy could not run. Everything that is source travels;
-    # run artifacts, binaries and the dataset link do not.
-    for entry in sorted(source.iterdir()):
-        name = entry.name
-        if name in _NOT_SOURCE or name.startswith("."):
-            continue
-        if entry.is_dir():
-            shutil.copytree(entry, code / name,
-                            ignore=shutil.ignore_patterns("__pycache__", "logs",
-                                                          "*.pth", "*.npy", "*.parquet"))
-        elif entry.suffix.lower() not in _NOT_SOURCE_SUFFIXES:
-            shutil.copy2(entry, code / name)
+    code.mkdir()
+    expected_sources = {
+        **receipt["candidate_sources"], **receipt["infrastructure_sources"],
+        **receipt["repository_configs"],
+        "archive_binding.json": block["archive_binding_sha256"],
+        "export_manifest.json": receipt["export_manifest"]["sha256"],
+    }
+    for name, source in sorted(sources.items()):
+        destination = code / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination)
+        if sha256(destination) != expected_sources[name]:
+            raise ValueError("source changed while staging: " + name)
+    # Archive the staged bytes, not mutable source files reread after copying.
+    staged_sources = {name: code / name for name in sources}
+    _source_tar(code / "stage2_source.tar.gz", staged_sources)
     shutil.copy2(sid, staging / "item_sids.json")
     shutil.copy2(checkpoint, staging / "rqvae_best.pth")
-    block = json.loads(stage3.read_text())
-    (staging / "recall.json").write_text(json.dumps(block, indent=2, sort_keys=True) + "\n")
-    # The layout docstring (2026-11-15) says the Stage 3 weights travel with the recall
-    # block, because the block names this file and an archived recall must be
-    # reproducible.  They are copied when present and noted in the ledger otherwise.
-    # `best_checkpoint` is the weights file in the newer runs and its directory in the
-    # older ones, so both shapes are accepted.
-    named = Path(block.get("best_checkpoint", ""))
-    stage3_weights = named if named.suffix == ".pth" else named / "HG_Rec_best.pth"
-    if stage3_weights.is_file():
-        shutil.copy2(stage3_weights, staging / "HG_Rec_best.pth")
-
+    if sha256(staging / "item_sids.json") != block["sid_sha256"]:
+        raise ValueError("SID changed while staging")
+    if sha256(staging / "rqvae_best.pth") != block["stage2_checkpoint_sha256"]:
+        raise ValueError("checkpoint changed while staging")
+    (staging / "recall.json").write_text(
+        json.dumps(block, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     files = {str(path.relative_to(staging)): sha256(path)
              for path in sorted(staging.rglob("*")) if path.is_file()}
     return files, archive_key(arm, sid)
@@ -141,8 +176,8 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--keep", action="store_true")
     parser.add_argument("--tree", default="",
-                        help="Stage 2 source tree, for arms whose tree no longer "
-                             "carries the arm name (shared four/five-arm trees)")
+                        help="Exact executed Stage2 source tree; must match its "
+                             "checkpoint-bound archive receipt")
     args = parser.parse_args()
 
     staging = RESEARCH / "_stage" / ("r2_arm_%s" % args.arm.replace("/", "__"))

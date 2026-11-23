@@ -24,6 +24,7 @@ this entry point are deliberately the same as RecBole's ``model=tiger``.
 """
 
 from contextlib import nullcontext
+import hashlib
 import json
 import logging
 import math
@@ -322,6 +323,55 @@ def _resolve_code_file(dataset_dir: Path, requested: str) -> Path:
             return candidate
     joined = ", ".join(str(candidate) for candidate in candidates)
     raise FileNotFoundError(f"SID file does not exist; checked: {joined}")
+
+
+def _sha256_file(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as source:
+        for block in iter(lambda: source.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _stage2_input_provenance(code_file):
+    """Capture the resolved input, not the requested filename or a nearby run."""
+    sid = Path(code_file).resolve()
+    repo = SCRIPT_DIR.parent
+    export_path = sid.parent / "export_manifest.json"
+    if not export_path.is_file():
+        raise ValueError("missing Stage2 export provenance for actual SID: " + str(sid))
+    export = json.loads(export_path.read_text(encoding="utf-8"))
+    sid_sha = _sha256_file(sid)
+    if export.get("sid_sha256") != sid_sha or export.get("tokens_match") is not True:
+        raise ValueError("actual SID does not match Stage2 export provenance")
+    named = export.get("checkpoint")
+    if not named:
+        raise ValueError("missing Stage2 checkpoint provenance")
+    checkpoint = Path(named)
+    checkpoint = checkpoint.resolve() if checkpoint.is_absolute() else (repo / checkpoint).resolve()
+    if not checkpoint.is_file():
+        raise ValueError("missing exact Stage2 checkpoint: " + str(checkpoint))
+    checkpoint_sha = _sha256_file(checkpoint)
+    if export.get("checkpoint_sha256") != checkpoint_sha:
+        raise ValueError("actual Stage2 checkpoint does not match export provenance")
+    result = {
+        "sid_path": str(sid), "sid_sha256": sid_sha,
+        "stage2_checkpoint": str(checkpoint),
+        "stage2_checkpoint_sha256": checkpoint_sha,
+        "stage2_export_manifest": str(export_path),
+        "stage2_export_manifest_sha256": _sha256_file(export_path),
+    }
+    binding_path = sid.parent / "archive_binding.json"
+    if binding_path.is_file():
+        binding = json.loads(binding_path.read_text(encoding="utf-8"))
+        if (binding.get("sid", {}).get("sha256") != sid_sha
+                or binding.get("checkpoint", {}).get("sha256") != checkpoint_sha):
+            raise ValueError("Stage2 archive binding does not match actual SID/checkpoint")
+        result.update(archive_binding=str(binding_path),
+                      archive_binding_sha256=_sha256_file(binding_path),
+                      stage2_run_id=binding.get("run_id"),
+                      stage2_source_tree=binding.get("source_tree"))
+    return result
 
 
 def make_sample_collator(dataset: GenRecDataset, *, include_eval_metadata=False):
@@ -816,12 +866,16 @@ def main():
 
     dataset_dir = Path(config["dataset_path"])
     code_file = _resolve_code_file(dataset_dir, config["code_path"])
+    input_provenance = _stage2_input_provenance(code_file)
+    trainer_sha256 = _sha256_file(Path(__file__).resolve())
     train_dataset = _build_dataset(config, config["train_file"], "train", code_file)
     valid_dataset = (
         _build_dataset(config, config["valid_file"], "evaluation", code_file)
         if not config["no_eval"]
         else None
     )
+    if _sha256_file(code_file) != input_provenance["sid_sha256"]:
+        raise ValueError("SID changed while constructing Stage3 datasets")
 
     # Runtime-derived config (就地赋值, 模块常量不动; line 584 之后无代码读 no_exclude_history/no_pin_memory, 故保留可见性)
     config["vocab_size"] = train_dataset.vocab_size if config["vocab_size"] == 0 else config["vocab_size"]
@@ -1432,12 +1486,21 @@ def main():
                 for s in _shards
             ]
         )
+        if (_stage2_input_provenance(code_file) != input_provenance
+                or _sha256_file(Path(__file__).resolve()) != trainer_sha256):
+            raise ValueError("Stage2 input or Stage3 trainer provenance changed during execution")
         test_result = {
             "best_checkpoint": best_checkpoint,
             "predictions": _prediction_path,
             "n_eval": n_eval_total,
             **{f"test_{key}": value for key, value in recalls.items()},
             **{f"test_{key}": value for key, value in ndcgs.items()},
+            **input_provenance,
+            "stage3_run_id": str(Path(log_path).resolve()),
+            "stage3_input_config": config,
+            "stage3_world_size": world_size,
+            "stage3_completed_epochs": config["num_epochs"],
+            "stage3_trainer_sha256": trainer_sha256,
         }
         logging.info("Test=%s", test_result)
         with open(os.path.join(log_path, "test_final.json"), "w", encoding="utf-8") as handle:

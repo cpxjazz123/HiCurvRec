@@ -1,0 +1,27 @@
+test_graph_audit (unittest.loader._FailedTest) ... ERROR
+test_stage3_from_another_sid_is_refused_before_upload (tools.issue252.test_archive_binding.ArchiveBindingTests) ... FAIL
+
+======================================================================
+ERROR: test_graph_audit (unittest.loader._FailedTest)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_graph_audit
+Traceback (most recent call last):
+  File "/usr/lib64/python3.9/unittest/loader.py", line 154, in loadTestsFromName
+    module = __import__(module_name)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_graph_audit.py", line 4, in <module>
+    from tools.issue252.graph_audit import reconstruct_edges, classify_difference
+ModuleNotFoundError: No module named 'tools.issue252.graph_audit'
+
+
+======================================================================
+FAIL: test_stage3_from_another_sid_is_refused_before_upload (tools.issue252.test_archive_binding.ArchiveBindingTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_archive_binding.py", line 37, in test_stage3_from_another_sid_is_refused_before_upload
+    module.stage('Arm',root/'staging',source)
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.071s
+
+FAILED (failures=1, errors=1)

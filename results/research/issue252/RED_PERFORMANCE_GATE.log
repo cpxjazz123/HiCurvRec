@@ -1,0 +1,18 @@
+test_performance (unittest.loader._FailedTest) ... ERROR
+
+======================================================================
+ERROR: test_performance (unittest.loader._FailedTest)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_performance
+Traceback (most recent call last):
+  File "/usr/lib64/python3.9/unittest/loader.py", line 154, in loadTestsFromName
+    module = __import__(module_name)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_performance.py", line 3, in <module>
+    from tools.issue252.performance import summarize_window
+ModuleNotFoundError: No module named 'tools.issue252.performance'
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (errors=1)

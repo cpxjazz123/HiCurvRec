@@ -1,0 +1,110 @@
+{
+  "audit_source": {
+    "path": "tools/issue252/historical_timing.py",
+    "sha256": "d337dd0c05aff936383db74bd17c0a631d4667ac3e466a78dab03be4cf789aa6"
+  },
+  "role_Q": {
+    "actual_end_record": {
+      "checkpoint_selection": "final_epoch",
+      "event": "train_end",
+      "final_collision": 0.010289990645463098,
+      "output_json": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_graphlet_role_Q/item_sids.json",
+      "output_sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_graphlet_role_Q/sids_for_hgrec.npy",
+      "sid_shape": [
+        24587,
+        4
+      ],
+      "timestamp": 1795100815.0494587,
+      "total_wall_time_s": 833.927,
+      "unique_after_extend": 24587,
+      "wall_time_s": 833.942
+    },
+    "actual_start_record": {
+      "all_items": 24587,
+      "batch_size_per_rank": 1024,
+      "beta": 0.25,
+      "codebook_dim": 32,
+      "codebook_num": 3,
+      "codebook_size": [
+        256,
+        256,
+        256
+      ],
+      "config_path": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_graphlet_role_rq/config/train_config.json",
+      "config_sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+      "early_stop": "disabled",
+      "ema_decay": 0.99,
+      "embedding_shape": [
+        24587,
+        768
+      ],
+      "epochs": 3000,
+      "eval_interval": 50,
+      "event": "train_start",
+      "gradient_clip_norm": 1.0,
+      "hidden_sizes": [
+        512,
+        256,
+        128
+      ],
+      "lr": 0.001,
+      "num_workers": 0,
+      "optimizer": "AdamW",
+      "pca_dim": 0,
+      "seed": 42,
+      "sk_epsilon": 0.003,
+      "sk_iters": 50,
+      "timestamp": 1795099984.0222158,
+      "total_batch_size": 4096,
+      "train_items": 24556,
+      "vq_type": "vq",
+      "wall_time_s": 2.914,
+      "warmup_epochs": 50,
+      "weight_decay": 0.0001,
+      "world_size": 4,
+      "xavier_init": true
+    },
+    "current_archived_source": {
+      "path": "stage2_RQ-VAE/_archive/TIGER_graphlet_role_rq/train_rqvae.py",
+      "sha256": "7ef6344560a729b76bd33c4b3a2bc903e01896847c5d239d37888bd24f57bb2d"
+    },
+    "epoch_first": 970,
+    "epoch_last": 999,
+    "epochs": 30,
+    "executed_source_sha256": null,
+    "hardware": null,
+    "path": "results/stage2_RQ-VAE/TIGER_graphlet_role_Q/logs/training_metrics.jsonl",
+    "sha256": "a26fb7f8fe29fd0ebfa9afebd50e1701b877bebc35e4b1167d8594c743b9fe5c",
+    "timer_boundary": "Current archived source starts per-epoch timer before loader; stops before post-loop metric all_reduce and before periodic full-catalogue evaluation. Cumulative records include intervening gaps.",
+    "timer_mean_s": 0.2607333333333333,
+    "timer_median_s": 0.256,
+    "timer_p95_s": 0.26,
+    "timer_sum_s": 7.822,
+    "warning": "Current archived source hash is not an execution-time binding. GPU/driver/clock absent. These windows do not certify the current mechanism.",
+    "window_timestamp_wall_s": 7.92777419090271,
+    "window_wall_s": 7.927999999999997
+  },
+  "schema": "genrec.issue252.historical_timing/1",
+  "wide_l1": {
+    "actual_start_records": [
+      "[RecBole RQ-VAE] device=cuda:0 all_items=24587 train_items=24556 world_size=4",
+      "[RecBole RQ-VAE] config: epochs=3000 batch_size_per_rank=1024 total_batch=4096 lr=0.001",
+      "[RecBole RQ-VAE] initializing codebooks with KMeans"
+    ],
+    "completed_epoch": 3000,
+    "epoch_first": 1001,
+    "epoch_last": 1030,
+    "epochs": 30,
+    "executed_source_sha256": null,
+    "hardware": null,
+    "path": "results/stage2_RQ-VAE/TIGER_graphlet_wide_l1_rq/logs/train_migrated.log",
+    "seed": null,
+    "sha256": "1b28955376756667afd90a68c03e25502d69e7519d24b9d0dd544d9470307849",
+    "timer_mean_s": 0.3677333333333333,
+    "timer_median_s": 0.347,
+    "timer_p95_s": 0.479,
+    "timer_sum_s": 11.032,
+    "warning": "Migrated text has no execution-source/GPU identity or window timestamps; timer sum is not inclusive wall.",
+    "window_wall_s": null
+  }
+}

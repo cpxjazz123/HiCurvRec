@@ -262,6 +262,13 @@ rclone 通过环境变量配置。目标桶 `genrec`,第一层是 `01`、`02`…
     **强制执行**:`tools/research/stage2/graph_contract.py::check_behavior_graph` 已并入 `checks.run_all`——
     候选树自建邻接/CSR 即 FAIL,读取非规范图即 FAIL,文件与 metadata 的 sha256/size 不符即 FAIL;
     完全不涉及图的树记 `NOT_APPLICABLE`。
+89c. **具名可见图契约(Issue #252 owner 授权)**:当 canonical 图包含专门保留的结构验证/测试用户行为时,
+    训练必须使用合法可见图,不得为满足 §89b 引入 held-out 行为。`infra246-visible-v2` 的注册与独立原始交互
+    审计固定在 `assets/v7_graph_contract/{contract,audit}.json`;准入核对原始训练输入、用户划分、每条边及整数
+    权重、隔离证据、生成源码和资产叶子哈希。新增静态性能缓存必须登记同一图身份、训练用途、输入与源码哈希,
+    不得混图、使用评估资产或在候选树重建拓扑。`graph_contract.verify_named_graph` 执行校验;真实入口凭据
+    同时绑定候选源码、检查策略与图代际,代际漂移拒绝复用。该具名契约是机器可复验的图协议,不是候选白名单;
+    未声明具名协议的树仍按 §89b 检查。
 90. **`stage2_RQ-VAE/` 顶层只允许保留一个活跃 Stage2 目录**,外加两个容器目录:
     - `stage2_RQ-VAE/baseline/`:冻结基线。新臂唯一复制来源是 `baseline/TIGER_RQ-VAE`;
       `baseline/TIGER_BEHAVIOR_SAMPLE_RQ-VAE` 只作历史样例。二者只读。

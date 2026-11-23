@@ -1,0 +1,33 @@
+test_named_graph_identity_change_requires_a_new_real_entry (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_named_graph_identity_change_requires_a_new_real_entry) ... FAIL
+test_graph_identity_drift_during_entry_is_not_a_pass (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_graph_identity_drift_during_entry_is_not_a_pass) ... FAIL
+test_graph_wrapper_preserves_the_verified_generation_identity (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_graph_wrapper_preserves_the_verified_generation_identity) ... ERROR
+
+======================================================================
+ERROR: test_graph_wrapper_preserves_the_verified_generation_identity (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_graph_wrapper_preserves_the_verified_generation_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_machine_cache.py", line 148, in test_graph_wrapper_preserves_the_verified_generation_identity
+    self.assertEqual(check_behavior_graph(ROOT)['identity'],'registered-generation')
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+KeyError: 'identity'
+
+======================================================================
+FAIL: test_named_graph_identity_change_requires_a_new_real_entry (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_named_graph_identity_change_requires_a_new_real_entry)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_machine_cache.py", line 125, in test_named_graph_identity_change_requires_a_new_real_entry
+    self.assertEqual(runner.call_count,2,
+AssertionError: 1 != 2 : a new named graph generation must execute its own real entry
+
+======================================================================
+FAIL: test_graph_identity_drift_during_entry_is_not_a_pass (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_graph_identity_drift_during_entry_is_not_a_pass)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_machine_cache.py", line 141, in test_graph_identity_drift_during_entry_is_not_a_pass
+    self.assertFalse(result['passed'],'an entry cannot authorize a different graph generation')
+AssertionError: True is not false : an entry cannot authorize a different graph generation
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.097s
+
+FAILED (failures=2, errors=1)

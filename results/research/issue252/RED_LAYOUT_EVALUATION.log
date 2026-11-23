@@ -1,0 +1,50 @@
+test_directed_bits_preserve_direction_and_isolation (tools.issue252.test_runtime_layout.RuntimeLayoutTests) ... ERROR
+test_valid_targets_are_lossless_and_duplicate_preserving (tools.issue252.test_runtime_layout.RuntimeLayoutTests) ... ERROR
+test_float_and_out_of_range_codes_are_not_silently_cast (tools.issue252.test_final_evaluation.FinalEvaluationTests) ... ERROR
+test_json_key_order_is_not_catalogue_order (tools.issue252.test_final_evaluation.FinalEvaluationTests) ... ERROR
+test_microstep_is_not_formal_completion (tools.issue252.test_final_evaluation.FinalEvaluationTests) ... ERROR
+
+======================================================================
+ERROR: test_directed_bits_preserve_direction_and_isolation (tools.issue252.test_runtime_layout.RuntimeLayoutTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_layout.py", line 8, in test_directed_bits_preserve_direction_and_isolation
+    from tools.issue252.runtime_layout import pack_directed
+ModuleNotFoundError: No module named 'tools.issue252.runtime_layout'
+
+======================================================================
+ERROR: test_valid_targets_are_lossless_and_duplicate_preserving (tools.issue252.test_runtime_layout.RuntimeLayoutTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_layout.py", line 14, in test_valid_targets_are_lossless_and_duplicate_preserving
+    from tools.issue252.runtime_layout import pack_targets
+ModuleNotFoundError: No module named 'tools.issue252.runtime_layout'
+
+======================================================================
+ERROR: test_float_and_out_of_range_codes_are_not_silently_cast (tools.issue252.test_final_evaluation.FinalEvaluationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_final_evaluation.py", line 23, in test_float_and_out_of_range_codes_are_not_silently_cast
+    from tools.issue252.final_evaluation import load_sid
+ModuleNotFoundError: No module named 'tools.issue252.final_evaluation'
+
+======================================================================
+ERROR: test_json_key_order_is_not_catalogue_order (tools.issue252.test_final_evaluation.FinalEvaluationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_final_evaluation.py", line 13, in test_json_key_order_is_not_catalogue_order
+    from tools.issue252.final_evaluation import load_sid
+ModuleNotFoundError: No module named 'tools.issue252.final_evaluation'
+
+======================================================================
+ERROR: test_microstep_is_not_formal_completion (tools.issue252.test_final_evaluation.FinalEvaluationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_final_evaluation.py", line 31, in test_microstep_is_not_formal_completion
+    from tools.issue252.final_evaluation import validate_final_checkpoint
+ModuleNotFoundError: No module named 'tools.issue252.final_evaluation'
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.002s
+
+FAILED (errors=5)

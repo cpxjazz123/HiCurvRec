@@ -107,6 +107,46 @@ class MachineCacheTests(unittest.TestCase):
                 self.assertNotEqual(before,module._checks_fingerprint(),
                                     'shared GNN runtime changes must invalidate the entry verdict')
 
+    def test_named_graph_identity_change_requires_a_new_real_entry(self):
+        module=server()
+        with tempfile.TemporaryDirectory(dir=ROOT/'results/research/issue252') as directory:
+            repo=Path(directory);tree=fixture(repo)
+            graph={'name':'behavior_graph','status':'PASS','detail':'named graph','identity':'A'}
+            def report(_):
+                return {'tree':str(tree),'passed':True,'admissible':True,
+                        'checks':[{'name':'entry','status':'PASS','detail':'executed'},dict(graph)]}
+            with patch.object(module,'REPO',repo),patch(
+                    'tools.research.stage2.checks.check_behavior_graph',side_effect=lambda _:dict(graph)),patch(
+                    'tools.research.stage2.checks.run_all',side_effect=report) as runner:
+                self.assertTrue(module.machine_admission(tree)['passed'])
+                graph['identity']='B'
+                second=module.machine_admission(tree)
+                self.assertTrue(second['passed'])
+                self.assertEqual(runner.call_count,2,
+                                 'a new named graph generation must execute its own real entry')
+                self.assertEqual(second['graph_identity'],'B')
+
+    def test_graph_identity_drift_during_entry_is_not_a_pass(self):
+        module=server()
+        with tempfile.TemporaryDirectory(dir=ROOT/'results/research/issue252') as directory:
+            repo=Path(directory);tree=fixture(repo)
+            before={'name':'behavior_graph','status':'PASS','detail':'before','identity':'A'}
+            after={**before,'detail':'after','identity':'B'}
+            report={'tree':str(tree),'passed':True,'admissible':True,
+                    'checks':[{'name':'entry','status':'PASS','detail':'executed'},before]}
+            with patch.object(module,'REPO',repo),patch(
+                    'tools.research.stage2.checks.check_behavior_graph',side_effect=[before,after]),patch(
+                    'tools.research.stage2.checks.run_all',return_value=report):
+                result=module.machine_admission(tree)
+                self.assertFalse(result['passed'],'an entry cannot authorize a different graph generation')
+                self.assertTrue(any(c['status']=='NOT_RUN' for c in result['checks']))
+
+    def test_graph_wrapper_preserves_the_verified_generation_identity(self):
+        from tools.research.stage2.checks import check_behavior_graph
+        with patch('tools.research.stage2.graph_contract.inspect_tree',
+                   return_value={'status':'PASS','detail':'verified','identity':'registered-generation'}):
+            self.assertEqual(check_behavior_graph(ROOT)['identity'],'registered-generation')
+
     def test_not_run_is_not_cached_as_an_executed_verdict(self):
         module=server()
         with tempfile.TemporaryDirectory(dir=ROOT/'results/research/issue251') as directory:

@@ -1,0 +1,61 @@
+test_conflicting_equal_length_sequences_fail (tools.issue252.test_graph_audit.GraphAuditTests) ... ok
+test_empty_and_repeated_transitions (tools.issue252.test_graph_audit.GraphAuditTests) ... ok
+test_longest_prefix_self_loops_and_split_weights (tools.issue252.test_graph_audit.GraphAuditTests) ... ok
+test_shorter_ambiguous_prefix_also_fails (tools.issue252.test_graph_audit.GraphAuditTests) ... ok
+test_weight_residual_is_not_support_residual (tools.issue252.test_graph_audit.GraphAuditTests) ... ok
+test_alias_cannot_redirect_registered_loader (tools.research.stage2.tests.test_named_graph.NamedGraphTests) ... ok
+test_candidate_cannot_import_graph_builder (tools.research.stage2.tests.test_named_graph.NamedGraphTests) ... ok
+test_contract_and_receipt_mutations_fail (tools.research.stage2.tests.test_named_graph.NamedGraphTests) ... ok
+test_identity_exposes_contract_and_source (tools.research.stage2.tests.test_named_graph.NamedGraphTests) ... ok
+test_mixed_and_evaluation_graphs (tools.research.stage2.tests.test_named_graph.NamedGraphTests) ... ok
+test_mutated_source_and_manifest_roles_fail_but_additions_do_not (tools.research.stage2.tests.test_named_graph.NamedGraphTests) ... ok
+test_new_cache_requires_graph_and_training_ancestry (tools.research.stage2.tests.test_named_graph.NamedGraphTests) ... ok
+test_registered_ego_consumer (tools.research.stage2.tests.test_named_graph.NamedGraphTests) ... ERROR
+test_registration_receipt_is_pinned (tools.research.stage2.tests.test_named_graph.NamedGraphTests) ... ok
+test_unknown_and_nonliteral_names (tools.research.stage2.tests.test_named_graph.NamedGraphTests) ... ok
+test_visible_filename_outside_registered_root (tools.research.stage2.tests.test_named_graph.NamedGraphTests) ... ok
+test_broken_source_fails_closed (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... ok
+test_comments_and_strings_do_not_create_a_graph_reader (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... ok
+test_module_import_alias_cannot_hide_graph_use (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... ok
+test_reader_import_alias_cannot_hide_graph_use (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... ok
+test_shared_ego_reader_is_foreign_not_inapplicable (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... ok
+test_unrelated_semantic_model_remains_inapplicable (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... ok
+test_ambiguous_stage3_generations_are_not_selected_by_mtime (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_another_tree_cannot_override_the_bound_tree (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_binding_refuses_crossed_export_and_missing_run_identity (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_binding_refuses_source_not_recorded_in_checkpoint (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_binding_requires_every_token_to_match_export (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_checkpoint_bound_asset_configuration_travels_with_source (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_correct_bundle_preserves_recall_logs_and_reproducible_tar (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_crossed_checkpoint_is_refused_before_copy (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_imported_repo_source_and_config_are_archived_and_checked (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_incomplete_log_stream_is_not_archived (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_incomplete_receipt_is_a_value_error_not_an_unbound_archive (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_missing_final_logs_and_binding_fail_closed (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_mutated_source_is_refused_even_with_explicit_tree (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_no_nearby_checkpoint_substitution (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_original_evidence_key_is_not_clobbered (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_source_import_closure_handles_relative_imports_cycles_and_missing_modules (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_stage3_captures_actual_resolved_input_identity (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_stage3_from_another_sid_is_refused_before_copy (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_full_consecutive_thirty_epochs_pass_and_gaps_refuse (tools.issue252.test_performance.PerformanceTests) ... ok
+test_interepoch_structure_gap_is_included (tools.issue252.test_performance.PerformanceTests) ... ok
+
+======================================================================
+ERROR: test_registered_ego_consumer (tools.research.stage2.tests.test_named_graph.NamedGraphTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_named_graph.py", line 35, in test_registered_ego_consumer
+    self.assertEqual(self.inspect(source)['status'], 'PASS')
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_named_graph.py", line 31, in inspect
+    return gc.inspect_tree(tree)
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/graph_contract.py", line 263, in inspect_tree
+    return _inspect_named_tree(tree)
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/graph_contract.py", line 378, in _inspect_named_tree
+    return {"status": "PASS", "tree": str(tree), "detail": stored["detail"],
+KeyError: 'detail'
+
+----------------------------------------------------------------------
+Ran 42 tests in 84.672s
+
+FAILED (errors=1)

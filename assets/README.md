@@ -111,8 +111,20 @@ retaining every expanded-node activation for the whole reconstruction batch.
 This memory partition is not node/edge/reference sampling; the actual loss and
 all parameter gradients are checked against direct activation retention.
 
-The frozen asset graph is not the repository's §89b canonical graph: it is a
-strict subgraph, despite identical training-source hashes. Reproduce the
-comparison with `python3.9 -m tools.issue251.audit_graphs`. Do not replace frozen
-egos/curvature targets or treat imported `EgoStore` readers as graph-free.
-Training admission needs an explicit owner reconciliation of these contracts.
+## Issue #252: named graph `infra246-visible-v2`
+
+The explicit owner reconciliation in issue252 preserves the correct frozen
+visible assets. The independent raw-interaction audit in
+`v7_graph_contract/audit.json` reconstructs all323633 canonical directed edges
+and261132 visible edges, including every integer weight. The62501 absent
+supports are exactly31100 validation-only,31241 test-only and160 shared held-out
+edges; unexplained residual0. Canonical includes structural held-out users and
+must not replace the training-visible graph.
+
+`v7_graph_contract/contract.json` binds raw train, user splits, graph, frozen
+assets, isolation and audit sources. `graph_contract.verify_named_graph`
+checks the pinned receipt and leaf identities on every admission, including
+cache hits. Candidate source, policy and graph generation bind the expensive
+real-entry credential. New lossless performance layouts need same-graph,
+training-only ancestry and source hashes; this is not an arm-name exemption.
+Reproduce the raw audit with `python3.9 -m tools.issue252.graph_audit`.
