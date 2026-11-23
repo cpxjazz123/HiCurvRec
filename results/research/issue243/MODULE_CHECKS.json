@@ -1,0 +1,485 @@
+{
+  "nodes": 128,
+  "edges": 15,
+  "modules": {
+    "manifold.k=-3.0": {
+      "output_norm_mean": 0.4077906608581543,
+      "output_norm_max": 0.4394640028476715,
+      "ball_radius": 0.5773502691896258,
+      "zero_vector_rate": 0.0,
+      "distance_mean": 1.0384283065795898,
+      "distance_std": 0.24708357453346252,
+      "distance_finite": true
+    },
+    "manifold.k=-1.0": {
+      "output_norm_mean": 0.4909300208091736,
+      "output_norm_max": 0.7611739039421082,
+      "ball_radius": 1.0,
+      "zero_vector_rate": 0.0,
+      "distance_mean": 0.9552056193351746,
+      "distance_std": 0.38109999895095825,
+      "distance_finite": true
+    },
+    "manifold.k=0.0": {
+      "output_norm_mean": 0.5523533821105957,
+      "output_norm_max": 1.8956691026687622,
+      "ball_radius": null,
+      "zero_vector_rate": 0.0,
+      "distance_mean": 0.428649365901947,
+      "distance_std": 0.22611002624034882,
+      "distance_finite": true
+    },
+    "manifold.k=1.0": {
+      "output_norm_mean": 0.6055260896682739,
+      "output_norm_max": 0.999000072479248,
+      "ball_radius": 1.0,
+      "zero_vector_rate": 0.0,
+      "distance_mean": 0.6801220774650574,
+      "distance_std": 0.20515167713165283,
+      "distance_finite": true
+    },
+    "manifold.k=3.0": {
+      "output_norm_mean": 0.5729358196258545,
+      "output_norm_max": 0.5767729878425598,
+      "ball_radius": 0.5773502691896258,
+      "zero_vector_rate": 0.0,
+      "distance_mean": 0.4261651933193207,
+      "distance_std": 0.09877588599920273,
+      "distance_finite": true
+    },
+    "kappa_gcn_layer": {
+      "output_shape": [
+        128,
+        16
+      ],
+      "output_norm_mean": 0.0917227640748024,
+      "params": {
+        "bias": {
+          "grad": "present",
+          "l2": 0.010526889003813267,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.03999941051006317
+        },
+        "w_self.weight": {
+          "grad": "present",
+          "l2": 0.0045657893642783165,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.1031978130340576
+        },
+        "w_self.bias": {
+          "grad": "present",
+          "l2": 0.010526889003813267,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.04000553488731384
+        },
+        "w_in.weight": {
+          "grad": "present",
+          "l2": 0.0006068009533919394,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.0847150087356567
+        },
+        "w_out.weight": {
+          "grad": "present",
+          "l2": 0.0006068009533919394,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.0847188234329224
+        }
+      }
+    },
+    "expert.k=-3.0": {
+      "output_norm_mean": 0.326090008020401,
+      "output_norm_max": 0.33889463543891907,
+      "zero_vector_rate": 0.0,
+      "finite": true,
+      "params": {
+        "layer1.bias": {
+          "grad": "present",
+          "l2": 0.013833384960889816,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.0565679594874382
+        },
+        "layer1.w_self.weight": {
+          "grad": "present",
+          "l2": 0.005672415252774954,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.5608433485031128
+        },
+        "layer1.w_self.bias": {
+          "grad": "present",
+          "l2": 0.013833384960889816,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.05656646192073822
+        },
+        "layer1.w_in.weight": {
+          "grad": "present",
+          "l2": 0.0006540932226926088,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.517608880996704
+        },
+        "layer1.w_out.weight": {
+          "grad": "present",
+          "l2": 0.0006540932226926088,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.5176093578338623
+        },
+        "layer2.bias": {
+          "grad": "present",
+          "l2": 0.027691492810845375,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.03999985009431839
+        },
+        "layer2.w_self.weight": {
+          "grad": "present",
+          "l2": 0.0030383882112801075,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.22618989646434784
+        },
+        "layer2.w_self.bias": {
+          "grad": "present",
+          "l2": 0.027691492810845375,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.04003081098198891
+        },
+        "layer2.w_in.weight": {
+          "grad": "present",
+          "l2": 0.00033416267251595855,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.22418347001075745
+        },
+        "layer2.w_out.weight": {
+          "grad": "present",
+          "l2": 0.00033416267251595855,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.22421152889728546
+        }
+      }
+    },
+    "expert.k=-1.0": {
+      "output_norm_mean": 0.33449551463127136,
+      "output_norm_max": 0.3598097860813141,
+      "zero_vector_rate": 0.0,
+      "finite": true,
+      "params": {
+        "layer1.bias": {
+          "grad": "present",
+          "l2": 0.01961412839591503,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.05656800791621208
+        },
+        "layer1.w_self.weight": {
+          "grad": "present",
+          "l2": 0.00846919510513544,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.562060832977295
+        },
+        "layer1.w_self.bias": {
+          "grad": "present",
+          "l2": 0.01961412839591503,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.05657075345516205
+        },
+        "layer1.w_in.weight": {
+          "grad": "present",
+          "l2": 0.001049523358233273,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.5442967414855957
+        },
+        "layer1.w_out.weight": {
+          "grad": "present",
+          "l2": 0.001049523358233273,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.544296383857727
+        },
+        "layer2.bias": {
+          "grad": "present",
+          "l2": 0.03695550560951233,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.0399998277425766
+        },
+        "layer2.w_self.weight": {
+          "grad": "present",
+          "l2": 0.004143218509852886,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.22611784934997559
+        },
+        "layer2.w_self.bias": {
+          "grad": "present",
+          "l2": 0.03695550560951233,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.04002467915415764
+        },
+        "layer2.w_in.weight": {
+          "grad": "present",
+          "l2": 0.0004516535555012524,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.22508765757083893
+        },
+        "layer2.w_out.weight": {
+          "grad": "present",
+          "l2": 0.0004516535555012524,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.2251102477312088
+        }
+      }
+    },
+    "expert.k=0.0": {
+      "output_norm_mean": 0.42438173294067383,
+      "output_norm_max": 0.4727870225906372,
+      "zero_vector_rate": 0.0,
+      "finite": true,
+      "params": {
+        "layer1.bias": {
+          "grad": "present",
+          "l2": 0.02596290223300457,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.056568291038274765
+        },
+        "layer1.w_self.weight": {
+          "grad": "present",
+          "l2": 0.0113217206671834,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.564858317375183
+        },
+        "layer1.w_self.bias": {
+          "grad": "present",
+          "l2": 0.02596290223300457,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.05656808987259865
+        },
+        "layer1.w_in.weight": {
+          "grad": "present",
+          "l2": 0.001322486437857151,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.5503445863723755
+        },
+        "layer1.w_out.weight": {
+          "grad": "present",
+          "l2": 0.001322486437857151,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.550348162651062
+        },
+        "layer2.bias": {
+          "grad": "present",
+          "l2": 0.05285036936402321,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.03999980911612511
+        },
+        "layer2.w_self.weight": {
+          "grad": "present",
+          "l2": 0.00765528017655015,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.22616718709468842
+        },
+        "layer2.w_self.bias": {
+          "grad": "present",
+          "l2": 0.05285036936402321,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.04003212973475456
+        },
+        "layer2.w_in.weight": {
+          "grad": "present",
+          "l2": 0.0008658536244183779,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.22514232993125916
+        },
+        "layer2.w_out.weight": {
+          "grad": "present",
+          "l2": 0.0008658536244183779,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.22514274716377258
+        }
+      }
+    },
+    "expert.k=1.0": {
+      "output_norm_mean": 0.37165459990501404,
+      "output_norm_max": 0.42490190267562866,
+      "zero_vector_rate": 0.0,
+      "finite": true,
+      "params": {
+        "layer1.bias": {
+          "grad": "present",
+          "l2": 0.025294287130236626,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.05656794458627701
+        },
+        "layer1.w_self.weight": {
+          "grad": "present",
+          "l2": 0.010840565897524357,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.5627883672714233
+        },
+        "layer1.w_self.bias": {
+          "grad": "present",
+          "l2": 0.025294287130236626,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.05656638741493225
+        },
+        "layer1.w_in.weight": {
+          "grad": "present",
+          "l2": 0.001299319788813591,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.5458879470825195
+        },
+        "layer1.w_out.weight": {
+          "grad": "present",
+          "l2": 0.001299319788813591,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.5458930730819702
+        },
+        "layer2.bias": {
+          "grad": "present",
+          "l2": 0.05271533876657486,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.03999994322657585
+        },
+        "layer2.w_self.weight": {
+          "grad": "present",
+          "l2": 0.006808385252952576,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.226190984249115
+        },
+        "layer2.w_self.bias": {
+          "grad": "present",
+          "l2": 0.05271533876657486,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.04003104194998741
+        },
+        "layer2.w_in.weight": {
+          "grad": "present",
+          "l2": 0.0008159248391166329,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.2256220579147339
+        },
+        "layer2.w_out.weight": {
+          "grad": "present",
+          "l2": 0.0008159248391166329,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.22562351822853088
+        }
+      }
+    },
+    "expert.k=3.0": {
+      "output_norm_mean": 0.48264986276626587,
+      "output_norm_max": 0.5100929737091064,
+      "zero_vector_rate": 0.0,
+      "finite": true,
+      "params": {
+        "layer1.bias": {
+          "grad": "present",
+          "l2": 0.05811602622270584,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.056568171828985214
+        },
+        "layer1.w_self.weight": {
+          "grad": "present",
+          "l2": 0.02119504287838936,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.5645524263381958
+        },
+        "layer1.w_self.bias": {
+          "grad": "present",
+          "l2": 0.05811602622270584,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.05656635761260986
+        },
+        "layer1.w_in.weight": {
+          "grad": "present",
+          "l2": 0.0015442062867805362,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.5488182306289673
+        },
+        "layer1.w_out.weight": {
+          "grad": "present",
+          "l2": 0.0015442062867805362,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 1.5488158464431763
+        },
+        "layer2.bias": {
+          "grad": "present",
+          "l2": 0.10280399769544601,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.039999932050704956
+        },
+        "layer2.w_self.weight": {
+          "grad": "present",
+          "l2": 0.013755738735198975,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.22624021768569946
+        },
+        "layer2.w_self.bias": {
+          "grad": "present",
+          "l2": 0.10280399769544601,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.040034618228673935
+        },
+        "layer2.w_in.weight": {
+          "grad": "present",
+          "l2": 0.0010575613705441356,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.22604548931121826
+        },
+        "layer2.w_out.weight": {
+          "grad": "present",
+          "l2": 0.0010575613705441356,
+          "nonzero": true,
+          "finite": true,
+          "adam_delta": 0.22605498135089874
+        }
+      }
+    }
+  }
+}
