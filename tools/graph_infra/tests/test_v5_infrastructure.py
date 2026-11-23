@@ -37,7 +37,7 @@ class EgoTests(unittest.TestCase):
             direction = int(block['edge_direction'][index])
             global_source = int(block['nodes'][source])
             global_target = int(block['nodes'][target])
-            has_forward = self.store._has_forward_edge(global_source, global_target)
+            has_forward = bool(self.store.forward[global_source,global_target] != 0)
             self.assertEqual(direction, 1 if has_forward else -1,
                              msg=f'edge {global_source}->{global_target} has the wrong direction')
 

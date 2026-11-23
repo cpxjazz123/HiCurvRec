@@ -36,7 +36,9 @@ def source_binding():
     tree = Path(__file__).resolve().parent
     paths = sorted(tree.rglob('*.py')) + sorted((tree / 'config').glob('*.json'))
     paths += [ROOT / name for name in ('assets/manifest.json',
-        'tools/issue251/launch_validation.py','tools/research/stage2/launcher.py')]
+        'tools/issue251/launch_validation.py','tools/research/stage2/launcher.py',
+        'tools/graph_infra/ego_gnn.py','tools/graph_infra/assets.py',
+        'results/research/issue251/CONTRACT.md')]
     return {str(path.relative_to(ROOT)): sha256(path) for path in paths}
 
 

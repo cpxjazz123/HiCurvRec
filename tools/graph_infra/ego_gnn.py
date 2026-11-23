@@ -19,6 +19,13 @@ FEATURE_NAMES = ('degree_in', 'degree_out', 'reciprocal_degree',
                  'log_degree_in', 'log_degree_out', 'isolated')
 
 
+def _induced_edges(graph, nodes):
+    """Directed local edges from the existing CSR, without Python edge scans."""
+    block=graph[nodes][:,nodes].tocoo(copy=False)
+    order=np.lexsort((block.col,block.row))
+    return np.column_stack((block.row[order],block.col[order])).astype(np.int64,copy=False)
+
+
 class EgoStore:
     """Ego subgraphs of the training-visible graph, with a deterministic 1-hop / 2-hop builder."""
 
@@ -109,47 +116,22 @@ class EgoStore:
             visited |= nxt
             frontier = nxt
         nodes = np.array(sorted(visited), dtype=np.int64)
-        local = {int(g): index for index, g in enumerate(nodes.tolist())}
-        sources, targets, directions = [], [], []
-        for g in nodes.tolist():
-            out_start, out_end = self.forward.indptr[g], self.forward.indptr[g + 1]
-            for target in self.forward.indices[out_start:out_end].tolist():
-                if target in local:
-                    sources.append(local[g])
-                    targets.append(local[target])
-                    directions.append(1)
-            in_start, in_end = self.reverse.indptr[g], self.reverse.indptr[g + 1]
-            for source in self.reverse.indices[in_start:in_end].tolist():
-                if source in local and not self._has_forward_edge(int(source), g):
-                    sources.append(local[source])
-                    targets.append(local[g])
-                    directions.append(-1)
-        edges = np.column_stack([np.array(sources, dtype=np.int64),
-                                  np.array(targets, dtype=np.int64)])
-        edge_direction = np.array(directions, dtype=np.int8)
-        if edges.size == 0:
-            edges = np.zeros((0, 2), dtype=np.int64)
-            edge_direction = np.zeros(0, dtype=np.int8)
-        order = np.lexsort((edges[:, 1], edges[:, 0])) if len(edges) else np.zeros(0, dtype=np.int64)
-        edges = edges[order]
-        edge_direction = edge_direction[order]
+        centre=int(np.searchsorted(nodes,node))
+        edges=_induced_edges(self.forward,nodes)
+        edge_direction=np.ones(len(edges),dtype=np.int8)
         return {
             'root': node,
-            'root_local': int(local[node]),
+            'root_local': centre,
             'nodes': nodes,
-            'local_of': np.array([local[int(g)] for g in nodes.tolist()], dtype=np.int64),
+            'local_of': np.arange(len(nodes),dtype=np.int64),
             'edges': edges,
             'edge_direction': edge_direction,
             'node_mask': np.ones(len(nodes), dtype=bool),
             'edge_mask': np.ones(len(edges), dtype=bool),
             'features': self.node_features()[nodes],
-            'is_centre': np.arange(len(nodes), dtype=np.int64) == local[node],
+            'is_centre': np.arange(len(nodes),dtype=np.int64)==centre,
         }
 
-    def _has_forward_edge(self, source: int, target: int) -> bool:
-        start, end = self.forward.indptr[source], self.forward.indptr[source + 1]
-        indices = self.forward.indices[start:end]
-        return bool(np.any(indices == target))
 
     # ------------------------------------------------------------------ batching
     def collate(self, items, hops: int = 1, standardized: bool = True) -> dict:

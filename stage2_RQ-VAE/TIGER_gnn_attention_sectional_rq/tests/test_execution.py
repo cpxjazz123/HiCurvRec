@@ -19,7 +19,9 @@ class ExecutionTests(unittest.TestCase):
             repo=Path(directory);tree=repo/'candidate';(tree/'config').mkdir(parents=True)
             (tree/'validation_entry.py').write_text('controlled entry')
             for name in ('assets/manifest.json','tools/issue250/launch_validation.py',
-                         'tools/issue251/launch_validation.py','tools/research/stage2/launcher.py'):
+                         'tools/issue251/launch_validation.py','tools/research/stage2/launcher.py',
+                         'tools/graph_infra/ego_gnn.py','tools/graph_infra/assets.py',
+                         'results/research/issue251/CONTRACT.md'):
                 path=repo/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('initial')
             with patch.object(validation_entry,'ROOT',repo),patch.object(
                     validation_entry,'__file__',str(tree/'validation_entry.py')):
@@ -29,6 +31,10 @@ class ExecutionTests(unittest.TestCase):
                     'changing the executed launcher must invalidate checkpoint evidence')
                 self.assertIn('tools/research/stage2/launcher.py',initial)
                 self.assertNotIn('tools/issue250/launch_validation.py',initial)
+                after_launcher=validation_entry.source_binding()
+                (repo/'tools/graph_infra/ego_gnn.py').write_text('changed imported graph kernel')
+                self.assertNotEqual(after_launcher,validation_entry.source_binding(),
+                    'changing an executed external source must invalidate checkpoint evidence')
 
     def test_rank0_calibration_does_not_advance_rotating_floor_history(self):
         import train_rqvae
