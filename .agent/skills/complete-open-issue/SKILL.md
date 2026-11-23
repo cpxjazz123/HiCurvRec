@@ -1,6 +1,6 @@
 ---
 name: complete-open-issue
-description: Use when the task is an open GitHub issue that must be finished end to end. Reads the issue, freezes a machine-checkable acceptance checklist, prepares data and infrastructure, implements with TDD, runs a check loop that re-reads the issue every round, trains when the issue needs it, judges the result against the issue's own criteria, closes the issue either when every criterion passes or when a blockage is reported with evidence, and enforces seven mandatory mechanisms (frozen maths contract, paper cross-check, independent reference implementation, known-answer tests, mutation tests, per-module verification, conclusion re-check) before any result may be claimed.
+description: Use when the task is an open GitHub issue that must be finished end to end. Reads the issue, freezes a machine-checkable acceptance checklist, prepares data and infrastructure, implements with TDD, runs a check loop that re-reads the issue every round, trains when the issue needs it, judges the result against the issue's own criteria, closes the issue either when every criterion passes or when a blockage is reported with evidence, terminates in exactly one of three states (completed, blocked, or in-progress with a PROGRESS.json checkpoint that keeps the issue open while executable work remains), enforces seven mandatory mechanisms (frozen maths contract, paper cross-check, independent reference implementation, known-answer tests, mutation tests, per-module verification, conclusion re-check) before any result may be claimed.
 ---
 
 # 按 open issue 完成任务的闭环
@@ -24,11 +24,17 @@ description: Use when the task is an open GitHub issue that must be finished end
 | 训练失败/指标低 | 按 §4 分类回对应步骤,或按 §5 出负结论并写进 `VERDICT.md` |
 | 遇到需要授权的例外(如 `git push --force`) | 该例外单独处理,但 issue 的其余部分继续推进 |
 | 想先汇报进度再继续 | 先 `gh issue comment` 贴该节点证据,再用 `out://` 说明,然后**继续干活** |
-| **遇到阻塞、失败、或无法在不违反冻结协议下修复的问题** | 立刻 `gh issue comment` 贴证据(命令、输出、文件路径、已排除的解释),然后按 §6.1 **直接关闭 issue** |
+| **遇到阻塞或失败** | 先按 §4 修;确实不可继续时按 §6.2 判定,只有 COMPLETED / BLOCKED 才关闭,其余写 `PROGRESS.json` 并**保持 OPEN** |
+| 本轮预算/上下文不足、任务还剩很多 | **不是阻塞**:写 `PROGRESS.json`、评论、保持 OPEN,下一轮从断点继续 |
+| 参考实现或单模块测试通过 | 不等于生产代码修好,也不等于训练入口正确(§6.5) |
 
-唯一合法的终止点有两个:**§6 全部验收 PASS 后关闭**,或 **§6.1 遇阻塞时的"评论 + 关闭"**。
-遇到失败先按 §3/§4 修;修不动了(要改判据、要改冻结协议、外部条件缺失且无法补齐)就不要再保持 OPEN 空等 ——
-把阻塞点、已尝试的修复、已排除的解释写进评论,写进 `VERDICT.md`,然后关闭。
+终止状态只有三种(§6.2):**COMPLETED**(全部验收 PASS)或 **BLOCKED**(§6.2 允许的外部阻塞)→ 关闭;
+**IN_PROGRESS**(仍有可执行任务,包括本轮预算不足)→ **保持 OPEN** 并写 `PROGRESS.json`(§6.3)。
+
+**工作尚未完成,不等于工作无法完成。** 任务量大、训练耗时长、上下文或单轮预算不足、代码还没写完、
+可修复的 bug —— 都不是阻塞。把这些写成研究任务的客观阻塞,本 skill 明令禁止。
+
+三种状态都必须落到 issue:关闭时贴结论与证据,继续时贴 `PROGRESS.json` 的路径与下一步命令。
 
 ## 强制机制(七项,单 Agent 执行时全部必做)
 
@@ -172,10 +178,15 @@ read issue://<N>                 # 或 gh issue view <N> --json number,title,bod
 轮询单次等待 ≤ 60 秒,每次报告 epoch / 产物 / 进程;禁止 `sleep N; 检查` 丢后台。
 训练完成后按 CLAUDE.md §6b 归档 R2(四件齐全才上传)。
 
-失败先分类再动手:`infra`(数据/环境)→ 回第 1 步;`implementation`(代码/公式)→ 回第 2 步;
-`resource`(预算外推不可行)→ 写进 `VERDICT.md` 并**按 §6.1 评论后关闭**;
+失败先分类再动手:`infra`(数据/环境)→ 回第 1 步;`implementation`(代码/公式)→ 回 §2;
 `experiment`(训练成功但指标低)→ 进入第 5 步。
-同一失败按对应步骤修过一轮仍复现、且已排除的解释都有实测 → 不再重试,按 §6.1 关闭。
+
+**`resource` 不是失败分类。** 工作量大、训练耗时长、上下文或轮次预算不足、代码尚未实现,
+都不是可以据以关闭的理由(§6.2)。
+
+可修复的实现错误必须继续定位。**同一种修复方式失败,要更换诊断方法**,例如:换成独立参考实现对照、
+逐位比对中间张量、构造最小复现、加变异测试定位未被覆盖的分支、缩小到单 batch 单步。
+禁止用「已经修过一轮」当作任务不可完成的结论。
 
 ## 5. 结论对账
 
@@ -198,18 +209,21 @@ gh issue close <N> --comment "结论 + 证据路径 + commit sha"
 gh issue view <N> --json state      # 必须 CLOSED
 ```
 
-关闭前确认:代码已推送(§43)、本地与远端 `main` 同 SHA(§45)、R2 归档完成(若 issue 要求)、
-`VERDICT.md` 里没有遗留 FAIL、**每个 C 的 PASS 都已评论到 issue**,且七项强制机制各有证据文件:
+关闭前必须通过 §6.4 的四问,并确认:代码已推送(§43)、本地与远端 `main` 同 SHA(§45)、
+R2 归档完成(若 issue 要求)、`VERDICT.md` 里没有遗留 FAIL、
+**每个 C 的 PASS 都已评论到 issue 且绑定 `path:sha256`(§6.5)**,且七项强制机制各有证据文件:
 `CONTRACT.md`(含论文对照)、`reference.py` + `tests/test_reference.py`、`tests/test_known_answers.py`、
 `tests/test_mutation.py` + `MUTATIONS.md`、`MODULE_CHECKS.json`、`VERDICT.md` 的复核段。
 
-## 6.1 遇阻塞时的关闭(与 §6 并列的合法终止点)
+## 6.1 遇阻塞时的关闭(BLOCKED)
 
-修不动了就关,不要保持 OPEN 等确认。条件(任一成立):
+只有 §6.2 里判为「是」的三类情形可以关闭:
 
-- 要修就必须改 issue 判据、改冻结协议/护栏,或 `[INFERENCE]` 之外的证据缺口无法补齐;
-- 同一失败在**按步骤修过之后**仍然复现,且已排除的候选解释都有实测(不是猜测);
-- 训练入口的机器闸门(smoke/准入)失败,而绕过它需要违反 §19h/§22/§23 之类的硬规则。
+- **必要的外部资源确认不可用** —— 数据、模型、凭证或硬件缺失,且有命令输出为证;
+- **继续就必须违反冻结协议或硬规则** —— 例如绕过 §19h/§22/§23 的机器闸门;
+- **owner 明确要求终止**。
+
+「工作量大」「训练久」「上下文或轮次预算不足」「代码还没写完」「可修复的 bug」**一律不得**据此关闭。
 
 动作顺序固定:
 
@@ -218,14 +232,87 @@ gh issue view <N> --json state      # 必须 CLOSED
 gh issue comment <N> --body-file results/research/issue<N>/COMMENT_<序号>.md
 # 2) 写 VERDICT.md:已完成项 + 阻塞点 + 已尝试的修复 + 已排除的解释 + 需要 owner 决定的最小放宽
 # 3) 关闭
-gh issue close <N> --comment "阻塞: <一句话>; 证据 <文件路径>; commit <sha>"
+gh issue close <N> --comment "BLOCKED: <一句话>; 证据 <文件路径>; commit <sha>"
 gh issue view <N> --json state      # 必须 CLOSED
 ```
 
 评论里**必须**包含:失败命令与输出原文、`VERDICT.md` 路径、已排除的解释及其实测依据、
-以及"若要继续,最小需要放宽什么"(选项 A/B/C 形式最好)。缺这些就是"没说清的关闭",视为未完成。
+以及"若要继续,最小需要放宽什么"(选项 A/B/C 形式最好)。
 
-关闭不是把问题藏起来:`VERDICT.md` 保留全部证据,续跑时从 §6.1 的"最小放宽"直接接上。
+## 6.2 终止状态与资源阻塞的判定
+
+| 状态 | 含义 | Issue 状态 | 必须留下的东西 |
+|---|---|---|---|
+| **COMPLETED** | 全部验收 PASS,结果可以正面也可以负面 | CLOSED | `VERDICT.md` + 逐条证据 + 关闭评论 |
+| **BLOCKED** | 存在可验证、不可自行解决的外部阻塞 | CLOSED | §6.1 的三类证据 + `VERDICT.md` 的阻塞段 |
+| **IN_PROGRESS** | 尚有任务可执行,包括当前轮次预算不足 | **OPEN** | `PROGRESS.json` + 评论 + 保持 OPEN |
+
+| 情况 | 是否允许提前关闭 |
+|---|---|
+| 剩余任务工作量大 | **否** |
+| 预计训练耗时较长 | **否** |
+| Agent 上下文即将耗尽 | **否** |
+| 当前执行轮次预算不足 | **否** |
+| 代码尚未实现 | **否** |
+| 可修复的代码错误 | **否** |
+| 必要外部资源确认不可用 | 是,需提供证据 |
+| 必须违反冻结协议才能继续 | 是,需提供证据 |
+| 用户明确要求终止 | 是 |
+
+判定的顺序是:先问"还有没有我能执行的下一步"。只要答案是"有",就必须保持 OPEN 并写断点;
+不得把"这一轮做不完"翻译成"这个任务做不了"。
+
+## 6.3 断点恢复协议(`PROGRESS.json`)
+
+执行环境确实无法继续当前轮次时,**不关闭 issue**,写 `results/research/issue<N>/PROGRESS.json`:
+
+```json
+{
+  "issue": 243,
+  "commit": "<当前 HEAD sha256/short>",
+  "state": "IN_PROGRESS",
+  "done": ["C1", "C2", "C4", "C5"],
+  "not_run": ["C17", "C21", "C26"],
+  "failed": [],
+  "running": [{"name": "teacher", "pid": 1234, "checkpoint": "...", "log": "..."}],
+  "next_commands": ["python3 results/research/issue243/teacher.py", "..."],
+  "blocked_by": null,
+  "updated_at": "2026-11-23T18:00:00Z"
+}
+```
+
+规则:
+
+- `commit` 必须与工作区一致;文件入库并推送(§43/§45)。
+- 在 issue 下评论 `PROGRESS.json` 的路径与 `next_commands`,然后**保持 OPEN**。
+- 下一次执行**从这个文件继续**,不得重复 `done` 里的实验,不得重跑已完成的训练。
+- 只有 §6.2 判为「是」的情形才能把 `state` 写成 `BLOCKED` 并关闭。
+
+## 6.4 关闭前强制检查
+
+关闭前必须逐条回答,任何一条答"否"都不允许关闭:
+
+1. **所有生产代码是否已经实现?** —— 不是参考实现、不是骨架、不是打桩。
+2. **所有必要测试是否实际执行?** —— 有输出与退出码,不是"应该能过"。
+3. **所有规定的训练是否已经完成?** —— 有 run_id、日志、checkpoint、指标。
+4. **是否仍然存在可执行的未完成任务?** —— 有,就必须 OPEN + `PROGRESS.json`。
+
+四条答案连同证据写进 `VERDICT.md` 的关闭段。
+
+## 6.5 证据必须绑定最终生产代码
+
+以下四件事**互不替代**:
+
+| 已通过 | **不能**说明 |
+|---|---|
+| 参考实现通过测试 | 生产代码已修复 |
+| 单模块测试通过 | 实际训练入口正确 |
+| smoke 通过 | 正式训练完成 |
+| 训练 loss 下降 | 机制成功、指标达标 |
+
+因此每条验收证据都要绑定**最终实际执行的生产代码**:文件路径 + `sha256sum`,
+以及产生该证据的命令与退出码。改了生产代码之后,同一份证据自动失效,必须重跑。
+`VERDICT.md` 的每条 PASS 都要写出对应的 `path:sha256`。
 
 ## 7. 合同不能证明 issue 的机制主张时
 
@@ -255,3 +342,7 @@ gh issue view <N> --json state      # 必须 CLOSED
 - 不写 `CONTRACT.md` 就开始编码,或实现之后才回头补公式——那是让代码定义语义。
 - 把生产代码自己的输出当正确答案,或参考实现直接 import 生产模块:这是自证,不是验证。
 - 训练跑完直接下结论,没有从原始产物重算头条指标:数字没人复核过。
+- 把"这一轮预算/上下文不够"写成阻塞并关闭 issue:工作没做完不等于做不到(§6.2)。
+- 参考实现通过就宣称生产代码已修复;单模块测试通过就宣称训练入口正确;smoke 通过就宣称正式训练完成(§6.5)。
+- 同一种修复方式失败一次就认定任务不可完成:应当更换诊断方法(§4)。
+- 关闭时仍有可执行的未完成任务:必须 OPEN + `PROGRESS.json`(§6.3/§6.4)。
