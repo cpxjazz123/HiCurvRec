@@ -2763,12 +2763,16 @@ def run_agent_verification(tree: Path, verification_id: str) -> dict:
 
 
 def _checks_fingerprint() -> str:
-    """A digest of the conformance checks themselves, for the cache key."""
+    """Bind admission and the shared runtime exercised by the real entry."""
     import hashlib
     digest = hashlib.sha256()
-    for name in ("checks.py", "ddp_probe.py"):
-        path = REPO / "tools" / "research" / "stage2" / name
-        if path.is_file():
+    for directory in ("tools/research/stage2", "tools/graph_infra"):
+        for path in sorted((REPO / directory).rglob("*.py")):
+            relative = path.relative_to(REPO)
+            if {"tests", "__pycache__"} & set(relative.parts):
+                continue
+            digest.update(str(relative).encode("utf-8"))
+            digest.update(b"\0")
             digest.update(path.read_bytes())
     return digest.hexdigest()[:12]
 
@@ -2776,6 +2780,7 @@ def _checks_fingerprint() -> str:
 def _conformance_report(tree: Path, digest: str) -> dict:
     """The frozen engineering checks of one tree, cached by its source digest."""
     import importlib
+    stage2_checks = importlib.import_module("tools.research.stage2.checks")
 
     cache_root = REPO / "results" / "research" / "_conformance"
     cache_root.mkdir(parents=True, exist_ok=True)
@@ -2788,12 +2793,21 @@ def _conformance_report(tree: Path, digest: str) -> dict:
     if cache.is_file():
         try:
             cached = json.loads(cache.read_text(encoding="utf-8"))
-            if cached.get("passed") is not None:
+            if (cached.get("passed") is not None and cached.get("digest") == digest
+                    and cached.get("checks_fingerprint") == _checks_fingerprint()
+                    and any(c.get("name") == "behavior_graph" for c in cached.get("checks", []))):
+                # Graph artifacts can change without changing trainer source.
+                # Reuse the expensive entry, never the mutable graph verdict.
+                graph = stage2_checks.check_behavior_graph(tree)
+                cached["checks"] = [graph if c.get("name") == "behavior_graph" else c
+                                    for c in cached["checks"]]
+                cached["passed"] = all(c.get("status") in ("PASS", "NOT_APPLICABLE")
+                                       for c in cached["checks"])
+                cached["admissible"] = cached["passed"]
                 return cached
         except (OSError, ValueError):
             pass
     try:
-        stage2_checks = importlib.import_module("tools.research.stage2.checks")
         report = stage2_checks.run_all(tree)
     except Exception as exc:                                  # noqa: BLE001
         report = {"tree": str(tree), "passed": False,
@@ -2809,9 +2823,10 @@ def _conformance_report(tree: Path, digest: str) -> dict:
     # for the one-epoch check once. A crash here must not take the admission
     # down with it: a report that cannot be cached is still a report.
     try:
-        from tools.research.core.evidence import atomic_json
-        atomic_json(cache, report)
-    except Exception:                                      # noqa: BLE001
+        temporary = cache.with_suffix(".json.tmp")
+        temporary.write_text(json.dumps(report, indent=2), encoding="utf-8")
+        os.replace(temporary, cache)
+    except OSError:
         pass
     return report
 
@@ -2908,27 +2923,25 @@ def _source_digest_of(tree: Path) -> str:
 def machine_admission(tree: Path) -> dict:
     """Admission for a tree whose verification is the MACHINE checks.
 
-    The agent review stage was removed: the five verifier roles, their prompts,
-    the repair planner and their tools are gone. What remains as admission is the
-    framework's own executable checks, which is what the policy asks for now:
-    the frozen constants and the launcher, a real one-epoch entry run, a
-    technically valid identifier and the four-rank probe. A tree that passes them
-    may be trained without any agent verdict.
+    The machine gate consists of the real one-epoch entry and the behavior-graph
+    contract. Cache the source-bound entry result across MCP reconnects while
+    checking graph integrity afresh on every cached request.
     """
-    import importlib
     # The checks module is part of a package (it imports the contract relatively),
     # so it is imported as one; the repository root has to be on the path, and the
     # Stage 2 worker does not put it there.
     if str(REPO) not in sys.path:
         sys.path.insert(0, str(REPO))
-    checks = importlib.import_module("tools.research.stage2.checks")
-    report = checks.run_all(tree)
+    from tools.research.verification.admission import source_digest
+    report = _conformance_report(tree, source_digest(tree))
     failing = [check["name"] + ": " + str(check["detail"])[:200]
                for check in report.get("checks", [])
                if check.get("status") not in ("PASS", "NOT_APPLICABLE")]
     return {"passed": bool(report.get("passed")),
             "refused": "; ".join(failing) if failing else None,
             "checks": report.get("checks", []),
+            "source_digest": report.get("digest"),
+            "checks_fingerprint": report.get("checks_fingerprint"),
             "tree": str(tree)}
 
 

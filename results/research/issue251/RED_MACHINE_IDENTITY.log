@@ -1,0 +1,23 @@
+test_cached_entry_cannot_hide_a_changed_graph_verdict (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_cached_entry_cannot_hide_a_changed_graph_verdict) ... FAIL
+test_shared_runtime_change_invalidates_entry_identity (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_shared_runtime_change_invalidates_entry_identity) ... FAIL
+
+======================================================================
+FAIL: test_cached_entry_cannot_hide_a_changed_graph_verdict (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_cached_entry_cannot_hide_a_changed_graph_verdict)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_machine_cache.py", line 94, in test_cached_entry_cannot_hide_a_changed_graph_verdict
+    self.assertFalse(result['passed'],'a cached entry must not bypass current graph integrity')
+AssertionError: True is not false : a cached entry must not bypass current graph integrity
+
+======================================================================
+FAIL: test_shared_runtime_change_invalidates_entry_identity (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_shared_runtime_change_invalidates_entry_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_machine_cache.py", line 107, in test_shared_runtime_change_invalidates_entry_identity
+    self.assertNotEqual(before,module._checks_fingerprint(),
+AssertionError: 'fb1f1e0235c2' == 'fb1f1e0235c2' : shared GNN runtime changes must invalidate the entry verdict
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.069s
+
+FAILED (failures=2)

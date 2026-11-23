@@ -1,0 +1,34 @@
+test_configuration_change_cannot_reuse_old_admission (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_configuration_change_cannot_reuse_old_admission) ... ok
+test_conformance_result_publication_survives_reconnect (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_conformance_result_publication_survives_reconnect) ... FAIL
+test_graph_checker_change_invalidates_cache_policy_identity (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_graph_checker_change_invalidates_cache_policy_identity) ... FAIL
+test_not_run_is_not_cached_as_an_executed_verdict (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_not_run_is_not_cached_as_an_executed_verdict) ... ok
+test_public_machine_calls_reuse_the_result_after_server_restart (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_public_machine_calls_reuse_the_result_after_server_restart) ... FAIL
+
+======================================================================
+FAIL: test_conformance_result_publication_survives_reconnect (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_conformance_result_publication_survives_reconnect)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_machine_cache.py", line 59, in test_conformance_result_publication_survives_reconnect
+    self.assertEqual(runner.call_count,1,'completed verdict must be atomically published, not silently discarded')
+AssertionError: 2 != 1 : completed verdict must be atomically published, not silently discarded
+
+======================================================================
+FAIL: test_graph_checker_change_invalidates_cache_policy_identity (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_graph_checker_change_invalidates_cache_policy_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_machine_cache.py", line 79, in test_graph_checker_change_invalidates_cache_policy_identity
+    self.assertNotEqual(before,module._checks_fingerprint(),
+AssertionError: 'fb1f1e0235c2' == 'fb1f1e0235c2' : changed graph admission policy must invalidate cached verdicts
+
+======================================================================
+FAIL: test_public_machine_calls_reuse_the_result_after_server_restart (tools.research.stage2.tests.test_machine_cache.MachineCacheTests.test_public_machine_calls_reuse_the_result_after_server_restart)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_machine_cache.py", line 48, in test_public_machine_calls_reuse_the_result_after_server_restart
+    self.assertEqual(runner.call_count,1,'cached machine calls must not repeat the expensive entry')
+AssertionError: 3 != 1 : cached machine calls must not repeat the expensive entry
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.172s
+
+FAILED (failures=3)
