@@ -45,6 +45,24 @@ MUTATIONS = [
      "    numerator = (1.0 - 2.0 * k * xy - k * y2) * x + (1.0 + k * x2) * y",
      "    numerator = (1.0 - 2.0 * k * xy - k * y2) * x - (1.0 + k * x2) * y",
      "tests/test_reference.py"),
+    # issue #244: the three spherical defects that produced pi/2 in #243
+    # NOTE: an earlier draft replaced the spherical closed form with 2*tan_k^-1(|(-x)+_k y|)
+    # and "survived".  That replacement is not a defect: with the domain unclamped the two
+    # forms agree to 1e-15 (verified in reference.py), which is exactly how #243's real bug
+    # was masked.  The real #243 defect was the hyperbolic radius clamp, covered by
+    # sphere-proju-hyperbolic-clamp below.  This mutation halves the distance instead.
+    ("sphere-distance-halved", "numeric", "manifold.py",
+     "        return radius * torch.acos((numerator / denominator).clamp(-1.0, 1.0))",
+     "        return 0.5 * radius * torch.acos((numerator / denominator).clamp(-1.0, 1.0))",
+     "tests/test_reference.py"),
+    ("sphere-logmap-drops-radius", "numeric", "manifold.py",
+     "        mapped = 2.0 * radius * torch.atan(norm / radius)  # theta = 2R*arctan(r/R)",
+     "        mapped = 2.0 * torch.atan(norm / radius)",
+     "tests/test_reference.py"),
+    ("sphere-proju-hyperbolic-clamp", "structural", "manifold.py",
+     "    if k > 0:\n        guard = 1e6 / math.sqrt(k)\n        scale = torch.where(norm > guard, guard / norm.clamp(min=EPS), torch.ones_like(norm))\n        return x * scale",
+     "    if k > 0:\n        maxnorm = (1.0 - eps) / math.sqrt(abs(k))\n        scale = torch.where(norm > maxnorm, maxnorm / norm.clamp(min=EPS), torch.ones_like(norm))\n        return x * scale",
+     "tests/test_reference.py"),
 ]
 
 

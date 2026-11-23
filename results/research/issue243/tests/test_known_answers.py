@@ -30,7 +30,8 @@ def test_self_distance_is_zero():
         for _ in range(10):
             x = ref.proju(rng.normal(size=4) * 0.3, k)
             d = ref.dist(x, x, k)[0]
-            approx(d, 0.0, 1e-9, f"self-distance k={k}")
+            # k>0 goes through arccos, whose conditioning near 1 costs ~1e-8 in float64
+            approx(d, 0.0, 1e-6 if k > 0 else 1e-9, f"self-distance k={k}")
 
 
 def test_hyperbolic_radial_known_answers():
@@ -121,10 +122,59 @@ def test_exp_log_round_trip():
 
 
 def test_projection_keeps_origin_and_clamps():
-    for k in (-1.0, 1.0):
-        assert np.allclose(ref.proju(np.zeros((1, 3)), k), 0.0), "zero must stay zero"
-        far = ref.proju(np.array([[10.0, 0.0, 0.0]]), k)
-        assert np.linalg.norm(far) < 1.0 / math.sqrt(abs(k)), "radius must be clamped"
+    assert np.allclose(ref.proju(np.zeros((1, 3)), -1.0), 0.0), "zero must stay zero"
+    assert np.allclose(ref.proju(np.zeros((1, 3)), 1.0), 0.0), "zero must stay zero"
+    # hyperbolic: clamped inside the ball
+    hyperbolic = ref.proju(np.array([[10.0, 0.0, 0.0]]), -1.0)
+    assert np.linalg.norm(hyperbolic) < 1.0, "hyperbolic radius must be clamped"
+    # spherical: the stereographic plane is unbounded, so a finite point must survive
+    spherical = ref.proju(np.array([[10.0, 0.0, 0.0]]), 1.0)
+    assert np.allclose(spherical, [[10.0, 0.0, 0.0]]), "positive curvature must not clamp"
+
+
+def test_sphere_stereographic_known_answers():
+    """Issue #244 §1: the stereographic sphere is not the Poincare ball.
+
+    x = 0.9 and y = -0.9 on the unit sphere sit at 4*atan(0.9), not at pi/2.  The values
+    below are derived from three-dimensional geometry, independent of any closed form.
+    """
+    k = 1.0
+    approx(ref.dist(np.array([[0.9]]), np.array([[-0.9]]), k)[0], 4.0 * math.atan(0.9), 1e-9,
+           "0.9 / -0.9")
+    approx(ref.dist(np.array([[0.9]]), np.array([[-0.9]]), k)[0], 2.93126, 1e-5, "issue value")
+    # near-antipodal: r -> 1 tends to pi
+    approx(ref.dist(np.array([[0.999]]), np.array([[-0.999]]), k)[0],
+           4.0 * math.atan(0.999), 1e-9, "near-antipodal")
+    assert ref.dist(np.array([[0.999]]), np.array([[-0.999]]), k)[0] < math.pi
+    # coincident points
+    approx(ref.dist(np.array([[0.4, 0.3]]), np.array([[0.4, 0.3]]), k)[0], 0.0, 1e-12, "coincident")
+    # across the equator: u=(0.5,0), v=(0,0.5) -> arccos(0.36), checked against 3-D points
+    u = np.array([[0.5, 0.0]])
+    v = np.array([[0.0, 0.5]])
+    pu = ref.stereo_to_sphere(u, k)[0]
+    pv = ref.stereo_to_sphere(v, k)[0]
+    approx(ref.dist(u, v, k)[0], math.acos(float((pu * pv).sum())), 1e-12, "across equator")
+    approx(ref.dist(u, v, k)[0], math.acos(0.36), 1e-12, "across equator value")
+
+
+def test_sphere_exp_log_are_consistent_with_distance():
+    k = 1.0
+    for tangent in (0.1, 0.4, 1.0, 2.5):
+        point = ref.expmap0(np.array([[tangent, 0.0]]), k)
+        approx(ref.dist(np.zeros((1, 2)), point, k)[0], tangent, 1e-9,
+               f"dist(0, expmap0({tangent}))")
+        back = ref.logmap0(point, k)
+        approx(back[0, 0], tangent, 1e-9, f"logmap0(expmap0({tangent}))")
+
+
+def test_euclidean_is_the_documented_flat_limit():
+    """CONTRACT: with the standard normalisations the Poincare distance is 2x Euclidean in
+    the flat limit, so k=0 is a separate space, not a continuous limit.  This pins that
+    documented convention instead of letting it drift."""
+    r = 1e-4
+    hyperbolic = ref.dist(np.zeros((1, 1)), np.array([[r]]), -1e-8)[0]
+    euclidean = ref.dist(np.zeros((1, 1)), np.array([[r]]), 0.0)[0]
+    approx(hyperbolic / max(euclidean, 1e-12), 2.0, 1e-3, "flat-limit ratio is 2")
 
 
 def test_spearman_with_ties():

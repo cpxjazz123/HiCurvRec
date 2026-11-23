@@ -73,6 +73,37 @@ def test_distance_matches_reference_and_known_answers():
     assert abs(float(manifold.dist(zero, e1, 0.0)) - 1.0) < 1e-6
 
 
+def test_sphere_distance_is_not_the_poincare_formula():
+    """The exact #243 bug: the Poincare formula returns pi/2 here; the sphere returns 4*atan(0.9)."""
+    x = torch.tensor([[0.9]])
+    y = torch.tensor([[-0.9]])
+    actual = float(manifold.dist(x, y, 1.0))
+    assert abs(actual - 4.0 * math.atan(0.9)) < 1e-6, actual
+    assert abs(actual - math.pi / 2) > 1.0, "must not collapse to the Poincare value"
+    assert abs(float(manifold.dist(x, x, 1.0))) < 1e-9
+
+
+def test_sphere_matches_reference_over_a_grid():
+    rng = np.random.default_rng(77)
+    for k in (0.5, 1.0, 3.0):
+        radius = 1.0 / math.sqrt(k)
+        x = rng.normal(size=(16, 3)) * radius * 3.0
+        y = rng.normal(size=(16, 3)) * radius * 3.0
+        produced = manifold.dist(torch.tensor(x), torch.tensor(y), k).numpy()
+        assert np.allclose(produced, ref.dist(x, y, k), atol=TOL), f"sphere k={k}"
+        assert np.allclose(manifold.expmap0(torch.tensor(x), k).numpy(), ref.expmap0(x, k), atol=TOL)
+        assert np.allclose(manifold.logmap0(torch.tensor(x), k).numpy(), ref.logmap0(x, k), atol=TOL)
+
+
+def test_sphere_projection_does_not_use_the_hyperbolic_radius():
+    """k>0 coordinates are unbounded; a 5/sqrt(k) radius must survive projection intact."""
+    k = 1.0
+    far = torch.tensor([[5.0, 0.0]])
+    assert torch.allclose(manifold.proju(far, k), far), "positive curvature must not be ball-clamped"
+    # and the distance to a far point is finite and below pi*R
+    assert float(manifold.dist(torch.zeros(1, 2), far, k)) < math.pi / math.sqrt(k)
+
+
 def test_distance_is_not_double_scaled():
     """The #242 bug: a 2x coefficient. This pins k=-3 against the hand value."""
     e1 = torch.tensor([[1.0, 0.0, 0.0]])
@@ -136,7 +167,9 @@ def test_expert_output_lives_in_its_manifold():
         edges = torch.tensor([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6]])
         z = expert(x, edges, edges)
         assert z.shape == (7, 4)
-        if k != 0:
+        # k<0 lives in a ball of radius 1/sqrt|k|; k>0 is a stereographic plane and has no
+        # radius bound at all, so only finiteness (and a valid sphere point) can be asserted
+        if k < 0:
             radius = 1.0 / math.sqrt(abs(k))
             assert float(z.norm(dim=-1).max()) <= radius + 1e-5, f"expert escaped its ball k={k}"
         assert torch.isfinite(z).all()

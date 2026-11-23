@@ -42,27 +42,49 @@ def tan_k_inv(u, k: float):
 
 
 def proju(x: np.ndarray, k: float, eps: float = 1e-3) -> np.ndarray:
-    """Project into the open ball of radius (1-eps)/sqrt|k|; the origin stays the origin."""
+    """Clamp into the coordinate domain of the model.
+
+    k < 0: the open Poincare ball of radius (1-eps)/sqrt|k|.
+    k > 0: the stereographic plane has **no hyperbolic radius bound** -- every finite
+           coordinate is a valid sphere point (the projection pole sits at infinity), so
+           only a large numerical guard is applied.  #243 used the hyperbolic clamp here,
+           which is one of the reasons the spherical distance was wrong.
+    k = 0: identity.
+    """
     x = np.asarray(x, dtype=np.float64)
     if k == 0:
         return x.copy()
-    maxnorm = (1.0 - eps) / math.sqrt(abs(k))
     norm = np.linalg.norm(x, axis=-1, keepdims=True)
-    scaled = np.where(norm > maxnorm, x * (maxnorm / np.maximum(norm, EPS)), x)
-    return scaled
+    if k > 0:
+        guard = 1e6 / math.sqrt(k)
+        return np.where(norm > guard, x * (guard / np.maximum(norm, EPS)), x)
+    maxnorm = (1.0 - eps) / math.sqrt(abs(k))
+    return np.where(norm > maxnorm, x * (maxnorm / np.maximum(norm, EPS)), x)
 
 
 def expmap0(x: np.ndarray, k: float) -> np.ndarray:
+    """k > 0: r = R * tan(theta / 2R) with R = 1/sqrt(k), so that dist(0, expmap0(v)) = |v|."""
     x = np.asarray(x, dtype=np.float64)
     norm = np.linalg.norm(x, axis=-1, keepdims=True)
-    scale = np.where(norm > EPS, tan_k(norm, k) / np.maximum(norm, EPS), 1.0)
+    if k > 0:
+        radius = 1.0 / math.sqrt(k)
+        mapped = radius * np.tan(norm / (2.0 * radius))
+    else:
+        mapped = tan_k(norm, k)
+    scale = np.where(norm > EPS, mapped / np.maximum(norm, EPS), 1.0)
     return proju(scale * x, k)
 
 
 def logmap0(y: np.ndarray, k: float) -> np.ndarray:
+    """k > 0: theta = 2 * arctan(r / R); inverse of expmap0 above."""
     y = proju(y, k)
     norm = np.linalg.norm(y, axis=-1, keepdims=True)
-    scale = np.where(norm > EPS, tan_k_inv(norm, k) / np.maximum(norm, EPS), 1.0)
+    if k > 0:
+        radius = 1.0 / math.sqrt(k)
+        mapped = 2.0 * radius * np.arctan(norm / radius)  # theta = 2R*arctan(r/R)
+    else:
+        mapped = tan_k_inv(norm, k)
+    scale = np.where(norm > EPS, mapped / np.maximum(norm, EPS), 1.0)
     return scale * y
 
 
@@ -83,17 +105,43 @@ def mobius_matvec(matrix: np.ndarray, x: np.ndarray, k: float) -> np.ndarray:
     return expmap0(matrix @ logmap0(x, k), k)
 
 
+def stereo_to_sphere(u: np.ndarray, k: float) -> np.ndarray:
+    """Inverse stereographic projection onto S^(d+1) of radius R = 1/sqrt(k).
+
+    This is the *definition* of the positive-curvature model, so the reference distance
+    below uses the three-dimensional points and an angle, not a stereographic closed form.
+    """
+    u = np.atleast_2d(np.asarray(u, dtype=np.float64))
+    radius = 1.0 / math.sqrt(k)
+    squared = (u * u).sum(-1, keepdims=True)
+    # The radius is NOT a global scale factor: the stereographic coordinate itself is
+    # measured in the same units, so R must appear inside the construction.
+    r2 = radius * radius
+    planar = 2.0 * r2 * u / (r2 + squared)
+    height = radius * (squared - r2) / (r2 + squared)
+    return np.concatenate([planar, height], axis=-1)
+
+
 def dist(x: np.ndarray, y: np.ndarray, k: float) -> np.ndarray:
-    """Unified κ-stereographic distance (CONTRACT §1.6), the official/geoopt form."""
+    """Distance in the model of curvature ``k``.
+
+    k > 0: computed through the inverse stereographic projection -- R * arccos(<P,Q>/R^2).
+           The Mobius/tan_k^-1 form is the **Poincare** formula and is not valid here.
+    k < 0: Poincare ball, 2 * tan_k^-1(|(-x) +_k y|).
+    k = 0: Euclidean.
+    """
     x = np.atleast_2d(np.asarray(x, dtype=np.float64))
     y = np.atleast_2d(np.asarray(y, dtype=np.float64))
     if k == 0:
         return np.linalg.norm(x - y, axis=-1)
+    if k > 0:
+        radius = 1.0 / math.sqrt(k)
+        left = stereo_to_sphere(x, k)
+        right = stereo_to_sphere(y, k)
+        cosine = (left * right).sum(-1) / (radius * radius)
+        return radius * np.arccos(np.clip(cosine, -1.0, 1.0))
     moved = mobius_add(-x, y, k)
-    norm = np.linalg.norm(moved, axis=-1)
-    # tan_k_inv already carries the sqrt|k| inside; multiplying the argument by sqrt|k|
-    # as well adds a spurious factor (only invisible at |k| = 1).
-    return 2.0 * tan_k_inv(norm, k)
+    return 2.0 * tan_k_inv(np.linalg.norm(moved, axis=-1), k)
 
 
 def dist_arcosh(x: np.ndarray, y: np.ndarray, k: float) -> np.ndarray:
