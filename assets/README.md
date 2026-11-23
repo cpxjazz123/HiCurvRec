@@ -1,0 +1,63 @@
+# `assets/` — persisted graph infrastructure assets
+
+This directory holds a **flattened copy** of the issue #248 asset family
+(`v4-full-sectional-248`). The canonical build stays in
+`results/research/issue248/assets/`; every file here is byte-identical to it (same sha256),
+and `manifest.json` here has its `path` fields repointed at `assets/` while keeping a
+`copy_of` field for each copied asset.
+
+## What is here
+
+| Path | Content |
+|---|---|
+| `manifest.json` | 62 assets: path, use (`training` / `evaluation` / `description`), schema, bytes, sha256, origin, command; plus input hashes, source commit, source-code hashes and the #246/#247 audit |
+| `coverage.json` | triple counts, per-centre expectations, component statistics, sampling declarations, shard inventory, runtime and storage cost |
+| `index.npz` | `item_shard`, `item_start`, `item_count`, `shard_names`, `total_rows`, `structure_class_counts`, `expected_pairs_per_centre`, `expected_total_rows` |
+| `item_summary.npz` | per item: total/valid/invalid triple counts, positive/zero/negative counts and ratios, mean, variance, minimum, maximum, quantiles, missing reason |
+| `distance_histogram.npz` | the exact per-node distance histogram (ragged `offsets`/`counts`) — the lossless intermediate every distance moment is recomputed from |
+| `node_moments.npz` | per node: `s1`, `s2`, eccentricity, component, component size, in/out/reciprocal degrees |
+| `shards/shard_000..012.npz` | the full triple table (28,391,948 rows): centre, b, c, `bc_dist_sq`, curvature, effective reference count, validity mask, invalid reason, directed structure class |
+| `train/` | the visible forward/reverse/undirected graphs and the item-id map |
+
+The frozen #246 and #247 assets (visible graph, splits, held-out support, ego, graphlet/orbit
+banks, relation banks, semantic embeddings, the frozen TIGER SID) are **referenced** by immutable
+hash from their own trees, not copied here.
+
+## Reading it
+
+```python
+from pathlib import Path
+from tools.graph_infra.full_assets import FullAssets
+assets = FullAssets(Path('.'), Path('assets'))
+assets.verify()                              # recompute every hash
+assets.item_triples(item_id)                 # every triple of one item
+assets.triple(m, b, c)                       # exact lookup
+assets.structure_class_counts()              # rows per canonical directed 3-node class
+```
+
+Training and evaluation stay separated:
+
+```python
+from tools.graph_infra.interfaces_v4 import TrainingView, EvaluationView
+training = TrainingView(Path('.'), Path('assets'))   # refuses any evaluation asset
+held    = EvaluationView(Path('.'), Path('assets'))  # serves only the strict banks
+```
+
+## What the curvature is
+
+GraphMoRE (arXiv 2412.11085v1, Appendix A.1, Eq. A.1) — the sectional curvature of the geodesic
+triangle formed by a centre `m` and two of its neighbours `b, c`:
+
+```
+kappa(m;b,c) = mean_{a in R(m)} [ g(a,m)^2 + g(b,c)^2/4 - ( g(a,b)^2 + g(a,c)^2 )/2 ]
+```
+
+`g` is the unweighted shortest-path distance on the **undirected projection** of the visible
+directed graph, so this is not a directed sectional curvature; direction survives in the
+reciprocal flags and in the per-triple structure class. `R(m)` is the centre's whole connected
+component; unreachable nodes are excluded from the mean and never imputed as zero, and no vertex
+is excluded from the reference set (`a = m, b, c` are valid references, as in the paper's sum
+over `V`). Items with no legal neighbour pair carry a missing reason and NaN statistics.
+
+The binaries stay out of git under the repository's `results/research/**` rules; the manifest,
+coverage report and this note are the committed evidence.
