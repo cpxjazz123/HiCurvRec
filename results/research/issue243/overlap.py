@@ -49,9 +49,9 @@ def close_pairs(nodes, out_csr, undirected):
             if target in index:
                 # symmetric: the distance we compare against is on the undirected projection
                 rows.append(index[int(node)]); cols.append(index[target]); data.append(1.0)
-                rows.append(index[target]); cols.append(source); data.append(1.0)
+                rows.append(index[target]); cols.append(index[int(node)]); data.append(1.0)
     if not rows:
-        return {}
+        return None
     import scipy.sparse as sp
     matrix = sp.csr_matrix((data, (rows, cols)), shape=(len(nodes), len(nodes)))
     distance = csgraph.shortest_path(matrix, method="D", unweighted=True)
@@ -104,7 +104,7 @@ def main() -> int:
         for sample in samples:
             nodes = [int(x) for x in sample["nodes"].tolist()]
             distance = close_pairs(nodes, out_csr, undirected)
-            if not distance:
+            if distance is None:
                 continue
             local_index = [position[x] for x in nodes]
             ii, jj, gaps = [], [], []
@@ -114,7 +114,9 @@ def main() -> int:
                         continue
                     gap = distance[a, b]
                     if np.isfinite(gap) and gap > 0:
-                        ii.append(local_index[a]); jj.append(local_index[b]); gaps.append(float(gap))
+                        # store SUBGRAPH positions here; item ids and descriptor rows are
+                        # derived below so the two index spaces cannot be mixed up again
+                        ii.append(a); jj.append(b); gaps.append(float(gap))
             if len(ii) < 6:
                 continue
             # model.distance indexes the FULL embedding matrix, so these must be item ids,

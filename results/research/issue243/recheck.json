@@ -1,0 +1,54 @@
+{
+  "checks": {
+    "sphere_0.9_-0.9": {
+      "recomputed": 2.931260585784912,
+      "expected": 2.931260407146026,
+      "ok": true
+    },
+    "calibration_spread": {
+      "before": 16.129175773294754,
+      "after": 1.0000820149208933,
+      "reported": 1.0000820149208933,
+      "ok": true
+    },
+    "overlap_aggregates": {
+      "reported": {
+        "centres": 400,
+        "mean_E": 0.6708754449089369,
+        "worst_E_mean": 0.730113724321127,
+        "p90_E_mean": 0.7232874098122121,
+        "simultaneous_fidelity": 0.025,
+        "uniform_gate_mean_E": 0.6671934366971254,
+        "single_expert_mean_E": [
+          0.6856223806738858,
+          0.8279553886751343,
+          1.08902306129535,
+          0.7384265754371881,
+          0.8317199454208208
+        ]
+      },
+      "recomputed_from_stored_subset": {
+        "centres_in_file": 50,
+        "mean_E": 0.6821354228258133,
+        "worst_E_mean": 0.7427543818950653,
+        "simultaneous_fidelity": 0.04
+      },
+      "note": "overlap.json stores the first 50 centres; the reported aggregate uses all 400, so the two are expected to differ slightly",
+      "ok": true
+    },
+    "evaluation_consistency": {
+      "spearman_d_geo_gap": 0.4074390030016872,
+      "beats_semantic": true,
+      "beats_jaccard": false,
+      "ok": true,
+      "note": "recomputing the Spearman values needs a fresh forward pass; only their ordering and the recorded verdict are checked here"
+    },
+    "gate_vs_pair_weights": {
+      "node_gate_max": 0.9996365904808044,
+      "pair_weight_max": 0.40443041920661926,
+      "ok": true,
+      "note": "node-level collapse does not transfer to pair weights, exactly as the issue warns"
+    }
+  },
+  "all_ok": true
+}
