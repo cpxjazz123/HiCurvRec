@@ -388,8 +388,9 @@ def main() -> None:
                     _curv_targets, _step_index, seed=SEED).to(device)
                 _lookup = curv_supervision.q_lookup_from_model(raw_module, all_embeddings, device)
                 k_q = curv_supervision.curvature_of_nodes(_lookup, _curv_targets, _idx, device)
+                _k_g = _curv_targets["k_g"][_idx.cpu() if _idx.is_cuda else _idx].to(device)
                 l_curv = curvature_fidelity_loss(
-                    k_q, _curv_targets["k_g"][_idx].to(device),
+                    k_q, _k_g,
                     scale=CAL_SCALE_S, delta=CAL_HUBER_DELTA, access_behavior=ACCESS_BEHAVIOR)
             else:
                 l_curv = torch.zeros((), device=device)

@@ -107,18 +107,28 @@ def main() -> int:
         latent = model.encoder(vectors)
         indices = model.rq(latent)[3]                     # (N, 3) hard codes
         hard_q = torch.zeros_like(latent)
+        residual = latent
         for level, layer in enumerate(model.rq.vq_layers):
-            hard_q = hard_q + layer.get_code_embs()[indices[:, level]]
+            code = layer.get_code_embs()[indices[:, level]]
+            hard_q = hard_q + code
+            residual = residual - code
+        # `residual` is now the L3 residual: exactly what the mixed distance is evaluated on,
+        # because the balanced level quantises the residual, not the encoder output.
 
-    # --- 3. mapping scale from the baseline latents ---------------------------
+    # --- 3. mapping scale from the L3 residual the metric actually sees -------
+    # Calibrating on the encoder output instead saturates tanh: the L3 residual is orders of
+    # magnitude smaller, so every point collapsed to the same ball radius and the assignment
+    # matrix became constant (the first three smokes failed on exactly that).
     spans = []
     offset = 0
     for d in mixed.DIMS:
         spans.append(slice(offset, offset + d))
         offset += d
-    rms = {name: float(latent[:, span].pow(2).mean().sqrt())
+    rms = {name: float(residual[:, span].pow(2).mean().sqrt())
            for name, span in zip(("hyperbolic", "euclidean", "spherical"), spans)}
     mapping_scale = float(np.mean(list(rms.values())))
+    if not mapping_scale > 0:
+        raise SystemExit("the L3 residual is degenerate; refusing to calibrate on it")
     mixed.set_scale(mapping_scale)
 
     # --- 4. K_q on the frozen baseline's hard q -------------------------------
@@ -180,6 +190,7 @@ def main() -> int:
             "curvature": list(mixed.CURVATURE),
             "mapping_scale": mapping_scale,
             "block_rms": rms,
+            "calibrated_on": "frozen baseline L3 residual (the tensor the balanced level sees)",
         },
         "target": {
             "global_scale_s": global_scale,

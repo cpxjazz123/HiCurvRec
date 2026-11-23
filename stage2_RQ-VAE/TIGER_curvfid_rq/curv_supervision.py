@@ -75,9 +75,11 @@ def curvature_of_nodes(encode_quantised, targets: dict, indices: torch.Tensor,
     """
     from distances import mixed
 
-    m = targets["m"][indices].to(device)
-    b = targets["b"][indices].to(device)
-    c = targets["c"][indices].to(device)
+    # the triplet tables live on the host; index them there and move only the rows needed
+    host = indices.cpu() if indices.is_cuda else indices
+    m = targets["m"][host].to(device)
+    b = targets["b"][host].to(device)
+    c = targets["c"][host].to(device)
     refs = targets["refs"].to(device)
 
     needed = torch.unique(torch.cat([m, b, c, refs]))
@@ -102,16 +104,32 @@ def curvature_of_nodes(encode_quantised, targets: dict, indices: torch.Tensor,
 
 
 def q_lookup_from_model(model, embeddings: torch.Tensor, device):
-    # `embeddings` holds the whole catalogue; only the requested rows are moved to the device, so
-    # the extra forward costs a few hundred rows rather than the full table.
-    """Return a function mapping item ids to their hard `q`, keeping the STE still attached.
+    """Return a function mapping item ids to their hard `q` under **argmin** quantisation.
 
-    The forward is a plain slice of the catalogue, so gradients reach the encoder and every
-    codebook that contributes to those rows — which is exactly what the issue asks to verify.
+    The residual stack is walked explicitly instead of calling `model.forward`, because at the
+    balanced level `forward` runs Sinkhorn, and Sinkhorn's global centring is undefined when the
+    cost matrix is constant.  That is not hypothetical: the supervised triplets are built around
+    high-degree nodes, whose L3 residuals are nearly identical, and the third smoke attempt died on
+    `Cannot center a constant distance matrix` for exactly that subset.
+
+    Argmin is also the right assignment for the target: it is what the exported SID uses
+    (`infer_use_sk=False`), i.e. the discrete object Stage3 actually reads.  The encoder still runs
+    in training mode, so batch-normalisation statistics match the step that produced the latents,
+    and the codeword lookup keeps the straight-through path intact for the gradient check.
     """
+    from distances import mixed
+
     def encode_quantised(ids: torch.Tensor) -> torch.Tensor:
         rows = embeddings[ids.to(embeddings.device)].to(device)
-        _, _, _, _, quantised = model(rows, return_quantized=True)
+        latent = model.encoder(rows)
+        residual = latent
+        quantised = torch.zeros_like(latent)
+        for layer in model.rq.vq_layers:
+            codes = layer.get_code_embs()
+            index = mixed.distances(residual, codes).argmin(dim=1)
+            code = codes[index]
+            quantised = quantised + code
+            residual = residual - code
         return quantised
 
     return encode_quantised

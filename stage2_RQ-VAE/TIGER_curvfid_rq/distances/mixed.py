@@ -29,6 +29,8 @@ CURVATURE = (-1.0, 0.0, 1.0)
 #: Radius cap that keeps the ball conditioned (without it a self-distance is ~14 instead of 0).
 RADIUS_CAP = 0.9
 EPS = 1e-6
+#: Ceiling on the arcosh argument: keeps the distance (and its gradient) finite at the boundary.
+MAX_ACOSH = 1e4
 
 _BLOCKS = ("hyperbolic", "euclidean", "spherical")
 _SPANS = []
@@ -53,8 +55,16 @@ def get_scale() -> float:
 
 
 def _to_ball(x: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
+    """Radial map `r -> cap * r / (r + scale)`, strictly inside the ball and strictly increasing.
+
+    `tanh(r/scale)` was the first choice and it fails here: its upper branch is flat, so once the L3
+    residual drifts past a few scales every point lands on the same radius and the assignment matrix
+    becomes constant (`center_distance` then refuses it).  The rational map has no flat region --
+    it is injective on [0, inf) with a bounded radius -- so the assignment keeps its ordering at any
+    magnitude.
+    """
     norm = x.norm(dim=-1, keepdim=True).clamp_min(EPS)
-    return RADIUS_CAP * torch.tanh(norm / scale) * x / norm
+    return RADIUS_CAP * (norm / (norm + scale)) * x / norm
 
 
 def _to_sphere(x: torch.Tensor) -> torch.Tensor:
@@ -69,7 +79,9 @@ def _hyperbolic_sq(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     v2 = (v * v).sum(-1).clamp(max=RADIUS_CAP ** 2)
     diff2 = (u - v).pow(2).sum(-1).clamp_min(0.0)
     inner = 1.0 + 2.0 * diff2 / ((1.0 - u2) * (1.0 - v2))
-    return torch.acosh(inner.clamp_min(1.0 + EPS)).pow(2) / abs(CURVATURE[0])
+    # Upper bound: arcosh(k) grows like log k but its gradient grows like 1/(k*sqrt(k^2-1)) near the
+    # boundary, and an unguarded first step at full learning rate drives the encoder to NaN.
+    return torch.acosh(inner.clamp(1.0 + EPS, MAX_ACOSH)).pow(2) / abs(CURVATURE[0])
 
 
 def _euclidean_sq(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
@@ -117,7 +129,7 @@ def _matrix_sq(name: str, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         diff2 = (u.pow(2).sum(-1, keepdim=True) - 2 * u @ v.t()
                  + v.pow(2).sum(-1, keepdim=True).t()).clamp_min(0.0)
         inner = 1.0 + 2.0 * diff2 / ((1.0 - u2) * (1.0 - v2).unsqueeze(0))
-        return torch.acosh(inner.clamp_min(1.0 + EPS)).pow(2) / abs(CURVATURE[0])
+        return torch.acosh(inner.clamp(1.0 + EPS, MAX_ACOSH)).pow(2) / abs(CURVATURE[0])
     u, v = _to_sphere(xb), _to_sphere(yb)
     diff2 = (u.pow(2).sum(-1, keepdim=True) - 2 * u @ v.t()
              + v.pow(2).sum(-1, keepdim=True).t()).clamp_min(0.0)
