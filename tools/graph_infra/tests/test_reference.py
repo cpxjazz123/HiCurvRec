@@ -68,7 +68,7 @@ def test_distance_matches_reference_and_known_answers():
     assert abs(float(manifold.dist(zero, 0.5 * e1, -1.0)) - math.log(3.0)) < 1e-6
     assert abs(float(manifold.dist(zero, 0.9 * e1, -1.0)) - math.log(19.0)) < 1e-5
     assert abs(float(manifold.dist(zero, 0.5 * e1, 1.0)) - 2.0 * math.atan(0.5)) < 1e-6
-    assert abs(float(manifold.dist(zero, e1, 0.0)) - 1.0) < 1e-6
+    assert abs(float(manifold.dist(zero, e1, 0.0)) - 2.0) < 1e-6, "flat limit of the family"
 
 
 def test_sphere_distance_is_not_the_poincare_formula():

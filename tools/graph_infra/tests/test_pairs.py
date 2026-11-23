@@ -106,7 +106,7 @@ def test_verifier_rejects_a_wrong_type():
 
 def test_bhattacharyya_hand_value():
     assert abs(bank.bhattacharyya({0: 0.5, 1: 0.5}, {0: 0.5, 2: 0.5}) - 0.5) < 1e-12
-    assert bank.bhattacharyya({}, {0: 1.0}) == 0.0
+    assert bank.bhattacharyya({}, {0: 1.0}) is None, "an empty distribution is missing, not zero"
 
 
 def test_split_banks_use_only_the_given_adjacency():

@@ -225,10 +225,10 @@ def neighbour_distributions(csr: sp.csr_matrix, items) -> dict[int, dict[int, fl
     return result
 
 
-def bhattacharyya(left: dict, right: dict) -> float:
-    """Bhattacharyya coefficient: sum of the geometric means of the shared probabilities."""
+def bhattacharyya(left: dict, right: dict) -> float | None:
+    """Bhattacharyya coefficient; an empty distribution is *missing*, not zero."""
     if not left or not right:
-        return 0.0
+        return None
     shared = set(left) & set(right)
     return float(sum((left[k] * right[k]) ** 0.5 for k in shared))
 
@@ -267,3 +267,78 @@ def probe_bank(out_csr: sp.csr_matrix, points: int = 64, seed: int = 245003) -> 
     return {"pairs": np.array(rows, dtype=np.int64), "graph_hops": np.array(hops, dtype=np.int64),
             "seed": seed, "points": int(points),
             "note": "graph hops are recorded on the probe; the model scale is calibrated elsewhere"}
+
+
+def _csr_set(csr: sp.csr_matrix, node: int) -> set:
+    start, end = csr.indptr[int(node)], csr.indptr[int(node) + 1]
+    return set(int(x) for x in csr.indices[start:end]) - {int(node)}
+
+
+def jaccard(left, right) -> float | None:
+    """Jaccard over neighbour sets; an empty union is missing, not zero."""
+    left, right = set(left), set(right)
+    union = left | right
+    if not union:
+        return None
+    return len(left & right) / len(union)
+
+
+def verify_degree_match(out_csr, in_csr, pairs, tolerance: int = 0) -> dict:
+    """Re-check every pair against the definition it claims to satisfy."""
+    violations = []
+    for left, right in np.asarray(pairs, dtype=np.int64).tolist():
+        left_out = len(_csr_set(out_csr, left))
+        right_out = len(_csr_set(out_csr, right))
+        left_in = len(_csr_set(in_csr, left))
+        right_in = len(_csr_set(in_csr, right))
+        if abs(left_out - right_out) > tolerance or abs(left_in - right_in) > tolerance:
+            violations.append((left, right, (left_in, left_out), (right_in, right_out)))
+        if out_csr[left, right] > 0 or out_csr[right, left] > 0:
+            violations.append((left, right, "direct_edge", "unexpected"))
+    return {"pairs": int(len(pairs)), "violations": len(violations),
+            "examples": violations[:5], "tolerance": int(tolerance)}
+
+
+def label_evidence(out_csr, in_csr, pair, group: str) -> dict:
+    """Witness that justifies the pair's label; never fabricates a negative."""
+    left, right = int(pair[0]), int(pair[1])
+    if group == "direct":
+        return {"kind": "direct", "witness": [left, right],
+                "note": "an observed transition; direction is the pair order"}
+    if group == "shared_successor":
+        common = sorted(_csr_set(out_csr, left) & _csr_set(out_csr, right))
+        return {"kind": "shared_successor", "witness": common[:3],
+                "note": "both items point to the witness"}
+    if group == "shared_predecessor":
+        common = sorted(_csr_set(in_csr, left) & _csr_set(in_csr, right))
+        return {"kind": "shared_predecessor", "witness": common[:3],
+                "note": "the witness points to both items"}
+    if group == "two_hop_chain":
+        middles = sorted(_csr_set(out_csr, left) & _csr_set(in_csr, right))
+        return {"kind": "two_hop_chain", "witness": middles[:3],
+                "note": "left -> witness -> right"}
+    return {"kind": group, "witness": [], "note": "no witness by definition"}
+
+
+_LABEL_KIND = {
+    "direct": "observed_edge",
+    "shared_successor": "common_successor",
+    "shared_predecessor": "common_predecessor",
+    "two_hop_chain": "two_hop_chain",
+    "degree_matched": "degree_matched_unobserved",
+}
+
+
+def pair_record(out_csr, in_csr, pair, group: str) -> dict:
+    """One audit record: directed order, undirected key, label kind and its witness."""
+    left, right = int(pair[0]), int(pair[1])
+    record = {
+        "pair_directed": [left, right],
+        "pair_undirected": [min(left, right), max(left, right)],
+        "group": group,
+        "label_kind": _LABEL_KIND.get(group, f"{group}_unobserved"),
+        "label_evidence": label_evidence(out_csr, in_csr, (left, right), group),
+    }
+    if out_csr[left, right] > 0 or out_csr[right, left] > 0:
+        record["direct_edge"] = True
+    return record

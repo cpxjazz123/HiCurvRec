@@ -58,8 +58,10 @@ def expmap0(x: torch.Tensor, k: float) -> torch.Tensor:
     """k > 0 uses r = R tan(theta / 2R) so that dist(0, expmap0(v)) equals |v|."""
     norm = x.norm(dim=-1, keepdim=True)
     if k > 0:
+        # same 2x convention as the Poincare branch: d(0, expmap0(v)) = 2 |v| for every sign,
+        # which makes k = 0 the continuous flat limit of the whole family
         radius = 1.0 / math.sqrt(k)
-        mapped = radius * torch.tan(norm / (2.0 * radius))
+        mapped = radius * torch.tan(norm / radius)
     else:
         mapped = tan_k(norm, k)
     scale = torch.where(norm > EPS, mapped / norm.clamp(min=EPS), torch.ones_like(norm))
@@ -71,7 +73,7 @@ def logmap0(y: torch.Tensor, k: float) -> torch.Tensor:
     norm = y.norm(dim=-1, keepdim=True)
     if k > 0:
         radius = 1.0 / math.sqrt(k)
-        mapped = 2.0 * radius * torch.atan(norm / radius)  # theta = 2R*arctan(r/R)
+        mapped = radius * torch.atan(norm / radius)  # inverse of R * tan(|v| / R)
     else:
         mapped = tan_k_inv(norm, k)
     scale = torch.where(norm > EPS, mapped / norm.clamp(min=EPS), torch.ones_like(norm))
@@ -101,10 +103,12 @@ def dist(x: torch.Tensor, y: torch.Tensor, k: float) -> torch.Tensor:
            ``reference.dist`` computes the same number the long way, through the inverse
            stereographic projection and a three-dimensional angle.
     k < 0: Poincare ball, 2 * tan_k^{-1}(|(-x) +_k y|).
-    k = 0: Euclidean.
+    k = 0: the flat limit of the same family, 2 * |x - y| -- not the plain Euclidean norm.
+           ``d(0, expmap0(v)) = 2 |v|`` holds for both signs and at k = 0, so the curvature
+           knob is continuous; the v1 branch returned |x - y| and jumped by a factor two.
     """
     if k == 0:
-        return (x - y).norm(dim=-1)
+        return 2.0 * (x - y).norm(dim=-1)
     if k > 0:
         radius = 1.0 / math.sqrt(k)
         x2 = (x * x).sum(-1)

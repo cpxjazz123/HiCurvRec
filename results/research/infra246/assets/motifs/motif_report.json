@@ -1,0 +1,54 @@
+{
+  "families": [
+    "empty",
+    "single_edge",
+    "out_star",
+    "reciprocal_pair",
+    "chain",
+    "reciprocal_with_third_in1_out0",
+    "in_star",
+    "ff_triangle",
+    "reciprocal_plus_third_in2_out0",
+    "reciprocal_with_third_in0_out1",
+    "reciprocal_all_4edges",
+    "fb_triangle",
+    "reciprocal_plus_third_in1_out1",
+    "reciprocal_plus_third_in0_out2",
+    "reciprocal_all_5edges",
+    "complete_bidirectional"
+  ],
+  "totals": {
+    "empty": 0,
+    "single_edge": 0,
+    "out_star": 6063454,
+    "reciprocal_pair": 0,
+    "chain": 12143069,
+    "reciprocal_with_third_in1_out0": 1584058,
+    "in_star": 5940844,
+    "ff_triangle": 435582,
+    "reciprocal_plus_third_in2_out0": 74826,
+    "reciprocal_with_third_in0_out1": 1524966,
+    "reciprocal_all_4edges": 121875,
+    "fb_triangle": 151647,
+    "reciprocal_plus_third_in1_out1": 166140,
+    "reciprocal_plus_third_in0_out2": 85572,
+    "reciprocal_all_5edges": 84891,
+    "complete_bidirectional": 15024
+  },
+  "coverage": 0.9893846341562614,
+  "instances_total": 28391948,
+  "sampling": "3-node counts are exact over every neighbour pair; instances are sampled",
+  "instance_sample": {
+    "centres": 2000,
+    "max_per_centre": 40,
+    "instances": 59385,
+    "coverage": 0.08134379956887786
+  },
+  "four_node_sample": {
+    "centres": 500,
+    "max_instances_per_centre": 10,
+    "instances": 4549,
+    "sampling": "sampled, not full"
+  },
+  "seconds": 49.7
+}

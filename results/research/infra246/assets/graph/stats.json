@@ -1,0 +1,104 @@
+{
+  "items": 24587,
+  "users": 57439,
+  "split": {
+    "sizes": {
+      "visible": 45951,
+      "struct_val": 5744,
+      "struct_test": 5744
+    },
+    "overlaps": {
+      "visible&struct_val": 0,
+      "visible&struct_test": 0,
+      "struct_val&struct_test": 0
+    },
+    "union_complete": true,
+    "disjoint": true
+  },
+  "edges": {
+    "full_description": {
+      "distinct": 323633,
+      "weight": 339519
+    },
+    "visible": {
+      "distinct": 261132,
+      "weight": 272244
+    },
+    "struct_val": {
+      "distinct": 33279,
+      "weight": 33559
+    },
+    "struct_test": {
+      "distinct": 33477,
+      "weight": 33716
+    }
+  },
+  "self_loops_dropped": 0,
+  "held_out_support_entries": 124648,
+  "graph_stats": {
+    "full_description": {
+      "nodes": 24587,
+      "directed_edges": 323633,
+      "self_loops": 0,
+      "reciprocal_pairs": 8242,
+      "isolated_nodes": 31,
+      "nodes_with_out_edge": 24474,
+      "nodes_with_in_edge": 24524,
+      "out_degree_max": 1295,
+      "in_degree_max": 1226,
+      "out_degree_median": 6.0,
+      "components": 32,
+      "largest_component": 24556
+    },
+    "visible": {
+      "nodes": 24587,
+      "directed_edges": 261132,
+      "self_loops": 0,
+      "reciprocal_pairs": 5900,
+      "isolated_nodes": 116,
+      "nodes_with_out_edge": 24295,
+      "nodes_with_in_edge": 24369,
+      "out_degree_max": 1049,
+      "in_degree_max": 982,
+      "out_degree_median": 5.0,
+      "components": 117,
+      "largest_component": 24471
+    },
+    "struct_val": {
+      "nodes": 24587,
+      "directed_edges": 33279,
+      "self_loops": 0,
+      "reciprocal_pairs": 167,
+      "isolated_nodes": 10228,
+      "nodes_with_out_edge": 13122,
+      "nodes_with_in_edge": 13160,
+      "out_degree_max": 176,
+      "in_degree_max": 170,
+      "out_degree_median": 1.0,
+      "components": 10254,
+      "largest_component": 14267
+    },
+    "struct_test": {
+      "nodes": 24587,
+      "directed_edges": 33477,
+      "self_loops": 0,
+      "reciprocal_pairs": 201,
+      "isolated_nodes": 9998,
+      "nodes_with_out_edge": 13413,
+      "nodes_with_in_edge": 13338,
+      "out_degree_max": 169,
+      "in_degree_max": 173,
+      "out_degree_median": 1.0,
+      "components": 10018,
+      "largest_component": 14528
+    }
+  },
+  "independent_crosscheck": {
+    "reference_edges": 323633,
+    "csr_edges": 323633,
+    "only_reference": 0,
+    "only_csr": 0,
+    "weight_mismatch": 0,
+    "ok": true
+  }
+}

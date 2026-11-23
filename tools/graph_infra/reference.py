@@ -63,12 +63,15 @@ def proju(x: np.ndarray, k: float, eps: float = 1e-3) -> np.ndarray:
 
 
 def expmap0(x: np.ndarray, k: float) -> np.ndarray:
-    """k > 0: r = R * tan(theta / 2R) with R = 1/sqrt(k), so that dist(0, expmap0(v)) = |v|."""
+    """k > 0: r = R * tan(|v| / R) with R = 1/sqrt(k), so that dist(0, expmap0(v)) = 2 |v|.
+
+    The 2x normalisation matches the Poincare branch; with it k = 0 is the continuous flat limit.
+    """
     x = np.asarray(x, dtype=np.float64)
     norm = np.linalg.norm(x, axis=-1, keepdims=True)
     if k > 0:
         radius = 1.0 / math.sqrt(k)
-        mapped = radius * np.tan(norm / (2.0 * radius))
+        mapped = radius * np.tan(norm / radius)
     else:
         mapped = tan_k(norm, k)
     scale = np.where(norm > EPS, mapped / np.maximum(norm, EPS), 1.0)
@@ -76,12 +79,12 @@ def expmap0(x: np.ndarray, k: float) -> np.ndarray:
 
 
 def logmap0(y: np.ndarray, k: float) -> np.ndarray:
-    """k > 0: theta = 2 * arctan(r / R); inverse of expmap0 above."""
+    """k > 0: |v| = R * arctan(r / R); inverse of expmap0 above."""
     y = proju(y, k)
     norm = np.linalg.norm(y, axis=-1, keepdims=True)
     if k > 0:
         radius = 1.0 / math.sqrt(k)
-        mapped = 2.0 * radius * np.arctan(norm / radius)  # theta = 2R*arctan(r/R)
+        mapped = radius * np.arctan(norm / radius)
     else:
         mapped = tan_k_inv(norm, k)
     scale = np.where(norm > EPS, mapped / np.maximum(norm, EPS), 1.0)
@@ -128,12 +131,13 @@ def dist(x: np.ndarray, y: np.ndarray, k: float) -> np.ndarray:
     k > 0: computed through the inverse stereographic projection -- R * arccos(<P,Q>/R^2).
            The Mobius/tan_k^-1 form is the **Poincare** formula and is not valid here.
     k < 0: Poincare ball, 2 * tan_k^-1(|(-x) +_k y|).
-    k = 0: Euclidean.
+    k = 0: the flat limit of the same family, 2 * |x - y| (the v1 value |x - y| was a
+           factor-two discontinuity with the curved branches).
     """
     x = np.atleast_2d(np.asarray(x, dtype=np.float64))
     y = np.atleast_2d(np.asarray(y, dtype=np.float64))
     if k == 0:
-        return np.linalg.norm(x - y, axis=-1)
+        return 2.0 * np.linalg.norm(x - y, axis=-1)
     if k > 0:
         radius = 1.0 / math.sqrt(k)
         left = stereo_to_sphere(x, k)

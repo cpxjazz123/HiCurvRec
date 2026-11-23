@@ -1,0 +1,27 @@
+# DEFECTS v2 — 问题 → 生产函数 → 定义 → 独立已知答案 → 测试 → 预期资产 (issue #246 §1)
+
+每一行都是**先写测试(红)、再改生产代码(绿)**。已知答案的来源分两类:
+`合成` = 手算写死在测试里;`参考` = `tests/reference_hand.py` 里的独立实现(换推导路径,不 import 生产模块)。
+
+| # | 问题(issue 出处) | 生产函数 | 数学/数据定义 | 独立已知答案 | 测试(红→绿) | 预期资产 |
+|---|---|---|---|---|---|---|
+| D1 | 留出方向被加权相减抵消 (§2) | `isolation.held_out_support` | `H = setdiff(support(eval), support(visible))`,再对称并集 `H ∨ Hᵀ` | 合成:可见 `(7→8)` 权重 3、评估 `(8→7)` 存在 → `(8,7)` 必被 block、`(7,8)` 不被 block;v1 公式在同一例上得 ≤0 | `test_v2_graph.py::test_held_out_support_uses_boolean_semantics` | `assets/graph/held_out_support.npz` |
+| D2 | 训练 bank 与探针仍含镜像留出对 (§2) | `pairs.exclude_undirected` + `build_assets_v2.build_pairs` | 无向规范 key `k=(min,max)`;`blocked(p)=H_u[k]` | 合成:`(4,3)` 在 blocked 集内被剔除,`(0,1)` 保留 | `test_v2_pairs.py::test_exclude_undirected_drops_the_mirror_image` | `assets/pairs/train_*.npz` |
+| D3 | ego 角色来自另一次随机采样 (§3) | `topology.root_roles` | `role_out = N_out(root)`,`role_in = N_in(root)`,互惠=两者交集 | 合成:12 个后继(>预算 8)必须全部标记为 out | `test_v2_ego.py::test_direction_reads_real_csr_membership_beyond_the_sample_budget` | `assets/ego/*.npz` 的 `role_out`/`role_in` |
+| D4 | hop 存的是遍历深度 (§3) | `topology.ego_induced` | `hop(root)=0`;直接邻接=1;其余=2(半径内);`traversal_depth` 另存 | 合成 + 参考:与 `reference_hops`(BFS)逐点相等;截断时二者必须不同 | `test_v2_ego.py::test_hop_is_the_shortest_hop_not_the_traversal_depth`、`test_traversal_depth_and_true_hop_can_differ` | ego npz 的 `hop`/`traversal_depth` |
+| D5 | 中心行没有保证 (§3) | `topology._pack` / `ego_full` | `root_local` 指向真实中心,id 可为任意值 | 合成:根为最大 id 时 `root_local` 仍指向它 | `test_v2_ego.py::test_root_local_is_explicit_when_the_root_has_the_largest_id` | ego npz 的 `root_local` |
+| D6 | cap 语义不明 (§3) | `topology.ego_induced` | `cap` = 邻居数上限,根另计 → 块大小 ≤ cap+1 | 合成:cap=3 时块 ≤4 | `test_v2_ego.py::test_cap_counts_neighbours_not_the_root` | `assets/ego/ego_report.json` |
+| D7 | batch 只补节点 (§3) | `topology.batch_egos` | 节点右补零 + `node_mask`;边补零 + `edge_mask`;特征 (B,W,7) | 合成:两个块边数之和 = `edge_mask` 的真值数 | `test_v2_ego.py::test_batch_egos_returns_edges_masks_and_features` | — |
+| D8 | fork/merge 判据过严 (§4) | `graphlet.fork_relaxed` / `merge_relaxed` | ∃ 一对后继(或前驱)之间无边(两方向都算) | 合成:三后继 1–2 相邻、3 与二者都不相邻 → fork=True;参考:`reference_hand.fork_relaxed` | `test_v2_graphlet.py::test_fork_relaxed_accepts_two_adjacent_plus_one_isolated_successor` | `assets/motifs/motif_counts.npz` |
+| D9 | 没有精确 graphlet 分类 (§4) | `graphlet.canonical_code` / `orbits` / `family_of` | 6 位码 over `(c,a),(c,b),(a,c),(a,b),(b,c),(b,a)`;canonical = 6 置换取最小;轨道 = 自同构轨道 | 参考:全部 64 个码的 canonical 与轨道逐个相等;16 个类且族名一一对应 | `test_v2_graphlet.py`(4 条) | `assets/motifs/motif_labels` 系列 |
+| D10 | 实例没有冻结 (§4) | `graphlet.motif_instances` / `sampled_instances` | 实例 = (中心, 两邻点) + 诱导边 + canonical + 族 + 轨道 + 中心角色 | 合成:与暴力三元组枚举的集合相等 | `test_v2_graphlet.py::test_instance_enumeration_matches_brute_force_triples` | `assets/motifs/motif_instances_visible.npz`、`motif_instances_4node_visible.npz` |
+| D11 | 结构保真指标无方向 (§6) | `metrics.subgraph_summary` | minimize:pass=`E≤t`、worst=max、p90=中心内 quantile(.9) 后汇总;三个分母分列 | 合成:`E=[.3,.4,.8]`,t=.5 → 2/3、0、.8、.72;参考:`reference_hand.subgraph_summary` | `test_v2_metrics.py::test_subgraph_summary_distortion_known_answer`、`..._matches_the_reference_on_random_inputs` | `tiger_baseline_v2.json` |
+| D12 | prefix@k 与碰撞口径 (§6) | `metrics.prefix_at_k` / `sid_structure` | 两侧长度都 ≥k 且前 k 位逐位相等;碰撞=1−distinct/items;重复=重复商品份额 | 参考:`reference_hand.prefix_at_k`、`collision_duplicate` | `test_v2_metrics.py::test_prefix_at_k_requires_both_lengths`、`..._collision_and_duplicate_prefix_vs_full` | `tiger_baseline_v2.json` |
+| D13 | SID 没有校验 (§6) | `metrics.sid_audit` | 长度、取值范围、缺失、额外、重复逐项报出 | 合成:含短行/越界/重复/缺失的表必须被逐项报出 | `test_v2_metrics.py::test_sid_audit_reports_every_defect` | `tiger_audit.json` |
+| D14 | join 与 manifest 不严格 (§6) | `assets.join_scores_v2` / `entry_v2` / `audit_manifest` / `assert_legal_use` | 逐项校验 + 按 pair id 对齐 + `legal_use` 序 | 合成:七类非法输入各抛一次;重排后逐对相等 | `test_v2_assets.py`(3 条) | `assets/manifest.json` |
+| D15 | PPR 只是探针 (§5) | `ppr.solve_selected` | `(I−(1−α)Pᵀ)x0=e_s`;悬挂质量归还源点;残差 ‖Ax−b‖∞ | 合成:含悬挂行时总质量=1;参考:与迭代定义一致(2e-3) | `test_v2_ppr.py`(3 条) | `assets/pairs/*.npz` 的 `ppr` |
+| D16 | 可见图没有曲率 (§5) | `curvature.orc_edge` / `node_curvature` | `κ=1−W1(μ_x,μ_y)/d`,μ 为均匀邻接测度,运输问题用 LP 精确解 | 合成:路径 0、三角 0.5、方环 0;参考:整数平面枚举(`reference_hand.transport_w1`) | `test_v2_geometry.py::test_orc_known_answers`、`..._matches_the_enumeration_reference` | `assets/curvature/curvature_visible.{npz,json}` |
+| D17 | 几何 κ→0 不连续 (§4/§5) | `manifold.dist` / `expmap0` / `logmap0` | `d(0,expmap0(v))=2|v|`(所有 k);`lim_{k→0} d=2|x−y|`;球面注入半径 `πR` | 合成:四个 k 的往返;参考:`reference.py` 同值 | `test_v2_geometry.py::test_geometry_boundaries_and_gradients`、`test_known_answers.py::test_k_zero_is_the_continuous_flat_limit` | — |
+| D18 | 用户划分没有冻结 (§2) | `splits.three_way` / `audit` | 80/10/10,seed 246001;两两交集空、并集全 | 合成:100 个用户 → 80/10/10,重复调用同结果 | `test_v2_graph.py::test_three_way_split_disjoint_and_complete` | `assets/graph/split_users.npz` |
+| D19 | 图没有独立复核 (§2) | `graph_build.count_edges` / `item_index` | 逐序列计数 → 加权边多重集;item ID 取实际集合 | 参考:`reference_hand.sequence_edges` 与 CSR 逐边相等 | `test_v2_graph.py::test_sequence_edges_match_the_csr_exactly` | `assets/graph/*_forward.npz`、`stats.json` |
+| D20 | TIGER 两个导出互不一致 (§7) | `tools/graph_infra/tiger_audit.py` | 只读重导(checkpoint→tokens→SID)并与两个旧文件逐行比对 | 合成/实测:重导与 NPY 仅 115 行差;与 JSON 全部 24,587 行差 | `tiger_audit.json`(运行时证据) | `results/research/infra246/tiger_reexport/` |

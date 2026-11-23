@@ -125,7 +125,11 @@ def prefix_at_k(pairs, k: int) -> float:
         return float("nan")
     hits = 0
     for left, right in pairs:
-        if all(int(a) == int(b) for a, b in zip(left[:k], right[:k])) and len(left) >= k == len(right[:k]):
+        left = list(left)
+        right = list(right)
+        if len(left) < k or len(right) < k:
+            continue
+        if all(int(a) == int(b) for a, b in zip(left[:k], right[:k])):
             hits += 1
     return hits / len(pairs)
 
@@ -150,7 +154,7 @@ def duplicate_item_fraction(sids) -> float:
     return duplicated / len(rows)
 
 
-def codebook_stats(tokens) -> list[dict]:
+def codebook_stats(tokens, unit: str = "nats") -> list[dict]:
     """Per-level usage, entropy and maximum bucket share for a token matrix (n, levels)."""
     tokens = np.asarray(tokens)
     if tokens.ndim != 2:
@@ -162,10 +166,12 @@ def codebook_stats(tokens) -> list[dict]:
         counts = np.bincount(column, minlength=size).astype(np.float64)
         probabilities = counts / counts.sum()
         positive = probabilities[probabilities > 0]
+        base = np.e if unit == "nats" else 2.0
         report.append({
             "level": level,
             "used": int((counts > 0).sum()),
-            "entropy": float(-(positive * np.log(positive)).sum()),
+            "entropy": float(-(positive * np.log(positive) / np.log(base)).sum()),
+            "entropy_unit": unit,
             "max_share": float(probabilities.max()) if probabilities.size else 0.0,
         })
     return report
@@ -197,31 +203,51 @@ def compare_sid_tables(left, right) -> dict:
     }
 
 
-def subgraph_summary(subgraph_values, threshold: float) -> dict:
-    """Aggregate per-center, per-subgraph scores without conflating the two denominators.
+def subgraph_summary(subgraph_values, threshold: float, direction: str = "minimize") -> dict:
+    """Aggregate per-centre, per-subgraph scores without conflating the denominators.
 
-    ``subgraph_values`` is a sequence of arrays, one per *center item*, holding that center's
-    per-subgraph scores.  Center-level and subgraph-level statistics are reported separately,
-    and the "all subgraphs pass" fraction is never mixed with "some subgraph passes".
+    ``direction="minimize"`` is for distortions (lower is better): pass = value <= threshold,
+    worst = max, per-centre p90 = quantile(values, 0.9).  ``"maximize"`` is the mirror for
+    similarities.  The three pass fractions use different denominators and are always reported
+    together; centres without a valid subgraph are counted, never silently dropped.
     """
-    arrays = [np.asarray(values, dtype=np.float64) for values in subgraph_values]
-    per_subgraph = np.concatenate(arrays) if arrays else np.zeros(0)
-    center_mean = np.array([values.mean() for values in arrays if values.size], dtype=np.float64)
-    center_worst = np.array([values.min() for values in arrays if values.size], dtype=np.float64)
-    all_pass = np.array([bool((values >= threshold).all()) for values in arrays if values.size], dtype=bool)
-    any_pass = np.array([bool((values >= threshold).any()) for values in arrays if values.size], dtype=bool)
+    if direction not in ("minimize", "maximize"):
+        raise ValueError(f"direction must be 'minimize' or 'maximize', got {direction!r}")
+    arrays = [np.asarray(values, dtype=np.float64).ravel() for values in subgraph_values]
+    valid = [values for values in arrays if values.size]
+    per_subgraph = np.concatenate(valid) if valid else np.zeros(0)
+    if direction == "minimize":
+        passed = per_subgraph <= threshold
+        worst = np.array([values.max() for values in valid], dtype=np.float64)
+        per_center = np.array([np.percentile(values, 90) for values in valid], dtype=np.float64)
+        all_pass = np.array([bool((values <= threshold).all()) for values in valid], dtype=bool)
+        any_pass = np.array([bool((values <= threshold).any()) for values in valid], dtype=bool)
+        quantile = 0.9
+    else:
+        passed = per_subgraph >= threshold
+        worst = np.array([values.min() for values in valid], dtype=np.float64)
+        per_center = np.array([np.percentile(values, 10) for values in valid], dtype=np.float64)
+        all_pass = np.array([bool((values >= threshold).all()) for values in valid], dtype=bool)
+        any_pass = np.array([bool((values >= threshold).any()) for values in valid], dtype=bool)
+        quantile = 0.1
+    centers = len(valid)
     return {
         "threshold": float(threshold),
-        "centers": int(center_mean.size),
+        "direction": direction,
+        "centers": centers,
+        "centers_total": len(arrays),
+        "centers_without_valid_subgraph": len(arrays) - centers,
         "subgraphs": int(per_subgraph.size),
-        "subgraph_pass_fraction": float((per_subgraph >= threshold).mean()) if per_subgraph.size else None,
-        "center_mean": float(center_mean.mean()) if center_mean.size else None,
-        "center_worst": float(center_worst.mean()) if center_worst.size else None,
-        "center_p90": float(np.percentile(center_mean, 90)) if center_mean.size else None,
-        "center_all_pass_fraction": float(all_pass.mean()) if all_pass.size else None,
-        "center_any_pass_fraction": float(any_pass.mean()) if any_pass.size else None,
-        "policy": "subgraph_pass_fraction and center_all_pass_fraction are different denominators "
-                  "and must be reported side by side, never as one number",
+        "subgraph_pass_fraction": float(passed.mean()) if per_subgraph.size else None,
+        "center_all_pass_fraction": float(all_pass.mean()) if centers else None,
+        "center_any_pass_fraction": float(any_pass.mean()) if centers else None,
+        "worst": float(worst.mean()) if centers else None,
+        "p90": float(per_center.mean()) if centers else None,
+        "center_quantile": float(quantile),
+        "center_mean": float(np.mean([values.mean() for values in valid])) if centers else None,
+        "denominator_policy": "subgraph pass uses all valid subgraphs; the two centre fractions use "
+                              "centres with at least one valid subgraph; centres without one are "
+                              "reported in centers_without_valid_subgraph and never counted as pass",
     }
 
 
@@ -239,3 +265,73 @@ def stratified(values, strata) -> dict:
                              "p10": float(np.percentile(selected, 10)) if selected.size else None,
                              "p90": float(np.percentile(selected, 90)) if selected.size else None}
     return report
+
+
+def sid_structure(codes) -> dict:
+    """Collision and duplicate rates over the prefix-3 codes and over the full codes."""
+    rows = [tuple(int(x) for x in code) for code in codes]
+    total = len(rows)
+    if total == 0:
+        return {"total": 0}
+    prefix = [row[:3] for row in rows]
+
+    def pair(keys):
+        counts = {}
+        for key in keys:
+            counts[key] = counts.get(key, 0) + 1
+        repeated = sum(count for count in counts.values() if count > 1)
+        return 1.0 - len(counts) / total, repeated / total
+
+    prefix_collision, prefix_duplicate = pair(prefix)
+    full_collision, full_duplicate = pair(rows)
+    return {
+        "total": total,
+        "distinct_prefix3": len(set(prefix)),
+        "distinct_full": len(set(rows)),
+        "collision_prefix3": prefix_collision,
+        "duplicate_prefix3": prefix_duplicate,
+        "collision_full": full_collision,
+        "duplicate_full": full_duplicate,
+        "policy": "prefix-3 and full-length (including the disambiguation token) are reported "
+                  "separately; they answer different questions",
+    }
+
+
+def sid_audit(table, item_ids, width: int, max_token: int) -> dict:
+    """Validate a SID table before any metric is computed from it."""
+    normalized = {int(k): [int(x) for x in values] for k, values in table.items()}
+    keys = sorted(normalized)
+    expected = [int(x) for x in item_ids]
+    bad_length, out_of_range, duplicates = [], [], []
+    seen = {}
+    for key in keys:
+        row = normalized[key]
+        if len(row) != width:
+            bad_length.append(key)
+            continue
+        if any(value < 0 or value > max_token for value in row):
+            out_of_range.append(key)
+        tuple_row = tuple(row)
+        if tuple_row in seen:
+            duplicates.append(key)
+        else:
+            seen[tuple_row] = key
+    missing = sorted(set(expected) - set(keys))
+    extra = sorted(set(keys) - set(expected))
+    return {
+        "rows": len(keys),
+        "expected": len(expected),
+        "missing_items": missing[:20],
+        "missing_count": len(missing),
+        "extra_items": extra[:20],
+        "extra_count": len(extra),
+        "bad_length": bad_length[:20],
+        "bad_length_count": len(bad_length),
+        "out_of_range": out_of_range[:20],
+        "out_of_range_count": len(out_of_range),
+        "duplicate_rows": duplicates[:20],
+        "duplicate_count": len(duplicates),
+        "width": int(width),
+        "max_token": int(max_token),
+        "ok": not missing and not extra and not bad_length and not out_of_range and not duplicates,
+    }

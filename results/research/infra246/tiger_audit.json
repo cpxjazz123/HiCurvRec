@@ -1,0 +1,220 @@
+{
+  "arm": "TIGER_RQ-VAE",
+  "read_only": true,
+  "legacy": {
+    "item_sids.json": {
+      "sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+      "schema": {
+        "shape": [
+          24587,
+          4
+        ],
+        "dtype": "int64",
+        "columns": [
+          {
+            "column": 0,
+            "min": 0,
+            "max": 255,
+            "distinct": 249,
+            "is_sequential_code": true
+          },
+          {
+            "column": 1,
+            "min": 0,
+            "max": 255,
+            "distinct": 256,
+            "is_sequential_code": true
+          },
+          {
+            "column": 2,
+            "min": 0,
+            "max": 255,
+            "distinct": 256,
+            "is_sequential_code": true
+          },
+          {
+            "column": 3,
+            "min": 768,
+            "max": 791,
+            "distinct": 24,
+            "is_sequential_code": true
+          }
+        ],
+        "distinct_rows": 24587,
+        "distinct_prefix3": 20425
+      },
+      "structure": {
+        "collision_prefix3": 0.16927644690283483,
+        "duplicate_prefix3": 0.26530280229389513,
+        "collision_full": 0.0,
+        "duplicate_full": 0.0,
+        "distinct_prefix3": 20425,
+        "distinct_full": 24587,
+        "items": 24587
+      },
+      "keys_contiguous": true,
+      "key_min": 0,
+      "key_max": 24586
+    },
+    "sids_for_hgrec.npy": {
+      "sha256": "6f2682c18d20ba8880a5c105820024ea59ca53a79523e058f8f8e47721507c72",
+      "schema": {
+        "shape": [
+          24587,
+          4
+        ],
+        "dtype": "int64",
+        "columns": [
+          {
+            "column": 0,
+            "min": 0,
+            "max": 255,
+            "distinct": 256,
+            "is_sequential_code": true
+          },
+          {
+            "column": 1,
+            "min": 0,
+            "max": 255,
+            "distinct": 256,
+            "is_sequential_code": true
+          },
+          {
+            "column": 2,
+            "min": 0,
+            "max": 255,
+            "distinct": 256,
+            "is_sequential_code": true
+          },
+          {
+            "column": 3,
+            "min": 768,
+            "max": 780,
+            "distinct": 13,
+            "is_sequential_code": true
+          }
+        ],
+        "distinct_rows": 24587,
+        "distinct_prefix3": 21873
+      },
+      "structure": {
+        "collision_prefix3": 0.11038353601496731,
+        "duplicate_prefix3": 0.1848131126204905,
+        "collision_full": 0.0,
+        "duplicate_full": 0.0,
+        "distinct_prefix3": 21873,
+        "distinct_full": 24587,
+        "items": 24587
+      }
+    },
+    "json_vs_npy": {
+      "same_shape": true,
+      "rows_differing": 24587,
+      "first_differing": 0,
+      "identical": false
+    },
+    "npy_origin": {
+      "best_match": null,
+      "matches": {}
+    },
+    "reexport_vs_item_sids_json": {
+      "same_shape": true,
+      "rows_differing": 24587,
+      "first_differing": 0,
+      "identical": false
+    },
+    "reexport_vs_sids_for_hgrec_npy": {
+      "same_shape": true,
+      "rows_differing": 115,
+      "first_differing": 704,
+      "identical": false
+    },
+    "reexport_structure": {
+      "collision_prefix3": 0.1099361451173384,
+      "duplicate_prefix3": 0.18424370602350837,
+      "collision_full": 0.0,
+      "duplicate_full": 0.0,
+      "distinct_prefix3": 21884,
+      "distinct_full": 24587,
+      "items": 24587
+    }
+  },
+  "reexport": {
+    "raw_tokens_shape": [
+      24587,
+      3
+    ],
+    "sid_shape": [
+      24587,
+      4
+    ],
+    "distinct_rows": 24587,
+    "checkpoint": {
+      "epoch": 300,
+      "collision": 0.11038353601496731,
+      "selection": "final_epoch",
+      "sha256": "af8efc29a8bcbbe5394cc5e358acf7b14c0e78ae99d8a8b9e5faf03fdddd97a8"
+    },
+    "reconstruction_mse": 9.607209814253481e-05,
+    "reconstruction_mae": 0.0062733922730513455,
+    "reconstruction_unit": "squared error on the 768-dim input embeddings",
+    "item_sids_sha256": "30d8a4b18bd3a2d77dfc0f430da4c86ea58433e419ef1c36ec38413ccca33021",
+    "sids_for_hgrec_sha256": "46bed2573b94d0257c17d37e7ec62dc60a83fc6133f731e058dc10577cf75971"
+  },
+  "stage3_binding": {
+    "references": [
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-01-2026_10-15-01/HG_Rec.log",
+        "line": "2026-11-01 10:15:01,961 - INFO - Configuration: {'batch_size': 4096, 'infer_size': 512, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'fas"
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-01-2026_10-15-01/training_metrics.jsonl",
+        "line": "{\"event\": \"train_start\", \"timestamp\": 1793488504.9694989, \"wall_time_s\": 0.003, \"num_epochs\": 150, \"no_eval\": true, \"batch_size\": 4096, \"infer_size\": 512, \"global_train_batch\": 4096, \"launch_mode\": \"s"
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-12-2026_21-04-04/HG_Rec.log",
+        "line": "2026-11-12 21:04:04,845 - INFO - Configuration: {'batch_size': 4096, 'infer_size': 1024, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'fa"
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-12-2026_21-04-04/training_metrics.jsonl",
+        "line": "{\"event\": \"train_start\", \"timestamp\": 1794477851.0270538, \"wall_time_s\": 0.009, \"num_epochs\": 150, \"no_eval\": true, \"batch_size\": 4096, \"infer_size\": 1024, \"global_train_batch\": 16384, \"launch_mode\": "
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_10-18-36/HG_Rec.log",
+        "line": "2026-11-23 10:18:36,972 - INFO - Configuration: {'batch_size': 4096, 'infer_size': 1024, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'fa"
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_10-18-36/training_metrics.jsonl",
+        "line": "{\"event\": \"train_start\", \"timestamp\": 1795389520.8893466, \"wall_time_s\": 0.023, \"num_epochs\": 150, \"no_eval\": true, \"batch_size\": 4096, \"infer_size\": 1024, \"global_train_batch\": 16384, \"launch_mode\": "
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_10-57-48/HG_Rec.log",
+        "line": "2026-11-23 10:57:48,990 - INFO - Configuration: {'batch_size': 4096, 'infer_size': 1024, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'fa"
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_10-57-48/training_metrics.jsonl",
+        "line": "{\"event\": \"train_start\", \"timestamp\": 1795391871.8938441, \"wall_time_s\": 0.019, \"num_epochs\": 150, \"no_eval\": true, \"batch_size\": 4096, \"infer_size\": 1024, \"global_train_batch\": 16384, \"launch_mode\": "
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_11-37-36/HG_Rec.log",
+        "line": "2026-11-23 11:37:36,200 - INFO - Configuration: {'batch_size': 4096, 'infer_size': 1024, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'fa"
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_11-37-36/training_metrics.jsonl",
+        "line": "{\"event\": \"train_start\", \"timestamp\": 1795394258.7701716, \"wall_time_s\": 0.002, \"num_epochs\": 150, \"no_eval\": true, \"batch_size\": 4096, \"infer_size\": 1024, \"global_train_batch\": 16384, \"launch_mode\": "
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Oct-26-2026_06-26-20/HG_Rec.log",
+        "line": "2026-10-26 06:26:20,846 - INFO - Configuration: {'batch_size': 4096, 'infer_size': 1024, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'fa"
+      },
+      {
+        "file": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Oct-26-2026_06-26-20/training_metrics.jsonl",
+        "line": "{\"event\": \"train_start\", \"timestamp\": 1792956383.9832406, \"wall_time_s\": 0.0, \"num_epochs\": 150, \"no_eval\": true, \"batch_size\": 4096, \"infer_size\": 1024, \"global_train_batch\": 16384, \"launch_mode\": \"d"
+      }
+    ],
+    "count": 12
+  },
+  "recall_binding": {
+    "test_R@10": "NA: the historical Stage3 run did not record a SID hash, so the number cannot be attributed to a specific SID table; see stage3_binding.references"
+  }
+}

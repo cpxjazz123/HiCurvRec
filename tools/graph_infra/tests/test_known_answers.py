@@ -52,7 +52,7 @@ def test_spherical_radial_known_answers():
 def test_euclidean_known_answer():
     a = np.array([[1.0, 2.0]])
     b = np.array([[4.0, 6.0]])
-    approx(ref.dist(a, b, 0.0)[0], 5.0, 1e-12, "euclid 3-4-5")
+    approx(ref.dist(a, b, 0.0)[0], 10.0, 1e-12, "flat limit of the family: 2 * (3-4-5)")
 
 
 def test_symmetry():
@@ -158,22 +158,25 @@ def test_sphere_stereographic_known_answers():
 
 def test_sphere_exp_log_are_consistent_with_distance():
     k = 1.0
-    for tangent in (0.1, 0.4, 1.0, 2.5):
+    # the sphere's injectivity radius is pi * R, i.e. |v| < pi * R / 2 under the 2x
+    # convention; 2.5 > pi/2 would wrap through the pole and is out of range by design
+    for tangent in (0.1, 0.4, 1.0, 1.4):
         point = ref.expmap0(np.array([[tangent, 0.0]]), k)
-        approx(ref.dist(np.zeros((1, 2)), point, k)[0], tangent, 1e-9,
-               f"dist(0, expmap0({tangent}))")
+        approx(ref.dist(np.zeros((1, 2)), point, k)[0], 2.0 * tangent, 1e-9,
+               f"dist(0, expmap0({tangent})) = 2|v| for the unified convention")
         back = ref.logmap0(point, k)
         approx(back[0, 0], tangent, 1e-9, f"logmap0(expmap0({tangent}))")
 
 
-def test_euclidean_is_the_documented_flat_limit():
-    """CONTRACT: with the standard normalisations the Poincare distance is 2x Euclidean in
-    the flat limit, so k=0 is a separate space, not a continuous limit.  This pins that
-    documented convention instead of letting it drift."""
+def test_k_zero_is_the_continuous_flat_limit():
+    """v2 CONTRACT: k = 0 is the flat limit of the same family (2 * Euclidean), so the
+    curvature knob is continuous.  v1 returned the plain Euclidean norm and jumped by a
+    factor two; this pins the corrected convention instead of letting it drift."""
     r = 1e-4
     hyperbolic = ref.dist(np.zeros((1, 1)), np.array([[r]]), -1e-8)[0]
     euclidean = ref.dist(np.zeros((1, 1)), np.array([[r]]), 0.0)[0]
-    approx(hyperbolic / max(euclidean, 1e-12), 2.0, 1e-3, "flat-limit ratio is 2")
+    approx(hyperbolic / max(euclidean, 1e-12), 1.0, 1e-3, "flat-limit ratio must be 1")
+    approx(euclidean, 2.0 * r, 1e-9, "and the limit is 2 * |x - y|")
 
 
 def test_spearman_with_ties():

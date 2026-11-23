@@ -48,12 +48,14 @@ Hashes are truncated to 16 hex characters here; the full values are in
 JSON; 24,587 of 24,587 rows differ. The JSON is newer (2026-11-20) than the NPY (2026-11-19). Any later
 work must name which artefact it reads. Measured by `tools/graph_infra/baseline_report.py`.
 
-**(b) The §63 record's `l3_collision` cannot be reproduced from its own fields.**
-The record documents `methodology.collision = "item-weighted share of repeated three-token SIDs"` and
-`diagnostics.level3_distinct_triples = 20425` over 24,587 items. Both natural readings
-(`1 − 20425/24587` and `(24587 − 20425)/24587`) give **0.1693**, yet the record stores **0.2653**. The
-§89 gate value for the same SID is 0.1693 and is confirmed by the training log, so the gate caliber wins
-and the record's field is reported as irreproducible rather than silently reused.
+**(b) The §63 record's `l3_collision` — CORRECTED by issue #246.**
+This entry originally claimed the value was irreproducible from the record's own fields. **That claim
+was wrong.** The record documents `methodology.collision = "item-weighted share of repeated three-token
+SIDs"`, and the share of *items* whose three-token code is shared with another item is **0.265303** —
+exactly the stored value. The §89 gate uses a different caliber, `1 − distinct/items = 0.169276`, which
+is the value confirmed by the training log. Both numbers are correct under their own caliber; the
+defect is that the two calibers share the word "collision". See
+`results/research/infra246/CONTRACT.md` §13 and `results/research/infra246/tiger_audit.json`.
 
 **(c) Three arms sit above the Stage3 collision gate (0.4).**
 Measured on every `results/stage2_RQ-VAE/*/item_sids.json` (54 arms):

@@ -113,12 +113,13 @@ def test_reconstruction_error_and_sid_comparison():
 
 
 def test_subgraph_summary_separates_the_denominators():
-    report = metrics.subgraph_summary([np.array([1.0, 0.0]), np.array([1.0, 1.0])], threshold=0.5)
+    report = metrics.subgraph_summary([np.array([1.0, 0.0]), np.array([1.0, 1.0])], threshold=0.5,
+                                      direction="maximize")
     assert report["centers"] == 2 and report["subgraphs"] == 4
     assert abs(report["subgraph_pass_fraction"] - 0.75) < 1e-12
     assert abs(report["center_all_pass_fraction"] - 0.5) < 1e-12
     assert abs(report["center_any_pass_fraction"] - 1.0) < 1e-12
-    assert abs(report["center_worst"] - 0.5) < 1e-12
+    assert abs(report["worst"] - 0.5) < 1e-12, "maximize records the per-centre minimum"
 
 
 def test_stratified_absent_strata_are_absent():

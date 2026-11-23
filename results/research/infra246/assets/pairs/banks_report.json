@@ -1,0 +1,118 @@
+{
+  "train": {
+    "direct": {
+      "pairs": 12000,
+      "reachable": 1.0
+    },
+    "shared_out": {
+      "pairs": 12000,
+      "reachable": 1.0
+    },
+    "shared_in": {
+      "pairs": 12000,
+      "reachable": 1.0
+    },
+    "two_hop": {
+      "pairs": 12000,
+      "reachable": 1.0
+    },
+    "degree_matched": {
+      "pairs": 12000,
+      "reachable": 0.9971666666666666
+    }
+  },
+  "strict": {
+    "struct_val": {
+      "direct": {
+        "pairs": 2726,
+        "reachable": 0.9955979457079971
+      },
+      "shared_out": {
+        "pairs": 2876,
+        "reachable": 0.9954798331015299
+      },
+      "shared_in": {
+        "pairs": 2881,
+        "reachable": 0.9951405761888233
+      },
+      "two_hop": {
+        "pairs": 2926,
+        "reachable": 0.9989747095010253
+      },
+      "degree_matched": {
+        "pairs": 2938,
+        "reachable": 0.9969366916269571
+      }
+    },
+    "struct_test": {
+      "direct": {
+        "pairs": 2729,
+        "reachable": 0.9945034811286185
+      },
+      "shared_out": {
+        "pairs": 2877,
+        "reachable": 0.9937434827945777
+      },
+      "shared_in": {
+        "pairs": 2877,
+        "reachable": 0.9951338199513382
+      },
+      "two_hop": {
+        "pairs": 2907,
+        "reachable": 0.99828001375989
+      },
+      "degree_matched": {
+        "pairs": 2940,
+        "reachable": 0.9972789115646259
+      }
+    }
+  },
+  "relaxed": {
+    "struct_val": {
+      "direct": {
+        "pairs": 274,
+        "reachable": 1.0
+      },
+      "shared_out": {
+        "pairs": 124,
+        "reachable": 1.0
+      },
+      "shared_in": {
+        "pairs": 119,
+        "reachable": 1.0
+      },
+      "two_hop": {
+        "pairs": 74,
+        "reachable": 1.0
+      },
+      "degree_matched": {
+        "pairs": 62,
+        "reachable": 1.0
+      }
+    },
+    "struct_test": {
+      "direct": {
+        "pairs": 271,
+        "reachable": 1.0
+      },
+      "shared_out": {
+        "pairs": 123,
+        "reachable": 1.0
+      },
+      "shared_in": {
+        "pairs": 123,
+        "reachable": 1.0
+      },
+      "two_hop": {
+        "pairs": 93,
+        "reachable": 1.0
+      },
+      "degree_matched": {
+        "pairs": 60,
+        "reachable": 1.0
+      }
+    }
+  },
+  "probe": 64,
+  "blocked_undirected": 85395
+}

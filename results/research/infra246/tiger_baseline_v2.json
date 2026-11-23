@@ -1,0 +1,1548 @@
+{
+  "confirmed_sid": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json (the file Stage3 read)",
+  "confirmed": {
+    "sid": "item_sids_json",
+    "groups": {
+      "train_degree_matched/degree_matched": {
+        "pairs": 12000,
+        "prefix@1": 0.013583333333333333,
+        "prefix@2": 0.00075,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.014333333333333333,
+        "spearman_two_hop_count_vs_prefix": 0.03319713397979841,
+        "spearman_ppr_vs_prefix": 0.03301071078599847,
+        "spearman_jaccard_out_vs_prefix": 0.030388471186513208,
+        "spearman_bhattacharyya_out_vs_prefix": 0.030569117206676093,
+        "spearman_hop_full_visible_vs_prefix": -0.02596462530779176,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 6182,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.00075,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.0014558395341313492,
+            "worst": 0.0019411193788417987,
+            "p90": 0.0021190553219022972,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 6182,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.00075,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.0014558395341313492,
+            "worst": 0.9980588806211582,
+            "p90": 0.9978809446780976,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "train_direct/direct": {
+        "pairs": 12000,
+        "prefix@1": 0.08775,
+        "prefix@2": 0.009166666666666667,
+        "prefix@3": 0.00175,
+        "mean_prefix_length": 0.09866666666666667,
+        "spearman_two_hop_count_vs_prefix": 0.032034940467558566,
+        "spearman_ppr_vs_prefix": 0.0636420967790002,
+        "spearman_jaccard_out_vs_prefix": 0.053364353149944914,
+        "spearman_bhattacharyya_out_vs_prefix": 0.0504762234419523,
+        "spearman_hop_full_visible_vs_prefix": null,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 7174,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.009166666666666667,
+            "center_all_pass_fraction": 0.00766657373850014,
+            "center_any_pass_fraction": 0.014775578477836632,
+            "worst": 0.020351268469473098,
+            "p90": 0.021198076386952883,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 7174,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.009166666666666667,
+            "center_all_pass_fraction": 0.00766657373850014,
+            "center_any_pass_fraction": 0.014775578477836632,
+            "worst": 0.9796487315305269,
+            "p90": 0.9788019236130472,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "train_shared_in/shared_in": {
+        "pairs": 12000,
+        "prefix@1": 0.0435,
+        "prefix@2": 0.00275,
+        "prefix@3": 0.0004166666666666667,
+        "mean_prefix_length": 0.04666666666666667,
+        "spearman_two_hop_count_vs_prefix": 0.016661329783422166,
+        "spearman_ppr_vs_prefix": 0.03951506541400476,
+        "spearman_jaccard_out_vs_prefix": 0.028927077573154363,
+        "spearman_bhattacharyya_out_vs_prefix": 0.031147851257432,
+        "spearman_hop_full_visible_vs_prefix": null,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 7368,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.00275,
+            "center_all_pass_fraction": 0.002035830618892508,
+            "center_any_pass_fraction": 0.004478827361563518,
+            "worst": 0.008041530944625407,
+            "p90": 0.008577633007600434,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 7368,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.00275,
+            "center_all_pass_fraction": 0.002035830618892508,
+            "center_any_pass_fraction": 0.004478827361563518,
+            "worst": 0.9919584690553745,
+            "p90": 0.9914223669923995,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "train_shared_out/shared_out": {
+        "pairs": 12000,
+        "prefix@1": 0.040916666666666664,
+        "prefix@2": 0.0026666666666666666,
+        "prefix@3": 0.0004166666666666667,
+        "mean_prefix_length": 0.044,
+        "spearman_two_hop_count_vs_prefix": 0.02099544196542678,
+        "spearman_ppr_vs_prefix": 0.06110260941270247,
+        "spearman_jaccard_out_vs_prefix": 0.09787872885127516,
+        "spearman_bhattacharyya_out_vs_prefix": 0.09632891439462489,
+        "spearman_hop_full_visible_vs_prefix": null,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 7458,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.0026666666666666666,
+            "center_all_pass_fraction": 0.0016090104585679806,
+            "center_any_pass_fraction": 0.004290694556181282,
+            "worst": 0.008480825958702065,
+            "p90": 0.008899839098954143,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 7458,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.0026666666666666666,
+            "center_all_pass_fraction": 0.0016090104585679806,
+            "center_any_pass_fraction": 0.004290694556181282,
+            "worst": 0.991519174041298,
+            "p90": 0.9911001609010458,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "train_two_hop/two_hop": {
+        "pairs": 12000,
+        "prefix@1": 0.013916666666666667,
+        "prefix@2": 0.00025,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.014166666666666666,
+        "spearman_two_hop_count_vs_prefix": -0.016284988371989547,
+        "spearman_ppr_vs_prefix": 0.039237554283844706,
+        "spearman_jaccard_out_vs_prefix": 0.011458894055006412,
+        "spearman_bhattacharyya_out_vs_prefix": 0.010329104522235023,
+        "spearman_hop_full_visible_vs_prefix": null,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 18,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.00025,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.16666666666666666,
+            "worst": 0.0,
+            "p90": 0.0,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 18,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.00025,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.16666666666666666,
+            "worst": 1.0,
+            "p90": 1.0,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_degree_matched/degree_matched": {
+        "pairs": 2940,
+        "prefix@1": 0.013605442176870748,
+        "prefix@2": 0.0013605442176870747,
+        "prefix@3": 0.0003401360544217687,
+        "mean_prefix_length": 0.015306122448979591,
+        "spearman_two_hop_count_vs_prefix": 0.03431554217894009,
+        "spearman_ppr_vs_prefix": 0.06158874857053031,
+        "spearman_jaccard_out_vs_prefix": 0.0475393264603549,
+        "spearman_bhattacharyya_out_vs_prefix": 0.048674362035384715,
+        "spearman_hop_full_visible_vs_prefix": -0.033027623783252816,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 1617,
+            "subgraphs": 2940,
+            "subgraph_pass_fraction": 0.0013605442176870747,
+            "center_all_pass_fraction": 0.0012368583797155227,
+            "center_any_pass_fraction": 0.0024737167594310453,
+            "worst": 0.0021645021645021645,
+            "p90": 0.002411873840445269,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 1617,
+            "subgraphs": 2940,
+            "subgraph_pass_fraction": 0.0013605442176870747,
+            "center_all_pass_fraction": 0.0012368583797155227,
+            "center_any_pass_fraction": 0.0024737167594310453,
+            "worst": 0.9978354978354979,
+            "p90": 0.9975881261595548,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_direct/direct": {
+        "pairs": 2729,
+        "prefix@1": 0.07768413338219128,
+        "prefix@2": 0.011359472334188348,
+        "prefix@3": 0.00036643459142543056,
+        "mean_prefix_length": 0.08941004030780506,
+        "spearman_two_hop_count_vs_prefix": -0.010124528877409424,
+        "spearman_ppr_vs_prefix": 0.006702850137334469,
+        "spearman_jaccard_out_vs_prefix": 0.03264612369912513,
+        "spearman_bhattacharyya_out_vs_prefix": 0.02939872567663163,
+        "spearman_hop_full_visible_vs_prefix": 0.003173866759046675,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2277,
+            "subgraphs": 2729,
+            "subgraph_pass_fraction": 0.011359472334188348,
+            "center_all_pass_fraction": 0.010979358805445762,
+            "center_any_pass_fraction": 0.013175230566534914,
+            "worst": 0.020750988142292492,
+            "p90": 0.02121212121212121,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2277,
+            "subgraphs": 2729,
+            "subgraph_pass_fraction": 0.011359472334188348,
+            "center_all_pass_fraction": 0.010979358805445762,
+            "center_any_pass_fraction": 0.013175230566534914,
+            "worst": 0.9792490118577075,
+            "p90": 0.9787878787878788,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_shared_in/shared_in": {
+        "pairs": 2877,
+        "prefix@1": 0.04449078901633646,
+        "prefix@2": 0.004866180048661801,
+        "prefix@3": 0.0003475842891901286,
+        "mean_prefix_length": 0.04970455335418839,
+        "spearman_two_hop_count_vs_prefix": 0.042653704918140696,
+        "spearman_ppr_vs_prefix": 0.04730571254200857,
+        "spearman_jaccard_out_vs_prefix": 0.038412342151149734,
+        "spearman_bhattacharyya_out_vs_prefix": 0.039769044801354014,
+        "spearman_hop_full_visible_vs_prefix": -0.043191007177731396,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2272,
+            "subgraphs": 2877,
+            "subgraph_pass_fraction": 0.004866180048661801,
+            "center_all_pass_fraction": 0.0048415492957746475,
+            "center_any_pass_fraction": 0.006161971830985915,
+            "worst": 0.012433978873239437,
+            "p90": 0.012632042253521127,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2272,
+            "subgraphs": 2877,
+            "subgraph_pass_fraction": 0.004866180048661801,
+            "center_all_pass_fraction": 0.0048415492957746475,
+            "center_any_pass_fraction": 0.006161971830985915,
+            "worst": 0.9875660211267606,
+            "p90": 0.9873679577464788,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_shared_out/shared_out": {
+        "pairs": 2877,
+        "prefix@1": 0.04031977754605492,
+        "prefix@2": 0.0045185957594716716,
+        "prefix@3": 0.0006951685783802572,
+        "mean_prefix_length": 0.04553354188390685,
+        "spearman_two_hop_count_vs_prefix": -0.016477115509848705,
+        "spearman_ppr_vs_prefix": 0.015264264616071724,
+        "spearman_jaccard_out_vs_prefix": 0.015109470383647416,
+        "spearman_bhattacharyya_out_vs_prefix": 0.019602671816318935,
+        "spearman_hop_full_visible_vs_prefix": -0.0027715124163394493,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2309,
+            "subgraphs": 2877,
+            "subgraph_pass_fraction": 0.0045185957594716716,
+            "center_all_pass_fraction": 0.0038977912516240795,
+            "center_any_pass_fraction": 0.00563014291901256,
+            "worst": 0.009852750108271979,
+            "p90": 0.01016673884798614,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2309,
+            "subgraphs": 2877,
+            "subgraph_pass_fraction": 0.0045185957594716716,
+            "center_all_pass_fraction": 0.0038977912516240795,
+            "center_any_pass_fraction": 0.00563014291901256,
+            "worst": 0.990147249891728,
+            "p90": 0.9898332611520138,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_two_hop/two_hop": {
+        "pairs": 2907,
+        "prefix@1": 0.02476780185758514,
+        "prefix@2": 0.0006879944960440316,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.02545579635362917,
+        "spearman_two_hop_count_vs_prefix": 0.0047859754670753684,
+        "spearman_ppr_vs_prefix": 0.0061968396775011975,
+        "spearman_jaccard_out_vs_prefix": 0.046782999052176394,
+        "spearman_bhattacharyya_out_vs_prefix": 0.040143994236916364,
+        "spearman_hop_full_visible_vs_prefix": -0.019803258235349442,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 115,
+            "subgraphs": 2907,
+            "subgraph_pass_fraction": 0.0006879944960440316,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.017391304347826087,
+            "worst": 0.0,
+            "p90": 0.0,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 115,
+            "subgraphs": 2907,
+            "subgraph_pass_fraction": 0.0006879944960440316,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.017391304347826087,
+            "worst": 1.0,
+            "p90": 1.0,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_degree_matched/degree_matched": {
+        "pairs": 2938,
+        "prefix@1": 0.01531654186521443,
+        "prefix@2": 0.0010211027910142954,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.016337644656228726,
+        "spearman_two_hop_count_vs_prefix": 0.04347891136766845,
+        "spearman_ppr_vs_prefix": 0.05100627638986164,
+        "spearman_jaccard_out_vs_prefix": 0.07741284178119168,
+        "spearman_bhattacharyya_out_vs_prefix": 0.07906444365980814,
+        "spearman_hop_full_visible_vs_prefix": -0.0643001450707735,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 1655,
+            "subgraphs": 2938,
+            "subgraph_pass_fraction": 0.0010211027910142954,
+            "center_all_pass_fraction": 0.0006042296072507553,
+            "center_any_pass_fraction": 0.0018126888217522659,
+            "worst": 0.0022658610271903325,
+            "p90": 0.002326283987915408,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 1655,
+            "subgraphs": 2938,
+            "subgraph_pass_fraction": 0.0010211027910142954,
+            "center_all_pass_fraction": 0.0006042296072507553,
+            "center_any_pass_fraction": 0.0018126888217522659,
+            "worst": 0.9977341389728097,
+            "p90": 0.9976737160120847,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_direct/direct": {
+        "pairs": 2726,
+        "prefix@1": 0.07776962582538519,
+        "prefix@2": 0.009170946441672781,
+        "prefix@3": 0.0022010271460014674,
+        "mean_prefix_length": 0.08914159941305942,
+        "spearman_two_hop_count_vs_prefix": -0.022324634423348182,
+        "spearman_ppr_vs_prefix": -0.010628341771823034,
+        "spearman_jaccard_out_vs_prefix": -0.027985474766721797,
+        "spearman_bhattacharyya_out_vs_prefix": -0.02691495636858107,
+        "spearman_hop_full_visible_vs_prefix": 0.03249297050478174,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2265,
+            "subgraphs": 2726,
+            "subgraph_pass_fraction": 0.009170946441672781,
+            "center_all_pass_fraction": 0.00706401766004415,
+            "center_any_pass_fraction": 0.011037527593818985,
+            "worst": 0.01997792494481236,
+            "p90": 0.020375275938189844,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2265,
+            "subgraphs": 2726,
+            "subgraph_pass_fraction": 0.009170946441672781,
+            "center_all_pass_fraction": 0.00706401766004415,
+            "center_any_pass_fraction": 0.011037527593818985,
+            "worst": 0.9800220750551877,
+            "p90": 0.9796247240618103,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_shared_in/shared_in": {
+        "pairs": 2881,
+        "prefix@1": 0.040263797292606734,
+        "prefix@2": 0.0017355085039916696,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.041999305796598406,
+        "spearman_two_hop_count_vs_prefix": 0.007745649648630699,
+        "spearman_ppr_vs_prefix": 0.024319511018705442,
+        "spearman_jaccard_out_vs_prefix": 0.03296503774684033,
+        "spearman_bhattacharyya_out_vs_prefix": 0.03164531134009716,
+        "spearman_hop_full_visible_vs_prefix": -0.0024414902789438742,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2263,
+            "subgraphs": 2881,
+            "subgraph_pass_fraction": 0.0017355085039916696,
+            "center_all_pass_fraction": 0.0017675651789659744,
+            "center_any_pass_fraction": 0.002209456473707468,
+            "worst": 0.009390190013256739,
+            "p90": 0.009677419354838708,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2263,
+            "subgraphs": 2881,
+            "subgraph_pass_fraction": 0.0017355085039916696,
+            "center_all_pass_fraction": 0.0017675651789659744,
+            "center_any_pass_fraction": 0.002209456473707468,
+            "worst": 0.9906098099867433,
+            "p90": 0.9903225806451612,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_shared_out/shared_out": {
+        "pairs": 2876,
+        "prefix@1": 0.03477051460361613,
+        "prefix@2": 0.0027816411682892906,
+        "prefix@3": 0.0006954102920723226,
+        "mean_prefix_length": 0.03824756606397774,
+        "spearman_two_hop_count_vs_prefix": -0.003525264752253428,
+        "spearman_ppr_vs_prefix": 0.021493226748074072,
+        "spearman_jaccard_out_vs_prefix": 0.014392746202957534,
+        "spearman_bhattacharyya_out_vs_prefix": 0.01194252464783613,
+        "spearman_hop_full_visible_vs_prefix": -0.0020810083977983273,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2275,
+            "subgraphs": 2876,
+            "subgraph_pass_fraction": 0.0027816411682892906,
+            "center_all_pass_fraction": 0.002197802197802198,
+            "center_any_pass_fraction": 0.003076923076923077,
+            "worst": 0.00868131868131868,
+            "p90": 0.008912087912087911,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2275,
+            "subgraphs": 2876,
+            "subgraph_pass_fraction": 0.0027816411682892906,
+            "center_all_pass_fraction": 0.002197802197802198,
+            "center_any_pass_fraction": 0.003076923076923077,
+            "worst": 0.9913186813186813,
+            "p90": 0.991087912087912,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_two_hop/two_hop": {
+        "pairs": 2926,
+        "prefix@1": 0.019138755980861243,
+        "prefix@2": 0.0003417634996582365,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.01948051948051948,
+        "spearman_two_hop_count_vs_prefix": -0.006861960033851174,
+        "spearman_ppr_vs_prefix": 0.00012116843795330463,
+        "spearman_jaccard_out_vs_prefix": -0.017099259338047703,
+        "spearman_bhattacharyya_out_vs_prefix": -0.01775921533719665,
+        "spearman_hop_full_visible_vs_prefix": -0.0026805316761800034,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 111,
+            "subgraphs": 2926,
+            "subgraph_pass_fraction": 0.0003417634996582365,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.009009009009009009,
+            "worst": 0.0045045045045045045,
+            "p90": 0.005180180180180181,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 111,
+            "subgraphs": 2926,
+            "subgraph_pass_fraction": 0.0003417634996582365,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.009009009009009009,
+            "worst": 0.9954954954954955,
+            "p90": 0.9948198198198199,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      }
+    }
+  },
+  "checkpoint_reexport": {
+    "sid": "checkpoint_reexport",
+    "groups": {
+      "train_degree_matched/degree_matched": {
+        "pairs": 12000,
+        "prefix@1": 0.0115,
+        "prefix@2": 0.00016666666666666666,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.011666666666666667,
+        "spearman_two_hop_count_vs_prefix": 0.03593167421628962,
+        "spearman_ppr_vs_prefix": 0.023474648565415847,
+        "spearman_jaccard_out_vs_prefix": 0.01985720109007407,
+        "spearman_bhattacharyya_out_vs_prefix": 0.020165303347421212,
+        "spearman_hop_full_visible_vs_prefix": -0.014831837415626966,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 6182,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.00016666666666666666,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.00032351989647363315,
+            "worst": 0.0017793594306049821,
+            "p90": 0.001904723390488515,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 6182,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.00016666666666666666,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.00032351989647363315,
+            "worst": 0.998220640569395,
+            "p90": 0.9980952766095116,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "train_direct/direct": {
+        "pairs": 12000,
+        "prefix@1": 0.06816666666666667,
+        "prefix@2": 0.006583333333333333,
+        "prefix@3": 0.002,
+        "mean_prefix_length": 0.07675,
+        "spearman_two_hop_count_vs_prefix": 0.026418138368906253,
+        "spearman_ppr_vs_prefix": 0.05266929199438793,
+        "spearman_jaccard_out_vs_prefix": 0.035082743639953354,
+        "spearman_bhattacharyya_out_vs_prefix": 0.03160287618429774,
+        "spearman_hop_full_visible_vs_prefix": null,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 7174,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.006583333333333333,
+            "center_all_pass_fraction": 0.004739336492890996,
+            "center_any_pass_fraction": 0.010454418734318372,
+            "worst": 0.015019514914970727,
+            "p90": 0.015730415388904375,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 7174,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.006583333333333333,
+            "center_all_pass_fraction": 0.004739336492890996,
+            "center_any_pass_fraction": 0.010454418734318372,
+            "worst": 0.9849804850850292,
+            "p90": 0.9842695846110956,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "train_shared_in/shared_in": {
+        "pairs": 12000,
+        "prefix@1": 0.032916666666666664,
+        "prefix@2": 0.00225,
+        "prefix@3": 8.333333333333333e-05,
+        "mean_prefix_length": 0.03525,
+        "spearman_two_hop_count_vs_prefix": 0.014238967429633502,
+        "spearman_ppr_vs_prefix": 0.041299201433173054,
+        "spearman_jaccard_out_vs_prefix": 0.01096716692763425,
+        "spearman_bhattacharyya_out_vs_prefix": 0.012528138098319794,
+        "spearman_hop_full_visible_vs_prefix": null,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 7368,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.00225,
+            "center_all_pass_fraction": 0.0016286644951140066,
+            "center_any_pass_fraction": 0.003528773072747014,
+            "worst": 0.006582519001085777,
+            "p90": 0.006982899022801303,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 7368,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.00225,
+            "center_all_pass_fraction": 0.0016286644951140066,
+            "center_any_pass_fraction": 0.003528773072747014,
+            "worst": 0.9934174809989142,
+            "p90": 0.9930171009771988,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "train_shared_out/shared_out": {
+        "pairs": 12000,
+        "prefix@1": 0.030333333333333334,
+        "prefix@2": 0.0019166666666666666,
+        "prefix@3": 0.00025,
+        "mean_prefix_length": 0.0325,
+        "spearman_two_hop_count_vs_prefix": 0.015386146530290657,
+        "spearman_ppr_vs_prefix": 0.04583670697977859,
+        "spearman_jaccard_out_vs_prefix": 0.10087732516492023,
+        "spearman_bhattacharyya_out_vs_prefix": 0.09830978096466482,
+        "spearman_hop_full_visible_vs_prefix": null,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 7458,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.0019166666666666666,
+            "center_all_pass_fraction": 0.0017430946634486458,
+            "center_any_pass_fraction": 0.003083936712255296,
+            "worst": 0.006536604987932421,
+            "p90": 0.006834942343791901,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 7458,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.0019166666666666666,
+            "center_all_pass_fraction": 0.0017430946634486458,
+            "center_any_pass_fraction": 0.003083936712255296,
+            "worst": 0.9934633950120676,
+            "p90": 0.993165057656208,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "train_two_hop/two_hop": {
+        "pairs": 12000,
+        "prefix@1": 0.012583333333333334,
+        "prefix@2": 0.0005,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.013083333333333334,
+        "spearman_two_hop_count_vs_prefix": -0.00042099430087566526,
+        "spearman_ppr_vs_prefix": 0.04427311592473054,
+        "spearman_jaccard_out_vs_prefix": 0.016071963613348686,
+        "spearman_bhattacharyya_out_vs_prefix": 0.013119985705555377,
+        "spearman_hop_full_visible_vs_prefix": null,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 18,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.0005,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.2777777777777778,
+            "worst": 0.0,
+            "p90": 0.0,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 18,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.0005,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.2777777777777778,
+            "worst": 1.0,
+            "p90": 1.0,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_degree_matched/degree_matched": {
+        "pairs": 2940,
+        "prefix@1": 0.012585034013605442,
+        "prefix@2": 0.0003401360544217687,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.01292517006802721,
+        "spearman_two_hop_count_vs_prefix": 0.023826480600799924,
+        "spearman_ppr_vs_prefix": 0.03198292504514967,
+        "spearman_jaccard_out_vs_prefix": 0.022578025045500324,
+        "spearman_bhattacharyya_out_vs_prefix": 0.026132434508595686,
+        "spearman_hop_full_visible_vs_prefix": -0.029402595527644574,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 1617,
+            "subgraphs": 2940,
+            "subgraph_pass_fraction": 0.0003401360544217687,
+            "center_all_pass_fraction": 0.0006184291898577613,
+            "center_any_pass_fraction": 0.0006184291898577613,
+            "worst": 0.0015460729746444033,
+            "p90": 0.0017470624613481758,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 1617,
+            "subgraphs": 2940,
+            "subgraph_pass_fraction": 0.0003401360544217687,
+            "center_all_pass_fraction": 0.0006184291898577613,
+            "center_any_pass_fraction": 0.0006184291898577613,
+            "worst": 0.9984539270253556,
+            "p90": 0.9982529375386517,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_direct/direct": {
+        "pairs": 2729,
+        "prefix@1": 0.06632466104800293,
+        "prefix@2": 0.005496518871381458,
+        "prefix@3": 0.0007328691828508611,
+        "mean_prefix_length": 0.07255404910223526,
+        "spearman_two_hop_count_vs_prefix": -0.03282890533426586,
+        "spearman_ppr_vs_prefix": -0.014764778403724461,
+        "spearman_jaccard_out_vs_prefix": 0.032882567314846706,
+        "spearman_bhattacharyya_out_vs_prefix": 0.031829990837449924,
+        "spearman_hop_full_visible_vs_prefix": 0.01098464775422933,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2277,
+            "subgraphs": 2729,
+            "subgraph_pass_fraction": 0.005496518871381458,
+            "center_all_pass_fraction": 0.005709266578831796,
+            "center_any_pass_fraction": 0.006587615283267457,
+            "worst": 0.017347386912604304,
+            "p90": 0.017654808959156786,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2277,
+            "subgraphs": 2729,
+            "subgraph_pass_fraction": 0.005496518871381458,
+            "center_all_pass_fraction": 0.005709266578831796,
+            "center_any_pass_fraction": 0.006587615283267457,
+            "worst": 0.9826526130873957,
+            "p90": 0.9823451910408433,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_shared_in/shared_in": {
+        "pairs": 2877,
+        "prefix@1": 0.028849496002780674,
+        "prefix@2": 0.0010427528675703858,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.029892248870351062,
+        "spearman_two_hop_count_vs_prefix": 0.024463533227538376,
+        "spearman_ppr_vs_prefix": 0.02915604409053374,
+        "spearman_jaccard_out_vs_prefix": 0.02397843193385588,
+        "spearman_bhattacharyya_out_vs_prefix": 0.025439411895617114,
+        "spearman_hop_full_visible_vs_prefix": -0.039945858836859326,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2272,
+            "subgraphs": 2877,
+            "subgraph_pass_fraction": 0.0010427528675703858,
+            "center_all_pass_fraction": 0.0013204225352112676,
+            "center_any_pass_fraction": 0.0013204225352112676,
+            "worst": 0.007262323943661972,
+            "p90": 0.007405369718309859,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2272,
+            "subgraphs": 2877,
+            "subgraph_pass_fraction": 0.0010427528675703858,
+            "center_all_pass_fraction": 0.0013204225352112676,
+            "center_any_pass_fraction": 0.0013204225352112676,
+            "worst": 0.992737676056338,
+            "p90": 0.9925946302816903,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_shared_out/shared_out": {
+        "pairs": 2877,
+        "prefix@1": 0.027111574556830033,
+        "prefix@2": 0.0013903371567605145,
+        "prefix@3": 0.0003475842891901286,
+        "mean_prefix_length": 0.028849496002780674,
+        "spearman_two_hop_count_vs_prefix": 0.003612616576346906,
+        "spearman_ppr_vs_prefix": 0.025572466627571375,
+        "spearman_jaccard_out_vs_prefix": 0.013492165438514562,
+        "spearman_bhattacharyya_out_vs_prefix": 0.01907339772762605,
+        "spearman_hop_full_visible_vs_prefix": -0.021544677232703917,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2309,
+            "subgraphs": 2877,
+            "subgraph_pass_fraction": 0.0013903371567605145,
+            "center_all_pass_fraction": 0.00043308791684711995,
+            "center_any_pass_fraction": 0.0017323516673884798,
+            "worst": 0.005954958856647899,
+            "p90": 0.00617150281507146,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2309,
+            "subgraphs": 2877,
+            "subgraph_pass_fraction": 0.0013903371567605145,
+            "center_all_pass_fraction": 0.00043308791684711995,
+            "center_any_pass_fraction": 0.0017323516673884798,
+            "worst": 0.9940450411433521,
+            "p90": 0.9938284971849285,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_two_hop/two_hop": {
+        "pairs": 2907,
+        "prefix@1": 0.019951840385276916,
+        "prefix@2": 0.0006879944960440316,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.02063983488132095,
+        "spearman_two_hop_count_vs_prefix": 0.02737574065294504,
+        "spearman_ppr_vs_prefix": 0.012190940318022397,
+        "spearman_jaccard_out_vs_prefix": 0.06643221019855056,
+        "spearman_bhattacharyya_out_vs_prefix": 0.058507457964912975,
+        "spearman_hop_full_visible_vs_prefix": -0.041709977773805175,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 115,
+            "subgraphs": 2907,
+            "subgraph_pass_fraction": 0.0006879944960440316,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.017391304347826087,
+            "worst": 0.0,
+            "p90": 0.0,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 115,
+            "subgraphs": 2907,
+            "subgraph_pass_fraction": 0.0006879944960440316,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.017391304347826087,
+            "worst": 1.0,
+            "p90": 1.0,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_degree_matched/degree_matched": {
+        "pairs": 2938,
+        "prefix@1": 0.01123213070115725,
+        "prefix@2": 0.0003403675970047651,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.011572498298162015,
+        "spearman_two_hop_count_vs_prefix": 0.06637686667612487,
+        "spearman_ppr_vs_prefix": 0.06526345536074141,
+        "spearman_jaccard_out_vs_prefix": 0.09144401706125352,
+        "spearman_bhattacharyya_out_vs_prefix": 0.0928962363660011,
+        "spearman_hop_full_visible_vs_prefix": -0.07343784066738074,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 1655,
+            "subgraphs": 2938,
+            "subgraph_pass_fraction": 0.0003403675970047651,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.0006042296072507553,
+            "worst": 0.0009063444108761329,
+            "p90": 0.0009667673716012083,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 1655,
+            "subgraphs": 2938,
+            "subgraph_pass_fraction": 0.0003403675970047651,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.0006042296072507553,
+            "worst": 0.9990936555891239,
+            "p90": 0.9990332326283988,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_direct/direct": {
+        "pairs": 2726,
+        "prefix@1": 0.05135730007336757,
+        "prefix@2": 0.00586940572267058,
+        "prefix@3": 0.001467351430667645,
+        "mean_prefix_length": 0.058694057226705794,
+        "spearman_two_hop_count_vs_prefix": -0.02131440527327282,
+        "spearman_ppr_vs_prefix": -0.022171340721621944,
+        "spearman_jaccard_out_vs_prefix": -0.031192261440776532,
+        "spearman_bhattacharyya_out_vs_prefix": -0.029923652190048645,
+        "spearman_hop_full_visible_vs_prefix": 0.03807873056371849,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2265,
+            "subgraphs": 2726,
+            "subgraph_pass_fraction": 0.00586940572267058,
+            "center_all_pass_fraction": 0.005739514348785872,
+            "center_any_pass_fraction": 0.00706401766004415,
+            "worst": 0.013465783664459162,
+            "p90": 0.013719646799116997,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2265,
+            "subgraphs": 2726,
+            "subgraph_pass_fraction": 0.00586940572267058,
+            "center_all_pass_fraction": 0.005739514348785872,
+            "center_any_pass_fraction": 0.00706401766004415,
+            "worst": 0.9865342163355408,
+            "p90": 0.986280353200883,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_shared_in/shared_in": {
+        "pairs": 2881,
+        "prefix@1": 0.03019784796945505,
+        "prefix@2": 0.0006942034015966678,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.030892051371051717,
+        "spearman_two_hop_count_vs_prefix": 0.010389859932147133,
+        "spearman_ppr_vs_prefix": 0.03180171852376011,
+        "spearman_jaccard_out_vs_prefix": 0.023721467786064505,
+        "spearman_bhattacharyya_out_vs_prefix": 0.024493286452090642,
+        "spearman_hop_full_visible_vs_prefix": -0.0047459869996258515,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2263,
+            "subgraphs": 2881,
+            "subgraph_pass_fraction": 0.0006942034015966678,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.0008837825894829872,
+            "worst": 0.006959787892178524,
+            "p90": 0.007125497127706584,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2263,
+            "subgraphs": 2881,
+            "subgraph_pass_fraction": 0.0006942034015966678,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.0008837825894829872,
+            "worst": 0.9930402121078215,
+            "p90": 0.9928745028722934,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_shared_out/shared_out": {
+        "pairs": 2876,
+        "prefix@1": 0.023991655076495134,
+        "prefix@2": 0.001043115438108484,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.025034770514603615,
+        "spearman_two_hop_count_vs_prefix": 0.0032531671596348756,
+        "spearman_ppr_vs_prefix": 0.022398264976631558,
+        "spearman_jaccard_out_vs_prefix": 0.00904046288228107,
+        "spearman_bhattacharyya_out_vs_prefix": 0.006597662131404661,
+        "spearman_hop_full_visible_vs_prefix": -0.011213094201276795,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2275,
+            "subgraphs": 2876,
+            "subgraph_pass_fraction": 0.001043115438108484,
+            "center_all_pass_fraction": 0.0013186813186813187,
+            "center_any_pass_fraction": 0.0013186813186813187,
+            "worst": 0.0059340659340659345,
+            "p90": 0.006043956043956044,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2275,
+            "subgraphs": 2876,
+            "subgraph_pass_fraction": 0.001043115438108484,
+            "center_all_pass_fraction": 0.0013186813186813187,
+            "center_any_pass_fraction": 0.0013186813186813187,
+            "worst": 0.994065934065934,
+            "p90": 0.993956043956044,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_two_hop/two_hop": {
+        "pairs": 2926,
+        "prefix@1": 0.014354066985645933,
+        "prefix@2": 0.000683526999316473,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.015037593984962405,
+        "spearman_two_hop_count_vs_prefix": -0.00782820692295495,
+        "spearman_ppr_vs_prefix": -0.012082694664233572,
+        "spearman_jaccard_out_vs_prefix": -0.012365479496684961,
+        "spearman_bhattacharyya_out_vs_prefix": -0.011086261971397447,
+        "spearman_hop_full_visible_vs_prefix": 0.017429515159394067,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 111,
+            "subgraphs": 2926,
+            "subgraph_pass_fraction": 0.000683526999316473,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.018018018018018018,
+            "worst": 0.0045045045045045045,
+            "p90": 0.00472972972972973,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 111,
+            "subgraphs": 2926,
+            "subgraph_pass_fraction": 0.000683526999316473,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.018018018018018018,
+            "worst": 0.9954954954954955,
+            "p90": 0.9952702702702703,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      }
+    }
+  },
+  "legacy_npy": {
+    "sid": "legacy_npy",
+    "groups": {
+      "train_degree_matched/degree_matched": {
+        "pairs": 12000,
+        "prefix@1": 0.0115,
+        "prefix@2": 0.00016666666666666666,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.011666666666666667,
+        "spearman_two_hop_count_vs_prefix": 0.03593167421628962,
+        "spearman_ppr_vs_prefix": 0.023474648565415847,
+        "spearman_jaccard_out_vs_prefix": 0.01985720109007407,
+        "spearman_bhattacharyya_out_vs_prefix": 0.020165303347421212,
+        "spearman_hop_full_visible_vs_prefix": -0.014831837415626966,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 6182,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.00016666666666666666,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.00032351989647363315,
+            "worst": 0.0017793594306049821,
+            "p90": 0.001904723390488515,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 6182,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.00016666666666666666,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.00032351989647363315,
+            "worst": 0.998220640569395,
+            "p90": 0.9980952766095116,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "train_direct/direct": {
+        "pairs": 12000,
+        "prefix@1": 0.06816666666666667,
+        "prefix@2": 0.006583333333333333,
+        "prefix@3": 0.002,
+        "mean_prefix_length": 0.07675,
+        "spearman_two_hop_count_vs_prefix": 0.026418138368906253,
+        "spearman_ppr_vs_prefix": 0.05266929199438793,
+        "spearman_jaccard_out_vs_prefix": 0.035082743639953354,
+        "spearman_bhattacharyya_out_vs_prefix": 0.03160287618429774,
+        "spearman_hop_full_visible_vs_prefix": null,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 7174,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.006583333333333333,
+            "center_all_pass_fraction": 0.004739336492890996,
+            "center_any_pass_fraction": 0.010454418734318372,
+            "worst": 0.015019514914970727,
+            "p90": 0.015730415388904375,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 7174,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.006583333333333333,
+            "center_all_pass_fraction": 0.004739336492890996,
+            "center_any_pass_fraction": 0.010454418734318372,
+            "worst": 0.9849804850850292,
+            "p90": 0.9842695846110956,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "train_shared_in/shared_in": {
+        "pairs": 12000,
+        "prefix@1": 0.032916666666666664,
+        "prefix@2": 0.00225,
+        "prefix@3": 8.333333333333333e-05,
+        "mean_prefix_length": 0.03525,
+        "spearman_two_hop_count_vs_prefix": 0.014238967429633502,
+        "spearman_ppr_vs_prefix": 0.041299201433173054,
+        "spearman_jaccard_out_vs_prefix": 0.01096716692763425,
+        "spearman_bhattacharyya_out_vs_prefix": 0.012528138098319794,
+        "spearman_hop_full_visible_vs_prefix": null,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 7368,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.00225,
+            "center_all_pass_fraction": 0.0016286644951140066,
+            "center_any_pass_fraction": 0.003528773072747014,
+            "worst": 0.006582519001085777,
+            "p90": 0.006982899022801303,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 7368,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.00225,
+            "center_all_pass_fraction": 0.0016286644951140066,
+            "center_any_pass_fraction": 0.003528773072747014,
+            "worst": 0.9934174809989142,
+            "p90": 0.9930171009771988,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "train_shared_out/shared_out": {
+        "pairs": 12000,
+        "prefix@1": 0.030333333333333334,
+        "prefix@2": 0.0018333333333333333,
+        "prefix@3": 0.00016666666666666666,
+        "mean_prefix_length": 0.03233333333333333,
+        "spearman_two_hop_count_vs_prefix": 0.01539624725798018,
+        "spearman_ppr_vs_prefix": 0.04581728778762526,
+        "spearman_jaccard_out_vs_prefix": 0.10086604503849593,
+        "spearman_bhattacharyya_out_vs_prefix": 0.09829990716582587,
+        "spearman_hop_full_visible_vs_prefix": null,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 7458,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.0018333333333333333,
+            "center_all_pass_fraction": 0.0016090104585679806,
+            "center_any_pass_fraction": 0.0029498525073746312,
+            "worst": 0.006469562885492089,
+            "p90": 0.006767900241351569,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 7458,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.0018333333333333333,
+            "center_all_pass_fraction": 0.0016090104585679806,
+            "center_any_pass_fraction": 0.0029498525073746312,
+            "worst": 0.993530437114508,
+            "p90": 0.9932320997586483,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "train_two_hop/two_hop": {
+        "pairs": 12000,
+        "prefix@1": 0.012583333333333334,
+        "prefix@2": 0.0005,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.013083333333333334,
+        "spearman_two_hop_count_vs_prefix": -0.00042099430087566526,
+        "spearman_ppr_vs_prefix": 0.04427311592473054,
+        "spearman_jaccard_out_vs_prefix": 0.016071963613348686,
+        "spearman_bhattacharyya_out_vs_prefix": 0.013119985705555377,
+        "spearman_hop_full_visible_vs_prefix": null,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 18,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.0005,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.2777777777777778,
+            "worst": 0.0,
+            "p90": 0.0,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 18,
+            "subgraphs": 12000,
+            "subgraph_pass_fraction": 0.0005,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.2777777777777778,
+            "worst": 1.0,
+            "p90": 1.0,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_degree_matched/degree_matched": {
+        "pairs": 2940,
+        "prefix@1": 0.012585034013605442,
+        "prefix@2": 0.0003401360544217687,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.01292517006802721,
+        "spearman_two_hop_count_vs_prefix": 0.023826480600799924,
+        "spearman_ppr_vs_prefix": 0.03198292504514967,
+        "spearman_jaccard_out_vs_prefix": 0.022578025045500324,
+        "spearman_bhattacharyya_out_vs_prefix": 0.026132434508595686,
+        "spearman_hop_full_visible_vs_prefix": -0.029402595527644574,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 1617,
+            "subgraphs": 2940,
+            "subgraph_pass_fraction": 0.0003401360544217687,
+            "center_all_pass_fraction": 0.0006184291898577613,
+            "center_any_pass_fraction": 0.0006184291898577613,
+            "worst": 0.0015460729746444033,
+            "p90": 0.0017470624613481758,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 1617,
+            "subgraphs": 2940,
+            "subgraph_pass_fraction": 0.0003401360544217687,
+            "center_all_pass_fraction": 0.0006184291898577613,
+            "center_any_pass_fraction": 0.0006184291898577613,
+            "worst": 0.9984539270253556,
+            "p90": 0.9982529375386517,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_direct/direct": {
+        "pairs": 2729,
+        "prefix@1": 0.06632466104800293,
+        "prefix@2": 0.005496518871381458,
+        "prefix@3": 0.0007328691828508611,
+        "mean_prefix_length": 0.07255404910223526,
+        "spearman_two_hop_count_vs_prefix": -0.03282890533426586,
+        "spearman_ppr_vs_prefix": -0.014764778403724461,
+        "spearman_jaccard_out_vs_prefix": 0.032882567314846706,
+        "spearman_bhattacharyya_out_vs_prefix": 0.031829990837449924,
+        "spearman_hop_full_visible_vs_prefix": 0.01098464775422933,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2277,
+            "subgraphs": 2729,
+            "subgraph_pass_fraction": 0.005496518871381458,
+            "center_all_pass_fraction": 0.005709266578831796,
+            "center_any_pass_fraction": 0.006587615283267457,
+            "worst": 0.017347386912604304,
+            "p90": 0.017654808959156786,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2277,
+            "subgraphs": 2729,
+            "subgraph_pass_fraction": 0.005496518871381458,
+            "center_all_pass_fraction": 0.005709266578831796,
+            "center_any_pass_fraction": 0.006587615283267457,
+            "worst": 0.9826526130873957,
+            "p90": 0.9823451910408433,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_shared_in/shared_in": {
+        "pairs": 2877,
+        "prefix@1": 0.028849496002780674,
+        "prefix@2": 0.0010427528675703858,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.029892248870351062,
+        "spearman_two_hop_count_vs_prefix": 0.024463533227538376,
+        "spearman_ppr_vs_prefix": 0.02915604409053374,
+        "spearman_jaccard_out_vs_prefix": 0.02397843193385588,
+        "spearman_bhattacharyya_out_vs_prefix": 0.025439411895617114,
+        "spearman_hop_full_visible_vs_prefix": -0.039945858836859326,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2272,
+            "subgraphs": 2877,
+            "subgraph_pass_fraction": 0.0010427528675703858,
+            "center_all_pass_fraction": 0.0013204225352112676,
+            "center_any_pass_fraction": 0.0013204225352112676,
+            "worst": 0.007262323943661972,
+            "p90": 0.007405369718309859,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2272,
+            "subgraphs": 2877,
+            "subgraph_pass_fraction": 0.0010427528675703858,
+            "center_all_pass_fraction": 0.0013204225352112676,
+            "center_any_pass_fraction": 0.0013204225352112676,
+            "worst": 0.992737676056338,
+            "p90": 0.9925946302816903,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_shared_out/shared_out": {
+        "pairs": 2877,
+        "prefix@1": 0.027111574556830033,
+        "prefix@2": 0.0013903371567605145,
+        "prefix@3": 0.0003475842891901286,
+        "mean_prefix_length": 0.028849496002780674,
+        "spearman_two_hop_count_vs_prefix": 0.003612616576346906,
+        "spearman_ppr_vs_prefix": 0.025572466627571375,
+        "spearman_jaccard_out_vs_prefix": 0.013492165438514562,
+        "spearman_bhattacharyya_out_vs_prefix": 0.01907339772762605,
+        "spearman_hop_full_visible_vs_prefix": -0.021544677232703917,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2309,
+            "subgraphs": 2877,
+            "subgraph_pass_fraction": 0.0013903371567605145,
+            "center_all_pass_fraction": 0.00043308791684711995,
+            "center_any_pass_fraction": 0.0017323516673884798,
+            "worst": 0.005954958856647899,
+            "p90": 0.00617150281507146,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2309,
+            "subgraphs": 2877,
+            "subgraph_pass_fraction": 0.0013903371567605145,
+            "center_all_pass_fraction": 0.00043308791684711995,
+            "center_any_pass_fraction": 0.0017323516673884798,
+            "worst": 0.9940450411433521,
+            "p90": 0.9938284971849285,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_test_two_hop/two_hop": {
+        "pairs": 2907,
+        "prefix@1": 0.019951840385276916,
+        "prefix@2": 0.0006879944960440316,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.02063983488132095,
+        "spearman_two_hop_count_vs_prefix": 0.02737574065294504,
+        "spearman_ppr_vs_prefix": 0.012190940318022397,
+        "spearman_jaccard_out_vs_prefix": 0.06643221019855056,
+        "spearman_bhattacharyya_out_vs_prefix": 0.058507457964912975,
+        "spearman_hop_full_visible_vs_prefix": -0.041709977773805175,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 115,
+            "subgraphs": 2907,
+            "subgraph_pass_fraction": 0.0006879944960440316,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.017391304347826087,
+            "worst": 0.0,
+            "p90": 0.0,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 115,
+            "subgraphs": 2907,
+            "subgraph_pass_fraction": 0.0006879944960440316,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.017391304347826087,
+            "worst": 1.0,
+            "p90": 1.0,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_degree_matched/degree_matched": {
+        "pairs": 2938,
+        "prefix@1": 0.01123213070115725,
+        "prefix@2": 0.0003403675970047651,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.011572498298162015,
+        "spearman_two_hop_count_vs_prefix": 0.06637686667612487,
+        "spearman_ppr_vs_prefix": 0.06526345536074141,
+        "spearman_jaccard_out_vs_prefix": 0.09144401706125352,
+        "spearman_bhattacharyya_out_vs_prefix": 0.0928962363660011,
+        "spearman_hop_full_visible_vs_prefix": -0.07343784066738074,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 1655,
+            "subgraphs": 2938,
+            "subgraph_pass_fraction": 0.0003403675970047651,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.0006042296072507553,
+            "worst": 0.0009063444108761329,
+            "p90": 0.0009667673716012083,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 1655,
+            "subgraphs": 2938,
+            "subgraph_pass_fraction": 0.0003403675970047651,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.0006042296072507553,
+            "worst": 0.9990936555891239,
+            "p90": 0.9990332326283988,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_direct/direct": {
+        "pairs": 2726,
+        "prefix@1": 0.05135730007336757,
+        "prefix@2": 0.00586940572267058,
+        "prefix@3": 0.001467351430667645,
+        "mean_prefix_length": 0.058694057226705794,
+        "spearman_two_hop_count_vs_prefix": -0.02131440527327282,
+        "spearman_ppr_vs_prefix": -0.022171340721621944,
+        "spearman_jaccard_out_vs_prefix": -0.031192261440776532,
+        "spearman_bhattacharyya_out_vs_prefix": -0.029923652190048645,
+        "spearman_hop_full_visible_vs_prefix": 0.03807873056371849,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2265,
+            "subgraphs": 2726,
+            "subgraph_pass_fraction": 0.00586940572267058,
+            "center_all_pass_fraction": 0.005739514348785872,
+            "center_any_pass_fraction": 0.00706401766004415,
+            "worst": 0.013465783664459162,
+            "p90": 0.013719646799116997,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2265,
+            "subgraphs": 2726,
+            "subgraph_pass_fraction": 0.00586940572267058,
+            "center_all_pass_fraction": 0.005739514348785872,
+            "center_any_pass_fraction": 0.00706401766004415,
+            "worst": 0.9865342163355408,
+            "p90": 0.986280353200883,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_shared_in/shared_in": {
+        "pairs": 2881,
+        "prefix@1": 0.03019784796945505,
+        "prefix@2": 0.0006942034015966678,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.030892051371051717,
+        "spearman_two_hop_count_vs_prefix": 0.010389859932147133,
+        "spearman_ppr_vs_prefix": 0.03180171852376011,
+        "spearman_jaccard_out_vs_prefix": 0.023721467786064505,
+        "spearman_bhattacharyya_out_vs_prefix": 0.024493286452090642,
+        "spearman_hop_full_visible_vs_prefix": -0.0047459869996258515,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2263,
+            "subgraphs": 2881,
+            "subgraph_pass_fraction": 0.0006942034015966678,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.0008837825894829872,
+            "worst": 0.006959787892178524,
+            "p90": 0.007125497127706584,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2263,
+            "subgraphs": 2881,
+            "subgraph_pass_fraction": 0.0006942034015966678,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.0008837825894829872,
+            "worst": 0.9930402121078215,
+            "p90": 0.9928745028722934,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_shared_out/shared_out": {
+        "pairs": 2876,
+        "prefix@1": 0.023991655076495134,
+        "prefix@2": 0.001043115438108484,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.025034770514603615,
+        "spearman_two_hop_count_vs_prefix": 0.0032531671596348756,
+        "spearman_ppr_vs_prefix": 0.022398264976631558,
+        "spearman_jaccard_out_vs_prefix": 0.00904046288228107,
+        "spearman_bhattacharyya_out_vs_prefix": 0.006597662131404661,
+        "spearman_hop_full_visible_vs_prefix": -0.011213094201276795,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 2275,
+            "subgraphs": 2876,
+            "subgraph_pass_fraction": 0.001043115438108484,
+            "center_all_pass_fraction": 0.0013186813186813187,
+            "center_any_pass_fraction": 0.0013186813186813187,
+            "worst": 0.0059340659340659345,
+            "p90": 0.006043956043956044,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 2275,
+            "subgraphs": 2876,
+            "subgraph_pass_fraction": 0.001043115438108484,
+            "center_all_pass_fraction": 0.0013186813186813187,
+            "center_any_pass_fraction": 0.0013186813186813187,
+            "worst": 0.994065934065934,
+            "p90": 0.993956043956044,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      },
+      "strict_struct_val_two_hop/two_hop": {
+        "pairs": 2926,
+        "prefix@1": 0.014354066985645933,
+        "prefix@2": 0.000683526999316473,
+        "prefix@3": 0.0,
+        "mean_prefix_length": 0.015037593984962405,
+        "spearman_two_hop_count_vs_prefix": -0.00782820692295495,
+        "spearman_ppr_vs_prefix": -0.012082694664233572,
+        "spearman_jaccard_out_vs_prefix": -0.012365479496684961,
+        "spearman_bhattacharyya_out_vs_prefix": -0.011086261971397447,
+        "spearman_hop_full_visible_vs_prefix": 0.017429515159394067,
+        "multi_subgraph": {
+          "similarity": {
+            "centers": 111,
+            "subgraphs": 2926,
+            "subgraph_pass_fraction": 0.000683526999316473,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.018018018018018018,
+            "worst": 0.0045045045045045045,
+            "p90": 0.00472972972972973,
+            "centers_without_valid_subgraph": 0
+          },
+          "distortion": {
+            "centers": 111,
+            "subgraphs": 2926,
+            "subgraph_pass_fraction": 0.000683526999316473,
+            "center_all_pass_fraction": 0.0,
+            "center_any_pass_fraction": 0.018018018018018018,
+            "worst": 0.9954954954954955,
+            "p90": 0.9952702702702703,
+            "centers_without_valid_subgraph": 0
+          }
+        }
+      }
+    }
+  }
+}
