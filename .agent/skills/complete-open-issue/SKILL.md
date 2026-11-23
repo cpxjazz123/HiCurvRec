@@ -1,9 +1,36 @@
 ---
 name: complete-open-issue
-description: Use when the task is an open GitHub issue that must be finished end to end. Reads the issue, freezes a machine-checkable acceptance checklist, prepares data and infrastructure, implements with TDD, runs a check loop that re-reads the issue every round, trains when the issue needs it, judges the result against the issue's own criteria, closes the issue either when every criterion passes or when a blockage is reported with evidence, terminates in exactly one of three states (completed, blocked, or in-progress with a PROGRESS.json checkpoint that keeps the issue open while executable work remains), enforces seven mandatory mechanisms (frozen maths contract, paper cross-check, independent reference implementation, known-answer tests, mutation tests, per-module verification, conclusion re-check) before any result may be claimed.
+description: Use when the task is an open GitHub issue that must be finished end to end. Reads the issue, freezes a machine-checkable acceptance checklist, prepares data and infrastructure, implements with TDD, runs a check loop that re-reads the issue every round, trains when the issue needs it, judges the result against the issue's own criteria, and keeps working until `gh issue view` reports CLOSED. Only two terminal states are allowed: completed (every criterion passes, including negative results) or blocked (a genuine external blockage proven with evidence). Workload, context or round budget, long training, failing tests and implementation errors are explicitly not reasons to stop; PROGRESS.json is only a crash-recovery checkpoint, never an exit. Enforces seven mandatory mechanisms (frozen maths contract, paper cross-check, independent reference implementation, known-answer tests, mutation tests, per-module verification, conclusion re-check) before any result may be claimed.
 ---
 
 # 按 open issue 完成任务的闭环
+
+## 铁律:开始之后必须推进到 CLOSED
+
+一旦开始执行 Issue,Agent 必须持续执行,直到 `gh issue view <N> --json state` 返回 `CLOSED`。
+
+**不得以下列任一理由主动结束任务、发送最终回复或关闭 Issue:**
+
+- 任务量大、剩余步骤多;
+- 上下文或当前轮次预算不足;
+- 训练耗时长,或训练仍在运行(应当轮询等待,而不是收尾);
+- 测试失败;
+- 实现错误或存在 bug;
+- 任何「这一轮做不完」的判断。
+
+**只要还存在可执行任务**(写代码、修 bug、加测试、跑检查、等训练、写证据、评论 issue),
+就必须继续做。不得以「已保存进度」作为退出理由。
+
+`PROGRESS.json` **只是断点文件**:用于外部强制中断之后的恢复,**不构成主动退出条件**;
+写完之后必须继续执行,不得把它当作收尾动作。
+
+只有两种情况允许停止:
+
+1. `gh issue view <N>` 返回 `CLOSED`(COMPLETED 或 BLOCKED,见 §6.2);
+2. 用户明确取消,或外部系统强制中断(进程被杀、机器故障等不可控事件) ——
+   这两种不属于 skill 的主动退出;恢复后仍然继续。
+
+遇到真正无法解决的阻塞:按 §6.1 记录完整证据、走阻塞关闭流程、**确认 `CLOSED` 之后才允许退出**。
 
 一个 issue 只有在**它的验收条件逐条被证据满足**时才算完成。本 skill 把这个过程固定为
 `读 issue → infra → 实现 → 检查循环 →(训练,仅当 issue 要求)→ 结论对账 → 关闭`;任何一步不满足,回到它
@@ -11,10 +38,10 @@ description: Use when the task is an open GitHub issue that must be finished end
 
 **训练不是固定步骤**:跑不跑由 issue 的验收条件决定(见 §4),不由"skill 有第四步"决定。
 
-**每个关键节点必须立刻评论到 issue。** 推进的终点是 §6.2 的三种状态之一:
-COMPLETED / BLOCKED(→ `CLOSED`),或 IN_PROGRESS(→ **保持 OPEN** + `PROGRESS.json`)。
-「这一轮做不完」既不是暂停的理由,也不是关闭的理由:它对应 IN_PROGRESS,下一轮从断点继续。
-不许把"下一步计划"当交付;但**已完成的节点 + 可执行的断点就是交付**,只要它们真的落到了仓库与 issue。
+**每个关键节点必须立刻评论到 issue,然后继续干活。** 评论与断点都不是收尾:
+它们必须落到仓库和 issue 上,但做完就继续下一步,直到 §6.2 的 COMPLETED 或 BLOCKED。
+
+不许把「下一步计划」当交付;同样不许把「已评论 / 已写断点」当交付 —— 交付是 §6.4 四问的答案。
 
 同时,进度不是留在本地的:每完成一个关键节点或拿到一条关键结论,先 `gh issue comment` 再继续
 (节点清单与格式见下节)。
@@ -27,17 +54,19 @@ COMPLETED / BLOCKED(→ `CLOSED`),或 IN_PROGRESS(→ **保持 OPEN** + `PROGRES
 | 训练失败/指标低 | 按 §4 分类回对应步骤,或按 §5 出负结论并写进 `VERDICT.md` |
 | 遇到需要授权的例外(如 `git push --force`) | 该例外单独处理,但 issue 的其余部分继续推进 |
 | 想先汇报进度再继续 | 先 `gh issue comment` 贴该节点证据,再用 `out://` 说明,然后**继续干活** |
-| **遇到阻塞或失败** | 先按 §4 修;确实不可继续时按 §6.2 判定,只有 COMPLETED / BLOCKED 才关闭,其余写 `PROGRESS.json` 并**保持 OPEN** |
-| 本轮预算/上下文不足、任务还剩很多 | **不是阻塞**:写 `PROGRESS.json`、评论、保持 OPEN,下一轮从断点继续 |
+| **遇到阻塞或失败** | 先按 §4 修;确实不可继续时按 §6.1 记录证据并关闭为 BLOCKED |
+| 本轮预算/上下文不足、任务还剩很多 | **不是结束理由**:继续做,必要时先写断点再继续,不得收尾 |
+| 测试失败 / 实现报错 | 那是当前要做的活:定位、修、重跑,不要结束 |
+| 训练还在跑 | 轮询等待,或先推进不依赖它的部分,不得收尾 |
 | 参考实现或单模块测试通过 | 不等于生产代码修好,也不等于训练入口正确(§6.5) |
 
-终止状态只有三种(§6.2):**COMPLETED**(全部验收 PASS)或 **BLOCKED**(§6.2 允许的外部阻塞)→ 关闭;
-**IN_PROGRESS**(仍有可执行任务,包括本轮预算不足)→ **保持 OPEN** 并写 `PROGRESS.json`(§6.3)。
+终止状态只有两种(§6.2):**COMPLETED**(全部验收 PASS)或 **BLOCKED**(§6.1 允许的外部阻塞),
+二者都必须让 `gh issue view <N>` 返回 `CLOSED`。
 
 **工作尚未完成,不等于工作无法完成。** 任务量大、训练耗时长、上下文或单轮预算不足、代码还没写完、
-可修复的 bug —— 都不是阻塞。把这些写成研究任务的客观阻塞,本 skill 明令禁止。
+可修复的 bug —— 都不是阻塞,也都不是结束理由。把这些写成研究任务的客观阻塞,本 skill 明令禁止。
 
-三种状态都必须落到 issue:关闭时贴结论与证据,继续时贴 `PROGRESS.json` 的路径与下一步命令。
+**不要发送最终回复来结束一轮工作。** 只有 CLOSED,或用户明确取消/外部强制中断,才允许停止。
 
 ## 强制机制(七项,单 Agent 执行时全部必做)
 
@@ -199,7 +228,7 @@ read issue://<N>                 # 或 gh issue view <N> --json number,title,bod
 `experiment`(训练成功但指标低)→ 进入第 5 步。
 
 **`resource` 不是失败分类。** 工作量大、训练耗时长、上下文或轮次预算不足、代码尚未实现,
-都不是可以据以关闭的理由(§6.2)。
+都不是结束或关闭的理由(§6.2);遇到它们,继续做就是了。
 
 可修复的实现错误必须继续定位。**同一种修复方式失败,要更换诊断方法**,例如:换成独立参考实现对照、
 逐位比对中间张量、构造最小复现、加变异测试定位未被覆盖的分支、缩小到单 batch 单步。
@@ -267,9 +296,10 @@ gh issue view <N> --json state      # 必须 CLOSED
 |---|---|---|---|
 | **COMPLETED** | 全部验收 PASS,结果可以正面也可以负面 | CLOSED | `VERDICT.md` + 逐条证据 + 关闭评论 |
 | **BLOCKED** | 存在可验证、不可自行解决的外部阻塞 | CLOSED | §6.1 的三类证据 + `VERDICT.md` 的阻塞段 |
-| **IN_PROGRESS** | 尚有任务可执行,包括当前轮次预算不足 | **OPEN** | `PROGRESS.json` + 评论 + 保持 OPEN |
 
-| 情况 | 是否允许提前关闭 |
+**没有第三种终止状态。** 「还有任务可执行」不是一种状态,而是「继续做」的指令。
+
+|情况|是否允许结束任务|
 |---|---|
 | 剩余任务工作量大 | **否** |
 | 预计训练耗时较长 | **否** |
@@ -281,18 +311,19 @@ gh issue view <N> --json state      # 必须 CLOSED
 | 必须违反冻结协议才能继续 | 是,需提供证据 |
 | 用户明确要求终止 | 是 |
 
-判定的顺序是:先问"还有没有我能执行的下一步"。只要答案是"有",就必须保持 OPEN 并写断点;
-不得把"这一轮做不完"翻译成"这个任务做不了"。
+判定的顺序固定:先问「还有没有我能执行的下一步」。只要答案是「有」,就必须继续执行 ——
+既不得关闭,也不得用断点收尾;不得把「这一轮做不完」翻译成「这个任务做不了」。
 
-## 6.3 断点恢复协议(`PROGRESS.json`)
+## 6.3 断点文件(`PROGRESS.json`,仅用于外部中断)
 
-执行环境确实无法继续当前轮次时,**不关闭 issue**,写 `results/research/issue<N>/PROGRESS.json`:
+`PROGRESS.json` 是**恢复用的断点**,不是退出机制。在每个关键节点顺手更新它,
+这样进程被杀、机器故障之后可以从这里接着做;写完必须继续执行。
 
 ```json
 {
   "issue": 243,
   "commit": "<当前 HEAD sha256/short>",
-  "state": "IN_PROGRESS",
+  "state": "WORKING",
   "done": ["C1", "C2", "C4", "C5"],
   "not_run": ["C17", "C21", "C26"],
   "failed": [],
@@ -306,9 +337,9 @@ gh issue view <N> --json state      # 必须 CLOSED
 规则:
 
 - `commit` 必须与工作区一致;文件入库并推送(§43/§45)。
-- 在 issue 下评论 `PROGRESS.json` 的路径与 `next_commands`,然后**保持 OPEN**。
-- 下一次执行**从这个文件继续**,不得重复 `done` 里的实验,不得重跑已完成的训练。
-- 只有 §6.2 判为「是」的情形才能把 `state` 写成 `BLOCKED` 并关闭。
+- **写完继续干活**,不得以「已保存进度」结束这一轮。
+- 恢复时**从这个文件继续**,不得重复 `done` 里的实验,不得重跑已完成的训练。
+- 只有 §6.2 判为「是」的情形才能关闭,且必须走 §6.1 的 BLOCKED 流程。
 
 ## 6.4 关闭前强制检查
 
@@ -317,7 +348,7 @@ gh issue view <N> --json state      # 必须 CLOSED
 1. **所有生产代码是否已经实现?**(应为**是**)—— 不是参考实现、不是骨架、不是打桩。
 2. **所有必要测试是否实际执行?**(应为**是**)—— 有输出与退出码,不是"应该能过"。
 3. **所有规定的训练是否已经完成?**(应为**是**)—— 有 run_id、日志、checkpoint、指标。
-4. **是否仍然存在可执行的未完成任务?**(应为**否**)—— 若为"是",必须 OPEN + `PROGRESS.json`。
+4. **是否仍然存在可执行的未完成任务?**(应为**否**)—— 若为"是",**不得关闭,继续执行**(断点只用来防外部中断)。
 
 四条答案连同证据写进 `VERDICT.md` 的关闭段。
 
@@ -362,7 +393,7 @@ gh issue view <N> --json state      # 必须 CLOSED
 - 检查"看起来没问题"就结束循环;一轮没做完就宣布通过。
 - 训练前跳过 §3,训练后才想起判据。
 - 在 `/tmp` 放脚本或中间数据(§86),跳过 `commit_guard`(§91),不推送就宣称完成。
-- 修不动了还保持 OPEN 空等确认:那属于 §6.1,必须先评论再关闭。
+- 遇到能修的问题却停在 OPEN 空等确认:要么继续修,要么按 §6.1 证明是外部阻塞并关闭。
 - 关闭时没有评论阻塞证据,或 `VERDICT.md` 里没有"已排除的解释"与"最小放宽"——这是"没说清的关闭",视为未完成。
 - 把关闭当作完成而不写 `VERDICT.md`:证据必须留在仓库里,续跑从最小放宽接上。
 - 只写本地 RUN_LOG/CHECK/VERDICT 而不同步评论 issue:进度没到达读者手里。关键节点必须落到 issue 评论。
@@ -370,6 +401,8 @@ gh issue view <N> --json state      # 必须 CLOSED
 - 把生产代码自己的输出当正确答案,或参考实现直接 import 生产模块:这是自证,不是验证。
 - 训练跑完直接下结论,没有从原始产物重算头条指标:数字没人复核过。
 - 把"这一轮预算/上下文不够"写成阻塞并关闭 issue:工作没做完不等于做不到(§6.2)。
+- 写完 `PROGRESS.json` 或发一条进度评论就结束这一轮:那只是断点/节点,必须继续执行。
+- 因为测试失败、实现报错或训练还没跑完就发送最终回复:这些都是当前要做的活。
 - 参考实现通过就宣称生产代码已修复;单模块测试通过就宣称训练入口正确;smoke 通过就宣称正式训练完成(§6.5)。
 - 同一种修复方式失败一次就认定任务不可完成:应当更换诊断方法(§4)。
 - 关闭时仍有可执行的未完成任务:必须 OPEN + `PROGRESS.json`(§6.3/§6.4)。
