@@ -22,13 +22,24 @@
 | C12 | `z`/硬 q/SID 重建 q 三路曲率指标 | MAE 2.13→0.89（z）、2.06→0.93（q）、2.68→0.93（SID）；Spearman 0.05→0.73 | `evaluation.json` | **PASS** |
 | C13 | SID 结构指标 | 碰撞 0.1693→0.1425；熵 [6.96/6.55/7.95]→[6.96/6.55/7.95]；重建 MSE 9.6e-5→6.8e-5；重导 80 项后一致 | `evaluation.json`、`export_manifest.json` | **PASS** |
 | C14 | 硬 q 曲率保真改善 + 报告权衡 + SID 不不可接受退化 | 改善成立；**权衡：负曲率符号一致率 0.485（正 0.970）**；SID 结构未退化（碰撞更低、熵持平） | `evaluation.json` | **PASS（附权衡）** |
-| C15 | 通过准入后一次 Stage3；报告 Recall/NDCG、SID 哈希；不称显著 | 见下节 | `test_final.json` | 待填 |
+| C15 | 通过准入后一次 Stage3；报告 Recall/NDCG、SID 哈希；不称显著 | **未测**：owner 于 epoch 8/150 要求结束，run 已停；准入已过（collision 0.1425），随时可 `stage3_start` 续跑 | 无 `test_final.json` | **NOT MEASURED** |
 | C16 | 交付实现/配置/测试/smoke 证据/日志/报告/哈希；不覆盖冻结资产；不创建额外 Issue | 全部存在；基线树未改动；issue 数未增 | `git status`、`gh issue list` | **PASS** |
 
-## Stage3（C15）
+## Stage3（C15）：**未测量**
 
-（Stage3 运行结束后填入：`test_recall@10`、`test_ndcg@10`、SID sha256、与冻结 TIGER 的差值，
-并按 issue 要求结合 0.00107 的波动判定，不将单次小幅差值称为显著。）
+owner 在 epoch 8/150 要求结束，run 已停止（GPU 已释放，`pgrep` 无残留）。
+
+- 准入状态：**已通过**。`stage3_start` 返回 `allow=true`，collision 0.1425 < 0.40，协议校验 `mismatched={}`。
+- SID 位置：`results/stage2_RQ-VAE/TIGER_curvloss_rq/item_sids.json`
+  （`tokens_match=true`，重导后 80 项改写一致）。
+- 续跑方式（一条命令，无需改任何源码）：
+
+  ```
+  stage3_start(item_sids="results/stage2_RQ-VAE/TIGER_curvloss_rq/item_sids.json")
+  ```
+
+- **因此本 issue 不能对「离散 SID 是否更好」下任何结论**。C14 只证明了监督在硬 q 上生效；
+  issue 本身明确要求不得把连续/硬 q 的改善自动视为 SID 改善。C15 缺测意味着该判定未做出。
 
 ## 已知框架缺口（记录，不隐瞒）
 
