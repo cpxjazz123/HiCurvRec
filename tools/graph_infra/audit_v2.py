@@ -71,10 +71,10 @@ def main() -> int:
     instances_per_centre = counts["instances"]
     degree = np.asarray(visible.getnnz(axis=1)).ravel()
     strata = {}
-    for name, path in sorted((ROOT / "pairs").glob("train_*.npz")):
+    for path in sorted((ROOT / "pairs").glob("train_*.npz")):
         pairs = np.load(path)["pairs"]
         centres = np.unique(pairs[:, 0])
-        strata[name] = {
+        strata[path.stem] = {
             "pairs": int(len(pairs)),
             "centres": int(len(centres)),
             "centre_degree_median": float(np.median(degree[centres])) if len(centres) else None,

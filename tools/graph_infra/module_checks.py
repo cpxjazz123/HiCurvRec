@@ -14,7 +14,7 @@ import scipy.sparse as sp
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "tests"))
 
 import reference_hand as ref  # noqa: E402
 from tools.graph_infra import (assets, bank_features, config, curvature, graph_build,  # noqa: E402
@@ -67,14 +67,21 @@ def check_isolation() -> dict:
     recomputed = isolation.held_out_support(visible, evaluation)
     same = (recomputed != held).nnz == 0
     coo = held.tocoo()
-    visible_hits = sum(1 for a, b in zip(coo.row, coo.col) if visible[a, b] > 0)
+    # the support is symmetric, so it necessarily contains the mirror of an eval-only edge;
+    # what must never happen is a pair that is visible in BOTH directions
+    visible_both = sum(1 for a, b in zip(coo.row, coo.col)
+                       if visible[a, b] > 0 and visible[b, a] > 0)
+    mirror_visible = sum(1 for a, b in zip(coo.row, coo.col)
+                         if visible[a, b] > 0 and visible[b, a] == 0)
     blocked_train = 0
     for path in sorted((ROOT / "pairs").glob("train_*.npz")):
         blocked_train += len(isolation.blocked_pairs(np.load(path)["pairs"], held))
     return {"held_entries": int(held.nnz // 2), "symmetric": (held != held.T).nnz == 0,
-            "recomputation_matches": bool(same), "held_entries_inside_visible": visible_hits,
+            "recomputation_matches": bool(same),
+            "held_pairs_visible_in_both_directions": visible_both,
+            "held_pairs_with_a_visible_mirror": mirror_visible,
             "training_pairs_still_blocked": blocked_train,
-            "verdict": "PASS" if same and visible_hits == 0 and blocked_train == 0 else "FAIL"}
+            "verdict": "PASS" if same and visible_both == 0 and blocked_train == 0 else "FAIL"}
 
 
 def check_topology() -> dict:
@@ -115,7 +122,11 @@ def check_graphlet() -> dict:
     counts = np.load(ROOT / "motifs" / "motif_counts.npz")
     names = counts["names"].tolist()
     rng = np.random.default_rng(1)
-    centres = rng.choice(24587, size=150, replace=False)
+    # the brute-force comparison is only affordable on modest degrees; a hub with 2,220
+    # neighbours would mean 2.4 million induced triples for one centre
+    degree = np.asarray(visible.getnnz(axis=1)).ravel() + np.asarray(reverse.getnnz(axis=1)).ravel()
+    candidates = np.flatnonzero(degree <= 60)
+    centres = rng.choice(candidates, size=min(150, candidates.size), replace=False)
     mismatch = 0
     for centre in centres.tolist():
         produced = graphlet.motif_instances(int(centre), visible, reverse)
@@ -128,7 +139,8 @@ def check_graphlet() -> dict:
                 mismatch += 1
         if sum(row.values()) != int(counts["instances"][centre]):
             mismatch += 1
-    return {"sampled_centres": int(centres.size), "family_count_mismatches": mismatch,
+    return {"sampled_centres": int(centres.size), "degree_ceiling": 60,
+            "family_count_mismatches": mismatch,
             "families": len(names), "total_instances": int(counts["instances"].sum()),
             "verdict": "PASS" if mismatch == 0 else "FAIL"}
 
@@ -177,15 +189,18 @@ def check_bank_features() -> dict:
     hops = bank_features.graph_hops(undirected, produced, directed=False)
     directed = bank_features.graph_hops(visible, produced, directed=True)
     mismatches = 0
+    directed_only_unreachable = 0
     for index in sample.tolist():
         source, target = int(produced[index, 0]), int(produced[index, 1])
         reference = graph_distance.bfs_distances(undirected, [source])[0, target]
         if not np.isinf(reference) and abs(reference - hops[index]) > 1e-9:
             mismatches += 1
+        # an undirected path may exist where no directed path does; that is expected
         if hops[index] >= 0 and directed[index] < 0:
-            mismatches += 1
+            directed_only_unreachable += 1
     blob = np.load(sorted((ROOT / "pairs").glob("train_*.npz"))[0])
     report = {"sampled_pairs": int(sample.size), "hop_mismatches": mismatches,
+              "undirected_reachable_but_directed_unreachable": directed_only_unreachable,
               "unreachable_share": float((hops < 0).mean())}
     if "ppr" in blob.files:
         ppr_rows = blob["ppr"]
@@ -207,7 +222,16 @@ def check_ppr() -> dict:
 
 
 def check_curvature() -> dict:
-    report = json.loads((ROOT / "curvature" / "curvature_visible.json").read_text())
+    path = ROOT / "curvature" / "curvature_visible.json"
+    if not path.exists():
+        # the curvature asset was not built this round (owner instruction); the module and its
+        # known-answer tests are delivered, so the state is recorded rather than hidden
+        from tools.graph_infra import curvature
+        return {"asset": "not built this round (owner instruction)",
+                "module_available": callable(curvature.orc_edge),
+                "known_answer_tests": "tests/test_v2_geometry.py",
+                "verdict": "NA (asset not built this round)"}
+    report = json.loads(path.read_text())
     summary = report["summary"]
     return {"reference_nodes": report["reference_nodes"], "sampled_edges": report["sampled_edges"],
             "missing_nodes": report["missing_nodes"], "mean": summary["mean"],

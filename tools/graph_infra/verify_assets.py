@@ -17,7 +17,8 @@ MANIFESTS = {
 
 
 def main(argv) -> int:
-    version = argv[1] if len(argv) > 1 else "v2"
+    arguments = [item for item in argv[1:] if not item.startswith("--")]
+    version = arguments[0] if arguments else "v2"
     if version not in MANIFESTS:
         raise SystemExit(f"unknown version {version!r}; choose from {sorted(MANIFESTS)}")
     manifest = MANIFESTS[version]

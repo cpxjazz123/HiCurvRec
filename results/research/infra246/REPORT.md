@@ -66,7 +66,18 @@ v2: 球面 = 双曲 = 2|v| ; k=0 = 2|x−y| = lim_{k→0} d_k          ← 连�
 
 ## 5. v2 冻结资产
 
-见 `results/research/infra246/assets/manifest.json`(逐项 sha256、schema、shape、dtype、graph_version、legal_use、version、purpose、command、源/码哈希、依赖)与 `assets/*/stats.json`、`banks_report.json`、`motif_report.json`、`curvature_visible.json`、`ego_report.json`。
+`results/research/infra246/assets/manifest.json`:**47 项**,逐项 sha256 + schema/shape/dtype/graph_version/legal_use/version/purpose/command/源哈希/码哈希/依赖,`verify_assets.py --version v2` 复核 **47/47**。
+
+| 组 | 内容 | 规模 |
+|---|---|---|
+| 图 | 4 个划分 × 正向/反向/无向 + `held_out_support` + `split_users` + `stats.json` | 可见 291,954 边、评估 33,971 边;留出无向对 **62,324**;用户 45,951/5,744/5,744(80/10/10),两两交集 0、并集完整 |
+| ego | 完整一跳、预算采样(cap 32)、全量图描述版 | 中心索引显式、hop 与遍历深度分列、in/out/mutual 三个 mask |
+| motif | 3 节点**全量**计数 + 抽样实例(3 节点 59,385、4 节点 4,549) | 全量邻接对 28,391,948;覆盖 98.94% 商品 |
+| pair bank | 训练 5 组 × 12,000;严格评估 2×5 组(每组 2,726–2,938);宽松评估 2×5 组(每组 60–274);探针 62 | 阻断无向对 85,395;严格组与训练 bank/探针交集 **0**;宽松组与训练集共享 52 对(=「用户隔离但边已见」的定义) |
+| 距离 | 可见图 BFS 缓存(2,000 参考根) | 不可达 0.49% |
+| 曲率 | **本轮未生成资产**(owner 指示;模块与已知答案测试已交付) | 补齐命令:`python3 tools/graph_infra/build_assets_v2.py curvature` |
+
+隔离审计(`isolation_audit.json`):严格评估 key 与训练 bank 交集 0、与探针交集 0、宽松组与严格组交集 0;跨组多标签(同一对出现在两个关系组)共 19 对,已落盘并声明为「关系类型标签,组内不重复加权」。
 
 ## 6. 验证
 

@@ -81,9 +81,12 @@ def test_held_out_support_is_boolean_and_bidirectional():
     off_diagonal = [(int(a), int(b)) for a, b in zip(coo.row, coo.col) if a != b]
     assert off_diagonal, "some held-out edges must exist"
     for left, right in off_diagonal[:500]:
-        assert visible[left, right] == 0
+        # a blocked pair is unseen in at least one direction; its mirror may still be visible,
+        # which is exactly why the evaluation splits the two cases apart
+        assert visible[left, right] == 0 or visible[right, left] == 0
         assert held[right, left] > 0
-        assert val[left, right] > 0 or test[left, right] > 0
+        assert (val[left, right] > 0 or val[right, left] > 0
+                or test[left, right] > 0 or test[right, left] > 0)
 
 
 def test_training_banks_respect_the_block_set_and_their_definitions():
@@ -184,8 +187,19 @@ def test_distance_fields_are_masked_and_ppr_is_a_mass():
         assert np.all(blob["jaccard_out_missing"][np.isnan(blob["jaccard_out"])] == 1)
 
 
-def test_curvature_report_has_units_and_missing():
-    report = json.loads(need(ROOT / "curvature" / "curvature_visible.json").read_text())
+def test_curvature_asset_state_is_explicit():
+    """The curvature *asset* was not built this round (owner instruction).
+
+    The module and its known-answer tests are delivered; this check records which of the two
+    exists, so the state can never be mistaken for a silently passing curvature check.
+    """
+    path = ROOT / "curvature" / "curvature_visible.json"
+    if not path.exists():
+        from tools.graph_infra import curvature
+        assert callable(curvature.orc_edge), "the curvature module must stay importable"
+        assert (Path(__file__).resolve().parent / "test_v2_geometry.py").exists()
+        return
+    report = json.loads(path.read_text())
     assert report["reference_nodes"] > 0
     assert report["unit"].startswith("dimensionless")
     assert "sampled_edges" in report and report["sampled_edges"] > 0

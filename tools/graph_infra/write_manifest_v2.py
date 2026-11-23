@@ -37,15 +37,15 @@ def _shape_dtype(path: Path):
         blob = np.load(path, allow_pickle=False)
         names = [name for name in blob.files if name not in ("names", "family_names", "kind_names")]
         if "indptr" in blob.files:
-            return list(blob["shape"]), "int64"
+            return [int(x) for x in blob["shape"]], "int64"
         if "nodes" in blob.files:
             return [int(blob["nodes"].shape[0])], "mixed"
         if "counts" in blob.files:
-            return list(blob["counts"].shape), "int64"
+            return [int(x) for x in blob["counts"].shape], "int64"
         return [int(blob[names[0]].shape[0])] if names else [0], "mixed"
     if path.suffix == ".json":
         payload = json.loads(path.read_text(encoding="utf-8"))
-        return [len(payload)], "json"
+        return [int(len(payload))], "json"
     return [path.stat().st_size], "binary"
 
 

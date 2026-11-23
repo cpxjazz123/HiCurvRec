@@ -13,7 +13,7 @@
 | C3 | train 内三路用户划分,seed/比例锁定,清单落盘,交集空/并集全,计数相加=完整图 | PASS | `tests/test_v2_graph.py::test_three_way_split_disjoint_and_complete`、`test_edge_counts_sum_to_the_full_graph`;`assets/graph/split_users.npz`;`MODULE_CHECKS.json.splits` |
 | C4 | full 仅描述;泛化资产来自可见图;两套 manifest 带合法用途;禁跨版本 join | PASS | `CONTRACT.md` §2;`assets/manifest.json` 的 `legal_use`/`graph_version`;`tests/test_v2_assets.py::test_legal_use_is_enforced` |
 | C5 | 修复 `eval − eval.multiply(visible)` 加权抵消 | PASS | `tests/test_v2_graph.py::test_held_out_support_uses_boolean_semantics`(已知答案);变异 `held-out-uses-the-v1-weighted-formula` 被抓 |
-| C6 | user-disjoint 与 pair-disjoint 分开;严格评估 key 从训练 bank/探针/采样器双向排除 | PASS | `results/research/infra246/isolation_audit.json`;`tests/test_v2_assets_real.py::test_strict_eval_keys_never_reach_a_training_bank_or_the_probe` |
+| C6 | user-disjoint 与 pair-disjoint 分开;严格评估 key 从训练 bank/探针/采样器双向排除 | PASS | `isolation_audit.json`:严格组∩训练 bank = **0**、∩探针 = **0**、∩宽松组 = 0;探针∩训练 bank = 0(62 对,已从训练 bank 剔除后重建);`tests/test_v2_assets_real.py::test_strict_eval_keys_never_reach_a_training_bank_or_the_probe` |
 | C7 | 验证/测试候选去重或声明独立口径,逐项审计交集 | PASS | `isolation_audit.json` 的 `strict_cross_split_overlap`、`train_cross_group_overlap`、`cross_group_multi_label` |
 | C8 | 共同邻域/两跳有独立标签证据与路径隔离;未观察≠负例 | PASS | `tests/test_v2_pairs.py::test_label_evidence_names_a_witness`、`test_unobserved_is_not_a_negative_label`;bank 的 `witness`/`label_kind` 列 |
 | C9 | 冻结真实 pair ID、组别、合法源图版本;记录跨组重复/多标签 | PASS | `assets/pairs/*.npz` 的 `pairs`/`group` 列 + manifest `graph_version`;`isolation_audit.json` |
@@ -30,7 +30,7 @@
 | C20 | 逐对全图可见无向 hop、有向 hop、子图 hop、不可达 mask | PASS | `assets/pairs/*.npz` 的 `hop_full_visible`/`hop_directed_src_dst`/`hop_subgraph` + 三个 `reachable_*` 列;`MODULE_CHECKS.json.bank_features` |
 | C21 | 转移频率、Jaccard、Bhattacharyya(空=missing)、两跳计数、**全部候选**的 PPR;固定 restart/收敛/截断并报误差与覆盖;度数匹配逐 pair 验证;K-hop 组分离 | **部分 PASS + owner 撤销 1 项** | 已交付:`assets/pairs/*.npz` 的 `direct_weight_visible`/`jaccard_out`/`jaccard_in`/`bhattacharyya_out`(空分布=missing)/`two_hop_count`/三个 hop 字段与 mask;`banks_report.json`;度数匹配逐 pair 校验 0 违规;K-hop 组与直连组分离。**owner 于 2026-11-23 指示本轮不做 PPR**,因此 bank 不含 ppr 列——该项记为 **owner-withdrawn(非 PASS)**;`tools/graph_infra/ppr.py` 与其测试保留可用 |
 | C22 | 有向 pair 顺序与无向 key 分列 | PASS | bank 的 `pairs` 为有向,审计用 `isolation.pair_keys` 的无向 key |
-| C23 | 可见图曲率:固定参考集 + 测地三元组代理,记录参考数/抽样/单位/分布/缺失;不用评估标签;几何边界复测 | PASS | `assets/curvature/curvature_visible.{npz,json}`;`tests/test_v2_geometry.py`;`MODULE_CHECKS.json.curvature` |
+| C23 | 可见图曲率:固定参考集 + 测地三元组代理,记录参考数/抽样/单位/分布/缺失;不用评估标签;几何边界复测 | **代码 PASS / 资产 owner-withdrawn** | 模块 `curvature.py` 与 `tests/test_v2_geometry.py`(路径 0、三角 0.5、方环 0 的已知答案 + 与整数平面枚举参考一致)已交付并通过;**可见图曲率资产文件本轮未生成**(owner 指示跳过构建;精确运输 LP 在高度数节点代价过高,已加邻域上限 64/侧并记录为近似),`MODULE_CHECKS.json.curvature` 记为 NA;补齐命令:`python3 tools/graph_infra/build_assets_v2.py curvature` |
 | C24 | `subgraph_summary` 显式 direction,已知答案 | PASS | `tests/test_v2_metrics.py::test_subgraph_summary_distortion_known_answer`(2/3、0、.8、.72);变异 `subgraph-summary-flips-the-pass-rule`、`...-worst-becomes-the-best` 被抓 |
 | C25 | 逐 pair/子图/中心可复算记录;按结构/度数/子图数分层 | PASS | 结构分层 = bank 的关系类型分组(direct / shared_out / shared_in / two_hop / degree_matched),逐组逐 pair 记录在 `tiger_baseline_v2.json`;度数与子图数分层在 `isolation_audit.json.bank_strata`(每 bank 的中心度数 p10/中位/p90 与每中心 3 节点实例数中位数) |
 | C26 | prefix@k 与碰撞/重复分列;SID 长度/取值/行映射/缺失/重复校验;熵标单位 | PASS | `tests/test_v2_metrics.py`(prefix/collision/sid_audit/entropy);`metrics.sid_structure`/`sid_audit`/`codebook_stats(unit=)` |
@@ -41,7 +41,7 @@
 | C31 | 只读重导到新目录;验证 checkpoint→SID→Stage3 读取一致、映射、量化重建;报两旧文件各自指标 | PASS | `tiger_audit.py` → `results/research/infra246/tiger_reexport/`;`tiger_audit.json` 的 `reexport`/`json_vs_npy`/`reexport_vs_*` |
 | C32 | 无法绑定 SID 哈希的历史 Recall 明确 NA | PASS | `tiger_audit.json.recall_binding`;Stage3 日志含 `code_path_sha256`,故 TIGER 的 Recall 可绑定到 JSON |
 | C33 | 用确认 SID 在统一独立 bank 复算 prefix@1/2/3、关系 Spearman、结构保真与多子图;只读前向复算 z/q/重建 MSE | PASS | `results/research/infra246/tiger_baseline_v2.json`;`tiger_audit.json.reexport.reconstruction_mse` |
-| C34 | 共享模块更新而非私有复制;v2 manifest 含源/配置/代码/schema/shape/dtype/hash/用途/版本/命令/依赖 | PASS | `tools/graph_infra/`(唯一位置);`assets/manifest.json` 的 `audit_manifest` |
+| C34 | 共享模块更新而非私有复制;v2 manifest 含源/配置/代码/schema/shape/dtype/hash/用途/版本/命令/依赖 | PASS | `tools/graph_infra/`(唯一位置);`assets/manifest.json` **47 项**,`audit_manifest` 通过、`verify_manifest` **47/47**;`tools/graph_infra/write_manifest_v2.py` 可在不重算资产的情况下重建清单 |
 | C35 | 先写失败测试再修复;真实数据全量检查与隔离;独立复算不读聚合;每个 P0 有反例;变异被指定断言捕获 | PASS | 红:首跑 36 FAIL/2 PASS;绿:`tests/test_v2_*.py` 全绿;变异 14/14;`tests/test_v2_assets_real.py`(真实资产) |
 | C36 | 核验未来入口读 v2 而非 v1;可复现构建/验证入口与 REUSE.md | PASS | `verify_assets.py` 默认 v2(`--version v1` 显式取旧版);`build_assets_v2.py`;`REUSE.md`;仓库内除 infra 包自身外无其它代码读取两版资产 |
 | C37 | 交付 CONTRACT/INFRA/REPORT/VERDICT + 完整验收表 + 证据;关键节点评论;不建新 Issue、不训练 | PASS | 本目录四份文档;issue 评论 01–06;未创建新 Issue,未训练 |

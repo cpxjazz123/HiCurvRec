@@ -1,0 +1,129 @@
+{
+  "issue": 246,
+  "data": "the frozen v2 assets and the real train parquet",
+  "graph_build": {
+    "users": 57439,
+    "distinct_edges": 323633,
+    "weight_total": 339519,
+    "self_loops": 0,
+    "independent_crosscheck_identical": true,
+    "verdict": "PASS"
+  },
+  "splits": {
+    "sizes": {
+      "visible": 45951,
+      "struct_val": 5744,
+      "struct_test": 5744
+    },
+    "overlaps": {
+      "visible&struct_val": 0,
+      "visible&struct_test": 0,
+      "struct_val&struct_test": 0
+    },
+    "union_complete": true,
+    "disjoint": true,
+    "weight_sum_matches_full": true,
+    "verdict": "PASS"
+  },
+  "isolation": {
+    "held_entries": 62324,
+    "symmetric": true,
+    "recomputation_matches": true,
+    "held_pairs_visible_in_both_directions": 0,
+    "held_pairs_with_a_visible_mirror": 2165,
+    "training_pairs_still_blocked": 0,
+    "verdict": "PASS"
+  },
+  "topology": {
+    "sampled_items": 400,
+    "role_errors": 0,
+    "hop_errors": 0,
+    "edge_errors": 0,
+    "max_nodes": 33,
+    "cap": 32,
+    "cap_respected": true,
+    "verdict": "PASS"
+  },
+  "graphlet": {
+    "sampled_centres": 150,
+    "degree_ceiling": 60,
+    "family_count_mismatches": 0,
+    "families": 16,
+    "total_instances": 28391948,
+    "verdict": "PASS"
+  },
+  "pairs_and_banks": {
+    "pairs_checked": 60000,
+    "group_violations": [],
+    "degree_match_violations": 0,
+    "strict_vs_train_overlap": 0,
+    "probe_vs_train_overlap": 0,
+    "verdict": "PASS"
+  },
+  "bank_features": {
+    "sampled_pairs": 60,
+    "hop_mismatches": 0,
+    "undirected_reachable_but_directed_unreachable": 3,
+    "unreachable_share": 0.0028333333333333335,
+    "ppr": "not shipped this round (owner withdrew the propagation column)",
+    "verdict": "PASS"
+  },
+  "ppr": {
+    "sources": 3,
+    "residual_max": 2.7755575615628914e-16,
+    "coverage": 1.0,
+    "mass_sum_sample": 3.65549740844633e-05,
+    "verdict": "PASS"
+  },
+  "curvature": {
+    "asset": "not built this round (owner instruction)",
+    "module_available": true,
+    "known_answer_tests": "tests/test_v2_geometry.py",
+    "verdict": "NA (asset not built this round)"
+  },
+  "metrics": {
+    "known_answer_ok": true,
+    "subgraph_pass_fraction": 0.6666666666666666,
+    "worst": 0.8,
+    "p90": 0.7200000000000001,
+    "tiger_sid_audit_ok": true,
+    "tiger_sid_missing": 0,
+    "verdict": "PASS"
+  },
+  "assets": {
+    "manifest_ok": true,
+    "assets": 47,
+    "join_rejections": 4,
+    "non_finite_rejected": 1,
+    "verdict": "PASS"
+  },
+  "geometry": {
+    "per_k": {
+      "k=-1.0": {
+        "d(0,exp0(v))": 1.0,
+        "expected": 1.0
+      },
+      "k=1e-12": {
+        "d(0,exp0(v))": 1.000044449303342,
+        "expected": 1.0
+      },
+      "k=0.0": {
+        "d(0,exp0(v))": 1.0,
+        "expected": 1.0
+      },
+      "k=1.0": {
+        "d(0,exp0(v))": 0.9999999999999999,
+        "expected": 1.0
+      }
+    },
+    "round_trip_ok": true,
+    "verdict": "PASS"
+  },
+  "summary": {
+    "modules": 12,
+    "passed": 11,
+    "failed": [
+      "curvature"
+    ]
+  }
+}

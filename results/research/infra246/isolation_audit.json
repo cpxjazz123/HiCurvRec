@@ -1,0 +1,143 @@
+{
+  "user_isolation": {
+    "audit": {
+      "sizes": {
+        "visible": 45951,
+        "struct_val": 5744,
+        "struct_test": 5744
+      },
+      "overlaps": {
+        "visible&struct_val": 0,
+        "visible&struct_test": 0,
+        "struct_val&struct_test": 0
+      },
+      "union_complete": true,
+      "disjoint": true
+    },
+    "statement": "struct_val / struct_test users never enter the visible graph"
+  },
+  "pair_isolation_strict": {
+    "strict_vs_train_overlap": 0,
+    "strict_vs_probe_overlap": 0,
+    "strict_cross_split_overlap": {
+      "strict_struct_test_degree_matched&strict_struct_test_direct": 0,
+      "strict_struct_test_degree_matched&strict_struct_test_shared_in": 1,
+      "strict_struct_test_degree_matched&strict_struct_test_shared_out": 0,
+      "strict_struct_test_degree_matched&strict_struct_test_two_hop": 1,
+      "strict_struct_test_degree_matched&strict_struct_val_degree_matched": 3,
+      "strict_struct_test_degree_matched&strict_struct_val_direct": 1,
+      "strict_struct_test_degree_matched&strict_struct_val_shared_in": 0,
+      "strict_struct_test_degree_matched&strict_struct_val_shared_out": 2,
+      "strict_struct_test_degree_matched&strict_struct_val_two_hop": 1,
+      "strict_struct_test_direct&strict_struct_test_shared_in": 0,
+      "strict_struct_test_direct&strict_struct_test_shared_out": 0,
+      "strict_struct_test_direct&strict_struct_test_two_hop": 0,
+      "strict_struct_test_direct&strict_struct_val_degree_matched": 1,
+      "strict_struct_test_direct&strict_struct_val_direct": 1,
+      "strict_struct_test_direct&strict_struct_val_shared_in": 1,
+      "strict_struct_test_direct&strict_struct_val_shared_out": 0,
+      "strict_struct_test_direct&strict_struct_val_two_hop": 1,
+      "strict_struct_test_shared_in&strict_struct_test_shared_out": 0,
+      "strict_struct_test_shared_in&strict_struct_test_two_hop": 2,
+      "strict_struct_test_shared_in&strict_struct_val_degree_matched": 0,
+      "strict_struct_test_shared_in&strict_struct_val_direct": 1,
+      "strict_struct_test_shared_in&strict_struct_val_shared_in": 0,
+      "strict_struct_test_shared_in&strict_struct_val_shared_out": 2,
+      "strict_struct_test_shared_in&strict_struct_val_two_hop": 1,
+      "strict_struct_test_shared_out&strict_struct_test_two_hop": 0,
+      "strict_struct_test_shared_out&strict_struct_val_degree_matched": 2,
+      "strict_struct_test_shared_out&strict_struct_val_direct": 2,
+      "strict_struct_test_shared_out&strict_struct_val_shared_in": 0,
+      "strict_struct_test_shared_out&strict_struct_val_shared_out": 0,
+      "strict_struct_test_shared_out&strict_struct_val_two_hop": 0,
+      "strict_struct_test_two_hop&strict_struct_val_degree_matched": 1,
+      "strict_struct_test_two_hop&strict_struct_val_direct": 1,
+      "strict_struct_test_two_hop&strict_struct_val_shared_in": 0,
+      "strict_struct_test_two_hop&strict_struct_val_shared_out": 1,
+      "strict_struct_test_two_hop&strict_struct_val_two_hop": 49,
+      "strict_struct_val_degree_matched&strict_struct_val_direct": 0,
+      "strict_struct_val_degree_matched&strict_struct_val_shared_in": 1,
+      "strict_struct_val_degree_matched&strict_struct_val_shared_out": 2,
+      "strict_struct_val_degree_matched&strict_struct_val_two_hop": 1,
+      "strict_struct_val_direct&strict_struct_val_shared_in": 0,
+      "strict_struct_val_direct&strict_struct_val_shared_out": 0,
+      "strict_struct_val_direct&strict_struct_val_two_hop": 0,
+      "strict_struct_val_shared_in&strict_struct_val_shared_out": 2,
+      "strict_struct_val_shared_in&strict_struct_val_two_hop": 0,
+      "strict_struct_val_shared_out&strict_struct_val_two_hop": 3
+    },
+    "statement": "an undirected key of a strict evaluation bank appears in no training bank, no probe and no other evaluation split"
+  },
+  "train_cross_group_overlap": {
+    "train_degree_matched&train_direct": 0,
+    "train_degree_matched&train_shared_in": 1,
+    "train_degree_matched&train_shared_out": 0,
+    "train_degree_matched&train_two_hop": 1,
+    "train_direct&train_shared_in": 0,
+    "train_direct&train_shared_out": 0,
+    "train_direct&train_two_hop": 0,
+    "train_shared_in&train_shared_out": 12,
+    "train_shared_in&train_two_hop": 3,
+    "train_shared_out&train_two_hop": 2
+  },
+  "relaxed_reported_separately": {
+    "relaxed_vs_train_overlap": 52,
+    "relaxed_vs_strict_overlap": 0,
+    "statement": "user-isolated but edge-seen pairs are listed separately and are not treated as unseen"
+  },
+  "held_out_support": {
+    "entries": 62324,
+    "symmetric": true
+  },
+  "bank_strata": {
+    "train_degree_matched": {
+      "pairs": 12000,
+      "centres": 6182,
+      "centre_degree_median": 11.0,
+      "centre_degree_p10": 3.0,
+      "centre_degree_p90": 29.0,
+      "centre_instances_median": 231.0,
+      "group": "degree_matched"
+    },
+    "train_direct": {
+      "pairs": 12000,
+      "centres": 7174,
+      "centre_degree_median": 11.0,
+      "centre_degree_p10": 4.0,
+      "centre_degree_p90": 47.0,
+      "centre_instances_median": 210.0,
+      "group": "direct"
+    },
+    "train_shared_in": {
+      "pairs": 12000,
+      "centres": 7368,
+      "centre_degree_median": 9.0,
+      "centre_degree_p10": 3.0,
+      "centre_degree_p90": 39.0,
+      "centre_instances_median": 153.0,
+      "group": "shared_in"
+    },
+    "train_shared_out": {
+      "pairs": 12000,
+      "centres": 7458,
+      "centre_degree_median": 9.0,
+      "centre_degree_p10": 3.0,
+      "centre_degree_p90": 40.0,
+      "centre_instances_median": 136.0,
+      "group": "shared_out"
+    },
+    "train_two_hop": {
+      "pairs": 12000,
+      "centres": 18,
+      "centre_degree_median": 5.0,
+      "centre_degree_p10": 2.0,
+      "centre_degree_p90": 20.100000000000012,
+      "centre_instances_median": 45.0,
+      "group": "two_hop"
+    }
+  },
+  "cross_group_multi_label": {
+    "policy": "a pair may appear in several relation groups; the groups are relation types, not disjoint labels, and no pair is weighted twice inside one group",
+    "train_pairs_in_more_than_one_group": 19
+  }
+}

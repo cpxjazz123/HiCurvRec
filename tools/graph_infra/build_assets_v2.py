@@ -440,6 +440,13 @@ def build_pairs(graph: dict) -> dict:
         pair_ops.verify_group(visible, reverse, kept, name)
     probe = pair_ops.probe_bank(visible, points=64)["pairs"]
     probe = pair_ops.exclude_undirected(probe, blocked_matrix)
+    # the probe must not repeat a training pair either
+    taken = np.zeros((n, n), dtype=np.int8)
+    for produced in train.values():
+        for left, right in produced.tolist():
+            taken[left, right] = 1
+            taken[right, left] = 1
+    probe = pair_ops.exclude_undirected(probe, sp.csr_matrix(taken))
 
     # fail fast: the per-bank call path is exercised on a one-pair probe before the real work
     bank_features.compute(np.array([[0, 1]], dtype=np.int64), visible, reverse, undirected,
