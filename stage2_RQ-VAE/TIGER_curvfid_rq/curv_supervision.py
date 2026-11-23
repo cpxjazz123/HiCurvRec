@@ -91,15 +91,16 @@ def curvature_of_nodes(encode_quantised, targets: dict, indices: torch.Tensor,
 
     q_m, q_b, q_c, q_a = rows(m), rows(b), rows(c), rows(refs)
 
-    def pairwise(x, y):
-        return mixed.distances(x, y).sqrt()
-
-    d_am = pairwise(q_a, q_m)          # (R, T)
-    d_ab = pairwise(q_a, q_b)
-    d_ac = pairwise(q_a, q_c)
-    d_bc = mixed.pairwise_sq(q_b, q_c).clamp_min(0.0).sqrt()   # (T,)
-    k_q = (d_am.pow(2) + d_bc.pow(2).unsqueeze(0) / 4.0
-           - (d_ab.pow(2) + d_ac.pow(2)) / 2.0).mean(dim=0)
+    # The formula only ever uses squared distances, so they stay squared: taking a square root first
+    # gives an infinite derivative whenever two points coincide (items sharing a codeword have
+    # exactly the same q), and that turned three parameter gradients into NaN at step 1 of the
+    # first attempt.  No sqrt, no singularity.
+    d2_am = mixed.distances(q_a, q_m)                              # (R, T)
+    d2_ab = mixed.distances(q_a, q_b)
+    d2_ac = mixed.distances(q_a, q_c)
+    d2_bc = mixed.pairwise_sq(q_b, q_c).clamp_min(0.0)             # (T,)
+    k_q = (d2_am + d2_bc.unsqueeze(0) / 4.0
+           - (d2_ab + d2_ac) / 2.0).mean(dim=0)
     return k_q
 
 

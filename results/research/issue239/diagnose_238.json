@@ -1,0 +1,257 @@
+{
+  "configuration": "issue238 (mixed distance as the Sinkhorn cost)",
+  "failure": null,
+  "rows": [
+    {
+      "step": 0,
+      "stage": "forward"
+    },
+    {
+      "quantity": "encoder_output",
+      "finite": true,
+      "min": -0.13230997323989868,
+      "max": 0.13214892148971558,
+      "mean": -0.0007166844443418086,
+      "std": 0.015428757295012474,
+      "extra": ""
+    },
+    {
+      "quantity": "l3_residual",
+      "finite": true,
+      "min": -0.09485118836164474,
+      "max": 0.08873782306909561,
+      "mean": -0.00018539989832788706,
+      "std": 0.005576235242187977,
+      "extra": ""
+    },
+    {
+      "quantity": "l3_codebook",
+      "finite": true,
+      "min": -0.04339967668056488,
+      "max": 0.03283654898405075,
+      "mean": -8.659487502882257e-05,
+      "std": 0.005772945936769247,
+      "extra": "unique(6dp)=256"
+    },
+    {
+      "quantity": "mixed_cost_matrix",
+      "finite": true,
+      "min": 0.20806966722011566,
+      "max": 7.1352996826171875,
+      "mean": 1.7946354150772095,
+      "std": 0.7091743350028992,
+      "extra": "per_row_span_mean=3.26507"
+    },
+    {
+      "quantity": "k_q",
+      "finite": true,
+      "min": -0.2588616609573364,
+      "max": 0.6724480390548706,
+      "mean": 0.12774458527565002,
+      "std": 0.15974508225917816,
+      "extra": ""
+    },
+    {
+      "quantity": "l_curv",
+      "finite": true,
+      "min": 1.9013493061065674,
+      "max": 1.9013493061065674,
+      "mean": 1.9013493061065674,
+      "std": NaN,
+      "extra": ""
+    },
+    {
+      "step": 0,
+      "stage": "weight",
+      "quantity": "lambda_curv",
+      "finite": true,
+      "min": 3.2991106089482223e-06,
+      "max": 3.2991106089482223e-06,
+      "mean": 3.2991106089482223e-06,
+      "std": 0.0,
+      "extra": "recon_grad=0.00147569 curv_grad=22.365"
+    },
+    {
+      "step": 0,
+      "stage": "backward",
+      "quantity": "grad_total_norm",
+      "finite": true,
+      "min": 0.0014787407126277685,
+      "max": 0.0014787407126277685,
+      "mean": 0.0014787407126277685,
+      "std": 0.0,
+      "extra": "nonfinite_tensors=0 names=[]"
+    },
+    {
+      "step": 0,
+      "stage": "update",
+      "quantity": "param_update_norm",
+      "finite": true,
+      "min": 0.6295509282556774,
+      "max": 0.6295509282556774,
+      "mean": 0.6295509282556774,
+      "std": 0.0,
+      "extra": ""
+    },
+    {
+      "step": 1,
+      "stage": "forward"
+    },
+    {
+      "quantity": "encoder_output",
+      "finite": true,
+      "min": -0.14720754325389862,
+      "max": 0.13484977185726166,
+      "mean": 0.0005264253704808652,
+      "std": 0.013389313593506813,
+      "extra": ""
+    },
+    {
+      "quantity": "l3_residual",
+      "finite": true,
+      "min": -0.14316359162330627,
+      "max": 0.13070693612098694,
+      "mean": -0.0002464901772327721,
+      "std": 0.012947635725140572,
+      "extra": ""
+    },
+    {
+      "quantity": "l3_codebook",
+      "finite": true,
+      "min": -0.0424044132232666,
+      "max": 0.03184059262275696,
+      "mean": -7.915962487459183e-05,
+      "std": 0.005370074883103371,
+      "extra": "unique(6dp)=256"
+    },
+    {
+      "quantity": "mixed_cost_matrix",
+      "finite": true,
+      "min": 0.3515129089355469,
+      "max": 7.042396545410156,
+      "mean": 2.2328391075134277,
+      "std": 0.7772733569145203,
+      "extra": "per_row_span_mean=3.88477"
+    },
+    {
+      "quantity": "k_q",
+      "finite": true,
+      "min": -0.316683828830719,
+      "max": 1.5298115015029907,
+      "mean": 0.16732457280158997,
+      "std": 0.3726753294467926,
+      "extra": ""
+    },
+    {
+      "quantity": "l_curv",
+      "finite": true,
+      "min": 1.9082601070404053,
+      "max": 1.9082601070404053,
+      "mean": 1.9082601070404053,
+      "std": NaN,
+      "extra": ""
+    },
+    {
+      "step": 1,
+      "stage": "backward",
+      "quantity": "grad_total_norm",
+      "finite": true,
+      "min": 0.0019619439262896776,
+      "max": 0.0019619439262896776,
+      "mean": 0.0019619439262896776,
+      "std": 0.0,
+      "extra": "nonfinite_tensors=0 names=[]"
+    },
+    {
+      "step": 1,
+      "stage": "update",
+      "quantity": "param_update_norm",
+      "finite": true,
+      "min": 0.5071571074196902,
+      "max": 0.5071571074196902,
+      "mean": 0.5071571074196902,
+      "std": 0.0,
+      "extra": ""
+    },
+    {
+      "step": 2,
+      "stage": "forward"
+    },
+    {
+      "quantity": "encoder_output",
+      "finite": true,
+      "min": -0.1146487221121788,
+      "max": 0.1365758627653122,
+      "mean": 0.00012604559015017003,
+      "std": 0.017194004729390144,
+      "extra": ""
+    },
+    {
+      "quantity": "l3_residual",
+      "finite": true,
+      "min": -0.09466550499200821,
+      "max": 0.11739333719015121,
+      "mean": -0.0001576469949213788,
+      "std": 0.009370846673846245,
+      "extra": ""
+    },
+    {
+      "quantity": "l3_codebook",
+      "finite": true,
+      "min": -0.04144902154803276,
+      "max": 0.03087519109249115,
+      "mean": -2.2354230168275535e-05,
+      "std": 0.005160967353731394,
+      "extra": "unique(6dp)=256"
+    },
+    {
+      "quantity": "mixed_cost_matrix",
+      "finite": true,
+      "min": 0.24958783388137817,
+      "max": 7.4393415451049805,
+      "mean": 1.8457849025726318,
+      "std": 0.7280977368354797,
+      "extra": "per_row_span_mean=3.34089"
+    },
+    {
+      "quantity": "k_q",
+      "finite": true,
+      "min": -0.17712798714637756,
+      "max": 0.5028307437896729,
+      "mean": 0.09512148797512054,
+      "std": 0.12395177781581879,
+      "extra": ""
+    },
+    {
+      "quantity": "l_curv",
+      "finite": true,
+      "min": 2.3639626502990723,
+      "max": 2.3639626502990723,
+      "mean": 2.3639626502990723,
+      "std": NaN,
+      "extra": ""
+    },
+    {
+      "step": 2,
+      "stage": "backward",
+      "quantity": "grad_total_norm",
+      "finite": true,
+      "min": 0.0013975942274555564,
+      "max": 0.0013975942274555564,
+      "mean": 0.0013975942274555564,
+      "std": 0.0,
+      "extra": "nonfinite_tensors=0 names=[]"
+    },
+    {
+      "step": 2,
+      "stage": "update",
+      "quantity": "param_update_norm",
+      "finite": true,
+      "min": 0.4803196004091236,
+      "max": 0.4803196004091236,
+      "mean": 0.4803196004091236,
+      "std": 0.0,
+      "extra": ""
+    }
+  ]
+}

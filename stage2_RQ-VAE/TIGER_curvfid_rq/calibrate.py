@@ -149,17 +149,14 @@ def main() -> int:
             terms = []
             # D_q is a product metric, so it cannot be delegated to cdist; the reference block is
             # (R, T) and the triplet-internal distance is element-wise (T,).
-            def pairwise(x, y):
-                return mixed.distances(x, y).sqrt()
-
-            d_bc = mixed.pairwise_sq(b, c).clamp_min(0.0).sqrt()
+            # squared distances throughout: a sqrt at zero distance has an infinite derivative
+            d2_bc = mixed.pairwise_sq(b, c).clamp_min(0.0)
             for a in ref_idx.split(16):
                 a_pt = hard_q[a]
-                d_am = pairwise(a_pt, m)
-                d_ab = pairwise(a_pt, b)
-                d_ac = pairwise(a_pt, c)
-                terms.append(d_am.pow(2) + d_bc.pow(2).unsqueeze(0) / 4.0
-                             - (d_ab.pow(2) + d_ac.pow(2)) / 2.0)
+                d2_am = mixed.distances(a_pt, m)
+                d2_ab = mixed.distances(a_pt, b)
+                d2_ac = mixed.distances(a_pt, c)
+                terms.append(d2_am + d2_bc.unsqueeze(0) / 4.0 - (d2_ab + d2_ac) / 2.0)
             k_q[sl] = torch.cat(terms, dim=0).mean(dim=0)
         k_q_np = k_q.numpy()
 

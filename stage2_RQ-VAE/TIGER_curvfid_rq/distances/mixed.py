@@ -31,6 +31,12 @@ RADIUS_CAP = 0.9
 EPS = 1e-6
 #: Ceiling on the arcosh argument: keeps the distance (and its gradient) finite at the boundary.
 MAX_ACOSH = 1e4
+#: The spherical block's `asin(chord/2)` has an infinite derivative at chord = 2 (antipodal), which
+#: turned three parameter gradients non-finite at step 1 of the #238 candidate; the NaN weights then
+#: produced a constant cost matrix at step 2.  Staying 1e-4 away bounds the derivative at ~70.
+MAX_ASIN_ARG = 1.0 - 1e-4
+#: Small floor under the square roots: a root at zero has an infinite derivative.
+GEOM_EPS = 1e-12
 
 _BLOCKS = ("hyperbolic", "euclidean", "spherical")
 _SPANS = []
@@ -63,12 +69,20 @@ def _to_ball(x: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
     it is injective on [0, inf) with a bounded radius -- so the assignment keeps its ordering at any
     magnitude.
     """
+    # `cap * r/(r+s) * x/r` == `cap * x/(r+s)`: the same map written without dividing by r, so a
+    # zero vector has a finite gradient (dividing by a clamped-to-1e-6 norm gave 1e6-scale terms).
+    # The floor is what makes the *backward* finite: `d norm / d x` is undefined at x = 0, and that
+    # 0/0 surfaced as NaN entries in the codebook gradients while every forward value stayed finite.
     norm = x.norm(dim=-1, keepdim=True).clamp_min(EPS)
-    return RADIUS_CAP * (norm / (norm + scale)) * x / norm
+    return RADIUS_CAP * x / (norm + scale)
+
+
+#: Floor on the sphere normalisation: unit vectors stay exactly unit, near-zero ones stay bounded.
+SPHERE_FLOOR = 1e-3
 
 
 def _to_sphere(x: torch.Tensor) -> torch.Tensor:
-    return x / x.norm(dim=-1, keepdim=True).clamp_min(EPS)
+    return x / x.norm(dim=-1, keepdim=True).clamp_min(SPHERE_FLOOR)
 
 
 def _hyperbolic_sq(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
@@ -90,8 +104,10 @@ def _euclidean_sq(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
 
 def _spherical_sq(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     u, v = _to_sphere(x), _to_sphere(y)
-    chord = (u - v).norm(dim=-1).clamp(0.0, 2.0)
-    return (2.0 * torch.asin((chord / 2.0).clamp(0.0, 1.0))).pow(2) / abs(CURVATURE[2])
+    # eps inside the root: d(sqrt(d))/dd is infinite at d = 0, which surfaced as NaN codebook
+    # gradients once two supervised items landed on the same codeword.
+    chord = ((u - v).pow(2).sum(-1) + GEOM_EPS).sqrt().clamp(0.0, 2.0)
+    return (2.0 * torch.asin((chord / 2.0).clamp(0.0, MAX_ASIN_ARG))).pow(2) / abs(CURVATURE[2])
 
 
 _COMPONENT = {"hyperbolic": _hyperbolic_sq, "euclidean": _euclidean_sq, "spherical": _spherical_sq}
@@ -133,8 +149,8 @@ def _matrix_sq(name: str, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     u, v = _to_sphere(xb), _to_sphere(yb)
     diff2 = (u.pow(2).sum(-1, keepdim=True) - 2 * u @ v.t()
              + v.pow(2).sum(-1, keepdim=True).t()).clamp_min(0.0)
-    chord = diff2.clamp_min(0.0).sqrt().clamp(0.0, 2.0)
-    return (2.0 * torch.asin((chord / 2.0).clamp(0.0, 1.0))).pow(2) / abs(CURVATURE[2])
+    chord = (diff2 + GEOM_EPS).sqrt().clamp(0.0, 2.0)
+    return (2.0 * torch.asin((chord / 2.0).clamp(0.0, MAX_ASIN_ARG))).pow(2) / abs(CURVATURE[2])
 
 
 def distances(latent: torch.Tensor, codebook: torch.Tensor) -> torch.Tensor:
