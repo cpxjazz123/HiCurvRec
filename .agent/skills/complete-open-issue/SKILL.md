@@ -1,6 +1,6 @@
 ---
 name: complete-open-issue
-description: Use when the task is an open GitHub issue that must be finished end to end. Reads the issue, freezes a machine-checkable acceptance checklist, prepares data and infrastructure, implements with TDD, runs a check loop that re-reads the issue every round, trains when the issue needs it, judges the result against the issue's own criteria, and closes the issue only when every criterion passes.
+description: Use when the task is an open GitHub issue that must be finished end to end. Reads the issue, freezes a machine-checkable acceptance checklist, prepares data and infrastructure, implements with TDD, runs a check loop that re-reads the issue every round, trains when the issue needs it, judges the result against the issue's own criteria, and closes the issue either when every criterion passes or when a blockage is reported with evidence.
 ---
 
 # 按 open issue 完成任务的闭环
@@ -24,10 +24,11 @@ description: Use when the task is an open GitHub issue that must be finished end
 | 训练失败/指标低 | 按 §4 分类回对应步骤,或按 §5 出负结论并写进 `VERDICT.md` |
 | 遇到需要授权的例外(如 `git push --force`) | 该例外单独处理,但 issue 的其余部分继续推进 |
 | 想先汇报进度再继续 | 先 `gh issue comment` 贴该节点证据,再用 `out://` 说明,然后**继续干活** |
+| **遇到阻塞、失败、或无法在不违反冻结协议下修复的问题** | 立刻 `gh issue comment` 贴证据(命令、输出、文件路径、已排除的解释),然后按 §6.1 **直接关闭 issue** |
 
-唯一合法的终止点是 §6 关闭成功。确实被外部条件卡死(缺数据且无法补齐、需要 owner 改 issue 判据)时,
-不得静默停止:在 issue 下评论写明阻塞点与本轮证据,保持 OPEN,并把阻塞原因写进 `VERDICT.md`——
-这是"报告阻塞",不是"暂停"。
+唯一合法的终止点有两个:**§6 全部验收 PASS 后关闭**,或 **§6.1 遇阻塞时的"评论 + 关闭"**。
+遇到失败先按 §3/§4 修;修不动了(要改判据、要改冻结协议、外部条件缺失且无法补齐)就不要再保持 OPEN 空等 ——
+把阻塞点、已尝试的修复、已排除的解释写进评论,写进 `VERDICT.md`,然后关闭。
 
 ## 进度必须回写到 issue(不是只写本地)
 
@@ -133,7 +134,9 @@ read issue://<N>                 # 或 gh issue view <N> --json number,title,bod
 训练完成后按 CLAUDE.md §6b 归档 R2(四件齐全才上传)。
 
 失败先分类再动手:`infra`(数据/环境)→ 回第 1 步;`implementation`(代码/公式)→ 回第 2 步;
-`resource`(预算外推不可行)→ 记录并停下讨论;`experiment`(训练成功但指标低)→ 进入第 5 步。
+`resource`(预算外推不可行)→ 写进 `VERDICT.md` 并**按 §6.1 评论后关闭**;
+`experiment`(训练成功但指标低)→ 进入第 5 步。
+同一失败按对应步骤修过一轮仍复现、且已排除的解释都有实测 → 不再重试,按 §6.1 关闭。
 
 ## 5. 结论对账
 
@@ -154,8 +157,31 @@ gh issue view <N> --json state      # 必须 CLOSED
 ```
 
 关闭前确认:代码已推送(§43)、本地与远端 `main` 同 SHA(§45)、R2 归档完成(若 issue 要求)、
-`VERDICT.md` 里没有遗留 FAIL、**每个 C 的 PASS 都已评论到 issue**。issue 未满足时**保持 open**,
-并在评论里贴本轮证据与阻塞点(评论文件同时入库)。
+`VERDICT.md` 里没有遗留 FAIL、**每个 C 的 PASS 都已评论到 issue**。
+
+## 6.1 遇阻塞时的关闭(与 §6 并列的合法终止点)
+
+修不动了就关,不要保持 OPEN 等确认。条件(任一成立):
+
+- 要修就必须改 issue 判据、改冻结协议/护栏,或 `[INFERENCE]` 之外的证据缺口无法补齐;
+- 同一失败在**按步骤修过之后**仍然复现,且已排除的候选解释都有实测(不是猜测);
+- 训练入口的机器闸门(smoke/准入)失败,而绕过它需要违反 §19h/§22/§23 之类的硬规则。
+
+动作顺序固定:
+
+```bash
+# 1) 把阻塞写成评论(文件同时入库,保证 issue 与仓库一一对应)
+gh issue comment <N> --body-file results/research/issue<N>/COMMENT_<序号>.md
+# 2) 写 VERDICT.md:已完成项 + 阻塞点 + 已尝试的修复 + 已排除的解释 + 需要 owner 决定的最小放宽
+# 3) 关闭
+gh issue close <N> --comment "阻塞: <一句话>; 证据 <文件路径>; commit <sha>"
+gh issue view <N> --json state      # 必须 CLOSED
+```
+
+评论里**必须**包含:失败命令与输出原文、`VERDICT.md` 路径、已排除的解释及其实测依据、
+以及"若要继续,最小需要放宽什么"(选项 A/B/C 形式最好)。缺这些就是"没说清的关闭",视为未完成。
+
+关闭不是把问题藏起来:`VERDICT.md` 保留全部证据,续跑时从 §6.1 的"最小放宽"直接接上。
 
 ## 7. 合同不能证明 issue 的机制主张时
 
@@ -167,8 +193,8 @@ gh issue view <N> --json state      # 必须 CLOSED
 
 这时不得把"未达成"写进 `VERDICT.md` 当结论,也不得硬训:
 ①在 issue 下贴出测量、互斥规模与计算脚本,说明为什么该主张在此预算下不可满足;
-②提出最小可判定的替代主张(通常是"换成能同时满足这些约束的显式表示"),请 owner 决定是否改判据或关 issue;
-③保持 OPEN,把证据与数学判据写进 `VERDICT.md`。这是"报告阻塞"的一种,不是暂停。
+②提出最小可判定的替代主张(通常是"换成能同时满足这些约束的显式表示"),并写成选项供 owner 决定;
+③把证据与数学判据写进 `VERDICT.md`,然后按 §6.1 关闭 —— 数学上不可满足属于阻塞,不保持 OPEN。
 
 ## 反模式
 
@@ -178,7 +204,7 @@ gh issue view <N> --json state      # 必须 CLOSED
 - 检查"看起来没问题"就结束循环;一轮没做完就宣布通过。
 - 训练前跳过 §3,训练后才想起判据。
 - 在 `/tmp` 放脚本或中间数据(§86),跳过 `commit_guard`(§91),不推送就宣称完成。
-- issue 没满足就关闭,或把关闭当作完成。
-- 在 issue 仍 OPEN 时停下来:贴一份"下一步计划"当交付、等 owner 确认、或因为某条检查 FAIL 就收工。
-  除 §6 关闭与"报告外部阻塞"两种情况外,任何形式的暂停都算本轮失败。
+- 修不动了还保持 OPEN 空等确认:那属于 §6.1,必须先评论再关闭。
+- 关闭时没有评论阻塞证据,或 `VERDICT.md` 里没有"已排除的解释"与"最小放宽"——这是"没说清的关闭",视为未完成。
+- 把关闭当作完成而不写 `VERDICT.md`:证据必须留在仓库里,续跑从最小放宽接上。
 - 只写本地 RUN_LOG/CHECK/VERDICT 而不同步评论 issue:进度没到达读者手里。关键节点必须落到 issue 评论。
