@@ -889,3 +889,9 @@ results/research/issue234/restore/
 # issue236: the per-item curvature CSVs are the deliverable of C19
 !results/research/issue236/node_curvature_exact_geodesic.csv
 !results/research/issue236/node_curvature_exact_neighbour.csv
+
+# issue240: the per-step trajectory stream is ~10^2 MB of generated data (issue asks for
+# JSONL on disk, not in git); the aggregates, key-step table and REPORT stay tracked.
+results/research/issue240/raw/
+results/research/issue240/equivalence/
+results/research/issue240/*.png
