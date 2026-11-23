@@ -1,0 +1,45 @@
+{
+  "feature_names": [
+    "degree_in",
+    "degree_out",
+    "reciprocal_degree",
+    "log_degree_in",
+    "log_degree_out",
+    "isolated"
+  ],
+  "items": 24587,
+  "standardization": {
+    "feature_names": [
+      "degree_in",
+      "degree_out",
+      "reciprocal_degree",
+      "log_degree_in",
+      "log_degree_out",
+      "isolated"
+    ],
+    "mean": [
+      10.620734534510108,
+      10.620734534510108,
+      0.4799284174563794,
+      1.9783858111217012,
+      1.9785534929943889,
+      0.004717940374994916
+    ],
+    "std": [
+      23.320428167867174,
+      23.62903568730341,
+      3.6996307174034864,
+      0.8253170753387764,
+      0.829970765262534,
+      0.0685250422372154
+    ],
+    "fitted_on": "training-visible items only",
+    "items": 24587
+  },
+  "forbidden_inputs": [
+    "graph structure labels (family / orbit / graphlet class)",
+    "validation and test edges",
+    "the 768-dim semantic embedding as a mandatory input"
+  ],
+  "source": "training-visible graph only"
+}

@@ -1,0 +1,81 @@
+{
+  "curvature_traversal": {
+    "rows_read": 28391948,
+    "expected_rows": 28391948,
+    "distinct_centres": 24326,
+    "duplicate_triples": 0,
+    "rows_match_expected": true,
+    "seconds": 10.890763643197715,
+    "shards": 13,
+    "max_rss_bytes_before": 4849434624,
+    "max_rss_bytes_after": 4849434624,
+    "peak_rss_bytes": 4849434624
+  },
+  "curvature_summary_agreement": {
+    "sampled_items": 256,
+    "max_abs_mean_difference": 0.0,
+    "matches": true
+  },
+  "curvature_reference_set": "the centre component, as frozen in #248",
+  "fidelity_scales": {
+    "graph_side": "hop^2 (unweighted shortest path on the undirected projection)",
+    "quantized_side": "the metric family's own length^2",
+    "alignment": "s = sum(kappa_q * kappa_g) / sum(kappa_q^2), a single global factor",
+    "headline": "sign agreement (scale free)"
+  },
+  "tiger": {
+    "sid_path": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+    "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+    "sid_items": 24587,
+    "pure_sid_metrics": {
+      "collision_prefix3": {
+        "items": 24587,
+        "distinct_prefix": 20425,
+        "collision_prefix": 0.16927644690283483,
+        "duplicate_prefix_share": 0.26530280229389513,
+        "length": 3
+      },
+      "duplicate_prefix3": 0.26530280229389513,
+      "collision_full": {
+        "items": 24587,
+        "distinct_prefix": 24587,
+        "collision_prefix": 0.0,
+        "duplicate_prefix_share": 0.0,
+        "length": 4
+      },
+      "prefix_sharing": {
+        "L1": 0.9997152967015089,
+        "L2": 0.8428031073331436,
+        "L3": 0.26530280229389513
+      },
+      "codebook_occupancy": [
+        {
+          "level": 0,
+          "used": 249,
+          "entropy": 6.958990494049653,
+          "entropy_unit": "bits",
+          "max_share": 0.029202424045227153
+        },
+        {
+          "level": 1,
+          "used": 256,
+          "entropy": 6.553546559233901,
+          "entropy_unit": "bits",
+          "max_share": 0.03855696099564811
+        },
+        {
+          "level": 2,
+          "used": 256,
+          "entropy": 7.944733248437091,
+          "entropy_unit": "bits",
+          "max_share": 0.006873551063570179
+        }
+      ],
+      "source": "recomputed directly from the frozen item_sids.json"
+    },
+    "geometry_metrics": {
+      "status": "NA",
+      "reason": "no codebook and checkpoint provably from the same SID generation as the Stage3 table: the frozen rqvae_best.pth belongs to a different generation (#246 measured its re-export as differing in all 24,587 rows), so the decoded q and the reconstruction error are NA"
+    }
+  }
+}

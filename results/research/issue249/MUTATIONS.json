@@ -1,0 +1,59 @@
+{
+  "mutations": [
+    {
+      "mutation": "the g(b,c)^2 quarter coefficient is doubled",
+      "category": "numeric",
+      "caught_by": "the closed form keeps the quarter coefficient",
+      "assertion_text": "2.9707008825523373 != 0.4355546413361456 within 12 places (2.5351462412161916 difference) : the closed form keeps the quarter coefficient"
+    },
+    {
+      "mutation": "the sign of the parallelogram residual is flipped",
+      "category": "numeric",
+      "caught_by": "the closed form keeps the residual sign",
+      "assertion_text": "-0.4355546413361456 != 0.4355546413361456 within 12 places (0.8711092826722912 difference) : the closed form keeps the residual sign"
+    },
+    {
+      "mutation": "the reference mask is ignored",
+      "category": "structural",
+      "caught_by": "the mask must remove a reference",
+      "assertion_text": "0.4355546413361456 != 1.0483568794978915 within 12 places (0.612802238161746 difference) : the mask must remove exactly the masked reference"
+    },
+    {
+      "mutation": "the reference set is replaced by a single node",
+      "category": "routing",
+      "caught_by": "the reference set must be the full one",
+      "assertion_text": "-4.85946710801754 != 0.4355546413361456 within 9 places (5.295021749353686 difference) : the reference set must be the full one"
+    },
+    {
+      "mutation": "the metric family is swapped for the spherical one",
+      "category": "routing",
+      "caught_by": "the metric family must be the one asked for",
+      "assertion_text": "1.8218037859066964 != 0.4355546413361456 within 9 places (1.386249144570551 difference) : the metric family must be the one asked for"
+    },
+    {
+      "mutation": "the ego edge direction is inverted",
+      "category": "structural",
+      "caught_by": "the ego edge direction must follow the forward edge table",
+      "assertion_text": "False is not true : the ego edge direction must follow the forward edge table"
+    },
+    {
+      "mutation": "the curvature traversal skips a shard",
+      "category": "routing",
+      "caught_by": "the traversal must read every row",
+      "assertion_text": "27351129 != 28391948 : the traversal must read every row"
+    },
+    {
+      "mutation": "the fidelity evaluator hides a sign disagreement",
+      "category": "routing",
+      "caught_by": "a sign flip must be reported",
+      "assertion_text": "1.0 not less than 1.0 : a sign flip must be reported"
+    },
+    {
+      "mutation": "the gradient diagnostic reports a zero gradient",
+      "category": "structural",
+      "caught_by": "the gradient norm must be reported",
+      "assertion_text": "0.0 not greater than 0.0 : the gradient norm must be reported"
+    }
+  ],
+  "caught": 9
+}

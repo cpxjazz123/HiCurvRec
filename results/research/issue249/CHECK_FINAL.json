@@ -1,0 +1,261 @@
+{
+  "command": "bash tools/graph_infra/verify_v5.sh",
+  "exit_code": 0,
+  "test_count": 79,
+  "test_sections": [
+    17,
+    24,
+    9,
+    1,
+    20,
+    8
+  ],
+  "log_sha256": "072afe16c4dcee9ed6cdb95faa1ab05cec7a7708de1b8fedb5d9465a108de7cf",
+  "modules": {
+    "issue": 249,
+    "modules": [
+      {
+        "module": "manifest",
+        "check": "every registered asset exists and matches its sha256",
+        "verdict": "PASS",
+        "detail": {
+          "assets": 67,
+          "drifted": []
+        }
+      },
+      {
+        "module": "manifest",
+        "check": "the reused assets are referenced, not copied",
+        "verdict": "PASS",
+        "detail": {
+          "reused": 40,
+          "built": 27
+        }
+      },
+      {
+        "module": "ego",
+        "check": "the node feature table has one row per item and only the allowed columns",
+        "verdict": "PASS",
+        "detail": {
+          "shape": [
+            24587,
+            6
+          ],
+          "features": [
+            "degree_in",
+            "degree_out",
+            "reciprocal_degree",
+            "log_degree_in",
+            "log_degree_out",
+            "isolated"
+          ]
+        }
+      },
+      {
+        "module": "ego",
+        "check": "the standardization is fitted on the training-visible items only",
+        "verdict": "PASS",
+        "detail": {
+          "items": 24587
+        }
+      },
+      {
+        "module": "ego",
+        "check": "the collated batch recovers the centre of every item",
+        "verdict": "PASS",
+        "detail": {
+          "items": [
+            0,
+            1,
+            2899,
+            1234,
+            20000
+          ],
+          "centres": [
+            0,
+            1,
+            2899,
+            1234,
+            20000
+          ]
+        }
+      },
+      {
+        "module": "ego",
+        "check": "the sparse collate equals the plain collate",
+        "verdict": "PASS",
+        "detail": {
+          "nodes": 100
+        }
+      },
+      {
+        "module": "ego",
+        "check": "the persisted batching index covers every item",
+        "verdict": "PASS",
+        "detail": {
+          "items": 24587
+        }
+      },
+      {
+        "module": "curvature",
+        "check": "the full traversal reads every row exactly once",
+        "verdict": "PASS",
+        "detail": {
+          "rows_read": 28391948,
+          "seconds": 10.9683090550825,
+          "peak_rss_bytes": 3906359296
+        }
+      },
+      {
+        "module": "curvature",
+        "check": "a batched aggregation equals the persisted per-item summary",
+        "verdict": "PASS",
+        "detail": {
+          "sampled_items": 128,
+          "max_abs_mean_difference": 0.0,
+          "matches": true
+        }
+      },
+      {
+        "module": "curvature",
+        "check": "the valid mask and the effective reference count are exposed",
+        "verdict": "PASS",
+        "detail": {
+          "rows": 15
+        }
+      },
+      {
+        "module": "diff_sectional",
+        "check": "the statistic is differentiable and the gradient is finite and nonzero",
+        "verdict": "PASS",
+        "detail": {
+          "statistic": 1.4753172519072058,
+          "gradient_norm": 3.0749521908500195
+        }
+      },
+      {
+        "module": "diff_sectional",
+        "check": "the chunked evaluation equals the unchunked one",
+        "verdict": "PASS",
+        "detail": {
+          "chunked": 1.475317251907206,
+          "plain": 1.4753172519072058
+        }
+      },
+      {
+        "module": "diff_sectional",
+        "check": "the euclidean metric is symmetric with a zero self distance",
+        "verdict": "PASS",
+        "detail": {
+          "symmetric": true,
+          "self_distance": 0.0
+        }
+      },
+      {
+        "module": "diff_sectional",
+        "check": "the hyperbolic metric is symmetric with a zero self distance",
+        "verdict": "PASS",
+        "detail": {
+          "symmetric": true,
+          "self_distance": 0.0
+        }
+      },
+      {
+        "module": "diff_sectional",
+        "check": "the spherical metric is symmetric with a zero self distance",
+        "verdict": "PASS",
+        "detail": {
+          "symmetric": true,
+          "self_distance": 0.0
+        }
+      },
+      {
+        "module": "fidelity",
+        "check": "the graph side of the evaluation reproduces the frozen #248 target exactly",
+        "verdict": "PASS",
+        "detail": {
+          "max_abs_difference": 0.0,
+          "matches": true
+        }
+      },
+      {
+        "module": "fidelity",
+        "check": "the hard SID and the continuous z are reported separately",
+        "verdict": "PASS",
+        "detail": {
+          "hard_sid_sign": 0.7005,
+          "continuous_sign": 0.6995
+        }
+      },
+      {
+        "module": "fidelity",
+        "check": "the evaluation reports the scale, the sign agreement and the distance distortion",
+        "verdict": "PASS",
+        "detail": {
+          "scale_factor": 17.42370762177145,
+          "distortion": {
+            "mean_abs_error": 3.1602050755415694,
+            "mean_signed_error": -3.1602050755415694,
+            "rms_error": 3.2234830385792423,
+            "max_abs_error": 6.953115553213932,
+            "relative_mean_abs_error": 0.952501666926144
+          }
+        }
+      },
+      {
+        "module": "tiger",
+        "check": "the Stage3 SID table is the one the run read",
+        "verdict": "PASS",
+        "detail": {
+          "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059"
+        }
+      },
+      {
+        "module": "tiger",
+        "check": "the geometry metrics of the Stage3 table are NA, not fabricated",
+        "verdict": "PASS",
+        "detail": "no codebook and checkpoint provably from the same SID generation as the Stage3 table: the frozen rqvae_best.pth belongs to a different generation (#246 measured its re-export as differing in all 24,587 rows), so the decoded q and the reconstruction error are NA"
+      },
+      {
+        "module": "tiger",
+        "check": "the pure SID metrics are recomputed from the table",
+        "verdict": "PASS",
+        "detail": {
+          "collision_prefix3": 0.16927644690283483
+        }
+      },
+      {
+        "module": "isolation",
+        "check": "the struct splits do not intersect the visible users",
+        "verdict": "PASS",
+        "detail": {
+          "visible_users": 45951,
+          "struct_val_users": 5744,
+          "struct_test_users": 5744,
+          "visible_intersect_struct_val": 0,
+          "visible_intersect_struct_test": 0,
+          "struct_val_intersect_struct_test": 0
+        }
+      },
+      {
+        "module": "isolation",
+        "check": "the training view may not read the held-out support",
+        "verdict": "PASS",
+        "detail": {
+          "use": "evaluation"
+        }
+      },
+      {
+        "module": "isolation",
+        "check": "the strict banks are served only by the evaluation view",
+        "verdict": "PASS",
+        "detail": {
+          "strict_banks": 10
+        }
+      }
+    ],
+    "pass": 24,
+    "fail": 0,
+    "na": 0
+  }
+}

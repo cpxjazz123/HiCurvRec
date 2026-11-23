@@ -61,3 +61,27 @@ over `V`). Items with no legal neighbour pair carry a missing reason and NaN sta
 
 The binaries stay out of git under the repository's `results/research/**` rules; the manifest,
 coverage report and this note are the committed evidence.
+
+## Issue #249: version `v5-gnn-geometry-249`
+
+`v5_gnn_geometry/` adds the ego batching index, permitted node features,
+training-visible standardization statistics, evaluation coverage and fidelity reports.
+The root manifest registers these additions; frozen graph targets remain unchanged.
+
+```python
+from tools.graph_infra.ego_gnn import EgoStore
+from tools.graph_infra.curvature_stream import CurvatureReader
+from tools.graph_infra.heldout_eval import HeldOutEvaluation
+store = EgoStore(Path('.'), Path('assets'))
+batch = store.collate([0, 1234], hops=1)
+chunks = store.collate_sparse([0, 1234], hops=1, chunk=1)
+reader = CurvatureReader(Path('.'), Path('assets'))
+rows = reader.item_rows(1234)
+evaluation = HeldOutEvaluation(Path('.'), Path('assets'))
+```
+
+Deterministic verification: `bash tools/graph_infra/verify_v5.sh`.
+Numerical APIs live in `diff_sectional.py`, gradient diagnostics in `grad_diag.py`,
+hard-SID decoding and metrics in `fidelity.py`. The finite-difference statistic
+is distance-induced, not intrinsic manifold curvature. Hard SID and continuous
+encoder fidelity are distinct measurements. No training is performed.
