@@ -1,0 +1,163 @@
+{
+  "scale_s": 3.3386005393832106,
+  "delta": 1.2109375,
+  "triplets": 191984,
+  "arms": {
+    "TIGER_RQ-VAE": {
+      "reconstruction_mse": 9.607e-05,
+      "sid": {
+        "items": 24587,
+        "distinct_triples": 20425,
+        "collision": 0.169276,
+        "used_per_level": [
+          249,
+          256,
+          256
+        ],
+        "entropy_per_level": [
+          6.959,
+          6.5535,
+          7.9447
+        ],
+        "max_bucket_share": 0.001,
+        "level1_prefixes": 249,
+        "level1_max_share": 0.0292,
+        "level2_prefixes": 7374,
+        "level2_max_share": 0.0035
+      },
+      "z": {
+        "n": 191984,
+        "mae": 2.128864,
+        "rmse": 2.736662,
+        "spearman": 0.0492,
+        "bias": 0.236609,
+        "mae_positive": 1.995646,
+        "sign_agreement_positive": 0.922306,
+        "mae_negative": 3.262597,
+        "sign_agreement_negative": 0.087738,
+        "mae_by_degree_quintile": [
+          2.3793554306030273,
+          2.12929105758667,
+          2.0030202865600586,
+          1.9395958185195923,
+          2.227224349975586
+        ]
+      },
+      "q_hard": {
+        "n": 191984,
+        "mae": 2.0552,
+        "rmse": 2.612375,
+        "spearman": 0.0486,
+        "bias": 0.073387,
+        "mae_positive": 1.928818,
+        "sign_agreement_positive": 0.91544,
+        "mae_negative": 3.130788,
+        "sign_agreement_negative": 0.092998,
+        "mae_by_degree_quintile": [
+          2.3606505393981934,
+          2.0615861415863037,
+          1.9252264499664307,
+          1.845287799835205,
+          2.126315116882324
+        ]
+      },
+      "q_sid": {
+        "n": 191984,
+        "mae": 2.680966,
+        "rmse": 3.393967,
+        "spearman": 0.0107,
+        "bias": 1.440732,
+        "mae_positive": 2.450647,
+        "sign_agreement_positive": 0.943494,
+        "mae_negative": 4.634284,
+        "sign_agreement_negative": 0.056374,
+        "mae_by_degree_quintile": [
+          2.3616340160369873,
+          2.377171277999878,
+          2.481674909591675,
+          2.75823712348938,
+          3.3590924739837646
+        ]
+      },
+      "edge_vs_random_closer_fraction": 0.5368
+    },
+    "TIGER_curvloss_rq": {
+      "reconstruction_mse": 6.803e-05,
+      "sid": {
+        "items": 24587,
+        "distinct_triples": 21083,
+        "collision": 0.142514,
+        "used_per_level": [
+          224,
+          256,
+          256
+        ],
+        "entropy_per_level": [
+          6.9613,
+          6.5487,
+          7.9523
+        ],
+        "max_bucket_share": 0.0009,
+        "level1_prefixes": 224,
+        "level1_max_share": 0.0244,
+        "level2_prefixes": 7511,
+        "level2_max_share": 0.0026
+      },
+      "z": {
+        "n": 191984,
+        "mae": 0.887368,
+        "rmse": 1.163033,
+        "spearman": 0.795,
+        "bias": 0.339077,
+        "mae_positive": 0.859461,
+        "sign_agreement_positive": 0.98293,
+        "mae_negative": 1.125094,
+        "sign_agreement_negative": 0.492482,
+        "mae_by_degree_quintile": [
+          1.0241317749023438,
+          0.8749493956565857,
+          0.8659425973892212,
+          0.8529760241508484,
+          0.8399604558944702
+        ]
+      },
+      "q_hard": {
+        "n": 191984,
+        "mae": 0.928999,
+        "rmse": 1.209413,
+        "spearman": 0.7323,
+        "bias": -0.048625,
+        "mae_positive": 0.897576,
+        "sign_agreement_positive": 0.970344,
+        "mae_negative": 1.196389,
+        "sign_agreement_negative": 0.485187,
+        "mae_by_degree_quintile": [
+          1.1723849773406982,
+          0.9116926193237305,
+          0.8690714240074158,
+          0.8553460836410522,
+          0.8726780414581299
+        ]
+      },
+      "q_sid": {
+        "n": 191984,
+        "mae": 0.928999,
+        "rmse": 1.209413,
+        "spearman": 0.7323,
+        "bias": -0.048625,
+        "mae_positive": 0.897576,
+        "sign_agreement_positive": 0.970344,
+        "mae_negative": 1.196389,
+        "sign_agreement_negative": 0.485187,
+        "mae_by_degree_quintile": [
+          1.1723849773406982,
+          0.9116926193237305,
+          0.8690714240074158,
+          0.8553460836410522,
+          0.8726780414581299
+        ]
+      },
+      "edge_vs_random_closer_fraction": 0.6605
+    }
+  }
+}
