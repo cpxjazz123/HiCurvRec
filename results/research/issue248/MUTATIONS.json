@@ -1,0 +1,53 @@
+{
+  "mutations": [
+    {
+      "mutation": "the g(b,c)^2 quarter coefficient is doubled",
+      "category": "numeric",
+      "caught_by": "closed form keeps the quarter coefficient",
+      "assertion_text": "np.float64(1.4) != np.float64(0.4) within 12 places (np.float64(0.9999999999999999) difference) : closed form keeps the quarter coefficient"
+    },
+    {
+      "mutation": "the sign of the residual is flipped",
+      "category": "numeric",
+      "caught_by": "closed form keeps the residual sign",
+      "assertion_text": "np.float64(-0.4) != np.float64(0.4) within 12 places (np.float64(0.8) difference) : closed form keeps the residual sign"
+    },
+    {
+      "mutation": "the reference count is replaced by the square of it",
+      "category": "numeric",
+      "caught_by": "closed form divides by the reference count",
+      "assertion_text": "np.float64(0.88) != np.float64(0.4) within 12 places (np.float64(0.48) difference) : closed form divides by the reference count"
+    },
+    {
+      "mutation": "the component size is replaced by one",
+      "category": "structural",
+      "caught_by": "closed form uses the component size",
+      "assertion_text": "np.float64(-2.0) != np.float64(0.4) within 12 places (np.float64(2.4) difference) : closed form uses the component size"
+    },
+    {
+      "mutation": "the distance histogram loses its first node",
+      "category": "structural",
+      "caught_by": "histogram reproduces S2",
+      "assertion_text": ""
+    },
+    {
+      "mutation": "g(b,c) ignores whether b and c are adjacent",
+      "category": "structural",
+      "caught_by": "g(b,c) respects adjacency",
+      "assertion_text": ""
+    },
+    {
+      "mutation": "the reference set becomes the whole graph",
+      "category": "routing",
+      "caught_by": "references stay inside the component",
+      "assertion_text": ""
+    },
+    {
+      "mutation": "the structure class ignores the edge direction",
+      "category": "routing",
+      "caught_by": "the structure class keeps direction",
+      "assertion_text": ""
+    }
+  ],
+  "caught": 8
+}

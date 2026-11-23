@@ -1,0 +1,131 @@
+{
+  "issue": 248,
+  "modules": [
+    {
+      "module": "manifest",
+      "check": "every asset hash recomputes",
+      "verdict": "PASS",
+      "detail": {
+        "assets": 62,
+        "names_sample": [
+          "coverage",
+          "distance_histogram",
+          "index",
+          "item_summary",
+          "node_moments"
+        ]
+      }
+    },
+    {
+      "module": "enumeration",
+      "check": "per-centre triple count equals C(deg,2) for every centre",
+      "verdict": "PASS",
+      "detail": {
+        "items": 24587,
+        "total": 28391948
+      }
+    },
+    {
+      "module": "enumeration",
+      "check": "global row count equals the recomputed population",
+      "verdict": "PASS",
+      "detail": {
+        "rows": 28391948,
+        "expected": 28391948
+      }
+    },
+    {
+      "module": "enumeration",
+      "check": "no duplicate triple and b < c everywhere",
+      "verdict": "PASS",
+      "detail": {
+        "rows": 28391948
+      }
+    },
+    {
+      "module": "curvature",
+      "check": "every stored curvature is finite and every triple has a reference set",
+      "verdict": "PASS",
+      "detail": {}
+    },
+    {
+      "module": "distance",
+      "check": "S2 recomputed from the persisted histogram equals the stored S2",
+      "verdict": "PASS",
+      "detail": {
+        "max_abs_difference": 0.0
+      }
+    },
+    {
+      "module": "distance",
+      "check": "S2 from an independent BFS matches the stored value on 12 sampled nodes",
+      "verdict": "PASS",
+      "detail": {
+        "max_relative_difference": 0.0
+      }
+    },
+    {
+      "module": "curvature",
+      "check": "five sampled triples recomputed from explicit distance rows match the table",
+      "verdict": "PASS",
+      "detail": {
+        "max_abs_difference": 0.0
+      }
+    },
+    {
+      "module": "distribution",
+      "check": "per-item counts and means recomputed from the shards match the summary",
+      "verdict": "PASS",
+      "detail": {
+        "max_abs_mean_difference": 0.0,
+        "count_mismatches": 0
+      }
+    },
+    {
+      "module": "coverage",
+      "check": "every triple uses exactly its centre's full reachable component",
+      "verdict": "PASS",
+      "detail": {
+        "components": 117,
+        "largest_component": 24471
+      }
+    },
+    {
+      "module": "structure",
+      "check": "the per-class row counts sum to the whole table",
+      "verdict": "PASS",
+      "detail": {
+        "classes_present": 13,
+        "class_slots": 64,
+        "rows": 28391948
+      }
+    },
+    {
+      "module": "isolation",
+      "check": "the training view refuses evaluation assets and vice versa",
+      "verdict": "PASS",
+      "detail": {}
+    },
+    {
+      "module": "isolation",
+      "check": "the visible graph used here is the frozen training-visible graph",
+      "verdict": "PASS",
+      "detail": {
+        "directed_edges": 261132,
+        "undirected_entries": 510464
+      }
+    },
+    {
+      "module": "isolation",
+      "check": "strict evaluation keys and training bank keys are disjoint",
+      "verdict": "PASS",
+      "detail": {
+        "strict": 28595,
+        "training": 59966
+      }
+    }
+  ],
+  "pass": 14,
+  "fail": 0,
+  "na": 0
+}
