@@ -23,6 +23,7 @@ copy.  This module is the machine half of that rule:
 """
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import re
@@ -127,11 +128,31 @@ def inspect_tree(tree: Path | str, folder: Path | str | None = None) -> dict:
     builds, reads, foreign = [], [], []
     for path in _sources(tree):
         text = path.read_text(errors="ignore")
+        try:
+            parsed=ast.parse(text)
+        except SyntaxError as exc:
+            return {"status":"FAIL","tree":str(tree),
+                    "detail":"cannot inspect invalid Python source %s: %s" %
+                             (path.relative_to(tree).as_posix(),exc.msg)}
+        for node in ast.walk(parsed):
+            # EgoStore reads assets/train/visible_*.npz, not the canonical graph.
+            # Imported loaders must not disappear behind NOT_APPLICABLE merely
+            # because their implementation and graph filename live outside the tree.
+            direct=(isinstance(node,ast.ImportFrom) and
+                    node.module=="tools.graph_infra.ego_gnn" and
+                    any(alias.name in ("EgoStore","*") for alias in node.names))
+            module=(isinstance(node,ast.Import) and
+                    any(alias.name=="tools.graph_infra.ego_gnn" for alias in node.names))
+            parent=(isinstance(node,ast.ImportFrom) and node.module=="tools.graph_infra" and
+                    any(alias.name=="ego_gnn" for alias in node.names))
+            if direct or module or parent:
+                foreign.append(path.relative_to(tree).as_posix())
         if "train.parquet" in text and BUILD_TOKENS.search(text):
             builds.append(path.relative_to(tree).as_posix())
         if "graph.npz" in text:
             mentions_canonical = "behavior_graph/graph.npz" in text or "behavior_graph\"" in text
             (reads if mentions_canonical else foreign).append(path.relative_to(tree).as_posix())
+    foreign=sorted(set(foreign))
     if builds:
         return {"status": "FAIL", "tree": str(tree),
                 "detail": "builds its own behaviour graph from train.parquet in " + ", ".join(sorted(builds)[:4])
@@ -139,7 +160,7 @@ def inspect_tree(tree: Path | str, folder: Path | str | None = None) -> dict:
                 "builds": builds}
     if foreign:
         return {"status": "FAIL", "tree": str(tree),
-                "detail": "reads a graph.npz that is not the canonical one in " + ", ".join(sorted(foreign)[:4]),
+                "detail": "reads a graph outside the canonical source in " + ", ".join(foreign[:4]),
                 "foreign": foreign}
     if not reads:
         return {"status": "NOT_APPLICABLE", "tree": str(tree),

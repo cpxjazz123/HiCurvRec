@@ -11,6 +11,7 @@ import weakref
 import numpy as np
 import torch
 from torch import nn
+from torch.utils.checkpoint import checkpoint
 
 
 class DirectedMean(nn.Module):
@@ -96,6 +97,16 @@ class SubgraphTokens(nn.Module):
         view.node_features = lambda: features
         return view, normalized
 
+    def _read_items(self, store, normalized, item_ids, hops):
+        items=item_ids.tolist()
+        batch=store.collate(items,hops=hops,standardized=False)
+        batch['features']=normalized[batch['nodes']]
+        result=self(batch)
+        groups=np.asarray(batch['batch_index'])[np.asarray(batch['node_mask'],dtype=bool)]
+        valid=torch.as_tensor(np.bincount(groups,minlength=len(items))>0,
+                              device=self.input.weight.device)
+        return result,valid
+
     def tokens_for_items(self, store, item_ids, device, chunk=32):
         """Deduplicate global items, run each scale separately, then restore order.
 
@@ -113,14 +124,16 @@ class SubgraphTokens(nn.Module):
         view, normalized = self._cached_store(store)
         outputs, validity = [], []
         for start in range(0, len(unique), chunk):
-            items = unique[start:start + chunk].tolist()
-            scales, masks = [], []
-            for hops in (1, 2):
-                batch = view.collate(items, hops=hops, standardized=False)
-                batch['features'] = normalized[batch['nodes']]
-                scales.append(self(batch))
-                groups = np.asarray(batch['batch_index'])[np.asarray(batch['node_mask'], dtype=bool)]
-                masks.append(torch.as_tensor(np.bincount(groups, minlength=len(items)) > 0, device=device))
+            items=torch.as_tensor(unique[start:start+chunk],dtype=torch.long)
+            scales,masks=[],[]
+            for hops in (1,2):
+                if torch.is_grad_enabled():
+                    value,valid=checkpoint(self._read_items,view,normalized,items,hops,
+                                           use_reentrant=False,preserve_rng_state=False)
+                else:
+                    value,valid=self._read_items(view,normalized,items,hops)
+                scales.append(value)
+                masks.append(valid)
             outputs.append(torch.stack(scales, dim=1))
             validity.append(torch.stack(masks, dim=1))
         restore = torch.as_tensor(inverse, dtype=torch.long, device=device)

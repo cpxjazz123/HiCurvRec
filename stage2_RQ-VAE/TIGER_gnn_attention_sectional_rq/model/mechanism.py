@@ -137,16 +137,11 @@ class RQVAE(OriginalRQVAE):
 
     def catalogue_q(self, embeddings, chunk=32, *, infer_use_sk=False):
         """One global quantization; chunk only structural messages, never assignment."""
-        def weight_forward(batch, ids):
-            return self.structure.gates_for_items(self.store,ids,batch.device,
-                                                  behavior_on=self.behavior_on)[1]
         weights=[];attentions=[];token_counts=[]
         for start in range(0,len(embeddings),chunk):
             ids=torch.arange(start,min(start+chunk,len(embeddings)),device=embeddings.device)
-            if torch.is_grad_enabled():
-                weight=checkpoint(weight_forward,embeddings[ids],ids,use_reentrant=False)
-            else:
-                weight=weight_forward(embeddings[ids],ids)
+            weight=self.structure.gates_for_items(self.store,ids,embeddings.device,
+                                                  behavior_on=self.behavior_on)[1]
             weights.append(weight)
             attentions.append(self.structure.last_attention.detach())
             token_counts.append(self.structure.last_token_mask[:,:-1].sum(-1))

@@ -1,7 +1,7 @@
 # `assets/` — persisted graph infrastructure assets
 
 This directory holds a **flattened copy** of the issue #248 asset family
-(`v4-full-sectional-248`). The canonical build stays in
+(`v4-full-sectional-248`). The frozen issue248 build stays in
 `results/research/issue248/assets/`; every file here is byte-identical to it (same sha256),
 and `manifest.json` here has its `path` fields repointed at `assets/` while keeping a
 `copy_of` field for each copied asset.
@@ -105,3 +105,14 @@ constructed on demand from the same visible directed CSR, without truncation.
 
 Verification-only asset checks are read-only: `build_assets_v5 --verify` preserves
 newer manifest versions and exact manifest bytes.
+
+The GNN recomputes exact full egos per chunk during backward, rather than
+retaining every expanded-node activation for the whole reconstruction batch.
+This memory partition is not node/edge/reference sampling; the actual loss and
+all parameter gradients are checked against direct activation retention.
+
+The frozen asset graph is not the repository's §89b canonical graph: it is a
+strict subgraph, despite identical training-source hashes. Reproduce the
+comparison with `python3.9 -m tools.issue251.audit_graphs`. Do not replace frozen
+egos/curvature targets or treat imported `EgoStore` readers as graph-free.
+Training admission needs an explicit owner reconciliation of these contracts.
