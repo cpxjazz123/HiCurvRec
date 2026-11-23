@@ -1,0 +1,77 @@
+EEEEEE
+======================================================================
+ERROR: test_behavior_off_applies_to_catalogue_selection_cost (test_mechanism.MechanismTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py", line 59, in test_behavior_off_applies_to_catalogue_selection_cost
+    model=self.model().eval();model.behavior_on=False
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py", line 24, in model
+    from model.mechanism import RQVAE
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/mechanism.py", line 25, in <module>
+    from .structure import DirectedGate
+ModuleNotFoundError: No module named 'model.structure'
+
+======================================================================
+ERROR: test_detached_cost_breaks_gate_path (test_mechanism.MechanismTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py", line 48, in test_detached_cost_breaks_gate_path
+    model=self.model().eval(); model.cut_selection_cost=True
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py", line 24, in model
+    from model.mechanism import RQVAE
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/mechanism.py", line 25, in <module>
+    from .structure import DirectedGate
+ModuleNotFoundError: No module named 'model.structure'
+
+======================================================================
+ERROR: test_fixed_curvature_metric_reaches_selection_gate_and_gnn (test_mechanism.MechanismTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py", line 40, in test_fixed_curvature_metric_reaches_selection_gate_and_gnn
+    model=self.model().eval(); x=self.embeddings[[1234,20000,5]]
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py", line 24, in model
+    from model.mechanism import RQVAE
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/mechanism.py", line 25, in <module>
+    from .structure import DirectedGate
+ModuleNotFoundError: No module named 'model.structure'
+
+======================================================================
+ERROR: test_hard_q_exactly_decodes_three_ids (test_mechanism.MechanismTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py", line 33, in test_hard_q_exactly_decodes_three_ids
+    model=self.model().eval(); x=self.embeddings[[1234,20000]]
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py", line 24, in model
+    from model.mechanism import RQVAE
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/mechanism.py", line 25, in <module>
+    from .structure import DirectedGate
+ModuleNotFoundError: No module named 'model.structure'
+
+======================================================================
+ERROR: test_installed_framework_guards_reject_duplicate_codewords (test_mechanism.MechanismTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py", line 70, in test_installed_framework_guards_reject_duplicate_codewords
+    model=self.model().eval()
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py", line 24, in model
+    from model.mechanism import RQVAE
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/mechanism.py", line 25, in <module>
+    from .structure import DirectedGate
+ModuleNotFoundError: No module named 'model.structure'
+
+======================================================================
+ERROR: test_missing_item_identity_is_rejected (test_mechanism.MechanismTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py", line 54, in test_missing_item_identity_is_rejected
+    model=self.model()
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py", line 24, in model
+    from model.mechanism import RQVAE
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/mechanism.py", line 25, in <module>
+    from .structure import DirectedGate
+ModuleNotFoundError: No module named 'model.structure'
+
+----------------------------------------------------------------------
+Ran 6 tests in 7.624s
+
+FAILED (errors=6)

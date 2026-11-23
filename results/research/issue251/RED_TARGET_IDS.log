@@ -1,0 +1,14 @@
+test_out_of_catalogue_centres_are_not_silently_dropped (test_curvature_loss.CurvatureTests) ... FAIL
+
+======================================================================
+FAIL: test_out_of_catalogue_centres_are_not_silently_dropped (test_curvature_loss.CurvatureTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_curvature_loss.py", line 50, in test_out_of_catalogue_centres_are_not_silently_dropped
+    target.loss(torch.tensor([[0.],[1.],[3.]],dtype=torch.double),squared,
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 1 test in 3.061s
+
+FAILED (failures=1)

@@ -130,7 +130,7 @@ def launch(entry: Path | str, result_dir: Path | str, *, port: int | None = None
     torchrun = Path(interpreter).with_name("torchrun")
     if not torchrun.is_file():
         raise contract.ContractError("torchrun is not next to " + interpreter)
-    command = [str(torchrun), "--standalone", "--nproc_per_node=" + str(int(world_size)),
+    command = [str(torchrun), "--master_addr=127.0.0.1", "--nproc_per_node=" + str(int(world_size)),
                "--master_port=" + str(int(port if port is not None else contract.STAGE2_PORT)),
                str(entry)]
     if order is not None:

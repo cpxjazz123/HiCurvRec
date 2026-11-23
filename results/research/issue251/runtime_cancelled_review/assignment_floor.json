@@ -1,0 +1,14 @@
+{
+ "changed": true,
+ "edits": [
+  "        return torch.argmin(distances, dim=-1)",
+  "            return torch.argmax(q, dim=-1)",
+  "        embed_ind = self._indices(self._distances(latent), infer_use_sk)",
+  "        embed_ind = self._indices(self._distances(latent), infer_use_sk)",
+  "        embed_ind = torch.argmin(self._distances(x), dim=-1).view(*x.shape[:-1])",
+  "from distances import build_distance"
+ ],
+ "family": "euclid",
+ "installed": "assignment_floor.py",
+ "module": "model/layers.py"
+}

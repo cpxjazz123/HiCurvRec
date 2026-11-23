@@ -1,0 +1,37 @@
+[issue251 rank3] initial_gradient_calibration start[issue251 rank0] initial_gradient_calibration start
+[issue251 rank1] initial_gradient_calibration start
+
+[issue251 rank2] initial_gradient_calibration start
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/geometry.py:65: UserWarning: Specified kernel cache directory could not be created! This disables kernel caching. Specified directory is /home/wlia0047/.cache/torch/kernels. This warning will appear only once per process. (Triggered internally at /pytorch/aten/src/ATen/native/cuda/jit_utils.cpp:1487.)
+  sx = torch.cat((torch.cos(ax), k * torch.sinc(ax / math.pi) * x), dim=-1)
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/geometry.py:65: UserWarning: Specified kernel cache directory could not be created! This disables kernel caching. Specified directory is /home/wlia0047/.cache/torch/kernels. This warning will appear only once per process. (Triggered internally at /pytorch/aten/src/ATen/native/cuda/jit_utils.cpp:1487.)
+  sx = torch.cat((torch.cos(ax), k * torch.sinc(ax / math.pi) * x), dim=-1)
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/geometry.py:65: UserWarning: Specified kernel cache directory could not be created! This disables kernel caching. Specified directory is /home/wlia0047/.cache/torch/kernels. This warning will appear only once per process. (Triggered internally at /pytorch/aten/src/ATen/native/cuda/jit_utils.cpp:1487.)
+  sx = torch.cat((torch.cos(ax), k * torch.sinc(ax / math.pi) * x), dim=-1)
+W1124 02:39:36.672967 1610900 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/agent/server/api.py:723] Received Signals.SIGTERM death signal, shutting down workers
+W1124 02:39:36.674029 1610900 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 1611642 closing signal SIGTERM
+W1124 02:39:36.674387 1610900 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 1611643 closing signal SIGTERM
+W1124 02:39:36.675344 1610900 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 1611644 closing signal SIGTERM
+W1124 02:39:36.675642 1610900 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 1611645 closing signal SIGTERM
+Traceback (most recent call last):
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 357, in wrapper
+    return f(*args, **kwargs)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py", line 901, in main
+    run(args)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py", line 892, in run
+    elastic_launch(
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py", line 143, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py", line 268, in launch_agent
+    result = agent.run()
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/metrics/api.py", line 138, in wrapper
+    result = f(*args, **kwargs)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/agent/server/api.py", line 715, in run
+    result = self._invoke_run(role)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/agent/server/api.py", line 879, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 1610900 got signal: 15

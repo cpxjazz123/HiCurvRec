@@ -897,3 +897,10 @@ results/research/issue240/equivalence/
 results/research/issue240/*.png
 # issue #246: the read-only TIGER re-export is a generated artefact; the audit JSON carries its hashes
 results/research/infra246/tiger_reexport/
+
+# Issue251: learned binary/source-archive evidence stays local; exact SID is text evidence.
+results/research/issue251/**/source_snapshot.tar.gz
+!results/research/issue251/runtime/item_sids.json
+!results/research/issue251/*.log
+!results/research/issue251/**/logs/
+!results/research/issue251/**/logs/controlled_validation.log

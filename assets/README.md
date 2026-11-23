@@ -10,7 +10,7 @@ and `manifest.json` here has its `path` fields repointed at `assets/` while keep
 
 | Path | Content |
 |---|---|
-| `manifest.json` | 62 assets: path, use (`training` / `evaluation` / `description`), schema, bytes, sha256, origin, command; plus input hashes, source commit, source-code hashes and the #246/#247 audit |
+| `manifest.json` | Versioned assets: path, use (`training` / `evaluation` / `description`), schema, bytes, sha256, origin, command; plus input hashes and source provenance |
 | `coverage.json` | triple counts, per-centre expectations, component statistics, sampling declarations, shard inventory, runtime and storage cost |
 | `index.npz` | `item_shard`, `item_start`, `item_count`, `shard_names`, `total_rows`, `structure_class_counts`, `expected_pairs_per_centre`, `expected_total_rows` |
 | `item_summary.npz` | per item: total/valid/invalid triple counts, positive/zero/negative counts and ratios, mean, variance, minimum, maximum, quantiles, missing reason |
@@ -85,3 +85,23 @@ Numerical APIs live in `diff_sectional.py`, gradient diagnostics in `grad_diag.p
 hard-SID decoding and metrics in `fidelity.py`. The finite-difference statistic
 is distance-induced, not intrinsic manifold curvature. Hard SID and continuous
 encoder fidelity are distinct measurements. No training is performed.
+
+## Issue #251: version `v6-cross-attention-251`
+
+`v6_attention_tokens/token_schema.json` declares two distinct full induced ego
+tokens (one hop and two hops), each produced by the same directional GNN and
+its own subgraph readout. Existing graph, features, targets and standardization
+statistics are reused by immutable hash; no binary asset is rebuilt.
+The root manifest now contains 68 assets.
+
+The candidate `TIGER_gnn_attention_sectional_rq` keeps both tokens until expert
+cross-attention. Token attention has shape `[items,5,3]` (two ego slots plus a
+masked null slot); final geometry weights have shape `[items,5]`. Null is valid
+only when both real tokens are invalid. Isolates have two valid root-only ego
+tokens. Learned attention outputs are run evidence, not reusable static assets.
+`tokens_for_items(store, ids, device, chunk=...)` restores global item order and
+duplicates after deterministic batching. Complete two-hop induced subgraphs are
+constructed on demand from the same visible directed CSR, without truncation.
+
+Verification-only asset checks are read-only: `build_assets_v5 --verify` preserves
+newer manifest versions and exact manifest bytes.

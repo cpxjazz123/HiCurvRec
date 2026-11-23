@@ -1,0 +1,13 @@
+{
+  "issue": 251,
+  "commit": "1f05379ded338b3d16907c55f1e97b3bef1dc230",
+  "commit_role": "HEAD before selective implementation commit; final execution is bound by per-file hashes",
+  "state": "WORKING",
+  "done": ["C1", "C3", "C4"],
+  "not_run": ["C2 complete catalogue coverage", "C5 full target backward", "C6 actual microstep", "C7 real entry and fourGPU", "C8 full independent remeasurement", "C9 final reconciliation"],
+  "failed": [],
+  "running": [{"name": "controlled_four_gpu_fixed_port", "job": "bg_55", "entry": "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/validation_entry.py", "log": "results/research/issue251/runtime/logs/controlled_validation.log"}],
+  "next_commands": ["python3.9 -m tools.issue251.collect_evidence", "verification_check(source_dir=TIGER_gnn_attention_sectional_rq, verification_id=machine:issue251)", "python3.9 -m tools.issue251.run_evaluation"],
+  "blocked_by": null,
+  "formal_training": false
+}

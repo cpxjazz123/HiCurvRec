@@ -1,0 +1,23 @@
+test_full_stream_counts_masks_macro_and_micro (tools.issue251.test_full_evaluation.FullEvaluationTests) ... ERROR
+test_independent_geometry_matches_production_and_hand_values (tools.issue251.test_full_evaluation.FullEvaluationTests) ... ERROR
+
+======================================================================
+ERROR: test_full_stream_counts_masks_macro_and_micro (tools.issue251.test_full_evaluation.FullEvaluationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue251/test_full_evaluation.py", line 28, in test_full_stream_counts_masks_macro_and_micro
+    from tools.issue251.full_evaluation import full_evaluate
+ModuleNotFoundError: No module named 'tools.issue251.full_evaluation'
+
+======================================================================
+ERROR: test_independent_geometry_matches_production_and_hand_values (tools.issue251.test_full_evaluation.FullEvaluationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue251/test_full_evaluation.py", line 14, in test_independent_geometry_matches_production_and_hand_values
+    from tools.issue251.full_evaluation import fixed_squared_numpy
+ModuleNotFoundError: No module named 'tools.issue251.full_evaluation'
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.001s
+
+FAILED (errors=2)

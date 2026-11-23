@@ -1,0 +1,21 @@
+{
+  "version": "v6-cross-attention-251",
+  "items": 24587,
+  "token_axis": ["full_closed_one_hop_induced_directed_ego", "full_closed_two_hop_induced_directed_ego"],
+  "tokens_per_item": 2,
+  "token_width": 32,
+  "encoder": "shared_two_layer_directed_mean_message_GNN_independent_per_induced_subgraph",
+  "readout": "masked_mean_within_each_subgraph_only",
+  "features": "assets/v5_gnn_geometry/node_features.npz",
+  "normalization": "assets/v5_gnn_geometry/node_features_report.json",
+  "overlap": "same_global_node_ids_separate_local_induced_message_boundaries",
+  "isolate": "two_valid_root_only_tokens",
+  "padding": "masked_before_projection_and_message_aggregation",
+  "null": "appended_fixed_zero_token_valid_only_when_no_original_token_is_valid",
+  "attention_shape": ["items", 5, "original_tokens_plus_one_null"],
+  "attention_normalization_axis": "tokens",
+  "geometry_weight_shape": ["items", 5],
+  "geometry_normalization_axis": "experts",
+  "coverage_definition": "all_global_items_have_a_root_containing_ego_at_each_scale_by_construction",
+  "not_claimed": "two_scales_are_not_all_Graphlets; no_four_node_enumeration"
+}

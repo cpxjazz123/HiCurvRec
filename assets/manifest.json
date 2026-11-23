@@ -1,6 +1,6 @@
 {
   "issue": 248,
-  "version": "v5-gnn-geometry-249",
+  "version": "v6-cross-attention-251",
   "source_commit": "37b343586eb6497c400ed72ba77de9ac34de3b98",
   "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.build_assets_v4",
   "seed": 248001,
@@ -738,6 +738,22 @@
       "origin": "built by issue #248",
       "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.build_assets_v4",
       "copy_of": "results/research/issue248/assets/train/visible_undirected.npz"
+    },
+    {
+      "name": "attention_token_schema",
+      "path": "assets/v6_attention_tokens/token_schema.json",
+      "use": "description",
+      "schema": "json",
+      "rows": 24587,
+      "bytes": 1133,
+      "sha256": "a721a7e29e8b8a5bced06235f8033c92174b29997b3405a571259cca5e7721e8",
+      "origin": "frozen by issue #251; no graph data rebuilt",
+      "command": "none (schema; existing graph and features reused)",
+      "input_hashes": {
+        "visible_forward": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "node_features": "580f04a9c6a8cc7142de17a865efdf287bf94e9e4a30b225504f12a75b74b4cd",
+        "ego_full_1hop_visible": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      }
     }
   ],
   "copy_note": "This manifest describes the copy under assets/ (flattened). The canonical build lives in results/research/issue248/assets/; every file here is byte-identical to it (same sha256), only the path field is repointed.",
@@ -767,6 +783,10 @@
     {
       "version": "v4-full-sectional-248",
       "note": "the #248 curvature table, kept; the v5 entries below are new and additive"
+    },
+    {
+      "version": "v6-cross-attention-251",
+      "note": "only the multiscale token/attention schema is new; all 67 existing assets remain immutable"
     }
   ]
 }

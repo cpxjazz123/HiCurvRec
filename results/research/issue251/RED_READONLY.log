@@ -1,0 +1,24 @@
+{
+  "reused": {
+    "verified_assets": 1,
+    "manifest_version": "v6-cross-attention-251"
+  },
+  "registered": {
+    "assets": 1,
+    "version": "v5-gnn-geometry-249"
+  },
+  "seconds": 0.0026311855763196945
+}
+F
+======================================================================
+FAIL: test_verify_preserves_newer_manifest_bytes (tools.graph_infra.tests.test_v5_verify_readonly.VerifyReadonlyTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/graph_infra/tests/test_v5_verify_readonly.py", line 26, in test_verify_preserves_newer_manifest_bytes
+    self.assertEqual(manifest.read_bytes(),before)
+AssertionError: b'{\n  "version": "v5-gnn-geometry-249",\n  "ass[393 chars]n}\n' != b'{\n    "version": "v6-cross-attention-251",\n [297 chars]n}\n'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.028s
+
+FAILED (failures=1)

@@ -1,0 +1,41 @@
+test_actual_launcher_changes_invalidate_source_evidence (test_execution.ExecutionTests) ... FAIL
+test_rank0_calibration_does_not_advance_rotating_floor_history (test_execution.ExecutionTests) ... ERROR
+test_training_split_drift_invalidates_binding (test_provenance.ProvenanceTests) ... FAIL
+test_checkpoint_binding_rejects_source_drift_since_capture (test_provenance.ProvenanceTests) ... ERROR
+
+======================================================================
+ERROR: test_rank0_calibration_does_not_advance_rotating_floor_history (test_execution.ExecutionTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_execution.py", line 36, in test_rank0_calibration_does_not_advance_rotating_floor_history
+    ids=train_rqvae._calibration_ids(np.arange(512,dtype=np.int64),'cpu')
+AttributeError: module 'train_rqvae' has no attribute '_calibration_ids'
+
+======================================================================
+ERROR: test_checkpoint_binding_rejects_source_drift_since_capture (test_provenance.ProvenanceTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_provenance.py", line 63, in test_checkpoint_binding_rejects_source_drift_since_capture
+    mechanism.RQVAE.provenance(object(),expected=initial)
+TypeError: provenance() got an unexpected keyword argument 'expected'
+
+======================================================================
+FAIL: test_actual_launcher_changes_invalidate_source_evidence (test_execution.ExecutionTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_execution.py", line 28, in test_actual_launcher_changes_invalidate_source_evidence
+    self.assertNotEqual(initial,validation_entry.source_binding(),
+AssertionError: {'candidate/validation_entry.py': 'df55b486f195175741eb50e268428f769ac119cf45cd0bc251e8e06741a3a6d3', 'assets/manifest.json': 'ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149', 'tools/issue250/launch_validation.py': 'ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149'} == {'candidate/validation_entry.py': 'df55b486f195175741eb50e268428f769ac119cf45cd0bc251e8e06741a3a6d3', 'assets/manifest.json': 'ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149', 'tools/issue250/launch_validation.py': 'ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149'} : changing the executed launcher must invalidate checkpoint evidence
+
+======================================================================
+FAIL: test_training_split_drift_invalidates_binding (test_provenance.ProvenanceTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_provenance.py", line 43, in test_training_split_drift_invalidates_binding
+    binding(repo,tree)
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.136s
+
+FAILED (failures=2, errors=2)

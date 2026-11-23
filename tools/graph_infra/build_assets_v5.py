@@ -158,7 +158,7 @@ def main() -> int:
         ]
         registered = register(entries)
     else:
-        registered = register([])
+        registered = {'assets': reused['verified_assets'], 'version': reused['manifest_version']}
     report = {'reused': reused, 'registered': registered,
               'seconds': time.monotonic() - start}
     print(json.dumps(report, indent=2))

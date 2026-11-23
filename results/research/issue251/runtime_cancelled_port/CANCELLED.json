@@ -1,0 +1,10 @@
+{
+  "status": "CANCELLED_NOT_ACCEPTED",
+  "reason": "Actual PyTorch standalone rendezvous ignored the frozen master port; independent reproduction and rank0 reported random port33455.",
+  "controller_pid": 1610900,
+  "worker_pids": [1611642, 1611643, 1611644, 1611645],
+  "actual_master_port": 33455,
+  "required_master_port": 50202,
+  "signal": "SIGTERM",
+  "formal_training": false
+}

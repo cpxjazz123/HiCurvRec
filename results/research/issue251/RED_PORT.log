@@ -1,0 +1,21 @@
+test_effective_rendezvous_keeps_frozen_port (tools.issue251.test_launcher_port.LauncherPortTests) ... W1124 02:39:28.240643 1673871 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] 
+W1124 02:39:28.240643 1673871 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+W1124 02:39:28.240643 1673871 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W1124 02:39:28.240643 1673871 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+FAIL
+
+======================================================================
+FAIL: test_effective_rendezvous_keeps_frozen_port (tools.issue251.test_launcher_port.LauncherPortTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue251/test_launcher_port.py", line 33, in test_effective_rendezvous_keeps_frozen_port
+    self.assertEqual(captured['endpoint'].rsplit(':',1)[-1],'50202',
+AssertionError: '0' != '50202'
+- 0
++ 50202
+ : PyTorch standalone mode must not silently replace the frozen master port with a random port
+
+----------------------------------------------------------------------
+Ran 1 test in 0.032s
+
+FAILED (failures=1)

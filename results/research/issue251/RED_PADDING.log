@@ -1,0 +1,20 @@
+test_invalid_nan_padding_has_no_influence (test_attention_pipeline.AttentionPipelineTests) ... FAIL
+
+======================================================================
+FAIL: test_invalid_nan_padding_has_no_influence (test_attention_pipeline.AttentionPipelineTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_attention_pipeline.py", line 23, in test_invalid_nan_padding_has_no_influence
+    torch.testing.assert_close(actual,expected)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 5 / 5 (100.0%)
+Greatest absolute difference: nan at index (0, 0) (up to 1e-07 allowed)
+Greatest relative difference: nan at index (0, 0) (up to 1e-07 allowed)
+
+----------------------------------------------------------------------
+Ran 1 test in 0.011s
+
+FAILED (failures=1)

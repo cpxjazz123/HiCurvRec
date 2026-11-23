@@ -1,0 +1,10 @@
+C3/C4 数学与生产路径单元验收 PASS：两个softmax轴、标量手算Q/K/V、独立Query、NaN padding/null、顺序/重复商品不变性、有限差分、五几何独立参考、实际attention干预改变边界硬码字、原始Sinkhorn规则、硬q严格解码与三个廉价开关，均由最终候选的45项测试覆盖；加独立评估/资产19项，总64项PASS，退出码0。证据 `UNIT_BOUND.log:08945ef02977a0c0bd01e6af7c70d0e7f530e8f72fdc258e8437b12fd0a242d1`。
+
+源码绑定：
+- `stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/attention.py:a227155453e1d7c79cb9cf5c59a8a5e3f7defa88895d784ae499a34d25d42ac6`
+- `stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure_gate.py:74e307fb00f72cc847c2ed66f3bcfa329e55243960537a6fec89ec4ccdf50802`
+- `stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/geometry.py:1478e2cc92dbfa13478b3eecc9a74c15a1e33a0338c8fdb0b72339324d6c1d9e`
+- `stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/selection.py:aaf40e7d14eced220dae00f6f2aa14cb33f5d911c41fb94b8d868dcecf32d524`
+- `stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/mechanism.py:ce3275521a00f49f034afd3ddbe8860a894867176766a98a9603a002c2ec3717`
+
+实际全目录attention记录与受控更新仍等待四GPU运行输出，不把这些单元结果替代C5/C6/C7。
