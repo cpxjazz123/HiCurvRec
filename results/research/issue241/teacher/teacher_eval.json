@@ -1,0 +1,36 @@
+{
+  "target": {
+    "pairs": 3415,
+    "roots": 1500,
+    "teacher_mrr@10": 0.1051056264379837,
+    "teacher_mrr": 0.010036347629456021,
+    "teacher_median_rank": 1252.0,
+    "structural_mrr@10": 0.10752527365265287,
+    "structural_mrr": 0.014345159615082342,
+    "structural_median_rank": 2564.0,
+    "teacher_recall@10": 0.017276720351390922,
+    "structural_recall@10": 0.02957540263543192,
+    "teacher_recall@50": 0.053587115666178624,
+    "structural_recall@50": 0.08286969253294289
+  },
+  "eval_unseen": {
+    "pairs": 3351,
+    "roots": 1500,
+    "teacher_mrr@10": 0.09999999999999999,
+    "teacher_mrr": 0.0005778242494309838,
+    "teacher_median_rank": 5544.0,
+    "structural_mrr@10": 0.10681601796194455,
+    "structural_mrr": 0.012719725916876083,
+    "structural_median_rank": 2816.0,
+    "teacher_recall@10": 0.0,
+    "structural_recall@10": 0.02447030737093405,
+    "teacher_recall@50": 0.001193673530289466,
+    "structural_recall@50": 0.07341092211280215
+  },
+  "verdict": {
+    "beats_structural_on_unseen": false,
+    "eval_unseen_edges": 30675,
+    "eval_edges_total": 32729,
+    "visible_pairs": 263666
+  }
+}
