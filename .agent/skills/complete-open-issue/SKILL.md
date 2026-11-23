@@ -102,15 +102,17 @@ description: Use when the task is an open GitHub issue that must be finished end
 ## 执行顺序
 
 1. 阅读 issue,冻结验收清单与**数学与数据契约**(§0、§1;`CONTRACT.md`)。
-2. 先写**独立参考实现**与**确定性测试**(含手算期望值),再写正式代码(§2)。
-3. 实现生产代码,跑确定性测试与参考实现一致性测试。
-4. **故意引入典型错误**,验证测试的检测能力(变异测试);不通过先补测试,不要补实现。
-5. 用真实数据**逐模块验证**:输出、梯度、参数更新(§3)。
-6. 全部准入检查通过后才启动正式训练(§3、§4)。
-7. 训练结束后**重新审查源码、指标计算与实验结论**,从原始产物重算头条数字(§5)。
-8. 归档证据并关闭 issue(§6 或 §6.1)。
+2. **先读 `/home/wlia0047/ar57/wenyu/GeneRec/assets`**:需要的 Infra 资产已存在就直接读取(按哈希引用),
+   **禁止重复创建**;确实缺失的才创建,并且**只创建到 `assets/`**(§1.0)。
+3. 先写**独立参考实现**与**确定性测试**(含手算期望值),再写正式代码(§2)。
+4. 实现生产代码,跑确定性测试与参考实现一致性测试。
+5. **故意引入典型错误**,验证测试的检测能力(变异测试);不通过先补测试,不要补实现。
+6. 用真实数据**逐模块验证**:输出、梯度、参数更新(§3)。
+7. 全部准入检查通过后才启动正式训练(§3、§4)。
+8. 训练结束后**重新审查源码、指标计算与实验结论**,从原始产物重算头条指标(§5)。
+9. 归档证据并关闭 issue(§6 或 §6.1)。
 
-顺序不可交换:先参考实现后生产代码,先变异测试后正式训练,先结论复核后关闭。
+顺序不可交换:先查 `assets/` 再建资产,先参考实现后生产代码,先变异测试后正式训练,先结论复核后关闭。
 
 ## 进度必须回写到 issue(不是只写本地)
 
@@ -123,7 +125,7 @@ description: Use when the task is an open GitHub issue that must be finished end
 | 节点 | 评论里至少写 |
 |---|---|
 | 冻结验收清单后 | 清单条数、正文 sha256、**是否需要训练及依据** |
-| infra 完成 / 出现 infra FAIL | 数据与基线哈希、缺什么、修复到哪一步 |
+| infra 完成 / 出现 infra FAIL | **`assets/` 复用了哪些资产(`path:sha256`)、哪些是新建的、新建在哪个路径**;数据与基线哈希、缺什么、修复到哪一步 |
 | 每条 `C` 从 FAIL→PASS,或出现新的 FAIL | 编号、命令、关键输出、证据文件路径 |
 | 每轮检查结束(`CHECK_k`) | 本轮 PASS/FAIL/NOT_RUN 计数、FAIL 的具体证据、下一轮要修什么 |
 | 训练启动 / 训练结束 | run 名、pid、epoch 范围、最终碰撞率与产物路径 |
@@ -160,10 +162,36 @@ read issue://<N>                 # 或 gh issue view <N> --json number,title,bod
 
 ## 1. infra 准备(所有这次任务需要的数据)
 
-逐项准备并留下证据,写 `INFRA.md`:
+### 1.0 **先查 `assets/`,禁止重复创建**(第一步,先于本节任何其他动作)
+
+所有 Infra 资产都放在仓库根的 `assets/`(CLAUDE.md §3a)。**本节的第一步永远是读取它**,
+而不是重新计算已经存在的东西:
+
+```bash
+ls -la /home/wlia0047/ar57/wenyu/GeneRec/assets
+cat  /home/wlia0047/ar57/wenyu/GeneRec/assets/manifest.json   # 若存在
+```
+
+判定与动作:
+
+| `assets/manifest.json` 的状态 | 动作 |
+|---|---|
+| 存在,且覆盖本次 issue 需要的全部资产 | **直接读取使用**。逐项核对 `sha256`、`coverage`、`use`(training/evaluation/description)。**禁止重新计算、重新生成、复制或改名**;缺什么就在 `INFRA.md` 里写明"引用 `assets/<name>`(sha256 …)",而不是重建一份 |
+| 存在,但只覆盖一部分 | 已有部分**直接读取**;只对**确实缺失**的项新建,新文件也写进 `assets/`,并在自己的 manifest 里登记 |
+| 不存在,或完全覆盖不到 | 才允许创建,并**必须直接创建到 `/home/wlia0047/ar57/wenyu/GeneRec/assets/`**,不得写在 `results/research/<issue>/` 或任何临时目录里 |
+
+新建时必须同时产出:`assets/manifest.json`(路径、版本、schema、shape、dtype、行数、字节、sha256、输入哈希、
+代码提交、生成命令、覆盖率、训练/评估用途)、`assets/coverage.json`(覆盖率与抽样声明)、`assets/README.md`
+(内容与读取方式),并在 `INFRA.md` 里写明每个文件的 `path:sha256`。
+
+`assets/` 下已存在的二进制**禁止覆盖或手工改写**(CLAUDE.md §17d);需要新版本时写新目录并更新 manifest。
+复用既有资产时**按不可变哈希引用**,不复制、不重复上传。
+
+### 1.1 逐项准备并留下证据,写 `INFRA.md`
 
 | 项 | 检查方式 |
 |---|---|
+| **既有 Infra 资产** | **先查 `assets/`**(见 1.0):需要的资产是否已在 `assets/manifest.json` 中登记;命中就引用其 `path:sha256`,缺失才新建 |
 | 数据 | 需要的 `results/stage0_build_parquet/*.parquet`、`stage1_GeneEmbedding/output/sentence_t5.npy`、`item_sids.json` 是否存在,sha256 是否记录 |
 | 基线/对照 | 对照臂的 SID、recall、stage2_metrics 路径与 sha256 |
 | 解释器 | Stage0/1/3 用 `genrec_env/bin/python3.10`,Stage2 用 `genrec_env_v2/bin/python3.9`(CLAUDE.md §6–§8) |
@@ -172,6 +200,7 @@ read issue://<N>                 # 或 gh issue view <N> --json number,title,bod
 | 依赖 | `sympy`/`sympytorch` 等只在项目解释器里;装完复查 GPU |
 
 `INFRA.md` 每条写:`需求 → 命令 → 输出摘要 → sha256 → PASS/FAIL`。存在 FAIL 就停在本节修到 PASS。
+"资产已存在于 `assets/`"是一条合法且优先的 PASS 路径,前提是哈希核对通过且没有重复创建。
 
 ## 2. 实现(写这次的代码)
 
@@ -348,7 +377,10 @@ gh issue view <N> --json state      # 必须 CLOSED
 1. **所有生产代码是否已经实现?**(应为**是**)—— 不是参考实现、不是骨架、不是打桩。
 2. **所有必要测试是否实际执行?**(应为**是**)—— 有输出与退出码,不是"应该能过"。
 3. **所有规定的训练是否已经完成?**(应为**是**)—— 有 run_id、日志、checkpoint、指标。
-4. **是否仍然存在可执行的未完成任务?**(应为**否**)—— 若为"是",**不得关闭,继续执行**(断点只用来防外部中断)。
+4. **Infra 资产是否都来自 `assets/` 且没有重复创建?**(应为**是**)—— 复用的资产引用了
+   `assets/manifest.json` 里的 `path:sha256`;新建的资产**只创建在 `assets/`** 并登记进 manifest;
+   没有把已有资产重算一份、改名或复制到别处(§1.0)。
+5. **是否仍然存在可执行的未完成任务?**(应为**否**)—— 若为"是",**不得关闭,继续执行**(断点只用来防外部中断)。
 
 四条答案连同证据写进 `VERDICT.md` 的关闭段。
 
@@ -388,8 +420,11 @@ gh issue view <N> --json state      # 必须 CLOSED
 ## 反模式
 
 - 不看 issue 原文,按记忆或按上一个 issue 的判据做。
-- 不读 issue 就默认要训练,白烧一次 3000 epoch 预算;或反过来,以"这是分析型 issue"为借口跳过
-  issue 明确要求的训练。判定必须写进 `RUN_LOG.md` 并引 issue 原文。
+| 不读 issue 就默认要训练,白烧一次 3000 epoch 预算;或反过来,以"这是分析型 issue"为借口跳过
+issue 明确要求的训练。判定必须写进 `RUN_LOG.md` 并引 issue 原文。
+| 不先读 `/home/wlia0047/ar57/wenyu/GeneRec/assets` 就动手造数据,或把已有资产重算一份、改名、
+复制到别处 —— 这既浪费算力也让两个版本对不上。命中 `assets/manifest.json` 就直接引用其
+`path:sha256`;确实缺失的才创建,且只创建到 `assets/`。
 - 检查"看起来没问题"就结束循环;一轮没做完就宣布通过。
 - 训练前跳过 §3,训练后才想起判据。
 - 在 `/tmp` 放脚本或中间数据(§86),跳过 `commit_guard`(§91),不推送就宣称完成。
