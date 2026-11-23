@@ -25,15 +25,21 @@ class RQVAE(nn.Module):
         self.rq = RQLayer(config, distance=distance)
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
 
-    def forward(self, embeddings: torch.Tensor) -> tuple[torch.Tensor, list, int, torch.Tensor]:
+    def forward(self, embeddings: torch.Tensor, return_quantized: bool = False):
         """Return the reconstruction, the per-level loss parts, unused codes, tokens.
 
         The parts are `(commitment, codebook)` pairs, one per residual level; the
         model does not turn them into a scalar. That is `losses/quantization.py`.
+
+        `return_quantized` appends the hard quantised vector `q = e1 + e2 + e3`, which is what
+        issue #239 supervises.  It is the only change to this file: the quantisation itself lives
+        in `model/layers.py`, which stays byte-identical to the frozen baseline.
         """
         encoded = self.encoder(embeddings)
         quantized, quant_parts, unused_codes, tokens = self.rq(encoded)
         reconstructed = self.decoder(quantized)
+        if return_quantized:
+            return reconstructed, quant_parts, int(unused_codes), tokens, quantized
         return reconstructed, quant_parts, int(unused_codes), tokens
 
     @torch.no_grad()
