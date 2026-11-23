@@ -1,0 +1,40 @@
+{
+  "source_bindings_verified": true,
+  "reviews": [
+    {
+      "agent": "FinalGradient251",
+      "role": "reviewer",
+      "findings": [],
+      "overall_correctness": "correct",
+      "confidence": 0.94,
+      "conclusion": "Chunk-bounded checkpointing removes nested replay and preserves hard-forward/soft-cost gradients; final GPU execution pending at review time.",
+      "source_sha256": {
+        "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py": "09d59072ce77e869b505423dbd00e9c529bd97f1cb8f1a1d6691c71f9fdc8064",
+        "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure_gate.py": "74e307fb00f72cc847c2ed66f3bcfa329e55243960537a6fec89ec4ccdf50802",
+        "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/attention.py": "a227155453e1d7c79cb9cf5c59a8a5e3f7defa88895d784ae499a34d25d42ac6",
+        "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/mechanism.py": "337765e1a081f5778db1f5588cea5a697073e4f28ed21ace1cc8efd1fc224b19",
+        "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/selection.py": "aaf40e7d14eced220dae00f6f2aa14cb33f5d911c41fb94b8d868dcecf32d524",
+        "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/curvature.py": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+        "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/validation_entry.py": "fb8362c3e337fd1cb84fd3739e67ff3ea6f6e59798a5970210f4767df4fa55e8",
+        "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/train_rqvae.py": "6efe2353a64bc5ed1595253c94214ba7c7847415e658bfa376f11be0fd479865",
+        "tools/research/stage2/tests/test_gnn_activation_memory.py": "89e3925b1e9bdc0a28746bfb664fc0c346e2ef422d5b77a3e9b96d71b6231972"
+      }
+    },
+    {
+      "agent": "FinalAdmission251",
+      "role": "reviewer",
+      "findings": [],
+      "overall_correctness": "incorrect",
+      "confidence": 0.98,
+      "conclusion": "Loader detection is fixed and code has no identified defect; acceptance remains blocked by frozen graphs differing from both canonical graphs. Owner contract change is required; checker relaxation is not permitted.",
+      "source_sha256": {
+        "tools/research/stage2/graph_contract.py": "f849b585c7fcaddb8a2c9a5e125865d04996928ff057976db92874be1aafb907",
+        "tools/research/stage2/tests/test_external_graph_reader.py": "78b0ae7b7d9b9e627777bc6f594e9f04c4cc472d2a6dd482a00af0d904439098",
+        "tools/issue251/audit_graphs.py": "ed3563151761b341f64a87b539074a3422b73ac08e832e32b36635416e107905",
+        "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/provenance.py": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+        "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_provenance.py": "f66ea883e455f20e2b10cbd120a68d878ed14d7a8468a5fc8f42ff5c0c3d29d7",
+        "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_execution.py": "3342ab2ef7b711570bf7230b7b935c4f513dc6d1b2665b9425671492971bc025"
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "scope": "CPU-only first32 actual global items0..31; exact frozen-feature cached production collation path, not a full-catalogue extrapolation",
+  "gnn_computation_included": false,
+  "one_hop": {"seconds": 0.0006558308377861977, "nodes": 699, "edges": 2326, "array_bytes": 106679},
+  "two_hop": {"seconds": 2.897113404236734, "nodes": 52865, "edges": 755142, "array_bytes": 23070685},
+  "process_peak_rss_kib": 4735776,
+  "diagnosis": "Python per-edge scans plus repeated reverse-edge membership scans; induced node sets and directed edges need not change",
+  "change": "Slice the existing forward CSR and map sorted local COO indices; no new graph or static asset"
+}

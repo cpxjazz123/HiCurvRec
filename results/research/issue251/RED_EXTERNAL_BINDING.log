@@ -1,0 +1,14 @@
+test_actual_launcher_changes_invalidate_source_evidence (test_execution.ExecutionTests) ... FAIL
+
+======================================================================
+FAIL: test_actual_launcher_changes_invalidate_source_evidence (test_execution.ExecutionTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_execution.py", line 36, in test_actual_launcher_changes_invalidate_source_evidence
+    self.assertNotEqual(after_launcher,validation_entry.source_binding(),
+AssertionError: {'candidate/validation_entry.py': 'df55b486f195175741eb50e268428f769ac119cf45cd0bc251e8e06741a3a6d3', 'assets/manifest.json': 'ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149', 'tools/issue251/launch_validation.py': '32dd9a18ff77cd5a69d62a0420cdec7c2687f729282842042ebc26dc80aedbfe', 'tools/research/stage2/launcher.py': 'ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149'} == {'candidate/validation_entry.py': 'df55b486f195175741eb50e268428f769ac119cf45cd0bc251e8e06741a3a6d3', 'assets/manifest.json': 'ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149', 'tools/issue251/launch_validation.py': '32dd9a18ff77cd5a69d62a0420cdec7c2687f729282842042ebc26dc80aedbfe', 'tools/research/stage2/launcher.py': 'ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149'} : changing an executed external source must invalidate checkpoint evidence
+
+----------------------------------------------------------------------
+Ran 1 test in 1.257s
+
+FAILED (failures=1)

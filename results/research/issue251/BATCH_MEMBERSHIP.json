@@ -1,0 +1,13 @@
+{
+  "command": "genrec_env_v2/bin/python3.9: pandas.read_parquet(train.parquet, columns=['target']); numpy.setdiff1d(arange(1024), unique(target))",
+  "exit_code": 0,
+  "training_path": "results/stage0_build_parquet/train.parquet",
+  "training_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+  "training_target_items": 24556,
+  "controlled_reconstruction_item_id_range_inclusive": [0, 1023],
+  "items_per_rank": 256,
+  "calibration_item_id_range_inclusive": [0, 255],
+  "controlled_reconstruction_ids_outside_training": [],
+  "calibration_ids_outside_training": [],
+  "interpretation": "The fixed controlled batches are genuine members of the trainer's reconstruction dataset, not held-out-only items or synthetic tensors."
+}

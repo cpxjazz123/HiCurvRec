@@ -1,0 +1,55 @@
+test_broken_source_fails_closed (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... FAIL
+test_comments_and_strings_do_not_create_a_graph_reader (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... ok
+test_module_import_alias_cannot_hide_graph_use (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... FAIL
+test_reader_import_alias_cannot_hide_graph_use (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... FAIL
+test_shared_ego_reader_is_foreign_not_inapplicable (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... FAIL
+test_unrelated_semantic_model_remains_inapplicable (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... ok
+
+======================================================================
+FAIL: test_broken_source_fails_closed (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_external_graph_reader.py", line 39, in test_broken_source_fails_closed
+    self.assertEqual(result['status'],'FAIL')
+AssertionError: 'NOT_APPLICABLE' != 'FAIL'
+- NOT_APPLICABLE
++ FAIL
+
+
+======================================================================
+FAIL: test_module_import_alias_cannot_hide_graph_use (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_external_graph_reader.py", line 28, in test_module_import_alias_cannot_hide_graph_use
+    self.assertEqual(result['status'],'FAIL')
+AssertionError: 'NOT_APPLICABLE' != 'FAIL'
+- NOT_APPLICABLE
++ FAIL
+
+
+======================================================================
+FAIL: test_reader_import_alias_cannot_hide_graph_use (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_external_graph_reader.py", line 23, in test_reader_import_alias_cannot_hide_graph_use
+    self.assertEqual(result['status'],'FAIL')
+AssertionError: 'NOT_APPLICABLE' != 'FAIL'
+- NOT_APPLICABLE
++ FAIL
+
+
+======================================================================
+FAIL: test_shared_ego_reader_is_foreign_not_inapplicable (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_external_graph_reader.py", line 18, in test_shared_ego_reader_is_foreign_not_inapplicable
+    self.assertEqual(result['status'],'FAIL')
+AssertionError: 'NOT_APPLICABLE' != 'FAIL'
+- NOT_APPLICABLE
++ FAIL
+
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.056s
+
+FAILED (failures=4)

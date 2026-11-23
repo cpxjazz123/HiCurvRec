@@ -1,0 +1,68 @@
+=== v5 differential tests
+./fs04/ar57/wenyu/GeneRec/tools/graph_infra/tests/test_v5_diff_sectional.py:232: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  self.assertAlmostEqual(float(chunked_value), float(full_value), places=12)
+................
+----------------------------------------------------------------------
+Ran 17 tests in 3.104s
+
+OK
+--- v5 differential tests: OK
+=== v5 infrastructure
+........................
+----------------------------------------------------------------------
+Ran 24 tests in 13.254s
+
+OK
+--- v5 infrastructure: OK
+=== v5 held-out
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 1.873s
+
+OK
+--- v5 held-out: OK
+=== v5 mutations
+.
+----------------------------------------------------------------------
+Ran 1 test in 21.174s
+
+OK
+--- v5 mutations: OK
+=== v4 regressions
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/networkx/utils/backends.py:135: RuntimeWarning: networkx backend defined more than once: nx-loopback
+  backends.update(_get_backends("networkx.backends"))
+....................
+----------------------------------------------------------------------
+Ran 20 tests in 12.115s
+
+OK
+--- v4 regressions: OK
+=== v3 regressions
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/networkx/utils/backends.py:135: RuntimeWarning: networkx backend defined more than once: nx-loopback
+  backends.update(_get_backends("networkx.backends"))
+........
+----------------------------------------------------------------------
+Ran 8 tests in 0.091s
+
+OK
+--- v3 regressions: OK
+=== asset manifest
+{
+  "reused": {
+    "verified_assets": 68,
+    "manifest_version": "v6-cross-attention-251"
+  },
+  "registered": {
+    "assets": 68,
+    "version": "v6-cross-attention-251"
+  },
+  "seconds": 0.38503188267350197
+}
+--- asset manifest: OK
+=== module checks
+/fs04/ar57/wenyu/GeneRec/tools/graph_infra/module_checks_v5.py:102: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  abs(float(chunked) - float(value.detach())) < 1e-12,
+{"pass": 24, "fail": 0, "na": 0}
+--- module checks: OK

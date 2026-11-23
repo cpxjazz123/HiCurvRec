@@ -1,0 +1,23 @@
+test_cycle_self_loop_and_nonconsecutive_global_ids (tools.graph_infra.tests.test_induced_edges.InducedEdgeTests) ... ERROR
+test_local_order_direction_and_outside_boundary (tools.graph_infra.tests.test_induced_edges.InducedEdgeTests) ... ERROR
+
+======================================================================
+ERROR: test_cycle_self_loop_and_nonconsecutive_global_ids (tools.graph_infra.tests.test_induced_edges.InducedEdgeTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/graph_infra/tests/test_induced_edges.py", line 21, in test_cycle_self_loop_and_nonconsecutive_global_ids
+    edges=ego_gnn._induced_edges(graph,np.array([1,4,6],dtype=np.int64))
+AttributeError: module 'tools.graph_infra.ego_gnn' has no attribute '_induced_edges'
+
+======================================================================
+ERROR: test_local_order_direction_and_outside_boundary (tools.graph_infra.tests.test_induced_edges.InducedEdgeTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/graph_infra/tests/test_induced_edges.py", line 13, in test_local_order_direction_and_outside_boundary
+    edges=ego_gnn._induced_edges(graph,np.array([2,0,1],dtype=np.int64))
+AttributeError: module 'tools.graph_infra.ego_gnn' has no attribute '_induced_edges'
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.100s
+
+FAILED (errors=2)

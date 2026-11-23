@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/usr/lib64/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib64/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue251/collect_evidence.py", line 103, in <module>
+    if __name__=='__main__':main()
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue251/collect_evidence.py", line 20, in main
+    reports=[json.loads((RUNTIME/('rank_%d.json'%rank)).read_text()) for rank in range(4)]
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue251/collect_evidence.py", line 20, in <listcomp>
+    reports=[json.loads((RUNTIME/('rank_%d.json'%rank)).read_text()) for rank in range(4)]
+  File "/usr/lib64/python3.9/pathlib.py", line 1194, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+  File "/usr/lib64/python3.9/pathlib.py", line 1180, in open
+    return io.open(self, mode, buffering, encoding, errors, newline,
+  File "/usr/lib64/python3.9/pathlib.py", line 1038, in _opener
+    return self._accessor.open(self, flags, mode)
+FileNotFoundError: [Errno 2] No such file or directory: '/fs04/ar57/wenyu/GeneRec/results/research/issue251/runtime/rank_0.json'

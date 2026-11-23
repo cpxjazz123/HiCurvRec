@@ -1,0 +1,9 @@
+{
+  "affected_children_terminated": [1704989, 1704990],
+  "confirmed_parent_pid": 4184319,
+  "confirmed_parent_program": "omp",
+  "stage2_actual_tool_call": {"tool": "stage2_status", "source_dir": "TIGER_gnn_attention_sectional_rq", "status": "idle", "completion_evidence": null, "latest_train": null, "train_end": null},
+  "controlled_validation_gpu_processes": [{"pid": 1970855, "used_memory_mib": 13968}, {"pid": 1970856, "used_memory_mib": 13968}, {"pid": 1970857, "used_memory_mib": 13968}, {"pid": 1970858, "used_memory_mib": 13968}],
+  "interpretation": "Reloaded Stage2 read-only endpoint works. Formal Stage2 state is idle; four separate controlled-validation ranks are active. Live memory is not peak memory or completion evidence.",
+  "genrec_actual_verification_call": "PENDING after controlled four-rank proof"
+}

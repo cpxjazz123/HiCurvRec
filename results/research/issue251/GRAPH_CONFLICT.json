@@ -1,0 +1,13 @@
+{
+  "training_sha256_both_graph_families": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+  "frozen_shared_forward": {"path": "assets/train/visible_forward.npz", "sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029", "edges": 261132},
+  "canonical_directed": {"path": "results/research/behavior_graph_directed/graph.npz", "sha256": "ef97a2bdc555259d402065026b00cf62bc1e91c3bc58a66da4d6f8f8df407fdd", "edges": 323633},
+  "directed_shared_only": 0,
+  "directed_canonical_only": 62501,
+  "frozen_shared_undirected_arcs": 510464,
+  "canonical_undirected_arcs": 630782,
+  "undirected_shared_only_arcs": 0,
+  "undirected_canonical_only_arcs": 120318,
+  "same_topology": false,
+  "interpretation": "The frozen #248/#249 assets required by #251 are a strict subgraph of both canonical graph contracts. Switching graph/ego/curvature targets changes the frozen issue specification; silently allowing a second graph violates repository §89b. This is a contract conflict, not a runtime-duration or unfinished-work blocker. Reachable implementation/entry repairs still continue."
+}

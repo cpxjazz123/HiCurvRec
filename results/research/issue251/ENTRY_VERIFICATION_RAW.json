@@ -1,0 +1,22 @@
+{
+  "text": "MCP failure\nserver: genrec\ntool: verification_check\ntransport: stdio\nstage: receive\nfailure: timeout\nretryable: no\nmessage: Request timeout after 300000ms\nnext: Check server health or increase the MCP timeout; the request outcome is unknown.",
+  "details": {
+    "xdev": {
+      "tool": "mcp__genrec_verification_check",
+      "mode": "execute",
+      "args": {
+        "source_dir": "TIGER_gnn_attention_sectional_rq",
+        "verification_id": "machine:issue251"
+      },
+      "tier": "write",
+      "inner": {
+        "serverName": "genrec",
+        "mcpToolName": "verification_check",
+        "isError": true,
+        "provider": "native",
+        "providerName": "OMP"
+      }
+    }
+  },
+  "hasError": true
+}

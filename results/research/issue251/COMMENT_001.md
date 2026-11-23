@@ -1,0 +1,1 @@
+C1：已读取完整原文、冻结数学契约及C1–C9验收清单，results/research/issue251/CONTRACT.md、ACCEPTANCE.json。共享67项资产哈希全部通过，复用既有1/2-hop、节点特征与全量曲率。候选从冻结TIGER新复制为TIGER_gnn_attention_sectional_rq，不继承#250训练树。明确两种独立诱导ego token，各自GNN/readout；注意力先按token轴、几何权重再按专家轴归一，null槽单独声明。不启动正式训练。

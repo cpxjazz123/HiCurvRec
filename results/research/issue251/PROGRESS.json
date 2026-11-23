@@ -1,13 +1,13 @@
 {
   "issue": 251,
-  "commit": "1f05379ded338b3d16907c55f1e97b3bef1dc230",
-  "commit_role": "HEAD before selective implementation commit; final execution is bound by per-file hashes",
+  "commit": "860c9ffcdf94dcc0a83d589dc134ff7e09c9c70e",
+  "commit_role": "MCP cache repair snapshot; model production remains cf0fd50c, later evidence-only commits do not alter executed source",
   "state": "WORKING",
   "done": ["C1", "C3", "C4"],
   "not_run": ["C2 complete catalogue coverage", "C5 full target backward", "C6 actual microstep", "C7 real entry and fourGPU", "C8 full independent remeasurement", "C9 final reconciliation"],
   "failed": [],
-  "running": [{"name": "controlled_four_gpu_fixed_port", "job": "bg_55", "entry": "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/validation_entry.py", "log": "results/research/issue251/runtime/logs/controlled_validation.log"}],
-  "next_commands": ["python3.9 -m tools.issue251.collect_evidence", "verification_check(source_dir=TIGER_gnn_attention_sectional_rq, verification_id=machine:issue251)", "python3.9 -m tools.issue251.run_evaluation"],
-  "blocked_by": null,
+  "running": [{"name": "final_source_entry_revalidation", "pid":2456764, "tool": "verification_check", "transport":"timed_out_at_300s_child_continues", "source_dir": "TIGER_gnn_attention_sectional_rq", "verification_id": "machine:issue251"}, {"name":"final_source_four_rank", "job":"bg_76", "entry":"tools.issue251.launch_validation", "performance_comparability":"diagnostic only; concurrent with entry smoke"}],
+  "next_commands": ["/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue251.collect_evidence", "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue251.run_evaluation"],
+  "blocked_by": "Canonical graph contract differs from frozen issue248/249 assets; finish all reachable verification before BLOCKED reconciliation",
   "formal_training": false
 }

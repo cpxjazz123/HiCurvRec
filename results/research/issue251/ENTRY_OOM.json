@@ -1,0 +1,9 @@
+{
+  "tool": "verification_check",
+  "arguments": {"source_dir": "TIGER_gnn_attention_sectional_rq", "verification_id": "machine:issue251"},
+  "passed": false,
+  "entry": {"status": "FAIL", "actual_error": "torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 96.00 MiB. GPU 0 has a total capacity of 44.39 GiB of which 73.31 MiB is free. Including non-PyTorch memory, this process has 44.31 GiB memory in use. Of the allocated memory 43.39 GiB is allocated by PyTorch, and 378.04 MiB is reserved by PyTorch but unallocated.", "site": "model/structure.py:28 outgoing.index_add_(0, source, x[target])"},
+  "behavior_graph": {"status": "NOT_APPLICABLE", "detail": "the tree does not use a behaviour graph"},
+  "interpretation": "The true entry failed despite the controlled four-rank proof passing. Reconstruction-batch GNN activations need bounded checkpointing without changing frozen batch size. The graph detector also missed the external EgoStore import; NOT_APPLICABLE is not taken as proof of graph isolation.",
+  "source_commit": "358db1804694afcf009acbdffc7bda705248747d"
+}

@@ -1,0 +1,11 @@
+{
+  "job": "bg_76",
+  "notification": "finished (exit 0), no output",
+  "observed_actual_state": "still running; proc device confirmed running, controller PID2650570 then started torchrun PID2660533 and workers2660570-2660573",
+  "collector_exit": 1,
+  "collector_error": "FileNotFoundError: runtime/rank_0.json",
+  "accepted_evidence": false,
+  "model_failure": false,
+  "action": "Reported tool notification inconsistency to xd://report_issue; stop premature metric reader, await the real controller completion and then collect once.",
+  "formal_training": false
+}

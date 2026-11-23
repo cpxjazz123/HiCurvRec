@@ -1,0 +1,11 @@
+{
+  "source_commit": "cf0fd50c717983c13e3088384c3bc86b7375a452",
+  "mcp_receive_timeout_ms": 300000,
+  "mcp_request_result": "UNKNOWN_NOT_RETRIED",
+  "server_pid": 2449633,
+  "actual_entry_pid": 2456764,
+  "mode": "framework one-epoch conformance, world1, frozen global batch4096",
+  "observed_train_start": true,
+  "observed_curvature_calibration": true,
+  "interpretation": "The native MCP transport deadline expired while the already-launched sanctioned entry check remained alive. Do not launch another check. Wait for this exact process and retrieve the server's source/check-bound result cache through the same public tool. This is not an implementation verdict or permission to bypass admission."
+}
