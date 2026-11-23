@@ -16,7 +16,7 @@
 2. Independent hand-computed token/attention references and geometry identities precede integration. Red logs retain missing-production, NaN-padding, invalid-target-ID and manifest-mutation failures.
 3. `UNIT_FINAL.log`:60 tests PASS; `REGRESSION_249.log`:79 tests and24 module checks PASS. Nine deliberate mutations caught by specified numerical/structural/routing assertions.
 4. Canonical reference extraction retained the same assertions: `REFERENCE_FINAL.log`,13 tests PASS. No test was weakened to accept a production error.
-5. Controlled four-rank proof on source358db180 completed with all28,391,948 targets and exact checkpoint/SID reload. It is archived under `history_358db180/` as NOT_ACCEPTED for final model sourcecf0fd50c. Final-source runtime evidence is still being executed; no earlier measurement is substituted.
+5. Controlled four-rank proof on source358db180 completed with all28,391,948 targets and exact checkpoint/SID reload, archived under `history_358db180/` as NOT_ACCEPTED for final source. Final sourcecf0fd50c was separately rerun successfully as `issue251_validation_2660533`; no earlier measurement is substituted.
 
 ## Commands
 
@@ -31,7 +31,7 @@ No formal `stage2_start` or `stage3_start` is authorized by this issue.
 
 Model snapshot: `cf0fd50c717983c13e3088384c3bc86b7375a452`.
 MCP cache repair: `860c9ffcdf94dcc0a83d589dc134ff7e09c9c70e`.
-Runtime/entry/full-data final measurements remain unfinished; this is not a completion claim. Selective commits exclude issue250 and unrelated user/history work.
+Final runtime/entry/full-data measurements and independent report reconciliation are complete and pushed in `a529589d71bb936cba244cc62d9f5a6fbab51362`. Canonical graph admission remains FAIL; see VERDICT.md. Selective commits exclude issue250 and unrelated user/history work.
 
 The shared worktree contained792 changed paths/249,039 changed lines, dominated
 by pre-existing research/history artifacts (including a147,524-line SID table).
@@ -75,3 +75,34 @@ canonical directed/undirected graphs. `GRAPH_AUDIT.json` records62501 directed
 edges and120318 undirected arcs missing from frozen assets, with zero extra
 shared edges. Same training-input hash does not imply same graph contract.
 No asset rebuild, graph whitelist or gate bypass is authorized.
+
+## Final actual results and closure reconciliation
+
+- Final four-rank validation exited0: torchrun2660533/workers2660570–2660573,
+  static50202, seed42, all24587 items/two tokens, all28391948 target rows and
+  complete component references. Eight parameter groups updated; actual cost-cut
+  negative removed gate/GNN curvature gradients. Raw ranks, checkpoint/SID/attention
+  and MODULE_CHECKS/RUNTIME_SUMMARY bind final model source hashes.
+- Native MCP entry2749016 finished1 epoch/global4096 in1592.004seconds,
+  independently recomputed collision0.047464107048440285. Public cache retrieval
+  took0.179seconds and matched persisted cache byte identity/checks; entry PASS,
+  behavior_graph FAIL. Source digest6f48f1141304376a8cd4b7c19cf3a928243fc933b637b578786ecc8dcdb5444f,
+  checks fingerprint4ce8f9720066. No third entry was launched to fetch the verdict.
+- Final independent evaluator remeasured full hard-q/z curvature, both decoder
+  reconstructions and10 strict banks in67.10seconds, exit0. The pre-parity
+  evaluator outputs remain explicitly superseded. Two added hand examples catch
+  using q in place of z and wrong reconstruction errors;22 evaluator checks PASS.
+- Report recheck2 known-answer tests PASS; actual stdlib reaggregation from
+  per-item counts/errors and raw SID/logs PASS. All report headlines/bank rows
+  agree within1e-9; max curvature reduction difference about1.2e-14.
+- Current-scope guard before runtime delivery used850 paths/500000 lines because
+  the shared workspace already held roughly248000 changed lines, including
+  unrelated historical/user artifacts; actual result760 paths/256558 lines,
+  none>=2MiB. Only issue251 tools/evidence were selected. Closing documentation
+  uses the tighter300000-line bound. No user's unrelated work was staged,
+  removed or committed.
+- CHECK_4:8 PASS,1 BLOCKED,0 NOT_RUN. The graph FAIL is not implementation work
+  left undone: frozen graph/ego/full targets conflict with canonical graph
+  admission, independently audited. Owner must choose an explicit exception or
+  a new frozen asset contract. No formal Stage2/Stage3, TIGER retraining, tuning,
+  ablation training or unsupported benefit claim.
