@@ -4,8 +4,8 @@
 > 因此不重排、不重新编号。已失去代码支撑的条款不进正文，统一列在 **附录 A**,并注明废止原因与可追溯的
 > git 提交。正文描述的是 **2026-11-22** 的代码现状。
 >
-> 目录:§0 现状 · §1 仓库边界 · §2 解释器 · §3 数据与产物 · §4 训练预算与机制范围 · §5 准入与验证 ·
-> §6 R2 归档 · §7 Git 与交付 · §8 MCP 运维 · §9 GPU 授权 · §10 指标与配对 · §11 工程不变量 ·
+> 目录:§0 现状 · §1 仓库边界 · §2 解释器 · §3 数据与产物 · §3a 基础设施资产位置 · §4 训练预算与机制范围 ·
+> §5 准入与验证 · §6 R2 归档 · §7 Git 与交付 · §8 MCP 运维 · §9 GPU 授权 · §10 指标与配对 · §11 工程不变量 ·
 > §12 临时文件 · §13 提交预检 · 附录 A 已废止条款
 
 ## 0. 现状一览(2026-11-22)
@@ -18,6 +18,7 @@
 | 数据 | `results/stage0_build_parquet/`(items 24,587;train 396,958)+ `stage1_GeneEmbedding/output/sentence_t5.npy` |
 | 活跃臂 | `stage2_RQ-VAE/TIGER_graphlet_wide_l1_rq`(3000 epoch 完成,collision 0.0521),Stage3 尚未启动 |
 | 冻结基线 | `stage2_RQ-VAE/baseline/TIGER_RQ-VAE`(只读,新臂唯一复制来源) |
+| **Infra 资产** | **`assets/`**(仓库根):全量截面曲率 `v4-full-sectional-248` = 28,391,948 行三元组表(13 shard)+ 逐商品曲率分布 + 逐节点精确距离直方图 + 节点矩 + 查询索引 + `manifest.json`(62 项)+ `coverage.json`。详见 §3a |
 
 ## 1. 仓库边界
 
@@ -46,6 +47,33 @@
 15. #117 的研究状态与证据仅写入 `results/research/issue117/`,不得污染正式训练目录。
 16. 构建商品 SID 的行为监督只允许使用训练划分中合法可见的交互,禁止读取验证或测试阶段的未来行为。
 17. 同一商品在不同用户、批次或推理请求中必须使用相同的全局 Semantic ID。
+
+## 3a. 基础设施资产位置(2026-11-24 owner 指令)
+
+17a. **所有 Infra(基础设施)资产统一存放在仓库根的 `assets/`**,不再按 issue 号分目录。当前 `assets/` 的内容:
+
+| 文件/目录 | 内容 |
+|---|---|
+| `assets/shards/shard_000..012.npz` | **全量截面曲率三元组表**:28,391,948 行(中心 m、邻居对 b<c、`g(b,c)²`、曲率、有效参考数、有效掩码、无效原因、有向 3 节点结构类) |
+| `assets/item_summary.npz` | 逐商品曲率分布:三元组总数/有效无效数/正零负计数与比例/均值/方差/极值/分位数/缺失原因 |
+| `assets/distance_histogram.npz` | 逐节点**精确距离直方图**(无损中间量;`S1`/`S2`/偏心距/分量大小全部由它重算) |
+| `assets/node_moments.npz` | 逐节点 `S1`/`S2`/偏心距/分量 id 与大小/入出互惠度 |
+| `assets/index.npz` | 查询索引:item → (shard, start, count)、shard 名、总行数、逐结构类计数、逐中心期望行数 |
+| `assets/manifest.json` | **唯一索引**:62 项,每项含路径、用途(`training`/`evaluation`/`description`)、schema、字节、sha256、来源、生成命令;另含输入哈希、源码哈希、commit、耗时与存储成本 |
+| `assets/coverage.json` | 覆盖率、采样声明(4 节点 graphlet 仍为抽样)、shard 清单、运行时与存储成本 |
+| `assets/train/` | 可见有向图 forward/reverse/undirected + item-id 映射 |
+| `assets/README.md` | 内容说明与读取示例 |
+
+17b. `assets/` 与 `results/research/issue248/assets/` 的文件**逐字节一致**(同一 sha256);后者是 canonical 构建位置,
+`assets/` 是对外读取位置,manifest 用 `path` 指向 `assets/`、`copy_of` 指向 canonical、`canonical_root`/`copy_root` 标明两者。
+17c. 读取入口:`tools/graph_infra/full_assets.py::FullAssets`(按商品 / 按三元组 / 按结构类查询)与
+`tools/graph_infra/interfaces_v4.py`(`TrainingView` 拒读 `evaluation` 资产,`EvaluationView` 只服务 strict bank)。
+17d. **禁止重建、覆盖或手工改写 `assets/` 中的二进制**;需要新版本时写入新目录并更新 manifest。禁止把资产
+只放在临时目录或机器缓存(§86)。
+17e. `assets/` 下的二进制(`.npz`/`.npy`)按 §92 不入库,只提交 `README.md`、`manifest.json`、`coverage.json`;
+资产实体保存在共享卷上,`assets/manifest.json` 记录每个文件的 sha256 供核验。
+17f. 评估资产(strict bank、held-out support、用户划分)留在冻结的 `results/research/infra246/assets/` 中并按哈希引用,
+**不复制进 `assets/`**,以保持训练侧与评估侧隔离。
 
 ## 4. 训练预算与机制范围
 
