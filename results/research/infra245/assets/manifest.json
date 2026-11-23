@@ -1,0 +1,352 @@
+{
+  "issue": 245,
+  "notes": "All assets are model-independent. Rebuild with `python3 tools/graph_infra/build_assets.py`; verify with `python3 tools/graph_infra/verify_assets.py`.",
+  "assets": [
+    {
+      "name": "graph_forward_full",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/graph/forward_full.npz",
+      "schema": "npz.csr",
+      "purpose": "directed transitions, weight = count",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "2dfaea73666c5a6d6a1c426fe7321277547b7c4f641abc1bd7a66dfa3e12bcd3",
+      "bytes": 796650,
+      "dependencies": [
+        "results/stage0_build_parquet/train.parquet"
+      ]
+    },
+    {
+      "name": "graph_reverse_full",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/graph/reverse_full.npz",
+      "schema": "npz.csr",
+      "purpose": "in-edges of the same graph",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "b395e8f68d312059a6bd2441192d1667cb5763d90bd9857ad335fa275c0530d5",
+      "bytes": 797048,
+      "dependencies": [
+        "results/stage0_build_parquet/train.parquet"
+      ]
+    },
+    {
+      "name": "graph_undirected_full",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/graph/undirected_full.npz",
+      "schema": "npz.csr",
+      "purpose": "simple undirected projection",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "7e3507748beb8f462ff27320ea71ada1f6917cd79b52fbc141579c467691afad",
+      "bytes": 1447107,
+      "dependencies": [
+        "results/stage0_build_parquet/train.parquet"
+      ]
+    },
+    {
+      "name": "graph_visible_forward",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/graph/visible_forward.npz",
+      "schema": "npz.csr",
+      "purpose": "visible graph (90% users)",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "20173fa40833b1d46d35e5e2811de82a184c89ff21787b1ea08137ddba9e26ba",
+      "bytes": 722717,
+      "dependencies": [
+        "results/stage0_build_parquet/train.parquet"
+      ]
+    },
+    {
+      "name": "graph_visible_undirected",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/graph/visible_undirected.npz",
+      "schema": "npz.csr",
+      "purpose": "undirected visible projection",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "0b9d58aea6db422170786e2dc0070813f9a06375b80242c1cc3c6745a2b2ed97",
+      "bytes": 1314499,
+      "dependencies": [
+        "results/stage0_build_parquet/train.parquet"
+      ]
+    },
+    {
+      "name": "graph_eval_forward",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/graph/eval_forward.npz",
+      "schema": "npz.csr",
+      "purpose": "held-out users' transitions",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "100273ad695d439cf7153e84d1972866b81b8d0b0d7cf876d7051e2cf9987fc6",
+      "bytes": 103932,
+      "dependencies": [
+        "results/stage0_build_parquet/train.parquet"
+      ]
+    },
+    {
+      "name": "graph_stats",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/graph/stats.json",
+      "schema": "json",
+      "purpose": "counts and degree statistics",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "4331a6175393ace35c2e32991672fd67f0cf3fceb60e129c8aab061e0f971718",
+      "bytes": 938,
+      "dependencies": [
+        "results/stage0_build_parquet/train.parquet"
+      ]
+    },
+    {
+      "name": "ego_one_hop",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/ego/ego_one_hop.npz",
+      "schema": "ego.offset.v1",
+      "purpose": "deterministic 1-hop induced ego subgraphs, cap 32",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "d80af8351c30a22e4f5867496e0a6476ae75a2ceb36a2650d022aca054846aac",
+      "bytes": 1791889,
+      "dependencies": [
+        "graph_forward_full"
+      ],
+      "coverage": 1.0,
+      "cap": 32,
+      "empty_fraction": 0.0012608288933176068
+    },
+    {
+      "name": "ego_two_hop",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/ego/ego_two_hop.npz",
+      "schema": "ego.offset.v1",
+      "purpose": "deterministic 2-hop induced ego subgraphs, cap 32",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "82402514610410a69a7fa695b7d4a190e91ce25d0a5891933e63b4407155158c",
+      "bytes": 5395894,
+      "dependencies": [
+        "graph_forward_full"
+      ],
+      "coverage": 1.0,
+      "cap": 32,
+      "empty_fraction": 0.0012608288933176068
+    },
+    {
+      "name": "bank_direct",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/pairs/bank_direct.npy",
+      "schema": "pairs.int64.Nx2",
+      "purpose": "direct candidate pairs on the visible graph, mirror-held-out pairs removed",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "e7cc08458c4c4527d5b596e331cd4ae47d3ce6724fadefede9358eee1bd95087",
+      "bytes": 192128,
+      "dependencies": [
+        "graph_visible_forward"
+      ],
+      "pairs": 12000,
+      "dropped_by_held_out_blocking": 104
+    },
+    {
+      "name": "bank_shared_out",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/pairs/bank_shared_out.npy",
+      "schema": "pairs.int64.Nx2",
+      "purpose": "shared_out candidate pairs on the visible graph, mirror-held-out pairs removed",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "f292b4b80228930e07df3fdf1279fc0a1eca176fd4ac8dd2d0af850e3bdd5d2a",
+      "bytes": 192128,
+      "dependencies": [
+        "graph_visible_forward"
+      ],
+      "pairs": 12000,
+      "dropped_by_held_out_blocking": 72
+    },
+    {
+      "name": "bank_shared_in",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/pairs/bank_shared_in.npy",
+      "schema": "pairs.int64.Nx2",
+      "purpose": "shared_in candidate pairs on the visible graph, mirror-held-out pairs removed",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "93ce3cac50c7c0cb08bf285c07b6c9f0d409fc7f07c8bcd5ec0a5f6e1b45db37",
+      "bytes": 192128,
+      "dependencies": [
+        "graph_visible_forward"
+      ],
+      "pairs": 12000,
+      "dropped_by_held_out_blocking": 73
+    },
+    {
+      "name": "bank_two_hop",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/pairs/bank_two_hop.npy",
+      "schema": "pairs.int64.Nx2",
+      "purpose": "two_hop candidate pairs on the visible graph, mirror-held-out pairs removed",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "abcbc8d83411274ffde4f2c944dfe62cc653cb3468186db68901926c48eb07d9",
+      "bytes": 192128,
+      "dependencies": [
+        "graph_visible_forward"
+      ],
+      "pairs": 12000,
+      "dropped_by_held_out_blocking": 25
+    },
+    {
+      "name": "bank_degree_matched",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/pairs/bank_degree_matched.npy",
+      "schema": "pairs.int64.Nx2",
+      "purpose": "degree_matched candidate pairs on the visible graph, mirror-held-out pairs removed",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "8ec6eb5b27a2ddca4feb90f3a8de0535a6f993e398cce3e760f5f105c03385de",
+      "bytes": 192128,
+      "dependencies": [
+        "graph_visible_forward"
+      ],
+      "pairs": 12000,
+      "dropped_by_held_out_blocking": 7
+    },
+    {
+      "name": "pair_types",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/pairs/types.json",
+      "schema": "json",
+      "purpose": "per-group pair counts, duplicates and self pairs",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "e157fe195d20e75231e173c3a5b227505cadccf91c108f0e3eb9e814259d05af",
+      "bytes": 649,
+      "dependencies": [
+        "bank_*"
+      ]
+    },
+    {
+      "name": "distance_visible_root_cache",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/distance/bfs_visible_root_cache.npz",
+      "schema": "npz.bfs.v1",
+      "purpose": "unweighted visible-graph distances from fixed reference roots",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "e9c7fb062ee410c742c43f1cc5f3d6cdc03a10868b4a3f49d1459844d246e060",
+      "bytes": 14386522,
+      "dependencies": [
+        "graph_visible_undirected"
+      ],
+      "roots": 2000,
+      "unreachable_fraction": 0.004852971082279253
+    },
+    {
+      "name": "curvature_proxy_236",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue236/node_curvature_exact_geodesic.csv",
+      "schema": "csv.node_curvature.v1",
+      "purpose": "per-item curvature proxy from #236",
+      "command": "produced by issue #236; reused here without recomputation",
+      "sha256": "da2697a4c3a3c1b20b7e4b0fec2af315c39ffe261736b7ea2defc1b1afaa30a1",
+      "bytes": 1283475,
+      "dependencies": [
+        "results/research/behavior_graph/graph.npz"
+      ],
+      "caliber": "FULL train undirected graph (315,391 edges), not the visible-only split; undirected only, do NOT read as a directed curvature",
+      "rows": 24587
+    },
+    {
+      "name": "motif_labels",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/motifs/motif_labels.npz",
+      "schema": "npz.motif.bool",
+      "purpose": "per-item chain/fork/merge/triangle/reciprocal labels",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "0e13db18a093ffe67a1acd7f875ebae42304894dc188b01148bfe0cfeeba948b",
+      "bytes": 16163,
+      "dependencies": [
+        "graph_forward_full"
+      ],
+      "types": [
+        "chain",
+        "fork",
+        "merge",
+        "triangle",
+        "reciprocal"
+      ]
+    },
+    {
+      "name": "motif_report",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/motifs/motif_report.json",
+      "schema": "json",
+      "purpose": "coverage, overlap and degree-matched control for the motifs",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "748e261e0ae1ab60dbece63de88870e1c8ce648972d485f610676cf51d4246cf",
+      "bytes": 6797,
+      "dependencies": [
+        "motif_labels"
+      ]
+    },
+    {
+      "name": "gradient_probe",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/pairs/probe.npz",
+      "schema": "npz.probe.v1",
+      "purpose": "frozen gradient-calibration probe; no model values are stored",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "f11494440a6a5849da603d5207142eb5e9f94de8df31d7f4cc16745ad44da652",
+      "bytes": 997,
+      "dependencies": [
+        "graph_visible_forward"
+      ]
+    },
+    {
+      "name": "bank_direct_eval",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/pairs/bank_direct_eval.npy",
+      "schema": "pairs.int64.Nx2",
+      "purpose": "direct pairs on the EVAL graph only; evaluation use, never supervision",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "efd4405f0b7443ca1ab900f839b3ef3519af62344a725d3324c8566b3ae848ed",
+      "bytes": 192128,
+      "dependencies": [
+        "graph_eval_forward"
+      ],
+      "pairs": 12000
+    },
+    {
+      "name": "bank_shared_out_eval",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/pairs/bank_shared_out_eval.npy",
+      "schema": "pairs.int64.Nx2",
+      "purpose": "shared_out pairs on the EVAL graph only; evaluation use, never supervision",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "943eda8135a8caf685de4ec052b2e1107c0df3c82a0ed6c7afc52a2d455127d6",
+      "bytes": 142592,
+      "dependencies": [
+        "graph_eval_forward"
+      ],
+      "pairs": 8904
+    },
+    {
+      "name": "bank_shared_in_eval",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/pairs/bank_shared_in_eval.npy",
+      "schema": "pairs.int64.Nx2",
+      "purpose": "shared_in pairs on the EVAL graph only; evaluation use, never supervision",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "97a32bebeeccd385c87e2d156014ffdf5d9c8495cb04188808c5e8717b41d76f",
+      "bytes": 142304,
+      "dependencies": [
+        "graph_eval_forward"
+      ],
+      "pairs": 8886
+    },
+    {
+      "name": "bank_two_hop_eval",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/pairs/bank_two_hop_eval.npy",
+      "schema": "pairs.int64.Nx2",
+      "purpose": "two_hop pairs on the EVAL graph only; evaluation use, never supervision",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "01b8bb86fbec11b7b72def55c6d60bc4ba81ff27ac0a50ebf405e62a52712cbc",
+      "bytes": 192128,
+      "dependencies": [
+        "graph_eval_forward"
+      ],
+      "pairs": 12000
+    },
+    {
+      "name": "bank_degree_matched_eval",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/pairs/bank_degree_matched_eval.npy",
+      "schema": "pairs.int64.Nx2",
+      "purpose": "degree_matched pairs on the EVAL graph only; evaluation use, never supervision",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "ab03eb3f6b831147cef5b52b452702b642adc5fc286119b1023159411b5a4f5b",
+      "bytes": 192128,
+      "dependencies": [
+        "graph_eval_forward"
+      ],
+      "pairs": 12000
+    },
+    {
+      "name": "ppr_visible_sources",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra245/assets/distance/ppr_visible_sources.npz",
+      "schema": "npz.ppr.v1",
+      "purpose": "PPR top-32 from 256 fixed visible-graph sources, restart 0.15, tolerance 1e-8; a propagation score, not a distance",
+      "command": "python3 tools/graph_infra/build_assets.py",
+      "sha256": "b710b2faf416c8b5020e51a9c4983550c72d28ebd071c3bf9a88f23fe2f537f0",
+      "bytes": 82874,
+      "dependencies": [
+        "graph_visible_forward"
+      ],
+      "sources": 256,
+      "top_k": 32
+    }
+  ]
+}

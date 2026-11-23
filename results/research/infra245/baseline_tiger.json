@@ -1,0 +1,81 @@
+{
+  "arm": "TIGER_RQ-VAE",
+  "sid": {
+    "path": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+    "sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+    "items": 24587
+  },
+  "sid_structure": {
+    "collision_first_three": 0.16927644690283483,
+    "duplicate_item_fraction_full_tuple": 0.0,
+    "distinct_first_three": 20425,
+    "codebook": [
+      {
+        "level": 0,
+        "used": 249,
+        "entropy": 4.823604640493978,
+        "max_share": 0.029202424045227153
+      },
+      {
+        "level": 1,
+        "used": 256,
+        "entropy": 4.542572320201309,
+        "max_share": 0.03855696099564811
+      },
+      {
+        "level": 2,
+        "used": 256,
+        "entropy": 5.506869451455025,
+        "max_share": 0.006873551063570179
+      }
+    ]
+  },
+  "prefix_sharing_on_frozen_banks": {
+    "direct": {
+      "pairs": 12000,
+      "prefix@1": 0.08325,
+      "prefix@2": 0.008083333333333333,
+      "prefix@3": 0.00175
+    },
+    "shared_out": {
+      "pairs": 12000,
+      "prefix@1": 0.03833333333333333,
+      "prefix@2": 0.00275,
+      "prefix@3": 0.0005
+    },
+    "shared_in": {
+      "pairs": 12000,
+      "prefix@1": 0.04783333333333333,
+      "prefix@2": 0.00375,
+      "prefix@3": 0.0004166666666666667
+    },
+    "two_hop": {
+      "pairs": 12000,
+      "prefix@1": 0.01125,
+      "prefix@2": 0.0003333333333333333,
+      "prefix@3": 0.0
+    },
+    "degree_matched": {
+      "pairs": 12000,
+      "prefix@1": 0.011583333333333333,
+      "prefix@2": 0.0005,
+      "prefix@3": 0.0
+    }
+  },
+  "reexport_consistency": {
+    "path": "results/stage2_RQ-VAE/TIGER_RQ-VAE/sids_for_hgrec.npy",
+    "sha256": "6f2682c18d20ba8880a5c105820024ea59ca53a79523e058f8f8e47721507c72",
+    "rows": 24587,
+    "items_differing_rowwise": 24587,
+    "distinct_triples_json": 20425,
+    "distinct_triples_npy": 21873,
+    "shared_triples": 17,
+    "consistent": false,
+    "finding": "INCONSISTENT: the two frozen TIGER exports do not describe the same SID table. item_sids.json carries 20425 distinct triples and matches the training log's collision 0.169276; sids_for_hgrec.npy carries 21873 and shares only 17 triples with it. The JSON is newer. Downstream work must name which artefact it uses instead of treating them as one object."
+  },
+  "not_computed": {
+    "reconstruction_mse": "NA: needs a decoder forward pass through the arm's own model code; the infra layer deliberately does not import a Stage2 tree",
+    "relation_strength_spearman": "NA: needs a model's D_geo or S_G; the bank ships without any model-specific target",
+    "stage3_recall": "NA in this infra pass: existing frozen numbers were computed under an older caliber and must not be presented as a new comparison"
+  }
+}
