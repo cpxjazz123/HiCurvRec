@@ -1,0 +1,62 @@
+{
+  "issue": 243,
+  "commit": "d998aa32",
+  "state": "IN_PROGRESS",
+  "done": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C12",
+    "C30"
+  ],
+  "partial": {
+    "C9": "reference ego/induced-edge helpers tested; production teacher still uses the #242 sampler and must be switched to induced edges",
+    "C11": "Jaccard/Spearman have hand tests and mutation coverage; the T=128 dimension assertion is not added yet"
+  },
+  "not_run": [
+    "C10",
+    "C13",
+    "C14",
+    "C15",
+    "C16",
+    "C17",
+    "C18",
+    "C19",
+    "C20",
+    "C21",
+    "C22",
+    "C23",
+    "C24",
+    "C25",
+    "C26",
+    "C27",
+    "C28",
+    "C29"
+  ],
+  "failed": [],
+  "running": [],
+  "known_issue": "the five experts' distance scales span ~100x (0.023 - 2.695); the pre-training scale calibration the issue requires has not been done",
+  "next_commands": [
+    "python3 results/research/issue243/tests/test_known_answers.py",
+    "python3 results/research/issue243/tests/test_reference.py",
+    "python3 results/research/issue243/tests/test_mutation.py",
+    "python3 results/research/issue243/module_checks.py",
+    "python3 results/research/issue243/teacher.py",
+    "CUDA_VISIBLE_DEVICES=0 python3 results/research/issue243/teacher.py"
+  ],
+  "resume_order": [
+    "1. expert scale calibration: measure per-curvature d_e quantiles on the frozen training probe, fix alpha_e into CONTRACT.md",
+    "2. formal 400-step teacher training, then independent evaluation on unseen eval pairs against semantic and Jaccard controls",
+    "3. overlap compatibility: E_t, worst subgraph, simultaneous-fidelity rate, degree-matched controls",
+    "4. S_G and the rebuilt pair bank with per-type validation",
+    "5. RQ-VAE candidate: TDD, lambda calibration, smoke, then one 3000-epoch Stage2",
+    "6. SID evaluation and one 150-epoch Stage3"
+  ],
+  "blocked_by": null,
+  "updated_at": "2026-11-23T18:30:00Z"
+}
