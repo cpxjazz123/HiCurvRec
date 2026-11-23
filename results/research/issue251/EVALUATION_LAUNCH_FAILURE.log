@@ -1,0 +1,3 @@
+Job bg_83 exited 1 before evaluation:
+mkdir: results/research/issue251/evaluation_before_continuous_parity: File exists
+Cause: the parallel archive metadata writer created the parent directory first. No model/evaluation ran and no prior artifacts were moved. Retry uses mkdir -p and preserves the previous evaluator outputs before running the completed evaluator.

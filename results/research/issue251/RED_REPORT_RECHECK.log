@@ -1,0 +1,19 @@
+test_report_recheck (unittest.loader._FailedTest.test_report_recheck) ... ERROR
+
+======================================================================
+ERROR: test_report_recheck (unittest.loader._FailedTest.test_report_recheck)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_report_recheck
+Traceback (most recent call last):
+  File "/apps/anaconda/2024.02-1/lib/python3.11/unittest/loader.py", line 162, in loadTestsFromName
+    module = __import__(module_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue251/test_report_recheck.py", line 3, in <module>
+    from tools.issue251.recompute_report import curvature_headlines, sid_headlines
+ModuleNotFoundError: No module named 'tools.issue251.recompute_report'
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (errors=1)

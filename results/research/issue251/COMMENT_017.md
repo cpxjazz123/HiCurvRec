@@ -1,0 +1,3 @@
+最终源cf0fd50c的真实入口（PID2456764）已实际完成1 epoch：global batch4096，train_end 1715.359秒，原始前三码碰撞0.04681335665188924，SID形状[24587,4]，追加导出计数器后24587项唯一。原始checkpoint/SID/全日志已移到 `results/research/issue251/entry_cf0_uncached/`，无覆盖；逐文件SHA和原始train_end保存在 `ENTRY_FIRST_OBSERVED.json`。checkpoint SHA `29086ea2f679053a4fc85fcf9951704fa63185e257962c525749a2364241e1b0`，SID SHA `6379a86272a8872a9bc3cf5ab3894e81e921d0b6b1c636727116581fd7a9b3e1`。
+
+旧MCP请求超时且未持久化判决，因此不伪造公开准入PASS。已仅重载3个共享实现的server子进程（父进程均为omp4184319；未动GPU验证worker），新genrec2740481、stage2 2740479、stage3 2740480；源码SHA `6c2b26a344ee0d3b7e9bbe373cec6eedd0d2e902d151fba57eac8c7d08655519`。为实证缓存修复已经公开verification_check启动一次新的准入验证；同样300秒传输超时后不再次派发，等待该次真实worker结束，再经同一工具读取持久化结果。正式训练仍未启动。

@@ -1,0 +1,32 @@
+{
+  "public_receipt_sha256": "12675d046954f62e3dab7ed81fae02a29a3b14111ea857b436c2bb47c8e6f87f",
+  "elapsed_seconds": 0.17900300025939941,
+  "verdict": {
+    "passed": false,
+    "refused": "behavior_graph: reads a graph outside the canonical source in model/mechanism.py, tests/test_structure.py",
+    "checks": [
+      {
+        "status": "PASS",
+        "name": "entry",
+        "detail": "one epoch runs and exports the identifier (levels 256/256/256, collision 0.047464, allowed at the stage3 gate)"
+      },
+      {
+        "status": "FAIL",
+        "name": "behavior_graph",
+        "detail": "reads a graph outside the canonical source in model/mechanism.py, tests/test_structure.py"
+      }
+    ],
+    "source_digest": "6f48f1141304376a8cd4b7c19cf3a928243fc933b637b578786ecc8dcdb5444f",
+    "checks_fingerprint": "4ce8f9720066",
+    "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq"
+  },
+  "persisted_cache": [
+    {
+      "path": "results/research/_conformance/6f48f1141304376a8cd4b7c19cf3a928__TIGER_gnn_attention_sectional_rq__4ce8f9720066.json",
+      "sha256": "dcfaced066847857136f442c9e6876c3cc0d931fc8f5544d0ef9ed2d72e24480",
+      "modified_at_unix": 1795457622.0
+    }
+  ],
+  "server_source_sha256": "6c2b26a344ee0d3b7e9bbe373cec6eedd0d2e902d151fba57eac8c7d08655519",
+  "interpretation": "Public source-bound cached entry PASS; current graph recheck FAIL. No formal training and no graph bypass."
+}

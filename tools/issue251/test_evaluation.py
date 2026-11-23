@@ -225,6 +225,37 @@ class EvaluationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             evaluation.evaluate_heldout(*fixture(), WrongUse(), fixed_squared=euclidean_squared)
 
+    def test_continuous_heldout_uses_actual_z_not_decoded_sid(self):
+        class Banks:
+            entries = {'strict_example': {'use': 'evaluation', 'sha256': 'abc'}}
+            def strict_banks(self):
+                return ['strict_example']
+            def load_strict(self, name):
+                return {'pairs': np.array([[0, 1], [1, 2]]),
+                        'labels': np.array([1, 0])}
+        # Actual z distances are3 and2: positive ranks behind negative, AUC0.
+        # Reusing hard q=[0,1,3,5] would instead give distances1,2 and AUC1.
+        report = evaluation.evaluate_continuous_heldout(
+            np.array([[0.], [3.], [1.], [5.]]), Banks(),
+            fixed_squared=euclidean_squared)
+        bank = report['banks']['strict_example']
+        self.assertEqual(bank['positive']['mean_distance'], 3.)
+        self.assertEqual(bank['negative']['mean_distance'], 2.)
+        self.assertEqual(bank['distance_ranking_auc'], 0.)
+        self.assertEqual(report['representation'], 'continuous_encoder_z')
+
+    def test_continuous_reconstruction_has_its_own_actual_errors(self):
+        report = evaluation.evaluate_reconstruction(
+            np.array([[0.], [1.]]), np.array([[2.], [0.]]),
+            representation='continuous-z')
+        self.assertEqual(report['mean_squared_error'], 2.5)
+        self.assertEqual(report['mean_l2_error'], 1.5)
+        self.assertEqual(report['per_item_l2'], [2., 1.])
+        with self.assertRaises(ValueError):
+            evaluation.evaluate_reconstruction(
+                np.array([[0.], [1.]]), np.array([[np.nan], [0.]]),
+                representation='continuous-z')
+
     def test_historical_tiger_reuses_provenance_safe_comparison(self):
         with patch('tools.graph_infra.tiger_compare.compare', return_value={
                 'geometry_metrics': {'status': 'NA'}, 'pure_sid_metrics': {'x': 1}}) as compare:

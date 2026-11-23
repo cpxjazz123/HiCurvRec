@@ -12,7 +12,8 @@ sys.path.insert(0,str(TREE))
 from model.geometry import fixed_squared
 from model.mechanism import RQVAE
 import train_rqvae as training
-from tools.issue251.evaluation import evaluate,evaluate_heldout,compare_historical_tiger
+from tools.issue251.evaluation import (evaluate,evaluate_heldout,evaluate_continuous_heldout,
+                                     evaluate_reconstruction,compare_historical_tiger)
 from tools.issue251.full_evaluation import full_evaluate,fixed_squared_numpy
 from tools.graph_infra.heldout_eval import HeldOutEvaluation
 
@@ -38,7 +39,9 @@ def main():
     embeddings=np.load(ROOT/'stage1_GeneEmbedding/output/sentence_t5.npy')
     with torch.no_grad():
         reconstruction=model.decoder(torch.from_numpy(q)).numpy()
-        continuous=model.encoder(torch.from_numpy(embeddings)).numpy()
+        continuous_tensor=model.encoder(torch.from_numpy(embeddings))
+        continuous=continuous_tensor.numpy()
+        continuous_reconstruction=model.decoder(continuous_tensor).numpy()
     empty=np.empty((0,3),dtype=np.int64)
     report=evaluate(sid,books,empty,np.empty(0),{},component_labels=components,
                     scale=scale,fixed_squared=fixed_squared,
@@ -55,10 +58,16 @@ def main():
     report.update(full_evaluate(q,ROOT/'assets',scale=scale))
     continuous_report=full_evaluate(continuous,ROOT/'assets',scale=scale)
     continuous_report['representation']='continuous_encoder_z'
+    continuous_report['reconstruction']=evaluate_reconstruction(
+        embeddings,continuous_reconstruction,representation='continuous-z')
+    continuous_report['reconstruction'].pop('per_item_l2')
     if report['curvature']['count']!=28391948 or continuous_report['curvature']['count']!=28391948:
         raise AssertionError('full independent evaluation did not visit every frozen valid triple')
-    report['strict_heldout']=evaluate_heldout(sid,books,HeldOutEvaluation(ROOT),
-                       scale=float(state['tangent_scale']),fixed_squared=fixed_squared)
+    heldout=HeldOutEvaluation(ROOT)
+    report['strict_heldout']=evaluate_heldout(sid,books,heldout,
+                       scale=scale,fixed_squared=fixed_squared)
+    continuous_report['strict_heldout']=evaluate_continuous_heldout(
+        continuous,heldout,scale=scale,fixed_squared=fixed_squared)
     report['historical_tiger']=compare_historical_tiger(ROOT)
     report['continuous_encoder']=continuous_report
     report['provenance']={'sid_sha256':digest(sid_file),'checkpoint_sha256':digest(checkpoint),

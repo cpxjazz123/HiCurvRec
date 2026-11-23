@@ -1,0 +1,2864 @@
+{
+  "metric": "equal_weight_five_expert_squared_distance; independent ambient implementation",
+  "expert_curvatures": [
+    -3,
+    -1,
+    0,
+    1,
+    3
+  ],
+  "tangent_scale": 0.18152852356433868,
+  "curvature_definition": "GraphMoRE A.1 discrete proxy, not intrinsic curvature",
+  "representation": "hard_sid_decoded",
+  "prefix": {
+    "L1": {
+      "items": 24587,
+      "distinct_prefix": 256,
+      "collision_prefix": 0.9895879936551837,
+      "duplicate_prefix_share": 0.9975190141131492,
+      "length": 1
+    },
+    "L2": {
+      "items": 24587,
+      "distinct_prefix": 3191,
+      "collision_prefix": 0.8702159677878554,
+      "duplicate_prefix_share": 0.9376499776304551,
+      "length": 2
+    },
+    "L3": {
+      "items": 24587,
+      "distinct_prefix": 9959,
+      "collision_prefix": 0.5949485500467726,
+      "duplicate_prefix_share": 0.7192825476878025,
+      "length": 3
+    }
+  },
+  "prefix_sharing": {
+    "L1": 0.9975190141131492,
+    "L2": 0.9376499776304551,
+    "L3": 0.7192825476878025
+  },
+  "codebook_occupancy": [
+    {
+      "level": 0,
+      "used": 256,
+      "entropy": 6.247240975421477,
+      "entropy_unit": "bits",
+      "max_share": 0.08028633017448245,
+      "capacity": 256,
+      "occupancy": 1.0
+    },
+    {
+      "level": 1,
+      "used": 256,
+      "entropy": 4.106350098767999,
+      "entropy_unit": "bits",
+      "max_share": 0.4601212022613576,
+      "capacity": 256,
+      "occupancy": 1.0
+    },
+    {
+      "level": 2,
+      "used": 256,
+      "entropy": 5.25979935093285,
+      "entropy_unit": "bits",
+      "max_share": 0.16720218001382844,
+      "capacity": 256,
+      "occupancy": 1.0
+    }
+  ],
+  "distance_distortion": {
+    "count": 28391948,
+    "mean_abs_error": 1.25322821227839,
+    "mean_relative_error": 0.6337213351038785,
+    "distance_scale": 1.0,
+    "scale_fitted_on_evaluation": false,
+    "scope": "all valid frozen triple (b,c) pairs, weighted by triple occurrence"
+  },
+  "reconstruction": {
+    "status": "OK",
+    "source": "caller-supplied hard-q reconstruction",
+    "mean_squared_error": 0.0002802857134533353,
+    "mean_l2_error": 0.41901288412172166
+  },
+  "reference_scope": "entire frozen component",
+  "shards": [
+    "shard_000.npz",
+    "shard_001.npz",
+    "shard_002.npz",
+    "shard_003.npz",
+    "shard_004.npz",
+    "shard_005.npz",
+    "shard_006.npz",
+    "shard_007.npz",
+    "shard_008.npz",
+    "shard_009.npz",
+    "shard_010.npz",
+    "shard_011.npz",
+    "shard_012.npz"
+  ],
+  "max_scaled_tangent_norm": 3.8886105130970505,
+  "wall_seconds": 30.223106123507023,
+  "peak_rss_kib": 4735776,
+  "strict_heldout": {
+    "representation": "hard_sid_decoded",
+    "probe_trained": false,
+    "labels_passed_to_model": false,
+    "tangent_scale": 0.18152852356433868,
+    "banks": {
+      "strict_struct_test_degree_matched": {
+        "pairs": 2940,
+        "sha256": "7742e34d49f18c287b33cfbc67dc92ba876a69724d730d90492ec3b87f6ae8ca",
+        "distance": {
+          "count": 2940,
+          "mean": 0.7229767393100777,
+          "std": 0.2885373371074005,
+          "min": 0.1812325830016972,
+          "q25": 0.5514486884961803,
+          "median": 0.6692167126383515,
+          "q75": 0.8137627215113967,
+          "max": 3.188802365709899
+        },
+        "topology": {
+          "hop_full_visible": {
+            "count": 2932,
+            "missing": 8,
+            "distance_spearman": 0.08415914121877474,
+            "target": {
+              "count": 2932,
+              "mean": 2.5242155525238745,
+              "std": 0.6453952477689179,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 2.0,
+              "q75": 3.0,
+              "max": 6.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_directed_src_dst": {
+            "count": 2917,
+            "missing": 23,
+            "distance_spearman": 0.08780442920110723,
+            "target": {
+              "count": 2917,
+              "mean": 2.860130270826191,
+              "std": 0.7645140357325356,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 6.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_subgraph": {
+            "count": 0,
+            "missing": 2940,
+            "distance_spearman": null,
+            "target": {
+              "status": "NA",
+              "reason": "no observations"
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "two_hop_count": {
+            "count": 2940,
+            "missing": 0,
+            "distance_spearman": -0.06597959364027248,
+            "target": {
+              "count": 2940,
+              "mean": 0.763265306122449,
+              "std": 1.593058139471096,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 1.0,
+              "max": 20.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_out": {
+            "count": 2940,
+            "missing": 0,
+            "distance_spearman": -0.06568873079800563,
+            "target": {
+              "count": 2940,
+              "mean": 0.005821831673985282,
+              "std": 0.010516344126011018,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.00986441008632883,
+              "max": 0.125
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_in": {
+            "count": 2940,
+            "missing": 0,
+            "distance_spearman": -0.07814389589539492,
+            "target": {
+              "count": 2940,
+              "mean": 0.0053851641553607525,
+              "std": 0.009651631037194389,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.00909090909090909,
+              "max": 0.1
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "bhattacharyya_out": {
+            "count": 2922,
+            "missing": 18,
+            "distance_spearman": -0.06991581177232535,
+            "target": {
+              "count": 2922,
+              "mean": 0.012546640782521996,
+              "std": 0.02286768342932657,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.021251957255733353,
+              "max": 0.2672612419124244
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          }
+        },
+        "distance_ranking_auc": {
+          "status": "NA",
+          "reason": "binary labels not supplied"
+        }
+      },
+      "strict_struct_test_direct": {
+        "pairs": 2729,
+        "sha256": "80fe725722ff618cb352761f9280d3d89e2b80cef117c9ae65f8196c4fcecbbd",
+        "distance": {
+          "count": 2729,
+          "mean": 0.6661042403734473,
+          "std": 0.29947246237777425,
+          "min": 0.0,
+          "q25": 0.48464560202222884,
+          "median": 0.6041859266457748,
+          "q75": 0.7803730747966817,
+          "max": 3.309683699601903
+        },
+        "topology": {
+          "hop_full_visible": {
+            "count": 2714,
+            "missing": 15,
+            "distance_spearman": 0.015252076706138559,
+            "target": {
+              "count": 2714,
+              "mean": 2.5869565217391304,
+              "std": 0.6273014401839657,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 5.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_directed_src_dst": {
+            "count": 2705,
+            "missing": 24,
+            "distance_spearman": 0.017886272811078047,
+            "target": {
+              "count": 2705,
+              "mean": 2.9844731977818855,
+              "std": 0.8295262604338054,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 7.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_subgraph": {
+            "count": 0,
+            "missing": 2729,
+            "distance_spearman": null,
+            "target": {
+              "status": "NA",
+              "reason": "no observations"
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "two_hop_count": {
+            "count": 2729,
+            "missing": 0,
+            "distance_spearman": -0.024990557743887778,
+            "target": {
+              "count": 2729,
+              "mean": 0.965188713814584,
+              "std": 2.741033079099087,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 1.0,
+              "max": 35.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_out": {
+            "count": 2729,
+            "missing": 0,
+            "distance_spearman": -0.04482553604438185,
+            "target": {
+              "count": 2729,
+              "mean": 0.0058479475310729894,
+              "std": 0.014018492367067682,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.005376344086021506,
+              "max": 0.2
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_in": {
+            "count": 2729,
+            "missing": 0,
+            "distance_spearman": -0.034614454696597935,
+            "target": {
+              "count": 2729,
+              "mean": 0.005328408470488314,
+              "std": 0.01227462167492526,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.004629629629629629,
+              "max": 0.14285714285714285
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "bhattacharyya_out": {
+            "count": 2699,
+            "missing": 30,
+            "distance_spearman": -0.04690026677602054,
+            "target": {
+              "count": 2699,
+              "mean": 0.016299631906812,
+              "std": 0.03371413730997545,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.021873986367506135,
+              "max": 0.3535533905932738
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          }
+        },
+        "distance_ranking_auc": {
+          "status": "NA",
+          "reason": "binary labels not supplied"
+        }
+      },
+      "strict_struct_test_shared_in": {
+        "pairs": 2877,
+        "sha256": "ccb5e503da7eb255d9d73b391669657a0990923219658ac04ea1474defd625ab",
+        "distance": {
+          "count": 2877,
+          "mean": 0.6981008709799056,
+          "std": 0.282614457303364,
+          "min": 0.0,
+          "q25": 0.5174031993937822,
+          "median": 0.6444226145433805,
+          "q75": 0.8086366016303024,
+          "max": 2.6058290873123617
+        },
+        "topology": {
+          "hop_full_visible": {
+            "count": 2863,
+            "missing": 14,
+            "distance_spearman": 0.040060704859125836,
+            "target": {
+              "count": 2863,
+              "mean": 2.6220747467691234,
+              "std": 0.6184622790766254,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 5.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_directed_src_dst": {
+            "count": 2857,
+            "missing": 20,
+            "distance_spearman": 0.028153495576284965,
+            "target": {
+              "count": 2857,
+              "mean": 2.999649982499125,
+              "std": 0.7855448628375411,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 7.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_subgraph": {
+            "count": 0,
+            "missing": 2877,
+            "distance_spearman": null,
+            "target": {
+              "status": "NA",
+              "reason": "no observations"
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "two_hop_count": {
+            "count": 2877,
+            "missing": 0,
+            "distance_spearman": -0.03898365217135196,
+            "target": {
+              "count": 2877,
+              "mean": 0.7959680222453945,
+              "std": 2.4853574129195453,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 1.0,
+              "max": 49.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_out": {
+            "count": 2876,
+            "missing": 1,
+            "distance_spearman": -0.030645858498901453,
+            "target": {
+              "count": 2876,
+              "mean": 0.004598675232618365,
+              "std": 0.011292004359328811,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.002229971646764213,
+              "max": 0.125
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_in": {
+            "count": 2876,
+            "missing": 1,
+            "distance_spearman": -0.037074888308866516,
+            "target": {
+              "count": 2876,
+              "mean": 0.0041065943756106865,
+              "std": 0.009485656903117387,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.0028422330692437882,
+              "max": 0.08695652173913043
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "bhattacharyya_out": {
+            "count": 2856,
+            "missing": 21,
+            "distance_spearman": -0.02927599534501663,
+            "target": {
+              "count": 2856,
+              "mean": 0.012848846600207749,
+              "std": 0.027609861120820162,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.013325744303461482,
+              "max": 0.23570226039551584
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          }
+        },
+        "distance_ranking_auc": {
+          "status": "NA",
+          "reason": "binary labels not supplied"
+        }
+      },
+      "strict_struct_test_shared_out": {
+        "pairs": 2877,
+        "sha256": "6ea0bda9b4feedd9c7403ee9336505bfb59d168c085fe3e50aa77504b7620b1e",
+        "distance": {
+          "count": 2877,
+          "mean": 0.6995861451789888,
+          "std": 0.29024438229206273,
+          "min": 0.0,
+          "q25": 0.5236643091024163,
+          "median": 0.6391573934061355,
+          "q75": 0.8035248181202015,
+          "max": 3.0702906243402253
+        },
+        "topology": {
+          "hop_full_visible": {
+            "count": 2859,
+            "missing": 18,
+            "distance_spearman": 0.04464262666662999,
+            "target": {
+              "count": 2859,
+              "mean": 2.651976215459951,
+              "std": 0.6305491908254225,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 5.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_directed_src_dst": {
+            "count": 2846,
+            "missing": 31,
+            "distance_spearman": 0.011681681470282862,
+            "target": {
+              "count": 2846,
+              "mean": 3.0411103302881237,
+              "std": 0.8032326840206077,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 4.0,
+              "max": 7.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_subgraph": {
+            "count": 0,
+            "missing": 2877,
+            "distance_spearman": null,
+            "target": {
+              "status": "NA",
+              "reason": "no observations"
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "two_hop_count": {
+            "count": 2877,
+            "missing": 0,
+            "distance_spearman": -0.037851606759365664,
+            "target": {
+              "count": 2877,
+              "mean": 0.7101147028154328,
+              "std": 2.0909321131719376,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 1.0,
+              "max": 26.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_out": {
+            "count": 2877,
+            "missing": 0,
+            "distance_spearman": -0.025468976983633745,
+            "target": {
+              "count": 2877,
+              "mean": 0.004097969763339059,
+              "std": 0.010743933699464593,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.0,
+              "max": 0.2
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_in": {
+            "count": 2877,
+            "missing": 0,
+            "distance_spearman": -0.0602101589597512,
+            "target": {
+              "count": 2877,
+              "mean": 0.003986986619150039,
+              "std": 0.010038585783225576,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.0,
+              "max": 0.16666666666666666
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "bhattacharyya_out": {
+            "count": 2843,
+            "missing": 34,
+            "distance_spearman": -0.029760411566531517,
+            "target": {
+              "count": 2843,
+              "mean": 0.011946636372257133,
+              "std": 0.02729726995036383,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.0,
+              "max": 0.4202606379143633
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          }
+        },
+        "distance_ranking_auc": {
+          "status": "NA",
+          "reason": "binary labels not supplied"
+        }
+      },
+      "strict_struct_test_two_hop": {
+        "pairs": 2907,
+        "sha256": "fedd4ffe3b5e541d36e8f590f59fbfb3ffeb53e1bd23b6ff24c650808fd84d4c",
+        "distance": {
+          "count": 2907,
+          "mean": 0.7266999785572325,
+          "std": 0.2699332490144962,
+          "min": 0.0,
+          "q25": 0.5412820196117019,
+          "median": 0.6818174640855006,
+          "q75": 0.8623672500888827,
+          "max": 2.204131052317934
+        },
+        "topology": {
+          "hop_full_visible": {
+            "count": 2902,
+            "missing": 5,
+            "distance_spearman": 0.06304737195373387,
+            "target": {
+              "count": 2902,
+              "mean": 2.5702963473466576,
+              "std": 0.5855953943929891,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 5.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_directed_src_dst": {
+            "count": 2795,
+            "missing": 112,
+            "distance_spearman": 0.0427598117458333,
+            "target": {
+              "count": 2795,
+              "mean": 2.874418604651163,
+              "std": 0.7115004504283678,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 5.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_subgraph": {
+            "count": 0,
+            "missing": 2907,
+            "distance_spearman": null,
+            "target": {
+              "status": "NA",
+              "reason": "no observations"
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "two_hop_count": {
+            "count": 2907,
+            "missing": 0,
+            "distance_spearman": -0.07141391215325414,
+            "target": {
+              "count": 2907,
+              "mean": 0.9102167182662538,
+              "std": 2.2648483087239915,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 1.0,
+              "max": 23.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_out": {
+            "count": 2907,
+            "missing": 0,
+            "distance_spearman": -0.06365216347032354,
+            "target": {
+              "count": 2907,
+              "mean": 0.005579588279576285,
+              "std": 0.01125768458576661,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.007272823442293451,
+              "max": 0.1111111111111111
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_in": {
+            "count": 2907,
+            "missing": 0,
+            "distance_spearman": -0.06648161434808332,
+            "target": {
+              "count": 2907,
+              "mean": 0.005123291706024251,
+              "std": 0.010883780607658438,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.005610109212224216,
+              "max": 0.14285714285714285
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "bhattacharyya_out": {
+            "count": 2788,
+            "missing": 119,
+            "distance_spearman": -0.05301853872366598,
+            "target": {
+              "count": 2788,
+              "mean": 0.01635908412545501,
+              "std": 0.031036240191980015,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.02365249792251884,
+              "max": 0.21821789023599236
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          }
+        },
+        "distance_ranking_auc": {
+          "status": "NA",
+          "reason": "binary labels not supplied"
+        }
+      },
+      "strict_struct_val_degree_matched": {
+        "pairs": 2938,
+        "sha256": "542719e36e441fc71624413c25dc0335c2ca4eea38e3cdb349c4c678ddb4991c",
+        "distance": {
+          "count": 2938,
+          "mean": 0.7303149659633286,
+          "std": 0.30491043196505535,
+          "min": 0.0,
+          "q25": 0.5531167019777781,
+          "median": 0.6678254154179346,
+          "q75": 0.816852780660198,
+          "max": 3.207220810562831
+        },
+        "topology": {
+          "hop_full_visible": {
+            "count": 2929,
+            "missing": 9,
+            "distance_spearman": 0.09903483601756477,
+            "target": {
+              "count": 2929,
+              "mean": 2.5155343120518947,
+              "std": 0.6171397334461889,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 2.0,
+              "q75": 3.0,
+              "max": 6.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_directed_src_dst": {
+            "count": 2924,
+            "missing": 14,
+            "distance_spearman": 0.09415823917289666,
+            "target": {
+              "count": 2924,
+              "mean": 2.8272913816689464,
+              "std": 0.7474951668979857,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 8.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_subgraph": {
+            "count": 0,
+            "missing": 2938,
+            "distance_spearman": null,
+            "target": {
+              "status": "NA",
+              "reason": "no observations"
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "two_hop_count": {
+            "count": 2938,
+            "missing": 0,
+            "distance_spearman": -0.07904184761576935,
+            "target": {
+              "count": 2938,
+              "mean": 0.7508509189925119,
+              "std": 1.5280030607105082,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 1.0,
+              "max": 20.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_out": {
+            "count": 2938,
+            "missing": 0,
+            "distance_spearman": -0.09794751235119219,
+            "target": {
+              "count": 2938,
+              "mean": 0.005684024570011067,
+              "std": 0.010048849788048243,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.009876722966414288,
+              "max": 0.08333333333333333
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_in": {
+            "count": 2938,
+            "missing": 0,
+            "distance_spearman": -0.08029117143397109,
+            "target": {
+              "count": 2938,
+              "mean": 0.005498145471163288,
+              "std": 0.009645032105821225,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.009324160609207337,
+              "max": 0.06666666666666667
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "bhattacharyya_out": {
+            "count": 2922,
+            "missing": 16,
+            "distance_spearman": -0.099428472012429,
+            "target": {
+              "count": 2922,
+              "mean": 0.012323367391219241,
+              "std": 0.022202226325908965,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.0207358317023163,
+              "max": 0.21320071635561044
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          }
+        },
+        "distance_ranking_auc": {
+          "status": "NA",
+          "reason": "binary labels not supplied"
+        }
+      },
+      "strict_struct_val_direct": {
+        "pairs": 2726,
+        "sha256": "bc65baff19071f1497f295261ccf8d92c7450d30d0cac41d86e6cd1e97f0d530",
+        "distance": {
+          "count": 2726,
+          "mean": 0.6653202936231674,
+          "std": 0.30532139264867536,
+          "min": 0.0,
+          "q25": 0.4782161546243422,
+          "median": 0.6034226229496034,
+          "q75": 0.7664068718033838,
+          "max": 3.184034043482296
+        },
+        "topology": {
+          "hop_full_visible": {
+            "count": 2714,
+            "missing": 12,
+            "distance_spearman": 0.0232997828008044,
+            "target": {
+              "count": 2714,
+              "mean": 2.5777450257921886,
+              "std": 0.6136784602709578,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 5.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_directed_src_dst": {
+            "count": 2694,
+            "missing": 32,
+            "distance_spearman": 0.017913246414597964,
+            "target": {
+              "count": 2694,
+              "mean": 2.9387527839643655,
+              "std": 0.7832920765061665,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 7.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_subgraph": {
+            "count": 0,
+            "missing": 2726,
+            "distance_spearman": null,
+            "target": {
+              "status": "NA",
+              "reason": "no observations"
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "two_hop_count": {
+            "count": 2726,
+            "missing": 0,
+            "distance_spearman": -0.019227800933570644,
+            "target": {
+              "count": 2726,
+              "mean": 1.0066030814380045,
+              "std": 2.8768997452112184,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 1.0,
+              "max": 44.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_out": {
+            "count": 2726,
+            "missing": 0,
+            "distance_spearman": -0.004350883642771336,
+            "target": {
+              "count": 2726,
+              "mean": 0.005289931910338567,
+              "std": 0.012149779855296814,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.0054274383078730904,
+              "max": 0.18181818181818182
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_in": {
+            "count": 2726,
+            "missing": 0,
+            "distance_spearman": -0.0009766275222837866,
+            "target": {
+              "count": 2726,
+              "mean": 0.005081707748438543,
+              "std": 0.011522336926997315,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.005263157894736842,
+              "max": 0.2
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "bhattacharyya_out": {
+            "count": 2688,
+            "missing": 38,
+            "distance_spearman": -0.005373388047661191,
+            "target": {
+              "count": 2688,
+              "mean": 0.015366042850184265,
+              "std": 0.030639849100584145,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.021464932829197512,
+              "max": 0.3333333333333333
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          }
+        },
+        "distance_ranking_auc": {
+          "status": "NA",
+          "reason": "binary labels not supplied"
+        }
+      },
+      "strict_struct_val_shared_in": {
+        "pairs": 2881,
+        "sha256": "66b2d85abf63a5674b2e8fd32fd18ea29072204bdc6793d167cecbaf6e8e8a87",
+        "distance": {
+          "count": 2881,
+          "mean": 0.6976615445851189,
+          "std": 0.2871334453689564,
+          "min": 0.0,
+          "q25": 0.5152584974205028,
+          "median": 0.6400030855663035,
+          "q75": 0.8118667059282058,
+          "max": 2.5123140488805458
+        },
+        "topology": {
+          "hop_full_visible": {
+            "count": 2867,
+            "missing": 14,
+            "distance_spearman": 0.06138036381306213,
+            "target": {
+              "count": 2867,
+              "mean": 2.6260899895361005,
+              "std": 0.6286854281402402,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 5.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_directed_src_dst": {
+            "count": 2860,
+            "missing": 21,
+            "distance_spearman": 0.029497585735611846,
+            "target": {
+              "count": 2860,
+              "mean": 2.9944055944055945,
+              "std": 0.7768302299232109,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 6.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_subgraph": {
+            "count": 0,
+            "missing": 2881,
+            "distance_spearman": null,
+            "target": {
+              "status": "NA",
+              "reason": "no observations"
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "two_hop_count": {
+            "count": 2881,
+            "missing": 0,
+            "distance_spearman": -0.0448568129806154,
+            "target": {
+              "count": 2881,
+              "mean": 0.8927455744533148,
+              "std": 2.950468013781747,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 1.0,
+              "max": 54.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_out": {
+            "count": 2881,
+            "missing": 0,
+            "distance_spearman": -0.05392284988973234,
+            "target": {
+              "count": 2881,
+              "mean": 0.004449091564452485,
+              "std": 0.011020513978743667,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.0028653295128939827,
+              "max": 0.25
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_in": {
+            "count": 2881,
+            "missing": 0,
+            "distance_spearman": -0.05162675508471004,
+            "target": {
+              "count": 2881,
+              "mean": 0.004387746170636061,
+              "std": 0.00996412765905388,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.0035211267605633804,
+              "max": 0.09523809523809523
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "bhattacharyya_out": {
+            "count": 2854,
+            "missing": 27,
+            "distance_spearman": -0.052048354870834077,
+            "target": {
+              "count": 2854,
+              "mean": 0.012840882053527994,
+              "std": 0.028502885221070254,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.014809605970900848,
+              "max": 0.5
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          }
+        },
+        "distance_ranking_auc": {
+          "status": "NA",
+          "reason": "binary labels not supplied"
+        }
+      },
+      "strict_struct_val_shared_out": {
+        "pairs": 2876,
+        "sha256": "78b5fe7114b9d9fd3465c4b4656b9cad195f10c2560ad25485b3f11f72e6af96",
+        "distance": {
+          "count": 2876,
+          "mean": 0.7096525516202982,
+          "std": 0.29451219215202895,
+          "min": 0.0,
+          "q25": 0.5285138754102172,
+          "median": 0.6478223775145886,
+          "q75": 0.8153898688339102,
+          "max": 3.207127532674243
+        },
+        "topology": {
+          "hop_full_visible": {
+            "count": 2863,
+            "missing": 13,
+            "distance_spearman": 0.060381428285947704,
+            "target": {
+              "count": 2863,
+              "mean": 2.6136919315403424,
+              "std": 0.6104066875736089,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 5.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_directed_src_dst": {
+            "count": 2854,
+            "missing": 22,
+            "distance_spearman": 0.061032282436398876,
+            "target": {
+              "count": 2854,
+              "mean": 2.979677645409951,
+              "std": 0.7591583561764632,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 6.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_subgraph": {
+            "count": 0,
+            "missing": 2876,
+            "distance_spearman": null,
+            "target": {
+              "status": "NA",
+              "reason": "no observations"
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "two_hop_count": {
+            "count": 2876,
+            "missing": 0,
+            "distance_spearman": -0.04537753636346492,
+            "target": {
+              "count": 2876,
+              "mean": 0.8303198887343533,
+              "std": 2.6276318752446914,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 1.0,
+              "max": 47.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_out": {
+            "count": 2876,
+            "missing": 0,
+            "distance_spearman": -0.07085155653298025,
+            "target": {
+              "count": 2876,
+              "mean": 0.004453751184650242,
+              "std": 0.010130295500072672,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.003392890312993406,
+              "max": 0.1
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_in": {
+            "count": 2876,
+            "missing": 0,
+            "distance_spearman": -0.024857170779981695,
+            "target": {
+              "count": 2876,
+              "mean": 0.003953523451451449,
+              "std": 0.00999617687941939,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.001445609529625323,
+              "max": 0.2
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "bhattacharyya_out": {
+            "count": 2850,
+            "missing": 26,
+            "distance_spearman": -0.07205423739498994,
+            "target": {
+              "count": 2850,
+              "mean": 0.012764406226990342,
+              "std": 0.026624304039009873,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.01491539339975716,
+              "max": 0.1889822365046136
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          }
+        },
+        "distance_ranking_auc": {
+          "status": "NA",
+          "reason": "binary labels not supplied"
+        }
+      },
+      "strict_struct_val_two_hop": {
+        "pairs": 2926,
+        "sha256": "d282477c65d03572ae8605d3e7a9303ea78cae9b12e47a16874bab05c640e64c",
+        "distance": {
+          "count": 2926,
+          "mean": 0.7722676245977065,
+          "std": 0.3182974767260824,
+          "min": 0.0,
+          "q25": 0.5496936823840054,
+          "median": 0.7051093540117994,
+          "q75": 0.9043949732640546,
+          "max": 3.0713612639170975
+        },
+        "topology": {
+          "hop_full_visible": {
+            "count": 2923,
+            "missing": 3,
+            "distance_spearman": 0.058732962666801315,
+            "target": {
+              "count": 2923,
+              "mean": 2.5846732808758124,
+              "std": 0.5906656059200032,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 5.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_directed_src_dst": {
+            "count": 2913,
+            "missing": 13,
+            "distance_spearman": 0.08695946434980636,
+            "target": {
+              "count": 2913,
+              "mean": 2.9210435976656366,
+              "std": 0.715633867484483,
+              "min": 2.0,
+              "q25": 2.0,
+              "median": 3.0,
+              "q75": 3.0,
+              "max": 6.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "hop_subgraph": {
+            "count": 0,
+            "missing": 2926,
+            "distance_spearman": null,
+            "target": {
+              "status": "NA",
+              "reason": "no observations"
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "two_hop_count": {
+            "count": 2926,
+            "missing": 0,
+            "distance_spearman": -0.0592066980262106,
+            "target": {
+              "count": 2926,
+              "mean": 0.7980177717019822,
+              "std": 2.099509146087016,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 1.0,
+              "max": 26.0
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_out": {
+            "count": 2926,
+            "missing": 0,
+            "distance_spearman": -0.04227627719956981,
+            "target": {
+              "count": 2926,
+              "mean": 0.005102131235460994,
+              "std": 0.010954255187872134,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.005398140075559431,
+              "max": 0.125
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "jaccard_in": {
+            "count": 2926,
+            "missing": 0,
+            "distance_spearman": -0.04306460038690766,
+            "target": {
+              "count": 2926,
+              "mean": 0.004447167747604972,
+              "std": 0.010360681602950016,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.00415805785123967,
+              "max": 0.2
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          },
+          "bhattacharyya_out": {
+            "count": 2917,
+            "missing": 9,
+            "distance_spearman": -0.051848329129858615,
+            "target": {
+              "count": 2917,
+              "mean": 0.014550323585020846,
+              "std": 0.029390975624617663,
+              "min": 0.0,
+              "q25": 0.0,
+              "median": 0.0,
+              "q75": 0.01928791874526149,
+              "max": 0.2672612419124244
+            },
+            "interpretation": "association on strict pairs; visible-field name retained"
+          }
+        },
+        "distance_ranking_auc": {
+          "status": "NA",
+          "reason": "binary labels not supplied"
+        }
+      }
+    }
+  },
+  "historical_tiger": {
+    "sid_path": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+    "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+    "sid_items": 24587,
+    "pure_sid_metrics": {
+      "collision_prefix3": {
+        "items": 24587,
+        "distinct_prefix": 20425,
+        "collision_prefix": 0.16927644690283483,
+        "duplicate_prefix_share": 0.26530280229389513,
+        "length": 3
+      },
+      "duplicate_prefix3": 0.26530280229389513,
+      "collision_full": {
+        "items": 24587,
+        "distinct_prefix": 24587,
+        "collision_prefix": 0.0,
+        "duplicate_prefix_share": 0.0,
+        "length": 4
+      },
+      "prefix_sharing": {
+        "L1": 0.9997152967015089,
+        "L2": 0.8428031073331436,
+        "L3": 0.26530280229389513
+      },
+      "codebook_occupancy": [
+        {
+          "level": 0,
+          "used": 249,
+          "entropy": 6.958990494049653,
+          "entropy_unit": "bits",
+          "max_share": 0.029202424045227153
+        },
+        {
+          "level": 1,
+          "used": 256,
+          "entropy": 6.553546559233901,
+          "entropy_unit": "bits",
+          "max_share": 0.03855696099564811
+        },
+        {
+          "level": 2,
+          "used": 256,
+          "entropy": 7.944733248437091,
+          "entropy_unit": "bits",
+          "max_share": 0.006873551063570179
+        }
+      ],
+      "source": "recomputed directly from the frozen item_sids.json"
+    },
+    "geometry_metrics": {
+      "status": "NA",
+      "reason": "no codebook and checkpoint provably from the same SID generation as the Stage3 table: the frozen rqvae_best.pth belongs to a different generation (#246 measured its re-export as differing in all 24,587 rows), so the decoded q and the reconstruction error are NA"
+    }
+  },
+  "provenance": {
+    "sid_sha256": "8ce6603faf07d7c0519722525d37e3c65c25fe42d092746400a726769835a339",
+    "checkpoint_sha256": "e43cdafb75f45b3d1a960f6d2d42e517dc4a0b45751aad33e1dced35c5af7018",
+    "scope": "controlled one-microstep diagnostic; not trained improvement",
+    "triples": 28391948,
+    "references": "all valid frozen triples and entire frozen components",
+    "ambient_vs_production_max_abs": {
+      "hard_q": 1.5543122344752192e-15,
+      "continuous_z": 5.329070518200751e-15
+    },
+    "evaluator_sources": {
+      "tools/issue251/run_evaluation.py": "2e5605196fda424f0c6b03f76ebdbf10fff24dad521fdb624c96e05b42e51803",
+      "tools/issue251/full_evaluation.py": "77b1f569bd9bd5347ef95caaf1c7d4881bcc484f99af183d2a1c859669f97def",
+      "tools/issue251/evaluation.py": "7ed9a6c3b26fe121f0c0fea737b200fe4c738f812832e4b252945cf568f8fb83"
+    },
+    "scale_fitted_on_evaluation": false
+  },
+  "curvature": {
+    "status": "OK",
+    "count": 28391948,
+    "excluded": 0,
+    "centres": 24326,
+    "macro_mae": 2.6846592811951826,
+    "micro_mae": 1.744486568784263,
+    "strata": {
+      "negative": {
+        "status": "OK",
+        "count": 21170678,
+        "micro_mae": 1.9435401238037606,
+        "macro_mae": 0.9803121892515753
+      },
+      "zero": {
+        "status": "OK",
+        "count": 77,
+        "micro_mae": 0.27337554895105565,
+        "macro_mae": 0.2793118462628939
+      },
+      "positive": {
+        "status": "OK",
+        "count": 7221193,
+        "micro_mae": 1.1609284998440603,
+        "macro_mae": 2.724753408529922
+      }
+    },
+    "sign": {
+      "accuracy": 0.3739497550502699,
+      "balanced_accuracy": 0.3361141896046254,
+      "present_signs": [
+        "negative",
+        "zero",
+        "positive"
+      ],
+      "recall": {
+        "negative": {
+          "status": "OK",
+          "count": 21170678,
+          "recall": 0.23912894995616107
+        },
+        "zero": {
+          "status": "OK",
+          "count": 77,
+          "recall": 0.0
+        },
+        "positive": {
+          "status": "OK",
+          "count": 7221193,
+          "recall": 0.7692136188577151
+        }
+      },
+      "zero_tolerance": 0.0
+    }
+  },
+  "continuous_encoder": {
+    "reference_scope": "entire frozen component",
+    "shards": [
+      "shard_000.npz",
+      "shard_001.npz",
+      "shard_002.npz",
+      "shard_003.npz",
+      "shard_004.npz",
+      "shard_005.npz",
+      "shard_006.npz",
+      "shard_007.npz",
+      "shard_008.npz",
+      "shard_009.npz",
+      "shard_010.npz",
+      "shard_011.npz",
+      "shard_012.npz"
+    ],
+    "metric": "equal_weight_five_expert_squared_distance; independent ambient implementation",
+    "tangent_scale": 0.18152852356433868,
+    "max_scaled_tangent_norm": 8.827975486277696,
+    "distance_distortion": {
+      "count": 28391948,
+      "mean_abs_error": 1.1952485398035626,
+      "mean_relative_error": 0.6046327718229525,
+      "distance_scale": 1.0,
+      "scale_fitted_on_evaluation": false,
+      "scope": "all valid frozen triple (b,c) pairs, weighted by triple occurrence"
+    },
+    "wall_seconds": 30.28369603585452,
+    "peak_rss_kib": 4735776,
+    "representation": "continuous_encoder_z",
+    "reconstruction": {
+      "status": "OK",
+      "source": "caller-supplied continuous-z reconstruction",
+      "mean_squared_error": 0.00025372100661630407,
+      "mean_l2_error": 0.4046030016793388
+    },
+    "strict_heldout": {
+      "representation": "continuous_encoder_z",
+      "probe_trained": false,
+      "labels_passed_to_model": false,
+      "tangent_scale": 0.18152852356433868,
+      "banks": {
+        "strict_struct_test_degree_matched": {
+          "pairs": 2940,
+          "sha256": "7742e34d49f18c287b33cfbc67dc92ba876a69724d730d90492ec3b87f6ae8ca",
+          "distance": {
+            "count": 2940,
+            "mean": 0.806309024401668,
+            "std": 0.40741415267566583,
+            "min": 0.1481725874186032,
+            "q25": 0.5857955664631478,
+            "median": 0.7068711216116137,
+            "q75": 0.8887353039681261,
+            "max": 4.448173209943069
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2932,
+              "missing": 8,
+              "distance_spearman": 0.06785671074226339,
+              "target": {
+                "count": 2932,
+                "mean": 2.5242155525238745,
+                "std": 0.6453952477689179,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 2.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2917,
+              "missing": 23,
+              "distance_spearman": 0.08021647471262436,
+              "target": {
+                "count": 2917,
+                "mean": 2.860130270826191,
+                "std": 0.7645140357325356,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2940,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2940,
+              "missing": 0,
+              "distance_spearman": -0.06454708031323317,
+              "target": {
+                "count": 2940,
+                "mean": 0.763265306122449,
+                "std": 1.593058139471096,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 20.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2940,
+              "missing": 0,
+              "distance_spearman": -0.05236680170218925,
+              "target": {
+                "count": 2940,
+                "mean": 0.005821831673985282,
+                "std": 0.010516344126011018,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.00986441008632883,
+                "max": 0.125
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2940,
+              "missing": 0,
+              "distance_spearman": -0.08193993529869364,
+              "target": {
+                "count": 2940,
+                "mean": 0.0053851641553607525,
+                "std": 0.009651631037194389,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.00909090909090909,
+                "max": 0.1
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2922,
+              "missing": 18,
+              "distance_spearman": -0.056758086095732074,
+              "target": {
+                "count": 2922,
+                "mean": 0.012546640782521996,
+                "std": 0.02286768342932657,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.021251957255733353,
+                "max": 0.2672612419124244
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_test_direct": {
+          "pairs": 2729,
+          "sha256": "80fe725722ff618cb352761f9280d3d89e2b80cef117c9ae65f8196c4fcecbbd",
+          "distance": {
+            "count": 2729,
+            "mean": 0.7586995086638152,
+            "std": 0.4851030887176268,
+            "min": 0.05760392166124921,
+            "q25": 0.4954487281961272,
+            "median": 0.6394912029404339,
+            "q75": 0.8487648755277596,
+            "max": 6.291552528584679
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2714,
+              "missing": 15,
+              "distance_spearman": 0.004828294312651119,
+              "target": {
+                "count": 2714,
+                "mean": 2.5869565217391304,
+                "std": 0.6273014401839657,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2705,
+              "missing": 24,
+              "distance_spearman": 0.008629973311874083,
+              "target": {
+                "count": 2705,
+                "mean": 2.9844731977818855,
+                "std": 0.8295262604338054,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 7.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2729,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2729,
+              "missing": 0,
+              "distance_spearman": -0.010206853901625615,
+              "target": {
+                "count": 2729,
+                "mean": 0.965188713814584,
+                "std": 2.741033079099087,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 35.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2729,
+              "missing": 0,
+              "distance_spearman": -0.03685898138974767,
+              "target": {
+                "count": 2729,
+                "mean": 0.0058479475310729894,
+                "std": 0.014018492367067682,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.005376344086021506,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2729,
+              "missing": 0,
+              "distance_spearman": -0.0365206942566202,
+              "target": {
+                "count": 2729,
+                "mean": 0.005328408470488314,
+                "std": 0.01227462167492526,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.004629629629629629,
+                "max": 0.14285714285714285
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2699,
+              "missing": 30,
+              "distance_spearman": -0.03657219638815098,
+              "target": {
+                "count": 2699,
+                "mean": 0.016299631906812,
+                "std": 0.03371413730997545,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.021873986367506135,
+                "max": 0.3535533905932738
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_test_shared_in": {
+          "pairs": 2877,
+          "sha256": "ccb5e503da7eb255d9d73b391669657a0990923219658ac04ea1474defd625ab",
+          "distance": {
+            "count": 2877,
+            "mean": 0.7904866205283252,
+            "std": 0.44347313531860705,
+            "min": 0.1413064232672396,
+            "q25": 0.5410757136536974,
+            "median": 0.6774503813374481,
+            "q75": 0.8745137980482723,
+            "max": 5.361878900546602
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2863,
+              "missing": 14,
+              "distance_spearman": 0.03230628725804261,
+              "target": {
+                "count": 2863,
+                "mean": 2.6220747467691234,
+                "std": 0.6184622790766254,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2857,
+              "missing": 20,
+              "distance_spearman": 0.016798287524469137,
+              "target": {
+                "count": 2857,
+                "mean": 2.999649982499125,
+                "std": 0.7855448628375411,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 7.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2877,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2877,
+              "missing": 0,
+              "distance_spearman": -0.03019068620896449,
+              "target": {
+                "count": 2877,
+                "mean": 0.7959680222453945,
+                "std": 2.4853574129195453,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 49.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2876,
+              "missing": 1,
+              "distance_spearman": -0.02318315845625448,
+              "target": {
+                "count": 2876,
+                "mean": 0.004598675232618365,
+                "std": 0.011292004359328811,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.002229971646764213,
+                "max": 0.125
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2876,
+              "missing": 1,
+              "distance_spearman": -0.025209613024956026,
+              "target": {
+                "count": 2876,
+                "mean": 0.0041065943756106865,
+                "std": 0.009485656903117387,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0028422330692437882,
+                "max": 0.08695652173913043
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2856,
+              "missing": 21,
+              "distance_spearman": -0.021281999394408276,
+              "target": {
+                "count": 2856,
+                "mean": 0.012848846600207749,
+                "std": 0.027609861120820162,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.013325744303461482,
+                "max": 0.23570226039551584
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_test_shared_out": {
+          "pairs": 2877,
+          "sha256": "6ea0bda9b4feedd9c7403ee9336505bfb59d168c085fe3e50aa77504b7620b1e",
+          "distance": {
+            "count": 2877,
+            "mean": 0.7796205133554847,
+            "std": 0.41797734796195146,
+            "min": 0.07889317445323593,
+            "q25": 0.5425586319578869,
+            "median": 0.6825153534529443,
+            "q75": 0.867408274399811,
+            "max": 4.3856852188349045
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2859,
+              "missing": 18,
+              "distance_spearman": 0.01716031059968603,
+              "target": {
+                "count": 2859,
+                "mean": 2.651976215459951,
+                "std": 0.6305491908254225,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2846,
+              "missing": 31,
+              "distance_spearman": -0.00734500857165432,
+              "target": {
+                "count": 2846,
+                "mean": 3.0411103302881237,
+                "std": 0.8032326840206077,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 4.0,
+                "max": 7.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2877,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2877,
+              "missing": 0,
+              "distance_spearman": -0.02227574346604987,
+              "target": {
+                "count": 2877,
+                "mean": 0.7101147028154328,
+                "std": 2.0909321131719376,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 26.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2877,
+              "missing": 0,
+              "distance_spearman": -0.016392266410997544,
+              "target": {
+                "count": 2877,
+                "mean": 0.004097969763339059,
+                "std": 0.010743933699464593,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2877,
+              "missing": 0,
+              "distance_spearman": -0.044829370465327256,
+              "target": {
+                "count": 2877,
+                "mean": 0.003986986619150039,
+                "std": 0.010038585783225576,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0,
+                "max": 0.16666666666666666
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2843,
+              "missing": 34,
+              "distance_spearman": -0.02150121757420578,
+              "target": {
+                "count": 2843,
+                "mean": 0.011946636372257133,
+                "std": 0.02729726995036383,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0,
+                "max": 0.4202606379143633
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_test_two_hop": {
+          "pairs": 2907,
+          "sha256": "fedd4ffe3b5e541d36e8f590f59fbfb3ffeb53e1bd23b6ff24c650808fd84d4c",
+          "distance": {
+            "count": 2907,
+            "mean": 0.7997387800517243,
+            "std": 0.3879634420859078,
+            "min": 0.18473613177126677,
+            "q25": 0.5637776797766807,
+            "median": 0.7164646197275707,
+            "q75": 0.9233594719371389,
+            "max": 4.687415355269063
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2902,
+              "missing": 5,
+              "distance_spearman": 0.07905943043923717,
+              "target": {
+                "count": 2902,
+                "mean": 2.5702963473466576,
+                "std": 0.5855953943929891,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2795,
+              "missing": 112,
+              "distance_spearman": 0.057544561305979826,
+              "target": {
+                "count": 2795,
+                "mean": 2.874418604651163,
+                "std": 0.7115004504283678,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2907,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2907,
+              "missing": 0,
+              "distance_spearman": -0.08349768839954858,
+              "target": {
+                "count": 2907,
+                "mean": 0.9102167182662538,
+                "std": 2.2648483087239915,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 23.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2907,
+              "missing": 0,
+              "distance_spearman": -0.08314977474236074,
+              "target": {
+                "count": 2907,
+                "mean": 0.005579588279576285,
+                "std": 0.01125768458576661,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.007272823442293451,
+                "max": 0.1111111111111111
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2907,
+              "missing": 0,
+              "distance_spearman": -0.0714014400575254,
+              "target": {
+                "count": 2907,
+                "mean": 0.005123291706024251,
+                "std": 0.010883780607658438,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.005610109212224216,
+                "max": 0.14285714285714285
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2788,
+              "missing": 119,
+              "distance_spearman": -0.07100011314528136,
+              "target": {
+                "count": 2788,
+                "mean": 0.01635908412545501,
+                "std": 0.031036240191980015,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.02365249792251884,
+                "max": 0.21821789023599236
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_degree_matched": {
+          "pairs": 2938,
+          "sha256": "542719e36e441fc71624413c25dc0335c2ca4eea38e3cdb349c4c678ddb4991c",
+          "distance": {
+            "count": 2938,
+            "mean": 0.8110819638143103,
+            "std": 0.43488168185691833,
+            "min": 0.17006794668192607,
+            "q25": 0.5737985712625707,
+            "median": 0.7016389867007584,
+            "q75": 0.8812011030180171,
+            "max": 4.385589881823815
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2929,
+              "missing": 9,
+              "distance_spearman": 0.08474287060440022,
+              "target": {
+                "count": 2929,
+                "mean": 2.5155343120518947,
+                "std": 0.6171397334461889,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 2.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2924,
+              "missing": 14,
+              "distance_spearman": 0.08019730589523824,
+              "target": {
+                "count": 2924,
+                "mean": 2.8272913816689464,
+                "std": 0.7474951668979857,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 8.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2938,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2938,
+              "missing": 0,
+              "distance_spearman": -0.06572133590102891,
+              "target": {
+                "count": 2938,
+                "mean": 0.7508509189925119,
+                "std": 1.5280030607105082,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 20.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2938,
+              "missing": 0,
+              "distance_spearman": -0.0910060846393234,
+              "target": {
+                "count": 2938,
+                "mean": 0.005684024570011067,
+                "std": 0.010048849788048243,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.009876722966414288,
+                "max": 0.08333333333333333
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2938,
+              "missing": 0,
+              "distance_spearman": -0.07733409509693112,
+              "target": {
+                "count": 2938,
+                "mean": 0.005498145471163288,
+                "std": 0.009645032105821225,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.009324160609207337,
+                "max": 0.06666666666666667
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2922,
+              "missing": 16,
+              "distance_spearman": -0.09236914455999475,
+              "target": {
+                "count": 2922,
+                "mean": 0.012323367391219241,
+                "std": 0.022202226325908965,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0207358317023163,
+                "max": 0.21320071635561044
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_direct": {
+          "pairs": 2726,
+          "sha256": "bc65baff19071f1497f295261ccf8d92c7450d30d0cac41d86e6cd1e97f0d530",
+          "distance": {
+            "count": 2726,
+            "mean": 0.749073411454987,
+            "std": 0.46082605935325904,
+            "min": 0.014884381862193203,
+            "q25": 0.49442935284948203,
+            "median": 0.6330778531061512,
+            "q75": 0.8359130782739043,
+            "max": 4.730348320766928
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2714,
+              "missing": 12,
+              "distance_spearman": 0.012454656145516246,
+              "target": {
+                "count": 2714,
+                "mean": 2.5777450257921886,
+                "std": 0.6136784602709578,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2694,
+              "missing": 32,
+              "distance_spearman": 0.008391394168795946,
+              "target": {
+                "count": 2694,
+                "mean": 2.9387527839643655,
+                "std": 0.7832920765061665,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 7.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2726,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2726,
+              "missing": 0,
+              "distance_spearman": -0.018426733733098874,
+              "target": {
+                "count": 2726,
+                "mean": 1.0066030814380045,
+                "std": 2.8768997452112184,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 44.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2726,
+              "missing": 0,
+              "distance_spearman": 0.0015136115788803835,
+              "target": {
+                "count": 2726,
+                "mean": 0.005289931910338567,
+                "std": 0.012149779855296814,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0054274383078730904,
+                "max": 0.18181818181818182
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2726,
+              "missing": 0,
+              "distance_spearman": -0.012125642355710599,
+              "target": {
+                "count": 2726,
+                "mean": 0.005081707748438543,
+                "std": 0.011522336926997315,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.005263157894736842,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2688,
+              "missing": 38,
+              "distance_spearman": 0.0027552189491366536,
+              "target": {
+                "count": 2688,
+                "mean": 0.015366042850184265,
+                "std": 0.030639849100584145,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.021464932829197512,
+                "max": 0.3333333333333333
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_shared_in": {
+          "pairs": 2881,
+          "sha256": "66b2d85abf63a5674b2e8fd32fd18ea29072204bdc6793d167cecbaf6e8e8a87",
+          "distance": {
+            "count": 2881,
+            "mean": 0.7862118597008237,
+            "std": 0.42635396954331145,
+            "min": 0.1298276558615219,
+            "q25": 0.5372348924048417,
+            "median": 0.6804864393786538,
+            "q75": 0.8888232781664521,
+            "max": 3.775843958452016
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2867,
+              "missing": 14,
+              "distance_spearman": 0.05753928537310622,
+              "target": {
+                "count": 2867,
+                "mean": 2.6260899895361005,
+                "std": 0.6286854281402402,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2860,
+              "missing": 21,
+              "distance_spearman": 0.030427013181547023,
+              "target": {
+                "count": 2860,
+                "mean": 2.9944055944055945,
+                "std": 0.7768302299232109,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2881,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2881,
+              "missing": 0,
+              "distance_spearman": -0.04148104228848996,
+              "target": {
+                "count": 2881,
+                "mean": 0.8927455744533148,
+                "std": 2.950468013781747,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 54.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2881,
+              "missing": 0,
+              "distance_spearman": -0.046058576048515654,
+              "target": {
+                "count": 2881,
+                "mean": 0.004449091564452485,
+                "std": 0.011020513978743667,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0028653295128939827,
+                "max": 0.25
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2881,
+              "missing": 0,
+              "distance_spearman": -0.057911833936722376,
+              "target": {
+                "count": 2881,
+                "mean": 0.004387746170636061,
+                "std": 0.00996412765905388,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0035211267605633804,
+                "max": 0.09523809523809523
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2854,
+              "missing": 27,
+              "distance_spearman": -0.043209639212681235,
+              "target": {
+                "count": 2854,
+                "mean": 0.012840882053527994,
+                "std": 0.028502885221070254,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.014809605970900848,
+                "max": 0.5
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_shared_out": {
+          "pairs": 2876,
+          "sha256": "78b5fe7114b9d9fd3465c4b4656b9cad195f10c2560ad25485b3f11f72e6af96",
+          "distance": {
+            "count": 2876,
+            "mean": 0.8078584918120374,
+            "std": 0.4731293796682167,
+            "min": 0.08948935949427424,
+            "q25": 0.5504404005034835,
+            "median": 0.6850846367790538,
+            "q75": 0.888382218981663,
+            "max": 5.903626872497159
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2863,
+              "missing": 13,
+              "distance_spearman": 0.058683579743700476,
+              "target": {
+                "count": 2863,
+                "mean": 2.6136919315403424,
+                "std": 0.6104066875736089,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2854,
+              "missing": 22,
+              "distance_spearman": 0.050046052835816986,
+              "target": {
+                "count": 2854,
+                "mean": 2.979677645409951,
+                "std": 0.7591583561764632,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2876,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2876,
+              "missing": 0,
+              "distance_spearman": -0.04171081491628836,
+              "target": {
+                "count": 2876,
+                "mean": 0.8303198887343533,
+                "std": 2.6276318752446914,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 47.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2876,
+              "missing": 0,
+              "distance_spearman": -0.0606538499441712,
+              "target": {
+                "count": 2876,
+                "mean": 0.004453751184650242,
+                "std": 0.010130295500072672,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.003392890312993406,
+                "max": 0.1
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2876,
+              "missing": 0,
+              "distance_spearman": -0.01744516586374564,
+              "target": {
+                "count": 2876,
+                "mean": 0.003953523451451449,
+                "std": 0.00999617687941939,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.001445609529625323,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2850,
+              "missing": 26,
+              "distance_spearman": -0.06021328183463143,
+              "target": {
+                "count": 2850,
+                "mean": 0.012764406226990342,
+                "std": 0.026624304039009873,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.01491539339975716,
+                "max": 0.1889822365046136
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_two_hop": {
+          "pairs": 2926,
+          "sha256": "d282477c65d03572ae8605d3e7a9303ea78cae9b12e47a16874bab05c640e64c",
+          "distance": {
+            "count": 2926,
+            "mean": 0.9496667793564966,
+            "std": 0.6155213623540253,
+            "min": 0.16270363698761114,
+            "q25": 0.5850529979430743,
+            "median": 0.7631921084467286,
+            "q75": 0.9866926399477741,
+            "max": 3.9081180946536462
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2923,
+              "missing": 3,
+              "distance_spearman": 0.11909897966557181,
+              "target": {
+                "count": 2923,
+                "mean": 2.5846732808758124,
+                "std": 0.5906656059200032,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2913,
+              "missing": 13,
+              "distance_spearman": 0.14622263102771832,
+              "target": {
+                "count": 2913,
+                "mean": 2.9210435976656366,
+                "std": 0.715633867484483,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2926,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2926,
+              "missing": 0,
+              "distance_spearman": -0.10985109280864595,
+              "target": {
+                "count": 2926,
+                "mean": 0.7980177717019822,
+                "std": 2.099509146087016,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 26.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2926,
+              "missing": 0,
+              "distance_spearman": -0.09343438653638084,
+              "target": {
+                "count": 2926,
+                "mean": 0.005102131235460994,
+                "std": 0.010954255187872134,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.005398140075559431,
+                "max": 0.125
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2926,
+              "missing": 0,
+              "distance_spearman": -0.09123065437531956,
+              "target": {
+                "count": 2926,
+                "mean": 0.004447167747604972,
+                "std": 0.010360681602950016,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.00415805785123967,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2917,
+              "missing": 9,
+              "distance_spearman": -0.09793328129544769,
+              "target": {
+                "count": 2917,
+                "mean": 0.014550323585020846,
+                "std": 0.029390975624617663,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.01928791874526149,
+                "max": 0.2672612419124244
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        }
+      }
+    },
+    "curvature": {
+      "status": "OK",
+      "count": 28391948,
+      "excluded": 0,
+      "centres": 24326,
+      "macro_mae": 2.7511175786802333,
+      "micro_mae": 1.7864154747500234,
+      "strata": {
+        "negative": {
+          "status": "OK",
+          "count": 21170678,
+          "micro_mae": 1.9776477148932086,
+          "macro_mae": 1.1303760196222246
+        },
+        "zero": {
+          "status": "OK",
+          "count": 77,
+          "micro_mae": 0.19533908776660813,
+          "macro_mae": 0.19956339652718583
+        },
+        "positive": {
+          "status": "OK",
+          "count": 7221193,
+          "micro_mae": 1.2257887657826654,
+          "macro_mae": 2.7883881495372256
+        }
+      },
+      "sign": {
+        "accuracy": 0.39073919831073234,
+        "balanced_accuracy": 0.33632345539577274,
+        "present_signs": [
+          "negative",
+          "zero",
+          "positive"
+        ],
+        "recall": {
+          "negative": {
+            "status": "OK",
+            "count": 21170678,
+            "recall": 0.27297618904788973
+          },
+          "zero": {
+            "status": "OK",
+            "count": 77,
+            "recall": 0.0
+          },
+          "positive": {
+            "status": "OK",
+            "count": 7221193,
+            "recall": 0.7359941771394284
+          }
+        },
+        "zero_tolerance": 0.0
+      }
+    }
+  },
+  "full_per_item_report": {
+    "path": "results/research/issue251/HARD_SID_EVALUATION.json",
+    "sha256": "2d37d7001bb97fdbd2a3c0a84fdc1c7a26982e0426eb5d0686cb64d8fa871465",
+    "bytes": 24668880
+  }
+}

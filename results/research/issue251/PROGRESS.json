@@ -1,13 +1,14 @@
 {
   "issue": 251,
-  "commit": "860c9ffcdf94dcc0a83d589dc134ff7e09c9c70e",
-  "commit_role": "MCP cache repair snapshot; model production remains cf0fd50c, later evidence-only commits do not alter executed source",
+  "commit": "ae188a31e057271f30e215cd9f5d546484b4f5b4",
+  "commit_role": "evidence snapshot; model remains cf0fd50c and MCP repair remains860c9ffc",
   "state": "WORKING",
   "done": ["C1", "C3", "C4"],
   "not_run": ["C2 complete catalogue coverage", "C5 full target backward", "C6 actual microstep", "C7 real entry and fourGPU", "C8 full independent remeasurement", "C9 final reconciliation"],
   "failed": [],
-  "running": [{"name": "final_source_entry_revalidation", "pid":2456764, "tool": "verification_check", "transport":"timed_out_at_300s_child_continues", "source_dir": "TIGER_gnn_attention_sectional_rq", "verification_id": "machine:issue251"}, {"name":"final_source_four_rank", "job":"bg_76", "entry":"tools.issue251.launch_validation", "performance_comparability":"diagnostic only; concurrent with entry smoke"}],
-  "next_commands": ["/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue251.collect_evidence", "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue251.run_evaluation"],
+  "running": [{"name":"cached_public_entry_revalidation", "pid":2749016, "server_pid":2740481, "job":"bg_80", "transport":"timed_out_at_300s_child_continues", "tool":"verification_check", "source_dir":"TIGER_gnn_attention_sectional_rq", "verification_id":"machine:issue251"}, {"name":"final_source_four_rank", "controller_pid":2650570, "worker_pids":[2660570,2660571,2660572,2660573], "jobs":["bg_76","bg_79"], "entry":"tools.issue251.launch_validation", "performance_comparability":"diagnostic only; concurrent with entry smoke"}],
+  "next_commands": ["verification_check(source_dir=TIGER_gnn_attention_sectional_rq, verification_id=machine:issue251) after exact cached-entry child exits; must reuse persisted entry", "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue251.collect_evidence after real four-rank completion", "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue251.run_evaluation after checkpoint/export"],
   "blocked_by": "Canonical graph contract differs from frozen issue248/249 assets; finish all reachable verification before BLOCKED reconciliation",
+  "completed_raw_entry": {"pid":2456764, "archive":"results/research/issue251/entry_cf0_uncached", "receipt":"ENTRY_FIRST_OBSERVED.json", "wall_seconds":1715.359, "collision":0.04681335665188924, "public_admission_receipt_available":false},
   "formal_training": false
 }

@@ -1,0 +1,47 @@
+{
+  "status": "PASS",
+  "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue251.recompute_report",
+  "exit_code": 0,
+  "curvature_from_per_item": {
+    "hard_q": {
+      "count": 28391948,
+      "centres": 24326,
+      "macro_mae": 2.684659281195189,
+      "micro_mae": 1.744486568784264
+    },
+    "continuous_z": {
+      "count": 28391948,
+      "centres": 24326,
+      "macro_mae": 2.7511175786802453,
+      "micro_mae": 1.7864154747500292
+    }
+  },
+  "discrete_from_actual_sid": {
+    "L1": {
+      "distinct": 256,
+      "collision": 0.9895879936551837,
+      "sharing": 0.9975190141131492,
+      "used": 256
+    },
+    "L2": {
+      "distinct": 3191,
+      "collision": 0.8702159677878554,
+      "sharing": 0.9376499776304551,
+      "used": 256
+    },
+    "L3": {
+      "distinct": 9959,
+      "collision": 0.5949485500467726,
+      "sharing": 0.7192825476878025,
+      "used": 256
+    }
+  },
+  "first_real_entry_collision": 0.04681335665188924,
+  "strict_banks_checked": 10,
+  "report_sha256": "34249b676816a787c1d25771de659d8c270b1f9a4d90befee6919e19373590fa",
+  "raw_report_sha256": "2d37d7001bb97fdbd2a3c0a84fdc1c7a26982e0426eb5d0686cb64d8fa871465",
+  "sid_sha256": "8ce6603faf07d7c0519722525d37e3c65c25fe42d092746400a726769835a339",
+  "source_bindings_sha256": "de1cf7273fb2c31e433e7779e4efa98940701af33321f122ff321401cffc8c6a",
+  "recheck_source_sha256": "11c3220d10c635bacfa39499b839ccb770e0b0eeb6afbafc20e483f9865d0be1",
+  "scope": "Independent aggregation/report reconciliation after full raw-asset NumPy remeasurement; not new training."
+}

@@ -1,0 +1,30 @@
+{
+  "elapsed_seconds": 0.17900300025939941,
+  "response": {
+    "text": "{\n  \"passed\": false,\n  \"refused\": \"behavior_graph: reads a graph outside the canonical source in model/mechanism.py, tests/test_structure.py\",\n  \"checks\": [\n    {\n      \"status\": \"PASS\",\n      \"name\": \"entry\",\n      \"detail\": \"one epoch runs and exports the identifier (levels 256/256/256, collision 0.047464, allowed at the stage3 gate)\"\n    },\n    {\n      \"status\": \"FAIL\",\n      \"name\": \"behavior_graph\",\n      \"detail\": \"reads a graph outside the canonical source in model/mechanism.py, tests/test_structure.py\"\n    }\n  ],\n  \"source_digest\": \"6f48f1141304376a8cd4b7c19cf3a928243fc933b637b578786ecc8dcdb5444f\",\n  \"checks_fingerprint\": \"4ce8f9720066\",\n  \"tree\": \"/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq\"\n}",
+    "details": {
+      "xdev": {
+        "tool": "mcp__genrec_verification_check",
+        "mode": "execute",
+        "args": {
+          "source_dir": "TIGER_gnn_attention_sectional_rq",
+          "verification_id": "machine:issue251"
+        },
+        "tier": "write",
+        "inner": {
+          "serverName": "genrec",
+          "mcpToolName": "verification_check",
+          "isError": false,
+          "rawContent": [
+            {
+              "type": "text",
+              "text": "{\n  \"passed\": false,\n  \"refused\": \"behavior_graph: reads a graph outside the canonical source in model/mechanism.py, tests/test_structure.py\",\n  \"checks\": [\n    {\n      \"status\": \"PASS\",\n      \"name\": \"entry\",\n      \"detail\": \"one epoch runs and exports the identifier (levels 256/256/256, collision 0.047464, allowed at the stage3 gate)\"\n    },\n    {\n      \"status\": \"FAIL\",\n      \"name\": \"behavior_graph\",\n      \"detail\": \"reads a graph outside the canonical source in model/mechanism.py, tests/test_structure.py\"\n    }\n  ],\n  \"source_digest\": \"6f48f1141304376a8cd4b7c19cf3a928243fc933b637b578786ecc8dcdb5444f\",\n  \"checks_fingerprint\": \"4ce8f9720066\",\n  \"tree\": \"/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq\"\n}"
+            }
+          ],
+          "provider": "native",
+          "providerName": "OMP"
+        }
+      }
+    }
+  }
+}

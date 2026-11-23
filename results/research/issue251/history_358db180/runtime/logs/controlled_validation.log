@@ -1,0 +1,60 @@
+[issue251 rank0] initial_gradient_calibration start[issue251 rank1] initial_gradient_calibration start
+
+[issue251 rank3] initial_gradient_calibration start
+[issue251 rank2] initial_gradient_calibration start
+[issue251 rank3] initial_gradient_calibration finished 92.382s
+[issue251 rank2] initial_gradient_calibration finished 92.383s
+[issue251 rank0] initial_gradient_calibration finished 92.384s
+[issue251 rank1] initial_gradient_calibration finished 92.386s
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/validation_entry.py:168: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  report['initial_original_loss'] = float(original)
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/validation_entry.py:168: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  report['initial_original_loss'] = float(original)
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/validation_entry.py:168: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  report['initial_original_loss'] = float(original)
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/validation_entry.py:168: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  report['initial_original_loss'] = float(original)
+[issue251 rank2] full_catalogue_A1_gradients start
+[issue251 rank1] full_catalogue_A1_gradients start
+[issue251 rank3] full_catalogue_A1_gradients start
+[issue251 rank0] full_catalogue_A1_gradients start
+[issue251 rank2] full_catalogue_A1_gradients finished 164.614s
+[issue251 rank1] full_catalogue_A1_gradients finished 164.692s
+[issue251 rank0] full_catalogue_A1_gradients finished 165.535s
+[issue251 rank3] full_catalogue_A1_gradients finished 166.316s
+[issue251 rank3] detached_cost_A1_negative start
+[issue251 rank2] detached_cost_A1_negative start
+[issue251 rank0] detached_cost_A1_negative start
+[issue251 rank1] detached_cost_A1_negative start
+[issue251 rank1] detached_cost_A1_negative finished 79.169s
+[issue251 rank2] detached_cost_A1_negative finished 79.880s
+[issue251 rank3] detached_cost_A1_negative finished 79.995s
+[issue251 rank0] detached_cost_A1_negative finished 80.069s
+[issue251 rank0] DDP_controlled_microstep start
+[issue251 rank3] DDP_controlled_microstep start
+[issue251 rank2] DDP_controlled_microstep start
+[issue251 rank1] DDP_controlled_microstep start
+[rank1]:[W1124 03:21:52.040063359 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank0]:[W1124 03:21:53.603279250 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank2]:[W1124 03:21:53.735230729 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank3]:[W1124 03:21:53.908472257 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[issue251 rank2] DDP_controlled_microstep finished 170.644s
+[issue251 rank3] DDP_controlled_microstep finished 170.644s
+[issue251 rank1] DDP_controlled_microstep finished 170.643s
+[issue251 rank0] DDP_controlled_microstep finished 170.644s
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+[issue251 rank0] rank0_export_reload start
+[issue251 rank0] rank0_export_reload finished 321.445s
+[issue251 rank0] all_28391948_targets_end_to_end start
+[issue251 rank0] all_28391948_targets_end_to_end finished 213.049s

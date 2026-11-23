@@ -1,0 +1,22 @@
+test_real_loss_tape_bound_and_gradient_equivalence (tools.research.stage2.tests.test_gnn_activation_memory.ActivationMemoryTests) ... FAIL
+
+======================================================================
+FAIL: test_real_loss_tape_bound_and_gradient_equivalence (tools.research.stage2.tests.test_gnn_activation_memory.ActivationMemoryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_gnn_activation_memory.py", line 64, in test_real_loss_tape_bound_and_gradient_equivalence
+    self.assertEqual(result.returncode,0,result.stdout+'\n'+result.stderr)
+AssertionError: 1 != 0 : {"actual_loss_saved_float_elements": 114910562, "actual_loss": 0.0005908388993702829, "maximum_saved_float_elements": 5000000}
+
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_gnn_activation_memory.py", line 69, in <module>
+    if sys.argv[1:]==['--probe']:probe()
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/tests/test_gnn_activation_memory.py", line 46, in probe
+    assert bounded[0]<5000000,'expanded ego-node GNN activations remain on the frozen-batch training tape'
+AssertionError: expanded ego-node GNN activations remain on the frozen-batch training tape
+
+
+----------------------------------------------------------------------
+Ran 1 test in 167.816s
+
+FAILED (failures=1)

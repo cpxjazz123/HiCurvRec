@@ -1,0 +1,7 @@
+C7实际公开准入回执已取回，整体FAIL/合同阻塞，而非NOT_RUN：`verification_check({"source_dir":"TIGER_gnn_attention_sectional_rq","verification_id":"machine:issue251"})` 返回 `entry=PASS`、`behavior_graph=FAIL`，原文 `reads a graph outside the canonical source in model/mechanism.py, tests/test_structure.py`。source_digest `6f48f1141304376a8cd4b7c19cf3a928243fc933b637b578786ecc8dcdb5444f`，checks_fingerprint `4ce8f9720066`。
+
+修复后的实际入口worker2749016完成1 epoch/global4096，1592.004秒；原始SID独立重算前三码碰撞0.047464107048440285，24587项、4列。checkpoint SHA `f853bc203efe8005aad82f6b33b6136b115dbf520065d1fa107258de7da00b26`，SID SHA `4e6de122fcd885254dc52a2d19153ea4e4ac4b79e4f55c301b10601f49f7d612`。这是第二次入口验证的独立产物，不与首次入口或受控微步SID混用。没有正式训练。
+
+随后同一公开工具0.179秒取回持久化、源码/配置/运行时代码绑定的entry结果，并重新验图；未再启动一轮入口。磁盘缓存与公开checks逐项相等。`ENTRY_PUBLIC_RECEIPT.json:12675d046954f62e3dab7ed81fae02a29a3b14111ea857b436c2bb47c8e6f87f`；`CACHE_RECEIPT_PROOF.json:35e454522ebe50196789cd4507af8f688d18cea988b9c90ddf3c28a530918450`；`ENTRY_FINAL_OBSERVED.json:109c873b2564065ceac4907185373aea821c1f58b30374bee6b46cbdb21aed8f`。缓存本体SHA `dcfaced066847857136f442c9e6876c3cc0d931fc8f5544d0ef9ed2d72e24480`，MCP共享源SHA `6c2b26a344ee0d3b7e9bbe373cec6eedd0d2e902d151fba57eac8c7d08655519`。三服务均仅重载目标子进程；stage2_status实际idle，stage3_status只读取历史TIGER结果，不是本候选Stage3。
+
+真实入口OOM、端口、图读取漏检与MCP结果丢失均已留下红→绿回归并实测修复；四卡、全部目标回传、重导出和独立全量评估已完成。剩下的不是待写代码或待跑测试：冻结#248/#249图与规范图严格不等（62501有向边/120318无向弧差集），既不能重建冻结目标，也不能绕过§89b。仅owner的具名例外或批准重冻结资产能解除；保持fail-closed，不把四卡通过写成准入通过。

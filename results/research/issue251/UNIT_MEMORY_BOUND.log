@@ -1,0 +1,104 @@
+test_empty_and_all_invalid_use_fixed_null (test_attention.ExpertAttentionTests) ... ok
+test_hand_computed_two_normalizations (test_attention.ExpertAttentionTests) ... /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_attention.py:66: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  self.assertGreater(float(weights.max() - weights.min()), 0.01)
+ok
+test_independent_queries_and_all_gradient_groups_train (test_attention.ExpertAttentionTests) ... ok
+test_padding_mask_and_repeated_items (test_attention.ExpertAttentionTests) ... ok
+test_permutation_equivariance_with_fixed_null_slot (test_attention.ExpertAttentionTests) ... ok
+test_single_token_degeneracy (test_attention.ExpertAttentionTests) ... ok
+test_smooth_directional_finite_differences_of_both_outputs (test_attention.ExpertAttentionTests) ... ok
+test_actual_attention_intervention_changes_hard_codeword (test_attention_pipeline.AttentionPipelineTests) ... ok
+test_duplicate_global_items_share_exact_attention_outputs (test_attention_pipeline.AttentionPipelineTests) ... ok
+test_invalid_nan_padding_has_no_influence (test_attention_pipeline.AttentionPipelineTests) ... ok
+test_centre_normalization_masks_invalid_rows (test_curvature_loss.CurvatureTests) ... ok
+test_chunked_gradients_match_explicit_reference_sum (test_curvature_loss.CurvatureTests) ... ok
+test_exact_full_reference_matches_hand_answer (test_curvature_loss.CurvatureTests) ... ok
+test_mixed_centre_stream_preserves_huber_mean_and_gradients (test_curvature_loss.CurvatureTests) ... ok
+test_out_of_catalogue_centres_are_not_silently_dropped (test_curvature_loss.CurvatureTests) ... ok
+test_reference_components_are_not_batch_local (test_curvature_loss.CurvatureTests) ... ok
+test_actual_launcher_changes_invalidate_source_evidence (test_execution.ExecutionTests) ... ok
+test_rank0_calibration_does_not_advance_rotating_floor_history (test_execution.ExecutionTests) ... ok
+test_balancing_cannot_be_replaced_by_argmin (test_known_answers.KnownAnswerTests) ... ok
+test_hand_answers_common_tangent_and_spherical_wrap (test_known_answers.KnownAnswerTests) ... ok
+test_behavior_off_applies_to_catalogue_selection_cost (test_mechanism.MechanismTests) ... ok
+test_detached_cost_breaks_gate_path (test_mechanism.MechanismTests) ... ok
+test_fixed_curvature_metric_reaches_selection_gate_and_gnn (test_mechanism.MechanismTests) ... ok
+test_hard_q_exactly_decodes_three_ids (test_mechanism.MechanismTests) ... ok
+test_installed_framework_guards_reject_duplicate_codewords (test_mechanism.MechanismTests) ... ok
+test_missing_item_identity_is_rejected (test_mechanism.MechanismTests) ... ok
+test_designated_assertions_detect_mutations (test_mutations.Mutations) ... ok
+test_binding_detects_asset_drift_and_source_change (test_provenance.ProvenanceTests) ... ok
+test_checkpoint_binding_rejects_source_drift_since_capture (test_provenance.ProvenanceTests) ... ok
+test_missing_candidate_provenance_rejects_checkpoint (test_provenance.ProvenanceTests) ... ok
+test_training_split_drift_invalidates_binding (test_provenance.ProvenanceTests) ... ok
+test_controlled_weight_intervention_changes_hard_id (test_reference.GeometryTests) ... ok
+test_fixed_mean_switches_and_broadcasting (test_reference.GeometryTests) ... ok
+test_hyperbolic_saturation_keeps_radial_distance (test_reference.GeometryTests) ... ok
+test_independent_lorentz_sphere_references (test_reference.GeometryTests) ... ok
+test_smooth_cost_finite_differences (test_reference.GeometryTests) ... ok
+test_zero_coincident_finite_gradients (test_reference.GeometryTests) ... ok
+test_balanced_marginals_and_hand_answer (test_reference.SelectionTests) ... ok
+test_exact_hard_forward_and_only_soft_backward (test_reference.SelectionTests) ... ok
+test_frozen_hard_rule_exact_and_inference_argmin (test_reference.SelectionTests) ... ok
+test_saturated_probabilities_are_finite (test_reference.SelectionTests) ... ok
+test_soft_finite_differences_both_paths (test_reference.SelectionTests) ... ok
+test_directed_hand_readout_and_padding (test_structure.StructureTests) ... ok
+test_initial_feature_cache_real_root (test_structure.StructureTests) ... ok
+test_separate_boundaries_duplicates_chunks_isolate_empty (test_structure.StructureTests) ... ok
+
+----------------------------------------------------------------------
+Ran 45 tests in 9.877s
+
+OK
+test_component_reference_and_index_validation (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_continuous_is_separate_actual_input_with_same_metrics (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_continuous_masks_fixed_scale_distortion_and_reference_enforcement (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_discrete_prefix_occupancy_and_reconstruction (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_distortion_pairs_cannot_disable_full_reference_validation (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_existing_unlabelled_strict_bank_schema_is_not_relabelled (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_explicit_labels_enforce_full_refs_with_distortion_mapping (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_frozen_tangent_scale_is_forwarded_without_fitting (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_graph_proves_components_and_conflicting_labels_fail (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_hard_decode_and_explicit_a1_known_answer (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_heldout_strict_wrapper_uses_only_decoded_distances (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_historical_tiger_reuses_provenance_safe_comparison (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_macro_differs_from_micro_with_repeated_centres (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_masked_targets_do_not_enter_metrics (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_missing_component_evidence_fails_even_with_complete_refs (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_negative_only_and_zero_strata (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_raw_and_fixed_distance_distortion_do_not_fit_evaluation (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_sign_balancing_does_not_reward_majority_baseline (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_full_stream_counts_masks_macro_and_micro (tools.issue251.test_full_evaluation.FullEvaluationTests) ... [full-evaluation] tiny.npz valid=4 cumulative=4
+ok
+test_independent_geometry_matches_production_and_hand_values (tools.issue251.test_full_evaluation.FullEvaluationTests) ... ok
+test_verify_preserves_newer_manifest_bytes (tools.graph_infra.tests.test_v5_verify_readonly.VerifyReadonlyTests) ... {
+  "reused": {
+    "verified_assets": 1,
+    "manifest_version": "v6-cross-attention-251"
+  },
+  "registered": {
+    "assets": 1,
+    "version": "v6-cross-attention-251"
+  },
+  "seconds": 0.0009509967640042305
+}
+ok
+test_cycle_self_loop_and_nonconsecutive_global_ids (tools.graph_infra.tests.test_induced_edges.InducedEdgeTests) ... ok
+test_local_order_direction_and_outside_boundary (tools.graph_infra.tests.test_induced_edges.InducedEdgeTests) ... ok
+test_effective_rendezvous_keeps_frozen_port (tools.research.stage2.tests.test_frozen_port.LauncherPortTests) ... W1124 04:00:19.311210 2350956 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] 
+W1124 04:00:19.311210 2350956 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+W1124 04:00:19.311210 2350956 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W1124 04:00:19.311210 2350956 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+ok
+test_broken_source_fails_closed (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... ok
+test_comments_and_strings_do_not_create_a_graph_reader (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... ok
+test_module_import_alias_cannot_hide_graph_use (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... ok
+test_reader_import_alias_cannot_hide_graph_use (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... ok
+test_shared_ego_reader_is_foreign_not_inapplicable (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... ok
+test_unrelated_semantic_model_remains_inapplicable (tools.research.stage2.tests.test_external_graph_reader.ExternalGraphReaderTests) ... ok
+
+----------------------------------------------------------------------
+Ran 30 tests in 0.540s
+
+OK

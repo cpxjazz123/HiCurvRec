@@ -1,0 +1,26 @@
+{
+  "actual_entry_pid": 2749016,
+  "public_receipt": "ENTRY_PUBLIC_RECEIPT.json",
+  "source_digest": "6f48f1141304376a8cd4b7c19cf3a928243fc933b637b578786ecc8dcdb5444f",
+  "train_end": {
+    "event": "train_end",
+    "timestamp": 1795457617.8207996,
+    "wall_time_s": 1592.018,
+    "total_wall_time_s": 1592.004,
+    "final_collision": 0.047464107048440285,
+    "checkpoint_selection": "final_epoch",
+    "sid_shape": [
+      24587,
+      4
+    ],
+    "output_sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_conformance/TIGER_gnn_attention_sectional_rq/sids_for_hgrec.npy",
+    "output_json": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_conformance/TIGER_gnn_attention_sectional_rq/item_sids.json",
+    "unique_after_extend": 24587
+  },
+  "recomputed_collision": 0.047464107048440285,
+  "sha256": {
+    "rqvae_best.pth": "f853bc203efe8005aad82f6b33b6136b115dbf520065d1fa107258de7da00b26",
+    "item_sids.json": "4e6de122fcd885254dc52a2d19153ea4e4ac4b79e4f55c301b10601f49f7d612",
+    "logs/training_metrics.jsonl": "12d89b9ddd4331b2428193436e5d6b07fdeab8d1ed72659fde24cb2c31fe4848"
+  }
+}

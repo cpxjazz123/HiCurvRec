@@ -1,0 +1,14 @@
+{
+  "request": "ENTRY_RETRY_TRANSPORT.json",
+  "observed_at_unix": 1795456360.2267697,
+  "workers": [
+    {
+      "pid": 2749016,
+      "parent": 2740481,
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -c import os, sys;os.environ['GENREC_SINGLE_GPU'] = '1';sys.path.insert(0, '/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq');import train_rqvae as t;t.EPOCHS = 1;t.RESULT_DIR = __import__('pathlib').Path('/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_conformance/TIGER_gnn_attention_sectional_rq');t.OUTPUT_SID = t.RESULT_DIR / 'sids_for_hgrec.npy';t.OUTPUT_JSON = t.RESULT_DIR / 'item_sids.json';t.CHECKPOINT = t.RESULT_DIR / 'rqvae_best.pth';t.LOG_DIR = t.RESULT_DIR / 'logs';setattr(t, 'METRICS_PATH', t.LOG_DIR / 'training_metrics.jsonl') if hasattr(t, 'METRICS_PATH') else None;setattr(t, 'EXPORT_MANIFEST', t.RESULT_DIR / 'export_manifest.json') if hasattr(t, 'EXPORT_MANIFEST') else None;t.main() "
+    }
+  ],
+  "actual_mode": "sanctioned real entry, one epoch, world1/global4096",
+  "formal_training": false,
+  "receipt_retrieval": "wait exact child, then same public verification_check; cache must avoid another entry"
+}

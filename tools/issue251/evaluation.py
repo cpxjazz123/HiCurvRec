@@ -284,6 +284,19 @@ def evaluate_continuous(z, triples, targets, reference_sets,
     return report
 
 
+def evaluate_reconstruction(embeddings, reconstruction, *, representation):
+    """Aligned actual decoder errors, labelled by the decoded representation."""
+    target, actual = _numpy(embeddings), _numpy(reconstruction)
+    if (target.ndim != 2 or target.shape != actual.shape or not len(target) or
+            not target.shape[1] or not np.isfinite(target).all() or not np.isfinite(actual).all()):
+        raise ValueError('reconstruction and embeddings must be aligned finite item matrices')
+    difference = actual.astype(np.float64) - target
+    l2 = np.linalg.norm(difference, axis=1)
+    return {'status': 'OK', 'source': 'caller-supplied '+representation+' reconstruction',
+            'mean_squared_error': float(np.square(difference).mean()),
+            'mean_l2_error': float(l2.mean()), 'per_item_l2': l2.tolist()}
+
+
 
 def evaluate(sid, codebooks, triples, targets, reference_sets,
              components_or_graph_optional=None, scale=1.0, *, fixed_squared,
@@ -324,15 +337,11 @@ def evaluate(sid, codebooks, triples, targets, reference_sets,
     if (embeddings is None) != (reconstruction is None):
         raise ValueError('embedding and hard-q reconstruction must be supplied together')
     if embeddings is not None:
-        target, actual = _numpy(embeddings), _numpy(reconstruction)
-        if (target.ndim != 2 or target.shape != actual.shape or len(target) != len(q) or
-                not target.shape[1] or not np.isfinite(target).all() or not np.isfinite(actual).all()):
-            raise ValueError('reconstruction and embeddings must be aligned finite item matrices')
-        difference = actual.astype(np.float64) - target
-        report['reconstruction'] = {'status': 'OK', 'source': 'caller-supplied hard-q reconstruction',
-                                    'mean_squared_error': float(np.square(difference).mean()),
-                                    'mean_l2_error': float(np.linalg.norm(difference, axis=1).mean()),
-                                    'per_item_l2': np.linalg.norm(difference, axis=1).tolist()}
+        target = _numpy(embeddings)
+        if target.ndim != 2 or len(target) != len(q):
+            raise ValueError('reconstruction and embeddings must align with SID items')
+        report['reconstruction'] = evaluate_reconstruction(
+            target, reconstruction, representation='hard-q')
     return report
 
 
@@ -344,9 +353,25 @@ def evaluate_heldout(sid, codebooks, heldout, scale=1.0, *, fixed_squared):
     reported directly. Optional binary ``labels`` permit a tie-correct distance
     AUC; absence is NA, never an inferred negative label or trained probe.
     """
-    _positive(scale, 'scale')
     _, _, q = _decode(sid, codebooks)
-    report = {'representation': 'hard_sid_decoded', 'probe_trained': False,
+    return _evaluate_heldout_coordinates(q, heldout, scale, fixed_squared,
+                                         'hard_sid_decoded')
+
+
+def evaluate_continuous_heldout(z, heldout, scale=1.0, *, fixed_squared):
+    """Use actual continuous coordinates on the very same frozen strict banks."""
+    return _evaluate_heldout_coordinates(z, heldout, scale, fixed_squared,
+                                         'continuous_encoder_z')
+
+
+def _evaluate_heldout_coordinates(values, heldout, scale, fixed_squared, representation):
+    _positive(scale, 'scale')
+    values = _numpy(values)
+    if (values.ndim != 2 or not len(values) or not values.shape[1] or
+            values.dtype.kind not in 'fiu' or not np.isfinite(values).all()):
+        raise ValueError('held-out coordinates must be a finite nonempty item matrix')
+    q = torch.from_numpy(values.astype(np.float64, copy=False))
+    report = {'representation': representation, 'probe_trained': False,
               'labels_passed_to_model': False, 'tangent_scale': float(scale), 'banks': {}}
     for name in heldout.strict_banks():
         entry = heldout.entries.get(name, {})

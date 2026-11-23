@@ -1,0 +1,23 @@
+test_continuous_heldout_uses_actual_z_not_decoded_sid (tools.issue251.test_evaluation.EvaluationTests) ... ERROR
+test_continuous_reconstruction_has_its_own_actual_errors (tools.issue251.test_evaluation.EvaluationTests) ... ERROR
+
+======================================================================
+ERROR: test_continuous_heldout_uses_actual_z_not_decoded_sid (tools.issue251.test_evaluation.EvaluationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue251/test_evaluation.py", line 238, in test_continuous_heldout_uses_actual_z_not_decoded_sid
+    report = evaluation.evaluate_continuous_heldout(
+AttributeError: module 'tools.issue251.evaluation' has no attribute 'evaluate_continuous_heldout'
+
+======================================================================
+ERROR: test_continuous_reconstruction_has_its_own_actual_errors (tools.issue251.test_evaluation.EvaluationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue251/test_evaluation.py", line 248, in test_continuous_reconstruction_has_its_own_actual_errors
+    report = evaluation.evaluate_reconstruction(
+AttributeError: module 'tools.issue251.evaluation' has no attribute 'evaluate_reconstruction'
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.001s
+
+FAILED (errors=2)

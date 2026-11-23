@@ -1,0 +1,28 @@
+{
+  "status": "COMPLETE_RAW_ARTIFACTS_NO_PUBLIC_RECEIPT",
+  "actual_entry_pid": 2456764,
+  "model_source_commit": "cf0fd50c717983c13e3088384c3bc86b7375a452",
+  "archive": "results/research/issue251/entry_cf0_uncached",
+  "train_end": {
+    "event": "train_end",
+    "timestamp": 1795455819.4873075,
+    "wall_time_s": 1715.374,
+    "total_wall_time_s": 1715.359,
+    "final_collision": 0.04681335665188924,
+    "checkpoint_selection": "final_epoch",
+    "sid_shape": [
+      24587,
+      4
+    ],
+    "output_sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_conformance/TIGER_gnn_attention_sectional_rq/sids_for_hgrec.npy",
+    "output_json": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_conformance/TIGER_gnn_attention_sectional_rq/item_sids.json",
+    "unique_after_extend": 24587
+  },
+  "sha256": {
+    "sids_for_hgrec.npy": "54213be44c72ca91d369bb25fb148b6ae6edbc54f67aebd75fc55685c7bdfe5a",
+    "rqvae_best.pth": "29086ea2f679053a4fc85fcf9951704fa63185e257962c525749a2364241e1b0",
+    "item_sids.json": "6379a86272a8872a9bc3cf5ab3894e81e921d0b6b1c636727116581fd7a9b3e1",
+    "logs/training_metrics.jsonl": "57a918831e0ddf61180f294c90b678f2fb77750efaeb19b872cbed6fe0aee46a"
+  },
+  "interpretation": "Actual process finished and train_end/checkpoint/SID are present. Old MCP route did not persist a retrievable admission receipt; do not invent one."
+}

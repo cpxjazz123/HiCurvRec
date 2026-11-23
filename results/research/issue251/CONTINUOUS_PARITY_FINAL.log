@@ -1,0 +1,28 @@
+test_component_reference_and_index_validation (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_continuous_heldout_uses_actual_z_not_decoded_sid (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_continuous_is_separate_actual_input_with_same_metrics (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_continuous_masks_fixed_scale_distortion_and_reference_enforcement (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_continuous_reconstruction_has_its_own_actual_errors (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_discrete_prefix_occupancy_and_reconstruction (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_distortion_pairs_cannot_disable_full_reference_validation (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_existing_unlabelled_strict_bank_schema_is_not_relabelled (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_explicit_labels_enforce_full_refs_with_distortion_mapping (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_frozen_tangent_scale_is_forwarded_without_fitting (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_graph_proves_components_and_conflicting_labels_fail (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_hard_decode_and_explicit_a1_known_answer (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_heldout_strict_wrapper_uses_only_decoded_distances (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_historical_tiger_reuses_provenance_safe_comparison (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_macro_differs_from_micro_with_repeated_centres (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_masked_targets_do_not_enter_metrics (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_missing_component_evidence_fails_even_with_complete_refs (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_negative_only_and_zero_strata (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_raw_and_fixed_distance_distortion_do_not_fit_evaluation (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_sign_balancing_does_not_reward_majority_baseline (tools.issue251.test_evaluation.EvaluationTests) ... ok
+test_full_stream_counts_masks_macro_and_micro (tools.issue251.test_full_evaluation.FullEvaluationTests) ... [full-evaluation] tiny.npz valid=4 cumulative=4
+ok
+test_independent_geometry_matches_production_and_hand_values (tools.issue251.test_full_evaluation.FullEvaluationTests) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.237s
+
+OK

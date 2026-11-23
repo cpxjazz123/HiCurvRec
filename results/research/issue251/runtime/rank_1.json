@@ -1,0 +1,392 @@
+{
+  "rank": 1,
+  "world_size": 4,
+  "seed": 42,
+  "controlled_microstep": true,
+  "formal_training": false,
+  "timings_seconds": {
+    "initial_gradient_calibration": 117.95132490247488,
+    "full_catalogue_A1_gradients": 162.52252237405628,
+    "detached_cost_A1_negative": 79.47620261181146,
+    "DDP_controlled_microstep": 170.17483597062528
+  },
+  "status": "pass",
+  "run_id": "issue251_validation_2660533",
+  "worker_pid": 2660571,
+  "controller_pid": 2660533,
+  "master_port": 50202,
+  "pretrained": {
+    "path": "results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth",
+    "sha256": "af8efc29a8bcbbe5394cc5e358acf7b14c0e78ae99d8a8b9e5faf03fdddd97a8",
+    "missing_new_state": [
+      "tangent_scale",
+      "curvature_weight",
+      "target_scale",
+      "structure.tokens.input.weight",
+      "structure.tokens.input.bias",
+      "structure.tokens.layers.0.self_linear.weight",
+      "structure.tokens.layers.0.self_linear.bias",
+      "structure.tokens.layers.0.incoming.weight",
+      "structure.tokens.layers.0.outgoing.weight",
+      "structure.tokens.layers.1.self_linear.weight",
+      "structure.tokens.layers.1.self_linear.bias",
+      "structure.tokens.layers.1.incoming.weight",
+      "structure.tokens.layers.1.outgoing.weight",
+      "structure.attention.query",
+      "structure.attention.null_token",
+      "structure.attention.key.weight",
+      "structure.attention.key.bias",
+      "structure.attention.value.weight",
+      "structure.attention.value.bias",
+      "structure.attention.score.0.weight",
+      "structure.attention.score.0.bias",
+      "structure.attention.score.2.weight",
+      "structure.attention.score.2.bias"
+    ]
+  },
+  "source_hashes": {
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/assignment_floor.py": "29ce6083bd8ceafa297d610f5780bea014e0af2417431fe82c3d8ed12f0c85b6",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/distances/__init__.py": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/distances/distance.py": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/__init__.py": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/_pairs.py": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/codebook.py": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/commitment.py": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/quantization.py": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/reconstruction.py": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/__init__.py": "fc51b6b47b052833e3bb249a00a581da6a6f27bb4905fb58237a2865354c0f81",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/attention.py": "a227155453e1d7c79cb9cf5c59a8a5e3f7defa88895d784ae499a34d25d42ac6",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/curvature.py": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/geometry.py": "1478e2cc92dbfa13478b3eecc9a74c15a1e33a0338c8fdb0b72339324d6c1d9e",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/layers.py": "9a61bd93018711972f6562176f5b46ec16908c6900102890b188174289bea2fa",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/mechanism.py": "337765e1a081f5778db1f5588cea5a697073e4f28ed21ace1cc8efd1fc224b19",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/model.py": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/provenance.py": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/selection.py": "aaf40e7d14eced220dae00f6f2aa14cb33f5d911c41fb94b8d868dcecf32d524",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py": "09d59072ce77e869b505423dbd00e9c529bd97f1cb8f1a1d6691c71f9fdc8064",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure_gate.py": "74e307fb00f72cc847c2ed66f3bcfa329e55243960537a6fec89ec4ccdf50802",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/utils.py": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/reference.py": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_attention.py": "bb7d7f20102955b4c6fe626d531e37c23911118ce15d9cf727007fade0dcb76e",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_attention_pipeline.py": "3a0c3049f5126090473301f57dd2390ff1bcbd6d3ff0a7c3807a702ed5740237",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_curvature_loss.py": "d260562cb8990411a1680ac0792006db787619ddafcc5a6c54d09fa13142f633",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_execution.py": "3342ab2ef7b711570bf7230b7b935c4f513dc6d1b2665b9425671492971bc025",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_known_answers.py": "4eda7c1d194193714be34b548454af0eb4a36a418ee8f90c24d7039921090938",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py": "d348fb86b3576709d3f49d339550edc47d83d5ea27899d99cc26868ebea3f6e5",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mutations.py": "7a121e8d4739035f462b206746ced069cf96bd1ad310d183ff1620f29e3bcb73",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_provenance.py": "f66ea883e455f20e2b10cbd120a68d878ed14d7a8468a5fc8f42ff5c0c3d29d7",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_reference.py": "f4fb492aff0301419ee6fe0ee06ca7943c639b552e3d150a2f1cd45d3bad7cc2",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_structure.py": "1d642b83be753213453ab6262c01a251ec4cf08ec5348954428e7de9114e6b0f",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/train_config.py": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/train_rqvae.py": "6efe2353a64bc5ed1595253c94214ba7c7847415e658bfa376f11be0fd479865",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/validation_entry.py": "fb8362c3e337fd1cb84fd3739e67ff3ea6f6e59798a5970210f4767df4fa55e8",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+    "assets/manifest.json": "23a0a6e2c28795c9b768d702e048c5bbd1fe31f749ad0ed3860709f2ef457463",
+    "tools/issue251/launch_validation.py": "16073f9d2a017e6a4882660cf897155874f3bef5debb3d68c9758d6a7a221ba6",
+    "tools/research/stage2/launcher.py": "2f4f4e1fb0b80d3c56e67ee7b526d4d873685c30e21cb547b36a20bbc3bb4dc3",
+    "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+    "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+    "results/research/issue251/CONTRACT.md": "4c4958596a2b40a2bf177e29780d5eeda199e5d2e3495aeafafd4c265b204892"
+  },
+  "embedding_sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+  "catalogue_size": 24587,
+  "curvature_centres": [
+    1
+  ],
+  "reference_count": 24471,
+  "valid_triples": 36,
+  "phase": "DDP_controlled_microstep",
+  "calibration": {
+    "reconstruction_gradient": 0.0011399938957765698,
+    "curvature_gradient": 1.0794994831085205,
+    "lambda": 0.0010560393566265702
+  },
+  "tangent_scale": 0.18152852356433868,
+  "target_scale": 2.000375270843506,
+  "last_layer_sinkhorn": true,
+  "initial_original_loss": 0.0021275929175317287,
+  "initial_reconstruction_loss": 0.00039047200698405504,
+  "original_gradients": {
+    "encoder": {
+      "norm": 0.001064237399309951,
+      "none": 0,
+      "zero": 0,
+      "parameters": 8
+    },
+    "GNN": {
+      "norm": 2.5330956292927755e-07,
+      "none": 0,
+      "zero": 0,
+      "parameters": 10
+    },
+    "Q": {
+      "norm": 1.0539868136581831e-07,
+      "none": 0,
+      "zero": 0,
+      "parameters": 1
+    },
+    "K": {
+      "norm": 1.5029528416912387e-07,
+      "none": 0,
+      "zero": 0,
+      "parameters": 2
+    },
+    "V": {
+      "norm": 1.0148086954656014e-07,
+      "none": 0,
+      "zero": 0,
+      "parameters": 2
+    },
+    "score": {
+      "norm": 1.0785144125199229e-07,
+      "none": 0,
+      "zero": 0,
+      "parameters": 4
+    },
+    "codebook": {
+      "norm": 0.0013883964000905391,
+      "none": 0,
+      "zero": 0,
+      "parameters": 3
+    },
+    "decoder": {
+      "norm": 0.002211505638307304,
+      "none": 0,
+      "zero": 0,
+      "parameters": 8
+    }
+  },
+  "initial_curvature_loss": 1.6217138767242432,
+  "curvature_gradients": {
+    "encoder": {
+      "norm": 0.5549969956211038,
+      "none": 0,
+      "zero": 0,
+      "parameters": 8
+    },
+    "GNN": {
+      "norm": 2.8300756406460247e-05,
+      "none": 0,
+      "zero": 0,
+      "parameters": 10
+    },
+    "Q": {
+      "norm": 1.516612914660776e-05,
+      "none": 0,
+      "zero": 0,
+      "parameters": 1
+    },
+    "K": {
+      "norm": 2.0526928433271893e-05,
+      "none": 0,
+      "zero": 0,
+      "parameters": 2
+    },
+    "V": {
+      "norm": 4.421170161985305e-06,
+      "none": 0,
+      "zero": 0,
+      "parameters": 2
+    },
+    "score": {
+      "norm": 4.600005427422138e-06,
+      "none": 0,
+      "zero": 0,
+      "parameters": 4
+    },
+    "codebook": {
+      "norm": 0.34152888162558404,
+      "none": 0,
+      "zero": 0,
+      "parameters": 3
+    },
+    "decoder": {
+      "norm": 0.0,
+      "none": 8,
+      "zero": 0,
+      "parameters": 8
+    }
+  },
+  "loss_gradient_cosine": -0.08425325180575338,
+  "unweighted_gradient_ratio": 231.10619063719622,
+  "weighted_gradient_ratio": 0.24405758262884245,
+  "module_gradient_comparison": {
+    "encoder": {
+      "raw_curvature_norm": 0.5549969956211038,
+      "weighted_curvature_norm": 0.00058609951011739,
+      "original_norm": 0.001064237399309951,
+      "weighted_ratio": 0.5507225272269285,
+      "cosine": -0.2645980968536513
+    },
+    "GNN": {
+      "raw_curvature_norm": 2.8300756406460247e-05,
+      "weighted_curvature_norm": 2.988675541786521e-08,
+      "original_norm": 2.5330956292927755e-07,
+      "weighted_ratio": 0.11798510515060738,
+      "cosine": 0.5797516338344696
+    },
+    "Q": {
+      "raw_curvature_norm": 1.516612914660776e-05,
+      "weighted_curvature_norm": 1.6016052218906605e-08,
+      "original_norm": 1.0539868136581831e-07,
+      "weighted_ratio": 0.15195685573444706,
+      "cosine": 0.7020137844419161
+    },
+    "K": {
+      "raw_curvature_norm": 2.0526928433271893e-05,
+      "weighted_curvature_norm": 2.1677275361628836e-08,
+      "original_norm": 1.5029528416912387e-07,
+      "weighted_ratio": 0.14423124106299895,
+      "cosine": 0.6422338308541331
+    },
+    "V": {
+      "raw_curvature_norm": 4.421170161985305e-06,
+      "weighted_curvature_norm": 4.668936384394865e-09,
+      "original_norm": 1.0148086954656014e-07,
+      "weighted_ratio": 0.04600804472071186,
+      "cosine": 0.9738481203357753
+    },
+    "score": {
+      "raw_curvature_norm": 4.600005427422138e-06,
+      "weighted_curvature_norm": 4.857793733698065e-09,
+      "original_norm": 1.0785144125199229e-07,
+      "weighted_ratio": 0.045041528210531256,
+      "cosine": 0.9667588495956688
+    },
+    "codebook": {
+      "raw_curvature_norm": 0.34152888162558404,
+      "weighted_curvature_norm": 0.00036066845729080453,
+      "original_norm": 0.0013883964000905391,
+      "weighted_ratio": 0.2597734028028918,
+      "cosine": 0.0030936354774052962
+    },
+    "decoder": {
+      "raw_curvature_norm": 0.0,
+      "weighted_curvature_norm": 0.0,
+      "original_norm": 0.002211505638307304,
+      "weighted_ratio": 0.0,
+      "cosine": null
+    }
+  },
+  "query_curvature_gradient_per_expert": [
+    8.976939802578045e-06,
+    3.609398781913119e-06,
+    5.532811959945782e-06,
+    3.945350711664937e-06,
+    9.498445403509224e-06
+  ],
+  "detached_cost_curvature_gradients": {
+    "encoder": {
+      "norm": 0.0,
+      "none": 8,
+      "zero": 0,
+      "parameters": 8
+    },
+    "GNN": {
+      "norm": 0.0,
+      "none": 10,
+      "zero": 0,
+      "parameters": 10
+    },
+    "Q": {
+      "norm": 0.0,
+      "none": 1,
+      "zero": 0,
+      "parameters": 1
+    },
+    "K": {
+      "norm": 0.0,
+      "none": 2,
+      "zero": 0,
+      "parameters": 2
+    },
+    "V": {
+      "norm": 0.0,
+      "none": 2,
+      "zero": 0,
+      "parameters": 2
+    },
+    "score": {
+      "norm": 0.0,
+      "none": 4,
+      "zero": 0,
+      "parameters": 4
+    },
+    "codebook": {
+      "norm": 0.21558996335969752,
+      "none": 0,
+      "zero": 0,
+      "parameters": 3
+    },
+    "decoder": {
+      "norm": 0.0,
+      "none": 8,
+      "zero": 0,
+      "parameters": 8
+    }
+  },
+  "DDP_vs_independent_rank_mean_relative_error": 1.1781930986387579e-09,
+  "gradient_rank_max_difference": 0.0,
+  "preclip_norm": 0.0023562381975352764,
+  "postclip_norm": 0.002356238264441686,
+  "microstep_losses": {
+    "original": 0.0021275929175317287,
+    "curvature": 1.6217138767242432,
+    "combined": 0.0038401889614760876
+  },
+  "learning_rate": 0.001,
+  "clip_norm": 1.0,
+  "parameter_rank_max_difference": 0.0,
+  "parameter_update_norms": {
+    "encoder.mlp.1.weight": 0.5419132906316443,
+    "encoder.mlp.1.bias": 0.02222411864715165,
+    "encoder.mlp.4.weight": 0.27119896093501894,
+    "encoder.mlp.4.bias": 0.014843676066847932,
+    "encoder.mlp.7.weight": 0.11091822850998537,
+    "encoder.mlp.7.bias": 0.009359074481725215,
+    "encoder.mlp.10.weight": 0.04626133236446029,
+    "encoder.mlp.10.bias": 0.005652433125161241,
+    "rq.vq_layers.0.embed.weight": 0.08916674615351997,
+    "rq.vq_layers.1.embed.weight": 0.08874697604421708,
+    "rq.vq_layers.2.embed.weight": 0.08864226750333704,
+    "decoder.mlp.1.weight": 0.06123649663595005,
+    "decoder.mlp.1.bias": 0.011223007866491058,
+    "decoder.mlp.4.weight": 0.15686630826329617,
+    "decoder.mlp.4.bias": 0.015443711576106302,
+    "decoder.mlp.7.weight": 0.28841478091499834,
+    "decoder.mlp.7.bias": 0.020907857040455106,
+    "decoder.mlp.10.weight": 0.5175386908752975,
+    "decoder.mlp.10.bias": 0.027650374865750057,
+    "structure.tokens.input.weight": 0.002373262759084966,
+    "structure.tokens.input.bias": 0.0007631195820998715,
+    "structure.tokens.layers.0.self_linear.weight": 0.0037776655797631085,
+    "structure.tokens.layers.0.self_linear.bias": 0.0005715484218364647,
+    "structure.tokens.layers.0.incoming.weight": 0.0032753388860185047,
+    "structure.tokens.layers.0.outgoing.weight": 0.003634797570636273,
+    "structure.tokens.layers.1.self_linear.weight": 0.004441774746046257,
+    "structure.tokens.layers.1.self_linear.bias": 0.00031562390071590557,
+    "structure.tokens.layers.1.incoming.weight": 0.003592135640566565,
+    "structure.tokens.layers.1.outgoing.weight": 0.0036501502728363312,
+    "structure.attention.query": 0.0026905250115155247,
+    "structure.attention.key.weight": 0.004384501628939154,
+    "structure.attention.key.bias": 5.609672535478834e-08,
+    "structure.attention.value.weight": 0.004668801913876086,
+    "structure.attention.value.bias": 6.568756595581669e-05,
+    "structure.attention.score.0.weight": 0.003856736926591393,
+    "structure.attention.score.0.bias": 0.00010979032372233018,
+    "structure.attention.score.2.weight": 0.002173423972531927,
+    "structure.attention.score.2.bias": 5.960464477539063e-08
+  },
+  "module_update_norms": {
+    "encoder": 0.6184623219789451,
+    "GNN": 0.00952931096485344,
+    "Q": 0.0026905250115155247,
+    "K": 0.004384501629298014,
+    "V": 0.004669263985612101,
+    "score": 0.004428345673504481,
+    "codebook": 0.15389667301385132,
+    "decoder": 0.6172134763925861
+  },
+  "wall_seconds": 1085.9479942005128,
+  "cuda_peak_bytes": 8984704512
+}
