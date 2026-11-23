@@ -46,6 +46,14 @@
 | C36 | 核验未来入口读 v2 而非 v1;可复现构建/验证入口与 REUSE.md | PASS | `verify_assets.py` 默认 v2(`--version v1` 显式取旧版);`build_assets_v2.py`;`REUSE.md`;仓库内除 infra 包自身外无其它代码读取两版资产 |
 | C37 | 交付 CONTRACT/INFRA/REPORT/VERDICT + 完整验收表 + 证据;关键节点评论;不建新 Issue、不训练 | PASS | 本目录四份文档;issue 评论 01–06;未创建新 Issue,未训练 |
 
+## 1.1 最终验证结果(2026-11-23)
+
+| 项 | 结果 | 证据 |
+|---|---|---|
+| 一键复验 `bash tools/graph_infra/verify_all.sh` | manifest **47/47**、17 个套件全绿、**14/14** 变异捕获、模块检查 **11 PASS + 1 NA**、隔离审计、TIGER 审计、基线复算全通过 | `results/research/infra246/verify_all.log`、`module_checks.log` |
+| 隔离审计 | 严格评估 key ∩ 训练 bank = **0**、∩ 探针 = **0**、∩ 宽松组 = 0;探针 ∩ 训练 bank = 0;用户三集合两两交集 0、并集完整 | `results/research/infra246/isolation_audit.json` |
+| 提交 | `6312ce7d`(代码+文档)、`799315db`(v2 资产清单与验证证据),均已推送,本地与远端 SHA 一致 | `git log --oneline -2` |
+
 ## 2. 结论复核(独立重算)
 
 头条数字全部由独立脚本从原始产物重算,与本文件/REPORT 中的数字逐项比对:
