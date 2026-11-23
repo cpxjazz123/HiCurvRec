@@ -1,0 +1,36 @@
+{
+  "schema": "genrec.directed_graph.issue242.v1",
+  "source": {
+    "path": "results/stage0_build_parquet/train.parquet",
+    "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+  },
+  "definition": "i -> j for consecutive items in one user's longest history + target; self-loops dropped",
+  "mapping": "node id equals the stage-0 item id; no remapping",
+  "seeds": {
+    "user_split": 241001,
+    "edge_holdout": 241002,
+    "eval_user_fraction": 0.1,
+    "target_edge_fraction": 0.1
+  },
+  "self_loops_dropped": 0,
+  "counts": {
+    "users": 57439,
+    "visible_users": 51695,
+    "eval_users": 5744,
+    "items": 24587,
+    "visible_directed_edges": 293202,
+    "ego_edges": 263666,
+    "target_edges": 29536,
+    "eval_directed_edges": 32729,
+    "ego_items_with_out_edge": 24316
+  },
+  "files": {
+    "ego_csr.npz": "b17c27542d88a9441857e8879f23c8f05e5f84c7f5d6100e2505c97e9ae73cc4",
+    "target_edges.npy": "2a32faa32a6190169645fdb688e5f9f39afde7feb014f83879307580dc9cf393",
+    "target_weights.npy": "96eb6e0dd29530e9b1053133d1acf348090bbcfc0ebe078d5dd4584fcb716181",
+    "eval_edges.npy": "ad7d8e852e160ebdf704ad9d4eea4e41fe4965a4a07075b8af5a802e0ac0c0e8",
+    "eval_weights.npy": "1d6b382a836acc61030a01e4f017f195d35539a8f685d03518f263683bd6b402",
+    "visible_users.npy": "8e98b8e5f9bd7bc88f34945327399fb6fc91064cd68f65aa8a68bb73dc5d752d",
+    "eval_users.npy": "82c47ba8656f7bfbe44f3205491d0f579b89d771a4c40de53557a1605f113011"
+  }
+}
