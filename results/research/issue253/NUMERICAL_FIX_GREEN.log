@@ -1,0 +1,23 @@
+test_empty_short_long_repeated_rows_values_and_exact_input_adjoint (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... /fs04/ar57/wenyu/GeneRec/tools/issue253/ego_reference.py:65: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+  operators.append(torch.sparse_csr_tensor(
+ok
+test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_controlled_weight_intervention_changes_hard_id (test_reference.GeometryTests) ... ok
+test_actual_attention_intervention_changes_hard_codeword (test_attention_pipeline.AttentionPipelineTests) ... /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/tests/test_attention_pipeline.py:52: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  self.assertGreater(float(weights[0,expert]),.99)
+ok
+test_duplicate_global_items_share_exact_attention_outputs (test_attention_pipeline.AttentionPipelineTests) ... ok
+test_invalid_nan_padding_has_no_influence (test_attention_pipeline.AttentionPipelineTests) ... ok
+test_collinear_zero_coincident_and_saturated_known_answers (test_geometry_memory.GeometryMemoryTests) ... ok
+test_independent_controlled_balanced_and_intervened_hard_ids (test_geometry_memory.GeometryMemoryTests) ... ok
+test_matrix_distance_does_not_materialize_coordinate_volume (test_geometry_memory.GeometryMemoryTests) ... ok
+test_matrix_matches_prebroadcast_values_and_gradients (test_geometry_memory.GeometryMemoryTests) ... ok
+test_matrix_mixed_cost_finite_differences (test_geometry_memory.GeometryMemoryTests) ... ok
+test_matrix_values_and_gradients_against_ambient_references (test_geometry_memory.GeometryMemoryTests) ... ok
+test_spherical_near_coincidence_and_antipodes (test_geometry_memory.GeometryMemoryTests) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 2.050s
+
+OK

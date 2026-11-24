@@ -1,0 +1,78 @@
+{
+  "schema": "genrec.issue253.performance/1",
+  "source_run_directory": "results/research/issue253/benchmark/issue253_benchmark_553023_581546155",
+  "run_id": "issue253_benchmark_553023_581546155",
+  "scope": "Actual four-rank world4/global4096 diagnostic, 60 complete inclusive epochs; every optimizer, DDP, structural branch, periodic evaluation and inter-epoch wait is inside the window.",
+  "window": {
+    "epochs": 30,
+    "first_epoch": 31,
+    "last_epoch": 60
+  },
+  "mean_seconds": 0.6395695453199247,
+  "median_seconds": 0.5900660301558673,
+  "p95_seconds": 0.8209879733622074,
+  "p95_definition": "nearest-rank ceil(0.95*N)",
+  "min_seconds": 0.5762457763776183,
+  "max_seconds": 1.6361043471843004,
+  "target_seconds": 0.4,
+  "expected_max_seconds": 0.5,
+  "authorized_ceiling_seconds": 0.8,
+  "target_met": false,
+  "expected_met": false,
+  "ceiling_met": true,
+  "verdict": "original performance target and expectation are NOT met; the complete mechanism stays inside the accepted 0.8 s/epoch ceiling, so formal training may proceed with that stated",
+  "historical_issue252_steady_seconds": 0.6405808043,
+  "relative_to_historical": 0.9984213404877464,
+  "initialization_seconds": 25.335956000722945,
+  "total_wall_seconds": 86.91998392157257,
+  "periodic_evaluation_epochs": [
+    50
+  ],
+  "periodic_evaluation_cost": [
+    {
+      "epoch": 50,
+      "epoch_seconds": 1.634591962210834,
+      "median_other_epoch_seconds": 0.5944154728204012,
+      "extra_seconds": 1.0401764893904328
+    }
+  ],
+  "periodic_amortised_seconds_per_epoch": 0.034672549646347764,
+  "optimizer_steps_total": null,
+  "optimizer_steps_per_epoch_per_rank": [
+    6
+  ],
+  "optimizer_steps_measured_total": 1440,
+  "peak_allocated_bytes": 8850328064,
+  "final_epoch_losses": {
+    "epoch": 60,
+    "loss": 0.00026478469953872263,
+    "recon": 0.000160750380018726,
+    "curvature_estimate": 0.923052191734314,
+    "gradient_norm_before_clip": 0.0005544064333662391,
+    "gate_mean": [
+      0.3338325023651123,
+      0.4014164209365845,
+      0.2647511065006256
+    ]
+  },
+  "recipe": {
+    "epochs": 3000,
+    "per_rank_batch": 1024,
+    "global_batch": 4096,
+    "world_size": 4,
+    "seed": 42,
+    "config_sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6"
+  },
+  "per_rank_worker_pids": [
+    553055,
+    553056,
+    553057,
+    553058
+  ],
+  "not_claimed": [
+    "0.4 s/epoch target achieved",
+    "0.5 s/epoch expectation achieved",
+    "single-card or micro-step estimate",
+    "cross-rank speedup"
+  ]
+}

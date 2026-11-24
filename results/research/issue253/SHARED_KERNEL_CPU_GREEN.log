@@ -1,0 +1,17 @@
+test_disjoint_populations_and_current_step_parameters (tools.issue253.test_shared_forward.SharedForwardTests) ... /fs04/ar57/wenyu/GeneRec/tools/issue252/ego_operators.py:189: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+  operators.append(torch.sparse_csr_tensor(crow, columns, values,
+ok
+test_overlap_duplicates_and_original_rank_local_order (tools.issue253.test_shared_forward.SharedForwardTests) ... ok
+test_empty_short_long_repeated_rows_values_and_exact_input_adjoint (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_finite_difference_live_second_affine_and_first_projection (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_float64_adjoint_retains_degree3_and7_reciprocals (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_full_induced_one_two_hop_nodes_edges_masks_and_live_parameters (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_known_directed_values_and_reciprocal_degree_transpose (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_noncontiguous_inputs_and_finite_difference_input_gradient (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_zero_nodes_and_each_unused_direction (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 76.585s
+
+OK

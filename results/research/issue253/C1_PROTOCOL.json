@@ -1,0 +1,62 @@
+{
+  "status": "PASS",
+  "detail": "every frozen protocol value matches the current source",
+  "command": [
+    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+    "-m",
+    "tools.issue253.check_protocol"
+  ],
+  "pid": 2959,
+  "training": false,
+  "cuda_used": false,
+  "arm": "TIGER_three_expert_attention_rq",
+  "input_dim": 768,
+  "latent_dim": 32,
+  "books": [
+    [
+      256,
+      32
+    ],
+    [
+      256,
+      32
+    ],
+    [
+      256,
+      32
+    ]
+  ],
+  "queries": [
+    3,
+    32
+  ],
+  "curvatures": [
+    -1,
+    0,
+    1
+  ],
+  "floor": 1,
+  "sinkhorn_layers": [
+    3
+  ],
+  "layer_use_sk_flags": [
+    false,
+    false,
+    true
+  ],
+  "epochs": 3000,
+  "batch_per_rank": 1024,
+  "seed": 42,
+  "config_sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+  "sources": {
+    "stage2_RQ-VAE/TIGER_three_expert_attention_rq/train_rqvae.py": "0818257e35f0868fed1c21b2b04fd364e0a0e48caffd1cbbb4409181f9e79ae0",
+    "stage2_RQ-VAE/TIGER_three_expert_attention_rq/train_config.py": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+    "stage2_RQ-VAE/TIGER_three_expert_attention_rq/config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+    "stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/mechanism.py": "5942a2b98fc2a40f57ae00e96eaa15eaa8d416eecdddea84fc50e06e8e825354",
+    "stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/geometry.py": "42964aaa6004f91adc96407b14e5e3ce54bec8dc6115b33891bd55cdb0ad02c5",
+    "stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/layers.py": "dadd6287dbf55751c10bae23d81c1af42ab9035a73a09d77b9c67550bdc1fb4a",
+    "stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/structure.py": "355dcb136d44e0ad0b14006d5e6327e37a3df95480c3520c5b0a0e0e94c3c9e9",
+    "stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/attention.py": "1ea6dc3d5d1e2b2fcf3e30c68662986d3f9e2f726d2359b7651817472cd04592",
+    "stage2_RQ-VAE/TIGER_three_expert_attention_rq/assignment_floor.py": "984bba1330c62a2a712c6797e27a9389bcb7274a8dbe552d48f13c22e9a6ff96"
+  }
+}

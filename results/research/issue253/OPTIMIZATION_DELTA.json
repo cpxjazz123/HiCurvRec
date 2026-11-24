@@ -1,0 +1,51 @@
+{
+  "baseline_source_archive": "results/research/issue253/BASELINE_PROFILE_SOURCE.tar.gz",
+  "baseline_archive_sha256": "e44e9f1399f29972d94d619c6e400c3b503d36b6f5a08e604f9e1fb6813c98c3",
+  "baseline_measured_inclusive_mean_seconds": 0.9118503464696308,
+  "baseline_measured_median_seconds": 0.5979033862240613,
+  "baseline_measured_p95_seconds": 2.9670059205964208,
+  "baseline_measured_window": "epochs 31..60 of the four-rank 60-epoch diagnostic, pre-optimization source",
+  "files": [
+    {
+      "file": "model/structure.py",
+      "baseline_sha256": "859429ec03c804f6ed8178ae8d95c9f7e974279b13ede03260e82e1c9a94dda8",
+      "current_sha256": "355dcb136d44e0ad0b14006d5e6327e37a3df95480c3520c5b0a0e0e94c3c9e9",
+      "changed": true,
+      "added": 3,
+      "removed": 5
+    },
+    {
+      "file": "model/mechanism.py",
+      "baseline_sha256": "a3f7ba9fe97ca59814d21fb333910e5bdf5d4f69e905be99444aa6b30293b602",
+      "current_sha256": "5942a2b98fc2a40f57ae00e96eaa15eaa8d416eecdddea84fc50e06e8e825354",
+      "changed": true,
+      "added": 40,
+      "removed": 9
+    },
+    {
+      "file": "model/estimator.py",
+      "baseline_sha256": "bc7633a3aed6f3060a0180d99cb50bf6035070ef9f096447eb5289389ce4c024",
+      "current_sha256": "1bc4a1fda6276a4e31f7ba7ed69d5a33cb83bc8d0f241471d67a8b79a7f6ddd0",
+      "changed": true,
+      "added": 36,
+      "removed": 13
+    },
+    {
+      "file": "train_rqvae.py",
+      "baseline_sha256": "0818257e35f0868fed1c21b2b04fd364e0a0e48caffd1cbbb4409181f9e79ae0",
+      "current_sha256": "0818257e35f0868fed1c21b2b04fd364e0a0e48caffd1cbbb4409181f9e79ae0",
+      "changed": false,
+      "added": 0,
+      "removed": 0
+    },
+    {
+      "file": "model/geometry.py",
+      "baseline_sha256": "42964aaa6004f91adc96407b14e5e3ce54bec8dc6115b33891bd55cdb0ad02c5",
+      "current_sha256": "42964aaa6004f91adc96407b14e5e3ce54bec8dc6115b33891bd55cdb0ad02c5",
+      "changed": false,
+      "added": 0,
+      "removed": 0
+    }
+  ],
+  "note": "The 0.9118 s/epoch mean is the measured PRE-optimization four-rank inclusive window. The optimized source differs as listed; the optimized inclusive window must be measured on the final bound source before any performance claim."
+}

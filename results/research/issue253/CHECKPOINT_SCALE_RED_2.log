@@ -1,0 +1,17 @@
+Import complete; entering actual state/cost assertion
+test_standard_state_restore_uses_serialized_common_scale_in_actual_cost (tools.issue253.test_checkpoint_state.CheckpointStateTests) ... FAIL
+
+======================================================================
+FAIL: test_standard_state_restore_uses_serialized_common_scale_in_actual_cost (tools.issue253.test_checkpoint_state.CheckpointStateTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_checkpoint_state.py", line 31, in test_standard_state_restore_uses_serialized_common_scale_in_actual_cost
+    torch.testing.assert_close(model.assignment_cost(x,y,weights),wanted,atol=1e-9,rtol=1e-8,
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: restored checkpoint metric must use serialized tangent_scale
+
+----------------------------------------------------------------------
+Ran 1 test in 2.063s
+
+FAILED (failures=1)

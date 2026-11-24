@@ -1,0 +1,231 @@
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/tests/test_attention.py:66: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  self.assertGreater(float(weights.max() - weights.min()), 0.01)
+/fs04/ar57/wenyu/GeneRec/tools/issue252/ego_operators.py:189: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+  operators.append(torch.sparse_csr_tensor(crow, columns, values,
+[full-evaluation] a.npz valid=3 cumulative=3
+[full-evaluation] b.npz valid=1 cumulative=4
+[full-evaluation] a.npz valid=3 cumulative=3
+[full-evaluation] b.npz valid=1 cumulative=4
+[issue253-evaluation] a.npz valid=3
+[issue253-evaluation] b.npz valid=1
+[issue253-evaluation] a.npz valid=3
+[issue253-evaluation] b.npz valid=1
+[issue253-evaluation] a.npz valid=3
+[issue253-evaluation] b.npz valid=1
+[issue253-evaluation] a.npz valid=3
+[issue253-evaluation] b.npz valid=1
+test_empty_and_all_invalid_use_fixed_null (test_attention.ExpertAttentionTests) ... ok
+test_hand_computed_two_normalizations (test_attention.ExpertAttentionTests) ... ok
+test_independent_queries_and_all_gradient_groups_train (test_attention.ExpertAttentionTests) ... ok
+test_padding_mask_and_repeated_items (test_attention.ExpertAttentionTests) ... ok
+test_permutation_equivariance_with_fixed_null_slot (test_attention.ExpertAttentionTests) ... ok
+test_single_token_degeneracy (test_attention.ExpertAttentionTests) ... ok
+test_smooth_directional_finite_differences_of_both_outputs (test_attention.ExpertAttentionTests) ... ok
+test_actual_attention_intervention_changes_hard_codeword (test_attention_pipeline.AttentionPipelineTests) ... ok
+test_duplicate_global_items_share_exact_attention_outputs (test_attention_pipeline.AttentionPipelineTests) ... ok
+test_invalid_nan_padding_has_no_influence (test_attention_pipeline.AttentionPipelineTests) ... ok
+test_compiled_api_preserves_functions_and_frozen_options (test_cuda_math.CompilerIsolationTests) ... ok
+test_configuration_keeps_every_cache_and_temporary_root_in_owned_tree (test_cuda_math.CompilerIsolationTests) ... ok
+test_default_cache_identity_is_issue253 (test_cuda_math.CompilerIsolationTests) ... ok
+test_centre_normalization_masks_invalid_rows (test_curvature_loss.CurvatureTests) ... ok
+test_chunked_gradients_match_explicit_reference_sum (test_curvature_loss.CurvatureTests) ... ok
+test_exact_full_reference_matches_hand_answer (test_curvature_loss.CurvatureTests) ... ok
+test_mixed_centre_stream_preserves_huber_mean_and_gradients (test_curvature_loss.CurvatureTests) ... ok
+test_out_of_catalogue_centres_are_not_silently_dropped (test_curvature_loss.CurvatureTests) ... ok
+test_reference_components_are_not_batch_local (test_curvature_loss.CurvatureTests) ... ok
+test_centre_cycle_and_full_component_reference_population (test_estimator.EstimatorTests) ... ok
+test_coincident_and_empty_reference_boundaries (test_estimator.EstimatorTests) ... ok
+test_known_full_reference_value_and_gradient (test_estimator.EstimatorTests) ... ok
+test_raw_statistic_unbiased_but_huber_not_unbiased (test_estimator.EstimatorTests) ... ok
+test_actual_launcher_changes_invalidate_source_evidence (test_execution.ExecutionTests) ... ok
+test_rank0_calibration_does_not_advance_rotating_floor_history (test_execution.ExecutionTests) ... ok
+test_collinear_zero_coincident_and_saturated_known_answers (test_geometry_memory.GeometryMemoryTests) ... ok
+test_independent_controlled_balanced_and_intervened_hard_ids (test_geometry_memory.GeometryMemoryTests) ... ok
+test_matrix_distance_does_not_materialize_coordinate_volume (test_geometry_memory.GeometryMemoryTests) ... ok
+test_matrix_matches_prebroadcast_values_and_gradients (test_geometry_memory.GeometryMemoryTests) ... ok
+test_matrix_mixed_cost_finite_differences (test_geometry_memory.GeometryMemoryTests) ... ok
+test_matrix_values_and_gradients_against_ambient_references (test_geometry_memory.GeometryMemoryTests) ... ok
+test_spherical_near_coincidence_and_antipodes (test_geometry_memory.GeometryMemoryTests) ... ok
+test_balancing_cannot_be_replaced_by_argmin (test_known_answers.KnownAnswerTests) ... ok
+test_hand_answers_common_tangent_and_spherical_wrap (test_known_answers.KnownAnswerTests) ... ok
+test_behavior_off_applies_to_catalogue_selection_cost (test_mechanism.MechanismTests) ... ok
+test_detached_cost_breaks_gate_path (test_mechanism.MechanismTests) ... ok
+test_fixed_curvature_metric_reaches_selection_gate_and_gnn (test_mechanism.MechanismTests) ... ok
+test_hard_q_exactly_decodes_three_ids (test_mechanism.MechanismTests) ... ok
+test_installed_framework_guards_reject_duplicate_codewords (test_mechanism.MechanismTests) ... ok
+test_missing_item_identity_is_rejected (test_mechanism.MechanismTests) ... ok
+test_binding_detects_asset_drift_and_source_change (test_provenance.ProvenanceTests) ... ok
+test_checkpoint_binding_rejects_source_drift_since_capture (test_provenance.ProvenanceTests) ... ok
+test_missing_candidate_provenance_rejects_checkpoint (test_provenance.ProvenanceTests) ... ok
+test_training_split_drift_invalidates_binding (test_provenance.ProvenanceTests) ... ok
+test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) ... ok
+test_either_unused_output_and_noncontiguous_inputs (test_sparse_adjoint.SparseAdjointTests) ... ok
+test_hand_directed_means_and_both_exact_adjoints (test_sparse_adjoint.SparseAdjointTests) ... ok
+test_production_backward_avoids_native_csr_transpose_conversion (test_sparse_adjoint.SparseAdjointTests) ... ok
+test_production_live_input_and_all_parameter_gradients (test_sparse_adjoint.SparseAdjointTests) ... ok
+test_directed_sparse_layer_hand_answer (test_sparse_structure.SparseStructureTests) ... ok
+test_forward_padding_cross_group_and_isolate (test_sparse_structure.SparseStructureTests) ... ok
+test_item_order_duplicates_chunks_and_distinct_hops (test_sparse_structure.SparseStructureTests) ... ok
+test_registered_store_never_builds_missing_operators (test_sparse_structure.SparseStructureTests) ... ok
+test_sparse_matches_independent_dense_input_and_parameter_gradients (test_sparse_structure.SparseStructureTests) ... ok
+test_cache_is_detached_static_only_and_all_weights_are_live (test_static_means.StaticMeansTests) ... ok
+test_dense_and_original_ragged_values_and_every_parameter_gradient (test_static_means.StaticMeansTests) ... ok
+test_frozen_feature_root_and_bounded_full_layout_cache (test_static_means.StaticMeansTests) ... ok
+test_live_affine_input_and_every_parameter_gradient (test_static_means.StaticMeansTests) ... ok
+test_production_retains_activations_and_only_second_layer_uses_wide_sparse_mm (test_static_means.StaticMeansTests) ... ok
+test_tiny_directed_affine_hand_answer_and_empty_directions (test_static_means.StaticMeansTests) ... ok
+test_directed_hand_readout_and_padding (test_structure.StructureTests) ... ok
+test_initial_feature_cache_real_root (test_structure.StructureTests) ... ok
+test_separate_boundaries_duplicates_chunks_isolate_empty (test_structure.StructureTests) ... ok
+test_behavior_off_is_exact_uniform_three_for_repeats_and_empty (test_three_geometry.ThreeAttentionTests) ... ok
+test_query_order_is_not_a_hardcoded_topological_role (test_three_geometry.ThreeAttentionTests) ... ok
+test_scalar_reference_for_two_tokens_and_all_masks (test_three_geometry.ThreeAttentionTests) ... ok
+test_three_query_serialization_and_shared_parameter_capacity (test_three_geometry.ThreeAttentionTests) ... ok
+test_ambient_directional_gradient_for_inputs_and_mixing (test_three_geometry.ThreeGeometryTests) ... ok
+test_common_scale_ambient_matrix_broadcast_and_row_pairs (test_three_geometry.ThreeGeometryTests) ... ok
+test_exact_curvatures_and_no_removed_expert_computation (test_three_geometry.ThreeGeometryTests) ... ok
+test_fixed_metric_has_no_trainable_gate_route (test_three_geometry.ThreeGeometryTests) ... ok
+test_invalid_common_scale_and_nonfinite_norms_fail_closed (test_three_geometry.ThreeGeometryTests) ... ok
+test_zero_curvature_limit_from_common_tangent_scaling (test_three_geometry.ThreeGeometryTests) ... ok
+test_frozen_baseline_does_not_inherit_experiment_gate (tools.issue253.test_admission_policy.AdmissionPolicyTests) ... ok
+test_new_three_expert_arm_requires_source_bound_four_rank_evidence (tools.issue253.test_admission_policy.AdmissionPolicyTests) ... ok
+test_three_queries_are_required_and_removed_queries_are_rejected (tools.issue253.test_admission_policy.AdmissionPolicyTests) ... ok
+test_standard_state_restore_uses_serialized_common_scale_in_actual_cost (tools.issue253.test_checkpoint_state.CheckpointStateTests) ... ok
+test_actual_model_imports_from_result_directory_in_isolated_python (tools.issue253.test_direct_import.DirectImportTests) ... ok
+test_empty_short_long_repeated_rows_values_and_exact_input_adjoint (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_finite_difference_live_second_affine_and_first_projection (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_float64_adjoint_retains_degree3_and7_reciprocals (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_full_induced_one_two_hop_nodes_edges_masks_and_live_parameters (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_known_directed_values_and_reciprocal_degree_transpose (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_noncontiguous_inputs_and_finite_difference_input_gradient (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_zero_nodes_and_each_unused_direction (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_collinear_known_answer_and_three_five_distinction (tools.issue253.test_final_evaluation.AmbientMetricTests) ... ok
+test_invalid_scale_and_pair_alignment_fail_closed (tools.issue253.test_final_evaluation.AmbientMetricTests) ... ok
+test_shared_matrix_paired_and_streamed_contracts (tools.issue253.test_final_evaluation.AmbientMetricTests) ... ok
+test_ledger_needs_exact_sid_and_checkpoint_not_prefix_or_arm_name (tools.issue253.test_final_evaluation.ArchiveIdentityTests) ... ok
+test_hard_q_is_three_actual_books_not_z_or_collision_counter (tools.issue253.test_final_evaluation.CommonScaleAndRepresentationTests) ... ok
+test_scale_comes_only_from_exact_bound_historical_checkpoint (tools.issue253.test_final_evaluation.CommonScaleAndRepresentationTests) ... ok
+test_full_user_coverage_keeps_original_rank_local_populations (tools.issue253.test_final_evaluation.FinalProtocolTests) ... ok
+test_heldout_broadcast_adapter_preserves_paired_shape (tools.issue253.test_final_evaluation.FinalProtocolTests) ... ok
+test_nearest_rank_p95_and_inter_epoch_wait_remain_inclusive (tools.issue253.test_final_evaluation.FinalProtocolTests) ... ok
+test_existing_full_evaluate_accepts_both_independent_metrics (tools.issue253.test_final_evaluation.FullCoverageTests) ... ok
+test_joint_cells_preserve_scales_full_rows_signs_and_distortion (tools.issue253.test_final_evaluation.FullCoverageTests) ... ok
+test_reconciliation_rejects_incomplete_full_count (tools.issue253.test_final_evaluation.FullCoverageTests) ... ok
+test_targets_cannot_fit_or_change_geometric_scale (tools.issue253.test_final_evaluation.FullCoverageTests) ... ok
+test_changed_archived_sources_configs_or_audit_fail_closed (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests) ... ok
+test_ledger_source_hash_disagreement_and_traversal_are_rejected (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests) ... ok
+test_live_infrastructure_drift_does_not_rewrite_historical_authority (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests) ... ok
+test_missing_archived_infrastructure_cannot_fall_back_to_live_source (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests) ... ok
+test_symlinked_archive_ancestor_is_not_an_immutable_source (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests) ... ok
+test_independent_reduction_uses_global_users_and_zero_based_ranks (tools.issue253.test_final_evaluation.PerUserRecallTests) ... ok
+test_mse_uses_all_coordinates_and_actual_representation (tools.issue253.test_final_evaluation.ReconstructionReductionTests) ... ok
+test_mutated_executed_source_fails_before_any_model_import (tools.issue253.test_final_evaluation.SourceBoundCheckpointTests) ... ok
+test_reused_binding_api_rejects_crossed_and_modified_artifacts (tools.issue253.test_final_evaluation.SourceBoundCheckpointTests) ... ok
+test_empty_or_non_string_identities_fail_closed (tools.issue253.test_final_evaluation.StoredIdentityTests) ... ok
+test_relative_and_absolute_identities_resolve_to_one_path (tools.issue253.test_final_evaluation.StoredIdentityTests) ... ok
+test_resolution_uses_the_bound_repository_root (tools.issue253.test_final_evaluation.StoredIdentityTests) ... ok
+test_incomplete_nonconsecutive_overlapping_or_nonfinite_windows (tools.issue253.test_performance.PerformanceTests) ... ok
+test_median_and_p95_cannot_hide_interepoch_work (tools.issue253.test_performance.PerformanceTests) ... ok
+test_nearest_rank_p95_and_exact_inclusive_mean (tools.issue253.test_performance.PerformanceTests) ... ok
+test_empty_degenerate_and_invalid_populations (tools.issue253.test_sample_indices.HostIndexTests) ... ok
+test_numpy_list_and_tensor_have_hand_known_value_and_all_gradients (tools.issue253.test_sample_indices.HostIndexTests) ... ok
+test_reference_occurrences_are_not_silently_deduplicated (tools.issue253.test_sample_indices.HostIndexTests) ... ok
+test_actual_target_sampling_matches_immutable252_bytes_and_order (tools.issue253.test_sample_indices.OriginalSamplingTests) ... ok
+test_disjoint_populations_and_current_step_parameters (tools.issue253.test_shared_forward.SharedForwardTests) ... ok
+test_overlap_duplicates_and_original_rank_local_order (tools.issue253.test_shared_forward.SharedForwardTests) ... ok
+test_independent_ambient_agreement_and_fixed_equal_three (tools.issue253.test_three_contract.ThreeExpertContract) ... ok
+test_three_origin_distances_are_one (tools.issue253.test_three_contract.ThreeExpertContract) ... ok
+test_three_queries_and_two_softmax_axes (tools.issue253.test_three_contract.ThreeExpertContract) ... ok
+test_current_source_inventory_policy_contract_and_asset_drift_refused (tools.issue252.test_training_admission.AdmissionTests) ... ok
+test_external_suite_or_runner_drift_refuses_old_execution_reports (tools.issue252.test_training_admission.AdmissionTests) ... ok
+test_failing_or_missing_rank_and_recipe_refused (tools.issue252.test_training_admission.AdmissionTests) ... ok
+test_final_credential_is_stored_and_rechecked_before_spawn (tools.issue252.test_training_admission.AdmissionTests) ... ok
+test_forged_performance_pass_missing_rank_and_coverage_refused (tools.issue252.test_training_admission.AdmissionTests) ... ok
+test_freeze_enforces_receipt_even_if_machine_result_is_forged (tools.issue252.test_training_admission.AdmissionTests) ... ok
+test_machine_gate_and_worker_cannot_bypass_missing_credential (tools.issue252.test_training_admission.AdmissionTests) ... ok
+test_missing_math_gradient_ddp_switch_and_export_evidence_refused (tools.issue252.test_training_admission.AdmissionTests) ... ok
+test_missing_receipt_refuses_before_workspace_reservation (tools.issue252.test_training_admission.AdmissionTests) ... ok
+test_round_trip_and_hash_bound_reports (tools.issue252.test_training_admission.AdmissionTests) ... ok
+test_source_bound_test_report_and_captured_output_drift_refused (tools.issue252.test_training_admission.AdmissionTests) ... ok
+test_missing_wrong_source_or_checkpoint_binding_refuses (tools.issue252.test_training_admission.ArchiveGateTests) ... ok
+test_nested_binding_created_with_stage2_interpreter_and_verified (tools.issue252.test_training_admission.ArchiveGateTests) ... ok
+test_current_frozen_floor_is_verify_only (tools.issue252.test_training_admission.FrozenFloorTests) ... ok
+test_frozen_launcher_refuses_patch_before_spawn_and_preserves_workspace (tools.issue252.test_training_admission.FrozenFloorTests) ... ok
+test_frozen_stale_floor_refuses_without_mutating_or_spawning (tools.issue252.test_training_admission.FrozenFloorTests) ... ok
+test_nested_sid_keeps_arm_identity_and_rejects_crossed_generation (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_public_start_preserves_four_cards_and_never_archives_old_results (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_runtime_helper_change_invalidates_admission_fingerprint (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_source_drift_after_admission_refuses_without_formal_spawn (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_stage3_evidence_is_selected_by_exact_sid_not_newest_arm_file (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_stage3_export_cannot_cross_source_or_checkpoint_generations (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_status_uses_exact_persisted_result_not_static_tree (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_worker_admits_then_runs_frozen_adapter_without_deleted_bootstrap (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_adapter_changes_paths_only_and_preserves_recipe (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ok
+test_adapter_parent_uses_only_the_standard_launcher (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ok
+test_arm_traversal_and_source_symlinks_are_refused (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ok
+test_inventory_matches_archive_and_omits_only_its_exclusions (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ok
+test_run_identity_cannot_escape_the_repository (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ok
+test_same_run_id_cannot_be_reused_for_another_arm (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ok
+test_source_bytes_are_frozen_with_independent_results (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ok
+test_ambiguous_stage3_generations_are_not_selected_by_mtime (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_another_tree_cannot_override_the_bound_tree (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_binding_refuses_crossed_export_and_missing_run_identity (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_binding_refuses_source_not_recorded_in_checkpoint (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_binding_requires_every_token_to_match_export (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_checkpoint_bound_asset_configuration_travels_with_source (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_correct_bundle_preserves_recall_logs_and_reproducible_tar (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_crossed_checkpoint_is_refused_before_copy (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_imported_repo_source_and_config_are_archived_and_checked (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_incomplete_log_stream_is_not_archived (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_incomplete_receipt_is_a_value_error_not_an_unbound_archive (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_mathematical_contract_is_issue252_and_archived (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_missing_final_logs_and_binding_fail_closed (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_mutated_source_is_refused_even_with_explicit_tree (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_nested_immutable_generation_archives_its_adapter_and_exact_inputs (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_no_nearby_checkpoint_substitution (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_original_evidence_key_is_not_clobbered (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_source_import_closure_handles_relative_imports_cycles_and_missing_modules (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_stage3_captures_actual_resolved_input_identity (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_stage3_from_another_sid_is_refused_before_copy (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_manifest_changed_after_training_or_missing_binding_still_fails (tools.issue252.test_final_input_generation.FinalInputGenerationTests) ... ok
+test_raw_training_or_embedding_changes_still_fail (tools.issue252.test_final_input_generation.FinalInputGenerationTests) ... ok
+test_registered_generation_bound_before_training_is_reported_explicitly (tools.issue252.test_final_input_generation.FinalInputGenerationTests) ... ok
+test_registered_leaf_changed_after_training_still_fails (tools.issue252.test_final_input_generation.FinalInputGenerationTests) ... ok
+
+----------------------------------------------------------------------
+Ran 178 tests in 152.095s
+
+OK
+test_controlled_weight_intervention_changes_hard_id (test_reference.GeometryTests) ... ok
+test_fixed_mean_switches_and_broadcasting (test_reference.GeometryTests) ... ok
+test_hyperbolic_saturation_keeps_radial_distance (test_reference.GeometryTests) ... ok
+test_independent_lorentz_sphere_references (test_reference.GeometryTests) ... ok
+test_smooth_cost_finite_differences (test_reference.GeometryTests) ... ok
+test_zero_coincident_finite_gradients (test_reference.GeometryTests) ... ok
+test_balanced_marginals_and_hand_answer (test_reference.SelectionTests) ... ok
+test_exact_hard_forward_and_only_soft_backward (test_reference.SelectionTests) ... ok
+test_frozen_hard_rule_exact_and_inference_argmin (test_reference.SelectionTests) ... ok
+test_saturated_probabilities_are_finite (test_reference.SelectionTests) ... ok
+test_soft_finite_differences_both_paths (test_reference.SelectionTests) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.095s
+
+OK
+test_designated_assertions_detect_mutations (test_mutations.Mutations) ... ok
+test_designated_assertions_capture_every_valid_mutation (tools.issue253.test_estimator_mutations.EstimatorMutations) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.025s
+
+OK
+{
+  "passed": true,
+  "test_reports": {
+    "deterministic": "results/research/issue253/contract_tests/1795509445822774281/deterministic.json",
+    "reference": "results/research/issue253/contract_tests/1795509445822774281/reference.json",
+    "mutation": "results/research/issue253/contract_tests/1795509445822774281/mutation.json"
+  }
+}

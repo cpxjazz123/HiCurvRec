@@ -1,0 +1,15 @@
+test_frozen_baseline_does_not_inherit_experiment_gate (tools.issue253.test_admission_policy.AdmissionPolicyTests.test_frozen_baseline_does_not_inherit_experiment_gate) ... ok
+test_new_three_expert_arm_requires_source_bound_four_rank_evidence (tools.issue253.test_admission_policy.AdmissionPolicyTests.test_new_three_expert_arm_requires_source_bound_four_rank_evidence) ... FAIL
+
+======================================================================
+FAIL: test_new_three_expert_arm_requires_source_bound_four_rank_evidence (tools.issue253.test_admission_policy.AdmissionPolicyTests.test_new_three_expert_arm_requires_source_bound_four_rank_evidence)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_admission_policy.py", line 11, in test_new_three_expert_arm_requires_source_bound_four_rank_evidence
+    self.assertTrue(admission.required(ROOT/'stage2_RQ-VAE'/ARM),
+AssertionError: False is not true : new full-ego arm must require four-rank source-bound entry evidence
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.001s
+
+FAILED (failures=1)

@@ -1,0 +1,16 @@
+test_incomplete_nonconsecutive_overlapping_or_nonfinite_windows (tools.issue253.test_performance.PerformanceTests.test_incomplete_nonconsecutive_overlapping_or_nonfinite_windows) ... ok
+test_median_and_p95_cannot_hide_interepoch_work (tools.issue253.test_performance.PerformanceTests.test_median_and_p95_cannot_hide_interepoch_work) ... FAIL
+test_nearest_rank_p95_and_exact_inclusive_mean (tools.issue253.test_performance.PerformanceTests.test_nearest_rank_p95_and_exact_inclusive_mean) ... ok
+
+======================================================================
+FAIL: test_median_and_p95_cannot_hide_interepoch_work (tools.issue253.test_performance.PerformanceTests.test_median_and_p95_cannot_hide_interepoch_work)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_performance.py", line 26, in test_median_and_p95_cannot_hide_interepoch_work
+    self.assertAlmostEqual(got['median_seconds'],.5,places=12,
+AssertionError: 0.40000000000000036 != 0.5 within 12 places (0.09999999999999964 difference) : inclusive epoch median must retain interepoch work
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.002s
+
+FAILED (failures=1)

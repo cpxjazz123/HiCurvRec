@@ -1,0 +1,44 @@
+model built and state dict loaded strictly
+encoder forward seconds 1.65
+hard q equals the SID decode True
+[issue253-evaluation] shard_000.npz valid=769276
+[issue253-evaluation] shard_001.npz valid=633899
+[issue253-evaluation] shard_002.npz valid=1411052
+[issue253-evaluation] shard_003.npz valid=1896048
+[issue253-evaluation] shard_004.npz valid=2462501
+[issue253-evaluation] shard_005.npz valid=1645333
+[issue253-evaluation] shard_006.npz valid=1179276
+[issue253-evaluation] shard_007.npz valid=1995023
+[issue253-evaluation] shard_008.npz valid=1233498
+[issue253-evaluation] shard_009.npz valid=2287390
+[issue253-evaluation] shard_010.npz valid=4816640
+[issue253-evaluation] shard_011.npz valid=7021193
+[issue253-evaluation] shard_012.npz valid=1040819
+hard_q cells ['common_fixed3', 'common_fixed5', 'native_fixed3'] seconds 72.58
+   common_fixed3 count 28391948 excluded 0 experts [-1, 0, 1] scale 0.08433422 heldout {"representation": "hard_sid_decoded", "probe_trained": false, "labels_passed_to_model": false, "tangent_scale": 0.08433422446250916, "banks": {"strict_struct_test_degree_matched": {"pairs": 2940, "sha256": "7742e34d49f18c287b33cfbc67dc92ba876a69724d730d90492ec3b87f6ae8ca", "distance": {"count": 294
+   common_fixed5 count 28391948 excluded 0 experts [-3, -1, 0, 1, 3] scale 0.08433422 heldout {"representation": "hard_sid_decoded", "probe_trained": false, "labels_passed_to_model": false, "tangent_scale": 0.08433422446250916, "banks": {"strict_struct_test_degree_matched": {"pairs": 2940, "sha256": "7742e34d49f18c287b33cfbc67dc92ba876a69724d730d90492ec3b87f6ae8ca", "distance": {"count": 294
+   native_fixed3 count 28391948 excluded 0 experts [-1, 0, 1] scale 0.08433422 heldout {"representation": "hard_sid_decoded", "probe_trained": false, "labels_passed_to_model": false, "tangent_scale": 0.08433422446250916, "banks": {"strict_struct_test_degree_matched": {"pairs": 2940, "sha256": "7742e34d49f18c287b33cfbc67dc92ba876a69724d730d90492ec3b87f6ae8ca", "distance": {"count": 294
+[issue253-evaluation] shard_000.npz valid=769276
+[issue253-evaluation] shard_001.npz valid=633899
+[issue253-evaluation] shard_002.npz valid=1411052
+[issue253-evaluation] shard_003.npz valid=1896048
+[issue253-evaluation] shard_004.npz valid=2462501
+[issue253-evaluation] shard_005.npz valid=1645333
+[issue253-evaluation] shard_006.npz valid=1179276
+[issue253-evaluation] shard_007.npz valid=1995023
+[issue253-evaluation] shard_008.npz valid=1233498
+[issue253-evaluation] shard_009.npz valid=2287390
+[issue253-evaluation] shard_010.npz valid=4816640
+[issue253-evaluation] shard_011.npz valid=7021193
+[issue253-evaluation] shard_012.npz valid=1040819
+continuous_z cells ['common_fixed3', 'common_fixed5', 'native_fixed3'] seconds 70.6
+   common_fixed3 count 28391948 excluded 0 experts [-1, 0, 1] scale 0.08433422 heldout {"representation": "continuous_encoder_z", "probe_trained": false, "labels_passed_to_model": false, "tangent_scale": 0.08433422446250916, "banks": {"strict_struct_test_degree_matched": {"pairs": 2940, "sha256": "7742e34d49f18c287b33cfbc67dc92ba876a69724d730d90492ec3b87f6ae8ca", "distance": {"count":
+   common_fixed5 count 28391948 excluded 0 experts [-3, -1, 0, 1, 3] scale 0.08433422 heldout {"representation": "continuous_encoder_z", "probe_trained": false, "labels_passed_to_model": false, "tangent_scale": 0.08433422446250916, "banks": {"strict_struct_test_degree_matched": {"pairs": 2940, "sha256": "7742e34d49f18c287b33cfbc67dc92ba876a69724d730d90492ec3b87f6ae8ca", "distance": {"count":
+   native_fixed3 count 28391948 excluded 0 experts [-1, 0, 1] scale 0.08433422 heldout {"representation": "continuous_encoder_z", "probe_trained": false, "labels_passed_to_model": false, "tangent_scale": 0.08433422446250916, "banks": {"strict_struct_test_degree_matched": {"pairs": 2940, "sha256": "7742e34d49f18c287b33cfbc67dc92ba876a69724d730d90492ec3b87f6ae8ca", "distance": {"count":
+{
+  "run_id": "stage2_6e4324cd326e45eba067d30295f8e4bd",
+  "native_scale": 0.08433422446250916,
+  "s_ref": 0.08433422446250916,
+  "items": 24587,
+  "distinct_l3": 22582
+}

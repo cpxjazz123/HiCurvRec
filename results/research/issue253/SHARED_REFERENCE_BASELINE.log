@@ -1,0 +1,43 @@
+test_disjoint_populations_and_current_step_parameters (tools.issue253.test_shared_forward.SharedForwardTests) ... /fs04/ar57/wenyu/GeneRec/tools/issue252/ego_operators.py:189: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+  operators.append(torch.sparse_csr_tensor(crow, columns, values,
+ERROR
+test_overlap_duplicates_and_original_rank_local_order (tools.issue253.test_shared_forward.SharedForwardTests) ... ok
+
+======================================================================
+ERROR: test_disjoint_populations_and_current_step_parameters (tools.issue253.test_shared_forward.SharedForwardTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_shared_forward.py", line 104, in test_disjoint_populations_and_current_step_parameters
+    self.compare(training,model,catalogue,ids,np.arange(256,512))
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_shared_forward.py", line 69, in compare
+    reference=copy.deepcopy(model)
+  File "/usr/lib64/python3.9/copy.py", line 172, in deepcopy
+    y = _reconstruct(x, memo, *rv)
+  File "/usr/lib64/python3.9/copy.py", line 270, in _reconstruct
+    state = deepcopy(state, memo)
+  File "/usr/lib64/python3.9/copy.py", line 146, in deepcopy
+    y = copier(x, memo)
+  File "/usr/lib64/python3.9/copy.py", line 230, in _deepcopy_dict
+    y[deepcopy(key, memo)] = deepcopy(value, memo)
+  File "/usr/lib64/python3.9/copy.py", line 146, in deepcopy
+    y = copier(x, memo)
+  File "/usr/lib64/python3.9/copy.py", line 230, in _deepcopy_dict
+    y[deepcopy(key, memo)] = deepcopy(value, memo)
+  File "/usr/lib64/python3.9/copy.py", line 172, in deepcopy
+    y = _reconstruct(x, memo, *rv)
+  File "/usr/lib64/python3.9/copy.py", line 270, in _reconstruct
+    state = deepcopy(state, memo)
+  File "/usr/lib64/python3.9/copy.py", line 146, in deepcopy
+    y = copier(x, memo)
+  File "/usr/lib64/python3.9/copy.py", line 230, in _deepcopy_dict
+    y[deepcopy(key, memo)] = deepcopy(value, memo)
+  File "/usr/lib64/python3.9/copy.py", line 153, in deepcopy
+    y = copier(memo)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/_tensor.py", line 136, in __deepcopy__
+    raise RuntimeError(
+RuntimeError: Only Tensors created explicitly by the user (graph leaves) support the deepcopy protocol at the moment.  If you were attempting to deepcopy a module, this may be because of a torch.nn.utils.weight_norm usage, see https://github.com/pytorch/pytorch/pull/103001
+
+----------------------------------------------------------------------
+Ran 2 tests in 8.334s
+
+FAILED (errors=1)

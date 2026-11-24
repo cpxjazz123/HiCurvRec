@@ -1,0 +1,296 @@
+test_independent_ambient_agreement_and_fixed_equal_three (tools.issue253.test_three_contract.ThreeExpertContract) ... ok
+test_three_origin_distances_are_one (tools.issue253.test_three_contract.ThreeExpertContract) ... ok
+test_three_queries_and_two_softmax_axes (tools.issue253.test_three_contract.ThreeExpertContract) ... ok
+test_empty_short_long_repeated_rows_values_and_exact_input_adjoint (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... /fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py:75: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+  (reference.incoming.to_sparse_csr(), reference.outgoing.to_sparse_csr()))
+test_finite_difference_live_second_affine_and_first_projection (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_float64_adjoint_retains_degree3_and7_reciprocals (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_full_induced_one_two_hop_nodes_edges_masks_and_live_parameters (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_known_directed_values_and_reciprocal_degree_transpose (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_noncontiguous_inputs_and_finite_difference_input_gradient (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... test_zero_nodes_and_each_unused_direction (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_behavior_off_is_exact_uniform_three_for_repeats_and_empty (test_three_geometry.ThreeAttentionTests) ... ok
+test_query_order_is_not_a_hardcoded_topological_role (test_three_geometry.ThreeAttentionTests) ... ok
+test_scalar_reference_for_two_tokens_and_all_masks (test_three_geometry.ThreeAttentionTests) ... ok
+test_three_query_serialization_and_shared_parameter_capacity (test_three_geometry.ThreeAttentionTests) ... ok
+test_ambient_directional_gradient_for_inputs_and_mixing (test_three_geometry.ThreeGeometryTests) ... ok
+test_common_scale_ambient_matrix_broadcast_and_row_pairs (test_three_geometry.ThreeGeometryTests) ... ok
+test_exact_curvatures_and_no_removed_expert_computation (test_three_geometry.ThreeGeometryTests) ... ok
+test_fixed_metric_has_no_trainable_gate_route (test_three_geometry.ThreeGeometryTests) ... ok
+test_invalid_common_scale_and_nonfinite_norms_fail_closed (test_three_geometry.ThreeGeometryTests) ... ok
+test_zero_curvature_limit_from_common_tangent_scaling (test_three_geometry.ThreeGeometryTests) ... ok
+test_empty_and_all_invalid_use_fixed_null (test_attention.ExpertAttentionTests) ... ok
+test_hand_computed_two_normalizations (test_attention.ExpertAttentionTests) ... /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/tests/test_attention.py:66: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  self.assertGreater(float(weights.max() - weights.min()), 0.01)
+ok
+test_independent_queries_and_all_gradient_groups_train (test_attention.ExpertAttentionTests) ... ok
+test_padding_mask_and_repeated_items (test_attention.ExpertAttentionTests) ... ok
+test_permutation_equivariance_with_fixed_null_slot (test_attention.ExpertAttentionTests) ... ok
+test_single_token_degeneracy (test_attention.ExpertAttentionTests) ... ok
+test_smooth_directional_finite_differences_of_both_outputs (test_attention.ExpertAttentionTests) ... ok
+test_controlled_weight_intervention_changes_hard_id (test_reference.GeometryTests) ... FAIL
+test_fixed_mean_switches_and_broadcasting (test_reference.GeometryTests) ... ok
+test_hyperbolic_saturation_keeps_radial_distance (test_reference.GeometryTests) ... ok
+test_independent_lorentz_sphere_references (test_reference.GeometryTests) ... ok
+test_smooth_cost_finite_differences (test_reference.GeometryTests) ... ok
+test_zero_coincident_finite_gradients (test_reference.GeometryTests) ... ok
+test_balanced_marginals_and_hand_answer (test_reference.SelectionTests) ... ok
+test_exact_hard_forward_and_only_soft_backward (test_reference.SelectionTests) ... ok
+test_frozen_hard_rule_exact_and_inference_argmin (test_reference.SelectionTests) ... ok
+test_saturated_probabilities_are_finite (test_reference.SelectionTests) ... ok
+test_soft_finite_differences_both_paths (test_reference.SelectionTests) ... ok
+test_balancing_cannot_be_replaced_by_argmin (test_known_answers.KnownAnswerTests) ... ok
+test_hand_answers_common_tangent_and_spherical_wrap (test_known_answers.KnownAnswerTests) ... ok
+test_designated_assertions_detect_mutations (test_mutations.Mutations) ... ok
+test_compiled_api_preserves_functions_and_frozen_options (test_cuda_math.CompilerIsolationTests) ... ok
+test_configuration_keeps_every_cache_and_temporary_root_in_owned_tree (test_cuda_math.CompilerIsolationTests) ... ok
+test_default_cache_identity_is_issue253 (test_cuda_math.CompilerIsolationTests) ... ok
+
+======================================================================
+FAIL: test_empty_short_long_repeated_rows_values_and_exact_input_adjoint (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (dtype=torch.float64)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 130, in test_empty_short_long_repeated_rows_values_and_exact_input_adjoint
+    torch.testing.assert_close(gradient, exact_transpose, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 64 / 34688 (0.2%)
+Greatest absolute difference: 0.44400848405602833 at index (1079, 6) (up to 1e-09 allowed)
+Greatest relative difference: 2.3779264858852693 at index (1079, 24) (up to 1e-08 allowed)
+
+======================================================================
+FAIL: test_empty_short_long_repeated_rows_values_and_exact_input_adjoint (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (dtype=torch.float32)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 130, in test_empty_short_long_repeated_rows_values_and_exact_input_adjoint
+    torch.testing.assert_close(gradient, exact_transpose, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 64 / 34688 (0.2%)
+Greatest absolute difference: 0.3518235683441162 at index (1077, 7) (up to 1e-05 allowed)
+Greatest relative difference: 4.132562637329102 at index (1079, 7) (up to 0.0001 allowed)
+
+======================================================================
+FAIL: test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (variable=0, dtype=torch.float64)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 225, in test_second_affine_readout_input_and_all_parameter_gradients
+    torch.testing.assert_close(got, want, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 18 / 6504 (0.3%)
+Greatest absolute difference: 0.07975693213121277 at index (1082, 0) (up to 1e-09 allowed)
+Greatest relative difference: 0.5804458493720186 at index (1083, 5) (up to 1e-08 allowed)
+
+======================================================================
+FAIL: test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (variable=1, dtype=torch.float64)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 225, in test_second_affine_readout_input_and_all_parameter_gradients
+    torch.testing.assert_close(got, want, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 192 / 192 (100.0%)
+Greatest absolute difference: 0.017576057788092903 at index (29, 3) (up to 1e-09 allowed)
+Greatest relative difference: 1.321743349753863 at index (27, 1) (up to 1e-08 allowed)
+
+======================================================================
+FAIL: test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (variable=2, dtype=torch.float64)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 225, in test_second_affine_readout_input_and_all_parameter_gradients
+    torch.testing.assert_close(got, want, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 32 / 32 (100.0%)
+Greatest absolute difference: 0.04476054759936332 at index (8,) (up to 1e-09 allowed)
+Greatest relative difference: 0.674205449476014 at index (13,) (up to 1e-08 allowed)
+
+======================================================================
+FAIL: test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (variable=3, dtype=torch.float64)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 225, in test_second_affine_readout_input_and_all_parameter_gradients
+    torch.testing.assert_close(got, want, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 1024 / 1024 (100.0%)
+Greatest absolute difference: 0.02544980030690802 at index (29, 1) (up to 1e-09 allowed)
+Greatest relative difference: 24.381953204485562 at index (16, 10) (up to 1e-08 allowed)
+
+======================================================================
+FAIL: test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (variable=4, dtype=torch.float64)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 225, in test_second_affine_readout_input_and_all_parameter_gradients
+    torch.testing.assert_close(got, want, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 32 / 32 (100.0%)
+Greatest absolute difference: 0.004572732594286366 at index (17,) (up to 1e-09 allowed)
+Greatest relative difference: 0.01415422037729174 at index (17,) (up to 1e-08 allowed)
+
+======================================================================
+FAIL: test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (variable=5, dtype=torch.float64)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 225, in test_second_affine_readout_input_and_all_parameter_gradients
+    torch.testing.assert_close(got, want, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 1024 / 1024 (100.0%)
+Greatest absolute difference: 0.05442900643466919 at index (29, 15) (up to 1e-09 allowed)
+Greatest relative difference: 31.693610459717558 at index (15, 14) (up to 1e-08 allowed)
+
+======================================================================
+FAIL: test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (variable=6, dtype=torch.float64)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 225, in test_second_affine_readout_input_and_all_parameter_gradients
+    torch.testing.assert_close(got, want, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 1024 / 1024 (100.0%)
+Greatest absolute difference: 0.0023472711816055827 at index (17, 15) (up to 1e-09 allowed)
+Greatest relative difference: 0.3707636087448357 at index (11, 4) (up to 1e-08 allowed)
+
+======================================================================
+FAIL: test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (variable=0, dtype=torch.float32)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 225, in test_second_affine_readout_input_and_all_parameter_gradients
+    torch.testing.assert_close(got, want, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 18 / 6504 (0.3%)
+Greatest absolute difference: 0.05028736591339111 at index (1081, 5) (up to 1e-05 allowed)
+Greatest relative difference: 1.0910345315933228 at index (1081, 4) (up to 0.0001 allowed)
+
+======================================================================
+FAIL: test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (variable=1, dtype=torch.float32)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 225, in test_second_affine_readout_input_and_all_parameter_gradients
+    torch.testing.assert_close(got, want, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 189 / 192 (98.4%)
+Greatest absolute difference: 0.010561101138591766 at index (0, 2) (up to 1e-05 allowed)
+Greatest relative difference: 6.430631160736084 at index (18, 1) (up to 0.0001 allowed)
+
+======================================================================
+FAIL: test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (variable=2, dtype=torch.float32)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 225, in test_second_affine_readout_input_and_all_parameter_gradients
+    torch.testing.assert_close(got, want, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 31 / 32 (96.9%)
+Greatest absolute difference: 0.03264176845550537 at index (0,) (up to 1e-05 allowed)
+Greatest relative difference: 0.06573183089494705 at index (21,) (up to 0.0001 allowed)
+
+======================================================================
+FAIL: test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (variable=3, dtype=torch.float32)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 225, in test_second_affine_readout_input_and_all_parameter_gradients
+    torch.testing.assert_close(got, want, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 983 / 1024 (96.0%)
+Greatest absolute difference: 0.01248970627784729 at index (2, 28) (up to 1e-05 allowed)
+Greatest relative difference: 6.618762016296387 at index (17, 21) (up to 0.0001 allowed)
+
+======================================================================
+FAIL: test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (variable=4, dtype=torch.float32)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 225, in test_second_affine_readout_input_and_all_parameter_gradients
+    torch.testing.assert_close(got, want, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 22 / 32 (68.8%)
+Greatest absolute difference: 0.0036880970001220703 at index (14,) (up to 1e-05 allowed)
+Greatest relative difference: 0.007374846842139959 at index (21,) (up to 0.0001 allowed)
+
+======================================================================
+FAIL: test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (variable=5, dtype=torch.float32)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 225, in test_second_affine_readout_input_and_all_parameter_gradients
+    torch.testing.assert_close(got, want, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 1019 / 1024 (99.5%)
+Greatest absolute difference: 0.027526676654815674 at index (2, 25) (up to 1e-05 allowed)
+Greatest relative difference: 10.150812149047852 at index (14, 0) (up to 0.0001 allowed)
+
+======================================================================
+FAIL: test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) (variable=6, dtype=torch.float32)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_ego_kernel.py", line 225, in test_second_affine_readout_input_and_all_parameter_gradients
+    torch.testing.assert_close(got, want, **tolerances(dtype))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py", line 1587, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 584 / 1024 (57.0%)
+Greatest absolute difference: 0.0017529726028442383 at index (14, 25) (up to 1e-05 allowed)
+Greatest relative difference: 2.822436571121216 at index (30, 6) (up to 0.0001 allowed)
+
+======================================================================
+FAIL: test_controlled_weight_intervention_changes_hard_id (test_reference.GeometryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/tests/test_reference.py", line 91, in test_controlled_weight_intervention_changes_hard_id
+    self.assertEqual(ids, [0, 1], "gate must change the actual selected discrete codeword")
+AssertionError: Lists differ: [0, 0] != [0, 1]
+
+First differing element 1:
+0
+1
+
+- [0, 0]
+?     ^
+
++ [0, 1]
+?     ^
+ : gate must change the actual selected discrete codeword
+
+----------------------------------------------------------------------
+Ran 45 tests in 45.067s
+
+FAILED (failures=17)

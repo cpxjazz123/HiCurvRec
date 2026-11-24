@@ -78,11 +78,9 @@ def level_probability(costs, tau: float = TAU):
     """The quantizer's own assignment preference at every level, from the captured costs."""
     return [torch.softmax(-c.float() / tau, dim=-1) for c in costs]
 
-
 def structure_forward(model, embeddings, captured, *, draw: dict, export_style: bool,
                       tau: float = TAU, latents=None):
     """The three level objectives for one draw, over costs that carry the encoder's graph.
-
     `captured` is `(tokens, costs)` as recorded by `RQLayer.forward`; `latents` is the same
     forward's per-level residual. The cost is RECOMPUTED from the latent with the metric the
     quantizer was handed, so the objective's graph reaches the encoder -- a detached clone of the
@@ -170,7 +168,6 @@ def normalise_latent_step(model, latent_norm: float, cost_scale: float) -> float
     # |J| * lr * sqrt(number of encoder parameters); the lr budget that keeps it within the
     # fraction of the resolution is what the trainer multiplies into the step size.
     return float(LATENT_STEP_FRACTION) * float(cost_scale) / max(float(latent_norm), 1e-12)
-
 def normalise_gradients(model, *, scale: float = GRADIENT_RMS) -> float:
     """Rescale every parameter gradient so the joint RMS equals `scale`; returns the factor."""
     params = [p for p in model.parameters() if p.grad is not None]
@@ -184,20 +181,15 @@ def normalise_gradients(model, *, scale: float = GRADIENT_RMS) -> float:
     for p in params:
         p.grad.mul_(factor)
     return factor
-
-
 def apply_structure_step(model, latent, costs, tokens, tau: float = TAU) -> dict:
     """Route the cost gradient, step the structure term on its own, and report the norms."""
     routed = route_cost_gradient(model, latent, costs, tokens, tau)
     latent.backward(routed["latent_grad"])
     for level, rows in enumerate(routed["codebook_grads"]):
     return routed
-
-
 def run_structure_step(model, embeddings, draw, *, export_style: bool = False,
                        tau: float = TAU) -> dict:
     """Forward and backward the structure term for one draw; returns the gradient report.
-
     The gradients land on `model.encoder`, `model.decoder` (through the shared MLP trunk) and each
     `model.rq.vq_layers[l].embed.weight`. Nothing touches reconstruction: the caller zeroes the
     gradients first, which is the §1 separate-step requirement.

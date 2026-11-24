@@ -281,7 +281,6 @@ def test_c41_a_satisfiable_instance_improves_its_hard_delta():
         optimizer.step()
     after = _hard_delta(model, embeddings, draw)
     assert after >= before, f"hard S fell from {before} to {after}"
-
 def _hard_delta(model, embeddings, draw):
     with torch.no_grad():
         values = []

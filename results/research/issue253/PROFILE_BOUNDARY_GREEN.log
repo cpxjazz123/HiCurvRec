@@ -1,0 +1,12 @@
+test_second_affine_readout_input_and_all_parameter_gradients (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... /fs04/ar57/wenyu/GeneRec/tools/issue253/ego_reference.py:65: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+  operators.append(torch.sparse_csr_tensor(
+ok
+test_full_induced_one_two_hop_nodes_edges_masks_and_live_parameters (tools.issue253.test_ego_kernel.KernelEquivalenceTests) ... ok
+test_independent_ambient_agreement_and_fixed_equal_three (tools.issue253.test_three_contract.ThreeExpertContract) ... ok
+test_three_origin_distances_are_one (tools.issue253.test_three_contract.ThreeExpertContract) ... ok
+test_three_queries_and_two_softmax_axes (tools.issue253.test_three_contract.ThreeExpertContract) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 1.863s
+
+OK

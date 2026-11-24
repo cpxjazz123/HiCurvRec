@@ -1,0 +1,25 @@
+F
+======================================================================
+FAIL: test_actual_model_imports_from_result_directory_in_isolated_python (tools.issue253.test_direct_import.DirectImportTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_direct_import.py", line 18, in test_actual_model_imports_from_result_directory_in_isolated_python
+    self.assertEqual(result.returncode, 0,
+AssertionError: 1 != 0 : actual candidate imports must not depend on caller cwd/PYTHONPATH:
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/train_rqvae.py", line 41, in <module>
+    from model import RQVAE
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/__init__.py", line 4, in <module>
+    from .mechanism import RQVAE
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/mechanism.py", line 10, in <module>
+    from .estimator import StructuralSampler, sampled_values
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/estimator.py", line 5, in <module>
+    from tools.issue252.host_transfer import host_int64
+ModuleNotFoundError: No module named 'tools'
+
+
+----------------------------------------------------------------------
+Ran 1 test in 3.155s
+
+FAILED (failures=1)

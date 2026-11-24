@@ -32,8 +32,8 @@ def latest(pattern):
 
 
 def main():
-    tests = latest('contract_tests')
-    validation = latest('geometry_validation/geometry_*')
+    tests = latest('contract_tests/*')
+    validation = latest('validation/*')
     benchmark = latest('benchmark/issue252_benchmark_*')
     descriptor = training_admission.create_receipt(
         ROOT, TREE,
@@ -43,6 +43,13 @@ def main():
                       for kind in ('deterministic', 'reference', 'mutation')})
     print('receipt', json.dumps(descriptor))
     run_id = 'issue252_formal'
+    suffix = 0
+    while True:
+        workspace = ROOT / 'results/stage2_RQ-VAE/_runs' / run_id / ARM / 'workspace.json'
+        if not workspace.exists():
+            break
+        suffix += 1
+        run_id = 'issue252_formal_r%d' % suffix
     run = run_workspace.freeze_run(ROOT, TREE, run_id, ARM)
     print('run', json.dumps({key: run[key] for key in ('run_id', 'arm', 'entry', 'result')}))
     code = launcher.launch(Path(run['entry']), Path(run['result']), python=PYTHON,

@@ -1,0 +1,78 @@
+test_empty_degenerate_and_invalid_populations (tools.issue253.test_sample_indices.HostIndexTests) ... ERROR
+test_numpy_list_and_tensor_have_hand_known_value_and_all_gradients (tools.issue253.test_sample_indices.HostIndexTests) ... ERROR
+test_reference_occurrences_are_not_silently_deduplicated (tools.issue253.test_sample_indices.HostIndexTests) ... ERROR
+test_actual_target_sampling_matches_immutable252_bytes_and_order (tools.issue253.test_sample_indices.OriginalSamplingTests) ... ok
+test_designated_assertions_capture_every_valid_mutation (tools.issue253.test_estimator_mutations.EstimatorMutations) ... ERROR
+
+======================================================================
+ERROR: test_empty_degenerate_and_invalid_populations (tools.issue253.test_sample_indices.HostIndexTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_sample_indices.py", line 34, in test_empty_degenerate_and_invalid_populations
+    got=sampled_values(q,[[0,1,2]],[0,1,2],squared)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/estimator.py", line 33, in sampled_values
+    triples, references, endpoints, inverse = (
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/estimator.py", line 34, in <genexpr>
+    host_int64(value, q.device)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/host_transfer.py", line 15, in host_int64
+    staging.copy_(source)
+RuntimeError: output with shape [3] doesn't match the broadcast shape [1, 3]
+
+======================================================================
+ERROR: test_numpy_list_and_tensor_have_hand_known_value_and_all_gradients (tools.issue253.test_sample_indices.HostIndexTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_sample_indices.py", line 21, in test_numpy_list_and_tensor_have_hand_known_value_and_all_gradients
+    value=sampled_values(q,convert([[0,1,2]]),convert([0,1,2]),squared)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/estimator.py", line 33, in sampled_values
+    triples, references, endpoints, inverse = (
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/estimator.py", line 34, in <genexpr>
+    host_int64(value, q.device)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/host_transfer.py", line 15, in host_int64
+    staging.copy_(source)
+RuntimeError: output with shape [3] doesn't match the broadcast shape [1, 3]
+
+======================================================================
+ERROR: test_reference_occurrences_are_not_silently_deduplicated (tools.issue253.test_sample_indices.HostIndexTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_sample_indices.py", line 27, in test_reference_occurrences_are_not_silently_deduplicated
+    got=sampled_values(q,np.array([[0,1,2],[0,1,2]]),np.array([0,0,1]),squared)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/estimator.py", line 33, in sampled_values
+    triples, references, endpoints, inverse = (
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/estimator.py", line 34, in <genexpr>
+    host_int64(value, q.device)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/host_transfer.py", line 15, in host_int64
+    staging.copy_(source)
+RuntimeError: The size of tensor a (6) must match the size of tensor b (3) at non-singleton dimension 1
+
+======================================================================
+ERROR: test_designated_assertions_capture_every_valid_mutation (tools.issue253.test_estimator_mutations.EstimatorMutations)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_estimator_mutations.py", line 33, in test_designated_assertions_capture_every_valid_mutation
+    caught('sampled curvature sign reversed','numeric',value_answer,
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_estimator_mutations.py", line 25, in caught
+    try:checker()
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_estimator_mutations.py", line 31, in value_answer
+    value=module.sampled_values(q,[[0,1,2]],[0,1,2],squared)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1157, in _execute_mock_call
+    result = effect(*args, **kwargs)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_estimator_mutations.py", line 34, in <lambda>
+    patch.object(module,'sampled_values',side_effect=lambda *a,**kw:-original(*a,**kw)))
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/estimator.py", line 33, in sampled_values
+    triples, references, endpoints, inverse = (
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_three_expert_attention_rq/model/estimator.py", line 34, in <genexpr>
+    host_int64(value, q.device)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/host_transfer.py", line 15, in host_int64
+    staging.copy_(source)
+RuntimeError: output with shape [3] doesn't match the broadcast shape [1, 3]
+
+----------------------------------------------------------------------
+Ran 5 tests in 1.292s
+
+FAILED (errors=4)

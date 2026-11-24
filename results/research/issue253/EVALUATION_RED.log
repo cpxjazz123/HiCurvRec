@@ -1,0 +1,146 @@
+test_collinear_known_answer_and_three_five_distinction (tools.issue253.test_final_evaluation.AmbientMetricTests) ... ok
+test_invalid_scale_and_pair_alignment_fail_closed (tools.issue253.test_final_evaluation.AmbientMetricTests) ... ok
+test_shared_matrix_paired_and_streamed_contracts (tools.issue253.test_final_evaluation.AmbientMetricTests) ... ok
+test_ledger_needs_exact_sid_and_checkpoint_not_prefix_or_arm_name (tools.issue253.test_final_evaluation.ArchiveIdentityTests) ... ok
+test_hard_q_is_three_actual_books_not_z_or_collision_counter (tools.issue253.test_final_evaluation.CommonScaleAndRepresentationTests) ... ERROR
+test_scale_comes_only_from_exact_bound_historical_checkpoint (tools.issue253.test_final_evaluation.CommonScaleAndRepresentationTests) ... ERROR
+test_existing_full_evaluate_accepts_both_independent_metrics (tools.issue253.test_final_evaluation.FullCoverageTests) ... [full-evaluation] a.npz valid=3 cumulative=3
+[full-evaluation] b.npz valid=1 cumulative=4
+[full-evaluation] a.npz valid=3 cumulative=3
+[full-evaluation] b.npz valid=1 cumulative=4
+ok
+test_joint_cells_preserve_scales_full_rows_signs_and_distortion (tools.issue253.test_final_evaluation.FullCoverageTests) ... ERROR
+test_reconciliation_rejects_incomplete_full_count (tools.issue253.test_final_evaluation.FullCoverageTests) ... ERROR
+test_targets_cannot_fit_or_change_geometric_scale (tools.issue253.test_final_evaluation.FullCoverageTests) ... ERROR
+test_changed_archived_sources_configs_or_audit_fail_closed (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests) ... test_ledger_source_hash_disagreement_and_traversal_are_rejected (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests) ... ERROR
+test_live_infrastructure_drift_does_not_rewrite_historical_authority (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests) ... ERROR
+test_missing_archived_infrastructure_cannot_fall_back_to_live_source (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests) ... ERROR
+test_independent_reduction_uses_global_users_and_zero_based_ranks (tools.issue253.test_final_evaluation.PerUserRecallTests) ... ok
+test_mse_uses_all_coordinates_and_actual_representation (tools.issue253.test_final_evaluation.ReconstructionReductionTests) ... ok
+test_mutated_executed_source_fails_before_any_model_import (tools.issue253.test_final_evaluation.SourceBoundCheckpointTests) ... ok
+test_reused_binding_api_rejects_crossed_and_modified_artifacts (tools.issue253.test_final_evaluation.SourceBoundCheckpointTests) ... ok
+
+======================================================================
+ERROR: test_hard_q_is_three_actual_books_not_z_or_collision_counter (tools.issue253.test_final_evaluation.CommonScaleAndRepresentationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 79, in test_hard_q_is_three_actual_books_not_z_or_collision_counter
+    from tools.issue253.final_evaluation import validate_representation
+ModuleNotFoundError: No module named 'tools.issue253.final_evaluation'
+
+======================================================================
+ERROR: test_scale_comes_only_from_exact_bound_historical_checkpoint (tools.issue253.test_final_evaluation.CommonScaleAndRepresentationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 65, in test_scale_comes_only_from_exact_bound_historical_checkpoint
+    from tools.issue253.final_evaluation import comparison_scale
+ModuleNotFoundError: No module named 'tools.issue253.final_evaluation'
+
+======================================================================
+ERROR: test_joint_cells_preserve_scales_full_rows_signs_and_distortion (tools.issue253.test_final_evaluation.FullCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 137, in test_joint_cells_preserve_scales_full_rows_signs_and_distortion
+    from tools.issue253.final_evaluation import evaluate_cells
+ModuleNotFoundError: No module named 'tools.issue253.final_evaluation'
+
+======================================================================
+ERROR: test_reconciliation_rejects_incomplete_full_count (tools.issue253.test_final_evaluation.FullCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 182, in test_reconciliation_rejects_incomplete_full_count
+    from tools.issue253.reconcile_results import reconcile_curvature
+ModuleNotFoundError: No module named 'tools.issue253.reconcile_results'
+
+======================================================================
+ERROR: test_targets_cannot_fit_or_change_geometric_scale (tools.issue253.test_final_evaluation.FullCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 167, in test_targets_cannot_fit_or_change_geometric_scale
+    from tools.issue253.final_evaluation import evaluate_cells
+ModuleNotFoundError: No module named 'tools.issue253.final_evaluation'
+
+======================================================================
+ERROR: test_changed_archived_sources_configs_or_audit_fail_closed (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests) (group='candidate_sources', name='train_rqvae.py')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 340, in test_changed_archived_sources_configs_or_audit_fail_closed
+    self.validate()
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 318, in validate
+    from tools.issue253.final_evaluation import validate_archived_sources
+ModuleNotFoundError: No module named 'tools.issue253.final_evaluation'
+
+======================================================================
+ERROR: test_changed_archived_sources_configs_or_audit_fail_closed (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests) (group='candidate_sources', name='model/__init__.py')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 340, in test_changed_archived_sources_configs_or_audit_fail_closed
+    self.validate()
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 318, in validate
+    from tools.issue253.final_evaluation import validate_archived_sources
+ModuleNotFoundError: No module named 'tools.issue253.final_evaluation'
+
+======================================================================
+ERROR: test_changed_archived_sources_configs_or_audit_fail_closed (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests) (group='infrastructure_sources', name='tools/issue252/training_admission.py')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 340, in test_changed_archived_sources_configs_or_audit_fail_closed
+    self.validate()
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 318, in validate
+    from tools.issue253.final_evaluation import validate_archived_sources
+ModuleNotFoundError: No module named 'tools.issue253.final_evaluation'
+
+======================================================================
+ERROR: test_changed_archived_sources_configs_or_audit_fail_closed (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests) (group='infrastructure_sources', name='tools/issue252/archive_audit.py')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 340, in test_changed_archived_sources_configs_or_audit_fail_closed
+    self.validate()
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 318, in validate
+    from tools.issue253.final_evaluation import validate_archived_sources
+ModuleNotFoundError: No module named 'tools.issue253.final_evaluation'
+
+======================================================================
+ERROR: test_changed_archived_sources_configs_or_audit_fail_closed (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests) (group='repository_configs', name='assets/manifest.json')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 340, in test_changed_archived_sources_configs_or_audit_fail_closed
+    self.validate()
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 318, in validate
+    from tools.issue253.final_evaluation import validate_archived_sources
+ModuleNotFoundError: No module named 'tools.issue253.final_evaluation'
+
+======================================================================
+ERROR: test_ledger_source_hash_disagreement_and_traversal_are_rejected (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 358, in test_ledger_source_hash_disagreement_and_traversal_are_rejected
+    self.validate(files=crossed)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 318, in validate
+    from tools.issue253.final_evaluation import validate_archived_sources
+ModuleNotFoundError: No module named 'tools.issue253.final_evaluation'
+
+======================================================================
+ERROR: test_live_infrastructure_drift_does_not_rewrite_historical_authority (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 328, in test_live_infrastructure_drift_does_not_rewrite_historical_authority
+    self.assertEqual(self.validate(), self.maps)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 318, in validate
+    from tools.issue253.final_evaluation import validate_archived_sources
+ModuleNotFoundError: No module named 'tools.issue253.final_evaluation'
+
+======================================================================
+ERROR: test_missing_archived_infrastructure_cannot_fall_back_to_live_source (tools.issue253.test_final_evaluation.HistoricalArchivedSourceTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 352, in test_missing_archived_infrastructure_cannot_fall_back_to_live_source
+    self.validate()
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue253/test_final_evaluation.py", line 318, in validate
+    from tools.issue253.final_evaluation import validate_archived_sources
+ModuleNotFoundError: No module named 'tools.issue253.final_evaluation'
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.826s
+
+FAILED (errors=13)
