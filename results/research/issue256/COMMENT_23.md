@@ -1,0 +1,3 @@
+对已保存的最终权重真实Loss梯度做纯代数归约（没有新增GPU运行）：18模块中，sharedKey与Query0的`<g_original,g_combined>/||g_original||²`分别为-2.3951106672、-6.9843923213。按恒等式`1 + (lambda*||g_C||/||g_O||)*cos(g_O,g_C)`，该局部batch上的原始负combined梯度方向对original目标是一阶上升方向。
+
+严格限定：这只覆盖最终权重的单rank真实1024样本回放，不是全局DDP平均，不是保存了Adam状态的续训，更不能推出正式AdamW某步Loss必升或Recall因果。R01只冻结了“初始化”的全局范数预算，因此不以此宣称实现违反其合同，也不改动本轮已完成权重。证据`rounds/r01/POST_GRADIENT_DIRECTION_SUMMARY.json`，输入为`POST_TRAINING_MODULE_CHECKS.json:ce069ba4238e4b027e7dccf106459ed41710b5f6fe959bc11a0a0e68df8e0595`，生产源码commit仍为`0cdfec9b024e568b5b08d96e777033844d66635e`。它保留为训练侧假设线索；Stage3完成后才对照推荐与验证结果决定R7。

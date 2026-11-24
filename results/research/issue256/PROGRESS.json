@@ -2,7 +2,7 @@
   "issue": 256,
   "state": "WORKING",
   "parent_commit": "c4ee00cdc4314b7fcab882acd939bf18ee3b0824",
-  "commit": "1d09e12c349850a7ac4e107be0aa658c62e70499",
+  "commit": "9a96a9cf5229ded0e34f9a25ed774dfe1564e24e",
   "source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
   "done": [
     "acceptance frozen",
@@ -35,8 +35,9 @@
     {
       "name": "R01 frozen Stage3",
       "pid": 809893,
-      "mode": "ddp-dispatched",
-      "epoch": null,
+      "mode": "ddp4",
+      "epoch": 58,
+      "worker_pids": [858572, 858573, 858574, 858575],
       "sid_sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
       "dispatch_evidence": "results/research/issue256/rounds/r01/STAGE3_START.json"
     }
@@ -47,5 +48,5 @@
     "reduce completed CPU diagnostics; after Stage3 finishes reduce full test, evaluate external validation and archive exact R2 pairing",
     "if test_R@10<=0.065, preserve R01 and return to training/validation-driven R1/R2"
   ],
-  "updated_at": "2026-11-24T19:35:03.879585+00:00"
+  "updated_at": "2026-11-24T19:48:11.762198+00:00"
 }

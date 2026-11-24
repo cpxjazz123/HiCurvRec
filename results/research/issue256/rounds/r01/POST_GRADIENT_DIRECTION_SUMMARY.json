@@ -1,0 +1,120 @@
+{
+  "run_id": "issue256_r01_formal",
+  "source": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/POST_TRAINING_MODULE_CHECKS.json",
+    "sha256": "ce069ba4238e4b027e7dccf106459ed41710b5f6fe959bc11a0a0e68df8e0595"
+  },
+  "formula": "<gO,gO+lambda*gC>/||gO||^2 = 1 + (lambda*||gC||/||gO||)*cos(gO,gC)",
+  "modules": {
+    "encoder": {
+      "weighted_curvature_over_original": 1.0973697664775142,
+      "original_curvature_cosine": 0.3363940953192909,
+      "original_dot_combined_over_original_norm_squared": 1.3691487098249449,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "GNN.input": {
+      "weighted_curvature_over_original": 2.922225737864656,
+      "original_curvature_cosine": 0.2778583213973088,
+      "original_dot_combined_over_original_norm_squared": 1.8119647382670854,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "sharedKey": {
+      "weighted_curvature_over_original": 5.8222875004987795,
+      "original_curvature_cosine": -0.5831231568191387,
+      "original_dot_combined_over_original_norm_squared": -2.3951106671994613,
+      "raw_negative_combined_is_ascent_for_original": true
+    },
+    "sharedValue": {
+      "weighted_curvature_over_original": 2.5269602686479886,
+      "original_curvature_cosine": -0.23825056166107736,
+      "original_dot_combined_over_original_norm_squared": 0.39795029669938975,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "sharedScore": {
+      "weighted_curvature_over_original": 4.9429715979359505,
+      "original_curvature_cosine": -0.06543563873630846,
+      "original_dot_combined_over_original_norm_squared": 0.6765534962336297,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "GNN.layers.0.self_linear": {
+      "weighted_curvature_over_original": 2.4925236942752154,
+      "original_curvature_cosine": -0.03474092304446986,
+      "original_dot_combined_over_original_norm_squared": 0.9134074261506671,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "GNN.layers.0.incoming": {
+      "weighted_curvature_over_original": 2.1078199382280562,
+      "original_curvature_cosine": 0.5028287034846566,
+      "original_dot_combined_over_original_norm_squared": 2.0598723667183227,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "GNN.layers.0.outgoing": {
+      "weighted_curvature_over_original": 4.5281962168996115,
+      "original_curvature_cosine": 0.41140603447018215,
+      "original_dot_combined_over_original_norm_squared": 2.8629272488975497,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "GNN.layers.1.self_linear": {
+      "weighted_curvature_over_original": 2.2494111340576093,
+      "original_curvature_cosine": 0.343285676133425,
+      "original_dot_combined_over_original_norm_squared": 1.7721906220570207,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "GNN.layers.1.incoming": {
+      "weighted_curvature_over_original": 1.3160573291600444,
+      "original_curvature_cosine": -0.10445296595201257,
+      "original_dot_combined_over_original_norm_squared": 0.8625339086063493,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "GNN.layers.1.outgoing": {
+      "weighted_curvature_over_original": 3.1544416903347536,
+      "original_curvature_cosine": -0.2765240644971933,
+      "original_dot_combined_over_original_norm_squared": 0.12772096256923715,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "codebook0": {
+      "weighted_curvature_over_original": 1.2580772396193345,
+      "original_curvature_cosine": 0.004080058787756076,
+      "original_dot_combined_over_original_norm_squared": 1.0051330290971847,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "codebook1": {
+      "weighted_curvature_over_original": 0.3965360263893948,
+      "original_curvature_cosine": 0.005689548078007461,
+      "original_dot_combined_over_original_norm_squared": 1.0022561107868044,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "codebook2": {
+      "weighted_curvature_over_original": 0.05009561954206738,
+      "original_curvature_cosine": 0.0009628795452507657,
+      "original_dot_combined_over_original_norm_squared": 1.0000482360473637,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "Query0": {
+      "weighted_curvature_over_original": 10.45835596927704,
+      "original_curvature_cosine": -0.7634462189640319,
+      "original_dot_combined_over_original_norm_squared": -6.984392321324469,
+      "raw_negative_combined_is_ascent_for_original": true
+    },
+    "Query1": {
+      "weighted_curvature_over_original": 0.07293192920328308,
+      "original_curvature_cosine": 0.6996918312210294,
+      "original_dot_combined_over_original_norm_squared": 1.0510298750987277,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "Query2": {
+      "weighted_curvature_over_original": 0.06506747980420285,
+      "original_curvature_cosine": -0.8510234616028728,
+      "original_dot_combined_over_original_norm_squared": 0.9446260480992523,
+      "raw_negative_combined_is_ascent_for_original": false
+    },
+    "decoder": {
+      "weighted_curvature_over_original": 0.0,
+      "original_curvature_cosine": null,
+      "original_dot_combined_over_original_norm_squared": 1.0,
+      "raw_negative_combined_is_ascent_for_original": false
+    }
+  },
+  "coverage": "one real1024-item rank0/world4 final-weight replay, not global DDP averaging",
+  "limitation": "Raw Euclidean gradient direction only; not AdamW optimizer continuation, a finite-step loss increase, causal Recall evidence, or a reason to alter this completed run."
+}

@@ -1,0 +1,218 @@
+{
+  "status": "running",
+  "test_result_scope": "this launch",
+  "variant": "TIGER_module_budget_prefix_rq",
+  "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+  "result_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq",
+  "gpu_probe": {
+    "physical": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "probe_source": "nvidia-smi",
+    "cuda_visible_devices": null,
+    "requested": null,
+    "visible": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "visible_count": 4,
+    "required": 4,
+    "mode": "ddp",
+    "entrypoint_supports_single_gpu": true
+  },
+  "current_gpu_probe": {
+    "physical": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "probe_source": "nvidia-smi",
+    "cuda_visible_devices": null,
+    "requested": null,
+    "visible": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "visible_count": 4,
+    "required": 4,
+    "mode": "ddp"
+  },
+  "pid": 809893,
+  "launched_at": 1795548654.8601086,
+  "live_processes": [
+    {
+      "pid": 809893,
+      "role": "launcher",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 855483,
+      "role": "torchrun",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/torchrun --standalone --nproc_per_node=4 --master_port=50201 /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 858572,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 858573,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 858574,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 858575,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861648,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861649,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861650,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861651,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861652,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861653,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861654,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861655,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861656,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861657,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861658,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861659,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861660,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861662,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861663,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    },
+    {
+      "pid": 861666,
+      "role": "rank",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    }
+  ],
+  "gpu_processes": [
+    {
+      "pid": 858572,
+      "used_memory_mib": "28370"
+    },
+    {
+      "pid": 858573,
+      "used_memory_mib": "28370"
+    },
+    {
+      "pid": 858574,
+      "used_memory_mib": "28370"
+    },
+    {
+      "pid": 858575,
+      "used_memory_mib": "28370"
+    }
+  ],
+  "launch": {
+    "dispatch_mode": "ddp",
+    "reported_mode": "ddp4",
+    "world_size": 4,
+    "train_batch_per_process": 4096,
+    "global_train_batch": 16384,
+    "infer_batch_per_process": 1024,
+    "cuda_visible_devices": "0,1,2,3"
+  },
+  "latest_train": {
+    "event": "train",
+    "timestamp": 1795549684.9544537,
+    "wall_time_s": 704.808,
+    "epoch": 58,
+    "loss": 2.010012083053589,
+    "lr": 0.0024477007895418153,
+    "best_recall_at_10": -1.0,
+    "best_train_loss": 2.0131622314453126,
+    "epoch_train_time_s": 11.604,
+    "cumulative_time_s": 704.808
+  },
+  "progress": "58/150",
+  "total_epochs": "150",
+  "protocol_ok": true,
+  "metrics": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/training_metrics.jsonl",
+  "test_final": null,
+  "test_final_stale": null,
+  "test_result": null,
+  "ckpt_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/ckpt",
+  "ckpt_files": [
+    "HG_Rec_best.pth"
+  ],
+  "run_log": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/_stage3_run.log",
+  "native_log": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/_stage3_launcher.log",
+  "run_log_tail": "[RecBole HG-Rec] launching 4-GPU DDP run (CUDA_VISIBLE_DEVICES=0,1,2,3)\n",
+  "native_log_tail": "0:08,  2.09it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  28%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258c                                | 7/25 [00:03<00:08,  2.09it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  28%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258c                                | 7/25 [00:03<00:08,  2.09it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  32%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258d                              | 8/25 [00:03<00:08,  2.09it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  32%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258d                              | 8/25 [00:03<00:08,  2.09it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  32%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258d                              | 8/25 [00:03<00:08,  2.09it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  32%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258d                              | 8/25 [00:03<00:08,  2.09it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  36%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258f                            | 9/25 [00:04<00:07,  2.09it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  36%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258f                            | 9/25 [00:04<00:07,  2.09it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  36%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258f                            | 9/25 [00:04<00:07,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  36%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258f                            | 9/25 [00:04<00:07,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  40%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258c                          | 10/25 [00:04<00:07,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  40%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258c                          | 10/25 [00:04<00:07,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  40%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258c                          | 10/25 [00:04<00:07,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  40%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258c                          | 10/25 [00:04<00:07,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  44%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258e                        | 11/25 [00:05<00:06,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  44%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258e                        | 11/25 [00:05<00:06,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  44%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258e                        | 11/25 [00:05<00:06,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  44%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258e                        | 11/25 [00:05<00:06,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  48%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588                       | 12/25 [00:05<00:06,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  48%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588                       | 12/25 [00:05<00:06,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  48%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588                       | 12/25 [00:05<00:06,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  48%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588                       | 12/25 [00:05<00:06,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  52%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2589                     | 13/25 [00:06<00:05,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  52%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2589                     | 13/25 [00:06<00:05,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  52%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2589                     | 13/25 [00:06<00:05,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 59\u001b[0m:  52%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2589                     | 13/25 [00:06<00:05,  2.10it/s]\u001b[0m",
+  "error_markers": [],
+  "observed_at": "2026-11-24T19:48:11.762198+00:00"
+}
