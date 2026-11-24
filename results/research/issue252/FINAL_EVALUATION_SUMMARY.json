@@ -1,0 +1,3882 @@
+{
+  "schema": "genrec.issue252.final_evaluation/1",
+  "scope": "formal final 3000-epoch same-run checkpoint",
+  "hard_q": {
+    "metric": "equal_weight_five_expert_squared_distance; independent ambient implementation",
+    "expert_curvatures": [
+      -3,
+      -1,
+      0,
+      1,
+      3
+    ],
+    "tangent_scale": 0.08433422446250916,
+    "curvature_definition": "GraphMoRE A.1 discrete proxy, not intrinsic curvature",
+    "curvature": {
+      "status": "OK",
+      "count": 28391948,
+      "excluded": 0,
+      "centres": 24326,
+      "macro_mae": 1.9442331968024757,
+      "micro_mae": 2.612150043503379,
+      "strata": {
+        "negative": {
+          "status": "OK",
+          "count": 21170678,
+          "micro_mae": 3.124980712902998,
+          "macro_mae": 2.331866697237183
+        },
+        "zero": {
+          "status": "OK",
+          "count": 77,
+          "micro_mae": 1.4223449694952177,
+          "macro_mae": 1.4155560407971015
+        },
+        "positive": {
+          "status": "OK",
+          "count": 7221193,
+          "micro_mae": 1.108675291423964,
+          "macro_mae": 1.787869412348064
+        }
+      },
+      "sign": {
+        "accuracy": 0.2982389232327419,
+        "balanced_accuracy": 0.3428875918991509,
+        "present_signs": [
+          "negative",
+          "zero",
+          "positive"
+        ],
+        "recall": {
+          "negative": {
+            "status": "OK",
+            "count": 21170678,
+            "recall": 0.07451254041084561
+          },
+          "zero": {
+            "status": "OK",
+            "count": 77,
+            "recall": 0.0
+          },
+          "positive": {
+            "status": "OK",
+            "count": 7221193,
+            "recall": 0.954150235286607
+          }
+        },
+        "zero_tolerance": 0.0
+      }
+    },
+    "representation": "hard_sid_decoded",
+    "prefix": {
+      "L1": {
+        "items": 24587,
+        "distinct_prefix": 256,
+        "collision_prefix": 0.9895879936551837,
+        "duplicate_prefix_share": 1.0,
+        "length": 1
+      },
+      "L2": {
+        "items": 24587,
+        "distinct_prefix": 9130,
+        "collision_prefix": 0.6286655549680726,
+        "duplicate_prefix_share": 0.7976572985724163,
+        "length": 2
+      },
+      "L3": {
+        "items": 24587,
+        "distinct_prefix": 22796,
+        "collision_prefix": 0.07284337251393014,
+        "duplicate_prefix_share": 0.13234636189856427,
+        "length": 3
+      }
+    },
+    "prefix_sharing": {
+      "L1": 1.0,
+      "L2": 0.7976572985724163,
+      "L3": 0.13234636189856427
+    },
+    "codebook_occupancy": [
+      {
+        "level": 0,
+        "used": 256,
+        "entropy": 7.4326833900435565,
+        "entropy_unit": "bits",
+        "max_share": 0.024199780371741163,
+        "capacity": 256,
+        "occupancy": 1.0
+      },
+      {
+        "level": 1,
+        "used": 256,
+        "entropy": 6.605769755493701,
+        "entropy_unit": "bits",
+        "max_share": 0.043437588969780776,
+        "capacity": 256,
+        "occupancy": 1.0
+      },
+      {
+        "level": 2,
+        "used": 256,
+        "entropy": 7.797765196613339,
+        "entropy_unit": "bits",
+        "max_share": 0.00870378655386993,
+        "capacity": 256,
+        "occupancy": 1.0
+      }
+    ],
+    "distance_distortion": {
+      "count": 28391948,
+      "mean_abs_error": 0.6578166741195234,
+      "mean_relative_error": 0.35035009090494285,
+      "distance_scale": 1.0,
+      "scale_fitted_on_evaluation": false,
+      "scope": "all valid frozen triple (b,c) pairs, weighted by triple occurrence"
+    },
+    "reconstruction": {
+      "status": "OK",
+      "source": "caller-supplied hard-q reconstruction",
+      "mean_squared_error": 8.840025082127364e-05,
+      "mean_l2_error": 0.2282148104970974
+    },
+    "reference_scope": "entire frozen component",
+    "shards": [
+      "shard_000.npz",
+      "shard_001.npz",
+      "shard_002.npz",
+      "shard_003.npz",
+      "shard_004.npz",
+      "shard_005.npz",
+      "shard_006.npz",
+      "shard_007.npz",
+      "shard_008.npz",
+      "shard_009.npz",
+      "shard_010.npz",
+      "shard_011.npz",
+      "shard_012.npz"
+    ],
+    "max_scaled_tangent_norm": 4.653062481825786,
+    "wall_seconds": 122.2064407998696,
+    "peak_rss_kib": 5623760,
+    "strict_heldout": {
+      "representation": "hard_sid_decoded",
+      "probe_trained": false,
+      "labels_passed_to_model": false,
+      "tangent_scale": 0.08433422446250916,
+      "banks": {
+        "strict_struct_test_degree_matched": {
+          "pairs": 2940,
+          "sha256": "7742e34d49f18c287b33cfbc67dc92ba876a69724d730d90492ec3b87f6ae8ca",
+          "distance": {
+            "count": 2940,
+            "mean": 2.607721288874627,
+            "std": 0.5312037992427797,
+            "min": 0.4019423820471473,
+            "q25": 2.2700776725430774,
+            "median": 2.7067227053547738,
+            "q75": 3.0123010024453567,
+            "max": 4.061973771827252
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2932,
+              "missing": 8,
+              "distance_spearman": 0.19211125408305219,
+              "target": {
+                "count": 2932,
+                "mean": 2.5242155525238745,
+                "std": 0.6453952477689179,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 2.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2917,
+              "missing": 23,
+              "distance_spearman": 0.19740930670304307,
+              "target": {
+                "count": 2917,
+                "mean": 2.860130270826191,
+                "std": 0.7645140357325356,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2940,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2940,
+              "missing": 0,
+              "distance_spearman": -0.17775025951658663,
+              "target": {
+                "count": 2940,
+                "mean": 0.763265306122449,
+                "std": 1.593058139471096,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 20.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2940,
+              "missing": 0,
+              "distance_spearman": -0.1808115695265042,
+              "target": {
+                "count": 2940,
+                "mean": 0.005821831673985282,
+                "std": 0.010516344126011018,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.00986441008632883,
+                "max": 0.125
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2940,
+              "missing": 0,
+              "distance_spearman": -0.16473142134218555,
+              "target": {
+                "count": 2940,
+                "mean": 0.0053851641553607525,
+                "std": 0.009651631037194389,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.00909090909090909,
+                "max": 0.1
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2922,
+              "missing": 18,
+              "distance_spearman": -0.18108886701226828,
+              "target": {
+                "count": 2922,
+                "mean": 0.012546640782521996,
+                "std": 0.02286768342932657,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.021251957255733353,
+                "max": 0.2672612419124244
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_test_direct": {
+          "pairs": 2729,
+          "sha256": "80fe725722ff618cb352761f9280d3d89e2b80cef117c9ae65f8196c4fcecbbd",
+          "distance": {
+            "count": 2729,
+            "mean": 2.293545589034814,
+            "std": 0.6083326767769343,
+            "min": 0.0,
+            "q25": 1.8850999570257474,
+            "median": 2.3291040162316827,
+            "q75": 2.7458056991391855,
+            "max": 3.9764528048414927
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2714,
+              "missing": 15,
+              "distance_spearman": 0.06434722633399019,
+              "target": {
+                "count": 2714,
+                "mean": 2.5869565217391304,
+                "std": 0.6273014401839657,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2705,
+              "missing": 24,
+              "distance_spearman": 0.05919770969440757,
+              "target": {
+                "count": 2705,
+                "mean": 2.9844731977818855,
+                "std": 0.8295262604338054,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 7.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2729,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2729,
+              "missing": 0,
+              "distance_spearman": -0.07549331201136482,
+              "target": {
+                "count": 2729,
+                "mean": 0.965188713814584,
+                "std": 2.741033079099087,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 35.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2729,
+              "missing": 0,
+              "distance_spearman": -0.09951992862915524,
+              "target": {
+                "count": 2729,
+                "mean": 0.0058479475310729894,
+                "std": 0.014018492367067682,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.005376344086021506,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2729,
+              "missing": 0,
+              "distance_spearman": -0.08549725981105104,
+              "target": {
+                "count": 2729,
+                "mean": 0.005328408470488314,
+                "std": 0.01227462167492526,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.004629629629629629,
+                "max": 0.14285714285714285
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2699,
+              "missing": 30,
+              "distance_spearman": -0.10078411878323029,
+              "target": {
+                "count": 2699,
+                "mean": 0.016299631906812,
+                "std": 0.03371413730997545,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.021873986367506135,
+                "max": 0.3535533905932738
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_test_shared_in": {
+          "pairs": 2877,
+          "sha256": "ccb5e503da7eb255d9d73b391669657a0990923219658ac04ea1474defd625ab",
+          "distance": {
+            "count": 2877,
+            "mean": 2.4541255886627114,
+            "std": 0.5621718576212233,
+            "min": 0.5364780785726829,
+            "q25": 2.0665149080773864,
+            "median": 2.5288325455651766,
+            "q75": 2.8890939435707783,
+            "max": 3.943855890868478
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2863,
+              "missing": 14,
+              "distance_spearman": 0.1062811194071118,
+              "target": {
+                "count": 2863,
+                "mean": 2.6220747467691234,
+                "std": 0.6184622790766254,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2857,
+              "missing": 20,
+              "distance_spearman": 0.08726061766182258,
+              "target": {
+                "count": 2857,
+                "mean": 2.999649982499125,
+                "std": 0.7855448628375411,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 7.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2877,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2877,
+              "missing": 0,
+              "distance_spearman": -0.08510001295011349,
+              "target": {
+                "count": 2877,
+                "mean": 0.7959680222453945,
+                "std": 2.4853574129195453,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 49.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2876,
+              "missing": 1,
+              "distance_spearman": -0.07871263799918597,
+              "target": {
+                "count": 2876,
+                "mean": 0.004598675232618365,
+                "std": 0.011292004359328811,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.002229971646764213,
+                "max": 0.125
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2876,
+              "missing": 1,
+              "distance_spearman": -0.0756989748362913,
+              "target": {
+                "count": 2876,
+                "mean": 0.0041065943756106865,
+                "std": 0.009485656903117387,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0028422330692437882,
+                "max": 0.08695652173913043
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2856,
+              "missing": 21,
+              "distance_spearman": -0.07866159381156328,
+              "target": {
+                "count": 2856,
+                "mean": 0.012848846600207749,
+                "std": 0.027609861120820162,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.013325744303461482,
+                "max": 0.23570226039551584
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_test_shared_out": {
+          "pairs": 2877,
+          "sha256": "6ea0bda9b4feedd9c7403ee9336505bfb59d168c085fe3e50aa77504b7620b1e",
+          "distance": {
+            "count": 2877,
+            "mean": 2.4450397836389537,
+            "std": 0.5669129606884772,
+            "min": 0.424002773807174,
+            "q25": 2.0600601711549094,
+            "median": 2.4954319377289678,
+            "q75": 2.8789433556818667,
+            "max": 3.944355344033334
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2859,
+              "missing": 18,
+              "distance_spearman": 0.12535720622491722,
+              "target": {
+                "count": 2859,
+                "mean": 2.651976215459951,
+                "std": 0.6305491908254225,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2846,
+              "missing": 31,
+              "distance_spearman": 0.10867960433763652,
+              "target": {
+                "count": 2846,
+                "mean": 3.0411103302881237,
+                "std": 0.8032326840206077,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 4.0,
+                "max": 7.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2877,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2877,
+              "missing": 0,
+              "distance_spearman": -0.09475302122834359,
+              "target": {
+                "count": 2877,
+                "mean": 0.7101147028154328,
+                "std": 2.0909321131719376,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 26.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2877,
+              "missing": 0,
+              "distance_spearman": -0.09148776472329032,
+              "target": {
+                "count": 2877,
+                "mean": 0.004097969763339059,
+                "std": 0.010743933699464593,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2877,
+              "missing": 0,
+              "distance_spearman": -0.1274323857803478,
+              "target": {
+                "count": 2877,
+                "mean": 0.003986986619150039,
+                "std": 0.010038585783225576,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0,
+                "max": 0.16666666666666666
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2843,
+              "missing": 34,
+              "distance_spearman": -0.09776605280419279,
+              "target": {
+                "count": 2843,
+                "mean": 0.011946636372257133,
+                "std": 0.02729726995036383,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0,
+                "max": 0.4202606379143633
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_test_two_hop": {
+          "pairs": 2907,
+          "sha256": "fedd4ffe3b5e541d36e8f590f59fbfb3ffeb53e1bd23b6ff24c650808fd84d4c",
+          "distance": {
+            "count": 2907,
+            "mean": 2.468197354698687,
+            "std": 0.601813198005485,
+            "min": 0.4317533765112706,
+            "q25": 2.0344204688812875,
+            "median": 2.513840273470453,
+            "q75": 2.9639767436802407,
+            "max": 3.8861211931873227
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2902,
+              "missing": 5,
+              "distance_spearman": 0.153039030724944,
+              "target": {
+                "count": 2902,
+                "mean": 2.5702963473466576,
+                "std": 0.5855953943929891,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2795,
+              "missing": 112,
+              "distance_spearman": 0.13683236469694968,
+              "target": {
+                "count": 2795,
+                "mean": 2.874418604651163,
+                "std": 0.7115004504283678,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2907,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2907,
+              "missing": 0,
+              "distance_spearman": -0.14546593235960154,
+              "target": {
+                "count": 2907,
+                "mean": 0.9102167182662538,
+                "std": 2.2648483087239915,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 23.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2907,
+              "missing": 0,
+              "distance_spearman": -0.17414593971282663,
+              "target": {
+                "count": 2907,
+                "mean": 0.005579588279576285,
+                "std": 0.01125768458576661,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.007272823442293451,
+                "max": 0.1111111111111111
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2907,
+              "missing": 0,
+              "distance_spearman": -0.18043117942667766,
+              "target": {
+                "count": 2907,
+                "mean": 0.005123291706024251,
+                "std": 0.010883780607658438,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.005610109212224216,
+                "max": 0.14285714285714285
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2788,
+              "missing": 119,
+              "distance_spearman": -0.18615055312217857,
+              "target": {
+                "count": 2788,
+                "mean": 0.01635908412545501,
+                "std": 0.031036240191980015,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.02365249792251884,
+                "max": 0.21821789023599236
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_degree_matched": {
+          "pairs": 2938,
+          "sha256": "542719e36e441fc71624413c25dc0335c2ca4eea38e3cdb349c4c678ddb4991c",
+          "distance": {
+            "count": 2938,
+            "mean": 2.625345411502731,
+            "std": 0.5420723807377563,
+            "min": 0.49122387414553664,
+            "q25": 2.29709510823318,
+            "median": 2.726319393451112,
+            "q75": 3.0234292054950505,
+            "max": 4.425728353976302
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2929,
+              "missing": 9,
+              "distance_spearman": 0.16489694624748066,
+              "target": {
+                "count": 2929,
+                "mean": 2.5155343120518947,
+                "std": 0.6171397334461889,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 2.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2924,
+              "missing": 14,
+              "distance_spearman": 0.1626456381654029,
+              "target": {
+                "count": 2924,
+                "mean": 2.8272913816689464,
+                "std": 0.7474951668979857,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 8.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2938,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2938,
+              "missing": 0,
+              "distance_spearman": -0.15004288214535272,
+              "target": {
+                "count": 2938,
+                "mean": 0.7508509189925119,
+                "std": 1.5280030607105082,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 20.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2938,
+              "missing": 0,
+              "distance_spearman": -0.16606657393189916,
+              "target": {
+                "count": 2938,
+                "mean": 0.005684024570011067,
+                "std": 0.010048849788048243,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.009876722966414288,
+                "max": 0.08333333333333333
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2938,
+              "missing": 0,
+              "distance_spearman": -0.15059734563933638,
+              "target": {
+                "count": 2938,
+                "mean": 0.005498145471163288,
+                "std": 0.009645032105821225,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.009324160609207337,
+                "max": 0.06666666666666667
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2922,
+              "missing": 16,
+              "distance_spearman": -0.16864353238681573,
+              "target": {
+                "count": 2922,
+                "mean": 0.012323367391219241,
+                "std": 0.022202226325908965,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0207358317023163,
+                "max": 0.21320071635561044
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_direct": {
+          "pairs": 2726,
+          "sha256": "bc65baff19071f1497f295261ccf8d92c7450d30d0cac41d86e6cd1e97f0d530",
+          "distance": {
+            "count": 2726,
+            "mean": 2.3046195513392176,
+            "std": 0.6206303816390178,
+            "min": 0.0,
+            "q25": 1.8723383204344428,
+            "median": 2.3504014016429364,
+            "q75": 2.7915816012890318,
+            "max": 4.729975743295166
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2714,
+              "missing": 12,
+              "distance_spearman": 0.07023464991826339,
+              "target": {
+                "count": 2714,
+                "mean": 2.5777450257921886,
+                "std": 0.6136784602709578,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2694,
+              "missing": 32,
+              "distance_spearman": 0.06430228533138299,
+              "target": {
+                "count": 2694,
+                "mean": 2.9387527839643655,
+                "std": 0.7832920765061665,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 7.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2726,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2726,
+              "missing": 0,
+              "distance_spearman": -0.07740629178421018,
+              "target": {
+                "count": 2726,
+                "mean": 1.0066030814380045,
+                "std": 2.8768997452112184,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 44.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2726,
+              "missing": 0,
+              "distance_spearman": -0.0592590441009553,
+              "target": {
+                "count": 2726,
+                "mean": 0.005289931910338567,
+                "std": 0.012149779855296814,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0054274383078730904,
+                "max": 0.18181818181818182
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2726,
+              "missing": 0,
+              "distance_spearman": -0.05036268719423914,
+              "target": {
+                "count": 2726,
+                "mean": 0.005081707748438543,
+                "std": 0.011522336926997315,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.005263157894736842,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2688,
+              "missing": 38,
+              "distance_spearman": -0.060934033549711976,
+              "target": {
+                "count": 2688,
+                "mean": 0.015366042850184265,
+                "std": 0.030639849100584145,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.021464932829197512,
+                "max": 0.3333333333333333
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_shared_in": {
+          "pairs": 2881,
+          "sha256": "66b2d85abf63a5674b2e8fd32fd18ea29072204bdc6793d167cecbaf6e8e8a87",
+          "distance": {
+            "count": 2881,
+            "mean": 2.452799707286269,
+            "std": 0.5686182367009623,
+            "min": 0.4586398790056094,
+            "q25": 2.0561480961928926,
+            "median": 2.508984000659996,
+            "q75": 2.890750417809508,
+            "max": 4.230519128409067
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2867,
+              "missing": 14,
+              "distance_spearman": 0.12233900067981736,
+              "target": {
+                "count": 2867,
+                "mean": 2.6260899895361005,
+                "std": 0.6286854281402402,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2860,
+              "missing": 21,
+              "distance_spearman": 0.0999934066644946,
+              "target": {
+                "count": 2860,
+                "mean": 2.9944055944055945,
+                "std": 0.7768302299232109,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2881,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2881,
+              "missing": 0,
+              "distance_spearman": -0.10417537388998242,
+              "target": {
+                "count": 2881,
+                "mean": 0.8927455744533148,
+                "std": 2.950468013781747,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 54.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2881,
+              "missing": 0,
+              "distance_spearman": -0.12369382475893191,
+              "target": {
+                "count": 2881,
+                "mean": 0.004449091564452485,
+                "std": 0.011020513978743667,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0028653295128939827,
+                "max": 0.25
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2881,
+              "missing": 0,
+              "distance_spearman": -0.11156039007471114,
+              "target": {
+                "count": 2881,
+                "mean": 0.004387746170636061,
+                "std": 0.00996412765905388,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0035211267605633804,
+                "max": 0.09523809523809523
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2854,
+              "missing": 27,
+              "distance_spearman": -0.12571908581454175,
+              "target": {
+                "count": 2854,
+                "mean": 0.012840882053527994,
+                "std": 0.028502885221070254,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.014809605970900848,
+                "max": 0.5
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_shared_out": {
+          "pairs": 2876,
+          "sha256": "78b5fe7114b9d9fd3465c4b4656b9cad195f10c2560ad25485b3f11f72e6af96",
+          "distance": {
+            "count": 2876,
+            "mean": 2.4888714462193504,
+            "std": 0.5620818715851084,
+            "min": 0.42249192008944525,
+            "q25": 2.1224930441825727,
+            "median": 2.5500493842300505,
+            "q75": 2.9107701865110407,
+            "max": 4.017711411473644
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2863,
+              "missing": 13,
+              "distance_spearman": 0.1312560130057597,
+              "target": {
+                "count": 2863,
+                "mean": 2.6136919315403424,
+                "std": 0.6104066875736089,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2854,
+              "missing": 22,
+              "distance_spearman": 0.11017047839676514,
+              "target": {
+                "count": 2854,
+                "mean": 2.979677645409951,
+                "std": 0.7591583561764632,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2876,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2876,
+              "missing": 0,
+              "distance_spearman": -0.10116694470236691,
+              "target": {
+                "count": 2876,
+                "mean": 0.8303198887343533,
+                "std": 2.6276318752446914,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 47.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2876,
+              "missing": 0,
+              "distance_spearman": -0.11118395652223036,
+              "target": {
+                "count": 2876,
+                "mean": 0.004453751184650242,
+                "std": 0.010130295500072672,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.003392890312993406,
+                "max": 0.1
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2876,
+              "missing": 0,
+              "distance_spearman": -0.08639952968550088,
+              "target": {
+                "count": 2876,
+                "mean": 0.003953523451451449,
+                "std": 0.00999617687941939,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.001445609529625323,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2850,
+              "missing": 26,
+              "distance_spearman": -0.11604685371837174,
+              "target": {
+                "count": 2850,
+                "mean": 0.012764406226990342,
+                "std": 0.026624304039009873,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.01491539339975716,
+                "max": 0.1889822365046136
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_two_hop": {
+          "pairs": 2926,
+          "sha256": "d282477c65d03572ae8605d3e7a9303ea78cae9b12e47a16874bab05c640e64c",
+          "distance": {
+            "count": 2926,
+            "mean": 2.557492883088527,
+            "std": 0.5942206339038602,
+            "min": 0.0,
+            "q25": 2.121216485464738,
+            "median": 2.6434022207757035,
+            "q75": 3.039037856202409,
+            "max": 3.994420455736696
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2923,
+              "missing": 3,
+              "distance_spearman": 0.18241035146727486,
+              "target": {
+                "count": 2923,
+                "mean": 2.5846732808758124,
+                "std": 0.5906656059200032,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2913,
+              "missing": 13,
+              "distance_spearman": 0.16736972323908675,
+              "target": {
+                "count": 2913,
+                "mean": 2.9210435976656366,
+                "std": 0.715633867484483,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2926,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2926,
+              "missing": 0,
+              "distance_spearman": -0.15228398434878554,
+              "target": {
+                "count": 2926,
+                "mean": 0.7980177717019822,
+                "std": 2.099509146087016,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 26.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2926,
+              "missing": 0,
+              "distance_spearman": -0.1768520925168309,
+              "target": {
+                "count": 2926,
+                "mean": 0.005102131235460994,
+                "std": 0.010954255187872134,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.005398140075559431,
+                "max": 0.125
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2926,
+              "missing": 0,
+              "distance_spearman": -0.16248072627234422,
+              "target": {
+                "count": 2926,
+                "mean": 0.004447167747604972,
+                "std": 0.010360681602950016,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.00415805785123967,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2917,
+              "missing": 9,
+              "distance_spearman": -0.18307506871619192,
+              "target": {
+                "count": 2917,
+                "mean": 0.014550323585020846,
+                "std": 0.029390975624617663,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.01928791874526149,
+                "max": 0.2672612419124244
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        }
+      }
+    },
+    "strict_prefix": {
+      "strict_struct_test_degree_matched": {
+        "pairs": 2940,
+        "sha256": "7742e34d49f18c287b33cfbc67dc92ba876a69724d730d90492ec3b87f6ae8ca",
+        "representation": "hard_sid_first_three_columns",
+        "prefix": {
+          "L1": 0.009523809523809525,
+          "L2": 0.0006802721088435374,
+          "L3": 0.0
+        }
+      },
+      "strict_struct_test_direct": {
+        "pairs": 2729,
+        "sha256": "80fe725722ff618cb352761f9280d3d89e2b80cef117c9ae65f8196c4fcecbbd",
+        "representation": "hard_sid_first_three_columns",
+        "prefix": {
+          "L1": 0.04653719311102968,
+          "L2": 0.00622938805423232,
+          "L3": 0.0007328691828508611
+        }
+      },
+      "strict_struct_test_shared_in": {
+        "pairs": 2877,
+        "sha256": "ccb5e503da7eb255d9d73b391669657a0990923219658ac04ea1474defd625ab",
+        "representation": "hard_sid_first_three_columns",
+        "prefix": {
+          "L1": 0.021897810218978103,
+          "L2": 0.0003475842891901286,
+          "L3": 0.0
+        }
+      },
+      "strict_struct_test_shared_out": {
+        "pairs": 2877,
+        "sha256": "6ea0bda9b4feedd9c7403ee9336505bfb59d168c085fe3e50aa77504b7620b1e",
+        "representation": "hard_sid_first_three_columns",
+        "prefix": {
+          "L1": 0.024678484532499132,
+          "L2": 0.0006951685783802572,
+          "L3": 0.0
+        }
+      },
+      "strict_struct_test_two_hop": {
+        "pairs": 2907,
+        "sha256": "fedd4ffe3b5e541d36e8f590f59fbfb3ffeb53e1bd23b6ff24c650808fd84d4c",
+        "representation": "hard_sid_first_three_columns",
+        "prefix": {
+          "L1": 0.014447884416924664,
+          "L2": 0.0010319917440660474,
+          "L3": 0.0
+        }
+      },
+      "strict_struct_val_degree_matched": {
+        "pairs": 2938,
+        "sha256": "542719e36e441fc71624413c25dc0335c2ca4eea38e3cdb349c4c678ddb4991c",
+        "representation": "hard_sid_first_three_columns",
+        "prefix": {
+          "L1": 0.01123213070115725,
+          "L2": 0.0013614703880190605,
+          "L3": 0.0
+        }
+      },
+      "strict_struct_val_direct": {
+        "pairs": 2726,
+        "sha256": "bc65baff19071f1497f295261ccf8d92c7450d30d0cac41d86e6cd1e97f0d530",
+        "representation": "hard_sid_first_three_columns",
+        "prefix": {
+          "L1": 0.04658840792369773,
+          "L2": 0.006969919295671314,
+          "L3": 0.0007336757153338225
+        }
+      },
+      "strict_struct_val_shared_in": {
+        "pairs": 2881,
+        "sha256": "66b2d85abf63a5674b2e8fd32fd18ea29072204bdc6793d167cecbaf6e8e8a87",
+        "representation": "hard_sid_first_three_columns",
+        "prefix": {
+          "L1": 0.018049288441513364,
+          "L2": 0.0013884068031933356,
+          "L3": 0.0
+        }
+      },
+      "strict_struct_val_shared_out": {
+        "pairs": 2876,
+        "sha256": "78b5fe7114b9d9fd3465c4b4656b9cad195f10c2560ad25485b3f11f72e6af96",
+        "representation": "hard_sid_first_three_columns",
+        "prefix": {
+          "L1": 0.02121001390820584,
+          "L2": 0.0024339360222531293,
+          "L3": 0.0
+        }
+      },
+      "strict_struct_val_two_hop": {
+        "pairs": 2926,
+        "sha256": "d282477c65d03572ae8605d3e7a9303ea78cae9b12e47a16874bab05c640e64c",
+        "representation": "hard_sid_first_three_columns",
+        "prefix": {
+          "L1": 0.013328776486671223,
+          "L2": 0.001367053998632946,
+          "L3": 0.0003417634996582365
+        }
+      }
+    }
+  },
+  "continuous_z": {
+    "representation": "continuous_encoder_z",
+    "reconstruction": {
+      "status": "OK",
+      "source": "caller-supplied continuous-z reconstruction",
+      "mean_squared_error": 8.917173965848479e-05,
+      "mean_l2_error": 0.22725269547053578
+    },
+    "reference_scope": "entire frozen component",
+    "shards": [
+      "shard_000.npz",
+      "shard_001.npz",
+      "shard_002.npz",
+      "shard_003.npz",
+      "shard_004.npz",
+      "shard_005.npz",
+      "shard_006.npz",
+      "shard_007.npz",
+      "shard_008.npz",
+      "shard_009.npz",
+      "shard_010.npz",
+      "shard_011.npz",
+      "shard_012.npz"
+    ],
+    "metric": "equal_weight_five_expert_squared_distance; independent ambient implementation",
+    "tangent_scale": 0.08433422446250916,
+    "max_scaled_tangent_norm": 5.065621032392829,
+    "curvature": {
+      "status": "OK",
+      "count": 28391948,
+      "excluded": 0,
+      "centres": 24326,
+      "macro_mae": 1.951155439337128,
+      "micro_mae": 2.6194174266757386,
+      "strata": {
+        "negative": {
+          "status": "OK",
+          "count": 21170678,
+          "micro_mae": 3.1352974841505388,
+          "macro_mae": 2.329245080582912
+        },
+        "zero": {
+          "status": "OK",
+          "count": 77,
+          "micro_mae": 1.3927953996581248,
+          "macro_mae": 1.386697298362326
+        },
+        "positive": {
+          "status": "OK",
+          "count": 7221193,
+          "micro_mae": 1.107003046735442,
+          "macro_mae": 1.7955919156801703
+        }
+      },
+      "sign": {
+        "accuracy": 0.29708190505279874,
+        "balanced_accuracy": 0.34230780265475036,
+        "present_signs": [
+          "negative",
+          "zero",
+          "positive"
+        ],
+        "recall": {
+          "negative": {
+            "status": "OK",
+            "count": 21170678,
+            "recall": 0.07305802865642753
+          },
+          "zero": {
+            "status": "OK",
+            "count": 77,
+            "recall": 0.0
+          },
+          "positive": {
+            "status": "OK",
+            "count": 7221193,
+            "recall": 0.9538653793078236
+          }
+        },
+        "zero_tolerance": 0.0
+      }
+    },
+    "distance_distortion": {
+      "count": 28391948,
+      "mean_abs_error": 0.6563898141930146,
+      "mean_relative_error": 0.34959931651868115,
+      "distance_scale": 1.0,
+      "scale_fitted_on_evaluation": false,
+      "scope": "all valid frozen triple (b,c) pairs, weighted by triple occurrence"
+    },
+    "wall_seconds": 118.14946462120861,
+    "peak_rss_kib": 5623760,
+    "strict_heldout": {
+      "representation": "continuous_encoder_z",
+      "probe_trained": false,
+      "labels_passed_to_model": false,
+      "tangent_scale": 0.08433422446250916,
+      "banks": {
+        "strict_struct_test_degree_matched": {
+          "pairs": 2940,
+          "sha256": "7742e34d49f18c287b33cfbc67dc92ba876a69724d730d90492ec3b87f6ae8ca",
+          "distance": {
+            "count": 2940,
+            "mean": 2.6041546901612675,
+            "std": 0.5328841935068539,
+            "min": 0.497749150756214,
+            "q25": 2.269376661045069,
+            "median": 2.707359993607256,
+            "q75": 3.0041363783405735,
+            "max": 4.104916784829201
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2932,
+              "missing": 8,
+              "distance_spearman": 0.19397677841035002,
+              "target": {
+                "count": 2932,
+                "mean": 2.5242155525238745,
+                "std": 0.6453952477689179,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 2.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2917,
+              "missing": 23,
+              "distance_spearman": 0.19878216561826456,
+              "target": {
+                "count": 2917,
+                "mean": 2.860130270826191,
+                "std": 0.7645140357325356,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2940,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2940,
+              "missing": 0,
+              "distance_spearman": -0.17907056236801613,
+              "target": {
+                "count": 2940,
+                "mean": 0.763265306122449,
+                "std": 1.593058139471096,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 20.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2940,
+              "missing": 0,
+              "distance_spearman": -0.18042961063761342,
+              "target": {
+                "count": 2940,
+                "mean": 0.005821831673985282,
+                "std": 0.010516344126011018,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.00986441008632883,
+                "max": 0.125
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2940,
+              "missing": 0,
+              "distance_spearman": -0.16706178013708944,
+              "target": {
+                "count": 2940,
+                "mean": 0.0053851641553607525,
+                "std": 0.009651631037194389,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.00909090909090909,
+                "max": 0.1
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2922,
+              "missing": 18,
+              "distance_spearman": -0.18071383996883608,
+              "target": {
+                "count": 2922,
+                "mean": 0.012546640782521996,
+                "std": 0.02286768342932657,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.021251957255733353,
+                "max": 0.2672612419124244
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_test_direct": {
+          "pairs": 2729,
+          "sha256": "80fe725722ff618cb352761f9280d3d89e2b80cef117c9ae65f8196c4fcecbbd",
+          "distance": {
+            "count": 2729,
+            "mean": 2.289638735112046,
+            "std": 0.6116492260640665,
+            "min": 0.2675619283842976,
+            "q25": 1.874890110013405,
+            "median": 2.3227840148038497,
+            "q75": 2.747264221091663,
+            "max": 4.055021503266447
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2714,
+              "missing": 15,
+              "distance_spearman": 0.06592599040092788,
+              "target": {
+                "count": 2714,
+                "mean": 2.5869565217391304,
+                "std": 0.6273014401839657,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2705,
+              "missing": 24,
+              "distance_spearman": 0.06067517244854508,
+              "target": {
+                "count": 2705,
+                "mean": 2.9844731977818855,
+                "std": 0.8295262604338054,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 7.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2729,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2729,
+              "missing": 0,
+              "distance_spearman": -0.07621741111934775,
+              "target": {
+                "count": 2729,
+                "mean": 0.965188713814584,
+                "std": 2.741033079099087,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 35.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2729,
+              "missing": 0,
+              "distance_spearman": -0.10120680307385775,
+              "target": {
+                "count": 2729,
+                "mean": 0.0058479475310729894,
+                "std": 0.014018492367067682,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.005376344086021506,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2729,
+              "missing": 0,
+              "distance_spearman": -0.08385714941224302,
+              "target": {
+                "count": 2729,
+                "mean": 0.005328408470488314,
+                "std": 0.01227462167492526,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.004629629629629629,
+                "max": 0.14285714285714285
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2699,
+              "missing": 30,
+              "distance_spearman": -0.10240820815662467,
+              "target": {
+                "count": 2699,
+                "mean": 0.016299631906812,
+                "std": 0.03371413730997545,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.021873986367506135,
+                "max": 0.3535533905932738
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_test_shared_in": {
+          "pairs": 2877,
+          "sha256": "ccb5e503da7eb255d9d73b391669657a0990923219658ac04ea1474defd625ab",
+          "distance": {
+            "count": 2877,
+            "mean": 2.450032477367418,
+            "std": 0.5647013772155782,
+            "min": 0.5393334915670737,
+            "q25": 2.0599718023818094,
+            "median": 2.528284513663822,
+            "q75": 2.8863587748762947,
+            "max": 4.2329861247370495
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2863,
+              "missing": 14,
+              "distance_spearman": 0.10605307054750615,
+              "target": {
+                "count": 2863,
+                "mean": 2.6220747467691234,
+                "std": 0.6184622790766254,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2857,
+              "missing": 20,
+              "distance_spearman": 0.08795554819277449,
+              "target": {
+                "count": 2857,
+                "mean": 2.999649982499125,
+                "std": 0.7855448628375411,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 7.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2877,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2877,
+              "missing": 0,
+              "distance_spearman": -0.08620662788194454,
+              "target": {
+                "count": 2877,
+                "mean": 0.7959680222453945,
+                "std": 2.4853574129195453,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 49.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2876,
+              "missing": 1,
+              "distance_spearman": -0.07962966262221381,
+              "target": {
+                "count": 2876,
+                "mean": 0.004598675232618365,
+                "std": 0.011292004359328811,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.002229971646764213,
+                "max": 0.125
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2876,
+              "missing": 1,
+              "distance_spearman": -0.07651741337178561,
+              "target": {
+                "count": 2876,
+                "mean": 0.0041065943756106865,
+                "std": 0.009485656903117387,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0028422330692437882,
+                "max": 0.08695652173913043
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2856,
+              "missing": 21,
+              "distance_spearman": -0.07974975619302596,
+              "target": {
+                "count": 2856,
+                "mean": 0.012848846600207749,
+                "std": 0.027609861120820162,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.013325744303461482,
+                "max": 0.23570226039551584
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_test_shared_out": {
+          "pairs": 2877,
+          "sha256": "6ea0bda9b4feedd9c7403ee9336505bfb59d168c085fe3e50aa77504b7620b1e",
+          "distance": {
+            "count": 2877,
+            "mean": 2.4406278066007543,
+            "std": 0.5681021027111309,
+            "min": 0.25842986402484086,
+            "q25": 2.054690870894845,
+            "median": 2.4932850852794415,
+            "q75": 2.8800875040386433,
+            "max": 4.0012764161726855
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2859,
+              "missing": 18,
+              "distance_spearman": 0.12528352214008082,
+              "target": {
+                "count": 2859,
+                "mean": 2.651976215459951,
+                "std": 0.6305491908254225,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2846,
+              "missing": 31,
+              "distance_spearman": 0.10944693167742243,
+              "target": {
+                "count": 2846,
+                "mean": 3.0411103302881237,
+                "std": 0.8032326840206077,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 4.0,
+                "max": 7.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2877,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2877,
+              "missing": 0,
+              "distance_spearman": -0.09665048496193142,
+              "target": {
+                "count": 2877,
+                "mean": 0.7101147028154328,
+                "std": 2.0909321131719376,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 26.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2877,
+              "missing": 0,
+              "distance_spearman": -0.09068936554068392,
+              "target": {
+                "count": 2877,
+                "mean": 0.004097969763339059,
+                "std": 0.010743933699464593,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2877,
+              "missing": 0,
+              "distance_spearman": -0.12706196691216645,
+              "target": {
+                "count": 2877,
+                "mean": 0.003986986619150039,
+                "std": 0.010038585783225576,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0,
+                "max": 0.16666666666666666
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2843,
+              "missing": 34,
+              "distance_spearman": -0.09720276413756249,
+              "target": {
+                "count": 2843,
+                "mean": 0.011946636372257133,
+                "std": 0.02729726995036383,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0,
+                "max": 0.4202606379143633
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_test_two_hop": {
+          "pairs": 2907,
+          "sha256": "fedd4ffe3b5e541d36e8f590f59fbfb3ffeb53e1bd23b6ff24c650808fd84d4c",
+          "distance": {
+            "count": 2907,
+            "mean": 2.468264569073816,
+            "std": 0.6012245329921989,
+            "min": 0.526323042778566,
+            "q25": 2.0340140079528295,
+            "median": 2.51740178577294,
+            "q75": 2.9686272957468294,
+            "max": 3.9063707196000124
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2902,
+              "missing": 5,
+              "distance_spearman": 0.1517763301362339,
+              "target": {
+                "count": 2902,
+                "mean": 2.5702963473466576,
+                "std": 0.5855953943929891,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2795,
+              "missing": 112,
+              "distance_spearman": 0.13415773387785543,
+              "target": {
+                "count": 2795,
+                "mean": 2.874418604651163,
+                "std": 0.7115004504283678,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2907,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2907,
+              "missing": 0,
+              "distance_spearman": -0.14347906099210103,
+              "target": {
+                "count": 2907,
+                "mean": 0.9102167182662538,
+                "std": 2.2648483087239915,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 23.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2907,
+              "missing": 0,
+              "distance_spearman": -0.17258321264714557,
+              "target": {
+                "count": 2907,
+                "mean": 0.005579588279576285,
+                "std": 0.01125768458576661,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.007272823442293451,
+                "max": 0.1111111111111111
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2907,
+              "missing": 0,
+              "distance_spearman": -0.17725703475754914,
+              "target": {
+                "count": 2907,
+                "mean": 0.005123291706024251,
+                "std": 0.010883780607658438,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.005610109212224216,
+                "max": 0.14285714285714285
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2788,
+              "missing": 119,
+              "distance_spearman": -0.18360200031281151,
+              "target": {
+                "count": 2788,
+                "mean": 0.01635908412545501,
+                "std": 0.031036240191980015,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.02365249792251884,
+                "max": 0.21821789023599236
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_degree_matched": {
+          "pairs": 2938,
+          "sha256": "542719e36e441fc71624413c25dc0335c2ca4eea38e3cdb349c4c678ddb4991c",
+          "distance": {
+            "count": 2938,
+            "mean": 2.6223435976355276,
+            "std": 0.5436745742693401,
+            "min": 0.28753477900749247,
+            "q25": 2.28682473239617,
+            "median": 2.719311619183865,
+            "q75": 3.0189522317332704,
+            "max": 4.690419093442606
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2929,
+              "missing": 9,
+              "distance_spearman": 0.1650554401401773,
+              "target": {
+                "count": 2929,
+                "mean": 2.5155343120518947,
+                "std": 0.6171397334461889,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 2.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2924,
+              "missing": 14,
+              "distance_spearman": 0.1630748862838115,
+              "target": {
+                "count": 2924,
+                "mean": 2.8272913816689464,
+                "std": 0.7474951668979857,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 8.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2938,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2938,
+              "missing": 0,
+              "distance_spearman": -0.15023562322559295,
+              "target": {
+                "count": 2938,
+                "mean": 0.7508509189925119,
+                "std": 1.5280030607105082,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 20.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2938,
+              "missing": 0,
+              "distance_spearman": -0.17028821507554054,
+              "target": {
+                "count": 2938,
+                "mean": 0.005684024570011067,
+                "std": 0.010048849788048243,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.009876722966414288,
+                "max": 0.08333333333333333
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2938,
+              "missing": 0,
+              "distance_spearman": -0.1500850057609835,
+              "target": {
+                "count": 2938,
+                "mean": 0.005498145471163288,
+                "std": 0.009645032105821225,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.009324160609207337,
+                "max": 0.06666666666666667
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2922,
+              "missing": 16,
+              "distance_spearman": -0.17275517488571085,
+              "target": {
+                "count": 2922,
+                "mean": 0.012323367391219241,
+                "std": 0.022202226325908965,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0207358317023163,
+                "max": 0.21320071635561044
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_direct": {
+          "pairs": 2726,
+          "sha256": "bc65baff19071f1497f295261ccf8d92c7450d30d0cac41d86e6cd1e97f0d530",
+          "distance": {
+            "count": 2726,
+            "mean": 2.301151181966926,
+            "std": 0.6256743878574049,
+            "min": 0.1562915035236461,
+            "q25": 1.8693078931264575,
+            "median": 2.351185472675245,
+            "q75": 2.785498992594597,
+            "max": 4.892183433590811
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2714,
+              "missing": 12,
+              "distance_spearman": 0.06912850420821288,
+              "target": {
+                "count": 2714,
+                "mean": 2.5777450257921886,
+                "std": 0.6136784602709578,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2694,
+              "missing": 32,
+              "distance_spearman": 0.061933105761163176,
+              "target": {
+                "count": 2694,
+                "mean": 2.9387527839643655,
+                "std": 0.7832920765061665,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 7.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2726,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2726,
+              "missing": 0,
+              "distance_spearman": -0.07486572424283479,
+              "target": {
+                "count": 2726,
+                "mean": 1.0066030814380045,
+                "std": 2.8768997452112184,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 44.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2726,
+              "missing": 0,
+              "distance_spearman": -0.057230450633452515,
+              "target": {
+                "count": 2726,
+                "mean": 0.005289931910338567,
+                "std": 0.012149779855296814,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0054274383078730904,
+                "max": 0.18181818181818182
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2726,
+              "missing": 0,
+              "distance_spearman": -0.047902963965183516,
+              "target": {
+                "count": 2726,
+                "mean": 0.005081707748438543,
+                "std": 0.011522336926997315,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.005263157894736842,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2688,
+              "missing": 38,
+              "distance_spearman": -0.05874588567678429,
+              "target": {
+                "count": 2688,
+                "mean": 0.015366042850184265,
+                "std": 0.030639849100584145,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.021464932829197512,
+                "max": 0.3333333333333333
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_shared_in": {
+          "pairs": 2881,
+          "sha256": "66b2d85abf63a5674b2e8fd32fd18ea29072204bdc6793d167cecbaf6e8e8a87",
+          "distance": {
+            "count": 2881,
+            "mean": 2.450661033084618,
+            "std": 0.5727834868246309,
+            "min": 0.42228482660666766,
+            "q25": 2.0560432975040244,
+            "median": 2.522614537515894,
+            "q75": 2.8929848186222653,
+            "max": 4.494346272896413
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2867,
+              "missing": 14,
+              "distance_spearman": 0.12660858639129263,
+              "target": {
+                "count": 2867,
+                "mean": 2.6260899895361005,
+                "std": 0.6286854281402402,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2860,
+              "missing": 21,
+              "distance_spearman": 0.10251347177261137,
+              "target": {
+                "count": 2860,
+                "mean": 2.9944055944055945,
+                "std": 0.7768302299232109,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2881,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2881,
+              "missing": 0,
+              "distance_spearman": -0.10493127219813503,
+              "target": {
+                "count": 2881,
+                "mean": 0.8927455744533148,
+                "std": 2.950468013781747,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 54.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2881,
+              "missing": 0,
+              "distance_spearman": -0.12495362834616022,
+              "target": {
+                "count": 2881,
+                "mean": 0.004449091564452485,
+                "std": 0.011020513978743667,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0028653295128939827,
+                "max": 0.25
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2881,
+              "missing": 0,
+              "distance_spearman": -0.11322169041977921,
+              "target": {
+                "count": 2881,
+                "mean": 0.004387746170636061,
+                "std": 0.00996412765905388,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.0035211267605633804,
+                "max": 0.09523809523809523
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2854,
+              "missing": 27,
+              "distance_spearman": -0.1266946174200493,
+              "target": {
+                "count": 2854,
+                "mean": 0.012840882053527994,
+                "std": 0.028502885221070254,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.014809605970900848,
+                "max": 0.5
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_shared_out": {
+          "pairs": 2876,
+          "sha256": "78b5fe7114b9d9fd3465c4b4656b9cad195f10c2560ad25485b3f11f72e6af96",
+          "distance": {
+            "count": 2876,
+            "mean": 2.4868759829432334,
+            "std": 0.5646364945723957,
+            "min": 0.24875014790154415,
+            "q25": 2.1182904611068505,
+            "median": 2.548899224359219,
+            "q75": 2.9083963096744343,
+            "max": 4.170335164832812
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2863,
+              "missing": 13,
+              "distance_spearman": 0.13088314249770772,
+              "target": {
+                "count": 2863,
+                "mean": 2.6136919315403424,
+                "std": 0.6104066875736089,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2854,
+              "missing": 22,
+              "distance_spearman": 0.10741000363368058,
+              "target": {
+                "count": 2854,
+                "mean": 2.979677645409951,
+                "std": 0.7591583561764632,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2876,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2876,
+              "missing": 0,
+              "distance_spearman": -0.09973009402241233,
+              "target": {
+                "count": 2876,
+                "mean": 0.8303198887343533,
+                "std": 2.6276318752446914,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 47.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2876,
+              "missing": 0,
+              "distance_spearman": -0.1110389024999012,
+              "target": {
+                "count": 2876,
+                "mean": 0.004453751184650242,
+                "std": 0.010130295500072672,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.003392890312993406,
+                "max": 0.1
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2876,
+              "missing": 0,
+              "distance_spearman": -0.08555945472256728,
+              "target": {
+                "count": 2876,
+                "mean": 0.003953523451451449,
+                "std": 0.00999617687941939,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.001445609529625323,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2850,
+              "missing": 26,
+              "distance_spearman": -0.11597717054309925,
+              "target": {
+                "count": 2850,
+                "mean": 0.012764406226990342,
+                "std": 0.026624304039009873,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.01491539339975716,
+                "max": 0.1889822365046136
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        },
+        "strict_struct_val_two_hop": {
+          "pairs": 2926,
+          "sha256": "d282477c65d03572ae8605d3e7a9303ea78cae9b12e47a16874bab05c640e64c",
+          "distance": {
+            "count": 2926,
+            "mean": 2.555309205779571,
+            "std": 0.5961781038043693,
+            "min": 0.44875156131153426,
+            "q25": 2.1109324723546634,
+            "median": 2.6319906012258567,
+            "q75": 3.0414706018398556,
+            "max": 3.9238210679294068
+          },
+          "topology": {
+            "hop_full_visible": {
+              "count": 2923,
+              "missing": 3,
+              "distance_spearman": 0.17813734424265001,
+              "target": {
+                "count": 2923,
+                "mean": 2.5846732808758124,
+                "std": 0.5906656059200032,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 5.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_directed_src_dst": {
+              "count": 2913,
+              "missing": 13,
+              "distance_spearman": 0.1636220960204478,
+              "target": {
+                "count": 2913,
+                "mean": 2.9210435976656366,
+                "std": 0.715633867484483,
+                "min": 2.0,
+                "q25": 2.0,
+                "median": 3.0,
+                "q75": 3.0,
+                "max": 6.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "hop_subgraph": {
+              "count": 0,
+              "missing": 2926,
+              "distance_spearman": null,
+              "target": {
+                "status": "NA",
+                "reason": "no observations"
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "two_hop_count": {
+              "count": 2926,
+              "missing": 0,
+              "distance_spearman": -0.14774147962451725,
+              "target": {
+                "count": 2926,
+                "mean": 0.7980177717019822,
+                "std": 2.099509146087016,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 1.0,
+                "max": 26.0
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_out": {
+              "count": 2926,
+              "missing": 0,
+              "distance_spearman": -0.17165473774803883,
+              "target": {
+                "count": 2926,
+                "mean": 0.005102131235460994,
+                "std": 0.010954255187872134,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.005398140075559431,
+                "max": 0.125
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "jaccard_in": {
+              "count": 2926,
+              "missing": 0,
+              "distance_spearman": -0.15990835067365594,
+              "target": {
+                "count": 2926,
+                "mean": 0.004447167747604972,
+                "std": 0.010360681602950016,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.00415805785123967,
+                "max": 0.2
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            },
+            "bhattacharyya_out": {
+              "count": 2917,
+              "missing": 9,
+              "distance_spearman": -0.17789691060920473,
+              "target": {
+                "count": 2917,
+                "mean": 0.014550323585020846,
+                "std": 0.029390975624617663,
+                "min": 0.0,
+                "q25": 0.0,
+                "median": 0.0,
+                "q75": 0.01928791874526149,
+                "max": 0.2672612419124244
+              },
+              "interpretation": "association on strict pairs; visible-field name retained"
+            }
+          },
+          "distance_ranking_auc": {
+            "status": "NA",
+            "reason": "binary labels not supplied"
+          }
+        }
+      }
+    }
+  },
+  "historical_tiger": {
+    "sid_path": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+    "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+    "sid_items": 24587,
+    "pure_sid_metrics": {
+      "collision_prefix3": {
+        "items": 24587,
+        "distinct_prefix": 20425,
+        "collision_prefix": 0.16927644690283483,
+        "duplicate_prefix_share": 0.26530280229389513,
+        "length": 3
+      },
+      "duplicate_prefix3": 0.26530280229389513,
+      "collision_full": {
+        "items": 24587,
+        "distinct_prefix": 24587,
+        "collision_prefix": 0.0,
+        "duplicate_prefix_share": 0.0,
+        "length": 4
+      },
+      "prefix_sharing": {
+        "L1": 0.9997152967015089,
+        "L2": 0.8428031073331436,
+        "L3": 0.26530280229389513
+      },
+      "codebook_occupancy": [
+        {
+          "level": 0,
+          "used": 249,
+          "entropy": 6.958990494049653,
+          "entropy_unit": "bits",
+          "max_share": 0.029202424045227153
+        },
+        {
+          "level": 1,
+          "used": 256,
+          "entropy": 6.553546559233901,
+          "entropy_unit": "bits",
+          "max_share": 0.03855696099564811
+        },
+        {
+          "level": 2,
+          "used": 256,
+          "entropy": 7.944733248437091,
+          "entropy_unit": "bits",
+          "max_share": 0.006873551063570179
+        }
+      ],
+      "source": "recomputed directly from the frozen item_sids.json"
+    },
+    "geometry_metrics": {
+      "status": "NA",
+      "reason": "no codebook and checkpoint provably from the same SID generation as the Stage3 table: the frozen rqvae_best.pth belongs to a different generation (#246 measured its re-export as differing in all 24,587 rows), so the decoded q and the reconstruction error are NA"
+    },
+    "recall": {
+      "status": "NA",
+      "reason": "no same-generation historical recall binding supplied"
+    }
+  },
+  "coverage": {
+    "items": 24587,
+    "valid_triples": 28391948,
+    "excluded_triples": 0,
+    "shards": [
+      {
+        "name": "shard_000.npz",
+        "valid": 769276,
+        "excluded": 0
+      },
+      {
+        "name": "shard_001.npz",
+        "valid": 633899,
+        "excluded": 0
+      },
+      {
+        "name": "shard_002.npz",
+        "valid": 1411052,
+        "excluded": 0
+      },
+      {
+        "name": "shard_003.npz",
+        "valid": 1896048,
+        "excluded": 0
+      },
+      {
+        "name": "shard_004.npz",
+        "valid": 2462501,
+        "excluded": 0
+      },
+      {
+        "name": "shard_005.npz",
+        "valid": 1645333,
+        "excluded": 0
+      },
+      {
+        "name": "shard_006.npz",
+        "valid": 1179276,
+        "excluded": 0
+      },
+      {
+        "name": "shard_007.npz",
+        "valid": 1995023,
+        "excluded": 0
+      },
+      {
+        "name": "shard_008.npz",
+        "valid": 1233498,
+        "excluded": 0
+      },
+      {
+        "name": "shard_009.npz",
+        "valid": 2287390,
+        "excluded": 0
+      },
+      {
+        "name": "shard_010.npz",
+        "valid": 4816640,
+        "excluded": 0
+      },
+      {
+        "name": "shard_011.npz",
+        "valid": 7021193,
+        "excluded": 0
+      },
+      {
+        "name": "shard_012.npz",
+        "valid": 1040819,
+        "excluded": 0
+      }
+    ],
+    "references": "entire original frozen component including centre",
+    "component_sizes": {
+      "0": 24471,
+      "1": 1,
+      "2": 1,
+      "3": 1,
+      "4": 1,
+      "5": 1,
+      "6": 1,
+      "7": 1,
+      "8": 1,
+      "9": 1,
+      "10": 1,
+      "11": 1,
+      "12": 1,
+      "13": 1,
+      "14": 1,
+      "15": 1,
+      "16": 1,
+      "17": 1,
+      "18": 1,
+      "19": 1,
+      "20": 1,
+      "21": 1,
+      "22": 1,
+      "23": 1,
+      "24": 1,
+      "25": 1,
+      "26": 1,
+      "27": 1,
+      "28": 1,
+      "29": 1,
+      "30": 1,
+      "31": 1,
+      "32": 1,
+      "33": 1,
+      "34": 1,
+      "35": 1,
+      "36": 1,
+      "37": 1,
+      "38": 1,
+      "39": 1,
+      "40": 1,
+      "41": 1,
+      "42": 1,
+      "43": 1,
+      "44": 1,
+      "45": 1,
+      "46": 1,
+      "47": 1,
+      "48": 1,
+      "49": 1,
+      "50": 1,
+      "51": 1,
+      "52": 1,
+      "53": 1,
+      "54": 1,
+      "55": 1,
+      "56": 1,
+      "57": 1,
+      "58": 1,
+      "59": 1,
+      "60": 1,
+      "61": 1,
+      "62": 1,
+      "63": 1,
+      "64": 1,
+      "65": 1,
+      "66": 1,
+      "67": 1,
+      "68": 1,
+      "69": 1,
+      "70": 1,
+      "71": 1,
+      "72": 1,
+      "73": 1,
+      "74": 1,
+      "75": 1,
+      "76": 1,
+      "77": 1,
+      "78": 1,
+      "79": 1,
+      "80": 1,
+      "81": 1,
+      "82": 1,
+      "83": 1,
+      "84": 1,
+      "85": 1,
+      "86": 1,
+      "87": 1,
+      "88": 1,
+      "89": 1,
+      "90": 1,
+      "91": 1,
+      "92": 1,
+      "93": 1,
+      "94": 1,
+      "95": 1,
+      "96": 1,
+      "97": 1,
+      "98": 1,
+      "99": 1,
+      "100": 1,
+      "101": 1,
+      "102": 1,
+      "103": 1,
+      "104": 1,
+      "105": 1,
+      "106": 1,
+      "107": 1,
+      "108": 1,
+      "109": 1,
+      "110": 1,
+      "111": 1,
+      "112": 1,
+      "113": 1,
+      "114": 1,
+      "115": 1,
+      "116": 1
+    },
+    "ordered_component_reference_pairs": 598829957,
+    "sampling": false,
+    "duplicate_triple_occurrences_preserved": true
+  },
+  "ambient_vs_production": {
+    "hard_q": {
+      "matrix_calls": 1292,
+      "paired_calls": 1738,
+      "distance_values": 334050193,
+      "max_absolute_error": 6.208817163621322e-11,
+      "rtol": 1e-09,
+      "atol": 1e-09,
+      "scope": "every full component block and valid frozen triple pair"
+    },
+    "continuous_z": {
+      "matrix_calls": 1292,
+      "paired_calls": 1738,
+      "distance_values": 334050193,
+      "max_absolute_error": 2.4835410757250034e-10,
+      "rtol": 1e-09,
+      "atol": 1e-09,
+      "scope": "every full component block and valid frozen triple pair"
+    }
+  },
+  "provenance": {
+    "run_id": "issue252_formal_r2",
+    "epoch": 3000,
+    "selection": "final_epoch",
+    "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/src",
+    "candidate_sources": {
+      "assignment_floor.py": "984bba1330c62a2a712c6797e27a9389bcb7274a8dbe552d48f13c22e9a6ff96",
+      "benchmark_entry.py": "5a67918b7932571adb441b4c0a5af31e7179fe381f1449652074d4ec22dcbe27",
+      "config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+      "distances/__init__.py": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+      "distances/distance.py": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+      "execution_entry.py": "1ed444bf34c5d4bfc0eb537ae5bd5edd45638ed18121c3ca63f47b36d518f64f",
+      "geometry_validation_entry.py": "b865c314e7d80e2f3ebdeba770c0c67be46b86296e991e417a43c95f39f01f45",
+      "losses/__init__.py": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+      "losses/_pairs.py": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+      "losses/codebook.py": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+      "losses/commitment.py": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+      "losses/quantization.py": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+      "losses/reconstruction.py": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+      "model/__init__.py": "fc51b6b47b052833e3bb249a00a581da6a6f27bb4905fb58237a2865354c0f81",
+      "model/attention.py": "a227155453e1d7c79cb9cf5c59a8a5e3f7defa88895d784ae499a34d25d42ac6",
+      "model/curvature.py": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+      "model/estimator.py": "bc7633a3aed6f3060a0180d99cb50bf6035070ef9f096447eb5289389ce4c024",
+      "model/geometry.py": "62ee1328ec2504e787bdea6e10b1393e055f86d10c271ee311a6af4346dc4c8f",
+      "model/layers.py": "9a61bd93018711972f6562176f5b46ec16908c6900102890b188174289bea2fa",
+      "model/mechanism.py": "8a5e5560abb1fe501e4968012a9005e72d491fc18451370ac391a4ccb372cbe6",
+      "model/model.py": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+      "model/provenance.py": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+      "model/selection.py": "f24c21c0cf387bfcfd7d100b029b15ff269ebd37fec97a2f21d3d0760d8e4704",
+      "model/structure.py": "97f245369a4e4652b82209edd93d494b0f534eb4f00d6e96f89f452126f77f7f",
+      "model/structure_gate.py": "0ceb6c38cc3b8b71d97269e9e6efd3fa5eeb8bdb6fe439fef1582a4dd9c83829",
+      "model/utils.py": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+      "optimized_profile_entry.py": "f5a3ada16d23a9d72b7f3b0b9cea48e1770ade82573a384408e73190b8226597",
+      "profile_entry.py": "0ce1ba101fd8f92e61dd377881209ed13838b489ef7f71bac470af70cfcdb280",
+      "sparse_validation_entry.py": "41ae578e83397df5a47057011a7a4adfac2d0917dd71d8d168175969fdc29118",
+      "steady_profile_entry.py": "002898d114b8a36ce62ea6f2ef43e762c6b8360ad848b06ff8c4305d776588b3",
+      "tests/reference.py": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
+      "tests/test_attention.py": "bb7d7f20102955b4c6fe626d531e37c23911118ce15d9cf727007fade0dcb76e",
+      "tests/test_attention_pipeline.py": "3a0c3049f5126090473301f57dd2390ff1bcbd6d3ff0a7c3807a702ed5740237",
+      "tests/test_curvature_loss.py": "d260562cb8990411a1680ac0792006db787619ddafcc5a6c54d09fa13142f633",
+      "tests/test_estimator.py": "07d4cb1a0841b766d0e5220a2be7b7b66c5abdfe3d00e9c43e38fa59ba991531",
+      "tests/test_execution.py": "541b91313406adce95a91c239f984f3f51cd14fcfbc8b8ed6a0295b30aded43e",
+      "tests/test_geometry_memory.py": "8b7465d359bee23c6676949756e06b19f5faa05631c91f5eccff3672304ad712",
+      "tests/test_known_answers.py": "4eda7c1d194193714be34b548454af0eb4a36a418ee8f90c24d7039921090938",
+      "tests/test_mechanism.py": "d348fb86b3576709d3f49d339550edc47d83d5ea27899d99cc26868ebea3f6e5",
+      "tests/test_mutations.py": "21334532c5a63247d09e0d404c9fd5e300046f13f0e52f81c280db60f5cea3cf",
+      "tests/test_provenance.py": "eb4916774252becccd55657166fdec5b51f6e6f6aeac20d4f0b3fd67ab37dc4b",
+      "tests/test_reference.py": "f4fb492aff0301419ee6fe0ee06ca7943c639b552e3d150a2f1cd45d3bad7cc2",
+      "tests/test_sparse_adjoint.py": "3cccaef26c00dd76a90376f662c359a502c5d7aadaea1a0fa9a992f367486a14",
+      "tests/test_sparse_structure.py": "3281132f56c7d015eb365bcfb668212f6a8cb01d39c94b976693654afa44befa",
+      "tests/test_static_means.py": "6bb188951436c17d1592cbb8f511d5abf74e0dad4212dea5eb18b9d5904cd7b9",
+      "tests/test_structure.py": "1d642b83be753213453ab6262c01a251ec4cf08ec5348954428e7de9114e6b0f",
+      "tests/test_sync_free_batch.py": "a6c95c1be81cd99a873d03bb7128cf5522560e7656ad31a979edfa37a0d82c34",
+      "train_config.py": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+      "train_rqvae.py": "268b7372cfb182f3fbd4e3972d5fd9dcd3ed3e521a3f0447f4fa65ff42096e4a",
+      "validation_entry.py": "8c2a03e17068e3a6c6064b30cca21ca1f54617cdf061c0349c92554de6f67283"
+    },
+    "infrastructure_sources": {
+      "tools/graph_infra/__init__.py": "b86861c93434621cff070d024b12f8c6f9d5a5e77a8deea54089645a3a7226ff",
+      "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+      "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+      "tools/issue252/archive_audit.py": "ab846964ff643af7aeb15a58e126eecb26f1c5e205103888aab2a1d55d526fb1",
+      "tools/issue252/cuda_math.py": "c2b3f443b21923b683326965d2d35687a069da7d5690a6018b2fa30d7c71a5a7",
+      "tools/issue252/ego_kernel.py": "3a07aa2ae3fcf31de7d327f5e061083e539d85359acdfb97c9925738c24a17b5",
+      "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba",
+      "tools/issue252/host_transfer.py": "41428cf5a9a9b9abb3568baa2164b675b9fd888172e3431f631665925d462f37",
+      "tools/issue252/performance.py": "76be9a448deeebe131e1e44b838e28a95ee4acd753b7725cd14354aa81a6e439",
+      "tools/issue252/run_workspace.py": "06e954c5e21ec78e348a7ff1eef81eb7fbdf18162c668663cc4d3f65f5c3c4b9",
+      "tools/issue252/sparse_adjoint.py": "772820bb1faeeb2a84b2b1e24efcccf1da731129561f749ba97fac3b629dddee",
+      "tools/issue252/static_features.py": "b6e408464f181de05007a6938b38eb3a4257439c50ca680555214c370b564f17",
+      "tools/issue252/training_admission.py": "4ad81e9fdeea36cbeb9a4ab9e13bc63b1c471dc5530ab5207af8de4af95aea29",
+      "tools/research/__init__.py": "9cf60044c83b3cca0a55944165f24e30e04ea6db3c9c71de977c2bfe32eb7d1b",
+      "tools/research/rounds/baseline.py": "65897df974e4e27e157dce83f7f5422afe1a8d4cc7710580507db4012b920757",
+      "tools/research/stage2/__init__.py": "7404443b2323f698ba2a8c4a96006b8fe74ac1b6a2b896da31f05fea92b78006",
+      "tools/research/stage2/anticollapse/__init__.py": "36b0be98738fc34ea93f2d5792f7e8fb8991eadc948bc9a6e910ce94efe1eabf",
+      "tools/research/stage2/anticollapse/artifact.py": "e75bde5903a50cd2b90a3198a1ec0ca2b944147b742381068f72aa2c20d0ae4c",
+      "tools/research/stage2/anticollapse/floor.py": "984bba1330c62a2a712c6797e27a9389bcb7274a8dbe552d48f13c22e9a6ff96",
+      "tools/research/stage2/anticollapse/patch_tree.py": "bffbc2b3a501956f5538dfce9b42c90d89e94a03b645eb651d0e449b4f9f0a5d",
+      "tools/research/stage2/checks.py": "30dd5c7c93a1ee21432fa0b29841444f9d390edcc71d48a5b8ba53fed41c0ef7",
+      "tools/research/stage2/contract.py": "bf82fd31970c7f99de7b377f0ebb11e3cb82fb77661d18be691c04c5c5f09a3c",
+      "tools/research/stage2/graph_batches.py": "99d3e5f90869d340beb30dbe15609e6a387322910a6b1df6ac36106c94622709",
+      "tools/research/stage2/graph_contract.py": "f2a6c9cd8d59f8412856a2d222ce4a5af5dce7e3fb80311825899a87d7972481",
+      "tools/research/stage2/launcher.py": "61d32bd6d1100d1903b6f934480a478630fe647f626510b66cc964720b28b85a",
+      "tools/research/stage2/tests/test_collectives.py": "1aa5df1cc572aad17286072b9d2a4a4eac0793405f1442df9fb70ebe4a65ab84",
+      "tools/research/stage2/tests/test_trainer_names.py": "45832220795da8a1958c0e9d3ebb29e9275fa9d48b7a86402b6f5f2515a0618b",
+      "tools/research/verification/__init__.py": "73b06c04e8c71e16ac85a8fdbc5bc9178635900dc977f5c3488745780d98f73b",
+      "tools/research/verification/admission.py": "4637400e7103a249c1c05c1a1d17d40349a2d307ccb3d07f7a52d9703ed7f647",
+      "tools/stage2/server.py": "1152c3360ddebd5eb161ab1111245a131e338e4058f49f74c215b43922cb96bb"
+    },
+    "checkpoint_provenance": {
+      "schema": 1,
+      "asset_manifest_sha256": "8c58d34521181925df2e66dbe01f64b7150fb56a1eab028f59e8b4832c381ae6",
+      "assets": {
+        "assets/coverage.json": "0360e0fd2f88b52c3b83911f086b09ae2502437a6451ebba79162675f6d5327e",
+        "assets/distance_histogram.npz": "0d17ed2bc5846677d8774df7b9074129909b8403297ac9b200a4aed9d131c2f9",
+        "assets/v5_gnn_geometry/ego_batching_index.npz": "15535a22356eea0b21343f3c9c51413a434d3ccf39062793bb16f1cea65292ca",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5",
+        "results/research/infra246/assets/ego/ego_sampled_visible.npz": "1386f987ae90be1310371352aeb6ad5d58a739690a4586065b4f175c05b47b1a",
+        "assets/v5_gnn_geometry/evaluation_report.json": "4ec297d4093ac0d75d116a8f75a272aaa04cce97039b834b2a66e88f8c5d2432",
+        "assets/v5_gnn_geometry/fidelity_report.json": "ea31bfc5f36f2144b9af2fa1d0f8bd41db208f08c71869b45e8d92eac93f7f5c",
+        "results/research/infra246/assets/graph/held_out_support.npz": "fea02c56eaee7df9fae22628c6da363ebf8a89fe3c76c762f0b4e0fc5799792e",
+        "assets/index.npz": "a5eb2935b258024500d3558c0256238aa342bd1ade52dd0141208c1730e656e1",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/item_summary.npz": "1a8f46e428e66df7ca8cd5672c1bf23af57d60e23459f5d13cfaffa52a82ed12",
+        "results/stage0_build_parquet/items.parquet": "6408e3c0f98a65d817747477a22092c0848f7ed105dc9bf7b7327e9544a99af3",
+        "results/research/infra246/assets/motifs/motif_counts.npz": "79e1adee8461751c5b4cdfa78a78ab0fa22ac23d8ad296c4b881d1167dfca7c9",
+        "results/research/infra246/assets/motifs/motif_instances_visible.npz": "68855edef787ae292108f3a415381be6427f1f575acaf9126c9a933214fa5349",
+        "results/research/infra246/assets/motifs/motif_instances_4node_visible.npz": "dc96eede3cc0fbe51b6117c597365ee4c3e44d4307881023c15945c6d77bc027",
+        "assets/v5_gnn_geometry/node_features.npz": "580f04a9c6a8cc7142de17a865efdf287bf94e9e4a30b225504f12a75b74b4cd",
+        "assets/v5_gnn_geometry/node_features_report.json": "840a52ccfce64a1c449c324dfdd8258f62375eb4be6d62000c50882fa44a10cc",
+        "assets/node_moments.npz": "21a9679881d07af5f2a36577b07a0ac426fc0788a2b75c9f6d3045ef74eef6fb",
+        "results/research/infra246/assets/pairs/probe.npz": "f6bde7e27622af24d2a2e462a023d60fe0e2d9d0f3ce683cd7e6264115417286",
+        "results/research/infra246/assets/pairs/relaxed_struct_test_degree_matched.npz": "47f34ce9f08d1c40aeef79f952ca6bb29c3c57665f4ebe59c87553e1a7a2fb2e",
+        "results/research/infra246/assets/pairs/relaxed_struct_test_direct.npz": "a216700f021d23ef8a007dd5afc526b031e1e179e784779847f1d50afdaeaf0a",
+        "results/research/infra246/assets/pairs/relaxed_struct_test_shared_in.npz": "1e1d63becb8d4542825351029cf57115edf4188612cfb1ae6b3dc5df19d55a68",
+        "results/research/infra246/assets/pairs/relaxed_struct_test_shared_out.npz": "3014c44743e51ace596878c75dc3ec66dba11fc0a38354e4567eef63028bd262",
+        "results/research/infra246/assets/pairs/relaxed_struct_test_two_hop.npz": "f3be301a575ccc7a295aac2a6e5824014fdcefbde1763ea831bde0af308baa08",
+        "results/research/infra246/assets/pairs/relaxed_struct_val_degree_matched.npz": "51ffe7cad12f64d545913413bbe560259bee0b09ab1946e91bdeb0c5b46a1a49",
+        "results/research/infra246/assets/pairs/relaxed_struct_val_direct.npz": "64ed4a57f3ef11cdfe6da94e63395bc281b4c51ca36448704f086ef480499d26",
+        "results/research/infra246/assets/pairs/relaxed_struct_val_shared_in.npz": "52934f9ef5e7dca28909df08828b90f1cf09e489cc48324fc8c21904bfa68fd7",
+        "results/research/infra246/assets/pairs/relaxed_struct_val_shared_out.npz": "1a14bb00d1440358dff2f2072ed2c191b64c76671639b260e4d194b70f98b272",
+        "results/research/infra246/assets/pairs/relaxed_struct_val_two_hop.npz": "4736a3ecdc1a85c7326cf9cd117be91f14a254567bf70c0e367a575c541e5e42",
+        "results/research/issue247/assets/sectional_summary.npz": "af41ddac19f8e7edf0a3f8323b7803dd875f8d423b339e3c7fb49b6c35cc461d",
+        "stage1_GeneEmbedding/output/sentence_t5.npy": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+        "assets/shards/shard_000.npz": "1870d81151e38db93de347c1b12a5b7742782d89069b4fb6241dc2cf9f5eedb2",
+        "assets/shards/shard_001.npz": "6b0866880439b2fc09312fb9dbafa0e9da46ae7e1997a727eef657210248439d",
+        "assets/shards/shard_002.npz": "45b08c50843a05c908b70dcc177411f0e25601a9bdfacc29caa0465f7e963b07",
+        "assets/shards/shard_003.npz": "fc307613f8e62a95ea8b36cebd77e62becd855b8a2bc1b5a3a07668e7b6d9845",
+        "assets/shards/shard_004.npz": "768f8989ff67c61b9177df0e342aa478b98eabfe86f7968fe4f9b436e213fde7",
+        "assets/shards/shard_005.npz": "26edcbb5a478cbf1b8e5355a33781f323568713b0fc154c15103bcb371bf95cf",
+        "assets/shards/shard_006.npz": "c5d51677292549c4049adeadd855be96ec0b7c01127efa01d3ed98a140e5968a",
+        "assets/shards/shard_007.npz": "ff76eb5b3e7789375102403f951a3cd9d84f1d0f96026048c591491a06d4a916",
+        "assets/shards/shard_008.npz": "b2859a2946ffe16bf0d6b0bea8a27dfbdfddc43e787fc5e917dfc6db5d6839ae",
+        "assets/shards/shard_009.npz": "e646af02cbc1b291c7ef2cce291616701ba32b1d86771c2a78a3ec4b0ff9c1ab",
+        "assets/shards/shard_010.npz": "5de0ed90a40afbacfb6d19bc980ddc03824b4b6e5f80193bef4157275a8b442f",
+        "assets/shards/shard_011.npz": "8ef23c61c63663c37cd06ac097f21aeff4c56b895fd9eb1219bb1fe94e8c3d4f",
+        "assets/shards/shard_012.npz": "c519e4fdd3e15ee87dc8a1600874de90f502340d6bf3fdd5245abb1dbd082444",
+        "results/research/infra246/assets/graph/split_users.npz": "acfd8bdb89052646e751bc78a0050bb71d8242a88916f01214e0e4fd05d8fb68",
+        "results/research/infra246/assets/pairs/strict_struct_test_degree_matched.npz": "7742e34d49f18c287b33cfbc67dc92ba876a69724d730d90492ec3b87f6ae8ca",
+        "results/research/infra246/assets/pairs/strict_struct_test_direct.npz": "80fe725722ff618cb352761f9280d3d89e2b80cef117c9ae65f8196c4fcecbbd",
+        "results/research/infra246/assets/pairs/strict_struct_test_shared_in.npz": "ccb5e503da7eb255d9d73b391669657a0990923219658ac04ea1474defd625ab",
+        "results/research/infra246/assets/pairs/strict_struct_test_shared_out.npz": "6ea0bda9b4feedd9c7403ee9336505bfb59d168c085fe3e50aa77504b7620b1e",
+        "results/research/infra246/assets/pairs/strict_struct_test_two_hop.npz": "fedd4ffe3b5e541d36e8f590f59fbfb3ffeb53e1bd23b6ff24c650808fd84d4c",
+        "results/research/infra246/assets/pairs/strict_struct_val_degree_matched.npz": "542719e36e441fc71624413c25dc0335c2ca4eea38e3cdb349c4c678ddb4991c",
+        "results/research/infra246/assets/pairs/strict_struct_val_direct.npz": "bc65baff19071f1497f295261ccf8d92c7450d30d0cac41d86e6cd1e97f0d530",
+        "results/research/infra246/assets/pairs/strict_struct_val_shared_in.npz": "66b2d85abf63a5674b2e8fd32fd18ea29072204bdc6793d167cecbaf6e8e8a87",
+        "results/research/infra246/assets/pairs/strict_struct_val_shared_out.npz": "78b5fe7114b9d9fd3465c4b4656b9cad195f10c2560ad25485b3f11f72e6af96",
+        "results/research/infra246/assets/pairs/strict_struct_val_two_hop.npz": "d282477c65d03572ae8605d3e7a9303ea78cae9b12e47a16874bab05c640e64c",
+        "results/research/issue247/assets/tiger.json": "45b122b1af3b2fbb6efb969c2614181784141c0445a6e7b2345c94f4c74026cc",
+        "results/research/issue247/assets/topology_features.npz": "1cbbab0b7d24f06c2a8cabc5e33f1fd613c6dd7468908efdd0139b6bd5e271b3",
+        "results/research/infra246/assets/pairs/train_degree_matched.npz": "c2c85c1052e65aa61964ab0dec6ce84772862489f1cced28025a139c215d69dd",
+        "results/research/infra246/assets/pairs/train_direct.npz": "22d0cf789730e0f26397fed14a7cdc3576ed0544c7bf05cd56e2e6a6c97a997c",
+        "results/research/infra246/assets/pairs/train_shared_in.npz": "a6510127dca2ba3dd013f9b25709f43d98e8ecaa8897c60d9aacedb93902bc91",
+        "results/research/infra246/assets/pairs/train_shared_out.npz": "9d8253cc8a045e3c4341b0d9a12ca5640d4557df2d13c9877fe18b40f34294e4",
+        "results/research/infra246/assets/pairs/train_two_hop.npz": "3edc9796ae2db4db1691468dc624f77b796e47cee91775421388af27ffdc4f23",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "results/research/infra246/assets/graph/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/visible_reverse.npz": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6",
+        "results/research/infra246/assets/graph/visible_reverse.npz": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6",
+        "assets/train/visible_undirected.npz": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818",
+        "assets/v6_attention_tokens/token_schema.json": "a721a7e29e8b8a5bced06235f8033c92174b29997b3405a571259cca5e7721e8",
+        "assets/v7_graph_contract/audit.json": "0918afe35cddf209441fff4fe80a558a2d562e14027326d124ec2f51000acb1b",
+        "assets/v7_graph_contract/contract.json": "d61a4ca54f6e7ea29331652aceae1b0d9495e215c44fb8415ae507ed52e38687",
+        "assets/v8_runtime_layout/visible_forward_bits.npy": "17a6e7dd9ea4d264c1e68dcaa12211861b31672a02065ef9ef8155a12cb6d737",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "assets/v8_runtime_layout/two_hop_root_local.npy": "7e9dca2a869509116427dc25008677f1d2d97c6c041aa2acb70133980e856edd",
+        "assets/v8_runtime_layout/targets.npy": "8c0ff9f8c25b98ed31802cdb62cf921df6d3cf8bbf35ee2d3de9817d6cd0807a",
+        "assets/v8_runtime_layout/target_offsets.npy": "33f30b2979311d74cf996545bec011856ffa7acbc9cb9b995c829dbc9f87937c",
+        "assets/v8_runtime_layout/metadata.json": "116068365f7acb74ebb0f4aa0dcfa9249a2fbe968b0721371c8a2d7505caff60",
+        "assets/v8_runtime_layout/audit.json": "74188af783ae98f97b38dabedffc5e82bc181dc61cd1a5ff155dc0df47afeb91",
+        "assets/v9_ego_operators/ego1_in_col.npy": "12359f51f960314a11387ad47c9ed99673c564526a440435934333bd5f90b694",
+        "assets/v9_ego_operators/ego1_in_ptr.npy": "33c42518b8eea2f81fbcdf7b35e635cbbaf6ce4c67b78d59a2153d4e169cb8db",
+        "assets/v9_ego_operators/ego1_out_col.npy": "303dd021660510d5b95e45bd593e547d1341624a9b17c3826ace081e1a5bc55f",
+        "assets/v9_ego_operators/ego1_out_ptr.npy": "6bc6654825c174eb80e2ade6f082f1f56a3ddc286e1f9874b5bad66e3bfdb785",
+        "assets/v9_ego_operators/ego2_in_col.npy": "cf61e25fa575695471837e05bcf8379f61e9a7da53038434582bd476d1731c17",
+        "assets/v9_ego_operators/ego2_in_ptr.npy": "f5b6379cb315b2e0591a11b4f3697350521704d953fdeb89c1426e313b244f9f",
+        "assets/v9_ego_operators/ego2_out_col.npy": "69c4ca48fb3ae5ecb8f0e90200e1a1d343fb5d0b9d6556cb3b2005c64568c867",
+        "assets/v9_ego_operators/ego2_out_ptr.npy": "1fba4377ce2dc4330009b422c5c6566446540ab2aa21b7b840f93cd61ff5837f",
+        "assets/v9_ego_operators/metadata.json": "27d5b7af803529d5b6ec735ae3bcae1d75a0f4c8cb0ff7fe4fb1c0240fa45242",
+        "assets/v9_ego_operators/audit.json": "5866c35f50aa9a256483d787abc3062c68b3dc7d1c9fdd53e3712e768d7627dd"
+      },
+      "candidate_sources": {
+        "assignment_floor.py": "984bba1330c62a2a712c6797e27a9389bcb7274a8dbe552d48f13c22e9a6ff96",
+        "benchmark_entry.py": "5a67918b7932571adb441b4c0a5af31e7179fe381f1449652074d4ec22dcbe27",
+        "config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+        "distances/__init__.py": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+        "distances/distance.py": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+        "execution_entry.py": "1ed444bf34c5d4bfc0eb537ae5bd5edd45638ed18121c3ca63f47b36d518f64f",
+        "geometry_validation_entry.py": "b865c314e7d80e2f3ebdeba770c0c67be46b86296e991e417a43c95f39f01f45",
+        "losses/__init__.py": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+        "losses/_pairs.py": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+        "losses/codebook.py": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+        "losses/commitment.py": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+        "losses/quantization.py": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+        "losses/reconstruction.py": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+        "model/__init__.py": "fc51b6b47b052833e3bb249a00a581da6a6f27bb4905fb58237a2865354c0f81",
+        "model/attention.py": "a227155453e1d7c79cb9cf5c59a8a5e3f7defa88895d784ae499a34d25d42ac6",
+        "model/curvature.py": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+        "model/estimator.py": "bc7633a3aed6f3060a0180d99cb50bf6035070ef9f096447eb5289389ce4c024",
+        "model/geometry.py": "62ee1328ec2504e787bdea6e10b1393e055f86d10c271ee311a6af4346dc4c8f",
+        "model/layers.py": "9a61bd93018711972f6562176f5b46ec16908c6900102890b188174289bea2fa",
+        "model/mechanism.py": "8a5e5560abb1fe501e4968012a9005e72d491fc18451370ac391a4ccb372cbe6",
+        "model/model.py": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+        "model/provenance.py": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+        "model/selection.py": "f24c21c0cf387bfcfd7d100b029b15ff269ebd37fec97a2f21d3d0760d8e4704",
+        "model/structure.py": "97f245369a4e4652b82209edd93d494b0f534eb4f00d6e96f89f452126f77f7f",
+        "model/structure_gate.py": "0ceb6c38cc3b8b71d97269e9e6efd3fa5eeb8bdb6fe439fef1582a4dd9c83829",
+        "model/utils.py": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+        "optimized_profile_entry.py": "f5a3ada16d23a9d72b7f3b0b9cea48e1770ade82573a384408e73190b8226597",
+        "profile_entry.py": "0ce1ba101fd8f92e61dd377881209ed13838b489ef7f71bac470af70cfcdb280",
+        "sparse_validation_entry.py": "41ae578e83397df5a47057011a7a4adfac2d0917dd71d8d168175969fdc29118",
+        "steady_profile_entry.py": "002898d114b8a36ce62ea6f2ef43e762c6b8360ad848b06ff8c4305d776588b3",
+        "tests/reference.py": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
+        "tests/test_attention.py": "bb7d7f20102955b4c6fe626d531e37c23911118ce15d9cf727007fade0dcb76e",
+        "tests/test_attention_pipeline.py": "3a0c3049f5126090473301f57dd2390ff1bcbd6d3ff0a7c3807a702ed5740237",
+        "tests/test_curvature_loss.py": "d260562cb8990411a1680ac0792006db787619ddafcc5a6c54d09fa13142f633",
+        "tests/test_estimator.py": "07d4cb1a0841b766d0e5220a2be7b7b66c5abdfe3d00e9c43e38fa59ba991531",
+        "tests/test_execution.py": "541b91313406adce95a91c239f984f3f51cd14fcfbc8b8ed6a0295b30aded43e",
+        "tests/test_geometry_memory.py": "8b7465d359bee23c6676949756e06b19f5faa05631c91f5eccff3672304ad712",
+        "tests/test_known_answers.py": "4eda7c1d194193714be34b548454af0eb4a36a418ee8f90c24d7039921090938",
+        "tests/test_mechanism.py": "d348fb86b3576709d3f49d339550edc47d83d5ea27899d99cc26868ebea3f6e5",
+        "tests/test_mutations.py": "21334532c5a63247d09e0d404c9fd5e300046f13f0e52f81c280db60f5cea3cf",
+        "tests/test_provenance.py": "eb4916774252becccd55657166fdec5b51f6e6f6aeac20d4f0b3fd67ab37dc4b",
+        "tests/test_reference.py": "f4fb492aff0301419ee6fe0ee06ca7943c639b552e3d150a2f1cd45d3bad7cc2",
+        "tests/test_sparse_adjoint.py": "3cccaef26c00dd76a90376f662c359a502c5d7aadaea1a0fa9a992f367486a14",
+        "tests/test_sparse_structure.py": "3281132f56c7d015eb365bcfb668212f6a8cb01d39c94b976693654afa44befa",
+        "tests/test_static_means.py": "6bb188951436c17d1592cbb8f511d5abf74e0dad4212dea5eb18b9d5904cd7b9",
+        "tests/test_structure.py": "1d642b83be753213453ab6262c01a251ec4cf08ec5348954428e7de9114e6b0f",
+        "tests/test_sync_free_batch.py": "a6c95c1be81cd99a873d03bb7128cf5522560e7656ad31a979edfa37a0d82c34",
+        "train_config.py": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+        "train_rqvae.py": "268b7372cfb182f3fbd4e3972d5fd9dcd3ed3e521a3f0447f4fa65ff42096e4a",
+        "validation_entry.py": "8c2a03e17068e3a6c6064b30cca21ca1f54617cdf061c0349c92554de6f67283"
+      },
+      "training_inputs": {
+        "results/stage0_build_parquet/train.parquet": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+      },
+      "mathematical_contract_sha256": "395ed683321b276701361490036e69228cf5ca41ea360f5a685b55e656a23513",
+      "infrastructure_sources": {
+        "tools/graph_infra/__init__.py": "b86861c93434621cff070d024b12f8c6f9d5a5e77a8deea54089645a3a7226ff",
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+        "tools/issue252/archive_audit.py": "ab846964ff643af7aeb15a58e126eecb26f1c5e205103888aab2a1d55d526fb1",
+        "tools/issue252/cuda_math.py": "c2b3f443b21923b683326965d2d35687a069da7d5690a6018b2fa30d7c71a5a7",
+        "tools/issue252/ego_kernel.py": "3a07aa2ae3fcf31de7d327f5e061083e539d85359acdfb97c9925738c24a17b5",
+        "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba",
+        "tools/issue252/host_transfer.py": "41428cf5a9a9b9abb3568baa2164b675b9fd888172e3431f631665925d462f37",
+        "tools/issue252/performance.py": "76be9a448deeebe131e1e44b838e28a95ee4acd753b7725cd14354aa81a6e439",
+        "tools/issue252/run_workspace.py": "06e954c5e21ec78e348a7ff1eef81eb7fbdf18162c668663cc4d3f65f5c3c4b9",
+        "tools/issue252/sparse_adjoint.py": "772820bb1faeeb2a84b2b1e24efcccf1da731129561f749ba97fac3b629dddee",
+        "tools/issue252/static_features.py": "b6e408464f181de05007a6938b38eb3a4257439c50ca680555214c370b564f17",
+        "tools/issue252/training_admission.py": "4ad81e9fdeea36cbeb9a4ab9e13bc63b1c471dc5530ab5207af8de4af95aea29",
+        "tools/research/__init__.py": "9cf60044c83b3cca0a55944165f24e30e04ea6db3c9c71de977c2bfe32eb7d1b",
+        "tools/research/rounds/baseline.py": "65897df974e4e27e157dce83f7f5422afe1a8d4cc7710580507db4012b920757",
+        "tools/research/stage2/__init__.py": "7404443b2323f698ba2a8c4a96006b8fe74ac1b6a2b896da31f05fea92b78006",
+        "tools/research/stage2/anticollapse/__init__.py": "36b0be98738fc34ea93f2d5792f7e8fb8991eadc948bc9a6e910ce94efe1eabf",
+        "tools/research/stage2/anticollapse/artifact.py": "e75bde5903a50cd2b90a3198a1ec0ca2b944147b742381068f72aa2c20d0ae4c",
+        "tools/research/stage2/anticollapse/floor.py": "984bba1330c62a2a712c6797e27a9389bcb7274a8dbe552d48f13c22e9a6ff96",
+        "tools/research/stage2/anticollapse/patch_tree.py": "bffbc2b3a501956f5538dfce9b42c90d89e94a03b645eb651d0e449b4f9f0a5d",
+        "tools/research/stage2/checks.py": "30dd5c7c93a1ee21432fa0b29841444f9d390edcc71d48a5b8ba53fed41c0ef7",
+        "tools/research/stage2/contract.py": "bf82fd31970c7f99de7b377f0ebb11e3cb82fb77661d18be691c04c5c5f09a3c",
+        "tools/research/stage2/graph_batches.py": "99d3e5f90869d340beb30dbe15609e6a387322910a6b1df6ac36106c94622709",
+        "tools/research/stage2/graph_contract.py": "f2a6c9cd8d59f8412856a2d222ce4a5af5dce7e3fb80311825899a87d7972481",
+        "tools/research/stage2/launcher.py": "61d32bd6d1100d1903b6f934480a478630fe647f626510b66cc964720b28b85a",
+        "tools/research/stage2/tests/test_collectives.py": "1aa5df1cc572aad17286072b9d2a4a4eac0793405f1442df9fb70ebe4a65ab84",
+        "tools/research/stage2/tests/test_trainer_names.py": "45832220795da8a1958c0e9d3ebb29e9275fa9d48b7a86402b6f5f2515a0618b",
+        "tools/research/verification/__init__.py": "73b06c04e8c71e16ac85a8fdbc5bc9178635900dc977f5c3488745780d98f73b",
+        "tools/research/verification/admission.py": "4637400e7103a249c1c05c1a1d17d40349a2d307ccb3d07f7a52d9703ed7f647",
+        "tools/stage2/server.py": "1152c3360ddebd5eb161ab1111245a131e338e4058f49f74c215b43922cb96bb"
+      }
+    },
+    "artifacts": {
+      "checkpoint": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/rqvae_best.pth",
+        "sha256": "0ca5cd32c307460cad7ecd72734538dff2ca3427f64286063ece8c290f8e28f0"
+      },
+      "sid": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/item_sids.json",
+        "sha256": "037766704565c5143ab721fd5ca5f61bbba3e800baa9dd561d3ae5601987cff2"
+      },
+      "binding": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/archive_binding.json",
+        "sha256": "549e38cdadf44478e400f45f7de2e934da83383513a5ba46902825be71d3c7ed"
+      },
+      "export_manifest": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/export_manifest.json",
+        "sha256": "66b81d8d235189a4d25db9d883af3adeb955888f4d667e87c36af871e8223bf6"
+      }
+    },
+    "frozen_inputs": {
+      "acceptance": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue252/ACCEPTANCE.json",
+        "sha256": "2e94233351af1b6d6c18c53f3dd676a9422efed7acfa8f8a52602dcd7443ff10"
+      },
+      "inputs": {
+        "train": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "items": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/items.parquet",
+          "sha256": "6408e3c0f98a65d817747477a22092c0848f7ed105dc9bf7b7327e9544a99af3"
+        },
+        "embeddings": {
+          "path": "/fs04/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "assets_manifest": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/manifest.json",
+          "sha256": "8c58d34521181925df2e66dbe01f64b7150fb56a1eab028f59e8b4832c381ae6"
+        }
+      },
+      "assets": {
+        "assets/coverage.json": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/coverage.json",
+          "sha256": "0360e0fd2f88b52c3b83911f086b09ae2502437a6451ebba79162675f6d5327e"
+        },
+        "assets/distance_histogram.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/distance_histogram.npz",
+          "sha256": "0d17ed2bc5846677d8774df7b9074129909b8403297ac9b200a4aed9d131c2f9"
+        },
+        "assets/v5_gnn_geometry/ego_batching_index.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v5_gnn_geometry/ego_batching_index.npz",
+          "sha256": "15535a22356eea0b21343f3c9c51413a434d3ccf39062793bb16f1cea65292ca"
+        },
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/ego/ego_full_1hop_visible.npz",
+          "sha256": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+        },
+        "results/research/infra246/assets/ego/ego_sampled_visible.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/ego/ego_sampled_visible.npz",
+          "sha256": "1386f987ae90be1310371352aeb6ad5d58a739690a4586065b4f175c05b47b1a"
+        },
+        "assets/v5_gnn_geometry/evaluation_report.json": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v5_gnn_geometry/evaluation_report.json",
+          "sha256": "4ec297d4093ac0d75d116a8f75a272aaa04cce97039b834b2a66e88f8c5d2432"
+        },
+        "assets/v5_gnn_geometry/fidelity_report.json": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v5_gnn_geometry/fidelity_report.json",
+          "sha256": "ea31bfc5f36f2144b9af2fa1d0f8bd41db208f08c71869b45e8d92eac93f7f5c"
+        },
+        "results/research/infra246/assets/graph/held_out_support.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/graph/held_out_support.npz",
+          "sha256": "fea02c56eaee7df9fae22628c6da363ebf8a89fe3c76c762f0b4e0fc5799792e"
+        },
+        "assets/index.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/index.npz",
+          "sha256": "a5eb2935b258024500d3558c0256238aa342bd1ade52dd0141208c1730e656e1"
+        },
+        "assets/train/item_ids.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/train/item_ids.npy",
+          "sha256": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+        },
+        "assets/item_summary.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/item_summary.npz",
+          "sha256": "1a8f46e428e66df7ca8cd5672c1bf23af57d60e23459f5d13cfaffa52a82ed12"
+        },
+        "results/stage0_build_parquet/items.parquet": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/items.parquet",
+          "sha256": "6408e3c0f98a65d817747477a22092c0848f7ed105dc9bf7b7327e9544a99af3"
+        },
+        "results/research/infra246/assets/motifs/motif_counts.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/motifs/motif_counts.npz",
+          "sha256": "79e1adee8461751c5b4cdfa78a78ab0fa22ac23d8ad296c4b881d1167dfca7c9"
+        },
+        "results/research/infra246/assets/motifs/motif_instances_visible.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/motifs/motif_instances_visible.npz",
+          "sha256": "68855edef787ae292108f3a415381be6427f1f575acaf9126c9a933214fa5349"
+        },
+        "results/research/infra246/assets/motifs/motif_instances_4node_visible.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/motifs/motif_instances_4node_visible.npz",
+          "sha256": "dc96eede3cc0fbe51b6117c597365ee4c3e44d4307881023c15945c6d77bc027"
+        },
+        "assets/v5_gnn_geometry/node_features.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v5_gnn_geometry/node_features.npz",
+          "sha256": "580f04a9c6a8cc7142de17a865efdf287bf94e9e4a30b225504f12a75b74b4cd"
+        },
+        "assets/v5_gnn_geometry/node_features_report.json": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v5_gnn_geometry/node_features_report.json",
+          "sha256": "840a52ccfce64a1c449c324dfdd8258f62375eb4be6d62000c50882fa44a10cc"
+        },
+        "assets/node_moments.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/node_moments.npz",
+          "sha256": "21a9679881d07af5f2a36577b07a0ac426fc0788a2b75c9f6d3045ef74eef6fb"
+        },
+        "results/research/infra246/assets/pairs/probe.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/probe.npz",
+          "sha256": "f6bde7e27622af24d2a2e462a023d60fe0e2d9d0f3ce683cd7e6264115417286"
+        },
+        "results/research/infra246/assets/pairs/relaxed_struct_test_degree_matched.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/relaxed_struct_test_degree_matched.npz",
+          "sha256": "47f34ce9f08d1c40aeef79f952ca6bb29c3c57665f4ebe59c87553e1a7a2fb2e"
+        },
+        "results/research/infra246/assets/pairs/relaxed_struct_test_direct.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/relaxed_struct_test_direct.npz",
+          "sha256": "a216700f021d23ef8a007dd5afc526b031e1e179e784779847f1d50afdaeaf0a"
+        },
+        "results/research/infra246/assets/pairs/relaxed_struct_test_shared_in.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/relaxed_struct_test_shared_in.npz",
+          "sha256": "1e1d63becb8d4542825351029cf57115edf4188612cfb1ae6b3dc5df19d55a68"
+        },
+        "results/research/infra246/assets/pairs/relaxed_struct_test_shared_out.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/relaxed_struct_test_shared_out.npz",
+          "sha256": "3014c44743e51ace596878c75dc3ec66dba11fc0a38354e4567eef63028bd262"
+        },
+        "results/research/infra246/assets/pairs/relaxed_struct_test_two_hop.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/relaxed_struct_test_two_hop.npz",
+          "sha256": "f3be301a575ccc7a295aac2a6e5824014fdcefbde1763ea831bde0af308baa08"
+        },
+        "results/research/infra246/assets/pairs/relaxed_struct_val_degree_matched.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/relaxed_struct_val_degree_matched.npz",
+          "sha256": "51ffe7cad12f64d545913413bbe560259bee0b09ab1946e91bdeb0c5b46a1a49"
+        },
+        "results/research/infra246/assets/pairs/relaxed_struct_val_direct.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/relaxed_struct_val_direct.npz",
+          "sha256": "64ed4a57f3ef11cdfe6da94e63395bc281b4c51ca36448704f086ef480499d26"
+        },
+        "results/research/infra246/assets/pairs/relaxed_struct_val_shared_in.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/relaxed_struct_val_shared_in.npz",
+          "sha256": "52934f9ef5e7dca28909df08828b90f1cf09e489cc48324fc8c21904bfa68fd7"
+        },
+        "results/research/infra246/assets/pairs/relaxed_struct_val_shared_out.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/relaxed_struct_val_shared_out.npz",
+          "sha256": "1a14bb00d1440358dff2f2072ed2c191b64c76671639b260e4d194b70f98b272"
+        },
+        "results/research/infra246/assets/pairs/relaxed_struct_val_two_hop.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/relaxed_struct_val_two_hop.npz",
+          "sha256": "4736a3ecdc1a85c7326cf9cd117be91f14a254567bf70c0e367a575c541e5e42"
+        },
+        "results/research/issue247/assets/sectional_summary.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue247/assets/sectional_summary.npz",
+          "sha256": "af41ddac19f8e7edf0a3f8323b7803dd875f8d423b339e3c7fb49b6c35cc461d"
+        },
+        "stage1_GeneEmbedding/output/sentence_t5.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "assets/shards/shard_000.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/shards/shard_000.npz",
+          "sha256": "1870d81151e38db93de347c1b12a5b7742782d89069b4fb6241dc2cf9f5eedb2"
+        },
+        "assets/shards/shard_001.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/shards/shard_001.npz",
+          "sha256": "6b0866880439b2fc09312fb9dbafa0e9da46ae7e1997a727eef657210248439d"
+        },
+        "assets/shards/shard_002.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/shards/shard_002.npz",
+          "sha256": "45b08c50843a05c908b70dcc177411f0e25601a9bdfacc29caa0465f7e963b07"
+        },
+        "assets/shards/shard_003.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/shards/shard_003.npz",
+          "sha256": "fc307613f8e62a95ea8b36cebd77e62becd855b8a2bc1b5a3a07668e7b6d9845"
+        },
+        "assets/shards/shard_004.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/shards/shard_004.npz",
+          "sha256": "768f8989ff67c61b9177df0e342aa478b98eabfe86f7968fe4f9b436e213fde7"
+        },
+        "assets/shards/shard_005.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/shards/shard_005.npz",
+          "sha256": "26edcbb5a478cbf1b8e5355a33781f323568713b0fc154c15103bcb371bf95cf"
+        },
+        "assets/shards/shard_006.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/shards/shard_006.npz",
+          "sha256": "c5d51677292549c4049adeadd855be96ec0b7c01127efa01d3ed98a140e5968a"
+        },
+        "assets/shards/shard_007.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/shards/shard_007.npz",
+          "sha256": "ff76eb5b3e7789375102403f951a3cd9d84f1d0f96026048c591491a06d4a916"
+        },
+        "assets/shards/shard_008.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/shards/shard_008.npz",
+          "sha256": "b2859a2946ffe16bf0d6b0bea8a27dfbdfddc43e787fc5e917dfc6db5d6839ae"
+        },
+        "assets/shards/shard_009.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/shards/shard_009.npz",
+          "sha256": "e646af02cbc1b291c7ef2cce291616701ba32b1d86771c2a78a3ec4b0ff9c1ab"
+        },
+        "assets/shards/shard_010.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/shards/shard_010.npz",
+          "sha256": "5de0ed90a40afbacfb6d19bc980ddc03824b4b6e5f80193bef4157275a8b442f"
+        },
+        "assets/shards/shard_011.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/shards/shard_011.npz",
+          "sha256": "8ef23c61c63663c37cd06ac097f21aeff4c56b895fd9eb1219bb1fe94e8c3d4f"
+        },
+        "assets/shards/shard_012.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/shards/shard_012.npz",
+          "sha256": "c519e4fdd3e15ee87dc8a1600874de90f502340d6bf3fdd5245abb1dbd082444"
+        },
+        "results/research/infra246/assets/graph/split_users.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/graph/split_users.npz",
+          "sha256": "acfd8bdb89052646e751bc78a0050bb71d8242a88916f01214e0e4fd05d8fb68"
+        },
+        "results/research/infra246/assets/pairs/strict_struct_test_degree_matched.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/strict_struct_test_degree_matched.npz",
+          "sha256": "7742e34d49f18c287b33cfbc67dc92ba876a69724d730d90492ec3b87f6ae8ca"
+        },
+        "results/research/infra246/assets/pairs/strict_struct_test_direct.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/strict_struct_test_direct.npz",
+          "sha256": "80fe725722ff618cb352761f9280d3d89e2b80cef117c9ae65f8196c4fcecbbd"
+        },
+        "results/research/infra246/assets/pairs/strict_struct_test_shared_in.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/strict_struct_test_shared_in.npz",
+          "sha256": "ccb5e503da7eb255d9d73b391669657a0990923219658ac04ea1474defd625ab"
+        },
+        "results/research/infra246/assets/pairs/strict_struct_test_shared_out.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/strict_struct_test_shared_out.npz",
+          "sha256": "6ea0bda9b4feedd9c7403ee9336505bfb59d168c085fe3e50aa77504b7620b1e"
+        },
+        "results/research/infra246/assets/pairs/strict_struct_test_two_hop.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/strict_struct_test_two_hop.npz",
+          "sha256": "fedd4ffe3b5e541d36e8f590f59fbfb3ffeb53e1bd23b6ff24c650808fd84d4c"
+        },
+        "results/research/infra246/assets/pairs/strict_struct_val_degree_matched.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/strict_struct_val_degree_matched.npz",
+          "sha256": "542719e36e441fc71624413c25dc0335c2ca4eea38e3cdb349c4c678ddb4991c"
+        },
+        "results/research/infra246/assets/pairs/strict_struct_val_direct.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/strict_struct_val_direct.npz",
+          "sha256": "bc65baff19071f1497f295261ccf8d92c7450d30d0cac41d86e6cd1e97f0d530"
+        },
+        "results/research/infra246/assets/pairs/strict_struct_val_shared_in.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/strict_struct_val_shared_in.npz",
+          "sha256": "66b2d85abf63a5674b2e8fd32fd18ea29072204bdc6793d167cecbaf6e8e8a87"
+        },
+        "results/research/infra246/assets/pairs/strict_struct_val_shared_out.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/strict_struct_val_shared_out.npz",
+          "sha256": "78b5fe7114b9d9fd3465c4b4656b9cad195f10c2560ad25485b3f11f72e6af96"
+        },
+        "results/research/infra246/assets/pairs/strict_struct_val_two_hop.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/strict_struct_val_two_hop.npz",
+          "sha256": "d282477c65d03572ae8605d3e7a9303ea78cae9b12e47a16874bab05c640e64c"
+        },
+        "results/research/issue247/assets/tiger.json": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue247/assets/tiger.json",
+          "sha256": "45b122b1af3b2fbb6efb969c2614181784141c0445a6e7b2345c94f4c74026cc"
+        },
+        "results/research/issue247/assets/topology_features.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue247/assets/topology_features.npz",
+          "sha256": "1cbbab0b7d24f06c2a8cabc5e33f1fd613c6dd7468908efdd0139b6bd5e271b3"
+        },
+        "results/research/infra246/assets/pairs/train_degree_matched.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/train_degree_matched.npz",
+          "sha256": "c2c85c1052e65aa61964ab0dec6ce84772862489f1cced28025a139c215d69dd"
+        },
+        "results/research/infra246/assets/pairs/train_direct.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/train_direct.npz",
+          "sha256": "22d0cf789730e0f26397fed14a7cdc3576ed0544c7bf05cd56e2e6a6c97a997c"
+        },
+        "results/research/infra246/assets/pairs/train_shared_in.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/train_shared_in.npz",
+          "sha256": "a6510127dca2ba3dd013f9b25709f43d98e8ecaa8897c60d9aacedb93902bc91"
+        },
+        "results/research/infra246/assets/pairs/train_shared_out.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/train_shared_out.npz",
+          "sha256": "9d8253cc8a045e3c4341b0d9a12ca5640d4557df2d13c9877fe18b40f34294e4"
+        },
+        "results/research/infra246/assets/pairs/train_two_hop.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/train_two_hop.npz",
+          "sha256": "3edc9796ae2db4db1691468dc624f77b796e47cee91775421388af27ffdc4f23"
+        },
+        "assets/train/visible_forward.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/train/visible_forward.npz",
+          "sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029"
+        },
+        "results/research/infra246/assets/graph/visible_forward.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/graph/visible_forward.npz",
+          "sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029"
+        },
+        "assets/train/visible_reverse.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/train/visible_reverse.npz",
+          "sha256": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6"
+        },
+        "results/research/infra246/assets/graph/visible_reverse.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/graph/visible_reverse.npz",
+          "sha256": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6"
+        },
+        "assets/train/visible_undirected.npz": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/train/visible_undirected.npz",
+          "sha256": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818"
+        },
+        "assets/v6_attention_tokens/token_schema.json": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v6_attention_tokens/token_schema.json",
+          "sha256": "a721a7e29e8b8a5bced06235f8033c92174b29997b3405a571259cca5e7721e8"
+        },
+        "assets/v7_graph_contract/audit.json": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v7_graph_contract/audit.json",
+          "sha256": "0918afe35cddf209441fff4fe80a558a2d562e14027326d124ec2f51000acb1b"
+        },
+        "assets/v7_graph_contract/contract.json": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v7_graph_contract/contract.json",
+          "sha256": "d61a4ca54f6e7ea29331652aceae1b0d9495e215c44fb8415ae507ed52e38687"
+        },
+        "assets/v8_runtime_layout/visible_forward_bits.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v8_runtime_layout/visible_forward_bits.npy",
+          "sha256": "17a6e7dd9ea4d264c1e68dcaa12211861b31672a02065ef9ef8155a12cb6d737"
+        },
+        "assets/v8_runtime_layout/two_hop_nodes.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v8_runtime_layout/two_hop_nodes.npy",
+          "sha256": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda"
+        },
+        "assets/v8_runtime_layout/two_hop_offsets.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v8_runtime_layout/two_hop_offsets.npy",
+          "sha256": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7"
+        },
+        "assets/v8_runtime_layout/two_hop_root_local.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v8_runtime_layout/two_hop_root_local.npy",
+          "sha256": "7e9dca2a869509116427dc25008677f1d2d97c6c041aa2acb70133980e856edd"
+        },
+        "assets/v8_runtime_layout/targets.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v8_runtime_layout/targets.npy",
+          "sha256": "8c0ff9f8c25b98ed31802cdb62cf921df6d3cf8bbf35ee2d3de9817d6cd0807a"
+        },
+        "assets/v8_runtime_layout/target_offsets.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v8_runtime_layout/target_offsets.npy",
+          "sha256": "33f30b2979311d74cf996545bec011856ffa7acbc9cb9b995c829dbc9f87937c"
+        },
+        "assets/v8_runtime_layout/metadata.json": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v8_runtime_layout/metadata.json",
+          "sha256": "116068365f7acb74ebb0f4aa0dcfa9249a2fbe968b0721371c8a2d7505caff60"
+        },
+        "assets/v8_runtime_layout/audit.json": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v8_runtime_layout/audit.json",
+          "sha256": "74188af783ae98f97b38dabedffc5e82bc181dc61cd1a5ff155dc0df47afeb91"
+        },
+        "assets/v9_ego_operators/ego1_in_col.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v9_ego_operators/ego1_in_col.npy",
+          "sha256": "12359f51f960314a11387ad47c9ed99673c564526a440435934333bd5f90b694"
+        },
+        "assets/v9_ego_operators/ego1_in_ptr.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v9_ego_operators/ego1_in_ptr.npy",
+          "sha256": "33c42518b8eea2f81fbcdf7b35e635cbbaf6ce4c67b78d59a2153d4e169cb8db"
+        },
+        "assets/v9_ego_operators/ego1_out_col.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v9_ego_operators/ego1_out_col.npy",
+          "sha256": "303dd021660510d5b95e45bd593e547d1341624a9b17c3826ace081e1a5bc55f"
+        },
+        "assets/v9_ego_operators/ego1_out_ptr.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v9_ego_operators/ego1_out_ptr.npy",
+          "sha256": "6bc6654825c174eb80e2ade6f082f1f56a3ddc286e1f9874b5bad66e3bfdb785"
+        },
+        "assets/v9_ego_operators/ego2_in_col.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v9_ego_operators/ego2_in_col.npy",
+          "sha256": "cf61e25fa575695471837e05bcf8379f61e9a7da53038434582bd476d1731c17"
+        },
+        "assets/v9_ego_operators/ego2_in_ptr.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v9_ego_operators/ego2_in_ptr.npy",
+          "sha256": "f5b6379cb315b2e0591a11b4f3697350521704d953fdeb89c1426e313b244f9f"
+        },
+        "assets/v9_ego_operators/ego2_out_col.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v9_ego_operators/ego2_out_col.npy",
+          "sha256": "69c4ca48fb3ae5ecb8f0e90200e1a1d343fb5d0b9d6556cb3b2005c64568c867"
+        },
+        "assets/v9_ego_operators/ego2_out_ptr.npy": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v9_ego_operators/ego2_out_ptr.npy",
+          "sha256": "1fba4377ce2dc4330009b422c5c6566446540ab2aa21b7b840f93cd61ff5837f"
+        },
+        "assets/v9_ego_operators/metadata.json": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v9_ego_operators/metadata.json",
+          "sha256": "27d5b7af803529d5b6ec735ae3bcae1d75a0f4c8cb0ff7fe4fb1c0240fa45242"
+        },
+        "assets/v9_ego_operators/audit.json": {
+          "path": "/fs04/ar57/wenyu/GeneRec/assets/v9_ego_operators/audit.json",
+          "sha256": "5866c35f50aa9a256483d787abc3062c68b3dc7d1c9fdd53e3712e768d7627dd"
+        }
+      },
+      "intake_asset_manifest_sha256": "f479dac35c0b2f7783683d7827e87f815bc1c27f21382562b1e65731c451fdc6",
+      "asset_manifest_authority": "checkpoint_pre_training_provenance"
+    },
+    "evaluator_sources": {
+      "tools/issue252/final_evaluation.py": {
+        "path": "/fs04/ar57/wenyu/GeneRec/tools/issue252/final_evaluation.py",
+        "sha256": "234ccee10b89cfb6312950b7381c16a03c0b7e68ae2fcc2708f8d2e40511fbd4"
+      },
+      "tools/issue252/archive_audit.py": {
+        "path": "/fs04/ar57/wenyu/GeneRec/tools/issue252/archive_audit.py",
+        "sha256": "ab846964ff643af7aeb15a58e126eecb26f1c5e205103888aab2a1d55d526fb1"
+      },
+      "tools/issue251/evaluation.py": {
+        "path": "/fs04/ar57/wenyu/GeneRec/tools/issue251/evaluation.py",
+        "sha256": "7ed9a6c3b26fe121f0c0fea737b200fe4c738f812832e4b252945cf568f8fb83"
+      },
+      "tools/issue251/full_evaluation.py": {
+        "path": "/fs04/ar57/wenyu/GeneRec/tools/issue251/full_evaluation.py",
+        "sha256": "77b1f569bd9bd5347ef95caaf1c7d4881bcc484f99af183d2a1c859669f97def"
+      },
+      "tools/graph_infra/fidelity.py": {
+        "path": "/fs04/ar57/wenyu/GeneRec/tools/graph_infra/fidelity.py",
+        "sha256": "ef3331a714c06938ad14256232ee5731878dce95f127926b246223dca03c548b"
+      },
+      "tools/graph_infra/metrics.py": {
+        "path": "/fs04/ar57/wenyu/GeneRec/tools/graph_infra/metrics.py",
+        "sha256": "dd9938d66adf57e718a07a9f61b36ad265bd9d38a9910911f0d82d19b8bf446e"
+      },
+      "tools/graph_infra/tiger_compare.py": {
+        "path": "/fs04/ar57/wenyu/GeneRec/tools/graph_infra/tiger_compare.py",
+        "sha256": "30c81664c453f01d4ebd64a5eaeec51d23171cfaa26ca53b7e1666521c418d7e"
+      },
+      "tools/graph_infra/heldout_eval.py": {
+        "path": "/fs04/ar57/wenyu/GeneRec/tools/graph_infra/heldout_eval.py",
+        "sha256": "401d9177d6c95c077d253b12c5af1dec537ddb8f2228e73c9253a6c5a5fb4686"
+      }
+    },
+    "scale_fitted_on_evaluation": false,
+    "calibration": {
+      "tangent_scale": 0.08433422446250916,
+      "curvature_weight": 2.6701975002652034e-05,
+      "target_scale": 2.000375270843506
+    }
+  },
+  "full_report": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue252/FINAL_EVALUATION.json",
+    "sha256": "e832369d59ea9d8d31a917b274de81afbe38262c1027f274e0b469e8bfbfa3ba",
+    "bytes": 41864252
+  }
+}

@@ -16,8 +16,9 @@ import numpy as np
 from tools.issue252 import archive_audit
 
 ROOT = next(p for p in Path(__file__).resolve().parents if (p/'stage2_RQ-VAE').is_dir())
-FINAL_TREE = ROOT/'stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq'
-FINAL_RESULT = ROOT/'results/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq'
+FINAL_RUN = ROOT/'results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq'
+FINAL_TREE = FINAL_RUN/'src'
+FINAL_RESULT = FINAL_RUN/'result'
 FINAL_CHECKPOINT = FINAL_RESULT/'rqvae_best.pth'
 FINAL_SID = FINAL_RESULT/'item_sids.json'
 FINAL_BINDING = FINAL_RESULT/'archive_binding.json'
@@ -124,7 +125,11 @@ def _frozen_inputs(repo, assets, embeddings, provenance):
     records = {}
     for name, expected in inputs.items():
         actual = _record(repo/expected['path'])
-        if actual['sha256'] != expected['sha256']:
+        # Data remain bound to intake; versioned engineering assets are bound
+        # to the manifest captured before this exact checkpoint's training.
+        expected_digest = (provenance.get('asset_manifest_sha256')
+                           if name == 'assets_manifest' else expected['sha256'])
+        if actual['sha256'] != expected_digest:
             raise ValueError('frozen '+name+' input hash mismatch')
         records[name] = actual
     if (Path(records['embeddings']['path']) != embeddings
@@ -146,7 +151,9 @@ def _frozen_inputs(repo, assets, embeddings, provenance):
         if provenance.get('assets', {}).get(entry['path']) != record['sha256']:
             raise ValueError('checkpoint asset provenance mismatch: '+entry['path'])
         leaves[entry['path']] = record
-    return {'acceptance': _record(acceptance_path), 'inputs': records, 'assets': leaves}, manifest
+    return {'acceptance': _record(acceptance_path), 'inputs': records, 'assets': leaves,
+            'intake_asset_manifest_sha256': inputs['assets_manifest']['sha256'],
+            'asset_manifest_authority': 'checkpoint_pre_training_provenance'}, manifest
 
 
 def _coverage(assets, items):

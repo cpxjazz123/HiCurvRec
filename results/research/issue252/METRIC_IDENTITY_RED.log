@@ -1,0 +1,23 @@
+test_identity_survives_more_than_64k_of_training_records (__main__.Stage3MetricIdentityTests.test_identity_survives_more_than_64k_of_training_records) ... FAIL
+test_other_sid_stream_cannot_replace_the_long_matching_stream (__main__.Stage3MetricIdentityTests.test_other_sid_stream_cannot_replace_the_long_matching_stream) ... FAIL
+
+======================================================================
+FAIL: test_identity_survives_more_than_64k_of_training_records (__main__.Stage3MetricIdentityTests.test_identity_survives_more_than_64k_of_training_records)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/genrec-mcp/tests/test_stage3_metric_identity.py", line 33, in test_identity_survives_more_than_64k_of_training_records
+    self.assertEqual(metrics, log)
+AssertionError: None != PosixPath('/fs04/ar57/wenyu/GeneRec/resul[64 chars]onl')
+
+======================================================================
+FAIL: test_other_sid_stream_cannot_replace_the_long_matching_stream (__main__.Stage3MetricIdentityTests.test_other_sid_stream_cannot_replace_the_long_matching_stream)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/genrec-mcp/tests/test_stage3_metric_identity.py", line 50, in test_other_sid_stream_cannot_replace_the_long_matching_stream
+    self.assertEqual(metrics, wanted)
+AssertionError: None != PosixPath('/fs04/ar57/wenyu/GeneRec/resul[64 chars]onl')
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.057s
+
+FAILED (failures=2)

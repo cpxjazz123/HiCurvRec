@@ -1,0 +1,21 @@
+test_manifest_changed_after_training_or_missing_binding_still_fails (tools.issue252.test_final_input_generation.FinalInputGenerationTests) ... ok
+test_raw_training_or_embedding_changes_still_fail (tools.issue252.test_final_input_generation.FinalInputGenerationTests) ... ok
+test_registered_generation_bound_before_training_is_reported_explicitly (tools.issue252.test_final_input_generation.FinalInputGenerationTests) ... ERROR
+test_registered_leaf_changed_after_training_still_fails (tools.issue252.test_final_input_generation.FinalInputGenerationTests) ... ok
+
+======================================================================
+ERROR: test_registered_generation_bound_before_training_is_reported_explicitly (tools.issue252.test_final_input_generation.FinalInputGenerationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_final_input_generation.py", line 49, in test_registered_generation_bound_before_training_is_reported_explicitly
+    report, manifest = self.load()
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_final_input_generation.py", line 45, in load
+    return _frozen_inputs(self.repo, self.assets, self.embeddings,
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/final_evaluation.py", line 129, in _frozen_inputs
+    raise ValueError('frozen '+name+' input hash mismatch')
+ValueError: frozen assets_manifest input hash mismatch
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.135s
+
+FAILED (errors=1)

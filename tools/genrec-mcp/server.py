@@ -2084,6 +2084,22 @@ def _last_record(path: Path, event: str | None = None) -> dict | None:
     return None
 
 
+def _first_record(path: Path, event: str) -> dict | None:
+    """Read run identity from the head, independently of the bounded live tail."""
+    try:
+        with path.open(encoding="utf-8") as handle:
+            for line in handle:
+                try:
+                    record = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(record, dict) and record.get("event") == event:
+                    return record
+    except OSError:
+        pass
+    return None
+
+
 def _gpu_processes() -> list[dict]:
     """Per-process GPU memory, so the monitor needs no second tool."""
     try:
@@ -2346,7 +2362,7 @@ def stage3_bound_files(variant: str, sid: Path, run_id: str, since=None) -> tupl
                 continue
             try:
                 if kind == "metrics":
-                    block = _last_record(path, "train_start") or {}
+                    block = _first_record(path, "train_start") or {}
                     value = block.get("code_path")
                 else:
                     block = json.loads(path.read_text(encoding="utf-8"))
@@ -2414,7 +2430,7 @@ def tool_stage3_status(item_sids: str | None = None) -> dict:
             test_final = stale_test
             test_result_scope = "the result of an earlier launch of this variant"
     latest_train = _last_record(metrics, "train") if metrics else None
-    train_start = _last_record(metrics, "train_start") if metrics else None
+    train_start = _first_record(metrics, "train_start") if metrics else None
     test_result = None
     # The scope was decided above, where the launch-scoped search runs: resetting
     # it here made a stale result of an earlier launch claim to be this launch's.
@@ -2495,34 +2511,35 @@ def tool_stage3_status(item_sids: str | None = None) -> dict:
 
 
 def record_sid_layers(sid: Path) -> dict:
-    """Record the mandatory layer metrics once per exported SID.
+    """Read the exact SID's manual layer record without rerunning analysis.
 
-    The report is keyed by the SID's own SHA-256, so a second call re-reads the
-    existing report instead of rewriting it, and a SID that cannot be measured
-    refuses the launch with the reason rather than a fabricated zero.
+    The automatic science evaluator was removed under CLAUDE.md §94. Missing
+    records remain explicit diagnostics (§63), not an import failure or a new
+    Stage3 gate. Immutable runs keep their SHA-keyed record under the arm.
     """
-    import hashlib
-    import importlib.util
+    from tools.issue252.run_workspace import run_from_sid
 
+    sid = sid.resolve()
     digest = hashlib.sha256(sid.read_bytes()).hexdigest()
-    target = sid.parent / "stage2_metrics" / (digest + ".json")
-    if target.is_file():
-        return {"passed": True, "report": str(target), "reused": True}
-    # The measurement needs numpy and pandas, which the MCP server (stdlib only)
-    # does not have: it runs in the project interpreter, in its own process.
-    interpreter = Path("/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10")
-    # Imported as a package module: the measurement uses package-relative imports.
-    done = subprocess.run(
-        [str(interpreter), "-m", "tools.research.science.sid_layer_analysis", str(sid)],
-        cwd=str(REPO), capture_output=True, text=True, timeout=3600,
-        env={**os.environ, "PYTHONPATH": str(REPO)})
-    if done.returncode != 0:
-        tail = (done.stderr or done.stdout).strip().splitlines()[-6:]
-        return {"passed": False, "reason": "the measurement failed: " + " | ".join(tail)[:600]}
+    run = run_from_sid(REPO, sid)
+    result = REPO / "results/stage2_RQ-VAE" / run["arm"] if run else sid.parent
+    target = result / "stage2_metrics" / (digest + ".json")
     if not target.is_file():
-        return {"passed": False,
-                "reason": "the measurement reported success but wrote no report"}
-    return {"passed": True, "report": str(target), "reused": False}
+        return {"passed": False, "report": str(target),
+                "reason": "manual layer record is missing (CLAUDE.md §63/§94)"}
+    try:
+        report = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return {"passed": False, "report": str(target),
+                "reason": "invalid manual layer record: " + str(exc)}
+    if not isinstance(report, dict) or report.get("sid") != {"path": str(sid), "sha256": digest}:
+        return {"passed": False, "report": str(target),
+                "reason": "manual layer record belongs to another SID"}
+    if run and (report.get("run_id") != run["run_id"] or report.get("arm") != run["arm"]):
+        return {"passed": False, "report": str(target),
+                "reason": "manual layer record belongs to another immutable run"}
+    return {"passed": True, "report": str(target), "reused": True,
+            "sha256": hashlib.sha256(target.read_bytes()).hexdigest()}
 
 
 def stage3_sid_quality(sid: Path, waive_collision: bool = False) -> dict:

@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/usr/lib64/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib64/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/final_evaluation.py", line 404, in <module>
+    main()
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/final_evaluation.py", line 399, in main
+    run_final_evaluation(tree=FINAL_TREE, checkpoint=FINAL_CHECKPOINT, sid=FINAL_SID,
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/final_evaluation.py", line 294, in run_final_evaluation
+    inputs, _ = _frozen_inputs(repo, assets, embeddings, payload['provenance'])
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/final_evaluation.py", line 129, in _frozen_inputs
+    raise ValueError('frozen '+name+' input hash mismatch')
+ValueError: frozen assets_manifest input hash mismatch

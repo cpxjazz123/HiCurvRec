@@ -66,3 +66,36 @@ Actual warmed profile `issue252_steady_profile_689572_578144683` completed3epoch
 | backward | 6 | 0.261937–0.271898 | 0.389811–0.477752 |
 
 These spans overlap and must not be added. Native `aten::fill_` calls numbered11596–13951/rank. Inspection identified36 separation checks ×256 separate self-diagonal writes=9216 avoidable tiny writes per epoch. A strided diagonal view can mask the identical entries with one write per block, preserving every off-diagonal value, cdist result and refusal threshold. CPU production regressions first observed256 writes against a1/3-write bound (RED), then passed the exact known minima, duplicates, partial blocks, empty/singleton and bounded-write assertions after fusion. `SEPARATION_MASK_RED.log` / `SEPARATION_MASK_GREEN.log` are the evidence; actual inclusive remeasurement is still required.
+
+## Final formal run and authorized bound
+
+The earlier sections are historical optimization checkpoints. The original
+0.5-second target was **not met**. `CONTRACT.md` records the owner's prospective
+0.8-second limit and separate last-level-only Sinkhorn decision; neither is
+represented as compliance with the original unamended recipe.
+
+Inclusive wall-clock results, independently recomputed from raw boundaries:
+
+| Window | Epochs | Wall seconds | Mean seconds/epoch | Median | P95 |
+|---|---:|---:|---:|---:|---:|
+| Admission benchmark 31–60 | 30 | 20.066302 | 0.668877 | 0.617600 | 0.801633 |
+| Formal run 31–60 | 30 | 20.164583 | 0.672153 | 0.623867 | 0.776458 |
+| Formal run 31–3000 | 2970 | 1902.524989 | 0.640581 | 0.606950 | 0.643008 |
+| Formal run 1–3000 | 3000 | 1944.579127 | 0.648193 | 0.607219 | 0.648559 |
+
+The immutable formal generation is `issue252_formal_r2`; all 3000 consecutive
+boundaries exist. Windows include gaps and periodic work between boundaries,
+not just the sum of the logged optimizer timers. The first formal epoch includes
+22.891136 seconds of cold execution/compilation and is retained in the full-run
+row. The admission-window prediction was 2006.630166 seconds for 3000 epochs;
+the actual trainer's total elapsed record is 1979.702 seconds. This is now an
+observed completion, not an extrapolated completion claim.
+
+Initialization has its own recorded 28.908401-second interval. Checkpoint/export
+completion occurs 9.398303 wall seconds after the last epoch boundary. These
+intervals use their recorded origins and are not added to manufacture an exact
+decomposition of the trainer total. Source: the immutable run's
+`result/logs/training_metrics.jsonl`, plus the pre-training benchmark referenced
+by `TRAINING_ADMISSION.json` (original bytes preserved in `admission_history/`
+under SHA256 `e93d46e65ec5ad43d1e216739cc98e12a67de783c44aa12e5767780ef3fdedff`).
+
