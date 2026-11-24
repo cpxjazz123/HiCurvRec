@@ -43,3 +43,9 @@ def compile_geometry(experts, mixed, fixed):
 def compile_probabilities(function):
     _configure()
     return torch.compile(function, fullgraph=True, dynamic=True, mode='default')
+
+
+def compile_dense(function):
+    """Compile one dense affine layer of the ego readout."""
+    _configure()
+    return torch.compile(function, fullgraph=True, dynamic=True, mode='default')

@@ -2,6 +2,7 @@
 import numpy as np
 import torch
 from torch import nn
+from tools.issue252.host_transfer import host_int64
 from .structure import SubgraphTokens
 from .attention import ExpertAttention
 
@@ -20,7 +21,7 @@ class TopologyAttention(nn.Module):
         unique,inverse=np.unique(np.asarray(raw,dtype=np.int64),return_inverse=True)
         tokens,mask=self.tokens.tokens_for_items(store,unique,device,chunk=chunk)
         weights,attention,effective_mask=self.attention(tokens,mask)
-        restore=torch.as_tensor(inverse,device=weights.device,dtype=torch.long)
+        restore=host_int64(inverse,weights.device)
         self.last_tokens=tokens[restore]
         self.last_attention=attention[restore]
         self.last_token_mask=effective_mask[restore]

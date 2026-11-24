@@ -89,3 +89,28 @@ For externally fixed q, uniform reference sampling makes k_hat unbiased and unif
 
 Full inference/export uses the entire ordered catalogue, full egos and the unchanged actual hard rule. Final hard-q and continuous-z curvature evaluation still visits all28,391,948 valid occurrences and all legal references using the independent evaluator. The exact full objective remains executable for checks; stochastic training metrics are labelled estimates. Initial scale, calibrated lambda, sampling seed/schedule, source/assets and actual coverage bind the checkpoint. All structural sampling/recomputation, optimizer and communication costs are inside the continuous performance window; initialization and final export are separately timed.
 
+
+## Owner decisions recorded after the fused-kernel work (2026-11-24)
+
+1. **Performance bound.** The fused per-ego Triton kernel (`tools/issue252/ego_kernel.py`)
+   replaced the per-batch block-diagonal CSR and the cuSPARSE gathers: the two-hop
+   assembly went 9.2 ms -> 0.3 ms, the forward directional means 17.1 ms -> 4.2 ms and the
+   adjoint 14.1 ms -> 6.0 ms per batch. The measured four-rank window over epochs 31-60 is
+   **0.696 s mean / 0.629 s median / 0.821 s P95**, i.e. the 0.5 s hard gate above is
+   **not** met. The owner reviewed those numbers and ordered the formal Stage2/Stage3 pair
+   to start anyway, so the oracle bound is recorded at 0.8 s (`tools/issue252/performance.py`)
+   instead of being silently bypassed. Everything else in this contract, including the
+   30-consecutive-epoch window, the inclusive wall-clock measurement and the 3000/150
+   epoch budgets, is unchanged.
+
+2. **Sinkhorn levels.** Only the **last** quantization level keeps the Sinkhorn-balanced
+   assignment; levels one and two take the floor-constrained nearest codeword
+   (`constrained_assignment(cost, ASSIGNMENT_FLOOR)`) with the softmax soft backward
+   surrogate, while the last level keeps the Sinkhorn proxy and the floor-constrained
+   Sinkhorn hard ids. Measured cost: no performance difference (88.0 ms -> 91.6 ms per
+   step, inside the noise), because the compiled Sinkhorn's arithmetic is small and its
+   launch overhead is hidden by the device queue. Consequence, stated explicitly: with
+   levels one and two no longer using the balanced assignment, this arm does **not** claim
+   "the baseline's Sinkhorn assignment plus a new cost matrix" for those levels
+   (CLAUDE.md §19h treats a plain argmin in place of the balanced assignment as
+   OUT_OF_SCOPE), and the paper's wording must say so.

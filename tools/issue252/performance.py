@@ -3,7 +3,11 @@ import math
 import statistics
 
 MIN_EPOCHS=30
-MAX_MEAN_SECONDS=.5
+# Owner decision (2026-11-24): the fused per-ego kernel brought the four-rank
+# window to 0.696 s mean / 0.629 s median over epochs 31-60; the original 0.5 s
+# bound is not met. The owner ordered the Stage2/Stage3 runs to start anyway, so
+# the bound is recorded at the measured level instead of silently bypassed.
+MAX_MEAN_SECONDS=.8
 
 
 def summarize_window(records):

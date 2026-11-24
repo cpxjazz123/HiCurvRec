@@ -75,3 +75,61 @@ def normalized_directional_means(x, incoming, outgoing):
     if not torch.is_grad_enabled() or not x.requires_grad:
         return torch.sparse.mm(incoming, x), torch.sparse.mm(outgoing, x)
     return _DirectionalMeans.apply(x, incoming, outgoing)
+
+
+class _FusedDirectionalMeans(torch.autograd.Function):
+    """Fused per-ego directional means with their exact adjoint.
+
+    The forward reads the frozen ego layout directly, so the batch's
+    block-diagonal CSR is never materialised. The adjoint uses the opposite
+    direction's support with the own direction's reciprocal degree, which is
+    the exact transpose of the forward operator.
+    """
+
+    @staticmethod
+    def forward(ctx, x, layout, geometry):
+        from tools.issue252 import ego_kernel
+        mean_in = ego_kernel.row_means(layout.in_ptr, layout.in_col, x, geometry)
+        mean_out = ego_kernel.row_means(layout.out_ptr, layout.out_col, x, geometry)
+        ctx.layout = layout
+        ctx.geometry = geometry
+        return mean_in, mean_out
+
+    @staticmethod
+    def backward(ctx, grad_in, grad_out):
+        from tools.issue252 import ego_kernel
+        layout, geometry = ctx.layout, ctx.geometry
+        device = grad_out.device
+        scale_out = ego_kernel.reciprocal_degrees(layout, geometry, 'out', device)
+        grad = ego_kernel.row_means(layout.in_ptr, layout.in_col, grad_out, geometry,
+                                     scale=scale_out)
+        if grad_in is not None:
+            scale_in = ego_kernel.reciprocal_degrees(layout, geometry, 'in', device)
+            grad = grad + ego_kernel.row_means(layout.out_ptr, layout.out_col, grad_in,
+                                               geometry, scale=scale_in)
+        return grad, None, None
+
+
+def fused_directional_means(x, layout, geometry):
+    """Incoming and outgoing means over the frozen ego layout."""
+    if not torch.is_grad_enabled() or not x.requires_grad:
+        from tools.issue252 import ego_kernel
+        mean_in = ego_kernel.row_means(layout.in_ptr, layout.in_col, x, geometry)
+        mean_out = ego_kernel.row_means(layout.out_ptr, layout.out_col, x, geometry)
+        return mean_in, mean_out
+    return _FusedDirectionalMeans.apply(x, layout, geometry)
+
+
+def directional_means(x, layout, geometry, operators=None):
+    """Incoming and outgoing means of the ego batch.
+
+    On the device the fused kernel reads the frozen layout directly. The CPU
+    reference path uses the same operator through the sparse CSR operators and
+    exists for the exactness tests, not for training.
+    """
+    if x.is_cuda:
+        return fused_directional_means(x, layout, geometry)
+    if operators is None:
+        raise ValueError("the CPU reference path needs the CSR operators")
+    incoming, outgoing = operators
+    return normalized_directional_means(x, incoming, outgoing)

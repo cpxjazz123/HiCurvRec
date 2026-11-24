@@ -183,7 +183,9 @@ class SparseAdjointTests(unittest.TestCase):
         # Independent dense static means keep the live feature-gradient reference.
         static = (incoming.to_dense() @ local, outgoing.to_dense() @ local,
                   incoming.crow_indices().diff() > 0, outgoing.crow_indices().diff() > 0)
-        actual = model._read_sparse(local, groups, sizes, incoming, outgoing, static, model._first_affine())
+        from tools.issue252.sparse_adjoint import normalized_directional_means
+        actual = model._read_sparse(local, groups, sizes, static, model._first_affine(),
+                                    lambda values: normalized_directional_means(values, incoming, outgoing))
         expected, _ = dense_tokens(model, store, [0, 3], features)
         torch.testing.assert_close(actual, expected[:, 1], atol=1e-10, rtol=1e-9)
         weights = torch.randn_like(actual)

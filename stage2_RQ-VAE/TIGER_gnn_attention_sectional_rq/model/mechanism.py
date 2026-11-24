@@ -85,8 +85,15 @@ class RQVAE(OriginalRQVAE):
         residual=encoded
         quantized=torch.zeros_like(encoded)
         hard_sum=torch.zeros_like(encoded)
-        tokens=[];parts=[];costs=[];unused=0
-        for layer in self.rq.vq_layers:
+        tokens=[];parts=[];costs=[]
+        # The unused-code count stays on the device: reading it back would
+        # synchronise every layer of every step.
+        unused=torch.zeros((),dtype=torch.int64,device=residual.device)
+        last_level=len(self.rq.vq_layers)-1
+        for level,layer in enumerate(self.rq.vq_layers):
+            # Only the last level keeps the Sinkhorn-balanced assignment; the
+            # earlier levels take the floor-constrained nearest codeword.
+            use_sinkhorn=bool(layer.use_sk) and level==last_level
             cost=self.assignment_cost(residual,layer.embed.weight,weights)
             costs.append(cost)
             guarded=hasattr(layer_module,'ASSIGNMENT_FLOOR')
@@ -98,16 +105,19 @@ class RQVAE(OriginalRQVAE):
             # The framework may install its assignment guard on VQLayer;
             # always use that real hard rule, never a parallel implementation.
             was_training=layer.training
-            layer.training=balanced
+            was_use_sk=layer.use_sk
+            layer.training=balanced and use_sinkhorn
+            layer.use_sk=use_sinkhorn
             try:
                 with torch.no_grad():
                     hard_ids=layer._indices(cost,False)
             finally:
                 layer.training=was_training
+                layer.use_sk=was_use_sk
             if guarded:
                 layer_module.verify_assignment(hard_ids,layer.n_embed,layer_module.ASSIGNMENT_FLOOR)
             selected=select(cost.detach() if self.cut_selection_cost else cost,layer.embed.weight,
-                            balanced=layer.use_sk,epsilon=layer.sk_epsilon,
+                            balanced=use_sinkhorn,epsilon=layer.sk_epsilon,
                             iterations=layer.sk_iters,training=balanced,hard_ids=hard_ids)
             hard=selected['hard'];q=selected['q']
             parts.append((commitment_loss(residual,hard),codebook_loss(residual,hard)))
@@ -115,7 +125,9 @@ class RQVAE(OriginalRQVAE):
             hard_sum=hard_sum+hard
             residual=residual-q
             tokens.append(selected['ids'])
-            unused+=layer.n_embed-int(torch.unique(selected['ids']).numel())
+            used=torch.zeros(layer.n_embed,dtype=torch.bool,device=selected['ids'].device)
+            used.index_fill_(0,selected['ids'],True)
+            unused=unused+(layer.n_embed-used.sum())
         self.last_q=quantized
         self.last_hard=hard_sum
         self.last_costs=costs

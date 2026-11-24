@@ -133,8 +133,11 @@ class StaticMeansTests(unittest.TestCase):
         static = [StaticFeatureMeans(part, features, chunk=1) for part in layouts]
         from tools.issue252.ego_operators import batch_operators
         nodes, groups, sizes, incoming, outgoing = batch_operators(layouts[1], torch.tensor([0, 3]), torch.double)
-        got = model._read_sparse(features[nodes], groups, sizes, incoming, outgoing,
-                                 static[1].gather(layouts[1], torch.tensor([0, 3])), model._first_affine())
+        from tools.issue252.sparse_adjoint import normalized_directional_means
+        got = model._read_sparse(features[nodes], groups, sizes,
+                                 static[1].gather(layouts[1], torch.tensor([0, 3])),
+                                 model._first_affine(),
+                                 lambda values: normalized_directional_means(values, incoming, outgoing))
         preactivation = torch.tensor([1.5 + 18., 2.5 + 8., 4.5 + 5. + 14.], dtype=torch.double)
         expected = torch.tanh(torch.tanh(preactivation)).mean()
         self.assertAlmostEqual(float(got[0, 0]), float(expected), places=12)
@@ -183,7 +186,9 @@ class StaticMeansTests(unittest.TestCase):
         local = features[nodes]
         static = (torch.sparse.mm(incoming, local), torch.sparse.mm(outgoing, local),
                   incoming.crow_indices().diff() > 0, outgoing.crow_indices().diff() > 0)
-        actual = model._read_sparse(local, groups, sizes, incoming, outgoing, static, model._first_affine())
+        from tools.issue252.sparse_adjoint import normalized_directional_means
+        actual = model._read_sparse(local, groups, sizes, static, model._first_affine(),
+                                    lambda values: normalized_directional_means(values, incoming, outgoing))
         expected, _ = dense_reference(model, store, [0, 3], features)
         expected = expected[:, 1]
         torch.testing.assert_close(actual, expected, atol=1e-9, rtol=1e-8)
