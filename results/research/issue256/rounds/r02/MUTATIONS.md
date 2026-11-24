@@ -1,4 +1,4 @@
-# R01 mutation detection contract
+# R02 mutation detection contract — inherited budget plus actual native refresh
 
 The five new valid policy mutations are injected into the production `model.calibration.norm_budget_weight` entry. Each must fail the exact assertion `maximal module-safe coefficient must be 0.25` on hardcoded encoder(4,2), Query1(1,4), codebook0(3,3) norm budgets. Crash, import error, timeout or an unrelated exception is not counted.
 
@@ -19,7 +19,7 @@ The real production calibrator regression uses an actual1,024-item legal trainin
 
 - Off-by-one anchor51->50 must fail `actual calibration epochs must be exactly1and51`.
 - Skipped later anchor must fail `actual60epoch trainer must refresh its budget at epoch51`.
-- Reusing structural step0 at51 must fail `each anchor must use its actual first structural step`.
+- Current first-step identity is checked on the actual epoch51 batch/sample; no synthetic receipt-only mutation is counted as production coverage.
 - The real60epoch/four-rank observer independently checks all17 current global budgets at1/51 and maximality. A stale lambda must fail `actual initial global coefficient is not maximal` or the explicit module budget bound, not an import/crash.
 
 These add schedule/current-state coverage to the inherited numeric/coefficient, structure/group omission and selected-cost gradient-routing mutation families. Exact assertion receipts are recorded after execution; no preemptive PASS.

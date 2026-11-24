@@ -1,0 +1,75 @@
+{
+  "schema": "genrec.issue256.shared_oracle_failure/1",
+  "diagnostic_exit_code": 1,
+  "diagnostic_wall_seconds": 259.94,
+  "profile_ranks": "4/4 PROFILED; not a current admission credential after the verifier repair",
+  "validation_rank_failures": [
+    {
+      "rank": 0,
+      "worker_pid": 1895088,
+      "error": "Traceback (most recent call last):\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 404, in main\n    training.main(diagnostic_epochs=1)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/train_rqvae.py\", line 533, in main\n    DIAGNOSTIC_OBSERVER(\"diagnostic_complete\", model=raw_module, catalogue=catalogue,\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 44, in __call__\n    return super().__call__(event, **fields)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 146, in __call__\n    self.completed(model, fields['catalogue'])\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 193, in completed\n    super().completed(model, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 207, in completed\n    self.shared_equivalence(raw, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 248, in shared_equivalence\n    ties = self.auxiliary_ties(actual_aux_ids, raw.last_structural_tokens,\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 298, in auxiliary_ties\n    raise AssertionError(\nAssertionError: shared real auxiliary assignment objective differs beyond the numerical divergence: level 1 568.999695 vs 567.841797 bound 0.0111763477\n"
+    },
+    {
+      "rank": 1,
+      "worker_pid": 1895089,
+      "error": "Traceback (most recent call last):\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 404, in main\n    training.main(diagnostic_epochs=1)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/train_rqvae.py\", line 533, in main\n    DIAGNOSTIC_OBSERVER(\"diagnostic_complete\", model=raw_module, catalogue=catalogue,\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 44, in __call__\n    return super().__call__(event, **fields)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 146, in __call__\n    self.completed(model, fields['catalogue'])\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 193, in completed\n    super().completed(model, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 207, in completed\n    self.shared_equivalence(raw, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 248, in shared_equivalence\n    ties = self.auxiliary_ties(actual_aux_ids, raw.last_structural_tokens,\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 298, in auxiliary_ties\n    raise AssertionError(\nAssertionError: shared real auxiliary assignment objective differs beyond the numerical divergence: level 0 564.713135 vs 565.063965 bound 0.13397789\n"
+    },
+    {
+      "rank": 3,
+      "worker_pid": 1895091,
+      "error": "Traceback (most recent call last):\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 404, in main\n    training.main(diagnostic_epochs=1)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/train_rqvae.py\", line 533, in main\n    DIAGNOSTIC_OBSERVER(\"diagnostic_complete\", model=raw_module, catalogue=catalogue,\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 44, in __call__\n    return super().__call__(event, **fields)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 146, in __call__\n    self.completed(model, fields['catalogue'])\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 193, in completed\n    super().completed(model, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 207, in completed\n    self.shared_equivalence(raw, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 247, in shared_equivalence\n    raise AssertionError('shared real reconstruction hard IDs differ')\nAssertionError: shared real reconstruction hard IDs differ\n"
+    }
+  ],
+  "completed_unit_suites": {
+    "candidate": 137,
+    "assets": 64,
+    "tools": 11,
+    "exit_code": 0
+  },
+  "unit_qualification": "The candidate suite includes actual CUDA kernel checks; it is not described as CPU-only. These are not a substitute for the four-rank real-Trainer diagnostic.",
+  "counterexample": {
+    "left_cost": [
+      [
+        0,
+        2
+      ],
+      [
+        1,
+        2.0009765625
+      ]
+    ],
+    "right_cost": [
+      [
+        0,
+        2
+      ],
+      [
+        1,
+        1.9990234375
+      ]
+    ],
+    "left_frozen_greedy_ids": [
+      1,
+      0
+    ],
+    "right_frozen_greedy_ids": [
+      0,
+      1
+    ],
+    "left_objective": 3.0,
+    "right_objective": 1.9990234375,
+    "summed_cost_perturbation": 0.001953125,
+    "interpretation": "frozen greedy floor repair is not globally optimal; its objective is not Lipschitz under this perturbation. The old verifier assumes otherwise."
+  },
+  "counterexample_command": "python3.9 -m pytest tests/test_shared_assignment_oracle.py -q -k valid_frozen",
+  "counterexample_exit_code": 1,
+  "counterexample_output": {
+    "path": "results/research/issue256/rounds/r02/GREEDY_ORACLE_RED.log",
+    "sha256": "65da21841b6f5ead129a6b9a2904a936e711cb96ce41857d5522efc7bfa846a2"
+  },
+  "old_verifier": {
+    "path": "results/research/issue256/rounds/r02/verification_generations/pre_shared_oracle/validation_entry.py",
+    "sha256": "1d63edb496b7357cb38742b38eb0798e590d32e886fed33f8e1b60400793ce8e"
+  },
+  "repair_contract": "Do not change production allocation or loosen numerical tolerances. Independently replay native recorded assignments on each exact cost tensor, record discrete branch differences, and compare shared-vs-two-branch continuous loss/VJPs under the same recorded hard branch. Actual real-loss/DDP updates, hard-prefix identity and exact whole-catalogue export remain mandatory."
+}

@@ -1,0 +1,36 @@
+{
+  "schema": "genrec.issue256.shared_oracle_repair/1",
+  "red": {
+    "path": "results/research/issue256/rounds/r02/SHARED_ORACLE_FAILURE.json",
+    "sha256": "ce30d6e996fb3e751e9bc762139e0d4135196f84eaf148223d193f7f5bdf277e"
+  },
+  "green_command": "python3.9 -m pytest tests/test_shared_assignment_oracle.py -q --basetemp=../../results/research/issue256/rounds/r02/pytest_greedy_green",
+  "green_exit_code": 0,
+  "green_summary": "2 passed in3.35s",
+  "green_output": {
+    "path": "results/research/issue256/rounds/r02/GREEDY_ORACLE_GREEN.log",
+    "sha256": "6976c47fabd46f0007e7738edb78f5283a467e3eae459cbce6a32635a41ad398"
+  },
+  "test": {
+    "path": "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_shared_assignment_oracle.py",
+    "sha256": "6807c016c71a52158f6861c83962072e05f7701bd63db2d76ecb7f8475ff545c"
+  },
+  "verifier": {
+    "path": "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py",
+    "sha256": "84778698b1f2384adb0e3b270c679cfc38588d2b9d6b2113f20c2e24d2794ab9"
+  },
+  "production_unchanged": {
+    "train_rqvae.py": "81c392c17c5c5356b61cbd56870680dd7357a41e82966f24044711908394838c",
+    "model/mechanism.py": "47b862ca58bd9b796d259bac9951aac60a30a77005ba8d192ccd4c65dc013c97",
+    "model/calibration.py": "3ef15bc15500592833fecaa98a1d170b9f7845e16b03382af2018d314ab74fdd",
+    "model/layers.py": "dadd6287dbf55751c10bae23d81c1af42ab9035a73a09d77b9c67550bdc1fb4a"
+  },
+  "guarantees": [
+    "exact native hard-rule replay for each recorded original cost tensor",
+    "record, do not suppress, native branch code/objective differences",
+    "fresh two-branch GNN reference with the same recorded discrete branch for continuous costs/loss/VJP comparison",
+    "unchanged1e-5/1e-4 output-cost and2e-5/2e-4 gradient tolerances",
+    "real Trainer loss/DDP/update/hard-prefix and exact whole-catalogue export still required"
+  ],
+  "full_current_source_status": "RUNNING_BG_505_NOT_YET_PASS"
+}

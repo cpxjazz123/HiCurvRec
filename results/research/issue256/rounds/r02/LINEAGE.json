@@ -1,0 +1,525 @@
+{
+  "candidate": "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq",
+  "frozen_tiger_source": "stage2_RQ-VAE/baseline/TIGER_RQ-VAE",
+  "source_origin_proof": {
+    "path": "results/research/issue256/rounds/r02/BASELINE_COPY.json",
+    "sha256": "cc81974d4f332f0350eef0b1fa4f07d70ae410cf5bfd7722a2b36fa758e58232"
+  },
+  "inherited_patch": {
+    "path": "results/research/issue256/rounds/r02/INHERITANCE.json",
+    "sha256": "cb5ebd5f858e3624c4c4bb8a2661fe08916f182abb6e330cefe0573873e870f0"
+  },
+  "baseline_source_hashes": {
+    "train_config.py": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+    "train_rqvae.py": "a06d9f9716d9b9ea616cf6c3b8dcf8e354f6f3a96aea50bb4896a31e3b64cf26",
+    "losses/codebook.py": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+    "losses/quantization.py": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+    "losses/__init__.py": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+    "losses/_pairs.py": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+    "losses/reconstruction.py": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+    "losses/commitment.py": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+    "model/model.py": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+    "model/layers.py": "0d5eacf6b3cbfe8874c2b8d54f7c7554de1ade392ae8b54521b53cecec4c994a",
+    "model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+    "model/utils.py": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+    "distances/distance.py": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+    "distances/__init__.py": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+    "config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6"
+  },
+  "trained_weight_initialization": false,
+  "main_change": "same maximal positive global module-budget recalculated on native50epoch first-step anchors",
+  "new_assets": [],
+  "files": [
+    {
+      "path": "assignment_floor.py",
+      "sha256": "984bba1330c62a2a712c6797e27a9389bcb7274a8dbe552d48f13c22e9a6ff96",
+      "baseline_sha256": null,
+      "inherited_sha256": "984bba1330c62a2a712c6797e27a9389bcb7274a8dbe552d48f13c22e9a6ff96",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "benchmark_entry.py",
+      "sha256": "a9139080228c9294eb710dc226602533cad72770bf61c953386b84e08e9f7853",
+      "baseline_sha256": null,
+      "inherited_sha256": "840078d08a347f155cc5e3edcf07ab7b12b7b2bd1762f4604466c9ba87469c84",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "budget_point_entry.py",
+      "sha256": "ea8b913bfd888cb3ed5427bb76a388b15bb0a96f1a1c136686615e8467d9663f",
+      "baseline_sha256": null,
+      "inherited_sha256": null,
+      "role": "non-admission one-epoch same-state discriminator; never formal training"
+    },
+    {
+      "path": "catalogue_audit_entry.py",
+      "sha256": "9d1caccb6e978323a2f1a738a339404f6437e045778ec92402f4304fdb7f9c6d",
+      "baseline_sha256": null,
+      "inherited_sha256": "9d1caccb6e978323a2f1a738a339404f6437e045778ec92402f4304fdb7f9c6d",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "config/train_config.json",
+      "sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+      "baseline_sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+      "inherited_sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "distances/__init__.py",
+      "sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+      "baseline_sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+      "inherited_sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "distances/distance.py",
+      "sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+      "baseline_sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+      "inherited_sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "execution_entry.py",
+      "sha256": "03d171ee5cac440f08853b2569185af1d6f8a0747c818418204983cd6ce38fb0",
+      "baseline_sha256": null,
+      "inherited_sha256": "03d171ee5cac440f08853b2569185af1d6f8a0747c818418204983cd6ce38fb0",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "final_audit_entry.py",
+      "sha256": "4c9f9c33172588fd9beab212a8a1d00848bdb958f1103815297a71da8ad53751",
+      "baseline_sha256": null,
+      "inherited_sha256": "4c9f9c33172588fd9beab212a8a1d00848bdb958f1103815297a71da8ad53751",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "kernel_validation_entry.py",
+      "sha256": "5ed8d083794b2b383f373e5ab6fff6f0aa9ecdd8f0a665d64065df4d19e69d7f",
+      "baseline_sha256": null,
+      "inherited_sha256": "5ed8d083794b2b383f373e5ab6fff6f0aa9ecdd8f0a665d64065df4d19e69d7f",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "layer_validation_entry.py",
+      "sha256": "a0fac743aedcb6c87036d5f9364d55fbb2b39983dd54dacb7659196b6aecb705",
+      "baseline_sha256": null,
+      "inherited_sha256": "a0fac743aedcb6c87036d5f9364d55fbb2b39983dd54dacb7659196b6aecb705",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "losses/__init__.py",
+      "sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+      "baseline_sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+      "inherited_sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "losses/_pairs.py",
+      "sha256": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+      "baseline_sha256": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+      "inherited_sha256": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "losses/codebook.py",
+      "sha256": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+      "baseline_sha256": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+      "inherited_sha256": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "losses/commitment.py",
+      "sha256": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+      "baseline_sha256": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+      "inherited_sha256": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "losses/quantization.py",
+      "sha256": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+      "baseline_sha256": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+      "inherited_sha256": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "losses/reconstruction.py",
+      "sha256": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+      "baseline_sha256": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+      "inherited_sha256": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "model/__init__.py",
+      "sha256": "fc51b6b47b052833e3bb249a00a581da6a6f27bb4905fb58237a2865354c0f81",
+      "baseline_sha256": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "inherited_sha256": "fc51b6b47b052833e3bb249a00a581da6a6f27bb4905fb58237a2865354c0f81",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "model/calibration.py",
+      "sha256": "3ef15bc15500592833fecaa98a1d170b9f7845e16b03382af2018d314ab74fdd",
+      "baseline_sha256": null,
+      "inherited_sha256": "98956a0234829e48051ef1f359f17a8416e094c066f73b8e8fcbead1cef0dd3e",
+      "role": "native-block calibration mechanism/integration"
+    },
+    {
+      "path": "model/curvature.py",
+      "sha256": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+      "baseline_sha256": null,
+      "inherited_sha256": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "model/estimator.py",
+      "sha256": "1bc4a1fda6276a4e31f7ba7ed69d5a33cb83bc8d0f241471d67a8b79a7f6ddd0",
+      "baseline_sha256": null,
+      "inherited_sha256": "1bc4a1fda6276a4e31f7ba7ed69d5a33cb83bc8d0f241471d67a8b79a7f6ddd0",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "model/geometry.py",
+      "sha256": "42964aaa6004f91adc96407b14e5e3ce54bec8dc6115b33891bd55cdb0ad02c5",
+      "baseline_sha256": null,
+      "inherited_sha256": "42964aaa6004f91adc96407b14e5e3ce54bec8dc6115b33891bd55cdb0ad02c5",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "model/layer_gate.py",
+      "sha256": "18bfc476986946bf47a5b80571630a3ef18b7653ff90856575d1240563421579",
+      "baseline_sha256": null,
+      "inherited_sha256": "18bfc476986946bf47a5b80571630a3ef18b7653ff90856575d1240563421579",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "model/layers.py",
+      "sha256": "dadd6287dbf55751c10bae23d81c1af42ab9035a73a09d77b9c67550bdc1fb4a",
+      "baseline_sha256": "0d5eacf6b3cbfe8874c2b8d54f7c7554de1ade392ae8b54521b53cecec4c994a",
+      "inherited_sha256": "dadd6287dbf55751c10bae23d81c1af42ab9035a73a09d77b9c67550bdc1fb4a",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "model/mechanism.py",
+      "sha256": "47b862ca58bd9b796d259bac9951aac60a30a77005ba8d192ccd4c65dc013c97",
+      "baseline_sha256": null,
+      "inherited_sha256": "168b46ba17fc2a7d2ab5aed736432022ab6ec11f18b89e0a9deb3f96f946c2bc",
+      "role": "native-block calibration mechanism/integration"
+    },
+    {
+      "path": "model/model.py",
+      "sha256": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+      "baseline_sha256": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+      "inherited_sha256": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "model/provenance.py",
+      "sha256": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+      "baseline_sha256": null,
+      "inherited_sha256": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "model/selection.py",
+      "sha256": "cb0bcb306224af0c8562fa7f3ea6ae4bf4cbf2f4ba61ee5bae60916efb12938c",
+      "baseline_sha256": null,
+      "inherited_sha256": "cb0bcb306224af0c8562fa7f3ea6ae4bf4cbf2f4ba61ee5bae60916efb12938c",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "model/structure.py",
+      "sha256": "1bccb9f7dbf54f62a743258efc7faca5fc7f89c9cc0039b793c7f0e1985a126b",
+      "baseline_sha256": null,
+      "inherited_sha256": "1bccb9f7dbf54f62a743258efc7faca5fc7f89c9cc0039b793c7f0e1985a126b",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "model/structure_gate.py",
+      "sha256": "ce043cd2c395b45c9074e195547bd06ceb6915f2078c8f19781b049a4c209499",
+      "baseline_sha256": null,
+      "inherited_sha256": "ce043cd2c395b45c9074e195547bd06ceb6915f2078c8f19781b049a4c209499",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "model/utils.py",
+      "sha256": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+      "baseline_sha256": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+      "inherited_sha256": "8e4e75e8c7323e9b7b5905b850afa6774e89245c3d6beb183e550b283651876e",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "module_budget_entry.py",
+      "sha256": "5df32d23c48bca120c6776fd573743539e4f7c9125fb3e8baedfd3753b20d224",
+      "baseline_sha256": null,
+      "inherited_sha256": "5df32d23c48bca120c6776fd573743539e4f7c9125fb3e8baedfd3753b20d224",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "periodic_budget_entry.py",
+      "sha256": "f07a74691b5cce219e3a200265c970a97e6ed9fcbcd9fe60cba26b08955c80d5",
+      "baseline_sha256": null,
+      "inherited_sha256": null,
+      "role": "new periodic diagnostic/test"
+    },
+    {
+      "path": "steady_profile_entry.py",
+      "sha256": "73551d1ecc5b5bc4b662a52ca1e0801b78f7744715471079ef975a15e8638af7",
+      "baseline_sha256": null,
+      "inherited_sha256": "73551d1ecc5b5bc4b662a52ca1e0801b78f7744715471079ef975a15e8638af7",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/reference.py",
+      "sha256": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
+      "baseline_sha256": null,
+      "inherited_sha256": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/reference_layer_gate.py",
+      "sha256": "b4fe04d6e66105b4face3fc1874254a5a6a7568a6a5ccc3b1f6a5d4b8fa18d31",
+      "baseline_sha256": null,
+      "inherited_sha256": "b4fe04d6e66105b4face3fc1874254a5a6a7568a6a5ccc3b1f6a5d4b8fa18d31",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_attention.py",
+      "sha256": "96ac7f522b6763ef5fc2819c9c30e53a08ff3fbd2c3befca23de0458ebf0d6a9",
+      "baseline_sha256": null,
+      "inherited_sha256": "96ac7f522b6763ef5fc2819c9c30e53a08ff3fbd2c3befca23de0458ebf0d6a9",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_attention_pipeline.py",
+      "sha256": "b88cf8f3037d76dba4154f1cf22fdd7866a8c8914bd4997cc1d2ea698e492f4c",
+      "baseline_sha256": null,
+      "inherited_sha256": "b88cf8f3037d76dba4154f1cf22fdd7866a8c8914bd4997cc1d2ea698e492f4c",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_budget_known_answers.py",
+      "sha256": "43068714dbe61e400f01fb4be23071f2031a9edbeebbe9cb25257487aa56bc06",
+      "baseline_sha256": null,
+      "inherited_sha256": "43068714dbe61e400f01fb4be23071f2031a9edbeebbe9cb25257487aa56bc06",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_budget_mutations.py",
+      "sha256": "a45192ed3389c15e4f24aab1008d496df6feb4256ad9915e1f1da0e2ce84ca6c",
+      "baseline_sha256": null,
+      "inherited_sha256": "a45192ed3389c15e4f24aab1008d496df6feb4256ad9915e1f1da0e2ce84ca6c",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_budget_reference.py",
+      "sha256": "2782b04e13f6ee9e54a10a53dc84ba77c885e0b4cf1191799a75f52008cd2c0e",
+      "baseline_sha256": null,
+      "inherited_sha256": "2782b04e13f6ee9e54a10a53dc84ba77c885e0b4cf1191799a75f52008cd2c0e",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_calibration.py",
+      "sha256": "f6f6572ab663ffcf6463947b7b6fc142da77e7bbc742778f5ef9538d5047f7a1",
+      "baseline_sha256": null,
+      "inherited_sha256": "f6f6572ab663ffcf6463947b7b6fc142da77e7bbc742778f5ef9538d5047f7a1",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_cuda_math.py",
+      "sha256": "a293e59cfb537dbbaa6eb5e35f769918f6951151581e9817c5ae954b95bfba83",
+      "baseline_sha256": null,
+      "inherited_sha256": "a293e59cfb537dbbaa6eb5e35f769918f6951151581e9817c5ae954b95bfba83",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_curvature_loss.py",
+      "sha256": "d260562cb8990411a1680ac0792006db787619ddafcc5a6c54d09fa13142f633",
+      "baseline_sha256": null,
+      "inherited_sha256": "d260562cb8990411a1680ac0792006db787619ddafcc5a6c54d09fa13142f633",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_entry_calibration.py",
+      "sha256": "939039f18ee9d5662bb400771c5e0234ca9d1b921afa394098e624533665499b",
+      "baseline_sha256": null,
+      "inherited_sha256": "939039f18ee9d5662bb400771c5e0234ca9d1b921afa394098e624533665499b",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_estimator.py",
+      "sha256": "07d4cb1a0841b766d0e5220a2be7b7b66c5abdfe3d00e9c43e38fa59ba991531",
+      "baseline_sha256": null,
+      "inherited_sha256": "07d4cb1a0841b766d0e5220a2be7b7b66c5abdfe3d00e9c43e38fa59ba991531",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_execution.py",
+      "sha256": "cd3d37b2fb5bcbfdf39437837f96844b990471faa7902ef19dca3d8c187f374d",
+      "baseline_sha256": null,
+      "inherited_sha256": "cd3d37b2fb5bcbfdf39437837f96844b990471faa7902ef19dca3d8c187f374d",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_geometry_memory.py",
+      "sha256": "0ebae94fad15202119347deeedf7d1a2ac1e00772d58acf9e84bebdf89485c5c",
+      "baseline_sha256": null,
+      "inherited_sha256": "0ebae94fad15202119347deeedf7d1a2ac1e00772d58acf9e84bebdf89485c5c",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_known_answers.py",
+      "sha256": "5227bfa8fe927e96c28ea42d55d219bad2d09f490b3aad62346a12c0565da513",
+      "baseline_sha256": null,
+      "inherited_sha256": "5227bfa8fe927e96c28ea42d55d219bad2d09f490b3aad62346a12c0565da513",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_layer_gate.py",
+      "sha256": "05ac143248c4fca1e0b1a0d2752babe0f4a6bd22cd3f8879a9cb4b49c832ac8f",
+      "baseline_sha256": null,
+      "inherited_sha256": "05ac143248c4fca1e0b1a0d2752babe0f4a6bd22cd3f8879a9cb4b49c832ac8f",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_layer_mechanism.py",
+      "sha256": "aa31dc3ae21ac651f2bf9b12c1e8e10f0d43e46e6bf48e5d516024515ead37d1",
+      "baseline_sha256": null,
+      "inherited_sha256": "aa31dc3ae21ac651f2bf9b12c1e8e10f0d43e46e6bf48e5d516024515ead37d1",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_mechanism.py",
+      "sha256": "bf5b84db0466103245e99d049bd36e53e237b06712c19be5c6acc674d520d418",
+      "baseline_sha256": null,
+      "inherited_sha256": "bf5b84db0466103245e99d049bd36e53e237b06712c19be5c6acc674d520d418",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_module_budget.py",
+      "sha256": "95b61949775b09c4e0205e119d4a2c72146d4709aec02dc3f562524497e35fea",
+      "baseline_sha256": null,
+      "inherited_sha256": "95b61949775b09c4e0205e119d4a2c72146d4709aec02dc3f562524497e35fea",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_mutations.py",
+      "sha256": "15181954e02ba080ea7823daec69ac77623ecdbc6bdbc0283dee16b4753b0cd0",
+      "baseline_sha256": null,
+      "inherited_sha256": "15181954e02ba080ea7823daec69ac77623ecdbc6bdbc0283dee16b4753b0cd0",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_periodic_budget.py",
+      "sha256": "72c0d25460b16a36b8d89992cefc026bac39817aa32815d7d754e1e858d78546",
+      "baseline_sha256": null,
+      "inherited_sha256": null,
+      "role": "new periodic diagnostic/test"
+    },
+    {
+      "path": "tests/test_profile_loader.py",
+      "sha256": "8a7f1ae3cc63623a2d06c98e419e2139e908b6ac78d5704a8adc976f1f452a7b",
+      "baseline_sha256": null,
+      "inherited_sha256": "8a7f1ae3cc63623a2d06c98e419e2139e908b6ac78d5704a8adc976f1f452a7b",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_provenance.py",
+      "sha256": "8c45537d5c083097492d73118654c03eda490f72d000a29691dd72ac69ee8f06",
+      "baseline_sha256": null,
+      "inherited_sha256": "8c45537d5c083097492d73118654c03eda490f72d000a29691dd72ac69ee8f06",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_reference.py",
+      "sha256": "0a939f348e8ce897e64f2328357b12ff8059c7eb615284616ba03d17fb68a72c",
+      "baseline_sha256": null,
+      "inherited_sha256": "0a939f348e8ce897e64f2328357b12ff8059c7eb615284616ba03d17fb68a72c",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_shared_assignment_oracle.py",
+      "sha256": "6807c016c71a52158f6861c83962072e05f7701bd63db2d76ecb7f8475ff545c",
+      "baseline_sha256": null,
+      "inherited_sha256": null,
+      "role": "native-rule/conditional-sharing verifier repair"
+    },
+    {
+      "path": "tests/test_sparse_adjoint.py",
+      "sha256": "5972c5c4432a15e9b986ca9a1eabd0cf528ebc2c66014112db17abbea83e82e3",
+      "baseline_sha256": null,
+      "inherited_sha256": "5972c5c4432a15e9b986ca9a1eabd0cf528ebc2c66014112db17abbea83e82e3",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_sparse_structure.py",
+      "sha256": "dfa0d16d375bd13af03e69f7df4faaa634c3564781730c34631af7892114ff6e",
+      "baseline_sha256": null,
+      "inherited_sha256": "dfa0d16d375bd13af03e69f7df4faaa634c3564781730c34631af7892114ff6e",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_static_means.py",
+      "sha256": "c1f496aabced794a58c47adc91cce915e87733bf2f934a3cc4ba0abafdd9640d",
+      "baseline_sha256": null,
+      "inherited_sha256": "c1f496aabced794a58c47adc91cce915e87733bf2f934a3cc4ba0abafdd9640d",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_structure.py",
+      "sha256": "e818e562c925c6aa6d3bd5853d2b1b1ba00e0f88f1831289537a11d375bec593",
+      "baseline_sha256": null,
+      "inherited_sha256": "e818e562c925c6aa6d3bd5853d2b1b1ba00e0f88f1831289537a11d375bec593",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_sync_free_batch.py",
+      "sha256": "0fa28c44ee9bb7ab2cc9d26fee74b88db9afa659fd57075d40a294df3865e964",
+      "baseline_sha256": null,
+      "inherited_sha256": "0fa28c44ee9bb7ab2cc9d26fee74b88db9afa659fd57075d40a294df3865e964",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "tests/test_three_geometry.py",
+      "sha256": "542015ddb04c215986bf91efb23a1d129834347ed4efa3d7e1ca434c1fff646e",
+      "baseline_sha256": null,
+      "inherited_sha256": "542015ddb04c215986bf91efb23a1d129834347ed4efa3d7e1ca434c1fff646e",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "train_config.py",
+      "sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+      "baseline_sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+      "inherited_sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+      "role": "inherited mechanism, diagnostics or frozen configuration"
+    },
+    {
+      "path": "train_rqvae.py",
+      "sha256": "81c392c17c5c5356b61cbd56870680dd7357a41e82966f24044711908394838c",
+      "baseline_sha256": "a06d9f9716d9b9ea616cf6c3b8dcf8e354f6f3a96aea50bb4896a31e3b64cf26",
+      "inherited_sha256": "f9a22b3ee2ee5904d3f3d88aee5befcb78037c574b5743ad5193fe30dd23a37d",
+      "role": "native-block calibration mechanism/integration"
+    },
+    {
+      "path": "unit_suite_entry.py",
+      "sha256": "32b036580c94d2d394affa6b6078295f765061366dfe8d0ffca1bdbbc12fdde8",
+      "baseline_sha256": null,
+      "inherited_sha256": null,
+      "role": "launcher-owned complete unit execution"
+    },
+    {
+      "path": "validation_entry.py",
+      "sha256": "84778698b1f2384adb0e3b270c679cfc38588d2b9d6b2113f20c2e24d2794ab9",
+      "baseline_sha256": null,
+      "inherited_sha256": "1d63edb496b7357cb38742b38eb0798e590d32e886fed33f8e1b60400793ce8e",
+      "role": "native-rule/conditional-sharing verifier repair"
+    }
+  ],
+  "recipe": {
+    "world_size": 4,
+    "global_batch": 4096,
+    "seed": 42,
+    "epochs": 3000,
+    "stage3_epochs": 150,
+    "beam": 20
+  }
+}

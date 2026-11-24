@@ -1,0 +1,15 @@
+{
+  "schema": "genrec.issue256.periodic_red_source/1",
+  "production": {
+    "train_rqvae.py": "c3854a277ff5ec7ca1217c7a95a2507b8698b6dfdde3f38dc2e7b29fcd93f19d",
+    "model/mechanism.py": "168b46ba17fc2a7d2ab5aed736432022ab6ec11f18b89e0a9deb3f96f946c2bc",
+    "model/calibration.py": "98956a0234829e48051ef1f359f17a8416e094c066f73b8e8fcbead1cef0dd3e"
+  },
+  "test": {
+    "path": "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/periodic_budget_entry.py",
+    "sha256": "8c05ab086f8f2856598b9f73872d40674ab21d7238e33aebc7c26c8725c69169"
+  },
+  "expected_failure": "actual60epoch trainer must refresh its budget at epoch51",
+  "formal_training": false,
+  "recorded_at": "2026-11-24T21:10:10.910965+00:00"
+}

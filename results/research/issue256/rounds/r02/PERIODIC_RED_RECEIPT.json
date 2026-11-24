@@ -1,0 +1,65 @@
+{
+  "schema": "genrec.issue256.periodic_red/1",
+  "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue256.r02.launch_periodic_check",
+  "exit_code": 1,
+  "wall_seconds": 484.75,
+  "run_id": "issue256_r02_periodic_budget_1746123_585781165",
+  "formal_training": false,
+  "completed_epochs": 60,
+  "world_size": 4,
+  "global_batch": 4096,
+  "designated_assertion": "actual60epoch trainer must refresh its budget at epoch51",
+  "actual_calibration_calls": [
+    [
+      1
+    ],
+    [
+      1
+    ],
+    [
+      1
+    ],
+    [
+      1
+    ]
+  ],
+  "independent_initial_global_budgets_passed": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "worker_pids": [
+    1746128,
+    1746129,
+    1746130,
+    1746131
+  ],
+  "ranks": [
+    {
+      "path": "results/research/issue256/rounds/r02/periodic_budget/issue256_r02_periodic_budget_1746123_585781165/rank_0.json",
+      "sha256": "902257ae5e065f1513fa5f82eea5f043b32093619145adb1bba1c16d0e669418"
+    },
+    {
+      "path": "results/research/issue256/rounds/r02/periodic_budget/issue256_r02_periodic_budget_1746123_585781165/rank_1.json",
+      "sha256": "737dbfe7f7845669452ae9129a85c1467e6c42b757d434dfb89fe192c8867afa"
+    },
+    {
+      "path": "results/research/issue256/rounds/r02/periodic_budget/issue256_r02_periodic_budget_1746123_585781165/rank_2.json",
+      "sha256": "c0084073aabae55556df1ac40de914d13f003d17136a49d03d4802d21b6fc772"
+    },
+    {
+      "path": "results/research/issue256/rounds/r02/periodic_budget/issue256_r02_periodic_budget_1746123_585781165/rank_3.json",
+      "sha256": "3d7bef53bee7f65e2177c9b0ab7fdffea562ce34adc1616b138ba0936e54b862"
+    }
+  ],
+  "metrics": {
+    "path": "results/research/issue256/rounds/r02/periodic_budget/issue256_r02_periodic_budget_1746123_585781165/logs/training_metrics.jsonl",
+    "sha256": "9704389210a1cbd4d4d0867c4533e2736b92b39a1ab6cb843f13af2e1ad57802"
+  },
+  "red_source": {
+    "path": "results/research/issue256/rounds/r02/PERIODIC_RED_SOURCE.json",
+    "sha256": "fa8216aa0046a206b25933a4cdfe5628a1fc84a146dcb27940b5fe190ccb0dc9"
+  },
+  "recorded_at": "2026-11-24T21:19:23.235190+00:00"
+}

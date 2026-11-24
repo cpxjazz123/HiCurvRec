@@ -1,0 +1,21 @@
+{
+  "schema": "genrec.issue256.inventory_red/1",
+  "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m pytest tools/issue256/r02/test_source_inventory.py -q --basetemp=results/research/issue256/rounds/r02/pytest_inventory_red",
+  "exit_code": 1,
+  "summary": "1 failed in0.12s; the source-changed assertion did not match because the round adapter was omitted and execution reached missing test receipt instead",
+  "cause": "duplicated tools/issue256/r02/r02 directory in the copied test inventory",
+  "test": {
+    "path": "tools/issue256/r02/test_source_inventory.py",
+    "sha256": "f3c0b1128dbe4b7c5aa3d5e3232458538c3801957e14237743b1d7fd227c46ae"
+  },
+  "old_source": {
+    "path": "results/research/issue256/rounds/r02/verification_generations/pre_periodic_refresh/tools/run_tests.py",
+    "sha256": "aadb7bf5e2129dd5c0b2e27020e80c331801581db49e99c5e660616fb4e766d4"
+  },
+  "output": {
+    "path": "results/research/issue256/rounds/r02/INVENTORY_RED.log",
+    "sha256": "350cbbab7e5eaf037e6bf212587e9eff6fd14865acfc9c2ad5cb66cf8cfc1aee"
+  },
+  "repair": "inventory the actual tools/issue256/r02; execute the round-controller unit suite and require it at formal dispatch",
+  "green_status": "PENDING_CURRENT_SOURCE_FULL_SUITES"
+}

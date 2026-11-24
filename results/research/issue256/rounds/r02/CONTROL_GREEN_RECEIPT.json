@@ -1,0 +1,41 @@
+{
+  "schema": "genrec.issue256.control_green/1",
+  "command": "python3.9 -m pytest tools/issue256/r02/test_unit_coverage.py tools/issue256/r02/test_source_inventory.py tools/issue256/r02/test_calibration_receipts.py -q",
+  "exit_code": 0,
+  "summary": "12 passed in0.11s",
+  "output": {
+    "path": "results/research/issue256/rounds/r02/CONTROL_GREEN.log",
+    "sha256": "185fee9ff5fe0f86ce14ba73a8a6f0801271e441c85f8c36f5c8d80abd930bab"
+  },
+  "sources": [
+    {
+      "path": "tools/issue256/r02/run_tests.py",
+      "sha256": "2eac399ace40dcd9f4da400b00233575d992bae1a7039721c02e3778307fb4d6"
+    },
+    {
+      "path": "tools/issue256/r02/calibration_receipts.py",
+      "sha256": "6cd4db51507be9fafe57666d372be9e08c973bbdda67e0a8740091312d3d3ac1"
+    },
+    {
+      "path": "tools/issue256/r02/test_unit_coverage.py",
+      "sha256": "d8cf0be0f96a24a0a8e0bd5a44e0f4b59ac30331398a1eb589352781719969d5"
+    },
+    {
+      "path": "tools/issue256/r02/test_source_inventory.py",
+      "sha256": "f3c0b1128dbe4b7c5aa3d5e3232458538c3801957e14237743b1d7fd227c46ae"
+    },
+    {
+      "path": "tools/issue256/r02/test_calibration_receipts.py",
+      "sha256": "450876a2be6e57bb391e33aaa957d98d4a94d5a1a752b297c1e2325ae14bbd42"
+    }
+  ],
+  "unit_coverage_red": {
+    "output": {
+      "path": "results/research/issue256/rounds/r02/UNIT_COVERAGE_RED.log",
+      "sha256": "2d43eaa500bd9f3f739dbe04cf291acc7091c4f192ae892f903ecd643337d5df"
+    },
+    "exit_code": 2,
+    "qualification": "missing new API/import red only; never counted as a specified-assertion mutation catch"
+  },
+  "full_current_source_status": "RUNNING_BG_505_NOT_YET_PASS"
+}

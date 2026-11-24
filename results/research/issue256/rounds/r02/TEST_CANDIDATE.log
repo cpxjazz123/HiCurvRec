@@ -1,0 +1,71 @@
+...................................                                      [100%]
+=============================== warnings summary ===============================
+tests/test_attention_pipeline.py::AttentionPipelineTests::test_duplicate_global_items_share_exact_attention_outputs
+  /fs04/ar57/wenyu/GeneRec/tools/issue252/ego_operators.py:189: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+    operators.append(torch.sparse_csr_tensor(crow, columns, values,
+
+tests/test_layer_gate.py: 45 warnings
+  /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/reference_layer_gate.py:40: DeprecationWarning: Conversion of an array with ndim > 0 to a scalar is deprecated, and will error in future. Ensure you extract a single element from your array before performing this operation. (Deprecated NumPy 1.25.)
+    score = float(score_w2 @ hidden + score_b2)
+
+tests/test_mutations.py::Mutations::test_designated_assertions_detect_mutations
+  /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_mutations.py:96: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+    self.assertEqual(float(a[0,:,:,1].sum()),0.,'masked subgraph must receive zero attention')
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+35 passed, 104 deselected, 47 warnings in 181.43s (0:03:01)
+
+
+...................................                                      [100%]
+=============================== warnings summary ===============================
+tests/test_curvature_loss.py::CurvatureTests::test_mixed_centre_stream_preserves_huber_mean_and_gradients
+  /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_curvature_loss.py:67: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+    self.assertAlmostEqual(float(merged),2.375,places=12)
+
+tests/test_layer_mechanism.py::LayerMechanismTests::test_four_token_types_are_produced_and_typed
+  /fs04/ar57/wenyu/GeneRec/tools/issue252/ego_operators.py:189: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+    operators.append(torch.sparse_csr_tensor(crow, columns, values,
+
+tests/test_three_geometry.py: 72 warnings
+  /fs04/ar57/wenyu/GeneRec/tools/issue253/reference.py:45: DeprecationWarning: Conversion of an array with ndim > 0 to a scalar is deprecated, and will error in future. Ensure you extract a single element from your array before performing this operation. (Deprecated NumPy 1.25.)
+    contexts.append(float(output_weight@np.tanh(score_weight@context+score_bias)+output_bias))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+35 passed, 104 deselected, 74 warnings in 115.75s (0:01:55)
+
+
+...................................                                      [100%]
+=============================== warnings summary ===============================
+tests/test_calibration.py::test_lambda_uses_full_original_gradients_not_reconstruction_only
+  /fs04/ar57/wenyu/GeneRec/tools/issue252/ego_operators.py:189: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+    operators.append(torch.sparse_csr_tensor(crow, columns, values,
+
+tests/test_curvature_loss.py::CurvatureTests::test_centre_normalization_masks_invalid_rows
+  /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_curvature_loss.py:37: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+    self.assertAlmostEqual(float(loss),4.5) # means Huber: (1.5+7.5)/2
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+35 passed, 104 deselected, 2 warnings in 91.48s (0:01:31)
+
+
+..................................                                       [100%]
+=============================== warnings summary ===============================
+tests/test_attention_pipeline.py::AttentionPipelineTests::test_actual_attention_intervention_changes_hard_codeword
+  /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_attention_pipeline.py:66: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+    self.assertGreater(float(weights[0,0,expert]),.99)
+
+tests/test_layer_mechanism.py::LayerMechanismTests::test_level_weights_change_only_their_own_cost
+  /fs04/ar57/wenyu/GeneRec/tools/issue252/ego_operators.py:189: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+    operators.append(torch.sparse_csr_tensor(crow, columns, values,
+
+tests/test_sync_free_batch.py::SyncFreeAssemblyTests::test_assembly_matches_the_unsynchronised_reference_values
+  /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/networkx/utils/backends.py:135: RuntimeWarning: networkx backend defined more than once: nx-loopback
+    backends.update(_get_backends("networkx.backends"))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+34 passed, 105 deselected, 3 warnings in 181.84s (0:03:01)
+

@@ -1,0 +1,153 @@
+{
+  "schema": "genrec.issue256.budget_point_failure/1",
+  "verification_pipeline_exit_code": 1,
+  "verification_pipeline_wall_seconds": 405.84,
+  "unit_suites": {
+    "candidate": 139,
+    "assets": 64,
+    "tools": 15,
+    "all_collected_cases_once": true,
+    "launcher_owned": true,
+    "skipped_cases": 0
+  },
+  "unit_receipt": {
+    "path": "results/research/issue256/rounds/r02/verification_generations/pre_budget_point/TEST_RESULTS.json",
+    "sha256": "1305fdb02e5a91e6c72c2523fa97a6c851c5d32ded4ad4135487be8bdd662786"
+  },
+  "failed_real_validation": {
+    "path": "results/research/issue256/rounds/r02/validation/issue256_r02_validation_2110729_586034877",
+    "ranks": [
+      {
+        "rank": 0,
+        "worker_pid": 2110735,
+        "error": "Traceback (most recent call last):\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 465, in main\n    training.main(diagnostic_epochs=1)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/train_rqvae.py\", line 452, in main\n    DIAGNOSTIC_OBSERVER(\"first_step_before_backward\", model=raw_module,\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 93, in __call__\n    self.verify_initial_budget(model, fields)\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 133, in verify_initial_budget\n    raise AssertionError('actual initial global coefficient is not maximal')\nAssertionError: actual initial global coefficient is not maximal\n"
+      },
+      {
+        "rank": 1,
+        "worker_pid": 2110736,
+        "error": "Traceback (most recent call last):\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 465, in main\n    training.main(diagnostic_epochs=1)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/train_rqvae.py\", line 452, in main\n    DIAGNOSTIC_OBSERVER(\"first_step_before_backward\", model=raw_module,\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 93, in __call__\n    self.verify_initial_budget(model, fields)\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 133, in verify_initial_budget\n    raise AssertionError('actual initial global coefficient is not maximal')\nAssertionError: actual initial global coefficient is not maximal\n"
+      },
+      {
+        "rank": 2,
+        "worker_pid": 2110737,
+        "error": "Traceback (most recent call last):\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 465, in main\n    training.main(diagnostic_epochs=1)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/train_rqvae.py\", line 452, in main\n    DIAGNOSTIC_OBSERVER(\"first_step_before_backward\", model=raw_module,\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 93, in __call__\n    self.verify_initial_budget(model, fields)\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 133, in verify_initial_budget\n    raise AssertionError('actual initial global coefficient is not maximal')\nAssertionError: actual initial global coefficient is not maximal\n"
+      },
+      {
+        "rank": 3,
+        "worker_pid": 2110738,
+        "error": "Traceback (most recent call last):\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 465, in main\n    training.main(diagnostic_epochs=1)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/train_rqvae.py\", line 452, in main\n    DIAGNOSTIC_OBSERVER(\"first_step_before_backward\", model=raw_module,\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 93, in __call__\n    self.verify_initial_budget(model, fields)\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 133, in verify_initial_budget\n    raise AssertionError('actual initial global coefficient is not maximal')\nAssertionError: actual initial global coefficient is not maximal\n"
+      }
+    ]
+  },
+  "actual_calibration": {
+    "event": "curvature_calibration",
+    "timestamp": 1795557310.11774,
+    "wall_time_s": 42.941,
+    "run_id": "issue256_r02_validation_2110729_586034877",
+    "purpose": "diagnostic",
+    "original_gradient": 0.00011530581601434031,
+    "reconstruction_gradient": 0.00011475777844118174,
+    "curvature_gradient": 32.90159078531005,
+    "original_curvature_cosine": -0.19887898389196718,
+    "reconstruction_curvature_cosine": 0.7425837566243979,
+    "lambda": 1.069727773028717e-06,
+    "calibration_batch_items": 1024,
+    "calibration_world_size": 4,
+    "module_budgets": {
+      "encoder": {
+        "original_gradient": 0.00011530581601434031,
+        "curvature_gradient": 32.90159078531005,
+        "weighted_ratio": 0.3052382495215563
+      },
+      "GNN.input": {
+        "original_gradient": 6.322662220157179e-08,
+        "curvature_gradient": 0.01110562009500358,
+        "weighted_ratio": 0.18789538075364423
+      },
+      "sharedKey": {
+        "original_gradient": 7.398174985208899e-08,
+        "curvature_gradient": 0.007840375656707074,
+        "weighted_ratio": 0.1133667101376489
+      },
+      "sharedValue": {
+        "original_gradient": 2.0815425050955455e-08,
+        "curvature_gradient": 0.00366014638254275,
+        "weighted_ratio": 0.18809898088421934
+      },
+      "sharedScore": {
+        "original_gradient": 2.7011175197119604e-08,
+        "curvature_gradient": 0.005432032940073289,
+        "weighted_ratio": 0.21512564550034388
+      },
+      "GNN.layers.0.self_linear": {
+        "original_gradient": 5.9172360214546224e-08,
+        "curvature_gradient": 0.007002268658738263,
+        "weighted_ratio": 0.12658817784691784
+      },
+      "GNN.layers.0.incoming": {
+        "original_gradient": 5.7266023383932515e-08,
+        "curvature_gradient": 0.008419225288166656,
+        "weighted_ratio": 0.15727090141664213
+      },
+      "GNN.layers.0.outgoing": {
+        "original_gradient": 5.521436164999749e-08,
+        "curvature_gradient": 0.006406308794768562,
+        "weighted_ratio": 0.12411637544237311
+      },
+      "GNN.layers.1.self_linear": {
+        "original_gradient": 4.755834184969431e-08,
+        "curvature_gradient": 0.004234346112063611,
+        "weighted_ratio": 0.09524296812126404
+      },
+      "GNN.layers.1.incoming": {
+        "original_gradient": 4.090246672188883e-08,
+        "curvature_gradient": 0.003921351782306804,
+        "weighted_ratio": 0.1025556462858614
+      },
+      "GNN.layers.1.outgoing": {
+        "original_gradient": 3.909831677372363e-08,
+        "curvature_gradient": 0.0038215842270699673,
+        "weighted_ratio": 0.104558331969233
+      },
+      "codebook0": {
+        "original_gradient": 3.865024087479614e-05,
+        "curvature_gradient": 6.109094382892681,
+        "weighted_ratio": 0.16908220444482547
+      },
+      "codebook1": {
+        "original_gradient": 9.278589391992131e-05,
+        "curvature_gradient": 22.891052888693235,
+        "weighted_ratio": 0.263910751886898
+      },
+      "codebook2": {
+        "original_gradient": 9.338165411986947e-05,
+        "curvature_gradient": 21.35718303335988,
+        "weighted_ratio": 0.24465589156426798
+      },
+      "Query0": {
+        "original_gradient": 6.26146226124498e-08,
+        "curvature_gradient": 0.0007480895556826697,
+        "weighted_ratio": 0.012780595666599908
+      },
+      "Query1": {
+        "original_gradient": 5.259333227063299e-09,
+        "curvature_gradient": 0.004916515779449684,
+        "weighted_ratio": 1.0000000472964818
+      },
+      "Query2": {
+        "original_gradient": 1.090829548709327e-08,
+        "curvature_gradient": 0.0030836407299971555,
+        "weighted_ratio": 0.30239886101577323
+      }
+    },
+    "calibration_epoch": 1,
+    "calibration_step": 0,
+    "calibration_seconds": 20.912051662802696,
+    "tangent_scale": 0.08433422446250916,
+    "target_scale": 2.000375270843506
+  },
+  "cause_status": "UNKNOWN_PENDING_DISCRIMINATING_DIAGNOSTIC",
+  "scale_hypothesis": "Source inspection shows tangent and target host mirrors use the float32 stored values, and level mirrors are refreshed from the broadcast buffers. No scale drift defect is claimed.",
+  "next_diagnostic": "Compare exact parameter/scalar state, encoded features, gates, per-level native costs/IDs and actual global calibration versus first-backward/replica gradients before any fix. No coefficient/tolerance change.",
+  "formal_training_started": false
+}
