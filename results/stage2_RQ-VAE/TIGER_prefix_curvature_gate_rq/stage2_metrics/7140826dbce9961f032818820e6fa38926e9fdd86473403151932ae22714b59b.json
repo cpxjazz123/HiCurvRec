@@ -1,0 +1,83 @@
+{
+  "schema": "genrec.issue252.layer_metrics/1",
+  "arm": "TIGER_prefix_curvature_gate_rq",
+  "run_id": "issue255_formal_r1",
+  "sid": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue255_formal_r1/TIGER_prefix_curvature_gate_rq/result/item_sids.json",
+    "sha256": "7140826dbce9961f032818820e6fa38926e9fdd86473403151932ae22714b59b"
+  },
+  "inputs": {
+    "train": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+      "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+    },
+    "valid": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+      "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+    }
+  },
+  "catalogue": {
+    "items": 24587,
+    "distinct_l2_prefixes": 306,
+    "distinct_l3_triples": 457,
+    "l3_collision": 0.9814129417985114,
+    "l3_refinement_gain_bits": 1.2062339303383027,
+    "prefix_entropy_bits": [
+      0.4607535796277777,
+      0.4854645320115245,
+      1.6916984623498272
+    ],
+    "codebook_occupancy": [
+      256,
+      256,
+      256
+    ]
+  },
+  "validation": {
+    "scope": "recommendation valid last-history-to-target; exact legal uniform catalogue negatives",
+    "rows": 57439,
+    "effective_rows": 57439,
+    "excluded_empty_history": 0,
+    "excluded_empty_negative_population": 0,
+    "positive_hits_by_level": [
+      53923,
+      53919,
+      32736
+    ],
+    "expected_negative_mass_by_level": [
+      52656.42657848745,
+      52650.89890212421,
+      29692.784909125246
+    ],
+    "positive_hit_rates_by_level": [
+      0.9387872351538153,
+      0.9387175960584272,
+      0.569926356656627
+    ],
+    "negative_hit_probabilities_by_level": [
+      0.9167364783246131,
+      0.9166402427292294,
+      0.5169446701566052
+    ],
+    "l1_positive_hit_rate": 0.9387872351538153,
+    "l1_negative_hit_probability": 0.9167364783246131,
+    "l1_hard_er": 1.0240535392128185,
+    "negative_sampling": false,
+    "conditional_g3": {
+      "status": "MISSING",
+      "reason": "legacy defining implementation removed; no surviving formula, not invented"
+    },
+    "conditional_log_enrichment_bits": 0.10643006140121779,
+    "conditional_prefix_survival_difference": 0.04317702477705787
+  },
+  "output": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_prefix_curvature_gate_rq/stage2_metrics/7140826dbce9961f032818820e6fa38926e9fdd86473403151932ae22714b59b.json",
+  "read_stage3_scores": false,
+  "evaluator": {
+    "path": "/fs04/ar57/wenyu/GeneRec/tools/issue252/layer_metrics.py",
+    "sha256": "b739ed1e8b7a3c745dec8d5de06c369464f6b8fb3c65a0eb52a221d33b688816"
+  },
+  "contract": {
+    "path": "results/research/issue252/LAYER_METRICS_CONTRACT.md",
+    "sha256": "b33c614dabd2e54b23a31d055061fea2bcf1a7a9c6c87a7eb443a34162b0960a"
+  }
+}

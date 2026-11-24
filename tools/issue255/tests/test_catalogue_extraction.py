@@ -40,6 +40,7 @@ class CatalogueExtractionTest(unittest.TestCase):
                          'metric': evaluation.common_metric(),
                          'catalogues': {'issue255': {
                              'execution': {'device_type': 'cuda', 'catalogue_passes': 1,
+                                           'matmul_precision': 'high',
                                            'no_grad': True, 'inference_mode': False,
                                            'actual_sid_reexport_equal': True,
                                            'all_levels_bitwise_equal': True},
@@ -103,6 +104,13 @@ class CatalogueExtractionTest(unittest.TestCase):
         self.publish()
         with self.assertRaisesRegex(ValueError, 'common_fixed3'):
             self.consume()
+
+    def test_runtime_from_a_different_sid_export_is_rejected(self):
+        self.document['catalogues']['issue255']['execution']['matmul_precision'] = 'highest'
+        self.publish()
+        with self.assertRaisesRegex(ValueError, 'export numerical policy'):
+            self.consume()
+
 
 
 if __name__ == '__main__':

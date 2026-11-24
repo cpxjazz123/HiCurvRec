@@ -168,9 +168,25 @@ def stage3(collision):
             'receipt': {'path': str(receipt_path), 'sha256': sha256(receipt_path)}}
 
 
-def main():
+def visible_sharing(path, l1):
+    """Recompute unweighted edge and non-isolate source means from raw CSR."""
     import numpy as np
-    from scipy.sparse import load_npz
+
+    l1 = np.asarray(l1)
+    with np.load(path, allow_pickle=False) as graph:
+        degrees = np.diff(graph['indptr'])
+        target = graph['indices']
+    if not len(target):
+        return {'micro': None, 'out_centre_macro': None}
+    source = np.repeat(np.arange(len(l1)), degrees)
+    hit = l1[source] == l1[target]
+    shared = np.bincount(source, weights=hit.astype(np.int64), minlength=len(l1))
+    present = degrees > 0
+    return {'micro': int(hit.sum()) / len(hit),
+            'out_centre_macro': statistics.fmean((shared[present] / degrees[present]).tolist())}
+
+
+def main():
     from tools.issue252.run_workspace import load_run
     from tools.issue255.paired_comparison import stage2_identity
     load_run(ROOT, RUN_ID, ARM)
@@ -187,14 +203,8 @@ def main():
     sid_result = {'items': len(rows), 'distinct_prefixes': [len(count) for count in counts],
                   'three_code_collision': collision, 'l3_refinement_gain_bits': entropy[2] - entropy[1],
                   'codebook_used': [len({row[level] for row in rows}) for level in range(3)]}
-    graph = load_npz(ROOT / 'assets/train/visible_forward.npz').tocsr()
-    degrees = np.diff(graph.indptr)
-    source = np.repeat(np.arange(len(rows)), degrees)
-    l1 = np.asarray([row[0] for row in rows])
-    hit = l1[source] == l1[graph.indices]
-    shared = np.bincount(source, weights=hit.astype(np.int64), minlength=len(rows))
-    sharing = {'micro': int(hit.sum()) / len(hit),
-               'out_centre_macro': statistics.fmean((shared[degrees > 0] / degrees[degrees > 0]).tolist())}
+    sharing = visible_sharing(ROOT / 'assets/train/visible_forward.npz',
+                              [row[0] for row in rows])
     evaluation_path = EVIDENCE / 'evaluation/FINAL_EVALUATION.json'
     evaluation = read_json(evaluation_path)
     generation = evaluation['generations']['issue255']

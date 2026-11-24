@@ -1,0 +1,67 @@
+{
+  "schema": "genrec.issue255.final_stage2/1",
+  "run_id": "issue255_formal_r1",
+  "arm": "TIGER_prefix_curvature_gate_rq",
+  "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue255_formal_r1/TIGER_prefix_curvature_gate_rq/src",
+  "epoch": 3000,
+  "artifacts": {
+    "checkpoint": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue255_formal_r1/TIGER_prefix_curvature_gate_rq/result/rqvae_best.pth",
+      "sha256": "0969f60eaf5bde2b715bad99f86f5a4ab30ef63e2f7c9998ca8a710761ace2a9"
+    },
+    "sid": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue255_formal_r1/TIGER_prefix_curvature_gate_rq/result/item_sids.json",
+      "sha256": "7140826dbce9961f032818820e6fa38926e9fdd86473403151932ae22714b59b"
+    },
+    "export": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue255_formal_r1/TIGER_prefix_curvature_gate_rq/result/export_manifest.json",
+      "sha256": "82305469e3eb9ed3eaae3d6b10674c63053c79ba5631dcc78f40b608e5da2578"
+    },
+    "binding": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue255_formal_r1/TIGER_prefix_curvature_gate_rq/result/archive_binding.json",
+      "sha256": "179dc5c0de3d3860fcde8a16db529ed97947c889b7d03846373ae327b638134b"
+    },
+    "layered_metrics": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_prefix_curvature_gate_rq/stage2_metrics/7140826dbce9961f032818820e6fa38926e9fdd86473403151932ae22714b59b.json",
+      "sha256": "99add4604067c1e681d5dd5a781049c047b6ee2ad96ba8454f39c390e561d6b9"
+    },
+    "workspace": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue255_formal_r1/TIGER_prefix_curvature_gate_rq/workspace.json",
+      "sha256": "40b88f95d7ce4af15ba6a0122a296d7f97ce1b63784d805d975c40665c59f5ec"
+    },
+    "training_summary": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue255/TRAINING_SUMMARY.json",
+      "sha256": "910aae93ae62bef1c821b88fe9090b093370fde6f45e7375582ad558d0fe2462"
+    },
+    "metrics": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue255_formal_r1/TIGER_prefix_curvature_gate_rq/result/logs/training_metrics.jsonl",
+      "sha256": "d900d34c798154a3235f31ed25f63b926018d639a87835b914fcf2e9b4aa7798"
+    }
+  },
+  "same_checkpoint_all_items_exact": true,
+  "collision_suffix_exact": true,
+  "quality": {
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue255_formal_r1/TIGER_prefix_curvature_gate_rq/result/item_sids.json",
+    "allow": false,
+    "reason": "three-level collision 0.981413 is not below 0.40: 98.1% of the items share an SID with another item",
+    "collision": 0.9814129417985114,
+    "quant_error": null,
+    "effective_rank": null,
+    "warnings": [],
+    "limits": {
+      "collision": 0.4,
+      "quant_error": [
+        0.035,
+        0.1
+      ],
+      "effective_rank": 8.0
+    }
+  },
+  "reexport_wall_seconds": 144.54827032610774,
+  "audit_wall_seconds": 234.73625076655298,
+  "evidence_timing": "post-formal audit; not pre-dispatch admission",
+  "evaluator": {
+    "path": "/fs04/ar57/wenyu/GeneRec/tools/issue255/finalize_stage2.py",
+    "sha256": "30643fd072436537e102b1b26259581f3cad9241c10962c14854095446ee4c16"
+  }
+}

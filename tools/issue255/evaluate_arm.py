@@ -35,6 +35,10 @@ COMPARISON_SHA256 = '7492f837377cd01dad566c4950538ee65056d8532eefbcf58d34bdf2f37
 TIGER_SID_SHA256 = '025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059'
 REPORT = OUTPUT / 'FINAL_EVALUATION.json'
 TABLE = OUTPUT / 'METRICS.tsv'
+# #253's canonical SID was cold-checker rewritten (274 original differences);
+# that checker uses PyTorch's highest default, not trainer.set_seed's high.
+# #255's zero-rewrite audit reproduces its source trainer's high policy.
+EXPORT_MATMUL_PRECISION = {'issue253': 'highest', 'issue255': 'high'}
 
 require = metrics.require
 record = metrics.file_record
@@ -246,6 +250,9 @@ def load_extraction(receipt_path, *, context, rows, books, embedding_shape, toke
     result = {}
     for name, entry in catalogues.items():
         execution = entry.get('execution', {})
+        require(name in EXPORT_MATMUL_PRECISION
+                and execution.get('matmul_precision') == EXPORT_MATMUL_PRECISION[name],
+                'extraction export numerical policy differs: ' + name)
         require(execution.get('device_type') == 'cuda'
                 and execution.get('catalogue_passes') == 1
                 and execution.get('no_grad') is True

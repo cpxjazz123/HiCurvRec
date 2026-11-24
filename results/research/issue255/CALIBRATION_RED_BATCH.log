@@ -1,0 +1,23 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_lambda_balances_full_original_encoder_gradient_on_real_training_data ___
+tests/test_calibration.py:54: in test_lambda_balances_full_original_encoder_gradient_on_real_training_data
+    assert measured['lambda'] == pytest.approx(original_norm / curvature_norm, rel=1.e-6)
+E   assert 0.0008543586591258645 == 0.000805870073939786 ± 8.1e-10
+E     
+E     comparison failed
+E     Obtained: 0.0008543586591258645
+E     Expected: 0.000805870073939786 ± 8.1e-10
+=============================== warnings summary ===============================
+tests/test_calibration.py::test_lambda_balances_full_original_encoder_gradient_on_real_training_data
+  /fs04/ar57/wenyu/GeneRec/tools/issue252/ego_operators.py:189: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+    operators.append(torch.sparse_csr_tensor(crow, columns, values,
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_calibration.py::test_lambda_balances_full_original_encoder_gradient_on_real_training_data - assert 0.0008543586591258645 == 0.000805870073939786 ± 8.1e-10
+  
+  comparison failed
+  Obtained: 0.0008543586591258645
+  Expected: 0.000805870073939786 ± 8.1e-10
+1 failed, 1 warning in 37.11s

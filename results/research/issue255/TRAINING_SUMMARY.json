@@ -1,0 +1,71 @@
+{
+  "collision_events": [
+    0.982023020295278,
+    0.9817383169967869,
+    0.9814129417985114
+  ],
+  "curvature_calibration": {
+    "curvature_gradient": 12.809191703796387,
+    "lambda": 8.766930113779381e-05,
+    "original_curvature_cosine": -0.29676613343959346,
+    "original_gradient": 0.0011229729279875755,
+    "reconstruction_curvature_cosine": 0.3391647380013927,
+    "reconstruction_gradient": 0.00019794188847299665,
+    "tangent_scale": 0.08433422446250916,
+    "target_scale": 2.000375270843506
+  },
+  "epochs_recorded": 3000,
+  "final_attention_entropy": 1.1886975765228271,
+  "final_curvature_estimate": 1.3510000705718994,
+  "final_gate_entropy": 0.12078380584716797,
+  "final_gradient_norm_before_clip": 0.007020115852355957,
+  "final_level_codebook_gradient_norm": [
+    0.004048299975693226,
+    0.0037314684595912695,
+    0.0013269520131871104
+  ],
+  "final_loss": 0.00040735071524977684,
+  "final_recon": 0.000176892033778131,
+  "interepoch_seconds": 0.052526830695569515,
+  "last_epoch": 3000,
+  "last_epoch_gate_mixture": {
+    "level1": {
+      "negative": 0.012055288068950176,
+      "positive": 0.004778685048222542,
+      "zero": 0.9831660985946655
+    },
+    "level2": {
+      "negative": 0.00533502921462059,
+      "positive": 0.9777946472167969,
+      "zero": 0.01687031053006649
+    },
+    "level3": {
+      "negative": 0.002137941773980856,
+      "positive": 0.9311336278915405,
+      "zero": 0.06672850251197815
+    }
+  },
+  "level_scale_calibration": {
+    "event": "level_scale_calibration",
+    "level_scales": [
+      0.350431889295578,
+      0.3611699044704437,
+      0.4350320100784302
+    ],
+    "purpose": "formal",
+    "references": 32,
+    "run_id": "issue255_formal_r1",
+    "samples": 28,
+    "tangent_scale": 0.08433422446250916,
+    "timestamp": 1795535606.910874,
+    "wall_time_s": 20.698
+  },
+  "window_epochs": [
+    31,
+    60
+  ],
+  "window_mean_seconds": 0.7569880786662301,
+  "window_median_seconds": 0.7193962428718805,
+  "window_p95_seconds": 0.9947054404765368,
+  "window_total_seconds": 22.7096423599869
+}

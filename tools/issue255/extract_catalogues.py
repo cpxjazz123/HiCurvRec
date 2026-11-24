@@ -44,14 +44,16 @@ def extract_generation(run, paths, payload, name, device):
 
     tree = Path(run['source'])
     trainer = _training_module(tree)
-    # Exactly the source trainer's seed, deterministic algorithms and high GEMM
-    # precision must be restored separately for EACH generation, before CUDA work.
+    # Replay each immutable SID's canonical export, not a newly chosen runtime.
+    # The historical checker rewrote #253 under highest; #255 was exact under
+    # its source trainer's high policy. Geometry evaluation itself is common.
     trainer.set_seed(trainer.SEED)
-    evaluation.require(torch.get_float32_matmul_precision() == 'high'
+    torch.set_float32_matmul_precision(evaluation.EXPORT_MATMUL_PRECISION[name])
+    evaluation.require(torch.get_float32_matmul_precision() == evaluation.EXPORT_MATMUL_PRECISION[name]
                        and torch.are_deterministic_algorithms_enabled()
                        and torch.backends.cudnn.deterministic
                        and not torch.backends.cudnn.benchmark,
-                       'source trainer did not restore frozen numerical policy')
+                       'canonical export numerical policy was not restored')
     model = trainer.RQVAE(trainer._tokenizer_config(), in_dim=768,
                          distance=trainer.DISTANCE).to(device)
     model.load_state_dict(payload['state_dict'], strict=True)
@@ -133,6 +135,7 @@ def extract_generation(run, paths, payload, name, device):
         'cudnn_benchmark': torch.backends.cudnn.benchmark,
         'cublas_workspace_config': os.environ.get('CUBLAS_WORKSPACE_CONFIG'),
         'catalogue_passes': len(selected) // 3, 'no_grad': True, 'inference_mode': False,
+        'numerical_policy_scope': 'canonical SID-producing runtime, not a change to either training recipe',
         'actual_sid_reexport_equal': True, 'all_levels_bitwise_equal': True,
         'shared_gate_across_levels': name == 'issue253'}
     return {'artifact': evaluation.record(output), 'execution': execution,

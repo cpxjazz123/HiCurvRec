@@ -1,0 +1,13 @@
+{
+  "schema": "genrec.issue255.stage3_refusal/1",
+  "tool": "stage3_start",
+  "arguments": {"item_sids": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue255_formal_r1/TIGER_prefix_curvature_gate_rq/result/item_sids.json"},
+  "started": false,
+  "refused": "SID quality gate: three-level collision 0.981413 is not below 0.40: 98.1% of the items share an SID with another item",
+  "collision": 0.9814129417985114,
+  "collision_gate_waived": false,
+  "sid_sha256": "7140826dbce9961f032818820e6fa38926e9fdd86473403151932ae22714b59b",
+  "checkpoint_sha256": "0969f60eaf5bde2b715bad99f86f5a4ab30ef63e2f7c9998ca8a710761ace2a9",
+  "status": "BLOCKED_BY_FROZEN_COLLISION_GATE",
+  "protocol_action": "No override, additional formal run or parameter tuning"
+}

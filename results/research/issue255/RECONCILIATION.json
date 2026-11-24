@@ -1,0 +1,116 @@
+{
+  "schema": "genrec.issue255.reconciliation/1",
+  "run_id": "issue255_formal_r1",
+  "catalogue": {
+    "items": 24587,
+    "distinct_prefixes": [
+      256,
+      306,
+      457
+    ],
+    "three_code_collision": 0.9814129417985114,
+    "l3_refinement_gain_bits": 1.2062339303383027,
+    "codebook_used": [
+      256,
+      256,
+      256
+    ]
+  },
+  "visible_edge_sharing": {
+    "micro": 0.9257195594565201,
+    "out_centre_macro": 0.9165098700786323
+  },
+  "curvature": {
+    "issue253": {
+      "L1": {
+        "count": 28391948,
+        "centres": 24326,
+        "macro_mae": 2.073935178538247,
+        "micro_mae": 2.329486513041214,
+        "recall": {
+          "negative": 0.198582445021364,
+          "zero": 0.0,
+          "positive": 0.8857532266482837
+        },
+        "balanced_sign_accuracy": 0.3614452238898826
+      },
+      "L2": {
+        "count": 28391948,
+        "centres": 24326,
+        "macro_mae": 2.086615708972294,
+        "micro_mae": 2.337995186661082,
+        "recall": {
+          "negative": 0.20203056321578364,
+          "zero": 0.0,
+          "positive": 0.8815303787061224
+        },
+        "balanced_sign_accuracy": 0.36118698064063537
+      },
+      "L3": {
+        "count": 28391948,
+        "centres": 24326,
+        "macro_mae": 2.0879410721964073,
+        "micro_mae": 2.3600796804409083,
+        "recall": {
+          "negative": 0.18568229132765612,
+          "zero": 0.0,
+          "positive": 0.8814975586443957
+        },
+        "balanced_sign_accuracy": 0.35572661665735056
+      }
+    },
+    "issue255": {
+      "L1": {
+        "count": 28391948,
+        "centres": 24326,
+        "macro_mae": 2.796243509798878,
+        "micro_mae": 1.6876370055703902,
+        "recall": {
+          "negative": 0.14726500492804245,
+          "zero": 0.0,
+          "positive": 0.9206280735053058
+        },
+        "balanced_sign_accuracy": 0.35596435947778277
+      },
+      "L2": {
+        "count": 28391948,
+        "centres": 24326,
+        "macro_mae": 2.7953011358963478,
+        "micro_mae": 1.6849884344224464,
+        "recall": {
+          "negative": 0.4070228171247043,
+          "zero": 0.11688311688311688,
+          "positive": 0.718672801017782
+        },
+        "balanced_sign_accuracy": 0.41419291167520106
+      },
+      "L3": {
+        "count": 28391948,
+        "centres": 24326,
+        "macro_mae": 2.7943310492335764,
+        "micro_mae": 1.686171254664388,
+        "recall": {
+          "negative": 0.2540172780484404,
+          "zero": 0.012987012987012988,
+          "positive": 0.8146518172274304
+        },
+        "balanced_sign_accuracy": 0.3605520360876279
+      }
+    }
+  },
+  "formal_inclusive_window_seconds": 0.7569880786662301,
+  "stage3": {
+    "status": "NOT_RUN_COLLISION_GATE",
+    "recall": "NA",
+    "reason": "three-code collision >= 0.4; no gate waiver or invented recall"
+  },
+  "source": {
+    "path": "/fs04/ar57/wenyu/GeneRec/tools/issue255/reconcile_results.py",
+    "sha256": "b97426edd7c7acd7f829830830176d4ec7c9eed8981e5a088fbbba5f83311204"
+  },
+  "evaluation": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue255/evaluation/FINAL_EVALUATION.json",
+    "sha256": "6aa757d6453c92860b7e9a8072b0e8f029532c82904c190a26b5e6bfd786d1a7"
+  },
+  "scope": "independent SID/edge/rank arithmetic and per-centre full-population reductions"
+}

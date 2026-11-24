@@ -1,0 +1,31 @@
+{
+  "schema": "genrec.issue255.vector_diagnostics/1",
+  "run_id": "issue255_formal_r1",
+  "items": 24587,
+  "quant_error": 0.009193088282806506,
+  "effective_rank": 2.1992642660648856,
+  "distinct_three_code_tuples": 457,
+  "collision": 0.9814129417985114,
+  "gate_remains": "REFUSED_COLLISION",
+  "runtime": "CPU float32 encoder with bias, float64 centered covariance; selected first-three SID codewords; no gate waiver",
+  "measurement_function": "tools.research.stage2.sid_quality.measure_vectors",
+  "exit_code": 0,
+  "inputs": {
+    "sid": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue255_formal_r1/TIGER_prefix_curvature_gate_rq/result/item_sids.json",
+      "sha256": "7140826dbce9961f032818820e6fa38926e9fdd86473403151932ae22714b59b"
+    },
+    "checkpoint": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue255_formal_r1/TIGER_prefix_curvature_gate_rq/result/rqvae_best.pth",
+      "sha256": "0969f60eaf5bde2b715bad99f86f5a4ab30ef63e2f7c9998ca8a710761ace2a9"
+    },
+    "embeddings": {
+      "path": "/fs04/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+      "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+    },
+    "code": {
+      "path": "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/sid_quality.py",
+      "sha256": "ba9e95057ce98823e01da6b5d2cebc700e016301b39f868b5ac947da8d81e7b8"
+    }
+  }
+}

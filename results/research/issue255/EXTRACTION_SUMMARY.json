@@ -1,0 +1,180 @@
+{
+  "schema": "genrec.issue255.catalogue_extraction/1",
+  "status": "COMPLETE",
+  "receipt": {
+    "path": "results/research/issue255/evaluation/EXTRACTION.json",
+    "sha256": "29eb0830d15d052a101fb005bd62a4be17f63b1bcd40bc5f02c3f2cea97f31fe"
+  },
+  "population": {
+    "curvature_triples_per_cell": 28391948,
+    "items": 24587,
+    "levels": 3
+  },
+  "metric": {
+    "expert_curvatures": [
+      -1,
+      0,
+      1
+    ],
+    "name": "common_fixed3",
+    "reference_scope": "entire frozen component",
+    "scale_fitted_on_evaluation": false,
+    "tangent_scale": 0.08433422446250916
+  },
+  "catalogues": {
+    "issue253": {
+      "artifact": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue255/evaluation/issue253_catalogue.npz",
+        "sha256": "ff077599456404e9f09f66552f60a92fcf63d0d584650fb7be6e3995a2b33102"
+      },
+      "execution": {
+        "actual_sid_reexport_equal": true,
+        "all_levels_bitwise_equal": true,
+        "catalogue_passes": 1,
+        "cublas_workspace_config": ":4096:8",
+        "cuda_version": "12.8",
+        "cudnn_benchmark": false,
+        "cudnn_deterministic": true,
+        "deterministic_algorithms": true,
+        "deterministic_warn_only": true,
+        "device": "cuda:0",
+        "device_name": "NVIDIA L40S",
+        "device_type": "cuda",
+        "inference_mode": false,
+        "matmul_precision": "highest",
+        "no_grad": true,
+        "numerical_policy_scope": "canonical SID-producing runtime, not a change to either training recipe",
+        "pid": 3615260,
+        "rank": 0,
+        "seed": 42,
+        "shared_gate_across_levels": true,
+        "torch_version": "2.8.0+cu128"
+      },
+      "arrays": {
+        "attention": {
+          "dtype": "float32",
+          "shape": [
+            24587,
+            3,
+            3,
+            3
+          ]
+        },
+        "prefixes": {
+          "dtype": "float32",
+          "shape": [
+            3,
+            24587,
+            32
+          ]
+        },
+        "reconstruction": {
+          "dtype": "float32",
+          "shape": [
+            24587,
+            768
+          ]
+        },
+        "sid": {
+          "dtype": "int64",
+          "shape": [
+            24587,
+            4
+          ]
+        },
+        "token_mask": {
+          "dtype": "bool",
+          "shape": [
+            24587,
+            3
+          ]
+        },
+        "weights": {
+          "dtype": "float32",
+          "shape": [
+            24587,
+            3,
+            3
+          ]
+        }
+      }
+    },
+    "issue255": {
+      "artifact": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue255/evaluation/issue255_catalogue.npz",
+        "sha256": "a2211e3a1331b91ad382afd871b0425b88ab1da6c35f03d38b2b89a66e6dd5be"
+      },
+      "execution": {
+        "actual_sid_reexport_equal": true,
+        "all_levels_bitwise_equal": true,
+        "catalogue_passes": 1,
+        "cublas_workspace_config": ":4096:8",
+        "cuda_version": "12.8",
+        "cudnn_benchmark": false,
+        "cudnn_deterministic": true,
+        "deterministic_algorithms": true,
+        "deterministic_warn_only": true,
+        "device": "cuda:0",
+        "device_name": "NVIDIA L40S",
+        "device_type": "cuda",
+        "inference_mode": false,
+        "matmul_precision": "high",
+        "no_grad": true,
+        "numerical_policy_scope": "canonical SID-producing runtime, not a change to either training recipe",
+        "pid": 3615260,
+        "rank": 0,
+        "seed": 42,
+        "shared_gate_across_levels": false,
+        "torch_version": "2.8.0+cu128"
+      },
+      "arrays": {
+        "attention": {
+          "dtype": "float32",
+          "shape": [
+            24587,
+            3,
+            3,
+            5
+          ]
+        },
+        "prefixes": {
+          "dtype": "float32",
+          "shape": [
+            3,
+            24587,
+            32
+          ]
+        },
+        "reconstruction": {
+          "dtype": "float32",
+          "shape": [
+            24587,
+            768
+          ]
+        },
+        "sid": {
+          "dtype": "int64",
+          "shape": [
+            24587,
+            4
+          ]
+        },
+        "token_mask": {
+          "dtype": "bool",
+          "shape": [
+            24587,
+            5
+          ]
+        },
+        "weights": {
+          "dtype": "float32",
+          "shape": [
+            24587,
+            3,
+            3
+          ]
+        }
+      }
+    }
+  }
+}

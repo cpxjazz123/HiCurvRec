@@ -1,0 +1,7 @@
+## Post-training extraction repair: canonical historical SID runtime
+
+The failed extraction reached #253 first. Its immutable export manifest records `rewritten_from_checkpoint=true`,274original differing items, and canonical SID SHA-256 `24c17aee0818373fbb4c76d175170a6b207d6e09a29faa398b140acd84bae2e3`. The extractor incorrectly forced trainer `high` precision onto both generations. The canonical checker is cold and does not set trainer precision; its default is `highest`. The historical manifest itself does not record the precision field, so the historical runtime attribution remains an inference until exact replay succeeds.
+
+The fixed replay uses historical canonical-checker `highest` for #253 and the already verified zero-rewrite source `high` for #255. Both actual hard SID tables, checkpoints and manifests remain unchanged; downstream geometry still uses the one common fixed-three float64 metric/scale. No score or evaluation outcome chooses a policy.
+
+A consumer regression now rejects catalogue data tagged with another SID export's numerical policy. Red:1failed/6passed at the designated `ValueError not raised` assertion (`EXPORT_POLICY_RED.log`). Green:7passed. The separate actual GPU replay is running; neither this unit result nor the inferred historical policy is accepted as full catalogue proof. Complete post-export suites are also running and will be recorded separately, without overwriting the original pre-dispatch receipt.

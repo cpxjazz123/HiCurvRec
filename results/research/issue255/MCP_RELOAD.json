@@ -1,0 +1,15 @@
+{
+  "schema": "genrec.issue255.mcp_reload/1",
+  "target": "tools/stage3/server.py",
+  "old_pid": 931435,
+  "new_pid": 3214215,
+  "verified_parent_pid": 4184319,
+  "verified_parent_comm": "omp",
+  "signal": "SIGTERM to target child only",
+  "tool_call": "stage3_status on the exact frozen issue253 SID",
+  "observed_status": "finished",
+  "observed_protocol_ok": true,
+  "observed_completed_epochs": 150,
+  "observed_test_population": 57439,
+  "scope": "reload proof on the existing historical generation; no issue255 Stage3 has started"
+}

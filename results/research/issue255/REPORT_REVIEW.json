@@ -1,0 +1,891 @@
+{
+  "schema": "genrec.issue255.report_review/1",
+  "passed": true,
+  "absolute_tolerance": 1e-08,
+  "checks": [
+    {
+      "field": "issue253/不同L1码",
+      "reported_or_stored": 256.0,
+      "independently_recomputed": 256,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/不同L2前缀",
+      "reported_or_stored": 10386.0,
+      "independently_recomputed": 10386,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/不同L3三码",
+      "reported_or_stored": 22826.0,
+      "independently_recomputed": 22826,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/三码碰撞率",
+      "reported_or_stored": 0.071623216,
+      "independently_recomputed": 0.07162321552039697,
+      "absolute_error": 4.796030378395599e-10
+    },
+    {
+      "field": "issue253/有向边L1共享率",
+      "reported_or_stored": 0.036180935,
+      "independently_recomputed": 0.03618093531240905,
+      "absolute_error": 3.124090500183918e-10
+    },
+    {
+      "field": "issue253/出中心宏平均L1共享率",
+      "reported_or_stored": 0.044097333,
+      "independently_recomputed": 0.04409733333580568,
+      "absolute_error": 3.3580567493363134e-10
+    },
+    {
+      "field": "issue253/语义重建MSE",
+      "reported_or_stored": 9.8553e-05,
+      "independently_recomputed": 9.855251449731026e-05,
+      "absolute_error": 4.855026897410087e-10
+    },
+    {
+      "field": "issue253/strict_struct_test_degree_matched/L1",
+      "reported_or_stored": 0.007142857142857143,
+      "independently_recomputed": 0.007142857142857143,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_test_degree_matched/L2",
+      "reported_or_stored": 0.0,
+      "independently_recomputed": 0.0,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_test_degree_matched/L3",
+      "reported_or_stored": 0.0,
+      "independently_recomputed": 0.0,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/report/test/degree-matched",
+      "reported_or_stored": 0.007142857,
+      "independently_recomputed": 0.007142857142857143,
+      "absolute_error": 1.4285714278194916e-10
+    },
+    {
+      "field": "issue253/strict_struct_test_direct/L1",
+      "reported_or_stored": 0.03517772077684134,
+      "independently_recomputed": 0.03517772077684134,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_test_direct/L2",
+      "reported_or_stored": 0.003297911322828875,
+      "independently_recomputed": 0.003297911322828875,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_test_direct/L3",
+      "reported_or_stored": 0.00036643459142543056,
+      "independently_recomputed": 0.00036643459142543056,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/report/test/direct",
+      "reported_or_stored": 0.035177721,
+      "independently_recomputed": 0.03517772077684134,
+      "absolute_error": 2.2315866515798533e-10
+    },
+    {
+      "field": "issue253/strict_struct_test_shared_in/L1",
+      "reported_or_stored": 0.01564129301355579,
+      "independently_recomputed": 0.01564129301355579,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_test_shared_in/L2",
+      "reported_or_stored": 0.0006951685783802572,
+      "independently_recomputed": 0.0006951685783802572,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_test_shared_in/L3",
+      "reported_or_stored": 0.0,
+      "independently_recomputed": 0.0,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/report/test/shared-in",
+      "reported_or_stored": 0.015641293,
+      "independently_recomputed": 0.01564129301355579,
+      "absolute_error": 1.3555788436203642e-11
+    },
+    {
+      "field": "issue253/strict_struct_test_shared_out/L1",
+      "reported_or_stored": 0.0170316301703163,
+      "independently_recomputed": 0.0170316301703163,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_test_shared_out/L2",
+      "reported_or_stored": 0.0013903371567605145,
+      "independently_recomputed": 0.0013903371567605145,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_test_shared_out/L3",
+      "reported_or_stored": 0.0,
+      "independently_recomputed": 0.0,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/report/test/shared-out",
+      "reported_or_stored": 0.01703163,
+      "independently_recomputed": 0.0170316301703163,
+      "absolute_error": 1.7031630272779097e-10
+    },
+    {
+      "field": "issue253/strict_struct_test_two_hop/L1",
+      "reported_or_stored": 0.01238390092879257,
+      "independently_recomputed": 0.01238390092879257,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_test_two_hop/L2",
+      "reported_or_stored": 0.0006879944960440316,
+      "independently_recomputed": 0.0006879944960440316,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_test_two_hop/L3",
+      "reported_or_stored": 0.0,
+      "independently_recomputed": 0.0,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/report/test/two-hop",
+      "reported_or_stored": 0.012383901,
+      "independently_recomputed": 0.01238390092879257,
+      "absolute_error": 7.120742884225706e-11
+    },
+    {
+      "field": "issue253/strict_struct_val_degree_matched/L1",
+      "reported_or_stored": 0.00850918992511913,
+      "independently_recomputed": 0.00850918992511913,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_val_degree_matched/L2",
+      "reported_or_stored": 0.0003403675970047651,
+      "independently_recomputed": 0.0003403675970047651,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_val_degree_matched/L3",
+      "reported_or_stored": 0.0,
+      "independently_recomputed": 0.0,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/report/val/degree-matched",
+      "reported_or_stored": 0.00850919,
+      "independently_recomputed": 0.00850918992511913,
+      "absolute_error": 7.488087060136817e-11
+    },
+    {
+      "field": "issue253/strict_struct_val_direct/L1",
+      "reported_or_stored": 0.031914893617021274,
+      "independently_recomputed": 0.031914893617021274,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_val_direct/L2",
+      "reported_or_stored": 0.003301540719002201,
+      "independently_recomputed": 0.003301540719002201,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_val_direct/L3",
+      "reported_or_stored": 0.0007336757153338225,
+      "independently_recomputed": 0.0007336757153338225,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/report/val/direct",
+      "reported_or_stored": 0.031914894,
+      "independently_recomputed": 0.031914893617021274,
+      "absolute_error": 3.8297872512194076e-10
+    },
+    {
+      "field": "issue253/strict_struct_val_shared_in/L1",
+      "reported_or_stored": 0.018049288441513364,
+      "independently_recomputed": 0.018049288441513364,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_val_shared_in/L2",
+      "reported_or_stored": 0.0006942034015966678,
+      "independently_recomputed": 0.0006942034015966678,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_val_shared_in/L3",
+      "reported_or_stored": 0.0,
+      "independently_recomputed": 0.0,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/report/val/shared-in",
+      "reported_or_stored": 0.018049288,
+      "independently_recomputed": 0.018049288441513364,
+      "absolute_error": 4.4151336406339503e-10
+    },
+    {
+      "field": "issue253/strict_struct_val_shared_out/L1",
+      "reported_or_stored": 0.01564673157162726,
+      "independently_recomputed": 0.01564673157162726,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_val_shared_out/L2",
+      "reported_or_stored": 0.0003477051460361613,
+      "independently_recomputed": 0.0003477051460361613,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_val_shared_out/L3",
+      "reported_or_stored": 0.0,
+      "independently_recomputed": 0.0,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/report/val/shared-out",
+      "reported_or_stored": 0.015646732,
+      "independently_recomputed": 0.01564673157162726,
+      "absolute_error": 4.28372740057803e-10
+    },
+    {
+      "field": "issue253/strict_struct_val_two_hop/L1",
+      "reported_or_stored": 0.007518796992481203,
+      "independently_recomputed": 0.007518796992481203,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_val_two_hop/L2",
+      "reported_or_stored": 0.0003417634996582365,
+      "independently_recomputed": 0.0003417634996582365,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/strict_struct_val_two_hop/L3",
+      "reported_or_stored": 0.0,
+      "independently_recomputed": 0.0,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/report/val/two-hop",
+      "reported_or_stored": 0.007518797,
+      "independently_recomputed": 0.007518796992481203,
+      "absolute_error": 7.518797216776729e-12
+    },
+    {
+      "field": "issue255/不同L1码",
+      "reported_or_stored": 256.0,
+      "independently_recomputed": 256,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/不同L2前缀",
+      "reported_or_stored": 306.0,
+      "independently_recomputed": 306,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/不同L3三码",
+      "reported_or_stored": 457.0,
+      "independently_recomputed": 457,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/三码碰撞率",
+      "reported_or_stored": 0.981412942,
+      "independently_recomputed": 0.9814129417985114,
+      "absolute_error": 2.014886035794916e-10
+    },
+    {
+      "field": "issue255/有向边L1共享率",
+      "reported_or_stored": 0.925719559,
+      "independently_recomputed": 0.9257195594565201,
+      "absolute_error": 4.565200439898831e-10
+    },
+    {
+      "field": "issue255/出中心宏平均L1共享率",
+      "reported_or_stored": 0.91650987,
+      "independently_recomputed": 0.9165098700786323,
+      "absolute_error": 7.863232287519395e-11
+    },
+    {
+      "field": "gate/L1/expert0",
+      "reported_or_stored": 0.012453704,
+      "independently_recomputed": 0.012453704319702927,
+      "absolute_error": 3.197029273260821e-10
+    },
+    {
+      "field": "gate/L1/expert1",
+      "reported_or_stored": 0.982363118,
+      "independently_recomputed": 0.9823631175535413,
+      "absolute_error": 4.464586478292176e-10
+    },
+    {
+      "field": "gate/L1/expert2",
+      "reported_or_stored": 0.005183177,
+      "independently_recomputed": 0.005183176602963638,
+      "absolute_error": 3.970363621208506e-10
+    },
+    {
+      "field": "gate/L2/expert0",
+      "reported_or_stored": 0.005730107,
+      "independently_recomputed": 0.005730106960293446,
+      "absolute_error": 3.970655401697165e-11
+    },
+    {
+      "field": "gate/L2/expert1",
+      "reported_or_stored": 0.017272308,
+      "independently_recomputed": 0.01727230769000563,
+      "absolute_error": 3.099943704509833e-10
+    },
+    {
+      "field": "gate/L2/expert2",
+      "reported_or_stored": 0.976997585,
+      "independently_recomputed": 0.9769975853190793,
+      "absolute_error": 3.190793185225971e-10
+    },
+    {
+      "field": "gate/L3/expert0",
+      "reported_or_stored": 0.002527866,
+      "independently_recomputed": 0.0025278658107518613,
+      "absolute_error": 1.8924813886128655e-10
+    },
+    {
+      "field": "gate/L3/expert1",
+      "reported_or_stored": 0.067080468,
+      "independently_recomputed": 0.0670804675566272,
+      "absolute_error": 4.433728106878476e-10
+    },
+    {
+      "field": "gate/L3/expert2",
+      "reported_or_stored": 0.930391666,
+      "independently_recomputed": 0.9303916664309619,
+      "absolute_error": 4.3096193280689477e-10
+    },
+    {
+      "field": "issue255/语义重建MSE",
+      "reported_or_stored": 0.000182337,
+      "independently_recomputed": 0.00018233678135234368,
+      "absolute_error": 2.186476563226323e-10
+    },
+    {
+      "field": "issue255/strict_struct_test_degree_matched/L1",
+      "reported_or_stored": 0.935374149659864,
+      "independently_recomputed": 0.935374149659864,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_test_degree_matched/L2",
+      "reported_or_stored": 0.935374149659864,
+      "independently_recomputed": 0.935374149659864,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_test_degree_matched/L3",
+      "reported_or_stored": 0.49795918367346936,
+      "independently_recomputed": 0.49795918367346936,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/report/test/degree-matched",
+      "reported_or_stored": 0.93537415,
+      "independently_recomputed": 0.935374149659864,
+      "absolute_error": 3.401360304522427e-10
+    },
+    {
+      "field": "issue255/strict_struct_test_direct/L1",
+      "reported_or_stored": 0.9186515207035544,
+      "independently_recomputed": 0.9186515207035544,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_test_direct/L2",
+      "reported_or_stored": 0.9186515207035544,
+      "independently_recomputed": 0.9186515207035544,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_test_direct/L3",
+      "reported_or_stored": 0.5360938072554049,
+      "independently_recomputed": 0.5360938072554049,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/report/test/direct",
+      "reported_or_stored": 0.918651521,
+      "independently_recomputed": 0.9186515207035544,
+      "absolute_error": 2.9644564580877386e-10
+    },
+    {
+      "field": "issue255/strict_struct_test_shared_in/L1",
+      "reported_or_stored": 0.9315258950295446,
+      "independently_recomputed": 0.9315258950295446,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_test_shared_in/L2",
+      "reported_or_stored": 0.9315258950295446,
+      "independently_recomputed": 0.9315258950295446,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_test_shared_in/L3",
+      "reported_or_stored": 0.5290232881473758,
+      "independently_recomputed": 0.5290232881473758,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/report/test/shared-in",
+      "reported_or_stored": 0.931525895,
+      "independently_recomputed": 0.9315258950295446,
+      "absolute_error": 2.954458899750989e-11
+    },
+    {
+      "field": "issue255/strict_struct_test_shared_out/L1",
+      "reported_or_stored": 0.9249217935349322,
+      "independently_recomputed": 0.9249217935349322,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_test_shared_out/L2",
+      "reported_or_stored": 0.9249217935349322,
+      "independently_recomputed": 0.9249217935349322,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_test_shared_out/L3",
+      "reported_or_stored": 0.543274244004171,
+      "independently_recomputed": 0.543274244004171,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/report/test/shared-out",
+      "reported_or_stored": 0.924921794,
+      "independently_recomputed": 0.9249217935349322,
+      "absolute_error": 4.6506776207877465e-10
+    },
+    {
+      "field": "issue255/strict_struct_test_two_hop/L1",
+      "reported_or_stored": 0.911592707258342,
+      "independently_recomputed": 0.911592707258342,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_test_two_hop/L2",
+      "reported_or_stored": 0.911592707258342,
+      "independently_recomputed": 0.911592707258342,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_test_two_hop/L3",
+      "reported_or_stored": 0.4330925352597179,
+      "independently_recomputed": 0.4330925352597179,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/report/test/two-hop",
+      "reported_or_stored": 0.911592707,
+      "independently_recomputed": 0.911592707258342,
+      "absolute_error": 2.5834201444752125e-10
+    },
+    {
+      "field": "issue255/strict_struct_val_degree_matched/L1",
+      "reported_or_stored": 0.9206943498978897,
+      "independently_recomputed": 0.9206943498978897,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_val_degree_matched/L2",
+      "reported_or_stored": 0.9203539823008849,
+      "independently_recomputed": 0.9203539823008849,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_val_degree_matched/L3",
+      "reported_or_stored": 0.49591558883594283,
+      "independently_recomputed": 0.49591558883594283,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/report/val/degree-matched",
+      "reported_or_stored": 0.92069435,
+      "independently_recomputed": 0.9206943498978897,
+      "absolute_error": 1.021103201992446e-10
+    },
+    {
+      "field": "issue255/strict_struct_val_direct/L1",
+      "reported_or_stored": 0.9222303741746148,
+      "independently_recomputed": 0.9222303741746148,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_val_direct/L2",
+      "reported_or_stored": 0.921863536316948,
+      "independently_recomputed": 0.921863536316948,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_val_direct/L3",
+      "reported_or_stored": 0.5462215700660308,
+      "independently_recomputed": 0.5462215700660308,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/report/val/direct",
+      "reported_or_stored": 0.922230374,
+      "independently_recomputed": 0.9222303741746148,
+      "absolute_error": 1.7461487811232246e-10
+    },
+    {
+      "field": "issue255/strict_struct_val_shared_in/L1",
+      "reported_or_stored": 0.9229434224227698,
+      "independently_recomputed": 0.9229434224227698,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_val_shared_in/L2",
+      "reported_or_stored": 0.9229434224227698,
+      "independently_recomputed": 0.9229434224227698,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_val_shared_in/L3",
+      "reported_or_stored": 0.5428670600485942,
+      "independently_recomputed": 0.5428670600485942,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/report/val/shared-in",
+      "reported_or_stored": 0.922943422,
+      "independently_recomputed": 0.9229434224227698,
+      "absolute_error": 4.2276981915279066e-10
+    },
+    {
+      "field": "issue255/strict_struct_val_shared_out/L1",
+      "reported_or_stored": 0.9099443671766342,
+      "independently_recomputed": 0.9099443671766342,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_val_shared_out/L2",
+      "reported_or_stored": 0.9099443671766342,
+      "independently_recomputed": 0.9099443671766342,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_val_shared_out/L3",
+      "reported_or_stored": 0.5219054242002782,
+      "independently_recomputed": 0.5219054242002782,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/report/val/shared-out",
+      "reported_or_stored": 0.909944367,
+      "independently_recomputed": 0.9099443671766342,
+      "absolute_error": 1.766341517495107e-10
+    },
+    {
+      "field": "issue255/strict_struct_val_two_hop/L1",
+      "reported_or_stored": 0.8051948051948052,
+      "independently_recomputed": 0.8051948051948052,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_val_two_hop/L2",
+      "reported_or_stored": 0.8045112781954887,
+      "independently_recomputed": 0.8045112781954887,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/strict_struct_val_two_hop/L3",
+      "reported_or_stored": 0.3752563226247437,
+      "independently_recomputed": 0.3752563226247437,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/report/val/two-hop",
+      "reported_or_stored": 0.805194805,
+      "independently_recomputed": 0.8051948051948052,
+      "absolute_error": 1.948052830158531e-10
+    },
+    {
+      "field": "issue253/L1/curve0",
+      "reported_or_stored": 2.073935179,
+      "independently_recomputed": 2.073935178538247,
+      "absolute_error": 4.6175285817184886e-10
+    },
+    {
+      "field": "issue253/L1/curve1",
+      "reported_or_stored": 2.329486513,
+      "independently_recomputed": 2.329486513041214,
+      "absolute_error": 4.121414320934491e-11
+    },
+    {
+      "field": "issue253/L1/curve2",
+      "reported_or_stored": 0.361445224,
+      "independently_recomputed": 0.3614452238898826,
+      "absolute_error": 1.1011741518629492e-10
+    },
+    {
+      "field": "issue253/L1/curve3",
+      "reported_or_stored": 0.198582445,
+      "independently_recomputed": 0.198582445021364,
+      "absolute_error": 2.1363993907286272e-11
+    },
+    {
+      "field": "issue253/L1/curve4",
+      "reported_or_stored": 0.0,
+      "independently_recomputed": 0.0,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/L1/curve5",
+      "reported_or_stored": 0.885753227,
+      "independently_recomputed": 0.8857532266482837,
+      "absolute_error": 3.517163227328979e-10
+    },
+    {
+      "field": "issue253/L2/curve0",
+      "reported_or_stored": 2.086615709,
+      "independently_recomputed": 2.086615708972294,
+      "absolute_error": 2.7706281713335557e-11
+    },
+    {
+      "field": "issue253/L2/curve1",
+      "reported_or_stored": 2.337995187,
+      "independently_recomputed": 2.337995186661082,
+      "absolute_error": 3.389182268165314e-10
+    },
+    {
+      "field": "issue253/L2/curve2",
+      "reported_or_stored": 0.361186981,
+      "independently_recomputed": 0.36118698064063537,
+      "absolute_error": 3.593646491495406e-10
+    },
+    {
+      "field": "issue253/L2/curve3",
+      "reported_or_stored": 0.202030563,
+      "independently_recomputed": 0.20203056321578364,
+      "absolute_error": 2.1578364095553582e-10
+    },
+    {
+      "field": "issue253/L2/curve4",
+      "reported_or_stored": 0.0,
+      "independently_recomputed": 0.0,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/L2/curve5",
+      "reported_or_stored": 0.881530379,
+      "independently_recomputed": 0.8815303787061224,
+      "absolute_error": 2.938775889305134e-10
+    },
+    {
+      "field": "issue253/L3/curve0",
+      "reported_or_stored": 2.087941072,
+      "independently_recomputed": 2.0879410721964073,
+      "absolute_error": 1.964073348403872e-10
+    },
+    {
+      "field": "issue253/L3/curve1",
+      "reported_or_stored": 2.36007968,
+      "independently_recomputed": 2.3600796804409083,
+      "absolute_error": 4.409081988399066e-10
+    },
+    {
+      "field": "issue253/L3/curve2",
+      "reported_or_stored": 0.355726617,
+      "independently_recomputed": 0.35572661665735056,
+      "absolute_error": 3.426494643576916e-10
+    },
+    {
+      "field": "issue253/L3/curve3",
+      "reported_or_stored": 0.185682291,
+      "independently_recomputed": 0.18568229132765612,
+      "absolute_error": 3.276561244547338e-10
+    },
+    {
+      "field": "issue253/L3/curve4",
+      "reported_or_stored": 0.0,
+      "independently_recomputed": 0.0,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue253/L3/curve5",
+      "reported_or_stored": 0.881497559,
+      "independently_recomputed": 0.8814975586443957,
+      "absolute_error": 3.556043237651352e-10
+    },
+    {
+      "field": "issue255/L1/curve0",
+      "reported_or_stored": 2.79624351,
+      "independently_recomputed": 2.796243509798878,
+      "absolute_error": 2.011222299813653e-10
+    },
+    {
+      "field": "issue255/L1/curve1",
+      "reported_or_stored": 1.687637006,
+      "independently_recomputed": 1.6876370055703902,
+      "absolute_error": 4.2960990320750625e-10
+    },
+    {
+      "field": "issue255/L1/curve2",
+      "reported_or_stored": 0.355964359,
+      "independently_recomputed": 0.35596435947778277,
+      "absolute_error": 4.777827578017479e-10
+    },
+    {
+      "field": "issue255/L1/curve3",
+      "reported_or_stored": 0.147265005,
+      "independently_recomputed": 0.14726500492804245,
+      "absolute_error": 7.195755102884505e-11
+    },
+    {
+      "field": "issue255/L1/curve4",
+      "reported_or_stored": 0.0,
+      "independently_recomputed": 0.0,
+      "absolute_error": 0.0
+    },
+    {
+      "field": "issue255/L1/curve5",
+      "reported_or_stored": 0.920628074,
+      "independently_recomputed": 0.9206280735053058,
+      "absolute_error": 4.946941745131994e-10
+    },
+    {
+      "field": "issue255/L2/curve0",
+      "reported_or_stored": 2.795301136,
+      "independently_recomputed": 2.7953011358963478,
+      "absolute_error": 1.0365219793584401e-10
+    },
+    {
+      "field": "issue255/L2/curve1",
+      "reported_or_stored": 1.684988434,
+      "independently_recomputed": 1.6849884344224464,
+      "absolute_error": 4.224463001634149e-10
+    },
+    {
+      "field": "issue255/L2/curve2",
+      "reported_or_stored": 0.414192912,
+      "independently_recomputed": 0.41419291167520106,
+      "absolute_error": 3.2479896550086096e-10
+    },
+    {
+      "field": "issue255/L2/curve3",
+      "reported_or_stored": 0.407022817,
+      "independently_recomputed": 0.4070228171247043,
+      "absolute_error": 1.2470430243993746e-10
+    },
+    {
+      "field": "issue255/L2/curve4",
+      "reported_or_stored": 0.116883117,
+      "independently_recomputed": 0.11688311688311688,
+      "absolute_error": 1.1688311429836062e-10
+    },
+    {
+      "field": "issue255/L2/curve5",
+      "reported_or_stored": 0.718672801,
+      "independently_recomputed": 0.718672801017782,
+      "absolute_error": 1.7781998096211282e-11
+    },
+    {
+      "field": "issue255/L3/curve0",
+      "reported_or_stored": 2.794331049,
+      "independently_recomputed": 2.7943310492335764,
+      "absolute_error": 2.335762694372079e-10
+    },
+    {
+      "field": "issue255/L3/curve1",
+      "reported_or_stored": 1.686171255,
+      "independently_recomputed": 1.686171254664388,
+      "absolute_error": 3.3561198264919767e-10
+    },
+    {
+      "field": "issue255/L3/curve2",
+      "reported_or_stored": 0.360552036,
+      "independently_recomputed": 0.3605520360876279,
+      "absolute_error": 8.762790493221928e-11
+    },
+    {
+      "field": "issue255/L3/curve3",
+      "reported_or_stored": 0.254017278,
+      "independently_recomputed": 0.2540172780484404,
+      "absolute_error": 4.844036283202513e-11
+    },
+    {
+      "field": "issue255/L3/curve4",
+      "reported_or_stored": 0.012987013,
+      "independently_recomputed": 0.012987012987012988,
+      "absolute_error": 1.2987012507070794e-11
+    },
+    {
+      "field": "issue255/L3/curve5",
+      "reported_or_stored": 0.814651817,
+      "independently_recomputed": 0.8146518172274304,
+      "absolute_error": 2.274304078397904e-10
+    },
+    {
+      "field": "准入诊断，epoch31–60/timing0",
+      "reported_or_stored": 0.750110548,
+      "independently_recomputed": 0.7501105478964746,
+      "absolute_error": 1.0352541046643182e-10
+    },
+    {
+      "field": "准入诊断，epoch31–60/timing1",
+      "reported_or_stored": 0.692650539,
+      "independently_recomputed": 0.6926505388692021,
+      "absolute_error": 1.3079781702174387e-10
+    },
+    {
+      "field": "准入诊断，epoch31–60/timing2",
+      "reported_or_stored": 1.022661891,
+      "independently_recomputed": 1.02266189083457,
+      "absolute_error": 1.65430114051901e-10
+    },
+    {
+      "field": "正式训练，epoch31–60/timing0",
+      "reported_or_stored": 0.756988079,
+      "independently_recomputed": 0.7569880786662301,
+      "absolute_error": 3.337699006067396e-10
+    },
+    {
+      "field": "正式训练，epoch31–60/timing1",
+      "reported_or_stored": 0.719396243,
+      "independently_recomputed": 0.7193962428718805,
+      "absolute_error": 1.2811951499713814e-10
+    },
+    {
+      "field": "正式训练，epoch31–60/timing2",
+      "reported_or_stored": 0.99470544,
+      "independently_recomputed": 0.9947054404765368,
+      "absolute_error": 4.765366989900599e-10
+    }
+  ],
+  "report": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue255/REPORT.md",
+    "sha256": "cab46886124cdab33f8d0f6b22827e1c4c629b0b2547d68f7ca75aecf0bd48a5"
+  },
+  "recomputation_script": {
+    "path": "/fs04/ar57/wenyu/GeneRec/tools/issue255/reconcile_results.py",
+    "sha256": "b97426edd7c7acd7f829830830176d4ec7c9eed8981e5a088fbbba5f83311204"
+  },
+  "raw_reconciliation": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue255/RECONCILIATION.json",
+    "sha256": "d9757df2ce1d49dbaa6f8a79459a0bc6043268422eafeaedc413ee956bc6afe3"
+  },
+  "supplementary_method": "raw JSON SID prefix sets; Python per-source edge loop; original heldout NPZ pair enumeration; raw catalogue float64 reconstruction/gate reductions; original inclusive timestamp boundaries; printed Markdown tables compared to these and independent six-cell reductions",
+  "exit_code": 0
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "genrec.issue255.archive_status/1",
+  "run_id": "issue255_formal_r1",
+  "status": "NOT_UPLOADED_INCOMPLETE_FOUR_PIECES",
+  "required": {
+    "stage2_executed_source": "available in immutable run src and bound by archive_binding.json",
+    "item_sids.json": "available, sha256 7140826dbce9961f032818820e6fa38926e9fdd86473403151932ae22714b59b",
+    "rqvae_best.pth": "available locally, sha256 0969f60eaf5bde2b715bad99f86f5a4ab30ef63e2f7c9998ca8a710761ace2a9",
+    "complete_Stage3_recall": "missing: frozen collision gate refused dispatch"
+  },
+  "probe_command": "python3 results/research/issue139/upload_stage3.py TIGER_prefix_curvature_gate_rq --dry-run",
+  "exit_code": 1,
+  "error": "ValueError: missing necessary Stage3 test_final.json for TIGER_prefix_curvature_gate_rq",
+  "uploaded": false,
+  "ledger_updated": false,
+  "remote_number": null,
+  "credential_status": "read-only authentication passed in R2_PREFLIGHT.json; credentials were not the blocker",
+  "policy": "No partial four-piece archive, fabricated recall, substituted invalid run or secret output"
+}
