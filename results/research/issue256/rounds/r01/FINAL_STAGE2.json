@@ -1,0 +1,73 @@
+{
+  "schema": "genrec.issue256.final_stage2/1",
+  "run_id": "issue256_r01_formal",
+  "arm": "TIGER_module_budget_prefix_rq",
+  "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src",
+  "epoch": 3000,
+  "artifacts": {
+    "checkpoint": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/rqvae_best.pth",
+      "sha256": "680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c"
+    },
+    "sid": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+      "sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f"
+    },
+    "export": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/export_manifest.json",
+      "sha256": "a90c264227101d5ef888f5f6306d95263fab18903313a5cd03b4e703a310b49d"
+    },
+    "binding": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/archive_binding.json",
+      "sha256": "f26791dce14cbc6d2c3336abd354937861e2a20bb880c42efb77e909b968b4eb"
+    },
+    "layered_metrics": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_module_budget_prefix_rq/stage2_metrics/201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f.json",
+      "sha256": "f9b23d678dea7ff78cba503e0241bdc576115a31cde66d5da0f7dd82ae2afa7d"
+    },
+    "workspace": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/workspace.json",
+      "sha256": "6d7c21ebf146e86524ac95d24f9e7a0cc8d4f648fb24ac92a71a441306d6bbd8"
+    },
+    "training_summary": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/TRAINING_SUMMARY.json",
+      "sha256": "37b763d8deaa80d2cd72972511690b85e3f0a723d56424cb8def18eebab436cc"
+    },
+    "metrics": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/logs/training_metrics.jsonl",
+      "sha256": "ad643a6fbb798c405834a96b8993e26b1fe42fb52228ed23a5f25659b8c08c54"
+    },
+    "post_training_modules": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/POST_TRAINING_MODULE_CHECKS.json",
+      "sha256": "ce069ba4238e4b027e7dccf106459ed41710b5f6fe959bc11a0a0e68df8e0595"
+    }
+  },
+  "same_checkpoint_all_items_exact": true,
+  "collision_suffix_exact": true,
+  "quality": {
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+    "allow": true,
+    "reason": "collision 0.0657 < 0.40; measured quantisation error 0.007 (band 0.035-0.100) and effective rank 5.39 (limit 8.0); WARNING quantisation error 0.007 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises",
+    "collision": 0.06568511815186884,
+    "quant_error": 0.0072272333547981436,
+    "effective_rank": 5.390244278887607,
+    "warnings": [
+      "quantisation error 0.007 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises"
+    ],
+    "limits": {
+      "collision": 0.4,
+      "quant_error": [
+        0.035,
+        0.1
+      ],
+      "effective_rank": 8.0
+    }
+  },
+  "reexport_wall_seconds": 144.5692267343402,
+  "audit_wall_seconds": 254.98709882423282,
+  "evidence_timing": "post-formal audit; never a substitute for pre-dispatch proof",
+  "evaluator": {
+    "path": "/fs04/ar57/wenyu/GeneRec/tools/issue256/finalize_stage2.py",
+    "sha256": "9840d6e95ca7a0a30fb99904050bdce5750da373264ee724e87acd1d1af695ef"
+  }
+}

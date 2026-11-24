@@ -1,0 +1,295 @@
+{
+  "run_id": "issue256_r01_formal",
+  "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src",
+  "epochs_recorded": 3000,
+  "last_epoch": 3000,
+  "inclusive_window": {
+    "epochs": 30,
+    "first_epoch": 31,
+    "last_epoch": 60,
+    "window_seconds": 21.07991445530206,
+    "mean_seconds": 0.7026638151767354,
+    "median_seconds": 0.6734066368080676,
+    "p95_seconds": 0.9529080558568239,
+    "sum_epoch_seconds": 21.033688112162054,
+    "interepoch_seconds": 0.046226343140006065,
+    "predicted_3000_epoch_seconds": 2107.991445530206,
+    "passed": true,
+    "scope": "continuous inclusive window; inter-epoch/periodic work is not subtracted",
+    "p95_definition": "nearest-rank ceil(0.95*N)",
+    "distribution_scope": "end-to-end epoch increments; interepoch work belongs to following epoch",
+    "target_seconds": 0.4,
+    "expected_max_seconds": 0.5,
+    "authorized_ceiling_seconds": 0.8,
+    "target_met": false
+  },
+  "curvature_calibration": {
+    "event": "curvature_calibration",
+    "timestamp": 1795546154.4126568,
+    "wall_time_s": 107.295,
+    "run_id": "issue256_r01_formal",
+    "purpose": "formal",
+    "original_gradient": 0.00011240725063122984,
+    "reconstruction_gradient": 0.00011458619081131968,
+    "curvature_gradient": 28.025575528593887,
+    "original_curvature_cosine": -0.18879046397804086,
+    "reconstruction_curvature_cosine": 0.7703688522776425,
+    "lambda": 1.6054239040386165e-06,
+    "calibration_batch_items": 1024,
+    "calibration_world_size": 4,
+    "module_budgets": {
+      "encoder": {
+        "original_gradient": 0.00011240725063122984,
+        "curvature_gradient": 28.025575528593887,
+        "weighted_ratio": 0.4002671413577305
+      },
+      "GNN.input": {
+        "original_gradient": 6.401704950331012e-08,
+        "curvature_gradient": 0.007193925534419912,
+        "weighted_ratio": 0.1804097518776514
+      },
+      "sharedKey": {
+        "original_gradient": 7.317659692627019e-08,
+        "curvature_gradient": 0.004970188383112144,
+        "weighted_ratio": 0.10904113573172662
+      },
+      "sharedValue": {
+        "original_gradient": 2.3342458132760432e-08,
+        "curvature_gradient": 0.001916947594553915,
+        "weighted_ratio": 0.1318418768744404
+      },
+      "sharedScore": {
+        "original_gradient": 3.092791879971474e-08,
+        "curvature_gradient": 0.0026330344859855997,
+        "weighted_ratio": 0.13667704352606816
+      },
+      "GNN.layers.0.self_linear": {
+        "original_gradient": 5.911935346437252e-08,
+        "curvature_gradient": 0.004687053431784742,
+        "weighted_ratio": 0.12727993758301362
+      },
+      "GNN.layers.0.incoming": {
+        "original_gradient": 5.907283491229886e-08,
+        "curvature_gradient": 0.005657401026337166,
+        "weighted_ratio": 0.15375132843884087
+      },
+      "GNN.layers.0.outgoing": {
+        "original_gradient": 5.5802241090026897e-08,
+        "curvature_gradient": 0.004566341886079592,
+        "weighted_ratio": 0.1313731182605703
+      },
+      "GNN.layers.1.self_linear": {
+        "original_gradient": 4.7629874788625535e-08,
+        "curvature_gradient": 0.0027925202512039263,
+        "weighted_ratio": 0.09412535270542703
+      },
+      "GNN.layers.1.incoming": {
+        "original_gradient": 4.0578680824492546e-08,
+        "curvature_gradient": 0.002543379632135124,
+        "weighted_ratio": 0.10062432724550584
+      },
+      "GNN.layers.1.outgoing": {
+        "original_gradient": 3.967155561164402e-08,
+        "curvature_gradient": 0.0026674428220715644,
+        "weighted_ratio": 0.10794576625961683
+      },
+      "codebook0": {
+        "original_gradient": 3.881313094590591e-05,
+        "curvature_gradient": 5.705991622846402,
+        "weighted_ratio": 0.23601639765492777
+      },
+      "codebook1": {
+        "original_gradient": 9.21716557014871e-05,
+        "curvature_gradient": 15.653289156323448,
+        "weighted_ratio": 0.2726452551723521
+      },
+      "codebook2": {
+        "original_gradient": 8.871498129370267e-05,
+        "curvature_gradient": 12.781107300455709,
+        "weighted_ratio": 0.23129233508264957
+      },
+      "Query0": {
+        "original_gradient": 6.243269772904093e-08,
+        "curvature_gradient": 0.0008411229210927496,
+        "weighted_ratio": 0.021629032428130367
+      },
+      "Query1": {
+        "original_gradient": 5.614283030493871e-09,
+        "curvature_gradient": 0.0034970719924004006,
+        "weighted_ratio": 0.9999999893574448
+      },
+      "Query2": {
+        "original_gradient": 6.804649419394538e-09,
+        "curvature_gradient": 0.0013779858183276998,
+        "weighted_ratio": 0.32510879485784655
+      }
+    },
+    "tangent_scale": 0.08433422446250916,
+    "target_scale": 2.000375270843506
+  },
+  "level_scale_calibration": [
+    {
+      "event": "level_scale_calibration",
+      "timestamp": 1795546133.8055952,
+      "wall_time_s": 86.688,
+      "run_id": "issue256_r01_formal",
+      "purpose": "formal",
+      "level_scales": [
+        0.350431889295578,
+        0.4139723479747772,
+        0.5116941332817078
+      ],
+      "tangent_scale": 0.08433422446250916,
+      "samples": 28,
+      "references": 32
+    }
+  ],
+  "last_training_record": {
+    "event": "train",
+    "timestamp": 1795548120.9553423,
+    "wall_time_s": 2073.838,
+    "run_id": "issue256_r01_formal",
+    "purpose": "formal",
+    "epoch": 3000,
+    "loss": 9.965944627765566e-05,
+    "recon": 8.047193114180118e-05,
+    "curvature_estimate": 1.7199554443359375,
+    "gradient_norm_before_clip": 0.0002468405000399798,
+    "lr": 0.0,
+    "epoch_time_s": 1.1447787713259459,
+    "raw_unique": 22972,
+    "collision": 0.06568511815186884,
+    "gate_mean": [
+      0.00889689289033413,
+      0.9569602012634277,
+      0.03414294123649597,
+      0.004291114863008261,
+      0.9775627851486206,
+      0.01814611814916134,
+      0.008298199623823166,
+      0.9862929582595825,
+      0.005408890545368195
+    ],
+    "gate_entropy": 0.07258392125368118,
+    "auxiliary_attention_entropy": 1.1345932483673096,
+    "level_codebook_gradient_norm": [
+      0.0001391303667332977,
+      8.757373143453151e-05,
+      4.444240403245203e-05
+    ],
+    "peak_allocated_bytes": 8835225600,
+    "structural_coverage": [
+      {
+        "updates": 18000,
+        "sampled_target_occurrences": 458989,
+        "sampled_references": 576000,
+        "unique_centres": 12163,
+        "centre_population": 24326,
+        "unique_target_rows": 386987,
+        "target_population": 28391948,
+        "unique_references": 24471,
+        "unique_aux_items": 24587,
+        "epoch_updates": 6,
+        "epoch_target_occurrences": 115,
+        "epoch_reference_draws": 192,
+        "epoch_centres": [
+          10039,
+          4048,
+          23084,
+          24027,
+          15792,
+          22335
+        ],
+        "sampling_sha256": "ff3a9312a10a0c9d937a79107522d0a8dd0733b6a56349456b9e7bba5a548b43",
+        "seed": 42,
+        "objective": "biased stochastic training estimator; not full-catalogue loss"
+      },
+      {
+        "updates": 18000,
+        "sampled_target_occurrences": 454026,
+        "sampled_references": 576000,
+        "unique_centres": 12163,
+        "centre_population": 24326,
+        "unique_target_rows": 383392,
+        "target_population": 28391948,
+        "unique_references": 24471,
+        "unique_aux_items": 24587,
+        "epoch_updates": 6,
+        "epoch_target_occurrences": 159,
+        "epoch_reference_draws": 192,
+        "epoch_centres": [
+          6527,
+          15922,
+          19864,
+          18089,
+          16480,
+          13115
+        ],
+        "sampling_sha256": "e8bd838a932dce17e82a0aaaf89ab7c62789c04560af14872dab9999f5bdcaa3",
+        "seed": 42,
+        "objective": "biased stochastic training estimator; not full-catalogue loss"
+      },
+      {
+        "updates": 18000,
+        "sampled_target_occurrences": 458474,
+        "sampled_references": 576000,
+        "unique_centres": 12163,
+        "centre_population": 24326,
+        "unique_target_rows": 386809,
+        "target_population": 28391948,
+        "unique_references": 24471,
+        "unique_aux_items": 24587,
+        "epoch_updates": 6,
+        "epoch_target_occurrences": 161,
+        "epoch_reference_draws": 192,
+        "epoch_centres": [
+          561,
+          4798,
+          12934,
+          24556,
+          23756,
+          23625
+        ],
+        "sampling_sha256": "fa8328a1020d619e415c276b70935a8bd6227e11327e0d29ae7097bba4a42898",
+        "seed": 42,
+        "objective": "biased stochastic training estimator; not full-catalogue loss"
+      },
+      {
+        "updates": 18000,
+        "sampled_target_occurrences": 454760,
+        "sampled_references": 576000,
+        "unique_centres": 12163,
+        "centre_population": 24326,
+        "unique_target_rows": 383778,
+        "target_population": 28391948,
+        "unique_references": 24471,
+        "unique_aux_items": 24587,
+        "epoch_updates": 6,
+        "epoch_target_occurrences": 146,
+        "epoch_reference_draws": 192,
+        "epoch_centres": [
+          22143,
+          1284,
+          16432,
+          17371,
+          16158,
+          1566
+        ],
+        "sampling_sha256": "080e11b78cf8c3dfd50b9e296dda6842e3f5a49193b34fb48880bf981c6b63e6",
+        "seed": 42,
+        "objective": "biased stochastic training estimator; not full-catalogue loss"
+      }
+    ],
+    "cumulative_time_s": 2073.8375782966614
+  },
+  "initialization": [
+    {
+      "event": "initialization_complete",
+      "timestamp": 1795546154.416018,
+      "wall_time_s": 107.298,
+      "run_id": "issue256_r01_formal",
+      "purpose": "formal",
+      "initialization_seconds": 110.29330036137253
+    }
+  ]
+}

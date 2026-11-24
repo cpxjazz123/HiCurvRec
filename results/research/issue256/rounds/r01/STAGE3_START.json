@@ -1,0 +1,87 @@
+{
+  "started": true,
+  "pid": 809893,
+  "launched_at": 1795548654.8601086,
+  "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py",
+  "cwd": "/fs04/ar57/wenyu/GeneRec/stage3_T5Train",
+  "variant": "TIGER_module_budget_prefix_rq",
+  "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+  "stage2_run_id": "issue256_r01_formal",
+  "archive_binding": {
+    "allow": true,
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/archive_binding.json",
+    "sha256": "f26791dce14cbc6d2c3336abd354937861e2a20bb880c42efb77e909b968b4eb"
+  },
+  "layer_record": {
+    "passed": true,
+    "report": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_module_budget_prefix_rq/stage2_metrics/201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f.json",
+    "reused": true,
+    "sha256": "f9b23d678dea7ff78cba503e0241bdc576115a31cde66d5da0f7dd82ae2afa7d"
+  },
+  "run_log": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/_stage3_run.log",
+  "native_log": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/_stage3_launcher.log",
+  "harness": "/fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py",
+  "mode": "ddp",
+  "gpu_probe": {
+    "physical": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "probe_source": "nvidia-smi",
+    "cuda_visible_devices": null,
+    "requested": null,
+    "visible": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "visible_count": 4,
+    "required": 4,
+    "mode": "ddp",
+    "entrypoint_supports_single_gpu": true
+  },
+  "collision": 0.06568511815186884,
+  "collision_gate_waived": false,
+  "sid_quality": {
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+    "allow": true,
+    "reason": "collision 0.0657 < 0.40; measured quantisation error 0.007 (band 0.035-0.100) and effective rank 5.39 (limit 8.0); WARNING quantisation error 0.007 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises",
+    "collision": 0.06568511815186884,
+    "quant_error": 0.007227233354192085,
+    "effective_rank": 5.3902442789303,
+    "warnings": [
+      "quantisation error 0.007 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises"
+    ],
+    "limits": {
+      "collision": 0.4,
+      "quant_error": [
+        0.035,
+        0.1
+      ],
+      "effective_rank": 8.0
+    }
+  },
+  "protocol": {
+    "trainer": "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py",
+    "expected": {
+      "NUM_EPOCHS": "150",
+      "NO_EVAL": "True",
+      "SKIP_TEST": "False",
+      "SEED": "42",
+      "BEAM_SIZE": "20"
+    },
+    "found": {
+      "NUM_EPOCHS": "150",
+      "NO_EVAL": "True",
+      "SKIP_TEST": "False",
+      "SEED": "42",
+      "BEAM_SIZE": "20"
+    },
+    "mismatched": {},
+    "early_stop_present": false,
+    "ok": true
+  }
+}

@@ -1140,3 +1140,17 @@ results/research/issue253/extraction/
 results/research/issue253/**/cache/
 results/research/issue253/*.tar.gz
 results/research/issue253/FINAL_EVALUATION.json
+
+# Issue256: retain raw runs locally; commit immutable hash-bound summaries.
+results/research/issue256/rounds/*/validation/
+results/research/issue256/rounds/*/benchmark/
+results/research/issue256/rounds/*/steady_profile/
+results/research/issue256/rounds/*/budget_regression/
+results/research/issue256/rounds/*/budget_regression_launcher*/
+results/research/issue256/rounds/*/pytest_*/
+results/research/issue256/**/PARENT_DIAGNOSTICS.json
+results/research/issue256/**/evaluation/*_items.jsonl
+results/research/issue256/**/evaluation/*_items.jsonl.partial
+results/research/issue256/**/evaluation/extractions/*/catalogue.partial
+results/research/issue256/**/recommendation_validation/rank*.jsonl
+results/research/issue256/**/recommendation_validation/launcher/

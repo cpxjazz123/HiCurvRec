@@ -1,0 +1,47 @@
+{
+  "command": "Stage2 Python inline: independent math.fsum reduction of all three retained parent training-curvature cells",
+  "exit_code": 0,
+  "source": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue255/evaluation/FINAL_EVALUATION.json",
+    "sha256": "6aa757d6453c92860b7e9a8072b0e8f029532c82904c190a26b5e6bfd786d1a7"
+  },
+  "cells": {
+    "L1": {
+      "count": 28391948,
+      "centres": 24326,
+      "macro_mae": 2.796243509798878,
+      "micro_mae": 1.6876370055703902,
+      "balanced_accuracy": 0.35596435947778277,
+      "sign_recall": {
+        "negative": 0.14726500492804245,
+        "zero": 0.0,
+        "positive": 0.9206280735053058
+      }
+    },
+    "L2": {
+      "count": 28391948,
+      "centres": 24326,
+      "macro_mae": 2.7953011358963478,
+      "micro_mae": 1.6849884344224464,
+      "balanced_accuracy": 0.41419291167520106,
+      "sign_recall": {
+        "negative": 0.4070228171247043,
+        "zero": 0.11688311688311688,
+        "positive": 0.718672801017782
+      }
+    },
+    "L3": {
+      "count": 28391948,
+      "centres": 24326,
+      "macro_mae": 2.7943310492335764,
+      "micro_mae": 1.686171254664388,
+      "balanced_accuracy": 0.3605520360876279,
+      "sign_recall": {
+        "negative": 0.2540172780484404,
+        "zero": 0.012987012987012988,
+        "positive": 0.8146518172274304
+      }
+    }
+  },
+  "test_access": false
+}

@@ -1,0 +1,3 @@
+已通过唯一Stage3 MCP入口启动R01，started=true，pid=809893，dispatch mode=ddp；冻结150epochs/seed42/beam20/NO_EVAL=true/SKIP_TEST=false，协议逐值匹配、无early-stop。SID前三码碰撞0.06568511815186884，collision_gate_waived=false；同一精确archive binding与§63分层记录通过。完整响应保存在`rounds/r01/STAGE3_START.json`，同一SID SHA为`201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f`。
+
+另一次只读CUDA全商品提取已退出0：3×24587×32硬前缀与真实码本累加逐位一致，分层gate24587×3×3、attention24587×3×3×5、重建24587×768；不改权重或SID。提取receipt `evaluation/extractions/cf90992b193667df37303f77860dd62d304b3c93b86b1c252836815976e4b38c/EXTRACTION.json:beeae5bc5b6fa62b92fcc8466e540ee8e8d72eb455f12e348bb0de9cce0aad41`。全量三层训练曲率/固定结构验证诊断现以独立CPU消费者计算，不读取结构test；不与Stage3争抢GPU。Stage3当前仍在初始化，尚无train_start或Recall，不把派发当完成。

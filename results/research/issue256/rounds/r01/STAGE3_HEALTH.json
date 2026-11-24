@@ -1,0 +1,83 @@
+{
+  "status": "running",
+  "test_result_scope": "this launch",
+  "variant": "TIGER_module_budget_prefix_rq",
+  "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+  "result_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq",
+  "gpu_probe": {
+    "physical": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "probe_source": "nvidia-smi",
+    "cuda_visible_devices": null,
+    "requested": null,
+    "visible": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "visible_count": 4,
+    "required": 4,
+    "mode": "ddp",
+    "entrypoint_supports_single_gpu": true
+  },
+  "current_gpu_probe": {
+    "physical": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "probe_source": "nvidia-smi",
+    "cuda_visible_devices": null,
+    "requested": null,
+    "visible": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "visible_count": 4,
+    "required": 4,
+    "mode": "ddp"
+  },
+  "pid": 809893,
+  "launched_at": 1795548654.8601086,
+  "live_processes": [
+    {
+      "pid": 809893,
+      "role": "launcher",
+      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
+    }
+  ],
+  "gpu_processes": [],
+  "launch": {
+    "dispatch_mode": "ddp",
+    "reported_mode": null,
+    "world_size": null,
+    "train_batch_per_process": null,
+    "global_train_batch": null,
+    "infer_batch_per_process": null,
+    "cuda_visible_devices": null
+  },
+  "latest_train": null,
+  "progress": null,
+  "total_epochs": "150",
+  "protocol_ok": true,
+  "metrics": null,
+  "test_final": null,
+  "test_final_stale": null,
+  "test_result": null,
+  "ckpt_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/ckpt",
+  "ckpt_files": [],
+  "run_log": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/_stage3_run.log",
+  "native_log": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/_stage3_launcher.log",
+  "run_log_tail": "",
+  "native_log_tail": "",
+  "error_markers": [],
+  "observed_at": "2026-11-24T19:35:03.879585+00:00"
+}

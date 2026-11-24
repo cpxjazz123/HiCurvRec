@@ -2,7 +2,8 @@
   "issue": 256,
   "state": "WORKING",
   "parent_commit": "c4ee00cdc4314b7fcab882acd939bf18ee3b0824",
-  "commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
+  "commit": "1d09e12c349850a7ac4e107be0aa658c62e70499",
+  "source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
   "done": [
     "acceptance frozen",
     "assets109/109",
@@ -18,26 +19,33 @@
     "current126/64 suites and complete current-source actual entry/DDP/performance/profile PASS",
     "CHECK_3:13 pretraining PASS,0 FAIL,4 full-training/final criteria NOT_RUN",
     "admitted source pushed with local/remote main SHA equality",
-    "formal R01 launched; four real workers and post-launch real Trainer smoke observed"
+    "formal R01 launched; four real workers and post-launch real Trainer smoke observed",
+    "R01 formal3000 epochs/train_end completed; launcher exit0",
+    "final checkpoint/SID cold audit exact with zero rewriting; layer metrics and quality recorded",
+    "post-training18-module actual-loss wiring and disposable optimizer update recorded",
+    "exact final full-catalogue hard prefixes/gates/attention/reconstruction extracted",
+    "legal frozen Stage3 MCP dispatch accepted without collision waiver",
+    "all three complete training-curvature populations and five validation banks measured; independent raw-artifact reduction PASS"
   ],
   "not_run": [
-    "r01 final epoch3000 checkpoint/SID audit and quality",
     "r01 legal150-epoch Stage3, independent reconciliation and complete R2",
     "strict final test_R@10>0.065 and issue256 closure"
   ],
-  "running": [{
-    "name": "issue256_r01_formal",
-    "mode": "ddp4",
-    "worker_pids": [435981,435982,435983,435984],
-    "epoch": 2000,
-    "checkpoint": "results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/rqvae_best.pth",
-    "checkpoint_exists": false,
-    "log": "results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/logs/training_metrics.jsonl"
-  }],
+  "running": [
+    {
+      "name": "R01 frozen Stage3",
+      "pid": 809893,
+      "mode": "ddp-dispatched",
+      "epoch": null,
+      "sid_sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
+      "dispatch_evidence": "results/research/issue256/rounds/r01/STAGE3_START.json"
+    }
+  ],
   "blocked_by": null,
   "next_commands": [
-    "read the exact existing formal metrics; never allocate another R01 run",
-    "after train_end, cold-audit the final checkpoint/SID and record layer metrics before Stage3"
+    "supervise the existing Stage3 via MCP status, never start another R01 formal run",
+    "reduce completed CPU diagnostics; after Stage3 finishes reduce full test, evaluate external validation and archive exact R2 pairing",
+    "if test_R@10<=0.065, preserve R01 and return to training/validation-driven R1/R2"
   ],
-  "updated_at": "2026-11-24T19:11:01.284375+00:00"
+  "updated_at": "2026-11-24T19:35:03.879585+00:00"
 }

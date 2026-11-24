@@ -1,0 +1,3 @@
+R01正式Stage2已写出真实train_end：恰好3000条训练epoch，`checkpoint_selection=final_epoch`，总wall=2084.053s，最终训练导出碰撞率0.06568511815186884；SID形状24587×4，追加碰撞计数器后24587条唯一。最终loss=0.00009965944627765566、recon=0.00008047193114180118。
+
+固定run：`results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/`，原worker435981/435982/435983/435984；生产源码commit`0cdfec9b024e568b5b08d96e777033844d66635e`。checkpoint和SID已存在，但还没有将训练内导出冒充冷重导出证明。接着执行同一最终checkpoint的零改写精确审计、分层记录、质量检查和训练后真实Loss接线诊断；这些完成且正式进程退场后才调用Stage3 MCP。当前没有Stage3或最终Recall结论。

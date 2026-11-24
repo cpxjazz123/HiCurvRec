@@ -1,0 +1,5 @@
+R01最终checkpoint冷审计PASS，启动器退出0：24587商品的前三码与原SID逐项精确一致、第四碰撞计数器也一致，SID未改写；已在读取任何本轮Stage3成绩前保存§63分层指标。最终碰撞0.06568511815186884 <0.4；quant_error=0.0072272333547981436、effective_rank=5.390244278887607。低quant_error触发诊断告警，不冒充已证明的泛化失败，也不绕过任何硬门槛。
+
+绑定：checkpoint SHA256 `680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c`；SID SHA256 `201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f`。`rounds/r01/FINAL_STAGE2.json:85380a1ac8aca033d28ae16d102924d5ea2986cb8e5af4117af1b00c2236ce23`记录全部源、输入、导出、分层记录与原始训练流身份；命令为Stage2解释器`-B -m tools.issue256.finalize_stage2`。
+
+训练后实际Loss接线：18/18模块combined梯度及一次独立新optimizer状态的诊断更新均非零；这不是正式optimizer续训。最终权重的单rank真实1024样本回放中，最大lambda*C/O范数比为Query0的10.4584，Query0/Query2等存在反向梯度；初始全局预算并不保证训练后继续成立。它是后续验证线索，不据此修改本轮权重或声明Recall因果。证据`POST_TRAINING_MODULE_CHECKS.json`；接着只读提取最终全商品硬前缀，随后合法派发Stage3。
