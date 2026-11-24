@@ -1,0 +1,46 @@
+{
+  "graph": {
+    "in_out_overlap_incidences": 11800,
+    "isolated_items": 116,
+    "items_both_in_and_out_neighbour": 3539
+  },
+  "items": 24587,
+  "population": "exact and complete: every item, every induced edge, no sampling or truncation",
+  "schema": "genrec.assets.v10_direction_ego.coverage/1",
+  "variants": {
+    "in_only": {
+      "edges_checked": 695377,
+      "empty_neighbourhood_items": 218,
+      "in_edges": 695377,
+      "items": 24587,
+      "items_checked": 24587,
+      "mismatches": 0,
+      "nodes": 285719,
+      "nodes_checked": 285719,
+      "out_edges": 695377,
+      "overlap_incidences": 11800,
+      "overlap_items": 3539,
+      "reciprocal_pairs_in_induced_sets": 80063,
+      "tokens_with_reciprocal_pairs": 5798,
+      "variant": "in_only",
+      "verdict": "PASS"
+    },
+    "out_only": {
+      "edges_checked": 695377,
+      "empty_neighbourhood_items": 292,
+      "in_edges": 695377,
+      "items": 24587,
+      "items_checked": 24587,
+      "mismatches": 0,
+      "nodes": 285719,
+      "nodes_checked": 285719,
+      "out_edges": 695377,
+      "overlap_incidences": 11800,
+      "overlap_items": 3539,
+      "reciprocal_pairs_in_induced_sets": 83645,
+      "tokens_with_reciprocal_pairs": 5791,
+      "variant": "out_only",
+      "verdict": "PASS"
+    }
+  }
+}

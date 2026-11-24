@@ -1439,6 +1439,483 @@
       "sha256": "5866c35f50aa9a256483d787abc3062c68b3dc7d1c9fdd53e3712e768d7627dd",
       "origin": "all-item complete full-ego sparse operator audit",
       "command": "python3.9 -m tools.issue252.ego_operators"
+    },
+    {
+      "name": "direction_in_only_nodes",
+      "path": "assets/v10_direction_ego/in_only/nodes.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int32",
+      "shape": [
+        285719
+      ],
+      "bytes": 1143004,
+      "sha256": "b26ed6a16fd31df46c75c7f1b1987a548a5686e082613ec1bb573a674eb1c1b2",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced in_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_in_only_offsets",
+      "path": "assets/v10_direction_ego/in_only/offsets.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int64",
+      "shape": [
+        24588
+      ],
+      "bytes": 196832,
+      "sha256": "7a7f93cb001e1b5c3fdf852f4f69147eee37851b4444434b0b1df10d1003d88e",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced in_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_in_only_node_counts",
+      "path": "assets/v10_direction_ego/in_only/node_counts.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int64",
+      "shape": [
+        24587
+      ],
+      "bytes": 196824,
+      "sha256": "93aa53b139e0233861ab7b733390c3b39bbd0cc537c62b71b181d8452d2cd6fa",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced in_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_in_only_in_ptr",
+      "path": "assets/v10_direction_ego/in_only/in_ptr.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int64",
+      "shape": [
+        285720
+      ],
+      "bytes": 2285888,
+      "sha256": "66d042a32ad439144feccce7691cb5b32987540d579d7906245382de6d83e185",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced in_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_in_only_in_col",
+      "path": "assets/v10_direction_ego/in_only/in_col.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int32",
+      "shape": [
+        695377
+      ],
+      "bytes": 2781636,
+      "sha256": "80223f4fce06f16fb9b240c42611d7428eb7c0ab81b16054e4fb73e76b81c14f",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced in_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_in_only_out_ptr",
+      "path": "assets/v10_direction_ego/in_only/out_ptr.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int64",
+      "shape": [
+        285720
+      ],
+      "bytes": 2285888,
+      "sha256": "5bb67d8b633cd047817e5bc3bf88d438fc66f75853e9aea62454589a022afe9c",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced in_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_in_only_out_col",
+      "path": "assets/v10_direction_ego/in_only/out_col.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int32",
+      "shape": [
+        695377
+      ],
+      "bytes": 2781636,
+      "sha256": "41c00a7b0cf96788ab94cda0097c0b5103b3e77db9f220bbcebe1dabbf668d0d",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced in_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_in_only_in_edge_counts",
+      "path": "assets/v10_direction_ego/in_only/in_edge_counts.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int64",
+      "shape": [
+        24587
+      ],
+      "bytes": 196824,
+      "sha256": "39d5d57c0b9e9b401a7c80357bdb4563df22c1e2b39c3bc18477df05f5d0e8d0",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced in_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_in_only_out_edge_counts",
+      "path": "assets/v10_direction_ego/in_only/out_edge_counts.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int64",
+      "shape": [
+        24587
+      ],
+      "bytes": 196824,
+      "sha256": "39d5d57c0b9e9b401a7c80357bdb4563df22c1e2b39c3bc18477df05f5d0e8d0",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced in_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_out_only_nodes",
+      "path": "assets/v10_direction_ego/out_only/nodes.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int32",
+      "shape": [
+        285719
+      ],
+      "bytes": 1143004,
+      "sha256": "84b48c7ddb5381a7e56f4aa6fc3afec3d99a9b1c814de7ebbb54ec55886e1453",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced out_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_out_only_offsets",
+      "path": "assets/v10_direction_ego/out_only/offsets.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int64",
+      "shape": [
+        24588
+      ],
+      "bytes": 196832,
+      "sha256": "d4545026ad0c3f01ed4950636d42fc4402f4ee2fe57eaae44ae1a9e1af9ca660",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced out_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_out_only_node_counts",
+      "path": "assets/v10_direction_ego/out_only/node_counts.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int64",
+      "shape": [
+        24587
+      ],
+      "bytes": 196824,
+      "sha256": "0cabaa18fff20c5d5a3801d6861ffe8471b361205fbcc30b0caaf3305a7911ca",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced out_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_out_only_in_ptr",
+      "path": "assets/v10_direction_ego/out_only/in_ptr.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int64",
+      "shape": [
+        285720
+      ],
+      "bytes": 2285888,
+      "sha256": "378e34068cd871273c2e94a15e95617cbb17c4e30c2de0d05078bc1e366fab38",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced out_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_out_only_in_col",
+      "path": "assets/v10_direction_ego/out_only/in_col.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int32",
+      "shape": [
+        695377
+      ],
+      "bytes": 2781636,
+      "sha256": "952779096b16e5d55053a431f882380f4f924ffde84e711111dbd938e72e03c0",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced out_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_out_only_out_ptr",
+      "path": "assets/v10_direction_ego/out_only/out_ptr.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int64",
+      "shape": [
+        285720
+      ],
+      "bytes": 2285888,
+      "sha256": "9ccb3c03723ab6bc839c000909ced2f3c2f6752a376ee84d46593ea9fce33dbb",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced out_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_out_only_out_col",
+      "path": "assets/v10_direction_ego/out_only/out_col.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int32",
+      "shape": [
+        695377
+      ],
+      "bytes": 2781636,
+      "sha256": "578568c9ab51766c62e6e78ae7f70739622de5161c1be20029738afd1f1cb73c",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced out_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_out_only_in_edge_counts",
+      "path": "assets/v10_direction_ego/out_only/in_edge_counts.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int64",
+      "shape": [
+        24587
+      ],
+      "bytes": 196824,
+      "sha256": "12ec99268f3bce705e6950344221e1037ed55149270f2bd2d238786991075d86",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced out_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_out_only_out_edge_counts",
+      "path": "assets/v10_direction_ego/out_only/out_edge_counts.npy",
+      "use": "training",
+      "schema": "npy",
+      "dtype": "int64",
+      "shape": [
+        24587
+      ],
+      "bytes": 196824,
+      "sha256": "12ec99268f3bce705e6950344221e1037ed55149270f2bd2d238786991075d86",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "exact induced out_only ego layout for every item",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "source_hashes": {
+        "tools/issue255/build_direction_ego.py": "a92a37c79e93881d4bc0a15ef3cb5b5572cc8e4ca587eaa10f39765c25bd8416"
+      }
+    },
+    {
+      "name": "direction_ego_metadata",
+      "path": "assets/v10_direction_ego/metadata.json",
+      "use": "description",
+      "schema": "json",
+      "bytes": 6328,
+      "sha256": "7fc4f408bc910e3800b18842992726a86e645ec49c651bdbe8b5e7ed8dfa85b5",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "the array semantics and hashes"
+    },
+    {
+      "name": "direction_ego_coverage",
+      "path": "assets/v10_direction_ego/coverage.json",
+      "use": "description",
+      "schema": "json",
+      "bytes": 1299,
+      "sha256": "eb1a7fed02336214a59a669bb879d8f4fcef11f62a09d573d336124204f25ea0",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "the exact population and overlap statistics"
+    },
+    {
+      "name": "direction_ego_audit",
+      "path": "assets/v10_direction_ego/audit.json",
+      "use": "description",
+      "schema": "json",
+      "bytes": 1349,
+      "sha256": "fff152cd88f18c71d05f06faff68bef2c6e43b311c62d5d7d91c94c47ca253dd",
+      "origin": "built by issue #255",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue255.build_direction_ego",
+      "inputs": {
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+      },
+      "content": "the independent per-item reconstruction verdict"
     }
   ],
   "copy_note": "This manifest describes the copy under assets/ (flattened). The canonical build lives in results/research/issue248/assets/; every file here is byte-identical to it (same sha256), only the path field is repointed.",

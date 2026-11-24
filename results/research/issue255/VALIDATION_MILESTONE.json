@@ -1,0 +1,211 @@
+{
+  "schema": "genrec.issue255.validation_milestone/1",
+  "run": "results/research/issue255/validation/issue255_validation_3054403_583806839",
+  "exit_code": 0,
+  "ranks": [
+    {
+      "rank": 0,
+      "status": "pass",
+      "pid": 3055842,
+      "sha256": "ca53ad9bea25d4606b751509ee86fbdc333538a2b439a6e8f8930989d9607076",
+      "losses": {
+        "original_loss": 0.0005921038100495934,
+        "structural_loss": 2.688838005065918,
+        "combined_loss": 0.0008893600897863507
+      },
+      "hard_prefix_exact": [
+        true,
+        true,
+        true
+      ],
+      "attention_shape": [
+        256,
+        3,
+        3,
+        5
+      ],
+      "layers": [
+        {
+          "level": 1,
+          "loss": 2.650691270828247,
+          "lambda_alpha": 3.685065166791901e-05,
+          "encoder_unweighted": 12.08971238679279,
+          "encoder_weighted": 0.0004455137794707647,
+          "reconstruction_cosine": 0.2768324920156443,
+          "future_books_zero": true
+        },
+        {
+          "level": 2,
+          "loss": 2.858635663986206,
+          "lambda_alpha": 3.685065166791901e-05,
+          "encoder_unweighted": 42.580775224242316,
+          "encoder_weighted": 0.0015691293105550735,
+          "reconstruction_cosine": 0.18778332385234853,
+          "future_books_zero": true
+        },
+        {
+          "level": 3,
+          "loss": 1.8298768997192383,
+          "lambda_alpha": 3.685065166791901e-05,
+          "encoder_unweighted": 34.6405166013998,
+          "encoder_weighted": 0.0012765256139864911,
+          "reconstruction_cosine": 0.08227812230920449,
+          "future_books_zero": true
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "status": "pass",
+      "pid": 3055843,
+      "sha256": "3b37a56067b7b21a4d630cd5392b562384ecb00331d49d58a41021b8885224cd",
+      "losses": {
+        "original_loss": 0.0005987173644825816,
+        "structural_loss": 4.291441917419434,
+        "combined_loss": 0.0010731446091085672
+      },
+      "hard_prefix_exact": [
+        true,
+        true,
+        true
+      ],
+      "attention_shape": [
+        256,
+        3,
+        3,
+        5
+      ],
+      "layers": [
+        {
+          "level": 1,
+          "loss": 6.066165924072266,
+          "lambda_alpha": 3.685065166791901e-05,
+          "encoder_unweighted": 50.00055473846348,
+          "encoder_weighted": 0.0018425530224237974,
+          "reconstruction_cosine": 0.5830649805153775,
+          "future_books_zero": true
+        },
+        {
+          "level": 2,
+          "loss": 9.811355590820312,
+          "lambda_alpha": 3.685065166791901e-05,
+          "encoder_unweighted": 83.32316894177093,
+          "encoder_weighted": 0.003070513069566552,
+          "reconstruction_cosine": 0.5701091704695115,
+          "future_books_zero": true
+        },
+        {
+          "level": 3,
+          "loss": 7.471683025360107,
+          "lambda_alpha": 3.685065166791901e-05,
+          "encoder_unweighted": 62.02787273243615,
+          "encoder_weighted": 0.002285767530813745,
+          "reconstruction_cosine": 0.5994776973341819,
+          "future_books_zero": true
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "status": "pass",
+      "pid": 3055844,
+      "sha256": "def900b30aaa1fd0fdb16c2d8628eaa5d1a3350d46637b5345d57f5d64569b93",
+      "losses": {
+        "original_loss": 0.0005889284075237811,
+        "structural_loss": 3.0790820121765137,
+        "combined_loss": 0.0009293269831687212
+      },
+      "hard_prefix_exact": [
+        true,
+        true,
+        true
+      ],
+      "attention_shape": [
+        256,
+        3,
+        3,
+        5
+      ],
+      "layers": [
+        {
+          "level": 1,
+          "loss": 2.023711919784546,
+          "lambda_alpha": 3.685065166791901e-05,
+          "encoder_unweighted": 13.176421946248277,
+          "encoder_weighted": 0.0004855597374714673,
+          "reconstruction_cosine": 0.5699331928449595,
+          "future_books_zero": true
+        },
+        {
+          "level": 2,
+          "loss": 1.8769705295562744,
+          "lambda_alpha": 3.685065166791901e-05,
+          "encoder_unweighted": 13.099979328671344,
+          "encoder_weighted": 0.00048274277515030303,
+          "reconstruction_cosine": 0.69029756343331,
+          "future_books_zero": true
+        },
+        {
+          "level": 3,
+          "loss": 1.5514187812805176,
+          "lambda_alpha": 3.685065166791901e-05,
+          "encoder_unweighted": 13.84617696610817,
+          "encoder_weighted": 0.0005102406448309039,
+          "reconstruction_cosine": 0.5943826676642534,
+          "future_books_zero": true
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "status": "pass",
+      "pid": 3055845,
+      "sha256": "c5a511f824c154d8ca675d56d525ec4cd70de46407c7f2666cf358261ab074d4",
+      "losses": {
+        "original_loss": 0.0005849667941220105,
+        "structural_loss": 9.982566833496094,
+        "combined_loss": 0.0016885590739548206
+      },
+      "hard_prefix_exact": [
+        true,
+        true,
+        true
+      ],
+      "attention_shape": [
+        256,
+        3,
+        3,
+        5
+      ],
+      "layers": [
+        {
+          "level": 1,
+          "loss": 2.500579357147217,
+          "lambda_alpha": 3.685065166791901e-05,
+          "encoder_unweighted": 16.640314588922696,
+          "encoder_weighted": 0.0006132064383223702,
+          "reconstruction_cosine": 0.7185736159244964,
+          "future_books_zero": true
+        },
+        {
+          "level": 2,
+          "loss": 1.7147964239120483,
+          "lambda_alpha": 3.685065166791901e-05,
+          "encoder_unweighted": 15.978229753075363,
+          "encoder_weighted": 0.0005888081794557224,
+          "reconstruction_cosine": 0.6073670257047623,
+          "future_books_zero": true
+        },
+        {
+          "level": 3,
+          "loss": 1.283607006072998,
+          "lambda_alpha": 3.685065166791901e-05,
+          "encoder_unweighted": 15.872294821914284,
+          "encoder_weighted": 0.000584904409105422,
+          "reconstruction_cosine": 0.6767441509479059,
+          "future_books_zero": true
+        }
+      ]
+    }
+  ]
+}

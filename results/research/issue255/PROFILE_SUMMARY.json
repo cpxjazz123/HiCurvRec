@@ -1,0 +1,1695 @@
+{
+  "schema": "genrec.issue255.profile_summary/1",
+  "approved_run_id": "issue255_formal_r1",
+  "source_run_directory": "/fs04/ar57/wenyu/GeneRec/results/research/issue255/steady_profile/issue255_steady_profile_3098896_583836618",
+  "scope": "instrumented epoch2, not the inclusive performance acceptance window",
+  "token_names": {
+    "GNN_1hop": "complete one-hop",
+    "GNN_2hop": "complete two-hop",
+    "GNN_3hop": "in-only induced",
+    "GNN_4hop": "out-only induced"
+  },
+  "memory_scope": "absolute allocator high-water marks, not incremental module memory",
+  "ranks": [
+    {
+      "rank": 0,
+      "source": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue255/steady_profile/issue255_steady_profile_3098896_583836618/rank_0.json",
+        "sha256": "b50f2bea80956e0b4e41e48030cf35596f773c035fa1f27b9562841a860de2fb"
+      },
+      "window_seconds": 1.401046359911561,
+      "peak_allocated_bytes": 8629522944,
+      "peak_reserved_bytes": 14457765888,
+      "profiled_epoch": 2,
+      "optimizer_steps": 6,
+      "phases": [
+        {
+          "phase": "Attention",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.018391402438282967,
+          "cuda_stream_span_seconds": 0.018504512310028073,
+          "phase_peak_allocated_bytes": 8301604864
+        },
+        {
+          "phase": "Decoder",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.004410865716636181,
+          "cuda_stream_span_seconds": 0.004500480055809021,
+          "phase_peak_allocated_bytes": 8353311744
+        },
+        {
+          "phase": "Encoder",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009491725824773312,
+          "cuda_stream_span_seconds": 0.009712287843227387,
+          "phase_peak_allocated_bytes": 8355050496
+        },
+        {
+          "phase": "GNN_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.07610973436385393,
+          "cuda_stream_span_seconds": 0.07179171228408814,
+          "phase_peak_allocated_bytes": 8035397632
+        },
+        {
+          "phase": "GNN_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.039691660553216934,
+          "cuda_stream_span_seconds": 0.13615487957000733,
+          "phase_peak_allocated_bytes": 8442438656
+        },
+        {
+          "phase": "GNN_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.03872937895357609,
+          "cuda_stream_span_seconds": 0.016749312087893483,
+          "phase_peak_allocated_bytes": 8291522560
+        },
+        {
+          "phase": "GNN_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.03922031447291374,
+          "cuda_stream_span_seconds": 0.02116739208996296,
+          "phase_peak_allocated_bytes": 8294699008
+        },
+        {
+          "phase": "assignment_floor",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.07533453218638897,
+          "cuda_stream_span_seconds": 0.07602876758575439,
+          "phase_peak_allocated_bytes": 8362477568
+        },
+        {
+          "phase": "assignment_guards",
+          "calls": 144,
+          "cpu_dispatch_wall_seconds": 0.15049209538847208,
+          "cuda_stream_span_seconds": 0.14463939207792284,
+          "phase_peak_allocated_bytes": 8362803200
+        },
+        {
+          "phase": "backward",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.2589328270405531,
+          "cuda_stream_span_seconds": 0.424017692565918,
+          "phase_peak_allocated_bytes": 8629522944
+        },
+        {
+          "phase": "combined_loss",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.003596104681491852,
+          "cuda_stream_span_seconds": 0.0036954559981822966,
+          "phase_peak_allocated_bytes": 8357672448
+        },
+        {
+          "phase": "communication::all_gather_object",
+          "calls": 1,
+          "cpu_dispatch_wall_seconds": 0.0015245331451296806,
+          "cuda_stream_span_seconds": 0.0015433599948883056,
+          "phase_peak_allocated_bytes": 7024527360
+        },
+        {
+          "phase": "communication::all_reduce",
+          "calls": 55,
+          "cpu_dispatch_wall_seconds": 0.02663693204522133,
+          "cuda_stream_span_seconds": 0.03930976005271078,
+          "phase_peak_allocated_bytes": 8337353216
+        },
+        {
+          "phase": "communication::barrier",
+          "calls": 1,
+          "cpu_dispatch_wall_seconds": 0.0005655651912093163,
+          "cuda_stream_span_seconds": 0.000584447979927063,
+          "phase_peak_allocated_bytes": 7024522240
+        },
+        {
+          "phase": "cpu_identity_index",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.003364092670381069,
+          "cuda_stream_span_seconds": 0.0034672959446907046,
+          "phase_peak_allocated_bytes": 7021233152
+        },
+        {
+          "phase": "cpu_layout_index_transfer_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.05290446523576975,
+          "cuda_stream_span_seconds": 0.049087809436023234,
+          "phase_peak_allocated_bytes": 8030438400
+        },
+        {
+          "phase": "cpu_layout_index_transfer_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.010197781026363373,
+          "cuda_stream_span_seconds": 0.010418496012687684,
+          "phase_peak_allocated_bytes": 8044958720
+        },
+        {
+          "phase": "cpu_layout_index_transfer_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.010244401171803474,
+          "cuda_stream_span_seconds": 0.0010176639854907988,
+          "phase_peak_allocated_bytes": 8290853888
+        },
+        {
+          "phase": "cpu_layout_index_transfer_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009996364824473858,
+          "cuda_stream_span_seconds": 0.005850207902491093,
+          "phase_peak_allocated_bytes": 8290370560
+        },
+        {
+          "phase": "criterion",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.0030659129843115807,
+          "cuda_stream_span_seconds": 0.003173311948776245,
+          "phase_peak_allocated_bytes": 8364524032
+        },
+        {
+          "phase": "data_read",
+          "calls": 7,
+          "cpu_dispatch_wall_seconds": 0.0182513864710927,
+          "cuda_stream_span_seconds": 0.009453503725118932,
+          "phase_peak_allocated_bytes": 7026242048
+        },
+        {
+          "phase": "first_affine_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.010850922204554081,
+          "cuda_stream_span_seconds": 0.008197088055312633,
+          "phase_peak_allocated_bytes": 8033064448
+        },
+        {
+          "phase": "first_affine_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.00953405536711216,
+          "cuda_stream_span_seconds": 0.02180889594554901,
+          "phase_peak_allocated_bytes": 8230382592
+        },
+        {
+          "phase": "first_affine_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009392705745995045,
+          "cuda_stream_span_seconds": 0.0026572479233145712,
+          "phase_peak_allocated_bytes": 8289478144
+        },
+        {
+          "phase": "first_affine_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009588208049535751,
+          "cuda_stream_span_seconds": 0.0048378879893571135,
+          "phase_peak_allocated_bytes": 8292683776
+        },
+        {
+          "phase": "full_ego_tokens",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.37251353077590466,
+          "cuda_stream_span_seconds": 0.37262492370605466,
+          "phase_peak_allocated_bytes": 8442438656
+        },
+        {
+          "phase": "gradient_clip",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.017704998143017292,
+          "cuda_stream_span_seconds": 0.0005953920036554336,
+          "phase_peak_allocated_bytes": 7026378240
+        },
+        {
+          "phase": "hard_Sinkhorn",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.01687045581638813,
+          "cuda_stream_span_seconds": 0.01748265600204468,
+          "phase_peak_allocated_bytes": 8346359808
+        },
+        {
+          "phase": "optimizer",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.007744596339762211,
+          "cuda_stream_span_seconds": 0.0010796799808740615,
+          "phase_peak_allocated_bytes": 7030999552
+        },
+        {
+          "phase": "pooling_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.043589917942881584,
+          "cuda_stream_span_seconds": 0.04381740617752075,
+          "phase_peak_allocated_bytes": 8034850304
+        },
+        {
+          "phase": "pooling_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009053846821188927,
+          "cuda_stream_span_seconds": 0.04577449679374695,
+          "phase_peak_allocated_bytes": 8366119936
+        },
+        {
+          "phase": "pooling_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008080431260168552,
+          "cuda_stream_span_seconds": 0.004800992049276829,
+          "phase_peak_allocated_bytes": 8291048960
+        },
+        {
+          "phase": "pooling_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008096064440906048,
+          "cuda_stream_span_seconds": 0.004841887995600701,
+          "phase_peak_allocated_bytes": 8294231040
+        },
+        {
+          "phase": "production_forward",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.908495050854981,
+          "cuda_stream_span_seconds": 0.908575340270996,
+          "phase_peak_allocated_bytes": 8442438656
+        },
+        {
+          "phase": "sampled_structural_forward",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.2052444526925683,
+          "cuda_stream_span_seconds": 0.2053400344848633,
+          "phase_peak_allocated_bytes": 8363261440
+        },
+        {
+          "phase": "sampled_triple_statistic",
+          "calls": 18,
+          "cpu_dispatch_wall_seconds": 0.049703292548656464,
+          "cuda_stream_span_seconds": 0.0500147202014923,
+          "phase_peak_allocated_bytes": 8362341888
+        },
+        {
+          "phase": "scheduler",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.002048283815383911,
+          "cuda_stream_span_seconds": 9.24799998756498e-06,
+          "phase_peak_allocated_bytes": 7026357760
+        },
+        {
+          "phase": "second_affine_activation_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008442391641438007,
+          "cuda_stream_span_seconds": 0.00866185599565506,
+          "phase_peak_allocated_bytes": 8035397632
+        },
+        {
+          "phase": "second_affine_activation_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.00814739428460598,
+          "cuda_stream_span_seconds": 0.030336767792701724,
+          "phase_peak_allocated_bytes": 8442438656
+        },
+        {
+          "phase": "second_affine_activation_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008216317743062973,
+          "cuda_stream_span_seconds": 0.004235359972342849,
+          "phase_peak_allocated_bytes": 8291522560
+        },
+        {
+          "phase": "second_affine_activation_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008429148234426975,
+          "cuda_stream_span_seconds": 0.004556607939302922,
+          "phase_peak_allocated_bytes": 8294699008
+        },
+        {
+          "phase": "second_directional_aggregation_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.006301512010395527,
+          "cuda_stream_span_seconds": 0.005770399987697602,
+          "phase_peak_allocated_bytes": 8033064448
+        },
+        {
+          "phase": "second_directional_aggregation_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.005677730776369572,
+          "cuda_stream_span_seconds": 0.035590080022811894,
+          "phase_peak_allocated_bytes": 8230382592
+        },
+        {
+          "phase": "second_directional_aggregation_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.005602976307272911,
+          "cuda_stream_span_seconds": 0.0025906879622489215,
+          "phase_peak_allocated_bytes": 8289478144
+        },
+        {
+          "phase": "second_directional_aggregation_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.005628465674817562,
+          "cuda_stream_span_seconds": 0.003139104008674622,
+          "phase_peak_allocated_bytes": 8292683776
+        },
+        {
+          "phase": "separate_rank_local_quantization",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.43345361668616533,
+          "cuda_stream_span_seconds": 0.4337410850524902,
+          "phase_peak_allocated_bytes": 8363261440
+        },
+        {
+          "phase": "soft_allocation",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.04478901345282793,
+          "cuda_stream_span_seconds": 0.049155360102653506,
+          "phase_peak_allocated_bytes": 8363261440
+        },
+        {
+          "phase": "static_feature_gather_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.005610787309706211,
+          "cuda_stream_span_seconds": 0.0038127360204234717,
+          "phase_peak_allocated_bytes": 8030427136
+        },
+        {
+          "phase": "static_feature_gather_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.004892174154520035,
+          "cuda_stream_span_seconds": 0.005081599950790405,
+          "phase_peak_allocated_bytes": 8050505216
+        },
+        {
+          "phase": "static_feature_gather_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.004876209422945976,
+          "cuda_stream_span_seconds": 0.00014467200171202423,
+          "phase_peak_allocated_bytes": 8287166464
+        },
+        {
+          "phase": "static_feature_gather_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.0049098217859864235,
+          "cuda_stream_span_seconds": 0.002257215991616249,
+          "phase_peak_allocated_bytes": 8290405376
+        },
+        {
+          "phase": "static_neighbour_mean_gather_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.007313786074519157,
+          "cuda_stream_span_seconds": 0.004798879943788052,
+          "phase_peak_allocated_bytes": 8030786048
+        },
+        {
+          "phase": "static_neighbour_mean_gather_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.0074716005474328995,
+          "cuda_stream_span_seconds": 0.007959039986133575,
+          "phase_peak_allocated_bytes": 8070817792
+        },
+        {
+          "phase": "static_neighbour_mean_gather_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.007190425880253315,
+          "cuda_stream_span_seconds": 0.0007644800096750261,
+          "phase_peak_allocated_bytes": 8287482880
+        },
+        {
+          "phase": "static_neighbour_mean_gather_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.007171083241701126,
+          "cuda_stream_span_seconds": 0.004074624024331569,
+          "phase_peak_allocated_bytes": 8290716672
+        },
+        {
+          "phase": "structural_sample",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.006050124764442444,
+          "cuda_stream_span_seconds": 0.0016800319410394879,
+          "phase_peak_allocated_bytes": 7021224960
+        },
+        {
+          "phase": "three_geometry_assignment_cost",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.03714863117784262,
+          "cuda_stream_span_seconds": 0.0472264003753662,
+          "phase_peak_allocated_bytes": 8362799104
+        },
+        {
+          "phase": "three_geometry_fixed_distance",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.029898380860686302,
+          "cuda_stream_span_seconds": 0.030582655966281885,
+          "phase_peak_allocated_bytes": 8362340864
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "source": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue255/steady_profile/issue255_steady_profile_3098896_583836618/rank_1.json",
+        "sha256": "d82d69b84fc04393df7081243446c5e242028d742471757d43c84677dda0c082"
+      },
+      "window_seconds": 1.4006732972338796,
+      "peak_allocated_bytes": 8689224192,
+      "peak_reserved_bytes": 10978590720,
+      "profiled_epoch": 2,
+      "optimizer_steps": 6,
+      "phases": [
+        {
+          "phase": "Attention",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.018060974776744843,
+          "cuda_stream_span_seconds": 0.01817203187942505,
+          "phase_peak_allocated_bytes": 8408356864
+        },
+        {
+          "phase": "Decoder",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.004846685566008091,
+          "cuda_stream_span_seconds": 0.0049578239917755125,
+          "phase_peak_allocated_bytes": 8457468416
+        },
+        {
+          "phase": "Encoder",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009316039271652699,
+          "cuda_stream_span_seconds": 0.009536831974983215,
+          "phase_peak_allocated_bytes": 8459207168
+        },
+        {
+          "phase": "GNN_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.07639320753514767,
+          "cuda_stream_span_seconds": 0.0716139526963234,
+          "phase_peak_allocated_bytes": 8071072768
+        },
+        {
+          "phase": "GNN_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.04054713621735573,
+          "cuda_stream_span_seconds": 0.13855513715744017,
+          "phase_peak_allocated_bytes": 8533040640
+        },
+        {
+          "phase": "GNN_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.03873408492654562,
+          "cuda_stream_span_seconds": 0.015415263935923577,
+          "phase_peak_allocated_bytes": 8397143552
+        },
+        {
+          "phase": "GNN_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.038606527261435986,
+          "cuda_stream_span_seconds": 0.02075740796327591,
+          "phase_peak_allocated_bytes": 8401085952
+        },
+        {
+          "phase": "assignment_floor",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.07424153108149767,
+          "cuda_stream_span_seconds": 0.07491967988014221,
+          "phase_peak_allocated_bytes": 8466634240
+        },
+        {
+          "phase": "assignment_guards",
+          "calls": 144,
+          "cpu_dispatch_wall_seconds": 0.15017437655478716,
+          "cuda_stream_span_seconds": 0.1438667200505733,
+          "phase_peak_allocated_bytes": 8466959872
+        },
+        {
+          "phase": "backward",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.3261346183717251,
+          "cuda_stream_span_seconds": 0.42315299987792965,
+          "phase_peak_allocated_bytes": 8689224192
+        },
+        {
+          "phase": "combined_loss",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.0033957604318857193,
+          "cuda_stream_span_seconds": 0.0034957439601421354,
+          "phase_peak_allocated_bytes": 8461638144
+        },
+        {
+          "phase": "communication::all_gather_object",
+          "calls": 1,
+          "cpu_dispatch_wall_seconds": 0.0015287911519408226,
+          "cuda_stream_span_seconds": 0.0015466879606246947,
+          "phase_peak_allocated_bytes": 7019914240
+        },
+        {
+          "phase": "communication::all_reduce",
+          "calls": 55,
+          "cpu_dispatch_wall_seconds": 0.026189777068793774,
+          "cuda_stream_span_seconds": 0.03622531197965145,
+          "phase_peak_allocated_bytes": 8442021888
+        },
+        {
+          "phase": "communication::barrier",
+          "calls": 1,
+          "cpu_dispatch_wall_seconds": 0.005508875474333763,
+          "cuda_stream_span_seconds": 0.005532127857208252,
+          "phase_peak_allocated_bytes": 7019909120
+        },
+        {
+          "phase": "cpu_identity_index",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.003423662856221199,
+          "cuda_stream_span_seconds": 0.003525791972875595,
+          "phase_peak_allocated_bytes": 7018533376
+        },
+        {
+          "phase": "cpu_layout_index_transfer_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.05320600140839815,
+          "cuda_stream_span_seconds": 0.049453856818377974,
+          "phase_peak_allocated_bytes": 8060042240
+        },
+        {
+          "phase": "cpu_layout_index_transfer_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.010427257977426052,
+          "cuda_stream_span_seconds": 0.010650431871414186,
+          "phase_peak_allocated_bytes": 8084980736
+        },
+        {
+          "phase": "cpu_layout_index_transfer_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.010106394067406654,
+          "cuda_stream_span_seconds": 0.001044575996696949,
+          "phase_peak_allocated_bytes": 8395901440
+        },
+        {
+          "phase": "cpu_layout_index_transfer_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.010151593945920467,
+          "cuda_stream_span_seconds": 0.005808608002960682,
+          "phase_peak_allocated_bytes": 8395696640
+        },
+        {
+          "phase": "criterion",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.00306891743093729,
+          "cuda_stream_span_seconds": 0.003165343999862671,
+          "phase_peak_allocated_bytes": 8467928576
+        },
+        {
+          "phase": "data_read",
+          "calls": 7,
+          "cpu_dispatch_wall_seconds": 0.016068213619291782,
+          "cuda_stream_span_seconds": 0.009090591537300498,
+          "phase_peak_allocated_bytes": 7023658496
+        },
+        {
+          "phase": "first_affine_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.010437301360070705,
+          "cuda_stream_span_seconds": 0.008570239901542664,
+          "phase_peak_allocated_bytes": 8065460736
+        },
+        {
+          "phase": "first_affine_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.00970109086483717,
+          "cuda_stream_span_seconds": 0.02231747186183929,
+          "phase_peak_allocated_bytes": 8326947840
+        },
+        {
+          "phase": "first_affine_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008847957476973534,
+          "cuda_stream_span_seconds": 0.002514688024297357,
+          "phase_peak_allocated_bytes": 8394592256
+        },
+        {
+          "phase": "first_affine_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.00878898985683918,
+          "cuda_stream_span_seconds": 0.004292287962511182,
+          "phase_peak_allocated_bytes": 8398577664
+        },
+        {
+          "phase": "full_ego_tokens",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.3728682054206729,
+          "cuda_stream_span_seconds": 0.372980354309082,
+          "phase_peak_allocated_bytes": 8533040640
+        },
+        {
+          "phase": "gradient_clip",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.018493027426302433,
+          "cuda_stream_span_seconds": 0.0005945280119776725,
+          "phase_peak_allocated_bytes": 7023794688
+        },
+        {
+          "phase": "hard_Sinkhorn",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.016894442029297352,
+          "cuda_stream_span_seconds": 0.017567551612854,
+          "phase_peak_allocated_bytes": 8450516480
+        },
+        {
+          "phase": "optimizer",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.00792972557246685,
+          "cuda_stream_span_seconds": 0.001087903991341591,
+          "phase_peak_allocated_bytes": 7029392896
+        },
+        {
+          "phase": "pooling_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.043754855170845985,
+          "cuda_stream_span_seconds": 0.043861601293087006,
+          "phase_peak_allocated_bytes": 8069931008
+        },
+        {
+          "phase": "pooling_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.00872038770467043,
+          "cuda_stream_span_seconds": 0.047005919694900505,
+          "phase_peak_allocated_bytes": 8481694720
+        },
+        {
+          "phase": "pooling_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008311038836836815,
+          "cuda_stream_span_seconds": 0.004966815911233425,
+          "phase_peak_allocated_bytes": 8396541952
+        },
+        {
+          "phase": "pooling_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008036007173359394,
+          "cuda_stream_span_seconds": 0.005216704018414021,
+          "phase_peak_allocated_bytes": 8400496640
+        },
+        {
+          "phase": "production_forward",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.9096099371090531,
+          "cuda_stream_span_seconds": 0.9097001724243164,
+          "phase_peak_allocated_bytes": 8533040640
+        },
+        {
+          "phase": "sampled_structural_forward",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.20598496962338686,
+          "cuda_stream_span_seconds": 0.20608048248291014,
+          "phase_peak_allocated_bytes": 8467418112
+        },
+        {
+          "phase": "sampled_triple_statistic",
+          "calls": 18,
+          "cpu_dispatch_wall_seconds": 0.049217899329960346,
+          "cuda_stream_span_seconds": 0.049537472486495975,
+          "phase_peak_allocated_bytes": 8466670592
+        },
+        {
+          "phase": "scheduler",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.0024066446349024773,
+          "cuda_stream_span_seconds": 9.376000030897558e-06,
+          "phase_peak_allocated_bytes": 7023774208
+        },
+        {
+          "phase": "second_affine_activation_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008302556350827217,
+          "cuda_stream_span_seconds": 0.0076593919917941075,
+          "phase_peak_allocated_bytes": 8071072768
+        },
+        {
+          "phase": "second_affine_activation_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008907982148230076,
+          "cuda_stream_span_seconds": 0.030594240367412567,
+          "phase_peak_allocated_bytes": 8533040640
+        },
+        {
+          "phase": "second_affine_activation_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008265330456197262,
+          "cuda_stream_span_seconds": 0.0033922240007668732,
+          "phase_peak_allocated_bytes": 8397143552
+        },
+        {
+          "phase": "second_affine_activation_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.00826050341129303,
+          "cuda_stream_span_seconds": 0.00434851199015975,
+          "phase_peak_allocated_bytes": 8401085952
+        },
+        {
+          "phase": "second_directional_aggregation_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.006485632620751858,
+          "cuda_stream_span_seconds": 0.005648896034806967,
+          "phase_peak_allocated_bytes": 8065460736
+        },
+        {
+          "phase": "second_directional_aggregation_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.005918513983488083,
+          "cuda_stream_span_seconds": 0.03598099160194397,
+          "phase_peak_allocated_bytes": 8326947840
+        },
+        {
+          "phase": "second_directional_aggregation_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.006109481677412987,
+          "cuda_stream_span_seconds": 0.0025017920061945914,
+          "phase_peak_allocated_bytes": 8394592256
+        },
+        {
+          "phase": "second_directional_aggregation_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.006095372140407562,
+          "cuda_stream_span_seconds": 0.003357823971658946,
+          "phase_peak_allocated_bytes": 8398577664
+        },
+        {
+          "phase": "separate_rank_local_quantization",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.4345425730571151,
+          "cuda_stream_span_seconds": 0.43482835388183594,
+          "phase_peak_allocated_bytes": 8467418112
+        },
+        {
+          "phase": "soft_allocation",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.04736411105841398,
+          "cuda_stream_span_seconds": 0.05209631979465485,
+          "phase_peak_allocated_bytes": 8467418112
+        },
+        {
+          "phase": "static_feature_gather_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.005546427331864834,
+          "cuda_stream_span_seconds": 0.003482784008607268,
+          "phase_peak_allocated_bytes": 8060127744
+        },
+        {
+          "phase": "static_feature_gather_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.004612715914845467,
+          "cuda_stream_span_seconds": 0.004807648003101348,
+          "phase_peak_allocated_bytes": 8094019072
+        },
+        {
+          "phase": "static_feature_gather_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.004590057767927647,
+          "cuda_stream_span_seconds": 0.00033228800725191833,
+          "phase_peak_allocated_bytes": 8391708160
+        },
+        {
+          "phase": "static_feature_gather_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.0048737963661551476,
+          "cuda_stream_span_seconds": 0.0024490560358390212,
+          "phase_peak_allocated_bytes": 8395741696
+        },
+        {
+          "phase": "static_neighbour_mean_gather_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.007564564235508442,
+          "cuda_stream_span_seconds": 0.005229247942566872,
+          "phase_peak_allocated_bytes": 8060846592
+        },
+        {
+          "phase": "static_neighbour_mean_gather_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.007615520618855953,
+          "cuda_stream_span_seconds": 0.00808438390493393,
+          "phase_peak_allocated_bytes": 8125154816
+        },
+        {
+          "phase": "static_neighbour_mean_gather_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.007657685317099094,
+          "cuda_stream_span_seconds": 0.0012990400232374666,
+          "phase_peak_allocated_bytes": 8392100352
+        },
+        {
+          "phase": "static_neighbour_mean_gather_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.00728532113134861,
+          "cuda_stream_span_seconds": 0.00402128005027771,
+          "phase_peak_allocated_bytes": 8396128256
+        },
+        {
+          "phase": "structural_sample",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.006248502992093563,
+          "cuda_stream_span_seconds": 0.0015498880083905534,
+          "phase_peak_allocated_bytes": 7018525184
+        },
+        {
+          "phase": "three_geometry_assignment_cost",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.03703703731298447,
+          "cuda_stream_span_seconds": 0.047356511890888214,
+          "phase_peak_allocated_bytes": 8466955776
+        },
+        {
+          "phase": "three_geometry_fixed_distance",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.029779769480228424,
+          "cuda_stream_span_seconds": 0.030467359960079186,
+          "phase_peak_allocated_bytes": 8466670592
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "source": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue255/steady_profile/issue255_steady_profile_3098896_583836618/rank_2.json",
+        "sha256": "ff29457b0029fce9dd329aed723a8a54f6ba550ea1057a922ad17eb08d8af3a1"
+      },
+      "window_seconds": 1.402298421598971,
+      "peak_allocated_bytes": 8686820864,
+      "peak_reserved_bytes": 12341739520,
+      "profiled_epoch": 2,
+      "optimizer_steps": 6,
+      "phases": [
+        {
+          "phase": "Attention",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.017994997091591358,
+          "cuda_stream_span_seconds": 0.01811459243297577,
+          "phase_peak_allocated_bytes": 8323241984
+        },
+        {
+          "phase": "Decoder",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.004937681369483471,
+          "cuda_stream_span_seconds": 0.004981024026870727,
+          "phase_peak_allocated_bytes": 8374710784
+        },
+        {
+          "phase": "Encoder",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009598725475370884,
+          "cuda_stream_span_seconds": 0.009819232046604155,
+          "phase_peak_allocated_bytes": 8376449536
+        },
+        {
+          "phase": "GNN_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.07738360948860645,
+          "cuda_stream_span_seconds": 0.07611404728889465,
+          "phase_peak_allocated_bytes": 8067803648
+        },
+        {
+          "phase": "GNN_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.042082831263542175,
+          "cuda_stream_span_seconds": 0.13677356958389283,
+          "phase_peak_allocated_bytes": 8487554560
+        },
+        {
+          "phase": "GNN_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.039428697898983955,
+          "cuda_stream_span_seconds": 0.01683904020488262,
+          "phase_peak_allocated_bytes": 8312581632
+        },
+        {
+          "phase": "GNN_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.03953638859093189,
+          "cuda_stream_span_seconds": 0.020964384004473684,
+          "phase_peak_allocated_bytes": 8315775488
+        },
+        {
+          "phase": "assignment_floor",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.07489780709147453,
+          "cuda_stream_span_seconds": 0.07560576009750367,
+          "phase_peak_allocated_bytes": 8383876608
+        },
+        {
+          "phase": "assignment_guards",
+          "calls": 144,
+          "cpu_dispatch_wall_seconds": 0.14647513907402754,
+          "cuda_stream_span_seconds": 0.13989167967438698,
+          "phase_peak_allocated_bytes": 8384202240
+        },
+        {
+          "phase": "backward",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.2691004630178213,
+          "cuda_stream_span_seconds": 0.4161208953857422,
+          "phase_peak_allocated_bytes": 8686820864
+        },
+        {
+          "phase": "combined_loss",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.0034713195636868477,
+          "cuda_stream_span_seconds": 0.003573311984539032,
+          "phase_peak_allocated_bytes": 8379935232
+        },
+        {
+          "phase": "communication::all_gather_object",
+          "calls": 1,
+          "cpu_dispatch_wall_seconds": 0.0016431529074907303,
+          "cuda_stream_span_seconds": 0.0016614079475402832,
+          "phase_peak_allocated_bytes": 7018201088
+        },
+        {
+          "phase": "communication::all_reduce",
+          "calls": 55,
+          "cpu_dispatch_wall_seconds": 0.026826749555766582,
+          "cuda_stream_span_seconds": 0.03134137580543756,
+          "phase_peak_allocated_bytes": 8357696000
+        },
+        {
+          "phase": "communication::barrier",
+          "calls": 1,
+          "cpu_dispatch_wall_seconds": 0.0052641648799180984,
+          "cuda_stream_span_seconds": 0.005287168025970459,
+          "phase_peak_allocated_bytes": 7018195968
+        },
+        {
+          "phase": "cpu_identity_index",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.003771340474486351,
+          "cuda_stream_span_seconds": 0.0038778560161590574,
+          "phase_peak_allocated_bytes": 7016470528
+        },
+        {
+          "phase": "cpu_layout_index_transfer_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.05327784735709429,
+          "cuda_stream_span_seconds": 0.049447998978197585,
+          "phase_peak_allocated_bytes": 8058856448
+        },
+        {
+          "phase": "cpu_layout_index_transfer_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.010713539086282253,
+          "cuda_stream_span_seconds": 0.010931935966014864,
+          "phase_peak_allocated_bytes": 8077906944
+        },
+        {
+          "phase": "cpu_layout_index_transfer_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.010390277951955795,
+          "cuda_stream_span_seconds": 0.0010300160124897956,
+          "phase_peak_allocated_bytes": 8311430656
+        },
+        {
+          "phase": "cpu_layout_index_transfer_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.010380917228758335,
+          "cuda_stream_span_seconds": 0.00589302408695221,
+          "phase_peak_allocated_bytes": 8311446528
+        },
+        {
+          "phase": "criterion",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.0031571313738822937,
+          "cuda_stream_span_seconds": 0.00325519996881485,
+          "phase_peak_allocated_bytes": 8386210304
+        },
+        {
+          "phase": "data_read",
+          "calls": 7,
+          "cpu_dispatch_wall_seconds": 0.017231261357665062,
+          "cuda_stream_span_seconds": 0.009380479919258505,
+          "phase_peak_allocated_bytes": 7021071360
+        },
+        {
+          "phase": "first_affine_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.010767190717160702,
+          "cuda_stream_span_seconds": 0.010067519932985308,
+          "phase_peak_allocated_bytes": 8063582208
+        },
+        {
+          "phase": "first_affine_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.010221637785434723,
+          "cuda_stream_span_seconds": 0.022636192202568056,
+          "phase_peak_allocated_bytes": 8259531264
+        },
+        {
+          "phase": "first_affine_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008967381902039051,
+          "cuda_stream_span_seconds": 0.002007168035954237,
+          "phase_peak_allocated_bytes": 8310561792
+        },
+        {
+          "phase": "first_affine_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008933531120419502,
+          "cuda_stream_span_seconds": 0.0043751679807901385,
+          "phase_peak_allocated_bytes": 8313760256
+        },
+        {
+          "phase": "full_ego_tokens",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.3780906656756997,
+          "cuda_stream_span_seconds": 0.37820464324951175,
+          "phase_peak_allocated_bytes": 8487554560
+        },
+        {
+          "phase": "gradient_clip",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.018423312343657017,
+          "cuda_stream_span_seconds": 0.0005896640047430992,
+          "phase_peak_allocated_bytes": 7021207552
+        },
+        {
+          "phase": "hard_Sinkhorn",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.017965639010071754,
+          "cuda_stream_span_seconds": 0.018588160037994385,
+          "phase_peak_allocated_bytes": 8367014912
+        },
+        {
+          "phase": "optimizer",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.00809614360332489,
+          "cuda_stream_span_seconds": 0.0010822080224752427,
+          "phase_peak_allocated_bytes": 7025889792
+        },
+        {
+          "phase": "pooling_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.04398613702505827,
+          "cuda_stream_span_seconds": 0.044218593358993544,
+          "phase_peak_allocated_bytes": 8066912768
+        },
+        {
+          "phase": "pooling_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009051699191331863,
+          "cuda_stream_span_seconds": 0.04481520009040832,
+          "phase_peak_allocated_bytes": 8375968768
+        },
+        {
+          "phase": "pooling_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008555788546800613,
+          "cuda_stream_span_seconds": 0.005404223881661892,
+          "phase_peak_allocated_bytes": 8312114688
+        },
+        {
+          "phase": "pooling_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008435280062258244,
+          "cuda_stream_span_seconds": 0.005119744010269642,
+          "phase_peak_allocated_bytes": 8315308032
+        },
+        {
+          "phase": "production_forward",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.916006232611835,
+          "cuda_stream_span_seconds": 0.9160939636230467,
+          "phase_peak_allocated_bytes": 8487554560
+        },
+        {
+          "phase": "sampled_structural_forward",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.2102565849199891,
+          "cuda_stream_span_seconds": 0.2103628158569336,
+          "phase_peak_allocated_bytes": 8384660480
+        },
+        {
+          "phase": "sampled_triple_statistic",
+          "calls": 18,
+          "cpu_dispatch_wall_seconds": 0.050508320331573486,
+          "cuda_stream_span_seconds": 0.05082313585281372,
+          "phase_peak_allocated_bytes": 8383835648
+        },
+        {
+          "phase": "scheduler",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.0023792488500475883,
+          "cuda_stream_span_seconds": 9.471999830566346e-06,
+          "phase_peak_allocated_bytes": 7021187072
+        },
+        {
+          "phase": "second_affine_activation_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008615951985120773,
+          "cuda_stream_span_seconds": 0.008828575909137725,
+          "phase_peak_allocated_bytes": 8067803648
+        },
+        {
+          "phase": "second_affine_activation_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009136086329817772,
+          "cuda_stream_span_seconds": 0.030456959694623944,
+          "phase_peak_allocated_bytes": 8487554560
+        },
+        {
+          "phase": "second_affine_activation_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008386604487895966,
+          "cuda_stream_span_seconds": 0.004359007995575667,
+          "phase_peak_allocated_bytes": 8312581632
+        },
+        {
+          "phase": "second_affine_activation_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008342371322214603,
+          "cuda_stream_span_seconds": 0.004428832007572055,
+          "phase_peak_allocated_bytes": 8315775488
+        },
+        {
+          "phase": "second_directional_aggregation_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.006450537592172623,
+          "cuda_stream_span_seconds": 0.0066448959708213795,
+          "phase_peak_allocated_bytes": 8063582208
+        },
+        {
+          "phase": "second_directional_aggregation_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.006262734532356262,
+          "cuda_stream_span_seconds": 0.03606908774375916,
+          "phase_peak_allocated_bytes": 8259531264
+        },
+        {
+          "phase": "second_directional_aggregation_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.006230306811630726,
+          "cuda_stream_span_seconds": 0.0029788799472153186,
+          "phase_peak_allocated_bytes": 8310561792
+        },
+        {
+          "phase": "second_directional_aggregation_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.006267990916967392,
+          "cuda_stream_span_seconds": 0.003468064021319151,
+          "phase_peak_allocated_bytes": 8313760256
+        },
+        {
+          "phase": "separate_rank_local_quantization",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.4318682700395584,
+          "cuda_stream_span_seconds": 0.43303273582458507,
+          "phase_peak_allocated_bytes": 8384660480
+        },
+        {
+          "phase": "soft_allocation",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.045982412062585354,
+          "cuda_stream_span_seconds": 0.050890815854072576,
+          "phase_peak_allocated_bytes": 8384660480
+        },
+        {
+          "phase": "static_feature_gather_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.005131586454808712,
+          "cuda_stream_span_seconds": 0.0035298879835754626,
+          "phase_peak_allocated_bytes": 8058894848
+        },
+        {
+          "phase": "static_feature_gather_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.005590248852968216,
+          "cuda_stream_span_seconds": 0.0057912000715732576,
+          "phase_peak_allocated_bytes": 8084283392
+        },
+        {
+          "phase": "static_feature_gather_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.004693041555583477,
+          "cuda_stream_span_seconds": 0.000343711999244988,
+          "phase_peak_allocated_bytes": 8308277760
+        },
+        {
+          "phase": "static_feature_gather_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.004916773177683353,
+          "cuda_stream_span_seconds": 0.002502783987671137,
+          "phase_peak_allocated_bytes": 8311481856
+        },
+        {
+          "phase": "static_neighbour_mean_gather_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.00769420899450779,
+          "cuda_stream_span_seconds": 0.005251040000468493,
+          "phase_peak_allocated_bytes": 8059463168
+        },
+        {
+          "phase": "static_neighbour_mean_gather_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.007781718857586384,
+          "cuda_stream_span_seconds": 0.00822767996788025,
+          "phase_peak_allocated_bytes": 8107710464
+        },
+        {
+          "phase": "static_neighbour_mean_gather_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.007702721282839775,
+          "cuda_stream_span_seconds": 0.0013143680281937121,
+          "phase_peak_allocated_bytes": 8308590592
+        },
+        {
+          "phase": "static_neighbour_mean_gather_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.007428506389260292,
+          "cuda_stream_span_seconds": 0.004089887969195843,
+          "phase_peak_allocated_bytes": 8311793152
+        },
+        {
+          "phase": "structural_sample",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.0066251205280423164,
+          "cuda_stream_span_seconds": 0.001849439989193343,
+          "phase_peak_allocated_bytes": 7016462336
+        },
+        {
+          "phase": "three_geometry_assignment_cost",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.03690397646278143,
+          "cuda_stream_span_seconds": 0.04752099227905273,
+          "phase_peak_allocated_bytes": 8384198144
+        },
+        {
+          "phase": "three_geometry_fixed_distance",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.030533138662576675,
+          "cuda_stream_span_seconds": 0.03121939188241959,
+          "phase_peak_allocated_bytes": 8383835648
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "source": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue255/steady_profile/issue255_steady_profile_3098896_583836618/rank_3.json",
+        "sha256": "ffe12e2effc73f5957559bc3439a020efe280fd3c47c1537641ac4ad9e2e8a93"
+      },
+      "window_seconds": 1.399506712332368,
+      "peak_allocated_bytes": 8705662464,
+      "peak_reserved_bytes": 11022630912,
+      "profiled_epoch": 2,
+      "optimizer_steps": 6,
+      "phases": [
+        {
+          "phase": "Attention",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.018873142078518867,
+          "cuda_stream_span_seconds": 0.01898755204677582,
+          "phase_peak_allocated_bytes": 8362569216
+        },
+        {
+          "phase": "Decoder",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.005157105624675751,
+          "cuda_stream_span_seconds": 0.005116512000560761,
+          "phase_peak_allocated_bytes": 8413466624
+        },
+        {
+          "phase": "Encoder",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008558792993426323,
+          "cuda_stream_span_seconds": 0.00878099203109741,
+          "phase_peak_allocated_bytes": 8415205376
+        },
+        {
+          "phase": "GNN_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.07675863895565271,
+          "cuda_stream_span_seconds": 0.07526448011398316,
+          "phase_peak_allocated_bytes": 8081647104
+        },
+        {
+          "phase": "GNN_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.04122968018054962,
+          "cuda_stream_span_seconds": 0.13408326625823971,
+          "phase_peak_allocated_bytes": 8505072640
+        },
+        {
+          "phase": "GNN_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.03921265993267298,
+          "cuda_stream_span_seconds": 0.01765964822471142,
+          "phase_peak_allocated_bytes": 8352828416
+        },
+        {
+          "phase": "GNN_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.03896437585353851,
+          "cuda_stream_span_seconds": 0.020687327951192856,
+          "phase_peak_allocated_bytes": 8355372032
+        },
+        {
+          "phase": "assignment_floor",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.07538291066884995,
+          "cuda_stream_span_seconds": 0.07606319963932037,
+          "phase_peak_allocated_bytes": 8422632448
+        },
+        {
+          "phase": "assignment_guards",
+          "calls": 144,
+          "cpu_dispatch_wall_seconds": 0.14999861363321543,
+          "cuda_stream_span_seconds": 0.14415942406654356,
+          "phase_peak_allocated_bytes": 8422958080
+        },
+        {
+          "phase": "backward",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.2626380892470479,
+          "cuda_stream_span_seconds": 0.42576195144653317,
+          "phase_peak_allocated_bytes": 8705662464
+        },
+        {
+          "phase": "combined_loss",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.003187107853591442,
+          "cuda_stream_span_seconds": 0.0035377920269966125,
+          "phase_peak_allocated_bytes": 8417872896
+        },
+        {
+          "phase": "communication::all_gather_object",
+          "calls": 1,
+          "cpu_dispatch_wall_seconds": 0.001532294787466526,
+          "cuda_stream_span_seconds": 0.0015497599840164184,
+          "phase_peak_allocated_bytes": 7019823616
+        },
+        {
+          "phase": "communication::all_reduce",
+          "calls": 55,
+          "cpu_dispatch_wall_seconds": 0.025191904045641422,
+          "cuda_stream_span_seconds": 0.0343178237983957,
+          "phase_peak_allocated_bytes": 8397076992
+        },
+        {
+          "phase": "communication::barrier",
+          "calls": 1,
+          "cpu_dispatch_wall_seconds": 0.005793806165456772,
+          "cuda_stream_span_seconds": 0.00582367992401123,
+          "phase_peak_allocated_bytes": 7019818496
+        },
+        {
+          "phase": "cpu_identity_index",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.00276816263794899,
+          "cuda_stream_span_seconds": 0.0028671359717845914,
+          "phase_peak_allocated_bytes": 7018486784
+        },
+        {
+          "phase": "cpu_layout_index_transfer_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.05275262240320444,
+          "cuda_stream_span_seconds": 0.04948867378383875,
+          "phase_peak_allocated_bytes": 8075040256
+        },
+        {
+          "phase": "cpu_layout_index_transfer_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009725869633257389,
+          "cuda_stream_span_seconds": 0.009948415994644166,
+          "phase_peak_allocated_bytes": 8093828608
+        },
+        {
+          "phase": "cpu_layout_index_transfer_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009443088434636593,
+          "cuda_stream_span_seconds": 0.0010423040241003038,
+          "phase_peak_allocated_bytes": 8352793600
+        },
+        {
+          "phase": "cpu_layout_index_transfer_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009454695507884026,
+          "cuda_stream_span_seconds": 0.0053179519847035405,
+          "phase_peak_allocated_bytes": 8351895552
+        },
+        {
+          "phase": "criterion",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.0030264947563409805,
+          "cuda_stream_span_seconds": 0.0031215039491653443,
+          "phase_peak_allocated_bytes": 8424163328
+        },
+        {
+          "phase": "data_read",
+          "calls": 7,
+          "cpu_dispatch_wall_seconds": 0.017702903598546982,
+          "cuda_stream_span_seconds": 0.009821439641993494,
+          "phase_peak_allocated_bytes": 7022825984
+        },
+        {
+          "phase": "first_affine_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.010102958418428898,
+          "cuda_stream_span_seconds": 0.009090911997482182,
+          "phase_peak_allocated_bytes": 8078552064
+        },
+        {
+          "phase": "first_affine_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.010055197402834892,
+          "cuda_stream_span_seconds": 0.022270911872386934,
+          "phase_peak_allocated_bytes": 8295286784
+        },
+        {
+          "phase": "first_affine_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009058569557964802,
+          "cuda_stream_span_seconds": 0.0028655359856784345,
+          "phase_peak_allocated_bytes": 8351160320
+        },
+        {
+          "phase": "first_affine_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.00942174717783928,
+          "cuda_stream_span_seconds": 0.005090688046067954,
+          "phase_peak_allocated_bytes": 8353753088
+        },
+        {
+          "phase": "full_ego_tokens",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.3752632848918438,
+          "cuda_stream_span_seconds": 0.37536873245239255,
+          "phase_peak_allocated_bytes": 8505072640
+        },
+        {
+          "phase": "gradient_clip",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.017202096991240978,
+          "cuda_stream_span_seconds": 0.0005926719978451729,
+          "phase_peak_allocated_bytes": 7022962176
+        },
+        {
+          "phase": "hard_Sinkhorn",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.016392561607062817,
+          "cuda_stream_span_seconds": 0.017058496236801148,
+          "phase_peak_allocated_bytes": 8405481472
+        },
+        {
+          "phase": "optimizer",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.009029094129800797,
+          "cuda_stream_span_seconds": 0.0010802240073680878,
+          "phase_peak_allocated_bytes": 7028138496
+        },
+        {
+          "phase": "pooling_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.04439342115074396,
+          "cuda_stream_span_seconds": 0.04462515252828598,
+          "phase_peak_allocated_bytes": 8080911360
+        },
+        {
+          "phase": "pooling_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009214597754180431,
+          "cuda_stream_span_seconds": 0.04314969611167908,
+          "phase_peak_allocated_bytes": 8424420352
+        },
+        {
+          "phase": "pooling_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008846401236951351,
+          "cuda_stream_span_seconds": 0.005328095994889737,
+          "phase_peak_allocated_bytes": 8352448512
+        },
+        {
+          "phase": "pooling_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.009030952118337154,
+          "cuda_stream_span_seconds": 0.005240064032375812,
+          "phase_peak_allocated_bytes": 8355004416
+        },
+        {
+          "phase": "production_forward",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.9068695837631822,
+          "cuda_stream_span_seconds": 0.906951644897461,
+          "phase_peak_allocated_bytes": 8505072640
+        },
+        {
+          "phase": "sampled_structural_forward",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.20490470621734858,
+          "cuda_stream_span_seconds": 0.2050122871398926,
+          "phase_peak_allocated_bytes": 8423416320
+        },
+        {
+          "phase": "sampled_triple_statistic",
+          "calls": 18,
+          "cpu_dispatch_wall_seconds": 0.048759037628769875,
+          "cuda_stream_span_seconds": 0.04907865500450134,
+          "phase_peak_allocated_bytes": 8422545920
+        },
+        {
+          "phase": "scheduler",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.0021046502515673637,
+          "cuda_stream_span_seconds": 9.343999903649092e-06,
+          "phase_peak_allocated_bytes": 7022941696
+        },
+        {
+          "phase": "second_affine_activation_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.007687507197260857,
+          "cuda_stream_span_seconds": 0.00790364795923233,
+          "phase_peak_allocated_bytes": 8081647104
+        },
+        {
+          "phase": "second_affine_activation_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.008080651052296162,
+          "cuda_stream_span_seconds": 0.0304272957444191,
+          "phase_peak_allocated_bytes": 8505072640
+        },
+        {
+          "phase": "second_affine_activation_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.007562970742583275,
+          "cuda_stream_span_seconds": 0.004157568022608757,
+          "phase_peak_allocated_bytes": 8352828416
+        },
+        {
+          "phase": "second_affine_activation_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.0074745966121554375,
+          "cuda_stream_span_seconds": 0.004078591970726847,
+          "phase_peak_allocated_bytes": 8355372032
+        },
+        {
+          "phase": "second_directional_aggregation_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.00708004180341959,
+          "cuda_stream_span_seconds": 0.007262719959020615,
+          "phase_peak_allocated_bytes": 8078552064
+        },
+        {
+          "phase": "second_directional_aggregation_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.006551728583872318,
+          "cuda_stream_span_seconds": 0.03599903953075408,
+          "phase_peak_allocated_bytes": 8295286784
+        },
+        {
+          "phase": "second_directional_aggregation_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.006729540415108204,
+          "cuda_stream_span_seconds": 0.002991712015122175,
+          "phase_peak_allocated_bytes": 8351160320
+        },
+        {
+          "phase": "second_directional_aggregation_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.006254691630601883,
+          "cuda_stream_span_seconds": 0.00318070400133729,
+          "phase_peak_allocated_bytes": 8353753088
+        },
+        {
+          "phase": "separate_rank_local_quantization",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.42987488862127066,
+          "cuda_stream_span_seconds": 0.43046976089477546,
+          "phase_peak_allocated_bytes": 8423416320
+        },
+        {
+          "phase": "soft_allocation",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.044029079377651215,
+          "cuda_stream_span_seconds": 0.049329791903495776,
+          "phase_peak_allocated_bytes": 8423416320
+        },
+        {
+          "phase": "static_feature_gather_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.00495567824691534,
+          "cuda_stream_span_seconds": 0.0028704959978349508,
+          "phase_peak_allocated_bytes": 8075053568
+        },
+        {
+          "phase": "static_feature_gather_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.0050248512998223305,
+          "cuda_stream_span_seconds": 0.0052174079716205595,
+          "phase_peak_allocated_bytes": 8100923392
+        },
+        {
+          "phase": "static_feature_gather_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.005232550203800201,
+          "cuda_stream_span_seconds": 0.00013286399934440851,
+          "phase_peak_allocated_bytes": 8349274112
+        },
+        {
+          "phase": "static_feature_gather_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.0054431455209851265,
+          "cuda_stream_span_seconds": 0.0032761919349431996,
+          "phase_peak_allocated_bytes": 8351922176
+        },
+        {
+          "phase": "static_neighbour_mean_gather_1hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.00866203848272562,
+          "cuda_stream_span_seconds": 0.006326463956385851,
+          "phase_peak_allocated_bytes": 8075527680
+        },
+        {
+          "phase": "static_neighbour_mean_gather_2hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.007999327033758163,
+          "cuda_stream_span_seconds": 0.00843584007024765,
+          "phase_peak_allocated_bytes": 8126905344
+        },
+        {
+          "phase": "static_neighbour_mean_gather_3hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.007631645537912846,
+          "cuda_stream_span_seconds": 0.001261984009295702,
+          "phase_peak_allocated_bytes": 8349533184
+        },
+        {
+          "phase": "static_neighbour_mean_gather_4hop",
+          "calls": 12,
+          "cpu_dispatch_wall_seconds": 0.007639399729669094,
+          "cuda_stream_span_seconds": 0.004037535987794399,
+          "phase_peak_allocated_bytes": 8352174080
+        },
+        {
+          "phase": "structural_sample",
+          "calls": 6,
+          "cpu_dispatch_wall_seconds": 0.0069447774440050125,
+          "cuda_stream_span_seconds": 0.0013800319539150226,
+          "phase_peak_allocated_bytes": 7018478592
+        },
+        {
+          "phase": "three_geometry_assignment_cost",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.03633409831672907,
+          "cuda_stream_span_seconds": 0.046176319777965553,
+          "phase_peak_allocated_bytes": 8422953984
+        },
+        {
+          "phase": "three_geometry_fixed_distance",
+          "calls": 36,
+          "cpu_dispatch_wall_seconds": 0.02965322509407997,
+          "cuda_stream_span_seconds": 0.030570752024650576,
+          "phase_peak_allocated_bytes": 8422544896
+        }
+      ]
+    }
+  ]
+}

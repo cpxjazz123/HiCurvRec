@@ -153,3 +153,28 @@ before loading arrays. The frozen producer is not rerun to repair a consumer.
 the complete assets: final hard-q and continuous-z evaluation uses every valid
 triple and the full reference populations. Per-epoch receipts report actual
 sampled coverage, not an asserted full-population pass.
+
+## v10 direction-aware ego layouts (issue #255)
+
+`assets/v10_direction_ego/{in_only,out_only}/` holds, for every one of the 24587 items, the induced subgraph "centre + all in-neighbours" and "centre + all out-neighbours" of the frozen training-visible directed graph: `nodes.npy` (the token node set, root first), `offsets.npy` and `node_counts.npy` (the per-token geometry), `in_ptr.npy`/`in_col.npy` and `out_ptr.npy`/`out_col.npy` (the local CSR of the induced edges in both directions) and the matching edge counts. The two populations are exact and complete, are not mutually exclusive and never invent a neighbour. `metadata.json` states the semantics, `coverage.json` the population and `audit.json` the independent per-item reconstruction verdict.
+
+Reading it is the same as the v9 ego operators: `offsets` gives each token's node range in `nodes`, the pointer arrays are indexed by node position, and `in_col`/`out_col` hold local node indices.
+
+```python
+import numpy as np
+base = 'assets/v10_direction_ego/in_only'
+offsets = np.load(base + '/offsets.npy')          # (24588,) token node ranges
+nodes = np.load(base + '/nodes.npy')              # (285719,) global item ids, root first
+in_ptr = np.load(base + '/in_ptr.npy')            # (285720,) node-position row pointers
+in_col = np.load(base + '/in_col.npy')            # (695377,) incoming local columns
+
+token = 42
+local_nodes = nodes[offsets[token]:offsets[token + 1]]
+degrees = np.diff(in_ptr[offsets[token]:offsets[token + 1] + 1])
+rows = np.repeat(np.arange(len(local_nodes)), degrees)
+columns = in_col[in_ptr[offsets[token]]:in_ptr[offsets[token + 1]]]
+incoming = set(zip(rows.tolist(), columns.tolist()))
+```
+
+Rebuild with `python3.9 -m tools.issue255.build_direction_ego`; the builder verifies the frozen graph hashes, re-derives every token and appends its manifest registration only if absent.
+

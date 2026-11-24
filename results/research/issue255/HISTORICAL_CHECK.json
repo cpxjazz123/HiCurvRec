@@ -1,0 +1,21 @@
+{
+  "schema": "genrec.issue255.historical_check/1",
+  "exit_code": 0,
+  "executed_calls": [
+    "paired_comparison.baseline_identity(actual_issue253_test_final)",
+    "paired_comparison.validate_completed(actual_issue253_run, population=57439)",
+    "historical.load_bound_checkpoint(actual_issue253_checkpoint)"
+  ],
+  "observed": {
+    "run_id": "stage2_787483d6ef9842d1a7c4593a61ae925c",
+    "epoch": 3000,
+    "population": 57439,
+    "test_final_sha256": "92cb7822e4ddaf11b8a31b3ecaeeb6e6ae6ad8300a4100a22b8125bdb1d586a4"
+  },
+  "frozen_config_revision": "6d96efe092547277173906b152f2d5b3e9172ced",
+  "sources": {
+    "tools/issue255/historical.py": "b4404a0bf450acf253a0523d9ebe7aabfea12d34aef1f2b9a9beb09e62e5600e",
+    "tools/issue255/paired_comparison.py": "02b55a1cd1043806088d6c7b331653d9083749d0b82f53c34b919ac52506db18",
+    "tools/issue255/tests/test_historical_binding.py": "b259ac6cd41510a635f19fd23a1cba11e4d2bd25f1c37ba8d887af4cee7a1ecc"
+  }
+}
