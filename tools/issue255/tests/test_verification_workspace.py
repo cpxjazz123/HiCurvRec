@@ -9,7 +9,7 @@ ROOT = next(p for p in Path(__file__).resolve().parents
 
 def test_verification_runs_against_source_not_result_shadow(tmp_path):
     repo = tmp_path / 'repository'
-    candidate = repo / 'stage2_RQ-VAE/TIGER_prefix_curvature_gate_rq'
+    candidate = repo / 'stage2_RQ-VAE/_archive/TIGER_prefix_curvature_gate_rq'
     candidate.mkdir(parents=True)
     (repo / 'results/stage2_RQ-VAE').mkdir(parents=True)
     marker = repo / 'tools/research/stage2/contract.py'

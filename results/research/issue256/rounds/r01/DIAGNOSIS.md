@@ -1,0 +1,30 @@
+# R01 — parent failure diagnosis before candidate design
+
+## R1 observations
+
+`PARENT_DIAGNOSTICS.json` is an extraction of the exact #255 report and source-bound real-data diagnostic; no concrete test error table or structure-test values are used for this decision. All parent source/artifact hashes and old R2 objects are checked in ../../PARENT_SOURCE_AUDIT.json and ../../PARENT_R2_AUDIT.json.
+
+- #252/#253 historical final R@10:0.0492870697609638/0.046431866850049616; neither reaches0.065. These are historical endpoints, not verified TIGER Recall or a controlled causal comparison.
+- #255 valid run:3000epochs,457 distinct triples/24,587 items, collision0.9814129417985114. Stage3 refused; Recall/NDCG NA, no complete R2 archive. The earlier wrong-calibration run remains INVALID_IMPLEMENTATION, not another valid candidate.
+- #255 L1/L2/L3 distinct prefixes:256/306/457; largest L1 group23,293 items. All256 codewords used at every level does not prevent this collapse.
+- Train-visible edge L1 sharing0.9257195594565201. Structure-validation degree-matched sharing0.9206943498978897; direct sharing0.9222303741746148, only+0.0015360242767251675 above control. Thus high raw edge sharing is not evidence of selective behavior preservation; collapsed unrelated pairs also match.
+- Catalogue reconstruction MSE0.00018233678135234408 versus exact #253 checkpoint0.00009855251449731042. All three full-training-graph curvature macro errors worsen although micro errors improve; weighting/population matters. Per-level macro/micro/sign/negative-zero-positive recall, gate/attention and source-bound diagnostics remain in PARENT_DIAGNOSTICS.json. These are in-sample curvature measurements, not held-out geometry claims.
+- Actual bound one-epoch diagnostic:17 curvature-coupled groups x4 ranks. Weighted structural/original gradient norms range well above1:encoder7.978–38.116; codebook1 up to103.123; Query1 up to121.021. Decoder structural norm is0 as required. The data are real first batches of1,024 items per rank, not synthetic losses. Their identities and generation remain separate from final formal weights.
+- Parent calibration instead constrains only the encoder on the first256 sorted training items. Its coefficient is not a guarantee for the actual shuffled first global4096 batch or other modules.
+- Paired external recommendation-validation inference was not saved historically:NA. Do not invent it or substitute test-error item analysis. Parent four-rank inclusive timing and initialization/export measurements are retained in the original performance reports; the new candidate must independently meet R5.
+
+## R2 classification
+
+**Verified facts:** current hard SID re-export is exact; final collision gate genuinely fails; real losses reach GNN, all layer queries/K/V/codebooks; actual module updates exist; all109 runtime assets match; the trained source/SID/checkpoint are paired. #252's two evolved infrastructure helpers differ from live helpers, but their exact executed bytes were independently verified in R2/100. This is explicitly historical provenance, not permission to rerun it with new code. No evidence of a test-derived training feature, changed vocabulary rule, absent GNN gradient or substituted checkpoint was found in these bound receipts.
+
+**Hypothesis H1 (not proven cause):** an encoder-only calibration on a different small population permits the structural term to dominate other modules and the actual training population; this contributes to prefix concentration and loss of semantic fidelity. Support is the measured17-group/4-rank gradient pressure plus catalogue collapse and validation nonselectivity. Counterexample: the encoder ratio is also far above1 on actual first batches, so a module-only explanation is incomplete; later optimization and fixed geometry scales may dominate independently. The diagnostic covers only the bound first step, not all3000epochs. There is no per-seed causal estimate.
+
+**Alternative explanations:** fixed initial per-level geometry scales become inappropriate; the sampled proxy has high variance or conflicting targets; AdamW changes the effective balance; GNN token means or layer gates overconcentrate; cumulative-prefix supervision conflicts with semantic reconstruction. Gate saturation and curvature correlations alone cannot identify any one cause.
+
+**Minimum discriminating intervention:** replace only the initial calibration policy with the maximal single scalar satisfying a norm budget for every coupled module on the actual initial global training batch. Compute global mean VJP vectors before norms. A coefficient based on mean local norms is not the same quantity. This one policy jointly specifies module coverage and the calibration population; this round cannot attribute any change separately to those two aspects. No other mechanism, loss, scale, assignment, readout, optimizer or training budget changes.
+
+## Falsification
+
+Pre-training: every coupled group has finite nonzero original and curvature VJPs; the chosen coefficient makes weighted curvature norm <= original norm (relative2e-6), at least one group active at the bound; all ranks agree; no model parameter is updated by calibration. The reference LP and hand answers must agree. Failure is implementation/admission failure, not an experiment.
+
+Post-training: collision must be<0.4 and L3 distinct triples must exceed the parent's457. If not, H1's proposed repair is falsified for this candidate. Catalogue reconstruction should improve relative to parent MSE0.00018233678135234408, and validation direct-minus-degree-matched sharing should exceed parent+0.0015360242767251675 without raising the control. These secondary predictions may conflict; report each separately, not an aggregate success label. Full macro/micro/sign results must remain distinct. Recall direction is upward, but neither a causal guarantee nor a claim that gradient bounds imply generalization. R@10<=0.065 after a valid complete run requires R1/R2 and another evidence-driven distinct hypothesis, not closing Issue256 or retraining the same mechanism for score.

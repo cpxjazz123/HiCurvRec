@@ -1,0 +1,13 @@
+{
+  "rank": 3,
+  "worker_pid": 6531,
+  "batch_items": 1024,
+  "formal_training": false,
+  "source_hashes": {
+    "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/mechanism.py": "7cea8be51adcaee041da2035d2b8285d46488f8197f4460726a13d0c92da1c28",
+    "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_module_budget.py": "a089ff4a5d987a9fa627479173cdd6e9fb6d16639e167743d69f0c572b8195a4",
+    "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/module_budget_entry.py": "684307bac7cdc0bee3975a62c6600e6e7d64d0c91fd69e64883f0e942320f94b"
+  },
+  "status": "FAIL",
+  "error": "Traceback (most recent call last):\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_module_budget_prefix_rq/module_budget_entry.py\", line 30, in main\n    check_actual_calibration(torch.device('cuda', rank), 1024)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_module_budget.py\", line 56, in check_actual_calibration\n    assert max(ratios.values()) <= 1 + 2e-6, ('module budget exceeded', ratios)\nAssertionError: ('module budget exceeded', {'encoder': 0.9999999018035465, 'GNN.input': 0.201878625051057, 'sharedKey': 0.09958752692087487, 'sharedValue': 0.2619346659119795, 'sharedScore': 0.29615146743503556, 'GNN.layers.0.self_linear': 0.10177912600052696, 'GNN.layers.0.incoming': 0.293124872852168, 'GNN.layers.0.outgoing': 0.299394891069586, 'GNN.layers.1.self_linear': 0.2024843979502506, 'GNN.layers.1.incoming': 0.11555887047631634, 'GNN.layers.1.outgoing': 0.3649596723786193, 'codebook0': 1.7393104724078572, 'codebook1': 2.3139086104466235, 'codebook2': 4.181675403974989, 'Query0': 0.013329052707454516, 'Query1': 5.618309840549973, 'Query2': 7.838469456872206})\n"
+}

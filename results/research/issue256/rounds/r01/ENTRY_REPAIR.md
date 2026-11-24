@@ -1,0 +1,9 @@
+# Entry engineering repair, not a second mechanism hypothesis
+
+The first current-source machine entry failed because it is a legitimate non-DDP one-epoch smoke: its train_sampler is None. The new four-rank-only identity utility rejected that input before training. `ADMISSION.json` and exact source overrides/receipts are retained under `verification_generations/pre_loader_fix/`.
+
+The frozen contract already requires the actual first batch without perturbing training RNG. No mathematical definition, target, coefficient formula, assignment, architecture or frozen optimizer recipe changed. The repaired private interface is `_calibration_batch(loader,device)`, used by both single-process smoke and four-rank formal training. It obtains features/IDs from the actual DataLoader inside a CPU RNG fork, and restores any explicit loader/sampler generators even if iteration fails. It transfers features once; IDs remain in their original CPU representation, matching the actual training path. Empty/short first batches fail closed. The former IDs-only API and all active callers were removed.
+
+TDD: `test_entry_calibration.py` first reproduced2 failures/1 pass through the old real sampler-None path; after repair, random, distributed and explicit-generator modes all prove exact next-training batch identity and state restoration. The existing assignment-history regression remains. Narrow green command ran5 tests; the actual machine entry then passed both entry and behavior_graph, without changing the checks. No diagnostic artifact is presented as a formal result.
+
+A source edit invalidates prior current-source credentials. Pre-repair121/64 suite, four-rank module/performance/profile and failing entry evidence are preserved; fresh full suites and every real credential are required before formal dispatch. Raw run IDs/directories are never overwritten. The immutable hypothesis remains R01; this is a pre-formal implementation repair, not score-driven retraining.

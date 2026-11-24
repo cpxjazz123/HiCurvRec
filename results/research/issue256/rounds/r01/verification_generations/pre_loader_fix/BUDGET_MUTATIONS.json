@@ -1,0 +1,56 @@
+{
+  "command": [
+    "python3.9",
+    "pytest.main",
+    "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_budget_mutations.py",
+    "-q",
+    "-k",
+    "mutation_is_caught",
+    "--basetemp=/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/pytest_mutation_trace"
+  ],
+  "exit_code": 0,
+  "actual_caught_assertions": [
+    {
+      "mutation": "maximum",
+      "exception": "AssertionError",
+      "assertion": "maximal module-safe coefficient must be 0.25\nassert 2.0 == 0.25 \u00b1 1.0e-12\n  \n  comparison failed\n  Obtained: 2.0\n  Expected: 0.25 \u00b1 1.0e-12",
+      "file": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_budget_known_answers.py",
+      "line": 9
+    },
+    {
+      "mutation": "mean",
+      "exception": "AssertionError",
+      "assertion": "maximal module-safe coefficient must be 0.25\nassert 1.0833333333333333 == 0.25 \u00b1 1.0e-12\n  \n  comparison failed\n  Obtained: 1.0833333333333333\n  Expected: 0.25 \u00b1 1.0e-12",
+      "file": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_budget_known_answers.py",
+      "line": 9
+    },
+    {
+      "mutation": "omit_query",
+      "exception": "AssertionError",
+      "assertion": "maximal module-safe coefficient must be 0.25\nassert 1.0 == 0.25 \u00b1 1.0e-12\n  \n  comparison failed\n  Obtained: 1.0\n  Expected: 0.25 \u00b1 1.0e-12",
+      "file": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_budget_known_answers.py",
+      "line": 9
+    },
+    {
+      "mutation": "square_denominator",
+      "exception": "AssertionError",
+      "assertion": "maximal module-safe coefficient must be 0.25\nassert 0.0625 == 0.25 \u00b1 1.0e-12\n  \n  comparison failed\n  Obtained: 0.0625\n  Expected: 0.25 \u00b1 1.0e-12",
+      "file": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_budget_known_answers.py",
+      "line": 9
+    },
+    {
+      "mutation": "flip_sign",
+      "exception": "AssertionError",
+      "assertion": "maximal module-safe coefficient must be 0.25\nassert -0.25 == 0.25 \u00b1 1.0e-12\n  \n  comparison failed\n  Obtained: -0.25\n  Expected: 0.25 \u00b1 1.0e-12",
+      "file": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_budget_known_answers.py",
+      "line": 9
+    }
+  ],
+  "trace_definition": "def capture(frame, event, arg):\n    if event == \"exception\" and arg[0] is AssertionError:\n        mutation = frame.f_back.f_locals.get(\"mutation\")\n        if mutation is not None:\n            records.append({\"mutation\": mutation, \"exception\": arg[0].__name__,\n                            \"assertion\": str(arg[1]), \"file\": frame.f_code.co_filename,\n                            \"line\": frame.f_lineno})\n    return capture\n\ndef trace(frame, event, arg):\n    if event == \"call\" and frame.f_code.co_name == \"assert_known_budget\":\n        return capture\n    return None\n",
+  "source_sha256": {
+    "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_budget_mutations.py": "a45192ed3389c15e4f24aab1008d496df6feb4256ad9915e1f1da0e2ce84ca6c",
+    "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_budget_known_answers.py": "43068714dbe61e400f01fb4be23071f2031a9edbeebbe9cb25257487aa56bc06",
+    "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/calibration.py": "98956a0234829e48051ef1f359f17a8416e094c066f73b8e8fcbead1cef0dd3e"
+  },
+  "scope": "Five actual designated assertion exceptions captured while unchanged production-helper mutation tests ran; crashes do not count."
+}

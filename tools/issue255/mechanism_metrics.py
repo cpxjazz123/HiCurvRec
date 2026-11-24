@@ -315,7 +315,7 @@ def a1_proxy(values, triples, labels, *, scale=CROSS_MODEL_TANGENT_SCALE,
     mean_a[d(q_a, q_c)])/2`` where ``a`` runs over the whole frozen component of
     the centre.  This is exactly the estimator the frozen #253 cell used, and it
     is identical to the explicit-mean oracle of
-    ``stage2_RQ-VAE/TIGER_prefix_curvature_gate_rq/tests/reference_layer_gate.py``.
+    ``stage2_RQ-VAE/_archive/TIGER_prefix_curvature_gate_rq/tests/reference_layer_gate.py``.
     """
     triples = np.asarray(triples, dtype=np.int64)
     require(triples.ndim == 2 and triples.shape[1] == 3, 'triples must be (n, 3)')

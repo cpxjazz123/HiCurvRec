@@ -1,0 +1,38 @@
+{
+  "schema": "genrec.issue256.test_access/1",
+  "policy": "EVALUATION.md",
+  "new_issue256_test_accesses": [],
+  "known_prior_exposures": [
+    {
+      "issue": 252,
+      "kind": "complete recommendation final test",
+      "population": 57439,
+      "aggregate_r10": 0.0492870697609638,
+      "selection_use": "historical endpoint only; no test item lists read for new mechanism selection"
+    },
+    {
+      "issue": 253,
+      "kind": "complete recommendation final test",
+      "population": 57439,
+      "aggregate_r10": 0.046431866850049616,
+      "selection_use": "historical endpoint only"
+    },
+    {
+      "issue": 254,
+      "kind": "paired posthoc recommendation-test and mechanism diagnosis",
+      "population": 57439,
+      "selection_use": "aggregate provenance/limits only; concrete error rows and cases excluded"
+    },
+    {
+      "issue": 255,
+      "kind": "structure-test aggregate reporting; Stage3 refused",
+      "new_recommendation_test": false,
+      "selection_use": "training and structure-validation diagnostics only for issue256 changes"
+    }
+  ],
+  "independent_confirmation": {
+    "available": false,
+    "reason": "No genuinely unvisited dataset identified; the fixed test is already exposed."
+  },
+  "bias": "Repeated candidate access is an exploratory selection loop; never report it as independent confirmation."
+}

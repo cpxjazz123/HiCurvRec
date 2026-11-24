@@ -1,0 +1,60 @@
+{
+  "command": "python3.9 -m tools.issue256.launch_budget_check",
+  "exit_code": 0,
+  "ranks": [
+    {
+      "path": "results/research/issue256/rounds/r01/budget_regression/3418cdb36564f6f576ad5d61c988d0d09a484f0fc0f4627439df9b8b99a0588e/rank_0.json",
+      "sha256": "9b1a839daf16b045aea459fdcf0e1d1a05b2b27e1fab7b3ac73859fafcb6a973",
+      "rank": 0,
+      "batch_items": 1024,
+      "worker_pid": 69462,
+      "source_hashes": {
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/mechanism.py": "c460faa67db1eae6f7abc84e95b3575c1b9a26928cf2a52bd2c5410e72716a2b",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/calibration.py": "98956a0234829e48051ef1f359f17a8416e094c066f73b8e8fcbead1cef0dd3e",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_module_budget.py": "95b61949775b09c4e0205e119d4a2c72146d4709aec02dc3f562524497e35fea",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/module_budget_entry.py": "8df1a0601caddbf195e838d8dfa441c2cf6aed931f532d949ecfa471377fe057"
+      }
+    },
+    {
+      "path": "results/research/issue256/rounds/r01/budget_regression/3418cdb36564f6f576ad5d61c988d0d09a484f0fc0f4627439df9b8b99a0588e/rank_1.json",
+      "sha256": "2f20a28728c8f31001ecd9b7787d9452f16b3b4b08088eb75c6dbd3bd03da605",
+      "rank": 1,
+      "batch_items": 1024,
+      "worker_pid": 69463,
+      "source_hashes": {
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/mechanism.py": "c460faa67db1eae6f7abc84e95b3575c1b9a26928cf2a52bd2c5410e72716a2b",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/calibration.py": "98956a0234829e48051ef1f359f17a8416e094c066f73b8e8fcbead1cef0dd3e",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_module_budget.py": "95b61949775b09c4e0205e119d4a2c72146d4709aec02dc3f562524497e35fea",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/module_budget_entry.py": "8df1a0601caddbf195e838d8dfa441c2cf6aed931f532d949ecfa471377fe057"
+      }
+    },
+    {
+      "path": "results/research/issue256/rounds/r01/budget_regression/3418cdb36564f6f576ad5d61c988d0d09a484f0fc0f4627439df9b8b99a0588e/rank_2.json",
+      "sha256": "b9ee6aab6fcf79492c2d47ce57255745fcf9e6d4d0da6b636a76c88e1e73e6f1",
+      "rank": 2,
+      "batch_items": 1024,
+      "worker_pid": 69464,
+      "source_hashes": {
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/mechanism.py": "c460faa67db1eae6f7abc84e95b3575c1b9a26928cf2a52bd2c5410e72716a2b",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/calibration.py": "98956a0234829e48051ef1f359f17a8416e094c066f73b8e8fcbead1cef0dd3e",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_module_budget.py": "95b61949775b09c4e0205e119d4a2c72146d4709aec02dc3f562524497e35fea",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/module_budget_entry.py": "8df1a0601caddbf195e838d8dfa441c2cf6aed931f532d949ecfa471377fe057"
+      }
+    },
+    {
+      "path": "results/research/issue256/rounds/r01/budget_regression/3418cdb36564f6f576ad5d61c988d0d09a484f0fc0f4627439df9b8b99a0588e/rank_3.json",
+      "sha256": "372132d3b1582d6d43bd8d9bd4bdb9ce4abf9179cc8a7b804bb8f7130f4a77c2",
+      "rank": 3,
+      "batch_items": 1024,
+      "worker_pid": 69465,
+      "source_hashes": {
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/mechanism.py": "c460faa67db1eae6f7abc84e95b3575c1b9a26928cf2a52bd2c5410e72716a2b",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/calibration.py": "98956a0234829e48051ef1f359f17a8416e094c066f73b8e8fcbead1cef0dd3e",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_module_budget.py": "95b61949775b09c4e0205e119d4a2c72146d4709aec02dc3f562524497e35fea",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/module_budget_entry.py": "8df1a0601caddbf195e838d8dfa441c2cf6aed931f532d949ecfa471377fe057"
+      }
+    }
+  ],
+  "all_designated_budget_assertions_pass": true,
+  "scope": "four rank-local 1024-item real-loss fixture checks on four sanctioned GPUs; actual Trainer global-vector DDP proof remains separately required"
+}

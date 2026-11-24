@@ -13,7 +13,7 @@ if str(ROOT) not in sys.path:
 
 from tools.research.stage2 import launcher
 
-from tools.issue255.identity import ARM, RUN_ID, RUN, EVIDENCE as OUTPUT
+from tools.issue255.identity import ARM, RUN_ID, RUN, SOURCE, EVIDENCE as OUTPUT
 PYTHON = '/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9'
 
 
@@ -89,7 +89,7 @@ def main():
     if launcher.is_child_rank():
         import os
         return audit() if int(os.environ['RANK']) == 0 else 0
-    return launcher.launch(ROOT / 'stage2_RQ-VAE' / ARM / 'final_audit_entry.py',
+    return launcher.launch(SOURCE / 'final_audit_entry.py',
                            OUTPUT / 'final_audit', python=PYTHON, log_name='final_audit.log')
 
 

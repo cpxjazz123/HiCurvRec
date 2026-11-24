@@ -1,0 +1,61 @@
+{
+  "command": "python3.9 -m tools.issue256.launch_budget_check",
+  "exit_code": 1,
+  "designated_assertion": "module budget exceeded",
+  "ranks": [
+    {
+      "path": "results/research/issue256/rounds/r01/budget_regression/17ccfa0db1c5539230c1e0840fdf0025671dc28c63d5052629f0cc7d23e51ea6/rank_0.json",
+      "sha256": "4397d4b7820b1075e7da319d0b90bbeb8d8c4216838eb0158673e07378e00ca3",
+      "rank": 0,
+      "batch_items": 1024,
+      "worker_pid": 6510,
+      "source_hashes": {
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/mechanism.py": "7cea8be51adcaee041da2035d2b8285d46488f8197f4460726a13d0c92da1c28",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_module_budget.py": "a089ff4a5d987a9fa627479173cdd6e9fb6d16639e167743d69f0c572b8195a4",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/module_budget_entry.py": "684307bac7cdc0bee3975a62c6600e6e7d64d0c91fd69e64883f0e942320f94b"
+      }
+    },
+    {
+      "path": "results/research/issue256/rounds/r01/budget_regression/17ccfa0db1c5539230c1e0840fdf0025671dc28c63d5052629f0cc7d23e51ea6/rank_1.json",
+      "sha256": "0562edb24cd30b332b755cd2aa8b1af5efa0e1dd75e202245f6b75e1f0247edd",
+      "rank": 1,
+      "batch_items": 1024,
+      "worker_pid": 6517,
+      "source_hashes": {
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/mechanism.py": "7cea8be51adcaee041da2035d2b8285d46488f8197f4460726a13d0c92da1c28",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_module_budget.py": "a089ff4a5d987a9fa627479173cdd6e9fb6d16639e167743d69f0c572b8195a4",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/module_budget_entry.py": "684307bac7cdc0bee3975a62c6600e6e7d64d0c91fd69e64883f0e942320f94b"
+      }
+    },
+    {
+      "path": "results/research/issue256/rounds/r01/budget_regression/17ccfa0db1c5539230c1e0840fdf0025671dc28c63d5052629f0cc7d23e51ea6/rank_2.json",
+      "sha256": "523a4a08380e7912ca7b91834ad6b0772fe419e6e3e070a0bea2260af97dc867",
+      "rank": 2,
+      "batch_items": 1024,
+      "worker_pid": 6522,
+      "source_hashes": {
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/mechanism.py": "7cea8be51adcaee041da2035d2b8285d46488f8197f4460726a13d0c92da1c28",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_module_budget.py": "a089ff4a5d987a9fa627479173cdd6e9fb6d16639e167743d69f0c572b8195a4",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/module_budget_entry.py": "684307bac7cdc0bee3975a62c6600e6e7d64d0c91fd69e64883f0e942320f94b"
+      }
+    },
+    {
+      "path": "results/research/issue256/rounds/r01/budget_regression/17ccfa0db1c5539230c1e0840fdf0025671dc28c63d5052629f0cc7d23e51ea6/rank_3.json",
+      "sha256": "ec8c2bd6f41716d76e3e557227d46292a3493e1d2da9c35057655cb5c5db2fd9",
+      "rank": 3,
+      "batch_items": 1024,
+      "worker_pid": 6531,
+      "source_hashes": {
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/mechanism.py": "7cea8be51adcaee041da2035d2b8285d46488f8197f4460726a13d0c92da1c28",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_module_budget.py": "a089ff4a5d987a9fa627479173cdd6e9fb6d16639e167743d69f0c572b8195a4",
+        "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/module_budget_entry.py": "684307bac7cdc0bee3975a62c6600e6e7d64d0c91fd69e64883f0e942320f94b"
+      }
+    }
+  ],
+  "timeouts_count_as_red": false,
+  "frozen_sources": {
+    "results/research/issue256/rounds/r01/red_source/test_module_budget.py": "a089ff4a5d987a9fa627479173cdd6e9fb6d16639e167743d69f0c572b8195a4",
+    "results/research/issue256/rounds/r01/red_source/mechanism.py": "7cea8be51adcaee041da2035d2b8285d46488f8197f4460726a13d0c92da1c28",
+    "results/research/issue256/rounds/r01/red_source/module_budget_entry.py": "684307bac7cdc0bee3975a62c6600e6e7d64d0c91fd69e64883f0e942320f94b"
+  }
+}

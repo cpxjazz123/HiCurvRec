@@ -1,0 +1,22 @@
+# Full diagnostic generations remain immutable on shared storage; commit compact SHA-bound receipts.
+rounds/*/pytest_*/
+rounds/*/compiler_cache/
+rounds/*/validation/
+rounds/*/benchmark/
+rounds/*/steady_profile/
+rounds/*/budget_regression_launcher*/
+rounds/*/evaluation/*.npz
+rounds/*/evaluation/*_items.json
+*.log
+!rounds/*/CALIBRATION_RED.log
+!rounds/*/CALIBRATION_TRACE_GPU.log
+!rounds/*/CALIBRATION_GREEN_GPU.log
+!rounds/*/TEST_RUN.log
+!rounds/*/TEST_CANDIDATE.log
+!rounds/*/TEST_ASSETS.log
+!RELOCATION_TEST.log
+!PARENT_SOURCE_AUDIT.log
+!rounds/*/ENTRY_CALIBRATION_RED.log
+!rounds/*/PROFILE_LOADER_RED.log
+# Keep the exact full payload in one compact committed mirror, not three pretty-printed copies.
+PARENT_DIAGNOSTICS.json

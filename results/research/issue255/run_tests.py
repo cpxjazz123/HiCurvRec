@@ -15,7 +15,7 @@ from pathlib import Path
 ROOT = next(p for p in Path(__file__).resolve().parents
             if (p / 'tools/research/stage2/contract.py').is_file()
             and (p / 'stage2_RQ-VAE').is_dir())
-TREE = ROOT / 'stage2_RQ-VAE/TIGER_prefix_curvature_gate_rq'
+TREE = ROOT / 'stage2_RQ-VAE/_archive/TIGER_prefix_curvature_gate_rq'
 PYTHON = '/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9'
 OUTPUT = ROOT / 'results/research/issue255'
 

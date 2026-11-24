@@ -1,0 +1,683 @@
+{
+  "issue": 256,
+  "round_id": "r01",
+  "check": 3,
+  "state": "PRETRAINING_PASS_NOT_COMPLETE",
+  "pretraining_admissible": true,
+  "counts": {
+    "PASS": 13,
+    "FAIL": 0,
+    "NOT_RUN": 4
+  },
+  "criteria": [
+    {
+      "id": "C1",
+      "verbatim": "这是持续迭代的研究 Issue，不是一次实验交付 Issue。继承 #255 的三曲率分层门控与累计截面曲率监督框架；#255 当前仍在执行，先等待其真实最终结果并审计，再作为本 Issue 的起点，不并行重复执行其模型。每轮完成后必须基于实际证据定位未达到目标的原因，提出针对性的下一轮修改，验证并迭代，直到同一冻结推荐协议下合法、完整 Stage3 最终 test R@10 > 0.065（严格沿用仓库采纳阈值）。没有达到目标不得标 COMPLETED 或以负结果结束本 Issue；真实权限/资源/外部依赖阻塞如实记录，等待解决，不伪造、不绕过权限。达到阈值后仍须完成完整验收、复算、归档和来源绑定才允许关闭。",
+      "criterion": "Final legal Stage3 R@10 and continuing loop",
+      "threshold": "test_R@10 > 0.065; do not complete after a failed candidate",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C2",
+      "verbatim": "保留三种曲率空间 {-1,0,+1}、共享有向 GNN、完整 1-hop / 2-hop ego、入/出方向拓扑 token、分层 Cross-Attention 几何门控、混合曲率码字选择及累计前缀截面曲率监督；GNN 与门控联合优化。",
+      "criterion": "Architecture and trainability",
+      "threshold": "three curvatures; directed shared GNN; four complete direction/ego tokens; layer gates; cumulative curvature",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "PASS"
+    },
+    {
+      "id": "C3",
+      "verbatim": "保留768维原始语义输入、32维latent、三层256码字、统一商品SID、原始RQ-VAE重建/commitment/codebook、#255实际硬分配协议及合法选码梯度路径。只允许在现有机制内部做针对性改进，例如方向/子图readout、门控表达/梯度、几何距离尺度、截面代理的层次及归一化、梯度冲突和稳定性等；每次变更必须解释与基础机制的关系。不得引入独立行为邻域约束、InfoNCE、pair-ranking、额外行为预测任务或其他不相关Loss，不删2-hop、不冻结GNN、不替换三曲率空间。",
+      "criterion": "Capacity, assignment and allowed scope",
+      "threshold": "768/32; 3x256; original RQ-VAE losses; actual #255 hard assignment; no unrelated objective",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "PASS"
+    },
+    {
+      "id": "C4",
+      "verbatim": "复用冻结训练图、完整曲率资产、基线TIGER与既有Infra；禁止重训TIGER、额外基线训练、PPR、四节点全量graphlet、多种子或盲目网格搜索。单agent串行研究决策，计算使用四卡，不创建每轮独立Issue。",
+      "criterion": "Reuse and serial decisions",
+      "threshold": "no repeated static assets, baseline training, PPR, grid or multiseed",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "PASS"
+    },
+    {
+      "id": "C5",
+      "verbatim": "每个有明确机制假设的新候选一次正式训练：四卡/global4096/seed42/Stage2 3000 epochs，固定Stage3 150 epochs及beam20、完整test和归档；失败实现故障的修复重跑需明确区分。既有规则中“一次候选训练”仍适用，但本 Issue 明确授权在证据驱动下创建后续机制版本，不能将其误读为禁止继续迭代。",
+      "criterion": "Candidate run authority",
+      "threshold": "one complete 3000-epoch world4/global4096 seed42 run per distinct hypothesis; frozen 150-epoch Stage3",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "PASS"
+    },
+    {
+      "id": "C6",
+      "verbatim": "审计 #252–#255 的最终报告、真实源码、数据、checkpoint、SID与R2归档，核查#255是否完整通过。保留历史 #252 R@10 0.049287、#253 0.046432 及#254相关性结果，不把它们视作单因素因果或已核验的TIGER Recall。",
+      "criterion": "Parent provenance audit",
+      "threshold": "audit #252 through #255; never interpret correlation as cause",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "PASS"
+    },
+    {
+      "id": "C7",
+      "verbatim": "建立固定、训练外的验证划分和统一诊断口径，冻结排序/候选解码/词表派生规则、评估总体及指标定义。优先使用 validation 与已冻结的结构验证库决定机制修改、权重或候选；严格隔离 recommendation test 和 structure test，禁止将#254具体测试错误商品清单、test标签/派生特征作为监督或参数选择依据。",
+      "criterion": "Validation isolation",
+      "threshold": "fixed train-external validation; test and #254 item-error lists excluded from supervision/selection",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "PASS"
+    },
+    {
+      "id": "C8",
+      "verbatim": "用户要求以最终固定test R@10>0.065为关闭阈值。若多个候选先后查看同一test分数，该分数是反复使用的探索性闭环门槛，不再是完全独立的最终泛化估计。记录每次test访问及由此产生的选择偏差；条件允许时预留未访问的独立确认集或新数据集作一次确认，否则明确局限，不宣称无偏泛化。即使某轮test失败，下一轮具体修改应由训练/验证侧证据驱动，而非针对test样本调参。",
+      "criterion": "Test access and bias",
+      "threshold": "log each access; no claim of independent confirmation without genuinely untouched data",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "PASS"
+    },
+    {
+      "id": "C9",
+      "verbatim": "R1 记录上轮结果及未达标差距：R@5/10、NDCG@5/10、训练/验证行为边L1前缀保持、度匹配对照、L1/L2/L3前缀和碰撞、普通语义重建、各级硬q曲率宏/微误差与符号平衡准确率、正/零/负召回、分层gate/attention、梯度范数/方向、各卡耗时。历史缺失标NA，不拼接不一致checkpoint。逐用户/商品配对错误分析以validation为主要决策集，test仅在授权的最终测试和事后透明报告中使用。",
+      "criterion": "R1 complete diagnostic inventory",
+      "threshold": "record all requested diagnostics; missing historical values NA",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "PASS"
+    },
+    {
+      "id": "C10",
+      "verbatim": "R2 定位最有证据的失败原因：先排除实现、数据隔离、导出、词表、训练/评估协议、尺度/梯度路径、数值和工程错误，再分析机制。区分已验证故障、统计相关、未证实假设。至少列出支持证据、反例、替代解释、覆盖率与影响量；若不能确定根因，必须明确未知，并设计能排除假设的最小诊断，而非虚构原因。",
+      "criterion": "R2 discriminating diagnosis",
+      "threshold": "support, counterexample, alternatives, coverage and measured impact; unproven root cause stays unknown",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "PASS"
+    },
+    {
+      "id": "C11",
+      "verbatim": "R3 冻结下一轮单一主要改动与可证伪预测：写清为何针对R2证据、数学定义、影响模块、保持不变项、训练前可验证判据、期望机制指标与Recall方向、失败判据。避免一次改变多个独立因素；若必须联合改动，明确只能归因于整个组合。不能仅凭上轮Recall低机械地更换参数。每轮方案/判据先登记，再写代码；权重/温度等原则上由训练侧统计或数学推导确定。",
+      "criterion": "R3 preregistered single change",
+      "threshold": "one main mathematical change; falsifiable pretraining and final predictions",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "PASS"
+    },
+    {
+      "id": "C12",
+      "verbatim": "R4 先红后绿实现并独立验收：真实数学参考、数值稳定、硬SID与checkpoint重导出一致、曲率Loss经选码路径更新各层gate/Q/K/V/GNN、梯度冲突、数据/资产身份、四卡DDP与真实入口；实际machine entry和behavior_graph PASS后才允许正式训练。诊断短运行不冒充正式结果。",
+      "criterion": "R4 actual path verification",
+      "threshold": "TDD; independent reference; mutations; module VJPs/updates; four-rank and real entry; entry and graph PASS",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "PASS"
+    },
+    {
+      "id": "C13",
+      "verbatim": "R5 保持性能与数据完整：先复用已保存资产，缺失静态数据才创建并持久化到assets/注册manifest；test派生分析留在evaluation区。真实四卡inclusive连续至少30稳态epoch计时，包含周期工作、结构Loss、通信和优化器；目标0.4–0.5s，既有授权上限0.8s。不得通过隐藏耗时、减少数据、改变训练预算或冻结GNN达标。超过上限定位并修复，不能机械派发。",
+      "criterion": "R5 full-work performance",
+      "threshold": "at least 30 consecutive steady four-card epochs; inclusive mean <= 0.8 s; target 0.4-0.5 s; full data and GNN",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "PASS"
+    },
+    {
+      "id": "C14",
+      "verbatim": "R6 完成当前候选Stage2 3000 epochs、合法硬SID（前三码碰撞<0.4且精确导出）及Stage3 150 epochs，按同一协议记录最终test，独立复算并绑定R2源码/SID/checkpoint/日志。保存验证结果、分层指标、逐用户配对、训练损失/梯度/时间等。无额外多种子或同机制追分重跑。",
+      "criterion": "R6 complete legally paired run",
+      "threshold": "3000/150 epochs; exact checkpoint export; first-three collision < 0.4; independent recompute and complete R2",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C15",
+      "verbatim": "R7 逐项验收与决策：对照预注册的预测，解释是否提高了真实L1前缀保持、几何保真、语义保真与推荐指标；若机制指标改善但Recall未改善，则该轮改善假设不成立。若 R@10 未过0.065，记录本轮最重要失败原因或剩余待证假设、下一轮方向和依据，更新本Issue进度后返回R1/R2继续。不得因单轮失败、负结果、复杂度或工作量以COMPLETED关闭。实际外部阻塞保留证据并等待解除。",
+      "criterion": "R7 continue negative rounds",
+      "threshold": "if final R@10 <= 0.065 return R1/R2; no same-mechanism score rerun",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C16",
+      "verbatim": "建立单一持续迭代台账（round_id、父版本/源码SHA、变更、假设、诊断/验证数据身份、完整Stage2/3 run、结果、归档ID、结论、下一轮方向），每轮以评论汇报且持久化独立目录，不覆盖历史失败/负结果。保存所有可复用静态数据及manifest，保存每轮完整模型、SID、日志、分析表、指标、独立复算、准入证据及R2归档。正式候选源码与运行绑定，推送并核对远端SHA。每轮结果不删减，不把相关性称因果。",
+      "criterion": "Immutable continuing ledger",
+      "threshold": "all rounds, source hashes, evidence, comments, runs, failures and archive IDs preserved",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "PASS"
+    },
+    {
+      "id": "C17",
+      "verbatim": "实际一次合法且完整的 Stage3 test R@10 > 0.065；源、输入、SID、checkpoint、3000/150 epochs、评估协议、独立复算和R2归档全部匹配；基础机制仍然保留；全部必要测试与真实准入通过；所有历史轮次与未达标原因、修复依据可追溯；如反复使用固定test，最终报告明确选择偏差及是否有独立确认。全部满足后才以COMPLETED关闭。",
+      "criterion": "Final conjunction",
+      "threshold": "every requested condition and R@10 > 0.065; complete source/SID/checkpoint/protocol/R2 pairing",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "pretraining conditions only; full Stage2/Stage3 and final adoption remain unexecuted",
+      "status": "NOT_RUN"
+    }
+  ],
+  "evidence": {
+    "TEST_RESULTS.json": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/TEST_RESULTS.json",
+      "sha256": "341794a9afcf3367304131433fb52fb47be6fa15b4b9ab82284727cac67d792f"
+    },
+    "ADMISSION.json": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/ADMISSION.json",
+      "sha256": "d93af887431db46bb6bc7493385091abf0d4d72598957b57302cc505c7ade796"
+    },
+    "VALIDATION.json": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/VALIDATION.json",
+      "sha256": "e7bea94af2a3f6d7bf39d0c520fa5b6b05293ef811c5cffdaa3c8d9833e2fee7"
+    },
+    "MODULE_CHECKS.json": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/MODULE_CHECKS.json",
+      "sha256": "94cdc2b1655d983ff630a717fbf40562d9145a960855eaa2334b58f9c6f58d88"
+    },
+    "PERFORMANCE.json": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/PERFORMANCE.json",
+      "sha256": "a901d449a684c1bf23559cab999bdc3206676448dde1abce044ca3373c635305"
+    },
+    "PROFILE_SUMMARY.json": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/PROFILE_SUMMARY.json",
+      "sha256": "fc6be29c24f2b9a98ea64475b7b477d9b6b72b870b6e2321907d64f9931f1d57"
+    },
+    "BUDGET_MUTATIONS.json": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/BUDGET_MUTATIONS.json",
+      "sha256": "86dee901074dc79386205ea604b81b8a82328ca23916fc8b455a91fc77833cd7"
+    },
+    "MUTATIONS.json": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/MUTATIONS.json",
+      "sha256": "4c414a0ba536c64328e79e5576d4b8b6b9b3ae17fc6bb2244d64e663456acd98"
+    },
+    "LAYER_MUTATIONS.json": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/LAYER_MUTATIONS.json",
+      "sha256": "9b96ede3451eb81913dbda5bc31a54b19b19468f391618db3a585b53c1fb8056"
+    },
+    "CALIBRATION_RED_RECEIPT.json": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/CALIBRATION_RED_RECEIPT.json",
+      "sha256": "2b7914962139500670c0a72aae3401e23073fd0b8ec7ceb0445031c0469b82c4"
+    }
+  },
+  "dispatch_verification": {
+    "source_files": {
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/assignment_floor.py": "984bba1330c62a2a712c6797e27a9389bcb7274a8dbe552d48f13c22e9a6ff96",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/benchmark_entry.py": "b3ce6497b0f2f46b6e9c6126638c1a1690569dd2a03880bd8b80aa78d030dfa6",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/catalogue_audit_entry.py": "c011f329f23c3350a2aca3ca8c68414720143c9be24e7f1e8ce53212426a2d78",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/distances/__init__.py": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/distances/distance.py": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/final_audit_entry.py": "4d1b0f36ab82619fa99cba7dee738b123b4cc9163eb33d22092f5f774a27c88b",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/kernel_validation_entry.py": "5ed8d083794b2b383f373e5ab6fff6f0aa9ecdd8f0a665d64065df4d19e69d7f",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/layer_validation_entry.py": "7292e81b8270738fa37b3f64d37225f63b66fa71a01525c43bf4465d992ad46e",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/losses/__init__.py": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/losses/_pairs.py": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/losses/codebook.py": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/losses/commitment.py": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/losses/quantization.py": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/losses/reconstruction.py": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/__init__.py": "fc51b6b47b052833e3bb249a00a581da6a6f27bb4905fb58237a2865354c0f81",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/calibration.py": "98956a0234829e48051ef1f359f17a8416e094c066f73b8e8fcbead1cef0dd3e",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/curvature.py": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/estimator.py": "1bc4a1fda6276a4e31f7ba7ed69d5a33cb83bc8d0f241471d67a8b79a7f6ddd0",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/geometry.py": "42964aaa6004f91adc96407b14e5e3ce54bec8dc6115b33891bd55cdb0ad02c5",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/layer_gate.py": "18bfc476986946bf47a5b80571630a3ef18b7653ff90856575d1240563421579",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/layers.py": "dadd6287dbf55751c10bae23d81c1af42ab9035a73a09d77b9c67550bdc1fb4a",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/mechanism.py": "c460faa67db1eae6f7abc84e95b3575c1b9a26928cf2a52bd2c5410e72716a2b",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/model.py": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/provenance.py": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/selection.py": "cb0bcb306224af0c8562fa7f3ea6ae4bf4cbf2f4ba61ee5bae60916efb12938c",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/structure.py": "1bccb9f7dbf54f62a743258efc7faca5fc7f89c9cc0039b793c7f0e1985a126b",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/structure_gate.py": "ce043cd2c395b45c9074e195547bd06ceb6915f2078c8f19781b049a4c209499",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/model/utils.py": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/module_budget_entry.py": "8df1a0601caddbf195e838d8dfa441c2cf6aed931f532d949ecfa471377fe057",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/steady_profile_entry.py": "b12fa8a63db60cd9a42e1423be85dcb432daeffc12fbe8af5526b50252b5af74",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/reference.py": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/reference_layer_gate.py": "b4fe04d6e66105b4face3fc1874254a5a6a7568a6a5ccc3b1f6a5d4b8fa18d31",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_attention.py": "96ac7f522b6763ef5fc2819c9c30e53a08ff3fbd2c3befca23de0458ebf0d6a9",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_attention_pipeline.py": "b88cf8f3037d76dba4154f1cf22fdd7866a8c8914bd4997cc1d2ea698e492f4c",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_budget_known_answers.py": "43068714dbe61e400f01fb4be23071f2031a9edbeebbe9cb25257487aa56bc06",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_budget_mutations.py": "a45192ed3389c15e4f24aab1008d496df6feb4256ad9915e1f1da0e2ce84ca6c",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_budget_reference.py": "cb3804dba9b503e7cfca1b57e846de7df5b0f6665bb7614626238f62457b8b2f",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_calibration.py": "f6f6572ab663ffcf6463947b7b6fc142da77e7bbc742778f5ef9538d5047f7a1",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_cuda_math.py": "a293e59cfb537dbbaa6eb5e35f769918f6951151581e9817c5ae954b95bfba83",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_curvature_loss.py": "d260562cb8990411a1680ac0792006db787619ddafcc5a6c54d09fa13142f633",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_entry_calibration.py": "939039f18ee9d5662bb400771c5e0234ca9d1b921afa394098e624533665499b",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_estimator.py": "07d4cb1a0841b766d0e5220a2be7b7b66c5abdfe3d00e9c43e38fa59ba991531",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_execution.py": "8f248bd21c9c5df209880cc83215be3dd3b3682c50627b31ad4bcbd367736d12",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_geometry_memory.py": "0ebae94fad15202119347deeedf7d1a2ac1e00772d58acf9e84bebdf89485c5c",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_known_answers.py": "5227bfa8fe927e96c28ea42d55d219bad2d09f490b3aad62346a12c0565da513",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_layer_gate.py": "05ac143248c4fca1e0b1a0d2752babe0f4a6bd22cd3f8879a9cb4b49c832ac8f",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_layer_mechanism.py": "aa31dc3ae21ac651f2bf9b12c1e8e10f0d43e46e6bf48e5d516024515ead37d1",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_mechanism.py": "bf5b84db0466103245e99d049bd36e53e237b06712c19be5c6acc674d520d418",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_module_budget.py": "95b61949775b09c4e0205e119d4a2c72146d4709aec02dc3f562524497e35fea",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_mutations.py": "9118f0ea51b486f862a75170e9ddea959bf329c7c86349f1486d03410fb978ed",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_profile_loader.py": "b8ca22d6b0428328c95bbc421d72fcd83c2ac638dc7c0dbd82a598143db49bbf",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_provenance.py": "d58a2e2cd857867148fa54edc4e776b477080b18a97e58b0522c2d2c78f878b7",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_reference.py": "0a939f348e8ce897e64f2328357b12ff8059c7eb615284616ba03d17fb68a72c",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_sparse_adjoint.py": "5972c5c4432a15e9b986ca9a1eabd0cf528ebc2c66014112db17abbea83e82e3",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_sparse_structure.py": "dfa0d16d375bd13af03e69f7df4faaa634c3564781730c34631af7892114ff6e",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_static_means.py": "c1f496aabced794a58c47adc91cce915e87733bf2f934a3cc4ba0abafdd9640d",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_structure.py": "e818e562c925c6aa6d3bd5853d2b1b1ba00e0f88f1831289537a11d375bec593",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_sync_free_batch.py": "0fa28c44ee9bb7ab2cc9d26fee74b88db9afa659fd57075d40a294df3865e964",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/tests/test_three_geometry.py": "542015ddb04c215986bf91efb23a1d129834347ed4efa3d7e1ca434c1fff646e",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/train_config.py": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/train_rqvae.py": "b96cf0c322db714b69bb5246b60c623a5e0c0f0b48905d6b1b63f7f4558afe1b",
+      "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/validation_entry.py": "1d63edb496b7357cb38742b38eb0798e590d32e886fed33f8e1b60400793ce8e",
+      "tools/issue256/admission.py": "593dfe6776f99340873d9e66c15a9af588e5c2366a7bcf20ef5db045e03c1531",
+      "tools/issue256/audit_parents.py": "c6c75194db5386cf2c45a736a64fcc89d7c4830fc9ea4939ac6662b9f966fe74",
+      "tools/issue256/collect_evidence.py": "ca9e5f303e2a9ff43fa76247792b685b3bda1bc99e86358d6802cec441f838c1",
+      "tools/issue256/dispatch_evidence.py": "c3957096cc895b19d908e7f306e0c61ca83c3c30f742519b39919f81d6df326e",
+      "tools/issue256/identity.py": "6a2361aea2f6e190eb69c60673f5948fe0836861ee282472d0d2e92ac5e6b99b",
+      "tools/issue256/launch_budget_check.py": "ec3690d1ecc778d5fe7140bc6d101ebbdf6229a1c46bb07aee1f13ff7491810b",
+      "tools/issue256/launch_diagnostics.py": "d0998fd770e1e57e58da5939ef3b39781cab41091ad0c72397bb7f0da1ea75a4",
+      "tools/issue256/launch_formal_run.py": "8dc46ae08a6e979598647b5143707c5302fd26b1ecd40c7d0b5cb1737c2b8ab9",
+      "tools/issue256/layer_validation_entry.py": "e7732b43ae78f7007b85e8ed399fbb31eabf0317d2254fd6d268965a334e1581",
+      "tools/issue256/parent_diagnostics.py": "f4e7154a73b192b70e3fc29371095c4e3a135bce9ed2bcb71b5f6e999e66ec4b",
+      "tools/issue256/run_tests.py": "00725f6445a2f57e6e1632f21a02fead6346d412bdc7400687cd4d6cb491e099",
+      "tools/graph_infra/__init__.py": "b86861c93434621cff070d024b12f8c6f9d5a5e77a8deea54089645a3a7226ff",
+      "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+      "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+      "tools/issue252/archive_audit.py": "1c4fc283096e7a8e3a22c415f6a2f886d61186ce80aa7c5700aa3bc37968cd2d",
+      "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba",
+      "tools/issue252/host_transfer.py": "41428cf5a9a9b9abb3568baa2164b675b9fd888172e3431f631665925d462f37",
+      "tools/issue253/cuda_math.py": "e6360d4c2f9ec80e2301f19342c109597f9177cd045a78540b73f2a4402e6473",
+      "tools/issue253/ego_kernel.py": "6a9a823e51e5923315ee6e6410ab20b57e6e4cb8e4c41f157d0f54b73fe7afb0",
+      "tools/issue253/sparse_adjoint.py": "bfc93d231a868945141a79a9092886b46d1fdb563dc4f2d3ee71e1ea110fea2d",
+      "tools/issue253/static_features.py": "bd38db54df2affa239810e236222d363cbc684c62da2850e3675c4c97997f747",
+      "tools/stage2/server.py": "1152c3360ddebd5eb161ab1111245a131e338e4058f49f74c215b43922cb96bb",
+      "assets/manifest.json": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b",
+      "tools/research/stage2/launcher.py": "61d32bd6d1100d1903b6f934480a478630fe647f626510b66cc964720b28b85a",
+      "tools/issue253/performance.py": "17469b0b3347e03720b440bda8911f7b65e73dd907f1faec0d8f88485c994103",
+      "results/research/issue256/rounds/r01/CONTRACT.md": "aa644b16eb9a378d48384eb72eb618eac8b90efe4790baad2e2fe7b2f2a54156",
+      "results/research/issue256/rounds/r01/MUTATIONS.md": "132656aff146903c906cfa39e8cf27c7294cfa1327c7b2e6bcc3d8db593f3c17",
+      "results/research/issue256/rounds/r01/reference.py": "c557b1c76a0445bcc7a914fdfa9589320fb55f1540e80a1b70e5f37d39b61c2f",
+      "results/research/issue256/ACCEPTANCE.json": "56db8c7084b5af5e9448b6ed2798ef7111c5e5b38753f5d3d4b78036e6f8860d",
+      "results/research/issue256/EVALUATION.md": "4e0ea06e5799a1d6c9cce514bab8deba1e4ea320dc8dd9d4d16467d0b206e993"
+    },
+    "credentials": {
+      "TEST_RESULTS.json": "341794a9afcf3367304131433fb52fb47be6fa15b4b9ab82284727cac67d792f",
+      "ADMISSION.json": "d93af887431db46bb6bc7493385091abf0d4d72598957b57302cc505c7ade796",
+      "VALIDATION.json": "e7bea94af2a3f6d7bf39d0c520fa5b6b05293ef811c5cffdaa3c8d9833e2fee7",
+      "PERFORMANCE.json": "a901d449a684c1bf23559cab999bdc3206676448dde1abce044ca3373c635305",
+      "MODULE_CHECKS.json": "94cdc2b1655d983ff630a717fbf40562d9145a960855eaa2334b58f9c6f58d88"
+    },
+    "ranks": {
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/validation/issue256_r01_validation_307113_584829437/rank_0.json": "1a9c3bdbeda178151e834e9d413b196f0bdc314caf1633d0138946c541f4bf23",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/validation/issue256_r01_validation_307113_584829437/rank_1.json": "4ff8726a7372a13039405b4d2666057fd104aa4af669aab9d7d76b56078107d5",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/validation/issue256_r01_validation_307113_584829437/rank_2.json": "5035051e1fcec6705a2d51a93d341210b5f19364acc3c403978509583ea4b947",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/validation/issue256_r01_validation_307113_584829437/rank_3.json": "93cc508ad7a9dd2f4d438c2cfd0953e0ef8fdfed3754cd059229b25236ecab88",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/benchmark/issue256_r01_benchmark_319158_584838278/rank_0.json": "cb33b5b78967b771fa77257747ec0e9e1f657cd18ae2205ae27b173963be0475",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/benchmark/issue256_r01_benchmark_319158_584838278/rank_1.json": "a8f1d5a9f313c6ff33af8ab705752bc8a7f32dc5a33c3fcca3c0877303385b41",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/benchmark/issue256_r01_benchmark_319158_584838278/rank_2.json": "6fb795dda893479798727d213f20756b47c777ed4230f249840842f25e9e6135",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/benchmark/issue256_r01_benchmark_319158_584838278/rank_3.json": "159aacbbd57a022352297f689de53b22c5ec9e97d19cb8911acb0eda2ca70472"
+    }
+  },
+  "issue_body_sha256": "32a2764070e8502926965d355a3ef6ff7619d45881abd0ffa575cb7cef73c5a8",
+  "recorded_at": "2026-11-24T18:39:58.862906+00:00",
+  "formal_training_started": false
+}

@@ -1,0 +1,17 @@
+{
+  "default_guard": {
+    "exit_code": 1,
+    "paths": 1747,
+    "lines": 422711
+  },
+  "deliberate_override": {
+    "max_paths": 2000,
+    "max_lines": 400000,
+    "reason": "Shared worktree includes unrelated147524-line SID and other staged work, which are excluded from the selective commit. Exact parent diagnostics remain at their original immutable SHA paths; the complete semantically identical payload is committed once as compact JSON instead of three23268-line copies. No data or failed outcome was dropped."
+  },
+  "compact_parent_payload_equal": true,
+  "full_parent_raw_sha256": "4f884d6f9bbfbc439d96a914a8de81fe279f172ac2e4ff9e550212a3d50f81b5",
+  "remote_observed": "https://github.com/cpxjazz123/HiCurvRec.git",
+  "branch_observed": "main",
+  "selection_policy": "Only this issue source, evidence, explicit Issue255 source-archive relocation and live path migration; unrelated staged/unstaged lines remain untouched."
+}

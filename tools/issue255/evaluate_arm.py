@@ -16,7 +16,7 @@ import sys
 import numpy as np
 
 from tools.issue255 import mechanism_metrics as metrics
-from tools.issue255.identity import ROOT, ARM, RUN_ID, RUN, EVIDENCE
+from tools.issue255.identity import ROOT, ARM, RUN_ID, RUN, EVIDENCE, SOURCE
 from tools.issue252.final_evaluation import load_bound_checkpoint, load_sid, _coverage
 from tools.issue255 import historical
 from tools.issue252.run_workspace import load_run
@@ -156,7 +156,7 @@ def extraction_sources():
              ROOT / 'tools/issue255/identity.py',
              ROOT / 'tools/issue255/historical.py',
              ROOT / 'tools/issue255/extract_catalogues.py',
-             ROOT / 'stage2_RQ-VAE' / ARM / 'catalogue_audit_entry.py',
+             SOURCE / 'catalogue_audit_entry.py',
              ROOT / 'tools/research/stage2/launcher.py',
              ROOT / 'tools/research/stage2/contract.py',
              ROOT / 'tools/research/stage2/anticollapse/patch_tree.py',
