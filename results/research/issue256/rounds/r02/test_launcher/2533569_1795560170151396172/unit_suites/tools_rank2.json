@@ -1,0 +1,44 @@
+{
+  "rank": 2,
+  "worker_pid": 2549449,
+  "device_index": 2,
+  "exit_code": 0,
+  "pytest_args": [
+    "/fs04/ar57/wenyu/GeneRec/tools/issue256/r02",
+    "-q",
+    "--basetemp=/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/pytest_tools_rank2"
+  ],
+  "cwd": "/fs04/ar57/wenyu/GeneRec",
+  "all_nodeids": [
+    "tools/issue256/r02/test_calibration_receipts.py::test_complete_current_block_evidence_matches_final_weight",
+    "tools/issue256/r02/test_calibration_receipts.py::test_invalid_block_evidence_cannot_admit_a_run[missing_anchor]",
+    "tools/issue256/r02/test_calibration_receipts.py::test_invalid_block_evidence_cannot_admit_a_run[wrong_step]",
+    "tools/issue256/r02/test_calibration_receipts.py::test_invalid_block_evidence_cannot_admit_a_run[stale_checkpoint]",
+    "tools/issue256/r02/test_calibration_receipts.py::test_invalid_block_evidence_cannot_admit_a_run[false_ratio]",
+    "tools/issue256/r02/test_calibration_receipts.py::test_invalid_block_evidence_cannot_admit_a_run[nonmaximal]",
+    "tools/issue256/r02/test_calibration_receipts.py::test_invalid_block_evidence_cannot_admit_a_run[nan]",
+    "tools/issue256/r02/test_external_validation.py::test_reducer_rejects_partial_frozen_validation",
+    "tools/issue256/r02/test_external_validation.py::test_reducer_preserves_complete_all_miss_population",
+    "tools/issue256/r02/test_source_inventory.py::test_changed_round_adapter_invalidates_tested_source",
+    "tools/issue256/r02/test_unit_coverage.py::test_disjoint_execution_reconciles_the_complete_collected_suite",
+    "tools/issue256/r02/test_unit_coverage.py::test_incomplete_execution_cannot_issue_a_full_suite_credential[missing]",
+    "tools/issue256/r02/test_unit_coverage.py::test_incomplete_execution_cannot_issue_a_full_suite_credential[duplicate]",
+    "tools/issue256/r02/test_unit_coverage.py::test_incomplete_execution_cannot_issue_a_full_suite_credential[skipped]",
+    "tools/issue256/r02/test_validation_diagnosis.py::test_best_prefix_distinguishes_all_three_levels_without_suffix"
+  ],
+  "selected_nodeids": [
+    "tools/issue256/r02/test_calibration_receipts.py::test_invalid_block_evidence_cannot_admit_a_run[wrong_step]",
+    "tools/issue256/r02/test_calibration_receipts.py::test_invalid_block_evidence_cannot_admit_a_run[nan]",
+    "tools/issue256/r02/test_unit_coverage.py::test_disjoint_execution_reconciles_the_complete_collected_suite",
+    "tools/issue256/r02/test_validation_diagnosis.py::test_best_prefix_distinguishes_all_three_levels_without_suffix"
+  ],
+  "passed_nodeids": [
+    "tools/issue256/r02/test_calibration_receipts.py::test_invalid_block_evidence_cannot_admit_a_run[wrong_step]",
+    "tools/issue256/r02/test_calibration_receipts.py::test_invalid_block_evidence_cannot_admit_a_run[nan]",
+    "tools/issue256/r02/test_unit_coverage.py::test_disjoint_execution_reconciles_the_complete_collected_suite",
+    "tools/issue256/r02/test_validation_diagnosis.py::test_best_prefix_distinguishes_all_three_levels_without_suffix"
+  ],
+  "failed": [],
+  "skipped": [],
+  "qualification": "Independent unit cases, not a DDP training or performance measurement."
+}

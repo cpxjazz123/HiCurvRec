@@ -18,6 +18,8 @@ assignment.
 """
 from __future__ import annotations
 
+from weakref import WeakKeyDictionary
+
 # `torch` is imported inside the functions: the MCP server and the round bookkeeping run
 # on the stdlib-only interpreter, and they import this package to install the layer into a
 # candidate. Only the training process needs torch.
@@ -31,7 +33,7 @@ class CodebookCollapse(RuntimeError):
     """A codeword ended up empty, or two codewords became the same vector."""
 
 
-_COUNTS: dict[int, "object"] = {}
+_COUNTS = WeakKeyDictionary()
 
 
 def _strict_cpu_repair(costs, initial, floor):
@@ -64,15 +66,16 @@ def _strict_cpu_repair(costs, initial, floor):
                         "min_count": int(counts.min()), "satisfied": True}
 
 
-def constrained_assignment(cost, floor: int, counts_key: int | None = None):
+def constrained_assignment(cost, floor: int, counts_key: object | None = None):
     """Cheapest assignment with `counts >= floor` for every codeword.
 
     Feasible regime (`items >= codewords * floor`): greedy repair, one pass per round, so
     the loop can only shrink the deficit.
 
     Infeasible regime (`items < codewords`): some codeword must be empty at this step. With
-    a `counts_key` the assignment rotates through the *least used* codewords and advances a
-    per-layer usage counter, so after `ceil(codewords / items)` steps every codeword has
+    a weak-referenceable layer owner as `counts_key`, assignment rotates through the
+    *least used* codewords and advances a per-layer usage counter, so after
+    `ceil(codewords / items)` steps every codeword has
     been used at least once. Without a key there is no history to rotate on and the call is
     refused rather than quietly guaranteed to a weaker standard.
     """
@@ -153,7 +156,7 @@ def constrained_assignment(cost, floor: int, counts_key: int | None = None):
                          "min_count": int(counts.min()), "satisfied": True})
 
 
-def _rotating_coverage(cost, floor: int, counts_key: int):
+def _rotating_coverage(cost, floor: int, counts_key: object):
     """Fill the least-used codewords first, so coverage rotates across steps.
 
     The usage vector is the only state: it is a pure function of the batches seen, so a

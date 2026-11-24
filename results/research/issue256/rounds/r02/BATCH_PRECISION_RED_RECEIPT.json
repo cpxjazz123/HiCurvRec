@@ -1,0 +1,26 @@
+{
+  "schema": "genrec.issue256.full_fp32_red/1",
+  "command": "python3.9 -m tools.issue256.r02.run_tests",
+  "exit_code": 1,
+  "launcher_wall_seconds": 121.63,
+  "designated_case": "tests/test_batch_invariant_gates.py::test_actual_geometry_gates_are_invariant_to_other_batch_items",
+  "designated_assertion": "global item geometry gates must not depend on companion batch items",
+  "failure_kind": "assertion in call phase, not crash/import/timeout",
+  "source": {
+    "path": "results/research/issue256/rounds/r02/verification_generations/pre_full_fp32/train_rqvae.py",
+    "sha256": "81c392c17c5c5356b61cbd56870680dd7357a41e82966f24044711908394838c"
+  },
+  "output": {
+    "path": "results/research/issue256/rounds/r02/verification_generations/pre_full_fp32/TEST_CANDIDATE.log",
+    "sha256": "068aace3cb22e7c18494235158eb0dbbcacd604b893cc2c525d22636782ab17d"
+  },
+  "test_results": {
+    "path": "results/research/issue256/rounds/r02/verification_generations/pre_full_fp32/TEST_RESULTS.json",
+    "sha256": "f1b621147956050c899ec5a9158a7ecd35076335c157a724d2517a8af6c6c84e"
+  },
+  "other_results": {
+    "assets": 64,
+    "tools": 15,
+    "unchanged_other_candidate_cases": 142
+  }
+}

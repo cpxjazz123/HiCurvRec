@@ -1,0 +1,47 @@
+{
+  "schema": "genrec.issue256.round_ledger/1",
+  "issue_body_sha256": "32a2764070e8502926965d355a3ef6ff7619d45881abd0ffa575cb7cef73c5a8",
+  "rounds": [
+    {
+      "round_id": "r01",
+      "parent_evidence_commit": "0d1b61101dbbf41374ac33571df959e88cfd00bf",
+      "parent_run_id": "issue255_formal_r1",
+      "arm": "TIGER_module_budget_prefix_rq",
+      "run_id": "issue256_r01_formal",
+      "status": "COMPLETED_NOT_ADOPTED",
+      "change": "single initial maximal global module-gradient norm-budget calibration on actual first global training batch",
+      "hypothesis": "reducing measured original/curvature module pressure repairs prefix collapse without abandoning structure",
+      "contract_sha256": "aa644b16eb9a378d48384eb72eb618eac8b90efe4790baad2e2fe7b2f2a54156",
+      "diagnosis_sha256": "8c2c2a2ecf7b232bde8e48ad2571e69a7d812ad8d02875cb6ee75aaf641ccadf",
+      "data_identity": "INFRA.json",
+      "validation_policy": "EVALUATION.md",
+      "stage2": {"run_id":"issue256_r01_formal","epochs":3000,"source_commit":"0cdfec9b024e568b5b08d96e777033844d66635e","sid_sha256":"201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f","checkpoint_sha256":"680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c","collision":0.06568511815186884},
+      "stage3": {"epochs":150,"world_size":4,"test_rows":57439,"test_recall@10":0.05273420498267727,"validation_recall@10":0.057643761207541916,"checkpoint_sha256":"d8540c837dedffd8291615bb6d7578308f74f6469e3182887685a08571082a96"},
+      "r2_archive": "102",
+      "result": {"path":"rounds/r01/ROUND_RESULT.json","sha256":"337f64a6ab11a5e85e8d84792452ae042179e0c60d3c87ca4cb16cbadf19c420","strict_target_met":false},
+      "registration_snapshot": {"path":"rounds/r01/REGISTRATION.json","sha256":"e58b5ee5b657ceb35c8cdc82a4a4ed1e78e2e934ae47a36cda598577459b04c5"},
+      "live_source_archive": "stage2_RQ-VAE/_archive/TIGER_module_budget_prefix_rq",
+      "next_decision": "Continue R1/R2 from measured final global-gradient drift and complete validation pairing; register a distinct hypothesis after inactive-tree archival, never rerun R01"
+    },
+    {
+      "round_id": "r02",
+      "parent_evidence_commit": "6cd32f054f139dccb8eee03f49afb08e59c50fa9",
+      "parent_run_id": "issue256_r01_formal",
+      "parent_source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
+      "arm": "TIGER_periodic_budget_prefix_rq",
+      "run_id": "issue256_r02_formal",
+      "status": "PREREGISTERED",
+      "change": "refresh the same maximal global module-gradient norm budget at native50epoch block anchors1,51,...,2951",
+      "hypothesis": "reduce measured later original/curvature norm drift without new objectives or independently tuned frequency",
+      "contract_sha256": "f80ae1d7b07268cf53d189e10fb447bf483aef5da913f2fd0b1faf3230fc519b",
+      "diagnosis_sha256": "00f6eddc8b36a917d3912dddf35278ffd8eede5b448950328aa9ea62a448d2b7",
+      "data_identity": "INFRA.json",
+      "validation_policy": "EVALUATION.md",
+      "stage2": null,
+      "stage3": null,
+      "r2_archive": null,
+      "result": null,
+      "next_decision": "real60epoch four-rank red/green regression at epoch51, all inherited gates and inclusive31\u201360 performance before one formal run"
+    }
+  ]
+}

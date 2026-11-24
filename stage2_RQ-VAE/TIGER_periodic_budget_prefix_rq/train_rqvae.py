@@ -167,7 +167,7 @@ def set_seed(seed: int) -> None:
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     torch.use_deterministic_algorithms(True, warn_only=True)
-    torch.set_float32_matmul_precision("high")
+    torch.set_float32_matmul_precision("highest")
 
 
 def load_embeddings(path: Path) -> np.ndarray:

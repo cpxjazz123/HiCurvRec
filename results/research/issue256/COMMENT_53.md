@@ -1,0 +1,3 @@
+R02 同参数算术辨别完成：实际1epoch后固定权重，标准四卡exit0、57.01s。原high策略共享/独立batch的GNN token差最高0.00327283144、gate差最高0.000141650438，4/4卡违反原forward容差；改用诊断highest时，所有被观测层及两种population均满足同一容差，gate最大差1.4901161193847656e-7。固定相同token的attention也在部分high样本表现batch依赖。没有更新权重或读取推荐分数。
+
+`BATCH_PRECISION_DIAGNOSIS.json` sha256 `d5b1a9abafd4ca0b8af577e55b40cca0e13c096aae23126403eecd66ce7fd30d` 绑定四卡原始NPZ/报告及所有逐层输出。下一步先补生产路径红测试，再将训练源码的float32稠密算术策略设为highest；不放宽容差、不改变维度/损失/标量预算/训练配方。inclusive性能仍须实测≤0.8s，否则先做等价工程优化。R02包含已登记周期预算主改动与两项数值工程修复，不能将其后Recall差异宣称为周期策略的单因素因果。

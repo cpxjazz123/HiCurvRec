@@ -1,0 +1,25 @@
+{
+  "schema": "genrec.issue256.floor_history_lifetime_green/1",
+  "generation_units": {
+    "path": "results/research/issue256/rounds/r02/verification_generations/pre_auxiliary_mode/TEST_RESULTS.json",
+    "sha256": "c042f2fb41fc8094ba2755e964fd44ed1ec2b3625885b0e6b7fe9f3def0b5d5f"
+  },
+  "complete_unit_counts": {
+    "candidate": 143,
+    "assets": 64,
+    "controller_and_framework": 17
+  },
+  "no_skips": true,
+  "specific_passed_cases": [
+    "tests/test_batch_invariant_gates.py::test_actual_geometry_gates_are_invariant_to_other_batch_items",
+    "tests/test_layer_mechanism.py::LayerMechanismTests::test_two_identical_instances_agree_on_the_loss",
+    "tools/research/stage2/tests/test_floor_history_lifetime.py::test_installed_quantizer_releases_history_without_changing_live_rotation",
+    "tools/research/stage2/tests/test_floor_install_on_baseline.py::test_floor_installs_into_the_frozen_baseline_copy"
+  ],
+  "framework_sources": {
+    "tools/research/stage2/anticollapse/floor.py": "0e0f2fbef74ac2d7c9cc1b67d50db1f164b95f59874d5eec9f539235908009da",
+    "tools/research/stage2/anticollapse/patch_tree.py": "75abaa019fc0420bc050fafa8c3f77ea8d17706a1c9de761ab3c5a077bab9cd2",
+    "tools/research/stage2/tests/test_floor_history_lifetime.py": "a56a4c0dc63106f6177230066b82456404a17680cb5cc1fdbcfba11df041e16c"
+  },
+  "qualification": "Specific lifecycle, install, identical-instance and gate-regression green. The later validation replay-mode bug still prevents complete admission; this is not a replacement for current final source-bound credentials."
+}

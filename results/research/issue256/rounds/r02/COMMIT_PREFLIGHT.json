@@ -1,0 +1,9 @@
+{
+  "command": "python3 tools/commit_guard.py --max-paths 2000 --max-lines 400000",
+  "exit_code": 0,
+  "observed_changed_paths": 1754,
+  "observed_changed_lines": 351472,
+  "files_at_least_2MiB": 0,
+  "reason": "The shared worktree includes large unrelated user changes and required small source-bound failure/admission evidence. The selective draft includes only owned Issue256/R02 paths and the three proven engineering-repair files plus its new regression; unrelated changes, root.gitignore, central R2 ledger and all binary products are excluded.",
+  "remote": "https://github.com/cpxjazz123/HiCurvRec.git"
+}

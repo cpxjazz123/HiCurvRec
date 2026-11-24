@@ -1,0 +1,37 @@
+{
+  "schema": "genrec.issue256.mcp_reload/1",
+  "reason": "framework rotating-history owner migration changes imported launcher/patch_tree code",
+  "parent_pid": 4184319,
+  "parent_command": "/home/wlia0047/.local/bin/omp",
+  "signals": "SIGTERM only to the2 confirmed server children; never omp",
+  "servers": {
+    "genrec": {
+      "old_pid": 927173,
+      "new_pid": 2745673
+    },
+    "stage2": {
+      "old_pid": 931436,
+      "new_pid": 2745674
+    }
+  },
+  "tool_probes": [
+    {
+      "tool": "stage2_status",
+      "source_dir": "TIGER_periodic_budget_prefix_rq",
+      "observed_status": "idle",
+      "run_id": null,
+      "visible_count": 4,
+      "live_processes": []
+    },
+    {
+      "tool": "verification_check",
+      "source_dir": "TIGER_periodic_budget_prefix_rq",
+      "verification_id": "issue256_r02_reload_probe",
+      "passed": false,
+      "refused": "missing/invalid evidence: /fs04/ar57/wenyu/GeneRec/results/research/issue117/verification/issue256_r02_reload_probe/manifest.json",
+      "qualification": "Expected fail-closed nonexistent evidence probe; no test or formal training launched."
+    }
+  ],
+  "initial_path_argument_attempt": "Both tools reject the directory path form; corrected to the advertised active arm name.",
+  "completed_at": "2026-11-24T23:07:14.324698+00:00"
+}

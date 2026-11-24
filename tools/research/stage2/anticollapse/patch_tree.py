@@ -66,11 +66,11 @@ MIXED = Family(
         # training assignment
         ("        return torch.argmin(distances, dim=-1)",
          "        index, _ = constrained_assignment(distances, ASSIGNMENT_FLOOR, "
-         "counts_key=id(self))\n"
+         "counts_key=self)\n"
          "        return index.to(distances.device)"),
         ("            return torch.argmax(q, dim=-1)",
          "            index, _ = constrained_assignment(-q, ASSIGNMENT_FLOOR, "
-             "counts_key=id(self))\n"
+             "counts_key=self)\n"
          "            return index.to(q.device)"),
         # the call site: whatever `_indices` returned is checked, so a mechanism that
         # assigns somewhere else (e.g. re-enables the Sinkhorn branch) is caught here
@@ -107,11 +107,11 @@ EUCLID = Family(
     edits=[
         ("        return torch.argmin(distances, dim=-1)",
          "        index, _ = constrained_assignment(distances, ASSIGNMENT_FLOOR, "
-         "counts_key=id(self))\n"
+         "counts_key=self)\n"
          "        return index.to(distances.device)"),
         ("            return torch.argmax(q, dim=-1)",
          "            index, _ = constrained_assignment(-q, ASSIGNMENT_FLOOR, "
-             "counts_key=id(self))\n"
+             "counts_key=self)\n"
          "            return index.to(q.device)"),
         # `layers.py` reaches this line from two places, so the anchor carries the line
         # that follows it in `forward`; both must stay in step.
@@ -280,14 +280,15 @@ SEP_CALL = ("\n        verify_separation(self.get_code_embs(), cost, key=id(self
 
 
 def _migrate(text: str) -> str:
-    # the rotating regime needs the usage key; add it once to older installs
-    if "counts_key=id(self)" not in text:
+    # Layer objects own weak usage history; recycled integer ids cannot own it.
+    text = text.replace("counts_key=id(self)", "counts_key=self")
+    if "counts_key=self" not in text:
         text = text.replace("constrained_assignment(distances, ASSIGNMENT_FLOOR)",
                             "constrained_assignment(distances, ASSIGNMENT_FLOOR, "
-                            "counts_key=id(self))")
+                            "counts_key=self)")
         text = text.replace("constrained_assignment(-q, ASSIGNMENT_FLOOR)",
                             "constrained_assignment(-q, ASSIGNMENT_FLOOR, "
-                            "counts_key=id(self))")
+                            "counts_key=self)")
     for old, new in MIGRATIONS:
         text = text.replace(old, new)
     # A check added after the first installs has to reach them too -- once. The guard is

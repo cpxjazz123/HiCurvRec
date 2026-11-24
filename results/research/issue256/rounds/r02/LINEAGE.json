@@ -32,10 +32,10 @@
   "files": [
     {
       "path": "assignment_floor.py",
-      "sha256": "984bba1330c62a2a712c6797e27a9389bcb7274a8dbe552d48f13c22e9a6ff96",
+      "sha256": "0e0f2fbef74ac2d7c9cc1b67d50db1f164b95f59874d5eec9f539235908009da",
       "baseline_sha256": null,
       "inherited_sha256": "984bba1330c62a2a712c6797e27a9389bcb7274a8dbe552d48f13c22e9a6ff96",
-      "role": "inherited mechanism, diagnostics or frozen configuration"
+      "role": "framework-owned rotating-history weak owner repair; assignment formula unchanged"
     },
     {
       "path": "benchmark_entry.py",
@@ -193,10 +193,10 @@
     },
     {
       "path": "model/layers.py",
-      "sha256": "dadd6287dbf55751c10bae23d81c1af42ab9035a73a09d77b9c67550bdc1fb4a",
+      "sha256": "9540ceeee2c32e6ff13c435003444760a4ffbb50aa20eb24fc33801ca4969405",
       "baseline_sha256": "0d5eacf6b3cbfe8874c2b8d54f7c7554de1ade392ae8b54521b53cecec4c994a",
       "inherited_sha256": "dadd6287dbf55751c10bae23d81c1af42ab9035a73a09d77b9c67550bdc1fb4a",
-      "role": "inherited mechanism, diagnostics or frozen configuration"
+      "role": "framework-owned rotating-history owner-key migration; feasible hard rule unchanged"
     },
     {
       "path": "model/mechanism.py",
@@ -438,7 +438,7 @@
     },
     {
       "path": "tests/test_shared_assignment_oracle.py",
-      "sha256": "6807c016c71a52158f6861c83962072e05f7701bd63db2d76ecb7f8475ff545c",
+      "sha256": "65da4c0f8062d9154d3f4c4b5fbc174770e81119d6accfabfe21871371f47bc3",
       "baseline_sha256": null,
       "inherited_sha256": null,
       "role": "native-rule/conditional-sharing verifier repair"
@@ -494,10 +494,10 @@
     },
     {
       "path": "train_rqvae.py",
-      "sha256": "81c392c17c5c5356b61cbd56870680dd7357a41e82966f24044711908394838c",
+      "sha256": "ccb4f0eb3411f197446c17f89f7f6c7cf621b9513161c4de2e488c58549fb66c",
       "baseline_sha256": "a06d9f9716d9b9ea616cf6c3b8dcf8e354f6f3a96aea50bb4896a31e3b64cf26",
       "inherited_sha256": "f9a22b3ee2ee5904d3f3d88aee5befcb78037c574b5743ad5193fe30dd23a37d",
-      "role": "native-block calibration mechanism/integration"
+      "role": "native-block calibration integration plus source-owned full-FP32 numerical repair"
     },
     {
       "path": "unit_suite_entry.py",
@@ -507,11 +507,69 @@
       "role": "launcher-owned complete unit execution"
     },
     {
+      "path": "static_consumers_entry.py",
+      "sha256": "76ce3b3bdb0b5d3612706b13e790065e7f4e0cb0589c7c4ddb8fd90f26ebebab",
+      "baseline_sha256": null,
+      "inherited_sha256": null,
+      "role": "non-admission full-cache/component discriminator"
+    },
+    {
+      "path": "static_cache_check_entry.py",
+      "sha256": "b03b421fd1b615678975bc0b9d75807a90603d664d2100f7971a19850a245905",
+      "baseline_sha256": null,
+      "inherited_sha256": null,
+      "role": "launcher-owned targeted CUDA regression runner"
+    },
+    {
+      "path": "tests/test_static_reproducibility.py",
+      "sha256": "a9a6fa80d2ef55352af3275e00eec9c03e981981a7dcdbe2391734bfc237ad96",
+      "baseline_sha256": null,
+      "inherited_sha256": null,
+      "role": "fresh-consumer exactness and float32/float64 directed/empty known answers"
+    },
+    {
+      "path": "shared_batches_entry.py",
+      "sha256": "0b332f321503f5a957ee4097421ede9b71b7f4869b5007a904269d27a5353703",
+      "baseline_sha256": null,
+      "inherited_sha256": null,
+      "role": "non-admission actual-post-epoch batch/precision discriminator"
+    },
+    {
+      "path": "tests/test_batch_invariant_gates.py",
+      "sha256": "af86dcfce017bae66af929e4673cbc03e1ae1a4e1091d9170924d2cf5bf10795",
+      "baseline_sha256": null,
+      "inherited_sha256": null,
+      "role": "production geometry-gate companion-batch invariance regression"
+    },
+    {
       "path": "validation_entry.py",
-      "sha256": "84778698b1f2384adb0e3b270c679cfc38588d2b9d6b2113f20c2e24d2794ab9",
+      "sha256": "36125d286d461a5ded3a79207f96bdf018accfef02685fbbfe68577f11dac584",
       "baseline_sha256": null,
       "inherited_sha256": "1d63edb496b7357cb38742b38eb0798e590d32e886fed33f8e1b60400793ce8e",
       "role": "native-rule/conditional-sharing verifier repair"
+    }
+  ],
+  "engineering_dependency_repairs": [
+    {
+      "path": "tools/research/stage2/anticollapse/floor.py",
+      "sha256": "0e0f2fbef74ac2d7c9cc1b67d50db1f164b95f59874d5eec9f539235908009da",
+      "previous_source_sha256": "984bba1330c62a2a712c6797e27a9389bcb7274a8dbe552d48f13c22e9a6ff96",
+      "change": "Weak layer-owned rotating history and complete active installer migration; feasible assignment unchanged.",
+      "evidence": "results/research/issue256/rounds/r02/FLOOR_LIFETIME_RED_RECEIPT.json"
+    },
+    {
+      "path": "tools/research/stage2/anticollapse/patch_tree.py",
+      "sha256": "75abaa019fc0420bc050fafa8c3f77ea8d17706a1c9de761ab3c5a077bab9cd2",
+      "previous_source_sha256": "bffbc2b3a501956f5538dfce9b42c90d89e94a03b645eb651d0e449b4f9f0a5d",
+      "change": "Weak layer-owned rotating history and complete active installer migration; feasible assignment unchanged.",
+      "evidence": "results/research/issue256/rounds/r02/FLOOR_LIFETIME_RED_RECEIPT.json"
+    },
+    {
+      "path": "tools/issue253/static_features.py",
+      "sha256": "8e35754f420ed4497bf2aacdb09eac140b19657af8902e6bae41d2d9ecaa61eb",
+      "previous_source_sha256": "bd38db54df2affa239810e236222d363cbc684c62da2850e3675c4c97997f747",
+      "change": "Reuse deterministic complete-row CUDA means; CPU and mathematical definition unchanged.",
+      "evidence": "results/research/issue256/rounds/r02/STATIC_CACHE_GREEN_RECEIPT.json"
     }
   ],
   "recipe": {

@@ -13,6 +13,10 @@ def test_changed_round_adapter_invalidates_tested_source(tmp_path,monkeypatch):
         (evidence/'CONTRACT.md','contract'),(evidence/'MUTATIONS.md','mutations'),
         (evidence/'reference.py','VALUE=1\n'),(helper,'VALUE=1\n'),
         (repo/'results/research/issue256/ACCEPTANCE.json','{}'),
+        (repo/'tools/research/stage2/anticollapse/floor.py','VALUE=1\n'),
+        (repo/'tools/research/stage2/anticollapse/patch_tree.py','VALUE=1\n'),
+        (repo/'tools/research/stage2/tests/test_floor_history_lifetime.py','VALUE=1\n'),
+        (repo/'tools/research/stage2/tests/test_floor_install_on_baseline.py','VALUE=1\n'),
         (repo/'results/research/issue256/EVALUATION.md','evaluation')]:
         path.parent.mkdir(parents=True,exist_ok=True)
         path.write_text(text)

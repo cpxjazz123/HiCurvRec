@@ -1,0 +1,55 @@
+{
+  "schema": "genrec.issue256.static_cache_red/1",
+  "command": "python3.9 -m tools.issue256.r02.check_static_cache",
+  "exit_code": 1,
+  "launcher_wall_seconds": 17.7,
+  "world_size": 4,
+  "formal_training": false,
+  "old_source": {
+    "path": "results/research/issue256/rounds/r02/verification_generations/pre_static_cache/static_features.py",
+    "sha256": "bd38db54df2affa239810e236222d363cbc684c62da2850e3675c4c97997f747"
+  },
+  "designated_assertion": "fresh frozen feature means must be bitwise identical: incoming",
+  "ranks": [
+    {
+      "rank": 0,
+      "exit_code": 1,
+      "failed_case": "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_static_reproducibility.py::test_fresh_static_means_are_identical_for_frozen_complete_egos",
+      "failure_phase": "call",
+      "report": {
+        "path": "results/research/issue256/rounds/r02/static_cache_check/issue256_r02_static_cache_check_2521497_586317171/rank_0.json",
+        "sha256": "fbc67ec8389e6e66fd3dffd81c8bbcd50c101fc71cd777ce50be67e51d6724ac"
+      }
+    },
+    {
+      "rank": 1,
+      "exit_code": 1,
+      "failed_case": "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_static_reproducibility.py::test_fresh_static_means_are_identical_for_frozen_complete_egos",
+      "failure_phase": "call",
+      "report": {
+        "path": "results/research/issue256/rounds/r02/static_cache_check/issue256_r02_static_cache_check_2521497_586317171/rank_1.json",
+        "sha256": "fc43df37997283d9b27c7b08f75008eed6af000ac48fe3c4c51364de82d8f381"
+      }
+    },
+    {
+      "rank": 2,
+      "exit_code": 1,
+      "failed_case": "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_static_reproducibility.py::test_fresh_static_means_are_identical_for_frozen_complete_egos",
+      "failure_phase": "call",
+      "report": {
+        "path": "results/research/issue256/rounds/r02/static_cache_check/issue256_r02_static_cache_check_2521497_586317171/rank_2.json",
+        "sha256": "c2283ec7efcc0913b6fa2ecdf58ed874101a60532d39cd1b6257edc6c503c0c8"
+      }
+    },
+    {
+      "rank": 3,
+      "exit_code": 1,
+      "failed_case": "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_static_reproducibility.py::test_fresh_static_means_are_identical_for_frozen_complete_egos",
+      "failure_phase": "call",
+      "report": {
+        "path": "results/research/issue256/rounds/r02/static_cache_check/issue256_r02_static_cache_check_2521497_586317171/rank_3.json",
+        "sha256": "64e83180852212aa3aa30fa3c6204ce85ede72d76cf2a08b233408d875537864"
+      }
+    }
+  ]
+}

@@ -15,3 +15,11 @@ The actual epoch51 diagnostic must use current DistributedSampler epoch50 and st
 The inherited floor repair is greedy, not a global minimum solver. The exact2x2 counterexample in VERIFIER_REPAIR.md disproves the old optimal-value perturbation assertion. Actual native assignments must replay exactly on their own original costs; continuous shared-GNN loss/VJP equivalence is conditional on the same recorded discrete branch. Native branch code differences are recorded, not called bitwise equivalence. This correction changes no production rule or tolerance, and exact global SID export remains mandatory.
 
 Execution outcomes belong to their real source-bound receipts; this review does not predeclare any check PASS.
+
+## Completed current-source review
+
+ADMISSION_SUMMARY.json binds145 candidate,64 inherited and17 controller/framework cases, no skips, actual18-group gradients/optimizer updates and all three individual prefix-loss routes. Actual four-rank anchors1/51 use steps0/300, identical current batch/sample and17 independent global budgets. All4 stale-coefficient injections are caught by the specified budget assertion and restored. The strict2e-6 budget and existing forward/VJP tolerances were not relaxed.
+
+Three engineering corrections accompany the cadence mechanism: deterministic complete-row static CUDA feature means; highest source-owned float32 dense arithmetic after a fixed-weight high/highest counterexample; weak layer-owned rotating coverage history. The last changes only dead-owner state, not the feasible1024/256/full-catalogue assignments. The verifier also drops the invalid greedy-optimality premise and replays each population's captured balanced flag, not the restored model training flag. These fixes do not change the frozen mathematical equations, but the eventual R01/R02 comparison cannot isolate cadence alone.
+
+Actual inclusive epochs31–60 include evaluation50 and refresh51: mean0.7827437869894008s, median0.6692326320335269s, P951.278036610223353s. Authorized0.8s ceiling passes; desired0.4–0.5s does not. Machine entry and behavior graph pass. dispatch_evidence.verify independently binds140 files and12 actual rank receipts. This is training admission only; final performance, all60 formal anchors, exact SID/export, full frozen Stage3, predictions and strict Recall remain to be established.

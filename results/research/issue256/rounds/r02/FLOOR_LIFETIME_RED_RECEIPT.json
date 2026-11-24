@@ -1,0 +1,21 @@
+{
+  "schema": "genrec.issue256.floor_history_lifetime_red/1",
+  "command": "python3.9 -m pytest tools/research/stage2/tests/test_floor_history_lifetime.py -q --basetemp=results/research/issue256/rounds/r02/floor_lifetime_pytest",
+  "exit_code": 1,
+  "wall_seconds": 4.46,
+  "pytest_seconds": 4.09,
+  "designated_assertion": "destroyed quantizer must release its rotating-coverage history",
+  "consumer": "Actual VQLayer._indices after real framework installation on a byte-copy baseline fixture",
+  "positive_controls_passed": [
+    "fresh owner cheap assignment[0,1]",
+    "live owner next coverage[2,3]",
+    "different live owner cheap assignment[0,1]",
+    "both owner objects actually destroyed"
+  ],
+  "output": {
+    "path": "results/research/issue256/rounds/r02/FLOOR_LIFETIME_RED.log",
+    "sha256": "fd44d37d80a986b9a0123f94888d8a6d45717dbf3db3ce277d609fe0cb39bc05"
+  },
+  "old_source_root": "results/research/issue256/rounds/r02/verification_generations/pre_floor_lifetime/source",
+  "qualification": "The earlier identical-instance failure did not retain its counter map; this deterministic lifetime defect is proven separately, not retroactively declared its measured cause."
+}

@@ -26,6 +26,10 @@ def source_inventory():
     for path in list((SOURCE / 'config').glob('*.json')) + [
             EVIDENCE / 'CONTRACT.md', EVIDENCE / 'MUTATIONS.md', EVIDENCE / 'reference.py',
             ROOT / 'results/research/issue256/ACCEPTANCE.json',
+            ROOT / 'tools/research/stage2/anticollapse/floor.py',
+            ROOT / 'tools/research/stage2/anticollapse/patch_tree.py',
+            ROOT / 'tools/research/stage2/tests/test_floor_history_lifetime.py',
+            ROOT / 'tools/research/stage2/tests/test_floor_install_on_baseline.py',
             ROOT / 'results/research/issue256/EVALUATION.md']:
         files[str(path.relative_to(ROOT))] = digest(path)
     return files
@@ -53,9 +57,11 @@ def aggregate_suite(reports):
 
 
 def _suite(name):
-    return {'candidate':(SOURCE/'tests',SOURCE),
-            'assets':(ROOT/'tools/issue255/tests',ROOT),
-            'tools':(ROOT/'tools/issue256/r02',ROOT)}[name]
+    return {'candidate':((SOURCE/'tests',),SOURCE),
+            'assets':((ROOT/'tools/issue255/tests',),ROOT),
+            'tools':((ROOT/'tools/issue256/r02',
+                      ROOT/'tools/research/stage2/tests/test_floor_history_lifetime.py',
+                      ROOT/'tools/research/stage2/tests/test_floor_install_on_baseline.py'),ROOT)}[name]
 
 
 def worker(name, output):
@@ -70,7 +76,7 @@ def worker(name, output):
     device=torch.cuda.current_device()
     for key in ('RANK','WORLD_SIZE','LOCAL_RANK'):
         os.environ.pop(key,None)
-    directory,cwd=_suite(name)
+    paths,cwd=_suite(name)
     os.chdir(cwd)
     sys.path.insert(0,str(cwd))
     class Shard:
@@ -96,7 +102,7 @@ def worker(name, output):
                 self.passed_nodeids.append(report.nodeid)
     shard=Shard()
     output=Path(output)
-    args=[str(directory),'-q','--basetemp='+str(EVIDENCE/('pytest_%s_rank%d'%(name,rank)))]
+    args=[*(str(path) for path in paths),'-q','--basetemp='+str(EVIDENCE/('pytest_%s_rank%d'%(name,rank)))]
     code=int(pytest.main(args,plugins=[shard]))
     report={'rank':rank,'worker_pid':os.getpid(),'device_index':device,
         'exit_code':code,'pytest_args':args,'cwd':str(cwd),

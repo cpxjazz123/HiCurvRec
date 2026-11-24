@@ -123,9 +123,9 @@ class VQLayer(nn.Module):
             q = self.sinkhorn(centered, self.sk_epsilon, self.sk_iters)
             if torch.isnan(q).any() or torch.isinf(q).any():
                 raise RuntimeError("Sinkhorn assignment returned NaN or infinity.")
-            index, _ = constrained_assignment(-q, ASSIGNMENT_FLOOR, counts_key=id(self))
+            index, _ = constrained_assignment(-q, ASSIGNMENT_FLOOR, counts_key=self)
             return index.to(q.device)
-        index, _ = constrained_assignment(distances, ASSIGNMENT_FLOOR, counts_key=id(self))
+        index, _ = constrained_assignment(distances, ASSIGNMENT_FLOOR, counts_key=self)
         return index.to(distances.device)
 
     def forward(

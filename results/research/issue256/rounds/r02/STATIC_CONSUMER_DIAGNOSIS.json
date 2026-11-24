@@ -1,0 +1,925 @@
+{
+  "schema": "genrec.issue256.static_consumer_discrimination/1",
+  "command": "python3.9 -m tools.issue256.r02.diagnose_static_consumers",
+  "exit_code": 0,
+  "launcher_wall_seconds": 353.12,
+  "world_size": 4,
+  "formal_training": false,
+  "admission_credential": false,
+  "matmul_precision_qualification": "Probe used default highest, not the actual Trainer high policy. Cache construction has no learned dense matmul. Do not equate this token difference with the previous high-policy gate magnitude.",
+  "ranks": [
+    {
+      "rank": 0,
+      "report": {
+        "path": "results/research/issue256/rounds/r02/static_consumers/issue256_r02_static_consumers_2461543_586273638/rank_0.json",
+        "sha256": "8b77674c01cb34503e0c6da557d4bd03d1f6714c877f8c2a10e59d8374dca1a9"
+      },
+      "features_different": 0,
+      "means": [
+        {
+          "layout": "one_hop",
+          "incoming": {
+            "shape": [
+              535051,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 1306,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "14e50a5fb623c86ca6130a72dce8aac2970d1d2dade37e0fe16bdae6e4df6b43",
+            "right_sha256": "e8a84602b8db4470e34dc384917740ddc9f879c8a7ba820001068a28a2cc4096"
+          },
+          "outgoing": {
+            "shape": [
+              535051,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 1297,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "20c87236e32bc389bb17577a291336a7d31798c6c6b7dcc5de9005e572ace8f7",
+            "right_sha256": "91ced86e4a6ca2734cb06991fa957525855dfcbc664b9943a268d2e5193ed811"
+          },
+          "in_nonempty": {
+            "shape": [
+              535051
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "de07a301868497e056d5625d514a052466348230b94d24aa4d955bc631232cf9",
+            "right_sha256": "de07a301868497e056d5625d514a052466348230b94d24aa4d955bc631232cf9"
+          },
+          "out_nonempty": {
+            "shape": [
+              535051
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "4341c461240b081305a78176bce9f06b5f8393cfae8e06bc927180f4ef7eefda",
+            "right_sha256": "4341c461240b081305a78176bce9f06b5f8393cfae8e06bc927180f4ef7eefda"
+          }
+        },
+        {
+          "layout": "two_hop",
+          "incoming": {
+            "shape": [
+              37077307,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 2646701,
+            "max_abs": 1.9073486328125e-06,
+            "left_sha256": "6044d1f4f5f94f0f4813778b8caa9da9a927ed999bd85cb1c21a394e0111aa4a",
+            "right_sha256": "4189ece23416f52437d5fb3b60a673e64dd2b068abf87850ba0d67a0051692ea"
+          },
+          "outgoing": {
+            "shape": [
+              37077307,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 2528414,
+            "max_abs": 1.9073486328125e-06,
+            "left_sha256": "023bdcaca47665fc30175a6cb3ce2abae0c05d84a2712ed2fa73b2094fbca336",
+            "right_sha256": "9f13f41ac7453531e18adc9c330281ef60d687ecbba3e32afc56e5bf9e82dfb6"
+          },
+          "in_nonempty": {
+            "shape": [
+              37077307
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "7bdeb70bc795d024ca937c302fe9fa355a4c2dd50d06fd730f4c3fba53063d4c",
+            "right_sha256": "7bdeb70bc795d024ca937c302fe9fa355a4c2dd50d06fd730f4c3fba53063d4c"
+          },
+          "out_nonempty": {
+            "shape": [
+              37077307
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "a450a8a1bebc61ade99d9e31abb06b0d0256c664b47f323cfd31c855abef5c67",
+            "right_sha256": "a450a8a1bebc61ade99d9e31abb06b0d0256c664b47f323cfd31c855abef5c67"
+          }
+        },
+        {
+          "layout": "in_only",
+          "incoming": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 609,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "f4602a967a5d707fd45bc6d335b762f0c30655ef24078b1aa1ac6670307e844f",
+            "right_sha256": "e7972fddb25f6000163dca4bedcc462573201f0e50ec88e3514503fbb640044a"
+          },
+          "outgoing": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 293,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "60fec17fa93fa56db31d921401ea8c50f2fc235f1ec62d50ae2e4eb0efb5d184",
+            "right_sha256": "dc2319a7e631f717f873e324f152512011ac49ef37f8fbd90054f42c9180a4cc"
+          },
+          "in_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "a4409062039754571af23bbb0bc7176ee778b4b29ca72e88c1faa760c602c95b",
+            "right_sha256": "a4409062039754571af23bbb0bc7176ee778b4b29ca72e88c1faa760c602c95b"
+          },
+          "out_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "8da4eec4aeee3a0dcb8efe9da90f1046253f213c7c9f91c023f463f5e0755ba5",
+            "right_sha256": "8da4eec4aeee3a0dcb8efe9da90f1046253f213c7c9f91c023f463f5e0755ba5"
+          }
+        },
+        {
+          "layout": "out_only",
+          "incoming": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 263,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "59c91cc36e199d9f708eb9d738b8ad3906efc1ecbd42793ddb52b6bf9f4b7ea2",
+            "right_sha256": "9825899568d7181dbd0eaf7283cfd14ec699e8b28b39a786562cf76ccbfbaa64"
+          },
+          "outgoing": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 515,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "ab634696d7a21dcc11035c4e210bfda7b9c88e28d819117fe6abb7ae2f80109e",
+            "right_sha256": "4f4314706eb09f15217fe15a50671eeb59c11265dfa0212a6ad6c0a851b16b47"
+          },
+          "in_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "c9b5e42cba846c8cf14ca5cb3dac79d38467ab4382c9c38b8e8a3a0e3b657783",
+            "right_sha256": "c9b5e42cba846c8cf14ca5cb3dac79d38467ab4382c9c38b8e8a3a0e3b657783"
+          },
+          "out_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "7f5399a1e268c5f0e5c01a7429b58a075a9c58733b25da87c60cbdc9f953ad7a",
+            "right_sha256": "7f5399a1e268c5f0e5c01a7429b58a075a9c58733b25da87c60cbdc9f953ad7a"
+          }
+        }
+      ],
+      "first_affine_all_exact": true,
+      "tokens": {
+        "fresh": {
+          "shape": [
+            256,
+            4,
+            32
+          ],
+          "dtype": "torch.float32",
+          "different": 1962,
+          "max_abs": 1.7881393432617188e-07,
+          "left_sha256": "f485920342a8a318945413ec52aba9c96045d4e2c3d9ebdc33c8b3d974f7b923",
+          "right_sha256": "5e59596b67a1af0b7ec6acb5f78a01ce215352dcdfea504a22586fbb7dba785f"
+        },
+        "same_consumer_repeat": {
+          "shape": [
+            256,
+            4,
+            32
+          ],
+          "dtype": "torch.float32",
+          "different": 0,
+          "max_abs": 0.0,
+          "left_sha256": "f485920342a8a318945413ec52aba9c96045d4e2c3d9ebdc33c8b3d974f7b923",
+          "right_sha256": "f485920342a8a318945413ec52aba9c96045d4e2c3d9ebdc33c8b3d974f7b923"
+        },
+        "masks": {
+          "shape": [
+            256,
+            4
+          ],
+          "dtype": "torch.bool",
+          "different": 0,
+          "max_abs": 0.0,
+          "left_sha256": "5a648d8015900d89664e00e125df179636301a2d8fa191c1aa2bd9358ea53a69",
+          "right_sha256": "5a648d8015900d89664e00e125df179636301a2d8fa191c1aa2bd9358ea53a69"
+        }
+      }
+    },
+    {
+      "rank": 1,
+      "report": {
+        "path": "results/research/issue256/rounds/r02/static_consumers/issue256_r02_static_consumers_2461543_586273638/rank_1.json",
+        "sha256": "b6372766488876ab2919c45dbd837775091b577b80781ab1bdcccd51426ff735"
+      },
+      "features_different": 0,
+      "means": [
+        {
+          "layout": "one_hop",
+          "incoming": {
+            "shape": [
+              535051,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 1345,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "47e9f023c380fca6a250f097fa7a7462eb4c4f6baad440bd19ffd9cb228917fe",
+            "right_sha256": "6e5e0412c38eca0d9c6d2d77265bd84f8c3a588b3a0d0902a94ccd2efea3b84d"
+          },
+          "outgoing": {
+            "shape": [
+              535051,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 1229,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "e614a4e578a078497afbdd822463eb25428ff3ac16b95c49dbcaabc91c52e33a",
+            "right_sha256": "4876f8fef8589c459d725ddb28630eb56c93bbf843f77d5b15c422cbb9cb663e"
+          },
+          "in_nonempty": {
+            "shape": [
+              535051
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "de07a301868497e056d5625d514a052466348230b94d24aa4d955bc631232cf9",
+            "right_sha256": "de07a301868497e056d5625d514a052466348230b94d24aa4d955bc631232cf9"
+          },
+          "out_nonempty": {
+            "shape": [
+              535051
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "4341c461240b081305a78176bce9f06b5f8393cfae8e06bc927180f4ef7eefda",
+            "right_sha256": "4341c461240b081305a78176bce9f06b5f8393cfae8e06bc927180f4ef7eefda"
+          }
+        },
+        {
+          "layout": "two_hop",
+          "incoming": {
+            "shape": [
+              37077307,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 2647893,
+            "max_abs": 1.9073486328125e-06,
+            "left_sha256": "de5312ab2268c328ea1620aa6815af90d8719af62121da37529d49cbe2e6f5cf",
+            "right_sha256": "0b3888a492586691bf0c3bae65d88480508309d80f35f70adcde469efbe3f360"
+          },
+          "outgoing": {
+            "shape": [
+              37077307,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 2532999,
+            "max_abs": 1.9073486328125e-06,
+            "left_sha256": "fa1b0d38ed53bd434e7b06e0cee2b0ed0d08cdd0e9d3ac64dc543b2056fdd113",
+            "right_sha256": "94e81d6e6606731e12cb1a5ad33d8921b1c6296b33e0b9139405eea5d47d9a9b"
+          },
+          "in_nonempty": {
+            "shape": [
+              37077307
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "7bdeb70bc795d024ca937c302fe9fa355a4c2dd50d06fd730f4c3fba53063d4c",
+            "right_sha256": "7bdeb70bc795d024ca937c302fe9fa355a4c2dd50d06fd730f4c3fba53063d4c"
+          },
+          "out_nonempty": {
+            "shape": [
+              37077307
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "a450a8a1bebc61ade99d9e31abb06b0d0256c664b47f323cfd31c855abef5c67",
+            "right_sha256": "a450a8a1bebc61ade99d9e31abb06b0d0256c664b47f323cfd31c855abef5c67"
+          }
+        },
+        {
+          "layout": "in_only",
+          "incoming": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 595,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "d72bcf7e0da37667d1be87229bac03d5a6a778b678135035592d35905507a5b7",
+            "right_sha256": "f9578a422352d8e490627e79628a7b89bdfef68e72961e36d588e927a0a05e90"
+          },
+          "outgoing": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 310,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "506a481c01510b6ee56cda5f7f9086bae64c5ec96727d3699a1847b45ec163c2",
+            "right_sha256": "07cc9aaefaa9020f8aace9eed1af1272d5a77eb224b3bd1625b544969a57dd3f"
+          },
+          "in_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "a4409062039754571af23bbb0bc7176ee778b4b29ca72e88c1faa760c602c95b",
+            "right_sha256": "a4409062039754571af23bbb0bc7176ee778b4b29ca72e88c1faa760c602c95b"
+          },
+          "out_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "8da4eec4aeee3a0dcb8efe9da90f1046253f213c7c9f91c023f463f5e0755ba5",
+            "right_sha256": "8da4eec4aeee3a0dcb8efe9da90f1046253f213c7c9f91c023f463f5e0755ba5"
+          }
+        },
+        {
+          "layout": "out_only",
+          "incoming": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 269,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "0238781e85793ccfc2018c6138dbd45d676ad957694a46f22d4e85efde032a23",
+            "right_sha256": "b91fcd577e5d63c597b7c6a532dbf4fe665a4ff401090f0bad87691df9eb4ec2"
+          },
+          "outgoing": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 523,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "26c0ea02bc6aef35063c3289756398afab467aaf2a27f68b8c4702ba77fd43a1",
+            "right_sha256": "2b8bbe595b789bc34aec5333685c4336724a712b07442b11fbc1b3e386d6293a"
+          },
+          "in_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "c9b5e42cba846c8cf14ca5cb3dac79d38467ab4382c9c38b8e8a3a0e3b657783",
+            "right_sha256": "c9b5e42cba846c8cf14ca5cb3dac79d38467ab4382c9c38b8e8a3a0e3b657783"
+          },
+          "out_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "7f5399a1e268c5f0e5c01a7429b58a075a9c58733b25da87c60cbdc9f953ad7a",
+            "right_sha256": "7f5399a1e268c5f0e5c01a7429b58a075a9c58733b25da87c60cbdc9f953ad7a"
+          }
+        }
+      ],
+      "first_affine_all_exact": true,
+      "tokens": {
+        "fresh": {
+          "shape": [
+            256,
+            4,
+            32
+          ],
+          "dtype": "torch.float32",
+          "different": 1944,
+          "max_abs": 1.7881393432617188e-07,
+          "left_sha256": "c6dd64d8ec94845e60b1f03e6d8a34516a465c273a0d3ee51c27c38a00eedeac",
+          "right_sha256": "8c826f57a3e45b10f7fb72dde611710f7ea57cfa746384f5fff99a6346d65368"
+        },
+        "same_consumer_repeat": {
+          "shape": [
+            256,
+            4,
+            32
+          ],
+          "dtype": "torch.float32",
+          "different": 0,
+          "max_abs": 0.0,
+          "left_sha256": "c6dd64d8ec94845e60b1f03e6d8a34516a465c273a0d3ee51c27c38a00eedeac",
+          "right_sha256": "c6dd64d8ec94845e60b1f03e6d8a34516a465c273a0d3ee51c27c38a00eedeac"
+        },
+        "masks": {
+          "shape": [
+            256,
+            4
+          ],
+          "dtype": "torch.bool",
+          "different": 0,
+          "max_abs": 0.0,
+          "left_sha256": "5a648d8015900d89664e00e125df179636301a2d8fa191c1aa2bd9358ea53a69",
+          "right_sha256": "5a648d8015900d89664e00e125df179636301a2d8fa191c1aa2bd9358ea53a69"
+        }
+      }
+    },
+    {
+      "rank": 2,
+      "report": {
+        "path": "results/research/issue256/rounds/r02/static_consumers/issue256_r02_static_consumers_2461543_586273638/rank_2.json",
+        "sha256": "77d11f278920a2206ad9cf067303002d03f79f7ab03b19823a22f78c3397a213"
+      },
+      "features_different": 0,
+      "means": [
+        {
+          "layout": "one_hop",
+          "incoming": {
+            "shape": [
+              535051,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 1408,
+            "max_abs": 1.430511474609375e-06,
+            "left_sha256": "0f06bf8fa7a8ddcd811c9650c0c765b0ba325b8c0f78983afc6463014f708e67",
+            "right_sha256": "859e6aa2be35da3fca5709296ac74071f5301ee3055da4319dd031208835c62e"
+          },
+          "outgoing": {
+            "shape": [
+              535051,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 1304,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "8a0db06104cba5751614b1e06266d4c2ab0dd2357100de945c768de9128ea82a",
+            "right_sha256": "9e51d86f94fd2b31ef999b382811753fd56e08adb52e3687b01dbc7ed433abb3"
+          },
+          "in_nonempty": {
+            "shape": [
+              535051
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "de07a301868497e056d5625d514a052466348230b94d24aa4d955bc631232cf9",
+            "right_sha256": "de07a301868497e056d5625d514a052466348230b94d24aa4d955bc631232cf9"
+          },
+          "out_nonempty": {
+            "shape": [
+              535051
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "4341c461240b081305a78176bce9f06b5f8393cfae8e06bc927180f4ef7eefda",
+            "right_sha256": "4341c461240b081305a78176bce9f06b5f8393cfae8e06bc927180f4ef7eefda"
+          }
+        },
+        {
+          "layout": "two_hop",
+          "incoming": {
+            "shape": [
+              37077307,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 2647298,
+            "max_abs": 1.9073486328125e-06,
+            "left_sha256": "2257f2335f2f3715f67f9f519aa651d30d317766b3837a966159125db72d464b",
+            "right_sha256": "e10dbea011c36a4d3d3415603d0aea7af877ee8f733a35a1fc69408652a95641"
+          },
+          "outgoing": {
+            "shape": [
+              37077307,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 2531246,
+            "max_abs": 1.9073486328125e-06,
+            "left_sha256": "41a63e7e3a67dcb2a09c2c15c5ebd813930155f09e60843217ac5d15fcaee79d",
+            "right_sha256": "319e671732ceec6ae369bcddffdb55a7e687e62d68ca5da1047acc668c829a20"
+          },
+          "in_nonempty": {
+            "shape": [
+              37077307
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "7bdeb70bc795d024ca937c302fe9fa355a4c2dd50d06fd730f4c3fba53063d4c",
+            "right_sha256": "7bdeb70bc795d024ca937c302fe9fa355a4c2dd50d06fd730f4c3fba53063d4c"
+          },
+          "out_nonempty": {
+            "shape": [
+              37077307
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "a450a8a1bebc61ade99d9e31abb06b0d0256c664b47f323cfd31c855abef5c67",
+            "right_sha256": "a450a8a1bebc61ade99d9e31abb06b0d0256c664b47f323cfd31c855abef5c67"
+          }
+        },
+        {
+          "layout": "in_only",
+          "incoming": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 589,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "a10770c1d7ab3eb6c3484bb24d82f00742eca92fc803b1c1efdf3a096e39937b",
+            "right_sha256": "5582d0d93211860220c02bfacfa8abfe7d4fdec95e0b0b6a20424b7e2c14a8af"
+          },
+          "outgoing": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 292,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "118d635c79627b1e6d83c0344c64cb8665dcf584822f76be1606ea7a01dbc416",
+            "right_sha256": "fb49c2e993d4a9bfbd7189b5584ae96799494c85e12182e17c47a835feeb059f"
+          },
+          "in_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "a4409062039754571af23bbb0bc7176ee778b4b29ca72e88c1faa760c602c95b",
+            "right_sha256": "a4409062039754571af23bbb0bc7176ee778b4b29ca72e88c1faa760c602c95b"
+          },
+          "out_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "8da4eec4aeee3a0dcb8efe9da90f1046253f213c7c9f91c023f463f5e0755ba5",
+            "right_sha256": "8da4eec4aeee3a0dcb8efe9da90f1046253f213c7c9f91c023f463f5e0755ba5"
+          }
+        },
+        {
+          "layout": "out_only",
+          "incoming": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 244,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "e026e3942d83c2b00465cea2bb7e9a0e894f9d1f2025fcaeadb2dda7c7977bd4",
+            "right_sha256": "13aad3ddbb0a04d85fa56b3617f18e5b4a39888255e9258673e33a2ba5300039"
+          },
+          "outgoing": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 528,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "6c53b8f9015a8cd01e5550ada14c95efd1a4fda8e54cae43dfaccc9977e250bb",
+            "right_sha256": "bfef53c8779ff63b813a4443aca8704ee64b41721d6186dac16310b4ac461a53"
+          },
+          "in_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "c9b5e42cba846c8cf14ca5cb3dac79d38467ab4382c9c38b8e8a3a0e3b657783",
+            "right_sha256": "c9b5e42cba846c8cf14ca5cb3dac79d38467ab4382c9c38b8e8a3a0e3b657783"
+          },
+          "out_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "7f5399a1e268c5f0e5c01a7429b58a075a9c58733b25da87c60cbdc9f953ad7a",
+            "right_sha256": "7f5399a1e268c5f0e5c01a7429b58a075a9c58733b25da87c60cbdc9f953ad7a"
+          }
+        }
+      ],
+      "first_affine_all_exact": true,
+      "tokens": {
+        "fresh": {
+          "shape": [
+            256,
+            4,
+            32
+          ],
+          "dtype": "torch.float32",
+          "different": 1938,
+          "max_abs": 1.7881393432617188e-07,
+          "left_sha256": "9c5e8ebcce931e669eaaeb96bbe835c6dd50d304c6057f531c6d6b44a2550e8a",
+          "right_sha256": "5969394586c17fb78d847883f0b067e42e7b8261732ed7231901e594403275c0"
+        },
+        "same_consumer_repeat": {
+          "shape": [
+            256,
+            4,
+            32
+          ],
+          "dtype": "torch.float32",
+          "different": 0,
+          "max_abs": 0.0,
+          "left_sha256": "9c5e8ebcce931e669eaaeb96bbe835c6dd50d304c6057f531c6d6b44a2550e8a",
+          "right_sha256": "9c5e8ebcce931e669eaaeb96bbe835c6dd50d304c6057f531c6d6b44a2550e8a"
+        },
+        "masks": {
+          "shape": [
+            256,
+            4
+          ],
+          "dtype": "torch.bool",
+          "different": 0,
+          "max_abs": 0.0,
+          "left_sha256": "5a648d8015900d89664e00e125df179636301a2d8fa191c1aa2bd9358ea53a69",
+          "right_sha256": "5a648d8015900d89664e00e125df179636301a2d8fa191c1aa2bd9358ea53a69"
+        }
+      }
+    },
+    {
+      "rank": 3,
+      "report": {
+        "path": "results/research/issue256/rounds/r02/static_consumers/issue256_r02_static_consumers_2461543_586273638/rank_3.json",
+        "sha256": "eae8018a792aa4f750013185d8ffd3acdb0fcd277acdd8ffc1caf9e185a3275d"
+      },
+      "features_different": 0,
+      "means": [
+        {
+          "layout": "one_hop",
+          "incoming": {
+            "shape": [
+              535051,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 1378,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "e698d1451ac2840df1edb96967437e48935bd1d6ac7ac7a5d48edc4c33d65ddd",
+            "right_sha256": "b5092ce4ffa16d29ba68a2b9884fbcfa3bc0ff7ce593532e9797ae17b9166d50"
+          },
+          "outgoing": {
+            "shape": [
+              535051,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 1285,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "0838c66ed74766d18aef2753abf879c7f54ad83cfed7b38476cf57ebaa4adfa2",
+            "right_sha256": "e899509addc13b1343db78a684d9fce69314d682c6d9ecec3e536de3b63c7cef"
+          },
+          "in_nonempty": {
+            "shape": [
+              535051
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "de07a301868497e056d5625d514a052466348230b94d24aa4d955bc631232cf9",
+            "right_sha256": "de07a301868497e056d5625d514a052466348230b94d24aa4d955bc631232cf9"
+          },
+          "out_nonempty": {
+            "shape": [
+              535051
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "4341c461240b081305a78176bce9f06b5f8393cfae8e06bc927180f4ef7eefda",
+            "right_sha256": "4341c461240b081305a78176bce9f06b5f8393cfae8e06bc927180f4ef7eefda"
+          }
+        },
+        {
+          "layout": "two_hop",
+          "incoming": {
+            "shape": [
+              37077307,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 2652445,
+            "max_abs": 1.9073486328125e-06,
+            "left_sha256": "3e92930ae7f7955c54fdf04db7df9329d4520e49ba95573c79f885a1b86ed54b",
+            "right_sha256": "e8f1a0a7eced60ca880facab18b9b28c4a9c00efc65c77cda4914abd14140dd9"
+          },
+          "outgoing": {
+            "shape": [
+              37077307,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 2529458,
+            "max_abs": 1.9073486328125e-06,
+            "left_sha256": "6845ccb324d0404f61ad9ccea5b4391b56c26745d388bd912bb93969a81d6c95",
+            "right_sha256": "d00757f735ff255613390bb7fb865f224bc273f077e77a82c6a174eafdf9a7b7"
+          },
+          "in_nonempty": {
+            "shape": [
+              37077307
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "7bdeb70bc795d024ca937c302fe9fa355a4c2dd50d06fd730f4c3fba53063d4c",
+            "right_sha256": "7bdeb70bc795d024ca937c302fe9fa355a4c2dd50d06fd730f4c3fba53063d4c"
+          },
+          "out_nonempty": {
+            "shape": [
+              37077307
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "a450a8a1bebc61ade99d9e31abb06b0d0256c664b47f323cfd31c855abef5c67",
+            "right_sha256": "a450a8a1bebc61ade99d9e31abb06b0d0256c664b47f323cfd31c855abef5c67"
+          }
+        },
+        {
+          "layout": "in_only",
+          "incoming": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 610,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "b75509a0f26302041a99094c23de8e0e3965b13e5b52df348cad96c3e485fc57",
+            "right_sha256": "73952474d2cb07c64c58dc47594dedffb47b872c0430aaf8707496a8e0b38f57"
+          },
+          "outgoing": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 288,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "484fc69a4b3ebf6899cfabe8031d6c814c5ba18903be159fb7d531c7e9c74fb6",
+            "right_sha256": "ceb221fdfabce452f6efd509e95dbdd4cc809e43ceeae99ad47693dd8ce29966"
+          },
+          "in_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "a4409062039754571af23bbb0bc7176ee778b4b29ca72e88c1faa760c602c95b",
+            "right_sha256": "a4409062039754571af23bbb0bc7176ee778b4b29ca72e88c1faa760c602c95b"
+          },
+          "out_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "8da4eec4aeee3a0dcb8efe9da90f1046253f213c7c9f91c023f463f5e0755ba5",
+            "right_sha256": "8da4eec4aeee3a0dcb8efe9da90f1046253f213c7c9f91c023f463f5e0755ba5"
+          }
+        },
+        {
+          "layout": "out_only",
+          "incoming": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 260,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "2babe60afc0265ad42c6d1df4f8b91026c6118d37a3faef040f3df534eb8f64c",
+            "right_sha256": "1d288bdeed6646c7a68708d87e95efcb92b08cd0343bc2b498dde20febc7ced2"
+          },
+          "outgoing": {
+            "shape": [
+              285719,
+              6
+            ],
+            "dtype": "torch.float32",
+            "different": 510,
+            "max_abs": 9.5367431640625e-07,
+            "left_sha256": "27881a9d4953171a23dffcd18482cfc97f950079311633af4f9cfdc1eda29e24",
+            "right_sha256": "fe40fa29227ca255feb73746e7f08bb47d2cb2584dc4da14b89b96399cd04098"
+          },
+          "in_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "c9b5e42cba846c8cf14ca5cb3dac79d38467ab4382c9c38b8e8a3a0e3b657783",
+            "right_sha256": "c9b5e42cba846c8cf14ca5cb3dac79d38467ab4382c9c38b8e8a3a0e3b657783"
+          },
+          "out_nonempty": {
+            "shape": [
+              285719
+            ],
+            "dtype": "torch.bool",
+            "different": 0,
+            "max_abs": 0.0,
+            "left_sha256": "7f5399a1e268c5f0e5c01a7429b58a075a9c58733b25da87c60cbdc9f953ad7a",
+            "right_sha256": "7f5399a1e268c5f0e5c01a7429b58a075a9c58733b25da87c60cbdc9f953ad7a"
+          }
+        }
+      ],
+      "first_affine_all_exact": true,
+      "tokens": {
+        "fresh": {
+          "shape": [
+            256,
+            4,
+            32
+          ],
+          "dtype": "torch.float32",
+          "different": 1911,
+          "max_abs": 1.7881393432617188e-07,
+          "left_sha256": "ebc4d0b30b6d06d4b52594a15217922e554a0361e22279f49a351d6025e9f506",
+          "right_sha256": "da67d5b9f7d35d9a86e9f0e57f90bb934adc80e532afba6c938825b4cf74f537"
+        },
+        "same_consumer_repeat": {
+          "shape": [
+            256,
+            4,
+            32
+          ],
+          "dtype": "torch.float32",
+          "different": 0,
+          "max_abs": 0.0,
+          "left_sha256": "ebc4d0b30b6d06d4b52594a15217922e554a0361e22279f49a351d6025e9f506",
+          "right_sha256": "ebc4d0b30b6d06d4b52594a15217922e554a0361e22279f49a351d6025e9f506"
+        },
+        "masks": {
+          "shape": [
+            256,
+            4
+          ],
+          "dtype": "torch.bool",
+          "different": 0,
+          "max_abs": 0.0,
+          "left_sha256": "5a648d8015900d89664e00e125df179636301a2d8fa191c1aa2bd9358ea53a69",
+          "right_sha256": "5a648d8015900d89664e00e125df179636301a2d8fa191c1aa2bd9358ea53a69"
+        }
+      }
+    }
+  ],
+  "conclusion": "All4 identical-feature consumers construct different static incoming/outgoing means; learned composed affine parameters and masks are exact. Repeating one consumer is bit-exact. The static cache is a demonstrated non-reproducible component; whether it fully explains the actual-budget failure must be tested after the targeted repair."
+}

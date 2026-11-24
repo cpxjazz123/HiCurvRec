@@ -1,0 +1,60 @@
+{
+  "schema": "genrec.issue256.auxiliary_replay_mode_red/1",
+  "command": "python3.9 results/research/issue256/rounds/r02/reproduce_auxiliary_replay.py",
+  "exit_code": 1,
+  "wall_seconds": 3.17,
+  "designated_assertion": "recorded hard IDs do not replay the frozen native allocation",
+  "hand_answer": {
+    "auxiliary_balanced_false": [
+      [
+        1
+      ],
+      [
+        0
+      ]
+    ],
+    "main_balanced_true": [
+      [
+        0
+      ],
+      [
+        1
+      ]
+    ]
+  },
+  "source": {
+    "path": "results/research/issue256/rounds/r02/verification_generations/pre_auxiliary_mode/validation_entry.py",
+    "sha256": "84778698b1f2384adb0e3b270c679cfc38588d2b9d6b2113f20c2e24d2794ab9"
+  },
+  "reproducer": {
+    "path": "results/research/issue256/rounds/r02/verification_generations/pre_auxiliary_mode/reproduce_auxiliary_replay.py",
+    "sha256": "672fc873a462be4c023093e096ea5a0dd5aaf399576943e0c0d03dcf4f12add3"
+  },
+  "output": {
+    "path": "results/research/issue256/rounds/r02/AUXILIARY_MODE_RED.log",
+    "sha256": "d70242d3ccdd23e5b6b7efb5f4f169deb3dd97ff752ac5fc59db6c4dcf9c44f7"
+  },
+  "actual_four_rank_failure": [
+    {
+      "rank": 0,
+      "path": "results/research/issue256/rounds/r02/validation/issue256_r02_validation_2786832_586493691/rank_0.json",
+      "sha256": "0437dab26a53cfd2b7ca558121e6a3fa4ff52cf5e6dcd28f47dc2a95fd2c430f"
+    },
+    {
+      "rank": 1,
+      "path": "results/research/issue256/rounds/r02/validation/issue256_r02_validation_2786832_586493691/rank_1.json",
+      "sha256": "d441a860919d94578c0619a6a624ee93ca05dab317698964696f68ca812f8d2c"
+    },
+    {
+      "rank": 2,
+      "path": "results/research/issue256/rounds/r02/validation/issue256_r02_validation_2786832_586493691/rank_2.json",
+      "sha256": "e2d8aa3d686fda4b5d5aa6fbf1c1ba54ec9000157544db9280213b4538fb5697"
+    },
+    {
+      "rank": 3,
+      "path": "results/research/issue256/rounds/r02/validation/issue256_r02_validation_2786832_586493691/rank_3.json",
+      "sha256": "f234b56f7d8c9f7a1325a82e898a8114e2bedbe83abed65a28800a44c0be2b60"
+    }
+  ],
+  "excluded_setup_failure": "AUXILIARY_MODE_SETUP_FAIL.log was an initial root-marker import failure; it is preserved but not counted as a red semantic catch."
+}

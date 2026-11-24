@@ -1,0 +1,517 @@
+{
+  "run_id": "issue256_r02_shared_batches_2601733_586369709",
+  "rank": 0,
+  "worker_pid": 2601738,
+  "formal_training": false,
+  "admission_credential": false,
+  "source_hashes": {
+    "kind": "shared_batches",
+    "tree": "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq",
+    "files": {
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/assignment_floor.py": "984bba1330c62a2a712c6797e27a9389bcb7274a8dbe552d48f13c22e9a6ff96",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/benchmark_entry.py": "a9139080228c9294eb710dc226602533cad72770bf61c953386b84e08e9f7853",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/budget_point_entry.py": "ea8b913bfd888cb3ed5427bb76a388b15bb0a96f1a1c136686615e8467d9663f",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/catalogue_audit_entry.py": "9d1caccb6e978323a2f1a738a339404f6437e045778ec92402f4304fdb7f9c6d",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/distances/__init__.py": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/distances/distance.py": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/execution_entry.py": "03d171ee5cac440f08853b2569185af1d6f8a0747c818418204983cd6ce38fb0",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/final_audit_entry.py": "4c9f9c33172588fd9beab212a8a1d00848bdb958f1103815297a71da8ad53751",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/kernel_validation_entry.py": "5ed8d083794b2b383f373e5ab6fff6f0aa9ecdd8f0a665d64065df4d19e69d7f",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/layer_validation_entry.py": "a0fac743aedcb6c87036d5f9364d55fbb2b39983dd54dacb7659196b6aecb705",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/losses/__init__.py": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/losses/_pairs.py": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/losses/codebook.py": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/losses/commitment.py": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/losses/quantization.py": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/losses/reconstruction.py": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/model/__init__.py": "fc51b6b47b052833e3bb249a00a581da6a6f27bb4905fb58237a2865354c0f81",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/model/calibration.py": "3ef15bc15500592833fecaa98a1d170b9f7845e16b03382af2018d314ab74fdd",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/model/curvature.py": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/model/estimator.py": "1bc4a1fda6276a4e31f7ba7ed69d5a33cb83bc8d0f241471d67a8b79a7f6ddd0",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/model/geometry.py": "42964aaa6004f91adc96407b14e5e3ce54bec8dc6115b33891bd55cdb0ad02c5",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/model/layer_gate.py": "18bfc476986946bf47a5b80571630a3ef18b7653ff90856575d1240563421579",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/model/layers.py": "dadd6287dbf55751c10bae23d81c1af42ab9035a73a09d77b9c67550bdc1fb4a",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/model/mechanism.py": "47b862ca58bd9b796d259bac9951aac60a30a77005ba8d192ccd4c65dc013c97",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/model/model.py": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/model/provenance.py": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/model/selection.py": "cb0bcb306224af0c8562fa7f3ea6ae4bf4cbf2f4ba61ee5bae60916efb12938c",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/model/structure.py": "1bccb9f7dbf54f62a743258efc7faca5fc7f89c9cc0039b793c7f0e1985a126b",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/model/structure_gate.py": "ce043cd2c395b45c9074e195547bd06ceb6915f2078c8f19781b049a4c209499",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/model/utils.py": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/module_budget_entry.py": "5df32d23c48bca120c6776fd573743539e4f7c9125fb3e8baedfd3753b20d224",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/periodic_budget_entry.py": "f07a74691b5cce219e3a200265c970a97e6ed9fcbcd9fe60cba26b08955c80d5",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/shared_batches_entry.py": "0b332f321503f5a957ee4097421ede9b71b7f4869b5007a904269d27a5353703",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/static_cache_check_entry.py": "b03b421fd1b615678975bc0b9d75807a90603d664d2100f7971a19850a245905",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/static_consumers_entry.py": "76ce3b3bdb0b5d3612706b13e790065e7f4e0cb0589c7c4ddb8fd90f26ebebab",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/steady_profile_entry.py": "73551d1ecc5b5bc4b662a52ca1e0801b78f7744715471079ef975a15e8638af7",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/reference.py": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/reference_layer_gate.py": "b4fe04d6e66105b4face3fc1874254a5a6a7568a6a5ccc3b1f6a5d4b8fa18d31",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_attention.py": "96ac7f522b6763ef5fc2819c9c30e53a08ff3fbd2c3befca23de0458ebf0d6a9",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_attention_pipeline.py": "b88cf8f3037d76dba4154f1cf22fdd7866a8c8914bd4997cc1d2ea698e492f4c",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_budget_known_answers.py": "43068714dbe61e400f01fb4be23071f2031a9edbeebbe9cb25257487aa56bc06",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_budget_mutations.py": "a45192ed3389c15e4f24aab1008d496df6feb4256ad9915e1f1da0e2ce84ca6c",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_budget_reference.py": "2782b04e13f6ee9e54a10a53dc84ba77c885e0b4cf1191799a75f52008cd2c0e",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_calibration.py": "f6f6572ab663ffcf6463947b7b6fc142da77e7bbc742778f5ef9538d5047f7a1",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_cuda_math.py": "a293e59cfb537dbbaa6eb5e35f769918f6951151581e9817c5ae954b95bfba83",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_curvature_loss.py": "d260562cb8990411a1680ac0792006db787619ddafcc5a6c54d09fa13142f633",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_entry_calibration.py": "939039f18ee9d5662bb400771c5e0234ca9d1b921afa394098e624533665499b",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_estimator.py": "07d4cb1a0841b766d0e5220a2be7b7b66c5abdfe3d00e9c43e38fa59ba991531",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_execution.py": "cd3d37b2fb5bcbfdf39437837f96844b990471faa7902ef19dca3d8c187f374d",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_geometry_memory.py": "0ebae94fad15202119347deeedf7d1a2ac1e00772d58acf9e84bebdf89485c5c",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_known_answers.py": "5227bfa8fe927e96c28ea42d55d219bad2d09f490b3aad62346a12c0565da513",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_layer_gate.py": "05ac143248c4fca1e0b1a0d2752babe0f4a6bd22cd3f8879a9cb4b49c832ac8f",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_layer_mechanism.py": "aa31dc3ae21ac651f2bf9b12c1e8e10f0d43e46e6bf48e5d516024515ead37d1",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_mechanism.py": "bf5b84db0466103245e99d049bd36e53e237b06712c19be5c6acc674d520d418",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_module_budget.py": "95b61949775b09c4e0205e119d4a2c72146d4709aec02dc3f562524497e35fea",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_mutations.py": "15181954e02ba080ea7823daec69ac77623ecdbc6bdbc0283dee16b4753b0cd0",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_periodic_budget.py": "72c0d25460b16a36b8d89992cefc026bac39817aa32815d7d754e1e858d78546",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_profile_loader.py": "8a7f1ae3cc63623a2d06c98e419e2139e908b6ac78d5704a8adc976f1f452a7b",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_provenance.py": "8c45537d5c083097492d73118654c03eda490f72d000a29691dd72ac69ee8f06",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_reference.py": "0a939f348e8ce897e64f2328357b12ff8059c7eb615284616ba03d17fb68a72c",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_shared_assignment_oracle.py": "6807c016c71a52158f6861c83962072e05f7701bd63db2d76ecb7f8475ff545c",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_sparse_adjoint.py": "5972c5c4432a15e9b986ca9a1eabd0cf528ebc2c66014112db17abbea83e82e3",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_sparse_structure.py": "dfa0d16d375bd13af03e69f7df4faaa634c3564781730c34631af7892114ff6e",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_static_means.py": "c1f496aabced794a58c47adc91cce915e87733bf2f934a3cc4ba0abafdd9640d",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_static_reproducibility.py": "a9a6fa80d2ef55352af3275e00eec9c03e981981a7dcdbe2391734bfc237ad96",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_structure.py": "e818e562c925c6aa6d3bd5853d2b1b1ba00e0f88f1831289537a11d375bec593",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_sync_free_batch.py": "0fa28c44ee9bb7ab2cc9d26fee74b88db9afa659fd57075d40a294df3865e964",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_three_geometry.py": "542015ddb04c215986bf91efb23a1d129834347ed4efa3d7e1ca434c1fff646e",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/train_config.py": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/train_rqvae.py": "81c392c17c5c5356b61cbd56870680dd7357a41e82966f24044711908394838c",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/unit_suite_entry.py": "32b036580c94d2d394affa6b6078295f765061366dfe8d0ffca1bdbbc12fdde8",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py": "84778698b1f2384adb0e3b270c679cfc38588d2b9d6b2113f20c2e24d2794ab9",
+      "tools/issue256/r02/admission.py": "c00b7bcfeba54899a6d893867642edf7a0a2593709fb476ed9bd0f0e81720811",
+      "tools/issue256/r02/calibration_receipts.py": "6cd4db51507be9fafe57666d372be9e08c973bbdda67e0a8740091312d3d3ac1",
+      "tools/issue256/r02/check_static_cache.py": "14e0422b8a203262bac3abdef35ddb5a1fc3193a910247ec06308672117d9012",
+      "tools/issue256/r02/collect_evidence.py": "a40202d238c29e1dbcdc4bd127ebc888701a200c1c26b6aef4ae39a219df5aa0",
+      "tools/issue256/r02/diagnose_budget_point.py": "bf79e1c8e1336defc91bdb39eb9b1cd391983430c147dba5d2c74e5da92cd1a9",
+      "tools/issue256/r02/diagnose_shared_batches.py": "3c61e729564790327860efea3ef19fa656dd65737d35c1fb676245a33952019a",
+      "tools/issue256/r02/diagnose_static_consumers.py": "e995e33f72ff0808584f19962804c2a2183eb94be3f53552c61932edf43769c6",
+      "tools/issue256/r02/dispatch_evidence.py": "fa0c163ec1ab0f5bfcbfb728e865e78ce8f89f13b8879f13bea7776cc3db7b7e",
+      "tools/issue256/r02/evaluate_arm.py": "0191a1163b21ddf2e1f31c286f497d3caad1cfe5a7c498fcff0a74a410661b4c",
+      "tools/issue256/r02/external_validation.py": "d45175192effa2917d6534201ca81d894ccc879bd8e0bc0d0483e4526cb79c5a",
+      "tools/issue256/r02/extract_catalogues.py": "c6448c6d8ec060da9ddebeefe02fd0501d54afa8b33ebf91dd3dde1a6f910b4f",
+      "tools/issue256/r02/final_global_gradients.py": "2caf795a8ce4961ecc7e32ac1e325f31fb50907b88b5958a19dc5fc99d8bad96",
+      "tools/issue256/r02/final_gradients.py": "8842119ccd1e5accf8314ac42f412dc5a0087b32e6a91b8504c697bf4db18078",
+      "tools/issue256/r02/finalize_stage2.py": "e8a4bd3372b28e94b21dd00a874de1ccc27612735c4017eb1a83d14f5d628db4",
+      "tools/issue256/r02/identity.py": "8438152a0f0b2f87f27a5c2d4f424249e69dac76a1773048ea5e84eb87e1b2e1",
+      "tools/issue256/r02/launch_budget_check.py": "d31bed1301ba77eef36485ad1e97daf8607cf2928289c9d84636d0d58fdaf36c",
+      "tools/issue256/r02/launch_diagnostics.py": "3e5c8b2e8eb39827c73d1a545513217e6b96f0a600e8a0dcf55a73f1c471aeb8",
+      "tools/issue256/r02/launch_formal_run.py": "1ac61a0b7b511184ae48ad9279a45bed5f6e1d72232100cf7a56bb3ee3243e78",
+      "tools/issue256/r02/launch_periodic_check.py": "383880e0c6e4bfb8eaab745f7f8ed1d2f0392accecbeb6754397de76c1b04d5d",
+      "tools/issue256/r02/layer_validation_entry.py": "5813694b9dbc4a9a4d605505b3ad3518f3de7d0b25c2d32bcfced4238bc9a4ba",
+      "tools/issue256/r02/reconcile_stage2.py": "93644cc45ac9a9a528a1e0c20a0519580261bf2ff66505bed4cab9694318f410",
+      "tools/issue256/r02/reconcile_stage3.py": "b6d7edc95b532acc6c696bf528ed8e6d4925a45cd55b7f2cac3798ffdc272cbc",
+      "tools/issue256/r02/run_tests.py": "2eac399ace40dcd9f4da400b00233575d992bae1a7039721c02e3778307fb4d6",
+      "tools/issue256/r02/test_calibration_receipts.py": "450876a2be6e57bb391e33aaa957d98d4a94d5a1a752b297c1e2325ae14bbd42",
+      "tools/issue256/r02/test_external_validation.py": "95fef0d756f74aa934de8a3e3dba1e9512695b30aa7a13a1667979294b0e8cb6",
+      "tools/issue256/r02/test_source_inventory.py": "f3c0b1128dbe4b7c5aa3d5e3232458538c3801957e14237743b1d7fd227c46ae",
+      "tools/issue256/r02/test_unit_coverage.py": "d8cf0be0f96a24a0a8e0bd5a44e0f4b59ac30331398a1eb589352781719969d5",
+      "tools/issue256/r02/test_validation_diagnosis.py": "3d0e7d3648b235013b3dd20a2b92b80b10dd86f7799e74e23212d278bf663718",
+      "tools/issue256/r02/validation_diagnosis.py": "b6c9d1b0ff3b040bb6f91bdd070e68144c3cf0a8e42ecf378af791f7fb2161ab",
+      "tools/graph_infra/__init__.py": "b86861c93434621cff070d024b12f8c6f9d5a5e77a8deea54089645a3a7226ff",
+      "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+      "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+      "tools/issue252/archive_audit.py": "1c4fc283096e7a8e3a22c415f6a2f886d61186ce80aa7c5700aa3bc37968cd2d",
+      "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba",
+      "tools/issue252/host_transfer.py": "41428cf5a9a9b9abb3568baa2164b675b9fd888172e3431f631665925d462f37",
+      "tools/issue252/performance.py": "76be9a448deeebe131e1e44b838e28a95ee4acd753b7725cd14354aa81a6e439",
+      "tools/issue252/run_workspace.py": "06e954c5e21ec78e348a7ff1eef81eb7fbdf18162c668663cc4d3f65f5c3c4b9",
+      "tools/issue252/training_admission.py": "240f32218f19a74944539b4bb53983a7bb8cd89c750c44b82388e71bbb2b4943",
+      "tools/issue253/cuda_math.py": "e6360d4c2f9ec80e2301f19342c109597f9177cd045a78540b73f2a4402e6473",
+      "tools/issue253/ego_kernel.py": "6a9a823e51e5923315ee6e6410ab20b57e6e4cb8e4c41f157d0f54b73fe7afb0",
+      "tools/issue253/sparse_adjoint.py": "bfc93d231a868945141a79a9092886b46d1fdb563dc4f2d3ee71e1ea110fea2d",
+      "tools/issue253/static_features.py": "8e35754f420ed4497bf2aacdb09eac140b19657af8902e6bae41d2d9ecaa61eb",
+      "tools/research/__init__.py": "9cf60044c83b3cca0a55944165f24e30e04ea6db3c9c71de977c2bfe32eb7d1b",
+      "tools/research/rounds/baseline.py": "65897df974e4e27e157dce83f7f5422afe1a8d4cc7710580507db4012b920757",
+      "tools/research/stage2/__init__.py": "7404443b2323f698ba2a8c4a96006b8fe74ac1b6a2b896da31f05fea92b78006",
+      "tools/research/stage2/anticollapse/__init__.py": "36b0be98738fc34ea93f2d5792f7e8fb8991eadc948bc9a6e910ce94efe1eabf",
+      "tools/research/stage2/anticollapse/artifact.py": "e75bde5903a50cd2b90a3198a1ec0ca2b944147b742381068f72aa2c20d0ae4c",
+      "tools/research/stage2/anticollapse/floor.py": "984bba1330c62a2a712c6797e27a9389bcb7274a8dbe552d48f13c22e9a6ff96",
+      "tools/research/stage2/anticollapse/patch_tree.py": "bffbc2b3a501956f5538dfce9b42c90d89e94a03b645eb651d0e449b4f9f0a5d",
+      "tools/research/stage2/checks.py": "30dd5c7c93a1ee21432fa0b29841444f9d390edcc71d48a5b8ba53fed41c0ef7",
+      "tools/research/stage2/contract.py": "bf82fd31970c7f99de7b377f0ebb11e3cb82fb77661d18be691c04c5c5f09a3c",
+      "tools/research/stage2/graph_batches.py": "99d3e5f90869d340beb30dbe15609e6a387322910a6b1df6ac36106c94622709",
+      "tools/research/stage2/graph_contract.py": "f2a6c9cd8d59f8412856a2d222ce4a5af5dce7e3fb80311825899a87d7972481",
+      "tools/research/stage2/launcher.py": "61d32bd6d1100d1903b6f934480a478630fe647f626510b66cc964720b28b85a",
+      "tools/research/stage2/tests/test_collectives.py": "1aa5df1cc572aad17286072b9d2a4a4eac0793405f1442df9fb70ebe4a65ab84",
+      "tools/research/stage2/tests/test_trainer_names.py": "45832220795da8a1958c0e9d3ebb29e9275fa9d48b7a86402b6f5f2515a0618b",
+      "tools/research/verification/__init__.py": "73b06c04e8c71e16ac85a8fdbc5bc9178635900dc977f5c3488745780d98f73b",
+      "tools/research/verification/admission.py": "4637400e7103a249c1c05c1a1d17d40349a2d307ccb3d07f7a52d9703ed7f647",
+      "tools/stage2/server.py": "1152c3360ddebd5eb161ab1111245a131e338e4058f49f74c215b43922cb96bb",
+      "assets/manifest.json": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b",
+      "tools/issue253/performance.py": "17469b0b3347e03720b440bda8911f7b65e73dd907f1faec0d8f88485c994103",
+      "results/research/issue256/rounds/r02/CONTRACT.md": "f80ae1d7b07268cf53d189e10fb447bf483aef5da913f2fd0b1faf3230fc519b",
+      "results/research/issue256/rounds/r02/MUTATIONS.md": "f2e3a82435aeb352d0d22fe3ec0c32b953979ddf66f761132c1659ee927577e4",
+      "results/research/issue256/rounds/r02/reference.py": "b3bb46b35325e9d393d13d17effe2fa0d22b4702608556a9686394713a9b885d",
+      "results/research/issue256/ACCEPTANCE.json": "56db8c7084b5af5e9448b6ed2798ef7111c5e5b38753f5d3d4b78036e6f8860d",
+      "results/research/issue256/EVALUATION.md": "4e0ea06e5799a1d6c9cce514bab8deba1e4ea320dc8dd9d4d16467d0b206e993"
+    }
+  },
+  "status": "COLLECTED_NOT_ADMISSION",
+  "policies": {
+    "high": {
+      "end_to_end": {
+        "main": {
+          "key": {
+            "shape": [
+              1024,
+              5,
+              32
+            ],
+            "different": 72029,
+            "max_abs": 0.0023251771926879883,
+            "outside_frozen_forward_tolerance": 55952
+          },
+          "value": {
+            "shape": [
+              1024,
+              5,
+              32
+            ],
+            "different": 72025,
+            "max_abs": 0.002087987959384918,
+            "outside_frozen_forward_tolerance": 56479
+          },
+          "score.0": {
+            "shape": [
+              1024,
+              3,
+              3,
+              32
+            ],
+            "different": 294883,
+            "max_abs": 0.0008667111396789551,
+            "outside_frozen_forward_tolerance": 209373
+          },
+          "score.1": {
+            "shape": [
+              1024,
+              3,
+              3,
+              32
+            ],
+            "different": 294874,
+            "max_abs": 0.0008020997047424316,
+            "outside_frozen_forward_tolerance": 203428
+          },
+          "score.2": {
+            "shape": [
+              1024,
+              3,
+              3,
+              1
+            ],
+            "different": 9216,
+            "max_abs": 0.0005948543548583984,
+            "outside_frozen_forward_tolerance": 6653
+          },
+          "tokens": {
+            "shape": [
+              1024,
+              4,
+              32
+            ],
+            "different": 72023,
+            "max_abs": 0.002002398017793894,
+            "outside_frozen_forward_tolerance": 48452
+          },
+          "weights": {
+            "shape": [
+              1024,
+              3,
+              3
+            ],
+            "different": 9207,
+            "max_abs": 0.00014165043830871582,
+            "outside_frozen_forward_tolerance": 419
+          }
+        },
+        "aux": {
+          "key": {
+            "shape": [
+              256,
+              5,
+              32
+            ],
+            "different": 7039,
+            "max_abs": 0.0009776651859283447,
+            "outside_frozen_forward_tolerance": 5207
+          },
+          "value": {
+            "shape": [
+              256,
+              5,
+              32
+            ],
+            "different": 7038,
+            "max_abs": 0.0009507834911346436,
+            "outside_frozen_forward_tolerance": 5390
+          },
+          "score.0": {
+            "shape": [
+              256,
+              3,
+              3,
+              32
+            ],
+            "different": 69668,
+            "max_abs": 0.000546574592590332,
+            "outside_frozen_forward_tolerance": 38114
+          },
+          "score.1": {
+            "shape": [
+              256,
+              3,
+              3,
+              32
+            ],
+            "different": 69651,
+            "max_abs": 0.000535324215888977,
+            "outside_frozen_forward_tolerance": 36793
+          },
+          "score.2": {
+            "shape": [
+              256,
+              3,
+              3,
+              1
+            ],
+            "different": 2253,
+            "max_abs": 0.0004247128963470459,
+            "outside_frozen_forward_tolerance": 1206
+          },
+          "tokens": {
+            "shape": [
+              256,
+              4,
+              32
+            ],
+            "different": 7309,
+            "max_abs": 0.001279786229133606,
+            "outside_frozen_forward_tolerance": 4904
+          },
+          "weights": {
+            "shape": [
+              256,
+              3,
+              3
+            ],
+            "different": 2271,
+            "max_abs": 7.963180541992188e-05,
+            "outside_frozen_forward_tolerance": 50
+          }
+        }
+      },
+      "fixed_identical_token_attention": {
+        "main": {
+          "shape": [
+            1024,
+            3,
+            3
+          ],
+          "different": 8555,
+          "max_abs": 4.166364669799805e-05,
+          "outside_frozen_forward_tolerance": 0
+        },
+        "aux": {
+          "shape": [
+            256,
+            3,
+            3
+          ],
+          "different": 2171,
+          "max_abs": 6.446242332458496e-05,
+          "outside_frozen_forward_tolerance": 1
+        }
+      }
+    },
+    "highest": {
+      "end_to_end": {
+        "main": {
+          "key": {
+            "shape": [
+              1024,
+              5,
+              32
+            ],
+            "different": 52977,
+            "max_abs": 2.7567148208618164e-07,
+            "outside_frozen_forward_tolerance": 0
+          },
+          "value": {
+            "shape": [
+              1024,
+              5,
+              32
+            ],
+            "different": 53528,
+            "max_abs": 3.5762786865234375e-07,
+            "outside_frozen_forward_tolerance": 0
+          },
+          "score.0": {
+            "shape": [
+              1024,
+              3,
+              3,
+              32
+            ],
+            "different": 227599,
+            "max_abs": 2.682209014892578e-07,
+            "outside_frozen_forward_tolerance": 0
+          },
+          "score.1": {
+            "shape": [
+              1024,
+              3,
+              3,
+              32
+            ],
+            "different": 220357,
+            "max_abs": 2.384185791015625e-07,
+            "outside_frozen_forward_tolerance": 0
+          },
+          "score.2": {
+            "shape": [
+              1024,
+              3,
+              3,
+              1
+            ],
+            "different": 7464,
+            "max_abs": 2.980232238769531e-07,
+            "outside_frozen_forward_tolerance": 0
+          },
+          "tokens": {
+            "shape": [
+              1024,
+              4,
+              32
+            ],
+            "different": 43604,
+            "max_abs": 2.384185791015625e-07,
+            "outside_frozen_forward_tolerance": 0
+          },
+          "weights": {
+            "shape": [
+              1024,
+              3,
+              3
+            ],
+            "different": 3857,
+            "max_abs": 8.940696716308594e-08,
+            "outside_frozen_forward_tolerance": 0
+          }
+        },
+        "aux": {
+          "key": {
+            "shape": [
+              256,
+              5,
+              32
+            ],
+            "different": 25417,
+            "max_abs": 2.980232238769531e-07,
+            "outside_frozen_forward_tolerance": 0
+          },
+          "value": {
+            "shape": [
+              256,
+              5,
+              32
+            ],
+            "different": 25592,
+            "max_abs": 3.5762786865234375e-07,
+            "outside_frozen_forward_tolerance": 0
+          },
+          "score.0": {
+            "shape": [
+              256,
+              3,
+              3,
+              32
+            ],
+            "different": 61998,
+            "max_abs": 2.980232238769531e-07,
+            "outside_frozen_forward_tolerance": 0
+          },
+          "score.1": {
+            "shape": [
+              256,
+              3,
+              3,
+              32
+            ],
+            "different": 60076,
+            "max_abs": 2.384185791015625e-07,
+            "outside_frozen_forward_tolerance": 0
+          },
+          "score.2": {
+            "shape": [
+              256,
+              3,
+              3,
+              1
+            ],
+            "different": 1954,
+            "max_abs": 2.980232238769531e-07,
+            "outside_frozen_forward_tolerance": 0
+          },
+          "tokens": {
+            "shape": [
+              256,
+              4,
+              32
+            ],
+            "different": 13618,
+            "max_abs": 2.384185791015625e-07,
+            "outside_frozen_forward_tolerance": 0
+          },
+          "weights": {
+            "shape": [
+              256,
+              3,
+              3
+            ],
+            "different": 1004,
+            "max_abs": 8.940696716308594e-08,
+            "outside_frozen_forward_tolerance": 0
+          }
+        }
+      },
+      "fixed_identical_token_attention": {
+        "main": {
+          "shape": [
+            1024,
+            3,
+            3
+          ],
+          "different": 0,
+          "max_abs": 0.0,
+          "outside_frozen_forward_tolerance": 0
+        },
+        "aux": {
+          "shape": [
+            256,
+            3,
+            3
+          ],
+          "different": 1070,
+          "max_abs": 1.1920928955078125e-07,
+          "outside_frozen_forward_tolerance": 0
+        }
+      }
+    }
+  },
+  "parameters_unchanged": true,
+  "parameters_sha256": "ec5ebf54ee91aa500140d13742749835069850f5ac836881c8dc5db5b2791505",
+  "population": {
+    "union": 1266,
+    "main": 1024,
+    "aux": 256
+  },
+  "completed_epoch": 1,
+  "arrays": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/shared_batches/issue256_r02_shared_batches_2601733_586369709/rank_0_arrays.npz",
+  "wall_seconds": 46.98944213334471
+}

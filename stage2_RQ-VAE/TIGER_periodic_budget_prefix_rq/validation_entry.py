@@ -298,7 +298,6 @@ class Observer:
         if len(native_branches) != 2:
             raise AssertionError('independent execution lost an actual quantization population')
         self.assignment_layers = list(raw.rq.vq_layers)
-        self.assignment_balanced = raw.training
         allocation_rows = []
         for left, right in zip(actual_branches, native_branches):
             if left['balanced'] != right['balanced']:
@@ -306,7 +305,7 @@ class Observer:
             torch.testing.assert_close(left['weights'], right['weights'], atol=1e-5, rtol=1e-4,
                 msg='shared and independent geometry gate values differ')
             allocation_rows.append(self.auxiliary_ties(left['tokens'], right['tokens'],
-                left['costs'], right['costs']))
+                left['costs'], right['costs'], balanced=left['balanced']))
 
         # Hold the discrete branch fixed to compare the claimed smooth computation,
         # not an invalid optimal-value Lipschitz theorem for greedy floor repair.
@@ -341,7 +340,7 @@ class Observer:
             'gradient_atol': 2e-5, 'gradient_rtol': 2e-4, 'gradients': gradients,
             'qualification': 'No unconditional bitwise equivalence of native greedy assignments under different float32 gate batches is claimed; exact global checkpoint export is checked separately.'}
 
-    def auxiliary_ties(self, shared_ids, independent_ids, shared_costs, independent_costs):
+    def auxiliary_ties(self, shared_ids, independent_ids, shared_costs, independent_costs, *, balanced):
         """Replay the frozen native rule; record divergence without optimality claims."""
         layers = self.assignment_layers
         if len(shared_costs) != len(layers) or len(independent_costs) != len(layers):
@@ -352,7 +351,7 @@ class Observer:
                 raise AssertionError('shared real auxiliary cost shapes differ')
             was_training, was_use_sk = layer.training, layer.use_sk
             use_sk = bool(was_use_sk) and level == len(layers)-1
-            layer.training = self.assignment_balanced and use_sk
+            layer.training = balanced and use_sk
             layer.use_sk = use_sk
             try:
                 with torch.no_grad():

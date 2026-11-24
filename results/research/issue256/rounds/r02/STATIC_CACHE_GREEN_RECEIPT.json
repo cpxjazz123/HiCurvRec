@@ -1,0 +1,53 @@
+{
+  "schema": "genrec.issue256.static_cache_green/1",
+  "command": "python3.9 -m tools.issue256.r02.check_static_cache",
+  "exit_code": 0,
+  "world_size": 4,
+  "production_source": {
+    "path": "tools/issue253/static_features.py",
+    "sha256": "8e35754f420ed4497bf2aacdb09eac140b19657af8902e6bae41d2d9ecaa61eb"
+  },
+  "ranks": [
+    {
+      "rank": 0,
+      "report": {
+        "path": "results/research/issue256/rounds/r02/static_cache_check/issue256_r02_static_cache_check_2532358_586324576/rank_0.json",
+        "sha256": "6b73da9058c9e9ad989550e2a2e127fb006e0694522ae261a0b0b0f72480e0ac"
+      }
+    },
+    {
+      "rank": 1,
+      "report": {
+        "path": "results/research/issue256/rounds/r02/static_cache_check/issue256_r02_static_cache_check_2532358_586324576/rank_1.json",
+        "sha256": "46cd005c3fe00a23eb19e22f40bd3713fb27b52827d3455541bf2518bafaa31a"
+      }
+    },
+    {
+      "rank": 2,
+      "report": {
+        "path": "results/research/issue256/rounds/r02/static_cache_check/issue256_r02_static_cache_check_2532358_586324576/rank_2.json",
+        "sha256": "26ec2af3c75b3cbbd40ec53db5115f50d301f7cbb24514e5ddfe4d2b18675581"
+      }
+    },
+    {
+      "rank": 3,
+      "report": {
+        "path": "results/research/issue256/rounds/r02/static_cache_check/issue256_r02_static_cache_check_2532358_586324576/rank_3.json",
+        "sha256": "944b7a0d35a4068260e777cad5e2a527486d3a56db98895bf1df8266862066d4"
+      }
+    }
+  ],
+  "complete_units": {
+    "path": "results/research/issue256/rounds/r02/TEST_RESULTS.json",
+    "sha256": "6ea2aac59d8fb5b16d9fc407598800d5872df552ab900f1041a49eccf79d502f",
+    "candidate": 142,
+    "assets": 64,
+    "tools": 15,
+    "no_skips": true
+  },
+  "actual_independent_global_initial_budget": {
+    "all4_passed": true,
+    "lambda": 1.0698641972339828e-06
+  },
+  "qualification": "The previous same-state budget failure is now repaired, but the later shared-vs-independent-batch gate assertion fails4/4. This is not complete admission."
+}

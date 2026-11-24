@@ -1,0 +1,461 @@
+{
+  "schema": "genrec.issue256.shared_batch_gate_failure/1",
+  "source_generation": "post_deterministic_static_means",
+  "command": "python3.9 -m tools.issue256.r02.launch_diagnostics",
+  "exit_code": 1,
+  "all4_actual_initial_budgets_passed": true,
+  "failure": "shared and independent geometry gate values differ",
+  "ranks": [
+    {
+      "rank": 0,
+      "report": {
+        "path": "results/research/issue256/rounds/r02/validation/issue256_r02_validation_2567507_586345783/rank_0.json",
+        "sha256": "c74b7329912d4ec642f7fd835fb4caa7be005c54caaa26a9d5cf8eb610798bb9"
+      },
+      "initial_budget": {
+        "lambda": 1.0698641972339828e-06,
+        "rank_lambdas": [
+          1.0698641972339828e-06,
+          1.0698641972339828e-06,
+          1.0698641972339828e-06,
+          1.0698641972339828e-06
+        ],
+        "modules": {
+          "encoder": {
+            "original_norm": 0.00011530507698904255,
+            "curvature_norm": 32.90157524256833,
+            "weighted_ratio": 0.3052789894756232
+          },
+          "GNN.input": {
+            "original_norm": 6.323422887749997e-08,
+            "curvature_norm": 0.011114093436611457,
+            "weighted_ratio": 0.1880400989087526
+          },
+          "sharedKey": {
+            "original_norm": 7.398091048355505e-08,
+            "curvature_norm": 0.007840655492223325,
+            "weighted_ratio": 0.11338650118181988
+          },
+          "sharedValue": {
+            "original_norm": 2.0809539012929406e-08,
+            "curvature_norm": 0.003654855783756198,
+            "weighted_ratio": 0.18790417926436595
+          },
+          "sharedScore": {
+            "original_norm": 2.7009506974784597e-08,
+            "curvature_norm": 0.005428200036598756,
+            "weighted_ratio": 0.21501454580429338
+          },
+          "GNN.layers.0.self_linear": {
+            "original_norm": 5.9170848017252306e-08,
+            "curvature_norm": 0.00700496480371627,
+            "weighted_ratio": 0.12665630623030955
+          },
+          "GNN.layers.0.incoming": {
+            "original_norm": 5.7264461803087125e-08,
+            "curvature_norm": 0.008424256934814855,
+            "weighted_ratio": 0.15738925328330997
+          },
+          "GNN.layers.0.outgoing": {
+            "original_norm": 5.521885315360321e-08,
+            "curvature_norm": 0.006408906841328562,
+            "weighted_ratio": 0.12417244439814926
+          },
+          "GNN.layers.1.self_linear": {
+            "original_norm": 4.7556103437362957e-08,
+            "curvature_norm": 0.0042348069289179086,
+            "weighted_ratio": 0.09526996511425911
+          },
+          "GNN.layers.1.incoming": {
+            "original_norm": 4.090030851867858e-08,
+            "curvature_norm": 0.00392129793824397,
+            "weighted_ratio": 0.10257272922278188
+          },
+          "GNN.layers.1.outgoing": {
+            "original_norm": 3.909609886011698e-08,
+            "curvature_norm": 0.0038218990031325607,
+            "weighted_ratio": 0.10458621264299571
+          },
+          "codebook0": {
+            "original_norm": 3.8650089273995854e-05,
+            "curvature_norm": 6.109098581351468,
+            "weighted_ratio": 0.16910454729423538
+          },
+          "codebook1": {
+            "original_norm": 9.278581373048066e-05,
+            "curvature_norm": 22.891048924562778,
+            "weighted_ratio": 0.26394459127835374
+          },
+          "codebook2": {
+            "original_norm": 9.338165130460822e-05,
+            "curvature_norm": 21.35718889441529,
+            "weighted_ratio": 0.24468716747323763
+          },
+          "Query0": {
+            "original_norm": 6.26157554012173e-08,
+            "curvature_norm": 0.0007481470214048271,
+            "weighted_ratio": 0.012782976222829534
+          },
+          "Query1": {
+            "original_norm": 5.2599920145680266e-09,
+            "curvature_norm": 0.0049165041601605414,
+            "weighted_ratio": 0.9999999547413131
+          },
+          "Query2": {
+            "original_norm": 1.0908440912564436e-08,
+            "curvature_norm": 0.0030838163002452922,
+            "weighted_ratio": 0.3024506138800165
+          }
+        },
+        "cancellation_probe": [
+          0.0,
+          2.0
+        ],
+        "actual_batch_items": 1024,
+        "independent_raw_replica": true,
+        "passed": true
+      },
+      "error": "Traceback (most recent call last):\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 465, in main\n    training.main(diagnostic_epochs=1)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/train_rqvae.py\", line 533, in main\n    DIAGNOSTIC_OBSERVER(\"diagnostic_complete\", model=raw_module, catalogue=catalogue,\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 44, in __call__\n    return super().__call__(event, **fields)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 147, in __call__\n    self.completed(model, fields['catalogue'])\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 193, in completed\n    super().completed(model, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 208, in completed\n    self.shared_equivalence(raw, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 306, in shared_equivalence\n    torch.testing.assert_close(left['weights'], right['weights'], atol=1e-5, rtol=1e-4,\n  File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py\", line 1587, in assert_close\n    raise error_metas[0].to_error(msg)\nAssertionError: shared and independent geometry gate values differ\n"
+    },
+    {
+      "rank": 1,
+      "report": {
+        "path": "results/research/issue256/rounds/r02/validation/issue256_r02_validation_2567507_586345783/rank_1.json",
+        "sha256": "133902f12705dbbaa23abdd67e16d342c6180b110e5ad2453d8fb2ecd34cc78b"
+      },
+      "initial_budget": {
+        "lambda": 1.0698641972339828e-06,
+        "rank_lambdas": [
+          1.0698641972339828e-06,
+          1.0698641972339828e-06,
+          1.0698641972339828e-06,
+          1.0698641972339828e-06
+        ],
+        "modules": {
+          "encoder": {
+            "original_norm": 0.00011530507698904255,
+            "curvature_norm": 32.90157524256833,
+            "weighted_ratio": 0.3052789894756232
+          },
+          "GNN.input": {
+            "original_norm": 6.323422887749997e-08,
+            "curvature_norm": 0.011114093436611457,
+            "weighted_ratio": 0.1880400989087526
+          },
+          "sharedKey": {
+            "original_norm": 7.398091048355505e-08,
+            "curvature_norm": 0.007840655492223325,
+            "weighted_ratio": 0.11338650118181988
+          },
+          "sharedValue": {
+            "original_norm": 2.0809539012929406e-08,
+            "curvature_norm": 0.003654855783756198,
+            "weighted_ratio": 0.18790417926436595
+          },
+          "sharedScore": {
+            "original_norm": 2.7009506974784597e-08,
+            "curvature_norm": 0.005428200036598756,
+            "weighted_ratio": 0.21501454580429338
+          },
+          "GNN.layers.0.self_linear": {
+            "original_norm": 5.9170848017252306e-08,
+            "curvature_norm": 0.00700496480371627,
+            "weighted_ratio": 0.12665630623030955
+          },
+          "GNN.layers.0.incoming": {
+            "original_norm": 5.7264461803087125e-08,
+            "curvature_norm": 0.008424256934814855,
+            "weighted_ratio": 0.15738925328330997
+          },
+          "GNN.layers.0.outgoing": {
+            "original_norm": 5.521885315360321e-08,
+            "curvature_norm": 0.006408906841328562,
+            "weighted_ratio": 0.12417244439814926
+          },
+          "GNN.layers.1.self_linear": {
+            "original_norm": 4.7556103437362957e-08,
+            "curvature_norm": 0.0042348069289179086,
+            "weighted_ratio": 0.09526996511425911
+          },
+          "GNN.layers.1.incoming": {
+            "original_norm": 4.090030851867858e-08,
+            "curvature_norm": 0.00392129793824397,
+            "weighted_ratio": 0.10257272922278188
+          },
+          "GNN.layers.1.outgoing": {
+            "original_norm": 3.909609886011698e-08,
+            "curvature_norm": 0.0038218990031325607,
+            "weighted_ratio": 0.10458621264299571
+          },
+          "codebook0": {
+            "original_norm": 3.8650089273995854e-05,
+            "curvature_norm": 6.109098581351468,
+            "weighted_ratio": 0.16910454729423538
+          },
+          "codebook1": {
+            "original_norm": 9.278581373048066e-05,
+            "curvature_norm": 22.891048924562778,
+            "weighted_ratio": 0.26394459127835374
+          },
+          "codebook2": {
+            "original_norm": 9.338165130460822e-05,
+            "curvature_norm": 21.35718889441529,
+            "weighted_ratio": 0.24468716747323763
+          },
+          "Query0": {
+            "original_norm": 6.26157554012173e-08,
+            "curvature_norm": 0.0007481470214048271,
+            "weighted_ratio": 0.012782976222829534
+          },
+          "Query1": {
+            "original_norm": 5.2599920145680266e-09,
+            "curvature_norm": 0.0049165041601605414,
+            "weighted_ratio": 0.9999999547413131
+          },
+          "Query2": {
+            "original_norm": 1.0908440912564436e-08,
+            "curvature_norm": 0.0030838163002452922,
+            "weighted_ratio": 0.3024506138800165
+          }
+        },
+        "cancellation_probe": [
+          0.0,
+          2.0
+        ],
+        "actual_batch_items": 1024,
+        "independent_raw_replica": true,
+        "passed": true
+      },
+      "error": "Traceback (most recent call last):\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 465, in main\n    training.main(diagnostic_epochs=1)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/train_rqvae.py\", line 533, in main\n    DIAGNOSTIC_OBSERVER(\"diagnostic_complete\", model=raw_module, catalogue=catalogue,\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 44, in __call__\n    return super().__call__(event, **fields)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 147, in __call__\n    self.completed(model, fields['catalogue'])\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 193, in completed\n    super().completed(model, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 208, in completed\n    self.shared_equivalence(raw, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 306, in shared_equivalence\n    torch.testing.assert_close(left['weights'], right['weights'], atol=1e-5, rtol=1e-4,\n  File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py\", line 1587, in assert_close\n    raise error_metas[0].to_error(msg)\nAssertionError: shared and independent geometry gate values differ\n"
+    },
+    {
+      "rank": 2,
+      "report": {
+        "path": "results/research/issue256/rounds/r02/validation/issue256_r02_validation_2567507_586345783/rank_2.json",
+        "sha256": "200d5095f789af8c2c7f7b201112f9f172c7f1dfa24aaf6cdfa20939f5472764"
+      },
+      "initial_budget": {
+        "lambda": 1.0698641972339828e-06,
+        "rank_lambdas": [
+          1.0698641972339828e-06,
+          1.0698641972339828e-06,
+          1.0698641972339828e-06,
+          1.0698641972339828e-06
+        ],
+        "modules": {
+          "encoder": {
+            "original_norm": 0.00011530507698904255,
+            "curvature_norm": 32.90157524256833,
+            "weighted_ratio": 0.3052789894756232
+          },
+          "GNN.input": {
+            "original_norm": 6.323422887749997e-08,
+            "curvature_norm": 0.011114093436611457,
+            "weighted_ratio": 0.1880400989087526
+          },
+          "sharedKey": {
+            "original_norm": 7.398091048355505e-08,
+            "curvature_norm": 0.007840655492223325,
+            "weighted_ratio": 0.11338650118181988
+          },
+          "sharedValue": {
+            "original_norm": 2.0809539012929406e-08,
+            "curvature_norm": 0.003654855783756198,
+            "weighted_ratio": 0.18790417926436595
+          },
+          "sharedScore": {
+            "original_norm": 2.7009506974784597e-08,
+            "curvature_norm": 0.005428200036598756,
+            "weighted_ratio": 0.21501454580429338
+          },
+          "GNN.layers.0.self_linear": {
+            "original_norm": 5.9170848017252306e-08,
+            "curvature_norm": 0.00700496480371627,
+            "weighted_ratio": 0.12665630623030955
+          },
+          "GNN.layers.0.incoming": {
+            "original_norm": 5.7264461803087125e-08,
+            "curvature_norm": 0.008424256934814855,
+            "weighted_ratio": 0.15738925328330997
+          },
+          "GNN.layers.0.outgoing": {
+            "original_norm": 5.521885315360321e-08,
+            "curvature_norm": 0.006408906841328562,
+            "weighted_ratio": 0.12417244439814926
+          },
+          "GNN.layers.1.self_linear": {
+            "original_norm": 4.7556103437362957e-08,
+            "curvature_norm": 0.0042348069289179086,
+            "weighted_ratio": 0.09526996511425911
+          },
+          "GNN.layers.1.incoming": {
+            "original_norm": 4.090030851867858e-08,
+            "curvature_norm": 0.00392129793824397,
+            "weighted_ratio": 0.10257272922278188
+          },
+          "GNN.layers.1.outgoing": {
+            "original_norm": 3.909609886011698e-08,
+            "curvature_norm": 0.0038218990031325607,
+            "weighted_ratio": 0.10458621264299571
+          },
+          "codebook0": {
+            "original_norm": 3.8650089273995854e-05,
+            "curvature_norm": 6.109098581351468,
+            "weighted_ratio": 0.16910454729423538
+          },
+          "codebook1": {
+            "original_norm": 9.278581373048066e-05,
+            "curvature_norm": 22.891048924562778,
+            "weighted_ratio": 0.26394459127835374
+          },
+          "codebook2": {
+            "original_norm": 9.338165130460822e-05,
+            "curvature_norm": 21.35718889441529,
+            "weighted_ratio": 0.24468716747323763
+          },
+          "Query0": {
+            "original_norm": 6.26157554012173e-08,
+            "curvature_norm": 0.0007481470214048271,
+            "weighted_ratio": 0.012782976222829534
+          },
+          "Query1": {
+            "original_norm": 5.2599920145680266e-09,
+            "curvature_norm": 0.0049165041601605414,
+            "weighted_ratio": 0.9999999547413131
+          },
+          "Query2": {
+            "original_norm": 1.0908440912564436e-08,
+            "curvature_norm": 0.0030838163002452922,
+            "weighted_ratio": 0.3024506138800165
+          }
+        },
+        "cancellation_probe": [
+          0.0,
+          2.0
+        ],
+        "actual_batch_items": 1024,
+        "independent_raw_replica": true,
+        "passed": true
+      },
+      "error": "Traceback (most recent call last):\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 465, in main\n    training.main(diagnostic_epochs=1)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/train_rqvae.py\", line 533, in main\n    DIAGNOSTIC_OBSERVER(\"diagnostic_complete\", model=raw_module, catalogue=catalogue,\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 44, in __call__\n    return super().__call__(event, **fields)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 147, in __call__\n    self.completed(model, fields['catalogue'])\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 193, in completed\n    super().completed(model, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 208, in completed\n    self.shared_equivalence(raw, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 306, in shared_equivalence\n    torch.testing.assert_close(left['weights'], right['weights'], atol=1e-5, rtol=1e-4,\n  File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py\", line 1587, in assert_close\n    raise error_metas[0].to_error(msg)\nAssertionError: shared and independent geometry gate values differ\n"
+    },
+    {
+      "rank": 3,
+      "report": {
+        "path": "results/research/issue256/rounds/r02/validation/issue256_r02_validation_2567507_586345783/rank_3.json",
+        "sha256": "8c4e1d142c7f83ab693f550724302ee6a0e66a81a8b3ad23eee7fd21b505b7b7"
+      },
+      "initial_budget": {
+        "lambda": 1.0698641972339828e-06,
+        "rank_lambdas": [
+          1.0698641972339828e-06,
+          1.0698641972339828e-06,
+          1.0698641972339828e-06,
+          1.0698641972339828e-06
+        ],
+        "modules": {
+          "encoder": {
+            "original_norm": 0.00011530507698904255,
+            "curvature_norm": 32.90157524256833,
+            "weighted_ratio": 0.3052789894756232
+          },
+          "GNN.input": {
+            "original_norm": 6.323422887749997e-08,
+            "curvature_norm": 0.011114093436611457,
+            "weighted_ratio": 0.1880400989087526
+          },
+          "sharedKey": {
+            "original_norm": 7.398091048355505e-08,
+            "curvature_norm": 0.007840655492223325,
+            "weighted_ratio": 0.11338650118181988
+          },
+          "sharedValue": {
+            "original_norm": 2.0809539012929406e-08,
+            "curvature_norm": 0.003654855783756198,
+            "weighted_ratio": 0.18790417926436595
+          },
+          "sharedScore": {
+            "original_norm": 2.7009506974784597e-08,
+            "curvature_norm": 0.005428200036598756,
+            "weighted_ratio": 0.21501454580429338
+          },
+          "GNN.layers.0.self_linear": {
+            "original_norm": 5.9170848017252306e-08,
+            "curvature_norm": 0.00700496480371627,
+            "weighted_ratio": 0.12665630623030955
+          },
+          "GNN.layers.0.incoming": {
+            "original_norm": 5.7264461803087125e-08,
+            "curvature_norm": 0.008424256934814855,
+            "weighted_ratio": 0.15738925328330997
+          },
+          "GNN.layers.0.outgoing": {
+            "original_norm": 5.521885315360321e-08,
+            "curvature_norm": 0.006408906841328562,
+            "weighted_ratio": 0.12417244439814926
+          },
+          "GNN.layers.1.self_linear": {
+            "original_norm": 4.7556103437362957e-08,
+            "curvature_norm": 0.0042348069289179086,
+            "weighted_ratio": 0.09526996511425911
+          },
+          "GNN.layers.1.incoming": {
+            "original_norm": 4.090030851867858e-08,
+            "curvature_norm": 0.00392129793824397,
+            "weighted_ratio": 0.10257272922278188
+          },
+          "GNN.layers.1.outgoing": {
+            "original_norm": 3.909609886011698e-08,
+            "curvature_norm": 0.0038218990031325607,
+            "weighted_ratio": 0.10458621264299571
+          },
+          "codebook0": {
+            "original_norm": 3.8650089273995854e-05,
+            "curvature_norm": 6.109098581351468,
+            "weighted_ratio": 0.16910454729423538
+          },
+          "codebook1": {
+            "original_norm": 9.278581373048066e-05,
+            "curvature_norm": 22.891048924562778,
+            "weighted_ratio": 0.26394459127835374
+          },
+          "codebook2": {
+            "original_norm": 9.338165130460822e-05,
+            "curvature_norm": 21.35718889441529,
+            "weighted_ratio": 0.24468716747323763
+          },
+          "Query0": {
+            "original_norm": 6.26157554012173e-08,
+            "curvature_norm": 0.0007481470214048271,
+            "weighted_ratio": 0.012782976222829534
+          },
+          "Query1": {
+            "original_norm": 5.2599920145680266e-09,
+            "curvature_norm": 0.0049165041601605414,
+            "weighted_ratio": 0.9999999547413131
+          },
+          "Query2": {
+            "original_norm": 1.0908440912564436e-08,
+            "curvature_norm": 0.0030838163002452922,
+            "weighted_ratio": 0.3024506138800165
+          }
+        },
+        "cancellation_probe": [
+          0.0,
+          2.0
+        ],
+        "actual_batch_items": 1024,
+        "independent_raw_replica": true,
+        "passed": true
+      },
+      "error": "Traceback (most recent call last):\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 465, in main\n    training.main(diagnostic_epochs=1)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/train_rqvae.py\", line 533, in main\n    DIAGNOSTIC_OBSERVER(\"diagnostic_complete\", model=raw_module, catalogue=catalogue,\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 44, in __call__\n    return super().__call__(event, **fields)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 147, in __call__\n    self.completed(model, fields['catalogue'])\n  File \"/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/layer_validation_entry.py\", line 193, in completed\n    super().completed(model, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 208, in completed\n    self.shared_equivalence(raw, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/validation_entry.py\", line 306, in shared_equivalence\n    torch.testing.assert_close(left['weights'], right['weights'], atol=1e-5, rtol=1e-4,\n  File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/testing/_comparison.py\", line 1587, in assert_close\n    raise error_metas[0].to_error(msg)\nAssertionError: shared and independent geometry gate values differ\n"
+    }
+  ],
+  "not_run": [
+    "benchmark60",
+    "periodic_budget60/epoch51",
+    "machine_entry/behavior_graph",
+    "formal_training"
+  ],
+  "next": "Same fixed post-epoch parameters: compare union vs independent batches stage-by-stage and isolate attention on identical token inputs under the actual high and diagnostic highest arithmetic policies. Do not change production policy without the discriminating result."
+}
