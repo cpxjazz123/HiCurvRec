@@ -1,0 +1,882 @@
+{
+  "schema": "genrec.issue256.final_global_gradients/1",
+  "run_id": "issue256_r01_formal",
+  "world_size": 4,
+  "global_batch": 4096,
+  "checkpoint": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/rqvae_best.pth",
+    "sha256": "680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c"
+  },
+  "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src",
+  "source_workspace_sha256": "6d7c21ebf146e86524ac95d24f9e7a0cc8d4f648fb24ac92a71a441306d6bbd8",
+  "lambda": 1.6054239040386165e-06,
+  "groups": {
+    "encoder": {
+      "original_norm": 5.617764299478385e-05,
+      "curvature_norm": 35.807488148484815,
+      "weighted_ratio": 1.0232931528027016,
+      "original_curvature_cosine": 0.6026467647589866,
+      "original_dot_combined": 5.102138583363281e-09,
+      "normalized_original_dot_combined": 1.6166843079365714,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "GNN.input": {
+      "original_norm": 1.1747734396617875e-08,
+      "curvature_norm": 0.024211789049323102,
+      "weighted_ratio": 3.308738824612368,
+      "original_curvature_cosine": 0.30281272284540794,
+      "original_dot_combined": 2.762846381166614e-16,
+      "normalized_original_dot_combined": 2.0019282126651854,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "sharedKey": {
+      "original_norm": 1.2008123942329562e-08,
+      "curvature_norm": 0.04445233223286325,
+      "weighted_ratio": 5.943046315947689,
+      "original_curvature_cosine": -0.11970211627663704,
+      "original_dot_combined": 4.161537780791361e-17,
+      "normalized_original_dot_combined": 0.28860477885099034,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "sharedValue": {
+      "original_norm": 8.41692119463144e-09,
+      "curvature_norm": 0.010365371911907076,
+      "weighted_ratio": 1.9770668462762937,
+      "original_curvature_cosine": -0.4444190980395576,
+      "original_dot_combined": 8.597252280600359e-18,
+      "normalized_original_dot_combined": 0.12135373541397719,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "sharedScore": {
+      "original_norm": 6.40891719008171e-09,
+      "curvature_norm": 0.011142009109853176,
+      "weighted_ratio": 2.791056154018782,
+      "original_curvature_cosine": -0.6086701929177607,
+      "original_dot_combined": -2.8704007243282896e-17,
+      "normalized_original_dot_combined": -0.6988326877109153,
+      "raw_combined_negative_is_original_ascent": true
+    },
+    "GNN.layers.0.self_linear": {
+      "original_norm": 1.1712116510717427e-08,
+      "curvature_norm": 0.019324881913040035,
+      "weighted_ratio": 2.6489343183640823,
+      "original_curvature_cosine": 0.01743715853115359,
+      "original_dot_combined": 1.4350970971216235e-16,
+      "normalized_original_dot_combined": 1.0461898876479279,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "GNN.layers.0.incoming": {
+      "original_norm": 1.1575288344115723e-08,
+      "curvature_norm": 0.019484063254698397,
+      "weighted_ratio": 2.7023241207459403,
+      "original_curvature_cosine": 0.4135026195557085,
+      "original_dot_combined": 2.8370713509570456e-16,
+      "normalized_original_dot_combined": 2.117418102817023,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "GNN.layers.0.outgoing": {
+      "original_norm": 9.998164781685564e-09,
+      "curvature_norm": 0.027112204683832714,
+      "weighted_ratio": 4.35345710348202,
+      "original_curvature_cosine": 0.37556694997749507,
+      "original_dot_combined": 2.6340475295477603e-16,
+      "normalized_original_dot_combined": 2.6350146062126023,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "GNN.layers.1.self_linear": {
+      "original_norm": 1.0765273001383963e-08,
+      "curvature_norm": 0.017599605519409926,
+      "weighted_ratio": 2.6246271133930628,
+      "original_curvature_cosine": 0.44115903087389124,
+      "original_dot_combined": 2.5007885575563154e-16,
+      "normalized_original_dot_combined": 2.1578779537498223,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "GNN.layers.1.incoming": {
+      "original_norm": 1.2445149143494051e-08,
+      "curvature_norm": 0.01044468214448444,
+      "weighted_ratio": 1.3473637150910736,
+      "original_curvature_cosine": -0.12163410757231215,
+      "original_dot_combined": 1.2949888437310122e-16,
+      "normalized_original_dot_combined": 0.836114616939582,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "GNN.layers.1.outgoing": {
+      "original_norm": 8.039736431180601e-09,
+      "curvature_norm": 0.01799759651393559,
+      "weighted_ratio": 3.5938705088210634,
+      "original_curvature_cosine": -0.1000720614956758,
+      "original_dot_combined": 4.139079125541127e-17,
+      "normalized_original_dot_combined": 0.640353969433763,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "codebook0": {
+      "original_norm": 5.5044234856900695e-05,
+      "curvature_norm": 37.31520139816778,
+      "weighted_ratio": 1.0883377062897526,
+      "original_curvature_cosine": 0.0038010410164097653,
+      "original_dot_combined": 3.0424017973290023e-09,
+      "normalized_original_dot_combined": 1.0041368162613127,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "codebook1": {
+      "original_norm": 5.0873764414459044e-05,
+      "curvature_norm": 21.427666517304008,
+      "weighted_ratio": 0.6761930914801862,
+      "original_curvature_cosine": 0.006852982589202414,
+      "original_dot_combined": 2.6001331893940395e-09,
+      "normalized_original_dot_combined": 1.0046339394828527,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "codebook2": {
+      "original_norm": 3.8360454799690054e-05,
+      "curvature_norm": 6.4820499337732125,
+      "weighted_ratio": 0.2712803579934493,
+      "original_curvature_cosine": -0.2061752472123634,
+      "original_dot_combined": 1.3892202221393803e-09,
+      "normalized_original_dot_combined": 0.9440687051268422,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "Query0": {
+      "original_norm": 1.7150462805301946e-08,
+      "curvature_norm": 0.0970633704714368,
+      "weighted_ratio": 9.085927122224803,
+      "original_curvature_cosine": 0.33967232400595987,
+      "original_dot_combined": 1.201919397394553e-15,
+      "normalized_original_dot_combined": 4.086237981354882,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "Query1": {
+      "original_norm": 1.2612083812214915e-09,
+      "curvature_norm": 0.00029118098707160396,
+      "weighted_ratio": 0.37065161000085056,
+      "original_curvature_cosine": 0.7880846288738151,
+      "original_dot_combined": 2.055282140310023e-18,
+      "normalized_original_dot_combined": 1.2921048365090024,
+      "raw_combined_negative_is_original_ascent": false
+    },
+    "Query2": {
+      "original_norm": 1.3724116903507704e-09,
+      "curvature_norm": 7.500618141932218e-05,
+      "weighted_ratio": 0.08774095808704457,
+      "original_curvature_cosine": -0.5839790774965322,
+      "original_dot_combined": 1.787004700698701e-18,
+      "normalized_original_dot_combined": 0.948761116237666,
+      "raw_combined_negative_is_original_ascent": false
+    }
+  },
+  "ranks": [
+    {
+      "rank": 0,
+      "pid": 1300364,
+      "device": "cuda:0",
+      "items": 1024,
+      "item_ids_sha256": "ca3c8ac0367e3e96e54eca82d8d2f23db13e1d0f50ec17f5b9454a53d2eb17d5",
+      "structural_sample_sha256": "0d1f76c82fe493c6dcecf5960afcecddc982869f6b62531cc8de9cf1e57bf8e7",
+      "structural_step": 17994,
+      "diagnostic_seed": 42,
+      "losses": {
+        "original": 0.00010316015686839819,
+        "curvature": 1.9969254732131958,
+        "combined": 0.00010636606748448685
+      },
+      "local_module_statistics": {
+        "encoder": {
+          "original_norm": 0.00018646837981582464,
+          "curvature_norm": 127.45840481228318,
+          "weighted_ratio": 1.0973698063895794,
+          "original_curvature_cosine": 0.33639406692756585,
+          "original_dot_combined": 4.760592527483207e-08,
+          "normalized_original_dot_combined": 1.369148692094906,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.input": {
+          "original_norm": 5.287763367103409e-08,
+          "curvature_norm": 0.096248788120881,
+          "weighted_ratio": 2.9222205014944755,
+          "original_curvature_cosine": 0.27786001998862686,
+          "original_dot_combined": 5.066343203566832e-15,
+          "normalized_original_dot_combined": 1.81196824695643,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "sharedKey": {
+          "original_norm": 4.823543402482919e-08,
+          "curvature_norm": 0.17493231129979517,
+          "weighted_ratio": 5.822286454494286,
+          "original_curvature_cosine": -0.5831231148870512,
+          "original_dot_combined": -5.572599241325094e-15,
+          "normalized_original_dot_combined": -2.3951098131093924,
+          "raw_combined_negative_is_original_ascent": true
+        },
+        "sharedValue": {
+          "original_norm": 2.6813470794159077e-08,
+          "curvature_norm": 0.04220489687803144,
+          "weighted_ratio": 2.526966793505758,
+          "original_curvature_cosine": -0.23825162277831774,
+          "original_dot_combined": 2.861081816899678e-16,
+          "normalized_original_dot_combined": 0.3979460607403312,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "sharedScore": {
+          "original_norm": 1.4894692434615331e-08,
+          "curvature_norm": 0.045859697636349554,
+          "weighted_ratio": 4.942985908609682,
+          "original_curvature_cosine": -0.06543476493328501,
+          "original_dot_combined": 1.5009540384374044e-16,
+          "normalized_original_dot_combined": 0.6765568790015851,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.0.self_linear": {
+          "original_norm": 5.039342779435665e-08,
+          "curvature_norm": 0.07823892136404498,
+          "weighted_ratio": 2.4925201575214446,
+          "original_curvature_cosine": -0.03473969671309431,
+          "original_dot_combined": 2.3196040088371955e-15,
+          "normalized_original_dot_combined": 0.9134106056764311,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.0.incoming": {
+          "original_norm": 5.755123456036217e-08,
+          "curvature_norm": 0.07556095528584784,
+          "weighted_ratio": 2.1078151451409943,
+          "original_curvature_cosine": 0.5028304302342974,
+          "original_dot_combined": 6.8225992074290094e-15,
+          "normalized_original_dot_combined": 2.0598735962856143,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.0.outgoing": {
+          "original_norm": 3.908543280373155e-08,
+          "curvature_norm": 0.11024293688714104,
+          "weighted_ratio": 4.528199726449992,
+          "original_curvature_cosine": 0.411406332875876,
+          "original_dot_combined": 4.373615367719393e-15,
+          "normalized_original_dot_combined": 2.8629300439883365,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.1.self_linear": {
+          "original_norm": 5.0172925056725784e-08,
+          "curvature_norm": 0.07029882074195826,
+          "weighted_ratio": 2.2494085628307703,
+          "original_curvature_cosine": 0.34328496188931407,
+          "original_dot_combined": 4.461168899125937e-15,
+          "normalized_original_dot_combined": 1.7721881327648576,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.1.incoming": {
+          "original_norm": 4.971130557608349e-08,
+          "curvature_norm": 0.0407512058722126,
+          "weighted_ratio": 1.316057972477079,
+          "original_curvature_cosine": -0.10445175444498832,
+          "original_dot_combined": 2.131509560042475e-15,
+          "normalized_original_dot_combined": 0.862535435823455,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.1.outgoing": {
+          "original_norm": 3.713070360638045e-08,
+          "curvature_norm": 0.07295671009716648,
+          "weighted_ratio": 3.154436489856331,
+          "original_curvature_cosine": -0.2765252747835294,
+          "original_dot_combined": 1.7608422447489727e-16,
+          "normalized_original_dot_combined": 0.12771858285528626,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "codebook0": {
+          "original_norm": 0.00014662896979593357,
+          "curvature_norm": 114.90458630685369,
+          "weighted_ratio": 1.2580772394256232,
+          "original_curvature_cosine": 0.004080058747957107,
+          "original_dot_combined": 2.1610415189117648e-08,
+          "normalized_original_dot_combined": 1.0051330290463243,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "codebook1": {
+          "original_norm": 0.00014676390524359683,
+          "curvature_norm": 36.25034835599016,
+          "weighted_ratio": 0.39653602623777723,
+          "original_curvature_cosine": 0.005689548067165884,
+          "original_dot_combined": 2.1588239705147184e-08,
+          "normalized_original_dot_combined": 1.0022561107816428,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "codebook2": {
+          "original_norm": 9.963363299104974e-05,
+          "curvature_norm": 3.1089661378770157,
+          "weighted_ratio": 0.05009561936823831,
+          "original_curvature_cosine": 0.0009628736605365074,
+          "original_dot_combined": 9.927339652595943e-09,
+          "normalized_original_dot_combined": 1.000048235752398,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "Query0": {
+          "original_norm": 5.860125655651744e-08,
+          "curvature_norm": 0.38175073043766083,
+          "weighted_ratio": 10.45833799549579,
+          "original_curvature_cosine": -0.7634466443203826,
+          "original_dot_combined": -2.3985120601035846e-14,
+          "normalized_original_dot_combined": -6.984383047829616,
+          "raw_combined_negative_is_original_ascent": true
+        },
+        "Query1": {
+          "original_norm": 6.437966395622697e-09,
+          "curvature_norm": 0.00029246703219693205,
+          "weighted_ratio": 0.07293196885144224,
+          "original_curvature_cosine": 0.6996915174601611,
+          "original_dot_combined": 4.356246773490531e-17,
+          "normalized_original_dot_combined": 1.0510298799570228,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "Query2": {
+          "original_norm": 5.687065098827914e-09,
+          "curvature_norm": 0.00023049515766026724,
+          "weighted_ratio": 0.06506738175886315,
+          "original_curvature_cosine": -0.8510240053392071,
+          "original_dot_combined": 3.0551767355900616e-17,
+          "normalized_original_dot_combined": 0.9446260961586369,
+          "raw_combined_negative_is_original_ascent": false
+        }
+      }
+    },
+    {
+      "rank": 1,
+      "pid": 1300365,
+      "device": "cuda:1",
+      "items": 1024,
+      "item_ids_sha256": "da2ce5b78236848486d77ad644f50f5a2f469e8ce56fce6ac83df007cff96a26",
+      "structural_sample_sha256": "19b137a45054746fa0906c140119b293eff2b65ac9c0fc9835c3090409ba307e",
+      "structural_step": 17994,
+      "diagnostic_seed": 43,
+      "losses": {
+        "original": 0.00010333706450182945,
+        "curvature": 5.469478607177734,
+        "combined": 0.0001121178938774392
+      },
+      "local_module_statistics": {
+        "encoder": {
+          "original_norm": 0.00015974031197097297,
+          "curvature_norm": 23.86514706948922,
+          "weighted_ratio": 0.23984977308493838,
+          "original_curvature_cosine": -0.546265426176464,
+          "original_dot_combined": 2.2173692407182252e-08,
+          "normalized_original_dot_combined": 0.868978361487428,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.input": {
+          "original_norm": 1.635738022189811e-08,
+          "curvature_norm": 0.004005380554169617,
+          "weighted_ratio": 0.39311513208128923,
+          "original_curvature_cosine": -0.35322586562489083,
+          "original_dot_combined": 2.304103855952899e-16,
+          "normalized_original_dot_combined": 0.8611415671803435,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "sharedKey": {
+          "original_norm": 1.107125017645039e-08,
+          "curvature_norm": 0.0017506901065156221,
+          "weighted_ratio": 0.25386471272616584,
+          "original_curvature_cosine": -0.26819232865529874,
+          "original_dot_combined": 1.142272792220977e-16,
+          "normalized_original_dot_combined": 0.931915431530561,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "sharedValue": {
+          "original_norm": 1.6763203811090217e-08,
+          "curvature_norm": 0.0035262469610543045,
+          "weighted_ratio": 0.33771116945287144,
+          "original_curvature_cosine": -0.8445048503423838,
+          "original_dot_combined": 2.0086273495109666e-16,
+          "normalized_original_dot_combined": 0.7148012793822516,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "sharedScore": {
+          "original_norm": 1.0017860939101107e-08,
+          "curvature_norm": 0.00233958651645876,
+          "weighted_ratio": 0.3749331460999851,
+          "original_curvature_cosine": -0.6725685750129071,
+          "original_dot_combined": 7.50505529346514e-17,
+          "normalized_original_dot_combined": 0.7478317482024268,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.0.self_linear": {
+          "original_norm": 1.0948621721871786e-08,
+          "curvature_norm": 0.002644464397283292,
+          "weighted_ratio": 0.3877644569906518,
+          "original_curvature_cosine": -0.12355008567131141,
+          "original_dot_combined": 1.1412943483324515e-16,
+          "normalized_original_dot_combined": 0.9520916681185155,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.0.incoming": {
+          "original_norm": 1.2196684920816209e-08,
+          "curvature_norm": 0.003169166208377127,
+          "weighted_ratio": 0.417150661825868,
+          "original_curvature_cosine": -0.44521627193794916,
+          "original_dot_combined": 1.2113124215668902e-16,
+          "normalized_original_dot_combined": 0.8142777375054389,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.0.outgoing": {
+          "original_norm": 1.668374734403275e-08,
+          "curvature_norm": 0.0032255171226819603,
+          "weighted_ratio": 0.31038124618277685,
+          "original_curvature_cosine": -0.4817925868089368,
+          "original_dot_combined": 2.3672352304176737e-16,
+          "normalized_original_dot_combined": 0.8504606165046186,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.1.self_linear": {
+          "original_norm": 1.3191205590981177e-08,
+          "curvature_norm": 0.0033074119056787908,
+          "weighted_ratio": 0.4025256143008606,
+          "original_curvature_cosine": -0.7103554151880735,
+          "original_dot_combined": 1.242527371561529e-16,
+          "normalized_original_dot_combined": 0.7140637501294779,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.1.incoming": {
+          "original_norm": 9.748784237817878e-09,
+          "curvature_norm": 0.001877516827264485,
+          "weighted_ratio": 0.3091883378680492,
+          "original_curvature_cosine": -0.4963441002788956,
+          "original_dot_combined": 8.045377892214867e-17,
+          "normalized_original_dot_combined": 0.8465361926241559,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.1.outgoing": {
+          "original_norm": 1.6833719460282968e-08,
+          "curvature_norm": 0.0028012767373248215,
+          "weighted_ratio": 0.2671564443341969,
+          "original_curvature_cosine": -0.6870136742140495,
+          "original_dot_combined": 2.3136358960350285e-16,
+          "normalized_original_dot_combined": 0.8164598695880022,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "codebook0": {
+          "original_norm": 0.00010702470942162593,
+          "curvature_norm": 92.71014459923413,
+          "weighted_ratio": 1.390698307809766,
+          "original_curvature_cosine": -0.0030946892695255376,
+          "original_dot_combined": 1.140499169929954e-08,
+          "normalized_original_dot_combined": 0.9956962208696738,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "codebook1": {
+          "original_norm": 5.9465426259148124e-05,
+          "curvature_norm": 65.20679260116925,
+          "weighted_ratio": 1.7604270268137687,
+          "original_curvature_cosine": -0.025936034169782313,
+          "original_dot_combined": 3.3746822284509314e-09,
+          "normalized_original_dot_combined": 0.9543415044791497,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "codebook2": {
+          "original_norm": 5.323991636245649e-05,
+          "curvature_norm": 24.40770110957105,
+          "weighted_ratio": 0.736002410994908,
+          "original_curvature_cosine": -0.15786040024282108,
+          "original_dot_combined": 2.5051618249276314e-09,
+          "normalized_original_dot_combined": 0.8838143648206626,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "Query0": {
+          "original_norm": 1.3672067168818472e-08,
+          "curvature_norm": 0.0028049275027739475,
+          "weighted_ratio": 0.3293647995175693,
+          "original_curvature_cosine": 0.03552824060482302,
+          "original_dot_combined": 1.8911277555468784e-16,
+          "normalized_original_dot_combined": 1.0117017518440194,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "Query1": {
+          "original_norm": 4.199884930631336e-10,
+          "curvature_norm": 3.064209173828898e-05,
+          "weighted_ratio": 0.11713070086184109,
+          "original_curvature_cosine": 0.09323399422761072,
+          "original_dot_combined": 1.7831661607934293e-19,
+          "normalized_original_dot_combined": 1.010920563088029,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "Query2": {
+          "original_norm": 6.556114883852607e-10,
+          "curvature_norm": 0.0002271734167087212,
+          "weighted_ratio": 0.5562892658342042,
+          "original_curvature_cosine": -0.19304882799660605,
+          "original_dot_combined": 3.83666938190833e-19,
+          "normalized_original_dot_combined": 0.8926090092036145,
+          "raw_combined_negative_is_original_ascent": false
+        }
+      }
+    },
+    {
+      "rank": 2,
+      "pid": 1300366,
+      "device": "cuda:2",
+      "items": 1024,
+      "item_ids_sha256": "d65cf487574cdd6c505e9e0030da878f106ea1fb3efcc7eeabbf8bca2a7f4af8",
+      "structural_sample_sha256": "023fcce344dc1829778237c850f8e3d10c1e67eb62fe451f7f20e0c663ea8329",
+      "structural_step": 17994,
+      "diagnostic_seed": 44,
+      "losses": {
+        "original": 9.63760248851031e-05,
+        "curvature": 0.42148688435554504,
+        "combined": 9.705268894322217e-05
+      },
+      "local_module_statistics": {
+        "encoder": {
+          "original_norm": 0.00012165433104306965,
+          "curvature_norm": 11.043693294227051,
+          "weighted_ratio": 0.14573923551596485,
+          "original_curvature_cosine": 0.4106265383725557,
+          "original_dot_combined": 1.568545995926094e-08,
+          "normalized_original_dot_combined": 1.0598443977849834,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.input": {
+          "original_norm": 6.572024731815397e-09,
+          "curvature_norm": 0.0049180678297291655,
+          "weighted_ratio": 1.2013928701923062,
+          "original_curvature_cosine": -0.18894719991880016,
+          "original_dot_combined": 3.3387044340644566e-17,
+          "normalized_original_dot_combined": 0.7730001811747532,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "sharedKey": {
+          "original_norm": 1.3443208146574228e-08,
+          "curvature_norm": 0.0033559279607809976,
+          "weighted_ratio": 0.40077390082235265,
+          "original_curvature_cosine": 0.8584641713209697,
+          "original_dot_combined": 2.4289651430111583e-16,
+          "normalized_original_dot_combined": 1.3440500346565336,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "sharedValue": {
+          "original_norm": 5.889610437049149e-09,
+          "curvature_norm": 0.003229155071348,
+          "weighted_ratio": 0.8802216711614981,
+          "original_curvature_cosine": -0.022604144291955636,
+          "original_dot_combined": 3.3997345566626944e-17,
+          "normalized_original_dot_combined": 0.980103342336159,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "sharedScore": {
+          "original_norm": 7.889032748351116e-09,
+          "curvature_norm": 0.002323232390150739,
+          "weighted_ratio": 0.4727794816879578,
+          "original_curvature_cosine": 0.4616309190937588,
+          "original_dot_combined": 7.582000429809239e-17,
+          "normalized_original_dot_combined": 1.2182496266602827,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.0.self_linear": {
+          "original_norm": 4.436092204533923e-09,
+          "curvature_norm": 0.003650488963348089,
+          "weighted_ratio": 1.3211137129202009,
+          "original_curvature_cosine": -0.2838691503802956,
+          "original_dot_combined": 1.2298860256764303e-17,
+          "normalized_original_dot_combined": 0.6249765727575849,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.0.incoming": {
+          "original_norm": 5.414179521477408e-09,
+          "curvature_norm": 0.0033594309172935203,
+          "weighted_ratio": 0.9961455243947436,
+          "original_curvature_cosine": -0.14449978309999828,
+          "original_dot_combined": 2.5093895311606618e-17,
+          "normalized_original_dot_combined": 0.8560571877889255,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.0.outgoing": {
+          "original_norm": 4.642863207448801e-09,
+          "curvature_norm": 0.005069272123561958,
+          "weighted_ratio": 1.75286892583572,
+          "original_curvature_cosine": -0.36622499160412714,
+          "original_dot_combined": 7.718310355875463e-18,
+          "normalized_original_dot_combined": 0.3580555923526781,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.1.self_linear": {
+          "original_norm": 5.461824457533805e-09,
+          "curvature_norm": 0.0033310848927382785,
+          "weighted_ratio": 0.979123982245056,
+          "original_curvature_cosine": -0.10271031297718679,
+          "original_dot_combined": 2.6831485222694787e-17,
+          "normalized_original_dot_combined": 0.8994338693401409,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.1.incoming": {
+          "original_norm": 3.4502341635303187e-09,
+          "curvature_norm": 0.0021180379900648614,
+          "weighted_ratio": 0.9855414611722351,
+          "original_curvature_cosine": 0.06359421483424786,
+          "original_dot_combined": 1.2650203090191468e-17,
+          "normalized_original_dot_combined": 1.0626747354098456,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.1.outgoing": {
+          "original_norm": 3.227304412949081e-09,
+          "curvature_norm": 0.0034951658971400347,
+          "weighted_ratio": 1.7386717092242638,
+          "original_curvature_cosine": 0.04854062222816808,
+          "original_dot_combined": 1.1294521938388015e-17,
+          "normalized_original_dot_combined": 1.0843962066162582,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "codebook0": {
+          "original_norm": 8.013275021031834e-05,
+          "curvature_norm": 13.059435136461804,
+          "weighted_ratio": 0.26163995727452144,
+          "original_curvature_cosine": -0.010849107854337825,
+          "original_dot_combined": 6.403030530394997e-09,
+          "normalized_original_dot_combined": 0.9971614398845245,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "codebook1": {
+          "original_norm": 6.201364475752412e-05,
+          "curvature_norm": 25.677042319403377,
+          "weighted_ratio": 0.6647333451494931,
+          "original_curvature_cosine": 0.0002873393033354704,
+          "original_dot_combined": 3.846426678755847e-09,
+          "normalized_original_dot_combined": 1.0001910040162991,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "codebook2": {
+          "original_norm": 6.328964572196656e-05,
+          "curvature_norm": 6.148302879493128,
+          "weighted_ratio": 0.15595967238258418,
+          "original_curvature_cosine": -0.05805138843426906,
+          "original_dot_combined": 3.9693140407558256e-09,
+          "normalized_original_dot_combined": 0.9909463244784371,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "Query0": {
+          "original_norm": 3.373173237071343e-08,
+          "curvature_norm": 0.007490923439574549,
+          "weighted_ratio": 0.3565220849332204,
+          "original_curvature_cosine": 0.961006579904345,
+          "original_dot_combined": 1.5276730831730065e-15,
+          "normalized_original_dot_combined": 1.3426200695020407,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "Query1": {
+          "original_norm": 1.5937230148826337e-09,
+          "curvature_norm": 0.0015387344073027618,
+          "weighted_ratio": 1.550031577872688,
+          "original_curvature_cosine": 0.7312495932197985,
+          "original_dot_combined": 5.4188881305683414e-18,
+          "normalized_original_dot_combined": 2.133459960797246,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "Query2": {
+          "original_norm": 6.218334997041798e-10,
+          "curvature_norm": 1.3903443629874471e-05,
+          "weighted_ratio": 0.03589533333677338,
+          "original_curvature_cosine": -0.7660100486187783,
+          "original_dot_combined": 3.760447613394693e-19,
+          "normalized_original_dot_combined": 0.972503813965511,
+          "raw_combined_negative_is_original_ascent": false
+        }
+      }
+    },
+    {
+      "rank": 3,
+      "pid": 1300367,
+      "device": "cuda:3",
+      "items": 1024,
+      "item_ids_sha256": "7baa984f6409eb7e0ee70bcd0e96b039c1a48d64f5eca215add68d724eb72414",
+      "structural_sample_sha256": "243addb7366009fd052f454015a2e2c6856eb69342bb61e5b7b33dcd50f5080c",
+      "structural_step": 17994,
+      "diagnostic_seed": 45,
+      "losses": {
+        "original": 0.00010410408140160143,
+        "curvature": 0.7678263187408447,
+        "combined": 0.00010533676686463878
+      },
+      "local_module_statistics": {
+        "encoder": {
+          "original_norm": 0.00016978236991562032,
+          "curvature_norm": 27.22745493691405,
+          "weighted_ratio": 0.257456690135614,
+          "original_curvature_cosine": -0.23136134167603709,
+          "original_dot_combined": 2.7109014138250007e-08,
+          "normalized_original_dot_combined": 0.9404344747467526,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.input": {
+          "original_norm": 1.459332944960656e-08,
+          "curvature_norm": 0.001030652421691638,
+          "weighted_ratio": 0.11338290143128736,
+          "original_curvature_cosine": 0.06920952908676363,
+          "original_dot_combined": 2.1463644059523872e-16,
+          "normalized_original_dot_combined": 1.0078471772145503,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "sharedKey": {
+          "original_norm": 1.4880088812292683e-08,
+          "curvature_norm": 0.0010835095017723854,
+          "weighted_ratio": 0.11690065001233976,
+          "original_curvature_cosine": -0.582800279066612,
+          "original_dot_combined": 2.0633195937941238e-16,
+          "normalized_original_dot_combined": 0.93187026854974,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "sharedValue": {
+          "original_norm": 8.652153999920281e-09,
+          "curvature_norm": 0.0011778638965959226,
+          "weighted_ratio": 0.21855492346952982,
+          "original_curvature_cosine": -0.12151109616051792,
+          "original_dot_combined": 7.28717293118723e-17,
+          "normalized_original_dot_combined": 0.9734431516779394,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "sharedScore": {
+          "original_norm": 7.437487614975102e-09,
+          "curvature_norm": 0.0012070946939237287,
+          "weighted_ratio": 0.26055823907006515,
+          "original_curvature_cosine": -0.6821724248153446,
+          "original_dot_combined": 4.5484004418882885e-17,
+          "normalized_original_dot_combined": 0.8222543542479575,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.0.self_linear": {
+          "original_norm": 1.2559205349914337e-08,
+          "curvature_norm": 0.0008611019184443527,
+          "weighted_ratio": 0.11007333387486207,
+          "original_curvature_cosine": 0.016184111414389187,
+          "original_dot_combined": 1.5801463189312608e-16,
+          "normalized_original_dot_combined": 1.0017814390991842,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.0.incoming": {
+          "original_norm": 9.349237373278077e-09,
+          "curvature_norm": 0.0007446570029418339,
+          "weighted_ratio": 0.12787033905562348,
+          "original_curvature_cosine": -0.23807304931086617,
+          "original_dot_combined": 8.474731574604004e-17,
+          "normalized_original_dot_combined": 0.9695575184646135,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.0.outgoing": {
+          "original_norm": 1.575195162584315e-08,
+          "curvature_norm": 0.0010341714168791473,
+          "weighted_ratio": 0.10540176563311394,
+          "original_curvature_cosine": -0.24134055364919713,
+          "original_dot_combined": 2.4181227157630814e-16,
+          "normalized_original_dot_combined": 0.9745622795265015,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.1.self_linear": {
+          "original_norm": 1.1112316011760915e-08,
+          "curvature_norm": 0.0008107834648367779,
+          "weighted_ratio": 0.11713590164917836,
+          "original_curvature_cosine": -0.13363479029404104,
+          "original_dot_combined": 1.215506255666872e-16,
+          "normalized_original_dot_combined": 0.9843465683472088,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.1.incoming": {
+          "original_norm": 7.68294031360244e-09,
+          "curvature_norm": 0.000630338011758009,
+          "weighted_ratio": 0.13171515987295054,
+          "original_curvature_cosine": -0.3367710996477835,
+          "original_dot_combined": 5.640923513897635e-17,
+          "normalized_original_dot_combined": 0.9556421407693028,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "GNN.layers.1.outgoing": {
+          "original_norm": 9.361847300874877e-09,
+          "curvature_norm": 0.0013013489133493798,
+          "weighted_ratio": 0.2231628636786815,
+          "original_curvature_cosine": 0.2210970770304323,
+          "original_dot_combined": 9.196860653717453e-17,
+          "normalized_original_dot_combined": 1.0493406568610972,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "codebook0": {
+          "original_norm": 9.332147652081948e-05,
+          "curvature_norm": 25.265994327449498,
+          "weighted_ratio": 0.4346548379304974,
+          "original_curvature_cosine": -0.0027831802222690687,
+          "original_dot_combined": 8.698362628025563e-09,
+          "normalized_original_dot_combined": 0.9987902772515581,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "codebook1": {
+          "original_norm": 0.00010326673655513441,
+          "curvature_norm": 33.49759039343977,
+          "weighted_ratio": 0.5207662616181387,
+          "original_curvature_cosine": 0.010594603062418531,
+          "original_dot_combined": 1.0722855596264121e-08,
+          "normalized_original_dot_combined": 1.0055173118301437,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "codebook2": {
+          "original_norm": 7.925101195312057e-05,
+          "curvature_norm": 2.6790283345833266,
+          "weighted_ratio": 0.05427029916641314,
+          "original_curvature_cosine": -0.04487353659974315,
+          "original_dot_combined": 6.265427449518638e-09,
+          "normalized_original_dot_combined": 0.9975646997440768,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "Query0": {
+          "original_norm": 3.4245065085284535e-08,
+          "curvature_norm": 0.002377209874563055,
+          "weighted_ratio": 0.1114446577349368,
+          "original_curvature_cosine": -0.7104360525585055,
+          "original_dot_combined": 1.0798748394953624e-15,
+          "normalized_original_dot_combined": 0.9208256972800575,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "Query1": {
+          "original_norm": 6.719551111938536e-09,
+          "curvature_norm": 0.0001230094380378599,
+          "weighted_ratio": 0.02938920903473347,
+          "original_curvature_cosine": -0.868306224408916,
+          "original_dot_combined": 4.400013142309237e-17,
+          "normalized_original_dot_combined": 0.9744811668646862,
+          "raw_combined_negative_is_original_ascent": false
+        },
+        "Query2": {
+          "original_norm": 1.6358606803076125e-10,
+          "curvature_norm": 4.709553572383065e-07,
+          "weighted_ratio": 0.004621927755505726,
+          "original_curvature_cosine": 0.9936258282063589,
+          "original_dot_combined": 2.6883297909753176e-20,
+          "normalized_original_dot_combined": 1.0045924667939743,
+          "raw_combined_negative_is_original_ascent": false
+        }
+      }
+    }
+  ],
+  "averaging": "SUM/world on actual original and curvature VJP vectors before norms/dots",
+  "groups_beyond_initial_budget": [
+    "encoder",
+    "GNN.input",
+    "sharedKey",
+    "sharedValue",
+    "sharedScore",
+    "GNN.layers.0.self_linear",
+    "GNN.layers.0.incoming",
+    "GNN.layers.0.outgoing",
+    "GNN.layers.1.self_linear",
+    "GNN.layers.1.incoming",
+    "GNN.layers.1.outgoing",
+    "codebook0",
+    "Query0"
+  ],
+  "raw_original_ascent_groups": [
+    "sharedScore"
+  ],
+  "elapsed_seconds": 226.10197056550533,
+  "evaluator": {
+    "path": "/fs04/ar57/wenyu/GeneRec/tools/issue256/final_global_gradients.py",
+    "sha256": "00e14a28a7f3b04d4ebbab7231be5a10654a88942b2899f3ebf1b1313b26e725"
+  },
+  "question": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/POST_ROUND_DIAGNOSIS.md",
+    "sha256": "593d6d6af71fb87c7a63a060c4085d0fce7d9e774caaf8b35ea26a3794ea41f0"
+  },
+  "optimizer_step": false,
+  "coefficient_recalibration": false,
+  "test_access": false,
+  "limitations": "One fresh-RNG final-weight global4096 train batch; not the formal RNG state, all epochs, an AdamW step or Recall causality."
+}

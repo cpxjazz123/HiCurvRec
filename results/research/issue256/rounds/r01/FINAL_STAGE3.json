@@ -1,0 +1,29 @@
+{
+  "schema": "genrec.issue256.final_stage3/1",
+  "run_id": "issue256_r01_formal",
+  "test_final": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/test_final.json",
+    "sha256": "195392578b47bc29bc967e61e3cc9561b74b1cfe9f243136720d2753141dab21"
+  },
+  "metrics": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/training_metrics.jsonl",
+    "sha256": "c2e077f1ca2543e1ac27ba04f95e1aa2fe27df3a11b88b5c7c5696262c644f68"
+  },
+  "stage3_checkpoint": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_06-36-15/HG_Rec_best.pth",
+    "sha256": "d8540c837dedffd8291615bb6d7578308f74f6469e3182887685a08571082a96"
+  },
+  "mcp_observed_at": "2026-11-24T20:10:38.743133+00:00",
+  "mcp_status": "finished",
+  "launch": {
+    "dispatch_mode": "ddp",
+    "reported_mode": "ddp4",
+    "world_size": 4,
+    "train_batch_per_process": 4096,
+    "global_train_batch": 16384,
+    "infer_batch_per_process": 1024,
+    "cuda_visible_devices": "0,1,2,3"
+  },
+  "stage2_source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
+  "consumer_freeze_sha256": "55ce21733defde81b2192396e56b8198311cbd52709271666cd2f8f475542216"
+}

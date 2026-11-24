@@ -1,5 +1,5 @@
 {
-  "status": "running",
+  "status": "finished",
   "test_result_scope": "this launch",
   "variant": "TIGER_module_budget_prefix_rq",
   "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
@@ -47,136 +47,8 @@
   },
   "pid": 809893,
   "launched_at": 1795548654.8601086,
-  "live_processes": [
-    {
-      "pid": 809893,
-      "role": "launcher",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 855483,
-      "role": "torchrun",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/torchrun --standalone --nproc_per_node=4 --master_port=50201 /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 858572,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 858573,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 858574,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 858575,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861648,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861649,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861650,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861651,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861652,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861653,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861654,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861655,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861656,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861657,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861658,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861659,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861660,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861662,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861663,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    },
-    {
-      "pid": 861666,
-      "role": "rank",
-      "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -u /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_module_budget_prefix_rq.py"
-    }
-  ],
-  "gpu_processes": [
-    {
-      "pid": 858572,
-      "used_memory_mib": "28370"
-    },
-    {
-      "pid": 858573,
-      "used_memory_mib": "28370"
-    },
-    {
-      "pid": 858574,
-      "used_memory_mib": "28370"
-    },
-    {
-      "pid": 858575,
-      "used_memory_mib": "28370"
-    }
-  ],
+  "live_processes": [],
+  "gpu_processes": [],
   "launch": {
     "dispatch_mode": "ddp",
     "reported_mode": "ddp4",
@@ -188,23 +60,119 @@
   },
   "latest_train": {
     "event": "train",
-    "timestamp": 1795550277.9817817,
-    "wall_time_s": 1297.835,
-    "epoch": 108,
-    "loss": 1.9059728002548217,
-    "lr": 0.0011289685158351042,
+    "timestamp": 1795550770.4900446,
+    "wall_time_s": 1790.344,
+    "epoch": 150,
+    "loss": 1.8599266290664673,
+    "lr": 0.0006000000000000001,
     "best_recall_at_10": -1.0,
-    "best_train_loss": 1.9072759342193604,
-    "epoch_train_time_s": 11.604,
-    "cumulative_time_s": 1297.835
+    "best_train_loss": 1.8602588367462158,
+    "epoch_train_time_s": 11.607,
+    "cumulative_time_s": 1790.344
   },
-  "progress": "108/150",
+  "progress": "150/150",
   "total_epochs": "150",
   "protocol_ok": true,
   "metrics": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/training_metrics.jsonl",
-  "test_final": null,
+  "test_final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/test_final.json",
   "test_final_stale": null,
-  "test_result": null,
+  "test_result": {
+    "best_checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_06-36-15/HG_Rec_best.pth",
+    "predictions": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/predictions/rank0.jsonl",
+    "n_eval": 57439,
+    "test_recall@5": 0.034105746966346905,
+    "test_recall@10": 0.05273420498267727,
+    "test_ndcg@5": 0.022554059459244956,
+    "test_ndcg@10": 0.02852344807984429,
+    "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+    "sid_sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
+    "stage2_checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/rqvae_best.pth",
+    "stage2_checkpoint_sha256": "680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c",
+    "stage2_export_manifest": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/export_manifest.json",
+    "stage2_export_manifest_sha256": "a90c264227101d5ef888f5f6306d95263fab18903313a5cd03b4e703a310b49d",
+    "archive_binding": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/archive_binding.json",
+    "archive_binding_sha256": "f26791dce14cbc6d2c3336abd354937861e2a20bb880c42efb77e909b968b4eb",
+    "stage2_run_id": "issue256_r01_formal",
+    "stage2_source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src",
+    "stage3_run_id": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15",
+    "stage3_input_config": {
+      "batch_size": 4096,
+      "infer_size": 1024,
+      "num_epochs": 150,
+      "eval_interval": 5,
+      "eval_start_epoch": 75,
+      "early_eval_epochs": [
+        25,
+        50,
+        75,
+        100,
+        125
+      ],
+      "fast": true,
+      "bf16": true,
+      "use_lr_scheduler": true,
+      "lr_warmup_pct": 0.1,
+      "lr_min_factor": 0.2,
+      "compile": false,
+      "compile_mode": "default",
+      "num_layers": 4,
+      "num_decoder_layers": 4,
+      "d_model": 128,
+      "d_ff": 1024,
+      "num_heads": 6,
+      "d_kv": 64,
+      "dropout_rate": 0.1,
+      "activation_function": "relu",
+      "feed_forward_proj": "relu",
+      "device": "cuda",
+      "lr": 0.003,
+      "weight_decay": 0.05,
+      "vocab_size": 780,
+      "eos_token_id": 779,
+      "pad_token_id": 0,
+      "n_user_tokens": 1,
+      "max_len": 20,
+      "dataset_name": "Amazon_2023_Instruments",
+      "dataset_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/",
+      "codebook_size": [
+        256,
+        256,
+        256,
+        1
+      ],
+      "code_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+      "train_file": "train.parquet",
+      "valid_file": "valid.parquet",
+      "test_file": "test.parquet",
+      "log_path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/",
+      "save_path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/ckpt/",
+      "seed": 42,
+      "topk_list": [
+        5,
+        10
+      ],
+      "beam_size": 20,
+      "no_eval": true,
+      "skip_test": false,
+      "screen_baseline_log": "",
+      "screen_start_epoch": 40,
+      "screen_window": 5,
+      "screen_min_ndcg_gain": 0.001,
+      "screen_min_recall_gain": 0.001,
+      "num_workers": 4,
+      "prefetch_factor": 8,
+      "exclude_history": true,
+      "no_exclude_history": false,
+      "pin_memory": true,
+      "no_pin_memory": false,
+      "sid_length": 4,
+      "max_token_seq_len": 82,
+      "decoder_start_token_id": 0
+    },
+    "stage3_world_size": 4,
+    "stage3_completed_epochs": 150,
+    "stage3_trainer_sha256": "54ca6bfbcd55a42e718660dd0004370a41a5e1c2c5038a86bbfc84f32b963690"
+  },
   "ckpt_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/ckpt",
   "ckpt_files": [
     "HG_Rec_best.pth"
@@ -212,7 +180,7 @@
   "run_log": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/_stage3_run.log",
   "native_log": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/_stage3_launcher.log",
   "run_log_tail": "[RecBole HG-Rec] launching 4-GPU DDP run (CUDA_VISIBLE_DEVICES=0,1,2,3)\n",
-  "native_log_tail": ",  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  64%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258c               | 16/25 [00:07<00:04,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  64%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258c               | 16/25 [00:07<00:04,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  68%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258f             | 17/25 [00:08<00:03,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  68%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258f             | 17/25 [00:08<00:03,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  68%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258f             | 17/25 [00:08<00:03,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  68%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258f             | 17/25 [00:08<00:03,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  72%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2589            | 18/25 [00:08<00:03,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  72%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2589            | 18/25 [00:08<00:03,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  72%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2589            | 18/25 [00:08<00:03,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  72%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2589            | 18/25 [00:08<00:03,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  76%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258b          | 19/25 [00:09<00:02,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  76%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258b          | 19/25 [00:09<00:02,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  76%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258b          | 19/25 [00:09<00:02,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  76%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258b          | 19/25 [00:09<00:02,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  80%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258d        | 20/25 [00:09<00:02,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  80%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258d        | 20/25 [00:09<00:02,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  80%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258d        | 20/25 [00:09<00:02,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  80%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258d        | 20/25 [00:09<00:02,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  84%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588       | 21/25 [00:10<00:01,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  84%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588       | 21/25 [00:10<00:01,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  84%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588       | 21/25 [00:10<00:01,  2.10it/s]\u001b[0m\r\u001b[1;35mTraining Epoch 109\u001b[0m:  84%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588       | 21/25 [00:10<00:01,  2.10it/s]\u001b[0m",
+  "native_log_tail": "5/15 [02:17<00:00,  9.17s/it]\u001b[0m\n[test] rank=1/4 shard n_eval=14360 elapsed=137.5s\n[RecBole-aligned] test={'best_checkpoint': '/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_06-36-15/HG_Rec_best.pth', 'predictions': '/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/predictions/rank0.jsonl', 'n_eval': 57439, 'test_recall@5': 0.034105746966346905, 'test_recall@10': 0.05273420498267727, 'test_ndcg@5': 0.022554059459244956, 'test_ndcg@10': 0.02852344807984429, 'sid_path': '/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json', 'sid_sha256': '201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f', 'stage2_checkpoint': '/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/rqvae_best.pth', 'stage2_checkpoint_sha256': '680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c', 'stage2_export_manifest': '/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/export_manifest.json', 'stage2_export_manifest_sha256': 'a90c264227101d5ef888f5f6306d95263fab18903313a5cd03b4e703a310b49d', 'archive_binding': '/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/archive_binding.json', 'archive_binding_sha256': 'f26791dce14cbc6d2c3336abd354937861e2a20bb880c42efb77e909b968b4eb', 'stage2_run_id': 'issue256_r01_formal', 'stage2_source_tree': '/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src', 'stage3_run_id': '/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15', 'stage3_input_config': {'batch_size': 4096, 'infer_size': 1024, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'fast': True, 'bf16': True, 'use_lr_scheduler': True, 'lr_warmup_pct': 0.1, 'lr_min_factor': 0.2, 'compile': False, 'compile_mode': 'default', 'num_layers': 4, 'num_decoder_layers': 4, 'd_model': 128, 'd_ff': 1024, 'num_heads': 6, 'd_kv': 64, 'dropout_rate': 0.1, 'activation_function': 'relu', 'feed_forward_proj': 'relu', 'device': 'cuda', 'lr': 0.003, 'weight_decay': 0.05, 'vocab_size': 780, 'eos_token_id': 779, 'pad_token_id': 0, 'n_user_tokens': 1, 'max_len': 20, 'dataset_name': 'Amazon_2023_Instruments', 'dataset_path': '/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/', 'codebook_size': [256, 256, 256, 1], 'code_path': '/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json', 'train_file': 'train.parquet', 'valid_file': 'valid.parquet', 'test_file': 'test.parquet', 'log_path': '/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/', 'save_path': '/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/ckpt/', 'seed': 42, 'topk_list': [5, 10], 'beam_size': 20, 'no_eval': True, 'skip_test': False, 'screen_baseline_log': '', 'screen_start_epoch': 40, 'screen_window': 5, 'screen_min_ndcg_gain': 0.001, 'screen_min_recall_gain': 0.001, 'num_workers': 4, 'prefetch_factor': 8, 'exclude_history': True, 'no_exclude_history': False, 'pin_memory': True, 'no_pin_memory': False, 'sid_length': 4, 'max_token_seq_len': 82, 'decoder_start_token_id': 0}, 'stage3_world_size': 4, 'stage3_completed_epochs': 150, 'stage3_trainer_sha256': '54ca6bfbcd55a42e718660dd0004370a41a5e1c2c5038a86bbfc84f32b963690'}\n[rank0]:[W1125 07:08:42.552061752 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())\n",
   "error_markers": [],
-  "observed_at": "2026-11-24T19:58:08.239978+00:00"
+  "observed_at": "2026-11-24T20:10:38.743133+00:00"
 }

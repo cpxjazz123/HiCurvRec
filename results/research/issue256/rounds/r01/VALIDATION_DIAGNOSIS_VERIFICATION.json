@@ -1,0 +1,37 @@
+{
+  "new_api_red": {
+    "command": "python3.9 -B -m pytest -q tools/issue256/test_validation_diagnosis.py",
+    "exit_code": 1,
+    "reason": "new diagnostic API absent before implementation; not claimed as a semantic mutation catch",
+    "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n________ test_best_prefix_distinguishes_all_three_levels_without_suffix ________\n\n    def test_best_prefix_distinguishes_all_three_levels_without_suffix():\n>       from tools.issue256.validation_diagnosis import best_prefix\nE       ModuleNotFoundError: No module named 'tools.issue256.validation_diagnosis'\n\ntools/issue256/test_validation_diagnosis.py:6: ModuleNotFoundError\n=========================== short test summary info ============================\nFAILED tools/issue256/test_validation_diagnosis.py::test_best_prefix_distinguishes_all_three_levels_without_suffix - ModuleNotFoundError: No module named 'tools.issue256.validation_diagnosis'\n1 failed in 0.21s\n"
+  },
+  "green": {
+    "command": "python3.9 -B -m pytest -q tools/issue256/test_external_validation.py tools/issue256/test_validation_diagnosis.py",
+    "exit_code": 0,
+    "passed": 3,
+    "output": "...                                                                      [100%]\n3 passed in 0.95s\n"
+  },
+  "hand_answers": {
+    "expected_best_prefixes": [
+      3,
+      2,
+      1,
+      0,
+      3
+    ],
+    "fourth_suffix_excluded": true
+  },
+  "full_validation": {
+    "command": "python3.9 -B -m tools.issue256.validation_diagnosis",
+    "exit_code": 0,
+    "report": {
+      "path": "results/research/issue256/rounds/r01/recommendation_validation/VALIDATION_DIAGNOSIS.json",
+      "sha256": "2913227ac2617bc428b46ab9261ae1fe3c5f59923ac2813b03faef3aca50f4a0"
+    }
+  },
+  "sources": {
+    "tools/issue256/validation_diagnosis.py": "41601a297da0e1ac61ebf737ca67ea08f964759ab4cd06b036cc14f82cdfaf05",
+    "tools/issue256/test_validation_diagnosis.py": "5564f1400bef664bb000185168c949c2d8f0430ac03fd03f3a5f144086574665"
+  },
+  "test_access": false
+}

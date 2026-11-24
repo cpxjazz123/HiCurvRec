@@ -1,0 +1,1 @@
+R01 Stage3已越过125epoch：2026-11-24T20:03:12Z为134/150，loss=1.8734379148483276；原四卡进程与冻结global16384/infer1024保持不变，无错误标记。证据`rounds/r01/STAGE3_AFTER125.json`及固定run原始训练流。尚无test_final，继续剩余16epochs及完整最终测试；不以训练Loss或中途checkpoint作最终结论。

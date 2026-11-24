@@ -2,7 +2,7 @@
   "issue": 256,
   "state": "WORKING",
   "parent_commit": "c4ee00cdc4314b7fcab882acd939bf18ee3b0824",
-  "commit": "4b539bc99f835def8c06bf91bffde40adc41511d",
+  "commit": "36de17c391322d4a950260efbfd1b909c5c2d5bf",
   "source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
   "done": [
     "acceptance frozen",
@@ -26,28 +26,31 @@
     "exact final full-catalogue hard prefixes/gates/attention/reconstruction extracted",
     "legal frozen Stage3 MCP dispatch accepted without collision waiver",
     "all three complete training-curvature populations and five validation banks measured; independent raw-artifact reduction PASS",
-    "external validation partial-population consumer regression red1FAIL/1PASS then green2PASS; real final-model evaluation still pending"
+    "external validation partial-population consumer regression red1FAIL/1PASS then green2PASS",
+    "R01 actual full150-epoch Stage3 completed; all57439 final test rows independently reconciled",
+    "R01 complete R2/102 archived with all117 objects verified",
+    "R01 same-checkpoint full57439-row external validation completed",
+    "R01 train-only final global4096 VJP diagnostic and complete paired validation diagnosis completed",
+    "inactive R01 live tree archived; forward SOURCE reference migrated and actual filesystem/import scenario passed"
   ],
   "not_run": [
-    "r01 legal150-epoch Stage3, independent reconciliation and complete R2",
+    "register and complete the next distinct training/validation-driven candidate",
     "strict final test_R@10>0.065 and issue256 closure"
   ],
-  "running": [
-    {
-      "name": "R01 frozen Stage3",
-      "pid": 809893,
-      "mode": "ddp4",
-      "epoch": 100,
-      "worker_pids": [858572, 858573, 858574, 858575],
-      "sid_sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
-      "dispatch_evidence": "results/research/issue256/rounds/r01/STAGE3_START.json"
-    }
-  ],
+  "running": [],
+  "failed_rounds": [{
+    "round": "r01",
+    "classification": "valid completed experiment; not adopted",
+    "test_recall@10": 0.05273420498267727,
+    "required": ">0.065",
+    "r2": "102",
+    "same_mechanism_rerun": false
+  }],
   "blocked_by": null,
   "next_commands": [
-    "supervise the existing Stage3 via MCP status, never start another R01 formal run",
-    "reduce completed CPU diagnostics; after Stage3 finishes reduce full test, evaluate external validation and archive exact R2 pairing",
-    "if test_R@10<=0.065, preserve R01 and return to training/validation-driven R1/R2"
+    "preserve R01 result and all source/metric/test-access/archive evidence",
+    "complete and push sealed R01 outcome, source archive and original registration/test-access snapshots",
+    "use actual train/global-gradient and validation-pairing evidence to freeze the next single-change hypothesis"
   ],
-  "updated_at": "2026-11-24T19:56:17.521402+00:00"
+  "updated_at": "2026-11-24T20:50:20.072136+00:00"
 }
