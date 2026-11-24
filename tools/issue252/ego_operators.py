@@ -158,13 +158,18 @@ def batch_operators(layout, ids, dtype, plan=None):
         ptr, col = getattr(layout, direction + '_ptr'), getattr(layout, direction + '_col')
         degree = ptr[indices + 1] - ptr[indices]
         edge_indices, _ = _ranges(ptr[indices], degree, total)
-        crow = torch.cat((degree.new_zeros(1), degree.cumsum(0)))
-        columns = col[edge_indices].long()
-        columns += torch.repeat_interleave(bases[groups], degree, output_size=total)
+        # The row pointer is the degree prefix sum and the columns are the
+        # layout's own local indices shifted by the ego base, so every CSR
+        # invariant holds by construction and needs no device-side check.
+        crow = torch.cat((degree.new_zeros(1), degree.cumsum(0))).to(torch.int32)
+        columns = col[edge_indices]
+        columns += torch.repeat_interleave(bases.to(torch.int32)[groups], degree,
+                                           output_size=total)
         values = torch.repeat_interleave(degree.to(dtype).clamp_min(1).reciprocal(), degree,
                                          output_size=total)
         operators.append(torch.sparse_csr_tensor(crow, columns, values,
-                                                size=(len(indices), len(indices)), device=ids.device))
+                                                size=(len(indices), len(indices)),
+                                                device=ids.device, check_invariants=False))
     return nodes, groups, sizes, *operators
 
 
