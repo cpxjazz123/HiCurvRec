@@ -68,44 +68,101 @@ def pack_synthetic(store, hops):
         rows = np.repeat(np.arange(len(keep)), np.diff(ptr))
         col = (col - offsets[groups[rows]]).astype(np.int32)
         result[direction + '_ptr'], result[direction + '_col'] = ptr, col
+    result['node_counts'] = np.diff(offsets)
+    for direction in ('in', 'out'):
+        ptr = result[direction + '_ptr']
+        result[direction + '_edge_counts'] = ptr[offsets[1:]] - ptr[offsets[:-1]]
     return result
+
+
+class BatchPlan:
+    """Host-known sizes of one batch of egos.
+
+    The node and edge totals are counted on the host from static per-item
+    counts, so every ragged gather can state its output size and no shape ever
+    depends on a device value.
+    """
+
+    __slots__ = ('nodes', 'in_edges', 'out_edges')
+
+    def __init__(self, nodes, in_edges, out_edges):
+        self.nodes = int(nodes)
+        self.in_edges = int(in_edges)
+        self.out_edges = int(out_edges)
+
+    def __repr__(self):
+        return ('BatchPlan(nodes=%d, in_edges=%d, out_edges=%d)'
+                % (self.nodes, self.in_edges, self.out_edges))
+
+
+def census(offsets, ptr):
+    """Per-item node and edge counts of the complete egos in one layout."""
+    offsets = np.asarray(offsets, dtype=np.int64)
+    ptr = np.asarray(ptr, dtype=np.int64)
+    nodes = np.diff(offsets)
+    edges = ptr[offsets[1:]] - ptr[offsets[:-1]]
+    if (nodes.shape != edges.shape or nodes.min() < 0 or edges.min() < 0):
+        raise ValueError('inconsistent ego census')
+    return nodes, edges
 
 
 class DeviceLayout:
     """Static integer topology resident once per store/device (no activations)."""
     def __init__(self, arrays, device):
+        self.node_counts = None
+        self.in_edge_counts = None
+        self.out_edge_counts = None
         for name, array in arrays.items():
+            if name.endswith('_counts'):
+                # Host-side census: exact per-item sizes, no device residency.
+                setattr(self, name, np.asarray(array, dtype=np.int64))
+                continue
             # Own tensor storage: read-only memmaps must never back writable tensors.
             tensor = torch.tensor(np.asarray(array), device=device,
                                   dtype=torch.int32 if name.endswith('_col') or name == 'nodes' else torch.int64)
             setattr(self, name, tensor)
 
+    def plan(self, ids):
+        """Exact host-side totals for the given item ids."""
+        ids = np.asarray(ids, dtype=np.int64).reshape(-1)
+        if (self.node_counts is None or len(ids) == 0):
+            return BatchPlan(0, 0, 0)
+        if ids.min() < 0 or ids.max() >= len(self.node_counts):
+            raise IndexError('item id outside the layout population')
+        return BatchPlan(self.node_counts[ids].sum(),
+                         self.in_edge_counts[ids].sum(),
+                         self.out_edge_counts[ids].sum())
 
-def _ranges(starts, lengths):
+
+def _ranges(starts, lengths, total):
     ends = lengths.cumsum(0)
     bases = ends - lengths
     if len(starts) == 0:
         return starts.new_empty(0), bases
-    return (torch.repeat_interleave(starts - bases, lengths)
-            + torch.arange(ends[-1], device=starts.device)), bases
+    return (torch.repeat_interleave(starts - bases, lengths, output_size=total)
+            + torch.arange(total, device=starts.device)), bases
 
 
-def batch_operators(layout, ids, dtype):
+def batch_operators(layout, ids, dtype, plan=None):
     """Gather complete blocks, without item loops or CPU node/edge expansion."""
+    if plan is None:
+        plan = layout.plan(ids.detach().cpu().numpy() if torch.is_tensor(ids) else ids)
     starts = layout.offsets[ids]
     sizes = layout.offsets[ids + 1] - starts
-    indices, bases = _ranges(starts, sizes)
-    groups = torch.repeat_interleave(torch.arange(len(ids), device=ids.device), sizes)
+    indices, bases = _ranges(starts, sizes, plan.nodes)
+    groups = torch.repeat_interleave(torch.arange(len(ids), device=ids.device), sizes,
+                                     output_size=plan.nodes)
     nodes = layout.nodes[indices].long()
     operators = []
-    for direction in ('in', 'out'):
+    for direction, total in (('in', plan.in_edges), ('out', plan.out_edges)):
         ptr, col = getattr(layout, direction + '_ptr'), getattr(layout, direction + '_col')
         degree = ptr[indices + 1] - ptr[indices]
-        edge_indices, _ = _ranges(ptr[indices], degree)
+        edge_indices, _ = _ranges(ptr[indices], degree, total)
         crow = torch.cat((degree.new_zeros(1), degree.cumsum(0)))
         columns = col[edge_indices].long()
-        columns += torch.repeat_interleave(bases[groups], degree)
-        values = torch.repeat_interleave(degree.to(dtype).clamp_min(1).reciprocal(), degree)
+        columns += torch.repeat_interleave(bases[groups], degree, output_size=total)
+        values = torch.repeat_interleave(degree.to(dtype).clamp_min(1).reciprocal(), degree,
+                                         output_size=total)
         operators.append(torch.sparse_csr_tensor(crow, columns, values,
                                                 size=(len(indices), len(indices)), device=ids.device))
     return nodes, groups, sizes, *operators
@@ -146,6 +203,11 @@ def load_layouts(root):
             for part in ('ptr', 'col'):
                 key = direction + '_' + part
                 layout[key] = np.load(root.parent / entries['ego%d_%s' % (hops, key)]['path'], mmap_mode='r')
+        node_counts, in_edges = census(layout['offsets'], layout['in_ptr'])
+        _, out_edges = census(layout['offsets'], layout['out_ptr'])
+        layout['node_counts'] = node_counts
+        layout['in_edge_counts'] = in_edges
+        layout['out_edge_counts'] = out_edges
         arrays.append(layout)
     return arrays
 
@@ -242,23 +304,12 @@ def audit():
     return report
 
 
-def main():
-    from tools.graph_infra.assets import load_sparse
-    entries, inputs = _inputs()
-    if DESTINATION.exists():
-        audit()
-        return 0
-    one, two = _populations(entries)
-    if len(one['node_offsets']) != len(two['offsets']):
-        raise ValueError('one/two-hop catalogue coverage differs')
-    graph = load_sparse(REPO / entries['visible_forward']['path'])
-    DESTINATION.mkdir()
-    for hops in (1, 2):
-        _write_layout(hops, one, two, graph)
+def _write_metadata(entries, inputs, coverage_items):
+    """Write the operator metadata from the arrays and the current producer."""
     common = dict(graph_name=GRAPH_NAME, graph_sha256=GRAPH_SHA256, use='training',
                   inputs=inputs, source_hashes={path: sha256(REPO / path) for path in SOURCE_PATHS},
                   command='python -m tools.issue252.ego_operators',
-                  coverage=dict(items=len(one['node_offsets']) - 1, scales=[1, 2],
+                  coverage=dict(items=coverage_items, scales=[1, 2],
                                 population='every full induced ego; all directed support; no sampling',
                                 normalization='reciprocal row degree computed in model dtype at runtime'))
     assets = []
@@ -270,6 +321,26 @@ def main():
     metadata = dict(common, version=VERSION, assets=assets,
                     references=[dict(name=name, path=entry['path'], sha256=entry['sha256']) for name, entry in entries.items()])
     (DESTINATION / 'metadata.json').write_text(json.dumps(metadata, indent=2, sort_keys=True) + '\n')
+    return metadata
+
+
+def main():
+    from tools.graph_infra.assets import load_sparse
+    entries, inputs = _inputs()
+    if DESTINATION.exists():
+        # The arrays are frozen; only the producer identity in the metadata can
+        # change, and it is rewritten by this same producer before the audit.
+        _write_metadata(entries, inputs, len(_populations(entries)[0]['node_offsets']) - 1)
+        audit()
+        return 0
+    one, two = _populations(entries)
+    if len(one['node_offsets']) != len(two['offsets']):
+        raise ValueError('one/two-hop catalogue coverage differs')
+    graph = load_sparse(REPO / entries['visible_forward']['path'])
+    DESTINATION.mkdir()
+    for hops in (1, 2):
+        _write_layout(hops, one, two, graph)
+    _write_metadata(entries, inputs, len(one['node_offsets']) - 1)
     audit()
     return 0
 

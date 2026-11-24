@@ -61,13 +61,16 @@ def _read_record(repo, record):
 
 
 def source_binding(repo, tree, kind):
-    """Mirror benchmark_entry.source_binding without importing the GPU trainer."""
+    """Canonical stdlib source/test inventory for diagnostics and admission."""
     repo, tree = Path(repo).resolve(), Path(tree).resolve()
     _require(kind in ('validation', 'benchmark'), 'unknown diagnostic kind')
     paths = list(tree.rglob('*.py')) + list((tree / 'config').glob('*.json'))
     paths += [repo / 'assets/manifest.json', repo / 'results/research/issue252/CONTRACT.md',
+              repo / 'results/research/issue252/reference.py',
               repo / 'results/research/issue252/EXECUTION_CONTRACT.md',
-              repo / 'tools/issue252/performance.py', repo / ('tools/issue252/launch_' + kind + '.py')]
+              repo / 'tools/issue252/performance.py', repo / 'tools/issue252/run_contract_tests.py',
+              repo / ('tools/issue252/launch_' + kind + '.py')]
+    paths += list((repo / 'tools/issue252').glob('test_*.py'))
     paths += [p for p in (repo / 'tools/research/stage2').rglob('*.py')
               if not {'tests', '__pycache__'} & set(p.parts)]
     result = {str(_file(repo, p).relative_to(repo)): sha256(p) for p in paths}

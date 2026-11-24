@@ -397,7 +397,9 @@ def main(*, diagnostic_epochs: int | None = None) -> None:
         observed_losses = [] if DIAGNOSTIC_OBSERVER is not None else None
         for step, (batch, item_ids) in enumerate(loader):
             batch = batch.to(device, non_blocking=True)
-            item_ids = item_ids.to(device, non_blocking=True)
+            # Item identity stays on the host: the structure gates need the
+            # identity order and the ego sizes, and both are host-side facts.
+            item_device = item_ids.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
             sample = sampler.draw((epoch - 1) * len(loader) + step, rank, world_size)
             reconstructed, quant_parts, _, _, curvature_loss = model(
@@ -412,7 +414,7 @@ def main(*, diagnostic_epochs: int | None = None) -> None:
             observe_first = DIAGNOSTIC_OBSERVER is not None and epoch == 1 and step == 0
             if observe_first:
                 DIAGNOSTIC_OBSERVER("first_step_before_backward", model=raw_module,
-                    batch=batch, item_ids=item_ids, catalogue=catalogue,
+                    batch=batch, item_ids=item_device, catalogue=catalogue,
                     structural_sample=sample, original_loss=original_loss,
                     structural_loss=curvature_loss, combined_loss=loss)
             loss.backward()

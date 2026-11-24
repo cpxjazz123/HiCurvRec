@@ -253,6 +253,60 @@ def retained_graph_checks(torch, geometry, reference, report, device):
                     'retained_graph/%s/%s/gradient_%d' % (name, retained, index)))
 
 
+def allocation_checks(torch, selection, reference, config, report, device):
+    """Same-cost probabilities and VJPs versus probability-domain arithmetic."""
+    generator = torch.Generator(device=device).manual_seed(42)
+    for rows, columns in ((3, 4), (256, 256), (1024, 256)):
+        for balanced in (False, True):
+            cost = torch.rand((rows, columns), device=device, generator=generator).requires_grad_()
+            trusted_cost = cost.detach().double().requires_grad_()
+            actual = selection.probabilities(cost, balanced=balanced, epsilon=config['SK_EPSILON'],
+                                            iterations=config['SK_ITERS'])
+            trusted = (reference.frozen_sinkhorn(trusted_cost, config['SK_EPSILON'], config['SK_ITERS'])
+                       if balanced else torch.softmax(-reference.frozen_center(trusted_cost)
+                                                      / selection.SOFT_TEMPERATURE, -1))
+            label = 'allocation/%d/%s' % (rows, balanced)
+            report['numeric_checks'].append(checked(torch, actual, trusted, torch.float32, label))
+            probe = torch.sin(torch.arange(rows * columns, device=device).double()).reshape(rows, columns)
+            for retained in (True, False):
+                coefficients = probe if retained else probe.cos()
+                gradient = torch.autograd.grad((actual * coefficients.float()).mean(),
+                                               cost, retain_graph=retained)[0]
+                expected = torch.autograd.grad((trusted * coefficients).mean(),
+                                               trusted_cost, retain_graph=retained)[0]
+                result = checked(torch, gradient, expected, torch.float32,
+                                 label + '/retained_%s/gradient' % retained)
+                reference_norm = expected.norm()
+                assert float(reference_norm) > 0, 'allocation reference VJP must exercise the route'
+                relative = float((gradient.double() - expected).norm() / reference_norm)
+                result['relative_l2_error'] = relative
+                assert relative <= TOLERANCES['float32']['rtol'], (
+                    'allocation mean-loss VJP relative norm mismatch: %s' % relative)
+                report['numeric_checks'].append(result)
+    # Count actual warmed native kernels at the real batch/capacity/iteration budget.
+    cost = torch.rand((1024, 256), device=device, generator=generator).requires_grad_()
+    probe = torch.cos(torch.arange(1024 * 256, device=device).float()).reshape(1024, 256)
+    def step():
+        probability = selection.probabilities(cost, balanced=True, epsilon=config['SK_EPSILON'],
+                                               iterations=config['SK_ITERS'])
+        return torch.autograd.grad((probability * probe).sum(), cost)[0]
+    step()
+    torch.cuda.synchronize(device)
+    with torch.profiler.profile(activities=[torch.profiler.ProfilerActivity.CPU,
+                                            torch.profiler.ProfilerActivity.CUDA]) as profiler:
+        gradient = step()
+        torch.cuda.synchronize(device)
+    count = sum(str(event.device_type).rsplit('.', 1)[-1] == 'CUDA'
+                and is_compute_kernel(event.name) for event in profiler.events())
+    limit = 4 * 2 * config['SK_ITERS'] + 64
+    report['allocation_profiles'] = [{'shape': [1024, 256], 'iterations': config['SK_ITERS'],
+        'cuda_kernel_count': count, 'kernel_limit_exclusive': limit,
+        'gradients_finite': bool(torch.isfinite(gradient).all()),
+        'budget': 'At most four kernels per column/row normalization across forward+backward, plus64 setup/reduction kernels'}]
+    assert bool(torch.isfinite(gradient).all()), 'allocation profiling has nonfinite gradients'
+    assert 0 < count < limit, 'Actual soft-allocation CUDA launch budget exceeded: %d >= %d' % (count, limit)
+
+
 def load_original_floor(report):
     import tarfile
     import types
@@ -493,6 +547,7 @@ def main():
             ('numeric', lambda: numerical_checks(torch, geometry, reference, report, device)),
             ('paired_training', lambda: paired_training_checks(torch, geometry, reference, report, device)),
             ('retained_graph', lambda: retained_graph_checks(torch, geometry, reference, report, device)),
+            ('allocation', lambda: allocation_checks(torch, selection, reference, config, report, device)),
             ('selection', lambda: selection_checks(torch, geometry, selection, reference,
                                                   original_floor, config, report, device)),
             ('resource', lambda: profile_geometry(torch, geometry, report, device))]

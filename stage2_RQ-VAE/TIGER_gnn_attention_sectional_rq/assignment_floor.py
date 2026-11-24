@@ -109,10 +109,15 @@ def constrained_assignment(cost, floor: int, counts_key: int | None = None):
             return torch.from_numpy(ids).to(device=costs.device), report
     moves = 0
     first_wanted = torch.empty(items, dtype=torch.long, device=costs.device)
+    move_counter = torch.zeros((), dtype=torch.long, device=costs.device)
+    stalled = torch.zeros((), dtype=torch.bool, device=costs.device)
     # Keep the same GPU argsort priority and greedy rounds. Resolve contested
     # items by their first sorted position, without host item/code lists.
     for _ in range(codewords):
-        counts_t = torch.bincount(assignment, minlength=codewords)
+        # The counts are a fixed-size scatter, not a bincount: the output size of
+        # a bincount depends on the data and would read the device back.
+        counts_t = torch.zeros(codewords, dtype=torch.long, device=costs.device)
+        counts_t.scatter_add_(0, assignment, torch.ones_like(assignment))
         deficit = (counts_t < floor).nonzero().flatten()
         if deficit.numel() == 0:
             break
@@ -125,19 +130,25 @@ def constrained_assignment(cost, floor: int, counts_key: int | None = None):
         positions = torch.arange(order.numel(), device=costs.device)
         first_wanted.fill_(codewords)
         first_wanted.scatter_reduce_(0, wanted, positions, reduce="amin", include_self=True)
-        keep = (first_wanted[wanted] == positions) & torch.isfinite(best_cost[order])
-        selected = keep.nonzero().flatten()
-        if selected.numel() == 0:
-            raise InfeasibleFloor("no droppable item for the empty codewords")
-        chosen_items = wanted[selected]
-        assignment[chosen_items] = deficit[order[selected]]
-        moves += chosen_items.numel()
+        # The first position that names an item decides its move, exactly as the
+        # contested-item rule does; the move itself needs no index list.
+        rank = first_wanted.clamp_max(max(order.numel() - 1, 0))
+        moved = (first_wanted < codewords) & torch.isfinite(best_cost[order[rank]])
+        assignment = torch.where(moved, deficit[order[rank]], assignment)
+        move_counter += moved.sum()
+        stalled |= ~moved.any()
     else:
-        remaining = int((torch.bincount(assignment, minlength=codewords) < floor).sum())
+        final_counts = torch.zeros(codewords, dtype=torch.long, device=costs.device)
+        final_counts.scatter_add_(0, assignment, torch.ones_like(assignment))
+        remaining = int((final_counts < floor).sum())
+        if bool(stalled):
+            raise InfeasibleFloor("no droppable item for the empty codewords")
         if remaining:
             raise InfeasibleFloor("repair did not converge")
 
-    counts = torch.bincount(assignment, minlength=codewords)
+    counts = torch.zeros(codewords, dtype=torch.long, device=costs.device)
+    counts.scatter_add_(0, assignment, torch.ones_like(assignment))
+    moves = int(move_counter)
     return (assignment, {"floor": floor, "moves": moves,
                          "min_count": int(counts.min()), "satisfied": True})
 
@@ -343,8 +354,7 @@ def _min_pairwise_distance(flat, block: int = 512) -> float:
     for start in range(0, rows, block):
         chunk = flat[start:start + block]
         distance = torch.cdist(chunk, flat)
-        for offset in range(chunk.shape[0]):
-            distance[offset, start + offset] = float("inf")
+        distance.diagonal(offset=start).fill_(float("inf"))
         best = min(best, float(distance.min()))
     return best
 

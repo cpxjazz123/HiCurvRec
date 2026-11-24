@@ -232,9 +232,9 @@ class StaticMeansTests(unittest.TestCase):
         sizes = []
         original = module.batch_operators
 
-        def observe(part, ids, dtype):
+        def observe(part, ids, dtype, plan=None):
             sizes.append(len(ids))
-            return original(part, ids, dtype)
+            return original(part, ids, dtype, plan)
 
         with patch.object(module, 'batch_operators', side_effect=observe):
             bounded = StaticFeatureMeans(layout, features, chunk=1)

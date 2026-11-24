@@ -29,6 +29,7 @@ from .curvature import FrozenCurvature
 from . import layers as layer_module
 from .provenance import binding,sha256
 from tools.issue252.archive_audit import imported_repo_sources
+from tools.issue252.host_transfer import host_int64
 
 
 class RQVAE(OriginalRQVAE):
@@ -40,6 +41,11 @@ class RQVAE(OriginalRQVAE):
         self.register_buffer('tangent_scale',torch.tensor(1.))
         self.register_buffer('curvature_weight',torch.tensor(float('nan')))
         self.register_buffer('target_scale',torch.tensor(self.targets.scale))
+        # Host mirrors of the frozen scales: the geometry helpers take the
+        # scale as a number, and reading a device buffer for it would stall
+        # the step on every cost.
+        self._tangent_scale_value = 1.0
+        self._target_scale_value = float(self.target_scale)
         self.behavior_on = True
         self.curvature_on = True
         self.cut_selection_cost = False
@@ -52,17 +58,27 @@ class RQVAE(OriginalRQVAE):
         self._catalogue_cache = None
 
     def _identities(self, embeddings, item_ids):
+        """Validate item identity on the host.
+
+        The structure gates need the identity order and the ego sizes, both of
+        which are host-side facts; keeping them there lets every later gather
+        state its output size instead of reading one back from the device.
+        """
         if item_ids is None:
             if len(embeddings) != self.store.n:
                 raise ValueError('item_ids required outside an ordered full-catalogue forward')
-            item_ids = torch.arange(self.store.n,device=embeddings.device)
-        ids = torch.as_tensor(item_ids,device=embeddings.device,dtype=torch.long)
-        if ids.shape != (len(embeddings),) or bool((ids < 0).any()) or bool((ids >= self.store.n).any()):
+            host = np.arange(self.store.n, dtype=np.int64)
+        elif torch.is_tensor(item_ids):
+            host = item_ids.detach().cpu().numpy()
+        else:
+            host = np.asarray(item_ids)
+        host = np.asarray(host, dtype=np.int64).reshape(-1)
+        if host.shape != (len(embeddings),) or ((host < 0) | (host >= self.store.n)).any():
             raise ValueError('item identity outside the global catalogue')
-        return ids
+        return host
 
     def assignment_cost(self, residual, codewords, weights):
-        return mixed_cost(residual,codewords,weights,scale=self.tangent_scale,
+        return mixed_cost(residual,codewords,weights,scale=self._tangent_scale_value,
                           curvature_on=self.curvature_on)
 
     def quantize(self, encoded, weights, *, balanced):
@@ -130,25 +146,26 @@ class RQVAE(OriginalRQVAE):
     @torch.no_grad()
     def get_indices(self, embeddings, *, infer_use_sk=False, item_ids=None):
         ids=self._identities(embeddings,item_ids)
+        index=host_int64(ids,embeddings.device)
         key=(embeddings.device,embeddings.dtype)
         if self._catalogue_cache is None or self._catalogue_cache[0]!=key:
             catalogue=torch.as_tensor(np.load(ROOT/'stage1_GeneEmbedding/output/sentence_t5.npy'),
                                       device=embeddings.device,dtype=embeddings.dtype)
             self._catalogue_cache=(key,catalogue)
         catalogue=self._catalogue_cache[1]
-        if not torch.equal(embeddings,catalogue[ids]):
+        if not torch.equal(embeddings,catalogue[index]):
             raise ValueError('export embeddings must match their global catalogue IDs')
         was_training=self.training
         self.eval()
         try:
             self.catalogue_q(catalogue,infer_use_sk=infer_use_sk)
-            return self.last_tokens[ids]
+            return self.last_tokens[index]
         finally:
             self.train(was_training)
 
     def catalogue_q(self, embeddings, chunk=1024, *, infer_use_sk=False):
         """Complete global quantization; structural chunks never split assignment."""
-        ids=torch.arange(len(embeddings),device=embeddings.device)
+        ids=np.arange(len(embeddings),dtype=np.int64)
         _,weights=self.structure.gates_for_items(self.store,ids,embeddings.device,
                                                 chunk=chunk,behavior_on=self.behavior_on)
         encoded=self.encoder(embeddings)
@@ -159,7 +176,7 @@ class RQVAE(OriginalRQVAE):
         return q
 
     def curvature_loss(self, catalogue_q, centres=None):
-        scale=float(self.tangent_scale)
+        scale=self._tangent_scale_value
         return self.targets.loss(catalogue_q,
             lambda x,y:fixed_squared(x,y,scale=scale),centres=centres,
             paired_squared=lambda x,y:fixed_squared(x[:,None,:],y[:,None,:],
@@ -175,20 +192,22 @@ class RQVAE(OriginalRQVAE):
 
     def sampled_curvature(self, embeddings, sample):
         """Fresh actual hard-q, using the declared finite auxiliary population."""
-        ids=torch.as_tensor(sample['ids'],device=embeddings.device,dtype=torch.long)
-        _,weights=self.structure.gates_for_items(self.store,ids,embeddings.device,
+        host=np.asarray(sample['ids'],dtype=np.int64)
+        ids=host_int64(host,embeddings.device)
+        _,weights=self.structure.gates_for_items(self.store,host,embeddings.device,
                                                 behavior_on=self.behavior_on)
         q,_,_,_=self.quantize(self.encoder(embeddings[ids]),weights,balanced=False)
         self.last_structural_q=q
         self.last_structural_ids=ids
         self.last_structural_tokens=self.last_tokens
-        scale=float(self.tangent_scale)
+        scale=self._tangent_scale_value
         predicted=sampled_values(q,sample['triples'],sample['references'],
             lambda x,y:fixed_squared(x,y,scale=scale),
             paired_squared=lambda x,y:fixed_squared(x[:,None,:],y[:,None,:],scale=scale).reshape(-1))
         target=torch.as_tensor(sample['target'],device=q.device,dtype=q.dtype)
         self.last_structural_prediction=predicted
-        return F.huber_loss(predicted/self.target_scale,target/self.target_scale,reduction='mean',delta=1.)
+        return F.huber_loss(predicted/self._target_scale_value,target/self._target_scale_value,
+                           reduction='mean',delta=1.)
 
     @torch.no_grad()
     def freeze_tangent_scale(self, catalogue_embeddings):
@@ -197,6 +216,7 @@ class RQVAE(OriginalRQVAE):
         if not bool(torch.isfinite(scale)) or float(scale)<=0:
             raise ValueError('nonfinite or zero frozen tangent scale')
         self.tangent_scale.copy_(scale)
+        self._tangent_scale_value = float(scale)
 
     def calibrate_curvature_weight(self, embeddings, item_ids, catalogue_embeddings, centres=None,
                                    *, structural_sample=None):
@@ -248,4 +268,6 @@ class RQVAE(OriginalRQVAE):
         values=torch.stack((self.tangent_scale,self.curvature_weight,self.target_scale))
         if not bool(torch.isfinite(values).all()) or not bool((values>0).all()):
             raise ValueError('checkpoint has missing/invalid frozen calibration')
+        self._tangent_scale_value=float(self.tangent_scale)
+        self._target_scale_value=float(self.target_scale)
         return blob

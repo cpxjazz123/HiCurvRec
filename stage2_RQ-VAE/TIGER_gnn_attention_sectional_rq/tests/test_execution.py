@@ -21,8 +21,10 @@ class ExecutionTests(unittest.TestCase):
             (tree/'train_rqvae.py').write_text('import tools.graph_infra.ego_gnn\n')
             for name in ('assets/manifest.json','tools/issue250/launch_validation.py',
                          'tools/issue252/launch_validation.py','tools/issue252/performance.py',
+                         'tools/issue252/run_contract_tests.py','tools/issue252/test_example.py',
                          'tools/research/stage2/launcher.py','tools/graph_infra/ego_gnn.py',
                          'tools/graph_infra/assets.py','results/research/issue252/CONTRACT.md',
+                         'results/research/issue252/reference.py',
                          'results/research/issue252/EXECUTION_CONTRACT.md'):
                 path=repo/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('VALUE=1\n')
             with patch.object(benchmark_entry,'ROOT',repo),patch.object(

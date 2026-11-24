@@ -10,7 +10,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
 CACHE = ROOT / 'results/research/issue252/compiler_cache'
 
 
-def compile_geometry(experts, mixed, fixed):
+def _configure():
     # Source-owned cache roots, not a user recipe/path override. No system temp
     # or CUDA-graph output reuse; compile failures propagate to admission.
     roots = {'TORCHINDUCTOR_CACHE_DIR': CACHE / 'inductor',
@@ -32,5 +32,14 @@ def compile_geometry(experts, mixed, fixed):
     # Calibration and independent real-loss VJPs retain their actual graphs.
     # Donating saved buffers would violate that consumer-visible lifetime.
     autograd.donated_buffer = False
+
+
+def compile_geometry(experts, mixed, fixed):
+    _configure()
     return tuple(torch.compile(function, fullgraph=True, dynamic=True, mode='default')
                  for function in (experts, mixed, fixed))
+
+
+def compile_probabilities(function):
+    _configure()
+    return torch.compile(function, fullgraph=True, dynamic=True, mode='default')

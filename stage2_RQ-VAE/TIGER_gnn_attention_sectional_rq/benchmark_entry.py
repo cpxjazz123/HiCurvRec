@@ -15,17 +15,8 @@ DIAGNOSTIC_EPOCHS = 60
 
 
 def source_binding(kind):
-    from tools.issue252.archive_audit import imported_repo_sources
-    tree = Path(__file__).resolve().parent
-    paths = list(tree.rglob('*.py')) + list((tree / 'config').glob('*.json'))
-    paths += [ROOT / 'assets/manifest.json', ROOT / 'results/research/issue252/CONTRACT.md',
-              ROOT / 'results/research/issue252/EXECUTION_CONTRACT.md',
-              ROOT / 'tools/issue252/performance.py', ROOT / ('tools/issue252/launch_' + kind + '.py')]
-    paths += [p for p in (ROOT / 'tools/research/stage2').rglob('*.py')
-              if not {'tests', '__pycache__'} & set(p.parts)]
-    result = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
-    result.update(imported_repo_sources(tree, ROOT))
-    return result
+    from tools.issue252.training_admission import source_binding as canonical_binding
+    return canonical_binding(ROOT, Path(__file__).resolve().parent, kind)
 
 
 def configure(kind):

@@ -50,3 +50,19 @@ Optimized cold-step rank0 assignment-guard time contains2.944s NCCL waiting whil
 Historical wide_l1 epochs1001–1030: mean0.367733s, median0.347s, nearest-rank P950.479s; role_Q epochs970–999: mean0.260733s, median0.256s, P950.260s, cumulative window7.928s. The old timers exclude post-loop communication/evaluation; GPU/executed-source evidence is missing. They do not certify this mechanism.
 
 Final-source60-epoch benchmark with inclusive epochs31–60, actual epoch50 full evaluation, all-rank structural coverage and a recomputed mean<=0.5s remains required. No formal run has started.
+
+## Current exact execution, before diagonal-mask fusion
+
+Actual inclusive60epoch diagnostic `issue252_benchmark_669470_578127856` FAILED: epochs31–60 window32.3996938094s, mean1.0799897936s, median0.9042086266s, P951.7783592449s; realeval50 included, initialization28.2181958472s separate. Projected3000epoch time3239.9693809450s is an extrapolation, not a completed formal run.
+
+Actual warmed profile `issue252_steady_profile_689572_578144683` completed3epochs/18optimizer steps on all4 ranks, no formal artifacts. Instrumented epoch2=1.7381–1.7464s; uninstrumented epoch3=0.9454–1.1899s, allocated peak9.640–9.897GB.
+
+| Nested phase / epoch | Calls/rank | CPU dispatch/wall seconds | CUDA stream-span seconds |
+|---|---:|---:|---:|
+| assignment guards | 144 | 0.299418–0.312363 | 0.284823–0.297480 |
+| full static operator assembly | 24 | 0.172066–0.174762 | 0.177186–0.179907 |
+| soft allocation | 36 | 0.099015–0.103255 | 0.099669–0.103944 |
+| GNN | 24 | 0.074387–0.075708 | 0.222414–0.228264 |
+| backward | 6 | 0.261937–0.271898 | 0.389811–0.477752 |
+
+These spans overlap and must not be added. Native `aten::fill_` calls numbered11596–13951/rank. Inspection identified36 separation checks ×256 separate self-diagonal writes=9216 avoidable tiny writes per epoch. A strided diagonal view can mask the identical entries with one write per block, preserving every off-diagonal value, cdist result and refusal threshold. CPU production regressions first observed256 writes against a1/3-write bound (RED), then passed the exact known minima, duplicates, partial blocks, empty/singleton and bounded-write assertions after fusion. `SEPARATION_MASK_RED.log` / `SEPARATION_MASK_GREEN.log` are the evidence; actual inclusive remeasurement is still required.

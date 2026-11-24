@@ -13,6 +13,7 @@ import numpy as np
 import torch
 from torch import nn
 from tools.issue252.ego_operators import DeviceLayout, batch_operators, load_layouts, pack_synthetic
+from tools.issue252.host_transfer import host_int64
 from tools.issue252.static_features import StaticFeatureMeans
 from tools.issue252.sparse_adjoint import normalized_directional_means
 
@@ -187,25 +188,36 @@ class SubgraphTokens(nn.Module):
             raise ValueError('chunk must be positive')
         if torch.device(device) != self.input.weight.device:
             raise ValueError('requested device differs from GNN device')
-        ids = torch.as_tensor(item_ids, device=device, dtype=torch.long).reshape(-1)
-        if len(ids) == 0:
+        host = np.asarray(item_ids.detach().cpu().numpy() if torch.is_tensor(item_ids)
+                          else item_ids, dtype=np.int64).reshape(-1)
+        if len(host) == 0:
             return self.input.weight.new_empty((0, 2, 32)), torch.empty((0, 2), dtype=torch.bool, device=device)
-        if bool(((ids < 0) | (ids >= store.n)).any()):
+        if ((host < 0) | (host >= store.n)).any():
             raise IndexError('item id out of range')
-        unique, restore = torch.unique(ids, sorted=True, return_inverse=True)
+        # The unique order and every ego size are known on the host, so no
+        # gather below has to read a device value to size its output.
+        unique, restore = np.unique(host, return_inverse=True)
         layouts, normalized = self._cached_store(store)
         means = self._feature_cache[store]['devices'][str(self.input.weight.device)]['means'][normalized.dtype]
         affine = self._first_affine()
         outputs, validity = [], []
-        for items in unique.split(chunk):
+        for begin in range(0, len(unique), chunk):
+            block = unique[begin:begin + chunk]
+            items = host_int64(block, device)
             scales, masks = [], []
             for layout, static in zip(layouts, means):
-                nodes, groups, sizes, incoming, outgoing = batch_operators(layout, items, normalized.dtype)
+                plan = layout.plan(block)
+                nodes, groups, sizes, incoming, outgoing = batch_operators(layout, items, normalized.dtype, plan)
                 # Retain the live activations; backward must not replay the GNN.
                 value = self._read_sparse(normalized[nodes], groups, sizes, incoming, outgoing,
-                                          static.gather(layout, items), affine)
+                                          static.gather(layout, items, plan), affine)
                 scales.append(value)
                 masks.append(sizes > 0)
             outputs.append(torch.stack(scales, dim=1))
             validity.append(torch.stack(masks, dim=1))
-        return torch.cat(outputs)[restore], torch.cat(validity)[restore]
+        tokens = torch.cat(outputs)
+        valid = torch.cat(validity)
+        if len(unique) != len(host) or not np.array_equal(unique, host):
+            index = host_int64(restore, device)
+            tokens, valid = tokens[index], valid[index]
+        return tokens, valid

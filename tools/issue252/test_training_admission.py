@@ -26,7 +26,10 @@ class AdmissionTests(unittest.TestCase):
             p=self.tree/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(text)
         for name in ('tools/research/stage2/launcher.py','tools/issue252/performance.py',
                      'tools/issue252/launch_validation.py','tools/issue252/launch_benchmark.py',
+                     'tools/issue252/run_contract_tests.py',
+                     'tools/issue252/test_estimator_mutations.py',
                      'results/research/issue252/CONTRACT.md',
+                     'results/research/issue252/reference.py',
                      'results/research/issue252/EXECUTION_CONTRACT.md'):
             p=self.repo/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text('')
         p=self.repo/'assets/manifest.json';p.parent.mkdir();p.write_text('{"assets":[]}')
@@ -181,6 +184,20 @@ class AdmissionTests(unittest.TestCase):
         output=Path(json.loads(self.tests['reference'].read_text())['output']['path'])
         output.write_text('changed command output')
         with self.assertRaises(ValueError):self.a.check_receipt(self.repo,self.tree)
+
+    def test_external_suite_or_runner_drift_refuses_old_execution_reports(self):
+        for name in ('tools/issue252/test_estimator_mutations.py',
+                     'tools/issue252/run_contract_tests.py',
+                     'results/research/issue252/reference.py'):
+            path = self.repo / name
+            previous = path.read_text()
+            with self.subTest(source=name):
+                path.write_text('CHANGED_TEST_CONTRACT = True\n')
+                try:
+                    with self.assertRaises(ValueError):
+                        self.create()
+                finally:
+                    path.write_text(previous)
 
     def test_freeze_enforces_receipt_even_if_machine_result_is_forged(self):
         from tools.research.verification.admission import source_digest

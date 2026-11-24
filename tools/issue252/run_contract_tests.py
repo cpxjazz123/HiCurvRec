@@ -43,8 +43,11 @@ def main():
     tests = TREE / 'tests'
     names = sorted(path.name for path in tests.glob('test_*.py')
                    if path.name not in ('test_reference.py', 'test_mutations.py'))
+    framework_names = sorted(path.name for path in (ROOT / 'tools/issue252').glob('test_*.py')
+                             if path.name != 'test_estimator_mutations.py')
     groups = {
-        'deterministic': [(tests, name) for name in names],
+        'deterministic': ([(tests, name) for name in names]
+                          + [(ROOT / 'tools/issue252', name) for name in framework_names]),
         'reference': [(tests, 'test_reference.py')],
         'mutation': [(tests, 'test_mutations.py'),
                      (ROOT / 'tools/issue252', 'test_estimator_mutations.py')],

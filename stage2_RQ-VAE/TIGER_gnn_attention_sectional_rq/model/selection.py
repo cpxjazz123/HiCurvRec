@@ -6,6 +6,8 @@ uses argmin. Hard selections are not differentiated. The q gradient is solely
 the derivative of P(C) @ E, including its soft codebook contribution, while
 `hard` remains available for the original commitment/codebook losses.
 """
+from functools import lru_cache
+
 import torch
 
 
@@ -33,14 +35,41 @@ def _log_sinkhorn(centered, epsilon, iterations):
     return torch.exp(log_q + log_batch).to(centered.dtype)
 
 
+@lru_cache(maxsize=1)
+def _cuda_sinkhorn():
+    from tools.issue252.cuda_math import compile_probabilities
+    return compile_probabilities(_sinkhorn)
+
+
+@lru_cache(maxsize=1)
+def _cuda_softmax():
+    from tools.issue252.cuda_math import compile_probabilities
+    return compile_probabilities(_softmax)
+
+
+def _sinkhorn(centered, epsilon, iterations):
+    return _log_sinkhorn(centered, epsilon, iterations)
+
+
+def _softmax(centered):
+    return torch.softmax(-centered / SOFT_TEMPERATURE, dim=-1)
+
+
 def probabilities(cost, *, balanced, epsilon, iterations, training=True):
     """Smooth same-cost probabilities; usable directly in finite differences."""
+    if balanced and training and (epsilon <= 0 or iterations <= 0):
+        raise ValueError("Balanced selection requires positive epsilon and iterations.")
+    # The centring stays outside the compiled region: its minimum and maximum
+    # are device values, and handing them to a kernel as scalars would read
+    # them back from the device.
     centered = center_cost(cost)
     if balanced and training:
-        if epsilon <= 0 or iterations <= 0:
-            raise ValueError("Balanced selection requires positive epsilon and iterations.")
-        return _log_sinkhorn(centered, epsilon, iterations)
-    return torch.softmax(-centered / SOFT_TEMPERATURE, dim=-1)
+        function = (_cuda_sinkhorn() if centered.is_cuda and centered.dtype == torch.float32
+                    else _sinkhorn)
+        return function(centered, epsilon, iterations)
+    function = (_cuda_softmax() if centered.is_cuda and centered.dtype == torch.float32
+                else _softmax)
+    return function(centered)
 
 
 @torch.no_grad()
