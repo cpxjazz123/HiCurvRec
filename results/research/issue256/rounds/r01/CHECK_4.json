@@ -1,0 +1,694 @@
+{
+  "issue": 256,
+  "round_id": "r01",
+  "check": 4,
+  "state": "CONTINUE_R1_R2",
+  "counts": {
+    "PASS": 15,
+    "FAIL": 2,
+    "NOT_RUN": 0
+  },
+  "issue_body_sha256": "32a2764070e8502926965d355a3ef6ff7619d45881abd0ffa575cb7cef73c5a8",
+  "issue_snapshot": {
+    "path": "results/research/issue256/rounds/r01/CHECK_4_ISSUE.json",
+    "sha256": "ed962ef61a0078615c6eef81ef11f55e4c812ca3c8fc2d645b41f9ec24be57dc"
+  },
+  "recorded_at": "2026-11-24T21:01:59.433383+00:00",
+  "production_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
+  "sealed_evidence_commit": "6cd32f054f139dccb8eee03f49afb08e59c50fa9",
+  "delivery": {
+    "remote": "https://github.com/cpxjazz123/HiCurvRec.git",
+    "branch": "main",
+    "local_remote_sha": "6cd32f054f139dccb8eee03f49afb08e59c50fa9",
+    "push_exit_code": 0
+  },
+  "production_sources": [
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/train_rqvae.py",
+      "sha256": "b96cf0c322db714b69bb5246b60c623a5e0c0f0b48905d6b1b63f7f4558afe1b"
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/model/mechanism.py",
+      "sha256": "c460faa67db1eae6f7abc84e95b3575c1b9a26928cf2a52bd2c5410e72716a2b"
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/model/calibration.py",
+      "sha256": "98956a0234829e48051ef1f359f17a8416e094c066f73b8e8fcbead1cef0dd3e"
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/model/layers.py",
+      "sha256": "dadd6287dbf55751c10bae23d81c1af42ab9035a73a09d77b9c67550bdc1fb4a"
+    },
+    {
+      "path": "stage3_T5Train/train_HG-Rec.py",
+      "sha256": "54ca6bfbcd55a42e718660dd0004370a41a5e1c2c5038a86bbfc84f32b963690"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "C1",
+      "verbatim": "这是持续迭代的研究 Issue，不是一次实验交付 Issue。继承 #255 的三曲率分层门控与累计截面曲率监督框架；#255 当前仍在执行，先等待其真实最终结果并审计，再作为本 Issue 的起点，不并行重复执行其模型。每轮完成后必须基于实际证据定位未达到目标的原因，提出针对性的下一轮修改，验证并迭代，直到同一冻结推荐协议下合法、完整 Stage3 最终 test R@10 > 0.065（严格沿用仓库采纳阈值）。没有达到目标不得标 COMPLETED 或以负结果结束本 Issue；真实权限/资源/外部依赖阻塞如实记录，等待解决，不伪造、不绕过权限。达到阈值后仍须完成完整验收、复算、归档和来源绑定才允许关闭。",
+      "criterion": "Final legal Stage3 R@10 and continuing loop",
+      "threshold": "test_R@10 > 0.065; do not complete after a failed candidate",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; final test only after legal complete training",
+      "status": "FAIL",
+      "observed": "FAIL: final test_R@10=0.05273420498267727 <=0.065; issue remains OPEN and R1/R2 continues.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C2",
+      "verbatim": "保留三种曲率空间 {-1,0,+1}、共享有向 GNN、完整 1-hop / 2-hop ego、入/出方向拓扑 token、分层 Cross-Attention 几何门控、混合曲率码字选择及累计前缀截面曲率监督；GNN 与门控联合优化。",
+      "criterion": "Architecture and trainability",
+      "threshold": "three curvatures; directed shared GNN; four complete direction/ego tokens; layer gates; cumulative curvature",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; training/validation-only research decisions",
+      "status": "PASS",
+      "observed": "PASS: immutable R01 source, per-level real-loss VJPs/updates and final source review retain all required architecture.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C3",
+      "verbatim": "保留768维原始语义输入、32维latent、三层256码字、统一商品SID、原始RQ-VAE重建/commitment/codebook、#255实际硬分配协议及合法选码梯度路径。只允许在现有机制内部做针对性改进，例如方向/子图readout、门控表达/梯度、几何距离尺度、截面代理的层次及归一化、梯度冲突和稳定性等；每次变更必须解释与基础机制的关系。不得引入独立行为邻域约束、InfoNCE、pair-ranking、额外行为预测任务或其他不相关Loss，不删2-hop、不冻结GNN、不替换三曲率空间。",
+      "criterion": "Capacity, assignment and allowed scope",
+      "threshold": "768/32; 3x256; original RQ-VAE losses; actual #255 hard assignment; no unrelated objective",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; training/validation-only research decisions",
+      "status": "PASS",
+      "observed": "PASS: 768/32/3x256, original losses, actual inherited floor/Sinkhorn hard selection and exact checkpoint export.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C4",
+      "verbatim": "复用冻结训练图、完整曲率资产、基线TIGER与既有Infra；禁止重训TIGER、额外基线训练、PPR、四节点全量graphlet、多种子或盲目网格搜索。单agent串行研究决策，计算使用四卡，不创建每轮独立Issue。",
+      "criterion": "Reuse and serial decisions",
+      "threshold": "no repeated static assets, baseline training, PPR, grid or multiseed",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; training/validation-only research decisions",
+      "status": "PASS",
+      "observed": "PASS: 109 frozen assets reused; serial single-agent decisions; no baseline/grid/multiseed/ablation training.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C5",
+      "verbatim": "每个有明确机制假设的新候选一次正式训练：四卡/global4096/seed42/Stage2 3000 epochs，固定Stage3 150 epochs及beam20、完整test和归档；失败实现故障的修复重跑需明确区分。既有规则中“一次候选训练”仍适用，但本 Issue 明确授权在证据驱动下创建后续机制版本，不能将其误读为禁止继续迭代。",
+      "criterion": "Candidate run authority",
+      "threshold": "one complete 3000-epoch world4/global4096 seed42 run per distinct hypothesis; frozen 150-epoch Stage3",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; training/validation-only research decisions",
+      "status": "PASS",
+      "observed": "PASS: one formal issue256_r01_formal, complete3000/150, frozen four-rank recipes and seed42.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C6",
+      "verbatim": "审计 #252–#255 的最终报告、真实源码、数据、checkpoint、SID与R2归档，核查#255是否完整通过。保留历史 #252 R@10 0.049287、#253 0.046432 及#254相关性结果，不把它们视作单因素因果或已核验的TIGER Recall。",
+      "criterion": "Parent provenance audit",
+      "threshold": "audit #252 through #255; never interpret correlation as cause",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; training/validation-only research decisions",
+      "status": "PASS",
+      "observed": "PASS: parent252–255 source/artifact/protocol audit retained; failed255 machine gate and historical correlations qualified.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C7",
+      "verbatim": "建立固定、训练外的验证划分和统一诊断口径，冻结排序/候选解码/词表派生规则、评估总体及指标定义。优先使用 validation 与已冻结的结构验证库决定机制修改、权重或候选；严格隔离 recommendation test 和 structure test，禁止将#254具体测试错误商品清单、test标签/派生特征作为监督或参数选择依据。",
+      "criterion": "Validation isolation",
+      "threshold": "fixed train-external validation; test and #254 item-error lists excluded from supervision/selection",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; training/validation-only research decisions",
+      "status": "PASS",
+      "observed": "PASS: fixed full57439 validation and five structural-validation banks; no test item errors in training/next-round diagnosis.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C8",
+      "verbatim": "用户要求以最终固定test R@10>0.065为关闭阈值。若多个候选先后查看同一test分数，该分数是反复使用的探索性闭环门槛，不再是完全独立的最终泛化估计。记录每次test访问及由此产生的选择偏差；条件允许时预留未访问的独立确认集或新数据集作一次确认，否则明确局限，不宣称无偏泛化。即使某轮test失败，下一轮具体修改应由训练/验证侧证据驱动，而非针对test样本调参。",
+      "criterion": "Test access and bias",
+      "threshold": "log each access; no claim of independent confirmation without genuinely untouched data",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; final test only after legal complete training",
+      "status": "PASS",
+      "observed": "PASS: exact test access snapshot retained; repeated-test exploratory selection bias and lack of independent confirmation disclosed.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C9",
+      "verbatim": "R1 记录上轮结果及未达标差距：R@5/10、NDCG@5/10、训练/验证行为边L1前缀保持、度匹配对照、L1/L2/L3前缀和碰撞、普通语义重建、各级硬q曲率宏/微误差与符号平衡准确率、正/零/负召回、分层gate/attention、梯度范数/方向、各卡耗时。历史缺失标NA，不拼接不一致checkpoint。逐用户/商品配对错误分析以validation为主要决策集，test仅在授权的最终测试和事后透明报告中使用。",
+      "criterion": "R1 complete diagnostic inventory",
+      "threshold": "record all requested diagnostics; missing historical values NA",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; training/validation-only research decisions",
+      "status": "PASS",
+      "observed": "PASS: complete R01 diagnostics in REPORT/ROUND_RESULT, full validation paired errors, all three full geometry cells and global/local gradient distinction.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C10",
+      "verbatim": "R2 定位最有证据的失败原因：先排除实现、数据隔离、导出、词表、训练/评估协议、尺度/梯度路径、数值和工程错误，再分析机制。区分已验证故障、统计相关、未证实假设。至少列出支持证据、反例、替代解释、覆盖率与影响量；若不能确定根因，必须明确未知，并设计能排除假设的最小诊断，而非虚构原因。",
+      "criterion": "R2 discriminating diagnosis",
+      "threshold": "support, counterexample, alternatives, coverage and measured impact; unproven root cause stays unknown",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; training/validation-only research decisions",
+      "status": "PASS",
+      "observed": "PASS: exact export/vocabulary/protocol/population checked; full four-rank diagnostic establishes norm drift with local-direction counterexample, alternatives and unknown causal root.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C11",
+      "verbatim": "R3 冻结下一轮单一主要改动与可证伪预测：写清为何针对R2证据、数学定义、影响模块、保持不变项、训练前可验证判据、期望机制指标与Recall方向、失败判据。避免一次改变多个独立因素；若必须联合改动，明确只能归因于整个组合。不能仅凭上轮Recall低机械地更换参数。每轮方案/判据先登记，再写代码；权重/温度等原则上由训练侧统计或数学推导确定。",
+      "criterion": "R3 preregistered single change",
+      "threshold": "one main mathematical change; falsifiable pretraining and final predictions",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; training/validation-only research decisions",
+      "status": "PASS",
+      "observed": "PASS for R01: diagnosis/contract/forecasts preregistered before implementation; all preserved. Next distinct intervention must be separately preregistered.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C12",
+      "verbatim": "R4 先红后绿实现并独立验收：真实数学参考、数值稳定、硬SID与checkpoint重导出一致、曲率Loss经选码路径更新各层gate/Q/K/V/GNN、梯度冲突、数据/资产身份、四卡DDP与真实入口；实际machine entry和behavior_graph PASS后才允许正式训练。诊断短运行不冒充正式结果。",
+      "criterion": "R4 actual path verification",
+      "threshold": "TDD; independent reference; mutations; module VJPs/updates; four-rank and real entry; entry and graph PASS",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; training/validation-only research decisions",
+      "status": "PASS",
+      "observed": "PASS:126 candidate+64 framework, designated-assertion mutations, actual model loss/DDP/entry/export checks; evaluator red/green receipts preserved.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C13",
+      "verbatim": "R5 保持性能与数据完整：先复用已保存资产，缺失静态数据才创建并持久化到assets/注册manifest；test派生分析留在evaluation区。真实四卡inclusive连续至少30稳态epoch计时，包含周期工作、结构Loss、通信和优化器；目标0.4–0.5s，既有授权上限0.8s。不得通过隐藏耗时、减少数据、改变训练预算或冻结GNN达标。超过上限定位并修复，不能机械派发。",
+      "criterion": "R5 full-work performance",
+      "threshold": "at least 30 consecutive steady four-card epochs; inclusive mean <= 0.8 s; target 0.4-0.5 s; full data and GNN",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; training/validation-only research decisions",
+      "status": "PASS",
+      "observed": "PASS ceiling only: real inclusive epochs31–60 mean0.7026638151767354s; desired0.4–0.5s not met. No hidden work/data reduction.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C14",
+      "verbatim": "R6 完成当前候选Stage2 3000 epochs、合法硬SID（前三码碰撞<0.4且精确导出）及Stage3 150 epochs，按同一协议记录最终test，独立复算并绑定R2源码/SID/checkpoint/日志。保存验证结果、分层指标、逐用户配对、训练损失/梯度/时间等。无额外多种子或同机制追分重跑。",
+      "criterion": "R6 complete legally paired run",
+      "threshold": "3000/150 epochs; exact checkpoint export; first-three collision < 0.4; independent recompute and complete R2",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; final test only after legal complete training",
+      "status": "PASS",
+      "observed": "PASS: exact3000/150 full run; collision0.06568511815186884; independently reduced metrics; full117-object R2/102 pairing.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C15",
+      "verbatim": "R7 逐项验收与决策：对照预注册的预测，解释是否提高了真实L1前缀保持、几何保真、语义保真与推荐指标；若机制指标改善但Recall未改善，则该轮改善假设不成立。若 R@10 未过0.065，记录本轮最重要失败原因或剩余待证假设、下一轮方向和依据，更新本Issue进度后返回R1/R2继续。不得因单轮失败、负结果、复杂度或工作量以COMPLETED关闭。实际外部阻塞保留证据并等待解除。",
+      "criterion": "R7 continue negative rounds",
+      "threshold": "if final R@10 <= 0.065 return R1/R2; no same-mechanism score rerun",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; final test only after legal complete training",
+      "status": "PASS",
+      "observed": "PASS continuing-loop action: negative R01 recorded, full validation/global-gradient diagnosis completed, inactive live tree safely archived before new design. Not issue completion.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C16",
+      "verbatim": "建立单一持续迭代台账（round_id、父版本/源码SHA、变更、假设、诊断/验证数据身份、完整Stage2/3 run、结果、归档ID、结论、下一轮方向），每轮以评论汇报且持久化独立目录，不覆盖历史失败/负结果。保存所有可复用静态数据及manifest，保存每轮完整模型、SID、日志、分析表、指标、独立复算、准入证据及R2归档。正式候选源码与运行绑定，推送并核对远端SHA。每轮结果不删减，不把相关性称因果。",
+      "criterion": "Immutable continuing ledger",
+      "threshold": "all rounds, source hashes, evidence, comments, runs, failures and archive IDs preserved",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; training/validation-only research decisions",
+      "status": "PASS",
+      "observed": "PASS: source/evidence commit6cd32f054f139dccb8eee03f49afb08e59c50fa9 pushed, main SHAs equal; immutable registration/test snapshot/run/source/ledger/archives retained.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    },
+    {
+      "id": "C17",
+      "verbatim": "实际一次合法且完整的 Stage3 test R@10 > 0.065；源、输入、SID、checkpoint、3000/150 epochs、评估协议、独立复算和R2归档全部匹配；基础机制仍然保留；全部必要测试与真实准入通过；所有历史轮次与未达标原因、修复依据可追溯；如反复使用固定test，最终报告明确选择偏差及是否有独立确认。全部满足后才以COMPLETED关闭。",
+      "criterion": "Final conjunction",
+      "threshold": "every requested condition and R@10 > 0.065; complete source/SID/checkpoint/protocol/R2 pairing",
+      "data": {
+        "semantic": {
+          "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+          "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+        },
+        "train": {
+          "path": "results/stage0_build_parquet/train.parquet",
+          "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+        },
+        "validation": {
+          "path": "results/stage0_build_parquet/valid.parquet",
+          "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+        },
+        "test": {
+          "path": "results/stage0_build_parquet/test.parquet",
+          "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+        },
+        "asset_manifest": {
+          "path": "assets/manifest.json",
+          "sha256": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b"
+        }
+      },
+      "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; final test only after legal complete training",
+      "status": "FAIL",
+      "observed": "FAIL: final conjunction requires test_R@10>0.065; legal complete R01 is below it. No closure.",
+      "production_binding": "production_sources and evidence entries; source/evidence identity preserved in the immutable executed snapshot"
+    }
+  ],
+  "evidence": {
+    "TEST_RESULTS.json": {
+      "path": "results/research/issue256/rounds/r01/TEST_RESULTS.json",
+      "sha256": "341794a9afcf3367304131433fb52fb47be6fa15b4b9ab82284727cac67d792f"
+    },
+    "ADMISSION.json": {
+      "path": "results/research/issue256/rounds/r01/ADMISSION.json",
+      "sha256": "d93af887431db46bb6bc7493385091abf0d4d72598957b57302cc505c7ade796"
+    },
+    "VALIDATION.json": {
+      "path": "results/research/issue256/rounds/r01/VALIDATION.json",
+      "sha256": "e7bea94af2a3f6d7bf39d0c520fa5b6b05293ef811c5cffdaa3c8d9833e2fee7"
+    },
+    "MODULE_CHECKS.json": {
+      "path": "results/research/issue256/rounds/r01/MODULE_CHECKS.json",
+      "sha256": "94cdc2b1655d983ff630a717fbf40562d9145a960855eaa2334b58f9c6f58d88"
+    },
+    "PERFORMANCE.json": {
+      "path": "results/research/issue256/rounds/r01/PERFORMANCE.json",
+      "sha256": "a901d449a684c1bf23559cab999bdc3206676448dde1abce044ca3373c635305"
+    },
+    "PROFILE_SUMMARY.json": {
+      "path": "results/research/issue256/rounds/r01/PROFILE_SUMMARY.json",
+      "sha256": "fc6be29c24f2b9a98ea64475b7b477d9b6b72b870b6e2321907d64f9931f1d57"
+    },
+    "BUDGET_MUTATIONS.json": {
+      "path": "results/research/issue256/rounds/r01/BUDGET_MUTATIONS.json",
+      "sha256": "86dee901074dc79386205ea604b81b8a82328ca23916fc8b455a91fc77833cd7"
+    },
+    "MUTATIONS.json": {
+      "path": "results/research/issue256/rounds/r01/MUTATIONS.json",
+      "sha256": "4c414a0ba536c64328e79e5576d4b8b6b9b3ae17fc6bb2244d64e663456acd98"
+    },
+    "LAYER_MUTATIONS.json": {
+      "path": "results/research/issue256/rounds/r01/LAYER_MUTATIONS.json",
+      "sha256": "9b96ede3451eb81913dbda5bc31a54b19b19468f391618db3a585b53c1fb8056"
+    },
+    "FINAL_STAGE2.json": {
+      "path": "results/research/issue256/rounds/r01/FINAL_STAGE2.json",
+      "sha256": "85380a1ac8aca033d28ae16d102924d5ea2986cb8e5af4117af1b00c2236ce23"
+    },
+    "FINAL_STAGE3.json": {
+      "path": "results/research/issue256/rounds/r01/FINAL_STAGE3.json",
+      "sha256": "d9a226cb5be2e9f5a03ebfc6be4af03842c2030d927d2c6867807bcda23ca28d"
+    },
+    "STAGE2_RECONCILIATION.json": {
+      "path": "results/research/issue256/rounds/r01/STAGE2_RECONCILIATION.json",
+      "sha256": "b74470fbd55b9c472a8216b19bed04fb51314742d3c628958abb833ae41ce5be"
+    },
+    "STAGE3_RECONCILIATION.json": {
+      "path": "results/research/issue256/rounds/r01/STAGE3_RECONCILIATION.json",
+      "sha256": "befed5ef99eda94ff81eab4b66d914f62255f94a2458e84796366565ef81dd5c"
+    },
+    "R2_RECEIPT.json": {
+      "path": "results/research/issue256/rounds/r01/R2_RECEIPT.json",
+      "sha256": "66a3f30746676ce432e420f560e113f9a209d064699891865cad891ba757d874"
+    },
+    "recommendation_validation/VALIDATION.json": {
+      "path": "results/research/issue256/rounds/r01/recommendation_validation/VALIDATION.json",
+      "sha256": "1245fb69ca0c958d85d63642c15666370f6e1df075d51f1d4dc8683b7a2e19ff"
+    },
+    "recommendation_validation/VALIDATION_DIAGNOSIS.json": {
+      "path": "results/research/issue256/rounds/r01/recommendation_validation/VALIDATION_DIAGNOSIS.json",
+      "sha256": "2913227ac2617bc428b46ab9261ae1fe3c5f59923ac2813b03faef3aca50f4a0"
+    },
+    "final_global_gradient/GLOBAL_FINAL_GRADIENTS.json": {
+      "path": "results/research/issue256/rounds/r01/final_global_gradient/GLOBAL_FINAL_GRADIENTS.json",
+      "sha256": "2f8ab0d79bb61ea4989fe44c8c2f8ca981f6cdd2d1b00117134663afe94571ee"
+    },
+    "LIVE_ARCHIVE.json": {
+      "path": "results/research/issue256/rounds/r01/LIVE_ARCHIVE.json",
+      "sha256": "85a0b37acbd484954cfdea580f476513204b5cab2456bc266b0eaf25020142b7"
+    },
+    "ROUND_RESULT.json": {
+      "path": "results/research/issue256/rounds/r01/ROUND_RESULT.json",
+      "sha256": "337f64a6ab11a5e85e8d84792452ae042179e0c60d3c87ca4cb16cbadf19c420"
+    }
+  },
+  "execution_receipts": {
+    "predispatch": {
+      "path": "results/research/issue256/rounds/r01/CHECK_3.json",
+      "sha256": "89d3bf597d029186540ce607805fc64dc4faef5e88af740306b1abc8af6a08be"
+    },
+    "formal": {
+      "path": "results/research/issue256/rounds/r01/STAGE3_FINISHED.json",
+      "sha256": "d89ef370bbfb92ebc3efcd1f6116751ebd1c867fe92dfd509cd135d29ed0efda"
+    },
+    "test_reduction": {
+      "path": "results/research/issue256/rounds/r01/STAGE3_RECONCILIATION.json",
+      "sha256": "befed5ef99eda94ff81eab4b66d914f62255f94a2458e84796366565ef81dd5c"
+    },
+    "full_validation": {
+      "path": "results/research/issue256/rounds/r01/recommendation_validation/VALIDATION.json",
+      "sha256": "1245fb69ca0c958d85d63642c15666370f6e1df075d51f1d4dc8683b7a2e19ff"
+    },
+    "archive": {
+      "path": "results/research/issue256/rounds/r01/R2_RECEIPT.json",
+      "sha256": "66a3f30746676ce432e420f560e113f9a209d064699891865cad891ba757d874"
+    }
+  },
+  "closure_allowed": false
+}

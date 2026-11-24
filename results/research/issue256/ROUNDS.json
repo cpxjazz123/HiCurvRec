@@ -22,6 +22,26 @@
       "registration_snapshot": {"path":"rounds/r01/REGISTRATION.json","sha256":"e58b5ee5b657ceb35c8cdc82a4a4ed1e78e2e934ae47a36cda598577459b04c5"},
       "live_source_archive": "stage2_RQ-VAE/_archive/TIGER_module_budget_prefix_rq",
       "next_decision": "Continue R1/R2 from measured final global-gradient drift and complete validation pairing; register a distinct hypothesis after inactive-tree archival, never rerun R01"
+    },
+    {
+      "round_id": "r02",
+      "parent_evidence_commit": "6cd32f054f139dccb8eee03f49afb08e59c50fa9",
+      "parent_run_id": "issue256_r01_formal",
+      "parent_source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
+      "arm": "TIGER_periodic_budget_prefix_rq",
+      "run_id": "issue256_r02_formal",
+      "status": "PREREGISTERED",
+      "change": "refresh the same maximal global module-gradient norm budget at native50epoch block anchors1,51,...,2951",
+      "hypothesis": "reduce measured later original/curvature norm drift without new objectives or independently tuned frequency",
+      "contract_sha256": "f80ae1d7b07268cf53d189e10fb447bf483aef5da913f2fd0b1faf3230fc519b",
+      "diagnosis_sha256": "00f6eddc8b36a917d3912dddf35278ffd8eede5b448950328aa9ea62a448d2b7",
+      "data_identity": "INFRA.json",
+      "validation_policy": "EVALUATION.md",
+      "stage2": null,
+      "stage3": null,
+      "r2_archive": null,
+      "result": null,
+      "next_decision": "real60epoch four-rank red/green regression at epoch51, all inherited gates and inclusive31\u201360 performance before one formal run"
     }
   ]
 }
