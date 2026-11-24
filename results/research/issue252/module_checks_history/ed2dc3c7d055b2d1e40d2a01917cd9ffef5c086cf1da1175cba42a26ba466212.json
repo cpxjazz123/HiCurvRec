@@ -1,0 +1,3435 @@
+{
+  "schema": "genrec.issue252.module_checks/1",
+  "scope": "Actual one-epoch four-rank production diagnostic; not formal 3000-epoch completion",
+  "run_id": "issue252_validation_642254_578105758",
+  "command": [
+    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+    "-m",
+    "tools.issue252.launch_validation"
+  ],
+  "exit_code": 0,
+  "per_rank_batch": 1024,
+  "completed_epoch": 1,
+  "actual_losses": {
+    "0": {
+      "original_loss": 0.0006031423108652234,
+      "structural_loss": 0.45134642720222473,
+      "combined_loss": 0.0006151938578113914
+    },
+    "1": {
+      "original_loss": 0.0006005318718962371,
+      "structural_loss": 0.8349098563194275,
+      "combined_loss": 0.0006228250567801297
+    },
+    "2": {
+      "original_loss": 0.0005944516742601991,
+      "structural_loss": 1.1213579177856445,
+      "combined_loss": 0.0006243933457881212
+    },
+    "3": {
+      "original_loss": 0.0005894689238630235,
+      "structural_loss": 0.27878832817077637,
+      "combined_loss": 0.0005969129269942641
+    }
+  },
+  "source_hashes": {
+    "assets/manifest.json": "f479dac35c0b2f7783683d7827e87f815bc1c27f21382562b1e65731c451fdc6",
+    "results/research/issue252/CONTRACT.md": "4ca0c421b397b20e13c0ab970a7e69cdf9752b7a947fb4d8f5ee2986f843bb92",
+    "results/research/issue252/EXECUTION_CONTRACT.md": "7702f8c7955a2bdc198186c7433e520f11f590e558d6673a77c7b0ac15e9f51a",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/assignment_floor.py": "1a2c05e1af3dbcecf0a029749559ea72031d73af19ee60d2a539eaf86eef7c84",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/benchmark_entry.py": "b0508644a8f728984fb1422e3311f9314d63b5b3b97c72f2af389af1ecd29778",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/distances/__init__.py": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/distances/distance.py": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/geometry_validation_entry.py": "9a7b5f4cc2344a72e4d2b05a0003a6b56400f6b73638a32f9e3f0e54b421a48c",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/__init__.py": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/_pairs.py": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/codebook.py": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/commitment.py": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/quantization.py": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/reconstruction.py": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/__init__.py": "fc51b6b47b052833e3bb249a00a581da6a6f27bb4905fb58237a2865354c0f81",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/attention.py": "a227155453e1d7c79cb9cf5c59a8a5e3f7defa88895d784ae499a34d25d42ac6",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/curvature.py": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/estimator.py": "bc7633a3aed6f3060a0180d99cb50bf6035070ef9f096447eb5289389ce4c024",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/geometry.py": "62ee1328ec2504e787bdea6e10b1393e055f86d10c271ee311a6af4346dc4c8f",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/layers.py": "9a61bd93018711972f6562176f5b46ec16908c6900102890b188174289bea2fa",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/mechanism.py": "b505d4a9498b9c0ea5d5544fc74f1f97ce0494f81a1cb88bc684f7e4d1278bee",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/model.py": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/provenance.py": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/selection.py": "aaf40e7d14eced220dae00f6f2aa14cb33f5d911c41fb94b8d868dcecf32d524",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py": "6afb386e5a70718db40235bdde1726323a1dbc41df668399898bec3cdd9651fb",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure_gate.py": "6bd4fa165e5c93a52e422bb473d03cf2bd53c15b9a5bce15488fe4990c1e325f",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/utils.py": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/optimized_profile_entry.py": "f5a3ada16d23a9d72b7f3b0b9cea48e1770ade82573a384408e73190b8226597",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/profile_entry.py": "0ce1ba101fd8f92e61dd377881209ed13838b489ef7f71bac470af70cfcdb280",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/sparse_validation_entry.py": "41ae578e83397df5a47057011a7a4adfac2d0917dd71d8d168175969fdc29118",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/steady_profile_entry.py": "002898d114b8a36ce62ea6f2ef43e762c6b8360ad848b06ff8c4305d776588b3",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/reference.py": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_attention.py": "bb7d7f20102955b4c6fe626d531e37c23911118ce15d9cf727007fade0dcb76e",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_attention_pipeline.py": "3a0c3049f5126090473301f57dd2390ff1bcbd6d3ff0a7c3807a702ed5740237",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_curvature_loss.py": "d260562cb8990411a1680ac0792006db787619ddafcc5a6c54d09fa13142f633",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_estimator.py": "07d4cb1a0841b766d0e5220a2be7b7b66c5abdfe3d00e9c43e38fa59ba991531",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_execution.py": "16dcde57cdf548e1f3411f14197f60556617f7c42a00372c6e1b946fde02d223",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_geometry_memory.py": "8b7465d359bee23c6676949756e06b19f5faa05631c91f5eccff3672304ad712",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_known_answers.py": "4eda7c1d194193714be34b548454af0eb4a36a418ee8f90c24d7039921090938",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py": "d348fb86b3576709d3f49d339550edc47d83d5ea27899d99cc26868ebea3f6e5",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mutations.py": "21334532c5a63247d09e0d404c9fd5e300046f13f0e52f81c280db60f5cea3cf",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_provenance.py": "eb4916774252becccd55657166fdec5b51f6e6f6aeac20d4f0b3fd67ab37dc4b",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_reference.py": "f4fb492aff0301419ee6fe0ee06ca7943c639b552e3d150a2f1cd45d3bad7cc2",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py": "3a00d982fbfee8ea75ffd8d33f449e63aa3caa940fd516c19e2fd468dc898a45",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_structure.py": "3281132f56c7d015eb365bcfb668212f6a8cb01d39c94b976693654afa44befa",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_static_means.py": "8bac4e77d50ce1e1fd6a2dec09cd3beb3bada9393c9f293210108f234b4a690a",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_structure.py": "1d642b83be753213453ab6262c01a251ec4cf08ec5348954428e7de9114e6b0f",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/train_config.py": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/train_rqvae.py": "0789043e3c36e4aa217ca3f8ac784336a84c20a7cebf5cd7d41718b3f4eee9d4",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/validation_entry.py": "8c2a03e17068e3a6c6064b30cca21ca1f54617cdf061c0349c92554de6f67283",
+    "tools/graph_infra/__init__.py": "b86861c93434621cff070d024b12f8c6f9d5a5e77a8deea54089645a3a7226ff",
+    "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+    "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+    "tools/issue252/archive_audit.py": "ab846964ff643af7aeb15a58e126eecb26f1c5e205103888aab2a1d55d526fb1",
+    "tools/issue252/cuda_math.py": "7e3e8d54f89eb64836d3b730bf30c44618c3e98f07952dd41582d1082c1c800b",
+    "tools/issue252/ego_operators.py": "251c2b8ab962c63f344504186ba5a749256f2bec066d2bdb46214e1fdaae0656",
+    "tools/issue252/launch_validation.py": "d9a1cda03c04dfb1b1cf6a2039d3820e691a37f737af5bfc6dd0fdd3ec0f69a5",
+    "tools/issue252/performance.py": "f470262eca9682a31f3d32631a55438c99f2f2c85845d55d138aeb183db45a69",
+    "tools/issue252/sparse_adjoint.py": "698791229d29742b72a85282f723d9b11b0b4373f7cf6e8d174fda69f4fe32a3",
+    "tools/issue252/static_features.py": "c1402d4d243b516ca609dfd8e03cde8ee57d1df0d1bac33aa5edd48906bead07",
+    "tools/research/stage2/__init__.py": "7404443b2323f698ba2a8c4a96006b8fe74ac1b6a2b896da31f05fea92b78006",
+    "tools/research/stage2/anticollapse/__init__.py": "36b0be98738fc34ea93f2d5792f7e8fb8991eadc948bc9a6e910ce94efe1eabf",
+    "tools/research/stage2/anticollapse/artifact.py": "e75bde5903a50cd2b90a3198a1ec0ca2b944147b742381068f72aa2c20d0ae4c",
+    "tools/research/stage2/anticollapse/floor.py": "1a2c05e1af3dbcecf0a029749559ea72031d73af19ee60d2a539eaf86eef7c84",
+    "tools/research/stage2/anticollapse/patch_tree.py": "bffbc2b3a501956f5538dfce9b42c90d89e94a03b645eb651d0e449b4f9f0a5d",
+    "tools/research/stage2/bootstrap.py": "ced38a908347de56e00054b4c632185ce71d65f8dadd3245a7569952ff0700d2",
+    "tools/research/stage2/checks.py": "30dd5c7c93a1ee21432fa0b29841444f9d390edcc71d48a5b8ba53fed41c0ef7",
+    "tools/research/stage2/collapse_watch.py": "1a2e68fda81fb7f5b827f296d421add6b861cad989a862d4b3220a979511182e",
+    "tools/research/stage2/contract.py": "bf82fd31970c7f99de7b377f0ebb11e3cb82fb77661d18be691c04c5c5f09a3c",
+    "tools/research/stage2/ddp_probe.py": "29af630d7dc747190c1b8836ff8dff02f9aa3b7220cf3dbc3d6c78e841cdb2f2",
+    "tools/research/stage2/export_check.py": "3b8eb3c95553d626dc8d4c1f69896d909df1d4f99f6e7ca615e31227fabc9299",
+    "tools/research/stage2/export_policy.py": "cbf7841d0a7cefe16b26d4b8862f951c6f3b8d1fcf015fa937ee2fafecf8cba4",
+    "tools/research/stage2/gpu_alloc.py": "9c9d46b4e0df3b9756394eaa9d26a8381ca5d8b0e86a547fd6e0551d0f3948b6",
+    "tools/research/stage2/graph_batches.py": "99d3e5f90869d340beb30dbe15609e6a387322910a6b1df6ac36106c94622709",
+    "tools/research/stage2/graph_contract.py": "f2a6c9cd8d59f8412856a2d222ce4a5af5dce7e3fb80311825899a87d7972481",
+    "tools/research/stage2/launcher.py": "61d32bd6d1100d1903b6f934480a478630fe647f626510b66cc964720b28b85a",
+    "tools/research/stage2/sid_quality.py": "ba9e95057ce98823e01da6b5d2cebc700e016301b39f868b5ac947da8d81e7b8",
+    "tools/stage2/server.py": "1152c3360ddebd5eb161ab1111245a131e338e4058f49f74c215b43922cb96bb"
+  },
+  "rank_reports": [
+    {
+      "path": "results/research/issue252/validation/issue252_validation_642254_578105758/rank_0.json",
+      "sha256": "b4a273eccf83745700a73d3001f62969a273b18beb27dfba4aad527b92aad9c1"
+    },
+    {
+      "path": "results/research/issue252/validation/issue252_validation_642254_578105758/rank_1.json",
+      "sha256": "5f6acb2cf43153030b17724ab2fd9b20ffaa0476e35f02dc7f29c4eadc355e4e"
+    },
+    {
+      "path": "results/research/issue252/validation/issue252_validation_642254_578105758/rank_2.json",
+      "sha256": "14e15bc03cc0b89cece8b8e9ebb0b9c72b94d838ce7577afd23f5c7bbe37155d"
+    },
+    {
+      "path": "results/research/issue252/validation/issue252_validation_642254_578105758/rank_3.json",
+      "sha256": "dd9a70c50b7178e5625f2f614c9d1cec42b8d73886df6a4adf34955222fdd594"
+    }
+  ],
+  "forward_observations": {
+    "0": {
+      "encoder.mlp.1": {
+        "calls": 6,
+        "finite": true
+      },
+      "encoder.mlp.4": {
+        "calls": 6,
+        "finite": true
+      },
+      "encoder.mlp.7": {
+        "calls": 6,
+        "finite": true
+      },
+      "encoder.mlp.10": {
+        "calls": 6,
+        "finite": true
+      },
+      "structure.tokens.layers.1.self_linear": {
+        "calls": 8,
+        "finite": true
+      },
+      "structure.tokens.layers.1.incoming": {
+        "calls": 8,
+        "finite": true
+      },
+      "structure.tokens.layers.1.outgoing": {
+        "calls": 8,
+        "finite": true
+      },
+      "structure.attention.key": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.attention.value": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.attention.score.0": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.attention.score.2": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.attention": {
+        "calls": 4,
+        "finite": true
+      },
+      "decoder.mlp.1": {
+        "calls": 2,
+        "finite": true
+      },
+      "decoder.mlp.4": {
+        "calls": 2,
+        "finite": true
+      },
+      "decoder.mlp.7": {
+        "calls": 2,
+        "finite": true
+      },
+      "decoder.mlp.10": {
+        "calls": 2,
+        "finite": true
+      },
+      "rq.vq_layers.0.embed": {
+        "calls": 1,
+        "finite": true
+      },
+      "rq.vq_layers.1.embed": {
+        "calls": 1,
+        "finite": true
+      },
+      "rq.vq_layers.2.embed": {
+        "calls": 1,
+        "finite": true
+      }
+    },
+    "1": {
+      "encoder.mlp.1": {
+        "calls": 4,
+        "finite": true
+      },
+      "encoder.mlp.4": {
+        "calls": 4,
+        "finite": true
+      },
+      "encoder.mlp.7": {
+        "calls": 4,
+        "finite": true
+      },
+      "encoder.mlp.10": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.tokens.layers.1.self_linear": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.tokens.layers.1.incoming": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.tokens.layers.1.outgoing": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.attention.key": {
+        "calls": 2,
+        "finite": true
+      },
+      "structure.attention.value": {
+        "calls": 2,
+        "finite": true
+      },
+      "structure.attention.score.0": {
+        "calls": 2,
+        "finite": true
+      },
+      "structure.attention.score.2": {
+        "calls": 2,
+        "finite": true
+      },
+      "structure.attention": {
+        "calls": 2,
+        "finite": true
+      },
+      "decoder.mlp.1": {
+        "calls": 1,
+        "finite": true
+      },
+      "decoder.mlp.4": {
+        "calls": 1,
+        "finite": true
+      },
+      "decoder.mlp.7": {
+        "calls": 1,
+        "finite": true
+      },
+      "decoder.mlp.10": {
+        "calls": 1,
+        "finite": true
+      },
+      "rq.vq_layers.0.embed": {
+        "calls": 1,
+        "finite": true
+      },
+      "rq.vq_layers.1.embed": {
+        "calls": 1,
+        "finite": true
+      },
+      "rq.vq_layers.2.embed": {
+        "calls": 1,
+        "finite": true
+      }
+    },
+    "2": {
+      "encoder.mlp.1": {
+        "calls": 4,
+        "finite": true
+      },
+      "encoder.mlp.4": {
+        "calls": 4,
+        "finite": true
+      },
+      "encoder.mlp.7": {
+        "calls": 4,
+        "finite": true
+      },
+      "encoder.mlp.10": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.tokens.layers.1.self_linear": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.tokens.layers.1.incoming": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.tokens.layers.1.outgoing": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.attention.key": {
+        "calls": 2,
+        "finite": true
+      },
+      "structure.attention.value": {
+        "calls": 2,
+        "finite": true
+      },
+      "structure.attention.score.0": {
+        "calls": 2,
+        "finite": true
+      },
+      "structure.attention.score.2": {
+        "calls": 2,
+        "finite": true
+      },
+      "structure.attention": {
+        "calls": 2,
+        "finite": true
+      },
+      "decoder.mlp.1": {
+        "calls": 1,
+        "finite": true
+      },
+      "decoder.mlp.4": {
+        "calls": 1,
+        "finite": true
+      },
+      "decoder.mlp.7": {
+        "calls": 1,
+        "finite": true
+      },
+      "decoder.mlp.10": {
+        "calls": 1,
+        "finite": true
+      },
+      "rq.vq_layers.0.embed": {
+        "calls": 1,
+        "finite": true
+      },
+      "rq.vq_layers.1.embed": {
+        "calls": 1,
+        "finite": true
+      },
+      "rq.vq_layers.2.embed": {
+        "calls": 1,
+        "finite": true
+      }
+    },
+    "3": {
+      "encoder.mlp.1": {
+        "calls": 4,
+        "finite": true
+      },
+      "encoder.mlp.4": {
+        "calls": 4,
+        "finite": true
+      },
+      "encoder.mlp.7": {
+        "calls": 4,
+        "finite": true
+      },
+      "encoder.mlp.10": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.tokens.layers.1.self_linear": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.tokens.layers.1.incoming": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.tokens.layers.1.outgoing": {
+        "calls": 4,
+        "finite": true
+      },
+      "structure.attention.key": {
+        "calls": 2,
+        "finite": true
+      },
+      "structure.attention.value": {
+        "calls": 2,
+        "finite": true
+      },
+      "structure.attention.score.0": {
+        "calls": 2,
+        "finite": true
+      },
+      "structure.attention.score.2": {
+        "calls": 2,
+        "finite": true
+      },
+      "structure.attention": {
+        "calls": 2,
+        "finite": true
+      },
+      "decoder.mlp.1": {
+        "calls": 1,
+        "finite": true
+      },
+      "decoder.mlp.4": {
+        "calls": 1,
+        "finite": true
+      },
+      "decoder.mlp.7": {
+        "calls": 1,
+        "finite": true
+      },
+      "decoder.mlp.10": {
+        "calls": 1,
+        "finite": true
+      },
+      "rq.vq_layers.0.embed": {
+        "calls": 1,
+        "finite": true
+      },
+      "rq.vq_layers.1.embed": {
+        "calls": 1,
+        "finite": true
+      },
+      "rq.vq_layers.2.embed": {
+        "calls": 1,
+        "finite": true
+      }
+    }
+  },
+  "forward_scope_note": "Hooks observe actual called modules. Exact first-affine fusion accesses original Linear parameters directly; whole GNN token outputs are observed, not falsely reported as calls to bypassed Linear wrappers. Independent first-affine output and every-parameter Jacobian tests are separately source-bound.",
+  "modules": [
+    {
+      "module": "encoder",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.00012434873403960396
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0014461404606624158
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 8.865162793077076e-05
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 9.003657484656214
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.00012434873403960396
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0014461404606624158
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 9.39644131608267e-05
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 10.085144418332867
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.00012434873403960396
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0014461404606624158
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 9.150154666491154e-05
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 2.9649846477325723
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.00012434873403960396
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0014461404606624158
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 9.30564846587825e-05
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 3.1132569417856337
+          }
+        }
+      }
+    },
+    {
+      "module": "decoder",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.00142953774488127
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0014774244014033498
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0014105905656984833
+          },
+          "real_structural_loss_vjp": {
+            "absent": true,
+            "none": 8,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.00142953774488127
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0014774244014033498
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0014138802749085624
+          },
+          "real_structural_loss_vjp": {
+            "absent": true,
+            "none": 8,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.00142953774488127
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0014774244014033498
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0014010597478919915
+          },
+          "real_structural_loss_vjp": {
+            "absent": true,
+            "none": 8,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.00142953774488127
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0014774244014033498
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.001401233918078621
+          },
+          "real_structural_loss_vjp": {
+            "absent": true,
+            "none": 8,
+            "zero": 0,
+            "tensors": 8,
+            "finite": true,
+            "norm": 0.0
+          }
+        }
+      }
+    },
+    {
+      "module": "GNN.input",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.5603931805910914e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.8924711125366228e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 8.119135132392336e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.025322386113086078
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.5603931805910914e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.8924711125366228e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 6.612260690495195e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.003564120423523673
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.5603931805910914e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.8924711125366228e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 7.705086258150725e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.0040195692332385515
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.5603931805910914e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.8924711125366228e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.762663897442688e-07
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.0026731377118321235
+          }
+        }
+      }
+    },
+    {
+      "module": "sharedKey",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.2753949229462863e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 2.4878661706159167e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 8.354968553346875e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.01516612932713322
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.2753949229462863e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 2.4878661706159167e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 4.484095230231467e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.002001974031282897
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.2753949229462863e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 2.4878661706159167e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 6.30932958976988e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.0020590161699667975
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.2753949229462863e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 2.4878661706159167e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.3593176266587678e-07
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.002103540262847179
+          }
+        }
+      }
+    },
+    {
+      "module": "sharedValue",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 3.992108284036022e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.0604536494656386e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.0910041634743692e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.004359452700905673
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 3.992108284036022e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.0604536494656386e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 2.4472207567193536e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.00048085726329262426
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 3.992108284036022e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.0604536494656386e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 2.2844760699813185e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.001295549591693012
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 3.992108284036022e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.0604536494656386e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 5.4209006745033386e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.0011352213323220957
+          }
+        }
+      }
+    },
+    {
+      "module": "sharedScore",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 5.5103011627436937e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 1.3598100971765724e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 1.4403664518185528e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 0.006056311215022557
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 5.5103011627436937e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 1.3598100971765724e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 3.2679708394053185e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 0.0006408815300446426
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 5.5103011627436937e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 1.3598100971765724e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 3.03105628997043e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 0.0016970202439936066
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 5.5103011627436937e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 1.3598100971765724e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 7.33745303580698e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 4,
+            "finite": true,
+            "norm": 0.0014792826264978113
+          }
+        }
+      }
+    },
+    {
+      "module": "GNN.layers.0.self_linear",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.6157949387680317e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 2.2650418658432173e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 9.01764363149731e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.018523506194668398
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.6157949387680317e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 2.2650418658432173e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 5.5570217103625416e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.001980621587321474
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.6157949387680317e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 2.2650418658432173e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 6.93134496344846e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.0027201394262995338
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.6157949387680317e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 2.2650418658432173e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.309760269482485e-07
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.0014590435611641956
+          }
+        }
+      }
+    },
+    {
+      "module": "GNN.layers.0.incoming",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.5299510378965645e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.0369830083682506e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 6.664158878163284e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.019501711018818906
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.5299510378965645e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.0369830083682506e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 6.254459443182397e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.002696379279309496
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.5299510378965645e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.0369830083682506e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.340472943001114e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.003218174089078341
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.5299510378965645e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.0369830083682506e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.589150043629581e-07
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.002004089813864168
+          }
+        }
+      }
+    },
+    {
+      "module": "GNN.layers.0.outgoing",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.495029330012936e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.0372545450210824e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 6.791312629234957e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0199965120245849
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.495029330012936e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.0372545450210824e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.933371953830624e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0019712718289685164
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.495029330012936e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.0372545450210824e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.377882820065117e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0031981417169755053
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.495029330012936e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.0372545450210824e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.566631678700733e-07
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0019118177700889938
+          }
+        }
+      }
+    },
+    {
+      "module": "GNN.layers.1.self_linear",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 9.624936397604077e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 2.1483524667424653e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 5.669949295832851e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.010455900902942926
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 9.624936397604077e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 2.1483524667424653e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 3.351260836095877e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.001292341123509344
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 9.624936397604077e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 2.1483524667424653e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 4.60108750471999e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.0019960585872635353
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 9.624936397604077e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 2.1483524667424653e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 1.0328268769124337e-07
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 2,
+            "finite": true,
+            "norm": 0.0015582210053025083
+          }
+        }
+      }
+    },
+    {
+      "module": "GNN.layers.1.incoming",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.169804898144303e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.7621642849432716e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.146763949835545e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.008553135305116227
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.169804898144303e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.7621642849432716e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 3.305991874805826e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0011777873542411904
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.169804898144303e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.7621642849432716e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 3.594474079151605e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0018679125089857886
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.169804898144303e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.7621642849432716e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 8.532501467385205e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.001431895950245626
+          }
+        }
+      }
+    },
+    {
+      "module": "GNN.layers.1.outgoing",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.466979855027308e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.815555743099863e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.380693016771527e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.008464890382118891
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.466979855027308e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.815555743099863e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 3.3475652067544025e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.000978644678190868
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.466979855027308e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.815555743099863e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 3.696146661090331e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0017326710815232667
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.466979855027308e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.815555743099863e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 8.605883088996008e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0015663549788832087
+          }
+        }
+      }
+    },
+    {
+      "module": "codebook0",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.60890335926801e-05
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0002782219806509424
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.60771282228363e-05
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.8169916646382265
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.60890335926801e-05
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0002782219806509424
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.5125053753905955e-05
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.663955692153194
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.60890335926801e-05
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0002782219806509424
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.721294175207742e-05
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.9371938567742817
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.60890335926801e-05
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0002782219806509424
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.3052654420111865e-05
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.7250807581173495
+          }
+        }
+      }
+    },
+    {
+      "module": "codebook1",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00014324051785192165
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00026706405278181225
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0001109385013161849
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 10.926811498883433
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00014324051785192165
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00026706405278181225
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00010404099512415192
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 17.030581582763688
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00014324051785192165
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00026706405278181225
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00011992830402204016
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.2810907937359817
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00014324051785192165
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00026706405278181225
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00011313635013872765
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 5.759816633741663
+          }
+        }
+      }
+    },
+    {
+      "module": "codebook2",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00011358317057196244
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00027016207009733295
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.753610800876228e-05
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 13.672062618255618
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00011358317057196244
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00027016207009733295
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 8.124098492766105e-05
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 14.760644605903076
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00011358317057196244
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00027016207009733295
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.353338481607992e-05
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.017454374792384
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00011358317057196244
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00027016207009733295
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 8.134481817295897e-05
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.2610129350031825
+          }
+        }
+      }
+    },
+    {
+      "module": "Query0",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.04087557626855e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 9.231126646361221e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.558713770416556e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.007815707408778743
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.04087557626855e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 9.231126646361221e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.3141202778997653e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0012903898071124594
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.04087557626855e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 9.231126646361221e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 3.467857050453832e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0012111809146089754
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.04087557626855e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 9.231126646361221e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 9.311046559545586e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.001173268721370353
+          }
+        }
+      }
+    },
+    {
+      "module": "Query1",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.9843802094675945e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 5.8552552459991065e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.690386007799885e-09
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0043216624504010485
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.9843802094675945e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 5.8552552459991065e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.1788208110668542e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0005800868161811208
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.9843802094675945e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 5.8552552459991065e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.808832899971109e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0004246250556187225
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.9843802094675945e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 5.8552552459991065e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 3.6677900799183236e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0006466281168370179
+          }
+        }
+      }
+    },
+    {
+      "module": "Query2",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 5.0912351696271244e-09
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.4903888700735934e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 3.261786454694572e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0040222664847711885
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 5.0912351696271244e-09
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.4903888700735934e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.9221755560127766e-09
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0002622100328033667
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 5.0912351696271244e-09
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.4903888700735934e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.1769893177227596e-09
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0003576345092613187
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 5.0912351696271244e-09
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.4903888700735934e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.59963978667917e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.00030340858444512627
+          }
+        }
+      }
+    },
+    {
+      "module": "Query3",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.2723706444650964e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 3.153999078995681e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 3.997748844312002e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0035147531865055946
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.2723706444650964e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 3.153999078995681e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.5612407927053925e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0013710380386492713
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.2723706444650964e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 3.153999078995681e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 6.445786145666212e-09
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0010274456173087572
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.2723706444650964e-08
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 3.153999078995681e-06
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.1965021387061257e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0013434007397705278
+          }
+        }
+      }
+    },
+    {
+      "module": "Query4",
+      "ranks": {
+        "0": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.0296490311532331e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.0572230075301877e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 5.6581152875655644e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.011281100114561885
+          }
+        },
+        "1": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.0296490311532331e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.0572230075301877e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 2.926670395920695e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0004933894394860567
+          }
+        },
+        "2": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.0296490311532331e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.0572230075301877e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 4.80821247015826e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0003995160905839262
+          }
+        },
+        "3": {
+          "actual_total_loss_gradient": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.0296490311532331e-07
+          },
+          "actual_optimizer_update": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 1.0572230075301877e-05
+          },
+          "real_original_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 7.205326535409961e-08
+          },
+          "real_structural_loss_vjp": {
+            "absent": false,
+            "none": 0,
+            "zero": 0,
+            "tensors": 1,
+            "finite": true,
+            "norm": 0.0004062523030962981
+          }
+        }
+      }
+    }
+  ],
+  "completed_parameter_hashes": [
+    "2ba2d851c67a4c75bc4905b389dcb64020ed4c92505cb4ccfe7ca44811f02fce",
+    "2ba2d851c67a4c75bc4905b389dcb64020ed4c92505cb4ccfe7ca44811f02fce",
+    "2ba2d851c67a4c75bc4905b389dcb64020ed4c92505cb4ccfe7ca44811f02fce",
+    "2ba2d851c67a4c75bc4905b389dcb64020ed4c92505cb4ccfe7ca44811f02fce"
+  ],
+  "actual_hard_q_decode_exact": true,
+  "switches": {
+    "0": {
+      "both_on": {
+        "weights_sha256": "6816f0dbc2142b87d4a94713c0b8bc215431c8e68e32e5052fb3ecc9af19aafc",
+        "cost_sha256": "4915358c0e0a588dbe4c4a745578639967c6dba2281485e9bfaa8998fdc5fa1d",
+        "tokens_sha256": "1e170d5235a297576bb950db188d45549bf28882adc2e55d8d75a6d9c5368d36",
+        "hard_q_decode_exact": true
+      },
+      "behavior_off": {
+        "weights_sha256": "ca18356b4de15379ba6c41eed3f3f569f080d50c90e8344f7cf841b5f7e8d13b",
+        "cost_sha256": "4286b8ae96975c72f689c302c1e4189992572e38ee583af58be1ef633bd1c3f1",
+        "tokens_sha256": "d322c40e3b08c73324d9641d98885a1e87b4d57f0b54add8b09b369ba96805dc",
+        "hard_q_decode_exact": true,
+        "cost_delta_norm": 12.103854179382324,
+        "changed_hard_items": 58
+      },
+      "curvature_off": {
+        "weights_sha256": "112606896c68109f3ca5d8791b29e5a9b78cea83f77cfc3ea7ba62761e6b51a2",
+        "cost_sha256": "daecd111189eb1ef9a49660191117e45d5c50deed5c5b6140245413dc4d38d5f",
+        "tokens_sha256": "a09520368761e40cf8fe0b95fb05bdaf15bcbce4ae994bfb2ee1617e8c627c62",
+        "hard_q_decode_exact": true,
+        "cost_delta_norm": 627.696533203125,
+        "changed_hard_items": 265
+      },
+      "both_off": {
+        "weights_sha256": "ca18356b4de15379ba6c41eed3f3f569f080d50c90e8344f7cf841b5f7e8d13b",
+        "cost_sha256": "77ce782ffb7973779269f1ece7b343a3f6c41ee7d53f6809048eb7fc5be541cd",
+        "tokens_sha256": "a09520368761e40cf8fe0b95fb05bdaf15bcbce4ae994bfb2ee1617e8c627c62",
+        "hard_q_decode_exact": true,
+        "cost_delta_norm": 627.696533203125,
+        "changed_hard_items": 265
+      },
+      "query_intervention": {
+        "weight_delta_norm": 0.25939059257507324,
+        "cost_delta_norm": 13.31369400024414,
+        "changed_hard_items": 71
+      }
+    },
+    "1": {
+      "both_on": {
+        "weights_sha256": "30b5bb55d1ed997ee4189b902a4d84f2976889fe30eaecc690eec751ecf92393",
+        "cost_sha256": "9d55d519dde34d889337384b535a9dc3dbb87e376a8d1052b3bde440255ecb1b",
+        "tokens_sha256": "4bff4a859b90d1b39383eb203e983f1ac0b10bca42caf51d7f18b733959308fc",
+        "hard_q_decode_exact": true
+      },
+      "behavior_off": {
+        "weights_sha256": "ca18356b4de15379ba6c41eed3f3f569f080d50c90e8344f7cf841b5f7e8d13b",
+        "cost_sha256": "546db26e545248c59d358b94c2e9438b7980ac63e99e8550db8d0aa9770aa8df",
+        "tokens_sha256": "3f83e007f1b3c64391e20dd3856db786ee4d032e54c17ca25a530f0f2499a4a2",
+        "hard_q_decode_exact": true,
+        "cost_delta_norm": 12.625594139099121,
+        "changed_hard_items": 30
+      },
+      "curvature_off": {
+        "weights_sha256": "67775370ef42da7ed85b4aff62d9cf8ffe819548bd3e6db4abc6b4f7638d301b",
+        "cost_sha256": "f4f53a438e6481fceddd7c8c18f8542d64cb75e7c2308430b733fccfd5b3a2d5",
+        "tokens_sha256": "17dfa65746309fb9065d218e8f566c45334fd506ab4639bb99329302a806fd32",
+        "hard_q_decode_exact": true,
+        "cost_delta_norm": 626.80029296875,
+        "changed_hard_items": 252
+      },
+      "both_off": {
+        "weights_sha256": "ca18356b4de15379ba6c41eed3f3f569f080d50c90e8344f7cf841b5f7e8d13b",
+        "cost_sha256": "017d9dd39cbe832a418d6b6c3287d7559d31af47492fc1d1f7c670fb0c0c4684",
+        "tokens_sha256": "17dfa65746309fb9065d218e8f566c45334fd506ab4639bb99329302a806fd32",
+        "hard_q_decode_exact": true,
+        "cost_delta_norm": 626.80029296875,
+        "changed_hard_items": 252
+      },
+      "query_intervention": {
+        "weight_delta_norm": 0.26456689834594727,
+        "cost_delta_norm": 13.980095863342285,
+        "changed_hard_items": 37
+      }
+    },
+    "2": {
+      "both_on": {
+        "weights_sha256": "6707924759dd876b2d97dec3a8b42c8bb43a4d2f0b5f4f647bed62dc0e679fed",
+        "cost_sha256": "8b419952697abf43d0e101bd2e5e7cce65fe24e804b79e52de3854a6beef3798",
+        "tokens_sha256": "d90aa56ca90c14c76949063db985d7cec665a4c50d046e69f9210e3b35cc061d",
+        "hard_q_decode_exact": true
+      },
+      "behavior_off": {
+        "weights_sha256": "ca18356b4de15379ba6c41eed3f3f569f080d50c90e8344f7cf841b5f7e8d13b",
+        "cost_sha256": "ec569860c3fd1e844942d4191a8a80830429dbe842dd5c50fd4adf4e05b41b57",
+        "tokens_sha256": "94b16ce1b51a067d3a12c0967f10ffed6df5690ee7b305ba949e719f4c0016ff",
+        "hard_q_decode_exact": true,
+        "cost_delta_norm": 12.154593467712402,
+        "changed_hard_items": 47
+      },
+      "curvature_off": {
+        "weights_sha256": "06ba1a8ac804ce583c1d295b804f85ad5879fcc1a27e60ab7709a55ddd0e48b3",
+        "cost_sha256": "5b13a9041f2e85ecce35700a32b2a53d082d85ddc37a774fd8491cf32e5ce14e",
+        "tokens_sha256": "33e101f8df527365dc69fd04974050755333c47e282ad749700a4a24b5442cb1",
+        "hard_q_decode_exact": true,
+        "cost_delta_norm": 622.1351928710938,
+        "changed_hard_items": 254
+      },
+      "both_off": {
+        "weights_sha256": "ca18356b4de15379ba6c41eed3f3f569f080d50c90e8344f7cf841b5f7e8d13b",
+        "cost_sha256": "d50276b62c9cdf0fcc20a2fa51aca3d92c8a8051fd8c8e1eb1b0d18a864f169e",
+        "tokens_sha256": "c505ec6004023ef6aa0497abc342a06849fb762b108f7c4c32091da3dd4588c7",
+        "hard_q_decode_exact": true,
+        "cost_delta_norm": 622.1351928710938,
+        "changed_hard_items": 252
+      },
+      "query_intervention": {
+        "weight_delta_norm": 0.2723024785518646,
+        "cost_delta_norm": 14.976061820983887,
+        "changed_hard_items": 68
+      }
+    },
+    "3": {
+      "both_on": {
+        "weights_sha256": "78813854dece3bfc047768520771e7235a5701dd2ab52113c05959b2ada76f4d",
+        "cost_sha256": "a5fcb6a1d0652e76bd4a19e5c46d3cdaee90067798ebbf9c36e19c68ed62fe8c",
+        "tokens_sha256": "fcb868ee36d0843fab38fc28f902fe1804e315363f07c250943daceef65e64fc",
+        "hard_q_decode_exact": true
+      },
+      "behavior_off": {
+        "weights_sha256": "ca18356b4de15379ba6c41eed3f3f569f080d50c90e8344f7cf841b5f7e8d13b",
+        "cost_sha256": "daa0f7e95b8ce66eeda19536df55c1f4cabd8c2db4ff1c9ad14633d88177f662",
+        "tokens_sha256": "d4fbcb8db5f88dab41fce7f733ee70d63ca2ae432c428a861e97a469574367b0",
+        "hard_q_decode_exact": true,
+        "cost_delta_norm": 11.741636276245117,
+        "changed_hard_items": 23
+      },
+      "curvature_off": {
+        "weights_sha256": "78813854dece3bfc047768520771e7235a5701dd2ab52113c05959b2ada76f4d",
+        "cost_sha256": "412368f03d78a21e7931f89c9b741b78eaf8a0eb54fc00272a9795e515198533",
+        "tokens_sha256": "27035fab8ce4f5526488815b72c665e709451b0835247905bd4e94f1c81b7cf1",
+        "hard_q_decode_exact": true,
+        "cost_delta_norm": 626.2841796875,
+        "changed_hard_items": 253
+      },
+      "both_off": {
+        "weights_sha256": "ca18356b4de15379ba6c41eed3f3f569f080d50c90e8344f7cf841b5f7e8d13b",
+        "cost_sha256": "e8ba4566b46df88495753a3d4fcfb6b74e41041dfb91fdc859bd3cb367bf5bf5",
+        "tokens_sha256": "27035fab8ce4f5526488815b72c665e709451b0835247905bd4e94f1c81b7cf1",
+        "hard_q_decode_exact": true,
+        "cost_delta_norm": 626.2841796875,
+        "changed_hard_items": 253
+      },
+      "query_intervention": {
+        "weight_delta_norm": 0.26843324303627014,
+        "cost_delta_norm": 13.770020484924316,
+        "changed_hard_items": 40
+      }
+    }
+  },
+  "diagnostic_export": {
+    "items": 24587,
+    "checkpoint_sha256": "295282414cb9283fd41e0f5fc975e5ec2384610fffb3f1f867c1493025496d70",
+    "sid_sha256": "bac17b6c53e1ab85fcdb8156e19af985e7d457e4bbd905128a23b76d41ad70ce",
+    "same_checkpoint_exact": true,
+    "formal_training": false
+  }
+}

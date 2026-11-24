@@ -1,22 +1,57 @@
 {
   "issue": 252,
-  "commit": "4be8600453f28fb4c7d08536f16e4d212e0aae8c",
-  "state": "WORKING",
-  "worktree_diagonal_optimization_uncommitted": true,
-  "done": ["C1", "C2", "C4", "C5", "C6"],
-  "not_run": ["C3 actual public entry PASS", "C7 accepted inclusive performance", "C8 fresh receipts after the exact guard-mask source change", "C9", "C10", "C11 final formal-run fault reconciliation", "C12", "C13 final same-SID comparison", "C14"],
-  "failed": ["C7: current prior60epoch mean1.0799897936483225s; exact diagonal-mask generation is being measured without other diagnostic jobs"],
-  "current_source_proofs": {
-    "validation": "results/research/issue252/validation/issue252_validation_642254_578105758",
-    "module_checks": "results/research/issue252/MODULE_CHECKS.json",
-    "mathematical_suites": "results/research/issue252/contract_tests/1795478044308266055",
-    "geometry": "results/research/issue252/geometry_validation/geometry_1795477867061548663_628781_434a38a67d78"
-    ,"scope": "Passed pre-diagonal-mask generation; regenerate final admission proofs after subsequent production changes"
+  "commit": "25a5164c246fa096e9703f3e3616c9c83a28ad94",
+  "commit_scope": "Published production source and primary experiment evidence; final verdict metadata has its own closing commit",
+  "state": "RESULTS_VERIFIED",
+  "outcome": "NEGATIVE",
+  "issue_state_at_recording": "OPEN",
+  "closing_transaction_pending_at_recording": true,
+  "done": ["C1", "C2", "C3", "C4", "C5", "C6", "C7 under recorded owner amendment", "C8 under recorded owner amendment", "C9", "C10", "C11", "C12", "C13", "C14 independent reconciliation and source/evidence publication"],
+  "not_run": [],
+  "failed": [],
+  "running": [],
+  "formal_stage2": {
+    "run_id": "issue252_formal_r2",
+    "completed_epochs": 3000,
+    "world_size": 4,
+    "global_batch": 4096,
+    "seed": 42,
+    "sid_sha256": "037766704565c5143ab721fd5ca5f61bbba3e800baa9dd561d3ae5601987cff2",
+    "checkpoint_sha256": "0ca5cd32c307460cad7ecd72734538dff2ca3427f64286063ece8c290f8e28f0"
   },
-  "running": [
-    {"name": "isolated inclusive60epoch diagonal-mask benchmark", "job": "bg_138", "formal_training": false, "command": "genrec_env_v2/bin/python3.9 -m tools.issue252.launch_benchmark"}
+  "formal_stage3": {
+    "completed_epochs": 150,
+    "world_size": 4,
+    "final_test": "results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06/test_final.json",
+    "test_recall_at_10": 0.0492870697609638,
+    "scientific_threshold_met": false
+  },
+  "final_source_proofs": {
+    "training_admission_sha256": "f7d24eb30580fd1246b071c1520023ef64d94aa7e7d86092db8e3d2a5976e015",
+    "public_verification_sha256": "a1c3a4252f407a0af3f913d97afe8038bd482d073da60030bdb188b19b0bf25c",
+    "module_checks_sha256": "97fbb5e0aff5e2315acb60fb9bbd4dac1627156e6ab8341b4124575454e9605f",
+    "reconciliation_sha256": "d6cf1cd6520eb06e36bfe8803468c41835bb89de25315a38635e31d3bdf752e8",
+    "deterministic_tests": 193,
+    "reference_tests": 11,
+    "mutation_suites": 2,
+    "designated_mutations_caught": 15,
+    "public_entry": "PASS",
+    "public_behavior_graph": "PASS"
+  },
+  "archive": {
+    "target": "r2:genrec/100/",
+    "key": "TIGER_gnn_attention_sectional_rq/037766704565",
+    "uploaded_file_hashes_verified": 100
+  },
+  "qualifications": [
+    "Original 0.5-second bound was not met; owner amended it to 0.8 seconds",
+    "Only level3 retains Sinkhorn, under the recorded owner amendment",
+    "Public machine verification was invoked post-run, not backdated",
+    "Layer metrics were persisted after Stage3 launch but before reading its score",
+    "Formal Stage2 JSONL does not contain rank-worker PID fields",
+    "Removed legacy Conditional G3 remains MISSING, not imputed"
   ],
-  "next_commands": ["Consume benchmark results; if mean exceeds0.5s, profile current real hot spots and continue exact optimization", "Create explicit TRAINING_ADMISSION.json only after all actual reports pass", "Commit/push, reload affected MCP children and call verification_check with machine:issue252 before one sanctioned formal Stage2 run"],
-  "blocked_by": null,
-  "checkpoint_is_not_a_stop": true
+  "next_commands": ["gh issue view 252 --json state"],
+  "resume_policy": "Consult live issue closure and VERDICT.md; do not relaunch or tune the completed formal experiment",
+  "blocked_by": null
 }
