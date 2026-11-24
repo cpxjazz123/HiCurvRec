@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "refused": null,
+  "checks": [
+    {
+      "status": "PASS",
+      "name": "entry",
+      "detail": "source-bound real four-rank Trainer epoch and exact checkpoint SID verified",
+      "training_admission": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue252/TRAINING_ADMISSION.json",
+        "sha256": "866b804ff83204775db9e57ef52c0d7c5b04d5c188d59382896f84cf30c56f01"
+      },
+      "run_id": "issue252_validation_3110912_580007597",
+      "entry_report": "/fs04/ar57/wenyu/GeneRec/results/research/issue252/validation/issue252_validation_3110912_580007597/rank_0.json",
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/research/issue252/validation/issue252_validation_3110912_580007597/diagnostic_item_sids.json"
+    },
+    {
+      "status": "PASS",
+      "name": "behavior_graph",
+      "detail": "raw train, split, graph, audit source and training dependencies verified",
+      "identity": "c6fd4a78ef03e1374dcb9d701163e29e9e25237c617fd987733760aaabe0231b"
+    }
+  ],
+  "source_digest": "4aeae9dec8f3cbbf4ee4b78fc10191e09a5d12cc5bf96180c881a334daad7a85",
+  "checks_fingerprint": "b2877a41335a",
+  "graph_identity": "c6fd4a78ef03e1374dcb9d701163e29e9e25237c617fd987733760aaabe0231b",
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq",
+  "training_admission": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue252/TRAINING_ADMISSION.json",
+    "sha256": "866b804ff83204775db9e57ef52c0d7c5b04d5c188d59382896f84cf30c56f01"
+  }
+}

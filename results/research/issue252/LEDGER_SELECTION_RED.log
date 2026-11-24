@@ -1,0 +1,23 @@
+test_missing_ambiguous_or_crossed_full_identities_are_rejected (tools.issue252.test_reconcile_results.ArchiveAssociationTests) ... ERROR
+test_unkeyed_history_cannot_hide_the_exact_completed_archive (tools.issue252.test_reconcile_results.ArchiveAssociationTests) ... ERROR
+
+======================================================================
+ERROR: test_missing_ambiguous_or_crossed_full_identities_are_rejected (tools.issue252.test_reconcile_results.ArchiveAssociationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_reconcile_results.py", line 68, in test_missing_ambiguous_or_crossed_full_identities_are_rejected
+    from tools.issue252.reconcile_results import bound_archive
+ImportError: cannot import name 'bound_archive' from 'tools.issue252.reconcile_results' (/fs04/ar57/wenyu/GeneRec/tools/issue252/reconcile_results.py)
+
+======================================================================
+ERROR: test_unkeyed_history_cannot_hide_the_exact_completed_archive (tools.issue252.test_reconcile_results.ArchiveAssociationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_reconcile_results.py", line 60, in test_unkeyed_history_cannot_hide_the_exact_completed_archive
+    from tools.issue252.reconcile_results import bound_archive
+ImportError: cannot import name 'bound_archive' from 'tools.issue252.reconcile_results' (/fs04/ar57/wenyu/GeneRec/tools/issue252/reconcile_results.py)
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.012s
+
+FAILED (errors=2)

@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/usr/lib64/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib64/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/reconcile_results.py", line 211, in <module>
+    main()
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/reconcile_results.py", line 186, in main
+    entries = [(number, entry) for number, entry in _json(ledger_path).items() if entry['key'] == key]
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/reconcile_results.py", line 186, in <listcomp>
+    entries = [(number, entry) for number, entry in _json(ledger_path).items() if entry['key'] == key]
+KeyError: 'key'

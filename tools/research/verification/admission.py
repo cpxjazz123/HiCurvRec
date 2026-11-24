@@ -121,9 +121,12 @@ def validate_evidence(tree: Path, candidate_id: str) -> tuple[Path, dict, dict]:
         raise AdmissionError("research proposal names a different candidate")
     contract_sha = manifest.get("contract_sha256")
     if contract_sha:
-        report = _preflight_module().run(candidate)
-        if report.get("contract_sha256") != contract_sha:
-            raise AdmissionError("verification manifest was bound to a different contract")
+        # The preflight package that produced such manifests was removed with the
+        # issue #117 framework, so a manifest that still binds a contract cannot
+        # be checked and must not be accepted silently.
+        raise AdmissionError(
+            "verification manifest binds a contract, but the preflight package "
+            "that produced it no longer exists")
     tests = manifest.get("tests")
     if not isinstance(tests, dict) or set(tests) != set(SUITES):
         raise AdmissionError("all four independent test suites are mandatory")
@@ -303,18 +306,3 @@ def _contract_module():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
-
-def _preflight_module():
-    """Import the preflight package module from a standalone file load too.
-
-    The MCP executes this file through ``spec_from_file_location``, so a relative
-    import would fail; putting the repository root on ``sys.path`` and importing
-    the real package works in both modes.
-    """
-    import sys
-
-    repo = Path(__file__).resolve().parents[3]
-    if str(repo) not in sys.path:
-        sys.path.insert(0, str(repo))
-    from tools.research.science import preflight
-    return preflight

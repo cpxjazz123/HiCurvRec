@@ -1,0 +1,41 @@
+test_global_population_and_zero_based_cutoffs_have_hand_answers (tools.issue252.test_reconcile_results.RecallRemeasurementTests) ... ERROR
+test_incomplete_or_duplicate_shards_are_not_complete_evaluation (tools.issue252.test_reconcile_results.RecallRemeasurementTests) ... ERROR
+test_invalid_or_repeated_local_rows_fail_closed (tools.issue252.test_reconcile_results.RecallRemeasurementTests) ... ERROR
+test_missing_rows_cannot_change_the_denominator (tools.issue252.test_reconcile_results.RecallRemeasurementTests) ... ERROR
+
+======================================================================
+ERROR: test_global_population_and_zero_based_cutoffs_have_hand_answers (tools.issue252.test_reconcile_results.RecallRemeasurementTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_reconcile_results.py", line 16, in test_global_population_and_zero_based_cutoffs_have_hand_answers
+    from tools.issue252.reconcile_results import remeasure_test
+ModuleNotFoundError: No module named 'tools.issue252.reconcile_results'
+
+======================================================================
+ERROR: test_incomplete_or_duplicate_shards_are_not_complete_evaluation (tools.issue252.test_reconcile_results.RecallRemeasurementTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_reconcile_results.py", line 27, in test_incomplete_or_duplicate_shards_are_not_complete_evaluation
+    from tools.issue252.reconcile_results import remeasure_test
+ModuleNotFoundError: No module named 'tools.issue252.reconcile_results'
+
+======================================================================
+ERROR: test_invalid_or_repeated_local_rows_fail_closed (tools.issue252.test_reconcile_results.RecallRemeasurementTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_reconcile_results.py", line 39, in test_invalid_or_repeated_local_rows_fail_closed
+    from tools.issue252.reconcile_results import remeasure_test
+ModuleNotFoundError: No module named 'tools.issue252.reconcile_results'
+
+======================================================================
+ERROR: test_missing_rows_cannot_change_the_denominator (tools.issue252.test_reconcile_results.RecallRemeasurementTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_reconcile_results.py", line 33, in test_missing_rows_cannot_change_the_denominator
+    from tools.issue252.reconcile_results import remeasure_test
+ModuleNotFoundError: No module named 'tools.issue252.reconcile_results'
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.002s
+
+FAILED (errors=4)

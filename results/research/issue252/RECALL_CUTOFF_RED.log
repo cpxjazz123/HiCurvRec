@@ -1,0 +1,14 @@
+test_global_population_and_zero_based_cutoffs_have_hand_answers (tools.issue252.test_reconcile_results.RecallRemeasurementTests) ... ERROR
+
+======================================================================
+ERROR: test_global_population_and_zero_based_cutoffs_have_hand_answers (tools.issue252.test_reconcile_results.RecallRemeasurementTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_reconcile_results.py", line 25, in test_global_population_and_zero_based_cutoffs_have_hand_answers
+    self.assertAlmostEqual(value, expected[key], msg=key)
+KeyError: 'test_recall@20'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.014s
+
+FAILED (errors=1)

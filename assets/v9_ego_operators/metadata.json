@@ -1,0 +1,344 @@
+{
+  "assets": [
+    {
+      "bytes": 6865768,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 6865640,
+      "dtype": "<i4",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego1_in_col",
+      "path": "assets/v9_ego_operators/ego1_in_col.npy",
+      "schema": "npy",
+      "sha256": "12359f51f960314a11387ad47c9ed99673c564526a440435934333bd5f90b694",
+      "shape": [
+        1716410
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 4280544,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 4280416,
+      "dtype": "<i8",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego1_in_ptr",
+      "path": "assets/v9_ego_operators/ego1_in_ptr.npy",
+      "schema": "npy",
+      "sha256": "33c42518b8eea2f81fbcdf7b35e635cbbaf6ce4c67b78d59a2153d4e169cb8db",
+      "shape": [
+        535052
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 6865768,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 6865640,
+      "dtype": "<i4",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego1_out_col",
+      "path": "assets/v9_ego_operators/ego1_out_col.npy",
+      "schema": "npy",
+      "sha256": "303dd021660510d5b95e45bd593e547d1341624a9b17c3826ace081e1a5bc55f",
+      "shape": [
+        1716410
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 4280544,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 4280416,
+      "dtype": "<i8",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego1_out_ptr",
+      "path": "assets/v9_ego_operators/ego1_out_ptr.npy",
+      "schema": "npy",
+      "sha256": "6bc6654825c174eb80e2ade6f082f1f56a3ddc286e1f9874b5bad66e3bfdb785",
+      "shape": [
+        535052
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 2053323796,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 2053323668,
+      "dtype": "<i4",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego2_in_col",
+      "path": "assets/v9_ego_operators/ego2_in_col.npy",
+      "schema": "npy",
+      "sha256": "cf61e25fa575695471837e05bcf8379f61e9a7da53038434582bd476d1731c17",
+      "shape": [
+        513330917
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 296618592,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 296618464,
+      "dtype": "<i8",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego2_in_ptr",
+      "path": "assets/v9_ego_operators/ego2_in_ptr.npy",
+      "schema": "npy",
+      "sha256": "f5b6379cb315b2e0591a11b4f3697350521704d953fdeb89c1426e313b244f9f",
+      "shape": [
+        37077308
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 2053323796,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 2053323668,
+      "dtype": "<i4",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego2_out_col",
+      "path": "assets/v9_ego_operators/ego2_out_col.npy",
+      "schema": "npy",
+      "sha256": "69c4ca48fb3ae5ecb8f0e90200e1a1d343fb5d0b9d6556cb3b2005c64568c867",
+      "shape": [
+        513330917
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 296618592,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 296618464,
+      "dtype": "<i8",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego2_out_ptr",
+      "path": "assets/v9_ego_operators/ego2_out_ptr.npy",
+      "schema": "npy",
+      "sha256": "1fba4377ce2dc4330009b422c5c6566446540ab2aa21b7b840f93cd61ff5837f",
+      "shape": [
+        37077308
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba"
+      },
+      "use": "training"
+    }
+  ],
+  "command": "python -m tools.issue252.ego_operators",
+  "coverage": {
+    "items": 24587,
+    "normalization": "reciprocal row degree computed in model dtype at runtime",
+    "population": "every full induced ego; all directed support; no sampling",
+    "scales": [
+      1,
+      2
+    ]
+  },
+  "graph_name": "infra246-visible-v2",
+  "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+  "inputs": {
+    "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+    "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+    "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+    "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+    "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+  },
+  "references": [
+    {
+      "name": "visible_forward",
+      "path": "assets/train/visible_forward.npz",
+      "sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029"
+    },
+    {
+      "name": "ego_full_1hop_visible",
+      "path": "results/research/infra246/assets/ego/ego_full_1hop_visible.npz",
+      "sha256": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+    },
+    {
+      "name": "two_hop_nodes",
+      "path": "assets/v8_runtime_layout/two_hop_nodes.npy",
+      "sha256": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda"
+    },
+    {
+      "name": "two_hop_offsets",
+      "path": "assets/v8_runtime_layout/two_hop_offsets.npy",
+      "sha256": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7"
+    },
+    {
+      "name": "item_ids",
+      "path": "assets/train/item_ids.npy",
+      "sha256": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e"
+    }
+  ],
+  "source_hashes": {
+    "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+    "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba"
+  },
+  "use": "training",
+  "version": "issue252.full-ego-csr.v1"
+}
