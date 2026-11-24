@@ -4,6 +4,7 @@ Features and normalization are frozen #249 assets; only rootless synthetic store
 may fit local statistics. Global IDs select features, never message endpoints.
 """
 import copy
+from functools import lru_cache
 import hashlib
 import json
 from pathlib import Path
@@ -14,6 +15,9 @@ import torch
 from torch import nn
 from tools.issue252.ego_operators import DeviceLayout, batch_operators, load_layouts, pack_synthetic
 from tools.issue252.host_transfer import host_int64
+from tools.issue252 import ego_kernel
+from tools.issue252.host_transfer import host_int64
+from tools.issue252.sparse_adjoint import directional_means
 from tools.issue252.static_features import StaticFeatureMeans
 from tools.issue252.sparse_adjoint import normalized_directional_means
 
@@ -75,6 +79,21 @@ class DirectedMean(nn.Module):
         return torch.tanh(self.self_linear(x)
                           + self.incoming(torch.sparse.mm(incoming, x))
                           + self.outgoing(torch.sparse.mm(outgoing, x)))
+
+
+def _affine_layer(features, mean_in, mean_out, nonempty_in, nonempty_out, affine):
+    """The first ego layer: the frozen six-feature means through the live affine."""
+    self_weight, self_bias, in_weight, in_bias, out_weight, out_bias = affine
+    return torch.tanh(features @ self_weight.T + self_bias
+                      + mean_in @ in_weight.T + nonempty_in[:, None] * in_bias
+                      + mean_out @ out_weight.T + nonempty_out[:, None] * out_bias)
+
+
+@lru_cache(maxsize=1)
+def _compiled_affine_layer():
+    """The fused first layer: one kernel chain instead of six full-size passes."""
+    from tools.issue252.cuda_math import compile_dense
+    return compile_dense(_affine_layer)
 
 
 class SubgraphTokens(nn.Module):
@@ -166,14 +185,14 @@ class SubgraphTokens(nn.Module):
                 layer.incoming.weight @ weight, layer.incoming.weight @ bias,
                 layer.outgoing.weight @ weight, layer.outgoing.weight @ bias)
 
-    def _read_sparse(self, features, groups, sizes, incoming, outgoing, static, affine):
+    def _read_sparse(self, features, groups, sizes, static, affine, operator):
         mean_in, mean_out, nonempty_in, nonempty_out = static
-        self_weight, self_bias, in_weight, in_bias, out_weight, out_bias = affine
-        x = torch.tanh(features @ self_weight.T + self_bias
-                       + mean_in @ in_weight.T + nonempty_in[:, None] * in_bias
-                       + mean_out @ out_weight.T + nonempty_out[:, None] * out_bias)
+        layer_function = (_compiled_affine_layer() if features.is_cuda
+                         else _affine_layer)
+        x = layer_function(features, mean_in, mean_out, nonempty_in, nonempty_out,
+                         affine)
         layer = self.layers[1]
-        mean_in, mean_out = normalized_directional_means(x, incoming, outgoing)
+        mean_in, mean_out = operator(x)
         x = torch.tanh(layer.self_linear(x) + layer.incoming(mean_in) + layer.outgoing(mean_out))
         readout = x.new_zeros((len(sizes), 32))
         readout.index_add_(0, groups, x)
@@ -186,7 +205,8 @@ class SubgraphTokens(nn.Module):
         """
         if chunk < 1:
             raise ValueError('chunk must be positive')
-        if torch.device(device) != self.input.weight.device:
+        device = torch.device(device)
+        if device != self.input.weight.device:
             raise ValueError('requested device differs from GNN device')
         host = np.asarray(item_ids.detach().cpu().numpy() if torch.is_tensor(item_ids)
                           else item_ids, dtype=np.int64).reshape(-1)
@@ -207,10 +227,21 @@ class SubgraphTokens(nn.Module):
             scales, masks = [], []
             for layout, static in zip(layouts, means):
                 plan = layout.plan(block)
-                nodes, groups, sizes, incoming, outgoing = batch_operators(layout, items, normalized.dtype, plan)
+                # The fused kernel reads the frozen layout directly: the batch's
+                # block-diagonal CSR is never materialised.
+                geometry = ego_kernel.batch_geometry(layout, block, device)
+                nodes = layout.nodes[geometry['layout_rows']].long()
+                groups = geometry['row_ego'].long()
+                sizes = host_int64(layout.node_counts[block], device)
+                operators = None
+                if device.type != 'cuda':
+                    operators = batch_operators(layout, items, normalized.dtype, plan)[3:]
+                operator = (lambda values, part=layout, batch=geometry:
+                            directional_means(values, part, batch, operators))
                 # Retain the live activations; backward must not replay the GNN.
-                value = self._read_sparse(normalized[nodes], groups, sizes, incoming, outgoing,
-                                          static.gather(layout, items, plan), affine)
+                value = self._read_sparse(normalized[nodes], groups, sizes,
+                                          static.gather(layout, items, plan), affine,
+                                          operator)
                 scales.append(value)
                 masks.append(sizes > 0)
             outputs.append(torch.stack(scales, dim=1))

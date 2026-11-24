@@ -112,11 +112,16 @@ class DeviceLayout:
         self.node_counts = None
         self.in_edge_counts = None
         self.out_edge_counts = None
+        self.offsets_np = None
         for name, array in arrays.items():
             if name.endswith('_counts'):
                 # Host-side census: exact per-item sizes, no device residency.
                 setattr(self, name, np.asarray(array, dtype=np.int64))
                 continue
+            if name == 'offsets':
+                # Host copy of the ego ranges: the batch geometry needs the
+                # item's first node without reading the device back.
+                self.offsets_np = np.asarray(array, dtype=np.int64)
             # Own tensor storage: read-only memmaps must never back writable tensors.
             tensor = torch.tensor(np.asarray(array), device=device,
                                   dtype=torch.int32 if name.endswith('_col') or name == 'nodes' else torch.int64)
@@ -132,6 +137,20 @@ class DeviceLayout:
         return BatchPlan(self.node_counts[ids].sum(),
                          self.in_edge_counts[ids].sum(),
                          self.out_edge_counts[ids].sum())
+
+
+def ragged_indices(starts, lengths, total):
+    """Concatenate per-item ranges without reading a device value for the size.
+
+    `starts` and `lengths` are device tensors; `total` is the host-known count
+    of the concatenated result.
+    """
+    ends = lengths.cumsum(0)
+    bases = ends - lengths
+    if len(starts) == 0:
+        return starts.new_empty(0)
+    return (torch.repeat_interleave(starts - bases, lengths, output_size=total)
+            + torch.arange(total, device=starts.device))
 
 
 def _ranges(starts, lengths, total):
