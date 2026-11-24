@@ -934,3 +934,26 @@ results/research/issue252/**/torchelastic_*/
 results/research/issue252/**/launcher_*/
 # Full repeated 1024-item geometry selections stay on shared storage; commit their SHA index.
 results/research/issue252/geometry_validation/**/rank_*.json
+
+# Issue251: learned binary/source-archive evidence stays local; exact SID is text evidence.
+results/research/issue251/**/source_snapshot.tar.gz
+!results/research/issue251/runtime/item_sids.json
+!results/research/issue251/*.log
+!results/research/issue251/**/logs/
+!results/research/issue251/**/logs/controlled_validation.log
+# Full per-item distributions remain generated data; commit summaries, hashes and remeasurement code.
+results/research/issue251/**/HARD_SID_EVALUATION.json
+
+# Issue252: small red/green command transcripts are source-bound acceptance evidence.
+!results/research/issue252/*.log
+results/research/issue252/runtime_temp/
+results/research/issue252/**/HARD_SID_EVALUATION.json
+results/research/issue252/**/FINAL_EVALUATION.json
+results/research/issue252/**/source_snapshot.tar.gz
+results/research/issue252/OPTIMIZED_PROFILE_INTERMEDIATE.json
+results/research/issue252/compiler_cache/
+results/research/issue252/**/cache/
+results/research/issue252/**/torchelastic_*/
+results/research/issue252/**/launcher_*/
+# Full repeated 1024-item geometry selections stay on shared storage; commit their SHA index.
+results/research/issue252/geometry_validation/**/rank_*.json

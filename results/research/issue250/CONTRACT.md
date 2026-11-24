@@ -1,0 +1,31 @@
+# Issue 250 mathematical contract — 2026-11-24
+
+No formal training or new baseline. Candidate `stage2_RQ-VAE/TIGER_gnn_gate_sectional_rq` is copied only from frozen TIGER. Shared assets: existing manifest v5, all 67 hashes verified. Semantic input 768, latent 32, three 256-entry codebooks, original reconstruction and quantization objectives remain unchanged.
+
+## Structure
+
+Fixed six input features and standardization are reused from assets/v5_gnn_geometry. Two directed message-passing layers, width 32: separate incoming/outgoing means and self linear maps followed by tanh. Descriptor T concatenates root h0, closed one-hop mean h1 and closed two-hop mean h2 (96 coordinates). Gate is linear(96,32), tanh, linear(32,5), softmax. No dropout, batch normalization, item embeddings, labels, semantic input or evaluation targets. Same item ego yields identical T across batches; repeated occurrences share one global gate. One-hop and two-hop pooling are both provided, without ego truncation. Only lawful training-visible graphs.
+
+## Five geometries
+
+Expert curvatures c=(-3,-1,0,1,3), shared 32-dimensional tangent space. One fixed tangent length scale s is derived from frozen encoder latent RMS; no expert-specific fitted scale. Define tangent u=x/s. exp_c uses Poincare tanh radial map for c<0, identity for c=0, spherical tangent exponential for c>0. Distances are constant-curvature geodesics, with spheres evaluated via unit ambient sphere coordinates (33 coordinates are a metric computation, not latent/codebook capacity). At c=0 use Euclidean; common length units are tangent units. Coincident points have exactly zero distance; float64 references, float32 training with stable atan2/asinh and finite domain guards.
+
+Assignment cost C_ij=sum_k w_ik d_c(exp_c(r_i/s),exp_c(e_j/s))^2. Curvature-off uses Euclidean for all experts; behavior-off uses uniform gate. Inference uses original argmin on every level. Training preserves frozen rules: levels 1,2 argmin, level 3 centered-distance Sinkhorn, epsilon .003, 50 iterations as configured (actual config is authoritative). No rule substitution. Existing training Sinkhorn is rank-local; inference batch invariance is required, training balanced assignment intentionally depends on batch composition.
+
+## Backward surrogate
+
+For each residual level, use identical C for hard rule and soft path. Nonbalanced layers P=softmax(-center(C)/tau); balanced layer P is differentiable log-domain Sinkhorn with original marginals, original epsilon and iteration count. Tau for nonbalanced layers is the frozen Sinkhorn epsilon, not tuned. q_soft=P E; q=q_soft+(q_hard-q_soft).detach(). Forward exactly equals selected codewords within floating point; retain exact hard tensor separately for decoded-SID checks. Residual r_next=r-q (same hard forward); all levels have their own cost pathway. Original commitment/codebook losses are computed on actual hard codewords. Reconstruction and curvature use selection-surrogate q; original objective functional is unchanged. No independent metric gate in curvature: all gate gradients must traverse selection costs. Negative tests detach cost or freeze gate.
+
+## Full-reference global supervision
+
+Metric for supervision and evaluation is fixed equal-weight mean of five squared expert distances, independent of gate. This is a symmetric squared dissimilarity; its square root is reported as distance, not asserted to be a new intrinsic manifold metric. A.1 uses these squared values directly. R(m) is the frozen component, including m,b,c; same frozen masks/targets. L_curv=mean_over_centres mean_over_valid_triples Huber((Kq-KG)/scale), delta=1. Target scale=max(RMS of all valid frozen KG, machine epsilon), derived without held-out data. No sampling replaces the full objective. Triple and reference chunks stream exactly; analytic distance-moment identity mean_a D(a,m)-.5(mean_a D(a,b)+mean_a D(a,c))+.25 D(b,c) avoids repeated reference computations. Exact reference moments are differentiable; chunking cannot detach them. Empty/invalid centres excluded, never imputed zero. For DDP, centre ownership modulo world size; gradients use global item q and global target denominator; DDP mean compensated by world size. Inference item gate is globally fixed.
+
+Lambda=norm(grad_encoder L_reconstruction)/norm(grad_encoder L_curv), on fixed initial frozen checkpoint and real batch with full references. Freeze before updates; fail on zero/nonfinite denominator. Record module norms, unweighted/weighted ratios, cosine, clipping and controlled microstep effects. No tuning. Checkpoint binds graph/feature/target hashes, s, target scale and lambda; missing calibration fails closed for training.
+
+## Acceptance and numerical references
+
+C1 audit+frozen contract; C2 deterministic directed structure/gate; C3 five geometries and unchanged assignments; C4 hard-forward surrogate and exact full-reference loss; C5 real loss routing/calibration/controlled updates; C6 numerical, four-GPU short DDP, entry and export consistency; C7 independent decoded-SID evaluation; C8 persistent source/config/hash evidence. All must be evidenced, no formal 3000-epoch dispatch.
+
+Independent geometry references: hyperboloid Lorentz inner product vs production Poincare distance, sphere ambient dot product vs production stabilized chord-angle evaluation, Euclidean direct norms. Independent A.1 reference: explicit triple/reference enumeration vs moment decomposition. Finite differences test smooth costs/soft assignments only, never hard argmin/STE.
+
+Paper comparison: GraphMoRE arXiv:2412.11085 Appendix A.1 defines the discrete squared-distance expression; we retain all vertices of the frozen centre component and explicitly do not call this intrinsic sectional curvature or directed supervision. Frozen TIGER model/layers.py::_indices and RQLayer construction, not generalized prose about TIGER, determine assignment placement. Sinkhorn backward is log-domain algebraic evaluation of the same row/column normalizations, not a new balancing objective. Numerical known answers, mutation assertions and source hashes accompany the implementation. Official GraphMoRE source comparison must be recorded before numerical acceptance.
