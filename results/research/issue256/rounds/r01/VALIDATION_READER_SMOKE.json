@@ -1,0 +1,34 @@
+{
+  "command": "Stage2 Python inline: exact five validation banks/all three prefixes compared with retained parent report",
+  "exit_code": 0,
+  "comparisons": 15,
+  "test_banks_opened": false,
+  "result": {
+    "val": {
+      "control_bank": "strict_struct_val_degree_matched",
+      "control_l1_rate": 0.9206943498978897,
+      "groups": {
+        "strict_struct_val_direct": {
+          "pairs": 2726,
+          "l1_rate": 0.9222303741746148,
+          "l1_difference": 0.0015360242767251675
+        },
+        "strict_struct_val_shared_in": {
+          "pairs": 2881,
+          "l1_rate": 0.9229434224227698,
+          "l1_difference": 0.002249072524880158
+        },
+        "strict_struct_val_shared_out": {
+          "pairs": 2876,
+          "l1_rate": 0.9099443671766342,
+          "l1_difference": -0.010749982721255491
+        },
+        "strict_struct_val_two_hop": {
+          "pairs": 2926,
+          "l1_rate": 0.8051948051948052,
+          "l1_difference": -0.11549954470308443
+        }
+      }
+    }
+  }
+}

@@ -2,6 +2,7 @@
   "issue": 256,
   "state": "WORKING",
   "parent_commit": "c4ee00cdc4314b7fcab882acd939bf18ee3b0824",
+  "commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
   "done": [
     "acceptance frozen",
     "assets109/109",
@@ -15,18 +16,28 @@
     "DataLoader RNG-preserving entry repair; machine entry and graph PASS",
     "profiler transparent loader and executed-source identity regressions repaired",
     "current126/64 suites and complete current-source actual entry/DDP/performance/profile PASS",
-    "CHECK_3:13 pretraining PASS,0 FAIL,4 full-training/final criteria NOT_RUN"
+    "CHECK_3:13 pretraining PASS,0 FAIL,4 full-training/final criteria NOT_RUN",
+    "admitted source pushed with local/remote main SHA equality",
+    "formal R01 launched; four real workers and post-launch real Trainer smoke observed"
   ],
   "not_run": [
-    "r01 formal four-card3000-epoch Stage2",
+    "r01 final epoch3000 checkpoint/SID audit and quality",
     "r01 legal150-epoch Stage3, independent reconciliation and complete R2",
     "strict final test_R@10>0.065 and issue256 closure"
   ],
-  "running": [],
+  "running": [{
+    "name": "issue256_r01_formal",
+    "mode": "ddp4",
+    "worker_pids": [435981,435982,435983,435984],
+    "epoch": 2000,
+    "checkpoint": "results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/rqvae_best.pth",
+    "checkpoint_exists": false,
+    "log": "results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/logs/training_metrics.jsonl"
+  }],
   "blocked_by": null,
   "next_commands": [
-    "commit and push the exact admitted source and CHECK_3 evidence",
-    "python3.9 -m tools.issue256.launch_formal_run"
+    "read the exact existing formal metrics; never allocate another R01 run",
+    "after train_end, cold-audit the final checkpoint/SID and record layer metrics before Stage3"
   ],
-  "updated_at": "2026-11-24T18:40:52.711558+00:00"
+  "updated_at": "2026-11-24T19:11:01.284375+00:00"
 }

@@ -1,0 +1,348 @@
+{
+  "run_id": "issue256_r01_formal",
+  "arm": "TIGER_module_budget_prefix_rq",
+  "source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
+  "observed_at": "2026-11-24T19:11:01.284375+00:00",
+  "source": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src",
+  "result": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result",
+  "metrics_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/logs/training_metrics.jsonl",
+  "workers": [
+    {
+      "pid": 435981,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    },
+    {
+      "pid": 435982,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    },
+    {
+      "pid": 435983,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    },
+    {
+      "pid": 435984,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    }
+  ],
+  "processes": [
+    {
+      "pid": 434483,
+      "ppid": 434416,
+      "comm": "pt_elastic",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun --master_addr=127.0.0.1 --nproc_per_node=4 --master_port=50202 /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    },
+    {
+      "pid": 435981,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    },
+    {
+      "pid": 435982,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    },
+    {
+      "pid": 435983,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    },
+    {
+      "pid": 435984,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    }
+  ],
+  "latest_epoch": 2000,
+  "latest_train": {
+    "event": "train",
+    "timestamp": 1795547460.7640018,
+    "wall_time_s": 1413.646,
+    "run_id": "issue256_r01_formal",
+    "purpose": "formal",
+    "epoch": 2000,
+    "loss": 0.0001084160030586645,
+    "recon": 8.517928654327989e-05,
+    "curvature_estimate": 1.6266365051269531,
+    "gradient_norm_before_clip": 0.00020948417659383267,
+    "lr": 0.0003389830508474576,
+    "epoch_time_s": 1.1448155855759978,
+    "raw_unique": 22610,
+    "collision": 0.08040834587383572,
+    "gate_mean": [
+      0.0213853120803833,
+      0.9345220327377319,
+      0.04409264773130417,
+      0.010853547602891922,
+      0.9581985473632812,
+      0.030947929248213768,
+      0.020396482199430466,
+      0.9658192992210388,
+      0.013784321956336498
+    ],
+    "gate_entropy": 0.10957911610603333,
+    "auxiliary_attention_entropy": 1.1183569431304932,
+    "level_codebook_gradient_norm": [
+      9.950983803719282e-05,
+      6.384463631547987e-05,
+      5.1512302889022976e-05
+    ],
+    "peak_allocated_bytes": 8784288768,
+    "structural_coverage": [
+      {
+        "updates": 12000,
+        "sampled_target_occurrences": 305876,
+        "sampled_references": 384000,
+        "unique_centres": 12000,
+        "centre_population": 24326,
+        "unique_target_rows": 305876,
+        "target_population": 28391948,
+        "unique_references": 24471,
+        "unique_aux_items": 24587,
+        "epoch_updates": 6,
+        "epoch_target_occurrences": 130,
+        "epoch_reference_draws": 192,
+        "epoch_centres": [
+          10431,
+          10334,
+          4025,
+          24288,
+          18461,
+          8010
+        ],
+        "sampling_sha256": "a0119b70121f53a087e3f55e64975a387a3e71b70bfd15a7a0c08293d65576d9",
+        "seed": 42,
+        "objective": "biased stochastic training estimator; not full-catalogue loss"
+      },
+      {
+        "updates": 12000,
+        "sampled_target_occurrences": 302873,
+        "sampled_references": 384000,
+        "unique_centres": 12000,
+        "centre_population": 24326,
+        "unique_target_rows": 302873,
+        "target_population": 28391948,
+        "unique_references": 24471,
+        "unique_aux_items": 24587,
+        "epoch_updates": 6,
+        "epoch_target_occurrences": 160,
+        "epoch_reference_draws": 192,
+        "epoch_centres": [
+          16894,
+          14352,
+          15275,
+          7487,
+          13703,
+          16863
+        ],
+        "sampling_sha256": "5d4ef70bf23adaf0980fe66f2207792512983104da3e2517c9dfc0b828eda5c2",
+        "seed": 42,
+        "objective": "biased stochastic training estimator; not full-catalogue loss"
+      },
+      {
+        "updates": 12000,
+        "sampled_target_occurrences": 305808,
+        "sampled_references": 384000,
+        "unique_centres": 12000,
+        "centre_population": 24326,
+        "unique_target_rows": 305808,
+        "target_population": 28391948,
+        "unique_references": 24471,
+        "unique_aux_items": 24587,
+        "epoch_updates": 6,
+        "epoch_target_occurrences": 170,
+        "epoch_reference_draws": 192,
+        "epoch_centres": [
+          11066,
+          1907,
+          2213,
+          7009,
+          24533,
+          13222
+        ],
+        "sampling_sha256": "b2366a985ed44994175a47aa373a6875a11b795915625e01fbe09a8aa4b1c4e4",
+        "seed": 42,
+        "objective": "biased stochastic training estimator; not full-catalogue loss"
+      },
+      {
+        "updates": 12000,
+        "sampled_target_occurrences": 303003,
+        "sampled_references": 384000,
+        "unique_centres": 12000,
+        "centre_population": 24326,
+        "unique_target_rows": 303003,
+        "target_population": 28391948,
+        "unique_references": 24471,
+        "unique_aux_items": 24587,
+        "epoch_updates": 6,
+        "epoch_target_occurrences": 112,
+        "epoch_reference_draws": 192,
+        "epoch_centres": [
+          13905,
+          15172,
+          20454,
+          9478,
+          23838,
+          2760
+        ],
+        "sampling_sha256": "3853233a0b75139d2a640356e41e8dbe81567a1083ebd412f03a0c9fa096ddc8",
+        "seed": 42,
+        "objective": "biased stochastic training estimator; not full-catalogue loss"
+      }
+    ],
+    "cumulative_time_s": 1413.6462376117706
+  },
+  "latest_periodic": {
+    "event": "train",
+    "timestamp": 1795547460.7640018,
+    "wall_time_s": 1413.646,
+    "run_id": "issue256_r01_formal",
+    "purpose": "formal",
+    "epoch": 2000,
+    "loss": 0.0001084160030586645,
+    "recon": 8.517928654327989e-05,
+    "curvature_estimate": 1.6266365051269531,
+    "gradient_norm_before_clip": 0.00020948417659383267,
+    "lr": 0.0003389830508474576,
+    "epoch_time_s": 1.1448155855759978,
+    "raw_unique": 22610,
+    "collision": 0.08040834587383572,
+    "gate_mean": [
+      0.0213853120803833,
+      0.9345220327377319,
+      0.04409264773130417,
+      0.010853547602891922,
+      0.9581985473632812,
+      0.030947929248213768,
+      0.020396482199430466,
+      0.9658192992210388,
+      0.013784321956336498
+    ],
+    "gate_entropy": 0.10957911610603333,
+    "auxiliary_attention_entropy": 1.1183569431304932,
+    "level_codebook_gradient_norm": [
+      9.950983803719282e-05,
+      6.384463631547987e-05,
+      5.1512302889022976e-05
+    ],
+    "peak_allocated_bytes": 8784288768,
+    "structural_coverage": [
+      {
+        "updates": 12000,
+        "sampled_target_occurrences": 305876,
+        "sampled_references": 384000,
+        "unique_centres": 12000,
+        "centre_population": 24326,
+        "unique_target_rows": 305876,
+        "target_population": 28391948,
+        "unique_references": 24471,
+        "unique_aux_items": 24587,
+        "epoch_updates": 6,
+        "epoch_target_occurrences": 130,
+        "epoch_reference_draws": 192,
+        "epoch_centres": [
+          10431,
+          10334,
+          4025,
+          24288,
+          18461,
+          8010
+        ],
+        "sampling_sha256": "a0119b70121f53a087e3f55e64975a387a3e71b70bfd15a7a0c08293d65576d9",
+        "seed": 42,
+        "objective": "biased stochastic training estimator; not full-catalogue loss"
+      },
+      {
+        "updates": 12000,
+        "sampled_target_occurrences": 302873,
+        "sampled_references": 384000,
+        "unique_centres": 12000,
+        "centre_population": 24326,
+        "unique_target_rows": 302873,
+        "target_population": 28391948,
+        "unique_references": 24471,
+        "unique_aux_items": 24587,
+        "epoch_updates": 6,
+        "epoch_target_occurrences": 160,
+        "epoch_reference_draws": 192,
+        "epoch_centres": [
+          16894,
+          14352,
+          15275,
+          7487,
+          13703,
+          16863
+        ],
+        "sampling_sha256": "5d4ef70bf23adaf0980fe66f2207792512983104da3e2517c9dfc0b828eda5c2",
+        "seed": 42,
+        "objective": "biased stochastic training estimator; not full-catalogue loss"
+      },
+      {
+        "updates": 12000,
+        "sampled_target_occurrences": 305808,
+        "sampled_references": 384000,
+        "unique_centres": 12000,
+        "centre_population": 24326,
+        "unique_target_rows": 305808,
+        "target_population": 28391948,
+        "unique_references": 24471,
+        "unique_aux_items": 24587,
+        "epoch_updates": 6,
+        "epoch_target_occurrences": 170,
+        "epoch_reference_draws": 192,
+        "epoch_centres": [
+          11066,
+          1907,
+          2213,
+          7009,
+          24533,
+          13222
+        ],
+        "sampling_sha256": "b2366a985ed44994175a47aa373a6875a11b795915625e01fbe09a8aa4b1c4e4",
+        "seed": 42,
+        "objective": "biased stochastic training estimator; not full-catalogue loss"
+      },
+      {
+        "updates": 12000,
+        "sampled_target_occurrences": 303003,
+        "sampled_references": 384000,
+        "unique_centres": 12000,
+        "centre_population": 24326,
+        "unique_target_rows": 303003,
+        "target_population": 28391948,
+        "unique_references": 24471,
+        "unique_aux_items": 24587,
+        "epoch_updates": 6,
+        "epoch_target_occurrences": 112,
+        "epoch_reference_draws": 192,
+        "epoch_centres": [
+          13905,
+          15172,
+          20454,
+          9478,
+          23838,
+          2760
+        ],
+        "sampling_sha256": "3853233a0b75139d2a640356e41e8dbe81567a1083ebd412f03a0c9fa096ddc8",
+        "seed": 42,
+        "objective": "biased stochastic training estimator; not full-catalogue loss"
+      }
+    ],
+    "cumulative_time_s": 1413.6462376117706
+  },
+  "first_real_trainer_smoke_passed": true,
+  "checkpoint_exists": false,
+  "train_end_seen": false,
+  "incomplete_final_log_line": false
+}

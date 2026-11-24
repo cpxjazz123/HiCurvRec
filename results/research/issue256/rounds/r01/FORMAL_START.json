@@ -1,0 +1,73 @@
+{
+  "run_id": "issue256_r01_formal",
+  "arm": "TIGER_module_budget_prefix_rq",
+  "entry": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py",
+  "source": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src",
+  "result": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result",
+  "source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
+  "observed_at": "2026-11-24T18:48:45.450256+00:00",
+  "processes": [
+    {
+      "pid": 434483,
+      "ppid": 434416,
+      "comm": "pt_elastic",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun --master_addr=127.0.0.1 --nproc_per_node=4 --master_port=50202 /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    },
+    {
+      "pid": 435981,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    },
+    {
+      "pid": 435982,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    },
+    {
+      "pid": 435983,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    },
+    {
+      "pid": 435984,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    }
+  ],
+  "workers": [
+    {
+      "pid": 435981,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    },
+    {
+      "pid": 435982,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    },
+    {
+      "pid": 435983,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    },
+    {
+      "pid": 435984,
+      "ppid": 434483,
+      "comm": "python",
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -u /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/execution_entry.py"
+    }
+  ],
+  "gpu": "435981, GPU-74901ff7-b610-7785-9de8-bdc436a705ba, 8270 MiB\n435982, GPU-a9f4388b-e6f2-43db-e87a-27376ec75405, 1018 MiB\n435983, GPU-7a81ce20-434d-9dd4-4aaa-ab322fc4d103, 1018 MiB\n435984, GPU-3019f361-2012-0e6e-efd7-c093e95e547d, 1018 MiB\n",
+  "latest_epoch": 0,
+  "latest_train": null,
+  "latest_event": "execution_context",
+  "checkpoint_exists": false,
+  "metrics_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/logs/training_metrics.jsonl"
+}
