@@ -1,0 +1,39 @@
+test_run_identity_cannot_escape_the_repository (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ERROR
+test_source_bytes_are_frozen_with_independent_results (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ERROR
+test_real_train_and_model_root_ignore_the_results_marker (tools.issue252.test_relocated_root.RelocatedRootTests) ... 
+======================================================================
+ERROR: test_run_identity_cannot_escape_the_repository (tools.issue252.test_run_workspace.RunWorkspaceTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_run_workspace.py", line 30, in test_run_identity_cannot_escape_the_repository
+    from tools.issue252.run_workspace import freeze_run
+ModuleNotFoundError: No module named 'tools.issue252.run_workspace'
+
+======================================================================
+ERROR: test_source_bytes_are_frozen_with_independent_results (tools.issue252.test_run_workspace.RunWorkspaceTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_run_workspace.py", line 11, in test_source_bytes_are_frozen_with_independent_results
+    from tools.issue252.run_workspace import freeze_run
+ModuleNotFoundError: No module named 'tools.issue252.run_workspace'
+
+======================================================================
+FAIL: test_real_train_and_model_root_ignore_the_results_marker (tools.issue252.test_relocated_root.RelocatedRootTests) (symbol='_repository_root')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_relocated_root.py", line 20, in test_real_train_and_model_root_ignore_the_results_marker
+    self.assertEqual(getattr(module,symbol)(),ROOT,
+AssertionError: PosixPath('/fs04/ar57/wenyu/GeneRec/results') != PosixPath('/fs04/ar57/wenyu/GeneRec') : run-source root discovery must not select results as the repository
+
+======================================================================
+FAIL: test_real_train_and_model_root_ignore_the_results_marker (tools.issue252.test_relocated_root.RelocatedRootTests) (symbol='repository_root')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_relocated_root.py", line 20, in test_real_train_and_model_root_ignore_the_results_marker
+    self.assertEqual(getattr(module,symbol)(),ROOT,
+AssertionError: PosixPath('/fs04/ar57/wenyu/GeneRec/results') != PosixPath('/fs04/ar57/wenyu/GeneRec') : run-source root discovery must not select results as the repository
+
+----------------------------------------------------------------------
+Ran 3 tests in 46.387s
+
+FAILED (failures=2, errors=2)

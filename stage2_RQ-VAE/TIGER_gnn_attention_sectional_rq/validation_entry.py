@@ -1,356 +1,290 @@
-"""No-argument, four-rank controlled microstep proof; never a training epoch."""
+"""Actual one-epoch phase2 diagnostic; no inherited checkpoint or synthetic loss."""
 import hashlib
 import json
 import os
-from pathlib import Path
-import random
 import time
-import tarfile
-from datetime import timedelta
 import traceback
 
-import numpy as np
 import torch
 import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel
-
 import train_rqvae as training
-from model.mechanism import RQVAE
-
-ROOT = training.REPO_ROOT
-OUTPUT = ROOT / 'results/research/issue251/runtime'
-PRETRAINED = ROOT / 'results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth'
-CONTROLLED_MICROSTEP = True
-BATCH = 256
+import benchmark_entry as common
 
 
-def sha256(path):
-    digest = hashlib.sha256()
-    with Path(path).open('rb') as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b''):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def source_binding():
-    tree = Path(__file__).resolve().parent
-    paths = sorted(tree.rglob('*.py')) + sorted((tree / 'config').glob('*.json'))
-    paths += [ROOT / name for name in ('assets/manifest.json',
-        'tools/issue251/launch_validation.py','tools/research/stage2/launcher.py',
-        'tools/graph_infra/ego_gnn.py','tools/graph_infra/assets.py',
-        'results/research/issue251/CONTRACT.md')]
-    return {str(path.relative_to(ROOT)): sha256(path) for path in paths}
+def digest(tensors):
+    value = hashlib.sha256()
+    for name, tensor in tensors:
+        array = tensor.detach().cpu().contiguous()
+        value.update(name.encode())
+        value.update(str((array.dtype, tuple(array.shape))).encode())
+        value.update(array.view(torch.uint8).numpy().tobytes())
+    return value.hexdigest()
 
 
 def groups(model):
-    return {'encoder': list(model.encoder.parameters()),
-            'GNN': list(model.structure.tokens.parameters()),
-            'Q': [model.structure.attention.query],
-            'K': list(model.structure.attention.key.parameters()),
-            'V': list(model.structure.attention.value.parameters()),
-            'score': list(model.structure.attention.score.parameters()),
-            'codebook': list(model.rq.parameters()), 'decoder': list(model.decoder.parameters())}
+    result = {'encoder': list(model.encoder.parameters()),
+              'decoder': list(model.decoder.parameters()),
+              'GNN.input': list(model.structure.tokens.input.parameters()),
+              'sharedKey': list(model.structure.attention.key.parameters()),
+              'sharedValue': list(model.structure.attention.value.parameters()),
+              'sharedScore': list(model.structure.attention.score.parameters())}
+    for name, module in model.structure.tokens.named_modules():
+        if name and name != 'input' and list(module.parameters(recurse=False)):
+            result['GNN.' + name] = list(module.parameters(recurse=False))
+    for index, book in enumerate(model.rq.vq_layers):
+        result['codebook%d' % index] = list(book.parameters())
+    # Each query is a row of one real parameter, not five fictitious modules.
+    query = model.structure.attention.query
+    for index in range(5):
+        result['Query%d' % index] = [(query, index)]
+    return result
 
 
-def gradients(loss, model, retain_graph=False):
-    parameters = list(model.parameters())
-    values = torch.autograd.grad(loss, parameters, allow_unused=True, retain_graph=retain_graph)
-    lookup = {id(p): g for p, g in zip(parameters, values)}
+def statistics(model, values):
     result = {}
     for name, members in groups(model).items():
-        present = [lookup[id(p)] for p in members if lookup[id(p)] is not None]
-        for value in present:
-            if not bool(torch.isfinite(value).all()):
-                raise AssertionError('nonfinite ' + name + ' gradient')
-        norm = sum(float(g.double().square().sum()) for g in present) ** .5
-        result[name] = {'norm': norm, 'none': len(members) - len(present),
-                        'zero': sum(int(not bool(g.any())) for g in present), 'parameters': len(members)}
-    return result, values
+        selected = []
+        for member in members:
+            parameter, index = member if isinstance(member, tuple) else (member, None)
+            value = values.get(id(parameter))
+            selected.append(None if value is None else value if index is None else value[index])
+        present = [value for value in selected if value is not None]
+        finite = all(bool(torch.isfinite(value).all()) for value in present)
+        result[name] = {'absent': not present, 'none': len(selected) - len(present),
+                        'zero': sum(not bool(value.any()) for value in present),
+                        'tensors': len(selected), 'finite': finite,
+                        'norm': sum(float(value.double().square().sum()) for value in present) ** .5}
+        if not finite:
+            raise RuntimeError('nonfinite module ' + name)
+    return result
 
 
-def synchronized(tensors):
-    maximum = 0.
-    for tensor in tensors:
-        if tensor is None:
-            continue
-        if not bool(torch.isfinite(tensor).all()):
-            raise AssertionError('nonfinite synchronized tensor')
-        reference = tensor.detach().clone()
-        dist.broadcast(reference, src=0)
-        difference = float((tensor.detach() - reference).abs().max())
-        maximum = max(maximum, difference)
-    if maximum > 1e-6:
-        raise AssertionError('rank mismatch: ' + str(maximum))
-    return maximum
+def tensor_leaves(value):
+    if torch.is_tensor(value):
+        yield value
+    elif isinstance(value, (list, tuple)):
+        for item in value:
+            yield from tensor_leaves(item)
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from tensor_leaves(item)
 
 
-def decode(model, tokens):
-    return sum(layer.embed(tokens[:, index]) for index, layer in enumerate(model.rq.vq_layers))
+class Observer:
+    def __init__(self, report, output):
+        self.report, self.output = report, output
+        self.forward = {}
+        self.seen = set()
+
+    def instrument(self, model):
+        for name, module in model.named_modules():
+            if list(module.parameters(recurse=False)):
+                def hook(owner, inputs, output, name=name):
+                    row = self.forward.setdefault(name, {'calls': 0, 'finite': True})
+                    row['calls'] += 1
+                    row['finite'] &= all(bool(torch.isfinite(t).all()) for t in tensor_leaves(output))
+                    if not row['finite']:
+                        raise RuntimeError('nonfinite forward ' + name)
+                module.register_forward_hook(hook)
+
+    def __call__(self, event, **fields):
+        if event != 'diagnostic_complete' and event in self.seen:
+            return
+        self.seen.add(event)
+        model = fields['model']
+        if event == 'first_step_before_backward':
+            self.before = {id(p): p.detach().clone() for p in model.parameters()}
+            self.batch = fields['batch'].detach().clone()
+            self.ids = fields['item_ids'].detach().clone()
+            self.sample = fields['structural_sample']
+            self.report['first_step_losses'] = {
+                key: float(fields[key].detach()) for key in
+                ('original_loss', 'structural_loss', 'combined_loss')}
+            if not all(torch.isfinite(fields[key]).all() for key in
+                       ('original_loss', 'structural_loss', 'combined_loss')):
+                raise RuntimeError('nonfinite actual first-step losses')
+            self.report['actual_batch_items'] = len(self.ids)
+            if len(self.ids) != 1024:
+                raise RuntimeError('first step is not the full real per-rank batch')
+            self.report['first_structural_sample'] = {
+                key: value.tolist() if hasattr(value, 'tolist') else value
+                for key, value in self.sample.items()}
+            decoded = sum(layer.embed(model.last_structural_tokens[:, i])
+                          for i, layer in enumerate(model.rq.vq_layers))
+            exact = torch.equal(model.last_structural_q, decoded)
+            self.report['actual_structural_hard_q_decode_exact'] = exact
+            if not exact:
+                raise RuntimeError('actual sampled training q differs from token decode')
+        elif event == 'first_step_after_backward':
+            self.report['normal_backward'] = statistics(model, {id(p): p.grad for p in model.parameters()})
+            self.report['normal_forward'] = {name: dict(row) for name, row in self.forward.items()}
+        elif event == 'first_step_after_optimizer':
+            self.report['actual_optimizer_update'] = statistics(model,
+                {id(p): p.detach() - self.before[id(p)] for p in model.parameters()})
+            del self.before
+        elif event == 'diagnostic_complete':
+            losses = fields['completed_losses']
+            self.report['completed_epoch'] = fields['completed_epoch']
+            self.report['completed_local_losses'] = [float(value) for value in losses]
+            if not losses or not all(torch.isfinite(torch.as_tensor(value)).all() for value in losses):
+                raise RuntimeError('completed epoch has missing/nonfinite real losses')
+            self.completed(model, fields['catalogue'])
+
+    def completed(self, model, catalogue):
+        required = {'first_step_before_backward', 'first_step_after_backward',
+                    'first_step_after_optimizer', 'diagnostic_complete'}
+        if not required <= self.seen:
+            raise RuntimeError('trainer omitted actual diagnostic observer events')
+        state_hash = digest(model.named_parameters())
+        hashes = [None] * dist.get_world_size()
+        dist.all_gather_object(hashes, state_hash)
+        self.report['completed_parameter_hashes'] = hashes
+        if len(set(hashes)) != 1:
+            raise RuntimeError('four-rank completed parameters differ')
+        self.report['completed_state_finite'] = all(
+            bool(torch.isfinite(p).all()) for p in model.parameters())
+        if not self.report['completed_state_finite']:
+            raise RuntimeError('nonfinite completed parameter')
+        # Independent unwrapped raw model: no autograd.grad through DDP's reducer.
+        raw = training.RQVAE(training._tokenizer_config(), in_dim=catalogue.shape[1],
+                             distance=training.DISTANCE).to(catalogue.device)
+        raw.load_state_dict(model.state_dict())
+        raw.train()
+        reconstructed, parts, _, _, structural = raw(
+            self.batch, self.ids, catalogue_embeddings=catalogue, structural_sample=self.sample)
+        original, _ = training.CRITERION(reconstructed, self.batch, parts)
+        parameters = list(raw.parameters())
+        original_g = torch.autograd.grad(original, parameters, allow_unused=True, retain_graph=True)
+        structural_g = torch.autograd.grad(structural, parameters, allow_unused=True)
+        self.report['raw_real_batch_VJP'] = {
+            'state': 'completed diagnostic checkpoint; same first real batch/sample',
+            'original': statistics(raw, dict(zip(map(id, parameters), original_g))),
+            'structural': statistics(raw, dict(zip(map(id, parameters), structural_g)))}
+        if self.report['raw_real_batch_VJP']['structural']['decoder']['norm'] != 0:
+            raise RuntimeError('structural-only loss unexpectedly reaches decoder')
+        if self.report['normal_backward']['decoder']['norm'] <= 0:
+            raise RuntimeError('actual total loss did not reach decoder')
+        for name, row in self.report['normal_backward'].items():
+            if row['norm'] <= 0 or self.report['actual_optimizer_update'][name]['norm'] <= 0:
+                raise RuntimeError('missing total gradient/update: ' + name)
+        del original_g, structural_g, parameters, original, structural, reconstructed, parts
+        raw.eval()
+        raw.rank_local_checks = True
+        for layer in raw.rq.vq_layers:
+            layer._skip_ddp_reduce = True
+        with torch.no_grad():
+            self.switches(raw, catalogue)
+        dist.barrier()
+        if dist.get_rank() == 0:
+            self.export(raw, catalogue)
+        dist.barrier()
+
+    def switches(self, raw, catalogue):
+        ids = self.ids
+        output = {}
+        snapshots = {}
+        for label, behavior, curvature in [('both_on', True, True),
+                                            ('behavior_off', False, True),
+                                            ('curvature_off', True, False),
+                                            ('both_off', False, False)]:
+            raw.behavior_on, raw.curvature_on = behavior, curvature
+            raw(catalogue[ids], ids)
+            decoded = sum(layer.embed(raw.last_tokens[:, i])
+                          for i, layer in enumerate(raw.rq.vq_layers))
+            if not torch.equal(raw.last_q, decoded) or not torch.equal(raw.last_hard, decoded):
+                raise RuntimeError('hard-q/token decode mismatch: ' + label)
+            snapshots[label] = (raw.last_weights.detach().clone(), raw.last_costs[0].detach().clone(),
+                                raw.last_tokens.detach().clone())
+            output[label] = {'weights_sha256': digest([('weights', snapshots[label][0])]),
+                             'cost_sha256': digest([('cost', snapshots[label][1])]),
+                             'tokens_sha256': digest([('tokens', snapshots[label][2])]),
+                             'hard_q_decode_exact': True}
+        raw.behavior_on = raw.curvature_on = True
+        baseline = snapshots['both_on']
+        for label in ('behavior_off', 'curvature_off', 'both_off'):
+            current = snapshots[label]
+            output[label]['cost_delta_norm'] = float((current[1] - baseline[1]).norm())
+            output[label]['changed_hard_items'] = int((current[2] != baseline[2]).any(-1).sum())
+            if output[label]['cost_delta_norm'] <= 0:
+                raise RuntimeError('switch has no actual cost influence: ' + label)
+        # Reversible intervention on the actual learned gate, not a fake echo flag.
+        query = raw.structure.attention.query
+        saved = query.detach().clone()
+        try:
+            query[0].neg_()
+            raw(catalogue[ids], ids)
+            weight_delta = float((raw.last_weights - baseline[0]).norm())
+            cost_delta = float((raw.last_costs[0] - baseline[1]).norm())
+            output['query_intervention'] = {'weight_delta_norm': weight_delta,
+                                             'cost_delta_norm': cost_delta,
+                                             'changed_hard_items': int(
+                                                 (raw.last_tokens != baseline[2]).any(-1).sum())}
+            if weight_delta <= 0 or cost_delta <= 0:
+                raise RuntimeError('real query intervention did not influence gates and cost')
+        finally:
+            query.copy_(saved)
+        self.report['switches'] = output
+
+    def export(self, raw, catalogue):
+        checkpoint = self.output / 'diagnostic_epoch1.pth'
+        torch.save({'state_dict': raw.state_dict(), 'epoch': 1, 'formal_training': False,
+                    'run_id': training.RUN_ID, 'provenance': raw.provenance()}, checkpoint)
+        restored = training.RQVAE(training._tokenizer_config(), in_dim=catalogue.shape[1],
+                                  distance=training.DISTANCE).to(catalogue.device)
+        restored.load_state_dict(torch.load(checkpoint, map_location=catalogue.device)['state_dict'])
+        restored.eval()
+        restored.rank_local_checks = True
+        for layer in restored.rq.vq_layers:
+            layer._skip_ddp_reduce = True
+        with torch.no_grad():
+            actual = raw.get_indices(catalogue)
+            again = restored.get_indices(catalogue)
+        if not torch.equal(actual, again):
+            raise RuntimeError('same-checkpoint full export differs')
+        extended = training._extend_collisions(actual.cpu().numpy(), list(training.CODEBOOK_SIZE))
+        path = self.output / 'diagnostic_item_sids.json'
+        payload = {str(i): row for i, row in enumerate(extended.tolist())}
+        path.write_text(json.dumps(payload))
+        if json.loads(path.read_text()) != payload:
+            raise RuntimeError('persisted diagnostic export differs')
+        self.report['export'] = {'items': len(actual), 'checkpoint_sha256': hashlib.sha256(
+            checkpoint.read_bytes()).hexdigest(), 'sid_sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
+            'same_checkpoint_exact': True, 'formal_training': False}
 
 
 def main():
-    rank = int(os.environ['RANK'])
-    local_rank = int(os.environ['LOCAL_RANK'])
-    if int(os.environ['WORLD_SIZE']) != 4:
-        raise RuntimeError('validation requires all four ranks')
-    torch.cuda.set_device(local_rank)
-    dist.init_process_group('nccl',timeout=timedelta(hours=1))
-    device = torch.device('cuda', local_rank)
-    random.seed(42)
-    np.random.seed(42)
-    torch.manual_seed(42)
-    torch.cuda.manual_seed_all(42)
-    OUTPUT.mkdir(parents=True, exist_ok=True)
-    report = {'rank': rank, 'world_size': 4, 'seed': 42, 'controlled_microstep': CONTROLLED_MICROSTEP,
-              'formal_training': False, 'timings_seconds': {}, 'status': 'running'}
-    report.update({'run_id':'issue251_validation_'+str(os.getppid()),
-                   'worker_pid':os.getpid(),'controller_pid':os.getppid(),
-                   'master_port':int(os.environ['MASTER_PORT'])})
-    started = time.perf_counter()
-    def timed(name, action):
-        report['phase']=name
-        (OUTPUT/('rank_%d.json'%rank)).write_text(json.dumps(report,indent=2,allow_nan=False))
-        print('[issue251 rank%d] %s start'%(rank,name),flush=True)
-        torch.cuda.synchronize()
-        begin = time.perf_counter()
-        result = action()
-        torch.cuda.synchronize()
-        report['timings_seconds'][name] = time.perf_counter() - begin
-        print('[issue251 rank%d] %s finished %.3fs'%(rank,name,report['timings_seconds'][name]),flush=True)
-        return result
+    run_id, output = common.configure('validation')
+    report = {'run_id': run_id, 'rank': int(os.environ['RANK']), 'worker_pid': os.getpid(),
+              'controller_pid': os.getppid(), 'formal_training': False, 'diagnostic_epochs': 1,
+              'source_hashes': common.source_binding('validation'), 'status': 'running',
+              'recipe': {'epochs': training.EPOCHS, 'per_rank_batch': 1024, 'global_batch': 4096,
+                         'world_size': 4, 'seed': 42, 'config_sha256': training.CONFIG.sha256}}
+    observer = Observer(report, output)
+    original_class = training.RQVAE
+    class Instrumented(original_class):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            observer.instrument(self)
+    training.RQVAE = Instrumented
+    training.DIAGNOSTIC_OBSERVER = observer
+    start = time.monotonic()
     try:
-        binding = source_binding()
-        embeddings = torch.from_numpy(np.load(training.EMBEDDING_FILE)).to(device=device, dtype=torch.float32)
-        if embeddings.ndim != 2 or embeddings.shape[1] != 768:
-            raise AssertionError('expected original semantic embedding catalogue')
-        model = RQVAE(training._tokenizer_config(), in_dim=embeddings.shape[1], distance=training.DISTANCE).to(device)
-        initial = torch.load(PRETRAINED, map_location='cpu')
-        incompatible = model.load_state_dict(initial['state_dict'], strict=False)
-        allowed_buffers = {'tangent_scale', 'curvature_weight', 'target_scale'}
-        if incompatible.unexpected_keys or any(not (key.startswith('structure.') or key in allowed_buffers)
-                                              for key in incompatible.missing_keys):
-            raise AssertionError(str(incompatible))
-        if len(embeddings) != model.store.n:
-            raise AssertionError('catalogue item identities do not match assets')
-        report['pretrained'] = {'path': str(PRETRAINED.relative_to(ROOT)), 'sha256': sha256(PRETRAINED),
-                                'missing_new_state': incompatible.missing_keys}
-        report['source_hashes'] = binding
-        report['embedding_sha256'] = sha256(training.EMBEDDING_FILE)
-        report['catalogue_size'] = len(embeddings)
-        calibration_centres = [int(model.targets.valid_centres[0])]
-        centres = [int(model.targets.valid_centres[rank])]
-        calibration_ids = torch.arange(BATCH,device=device)
-        ids = torch.arange(rank*BATCH,(rank+1)*BATCH,device=device)
-        batch = embeddings[ids]
-        report['curvature_centres'] = centres
-        report['reference_count'] = int(np.sum(model.targets.components == model.targets.components[centres[0]]))
-        report['valid_triples'] = sum(len(triples) for triples, _, _ in model.targets.blocks(centres))
-        if not report['valid_triples']:
-            raise AssertionError('fixed centre has no valid triples')
-        model.freeze_tangent_scale(embeddings)
-        report['calibration'] = timed('initial_gradient_calibration', lambda:
-            model.calibrate_curvature_weight(embeddings[calibration_ids], calibration_ids,
-                                             embeddings, calibration_centres))
-        dist.broadcast(model.curvature_weight,0)
-        frozen_lambda = model.curvature_weight.detach().clone()
-        report['tangent_scale'] = float(model.tangent_scale)
-        report['target_scale'] = float(model.target_scale)
-        model.train()
-        report['last_layer_sinkhorn'] = bool(model.rq.vq_layers[-1].use_sk)
-        if not report['last_layer_sinkhorn']:
-            raise AssertionError('original last-layer Sinkhorn disabled')
-        reconstructed, parts, _, tokens = model(batch, ids)
-        original, reconstruction = model.compute_loss(batch, reconstructed, parts)
-        if not torch.equal(model.last_hard, decode(model, tokens)):
-            raise AssertionError('hard quantization differs from decoded SID')
-        if not torch.equal(model.last_q, model.last_hard):
-            raise AssertionError('surrogate forward is not hard quantization')
-        report['initial_original_loss'] = float(original)
-        report['initial_reconstruction_loss'] = float(reconstruction)
-        report['original_gradients'], original_gradients = gradients(original, model)
-        del reconstructed, parts, original, reconstruction
-        def curvature_proof():
-            q = model.catalogue_q(embeddings)
-            if len(q) != len(embeddings):
-                raise AssertionError('curvature catalogue truncated')
-            if not torch.equal(model.last_hard, decode(model, model.last_tokens)):
-                raise AssertionError('global hard quantization differs from decoded SID')
-            loss = model.curvature_loss(q, centres)
-            norms, values = gradients(loss, model)
-            return float(loss), norms, values
-        curvature, norms, curvature_gradients = timed('full_catalogue_A1_gradients', curvature_proof)
-        report['initial_curvature_loss'] = curvature
-        report['curvature_gradients'] = norms
-        for name in ('encoder','GNN','Q','K','V','score','codebook'):
-            if norms[name]['norm'] <= 0:
-                raise AssertionError('missing actual A1 gradient: ' + name)
-        if norms['decoder']['norm'] != 0:
-            raise AssertionError('curvature unexpectedly reaches decoder')
-        dot = sum(float((a.double() * b.double()).sum()) for a,b in zip(original_gradients,curvature_gradients)
-                  if a is not None and b is not None)
-        a_norm = sum(float(a.double().square().sum()) for a in original_gradients if a is not None) ** .5
-        b_norm = sum(float(b.double().square().sum()) for b in curvature_gradients if b is not None) ** .5
-        report['loss_gradient_cosine'] = dot / (a_norm * b_norm)
-        report['unweighted_gradient_ratio'] = b_norm / a_norm
-        report['weighted_gradient_ratio'] = float(frozen_lambda) * b_norm / a_norm
-        positions={id(parameter):i for i,parameter in enumerate(model.parameters())}
-        report['module_gradient_comparison']={}
-        for group,members in groups(model).items():
-            on=report['original_gradients'][group]['norm'];cn=norms[group]['norm']
-            group_dot=0.
-            for parameter in members:
-                a=original_gradients[positions[id(parameter)]]
-                b=curvature_gradients[positions[id(parameter)]]
-                if a is not None and b is not None:
-                    group_dot+=float((a.double()*b.double()).sum())
-            report['module_gradient_comparison'][group]={
-                'raw_curvature_norm':cn,'weighted_curvature_norm':float(frozen_lambda)*cn,
-                'original_norm':on,'weighted_ratio':float(frozen_lambda)*cn/on if on else None,
-                'cosine':group_dot/(on*cn) if on and cn else None}
-        report['query_curvature_gradient_per_expert']=curvature_gradients[
-            positions[id(model.structure.attention.query)]].double().norm(dim=-1).cpu().tolist()
-        reference_gradients=[]
-        for parameter,original_gradient,curvature_gradient in zip(
-                model.parameters(),original_gradients,curvature_gradients):
-            expected=torch.zeros_like(parameter)
-            if original_gradient is not None:
-                expected.add_(original_gradient)
-            if curvature_gradient is not None:
-                expected.add_(curvature_gradient,alpha=float(frozen_lambda))
-            dist.all_reduce(expected)
-            reference_gradients.append(expected/4)
-        del original_gradients,curvature_gradients
-        model.cut_selection_cost = True
-        _, cut_norms, _ = timed('detached_cost_A1_negative', curvature_proof)
-        model.cut_selection_cost = False
-        report['detached_cost_curvature_gradients'] = cut_norms
-        if any(cut_norms[name]['norm'] != 0 for name in ('GNN','Q','K','V','score')):
-            raise AssertionError('detached assignment cost did not cut actual A1 structure route')
-        sid_before = model.last_tokens.detach().clone()
-        cost_before = model.last_costs[0][:8].detach().clone()
-        with torch.no_grad():
-            gate_before = model.structure.gates_for_items(model.store,ids[:8],device)[1].detach().clone()
-        wrapped = DistributedDataParallel(model, device_ids=[local_rank], find_unused_parameters=True)
-        optimizer = torch.optim.AdamW(model.parameters(), lr=training.LR, weight_decay=training.WEIGHT_DECAY)
-        before = {name: parameter.detach().clone() for name, parameter in model.named_parameters()}
-        def microstep():
-            optimizer.zero_grad(set_to_none=True)
-            reconstructed, parts, _, _, curv = wrapped(batch, ids, catalogue_embeddings=embeddings,
-                                                       curvature_centres=centres)
-            original, _ = model.compute_loss(batch, reconstructed, parts)
-            loss = model.combined_loss(original, curv)
-            if not bool(torch.isfinite(loss)):
-                raise AssertionError('nonfinite combined loss')
-            loss.backward()
-            relative_error=max(float((p.grad-e).abs().max() /
-                (1+p.grad.abs().max()+e.abs().max()))
-                for p,e in zip(model.parameters(),reference_gradients) if p.grad is not None)
-            report['DDP_vs_independent_rank_mean_relative_error']=relative_error
-            if relative_error>1e-4:
-                raise AssertionError('DDP gradient differs from mean of independent real losses')
-            report['gradient_rank_max_difference'] = synchronized([p.grad for p in model.parameters()])
-            report['preclip_norm'] = float(torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0))
-            report['postclip_norm']=sum(float(p.grad.double().square().sum())
-                for p in model.parameters() if p.grad is not None)**.5
-            optimizer.step()
-            return {'original': float(original), 'curvature': float(curv), 'combined': float(loss)}
-        report['microstep_losses'] = timed('DDP_controlled_microstep', microstep)
-        report['learning_rate'] = training.LR
-        report['clip_norm'] = 1.0
-        report['parameter_rank_max_difference'] = synchronized(list(model.parameters()))
-        report['parameter_update_norms'] = {name: float((parameter.detach()-before[name]).double().norm())
-                                            for name, parameter in model.named_parameters()}
-        names={id(parameter):name for name,parameter in model.named_parameters()}
-        report['module_update_norms']={group:sum(float(
-            (parameter.detach()-before[names[id(parameter)]]).double().square().sum())
-            for parameter in members)**.5 for group,members in groups(model).items()}
-        if any(report['module_update_norms'][group]<=0 for group in ('GNN','Q','K','V','score')):
-            raise AssertionError('controlled update did not change all trainable structure groups')
-        del before
-        if not torch.equal(frozen_lambda, model.curvature_weight):
-            raise AssertionError('calibration changed during microstep')
-        dist.barrier()
-        # Other ranks wait in the barrier: any inference collective deadlocks and fails the run.
-        if rank == 0:
-            def export_reload():
-                model.eval()
-                held = torch.tensor([0, centres[0], len(embeddings)-1, 0], device=device)
-                first = model.get_indices(embeddings[held], item_ids=held)
-                with torch.no_grad():
-                    gate_after=model.structure.gates_for_items(model.store,ids[:8],device)[1]
-                report['attention_token_axes']=model.structure.last_attention.detach().cpu().tolist()
-                report['attention_valid_token_mask']=model.structure.last_token_mask.cpu().tolist()
-                report['expert_geometry_weights']=gate_after.cpu().tolist()
-                report['gate_weight_change_norm']=float((gate_after-gate_before).norm())
-                report['selection_cost_change_norm']=float((model.last_costs[0][:8]-cost_before).norm())
-                report['hard_sid_changed_items']=int((model.last_tokens!=sid_before).any(-1).sum())
-                if report['gate_weight_change_norm']<=0 or report['selection_cost_change_norm']<=0:
-                    raise AssertionError('controlled update did not change gates and selection costs')
-                if report['hard_sid_changed_items']==0:
-                    raise AssertionError('controlled microstep did not change any actual hard SID')
-                second = model.get_indices(embeddings[held], item_ids=held)
-                if not torch.equal(first, second):
-                    raise AssertionError('repeated real-ID inference differs')
-                state = {name: value.detach().cpu() for name, value in model.state_dict().items()}
-                checkpoint_path = OUTPUT / 'controlled_microstep.pth'
-                torch.save({'state_dict': state, 'source_hashes': binding, 'asset_manifest_sha256': sha256(ROOT/'assets/manifest.json'),
-                            'pretrained_sha256': report['pretrained']['sha256'], 'controlled_microsteps': 1,
-                            'config': vars(training._tokenizer_config()),
-                            'provenance':model.provenance()}, checkpoint_path)
-                with tarfile.open(OUTPUT / 'source_snapshot.tar.gz', 'w:gz') as archive:
-                    for source in binding:
-                        archive.add(ROOT / source, arcname=source)
-                reloaded = RQVAE(training._tokenizer_config(), in_dim=embeddings.shape[1], distance=training.DISTANCE).to(device)
-                reloaded.load_checkpoint(checkpoint_path)
-                reloaded.eval()
-                all_ids = torch.arange(len(embeddings), device=device)
-                actual = model.get_indices(embeddings, item_ids=all_ids)
-                restored = reloaded.get_indices(embeddings, item_ids=all_ids)
-                if not torch.equal(actual, restored):
-                    raise AssertionError('checkpoint export reload changed SID')
-                if not torch.equal(first, restored[held]):
-                    raise AssertionError('held real-ID inference differs from catalogue export')
-                path = OUTPUT / 'item_sids.json'
-                path.write_text(json.dumps({str(i): row for i,row in enumerate(actual.cpu().tolist())}))
-                disk = json.loads(path.read_text())
-                if [disk[str(i)] for i in range(len(embeddings))] != restored.cpu().tolist():
-                    raise AssertionError('persisted export differs')
-                return {'checkpoint_sha256': sha256(checkpoint_path), 'export_sha256': sha256(path),
-                        'items': len(actual), 'held_item_ids': held.cpu().tolist(), 'exact_reload': True,
-                        'rank0_inference_without_collectives': True},reloaded
-            report['export'],benchmark_model = timed('rank0_export_reload',export_reload)
-            def full_target_proof():
-                q=benchmark_model.catalogue_q(embeddings)
-                loss=benchmark_model.curvature_loss(q)
-                module_norms,values=gradients(loss,benchmark_model)
-                if benchmark_model.targets.last_rows!=28391948:
-                    raise AssertionError('full target traversal count mismatch')
-                if not bool((benchmark_model.last_token_counts==2).all()):
-                    raise AssertionError('catalogue token coverage incomplete')
-                attention_file=OUTPUT/'catalogue_attention.npz'
-                np.savez_compressed(attention_file,
-                    token_attention=benchmark_model.catalogue_attention.cpu().numpy(),
-                    expert_weights=benchmark_model.last_weights.detach().cpu().numpy(),
-                    token_counts=benchmark_model.last_token_counts.cpu().numpy())
-                return {'loss':float(loss),'valid_triples':benchmark_model.targets.last_rows,
-                        'centres':benchmark_model.targets.last_centres,
-                        'module_gradients':module_norms,'full_catalogue_items':len(q),
-                        'tokens_per_item':2,'attention_sha256':sha256(attention_file),
-                        'optimizer_steps':0}
-            report['full_target_end_to_end']=timed('all_28391948_targets_end_to_end',full_target_proof)
-        dist.barrier()
-        if binding != source_binding():
-            raise AssertionError('source changed during validation')
+        training.main(diagnostic_epochs=1)
+        if 'diagnostic_complete' not in observer.seen:
+            raise RuntimeError('trainer did not emit completed diagnostic evidence')
+        if report['source_hashes'] != common.source_binding('validation'):
+            raise RuntimeError('sources changed during validation')
         report['status'] = 'pass'
     except Exception:
         report['status'] = 'fail'
         report['error'] = traceback.format_exc()
         raise
     finally:
-        report['wall_seconds'] = time.perf_counter() - started
-        report['cuda_peak_bytes'] = torch.cuda.max_memory_allocated(device)
-        (OUTPUT / ('rank_%d.json' % rank)).write_text(json.dumps(report, indent=2, allow_nan=False))
-        dist.destroy_process_group()
+        training.RQVAE = original_class
+        training.DIAGNOSTIC_OBSERVER = None
+        report['wall_seconds'] = time.monotonic() - start
+        (output / ('rank_%d.json' % report['rank'])).write_text(
+            json.dumps(report, indent=2, allow_nan=False))
 
 
 if __name__ == '__main__':

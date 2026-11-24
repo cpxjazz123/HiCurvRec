@@ -1,0 +1,240 @@
+test_mathematical_contract_is_issue252_and_archived (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ERROR
+test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) ... 
+======================================================================
+ERROR: test_mathematical_contract_is_issue252_and_archived (tools.issue252.test_archive_binding.ArchiveBindingTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_archive_binding.py", line 220, in test_mathematical_contract_is_issue252_and_archived
+    self.assertEqual(archive_audit._repository_configs(provenance, self.root),
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/archive_audit.py", line 158, in _repository_configs
+    raise ValueError('checkpoint repository config hash mismatch: ' + name)
+ValueError: checkpoint repository config hash mismatch: results/research/issue251/CONTRACT.md
+
+======================================================================
+FAIL: test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) (asset='ego_full_1hop_visible')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_integrity.py", line 57, in test_parseable_operator_and_ego_mutations_fail_before_any_array_load
+    structure.SubgraphTokens()._cached_store(store)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py", line 87, in _cached_store
+    with np.load(feature_path, allow_pickle=False) as asset:
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: loaded corrupted asset
+
+======================================================================
+FAIL: test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) (asset='two_hop_nodes')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_integrity.py", line 57, in test_parseable_operator_and_ego_mutations_fail_before_any_array_load
+    structure.SubgraphTokens()._cached_store(store)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py", line 87, in _cached_store
+    with np.load(feature_path, allow_pickle=False) as asset:
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: loaded corrupted asset
+
+======================================================================
+FAIL: test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) (asset='two_hop_offsets')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_integrity.py", line 57, in test_parseable_operator_and_ego_mutations_fail_before_any_array_load
+    structure.SubgraphTokens()._cached_store(store)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py", line 87, in _cached_store
+    with np.load(feature_path, allow_pickle=False) as asset:
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: loaded corrupted asset
+
+======================================================================
+FAIL: test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) (asset='node_features')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_integrity.py", line 57, in test_parseable_operator_and_ego_mutations_fail_before_any_array_load
+    structure.SubgraphTokens()._cached_store(store)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py", line 87, in _cached_store
+    with np.load(feature_path, allow_pickle=False) as asset:
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: loaded corrupted asset
+
+======================================================================
+FAIL: test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) (asset='node_features_report')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_integrity.py", line 57, in test_parseable_operator_and_ego_mutations_fail_before_any_array_load
+    structure.SubgraphTokens()._cached_store(store)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py", line 87, in _cached_store
+    with np.load(feature_path, allow_pickle=False) as asset:
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: loaded corrupted asset
+
+======================================================================
+FAIL: test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) (asset='ego_operator_metadata')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_integrity.py", line 57, in test_parseable_operator_and_ego_mutations_fail_before_any_array_load
+    structure.SubgraphTokens()._cached_store(store)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py", line 87, in _cached_store
+    with np.load(feature_path, allow_pickle=False) as asset:
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: loaded corrupted asset
+
+======================================================================
+FAIL: test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) (asset='ego1_in_ptr')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_integrity.py", line 57, in test_parseable_operator_and_ego_mutations_fail_before_any_array_load
+    structure.SubgraphTokens()._cached_store(store)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py", line 87, in _cached_store
+    with np.load(feature_path, allow_pickle=False) as asset:
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: loaded corrupted asset
+
+======================================================================
+FAIL: test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) (asset='ego1_in_col')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_integrity.py", line 57, in test_parseable_operator_and_ego_mutations_fail_before_any_array_load
+    structure.SubgraphTokens()._cached_store(store)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py", line 87, in _cached_store
+    with np.load(feature_path, allow_pickle=False) as asset:
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: loaded corrupted asset
+
+======================================================================
+FAIL: test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) (asset='ego1_out_ptr')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_integrity.py", line 57, in test_parseable_operator_and_ego_mutations_fail_before_any_array_load
+    structure.SubgraphTokens()._cached_store(store)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py", line 87, in _cached_store
+    with np.load(feature_path, allow_pickle=False) as asset:
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: loaded corrupted asset
+
+======================================================================
+FAIL: test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) (asset='ego1_out_col')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_integrity.py", line 57, in test_parseable_operator_and_ego_mutations_fail_before_any_array_load
+    structure.SubgraphTokens()._cached_store(store)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py", line 87, in _cached_store
+    with np.load(feature_path, allow_pickle=False) as asset:
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: loaded corrupted asset
+
+======================================================================
+FAIL: test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) (asset='ego2_in_ptr')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_integrity.py", line 57, in test_parseable_operator_and_ego_mutations_fail_before_any_array_load
+    structure.SubgraphTokens()._cached_store(store)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py", line 87, in _cached_store
+    with np.load(feature_path, allow_pickle=False) as asset:
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: loaded corrupted asset
+
+======================================================================
+FAIL: test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) (asset='ego2_in_col')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_integrity.py", line 57, in test_parseable_operator_and_ego_mutations_fail_before_any_array_load
+    structure.SubgraphTokens()._cached_store(store)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py", line 87, in _cached_store
+    with np.load(feature_path, allow_pickle=False) as asset:
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: loaded corrupted asset
+
+======================================================================
+FAIL: test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) (asset='ego2_out_ptr')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_integrity.py", line 57, in test_parseable_operator_and_ego_mutations_fail_before_any_array_load
+    structure.SubgraphTokens()._cached_store(store)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py", line 87, in _cached_store
+    with np.load(feature_path, allow_pickle=False) as asset:
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: loaded corrupted asset
+
+======================================================================
+FAIL: test_parseable_operator_and_ego_mutations_fail_before_any_array_load (tools.issue252.test_runtime_integrity.RuntimeIntegrityTests) (asset='ego2_out_col')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_integrity.py", line 57, in test_parseable_operator_and_ego_mutations_fail_before_any_array_load
+    structure.SubgraphTokens()._cached_store(store)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py", line 87, in _cached_store
+    with np.load(feature_path, allow_pickle=False) as asset:
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: loaded corrupted asset
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.161s
+
+FAILED (failures=14, errors=1)

@@ -52,10 +52,11 @@ class ProvenanceTests(unittest.TestCase):
             train.parent.mkdir(parents=True);train.write_bytes(b'frozen training rows')
             (repo/'assets/manifest.json').write_text(json.dumps(
                 {'assets':[],'inputs':{'train':hashlib.sha256(train.read_bytes()).hexdigest()}}))
-            for name in ('results/research/issue251/CONTRACT.md',
+            for name in ('results/research/issue252/CONTRACT.md',
                          'tools/graph_infra/ego_gnn.py','tools/graph_infra/assets.py'):
                 path=repo/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('frozen')
             source=tree/'model/mechanism.py';source.write_text('executed source')
+            (tree/'train_rqvae.py').write_text('import tools.graph_infra.ego_gnn\n')
             with patch.object(mechanism,'ROOT',repo),patch.object(mechanism,'__file__',str(source)):
                 initial=mechanism.RQVAE.provenance(object())
                 source.write_text('new disk source, not the executed source')

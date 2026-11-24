@@ -1,0 +1,14 @@
+test_source_inventory_detects_imported_compiler_policy_drift (tools.issue252.test_geometry_driver.GeometryDriverTests.test_source_inventory_detects_imported_compiler_policy_drift) ... FAIL
+
+======================================================================
+FAIL: test_source_inventory_detects_imported_compiler_policy_drift (tools.issue252.test_geometry_driver.GeometryDriverTests.test_source_inventory_detects_imported_compiler_policy_drift)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_geometry_driver.py", line 131, in test_source_inventory_detects_imported_compiler_policy_drift
+    self.assertNotEqual(value['before'], value['after'],
+AssertionError: {'results/research/issue252/profiling_baseline/source_snapshot.tar.gz': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'stage2_RQ-VAE/test_arm/assignment_floor.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'stage2_RQ-VAE/test_arm/config/train_config.json': '44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a', 'stage2_RQ-VAE/test_arm/geometry_validation_entry.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'stage2_RQ-VAE/test_arm/model/geometry.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'stage2_RQ-VAE/test_arm/tests/reference.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'tools/issue252/launch_geometry_validation.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'tools/research/stage2/anticollapse/floor.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'} == {'results/research/issue252/profiling_baseline/source_snapshot.tar.gz': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'stage2_RQ-VAE/test_arm/assignment_floor.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'stage2_RQ-VAE/test_arm/config/train_config.json': '44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a', 'stage2_RQ-VAE/test_arm/geometry_validation_entry.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'stage2_RQ-VAE/test_arm/model/geometry.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'stage2_RQ-VAE/test_arm/tests/reference.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'tools/issue252/launch_geometry_validation.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'tools/research/stage2/anticollapse/floor.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'} : Imported compiler policy changes must invalidate GPU proof
+
+----------------------------------------------------------------------
+Ran 1 test in 0.136s
+
+FAILED (failures=1)

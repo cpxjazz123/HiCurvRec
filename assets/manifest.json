@@ -1,6 +1,6 @@
 {
   "issue": 248,
-  "version": "v6-cross-attention-251",
+  "version": "v9-full-ego-runtime-252",
   "source_commit": "37b343586eb6497c400ed72ba77de9ac34de3b98",
   "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.graph_infra.build_assets_v4",
   "seed": 248001,
@@ -754,6 +754,691 @@
         "node_features": "580f04a9c6a8cc7142de17a865efdf287bf94e9e4a30b225504f12a75b74b4cd",
         "ego_full_1hop_visible": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
       }
+    },
+    {
+      "name": "named_visible_graph_audit",
+      "path": "assets/v7_graph_contract/audit.json",
+      "use": "description",
+      "schema": "issue252.raw-transitions.v1",
+      "bytes": 32689,
+      "sha256": "0918afe35cddf209441fff4fe80a558a2d562e14027326d124ec2f51000acb1b",
+      "origin": "independent raw-interaction audit; original correct binaries reused",
+      "command": "python3.9 -m tools.issue252.graph_audit"
+    },
+    {
+      "name": "named_visible_graph_contract",
+      "path": "assets/v7_graph_contract/contract.json",
+      "use": "description",
+      "schema": "genrec.named_graph.v1",
+      "bytes": 30759,
+      "sha256": "d61a4ca54f6e7ea29331652aceae1b0d9495e215c44fb8415ae507ed52e38687",
+      "origin": "owner issue252 graph reconciliation",
+      "command": "python3.9 -m tools.issue252.graph_audit"
+    },
+    {
+      "bit_order": "little: row[source, target//8] bit target%8; support only",
+      "bytes": 75580566,
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue252.runtime_layout",
+      "coverage": {
+        "centres": "all global IDs in item_ids order",
+        "duplicates": "preserved",
+        "items": 24587,
+        "target_comparison": "float64 bit-for-bit",
+        "target_order": "centre, then frozen index shard order, then stored row order",
+        "two_hop": "complete closed populations; no truncation or sampling",
+        "valid_targets": 28391948
+      },
+      "data_bytes": 75580438,
+      "dtype": "|u1",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/index.npz": "a5eb2935b258024500d3558c0256238aa342bd1ade52dd0141208c1730e656e1",
+        "assets/shards/shard_000.npz": "1870d81151e38db93de347c1b12a5b7742782d89069b4fb6241dc2cf9f5eedb2",
+        "assets/shards/shard_001.npz": "6b0866880439b2fc09312fb9dbafa0e9da46ae7e1997a727eef657210248439d",
+        "assets/shards/shard_002.npz": "45b08c50843a05c908b70dcc177411f0e25601a9bdfacc29caa0465f7e963b07",
+        "assets/shards/shard_003.npz": "fc307613f8e62a95ea8b36cebd77e62becd855b8a2bc1b5a3a07668e7b6d9845",
+        "assets/shards/shard_004.npz": "768f8989ff67c61b9177df0e342aa478b98eabfe86f7968fe4f9b436e213fde7",
+        "assets/shards/shard_005.npz": "26edcbb5a478cbf1b8e5355a33781f323568713b0fc154c15103bcb371bf95cf",
+        "assets/shards/shard_006.npz": "c5d51677292549c4049adeadd855be96ec0b7c01127efa01d3ed98a140e5968a",
+        "assets/shards/shard_007.npz": "ff76eb5b3e7789375102403f951a3cd9d84f1d0f96026048c591491a06d4a916",
+        "assets/shards/shard_008.npz": "b2859a2946ffe16bf0d6b0bea8a27dfbdfddc43e787fc5e917dfc6db5d6839ae",
+        "assets/shards/shard_009.npz": "e646af02cbc1b291c7ef2cce291616701ba32b1d86771c2a78a3ec4b0ff9c1ab",
+        "assets/shards/shard_010.npz": "5de0ed90a40afbacfb6d19bc980ddc03824b4b6e5f80193bef4157275a8b442f",
+        "assets/shards/shard_011.npz": "8ef23c61c63663c37cd06ac097f21aeff4c56b895fd9eb1219bb1fe94e8c3d4f",
+        "assets/shards/shard_012.npz": "c519e4fdd3e15ee87dc8a1600874de90f502340d6bf3fdd5245abb1dbd082444",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/visible_reverse.npz": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6",
+        "assets/train/visible_undirected.npz": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818",
+        "assets/v5_gnn_geometry/node_features.npz": "580f04a9c6a8cc7142de17a865efdf287bf94e9e4a30b225504f12a75b74b4cd",
+        "assets/v5_gnn_geometry/node_features_report.json": "840a52ccfce64a1c449c324dfdd8258f62375eb4be6d62000c50882fa44a10cc",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "logical_shape": [
+        24587,
+        24587
+      ],
+      "name": "visible_forward_bits",
+      "path": "assets/v8_runtime_layout/visible_forward_bits.npy",
+      "schema": "npy",
+      "sha256": "17a6e7dd9ea4d264c1e68dcaa12211861b31672a02065ef9ef8155a12cb6d737",
+      "shape": [
+        24587,
+        3074
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+        "tools/issue252/runtime_layout.py": "4f052756dd7c66a687e6b9aa2c9eae16c7a92303c36cf99fe3e9a4581c2ebf5b"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 148309356,
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue252.runtime_layout",
+      "coverage": {
+        "centres": "all global IDs in item_ids order",
+        "duplicates": "preserved",
+        "items": 24587,
+        "target_comparison": "float64 bit-for-bit",
+        "target_order": "centre, then frozen index shard order, then stored row order",
+        "two_hop": "complete closed populations; no truncation or sampling",
+        "valid_targets": 28391948
+      },
+      "data_bytes": 148309228,
+      "dtype": "<i4",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/index.npz": "a5eb2935b258024500d3558c0256238aa342bd1ade52dd0141208c1730e656e1",
+        "assets/shards/shard_000.npz": "1870d81151e38db93de347c1b12a5b7742782d89069b4fb6241dc2cf9f5eedb2",
+        "assets/shards/shard_001.npz": "6b0866880439b2fc09312fb9dbafa0e9da46ae7e1997a727eef657210248439d",
+        "assets/shards/shard_002.npz": "45b08c50843a05c908b70dcc177411f0e25601a9bdfacc29caa0465f7e963b07",
+        "assets/shards/shard_003.npz": "fc307613f8e62a95ea8b36cebd77e62becd855b8a2bc1b5a3a07668e7b6d9845",
+        "assets/shards/shard_004.npz": "768f8989ff67c61b9177df0e342aa478b98eabfe86f7968fe4f9b436e213fde7",
+        "assets/shards/shard_005.npz": "26edcbb5a478cbf1b8e5355a33781f323568713b0fc154c15103bcb371bf95cf",
+        "assets/shards/shard_006.npz": "c5d51677292549c4049adeadd855be96ec0b7c01127efa01d3ed98a140e5968a",
+        "assets/shards/shard_007.npz": "ff76eb5b3e7789375102403f951a3cd9d84f1d0f96026048c591491a06d4a916",
+        "assets/shards/shard_008.npz": "b2859a2946ffe16bf0d6b0bea8a27dfbdfddc43e787fc5e917dfc6db5d6839ae",
+        "assets/shards/shard_009.npz": "e646af02cbc1b291c7ef2cce291616701ba32b1d86771c2a78a3ec4b0ff9c1ab",
+        "assets/shards/shard_010.npz": "5de0ed90a40afbacfb6d19bc980ddc03824b4b6e5f80193bef4157275a8b442f",
+        "assets/shards/shard_011.npz": "8ef23c61c63663c37cd06ac097f21aeff4c56b895fd9eb1219bb1fe94e8c3d4f",
+        "assets/shards/shard_012.npz": "c519e4fdd3e15ee87dc8a1600874de90f502340d6bf3fdd5245abb1dbd082444",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/visible_reverse.npz": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6",
+        "assets/train/visible_undirected.npz": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818",
+        "assets/v5_gnn_geometry/node_features.npz": "580f04a9c6a8cc7142de17a865efdf287bf94e9e4a30b225504f12a75b74b4cd",
+        "assets/v5_gnn_geometry/node_features_report.json": "840a52ccfce64a1c449c324dfdd8258f62375eb4be6d62000c50882fa44a10cc",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "two_hop_nodes",
+      "path": "assets/v8_runtime_layout/two_hop_nodes.npy",
+      "schema": "npy",
+      "sha256": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+      "shape": [
+        37077307
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+        "tools/issue252/runtime_layout.py": "4f052756dd7c66a687e6b9aa2c9eae16c7a92303c36cf99fe3e9a4581c2ebf5b"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 196832,
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue252.runtime_layout",
+      "coverage": {
+        "centres": "all global IDs in item_ids order",
+        "duplicates": "preserved",
+        "items": 24587,
+        "target_comparison": "float64 bit-for-bit",
+        "target_order": "centre, then frozen index shard order, then stored row order",
+        "two_hop": "complete closed populations; no truncation or sampling",
+        "valid_targets": 28391948
+      },
+      "data_bytes": 196704,
+      "dtype": "<i8",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/index.npz": "a5eb2935b258024500d3558c0256238aa342bd1ade52dd0141208c1730e656e1",
+        "assets/shards/shard_000.npz": "1870d81151e38db93de347c1b12a5b7742782d89069b4fb6241dc2cf9f5eedb2",
+        "assets/shards/shard_001.npz": "6b0866880439b2fc09312fb9dbafa0e9da46ae7e1997a727eef657210248439d",
+        "assets/shards/shard_002.npz": "45b08c50843a05c908b70dcc177411f0e25601a9bdfacc29caa0465f7e963b07",
+        "assets/shards/shard_003.npz": "fc307613f8e62a95ea8b36cebd77e62becd855b8a2bc1b5a3a07668e7b6d9845",
+        "assets/shards/shard_004.npz": "768f8989ff67c61b9177df0e342aa478b98eabfe86f7968fe4f9b436e213fde7",
+        "assets/shards/shard_005.npz": "26edcbb5a478cbf1b8e5355a33781f323568713b0fc154c15103bcb371bf95cf",
+        "assets/shards/shard_006.npz": "c5d51677292549c4049adeadd855be96ec0b7c01127efa01d3ed98a140e5968a",
+        "assets/shards/shard_007.npz": "ff76eb5b3e7789375102403f951a3cd9d84f1d0f96026048c591491a06d4a916",
+        "assets/shards/shard_008.npz": "b2859a2946ffe16bf0d6b0bea8a27dfbdfddc43e787fc5e917dfc6db5d6839ae",
+        "assets/shards/shard_009.npz": "e646af02cbc1b291c7ef2cce291616701ba32b1d86771c2a78a3ec4b0ff9c1ab",
+        "assets/shards/shard_010.npz": "5de0ed90a40afbacfb6d19bc980ddc03824b4b6e5f80193bef4157275a8b442f",
+        "assets/shards/shard_011.npz": "8ef23c61c63663c37cd06ac097f21aeff4c56b895fd9eb1219bb1fe94e8c3d4f",
+        "assets/shards/shard_012.npz": "c519e4fdd3e15ee87dc8a1600874de90f502340d6bf3fdd5245abb1dbd082444",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/visible_reverse.npz": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6",
+        "assets/train/visible_undirected.npz": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818",
+        "assets/v5_gnn_geometry/node_features.npz": "580f04a9c6a8cc7142de17a865efdf287bf94e9e4a30b225504f12a75b74b4cd",
+        "assets/v5_gnn_geometry/node_features_report.json": "840a52ccfce64a1c449c324dfdd8258f62375eb4be6d62000c50882fa44a10cc",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "two_hop_offsets",
+      "path": "assets/v8_runtime_layout/two_hop_offsets.npy",
+      "schema": "npy",
+      "sha256": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+      "shape": [
+        24588
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+        "tools/issue252/runtime_layout.py": "4f052756dd7c66a687e6b9aa2c9eae16c7a92303c36cf99fe3e9a4581c2ebf5b"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 98476,
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue252.runtime_layout",
+      "coverage": {
+        "centres": "all global IDs in item_ids order",
+        "duplicates": "preserved",
+        "items": 24587,
+        "target_comparison": "float64 bit-for-bit",
+        "target_order": "centre, then frozen index shard order, then stored row order",
+        "two_hop": "complete closed populations; no truncation or sampling",
+        "valid_targets": 28391948
+      },
+      "data_bytes": 98348,
+      "dtype": "<i4",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/index.npz": "a5eb2935b258024500d3558c0256238aa342bd1ade52dd0141208c1730e656e1",
+        "assets/shards/shard_000.npz": "1870d81151e38db93de347c1b12a5b7742782d89069b4fb6241dc2cf9f5eedb2",
+        "assets/shards/shard_001.npz": "6b0866880439b2fc09312fb9dbafa0e9da46ae7e1997a727eef657210248439d",
+        "assets/shards/shard_002.npz": "45b08c50843a05c908b70dcc177411f0e25601a9bdfacc29caa0465f7e963b07",
+        "assets/shards/shard_003.npz": "fc307613f8e62a95ea8b36cebd77e62becd855b8a2bc1b5a3a07668e7b6d9845",
+        "assets/shards/shard_004.npz": "768f8989ff67c61b9177df0e342aa478b98eabfe86f7968fe4f9b436e213fde7",
+        "assets/shards/shard_005.npz": "26edcbb5a478cbf1b8e5355a33781f323568713b0fc154c15103bcb371bf95cf",
+        "assets/shards/shard_006.npz": "c5d51677292549c4049adeadd855be96ec0b7c01127efa01d3ed98a140e5968a",
+        "assets/shards/shard_007.npz": "ff76eb5b3e7789375102403f951a3cd9d84f1d0f96026048c591491a06d4a916",
+        "assets/shards/shard_008.npz": "b2859a2946ffe16bf0d6b0bea8a27dfbdfddc43e787fc5e917dfc6db5d6839ae",
+        "assets/shards/shard_009.npz": "e646af02cbc1b291c7ef2cce291616701ba32b1d86771c2a78a3ec4b0ff9c1ab",
+        "assets/shards/shard_010.npz": "5de0ed90a40afbacfb6d19bc980ddc03824b4b6e5f80193bef4157275a8b442f",
+        "assets/shards/shard_011.npz": "8ef23c61c63663c37cd06ac097f21aeff4c56b895fd9eb1219bb1fe94e8c3d4f",
+        "assets/shards/shard_012.npz": "c519e4fdd3e15ee87dc8a1600874de90f502340d6bf3fdd5245abb1dbd082444",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/visible_reverse.npz": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6",
+        "assets/train/visible_undirected.npz": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818",
+        "assets/v5_gnn_geometry/node_features.npz": "580f04a9c6a8cc7142de17a865efdf287bf94e9e4a30b225504f12a75b74b4cd",
+        "assets/v5_gnn_geometry/node_features_report.json": "840a52ccfce64a1c449c324dfdd8258f62375eb4be6d62000c50882fa44a10cc",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "two_hop_root_local",
+      "path": "assets/v8_runtime_layout/two_hop_root_local.npy",
+      "schema": "npy",
+      "sha256": "7e9dca2a869509116427dc25008677f1d2d97c6c041aa2acb70133980e856edd",
+      "shape": [
+        24587
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+        "tools/issue252/runtime_layout.py": "4f052756dd7c66a687e6b9aa2c9eae16c7a92303c36cf99fe3e9a4581c2ebf5b"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 454271360,
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue252.runtime_layout",
+      "coverage": {
+        "centres": "all global IDs in item_ids order",
+        "duplicates": "preserved",
+        "items": 24587,
+        "target_comparison": "float64 bit-for-bit",
+        "target_order": "centre, then frozen index shard order, then stored row order",
+        "two_hop": "complete closed populations; no truncation or sampling",
+        "valid_targets": 28391948
+      },
+      "data_bytes": 454271168,
+      "dtype": [
+        [
+          "b",
+          "<i4"
+        ],
+        [
+          "c",
+          "<i4"
+        ],
+        [
+          "target",
+          "<f8"
+        ]
+      ],
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/index.npz": "a5eb2935b258024500d3558c0256238aa342bd1ade52dd0141208c1730e656e1",
+        "assets/shards/shard_000.npz": "1870d81151e38db93de347c1b12a5b7742782d89069b4fb6241dc2cf9f5eedb2",
+        "assets/shards/shard_001.npz": "6b0866880439b2fc09312fb9dbafa0e9da46ae7e1997a727eef657210248439d",
+        "assets/shards/shard_002.npz": "45b08c50843a05c908b70dcc177411f0e25601a9bdfacc29caa0465f7e963b07",
+        "assets/shards/shard_003.npz": "fc307613f8e62a95ea8b36cebd77e62becd855b8a2bc1b5a3a07668e7b6d9845",
+        "assets/shards/shard_004.npz": "768f8989ff67c61b9177df0e342aa478b98eabfe86f7968fe4f9b436e213fde7",
+        "assets/shards/shard_005.npz": "26edcbb5a478cbf1b8e5355a33781f323568713b0fc154c15103bcb371bf95cf",
+        "assets/shards/shard_006.npz": "c5d51677292549c4049adeadd855be96ec0b7c01127efa01d3ed98a140e5968a",
+        "assets/shards/shard_007.npz": "ff76eb5b3e7789375102403f951a3cd9d84f1d0f96026048c591491a06d4a916",
+        "assets/shards/shard_008.npz": "b2859a2946ffe16bf0d6b0bea8a27dfbdfddc43e787fc5e917dfc6db5d6839ae",
+        "assets/shards/shard_009.npz": "e646af02cbc1b291c7ef2cce291616701ba32b1d86771c2a78a3ec4b0ff9c1ab",
+        "assets/shards/shard_010.npz": "5de0ed90a40afbacfb6d19bc980ddc03824b4b6e5f80193bef4157275a8b442f",
+        "assets/shards/shard_011.npz": "8ef23c61c63663c37cd06ac097f21aeff4c56b895fd9eb1219bb1fe94e8c3d4f",
+        "assets/shards/shard_012.npz": "c519e4fdd3e15ee87dc8a1600874de90f502340d6bf3fdd5245abb1dbd082444",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/visible_reverse.npz": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6",
+        "assets/train/visible_undirected.npz": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818",
+        "assets/v5_gnn_geometry/node_features.npz": "580f04a9c6a8cc7142de17a865efdf287bf94e9e4a30b225504f12a75b74b4cd",
+        "assets/v5_gnn_geometry/node_features_report.json": "840a52ccfce64a1c449c324dfdd8258f62375eb4be6d62000c50882fa44a10cc",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "targets",
+      "path": "assets/v8_runtime_layout/targets.npy",
+      "schema": "npy",
+      "sha256": "8c0ff9f8c25b98ed31802cdb62cf921df6d3cf8bbf35ee2d3de9817d6cd0807a",
+      "shape": [
+        28391948
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+        "tools/issue252/runtime_layout.py": "4f052756dd7c66a687e6b9aa2c9eae16c7a92303c36cf99fe3e9a4581c2ebf5b"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 196832,
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m tools.issue252.runtime_layout",
+      "coverage": {
+        "centres": "all global IDs in item_ids order",
+        "duplicates": "preserved",
+        "items": 24587,
+        "target_comparison": "float64 bit-for-bit",
+        "target_order": "centre, then frozen index shard order, then stored row order",
+        "two_hop": "complete closed populations; no truncation or sampling",
+        "valid_targets": 28391948
+      },
+      "data_bytes": 196704,
+      "dtype": "<i8",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/index.npz": "a5eb2935b258024500d3558c0256238aa342bd1ade52dd0141208c1730e656e1",
+        "assets/shards/shard_000.npz": "1870d81151e38db93de347c1b12a5b7742782d89069b4fb6241dc2cf9f5eedb2",
+        "assets/shards/shard_001.npz": "6b0866880439b2fc09312fb9dbafa0e9da46ae7e1997a727eef657210248439d",
+        "assets/shards/shard_002.npz": "45b08c50843a05c908b70dcc177411f0e25601a9bdfacc29caa0465f7e963b07",
+        "assets/shards/shard_003.npz": "fc307613f8e62a95ea8b36cebd77e62becd855b8a2bc1b5a3a07668e7b6d9845",
+        "assets/shards/shard_004.npz": "768f8989ff67c61b9177df0e342aa478b98eabfe86f7968fe4f9b436e213fde7",
+        "assets/shards/shard_005.npz": "26edcbb5a478cbf1b8e5355a33781f323568713b0fc154c15103bcb371bf95cf",
+        "assets/shards/shard_006.npz": "c5d51677292549c4049adeadd855be96ec0b7c01127efa01d3ed98a140e5968a",
+        "assets/shards/shard_007.npz": "ff76eb5b3e7789375102403f951a3cd9d84f1d0f96026048c591491a06d4a916",
+        "assets/shards/shard_008.npz": "b2859a2946ffe16bf0d6b0bea8a27dfbdfddc43e787fc5e917dfc6db5d6839ae",
+        "assets/shards/shard_009.npz": "e646af02cbc1b291c7ef2cce291616701ba32b1d86771c2a78a3ec4b0ff9c1ab",
+        "assets/shards/shard_010.npz": "5de0ed90a40afbacfb6d19bc980ddc03824b4b6e5f80193bef4157275a8b442f",
+        "assets/shards/shard_011.npz": "8ef23c61c63663c37cd06ac097f21aeff4c56b895fd9eb1219bb1fe94e8c3d4f",
+        "assets/shards/shard_012.npz": "c519e4fdd3e15ee87dc8a1600874de90f502340d6bf3fdd5245abb1dbd082444",
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/train/visible_reverse.npz": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6",
+        "assets/train/visible_undirected.npz": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818",
+        "assets/v5_gnn_geometry/node_features.npz": "580f04a9c6a8cc7142de17a865efdf287bf94e9e4a30b225504f12a75b74b4cd",
+        "assets/v5_gnn_geometry/node_features_report.json": "840a52ccfce64a1c449c324dfdd8258f62375eb4be6d62000c50882fa44a10cc",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "target_offsets",
+      "path": "assets/v8_runtime_layout/target_offsets.npy",
+      "schema": "npy",
+      "sha256": "33f30b2979311d74cf996545bec011856ffa7acbc9cb9b995c829dbc9f87937c",
+      "shape": [
+        24588
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+        "tools/issue252/runtime_layout.py": "4f052756dd7c66a687e6b9aa2c9eae16c7a92303c36cf99fe3e9a4581c2ebf5b"
+      },
+      "use": "training"
+    },
+    {
+      "name": "runtime_layout_metadata",
+      "path": "assets/v8_runtime_layout/metadata.json",
+      "use": "description",
+      "schema": "json",
+      "bytes": 43425,
+      "sha256": "116068365f7acb74ebb0f4aa0dcfa9249a2fbe968b0721371c8a2d7505caff60",
+      "origin": "lossless runtime layout and complete original-input audit",
+      "command": "python3.9 -m tools.issue252.runtime_layout"
+    },
+    {
+      "name": "runtime_layout_audit",
+      "path": "assets/v8_runtime_layout/audit.json",
+      "use": "description",
+      "schema": "json",
+      "bytes": 4489,
+      "sha256": "74188af783ae98f97b38dabedffc5e82bc181dc61cd1a5ff155dc0df47afeb91",
+      "origin": "lossless runtime layout and complete original-input audit",
+      "command": "python3.9 -m tools.issue252.runtime_layout"
+    },
+    {
+      "bytes": 6865768,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 6865640,
+      "dtype": "<i4",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego1_in_col",
+      "path": "assets/v9_ego_operators/ego1_in_col.npy",
+      "schema": "npy",
+      "sha256": "12359f51f960314a11387ad47c9ed99673c564526a440435934333bd5f90b694",
+      "shape": [
+        1716410
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "251c2b8ab962c63f344504186ba5a749256f2bec066d2bdb46214e1fdaae0656"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 4280544,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 4280416,
+      "dtype": "<i8",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego1_in_ptr",
+      "path": "assets/v9_ego_operators/ego1_in_ptr.npy",
+      "schema": "npy",
+      "sha256": "33c42518b8eea2f81fbcdf7b35e635cbbaf6ce4c67b78d59a2153d4e169cb8db",
+      "shape": [
+        535052
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "251c2b8ab962c63f344504186ba5a749256f2bec066d2bdb46214e1fdaae0656"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 6865768,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 6865640,
+      "dtype": "<i4",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego1_out_col",
+      "path": "assets/v9_ego_operators/ego1_out_col.npy",
+      "schema": "npy",
+      "sha256": "303dd021660510d5b95e45bd593e547d1341624a9b17c3826ace081e1a5bc55f",
+      "shape": [
+        1716410
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "251c2b8ab962c63f344504186ba5a749256f2bec066d2bdb46214e1fdaae0656"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 4280544,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 4280416,
+      "dtype": "<i8",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego1_out_ptr",
+      "path": "assets/v9_ego_operators/ego1_out_ptr.npy",
+      "schema": "npy",
+      "sha256": "6bc6654825c174eb80e2ade6f082f1f56a3ddc286e1f9874b5bad66e3bfdb785",
+      "shape": [
+        535052
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "251c2b8ab962c63f344504186ba5a749256f2bec066d2bdb46214e1fdaae0656"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 2053323796,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 2053323668,
+      "dtype": "<i4",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego2_in_col",
+      "path": "assets/v9_ego_operators/ego2_in_col.npy",
+      "schema": "npy",
+      "sha256": "cf61e25fa575695471837e05bcf8379f61e9a7da53038434582bd476d1731c17",
+      "shape": [
+        513330917
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "251c2b8ab962c63f344504186ba5a749256f2bec066d2bdb46214e1fdaae0656"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 296618592,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 296618464,
+      "dtype": "<i8",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego2_in_ptr",
+      "path": "assets/v9_ego_operators/ego2_in_ptr.npy",
+      "schema": "npy",
+      "sha256": "f5b6379cb315b2e0591a11b4f3697350521704d953fdeb89c1426e313b244f9f",
+      "shape": [
+        37077308
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "251c2b8ab962c63f344504186ba5a749256f2bec066d2bdb46214e1fdaae0656"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 2053323796,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 2053323668,
+      "dtype": "<i4",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego2_out_col",
+      "path": "assets/v9_ego_operators/ego2_out_col.npy",
+      "schema": "npy",
+      "sha256": "69c4ca48fb3ae5ecb8f0e90200e1a1d343fb5d0b9d6556cb3b2005c64568c867",
+      "shape": [
+        513330917
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "251c2b8ab962c63f344504186ba5a749256f2bec066d2bdb46214e1fdaae0656"
+      },
+      "use": "training"
+    },
+    {
+      "bytes": 296618592,
+      "command": "python -m tools.issue252.ego_operators",
+      "coverage": {
+        "items": 24587,
+        "normalization": "reciprocal row degree computed in model dtype at runtime",
+        "population": "every full induced ego; all directed support; no sampling",
+        "scales": [
+          1,
+          2
+        ]
+      },
+      "data_bytes": 296618464,
+      "dtype": "<i8",
+      "graph_name": "infra246-visible-v2",
+      "graph_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "inputs": {
+        "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+        "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+        "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+        "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+        "results/research/infra246/assets/ego/ego_full_1hop_visible.npz": "2082cce4d49ea4f9363082cdc537c1730aa66c203d223fd259e8da314a74edc5"
+      },
+      "name": "ego2_out_ptr",
+      "path": "assets/v9_ego_operators/ego2_out_ptr.npy",
+      "schema": "npy",
+      "sha256": "1fba4377ce2dc4330009b422c5c6566446540ab2aa21b7b840f93cd61ff5837f",
+      "shape": [
+        37077308
+      ],
+      "source_hashes": {
+        "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+        "tools/issue252/ego_operators.py": "251c2b8ab962c63f344504186ba5a749256f2bec066d2bdb46214e1fdaae0656"
+      },
+      "use": "training"
+    },
+    {
+      "name": "ego_operator_metadata",
+      "path": "assets/v9_ego_operators/metadata.json",
+      "use": "description",
+      "schema": "json",
+      "bytes": 15908,
+      "sha256": "5f8f2c0aca5203bb80b0d4779797220e5748dda3f42b41fdd07011730e7fc8db",
+      "origin": "all-item complete full-ego sparse operator audit",
+      "command": "python3.9 -m tools.issue252.ego_operators"
+    },
+    {
+      "name": "ego_operator_audit",
+      "path": "assets/v9_ego_operators/audit.json",
+      "use": "description",
+      "schema": "json",
+      "bytes": 1162,
+      "sha256": "54a7e0f83db77c80a02d6efe42aa3288ae3614b56e5cd9de4d7615b784cb2779",
+      "origin": "all-item complete full-ego sparse operator audit",
+      "command": "python3.9 -m tools.issue252.ego_operators"
     }
   ],
   "copy_note": "This manifest describes the copy under assets/ (flattened). The canonical build lives in results/research/issue248/assets/; every file here is byte-identical to it (same sha256), only the path field is repointed.",
@@ -787,6 +1472,14 @@
     {
       "version": "v6-cross-attention-251",
       "note": "only the multiscale token/attention schema is new; all 67 existing assets remain immutable"
+    },
+    {
+      "version": "v7-named-visible-252",
+      "note": "independent raw-user transition audit and named registration; all68 prior asset leaves preserved"
+    },
+    {
+      "version": "v9-full-ego-runtime-252",
+      "note": "lossless v8 memmap/population and v9 full-ego CSR layouts; every original target, node and edge preserved"
     }
   ]
 }

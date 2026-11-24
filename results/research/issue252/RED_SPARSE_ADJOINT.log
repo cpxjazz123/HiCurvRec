@@ -1,0 +1,160 @@
+test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) ... /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py:108: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+  operators = incoming.to_sparse_csr(), outgoing.to_sparse_csr()
+test_either_unused_output_and_noncontiguous_inputs (test_sparse_adjoint.SparseAdjointTests) ... test_hand_directed_means_and_both_exact_adjoints (test_sparse_adjoint.SparseAdjointTests) ... ERROR
+test_production_backward_avoids_native_csr_transpose_conversion (test_sparse_adjoint.SparseAdjointTests) ... ok
+test_production_live_input_and_all_parameter_gradients (test_sparse_adjoint.SparseAdjointTests) ... ok
+
+======================================================================
+ERROR: test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) (device='cpu', dtype=torch.float32, n=6, edges=((0, 1), (0, 2), (0, 3), (2, 1), (3, 2), (3, 3)))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 110, in test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated
+    actual = directional_means(x, *operators)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+======================================================================
+ERROR: test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) (device='cpu', dtype=torch.float32, n=4, edges=())
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 110, in test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated
+    actual = directional_means(x, *operators)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+======================================================================
+ERROR: test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) (device='cpu', dtype=torch.float32, n=0, edges=())
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 110, in test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated
+    actual = directional_means(x, *operators)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+======================================================================
+ERROR: test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) (device='cpu', dtype=torch.float64, n=6, edges=((0, 1), (0, 2), (0, 3), (2, 1), (3, 2), (3, 3)))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 110, in test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated
+    actual = directional_means(x, *operators)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+======================================================================
+ERROR: test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) (device='cpu', dtype=torch.float64, n=4, edges=())
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 110, in test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated
+    actual = directional_means(x, *operators)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+======================================================================
+ERROR: test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) (device='cpu', dtype=torch.float64, n=0, edges=())
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 110, in test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated
+    actual = directional_means(x, *operators)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+======================================================================
+ERROR: test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) (device='cuda', dtype=torch.float32, n=6, edges=((0, 1), (0, 2), (0, 3), (2, 1), (3, 2), (3, 3)))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 110, in test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated
+    actual = directional_means(x, *operators)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+======================================================================
+ERROR: test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) (device='cuda', dtype=torch.float32, n=4, edges=())
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 110, in test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated
+    actual = directional_means(x, *operators)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+======================================================================
+ERROR: test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) (device='cuda', dtype=torch.float32, n=0, edges=())
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 110, in test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated
+    actual = directional_means(x, *operators)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+======================================================================
+ERROR: test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) (device='cuda', dtype=torch.float64, n=6, edges=((0, 1), (0, 2), (0, 3), (2, 1), (3, 2), (3, 3)))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 110, in test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated
+    actual = directional_means(x, *operators)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+======================================================================
+ERROR: test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) (device='cuda', dtype=torch.float64, n=4, edges=())
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 110, in test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated
+    actual = directional_means(x, *operators)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+======================================================================
+ERROR: test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) (device='cuda', dtype=torch.float64, n=0, edges=())
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 110, in test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated
+    actual = directional_means(x, *operators)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+======================================================================
+ERROR: test_either_unused_output_and_noncontiguous_inputs (test_sparse_adjoint.SparseAdjointTests) (direction=0)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 135, in test_either_unused_output_and_noncontiguous_inputs
+    mean = directional_means(x, *operators)[direction]
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+======================================================================
+ERROR: test_either_unused_output_and_noncontiguous_inputs (test_sparse_adjoint.SparseAdjointTests) (direction=1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 135, in test_either_unused_output_and_noncontiguous_inputs
+    mean = directional_means(x, *operators)[direction]
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+======================================================================
+ERROR: test_hand_directed_means_and_both_exact_adjoints (test_sparse_adjoint.SparseAdjointTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 89, in test_hand_directed_means_and_both_exact_adjoints
+    mean_in, mean_out = directional_means(x, incoming.to_sparse_csr(), outgoing.to_sparse_csr())
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py", line 18, in directional_means
+    from tools.issue252.sparse_adjoint import normalized_directional_means
+ModuleNotFoundError: No module named 'tools.issue252.sparse_adjoint'
+
+----------------------------------------------------------------------
+Ran 5 tests in 2.297s
+
+FAILED (errors=15)

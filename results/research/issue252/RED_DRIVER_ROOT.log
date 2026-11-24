@@ -1,0 +1,25 @@
+test_actual_standalone_driver_tracks_epochs_from_result_cwd (tools.issue252.test_driver_root.DriverRootTests) ... FAIL
+
+======================================================================
+FAIL: test_actual_standalone_driver_tracks_epochs_from_result_cwd (tools.issue252.test_driver_root.DriverRootTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_driver_root.py", line 39, in test_actual_standalone_driver_tracks_epochs_from_result_cwd
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 1 != 0 : Traceback (most recent call last):
+  File "<string>", line 4, in <module>
+  File "/usr/lib64/python3.9/runpy.py", line 288, in run_path
+    return _run_module_code(code, init_globals, run_name,
+  File "/usr/lib64/python3.9/runpy.py", line 97, in _run_module_code
+    _run_code(code, mod_globals, init_globals,
+  File "/usr/lib64/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/steady_profile_entry.py", line 19, in <module>
+    from tools.issue252.profiling import Tracker
+ModuleNotFoundError: No module named 'tools'
+
+
+----------------------------------------------------------------------
+Ran 1 test in 1.777s
+
+FAILED (failures=1)

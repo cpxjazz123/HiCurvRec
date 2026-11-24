@@ -1,0 +1,252 @@
+test_corrupt_checkpoint_never_records_or_saves (tools.issue252.test_r2_verification.RemoteVerificationTests) ... FAIL
+test_explicit_verifier_consumes_all_remote_bytes (tools.issue252.test_r2_verification.RemoteVerificationTests) ... ERROR
+test_extra_fifth_entry_never_records_or_saves (tools.issue252.test_r2_verification.RemoteVerificationTests) ... FAIL
+test_extra_nested_object_never_records_or_saves (tools.issue252.test_r2_verification.RemoteVerificationTests) ... FAIL
+test_failed_cat_never_records_or_saves (tools.issue252.test_r2_verification.RemoteVerificationTests) ... FAIL
+test_failed_listing_never_records_or_saves (tools.issue252.test_r2_verification.RemoteVerificationTests) ... FAIL
+test_failed_upload_never_records_or_saves (tools.issue252.test_r2_verification.RemoteVerificationTests) ... FAIL
+test_missing_object_never_records_or_saves (tools.issue252.test_r2_verification.RemoteVerificationTests) ... FAIL
+test_stale_source_bytes_never_record_or_save (tools.issue252.test_r2_verification.RemoteVerificationTests) ... FAIL
+test_valid_remote_streams_every_object_before_ledger_save (tools.issue252.test_r2_verification.RemoteVerificationTests) ... FAIL
+
+======================================================================
+ERROR: test_explicit_verifier_consumes_all_remote_bytes (tools.issue252.test_r2_verification.RemoteVerificationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 127, in test_explicit_verifier_consumes_all_remote_bytes
+    self.layout.verify_upload("51", self.files, runner=command)
+AttributeError: module 'r2_layout' has no attribute 'verify_upload'
+
+======================================================================
+FAIL: test_corrupt_checkpoint_never_records_or_saves (tools.issue252.test_r2_verification.RemoteVerificationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 103, in run_upload
+    result = self.module.main()
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/upload_stage3.py", line 210, in main
+    result = ledger.reconcile(number)
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 202, in reconcile
+    objects = list(listing(number))
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 179, in remote_listing
+    size, relative = line.split(";", 1)
+ValueError: not enough values to unpack (expected 2, got 1)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 135, in test_corrupt_checkpoint_never_records_or_saves
+    _, error = self.run_upload(remote)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 106, in run_upload
+    record.assert_not_called()
+  File "/usr/lib64/python3.9/unittest/mock.py", line 868, in assert_not_called
+    raise AssertionError(msg)
+AssertionError: Expected 'record' to not have been called. Called 1 times.
+Calls: [call('51', 'Arm/sid-digest', {'Arm/train_rqvae.py': '6d4e6ec1135ce86b55907ddb3e2b68a6c7ae7ffd8fa970fa4848913feae2ea7a', 'Arm/model/layer.py': '42396f2a21b3ccb8d32348751c9353dc5047380a8d75c06c3b40dde5d02c2e72', 'Arm/stage2_source.tar.gz': '6babc1cb1f2fb241582a04fdf1b81d7f92d7b857847135df5fb03d6b5cd4b823', 'item_sids.json': '1668d7c09e6cdcac271327533909d791ef0f1a49ecfeb0aee47ecc184c262d7b', 'rqvae_best.pth': '4043ab3659cd61351795c186762a045221774893a97dcc74f6ba3deade65ac03', 'recall.json': 'ce58ea8fad22b613e9ae94276e44a4202a1fd88b5e768de071d2a33b38fb775c'}, {'arm': 'Arm', 'recall_keys': ['test_R@10']})].
+
+======================================================================
+FAIL: test_extra_fifth_entry_never_records_or_saves (tools.issue252.test_r2_verification.RemoteVerificationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 103, in run_upload
+    result = self.module.main()
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/upload_stage3.py", line 210, in main
+    result = ledger.reconcile(number)
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 202, in reconcile
+    objects = list(listing(number))
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 179, in remote_listing
+    size, relative = line.split(";", 1)
+ValueError: not enough values to unpack (expected 2, got 1)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 152, in test_extra_fifth_entry_never_records_or_saves
+    _, error = self.run_upload(remote)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 106, in run_upload
+    record.assert_not_called()
+  File "/usr/lib64/python3.9/unittest/mock.py", line 868, in assert_not_called
+    raise AssertionError(msg)
+AssertionError: Expected 'record' to not have been called. Called 1 times.
+Calls: [call('51', 'Arm/sid-digest', {'Arm/train_rqvae.py': '6d4e6ec1135ce86b55907ddb3e2b68a6c7ae7ffd8fa970fa4848913feae2ea7a', 'Arm/model/layer.py': '42396f2a21b3ccb8d32348751c9353dc5047380a8d75c06c3b40dde5d02c2e72', 'Arm/stage2_source.tar.gz': '6babc1cb1f2fb241582a04fdf1b81d7f92d7b857847135df5fb03d6b5cd4b823', 'item_sids.json': '1668d7c09e6cdcac271327533909d791ef0f1a49ecfeb0aee47ecc184c262d7b', 'rqvae_best.pth': '4043ab3659cd61351795c186762a045221774893a97dcc74f6ba3deade65ac03', 'recall.json': 'ce58ea8fad22b613e9ae94276e44a4202a1fd88b5e768de071d2a33b38fb775c'}, {'arm': 'Arm', 'recall_keys': ['test_R@10']})].
+
+======================================================================
+FAIL: test_extra_nested_object_never_records_or_saves (tools.issue252.test_r2_verification.RemoteVerificationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 103, in run_upload
+    result = self.module.main()
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/upload_stage3.py", line 210, in main
+    result = ledger.reconcile(number)
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 202, in reconcile
+    objects = list(listing(number))
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 179, in remote_listing
+    size, relative = line.split(";", 1)
+ValueError: not enough values to unpack (expected 2, got 1)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 157, in test_extra_nested_object_never_records_or_saves
+    _, error = self.run_upload(remote)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 106, in run_upload
+    record.assert_not_called()
+  File "/usr/lib64/python3.9/unittest/mock.py", line 868, in assert_not_called
+    raise AssertionError(msg)
+AssertionError: Expected 'record' to not have been called. Called 1 times.
+Calls: [call('51', 'Arm/sid-digest', {'Arm/train_rqvae.py': '6d4e6ec1135ce86b55907ddb3e2b68a6c7ae7ffd8fa970fa4848913feae2ea7a', 'Arm/model/layer.py': '42396f2a21b3ccb8d32348751c9353dc5047380a8d75c06c3b40dde5d02c2e72', 'Arm/stage2_source.tar.gz': '6babc1cb1f2fb241582a04fdf1b81d7f92d7b857847135df5fb03d6b5cd4b823', 'item_sids.json': '1668d7c09e6cdcac271327533909d791ef0f1a49ecfeb0aee47ecc184c262d7b', 'rqvae_best.pth': '4043ab3659cd61351795c186762a045221774893a97dcc74f6ba3deade65ac03', 'recall.json': 'ce58ea8fad22b613e9ae94276e44a4202a1fd88b5e768de071d2a33b38fb775c'}, {'arm': 'Arm', 'recall_keys': ['test_R@10']})].
+
+======================================================================
+FAIL: test_failed_cat_never_records_or_saves (tools.issue252.test_r2_verification.RemoteVerificationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 103, in run_upload
+    result = self.module.main()
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/upload_stage3.py", line 210, in main
+    result = ledger.reconcile(number)
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 202, in reconcile
+    objects = list(listing(number))
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 179, in remote_listing
+    size, relative = line.split(";", 1)
+ValueError: not enough values to unpack (expected 2, got 1)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 161, in test_failed_cat_never_records_or_saves
+    _, error = self.run_upload(self.objects, failure="cat")
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 106, in run_upload
+    record.assert_not_called()
+  File "/usr/lib64/python3.9/unittest/mock.py", line 868, in assert_not_called
+    raise AssertionError(msg)
+AssertionError: Expected 'record' to not have been called. Called 1 times.
+Calls: [call('51', 'Arm/sid-digest', {'Arm/train_rqvae.py': '6d4e6ec1135ce86b55907ddb3e2b68a6c7ae7ffd8fa970fa4848913feae2ea7a', 'Arm/model/layer.py': '42396f2a21b3ccb8d32348751c9353dc5047380a8d75c06c3b40dde5d02c2e72', 'Arm/stage2_source.tar.gz': '6babc1cb1f2fb241582a04fdf1b81d7f92d7b857847135df5fb03d6b5cd4b823', 'item_sids.json': '1668d7c09e6cdcac271327533909d791ef0f1a49ecfeb0aee47ecc184c262d7b', 'rqvae_best.pth': '4043ab3659cd61351795c186762a045221774893a97dcc74f6ba3deade65ac03', 'recall.json': 'ce58ea8fad22b613e9ae94276e44a4202a1fd88b5e768de071d2a33b38fb775c'}, {'arm': 'Arm', 'recall_keys': ['test_R@10']})].
+
+======================================================================
+FAIL: test_failed_listing_never_records_or_saves (tools.issue252.test_r2_verification.RemoteVerificationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 103, in run_upload
+    result = self.module.main()
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/upload_stage3.py", line 210, in main
+    result = ledger.reconcile(number)
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 202, in reconcile
+    objects = list(listing(number))
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 174, in remote_listing
+    raise SystemExit("listing of %s failed: %s" % (number, (done.stderr or done.stdout)[-500:]))
+SystemExit: listing of 51 failed: credential-must-not-be-logged
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 165, in test_failed_listing_never_records_or_saves
+    _, error = self.run_upload(self.objects, failure="lsf")
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 106, in run_upload
+    record.assert_not_called()
+  File "/usr/lib64/python3.9/unittest/mock.py", line 868, in assert_not_called
+    raise AssertionError(msg)
+AssertionError: Expected 'record' to not have been called. Called 1 times.
+Calls: [call('51', 'Arm/sid-digest', {'Arm/train_rqvae.py': '6d4e6ec1135ce86b55907ddb3e2b68a6c7ae7ffd8fa970fa4848913feae2ea7a', 'Arm/model/layer.py': '42396f2a21b3ccb8d32348751c9353dc5047380a8d75c06c3b40dde5d02c2e72', 'Arm/stage2_source.tar.gz': '6babc1cb1f2fb241582a04fdf1b81d7f92d7b857847135df5fb03d6b5cd4b823', 'item_sids.json': '1668d7c09e6cdcac271327533909d791ef0f1a49ecfeb0aee47ecc184c262d7b', 'rqvae_best.pth': '4043ab3659cd61351795c186762a045221774893a97dcc74f6ba3deade65ac03', 'recall.json': 'ce58ea8fad22b613e9ae94276e44a4202a1fd88b5e768de071d2a33b38fb775c'}, {'arm': 'Arm', 'recall_keys': ['test_R@10']})].
+
+======================================================================
+FAIL: test_failed_upload_never_records_or_saves (tools.issue252.test_r2_verification.RemoteVerificationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 103, in run_upload
+    result = self.module.main()
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/upload_stage3.py", line 202, in main
+    target = upload_directory(staging, number, dry_run=args.dry_run)
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 230, in upload_directory
+    raise SystemExit("upload of %s failed: %s" % (number, (done.stderr or done.stdout)[-500:]))
+SystemExit: upload of 51 failed: credential-must-not-be-logged
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 169, in test_failed_upload_never_records_or_saves
+    _, error = self.run_upload(self.objects, failure="copy")
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 109, in run_upload
+    self.assertNotIn("credential-must-not-be-logged", str(error))
+AssertionError: 'credential-must-not-be-logged' unexpectedly found in 'upload of 51 failed: credential-must-not-be-logged'
+
+======================================================================
+FAIL: test_missing_object_never_records_or_saves (tools.issue252.test_r2_verification.RemoteVerificationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 103, in run_upload
+    result = self.module.main()
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/upload_stage3.py", line 210, in main
+    result = ledger.reconcile(number)
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 202, in reconcile
+    objects = list(listing(number))
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 179, in remote_listing
+    size, relative = line.split(";", 1)
+ValueError: not enough values to unpack (expected 2, got 1)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 147, in test_missing_object_never_records_or_saves
+    _, error = self.run_upload(remote)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 106, in run_upload
+    record.assert_not_called()
+  File "/usr/lib64/python3.9/unittest/mock.py", line 868, in assert_not_called
+    raise AssertionError(msg)
+AssertionError: Expected 'record' to not have been called. Called 1 times.
+Calls: [call('51', 'Arm/sid-digest', {'Arm/train_rqvae.py': '6d4e6ec1135ce86b55907ddb3e2b68a6c7ae7ffd8fa970fa4848913feae2ea7a', 'Arm/model/layer.py': '42396f2a21b3ccb8d32348751c9353dc5047380a8d75c06c3b40dde5d02c2e72', 'Arm/stage2_source.tar.gz': '6babc1cb1f2fb241582a04fdf1b81d7f92d7b857847135df5fb03d6b5cd4b823', 'item_sids.json': '1668d7c09e6cdcac271327533909d791ef0f1a49ecfeb0aee47ecc184c262d7b', 'rqvae_best.pth': '4043ab3659cd61351795c186762a045221774893a97dcc74f6ba3deade65ac03', 'recall.json': 'ce58ea8fad22b613e9ae94276e44a4202a1fd88b5e768de071d2a33b38fb775c'}, {'arm': 'Arm', 'recall_keys': ['test_R@10']})].
+
+======================================================================
+FAIL: test_stale_source_bytes_never_record_or_save (tools.issue252.test_r2_verification.RemoteVerificationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 103, in run_upload
+    result = self.module.main()
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/upload_stage3.py", line 210, in main
+    result = ledger.reconcile(number)
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 202, in reconcile
+    objects = list(listing(number))
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 179, in remote_listing
+    size, relative = line.split(";", 1)
+ValueError: not enough values to unpack (expected 2, got 1)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 141, in test_stale_source_bytes_never_record_or_save
+    _, error = self.run_upload(remote)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 106, in run_upload
+    record.assert_not_called()
+  File "/usr/lib64/python3.9/unittest/mock.py", line 868, in assert_not_called
+    raise AssertionError(msg)
+AssertionError: Expected 'record' to not have been called. Called 1 times.
+Calls: [call('51', 'Arm/sid-digest', {'Arm/train_rqvae.py': '6d4e6ec1135ce86b55907ddb3e2b68a6c7ae7ffd8fa970fa4848913feae2ea7a', 'Arm/model/layer.py': '42396f2a21b3ccb8d32348751c9353dc5047380a8d75c06c3b40dde5d02c2e72', 'Arm/stage2_source.tar.gz': '6babc1cb1f2fb241582a04fdf1b81d7f92d7b857847135df5fb03d6b5cd4b823', 'item_sids.json': '1668d7c09e6cdcac271327533909d791ef0f1a49ecfeb0aee47ecc184c262d7b', 'rqvae_best.pth': '4043ab3659cd61351795c186762a045221774893a97dcc74f6ba3deade65ac03', 'recall.json': 'ce58ea8fad22b613e9ae94276e44a4202a1fd88b5e768de071d2a33b38fb775c'}, {'arm': 'Arm', 'recall_keys': ['test_R@10']})].
+
+======================================================================
+FAIL: test_valid_remote_streams_every_object_before_ledger_save (tools.issue252.test_r2_verification.RemoteVerificationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 103, in run_upload
+    result = self.module.main()
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/upload_stage3.py", line 210, in main
+    result = ledger.reconcile(number)
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 202, in reconcile
+    objects = list(listing(number))
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_layout.py", line 179, in remote_listing
+    size, relative = line.split(";", 1)
+ValueError: not enough values to unpack (expected 2, got 1)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 117, in test_valid_remote_streams_every_object_before_ledger_save
+    command, error = self.run_upload(self.objects)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_r2_verification.py", line 106, in run_upload
+    record.assert_not_called()
+  File "/usr/lib64/python3.9/unittest/mock.py", line 868, in assert_not_called
+    raise AssertionError(msg)
+AssertionError: Expected 'record' to not have been called. Called 1 times.
+Calls: [call('51', 'Arm/sid-digest', {'Arm/train_rqvae.py': '6d4e6ec1135ce86b55907ddb3e2b68a6c7ae7ffd8fa970fa4848913feae2ea7a', 'Arm/model/layer.py': '42396f2a21b3ccb8d32348751c9353dc5047380a8d75c06c3b40dde5d02c2e72', 'Arm/stage2_source.tar.gz': '6babc1cb1f2fb241582a04fdf1b81d7f92d7b857847135df5fb03d6b5cd4b823', 'item_sids.json': '1668d7c09e6cdcac271327533909d791ef0f1a49ecfeb0aee47ecc184c262d7b', 'rqvae_best.pth': '4043ab3659cd61351795c186762a045221774893a97dcc74f6ba3deade65ac03', 'recall.json': 'ce58ea8fad22b613e9ae94276e44a4202a1fd88b5e768de071d2a33b38fb775c'}, {'arm': 'Arm', 'recall_keys': ['test_R@10']})].
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.270s
+
+FAILED (failures=9, errors=1)

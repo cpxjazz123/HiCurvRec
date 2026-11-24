@@ -1,0 +1,34 @@
+test_nested_span_preserves_prechild_and_transient_child_peaks (tools.issue252.test_phase_memory.PhaseMemoryTests) ... ok
+test_disabled_wrappers_leave_initialization_and_other_epochs_unmeasured (tools.issue252.test_phase_memory.SteadyProfileTests) ... ERROR
+test_every_rank_profiles_only_between_complete_epoch_boundaries (tools.issue252.test_phase_memory.SteadyProfileTests) ... ERROR
+
+======================================================================
+ERROR: test_disabled_wrappers_leave_initialization_and_other_epochs_unmeasured (tools.issue252.test_phase_memory.SteadyProfileTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_phase_memory.py", line 88, in test_disabled_wrappers_leave_initialization_and_other_epochs_unmeasured
+    module = self.entry()
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_phase_memory.py", line 59, in entry
+    spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1040, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/steady_profile_entry.py'
+
+======================================================================
+ERROR: test_every_rank_profiles_only_between_complete_epoch_boundaries (tools.issue252.test_phase_memory.SteadyProfileTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_phase_memory.py", line 63, in test_every_rank_profiles_only_between_complete_epoch_boundaries
+    module = self.entry()
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_phase_memory.py", line 59, in entry
+    spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1040, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/steady_profile_entry.py'
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.003s
+
+FAILED (errors=2)

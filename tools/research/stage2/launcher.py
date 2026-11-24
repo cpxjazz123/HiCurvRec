@@ -89,6 +89,30 @@ def release_serial(lock: Path, pid: int) -> None:
         lock.unlink()
 
 
+def prepare_floor(tree: Path, *, frozen: bool = False) -> dict:
+    """Repair a live tree, but only verify an immutable admitted generation."""
+    tree = Path(tree).resolve()
+    if not frozen:
+        return patch_tree.apply_floor(tree)
+    for family, spec in patch_tree.FAMILIES.items():
+        module = tree / spec.module
+        if module.is_file():
+            break
+    else:
+        raise LaunchRefused("immutable source has no known assignment-floor quantiser")
+    text = module.read_text(encoding="utf-8")
+    installed = tree / patch_tree.TARGET_NAME
+    if (patch_tree._migrate(text) != text or not patch_tree._already_patched(text)
+            or not installed.is_file() or installed.is_symlink()
+            or installed.read_bytes() != patch_tree.FLOOR_MODULE.read_bytes()):
+        raise LaunchRefused("immutable source requires an assignment-floor patch; re-admit live source")
+    patch_tree.floor_constant(tree, family)
+    if patch_tree.unguarded_sites(tree, family):
+        raise LaunchRefused("immutable source has unguarded assignment sites")
+    return {"family": family, "module": spec.module, "changed": False,
+            "reason": "immutable assignment floor verified"}
+
+
 def launch(entry: Path | str, result_dir: Path | str, *, port: int | None = None,
            world_size: int = contract.WORLD_SIZE, env_extra: dict | None = None,
            python: str | None = None, log_name: str = "train_migrated.log") -> int:
@@ -109,14 +133,27 @@ def launch(entry: Path | str, result_dir: Path | str, *, port: int | None = None
     if int(world_size) != required_world_size():
         raise LaunchRefused(
             "Stage2 runs at world_size=%d; %d was requested" % (required_world_size(), int(world_size)))
+    frozen = entry.parent.name == "src" and "_runs" in entry.parts
+    if frozen:
+        from tools.issue252.run_workspace import check_run_admission, load_run
+        workspace = entry.parent.parent / "workspace.json"
+        identity = json.loads(workspace.read_text(encoding="utf-8"))
+        repo = contract.resolve_root(entry)
+        run = load_run(repo, identity["run_id"], identity["arm"])
+        if Path(run["entry"]) != entry or Path(run["result"]) != result_dir:
+            raise LaunchRefused("immutable launcher paths cross run generations")
+        check_run_admission(repo, run)
+    installed = prepare_floor(entry.parent, frozen=frozen)
+    # Diagnostic entries collect the credential; only the formal trainer consumes it.
+    if not frozen and entry.name == "train_rqvae.py":
+        from tools.issue252.training_admission import check_receipt, required
+        if required(entry.parent):
+            check_receipt(contract.resolve_root(entry), entry.parent)
     lock = acquire_serial(SERIAL_LOCK, os.getpid())
     result_dir.mkdir(parents=True, exist_ok=True)
     logs = result_dir / "logs"
     logs.mkdir(parents=True, exist_ok=True)
-    # The floor is installed here, at the only permitted launch path, so no candidate can
-    # reach training without it -- no cooperation from the mechanism's own code is needed.
-    # Fails closed on a quantiser this repository does not know.
-    installed = patch_tree.apply_floor(entry.parent)
+    # Never repair the snapshot after its admission/source inventory was frozen.
     (result_dir / "assignment_floor.json").write_text(
         json.dumps(installed, indent=1, sort_keys=True), encoding="utf-8")
     # Issue #230: hand the trainer an epoch order that carries whole graphlet instances.
@@ -139,6 +176,12 @@ def launch(entry: Path | str, result_dir: Path | str, *, port: int | None = None
     env = contract.launch_env(env_extra)
     log_path = logs / log_name
     try:
+        if frozen:
+            run = load_run(repo, identity["run_id"], identity["arm"])
+            check_run_admission(repo, run)
+            prepare_floor(entry.parent, frozen=True)
+        elif entry.name == "train_rqvae.py" and required(entry.parent):
+            check_receipt(contract.resolve_root(entry), entry.parent)
         with log_path.open("w", encoding="utf-8") as sink:
             completed = subprocess.run(command, cwd=str(result_dir), env=env,
                                        stdout=sink, stderr=subprocess.STDOUT)

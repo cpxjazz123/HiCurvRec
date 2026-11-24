@@ -8,10 +8,6 @@ and each of those holds exactly four things --
     item_sids.json         the identifier table
     rqvae_best.pth         the checkpoint that exported it
     recall.json            every key of the Stage 3 result
-    HG_Rec_best.pth        the Stage 3 weights that recall was measured with
-                           (added 2026-11-15 at the owner's request: the recall
-                           block named this file but the archive did not hold it,
-                           so an archived recall could not be reproduced)
 
 No issue names, no arm names, no nesting beyond that. What a number refers to is
 recorded here, in a ledger that lives in the repository, so the bucket stays
@@ -30,8 +26,10 @@ import hashlib
 import json
 import os
 import re
+import select
 import subprocess
 from pathlib import Path
+import time
 
 REPO = Path(__file__).resolve().parents[3]
 LEDGER_PATH = Path(__file__).resolve().parent / "r2_ledger.json"
@@ -74,11 +72,34 @@ def sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def rclone(args: list[str], timeout: int = 3600, *, text: bool = True) -> subprocess.CompletedProcess:
+def rclone(args: list[str], timeout: int = 3600, *, text: bool = True,
+           consume=None) -> subprocess.CompletedProcess:
     env = dict(os.environ)
     env.update(credentials())
-    return subprocess.run([str(RCLONE)] + args, capture_output=True, text=text,
-                          env=env, timeout=timeout)
+    command = [str(RCLONE)] + args
+    if consume is None:
+        return subprocess.run(command, capture_output=True, text=text,
+                              env=env, timeout=timeout)
+    # Hash checkpoint bytes as they arrive, without retaining or copying the
+    # complete object. Do not expose remote diagnostics, which may contain secrets.
+    deadline = time.monotonic() + timeout
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                          env=env) as process:
+        try:
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0 or not select.select([process.stdout], [], [], remaining)[0]:
+                    raise subprocess.TimeoutExpired(command, timeout)
+                block = os.read(process.stdout.fileno(), 1 << 20)
+                if not block:
+                    break
+                consume(block)
+            process.wait(timeout=max(0, deadline - time.monotonic()))
+        except BaseException:
+            process.kill()
+            process.wait()
+            raise
+        return subprocess.CompletedProcess(command, process.returncode, b"", b"")
 
 
 class Ledger:
@@ -220,6 +241,37 @@ class Ledger:
         return self.path
 
 
+def verify_upload(number: str, files: dict[str, str], *, runner=None) -> None:
+    """Require the exact four-piece object set and hash every remote object's bytes.
+
+    ``files`` is the staged path-to-SHA256 snapshot. Verification never repairs
+    old numbers or reconciles extra objects into the ledger.
+    """
+    runner = rclone if runner is None else runner
+    expected = set(files)
+    top = {name.split("/", 1)[0] for name in expected}
+    required = {SID, CHECKPOINT, RECALL}
+    if (len(top) != 4 or not required <= expected
+            or any(name in expected for name in top - required)):
+        raise ValueError("staged archive must contain exactly four first-level entries")
+    target = "%s/%s/" % (BUCKET, number)
+    listed = runner(["lsf", target, "-R", "--files-only", "--format", "p"])
+    if listed.returncode != 0:
+        raise RuntimeError("remote listing failed for archive " + number)
+    names = [name for name in listed.stdout.splitlines() if name]
+    actual = set(names)
+    if actual != expected or len(names) != len(actual):
+        raise RuntimeError("remote object set differs from staged archive %s: missing=%s extra=%s"
+                           % (number, sorted(expected - actual), sorted(actual - expected)))
+    for relative in sorted(expected):
+        digest = hashlib.sha256()
+        done = runner(["cat", target + relative], text=False, consume=digest.update)
+        if done.returncode != 0:
+            raise RuntimeError("remote read failed for archive %s/%s" % (number, relative))
+        if digest.hexdigest() != files[relative]:
+            raise RuntimeError("remote SHA256 mismatch for archive %s/%s" % (number, relative))
+
+
 def upload_directory(local: Path, number: str, *, dry_run: bool = False) -> str:
     target = "%s/%s/" % (BUCKET, number)
     command = ["copy", str(local), target, "--s3-no-check-bucket"]
@@ -227,5 +279,5 @@ def upload_directory(local: Path, number: str, *, dry_run: bool = False) -> str:
         command.append("--dry-run")
     done = rclone(command)
     if done.returncode != 0:
-        raise SystemExit("upload of %s failed: %s" % (number, (done.stderr or done.stdout)[-500:]))
+        raise SystemExit("upload of %s failed" % number)
     return target

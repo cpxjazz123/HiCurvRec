@@ -1,0 +1,18 @@
+test_directed_sparse_layer_hand_answer (test_sparse_structure.SparseStructureTests) ... /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_structure.py:19: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+  incoming=torch.sparse_coo_tensor(torch.tensor([[1,2],[0,0]]),torch.ones(2,dtype=torch.double),(3,3)).to_sparse_csr()
+ERROR
+
+======================================================================
+ERROR: test_directed_sparse_layer_hand_answer (test_sparse_structure.SparseStructureTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_structure.py", line 21, in test_directed_sparse_layer_hand_answer
+    result=layer.forward_sparse(x,incoming,outgoing)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/nn/modules/module.py", line 1962, in __getattr__
+    raise AttributeError(
+AttributeError: 'DirectedMean' object has no attribute 'forward_sparse'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.789s
+
+FAILED (errors=1)

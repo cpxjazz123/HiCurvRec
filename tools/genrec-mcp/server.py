@@ -24,7 +24,8 @@ PROTOCOL_VERSION = "2024-11-05"
 SERVER_NAME = "genrec-mcp"
 SERVER_VERSION = "1.0.0"
 
-REPO = Path("/home/wlia0047/ar57/wenyu/GeneRec")
+REPO = next(p for p in Path(__file__).resolve().parents
+            if (p / "tools/research/stage2/contract.py").is_file())
 STAGE2_ROOT = REPO / "stage2_RQ-VAE"
 RESULT2_ROOT = REPO / "results/stage2_RQ-VAE"
 STAGE3_DIR = REPO / "stage3_T5Train"
@@ -51,9 +52,8 @@ STAGE2_LIVENESS_TIMEOUT_S = 420
 STAGE2_PORT_CONTRACT = 50202
 
 STATE_DIR = Path(os.path.expanduser("~/.cache/genrec-mcp"))
-# Generated per-launch Stage3 entrypoints live outside the repository: the run's
-# SID path arrives as a tool argument, so it cannot be hardcoded in any repo file.
-HARNESS_DIR = Path("/tmp/genrec-mcp")
+# Generated framework drivers stay inside the repository (§86).
+HARNESS_DIR = REPO / "results/research/_mcp_runtime"
 
 # Per-user shard dumps are a protocol-side constant, not a caller switch: the arm
 # this SID belongs to was evaluated with them on, and they do not change any
@@ -620,26 +620,9 @@ def free_stage2_port(start: int = None, span: int = 200) -> int:
 
 
 def stage2_launch_decision(gpu_probe: dict) -> str | None:
-    """``None`` -> dispatch, otherwise the refusal reason for this probed layout.
-
-    Pure on purpose: the decision is a function of the probe and the tree's
-    declared capability, so it can be exercised without launching anything.
-    """
-    mode = gpu_probe.get("mode")
-    if mode == "none":
-        return (
-            "no CUDA device is visible to this server "
-            f"(CUDA_VISIBLE_DEVICES={gpu_probe.get('cuda_visible_devices')!r}, "
-            f"physical={gpu_probe.get('physical')}); both the 4-rank and the "
-            "single-card layouts need at least one card"
-        )
-    if mode == "single-gpu" and not gpu_probe.get("entrypoint_supports_single_gpu"):
-        return (
-            f"{gpu_probe.get('visible_count')} CUDA device(s) visible, but this tree's "
-            "trainer has no single-card launch path (it forks 4-rank torchrun); run it "
-            "on a 4-card allocation, or add the single-card contract to the tree's "
-            "trainer first"
-        )
+    """Refuse anything except the frozen four-rank Stage2 layout."""
+    if gpu_probe.get("mode") != "ddp" or int(gpu_probe.get("visible_count") or 0) < 4:
+        return "formal Stage2 requires four visible CUDA cards and the frozen ddp4 recipe"
     return None
 
 
@@ -811,6 +794,36 @@ def tree_entrypoint(tree: Path) -> tuple[Path | None, list[dict]]:
     return accepted, verdicts
 
 
+def stage3_archive_binding(sid: Path, run: dict, manifest: Path, *, create: bool = True) -> dict:
+    """Audit the exact immutable export in Stage2 Python, then verify in stdlib."""
+    from tools.issue252.archive_audit import sha256, validate_binding
+    source = Path(run["source"])
+    checkpoint = Path(run["result"]) / "rqvae_best.pth"
+    binding = Path(run["result"]) / "archive_binding.json"
+    try:
+        # Never replace an existing invalid receipt with an apparent fresh pass.
+        if create and not binding.exists():
+            code = (
+                "import sys; from tools.issue252.archive_audit import create_binding; "
+                "create_binding(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],"
+                "output=sys.argv[5],repo=sys.argv[6])")
+            done = subprocess.run(
+                [PY2, "-c", code, str(source), str(checkpoint), str(sid),
+                 str(manifest), str(binding), str(REPO)],
+                cwd=str(REPO), capture_output=True, text=True, timeout=1800,
+                env={**os.environ, "PYTHONPATH": str(REPO)})
+            if done.returncode:
+                raise ValueError("archive binding audit failed: " +
+                                 (done.stderr or done.stdout or "").strip()[-1000:])
+        receipt, _ = validate_binding(binding, sid, checkpoint, source)
+        if (receipt["run_id"] != run["run_id"]
+                or receipt.get("export_manifest", {}).get("path") != str(manifest)):
+            raise ValueError("archive binding crosses immutable run/export generations")
+        return {"allow": True, "path": str(binding), "sha256": sha256(binding)}
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError) as exc:
+        return {"allow": False, "reason": "archive binding: " + str(exc), "path": str(binding)}
+
+
 def stage3_export_gate(sid: Path) -> dict:
     """Make the SID the checkpoint's own table before Stage 3 reads it.
 
@@ -827,15 +840,19 @@ def stage3_export_gate(sid: Path) -> dict:
     from tools.research.stage2.export_policy import (archived_sids, decide,
                                                     manifest_path, read_manifest)
 
+    from tools.issue252.run_workspace import run_from_sid
+    run = run_from_sid(REPO, sid)
     sid_sha = hashlib.sha256(sid.read_bytes()).hexdigest()
     archived = archived_sids(REPO)
     manifest = read_manifest(sid)
     ran_check = False
-    if manifest is None and sid_sha not in archived:
-        tree, _ = resolve_stage2_tree(sid.parent.name)
+    if manifest is None and (run or sid_sha not in archived):
+        tree = Path(run["source"]) if run else resolve_stage2_tree(sid.parent.name)[0]
         python = tree_python(tree) if tree is not None else PY3
         command = [python, "-m", "tools.research.stage2.export_check",
                    "--sid", str(sid), "--rewrite"]
+        if tree is not None:
+            command.extend(["--tree", str(tree)])
         try:
             completed = subprocess.run(
                 command, cwd=str(REPO), capture_output=True, text=True, timeout=1800,
@@ -852,7 +869,27 @@ def stage3_export_gate(sid: Path) -> dict:
                     "reason": "the export check wrote no manifest: " + tail,
                     "ran_check": True, "manifest": str(manifest_path(sid))}
         sid_sha = hashlib.sha256(sid.read_bytes()).hexdigest()
+    if run:
+        checkpoint = Path(run["result"]) / "rqvae_best.pth"
+        valid = bool(
+            isinstance(manifest, dict) and checkpoint.is_file()
+            and manifest.get("tree") and manifest.get("checkpoint") and manifest.get("sid")
+            and Path(manifest["tree"]).resolve() == Path(run["source"])
+            and Path(manifest["checkpoint"]).resolve() == checkpoint
+            and Path(manifest["sid"]).resolve() == sid
+            and manifest.get("checkpoint_sha256") == hashlib.sha256(checkpoint.read_bytes()).hexdigest())
+        if not valid:
+            return {"allow": False, "state": "REFUSED", "sid_sha256": sid_sha,
+                    "reason": "export manifest crosses immutable run generations",
+                    "manifest": str(manifest_path(sid)), "ran_check": ran_check}
     verdict = decide(sid_sha, manifest, archived)
+    if run and verdict.get("allow"):
+        binding = stage3_archive_binding(sid, run, manifest_path(sid))
+        if not binding["allow"]:
+            return {**verdict, "allow": False, "reason": binding["reason"],
+                    "archive_binding": binding, "sid_sha256": sid_sha,
+                    "manifest": str(manifest_path(sid)), "ran_check": ran_check}
+        verdict["archive_binding"] = binding
     return {**verdict, "sid_sha256": sid_sha, "manifest": str(manifest_path(sid)),
             "ran_check": ran_check,
             "differing_items": (manifest or {}).get("original_differing_items"),
@@ -880,12 +917,12 @@ def tree_python(tree: Path) -> str:
 
 
 def tree_arm(tree: Path) -> str | None:
-    """The arm this tree would train, read from its hardcoded EXPERIMENT_ARM switch."""
+    """Read the source's arm identity, including explicitly named historical arms."""
     try:
         text = (tree / "train_rqvae.py").read_text(encoding="utf-8", errors="replace")
     except OSError:
         return None
-    found = re.search(r'^EXPERIMENT_ARM\s*=\s*"([^"]+)"', text, re.M)
+    found = re.search(r'^(?:ARM_NAME|EXPERIMENT_ARM)\s*=\s*["\']([^"\']+)["\']', text, re.M)
     return found.group(1) if found else None
 
 
@@ -906,7 +943,7 @@ def tree_result_dir(tree: Path) -> Path:
         pass
     base = RESULT2_ROOT / tree.name
     arm = tree_arm(tree)
-    return base / arm if arm else base
+    return base / arm if arm and arm != tree.name else base
 
 
 def tree_log_paths(tree: Path) -> dict:
@@ -993,6 +1030,31 @@ def frozen_protocol_check() -> dict:
     }
 
 
+def resolve_stage2_sid(given: Path) -> Path:
+    """Resolve only the persisted current run, or explicitly addressed history."""
+    from tools.issue252.run_workspace import persisted_run, run_from_sid
+    given = Path(given)
+    if given.is_dir() or given.name != "item_sids.json":
+        given = given / "item_sids.json"
+    sid = given.resolve()
+    relative = sid.relative_to(RESULT2_ROOT.resolve())
+    run = run_from_sid(REPO, sid)
+    if run:
+        state = load_state("stage2__" + run["arm"])
+        current = persisted_run(REPO, state)
+        if current and current["run_id"] != run["run_id"]:
+            raise ValueError("SID is not the current persisted Stage2 run")
+        return sid
+    # Canonical spelling addresses the persisted generation, not old static data.
+    # Deeper historical paths remain explicit; no modification-time search.
+    if len(relative.parts) == 2:
+        state = load_state("stage2__" + relative.parts[0])
+        current = persisted_run(REPO, state)
+        if current:
+            return Path(current["result"]) / "item_sids.json"
+    return sid
+
+
 def derive_stage3_variant(sid: Path) -> str:
     """Variant directory name derived from the SID's own location, never hardcoded.
 
@@ -1015,6 +1077,10 @@ def derive_stage3_variant(sid: Path) -> str:
             continue
     if relative is None:
         relative = Path(logical.parent.name)
+    if relative.parts and relative.parts[0] == "_runs":
+        if len(relative.parts) != 4 or relative.parts[3] != "result":
+            raise ValueError("invalid immutable Stage2 result path")
+        return relative.parts[2]
     raw = "__".join(part for part in relative.parts if part) or logical.parent.name
     return re.sub(r"[^A-Za-z0-9._-]+", "_", raw)
 
@@ -1757,29 +1823,22 @@ def tool_stage2_start(source_dir: str, verification_id: str = "") -> dict:
             "refused": problem,
             "available_trees": [item.name for item in stage2_trees()],
         }
+    from tools.issue252.training_admission import check_receipt, required
+    if required(tree):
+        from tools.research.stage2.anticollapse.patch_tree import apply_floor
+        try:
+            apply_floor(tree)
+            check_receipt(REPO, tree)
+        except (OSError, ValueError, RuntimeError) as exc:
+            return {"started": False, "refused": "Issue252 training admission: " + str(exc),
+                    "tree": str(tree)}
     entry, verdicts = tree_entrypoint(tree)
     python = tree_python(tree)
     arm = tree_arm(tree)
     result_dir = tree_result_dir(tree)
     logs = tree_log_paths(tree)
-    # Probe the host before anything else: a Stage2 run is either the 4-rank DDP
-    # layout or the single-card layout, and which one applies is a fact about this
-    # machine, not a per-tree choice. Zero visible cards means no layout works, and
-    # saying so up front beats a crash inside the trainer.
+    # Stage2's recipe is four ranks; never narrow a four-card allocation to one.
     gpu_probe = probe_gpu_layout()
-    # Only the source tree's trainer carries the single-card launch contract so far;
-    # the other trees keep a launcher that unconditionally forks 4 ranks, so a
-    # single-card promise has to be refused rather than attempted.
-    gpu_probe["entrypoint_supports_single_gpu"] = tree_supports_single_gpu(tree)
-    allocation = None
-    if gpu_probe.get("mode") in {"ddp", "single-gpu"}:
-        allocation = allocate_stage2_card(gpu_probe.get("visible") or [])
-        gpu_probe["allocation"] = allocation
-        if allocation["card"] is None:
-            return {"started": False, "refused": allocation["refusal"], "gpu_probe": gpu_probe,
-                    "tree": str(tree), "arm": arm, "result_dir": str(result_dir)}
-        gpu_probe.update({"mode": "single-gpu", "visible": [str(allocation["card"])],
-                          "visible_count": 1, "assigned_card": allocation["card"]})
     context = {
         "tree": str(tree),
         "arm": arm,
@@ -1799,14 +1858,15 @@ def tool_stage2_start(source_dir: str, verification_id: str = "") -> dict:
     if refusal is not None:
         return {"started": False, "refused": refusal, **context}
     cmd = [python, str(entry)]
-    existing = stage_processes(entry)
     state_key = f"stage2__{tree.name}"
     state = load_state(state_key)
+    current_entry = Path(state["entrypoint"]) if state.get("run_id") else entry
+    existing = stage_processes(current_entry)
     worker_live = state_process_live(state.get("worker_pid"), HARNESS_DIR / "stage2_worker.py")
     # A pending smoke owns the tree even though no trainer is running yet, so a
     # second start must not archive and smoke it a second time.
     pending_worker = worker_live and state.get("status") in {"starting", "smoke_pending"}
-    if existing or state_process_live(state.get("pid"), entry) or pending_worker:
+    if existing or state_process_live(state.get("pid"), current_entry) or pending_worker:
         return {
             "started": False,
             "refused": (
@@ -1820,57 +1880,21 @@ def tool_stage2_start(source_dir: str, verification_id: str = "") -> dict:
             "state": state,
             **context,
         }
-    # Existing artifacts must not block a run and must not be lost: copy them to
-    # the archive first (copy, because the archive may live on another device),
-    # keep the originals until the smoke has passed, and only then remove them so
-    # the trainer writes fresh ones.
-    existing_artifacts = [name for name in STAGE2_ARTIFACTS if (result_dir / name).is_file()]
-    archived: list[str] = []
-    if existing_artifacts:
-        # The archive directory must be unique per dispatch: two dispatches in the
-        # same second collided on the timestamp alone and the second one refused
-        # with 'File exists' before it ever looked at the tree.
-        import uuid as _uuid
-        archive = STAGE2_ARCHIVE_ROOT / (
-            f"{tree.name}_{int(time.time())}_{_uuid.uuid4().hex[:6]}")
-        try:
-            archive.mkdir(parents=True, exist_ok=False)
-            for name in existing_artifacts:
-                source = result_dir / name
-                target = archive / name
-                shutil.copy2(source, target)
-                if target.stat().st_size != source.stat().st_size:
-                    raise OSError(f"archive copy of {name} does not match the original size")
-                archived.append(str(target))
-        except OSError as exc:
-            return {
-                "started": False,
-                "refused": f"could not archive the existing artifacts before retraining: {exc}",
-                "cmd": " ".join(cmd),
-                "cwd": str(tree),
-                "existing_artifacts": existing_artifacts,
-                "archived_artifacts": archived,
-                "result_dir": str(result_dir),
-                **context,
-            }
-    run_log = Path(logs["run_log"])
-    run_log.parent.mkdir(parents=True, exist_ok=True)
-    # The one-epoch gradient smoke forks a real 4-rank DDP run, so it costs a GPU
-    # and tens of seconds: doing it inline would outlast the MCP client's request
-    # deadline and lose the reply. A detached worker owns the rest of the
-    # sequence instead -- smoke first, and only on a pass remove the archived
-    # originals and launch -- and reports through the state file.
+    import uuid
+    run_id = "stage2_" + uuid.uuid4().hex
+    # The detached worker obtains real entry/graph admission before reserving an
+    # immutable generation. No previous artifact is archived, removed or replaced.
     worker = write_stage2_worker()
-    worker_log = HARNESS_DIR / f"stage2_worker_{tree.name}.log"
+    worker_log = HARNESS_DIR / f"stage2_worker_{run_id}.log"
     worker_spec = json.dumps(
         {
             "state_key": state_key,
+            "run_id": run_id,
             "python": python,
             "entry": str(entry),
             "arm": arm,
             "result_dir": str(result_dir),
-            "existing_artifacts": existing_artifacts,
-            "archived_artifacts": archived,
+            "dispatch_id": run_id,
             "logs": logs,
             "gpu_probe": gpu_probe,
             "verification_id": verification_id,
@@ -1883,7 +1907,7 @@ def tool_stage2_start(source_dir: str, verification_id: str = "") -> dict:
         "tree": str(tree),
         "arm": arm,
         "result_dir": str(result_dir),
-        "archived_artifacts": archived,
+        "dispatch_id": run_id,
         "gpu_probe": gpu_probe,
         "assigned_card": gpu_probe.get("assigned_card"),
         **logs,
@@ -1945,190 +1969,93 @@ def write_stage2_worker() -> Path:
     return worker
 
 
-def _wait_for_the_ranks(tree: Path, timeout: int) -> bool:
-    """Whether the four ranks proved themselves within the timeout.
-
-    The trainer writes its metrics file when the run starts, so the file's
-    existence says the ranks are alive and past the point where a fork from a
-    torch-importing process can deadlock. The file is looked for where the
-    trainers actually write it: the tree's own log directory, which is where the
-    frozen baseline writes it and where the status tool reads it.
-    """
-    metrics = tree / "logs" / "training_metrics.jsonl"
+def _wait_for_the_ranks(result_dir: Path, timeout: int) -> bool:
+    """Wait for this generation's metrics, never a populated live-tree log."""
+    metrics = result_dir / "logs" / "training_metrics.jsonl"
     deadline = time.monotonic() + timeout
     while True:
-        if metrics.exists():
+        if metrics.is_file() and metrics.stat().st_size:
             return True
         if time.monotonic() >= deadline:
             return False
         time.sleep(5)
 
-
 def stage2_worker_main(tree_arg: str, spec: dict) -> int:
-    """Smoke, then launch. Returns 0 when training was started, 1 otherwise."""
-    tree = Path(tree_arg)
+    """Machine admission -> immutable workspace -> the standard launcher adapter."""
+    if str(REPO) not in sys.path:
+        sys.path.insert(0, str(REPO))
+    from tools.issue252.archive_audit import source_hashes
+    from tools.issue252.run_workspace import check_run_admission, freeze_run
+    from tools.research.stage2.checks import check_behavior_graph
+    from tools.research.verification.admission import source_digest
+
+    tree = Path(tree_arg).resolve()
     state_key = spec["state_key"]
-    entry = Path(spec["entry"])
-    result_dir = Path(spec["result_dir"])
-    logs = spec["logs"]
     pending = load_state(state_key)
-    smoke_log = HARNESS_DIR / f"smoke_{tree.name}.log"
-    checkpoint, checkpoint_source = probe_checkpoint(tree, result_dir)
     gpu_probe = spec.get("gpu_probe") or probe_gpu_layout()
-    child_env = stage2_child_env(tree, gpu_probe)
-    # A checkpoint from another version of the model cannot probe this one, and
-    # loading it would raise a missing-key error that reads like a defect of the
-    # tree. It is asked here, before the smoke, and an incompatible checkpoint is
-    # treated exactly like an absent one.
-    if checkpoint is not None:
-        compatible, why = checkpoint_matches(tree, checkpoint, spec["python"])
-        if not compatible:
-            checkpoint_source = checkpoint_source + " (incompatible: " + why[:160] + ")"
-            checkpoint = None
-    smoke = run_stage2_smoke(
-        tree,
-        spec["python"],
-        STAGE2_SMOKE_TIMEOUT_S,
-        checkpoint,
-        log_path=smoke_log,
-        env=child_env,
-    )
-    summary = smoke["summary"] or {}
-    smoke_detail = {
-        "passed": smoke["passed"],
-        "launch_mode": summary.get("launch_mode"),
-        "steps": summary.get("steps"),
-        "applied_grad_norms": (summary.get("applied_grad_norms") or [])[:5],
-        "live_terms": sorted(
-            key for key, value in (summary.get("probed_terms") or {}).items()
-            if value.get("grad", 0) > 0
-        ),
-        "dead_terms": summary.get("dead_terms"),
-        "nonfinite_terms": summary.get("nonfinite_terms"),
-        "checkpoint_probe": summary.get("checkpoint_probe"),
-        "checkpoint_source": checkpoint_source,
-        "scratch": smoke["scratch"],
-        "log": smoke["log"],
-    }
-    refused = None
-    if not smoke["passed"]:
-        refused = "the one-epoch gradient smoke failed, so no training was started"
-    # The smoke pays for the DDP start-up, so its step time is only a hint. The
-    # honest cost probe is the measured epoch time of the real run, and the round
-    # checks that while the job runs.
-    projection = project_frozen_run_cost(summary)
-    smoke_detail["cost_projection_hint"] = projection
-    if refused is None:
-        # The smoke passed, so the archived copies are the only backup needed: drop
-        # the originals now so the run writes a fresh artifact set instead of a
-        # mixture. A failed removal is fatal.
-        undeleted = []
-        for name in spec.get("existing_artifacts") or []:
+    state = {**pending, "tree": str(tree), "arm": spec.get("arm") or tree.name,
+             "gpu_probe": gpu_probe}
+    try:
+        refusal = stage2_launch_decision(gpu_probe)
+        if refusal:
+            raise ValueError(refusal)
+        admitted = machine_admission(tree)
+        state["admission"] = admitted
+        state["smoke"] = {
+            "passed": admitted["passed"], "checks": admitted.get("checks", []),
+            "source_digest": admitted.get("source_digest"),
+            "graph_identity": admitted.get("graph_identity"),
+        }
+        if not admitted["passed"]:
+            raise ValueError(admitted.get("refused") or "machine entry/graph admission failed")
+        # Check again after snapshotting: neither a cached entry nor copy time may
+        # authorize a different source, runtime policy or behavior graph generation.
+        run = freeze_run(REPO, tree, spec["run_id"], state["arm"],
+                         source_digest=admitted["source_digest"],
+                         graph_identity=admitted["graph_identity"],
+                         checks_fingerprint=admitted["checks_fingerprint"])
+        entry, result_dir = Path(run["entry"]), Path(run["result"])
+        state.update(run_id=run["run_id"], source_tree=run["source"],
+                     entrypoint=run["entry"], result_dir=run["result"],
+                     logs=run["logs"], source_digest=admitted["source_digest"],
+                     graph_identity=admitted["graph_identity"],
+                     checks_fingerprint=admitted["checks_fingerprint"], **run["logs"])
+        state["training_admission"] = run.get("training_admission")
+        graph = check_behavior_graph(tree)
+        if (source_digest(tree) != admitted["source_digest"]
+                or source_hashes(tree) != run["admitted_sources"]
+                or _checks_fingerprint() != admitted["checks_fingerprint"]
+                or graph.get("identity") != admitted["graph_identity"]
+                or graph.get("status") not in ("PASS", "NOT_APPLICABLE")):
+            raise ValueError("source/runtime/graph generation changed after machine admission")
+        check_run_admission(REPO, run)
+        cmd = [spec["python"], str(entry)]
+        state.update(cmd=" ".join(cmd), cwd=str(result_dir))
+        Path(run["logs"]["run_log"]).parent.mkdir(parents=True, exist_ok=True)
+        with Path(run["logs"]["run_log"]).open("xb") as sink:
+            child = subprocess.Popen(
+                cmd, cwd=str(result_dir), stdout=sink, stderr=subprocess.STDOUT,
+                stdin=subprocess.DEVNULL, start_new_session=True,
+                env=stage2_child_env(result_dir, gpu_probe))
+        state.update(status="running", pid=child.pid, launched_at=time.time())
+        save_state(state_key, state)
+        if not _wait_for_the_ranks(result_dir, STAGE2_LIVENESS_TIMEOUT_S):
             try:
-                (result_dir / name).unlink()
-            except OSError as exc:
-                undeleted.append(f"{name}: {exc}")
-        if undeleted:
-            refused = f"could not remove the archived originals before retraining: {undeleted}"
-    if refused is not None:
-        save_state(
-            state_key,
-            {
-                "status": "refused",
-                "refused": refused,
-                "smoke": smoke_detail,
-                "traceback": summary.get("traceback"),
-                "worker_pid": pending.get("worker_pid"),
-                "tree": str(tree),
-                "arm": spec.get("arm"),
-                "result_dir": str(result_dir),
-                "archived_artifacts": spec.get("archived_artifacts"),
-                "gpu_probe": gpu_probe,
-                **logs,
-            },
-        )
+                os.killpg(os.getpgid(child.pid), signal.SIGTERM)
+            except (OSError, ProcessLookupError):
+                child.terminate()
+            try:
+                child.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                child.kill()
+            raise ValueError("four ranks did not write this run's metrics within %s s: %s" %
+                             (STAGE2_LIVENESS_TIMEOUT_S,
+                              _tail_text(Path(run["logs"]["native_log"]), 2000)))
+        return 0
+    except Exception as exc:
+        state.update(status="refused", refused=type(exc).__name__ + ": " + str(exc))
+        save_state(state_key, state)
         return 1
-    cmd = [
-        sys.executable, "-m", "tools.research.stage2.bootstrap",
-        "--entry", str(entry),
-        "--result-dir", str(result_dir),
-        "--python", str(spec["python"]),
-        "--visible-devices", ",".join(str(x) for x in (gpu_probe.get("visible") or [])),
-        # One rank per visible card: a one-card host must not be asked for four,
-        # and a four-rank job must still get four. The world size is a property
-        # of the probed layout, not a constant of the contract.
-        "--world-size", str(max(1, int(gpu_probe.get("visible_count") or 1))),
-        # Stage 2 may run concurrently, so the rendezvous port is per launch:
-        # the first job still gets the contract's 50202, the others the next
-        # free port above it.
-        "--port", str(free_stage2_port()),
-    ]
-    # The arm's log directory does not exist yet for a fresh tree, and the run
-    # log is opened before the trainer can create it.
-    Path(logs["run_log"]).parent.mkdir(parents=True, exist_ok=True)
-    with Path(logs["run_log"]).open("wb") as sink:
-        child = subprocess.Popen(
-            cmd,
-            cwd=str(REPO),
-            stdout=sink,
-            stderr=subprocess.STDOUT,
-            stdin=subprocess.DEVNULL,
-            start_new_session=True,
-            env=child_env,
-        )
-    save_state(
-        state_key,
-        {
-            "status": "running",
-            "pid": child.pid,
-            "launched_at": time.time(),
-            "cmd": " ".join(cmd),
-            "cwd": str(REPO),
-            "tree": str(tree),
-            "arm": spec.get("arm"),
-            "result_dir": str(result_dir),
-            "smoke": smoke_detail,
-            "archived_artifacts": spec.get("archived_artifacts"),
-            "gpu_probe": gpu_probe,
-            **logs,
-        },
-    )
-    # A job that never starts used to look alive: an empty log, no GPU use, and
-    # a status that only turned into "exited_incomplete" much later. The ranks
-    # have to prove themselves here, or the launch is refused with the log that
-    # says why.
-    if not _wait_for_the_ranks(tree, STAGE2_LIVENESS_TIMEOUT_S):
-        try:
-            os.killpg(os.getpgid(child.pid), signal.SIGKILL)
-        except (OSError, ProcessLookupError):
-            child.kill()
-        try:
-            child.wait(timeout=30)
-        except subprocess.TimeoutExpired:
-            pass
-        save_state(
-            state_key,
-            {
-                "status": "refused",
-                "refused": "the four ranks did not start within "
-                           + str(STAGE2_LIVENESS_TIMEOUT_S)
-                           + " s; the launch log is "
-                           + _tail_text(tree / "logs" / "train_migrated.log", 2000),
-                "pid": child.pid,
-                "launched_at": time.time(),
-                "cmd": " ".join(cmd),
-                "cwd": str(REPO),
-                "tree": str(tree),
-                "arm": spec.get("arm"),
-                "result_dir": str(result_dir),
-                "smoke": smoke_detail,
-                "archived_artifacts": spec.get("archived_artifacts"),
-                "gpu_probe": gpu_probe,
-                **logs,
-            },
-        )
-        return 1
-    return 0
 
 
 def _tail_text(path: Path, limit: int = 4000) -> str:
@@ -2199,6 +2126,12 @@ def tool_stage2_stop(source_dir: str) -> dict:
     entry, _ = tree_entrypoint(tree)
     state_key = f"stage2__{tree.name}"
     state = load_state(state_key)
+    if state.get("run_id"):
+        from tools.issue252.run_workspace import persisted_run
+        try:
+            entry = Path(persisted_run(REPO, state, verify_source=False)["entry"])
+        except (OSError, ValueError, KeyError) as exc:
+            return {"stopped": False, "refused": str(exc), "state": state}
     worker_pid = state.get("worker_pid")
     worker_alive = state_process_live(worker_pid, HARNESS_DIR / "stage2_worker.py")
     live = stage_processes(entry) if entry else []
@@ -2257,8 +2190,16 @@ def tool_stage2_status(source_dir: str) -> dict:
             "available_trees": [item.name for item in stage2_trees()],
         }
     entry, _ = tree_entrypoint(tree)
-    result_dir = tree_result_dir(tree)
     state = load_state(f"stage2__{tree.name}")
+    run = None
+    if state.get("run_id"):
+        from tools.issue252.run_workspace import persisted_run
+        try:
+            run = persisted_run(REPO, state)
+        except (OSError, ValueError, KeyError) as exc:
+            return {"status": "refused", "refused": str(exc), "state": state}
+        entry = Path(run["entry"])
+    result_dir = Path(run["result"]) if run else tree_result_dir(tree)
     live = stage_processes(entry) if entry else []
     worker_alive = state_process_live(state.get("worker_pid"), HARNESS_DIR / "stage2_worker.py")
     artifacts = {
@@ -2269,7 +2210,7 @@ def tool_stage2_status(source_dir: str) -> dict:
         for name in STAGE2_ARTIFACTS
         if (result_dir / name).is_file()
     }
-    logs = state.get("logs") or tree_log_paths(tree)
+    logs = run["logs"] if run else (state.get("logs") or tree_log_paths(tree))
     latest_train = _last_record(Path(logs["metrics"]), "train")
     train_end = _last_record(Path(logs["metrics"]), "train_end")
     launched_at = state.get("launched_at")
@@ -2284,7 +2225,7 @@ def tool_stage2_status(source_dir: str) -> dict:
     # the frozen last epoch in the metrics plus the exported artifacts is the run
     # having finished even when the worker that launched it is gone (a reloaded
     # MCP server kills its workers; the training keeps running and completes).
-    metrics_complete = artifacts_complete and _stage2_finished(result_dir, tree)
+    metrics_complete = artifacts_complete and _stage2_finished(result_dir, None if run else tree)
     complete = artifacts_complete and (train_end_fresh or metrics_complete)
     completion_evidence = (
         "train_end" if train_end_fresh else
@@ -2317,8 +2258,11 @@ def tool_stage2_status(source_dir: str) -> dict:
         "status": status,
         "completion_evidence": completion_evidence,
         "tree": str(tree),
-        "arm": tree_arm(tree),
+        "arm": run["arm"] if run else tree_arm(tree),
         "result_dir": str(result_dir),
+        "run_id": state.get("run_id"),
+        "source_tree": run["source"] if run else str(tree),
+        "entrypoint": str(entry) if entry else None,
         # Two different facts, kept apart on purpose: ``gpu_probe`` is the layout this
         # run was dispatched with (null when the tree never ran), ``current_gpu_probe``
         # is what this host looks like right now. A stale launch record must not be
@@ -2389,6 +2333,36 @@ def stage3_variant_processes(variant: str) -> list[dict]:
     return [item for item in stage3_processes() if harness in item.get("cmd", "")]
 
 
+def stage3_bound_files(variant: str, sid: Path, run_id: str, since=None) -> tuple:
+    """Select this SID generation's evidence; a newer same-arm run is irrelevant."""
+    sid = Path(sid).resolve()
+    root = RESULT3_ROOT / variant
+    selected = []
+    for pattern, kind in (("**/training_metrics.jsonl", "metrics"),
+                          ("**/test_final.json", "final")):
+        matches = []
+        for path in sorted(root.glob(pattern)):
+            if not path.is_file() or (since is not None and path.stat().st_mtime < since):
+                continue
+            try:
+                if kind == "metrics":
+                    block = _last_record(path, "train_start") or {}
+                    value = block.get("code_path")
+                else:
+                    block = json.loads(path.read_text(encoding="utf-8"))
+                    if block.get("stage2_run_id") != run_id:
+                        continue
+                    value = block.get("sid_path")
+                if value and Path(value).resolve() == sid:
+                    matches.append(path)
+            except (OSError, ValueError, TypeError):
+                continue
+        if len(matches) > 1:
+            raise ValueError("ambiguous Stage3 " + kind + " for this exact SID generation")
+        selected.append(matches[0] if matches else None)
+    return tuple(selected)
+
+
 def tool_stage3_status(item_sids: str | None = None) -> dict:
     """Read-only: where the Stage3 run for one Stage2 SID stands. Starts nothing."""
     if not item_sids:
@@ -2397,8 +2371,8 @@ def tool_stage3_status(item_sids: str | None = None) -> dict:
     if given.is_dir():
         given = given / "item_sids.json"
     try:
-        sid = given.resolve()
-    except OSError as exc:
+        sid = resolve_stage2_sid(given)
+    except (OSError, ValueError, KeyError) as exc:
         return {"status": "unknown", "refused": f"cannot resolve {item_sids}: {exc}"}
     if RESULT2_ROOT.resolve() not in sid.parents:
         return {
@@ -2414,21 +2388,31 @@ def tool_stage3_status(item_sids: str | None = None) -> dict:
     variant = derive_stage3_variant(sid_logical)
     paths = stage3_paths(variant)
     state = load_state(f"stage3__{variant}")
+    if state.get("sid") and Path(state["sid"]).resolve() != sid:
+        return {"status": "unknown", "variant": variant,
+                "refused": "Stage3 state belongs to a different Stage2 generation"}
     launched_at = state.get("launched_at")
     # Variant directories are reused across launches, so only evidence written at
     # or after this launch's own timestamp counts as this run's.
     live = stage3_variant_processes(variant)
-    metrics = stage3_newest("**/training_metrics.jsonl", variant, since=launched_at)
+    from tools.issue252.run_workspace import run_from_sid
+    run = run_from_sid(REPO, sid)
     test_result_scope = "this launch"
-    test_final = stage3_newest("**/test_final.json", variant, since=launched_at)
-    stale_test = stage3_newest("**/test_final.json", variant)
-    if stale_test is not None and test_final is None:
-        # The launch-scoped search found nothing: the variant was launched
-        # again after a run that had already finished, and the finished result
-        # is older than the new launch. It is still the result of this variant,
-        # so it is reported with the scope spelled out.
-        test_final = stale_test
-        test_result_scope = "the result of an earlier launch of this variant"
+    stale_test = None
+    if run:
+        try:
+            metrics, test_final = stage3_bound_files(
+                variant, sid, run["run_id"], since=launched_at)
+        except ValueError as exc:
+            return {"status": "unknown", "refused": str(exc), "variant": variant}
+    else:
+        # Explicit legacy history retains its old reporting semantics.
+        metrics = stage3_newest("**/training_metrics.jsonl", variant, since=launched_at)
+        test_final = stage3_newest("**/test_final.json", variant, since=launched_at)
+        stale_test = stage3_newest("**/test_final.json", variant)
+        if stale_test is not None and test_final is None:
+            test_final = stale_test
+            test_result_scope = "the result of an earlier launch of this variant"
     latest_train = _last_record(metrics, "train") if metrics else None
     train_start = _last_record(metrics, "train_start") if metrics else None
     test_result = None
@@ -2584,8 +2568,8 @@ def tool_stage3_start(item_sids: str | None = None, waive_collision: bool = Fals
     if given.name != "item_sids.json":
         return {"started": False, "refused": "item_sids must name an item_sids.json file"}
     try:
-        sid = given.resolve()
-    except OSError as exc:
+        sid = resolve_stage2_sid(given)
+    except (OSError, ValueError, KeyError) as exc:
         return {"started": False, "refused": f"cannot resolve {item_sids}: {exc}"}
     if RESULT2_ROOT.resolve() not in sid.parents:
         return {
@@ -2648,6 +2632,8 @@ def tool_stage3_start(item_sids: str | None = None, waive_collision: bool = Fals
             "sid_quality": quality,
         }
     chosen_variant = derive_stage3_variant(sid_logical)
+    from tools.issue252.run_workspace import run_from_sid
+    stage2_run = run_from_sid(REPO, sid)
     context = {
         "sid": sid_info,
         "export_gate": export_gate,
@@ -2684,6 +2670,12 @@ def tool_stage3_start(item_sids: str | None = None, waive_collision: bool = Fals
             "processes": live,
             **context,
         }
+    if stage2_run:
+        binding = stage3_archive_binding(
+            sid, stage2_run, Path(export_gate["manifest"]), create=False)
+        if not binding["allow"] or binding != export_gate.get("archive_binding"):
+            return {"started": False, "refused": binding.get("reason") or
+                    "archive binding changed before Stage3 dispatch", **context}
     harness = write_stage3_harness(sid_logical, chosen_variant, STAGE3_PER_USER_DUMP)
     run_log.parent.mkdir(parents=True, exist_ok=True)
     with run_log.open("wb") as sink:
@@ -2703,6 +2695,8 @@ def tool_stage3_start(item_sids: str | None = None, waive_collision: bool = Fals
         "cwd": str(STAGE3_DIR),
         "variant": chosen_variant,
         "sid": str(sid),
+        "stage2_run_id": stage2_run["run_id"] if stage2_run else None,
+        "archive_binding": export_gate.get("archive_binding"),
         "layer_record": layer_record,
         "run_log": str(run_log),
         "native_log": str(RESULT3_ROOT / chosen_variant / "logs/_stage3_launcher.log"),
@@ -2766,14 +2760,18 @@ def _checks_fingerprint() -> str:
     """Bind admission and the shared runtime exercised by the real entry."""
     import hashlib
     digest = hashlib.sha256()
-    for directory in ("tools/research/stage2", "tools/graph_infra"):
+    for directory in ("tools/research/stage2", "tools/graph_infra", "tools/issue252"):
         for path in sorted((REPO / directory).rglob("*.py")):
             relative = path.relative_to(REPO)
-            if {"tests", "__pycache__"} & set(relative.parts):
+            if {"tests", "__pycache__"} & set(relative.parts) or path.name.startswith("test_"):
                 continue
             digest.update(str(relative).encode("utf-8"))
             digest.update(b"\0")
             digest.update(path.read_bytes())
+    shared = REPO / "tools/genrec-mcp/server.py"
+    if shared.is_file():
+        digest.update(b"tools/genrec-mcp/server.py\0")
+        digest.update(shared.read_bytes())
     return digest.hexdigest()[:12]
 
 
@@ -2947,7 +2945,24 @@ def machine_admission(tree: Path) -> dict:
     if str(REPO) not in sys.path:
         sys.path.insert(0, str(REPO))
     from tools.research.verification.admission import source_digest
+    from tools.issue252.training_admission import check_receipt, required
+    credential = None
+    if required(tree):
+        from tools.research.stage2.anticollapse.patch_tree import apply_floor
+        try:
+            apply_floor(tree)
+            credential = check_receipt(REPO, tree)
+        except (OSError, ValueError, RuntimeError) as exc:
+            return {"passed": False, "refused": "Issue252 training admission: " + str(exc),
+                    "checks": [], "tree": str(tree)}
     report = _conformance_report(tree, source_digest(tree))
+    if required(tree):
+        try:
+            if check_receipt(REPO, tree) != credential:
+                raise ValueError("credential changed during machine admission")
+        except (OSError, ValueError, RuntimeError) as exc:
+            return {"passed": False, "refused": str(exc), "checks": report.get("checks", []),
+                    "tree": str(tree)}
     failing = [check["name"] + ": " + str(check["detail"])[:200]
                for check in report.get("checks", [])
                if check.get("status") not in ("PASS", "NOT_APPLICABLE")]
@@ -2957,7 +2972,7 @@ def machine_admission(tree: Path) -> dict:
             "source_digest": report.get("digest"),
             "checks_fingerprint": report.get("checks_fingerprint"),
             "graph_identity": report.get("graph_identity"),
-            "tree": str(tree)}
+            "tree": str(tree), "training_admission": credential}
 
 
 def round_admission(tree: Path, verification_id: str) -> dict:

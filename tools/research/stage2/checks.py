@@ -138,6 +138,30 @@ def check_entry(tree: Path | str) -> dict:
     entry = tree / "train_rqvae.py"
     if not entry.is_file():
         return {"status": "FAIL", "name": "entry", "detail": "the entry point is missing"}
+    from tools.issue252.training_admission import check_receipt, required
+    if required(tree):
+        # This candidate's real Trainer already completed an actual four-rank
+        # epoch and exact checkpoint export through launcher.launch. Revalidate
+        # that explicit source-bound run instead of starting the legacy direct
+        # single-card t.main() subprocess below.
+        try:
+            credential = check_receipt(contract.resolve_root(), tree)
+            evidence = json.loads(Path(credential["path"]).read_text())
+            reports = [(Path(row["path"]), json.loads(Path(row["path"]).read_text()))
+                       for row in evidence["validation_reports"]]
+            report_path, report = next((path, row) for path, row in reports if row["rank"] == 0)
+            sid = report_path.parent / "diagnostic_item_sids.json"
+            from .anticollapse import audit_sid
+            artifact = audit_sid(sid, enforce_gate=CHECK_ENTRY_ENFORCE_COLLISION)
+            if artifact["status"] != "PASS":
+                raise ValueError(artifact["detail"])
+            return {"status": "PASS", "name": "entry",
+                    "detail": "source-bound real four-rank Trainer epoch and exact checkpoint SID verified",
+                    "training_admission": credential, "run_id": report["run_id"],
+                    "entry_report": str(report_path), "sid": str(sid)}
+        except (OSError, ValueError, KeyError, TypeError, RuntimeError, SyntaxError) as exc:
+            return {"status": "FAIL", "name": "entry",
+                    "detail": "four-rank entry evidence refused: " + str(exc)}
     scratch = _scratch_dir(tree)
     command = [_python_for(), "-c",
                "import os, sys;"

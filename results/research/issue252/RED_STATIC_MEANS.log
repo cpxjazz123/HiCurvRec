@@ -1,0 +1,93 @@
+test_cache_is_detached_static_only_and_all_weights_are_live (test_static_means.StaticMeansTests) ... /fs04/ar57/wenyu/GeneRec/tools/issue252/ego_operators.py:109: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+  operators.append(torch.sparse_csr_tensor(crow, columns, values,
+ERROR
+test_dense_and_original_ragged_values_and_every_parameter_gradient (test_static_means.StaticMeansTests) ... ok
+test_frozen_feature_root_and_bounded_full_layout_cache (test_static_means.StaticMeansTests) ... ERROR
+test_live_affine_input_and_every_parameter_gradient (test_static_means.StaticMeansTests) ... ERROR
+test_production_retains_activations_and_only_second_layer_uses_wide_sparse_mm (test_static_means.StaticMeansTests) ... FAIL
+test_tiny_directed_affine_hand_answer_and_empty_directions (test_static_means.StaticMeansTests) ... ERROR
+
+======================================================================
+ERROR: test_cache_is_detached_static_only_and_all_weights_are_live (test_static_means.StaticMeansTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_static_means.py", line 203, in test_cache_is_detached_static_only_and_all_weights_are_live
+    static = resident['means'][torch.double]
+KeyError: 'means'
+
+======================================================================
+ERROR: test_frozen_feature_root_and_bounded_full_layout_cache (test_static_means.StaticMeansTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_static_means.py", line 225, in test_frozen_feature_root_and_bounded_full_layout_cache
+    from tools.issue252.static_features import StaticFeatureMeans
+ModuleNotFoundError: No module named 'tools.issue252.static_features'
+
+======================================================================
+ERROR: test_live_affine_input_and_every_parameter_gradient (test_static_means.StaticMeansTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_static_means.py", line 185, in test_live_affine_input_and_every_parameter_gradient
+    actual = model._read_sparse(local, groups, sizes, incoming, outgoing, static, model._first_affine())
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/nn/modules/module.py", line 1962, in __getattr__
+    raise AttributeError(
+AttributeError: 'SubgraphTokens' object has no attribute '_first_affine'
+
+======================================================================
+ERROR: test_tiny_directed_affine_hand_answer_and_empty_directions (test_static_means.StaticMeansTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_static_means.py", line 104, in test_tiny_directed_affine_hand_answer_and_empty_directions
+    from tools.issue252.static_features import StaticFeatureMeans
+ModuleNotFoundError: No module named 'tools.issue252.static_features'
+
+======================================================================
+FAIL: test_production_retains_activations_and_only_second_layer_uses_wide_sparse_mm (test_static_means.StaticMeansTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_static_means.py", line 97, in test_production_retains_activations_and_only_second_layer_uses_wide_sparse_mm
+    self.assertEqual(widths, [32] * 8,
+AssertionError: Lists differ: [32, [21 chars]2, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,[51 chars], 32] != [32, [21 chars]2, 32]
+
+First list contains 24 additional elements.
+First extra element 8:
+32
+
++ [32, 32, 32, 32, 32, 32, 32, 32]
+- [32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32,
+-  32] : Only the second layer may perform two 32-wide sparse means per ego chunk/scale
+
+----------------------------------------------------------------------
+Ran 6 tests in 5.633s
+
+FAILED (failures=1, errors=4)

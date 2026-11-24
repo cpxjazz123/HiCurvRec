@@ -1,0 +1,32 @@
+test_contested_unique_priorities_keep_hand_assigned_ids (tools.issue252.test_floor_cpu.StrictFloorTests) ... ERROR
+test_nonfinite_priorities_fall_back_instead_of_selecting (tools.issue252.test_floor_cpu.StrictFloorTests) ... ERROR
+test_tied_priorities_refuse_cpu_route_without_mutating_input (tools.issue252.test_floor_cpu.StrictFloorTests) ... ERROR
+
+======================================================================
+ERROR: test_contested_unique_priorities_keep_hand_assigned_ids (tools.issue252.test_floor_cpu.StrictFloorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_floor_cpu.py", line 11, in test_contested_unique_priorities_keep_hand_assigned_ids
+    result = floor._strict_cpu_repair(costs, assignment, 1)
+AttributeError: module 'tools.research.stage2.anticollapse.floor' has no attribute '_strict_cpu_repair'
+
+======================================================================
+ERROR: test_nonfinite_priorities_fall_back_instead_of_selecting (tools.issue252.test_floor_cpu.StrictFloorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_floor_cpu.py", line 24, in test_nonfinite_priorities_fall_back_instead_of_selecting
+    self.assertIsNone(floor._strict_cpu_repair(costs, np.zeros(7, dtype=np.int64), 1))
+AttributeError: module 'tools.research.stage2.anticollapse.floor' has no attribute '_strict_cpu_repair'
+
+======================================================================
+ERROR: test_tied_priorities_refuse_cpu_route_without_mutating_input (tools.issue252.test_floor_cpu.StrictFloorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_floor_cpu.py", line 19, in test_tied_priorities_refuse_cpu_route_without_mutating_input
+    self.assertIsNone(floor._strict_cpu_repair(costs, assignment, 1))
+AttributeError: module 'tools.research.stage2.anticollapse.floor' has no attribute '_strict_cpu_repair'
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.002s
+
+FAILED (errors=3)

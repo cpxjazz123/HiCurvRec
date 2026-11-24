@@ -1,0 +1,7 @@
+# Exact floor execution, unchanged assignment rule
+
+Warmed actual profile measured36 floor calls/epoch,0.465s inclusive under instrumentation. The current GPU greedy repair remains the correctness rule: same float32 costs, initial argmin, donor mask, codeword-round bound, minimum row per deficient codeword, ascending best-cost priority and first claimant per item. Original Sinkhorn arithmetic and all capacities remain unchanged.
+
+A CPU execution of those same comparisons is allowed only when each round's finite best-cost priorities are strictly unique. Then the priority order is mathematically unique and NumPy/GPU argsort instability cannot affect it. Copy the detached small cost matrix and initial assignment once, perform exact float32 comparisons and simultaneous moves; return the same integer IDs/metadata. Any tied/nonfinite priority, absence of donors or unresolved repair returns to the existing GPU rule from the untouched initial assignment. Never choose a different tie rule, Hungarian solver or assignment objective. Healthy GPU assignments stay on device without a host cost copy.
+
+The active floor is1. An exploratory floor2 test exposed the pre-existing general repair round bound; this task neither changes that bound nor pretends floor2 is the frozen formal protocol. No formal run has started. Known answers, nonfinite/tie fallback, full old-rule CPU compatibility and actual four-rank CUDA equality must be checked before admission. Performance remains an inclusive60epoch measured gate, not a claim from this optimization.

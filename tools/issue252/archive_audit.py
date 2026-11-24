@@ -63,6 +63,9 @@ def imported_repo_sources(tree, repo=REPO):
     """
     tree, repo = Path(tree).resolve(), Path(repo).resolve()
     queue = [(tree / 'train_rqvae.py', 'train_rqvae')]
+    execution_entry = tree / 'execution_entry.py'
+    if execution_entry.is_file():
+        queue.append((execution_entry, 'execution_entry'))
     seen, external = set(), {}
 
     def enqueue(module, required=False):
@@ -142,7 +145,7 @@ def _repository_configs(provenance, repo):
     if 'asset_manifest_sha256' in provenance:
         hashes['assets/manifest.json'] = provenance['asset_manifest_sha256']
     if 'mathematical_contract_sha256' in provenance:
-        hashes['results/research/issue251/CONTRACT.md'] = provenance['mathematical_contract_sha256']
+        hashes['results/research/issue252/CONTRACT.md'] = provenance['mathematical_contract_sha256']
     for name, digest in provenance.get('assets', {}).items():
         relative = Path(name)
         if relative.is_absolute() or '..' in relative.parts:

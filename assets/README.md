@@ -128,3 +128,28 @@ cache hits. Candidate source, policy and graph generation bind the expensive
 real-entry credential. New lossless performance layouts need same-graph,
 training-only ancestry and source hashes; this is not an arm-name exemption.
 Reproduce the raw audit with `python3.9 -m tools.issue252.graph_audit`.
+
+## Issue #252: lossless runtime layouts
+
+The root manifest adds `v8_runtime_layout/` and `v9_ego_operators/`; original
+graph, features, full targets and evaluation banks remain byte-identical.
+Their `metadata.json` and `audit.json` record hashes, inputs, generator sources
+and complete coverage. The original `coverage.json` remains an immutable
+description of the full target population, not a claim about training samples.
+
+| Layout | Persisted population |
+|---|---|
+| v8 targets / offsets | All28,391,948 valid triple occurrences, preserving original order and float64 target bits;24,326 nonempty centres |
+| v8 two-hop nodes / offsets / roots | All24,587 complete egos; no truncation |
+| v9 directional CSR operators | Complete induced support:1-hop535,051 nodes /1,716,410 edges;2-hop37,077,307 nodes /513,330,917 edges across all egos |
+
+Training gathers these static integer layouts once per device and recomputes
+learned GNN tokens and gates on every forward/backward; no learned activation
+is persisted as an asset. The consumer checks registered file sizes and SHA256
+before loading arrays. The frozen producer is not rerun to repair a consumer.
+
+`results/research/issue252/CONTRACT.md` separately freezes the explicitly biased
+32-triple /32-full-component-reference training estimator. This does not replace
+the complete assets: final hard-q and continuous-z evaluation uses every valid
+triple and the full reference populations. Per-epoch receipts report actual
+sampled coverage, not an asserted full-population pass.

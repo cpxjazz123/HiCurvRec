@@ -1,0 +1,16 @@
+test_cache_is_detached_static_only_and_all_weights_are_live (test_static_means.StaticMeansTests) ... /fs04/ar57/wenyu/GeneRec/tools/issue252/ego_operators.py:109: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+  operators.append(torch.sparse_csr_tensor(crow, columns, values,
+ok
+test_dense_and_original_ragged_values_and_every_parameter_gradient (test_static_means.StaticMeansTests) ... ok
+test_frozen_feature_root_and_bounded_full_layout_cache (test_static_means.StaticMeansTests) ... ok
+test_live_affine_input_and_every_parameter_gradient (test_static_means.StaticMeansTests) ... ok
+test_production_retains_activations_and_only_second_layer_uses_wide_sparse_mm (test_static_means.StaticMeansTests) ... ok
+test_tiny_directed_affine_hand_answer_and_empty_directions (test_static_means.StaticMeansTests) ... /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_static_means.py:139: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  self.assertAlmostEqual(float(got[0, 0]), float(expected), places=12)
+ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 1.442s
+
+OK

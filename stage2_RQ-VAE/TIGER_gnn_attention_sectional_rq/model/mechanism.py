@@ -3,17 +3,19 @@ from pathlib import Path
 import sys
 import numpy as np
 import torch
+import torch.nn.functional as F
 from .model import RQVAE as OriginalRQVAE
-from torch.utils.checkpoint import checkpoint
 from .geometry import mixed_cost, fixed_squared
 from .selection import select
+from .estimator import StructuralSampler, sampled_values
 from losses.commitment import commitment_loss
 from losses.codebook import codebook_loss
 
 
 def repository_root():
     for parent in Path(__file__).resolve().parents:
-        if (parent / 'stage2_RQ-VAE').is_dir():
+        if ((parent / 'stage2_RQ-VAE').is_dir()
+                and (parent / 'tools/research/stage2/contract.py').is_file()):
             return parent
     raise RuntimeError('missing repository marker')
 
@@ -26,6 +28,7 @@ from .structure_gate import TopologyAttention
 from .curvature import FrozenCurvature
 from . import layers as layer_module
 from .provenance import binding,sha256
+from tools.issue252.archive_audit import imported_repo_sources
 
 
 class RQVAE(OriginalRQVAE):
@@ -45,6 +48,8 @@ class RQVAE(OriginalRQVAE):
         self.last_hard = None
         self.last_costs = []
         self.last_weights = None
+        self._structural_sampler = None
+        self._catalogue_cache = None
 
     def _identities(self, embeddings, item_ids):
         if item_ids is None:
@@ -66,8 +71,7 @@ class RQVAE(OriginalRQVAE):
         hard_sum=torch.zeros_like(encoded)
         tokens=[];parts=[];costs=[];unused=0
         for layer in self.rq.vq_layers:
-            cost=(checkpoint(self.assignment_cost,residual,layer.embed.weight,weights,use_reentrant=False)
-                  if torch.is_grad_enabled() else self.assignment_cost(residual,layer.embed.weight,weights))
+            cost=self.assignment_cost(residual,layer.embed.weight,weights)
             costs.append(cost)
             guarded=hasattr(layer_module,'ASSIGNMENT_FLOOR')
             rank_local=not balanced or self.rank_local_checks
@@ -103,7 +107,7 @@ class RQVAE(OriginalRQVAE):
         return quantized,parts,unused,self.last_tokens
 
     def forward(self, embeddings, item_ids=None, *, infer_use_sk=False,
-                catalogue_embeddings=None, curvature_centres=None):
+                catalogue_embeddings=None, curvature_centres=None, structural_sample=None):
         ids=self._identities(embeddings,item_ids)
         _,weights=self.structure.gates_for_items(self.store,ids,embeddings.device,
                                                 behavior_on=self.behavior_on)
@@ -114,17 +118,24 @@ class RQVAE(OriginalRQVAE):
         reconstructed=self.decoder(quantized)
         result=(reconstructed,parts,unused,tokens)
         if catalogue_embeddings is not None:
-            global_q=self.catalogue_q(catalogue_embeddings)
-            curvature=(global_q.sum()*0 if curvature_centres is not None and len(curvature_centres)==0
-                       else self.curvature_loss(global_q,curvature_centres))
+            if structural_sample is not None:
+                curvature=self.sampled_curvature(catalogue_embeddings,structural_sample)
+            else:
+                global_q=self.catalogue_q(catalogue_embeddings)
+                curvature=(global_q.sum()*0 if curvature_centres is not None and len(curvature_centres)==0
+                           else self.curvature_loss(global_q,curvature_centres))
             return (*result,curvature)
         return result
 
     @torch.no_grad()
     def get_indices(self, embeddings, *, infer_use_sk=False, item_ids=None):
         ids=self._identities(embeddings,item_ids)
-        catalogue=torch.as_tensor(np.load(ROOT/'stage1_GeneEmbedding/output/sentence_t5.npy'),
-                                  device=embeddings.device,dtype=embeddings.dtype)
+        key=(embeddings.device,embeddings.dtype)
+        if self._catalogue_cache is None or self._catalogue_cache[0]!=key:
+            catalogue=torch.as_tensor(np.load(ROOT/'stage1_GeneEmbedding/output/sentence_t5.npy'),
+                                      device=embeddings.device,dtype=embeddings.dtype)
+            self._catalogue_cache=(key,catalogue)
+        catalogue=self._catalogue_cache[1]
         if not torch.equal(embeddings,catalogue[ids]):
             raise ValueError('export embeddings must match their global catalogue IDs')
         was_training=self.training
@@ -135,21 +146,16 @@ class RQVAE(OriginalRQVAE):
         finally:
             self.train(was_training)
 
-    def catalogue_q(self, embeddings, chunk=32, *, infer_use_sk=False):
-        """One global quantization; chunk only structural messages, never assignment."""
-        weights=[];attentions=[];token_counts=[]
-        for start in range(0,len(embeddings),chunk):
-            ids=torch.arange(start,min(start+chunk,len(embeddings)),device=embeddings.device)
-            weight=self.structure.gates_for_items(self.store,ids,embeddings.device,
-                                                  behavior_on=self.behavior_on)[1]
-            weights.append(weight)
-            attentions.append(self.structure.last_attention.detach())
-            token_counts.append(self.structure.last_token_mask[:,:-1].sum(-1))
+    def catalogue_q(self, embeddings, chunk=1024, *, infer_use_sk=False):
+        """Complete global quantization; structural chunks never split assignment."""
+        ids=torch.arange(len(embeddings),device=embeddings.device)
+        _,weights=self.structure.gates_for_items(self.store,ids,embeddings.device,
+                                                chunk=chunk,behavior_on=self.behavior_on)
         encoded=self.encoder(embeddings)
-        self.last_weights=torch.cat(weights)
-        self.catalogue_attention=torch.cat(attentions)
-        self.last_token_counts=torch.cat(token_counts)
-        q,_,_,_=self.quantize(encoded,self.last_weights,balanced=infer_use_sk)
+        self.last_weights=weights
+        self.catalogue_attention=self.structure.last_attention.detach()
+        self.last_token_counts=self.structure.last_token_mask[:,:-1].sum(-1)
+        q,_,_,_=self.quantize(encoded,weights,balanced=infer_use_sk)
         return q
 
     def curvature_loss(self, catalogue_q, centres=None):
@@ -159,6 +165,31 @@ class RQVAE(OriginalRQVAE):
             paired_squared=lambda x,y:fixed_squared(x[:,None,:],y[:,None,:],
                                                     scale=scale).reshape(-1))
 
+    def structural_sampler(self):
+        if self._structural_sampler is None:
+            root=ROOT/'assets'/'v8_runtime_layout'
+            table=np.load(root/'targets.npy',mmap_mode='r',allow_pickle=False)
+            offsets=np.load(root/'target_offsets.npy',mmap_mode='r',allow_pickle=False)
+            self._structural_sampler=StructuralSampler(table,offsets,self.targets.components)
+        return self._structural_sampler
+
+    def sampled_curvature(self, embeddings, sample):
+        """Fresh actual hard-q, using the declared finite auxiliary population."""
+        ids=torch.as_tensor(sample['ids'],device=embeddings.device,dtype=torch.long)
+        _,weights=self.structure.gates_for_items(self.store,ids,embeddings.device,
+                                                behavior_on=self.behavior_on)
+        q,_,_,_=self.quantize(self.encoder(embeddings[ids]),weights,balanced=False)
+        self.last_structural_q=q
+        self.last_structural_ids=ids
+        self.last_structural_tokens=self.last_tokens
+        scale=float(self.tangent_scale)
+        predicted=sampled_values(q,sample['triples'],sample['references'],
+            lambda x,y:fixed_squared(x,y,scale=scale),
+            paired_squared=lambda x,y:fixed_squared(x[:,None,:],y[:,None,:],scale=scale).reshape(-1))
+        target=torch.as_tensor(sample['target'],device=q.device,dtype=q.dtype)
+        self.last_structural_prediction=predicted
+        return F.huber_loss(predicted/self.target_scale,target/self.target_scale,reduction='mean',delta=1.)
+
     @torch.no_grad()
     def freeze_tangent_scale(self, catalogue_embeddings):
         z=self.encoder(catalogue_embeddings)
@@ -167,8 +198,9 @@ class RQVAE(OriginalRQVAE):
             raise ValueError('nonfinite or zero frozen tangent scale')
         self.tangent_scale.copy_(scale)
 
-    def calibrate_curvature_weight(self, embeddings, item_ids, catalogue_embeddings, centres):
-        """One initial, real-loss encoder gradient ratio; no optimizer step."""
+    def calibrate_curvature_weight(self, embeddings, item_ids, catalogue_embeddings, centres=None,
+                                   *, structural_sample=None):
+        """Freeze one initial real-loss encoder gradient ratio; no optimizer step."""
         previous=self.rank_local_checks
         self.rank_local_checks=True
         try:
@@ -176,8 +208,11 @@ class RQVAE(OriginalRQVAE):
         finally:
             self.rank_local_checks=previous
         _,reconstruction=self.compute_loss(embeddings,reconstructed,parts)
-        q=self.catalogue_q(catalogue_embeddings)
-        curvature=self.curvature_loss(q,centres)
+        if structural_sample is None:
+            q=self.catalogue_q(catalogue_embeddings)
+            curvature=self.curvature_loss(q,centres)
+        else:
+            curvature=self.sampled_curvature(catalogue_embeddings,structural_sample)
         parameters=tuple(self.encoder.parameters())
         rg=torch.autograd.grad(reconstruction,parameters,retain_graph=True,allow_unused=True)
         cg=torch.autograd.grad(curvature,parameters,allow_unused=True)
@@ -196,9 +231,9 @@ class RQVAE(OriginalRQVAE):
 
     def provenance(self, *, expected=None):
         result=binding(ROOT,Path(__file__).resolve().parent.parent)
-        result['mathematical_contract_sha256']=sha256(ROOT/'results/research/issue251/CONTRACT.md')
-        result['infrastructure_sources']={path:sha256(ROOT/path) for path in
-            ('tools/graph_infra/ego_gnn.py','tools/graph_infra/assets.py')}
+        result['mathematical_contract_sha256']=sha256(ROOT/'results/research/issue252/CONTRACT.md')
+        result['infrastructure_sources']=imported_repo_sources(
+            Path(__file__).resolve().parent.parent,ROOT)
         if expected is not None:
             if result!=expected:
                 raise ValueError('source/assets/config changed during execution')

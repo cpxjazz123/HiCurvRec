@@ -1,0 +1,42 @@
+test_entry_import_is_cpu_safe_and_report_schema_is_complete (tools.issue252.test_geometry_driver.GeometryDriverTests) ... FAIL
+test_kernel_gate_counts_actual_cuda_events_not_compile_flags (tools.issue252.test_geometry_driver.GeometryDriverTests) ... FAIL
+test_launcher_resolves_repo_before_tools_import_from_result_cwd (tools.issue252.test_geometry_driver.GeometryDriverTests) ... ok
+
+======================================================================
+FAIL: test_entry_import_is_cpu_safe_and_report_schema_is_complete (tools.issue252.test_geometry_driver.GeometryDriverTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_geometry_driver.py", line 53, in test_entry_import_is_cpu_safe_and_report_schema_is_complete
+    value = self.probe('''
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_geometry_driver.py", line 28, in probe
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 1 != 0 : Traceback (most recent call last):
+  File "<string>", line 3, in <module>
+  File "/usr/lib64/python3.9/runpy.py", line 287, in run_path
+    code, fname = _get_code_from_file(run_name, path_name)
+  File "/usr/lib64/python3.9/runpy.py", line 252, in _get_code_from_file
+    with io.open_code(decoded_path) as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/geometry_validation_entry.py'
+
+
+======================================================================
+FAIL: test_kernel_gate_counts_actual_cuda_events_not_compile_flags (tools.issue252.test_geometry_driver.GeometryDriverTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_geometry_driver.py", line 74, in test_kernel_gate_counts_actual_cuda_events_not_compile_flags
+    value = self.probe('''
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_geometry_driver.py", line 28, in probe
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 1 != 0 : Traceback (most recent call last):
+  File "<string>", line 3, in <module>
+  File "/usr/lib64/python3.9/runpy.py", line 287, in run_path
+    code, fname = _get_code_from_file(run_name, path_name)
+  File "/usr/lib64/python3.9/runpy.py", line 252, in _get_code_from_file
+    with io.open_code(decoded_path) as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/geometry_validation_entry.py'
+
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.235s
+
+FAILED (failures=2)

@@ -97,7 +97,7 @@ class Mutations(unittest.TestCase):
             return original_matmul(a.detach()+a*0 if a is attention_model.query else a,b,*args,**kwargs)
         caught('expert Query detached from attention','routing',query_route,
                patch('torch.matmul',side_effect=detached_query))
-        (ROOT/'results/research/issue251/MUTATIONS.json').write_text(json.dumps(records,indent=2)+'\n')
+        (ROOT/'results/research/issue252/MUTATIONS.json').write_text(json.dumps(records,indent=2)+'\n')
         self.assertEqual(len(records),9)
 
 if __name__=='__main__':unittest.main()

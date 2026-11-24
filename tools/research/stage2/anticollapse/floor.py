@@ -34,6 +34,36 @@ class CodebookCollapse(RuntimeError):
 _COUNTS: dict[int, "object"] = {}
 
 
+def _strict_cpu_repair(costs, initial, floor):
+    """Same greedy moves only when their priority order is unambiguous."""
+    import numpy as np
+
+    assignment = initial.copy()
+    items, codewords = costs.shape
+    moves = 0
+    for _ in range(codewords):
+        counts = np.bincount(assignment, minlength=codewords)
+        deficit = np.flatnonzero(counts < floor)
+        if not len(deficit):
+            return assignment, {"floor": floor, "moves": moves,
+                                "min_count": int(counts.min()), "satisfied": True}
+        donatable = counts[assignment] > floor
+        sub = np.where(donatable[:, None], costs[:, deficit], np.float32(np.inf))
+        wanted = sub.argmin(axis=0)
+        best = sub[wanted, np.arange(len(deficit))]
+        if not np.isfinite(best).all() or len(np.unique(best)) != len(best):
+            return None
+        order = np.argsort(best)
+        _, selected = np.unique(wanted[order], return_index=True)
+        assignment[wanted[order[selected]]] = deficit[order[selected]]
+        moves += len(selected)
+    counts = np.bincount(assignment, minlength=codewords)
+    if np.any(counts < floor):
+        return None
+    return assignment, {"floor": floor, "moves": moves,
+                        "min_count": int(counts.min()), "satisfied": True}
+
+
 def constrained_assignment(cost, floor: int, counts_key: int | None = None):
     """Cheapest assignment with `counts >= floor` for every codeword.
 
@@ -72,10 +102,15 @@ def constrained_assignment(cost, floor: int, counts_key: int | None = None):
     if int(counts_tensor.min()) >= floor:
         return assignment, {"floor": floor, "moves": 0, "min_count": floor,
                             "satisfied": True}
+    if costs.is_cuda:
+        repaired = _strict_cpu_repair(costs.cpu().numpy(), assignment.cpu().numpy(), floor)
+        if repaired is not None:
+            ids, report = repaired
+            return torch.from_numpy(ids).to(device=costs.device), report
     moves = 0
-    # Repair: hand every deficient codeword the item it likes most, resolving a contested
-    # item in favour of the codeword that wants it more. Two host transfers, one Python
-    # pass over the codewords, then a single scatter.
+    first_wanted = torch.empty(items, dtype=torch.long, device=costs.device)
+    # Keep the same GPU argsort priority and greedy rounds. Resolve contested
+    # items by their first sorted position, without host item/code lists.
     for _ in range(codewords):
         counts_t = torch.bincount(assignment, minlength=codewords)
         deficit = (counts_t < floor).nonzero().flatten()
@@ -86,23 +121,17 @@ def constrained_assignment(cost, floor: int, counts_key: int | None = None):
         sub = costs[:, deficit].masked_fill(~donatable.unsqueeze(1), float("inf"))
         best_cost, best_item = sub.min(dim=0)
         order = torch.argsort(best_cost)
-        wanted = best_item[order].tolist()
-        codes = deficit[order].tolist()
-        feasible = torch.isfinite(best_cost[order]).tolist()
-        seen: set[int] = set()
-        chosen_codes: list[int] = []
-        chosen_items: list[int] = []
-        for code, item, ok in zip(codes, wanted, feasible):
-            if not ok or item in seen:
-                continue
-            seen.add(item)
-            chosen_codes.append(code)
-            chosen_items.append(item)
-        if not chosen_codes:
+        wanted = best_item[order]
+        positions = torch.arange(order.numel(), device=costs.device)
+        first_wanted.fill_(codewords)
+        first_wanted.scatter_reduce_(0, wanted, positions, reduce="amin", include_self=True)
+        keep = (first_wanted[wanted] == positions) & torch.isfinite(best_cost[order])
+        selected = keep.nonzero().flatten()
+        if selected.numel() == 0:
             raise InfeasibleFloor("no droppable item for the empty codewords")
-        assignment[torch.tensor(chosen_items, device=costs.device)] = torch.tensor(
-            chosen_codes, device=costs.device)
-        moves += len(chosen_codes)
+        chosen_items = wanted[selected]
+        assignment[chosen_items] = deficit[order[selected]]
+        moves += chosen_items.numel()
     else:
         remaining = int((torch.bincount(assignment, minlength=codewords) < floor).sum())
         if remaining:

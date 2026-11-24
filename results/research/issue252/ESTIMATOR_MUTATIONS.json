@@ -1,0 +1,38 @@
+[
+  {
+    "mutation": "sampled curvature sign reversed",
+    "category": "numeric",
+    "assertion": "-1.3333333333333335 != 1.3333333333333333 within 12 places (2.666666666666667 difference) : sampled A.1 with complete references must equal4/3",
+    "caught_by_assertion": true
+  },
+  {
+    "mutation": "reference mean replaced by sum",
+    "category": "structural",
+    "assertion": "2.0 != 1.3333333333333333 within 12 places (0.6666666666666667 difference) : sampled A.1 with complete references must equal4/3",
+    "caught_by_assertion": true
+  },
+  {
+    "mutation": "pair coefficient doubled",
+    "category": "numeric",
+    "assertion": "2.3333333333333335 != 1.3333333333333333 within 12 places (1.0000000000000002 difference) : sampled A.1 with complete references must equal4/3",
+    "caught_by_assertion": true
+  },
+  {
+    "mutation": "legal centre reference silently masked",
+    "category": "structural",
+    "assertion": "4.0 != 1.3333333333333333 within 12 places (2.666666666666667 difference) : sampled A.1 with complete references must equal4/3",
+    "caught_by_assertion": true
+  },
+  {
+    "mutation": "hard-q structural gradient detached",
+    "category": "routing",
+    "assertion": "reference and endpoint gradients must equal the closed-moment derivative",
+    "caught_by_assertion": true
+  },
+  {
+    "mutation": "centre schedule permanently repeats one centre",
+    "category": "structural",
+    "assertion": "Items in the second set but not the first:\n1\n5 : one complete centre cycle must cover every frozen valid centre",
+    "caught_by_assertion": true
+  }
+]

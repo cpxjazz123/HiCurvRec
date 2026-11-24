@@ -1,0 +1,31 @@
+test_reused_npz_metadata_never_unpickles_object_labels (tools.issue252.test_runtime_layout.RuntimeLayoutTests) ... ERROR
+test_device_and_cpu_microseconds_are_both_converted (tools.issue252.test_profile_units.ProfileUnitsTests) ... ERROR
+
+======================================================================
+ERROR: test_reused_npz_metadata_never_unpickles_object_labels (tools.issue252.test_runtime_layout.RuntimeLayoutTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_runtime_layout.py", line 166, in test_reused_npz_metadata_never_unpickles_object_labels
+    result=layout._metadata(entries,{}, {},SimpleNamespace(n=1))
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/runtime_layout.py", line 277, in _metadata
+    description = {key: _array_description(blob[key]) for key in blob.files}
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/runtime_layout.py", line 277, in <dictcomp>
+    description = {key: _array_description(blob[key]) for key in blob.files}
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/numpy/lib/_npyio_impl.py", line 256, in __getitem__
+    return format.read_array(bytes,
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/numpy/lib/format.py", line 822, in read_array
+    raise ValueError("Object arrays cannot be loaded when "
+ValueError: Object arrays cannot be loaded when allow_pickle=False
+
+======================================================================
+ERROR: test_device_and_cpu_microseconds_are_both_converted (tools.issue252.test_profile_units.ProfileUnitsTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_profile_units.py", line 8, in test_device_and_cpu_microseconds_are_both_converted
+    from tools.issue252.profile_units import operator_record
+ModuleNotFoundError: No module named 'tools.issue252.profile_units'
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.286s
+
+FAILED (errors=2)

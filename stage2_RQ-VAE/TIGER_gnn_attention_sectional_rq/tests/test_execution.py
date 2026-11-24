@@ -14,26 +14,28 @@ sys.path.insert(0,str(TREE))
 
 class ExecutionTests(unittest.TestCase):
     def test_actual_launcher_changes_invalidate_source_evidence(self):
-        import validation_entry
-        with tempfile.TemporaryDirectory(dir=ROOT/'results/research/issue251') as directory:
+        import benchmark_entry
+        with tempfile.TemporaryDirectory(dir=ROOT/'results/research/issue252') as directory:
             repo=Path(directory);tree=repo/'candidate';(tree/'config').mkdir(parents=True)
-            (tree/'validation_entry.py').write_text('controlled entry')
+            (tree/'benchmark_entry.py').write_text('VALUE=1\n')
+            (tree/'train_rqvae.py').write_text('import tools.graph_infra.ego_gnn\n')
             for name in ('assets/manifest.json','tools/issue250/launch_validation.py',
-                         'tools/issue251/launch_validation.py','tools/research/stage2/launcher.py',
-                         'tools/graph_infra/ego_gnn.py','tools/graph_infra/assets.py',
-                         'results/research/issue251/CONTRACT.md'):
-                path=repo/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('initial')
-            with patch.object(validation_entry,'ROOT',repo),patch.object(
-                    validation_entry,'__file__',str(tree/'validation_entry.py')):
-                initial=validation_entry.source_binding()
-                (repo/'tools/issue251/launch_validation.py').write_text('changed actual launch')
-                self.assertNotEqual(initial,validation_entry.source_binding(),
+                         'tools/issue252/launch_validation.py','tools/issue252/performance.py',
+                         'tools/research/stage2/launcher.py','tools/graph_infra/ego_gnn.py',
+                         'tools/graph_infra/assets.py','results/research/issue252/CONTRACT.md',
+                         'results/research/issue252/EXECUTION_CONTRACT.md'):
+                path=repo/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('VALUE=1\n')
+            with patch.object(benchmark_entry,'ROOT',repo),patch.object(
+                    benchmark_entry,'__file__',str(tree/'benchmark_entry.py')):
+                initial=benchmark_entry.source_binding('validation')
+                (repo/'tools/issue252/launch_validation.py').write_text('VALUE=2\n')
+                self.assertNotEqual(initial,benchmark_entry.source_binding('validation'),
                     'changing the executed launcher must invalidate checkpoint evidence')
                 self.assertIn('tools/research/stage2/launcher.py',initial)
                 self.assertNotIn('tools/issue250/launch_validation.py',initial)
-                after_launcher=validation_entry.source_binding()
-                (repo/'tools/graph_infra/ego_gnn.py').write_text('changed imported graph kernel')
-                self.assertNotEqual(after_launcher,validation_entry.source_binding(),
+                after_launcher=benchmark_entry.source_binding('validation')
+                (repo/'tools/graph_infra/ego_gnn.py').write_text('VALUE=3\n')
+                self.assertNotEqual(after_launcher,benchmark_entry.source_binding('validation'),
                     'changing an executed external source must invalidate checkpoint evidence')
 
     def test_rank0_calibration_does_not_advance_rotating_floor_history(self):

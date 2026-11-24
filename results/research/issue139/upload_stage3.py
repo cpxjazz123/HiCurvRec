@@ -35,8 +35,9 @@ sys.path.insert(0, str(RESEARCH))
 sys.path.insert(0, str(REPO))
 
 from tools.issue252.archive_audit import validate_binding  # noqa: E402
+from tools.issue252.run_workspace import run_from_sid  # noqa: E402
 
-from r2_layout import Ledger, sha256, upload_directory  # noqa: E402
+from r2_layout import Ledger, sha256, upload_directory, verify_upload  # noqa: E402
 
 RESULTS = REPO / "results"
 TREES = REPO / "stage2_RQ-VAE"
@@ -119,6 +120,18 @@ def stage(arm: str, staging: Path, tree: Path | None = None) -> tuple[dict, str]
     receipt, sources = validate_binding(binding, sid, checkpoint, tree)
     if block.get("stage2_run_id") != receipt["run_id"]:
         raise ValueError("Stage3 Stage2 run identity mismatch")
+    # Nested formal results carry a workspace identity in addition to the archive
+    # receipt. Never infer their arm from the immediate parent named "result".
+    result_root = (REPO / "results/stage2_RQ-VAE").resolve()
+    if sid.is_relative_to(result_root):
+        run = run_from_sid(REPO, sid)
+        if run is not None:
+            if arm != run["arm"]:
+                raise ValueError("requested archive arm differs from immutable run arm")
+            if (receipt["run_id"] != run["run_id"]
+                    or Path(receipt["source_tree"]).resolve() != Path(run["source"])
+                    or checkpoint != Path(run["result"]) / "rqvae_best.pth"):
+                raise ValueError("archive inputs cross immutable run generations")
     evidence_key = "stage3_archive_evidence"
     if evidence_key in block:
         raise ValueError("refusing to overwrite existing final-test key: " + evidence_key)
@@ -187,19 +200,13 @@ def main() -> int:
         ledger = Ledger()
         number = ledger.assign(key)
         target = upload_directory(staging, number, dry_run=args.dry_run)
+        if not args.dry_run:
+            verify_upload(number, files)
         ledger.record(number, key, files, {"arm": args.arm,
                                            "recall_keys": sorted(json.loads(
                                                (staging / "recall.json").read_text()))})
         if not args.dry_run:
-            # The ledger must cover the directory, not just this staging set:
-            # a number that earlier uploads filled tree-and-all keeps those
-            # objects, and they need a checksum too.
-            result = ledger.reconcile(number)
             ledger.save()
-            for relative in sorted(result["added"]):
-                print("  recorded without uploading: %s/%s" % (number, relative))
-            for relative in result["recorded_but_absent"]:
-                print("  WARNING recorded but not in the bucket: %s/%s" % (number, relative))
         print("%s: %d files, recall keys %d -> %s" % (
             args.arm, len(files), len(json.loads((staging / "recall.json").read_text())), target))
         print(("would upload to " if args.dry_run else "uploaded to ") + target)

@@ -1,0 +1,32 @@
+test_catalogue_conditional_entropy_and_counter_is_not_a_code (tools.issue252.test_layer_metrics.LayerMetricTests) ... ERROR
+test_empty_and_fully_excluded_rows_are_not_zero_imputed (tools.issue252.test_layer_metrics.LayerMetricTests) ... ERROR
+test_exact_legal_negative_population_hand_answer (tools.issue252.test_layer_metrics.LayerMetricTests) ... ERROR
+
+======================================================================
+ERROR: test_catalogue_conditional_entropy_and_counter_is_not_a_code (tools.issue252.test_layer_metrics.LayerMetricTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_layer_metrics.py", line 12, in test_catalogue_conditional_entropy_and_counter_is_not_a_code
+    from tools.issue252.layer_metrics import catalogue_metrics
+ModuleNotFoundError: No module named 'tools.issue252.layer_metrics'
+
+======================================================================
+ERROR: test_empty_and_fully_excluded_rows_are_not_zero_imputed (tools.issue252.test_layer_metrics.LayerMetricTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_layer_metrics.py", line 33, in test_empty_and_fully_excluded_rows_are_not_zero_imputed
+    from tools.issue252.layer_metrics import validation_metrics
+ModuleNotFoundError: No module named 'tools.issue252.layer_metrics'
+
+======================================================================
+ERROR: test_exact_legal_negative_population_hand_answer (tools.issue252.test_layer_metrics.LayerMetricTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_layer_metrics.py", line 22, in test_exact_legal_negative_population_hand_answer
+    from tools.issue252.layer_metrics import validation_metrics
+ModuleNotFoundError: No module named 'tools.issue252.layer_metrics'
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.002s
+
+FAILED (errors=3)

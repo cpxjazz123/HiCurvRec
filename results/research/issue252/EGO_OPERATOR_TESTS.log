@@ -1,0 +1,10 @@
+test_block_gather_duplicates_empty_and_double_normalization (tools.issue252.test_ego_operators.OperatorTests) ... /fs04/ar57/wenyu/GeneRec/tools/issue252/ego_operators.py:109: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+  operators.append(torch.sparse_csr_tensor(crow, columns, values,
+ok
+test_normalization_not_rounded_to_float32 (tools.issue252.test_ego_operators.OperatorTests) ... ok
+test_sorted_directional_csr_and_isolate (tools.issue252.test_ego_operators.OperatorTests) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.289s
+
+OK

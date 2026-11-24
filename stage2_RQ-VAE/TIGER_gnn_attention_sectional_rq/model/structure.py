@@ -4,6 +4,7 @@ Features and normalization are frozen #249 assets; only rootless synthetic store
 may fit local statistics. Global IDs select features, never message endpoints.
 """
 import copy
+import hashlib
 import json
 from pathlib import Path
 import weakref
@@ -11,7 +12,52 @@ import weakref
 import numpy as np
 import torch
 from torch import nn
-from torch.utils.checkpoint import checkpoint
+from tools.issue252.ego_operators import DeviceLayout, batch_operators, load_layouts, pack_synthetic
+from tools.issue252.static_features import StaticFeatureMeans
+from tools.issue252.sparse_adjoint import normalized_directional_means
+
+
+def _verify_store_assets(store):
+    """Check bytes once before any registered feature or layout array is loaded.
+
+    The original CSR producer is frozen in the asset provenance; runtime
+    integrity belongs to its training consumer, not a regenerated asset copy.
+    """
+    repo, root = Path(store.repo).resolve(), Path(store.root).resolve()
+    manifest = json.loads((root / 'manifest.json').read_text())
+    entries = {entry['name']: entry for entry in manifest['assets']}
+    if len(entries) != len(manifest['assets']):
+        raise ValueError('duplicate runtime asset identity')
+    names = ['ego_full_1hop_visible', 'two_hop_nodes', 'two_hop_offsets',
+             'node_features', 'node_features_report', 'ego_operator_metadata']
+    names += ['ego%d_%s_%s' % (hops, direction, part)
+              for hops in (1, 2) for direction in ('in', 'out') for part in ('ptr', 'col')]
+    for name in names:
+        entry = entries.get(name, {})
+        relative = Path(entry.get('path', ''))
+        path = (repo / relative).resolve()
+        if (relative.is_absolute() or '..' in relative.parts or repo not in path.parents
+                or entry.get('use') != ('description' if name == 'ego_operator_metadata' else 'training')
+                or not path.is_file() or path.stat().st_size != entry.get('bytes')):
+            raise ValueError('runtime asset identity changed: ' + name)
+        digest = hashlib.sha256()
+        with path.open('rb') as source:
+            for block in iter(lambda: source.read(1 << 20), b''):
+                digest.update(block)
+        if digest.hexdigest() != entry.get('sha256'):
+            raise ValueError('runtime asset bytes changed: ' + name)
+
+
+def _edge_operators(edges, n, dtype, device):
+    """Explicit ragged inputs; production gathers already-persisted CSR blocks."""
+    operators = []
+    for row, col in ((edges[:, 1], edges[:, 0]), (edges[:, 0], edges[:, 1])):
+        order = torch.argsort(row * n + col)
+        degree = torch.bincount(row, minlength=n)
+        ptr = torch.cat((degree.new_zeros(1), degree.cumsum(0)))
+        values = degree[row[order]].to(dtype).clamp_min(1).reciprocal()
+        operators.append(torch.sparse_csr_tensor(ptr, col[order], values, size=(n, n), device=device))
+    return operators
 
 
 class DirectedMean(nn.Module):
@@ -22,16 +68,12 @@ class DirectedMean(nn.Module):
         self.outgoing = nn.Linear(32, 32, bias=False)
 
     def forward(self, x, edges):
-        source, target = edges.unbind(1)
-        incoming, outgoing = torch.zeros_like(x), torch.zeros_like(x)
-        counts_in, counts_out = x.new_zeros((len(x), 1)), x.new_zeros((len(x), 1))
-        incoming.index_add_(0, target, x[source])
-        outgoing.index_add_(0, source, x[target])
-        ones = x.new_ones((len(source), 1))
-        counts_in.index_add_(0, target, ones)
-        counts_out.index_add_(0, source, ones)
-        return torch.tanh(self.self_linear(x) + self.incoming(incoming / counts_in.clamp_min(1))
-                          + self.outgoing(outgoing / counts_out.clamp_min(1)))
+        return self.forward_sparse(x, *_edge_operators(edges, len(x), x.dtype, x.device))
+
+    def forward_sparse(self, x, incoming, outgoing):
+        return torch.tanh(self.self_linear(x)
+                          + self.incoming(torch.sparse.mm(incoming, x))
+                          + self.outgoing(torch.sparse.mm(outgoing, x)))
 
 
 class SubgraphTokens(nn.Module):
@@ -57,19 +99,22 @@ class SubgraphTokens(nn.Module):
         edges = edges[in_range]
         edges = edges[mask[edges[:, 0]] & mask[edges[:, 1]]]
         edges = edges[groups[edges[:, 0]] == groups[edges[:, 1]]]
+        incoming, outgoing = _edge_operators(edges, len(features), dtype, device)
         x = self.input(features.masked_fill(~mask[:, None], 0))
         for layer in self.layers:
-            x = layer(x, edges).masked_fill(~mask[:, None], 0)
+            x = layer.forward_sparse(x, incoming, outgoing).masked_fill(~mask[:, None], 0)
         count = len(batch['items'])
         readout = x.new_zeros((count, 32))
         sizes = x.new_zeros((count, 1))
         readout.index_add_(0, groups[mask], x[mask])
-        sizes.index_add_(0, groups[mask], x.new_ones((int(mask.sum()), 1)))
+        sizes.index_add_(0, groups[mask], x.new_ones((len(groups[mask]), 1)))
         return readout / sizes.clamp_min(1)
 
     def _cached_store(self, store):
         cached = self._feature_cache.get(store)
         if cached is None:
+            if hasattr(store, 'repo'):
+                _verify_store_assets(store)
             if hasattr(store, 'root'):
                 root = Path(store.root)
                 direct = root / 'node_features.npz'
@@ -88,26 +133,52 @@ class SubgraphTokens(nn.Module):
             if not np.isfinite(features).all() or not np.isfinite(mean).all() or not np.isfinite(std).all() or (std <= 0).any():
                 raise ValueError('invalid frozen feature normalization')
             normalized = (features - mean) / std
-            cached = (features, normalized)
+            if hasattr(store, 'repo'):
+                layouts = load_layouts(store.root)
+            else:
+                view = copy.copy(store)
+                view.node_features = lambda: features
+                layouts = [pack_synthetic(view, hops) for hops in (1, 2)]
+            cached = {'normalized': normalized, 'layouts': layouts, 'devices': {}}
             self._feature_cache[store] = cached
-        features, normalized = cached
-        # EgoStore calls these methods repeatedly inside ego/collate. A private
-        # shallow view reuses graph assets without mutating the caller's store.
-        view = copy.copy(store)
-        view.node_features = lambda: features
-        return view, normalized
+        device, dtype = self.input.weight.device, self.input.weight.dtype
+        device_key = str(device)
+        if device_key not in cached['devices']:
+            cached['devices'][device_key] = {
+                'layouts': [DeviceLayout(layout, device) for layout in cached['layouts']],
+                'features': {}, 'means': {}}
+        resident = cached['devices'][device_key]
+        if dtype not in resident['features']:
+            resident['features'][dtype] = torch.tensor(cached['normalized'], device=device, dtype=dtype)
+        if dtype not in resident['means']:
+            resident['means'][dtype] = [
+                StaticFeatureMeans(layout, resident['features'][dtype])
+                for layout in resident['layouts']]
+        return resident['layouts'], resident['features'][dtype]
 
-    def _read_items(self, store, normalized, item_ids, hops):
-        items=item_ids.tolist()
-        batch=store.collate(items,hops=hops,standardized=False)
-        batch['features']=normalized[batch['nodes']]
-        result=self(batch)
-        groups=np.asarray(batch['batch_index'])[np.asarray(batch['node_mask'],dtype=bool)]
-        valid=torch.as_tensor(np.bincount(groups,minlength=len(items))>0,
-                              device=self.input.weight.device)
-        return result,valid
+    def _first_affine(self):
+        """Compose live weights/biases; only six-feature means are static."""
+        layer = self.layers[0]
+        weight, bias = self.input.weight, self.input.bias
+        return (layer.self_linear.weight @ weight,
+                layer.self_linear.weight @ bias + layer.self_linear.bias,
+                layer.incoming.weight @ weight, layer.incoming.weight @ bias,
+                layer.outgoing.weight @ weight, layer.outgoing.weight @ bias)
 
-    def tokens_for_items(self, store, item_ids, device, chunk=32):
+    def _read_sparse(self, features, groups, sizes, incoming, outgoing, static, affine):
+        mean_in, mean_out, nonempty_in, nonempty_out = static
+        self_weight, self_bias, in_weight, in_bias, out_weight, out_bias = affine
+        x = torch.tanh(features @ self_weight.T + self_bias
+                       + mean_in @ in_weight.T + nonempty_in[:, None] * in_bias
+                       + mean_out @ out_weight.T + nonempty_out[:, None] * out_bias)
+        layer = self.layers[1]
+        mean_in, mean_out = normalized_directional_means(x, incoming, outgoing)
+        x = torch.tanh(layer.self_linear(x) + layer.incoming(mean_in) + layer.outgoing(mean_out))
+        readout = x.new_zeros((len(sizes), 32))
+        readout.index_add_(0, groups, x)
+        return readout / sizes.to(x.dtype).clamp_min(1)[:, None]
+
+    def tokens_for_items(self, store, item_ids, device, chunk=1024):
         """Deduplicate global items, run each scale separately, then restore order.
 
         chunk bounds ego batch size, never the size of an individual full ego.
@@ -116,25 +187,25 @@ class SubgraphTokens(nn.Module):
             raise ValueError('chunk must be positive')
         if torch.device(device) != self.input.weight.device:
             raise ValueError('requested device differs from GNN device')
-        ids = item_ids.detach().cpu().numpy() if torch.is_tensor(item_ids) else np.asarray(item_ids)
-        ids = np.asarray(ids, dtype=np.int64).reshape(-1)
+        ids = torch.as_tensor(item_ids, device=device, dtype=torch.long).reshape(-1)
         if len(ids) == 0:
             return self.input.weight.new_empty((0, 2, 32)), torch.empty((0, 2), dtype=torch.bool, device=device)
-        unique, inverse = np.unique(ids, return_inverse=True)
-        view, normalized = self._cached_store(store)
+        if bool(((ids < 0) | (ids >= store.n)).any()):
+            raise IndexError('item id out of range')
+        unique, restore = torch.unique(ids, sorted=True, return_inverse=True)
+        layouts, normalized = self._cached_store(store)
+        means = self._feature_cache[store]['devices'][str(self.input.weight.device)]['means'][normalized.dtype]
+        affine = self._first_affine()
         outputs, validity = [], []
-        for start in range(0, len(unique), chunk):
-            items=torch.as_tensor(unique[start:start+chunk],dtype=torch.long)
-            scales,masks=[],[]
-            for hops in (1,2):
-                if torch.is_grad_enabled():
-                    value,valid=checkpoint(self._read_items,view,normalized,items,hops,
-                                           use_reentrant=False,preserve_rng_state=False)
-                else:
-                    value,valid=self._read_items(view,normalized,items,hops)
+        for items in unique.split(chunk):
+            scales, masks = [], []
+            for layout, static in zip(layouts, means):
+                nodes, groups, sizes, incoming, outgoing = batch_operators(layout, items, normalized.dtype)
+                # Retain the live activations; backward must not replay the GNN.
+                value = self._read_sparse(normalized[nodes], groups, sizes, incoming, outgoing,
+                                          static.gather(layout, items), affine)
                 scales.append(value)
-                masks.append(valid)
+                masks.append(sizes > 0)
             outputs.append(torch.stack(scales, dim=1))
             validity.append(torch.stack(masks, dim=1))
-        restore = torch.as_tensor(inverse, dtype=torch.long, device=device)
         return torch.cat(outputs)[restore], torch.cat(validity)[restore]

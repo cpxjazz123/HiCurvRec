@@ -1,0 +1,18 @@
+test_matrix_distance_does_not_materialize_coordinate_volume (test_geometry_memory.GeometryMemoryTests) ... FAIL
+
+======================================================================
+FAIL: test_matrix_distance_does_not_materialize_coordinate_volume (test_geometry_memory.GeometryMemoryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_geometry_memory.py", line 28, in test_matrix_distance_does_not_materialize_coordinate_volume
+    with NoCoordinateVolume():result=geometry.expert_squared(x,y)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/geometry.py", line 82, in expert_squared
+    euclidean = (x - y).square().sum(-1)
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_geometry_memory.py", line 19, in __torch_dispatch__
+    raise AssertionError('pairwise geometry allocated the full item-code-coordinate volume')
+AssertionError: pairwise geometry allocated the full item-code-coordinate volume
+
+----------------------------------------------------------------------
+Ran 1 test in 0.834s
+
+FAILED (failures=1)

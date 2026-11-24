@@ -1,0 +1,34 @@
+test_contested_repair_without_host_item_lists (tools.issue252.test_floor_vectorization.FloorVectorizationTests) ... FAIL
+test_two_floor_and_infeasible_contracts (tools.issue252.test_floor_vectorization.FloorVectorizationTests) ... ERROR
+test_uncontested_and_no_floor_hard_ids (tools.issue252.test_floor_vectorization.FloorVectorizationTests) ... ok
+
+======================================================================
+ERROR: test_two_floor_and_infeasible_contracts (tools.issue252.test_floor_vectorization.FloorVectorizationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_floor_vectorization.py", line 19, in test_two_floor_and_infeasible_contracts
+    actual, report = floor.constrained_assignment(cost, 2)
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/anticollapse/floor.py", line 109, in constrained_assignment
+    raise InfeasibleFloor("repair did not converge")
+tools.research.stage2.anticollapse.floor.InfeasibleFloor: repair did not converge
+
+======================================================================
+FAIL: test_contested_repair_without_host_item_lists (tools.issue252.test_floor_vectorization.FloorVectorizationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_floor_vectorization.py", line 12, in test_contested_repair_without_host_item_lists
+    actual, report = floor.constrained_assignment(cost, 1)
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/anticollapse/floor.py", line 89, in constrained_assignment
+    wanted = best_item[order].tolist()
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: per-round item host transfer
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.058s
+
+FAILED (failures=1, errors=1)

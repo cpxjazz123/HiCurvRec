@@ -1,0 +1,14 @@
+test_actual_bulk_fetch_matches_all_rank_epochs_and_padding (tools.issue252.test_bulk_loader.BulkLoaderTests) ... ERROR
+
+======================================================================
+ERROR: test_actual_bulk_fetch_matches_all_rank_epochs_and_padding (tools.issue252.test_bulk_loader.BulkLoaderTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_bulk_loader.py", line 15, in test_actual_bulk_fetch_matches_all_rank_epochs_and_padding
+    from train_rqvae import _BatchedTensorDataset, _batch_passthrough
+ImportError: cannot import name '_BatchedTensorDataset' from 'train_rqvae' (/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/train_rqvae.py)
+
+----------------------------------------------------------------------
+Ran 1 test in 1.283s
+
+FAILED (errors=1)

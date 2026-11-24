@@ -1,0 +1,27 @@
+test_direct_entry_refusal_cannot_fall_back_to_single_card_training (tools.issue252.test_relocated_root.RelocatedRootTests) ... ok
+test_real_train_and_model_root_ignore_the_results_marker (tools.issue252.test_relocated_root.RelocatedRootTests) ... ok
+test_actual_adapter_dependency_is_bound_even_when_trainer_does_not_import_it (tools.issue252.test_execution_closure.ExecutionClosureTests) ... ok
+test_ambiguous_stage3_generations_are_not_selected_by_mtime (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_another_tree_cannot_override_the_bound_tree (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_binding_refuses_crossed_export_and_missing_run_identity (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_binding_refuses_source_not_recorded_in_checkpoint (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_binding_requires_every_token_to_match_export (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_checkpoint_bound_asset_configuration_travels_with_source (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_correct_bundle_preserves_recall_logs_and_reproducible_tar (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_crossed_checkpoint_is_refused_before_copy (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_imported_repo_source_and_config_are_archived_and_checked (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_incomplete_log_stream_is_not_archived (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_incomplete_receipt_is_a_value_error_not_an_unbound_archive (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_missing_final_logs_and_binding_fail_closed (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_mutated_source_is_refused_even_with_explicit_tree (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_nested_immutable_generation_archives_its_adapter_and_exact_inputs (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_no_nearby_checkpoint_substitution (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_original_evidence_key_is_not_clobbered (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_source_import_closure_handles_relative_imports_cycles_and_missing_modules (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_stage3_captures_actual_resolved_input_identity (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_stage3_from_another_sid_is_refused_before_copy (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 4.508s
+
+OK

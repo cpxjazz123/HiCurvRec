@@ -25,6 +25,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
+_PROCESS_BOOT_MONOTONIC = time.perf_counter()
+
 import numpy as np
 import pandas as pd
 import torch
@@ -40,6 +42,16 @@ from model import RQVAE
 from train_config import load_train_config
 
 
+class _BatchedTensorDataset(TensorDataset):
+    """One exact tensor gather per batch; sampler/order/padding are unchanged."""
+    def __getitems__(self, indices):
+        return tuple(tensor[indices] for tensor in self.tensors)
+
+
+def _batch_passthrough(batch):
+    return batch
+
+
 # === 路径常量（无绝对路径；由文件自身向上找仓库标记推导）===
 # Stage0 emits user-event parquet directly into results/stage0_build_parquet/.
 def _repository_root() -> Path:
@@ -51,7 +63,8 @@ def _repository_root() -> Path:
     """
     here = Path(__file__).resolve()
     for parent in here.parents:
-        if (parent / "stage2_RQ-VAE").is_dir():
+        if ((parent / "stage2_RQ-VAE").is_dir()
+                and (parent / "tools/research/stage2/contract.py").is_file()):
             return parent
     raise RuntimeError("cannot locate the repository root above " + str(here))
 
@@ -59,6 +72,7 @@ def _repository_root() -> Path:
 REPO_ROOT = _repository_root()
 # The arm name is this tree's promoted name; a candidate copy changes only this line.
 ARM_NAME = "TIGER_gnn_attention_sectional_rq"
+BEHAVIOR_GRAPH_NAME = "infra246-visible-v2"
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
@@ -105,22 +119,14 @@ EVAL_INTERVAL       = CONFIG.EVAL_INTERVAL
 # 保留 best-collision checkpoint 仅作为导出用的最后一次快照.
 
 
-# === DDP launcher 配置 (与 stage3 不同 master_port 避免冲突) ===
-_LAUNCHER = {
-    # torchrun lives next to the interpreter that runs this file: no absolute
-    # path, and the same interpreter the project pins in CLAUDE.md §2.
-    "torchrun":    str(Path(sys.executable).with_name("torchrun")),
-    "script":      os.path.abspath(__file__),
-    "nproc":       4,
-    "master_port": 50202,
-    "log":         str(LOG_DIR / "train_migrated.log"),
-    "visible_dev": "0,1,2,3",
-}
 
 
 # === 2026-09-22: 全程训练 metrics JSONL 收集器 (rank 0 only) ===
 _metrics_lock = threading.Lock()
 _T0 = time.time()
+RUN_ID = None
+RUN_PURPOSE = "formal"
+DIAGNOSTIC_OBSERVER = None
 # Truncate-on-train_start: every fresh run starts with an empty metrics file
 # so a single ``training_metrics.jsonl`` always represents exactly one run
 # (no leftover rows from a prior failed attempt).
@@ -128,7 +134,8 @@ _metrics_truncated = False
 def _record(rank, event, **fields):
     if rank != 0:
         return
-    rec = {"event": event, "timestamp": time.time(), "wall_time_s": round(time.time() - _T0, 3)}
+    rec = {"event": event, "timestamp": time.time(), "wall_time_s": round(time.time() - _T0, 3),
+           "run_id": RUN_ID, "purpose": RUN_PURPOSE}
     rec.update(fields)
     METRICS_PATH.parent.mkdir(parents=True, exist_ok=True)
     global _metrics_truncated
@@ -248,7 +255,14 @@ def _calibration_ids(train_ids, device):
     return torch.from_numpy(train_ids[:width]).to(device)
 
 
-def main() -> None:
+def main(*, diagnostic_epochs: int | None = None) -> None:
+    global RUN_ID, RUN_PURPOSE
+    if diagnostic_epochs is not None and (
+            type(diagnostic_epochs) is not int or not 0 < diagnostic_epochs <= EPOCHS):
+        raise ValueError("diagnostic epoch bound must be within the configured budget")
+    if diagnostic_epochs is None and DIAGNOSTIC_OBSERVER is not None:
+        raise ValueError("a formal run cannot install diagnostic observers")
+    RUN_PURPOSE = "diagnostic" if diagnostic_epochs is not None else "formal"
     # === DDP 初始化 ===
     if _single_card_mode():
         # One process, one rank, no process group: every collective below is
@@ -278,6 +292,11 @@ def main() -> None:
         rank, world_size, local_rank = 0, 1, 0
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+    identity = [RUN_ID or f"{ARM_NAME}_{time.time_ns()}"] if rank == 0 else [None]
+    if world_size > 1:
+        dist.broadcast_object_list(identity, src=0)
+    RUN_ID = identity[0]
+
     set_seed(SEED + rank)
     embeddings = maybe_apply_pca(load_embeddings(EMBEDDING_FILE), PCA_DIM, SEED)
     train_frame = pd.read_parquet(TRAIN_FILE)
@@ -295,7 +314,7 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
-    train_dataset = TensorDataset(train_embeddings, torch.from_numpy(train_ids))
+    train_dataset = _BatchedTensorDataset(train_embeddings, torch.from_numpy(train_ids))
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -303,6 +322,7 @@ def main() -> None:
         shuffle=(train_sampler is None),
         sampler=train_sampler,
         num_workers=NUM_WORKERS,
+        collate_fn=_batch_passthrough,
         pin_memory=device.type == "cuda",
         persistent_workers=False,  # 2026-09-24: 关闭避免每个 epoch 都 fork 一次
     )
@@ -327,6 +347,11 @@ def main() -> None:
         print(f"[RecBole RQ-VAE] device={device} all_items={len(all_embeddings)} train_items={len(train_embeddings)} world_size={world_size}", flush=True)
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
         _record(rank, "train_start", config_sha256=CONFIG.sha256, config_path=CONFIG.path, epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size)
+        _record(rank, "execution_context", source_tree=str(Path(__file__).resolve().parent),
+                epoch_budget=EPOCHS, diagnostic_stop_epoch=diagnostic_epochs,
+                executed_provenance=executed_provenance,
+                torch_version=torch.__version__, cuda_build=torch.version.cuda,
+                gpu=torch.cuda.get_device_name(device) if device.type == "cuda" else "CPU")
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
@@ -338,11 +363,12 @@ def main() -> None:
         dist.barrier()
     catalogue = all_embeddings.to(device)
     raw_module.freeze_tangent_scale(catalogue)
+    sampler = raw_module.structural_sampler()
     if rank == 0:
         calibration_ids = _calibration_ids(train_ids,device)
         calibration = raw_module.calibrate_curvature_weight(
             catalogue[calibration_ids], calibration_ids, catalogue,
-            raw_module.targets.valid_centres[:1])
+            structural_sample=sampler.draw(0, 0, world_size, track=False))
         _record(rank, "curvature_calibration", **calibration,
                 tangent_scale=float(raw_module.tangent_scale),
                 target_scale=float(raw_module.target_scale))
@@ -355,93 +381,116 @@ def main() -> None:
     final_raw_unique = 0
     codebook_sizes = list(config.codebook_size)
 
+    if device.type == "cuda":
+        torch.cuda.synchronize(device)
+    _record(rank, "initialization_complete",
+            initialization_seconds=time.perf_counter() - _PROCESS_BOOT_MONOTONIC)
     for epoch in range(1, EPOCHS + 1):
+        epoch_start = time.perf_counter()
+        if device.type == "cuda":
+            torch.cuda.reset_peak_memory_stats(device)
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
         model.train()
-        losses: list[float] = []
-        recons: list[float] = []
-        _epoch_t0 = time.time()
+        sampler.begin_epoch()
+        totals = torch.zeros(11, device=device)
+        observed_losses = [] if DIAGNOSTIC_OBSERVER is not None else None
         for step, (batch, item_ids) in enumerate(loader):
             batch = batch.to(device, non_blocking=True)
-            optimizer.zero_grad(set_to_none=True)
             item_ids = item_ids.to(device, non_blocking=True)
-            scheduled = raw_module.targets.valid_centres[step::len(loader)]
-            owned = scheduled[scheduled % world_size == rank]
+            optimizer.zero_grad(set_to_none=True)
+            sample = sampler.draw((epoch - 1) * len(loader) + step, rank, world_size)
             reconstructed, quant_parts, _, _, curvature_loss = model(
-                batch, item_ids, catalogue_embeddings=catalogue,
-                curvature_centres=owned)
-            # 唯一接入点：损失项与权重在 losses/ 里，这里只拿到总损失与分项。
-            loss, components = CRITERION(reconstructed, batch, quant_parts)
+                batch, item_ids, catalogue_embeddings=catalogue, structural_sample=sample)
+            original_loss, components = CRITERION(reconstructed, batch, quant_parts)
             recon_loss = components["reconstruction"]
-            # The complete frozen centre set is visited once per epoch.
-            # Compensate DDP rank averaging and unequal centre ownership.
-            curvature_loss = curvature_loss * (
-                len(loader) * world_size * len(owned) / len(raw_module.targets.valid_centres))
-            loss = raw_module.combined_loss(loss, curvature_loss)
+            loss = raw_module.combined_loss(original_loss, curvature_loss)
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
+            if observed_losses is not None:
+                observed_losses.append(loss.detach())
+            observe_first = DIAGNOSTIC_OBSERVER is not None and epoch == 1 and step == 0
+            if observe_first:
+                DIAGNOSTIC_OBSERVER("first_step_before_backward", model=raw_module,
+                    batch=batch, item_ids=item_ids, catalogue=catalogue,
+                    structural_sample=sample, original_loss=original_loss,
+                    structural_loss=curvature_loss, combined_loss=loss)
             loss.backward()
+            if observe_first:
+                DIAGNOSTIC_OBSERVER("first_step_after_backward", model=raw_module)
             if GRADIENT_CLIP_NORM > 0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIP_NORM)
+                gradient_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIP_NORM)
+            else:
+                gradient_norm = torch.linalg.vector_norm(torch.stack([
+                    torch.linalg.vector_norm(p.grad) for p in model.parameters() if p.grad is not None]))
             optimizer.step()
+            if observe_first:
+                DIAGNOSTIC_OBSERVER("first_step_after_optimizer", model=raw_module)
             scheduler.step()
-            losses.append(float(loss.detach()))
-            recons.append(float(recon_loss.detach()))
-        epoch_time_s = round(time.time() - _epoch_t0, 3)
-
-        # === DDP all_reduce: 跨 rank 求平均 loss / recon ===
-        local_loss = torch.tensor(float(np.mean(losses)) if losses else 0.0, device=device)
-        local_recon = torch.tensor(float(np.mean(recons)) if recons else 0.0, device=device)
+            weights = raw_module.last_weights.detach()
+            attention = raw_module.structure.last_attention.detach()
+            gate_entropy = -(weights * weights.clamp_min(1e-30).log()).sum(-1).mean()
+            attention_entropy = -(attention * attention.clamp_min(1e-30).log()).sum(-1).mean()
+            totals += torch.cat((torch.stack((loss.detach(), recon_loss.detach(),
+                                             curvature_loss.detach(), gradient_norm.detach())),
+                                 weights.mean(0), gate_entropy[None], attention_entropy[None]))
         if world_size > 1:
-            dist.all_reduce(local_loss, op=dist.ReduceOp.SUM)
-            dist.all_reduce(local_recon, op=dist.ReduceOp.SUM)
-        avg_loss = float(local_loss.item()) / max(world_size, 1)
-        avg_recon = float(local_recon.item()) / max(world_size, 1)
+            dist.all_reduce(totals, op=dist.ReduceOp.SUM)
+        average = (totals / (len(loader) * world_size)).cpu().tolist()
+        coverage = [sampler.receipt()]
+        if world_size > 1:
+            coverage = [None] * world_size
+            dist.all_gather_object(coverage, sampler.receipt())
+        avg_loss, avg_recon, avg_curvature, avg_gradient = average[:4]
         cur_lr = optimizer.param_groups[0]["lr"]
-
-        # === 非 eval 间隔: 只 log train 行 ===
-        if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
-            if rank == 0:
-                print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
-            continue
-
-        # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
-        model.eval()
-        # Skip DDP all_reduce inside VQLayer.forward when rank 0 runs eval alone:
-        # rank 1-3 are stuck in barrier and won't join, would deadlock.
-        for layer in raw_module.rq.vq_layers:
-            layer._skip_ddp_reduce = True
-        raw_unique = None
-        collision_v = None
-        try:
-            if rank == 0:
-                with torch.no_grad():
-                    raw_tokens = raw_module.get_indices(
-                        all_embeddings.to(device), infer_use_sk=False
-                    ).cpu().numpy().astype(np.int64)
-                raw_unique = int(len(np.unique(raw_tokens, axis=0)))
-                collision_v = 1.0 - raw_unique / len(raw_tokens)
-                final_collision = collision_v
-                final_raw_unique = raw_unique
-                print(
-                    f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} "
-                    f"lr={cur_lr:.3e} raw_unique={raw_unique}/{len(raw_tokens)} "
-                    f"collision={collision_v:.6f} time={epoch_time_s}s",
-                    flush=True,
-                )
-                _record(
-                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, lr=cur_lr,
-                    epoch_time_s=epoch_time_s,
-                    cumulative_time_s=round(time.time() - _T0, 3),
-                    raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
-                )
-        finally:
+        raw_unique = collision_v = None
+        if epoch % EVAL_INTERVAL == 0 or epoch == EPOCHS:
+            model.eval()
             for layer in raw_module.rq.vq_layers:
-                layer._skip_ddp_reduce = False
+                layer._skip_ddp_reduce = True
+            try:
+                if rank == 0:
+                    with torch.no_grad():
+                        raw_tokens = raw_module.get_indices(catalogue, infer_use_sk=False).cpu().numpy().astype(np.int64)
+                    raw_unique = int(len(np.unique(raw_tokens, axis=0)))
+                    collision_v = 1.0 - raw_unique / len(raw_tokens)
+                    final_collision, final_raw_unique = collision_v, raw_unique
+            finally:
+                for layer in raw_module.rq.vq_layers:
+                    layer._skip_ddp_reduce = False
+            if world_size > 1:
+                dist.barrier()
+        if device.type == "cuda":
+            torch.cuda.synchronize(device)
+        elapsed = time.perf_counter() - epoch_start
+        peak = torch.cuda.max_memory_allocated(device) if device.type == "cuda" else None
+        _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon,
+                curvature_estimate=avg_curvature, gradient_norm_before_clip=avg_gradient,
+                lr=cur_lr, epoch_time_s=elapsed, raw_unique=raw_unique, collision=collision_v,
+                gate_mean=average[4:9], gate_entropy=average[9],
+                auxiliary_attention_entropy=average[10], peak_allocated_bytes=peak,
+                structural_coverage=coverage, cumulative_time_s=time.time() - _T0)
+        if rank == 0:
+            print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} "
+                  f"curvature_estimate={avg_curvature:.6f} time={elapsed:.6f}s "
+                  f"collision={collision_v}", flush=True)
         if world_size > 1:
             dist.barrier()
+        end = time.perf_counter()
+        _record(rank, "epoch_boundary", epoch=epoch, start=epoch_start, end=end,
+                epoch_time_s=end - epoch_start, structural_coverage=coverage)
+        if diagnostic_epochs is not None and epoch == diagnostic_epochs:
+            if world_size > 1:
+                dist.barrier()
+            if DIAGNOSTIC_OBSERVER is not None:
+                DIAGNOSTIC_OBSERVER("diagnostic_complete", model=raw_module, catalogue=catalogue,
+                    completed_epoch=epoch, completed_losses=[float(value) for value in observed_losses])
+            _record(rank, "diagnostic_end", completed_epochs=epoch, epoch_budget=EPOCHS,
+                    checkpoint_written=False, sid_exported=False)
+            if world_size > 1:
+                dist.barrier()
+                dist.destroy_process_group()
+            return
 
     # === 训练结束: only rank 0 保存终点 checkpoint 并导出 SID ===
     # Stage3 只接受训练终点权重；不保留任何中间或"最优 collision"快照。
@@ -456,6 +505,9 @@ def main() -> None:
                 "state_dict": final_state,
                 "epoch": EPOCHS,
                 "collision": final_collision,
+                "run_id": RUN_ID,
+                "source_tree": str(Path(__file__).resolve().parent),
+                "sampling": sampler.receipt(),
                 "selection": "final_epoch",
                 "provenance": raw_module.provenance(expected=executed_provenance),
             },
@@ -503,12 +555,6 @@ SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"
 SINGLE_CARD_BATCH = 4096
 
 
-def _visible_card_count() -> int:
-    """How many cards this process can actually see."""
-    try:
-        return max(1, int(torch.cuda.device_count()))
-    except Exception:  # noqa: BLE001 - a host without torch still has to run CPU
-        return 0
 
 
 def _single_card_mode() -> bool:
@@ -516,41 +562,19 @@ def _single_card_mode() -> bool:
 
 
 def _launch_via_torchrun() -> None:
-    """Four ranks on a four-card host; this process alone when there is one card.
-
-    The frozen recipe starts four ranks through the framework's launcher. On a
-    host with a single visible card that launch cannot work: ranks 1 to 3 ask
-    for ``cuda:1`` to ``cuda:3`` and torch aborts with 'invalid device ordinal'.
-    A one-card host therefore runs in this process, with the four-rank global
-    batch and no process group.
-    """
+    """Use the same admitted immutable four-rank pipeline as the public MCP."""
     if int(os.environ.get("RANK", -1)) >= 0:
-        return  # 已经在 torchrun 启动的子进程里
-    if _visible_card_count() <= 1:
-        os.environ[SINGLE_GPU_ENV] = "1"
         return
-    LOG_DIR.mkdir(parents=True, exist_ok=True)
-    env = dict(os.environ)
-    env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["visible_dev"]
-    env["NCCL_IB_DISABLE"]     = "1"
-    env["NCCL_P2P_DISABLE"]    = "1"
-    env["NCCL_SHM_DISABLE"]    = "1"
-    env["NCCL_TIMEOUT"]        = "3600"
-    env["TORCH_NCCL_BLOCKING_WAIT"] = "1"
-    # The four ranks are started by the framework's launcher, not by this file:
-    # the port, the world size, the working directory and the log belong to the
-    # frozen contract, so that no candidate has to re-implement them.
-    sys.path.insert(0, str(REPO_ROOT))
-    from tools.research.stage2 import contract as stage2_contract
-    from tools.research.stage2 import launcher as stage2_launcher
-    rc = stage2_launcher.launch(
-        entry=_LAUNCHER["script"], result_dir=RESULT_DIR,
-        port=stage2_contract.STAGE2_PORT, world_size=int(_LAUNCHER["nproc"]),
-        python=_LAUNCHER["torchrun"].rsplit("/", 1)[0] + "/python3.9",
-        env_extra={k: env[k] for k in ("CUDA_VISIBLE_DEVICES", "NCCL_IB_DISABLE",
-                                       "NCCL_P2P_DISABLE", "NCCL_SHM_DISABLE",
-                                       "NCCL_TIMEOUT", "TORCH_NCCL_BLOCKING_WAIT")})
-    sys.exit(rc)
+    if str(REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(REPO_ROOT))
+    from tools.stage2.server import load_shared
+    outcome = load_shared().tool_stage2_start(str(Path(__file__).resolve().parent))
+    if outcome.get("refused"):
+        raise RuntimeError(outcome["refused"])
+    if outcome.get("status") not in {"starting", "smoke_pending", "running"} and not outcome.get("started"):
+        raise RuntimeError("the formal framework did not accept the run: " + str(outcome))
+    print(json.dumps(outcome, ensure_ascii=False, default=str), flush=True)
+    sys.exit(0)
 
 
 if __name__ == "__main__":

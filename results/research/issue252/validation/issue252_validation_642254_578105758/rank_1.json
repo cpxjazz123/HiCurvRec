@@ -1,0 +1,1615 @@
+{
+  "run_id": "issue252_validation_642254_578105758",
+  "rank": 1,
+  "worker_pid": 642261,
+  "controller_pid": 642254,
+  "formal_training": false,
+  "diagnostic_epochs": 1,
+  "source_hashes": {
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/assignment_floor.py": "1a2c05e1af3dbcecf0a029749559ea72031d73af19ee60d2a539eaf86eef7c84",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/profile_entry.py": "0ce1ba101fd8f92e61dd377881209ed13838b489ef7f71bac470af70cfcdb280",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/steady_profile_entry.py": "002898d114b8a36ce62ea6f2ef43e762c6b8360ad848b06ff8c4305d776588b3",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/train_config.py": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/benchmark_entry.py": "b0508644a8f728984fb1422e3311f9314d63b5b3b97c72f2af389af1ecd29778",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/train_rqvae.py": "0789043e3c36e4aa217ca3f8ac784336a84c20a7cebf5cd7d41718b3f4eee9d4",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/validation_entry.py": "8c2a03e17068e3a6c6064b30cca21ca1f54617cdf061c0349c92554de6f67283",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/optimized_profile_entry.py": "f5a3ada16d23a9d72b7f3b0b9cea48e1770ade82573a384408e73190b8226597",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/sparse_validation_entry.py": "41ae578e83397df5a47057011a7a4adfac2d0917dd71d8d168175969fdc29118",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/geometry_validation_entry.py": "9a7b5f4cc2344a72e4d2b05a0003a6b56400f6b73638a32f9e3f0e54b421a48c",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/codebook.py": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/reconstruction.py": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/commitment.py": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/quantization.py": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/__init__.py": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/_pairs.py": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/model.py": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/layers.py": "9a61bd93018711972f6562176f5b46ec16908c6900102890b188174289bea2fa",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/geometry.py": "62ee1328ec2504e787bdea6e10b1393e055f86d10c271ee311a6af4346dc4c8f",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/mechanism.py": "b505d4a9498b9c0ea5d5544fc74f1f97ce0494f81a1cb88bc684f7e4d1278bee",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/estimator.py": "bc7633a3aed6f3060a0180d99cb50bf6035070ef9f096447eb5289389ce4c024",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/provenance.py": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/curvature.py": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure_gate.py": "6bd4fa165e5c93a52e422bb473d03cf2bd53c15b9a5bce15488fe4990c1e325f",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/__init__.py": "fc51b6b47b052833e3bb249a00a581da6a6f27bb4905fb58237a2865354c0f81",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/attention.py": "a227155453e1d7c79cb9cf5c59a8a5e3f7defa88895d784ae499a34d25d42ac6",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/selection.py": "aaf40e7d14eced220dae00f6f2aa14cb33f5d911c41fb94b8d868dcecf32d524",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py": "6afb386e5a70718db40235bdde1726323a1dbc41df668399898bec3cdd9651fb",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/utils.py": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/distances/distance.py": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/distances/__init__.py": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_provenance.py": "eb4916774252becccd55657166fdec5b51f6e6f6aeac20d4f0b3fd67ab37dc4b",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_attention.py": "bb7d7f20102955b4c6fe626d531e37c23911118ce15d9cf727007fade0dcb76e",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_estimator.py": "07d4cb1a0841b766d0e5220a2be7b7b66c5abdfe3d00e9c43e38fa59ba991531",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_structure.py": "3281132f56c7d015eb365bcfb668212f6a8cb01d39c94b976693654afa44befa",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_structure.py": "1d642b83be753213453ab6262c01a251ec4cf08ec5348954428e7de9114e6b0f",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_execution.py": "16dcde57cdf548e1f3411f14197f60556617f7c42a00372c6e1b946fde02d223",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_reference.py": "f4fb492aff0301419ee6fe0ee06ca7943c639b552e3d150a2f1cd45d3bad7cc2",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_attention_pipeline.py": "3a0c3049f5126090473301f57dd2390ff1bcbd6d3ff0a7c3807a702ed5740237",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_curvature_loss.py": "d260562cb8990411a1680ac0792006db787619ddafcc5a6c54d09fa13142f633",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mutations.py": "21334532c5a63247d09e0d404c9fd5e300046f13f0e52f81c280db60f5cea3cf",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/reference.py": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_adjoint.py": "3a00d982fbfee8ea75ffd8d33f449e63aa3caa940fd516c19e2fd468dc898a45",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_geometry_memory.py": "8b7465d359bee23c6676949756e06b19f5faa05631c91f5eccff3672304ad712",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py": "d348fb86b3576709d3f49d339550edc47d83d5ea27899d99cc26868ebea3f6e5",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_known_answers.py": "4eda7c1d194193714be34b548454af0eb4a36a418ee8f90c24d7039921090938",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_static_means.py": "8bac4e77d50ce1e1fd6a2dec09cd3beb3bada9393c9f293210108f234b4a690a",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+    "assets/manifest.json": "f479dac35c0b2f7783683d7827e87f815bc1c27f21382562b1e65731c451fdc6",
+    "results/research/issue252/CONTRACT.md": "4ca0c421b397b20e13c0ab970a7e69cdf9752b7a947fb4d8f5ee2986f843bb92",
+    "results/research/issue252/EXECUTION_CONTRACT.md": "7702f8c7955a2bdc198186c7433e520f11f590e558d6673a77c7b0ac15e9f51a",
+    "tools/issue252/performance.py": "f470262eca9682a31f3d32631a55438c99f2f2c85845d55d138aeb183db45a69",
+    "tools/issue252/launch_validation.py": "d9a1cda03c04dfb1b1cf6a2039d3820e691a37f737af5bfc6dd0fdd3ec0f69a5",
+    "tools/research/stage2/graph_batches.py": "99d3e5f90869d340beb30dbe15609e6a387322910a6b1df6ac36106c94622709",
+    "tools/research/stage2/collapse_watch.py": "1a2e68fda81fb7f5b827f296d421add6b861cad989a862d4b3220a979511182e",
+    "tools/research/stage2/ddp_probe.py": "29af630d7dc747190c1b8836ff8dff02f9aa3b7220cf3dbc3d6c78e841cdb2f2",
+    "tools/research/stage2/graph_contract.py": "f2a6c9cd8d59f8412856a2d222ce4a5af5dce7e3fb80311825899a87d7972481",
+    "tools/research/stage2/checks.py": "30dd5c7c93a1ee21432fa0b29841444f9d390edcc71d48a5b8ba53fed41c0ef7",
+    "tools/research/stage2/bootstrap.py": "ced38a908347de56e00054b4c632185ce71d65f8dadd3245a7569952ff0700d2",
+    "tools/research/stage2/launcher.py": "61d32bd6d1100d1903b6f934480a478630fe647f626510b66cc964720b28b85a",
+    "tools/research/stage2/gpu_alloc.py": "9c9d46b4e0df3b9756394eaa9d26a8381ca5d8b0e86a547fd6e0551d0f3948b6",
+    "tools/research/stage2/contract.py": "bf82fd31970c7f99de7b377f0ebb11e3cb82fb77661d18be691c04c5c5f09a3c",
+    "tools/research/stage2/__init__.py": "7404443b2323f698ba2a8c4a96006b8fe74ac1b6a2b896da31f05fea92b78006",
+    "tools/research/stage2/export_check.py": "3b8eb3c95553d626dc8d4c1f69896d909df1d4f99f6e7ca615e31227fabc9299",
+    "tools/research/stage2/export_policy.py": "cbf7841d0a7cefe16b26d4b8862f951c6f3b8d1fcf015fa937ee2fafecf8cba4",
+    "tools/research/stage2/sid_quality.py": "ba9e95057ce98823e01da6b5d2cebc700e016301b39f868b5ac947da8d81e7b8",
+    "tools/research/stage2/anticollapse/artifact.py": "e75bde5903a50cd2b90a3198a1ec0ca2b944147b742381068f72aa2c20d0ae4c",
+    "tools/research/stage2/anticollapse/patch_tree.py": "bffbc2b3a501956f5538dfce9b42c90d89e94a03b645eb651d0e449b4f9f0a5d",
+    "tools/research/stage2/anticollapse/__init__.py": "36b0be98738fc34ea93f2d5792f7e8fb8991eadc948bc9a6e910ce94efe1eabf",
+    "tools/research/stage2/anticollapse/floor.py": "1a2c05e1af3dbcecf0a029749559ea72031d73af19ee60d2a539eaf86eef7c84",
+    "tools/graph_infra/__init__.py": "b86861c93434621cff070d024b12f8c6f9d5a5e77a8deea54089645a3a7226ff",
+    "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+    "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+    "tools/issue252/archive_audit.py": "ab846964ff643af7aeb15a58e126eecb26f1c5e205103888aab2a1d55d526fb1",
+    "tools/issue252/cuda_math.py": "7e3e8d54f89eb64836d3b730bf30c44618c3e98f07952dd41582d1082c1c800b",
+    "tools/issue252/ego_operators.py": "251c2b8ab962c63f344504186ba5a749256f2bec066d2bdb46214e1fdaae0656",
+    "tools/issue252/sparse_adjoint.py": "698791229d29742b72a85282f723d9b11b0b4373f7cf6e8d174fda69f4fe32a3",
+    "tools/issue252/static_features.py": "c1402d4d243b516ca609dfd8e03cde8ee57d1df0d1bac33aa5edd48906bead07",
+    "tools/stage2/server.py": "1152c3360ddebd5eb161ab1111245a131e338e4058f49f74c215b43922cb96bb"
+  },
+  "status": "pass",
+  "recipe": {
+    "epochs": 3000,
+    "per_rank_batch": 1024,
+    "global_batch": 4096,
+    "world_size": 4,
+    "seed": 42,
+    "config_sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6"
+  },
+  "first_step_losses": {
+    "original_loss": 0.0006005318718962371,
+    "structural_loss": 0.8349098563194275,
+    "combined_loss": 0.0006228250567801297
+  },
+  "actual_batch_items": 1024,
+  "first_structural_sample": {
+    "centre": 14620,
+    "ids": [
+      163,
+      183,
+      293,
+      411,
+      653,
+      666,
+      716,
+      776,
+      791,
+      836,
+      865,
+      966,
+      1148,
+      1171,
+      1174,
+      1448,
+      1613,
+      1765,
+      1833,
+      1875,
+      1880,
+      1965,
+      2086,
+      2122,
+      2253,
+      2307,
+      2308,
+      2426,
+      2440,
+      2482,
+      2539,
+      2583,
+      2700,
+      2823,
+      3156,
+      3218,
+      3387,
+      3595,
+      3608,
+      3822,
+      3965,
+      4018,
+      4141,
+      4223,
+      4600,
+      4616,
+      4766,
+      5081,
+      5303,
+      5364,
+      5709,
+      5737,
+      5774,
+      5807,
+      5808,
+      5840,
+      6036,
+      6194,
+      6300,
+      6443,
+      6562,
+      6598,
+      6681,
+      6750,
+      6805,
+      6928,
+      6957,
+      6979,
+      7029,
+      7044,
+      7085,
+      7121,
+      7154,
+      7307,
+      7491,
+      7658,
+      7727,
+      7753,
+      8059,
+      8194,
+      8239,
+      8422,
+      8432,
+      8476,
+      8477,
+      8574,
+      8699,
+      8715,
+      8776,
+      8930,
+      9073,
+      9095,
+      9096,
+      9291,
+      9371,
+      9473,
+      9496,
+      9648,
+      9851,
+      9897,
+      9946,
+      10297,
+      10327,
+      10385,
+      10468,
+      10530,
+      10686,
+      10728,
+      10800,
+      10811,
+      10836,
+      10842,
+      10989,
+      11045,
+      11070,
+      11176,
+      11434,
+      11473,
+      11560,
+      11684,
+      11756,
+      11818,
+      11844,
+      11936,
+      12018,
+      12139,
+      12206,
+      12301,
+      12316,
+      12545,
+      12595,
+      12723,
+      12726,
+      12762,
+      12775,
+      12809,
+      13020,
+      13355,
+      13443,
+      13497,
+      13781,
+      13857,
+      13911,
+      13990,
+      14111,
+      14151,
+      14235,
+      14487,
+      14533,
+      14567,
+      14620,
+      14698,
+      15005,
+      15045,
+      15089,
+      15258,
+      15312,
+      15358,
+      15408,
+      15448,
+      15568,
+      15590,
+      15605,
+      15724,
+      16343,
+      16510,
+      16592,
+      16607,
+      16622,
+      16803,
+      16862,
+      17037,
+      17126,
+      17154,
+      17263,
+      17345,
+      17385,
+      17554,
+      18069,
+      18120,
+      18161,
+      18172,
+      18199,
+      18214,
+      18339,
+      18432,
+      18436,
+      18478,
+      18598,
+      18657,
+      18930,
+      19089,
+      19151,
+      19299,
+      19571,
+      19647,
+      19698,
+      19704,
+      19773,
+      19813,
+      20011,
+      20256,
+      20311,
+      20441,
+      20546,
+      20608,
+      20612,
+      20659,
+      20731,
+      20814,
+      20912,
+      20965,
+      21097,
+      21155,
+      21213,
+      21252,
+      21308,
+      21394,
+      21666,
+      21690,
+      21704,
+      21895,
+      21896,
+      22177,
+      22253,
+      22263,
+      22412,
+      22428,
+      22542,
+      22590,
+      22629,
+      22638,
+      22664,
+      22721,
+      22749,
+      22950,
+      22983,
+      23000,
+      23337,
+      23407,
+      23444,
+      23546,
+      23575,
+      23592,
+      23658,
+      23671,
+      23674,
+      23700,
+      23841,
+      23911,
+      24063,
+      24130,
+      24248,
+      24259,
+      24289,
+      24517
+    ],
+    "triples_global": [
+      [
+        14620,
+        2539,
+        12139
+      ],
+      [
+        14620,
+        791,
+        12139
+      ],
+      [
+        14620,
+        716,
+        9473
+      ],
+      [
+        14620,
+        2539,
+        16343
+      ],
+      [
+        14620,
+        14698,
+        20731
+      ],
+      [
+        14620,
+        22177,
+        22721
+      ],
+      [
+        14620,
+        791,
+        22177
+      ],
+      [
+        14620,
+        16803,
+        20731
+      ],
+      [
+        14620,
+        14698,
+        16343
+      ],
+      [
+        14620,
+        2539,
+        18161
+      ],
+      [
+        14620,
+        716,
+        791
+      ],
+      [
+        14620,
+        9473,
+        18161
+      ],
+      [
+        14620,
+        716,
+        22177
+      ],
+      [
+        14620,
+        163,
+        18161
+      ],
+      [
+        14620,
+        163,
+        9473
+      ],
+      [
+        14620,
+        791,
+        14698
+      ],
+      [
+        14620,
+        11936,
+        14698
+      ],
+      [
+        14620,
+        12139,
+        16803
+      ],
+      [
+        14620,
+        9473,
+        16343
+      ],
+      [
+        14620,
+        2539,
+        11936
+      ],
+      [
+        14620,
+        16803,
+        22177
+      ],
+      [
+        14620,
+        9473,
+        22721
+      ],
+      [
+        14620,
+        163,
+        16343
+      ],
+      [
+        14620,
+        16803,
+        23841
+      ],
+      [
+        14620,
+        11936,
+        18161
+      ],
+      [
+        14620,
+        20731,
+        23841
+      ],
+      [
+        14620,
+        716,
+        16343
+      ],
+      [
+        14620,
+        163,
+        14698
+      ],
+      [
+        14620,
+        12139,
+        22664
+      ],
+      [
+        14620,
+        9473,
+        12139
+      ],
+      [
+        14620,
+        11936,
+        23841
+      ],
+      [
+        14620,
+        18161,
+        23841
+      ]
+    ],
+    "triples": [
+      [
+        150,
+        30,
+        125
+      ],
+      [
+        150,
+        8,
+        125
+      ],
+      [
+        150,
+        6,
+        95
+      ],
+      [
+        150,
+        30,
+        164
+      ],
+      [
+        150,
+        151,
+        208
+      ],
+      [
+        150,
+        223,
+        233
+      ],
+      [
+        150,
+        8,
+        223
+      ],
+      [
+        150,
+        169,
+        208
+      ],
+      [
+        150,
+        151,
+        164
+      ],
+      [
+        150,
+        30,
+        180
+      ],
+      [
+        150,
+        6,
+        8
+      ],
+      [
+        150,
+        95,
+        180
+      ],
+      [
+        150,
+        6,
+        223
+      ],
+      [
+        150,
+        0,
+        180
+      ],
+      [
+        150,
+        0,
+        95
+      ],
+      [
+        150,
+        8,
+        151
+      ],
+      [
+        150,
+        123,
+        151
+      ],
+      [
+        150,
+        125,
+        169
+      ],
+      [
+        150,
+        95,
+        164
+      ],
+      [
+        150,
+        30,
+        123
+      ],
+      [
+        150,
+        169,
+        223
+      ],
+      [
+        150,
+        95,
+        233
+      ],
+      [
+        150,
+        0,
+        164
+      ],
+      [
+        150,
+        169,
+        248
+      ],
+      [
+        150,
+        123,
+        180
+      ],
+      [
+        150,
+        208,
+        248
+      ],
+      [
+        150,
+        6,
+        164
+      ],
+      [
+        150,
+        0,
+        151
+      ],
+      [
+        150,
+        125,
+        232
+      ],
+      [
+        150,
+        95,
+        125
+      ],
+      [
+        150,
+        123,
+        248
+      ],
+      [
+        150,
+        180,
+        248
+      ]
+    ],
+    "references_global": [
+      6194,
+      10686,
+      7029,
+      17037,
+      6300,
+      8194,
+      12775,
+      3387,
+      8574,
+      15258,
+      5737,
+      1148,
+      1765,
+      17385,
+      19571,
+      24063,
+      666,
+      20612,
+      3822,
+      21895,
+      22638,
+      17345,
+      10811,
+      16607,
+      13443,
+      5840,
+      1613,
+      9073,
+      20311,
+      13911,
+      21155,
+      16622
+    ],
+    "references": [
+      57,
+      106,
+      68,
+      171,
+      58,
+      79,
+      134,
+      36,
+      85,
+      155,
+      51,
+      12,
+      17,
+      176,
+      194,
+      250,
+      5,
+      206,
+      39,
+      221,
+      231,
+      175,
+      109,
+      167,
+      138,
+      55,
+      16,
+      90,
+      202,
+      142,
+      213,
+      168
+    ],
+    "target": [
+      1.858689877814556,
+      1.67285766826039,
+      2.316456213477177,
+      2.585877160720853,
+      1.2022598177434514,
+      2.455498344979772,
+      2.251317886477872,
+      2.977483551959462,
+      -0.10038412815168976,
+      -1.1370806260471578,
+      1.3364799150014304,
+      -0.3429365371255772,
+      0.6604143680274611,
+      -2.538331085774999,
+      2.6919414817539127,
+      0.4269543541334641,
+      -1.503739119774427,
+      0.9476523231580238,
+      3.380021249642434,
+      1.182522169098116,
+      1.5261125413755057,
+      3.361540190429488,
+      1.184626700993012,
+      2.484757468023375,
+      -3.253606309509215,
+      3.985268276735728,
+      0.8091414327162764,
+      -0.7884638960402108,
+      2.9656123574843694,
+      2.6528339667361367,
+      1.2792693392178498,
+      -1.0403334559274242
+    ],
+    "row_ids": [
+      10735555,
+      10735543,
+      10735528,
+      10735557,
+      10735598,
+      10735626,
+      10735549,
+      10735611,
+      10735595,
+      10735559,
+      10735526,
+      10735570,
+      10735536,
+      10735520,
+      10735514,
+      10735544,
+      10735577,
+      10735588,
+      10735568,
+      10735554,
+      10735612,
+      10735574,
+      10735518,
+      10735615,
+      10735580,
+      10735624,
+      10735532,
+      10735517,
+      10735592,
+      10735566,
+      10735585,
+      10735620
+    ],
+    "reference_population": 24471,
+    "centre_population": 24326,
+    "triple_population": 120,
+    "global_step": 0,
+    "rank": 1,
+    "world_size": 4
+  },
+  "actual_structural_hard_q_decode_exact": true,
+  "normal_backward": {
+    "encoder": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 8,
+      "finite": true,
+      "norm": 0.00012434873403960396
+    },
+    "decoder": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 8,
+      "finite": true,
+      "norm": 0.00142953774488127
+    },
+    "GNN.input": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 1.5603931805910914e-07
+    },
+    "sharedKey": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 1.2753949229462863e-07
+    },
+    "sharedValue": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 3.992108284036022e-08
+    },
+    "sharedScore": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 4,
+      "finite": true,
+      "norm": 5.5103011627436937e-08
+    },
+    "GNN.layers.0.self_linear": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 1.6157949387680317e-07
+    },
+    "GNN.layers.0.incoming": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.5299510378965645e-07
+    },
+    "GNN.layers.0.outgoing": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.495029330012936e-07
+    },
+    "GNN.layers.1.self_linear": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 9.624936397604077e-08
+    },
+    "GNN.layers.1.incoming": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 7.169804898144303e-08
+    },
+    "GNN.layers.1.outgoing": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 7.466979855027308e-08
+    },
+    "codebook0": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 4.60890335926801e-05
+    },
+    "codebook1": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 0.00014324051785192165
+    },
+    "codebook2": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 0.00011358317057196244
+    },
+    "Query0": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 7.04087557626855e-08
+    },
+    "Query1": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 2.9843802094675945e-08
+    },
+    "Query2": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 5.0912351696271244e-09
+    },
+    "Query3": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.2723706444650964e-08
+    },
+    "Query4": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.0296490311532331e-07
+    }
+  },
+  "normal_forward": {
+    "encoder.mlp.1": {
+      "calls": 4,
+      "finite": true
+    },
+    "encoder.mlp.4": {
+      "calls": 4,
+      "finite": true
+    },
+    "encoder.mlp.7": {
+      "calls": 4,
+      "finite": true
+    },
+    "encoder.mlp.10": {
+      "calls": 4,
+      "finite": true
+    },
+    "structure.tokens.layers.1.self_linear": {
+      "calls": 4,
+      "finite": true
+    },
+    "structure.tokens.layers.1.incoming": {
+      "calls": 4,
+      "finite": true
+    },
+    "structure.tokens.layers.1.outgoing": {
+      "calls": 4,
+      "finite": true
+    },
+    "structure.attention.key": {
+      "calls": 2,
+      "finite": true
+    },
+    "structure.attention.value": {
+      "calls": 2,
+      "finite": true
+    },
+    "structure.attention.score.0": {
+      "calls": 2,
+      "finite": true
+    },
+    "structure.attention.score.2": {
+      "calls": 2,
+      "finite": true
+    },
+    "structure.attention": {
+      "calls": 2,
+      "finite": true
+    },
+    "decoder.mlp.1": {
+      "calls": 1,
+      "finite": true
+    },
+    "decoder.mlp.4": {
+      "calls": 1,
+      "finite": true
+    },
+    "decoder.mlp.7": {
+      "calls": 1,
+      "finite": true
+    },
+    "decoder.mlp.10": {
+      "calls": 1,
+      "finite": true
+    },
+    "rq.vq_layers.0.embed": {
+      "calls": 1,
+      "finite": true
+    },
+    "rq.vq_layers.1.embed": {
+      "calls": 1,
+      "finite": true
+    },
+    "rq.vq_layers.2.embed": {
+      "calls": 1,
+      "finite": true
+    }
+  },
+  "actual_optimizer_update": {
+    "encoder": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 8,
+      "finite": true,
+      "norm": 0.0014461404606624158
+    },
+    "decoder": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 8,
+      "finite": true,
+      "norm": 0.0014774244014033498
+    },
+    "GNN.input": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 1.8924711125366228e-05
+    },
+    "sharedKey": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 2.4878661706159167e-05
+    },
+    "sharedValue": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 1.0604536494656386e-05
+    },
+    "sharedScore": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 4,
+      "finite": true,
+      "norm": 1.3598100971765724e-05
+    },
+    "GNN.layers.0.self_linear": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 2.2650418658432173e-05
+    },
+    "GNN.layers.0.incoming": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 2.0369830083682506e-05
+    },
+    "GNN.layers.0.outgoing": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 2.0372545450210824e-05
+    },
+    "GNN.layers.1.self_linear": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 2.1483524667424653e-05
+    },
+    "GNN.layers.1.incoming": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.7621642849432716e-05
+    },
+    "GNN.layers.1.outgoing": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.815555743099863e-05
+    },
+    "codebook0": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 0.0002782219806509424
+    },
+    "codebook1": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 0.00026706405278181225
+    },
+    "codebook2": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 0.00027016207009733295
+    },
+    "Query0": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 9.231126646361221e-06
+    },
+    "Query1": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 5.8552552459991065e-06
+    },
+    "Query2": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.4903888700735934e-06
+    },
+    "Query3": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 3.153999078995681e-06
+    },
+    "Query4": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.0572230075301877e-05
+    }
+  },
+  "completed_epoch": 1,
+  "completed_local_losses": [
+    0.0006228250567801297,
+    0.0006585354567505419,
+    0.0006489414954558015,
+    0.0006301182438619435,
+    0.0006205521058291197,
+    0.000622571213170886
+  ],
+  "completed_parameter_hashes": [
+    "2ba2d851c67a4c75bc4905b389dcb64020ed4c92505cb4ccfe7ca44811f02fce",
+    "2ba2d851c67a4c75bc4905b389dcb64020ed4c92505cb4ccfe7ca44811f02fce",
+    "2ba2d851c67a4c75bc4905b389dcb64020ed4c92505cb4ccfe7ca44811f02fce",
+    "2ba2d851c67a4c75bc4905b389dcb64020ed4c92505cb4ccfe7ca44811f02fce"
+  ],
+  "completed_state_finite": true,
+  "raw_real_batch_VJP": {
+    "state": "completed diagnostic checkpoint; same first real batch/sample",
+    "original": {
+      "encoder": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 8,
+        "finite": true,
+        "norm": 9.39644131608267e-05
+      },
+      "decoder": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 8,
+        "finite": true,
+        "norm": 0.0014138802749085624
+      },
+      "GNN.input": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 6.612260690495195e-08
+      },
+      "sharedKey": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 4.484095230231467e-08
+      },
+      "sharedValue": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 2.4472207567193536e-08
+      },
+      "sharedScore": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 4,
+        "finite": true,
+        "norm": 3.2679708394053185e-08
+      },
+      "GNN.layers.0.self_linear": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 5.5570217103625416e-08
+      },
+      "GNN.layers.0.incoming": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 6.254459443182397e-08
+      },
+      "GNN.layers.0.outgoing": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 4.933371953830624e-08
+      },
+      "GNN.layers.1.self_linear": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 3.351260836095877e-08
+      },
+      "GNN.layers.1.incoming": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 3.305991874805826e-08
+      },
+      "GNN.layers.1.outgoing": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 3.3475652067544025e-08
+      },
+      "codebook0": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 4.5125053753905955e-05
+      },
+      "codebook1": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.00010404099512415192
+      },
+      "codebook2": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 8.124098492766105e-05
+      },
+      "Query0": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 2.3141202778997653e-08
+      },
+      "Query1": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 1.1788208110668542e-08
+      },
+      "Query2": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 4.9221755560127766e-09
+      },
+      "Query3": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 1.5612407927053925e-08
+      },
+      "Query4": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 2.926670395920695e-08
+      }
+    },
+    "structural": {
+      "encoder": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 8,
+        "finite": true,
+        "norm": 10.085144418332867
+      },
+      "decoder": {
+        "absent": true,
+        "none": 8,
+        "zero": 0,
+        "tensors": 8,
+        "finite": true,
+        "norm": 0.0
+      },
+      "GNN.input": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 0.003564120423523673
+      },
+      "sharedKey": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 0.002001974031282897
+      },
+      "sharedValue": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 0.00048085726329262426
+      },
+      "sharedScore": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 4,
+        "finite": true,
+        "norm": 0.0006408815300446426
+      },
+      "GNN.layers.0.self_linear": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 0.001980621587321474
+      },
+      "GNN.layers.0.incoming": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.002696379279309496
+      },
+      "GNN.layers.0.outgoing": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.0019712718289685164
+      },
+      "GNN.layers.1.self_linear": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 0.001292341123509344
+      },
+      "GNN.layers.1.incoming": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.0011777873542411904
+      },
+      "GNN.layers.1.outgoing": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.000978644678190868
+      },
+      "codebook0": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 2.663955692153194
+      },
+      "codebook1": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 17.030581582763688
+      },
+      "codebook2": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 14.760644605903076
+      },
+      "Query0": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.0012903898071124594
+      },
+      "Query1": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.0005800868161811208
+      },
+      "Query2": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.0002622100328033667
+      },
+      "Query3": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.0013710380386492713
+      },
+      "Query4": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.0004933894394860567
+      }
+    }
+  },
+  "switches": {
+    "both_on": {
+      "weights_sha256": "30b5bb55d1ed997ee4189b902a4d84f2976889fe30eaecc690eec751ecf92393",
+      "cost_sha256": "9d55d519dde34d889337384b535a9dc3dbb87e376a8d1052b3bde440255ecb1b",
+      "tokens_sha256": "4bff4a859b90d1b39383eb203e983f1ac0b10bca42caf51d7f18b733959308fc",
+      "hard_q_decode_exact": true
+    },
+    "behavior_off": {
+      "weights_sha256": "ca18356b4de15379ba6c41eed3f3f569f080d50c90e8344f7cf841b5f7e8d13b",
+      "cost_sha256": "546db26e545248c59d358b94c2e9438b7980ac63e99e8550db8d0aa9770aa8df",
+      "tokens_sha256": "3f83e007f1b3c64391e20dd3856db786ee4d032e54c17ca25a530f0f2499a4a2",
+      "hard_q_decode_exact": true,
+      "cost_delta_norm": 12.625594139099121,
+      "changed_hard_items": 30
+    },
+    "curvature_off": {
+      "weights_sha256": "67775370ef42da7ed85b4aff62d9cf8ffe819548bd3e6db4abc6b4f7638d301b",
+      "cost_sha256": "f4f53a438e6481fceddd7c8c18f8542d64cb75e7c2308430b733fccfd5b3a2d5",
+      "tokens_sha256": "17dfa65746309fb9065d218e8f566c45334fd506ab4639bb99329302a806fd32",
+      "hard_q_decode_exact": true,
+      "cost_delta_norm": 626.80029296875,
+      "changed_hard_items": 252
+    },
+    "both_off": {
+      "weights_sha256": "ca18356b4de15379ba6c41eed3f3f569f080d50c90e8344f7cf841b5f7e8d13b",
+      "cost_sha256": "017d9dd39cbe832a418d6b6c3287d7559d31af47492fc1d1f7c670fb0c0c4684",
+      "tokens_sha256": "17dfa65746309fb9065d218e8f566c45334fd506ab4639bb99329302a806fd32",
+      "hard_q_decode_exact": true,
+      "cost_delta_norm": 626.80029296875,
+      "changed_hard_items": 252
+    },
+    "query_intervention": {
+      "weight_delta_norm": 0.26456689834594727,
+      "cost_delta_norm": 13.980095863342285,
+      "changed_hard_items": 37
+    }
+  },
+  "wall_seconds": 113.50119926594198
+}

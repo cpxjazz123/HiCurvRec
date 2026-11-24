@@ -1,0 +1,61 @@
+test_centre_cycle_and_full_component_reference_population (test_estimator.EstimatorTests) ... ERROR
+test_coincident_and_empty_reference_boundaries (test_estimator.EstimatorTests) ... ERROR
+test_known_full_reference_value_and_gradient (test_estimator.EstimatorTests) ... ERROR
+test_raw_statistic_unbiased_but_huber_not_unbiased (test_estimator.EstimatorTests) ... ERROR
+
+======================================================================
+ERROR: test_centre_cycle_and_full_component_reference_population (test_estimator.EstimatorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_estimator.py", line 54, in test_centre_cycle_and_full_component_reference_population
+    module=production()
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_estimator.py", line 16, in production
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1040, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/estimator.py'
+
+======================================================================
+ERROR: test_coincident_and_empty_reference_boundaries (test_estimator.EstimatorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_estimator.py", line 45, in test_coincident_and_empty_reference_boundaries
+    module=production()
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_estimator.py", line 16, in production
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1040, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/estimator.py'
+
+======================================================================
+ERROR: test_known_full_reference_value_and_gradient (test_estimator.EstimatorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_estimator.py", line 25, in test_known_full_reference_value_and_gradient
+    module=production()
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_estimator.py", line 16, in production
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1040, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/estimator.py'
+
+======================================================================
+ERROR: test_raw_statistic_unbiased_but_huber_not_unbiased (test_estimator.EstimatorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_estimator.py", line 34, in test_raw_statistic_unbiased_but_huber_not_unbiased
+    module=production()
+  File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_estimator.py", line 16, in production
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1040, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/estimator.py'
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.001s
+
+FAILED (errors=4)

@@ -1,0 +1,50 @@
+test_nested_sid_keeps_arm_identity_and_rejects_crossed_generation (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_public_start_preserves_four_cards_and_never_archives_old_results (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_runtime_helper_change_invalidates_admission_fingerprint (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_source_drift_after_admission_refuses_without_formal_spawn (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_stage3_evidence_is_selected_by_exact_sid_not_newest_arm_file (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_stage3_export_cannot_cross_source_or_checkpoint_generations (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_status_uses_exact_persisted_result_not_static_tree (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_worker_admits_then_runs_frozen_adapter_without_deleted_bootstrap (tools.issue252.test_run_workspace.PersistedRunTests) ... ok
+test_adapter_changes_paths_only_and_preserves_recipe (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ok
+test_adapter_parent_uses_only_the_standard_launcher (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ok
+test_arm_traversal_and_source_symlinks_are_refused (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ok
+test_inventory_matches_archive_and_omits_only_its_exclusions (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ok
+test_run_identity_cannot_escape_the_repository (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ok
+test_same_run_id_cannot_be_reused_for_another_arm (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ok
+test_source_bytes_are_frozen_with_independent_results (tools.issue252.test_run_workspace.RunWorkspaceTests) ... ok
+test_ambiguous_stage3_generations_are_not_selected_by_mtime (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_another_tree_cannot_override_the_bound_tree (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_binding_refuses_crossed_export_and_missing_run_identity (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_binding_refuses_source_not_recorded_in_checkpoint (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_binding_requires_every_token_to_match_export (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_checkpoint_bound_asset_configuration_travels_with_source (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_correct_bundle_preserves_recall_logs_and_reproducible_tar (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_crossed_checkpoint_is_refused_before_copy (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_imported_repo_source_and_config_are_archived_and_checked (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_incomplete_log_stream_is_not_archived (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_incomplete_receipt_is_a_value_error_not_an_unbound_archive (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_missing_final_logs_and_binding_fail_closed (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_mutated_source_is_refused_even_with_explicit_tree (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_nested_immutable_generation_archives_its_adapter_and_exact_inputs (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_no_nearby_checkpoint_substitution (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_original_evidence_key_is_not_clobbered (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_source_import_closure_handles_relative_imports_cycles_and_missing_modules (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_stage3_captures_actual_resolved_input_identity (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_stage3_from_another_sid_is_refused_before_copy (tools.issue252.test_archive_binding.ArchiveBindingTests) ... ok
+test_cached_entry_cannot_hide_a_changed_graph_verdict (tools.research.stage2.tests.test_machine_cache.MachineCacheTests) ... ok
+test_configuration_change_cannot_reuse_old_admission (tools.research.stage2.tests.test_machine_cache.MachineCacheTests) ... ok
+test_conformance_result_publication_survives_reconnect (tools.research.stage2.tests.test_machine_cache.MachineCacheTests) ... ok
+test_graph_checker_change_invalidates_cache_policy_identity (tools.research.stage2.tests.test_machine_cache.MachineCacheTests) ... ok
+test_graph_identity_drift_during_entry_is_not_a_pass (tools.research.stage2.tests.test_machine_cache.MachineCacheTests) ... ok
+test_graph_wrapper_preserves_the_verified_generation_identity (tools.research.stage2.tests.test_machine_cache.MachineCacheTests) ... ok
+test_named_graph_identity_change_requires_a_new_real_entry (tools.research.stage2.tests.test_machine_cache.MachineCacheTests) ... ok
+test_not_run_is_not_cached_as_an_executed_verdict (tools.research.stage2.tests.test_machine_cache.MachineCacheTests) ... ok
+test_public_machine_calls_reuse_the_result_after_server_restart (tools.research.stage2.tests.test_machine_cache.MachineCacheTests) ... ok
+test_shared_runtime_change_invalidates_entry_identity (tools.research.stage2.tests.test_machine_cache.MachineCacheTests) ... ok
+test_designated_assertions_capture_every_valid_mutation (tools.issue252.test_estimator_mutations.EstimatorMutations) ... ok
+
+----------------------------------------------------------------------
+Ran 45 tests in 3.849s
+
+OK

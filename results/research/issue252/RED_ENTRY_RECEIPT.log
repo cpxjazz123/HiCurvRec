@@ -1,0 +1,22 @@
+test_missing_four_rank_receipt_refuses_without_single_card_process (tools.issue252.test_entry_receipt.EntryReceiptTests) ... FAIL
+
+======================================================================
+FAIL: test_missing_four_rank_receipt_refuses_without_single_card_process (tools.issue252.test_entry_receipt.EntryReceiptTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_entry_receipt.py", line 21, in test_missing_four_rank_receipt_refuses_without_single_card_process
+    result = checks.check_entry(tree)
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/checks.py", line 168, in check_entry
+    done = subprocess.run(command, cwd=str(tree), capture_output=True, text=True,
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1092, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1096, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/usr/lib64/python3.9/unittest/mock.py", line 1151, in _execute_mock_call
+    raise effect
+AssertionError: single-card GPU bypass
+
+----------------------------------------------------------------------
+Ran 1 test in 0.015s
+
+FAILED (failures=1)

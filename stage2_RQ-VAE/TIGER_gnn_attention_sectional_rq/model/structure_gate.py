@@ -15,7 +15,7 @@ class TopologyAttention(nn.Module):
         self.last_attention=None
         self.last_token_mask=None
 
-    def gates_for_items(self,store,item_ids,device,chunk=32,behavior_on=True):
+    def gates_for_items(self,store,item_ids,device,chunk=1024,behavior_on=True):
         raw=item_ids.detach().cpu().numpy() if torch.is_tensor(item_ids) else np.asarray(item_ids)
         unique,inverse=np.unique(np.asarray(raw,dtype=np.int64),return_inverse=True)
         tokens,mask=self.tokens.tokens_for_items(store,unique,device,chunk=chunk)

@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/usr/lib64/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib64/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/runtime_layout.py", line 413, in <module>
+    raise SystemExit(main())
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/runtime_layout.py", line 407, in main
+    _json_once(DESTINATION / 'metadata.json', _metadata(entries, inputs, sources, store))
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/runtime_layout.py", line 277, in _metadata
+    description = {key: _array_description(blob[key]) for key in blob.files}
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/runtime_layout.py", line 277, in <dictcomp>
+    description = {key: _array_description(blob[key]) for key in blob.files}
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/numpy/lib/_npyio_impl.py", line 256, in __getitem__
+    return format.read_array(bytes,
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/numpy/lib/format.py", line 822, in read_array
+    raise ValueError("Object arrays cannot be loaded when "
+ValueError: Object arrays cannot be loaded when allow_pickle=False

@@ -1,0 +1,21 @@
+{
+  "issue": 252,
+  "commit": "521c5e22868f181b3d5283c0cd29cae91b13a9e9",
+  "state": "WORKING",
+  "worktree_phase2_uncommitted": true,
+  "done": ["C1", "C2", "C4", "C5", "C6"],
+  "not_run": ["C3 actual public entry PASS", "C7 accepted inclusive performance", "C9", "C10", "C11 final formal-run fault reconciliation", "C12", "C13 final same-SID comparison", "C14"],
+  "failed": ["C7: prior actual60epoch mean2.2026225s; current exact generation is being measured without other diagnostic jobs"],
+  "current_source_proofs": {
+    "validation": "results/research/issue252/validation/issue252_validation_642254_578105758",
+    "module_checks": "results/research/issue252/MODULE_CHECKS.json",
+    "mathematical_suites": "results/research/issue252/contract_tests/1795478044308266055",
+    "geometry": "results/research/issue252/geometry_validation/geometry_1795477867061548663_628781_434a38a67d78"
+  },
+  "running": [
+    {"name": "isolated inclusive60epoch benchmark", "job": "bg_136", "formal_training": false, "command": "genrec_env_v2/bin/python3.9 -m tools.issue252.launch_benchmark"}
+  ],
+  "next_commands": ["Consume benchmark results; if mean exceeds0.5s, profile current real hot spots and continue exact optimization", "Create explicit TRAINING_ADMISSION.json only after all actual reports pass", "Commit/push, reload affected MCP children and call verification_check with machine:issue252 before one sanctioned formal Stage2 run"],
+  "blocked_by": null,
+  "checkpoint_is_not_a_stop": true
+}

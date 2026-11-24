@@ -1,0 +1,101 @@
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_attention.py:66: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  self.assertGreater(float(weights.max() - weights.min()), 0.01)
+/fs04/ar57/wenyu/GeneRec/tools/issue252/ego_operators.py:109: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+  operators.append(torch.sparse_csr_tensor(crow, columns, values,
+test_empty_and_all_invalid_use_fixed_null (test_attention.ExpertAttentionTests) ... ok
+test_hand_computed_two_normalizations (test_attention.ExpertAttentionTests) ... ok
+test_independent_queries_and_all_gradient_groups_train (test_attention.ExpertAttentionTests) ... ok
+test_padding_mask_and_repeated_items (test_attention.ExpertAttentionTests) ... ok
+test_permutation_equivariance_with_fixed_null_slot (test_attention.ExpertAttentionTests) ... ok
+test_single_token_degeneracy (test_attention.ExpertAttentionTests) ... ok
+test_smooth_directional_finite_differences_of_both_outputs (test_attention.ExpertAttentionTests) ... ok
+test_actual_attention_intervention_changes_hard_codeword (test_attention_pipeline.AttentionPipelineTests) ... ok
+test_duplicate_global_items_share_exact_attention_outputs (test_attention_pipeline.AttentionPipelineTests) ... ok
+test_invalid_nan_padding_has_no_influence (test_attention_pipeline.AttentionPipelineTests) ... ok
+test_centre_normalization_masks_invalid_rows (test_curvature_loss.CurvatureTests) ... ok
+test_chunked_gradients_match_explicit_reference_sum (test_curvature_loss.CurvatureTests) ... ok
+test_exact_full_reference_matches_hand_answer (test_curvature_loss.CurvatureTests) ... ok
+test_mixed_centre_stream_preserves_huber_mean_and_gradients (test_curvature_loss.CurvatureTests) ... ok
+test_out_of_catalogue_centres_are_not_silently_dropped (test_curvature_loss.CurvatureTests) ... ok
+test_reference_components_are_not_batch_local (test_curvature_loss.CurvatureTests) ... ok
+test_centre_cycle_and_full_component_reference_population (test_estimator.EstimatorTests) ... ok
+test_coincident_and_empty_reference_boundaries (test_estimator.EstimatorTests) ... ok
+test_known_full_reference_value_and_gradient (test_estimator.EstimatorTests) ... ok
+test_raw_statistic_unbiased_but_huber_not_unbiased (test_estimator.EstimatorTests) ... ok
+test_actual_launcher_changes_invalidate_source_evidence (test_execution.ExecutionTests) ... ok
+test_rank0_calibration_does_not_advance_rotating_floor_history (test_execution.ExecutionTests) ... ok
+test_collinear_zero_coincident_and_saturated_known_answers (test_geometry_memory.GeometryMemoryTests) ... ok
+test_independent_controlled_balanced_and_intervened_hard_ids (test_geometry_memory.GeometryMemoryTests) ... ok
+test_matrix_distance_does_not_materialize_coordinate_volume (test_geometry_memory.GeometryMemoryTests) ... ok
+test_matrix_matches_prebroadcast_values_and_gradients (test_geometry_memory.GeometryMemoryTests) ... ok
+test_matrix_mixed_cost_finite_differences (test_geometry_memory.GeometryMemoryTests) ... ok
+test_matrix_values_and_gradients_against_ambient_references (test_geometry_memory.GeometryMemoryTests) ... ok
+test_spherical_near_coincidence_and_antipodes (test_geometry_memory.GeometryMemoryTests) ... ok
+test_balancing_cannot_be_replaced_by_argmin (test_known_answers.KnownAnswerTests) ... ok
+test_hand_answers_common_tangent_and_spherical_wrap (test_known_answers.KnownAnswerTests) ... ok
+test_behavior_off_applies_to_catalogue_selection_cost (test_mechanism.MechanismTests) ... ok
+test_detached_cost_breaks_gate_path (test_mechanism.MechanismTests) ... ok
+test_fixed_curvature_metric_reaches_selection_gate_and_gnn (test_mechanism.MechanismTests) ... ok
+test_hard_q_exactly_decodes_three_ids (test_mechanism.MechanismTests) ... ok
+test_installed_framework_guards_reject_duplicate_codewords (test_mechanism.MechanismTests) ... ok
+test_missing_item_identity_is_rejected (test_mechanism.MechanismTests) ... ok
+test_binding_detects_asset_drift_and_source_change (test_provenance.ProvenanceTests) ... ok
+test_checkpoint_binding_rejects_source_drift_since_capture (test_provenance.ProvenanceTests) ... ok
+test_missing_candidate_provenance_rejects_checkpoint (test_provenance.ProvenanceTests) ... ok
+test_training_split_drift_invalidates_binding (test_provenance.ProvenanceTests) ... ok
+test_dense_values_first_gradients_and_gradgrad_irregular_empty_isolated (test_sparse_adjoint.SparseAdjointTests) ... ok
+test_either_unused_output_and_noncontiguous_inputs (test_sparse_adjoint.SparseAdjointTests) ... ok
+test_hand_directed_means_and_both_exact_adjoints (test_sparse_adjoint.SparseAdjointTests) ... ok
+test_production_backward_avoids_native_csr_transpose_conversion (test_sparse_adjoint.SparseAdjointTests) ... ok
+test_production_live_input_and_all_parameter_gradients (test_sparse_adjoint.SparseAdjointTests) ... ok
+test_directed_sparse_layer_hand_answer (test_sparse_structure.SparseStructureTests) ... ok
+test_forward_padding_cross_group_and_isolate (test_sparse_structure.SparseStructureTests) ... ok
+test_item_order_duplicates_chunks_and_distinct_hops (test_sparse_structure.SparseStructureTests) ... ok
+test_registered_store_never_builds_missing_operators (test_sparse_structure.SparseStructureTests) ... ok
+test_sparse_matches_independent_dense_input_and_parameter_gradients (test_sparse_structure.SparseStructureTests) ... ok
+test_cache_is_detached_static_only_and_all_weights_are_live (test_static_means.StaticMeansTests) ... ok
+test_dense_and_original_ragged_values_and_every_parameter_gradient (test_static_means.StaticMeansTests) ... ok
+test_frozen_feature_root_and_bounded_full_layout_cache (test_static_means.StaticMeansTests) ... ok
+test_live_affine_input_and_every_parameter_gradient (test_static_means.StaticMeansTests) ... ok
+test_production_retains_activations_and_only_second_layer_uses_wide_sparse_mm (test_static_means.StaticMeansTests) ... ok
+test_tiny_directed_affine_hand_answer_and_empty_directions (test_static_means.StaticMeansTests) ... ok
+test_directed_hand_readout_and_padding (test_structure.StructureTests) ... ok
+test_initial_feature_cache_real_root (test_structure.StructureTests) ... ok
+test_separate_boundaries_duplicates_chunks_isolate_empty (test_structure.StructureTests) ... ok
+
+----------------------------------------------------------------------
+Ran 60 tests in 131.077s
+
+OK
+test_controlled_weight_intervention_changes_hard_id (test_reference.GeometryTests) ... ok
+test_fixed_mean_switches_and_broadcasting (test_reference.GeometryTests) ... ok
+test_hyperbolic_saturation_keeps_radial_distance (test_reference.GeometryTests) ... ok
+test_independent_lorentz_sphere_references (test_reference.GeometryTests) ... ok
+test_smooth_cost_finite_differences (test_reference.GeometryTests) ... ok
+test_zero_coincident_finite_gradients (test_reference.GeometryTests) ... ok
+test_balanced_marginals_and_hand_answer (test_reference.SelectionTests) ... ok
+test_exact_hard_forward_and_only_soft_backward (test_reference.SelectionTests) ... ok
+test_frozen_hard_rule_exact_and_inference_argmin (test_reference.SelectionTests) ... ok
+test_saturated_probabilities_are_finite (test_reference.SelectionTests) ... ok
+test_soft_finite_differences_both_paths (test_reference.SelectionTests) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.110s
+
+OK
+test_designated_assertions_detect_mutations (test_mutations.Mutations) ... ok
+test_designated_assertions_capture_every_valid_mutation (test_estimator_mutations.EstimatorMutations) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.017s
+
+OK
+{
+  "passed": true,
+  "test_reports": {
+    "deterministic": "results/research/issue252/contract_tests/1795478044308266055/deterministic.json",
+    "reference": "results/research/issue252/contract_tests/1795478044308266055/reference.json",
+    "mutation": "results/research/issue252/contract_tests/1795478044308266055/mutation.json"
+  }
+}

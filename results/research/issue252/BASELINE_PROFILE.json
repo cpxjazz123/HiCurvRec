@@ -1,0 +1,1661 @@
+{
+  "schema": "genrec.issue252.profile/1",
+  "status": "PROFILED",
+  "formal_training": false,
+  "world_size": 4,
+  "global_batch": 4096,
+  "completed_optimizer_steps": 1,
+  "completed_epochs": 0,
+  "ranks": [
+    {
+      "rank": 0,
+      "run_id": "issue252_baseline_profile_3415496",
+      "worker_pid": 3415592,
+      "master_port": 50202,
+      "gpu": "NVIDIA L40S",
+      "torch": "2.8.0+cu128",
+      "cuda_build": "12.8",
+      "initialization_seconds": 211.41359672602266,
+      "initialization_peak_bytes": 8975459840,
+      "actual_one_step_wall_seconds": 202.73982521146536,
+      "training_step_peak_bytes": 9164071424,
+      "loader": {
+        "items": 24556,
+        "steps_per_epoch": 6,
+        "batch_per_rank": 1024
+      },
+      "communication": [
+        {
+          "name": "nccl:all_reduce",
+          "calls": 10,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.6611544190000203
+        },
+        {
+          "name": "ncclDevKernel_AllReduce_Sum_f32_RING_LL(ncclDevKernelArgsStorage<4096ul>)",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.4013613110000193
+        },
+        {
+          "name": "ncclDevKernel_AllReduce_Sum_f64_RING_LL(ncclDevKernelArgsStorage<4096ul>)",
+          "calls": 9,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.25979310800000094
+        },
+        {
+          "name": "ncclDevKernel_Broadcast_RING_LL(ncclDevKernelArgsStorage<4096ul>)",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 5.279999999969732e-06
+        },
+        {
+          "name": "nccl:broadcast",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 5.279999999969732e-06
+        },
+        {
+          "name": "c10d::broadcast_",
+          "calls": 1,
+          "self_cpu_seconds": 0.026233688000000022,
+          "self_device_seconds": 0.0
+        },
+        {
+          "name": "nccl:broadcast",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.0
+        },
+        {
+          "name": "c10d::allreduce_",
+          "calls": 10,
+          "self_cpu_seconds": 0.0003564959999918938,
+          "self_device_seconds": 0.0
+        },
+        {
+          "name": "nccl:all_reduce",
+          "calls": 10,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "run_id": "issue252_baseline_profile_3415496",
+      "worker_pid": 3415593,
+      "master_port": 50202,
+      "gpu": "NVIDIA L40S",
+      "torch": "2.8.0+cu128",
+      "cuda_build": "12.8",
+      "initialization_seconds": 211.4032749608159,
+      "initialization_peak_bytes": 219075072,
+      "actual_one_step_wall_seconds": 202.75283087044954,
+      "training_step_peak_bytes": 9160987648,
+      "loader": {
+        "items": 24556,
+        "steps_per_epoch": 6,
+        "batch_per_rank": 1024
+      },
+      "communication": [
+        {
+          "name": "nccl:all_reduce",
+          "calls": 10,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.6556621210000012
+        },
+        {
+          "name": "ncclDevKernel_AllReduce_Sum_f32_RING_LL(ncclDevKernelArgsStorage<4096ul>)",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.4973455230000019
+        },
+        {
+          "name": "ncclDevKernel_AllReduce_Sum_f64_RING_LL(ncclDevKernelArgsStorage<4096ul>)",
+          "calls": 9,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.1583165979999993
+        },
+        {
+          "name": "ncclDevKernel_Broadcast_RING_LL(ncclDevKernelArgsStorage<4096ul>)",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 6.687999999965541e-06
+        },
+        {
+          "name": "nccl:broadcast",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 6.687999999965541e-06
+        },
+        {
+          "name": "c10d::broadcast_",
+          "calls": 1,
+          "self_cpu_seconds": 0.026200806999999913,
+          "self_device_seconds": 0.0
+        },
+        {
+          "name": "nccl:broadcast",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.0
+        },
+        {
+          "name": "c10d::allreduce_",
+          "calls": 10,
+          "self_cpu_seconds": 0.00032815700001083317,
+          "self_device_seconds": 0.0
+        },
+        {
+          "name": "nccl:all_reduce",
+          "calls": 10,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "run_id": "issue252_baseline_profile_3415496",
+      "worker_pid": 3415594,
+      "master_port": 50202,
+      "gpu": "NVIDIA L40S",
+      "torch": "2.8.0+cu128",
+      "cuda_build": "12.8",
+      "initialization_seconds": 211.3909800639376,
+      "initialization_peak_bytes": 219075072,
+      "actual_one_step_wall_seconds": 202.74874462746084,
+      "training_step_peak_bytes": 9161043968,
+      "loader": {
+        "items": 24556,
+        "steps_per_epoch": 6,
+        "batch_per_rank": 1024
+      },
+      "communication": [
+        {
+          "name": "nccl:all_reduce",
+          "calls": 10,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.4971992049999982
+        },
+        {
+          "name": "ncclDevKernel_AllReduce_Sum_f32_RING_LL(ncclDevKernelArgsStorage<4096ul>)",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.4122250949999988
+        },
+        {
+          "name": "ncclDevKernel_AllReduce_Sum_f64_RING_LL(ncclDevKernelArgsStorage<4096ul>)",
+          "calls": 9,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.08497410999999941
+        },
+        {
+          "name": "ncclDevKernel_Broadcast_RING_LL(ncclDevKernelArgsStorage<4096ul>)",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 6.62400000001071e-06
+        },
+        {
+          "name": "nccl:broadcast",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 6.62400000001071e-06
+        },
+        {
+          "name": "c10d::broadcast_",
+          "calls": 1,
+          "self_cpu_seconds": 0.02617607899999997,
+          "self_device_seconds": 0.0
+        },
+        {
+          "name": "nccl:broadcast",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.0
+        },
+        {
+          "name": "c10d::allreduce_",
+          "calls": 10,
+          "self_cpu_seconds": 0.0002956979999877512,
+          "self_device_seconds": 0.0
+        },
+        {
+          "name": "nccl:all_reduce",
+          "calls": 10,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "run_id": "issue252_baseline_profile_3415496",
+      "worker_pid": 3415595,
+      "master_port": 50202,
+      "gpu": "NVIDIA L40S",
+      "torch": "2.8.0+cu128",
+      "cuda_build": "12.8",
+      "initialization_seconds": 211.3797160256654,
+      "initialization_peak_bytes": 219075072,
+      "actual_one_step_wall_seconds": 202.74810209590942,
+      "training_step_peak_bytes": 9160965120,
+      "loader": {
+        "items": 24556,
+        "steps_per_epoch": 6,
+        "batch_per_rank": 1024
+      },
+      "communication": [
+        {
+          "name": "nccl:all_reduce",
+          "calls": 10,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.08554035000000894
+        },
+        {
+          "name": "ncclDevKernel_AllReduce_Sum_f64_RING_LL(ncclDevKernelArgsStorage<4096ul>)",
+          "calls": 9,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.08478981599999964
+        },
+        {
+          "name": "ncclDevKernel_AllReduce_Sum_f32_RING_LL(ncclDevKernelArgsStorage<4096ul>)",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.0007505340000092983
+        },
+        {
+          "name": "ncclDevKernel_Broadcast_RING_LL(ncclDevKernelArgsStorage<4096ul>)",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 6.752999999967869e-06
+        },
+        {
+          "name": "nccl:broadcast",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 6.752999999967869e-06
+        },
+        {
+          "name": "c10d::broadcast_",
+          "calls": 1,
+          "self_cpu_seconds": 0.026220325000000013,
+          "self_device_seconds": 0.0
+        },
+        {
+          "name": "nccl:broadcast",
+          "calls": 1,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.0
+        },
+        {
+          "name": "c10d::allreduce_",
+          "calls": 10,
+          "self_cpu_seconds": 0.00031234099997021257,
+          "self_device_seconds": 0.0
+        },
+        {
+          "name": "nccl:all_reduce",
+          "calls": 10,
+          "self_cpu_seconds": 0.0,
+          "self_device_seconds": 0.0
+        }
+      ]
+    }
+  ],
+  "phases": [
+    {
+      "stage": "initialization",
+      "phase": "Attention",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 770
+      },
+      "cpu_dispatch_wall_s_min": 1.5602027904242277,
+      "cpu_dispatch_wall_s_max": 1.5602027904242277,
+      "cuda_stream_span_s_min": 1.5775794069767,
+      "cuda_stream_span_s_max": 1.5775794069767,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((256, 2, 32), (256, 2))": 1,
+          "shapes:((32, 2, 32), (32, 2))": 768,
+          "shapes:((11, 2, 32), (11, 2))": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "Decoder",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 1
+      },
+      "cpu_dispatch_wall_s_min": 0.02327927201986313,
+      "cpu_dispatch_wall_s_max": 0.02327927201986313,
+      "cuda_stream_span_s_min": 0.023322784423828125,
+      "cuda_stream_span_s_max": 0.023322784423828125,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((256, 32),)": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "Encoder",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 4,
+        "1": 2,
+        "2": 2,
+        "3": 2
+      },
+      "cpu_dispatch_wall_s_min": 2.3984170584008098,
+      "cpu_dispatch_wall_s_max": 2.406015490181744,
+      "cuda_stream_span_s_min": 2.3987108181118963,
+      "cuda_stream_span_s_max": 2.4061255438327787,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((24556, 768),)": 1,
+          "shapes:((24587, 768),)": 2,
+          "shapes:((256, 768),)": 1
+        },
+        "1": {
+          "shapes:((24556, 768),)": 1,
+          "shapes:((24587, 768),)": 1
+        },
+        "2": {
+          "shapes:((24556, 768),)": 1,
+          "shapes:((24587, 768),)": 1
+        },
+        "3": {
+          "shapes:((24556, 768),)": 1,
+          "shapes:((24587, 768),)": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "GNN",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 1554
+      },
+      "cpu_dispatch_wall_s_min": 12.676633710972965,
+      "cpu_dispatch_wall_s_max": 12.676633710972965,
+      "cuda_stream_span_s_min": 13.075733890533433,
+      "cuda_stream_span_s_max": 13.075733890533433,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:()": 1554
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "assignment_floor",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 9,
+        "1": 3,
+        "2": 3,
+        "3": 3
+      },
+      "cpu_dispatch_wall_s_min": 0.5835855696350336,
+      "cpu_dispatch_wall_s_max": 0.7024692865088582,
+      "cuda_stream_span_s_min": 0.5837172908782958,
+      "cuda_stream_span_s_max": 0.7028010918796063,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((24556, 256),)": 3,
+          "shapes:((256, 256),)": 3,
+          "shapes:((24587, 256),)": 3
+        },
+        "1": {
+          "shapes:((24556, 256),)": 3
+        },
+        "2": {
+          "shapes:((24556, 256),)": 3
+        },
+        "3": {
+          "shapes:((24556, 256),)": 3
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "assignment_guards",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 24
+      },
+      "cpu_dispatch_wall_s_min": 1.0545967258512974,
+      "cpu_dispatch_wall_s_max": 1.0545967258512974,
+      "cuda_stream_span_s_min": 0.9759094065576792,
+      "cuda_stream_span_s_max": 0.9759094065576792,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((256, 32),)": 6,
+          "shapes:((256, 32), (256, 256))": 3,
+          "shapes:((256, 256),)": 3,
+          "shapes:((256,),)": 3,
+          "shapes:((256, 32), (24587, 256))": 3,
+          "shapes:((24587, 256),)": 3,
+          "shapes:((24587,),)": 3
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "codebook_initialization",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1
+      },
+      "cpu_dispatch_wall_s_min": 6.523030229844153,
+      "cpu_dispatch_wall_s_max": 6.658181376755238,
+      "cuda_stream_span_s_min": 6.52300537109375,
+      "cuda_stream_span_s_max": 6.65816455078125,
+      "footprint_per_rank": {
+        "0": {},
+        "1": {},
+        "2": {},
+        "3": {}
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "ego_build",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 1554
+      },
+      "cpu_dispatch_wall_s_min": 73.75460253749043,
+      "cpu_dispatch_wall_s_max": 73.75460253749043,
+      "cuda_stream_span_s_min": 73.84643393081426,
+      "cuda_stream_span_s_max": 73.84643393081426,
+      "footprint_per_rank": {
+        "0": {
+          "items": 49686,
+          "expanded_nodes": 38074407,
+          "expanded_edges": 521664262,
+          "numpy_bytes": 16039299731
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "embedding_read",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1
+      },
+      "cpu_dispatch_wall_s_min": 0.46434797532856464,
+      "cpu_dispatch_wall_s_max": 0.46533697936683893,
+      "cuda_stream_span_s_min": 0.46447412109375,
+      "cuda_stream_span_s_max": 0.4654552917480469,
+      "footprint_per_rank": {
+        "0": {},
+        "1": {},
+        "2": {},
+        "3": {}
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "five_geometry_assignment_cost",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 12
+      },
+      "cpu_dispatch_wall_s_min": 3.048568293452263,
+      "cpu_dispatch_wall_s_max": 3.048568293452263,
+      "cuda_stream_span_s_min": 3.019754147291184,
+      "cuda_stream_span_s_max": 3.019754147291184,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((256, 32), (256, 32), (256, 5))": 6,
+          "shapes:((24587, 32), (256, 32), (24587, 5))": 6
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "five_geometry_distances",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 38
+      },
+      "cpu_dispatch_wall_s_min": 2.660387508571148,
+      "cpu_dispatch_wall_s_max": 2.660387508571148,
+      "cuda_stream_span_s_min": 2.6314013085365295,
+      "cuda_stream_span_s_max": 2.6314013085365295,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((256, 32), (256, 32))": 6,
+          "shapes:((24587, 32), (256, 32))": 6,
+          "shapes:((2048, 32), (12, 32))": 22,
+          "shapes:((1943, 32), (12, 32))": 2,
+          "shapes:((55, 1, 32), (55, 1, 32))": 2
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "full_curvature_loss",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 1
+      },
+      "cpu_dispatch_wall_s_min": 0.21970579028129578,
+      "cpu_dispatch_wall_s_max": 0.21970579028129578,
+      "cuda_stream_span_s_min": 0.21971533203125,
+      "cuda_stream_span_s_max": 0.21971533203125,
+      "footprint_per_rank": {
+        "0": {
+          "valid_rows": 55,
+          "centres": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "full_reference_distances",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 1
+      },
+      "cpu_dispatch_wall_s_min": 0.03874994534999132,
+      "cpu_dispatch_wall_s_max": 0.03874994534999132,
+      "cuda_stream_span_s_min": 0.03877785491943359,
+      "cuda_stream_span_s_max": 0.03877785491943359,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((24587, 32), (12,))": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "gradient_calibration",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 1
+      },
+      "cpu_dispatch_wall_s_min": 98.30790513474494,
+      "cpu_dispatch_wall_s_max": 98.30790513474494,
+      "cuda_stream_span_s_min": 98.3072734375,
+      "cuda_stream_span_s_max": 98.3072734375,
+      "footprint_per_rank": {
+        "0": {}
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "hard_Sinkhorn",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 1
+      },
+      "cpu_dispatch_wall_s_min": 0.0017858883365988731,
+      "cpu_dispatch_wall_s_max": 0.0017858883365988731,
+      "cuda_stream_span_s_min": 0.001809407949447632,
+      "cuda_stream_span_s_max": 0.001809407949447632,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((256, 256),)": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "scale_calibration",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1
+      },
+      "cpu_dispatch_wall_s_min": 1.0165296783670783,
+      "cpu_dispatch_wall_s_max": 1.018450379371643,
+      "cuda_stream_span_s_min": 1.0166027221679688,
+      "cuda_stream_span_s_max": 1.0185257568359376,
+      "footprint_per_rank": {
+        "0": {},
+        "1": {},
+        "2": {},
+        "3": {}
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "soft_allocation",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 6
+      },
+      "cpu_dispatch_wall_s_min": 0.10392634104937315,
+      "cpu_dispatch_wall_s_max": 0.10392634104937315,
+      "cuda_stream_span_s_min": 0.10420991878211498,
+      "cuda_stream_span_s_max": 0.10420991878211498,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((256, 256),)": 3,
+          "shapes:((24587, 256),)": 3
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "target_read_and_unpack",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 4
+      },
+      "cpu_dispatch_wall_s_min": 0.11430126521736383,
+      "cpu_dispatch_wall_s_max": 0.11430126521736383,
+      "cuda_stream_span_s_min": 0.11449840002879501,
+      "cuda_stream_span_s_max": 0.11449840002879501,
+      "footprint_per_rank": {
+        "0": {
+          "rows": 110
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "train_parquet_read",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1
+      },
+      "cpu_dispatch_wall_s_min": 3.129716958850622,
+      "cpu_dispatch_wall_s_max": 3.134766678325832,
+      "cuda_stream_span_s_min": 3.12981103515625,
+      "cuda_stream_span_s_max": 3.134861328125,
+      "footprint_per_rank": {
+        "0": {},
+        "1": {},
+        "2": {},
+        "3": {}
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "triple_statistic",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 1
+      },
+      "cpu_dispatch_wall_s_min": 0.0032908618450164795,
+      "cpu_dispatch_wall_s_max": 0.0032908618450164795,
+      "cuda_stream_span_s_min": 0.003308543920516968,
+      "cuda_stream_span_s_max": 0.003308543920516968,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((24587, 32),)": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "initialization",
+      "phase": "whole_catalogue_forward",
+      "ranks_present": [
+        0
+      ],
+      "calls_per_rank": {
+        "0": 1
+      },
+      "cpu_dispatch_wall_s_min": 85.1468918537721,
+      "cpu_dispatch_wall_s_max": 85.1468918537721,
+      "cuda_stream_span_s_min": 85.1462734375,
+      "cuda_stream_span_s_max": 85.1462734375,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((24587, 768),)": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 8975459840
+    },
+    {
+      "stage": "training_step",
+      "phase": "Attention",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 770,
+        "1": 770,
+        "2": 770,
+        "3": 770
+      },
+      "cpu_dispatch_wall_s_min": 0.8390923142433167,
+      "cpu_dispatch_wall_s_max": 0.9109804723411798,
+      "cuda_stream_span_s_min": 0.8589539150595664,
+      "cuda_stream_span_s_max": 0.9302042222023011,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((1024, 2, 32), (1024, 2))": 1,
+          "shapes:((32, 2, 32), (32, 2))": 768,
+          "shapes:((11, 2, 32), (11, 2))": 1
+        },
+        "1": {
+          "shapes:((1024, 2, 32), (1024, 2))": 1,
+          "shapes:((32, 2, 32), (32, 2))": 768,
+          "shapes:((11, 2, 32), (11, 2))": 1
+        },
+        "2": {
+          "shapes:((1024, 2, 32), (1024, 2))": 1,
+          "shapes:((32, 2, 32), (32, 2))": 768,
+          "shapes:((11, 2, 32), (11, 2))": 1
+        },
+        "3": {
+          "shapes:((1024, 2, 32), (1024, 2))": 1,
+          "shapes:((32, 2, 32), (32, 2))": 768,
+          "shapes:((11, 2, 32), (11, 2))": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "Decoder",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1
+      },
+      "cpu_dispatch_wall_s_min": 0.0006276192143559456,
+      "cpu_dispatch_wall_s_max": 0.023617302998900414,
+      "cuda_stream_span_s_min": 0.0006542080044746399,
+      "cuda_stream_span_s_max": 0.02369670486450195,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((1024, 32),)": 1
+        },
+        "1": {
+          "shapes:((1024, 32),)": 1
+        },
+        "2": {
+          "shapes:((1024, 32),)": 1
+        },
+        "3": {
+          "shapes:((1024, 32),)": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "Encoder",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 2,
+        "1": 2,
+        "2": 2,
+        "3": 2
+      },
+      "cpu_dispatch_wall_s_min": 0.001054392196238041,
+      "cpu_dispatch_wall_s_max": 0.0012840395793318748,
+      "cuda_stream_span_s_min": 0.0011946560144424439,
+      "cuda_stream_span_s_max": 0.0013766400218009948,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((1024, 768),)": 1,
+          "shapes:((24587, 768),)": 1
+        },
+        "1": {
+          "shapes:((1024, 768),)": 1,
+          "shapes:((24587, 768),)": 1
+        },
+        "2": {
+          "shapes:((1024, 768),)": 1,
+          "shapes:((24587, 768),)": 1
+        },
+        "3": {
+          "shapes:((1024, 768),)": 1,
+          "shapes:((24587, 768),)": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "GNN",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 3204,
+        "1": 3204,
+        "2": 3204,
+        "3": 3204
+      },
+      "cpu_dispatch_wall_s_min": 24.059335673227906,
+      "cpu_dispatch_wall_s_max": 25.07263303361833,
+      "cuda_stream_span_s_min": 24.485161735057922,
+      "cuda_stream_span_s_max": 25.495714375019144,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:()": 3204
+        },
+        "1": {
+          "shapes:()": 3204
+        },
+        "2": {
+          "shapes:()": 3204
+        },
+        "3": {
+          "shapes:()": 3204
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "assignment_floor",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 6,
+        "1": 6,
+        "2": 6,
+        "3": 6
+      },
+      "cpu_dispatch_wall_s_min": 0.10981142334640026,
+      "cpu_dispatch_wall_s_max": 0.11079270485788584,
+      "cuda_stream_span_s_min": 0.11002281296253204,
+      "cuda_stream_span_s_max": 0.1110093433856964,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((1024, 256),)": 3,
+          "shapes:((24587, 256),)": 3
+        },
+        "1": {
+          "shapes:((1024, 256),)": 3,
+          "shapes:((24587, 256),)": 3
+        },
+        "2": {
+          "shapes:((1024, 256),)": 3,
+          "shapes:((24587, 256),)": 3
+        },
+        "3": {
+          "shapes:((1024, 256),)": 3,
+          "shapes:((24587, 256),)": 3
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "assignment_guards",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 24,
+        "1": 24,
+        "2": 24,
+        "3": 24
+      },
+      "cpu_dispatch_wall_s_min": 0.38018942438066006,
+      "cpu_dispatch_wall_s_max": 0.7379184076562524,
+      "cuda_stream_span_s_min": 0.303626851066947,
+      "cuda_stream_span_s_max": 0.6614679006189109,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((256, 32),)": 6,
+          "shapes:((256, 32), (1024, 256))": 3,
+          "shapes:((1024, 256),)": 3,
+          "shapes:((1024,),)": 3,
+          "shapes:((256, 32), (24587, 256))": 3,
+          "shapes:((24587, 256),)": 3,
+          "shapes:((24587,),)": 3
+        },
+        "1": {
+          "shapes:((256, 32),)": 6,
+          "shapes:((256, 32), (1024, 256))": 3,
+          "shapes:((1024, 256),)": 3,
+          "shapes:((1024,),)": 3,
+          "shapes:((256, 32), (24587, 256))": 3,
+          "shapes:((24587, 256),)": 3,
+          "shapes:((24587,),)": 3
+        },
+        "2": {
+          "shapes:((256, 32),)": 6,
+          "shapes:((256, 32), (1024, 256))": 3,
+          "shapes:((1024, 256),)": 3,
+          "shapes:((1024,),)": 3,
+          "shapes:((256, 32), (24587, 256))": 3,
+          "shapes:((24587, 256),)": 3,
+          "shapes:((24587,),)": 3
+        },
+        "3": {
+          "shapes:((256, 32),)": 6,
+          "shapes:((256, 32), (1024, 256))": 3,
+          "shapes:((1024, 256),)": 3,
+          "shapes:((1024,),)": 3,
+          "shapes:((256, 32), (24587, 256))": 3,
+          "shapes:((24587, 256),)": 3,
+          "shapes:((24587,),)": 3
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "backward",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1
+      },
+      "cpu_dispatch_wall_s_min": 100.86672750487924,
+      "cpu_dispatch_wall_s_max": 102.23619659524411,
+      "cuda_stream_span_s_min": 101.2500859375,
+      "cuda_stream_span_s_max": 102.6249921875,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((),)": 1
+        },
+        "1": {
+          "shapes:((),)": 1
+        },
+        "2": {
+          "shapes:((),)": 1
+        },
+        "3": {
+          "shapes:((),)": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "data_read",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1
+      },
+      "cpu_dispatch_wall_s_min": 0.24414417333900928,
+      "cpu_dispatch_wall_s_max": 0.24513438995927572,
+      "cuda_stream_span_s_min": 0.2442470703125,
+      "cuda_stream_span_s_max": 0.24522915649414062,
+      "footprint_per_rank": {
+        "0": {},
+        "1": {},
+        "2": {},
+        "3": {}
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "ego_build",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 3204,
+        "1": 3204,
+        "2": 3204,
+        "3": 3204
+      },
+      "cpu_dispatch_wall_s_min": 151.90292033925653,
+      "cpu_dispatch_wall_s_max": 152.1314654359594,
+      "cuda_stream_span_s_min": 151.78446135205687,
+      "cuda_stream_span_s_max": 152.0650480921246,
+      "footprint_per_rank": {
+        "0": {
+          "items": 102444,
+          "expanded_nodes": 78311986,
+          "expanded_edges": 1072281354,
+          "numpy_bytes": 32972052950
+        },
+        "1": {
+          "items": 102444,
+          "expanded_nodes": 78429270,
+          "expanded_edges": 1074215850,
+          "numpy_bytes": 33029973306
+        },
+        "2": {
+          "items": 102444,
+          "expanded_nodes": 78257206,
+          "expanded_edges": 1071483992,
+          "numpy_bytes": 32947760838
+        },
+        "3": {
+          "items": 102444,
+          "expanded_nodes": 78242316,
+          "expanded_edges": 1070976228,
+          "numpy_bytes": 32933591124
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "five_geometry_assignment_cost",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 12,
+        "1": 12,
+        "2": 12,
+        "3": 12
+      },
+      "cpu_dispatch_wall_s_min": 0.30117637291550636,
+      "cpu_dispatch_wall_s_max": 0.30998413637280464,
+      "cuda_stream_span_s_min": 0.2185723850727081,
+      "cuda_stream_span_s_max": 0.23641996788978578,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((1024, 32), (256, 32), (1024, 5))": 6,
+          "shapes:((24587, 32), (256, 32), (24587, 5))": 6
+        },
+        "1": {
+          "shapes:((1024, 32), (256, 32), (1024, 5))": 6,
+          "shapes:((24587, 32), (256, 32), (24587, 5))": 6
+        },
+        "2": {
+          "shapes:((1024, 32), (256, 32), (1024, 5))": 6,
+          "shapes:((24587, 32), (256, 32), (24587, 5))": 6
+        },
+        "3": {
+          "shapes:((1024, 32), (256, 32), (1024, 5))": 6,
+          "shapes:((24587, 32), (256, 32), (24587, 5))": 6
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "five_geometry_distances",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 700,
+        "1": 698,
+        "2": 618,
+        "3": 646
+      },
+      "cpu_dispatch_wall_s_min": 2.5035787224769592,
+      "cpu_dispatch_wall_s_max": 2.75033435318619,
+      "cuda_stream_span_s_min": 3.169795140981675,
+      "cuda_stream_span_s_max": 3.4801996376514457,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((1024, 32), (256, 32))": 6,
+          "shapes:((24587, 32), (256, 32))": 6,
+          "shapes:((2048, 32), (512, 32))": 462,
+          "shapes:((1943, 32), (512, 32))": 42,
+          "shapes:((2048, 32), (186, 32))": 22,
+          "shapes:((1943, 32), (186, 32))": 2,
+          "shapes:((16384, 1, 32), (16384, 1, 32))": 158,
+          "shapes:((13002, 1, 32), (13002, 1, 32))": 2
+        },
+        "1": {
+          "shapes:((1024, 32), (256, 32))": 6,
+          "shapes:((24587, 32), (256, 32))": 6,
+          "shapes:((2048, 32), (512, 32))": 484,
+          "shapes:((1943, 32), (512, 32))": 44,
+          "shapes:((2048, 32), (80, 32))": 22,
+          "shapes:((1943, 32), (80, 32))": 2,
+          "shapes:((16384, 1, 32), (16384, 1, 32))": 132,
+          "shapes:((13869, 1, 32), (13869, 1, 32))": 2
+        },
+        "2": {
+          "shapes:((1024, 32), (256, 32))": 6,
+          "shapes:((24587, 32), (256, 32))": 6,
+          "shapes:((2048, 32), (512, 32))": 440,
+          "shapes:((1943, 32), (512, 32))": 40,
+          "shapes:((2048, 32), (18, 32))": 22,
+          "shapes:((1943, 32), (18, 32))": 2,
+          "shapes:((16384, 1, 32), (16384, 1, 32))": 100,
+          "shapes:((4207, 1, 32), (4207, 1, 32))": 2
+        },
+        "3": {
+          "shapes:((1024, 32), (256, 32))": 6,
+          "shapes:((24587, 32), (256, 32))": 6,
+          "shapes:((2048, 32), (512, 32))": 462,
+          "shapes:((1943, 32), (512, 32))": 42,
+          "shapes:((2048, 32), (425, 32))": 22,
+          "shapes:((1943, 32), (425, 32))": 2,
+          "shapes:((16384, 1, 32), (16384, 1, 32))": 104,
+          "shapes:((13796, 1, 32), (13796, 1, 32))": 2
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "full_curvature_loss",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1
+      },
+      "cpu_dispatch_wall_s_min": 5.964876424521208,
+      "cpu_dispatch_wall_s_max": 6.185158737003803,
+      "cuda_stream_span_s_min": 5.9648505859375,
+      "cuda_stream_span_s_max": 6.18512158203125,
+      "footprint_per_rank": {
+        "0": {
+          "valid_rows": 1307338,
+          "centres": 966
+        },
+        "1": {
+          "valid_rows": 1095213,
+          "centres": 1067
+        },
+        "2": {
+          "valid_rows": 823407,
+          "centres": 945
+        },
+        "3": {
+          "valid_rows": 865764,
+          "centres": 1077
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "full_reference_distances",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1
+      },
+      "cpu_dispatch_wall_s_min": 1.5213619070127606,
+      "cpu_dispatch_wall_s_max": 1.6403722185641527,
+      "cuda_stream_span_s_min": 1.5213756103515625,
+      "cuda_stream_span_s_max": 1.6403829345703125,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((24587, 32), (10938,))": 1
+        },
+        "1": {
+          "shapes:((24587, 32), (11344,))": 1
+        },
+        "2": {
+          "shapes:((24587, 32), (10258,))": 1
+        },
+        "3": {
+          "shapes:((24587, 32), (11177,))": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "hard_Sinkhorn",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1
+      },
+      "cpu_dispatch_wall_s_min": 0.002605486661195755,
+      "cpu_dispatch_wall_s_max": 0.0030161570757627487,
+      "cuda_stream_span_s_min": 0.002630079984664917,
+      "cuda_stream_span_s_max": 0.0030442240238189697,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((1024, 256),)": 1
+        },
+        "1": {
+          "shapes:((1024, 256),)": 1
+        },
+        "2": {
+          "shapes:((1024, 256),)": 1
+        },
+        "3": {
+          "shapes:((1024, 256),)": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "optimizer",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1
+      },
+      "cpu_dispatch_wall_s_min": 1.0912738386541605,
+      "cpu_dispatch_wall_s_max": 1.091344085521996,
+      "cuda_stream_span_s_min": 1.0913509521484375,
+      "cuda_stream_span_s_max": 1.091422607421875,
+      "footprint_per_rank": {
+        "0": {},
+        "1": {},
+        "2": {},
+        "3": {}
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "soft_allocation",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 6,
+        "1": 6,
+        "2": 6,
+        "3": 6
+      },
+      "cpu_dispatch_wall_s_min": 0.013948020525276661,
+      "cpu_dispatch_wall_s_max": 0.015206214040517807,
+      "cuda_stream_span_s_min": 0.014154848128557204,
+      "cuda_stream_span_s_max": 0.015419680446386337,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((1024, 256),)": 3,
+          "shapes:((24587, 256),)": 3
+        },
+        "1": {
+          "shapes:((1024, 256),)": 3,
+          "shapes:((24587, 256),)": 3
+        },
+        "2": {
+          "shapes:((1024, 256),)": 3,
+          "shapes:((24587, 256),)": 3
+        },
+        "3": {
+          "shapes:((1024, 256),)": 3,
+          "shapes:((24587, 256),)": 3
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "target_read_and_unpack",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 162,
+        "1": 136,
+        "2": 104,
+        "3": 108
+      },
+      "cpu_dispatch_wall_s_min": 4.201659533195198,
+      "cpu_dispatch_wall_s_max": 4.238333253189921,
+      "cuda_stream_span_s_min": 4.206225192852319,
+      "cuda_stream_span_s_max": 4.243038109488783,
+      "footprint_per_rank": {
+        "0": {
+          "rows": 2614676
+        },
+        "1": {
+          "rows": 2190426
+        },
+        "2": {
+          "rows": 1646814
+        },
+        "3": {
+          "rows": 1731528
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "triple_statistic",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 80,
+        "1": 67,
+        "2": 51,
+        "3": 53
+      },
+      "cpu_dispatch_wall_s_min": 0.20871944725513458,
+      "cpu_dispatch_wall_s_max": 0.3216374097391963,
+      "cuda_stream_span_s_min": 0.2098201296329498,
+      "cuda_stream_span_s_max": 0.32335388708114626,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((24587, 32),)": 80
+        },
+        "1": {
+          "shapes:((24587, 32),)": 67
+        },
+        "2": {
+          "shapes:((24587, 32),)": 51
+        },
+        "3": {
+          "shapes:((24587, 32),)": 53
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    },
+    {
+      "stage": "training_step",
+      "phase": "whole_catalogue_forward",
+      "ranks_present": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "calls_per_rank": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1
+      },
+      "cpu_dispatch_wall_s_min": 87.87811189889908,
+      "cpu_dispatch_wall_s_max": 88.94622370321304,
+      "cuda_stream_span_s_min": 87.8775703125,
+      "cuda_stream_span_s_max": 88.94546875,
+      "footprint_per_rank": {
+        "0": {
+          "shapes:((24587, 768),)": 1
+        },
+        "1": {
+          "shapes:((24587, 768),)": 1
+        },
+        "2": {
+          "shapes:((24587, 768),)": 1
+        },
+        "3": {
+          "shapes:((24587, 768),)": 1
+        }
+      },
+      "phase_peak_bytes": null,
+      "rank_peak_bytes_upper_bound": 9164071424
+    }
+  ],
+  "executed_sources": {
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/assignment_floor.py": "29ce6083bd8ceafa297d610f5780bea014e0af2417431fe82c3d8ed12f0c85b6",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/profile_entry.py": "0ce1ba101fd8f92e61dd377881209ed13838b489ef7f71bac470af70cfcdb280",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/train_config.py": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/train_rqvae.py": "6efe2353a64bc5ed1595253c94214ba7c7847415e658bfa376f11be0fd479865",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/validation_entry.py": "fb8362c3e337fd1cb84fd3739e67ff3ea6f6e59798a5970210f4767df4fa55e8",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/codebook.py": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/reconstruction.py": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/commitment.py": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/quantization.py": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/__init__.py": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/losses/_pairs.py": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/model.py": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/layers.py": "9a61bd93018711972f6562176f5b46ec16908c6900102890b188174289bea2fa",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/geometry.py": "1478e2cc92dbfa13478b3eecc9a74c15a1e33a0338c8fdb0b72339324d6c1d9e",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/mechanism.py": "337765e1a081f5778db1f5588cea5a697073e4f28ed21ace1cc8efd1fc224b19",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/provenance.py": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/curvature.py": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure_gate.py": "74e307fb00f72cc847c2ed66f3bcfa329e55243960537a6fec89ec4ccdf50802",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/__init__.py": "fc51b6b47b052833e3bb249a00a581da6a6f27bb4905fb58237a2865354c0f81",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/attention.py": "a227155453e1d7c79cb9cf5c59a8a5e3f7defa88895d784ae499a34d25d42ac6",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/selection.py": "aaf40e7d14eced220dae00f6f2aa14cb33f5d911c41fb94b8d868dcecf32d524",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py": "09d59072ce77e869b505423dbd00e9c529bd97f1cb8f1a1d6691c71f9fdc8064",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/utils.py": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/distances/distance.py": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/distances/__init__.py": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_provenance.py": "f66ea883e455f20e2b10cbd120a68d878ed14d7a8468a5fc8f42ff5c0c3d29d7",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_attention.py": "bb7d7f20102955b4c6fe626d531e37c23911118ce15d9cf727007fade0dcb76e",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_structure.py": "1d642b83be753213453ab6262c01a251ec4cf08ec5348954428e7de9114e6b0f",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_execution.py": "3342ab2ef7b711570bf7230b7b935c4f513dc6d1b2665b9425671492971bc025",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_reference.py": "f4fb492aff0301419ee6fe0ee06ca7943c639b552e3d150a2f1cd45d3bad7cc2",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_attention_pipeline.py": "3a0c3049f5126090473301f57dd2390ff1bcbd6d3ff0a7c3807a702ed5740237",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_curvature_loss.py": "d260562cb8990411a1680ac0792006db787619ddafcc5a6c54d09fa13142f633",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mutations.py": "7a121e8d4739035f462b206746ced069cf96bd1ad310d183ff1620f29e3bcb73",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/reference.py": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_mechanism.py": "d348fb86b3576709d3f49d339550edc47d83d5ea27899d99cc26868ebea3f6e5",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_known_answers.py": "4eda7c1d194193714be34b548454af0eb4a36a418ee8f90c24d7039921090938",
+    "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+    "assets/manifest.json": "23a0a6e2c28795c9b768d702e048c5bbd1fe31f749ad0ed3860709f2ef457463",
+    "tools/issue252/profiling.py": "bfa080290f44f0d79069f245298cbb009a782e392df914639eab559099b96bbf",
+    "tools/issue252/launch_profile.py": "f07b0976020ffe56e19e678fc409fe5aba889688be30d68d0f3ddada7ea03f1d",
+    "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+    "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+    "tools/research/stage2/launcher.py": "2f4f4e1fb0b80d3c56e67ee7b526d4d873685c30e21cb547b36a20bbc3bb4dc3"
+  },
+  "raw_reports": {
+    "results/research/issue252/profiling_baseline/rank_0.json": "df0f7db8b3248011527d2aab76738add11305c4b16e41173f4fe41f6daac415b",
+    "results/research/issue252/profiling_baseline/rank_1.json": "f3a3f90cd3fa90633441a4c2a68aecfde2c1cf383fcedb8b383e3733d810eafd",
+    "results/research/issue252/profiling_baseline/rank_2.json": "293f738588c460768ff2d647df79f47f8257e6f5e166d411510144ec3265f50e",
+    "results/research/issue252/profiling_baseline/rank_3.json": "2f3e9be6dbb26b41bc5088f45dcbe1189df0558a22eefdaed9e7825c520d90bc"
+  },
+  "executed_source_snapshot": {
+    "path": "results/research/issue252/profiling_baseline/source_snapshot.tar.gz",
+    "sha256": "2aa193ccb031e5fc1002d8b402291901d493be69e961667ad9013dbabb058255"
+  },
+  "historical_timing": {
+    "path": "results/research/issue252/HISTORICAL_TIMING.json",
+    "sha256": "b1faf9bae689a4fee945f2e5d5c934785f4e46f044ba000ac4101babb4bfd541"
+  },
+  "collector": {
+    "path": "tools/issue252/collect_profile.py",
+    "sha256": "68b8d3511ec7d2083202e13df08d67ecac8c5a6d73cefa4fa78eccec59393880"
+  },
+  "limits": [
+    "Nested inclusive phase spans must not be added.",
+    "One step is not a completed epoch or a throughput credential.",
+    "Only phase-global allocator peaks were recorded; phase peaks are unmeasured, with observed rank-peak upper bounds.",
+    "Raw legacy device operator fields were mislabeled native microseconds; corrected by1e6 here, not by rerunning training.",
+    "Full diagnostic command took1233.49s including profiler collection/serialization; initialization/step scopes exclude profiler teardown."
+  ]
+}

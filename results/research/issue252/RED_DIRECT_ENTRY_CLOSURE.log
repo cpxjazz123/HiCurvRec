@@ -1,0 +1,23 @@
+test_direct_entry_refusal_cannot_fall_back_to_single_card_training (tools.issue252.test_relocated_root.RelocatedRootTests) ... FAIL
+test_actual_adapter_dependency_is_bound_even_when_trainer_does_not_import_it (tools.issue252.test_execution_closure.ExecutionClosureTests) ... FAIL
+
+======================================================================
+FAIL: test_direct_entry_refusal_cannot_fall_back_to_single_card_training (tools.issue252.test_relocated_root.RelocatedRootTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_relocated_root.py", line 34, in test_direct_entry_refusal_cannot_fall_back_to_single_card_training
+    train_rqvae._launch_via_torchrun()
+AssertionError: RuntimeError not raised
+
+======================================================================
+FAIL: test_actual_adapter_dependency_is_bound_even_when_trainer_does_not_import_it (tools.issue252.test_execution_closure.ExecutionClosureTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_execution_closure.py", line 18, in test_actual_adapter_dependency_is_bound_even_when_trainer_does_not_import_it
+    self.assertEqual(sources.get('tools/adapter_dependency.py'),sha256(dependency),
+AssertionError: None != '01afd17aa52c239d0c54efade3f284bce3dc2853680b5bba25849b20187bb717' : actual framework adapter imports must be included in executed-source provenance
+
+----------------------------------------------------------------------
+Ran 2 tests in 2.655s
+
+FAILED (failures=2)

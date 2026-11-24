@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "fixtures": 180,
+  "shared_existing_refusals": 0,
+  "scope": "CPU numerical compatibility of frozen floor1 hard IDs and metadata; GPU performance/whole training still unverified",
+  "frozen_source": {
+    "path": "stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/assignment_floor.py",
+    "sha256": "29ce6083bd8ceafa297d610f5780bea014e0af2417431fe82c3d8ed12f0c85b6"
+  },
+  "new_source": {
+    "path": "tools/research/stage2/anticollapse/floor.py",
+    "sha256": "2cda9f1b63c2076f8cf37cb2925f4bf139c0d871b3b4952143527f29d10ffb20"
+  }
+}

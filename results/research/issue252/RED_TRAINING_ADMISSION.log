@@ -1,0 +1,104 @@
+test_current_source_inventory_policy_contract_and_asset_drift_refused (tools.issue252.test_training_admission.AdmissionTests) ... ERROR
+test_failing_or_missing_rank_and_recipe_refused (tools.issue252.test_training_admission.AdmissionTests) ... ERROR
+test_forged_performance_pass_missing_rank_and_coverage_refused (tools.issue252.test_training_admission.AdmissionTests) ... ERROR
+test_machine_gate_and_worker_cannot_bypass_missing_credential (tools.issue252.test_training_admission.AdmissionTests) ... ERROR
+test_missing_math_gradient_ddp_switch_and_export_evidence_refused (tools.issue252.test_training_admission.AdmissionTests) ... ERROR
+test_missing_receipt_refuses_before_workspace_reservation (tools.issue252.test_training_admission.AdmissionTests) ... ERROR
+test_round_trip_and_hash_bound_reports (tools.issue252.test_training_admission.AdmissionTests) ... ERROR
+test_missing_wrong_source_or_checkpoint_binding_refuses (tools.issue252.test_training_admission.ArchiveGateTests) ... ERROR
+test_nested_binding_created_with_stage2_interpreter_and_verified (tools.issue252.test_training_admission.ArchiveGateTests) ... ERROR
+test_current_frozen_floor_is_verify_only (tools.issue252.test_training_admission.FrozenFloorTests) ... ERROR
+test_frozen_stale_floor_refuses_without_mutating_or_spawning (tools.issue252.test_training_admission.FrozenFloorTests) ... ERROR
+
+======================================================================
+ERROR: test_current_source_inventory_policy_contract_and_asset_drift_refused (tools.issue252.test_training_admission.AdmissionTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_training_admission.py", line 16, in setUp
+    from tools.issue252 import training_admission as admission
+ImportError: cannot import name 'training_admission' from 'tools.issue252' (unknown location)
+
+======================================================================
+ERROR: test_failing_or_missing_rank_and_recipe_refused (tools.issue252.test_training_admission.AdmissionTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_training_admission.py", line 16, in setUp
+    from tools.issue252 import training_admission as admission
+ImportError: cannot import name 'training_admission' from 'tools.issue252' (unknown location)
+
+======================================================================
+ERROR: test_forged_performance_pass_missing_rank_and_coverage_refused (tools.issue252.test_training_admission.AdmissionTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_training_admission.py", line 16, in setUp
+    from tools.issue252 import training_admission as admission
+ImportError: cannot import name 'training_admission' from 'tools.issue252' (unknown location)
+
+======================================================================
+ERROR: test_machine_gate_and_worker_cannot_bypass_missing_credential (tools.issue252.test_training_admission.AdmissionTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_training_admission.py", line 16, in setUp
+    from tools.issue252 import training_admission as admission
+ImportError: cannot import name 'training_admission' from 'tools.issue252' (unknown location)
+
+======================================================================
+ERROR: test_missing_math_gradient_ddp_switch_and_export_evidence_refused (tools.issue252.test_training_admission.AdmissionTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_training_admission.py", line 16, in setUp
+    from tools.issue252 import training_admission as admission
+ImportError: cannot import name 'training_admission' from 'tools.issue252' (unknown location)
+
+======================================================================
+ERROR: test_missing_receipt_refuses_before_workspace_reservation (tools.issue252.test_training_admission.AdmissionTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_training_admission.py", line 16, in setUp
+    from tools.issue252 import training_admission as admission
+ImportError: cannot import name 'training_admission' from 'tools.issue252' (unknown location)
+
+======================================================================
+ERROR: test_round_trip_and_hash_bound_reports (tools.issue252.test_training_admission.AdmissionTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_training_admission.py", line 16, in setUp
+    from tools.issue252 import training_admission as admission
+ImportError: cannot import name 'training_admission' from 'tools.issue252' (unknown location)
+
+======================================================================
+ERROR: test_missing_wrong_source_or_checkpoint_binding_refuses (tools.issue252.test_training_admission.ArchiveGateTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_training_admission.py", line 227, in test_missing_wrong_source_or_checkpoint_binding_refuses
+    result=module.stage3_archive_binding(Path('/result/item_sids.json'),run,Path('/result/export_manifest.json'))
+AttributeError: module 'issue252_workspace_server' has no attribute 'stage3_archive_binding'
+
+======================================================================
+ERROR: test_nested_binding_created_with_stage2_interpreter_and_verified (tools.issue252.test_training_admission.ArchiveGateTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_training_admission.py", line 215, in test_nested_binding_created_with_stage2_interpreter_and_verified
+    result=module.stage3_archive_binding(Path('/result/item_sids.json'),run,Path('/result/export_manifest.json'))
+AttributeError: module 'issue252_workspace_server' has no attribute 'stage3_archive_binding'
+
+======================================================================
+ERROR: test_current_frozen_floor_is_verify_only (tools.issue252.test_training_admission.FrozenFloorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_training_admission.py", line 204, in test_current_frozen_floor_is_verify_only
+    self.assertFalse(launcher.prepare_floor(tree,frozen=True)['changed'])
+AttributeError: module 'tools.research.stage2.launcher' has no attribute 'prepare_floor'
+
+======================================================================
+ERROR: test_frozen_stale_floor_refuses_without_mutating_or_spawning (tools.issue252.test_training_admission.FrozenFloorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue252/test_training_admission.py", line 190, in test_frozen_stale_floor_refuses_without_mutating_or_spawning
+    launcher.prepare_floor(tree,frozen=True)
+AttributeError: module 'tools.research.stage2.launcher' has no attribute 'prepare_floor'
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.152s
+
+FAILED (errors=11)

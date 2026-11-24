@@ -1,0 +1,12 @@
+test_directed_sparse_layer_hand_answer (test_sparse_structure.SparseStructureTests) ... /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/tests/test_sparse_structure.py:19: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+  incoming=torch.sparse_coo_tensor(torch.tensor([[1,2],[0,0]]),torch.ones(2,dtype=torch.double),(3,3)).to_sparse_csr()
+ok
+test_forward_padding_cross_group_and_isolate (test_sparse_structure.SparseStructureTests) ... ok
+test_item_order_duplicates_chunks_and_distinct_hops (test_sparse_structure.SparseStructureTests) ... ok
+test_registered_store_never_builds_missing_operators (test_sparse_structure.SparseStructureTests) ... ok
+test_sparse_matches_independent_dense_input_and_parameter_gradients (test_sparse_structure.SparseStructureTests) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 31.319s
+
+OK

@@ -158,6 +158,45 @@ class ArchiveBindingTests(unittest.TestCase):
         self.assertEqual(archive.read_bytes(),
                          (self.root / "second/Arm/stage2_source.tar.gz").read_bytes())
         self.assertIn("Arm/stage2_source.tar.gz", files)
+    def test_nested_immutable_generation_archives_its_adapter_and_exact_inputs(self):
+        import torch
+        from tools.issue252.run_workspace import freeze_run
+        tree=self.root/'stage2_RQ-VAE/Candidate'
+        (tree/'model').mkdir(parents=True)
+        (tree/'train_rqvae.py').write_text('VALUE=1\n')
+        (tree/'model/__init__.py').write_text('VALUE=2\n')
+        run=freeze_run(self.root,tree,'actual-run','Arm')
+        self.source=Path(run['source']);self.result=Path(run['result'])
+        self.sid=self.result/'item_sids.json';self.sid.write_text('{"0":[0,0,0,0]}')
+        self.checkpoint=self.result/'rqvae_best.pth'
+        self.payload.update(source_tree=str(self.source),provenance={
+            'candidate_sources':archive_audit.source_hashes(self.source),
+            'infrastructure_sources':{}})
+        torch.save(self.payload,self.checkpoint)
+        self.export=self.result/'export_manifest.json'
+        self.export.write_text(json.dumps({
+            'schema':'genrec.stage2.export_manifest/1','tree':str(self.source),
+            'checkpoint':str(self.checkpoint),'checkpoint_sha256':archive_audit.sha256(self.checkpoint),
+            'sid':str(self.sid),'sid_sha256':archive_audit.sha256(self.sid),
+            'tokens_match':True,'same_l3':1.0,'differing_items':0}))
+        self.binding=self.result/'archive_binding.json'
+        archive_audit.create_binding(self.source,self.checkpoint,self.sid,self.export,
+                                     output=self.binding,repo=self.root)
+        self.update_final(sid_path=str(self.sid),sid_sha256=archive_audit.sha256(self.sid),
+                          stage2_checkpoint=str(self.checkpoint),
+                          stage2_checkpoint_sha256=archive_audit.sha256(self.checkpoint),
+                          archive_binding=str(self.binding),
+                          archive_binding_sha256=archive_audit.sha256(self.binding))
+        with patch.object(self.module,'REPO',self.root):
+            self.stage()
+            with tarfile.open(self.root/'staging/Arm/stage2_source.tar.gz') as bundle:
+                self.assertEqual(bundle.extractfile('execution_entry.py').read(),
+                                 Path(run['entry']).read_bytes())
+            with patch.object(self.module,'_latest_test_final',return_value=self.final):
+                with self.assertRaisesRegex(ValueError,'arm'):
+                    self.module.stage('WrongArm',self.root/'crossed-arm')
+        self.assertEqual({p.name for p in (self.root/'staging').iterdir()},
+                         {'Arm','item_sids.json','rqvae_best.pth','recall.json'})
 
     def test_original_evidence_key_is_not_clobbered(self):
         self.update_final(stage3_archive_evidence={"already": "owned"})
@@ -169,6 +208,20 @@ class ArchiveBindingTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source"):
             archive_audit.create_binding(self.source, self.checkpoint, self.sid,
                                          self.export, repo=self.root)
+
+    def test_mathematical_contract_is_issue252_and_archived(self):
+        current = self.root / "results/research/issue252/CONTRACT.md"
+        previous = self.root / "results/research/issue251/CONTRACT.md"
+        current.parent.mkdir(parents=True)
+        previous.parent.mkdir(parents=True)
+        current.write_text("frozen issue252 mathematics\n")
+        previous.write_text("different issue251 contract\n")
+        provenance = {"mathematical_contract_sha256": archive_audit.sha256(current)}
+        self.assertEqual(archive_audit._repository_configs(provenance, self.root),
+                         {"results/research/issue252/CONTRACT.md": archive_audit.sha256(current)})
+        current.write_text("changed current contract\n")
+        with self.assertRaisesRegex(ValueError, "repository config"):
+            archive_audit._repository_configs(provenance, self.root)
 
     def test_binding_refuses_crossed_export_and_missing_run_identity(self):
         import torch
