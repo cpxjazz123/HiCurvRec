@@ -111,22 +111,16 @@ def structure_forward(model, embeddings, captured, *, draw: dict, export_style: 
         "export_style": bool(export_style),
     }
     return objective, diagnostics, costs
-
-
 def cost_slopes(latent: torch.Tensor, tokens: torch.Tensor, codebook: torch.Tensor):
     """`d cost/d latent` and `d cost/d c` at the assigned codewords, for squared Euclidean.
-
     `cost = ||z - c||^2` => `d/dz = 2(z - c)` and `d/dc = -2(z - c)`. This is the metric the
     quantizer was handed; the branch reads it rather than replacing it.
     """
     delta = latent.unsqueeze(1) - codebook[tokens.long()].unsqueeze(2)   # (B, D, K)
     return 2.0 * delta, -2.0 * delta
-
-
 def route_cost_gradient(model, latent: torch.Tensor, costs, tokens: torch.Tensor,
                         tau: float = TAU) -> dict:
     """Report where the structure gradient landed; the encoder is reached through the metric.
-
     The cost is now `metric(latent, codebook)`, so `backward()` on the objective already carries
     the gradient into the encoder -- there is no detached leaf to route. The codebook is frozen for
     this term (issue #232 option 2, the measured `CodebookCollapse`), so it is reported as zero and
@@ -144,8 +138,6 @@ def route_cost_gradient(model, latent: torch.Tensor, costs, tokens: torch.Tensor
             "codebook_grad_norms": [0.0, 0.0, 0.0],
             "encoder_grad_norm": encoder_norm,
             "codebook_frozen": True}
-
-
 #: Gradient-scale normalisation for the structure step. Not a learning rate and not a weight on
 #: the objective: the objective's own slope varies by eight orders of magnitude across the run
 #: (measured: 2.6e+02 on the frozen checkpoint vs 1.9e-06 in the first run), and under AdamW a raw
@@ -155,8 +147,6 @@ def route_cost_gradient(model, latent: torch.Tensor, costs, tokens: torch.Tensor
 #: probabilities happen to sit, which is what the separate-step design already promised: the step
 #: size is the weight, so it must not ride on the objective's scale.
 GRADIENT_RMS = 1.0
-
-
 #: Step-length budget for the encoder, in the units the metric is measured in. `verify_separation`
 #: compares `min_pairwise_codeword_distance / sqrt(mean assigned cost)`, and on the frozen checkpoint
 #: the assigned-codeword resolution is 0.0458 -- so a step whose LENGTH is ~0.1 of that resolution
@@ -168,8 +158,6 @@ GRADIENT_RMS = 1.0
 #: 0.13-0.16 within ten steps, because AdamW's m/sqrt(v) makes the step size independent of the
 #: gradient's own magnitude).
 LATENT_STEP_FRACTION = 0.1
-
-
 def normalise_latent_step(model, latent_norm: float, cost_scale: float) -> float:
     """Clamp the encoder step so the latent moves by at most `LATENT_STEP_FRACTION` of resolution."""
     params = [p for p in model.encoder.parameters() if p.grad is not None]
@@ -182,7 +170,6 @@ def normalise_latent_step(model, latent_norm: float, cost_scale: float) -> float
     # |J| * lr * sqrt(number of encoder parameters); the lr budget that keeps it within the
     # fraction of the resolution is what the trainer multiplies into the step size.
     return float(LATENT_STEP_FRACTION) * float(cost_scale) / max(float(latent_norm), 1e-12)
-
 
 def normalise_gradients(model, *, scale: float = GRADIENT_RMS) -> float:
     """Rescale every parameter gradient so the joint RMS equals `scale`; returns the factor."""
@@ -204,8 +191,6 @@ def apply_structure_step(model, latent, costs, tokens, tau: float = TAU) -> dict
     routed = route_cost_gradient(model, latent, costs, tokens, tau)
     latent.backward(routed["latent_grad"])
     for level, rows in enumerate(routed["codebook_grads"]):
-        weight = model.rq.vq_layers[level].embed.weight
-        weight.grad = rows if weight.grad is None else weight.grad + rows
     return routed
 
 
@@ -247,7 +232,6 @@ def run_structure_step(model, embeddings, draw, *, export_style: bool = False,
     routed["encoder_grad_norm"] = float(sum(
         p.grad.norm() for p in model.encoder.parameters() if p.grad is not None))
     return routed
-
 
 __all__ = ["StructureBranch", "structure_forward", "route_cost_gradient", "apply_structure_step",
            "run_structure_step", "hard_codes_of", "level_probability", "cost_slopes",

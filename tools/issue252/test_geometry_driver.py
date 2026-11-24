@@ -10,7 +10,7 @@ import unittest
 ROOT = next(p for p in Path(__file__).resolve().parents
             if (p / 'stage2_RQ-VAE').is_dir()
             and (p / 'tools/research/stage2/contract.py').is_file())
-ENTRY = ROOT / 'stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/geometry_validation_entry.py'
+ENTRY = ROOT / 'stage2_RQ-VAE/_archive/TIGER_gnn_attention_sectional_rq/geometry_validation_entry.py'
 DRIVER = ROOT / 'tools/issue252/launch_geometry_validation.py'
 
 

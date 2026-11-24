@@ -1830,7 +1830,7 @@ def tool_stage2_start(source_dir: str, verification_id: str = "") -> dict:
             apply_floor(tree)
             check_receipt(REPO, tree)
         except (OSError, ValueError, RuntimeError) as exc:
-            return {"started": False, "refused": "Issue252 training admission: " + str(exc),
+            return {"started": False, "refused": "Stage2 training admission: " + str(exc),
                     "tree": str(tree)}
     entry, verdicts = tree_entrypoint(tree)
     python = tree_python(tree)
@@ -2970,7 +2970,7 @@ def machine_admission(tree: Path) -> dict:
             apply_floor(tree)
             credential = check_receipt(REPO, tree)
         except (OSError, ValueError, RuntimeError) as exc:
-            return {"passed": False, "refused": "Issue252 training admission: " + str(exc),
+            return {"passed": False, "refused": "Stage2 training admission: " + str(exc),
                     "checks": [], "tree": str(tree)}
     report = _conformance_report(tree, source_digest(tree))
     if required(tree):

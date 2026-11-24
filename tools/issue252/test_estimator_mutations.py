@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 ROOT=next(p for p in Path(__file__).resolve().parents if (p/'stage2_RQ-VAE').is_dir())
-PATH=ROOT/'stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/estimator.py'
+PATH=ROOT/'stage2_RQ-VAE/_archive/TIGER_gnn_attention_sectional_rq/model/estimator.py'
 
 
 def squared(a,b):return (a[:,None,:]-b[None,:,:]).square().sum(-1)

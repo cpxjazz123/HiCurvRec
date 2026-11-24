@@ -139,13 +139,32 @@ def _manifest_path(value, repo):
     return path.resolve() if path.is_absolute() else (repo / path).resolve()
 
 
+def _contract_path(provenance, repo):
+    """The contract document a checkpoint was bound to.
+
+    A checkpoint names the document it hashed. Older checkpoints name only the
+    digest, so the document is found by that exact hash inside the repository.
+    """
+    recorded = provenance.get('mathematical_contract_path')
+    if recorded:
+        relative = Path(recorded)
+        if relative.is_absolute() or '..' in relative.parts:
+            raise ValueError('invalid checkpoint contract path: ' + str(recorded))
+        return str(relative)
+    digest = provenance['mathematical_contract_sha256']
+    for path in sorted((Path(repo)/'results/research').glob('issue*/CONTRACT.md')):
+        if sha256(path) == digest:
+            return str(path.relative_to(repo))
+    raise ValueError('checkpoint mathematical contract hash matches no contract document')
+
+
 def _repository_configs(provenance, repo):
     """Small runtime configs already bound by the checkpoint (never asset binaries)."""
     hashes = {}
     if 'asset_manifest_sha256' in provenance:
         hashes['assets/manifest.json'] = provenance['asset_manifest_sha256']
     if 'mathematical_contract_sha256' in provenance:
-        hashes['results/research/issue252/CONTRACT.md'] = provenance['mathematical_contract_sha256']
+        hashes[_contract_path(provenance, repo)] = provenance['mathematical_contract_sha256']
     for name, digest in provenance.get('assets', {}).items():
         relative = Path(name)
         if relative.is_absolute() or '..' in relative.parts:

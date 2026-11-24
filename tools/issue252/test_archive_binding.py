@@ -220,8 +220,28 @@ class ArchiveBindingTests(unittest.TestCase):
         self.assertEqual(archive_audit._repository_configs(provenance, self.root),
                          {"results/research/issue252/CONTRACT.md": archive_audit.sha256(current)})
         current.write_text("changed current contract\n")
-        with self.assertRaisesRegex(ValueError, "repository config"):
+        # The contract document is resolved by the digest the checkpoint holds,
+        # so a changed document is no longer the bound one at all.
+        with self.assertRaisesRegex(ValueError, "contract"):
             archive_audit._repository_configs(provenance, self.root)
+
+    def test_checkpoint_names_the_contract_document_it_was_bound_to(self):
+        current = self.root / "results/research/issue253/CONTRACT.md"
+        current.parent.mkdir(parents=True)
+        current.write_text("frozen issue253 mathematics\n")
+        digest = archive_audit.sha256(current)
+        named = {"mathematical_contract_path": "results/research/issue253/CONTRACT.md",
+                 "mathematical_contract_sha256": digest}
+        self.assertEqual(archive_audit._repository_configs(named, self.root),
+                         {"results/research/issue253/CONTRACT.md": digest})
+        # A digest that matches no contract document is not a binding.
+        with self.assertRaisesRegex(ValueError, "contract"):
+            archive_audit._repository_configs({"mathematical_contract_sha256": "0"*64}, self.root)
+        for unsafe in ("/etc/passwd", "../escape/CONTRACT.md"):
+            with self.subTest(path=unsafe), self.assertRaisesRegex(ValueError, "contract"):
+                archive_audit._repository_configs(
+                    {"mathematical_contract_path": unsafe,
+                     "mathematical_contract_sha256": digest}, self.root)
 
     def test_binding_refuses_crossed_export_and_missing_run_identity(self):
         import torch

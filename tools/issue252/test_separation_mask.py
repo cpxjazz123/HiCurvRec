@@ -25,7 +25,7 @@ class MaskWrites(TorchDispatchMode):
 
 def implementations():
     spec = importlib.util.spec_from_file_location('issue252_floor_mask_candidate',
-        ROOT / 'stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/assignment_floor.py')
+        ROOT / 'stage2_RQ-VAE/_archive/TIGER_gnn_attention_sectional_rq/assignment_floor.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return (floor._min_pairwise_distance, module._min_pairwise_distance)

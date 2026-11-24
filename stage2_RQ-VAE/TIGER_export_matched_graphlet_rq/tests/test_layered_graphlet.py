@@ -189,7 +189,6 @@ def test_c16_export_extension_is_unchanged():
 
 
 # --- C39/C40/C41: gradients on the real model --------------------------------------------------
-def _small_model():
     import train_rqvae  # noqa: PLC0415
     from model import RQVAE  # noqa: PLC0415
 
@@ -224,7 +223,6 @@ def test_c39_c40_structure_step_reaches_encoder_and_codebooks():
     """Run on the FROZEN checkpoint: an untrained model has no structure at all, so every hinge
     sits at its ceiling and the gradient is exactly 0 -- the first 3000-epoch run proved that
     `> 0` on a random model proves nothing (its objective was constant 1.3 for 18,000 steps)."""
-    torch.manual_seed(3)
     model = _trained_model()
     branch = LW.StructureBranch(_banks(), instance_batch=32, seed=1)
     embeddings = _real_embeddings()
@@ -283,7 +281,6 @@ def test_c41_a_satisfiable_instance_improves_its_hard_delta():
         optimizer.step()
     after = _hard_delta(model, embeddings, draw)
     assert after >= before, f"hard S fell from {before} to {after}"
-
 
 def _hard_delta(model, embeddings, draw):
     with torch.no_grad():

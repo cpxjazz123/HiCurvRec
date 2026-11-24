@@ -12,7 +12,7 @@ import numpy as np
 ROOT = next(p for p in Path(__file__).resolve().parents
             if (p / 'tools/research/stage2/contract.py').is_file())
 SPEC = importlib.util.spec_from_file_location('structure252_integrity', ROOT /
-    'stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/structure.py')
+    'stage2_RQ-VAE/_archive/TIGER_gnn_attention_sectional_rq/model/structure.py')
 structure = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(structure)
 

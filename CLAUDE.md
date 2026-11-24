@@ -16,7 +16,7 @@
 | MCP 服务 | 三个:`stage2`(`tools/stage2/server.py` → `stage2_start/status/stop`)、`stage3`(`tools/stage3/server.py` → `stage3_start/status`)、`genrec`(`tools/genrec-mcp/server.py` → `verification_check`) |
 | `tools/research/` | 只保留启动与准入内核(§94),没有轮次、Agent、差分与科学分析模块 |
 | 数据 | `results/stage0_build_parquet/`(items 24,587;train 396,958)+ `stage1_GeneEmbedding/output/sentence_t5.npy` |
-| 活跃臂 | `stage2_RQ-VAE/TIGER_graphlet_wide_l1_rq`(3000 epoch 完成,collision 0.0521),Stage3 尚未启动 |
+| 活跃臂 | `stage2_RQ-VAE/TIGER_three_expert_attention_rq`(#253,三专家 {-1,0,+1} 完整双尺度 ego;正式 Stage2 3000 epoch 完成,Stage3 已派发)。旧机制均在 `_archive/` |
 | 冻结基线 | `stage2_RQ-VAE/baseline/TIGER_RQ-VAE`(只读,新臂唯一复制来源) |
 | **Infra 资产** | **`assets/`**(仓库根):全量截面曲率 `v4-full-sectional-248` = 28,391,948 行三元组表(13 shard)+ 逐商品曲率分布 + 逐节点精确距离直方图 + 节点矩 + 查询索引 + `manifest.json`(62 项)+ `coverage.json`。详见 §3a |
 

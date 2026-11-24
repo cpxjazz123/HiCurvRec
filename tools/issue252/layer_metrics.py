@@ -100,7 +100,19 @@ def validation_metrics(sids, examples):
             'conditional_prefix_survival_difference': difference}
 
 
-def record_layers(sid_path, *, repo=ROOT):
+def resolve_arm(repo, sid, arm=None):
+    """The arm that owns this SID: an explicit value, else the immutable run's
+    own arm, else the historical constant for a pre-workspace result path."""
+    from tools.issue252.run_workspace import run_from_sid
+    if arm is not None:
+        if not isinstance(arm, str) or not arm.strip():
+            raise ValueError('explicit arm must be a nonempty string')
+        return arm
+    run = run_from_sid(Path(repo).resolve(), Path(sid).resolve())
+    return run['arm'] if run is not None else ARM
+
+
+def record_layers(sid_path, *, repo=ROOT, arm=None):
     import pyarrow.parquet as pq
     from tools.issue252.final_evaluation import load_sid
 
@@ -110,6 +122,7 @@ def record_layers(sid_path, *, repo=ROOT):
     binding = sid.with_name('archive_binding.json')
     receipt = json.loads(binding.read_text())
     validate_binding(binding, sid, sid.with_name('rqvae_best.pth'), receipt['source_tree'])
+    arm = resolve_arm(repo, sid, arm)
     rows = load_sid(sid, 24587, (256, 256, 256))
     records = {}
     for name in ('train', 'valid'):
@@ -117,8 +130,8 @@ def record_layers(sid_path, *, repo=ROOT):
         records[name] = {'path': str(path), 'sha256': sha256(path)}
     examples = pq.read_table(records['valid']['path'], columns=['history', 'seen_history', 'target']).to_pylist()
     digest = sha256(sid)
-    output = repo / 'results/stage2_RQ-VAE' / ARM / 'stage2_metrics' / (digest + '.json')
-    report = {'schema': 'genrec.issue252.layer_metrics/1', 'arm': ARM, 'run_id': receipt['run_id'],
+    output = repo / 'results/stage2_RQ-VAE' / arm / 'stage2_metrics' / (digest + '.json')
+    report = {'schema': 'genrec.issue252.layer_metrics/1', 'arm': arm, 'run_id': receipt['run_id'],
               'sid': {'path': str(sid), 'sha256': digest}, 'inputs': records,
               'catalogue': catalogue_metrics(rows), 'validation': validation_metrics(rows, examples),
               'output': str(output), 'read_stage3_scores': False,

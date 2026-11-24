@@ -15,7 +15,7 @@ from tools.issue252.training_admission import source_binding
 
 ROOT = next(p for p in Path(__file__).resolve().parents
             if (p / 'tools/research/stage2/contract.py').is_file())
-TREE = ROOT / 'stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq'
+TREE = ROOT / 'stage2_RQ-VAE/_archive/TIGER_gnn_attention_sectional_rq'
 OUTPUT = ROOT / 'results/research/issue252/contract_tests'
 COMMAND = [sys.executable, '-m', 'tools.issue252.run_contract_tests']
 

@@ -1,0 +1,14 @@
+{
+  "status": "MEASURED_NO_NEW_PERSISTENT_ASSET",
+  "scope": "Actual immutable full-target StructuralSampler, 180 original steps times four rank identities; CPU sequential preparation, not a GPU throughput benchmark",
+  "draws": 720,
+  "epochs": 30,
+  "prepare_seconds": 0.5638504661619663,
+  "retrieval_seconds": 0.0003732433542609215,
+  "array_bytes": 3041344,
+  "sampler_source_sha256": "1bc4a1fda6276a4e31f7ba7ed69d5a33cb83bc8d0f241471d67a8b79a7f6ddd0",
+  "command": "Stage2 Python: load actual targets.npy, target_offsets.npy, node_moments.npz; StructuralSampler.draw(step,rank,4,track=False) for step in range(180), rank in range(4); time generation and traversal",
+  "exit_code": 0,
+  "decision": "No net whole-run saving demonstrated by materializing a single-use schedule: preparation still performs every original draw. Do not create duplicate persistent assets. Four-rank on-device static topology and immutable six-feature means are reused. Host endpoints are determined before asynchronous transfers; original RNG, order and receipt are checked by test_sample_indices. Per-rank training overhead is not the sequential four-rank total divided by epochs.",
+  "not_claimed": ["Full schedule asset exists", "Measured GPU speedup from this CPU experiment", "Preparation is free", "Precomputation cannot help with overlap"]
+}

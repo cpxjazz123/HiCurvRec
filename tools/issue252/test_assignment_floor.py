@@ -13,7 +13,7 @@ import torch
 
 ROOT = next(p for p in Path(__file__).resolve().parents
             if (p / 'tools/research/stage2/contract.py').is_file())
-TREE = ROOT / 'stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq'
+TREE = ROOT / 'stage2_RQ-VAE/_archive/TIGER_gnn_attention_sectional_rq'
 
 
 def _load(name, path):

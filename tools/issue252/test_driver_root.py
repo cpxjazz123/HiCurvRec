@@ -9,7 +9,7 @@ import unittest
 
 ROOT = next(p for p in Path(__file__).resolve().parents
             if (p / 'tools/research/stage2/contract.py').is_file())
-ENTRY = ROOT / 'stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/steady_profile_entry.py'
+ENTRY = ROOT / 'stage2_RQ-VAE/_archive/TIGER_gnn_attention_sectional_rq/steady_profile_entry.py'
 
 
 class DriverRootTests(unittest.TestCase):

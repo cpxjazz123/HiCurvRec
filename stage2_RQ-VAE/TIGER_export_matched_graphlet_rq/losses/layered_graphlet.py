@@ -88,10 +88,8 @@ def ste(prob: torch.Tensor, hard: torch.Tensor) -> torch.Tensor:
 
 def gated_hinge(gap: torch.Tensor, margin: float) -> torch.Tensor:
     """`hinge(m - gap)` taking `gap` itself (already `a - b`); inactive rows have zero gradient.
-
     The inactive rows are replaced by a detached constant, not multiplied by a zero: a product
     still carries `0 * d(gap)` terms through the autograd graph, and only `where` stops them.
-    """
     gap = gap.reshape(-1)
     inactive = gap.detach() >= margin
     return torch.where(inactive, torch.zeros_like(gap), margin - gap)
@@ -125,7 +123,6 @@ def structure_value(tokens, roles, kind: str) -> torch.Tensor:
 def prefix_shares(probs, roles):
     """`P_1, P_2, P_3` per item pair. `P_1 = same_1`, `P_l = P_{l-1} * same_l`, so a deeper prefix
     is impossible without the shallower one -- exactly the contract's running product."""
-    a, b, c = roles[:, 0], roles[:, 1], roles[:, 2]
     run_ab = run_bc = run_ac = None
     out = []
     for level, prob in enumerate(probs[:CODES]):
@@ -135,8 +132,6 @@ def prefix_shares(probs, roles):
         run_ac = s_ac if run_ac is None else run_ac * s_ac
         out.append((run_ab, run_bc, run_ac))
     return out
-
-
 def level_objectives(probs, tokens, roles, kind: str) -> dict:
     """The three level objectives of one instance batch, each a mean over its instances."""
     a, b, c = roles[:, 0], roles[:, 1], roles[:, 2]
@@ -171,8 +166,6 @@ def level_objectives(probs, tokens, roles, kind: str) -> dict:
                              (buckets[b] == buckets[c]).float(),
                              (buckets[a] == buckets[c]).float()), kind).detach().mean(),
     }
-
-
 def graphlet_objective(probs, tokens, roles_by_kind) -> torch.Tensor:
     """`mean_k [mean_i (L1 + L2 + L3)]`, equal weight per kind so no bank's size dominates."""
     parts = []

@@ -12,7 +12,7 @@ def repository_root():
 
 ROOT = repository_root()
 STAGE2_PYTHON = '/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9'
-ENTRY = ROOT / 'stage2_RQ-VAE/TIGER_gnn_gate_sectional_rq/validation_entry.py'
+ENTRY = ROOT / 'stage2_RQ-VAE/_archive/TIGER_gnn_gate_sectional_rq/validation_entry.py'
 RESULT_DIR = ROOT / 'results/research/issue250/runtime'
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))

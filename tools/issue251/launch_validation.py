@@ -8,7 +8,7 @@ if str(ROOT) not in sys.path:
 from tools.research.stage2.launcher import launch
 
 PYTHON='/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9'
-ENTRY=ROOT/'stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/validation_entry.py'
+ENTRY=ROOT/'stage2_RQ-VAE/_archive/TIGER_gnn_attention_sectional_rq/validation_entry.py'
 OUTPUT=ROOT/'results/research/issue251/runtime'
 
 

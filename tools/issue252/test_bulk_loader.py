@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader, DistributedSampler, TensorDataset
 
 ROOT = next(p for p in Path(__file__).resolve().parents
             if (p / 'tools/research/stage2/contract.py').is_file())
-sys.path.insert(0, str(ROOT / 'stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq'))
+sys.path.insert(0, str(ROOT / 'stage2_RQ-VAE/_archive/TIGER_gnn_attention_sectional_rq'))
 
 
 class BulkLoaderTests(unittest.TestCase):

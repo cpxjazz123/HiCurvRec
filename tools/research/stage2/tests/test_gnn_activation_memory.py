@@ -13,7 +13,7 @@ def probe():
     import numpy as np
     import torch
     from unittest.mock import patch
-    tree=ROOT/'stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq'
+    tree=ROOT/'stage2_RQ-VAE/_archive/TIGER_gnn_attention_sectional_rq'
     sys.path.insert(0,str(tree))
     import train_rqvae as training
     import assignment_floor

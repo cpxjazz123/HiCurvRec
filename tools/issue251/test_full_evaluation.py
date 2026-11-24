@@ -12,7 +12,7 @@ ROOT=next(p for p in Path(__file__).resolve().parents if (p/'assets').is_dir())
 class FullEvaluationTests(unittest.TestCase):
     def test_independent_geometry_matches_production_and_hand_values(self):
         from tools.issue251.full_evaluation import fixed_squared_numpy
-        path=ROOT/'stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/model/geometry.py'
+        path=ROOT/'stage2_RQ-VAE/_archive/TIGER_gnn_attention_sectional_rq/model/geometry.py'
         spec=importlib.util.spec_from_file_location('full_eval_geometry',path)
         geometry=importlib.util.module_from_spec(spec);spec.loader.exec_module(geometry)
         x=np.array([[0.,0.],[.3,-.2],[.3,-.2]])

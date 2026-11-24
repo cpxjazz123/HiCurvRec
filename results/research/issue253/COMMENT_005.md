@@ -1,0 +1,3 @@
+C5资产核验PASS：`asset_audit.json` 中91条记录实际SHA-256/bytes全部匹配，无重复建设或新建静态资产。证据 `results/research/issue253/asset_audit.json:7ea3d14bd7fff766127d43ac73d98861d6c691d0106d00718fa8c41375da17a1`；manifest `8c58d34521181925df2e66dbe01f64b7150fb56a1eab028f59e8b4832c381ae6`。24个旧机制已归档，当前顶层仅新候选、baseline与_archive。历史可变工具路径已同步到_archive，历史run源码/数据/成绩原件未改写。
+
+数值检查同时揭示17个失败subcase（45tests，`INITIAL_NUMERICAL_GREEN.log`）：重复边dense→CSR测试适配器错误地合并重边，以及旧±3特有的硬选码干预fixture。已保留重边/容差并改为occurrence CSR，3专家fixture由独立公式重推；窄复验13tests全部PASS，exit0，证据 `NUMERICAL_FIX_GREEN.log`。这不是放宽生产公式或把异常当mutation捕获。三专家初始shape/ambient/attention检查已转绿；完整准入/正式实验仍未完成。

@@ -1,0 +1,160 @@
+{
+  "issue": 253,
+  "body_sha256": "0a35f9d2c84736fbb8db523acdea5cd822b70d3fc3d78c90d56f0f76020cff3a",
+  "frozen_at": "2026-11-24T06:55:55.464103+00:00",
+  "criteria": [
+    {
+      "id": "C1",
+      "issue_verbatim": "从 #252 已归档的实际候选源码及其冻结 TIGER 来源核对当前规则，创建独立候选身份（不可覆盖 #252）。保持 768 维输入、32 维 latent、三层256码字、原重建/commitment/codebook目标、#252 实际 hard floor 及仅 L3 Sinkhorn 分配协议、固定训练配方 global batch4096/world4/seed42。此次不恢复或改变其他层分配规则；明确不声称三层均衡分配。",
+      "criterion": "独立候选、冻结768/32/3×256、仅L3 Sinkhorn、原floor、batch4096/world4/seed42",
+      "threshold": "全部相等；不覆盖#252",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "source_provenance.json + 协议/分配测试",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C2",
+      "issue_verbatim": "GNN 仍读取各商品完整有向1-hop/2-hop ego，保持 #252 的节点特征、共享方向消息传递、子图内 readout、两个 token、上下文与全部节点/边，不降采样、不截断、不冻结 GNN、不改为全图 GNN。门控使用三个独立可训练 Query，共享 K/V 与 score MLP，先按两个有效 token 做 masked Attention 再按三专家 Softmax。输出 [N,3]，保留 null/padding 语义，禁止硬编码专家关注的子图类型。",
+      "criterion": "完整有向ego、共享GNN、双token、3个Query、masked token attention后expert softmax",
+      "threshold": "无丢失节点/边；gate=[N,3]；null/padding正确",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "完整覆盖及attention已知答案/梯度测试",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C3",
+      "issue_verbatim": "选码代价 D²(r_i,e_j)=Σ_{k∈{-1,0,1}} w_ik d_k²(r_i,e_j)，共享32维切空间；不在内部继续计算被移除的±3专家。固定几何监督距离使用三个专家等权平均，与可训练门控独立；明确这是相较 #252 五专家固定监督度量的变化。真实图 A.1 全量曲率目标与参考集合保持不变，复用已有合法训练图及其所有资产；沿用 #252 已明确的随机训练估计器（每 rank 每 step 同样中心/最多32三元组、32参考、辅助总体至少256）及完整评估，不声称每步全量或无偏梯度。保留其权重校准方法，仅依据新模型初始真实梯度确定并冻结，不以结果调参。",
+      "criterion": "三曲率加权选码、等权独立监督、原A.1训练估计器、初始梯度校准",
+      "threshold": "曲率恰为(-1,0,1)；采样逐值同源；权重只校准一次",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "数学/采样/真实loss路由与校准证据",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C4",
+      "issue_verbatim": "因固定监督度量由五专家变为三专家，最终独立评估同时报告本臂三专家固定度量以及 #252 原五专家固定度量的统一复测口径（尺度、同目标、同参考集、同样本范围事前确定）；避免直接比较不同度量下的 MAE。无额外训练臂。",
+      "criterion": "最终q与z同时使用三专家和五专家统一复测",
+      "threshold": "同尺度/同目标/同参考/同范围；无额外训练",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "evaluation.json + 独立复算",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C5",
+      "issue_verbatim": "首先读取 assets/manifest.json、已冻结具名图契约与 #252 性能/源码报告。按哈希复用所有正确资产，包括 v9 完整 ego CSR、静态特征、28,391,948曲率三元组及原始语义。禁止重复建设；新增静态资产直接持久化 assets/ 版本目录并注册 manifest（来源、hash、shape、bytes、生成命令、训练用途），验证重新加载，不只留临时缓存。",
+      "criterion": "复用具名图及v9完整ego与全部合法目标资产",
+      "threshold": "输入sha256全匹配；禁止重建已有资产",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "INFRA.md + asset_audit.json",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C6",
+      "issue_verbatim": "以真实四卡 global4096、6步/epoch 的入口逐 rank 实测 profiling，区分 GNN 1/2-hop、重建/曲率辅助分支、CPU索引/搬运、静态特征 gather、第一层 affine、第二层方向聚合、pooling、Attention、三几何代价、选码、反传、NCCL/DDP 与负载不均；CUDA event/wall 同时记录，避免把重叠 span 求和。给出基准与优化后的相同口径及每卡节点/边量、峰值显存、等待时间。",
+      "criterion": "四rank、global4096、每epoch6步的前后profiling",
+      "threshold": "所有指定span、wall/event、峰值显存和工作量均有实测",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "profiling_baseline/optimized原始records及报告",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C7",
+      "issue_verbatim": "**优先精确复用同一步动态计算**：重建 batch 与结构辅助总体先取商品 ID 并集，按当前参数只生成一次 GNN token/gate（必要时也共享相同 encoder 的前向），再按原顺序 gather 回两个分支。保持原来两个分支各自的真实 quantization population、floor、Sinkhorn、loss归一及梯度；不能合并码字分配改变目标。验证重叠商品、重复ID、rank-local batch、全部参数梯度和硬输出；禁止跨 optimizer step 缓存可学习输出。",
+      "criterion": "同一步两分支ID并集共享动态token/gate后按序gather",
+      "threshold": "硬输出、全参数梯度同原双分支；量化总体不合并；不跨step缓存",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "shared_branch_equivalence.json",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C8",
+      "issue_verbatim": "**静态调度与 GPU 常驻**：将固定 seed、global step、rank 可确定的训练曲率采样表、静态索引和已存在的六维特征邻域均值提前准备；只有确实节省时间才新增资产，复现原采样哈希/顺序/覆盖/filler，不预计算动态 GNN 或门控结果。保留完整目标资产。消除 GPU→CPU shape 同步、重复 np.unique、索引构造、重复加载；使用 pinned/异步预取及必要 stream/event，确保没有数据争用。",
+      "criterion": "静态调度/常驻优化保留原采样与完整资产",
+      "threshold": "采样hash/顺序/coverage/filler相等；新增资产只在assets注册",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "schedule_audit.json + 重载/数据争用验证",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C9",
+      "issue_verbatim": "**四卡职责及均衡**：先优化现有四卡数据并行，各卡计算自己的完整 ego、重建和辅助任务；不简单把单商品 GNN 拆成4份或固定一张卡专门跑GNN。测量各rank 的有效节点/边工作量及等待。允许探索精确的同一步跨rank GNN token 复用、ego workload-aware 调度、overlap communication/computation；只有证明原 rank-local 分配总体不变、处理所有样本、跨rank autograd/梯度缩放与原DDP一致且净墙钟收益为正才采用。不得借重排改变原每rank的量化总体；若必要使用单独GNN任务划分并恢复原 item/rank 顺序，必须验证分布式梯度回传和通信成本。无理论保证不得宣称4倍加速。",
+      "criterion": "四卡原rank-local分配保持、工作量与等待实测",
+      "threshold": "无未验证跨rank复用；若采用则所有梯度/顺序/收益证明PASS",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "four_rank.json + profiling",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C10",
+      "issue_verbatim": "**Triton GNN 优化**：复用 #252 per-ego kernel，检查当前每行串行遍历边的 degree imbalance。针对长/短行选择合法的向量化/分块 reduction、方向聚合与第二层 affine/readout 的融合，保持精确转置反传；静态元数据可预计算且持久化。以独立 CSR/dense 参考验证值及输入/参数梯度，不改变邻域范围或归一化，保持同一优化器步的新参数生效。任何低精度、近似或改变算术的方案必须事前声明，不能冒充等价工程优化；优先精确方案。",
+      "criterion": "per-ego Triton reduction/fusion优化且转置反传精确",
+      "threshold": "独立CSR/dense值与输入/参数梯度在事前容差内",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "kernel_equivalence.json + 稳态收益",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C11",
+      "issue_verbatim": "三专家几何计算只保留 -1/0/+1，复用径向、单位方向等公共中间量，继续采用已经验证的编译/融合算子。核对 gate、mixed cost、fixed distance、surrogate、独立 evaluator、checkpoint schema、所有开关与诊断均从5改为3，无遗留常量或隐式均匀1/5。",
+      "criterion": "几何、gate、loss、evaluator、checkpoint与开关全部三专家",
+      "threshold": "无被移除±3的生产计算；无隐式1/5",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "三几何/序列化/诊断/开关测试",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C12",
+      "issue_verbatim": "TDD 红→绿：独立三几何公式、零曲率极限、两次归一化、三专家 attention、硬q=三层码字和、有效 gate 干预改变选码、真实截面 Loss→选码代价→Q/K/V/score/GNN 梯度、固定度量无旁路。逐项核对采样与 #252 一致、同一步共享梯度与原双分支等价、跨rank如采用则验证单机参考/四rank一致、无图泄漏、完整2-hop覆盖、导出与checkpoint绑定。保持图具名准入；真实公开 machine entry+behavior_graph PASS 后才派发正式训练。",
+      "criterion": "TDD独立参考、已知答案、变异、真实梯度、图/入口/四卡/导出",
+      "threshold": "全部实际PASS；正式启动前公开entry+behavior_graph PASS",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "CHECK_k + MODULE_CHECKS + machine admission",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C13",
+      "issue_verbatim": "性能目标：正式四卡稳态 inclusive 约0.4s/epoch，期望≤0.5s/epoch；同口径至少连续30 epoch，记录均值/中位/P95、初始化/导出与全量评估、峰值显存、全体optimizer steps、周期工作摊销。对比 #252 正式稳态0.64058s，不用单卡/单模块估计冒充四卡实测。优先达到目标；若未达，不因耗时而擅自删2-hop、冻结GNN、减少训练采样或隐藏成本，提供量化瓶颈与剩余方案；仅在实际完整机制仍可运行且满足 #252 已接受的0.8s/epoch上限时允许继续正式训练，并明确原性能目标未达。超过0.8s需继续优化或明确报告客观阻塞。",
+      "criterion": "正式四卡inclusive连续至少30epoch性能",
+      "threshold": "目标约0.4、期望≤0.5s；未达仅完整机制≤0.8s允许正式训练",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "正式records重算均值/中位/P95与全部摊销成本",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C14",
+      "issue_verbatim": "记录门控三种曲率权重、Attention、未加权/加权结构与重建梯度范数及方向、裁剪、GNN 每卡计算与通信，确认不存在梯度旁路或退化。数值/梯度/硬SID/真实四卡/入口与回归附实际证据。",
+      "criterion": "gate/attention、各损失梯度范数方向、裁剪、每卡计算通信诊断",
+      "threshold": "逐项实测；无旁路/无退化证据，不以单总loss替代",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "MODULE_CHECKS.json + diagnostics",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C15",
+      "issue_verbatim": "正式一次四卡 Stage2（3000 epochs）→最终硬SID、checkpoint重导出一致→一次冻结 Stage3（150 epochs，实际最终测试）。不重新训练TIGER；不做额外正式臂、多种子或追分重跑。Stage3 三码碰撞<0.4，按现有协议；如有真实实现故障按回归修复并保留证据。",
+      "criterion": "一次正式Stage2 3000epoch及Stage3 150epoch最终test",
+      "threshold": "epoch完整；checkpoint重导出SID相等；collision<0.4",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "run identity + checkpoint/SID hash + final test",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C16",
+      "issue_verbatim": "对准确绑定的最终硬q/连续z分别报告全量28,391,948合法曲率三元组与完整参考、宏/微MAE、分符号召回/平衡准确率、距离失真、重建MSE、SID碰撞/前缀/占用、独立held-out；同口径对 #252 历史结果作参考，TIGER只复用冻结SID，同源缺失指标标NA。Stage3 R@5/10、NDCG@5/10及原始逐用户复算。不要把单臂结果视为三专家相对五专家的独立因果证明。",
+      "criterion": "全量28,391,948 A.1及完整参考、q/z、heldout与原始逐用户recall复算",
+      "threshold": "完整覆盖；宏微/分符号/失真/MSE/SID/Recall/NDCG全记录；缺失同源NA",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "final_evaluation + per_user_recompute + REPORT",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "C17",
+      "issue_verbatim": "保存完整模型、SID、日志、报告、运行身份及源码/资产哈希、R2精确归档并复验；输出最终 VERDICT、逐项 PASS/FAIL/NA、性能对账及远端提交。",
+      "criterion": "模型/SID/日志/报告/身份/源码资产hash、R2精确复验、远端提交",
+      "threshold": "归档齐全且复验；main本远端同SHA；最终逐项判定",
+      "data": "assets/manifest.json的不可变输入及正式候选绑定产物；具体path:sha256见INFRA/asset_audit",
+      "method_output": "R2 receipt + VERDICT.md + commit receipt",
+      "status": "NOT_RUN"
+    }
+  ]
+}

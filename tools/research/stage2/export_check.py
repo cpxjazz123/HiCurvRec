@@ -94,6 +94,23 @@ def _sid_payload(rows) -> dict:
     return {str(index): [int(value) for value in row] for index, row in enumerate(rows)}
 
 
+def agreement(tokens, expected):
+    """How the current exported table agrees with the checkpoint's tokens.
+
+    Returns ``(same_l1, same_l3, differing_items)``. ``differing_items`` always
+    counts the table that is on disk now, so a table that was rewritten from the
+    checkpoint differs on no item, while the trainer's own table difference is
+    kept separately as ``original_differing_items``.
+    """
+    import numpy as np
+
+    tokens = np.asarray(tokens)
+    expected = np.asarray(expected)
+    same_l1 = float((tokens[:, 0] == expected[:, 0]).mean())
+    same_l3 = float((tokens[:, :3] == expected).all(axis=1).mean())
+    return same_l1, same_l3, int(round((1 - same_l3) * tokens.shape[0]))
+
+
 def check(tree: Path, checkpoint: Path, sid: Path,
           embeddings: Path = EMBEDDINGS, rewrite: bool = False) -> dict:
     """Re-export and compare; returns the manifest that goes beside the SID.
@@ -126,9 +143,8 @@ def check(tree: Path, checkpoint: Path, sid: Path,
 
     exported = json.loads(Path(sid).read_text(encoding="utf-8"))
     expected = np.array([[int(v) for v in exported[str(i)][:3]] for i in range(len(exported))])
-    same_l1 = float((tokens[:, 0] == expected[:, 0]).mean())
-    same_l3 = float((tokens[:, :3] == expected).all(axis=1).mean())
-    differing = int(round((1 - same_l3) * tokens.shape[0]))
+    same_l1, same_l3, differing = agreement(tokens, expected)
+    original_differing = differing
     rewritten = False
     original_sid_sha = sha256_of(sid)
     if differing and rewrite:
@@ -142,10 +158,9 @@ def check(tree: Path, checkpoint: Path, sid: Path,
         temporary.write_text(json.dumps(_sid_payload(rows), indent=2), encoding="utf-8")
         temporary.replace(sid)
         rewritten = True
-        # The table now IS the checkpoint's export.
-        expected = tokens[:, :3]
-        same_l1 = 1.0
-        same_l3 = 1.0
+        # The table now IS the checkpoint's export: it differs on no item. The
+        # trainer's own table difference stays in ``original_differing_items``.
+        same_l1, same_l3, differing = agreement(tokens, tokens[:, :3])
     return {
         "schema": "genrec.stage2.export_manifest/1",
         "tree": str(Path(tree).relative_to(REPO)) if Path(tree).is_relative_to(REPO) else str(tree),
@@ -162,7 +177,7 @@ def check(tree: Path, checkpoint: Path, sid: Path,
         "tokens_match": same_l3 > 0.9999,
         "rewritten_from_checkpoint": rewritten,
         "original_sid_sha256": original_sid_sha,
-        "original_differing_items": differing,
+        "original_differing_items": original_differing,
         "checked_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 

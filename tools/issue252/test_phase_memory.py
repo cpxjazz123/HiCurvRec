@@ -53,7 +53,7 @@ class SteadyProfileTests(TestCase):
     @staticmethod
     def entry():
         root = Path(__file__).resolve().parents[2]
-        path = root / 'stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq/steady_profile_entry.py'
+        path = root / 'stage2_RQ-VAE/_archive/TIGER_gnn_attention_sectional_rq/steady_profile_entry.py'
         spec = importlib.util.spec_from_file_location('issue252_steady_profile', path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT=next(p for p in Path(__file__).resolve().parents if (p/'stage2_RQ-VAE').is_dir())
-TREE=ROOT/'stage2_RQ-VAE/TIGER_gnn_attention_sectional_rq'
+TREE=ROOT/'stage2_RQ-VAE/_archive/TIGER_gnn_attention_sectional_rq'
 sys.path.insert(0,str(TREE))
 
 
