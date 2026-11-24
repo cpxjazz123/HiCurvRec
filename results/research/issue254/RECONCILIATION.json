@@ -1,0 +1,49 @@
+{
+  "schema": "genrec.issue254.independent_reconciliation/1",
+  "population": 57439,
+  "atol": 1e-12,
+  "raw_candidate_tables_exact": true,
+  "endpoints": {
+    "5": {
+      "groups": {
+        "neither_hit": 54969,
+        "both_hit": 1218,
+        "only_issue252_hit": 665,
+        "only_issue253_hit": 587
+      },
+      "net_hits": -78,
+      "recall_delta": -0.0013579623600689426,
+      "sum_per_item_net_hits": -78,
+      "targets": 16462,
+      "issue252": {
+        "recall": 0.03278260415397204,
+        "ndcg": 0.021616071827379228
+      },
+      "issue253": {
+        "recall": 0.0314246417939031,
+        "ndcg": 0.02080348571822261
+      }
+    },
+    "10": {
+      "groups": {
+        "neither_hit": 53844,
+        "both_hit": 1903,
+        "only_issue252_hit": 928,
+        "only_issue253_hit": 764
+      },
+      "net_hits": -164,
+      "recall_delta": -0.0028552029109141872,
+      "sum_per_item_net_hits": -164,
+      "targets": 16462,
+      "issue252": {
+        "recall": 0.0492870697609638,
+        "ndcg": 0.02692583040624565
+      },
+      "issue253": {
+        "recall": 0.046431866850049616,
+        "ndcg": 0.0256340290671232
+      }
+    }
+  },
+  "all_checks_passed": true
+}

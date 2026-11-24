@@ -1,0 +1,1788 @@
+{
+  "schema": "genrec.issue254.statistics/1",
+  "purpose": "evaluation",
+  "seed": 254,
+  "bootstrap_repetitions": 10000,
+  "ci": "percentile 95%",
+  "delta_direction": "issue253 - issue252",
+  "primary_endpoint": "paired hit@10 change",
+  "overall": {
+    "5": {
+      "population": 57439,
+      "targets": 16462,
+      "regressions": 665,
+      "improvements": 587,
+      "recall_delta": -0.0013579623600689426,
+      "net_hit_count": -78,
+      "mcnemar_exact_two_sided_p": 0.0295036760619511,
+      "paired_user_ci95": [
+        -0.0025940563032086214,
+        -0.00015668796462333954
+      ],
+      "target_cluster_ci95": [
+        -0.00348806256740172,
+        0.0007266141696167478
+      ],
+      "item_macro_delta": -0.000330013079935088,
+      "item_macro_ci95": [
+        -0.0007425841576416032,
+        7.539452244283384e-05
+      ],
+      "ndcg_delta": -0.0008125861091566171,
+      "ndcg_paired_ci95": [
+        -0.0015835461908931428,
+        -3.160669947277673e-05
+      ]
+    },
+    "10": {
+      "population": 57439,
+      "targets": 16462,
+      "regressions": 928,
+      "improvements": 764,
+      "recall_delta": -0.0028552029109141872,
+      "net_hit_count": -164,
+      "mcnemar_exact_two_sided_p": 7.322851639318174e-05,
+      "paired_user_ci95": [
+        -0.004282804366371281,
+        -0.0014276014554570936
+      ],
+      "target_cluster_ci95": [
+        -0.0057433046637826715,
+        -0.00015574622122973368
+      ],
+      "item_macro_delta": -0.0004102137739949639,
+      "item_macro_ci95": [
+        -0.0009838259018231604,
+        0.0001681620057912917
+      ],
+      "ndcg_delta": -0.0012918013391224495,
+      "ndcg_paired_ci95": [
+        -0.0020346250741110124,
+        -0.0005239247658348778
+      ]
+    }
+  },
+  "groups": {
+    "5": {
+      "both_hit": {
+        "samples": 1218,
+        "targets": 117,
+        "mean": {
+          "gate_zero_delta": -0.5303240150751543,
+          "gate_entropy_delta": 0.8243533156704845,
+          "attention_2hop_delta": -0.4080120694622332,
+          "curvature_mae_q_delta": 0.10628780575718108,
+          "reconstruction_mse_q_delta": 3.913231805419778e-06,
+          "quantization_mse_delta": 5.627469582446331e-08,
+          "edge_prefix_l1_out_delta": -0.010868634845805407,
+          "edge_prefix_l2_out_delta": -0.0039496884989721585,
+          "collision_group_size_delta": -0.003284072249589491,
+          "curvature_negative_ratio": 0.9087449612804168,
+          "degree_undirected": 777.423645320197,
+          "history_len": 6.611658456486043,
+          "test_target_frequency": 109.15024630541872
+        },
+        "valid_counts": {
+          "gate_zero_delta": 1218,
+          "gate_entropy_delta": 1218,
+          "attention_2hop_delta": 1218,
+          "curvature_mae_q_delta": 1218,
+          "reconstruction_mse_q_delta": 1218,
+          "quantization_mse_delta": 1218,
+          "edge_prefix_l1_out_delta": 1218,
+          "edge_prefix_l2_out_delta": 1218,
+          "collision_group_size_delta": 1218,
+          "curvature_negative_ratio": 1218,
+          "degree_undirected": 1218,
+          "history_len": 1218,
+          "test_target_frequency": 1218
+        }
+      },
+      "neither_hit": {
+        "samples": 54969,
+        "targets": 16457,
+        "mean": {
+          "gate_zero_delta": 0.06858358640986095,
+          "gate_entropy_delta": -0.1868579632633062,
+          "attention_2hop_delta": 0.3117574609043679,
+          "curvature_mae_q_delta": 0.029596369866653056,
+          "reconstruction_mse_q_delta": 6.99621272889964e-06,
+          "quantization_mse_delta": 2.4163519742329347e-07,
+          "edge_prefix_l1_out_delta": -0.013795806841308373,
+          "edge_prefix_l2_out_delta": -0.0020870718516575503,
+          "collision_group_size_delta": 0.007131292182866707,
+          "curvature_negative_ratio": 0.31400868294488765,
+          "degree_undirected": 90.82451927450018,
+          "history_len": 7.957630664556386,
+          "test_target_frequency": 13.418745110880678
+        },
+        "valid_counts": {
+          "gate_zero_delta": 54969,
+          "gate_entropy_delta": 54969,
+          "attention_2hop_delta": 54969,
+          "curvature_mae_q_delta": 54349,
+          "reconstruction_mse_q_delta": 54969,
+          "quantization_mse_delta": 54969,
+          "edge_prefix_l1_out_delta": 54316,
+          "edge_prefix_l2_out_delta": 54316,
+          "collision_group_size_delta": 54969,
+          "curvature_negative_ratio": 54349,
+          "degree_undirected": 54969,
+          "history_len": 54969,
+          "test_target_frequency": 54969
+        }
+      },
+      "only_issue252_hit": {
+        "samples": 665,
+        "targets": 190,
+        "mean": {
+          "gate_zero_delta": -0.4113699688499135,
+          "gate_entropy_delta": 0.6420218501838545,
+          "attention_2hop_delta": -0.2867590813052631,
+          "curvature_mae_q_delta": 0.046974995890572,
+          "reconstruction_mse_q_delta": 4.002300041232831e-06,
+          "quantization_mse_delta": 2.030099468371688e-07,
+          "edge_prefix_l1_out_delta": -0.020819466055295232,
+          "edge_prefix_l2_out_delta": -0.004416320783628887,
+          "collision_group_size_delta": 0.04360902255639098,
+          "curvature_negative_ratio": 0.8313842700877414,
+          "degree_undirected": 584.5488721804511,
+          "history_len": 7.154887218045113,
+          "test_target_frequency": 80.0421052631579
+        },
+        "valid_counts": {
+          "gate_zero_delta": 665,
+          "gate_entropy_delta": 665,
+          "attention_2hop_delta": 665,
+          "curvature_mae_q_delta": 665,
+          "reconstruction_mse_q_delta": 665,
+          "quantization_mse_delta": 665,
+          "edge_prefix_l1_out_delta": 665,
+          "edge_prefix_l2_out_delta": 665,
+          "collision_group_size_delta": 665,
+          "curvature_negative_ratio": 665,
+          "degree_undirected": 665,
+          "history_len": 665,
+          "test_target_frequency": 665
+        }
+      },
+      "only_issue253_hit": {
+        "samples": 587,
+        "targets": 170,
+        "mean": {
+          "gate_zero_delta": -0.45217459076409444,
+          "gate_entropy_delta": 0.7079438383172038,
+          "attention_2hop_delta": -0.3488893676831346,
+          "curvature_mae_q_delta": 0.10706112459758914,
+          "reconstruction_mse_q_delta": 3.39499082472015e-06,
+          "quantization_mse_delta": -1.185296563513893e-08,
+          "edge_prefix_l1_out_delta": -0.006244032672323231,
+          "edge_prefix_l2_out_delta": -0.003543426733144923,
+          "collision_group_size_delta": 0.1567291311754685,
+          "curvature_negative_ratio": 0.8524313513145055,
+          "degree_undirected": 556.0971039182283,
+          "history_len": 7.091993185689949,
+          "test_target_frequency": 75.93696763202726
+        },
+        "valid_counts": {
+          "gate_zero_delta": 587,
+          "gate_entropy_delta": 587,
+          "attention_2hop_delta": 587,
+          "curvature_mae_q_delta": 587,
+          "reconstruction_mse_q_delta": 587,
+          "quantization_mse_delta": 587,
+          "edge_prefix_l1_out_delta": 587,
+          "edge_prefix_l2_out_delta": 587,
+          "collision_group_size_delta": 587,
+          "curvature_negative_ratio": 587,
+          "degree_undirected": 587,
+          "history_len": 587,
+          "test_target_frequency": 587
+        }
+      }
+    },
+    "10": {
+      "both_hit": {
+        "samples": 1903,
+        "targets": 203,
+        "mean": {
+          "gate_zero_delta": -0.5018837301592043,
+          "gate_entropy_delta": 0.7831352093799803,
+          "attention_2hop_delta": -0.38328893854440355,
+          "curvature_mae_q_delta": 0.10610568341036751,
+          "reconstruction_mse_q_delta": 3.640263474556856e-06,
+          "quantization_mse_delta": 9.722256749759755e-08,
+          "edge_prefix_l1_out_delta": -0.011202227084803024,
+          "edge_prefix_l2_out_delta": -0.003514904677416201,
+          "collision_group_size_delta": 0.0394114555964267,
+          "curvature_negative_ratio": 0.8868828495324456,
+          "degree_undirected": 693.8218602207041,
+          "history_len": 6.626904887020494,
+          "test_target_frequency": 97.1297950604309
+        },
+        "valid_counts": {
+          "gate_zero_delta": 1903,
+          "gate_entropy_delta": 1903,
+          "attention_2hop_delta": 1903,
+          "curvature_mae_q_delta": 1903,
+          "reconstruction_mse_q_delta": 1903,
+          "quantization_mse_delta": 1903,
+          "edge_prefix_l1_out_delta": 1903,
+          "edge_prefix_l2_out_delta": 1903,
+          "collision_group_size_delta": 1903,
+          "curvature_negative_ratio": 1903,
+          "degree_undirected": 1903,
+          "history_len": 1903,
+          "test_target_frequency": 1903
+        }
+      },
+      "neither_hit": {
+        "samples": 53844,
+        "targets": 16449,
+        "mean": {
+          "gate_zero_delta": 0.07836891152805284,
+          "gate_entropy_delta": -0.20410435720179237,
+          "attention_2hop_delta": 0.3242418680180373,
+          "curvature_mae_q_delta": 0.02826707489977905,
+          "reconstruction_mse_q_delta": 7.052045253307362e-06,
+          "quantization_mse_delta": 2.417483289658344e-07,
+          "edge_prefix_l1_out_delta": -0.013773919483037545,
+          "edge_prefix_l2_out_delta": -0.0020745816961932643,
+          "collision_group_size_delta": 0.005163063665403759,
+          "curvature_negative_ratio": 0.3038453835287993,
+          "degree_undirected": 83.80710942723424,
+          "history_len": 7.979682044424634,
+          "test_target_frequency": 12.467424411262165
+        },
+        "valid_counts": {
+          "gate_zero_delta": 53844,
+          "gate_entropy_delta": 53844,
+          "attention_2hop_delta": 53844,
+          "curvature_mae_q_delta": 53224,
+          "reconstruction_mse_q_delta": 53844,
+          "quantization_mse_delta": 53844,
+          "edge_prefix_l1_out_delta": 53191,
+          "edge_prefix_l2_out_delta": 53191,
+          "collision_group_size_delta": 53844,
+          "curvature_negative_ratio": 53224,
+          "degree_undirected": 53844,
+          "history_len": 53844,
+          "test_target_frequency": 53844
+        }
+      },
+      "only_issue252_hit": {
+        "samples": 928,
+        "targets": 279,
+        "mean": {
+          "gate_zero_delta": -0.3929731509937295,
+          "gate_entropy_delta": 0.6189220172622231,
+          "attention_2hop_delta": -0.2667650854482759,
+          "curvature_mae_q_delta": 0.020553343564690366,
+          "reconstruction_mse_q_delta": 4.479779538246098e-06,
+          "quantization_mse_delta": 1.8916321571538735e-07,
+          "edge_prefix_l1_out_delta": -0.021625278612620726,
+          "edge_prefix_l2_out_delta": -0.005216761763879998,
+          "collision_group_size_delta": 0.016163793103448277,
+          "curvature_negative_ratio": 0.8040783621883583,
+          "degree_undirected": 518.0980603448276,
+          "history_len": 7.114224137931035,
+          "test_target_frequency": 71.09698275862068
+        },
+        "valid_counts": {
+          "gate_zero_delta": 928,
+          "gate_entropy_delta": 928,
+          "attention_2hop_delta": 928,
+          "curvature_mae_q_delta": 928,
+          "reconstruction_mse_q_delta": 928,
+          "quantization_mse_delta": 928,
+          "edge_prefix_l1_out_delta": 928,
+          "edge_prefix_l2_out_delta": 928,
+          "collision_group_size_delta": 928,
+          "curvature_negative_ratio": 928,
+          "degree_undirected": 928,
+          "history_len": 928,
+          "test_target_frequency": 928
+        }
+      },
+      "only_issue253_hit": {
+        "samples": 764,
+        "targets": 258,
+        "mean": {
+          "gate_zero_delta": -0.4121503308415413,
+          "gate_entropy_delta": 0.6548476348616465,
+          "attention_2hop_delta": -0.310180591973822,
+          "curvature_mae_q_delta": 0.1395228964361079,
+          "reconstruction_mse_q_delta": 4.189190514084479e-06,
+          "quantization_mse_delta": 1.3321549152605855e-07,
+          "edge_prefix_l1_out_delta": -0.007914379349449397,
+          "edge_prefix_l2_out_delta": -0.0017144850518707913,
+          "collision_group_size_delta": 0.18455497382198952,
+          "curvature_negative_ratio": 0.8119993970331834,
+          "degree_undirected": 446.2578534031414,
+          "history_len": 7.232984293193717,
+          "test_target_frequency": 60.537958115183244
+        },
+        "valid_counts": {
+          "gate_zero_delta": 764,
+          "gate_entropy_delta": 764,
+          "attention_2hop_delta": 764,
+          "curvature_mae_q_delta": 764,
+          "reconstruction_mse_q_delta": 764,
+          "quantization_mse_delta": 764,
+          "edge_prefix_l1_out_delta": 764,
+          "edge_prefix_l2_out_delta": 764,
+          "collision_group_size_delta": 764,
+          "curvature_negative_ratio": 764,
+          "degree_undirected": 764,
+          "history_len": 764,
+          "test_target_frequency": 764
+        }
+      }
+    }
+  },
+  "strata": [
+    {
+      "stratum": "target_test_frequency",
+      "level": "1",
+      "cutoff": 5,
+      "population": 6609,
+      "targets": 6609,
+      "global_population": 57439,
+      "coverage": 0.11506119535507234,
+      "regressions": 2,
+      "improvements": 2,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        -0.0006052352852171282,
+        0.0006052352852171282
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "target_test_frequency",
+      "level": "1",
+      "cutoff": 10,
+      "population": 6609,
+      "targets": 6609,
+      "global_population": 57439,
+      "coverage": 0.11506119535507234,
+      "regressions": 3,
+      "improvements": 5,
+      "net_hit_count": 2,
+      "conditional_recall_delta": 0.0003026176426085641,
+      "global_recall_contribution": 3.4819547694075456e-05,
+      "paired_ci95": [
+        -0.00045392646391284613,
+        0.0012104705704342564
+      ],
+      "mcnemar_p": 0.7265625,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "target_test_frequency",
+      "level": "2-4",
+      "cutoff": 5,
+      "population": 18297,
+      "targets": 6965,
+      "global_population": 57439,
+      "coverage": 0.31854663207924927,
+      "regressions": 9,
+      "improvements": 12,
+      "net_hit_count": 3,
+      "conditional_recall_delta": 0.00016396130513198886,
+      "global_recall_contribution": 5.2229321541113184e-05,
+      "paired_ci95": [
+        -0.0003279226102639777,
+        0.0006558452205279554
+      ],
+      "mcnemar_p": 0.6636238098144531,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "target_test_frequency",
+      "level": "2-4",
+      "cutoff": 10,
+      "population": 18297,
+      "targets": 6965,
+      "global_population": 57439,
+      "coverage": 0.31854663207924927,
+      "regressions": 22,
+      "improvements": 21,
+      "net_hit_count": -1,
+      "conditional_recall_delta": -5.465376837732962e-05,
+      "global_recall_contribution": -1.7409773847037728e-05,
+      "paired_ci95": [
+        -0.0007651527572826146,
+        0.0006558452205279554
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "target_test_frequency",
+      "level": "5-9",
+      "cutoff": 5,
+      "population": 12064,
+      "targets": 1925,
+      "global_population": 57439,
+      "coverage": 0.21003151169066314,
+      "regressions": 63,
+      "improvements": 35,
+      "net_hit_count": -28,
+      "conditional_recall_delta": -0.0023209549071618036,
+      "global_recall_contribution": -0.00048747366771705633,
+      "paired_ci95": [
+        -0.003978779840848806,
+        -0.0007460212201591511
+      ],
+      "mcnemar_p": 0.00609262967206472,
+      "p_holm_all_subgroups_both_cutoffs": 0.304631483603236
+    },
+    {
+      "stratum": "target_test_frequency",
+      "level": "5-9",
+      "cutoff": 10,
+      "population": 12064,
+      "targets": 1925,
+      "global_population": 57439,
+      "coverage": 0.21003151169066314,
+      "regressions": 104,
+      "improvements": 64,
+      "net_hit_count": -40,
+      "conditional_recall_delta": -0.0033156498673740055,
+      "global_recall_contribution": -0.0006963909538815091,
+      "paired_ci95": [
+        -0.005387931034482759,
+        -0.0011604774535809018
+      ],
+      "mcnemar_p": 0.002517989851685426,
+      "p_holm_all_subgroups_both_cutoffs": 0.13093547228764216
+    },
+    {
+      "stratum": "target_test_frequency",
+      "level": ">=10",
+      "cutoff": 5,
+      "population": 20469,
+      "targets": 963,
+      "global_population": 57439,
+      "coverage": 0.3563606608750152,
+      "regressions": 591,
+      "improvements": 538,
+      "net_hit_count": -53,
+      "conditional_recall_delta": -0.002589281352288827,
+      "global_recall_contribution": -0.0009227180138929995,
+      "paired_ci95": [
+        -0.005813669451365479,
+        0.0006839611119253506
+      ],
+      "mcnemar_p": 0.12168225930252476,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "target_test_frequency",
+      "level": ">=10",
+      "cutoff": 10,
+      "population": 20469,
+      "targets": 963,
+      "global_population": 57439,
+      "coverage": 0.3563606608750152,
+      "regressions": 799,
+      "improvements": 674,
+      "net_hit_count": -125,
+      "conditional_recall_delta": -0.00610679564219063,
+      "global_recall_contribution": -0.002176221730879716,
+      "paired_ci95": [
+        -0.009770873027505008,
+        -0.0023938638917387267
+      ],
+      "mcnemar_p": 0.0012266672394504385,
+      "p_holm_all_subgroups_both_cutoffs": 0.06501336369087324
+    },
+    {
+      "stratum": "target_train_frequency",
+      "level": "0",
+      "cutoff": 5,
+      "population": 106,
+      "targets": 31,
+      "global_population": 57439,
+      "coverage": 0.001845436027785999,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "target_train_frequency",
+      "level": "0",
+      "cutoff": 10,
+      "population": 106,
+      "targets": 31,
+      "global_population": 57439,
+      "coverage": 0.001845436027785999,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "target_train_frequency",
+      "level": "1-4",
+      "cutoff": 5,
+      "population": 6296,
+      "targets": 3521,
+      "global_population": 57439,
+      "coverage": 0.10961193614094952,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "target_train_frequency",
+      "level": "1-4",
+      "cutoff": 10,
+      "population": 6296,
+      "targets": 3521,
+      "global_population": 57439,
+      "coverage": 0.10961193614094952,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "target_train_frequency",
+      "level": "20-99",
+      "cutoff": 5,
+      "population": 19364,
+      "targets": 3541,
+      "global_population": 57439,
+      "coverage": 0.3371228607740385,
+      "regressions": 114,
+      "improvements": 59,
+      "net_hit_count": -55,
+      "conditional_recall_delta": -0.002840322247469531,
+      "global_recall_contribution": -0.000957537561587075,
+      "paired_ci95": [
+        -0.0041830200371824,
+        -0.0015492666804379262
+      ],
+      "mcnemar_p": 3.50253792366362e-05,
+      "p_holm_all_subgroups_both_cutoffs": 0.002101522754198172
+    },
+    {
+      "stratum": "target_train_frequency",
+      "level": "20-99",
+      "cutoff": 10,
+      "population": 19364,
+      "targets": 3541,
+      "global_population": 57439,
+      "coverage": 0.3371228607740385,
+      "regressions": 182,
+      "improvements": 118,
+      "net_hit_count": -64,
+      "conditional_recall_delta": -0.003305102251600909,
+      "global_recall_contribution": -0.0011142255262104146,
+      "paired_ci95": [
+        -0.0050609378227638915,
+        -0.0015492666804379262
+      ],
+      "mcnemar_p": 0.0002623792512685131,
+      "p_holm_all_subgroups_both_cutoffs": 0.014693238071036733
+    },
+    {
+      "stratum": "target_train_frequency",
+      "level": "5-19",
+      "cutoff": 5,
+      "population": 18788,
+      "targets": 8908,
+      "global_population": 57439,
+      "coverage": 0.3270948310381448,
+      "regressions": 12,
+      "improvements": 11,
+      "net_hit_count": -1,
+      "conditional_recall_delta": -5.3225463061528635e-05,
+      "global_recall_contribution": -1.7409773847037728e-05,
+      "paired_ci95": [
+        -0.0005322546306152864,
+        0.0004790291675537577
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "target_train_frequency",
+      "level": "5-19",
+      "cutoff": 10,
+      "population": 18788,
+      "targets": 8908,
+      "global_population": 57439,
+      "coverage": 0.3270948310381448,
+      "regressions": 20,
+      "improvements": 15,
+      "net_hit_count": -5,
+      "conditional_recall_delta": -0.0002661273153076432,
+      "global_recall_contribution": -8.704886923518864e-05,
+      "paired_ci95": [
+        -0.0008516074089844582,
+        0.00037257824143070045
+      ],
+      "mcnemar_p": 0.4995598332025112,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "target_train_frequency",
+      "level": ">=100",
+      "cutoff": 5,
+      "population": 12885,
+      "targets": 461,
+      "global_population": 57439,
+      "coverage": 0.2243249360190811,
+      "regressions": 539,
+      "improvements": 517,
+      "net_hit_count": -22,
+      "conditional_recall_delta": -0.0017074117190531625,
+      "global_recall_contribution": -0.00038301502463483,
+      "paired_ci95": [
+        -0.006596818005432673,
+        0.0033372138145129995
+      ],
+      "mcnemar_p": 0.5181494786389758,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "target_train_frequency",
+      "level": ">=100",
+      "cutoff": 10,
+      "population": 12885,
+      "targets": 461,
+      "global_population": 57439,
+      "coverage": 0.2243249360190811,
+      "regressions": 726,
+      "improvements": 631,
+      "net_hit_count": -95,
+      "conditional_recall_delta": -0.007372914241365929,
+      "global_recall_contribution": -0.001653928515468584,
+      "paired_ci95": [
+        -0.01296080714008537,
+        -0.0017074117190531625
+      ],
+      "mcnemar_p": 0.010691793400900658,
+      "p_holm_all_subgroups_both_cutoffs": 0.5238978766441322
+    },
+    {
+      "stratum": "behavior_degree",
+      "level": "0-4",
+      "cutoff": 5,
+      "population": 4118,
+      "targets": 2110,
+      "global_population": 57439,
+      "coverage": 0.07169344870210136,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "behavior_degree",
+      "level": "0-4",
+      "cutoff": 10,
+      "population": 4118,
+      "targets": 2110,
+      "global_population": 57439,
+      "coverage": 0.07169344870210136,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "behavior_degree",
+      "level": "20-99",
+      "cutoff": 5,
+      "population": 21007,
+      "targets": 4889,
+      "global_population": 57439,
+      "coverage": 0.3657271192047215,
+      "regressions": 107,
+      "improvements": 57,
+      "net_hit_count": -50,
+      "conditional_recall_delta": -0.002380158994620841,
+      "global_recall_contribution": -0.0008704886923518863,
+      "paired_ci95": [
+        -0.003570238491931261,
+        -0.0011900794973104204
+      ],
+      "mcnemar_p": 0.00011636001219744381,
+      "p_holm_all_subgroups_both_cutoffs": 0.006632520695254297
+    },
+    {
+      "stratum": "behavior_degree",
+      "level": "20-99",
+      "cutoff": 10,
+      "population": 21007,
+      "targets": 4889,
+      "global_population": 57439,
+      "coverage": 0.3657271192047215,
+      "regressions": 160,
+      "improvements": 106,
+      "net_hit_count": -54,
+      "conditional_recall_delta": -0.0025705717141905077,
+      "global_recall_contribution": -0.0009401277877400373,
+      "paired_ci95": [
+        -0.004093873470747846,
+        -0.0010472699576331698
+      ],
+      "mcnemar_p": 0.0011160401446486576,
+      "p_holm_all_subgroups_both_cutoffs": 0.06026616781102751
+    },
+    {
+      "stratum": "behavior_degree",
+      "level": "5-19",
+      "cutoff": 5,
+      "population": 16910,
+      "targets": 8794,
+      "global_population": 57439,
+      "coverage": 0.29439927575340796,
+      "regressions": 5,
+      "improvements": 6,
+      "net_hit_count": 1,
+      "conditional_recall_delta": 5.913660555884092e-05,
+      "global_recall_contribution": 1.7409773847037728e-05,
+      "paired_ci95": [
+        -0.00029568302779420464,
+        0.0004730928444707274
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "behavior_degree",
+      "level": "5-19",
+      "cutoff": 10,
+      "population": 16910,
+      "targets": 8794,
+      "global_population": 57439,
+      "coverage": 0.29439927575340796,
+      "regressions": 9,
+      "improvements": 11,
+      "net_hit_count": 2,
+      "conditional_recall_delta": 0.00011827321111768185,
+      "global_recall_contribution": 3.4819547694075456e-05,
+      "paired_ci95": [
+        -0.00041395623891188647,
+        0.0006505026611472502
+      ],
+      "mcnemar_p": 0.8238029479980469,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "behavior_degree",
+      "level": ">=100",
+      "cutoff": 5,
+      "population": 15404,
+      "targets": 669,
+      "global_population": 57439,
+      "coverage": 0.26818015633976916,
+      "regressions": 553,
+      "improvements": 524,
+      "net_hit_count": -29,
+      "conditional_recall_delta": -0.0018826278888600364,
+      "global_recall_contribution": -0.0005048834415640941,
+      "paired_ci95": [
+        -0.006102311088029083,
+        0.00240197351337315
+      ],
+      "mcnemar_p": 0.3935591358939004,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "behavior_degree",
+      "level": ">=100",
+      "cutoff": 10,
+      "population": 15404,
+      "targets": 669,
+      "global_population": 57439,
+      "coverage": 0.26818015633976916,
+      "regressions": 759,
+      "improvements": 647,
+      "net_hit_count": -112,
+      "conditional_recall_delta": -0.007270838743183588,
+      "global_recall_contribution": -0.0019498946708682253,
+      "paired_ci95": [
+        -0.01194494936380161,
+        -0.002466891716437289
+      ],
+      "mcnemar_p": 0.0030601703242751866,
+      "p_holm_all_subgroups_both_cutoffs": 0.15606868653803452
+    },
+    {
+      "stratum": "history_length",
+      "level": "0-4",
+      "cutoff": 5,
+      "population": 16965,
+      "targets": 8478,
+      "global_population": 57439,
+      "coverage": 0.295356813314995,
+      "regressions": 229,
+      "improvements": 200,
+      "net_hit_count": -29,
+      "conditional_recall_delta": -0.0017094017094017094,
+      "global_recall_contribution": -0.0005048834415640941,
+      "paired_ci95": [
+        -0.00412614205717654,
+        0.0007073386383731211
+      ],
+      "mcnemar_p": 0.1763530393602459,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "history_length",
+      "level": "0-4",
+      "cutoff": 10,
+      "population": 16965,
+      "targets": 8478,
+      "global_population": 57439,
+      "coverage": 0.295356813314995,
+      "regressions": 303,
+      "improvements": 255,
+      "net_hit_count": -48,
+      "conditional_recall_delta": -0.0028293545534924846,
+      "global_recall_contribution": -0.0008356691446578109,
+      "paired_ci95": [
+        -0.005599764220453876,
+        -5.8944886531093426e-05
+      ],
+      "mcnemar_p": 0.04653042798886235,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "history_length",
+      "level": "10-19",
+      "cutoff": 5,
+      "population": 9138,
+      "targets": 5728,
+      "global_population": 57439,
+      "coverage": 0.15909051341423075,
+      "regressions": 80,
+      "improvements": 81,
+      "net_hit_count": 1,
+      "conditional_recall_delta": 0.0001094331363536879,
+      "global_recall_contribution": 1.7409773847037728e-05,
+      "paired_ci95": [
+        -0.0026263952724885093,
+        0.0028452615451958854
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "history_length",
+      "level": "10-19",
+      "cutoff": 10,
+      "population": 9138,
+      "targets": 5728,
+      "global_population": 57439,
+      "coverage": 0.15909051341423075,
+      "regressions": 129,
+      "improvements": 110,
+      "net_hit_count": -19,
+      "conditional_recall_delta": -0.0020792295907200702,
+      "global_recall_contribution": -0.0003307857030937168,
+      "paired_ci95": [
+        -0.005471656817684395,
+        0.0013131976362442547
+      ],
+      "mcnemar_p": 0.24423531796411055,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "history_length",
+      "level": "5-9",
+      "cutoff": 5,
+      "population": 28616,
+      "targets": 11814,
+      "global_population": 57439,
+      "coverage": 0.4981980884068316,
+      "regressions": 335,
+      "improvements": 287,
+      "net_hit_count": -48,
+      "conditional_recall_delta": -0.0016773832820799553,
+      "global_recall_contribution": -0.0008356691446578109,
+      "paired_ci95": [
+        -0.003424657534246575,
+        6.98909700866648e-05
+      ],
+      "mcnemar_p": 0.059406427505306454,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "history_length",
+      "level": "5-9",
+      "cutoff": 10,
+      "population": 28616,
+      "targets": 11814,
+      "global_population": 57439,
+      "coverage": 0.4981980884068316,
+      "regressions": 470,
+      "improvements": 372,
+      "net_hit_count": -98,
+      "conditional_recall_delta": -0.003424657534246575,
+      "global_recall_contribution": -0.0017061578370096973,
+      "paired_ci95": [
+        -0.005451495666759855,
+        -0.0014327648867766285
+      ],
+      "mcnemar_p": 0.0008192046801745093,
+      "p_holm_all_subgroups_both_cutoffs": 0.04505625740959801
+    },
+    {
+      "stratum": "history_length",
+      "level": ">=20",
+      "cutoff": 5,
+      "population": 2720,
+      "targets": 2234,
+      "global_population": 57439,
+      "coverage": 0.04735458486394262,
+      "regressions": 21,
+      "improvements": 19,
+      "net_hit_count": -2,
+      "conditional_recall_delta": -0.0007352941176470588,
+      "global_recall_contribution": -3.4819547694075456e-05,
+      "paired_ci95": [
+        -0.005147058823529412,
+        0.004044117647058824
+      ],
+      "mcnemar_p": 0.8746293123804207,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "history_length",
+      "level": ">=20",
+      "cutoff": 10,
+      "population": 2720,
+      "targets": 2234,
+      "global_population": 57439,
+      "coverage": 0.04735458486394262,
+      "regressions": 26,
+      "improvements": 27,
+      "net_hit_count": 1,
+      "conditional_recall_delta": 0.0003676470588235294,
+      "global_recall_contribution": 1.7409773847037728e-05,
+      "paired_ci95": [
+        -0.004779411764705883,
+        0.0058823529411764705
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "baseline_rank",
+      "level": "0-4",
+      "cutoff": 5,
+      "population": 1883,
+      "targets": 216,
+      "global_population": 57439,
+      "coverage": 0.03278260415397204,
+      "regressions": 665,
+      "improvements": 0,
+      "net_hit_count": -665,
+      "conditional_recall_delta": -0.35315985130111527,
+      "global_recall_contribution": -0.01157749960828009,
+      "paired_ci95": [
+        -0.3749336165693043,
+        -0.33191715347849177
+      ],
+      "mcnemar_p": 1.3064201766302604e-200,
+      "p_holm_all_subgroups_both_cutoffs": 8.491731148096692e-199
+    },
+    {
+      "stratum": "baseline_rank",
+      "level": "0-4",
+      "cutoff": 10,
+      "population": 1883,
+      "targets": 216,
+      "global_population": 57439,
+      "coverage": 0.03278260415397204,
+      "regressions": 441,
+      "improvements": 0,
+      "net_hit_count": -441,
+      "conditional_recall_delta": -0.2342007434944238,
+      "global_recall_contribution": -0.007677710266543638,
+      "paired_ci95": [
+        -0.2533191715347849,
+        -0.21561338289962825
+      ],
+      "mcnemar_p": 3.522101828684134e-133,
+      "p_holm_all_subgroups_both_cutoffs": 2.2189241520710043e-131
+    },
+    {
+      "stratum": "baseline_rank",
+      "level": "5-9",
+      "cutoff": 5,
+      "population": 948,
+      "targets": 263,
+      "global_population": 57439,
+      "coverage": 0.016504465606991765,
+      "regressions": 0,
+      "improvements": 252,
+      "net_hit_count": 252,
+      "conditional_recall_delta": 0.26582278481012656,
+      "global_recall_contribution": 0.004387263009453507,
+      "paired_ci95": [
+        0.23839662447257384,
+        0.29430379746835444
+      ],
+      "mcnemar_p": 2.7635739376302223e-76,
+      "p_holm_all_subgroups_both_cutoffs": 1.6857801019544356e-74
+    },
+    {
+      "stratum": "baseline_rank",
+      "level": "5-9",
+      "cutoff": 10,
+      "population": 948,
+      "targets": 263,
+      "global_population": 57439,
+      "coverage": 0.016504465606991765,
+      "regressions": 487,
+      "improvements": 0,
+      "net_hit_count": -487,
+      "conditional_recall_delta": -0.5137130801687764,
+      "global_recall_contribution": -0.008478559863507373,
+      "paired_ci95": [
+        -0.5443037974683544,
+        -0.4820675105485232
+      ],
+      "mcnemar_p": 5.0052077379577523e-147,
+      "p_holm_all_subgroups_both_cutoffs": 3.2033329522929615e-145
+    },
+    {
+      "stratum": "baseline_rank",
+      "level": "not_in10",
+      "cutoff": 5,
+      "population": 54608,
+      "targets": 16455,
+      "global_population": 57439,
+      "coverage": 0.9507129302390362,
+      "regressions": 0,
+      "improvements": 335,
+      "net_hit_count": 335,
+      "conditional_recall_delta": 0.006134632288309405,
+      "global_recall_contribution": 0.005832274238757639,
+      "paired_ci95": [
+        0.005493700556694989,
+        0.006793876355112804
+      ],
+      "mcnemar_p": 2.8574684782056875e-101,
+      "p_holm_all_subgroups_both_cutoffs": 1.7716304564875262e-99
+    },
+    {
+      "stratum": "baseline_rank",
+      "level": "not_in10",
+      "cutoff": 10,
+      "population": 54608,
+      "targets": 16455,
+      "global_population": 57439,
+      "coverage": 0.9507129302390362,
+      "regressions": 0,
+      "improvements": 764,
+      "net_hit_count": 764,
+      "conditional_recall_delta": 0.01399062408438324,
+      "global_recall_contribution": 0.013301067219136823,
+      "paired_ci95": [
+        0.013020070319367126,
+        0.01497949018458834
+      ],
+      "mcnemar_p": 2.0611676062710827e-230,
+      "p_holm_all_subgroups_both_cutoffs": 1.3603706201389146e-228
+    },
+    {
+      "stratum": "curvature",
+      "level": "missing",
+      "cutoff": 5,
+      "population": 620,
+      "targets": 245,
+      "global_population": 57439,
+      "coverage": 0.01079405978516339,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "curvature",
+      "level": "missing",
+      "cutoff": 10,
+      "population": 620,
+      "targets": 245,
+      "global_population": 57439,
+      "coverage": 0.01079405978516339,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "curvature",
+      "level": "mixed-sign",
+      "cutoff": 5,
+      "population": 46154,
+      "targets": 10108,
+      "global_population": 57439,
+      "coverage": 0.8035307021361793,
+      "regressions": 662,
+      "improvements": 587,
+      "net_hit_count": -75,
+      "conditional_recall_delta": -0.0016249945833513887,
+      "global_recall_contribution": -0.0013057330385278295,
+      "paired_ci95": [
+        -0.003163322788924037,
+        -0.0001516661611127963
+      ],
+      "mcnemar_p": 0.036229072743635723,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "curvature",
+      "level": "mixed-sign",
+      "cutoff": 10,
+      "population": 46154,
+      "targets": 10108,
+      "global_population": 57439,
+      "coverage": 0.8035307021361793,
+      "regressions": 925,
+      "improvements": 764,
+      "net_hit_count": -161,
+      "conditional_recall_delta": -0.0034883217055943147,
+      "global_recall_contribution": -0.002802973589373074,
+      "paired_ci95": [
+        -0.005243315855613814,
+        -0.0017333275555748147
+      ],
+      "mcnemar_p": 9.782901316735165e-05,
+      "p_holm_all_subgroups_both_cutoffs": 0.005674082763706395
+    },
+    {
+      "stratum": "curvature",
+      "level": "positive-only",
+      "cutoff": 5,
+      "population": 10665,
+      "targets": 6109,
+      "global_population": 57439,
+      "coverage": 0.18567523807865735,
+      "regressions": 3,
+      "improvements": 0,
+      "net_hit_count": -3,
+      "conditional_recall_delta": -0.00028129395218002813,
+      "global_recall_contribution": -5.2229321541113184e-05,
+      "paired_ci95": [
+        -0.0006563525550867324,
+        0.0
+      ],
+      "mcnemar_p": 0.25,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "curvature",
+      "level": "positive-only",
+      "cutoff": 10,
+      "population": 10665,
+      "targets": 6109,
+      "global_population": 57439,
+      "coverage": 0.18567523807865735,
+      "regressions": 3,
+      "improvements": 0,
+      "net_hit_count": -3,
+      "conditional_recall_delta": -0.00028129395218002813,
+      "global_recall_contribution": -5.2229321541113184e-05,
+      "paired_ci95": [
+        -0.0006563525550867324,
+        0.0
+      ],
+      "mcnemar_p": 0.25,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "chain",
+      "cutoff": 5,
+      "population": 56159,
+      "targets": 15848,
+      "global_population": 57439,
+      "coverage": 0.9777154894757917,
+      "regressions": 665,
+      "improvements": 587,
+      "net_hit_count": -78,
+      "conditional_recall_delta": -0.001388913620256771,
+      "global_recall_contribution": -0.0013579623600689426,
+      "paired_ci95": [
+        -0.0026531811463879344,
+        -0.00016025926387578128
+      ],
+      "mcnemar_p": 0.0295036760619511,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "chain",
+      "cutoff": 10,
+      "population": 56159,
+      "targets": 15848,
+      "global_population": 57439,
+      "coverage": 0.9777154894757917,
+      "regressions": 928,
+      "improvements": 764,
+      "net_hit_count": -164,
+      "conditional_recall_delta": -0.0029202799195142365,
+      "global_recall_contribution": -0.0028552029109141872,
+      "paired_ci95": [
+        -0.0043804198792713545,
+        -0.0014601399597571182
+      ],
+      "mcnemar_p": 7.322851639318174e-05,
+      "p_holm_all_subgroups_both_cutoffs": 0.004320482467197723
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "fb_triangle",
+      "cutoff": 5,
+      "population": 12,
+      "targets": 7,
+      "global_population": 57439,
+      "coverage": 0.00020891728616445274,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "fb_triangle",
+      "cutoff": 10,
+      "population": 12,
+      "targets": 7,
+      "global_population": 57439,
+      "coverage": 0.00020891728616445274,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "ff_triangle",
+      "cutoff": 5,
+      "population": 17,
+      "targets": 8,
+      "global_population": 57439,
+      "coverage": 0.00029596615539964133,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "ff_triangle",
+      "cutoff": 10,
+      "population": 17,
+      "targets": 8,
+      "global_population": 57439,
+      "coverage": 0.00029596615539964133,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "in_star",
+      "cutoff": 5,
+      "population": 313,
+      "targets": 142,
+      "global_population": 57439,
+      "coverage": 0.005449259214122809,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "in_star",
+      "cutoff": 10,
+      "population": 313,
+      "targets": 142,
+      "global_population": 57439,
+      "coverage": 0.005449259214122809,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "missing",
+      "cutoff": 5,
+      "population": 620,
+      "targets": 245,
+      "global_population": 57439,
+      "coverage": 0.01079405978516339,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "missing",
+      "cutoff": 10,
+      "population": 620,
+      "targets": 245,
+      "global_population": 57439,
+      "coverage": 0.01079405978516339,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "out_star",
+      "cutoff": 5,
+      "population": 297,
+      "targets": 200,
+      "global_population": 57439,
+      "coverage": 0.005170702832570205,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "out_star",
+      "cutoff": 10,
+      "population": 297,
+      "targets": 200,
+      "global_population": 57439,
+      "coverage": 0.005170702832570205,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "reciprocal_plus_third_in1_out1",
+      "cutoff": 5,
+      "population": 9,
+      "targets": 5,
+      "global_population": 57439,
+      "coverage": 0.00015668796462333954,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "reciprocal_plus_third_in1_out1",
+      "cutoff": 10,
+      "population": 9,
+      "targets": 5,
+      "global_population": 57439,
+      "coverage": 0.00015668796462333954,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "reciprocal_plus_third_in2_out0",
+      "cutoff": 5,
+      "population": 2,
+      "targets": 2,
+      "global_population": 57439,
+      "coverage": 3.4819547694075456e-05,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "reciprocal_plus_third_in2_out0",
+      "cutoff": 10,
+      "population": 2,
+      "targets": 2,
+      "global_population": 57439,
+      "coverage": 3.4819547694075456e-05,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "reciprocal_with_third_in0_out1",
+      "cutoff": 5,
+      "population": 6,
+      "targets": 3,
+      "global_population": 57439,
+      "coverage": 0.00010445864308222637,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "reciprocal_with_third_in0_out1",
+      "cutoff": 10,
+      "population": 6,
+      "targets": 3,
+      "global_population": 57439,
+      "coverage": 0.00010445864308222637,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "reciprocal_with_third_in1_out0",
+      "cutoff": 5,
+      "population": 4,
+      "targets": 2,
+      "global_population": 57439,
+      "coverage": 6.963909538815091e-05,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    },
+    {
+      "stratum": "dominant_family_exploratory",
+      "level": "reciprocal_with_third_in1_out0",
+      "cutoff": 10,
+      "population": 4,
+      "targets": 2,
+      "global_population": 57439,
+      "coverage": 6.963909538815091e-05,
+      "regressions": 0,
+      "improvements": 0,
+      "net_hit_count": 0,
+      "conditional_recall_delta": 0.0,
+      "global_recall_contribution": 0.0,
+      "paired_ci95": [
+        0.0,
+        0.0
+      ],
+      "mcnemar_p": 1.0,
+      "p_holm_all_subgroups_both_cutoffs": 1.0
+    }
+  ],
+  "holm_family_size": 66,
+  "adjusted_exploratory_association": {
+    "population": 56689,
+    "excluded_incomplete": 750,
+    "clusters": 16153,
+    "intercept": -0.0028929774735839413,
+    "omitted_constant_features": [],
+    "coefficients": [
+      {
+        "feature": "log_train_target_frequency",
+        "coefficient_per_sd": -0.007245641840085758,
+        "cluster_se": 0.01151733798970017,
+        "ci95": [
+          -0.02982090119296062,
+          0.015329617512789103
+        ],
+        "p": 0.5292876840484924,
+        "p_holm_model_family": 1.0
+      },
+      {
+        "feature": "log_test_target_frequency",
+        "coefficient_per_sd": -0.005273743209019221,
+        "cluster_se": 0.0029626883145281555,
+        "ci95": [
+          -0.011080940769950223,
+          0.000533454351911781
+        ],
+        "p": 0.07508602720478146,
+        "p_holm_model_family": 0.5256021904334702
+      },
+      {
+        "feature": "log_behavior_degree",
+        "coefficient_per_sd": 0.004385609938624758,
+        "cluster_se": 0.009680304378634244,
+        "ci95": [
+          -0.014588859870099448,
+          0.023360079747348966
+        ],
+        "p": 0.6505226885767401,
+        "p_holm_model_family": 1.0
+      },
+      {
+        "feature": "log_history_length",
+        "coefficient_per_sd": 0.00041238482472082225,
+        "cluster_se": 0.0006470843534850726,
+        "ci95": [
+          -0.0008559722484306935,
+          0.001680741897872338
+        ],
+        "p": 0.5239405307124513,
+        "p_holm_model_family": 1.0
+      },
+      {
+        "feature": "negative_curvature_fraction",
+        "coefficient_per_sd": 0.0021879673462440645,
+        "cluster_se": 0.003937187071522077,
+        "ci95": [
+          -0.005529355818178468,
+          0.009905290510666596
+        ],
+        "p": 0.5784110650360312,
+        "p_holm_model_family": 1.0
+      },
+      {
+        "feature": "euclidean_gate_delta",
+        "coefficient_per_sd": -0.0009178115422068188,
+        "cluster_se": 0.001184834810686024,
+        "ci95": [
+          -0.003240219130268555,
+          0.0014045960458549177
+        ],
+        "p": 0.43856819099538813,
+        "p_holm_model_family": 1.0
+      },
+      {
+        "feature": "curvature_mae_delta",
+        "coefficient_per_sd": 0.004046431623469945,
+        "cluster_se": 0.001705142965532422,
+        "ci95": [
+          0.0007041623668891796,
+          0.007388700880050709
+        ],
+        "p": 0.01765233093137485,
+        "p_holm_model_family": 0.1412186474509988
+      },
+      {
+        "feature": "reconstruction_mse_delta",
+        "coefficient_per_sd": 3.1646216168025174e-06,
+        "cluster_se": 0.0003873372451547872,
+        "ci95": [
+          -0.0007560593218167645,
+          0.0007623885650503695
+        ],
+        "p": 0.9934812993424812,
+        "p_holm_model_family": 1.0
+      },
+      {
+        "feature": "edge_prefix_l1_out_delta",
+        "coefficient_per_sd": 0.0022149723075560674,
+        "cluster_se": 0.0006211901717015398,
+        "ci95": [
+          0.0009973707015113185,
+          0.003432573913600816
+        ],
+        "p": 0.0003639469266511385,
+        "p_holm_model_family": 0.0032755223398602466
+      }
+    ],
+    "interpretation": "post-hoc complete-case conditional association, not causal mediation"
+  },
+  "additional_strata": [
+    "target_train_frequency",
+    "dominant_family_exploratory"
+  ],
+  "additional_strata_reason": "training popularity controls exposure; exact motif family is the requested structural attribution, both post-hoc",
+  "train_frequency_source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+  "limitations": [
+    "Single completed run per arm; model/expert count, fixed supervision, execution and trajectories changed together.",
+    "Catalogue-derived T5 vocab/EOS also differ; not a single-factor or identical-vocabulary causal comparison.",
+    "Baseline-rank subgrouping conditions on an outcome and is descriptive.",
+    "Complete-case adjusted associations are neither causal effects nor mediation identification.",
+    "No model multi-seed training, new baseline or experiment."
+  ]
+}

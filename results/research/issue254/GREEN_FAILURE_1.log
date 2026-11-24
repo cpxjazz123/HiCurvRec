@@ -1,0 +1,50 @@
+test_item_overlap_not_cross_model_integer_codes (test_candidates.CandidateTests) ... ok
+test_observed_branch_not_inferred_beam_failure (test_candidates.CandidateTests) ... ok
+test_duplicate_prediction_rejected (test_known_answers.KnownAnswers) ... ok
+test_four_groups_signed_delta (test_known_answers.KnownAnswers) ... ok
+test_history_identity_mismatch_rejected (test_known_answers.KnownAnswers) ... ok
+test_identity_mismatch_rejected (test_known_answers.KnownAnswers) ... ok
+test_missing_prediction_not_unhit (test_known_answers.KnownAnswers) ... ok
+test_population_denominator_and_repeated_target (test_known_answers.KnownAnswers) ... ok
+test_prefix_ignores_collision_suffix (test_known_answers.KnownAnswers) ... ok
+test_rank_is_one_based_display_and_censored (test_known_answers.KnownAnswers) ... ok
+test_attention_weighting_and_null_mask (test_mechanism.MechanismTests) ... ok
+test_curvature_explicit_identity_missing (test_mechanism.MechanismTests) ... ok
+test_five_to_three_signs_and_entropy (test_mechanism.MechanismTests) ... ok
+test_sid_direction_and_relabel_invariance (test_mechanism.MechanismTests) ... ok
+test_fourth_suffix_misrouted_as_geometry (test_mutation.MutationTests) ... ok
+test_identity_route_bypass (test_mutation.MutationTests) ... ok
+test_item_denominator (test_mutation.MutationTests) ... ok
+test_missing_curvature_mask_dropped (test_mutation.MutationTests) ... FAIL
+test_rank_off_by_one (test_mutation.MutationTests) ... ok
+test_sign_flip (test_mutation.MutationTests) ... ok
+test_empty_and_invalid_ranks (test_reference.ReferenceTests) ... ok
+test_histogram_matches_hand_answer_and_per_sample_reduction (test_reference.ReferenceTests) ... ok
+test_raw_candidates_override_incorrect_dumped_rank (test_reference.ReferenceTests) ... ok
+test_cluster_adjusted_linear_association (test_statistics.StatisticsTests) ... ok
+test_cluster_ratio_not_unweighted_item_mean (test_statistics.StatisticsTests) ... ok
+test_exact_discordants (test_statistics.StatisticsTests) ... ok
+test_holm_preserves_original_order (test_statistics.StatisticsTests) ... ok
+test_paired_resampling_keeps_degenerate_effect (test_statistics.StatisticsTests) ... ok
+test_training_frequency_input_hash_not_asset_entry (test_statistics.StatisticsTests) ... ok
+test_catalogue_order_must_be_explicit (test_structure.StructureTests) ... ok
+test_hand_degrees_density_and_reciprocity (test_structure.StructureTests) ... ok
+test_hand_relations_keep_direction_weight_and_overlap (test_structure.StructureTests) ... ok
+test_history_occurrences_and_unique_support_are_separate (test_structure.StructureTests) ... ok
+test_invalid_curvature_values_stay_missing_not_zero (test_structure.StructureTests) ... ok
+test_sampled_coverage_names_and_uncovered_masks (test_structure.StructureTests) ... ok
+
+======================================================================
+FAIL: test_missing_curvature_mask_dropped (test_mutation.MutationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue254/tests/test_mutation.py", line 66, in test_missing_curvature_mask_dropped
+    self.caught('tools.issue254.mechanism.join_curvature',mutant,
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue254/tests/test_mutation.py", line 16, in caught
+    check()
+AssertionError: AssertionError not raised
+
+----------------------------------------------------------------------
+Ran 35 tests in 33.520s
+
+FAILED (failures=1)

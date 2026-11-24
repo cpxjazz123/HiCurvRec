@@ -1,0 +1,56 @@
+{
+  "schema": "genrec.issue254.module_checks/1",
+  "modules": [
+    {
+      "module": "identity/source/R2",
+      "status": "PASS",
+      "evidence": "EVIDENCE.json",
+      "checked_input_files": 256
+    },
+    {
+      "module": "paired metrics/item contribution conservation",
+      "status": "PASS",
+      "evidence": "RECONCILIATION.json"
+    },
+    {
+      "module": "graph/triples/masks/context",
+      "status": "PASS",
+      "evidence": "STRUCTURE_SUMMARY.json"
+    },
+    {
+      "module": "CPU checkpoint gate/attention/q/SID",
+      "status": "PASS",
+      "evidence": "MECHANISM_SUMMARY.json"
+    },
+    {
+      "module": "actual candidate coverage and cases",
+      "status": "PASS",
+      "evidence": "CANDIDATE_SUMMARY.json"
+    },
+    {
+      "module": "candidate/history/target topology and mechanism joins",
+      "status": "PASS",
+      "evidence": "CONNECTIONS_SUMMARY.json"
+    },
+    {
+      "module": "paired/cluster statistics and controls",
+      "status": "PASS",
+      "evidence": "STATISTICS_SUMMARY.json"
+    },
+    {
+      "module": "known answers/reference/designated mutations",
+      "status": "PASS",
+      "evidence": "TEST_RESULTS.json"
+    },
+    {
+      "module": "new gradients/optimizer/DDP/training",
+      "status": "NA",
+      "reason": "read-only analysis; new training/mechanism changes forbidden"
+    },
+    {
+      "module": "T5 pruned beam trajectory/probability attribution",
+      "status": "NA",
+      "reason": "not saved in the original runs; no fabricated trace"
+    }
+  ]
+}

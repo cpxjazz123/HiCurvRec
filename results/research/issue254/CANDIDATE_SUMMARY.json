@@ -1,0 +1,654 @@
+{
+  "schema": "genrec.issue254.candidates/1",
+  "purpose": "evaluation",
+  "population": 57439,
+  "candidate_error_rows": 40716,
+  "candidate_error_scope": "all wrong selected candidates for the union of discordant@5/@10 samples, both arms",
+  "coverage_by_cutoff_group_arm": {
+    "k5/neither_hit/issue252": {
+      "saved_topk_lacks_target_l1": 47349,
+      "target_l1_covered_l2_absent": 6651,
+      "target_l2_covered_l3_absent": 941,
+      "target_l3_covered_target_absent": 28
+    },
+    "k5/neither_hit/issue253": {
+      "saved_topk_lacks_target_l1": 48910,
+      "target_l1_covered_l2_absent": 5622,
+      "target_l2_covered_l3_absent": 402,
+      "target_l3_covered_target_absent": 35
+    },
+    "k10/neither_hit/issue252": {
+      "saved_topk_lacks_target_l1": 42737,
+      "target_l2_covered_l3_absent": 1576,
+      "target_l1_covered_l2_absent": 9482,
+      "target_l3_covered_target_absent": 49
+    },
+    "k10/neither_hit/issue253": {
+      "saved_topk_lacks_target_l1": 44209,
+      "target_l1_covered_l2_absent": 8736,
+      "target_l2_covered_l3_absent": 830,
+      "target_l3_covered_target_absent": 69
+    },
+    "k5/both_hit/issue252": {
+      "target_present": 1218
+    },
+    "k5/both_hit/issue253": {
+      "target_present": 1218
+    },
+    "k10/both_hit/issue252": {
+      "target_present": 1903
+    },
+    "k10/both_hit/issue253": {
+      "target_present": 1903
+    },
+    "k10/only_issue252_hit/issue252": {
+      "target_present": 928
+    },
+    "k10/only_issue252_hit/issue253": {
+      "saved_topk_lacks_target_l1": 677,
+      "target_l1_covered_l2_absent": 233,
+      "target_l2_covered_l3_absent": 17,
+      "target_l3_covered_target_absent": 1
+    },
+    "k10/only_issue253_hit/issue252": {
+      "saved_topk_lacks_target_l1": 481,
+      "target_l1_covered_l2_absent": 233,
+      "target_l2_covered_l3_absent": 49,
+      "target_l3_covered_target_absent": 1
+    },
+    "k10/only_issue253_hit/issue253": {
+      "target_present": 764
+    },
+    "k5/only_issue252_hit/issue252": {
+      "target_present": 665
+    },
+    "k5/only_issue252_hit/issue253": {
+      "saved_topk_lacks_target_l1": 556,
+      "target_l1_covered_l2_absent": 106,
+      "target_l2_covered_l3_absent": 3
+    },
+    "k5/only_issue253_hit/issue252": {
+      "saved_topk_lacks_target_l1": 449,
+      "target_l1_covered_l2_absent": 108,
+      "target_l2_covered_l3_absent": 30
+    },
+    "k5/only_issue253_hit/issue253": {
+      "target_present": 587
+    }
+  },
+  "fallback_selected_candidates": {
+    "issue252": 5,
+    "issue253": 0
+  },
+  "saved_candidates_per_arm_per_sample": 10,
+  "search_beam": 20,
+  "exact_target_ranks_beyond10": "NA; no full beam trajectories/probabilities were saved",
+  "illegal_selected_decode": 0,
+  "rank_validation_source": "PAIRED_SUMMARY.json exact loader checks",
+  "case_selection": "first sample per top3 net-loss/net-gain target; both/neither controls reuse loss targets",
+  "cases": [
+    {
+      "case": "C01",
+      "group10": "both_hit",
+      "target_item": 22372,
+      "last_history_item": 22100,
+      "wrong_item_issue253": 23516,
+      "rank_issue252": 1,
+      "rank_issue253": 1,
+      "coverage_issue253": "target_present",
+      "last_target_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 1.0,
+        "target_to_source_edge": false,
+        "target_to_source_weight": 0.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 65,
+        "neighbor_jaccard": 0.039804041641151255,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "target_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 4.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 2.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 279,
+        "neighbor_jaccard": 0.11827045358202629,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "last_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 2.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 2.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 78,
+        "neighbor_jaccard": 0.05263157894736842,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      }
+    },
+    {
+      "case": "C02",
+      "group10": "both_hit",
+      "target_item": 20159,
+      "last_history_item": 22645,
+      "wrong_item_issue253": 23516,
+      "rank_issue252": 3,
+      "rank_issue253": 2,
+      "coverage_issue253": "target_present",
+      "last_target_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 2.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 2.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 132,
+        "neighbor_jaccard": 0.06537890044576523,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "target_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 5.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 4.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 357,
+        "neighbor_jaccard": 0.1320754716981132,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "last_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 3.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 3.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 99,
+        "neighbor_jaccard": 0.06635388739946381,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      }
+    },
+    {
+      "case": "C03",
+      "group10": "only_issue252_hit",
+      "target_item": 20159,
+      "last_history_item": 22925,
+      "wrong_item_issue253": 23516,
+      "rank_issue252": 2,
+      "rank_issue253": ">10",
+      "coverage_issue253": "saved_topk_lacks_target_l1",
+      "last_target_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 1.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 44,
+        "neighbor_jaccard": 0.02319451765946231,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "target_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 5.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 4.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 357,
+        "neighbor_jaccard": 0.1320754716981132,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "last_wrong_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": false,
+        "target_to_source_weight": 0.0,
+        "undirected_adjacent": false,
+        "common_neighbor_count": 38,
+        "neighbor_jaccard": 0.028294862248696945,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": true,
+        "undirected_within_two_hop": true
+      }
+    },
+    {
+      "case": "C04",
+      "group10": "only_issue252_hit",
+      "target_item": 22372,
+      "last_history_item": 11314,
+      "wrong_item_issue253": 20159,
+      "rank_issue252": 4,
+      "rank_issue253": ">10",
+      "coverage_issue253": "saved_topk_lacks_target_l1",
+      "last_target_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": false,
+        "target_to_source_weight": 0.0,
+        "undirected_adjacent": false,
+        "common_neighbor_count": 1,
+        "neighbor_jaccard": 0.0007178750897343862,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": true,
+        "undirected_within_two_hop": true
+      },
+      "target_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 7.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 8.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 381,
+        "neighbor_jaccard": 0.13525026624068157,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "last_wrong_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": false,
+        "target_to_source_weight": 0.0,
+        "undirected_adjacent": false,
+        "common_neighbor_count": 0,
+        "neighbor_jaccard": 0.0,
+        "undirected_two_step_walk": false,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": false
+      }
+    },
+    {
+      "case": "C05",
+      "group10": "neither_hit",
+      "target_item": 20159,
+      "last_history_item": 23449,
+      "wrong_item_issue253": 22919,
+      "rank_issue252": ">10",
+      "rank_issue253": ">10",
+      "coverage_issue253": "saved_topk_lacks_target_l1",
+      "last_target_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": false,
+        "target_to_source_weight": 0.0,
+        "undirected_adjacent": false,
+        "common_neighbor_count": 7,
+        "neighbor_jaccard": 0.0038043478260869567,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": true,
+        "undirected_within_two_hop": true
+      },
+      "target_wrong_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 1.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 26,
+        "neighbor_jaccard": 0.012745098039215686,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "last_wrong_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 1.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 3,
+        "neighbor_jaccard": 0.010344827586206896,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      }
+    },
+    {
+      "case": "C06",
+      "group10": "neither_hit",
+      "target_item": 22372,
+      "last_history_item": 22105,
+      "wrong_item_issue253": 18934,
+      "rank_issue252": ">10",
+      "rank_issue253": ">10",
+      "coverage_issue253": "saved_topk_lacks_target_l1",
+      "last_target_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": false,
+        "target_to_source_weight": 0.0,
+        "undirected_adjacent": false,
+        "common_neighbor_count": 38,
+        "neighbor_jaccard": 0.025867937372362152,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": true,
+        "undirected_within_two_hop": true
+      },
+      "target_wrong_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": false,
+        "target_to_source_weight": 0.0,
+        "undirected_adjacent": false,
+        "common_neighbor_count": 167,
+        "neighbor_jaccard": 0.08425832492431887,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": true,
+        "undirected_within_two_hop": true
+      },
+      "last_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 1.0,
+        "target_to_source_edge": false,
+        "target_to_source_weight": 0.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 25,
+        "neighbor_jaccard": 0.029239766081871343,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      }
+    },
+    {
+      "case": "C07",
+      "group10": "neither_hit",
+      "target_item": 11060,
+      "last_history_item": 6106,
+      "wrong_item_issue253": 20159,
+      "rank_issue252": ">10",
+      "rank_issue253": ">10",
+      "coverage_issue253": "saved_topk_lacks_target_l1",
+      "last_target_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 2.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 2.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 93,
+        "neighbor_jaccard": 0.1054421768707483,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "target_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 3.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 1.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 186,
+        "neighbor_jaccard": 0.08781869688385269,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "last_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 4.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 3.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 191,
+        "neighbor_jaccard": 0.09095238095238095,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      }
+    },
+    {
+      "case": "C08",
+      "group10": "only_issue252_hit",
+      "target_item": 11060,
+      "last_history_item": 22890,
+      "wrong_item_issue253": 18934,
+      "rank_issue252": 3,
+      "rank_issue253": ">10",
+      "coverage_issue253": "saved_topk_lacks_target_l1",
+      "last_target_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 11.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 22.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 114,
+        "neighbor_jaccard": 0.1360381861575179,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "target_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 13.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 2.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 132,
+        "neighbor_jaccard": 0.11754229741763135,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "last_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 2.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 5.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 119,
+        "neighbor_jaccard": 0.10818181818181818,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      }
+    },
+    {
+      "case": "C09",
+      "group10": "only_issue253_hit",
+      "target_item": 24366,
+      "last_history_item": 21213,
+      "wrong_item_issue253": 7987,
+      "rank_issue252": ">10",
+      "rank_issue253": 2,
+      "coverage_issue253": "target_present",
+      "last_target_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": false,
+        "target_to_source_weight": 0.0,
+        "undirected_adjacent": false,
+        "common_neighbor_count": 6,
+        "neighbor_jaccard": 0.007168458781362007,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": true,
+        "undirected_within_two_hop": true
+      },
+      "target_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 2.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 1.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 84,
+        "neighbor_jaccard": 0.07381370826010544,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "last_wrong_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": false,
+        "target_to_source_weight": 0.0,
+        "undirected_adjacent": false,
+        "common_neighbor_count": 5,
+        "neighbor_jaccard": 0.011160714285714286,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": true,
+        "undirected_within_two_hop": true
+      }
+    },
+    {
+      "case": "C10",
+      "group10": "only_issue253_hit",
+      "target_item": 22571,
+      "last_history_item": 198,
+      "wrong_item_issue253": 23602,
+      "rank_issue252": ">10",
+      "rank_issue253": 1,
+      "coverage_issue253": "target_present",
+      "last_target_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": false,
+        "target_to_source_weight": 0.0,
+        "undirected_adjacent": false,
+        "common_neighbor_count": 31,
+        "neighbor_jaccard": 0.05400696864111498,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": true,
+        "undirected_within_two_hop": true
+      },
+      "target_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 2.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 2.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 136,
+        "neighbor_jaccard": 0.09948792977322604,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "last_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 1.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 2.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 54,
+        "neighbor_jaccard": 0.04954128440366973,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      }
+    },
+    {
+      "case": "C11",
+      "group10": "both_hit",
+      "target_item": 11060,
+      "last_history_item": 18594,
+      "wrong_item_issue253": 23602,
+      "rank_issue252": 6,
+      "rank_issue253": 4,
+      "coverage_issue253": "target_present",
+      "last_target_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 1.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 13,
+        "neighbor_jaccard": 0.02448210922787194,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "target_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 3.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 4.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 175,
+        "neighbor_jaccard": 0.13059701492537312,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "last_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 1.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 1.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 20,
+        "neighbor_jaccard": 0.019029495718363463,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      }
+    },
+    {
+      "case": "C12",
+      "group10": "only_issue253_hit",
+      "target_item": 9218,
+      "last_history_item": 20997,
+      "wrong_item_issue253": 22372,
+      "rank_issue252": ">10",
+      "rank_issue253": 10,
+      "coverage_issue253": "target_present",
+      "last_target_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": false,
+        "target_to_source_weight": 0.0,
+        "undirected_adjacent": false,
+        "common_neighbor_count": 0,
+        "neighbor_jaccard": 0.0,
+        "undirected_two_step_walk": false,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": false
+      },
+      "target_wrong_relation": {
+        "source_to_target_edge": true,
+        "source_to_target_weight": 18.0,
+        "target_to_source_edge": true,
+        "target_to_source_weight": 27.0,
+        "undirected_adjacent": true,
+        "common_neighbor_count": 167,
+        "neighbor_jaccard": 0.09887507400828893,
+        "undirected_two_step_walk": true,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": true
+      },
+      "last_wrong_relation": {
+        "source_to_target_edge": false,
+        "source_to_target_weight": 0.0,
+        "target_to_source_edge": false,
+        "target_to_source_weight": 0.0,
+        "undirected_adjacent": false,
+        "common_neighbor_count": 0,
+        "neighbor_jaccard": 0.0,
+        "undirected_two_step_walk": false,
+        "undirected_exact_two_hop": false,
+        "undirected_within_two_hop": false
+      }
+    }
+  ],
+  "graph_input_sha256": {
+    "results/research/issue254/EVIDENCE.json": "2ce08437b558f911c27f4d475e98706e95a49833f6137419382b334a8ff7de04",
+    "assets/manifest.json": "8c58d34521181925df2e66dbe01f64b7150fb56a1eab028f59e8b4832c381ae6",
+    "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+    "results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/item_sids.json": "037766704565c5143ab721fd5ca5f61bbba3e800baa9dd561d3ae5601987cff2",
+    "results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/item_sids.json": "24c17aee0818373fbb4c76d175170a6b207d6e09a29faa398b140acd84bae2e3",
+    "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+    "assets/train/visible_reverse.npz": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6",
+    "assets/train/visible_undirected.npz": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818"
+  },
+  "interpretation": "saved output branch coverage is observable; T5 prefix pruning/probability/ranking cause is unidentifiable"
+}

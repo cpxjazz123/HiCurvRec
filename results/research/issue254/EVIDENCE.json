@@ -1,0 +1,718 @@
+{
+  "asset_manifest": {
+    "bytes": 71218,
+    "path": "/fs04/ar57/wenyu/GeneRec/assets/manifest.json",
+    "present": true,
+    "sha256": "8c58d34521181925df2e66dbe01f64b7150fb56a1eab028f59e8b4832c381ae6"
+  },
+  "assets": [
+    {
+      "actual_sha256": "a5eb2935b258024500d3558c0256238aa342bd1ade52dd0141208c1730e656e1",
+      "bytes": 112891,
+      "manifest_sha256": "a5eb2935b258024500d3558c0256238aa342bd1ade52dd0141208c1730e656e1",
+      "path": "assets/index.npz",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "21a9679881d07af5f2a36577b07a0ac426fc0788a2b75c9f6d3045ef74eef6fb",
+      "bytes": 204375,
+      "manifest_sha256": "21a9679881d07af5f2a36577b07a0ac426fc0788a2b75c9f6d3045ef74eef6fb",
+      "path": "assets/node_moments.npz",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "1a8f46e428e66df7ca8cd5672c1bf23af57d60e23459f5d13cfaffa52a82ed12",
+      "bytes": 1754963,
+      "manifest_sha256": "1a8f46e428e66df7ca8cd5672c1bf23af57d60e23459f5d13cfaffa52a82ed12",
+      "path": "assets/item_summary.npz",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "bytes": 650620,
+      "manifest_sha256": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+      "path": "assets/train/visible_forward.npz",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6",
+      "bytes": 651122,
+      "manifest_sha256": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6",
+      "path": "assets/train/visible_reverse.npz",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818",
+      "bytes": 1178709,
+      "manifest_sha256": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818",
+      "path": "assets/train/visible_undirected.npz",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "1870d81151e38db93de347c1b12a5b7742782d89069b4fb6241dc2cf9f5eedb2",
+      "bytes": 5512383,
+      "manifest_sha256": "1870d81151e38db93de347c1b12a5b7742782d89069b4fb6241dc2cf9f5eedb2",
+      "path": "assets/shards/shard_000.npz",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "8c0ff9f8c25b98ed31802cdb62cf921df6d3cf8bbf35ee2d3de9817d6cd0807a",
+      "bytes": 454271360,
+      "manifest_sha256": "8c0ff9f8c25b98ed31802cdb62cf921df6d3cf8bbf35ee2d3de9817d6cd0807a",
+      "path": "assets/v8_runtime_layout/targets.npy",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "33f30b2979311d74cf996545bec011856ffa7acbc9cb9b995c829dbc9f87937c",
+      "bytes": 196832,
+      "manifest_sha256": "33f30b2979311d74cf996545bec011856ffa7acbc9cb9b995c829dbc9f87937c",
+      "path": "assets/v8_runtime_layout/target_offsets.npy",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+      "bytes": 148309356,
+      "manifest_sha256": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+      "path": "assets/v8_runtime_layout/two_hop_nodes.npy",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+      "bytes": 196832,
+      "manifest_sha256": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+      "path": "assets/v8_runtime_layout/two_hop_offsets.npy",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "17a6e7dd9ea4d264c1e68dcaa12211861b31672a02065ef9ef8155a12cb6d737",
+      "bytes": 75580566,
+      "manifest_sha256": "17a6e7dd9ea4d264c1e68dcaa12211861b31672a02065ef9ef8155a12cb6d737",
+      "path": "assets/v8_runtime_layout/visible_forward_bits.npy",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "1cbbab0b7d24f06c2a8cabc5e33f1fd613c6dd7468908efdd0139b6bd5e271b3",
+      "bytes": 814211,
+      "manifest_sha256": "1cbbab0b7d24f06c2a8cabc5e33f1fd613c6dd7468908efdd0139b6bd5e271b3",
+      "path": "results/research/issue247/assets/topology_features.npz",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "79e1adee8461751c5b4cdfa78a78ab0fa22ac23d8ad296c4b881d1167dfca7c9",
+      "bytes": 254494,
+      "manifest_sha256": "79e1adee8461751c5b4cdfa78a78ab0fa22ac23d8ad296c4b881d1167dfca7c9",
+      "path": "results/research/infra246/assets/motifs/motif_counts.npz",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "68855edef787ae292108f3a415381be6427f1f575acaf9126c9a933214fa5349",
+      "bytes": 653792,
+      "manifest_sha256": "68855edef787ae292108f3a415381be6427f1f575acaf9126c9a933214fa5349",
+      "path": "results/research/infra246/assets/motifs/motif_instances_visible.npz",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "dc96eede3cc0fbe51b6117c597365ee4c3e44d4307881023c15945c6d77bc027",
+      "bytes": 72666,
+      "manifest_sha256": "dc96eede3cc0fbe51b6117c597365ee4c3e44d4307881023c15945c6d77bc027",
+      "path": "results/research/infra246/assets/motifs/motif_instances_4node_visible.npz",
+      "registered": true,
+      "use": "training"
+    },
+    {
+      "actual_sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc",
+      "bytes": 2546378,
+      "manifest_sha256": null,
+      "path": "results/stage0_build_parquet/test.parquet",
+      "registered": false,
+      "use": null
+    },
+    {
+      "actual_sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+      "bytes": 75531392,
+      "manifest_sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb",
+      "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+      "registered": true,
+      "use": "training"
+    }
+  ],
+  "generations": {
+    "issue252": {
+      "arm": "TIGER_gnn_attention_sectional_rq",
+      "r2": {
+        "files": 100,
+        "generation_hashes_match": true,
+        "key": "TIGER_gnn_attention_sectional_rq/037766704565",
+        "receipt_reused": true
+      },
+      "r2_number": "100",
+      "source_inventory": {
+        "all_match": true,
+        "files": 50,
+        "mapping": "stage2_archive_binding.candidate_sources",
+        "sha256": "e9c897cfc9f488f356162ed7aa1e09549c37580178d4276f7d00a8b2cab2de16"
+      },
+      "stage2_archive_binding": {
+        "bytes": 30922,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/archive_binding.json",
+        "present": true,
+        "sha256": "549e38cdadf44478e400f45f7de2e934da83383513a5ba46902825be71d3c7ed"
+      },
+      "stage2_checkpoint": {
+        "bytes": 4672373,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/rqvae_best.pth",
+        "present": true,
+        "sha256": "0ca5cd32c307460cad7ecd72734538dff2ca3427f64286063ece8c290f8e28f0"
+      },
+      "stage2_export_manifest": {
+        "bytes": 955,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/export_manifest.json",
+        "present": true,
+        "sha256": "66b81d8d235189a4d25db9d883af3adeb955888f4d667e87c36af871e8223bf6"
+      },
+      "stage2_metrics": {
+        "bytes": 16724981,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/logs/training_metrics.jsonl",
+        "present": true,
+        "sha256": "02a386c8374fdf675af1d9825873b57d900a50d23822ba1626bf45ac8d2413a9"
+      },
+      "stage2_result": {
+        "kind": "directory",
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result",
+        "present": true
+      },
+      "stage2_run_id": "issue252_formal_r2",
+      "stage2_sid": {
+        "bytes": 1264278,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/item_sids.json",
+        "present": true,
+        "sha256": "037766704565c5143ab721fd5ca5f61bbba3e800baa9dd561d3ae5601987cff2"
+      },
+      "stage2_source": {
+        "kind": "directory",
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/src",
+        "present": true
+      },
+      "stage2_trainer_copy_is_not_authority": {
+        "bytes": 1264271,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/item_sids.trainer.json",
+        "present": true,
+        "sha256": "9b6a3e66c4d17ceae05550201b2cbda1af8cfa3857760fbb7aeeec66abef8eaa"
+      },
+      "stage3_checkpoint": {
+        "bytes": 18282260,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/ckpt/Amazon_2023_Instruments/Nov-24-2026_15-34-06/HG_Rec_best.pth",
+        "present": true,
+        "sha256": "c63ce7b83e7cd27d140c6e9f2ef6c3da912cf20f30c0bc6c999169d1eb60a7a2"
+      },
+      "stage3_config": {
+        "activation_function": "relu",
+        "batch_size": 4096,
+        "beam_size": 20,
+        "bf16": true,
+        "code_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/item_sids.json",
+        "codebook_size": [
+          256,
+          256,
+          256,
+          1
+        ],
+        "compile": false,
+        "compile_mode": "default",
+        "d_ff": 1024,
+        "d_kv": 64,
+        "d_model": 128,
+        "dataset_name": "Amazon_2023_Instruments",
+        "dataset_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/",
+        "decoder_start_token_id": 0,
+        "device": "cuda",
+        "dropout_rate": 0.1,
+        "early_eval_epochs": [
+          25,
+          50,
+          75,
+          100,
+          125
+        ],
+        "eos_token_id": 780,
+        "eval_interval": 5,
+        "eval_start_epoch": 75,
+        "exclude_history": true,
+        "fast": true,
+        "feed_forward_proj": "relu",
+        "infer_size": 1024,
+        "log_path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/",
+        "lr": 0.003,
+        "lr_min_factor": 0.2,
+        "lr_warmup_pct": 0.1,
+        "max_len": 20,
+        "max_token_seq_len": 82,
+        "n_user_tokens": 1,
+        "no_eval": true,
+        "no_exclude_history": false,
+        "no_pin_memory": false,
+        "num_decoder_layers": 4,
+        "num_epochs": 150,
+        "num_heads": 6,
+        "num_layers": 4,
+        "num_workers": 4,
+        "pad_token_id": 0,
+        "pin_memory": true,
+        "prefetch_factor": 8,
+        "save_path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/ckpt/",
+        "screen_baseline_log": "",
+        "screen_min_ndcg_gain": 0.001,
+        "screen_min_recall_gain": 0.001,
+        "screen_start_epoch": 40,
+        "screen_window": 5,
+        "seed": 42,
+        "sid_length": 4,
+        "skip_test": false,
+        "test_file": "test.parquet",
+        "topk_list": [
+          5,
+          10
+        ],
+        "train_file": "train.parquet",
+        "use_lr_scheduler": true,
+        "valid_file": "valid.parquet",
+        "vocab_size": 781,
+        "weight_decay": 0.05
+      },
+      "stage3_dataloader": {
+        "bytes": 4396,
+        "path": "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/data/dataloader.py",
+        "present": true,
+        "sha256": "d490b89c82a8ce3e1d8fa7577040038ef3411d030ce327fad95a999334f98af4"
+      },
+      "stage3_dataset_codec": {
+        "bytes": 9579,
+        "path": "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/data/dataset.py",
+        "present": true,
+        "sha256": "8899f1348e740996c572cd95439365f4caf2fe791acc4a0e22ed7d837937030e"
+      },
+      "stage3_log": {
+        "bytes": 44402,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06/HG_Rec.log",
+        "present": true,
+        "sha256": "b3540e158426a8802fb2b6356912ffe16b86e4f60c22d8dfc0a195e1fd9932f6"
+      },
+      "stage3_metrics": {
+        "bytes": 82173,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06/training_metrics.jsonl",
+        "present": true,
+        "sha256": "f7e69b0ef3e97aa7cfe80c9922a681458436b8ac046260782b261b25e6f3c921"
+      },
+      "stage3_predictions": [
+        {
+          "bytes": 14865004,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06/predictions/rank0.jsonl",
+          "present": true,
+          "sha256": "72330429bb0d58d677a04817ac5b0e83d085e7abf2cbaa86bd5b6ff6e8ed1834"
+        },
+        {
+          "bytes": 14877010,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06/predictions/rank1.jsonl",
+          "present": true,
+          "sha256": "b37a25026516cb16dc9d797645c76a126790cb43faad3f9a0c99132d1b279559"
+        },
+        {
+          "bytes": 14869667,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06/predictions/rank2.jsonl",
+          "present": true,
+          "sha256": "64709058ebfb635fa4c087ef935a8ae105922da9f23cfa149cb82e3d3171386e"
+        },
+        {
+          "bytes": 14859682,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06/predictions/rank3.jsonl",
+          "present": true,
+          "sha256": "00c53803f87bc0c7a2195811d9bd339770877ecb6f4f760fddfeac08add4a003"
+        }
+      ],
+      "stage3_run_dir": "results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06",
+      "stage3_shards": [
+        {
+          "bytes": 1006700,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06/_test_shards/rank0.json",
+          "present": true,
+          "sha256": "4256af3de207106907af98981080de2b95f91f08110a4d1a9903edf1a87b0ff5"
+        },
+        {
+          "bytes": 1006544,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06/_test_shards/rank1.json",
+          "present": true,
+          "sha256": "fc05028a736f3fec28be165e1b21767a0767baed09c51ee45fde330fc56a6b73"
+        },
+        {
+          "bytes": 1006499,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06/_test_shards/rank2.json",
+          "present": true,
+          "sha256": "40e39c32025274b2d1019f48ba55138accce27696ebbc86b146fbd51cea0b439"
+        },
+        {
+          "bytes": 1006343,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06/_test_shards/rank3.json",
+          "present": true,
+          "sha256": "20355267f3e987c73126ec83c3828f8794dc7a571245fa6ab45e60431e4b19c7"
+        }
+      ],
+      "stage3_test_final": {
+        "bytes": 4011,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06/test_final.json",
+        "present": true,
+        "sha256": "6786fa854e2ec5a83cb690033200087ced511215c7240a7e6114e0f9c2e4b8c9"
+      },
+      "stage3_trainer": {
+        "bytes": 77538,
+        "path": "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py",
+        "present": true,
+        "sha256": "54ca6bfbcd55a42e718660dd0004370a41a5e1c2c5038a86bbfc84f32b963690"
+      }
+    },
+    "issue253": {
+      "arm": "TIGER_three_expert_attention_rq",
+      "r2": {
+        "files": 99,
+        "generation_hashes_match": true,
+        "key": "TIGER_three_expert_attention_rq/24c17aee0818",
+        "receipt_reused": true
+      },
+      "r2_number": "101",
+      "source_inventory": {
+        "all_match": true,
+        "files": 49,
+        "mapping": "stage2_archive_binding.candidate_sources",
+        "sha256": "1d99cf7bd9bdeb9773a323eb60e35ea13b04aa17f26739267c18580796cb3aa9"
+      },
+      "stage2_archive_binding": {
+        "bytes": 30906,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/archive_binding.json",
+        "present": true,
+        "sha256": "e0aed038ed6e1d6bb11ba4b9b833dc32207896d9d6c2c1dab27098658524e046"
+      },
+      "stage2_checkpoint": {
+        "bytes": 4672437,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/rqvae_best.pth",
+        "present": true,
+        "sha256": "ecc37a67753bee1bf08c26692f05f87e1601a2970c2adfb707ea4e644e62e72d"
+      },
+      "stage2_export_manifest": {
+        "bytes": 1016,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/export_manifest.json",
+        "present": true,
+        "sha256": "ed58ef9967d5a778d7c4509a9f45e81d83c39353b25c8011c2b43f90cc6fc355"
+      },
+      "stage2_metrics": {
+        "bytes": 16724035,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/logs/training_metrics.jsonl",
+        "present": true,
+        "sha256": "94ce6ee9c455b5c386977cc9d360eb0d5bce9f3d185cca687061ffbb130696d9"
+      },
+      "stage2_result": {
+        "kind": "directory",
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result",
+        "present": true
+      },
+      "stage2_run_id": "stage2_787483d6ef9842d1a7c4593a61ae925c",
+      "stage2_sid": {
+        "bytes": 1258391,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/item_sids.json",
+        "present": true,
+        "sha256": "24c17aee0818373fbb4c76d175170a6b207d6e09a29faa398b140acd84bae2e3"
+      },
+      "stage2_source": {
+        "kind": "directory",
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/src",
+        "present": true
+      },
+      "stage2_trainer_copy_is_not_authority": {
+        "bytes": 1258376,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/item_sids.trainer.json",
+        "present": true,
+        "sha256": "748377d0354b02c927364e8775b48599b0f0911e51ece57018c0484810025e92"
+      },
+      "stage3_checkpoint": {
+        "bytes": 18281236,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/ckpt/Amazon_2023_Instruments/Nov-24-2026_21-16-28/HG_Rec_best.pth",
+        "present": true,
+        "sha256": "540f45d4f23b9444b0accc169e34cb0cfadd12f7ff59fd3447376b7ffa5ec636"
+      },
+      "stage3_config": {
+        "activation_function": "relu",
+        "batch_size": 4096,
+        "beam_size": 20,
+        "bf16": true,
+        "code_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/item_sids.json",
+        "codebook_size": [
+          256,
+          256,
+          256,
+          1
+        ],
+        "compile": false,
+        "compile_mode": "default",
+        "d_ff": 1024,
+        "d_kv": 64,
+        "d_model": 128,
+        "dataset_name": "Amazon_2023_Instruments",
+        "dataset_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/",
+        "decoder_start_token_id": 0,
+        "device": "cuda",
+        "dropout_rate": 0.1,
+        "early_eval_epochs": [
+          25,
+          50,
+          75,
+          100,
+          125
+        ],
+        "eos_token_id": 778,
+        "eval_interval": 5,
+        "eval_start_epoch": 75,
+        "exclude_history": true,
+        "fast": true,
+        "feed_forward_proj": "relu",
+        "infer_size": 1024,
+        "log_path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/",
+        "lr": 0.003,
+        "lr_min_factor": 0.2,
+        "lr_warmup_pct": 0.1,
+        "max_len": 20,
+        "max_token_seq_len": 82,
+        "n_user_tokens": 1,
+        "no_eval": true,
+        "no_exclude_history": false,
+        "no_pin_memory": false,
+        "num_decoder_layers": 4,
+        "num_epochs": 150,
+        "num_heads": 6,
+        "num_layers": 4,
+        "num_workers": 4,
+        "pad_token_id": 0,
+        "pin_memory": true,
+        "prefetch_factor": 8,
+        "save_path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/ckpt/",
+        "screen_baseline_log": "",
+        "screen_min_ndcg_gain": 0.001,
+        "screen_min_recall_gain": 0.001,
+        "screen_start_epoch": 40,
+        "screen_window": 5,
+        "seed": 42,
+        "sid_length": 4,
+        "skip_test": false,
+        "test_file": "test.parquet",
+        "topk_list": [
+          5,
+          10
+        ],
+        "train_file": "train.parquet",
+        "use_lr_scheduler": true,
+        "valid_file": "valid.parquet",
+        "vocab_size": 779,
+        "weight_decay": 0.05
+      },
+      "stage3_dataloader": {
+        "bytes": 4396,
+        "path": "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/data/dataloader.py",
+        "present": true,
+        "sha256": "d490b89c82a8ce3e1d8fa7577040038ef3411d030ce327fad95a999334f98af4"
+      },
+      "stage3_dataset_codec": {
+        "bytes": 9579,
+        "path": "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/data/dataset.py",
+        "present": true,
+        "sha256": "8899f1348e740996c572cd95439365f4caf2fe791acc4a0e22ed7d837937030e"
+      },
+      "stage3_log": {
+        "bytes": 44643,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/Amazon_2023_Instruments/Nov-24-2026_21-16-28/HG_Rec.log",
+        "present": true,
+        "sha256": "6cccef9186769d1a551216c5b88afc15fbdeb9b0c42b933774a61eedd7ac9e8a"
+      },
+      "stage3_metrics": {
+        "bytes": 82378,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/Amazon_2023_Instruments/Nov-24-2026_21-16-28/training_metrics.jsonl",
+        "present": true,
+        "sha256": "22b8ee5c3f8bb7922f5b792364c98eed6369a95b2d01930382982f8d0e9316ee"
+      },
+      "stage3_predictions": [
+        {
+          "bytes": 14728765,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/Amazon_2023_Instruments/Nov-24-2026_21-16-28/predictions/rank0.jsonl",
+          "present": true,
+          "sha256": "1f8695d6af6d29f1272330c2bc46360b2654e6b163dd91c3479a9d2087d616f6"
+        },
+        {
+          "bytes": 14722945,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/Amazon_2023_Instruments/Nov-24-2026_21-16-28/predictions/rank1.jsonl",
+          "present": true,
+          "sha256": "df5135260eb24c6ded047fe1903fc764138c9128e2dce1f3f1d811fabd443d93"
+        },
+        {
+          "bytes": 14741022,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/Amazon_2023_Instruments/Nov-24-2026_21-16-28/predictions/rank2.jsonl",
+          "present": true,
+          "sha256": "ea33e5464578caa16c1d86eea78141e4b577a12bb37bf597714bd089c62f3cfd"
+        },
+        {
+          "bytes": 14744593,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/Amazon_2023_Instruments/Nov-24-2026_21-16-28/predictions/rank3.jsonl",
+          "present": true,
+          "sha256": "c041e2f1bb35a590bca77c391a0a2edaab64600f28ced000d0752e2bad6c58e2"
+        }
+      ],
+      "stage3_run_dir": "results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/Amazon_2023_Instruments/Nov-24-2026_21-16-28",
+      "stage3_shards": [
+        {
+          "bytes": 1006814,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/Amazon_2023_Instruments/Nov-24-2026_21-16-28/_test_shards/rank0.json",
+          "present": true,
+          "sha256": "90dc76aa585ed8e7b7c0874bc46d2c67bcd17e5a7ba551ed3010d8b64b72aba6"
+        },
+        {
+          "bytes": 1006682,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/Amazon_2023_Instruments/Nov-24-2026_21-16-28/_test_shards/rank1.json",
+          "present": true,
+          "sha256": "79e91b5accae7fcb97917f34c4e5847b68c9808ccbaf795ffae2ffe3ac31a7bf"
+        },
+        {
+          "bytes": 1006585,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/Amazon_2023_Instruments/Nov-24-2026_21-16-28/_test_shards/rank2.json",
+          "present": true,
+          "sha256": "5f2a1e85ecb46e1145935b90822a2d458d03c6035942eb7b50d256830c7eef71"
+        },
+        {
+          "bytes": 1006499,
+          "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/Amazon_2023_Instruments/Nov-24-2026_21-16-28/_test_shards/rank3.json",
+          "present": true,
+          "sha256": "b2d8aed15e817cabaf57fd265e63adb83caf688cccced7b6b7f73dc709a795e4"
+        }
+      ],
+      "stage3_test_final": {
+        "bytes": 4147,
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/Amazon_2023_Instruments/Nov-24-2026_21-16-28/test_final.json",
+        "present": true,
+        "sha256": "92cb7822e4ddaf11b8a31b3ecaeeb6e6ae6ad8300a4100a22b8125bdb1d586a4"
+      },
+      "stage3_trainer": {
+        "bytes": 77538,
+        "path": "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py",
+        "present": true,
+        "sha256": "54ca6bfbcd55a42e718660dd0004370a41a5e1c2c5038a86bbfc84f32b963690"
+      }
+    }
+  },
+  "history_identity_limitation": "Original prediction dumps have no explicit user/history. Identity is reconstructed from the hash-verified split and trainer sharding, with every target and canonical SID independently checked. No per-sample historical input tensor digest was saved.",
+  "issue": 254,
+  "issue252_report": {
+    "bytes": 8045,
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue252/REPORT.md",
+    "present": true,
+    "sha256": "2a5fcffa0d0ec6737b39b9cab4533521e2ae6887073b44b9cd2c6c088aeb2aa5"
+  },
+  "issue253_final_evaluation": {
+    "bytes": 713687264,
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue253/FINAL_EVALUATION.json",
+    "present": true,
+    "sha256": "7492f837377cd01dad566c4950538ee65056d8532eefbcf58d34bdf2f37896ed"
+  },
+  "issue253_reconciliation": {
+    "bytes": 32005,
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue253/RECONCILIATION.json",
+    "present": true,
+    "sha256": "9d07b3fc68af901e133ab3b1082f1ff030091bf231dd5ae45edc6f91c0c9e5f7"
+  },
+  "issue253_report": {
+    "bytes": 20858,
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue253/REPORT.md",
+    "present": true,
+    "sha256": "10ca605fc111e30084abaa29e52c4f5132c9d610febeb451e3dcf9240cc0db80"
+  },
+  "protocol_comparison": {
+    "differences": {
+      "code_path": [
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/item_sids.json",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/item_sids.json"
+      ],
+      "eos_token_id": [
+        780,
+        778
+      ],
+      "log_path": [
+        "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/",
+        "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/"
+      ],
+      "save_path": [
+        "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/ckpt/",
+        "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/ckpt/"
+      ],
+      "vocab_size": [
+        781,
+        779
+      ]
+    },
+    "note": "vocabulary/EOS derived from fourth collision suffix; not an identical-vocabulary counterfactual",
+    "other_fields_identical": true,
+    "persisted_candidates": 10,
+    "population": 57439,
+    "search_beam": 20
+  },
+  "purpose": "evaluation",
+  "r2_ledger": {
+    "bytes": 298711,
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue139/r2_ledger.json",
+    "present": true,
+    "sha256": "41ecabeb6cfcb70ff29fee5c6b75e2902a1e8e81a227fe0d0aaaf808e4a00f71"
+  },
+  "r2_receipts": {
+    "issue252": {
+      "bytes": 8493,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue252/RECONCILIATION.json",
+      "present": true,
+      "sha256": "d6cf1cd6520eb06e36bfe8803468c41835bb89de25315a38635e31d3bdf752e8"
+    },
+    "issue253": {
+      "bytes": 13673,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue253/R2_RECEIPT.json",
+      "present": true,
+      "sha256": "4beb844e45621dc258cc56da91f04a8113ad27135dd9826b19c650278fdfc959"
+    }
+  },
+  "schema": "genrec.issue254.evidence/1",
+  "test_parquet": {
+    "bytes": 2546378,
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/test.parquet",
+    "present": true,
+    "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc"
+  },
+  "test_split_original_sha_verified": true,
+  "verdicts": {
+    "issue252": {
+      "bytes": 11338,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue252/VERDICT.md",
+      "present": true,
+      "sha256": "25afc97b302b32e2688d318f0d97f9a1ebc6e07d61c8b28a12774765589a5195"
+    },
+    "issue253": {
+      "bytes": 5312,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue253/VERDICT.md",
+      "present": true,
+      "sha256": "3675061fa840ea0f88cd5ca5a1c20453f1f0e338233c4642ca8e9a98e8e9edee"
+    }
+  }
+}

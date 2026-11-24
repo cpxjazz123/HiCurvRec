@@ -1,0 +1,39 @@
+{
+  "population": 57439,
+  "cutoffs": {
+    "5": {
+      "groups": {
+        "both_hit": 1218,
+        "only_issue252_hit": 665,
+        "only_issue253_hit": 587,
+        "neither_hit": 54969
+      },
+      "net_change": -0.0013579623600689426,
+      "recall_issue252": 0.03278260415397204,
+      "ndcg_issue252": 0.021616071827379325,
+      "recall_issue253": 0.0314246417939031,
+      "ndcg_issue253": 0.020803485718222655
+    },
+    "10": {
+      "groups": {
+        "both_hit": 1903,
+        "only_issue252_hit": 928,
+        "only_issue253_hit": 764,
+        "neither_hit": 53844
+      },
+      "net_change": -0.0028552029109141872,
+      "recall_issue252": 0.0492870697609638,
+      "ndcg_issue252": 0.02692583040624589,
+      "recall_issue253": 0.046431866850049616,
+      "ndcg_issue253": 0.025634029067123393
+    }
+  },
+  "join": {
+    "gaps": {},
+    "matched": 57439,
+    "unique_users": 57439,
+    "rule": "(user, SHA256(full history,seen history,target,user),target); verified split/shard/target/SID reconstruction",
+    "raw_user_ids_dumped": false
+  },
+  "summary": "PAIRED_SUMMARY.json"
+}

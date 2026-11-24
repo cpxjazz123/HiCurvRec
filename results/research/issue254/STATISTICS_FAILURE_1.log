@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue254/statistics.py", line 243, in <module>
+    main()
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue254/statistics.py", line 146, in main
+    if sha256(ROOT / train_path) != registered[train_path]['sha256']:
+KeyError: 'results/stage0_build_parquet/train.parquet'

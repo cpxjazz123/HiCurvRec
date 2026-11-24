@@ -1,0 +1,144 @@
+{
+  "population": 57439,
+  "candidate_rows": 40716,
+  "groups10": {
+    "both_hit": {
+      "samples": 1903,
+      "targets": 203,
+      "issue252": {
+        "sign_label_concordance": {
+          "different": 1879,
+          "same": 24
+        },
+        "mean_three_sign_gate_entropy": 0.22222080631442315,
+        "first_non_target_same_family_fraction": 1.0,
+        "mean": {
+          "gate_zero": 0.9100805329167712,
+          "attention_1hop": 0.10266687318407779,
+          "attention_2hop": 0.8973331159117184,
+          "curvature_mae_q": 2.773467785475728,
+          "reconstruction_mse_q": 4.369723885575481e-05
+        }
+      },
+      "issue253": {
+        "sign_label_concordance": {
+          "different": 1791,
+          "same": 112
+        },
+        "mean_three_sign_gate_entropy": 1.0458844340105018,
+        "first_non_target_same_family_fraction": 1.0,
+        "mean": {
+          "gate_zero": 0.40819680275756687,
+          "attention_1hop": 0.48595581914345765,
+          "attention_2hop": 0.5140441773673147,
+          "curvature_mae_q": 2.879573468886095,
+          "reconstruction_mse_q": 4.733750233031167e-05
+        }
+      }
+    },
+    "neither_hit": {
+      "samples": 53844,
+      "targets": 16449,
+      "issue252": {
+        "sign_label_concordance": {
+          "different": 48518,
+          "same": 4706,
+          "unavailable": 620
+        },
+        "mean_three_sign_gate_entropy": 0.5477676728659223,
+        "first_non_target_same_family_fraction": 0.9762276205333927,
+        "mean": {
+          "gate_zero": 0.7136858195343821,
+          "attention_1hop": 0.6026382256183196,
+          "attention_2hop": 0.39736177253095606,
+          "curvature_mae_q": 1.9049560476498635,
+          "reconstruction_mse_q": 6.8470448144652e-05
+        }
+      },
+      "issue253": {
+        "sign_label_concordance": {
+          "different": 53069,
+          "unavailable": 620,
+          "same": 155
+        },
+        "mean_three_sign_gate_entropy": 0.47231701269981385,
+        "first_non_target_same_family_fraction": 0.9762276205333927,
+        "mean": {
+          "gate_zero": 0.792054731062435,
+          "attention_1hop": 0.27839635862690365,
+          "attention_2hop": 0.7216036405489934,
+          "curvature_mae_q": 1.9332231225496423,
+          "reconstruction_mse_q": 7.552249339795936e-05
+        }
+      }
+    },
+    "only_issue252_hit": {
+      "samples": 928,
+      "targets": 279,
+      "issue252": {
+        "sign_label_concordance": {
+          "different": 902,
+          "same": 26
+        },
+        "mean_three_sign_gate_entropy": 0.2919320578205645,
+        "first_non_target_same_family_fraction": 1.0,
+        "mean": {
+          "gate_zero": 0.8747318938759894,
+          "attention_1hop": 0.18811546834137932,
+          "attention_2hop": 0.8118845323232758,
+          "curvature_mae_q": 2.44429754074587,
+          "reconstruction_mse_q": 4.65357641709277e-05
+        }
+      },
+      "issue253": {
+        "sign_label_concordance": {
+          "different": 873,
+          "same": 55
+        },
+        "mean_three_sign_gate_entropy": 0.9616723211446663,
+        "first_non_target_same_family_fraction": 1.0,
+        "mean": {
+          "gate_zero": 0.48175874288225995,
+          "attention_1hop": 0.4548805597737069,
+          "attention_2hop": 0.545119446875,
+          "curvature_mae_q": 2.464850884310561,
+          "reconstruction_mse_q": 5.10155437091738e-05
+        }
+      }
+    },
+    "only_issue253_hit": {
+      "samples": 764,
+      "targets": 258,
+      "issue252": {
+        "sign_label_concordance": {
+          "different": 739,
+          "same": 25
+        },
+        "mean_three_sign_gate_entropy": 0.27818974429060994,
+        "first_non_target_same_family_fraction": 1.0,
+        "mean": {
+          "gate_zero": 0.8763276982018773,
+          "attention_1hop": 0.1563529420314136,
+          "attention_2hop": 0.843647049552356,
+          "curvature_mae_q": 2.3889944294500234,
+          "reconstruction_mse_q": 5.0356920430821876e-05
+        }
+      },
+      "issue253": {
+        "sign_label_concordance": {
+          "different": 751,
+          "same": 13
+        },
+        "mean_three_sign_gate_entropy": 0.9909482319782167,
+        "first_non_target_same_family_fraction": 1.0,
+        "mean": {
+          "gate_zero": 0.464177367360336,
+          "attention_1hop": 0.46653354272251313,
+          "attention_2hop": 0.533466457578534,
+          "curvature_mae_q": 2.5285173258861313,
+          "reconstruction_mse_q": 5.454611094490634e-05
+        }
+      }
+    }
+  }
+}

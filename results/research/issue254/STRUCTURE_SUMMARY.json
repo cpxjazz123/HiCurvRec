@@ -1,0 +1,619 @@
+{
+  "catalogue_order_verified": true,
+  "context": {
+    "computed": true,
+    "full_history": true,
+    "path": "results/research/issue254/tables/context_graph.csv",
+    "reload_verified": true,
+    "rows": 57439,
+    "sha256": "ed553f400959a5e85e5a1be3b37b3222da9b6b6fbd9c1094291b156525991906"
+  },
+  "coverage": {
+    "curvature_missing": 261,
+    "family_valid": 24326,
+    "sampled_3node_center_covered": 1979,
+    "sampled_3node_participation_covered": 13479,
+    "sampled_4node_center_covered": 481,
+    "sampled_4node_participation_covered": 3916,
+    "sampled_orbit_valid": 1979
+  },
+  "curvature_valid_triples": 28391948,
+  "definitions": {
+    "curvature_class": "positive/negative-only permit zero-valued triples; mixed-sign requires both signs",
+    "curvature_quantiles": [
+      0,
+      0.25,
+      0.5,
+      0.75,
+      1
+    ],
+    "dominant_family": "first schema family in a count tie; index=-1 and name empty when invalid",
+    "exact_two_hop_size": "two_hop_size minus one_hop_size",
+    "induced_neighbor_density": "undirected edges among open neighbours / choose(degree,2); undefined below degree2",
+    "missing": "NaN for undefined ratios/moments/vectors; explicit validity masks; counts remain actual counts",
+    "one_hop_size": "open neighbours; closed adds root",
+    "reciprocal_ratio": "reciprocal_degree / undirected_degree; undefined if degree=0",
+    "two_hop_size": "full frozen closed radius-two population minus root"
+  },
+  "family_names": [
+    "empty",
+    "single_edge",
+    "out_star",
+    "reciprocal_pair",
+    "chain",
+    "reciprocal_with_third_in1_out0",
+    "in_star",
+    "ff_triangle",
+    "reciprocal_plus_third_in2_out0",
+    "reciprocal_with_third_in0_out1",
+    "reciprocal_all_4edges",
+    "fb_triangle",
+    "reciprocal_plus_third_in1_out1",
+    "reciprocal_plus_third_in0_out2",
+    "reciprocal_all_5edges",
+    "complete_bidirectional"
+  ],
+  "family_scope": "exact all neighbour pairs per center, three nodes",
+  "full_stored_triples": 28391948,
+  "graph_nnz": {
+    "forward": 261132,
+    "reverse": 261132,
+    "undirected": 510464
+  },
+  "input_sha256": {
+    "assets/item_summary.npz": "1a8f46e428e66df7ca8cd5672c1bf23af57d60e23459f5d13cfaffa52a82ed12",
+    "assets/manifest.json": "8c58d34521181925df2e66dbe01f64b7150fb56a1eab028f59e8b4832c381ae6",
+    "assets/node_moments.npz": "21a9679881d07af5f2a36577b07a0ac426fc0788a2b75c9f6d3045ef74eef6fb",
+    "assets/train/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+    "assets/train/visible_forward.npz": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+    "assets/train/visible_reverse.npz": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6",
+    "assets/train/visible_undirected.npz": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818",
+    "assets/v8_runtime_layout/target_offsets.npy": "33f30b2979311d74cf996545bec011856ffa7acbc9cb9b995c829dbc9f87937c",
+    "assets/v8_runtime_layout/targets.npy": "8c0ff9f8c25b98ed31802cdb62cf921df6d3cf8bbf35ee2d3de9817d6cd0807a",
+    "assets/v8_runtime_layout/two_hop_nodes.npy": "78a3fa1f0d255b429016bc9cbba8b9b64e86ed490c398b896f9548d09a3a9dda",
+    "assets/v8_runtime_layout/two_hop_offsets.npy": "f5e233414984f26d32a4df5c5b73310b30973826612251f0fd65a4c1f4339cf7",
+    "assets/v8_runtime_layout/two_hop_root_local.npy": "7e9dca2a869509116427dc25008677f1d2d97c6c041aa2acb70133980e856edd",
+    "results/research/infra246/assets/motifs/motif_counts.npz": "79e1adee8461751c5b4cdfa78a78ab0fa22ac23d8ad296c4b881d1167dfca7c9",
+    "results/research/infra246/assets/motifs/motif_instances_4node_visible.npz": "dc96eede3cc0fbe51b6117c597365ee4c3e44d4307881023c15945c6d77bc027",
+    "results/research/infra246/assets/motifs/motif_instances_visible.npz": "68855edef787ae292108f3a415381be6427f1f575acaf9126c9a933214fa5349",
+    "results/research/issue247/assets/item_ids.npy": "262f7ce84b271f6232e7c59893580988ae0049606d09263a5f86e3c37e14804e",
+    "results/research/issue247/assets/manifest.json": "4ac2e02cb1dc58bc74b1f4394cd58a01569b8ed36af7b99d9def5c214b8df3b5",
+    "results/research/issue247/assets/orbit_schema.npz": "5f1a4a4ff1ffc8737af7d9db044300f9c94392dbd6680a6c352abf1f0e583c9b",
+    "results/research/issue247/assets/topology_features.npz": "1cbbab0b7d24f06c2a8cabc5e33f1fd613c6dd7468908efdd0139b6bd5e271b3",
+    "results/research/issue254/EVIDENCE.json": "2ce08437b558f911c27f4d475e98706e95a49833f6137419382b334a8ff7de04",
+    "results/research/issue254/tables/paired_user_ledger.csv": "c856b5b306f5baed939262c28ec1250dedac08de6d7d4297f7a70f7a0f550b14",
+    "results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/item_sids.json": "037766704565c5143ab721fd5ca5f61bbba3e800baa9dd561d3ae5601987cff2",
+    "results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/item_sids.json": "24c17aee0818373fbb4c76d175170a6b207d6e09a29faa398b140acd84bae2e3"
+  },
+  "items": 24587,
+  "outputs": {
+    "items_csv": {
+      "columns": [
+        "item",
+        "degree_out",
+        "degree_in",
+        "degree_undirected",
+        "reciprocal_degree",
+        "reciprocal_ratio",
+        "induced_neighbor_density",
+        "one_hop_size",
+        "one_hop_closed_size",
+        "curvature_total",
+        "curvature_valid",
+        "curvature_invalid",
+        "curvature_positive",
+        "curvature_zero",
+        "curvature_negative",
+        "curvature_positive_ratio",
+        "curvature_zero_ratio",
+        "curvature_negative_ratio",
+        "curvature_mean",
+        "curvature_variance",
+        "curvature_minimum",
+        "curvature_maximum",
+        "curvature_q00",
+        "curvature_q25",
+        "curvature_q50",
+        "curvature_q75",
+        "curvature_q100",
+        "curvature_missing",
+        "curvature_missing_reason",
+        "curvature_class",
+        "two_hop_closed_size",
+        "two_hop_size",
+        "exact_two_hop_size",
+        "family_counts_empty",
+        "family_counts_single_edge",
+        "family_counts_out_star",
+        "family_counts_reciprocal_pair",
+        "family_counts_chain",
+        "family_counts_reciprocal_with_third_in1_out0",
+        "family_counts_in_star",
+        "family_counts_ff_triangle",
+        "family_counts_reciprocal_plus_third_in2_out0",
+        "family_counts_reciprocal_with_third_in0_out1",
+        "family_counts_reciprocal_all_4edges",
+        "family_counts_fb_triangle",
+        "family_counts_reciprocal_plus_third_in1_out1",
+        "family_counts_reciprocal_plus_third_in0_out2",
+        "family_counts_reciprocal_all_5edges",
+        "family_counts_complete_bidirectional",
+        "family_distribution_empty",
+        "family_distribution_single_edge",
+        "family_distribution_out_star",
+        "family_distribution_reciprocal_pair",
+        "family_distribution_chain",
+        "family_distribution_reciprocal_with_third_in1_out0",
+        "family_distribution_in_star",
+        "family_distribution_ff_triangle",
+        "family_distribution_reciprocal_plus_third_in2_out0",
+        "family_distribution_reciprocal_with_third_in0_out1",
+        "family_distribution_reciprocal_all_4edges",
+        "family_distribution_fb_triangle",
+        "family_distribution_reciprocal_plus_third_in1_out1",
+        "family_distribution_reciprocal_plus_third_in0_out2",
+        "family_distribution_reciprocal_all_5edges",
+        "family_distribution_complete_bidirectional",
+        "family_valid",
+        "family_total",
+        "dominant_family",
+        "dominant_family_index",
+        "dominant_family_count",
+        "dominant_family_ratio",
+        "sampled_orbit_counts_g3_o1",
+        "sampled_orbit_counts_g6_o2",
+        "sampled_orbit_counts_g7_o2",
+        "sampled_orbit_counts_g10_o0",
+        "sampled_orbit_counts_g11_o0",
+        "sampled_orbit_counts_g11_o1",
+        "sampled_orbit_counts_g11_o2",
+        "sampled_orbit_counts_g15_o0",
+        "sampled_orbit_counts_g15_o1",
+        "sampled_orbit_counts_g21_o2",
+        "sampled_orbit_counts_g23_o1",
+        "sampled_orbit_counts_g25_o0",
+        "sampled_orbit_counts_g27_o0",
+        "sampled_orbit_counts_g27_o1",
+        "sampled_orbit_counts_g27_o2",
+        "sampled_orbit_counts_g30_o0",
+        "sampled_orbit_counts_g30_o1",
+        "sampled_orbit_counts_g31_o0",
+        "sampled_orbit_counts_g31_o1",
+        "sampled_orbit_counts_g31_o2",
+        "sampled_orbit_distribution_g3_o1",
+        "sampled_orbit_distribution_g6_o2",
+        "sampled_orbit_distribution_g7_o2",
+        "sampled_orbit_distribution_g10_o0",
+        "sampled_orbit_distribution_g11_o0",
+        "sampled_orbit_distribution_g11_o1",
+        "sampled_orbit_distribution_g11_o2",
+        "sampled_orbit_distribution_g15_o0",
+        "sampled_orbit_distribution_g15_o1",
+        "sampled_orbit_distribution_g21_o2",
+        "sampled_orbit_distribution_g23_o1",
+        "sampled_orbit_distribution_g25_o0",
+        "sampled_orbit_distribution_g27_o0",
+        "sampled_orbit_distribution_g27_o1",
+        "sampled_orbit_distribution_g27_o2",
+        "sampled_orbit_distribution_g30_o0",
+        "sampled_orbit_distribution_g30_o1",
+        "sampled_orbit_distribution_g31_o0",
+        "sampled_orbit_distribution_g31_o1",
+        "sampled_orbit_distribution_g31_o2",
+        "sampled_orbit_valid",
+        "sampled_orbit_total",
+        "sampled_orbit_role_coverage",
+        "sampled_3node_center_count",
+        "sampled_3node_center_covered",
+        "sampled_3node_participation_count",
+        "sampled_3node_participation_covered",
+        "sampled_4node_center_count",
+        "sampled_4node_center_covered",
+        "sampled_4node_participation_count",
+        "sampled_4node_participation_covered"
+      ],
+      "path": "results/research/issue254/tables/structure_items.csv",
+      "rows": 24587,
+      "sha256": "858f3b96e6a680f5f7461a40e10fc67be376aa8c523e4cbefe41398374420f56"
+    },
+    "vectors_npz": {
+      "path": "results/research/issue254/tables/structure_vectors.npz",
+      "sha256": "e6292f1e59edd26cd9cf0b3b938e88eca3793cca9646245f933b655c501bd03a"
+    }
+  },
+  "purpose": "evaluation",
+  "reload_verified": true,
+  "sampled_3node_instances": 59385,
+  "sampled_4node_instances": 4549,
+  "sampled_orbit_graphlet_role_keys": [
+    [
+      3,
+      1
+    ],
+    [
+      6,
+      2
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      10,
+      0
+    ],
+    [
+      11,
+      0
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      15,
+      0
+    ],
+    [
+      15,
+      1
+    ],
+    [
+      21,
+      2
+    ],
+    [
+      23,
+      1
+    ],
+    [
+      25,
+      0
+    ],
+    [
+      27,
+      0
+    ],
+    [
+      27,
+      1
+    ],
+    [
+      27,
+      2
+    ],
+    [
+      30,
+      0
+    ],
+    [
+      30,
+      1
+    ],
+    [
+      31,
+      0
+    ],
+    [
+      31,
+      1
+    ],
+    [
+      31,
+      2
+    ]
+  ],
+  "sampled_scope": "stored sampled instances only; not exhaustive three/four-node roles",
+  "schema": "genrec.issue254.structure/1",
+  "vectors": {
+    "curvature_class": {
+      "dtype": "<U16",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_invalid": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_maximum": {
+      "dtype": "float64",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_mean": {
+      "dtype": "float64",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_minimum": {
+      "dtype": "float64",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_missing": {
+      "dtype": "bool",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_missing_reason": {
+      "dtype": "<U32",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_negative": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_negative_ratio": {
+      "dtype": "float64",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_positive": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_positive_ratio": {
+      "dtype": "float64",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_quantiles": {
+      "dtype": "float64",
+      "shape": [
+        24587,
+        5
+      ]
+    },
+    "curvature_total": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_valid": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_variance": {
+      "dtype": "float64",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_zero": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "curvature_zero_ratio": {
+      "dtype": "float64",
+      "shape": [
+        24587
+      ]
+    },
+    "degree_in": {
+      "dtype": "int32",
+      "shape": [
+        24587
+      ]
+    },
+    "degree_out": {
+      "dtype": "int32",
+      "shape": [
+        24587
+      ]
+    },
+    "degree_undirected": {
+      "dtype": "int32",
+      "shape": [
+        24587
+      ]
+    },
+    "dominant_family": {
+      "dtype": "<U30",
+      "shape": [
+        24587
+      ]
+    },
+    "dominant_family_count": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "dominant_family_index": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "dominant_family_ratio": {
+      "dtype": "float64",
+      "shape": [
+        24587
+      ]
+    },
+    "exact_two_hop_size": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "family_counts": {
+      "dtype": "int64",
+      "shape": [
+        24587,
+        16
+      ]
+    },
+    "family_distribution": {
+      "dtype": "float64",
+      "shape": [
+        24587,
+        16
+      ]
+    },
+    "family_total": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "family_valid": {
+      "dtype": "bool",
+      "shape": [
+        24587
+      ]
+    },
+    "induced_neighbor_density": {
+      "dtype": "float64",
+      "shape": [
+        24587
+      ]
+    },
+    "item": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "one_hop_closed_size": {
+      "dtype": "int32",
+      "shape": [
+        24587
+      ]
+    },
+    "one_hop_size": {
+      "dtype": "int32",
+      "shape": [
+        24587
+      ]
+    },
+    "reciprocal_degree": {
+      "dtype": "int32",
+      "shape": [
+        24587
+      ]
+    },
+    "reciprocal_ratio": {
+      "dtype": "float64",
+      "shape": [
+        24587
+      ]
+    },
+    "sampled_3node_center_count": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "sampled_3node_center_covered": {
+      "dtype": "bool",
+      "shape": [
+        24587
+      ]
+    },
+    "sampled_3node_participation_count": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "sampled_3node_participation_covered": {
+      "dtype": "bool",
+      "shape": [
+        24587
+      ]
+    },
+    "sampled_4node_center_count": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "sampled_4node_center_covered": {
+      "dtype": "bool",
+      "shape": [
+        24587
+      ]
+    },
+    "sampled_4node_participation_count": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "sampled_4node_participation_covered": {
+      "dtype": "bool",
+      "shape": [
+        24587
+      ]
+    },
+    "sampled_orbit_counts": {
+      "dtype": "int64",
+      "shape": [
+        24587,
+        20
+      ]
+    },
+    "sampled_orbit_distribution": {
+      "dtype": "float64",
+      "shape": [
+        24587,
+        20
+      ]
+    },
+    "sampled_orbit_role_coverage": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "sampled_orbit_total": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "sampled_orbit_valid": {
+      "dtype": "bool",
+      "shape": [
+        24587
+      ]
+    },
+    "two_hop_closed_size": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    },
+    "two_hop_size": {
+      "dtype": "int64",
+      "shape": [
+        24587
+      ]
+    }
+  }
+}

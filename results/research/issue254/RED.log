@@ -1,0 +1,63 @@
+F.FFFEFF
+======================================================================
+ERROR: test_population_denominator_and_repeated_target (tools.issue254.tests.test_known_answers.KnownAnswers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue254/tests/test_known_answers.py", line 30, in test_population_denominator_and_repeated_target
+    out = contract.per_item_contributions(rows, 10)
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue254/contract.py", line 122, in per_item_contributions
+    bucket[group(int(row['rank_252']) if row['rank_252'] is not None else None,
+KeyError: 'rank_252'
+
+======================================================================
+FAIL: test_duplicate_prediction_rejected (tools.issue254.tests.test_known_answers.KnownAnswers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue254/tests/test_known_answers.py", line 42, in test_duplicate_prediction_rejected
+    paired.build_ledger(left, arm(samples, [None, 0]), samples)
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_history_identity_mismatch_rejected (tools.issue254.tests.test_known_answers.KnownAnswers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue254/tests/test_known_answers.py", line 61, in test_history_identity_mismatch_rejected
+    paired.build_ledger(bad, arm(samples, [None]), samples)
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_identity_mismatch_rejected (tools.issue254.tests.test_known_answers.KnownAnswers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue254/tests/test_known_answers.py", line 54, in test_identity_mismatch_rejected
+    paired.build_ledger(bad, arm(samples, [None]), samples)
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_missing_prediction_not_unhit (tools.issue254.tests.test_known_answers.KnownAnswers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue254/tests/test_known_answers.py", line 47, in test_missing_prediction_not_unhit
+    paired.build_ledger(arm(samples[:1], [None]), arm(samples, [None, 0]), samples)
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_prefix_ignores_collision_suffix (tools.issue254.tests.test_known_answers.KnownAnswers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue254/tests/test_known_answers.py", line 82, in test_prefix_ignores_collision_suffix
+    self.assertEqual(contract.prefix_levels([1, 2, 3, 769], [1, 2, 3, 769]), 3,
+AssertionError: 4 != 3 : fourth token is not a geometry level
+
+======================================================================
+FAIL: test_rank_is_one_based_display_and_censored (tools.issue254.tests.test_known_answers.KnownAnswers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/issue254/tests/test_known_answers.py", line 76, in test_rank_is_one_based_display_and_censored
+    self.assertEqual(contract.truncated_rank(0), 1, 'display ranks are one-based')
+AssertionError: 0 != 1 : display ranks are one-based
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.002s
+
+FAILED (failures=6, errors=1)
