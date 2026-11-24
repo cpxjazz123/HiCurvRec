@@ -1,0 +1,5 @@
+外部validation总体缺口已按同一测试修复：推理入口与分片归约器都检查冻结valid.parquet的真实行数；4/5部分总体被拒绝且不发布成功结果，完整5行全miss仍保留全部分母。原回归现为2 passed in1.25s，退出0；不放宽总体或指标。
+
+`VALIDATION_POPULATION_GREEN_RECEIPT.json`保存红/绿原输出、命令、退出码与两代代码/test SHA；`verification_generations/pre_population_fix/external_validation.py`逐字保留并哈希确认原失败实现，非事后改写失败记录。正式训练生产源码未改，Stage3未重启。
+
+完整最终模型的外部validation推理尚未执行，不能用这两个消费者回归冒充端到端验证。其消费者与独立test原始预测归约代码会在本轮test_final产生前冻结于`EVALUATION_CONSUMERS.json`，随后只用实际最终配对checkpoint执行，不用结果倒改口径。

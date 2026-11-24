@@ -2,7 +2,7 @@
   "issue": 256,
   "state": "WORKING",
   "parent_commit": "c4ee00cdc4314b7fcab882acd939bf18ee3b0824",
-  "commit": "9a96a9cf5229ded0e34f9a25ed774dfe1564e24e",
+  "commit": "4b539bc99f835def8c06bf91bffde40adc41511d",
   "source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
   "done": [
     "acceptance frozen",
@@ -25,7 +25,8 @@
     "post-training18-module actual-loss wiring and disposable optimizer update recorded",
     "exact final full-catalogue hard prefixes/gates/attention/reconstruction extracted",
     "legal frozen Stage3 MCP dispatch accepted without collision waiver",
-    "all three complete training-curvature populations and five validation banks measured; independent raw-artifact reduction PASS"
+    "all three complete training-curvature populations and five validation banks measured; independent raw-artifact reduction PASS",
+    "external validation partial-population consumer regression red1FAIL/1PASS then green2PASS; real final-model evaluation still pending"
   ],
   "not_run": [
     "r01 legal150-epoch Stage3, independent reconciliation and complete R2",
@@ -36,7 +37,7 @@
       "name": "R01 frozen Stage3",
       "pid": 809893,
       "mode": "ddp4",
-      "epoch": 58,
+      "epoch": 100,
       "worker_pids": [858572, 858573, 858574, 858575],
       "sid_sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
       "dispatch_evidence": "results/research/issue256/rounds/r01/STAGE3_START.json"
@@ -48,5 +49,5 @@
     "reduce completed CPU diagnostics; after Stage3 finishes reduce full test, evaluate external validation and archive exact R2 pairing",
     "if test_R@10<=0.065, preserve R01 and return to training/validation-driven R1/R2"
   ],
-  "updated_at": "2026-11-24T19:48:11.762198+00:00"
+  "updated_at": "2026-11-24T19:56:17.521402+00:00"
 }

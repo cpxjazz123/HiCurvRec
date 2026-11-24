@@ -1,0 +1,3 @@
+R6外部validation消费者的使用前边界回归发现一个工程缺口：在真实5行Parquet固定总体上，4个分片共同只报告4行时，归约器错误地发布n_eval=4，而非拒绝。实际测试`test_reducer_rejects_partial_frozen_validation`按指定断言报`DID NOT RAISE ValueError`；同文件完整5行、全miss路径通过，合计1 failed/1 passed。命令为Stage2解释器`-B -m pytest -q tools/issue256/test_external_validation.py --basetemp results/research/issue256/rounds/r01/pytest_validation_population_red`；退出1，原输出保存在`VALIDATION_POPULATION_RED.log`。
+
+这是新外部评估消费者的缺失总体校验，不是正式Stage2/Stage3训练实现或一份真实validation结果已经缺行：本轮外部validation尚未运行，正式Stage3继续原150epoch不重启。将推理入口和归约器均绑定冻结valid.parquet的实际行数，完整总体不变，随后跑同一回归转绿，再使用实际最终checkpoint。预注册指标、阈值、模型与冻结训练协议均不放宽。

@@ -1,0 +1,12 @@
+{
+  "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -B -m pytest -q tools/issue256/test_external_validation.py --basetemp results/research/issue256/rounds/r01/pytest_validation_population_green",
+  "exit_code": 0,
+  "passed": 2,
+  "evaluator_sha256": "47754e1b4014f79b9fa7e9aa2adc1850645203d03a6b02fd76181454f921c31b",
+  "test_sha256": "95fef0d756f74aa934de8a3e3dba1e9512695b30aa7a13a1667979294b0e8cb6",
+  "red_source_sha256": "db15c2080953ffea0f0821da380694474d4e3ad337de36a525e8f83ee24c436c",
+  "red_output": "F.                                                                       [100%]\n=================================== FAILURES ===================================\n________________ test_reducer_rejects_partial_frozen_validation ________________\n\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f95b02b8580>\ntmp_path = PosixPath('/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/pytest_validation_population_red/test_reducer_rejects_partial_f0')\n\n    def test_reducer_rejects_partial_frozen_validation(monkeypatch, tmp_path):\n        output = prepared(monkeypatch, tmp_path, 4)\n        with pytest.raises(ValueError, match='validation population differs from the complete frozen split'):\n>           evaluation.reduce_rows()\nE           Failed: DID NOT RAISE <class 'ValueError'>\n\ntools/issue256/test_external_validation.py:35: Failed\n----------------------------- Captured stdout call -----------------------------\n{\n  \"n_eval\": 4,\n  \"validation_recall@5\": 0.0,\n  \"validation_ndcg@5\": 0.0,\n  \"validation_recall@10\": 0.0,\n  \"validation_ndcg@10\": 0.0\n}\n=========================== short test summary info ============================\nFAILED tools/issue256/test_external_validation.py::test_reducer_rejects_partial_frozen_validation - Failed: DID NOT RAISE <class 'ValueError'>\n1 failed, 1 passed in 47.32s\n",
+  "green_output": "..                                                                       [100%]\n2 passed in 1.25s\n",
+  "formal_source_changed": false,
+  "full_model_validation_status": "NOT_RUN until the completed formal Stage3 checkpoint exists"
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "genrec.issue256.evaluation_consumers/1",
+  "frozen_before_test_final": true,
+  "stage3_observed_at": "2026-11-24T19:56:17.521402+00:00",
+  "stage3_progress": "100/150",
+  "production_source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
+  "sources": {
+    "tools/issue256/external_validation.py": "47754e1b4014f79b9fa7e9aa2adc1850645203d03a6b02fd76181454f921c31b",
+    "tools/issue256/reconcile_stage3.py": "d2cc40ff96c69febc03a4f6557b7d05d8527ace9bb019f1b7c60bf20616f8c3d",
+    "tools/issue256/test_external_validation.py": "95fef0d756f74aa934de8a3e3dba1e9512695b30aa7a13a1667979294b0e8cb6",
+    "stage2_RQ-VAE/TIGER_module_budget_prefix_rq/validation_inference_entry.py": "701d377860c84e1b052203ef6554042811c02d35c2e5b262cf08d9b65e249e11",
+    "stage3_T5Train/train_HG-Rec.py": "54ca6bfbcd55a42e718660dd0004370a41a5e1c2c5038a86bbfc84f32b963690",
+    "results/research/issue256/EVALUATION.md": "4e0ea06e5799a1d6c9cce514bab8deba1e4ea320dc8dd9d4d16467d0b206e993"
+  },
+  "population": {
+    "test": 57439,
+    "validation": "exact immutable valid.parquet metadata row count; no shard-provided replacement"
+  },
+  "validation_split_sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9",
+  "test_split_sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc",
+  "metrics": [
+    "Recall@5",
+    "Recall@10",
+    "NDCG@5",
+    "NDCG@10"
+  ],
+  "beam": 20,
+  "world": 4,
+  "infer_per_process": 1024,
+  "status": "consumer population regressions2PASS; real final-checkpoint GPU validation and persisted final-test reduction NOT_RUN until final artifacts exist",
+  "test_access": false
+}
