@@ -1,0 +1,202 @@
+{
+  "analysis": {
+    "identity": {
+      "archive_binding": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/archive_binding.json",
+        "recorded_sha256": "f26791dce14cbc6d2c3336abd354937861e2a20bb880c42efb77e909b968b4eb",
+        "sha256": "f26791dce14cbc6d2c3336abd354937861e2a20bb880c42efb77e909b968b4eb"
+      },
+      "arm": "TIGER_module_budget_prefix_rq",
+      "kind": "stage3_final",
+      "metrics": {
+        "n_eval": 57439,
+        "test_ndcg@10": 0.02852344807984429,
+        "test_ndcg@5": 0.022554059459244956,
+        "test_recall@10": 0.05273420498267727,
+        "test_recall@5": 0.034105746966346905
+      },
+      "predictions": [
+        "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/predictions/rank0.jsonl",
+        "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/predictions/rank1.jsonl",
+        "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/predictions/rank2.jsonl",
+        "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/predictions/rank3.jsonl"
+      ],
+      "schema": "genrec.pipeline.identity/1",
+      "sid": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+        "recorded_sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
+        "sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f"
+      },
+      "stage2_checkpoint": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/rqvae_best.pth",
+        "recorded_sha256": "680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c",
+        "sha256": "680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c"
+      },
+      "stage2_export_manifest": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/export_manifest.json",
+        "recorded_sha256": "a90c264227101d5ef888f5f6306d95263fab18903313a5cd03b4e703a310b49d",
+        "sha256": "a90c264227101d5ef888f5f6306d95263fab18903313a5cd03b4e703a310b49d"
+      },
+      "stage2_run_id": "issue256_r01_formal",
+      "stage3_run_id": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15",
+      "test_final": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/test_final.json",
+        "sha256": "195392578b47bc29bc967e61e3cc9561b74b1cfe9f243136720d2753141dab21"
+      }
+    },
+    "layer_record": {
+      "catalogue": {
+        "codebook_occupancy": [
+          256,
+          256,
+          256
+        ],
+        "distinct_l2_prefixes": 8559,
+        "distinct_l3_triples": 22972,
+        "items": 24587,
+        "l3_collision": 0.06568511815186884,
+        "l3_refinement_gain_bits": 2.038433479685075,
+        "prefix_entropy_bits": [
+          7.433836844330941,
+          12.403899500776978,
+          14.442332980462053
+        ]
+      },
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_module_budget_prefix_rq/stage2_metrics/201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f.json",
+      "validation": {
+        "conditional_g3": {
+          "reason": "legacy defining implementation removed; no surviving formula, not invented",
+          "status": "MISSING"
+        },
+        "conditional_log_enrichment_bits": 2.36145632928772,
+        "l1_hard_er": 8.516228225914546,
+        "l1_negative_hit_probability": 0.007835823722130155,
+        "l1_positive_hit_rate": 0.0667316631556956,
+        "rows": 57439
+      }
+    },
+    "role_conditioning": null,
+    "schema": "genrec.pipeline.analysis/1",
+    "sid_chain": {
+      "H_L1": 7.433836844330946,
+      "H_L2_given_L1": 4.97006265644805,
+      "H_L3_given_L1L2": 2.0384334796889796,
+      "H_triple": 14.442332980467976,
+      "collision": 0.06568511815186884,
+      "distinct_L1": 256,
+      "distinct_L2": 8559,
+      "distinct_triples": 22972,
+      "items": 24587,
+      "items_per_L2": 2.8726486739105037,
+      "items_per_triple": 1.0703029775378723
+    },
+    "stage3": {
+      "n_eval": 57439,
+      "test_ndcg@10": 0.02852344807984429,
+      "test_ndcg@5": 0.022554059459244956,
+      "test_recall@10": 0.05273420498267727,
+      "test_recall@5": 0.034105746966346905
+    }
+  },
+  "checks": [
+    {
+      "actual": 22972,
+      "check": "sid_chain:distinct_l3_triples",
+      "expected": 22972,
+      "status": "PASS",
+      "tolerance": 0
+    },
+    {
+      "actual": 8559,
+      "check": "sid_chain:distinct_l2_prefixes",
+      "expected": 8559,
+      "status": "PASS",
+      "tolerance": 0
+    },
+    {
+      "actual": 0.06568511815186884,
+      "check": "sid_chain:l3_collision",
+      "expected": 0.06568511815186884,
+      "status": "PASS",
+      "tolerance": 1e-10
+    },
+    {
+      "actual": 2.0384334796889796,
+      "check": "sid_chain:l3_refinement_gain_bits",
+      "expected": 2.038433479685075,
+      "status": "PASS",
+      "tolerance": 1e-10
+    },
+    {
+      "actual": 0.034105746966346905,
+      "check": "independent_reduction:test_recall@5",
+      "expected": 0.034105746966346905,
+      "status": "PASS",
+      "tolerance": 1e-10
+    },
+    {
+      "actual": 0.05273420498267727,
+      "check": "independent_reduction:test_recall@10",
+      "expected": 0.05273420498267727,
+      "status": "PASS",
+      "tolerance": 1e-10
+    },
+    {
+      "actual": 0.02255405945924502,
+      "check": "independent_reduction:test_ndcg@5",
+      "expected": 0.022554059459244956,
+      "status": "PASS",
+      "tolerance": 1e-10
+    },
+    {
+      "actual": 0.028523448079844565,
+      "check": "independent_reduction:test_ndcg@10",
+      "expected": 0.02852344807984429,
+      "status": "PASS",
+      "tolerance": 1e-10
+    },
+    {
+      "check": "artefact:test_final",
+      "current": "195392578b47bc29bc967e61e3cc9561b74b1cfe9f243136720d2753141dab21",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/test_final.json",
+      "recorded": "195392578b47bc29bc967e61e3cc9561b74b1cfe9f243136720d2753141dab21",
+      "status": "PASS"
+    },
+    {
+      "check": "artefact:sid",
+      "current": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+      "recorded": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
+      "status": "PASS"
+    },
+    {
+      "check": "artefact:stage2_checkpoint",
+      "current": "680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/rqvae_best.pth",
+      "recorded": "680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c",
+      "status": "PASS"
+    },
+    {
+      "check": "artefact:stage2_export_manifest",
+      "current": "a90c264227101d5ef888f5f6306d95263fab18903313a5cd03b4e703a310b49d",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/export_manifest.json",
+      "recorded": "a90c264227101d5ef888f5f6306d95263fab18903313a5cd03b4e703a310b49d",
+      "status": "PASS"
+    },
+    {
+      "check": "artefact:archive_binding",
+      "current": "f26791dce14cbc6d2c3336abd354937861e2a20bb880c42efb77e909b968b4eb",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/archive_binding.json",
+      "recorded": "f26791dce14cbc6d2c3336abd354937861e2a20bb880c42efb77e909b968b4eb",
+      "status": "PASS"
+    }
+  ],
+  "failed": [],
+  "run": {
+    "arm": "TIGER_module_budget_prefix_rq",
+    "stage2_run_id": "issue256_r01_formal",
+    "stage3_run_id": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15"
+  },
+  "schema": "genrec.pipeline.replay/1",
+  "status": "PASS"
+}

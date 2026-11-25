@@ -464,3 +464,28 @@ issue 明确要求的训练。判定必须写进 `RUN_LOG.md` 并引 issue 原�
 - 参考实现通过就宣称生产代码已修复;单模块测试通过就宣称训练入口正确;smoke 通过就宣称正式训练完成(§6.5)。
 - 同一种修复方式失败一次就认定任务不可完成:应当更换诊断方法(§4)。
 - 关闭时仍有可执行的未完成任务:必须 OPEN + `PROGRESS.json`(§6.3/§6.4)。
+
+## 8. 公共流水线接口(仓库内实际实现，Issue #257)
+
+本 skill 的 §1–§6 步骤在仓库里有可直接调用的实现，禁止另写一套：
+
+| skill 步骤 | 实现 |
+|---|---|
+| 冻结验收清单 / 断点 | `results/research/<issue>/RUN_LOG.md`、`PROGRESS.json` |
+| infra 与候选边界 | `tools/research/stage2/{launcher,contract}.py`、`tools/issue252/run_workspace.py` |
+| 依赖感知验证 | `tools/issue257/depgraph.py`(`Spec(...).fingerprint()` / `plan(specs, cache=...)` / `Cache.record`) |
+| 轮次状态机 | `tools/issue257/registry.py`(`Round.register` / `.advance` / `.evidence`) |
+| 计时 | `tools/issue257/timeline.py`(`Timeline.start/stop/summary`，区间合并) |
+| 自动化分析 | `tools/issue257/analysis.py`(`analyse(identity)`，按 run 身份，无 issue/arm 硬编码) |
+| 结论对账 | `tools/issue257/replay.py`(`replay(path)` 只读复算，逐项 PASS/FAIL/NA) |
+| 报告集合 | `tools/issue257/report.py`(`write_all` → RUN_MANIFEST/TIMELINE/VALIDATION_PLAN/RECEIPTS/REPORT/VERDICT/ROUND_RESULT) |
+| 归档校验 | `tools/issue257/archive.py`(`verify(identity)`；上传仍调 `results/research/issue139/upload_stage3.py`) |
+
+规则：
+
+* 复用 PASS 的依据是**指纹**（导入闭包 + 资产 + 配置 + 测试自身 + 运行时），不是路径、时间或
+  候选名；FAIL/NOT_RUN/缺收据/陈旧收据不得复用。
+* 机制数学、真实入口/四卡、性能、最终 run 身份仍按 issue 要求每轮实跑；公共层可按指纹复用。
+* 训练仍只经 `stage2_start` / `stage3_start`（或 `launcher.launch`），不新写启动器。
+* 复算一律从原始产物（`item_sids.json`、`test_final.json`、predictions）重算，容差与期望值写死。
+* 测试：`python3.9 -m pytest tools/issue257/tests -q`（已知答案、依赖失效四场景、闭包突变、复算侦错）。

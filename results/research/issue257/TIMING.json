@@ -1,0 +1,46 @@
+{
+  "schema": "genrec.pipeline.timing/1",
+  "cpu_only_replay": {
+    "cold_s": 1.595,
+    "warm_mean_s": 1.6732
+  },
+  "replay_status": "PASS",
+  "archive_check": {
+    "status": "PASS",
+    "checks": [
+      {
+        "check": "ledger_entry",
+        "status": "PASS",
+        "number": "105",
+        "key": "TIGER_role_conditioned_l3_rq/26368f3e7690",
+        "sid_prefix": "26368f3e7690"
+      },
+      {
+        "check": "ledger_files",
+        "status": "PASS",
+        "files": 131,
+        "recall_keys": 23
+      },
+      {
+        "check": "piece:sid",
+        "status": "PASS",
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/item_sids.json"
+      },
+      {
+        "check": "piece:checkpoint",
+        "status": "PASS",
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/rqvae_best.pth"
+      },
+      {
+        "check": "piece:test_final",
+        "status": "PASS",
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/logs/Amazon_2023_Instruments/Nov-25-2026_19-53-02/test_final.json"
+      },
+      {
+        "check": "piece:source",
+        "status": "PASS",
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/src"
+      }
+    ]
+  }
+}

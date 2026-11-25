@@ -286,6 +286,33 @@ rclone 通过环境变量配置。目标桶 `genrec`,第一层是 `01`、`02`…
     stage2 的诊断模块与其 tests)。**不变**:`stage2_start/status/stop`、`stage3_start/status`、训练入口。
     **随之失效**:全部 `research_round_*` 工具、轮次工具面、自动范围/差分/参考实现检查(见附录 A)。
 
+## 16. 单 agent 迭代流水线(Issue #257 交付)
+
+95. **`tools/issue257/` 是轮次执行的公共入口，不新建第二套 launcher/归档器。** 模块分工：
+    `identity.py`(从 SID/test_final/结果目录解析 run 身份，无 issue/arm 硬编码)、
+    `timeline.py`(墙钟/CPU/GPU 区间合并计时)、`registry.py`(轮次状态机：
+    REGISTERED→VALIDATED→ADMITTED→STAGE2_RUNNING→STAGE2_DONE→STAGE3_RUNNING→STAGE3_DONE→
+    ANALYSED→ARCHIVED→CLOSED，禁止跳步，running 相位可幂等重入)、
+    `depgraph.py`(依赖感知验证：导入闭包+资产+配置+运行时的内容哈希指纹，PASS 仅同指纹复用)、
+    `analysis.py`(以 run 身份参数化的 SID 链熵/role 条件/Stage3 指标/独立归约)、
+    `replay.py`(只读复算历史 run 并与存档数字比对)、`report.py`(RUN_MANIFEST/TIMELINE/
+    VALIDATION_PLAN/RECEIPTS/REPORT/VERDICT/ROUND_RESULT)、`archive.py`(校验 R2 四件套与台账，
+    上传仍调用 `results/research/issue139/upload_stage3.py`)。
+96. **调用接口**：新轮次先 `Round.register(...)` 冻结合同与 run_id，再 `depgraph.plan(specs, cache=...)`
+    得到复用/重验集合，跑完把 `cache.record(...)` 写回；训练仍只经 `stage2_start`/`stage3_start`
+    与 `launcher.launch`；结束时 `replay` + `report.write_all` + `archive.verify`。
+    测试：`python3.9 -m pytest tools/issue257/tests -q`。
+97. **凭据失效规则**：指纹覆盖 (a) 测试与被测模块的传递导入闭包(含候选树内相对导入)、
+    (b) 声明的资产与配置、(c) 测试文件自身、(d) 运行时(解释器/torch/可见设备)。任一变化即失效；
+    FAIL/NOT_RUN/缺收据/陈旧收据一律不得复用；无关的文档或报告修改不得触发重验。
+    已实测四种场景(仅分析变化、共享算子变化、机制变化、无关文档变化)与一个闭包突变测试，
+    见 `results/research/issue257/VALIDATION_PLAN_DEMO.json` 与 `tools/issue257/tests/test_depgraph.py`。
+98. **失败恢复**：进程中断后用 `registry.Round(root, round_id)` 读回状态与 evidence 继续；
+    `results/research/<issue>/PROGRESS.json` 只作断点，不作退出理由。
+99. **产物位置**：轮次证据 `results/research/<issue>/rounds/<round>/`，流水线复算
+    `results/research/issue257/replay/<run>/`，收据 `results/research/issue257/receipts/`；
+    R2 编号与逐文件校验仍在 `results/research/issue139/r2_ledger.json`。
+
 ---
 
 ## 附录 A:已废止条款

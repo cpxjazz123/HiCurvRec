@@ -1,0 +1,22 @@
+{
+  "schema": "genrec.pipeline.plan_demo/1",
+  "all_records_present": {
+    "reuse": [
+      "pipeline_units",
+      "candidate_suite",
+      "stage3_protocol"
+    ],
+    "rerun": []
+  },
+  "analysis_change": [
+    "pipeline_units"
+  ],
+  "shared_operator_change": [
+    "candidate_suite"
+  ],
+  "mechanism_change": [
+    "candidate_suite"
+  ],
+  "unrelated_doc_change": [],
+  "shared_operator_file": "tools/graph_infra/ego_gnn.py"
+}
