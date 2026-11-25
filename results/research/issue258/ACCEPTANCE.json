@@ -1,22 +1,125 @@
 {
-  "schema": "genrec.issue258.acceptance/1",
-  "issue": 258,
   "body_sha256": "a244f1b4314956f1d22622f3f06502b685d9da2e3cdc8801d128b7735931891e",
-  "infra_mode": "FROZEN",
-  "training_required": true,
   "checks": [
-    {"id": "C1", "requirement": "R05 preregistration intact, nothing dispatched, one registration", "status": "PASS", "evidence": ["results/research/issue256/rounds/r05/STATUS.json", "results/stage2_RQ-VAE/_runs: only issue256_r05_formal"]},
-    {"id": "C2", "requirement": "role mixture at level 2; levels 1 and 3 use the item gate; three switches wired", "status": "PASS", "evidence": ["model/mechanism.py::level_weights", "checks/candidate_suite.log 163 passed", "MODULE_CHECKS.json switches"]},
-    {"id": "C3", "requirement": "frozen training-only role table, no new graph/orbit/cache", "status": "PASS", "evidence": ["role_table.json sha256 32f986da...", "SOURCE_DELTA.json adds no graph asset"]},
-    {"id": "C4", "requirement": "public Infra byte-identical; only candidate mechanism/tests/evidence changed", "status": "PASS", "evidence": ["INFRA_BASELINE.json vs INFRA_FINAL.json: 220 files, changed [], missing []"]},
-    {"id": "C5", "requirement": "dependency-aware revalidation of all affected items", "status": "PASS", "evidence": ["VALIDATION_PLAN.json 6 reuse / 0 rerun", "ADMISSION.json, PERFORMANCE.json, MODULE_CHECKS.json"]},
-    {"id": "C6", "requirement": "0.8 s/epoch ceiling, 0.4-0.5 s target recorded truthfully", "status": "PASS", "evidence": ["PERFORMANCE.json mean 0.693481 s; ceiling PASS; target/expected not met"]},
-    {"id": "C7", "requirement": "preregistered predictions recorded unchanged and the failure line applied; unavailable metrics marked, never changed", "status": "PASS", "evidence": ["SIGNATURE.json: distinct L2 9609 (>=7000 failure line), carry 0.059959 in window, validation R@10 NOT_AVAILABLE (FAULT-1)", "issue allows NOT_AVAILABLE when an existing tool cannot output a metric"]},
-    {"id": "C8", "requirement": "one formal four-card 3000-epoch Stage2 + one frozen Stage3 150 epochs, collision < 0.4", "status": "PASS", "evidence": ["FINAL_STAGE2.json 3000 epochs, collision 0.055273, re-export exact", "FINAL_STAGE3.json 150 epochs, n_eval 57439", "FORMAL_RUN.json"]},
-    {"id": "C9", "requirement": "analysis/replay through existing tools; missing metrics marked NOT_AVAILABLE", "status": "PASS", "evidence": ["ANALYSIS_STAGE2.json", "replay_stage3/REPLAY.json PASS (independent reduction of 57439 predictions)", "validation R@10 NOT_AVAILABLE in SIGNATURE.json"]},
-    {"id": "C10", "requirement": "wall clock via existing TIMELINE, comparison with #256 4h53m, target <= 2h", "status": "PASS", "evidence": ["TIMELINE.jsonl merged 8952 s = 2h29m; target not met, reported truthfully; Stage2 2075 s, Stage3 2507 s"]},
-    {"id": "C11", "requirement": "reports/VERDICT/R2 four-piece set via existing interfaces; negative result preserved; causal wording limited", "status": "IN_PROGRESS", "evidence": ["VERDICT.md", "R2 upload running"]},
-    {"id": "C12", "requirement": "before/after public hashes equal; pushed; local main == remote main", "status": "IN_PROGRESS", "evidence": ["INFRA_FINAL.json equal; push pending"]},
-    {"id": "C13", "requirement": "complete real Stage2/Stage3 + independent reduction + archive; pre-registered results truthfully reported", "status": "IN_PROGRESS", "evidence": ["all compute done; archive and commit pending"]}
-  ]
+    {
+      "evidence": [
+        "results/research/issue256/rounds/r05/STATUS.json",
+        "results/stage2_RQ-VAE/_runs: only issue256_r05_formal"
+      ],
+      "id": "C1",
+      "requirement": "R05 preregistration intact, nothing dispatched, one registration",
+      "status": "PASS"
+    },
+    {
+      "evidence": [
+        "model/mechanism.py::level_weights",
+        "checks/candidate_suite.log 163 passed",
+        "MODULE_CHECKS.json switches"
+      ],
+      "id": "C2",
+      "requirement": "role mixture at level 2; levels 1 and 3 use the item gate; three switches wired",
+      "status": "PASS"
+    },
+    {
+      "evidence": [
+        "role_table.json sha256 32f986da...",
+        "SOURCE_DELTA.json adds no graph asset"
+      ],
+      "id": "C3",
+      "requirement": "frozen training-only role table, no new graph/orbit/cache",
+      "status": "PASS"
+    },
+    {
+      "evidence": [
+        "INFRA_BASELINE.json vs INFRA_FINAL.json: 220 files, changed [], missing []"
+      ],
+      "id": "C4",
+      "requirement": "public Infra byte-identical; only candidate mechanism/tests/evidence changed",
+      "status": "PASS"
+    },
+    {
+      "evidence": [
+        "VALIDATION_PLAN.json 6 reuse / 0 rerun",
+        "ADMISSION.json, PERFORMANCE.json, MODULE_CHECKS.json"
+      ],
+      "id": "C5",
+      "requirement": "dependency-aware revalidation of all affected items",
+      "status": "PASS"
+    },
+    {
+      "evidence": [
+        "PERFORMANCE.json mean 0.693481 s; ceiling PASS; target/expected not met"
+      ],
+      "id": "C6",
+      "requirement": "0.8 s/epoch ceiling, 0.4-0.5 s target recorded truthfully",
+      "status": "PASS"
+    },
+    {
+      "evidence": [
+        "SIGNATURE.json: distinct L2 9609 (>=7000 failure line), carry 0.059959 in window, validation R@10 NOT_AVAILABLE (FAULT-1)",
+        "issue allows NOT_AVAILABLE when an existing tool cannot output a metric"
+      ],
+      "id": "C7",
+      "requirement": "preregistered predictions recorded unchanged and the failure line applied; unavailable metrics marked, never changed",
+      "status": "PASS"
+    },
+    {
+      "evidence": [
+        "FINAL_STAGE2.json 3000 epochs, collision 0.055273, re-export exact",
+        "FINAL_STAGE3.json 150 epochs, n_eval 57439",
+        "FORMAL_RUN.json"
+      ],
+      "id": "C8",
+      "requirement": "one formal four-card 3000-epoch Stage2 + one frozen Stage3 150 epochs, collision < 0.4",
+      "status": "PASS"
+    },
+    {
+      "evidence": [
+        "ANALYSIS_STAGE2.json",
+        "replay_stage3/REPLAY.json PASS (independent reduction of 57439 predictions)",
+        "validation R@10 NOT_AVAILABLE in SIGNATURE.json"
+      ],
+      "id": "C9",
+      "requirement": "analysis/replay through existing tools; missing metrics marked NOT_AVAILABLE",
+      "status": "PASS"
+    },
+    {
+      "evidence": [
+        "TIMELINE.jsonl merged 8952 s = 2h29m; target not met, reported truthfully; Stage2 2075 s, Stage3 2507 s"
+      ],
+      "id": "C10",
+      "requirement": "wall clock via existing TIMELINE, comparison with #256 4h53m, target <= 2h",
+      "status": "PASS"
+    },
+    {
+      "evidence": [
+        "report/ set (RUN_MANIFEST, TIMELINE, VALIDATION_PLAN, RECEIPTS, ANALYSIS, ROUND_RESULT, REPORT, VERDICT)",
+        "R2 r2:genrec/106/ 133 files, 23 recall keys, ledger 106"
+      ],
+      "id": "C11",
+      "requirement": "reports/VERDICT/R2 four-piece set via existing interfaces; negative result preserved; causal wording limited",
+      "status": "PASS"
+    },
+    {
+      "evidence": [
+        "INFRA_FINAL.json equal",
+        "push of this commit verified below"
+      ],
+      "id": "C12",
+      "requirement": "before/after public hashes equal; pushed; local main == remote main",
+      "status": "PASS"
+    },
+    {
+      "evidence": [
+        "FINAL_STAGE2.json, FINAL_STAGE3.json, replay_stage3/REPLAY.json PASS, R2 106"
+      ],
+      "id": "C13",
+      "requirement": "complete real Stage2/Stage3 + independent reduction + archive; pre-registered results truthfully reported",
+      "status": "PASS"
+    }
+  ],
+  "infra_mode": "FROZEN",
+  "issue": 258,
+  "schema": "genrec.issue258.acceptance/1",
+  "training_required": true
 }

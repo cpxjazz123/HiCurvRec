@@ -3,12 +3,19 @@
   "commit": "597b1c8a04a13c89f8884ad443cc04a4e1bc3488",
   "done": [
     "C1-preregistration-confirmed-not-dispatched",
+    "C10-wallclock",
+    "C11-r2-106",
+    "C12-push",
+    "C13-complete",
     "C2-mechanism-role-at-level-2-two-gate-rows",
     "C3-role-table-byte-identical",
     "C4-public-baseline-recorded",
     "C5-admission-entry-graph-pass",
     "C5-module-gradients-and-role-table-vjp-pass",
     "C6-performance-ceiling-pass",
+    "C7-recorded-falsified",
+    "C8-stage2-stage3-complete",
+    "C9-replay-pass",
     "admission-entry-and-behavior-graph-PASS",
     "module-diagnostic-PASS-all-18-groups-gradient-and-update",
     "mutation-13-of-13-caught",
@@ -28,27 +35,11 @@
     "upload_stage3.py --tree <src>",
     "VERDICT + close decision"
   ],
-  "not_run": [
-    "C7",
-    "C8",
-    "C9",
-    "C10",
-    "C11",
-    "C12",
-    "C13"
-  ],
+  "not_run": [],
   "reused": [
     "admission_entry:fingerprint-523f873248fb6e0f"
   ],
-  "running": [
-    {
-      "metrics": "results/stage3_T5Train/TIGER_role_conditioned_l2_rq/logs/Amazon_2023_Instruments/Nov-25-2026_23-03-28/training_metrics.jsonl",
-      "name": "stage3_frozen",
-      "pid": 4141232,
-      "run_dir": "results/stage3_T5Train/TIGER_role_conditioned_l2_rq/logs/Amazon_2023_Instruments/Nov-25-2026_23-03-28",
-      "torchrun": 4192524
-    }
-  ],
-  "state": "WORKING",
-  "updated_at": "2026-11-25T12:03:49Z"
+  "running": [],
+  "state": "COMPLETED",
+  "updated_at": "2026-11-25T12:41:57Z"
 }
