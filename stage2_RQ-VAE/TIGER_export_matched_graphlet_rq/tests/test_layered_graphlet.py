@@ -259,7 +259,6 @@ def test_c39b_the_temperature_resolves_the_real_cost_scale():
     peak = float(prob.max(-1).values.mean())
     # flat (uniform 1/256 = 0.0039) has no gradient; saturated (1.0) has none either
     assert 0.05 < peak < 0.95, peak
-
 def test_c41_a_satisfiable_instance_improves_its_hard_delta():
     """A tiny feasible example: descending the real structure step moves the HARD S value."""
     model = _trained_model()
