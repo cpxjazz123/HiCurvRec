@@ -1,27 +1,43 @@
 {
-  "issue": 259,
-  "commit": "2c975d7c83",
-  "state": "CLOSED",
+  "blocked_by": null,
+  "commit": "045a7e85",
+  "done": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9",
+    "C10",
+    "C11",
+    "C12"
+  ],
+  "evidence": {
+    "frozen": "4/4 unchanged",
+    "r05_validation": "NOT_AVAILABLE (R04-bound artefact; no R05 validation artefact)",
+    "replay": "R05 status PASS, 13/13 checks",
+    "scenarios": "11 fixtures, all expected, 10 run / 4 reuse",
+    "tests": "57 passed via execution.run_and_record",
+    "training_launches": 0
+  },
+  "failed": [],
+  "infra_faults": [],
   "infra_mode": "BUILD",
-  "done": ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10", "C11", "C12"],
+  "issue": 259,
+  "next_commands": [],
+  "not_run": [
+    "formal Stage2 training",
+    "formal Stage3 training"
+  ],
   "reused": [
     "R05 SID dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6",
     "R05 test_final ed2d61223dd58af4fd77166a6ecdd1ec2c4aa6129ef534c1d60be6866db97cb9",
     "frozen TIGER rqvae_best.pth af8efc29a8bcbbe5394cc5e358acf7b14c0e78ae99d8a8b9e5faf03fdddd97a8"
   ],
-  "not_run": ["formal Stage2 training", "formal Stage3 training"],
-  "failed": [],
-  "infra_faults": [],
   "running": [],
-  "next_commands": [],
-  "blocked_by": null,
-  "evidence": {
-    "tests": "57 passed via execution.run_and_record",
-    "scenarios": "11 fixtures, all expected, 10 run / 4 reuse",
-    "replay": "R05 status PASS, 13/13 checks",
-    "frozen": "4/4 unchanged",
-    "training_launches": 0,
-    "r05_validation": "NOT_AVAILABLE (R04-bound artefact; no R05 validation artefact)"
-  },
-  "updated_at": "2026-11-25T14:20:00Z"
+  "state": "CLOSED",
+  "updated_at": "2026-11-26T01:15:00Z"
 }
