@@ -1,6 +1,6 @@
 ---
 name: complete-open-issue
-description: Use when the task is an open GitHub issue that must be finished end to end. Reads the issue, decides INFRA_MODE (FROZEN by default — only the research mechanism and its dedicated tests may change; BUILD only when the issue explicitly authorizes infrastructure work), freezes a machine-checkable acceptance checklist, reuses assets and the existing iteration Infra by hash, implements with TDD, runs dependency-aware validation (only re-verifying affected units, by fingerprint), trains when the issue needs it, reuses the existing analysis/replay tools to recompute headline metrics, and keeps working until `gh issue view` reports CLOSED — or, for a reproducible non-recoverable public-Infra fault that the issue did not authorize closing, reports evidence and leaves the issue OPEN. Research iterations must never become infrastructure development tasks: only the verification rigor is mandatory, not repeated engineering.
+description: Use when the task is an open GitHub issue that must be finished end to end. Reads the issue, decides INFRA_MODE (FROZEN by default — only the research mechanism and its dedicated tests may change; BUILD only when the issue explicitly authorizes infrastructure work), freezes a machine-checkable acceptance checklist, reuses assets and the existing iteration Infra by hash, implements with TDD, and runs INCREMENTAL validation: every repeated operation must name what changed that invalidated the previous evidence; unchanged units reuse their fingerprinted receipts, only affected modules/tests/mutations/benchmarks rerun, and long commands must persist their log, command and exit code before they start. Trains when the issue needs it (frozen TIGER baseline reused, never retrained), reuses the existing analysis/replay tools to recompute headline metrics, records per-phase wall time against a 100-minute budget, and keeps working until `gh issue view` reports CLOSED — or, for a reproducible non-recoverable public-Infra fault that the issue did not authorize closing, reports evidence and leaves the issue OPEN. Research iterations must never become infrastructure development tasks.
 ---
 
 # 按 open issue 完成任务的闭环
@@ -51,19 +51,76 @@ Stage3 训练入口、`CLAUDE.md`、本 Skill。指纹用 `tools/iteration/depgr
 **禁止为此新写检测工具**。发现未经授权的变化:停止推进,按 §1.1 记录,并按 §6.1 处理。
 运行期正常产物(日志、checkpoint、receipts、报告)不计入 Infra 变更。
 
-## 六步执行流程
+## 九步执行流程
 
 ```mermaid
 flowchart TD
-    A["读取既有 Infra 与历史结果"] --> B["提出并修改研究机制"]
-    B --> C["执行必要验证(依赖感知)"]
-    C --> D["正式训练"]
-    D --> E["自动分析与归档"]
-    E --> F["总结结论"]
+    A["读取 Issue 与历史实验"] --> B["确定本轮机制修改范围"]
+    B --> C["分析代码依赖及验证影响范围"]
+    C --> D["实现研究机制"]
+    D --> E["执行增量验证"]
+    E --> F["Stage2 正式训练"]
+    F --> G["Stage3 正式训练"]
+    G --> H["自动分析及归档"]
+    H --> I["完成 Issue 验收"]
 ```
+
+禁止在每轮迭代中重新建设已有 Infra、重新训练 TIGER 基线或无条件重复执行所有历史测试。
 
 每一步之前与之后都做上一小节的 Infra 完整性检查。遇到 Infra 错误时,只允许用**已有接口**
 重新执行或恢复;不得临时编写新的框架工具,不得绕过准入、不得伪造结果。
+
+## 增量验证与重复执行禁令(默认)
+
+> **每一项重复执行的操作,都必须能够说明本轮发生了什么变化,使得之前的验证证据不再有效。
+> 如果无法说明,则不得重复执行。**
+
+这条原则优先于"多跑一遍更保险":没有失效理由的重跑是浪费,也必须记录为一次无理由重复。
+
+### 变更范围 → 验证范围(按本轮实际修改,而不是按历史清单)
+
+| 修改内容 | 必须验证 | 可以复用的历史验证 |
+|---|---|---|
+| Loss 函数 | 数值正确性、梯度传播、相关集成测试 | 未受影响的数据资产测试 |
+| 门控网络 | 权重计算、梯度、码字分配 | 图数据构建测试 |
+| GNN | 消息聚合、梯度、计算性能 | 未受影响的 Stage3 模型/测试 |
+| 曲率距离 | 距离数值、数值稳定性、量化结果 | 未受影响的图资产测试 |
+| 公共训练框架(`BUILD` 授权时) | 完整回归测试 | 根据实际依赖判断 |
+| 仅修改超参数 | 参数合法性、必要的训练准入 | 未受影响的单元测试 |
+| 仅修改文档/报告/证据文本 | 不触发任何计算证据;只更新引用哈希 | 全部计算证据 |
+
+历史验证只有在**相关代码、依赖、数据资产和执行环境**均未发生影响其有效性的变化时才允许复用。
+无法确定影响范围时,必须扩大验证范围(先按更大闭包实跑,再收窄)。
+
+### 强制执行约束
+
+| 规则 | 强制要求 |
+|---|---|
+| 日志持久化 | 所有测试/训练命令从启动时就保存完整日志、命令、开始时间、退出码与版本信息(python、torch、GPU);**预计超过 60 秒的命令启动前必须先确认输出路径存在且可写**。未落盘的运行视为没有执行过,不得引用其输出 |
+| 禁止重复执行 | 已具有有效证据(指纹 + 收据 + 日志 + 退出码)的测试不得无理由重跑;重跑必须在 `CHECK_k.md` 写明"哪一处变化使旧证据失效" |
+| 性能测试 | 只有计算路径或性能相关配置发生变化时,才执行完整的 60 epoch 基准;仅测试/文档/证据改动不得重跑 benchmark |
+| 梯度检查 | 只检查受到本轮机制影响的模块及相关梯度传播路径;未受影响的模块复用其分模块收据 |
+| 变异测试 | 只重新执行受到修改影响的变异;原有的、闭包未变的变异记录保持有效 |
+| Infra 冻结 | 研究迭代期间禁止新增、修改基础设施;缺失或故障按 §1.1 记录,按 §6.1 处理 |
+| 基线复用 | 直接使用已经冻结的 TIGER 实验结果;禁止重训 TIGER 基线 |
+| 结果分析 | 调用已有自动化分析工具(`tools/iteration/analysis.py`、`replay.py`、`report.py`),避免手工重复统计 |
+| 失败处理 | 根据失败原因做局部修复,只复验受影响范围,不重启整个流程 |
+| 时间记录 | 自动记录每个执行阶段的实际耗时及重复执行原因(`TIMELINE.jsonl` / `CHECK_k.md`) |
+
+### 时间预算(用于发现异常开销,不是跳过验证的借口)
+
+| 执行阶段 | 预算 |
+|---|---:|
+| 阅读 Issue、分析历史结果 | 3 分钟 |
+| 研究机制实现 | 10 分钟 |
+| 增量验证及训练准入 | 7 分钟 |
+| Stage2 | 34 分钟 |
+| Stage3 | 42 分钟 |
+| 自动分析及归档 | 4 分钟 |
+| **总计** | **100 分钟** |
+
+超出预算时,Agent 必须记录具体原因(首次 import、冷缓存、真实故障、外部排队等),并区分
+"必要验证"与"重复执行";不得为了达标而跳过必要验证,也不得把异常开销当作正常。
 
 ## 铁律:在授权范围内推进到终止状态
 
@@ -92,8 +149,9 @@ flowchart TD
    **Issue 保持 OPEN**,等待 owner 决定。该状态只允许在授权范围内确实无可执行下一步时使用。
 
 一个 issue 只有在**它的验收条件逐条被证据满足**时才算完成。本 skill 把这个过程固定为
-`读 issue → 冻结清单与模式 → 复用/校验既有 Infra → 实现机制 → 依赖感知检查 →(训练,仅当 issue 要求)
-→ 结论对账 → 关闭`;任何一步不满足,回到它应该在的那一步,不允许跳步,也不允许"差不多"。
+`读 issue 与历史实验 → 确定本轮机制修改范围 → 分析代码依赖与验证影响范围 → 实现机制 →
+增量验证 → Stage2 → Stage3 → 自动分析归档 → 完成验收`;任何一步不满足,回到它应该在的那一步,
+不允许跳步,也不允许"差不多"。
 
 **训练不是固定步骤**:跑不跑由 issue 的验收条件决定(见 §4)。
 
@@ -155,21 +213,25 @@ flowchart TD
 
 ## 执行顺序
 
-1. 阅读 issue,冻结验收清单(§0;`RUN_LOG.md`),确定并记录 `INFRA_MODE`。
+1. 阅读 issue 与历史实验,冻结验收清单(§0;`RUN_LOG.md`),确定并记录 `INFRA_MODE`,
+   **写下本轮机制修改范围**。
 2. **先读 `/home/wlia0047/ar57/wenyu/GeneRec/assets`**:需要的 Infra 资产已存在就直接读取(按哈希引用)
    (§1.0)。`FROZEN` 下**禁止**新建或重建资产;确实缺失时记录为 Infra 故障(§1.1)。
 3. **若开始新 Stage2 机制,先归档全部旧机制,再复制冻结基线、开展新机制探索**(§1.0a);
    之后冻结**数学与数据契约**(`CONTRACT.md`)。非新机制任务不搬动当前机制。
-4. 先写**独立参考实现**与**确定性测试**(含手算期望值),再写正式代码(§2)。
-5. 实现生产代码,跑确定性测试与参考实现一致性测试。
-6. **故意引入典型错误**,验证测试的检测能力(变异测试);不通过先补测试,不要补实现。
-7. 用真实数据**逐模块验证**:输出、梯度、参数更新(§3)。
-8. 全部准入检查通过后才启动正式训练(§3、§4)。
-9. 训练结束后**重新审查源码、指标计算与实验结论**,用既有复算接口从原始产物重算头条指标(§5)。
-10. 归档证据并关闭 issue(§6)。
+4. **分析依赖闭包与验证影响范围**:用 `tools/iteration/depgraph.py` 生成本轮验证计划,
+   标明实跑项与 `reused:<指纹>` 项;无法确定影响范围时扩大,不得无差别重跑全部。
+5. 先写**独立参考实现**与**确定性测试**(含手算期望值),再写正式代码(§2)。
+6. 实现生产代码,只跑受影响范围内的确定性测试与参考一致性测试。
+7. **故意引入典型错误**,只在受影响的模块/路径上验证测试的检测能力;不通过先补测试。
+8. 用真实数据**逐模块验证受影响的模块**及其梯度传播路径(§3)。
+9. 全部准入检查通过后才启动正式训练;性能基准按 §4 的增量规则执行。
+10. 训练结束后**重新审查源码、指标计算与实验结论**,用既有复算接口从原始产物重算头条指标(§5);
+    归档证据并关闭 issue(§6)。
 
-顺序不可交换:先查 `assets/` 再谈资产,先归档旧机制再复制基线与探索新机制,先参考实现后生产代码,
-先变异测试后正式训练,先结论复核后关闭。取消的是**重复建设**,不是**顺序要求**。
+顺序不可交换:先查 `assets/` 再谈资产,先归档旧机制再复制基线与探索新机制,先定影响范围再验证,
+先参考实现后生产代码,先变异测试后正式训练,先结论复核后关闭。取消的是**重复建设与无理由重跑**,
+不是**顺序要求**或**验证强度**。
 
 ## 进度必须回写到 issue(不是只写本地)
 
@@ -216,6 +278,10 @@ read issue://<N>                 # 或 gh issue view <N> --json number,title,bod
 - 其他情况(包括"只使用既有 Infra""严禁开发新 Infra")→ `FROZEN`。
 
 之后每轮检查都以这份清单为准;issue 正文在本轮中途被改过时,重新冻结并记录差异。
+
+同时写下**本轮机制修改范围**:哪些候选模块、哪些机制测试、哪些证据可能变化。这份范围是 §3 影响
+分析的输入,也是判断"哪一处变化使旧证据失效"的依据;范围为空(纯文档/分析任务)时,不得重跑任何
+计算证据。修改范围与验证计划一并写进 `RUN_LOG.md`。
 
 **issue 缺少可判定条件时不许开工**:先在 issue 下评论列出缺口,等 owner 补齐。
 
@@ -289,6 +355,18 @@ cat  /home/wlia0047/ar57/wenyu/GeneRec/assets/manifest.json   # 若存在
 
 "资产已存在于 `assets/`"是一条合法且优先的 PASS 路径,前提是哈希核对通过且没有重复创建。
 
+### 1.2 长命令启动前的输出预检(强制)
+
+任何预计超过 60 秒的命令(候选测试、准入 smoke、benchmark、Stage2/Stage3)在启动前必须确认:
+
+1. 输出日志路径已创建且可写,位于仓库内(不得用 `/tmp`,§86);
+2. 命令文本、开始时间、解释器与依赖版本、退出码会被写入同一日志或对应收据;
+3. 失败时保留日志,不覆盖已有证据;重跑使用新的 generation 名。
+
+未落盘输出的运行不得作为复用依据。如果因为没有保存而重跑,必须在 `CHECK_k.md` 写明
+"上次运行未落盘,证据不可用"——这正是本规则要消除的重复(实测反例:163 项候选测试因日志未保存
+而被迫整轮重跑)。
+
 ## 2. 实现(只改研究机制)
 
 1. **先写独立参考实现** `reference.py`:不 import 生产模块,换一种计算方法(numpy 对 torch、
@@ -300,7 +378,9 @@ cat  /home/wlia0047/ar57/wenyu/GeneRec/assets/manifest.json   # 若存在
    测试失败;记录 `MUTATIONS.md`。一个都抓不到的变异说明测试没有检测力,先补测试。
 5. 只改机制层;路径、结果目录、日志、SID 导出、GPU/DDP 启动、端口、冻结超参归框架(§66–§68)。
    `FROZEN` 下这些框架组件只调用、不修改。
-6. 跑全量:候选树自己的测试 + 机制直接依赖的既有框架测试。
+6. 跑**受影响范围**:首次实现一个新机制时,候选树全部测试都属于受影响范围,跑一次全量并落盘;
+   之后的修复只复验被修改文件依赖闭包内的测试,未受影响的测试按指纹复用,不重跑全量。
+   同时跑机制直接依赖的既有框架测试,其余框架测试按依赖判断。
 
 ## 3. 检查循环(依赖感知,只重验受影响部分)
 
@@ -313,7 +393,10 @@ cat  /home/wlia0047/ar57/wenyu/GeneRec/assets/manifest.json   # 若存在
      计算受影响单元;指纹 = 导入闭包 + 资产 + 配置 + 测试自身 + 运行时;
    - 只有**指纹相同且有有效收据**的 PASS 可以复用,并在 `CHECK_k.md` 标注 `reused:<收据/指纹>`;
    - `FAIL`、`NOT_RUN`、缺收据、陈旧收据、依赖闭包已变的 PASS **一律不得复用**,必须实跑;
-   - 机制数学、真实入口/四卡、性能、最终 run 身份**不按指纹跳过**,按 issue 要求实跑。
+   - 机制数学与真实入口/四卡按 issue 实跑(这些结果不能由静态指纹替代);
+   - 性能只在计算路径或性能相关配置发生变化时重跑完整 60 epoch 基准;否则复用有效的
+     `PERFORMANCE.json` 并标注 `reused:<指纹>`;
+   - 最终 run 身份以不可变 run 记录证明,不重复创建第二个同机制 run。
 3. 对受影响的条目跑对应检查:确定性测试、参考实现一致性、变异测试结果、分模块验证
    (输出/梯度/参数更新)、真实入口 1 epoch smoke、SID 技术有效、行为图契约、指标复算。
    记录命令、关键输出、指标值、文件 sha256。
@@ -351,6 +434,10 @@ cat  /home/wlia0047/ar57/wenyu/GeneRec/assets/manifest.json   # 若存在
 
 轮询单次等待 ≤ 60 秒,每次报告 epoch / 产物 / 进程;禁止 `sleep N; 检查` 丢后台。
 训练完成后按 CLAUDE.md §6b 归档 R2(四件齐全才上传)。
+
+**训练前验证与基准的增量规则**:真实入口与行为图门槛每次按 issue 执行;60 epoch 性能基准只在
+计算路径或性能相关配置相对上一份有效 `PERFORMANCE.json` 发生变化时执行,否则复用并记录
+`reused:<指纹>`。冻结的 TIGER 基线结果直接引用,禁止重训基线。
 
 失败先分类再动手:
 
@@ -538,7 +625,8 @@ gh issue view <N> --json state      # 必须 CLOSED
 - 改动机制代码 → 该机制的确定性/参考/变异/分模块证据失效,必须重跑;
 - 只改报告/日志/证据文本 → 不触发计算证据失效,但要更新其中引用的哈希;
 - `FAIL`、`NOT_RUN`、缺收据、陈旧收据永远不得复用;
-- 机制数学、真实入口/四卡、性能、最终 run 身份不按指纹缓存,按 issue 要求重跑。
+- 机制数学与真实入口/四卡每次按 issue 实跑;性能只在计算路径/性能配置变化时重跑;
+  最终 run 身份以既有不可变 run 证明,不重复创建。
 
 `VERDICT.md` 的每条 PASS 都要写出对应的 `path:sha256`,或写 `reused:<指纹>` 并附收据路径。
 
@@ -572,6 +660,11 @@ Issue 明确授权 → 关闭为 BLOCKED。
 - 在 `FROZEN` 下修改 `tools/iteration/`、公共评估器/归档器、`assets/` 生成工具、准入规则、Skill、`CLAUDE.md`。
 - 把公共 Infra 的 bug 当机制 bug 去改框架,或把机制 bug 当 Infra 阻塞去报告。
 - 用陈旧收据、无关依赖的 PASS 冒充本轮验证;或反过来,每轮无差别重跑全部检查、每轮另写复算器。
+- 重跑已有有效证据的全套测试或基准,却无法说出本轮哪一处变化使旧证据失效 —— 违反"无变化不重复"原则。
+- 长命令启动前不建日志/输出路径,跑完才发现证据丢失、只能整轮重跑(163 项测试反例)。
+- 重训冻结的 TIGER 基线,或以"保险"为理由重跑历史对照实验。
+- 只改测试、文档或证据文本,却重跑 benchmark 或全套梯度检查(这些证据并未失效)。
+- 以"时间预算"为借口跳过受影响范围内的必要验证;预算用于发现异常开销,不是放宽验收。
 - 检查"看起来没问题"就结束循环;一轮没做完就宣布通过。
 - 训练前跳过 §3,训练后才想起判据。
 - 在 `/tmp` 放脚本或中间数据(§86),跳过 `commit_guard`(§91),不推送就宣称完成。
@@ -611,7 +704,8 @@ Issue 明确授权 → 关闭为 BLOCKED。
 
 * 复用 PASS 的依据是**指纹**(导入闭包 + 资产 + 配置 + 测试自身 + 运行时),不是路径、时间或
   候选名;FAIL/NOT_RUN/缺收据/陈旧收据不得复用。
-* 机制数学、真实入口/四卡、性能、最终 run 身份仍按 issue 要求实跑;公共层可按指纹复用。
+* 机制数学与真实入口/四卡仍按 issue 实跑;性能基准仅在计算路径/性能配置变化时重跑;最终 run 身份
+  以既有不可变 run 证明。公共层与未受影响单元可按指纹复用。
 * 训练仍只经 `stage2_start` / `stage3_start`(或 `launcher.launch`),不新写启动器。
 * 复算一律从原始产物(`item_sids.json`、`test_final.json`、predictions)重算,容差与期望值写死。
 * 测试:`python3.9 -m pytest tools/iteration/tests -q`(已知答案、依赖失效四场景、闭包突变、复算侦错)。
