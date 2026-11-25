@@ -13,7 +13,7 @@
 
 ## Fingerprint
 
-`tools/issue257/depgraph.py` builds, for each validation unit, the SHA-256 of a canonical JSON of:
+`tools/iteration/depgraph.py` builds, for each validation unit, the SHA-256 of a canonical JSON of:
 
 * **code**: every repo-local module in the unit's transitive import closure (AST-parsed, including
   relative imports inside a candidate tree via `roots=`), each with its file hash;
@@ -31,7 +31,7 @@ matches *and* the receipt says PASS.
 | scenario | expected | measured |
 |---|---|---|
 | nothing changed | reuse | `reuse: [pipeline_units, candidate_suite, stage3_protocol]` |
-| analysis-only edit (`tools/issue257/analysis.py`) | rerun only the analysis unit | `rerun: [pipeline_units]` |
+| analysis-only edit (`tools/iteration/analysis.py`) | rerun only the analysis unit | `rerun: [pipeline_units]` |
 | shared operator edit (`tools/graph_infra/ego_gnn.py`) | rerun every consumer | `rerun: [candidate_suite]` |
 | mechanism edit (`model/mechanism.py`) | rerun the mechanism unit | `rerun: [candidate_suite]` |
 | unrelated document edit (`RUN_LOG.md`) | rerun nothing | `rerun: []` |

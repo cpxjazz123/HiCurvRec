@@ -4,9 +4,9 @@
 |---|---|---|---|
 | C1 | #251–#256 故障台账（分类/复现/修复/范围） | PASS | `results/research/issue257/FAULT_LEDGER.md`（12 行，每行指向仓库内已有证据） |
 | C2 | 阶段计时（不可恢复标 NA） | PASS | `results/research/issue257/TIMING.json` |
-| C3 | 公共边界（候选只管机制与测试） | PASS | `tools/issue257/*` + 复用 `tools/research/stage2/*`、`upload_stage3.py` |
+| C3 | 公共边界（候选只管机制与测试） | PASS | `tools/iteration/*` + 复用 `tools/research/stage2/*`、`upload_stage3.py` |
 | C4 | 显式父代 + 不可变快照 | PASS | `_archive/` 树 + `run_workspace`；`archive.py` 校验 binding |
-| C5 | 依赖感知验证（闭包+资产+配置+运行时指纹） | PASS | `tools/issue257/depgraph.py`、`tests/test_depgraph.py` |
+| C5 | 依赖感知验证（闭包+资产+配置+运行时指纹） | PASS | `tools/iteration/depgraph.py`、`tests/test_depgraph.py` |
 | C6 | 三类真实变更场景 + 最小重验集 | PASS | `VALIDATION_PLAN_DEMO.json`：仅分析→1 单元；共享算子→候选；机制→候选；无关文档→0 |
 | C7 | 轮次状态机（十态、禁跳步、可重入） | PASS | `registry.py` + `tests/test_known_answers.py` |
 | C8 | 按 run 身份参数化的自动分析 | PASS | `analysis.py`（无 issue/arm 字面量） |

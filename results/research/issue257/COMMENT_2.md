@@ -1,8 +1,8 @@
-公共流水线已落地并通过实测（14 个测试全绿，`python3.9 -m pytest tools/issue257/tests -q` → `14 passed`）：
+公共流水线已落地并通过实测（14 个测试全绿，`python3.9 -m pytest tools/iteration/tests -q` → `14 passed`）：
 
 - **依赖感知验证**：指纹 = 测试与被测模块的传递导入闭包 + 资产 + 配置 + 测试自身 + 运行时（解释器/torch/可见设备）的 SHA-256；PASS 仅同指纹复用。实测四场景（`results/research/issue257/VALIDATION_PLAN_DEMO.json`）：
   - 全部收据存在 → `reuse: [pipeline_units, candidate_suite, stage3_protocol]`
-  - 仅分析改动（`tools/issue257/analysis.py`）→ 只重验 `pipeline_units`
+  - 仅分析改动（`tools/iteration/analysis.py`）→ 只重验 `pipeline_units`
   - 共享算子改动（`tools/graph_infra/ego_gnn.py`）→ 重验 `candidate_suite`
   - 机制改动（`model/mechanism.py`）→ 重验 `candidate_suite`
   - 无关文档改动（`RUN_LOG.md`）→ 不重验任何单元

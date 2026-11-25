@@ -473,13 +473,13 @@ issue 明确要求的训练。判定必须写进 `RUN_LOG.md` 并引 issue 原�
 |---|---|
 | 冻结验收清单 / 断点 | `results/research/<issue>/RUN_LOG.md`、`PROGRESS.json` |
 | infra 与候选边界 | `tools/research/stage2/{launcher,contract}.py`、`tools/issue252/run_workspace.py` |
-| 依赖感知验证 | `tools/issue257/depgraph.py`(`Spec(...).fingerprint()` / `plan(specs, cache=...)` / `Cache.record`) |
-| 轮次状态机 | `tools/issue257/registry.py`(`Round.register` / `.advance` / `.evidence`) |
-| 计时 | `tools/issue257/timeline.py`(`Timeline.start/stop/summary`，区间合并) |
-| 自动化分析 | `tools/issue257/analysis.py`(`analyse(identity)`，按 run 身份，无 issue/arm 硬编码) |
-| 结论对账 | `tools/issue257/replay.py`(`replay(path)` 只读复算，逐项 PASS/FAIL/NA) |
-| 报告集合 | `tools/issue257/report.py`(`write_all` → RUN_MANIFEST/TIMELINE/VALIDATION_PLAN/RECEIPTS/REPORT/VERDICT/ROUND_RESULT) |
-| 归档校验 | `tools/issue257/archive.py`(`verify(identity)`；上传仍调 `results/research/issue139/upload_stage3.py`) |
+| 依赖感知验证 | `tools/iteration/depgraph.py`(`Spec(...).fingerprint()` / `plan(specs, cache=...)` / `Cache.record`) |
+| 轮次状态机 | `tools/iteration/registry.py`(`Round.register` / `.advance` / `.evidence`) |
+| 计时 | `tools/iteration/timeline.py`(`Timeline.start/stop/summary`，区间合并) |
+| 自动化分析 | `tools/iteration/analysis.py`(`analyse(identity)`，按 run 身份，无 issue/arm 硬编码) |
+| 结论对账 | `tools/iteration/replay.py`(`replay(path)` 只读复算，逐项 PASS/FAIL/NA) |
+| 报告集合 | `tools/iteration/report.py`(`write_all` → RUN_MANIFEST/TIMELINE/VALIDATION_PLAN/RECEIPTS/REPORT/VERDICT/ROUND_RESULT) |
+| 归档校验 | `tools/iteration/archive.py`(`verify(identity)`；上传仍调 `results/research/issue139/upload_stage3.py`) |
 
 规则：
 
@@ -488,4 +488,4 @@ issue 明确要求的训练。判定必须写进 `RUN_LOG.md` 并引 issue 原�
 * 机制数学、真实入口/四卡、性能、最终 run 身份仍按 issue 要求每轮实跑；公共层可按指纹复用。
 * 训练仍只经 `stage2_start` / `stage3_start`（或 `launcher.launch`），不新写启动器。
 * 复算一律从原始产物（`item_sids.json`、`test_final.json`、predictions）重算，容差与期望值写死。
-* 测试：`python3.9 -m pytest tools/issue257/tests -q`（已知答案、依赖失效四场景、闭包突变、复算侦错）。
+* 测试：`python3.9 -m pytest tools/iteration/tests -q`（已知答案、依赖失效四场景、闭包突变、复算侦错）。
