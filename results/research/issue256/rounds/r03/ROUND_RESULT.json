@@ -1,0 +1,65 @@
+{
+  "schema": "genrec.issue256.r03.round_result/1",
+  "round_id": "r03",
+  "run_id": "issue256_r03_formal",
+  "arm": "TIGER_role_conditioned_l1_rq",
+  "status": "complete_negative",
+  "mechanism": {
+    "change": "level-1 curvature mixture taken from the item's graphlet orbit role via a learned per-role table (n_roles+2 rows); levels 2 and 3 keep the learned per-item gate",
+    "hypothesis": "role-conditioned level-1 commitment coarsens the level-1 partition, lifts the absolute L1 prefix carry and thereby the final Recall"
+  },
+  "stage2": {
+    "epochs": 3000,
+    "world_size": 4,
+    "global_batch": 4096,
+    "completed": true,
+    "export": "layered_mode_carries_run_id"
+  },
+  "stage2_signature": {
+    "prediction": "distinct two-code prefixes <= 6000 AND absolute L1 prefix carry >= 0.10",
+    "measured": {
+      "distinct_two_code_prefixes": 9257,
+      "l1_prefix_carry": 0.0596,
+      "l3_collision": 0.0545,
+      "quant_error": 0.0065,
+      "l3_refinement_gain_bits": 2.099
+    },
+    "verdict": "FALSIFIED",
+    "criterion": "the round's own kill criterion: L1 carry < 0.08 -> the role-conditioned level-1 coupling is falsified; the mechanism widened the partition instead of coarsening it"
+  },
+  "stage3": {
+    "epochs": 150,
+    "world_size": 4,
+    "test_recall_at_10": 0.0490085133794112,
+    "test_recall_at_5": 0.03189470568777312,
+    "test_ndcg_at_10": 0.026458843712066176,
+    "n_eval": 57439,
+    "reconciliation": {
+      "path": "results/research/issue256/rounds/r03/STAGE3_RECONCILIATION.json",
+      "sha256": "72638eaea4c75618f84052a01ce162e4ce933734abb3b6b63d013430ab4b070f",
+      "status": "PASS",
+      "strict_target_met": false,
+      "metrics": {
+        "n_eval": 57439,
+        "test_recall@5": 0.03189470568777312,
+        "test_ndcg@5": 0.02094108887285172,
+        "test_recall@10": 0.0490085133794112,
+        "test_ndcg@10": 0.026458843712066193
+      }
+    },
+    "pointer": {
+      "path": "results/research/issue256/rounds/r03/FINAL_STAGE3.json",
+      "sha256": "8f4c448075924177cf30b25718d5c768f094978f50de3175c5e96934702535fe"
+    }
+  },
+  "comparison": {
+    "threshold": 0.065,
+    "baseline_TIGER_RQ-VAE": 0.0557,
+    "R01": 0.0527,
+    "R02": 0.0527,
+    "R03": 0.0490085133794112
+  },
+  "result": "negative: the mechanism signature is falsified at Stage 2 and the final Recall (0.0490) is below the 0.065 threshold and below the parent R02 (0.0527)",
+  "r2_archive": null,
+  "frozen_at": "2026-11-25T06:59:31.802183+00:00"
+}

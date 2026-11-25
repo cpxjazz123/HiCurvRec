@@ -1,0 +1,76 @@
+{
+  "schema": "genrec.issue256.test_access/1",
+  "policy": "EVALUATION.md",
+  "new_issue256_test_accesses": [
+    {
+      "round": "r01",
+      "kind": "authorized complete frozen Stage3 final test",
+      "status": "completed",
+      "first_result_observed_at": "2026-11-24T20:09:30.840293+00:00",
+      "finished_observed_at": "2026-11-24T20:10:38.743133+00:00",
+      "observed_at": "2026-11-24T20:07:25.817571+00:00",
+      "stage3_run": "results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15",
+      "stage2_run_id": "issue256_r01_formal",
+      "stage2_source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
+      "stage3_trainer_sha256": "54ca6bfbcd55a42e718660dd0004370a41a5e1c2c5038a86bbfc84f32b963690",
+      "sid_sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
+      "stage2_checkpoint_sha256": "680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c",
+      "population": 57439,
+      "result": {
+        "test_recall@5": 0.034105746966346905,
+        "test_recall@10": 0.05273420498267727,
+        "test_ndcg@5": 0.022554059459244956,
+        "test_ndcg@10": 0.02852344807984429
+      },
+      "stage3_checkpoint_sha256": "d8540c837dedffd8291615bb6d7578308f74f6469e3182887685a08571082a96",
+      "selection_use": "Issue closure threshold only; no test error rows or derived supervision for the next concrete mechanism decision",
+      "evidence": "rounds/r01/STAGE3_TEST_PHASE.json",
+      "independent_confirmation": false
+    },
+    {
+      "round": "r01",
+      "kind": "read-only independent reduction of existing final predictions",
+      "status": "completed",
+      "after_stage3_finished": true,
+      "population": 57439,
+      "model_test_replay": false,
+      "evidence": "rounds/r01/STAGE3_RECONCILIATION.json",
+      "evidence_sha256": "befed5ef99eda94ff81eab4b66d914f62255f94a2458e84796366565ef81dd5c",
+      "selection_use": "Numerical and identity audit only; no test error cases used for the next mechanism choice",
+      "independent_confirmation": false
+    }
+  ],
+  "known_prior_exposures": [
+    {
+      "issue": 252,
+      "kind": "complete recommendation final test",
+      "population": 57439,
+      "aggregate_r10": 0.0492870697609638,
+      "selection_use": "historical endpoint only; no test item lists read for new mechanism selection"
+    },
+    {
+      "issue": 253,
+      "kind": "complete recommendation final test",
+      "population": 57439,
+      "aggregate_r10": 0.046431866850049616,
+      "selection_use": "historical endpoint only"
+    },
+    {
+      "issue": 254,
+      "kind": "paired posthoc recommendation-test and mechanism diagnosis",
+      "population": 57439,
+      "selection_use": "aggregate provenance/limits only; concrete error rows and cases excluded"
+    },
+    {
+      "issue": 255,
+      "kind": "structure-test aggregate reporting; Stage3 refused",
+      "new_recommendation_test": false,
+      "selection_use": "training and structure-validation diagnostics only for issue256 changes"
+    }
+  ],
+  "independent_confirmation": {
+    "available": false,
+    "reason": "No genuinely unvisited dataset identified; the fixed test is already exposed."
+  },
+  "bias": "Repeated candidate access is an exploratory selection loop; never report it as independent confirmation."
+}

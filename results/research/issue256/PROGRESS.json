@@ -5,7 +5,7 @@
   "commit": "16259df8c01a55a8689f195bcd2c301fabe7a3bb",
   "r01_source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
   "last_admitted_source_commit": "16259df8c01a55a8689f195bcd2c301fabe7a3bb",
-  "current_source_state": "re-admission required after pre-worker generated-entry ownership refusal",
+  "current_source_state": "R03 complete negative; next round requires a new preregistration on the level-3 refinement lever",
   "done": [
     "acceptance frozen",
     "assets109/109",
@@ -74,7 +74,16 @@
     "R03 complete unit coverage: 152 candidate + 64 asset + 22 controller/framework cases across four launcher-owned workers, no skips",
     "R03 four-card diagnostics pass: steady profile, real validation, benchmark and periodic budget; the inclusive31-60 window measures mean0.7114374786925812s against the0.8s ceiling",
     "R03 machine admission passes (real one-epoch entry with SID export, behaviour-graph contract) and the credential collection binds132 exact source files",
-    "R02 tree archived with git mv; stage2_RQ-VAE keeps exactly one active candidate tree"
+    "R02 tree archived with git mv; stage2_RQ-VAE keeps exactly one active candidate tree",
+    "R03 formal Stage2 completed all3000 epochs on four cards in2136.841s with the final-epoch checkpoint; the exported SID has24587 items and three-code collision0.05445967381136374",
+    "the collision trajectory is the mechanism signature: 0.329 at epoch100, 0.535 at1000, then collapsing to0.054 at3000, i.e. the coarsening does not persist to the final assignment",
+    "R03 export audit passed: the final checkpoint reproduces all24587 SIDs exactly, the archive binding is written and the layered metrics record is bound",
+    "R03 export conditional entropies measured on the persisted SID: H(L1)=7.4596, H(L2|L1)=5.1067, H(L3|L1L2)=2.0193 bits; 23247 distinct triples over 24587 items, so the triple is an item identity map and the residual freedom sits in the level-3 refinement",
+    "R03 frozen Stage3 completed all150 epochs on four cards (beam20, seed42, no early stop) and wrote the final test over the complete57439-row population",
+    "independent reduction of the persisted Stage3 predictions reproduces the metrics exactly: test_R@10=0.0490085133794112, R@5=0.03189470568777312, strict_target_met false",
+    "complete recommendation validation over57439 rows: validation_R@10=0.05430108462891067, below the preregistered0.0583 recommendation and below R01/R02, so the role-conditioned level-1 coupling is falsified on validation and test alike",
+    "four required R2 artefacts archived at r2:genrec/104/ (131 files, 23 recall keys) with the ledger entry recorded",
+    "CHECK_1 recorded for R03:16 PASS/1 FAIL (the closure threshold C17),0 NOT_RUN; round classified as a completed negative result, issue stays OPEN"
   ],
   "not_run": [
     "strict final test_R@10>0.065 for issue256 closure",
@@ -108,5 +117,5 @@
     "dispatch the single preregistered issue256_r03_formal Stage2 3000-epoch four-card run",
     "then the frozen Stage3 150-epoch run, the independent reduction, the complete validation and the four-artefact R2 archive"
   ],
-  "updated_at": "2026-11-25T03:22:34.510263+00:00"
+  "updated_at": "2026-11-25T07:08:12.495659+00:00"
 }

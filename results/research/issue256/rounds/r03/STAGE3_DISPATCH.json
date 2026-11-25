@@ -1,0 +1,49 @@
+{
+  "schema": "genrec.issue256.r03.stage3_dispatch/1",
+  "run_id": "issue256_r03_formal",
+  "variant": "TIGER_role_conditioned_l1_rq",
+  "pid": 1313636,
+  "launched_at": 1795587344.1840537,
+  "mode": "ddp",
+  "gpu_visible": [
+    "0",
+    "1",
+    "2",
+    "3"
+  ],
+  "sid": "results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/item_sids.json",
+  "sid_sha256": "f6754f385fe7ea46e912442e624aa0b59d44cc9b422c6f721c69bf3ce7fa1862",
+  "archive_binding_sha256": "6dd2d5dbd7ab641d5fb017935aacf3e27e8beedb9f1a58da0a3c795b16bee236",
+  "layer_record_sha256": "e749eebd4253b3135f1fd07ad167b8160a54ab16c96cd60cc52db7b8a37e6e38",
+  "export_audit": {
+    "path": "results/research/issue256/rounds/r03/FINAL_STAGE2.json",
+    "sha256": "2bb05b56e97535fe32894d28185f8bd9520de1a5a97d24dbdef6faa49a1e54c0"
+  },
+  "collision": 0.05445967381136374,
+  "collision_gate_waived": false,
+  "sid_quality": {
+    "allow": true,
+    "quant_error": 0.0064714144188526635,
+    "effective_rank": 4.423477527020395,
+    "warnings": [
+      "quantisation error 0.006 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises"
+    ]
+  },
+  "protocol_checked": {
+    "NUM_EPOCHS": "150",
+    "NO_EVAL": "True",
+    "SKIP_TEST": "False",
+    "SEED": "42",
+    "BEAM_SIZE": "20",
+    "early_stop_present": false,
+    "mismatched": {}
+  },
+  "mechanism_signature_falsified": {
+    "distinct_two_code_prefixes": 9257,
+    "required_max": 6000,
+    "absolute_l1_prefix_carry": 0.05961,
+    "required_min": 0.1
+  },
+  "dispatched_by": "mcp stage3_start",
+  "recommendation_test_read": false
+}

@@ -1,0 +1,40 @@
+{
+  "schema": "genrec.issue256.r03.formal_launch/1",
+  "run_id": "issue256_r03_formal",
+  "arm": "TIGER_role_conditioned_l1_rq",
+  "source_commit": "bcf124e6f79cdc3cd178f6f6736250d4be978ff6",
+  "entry": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/src/execution_entry.py",
+  "result": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result",
+  "workspace": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/workspace.json",
+  "local_main_equals_origin_main": true,
+  "dispatcher": "tools.issue256.r03.launch_formal_run",
+  "registration": {
+    "path": "results/research/issue256/ROUNDS.json",
+    "run_id": "issue256_r03_formal",
+    "arm": "TIGER_role_conditioned_l1_rq",
+    "contract_matches": true
+  },
+  "recipe": {
+    "world_size": 4,
+    "global_batch": 4096,
+    "per_rank_batch": 1024,
+    "seed": 42,
+    "epochs": 3000,
+    "port": 50202,
+    "early_stopping": false,
+    "mean_diagnostic_epoch_seconds": 0.6767370127451916,
+    "stage3": {
+      "epochs": 150,
+      "beam": 20,
+      "no_eval": true,
+      "skip_test": false
+    }
+  },
+  "launch_log": {
+    "path": "results/research/issue256/rounds/r03/FORMAL_LAUNCH.log",
+    "sha256": "83729f21e4f2faf97863e722665fd49d20f9d5edec6b1f3d0eae8cc4ba463a34"
+  },
+  "formal_training_started": true,
+  "stage3_started": false,
+  "recommendation_test_read": false
+}

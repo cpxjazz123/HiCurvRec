@@ -57,7 +57,7 @@ def evaluate_layer(values, labels, coverage, level):
     values = np.asarray(values, dtype=np.float64)
     moments = metrics.component_moments(values, labels)
     accumulator = metrics.CurvatureAccumulator()
-    path = OUTPUT / ('r02_L%d_items.jsonl' % level)
+    path = OUTPUT / ('r03_L%d_items.jsonl' % level)
     partial = path.with_name(path.name + '.partial')
     excluded = 0
     with partial.open('w') as handle:
