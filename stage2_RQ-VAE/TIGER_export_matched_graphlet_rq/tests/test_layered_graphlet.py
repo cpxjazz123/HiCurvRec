@@ -238,7 +238,6 @@ def test_c39_c40_structure_step_reaches_encoder_and_codebooks():
     assert report["codebook_frozen"] is True
     assert all(norm == 0.0 for norm in report["codebook_grad_norms"])
 
-
 def test_c39b_the_temperature_resolves_the_real_cost_scale():
     """TAU must put `p` on the quantizer's decision boundary, not at either extreme."""
     import train_rqvae  # noqa: PLC0415

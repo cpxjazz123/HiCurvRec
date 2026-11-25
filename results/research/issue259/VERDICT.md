@@ -70,3 +70,11 @@ report.write_all(out_dir, identity=identity, plan=plan, receipts=[],
 - The R05 validation metric remains `NOT_AVAILABLE`; producing it requires a run-bound validation artefact,
   which is explicitly out of scope here.
 - Legacy #257/#258 receipts lacking `fingerprint`/`output_sha256` are invalid by design; they must rerun once.
+
+## 6. Close checks (CLAUDE / Skill §6.4)
+
+1. Production code implemented: **yes** — `depgraph.py`, `execution.py`, `integrity.py`, `analysis.py`, `report.py` are real implementations, not stubs.
+2. Necessary tests actually executed: **yes** — 57 passed through `execution.run_and_record`; `SUITE_RUN.json` holds the command, log path, exit code 0 and duration; receipt is valid by `Cache.lookup_valid`.
+3. Required training completed: **N/A by scope** — Infra-only issue, zero formal training launches required and performed.
+4. Infra boundary respected: **yes** — BUILD authorization recorded in `RUN_LOG.md` §2 and Issue comment 1; `INFRA_DIFF.json` contains only authorized paths; frozen artefacts 4/4 unchanged.
+5. Executable unfinished tasks remain: **no** — C1–C12 all have current evidence; the only `NOT_AVAILABLE` is the explicitly out-of-scope R05 validation metric.
