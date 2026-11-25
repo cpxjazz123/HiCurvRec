@@ -1,0 +1,84 @@
+{
+  "checks": [
+    {
+      "actual": "PASS",
+      "check": "C1",
+      "expected": "R05 preregistration intact, nothing dispatched, one registration",
+      "status": "PASS"
+    },
+    {
+      "actual": "PASS",
+      "check": "C2",
+      "expected": "role mixture at level 2; levels 1 and 3 use the item gate; three switches wired",
+      "status": "PASS"
+    },
+    {
+      "actual": "PASS",
+      "check": "C3",
+      "expected": "frozen training-only role table, no new graph/orbit/cache",
+      "status": "PASS"
+    },
+    {
+      "actual": "PASS",
+      "check": "C4",
+      "expected": "public Infra byte-identical; only candidate mechanism/tests/evidence changed",
+      "status": "PASS"
+    },
+    {
+      "actual": "PASS",
+      "check": "C5",
+      "expected": "dependency-aware revalidation of all affected items",
+      "status": "PASS"
+    },
+    {
+      "actual": "PASS",
+      "check": "C6",
+      "expected": "0.8 s/epoch ceiling, 0.4-0.5 s target recorded truthfully",
+      "status": "PASS"
+    },
+    {
+      "actual": "PASS",
+      "check": "C7",
+      "expected": "preregistered predictions recorded unchanged and the failure line applied; unavailable metrics marked, never changed",
+      "status": "PASS"
+    },
+    {
+      "actual": "PASS",
+      "check": "C8",
+      "expected": "one formal four-card 3000-epoch Stage2 + one frozen Stage3 150 epochs, collision < 0.4",
+      "status": "PASS"
+    },
+    {
+      "actual": "PASS",
+      "check": "C9",
+      "expected": "analysis/replay through existing tools; missing metrics marked NOT_AVAILABLE",
+      "status": "PASS"
+    },
+    {
+      "actual": "PASS",
+      "check": "C10",
+      "expected": "wall clock via existing TIMELINE, comparison with #256 4h53m, target <= 2h",
+      "status": "PASS"
+    },
+    {
+      "actual": "IN_PROGRESS",
+      "check": "C11",
+      "expected": "reports/VERDICT/R2 four-piece set via existing interfaces; negative result preserved; causal wording limited",
+      "status": "IN_PROGRESS"
+    },
+    {
+      "actual": "IN_PROGRESS",
+      "check": "C12",
+      "expected": "before/after public hashes equal; pushed; local main == remote main",
+      "status": "IN_PROGRESS"
+    },
+    {
+      "actual": "IN_PROGRESS",
+      "check": "C13",
+      "expected": "complete real Stage2/Stage3 + independent reduction + archive; pre-registered results truthfully reported",
+      "status": "IN_PROGRESS"
+    }
+  ],
+  "limits": "validation Recall@10 NOT_AVAILABLE (FAULT-1); Stage3 test exploratory; R05-vs-baseline is not single-factor causal",
+  "status": "COMPLETED_NEGATIVE"
+}

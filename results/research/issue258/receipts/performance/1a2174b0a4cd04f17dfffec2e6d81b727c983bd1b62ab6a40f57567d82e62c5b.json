@@ -1,0 +1,25 @@
+{
+  "declared": {
+    "assets": [],
+    "code": [
+      "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/benchmark_entry.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/launcher.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/issue253/performance.py"
+    ],
+    "configs": [],
+    "tests": [
+      "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_profile_loader.py"
+    ]
+  },
+  "digest": "1a2174b0a4cd04f17dfffec2e6d81b727c983bd1b62ab6a40f57567d82e62c5b",
+  "evidence": {
+    "command": "launcher.launch(benchmark_entry.py)",
+    "exit_code": 0,
+    "mean_seconds": 0.6934812462888658,
+    "output": "results/research/issue258/PERFORMANCE.json",
+    "output_sha256": "8a7e2778c73558fbafa2b4310ef59fab3744d99fcd3a7b7c736ce4147bfffc8b"
+  },
+  "schema": "genrec.pipeline.receipt/1",
+  "status": "PASS",
+  "test_id": "performance"
+}

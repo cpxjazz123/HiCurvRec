@@ -1,0 +1,27 @@
+{
+  "declared": {
+    "assets": [
+      "/fs04/ar57/wenyu/GeneRec/assets/manifest.json",
+      "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph/edges.parquet",
+      "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph/graph.npz",
+      "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph/node_features.npy",
+      "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph/metadata.json"
+    ],
+    "code": [
+      "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/graph_contract.py"
+    ],
+    "configs": [],
+    "tests": []
+  },
+  "digest": "ba267bab30c0a824ab179a5814be62bab398cf5e731d671f52410ec5a0e01598",
+  "evidence": {
+    "command": "checks.run_all -> check_behavior_graph",
+    "detail": "raw train, split, graph, audit source and training dependencies verified",
+    "exit_code": 0,
+    "output": "results/research/issue258/ADMISSION.json",
+    "output_sha256": "a1b734e3fe47e85ffb0cc3a7c052d9b8d18a1af1c82d5e5f2c0b1beec3375b67"
+  },
+  "schema": "genrec.pipeline.receipt/1",
+  "status": "PASS",
+  "test_id": "behavior_graph"
+}

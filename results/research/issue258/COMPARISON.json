@@ -1,0 +1,64 @@
+{
+  "baseline_TIGER_RQ-VAE_test_recall_at_10": 0.0557,
+  "causal_note": "R05 vs R04 differs only in which level consumes the same frozen role table; R05 vs baseline changes the mechanism family too and is not single-factor causal.",
+  "rounds": [
+    {
+      "H_L3_given_L1L2": null,
+      "arm": "TIGER_module_budget_prefix_rq",
+      "collision": null,
+      "distinct_two_code_prefixes": null,
+      "round": "r01",
+      "run_id": null,
+      "status": "COMPLETED_NOT_ADOPTED",
+      "test_recall_at_10": 0.05273420498,
+      "test_recall_source": "issue #258 text (R01 corrected against the original same-source reduction)"
+    },
+    {
+      "H_L3_given_L1L2": null,
+      "arm": "TIGER_periodic_budget_prefix_rq",
+      "collision": null,
+      "distinct_two_code_prefixes": null,
+      "round": "r02",
+      "run_id": "issue256_r02_formal",
+      "status": null,
+      "test_recall_at_10": 0.05266456589,
+      "test_recall_source": "issue #258 text (R01 corrected against the original same-source reduction)"
+    },
+    {
+      "H_L3_given_L1L2": null,
+      "arm": "TIGER_role_conditioned_l1_rq",
+      "collision": null,
+      "distinct_two_code_prefixes": 9257,
+      "round": "r03",
+      "run_id": "issue256_r03_formal",
+      "status": "complete_negative",
+      "test_recall_at_10": 0.0490085134,
+      "test_recall_source": "issue #258 text (R01 corrected against the original same-source reduction)"
+    },
+    {
+      "H_L3_given_L1L2": 1.995707,
+      "arm": "TIGER_role_conditioned_l3_rq",
+      "collision": 0.06474966445682673,
+      "distinct_two_code_prefixes": 8781,
+      "round": "r04",
+      "run_id": "issue256_r04_formal",
+      "status": "complete_negative",
+      "test_recall_at_10": 0.0515155208,
+      "test_recall_source": "issue #258 text (R01 corrected against the original same-source reduction)"
+    },
+    {
+      "H_L3_given_L1L2": 1.85157,
+      "arm": "TIGER_role_conditioned_l2_rq",
+      "collision": 0.05527311180705252,
+      "distinct_two_code_prefixes": 9609,
+      "note": "negative: signature falsified at Stage2 and test below threshold",
+      "round": "r05",
+      "run_id": "issue256_r05_formal",
+      "status": "complete_negative",
+      "test_recall@5": 0.033270077821689094,
+      "test_recall_at_10": 0.05034906596563311
+    }
+  ],
+  "schema": "genrec.issue258.comparison/1",
+  "threshold": 0.065
+}

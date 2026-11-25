@@ -1,0 +1,31 @@
+{
+  "declared": {
+    "assets": [],
+    "code": [
+      "/fs04/ar57/wenyu/GeneRec/tools/iteration/__init__.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/iteration/analysis.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/iteration/archive.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/iteration/depgraph.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/iteration/identity.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/iteration/registry.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/iteration/replay.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/iteration/report.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/iteration/timeline.py"
+    ],
+    "configs": [],
+    "tests": [
+      "/fs04/ar57/wenyu/GeneRec/tools/iteration/tests/test_depgraph.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/iteration/tests/test_known_answers.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/iteration/tests/test_replay.py"
+    ]
+  },
+  "digest": "b28c4f591b1a477df7185101b2cc30021862b51b9a75e4c6f7fa9fd7bdcec759",
+  "evidence": {
+    "command": "python3.9 -m pytest tools/iteration/tests -q",
+    "exit_code": 0,
+    "output": "results/research/issue258/checks/pipeline_units.log"
+  },
+  "schema": "genrec.pipeline.receipt/1",
+  "status": "PASS",
+  "test_id": "pipeline_units"
+}

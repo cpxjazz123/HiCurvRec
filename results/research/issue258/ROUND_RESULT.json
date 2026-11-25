@@ -1,0 +1,99 @@
+{
+  "arm": "TIGER_role_conditioned_l2_rq",
+  "comparison": {
+    "R01": 0.05273420498,
+    "R02": 0.05266456589,
+    "R03": 0.0490085134,
+    "R04": 0.0515155208,
+    "R05": 0.05034906596563311,
+    "baseline_TIGER_RQ-VAE": 0.0557,
+    "threshold": 0.065
+  },
+  "frozen_at": "2026-11-25T12:40:16Z",
+  "mechanism": {
+    "change": "the per-role curvature mixture m_r=softmax(theta_r) is applied to the level-2 cost; levels 1 and 3 keep the item gate (two gate rows: row 0 -> level 1, row 1 -> level 3)",
+    "hypothesis": "level 1 has nothing left to coarsen; the level-2 branching (34.3 second codes per first code in R04) is the remaining lever, so a role-conditioned level-2 cost should coarsen the prefix and lift Recall"
+  },
+  "r2_archive": {
+    "bucket": "r2:genrec/106/",
+    "files": 133,
+    "ledger": "results/research/issue139/r2_ledger.json",
+    "number": 106,
+    "recall_keys": 23
+  },
+  "result": "negative: the preregistered Stage2 signature is falsified (9609 >= 7000) and the final test (0.050349) is below the 0.065 threshold and below R01/R02/R04; the L2 placement of the same role mixture did not coarsen the prefix",
+  "round_id": "r05",
+  "run_id": "issue256_r05_formal",
+  "schema": "genrec.issue258.round_result/1",
+  "stage2": {
+    "checkpoint_sha256": "f93da1a7466d62f07c6482c64cf1a8efdd9dd1fa7ccdf7891be98d6d37bc7f26",
+    "completed": true,
+    "effective_rank": 4.333195087743894,
+    "epochs": 3000,
+    "final_collision": 0.05527311180705252,
+    "global_batch": 4096,
+    "quant_error": 0.007133719437883409,
+    "reexport_differing_items": 0,
+    "sid_sha256": "dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6",
+    "world_size": 4
+  },
+  "stage2_signature": {
+    "conclusion": "FALSIFIED: 9609 distinct L2 prefixes >= the 7000 failure line; level 1 unchanged",
+    "failure_line": "distinct two-code prefixes >= 7000 or validation R@10 <= 0.0576",
+    "measured": {
+      "H_L1": 7.396808,
+      "H_L2_given_L1": 5.218217,
+      "H_L3_given_L1L2": 1.85157,
+      "absolute_l1_prefix_carry": 0.05995926112919793,
+      "collision": 0.05527311180705252,
+      "distinct_L1": 256,
+      "distinct_triples": 23228,
+      "distinct_two_code_prefixes": 9609,
+      "items_per_L2_prefix": 2.558747008013321,
+      "l1_hard_er": 7.102279795806805,
+      "l3_refinement_gain_bits": 1.851570349766611
+    },
+    "prediction": "distinct two-code prefixes <= 6000; L1 carry inside 0.0496..0.0696; validation R@10 >= 0.0583",
+    "verdicts": {
+      "distinct_two_code_prefixes_met": false,
+      "failure_line_met": true,
+      "level1_unchanged": true,
+      "validation_recall_at_10": "NOT_AVAILABLE",
+      "validation_recall_reason": "FAULT-1: the only implementation is R04-identity-bound tools/issue256/r04/external_validation.py; FROZEN forbids copying or parameterising it"
+    }
+  },
+  "stage3": {
+    "epochs": 150,
+    "n_eval": 57439,
+    "pointer": {
+      "path": "results/research/issue258/FINAL_STAGE3.json",
+      "sha256": "5288ccf16d60dee519a87b364520b67d4716154e6af15632a481420395932df2"
+    },
+    "reconciliation": {
+      "path": "results/research/issue258/replay_stage3/REPLAY.json",
+      "sha256": "d8de950529b246ca6f5e8f5eaed4309b060850619704cc0c33ac99f647f773ac",
+      "status": "PASS"
+    },
+    "test_ndcg_at_10": 0.02732772020207201,
+    "test_recall_at_10": 0.05034906596563311,
+    "test_recall_at_5": 0.033270077821689094,
+    "validation_reason": "FAULT-1 in INFRA_FAULTS.md",
+    "validation_recall_at_10": "NOT_AVAILABLE",
+    "world_size": 4
+  },
+  "status": "complete_negative",
+  "wall_clock": {
+    "gpu_wall_s": 4581.704,
+    "historical_issue256_per_round_seconds": 17580,
+    "merged_wall_s": 8951.906,
+    "phases": {
+      "mechanism": 539.5,
+      "registration": 917.132,
+      "training_stage2": 2074.648,
+      "training_stage3": 2507.056,
+      "validation": 7495.275
+    },
+    "target_met": false,
+    "target_seconds": 7200
+  }
+}

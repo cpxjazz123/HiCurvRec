@@ -1,0 +1,501 @@
+{
+  "all_rank_parameter_hashes_agree": true,
+  "all_rank_status": [
+    "pass",
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "gradient_reached_every_module": true,
+  "module_budget": {
+    "all_pass": true,
+    "rank_reports": {
+      "results/research/issue258/budget_regression/0ba49c4f15c6ab58e74e738151fcf338bb3f921efcae1c14cd39567c7dd1afb0/rank_0.json": "959cfdd8b67bbbb0bea6acb927811be44391570e791d4cf7d8cf978ac8c22725",
+      "results/research/issue258/budget_regression/0ba49c4f15c6ab58e74e738151fcf338bb3f921efcae1c14cd39567c7dd1afb0/rank_1.json": "b6c73fd9e1eeece428ba0f221f42bb88dbce2558550337ccc22e9799568047bf",
+      "results/research/issue258/budget_regression/0ba49c4f15c6ab58e74e738151fcf338bb3f921efcae1c14cd39567c7dd1afb0/rank_2.json": "398d754c9b29c087daedbcf3688ac8b8338c6621c964685466c5d61304b77489",
+      "results/research/issue258/budget_regression/0ba49c4f15c6ab58e74e738151fcf338bb3f921efcae1c14cd39567c7dd1afb0/rank_3.json": "6ed1fa25c219381684ece38d31ca5133935eb9bcb29a42e1c0efd9338de6df98"
+    },
+    "scope": "four-rank real-loss calibration regression; every coupled module VJP bounded under the maximal lambda",
+    "source_run_directory": "results/research/issue258/budget_regression/0ba49c4f15c6ab58e74e738151fcf338bb3f921efcae1c14cd39567c7dd1afb0",
+    "statuses": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ]
+  },
+  "modules": {
+    "GNN.input": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": 0.648577456228065,
+        "dot": 2.8891044172306244e-10,
+        "original_norm": 6.742742055515267e-08,
+        "structural_norm": 0.006606399660828522,
+        "weighted_structural_norm": 4.3134535788985425e-08
+      },
+      "normal_grad_norm": 6.704683861205248e-08,
+      "optimizer_update_norm": 1.2656198678872342e-05,
+      "original_vjp_norm": 6.742742055515267e-08,
+      "structural_vjp_norm": 0.006606399660828522
+    },
+    "GNN.layers.0.incoming": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": 0.7276526165712304,
+        "dot": 2.599396341908092e-10,
+        "original_norm": 6.118873983814389e-08,
+        "structural_norm": 0.005838172177589454,
+        "weighted_structural_norm": 3.811862128621343e-08
+      },
+      "normal_grad_norm": 6.153197443453407e-08,
+      "optimizer_update_norm": 1.3373476317212373e-05,
+      "original_vjp_norm": 6.118873983814389e-08,
+      "structural_vjp_norm": 0.005838172177589454
+    },
+    "GNN.layers.0.outgoing": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": 0.6953288456544927,
+        "dot": 2.324080000086113e-10,
+        "original_norm": 5.6697214403859324e-08,
+        "structural_norm": 0.005895207620253923,
+        "weighted_structural_norm": 3.849101736715877e-08
+      },
+      "normal_grad_norm": 5.856944864839815e-08,
+      "optimizer_update_norm": 1.3096721900583236e-05,
+      "original_vjp_norm": 5.6697214403859324e-08,
+      "structural_vjp_norm": 0.005895207620253923
+    },
+    "GNN.layers.0.self_linear": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": 0.7851575168395484,
+        "dot": 2.8628427214483235e-10,
+        "original_norm": 6.287244543349456e-08,
+        "structural_norm": 0.005799363675117087,
+        "weighted_structural_norm": 3.7865232629039565e-08
+      },
+      "normal_grad_norm": 6.126534204929191e-08,
+      "optimizer_update_norm": 1.3872347632579477e-05,
+      "original_vjp_norm": 6.287244543349456e-08,
+      "structural_vjp_norm": 0.005799363675117087
+    },
+    "GNN.layers.1.incoming": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": 0.8597668210312084,
+        "dot": 1.4274159460018658e-10,
+        "original_norm": 4.172401296732351e-08,
+        "structural_norm": 0.0039790902631697,
+        "weighted_structural_norm": 2.59802948922366e-08
+      },
+      "normal_grad_norm": 4.387036070246763e-08,
+      "optimizer_update_norm": 1.1370653500035691e-05,
+      "original_vjp_norm": 4.172401296732351e-08,
+      "structural_vjp_norm": 0.0039790902631697
+    },
+    "GNN.layers.1.outgoing": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": 0.6303243527932008,
+        "dot": 1.0334962015245308e-10,
+        "original_norm": 4.14296675111741e-08,
+        "structural_norm": 0.003957613240084326,
+        "weighted_structural_norm": 2.584006701192687e-08
+      },
+      "normal_grad_norm": 4.190254323748575e-08,
+      "optimizer_update_norm": 1.0983673608917994e-05,
+      "original_vjp_norm": 4.14296675111741e-08,
+      "structural_vjp_norm": 0.003957613240084326
+    },
+    "GNN.layers.1.self_linear": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": 0.8299922260359133,
+        "dot": 1.6508381618069465e-10,
+        "original_norm": 4.861423625381699e-08,
+        "structural_norm": 0.0040913535277548275,
+        "weighted_structural_norm": 2.6713284728250887e-08
+      },
+      "normal_grad_norm": 5.2171470460265285e-08,
+      "optimizer_update_norm": 1.2734474258715567e-05,
+      "original_vjp_norm": 4.861423625381699e-08,
+      "structural_vjp_norm": 0.0040913535277548275
+    },
+    "Query0": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": 0.9349050947065803,
+        "dot": 3.665591089290441e-10,
+        "original_norm": 6.395110878145557e-08,
+        "structural_norm": 0.006130958988183148,
+        "weighted_structural_norm": 4.00302863092939e-08
+      },
+      "normal_grad_norm": 6.669323468102893e-08,
+      "optimizer_update_norm": 1.0055819306847573e-05,
+      "original_vjp_norm": 6.395110878145557e-08,
+      "structural_vjp_norm": 0.006130958988183148
+    },
+    "Query1": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": -0.42344704921078097,
+        "dot": -1.5768264376969464e-12,
+        "original_norm": 4.954144925803193e-09,
+        "structural_norm": 0.0007516507151567232,
+        "weighted_structural_norm": 4.907681390513702e-09
+      },
+      "normal_grad_norm": 8.754946166841961e-09,
+      "optimizer_update_norm": 2.4442224327232517e-06,
+      "original_vjp_norm": 4.954144925803193e-09,
+      "structural_vjp_norm": 0.0007516507151567232
+    },
+    "codebook0": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": -0.0006195901154953269,
+        "dot": -5.850172103476648e-07,
+        "original_norm": 4.461720567086364e-05,
+        "structural_norm": 21.16224775168437,
+        "weighted_structural_norm": 0.00013817264771806534
+      },
+      "normal_grad_norm": 4.42388111662127e-05,
+      "optimizer_update_norm": 0.00027747478154289626,
+      "original_vjp_norm": 4.461720567086364e-05,
+      "structural_vjp_norm": 21.16224775168437
+    },
+    "codebook1": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": 0.2281433688953636,
+        "dot": 0.00011757638316061355,
+        "original_norm": 8.540590303643728e-05,
+        "structural_norm": 6.034264700402593,
+        "weighted_structural_norm": 3.9398949509979266e-05
+      },
+      "normal_grad_norm": 0.00013237718681582907,
+      "optimizer_update_norm": 0.00026657982534800107,
+      "original_vjp_norm": 8.540590303643728e-05,
+      "structural_vjp_norm": 6.034264700402593
+    },
+    "codebook2": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": 0.10843586953179758,
+        "dot": 3.0674552031936904e-05,
+        "original_norm": 8.66090936306084e-05,
+        "structural_norm": 3.2661924380327436,
+        "weighted_structural_norm": 2.1325639053809257e-05
+      },
+      "normal_grad_norm": 0.00010291423385543276,
+      "optimizer_update_norm": 0.0002675105968521608,
+      "original_vjp_norm": 8.66090936306084e-05,
+      "structural_vjp_norm": 3.2661924380327436
+    },
+    "decoder": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": null,
+        "dot": 0.0,
+        "original_norm": 0.0,
+        "structural_norm": 0.0,
+        "weighted_structural_norm": 0.0
+      },
+      "normal_grad_norm": 0.001428974956803088,
+      "optimizer_update_norm": 0.0014856182308623693,
+      "original_vjp_norm": 0.0014081056050302626,
+      "structural_vjp_norm": 0.0
+    },
+    "encoder": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": -0.2306572848946609,
+        "dot": -0.0007619847366908685,
+        "original_norm": 9.256478958433745e-05,
+        "structural_norm": 35.68890952313791,
+        "weighted_structural_norm": 0.00023302019619300364
+      },
+      "normal_grad_norm": 0.00010801327609082899,
+      "optimizer_update_norm": 0.0014190258140296503,
+      "original_vjp_norm": 9.256478958433745e-05,
+      "structural_vjp_norm": 35.68890952313791
+    },
+    "role_mix": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": 0.328125399116362,
+        "dot": 2.831708173133808e-09,
+        "original_norm": 2.2434266259488765e-07,
+        "structural_norm": 0.03846774915137935,
+        "weighted_structural_norm": 2.5116380898514874e-07
+      },
+      "normal_grad_norm": 1.3145704680681889e-07,
+      "optimizer_update_norm": 8.013558561372154e-06,
+      "original_vjp_norm": 2.2434266259488765e-07,
+      "structural_vjp_norm": 0.03846774915137935
+    },
+    "sharedKey": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": 0.9408788566263836,
+        "dot": 4.459807416056486e-10,
+        "original_norm": 7.046225058231644e-08,
+        "structural_norm": 0.006727069051436279,
+        "weighted_structural_norm": 4.3922410942628887e-08
+      },
+      "normal_grad_norm": 7.633934755010141e-08,
+      "optimizer_update_norm": 1.6895487086908252e-05,
+      "original_vjp_norm": 7.046225058231644e-08,
+      "structural_vjp_norm": 0.006727069051436279
+    },
+    "sharedScore": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": 0.8334737183781845,
+        "dot": 2.9036182524038384e-10,
+        "original_norm": 4.926322922406076e-08,
+        "structural_norm": 0.007071714699240666,
+        "weighted_structural_norm": 4.617267292993832e-08
+      },
+      "normal_grad_norm": 3.879348289641762e-08,
+      "optimizer_update_norm": 1.003198585461334e-05,
+      "original_vjp_norm": 4.926322922406076e-08,
+      "structural_vjp_norm": 0.007071714699240666
+    },
+    "sharedValue": {
+      "forward_calls": 0,
+      "forward_finite": false,
+      "grad_absent": false,
+      "grad_none": 0,
+      "grad_zero": 0,
+      "loss_direction": {
+        "cosine": 0.8104409230214166,
+        "dot": 1.416751885539528e-10,
+        "original_norm": 3.696833155132947e-08,
+        "structural_norm": 0.004728708972882172,
+        "weighted_structural_norm": 3.087470890323069e-08
+      },
+      "normal_grad_norm": 3.075450687422286e-08,
+      "optimizer_update_norm": 8.509532339449419e-06,
+      "original_vjp_norm": 3.696833155132947e-08,
+      "structural_vjp_norm": 0.004728708972882172
+    }
+  },
+  "not_claimed": "The diagnostic proves per-module gradient presence and actual optimizer updates on the real losses; it does not by itself prove a recommendation gain.",
+  "optimizer_updated_every_module": true,
+  "rank_reports": {
+    "results/research/issue258/validation/issue258_r05_validation_3631936_590717288/rank_0.json": "40cc9c4bc6cb42938d88938b923d2a4429d432a0652fac94dc1cb541ac9b421c",
+    "results/research/issue258/validation/issue258_r05_validation_3631936_590717288/rank_1.json": "2c82ab91df5fb4e6fc74d079d96a11cbb1327aa599151b06e543cca16956c821",
+    "results/research/issue258/validation/issue258_r05_validation_3631936_590717288/rank_2.json": "e75c109060daf1592dec12c1b81d6b7ce01650e03c42c4e4be1140a49d2c85b5",
+    "results/research/issue258/validation/issue258_r05_validation_3631936_590717288/rank_3.json": "b347e474d7029c1ad1953ef152923f111d45505e032545b58e271fffaaad10ee"
+  },
+  "reference_rank": {
+    "actual_gate_weights": {
+      "level2_role_mixture": {
+        "max": [
+          0.3333333432674408,
+          0.3333333432674408,
+          0.3333333432674408
+        ],
+        "mean": [
+          0.3333333432674408,
+          0.3333333432674408,
+          0.3333333432674408
+        ],
+        "min": [
+          0.3333333432674408,
+          0.3333333432674408,
+          0.3333333432674408
+        ],
+        "row_sum_max_abs_error": 0.0,
+        "rows_in_batch": 9
+      },
+      "per_row": [
+        {
+          "argmax_histogram": [
+            866,
+            99,
+            59
+          ],
+          "max": [
+            0.3536700904369354,
+            0.34015464782714844,
+            0.33718228340148926
+          ],
+          "mean": [
+            0.33737099170684814,
+            0.331579327583313,
+            0.33104968070983887
+          ],
+          "min": [
+            0.33006465435028076,
+            0.32158318161964417,
+            0.31859079003334045
+          ]
+        },
+        {
+          "argmax_histogram": [
+            755,
+            80,
+            189
+          ],
+          "max": [
+            0.34537023305892944,
+            0.337760865688324,
+            0.3398112654685974
+          ],
+          "mean": [
+            0.33616697788238525,
+            0.3314790725708008,
+            0.33235394954681396
+          ],
+          "min": [
+            0.330644428730011,
+            0.32510361075401306,
+            0.32595717906951904
+          ]
+        }
+      ],
+      "population": 1024,
+      "row_sum_max_abs_error": 1.1920928955078125e-07,
+      "shape": [
+        1024,
+        2,
+        3
+      ]
+    },
+    "actual_structural_hard_q_decode_exact": true,
+    "completed_local_losses": [
+      0.0006041110609658062,
+      0.0006310349563136697,
+      0.0006481012096628547,
+      0.0006048218347132206,
+      0.0006498612347058952,
+      0.000613108859397471
+    ],
+    "first_step_losses": {
+      "combined_loss": 0.0006041110609658062,
+      "original_loss": 0.0005925685982219875,
+      "structural_loss": 1.7678194046020508
+    },
+    "rank": 0,
+    "run_id": "issue258_r05_validation_3631936_590717288",
+    "switches": {
+      "behavior_off": {
+        "changed_hard_items": 102,
+        "cost_delta_norm": 389.445556640625,
+        "cost_sha256": "a63825c3925aa77261feb7f0cd3c37246c4374db5ffb3f0bdc2f093bf6d3d44c",
+        "hard_q_decode_exact": true,
+        "level1_cost_delta_norm": 0.0,
+        "level3_cost_delta_norm": 215.5248260498047,
+        "tokens_sha256": "930e530e4fc8dca192f78c3d171f70975087778e56884478d159df5629ab653d",
+        "weights_sha256": "e94d85814636b3ffa6aaf150ea098aa690f4d2490f1805b8138b5be44f5a09cb"
+      },
+      "both_off": {
+        "changed_hard_items": 190,
+        "cost_delta_norm": 975.3823852539062,
+        "cost_sha256": "d21f7a52e525f383260a9ef96d99a94eaa71fba65ac85f26edb18a6bea17a9ee",
+        "hard_q_decode_exact": true,
+        "level1_cost_delta_norm": 485.186767578125,
+        "level3_cost_delta_norm": 901.0755615234375,
+        "tokens_sha256": "b91ed2db52843736cd28378788ec4d0d5e4ba99076804d79ce7c1082955143ae",
+        "weights_sha256": "e94d85814636b3ffa6aaf150ea098aa690f4d2490f1805b8138b5be44f5a09cb"
+      },
+      "both_on": {
+        "cost_sha256": "a63825c3925aa77261feb7f0cd3c37246c4374db5ffb3f0bdc2f093bf6d3d44c",
+        "hard_q_decode_exact": true,
+        "tokens_sha256": "6e762de7a1d810a5482bb3ab85c1db6fad960c4a7133023e8cfb7a0c81bfb99f",
+        "weights_sha256": "e94d85814636b3ffa6aaf150ea098aa690f4d2490f1805b8138b5be44f5a09cb"
+      },
+      "curvature_off": {
+        "changed_hard_items": 190,
+        "cost_delta_norm": 975.3823852539062,
+        "cost_sha256": "d21f7a52e525f383260a9ef96d99a94eaa71fba65ac85f26edb18a6bea17a9ee",
+        "hard_q_decode_exact": true,
+        "level1_cost_delta_norm": 485.186767578125,
+        "level3_cost_delta_norm": 901.0755615234375,
+        "tokens_sha256": "b91ed2db52843736cd28378788ec4d0d5e4ba99076804d79ce7c1082955143ae",
+        "weights_sha256": "e94d85814636b3ffa6aaf150ea098aa690f4d2490f1805b8138b5be44f5a09cb"
+      },
+      "query_intervention": {
+        "changed_hard_items": 35,
+        "cost_delta_norm": 15.846749305725098,
+        "role_level_cost_delta_norm": 541.1859130859375,
+        "weight_delta_norm": 0.4514435827732086
+      },
+      "role_table_perturbed_for_the_wiring_check": true
+    }
+  },
+  "schema": "genrec.issue258.module_checks/1",
+  "scope": "Actual one-epoch four-rank diagnostic on the real per-rank batch (1024), real reconstruction loss and real sampled structural curvature loss. No synthetic loss.",
+  "source_run_directory": "results/research/issue258/validation/issue258_r05_validation_3631936_590717288"
+}

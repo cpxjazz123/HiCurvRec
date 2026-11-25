@@ -1,0 +1,28 @@
+{
+  "declared": {
+    "assets": [
+      "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/role_table.json",
+      "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth",
+      "/fs04/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy"
+    ],
+    "code": [
+      "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/mechanism.py",
+      "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/calibration.py",
+      "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/train_rqvae.py"
+    ],
+    "configs": [],
+    "tests": [
+      "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_module_budget.py"
+    ]
+  },
+  "digest": "7bd860a2919073b4cd292bbf83bc112109ba40dee616b3b1f57c786d251af25e",
+  "evidence": {
+    "command": "launcher.launch(validation_entry.py) + launcher.launch(module_budget_entry.py)",
+    "exit_code": 0,
+    "output": "results/research/issue258/MODULE_CHECKS.json",
+    "output_sha256": "661bbe7963cf00d23512967f9fe5fa732618160d8333a839d233c6b3af206164"
+  },
+  "schema": "genrec.pipeline.receipt/1",
+  "status": "PASS",
+  "test_id": "module_gradients"
+}

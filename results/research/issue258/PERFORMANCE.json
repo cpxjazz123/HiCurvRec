@@ -1,0 +1,34 @@
+{
+  "authorized_ceiling_seconds": 0.8,
+  "ceiling_met": true,
+  "expected_max_seconds": 0.5,
+  "expected_met": false,
+  "initialization_seconds": 46.61871104687452,
+  "mean_seconds": 0.6934812462888658,
+  "median_seconds": 0.6516931732185185,
+  "p95_definition": "nearest-rank ceil(0.95*N)",
+  "p95_seconds": 0.9044815273955464,
+  "predicted_3000_epoch_seconds": 2080.4437388665974,
+  "rank_reports": {
+    "results/research/issue258/benchmark/issue258_r05_benchmark_3765424_590815180/rank_0.json": "da25f98657bcda42e5d3f60d9e9bf0a8e799ed1ea16ecbca176193484a7c2c4d",
+    "results/research/issue258/benchmark/issue258_r05_benchmark_3765424_590815180/rank_1.json": "575e0f86e6043f842eef544cafc99f14ac1082e5761b1b55accf272854316771",
+    "results/research/issue258/benchmark/issue258_r05_benchmark_3765424_590815180/rank_2.json": "9834609324eb790c7e3b23608cf34ceb86713468640bf8ab8518238d6081d58d",
+    "results/research/issue258/benchmark/issue258_r05_benchmark_3765424_590815180/rank_3.json": "e2d7e4c0aa2f42df614fa77a8e1b8000a3dcdd4e1779658b18d9b3afe5b3c155"
+  },
+  "run_id": "issue258_r05_benchmark_3765424_590815180",
+  "schema": "genrec.issue258.performance/1",
+  "scope": "actual four-rank world4/global4096 diagnostic, 60 complete inclusive epochs",
+  "source_binding_current": true,
+  "source_files_checked": 136,
+  "source_mismatch": [],
+  "source_run_directory": "results/research/issue258/benchmark/issue258_r05_benchmark_3765424_590815180",
+  "target_met": false,
+  "target_seconds": 0.4,
+  "total_wall_seconds": 90.03862267266959,
+  "verdict": "inclusive ceiling=True; target=False; expected=False",
+  "window": {
+    "epochs": 30,
+    "first_epoch": 31,
+    "last_epoch": 60
+  }
+}

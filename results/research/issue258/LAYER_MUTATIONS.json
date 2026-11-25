@@ -1,0 +1,20 @@
+[
+  {
+    "mutation": "layer weights routed to the first level",
+    "category": "routing",
+    "assertion": "True is not false : every level must own its own expert mixture",
+    "caught": true
+  },
+  {
+    "mutation": "expert weights normalised over the level axis",
+    "category": "structural",
+    "assertion": "Tensor-likes are not close!\n\nMismatched elements: 8 / 8 (100.0%)\nGreatest absolute difference: 0.5405823847494484 at index (0, 0) (up to 1e-12 allowed)\nGreatest relative difference: 0.5405823847494484 at index (0, 0) (up to 0 allowed)",
+    "caught": true
+  },
+  {
+    "mutation": "every level reuses the final prefix",
+    "category": "routing",
+    "assertion": "True is not false : each level must carry its own cumulative prefix",
+    "caught": true
+  }
+]

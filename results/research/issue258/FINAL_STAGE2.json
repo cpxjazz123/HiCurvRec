@@ -1,0 +1,81 @@
+{
+  "arm": "TIGER_role_conditioned_l2_rq",
+  "artifacts": {
+    "binding": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/archive_binding.json",
+      "sha256": "28055c2832260b2c2a13620e3dcd74cc3a6cbfa636652a194deb3295ffd540ae"
+    },
+    "checkpoint": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/rqvae_best.pth",
+      "sha256": "f93da1a7466d62f07c6482c64cf1a8efdd9dd1fa7ccdf7891be98d6d37bc7f26"
+    },
+    "export": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/export_manifest.json",
+      "sha256": "071d75459ee43b4dbbec72dc50a91d0035c8b01b43e6d009d077b85b35d147cb"
+    },
+    "layered_metrics": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/stage2_metrics/dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6.json",
+      "sha256": "14ade7f4608474adad6d7fe502b07dbf1aa6d547cc7486b98ccd5e202b9877aa"
+    },
+    "metrics": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/logs/training_metrics.jsonl",
+      "sha256": "9990e412fcc8333eaa572020d3c1d53e9dc513ab6d4f9aa862253851fd16697a"
+    },
+    "sid": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/item_sids.json",
+      "sha256": "dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6"
+    },
+    "workspace": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/workspace.json",
+      "sha256": "4a0d5e7dc50cb7d9859ccdb0562faf4c4d60f62585474508806c9c21c336d9b5"
+    }
+  },
+  "collision": 0.05527311180705252,
+  "effective_rank": 4.333195087743894,
+  "epoch": 3000,
+  "quality": {
+    "allow": true,
+    "collision": 0.05527311180705252,
+    "effective_rank": 4.333195087743894,
+    "limits": {
+      "collision": 0.4,
+      "effective_rank": 8.0,
+      "quant_error": [
+        0.035,
+        0.1
+      ]
+    },
+    "quant_error": 0.007133719437883409,
+    "reason": "collision 0.0553 < 0.40; measured quantisation error 0.007 (band 0.035-0.100) and effective rank 4.33 (limit 8.0); WARNING quantisation error 0.007 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/item_sids.json",
+    "warnings": [
+      "quantisation error 0.007 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises"
+    ]
+  },
+  "quant_error": 0.007133719437883409,
+  "reexport": {
+    "manifest": {
+      "checked_at": "2026-11-25T11:56:04+00:00",
+      "checkpoint": "results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/rqvae_best.pth",
+      "checkpoint_sha256": "f93da1a7466d62f07c6482c64cf1a8efdd9dd1fa7ccdf7891be98d6d37bc7f26",
+      "differing_items": 0,
+      "items": 24587,
+      "original_differing_items": 0,
+      "original_sid_sha256": "dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6",
+      "rewritten_from_checkpoint": false,
+      "same_l1": 1.0,
+      "same_l3": 1.0,
+      "schema": "genrec.stage2.export_manifest/1",
+      "sid": "results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/item_sids.json",
+      "sid_sha256": "dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6",
+      "tokens_match": true,
+      "tokens_sha256": "c48605df6510a544cb9bc151d0fe6d7e0c2089954dbe219ddd146034936a747b",
+      "tree": "results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/src"
+    },
+    "manifest_sha256": "071d75459ee43b4dbbec72dc50a91d0035c8b01b43e6d009d077b85b35d147cb"
+  },
+  "run_id": "issue256_r05_formal",
+  "same_checkpoint_all_items_exact": true,
+  "schema": "genrec.issue258.final_stage2/1",
+  "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/src"
+}

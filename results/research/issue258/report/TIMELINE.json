@@ -1,0 +1,55 @@
+{
+  "cpu_wall_s": 8951.906,
+  "gpu_wall_s": 4581.704,
+  "merged_wall_s": 8951.906,
+  "open_phases": [],
+  "phases": {
+    "mechanism": {
+      "cpu_s": 0.0,
+      "resource": "cpu",
+      "spans": 1,
+      "status": [
+        "PASS"
+      ],
+      "wall_s": 539.5
+    },
+    "registration": {
+      "cpu_s": 0.0,
+      "resource": "cpu",
+      "spans": 1,
+      "status": [
+        "PASS"
+      ],
+      "wall_s": 917.132
+    },
+    "training_stage2": {
+      "cpu_s": 1.561,
+      "resource": "gpu",
+      "spans": 1,
+      "status": [
+        "PASS"
+      ],
+      "wall_s": 2074.648
+    },
+    "training_stage3": {
+      "cpu_s": 0.031,
+      "resource": "gpu",
+      "spans": 1,
+      "status": [
+        "PASS"
+      ],
+      "wall_s": 2507.056
+    },
+    "validation": {
+      "cpu_s": 0.0,
+      "resource": "cpu",
+      "spans": 1,
+      "status": [
+        "PASS"
+      ],
+      "wall_s": 7495.275
+    }
+  },
+  "schema": "genrec.pipeline.timeline_summary/1",
+  "span_count": 5
+}

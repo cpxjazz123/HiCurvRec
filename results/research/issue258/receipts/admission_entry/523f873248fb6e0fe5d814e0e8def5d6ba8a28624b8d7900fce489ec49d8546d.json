@@ -1,0 +1,33 @@
+{
+  "declared": {
+    "assets": [
+      "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/role_table.json",
+      "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth",
+      "/fs04/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+      "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+      "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet"
+    ],
+    "code": [
+      "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/checks.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/launcher.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/graph_contract.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/contract.py",
+      "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/sid_quality.py",
+      "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/train_rqvae.py"
+    ],
+    "configs": [
+      "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/config/train_config.json"
+    ],
+    "tests": []
+  },
+  "digest": "523f873248fb6e0fe5d814e0e8def5d6ba8a28624b8d7900fce489ec49d8546d",
+  "evidence": {
+    "command": "checks.run_all(candidate tree)",
+    "exit_code": 0,
+    "output": "results/research/issue258/ADMISSION.json",
+    "output_sha256": "a1b734e3fe47e85ffb0cc3a7c052d9b8d18a1af1c82d5e5f2c0b1beec3375b67"
+  },
+  "schema": "genrec.pipeline.receipt/1",
+  "status": "PASS",
+  "test_id": "admission_entry"
+}

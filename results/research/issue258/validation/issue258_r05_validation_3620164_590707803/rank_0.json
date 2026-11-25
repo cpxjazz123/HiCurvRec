@@ -1,0 +1,2266 @@
+{
+  "run_id": "issue258_r05_validation_3620164_590707803",
+  "rank": 0,
+  "worker_pid": 3620169,
+  "controller_pid": 3620164,
+  "formal_training": false,
+  "diagnostic_epochs": 1,
+  "source_hashes": {
+    "kind": "validation",
+    "tree": "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq",
+    "files": {
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/assignment_floor.py": "0e0f2fbef74ac2d7c9cc1b67d50db1f164b95f59874d5eec9f539235908009da",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/benchmark_entry.py": "bc64201c5dd4d8508271d5e60fad8beff03f94c03e4dd6f40e175550abfcc932",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/budget_point_entry.py": "8d80add3dadaab3774302500fe2dd266600b5a874d4ac5579735f5f70949af2a",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/catalogue_audit_entry.py": "0b5109405637d0982898921a9dc46975d6c927ccd7cb14879650730920d954fb",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/distances/__init__.py": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/distances/distance.py": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/final_audit_entry.py": "b892605668e0b1d70eabe0ea38725f126a653644f3535e90fe3780e864356ceb",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/kernel_validation_entry.py": "5ed8d083794b2b383f373e5ab6fff6f0aa9ecdd8f0a665d64065df4d19e69d7f",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/layer_validation_entry.py": "4e8a8f1b3e4b78011b034d3132fbb24d52505e64d50bac4d9d419e233247793f",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/losses/__init__.py": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/losses/_pairs.py": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/losses/codebook.py": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/losses/commitment.py": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/losses/quantization.py": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/losses/reconstruction.py": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/__init__.py": "fc51b6b47b052833e3bb249a00a581da6a6f27bb4905fb58237a2865354c0f81",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/calibration.py": "3ef15bc15500592833fecaa98a1d170b9f7845e16b03382af2018d314ab74fdd",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/curvature.py": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/estimator.py": "1bc4a1fda6276a4e31f7ba7ed69d5a33cb83bc8d0f241471d67a8b79a7f6ddd0",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/geometry.py": "42964aaa6004f91adc96407b14e5e3ce54bec8dc6115b33891bd55cdb0ad02c5",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/layer_gate.py": "d0f11d650f033ff98335cfa7b3e9a81be28c901f12e0b8396d30f3e3a25bc579",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/layers.py": "9540ceeee2c32e6ff13c435003444760a4ffbb50aa20eb24fc33801ca4969405",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/mechanism.py": "46001e5e2f0b8cfd47cd5f18d12628a0d4fef103cd96bf0e95d8f7c93b592e81",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/model.py": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/provenance.py": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/role_mix.py": "fb9f2232010f96adabce4b7ae1c3a248313e976e59ee86d08ed8473a76524473",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/selection.py": "cb0bcb306224af0c8562fa7f3ea6ae4bf4cbf2f4ba61ee5bae60916efb12938c",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/structure.py": "1bccb9f7dbf54f62a743258efc7faca5fc7f89c9cc0039b793c7f0e1985a126b",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/structure_gate.py": "ce043cd2c395b45c9074e195547bd06ceb6915f2078c8f19781b049a4c209499",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/utils.py": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/module_budget_entry.py": "dfad59f16d1cc1557c57bc912ea421047f5f0d880be507b411be05fd13009611",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/periodic_budget_entry.py": "0cb1e1781d0fb3553db11c4644e9a6bca86663af201238e0593deac79403d688",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/role_table.json": "32f986dac9bf8e382c11aedd62cd54e7defbf1853ee0b930b6fe51d4f334d3eb",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/shared_batches_entry.py": "f77acc9c0b048c3238050f5fdf108aaf9f0cbcb0789bf4e261d586e52e651842",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/static_cache_check_entry.py": "2593ebe3835cfb200aaf04429192a2c5b9c1051c635f55d55e645c496d5c4fba",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/static_consumers_entry.py": "081d193888d06dfa11d358c0127d018f5c4d85dcf14163af2968e07d08ba6392",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/steady_profile_entry.py": "aa4145876cf008d39e7ad4ded2340bba96323a5beb05fa0b455078eda7e3d626",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/reference.py": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/reference_l2_routing.py": "a33bc7e574d52f0d616a7c783aeb743110822e57250acb21a3d7964f89277ccb",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/reference_layer_gate.py": "b4fe04d6e66105b4face3fc1874254a5a6a7568a6a5ccc3b1f6a5d4b8fa18d31",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_attention.py": "b0846be3f38fe80e9e005cc95e101ce51192d1dc745ecba8e7a1d01d31e51f50",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_attention_pipeline.py": "b88cf8f3037d76dba4154f1cf22fdd7866a8c8914bd4997cc1d2ea698e492f4c",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_batch_invariant_gates.py": "af86dcfce017bae66af929e4673cbc03e1ae1a4e1091d9170924d2cf5bf10795",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_budget_known_answers.py": "43068714dbe61e400f01fb4be23071f2031a9edbeebbe9cb25257487aa56bc06",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_budget_mutations.py": "a45192ed3389c15e4f24aab1008d496df6feb4256ad9915e1f1da0e2ce84ca6c",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_budget_reference.py": "349cd9c3f31b318bb459e418863299ef4dc8238769ec1decec4ee2115ff06567",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_calibration.py": "f6f6572ab663ffcf6463947b7b6fc142da77e7bbc742778f5ef9538d5047f7a1",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_cuda_math.py": "a293e59cfb537dbbaa6eb5e35f769918f6951151581e9817c5ae954b95bfba83",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_curvature_loss.py": "d260562cb8990411a1680ac0792006db787619ddafcc5a6c54d09fa13142f633",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_entry_calibration.py": "939039f18ee9d5662bb400771c5e0234ca9d1b921afa394098e624533665499b",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_estimator.py": "07d4cb1a0841b766d0e5220a2be7b7b66c5abdfe3d00e9c43e38fa59ba991531",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_execution.py": "963b67be6171a7f53eb75852c05b365fef6e33c87e5138e294490177293f5ca9",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_geometry_memory.py": "0ebae94fad15202119347deeedf7d1a2ac1e00772d58acf9e84bebdf89485c5c",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_known_answers.py": "5227bfa8fe927e96c28ea42d55d219bad2d09f490b3aad62346a12c0565da513",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_l2_role_reference.py": "839d780ad17298083c77d25e4785463ac18968cbc6ec19ab774e2d0910cbbedb",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_layer_gate.py": "05ac143248c4fca1e0b1a0d2752babe0f4a6bd22cd3f8879a9cb4b49c832ac8f",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_layer_mechanism.py": "9baaade0e29d34701bd453de79e7f59bac341c62f1b4de52eb510160d7cc619a",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_mechanism.py": "bf5b84db0466103245e99d049bd36e53e237b06712c19be5c6acc674d520d418",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_module_budget.py": "5eee3cf51b6bd4203cba0aa42a8126fe5e45a8781892dd55ee21d9a9c28e698c",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_mutations.py": "85b0e18e636dda56d377b79d1a23ceceeaf68d4fff23bf4ccd63923290c6d2b3",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_periodic_budget.py": "5af7ce35a24171f6dce8d7045098fe62c7eab9b446551099be17ce8e13699aaa",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_profile_loader.py": "121b1331d47235bea4e5550273eeb67695278c2770aabf156d3d86347a22da93",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_provenance.py": "bee9e3efd1ffc823596a9fdc1f4d32f8996bdf7f746f399e1201d8c63578c9c7",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_reference.py": "0a939f348e8ce897e64f2328357b12ff8059c7eb615284616ba03d17fb68a72c",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_role_mixture.py": "65c4ef4623cb75c649a0977b68dfb9091d90d77b21fcb74651c3e3d7a95ab70a",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_shared_assignment_oracle.py": "65da4c0f8062d9154d3f4c4b5fbc174770e81119d6accfabfe21871371f47bc3",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_sparse_adjoint.py": "5972c5c4432a15e9b986ca9a1eabd0cf528ebc2c66014112db17abbea83e82e3",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_sparse_structure.py": "dfa0d16d375bd13af03e69f7df4faaa634c3564781730c34631af7892114ff6e",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_static_means.py": "c1f496aabced794a58c47adc91cce915e87733bf2f934a3cc4ba0abafdd9640d",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_static_reproducibility.py": "a9a6fa80d2ef55352af3275e00eec9c03e981981a7dcdbe2391734bfc237ad96",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_structure.py": "e818e562c925c6aa6d3bd5853d2b1b1ba00e0f88f1831289537a11d375bec593",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_sync_free_batch.py": "0fa28c44ee9bb7ab2cc9d26fee74b88db9afa659fd57075d40a294df3865e964",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_three_geometry.py": "542015ddb04c215986bf91efb23a1d129834347ed4efa3d7e1ca434c1fff646e",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/train_config.py": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/train_rqvae.py": "6d8a68f631378614e61c12ab5bf63866a66a0d0c6be204db12a9205841a67247",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/unit_suite_entry.py": "b0432d3232c185977518df98a53869aa37cb77623ba6dfe2e735c850360cf99b",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/validation_entry.py": "9570723b97f9d5e5f3b503a24046fe22ea2db3b58624b6bb9c17003244604c96",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/validation_inference_entry.py": "96537c99e89e26eadc6be0c1fb29742a98f2057c51cd3a94b3cdd3566bb34f4c",
+      "tools/issue256/r04/admission.py": "2d3bdb93a3055751bd56599b19cdecb9116de397f0eda6ebf2d41ba216ad59e8",
+      "tools/issue256/r04/build_lineage.py": "b48a3640eb61e44702cfca6f2ddab5a1b37f054980f09d8e610ebacff319f4c2",
+      "tools/issue256/r04/calibration_receipts.py": "83c476eb85b649bea7c90fdf1f18010d4c108f817c2990e33ac8c31130f16e19",
+      "tools/issue256/r04/check_static_cache.py": "560675461f7acd361398500cd4c6227ef187497ad94c72aba31df0465cc2bf73",
+      "tools/issue256/r04/collect_evidence.py": "a02ccda45a7f2e61b6ef6d36af38538d964b20b2e2465ef0ff9e16e80f2b9c2b",
+      "tools/issue256/r04/derive_role_table.py": "81803296b4872660975f50a5f02d89836462b6680bf9a4b94c5bbeb511a5e458",
+      "tools/issue256/r04/diagnose_budget_point.py": "9457971a84c95798139d5669f26e19141f1047bcf6ca95c59f4f898e556351df",
+      "tools/issue256/r04/diagnose_shared_batches.py": "90840d42016e551135219623b2bf8741888b5c33198ae7350cd3af77650d0209",
+      "tools/issue256/r04/diagnose_static_consumers.py": "3bdd68b635948cc79909d9508f4c696109d2912dca6a31c15d30fff617add571",
+      "tools/issue256/r04/dispatch_evidence.py": "4e379b71830e3912dc8422bd1dba40331ed8830ab03848becb2ef1e6d8d78cfd",
+      "tools/issue256/r04/evaluate_arm.py": "d85e5a3a9de9af16458aff9e2ceece23111559a7e7af471663f9681a6f66f218",
+      "tools/issue256/r04/external_validation.py": "4c1cd3aa1f4d83439a7e7f0ba9198c23bbce4522ec12686e7fcea21f82fe14bf",
+      "tools/issue256/r04/extract_catalogues.py": "f65d790da74d13af0448bd3bf35aab3d823860fdbcd584c41412d58478488889",
+      "tools/issue256/r04/final_global_gradients.py": "04c034c7438839eb9a3e6326e1ad7defda3b07c3691be804235099bd4a7415c0",
+      "tools/issue256/r04/final_gradients.py": "7ed32dcc5c48c3bdef8d652906f845790b706b634c69018459f87746409fc62f",
+      "tools/issue256/r04/finalize_stage2.py": "8d582857afa0b7d2405b6abf518674940f5e02c98d83d75202884489b5986e61",
+      "tools/issue256/r04/identity.py": "a5b3f9f340876217da931ca6a64edf551e0049c6d0121dd88025706babd6f03f",
+      "tools/issue256/r04/launch_budget_check.py": "758ad500be48b4aa6a8417c4f08dc2f64a07c68d0c54b46dc497a954507a18e8",
+      "tools/issue256/r04/launch_diagnostics.py": "a516ba86fbc58a2a78a59df32a47f7d68112c49929c654ccf32eb1bd90d00037",
+      "tools/issue256/r04/launch_formal_run.py": "9d42ff7903fce2bf3661f670d089a93961ac491d6b2b22f7ba1731248df42519",
+      "tools/issue256/r04/launch_periodic_check.py": "7f517dfae47737b517cc4baea50e626cb4fdb7afe90a82e047ec00e7b6fd2400",
+      "tools/issue256/r04/layer_validation_entry.py": "2bda44793088f24bc0ac69e485689fb3830022edfe762d6ea9a5a0b7a5bba72c",
+      "tools/issue256/r04/measure_signature.py": "da78e0338d1bec6ec7f2c520d6eaaec0afe555e6a8cd62a6daa5b13f24d52370",
+      "tools/issue256/r04/reconcile_stage2.py": "eb28b9c7332d0ab4a0ba3142e3b9d531bca73b161073781b85d4e34af032e75b",
+      "tools/issue256/r04/reconcile_stage3.py": "ac78083e9806225b1f0c2dd645f6dfbd2c5e9f57c1e4800b6cd22961c3ec7d13",
+      "tools/issue256/r04/run_tests.py": "255e8d9a51efe9586b83db6b1237c42c9f5a446ae99df93d1c0e2b789a576158",
+      "tools/issue256/r04/test_calibration_receipts.py": "07ac39bf115fff3d42103c4e6fa80fff33726678cbae1242a2e7c2ed22e2a1c2",
+      "tools/issue256/r04/test_external_validation.py": "95fef0d756f74aa934de8a3e3dba1e9512695b30aa7a13a1667979294b0e8cb6",
+      "tools/issue256/r04/test_formal_workspace.py": "21c26fc677f3a04ca46ec834c7ea50f701651ffcf8d8a3f3d5e4bbf408c813c2",
+      "tools/issue256/r04/test_profile_identity.py": "6c34b73df123a38254877c9489a1c01ee0c5317f7a363f737c7ab0fe87d5b594",
+      "tools/issue256/r04/test_source_inventory.py": "a8f022fdec490bbedb73b79e6ae4a5f9b63ec7a8e960896cdc77b0af4019b026",
+      "tools/issue256/r04/test_unit_coverage.py": "35d3a1d5de8aa72a2ed692be24c903951d919086781930296cf9b230e1f382be",
+      "tools/issue256/r04/test_validation_diagnosis.py": "1b38c73a54e0c38fa34678b557f21dc606fe9d30a2939b0b0b41059b2f10b609",
+      "tools/issue256/r04/validation_diagnosis.py": "c23b9435b1e057876a963ddeb34e6b4b0e8fb2b791facaa2d3a967e3d6781588",
+      "tools/graph_infra/__init__.py": "b86861c93434621cff070d024b12f8c6f9d5a5e77a8deea54089645a3a7226ff",
+      "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+      "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+      "tools/issue252/archive_audit.py": "1c4fc283096e7a8e3a22c415f6a2f886d61186ce80aa7c5700aa3bc37968cd2d",
+      "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba",
+      "tools/issue252/host_transfer.py": "41428cf5a9a9b9abb3568baa2164b675b9fd888172e3431f631665925d462f37",
+      "tools/issue253/cuda_math.py": "e6360d4c2f9ec80e2301f19342c109597f9177cd045a78540b73f2a4402e6473",
+      "tools/issue253/ego_kernel.py": "6a9a823e51e5923315ee6e6410ab20b57e6e4cb8e4c41f157d0f54b73fe7afb0",
+      "tools/issue253/sparse_adjoint.py": "bfc93d231a868945141a79a9092886b46d1fdb563dc4f2d3ee71e1ea110fea2d",
+      "tools/issue253/static_features.py": "8e35754f420ed4497bf2aacdb09eac140b19657af8902e6bae41d2d9ecaa61eb",
+      "tools/stage2/server.py": "1152c3360ddebd5eb161ab1111245a131e338e4058f49f74c215b43922cb96bb",
+      "assets/manifest.json": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b",
+      "tools/issue252/profiling.py": "6f4a842d060c5e980c845365d395d80cc47f55a03a4e66e4caa1cb8c5b87d01a",
+      "tools/issue252/profile_units.py": "df5d239ac646a29d48329fcddf32f06d6bbef928297ed4ef8d55c9ec64b88028",
+      "tools/issue256/r02/launch_diagnostics.py": "3e5c8b2e8eb39827c73d1a545513217e6b96f0a600e8a0dcf55a73f1c471aeb8",
+      "tools/issue256/r02/layer_validation_entry.py": "5813694b9dbc4a9a4d605505b3ad3518f3de7d0b25c2d32bcfced4238bc9a4ba",
+      "tools/research/stage2/launcher.py": "61d32bd6d1100d1903b6f934480a478630fe647f626510b66cc964720b28b85a",
+      "tools/issue253/performance.py": "17469b0b3347e03720b440bda8911f7b65e73dd907f1faec0d8f88485c994103",
+      "results/research/issue258/CONTRACT.md": "50904210aa364b4259a9e2b396fca1c33c5a6f838a62201a0f26ea621ce96773",
+      "results/research/issue258/MUTATIONS.md": "bc51655de0f63e88f651e484232b01042265341b7e6159bc8b314c7722e379ef",
+      "results/research/issue258/reference.py": "26966c5d1bbdeb6a070ab44d231b8bff76fd34bd06b5d22a116dafadd282d790",
+      "results/research/issue258/ACCEPTANCE.json": "6011120a590502162b979429a183ccd2396b2db4e4e3afb840914fbd1538524c",
+      "results/research/issue258/EVALUATION.md": "2ac543dd039deca16a67c86479bdd90cfb5cb93c585f00763d465389c897b611"
+    }
+  },
+  "status": "fail",
+  "recipe": {
+    "epochs": 3000,
+    "per_rank_batch": 1024,
+    "global_batch": 4096,
+    "world_size": 4,
+    "seed": 42,
+    "config_sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6"
+  },
+  "first_step_losses": {
+    "original_loss": 0.0005925685982219875,
+    "structural_loss": 1.7678194046020508,
+    "combined_loss": 0.0006041110609658062
+  },
+  "actual_batch_items": 1024,
+  "first_structural_sample": {
+    "centre": 15918,
+    "ids": [
+      243,
+      477,
+      529,
+      553,
+      558,
+      750,
+      845,
+      918,
+      1018,
+      1070,
+      1421,
+      1591,
+      1866,
+      1929,
+      1938,
+      2028,
+      2067,
+      2141,
+      2197,
+      2207,
+      2317,
+      2357,
+      2532,
+      2590,
+      2645,
+      2664,
+      2788,
+      2882,
+      2917,
+      3079,
+      3119,
+      3178,
+      3404,
+      3432,
+      3441,
+      3469,
+      3539,
+      3712,
+      3718,
+      3772,
+      3933,
+      3938,
+      3950,
+      4060,
+      4076,
+      4180,
+      4261,
+      4293,
+      4327,
+      4396,
+      4611,
+      4635,
+      4952,
+      5233,
+      5553,
+      5657,
+      5707,
+      5810,
+      5834,
+      5981,
+      5989,
+      6386,
+      6444,
+      6500,
+      6550,
+      6658,
+      6743,
+      6764,
+      6864,
+      6906,
+      6983,
+      7162,
+      7225,
+      7350,
+      7366,
+      7409,
+      7417,
+      7485,
+      7555,
+      7749,
+      7839,
+      7875,
+      7976,
+      8080,
+      8087,
+      8136,
+      8161,
+      8284,
+      8372,
+      8472,
+      8502,
+      8841,
+      8925,
+      8952,
+      8975,
+      9070,
+      9116,
+      9309,
+      9473,
+      9919,
+      9963,
+      9987,
+      10058,
+      10185,
+      10203,
+      10254,
+      10579,
+      10597,
+      10649,
+      10709,
+      10712,
+      10773,
+      10823,
+      10901,
+      10937,
+      10958,
+      10992,
+      11152,
+      11184,
+      11280,
+      11338,
+      11339,
+      11455,
+      11481,
+      11498,
+      11619,
+      11652,
+      11829,
+      11939,
+      11972,
+      12040,
+      12066,
+      12104,
+      12107,
+      12111,
+      12152,
+      12176,
+      12184,
+      12243,
+      12329,
+      12782,
+      13307,
+      13330,
+      13378,
+      13384,
+      13390,
+      13443,
+      13499,
+      13597,
+      13608,
+      13637,
+      13640,
+      13779,
+      13786,
+      13836,
+      14010,
+      14031,
+      14180,
+      14247,
+      14307,
+      14405,
+      14490,
+      14702,
+      14842,
+      15017,
+      15104,
+      15363,
+      15401,
+      15405,
+      15444,
+      15475,
+      15917,
+      15918,
+      15951,
+      16155,
+      16189,
+      16200,
+      16218,
+      16243,
+      16291,
+      16358,
+      16423,
+      16466,
+      16513,
+      16610,
+      16711,
+      16734,
+      16830,
+      17016,
+      17021,
+      17113,
+      17176,
+      17233,
+      17518,
+      17539,
+      17619,
+      17645,
+      17664,
+      17863,
+      17943,
+      18031,
+      18217,
+      18253,
+      18559,
+      18575,
+      18652,
+      18694,
+      18846,
+      18888,
+      19051,
+      19137,
+      19201,
+      19280,
+      19304,
+      19386,
+      19451,
+      19514,
+      19796,
+      19822,
+      19877,
+      20050,
+      20289,
+      20439,
+      20821,
+      20844,
+      20861,
+      20881,
+      20973,
+      21553,
+      22002,
+      22006,
+      22088,
+      22217,
+      22229,
+      22395,
+      22512,
+      22646,
+      22681,
+      22919,
+      23012,
+      23066,
+      23105,
+      23381,
+      23412,
+      23463,
+      23511,
+      23521,
+      23586,
+      23708,
+      23764,
+      23820,
+      23970,
+      23975,
+      24221,
+      24267,
+      24321
+    ],
+    "triples_global": [
+      [
+        15918,
+        11972,
+        23820
+      ],
+      [
+        15918,
+        23586,
+        23820
+      ],
+      [
+        15918,
+        12176,
+        23381
+      ],
+      [
+        15918,
+        11972,
+        12176
+      ],
+      [
+        15918,
+        4261,
+        21553
+      ],
+      [
+        15918,
+        4261,
+        23820
+      ],
+      [
+        15918,
+        9473,
+        12176
+      ],
+      [
+        15918,
+        9473,
+        11972
+      ],
+      [
+        15918,
+        21553,
+        23820
+      ],
+      [
+        15918,
+        12176,
+        23820
+      ],
+      [
+        15918,
+        4261,
+        9473
+      ],
+      [
+        15918,
+        12176,
+        23586
+      ],
+      [
+        15918,
+        9473,
+        21553
+      ],
+      [
+        15918,
+        11972,
+        23381
+      ],
+      [
+        15918,
+        21553,
+        23381
+      ],
+      [
+        15918,
+        9473,
+        23381
+      ],
+      [
+        15918,
+        4261,
+        23381
+      ],
+      [
+        15918,
+        23381,
+        23820
+      ],
+      [
+        15918,
+        11972,
+        23586
+      ],
+      [
+        15918,
+        4261,
+        11972
+      ],
+      [
+        15918,
+        12176,
+        21553
+      ],
+      [
+        15918,
+        9473,
+        23820
+      ],
+      [
+        15918,
+        4261,
+        12176
+      ],
+      [
+        15918,
+        4261,
+        23586
+      ],
+      [
+        15918,
+        23381,
+        23586
+      ],
+      [
+        15918,
+        9473,
+        23586
+      ],
+      [
+        15918,
+        11972,
+        21553
+      ],
+      [
+        15918,
+        21553,
+        23586
+      ]
+    ],
+    "triples": [
+      [
+        172,
+        129,
+        250
+      ],
+      [
+        172,
+        247,
+        250
+      ],
+      [
+        172,
+        136,
+        242
+      ],
+      [
+        172,
+        129,
+        136
+      ],
+      [
+        172,
+        46,
+        228
+      ],
+      [
+        172,
+        46,
+        250
+      ],
+      [
+        172,
+        98,
+        136
+      ],
+      [
+        172,
+        98,
+        129
+      ],
+      [
+        172,
+        228,
+        250
+      ],
+      [
+        172,
+        136,
+        250
+      ],
+      [
+        172,
+        46,
+        98
+      ],
+      [
+        172,
+        136,
+        247
+      ],
+      [
+        172,
+        98,
+        228
+      ],
+      [
+        172,
+        129,
+        242
+      ],
+      [
+        172,
+        228,
+        242
+      ],
+      [
+        172,
+        98,
+        242
+      ],
+      [
+        172,
+        46,
+        242
+      ],
+      [
+        172,
+        242,
+        250
+      ],
+      [
+        172,
+        129,
+        247
+      ],
+      [
+        172,
+        46,
+        129
+      ],
+      [
+        172,
+        136,
+        228
+      ],
+      [
+        172,
+        98,
+        250
+      ],
+      [
+        172,
+        46,
+        136
+      ],
+      [
+        172,
+        46,
+        247
+      ],
+      [
+        172,
+        242,
+        247
+      ],
+      [
+        172,
+        98,
+        247
+      ],
+      [
+        172,
+        129,
+        228
+      ],
+      [
+        172,
+        228,
+        247
+      ]
+    ],
+    "references_global": [
+      8975,
+      4635,
+      1070,
+      9070,
+      11498,
+      19514,
+      20439,
+      11338,
+      8087,
+      18217,
+      18253,
+      3933,
+      10058,
+      7976,
+      12184,
+      3178,
+      17176,
+      16830,
+      13384,
+      10709,
+      1866,
+      16734,
+      22646,
+      16423,
+      15444,
+      23105,
+      11652,
+      22229,
+      13836,
+      5553,
+      23764,
+      3772
+    ],
+    "references": [
+      94,
+      51,
+      9,
+      95,
+      124,
+      216,
+      222,
+      120,
+      84,
+      201,
+      202,
+      40,
+      102,
+      82,
+      137,
+      31,
+      191,
+      187,
+      144,
+      109,
+      12,
+      186,
+      236,
+      181,
+      169,
+      241,
+      126,
+      233,
+      154,
+      54,
+      249,
+      39
+    ],
+    "target": [
+      3.4614237260430714,
+      3.7982918556658904,
+      3.0967267377712395,
+      2.8150055167340935,
+      3.238445506926566,
+      3.765477503984308,
+      4.660250909239508,
+      4.5224551509950555,
+      3.71860569653876,
+      3.599219484287524,
+      4.826508928936292,
+      3.151873646356912,
+      4.779637121490744,
+      2.958930979526787,
+      3.2161129500224757,
+      4.8041763720322015,
+      3.2629847574680233,
+      3.7431449470802174,
+      3.0140778881124595,
+      2.9812635364308773,
+      3.0721874872297823,
+      5.306669118548486,
+      3.11905929467533,
+      3.3181316660536964,
+      3.2957991091496055,
+      4.8593232806178746,
+      2.9343917289853296,
+      3.2712598586081483
+    ],
+    "row_ids": [
+      11915714,
+      11915724,
+      11915716,
+      11915710,
+      11915700,
+      11915703,
+      11915705,
+      11915704,
+      11915721,
+      11915718,
+      11915697,
+      11915717,
+      11915706,
+      11915712,
+      11915719,
+      11915707,
+      11915701,
+      11915723,
+      11915713,
+      11915698,
+      11915715,
+      11915709,
+      11915699,
+      11915702,
+      11915722,
+      11915708,
+      11915711,
+      11915720
+    ],
+    "reference_population": 24471,
+    "centre_population": 24326,
+    "triple_population": 28,
+    "global_step": 0,
+    "rank": 0,
+    "world_size": 4
+  },
+  "actual_structural_hard_q_decode_exact": true,
+  "actual_gate_weights": {
+    "population": 1024,
+    "shape": [
+      1024,
+      2,
+      3
+    ],
+    "per_row": [
+      {
+        "mean": [
+          0.33737099170684814,
+          0.331579327583313,
+          0.33104968070983887
+        ],
+        "min": [
+          0.33006465435028076,
+          0.32158318161964417,
+          0.31859079003334045
+        ],
+        "max": [
+          0.3536700904369354,
+          0.34015464782714844,
+          0.33718228340148926
+        ],
+        "argmax_histogram": [
+          866,
+          99,
+          59
+        ]
+      },
+      {
+        "mean": [
+          0.33616697788238525,
+          0.3314790725708008,
+          0.33235394954681396
+        ],
+        "min": [
+          0.330644428730011,
+          0.32510361075401306,
+          0.32595717906951904
+        ],
+        "max": [
+          0.34537023305892944,
+          0.337760865688324,
+          0.3398112654685974
+        ],
+        "argmax_histogram": [
+          755,
+          80,
+          189
+        ]
+      }
+    ],
+    "row_sum_max_abs_error": 1.1920928955078125e-07,
+    "level2_role_mixture": {
+      "rows_in_batch": 9,
+      "mean": [
+        0.3333333432674408,
+        0.3333333432674408,
+        0.3333333432674408
+      ],
+      "min": [
+        0.3333333432674408,
+        0.3333333432674408,
+        0.3333333432674408
+      ],
+      "max": [
+        0.3333333432674408,
+        0.3333333432674408,
+        0.3333333432674408
+      ],
+      "row_sum_max_abs_error": 0.0
+    }
+  },
+  "normal_backward": {
+    "encoder": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 8,
+      "finite": true,
+      "norm": 0.00010801313573767843
+    },
+    "decoder": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 8,
+      "finite": true,
+      "norm": 0.00142897495701889
+    },
+    "role_mix": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.3145403524455652e-07
+    },
+    "GNN.input": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 6.704669485340682e-08
+    },
+    "sharedKey": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 7.633916210801475e-08
+    },
+    "sharedValue": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 3.0754471053233764e-08
+    },
+    "sharedScore": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 4,
+      "finite": true,
+      "norm": 3.879346159990444e-08
+    },
+    "GNN.layers.0.self_linear": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 6.126521446009755e-08
+    },
+    "GNN.layers.0.incoming": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 6.153188099316245e-08
+    },
+    "GNN.layers.0.outgoing": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 5.856934243177199e-08
+    },
+    "GNN.layers.1.self_linear": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 5.217136348977914e-08
+    },
+    "GNN.layers.1.incoming": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 4.387027907020308e-08
+    },
+    "GNN.layers.1.outgoing": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 4.1902463348982086e-08
+    },
+    "codebook0": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 4.423881556153028e-05
+    },
+    "codebook1": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 0.00013237707182211955
+    },
+    "codebook2": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 0.00010291428181439548
+    },
+    "Query0": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 6.669306905569644e-08
+    },
+    "Query1": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 8.754959553923917e-09
+    }
+  },
+  "normal_forward": {
+    "encoder.mlp.1": {
+      "calls": 7,
+      "finite": true
+    },
+    "encoder.mlp.4": {
+      "calls": 7,
+      "finite": true
+    },
+    "encoder.mlp.7": {
+      "calls": 7,
+      "finite": true
+    },
+    "encoder.mlp.10": {
+      "calls": 7,
+      "finite": true
+    },
+    "structure.tokens.layers.1.self_linear": {
+      "calls": 116,
+      "finite": true
+    },
+    "structure.tokens.layers.1.incoming": {
+      "calls": 116,
+      "finite": true
+    },
+    "structure.tokens.layers.1.outgoing": {
+      "calls": 116,
+      "finite": true
+    },
+    "structure.attention.key": {
+      "calls": 3,
+      "finite": true
+    },
+    "structure.attention.value": {
+      "calls": 3,
+      "finite": true
+    },
+    "structure.attention.score.0": {
+      "calls": 3,
+      "finite": true
+    },
+    "structure.attention.score.2": {
+      "calls": 3,
+      "finite": true
+    },
+    "structure.attention": {
+      "calls": 3,
+      "finite": true
+    },
+    "decoder.mlp.1": {
+      "calls": 2,
+      "finite": true
+    },
+    "decoder.mlp.4": {
+      "calls": 2,
+      "finite": true
+    },
+    "decoder.mlp.7": {
+      "calls": 2,
+      "finite": true
+    },
+    "decoder.mlp.10": {
+      "calls": 2,
+      "finite": true
+    },
+    "rq.vq_layers.0.embed": {
+      "calls": 1,
+      "finite": true
+    },
+    "rq.vq_layers.1.embed": {
+      "calls": 1,
+      "finite": true
+    },
+    "rq.vq_layers.2.embed": {
+      "calls": 1,
+      "finite": true
+    }
+  },
+  "normal_backward_post_clip": {
+    "encoder": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 8,
+      "finite": true,
+      "norm": 0.00010801313573767843
+    },
+    "decoder": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 8,
+      "finite": true,
+      "norm": 0.00142897495701889
+    },
+    "role_mix": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.3145403524455652e-07
+    },
+    "GNN.input": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 6.704669485340682e-08
+    },
+    "sharedKey": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 7.633916210801475e-08
+    },
+    "sharedValue": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 3.0754471053233764e-08
+    },
+    "sharedScore": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 4,
+      "finite": true,
+      "norm": 3.879346159990444e-08
+    },
+    "GNN.layers.0.self_linear": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 6.126521446009755e-08
+    },
+    "GNN.layers.0.incoming": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 6.153188099316245e-08
+    },
+    "GNN.layers.0.outgoing": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 5.856934243177199e-08
+    },
+    "GNN.layers.1.self_linear": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 5.217136348977914e-08
+    },
+    "GNN.layers.1.incoming": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 4.387027907020308e-08
+    },
+    "GNN.layers.1.outgoing": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 4.1902463348982086e-08
+    },
+    "codebook0": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 4.423881556153028e-05
+    },
+    "codebook1": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 0.00013237707182211955
+    },
+    "codebook2": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 0.00010291428181439548
+    },
+    "Query0": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 6.669306905569644e-08
+    },
+    "Query1": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 8.754959553923917e-09
+    }
+  },
+  "actual_optimizer_update": {
+    "encoder": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 8,
+      "finite": true,
+      "norm": 0.0014190258567086172
+    },
+    "decoder": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 8,
+      "finite": true,
+      "norm": 0.0014856182430693593
+    },
+    "role_mix": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 8.013494093798662e-06
+    },
+    "GNN.input": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 1.2656197130371001e-05
+    },
+    "sharedKey": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 1.6895487086908252e-05
+    },
+    "sharedValue": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 8.509532238612766e-06
+    },
+    "sharedScore": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 4,
+      "finite": true,
+      "norm": 1.0031989841949445e-05
+    },
+    "GNN.layers.0.self_linear": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 1.3872335918054402e-05
+    },
+    "GNN.layers.0.incoming": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.3373476317212373e-05
+    },
+    "GNN.layers.0.outgoing": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.3096721900583236e-05
+    },
+    "GNN.layers.1.self_linear": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 1.2734468144925042e-05
+    },
+    "GNN.layers.1.incoming": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.1370653500035691e-05
+    },
+    "GNN.layers.1.outgoing": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.0983673608917994e-05
+    },
+    "codebook0": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 0.00027747480063309643
+    },
+    "codebook1": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 0.0002665798311535528
+    },
+    "codebook2": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 0.0002675105927256426
+    },
+    "Query0": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 1.0055819306847573e-05
+    },
+    "Query1": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 2.4442224772623997e-06
+    }
+  },
+  "completed_epoch": 1,
+  "completed_local_losses": [
+    0.0006041110609658062,
+    0.0006310350145213306,
+    0.0006481012096628547,
+    0.0006048218929208815,
+    0.0006498612929135561,
+    0.0006131089176051319
+  ],
+  "completed_parameter_hashes": [
+    "1e5f388163af54c47bcef0c47a7d7fc299bca4b0320111beebc959a9c91f6111",
+    "1e5f388163af54c47bcef0c47a7d7fc299bca4b0320111beebc959a9c91f6111",
+    "1e5f388163af54c47bcef0c47a7d7fc299bca4b0320111beebc959a9c91f6111",
+    "1e5f388163af54c47bcef0c47a7d7fc299bca4b0320111beebc959a9c91f6111"
+  ],
+  "completed_state_finite": true,
+  "weighted_structural_VJP": {
+    "encoder": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 8,
+      "finite": true,
+      "norm": 0.00023302045119384172
+    },
+    "decoder": {
+      "absent": true,
+      "none": 8,
+      "zero": 0,
+      "tensors": 8,
+      "finite": true,
+      "norm": 0.0
+    },
+    "role_mix": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 2.511612958172806e-07
+    },
+    "GNN.input": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 4.313421797604036e-08
+    },
+    "sharedKey": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 4.392195084209213e-08
+    },
+    "sharedValue": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 3.08747156809865e-08
+    },
+    "sharedScore": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 4,
+      "finite": true,
+      "norm": 4.617276548642805e-08
+    },
+    "GNN.layers.0.self_linear": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 3.78647879393662e-08
+    },
+    "GNN.layers.0.incoming": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 3.811829913251098e-08
+    },
+    "GNN.layers.0.outgoing": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 3.849064901113723e-08
+    },
+    "GNN.layers.1.self_linear": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 2,
+      "finite": true,
+      "norm": 2.6712935195977422e-08
+    },
+    "GNN.layers.1.incoming": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 2.59801390911636e-08
+    },
+    "GNN.layers.1.outgoing": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 2.583983279292018e-08
+    },
+    "codebook0": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 0.00013817272123002144
+    },
+    "codebook1": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 3.939898201443731e-05
+    },
+    "codebook2": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 2.132569627029468e-05
+    },
+    "Query0": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 4.0029821939717265e-08
+    },
+    "Query1": {
+      "absent": false,
+      "none": 0,
+      "zero": 0,
+      "tensors": 1,
+      "finite": true,
+      "norm": 4.907834012701587e-09
+    }
+  },
+  "loss_gradient_direction": {
+    "encoder": {
+      "dot": -0.0007619862691676809,
+      "cosine": -0.23065788579012703,
+      "original_norm": 9.256474281176261e-05,
+      "structural_norm": 35.68890635816126,
+      "weighted_structural_norm": 0.00023302045142862881
+    },
+    "decoder": {
+      "dot": 0.0,
+      "cosine": null,
+      "original_norm": 0.0,
+      "structural_norm": 0.0,
+      "weighted_structural_norm": 0.0
+    },
+    "role_mix": {
+      "dot": 2.831768702520871e-09,
+      "cosine": 0.32813420118971603,
+      "original_norm": 2.2434395190588527e-07,
+      "structural_norm": 0.038467318442972395,
+      "weighted_structural_norm": 2.511612941812786e-07
+    },
+    "GNN.input": {
+      "dot": 2.8890311532823145e-10,
+      "cosine": 0.6485697855758105,
+      "original_norm": 6.742708471478162e-08,
+      "structural_norm": 0.0066063431678350494,
+      "weighted_structural_norm": 4.313421800635623e-08
+    },
+    "sharedKey": {
+      "dot": 4.459729502556038e-10,
+      "cosine": 0.9408772831207042,
+      "original_norm": 7.046195914927804e-08,
+      "structural_norm": 0.006726990601510571,
+      "weighted_structural_norm": 4.392195073138401e-08
+    },
+    "sharedValue": {
+      "dot": 1.4167459920546966e-10,
+      "cosine": 0.810438772236553,
+      "original_norm": 3.696831164643675e-08,
+      "structural_norm": 0.004728704397454447,
+      "weighted_structural_norm": 3.0874715585545e-08
+    },
+    "sharedScore": {
+      "dot": 2.9036115309363287e-10,
+      "cosine": 0.8334715035785472,
+      "original_norm": 4.926320555397305e-08,
+      "structural_norm": 0.007071720518808135,
+      "weighted_structural_norm": 4.617276559647059e-08
+    },
+    "GNN.layers.0.self_linear": {
+      "dot": 2.862773416078697e-10,
+      "cosine": 0.7851519639164979,
+      "original_norm": 6.287218081113866e-08,
+      "structural_norm": 0.005799288703754229,
+      "weighted_structural_norm": 3.786478795825397e-08
+    },
+    "GNN.layers.0.incoming": {
+      "dot": 2.5993265174762606e-10,
+      "cosine": 0.7276430808457794,
+      "original_norm": 6.118848768075093e-08,
+      "structural_norm": 0.005838115919484899,
+      "weighted_structural_norm": 3.8118299098283864e-08
+    },
+    "GNN.layers.0.outgoing": {
+      "dot": 2.3240240762198894e-10,
+      "cosine": 0.6953220556115645,
+      "original_norm": 5.6697013454902455e-08,
+      "structural_norm": 0.0058951442261253395,
+      "weighted_structural_norm": 3.8490649027536506e-08
+    },
+    "GNN.layers.1.self_linear": {
+      "dot": 1.6507986018823744e-10,
+      "cosine": 0.8299873558839684,
+      "original_norm": 4.8614050214129384e-08,
+      "structural_norm": 0.0040912951476761395,
+      "weighted_structural_norm": 2.6712935181361793e-08
+    },
+    "GNN.layers.1.incoming": {
+      "dot": 1.4273911439334835e-10,
+      "cosine": 0.8597607263117606,
+      "original_norm": 4.172388329185305e-08,
+      "structural_norm": 0.003979061697845214,
+      "weighted_structural_norm": 2.5980139144337415e-08
+    },
+    "GNN.layers.1.outgoing": {
+      "dot": 1.0334691661905208e-10,
+      "cosine": 0.6303164781030155,
+      "original_norm": 4.142952590094364e-08,
+      "structural_norm": 0.0039575726818883855,
+      "weighted_structural_norm": 2.583983279398964e-08
+    },
+    "codebook0": {
+      "dot": -5.852014119099954e-07,
+      "cosine": -0.0006197852679084232,
+      "original_norm": 4.4617230074726154e-05,
+      "structural_norm": 21.16223395581024,
+      "weighted_structural_norm": 0.0001381727212409661
+    },
+    "codebook1": {
+      "dot": 0.00011757698643544002,
+      "cosine": 0.2281449278617979,
+      "original_norm": 8.540578774798186e-05,
+      "structural_norm": 6.0342625735832165,
+      "weighted_structural_norm": 3.939898227264381e-05
+    },
+    "codebook2": {
+      "dot": 3.067461016779904e-05,
+      "cosine": 0.10843591088847103,
+      "original_norm": 8.660909503867717e-05,
+      "structural_norm": 3.266197329469582,
+      "weighted_structural_norm": 2.1325696241009616e-05
+    },
+    "Query0": {
+      "dot": 3.665527747369564e-10,
+      "cosine": 0.9349045639003674,
+      "original_norm": 6.395085799204779e-08,
+      "structural_norm": 0.006130880567989073,
+      "weighted_structural_norm": 4.002982168382215e-08
+    },
+    "Query1": {
+      "dot": -1.5768603314243194e-12,
+      "cosine": -0.42344083068121213,
+      "original_norm": 4.954175995996819e-09,
+      "structural_norm": 0.0007516731964163455,
+      "weighted_structural_norm": 4.907833986223652e-09
+    }
+  },
+  "raw_real_batch_VJP": {
+    "state": "completed diagnostic checkpoint; same first real batch/sample",
+    "original": {
+      "encoder": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 8,
+        "finite": true,
+        "norm": 9.256474281176261e-05
+      },
+      "decoder": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 8,
+        "finite": true,
+        "norm": 0.001408105601285276
+      },
+      "role_mix": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 2.2434395190588527e-07
+      },
+      "GNN.input": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 6.742708471478162e-08
+      },
+      "sharedKey": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 7.046195914927804e-08
+      },
+      "sharedValue": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 3.696831164643675e-08
+      },
+      "sharedScore": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 4,
+        "finite": true,
+        "norm": 4.926320555397305e-08
+      },
+      "GNN.layers.0.self_linear": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 6.287218081113866e-08
+      },
+      "GNN.layers.0.incoming": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 6.118848768075093e-08
+      },
+      "GNN.layers.0.outgoing": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 5.6697013454902455e-08
+      },
+      "GNN.layers.1.self_linear": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 4.8614050214129384e-08
+      },
+      "GNN.layers.1.incoming": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 4.172388329185305e-08
+      },
+      "GNN.layers.1.outgoing": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 4.142952590094364e-08
+      },
+      "codebook0": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 4.4617230074726154e-05
+      },
+      "codebook1": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 8.540578774798186e-05
+      },
+      "codebook2": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 8.660909503867717e-05
+      },
+      "Query0": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 6.395085799204779e-08
+      },
+      "Query1": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 4.954175995996819e-09
+      }
+    },
+    "structural": {
+      "encoder": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 8,
+        "finite": true,
+        "norm": 35.68890635816126
+      },
+      "decoder": {
+        "absent": true,
+        "none": 8,
+        "zero": 0,
+        "tensors": 8,
+        "finite": true,
+        "norm": 0.0
+      },
+      "role_mix": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.038467318442972395
+      },
+      "GNN.input": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 0.0066063431678350494
+      },
+      "sharedKey": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 0.006726990601510571
+      },
+      "sharedValue": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 0.004728704397454447
+      },
+      "sharedScore": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 4,
+        "finite": true,
+        "norm": 0.007071720518808135
+      },
+      "GNN.layers.0.self_linear": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 0.005799288703754229
+      },
+      "GNN.layers.0.incoming": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.005838115919484899
+      },
+      "GNN.layers.0.outgoing": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.0058951442261253395
+      },
+      "GNN.layers.1.self_linear": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 2,
+        "finite": true,
+        "norm": 0.0040912951476761395
+      },
+      "GNN.layers.1.incoming": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.003979061697845214
+      },
+      "GNN.layers.1.outgoing": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.0039575726818883855
+      },
+      "codebook0": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 21.16223395581024
+      },
+      "codebook1": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 6.0342625735832165
+      },
+      "codebook2": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 3.266197329469582
+      },
+      "Query0": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.006130880567989073
+      },
+      "Query1": {
+        "absent": false,
+        "none": 0,
+        "zero": 0,
+        "tensors": 1,
+        "finite": true,
+        "norm": 0.0007516731964163455
+      }
+    }
+  },
+  "shared_equivalence": {
+    "reference": "independent two-branch GNN execution conditional on the actual recorded hard branch",
+    "reconstruction_population": 1024,
+    "auxiliary_population": 256,
+    "reconstruction_ids_sha256": "a275b2815fa8c5bc87ecc9cbd61ba15500e7faac9b11ea4b73ea10af44fc4192",
+    "native_allocations": [
+      {
+        "levels": [
+          {
+            "level": 0,
+            "max_cost_divergence": 3.814697265625e-06,
+            "summed_cost_perturbation": 0.001201629638671875,
+            "shared_objective": 482.7669372558594,
+            "independent_objective": 482.76690673828125,
+            "differing_items": 0,
+            "exact_native_rule_replay": true
+          },
+          {
+            "level": 1,
+            "max_cost_divergence": 0.0,
+            "summed_cost_perturbation": 0.0,
+            "shared_objective": 389.3120422363281,
+            "independent_objective": 389.3120422363281,
+            "differing_items": 0,
+            "exact_native_rule_replay": true
+          },
+          {
+            "level": 2,
+            "max_cost_divergence": 1.9073486328125e-06,
+            "summed_cost_perturbation": 0.00011211633682250977,
+            "shared_objective": 459.14453125,
+            "independent_objective": 459.14453125,
+            "differing_items": 0,
+            "exact_native_rule_replay": true
+          }
+        ],
+        "differing_items": 0,
+        "rule": "Exact frozen greedy/Sinkhorn replay on each original cost tensor; no optimal-value perturbation bound."
+      },
+      {
+        "levels": [
+          {
+            "level": 0,
+            "max_cost_divergence": 5.7220458984375e-06,
+            "summed_cost_perturbation": 0.0003185272216796875,
+            "shared_objective": 576.516845703125,
+            "independent_objective": 576.516845703125,
+            "differing_items": 0,
+            "exact_native_rule_replay": true
+          },
+          {
+            "level": 1,
+            "max_cost_divergence": 0.0,
+            "summed_cost_perturbation": 0.0,
+            "shared_objective": 589.7137451171875,
+            "independent_objective": 589.7137451171875,
+            "differing_items": 0,
+            "exact_native_rule_replay": true
+          },
+          {
+            "level": 2,
+            "max_cost_divergence": 3.814697265625e-06,
+            "summed_cost_perturbation": 6.431341171264648e-05,
+            "shared_objective": 584.0279541015625,
+            "independent_objective": 584.0278930664062,
+            "differing_items": 0,
+            "exact_native_rule_replay": true
+          }
+        ],
+        "differing_items": 0,
+        "rule": "Exact frozen greedy/Sinkhorn replay on each original cost tensor; no optimal-value perturbation bound."
+      }
+    ],
+    "native_losses": [
+      0.0005842826212756336,
+      2.4422616958618164,
+      0.0006002286681905389
+    ],
+    "native_hard_ids_exact": true,
+    "hard_q_exact": true,
+    "native_rule_exact_replay": true,
+    "loss_max_abs": 0.0,
+    "gradient_atol": 2e-05,
+    "gradient_rtol": 0.0002,
+    "gradients": {
+      "encoder.mlp.1.weight": {
+        "max_abs": 3.979039320256561e-12,
+        "reference_norm": 0.00011080218973802403
+      },
+      "encoder.mlp.1.bias": {
+        "max_abs": 2.000888343900442e-11,
+        "reference_norm": 7.238818216137588e-05
+      },
+      "encoder.mlp.4.weight": {
+        "max_abs": 5.4569682106375694e-12,
+        "reference_norm": 8.810180588625371e-05
+      },
+      "encoder.mlp.4.bias": {
+        "max_abs": 4.001776687800884e-11,
+        "reference_norm": 9.016835974762216e-05
+      },
+      "encoder.mlp.7.weight": {
+        "max_abs": 5.002220859751105e-12,
+        "reference_norm": 5.1655606512213126e-05
+      },
+      "encoder.mlp.7.bias": {
+        "max_abs": 4.001776687800884e-11,
+        "reference_norm": 9.687968849902973e-05
+      },
+      "encoder.mlp.10.weight": {
+        "max_abs": 6.0254023992456496e-12,
+        "reference_norm": 2.435394526401069e-05
+      },
+      "encoder.mlp.10.bias": {
+        "max_abs": 6.366462912410498e-11,
+        "reference_norm": 8.282426279038191e-05
+      },
+      "rq.vq_layers.0.embed.weight": {
+        "max_abs": 7.275957614183426e-11,
+        "reference_norm": 0.0001451714924769476
+      },
+      "rq.vq_layers.1.embed.weight": {
+        "max_abs": 1.2732925824820995e-11,
+        "reference_norm": 0.00010189111344516277
+      },
+      "rq.vq_layers.2.embed.weight": {
+        "max_abs": 3.183231456205249e-11,
+        "reference_norm": 9.141380724031478e-05
+      },
+      "decoder.mlp.1.weight": {
+        "max_abs": 0.0,
+        "reference_norm": 2.0753905118908733e-05
+      },
+      "decoder.mlp.1.bias": {
+        "max_abs": 0.0,
+        "reference_norm": 0.00020751214469783008
+      },
+      "decoder.mlp.4.weight": {
+        "max_abs": 0.0,
+        "reference_norm": 3.434612153796479e-05
+      },
+      "decoder.mlp.4.bias": {
+        "max_abs": 0.0,
+        "reference_norm": 0.0004017955798190087
+      },
+      "decoder.mlp.7.weight": {
+        "max_abs": 0.0,
+        "reference_norm": 5.104642696096562e-05
+      },
+      "decoder.mlp.7.bias": {
+        "max_abs": 0.0,
+        "reference_norm": 0.0006705359555780888
+      },
+      "decoder.mlp.10.weight": {
+        "max_abs": 0.0,
+        "reference_norm": 7.097913476172835e-05
+      },
+      "decoder.mlp.10.bias": {
+        "max_abs": 0.0,
+        "reference_norm": 0.0011486461153253913
+      },
+      "structure.tokens.input.weight": {
+        "max_abs": 6.039613253960852e-14,
+        "reference_norm": 9.982769455518792e-08
+      },
+      "structure.tokens.input.bias": {
+        "max_abs": 3.68594044175552e-14,
+        "reference_norm": 1.462883858494024e-08
+      },
+      "structure.tokens.layers.0.self_linear.weight": {
+        "max_abs": 5.1514348342607263e-14,
+        "reference_norm": 9.483979823698974e-08
+      },
+      "structure.tokens.layers.0.self_linear.bias": {
+        "max_abs": 3.275157922644212e-14,
+        "reference_norm": 1.1418803680385281e-08
+      },
+      "structure.tokens.layers.0.incoming.weight": {
+        "max_abs": 3.042011087472929e-14,
+        "reference_norm": 9.268939749063065e-08
+      },
+      "structure.tokens.layers.0.outgoing.weight": {
+        "max_abs": 7.66053886991358e-14,
+        "reference_norm": 8.792537187218841e-08
+      },
+      "structure.tokens.layers.1.self_linear.weight": {
+        "max_abs": 3.0531133177191805e-14,
+        "reference_norm": 7.185324335523546e-08
+      },
+      "structure.tokens.layers.1.self_linear.bias": {
+        "max_abs": 5.0182080713057076e-14,
+        "reference_norm": 8.347983637690959e-09
+      },
+      "structure.tokens.layers.1.incoming.weight": {
+        "max_abs": 2.842170943040401e-14,
+        "reference_norm": 6.542003205822766e-08
+      },
+      "structure.tokens.layers.1.outgoing.weight": {
+        "max_abs": 2.842170943040401e-14,
+        "reference_norm": 6.110354888733127e-08
+      },
+      "structure.attention.query": {
+        "max_abs": 7.105427357601002e-14,
+        "reference_norm": 1.0250227688857194e-07
+      },
+      "structure.attention.key.weight": {
+        "max_abs": 2.6645352591003757e-14,
+        "reference_norm": 1.1277277423005216e-07
+      },
+      "structure.attention.key.bias": {
+        "max_abs": 1.663599813461758e-15,
+        "reference_norm": 2.7590336428278545e-15
+      },
+      "structure.attention.value.weight": {
+        "max_abs": 4.0745185003743245e-14,
+        "reference_norm": 6.416199482828233e-08
+      },
+      "structure.attention.value.bias": {
+        "max_abs": 7.105427357601002e-14,
+        "reference_norm": 7.2912120785417756e-09
+      },
+      "structure.attention.score.0.weight": {
+        "max_abs": 5.062616992290714e-14,
+        "reference_norm": 7.853097372390039e-08
+      },
+      "structure.attention.score.0.bias": {
+        "max_abs": 7.105427357601002e-14,
+        "reference_norm": 7.055345196960161e-09
+      },
+      "structure.attention.score.2.weight": {
+        "max_abs": 1.2967404927621828e-13,
+        "reference_norm": 4.618966897851351e-08
+      },
+      "structure.attention.score.2.bias": {
+        "max_abs": 1.163513729807164e-13,
+        "reference_norm": 6.217248937900877e-14
+      },
+      "role_mix.logits": {
+        "max_abs": 9.094947017729282e-13,
+        "reference_norm": 3.878029133375094e-07
+      }
+    },
+    "qualification": "No unconditional bitwise equivalence of native greedy assignments under different float32 gate batches is claimed; exact global checkpoint export is checked separately."
+  },
+  "error": "Traceback (most recent call last):\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/validation_entry.py\", line 499, in main\n    training.main(diagnostic_epochs=1)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/train_rqvae.py\", line 540, in main\n    DIAGNOSTIC_OBSERVER(\"diagnostic_complete\", model=raw_module, catalogue=catalogue,\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/validation_entry.py\", line 158, in __call__\n    self.completed(model, fields['catalogue'])\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/validation_entry.py\", line 225, in completed\n    self.switches(raw, catalogue)\n  File \"/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/validation_entry.py\", line 430, in switches\n    raise RuntimeError('the behaviour switch must not move the gate-owned levels')\nRuntimeError: the behaviour switch must not move the gate-owned levels\n",
+  "wall_seconds": 53.218586328439415
+}

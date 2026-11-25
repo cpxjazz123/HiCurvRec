@@ -1,0 +1,19 @@
+{
+  "allow": true,
+  "collision": 0.05527311180705252,
+  "effective_rank": 4.333195087743894,
+  "limits": {
+    "collision": 0.4,
+    "effective_rank": 8.0,
+    "quant_error": [
+      0.035,
+      0.1
+    ]
+  },
+  "quant_error": 0.007133719437883409,
+  "reason": "collision 0.0553 < 0.40; measured quantisation error 0.007 (band 0.035-0.100) and effective rank 4.33 (limit 8.0); WARNING quantisation error 0.007 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises",
+  "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/item_sids.json",
+  "warnings": [
+    "quantisation error 0.007 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises"
+  ]
+}

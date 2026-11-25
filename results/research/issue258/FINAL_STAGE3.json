@@ -1,0 +1,36 @@
+{
+  "arm": "TIGER_role_conditioned_l2_rq",
+  "independent_reduction": "results/research/issue258/replay_stage3/REPLAY.json",
+  "metrics": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l2_rq/logs/Amazon_2023_Instruments/Nov-25-2026_23-03-28/training_metrics.jsonl",
+    "sha256": "a8ca7209122a9032c3399e14cb1618af0ddc04d7aa6615596c54c1e35c2c310b"
+  },
+  "metrics_values": {
+    "n_eval": 57439,
+    "test_ndcg@10": 0.02732772020207201,
+    "test_ndcg@5": 0.021846481598707893,
+    "test_recall@10": 0.05034906596563311,
+    "test_recall@5": 0.033270077821689094
+  },
+  "predictions": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l2_rq/logs/Amazon_2023_Instruments/Nov-25-2026_23-03-28/predictions/rank0.jsonl",
+  "protocol": {
+    "beam": 20,
+    "epochs": 150,
+    "no_eval": true,
+    "seed": 42,
+    "world_size": 4
+  },
+  "run_id": "issue256_r05_formal",
+  "schema": "genrec.issue258.final_stage3/1",
+  "sid_sha256": "dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6",
+  "stage2_checkpoint_sha256": "f93da1a7466d62f07c6482c64cf1a8efdd9dd1fa7ccdf7891be98d6d37bc7f26",
+  "stage3_checkpoint": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l2_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_23-03-28/HG_Rec_best.pth",
+    "sha256": "d385c453dba94df296f8f7e01c671fc1199e1dacb31a43e2304726d3e1e8cc1c"
+  },
+  "stage3_run_dir": "results/stage3_T5Train/TIGER_role_conditioned_l2_rq/logs/Amazon_2023_Instruments/Nov-25-2026_23-03-28",
+  "test_final": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l2_rq/logs/Amazon_2023_Instruments/Nov-25-2026_23-03-28/test_final.json",
+    "sha256": "ed2d61223dd58af4fd77166a6ecdd1ec2c4aa6129ef534c1d60be6866db97cb9"
+  }
+}

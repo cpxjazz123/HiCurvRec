@@ -1,0 +1,285 @@
+{
+  "receipts": [
+    {
+      "declared": {
+        "assets": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/role_table.json",
+          "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth",
+          "/fs04/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+          "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+          "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet"
+        ],
+        "code": [
+          "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/checks.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/launcher.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/graph_contract.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/contract.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/sid_quality.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/train_rqvae.py"
+        ],
+        "configs": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/config/train_config.json"
+        ],
+        "tests": []
+      },
+      "digest": "523f873248fb6e0fe5d814e0e8def5d6ba8a28624b8d7900fce489ec49d8546d",
+      "evidence": {
+        "command": "checks.run_all(candidate tree)",
+        "exit_code": 0,
+        "output": "results/research/issue258/ADMISSION.json",
+        "output_sha256": "a1b734e3fe47e85ffb0cc3a7c052d9b8d18a1af1c82d5e5f2c0b1beec3375b67"
+      },
+      "schema": "genrec.pipeline.receipt/1",
+      "status": "PASS",
+      "test_id": "admission_entry"
+    },
+    {
+      "declared": {
+        "assets": [
+          "/fs04/ar57/wenyu/GeneRec/assets/manifest.json",
+          "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph/edges.parquet",
+          "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph/graph.npz",
+          "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph/node_features.npy",
+          "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph/metadata.json"
+        ],
+        "code": [
+          "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/graph_contract.py"
+        ],
+        "configs": [],
+        "tests": []
+      },
+      "digest": "ba267bab30c0a824ab179a5814be62bab398cf5e731d671f52410ec5a0e01598",
+      "evidence": {
+        "command": "checks.run_all -> check_behavior_graph",
+        "detail": "raw train, split, graph, audit source and training dependencies verified",
+        "exit_code": 0,
+        "output": "results/research/issue258/ADMISSION.json",
+        "output_sha256": "a1b734e3fe47e85ffb0cc3a7c052d9b8d18a1af1c82d5e5f2c0b1beec3375b67"
+      },
+      "schema": "genrec.pipeline.receipt/1",
+      "status": "PASS",
+      "test_id": "behavior_graph"
+    },
+    {
+      "declared": {
+        "assets": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/role_table.json",
+          "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth",
+          "/fs04/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+          "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+          "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet"
+        ],
+        "code": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/mechanism.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/layer_gate.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/role_mix.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/train_rqvae.py"
+        ],
+        "configs": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/config/train_config.json"
+        ],
+        "tests": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/reference.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/reference_l2_routing.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/reference_layer_gate.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_attention.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_attention_pipeline.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_batch_invariant_gates.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_budget_known_answers.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_budget_mutations.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_budget_reference.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_calibration.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_cuda_math.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_curvature_loss.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_entry_calibration.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_estimator.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_execution.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_geometry_memory.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_known_answers.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_l2_role_reference.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_layer_gate.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_layer_mechanism.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_mechanism.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_module_budget.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_mutations.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_periodic_budget.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_profile_loader.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_provenance.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_reference.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_role_mixture.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_shared_assignment_oracle.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_sparse_adjoint.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_sparse_structure.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_static_means.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_static_reproducibility.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_structure.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_sync_free_batch.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_three_geometry.py"
+        ]
+      },
+      "digest": "0f08d8e31e4b723cb9e1b72f73929c2035cc9ceff2b5b919a21672c6d9fac73d",
+      "evidence": {
+        "command": "python3.9 -m pytest tests -q (cwd candidate tree)",
+        "exit_code": 0,
+        "output": "results/research/issue258/checks/candidate_suite.log",
+        "output_sha256": "8d65bfe1b1a461d9d71d3238aa4c3d7482f2d9d4907ac566f44f296b5fe64ab5",
+        "passed": 163
+      },
+      "schema": "genrec.pipeline.receipt/1",
+      "status": "PASS",
+      "test_id": "candidate_suite"
+    },
+    {
+      "declared": {
+        "assets": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/role_table.json",
+          "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth",
+          "/fs04/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+          "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+          "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet"
+        ],
+        "code": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/mechanism.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/layer_gate.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/role_mix.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/train_rqvae.py"
+        ],
+        "configs": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/config/train_config.json"
+        ],
+        "tests": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/reference.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/reference_l2_routing.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/reference_layer_gate.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_attention.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_attention_pipeline.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_batch_invariant_gates.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_budget_known_answers.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_budget_mutations.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_budget_reference.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_calibration.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_cuda_math.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_curvature_loss.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_entry_calibration.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_estimator.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_execution.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_geometry_memory.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_known_answers.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_l2_role_reference.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_layer_gate.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_layer_mechanism.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_mechanism.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_module_budget.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_mutations.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_periodic_budget.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_profile_loader.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_provenance.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_reference.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_role_mixture.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_shared_assignment_oracle.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_sparse_adjoint.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_sparse_structure.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_static_means.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_static_reproducibility.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_structure.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_sync_free_batch.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_three_geometry.py"
+        ]
+      },
+      "digest": "5de5389e6518f1ebec54572c7f9e107f2517a71637c4ab6cbd82a310af639a9d",
+      "evidence": {
+        "command": "python3.9 -m pytest tests -q (cwd candidate tree)",
+        "exit_code": 0,
+        "output": "results/research/issue258/checks/candidate_suite.log"
+      },
+      "schema": "genrec.pipeline.receipt/1",
+      "status": "PASS",
+      "test_id": "candidate_suite"
+    },
+    {
+      "declared": {
+        "assets": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/role_table.json",
+          "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth",
+          "/fs04/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy"
+        ],
+        "code": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/mechanism.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/model/calibration.py",
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/train_rqvae.py"
+        ],
+        "configs": [],
+        "tests": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_module_budget.py"
+        ]
+      },
+      "digest": "7bd860a2919073b4cd292bbf83bc112109ba40dee616b3b1f57c786d251af25e",
+      "evidence": {
+        "command": "launcher.launch(validation_entry.py) + launcher.launch(module_budget_entry.py)",
+        "exit_code": 0,
+        "output": "results/research/issue258/MODULE_CHECKS.json",
+        "output_sha256": "661bbe7963cf00d23512967f9fe5fa732618160d8333a839d233c6b3af206164"
+      },
+      "schema": "genrec.pipeline.receipt/1",
+      "status": "PASS",
+      "test_id": "module_gradients"
+    },
+    {
+      "declared": {
+        "assets": [],
+        "code": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/benchmark_entry.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/research/stage2/launcher.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/issue253/performance.py"
+        ],
+        "configs": [],
+        "tests": [
+          "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/tests/test_profile_loader.py"
+        ]
+      },
+      "digest": "1a2174b0a4cd04f17dfffec2e6d81b727c983bd1b62ab6a40f57567d82e62c5b",
+      "evidence": {
+        "command": "launcher.launch(benchmark_entry.py)",
+        "exit_code": 0,
+        "mean_seconds": 0.6934812462888658,
+        "output": "results/research/issue258/PERFORMANCE.json",
+        "output_sha256": "8a7e2778c73558fbafa2b4310ef59fab3744d99fcd3a7b7c736ce4147bfffc8b"
+      },
+      "schema": "genrec.pipeline.receipt/1",
+      "status": "PASS",
+      "test_id": "performance"
+    },
+    {
+      "declared": {
+        "assets": [],
+        "code": [
+          "/fs04/ar57/wenyu/GeneRec/tools/iteration/__init__.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/iteration/analysis.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/iteration/archive.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/iteration/depgraph.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/iteration/identity.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/iteration/registry.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/iteration/replay.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/iteration/report.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/iteration/timeline.py"
+        ],
+        "configs": [],
+        "tests": [
+          "/fs04/ar57/wenyu/GeneRec/tools/iteration/tests/test_depgraph.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/iteration/tests/test_known_answers.py",
+          "/fs04/ar57/wenyu/GeneRec/tools/iteration/tests/test_replay.py"
+        ]
+      },
+      "digest": "b28c4f591b1a477df7185101b2cc30021862b51b9a75e4c6f7fa9fd7bdcec759",
+      "evidence": {
+        "command": "python3.9 -m pytest tools/iteration/tests -q",
+        "exit_code": 0,
+        "output": "results/research/issue258/checks/pipeline_units.log"
+      },
+      "schema": "genrec.pipeline.receipt/1",
+      "status": "PASS",
+      "test_id": "pipeline_units"
+    }
+  ],
+  "schema": "genrec.pipeline.receipts/1"
+}

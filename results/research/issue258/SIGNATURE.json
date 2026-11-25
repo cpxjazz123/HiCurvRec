@@ -1,0 +1,45 @@
+{
+  "arm": "TIGER_role_conditioned_l2_rq",
+  "conclusion": "preregistered mechanism signature FALSIFIED at Stage2: 9609 distinct L2 prefixes >= the 7000 failure line (R04: 8781); level 1 unchanged; validation R@10 not measurable with an existing interface",
+  "layered_metrics": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/stage2_metrics/dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6.json",
+    "sha256": "14ade7f4608474adad6d7fe502b07dbf1aa6d547cc7486b98ccd5e202b9877aa"
+  },
+  "measured": {
+    "H_L1": 7.396808,
+    "H_L2_given_L1": 5.218217,
+    "H_L3_given_L1L2": 1.85157,
+    "absolute_l1_prefix_carry": 0.05995926112919793,
+    "collision": 0.05527311180705252,
+    "distinct_L1": 256,
+    "distinct_triples": 23228,
+    "distinct_two_code_prefixes": 9609,
+    "items_per_L2_prefix": 2.558747008013321,
+    "l1_hard_er": 7.102279795806805,
+    "l3_refinement_gain_bits": 1.851570349766611
+  },
+  "prediction": {
+    "absolute_l1_prefix_carry_window": [
+      0.0496,
+      0.0696
+    ],
+    "distinct_two_code_prefixes_max": 6000,
+    "failure_distinct_two_code_prefixes_min": 7000,
+    "failure_validation_recall_at_10_max": 0.0576,
+    "validation_recall_at_10_min": 0.0583
+  },
+  "round_id": "r05",
+  "run_id": "issue256_r05_formal",
+  "schema": "genrec.issue258.signature/1",
+  "sid": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/item_sids.json",
+    "sha256": "dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6"
+  },
+  "verdicts": {
+    "distinct_two_code_prefixes_met": false,
+    "failure_line_met": true,
+    "level1_unchanged": true,
+    "validation_recall_at_10": "NOT_AVAILABLE",
+    "validation_recall_reason": "FAULT-1: the only implementation is R04-identity-bound tools/issue256/r04/external_validation.py; FROZEN forbids copying or parameterising it"
+  }
+}
