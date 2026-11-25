@@ -248,7 +248,6 @@ def test_c39b_the_temperature_resolves_the_real_cost_scale():
     if not checkpoint.is_file():
         pytest.skip("the frozen checkpoint is not reachable")
     from model import RQVAE  # noqa: PLC0415
-
     model = RQVAE(train_rqvae._tokenizer_config(), in_dim=768, distance=train_rqvae.DISTANCE)
     model.load_state_dict(torch.load(checkpoint, map_location="cpu")["state_dict"])
     model.eval()

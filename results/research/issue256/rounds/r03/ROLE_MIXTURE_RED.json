@@ -1,0 +1,15 @@
+{
+  "schema": "genrec.issue256.r03.role_mixture_red/1",
+  "command": "python3.9 -m pytest tests/test_role_mixture.py -q (run inside a copy of the pre-change tree)",
+  "tree": "results/research/issue256/rounds/r03/red_tree/tree (copy of stage2_RQ-VAE/_archive/TIGER_periodic_budget_prefix_rq with the new test and the role table)",
+  "exit_code": 1,
+  "failed": 7,
+  "passed": 0,
+  "wall_seconds": 257.04,
+  "failures": [
+    "ModuleNotFoundError: No module named model.role_mix",
+    "AttributeError: 'RQVAE' object has no attribute 'role_mix'"
+  ],
+  "interpretation": "The pre-change tree has neither the role module nor the role-conditioned level-1 mixture, so every acceptance case fails. The red is produced by the real pre-change source, not by a stub.",
+  "evidence_dir": "results/research/issue256/rounds/r03/red_evidence"
+}

@@ -129,14 +129,26 @@
       "parent_source_commit": "01fb29d4868f9c90590b2655b83ea50362823c13",
       "arm": "TIGER_role_conditioned_l1_rq",
       "run_id": "issue256_r03_formal",
-      "status": "PREREGISTERED_NOT_RUN",
+      "status": "ADMITTED_READY_TO_DISPATCH",
       "change": "take the level-1 curvature mixture from the item graphlet orbit type instead of the free learned per-item gate; levels 2 and 3 unchanged",
       "hypothesis": "a role-conditioned level-1 commitment coarsens the level-1 partition and lifts the absolute L1 prefix carry, which is the measured correlate of the final Recall",
-      "contract_sha256": "ba983b1423bffb50fb635f04963e424e6d56b569354e77a32bf6c8c66363d89c",
+      "contract_sha256": "64cc8e59977b024df441f4bbae13d155553c8c43ea590645da2aefe380f2f795",
       "diagnosis_sha256": "94a71a00a65972860d32793f196941374a8f94e4a072b8205203ef75e2e1df0a",
       "data_identity": "INFRA.json",
       "validation_policy": "EVALUATION.md",
-      "admission": null,
+      "admission": {
+        "path": "rounds/r03/ADMISSION_SUMMARY.json",
+        "sha256": "031cc4681ccc81b08f3dbcd6a8963684e4d6b6b48603895a3c6879cb16447a54",
+        "source_files": null,
+        "unit_cases": {
+          "candidate": 152,
+          "assets": 64,
+          "controller_and_framework": 22
+        },
+        "module_groups": 17,
+        "mean_seconds": 0.6767370127451916,
+        "ceiling_met": true
+      },
       "registration_snapshot": "rounds/r03/REGISTRATION.json",
       "engineering_repairs": [
         "deterministic static CUDA means",
@@ -150,7 +162,14 @@
       "stage3": null,
       "r2_archive": null,
       "result": null,
-      "next_decision": "Implement the role-conditioned level-1 cost red-to-green, re-admit the source, then run the single preregistered four-card Stage2/Stage3 pair"
+      "next_decision": "Implement the role-conditioned level-1 cost red-to-green, re-admit the source, then run the single preregistered four-card Stage2/Stage3 pair",
+      "amendments": [
+        "section 6: the batch-mean role mixture was withdrawn before any training because it would make the global SID batch-dependent",
+        "section 7: the learned gate now owns levels two and three; the level-1 query row had no consumer left"
+      ],
+      "lineage": "rounds/r03/LINEAGE.json",
+      "red_green": "rounds/r03/RED_GREEN.json",
+      "evaluation_consumers": "rounds/r03/EVALUATION_CONSUMERS.json"
     }
   ]
 }

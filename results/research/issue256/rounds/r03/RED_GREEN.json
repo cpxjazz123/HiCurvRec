@@ -1,0 +1,30 @@
+{
+  "schema": "genrec.issue256.r03.red_green/1",
+  "red": {
+    "stage": "the complete candidate unit suite on the R03 source",
+    "failures": [
+      "tests/test_calibration.py::test_lambda_uses_full_original_gradients_not_reconstruction_only",
+      "RuntimeError: One of the differentiated Tensors appears to not have been used in the graph (the new role table is outside the curvature graph)",
+      "RuntimeError: degenerate active original gradient: Query0 (the level-1 query row lost its only consumer)"
+    ],
+    "log": "results/research/issue256/rounds/r03/TEST_RUN.log (first generation) and the candidate rank logs",
+    "role_mixture_red": {
+      "log": "results/research/issue256/rounds/r03/ROLE_MIXTURE_RED.json",
+      "failed": 7,
+      "passed": 0,
+      "interpretation": "the pre-change tree has neither the role module nor the role-conditioned level-1 mixture"
+    }
+  },
+  "repairs": [
+    "the role table is outside the calibrated module groups, exactly as the level-1 query row was",
+    "the learned gate now provides the levels two and three; the level-1 query row is removed so no parameter is left without a gradient",
+    "the diagnostics take the same parameter set as the calibration and record the role table gradient norm separately"
+  ],
+  "green": {
+    "command": "python3.9 -m pytest tests/test_calibration.py tests/test_role_mixture.py -q",
+    "passed": 8,
+    "failed": 0,
+    "log": "results/research/issue256/rounds/r03/CALIBRATION_GREEN.log"
+  },
+  "contract": "results/research/issue256/rounds/r03/CONTRACT.md sections 6 and 7"
+}

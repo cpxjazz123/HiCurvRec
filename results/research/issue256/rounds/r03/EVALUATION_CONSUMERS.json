@@ -1,0 +1,66 @@
+{
+  "schema": "genrec.issue256.r03.evaluation_consumers/1",
+  "frozen_at": "2026-11-25T02:29:52.419759+00:00",
+  "round_id": "r03",
+  "run_id": "issue256_r03_formal",
+  "before_any_formal_worker": true,
+  "before_any_r03_recommendation_test": true,
+  "stage3_required_protocol": {
+    "epochs": 150,
+    "seed": 42,
+    "world_size": 4,
+    "global_train_batch": 16384,
+    "per_rank_train_batch": 4096,
+    "per_rank_inference_batch": 1024,
+    "beam": 20,
+    "eval_interval": 5,
+    "eval_start_epoch": 75,
+    "early_eval_epochs": [
+      25,
+      50,
+      75,
+      100,
+      125
+    ],
+    "no_eval": true,
+    "skip_test": false
+  },
+  "evaluation_policy": {
+    "path": "results/research/issue256/EVALUATION.md",
+    "sha256": "4e0ea06e5799a1d6c9cce514bab8deba1e4ea320dc8dd9d4d16467d0b206e993"
+  },
+  "mechanism_forecasts": {
+    "path": "results/research/issue256/rounds/r03/CONTRACT.md",
+    "sha256": "64cc8e59977b024df441f4bbae13d155553c8c43ea590645da2aefe380f2f795"
+  },
+  "source_files": {
+    "stage3_trainer": {
+      "path": "stage3_T5Train/train_HG-Rec.py",
+      "sha256": "54ca6bfbcd55a42e718660dd0004370a41a5e1c2c5038a86bbfc84f32b963690"
+    },
+    "stage2_source_tree": "stage2_RQ-VAE/TIGER_role_conditioned_l1_rq",
+    "role_table": {
+      "path": "stage2_RQ-VAE/TIGER_role_conditioned_l1_rq/role_table.json",
+      "sha256": "9ae0478ad993ccfa4b7d79346f9f97cc64f8a0949c08a668135628f4aeb3cfb4"
+    }
+  },
+  "data_identity": {
+    "path": "results/research/issue256/INFRA.json",
+    "sha256": "1417672d92d53f9b874c03ab235b6889d80e31aa07f0cd50a31a41732302ceb2"
+  },
+  "selection_rules": [
+    "Only the actual final3000-epoch SID/checkpoint and the final150-epoch Stage3 checkpoint; no best-score selection and no repeat run.",
+    "Exact unchanged Stage3 SID/vocabulary/EOS/ranking/seen-filter rules; no extra SID level offset and no decoder rewrite.",
+    "The decision uses the complete 57439-row validation split; the final test is read once, after the decision is frozen.",
+    "Independent reduction of all persisted predictions must reconcile R@5/10 and NDCG@5/10 before adoption.",
+    "Mechanism decisions use train/validation and the fixed structure-validation only; no recommendation-test item errors and no structure-test labels as supervision."
+  ],
+  "preregistered_predictions": {
+    "distinct_two_code_prefixes_max": 6000,
+    "absolute_l1_prefix_carry_min": 0.1,
+    "validation_recall@10_min": 0.0583,
+    "failure_criterion": "L1 carry below 0.08 or validation Recall@10 at or below 0.0576 falsifies the role-conditioned level-1 coupling"
+  },
+  "strict_closure_rule": "one legal complete final test_R@10 >0.065 plus matching source/SID/checkpoints/full protocol/independent reductions/R2",
+  "bias_disclosure": "The fixed final test has been read by earlier rounds and is a reused exploratory stopping threshold; no untouched independent confirmation population exists in this frozen dataset, so no unbiased final generalisation or single-factor causal claim is made."
+}

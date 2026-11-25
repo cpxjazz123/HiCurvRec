@@ -1,0 +1,56 @@
+[
+  {
+    "mutation": "squared-distance coefficient doubled",
+    "category": "numeric",
+    "assertion": "Tensor-likes are not close!\n\nMismatched elements: 3 / 3 (100.0%)\nGreatest absolute difference: 0.2500000000000002 at index (0, 0, 0) (up to 1e-07 allowed)\nGreatest relative difference: 1.0000000000000009 at index (0, 0, 0) (up to 1e-07 allowed)",
+    "caught": true
+  },
+  {
+    "mutation": "balanced rule replaced by argmin",
+    "category": "structural",
+    "assertion": "Lists differ: [0, 0] != [1, 0]\n\nFirst differing element 0:\n0\n1\n\n- [0, 0]\n?  ^\n\n+ [1, 0]\n?  ^\n : balanced hard IDs must be [1,0]",
+    "caught": true
+  },
+  {
+    "mutation": "cost detached before soft assignment",
+    "category": "routing",
+    "assertion": "0.0 not greater than 0.0 : selection cost must receive nonzero gradient",
+    "caught": true
+  },
+  {
+    "mutation": "A.1 overall sign flipped",
+    "category": "numeric",
+    "assertion": "-1.3333333333333335 != 1.3333333333333333 within 7 places (2.666666666666667 difference) : full-reference A.1 must be 4/3",
+    "caught": true
+  },
+  {
+    "mutation": "invalid mask ignored",
+    "category": "structural",
+    "assertion": "252.25 != 4.5 within 7 places (247.75 difference) : invalid target cannot contribute to centre loss",
+    "caught": true
+  },
+  {
+    "mutation": "hard forward replaced by soft codewords",
+    "category": "routing",
+    "assertion": "False is not true : hard forward must equal real selected codewords",
+    "caught": true
+  },
+  {
+    "mutation": "geometry weights normalized over items",
+    "category": "structural",
+    "assertion": "Tensor-likes are not close!\n\nMismatched elements: 4 / 4 (100.0%)\nGreatest absolute difference: 0.5378131502868615 at index (1, 0) (up to 1e-07 allowed)\nGreatest relative difference: 0.5378131502868615 at index (1, 0) (up to 1e-07 allowed)",
+    "caught": true
+  },
+  {
+    "mutation": "subgraph attention mask ignored",
+    "category": "structural",
+    "assertion": "2.873314575544806 != 0.0 : masked subgraph must receive zero attention",
+    "caught": true
+  },
+  {
+    "mutation": "expert Query detached from attention",
+    "category": "routing",
+    "assertion": "0.0 not greater than 0.0 : expert Query must receive gradient",
+    "caught": true
+  }
+]

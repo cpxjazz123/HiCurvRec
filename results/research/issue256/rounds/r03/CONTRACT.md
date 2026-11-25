@@ -137,3 +137,67 @@ caught), the inclusive 31-60 epoch window under the 0.8s ceiling, the complete
 candidate/asset/controller test suites with no skip, and a dispatch probe over
 the exact current source inventory. The evaluation consumers (Stage3 protocol,
 selection rule, bias disclosure) are frozen before the first worker, as in R02.
+
+## 6. Amendment 1 (frozen before any R03 training)
+
+Section 2 defined the role mixture as the mean of the item's own learned
+mixture over the role's items **in the current batch**. That form is withdrawn:
+it makes the level-1 cost depend on which other items share the batch, so the
+same item would receive a different global Semantic ID in different batches
+(and at export), which the protocol forbids and which the export audit would
+reject.
+
+The batch-invariant form of the same claim replaces it:
+
+* `m_{r,e}` is a **learned** curvature mixture with one row per role (plus one
+  row for the items that appear in no training instance), initialised
+  uniformly, `m_{r,·} = softmax(θ_r)`, `θ_r` a parameter of the model and
+  therefore part of the checkpoint.
+* `D_1(i, c) = Σ_e m_{r(i), e} · d_e(residual_i, c)` exactly as before, and
+  levels 2 and 3 keep the item's own learned mixture.
+
+What changes relative to the withdrawn form: the level-1 geometry is a
+function of the role and of the checkpoint alone, never of the batch. What does
+not change: the behaviour signal is still the item's graphlet orbit role, the
+curve operation is still the three-expert mixed-curvature distance, the
+coupling path is still `role → mixture → level-1 cost → level-1 code → first SID
+token → Stage3 decoder`, and the Sinkhorn balanced assignment and the
+assignment floor are still the baseline's.
+
+The role label itself is unchanged and is read only from the training
+instances of the frozen asset `results/research/graphlet_roles/instances.npz`
+(sha256 `a194dc364d24802a78f43f1573d7491645d134f04d55bb519a25e3ca1d47aade`),
+one label per item, 24,532 of 24,587 items covered, 8 roles. The label table is
+written into the candidate tree as `role_table.json` so that it is covered by
+the hashed source inventory, with the derivation script and the asset hash
+recorded next to it.
+
+The predictions of section 3 are unaffected.
+
+## 7. Amendment 2 (frozen before any R03 training, after the red-green step)
+
+Amendment 1 replaces the level-1 mixture with a per-role table.  That table is
+the *only* level-1 geometry, so the learned per-item level-1 mixture has no
+consumer left: its query row would receive no gradient at all, and the module
+budget solver refuses a group whose original gradient is zero (the first
+red-green run failed with `degenerate active original gradient: Query0`).
+A dead parameter row is not an option, so:
+
+* the learned layer gate now provides the mixtures of levels two and three
+  (`model/layer_gate.py`: `LEVELS = 2`), and the first semantic level has no
+  learned per-item mixture;
+* the role table has `n_roles + 2` rows: one per graphlet role, one for the
+  items that appear in no training instance, and one **global** row;
+* `BEHAVIOR_OFF` means that every item uses the single global row, which is
+  the behaviour-free twin of the candidate;
+* `CURVE_OFF` is unchanged: every expert becomes the Euclidean distance, so
+  the level-1 cost cannot depend on any mixture;
+* the role table and the global row are outside the calibrated module groups,
+  exactly as the level-1 gate row was; the budget machinery, its groups and its
+  calibration are otherwise unchanged (the group count therefore drops by the
+  removed query row).
+
+The coupling path, the behaviour signal, the curve operation, the assignment
+rule and the recipe are unchanged from section 2 and amendment 1.
+
+

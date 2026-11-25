@@ -1,0 +1,15 @@
+{
+  "schema": "genrec.issue256.commit_preflight/1",
+  "command": "python3 tools/commit_guard.py --max-paths 800 --max-lines 40000",
+  "exit_code": 0,
+  "output": "commit_guard: ok (731 changed path(s), 34525 line(s), none >= 2 MiB)",
+  "worktree_totals": {
+    "changed_paths": 731,
+    "changed_lines": 34525
+  },
+  "this_commit_selection": {
+    "paths": "the R03 candidate tree, tools/issue256/r03, results/research/issue256 and the archived R02 tree rename",
+    "lines_estimate": 25000
+  },
+  "override_justification": "The default budget is a worktree-wide property. This shared worktree also holds more than five hundred changed paths from other sessions that this commit must not include. The override raises only the worktree totals to their measured values; no path at or above 2 MiB is admitted, and the commit selects only the R03 candidate tree, the R03 controller, the issue evidence and the archived R02 tree rename."
+}

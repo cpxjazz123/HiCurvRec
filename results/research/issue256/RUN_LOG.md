@@ -253,3 +253,21 @@ The single preregistered R02 run finished its whole pipeline: 3000 four-card epo
 The preregistered cadence hypothesis is falsified: refreshing the maximal global module budget every 50 native epochs moved the final Recall@10 by -0.000070 against the single refresh (R01 0.05273420498267727) and the validation Recall@10 by -0.000331, so the effect is null on both splits and far below the 0.065 threshold.
 
 The failure is located rather than guessed. Pairing 14 arms by their SID file shows that final Recall tracks the granularity of the level-1 commitment (absolute L1/L2/L3 prefix carry, refinement gain, distinct two-code prefix count; |r| 0.80-0.91). This lineage commits an almost item-unique SID (8840 distinct two-code prefixes, three-code collision 0.0649, quantisation error 0.0077) and therefore carries only 6.43% of validation targets inside the same L1 prefix, against 15.99% for the best mixed arm. The next candidate must act on that granularity, not on the refresh schedule.
+
+## R03 implemented and admitted
+
+The role-conditioned level-1 candidate is implemented red-to-green and admitted
+on its own source. The seven role-mixture acceptance cases fail against the
+pre-change tree (no role module, no role-conditioned mixture) and pass in the
+candidate; a second red showed the new table outside the curvature graph, and a
+third showed the level-1 query row had lost its only consumer, which is why the
+learned gate now owns the two remaining levels and the role table sits outside
+the calibrated module groups (seventeen groups instead of eighteen).
+
+Admission on the exact current source: 152 candidate + 64 asset + 22
+controller/framework cases with no skips, real one-epoch entry with SID export,
+the behaviour-graph contract, the four-card diagnostics (anchors 1 and 51, four
+caught stale-coefficient mutations), the inclusive 31-60 epoch window at
+0.7114374786925812s mean against the 0.8s ceiling, and a dispatch binding probe
+over 132 exact source files. The contract carries two amendments, both frozen
+before any training.

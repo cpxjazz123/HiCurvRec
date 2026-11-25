@@ -1,0 +1,81 @@
+{
+  "anchor_51_lambda": 3.5741567216973635e-07,
+  "ceiling_met": true,
+  "ceiling_seconds": 0.8,
+  "command": "python3.9 -m tools.issue256.r03.run_tests && python3.9 -m tools.issue256.r03.launch_diagnostics && python3.9 -m tools.issue256.r03.admission && python3.9 -m tools.issue256.r03.collect_evidence",
+  "desired_0_4_to_0_5_met": false,
+  "dispatch_binding_probe_exit_code": 0,
+  "evidence": {
+    "ADMISSION.json": {
+      "path": "results/research/issue256/rounds/r03/ADMISSION.json",
+      "sha256": "14e05b8beef067e534bcac3fdeb80256fe633c11006dceaaa260c778e660e976"
+    },
+    "CONTRACT.md": {
+      "path": "results/research/issue256/rounds/r03/CONTRACT.md",
+      "sha256": "64cc8e59977b024df441f4bbae13d155553c8c43ea590645da2aefe380f2f795"
+    },
+    "EVALUATION_CONSUMERS.json": {
+      "path": "results/research/issue256/rounds/r03/EVALUATION_CONSUMERS.json",
+      "sha256": "9c2ae884d6cef57239e370ba4bbb4721391c9851efcce5d702415ee0c4143032"
+    },
+    "LINEAGE.json": {
+      "path": "results/research/issue256/rounds/r03/LINEAGE.json",
+      "sha256": "bc1c57ea4c8e6fe60fef5455da200eca395d76b511ab003648a9551593519df3"
+    },
+    "MODULE_CHECKS.json": {
+      "path": "results/research/issue256/rounds/r03/MODULE_CHECKS.json",
+      "sha256": "55309349fb6eb2c6d9acfcafc65d517ce6284fde60a5f0ffd6aa6b7a8b5859eb"
+    },
+    "PERFORMANCE.json": {
+      "path": "results/research/issue256/rounds/r03/PERFORMANCE.json",
+      "sha256": "0af007731881a851482025769dda4f3bd14bc5a1d7a65c3f287c941414d93a91"
+    },
+    "PERIODIC_VALIDATION.json": {
+      "path": "results/research/issue256/rounds/r03/PERIODIC_VALIDATION.json",
+      "sha256": "65a8e5676d96b987db6d43725d39bd7f3e58e424652e31244495fa609cca84d4"
+    },
+    "PROFILE_SUMMARY.json": {
+      "path": "results/research/issue256/rounds/r03/PROFILE_SUMMARY.json",
+      "sha256": "d9e8b96dcf9c5479a6dd69b3021334e5b162e6d872fc8dd11601bd89f3a33be3"
+    },
+    "RED_GREEN.json": {
+      "path": "results/research/issue256/rounds/r03/RED_GREEN.json",
+      "sha256": "261b8d36c91e321f25ac61172630e93602707cf9e8b795b6afd68aaed1f99d73"
+    },
+    "TEST_RESULTS.json": {
+      "path": "results/research/issue256/rounds/r03/TEST_RESULTS.json",
+      "sha256": "55827ccb1e5486eca032c92e68fc3709b0f5f7f4c80d8ffdbf6021e3053887bf"
+    },
+    "VALIDATION.json": {
+      "path": "results/research/issue256/rounds/r03/VALIDATION.json",
+      "sha256": "7c6073c0a51940d147a4aca9658107c94c188aec0dff73e59ab88217fb6da732"
+    }
+  },
+  "exit_code": 0,
+  "formal_training_started": false,
+  "gradient_reached_every_module": true,
+  "inclusive_window": [
+    31,
+    60
+  ],
+  "initial_lambda": 1.862913904915331e-06,
+  "machine_checks": {
+    "behavior_graph": "PASS",
+    "entry": "PASS"
+  },
+  "mean_seconds": 0.6767370127451916,
+  "median_seconds": 0.6458914577960968,
+  "module_groups": 17,
+  "optimizer_updated_every_module": true,
+  "p95_seconds": 0.8804416777566075,
+  "passed": true,
+  "qualification": "Complete current-source admission permits exactly one frozen formal run of the role-conditioned level-1 candidate. No final SID/Recall/R2 result and no issue closure is claimed. The module budget groups drop from eighteen to seventeen because the level-1 query row no longer exists, and the role table sits outside the calibrated groups.",
+  "schema": "genrec.issue256.r03.admission_summary/1",
+  "stale_coefficient_mutation_caught_all4": true,
+  "unit_cases": {
+    "assets": 64,
+    "candidate": 152,
+    "controller_and_framework": 22,
+    "skipped": 0
+  }
+}

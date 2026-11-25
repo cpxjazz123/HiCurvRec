@@ -1,0 +1,628 @@
+{
+  "schema": "genrec.issue256.r03.lineage/1",
+  "round_id": "r03",
+  "candidate": "stage2_RQ-VAE/TIGER_role_conditioned_l1_rq",
+  "copy_source": "stage2_RQ-VAE/_archive/TIGER_periodic_budget_prefix_rq",
+  "copy_source_reason": "the R03 mechanism is the R02 mechanism family with one change; the copy is the archived R02 tree, which itself carries the #255 three-curvature lineage",
+  "frozen_tiger_source": "stage2_RQ-VAE/baseline/TIGER_RQ-VAE",
+  "baseline_source_hashes": {
+    "config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+    "distances/__init__.py": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+    "distances/distance.py": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+    "losses/__init__.py": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+    "losses/_pairs.py": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+    "losses/codebook.py": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+    "losses/commitment.py": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+    "losses/quantization.py": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+    "losses/reconstruction.py": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+    "model/__init__.py": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+    "model/layers.py": "0d5eacf6b3cbfe8874c2b8d54f7c7554de1ade392ae8b54521b53cecec4c994a",
+    "model/model.py": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+    "model/utils.py": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+    "train_config.py": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+    "train_rqvae.py": "a06d9f9716d9b9ea616cf6c3b8dcf8e354f6f3a96aea50bb4896a31e3b64cf26"
+  },
+  "files": [
+    {
+      "path": "assignment_floor.py",
+      "sha256": "0e0f2fbef74ac2d7c9cc1b67d50db1f164b95f59874d5eec9f539235908009da",
+      "baseline_sha256": null,
+      "inherited_sha256": "0e0f2fbef74ac2d7c9cc1b67d50db1f164b95f59874d5eec9f539235908009da",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "benchmark_entry.py",
+      "sha256": "22935ad7e3e96d0f8b8aa54cd8105a05975a30559bd136a964b8ccb1b5ab70d4",
+      "baseline_sha256": null,
+      "inherited_sha256": "efebb5885b8ce9a0ebbe429ded0d55defba3b1188d2007f3d97c9eed6d307857",
+      "role": "changed: the controller namespace and the round paths"
+    },
+    {
+      "path": "budget_point_entry.py",
+      "sha256": "e7cd50641075b6f76980f387900ef31f812248a29ef13896d138cdefa0d7418d",
+      "baseline_sha256": null,
+      "inherited_sha256": "ea8b913bfd888cb3ed5427bb76a388b15bb0a96f1a1c136686615e8467d9663f",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "catalogue_audit_entry.py",
+      "sha256": "c94c39bd235759de513d07a520bdd2db43e45b3dd79619738a9c7347a476a457",
+      "baseline_sha256": null,
+      "inherited_sha256": "9d1caccb6e978323a2f1a738a339404f6437e045778ec92402f4304fdb7f9c6d",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "config/train_config.json",
+      "sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+      "baseline_sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+      "inherited_sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "distances/__init__.py",
+      "sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+      "baseline_sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+      "inherited_sha256": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "distances/distance.py",
+      "sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+      "baseline_sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+      "inherited_sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "final_audit_entry.py",
+      "sha256": "babc6d60c9cbce4c95c98e863ceca733dbc0d77aab3beadc32a613d24cc6c68a",
+      "baseline_sha256": null,
+      "inherited_sha256": "4c9f9c33172588fd9beab212a8a1d00848bdb958f1103815297a71da8ad53751",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "kernel_validation_entry.py",
+      "sha256": "5ed8d083794b2b383f373e5ab6fff6f0aa9ecdd8f0a665d64065df4d19e69d7f",
+      "baseline_sha256": null,
+      "inherited_sha256": "5ed8d083794b2b383f373e5ab6fff6f0aa9ecdd8f0a665d64065df4d19e69d7f",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "layer_validation_entry.py",
+      "sha256": "16b7ef8eb2086b5334cd5caead9ba49fd1e2edb4564cb7e0698fe5dec7ad3717",
+      "baseline_sha256": null,
+      "inherited_sha256": "a0fac743aedcb6c87036d5f9364d55fbb2b39983dd54dacb7659196b6aecb705",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "losses/__init__.py",
+      "sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+      "baseline_sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+      "inherited_sha256": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "losses/_pairs.py",
+      "sha256": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+      "baseline_sha256": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+      "inherited_sha256": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "losses/codebook.py",
+      "sha256": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+      "baseline_sha256": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+      "inherited_sha256": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "losses/commitment.py",
+      "sha256": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+      "baseline_sha256": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+      "inherited_sha256": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "losses/quantization.py",
+      "sha256": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+      "baseline_sha256": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+      "inherited_sha256": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "losses/reconstruction.py",
+      "sha256": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+      "baseline_sha256": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+      "inherited_sha256": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "model/__init__.py",
+      "sha256": "fc51b6b47b052833e3bb249a00a581da6a6f27bb4905fb58237a2865354c0f81",
+      "baseline_sha256": "a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4",
+      "inherited_sha256": "fc51b6b47b052833e3bb249a00a581da6a6f27bb4905fb58237a2865354c0f81",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "model/calibration.py",
+      "sha256": "3ef15bc15500592833fecaa98a1d170b9f7845e16b03382af2018d314ab74fdd",
+      "baseline_sha256": null,
+      "inherited_sha256": "3ef15bc15500592833fecaa98a1d170b9f7845e16b03382af2018d314ab74fdd",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "model/curvature.py",
+      "sha256": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+      "baseline_sha256": null,
+      "inherited_sha256": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "model/estimator.py",
+      "sha256": "1bc4a1fda6276a4e31f7ba7ed69d5a33cb83bc8d0f241471d67a8b79a7f6ddd0",
+      "baseline_sha256": null,
+      "inherited_sha256": "1bc4a1fda6276a4e31f7ba7ed69d5a33cb83bc8d0f241471d67a8b79a7f6ddd0",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "model/geometry.py",
+      "sha256": "42964aaa6004f91adc96407b14e5e3ce54bec8dc6115b33891bd55cdb0ad02c5",
+      "baseline_sha256": null,
+      "inherited_sha256": "42964aaa6004f91adc96407b14e5e3ce54bec8dc6115b33891bd55cdb0ad02c5",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "model/layer_gate.py",
+      "sha256": "18bfc476986946bf47a5b80571630a3ef18b7653ff90856575d1240563421579",
+      "baseline_sha256": null,
+      "inherited_sha256": "18bfc476986946bf47a5b80571630a3ef18b7653ff90856575d1240563421579",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "model/layers.py",
+      "sha256": "9540ceeee2c32e6ff13c435003444760a4ffbb50aa20eb24fc33801ca4969405",
+      "baseline_sha256": "0d5eacf6b3cbfe8874c2b8d54f7c7554de1ade392ae8b54521b53cecec4c994a",
+      "inherited_sha256": "9540ceeee2c32e6ff13c435003444760a4ffbb50aa20eb24fc33801ca4969405",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "model/mechanism.py",
+      "sha256": "93af7b1f6168191ce71c2fe0ae5872dd6925b8390a7b392f5b3218aa6efabea5",
+      "baseline_sha256": null,
+      "inherited_sha256": "47b862ca58bd9b796d259bac9951aac60a30a77005ba8d192ccd4c65dc013c97",
+      "role": "changed: the level-1 cost uses the role mixture; levels 2 and 3 unchanged"
+    },
+    {
+      "path": "model/model.py",
+      "sha256": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+      "baseline_sha256": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+      "inherited_sha256": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "model/provenance.py",
+      "sha256": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+      "baseline_sha256": null,
+      "inherited_sha256": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "model/role_mix.py",
+      "sha256": "1639d914845cf0750234e44396fe959fd087caeb36c83dee7a48864cded6a832",
+      "baseline_sha256": null,
+      "inherited_sha256": null,
+      "role": "new: the role table and the learnable per-role curvature mixture"
+    },
+    {
+      "path": "model/selection.py",
+      "sha256": "cb0bcb306224af0c8562fa7f3ea6ae4bf4cbf2f4ba61ee5bae60916efb12938c",
+      "baseline_sha256": null,
+      "inherited_sha256": "cb0bcb306224af0c8562fa7f3ea6ae4bf4cbf2f4ba61ee5bae60916efb12938c",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "model/structure.py",
+      "sha256": "1bccb9f7dbf54f62a743258efc7faca5fc7f89c9cc0039b793c7f0e1985a126b",
+      "baseline_sha256": null,
+      "inherited_sha256": "1bccb9f7dbf54f62a743258efc7faca5fc7f89c9cc0039b793c7f0e1985a126b",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "model/structure_gate.py",
+      "sha256": "ce043cd2c395b45c9074e195547bd06ceb6915f2078c8f19781b049a4c209499",
+      "baseline_sha256": null,
+      "inherited_sha256": "ce043cd2c395b45c9074e195547bd06ceb6915f2078c8f19781b049a4c209499",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "model/utils.py",
+      "sha256": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+      "baseline_sha256": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+      "inherited_sha256": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "module_budget_entry.py",
+      "sha256": "f537b9caa3bcbb7c4b9c5aa644641c238261c216a5d539631b64576ab5a49876",
+      "baseline_sha256": null,
+      "inherited_sha256": "5df32d23c48bca120c6776fd573743539e4f7c9125fb3e8baedfd3753b20d224",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "periodic_budget_entry.py",
+      "sha256": "97a38d80c74720c94ab8c1d86959f2c3e9470f7fe10672e11512731a86343695",
+      "baseline_sha256": null,
+      "inherited_sha256": "f07a74691b5cce219e3a200265c970a97e6ed9fcbcd9fe60cba26b08955c80d5",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "role_table.json",
+      "sha256": "9ae0478ad993ccfa4b7d79346f9f97cc64f8a0949c08a668135628f4aeb3cfb4",
+      "baseline_sha256": null,
+      "inherited_sha256": null,
+      "role": "new: the per-item graphlet orbit role, derived from the training instances only"
+    },
+    {
+      "path": "shared_batches_entry.py",
+      "sha256": "574c0105dcd631ff96c56360b0e2c592a157ae0cd8a5b9878bd2f7dd81e5146f",
+      "baseline_sha256": null,
+      "inherited_sha256": "0b332f321503f5a957ee4097421ede9b71b7f4869b5007a904269d27a5353703",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "static_cache_check_entry.py",
+      "sha256": "e7a8faf691bc4b0136deb8fc12c7924bffa8fe6bac3352958f5cd788554c5d9e",
+      "baseline_sha256": null,
+      "inherited_sha256": "b03b421fd1b615678975bc0b9d75807a90603d664d2100f7971a19850a245905",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "static_consumers_entry.py",
+      "sha256": "3ab9401f6199a701d25fc82929ebd7fc0de3599c3b3cbc23828cb40b063895a6",
+      "baseline_sha256": null,
+      "inherited_sha256": "76ce3b3bdb0b5d3612706b13e790065e7f4e0cb0589c7c4ddb8fd90f26ebebab",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "steady_profile_entry.py",
+      "sha256": "dff66fcf84df4a67fe1962170c01e17523a758576d00cc581cb1a43ca8bc827b",
+      "baseline_sha256": null,
+      "inherited_sha256": "d344d4994d478b4f7901b1997f4227cfad0feb40ca9e3744ebe09691198912fa",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/reference.py",
+      "sha256": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
+      "baseline_sha256": null,
+      "inherited_sha256": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/reference_layer_gate.py",
+      "sha256": "b4fe04d6e66105b4face3fc1874254a5a6a7568a6a5ccc3b1f6a5d4b8fa18d31",
+      "baseline_sha256": null,
+      "inherited_sha256": "b4fe04d6e66105b4face3fc1874254a5a6a7568a6a5ccc3b1f6a5d4b8fa18d31",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_attention.py",
+      "sha256": "96ac7f522b6763ef5fc2819c9c30e53a08ff3fbd2c3befca23de0458ebf0d6a9",
+      "baseline_sha256": null,
+      "inherited_sha256": "96ac7f522b6763ef5fc2819c9c30e53a08ff3fbd2c3befca23de0458ebf0d6a9",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_attention_pipeline.py",
+      "sha256": "b88cf8f3037d76dba4154f1cf22fdd7866a8c8914bd4997cc1d2ea698e492f4c",
+      "baseline_sha256": null,
+      "inherited_sha256": "b88cf8f3037d76dba4154f1cf22fdd7866a8c8914bd4997cc1d2ea698e492f4c",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_batch_invariant_gates.py",
+      "sha256": "af86dcfce017bae66af929e4673cbc03e1ae1a4e1091d9170924d2cf5bf10795",
+      "baseline_sha256": null,
+      "inherited_sha256": "af86dcfce017bae66af929e4673cbc03e1ae1a4e1091d9170924d2cf5bf10795",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_budget_known_answers.py",
+      "sha256": "43068714dbe61e400f01fb4be23071f2031a9edbeebbe9cb25257487aa56bc06",
+      "baseline_sha256": null,
+      "inherited_sha256": "43068714dbe61e400f01fb4be23071f2031a9edbeebbe9cb25257487aa56bc06",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_budget_mutations.py",
+      "sha256": "a45192ed3389c15e4f24aab1008d496df6feb4256ad9915e1f1da0e2ce84ca6c",
+      "baseline_sha256": null,
+      "inherited_sha256": "a45192ed3389c15e4f24aab1008d496df6feb4256ad9915e1f1da0e2ce84ca6c",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_budget_reference.py",
+      "sha256": "47a382bd6b7a36e425c46c4ae8e72ff4f139effbc1123fecfd45302090eb0c2f",
+      "baseline_sha256": null,
+      "inherited_sha256": "2782b04e13f6ee9e54a10a53dc84ba77c885e0b4cf1191799a75f52008cd2c0e",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_calibration.py",
+      "sha256": "f6f6572ab663ffcf6463947b7b6fc142da77e7bbc742778f5ef9538d5047f7a1",
+      "baseline_sha256": null,
+      "inherited_sha256": "f6f6572ab663ffcf6463947b7b6fc142da77e7bbc742778f5ef9538d5047f7a1",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_cuda_math.py",
+      "sha256": "a293e59cfb537dbbaa6eb5e35f769918f6951151581e9817c5ae954b95bfba83",
+      "baseline_sha256": null,
+      "inherited_sha256": "a293e59cfb537dbbaa6eb5e35f769918f6951151581e9817c5ae954b95bfba83",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_curvature_loss.py",
+      "sha256": "d260562cb8990411a1680ac0792006db787619ddafcc5a6c54d09fa13142f633",
+      "baseline_sha256": null,
+      "inherited_sha256": "d260562cb8990411a1680ac0792006db787619ddafcc5a6c54d09fa13142f633",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_entry_calibration.py",
+      "sha256": "939039f18ee9d5662bb400771c5e0234ca9d1b921afa394098e624533665499b",
+      "baseline_sha256": null,
+      "inherited_sha256": "939039f18ee9d5662bb400771c5e0234ca9d1b921afa394098e624533665499b",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_estimator.py",
+      "sha256": "07d4cb1a0841b766d0e5220a2be7b7b66c5abdfe3d00e9c43e38fa59ba991531",
+      "baseline_sha256": null,
+      "inherited_sha256": "07d4cb1a0841b766d0e5220a2be7b7b66c5abdfe3d00e9c43e38fa59ba991531",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_execution.py",
+      "sha256": "aa27b8f2e5fe7ee92963fd00c2e8019639cdd87683390233a877941a609230cc",
+      "baseline_sha256": null,
+      "inherited_sha256": "cd3d37b2fb5bcbfdf39437837f96844b990471faa7902ef19dca3d8c187f374d",
+      "role": "changed: the R03 mechanism bytes differ from the parent"
+    },
+    {
+      "path": "tests/test_geometry_memory.py",
+      "sha256": "0ebae94fad15202119347deeedf7d1a2ac1e00772d58acf9e84bebdf89485c5c",
+      "baseline_sha256": null,
+      "inherited_sha256": "0ebae94fad15202119347deeedf7d1a2ac1e00772d58acf9e84bebdf89485c5c",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_known_answers.py",
+      "sha256": "5227bfa8fe927e96c28ea42d55d219bad2d09f490b3aad62346a12c0565da513",
+      "baseline_sha256": null,
+      "inherited_sha256": "5227bfa8fe927e96c28ea42d55d219bad2d09f490b3aad62346a12c0565da513",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_layer_gate.py",
+      "sha256": "05ac143248c4fca1e0b1a0d2752babe0f4a6bd22cd3f8879a9cb4b49c832ac8f",
+      "baseline_sha256": null,
+      "inherited_sha256": "05ac143248c4fca1e0b1a0d2752babe0f4a6bd22cd3f8879a9cb4b49c832ac8f",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_layer_mechanism.py",
+      "sha256": "aa31dc3ae21ac651f2bf9b12c1e8e10f0d43e46e6bf48e5d516024515ead37d1",
+      "baseline_sha256": null,
+      "inherited_sha256": "aa31dc3ae21ac651f2bf9b12c1e8e10f0d43e46e6bf48e5d516024515ead37d1",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_mechanism.py",
+      "sha256": "bf5b84db0466103245e99d049bd36e53e237b06712c19be5c6acc674d520d418",
+      "baseline_sha256": null,
+      "inherited_sha256": "bf5b84db0466103245e99d049bd36e53e237b06712c19be5c6acc674d520d418",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_module_budget.py",
+      "sha256": "95b61949775b09c4e0205e119d4a2c72146d4709aec02dc3f562524497e35fea",
+      "baseline_sha256": null,
+      "inherited_sha256": "95b61949775b09c4e0205e119d4a2c72146d4709aec02dc3f562524497e35fea",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_mutations.py",
+      "sha256": "c4f34277bcd17de7bb29dd580455628a16d44d6ab8dc9f2d6fff9b2c5d24a2fd",
+      "baseline_sha256": null,
+      "inherited_sha256": "15181954e02ba080ea7823daec69ac77623ecdbc6bdbc0283dee16b4753b0cd0",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_periodic_budget.py",
+      "sha256": "3554d75d8dacb7c878ddf844197deeb1e4c768bd972df64bc9c07669ab16a52d",
+      "baseline_sha256": null,
+      "inherited_sha256": "72c0d25460b16a36b8d89992cefc026bac39817aa32815d7d754e1e858d78546",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_profile_loader.py",
+      "sha256": "5dbf444ebae109621dd7b75370d670aa55a3a4fb434cb0ba9e26169b86990996",
+      "baseline_sha256": null,
+      "inherited_sha256": "0e311f4ce65c393d4273140924d0b35cc9be0e9ce35ace2c4a7e543c0df4870e",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_provenance.py",
+      "sha256": "93f44bd2f9bcb5114dc87f6538ba6e7ad5a469f78e1a0f0a9bc2135b30626b3b",
+      "baseline_sha256": null,
+      "inherited_sha256": "8c45537d5c083097492d73118654c03eda490f72d000a29691dd72ac69ee8f06",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_reference.py",
+      "sha256": "0a939f348e8ce897e64f2328357b12ff8059c7eb615284616ba03d17fb68a72c",
+      "baseline_sha256": null,
+      "inherited_sha256": "0a939f348e8ce897e64f2328357b12ff8059c7eb615284616ba03d17fb68a72c",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_role_mixture.py",
+      "sha256": "bf98ad42ad2998a8fe50ceb9e92ca0e0af6589f154cc44bd187880d10d6bdb6b",
+      "baseline_sha256": null,
+      "inherited_sha256": null,
+      "role": "new: the R03 acceptance tests"
+    },
+    {
+      "path": "tests/test_shared_assignment_oracle.py",
+      "sha256": "65da4c0f8062d9154d3f4c4b5fbc174770e81119d6accfabfe21871371f47bc3",
+      "baseline_sha256": null,
+      "inherited_sha256": "65da4c0f8062d9154d3f4c4b5fbc174770e81119d6accfabfe21871371f47bc3",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_sparse_adjoint.py",
+      "sha256": "5972c5c4432a15e9b986ca9a1eabd0cf528ebc2c66014112db17abbea83e82e3",
+      "baseline_sha256": null,
+      "inherited_sha256": "5972c5c4432a15e9b986ca9a1eabd0cf528ebc2c66014112db17abbea83e82e3",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_sparse_structure.py",
+      "sha256": "dfa0d16d375bd13af03e69f7df4faaa634c3564781730c34631af7892114ff6e",
+      "baseline_sha256": null,
+      "inherited_sha256": "dfa0d16d375bd13af03e69f7df4faaa634c3564781730c34631af7892114ff6e",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_static_means.py",
+      "sha256": "c1f496aabced794a58c47adc91cce915e87733bf2f934a3cc4ba0abafdd9640d",
+      "baseline_sha256": null,
+      "inherited_sha256": "c1f496aabced794a58c47adc91cce915e87733bf2f934a3cc4ba0abafdd9640d",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_static_reproducibility.py",
+      "sha256": "a9a6fa80d2ef55352af3275e00eec9c03e981981a7dcdbe2391734bfc237ad96",
+      "baseline_sha256": null,
+      "inherited_sha256": "a9a6fa80d2ef55352af3275e00eec9c03e981981a7dcdbe2391734bfc237ad96",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_structure.py",
+      "sha256": "e818e562c925c6aa6d3bd5853d2b1b1ba00e0f88f1831289537a11d375bec593",
+      "baseline_sha256": null,
+      "inherited_sha256": "e818e562c925c6aa6d3bd5853d2b1b1ba00e0f88f1831289537a11d375bec593",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_sync_free_batch.py",
+      "sha256": "0fa28c44ee9bb7ab2cc9d26fee74b88db9afa659fd57075d40a294df3865e964",
+      "baseline_sha256": null,
+      "inherited_sha256": "0fa28c44ee9bb7ab2cc9d26fee74b88db9afa659fd57075d40a294df3865e964",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "tests/test_three_geometry.py",
+      "sha256": "542015ddb04c215986bf91efb23a1d129834347ed4efa3d7e1ca434c1fff646e",
+      "baseline_sha256": null,
+      "inherited_sha256": "542015ddb04c215986bf91efb23a1d129834347ed4efa3d7e1ca434c1fff646e",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "train_config.py",
+      "sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+      "baseline_sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+      "inherited_sha256": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "train_rqvae.py",
+      "sha256": "1d8215490428d518342078b976c5c0facba9598c1e4ee28677d410066329c425",
+      "baseline_sha256": "a06d9f9716d9b9ea616cf6c3b8dcf8e354f6f3a96aea50bb4896a31e3b64cf26",
+      "inherited_sha256": "ccb4f0eb3411f197446c17f89f7f6c7cf621b9513161c4de2e488c58549fb66c",
+      "role": "changed: the arm name only"
+    },
+    {
+      "path": "unit_suite_entry.py",
+      "sha256": "ffc14e5c721ca07d1b4a9ea1ddead7769c0db715d12cbfe3c577fb554633c47a",
+      "baseline_sha256": null,
+      "inherited_sha256": "32b036580c94d2d394affa6b6078295f765061366dfe8d0ffca1bdbbc12fdde8",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "validation_entry.py",
+      "sha256": "36125d286d461a5ded3a79207f96bdf018accfef02685fbbfe68577f11dac584",
+      "baseline_sha256": null,
+      "inherited_sha256": "36125d286d461a5ded3a79207f96bdf018accfef02685fbbfe68577f11dac584",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    },
+    {
+      "path": "validation_inference_entry.py",
+      "sha256": "338ff305021f783c6db7a848cea384eba0fc0f203662a5195049b0729f20386e",
+      "baseline_sha256": null,
+      "inherited_sha256": "8f241fa50da73e5c2655ee5d447244eb96b0dcc1918a5de3d18a08713210726c",
+      "role": "changed: the controller namespace, the round paths and the arm name only; the mechanism bytes are inherited"
+    }
+  ],
+  "main_change": "the level-1 curvature mixture comes from the item graphlet orbit role instead of the item own free gate; levels 2 and 3 keep the learned mixture, the Sinkhorn balanced assignment, the assignment floor, the losses and the recipe are unchanged",
+  "new_assets": [
+    {
+      "path": "stage2_RQ-VAE/TIGER_role_conditioned_l1_rq/role_table.json",
+      "sha256": "9ae0478ad993ccfa4b7d79346f9f97cc64f8a0949c08a668135628f4aeb3cfb4",
+      "derivation": "tools/issue256/r03/derive_role_table.py",
+      "source": {
+        "path": "results/research/graphlet_roles/instances.npz",
+        "sha256": "a194dc364d24802a78f43f1573d7491645d134f04d55bb519a25e3ca1d47aade"
+      },
+      "split_rule": "training instances only"
+    }
+  ],
+  "changed_files": [
+    "benchmark_entry.py",
+    "budget_point_entry.py",
+    "catalogue_audit_entry.py",
+    "final_audit_entry.py",
+    "layer_validation_entry.py",
+    "model/mechanism.py",
+    "model/role_mix.py",
+    "module_budget_entry.py",
+    "periodic_budget_entry.py",
+    "role_table.json",
+    "shared_batches_entry.py",
+    "static_cache_check_entry.py",
+    "static_consumers_entry.py",
+    "steady_profile_entry.py",
+    "tests/test_budget_reference.py",
+    "tests/test_execution.py",
+    "tests/test_mutations.py",
+    "tests/test_periodic_budget.py",
+    "tests/test_profile_loader.py",
+    "tests/test_provenance.py",
+    "tests/test_role_mixture.py",
+    "train_rqvae.py",
+    "unit_suite_entry.py",
+    "validation_inference_entry.py"
+  ],
+  "added_files": [
+    "model/role_mix.py",
+    "role_table.json",
+    "tests/test_role_mixture.py"
+  ],
+  "removed_files": [],
+  "trained_weight_initialization": false,
+  "recipe": {
+    "world_size": 4,
+    "global_batch": 4096,
+    "seed": 42,
+    "epochs": 3000,
+    "stage3_epochs": 150,
+    "beam": 20
+  },
+  "engineering_dependency_repairs": [
+    {
+      "path": "results/research/issue256/rounds/r02/INHERITANCE.json",
+      "sha256": "cb5ebd5f858e3624c4c4bb8a2661fe08916f182abb6e330cefe0573873e870f0"
+    }
+  ],
+  "budget_scope_disclosure": "the role mixture is 9x3 parameters outside the eighteen calibrated module groups; the module budget machinery and its calibration are unchanged",
+  "contract_amendment": "rounds/r03/CONTRACT.md section 6: the batch-mean role mixture was withdrawn before any training because it would make the global SID batch-dependent; the learned per-role table is the batch-invariant form of the same claim"
+}
