@@ -43,12 +43,14 @@ description: Use when the task is an open GitHub issue that must be finished end
 
 正常运行的输出(日志、checkpoint、凭据、报告、台账、缓存条目)按既有 API 生成,不属于新 Infra。
 
-### 每个阶段的 Infra 完整性检查(两种模式都做)
+### Infra 完整性检查(合并检查点,不做每阶段双检)
 
-阶段开始与结束时,记录下列公共组件的 `path:sha256` 基线并重算比对:
-`tools/iteration/`、`tools/research/stage2/`、`tools/research/verification/`、`assets/manifest.json`、
-Stage3 训练入口、`CLAUDE.md`、本 Skill。指纹用 `tools/iteration/depgraph.py` 的导入闭包计算,
-**禁止为此新写检测工具**。发现未经授权的变化:停止推进,按 §1.1 记录,并按 §6.1 处理。
+一轮只在三个节点记录并重算下列公共组件的 `path:sha256`:
+①**本轮开始**;②**正式训练派发前**;③**归档/关闭前**。相邻阶段共用上一次结果,不重复检查。
+组件范围:`tools/iteration/`、`tools/research/stage2/`、`tools/research/verification/`、
+`assets/manifest.json`、Stage3 训练入口、`CLAUDE.md`、本 Skill。指纹用
+`tools/iteration/depgraph.py` 的导入闭包计算,**禁止为此新写检测工具**。
+发现未经授权的变化:停止推进,按 §1.1 记录,并按 §6.1 处理。
 运行期正常产物(日志、checkpoint、receipts、报告)不计入 Infra 变更。
 
 ## 九步执行流程
@@ -67,8 +69,9 @@ flowchart TD
 
 禁止在每轮迭代中重新建设已有 Infra、重新训练 TIGER 基线或无条件重复执行所有历史测试。
 
-每一步之前与之后都做上一小节的 Infra 完整性检查。遇到 Infra 错误时,只允许用**已有接口**
-重新执行或恢复;不得临时编写新的框架工具,不得绕过准入、不得伪造结果。
+按上一小节的三个检查点执行 Infra 完整性检查(开始、训练派发前、归档/关闭前),相邻阶段共用结果。
+遇到 Infra 错误时,只允许用**已有接口**重新执行或恢复;不得临时编写新的框架工具,不得绕过准入、
+不得伪造结果。
 
 ## 增量验证与重复执行禁令(默认)
 
@@ -361,7 +364,11 @@ cat  /home/wlia0047/ar57/wenyu/GeneRec/assets/manifest.json   # 若存在
 
 1. 输出日志路径已创建且可写,位于仓库内(不得用 `/tmp`,§86);
 2. 命令文本、开始时间、解释器与依赖版本、退出码会被写入同一日志或对应收据;
-3. 失败时保留日志,不覆盖已有证据;重跑使用新的 generation 名。
+3. 失败时保留日志,不覆盖已有证据;重跑使用新的 generation 名;
+4. 统一走**已有持久化接口**:训练/评估用 `stage2_start`、`stage3_start` 或 `launcher.launch`
+   (自带日志);测试与诊断从启动处用 shell 重定向到 `results/research/<issue>/checks/<unit>.log`,
+   并把命令与退出码写入同一日志。禁止裸 `torchrun`、禁止依赖 Agent 记忆事后补写日志、
+   禁止为记录日志新建 wrapper 工具(FROZEN)。
 
 未落盘输出的运行不得作为复用依据。如果因为没有保存而重跑,必须在 `CHECK_k.md` 写明
 "上次运行未落盘,证据不可用"——这正是本规则要消除的重复(实测反例:163 项候选测试因日志未保存
@@ -378,9 +385,9 @@ cat  /home/wlia0047/ar57/wenyu/GeneRec/assets/manifest.json   # 若存在
    测试失败;记录 `MUTATIONS.md`。一个都抓不到的变异说明测试没有检测力,先补测试。
 5. 只改机制层;路径、结果目录、日志、SID 导出、GPU/DDP 启动、端口、冻结超参归框架(§66–§68)。
    `FROZEN` 下这些框架组件只调用、不修改。
-6. 跑**受影响范围**:首次实现一个新机制时,候选树全部测试都属于受影响范围,跑一次全量并落盘;
-   之后的修复只复验被修改文件依赖闭包内的测试,未受影响的测试按指纹复用,不重跑全量。
-   同时跑机制直接依赖的既有框架测试,其余框架测试按依赖判断。
+6. 跑**受影响范围**:新机制**不自动**意味着所有历史测试失效。每轮按实际代码变更与依赖闭包确定
+   验证范围,只重验失效的单元;未受影响的测试按指纹与收据复用,不跑全量。
+   **只有影响范围无法可靠确定时,才跑候选树全量**,并在 `CHECK_k.md` 写明为何无法定界。
 
 ## 3. 检查循环(依赖感知,只重验受影响部分)
 
@@ -392,11 +399,18 @@ cat  /home/wlia0047/ar57/wenyu/GeneRec/assets/manifest.json   # 若存在
    - 用 `tools/iteration/depgraph.py` 的 `Spec(...).fingerprint()` 与 `plan(specs, cache=...)`
      计算受影响单元;指纹 = 导入闭包 + 资产 + 配置 + 测试自身 + 运行时;
    - 只有**指纹相同且有有效收据**的 PASS 可以复用,并在 `CHECK_k.md` 标注 `reused:<收据/指纹>`;
+   - **收据证据有效性**:复用前读取收据的 `evidence`,其中 `output` 文件必须存在,`output_sha256`
+     必须与当前文件一致;日志路径必须存在且非空。收据没有证据路径、文件缺失、哈希不符或日志为空
+     → 视为失效,必须实跑。**不得只看 `status=PASS` 与指纹**;
    - `FAIL`、`NOT_RUN`、缺收据、陈旧收据、依赖闭包已变的 PASS **一律不得复用**,必须实跑;
    - 机制数学与真实入口/四卡按 issue 实跑(这些结果不能由静态指纹替代);
    - 性能只在计算路径或性能相关配置发生变化时重跑完整 60 epoch 基准;否则复用有效的
      `PERFORMANCE.json` 并标注 `reused:<指纹>`;
    - 最终 run 身份以不可变 run 记录证明,不重复创建第二个同机制 run。
+   - **depgraph 已知限制**:`tools/iteration/depgraph.py` 对包内相对导入与动态导入
+     (`importlib`/`__import__`/插件式加载)解析不完整。本轮修改涉及这些形态时,影响范围视为
+     **不可靠确定**,必须扩大验证;该缺陷属于公共 Infra,在独立 Infra 任务中修复,
+     `FROZEN` 下不得修改该文件。
 3. 对受影响的条目跑对应检查:确定性测试、参考实现一致性、变异测试结果、分模块验证
    (输出/梯度/参数更新)、真实入口 1 epoch smoke、SID 技术有效、行为图契约、指标复算。
    记录命令、关键输出、指标值、文件 sha256。
