@@ -42,5 +42,33 @@
         "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/src"
       }
     ]
+  },
+  "controlled_entry": {
+    "tree": "stage2_RQ-VAE/_archive/TIGER_role_conditioned_l3_rq",
+    "gate_elapsed_s": 47.27,
+    "entry": "PASS",
+    "behavior_graph": "PASS",
+    "evidence": "results/research/issue257/controlled_entry.json"
+  },
+  "failed_attempt": {
+    "what": "archived tree validation_entry.py (its own 1-epoch diagnostic)",
+    "launcher_exit": 1,
+    "elapsed_s": 304.97,
+    "error": "gate weights do not cover the three experts",
+    "why": "the tree observer expects last_weights shaped (N,3); the mechanism stores the gate tensor (N,2,3). The admission path uses check_entry, so this latent assertion was never exercised; it is recorded, not hidden.",
+    "evidence": "results/research/issue257/short_candidate/logs/short_candidate.log"
+  },
+  "four_card_training_entry": {
+    "entry": "steady_profile_entry.py",
+    "launcher_exit": 0,
+    "elapsed_s": 67.17,
+    "ranks": 4,
+    "statuses": [
+      "PROFILED",
+      "PROFILED",
+      "PROFILED",
+      "PROFILED"
+    ],
+    "evidence": "results/research/issue257/controlled_four_card.json"
   }
 }

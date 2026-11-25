@@ -39,4 +39,6 @@ replays of already finished runs and a controlled short four-card entry, not a n
 - 2026-11-25 — pipeline package written; 14 tests green (`tools/issue257/tests`).
 - 2026-11-25 — replay R01/R04 PASS (13 checks each, independent reduction over all 57,439 rows).
 - 2026-11-25 — archive verification PASS for R04; replay cold 1.6 s / warm 1.7 s.
-- 2026-11-25 — controlled short four-card entry executed through `launcher.launch`.
+- 2026-11-25 — first controlled attempt (`validation_entry.py` of the archived tree) failed on a latent shape assertion of that tree's own observer (recorded in `TIMING.json.failed_attempt`); no claim was made from it.
+- 2026-11-25 — canonical controlled entry passed: `checks.run_all(archived R04 tree)` -> entry PASS, behaviour_graph PASS in 47.27 s (`controlled_entry.json`).
+- 2026-11-25 — real short four-card training entry passed: `steady_profile_entry.py` via `launcher.launch`, exit 0, four ranks PROFILED, 67.17 s (`controlled_four_card.json`); the run directory was moved out of the immutable R04 round into the pipeline directory.

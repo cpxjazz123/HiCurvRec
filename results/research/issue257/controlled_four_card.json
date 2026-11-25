@@ -1,0 +1,41 @@
+{
+  "schema": "genrec.pipeline.controlled_four_card/1",
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/_archive/TIGER_role_conditioned_l3_rq",
+  "entry": "steady_profile_entry.py",
+  "launcher_exit": 0,
+  "elapsed_s": 67.17,
+  "ranks": 4,
+  "statuses": [
+    "PROFILED",
+    "PROFILED",
+    "PROFILED",
+    "PROFILED"
+  ],
+  "run_dir": "results/research/issue257/controlled_entry_four_card/run",
+  "epochs": [],
+  "relocated_from": "results/research/issue256/rounds/r04/steady_profile/issue256_r04_steady_profile_3171053_590387564",
+  "note": "the archived tree resolves its own evidence directory from tools.issue256.r04.identity; the new run was moved into the pipeline directory so the immutable R04 round is not extended",
+  "rank_receipts": [
+    {
+      "path": "results/research/issue257/controlled_entry_four_card/run/rank_0.json",
+      "sha256": "d447938525155b207d111f530ccd92aff62553cbfafbe8703c16893cb6d3f940",
+      "bytes": 659769
+    },
+    {
+      "path": "results/research/issue257/controlled_entry_four_card/run/rank_1.json",
+      "sha256": "1106e599c13519c50c1da84c168f162e90257d7764877bcff30f721f7f529afb",
+      "bytes": 661404
+    },
+    {
+      "path": "results/research/issue257/controlled_entry_four_card/run/rank_2.json",
+      "sha256": "1e67d1da33de12cb4e3ed21bed97bdc69b904084823bcd0d4ef12ac4cdf0f60f",
+      "bytes": 659947
+    },
+    {
+      "path": "results/research/issue257/controlled_entry_four_card/run/rank_3.json",
+      "sha256": "497f4d0b206afd2889c8eb6b79aae0b97b2f1298ab5466a8d453a8e1f771e4dd",
+      "bytes": 660141
+    }
+  ],
+  "raw_policy": "raw per-item profile tables are kept out of Git; their sha256 and size are recorded here"
+}

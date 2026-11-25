@@ -1,0 +1,19 @@
+{
+  "schema": "genrec.pipeline.controlled_entry/1",
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/_archive/TIGER_role_conditioned_l3_rq",
+  "elapsed_s": 47.27,
+  "passed": true,
+  "admissible": true,
+  "checks": [
+    {
+      "name": "entry",
+      "status": "PASS",
+      "detail": "one epoch runs and exports the identifier (levels 256/256/256, collision 0.055436, allowed at the stage3 gate)"
+    },
+    {
+      "name": "behavior_graph",
+      "status": "PASS",
+      "detail": "raw train, split, graph, audit source and training dependencies verified"
+    }
+  ]
+}
