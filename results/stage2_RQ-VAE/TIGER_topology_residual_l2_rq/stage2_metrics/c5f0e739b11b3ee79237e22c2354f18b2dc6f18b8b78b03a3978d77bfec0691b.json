@@ -1,0 +1,83 @@
+{
+  "schema": "genrec.issue252.layer_metrics/1",
+  "arm": "TIGER_topology_residual_l2_rq",
+  "run_id": "stage2_127a3cca78dc49bf899ded006b2a11ca",
+  "sid": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_127a3cca78dc49bf899ded006b2a11ca/TIGER_topology_residual_l2_rq/result/item_sids.json",
+    "sha256": "c5f0e739b11b3ee79237e22c2354f18b2dc6f18b8b78b03a3978d77bfec0691b"
+  },
+  "inputs": {
+    "train": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+      "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+    },
+    "valid": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+      "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+    }
+  },
+  "catalogue": {
+    "items": 24587,
+    "distinct_l2_prefixes": 7714,
+    "distinct_l3_triples": 22115,
+    "l3_collision": 0.10054093626713301,
+    "l3_refinement_gain_bits": 2.290830100807458,
+    "prefix_entropy_bits": [
+      7.434431439062039,
+      12.068010406731975,
+      14.358840507539433
+    ],
+    "codebook_occupancy": [
+      256,
+      256,
+      256
+    ]
+  },
+  "validation": {
+    "scope": "recommendation valid last-history-to-target; exact legal uniform catalogue negatives",
+    "rows": 57439,
+    "effective_rows": 57439,
+    "excluded_empty_history": 0,
+    "excluded_empty_negative_population": 0,
+    "positive_hits_by_level": [
+      3713,
+      392,
+      37
+    ],
+    "expected_negative_mass_by_level": [
+      448.19968482521386,
+      24.735043663465866,
+      0.6200422665224141
+    ],
+    "positive_hit_rates_by_level": [
+      0.06464249029405109,
+      0.006824631348038789,
+      0.000644161632340396
+    ],
+    "negative_hit_probabilities_by_level": [
+      0.00780305515112056,
+      0.00043063151627754427,
+      1.0794795635759921e-05
+    ],
+    "l1_positive_hit_rate": 0.06464249029405109,
+    "l1_negative_hit_probability": 0.00780305515112056,
+    "l1_hard_er": 8.28425392902267,
+    "negative_sampling": false,
+    "conditional_g3": {
+      "status": "MISSING",
+      "reason": "legacy defining implementation removed; no surviving formula, not invented"
+    },
+    "conditional_log_enrichment_bits": 1.912789594220599,
+    "conditional_prefix_survival_difference": 0.06932039419666151
+  },
+  "output": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_topology_residual_l2_rq/stage2_metrics/c5f0e739b11b3ee79237e22c2354f18b2dc6f18b8b78b03a3978d77bfec0691b.json",
+  "read_stage3_scores": false,
+  "evaluator": {
+    "path": "/fs04/ar57/wenyu/GeneRec/tools/issue252/layer_metrics.py",
+    "sha256": "b739ed1e8b7a3c745dec8d5de06c369464f6b8fb3c65a0eb52a221d33b688816"
+  },
+  "contract": {
+    "path": "results/research/issue252/LAYER_METRICS_CONTRACT.md",
+    "sha256": "b33c614dabd2e54b23a31d055061fea2bcf1a7a9c6c87a7eb443a34162b0960a"
+  }
+}

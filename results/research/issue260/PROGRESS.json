@@ -1,0 +1,36 @@
+{
+  "issue": 260,
+  "commit": "3e7f2457",
+  "state": "WORKING",
+  "infra_mode": "FROZEN",
+  "done": [
+    "C1-frozen-checklist",
+    "C2-initial-hypotheses",
+    "C3-diagnosis",
+    "C3-contract",
+    "C5-local-check",
+    "C5-dispatch",
+    "C5-r06b-dispatch",
+    "C5-scale-probe",
+    "C5-r06b-stage2",
+    "C5-r06b-stage3",
+    "C5-r2-upload"
+  ],
+  "reused": [
+    "R05 checkpoint f93da1a7466d62f07c6482c64cf1a8efdd9dd1fa7ccdf7891be98d6d37bc7f26",
+    "R05 SID dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6",
+    "baseline SID 025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059"
+  ],
+  "not_run": [],
+  "failed": [],
+  "infra_faults": [],
+  "running": [],
+  "next_commands": [
+    "inspect graphlet-role evidence",
+    "choose a new mechanism only if a concrete positive hypothesis exists"
+  ],
+  "blocked_by": null,
+  "updated_at": "2026-11-26T04:20:00Z",
+  "run_id": "stage2_127a3cca78dc49bf899ded006b2a11ca",
+  "status": "NEGATIVE_R06B"
+}

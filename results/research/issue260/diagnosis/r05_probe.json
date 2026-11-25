@@ -1,0 +1,470 @@
+{
+  "schema": "genrec.issue260.r05_probe/1",
+  "run_id": "issue256_r05_formal",
+  "checkpoint": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/rqvae_best.pth",
+    "epoch": 3000,
+    "collision": 0.05527311180705252
+  },
+  "items": 24587,
+  "device": "cuda:0",
+  "export_match": true,
+  "role_distribution": {
+    "-1": 55,
+    "0": 324,
+    "1": 6814,
+    "2": 9342,
+    "3": 3611,
+    "4": 109,
+    "5": 122,
+    "6": 4036,
+    "7": 174
+  },
+  "role_mixture": {
+    "NO_ROLE": {
+      "weights": [
+        0.346366,
+        0.338092,
+        0.315542
+      ],
+      "entropy": 1.583853
+    },
+    "GLOBAL": {
+      "weights": [
+        0.333333,
+        0.333333,
+        0.333333
+      ],
+      "entropy": 1.584963
+    },
+    "role0": {
+      "weights": [
+        0.282902,
+        0.366574,
+        0.350524
+      ],
+      "entropy": 1.576214
+    },
+    "role1": {
+      "weights": [
+        0.291287,
+        0.380229,
+        0.328484
+      ],
+      "entropy": 1.576363
+    },
+    "role2": {
+      "weights": [
+        0.328109,
+        0.424039,
+        0.247853
+      ],
+      "entropy": 1.551154
+    },
+    "role3": {
+      "weights": [
+        0.186821,
+        0.410431,
+        0.402748
+      ],
+      "entropy": 1.5079
+    },
+    "role4": {
+      "weights": [
+        0.319464,
+        0.343781,
+        0.336756
+      ],
+      "entropy": 1.584281
+    },
+    "role5": {
+      "weights": [
+        0.345358,
+        0.340386,
+        0.314256
+      ],
+      "entropy": 1.583743
+    },
+    "role6": {
+      "weights": [
+        0.277418,
+        0.409696,
+        0.312886
+      ],
+      "entropy": 1.565107
+    },
+    "role7": {
+      "weights": [
+        0.361542,
+        0.382947,
+        0.255511
+      ],
+      "entropy": 1.563941
+    }
+  },
+  "gate": {
+    "level1": {
+      "mean_weights": [
+        0.37882697582244873,
+        0.38537418842315674,
+        0.2358027845621109
+      ],
+      "mean_entropy": 1.505192518234253,
+      "argmax_share": [
+        0.21230731687477122,
+        0.7869605889291089,
+        0.0007320941961199008
+      ],
+      "share_entropy_below_0_5": 0.004839956074348233,
+      "role_eta2": 0.13287951269197398,
+      "degree_pearson": [
+        0.34516110612884937,
+        -0.2543555336178286,
+        -0.2633263471902055
+      ]
+    },
+    "level2": {
+      "mean_weights": [
+        0.023439671844244003,
+        0.9499330520629883,
+        0.026701563969254494
+      ],
+      "mean_entropy": 0.1757175475358963,
+      "argmax_share": [
+        0.0038231585797372596,
+        0.9958921381217717,
+        0.00028470329849107255
+      ],
+      "share_entropy_below_0_5": 0.8773742221499167,
+      "role_eta2": 0.006376690788487392,
+      "degree_pearson": [
+        -0.02261132185158757,
+        -0.05344710573222223,
+        0.12635795432230496
+      ]
+    }
+  },
+  "token_probe": {
+    "tokens": {
+      "accuracy": 0.5658333333333333,
+      "majority_baseline": 0.385,
+      "train_items": 4800,
+      "test_items": 1200
+    },
+    "degree": {
+      "accuracy": 0.54,
+      "majority_baseline": 0.385,
+      "train_items": 4800,
+      "test_items": 1200
+    },
+    "tokens_plus_degree": {
+      "accuracy": 0.57,
+      "majority_baseline": 0.385,
+      "train_items": 4800,
+      "test_items": 1200
+    }
+  },
+  "quantisation_error": {
+    "L1": 1.910284481709823e-05,
+    "L2": 5.3869707699050196e-06,
+    "L3": 2.3247832814377034e-06
+  },
+  "margins": {
+    "L1": {
+      "mean": 0.10930800437927246,
+      "median": 0.0716814398765564,
+      "p10": 0.013072838075459003,
+      "relative_median": 1.121794581413269,
+      "fraction_gap_lt_1pct_best": 0.008134379956887787
+    },
+    "L2": {
+      "mean": 0.010439500212669373,
+      "median": 0.005930587649345398,
+      "p10": 0.0009638778865337372,
+      "relative_median": 0.403408408164978,
+      "fraction_gap_lt_1pct_best": 0.021596778785537073
+    },
+    "L3": {
+      "mean": 0.0019541822839528322,
+      "median": 0.0008814972825348377,
+      "p10": 0.00013782530731987208,
+      "relative_median": 0.16467013955116272,
+      "fraction_gap_lt_1pct_best": 0.04498312116158946
+    }
+  },
+  "code_changes": {
+    "behavior_off": {
+      "L1": 0.0,
+      "L2": 0.0010981412941798512,
+      "L3": 0.0010981412941798512,
+      "prefix2_change": 0.0010981412941798512,
+      "prefix3_change": 0.0010981412941798512
+    },
+    "curve_off": {
+      "L1": 0.015658681417008987,
+      "L2": 0.016878838410542156,
+      "L3": 0.0167161508114044,
+      "prefix2_change": 0.016878838410542156,
+      "prefix3_change": 0.016878838410542156
+    },
+    "both_off": {
+      "L1": 0.015658681417008987,
+      "L2": 0.016878838410542156,
+      "L3": 0.0167161508114044,
+      "prefix2_change": 0.016878838410542156,
+      "prefix3_change": 0.016878838410542156
+    },
+    "gate_uniform": {
+      "L1": 0.0050026436734859885,
+      "L2": 0.005043315573270427,
+      "L3": 0.00496197177370155,
+      "prefix2_change": 0.005043315573270427,
+      "prefix3_change": 0.005043315573270427
+    }
+  },
+  "prefixes": {
+    "base": {
+      "L1": {
+        "prefixes": 256,
+        "items_per_prefix_mean": 96.04296875,
+        "items_per_prefix_median": 59.5,
+        "role_purity_weighted": 0.3901248627323382,
+        "collision": 0.9895879936551837
+      },
+      "L2": {
+        "prefixes": 9609,
+        "items_per_prefix_mean": 2.558747008013321,
+        "items_per_prefix_median": 1.0,
+        "role_purity_weighted": 0.6283808516695815,
+        "collision": 0.6091837149713263
+      },
+      "L3": {
+        "prefixes": 23228,
+        "items_per_prefix_mean": 1.0585069743413122,
+        "items_per_prefix_median": 1.0,
+        "role_purity_weighted": 0.9632326025948672,
+        "collision": 0.05527311180705252
+      },
+      "triples": 23228
+    },
+    "behavior_off": {
+      "L1": {
+        "prefixes": 256,
+        "items_per_prefix_mean": 96.04296875,
+        "items_per_prefix_median": 59.5,
+        "role_purity_weighted": 0.3901248627323382,
+        "collision": 0.9895879936551837
+      },
+      "L2": {
+        "prefixes": 9611,
+        "items_per_prefix_mean": 2.5582145458328998,
+        "items_per_prefix_median": 1.0,
+        "role_purity_weighted": 0.6283401797697971,
+        "collision": 0.6091023711717574
+      },
+      "L3": {
+        "prefixes": 23227,
+        "items_per_prefix_mean": 1.058552546605244,
+        "items_per_prefix_median": 1.0,
+        "role_purity_weighted": 0.9632326025948672,
+        "collision": 0.05531378370683693
+      },
+      "triples": 23227
+    },
+    "curve_off": {
+      "L1": {
+        "prefixes": 256,
+        "items_per_prefix_mean": 96.04296875,
+        "items_per_prefix_median": 60.5,
+        "role_purity_weighted": 0.39020620653190713,
+        "collision": 0.9895879936551837
+      },
+      "L2": {
+        "prefixes": 9598,
+        "items_per_prefix_mean": 2.561679516565951,
+        "items_per_prefix_median": 1.0,
+        "role_purity_weighted": 0.6279334607719527,
+        "collision": 0.6096311058689552
+      },
+      "L3": {
+        "prefixes": 23216,
+        "items_per_prefix_mean": 1.0590541006202618,
+        "items_per_prefix_median": 1.0,
+        "role_purity_weighted": 0.9630292430959451,
+        "collision": 0.055761174604465724
+      },
+      "triples": 23216
+    },
+    "both_off": {
+      "L1": {
+        "prefixes": 256,
+        "items_per_prefix_mean": 96.04296875,
+        "items_per_prefix_median": 60.5,
+        "role_purity_weighted": 0.39020620653190713,
+        "collision": 0.9895879936551837
+      },
+      "L2": {
+        "prefixes": 9598,
+        "items_per_prefix_mean": 2.561679516565951,
+        "items_per_prefix_median": 1.0,
+        "role_purity_weighted": 0.6279334607719527,
+        "collision": 0.6096311058689552
+      },
+      "L3": {
+        "prefixes": 23216,
+        "items_per_prefix_mean": 1.0590541006202618,
+        "items_per_prefix_median": 1.0,
+        "role_purity_weighted": 0.9630292430959451,
+        "collision": 0.055761174604465724
+      },
+      "triples": 23216
+    },
+    "gate_uniform": {
+      "L1": {
+        "prefixes": 256,
+        "items_per_prefix_mean": 96.04296875,
+        "items_per_prefix_median": 59.0,
+        "role_purity_weighted": 0.3900841908325538,
+        "collision": 0.9895879936551837
+      },
+      "L2": {
+        "prefixes": 9605,
+        "items_per_prefix_mean": 2.559812597605414,
+        "items_per_prefix_median": 1.0,
+        "role_purity_weighted": 0.6279741326717371,
+        "collision": 0.609346402570464
+      },
+      "L3": {
+        "prefixes": 23228,
+        "items_per_prefix_mean": 1.0585069743413122,
+        "items_per_prefix_median": 1.0,
+        "role_purity_weighted": 0.9632326025948672,
+        "collision": 0.05527311180705252
+      },
+      "triples": 23228
+    }
+  },
+  "behaviour": {
+    "base": {
+      "L1": {
+        "positive_rate": 0.05354271119099423,
+        "negative_rate": 0.009336865008040866,
+        "lift": 5.734549138804458
+      },
+      "L2": {
+        "positive_rate": 0.0035947403273105666,
+        "negative_rate": 0.0003159587550846656,
+        "lift": 11.377245508982035
+      },
+      "L3": {
+        "positive_rate": 0.0004162330905306972,
+        "negative_rate": 7.567874373285404e-06,
+        "lift": 55.0
+      }
+    },
+    "behavior_off": {
+      "L1": {
+        "positive_rate": 0.05354271119099423,
+        "negative_rate": 0.009336865008040866,
+        "lift": 5.734549138804458
+      },
+      "L2": {
+        "positive_rate": 0.0035947403273105666,
+        "negative_rate": 0.0003159587550846656,
+        "lift": 11.377245508982035
+      },
+      "L3": {
+        "positive_rate": 0.0004162330905306972,
+        "negative_rate": 7.567874373285404e-06,
+        "lift": 55.0
+      }
+    },
+    "curve_off": {
+      "L1": {
+        "positive_rate": 0.05339135370352852,
+        "negative_rate": 0.00938605619146722,
+        "lift": 5.688369280387019
+      },
+      "L2": {
+        "positive_rate": 0.0035947403273105666,
+        "negative_rate": 0.0003140667864913442,
+        "lift": 11.44578313253012
+      },
+      "L3": {
+        "positive_rate": 0.0004162330905306972,
+        "negative_rate": 7.567874373285404e-06,
+        "lift": 55.0
+      }
+    },
+    "both_off": {
+      "L1": {
+        "positive_rate": 0.05339135370352852,
+        "negative_rate": 0.00938605619146722,
+        "lift": 5.688369280387019
+      },
+      "L2": {
+        "positive_rate": 0.0035947403273105666,
+        "negative_rate": 0.0003140667864913442,
+        "lift": 11.44578313253012
+      },
+      "L3": {
+        "positive_rate": 0.0004162330905306972,
+        "negative_rate": 7.567874373285404e-06,
+        "lift": 55.0
+      }
+    },
+    "gate_uniform": {
+      "L1": {
+        "positive_rate": 0.05354271119099423,
+        "negative_rate": 0.00938605619146722,
+        "lift": 5.704495061479541
+      },
+      "L2": {
+        "positive_rate": 0.0035947403273105666,
+        "negative_rate": 0.0003121748178980229,
+        "lift": 11.515151515151516
+      },
+      "L3": {
+        "positive_rate": 0.0004162330905306972,
+        "negative_rate": 7.567874373285404e-06,
+        "lift": 55.0
+      }
+    }
+  },
+  "behaviour_reference": {
+    "R05_item_sids": {
+      "L1": {
+        "positive_rate": 0.05354271119099423,
+        "negative_rate": 0.009336865008040866,
+        "lift": 5.734549138804458
+      },
+      "L2": {
+        "positive_rate": 0.0035947403273105666,
+        "negative_rate": 0.0003159587550846656,
+        "lift": 11.377245508982035
+      },
+      "L3": {
+        "positive_rate": 0.0004162330905306972,
+        "negative_rate": 7.567874373285404e-06,
+        "lift": 55.0
+      }
+    },
+    "baseline_item_sids": {
+      "L1": {
+        "positive_rate": 0.08349257402327122,
+        "negative_rate": 0.012613754611673446,
+        "lift": 6.619169041547923
+      },
+      "L2": {
+        "positive_rate": 0.00804086652161574,
+        "negative_rate": 0.0005013716772301579,
+        "lift": 16.037735849056606
+      },
+      "L3": {
+        "positive_rate": 0.0016460126761895753,
+        "negative_rate": 3.216346608646297e-05,
+        "lift": 51.1764705882353
+      }
+    }
+  }
+}
