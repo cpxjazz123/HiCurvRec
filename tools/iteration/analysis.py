@@ -126,7 +126,40 @@ def reduce_predictions(paths, expected_users):
             'test_ndcg@5': ndcg5 / total, 'test_ndcg@10': ndcg10 / total}
 
 
-def analyse(identity, *, repo=REPO, role_table=None):
+def saved_validation(path, identity):
+    """Validation metrics from a saved artefact, only when bound to this identity.
+
+    A missing or identity-mismatched artefact is ``NOT_AVAILABLE``; the test
+    split is never substituted and no value is fabricated.
+    """
+    if not path:
+        return {'status': 'NOT_AVAILABLE', 'reason': 'no_artifact'}
+    path = Path(path)
+    if not path.is_file():
+        return {'status': 'NOT_AVAILABLE', 'reason': 'missing artifact: %s' % path}
+    try:
+        payload = json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, ValueError) as exc:
+        return {'status': 'NOT_AVAILABLE', 'reason': 'unreadable artifact: %s' % exc}
+    binding = payload.get('identity') or {}
+    expected_run = identity.get('stage2_run_id') or identity.get('run_id')
+    recorded_run = binding.get('run_id') or binding.get('stage2_run_id')
+    if expected_run and recorded_run != expected_run:
+        return {'status': 'NOT_AVAILABLE',
+                'reason': 'identity run_id %r != %r' % (recorded_run, expected_run)}
+    expected_sid = (identity.get('sid') or {}).get('sha256')
+    recorded_sid = binding.get('sid_sha256')
+    if expected_sid and recorded_sid != expected_sid:
+        return {'status': 'NOT_AVAILABLE',
+                'reason': 'identity sid_sha256 %r != %r' % (recorded_sid, expected_sid)}
+    metrics = payload.get('metrics')
+    if not isinstance(metrics, dict):
+        return {'status': 'NOT_AVAILABLE', 'reason': 'artifact has no metrics'}
+    return {'status': 'PASS', 'metrics': metrics, 'path': str(path),
+            'identity': binding}
+
+
+def analyse(identity, *, repo=REPO, role_table=None, validation_artifact=None):
     sid_path = identity['sid']['path']
     rows = [row for row in json.loads(Path(sid_path).read_text(encoding='utf-8')).values()]
     chain = sid_chain(rows)
@@ -139,6 +172,7 @@ def analyse(identity, *, repo=REPO, role_table=None):
            'layer_record': ({'path': str(record_path), 'catalogue': record.get('catalogue'),
                              'validation': _selected(record.get('validation'))}
                             if record else None),
+           'saved_validation': saved_validation(validation_artifact, identity),
            'stage3': identity.get('metrics')}
     return out
 

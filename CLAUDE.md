@@ -294,20 +294,30 @@ rclone 通过环境变量配置。目标桶 `genrec`,第一层是 `01`、`02`…
     `timeline.py`(墙钟/CPU/GPU 区间合并计时)、`registry.py`(轮次状态机：
     REGISTERED→VALIDATED→ADMITTED→STAGE2_RUNNING→STAGE2_DONE→STAGE3_RUNNING→STAGE3_DONE→
     ANALYSED→ARCHIVED→CLOSED，禁止跳步，running 相位可幂等重入)、
-    `depgraph.py`(依赖感知验证：导入闭包+资产+配置+运行时的内容哈希指纹，PASS 仅同指纹复用)、
+    `depgraph.py`(依赖感知验证：绝对/多级相对/包 `__init__`/字面量动态导入闭包，资产、配置、测试与
+    按单元裁剪的运行时；PASS 仅在指纹与机器证据同时有效时复用；非字面量动态导入判 unresolved 并强制实跑)、
+    `execution.py`(持久执行入口：启动前写 `command.json`，stdout/stderr 落盘，记录退出码/耗时/版本；
+    非零退出为 FAIL，超时为 INCOMPLETE)、`integrity.py`(保护路径快照与新增/删除/修改比较)、
     `analysis.py`(以 run 身份参数化的 SID 链熵/role 条件/Stage3 指标/独立归约)、
     `replay.py`(只读复算历史 run 并与存档数字比对)、`report.py`(RUN_MANIFEST/TIMELINE/
     VALIDATION_PLAN/RECEIPTS/REPORT/VERDICT/ROUND_RESULT)、`archive.py`(校验 R2 四件套与台账，
     上传仍调用 `results/research/issue139/upload_stage3.py`)。
 96. **调用接口**：新轮次先 `Round.register(...)` 冻结合同与 run_id，再 `depgraph.plan(specs, cache=...)`
-    得到复用/重验集合，跑完把 `cache.record(...)` 写回；训练仍只经 `stage2_start`/`stage3_start`
-    与 `launcher.launch`；结束时 `replay` + `report.write_all` + `archive.verify`。
+    得到复用/重验集合（每个 RUN 带原因），长命令用 `execution.run` 或 `execution.run_and_record`
+    执行（训练仍只经 `stage2_start`/`stage3_start` 与 `launcher.launch`），跑完由 `run_and_record`
+    把指纹、日志、输出 sha256 与退出码写入收据；结束时 `replay` + `report.write_all` + `archive.verify`。
+    `report.write_all(..., executions=[...])` 写入 `EXECUTIONS.json` 并在 REPORT 记录执行次数与耗时。
     测试：`python3.9 -m pytest tools/iteration/tests -q`。
-97. **凭据失效规则**：指纹覆盖 (a) 测试与被测模块的传递导入闭包(含候选树内相对导入)、
-    (b) 声明的资产与配置、(c) 测试文件自身、(d) 运行时(解释器/torch/可见设备)。任一变化即失效；
-    FAIL/NOT_RUN/缺收据/陈旧收据一律不得复用；无关的文档或报告修改不得触发重验。
-    已实测四种场景(仅分析变化、共享算子变化、机制变化、无关文档变化)与一个闭包突变测试，
-    见 `results/research/issue257/VALIDATION_PLAN_DEMO.json` 与 `tools/iteration/tests/test_depgraph.py`。
+97. **凭据失效规则**：指纹覆盖 (a) 测试与被测模块的传递闭包——绝对导入、多级相对导入、包 `__init__`
+    链、字面量 `importlib.import_module`/`__import__`；非字面量动态导入记 `unresolved`，plan 强制 RUN；
+    (b) 声明的资产、配置与 `extra`（目录递归展开，缺失记 `missing` 并强制 RUN）；(c) 测试文件自身；
+    (d) 运行时（解释器/Python/torch/CUDA/可见设备），按 `Spec(runtime_keys=...)` 裁剪。
+    **收据分代**：`<unit>/<digest>/<generation>.json`，不覆盖历史；复用前 `Cache.lookup_valid` 校验
+    schema/unit/digest/fingerprint/PASS/command/exit=0/日志非空/output sha256，任一不符即失效。
+    删除或改名依赖用上一份收据的闭包与 `changed` 求交，触发一次复检；新收据落盘后不再循环。
+    真实入口、行为图、admission 等门槛用 `Spec(cacheable=False)`，永不复用。
+    已实测场景见 `results/research/issue259/SCENARIOS.json`（11 个固定 fixture），
+    回归测试见 `tools/iteration/tests/test_depgraph*.py`、`test_execution.py`、`test_integrity.py`。
 98. **失败恢复**：进程中断后用 `registry.Round(root, round_id)` 读回状态与 evidence 继续；
     `results/research/<issue>/PROGRESS.json` 只作断点，不作退出理由。
 99. **产物位置**：轮次证据 `results/research/<issue>/rounds/<round>/`，流水线复算

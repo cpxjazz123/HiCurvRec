@@ -1,0 +1,21 @@
+{
+  "issue": 259,
+  "commit": "730c98276422383a6a8c50898ff5a13484a45d77",
+  "state": "WORKING",
+  "infra_mode": "BUILD",
+  "done": ["C1-audit", "C1-contract", "C1-overhead-decomposition"],
+  "reused": [],
+  "not_run": ["C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10", "C11", "C12"],
+  "failed": [],
+  "infra_faults": [],
+  "running": [],
+  "next_commands": [
+    "write failing tests for relative/package/dynamic imports, missing inputs, evidence validation, env scoping",
+    "implement depgraph changes until green",
+    "add execution.py and integrity.py with tests",
+    "extend analysis/report; run scenario matrix and R05 replay",
+    "update SKILL.md/CLAUDE.md, VERDICT, commit, close"
+  ],
+  "blocked_by": null,
+  "updated_at": "2026-11-25T14:30:00Z"
+}

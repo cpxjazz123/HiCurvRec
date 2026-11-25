@@ -19,7 +19,7 @@ def _write(path, payload):
 
 
 def write_all(out_dir, *, identity, plan, receipts, analysis, timeline=None,
-              verdict=None, round_result=None):
+              verdict=None, round_result=None, executions=None):
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     written = {}
@@ -38,10 +38,21 @@ def write_all(out_dir, *, identity, plan, receipts, analysis, timeline=None,
     if timeline is not None:
         written['TIMELINE'] = _write(out / 'TIMELINE.json', timeline)
     written['ANALYSIS'] = _write(out / 'ANALYSIS.json', analysis)
+    if executions is not None:
+        counts = {}
+        for item in executions:
+            counts[item.get('status')] = counts.get(item.get('status'), 0) + 1
+        written['EXECUTIONS'] = _write(out / 'EXECUTIONS.json',
+                                       {'schema': 'genrec.pipeline.executions/1',
+                                        'total': len(executions), 'counts': counts,
+                                        'duration_s': round(sum(float(item.get('duration_s') or 0)
+                                                                for item in executions), 3),
+                                        'items': executions})
     if round_result is not None:
         written['ROUND_RESULT'] = _write(out / 'ROUND_RESULT.json', round_result)
     written['REPORT'] = _report(out / 'REPORT.md', identity=identity, analysis=analysis,
-                                plan=plan, timeline=timeline, verdict=verdict)
+                                plan=plan, timeline=timeline, verdict=verdict,
+                                executions=executions)
     if verdict is not None:
         written['VERDICT'] = _write(out / 'VERDICT.json', verdict)
         written['VERDICT_MD'] = _verdict_md(out / 'VERDICT.md', identity=identity, verdict=verdict,
@@ -49,7 +60,7 @@ def write_all(out_dir, *, identity, plan, receipts, analysis, timeline=None,
     return {key: str(path) for key, path in written.items()}
 
 
-def _report(path, *, identity, analysis, plan, timeline, verdict):
+def _report(path, *, identity, analysis, plan, timeline, verdict, executions=None):
     chain = analysis.get('sid_chain') or {}
     role = analysis.get('role_conditioning') or {}
     stage3 = identity.get('metrics') or {}
@@ -80,6 +91,15 @@ def _report(path, *, identity, analysis, plan, timeline, verdict):
     if timeline:
         lines += ['', '## Timing', '',
                   'merged wall: %ss, GPU wall: %ss' % (timeline.get('merged_wall_s'), timeline.get('gpu_wall_s'))]
+    if executions is not None:
+        counts = {}
+        for item in executions:
+            counts[item.get('status')] = counts.get(item.get('status'), 0) + 1
+        lines += ['', '## Validation activity', '',
+                  'executions: %d' % len(executions),
+                  'statuses: %s' % ', '.join('%s %s' % (key, counts[key]) for key in sorted(counts)),
+                  'total execution seconds: %s' % round(sum(float(item.get('duration_s') or 0)
+                                                              for item in executions), 3)]
     if verdict:
         lines += ['', '## Verdict', '', 'status: **' + str(verdict.get('status')) + '**']
         for row in verdict.get('checks', []):

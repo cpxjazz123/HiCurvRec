@@ -365,10 +365,10 @@ cat  /home/wlia0047/ar57/wenyu/GeneRec/assets/manifest.json   # 若存在
 1. 输出日志路径已创建且可写,位于仓库内(不得用 `/tmp`,§86);
 2. 命令文本、开始时间、解释器与依赖版本、退出码会被写入同一日志或对应收据;
 3. 失败时保留日志,不覆盖已有证据;重跑使用新的 generation 名;
-4. 统一走**已有持久化接口**:训练/评估用 `stage2_start`、`stage3_start` 或 `launcher.launch`
-   (自带日志);测试与诊断从启动处用 shell 重定向到 `results/research/<issue>/checks/<unit>.log`,
-   并把命令与退出码写入同一日志。禁止裸 `torchrun`、禁止依赖 Agent 记忆事后补写日志、
-   禁止为记录日志新建 wrapper 工具(FROZEN)。
+4. 统一走**已有持久化接口**:训练/评估用 `stage2_start`、`stage3_start` 或 `launcher.launch`;
+   测试与诊断用 `tools/iteration/execution.py::run` 或 `run_and_record`(启动前写 `command.json`,
+   日志、退出码、耗时与版本自动落盘;非零退出为 FAIL,超时为 INCOMPLETE),不要再手写 shell 重定向,
+   也不要为记录日志新建 wrapper。禁止裸 `torchrun`、禁止依赖 Agent 记忆事后补写日志。
 
 未落盘输出的运行不得作为复用依据。如果因为没有保存而重跑,必须在 `CHECK_k.md` 写明
 "上次运行未落盘,证据不可用"——这正是本规则要消除的重复(实测反例:163 项候选测试因日志未保存
@@ -407,10 +407,9 @@ cat  /home/wlia0047/ar57/wenyu/GeneRec/assets/manifest.json   # 若存在
    - 性能只在计算路径或性能相关配置发生变化时重跑完整 60 epoch 基准;否则复用有效的
      `PERFORMANCE.json` 并标注 `reused:<指纹>`;
    - 最终 run 身份以不可变 run 记录证明,不重复创建第二个同机制 run。
-   - **depgraph 已知限制**:`tools/iteration/depgraph.py` 对包内相对导入与动态导入
-     (`importlib`/`__import__`/插件式加载)解析不完整。本轮修改涉及这些形态时,影响范围视为
-     **不可靠确定**,必须扩大验证;该缺陷属于公共 Infra,在独立 Infra 任务中修复,
-     `FROZEN` 下不得修改该文件。
+   - **导入闭包覆盖**:多级相对导入、包 `__init__` 链、字面量 `importlib.import_module`/`__import__`
+     均已解析;非字面量动态导入记为 `unresolved`,plan 直接 RUN 并给出原因,不静默跳过。
+     依赖删除/改名用上一份收据的闭包与 `changed` 求交,复检一次后由新收据终止循环。
 3. 对受影响的条目跑对应检查:确定性测试、参考实现一致性、变异测试结果、分模块验证
    (输出/梯度/参数更新)、真实入口 1 epoch smoke、SID 技术有效、行为图契约、指标复算。
    记录命令、关键输出、指标值、文件 sha256。
@@ -706,7 +705,9 @@ Issue 明确授权 → 关闭为 BLOCKED。
 |---|---|
 | 冻结验收清单 / 断点 | `results/research/<issue>/RUN_LOG.md`、`PROGRESS.json` |
 | 候选边界 | `tools/research/stage2/{launcher,contract}.py` |
-| 依赖感知验证 | `tools/iteration/depgraph.py`(`Spec(...).fingerprint()` / `plan(specs, cache=...)` / `Cache.record`) |
+| 依赖感知验证 | `tools/iteration/depgraph.py`(`Spec(...).fingerprint()` / `plan(specs, cache=...)` / `Cache.lookup_valid` / `Cache.record`) |
+| 持久执行 | `tools/iteration/execution.py`(`run` / `run_and_record`:command.json、日志、退出码、耗时、超时) |
+| 完整性检查点 | `tools/iteration/integrity.py`(`snapshot` / `compare` / `write` / `read`) |
 | 轮次状态机 | `tools/iteration/registry.py`(`Round.register` / `.advance` / `.evidence`) |
 | 计时 | `tools/iteration/timeline.py`(`Timeline.start/stop/summary`,区间合并) |
 | 自动化分析 | `tools/iteration/analysis.py`(`analyse(identity)`,按 run 身份,无 issue/arm 硬编码) |
@@ -716,10 +717,13 @@ Issue 明确授权 → 关闭为 BLOCKED。
 
 规则:
 
-* 复用 PASS 的依据是**指纹**(导入闭包 + 资产 + 配置 + 测试自身 + 运行时),不是路径、时间或
-  候选名;FAIL/NOT_RUN/缺收据/陈旧收据不得复用。
-* 机制数学与真实入口/四卡仍按 issue 实跑;性能基准仅在计算路径/性能配置变化时重跑;最终 run 身份
-  以既有不可变 run 证明。公共层与未受影响单元可按指纹复用。
+* 复用 PASS 的依据是**指纹 + 机器证据**,不是路径、时间或候选名:指纹覆盖导入闭包/资产/配置/测试/
+  裁剪后的运行时;复用前必须通过 `Cache.lookup_valid` 的 schema、digest、fingerprint、PASS、
+  command、exit=0、日志非空、`output_sha256` 校验。FAIL/NOT_RUN/缺收据/证据损坏一律不得复用。
+* 收据按 `<unit>/<digest>/<generation>.json` 分代保存,不覆盖;长命令用 `execution.run` 或
+  `run_and_record`,不要手写重定向。
+* 机制数学与真实入口/四卡仍按 issue 实跑;真实入口、行为图、admission 用 `Spec(cacheable=False)`,
+  永不复用;性能基准仅在计算路径/性能配置变化时重跑;最终 run 身份以既有不可变 run 证明。
 * 训练仍只经 `stage2_start` / `stage3_start`(或 `launcher.launch`),不新写启动器。
 * 复算一律从原始产物(`item_sids.json`、`test_final.json`、predictions)重算,容差与期望值写死。
 * 测试:`python3.9 -m pytest tools/iteration/tests -q`(已知答案、依赖失效四场景、闭包突变、复算侦错)。
