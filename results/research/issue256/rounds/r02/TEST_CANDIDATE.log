@@ -5,7 +5,7 @@ tests/test_attention_pipeline.py::AttentionPipelineTests::test_duplicate_global_
     operators.append(torch.sparse_csr_tensor(crow, columns, values,
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-37 passed, 108 deselected, 1 warning in 84.50s (0:01:24)
+37 passed, 108 deselected, 1 warning in 84.29s (0:01:24)
 
 
 ....................................                                     [100%]
@@ -28,7 +28,7 @@ tests/test_sync_free_batch.py::SyncFreeAssemblyTests::test_assembly_matches_the_
     backends.update(_get_backends("networkx.backends"))
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-36 passed, 109 deselected, 48 warnings in 101.25s (0:01:41)
+36 passed, 109 deselected, 48 warnings in 101.73s (0:01:41)
 
 
 ....................................                                     [100%]
@@ -47,7 +47,7 @@ tests/test_layer_mechanism.py::LayerMechanismTests::test_four_token_types_are_pr
     operators.append(torch.sparse_csr_tensor(crow, columns, values,
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-36 passed, 109 deselected, 3 warnings in 119.99s (0:01:59)
+36 passed, 109 deselected, 3 warnings in 92.35s (0:01:32)
 
 
 ....................................                                     [100%]
@@ -66,5 +66,5 @@ tests/test_three_geometry.py: 72 warnings
     contexts.append(float(output_weight@np.tanh(score_weight@context+score_bias)+output_bias))
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-36 passed, 109 deselected, 74 warnings in 89.12s (0:01:29)
+36 passed, 109 deselected, 74 warnings in 80.91s (0:01:20)
 

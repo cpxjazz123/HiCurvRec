@@ -1,90 +1,90 @@
 {
-  "schema": "genrec.issue256.r02.admission_summary/1",
-  "passed": true,
-  "formal_training_started": false,
-  "command": "python3.9 -m tools.issue256.r02.run_tests && python3.9 -m tools.issue256.r02.launch_diagnostics && python3.9 -m tools.issue256.r02.admission && python3.9 -m tools.issue256.r02.collect_evidence",
-  "exit_code": 0,
-  "wall_seconds": 593.64,
-  "dispatch_binding_probe_exit_code": 0,
-  "source_files": 140,
-  "actual_rank_receipts": 12,
-  "unit_cases": {
-    "candidate": 145,
-    "assets": 64,
-    "controller_and_framework": 17
-  },
-  "skipped": 0,
-  "actual_module_groups": 18,
-  "gradient_reached_every_module": true,
-  "optimizer_updated_every_module": true,
   "actual_anchors": [
     1,
     51
   ],
+  "actual_module_groups": 18,
+  "actual_rank_receipts": 12,
   "actual_steps": [
     0,
     300
   ],
   "budget_groups_per_anchor": 17,
-  "rank_agreement": 4,
-  "initial_lambda": 4.810362042917404e-06,
-  "epoch51_lambda": 3.900953231550375e-07,
-  "stale_coefficient_mutation_caught_all4": true,
-  "inclusive_window": [
-    31,
-    60
-  ],
-  "mean_seconds": 0.7827437869894008,
-  "median_seconds": 0.6692326320335269,
-  "p95_seconds": 1.278036610223353,
-  "ceiling_seconds": 0.8,
   "ceiling_met": true,
+  "ceiling_seconds": 0.8,
+  "command": "python3.9 -m tools.issue256.r02.run_tests && python3.9 -m tools.issue256.r02.launch_diagnostics && python3.9 -m tools.issue256.r02.admission && python3.9 -m tools.issue256.r02.collect_evidence",
   "desired_0_4_to_0_5_met": false,
-  "machine_checks": {
-    "entry": "PASS",
-    "behavior_graph": "PASS"
-  },
+  "dispatch_binding_probe_exit_code": 0,
+  "epoch51_lambda": 4.955299573339289e-06,
   "evidence": {
-    "TEST_RESULTS.json": {
-      "path": "results/research/issue256/rounds/r02/TEST_RESULTS.json",
-      "sha256": "c866f8563862b595d95ed17b0eab3d4af2709e0a7955baf6802e43a1e419524c"
-    },
-    "MODULE_CHECKS.json": {
-      "path": "results/research/issue256/rounds/r02/MODULE_CHECKS.json",
-      "sha256": "66567665a57bc48558c0d8251ada8919b63220f4c949e0eb85f5d2ea333ee55f"
-    },
-    "VALIDATION.json": {
-      "path": "results/research/issue256/rounds/r02/VALIDATION.json",
-      "sha256": "1d8537409dfacea80bb319e74109cbac1414fc9208777ddf3ca65576aaf8d4bb"
-    },
-    "PERIODIC_VALIDATION.json": {
-      "path": "results/research/issue256/rounds/r02/PERIODIC_VALIDATION.json",
-      "sha256": "95d1d757dedb46e1f681abc28d15a9eea0339a4e8d232bcc4580885719df161d"
-    },
-    "PERFORMANCE.json": {
-      "path": "results/research/issue256/rounds/r02/PERFORMANCE.json",
-      "sha256": "1fcc4b592185abd0ce4ce06f121c1de36dc661e7cb3aa650c6ae0a7856482332"
-    },
-    "PROFILE_SUMMARY.json": {
-      "path": "results/research/issue256/rounds/r02/PROFILE_SUMMARY.json",
-      "sha256": "e311a43e11d0b0fa4b542c96c2345930618c30dda176bd7a8eb0ca1741424208"
-    },
     "ADMISSION.json": {
       "path": "results/research/issue256/rounds/r02/ADMISSION.json",
-      "sha256": "370b64b211d264026aa3d3fea2063e4f574de9755361be7b1fd41638659a4807"
+      "sha256": "f4239fa01d86b7c8a1d8acd6aa524ae21687f07ee009201b3580d0b013e56081"
     },
     "ADMITTED_CREDENTIALS.json": {
       "path": "results/research/issue256/rounds/r02/ADMITTED_CREDENTIALS.json",
       "sha256": "76330aa276dd7333604e9afa39a83cf37ecda5d9e30a3ff9d0e11239443c4d82"
     },
+    "LAYER_MUTATIONS.json": {
+      "path": "results/research/issue256/rounds/r02/LAYER_MUTATIONS.json",
+      "sha256": "9b96ede3451eb81913dbda5bc31a54b19b19468f391618db3a585b53c1fb8056"
+    },
+    "MODULE_CHECKS.json": {
+      "path": "results/research/issue256/rounds/r02/MODULE_CHECKS.json",
+      "sha256": "a7eed491db6785354cff596ae86449f44b5c190bf6ed48dd3cb2ea80bda75fbc"
+    },
     "MUTATIONS.json": {
       "path": "results/research/issue256/rounds/r02/MUTATIONS.json",
       "sha256": "4c414a0ba536c64328e79e5576d4b8b6b9b3ae17fc6bb2244d64e663456acd98"
     },
-    "LAYER_MUTATIONS.json": {
-      "path": "results/research/issue256/rounds/r02/LAYER_MUTATIONS.json",
-      "sha256": "9b96ede3451eb81913dbda5bc31a54b19b19468f391618db3a585b53c1fb8056"
+    "PERFORMANCE.json": {
+      "path": "results/research/issue256/rounds/r02/PERFORMANCE.json",
+      "sha256": "afd840b9efbb14e5daf8f875b6d4da24a8902efd39da035f07de70de06b94f88"
+    },
+    "PERIODIC_VALIDATION.json": {
+      "path": "results/research/issue256/rounds/r02/PERIODIC_VALIDATION.json",
+      "sha256": "5cbd48ab106403dd08d607edad82175ebbd9821a5005e584bc0d69aadc2240f9"
+    },
+    "PROFILE_SUMMARY.json": {
+      "path": "results/research/issue256/rounds/r02/PROFILE_SUMMARY.json",
+      "sha256": "77d50b61340664ef0461f98076aa2d321ba59a5e5c0ebcc317e1b995cbe56d82"
+    },
+    "TEST_RESULTS.json": {
+      "path": "results/research/issue256/rounds/r02/TEST_RESULTS.json",
+      "sha256": "ecf3aef501f4d6bc59fb3361b440667d0361b4480fa846e2274a933ec3a4248e"
+    },
+    "VALIDATION.json": {
+      "path": "results/research/issue256/rounds/r02/VALIDATION.json",
+      "sha256": "5238cefcaed3808d9c31be2cce0828982bd46c9ce75cec419794f26a08f54a5f"
     }
   },
-  "qualification": "Complete current-source admission permits exactly one frozen formal run. No final SID/Recall/R2 result or issue completion is claimed. Numerical repairs prevent single-factor causal attribution versus R01."
+  "exit_code": 0,
+  "formal_training_started": false,
+  "gradient_reached_every_module": true,
+  "inclusive_window": [
+    31,
+    60
+  ],
+  "initial_lambda": 6.590095381397987e-06,
+  "machine_checks": {
+    "behavior_graph": "PASS",
+    "entry": "PASS"
+  },
+  "mean_seconds": 0.7015530683721105,
+  "median_seconds": 0.6646260167472064,
+  "optimizer_updated_every_module": true,
+  "p95_seconds": 0.9259118186309934,
+  "passed": true,
+  "qualification": "Complete current-source admission of the repaired R02 source permits exactly one frozen formal run under issue256_r02_formal. No final SID/Recall/R2 result or issue completion is claimed. Numerical repairs prevent single-factor causal attribution versus R01.",
+  "rank_agreement": 4,
+  "schema": "genrec.issue256.r02.admission_summary/1",
+  "skipped": 0,
+  "source_files": 125,
+  "stale_coefficient_mutation_caught_all4": true,
+  "unit_cases": {
+    "assets": 64,
+    "candidate": 145,
+    "controller_and_framework": 22
+  },
+  "wall_seconds": 543.11
 }

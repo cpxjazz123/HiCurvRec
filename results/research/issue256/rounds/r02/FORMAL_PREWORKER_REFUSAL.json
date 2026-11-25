@@ -1,0 +1,30 @@
+{
+  "schema": "genrec.issue256.formal_preworker_refusal/1",
+  "attempt_command": "python3.9 -m tools.issue256.r02.launch_formal_run",
+  "service_name": "issue256-r02-formal",
+  "exit_code": 1,
+  "admitted_source_commit": "16259df8c01a55a8689f195bcd2c301fabe7a3bb",
+  "run_id": "issue256_r02_formal",
+  "error": "candidate source collides with generated execution entry",
+  "failure_function": "tools/issue252/run_workspace.py::freeze_run",
+  "failure_before_reservation": true,
+  "failure_before_launcher_launch": true,
+  "workspace_path_observation": "results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq: Path not found",
+  "formal_training_started": false,
+  "formal_training_budget_consumed": false,
+  "cause": "R01 inherited patch mistakenly retained its framework-generated execution_entry.py in the live R02 tree. The central freeze guard correctly refuses this ownership collision.",
+  "regression": {
+    "path": "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_formal_workspace.py",
+    "sha256": "cd053a9a1cad0ae828dfaf49a25b0df6dc3bc75608a01685efe48990474b311a",
+    "command": "python3.9 -m pytest stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_formal_workspace.py -q --basetemp=results/research/issue256/rounds/r02/formal_entry_pytest",
+    "exit_code": 1,
+    "output": {
+      "path": "results/research/issue256/rounds/r02/FORMAL_ENTRY_RED.log",
+      "sha256": "38aa01309639366ee5c591a33a99ef778b4ba77c4d5e518e2f0254bfae30403c"
+    },
+    "designated_error": "candidate source collides with generated execution entry",
+    "pytest_seconds": 0.16
+  },
+  "excluded_fixture_error": "FORMAL_ENTRY_FIXTURE_FAIL.log lacked the model source in the first test fixture; corrected source-complete fixture reproduces the real collision. It is not counted as semantic red.",
+  "fix": "Remove only the obsolete live generated adapter into preserved evidence; regenerate every exact-source credential before any worker launch. Keep the same sole formal run id, because no reservation or training occurred."
+}

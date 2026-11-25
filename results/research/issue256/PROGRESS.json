@@ -2,8 +2,10 @@
   "issue": 256,
   "state": "WORKING",
   "parent_commit": "c4ee00cdc4314b7fcab882acd939bf18ee3b0824",
-  "commit": "50bb8f47a27b85a3b955c4ab7dd076e4cf2fc0c0",
-  "source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
+  "commit": "16259df8c01a55a8689f195bcd2c301fabe7a3bb",
+  "r01_source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
+  "last_admitted_source_commit": "16259df8c01a55a8689f195bcd2c301fabe7a3bb",
+  "current_source_state": "re-admission required after pre-worker generated-entry ownership refusal",
   "done": [
     "acceptance frozen",
     "assets109/109",
@@ -52,29 +54,34 @@
     "affected Stage2/genrec MCP children reloaded and actual read-only/fail-closed calls observed",
     "full143/64/17 unit generation passed all ownership, installation, identical-instance and gate regressions",
     "later real replay failure reproduced by native2x2 balancedFalse/True counterexample; verifier now uses each captured population mode",
-    "final current-source145/64/17 complete unit generation passes with no skips",
-    "actual18-module gradients/updates, native replay, conditional shared-GNN VJPs, three-prefix routes and real1/51 refresh/stale mutation pass4/4",
-    "inclusive31–60 mean0.7827437869894008s includes eval50/refresh51 and passes0.8s ceiling; desired0.4–0.5s is missed",
-    "machine entry/behavior_graph and exact140-file/12-rank dispatch binding pass; CHECK_6:13PASS/0FAIL/4NOT_RUN"
+    "generation16259df8 complete145/64/17 cases, real18-module updates,1/51 budgets/mutations and inclusive0.7827437869894008s machine admission passed",
+    "generation16259df8 pushed with equal main SHAs; its formal call was refused before reservation/launcher because an inherited generated entry collided",
+    "actual freeze_run/load_run regression reproduces the same ownership failure; obsolete adapter preserved outside live source; no formal worker or budget consumed",
+    "inherited generated execution_entry.py removed from live source and preserved outside the tree; real freeze_run/load_run ownership regression green1case",
+    "canonical full-role source identity now includes profiler dependencies for every role; exact before/after equality replaced subset matching, 3 red regressions added",
+    "complete current-source re-admission: 145 candidate + 64 asset + 22 controller/framework cases, 18 module gradient/optimizer groups, anchors1/51 with 17 budget groups, 4 stale mutations caught, inclusive31-60 mean0.7015530683721105s, machine entry/behavior_graph PASS",
+    "dispatch binding probe exits0 over 125 exact-source files; CHECK_9 records 14PASS/0FAIL/3NOT_RUN"
   ],
   "not_run": [
     "R02 sole complete formal Stage2/Stage3 run and final pairing/R2",
     "strict final test_R@10>0.065 and issue256 closure"
   ],
   "running": [],
-  "failed_rounds": [{
-    "round": "r01",
-    "classification": "valid completed experiment; not adopted",
-    "test_recall@10": 0.05273420498267727,
-    "required": ">0.065",
-    "r2": "102",
-    "same_mechanism_rerun": false
-  }],
+  "failed_rounds": [
+    {
+      "round": "r01",
+      "classification": "valid completed experiment; not adopted",
+      "test_recall@10": 0.05273420498267727,
+      "required": ">0.065",
+      "r2": "102",
+      "same_mechanism_rerun": false
+    }
+  ],
   "blocked_by": null,
   "next_commands": [
-    "commit and push admitted current source/evidence; confirm allowed remote and equal main SHAs",
-    "reserve and launch exactly issue256_r02_formal through its source-bound dispatcher",
-    "observe post-launch real Trainer smoke, complete3000/150 epochs, exact SID/layers, validation and final strict test/R2 reconciliation"
+    "push the admitted current source and evidence, confirm remote address and equal main SHAs",
+    "dispatch exactly issue256_r02_formal through tools.issue256.r02.launch_formal_run (four cards, port 50202, world_size 4, 3000 epochs)",
+    "observe the real Trainer smoke, full3000/150 epochs, exact SID export, final strict test and exact R2 pairing"
   ],
-  "updated_at": "2026-11-24T23:31:40.015068+00:00"
+  "updated_at": "2026-11-25T00:17:09.593067+00:00"
 }

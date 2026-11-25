@@ -1,0 +1,22 @@
+{
+  "schema": "genrec.issue256.formal_entry_green/1",
+  "controller_test": {
+    "path": "tools/issue256/r02/test_formal_workspace.py",
+    "sha256": "c116f5a868d1494b229681946735edc5d2d9a9f9878e702936584e0de605a4ef"
+  },
+  "target_output": {
+    "path": "results/research/issue256/rounds/r02/FORMAL_ENTRY_GREEN.log",
+    "sha256": "93c97c10af4fc8b54296201243c032c5e8295479ca6b4adc06019033d6f9e282"
+  },
+  "exit_code": 0,
+  "passed": 1,
+  "pytest_seconds": 0.2,
+  "full_generation_units": {
+    "path": "results/research/issue256/rounds/r02/verification_generations/pre_profile_identity/TEST_RESULTS.json",
+    "sha256": "0866c76403cde47e1142e8125ef4ccbfab9420b62009e27d13c8e8b003435d4a",
+    "candidate": 145,
+    "assets": 64,
+    "controller_framework": 18
+  },
+  "qualification": "Ownership regression and all physical diagnostics/machine checks pass; later profile identity collection defect prevents formal dispatch. This is not a current complete admission credential."
+}

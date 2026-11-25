@@ -28,8 +28,6 @@ def write_json(path, value):
 
 def select(kind, files):
     matches = []
-    core_prefix = str(SOURCE.relative_to(ROOT)) + '/'
-    core = {name: digest for name, digest in files.items() if name.startswith(core_prefix)}
     for directory in sorted((EVIDENCE / kind).glob('*')):
         paths = [directory / ('rank_%d.json' % i) for i in range(4)]
         if not all(path.is_file() for path in paths):
@@ -37,8 +35,8 @@ def select(kind, files):
         reports = [read_json(path) for path in paths]
         if kind == 'steady_profile':
             good = all(row.get('status') == 'PROFILED' and row.get('source_unchanged')
-                       and row['source_hashes_before'] == row['source_hashes_after']
-                       and all(row['source_hashes_before'].get(name) == digest for name, digest in core.items())
+                       and row.get('source_hashes_before') == files
+                       and row.get('source_hashes_after') == files
                        for row in reports)
         else:
             good = all(str(row.get('status')).lower() == 'pass'

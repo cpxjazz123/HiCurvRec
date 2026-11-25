@@ -15,11 +15,32 @@
       "diagnosis_sha256": "8c2c2a2ecf7b232bde8e48ad2571e69a7d812ad8d02875cb6ee75aaf641ccadf",
       "data_identity": "INFRA.json",
       "validation_policy": "EVALUATION.md",
-      "stage2": {"run_id":"issue256_r01_formal","epochs":3000,"source_commit":"0cdfec9b024e568b5b08d96e777033844d66635e","sid_sha256":"201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f","checkpoint_sha256":"680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c","collision":0.06568511815186884},
-      "stage3": {"epochs":150,"world_size":4,"test_rows":57439,"test_recall@10":0.05273420498267727,"validation_recall@10":0.057643761207541916,"checkpoint_sha256":"d8540c837dedffd8291615bb6d7578308f74f6469e3182887685a08571082a96"},
+      "stage2": {
+        "run_id": "issue256_r01_formal",
+        "epochs": 3000,
+        "source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
+        "sid_sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
+        "checkpoint_sha256": "680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c",
+        "collision": 0.06568511815186884
+      },
+      "stage3": {
+        "epochs": 150,
+        "world_size": 4,
+        "test_rows": 57439,
+        "test_recall@10": 0.05273420498267727,
+        "validation_recall@10": 0.057643761207541916,
+        "checkpoint_sha256": "d8540c837dedffd8291615bb6d7578308f74f6469e3182887685a08571082a96"
+      },
       "r2_archive": "102",
-      "result": {"path":"rounds/r01/ROUND_RESULT.json","sha256":"337f64a6ab11a5e85e8d84792452ae042179e0c60d3c87ca4cb16cbadf19c420","strict_target_met":false},
-      "registration_snapshot": {"path":"rounds/r01/REGISTRATION.json","sha256":"e58b5ee5b657ceb35c8cdc82a4a4ed1e78e2e934ae47a36cda598577459b04c5"},
+      "result": {
+        "path": "rounds/r01/ROUND_RESULT.json",
+        "sha256": "337f64a6ab11a5e85e8d84792452ae042179e0c60d3c87ca4cb16cbadf19c420",
+        "strict_target_met": false
+      },
+      "registration_snapshot": {
+        "path": "rounds/r01/REGISTRATION.json",
+        "sha256": "e58b5ee5b657ceb35c8cdc82a4a4ed1e78e2e934ae47a36cda598577459b04c5"
+      },
       "live_source_archive": "stage2_RQ-VAE/_archive/TIGER_module_budget_prefix_rq",
       "next_decision": "Continue R1/R2 from measured final global-gradient drift and complete validation pairing; register a distinct hypothesis after inactive-tree archival, never rerun R01"
     },
@@ -30,22 +51,36 @@
       "parent_source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
       "arm": "TIGER_periodic_budget_prefix_rq",
       "run_id": "issue256_r02_formal",
-      "status": "ADMISSION_COMPLETE",
+      "status": "ADMITTED_READY_TO_DISPATCH",
       "change": "refresh the same maximal global module-gradient norm budget at native50epoch block anchors1,51,...,2951",
       "hypothesis": "reduce measured later original/curvature norm drift without new objectives or independently tuned frequency",
       "contract_sha256": "f80ae1d7b07268cf53d189e10fb447bf483aef5da913f2fd0b1faf3230fc519b",
       "diagnosis_sha256": "00f6eddc8b36a917d3912dddf35278ffd8eede5b448950328aa9ea62a448d2b7",
       "data_identity": "INFRA.json",
       "validation_policy": "EVALUATION.md",
-      "admission": {"path":"rounds/r02/ADMISSION_SUMMARY.json","mean_seconds":0.7827437869894008,"ceiling_met":true,"desired_target_met":false},
+      "admission": {
+        "path": "rounds/r02/ADMISSION_SUMMARY.json",
+        "sha256": "8938b49096dede363811d70664e152b3127d08cf04f472d5446db98c96a8ebeb",
+        "source_files": 125,
+        "check": "rounds/r02/CHECK_9.json",
+        "check_sha256": "aae72484172c67a20e9b42ea81eeaf8f68fe6230ffaf37a3fd94e6c0d48b0ebd",
+        "superseded": false
+      },
       "registration_snapshot": "rounds/r02/REGISTRATION.json",
-      "engineering_repairs": ["deterministic static CUDA means","highest dense float32 arithmetic","weak layer-owned rotating history"],
+      "engineering_repairs": [
+        "deterministic static CUDA means",
+        "highest dense float32 arithmetic",
+        "weak layer-owned rotating history",
+        "framework-owned generated execution entry removed from live source",
+        "canonical full-role source identity with exact before/after equality"
+      ],
       "causal_limit": "Cadence is the principal mechanism change; numerical repairs mean R01/R02 is not single-factor causal isolation",
+      "preworker_refusal": "rounds/r02/FORMAL_PREWORKER_REFUSAL.json",
       "stage2": null,
       "stage3": null,
       "r2_archive": null,
       "result": null,
-      "next_decision": "Push admitted source/evidence, then exactly one frozen3000epoch Stage2 and legal150epoch Stage3; no source or hypothesis change mid-run"
+      "next_decision": "Push admitted source/evidence with equal main SHAs, then start the single preregistered run issue256_r02_formal; no reservation exists yet"
     }
   ]
 }

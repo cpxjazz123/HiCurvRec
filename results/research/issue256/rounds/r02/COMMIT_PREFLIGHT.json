@@ -1,9 +1,21 @@
 {
-  "command": "python3 tools/commit_guard.py --max-paths 2000 --max-lines 400000",
+  "schema": "genrec.issue256.commit_preflight/1",
+  "command": "python3 tools/commit_guard.py --max-paths 600 --max-lines 20000",
   "exit_code": 0,
-  "observed_changed_paths": 1754,
-  "observed_changed_lines": 351472,
-  "files_at_least_2MiB": 0,
-  "reason": "The shared worktree includes large unrelated user changes and required small source-bound failure/admission evidence. The selective draft includes only owned Issue256/R02 paths and the three proven engineering-repair files plus its new regression; unrelated changes, root.gitignore, central R2 ledger and all binary products are excluded.",
-  "remote": "https://github.com/cpxjazz123/HiCurvRec.git"
+  "output": "commit_guard: ok (588 changed path(s), 14081 line(s), none >= 2 MiB)",
+  "worktree_totals": {
+    "changed_paths": 588,
+    "changed_lines": 14081
+  },
+  "this_commit_selection": {
+    "paths": 66,
+    "lines": 5010,
+    "paths_owned": [
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/",
+      "tools/issue256/",
+      "results/research/issue256/"
+    ]
+  },
+  "override_justification": "The default guard budget is a worktree-wide property. This shared worktree also holds 522 changed paths from other sessions (staged renames, deleted trees and the TIGER_three_expert_attention_rq arm) that this commit must not include. The override raises only the worktree totals to their measured values; no path at or above 2 MiB is admitted, and this commit selects 66 paths / 5010 lines, inside the default 150 path / 30000 line budget.",
+  "excluded_locally": "Unrelated untracked generated trees are excluded in .git/info/exclude only; no repository file was removed and no other agent staged entry was touched."
 }

@@ -29,6 +29,15 @@
   "trained_weight_initialization": false,
   "main_change": "same maximal positive global module-budget recalculated on native50epoch first-step anchors",
   "new_assets": [],
+  "removed_framework_generated_sources": [
+    {
+      "path": "execution_entry.py",
+      "sha256": "03d171ee5cac440f08853b2569185af1d6f8a0747c818418204983cd6ce38fb0",
+      "owner": "tools.issue252.run_workspace.freeze_run",
+      "reason": "Inherited generated adapter collides with the framework-owned immutable execution entry; live source must not contain it.",
+      "preserved_as": "results/research/issue256/rounds/r02/verification_generations/pre_generated_entry/execution_entry.py"
+    }
+  ],
   "files": [
     {
       "path": "assignment_floor.py",
@@ -77,13 +86,6 @@
       "sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
       "baseline_sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
       "inherited_sha256": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
-      "role": "inherited mechanism, diagnostics or frozen configuration"
-    },
-    {
-      "path": "execution_entry.py",
-      "sha256": "03d171ee5cac440f08853b2569185af1d6f8a0747c818418204983cd6ce38fb0",
-      "baseline_sha256": null,
-      "inherited_sha256": "03d171ee5cac440f08853b2569185af1d6f8a0747c818418204983cd6ce38fb0",
       "role": "inherited mechanism, diagnostics or frozen configuration"
     },
     {

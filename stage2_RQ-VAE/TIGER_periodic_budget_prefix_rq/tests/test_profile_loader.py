@@ -2,7 +2,6 @@
 from pathlib import Path
 import subprocess
 import sys
-from types import SimpleNamespace
 
 TREE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(TREE))
@@ -58,9 +57,8 @@ def test_changed_actual_tracker_source_invalidates_profile_identity(tmp_path, mo
         files.append(path)
     monkeypatch.setattr(benchmark_entry, 'ROOT', tmp_path)
     monkeypatch.setattr(benchmark_entry, '__file__', str(tree / 'benchmark_entry.py'))
-    training = SimpleNamespace(REPO_ROOT=tmp_path, __file__=str(tree / 'train_rqvae.py'))
     for path in files:
-        before = steady_profile_entry.source_binding(training)
+        before = steady_profile_entry.source_binding()
         path.write_text('VALUE=2\n')
-        after = steady_profile_entry.source_binding(training)
+        after = steady_profile_entry.source_binding()
         assert before != after, 'changed executed profiler dependency must invalidate its identity'

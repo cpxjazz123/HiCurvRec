@@ -1,0 +1,5 @@
+已准入源码16259df8推送并核对main同SHA；首次正式入口调用在任何reservation/launcher/GPU worker之前被正确拒绝：`candidate source collides with generated execution entry`。原因是R01继承patch错误保留了框架生成的execution_entry.py；不存在正式workspace，没有消耗一次正式训练预算，不能把这次调用记成已开训。
+
+新增真实freeze_run/load_run回归先红：复制实际trainer/model及碰撞adapter，1failed、0.16s，正是同一namespace错误。最初fixture缺model的setup失败另存，不冒充红。证据 `FORMAL_PREWORKER_REFUSAL.json` sha256 `c5b13009dfd1a618d8271302c9e6a0fae57660db8c54245ca513dc35792c8931`，旧完整准入凭据已冻结到pre_generated_entry/。
+
+修复只移除live树里不该继承的生成adapter，保留原字节证据；不碰数学/训练/分配。删除后旧source-bound凭据失效，必须完整重做准入并再推送，才可用同一唯一run_id首次启动worker；不绕过已有拒绝或复用旧凭据。

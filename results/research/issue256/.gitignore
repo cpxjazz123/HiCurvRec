@@ -20,3 +20,19 @@ rounds/*/evaluation/*_items.json
 !rounds/*/PROFILE_LOADER_RED.log
 # Keep the exact full payload in one compact committed mirror, not three pretty-printed copies.
 PARENT_DIAGNOSTICS.json
+# Raw four-rank diagnostic generations stay on shared storage; the compact SHA-bound receipts are committed.
+rounds/*/periodic_budget/
+rounds/*/budget_point/
+rounds/*/shared_batches/
+rounds/*/static_cache_check/
+rounds/*/static_consumers/
+rounds/*/test_launcher/
+rounds/*/*_launcher*/
+rounds/*/*pytest*/
+# Superseded generations keep a committed hash manifest instead of pretty-printed derived receipts.
+rounds/*/verification_generations/*/MODULE_CHECKS.json
+rounds/*/verification_generations/*/PROFILE_SUMMARY.json
+rounds/*/verification_generations/*/PERIODIC_VALIDATION.json
+rounds/*/verification_generations/*/ADMISSION.json
+rounds/*/verification_generations/*/VALIDATION.json
+rounds/*/verification_generations/*/PERFORMANCE.json

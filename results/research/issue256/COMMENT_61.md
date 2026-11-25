@@ -1,0 +1,3 @@
+R02 CHECK_7：8 PASS /1 FAIL /8 NOT_RUN。Issue重新读取仍OPEN、正文SHA未变。`CHECK_7.json` sha256 `3b204ea07f6ea6ba8e4367fbf57b93f25ccb32091c69ad1e561e74b413b0c421` 明确旧140文件准入只对16259df8那一代有效，当前删除框架生成adapter后不能复用。
+
+真实freeze_run/load_run回归已放到版本化R02控制测试，与机制源码分离；它检查live源能生成且只由框架拥有immutable adapter，并校验实际trainer字节/持久化snapshot。不是只检查文件名或源码文本。bg_515正在完整重做全部证据；唯一正式run_id保留给尚未发生的第一次worker训练。

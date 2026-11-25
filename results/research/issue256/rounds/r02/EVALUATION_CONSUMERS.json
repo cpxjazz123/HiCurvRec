@@ -1,0 +1,65 @@
+{
+  "schema": "genrec.issue256.r02.evaluation_consumers/1",
+  "frozen_at": "2026-11-24T23:52:22.712270+00:00",
+  "round_id": "r02",
+  "run_id": "issue256_r02_formal",
+  "before_any_formal_worker": true,
+  "before_any_r02_recommendation_test": true,
+  "stage3_required_protocol": {
+    "epochs": 150,
+    "seed": 42,
+    "world_size": 4,
+    "global_train_batch": 16384,
+    "per_rank_train_batch": 4096,
+    "per_rank_inference_batch": 1024,
+    "beam": 20,
+    "eval_interval": 5,
+    "eval_start_epoch": 75,
+    "early_eval_epochs": [
+      25,
+      50,
+      75,
+      100,
+      125
+    ],
+    "no_eval": true,
+    "skip_test": false
+  },
+  "evaluation_policy": {
+    "path": "results/research/issue256/EVALUATION.md",
+    "sha256": "4e0ea06e5799a1d6c9cce514bab8deba1e4ea320dc8dd9d4d16467d0b206e993"
+  },
+  "mechanism_forecasts": {
+    "path": "results/research/issue256/rounds/r02/CONTRACT.md",
+    "sha256": "f80ae1d7b07268cf53d189e10fb447bf483aef5da913f2fd0b1faf3230fc519b"
+  },
+  "source_files": {
+    "stage3_T5Train/train_HG-Rec.py": "54ca6bfbcd55a42e718660dd0004370a41a5e1c2c5038a86bbfc84f32b963690",
+    "tools/issue256/r02/external_validation.py": "d45175192effa2917d6534201ca81d894ccc879bd8e0bc0d0483e4526cb79c5a",
+    "tools/issue256/r02/reconcile_stage3.py": "b6d7edc95b532acc6c696bf528ed8e6d4925a45cd55b7f2cac3798ffdc272cbc",
+    "tools/issue256/r02/validation_diagnosis.py": "b6c9d1b0ff3b040bb6f91bdd070e68144c3cf0a8e42ecf378af791f7fb2161ab",
+    "tools/issue256/r02/finalize_stage2.py": "e8a4bd3372b28e94b21dd00a874de1ccc27612735c4017eb1a83d14f5d628db4",
+    "tools/issue256/r02/extract_catalogues.py": "c6448c6d8ec060da9ddebeefe02fd0501d54afa8b33ebf91dd3dde1a6f910b4f",
+    "tools/issue256/r02/evaluate_arm.py": "0191a1163b21ddf2e1f31c286f497d3caad1cfe5a7c498fcff0a74a410661b4c",
+    "tools/issue256/r02/reconcile_stage2.py": "93644cc45ac9a9a528a1e0c20a0519580261bf2ff66505bed4cab9694318f410",
+    "tools/issue256/r02/final_gradients.py": "8842119ccd1e5accf8314ac42f412dc5a0087b32e6a91b8504c697bf4db18078",
+    "tools/issue256/r02/final_global_gradients.py": "2caf795a8ce4961ecc7e32ac1e325f31fb50907b88b5958a19dc5fc99d8bad96"
+  },
+  "data_identity": {
+    "path": "results/research/issue256/INFRA.json",
+    "sha256": "1417672d92d53f9b874c03ab235b6889d80e31aa07f0cd50a31a41732302ceb2"
+  },
+  "test_access_snapshot": {
+    "path": "results/research/issue256/rounds/r02/TEST_ACCESS_SNAPSHOT.json",
+    "sha256": "5ca56d5716c98a6be1d4ab7bb6adb7e4ba2f00c50627643915450755bf1dfdb7"
+  },
+  "selection_rules": [
+    "Only the actual final3000-epoch SID/checkpoint and final150-epoch Stage3 checkpoint; no best-score selection or repeat run.",
+    "Exact unchanged Stage3 SID/vocabulary/EOS/ranking/seen-filter rules; no extra SID level offset or decoder rewrite.",
+    "Full fixed57439-row recommendation validation after final weights; final test only under the authorized complete Stage3 evaluation.",
+    "Independent reduction of all persisted predictions must reconcile R@5/10 and NDCG@5/10 before adoption.",
+    "Mechanism decisions use train/validation and fixed structure-validation only; no recommendation-test item errors or structure-test labels as supervision."
+  ],
+  "strict_closure_rule": "one legal complete final test_R@10 >0.065 plus matching source/SID/checkpoints/full protocol/independent reductions/R2",
+  "bias_disclosure": "The fixed final test is reused across candidate rounds as an exploratory stopping threshold. No untouched independent confirmation population is available in this frozen dataset; no unbiased final generalization or isolated cadence-causality claim."
+}

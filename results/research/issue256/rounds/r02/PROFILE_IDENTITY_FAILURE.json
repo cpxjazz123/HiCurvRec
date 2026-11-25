@@ -1,0 +1,42 @@
+{
+  "schema": "genrec.issue256.profile_identity_failure/1",
+  "pipeline_exit_code": 1,
+  "pipeline_wall_seconds": 825.26,
+  "completed": [
+    "real freeze_run/load_run green1case",
+    "complete145/64/18 unit coverage, no skips",
+    "all four-rank module/native/periodic/performance diagnostics",
+    "machine entry and behavior graph PASS"
+  ],
+  "failed_stage": "collection only",
+  "error": "steady_profile requires one complete exact-source run, found 2",
+  "cause": "Profiler selector tested only a subset of current candidate paths. It ignored removed candidate files and missing/changed controller dependencies, so an obsolete profile shadowed the actual exact generation.",
+  "observed_identity_domains": {
+    "current_machine_files": 122,
+    "current_profiler_files": 124,
+    "only_profiler": [
+      "tools/issue252/profile_units.py",
+      "tools/issue252/profiling.py"
+    ],
+    "different_common_values": 0
+  },
+  "collector_output": {
+    "path": "results/research/issue256/rounds/r02/verification_generations/pre_profile_identity/COLLECT_RUN.log",
+    "sha256": "731ea6e07bfbfbc3247c6cd48922c4fb3e0e2cc219f9a387b8bf03f648a27c23"
+  },
+  "red_regression": {
+    "path": "tools/issue256/r02/test_profile_identity.py",
+    "sha256": "43c0349cc47b48f5bc7a5a4190b2714405e834e1e98da5f7952bc8fb985b4d80",
+    "command": "python3.9 -m pytest tools/issue256/r02/test_profile_identity.py -q --basetemp=results/research/issue256/rounds/r02/profile_identity_pytest",
+    "exit_code": 1,
+    "failed": 3,
+    "passed": 1,
+    "pytest_seconds": 0.18,
+    "output": {
+      "path": "results/research/issue256/rounds/r02/PROFILE_IDENTITY_RED.log",
+      "sha256": "b1dd020ab2e4323dc4349852d28f8bc7ba2b5029efd205ab46f22e2c39de5752"
+    }
+  },
+  "repair": "One canonical full inventory now includes profiler dependencies for every role. The profiler delegates to it, and collection requires exact full before/after equality. No candidate-only subset, mtime, speed or latest fallback. Real duplicate exact generations still fail closed.",
+  "formal_training_started": false
+}

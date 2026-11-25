@@ -34,6 +34,8 @@ def source_binding(kind):
     from tools.issue252.archive_audit import imported_repo_sources
     files.update(imported_repo_sources(tree, ROOT))
     for relative in ('assets/manifest.json', 'tools/issue252/archive_audit.py',
+                     'tools/issue252/profiling.py',
+                     'tools/issue252/profile_units.py',
                      'tools/issue256/r02/launch_diagnostics.py',
                      'tools/issue256/r02/layer_validation_entry.py',
                      'tools/research/stage2/launcher.py',

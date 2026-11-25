@@ -1,19 +1,19 @@
 {
   "schema": "genrec.issue256.performance/1",
-  "source_run_directory": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/benchmark/issue256_r02_benchmark_2884854_586557521",
-  "run_id": "issue256_r02_benchmark_2884854_586557521",
+  "source_run_directory": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/benchmark/issue256_r02_benchmark_3300455_586833257",
+  "run_id": "issue256_r02_benchmark_3300455_586833257",
   "scope": "Actual four-rank world4/global4096 diagnostic, 60 complete inclusive epochs; every optimizer, DDP, structural branch, periodic evaluation and inter-epoch wait is inside the window.",
   "window": {
     "epochs": 30,
     "first_epoch": 31,
     "last_epoch": 60
   },
-  "mean_seconds": 0.7827437869894008,
-  "median_seconds": 0.6692326320335269,
-  "p95_seconds": 1.278036610223353,
+  "mean_seconds": 0.7015530683721105,
+  "median_seconds": 0.6646260167472064,
+  "p95_seconds": 0.9259118186309934,
   "p95_definition": "nearest-rank ceil(0.95*N)",
-  "min_seconds": 0.6182748656719923,
-  "max_seconds": 3.0693041561171412,
+  "min_seconds": 0.6237474968656898,
+  "max_seconds": 1.2450880138203502,
   "target_seconds": 0.4,
   "expected_max_seconds": 0.5,
   "authorized_ceiling_seconds": 0.8,
@@ -22,43 +22,43 @@
   "ceiling_met": true,
   "verdict": "inclusive ceiling=True; target=False; expected=False",
   "historical_issue252_steady_seconds": 0.6405808043,
-  "relative_to_historical": 1.2219282590660059,
-  "initialization_seconds": 40.32118894252926,
-  "total_wall_seconds": 90.72173770610243,
+  "relative_to_historical": 1.0951827835970491,
+  "initialization_seconds": 39.57885135896504,
+  "total_wall_seconds": 83.82826361712068,
   "periodic_evaluation_epochs": [
     50
   ],
   "periodic_evaluation_cost": [
     {
       "epoch": 50,
-      "epoch_seconds": 1.2765281358733773,
-      "median_other_epoch_seconds": 0.6572230700403452,
-      "extra_seconds": 0.6193050658330321
+      "epoch_seconds": 1.2435597535222769,
+      "median_other_epoch_seconds": 0.667514297645539,
+      "extra_seconds": 0.5760454558767378
     }
   ],
-  "periodic_amortised_seconds_per_epoch": 0.020643502194434404,
+  "periodic_amortised_seconds_per_epoch": 0.01920151519589126,
   "optimizer_steps_total": null,
   "optimizer_steps_per_epoch_per_rank": [
     6
   ],
   "optimizer_steps_measured_total": 1440,
-  "peak_allocated_bytes": 9502003712,
+  "peak_allocated_bytes": 9502933504,
   "final_epoch_losses": {
     "epoch": 60,
-    "loss": 0.0001976104686036706,
-    "recon": 0.0001596538641024381,
-    "curvature_estimate": 1.2365342378616333,
-    "gradient_norm_before_clip": 0.00025972846196964383,
+    "loss": 0.0001693580998107791,
+    "recon": 0.0001563354308018461,
+    "curvature_estimate": 1.2743430137634277,
+    "gradient_norm_before_clip": 0.0001317064161412418,
     "gate_mean": [
-      0.333182156085968,
-      0.33317726850509644,
-      0.3336406350135803,
-      0.33186063170433044,
-      0.3350334167480469,
-      0.3331058919429779,
-      0.3356573283672333,
-      0.33212360739707947,
-      0.33221909403800964
+      0.3361738324165344,
+      0.32958441972732544,
+      0.33424174785614014,
+      0.3142338991165161,
+      0.3454302251338959,
+      0.3403359353542328,
+      0.3255169093608856,
+      0.3371874690055847,
+      0.33729562163352966
     ]
   },
   "recipe": {
@@ -70,10 +70,10 @@
     "config_sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6"
   },
   "per_rank_worker_pids": [
-    2884863,
-    2884864,
-    2884865,
-    2884866
+    3300467,
+    3300468,
+    3300469,
+    3300470
   ],
   "not_claimed": [
     "0.4 s/epoch target achieved",
@@ -87,13 +87,12 @@
     "tree": "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq",
     "files": {
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/assignment_floor.py": "0e0f2fbef74ac2d7c9cc1b67d50db1f164b95f59874d5eec9f539235908009da",
-      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/benchmark_entry.py": "a9139080228c9294eb710dc226602533cad72770bf61c953386b84e08e9f7853",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/benchmark_entry.py": "efebb5885b8ce9a0ebbe429ded0d55defba3b1188d2007f3d97c9eed6d307857",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/budget_point_entry.py": "ea8b913bfd888cb3ed5427bb76a388b15bb0a96f1a1c136686615e8467d9663f",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/catalogue_audit_entry.py": "9d1caccb6e978323a2f1a738a339404f6437e045778ec92402f4304fdb7f9c6d",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/distances/__init__.py": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/distances/distance.py": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
-      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/execution_entry.py": "03d171ee5cac440f08853b2569185af1d6f8a0747c818418204983cd6ce38fb0",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/final_audit_entry.py": "4c9f9c33172588fd9beab212a8a1d00848bdb958f1103815297a71da8ad53751",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/kernel_validation_entry.py": "5ed8d083794b2b383f373e5ab6fff6f0aa9ecdd8f0a665d64065df4d19e69d7f",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/layer_validation_entry.py": "a0fac743aedcb6c87036d5f9364d55fbb2b39983dd54dacb7659196b6aecb705",
@@ -122,7 +121,7 @@
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/shared_batches_entry.py": "0b332f321503f5a957ee4097421ede9b71b7f4869b5007a904269d27a5353703",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/static_cache_check_entry.py": "b03b421fd1b615678975bc0b9d75807a90603d664d2100f7971a19850a245905",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/static_consumers_entry.py": "76ce3b3bdb0b5d3612706b13e790065e7f4e0cb0589c7c4ddb8fd90f26ebebab",
-      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/steady_profile_entry.py": "73551d1ecc5b5bc4b662a52ca1e0801b78f7744715471079ef975a15e8638af7",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/steady_profile_entry.py": "d344d4994d478b4f7901b1997f4227cfad0feb40ca9e3744ebe09691198912fa",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/reference.py": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/reference_layer_gate.py": "b4fe04d6e66105b4face3fc1874254a5a6a7568a6a5ccc3b1f6a5d4b8fa18d31",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_attention.py": "96ac7f522b6763ef5fc2819c9c30e53a08ff3fbd2c3befca23de0458ebf0d6a9",
@@ -145,7 +144,7 @@
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_module_budget.py": "95b61949775b09c4e0205e119d4a2c72146d4709aec02dc3f562524497e35fea",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_mutations.py": "15181954e02ba080ea7823daec69ac77623ecdbc6bdbc0283dee16b4753b0cd0",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_periodic_budget.py": "72c0d25460b16a36b8d89992cefc026bac39817aa32815d7d754e1e858d78546",
-      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_profile_loader.py": "8a7f1ae3cc63623a2d06c98e419e2139e908b6ac78d5704a8adc976f1f452a7b",
+      "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_profile_loader.py": "0e311f4ce65c393d4273140924d0b35cc9be0e9ce35ace2c4a7e543c0df4870e",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_provenance.py": "8c45537d5c083097492d73118654c03eda490f72d000a29691dd72ac69ee8f06",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_reference.py": "0a939f348e8ce897e64f2328357b12ff8059c7eb615284616ba03d17fb68a72c",
       "stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/tests/test_shared_assignment_oracle.py": "65da4c0f8062d9154d3f4c4b5fbc174770e81119d6accfabfe21871371f47bc3",
@@ -163,7 +162,7 @@
       "tools/issue256/r02/admission.py": "c00b7bcfeba54899a6d893867642edf7a0a2593709fb476ed9bd0f0e81720811",
       "tools/issue256/r02/calibration_receipts.py": "6cd4db51507be9fafe57666d372be9e08c973bbdda67e0a8740091312d3d3ac1",
       "tools/issue256/r02/check_static_cache.py": "14e0422b8a203262bac3abdef35ddb5a1fc3193a910247ec06308672117d9012",
-      "tools/issue256/r02/collect_evidence.py": "a40202d238c29e1dbcdc4bd127ebc888701a200c1c26b6aef4ae39a219df5aa0",
+      "tools/issue256/r02/collect_evidence.py": "bbcc619ebb8f25805d5d70a2f8ab1bf73b4820944217786b54b61cca131b9deb",
       "tools/issue256/r02/diagnose_budget_point.py": "bf79e1c8e1336defc91bdb39eb9b1cd391983430c147dba5d2c74e5da92cd1a9",
       "tools/issue256/r02/diagnose_shared_batches.py": "3c61e729564790327860efea3ef19fa656dd65737d35c1fb676245a33952019a",
       "tools/issue256/r02/diagnose_static_consumers.py": "e995e33f72ff0808584f19962804c2a2183eb94be3f53552c61932edf43769c6",
@@ -185,6 +184,8 @@
       "tools/issue256/r02/run_tests.py": "fb953800cf7a5f3a93eb9438e23024a426eb15dcd788e3f2ceb3c55b606adfd5",
       "tools/issue256/r02/test_calibration_receipts.py": "450876a2be6e57bb391e33aaa957d98d4a94d5a1a752b297c1e2325ae14bbd42",
       "tools/issue256/r02/test_external_validation.py": "95fef0d756f74aa934de8a3e3dba1e9512695b30aa7a13a1667979294b0e8cb6",
+      "tools/issue256/r02/test_formal_workspace.py": "c116f5a868d1494b229681946735edc5d2d9a9f9878e702936584e0de605a4ef",
+      "tools/issue256/r02/test_profile_identity.py": "43c0349cc47b48f5bc7a5a4190b2714405e834e1e98da5f7952bc8fb985b4d80",
       "tools/issue256/r02/test_source_inventory.py": "46bac3d0c3d92918b3ecc0d7db17a7c15db24f81ee2e85e2adfebf0504edc3b2",
       "tools/issue256/r02/test_unit_coverage.py": "d8cf0be0f96a24a0a8e0bd5a44e0f4b59ac30331398a1eb589352781719969d5",
       "tools/issue256/r02/test_validation_diagnosis.py": "3d0e7d3648b235013b3dd20a2b92b80b10dd86f7799e74e23212d278bf663718",
@@ -195,31 +196,15 @@
       "tools/issue252/archive_audit.py": "1c4fc283096e7a8e3a22c415f6a2f886d61186ce80aa7c5700aa3bc37968cd2d",
       "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba",
       "tools/issue252/host_transfer.py": "41428cf5a9a9b9abb3568baa2164b675b9fd888172e3431f631665925d462f37",
-      "tools/issue252/performance.py": "76be9a448deeebe131e1e44b838e28a95ee4acd753b7725cd14354aa81a6e439",
-      "tools/issue252/run_workspace.py": "06e954c5e21ec78e348a7ff1eef81eb7fbdf18162c668663cc4d3f65f5c3c4b9",
-      "tools/issue252/training_admission.py": "240f32218f19a74944539b4bb53983a7bb8cd89c750c44b82388e71bbb2b4943",
       "tools/issue253/cuda_math.py": "e6360d4c2f9ec80e2301f19342c109597f9177cd045a78540b73f2a4402e6473",
       "tools/issue253/ego_kernel.py": "6a9a823e51e5923315ee6e6410ab20b57e6e4cb8e4c41f157d0f54b73fe7afb0",
       "tools/issue253/sparse_adjoint.py": "bfc93d231a868945141a79a9092886b46d1fdb563dc4f2d3ee71e1ea110fea2d",
       "tools/issue253/static_features.py": "8e35754f420ed4497bf2aacdb09eac140b19657af8902e6bae41d2d9ecaa61eb",
-      "tools/research/__init__.py": "9cf60044c83b3cca0a55944165f24e30e04ea6db3c9c71de977c2bfe32eb7d1b",
-      "tools/research/rounds/baseline.py": "65897df974e4e27e157dce83f7f5422afe1a8d4cc7710580507db4012b920757",
-      "tools/research/stage2/__init__.py": "7404443b2323f698ba2a8c4a96006b8fe74ac1b6a2b896da31f05fea92b78006",
-      "tools/research/stage2/anticollapse/__init__.py": "36b0be98738fc34ea93f2d5792f7e8fb8991eadc948bc9a6e910ce94efe1eabf",
-      "tools/research/stage2/anticollapse/artifact.py": "e75bde5903a50cd2b90a3198a1ec0ca2b944147b742381068f72aa2c20d0ae4c",
-      "tools/research/stage2/anticollapse/floor.py": "0e0f2fbef74ac2d7c9cc1b67d50db1f164b95f59874d5eec9f539235908009da",
-      "tools/research/stage2/anticollapse/patch_tree.py": "75abaa019fc0420bc050fafa8c3f77ea8d17706a1c9de761ab3c5a077bab9cd2",
-      "tools/research/stage2/checks.py": "30dd5c7c93a1ee21432fa0b29841444f9d390edcc71d48a5b8ba53fed41c0ef7",
-      "tools/research/stage2/contract.py": "bf82fd31970c7f99de7b377f0ebb11e3cb82fb77661d18be691c04c5c5f09a3c",
-      "tools/research/stage2/graph_batches.py": "99d3e5f90869d340beb30dbe15609e6a387322910a6b1df6ac36106c94622709",
-      "tools/research/stage2/graph_contract.py": "f2a6c9cd8d59f8412856a2d222ce4a5af5dce7e3fb80311825899a87d7972481",
-      "tools/research/stage2/launcher.py": "61d32bd6d1100d1903b6f934480a478630fe647f626510b66cc964720b28b85a",
-      "tools/research/stage2/tests/test_collectives.py": "1aa5df1cc572aad17286072b9d2a4a4eac0793405f1442df9fb70ebe4a65ab84",
-      "tools/research/stage2/tests/test_trainer_names.py": "45832220795da8a1958c0e9d3ebb29e9275fa9d48b7a86402b6f5f2515a0618b",
-      "tools/research/verification/__init__.py": "73b06c04e8c71e16ac85a8fdbc5bc9178635900dc977f5c3488745780d98f73b",
-      "tools/research/verification/admission.py": "4637400e7103a249c1c05c1a1d17d40349a2d307ccb3d07f7a52d9703ed7f647",
       "tools/stage2/server.py": "1152c3360ddebd5eb161ab1111245a131e338e4058f49f74c215b43922cb96bb",
       "assets/manifest.json": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b",
+      "tools/issue252/profiling.py": "6f4a842d060c5e980c845365d395d80cc47f55a03a4e66e4caa1cb8c5b87d01a",
+      "tools/issue252/profile_units.py": "df5d239ac646a29d48329fcddf32f06d6bbef928297ed4ef8d55c9ec64b88028",
+      "tools/research/stage2/launcher.py": "61d32bd6d1100d1903b6f934480a478630fe647f626510b66cc964720b28b85a",
       "tools/issue253/performance.py": "17469b0b3347e03720b440bda8911f7b65e73dd907f1faec0d8f88485c994103",
       "results/research/issue256/rounds/r02/CONTRACT.md": "f80ae1d7b07268cf53d189e10fb447bf483aef5da913f2fd0b1faf3230fc519b",
       "results/research/issue256/rounds/r02/MUTATIONS.md": "f2e3a82435aeb352d0d22fe3ec0c32b953979ddf66f761132c1659ee927577e4",
@@ -230,234 +215,234 @@
   },
   "ranks": [
     {
-      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/benchmark/issue256_r02_benchmark_2884854_586557521/rank_0.json",
-      "sha256": "75d6a6ae3f70f8a7aa02b35346ef7aca9022fd4ab8ba63ab0284d234f85c72df"
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/benchmark/issue256_r02_benchmark_3300455_586833257/rank_0.json",
+      "sha256": "ceef8efbbd9496110eda3fb5122bb6eda276759df6c25be6b67efb414e62b3b2"
     },
     {
-      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/benchmark/issue256_r02_benchmark_2884854_586557521/rank_1.json",
-      "sha256": "69db7134f69a7eb0fe02db43473bb41b312ec54d03037157fa7e205bd4e35d19"
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/benchmark/issue256_r02_benchmark_3300455_586833257/rank_1.json",
+      "sha256": "ed60b1896a17f926458118b33818c606081b4ade3f822e9b6e6cb3887b4039e9"
     },
     {
-      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/benchmark/issue256_r02_benchmark_2884854_586557521/rank_2.json",
-      "sha256": "3830a3ecddc0cd2e443dd3066cf79f6a1964aa5fab4d28533d9a84e725d2f946"
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/benchmark/issue256_r02_benchmark_3300455_586833257/rank_2.json",
+      "sha256": "b7ada982d1d9ce979fbfe1dc7be6839a0d20ffbb65afd5597996156b4f4b84ad"
     },
     {
-      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/benchmark/issue256_r02_benchmark_2884854_586557521/rank_3.json",
-      "sha256": "b3ebb9ad3610e8ce253778463c461c9e09ec0e9ec3a9cf07e936a5a5df69f76b"
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/benchmark/issue256_r02_benchmark_3300455_586833257/rank_3.json",
+      "sha256": "99c4eabbb31534591c5192e109ba8f72db164b3a8bce4f1a612a0431168978c9"
     }
   ],
   "native_block_calibrations": [
     {
       "event": "curvature_calibration",
-      "timestamp": 1795562534.29407,
-      "wall_time_s": 40.71,
-      "run_id": "issue256_r02_benchmark_2884854_586557521",
+      "timestamp": 1795565290.6957862,
+      "wall_time_s": 39.852,
+      "run_id": "issue256_r02_benchmark_3300455_586833257",
       "purpose": "diagnostic",
-      "original_gradient": 0.00011324019683520312,
-      "reconstruction_gradient": 0.00011208522169307664,
-      "curvature_gradient": 11.163941889998602,
-      "original_curvature_cosine": -0.26243974779708273,
-      "reconstruction_curvature_cosine": 0.59462416166353,
-      "lambda": 4.810362042917404e-06,
+      "original_gradient": 0.0001118627808131148,
+      "reconstruction_gradient": 0.00011295809496517446,
+      "curvature_gradient": 8.542711741095967,
+      "original_curvature_cosine": -0.3059286173052385,
+      "reconstruction_curvature_cosine": 0.6289821281815571,
+      "lambda": 6.578409738722257e-06,
       "calibration_batch_items": 1024,
       "calibration_world_size": 4,
       "module_budgets": {
         "encoder": {
-          "original_gradient": 0.00011324019683520312,
-          "curvature_gradient": 11.163941889998602,
-          "weighted_ratio": 0.4742362148587353
+          "original_gradient": 0.0001118627808131148,
+          "curvature_gradient": 8.542711741095967,
+          "weighted_ratio": 0.5023785186121003
         },
         "GNN.input": {
-          "original_gradient": 6.72176141332291e-08,
-          "curvature_gradient": 0.002322233441178116,
-          "weighted_ratio": 0.166188338343809
+          "original_gradient": 6.420592287110547e-08,
+          "curvature_gradient": 0.0014852133139088217,
+          "weighted_ratio": 0.152171969366625
         },
         "sharedKey": {
-          "original_gradient": 7.41237694133392e-08,
-          "curvature_gradient": 0.002492830089001863,
-          "weighted_ratio": 0.16177557259276426
+          "original_gradient": 7.123806273498672e-08,
+          "curvature_gradient": 0.0017630942774270275,
+          "weighted_ratio": 0.16281122927301625
         },
         "sharedValue": {
-          "original_gradient": 1.9234137955886173e-08,
-          "curvature_gradient": 0.0007766714425805799,
-          "weighted_ratio": 0.19424165698386217
+          "original_gradient": 2.3964668100043743e-08,
+          "curvature_gradient": 0.000608321271532624,
+          "weighted_ratio": 0.16698693928145056
         },
         "sharedScore": {
-          "original_gradient": 2.1626667750454835e-08,
-          "curvature_gradient": 0.0010174519501316938,
-          "weighted_ratio": 0.22630912435887668
+          "original_gradient": 2.9308755848902084e-08,
+          "curvature_gradient": 0.0006889611700508306,
+          "weighted_ratio": 0.15463873301307826
         },
         "GNN.layers.0.self_linear": {
-          "original_gradient": 6.351804210462897e-08,
-          "curvature_gradient": 0.0017087680289874692,
-          "weighted_ratio": 0.12940878834476982
+          "original_gradient": 5.8826189518240305e-08,
+          "curvature_gradient": 0.0013878539276845387,
+          "weighted_ratio": 0.15520080203347175
         },
         "GNN.layers.0.incoming": {
-          "original_gradient": 5.487470159775572e-08,
-          "curvature_gradient": 0.001826454688736919,
-          "weighted_ratio": 0.16010853912630527
+          "original_gradient": 5.8134172082268894e-08,
+          "curvature_gradient": 0.0013808529781943676,
+          "weighted_ratio": 0.15625605997523193
         },
         "GNN.layers.0.outgoing": {
-          "original_gradient": 5.321857369558581e-08,
-          "curvature_gradient": 0.0017106190470935001,
-          "weighted_ratio": 0.15462077170836763
+          "original_gradient": 5.3550016946267375e-08,
+          "curvature_gradient": 0.0015712381247005279,
+          "weighted_ratio": 0.1930204465061728
         },
         "GNN.layers.1.self_linear": {
-          "original_gradient": 4.928002372126453e-08,
-          "curvature_gradient": 0.001214884535557749,
-          "weighted_ratio": 0.11858830445027994
+          "original_gradient": 4.8686167930452114e-08,
+          "curvature_gradient": 0.0010735731100884251,
+          "weighted_ratio": 0.14505975932886395
         },
         "GNN.layers.1.incoming": {
-          "original_gradient": 4.185680496110672e-08,
-          "curvature_gradient": 0.0012427812496843321,
-          "weighted_ratio": 0.14282570675630712
+          "original_gradient": 4.118034783798259e-08,
+          "curvature_gradient": 0.0008418505376363992,
+          "weighted_ratio": 0.13448254000001092
         },
         "GNN.layers.1.outgoing": {
-          "original_gradient": 4.020649844158008e-08,
-          "curvature_gradient": 0.000991839685505179,
-          "weighted_ratio": 0.11866509546325339
+          "original_gradient": 4.038821363058666e-08,
+          "curvature_gradient": 0.0009010920448124809,
+          "weighted_ratio": 0.14676937032417778
         },
         "codebook0": {
-          "original_gradient": 3.881315302194646e-05,
-          "curvature_gradient": 2.7753022764231865,
-          "weighted_ratio": 0.3439609433580322
+          "original_gradient": 3.885149443399719e-05,
+          "curvature_gradient": 2.994580872410626,
+          "weighted_ratio": 0.5070481911043103
         },
         "codebook1": {
-          "original_gradient": 8.315959305285813e-05,
-          "curvature_gradient": 17.287595132992955,
-          "weighted_ratio": 0.9999999806181691
+          "original_gradient": 8.478329910573877e-05,
+          "curvature_gradient": 12.888114502578834,
+          "weighted_ratio": 0.9999999864571605
         },
         "codebook2": {
-          "original_gradient": 9.888075110210224e-05,
-          "curvature_gradient": 3.2765377937062814,
-          "weighted_ratio": 0.15939738381188268
+          "original_gradient": 8.68009552245266e-05,
+          "curvature_gradient": 7.08576099609241,
+          "weighted_ratio": 0.5370106702441172
         },
         "Query0": {
-          "original_gradient": 6.258834166212492e-08,
-          "curvature_gradient": 0.0006416808316467003,
-          "weighted_ratio": 0.04931776484643424
+          "original_gradient": 6.121236625734915e-08,
+          "curvature_gradient": 0.0009222541754527317,
+          "weighted_ratio": 0.09911340175723261
         },
         "Query1": {
-          "original_gradient": 1.3670567110447527e-08,
-          "curvature_gradient": 0.0018845717669495783,
-          "weighted_ratio": 0.6631379972495716
+          "original_gradient": 9.412857007234357e-09,
+          "curvature_gradient": 0.0010440785260276612,
+          "weighted_ratio": 0.7296803019882676
         },
         "Query2": {
-          "original_gradient": 1.2119253600867111e-08,
-          "curvature_gradient": 0.0007685770640339325,
-          "weighted_ratio": 0.3050628411324939
+          "original_gradient": 6.727819989705499e-09,
+          "curvature_gradient": 0.00042984524663642064,
+          "weighted_ratio": 0.42029931849295493
         }
       },
       "calibration_epoch": 1,
       "calibration_step": 0,
-      "calibration_seconds": 19.872308367863297,
+      "calibration_seconds": 19.628445487469435,
       "tangent_scale": 0.0843321830034256,
       "target_scale": 2.000375270843506
     },
     {
       "event": "curvature_calibration",
-      "timestamp": 1795562577.0719426,
-      "wall_time_s": 83.488,
-      "run_id": "issue256_r02_benchmark_2884854_586557521",
+      "timestamp": 1795565327.2772996,
+      "wall_time_s": 76.433,
+      "run_id": "issue256_r02_benchmark_3300455_586833257",
       "purpose": "diagnostic",
-      "original_gradient": 0.00023543419969740086,
-      "reconstruction_gradient": 0.00021066630911392316,
-      "curvature_gradient": 20.497174314827003,
-      "original_curvature_cosine": -0.19922912972553186,
-      "reconstruction_curvature_cosine": -0.19682360989476255,
-      "lambda": 2.260705514345318e-06,
+      "original_gradient": 0.000245988866310114,
+      "reconstruction_gradient": 0.00014815597015038236,
+      "curvature_gradient": 41.930078055234,
+      "original_curvature_cosine": -0.24446052945377997,
+      "reconstruction_curvature_cosine": -0.37506032084279123,
+      "lambda": 5.906208500050525e-08,
       "calibration_batch_items": 1024,
       "calibration_world_size": 4,
       "module_budgets": {
         "encoder": {
-          "original_gradient": 0.00023543419969740086,
-          "curvature_gradient": 20.497174314827003,
-          "weighted_ratio": 0.1968196424376071
+          "original_gradient": 0.000245988866310114,
+          "curvature_gradient": 41.930078055234,
+          "weighted_ratio": 0.010067438706977884
         },
         "GNN.input": {
-          "original_gradient": 1.0499505312703495e-07,
-          "curvature_gradient": 0.005928119794772294,
-          "weighted_ratio": 0.12764156701293747
+          "original_gradient": 2.228457065496816e-08,
+          "curvature_gradient": 0.11375431200001188,
+          "weighted_ratio": 0.30148962475168206
         },
         "sharedKey": {
-          "original_gradient": 1.7127628386376383e-07,
-          "curvature_gradient": 0.006484437711627282,
-          "weighted_ratio": 0.08558922322114881
+          "original_gradient": 2.158844452461468e-08,
+          "curvature_gradient": 0.15999891709557373,
+          "weighted_ratio": 0.43772813880652817
         },
         "sharedValue": {
-          "original_gradient": 2.2802430399894938e-08,
-          "curvature_gradient": 0.002537687345688901,
-          "weighted_ratio": 0.2515943991702597
+          "original_gradient": 1.7123022836313346e-08,
+          "curvature_gradient": 0.0881994822090697,
+          "weighted_ratio": 0.3042246316570466
         },
         "sharedScore": {
-          "original_gradient": 4.597843232682867e-08,
-          "curvature_gradient": 0.003498178888463972,
-          "weighted_ratio": 0.1720013472208427
+          "original_gradient": 1.734081751967889e-08,
+          "curvature_gradient": 0.13705116321647923,
+          "weighted_ratio": 0.4667904175869388
         },
         "GNN.layers.0.self_linear": {
-          "original_gradient": 7.654945653157606e-08,
-          "curvature_gradient": 0.0037723213655440455,
-          "weighted_ratio": 0.11140650893387213
+          "original_gradient": 1.7085890107347777e-08,
+          "curvature_gradient": 0.08907422678731025,
+          "weighted_ratio": 0.3079095979672694
         },
         "GNN.layers.0.incoming": {
-          "original_gradient": 6.796622577068673e-08,
-          "curvature_gradient": 0.005339438292722068,
-          "weighted_ratio": 0.17760141092120799
+          "original_gradient": 1.6948514421374426e-08,
+          "curvature_gradient": 0.08082477516677786,
+          "weighted_ratio": 0.28165770889197744
         },
         "GNN.layers.0.outgoing": {
-          "original_gradient": 8.76037200851412e-08,
-          "curvature_gradient": 0.00462615655201158,
-          "weighted_ratio": 0.11938280266172382
+          "original_gradient": 1.8276650267141426e-08,
+          "curvature_gradient": 0.06298906717774214,
+          "weighted_ratio": 0.20355292602183236
         },
         "GNN.layers.1.self_linear": {
-          "original_gradient": 7.415081697533428e-08,
-          "curvature_gradient": 0.0031566796908744353,
-          "weighted_ratio": 0.09624065486096471
+          "original_gradient": 1.5975472582159237e-08,
+          "curvature_gradient": 0.08161720202846952,
+          "weighted_ratio": 0.3017426933017428
         },
         "GNN.layers.1.incoming": {
-          "original_gradient": 6.946069469096121e-08,
-          "curvature_gradient": 0.003292096988601896,
-          "weighted_ratio": 0.10714637751615223
+          "original_gradient": 1.505728127204046e-08,
+          "curvature_gradient": 0.08157863655367248,
+          "weighted_ratio": 0.31999165581804917
         },
         "GNN.layers.1.outgoing": {
-          "original_gradient": 7.179152162042941e-08,
-          "curvature_gradient": 0.003687994047459673,
-          "weighted_ratio": 0.11613444445495961
+          "original_gradient": 1.512607629896685e-08,
+          "curvature_gradient": 0.08328972635842635,
+          "weighted_ratio": 0.32521751183988135
         },
         "codebook0": {
-          "original_gradient": 9.811414291829107e-05,
-          "curvature_gradient": 17.903803089582873,
-          "weighted_ratio": 0.4125320281916981
+          "original_gradient": 0.00014768005764149295,
+          "curvature_gradient": 40.81129631123492,
+          "weighted_ratio": 0.016321772148589174
         },
         "codebook1": {
-          "original_gradient": 9.283204475726905e-05,
-          "curvature_gradient": 9.34952213021318,
-          "weighted_ratio": 0.22768556150554317
+          "original_gradient": 9.911372125116517e-05,
+          "curvature_gradient": 43.56708646354618,
+          "weighted_ratio": 0.025961722871989095
         },
         "codebook2": {
-          "original_gradient": 3.5746862923594904e-05,
-          "curvature_gradient": 3.396128137672008,
-          "weighted_ratio": 0.21477816458100255
+          "original_gradient": 3.792108620473125e-05,
+          "curvature_gradient": 6.147296644130454,
+          "weighted_ratio": 0.009574413426840463
         },
         "Query0": {
-          "original_gradient": 1.3159510239033842e-08,
-          "curvature_gradient": 0.0058209752197393065,
-          "weighted_ratio": 1.0000000409664378
+          "original_gradient": 1.1898305945237528e-08,
+          "curvature_gradient": 0.002330972450585215,
+          "weighted_ratio": 0.011570730627027225
         },
         "Query1": {
-          "original_gradient": 1.668798918088118e-07,
-          "curvature_gradient": 0.0024321649582513304,
-          "weighted_ratio": 0.03294829996184057
+          "original_gradient": 8.381727402385143e-09,
+          "curvature_gradient": 0.14191384045192865,
+          "weighted_ratio": 0.9999999886819042
         },
         "Query2": {
-          "original_gradient": 4.881987186576582e-09,
-          "curvature_gradient": 0.0013085616011540191,
-          "weighted_ratio": 0.6059566144957198
+          "original_gradient": 1.4279473625520829e-08,
+          "curvature_gradient": 0.002915518666613859,
+          "weighted_ratio": 0.012059030733482431
         }
       },
       "calibration_epoch": 51,
       "calibration_step": 300,
-      "calibration_seconds": 0.1288406578823924,
+      "calibration_seconds": 0.13266541622579098,
       "tangent_scale": 0.0843321830034256,
       "target_scale": 2.000375270843506
     }

@@ -1,0 +1,3 @@
+在任何R02正式worker/推荐test之前，已冻结同协议评估消费者与访问台账快照。`rounds/r02/EVALUATION_CONSUMERS.json` sha256 `bbee5dc2658310e7d2553dc51edada8c92bf515b4065fe4ab74b031a1f15532b`，绑定未改动Stage3源码54ca6bfb、全部独立复算/validation消费者、固定数据与原EVALUATION.md。
+
+仅final3000/150权重，完整57439验证/最终test，beam20、seed42；不改SID offset/vocab/EOS/排序/seen-filter规则，不按验证挑checkpoint，不重训追分。固定test是反复使用的探索性停止门槛；没有未访问的独立确认集，不宣称无偏泛化或cadence单因素因果。当前仍是bg_515完整重验，没有正式worker或R02 test分数。

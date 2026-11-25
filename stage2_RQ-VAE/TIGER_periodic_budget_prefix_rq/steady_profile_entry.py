@@ -5,7 +5,6 @@ throughput benchmark and does not decide the inclusive 60-epoch speed gate.
 """
 import functools
 import numpy as np
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -296,13 +295,9 @@ class SteadyTracker(Tracker):
                 'interpretation': 'Instrumented full epoch2 after actual epoch1 initialization/cold start. Three production diagnostic epochs, no formal checkpoint/SID. Nested/inclusive phase spans overlap and MUST NOT be summed. CUDA operator times are exclusive self device times; concurrent kernels/ranks are not an additive epoch estimate. This profile makes no speed acceptance claim; the inclusive 60-epoch benchmark is still required.'}
 
 
-def source_binding(training):
+def source_binding():
     import benchmark_entry
-    files = benchmark_entry.source_binding('steady_profile')['files']
-    for name in ('tools/issue252/profiling.py', 'tools/issue252/profile_units.py'):
-        path = training.REPO_ROOT / name
-        files[name] = hashlib.sha256(path.read_bytes()).hexdigest()
-    return files
+    return benchmark_entry.source_binding('steady_profile')['files']
 
 
 def main():
@@ -324,7 +319,7 @@ def main():
     training.OUTPUT_SID = output / 'forbidden_formal_sids.npy'
     training.OUTPUT_JSON = output / 'forbidden_formal_item_sids.json'
     rank = int(os.environ['RANK'])
-    before = source_binding(training)
+    before = source_binding()
     tracker = SteadyTracker(output, BOOT_TIME, training)
     report = {'status': 'FAIL', 'run_id': run_id, 'rank': rank, 'worker_pid': os.getpid(),
               'controller_pid': controller, 'formal_training': False, 'diagnostic_epochs': 3,
@@ -353,7 +348,7 @@ def main():
     finally:
         if tracker.enabled:
             tracker.stop_window()
-        after = source_binding(training)
+        after = source_binding()
         report['source_hashes_after'] = after
         report['source_unchanged'] = before == after
         if before != after:
