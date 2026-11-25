@@ -271,3 +271,18 @@ caught stale-coefficient mutations), the inclusive 31-60 epoch window at
 0.7114374786925812s mean against the 0.8s ceiling, and a dispatch binding probe
 over 132 exact source files. The contract carries two amendments, both frozen
 before any training.
+
+## R03 round complete (negative, not adopted)
+
+The role-conditioned level-1 curvature mixture ran once under the frozen recipe: Stage2 completed all 3000 epochs on four cards (collision 0.05445967381136374, export exact from the final checkpoint) and Stage3 completed the frozen 150-epoch four-card protocol over the complete 57439-row test population. test_R@10 = 0.0490085133794112 (R@5 = 0.03189470568777312), below the 0.065 threshold and below the parent R02 (0.05266456588728913). The preregistered mechanism signature was already falsified at Stage 2 (distinct two-code prefixes 9257 > 6000; absolute L1 prefix carry 0.0596 < 0.08) and the complete57439-row recommendation validation agrees (validation_R@10 = 0.05430108462891067 < the preregistered 0.0583).
+
+The measured next-step diagnosis: the exported SID has H(L1)=7.4596, H(L2|L1)=5.1067 and H(L3|L1L2)=2.0193 bits with 23247 distinct triples over 24587 items - the triple is an item identity map and the residual freedom sits in the level-3 refinement given the prefix, not in the level-1 metric. The four artefacts are archived at r2:genrec/104/ (131 files, 23 recall keys). CHECK_1 records 16 PASS / 1 FAIL (the closure threshold C17); the issue stays OPEN and the candidate is not adopted.
+
+## R03 entropy correction (before any R04 training)
+
+The first R03 entropy reduction counted the export's fourth column (the per-item collision counter
+appended by `_extend_collisions`) as a semantic code. Recomputing on the three semantic codes gives
+H(L1)=7.4596, H(L2|L1)=5.1067, H(L3|L1L2)=1.9028 bits and 23248 distinct triples of 24587 items; the
+collision metric is unchanged at 0.05445967381136374. The round's verdict does not depend on the
+figure (both the mechanism signature and the final test are falsified), and R04's thresholds are
+anchored on the corrected baseline through `rounds/r04/DIAGNOSIS.json` and CONTRACT Amendment 1.

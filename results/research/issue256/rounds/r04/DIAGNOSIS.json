@@ -1,0 +1,22 @@
+{
+  "schema": "genrec.issue256.r04.diagnosis/1",
+  "round_id": "r04",
+  "question": "which SID level carries the item-unique information that R03 failed to coarsen?",
+  "method": "conditional entropies (bits) of the three semantic codes of the persisted R03 hard SID; the fourth column is the export collision counter and is excluded; exact counts over every item, no model replay",
+  "sid": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/item_sids.json",
+    "sha256": "f6754f385fe7ea46e912442e624aa0b59d44cc9b422c6f721c69bf3ce7fa1862",
+    "items": 24587
+  },
+  "measured": {
+    "H_L1": 7.4596,
+    "H_L2_given_L1": 5.1067,
+    "H_L3_given_L1L2": 1.9028,
+    "H_L1L2L3": 14.4691,
+    "distinct_L1": 256,
+    "distinct_triples": 23248,
+    "collision": 0.0545
+  },
+  "interpretation": "level 1 already uses all 256 codewords near-uniformly (7.46 of 8 bits), so a level-1 metric change cannot coarsen the triple; the residual freedom that makes the triple an identity map sits in the level-3 refinement given the prefix (2.02 bits over 256 codewords). The next coupling must act on the level-3 cost.",
+  "recorded_at": "2026-11-25T07:22:16.153688+00:00"
+}

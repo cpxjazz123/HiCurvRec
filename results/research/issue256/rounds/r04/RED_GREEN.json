@@ -1,0 +1,30 @@
+{
+  "schema": "genrec.issue256.r04.red_green/1",
+  "round_id": "r04",
+  "contract": "the role mixture drives the level-3 cost; levels 1 and 2 keep the item gate",
+  "tests": "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_role_mixture.py",
+  "red": {
+    "command": "python3.9 -m pytest tests/test_role_mixture.py -q",
+    "exit_code": 1,
+    "result": "4 failed, 3 passed in 266.21s",
+    "failures": [
+      "test_level_three_uses_the_role_mixture_and_the_earlier_levels_the_item_mixture",
+      "test_items_of_one_role_share_the_level_three_mixture",
+      "test_behaviour_switch_off_uses_one_global_mixture",
+      "test_curve_switch_off_makes_the_level_three_cost_euclidean"
+    ],
+    "observed_excerpt": "Greatest absolute difference: 2.1192433834075928 at index (2, 0) (up to 1e-05 allowed)"
+  },
+  "green": {
+    "command": "python3.9 -m pytest tests/test_role_mixture.py -q",
+    "exit_code": 0,
+    "result": "7 passed in 12.72s"
+  },
+  "repairs": [
+    "model/mechanism.py::level_weights: the role table is consumed by level 3 (index 2) and the gate provides the mixtures of levels 1 and 2",
+    "model/layer_gate.py and model/role_mix.py: documentation of the level the table drives",
+    "validation_entry.py::switches: the switch influence is measured on the level-3 cost, the behaviour switch must leave the gate-owned levels untouched, and the gate intervention must leave the role-conditioned level untouched"
+  ],
+  "recorded_at": "2026-11-25T07:23:30.901270+00:00",
+  "note": "the red and green tails were observed live in the session; only the excerpts quoted here are persisted"
+}

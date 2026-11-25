@@ -13,7 +13,16 @@
     "world_size": 4,
     "global_batch": 4096,
     "completed": true,
-    "export": "layered_mode_carries_run_id"
+    "export": "layered_mode_carries_run_id",
+    "conditional_entropy_bits": {
+      "H_L1": 7.4596,
+      "H_L2_given_L1": 5.1067,
+      "H_L3_given_L1L2": 1.9028,
+      "H_L1L2L3": 14.4691,
+      "distinct_triples": 23248,
+      "items": 24587,
+      "method": "three semantic codes; the fourth column is the collision counter"
+    }
   },
   "stage2_signature": {
     "prediction": "distinct two-code prefixes <= 6000 AND absolute L1 prefix carry >= 0.10",
@@ -61,5 +70,12 @@
   },
   "result": "negative: the mechanism signature is falsified at Stage 2 and the final Recall (0.0490) is below the 0.065 threshold and below the parent R02 (0.0527)",
   "r2_archive": null,
-  "frozen_at": "2026-11-25T06:59:31.802183+00:00"
+  "frozen_at": "2026-11-25T06:59:31.802183+00:00",
+  "corrections": [
+    {
+      "field": "stage2.conditional_entropy_bits",
+      "note": "the first reduction counted the export collision counter (the fourth column appended by _extend_collisions) as a semantic code; the entropies were recomputed on the three semantic codes: H(L3|L1L2)=1.9028 bits and 23248 distinct triples (the collision metric is unchanged at 0.05445967381136374)",
+      "recorded_at": "2026-11-25T07:22:49.200048+00:00"
+    }
+  ]
 }

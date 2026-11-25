@@ -90,7 +90,7 @@ Observed: PASS: Stage2 ran all 3000 epochs, exported a hard SID whose three-code
 
 R7 逐项验收与决策：对照预注册的预测，解释是否提高了真实L1前缀保持、几何保真、语义保真与推荐指标；若机制指标改善但Recall未改善，则该轮改善假设不成立。若 R@10 未过0.065，记录本轮最重要失败原因或剩余待证假设、下一轮方向和依据，更新本Issue进度后返回R1/R2继续。不得因单轮失败、负结果、复杂度或工作量以COMPLETED关闭。实际外部阻塞保留证据并等待解除。
 
-Observed: PASS: the round is accepted as a completed negative result. The preregistered mechanism signature is falsified (distinct two-code prefixes 9257 > 6000; absolute L1 prefix carry 0.0596 < 0.08) and the final test confirms it (0.0490085133794112 against R02 0.05266456588728913): the role-conditioned level-1 geometry did not coarsen the partition. The failure reason is recorded with its evidence (the export conditional entropies H(L3|L1L2)=2.0193 bits over 23247 distinct triples) and the next direction is stated.
+Observed: PASS: the round is accepted as a completed negative result. The preregistered mechanism signature is falsified (distinct two-code prefixes 9257 > 6000; absolute L1 prefix carry 0.0596 < 0.08) and the final test confirms it (0.0490085133794112 against R02 0.05266456588728913): the role-conditioned level-1 geometry did not coarsen the partition. The failure reason is recorded with its evidence (the export conditional entropies H(L3|L1L2)=1.9028 bits over 23248 distinct triples) and the next direction is stated.
 
 ## C16 — PASS
 

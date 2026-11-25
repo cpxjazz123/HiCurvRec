@@ -454,7 +454,7 @@
    "scope": "Each immutable rounds/<round_id>/CHECK_*.json and final VERDICT.md; production source hashes and command/exit code required; final test only after legal complete training",
    "threshold": "if final R@10 <= 0.065 return R1/R2; no same-mechanism score rerun",
    "status": "PASS",
-   "observed": "PASS: the round is accepted as a completed negative result. The preregistered mechanism signature is falsified (distinct two-code prefixes 9257 > 6000; absolute L1 prefix carry 0.0596 < 0.08) and the final test confirms it (0.0490085133794112 against R02 0.05266456588728913): the role-conditioned level-1 geometry did not coarsen the partition. The failure reason is recorded with its evidence (the export conditional entropies H(L3|L1L2)=2.0193 bits over 23247 distinct triples) and the next direction is stated.",
+   "observed": "PASS: the round is accepted as a completed negative result. The preregistered mechanism signature is falsified (distinct two-code prefixes 9257 > 6000; absolute L1 prefix carry 0.0596 < 0.08) and the final test confirms it (0.0490085133794112 against R02 0.05266456588728913): the role-conditioned level-1 geometry did not coarsen the partition. The failure reason is recorded with its evidence (the export conditional entropies H(L3|L1L2)=1.9028 bits over 23248 distinct triples) and the next direction is stated.",
    "data": {
     "semantic": {
      "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
@@ -545,7 +545,7 @@
  "evidence": {
   "round_result": {
    "path": "results/research/issue256/rounds/r03/ROUND_RESULT.json",
-   "sha256": "e0241ba46da001e26164f40b5018ca7dfc07a103d9ea56e38e4d790cc7d3216d"
+   "sha256": "ed799eab71d49eabab97288ff79290ec5fba17ebd256a835ec224cd597cadb78"
   },
   "stage2_complete": {
    "path": "results/research/issue256/rounds/r03/FORMAL_STAGE2_COMPLETE.json",
