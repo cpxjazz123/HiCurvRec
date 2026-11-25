@@ -243,7 +243,6 @@ def test_c39b_the_temperature_resolves_the_real_cost_scale():
     """TAU must put `p` on the quantizer's decision boundary, not at either extreme."""
     import train_rqvae  # noqa: PLC0415
     import torch  # noqa: PLC0415
-
     checkpoint = train_rqvae.REPO_ROOT / "results" / "stage2_RQ-VAE" / "TIGER_RQ-VAE" / "rqvae_best.pth"
     if not checkpoint.is_file():
         pytest.skip("the frozen checkpoint is not reachable")
