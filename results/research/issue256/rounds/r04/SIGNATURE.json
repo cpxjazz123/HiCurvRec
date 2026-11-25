@@ -1,0 +1,40 @@
+{
+  "schema": "genrec.issue256.r04.signature/1",
+  "round_id": "r04",
+  "run_id": "issue256_r04_formal",
+  "arm": "TIGER_role_conditioned_l3_rq",
+  "sid": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/item_sids.json",
+    "sha256": "26368f3e7690c6831b523eb82e0755aea58885336e0e23725ba5f7fb4ad80a18"
+  },
+  "layered_metrics": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/stage2_metrics/26368f3e7690c6831b523eb82e0755aea58885336e0e23725ba5f7fb4ad80a18.json",
+    "sha256": "54645bfee2558d3eb60843508a9a3a27adae2220fc0566f54bedd9347649c484"
+  },
+  "measured": {
+    "items": 24587,
+    "H_L1": 7.468368,
+    "H_L2_given_L1": 4.981506,
+    "H_L3_given_L1L2": 1.995707,
+    "H_L1L2L3": 14.445581,
+    "distinct_L1": 256,
+    "distinct_triples": 22995,
+    "collision": 0.06475,
+    "absolute_l1_prefix_carry": 0.06250108811086544,
+    "distinct_two_code_prefixes": 8781,
+    "l3_collision_layered": 0.06474966445682673,
+    "l3_refinement_gain_bits": 1.9957073319719747
+  },
+  "prediction": {
+    "H_L3_given_L1L2_max_bits": 1.2,
+    "distinct_triples_max": 12000,
+    "absolute_l1_prefix_carry_window": [
+      0.0496,
+      0.0696
+    ],
+    "failure_threshold_bits": 1.5
+  },
+  "signature_met": false,
+  "level1_unchanged": true,
+  "falsified": true
+}

@@ -1,0 +1,73 @@
+{
+  "schema": "genrec.issue256.final_stage2/1",
+  "run_id": "issue256_r04_formal",
+  "arm": "TIGER_role_conditioned_l3_rq",
+  "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/src",
+  "epoch": 3000,
+  "artifacts": {
+    "checkpoint": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/rqvae_best.pth",
+      "sha256": "5c6b1557f004a194010092f3d9cb7ff471940ee32a19dfd6c0feaf01b6c1a638"
+    },
+    "sid": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/item_sids.json",
+      "sha256": "26368f3e7690c6831b523eb82e0755aea58885336e0e23725ba5f7fb4ad80a18"
+    },
+    "export": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/export_manifest.json",
+      "sha256": "ebc490960412336d6026a438b13e875a539928cb7bc70fda059fa73c5ba6c3dd"
+    },
+    "binding": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/archive_binding.json",
+      "sha256": "4a1e8a22a710544895d19cee5a162549223765160546728fd9cbf1bfa6ccf69d"
+    },
+    "layered_metrics": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/stage2_metrics/26368f3e7690c6831b523eb82e0755aea58885336e0e23725ba5f7fb4ad80a18.json",
+      "sha256": "54645bfee2558d3eb60843508a9a3a27adae2220fc0566f54bedd9347649c484"
+    },
+    "workspace": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/workspace.json",
+      "sha256": "cc785af023f616e985a61a2c8a9af68c8425a97c6a1284c4f12728581b7d035d"
+    },
+    "training_summary": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/TRAINING_SUMMARY.json",
+      "sha256": "fe9821768cb108dbc80c34be6c68afeedca69116e52c840574be5a4a8338aa53"
+    },
+    "metrics": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/logs/training_metrics.jsonl",
+      "sha256": "39d5c2e3c7e72888f5f504c069befe1c3529b588b1d9c3280bd7e8b9db47bef7"
+    },
+    "post_training_modules": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/POST_TRAINING_MODULE_CHECKS.json",
+      "sha256": "d9a4b83742721f6f44d82fd9d276f372cdee3a072a196bce8a96b51112559bae"
+    }
+  },
+  "same_checkpoint_all_items_exact": true,
+  "collision_suffix_exact": true,
+  "quality": {
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/item_sids.json",
+    "allow": true,
+    "reason": "collision 0.0647 < 0.40; measured quantisation error 0.008 (band 0.035-0.100) and effective rank 5.14 (limit 8.0); WARNING quantisation error 0.008 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises",
+    "collision": 0.06474966445682673,
+    "quant_error": 0.00761586627748521,
+    "effective_rank": 5.14342348747351,
+    "warnings": [
+      "quantisation error 0.008 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises"
+    ],
+    "limits": {
+      "collision": 0.4,
+      "quant_error": [
+        0.035,
+        0.1
+      ],
+      "effective_rank": 8.0
+    }
+  },
+  "reexport_wall_seconds": 169.44614268746227,
+  "audit_wall_seconds": 312.1022666208446,
+  "evidence_timing": "post-formal audit; never a substitute for pre-dispatch proof",
+  "evaluator": {
+    "path": "/fs04/ar57/wenyu/GeneRec/tools/issue256/r04/finalize_stage2.py",
+    "sha256": "8d582857afa0b7d2405b6abf518674940f5e02c98d83d75202884489b5986e61"
+  }
+}

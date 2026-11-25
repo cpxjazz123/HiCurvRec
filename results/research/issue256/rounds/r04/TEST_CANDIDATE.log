@@ -9,7 +9,7 @@ tests/test_sync_free_batch.py::SyncFreeAssemblyTests::test_assembly_matches_the_
     backends.update(_get_backends("networkx.backends"))
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-38 passed, 114 deselected, 2 warnings in 83.70s (0:01:23)
+38 passed, 114 deselected, 2 warnings in 83.11s (0:01:23)
 
 
 ......................................                                   [100%]
@@ -28,7 +28,7 @@ tests/test_mutations.py::Mutations::test_designated_assertions_detect_mutations
     self.assertEqual(float(a[0,:,:,1].sum()),0.,'masked subgraph must receive zero attention')
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-38 passed, 114 deselected, 32 warnings in 99.35s (0:01:39)
+38 passed, 114 deselected, 32 warnings in 97.99s (0:01:37)
 
 
 ......................................                                   [100%]
@@ -51,7 +51,7 @@ tests/test_three_geometry.py: 48 warnings
     contexts.append(float(output_weight@np.tanh(score_weight@context+score_bias)+output_bias))
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-38 passed, 114 deselected, 51 warnings in 92.86s (0:01:32)
+38 passed, 114 deselected, 51 warnings in 95.52s (0:01:35)
 
 
 ......................................                                   [100%]
@@ -66,5 +66,5 @@ tests/test_calibration.py::test_lambda_uses_full_original_gradients_not_reconstr
     operators.append(torch.sparse_csr_tensor(crow, columns, values,
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-38 passed, 114 deselected, 2 warnings in 80.85s (0:01:20)
+38 passed, 114 deselected, 2 warnings in 79.72s (0:01:19)
 
