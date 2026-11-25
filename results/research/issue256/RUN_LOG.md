@@ -286,3 +286,21 @@ H(L1)=7.4596, H(L2|L1)=5.1067, H(L3|L1L2)=1.9028 bits and 23248 distinct triples
 collision metric is unchanged at 0.05445967381136374. The round's verdict does not depend on the
 figure (both the mechanism signature and the final test are falsified), and R04's thresholds are
 anchored on the corrected baseline through `rounds/r04/DIAGNOSIS.json` and CONTRACT Amendment 1.
+
+## R04 round complete (negative, not adopted)
+
+The level-3 role-conditioned mixture ran once under the frozen recipe: Stage2 completed all 3000 epochs
+on four cards in 2036.667s (collision 0.06474966445682673, export exact from the final checkpoint) and
+Stage3 completed the frozen 150-epoch four-card protocol over the complete 57439-row test population.
+The preregistered signature was falsified at Stage 2: H(L3|L1L2)=1.9957 bits (criterion >=1.5) and
+22995 distinct triples (prediction <=12000), while level 1 stayed inside its predicted window (L1 carry
+0.0625). The final test is test_R@10=0.05151552081338463 (R@5=0.03405351764480579), below the 0.065
+threshold and below the parent rounds; the complete 57439-row recommendation validation is
+validation_R@10=0.05590278382283814 (preregistered 0.0583). The four artefacts are archived at
+r2:genrec/105/ (131 files, 23 recall keys). CHECK_1 records 16 PASS / 1 FAIL (the closure threshold C17);
+the issue stays OPEN and the candidate is not adopted.
+
+Reading both rounds together: moving the role mixture from level 1 (R03) to level 3 (R04) left the
+three-code triple essentially unique (23248 -> 22995 of 24587 items). The level the mixture drives is
+therefore not the binding constraint; the next round must diagnose the assignment and codebook freedom
+that lets the encoder place almost every item on its own triple before another single change is frozen.

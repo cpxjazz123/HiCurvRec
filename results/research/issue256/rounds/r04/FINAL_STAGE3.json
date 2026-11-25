@@ -1,0 +1,30 @@
+{
+  "schema": "genrec.issue256.final_stage3/1",
+  "run_id": "issue256_r04_formal",
+  "test_final": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/logs/Amazon_2023_Instruments/Nov-25-2026_19-53-02/test_final.json",
+    "sha256": "714d6f1a73ebf68d81e80683c99171782d6833f7abb5021d1e600be5bd9d79cf"
+  },
+  "metrics": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/logs/Amazon_2023_Instruments/Nov-25-2026_19-53-02/training_metrics.jsonl",
+    "sha256": "cc3af3976f8f330b5c6ffe6468635e4f929c34dd6785f795676382bb2b7d5b6f"
+  },
+  "stage3_checkpoint": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_19-53-02/HG_Rec_best.pth",
+    "sha256": "626c2db2b589a2297e01a5f1b3b31eb4c4d02450c078ea6d13eae3edb394cdf2"
+  },
+  "stage3_run_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/logs/Amazon_2023_Instruments/Nov-25-2026_19-53-02",
+  "stage2_source_commit": "446bf3d6d12b471583227036d5ef1d6872e9a3bf",
+  "launch": {
+    "dispatch_mode": "ddp",
+    "reported_mode": "ddp4",
+    "world_size": 4,
+    "train_batch_per_process": 4096,
+    "global_train_batch": 16384,
+    "infer_batch_per_process": 1024,
+    "cuda_visible_devices": "0,1,2,3"
+  },
+  "consumer_freeze_sha256": "b817ac914675e49e6dd1e2d88085b8b5c0042571b2c50ef2c7693fb906f4035e",
+  "mcp_status": "finished",
+  "mcp_observed_at": "2026-11-25T09:26:18.555690+00:00"
+}

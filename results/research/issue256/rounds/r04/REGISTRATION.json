@@ -5,7 +5,7 @@
   "parent_source_commit": "bcf124e6f79cdc3cd178f6f6736250d4be978ff6",
   "arm": "TIGER_role_conditioned_l3_rq",
   "run_id": "issue256_r04_formal",
-  "status": "FORMAL_STAGE2_COMPLETE_STAGE3_PENDING",
+  "status": "COMPLETE_NEGATIVE_NOT_ADOPTED",
   "change": "take the level-3 (refinement) curvature mixture from the item graphlet orbit type instead of the free learned per-item gate; levels 1 and 2 keep the learned gate",
   "hypothesis": "the item-unique information of the R03 SID sits in the level-3 refinement (H(L3|L1L2)=1.9028 bits over 23248 triples), so a role-conditioned level-3 cost coarsens the triple and lifts Recall; a level-1 change cannot",
   "contract_sha256": "f698b29d73ffaeec83a85fe3b79e0cc01c42a29fad25cc3b2bf1b88027e03c99",
@@ -56,10 +56,39 @@
     "mechanism_signature_falsified": true,
     "layer_metrics": "results/stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/stage2_metrics/26368f3e7690c6831b523eb82e0755aea58885336e0e23725ba5f7fb4ad80a18.json"
   },
-  "stage3": null,
-  "result": null,
-  "r2_archive": null,
-  "next_decision": "Run the frozen 150-epoch Stage3 on the exported SID and record the final test; the level-3 mechanism signature is falsified at Stage 2 (H(L3|L1L2)=1.9957 bits, 22995 triples)",
+  "stage3": {
+    "variant": "TIGER_role_conditioned_l3_rq",
+    "pid": 2579892,
+    "mode": "ddp",
+    "epochs": 150,
+    "dispatch": null,
+    "completed_epochs": 150,
+    "stage3_world_size": 4,
+    "n_eval": 57439,
+    "test_recall@5": 0.03405351764480579,
+    "test_recall@10": 0.05151552081338463,
+    "test_ndcg@5": 0.02247801380083515,
+    "test_ndcg@10": 0.028115151372565275,
+    "stage3_run": "results/stage3_T5Train/TIGER_role_conditioned_l3_rq/logs/Amazon_2023_Instruments/Nov-25-2026_19-53-02",
+    "independent_reduction": "rounds/r04/STAGE3_RECONCILIATION.json",
+    "validation_recall@10": 0.05590278382283814,
+    "validation": "rounds/r04/recommendation_validation/VALIDATION.json"
+  },
+  "result": {
+    "strict_target_met": false,
+    "test_recall@10": 0.05151552081338463,
+    "required": ">0.065",
+    "classification": "valid completed experiment; the preregistered mechanism signature is falsified at Stage 2 and the final test is below the threshold; not adopted",
+    "round_verdict": "rounds/r04/ROUND_RESULT.json",
+    "check": "rounds/r04/CHECK_1.json"
+  },
+  "r2_archive": {
+    "bucket": "r2:genrec/105/",
+    "files": 131,
+    "recall_keys": 23,
+    "ledger": "results/research/issue139/r2_ledger.json"
+  },
+  "next_decision": "The level that carries the item-unique information is not controlled by the curvature mixture at either end: R03 (role at level 1) left the triple unchanged and R04 (role at level 3) measured H(L3|L1L2)=1.9957 with 22995 triples, both far from the coarsening the measured correlate promised. The next round must diagnose the assignment itself (the codebook and assignment-margin freedom that lets 24587 items occupy 22995 triples) rather than the per-level mixture, before another single change.",
   "amendments": [
     "section 6: the first entropy reduction counted the export collision counter; corrected on the three semantic codes before any training"
   ],

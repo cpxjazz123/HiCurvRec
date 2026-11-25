@@ -5,7 +5,7 @@
   "commit": "16259df8c01a55a8689f195bcd2c301fabe7a3bb",
   "r01_source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
   "last_admitted_source_commit": "16259df8c01a55a8689f195bcd2c301fabe7a3bb",
-  "current_source_state": "R03 complete negative; next round requires a new preregistration on the level-3 refinement lever",
+  "current_source_state": "R04 complete negative; the next round must diagnose the assignment and codebook freedom that keeps the triple near-unique",
   "done": [
     "acceptance frozen",
     "assets109/109",
@@ -84,7 +84,14 @@
     "complete recommendation validation over57439 rows: validation_R@10=0.05430108462891067, below the preregistered0.0583 recommendation and below R01/R02, so the role-conditioned level-1 coupling is falsified on validation and test alike",
     "four required R2 artefacts archived at r2:genrec/104/ (131 files, 23 recall keys) with the ledger entry recorded",
     "CHECK_1 recorded for R03:16 PASS/1 FAIL (the closure threshold C17),0 NOT_RUN; round classified as a completed negative result, issue stays OPEN",
-    "R03 entropy correction recorded: the first reduction included the export collision counter; recomputing on the three semantic codes gives H(L3|L1L2)=1.9028 bits and 23248 triples (collision unchanged)"
+    "R03 entropy correction recorded: the first reduction included the export collision counter; recomputing on the three semantic codes gives H(L3|L1L2)=1.9028 bits and 23248 triples (collision unchanged)",
+    "R04 formal Stage2 completed all3000 epochs on four cards in2036.667s; the exported SID has24587 items and three-code collision0.06474966445682673",
+    "R04 signature measured from the export: H(L3|L1L2)=1.9957 bits, distinct triples22995, L1 carry0.0625 inside the predicted window; the failure criterion (>=1.5 bits) is met, so the level-3 role mixture is falsified at Stage 2",
+    "R04 frozen Stage3 completed all150 epochs on four cards and wrote the final test over the complete57439-row population",
+    "independent reduction of the persisted Stage3 predictions reproduces the metrics exactly: test_R@10=0.05151552081338463, R@5=0.03405351764480579, strict_target_met false",
+    "complete recommendation validation over57439 rows: validation_R@10=0.05590278382283814, below the preregistered0.0583 and below R01/R02",
+    "four required R2 artefacts archived at r2:genrec/105/ (131 files, 23 recall keys) with the ledger entry recorded",
+    "CHECK_1 recorded for R04:16 PASS/1 FAIL (the closure threshold C17),0 NOT_RUN; round classified as a completed negative result, issue stays OPEN"
   ],
   "not_run": [
     "strict final test_R@10>0.065 for issue256 closure",
@@ -118,5 +125,5 @@
     "dispatch the single preregistered issue256_r03_formal Stage2 3000-epoch four-card run",
     "then the frozen Stage3 150-epoch run, the independent reduction, the complete validation and the four-artefact R2 archive"
   ],
-  "updated_at": "2026-11-25T07:22:57.316199+00:00"
+  "updated_at": "2026-11-25T09:36:33.111703+00:00"
 }

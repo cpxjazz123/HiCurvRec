@@ -1,0 +1,72 @@
+{
+  "schema": "genrec.issue256.r04.round_result/1",
+  "round_id": "r04",
+  "run_id": "issue256_r04_formal",
+  "arm": "TIGER_role_conditioned_l3_rq",
+  "status": "complete_negative",
+  "mechanism": {
+    "change": "the level-3 (refinement) curvature mixture is taken from the item graphlet orbit role via the learned per-role table; levels 1 and 2 keep the learned per-item gate",
+    "hypothesis": "the item-unique information of the R03 SID sits in the level-3 refinement, so a role-conditioned level-3 cost coarsens the triple and lifts Recall"
+  },
+  "stage2": {
+    "epochs": 3000,
+    "world_size": 4,
+    "global_batch": 4096,
+    "completed": true,
+    "final_collision": 0.06474966445682673,
+    "quant_error": 0.00761586627748521,
+    "effective_rank": 5.14342348747351
+  },
+  "stage2_signature": {
+    "prediction": "H(L3|L1L2) <= 1.2 bits AND distinct triples <= 12000; L1 carry inside 0.0496..0.0696",
+    "measured": {
+      "H_L1": 7.468368,
+      "H_L2_given_L1": 4.981506,
+      "H_L3_given_L1L2": 1.995707,
+      "distinct_triples": 22995,
+      "collision": 0.06475,
+      "absolute_l1_prefix_carry": 0.06250108811086544,
+      "distinct_two_code_prefixes": 8781
+    },
+    "verdict": "FALSIFIED",
+    "criterion": "the round's own failure criterion: H(L3|L1L2) >= 1.5 bits; the level-3 role mixture did not coarsen the refinement and level 1 stayed exactly where the contract said it should"
+  },
+  "stage3": {
+    "epochs": 150,
+    "world_size": 4,
+    "test_recall_at_10": 0.05151552081338463,
+    "test_recall_at_5": 0.03405351764480579,
+    "test_ndcg_at_10": 0.028115151372565275,
+    "n_eval": 57439,
+    "reconciliation": {
+      "path": "results/research/issue256/rounds/r04/STAGE3_RECONCILIATION.json",
+      "sha256": "c24fe0429c269679ba9209b664d5d08f97a57bcff16edfb2e399265436b0acec",
+      "status": "PASS",
+      "strict_target_met": false,
+      "metrics": {
+        "n_eval": 57439,
+        "test_recall@10": 0.05151552081338463
+      }
+    },
+    "validation_recall_at_10": 0.05590278382283814,
+    "pointer": {
+      "path": "results/research/issue256/rounds/r04/FINAL_STAGE3.json",
+      "sha256": "73c29fba69522f4aeba5c1fd1c1d5025f3811496aff95360ce15be24848265d2"
+    }
+  },
+  "comparison": {
+    "threshold": 0.065,
+    "baseline_TIGER_RQ-VAE": 0.0557,
+    "R01": 0.05266456588728913,
+    "R02": 0.05266456588728913,
+    "R03": 0.0490085133794112,
+    "R04": 0.05151552081338463
+  },
+  "result": "negative: the mechanism signature is falsified at Stage 2 (H=1.9957 >= 1.5, 22995 triples) and the final Recall (0.0515) is below the threshold and below R01/R02",
+  "r2_archive": {
+    "bucket": "r2:genrec/105/",
+    "files": 131,
+    "recall_keys": 23
+  },
+  "frozen_at": "2026-11-25T09:35:42.645717+00:00"
+}

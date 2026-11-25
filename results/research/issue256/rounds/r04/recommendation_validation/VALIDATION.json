@@ -1,0 +1,136 @@
+{
+  "schema": "genrec.issue256.recommendation_validation/1",
+  "status": "COMPLETE",
+  "identity": {
+    "run_id": "issue256_r04_formal",
+    "stage3_run_id": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/logs/Amazon_2023_Instruments/Nov-25-2026_19-53-02",
+    "test_final": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/logs/Amazon_2023_Instruments/Nov-25-2026_19-53-02/test_final.json",
+      "sha256": "714d6f1a73ebf68d81e80683c99171782d6833f7abb5021d1e600be5bd9d79cf"
+    },
+    "checkpoint": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_19-53-02/HG_Rec_best.pth",
+      "sha256": "626c2db2b589a2297e01a5f1b3b31eb4c4d02450c078ea6d13eae3edb394cdf2"
+    },
+    "sid": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/item_sids.json",
+      "sha256": "26368f3e7690c6831b523eb82e0755aea58885336e0e23725ba5f7fb4ad80a18"
+    },
+    "valid": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+      "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+    },
+    "sources": {
+      "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py": "54ca6bfbcd55a42e718660dd0004370a41a5e1c2c5038a86bbfc84f32b963690",
+      "/fs04/ar57/wenyu/GeneRec/tools/issue256/r04/external_validation.py": "4c1cd3aa1f4d83439a7e7f0ba9198c23bbce4522ec12686e7fcea21f82fe14bf",
+      "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/model/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/model/hg_rec.py": "f2876a95ee25b3f25d417792867c560da3053f8e5880120eda89affd9fd5cad1",
+      "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/model/utils.py": "a471b26da34ab30372f2cb2cc7baf05a6747be8830db4f178eac3b228364623c",
+      "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/data/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/data/dataloader.py": "d490b89c82a8ce3e1d8fa7577040038ef3411d030ce327fad95a999334f98af4",
+      "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/data/dataset.py": "8899f1348e740996c572cd95439365f4caf2fe791acc4a0e22ed7d837937030e"
+    },
+    "config": {
+      "batch_size": 4096,
+      "infer_size": 1024,
+      "num_epochs": 150,
+      "eval_interval": 5,
+      "eval_start_epoch": 75,
+      "early_eval_epochs": [
+        25,
+        50,
+        75,
+        100,
+        125
+      ],
+      "fast": true,
+      "bf16": true,
+      "use_lr_scheduler": true,
+      "lr_warmup_pct": 0.1,
+      "lr_min_factor": 0.2,
+      "compile": false,
+      "compile_mode": "default",
+      "num_layers": 4,
+      "num_decoder_layers": 4,
+      "d_model": 128,
+      "d_ff": 1024,
+      "num_heads": 6,
+      "d_kv": 64,
+      "dropout_rate": 0.1,
+      "activation_function": "relu",
+      "feed_forward_proj": "relu",
+      "device": "cuda",
+      "lr": 0.003,
+      "weight_decay": 0.05,
+      "vocab_size": 780,
+      "eos_token_id": 779,
+      "pad_token_id": 0,
+      "n_user_tokens": 1,
+      "max_len": 20,
+      "dataset_name": "Amazon_2023_Instruments",
+      "dataset_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/",
+      "codebook_size": [
+        256,
+        256,
+        256,
+        1
+      ],
+      "code_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/item_sids.json",
+      "train_file": "train.parquet",
+      "valid_file": "valid.parquet",
+      "test_file": "test.parquet",
+      "log_path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/logs/",
+      "save_path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/ckpt/",
+      "seed": 42,
+      "topk_list": [
+        5,
+        10
+      ],
+      "beam_size": 20,
+      "no_eval": true,
+      "skip_test": false,
+      "screen_baseline_log": "",
+      "screen_start_epoch": 40,
+      "screen_window": 5,
+      "screen_min_ndcg_gain": 0.001,
+      "screen_min_recall_gain": 0.001,
+      "num_workers": 4,
+      "prefetch_factor": 8,
+      "exclude_history": true,
+      "no_exclude_history": false,
+      "pin_memory": true,
+      "no_pin_memory": false,
+      "sid_length": 4,
+      "max_token_seq_len": 82,
+      "decoder_start_token_id": 0
+    }
+  },
+  "metrics": {
+    "n_eval": 57439,
+    "validation_recall@5": 0.0367346228172496,
+    "validation_ndcg@5": 0.02446722095244873,
+    "validation_recall@10": 0.05590278382283814,
+    "validation_ndcg@10": 0.030634974647999785
+  },
+  "shards": [
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank0.json",
+      "sha256": "658333f110968b4faa1bb5a3d19d4179b9d4a2ed446686abb1d8cb18a0000577"
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank1.json",
+      "sha256": "60690051810ec5b4dc076a4805cd07c0218407112da1b3972a143102c907e7db"
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank2.json",
+      "sha256": "f1243b04d2001d613b96c883c123309c199153abefde56c658d3dec36cdf9b25"
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank3.json",
+      "sha256": "070927eda8d5d735d738df3d47a3db7e4c1897c995664ec74ecb373ab4763f56"
+    }
+  ],
+  "used_for_checkpoint_selection": false,
+  "training": false,
+  "test_access": false
+}
