@@ -67,7 +67,8 @@
     "complete recommendation validation over57439 rows: validation_R@10=0.0573129755044482 (R01 0.057643761207541916), so the cadence change is falsified on validation and test alike",
     "four required R2 artefacts archived at r2:genrec/103/ (127 files, 23 recall keys) with the ledger entry recorded",
     "14-arm SID-paired diagnostic: final Recall tracks level-1 commitment granularity (|r| 0.80-0.91); this lineage commits an almost item-unique SID and lands at the bottom of that group",
-    "paired geometry contrasts with a measured protocol noise floor (median repeat spread0.000949): mixed curvature beats pure Euclidean by+0.003055, per-role bias beats the shuffled control by+0.001114 and the global bias by+0.000157"
+    "paired geometry contrasts with a measured protocol noise floor (median repeat spread0.000949): mixed curvature beats pure Euclidean by+0.003055, per-role bias beats the shuffled control by+0.001114 and the global bias by+0.000157",
+    "R03 preregistered before any training: the role-conditioned level-1 curvature mixture with the three switches, the exact equations, the level-1 granularity predictions (distinct two-code prefixes <=6000, absolute L1 carry >=0.10) and the validation Recall prediction (>=0.0583) with an explicit failure criterion"
   ],
   "not_run": [
     "strict final test_R@10>0.065 for issue256 closure",
@@ -97,9 +98,9 @@
   ],
   "blocked_by": null,
   "next_commands": [
-    "push the completed R02 round evidence (negative result) with equal main SHAs",
-    "preregister the next single-change candidate: role-conditioned mixed-curvature level-1 assignment (contract, falsifiable prediction, admissions) before any training",
-    "then one frozen four-card Stage2 3000-epoch run and one frozen Stage3 150-epoch run, reconciled and archived"
+    "implement the R03 role-conditioned level-1 assignment cost red-to-green in a fresh candidate tree",
+    "re-admit the R03 source (real entry, behaviour graph, four-rank diagnostics, inclusive window, complete test suites, dispatch probe)",
+    "push the admitted R03 source, then run the single preregistered issue256_r03_formal Stage2 3000-epoch and Stage3 150-epoch pair, reconcile and archive"
   ],
-  "updated_at": "2026-11-25T02:01:03.088024+00:00"
+  "updated_at": "2026-11-25T02:06:10.614003+00:00"
 }

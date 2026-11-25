@@ -121,6 +121,36 @@
         "check": "rounds/r02/CHECK_10.json"
       },
       "next_decision": "Preregister the next single-change candidate on the measured level-1 granularity lever (role-conditioned mixed-curvature level-1 assignment) and run it once under the frozen recipe"
+    },
+    {
+      "round_id": "r03",
+      "parent_evidence_commit": "fedb8718c6509b3d278b0f9725202d788c562493",
+      "parent_run_id": "issue256_r02_formal",
+      "parent_source_commit": "01fb29d4868f9c90590b2655b83ea50362823c13",
+      "arm": "TIGER_role_conditioned_l1_rq",
+      "run_id": "issue256_r03_formal",
+      "status": "PREREGISTERED_NOT_RUN",
+      "change": "take the level-1 curvature mixture from the item graphlet orbit type instead of the free learned per-item gate; levels 2 and 3 unchanged",
+      "hypothesis": "a role-conditioned level-1 commitment coarsens the level-1 partition and lifts the absolute L1 prefix carry, which is the measured correlate of the final Recall",
+      "contract_sha256": "ba983b1423bffb50fb635f04963e424e6d56b569354e77a32bf6c8c66363d89c",
+      "diagnosis_sha256": "94a71a00a65972860d32793f196941374a8f94e4a072b8205203ef75e2e1df0a",
+      "data_identity": "INFRA.json",
+      "validation_policy": "EVALUATION.md",
+      "admission": null,
+      "registration_snapshot": "rounds/r03/REGISTRATION.json",
+      "engineering_repairs": [
+        "deterministic static CUDA means",
+        "highest dense float32 arithmetic",
+        "weak layer-owned rotating history",
+        "framework-owned generated execution entry",
+        "canonical full-role source identity"
+      ],
+      "causal_limit": "R01/R02 carry the numerical repairs, so R03 vs R02 is not a single-factor isolation; only R03 vs the frozen baseline TIGER_RQ-VAE is clean",
+      "stage2": null,
+      "stage3": null,
+      "r2_archive": null,
+      "result": null,
+      "next_decision": "Implement the role-conditioned level-1 cost red-to-green, re-admit the source, then run the single preregistered four-card Stage2/Stage3 pair"
     }
   ]
 }

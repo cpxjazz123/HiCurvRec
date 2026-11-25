@@ -31,13 +31,14 @@ SID_FALLBACK = {arm: str(ROOT / 'results/stage2_RQ-VAE' / arm / 'item_sids.json'
                             'TIGER_graphlet_role_E', 'TIGER_graphlet_role_Q',
                             'TIGER_graphlet_role_QR', 'TIGER_graphlet_role_R',
                             'TIGER_graphlet_role_T', 'TIGER_struct_mixed_rq',
-                            'TIGER_af3_gate_mixed_rq')}
+                            'TIGER_af3_gate_mixed_rq', 'TIGER_RQ-VAE', 'TIGER_RQ-VAE__canonical')}
 ARMS = [
     'TIGER_struct_mixed_rq', 'TIGER_mixed_rq_F0', 'TIGER_mixed_rq_L', 'TIGER_mixed_rq_A',
     'TIGER_mixed_rq_G', 'TIGER_mixed_rq_E', 'TIGER_role_geom_rq', 'TIGER_role_geom_global_rq',
     'TIGER_role_geom_shuffled_rq', 'TIGER_graphlet_role_E', 'TIGER_graphlet_role_QR',
     'TIGER_graphlet_role_R', 'TIGER_graphlet_role_Q', 'TIGER_graphlet_role_T',
     'TIGER_module_budget_prefix_rq', 'TIGER_periodic_budget_prefix_rq',
+    'TIGER_RQ-VAE', 'TIGER_RQ-VAE__canonical',
 ]
 
 
