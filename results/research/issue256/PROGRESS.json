@@ -1,11 +1,11 @@
 {
   "issue": 256,
-  "state": "WORKING",
+  "state": "CLOSED_BY_OWNER",
   "parent_commit": "c4ee00cdc4314b7fcab882acd939bf18ee3b0824",
   "commit": "16259df8c01a55a8689f195bcd2c301fabe7a3bb",
   "r01_source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
   "last_admitted_source_commit": "16259df8c01a55a8689f195bcd2c301fabe7a3bb",
-  "current_source_state": "R04 complete negative; the next round must diagnose the assignment and codebook freedom that keeps the triple near-unique",
+  "current_source_state": "no active Stage2 arm; the R03/R04 trees are archived and the R05 candidate was never dispatched",
   "done": [
     "acceptance frozen",
     "assets109/109",
@@ -91,7 +91,9 @@
     "independent reduction of the persisted Stage3 predictions reproduces the metrics exactly: test_R@10=0.05151552081338463, R@5=0.03405351764480579, strict_target_met false",
     "complete recommendation validation over57439 rows: validation_R@10=0.05590278382283814, below the preregistered0.0583 and below R01/R02",
     "four required R2 artefacts archived at r2:genrec/105/ (131 files, 23 recall keys) with the ledger entry recorded",
-    "CHECK_1 recorded for R04:16 PASS/1 FAIL (the closure threshold C17),0 NOT_RUN; round classified as a completed negative result, issue stays OPEN"
+    "CHECK_1 recorded for R04:16 PASS/1 FAIL (the closure threshold C17),0 NOT_RUN; round classified as a completed negative result, issue stays OPEN",
+    "R05 preregistered on the measured level-2 branching (34.3 prefixes per first code, median one item per prefix) but not dispatched: the owner closed issue 256 first",
+    "issue 256 closed by the owner after four complete rounds; best final test_R@10 across the loop is 0.05266456588728913 (R01/R02), below the 0.065 threshold, and the closure is an owner decision, not a met target"
   ],
   "not_run": [
     "strict final test_R@10>0.065 for issue256 closure",
@@ -125,5 +127,5 @@
     "dispatch the single preregistered issue256_r03_formal Stage2 3000-epoch four-card run",
     "then the frozen Stage3 150-epoch run, the independent reduction, the complete validation and the four-artefact R2 archive"
   ],
-  "updated_at": "2026-11-25T09:36:33.111703+00:00"
+  "updated_at": "2026-11-25T09:43:28.464512+00:00"
 }

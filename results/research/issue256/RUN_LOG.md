@@ -304,3 +304,11 @@ Reading both rounds together: moving the role mixture from level 1 (R03) to leve
 three-code triple essentially unique (23248 -> 22995 of 24587 items). The level the mixture drives is
 therefore not the binding constraint; the next round must diagnose the assignment and codebook freedom
 that lets the encoder place almost every item on its own triple before another single change is frozen.
+
+## Issue 256 closed by the owner (2026-11-25)
+
+After four complete rounds (R01 0.05266, R02 0.05266, R03 0.04901, R04 0.05152 final test R@10) the closure threshold of
+0.065 was never met. The owner closed the issue at this point. R05 was preregistered on the measured placement diagnosis
+(level-2 branching: 34.3 second codes per first code, median one item per prefix) but was never dispatched: no workspace
+was reserved, no worker started and no GPU budget was consumed; its contract and diagnosis remain as the recorded next
+direction. The R03/R04 trees are archived and no active Stage2 arm remains.

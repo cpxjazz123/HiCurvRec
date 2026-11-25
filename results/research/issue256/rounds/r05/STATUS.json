@@ -1,0 +1,20 @@
+{
+  "schema": "genrec.issue256.r05.status/1",
+  "round_id": "r05",
+  "run_id": "issue256_r05_formal",
+  "arm": "TIGER_role_conditioned_l2_rq",
+  "status": "REGISTERED_NOT_DISPATCHED",
+  "reason": "the owner closed issue 256 after R04; no R05 worker was started, no workspace was reserved and no GPU budget was consumed. The frozen contract (rounds/r05/CONTRACT.md) and the placement diagnosis (rounds/r05/DIAGNOSIS.json) remain as the recorded next direction.",
+  "evidence": {
+    "contract": {
+      "path": "results/research/issue256/rounds/r05/CONTRACT.md",
+      "sha256": "1ebc1eef161e3cf29806db5689230fbbcefae5f653f4d07e89989e83a9cfd752"
+    },
+    "diagnosis": {
+      "path": "results/research/issue256/rounds/r05/DIAGNOSIS.json",
+      "sha256": "4fb0499a146b8352bdb1d0affc5266444ff561f581c8464d5faf5f2e7f11ce51"
+    }
+  },
+  "closed_with_issue": 256,
+  "recorded_at": "2026-11-25T09:43:28.459651+00:00"
+}

@@ -1,0 +1,46 @@
+{
+  "schema": "genrec.issue256.r05.diagnosis/1",
+  "round_id": "r05",
+  "question": "at which level does the branching that keeps the triple unique live, and is the role already separated there?",
+  "method": "exact counts over the persisted R04 hard SID joined with the frozen role table; the fourth column is the export collision counter",
+  "sid": {
+    "path": "results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/item_sids.json",
+    "sha256": "26368f3e7690c6831b523eb82e0755aea58885336e0e23725ba5f7fb4ad80a18"
+  },
+  "measured": {
+    "distinct_L2_prefixes": 8781,
+    "L2_prefixes_per_L1": 34.3,
+    "items_per_L2_prefix": {
+      "mean": 2.8,
+      "median": 1,
+      "p90": 6,
+      "max": 64
+    },
+    "roles_per_L2_prefix": {
+      "mean": 1.746,
+      "median": 1,
+      "p90": 3,
+      "max": 7
+    },
+    "prefix_role_cells": 15331,
+    "items_per_cell": {
+      "mean": 1.604,
+      "median": 1,
+      "p90": 3,
+      "max": 25
+    },
+    "distinct_L3_per_cell": {
+      "mean": 1.568,
+      "median": 1,
+      "p90": 3,
+      "max": 23
+    },
+    "items_per_triple": 1.069,
+    "H_L1": 7.4684,
+    "H_L2_given_L1": 4.9815,
+    "H_L3_given_L1L2": 1.9957
+  },
+  "reading": "Level 1 already uses all 256 codes (7.47 of 8 bits), so there is nothing left to coarsen there. The explosion is at level 2: 8781 prefixes over 256 first codes is 34 second codes per first code, while the median prefix holds a single item. Within a prefix the roles are already almost pure (median 1 role) and the level-3 refinement adds only 1.57 distinct third codes per (prefix, role) cell. The remaining freedom therefore sits in how many distinct second codes a level-1 cell opens, not in the level-1 or level-3 mixture.",
+  "next_direction": "R05 moves the role-conditioned curvature mixture to the level-2 cost (the third and last placement): same-role items must share second codes across the level-1 cell, which is the measured lever (34 second codes per first code, median 1 item per prefix).",
+  "recorded_at": "2026-11-25T09:38:57.813273+00:00"
+}
