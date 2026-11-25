@@ -1,0 +1,57 @@
+{
+  "schema": "genrec.issue256.assignment_freedom/1",
+  "recorded_at": "2026-11-25T09:37:47.001634+00:00",
+  "question": "why do the role-conditioned mixtures leave the three-code triple near-unique at either level?",
+  "method": "exact counts and conditional entropies (bits) over the first three codes of each persisted SID; the fourth column is the export collision counter",
+  "arms": {
+    "baseline_TIGER_RQ-VAE": {
+      "items": 24587,
+      "H_L1": 6.959,
+      "H_L2|L1": 4.9793,
+      "H_L3|L1L2": 2.2034,
+      "H_triple": 14.1417,
+      "distinct_L1": 249,
+      "distinct_L2": 7374,
+      "distinct_triples": 20425,
+      "items_per_L2": 3.334,
+      "items_per_triple": 1.204
+    },
+    "R01_module_budget": {
+      "missing": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_module_budget_prefix_rq/item_sids.json"
+    },
+    "R02_periodic_budget": {
+      "missing": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/item_sids.json"
+    },
+    "R03_role_l1": {
+      "items": 24587,
+      "H_L1": 7.4596,
+      "H_L2|L1": 5.1067,
+      "H_L3|L1L2": 1.9028,
+      "H_triple": 14.4691,
+      "distinct_L1": 256,
+      "distinct_L2": 9257,
+      "distinct_triples": 23248,
+      "items_per_L2": 2.656,
+      "items_per_triple": 1.058
+    },
+    "R04_role_l3": {
+      "items": 24587,
+      "H_L1": 7.4684,
+      "H_L2|L1": 4.9815,
+      "H_L3|L1L2": 1.9957,
+      "H_triple": 14.4456,
+      "distinct_L1": 256,
+      "distinct_L2": 8781,
+      "distinct_triples": 22995,
+      "items_per_L2": 2.8,
+      "items_per_triple": 1.069
+    }
+  },
+  "reading": "Every arm keeps the triple near-unique: the baseline has 20425 triples (1.204 items per triple), R03 23248 (1.058) and R04 22995 (1.069). The difference between arms is in the level-2 branching: distinct L2 prefixes 7374 (baseline), 9257 (R03), 8781 (R04) over roughly 250-256 level-1 codes, i.e. 29-36 distinct second codes per first code, and 2.66-3.33 items per L2 prefix. The level-3 refinement then splits each prefix again (H(L3|L1L2) 1.90-2.20 bits). Neither the level-1 nor the level-3 *mixture* moved that branching, which is consistent with both rounds: the freedom lives in the assignment/codebook itself, not in where the mixture is applied.",
+  "next_direction": "R05 must constrain the branching inside a prefix rather than the metric of a level: the cost matrix needs a behaviour-conditioned reuse margin (a curvature-weighted hinge that discounts codes already used by the same graphlet role inside the same level-1 cell), with the Sinkhorn rule unchanged, so the role-to-code coupling acts on the assignment margin rather than on a distance mixture.",
+  "support": {
+    "baseline": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+    "R03": "results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/item_sids.json",
+    "R04": "results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/item_sids.json"
+  }
+}

@@ -88,7 +88,7 @@
     "recall_keys": 23,
     "ledger": "results/research/issue139/r2_ledger.json"
   },
-  "next_decision": "The level that carries the item-unique information is not controlled by the curvature mixture at either end: R03 (role at level 1) left the triple unchanged and R04 (role at level 3) measured H(L3|L1L2)=1.9957 with 22995 triples, both far from the coarsening the measured correlate promised. The next round must diagnose the assignment itself (the codebook and assignment-margin freedom that lets 24587 items occupy 22995 triples) rather than the per-level mixture, before another single change.",
+  "next_decision": "Diagnose the assignment/codebook freedom before another single change (rounds/../analysis/ASSIGNMENT_FREEDOM.json): every arm keeps the triple near-unique (baseline 20425, R03 23248, R04 22995 of 24587) and the difference between arms is the level-2 branching (7374/9257/8781 distinct L2 prefixes over ~250 first codes). R05 must constrain the branching inside a prefix with a behaviour-conditioned reuse margin in the cost matrix, keeping the Sinkhorn rule unchanged.",
   "amendments": [
     "section 6: the first entropy reduction counted the export collision counter; corrected on the three semantic codes before any training"
   ],
