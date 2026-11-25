@@ -246,19 +246,34 @@
     },
     {
       "round_id": "r04",
-      "parent_evidence_commit": null,
+      "parent_evidence_commit": "6b401ea16ac792353bcb0a25e532fb0550f41530",
       "parent_run_id": "issue256_r03_formal",
       "parent_source_commit": "bcf124e6f79cdc3cd178f6f6736250d4be978ff6",
       "arm": "TIGER_role_conditioned_l3_rq",
       "run_id": "issue256_r04_formal",
-      "status": "REGISTERED_PENDING_ADMISSION",
+      "status": "ADMITTED_READY_TO_DISPATCH",
       "change": "take the level-3 (refinement) curvature mixture from the item graphlet orbit type instead of the free learned per-item gate; levels 1 and 2 keep the learned gate",
       "hypothesis": "the item-unique information of the R03 SID sits in the level-3 refinement (H(L3|L1L2)=1.9028 bits over 23248 triples), so a role-conditioned level-3 cost coarsens the triple and lifts Recall; a level-1 change cannot",
       "contract_sha256": "f698b29d73ffaeec83a85fe3b79e0cc01c42a29fad25cc3b2bf1b88027e03c99",
       "diagnosis_sha256": "81b1a1d35c7f6d52d6a4e7e143470f5d32b51ec9a6db7ad49fe85049b425b1a5",
       "data_identity": "INFRA.json",
       "validation_policy": "EVALUATION.md",
-      "admission": null,
+      "admission": {
+        "path": "rounds/r04/ADMISSION.json",
+        "sha256": "db82cfa12518639b73866d88f249fa836f4a30038948b549e962d008cb7dfba2",
+        "source_files": null,
+        "unit_cases": {
+          "candidate": 152,
+          "assets": 64,
+          "controller_and_framework": 22
+        },
+        "module_groups": 17,
+        "mean_seconds": 0.6842494905615847,
+        "ceiling_met": true,
+        "validation": "rounds/r04/VALIDATION.json",
+        "performance": "rounds/r04/PERFORMANCE.json",
+        "test_results": "rounds/r04/TEST_RESULTS.json"
+      },
       "registration_snapshot": "rounds/r04/REGISTRATION.json",
       "engineering_repairs": [
         "deterministic static CUDA means",
@@ -272,7 +287,7 @@
       "stage3": null,
       "result": null,
       "r2_archive": null,
-      "next_decision": "Admit the R04 source, then run the single preregistered four-card Stage2/Stage3 pair",
+      "next_decision": "Dispatch the single preregistered four-card Stage2 run on the admitted source",
       "amendments": [
         "section 6: the first entropy reduction counted the export collision counter; corrected on the three semantic codes before any training"
       ],

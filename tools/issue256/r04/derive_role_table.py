@@ -20,7 +20,7 @@ import numpy as np
 
 ROOT = next(p for p in Path(__file__).resolve().parents if (p / 'stage2_RQ-VAE').is_dir())
 INSTANCES = ROOT / 'results' / 'research' / 'graphlet_roles' / 'instances.npz'
-OUTPUT = ROOT / 'stage2_RQ-VAE' / 'TIGER_role_conditioned_l1_rq' / 'role_table.json'
+OUTPUT = ROOT / 'stage2_RQ-VAE' / 'TIGER_role_conditioned_l3_rq' / 'role_table.json'
 
 TYPES = ('K3', 'P3', 'C4', 'P4', 'K1_3')
 ROLE_NAMES = {

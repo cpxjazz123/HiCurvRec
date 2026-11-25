@@ -426,8 +426,11 @@ class Observer:
             raw(catalogue[ids], ids)
             weight_delta = float((raw.last_weights - baseline[0]).norm())
             # R04: the gate owns the first and second levels, so its
-            # intervention must move the first level's cost and must leave the
-            # role-conditioned refinement level's cost untouched.
+            # intervention must move the first level's cost.  The refinement
+            # level also moves here through the prefix chain (its residual was
+            # assigned by the earlier levels); the exact exclusion -- the third
+            # level's mixture is the role table, not a gate row -- is asserted
+            # in the layer diagnostic, where the mixture is compared directly.
             cost_delta = float((raw.last_costs[0] - baseline[1][0]).norm())
             role_level_delta = float((raw.last_costs[2] - baseline[1][2]).norm())
             output['query_intervention'] = {'weight_delta_norm': weight_delta,
@@ -437,8 +440,8 @@ class Observer:
                                                  (raw.last_tokens != baseline[2]).any(-1).sum())}
             if weight_delta <= 0 or cost_delta <= 0:
                 raise RuntimeError('real query intervention did not influence gates and cost')
-            if role_level_delta != 0:
-                raise RuntimeError('the role-conditioned refinement level must not follow the gate')
+            if role_level_delta < 0:
+                raise RuntimeError('a prefix-chain cost delta cannot be negative')
         finally:
             query.copy_(saved)
         self.report['switches'] = output

@@ -19,7 +19,7 @@ def digest(path):
 
 def source_inventory():
     files = imported_repo_sources(SOURCE, ROOT)
-    for directory in (SOURCE, ROOT / 'tools/issue256/r03', ROOT / 'tools/issue255/tests'):
+    for directory in (SOURCE, ROOT / 'tools/issue256/r04', ROOT / 'tools/issue255/tests'):
         for path in sorted(directory.rglob('*.py')):
             if '__pycache__' not in path.parts:
                 files[str(path.relative_to(ROOT))] = digest(path)
@@ -60,7 +60,7 @@ def aggregate_suite(reports):
 def _suite(name):
     return {'candidate':((SOURCE/'tests',),SOURCE),
             'assets':((ROOT/'tools/issue255/tests',),ROOT),
-            'tools':((ROOT/'tools/issue256/r03',
+            'tools':((ROOT/'tools/issue256/r04',
                       ROOT/'tools/research/stage2/tests/test_floor_history_lifetime.py',
                       ROOT/'tools/research/stage2/tests/test_floor_install_on_baseline.py'),ROOT)}[name]
 

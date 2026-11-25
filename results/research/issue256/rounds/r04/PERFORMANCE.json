@@ -1,0 +1,445 @@
+{
+  "schema": "genrec.issue256.performance/1",
+  "source_run_directory": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/benchmark/issue256_r04_benchmark_2124155_589626027",
+  "run_id": "issue256_r04_benchmark_2124155_589626027",
+  "scope": "Actual four-rank world4/global4096 diagnostic, 60 complete inclusive epochs; every optimizer, DDP, structural branch, periodic evaluation and inter-epoch wait is inside the window.",
+  "window": {
+    "epochs": 30,
+    "first_epoch": 31,
+    "last_epoch": 60
+  },
+  "mean_seconds": 0.6842494905615847,
+  "median_seconds": 0.6591285443864763,
+  "p95_seconds": 0.8565991763025522,
+  "p95_definition": "nearest-rank ceil(0.95*N)",
+  "min_seconds": 0.6142394188791513,
+  "max_seconds": 1.248455156572163,
+  "target_seconds": 0.4,
+  "expected_max_seconds": 0.5,
+  "authorized_ceiling_seconds": 0.8,
+  "target_met": false,
+  "expected_met": false,
+  "ceiling_met": true,
+  "verdict": "inclusive ceiling=True; target=False; expected=False",
+  "historical_issue252_steady_seconds": 0.6405808043,
+  "relative_to_historical": 1.068170457135855,
+  "initialization_seconds": 41.508352253586054,
+  "total_wall_seconds": 85.48983173724264,
+  "periodic_evaluation_epochs": [
+    50
+  ],
+  "periodic_evaluation_cost": [
+    {
+      "epoch": 50,
+      "epoch_seconds": 1.2454584771767259,
+      "median_other_epoch_seconds": 0.6694685448892415,
+      "extra_seconds": 0.5759899322874844
+    }
+  ],
+  "periodic_amortised_seconds_per_epoch": 0.019199664409582814,
+  "optimizer_steps_total": null,
+  "optimizer_steps_per_epoch_per_rank": [
+    6
+  ],
+  "optimizer_steps_measured_total": 1440,
+  "peak_allocated_bytes": 9498925568,
+  "final_epoch_losses": {
+    "epoch": 60,
+    "loss": 0.00017757675959728658,
+    "recon": 0.00015446187171619385,
+    "curvature_estimate": 1.1177794933319092,
+    "gradient_norm_before_clip": 0.0002856804057955742,
+    "gate_mean": [
+      0.29289937019348145,
+      0.3852637708187103,
+      0.3218368887901306,
+      0.35032254457473755,
+      0.31236863136291504,
+      0.3373088836669922
+    ]
+  },
+  "recipe": {
+    "epochs": 3000,
+    "per_rank_batch": 1024,
+    "global_batch": 4096,
+    "world_size": 4,
+    "seed": 42,
+    "config_sha256": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6"
+  },
+  "per_rank_worker_pids": [
+    2124161,
+    2124162,
+    2124163,
+    2124164
+  ],
+  "not_claimed": [
+    "0.4 s/epoch target achieved",
+    "0.5 s/epoch expectation achieved",
+    "single-card or micro-step estimate",
+    "cross-rank speedup"
+  ],
+  "approved_run_id": "issue256_r04_formal",
+  "source_hashes": {
+    "kind": "benchmark",
+    "tree": "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq",
+    "files": {
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/assignment_floor.py": "0e0f2fbef74ac2d7c9cc1b67d50db1f164b95f59874d5eec9f539235908009da",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/benchmark_entry.py": "20428c5af94793c3b0b9f6b3b57982d57cea113b51a34575f3e2e6e58bf95799",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/budget_point_entry.py": "8d80add3dadaab3774302500fe2dd266600b5a874d4ac5579735f5f70949af2a",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/catalogue_audit_entry.py": "0b5109405637d0982898921a9dc46975d6c927ccd7cb14879650730920d954fb",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/config/train_config.json": "27461832258ca93f5bd21ec2f5618ccb69943ac32d5337d6ac57527a0e7638f6",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/distances/__init__.py": "4060a8db940bd12207c0dd91b9a5842772a0b55536d0deeeaaf0463cce606917",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/distances/distance.py": "d8618ed2f2493d4295966ef87e919e4f7265df39162c0aebca8e7b8d6b7adf41",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/final_audit_entry.py": "b892605668e0b1d70eabe0ea38725f126a653644f3535e90fe3780e864356ceb",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/kernel_validation_entry.py": "5ed8d083794b2b383f373e5ab6fff6f0aa9ecdd8f0a665d64065df4d19e69d7f",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/layer_validation_entry.py": "4e8a8f1b3e4b78011b034d3132fbb24d52505e64d50bac4d9d419e233247793f",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/losses/__init__.py": "fe57896283e767977639a74c0503acb0ac62cf33f3c6e02c0bc5b8b39d64d5a2",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/losses/_pairs.py": "9d9a72d206dd6d0c88c62c550e4a7029e34f6a3908ef0489212b2b385ce6ce3f",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/losses/codebook.py": "f4920e7ebb9292d5955a0e2694af9e60f9c0a3464e343cc1131a04e0bbfb3046",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/losses/commitment.py": "b3f41a594e3de7dc8b212365208f0b022a88efa4637eebd16c2c8478400f511d",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/losses/quantization.py": "eb88d1f5e949ea002183823c7c877f119ebbc2e01b72f3ff15919f40f46c8623",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/losses/reconstruction.py": "602cc19dbecc8e91cad8459b3952115e6bf08f3054a8c9ae6c982b1f48c79f38",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/__init__.py": "fc51b6b47b052833e3bb249a00a581da6a6f27bb4905fb58237a2865354c0f81",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/calibration.py": "3ef15bc15500592833fecaa98a1d170b9f7845e16b03382af2018d314ab74fdd",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/curvature.py": "6a4204bca7915ec58f679db2554631c5e9bb40af59a21488b452f59e275bc9ad",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/estimator.py": "1bc4a1fda6276a4e31f7ba7ed69d5a33cb83bc8d0f241471d67a8b79a7f6ddd0",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/geometry.py": "42964aaa6004f91adc96407b14e5e3ce54bec8dc6115b33891bd55cdb0ad02c5",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/layer_gate.py": "af81668339aad843a78b9a597842435f299b26469e176184aa4375f2dd238539",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/layers.py": "9540ceeee2c32e6ff13c435003444760a4ffbb50aa20eb24fc33801ca4969405",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/mechanism.py": "eac7e1d11764ba065e5655a033d0f41d917edcd5fd72bd4a6fc46f6404651782",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/model.py": "f00683ecbc87888890b587cd34eb496c779360ea7c724f6f0e53cd8aaa4d23c1",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/provenance.py": "5089d6b34267d524c44dacc1da499d856d6686d95335c9083423fe70aab8448c",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/role_mix.py": "fc9bf78d7a8b83d5169b63c53dfd309e10a22667e36cdb5e7f6e32f087080961",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/selection.py": "cb0bcb306224af0c8562fa7f3ea6ae4bf4cbf2f4ba61ee5bae60916efb12938c",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/structure.py": "1bccb9f7dbf54f62a743258efc7faca5fc7f89c9cc0039b793c7f0e1985a126b",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/structure_gate.py": "ce043cd2c395b45c9074e195547bd06ceb6915f2078c8f19781b049a4c209499",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/model/utils.py": "5e3dff23978e850b006862c2108dc9d1f3e59e446702c8b076a940a67f306dac",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/module_budget_entry.py": "0a237bb95ea76492bd32fb423d9879175ef7517464dd6ec19c44d8bad9cec98d",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/periodic_budget_entry.py": "0cb1e1781d0fb3553db11c4644e9a6bca86663af201238e0593deac79403d688",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/role_table.json": "32f986dac9bf8e382c11aedd62cd54e7defbf1853ee0b930b6fe51d4f334d3eb",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/shared_batches_entry.py": "f77acc9c0b048c3238050f5fdf108aaf9f0cbcb0789bf4e261d586e52e651842",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/static_cache_check_entry.py": "2593ebe3835cfb200aaf04429192a2c5b9c1051c635f55d55e645c496d5c4fba",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/static_consumers_entry.py": "081d193888d06dfa11d358c0127d018f5c4d85dcf14163af2968e07d08ba6392",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/steady_profile_entry.py": "aa4145876cf008d39e7ad4ded2340bba96323a5beb05fa0b455078eda7e3d626",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/reference.py": "7d02ae8670362bf021fa1539d3b2f6721e6de926bb611fee3d2f72ab017b2270",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/reference_layer_gate.py": "b4fe04d6e66105b4face3fc1874254a5a6a7568a6a5ccc3b1f6a5d4b8fa18d31",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_attention.py": "b0846be3f38fe80e9e005cc95e101ce51192d1dc745ecba8e7a1d01d31e51f50",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_attention_pipeline.py": "b88cf8f3037d76dba4154f1cf22fdd7866a8c8914bd4997cc1d2ea698e492f4c",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_batch_invariant_gates.py": "af86dcfce017bae66af929e4673cbc03e1ae1a4e1091d9170924d2cf5bf10795",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_budget_known_answers.py": "43068714dbe61e400f01fb4be23071f2031a9edbeebbe9cb25257487aa56bc06",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_budget_mutations.py": "a45192ed3389c15e4f24aab1008d496df6feb4256ad9915e1f1da0e2ce84ca6c",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_budget_reference.py": "349cd9c3f31b318bb459e418863299ef4dc8238769ec1decec4ee2115ff06567",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_calibration.py": "f6f6572ab663ffcf6463947b7b6fc142da77e7bbc742778f5ef9538d5047f7a1",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_cuda_math.py": "a293e59cfb537dbbaa6eb5e35f769918f6951151581e9817c5ae954b95bfba83",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_curvature_loss.py": "d260562cb8990411a1680ac0792006db787619ddafcc5a6c54d09fa13142f633",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_entry_calibration.py": "939039f18ee9d5662bb400771c5e0234ca9d1b921afa394098e624533665499b",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_estimator.py": "07d4cb1a0841b766d0e5220a2be7b7b66c5abdfe3d00e9c43e38fa59ba991531",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_execution.py": "c0cb0b99d0a1857e8b0d2f34021467a2df00d11e0d8da7bab63121ecc150fcfd",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_geometry_memory.py": "0ebae94fad15202119347deeedf7d1a2ac1e00772d58acf9e84bebdf89485c5c",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_known_answers.py": "5227bfa8fe927e96c28ea42d55d219bad2d09f490b3aad62346a12c0565da513",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_layer_gate.py": "05ac143248c4fca1e0b1a0d2752babe0f4a6bd22cd3f8879a9cb4b49c832ac8f",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_layer_mechanism.py": "2e12248e8f58444153db35a41e5bc7dbf483fe7056dd4127f7315232d0f847a7",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_mechanism.py": "bf5b84db0466103245e99d049bd36e53e237b06712c19be5c6acc674d520d418",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_module_budget.py": "385100585ceef760bc93f83cd6c001ba4ba78edbd45ebd130cdd92a1a0b44159",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_mutations.py": "f5a6040acb4ee412256de89db2db7cef4bbd13089f961956a073f57e173580ee",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_periodic_budget.py": "5af7ce35a24171f6dce8d7045098fe62c7eab9b446551099be17ce8e13699aaa",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_profile_loader.py": "3abd9d350eb8bc8ce61ad5e894ab4312d38a520c101323e1ad7ee10dd37aed0c",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_provenance.py": "cb1c441759cfda7efa11387c74083111985064b8789c456a309ca490b031b344",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_reference.py": "0a939f348e8ce897e64f2328357b12ff8059c7eb615284616ba03d17fb68a72c",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_role_mixture.py": "209f764e03c67240ca62c74232cf38b1398c331e58d6cbb585d769f623414f96",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_shared_assignment_oracle.py": "65da4c0f8062d9154d3f4c4b5fbc174770e81119d6accfabfe21871371f47bc3",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_sparse_adjoint.py": "5972c5c4432a15e9b986ca9a1eabd0cf528ebc2c66014112db17abbea83e82e3",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_sparse_structure.py": "dfa0d16d375bd13af03e69f7df4faaa634c3564781730c34631af7892114ff6e",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_static_means.py": "c1f496aabced794a58c47adc91cce915e87733bf2f934a3cc4ba0abafdd9640d",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_static_reproducibility.py": "a9a6fa80d2ef55352af3275e00eec9c03e981981a7dcdbe2391734bfc237ad96",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_structure.py": "e818e562c925c6aa6d3bd5853d2b1b1ba00e0f88f1831289537a11d375bec593",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_sync_free_batch.py": "0fa28c44ee9bb7ab2cc9d26fee74b88db9afa659fd57075d40a294df3865e964",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/tests/test_three_geometry.py": "542015ddb04c215986bf91efb23a1d129834347ed4efa3d7e1ca434c1fff646e",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/train_config.py": "21ed7bf5c3b8bebe7aa276f78b9ea0ea124ec3ab6a798dcb940ad7b545cb0e3d",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/train_rqvae.py": "44bf794c5ba1ff089342335fd148804840704c34679d026e390dfb89741d727e",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/unit_suite_entry.py": "b0432d3232c185977518df98a53869aa37cb77623ba6dfe2e735c850360cf99b",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/validation_entry.py": "3387c3e8d1b115219a3a12a0f0ad1a47d3005413743346e47367c77878bbbe15",
+      "stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/validation_inference_entry.py": "96537c99e89e26eadc6be0c1fb29742a98f2057c51cd3a94b3cdd3566bb34f4c",
+      "tools/issue256/r04/admission.py": "2d3bdb93a3055751bd56599b19cdecb9116de397f0eda6ebf2d41ba216ad59e8",
+      "tools/issue256/r04/build_lineage.py": "b48a3640eb61e44702cfca6f2ddab5a1b37f054980f09d8e610ebacff319f4c2",
+      "tools/issue256/r04/calibration_receipts.py": "83c476eb85b649bea7c90fdf1f18010d4c108f817c2990e33ac8c31130f16e19",
+      "tools/issue256/r04/check_static_cache.py": "560675461f7acd361398500cd4c6227ef187497ad94c72aba31df0465cc2bf73",
+      "tools/issue256/r04/collect_evidence.py": "a02ccda45a7f2e61b6ef6d36af38538d964b20b2e2465ef0ff9e16e80f2b9c2b",
+      "tools/issue256/r04/derive_role_table.py": "81803296b4872660975f50a5f02d89836462b6680bf9a4b94c5bbeb511a5e458",
+      "tools/issue256/r04/diagnose_budget_point.py": "9457971a84c95798139d5669f26e19141f1047bcf6ca95c59f4f898e556351df",
+      "tools/issue256/r04/diagnose_shared_batches.py": "90840d42016e551135219623b2bf8741888b5c33198ae7350cd3af77650d0209",
+      "tools/issue256/r04/diagnose_static_consumers.py": "3bdd68b635948cc79909d9508f4c696109d2912dca6a31c15d30fff617add571",
+      "tools/issue256/r04/dispatch_evidence.py": "4e379b71830e3912dc8422bd1dba40331ed8830ab03848becb2ef1e6d8d78cfd",
+      "tools/issue256/r04/evaluate_arm.py": "d85e5a3a9de9af16458aff9e2ceece23111559a7e7af471663f9681a6f66f218",
+      "tools/issue256/r04/external_validation.py": "4c1cd3aa1f4d83439a7e7f0ba9198c23bbce4522ec12686e7fcea21f82fe14bf",
+      "tools/issue256/r04/extract_catalogues.py": "f65d790da74d13af0448bd3bf35aab3d823860fdbcd584c41412d58478488889",
+      "tools/issue256/r04/final_global_gradients.py": "04c034c7438839eb9a3e6326e1ad7defda3b07c3691be804235099bd4a7415c0",
+      "tools/issue256/r04/final_gradients.py": "7ed32dcc5c48c3bdef8d652906f845790b706b634c69018459f87746409fc62f",
+      "tools/issue256/r04/finalize_stage2.py": "8d582857afa0b7d2405b6abf518674940f5e02c98d83d75202884489b5986e61",
+      "tools/issue256/r04/identity.py": "a5b3f9f340876217da931ca6a64edf551e0049c6d0121dd88025706babd6f03f",
+      "tools/issue256/r04/launch_budget_check.py": "758ad500be48b4aa6a8417c4f08dc2f64a07c68d0c54b46dc497a954507a18e8",
+      "tools/issue256/r04/launch_diagnostics.py": "a516ba86fbc58a2a78a59df32a47f7d68112c49929c654ccf32eb1bd90d00037",
+      "tools/issue256/r04/launch_formal_run.py": "9d42ff7903fce2bf3661f670d089a93961ac491d6b2b22f7ba1731248df42519",
+      "tools/issue256/r04/launch_periodic_check.py": "7f517dfae47737b517cc4baea50e626cb4fdb7afe90a82e047ec00e7b6fd2400",
+      "tools/issue256/r04/layer_validation_entry.py": "2bda44793088f24bc0ac69e485689fb3830022edfe762d6ea9a5a0b7a5bba72c",
+      "tools/issue256/r04/reconcile_stage2.py": "eb28b9c7332d0ab4a0ba3142e3b9d531bca73b161073781b85d4e34af032e75b",
+      "tools/issue256/r04/reconcile_stage3.py": "ac78083e9806225b1f0c2dd645f6dfbd2c5e9f57c1e4800b6cd22961c3ec7d13",
+      "tools/issue256/r04/run_tests.py": "255e8d9a51efe9586b83db6b1237c42c9f5a446ae99df93d1c0e2b789a576158",
+      "tools/issue256/r04/test_calibration_receipts.py": "07ac39bf115fff3d42103c4e6fa80fff33726678cbae1242a2e7c2ed22e2a1c2",
+      "tools/issue256/r04/test_external_validation.py": "95fef0d756f74aa934de8a3e3dba1e9512695b30aa7a13a1667979294b0e8cb6",
+      "tools/issue256/r04/test_formal_workspace.py": "21c26fc677f3a04ca46ec834c7ea50f701651ffcf8d8a3f3d5e4bbf408c813c2",
+      "tools/issue256/r04/test_profile_identity.py": "6c34b73df123a38254877c9489a1c01ee0c5317f7a363f737c7ab0fe87d5b594",
+      "tools/issue256/r04/test_source_inventory.py": "a8f022fdec490bbedb73b79e6ae4a5f9b63ec7a8e960896cdc77b0af4019b026",
+      "tools/issue256/r04/test_unit_coverage.py": "35d3a1d5de8aa72a2ed692be24c903951d919086781930296cf9b230e1f382be",
+      "tools/issue256/r04/test_validation_diagnosis.py": "1b38c73a54e0c38fa34678b557f21dc606fe9d30a2939b0b0b41059b2f10b609",
+      "tools/issue256/r04/validation_diagnosis.py": "c23b9435b1e057876a963ddeb34e6b4b0e8fb2b791facaa2d3a967e3d6781588",
+      "tools/graph_infra/__init__.py": "b86861c93434621cff070d024b12f8c6f9d5a5e77a8deea54089645a3a7226ff",
+      "tools/graph_infra/assets.py": "808fe05241b457fcbb82cfab3c6481309575fee2fddfff73b376c230d44317b9",
+      "tools/graph_infra/ego_gnn.py": "a0eda5ab356f1a64dd591430f2442897d43d18f700ee69dc55aba58d86a90479",
+      "tools/issue252/archive_audit.py": "1c4fc283096e7a8e3a22c415f6a2f886d61186ce80aa7c5700aa3bc37968cd2d",
+      "tools/issue252/ego_operators.py": "d4c7ca30a2bab63bbdc910f02ed4999b5878ff868f98fececa4bd2ed80259aba",
+      "tools/issue252/host_transfer.py": "41428cf5a9a9b9abb3568baa2164b675b9fd888172e3431f631665925d462f37",
+      "tools/issue253/cuda_math.py": "e6360d4c2f9ec80e2301f19342c109597f9177cd045a78540b73f2a4402e6473",
+      "tools/issue253/ego_kernel.py": "6a9a823e51e5923315ee6e6410ab20b57e6e4cb8e4c41f157d0f54b73fe7afb0",
+      "tools/issue253/sparse_adjoint.py": "bfc93d231a868945141a79a9092886b46d1fdb563dc4f2d3ee71e1ea110fea2d",
+      "tools/issue253/static_features.py": "8e35754f420ed4497bf2aacdb09eac140b19657af8902e6bae41d2d9ecaa61eb",
+      "tools/stage2/server.py": "1152c3360ddebd5eb161ab1111245a131e338e4058f49f74c215b43922cb96bb",
+      "assets/manifest.json": "cfbd9d9c0d3c5282f9fdd0c0b28798cbf7a86479c2626b702e499b589acc5b6b",
+      "tools/issue252/profiling.py": "6f4a842d060c5e980c845365d395d80cc47f55a03a4e66e4caa1cb8c5b87d01a",
+      "tools/issue252/profile_units.py": "df5d239ac646a29d48329fcddf32f06d6bbef928297ed4ef8d55c9ec64b88028",
+      "tools/issue256/r02/launch_diagnostics.py": "3e5c8b2e8eb39827c73d1a545513217e6b96f0a600e8a0dcf55a73f1c471aeb8",
+      "tools/issue256/r02/layer_validation_entry.py": "5813694b9dbc4a9a4d605505b3ad3518f3de7d0b25c2d32bcfced4238bc9a4ba",
+      "tools/research/stage2/launcher.py": "61d32bd6d1100d1903b6f934480a478630fe647f626510b66cc964720b28b85a",
+      "tools/issue253/performance.py": "17469b0b3347e03720b440bda8911f7b65e73dd907f1faec0d8f88485c994103",
+      "results/research/issue256/rounds/r04/CONTRACT.md": "f698b29d73ffaeec83a85fe3b79e0cc01c42a29fad25cc3b2bf1b88027e03c99",
+      "results/research/issue256/rounds/r04/MUTATIONS.md": "3fc90b2b8c346efd673209b7d7305a554d6e85fab1407a0d077e26837168e03b",
+      "results/research/issue256/rounds/r04/reference.py": "b3bb46b35325e9d393d13d17effe2fa0d22b4702608556a9686394713a9b885d",
+      "results/research/issue256/ACCEPTANCE.json": "56db8c7084b5af5e9448b6ed2798ef7111c5e5b38753f5d3d4b78036e6f8860d",
+      "results/research/issue256/EVALUATION.md": "4e0ea06e5799a1d6c9cce514bab8deba1e4ea320dc8dd9d4d16467d0b206e993"
+    }
+  },
+  "ranks": [
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/benchmark/issue256_r04_benchmark_2124155_589626027/rank_0.json",
+      "sha256": "1bd335e6a43436c0e0b334fe5dedc9799ad99f4cb0d79e04b24e6b9a4a423cfa"
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/benchmark/issue256_r04_benchmark_2124155_589626027/rank_1.json",
+      "sha256": "4bd504f52d9e74f9a8b678db8ed22221a63744b4112bd02789b8154068942426"
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/benchmark/issue256_r04_benchmark_2124155_589626027/rank_2.json",
+      "sha256": "1a9fba5a527c037924b8a4ee04c7c6a949bed417c73ba5ad9f3764daffd2b907"
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/benchmark/issue256_r04_benchmark_2124155_589626027/rank_3.json",
+      "sha256": "d2938ee713187d5606a54ba3a08883b0be895a005812b8523b807757a3145b66"
+    }
+  ],
+  "native_block_calibrations": [
+    {
+      "event": "curvature_calibration",
+      "timestamp": 1795593220.484258,
+      "wall_time_s": 41.779,
+      "run_id": "issue256_r04_benchmark_2124155_589626027",
+      "purpose": "diagnostic",
+      "original_gradient": 0.00011210114661604957,
+      "reconstruction_gradient": 0.00011295003832301107,
+      "curvature_gradient": 8.543437183185219,
+      "original_curvature_cosine": -0.3062973982656847,
+      "reconstruction_curvature_cosine": 0.6298364868775623,
+      "lambda": 6.5780686782090925e-06,
+      "calibration_batch_items": 1024,
+      "calibration_world_size": 4,
+      "module_budgets": {
+        "encoder": {
+          "original_gradient": 0.00011210114661604957,
+          "curvature_gradient": 8.543437183185219,
+          "weighted_ratio": 0.5013268662758845
+        },
+        "GNN.input": {
+          "original_gradient": 6.365272977824441e-08,
+          "curvature_gradient": 0.0014828638479889645,
+          "weighted_ratio": 0.15324370638128898
+        },
+        "sharedKey": {
+          "original_gradient": 7.069257683153593e-08,
+          "curvature_gradient": 0.0016336482007612589,
+          "weighted_ratio": 0.15201383995732884
+        },
+        "sharedValue": {
+          "original_gradient": 2.807343922886557e-08,
+          "curvature_gradient": 0.0005838073695325145,
+          "weighted_ratio": 0.13679567153570515
+        },
+        "sharedScore": {
+          "original_gradient": 3.550653420200902e-08,
+          "curvature_gradient": 0.0008102616644009628,
+          "weighted_ratio": 0.15011200038352274
+        },
+        "GNN.layers.0.self_linear": {
+          "original_gradient": 5.784604742754041e-08,
+          "curvature_gradient": 0.0013778961541678941,
+          "weighted_ratio": 0.15668997168579724
+        },
+        "GNN.layers.0.incoming": {
+          "original_gradient": 5.819329791303296e-08,
+          "curvature_gradient": 0.0013367344660420518,
+          "weighted_ratio": 0.15110212752153487
+        },
+        "GNN.layers.0.outgoing": {
+          "original_gradient": 5.476865326324644e-08,
+          "curvature_gradient": 0.0014303611304038474,
+          "weighted_ratio": 0.17179560186029622
+        },
+        "GNN.layers.1.self_linear": {
+          "original_gradient": 4.895984413003063e-08,
+          "curvature_gradient": 0.0010870033766469706,
+          "weighted_ratio": 0.1460458666093487
+        },
+        "GNN.layers.1.incoming": {
+          "original_gradient": 4.158851492031927e-08,
+          "curvature_gradient": 0.0007572798126841295,
+          "weighted_ratio": 0.11977918966333889
+        },
+        "GNN.layers.1.outgoing": {
+          "original_gradient": 4.0669000963476113e-08,
+          "curvature_gradient": 0.0008687331779773828,
+          "weighted_ratio": 0.14051455340410757
+        },
+        "codebook0": {
+          "original_gradient": 3.8856114537569095e-05,
+          "curvature_gradient": 2.993987753010456,
+          "weighted_ratio": 0.5068612056405533
+        },
+        "codebook1": {
+          "original_gradient": 8.478389912069048e-05,
+          "curvature_gradient": 12.888874115150351,
+          "weighted_ratio": 0.9999999999240419
+        },
+        "codebook2": {
+          "original_gradient": 8.723503695785747e-05,
+          "curvature_gradient": 7.083322767368483,
+          "weighted_ratio": 0.5341269432393481
+        },
+        "Query0": {
+          "original_gradient": 6.113733232489378e-08,
+          "curvature_gradient": 0.0009214587122365743,
+          "weighted_ratio": 0.09914431105719375
+        },
+        "Query1": {
+          "original_gradient": 9.450637182675966e-09,
+          "curvature_gradient": 0.0009644496850730158,
+          "weighted_ratio": 0.6713003729226913
+        }
+      },
+      "calibration_epoch": 1,
+      "calibration_step": 0,
+      "calibration_seconds": 20.262569314800203,
+      "tangent_scale": 0.0843321830034256,
+      "target_scale": 2.000375270843506
+    },
+    {
+      "event": "curvature_calibration",
+      "timestamp": 1795593257.4268198,
+      "wall_time_s": 78.722,
+      "run_id": "issue256_r04_benchmark_2124155_589626027",
+      "purpose": "diagnostic",
+      "original_gradient": 0.0001700032500788266,
+      "reconstruction_gradient": 7.489658020257313e-05,
+      "curvature_gradient": 123.57521063796608,
+      "original_curvature_cosine": -0.25145503936827285,
+      "reconstruction_curvature_cosine": -0.3029975368213892,
+      "lambda": 5.79997738725524e-09,
+      "calibration_batch_items": 1024,
+      "calibration_world_size": 4,
+      "module_budgets": {
+        "encoder": {
+          "original_gradient": 0.0001700032500788266,
+          "curvature_gradient": 123.57521063796608,
+          "weighted_ratio": 0.004215998382343712
+        },
+        "GNN.input": {
+          "original_gradient": 5.460101908609689e-08,
+          "curvature_gradient": 0.2638708170585068,
+          "weighted_ratio": 0.02802960087031786
+        },
+        "sharedKey": {
+          "original_gradient": 2.4741608176073945e-08,
+          "curvature_gradient": 0.2461115361669837,
+          "weighted_ratio": 0.05769395967928812
+        },
+        "sharedValue": {
+          "original_gradient": 3.2306231259725497e-08,
+          "curvature_gradient": 0.07151613470583724,
+          "weighted_ratio": 0.012839379523505588
+        },
+        "sharedScore": {
+          "original_gradient": 3.914093107285686e-08,
+          "curvature_gradient": 0.10681172549060572,
+          "weighted_ratio": 0.015827564024628864
+        },
+        "GNN.layers.0.self_linear": {
+          "original_gradient": 4.0298033661903813e-08,
+          "curvature_gradient": 0.19529225136827474,
+          "weighted_ratio": 0.028107838991483128
+        },
+        "GNN.layers.0.incoming": {
+          "original_gradient": 4.394370004112695e-08,
+          "curvature_gradient": 0.19629170573792437,
+          "weighted_ratio": 0.025907865143813776
+        },
+        "GNN.layers.0.outgoing": {
+          "original_gradient": 4.51136710657225e-08,
+          "curvature_gradient": 0.20085568337400944,
+          "weighted_ratio": 0.02582273608312252
+        },
+        "GNN.layers.1.self_linear": {
+          "original_gradient": 2.934838313968556e-08,
+          "curvature_gradient": 0.0969618315697737,
+          "weighted_ratio": 0.019162092434696354
+        },
+        "GNN.layers.1.incoming": {
+          "original_gradient": 2.6290789655702163e-08,
+          "curvature_gradient": 0.1191476205047401,
+          "weighted_ratio": 0.02628500374932177
+        },
+        "GNN.layers.1.outgoing": {
+          "original_gradient": 2.6305788294479778e-08,
+          "curvature_gradient": 0.099496626892441,
+          "weighted_ratio": 0.021937308231338125
+        },
+        "codebook0": {
+          "original_gradient": 7.126333557605396e-05,
+          "curvature_gradient": 100.7645291170087,
+          "weighted_ratio": 0.00820101929823861
+        },
+        "codebook1": {
+          "original_gradient": 3.9490130311909785e-05,
+          "curvature_gradient": 146.90224249442426,
+          "weighted_ratio": 0.021575762801364667
+        },
+        "codebook2": {
+          "original_gradient": 3.2060141878126e-05,
+          "curvature_gradient": 10.068582390563797,
+          "weighted_ratio": 0.00182150005477143
+        },
+        "Query0": {
+          "original_gradient": 1.9790160095721438e-08,
+          "curvature_gradient": 0.001369411672153735,
+          "weighted_ratio": 0.0004013386801278177
+        },
+        "Query1": {
+          "original_gradient": 1.0546076708939882e-09,
+          "curvature_gradient": 0.1818296142779359,
+          "weighted_ratio": 0.9999999812739676
+        }
+      },
+      "calibration_epoch": 51,
+      "calibration_step": 300,
+      "calibration_seconds": 0.12843682058155537,
+      "tangent_scale": 0.0843321830034256,
+      "target_scale": 2.000375270843506
+    }
+  ]
+}

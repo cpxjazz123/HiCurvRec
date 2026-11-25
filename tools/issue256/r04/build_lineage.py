@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 
 ROOT = next(p for p in Path(__file__).resolve().parents if (p / 'stage2_RQ-VAE').is_dir())
-TREE = ROOT / 'stage2_RQ-VAE' / 'TIGER_role_conditioned_l1_rq'
+TREE = ROOT / 'stage2_RQ-VAE' / 'TIGER_role_conditioned_l3_rq'
 PARENT = ROOT / 'stage2_RQ-VAE' / '_archive' / 'TIGER_periodic_budget_prefix_rq'
 BASELINE = ROOT / 'stage2_RQ-VAE' / 'baseline' / 'TIGER_RQ-VAE'
 OUTPUT = ROOT / 'results/research/issue256/rounds/r04/LINEAGE.json'
@@ -78,7 +78,7 @@ def main() -> int:
     record = {
         'schema': 'genrec.issue256.r03.lineage/1',
         'round_id': 'r04',
-        'candidate': 'stage2_RQ-VAE/TIGER_role_conditioned_l1_rq',
+        'candidate': 'stage2_RQ-VAE/TIGER_role_conditioned_l3_rq',
         'copy_source': 'stage2_RQ-VAE/_archive/TIGER_periodic_budget_prefix_rq',
         'copy_source_reason': ('the R04 mechanism is the R03 mechanism family with one '
                                 'change (the role table drives the level-3 cost); the copy is '
@@ -91,7 +91,7 @@ def main() -> int:
                          'role instead of the item own free gate; levels 2 and 3 keep the '
                          'learned mixture, the Sinkhorn balanced assignment, the assignment '
                          'floor, the losses and the recipe are unchanged'),
-        'new_assets': [{'path': 'stage2_RQ-VAE/TIGER_role_conditioned_l1_rq/role_table.json',
+        'new_assets': [{'path': 'stage2_RQ-VAE/TIGER_role_conditioned_l3_rq/role_table.json',
                         'sha256': tree['role_table.json'],
                         'derivation': 'tools/issue256/r03/derive_role_table.py',
                         'source': {'path': 'results/research/graphlet_roles/instances.npz',

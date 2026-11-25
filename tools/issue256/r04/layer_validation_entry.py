@@ -137,7 +137,7 @@ class LayerObserver(original.Observer):
                 raise AssertionError('missing actual global coupled-module VJP: ' + name)
             rows[name] = {'original_norm': on, 'curvature_norm': cn,
                           'weighted_ratio': weight * cn / on}
-        # R03: sixteen coupled module groups; the level-1 query row is gone.
+        # R04: sixteen coupled module groups; the third level has no per-item gate row.
         if len(rows) != 16 or max(row['weighted_ratio'] for row in rows.values()) > 1 + 2e-6:
             raise AssertionError('actual initial global module budget exceeded')
         if abs(max(row['weighted_ratio'] for row in rows.values()) - 1) > 2e-6:
@@ -185,16 +185,26 @@ class LayerObserver(original.Observer):
                 if stats['codebook%d' % future]['norm'] != 0:
                     raise RuntimeError('a future codebook directly influences an earlier prefix')
             gate_groups = ('GNN.input', 'sharedKey', 'sharedValue', 'sharedScore')
-            if level == 0:
-                # R03: the first level's curvature mixture is the item's graphlet
-                # role, so the learned gate has no consumer at that level and
-                # must not receive a gradient from its prefix loss.
-                for group in gate_groups:
-                    if stats[group]['norm'] != 0:
-                        raise RuntimeError('the role-conditioned first level must not reach the gate: ' + group)
-                self.report['role_conditioned_first_level_has_no_gate_gradient'] = True
+            if level == 2:
+                # R04: no gate row feeds the third level's geometry, so its cost
+                # must be measured in the role table exactly.  The gate gradient
+                # that remains on this prefix loss is the prefix chain's (the
+                # residual entering level three was assigned by levels one and
+                # two), so it is recorded, not excluded -- unlike R03, where the
+                # role-conditioned level was the first and had no chain at all.
+                role_rows = raw.role_mix.rows_for(self.ids, raw.last_weights.device)
+                expected = raw.role_mix.weights()[role_rows]
+                actual = raw.level_weights(raw.last_weights, 2, role_rows)
+                if not torch.equal(actual, expected):
+                    raise RuntimeError('the third level must measure its cost in the role mixture')
+                if int(raw.structure.attention.query.shape[0]) != 2:
+                    raise RuntimeError('the gate must own exactly two levels')
+                self.report['role_conditioned_third_level_mixture'] = {
+                    'exact_role_table': True,
+                    'gate_rows': int(raw.structure.attention.query.shape[0]),
+                    'prefix_chain_gate_norms': {group: float(stats[group]['norm']) for group in gate_groups}}
             else:
-                for group in gate_groups + ('Query%d' % (level - 1),):
+                for group in gate_groups + ('Query%d' % level,):
                     if stats[group]['norm'] <= 0:
                         raise RuntimeError('individual prefix loss has missing gradient: ' + group)
             rg = [g for (name, _), g in zip(raw.named_parameters(), reconstruction_g) if name.startswith('encoder.')]

@@ -7,8 +7,8 @@ from tools.issue256.r04 import run_tests,dispatch_evidence
 def test_changed_round_adapter_invalidates_tested_source(tmp_path,monkeypatch):
     repo=tmp_path/'repo'
     source=repo/'stage2_RQ-VAE/arm'
-    evidence=repo/'results/research/issue256/rounds/r03'
-    helper=repo/'tools/issue256/r03/controller.py'
+    evidence=repo/'results/research/issue256/rounds/r04'
+    helper=repo/'tools/issue256/r04/controller.py'
     for path,text in [(source/'train_rqvae.py','VALUE=1\n'),
         (source/'role_table.json','{}'),
         (evidence/'CONTRACT.md','contract'),(evidence/'MUTATIONS.md','mutations'),
@@ -26,5 +26,5 @@ def test_changed_round_adapter_invalidates_tested_source(tmp_path,monkeypatch):
     monkeypatch.setattr(run_tests,'EVIDENCE',evidence)
     old=run_tests.source_inventory()
     helper.write_text('VALUE=2\n')
-    with pytest.raises(ValueError,match='source changed: tools/issue256/r03/controller.py'):
+    with pytest.raises(ValueError,match='source changed: tools/issue256/r04/controller.py'):
         dispatch_evidence.verify(repo,old)
