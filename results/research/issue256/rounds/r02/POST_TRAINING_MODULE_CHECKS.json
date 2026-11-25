@@ -1,0 +1,649 @@
+{
+  "schema": "genrec.issue256.final_wiring/1",
+  "run_id": "issue256_r02_formal",
+  "checkpoint_epoch": 3000,
+  "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/src",
+  "evaluator": {
+    "path": "/fs04/ar57/wenyu/GeneRec/tools/issue256/r02/final_gradients.py",
+    "sha256": "8842119ccd1e5accf8314ac42f412dc5a0087b32e6a91b8504c697bf4db18078"
+  },
+  "population": "actual1024-item rank0/world4 first batch for epoch3000; diagnostic replay",
+  "batch_item_ids_sha256": "ca3c8ac0367e3e96e54eca82d8d2f23db13e1d0f50ec17f5b9454a53d2eb17d5",
+  "batch_items": 1024,
+  "structural_global_step": 17994,
+  "lambda": 3.6176693356537726e-06,
+  "losses": {
+    "original": 0.00010433032002765685,
+    "curvature": 0.7821521759033203,
+    "reconstruction": 8.545249875169247e-05,
+    "combined": 0.00010715988901210949
+  },
+  "modules": {
+    "encoder": {
+      "original": {
+        "none": 0,
+        "tensors": 8,
+        "zero": 0,
+        "norm": 0.00019622913678320853
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 8,
+        "zero": 0,
+        "norm": 38.45606418087439
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 8,
+        "zero": 0,
+        "norm": 0.00019579825755926584
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 8,
+        "zero": 0,
+        "norm": 0.00025043279878987786
+      },
+      "weighted_curvature_over_original": 0.7089738376150643,
+      "original_curvature_cosine": 0.08893635506032377,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 8,
+        "zero": 0,
+        "norm": 0.234563615749666
+      }
+    },
+    "GNN.input": {
+      "original": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 1.3716951356446955e-08
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 0.003132002768721365
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 1.1658368914371626e-08
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 1.7909252821458865e-08
+      },
+      "weighted_curvature_over_original": 0.8260254105414354,
+      "original_curvature_cosine": 0.013503769309371567,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 0.0014787540461599525
+      }
+    },
+    "sharedKey": {
+      "original": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 8.836909934123764e-09
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 0.012899809261216873
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 8.294823356583797e-09
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 4.429596140694205e-08
+      },
+      "weighted_curvature_over_original": 5.280946026153449,
+      "original_curvature_cosine": -0.35590965302046895,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 0.0034947187100665992
+      }
+    },
+    "sharedValue": {
+      "original": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 7.577067642771146e-09
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 0.0017679819280384116
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 6.5772705551552015e-09
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 3.3829761477139787e-09
+      },
+      "weighted_curvature_over_original": 0.8441225957850113,
+      "original_curvature_cosine": -0.8963391587890037,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 0.00033243723255224237
+      }
+    },
+    "sharedScore": {
+      "original": {
+        "none": 0,
+        "tensors": 4,
+        "zero": 0,
+        "norm": 4.222632913356108e-09
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 4,
+        "zero": 0,
+        "norm": 0.0011775426948895402
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 4,
+        "zero": 0,
+        "norm": 3.776726295963137e-09
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 4,
+        "zero": 0,
+        "norm": 3.4995671208156577e-09
+      },
+      "weighted_curvature_over_original": 1.0088397893292649,
+      "original_curvature_cosine": -0.6597299792488304,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 4,
+        "zero": 0,
+        "norm": 0.000338815413827256
+      }
+    },
+    "GNN.layers.0.self_linear": {
+      "original": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 1.1714291238415591e-08
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 0.0032815003651406557
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 9.976012933578967e-09
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 1.5786273323513376e-08
+      },
+      "weighted_curvature_over_original": 1.013410286998436,
+      "original_curvature_cosine": -0.10406298131962709,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 0.0013843476684566067
+      }
+    },
+    "GNN.layers.0.incoming": {
+      "original": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 9.377755589108193e-09
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.0031787654137353234
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 7.781084664463324e-09
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 1.4582580131898259e-08
+      },
+      "weighted_curvature_over_original": 1.2262765917959544,
+      "original_curvature_cosine": -0.03492322557412407,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.0012523193035194474
+      }
+    },
+    "GNN.layers.0.outgoing": {
+      "original": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 1.3114432613945724e-08
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.005740166403487092
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 1.1421704740221285e-08
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 2.6271933083599108e-08
+      },
+      "weighted_curvature_over_original": 1.5834481437925818,
+      "original_curvature_cosine": 0.15973597502244374,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.002141947664145812
+      }
+    },
+    "GNN.layers.1.self_linear": {
+      "original": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 7.18204042066656e-09
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 0.003537174597920388
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 6.2600855034692164e-09
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 1.180927116305395e-08
+      },
+      "weighted_curvature_over_original": 1.7817120662434855,
+      "original_curvature_cosine": -0.4126917139554667,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 2,
+        "zero": 0,
+        "norm": 0.0010922219892127664
+      }
+    },
+    "GNN.layers.1.incoming": {
+      "original": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 6.437941845255174e-09
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.002953115569902157
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 5.629405794263394e-09
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 1.0306950315143104e-08
+      },
+      "weighted_curvature_over_original": 1.6594427067946436,
+      "original_curvature_cosine": -0.3586942720367827,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.0009645852913641804
+      }
+    },
+    "GNN.layers.1.outgoing": {
+      "original": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 8.11970902725773e-09
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.003761120223883656
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 7.1033784743156605e-09
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 1.1243373371330767e-08
+      },
+      "weighted_curvature_over_original": 1.6757360708338678,
+      "original_curvature_cosine": -0.5640847804457056,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.0010483725587952188
+      }
+    },
+    "codebook0": {
+      "original": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.0002014748750623074
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 27.050032936170673
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.00019870877796703294
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.00022387962000685363
+      },
+      "weighted_curvature_over_original": 0.48570857607602924,
+      "original_curvature_cosine": -0.0011729768011232297,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.08365727209265642
+      }
+    },
+    "codebook1": {
+      "original": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 8.316251987515391e-05
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 15.239382163767921
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 8.116924864743563e-05
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.00010242490999739109
+      },
+      "weighted_curvature_over_original": 0.6629313978332624,
+      "original_curvature_cosine": 0.05839098413075182,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.08254864724161691
+      }
+    },
+    "codebook2": {
+      "original": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 5.9695125601545315e-05
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 24.160671270210795
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 5.9857573671374584e-05
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.00010497547040167884
+      },
+      "weighted_curvature_over_original": 1.4641952538381129,
+      "original_curvature_cosine": -0.017569823536960783,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.07546294477843694
+      }
+    },
+    "Query0": {
+      "original": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 9.851009326592108e-09
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.024436113978240647
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 9.304372251190151e-09
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 8.55952499649451e-08
+      },
+      "weighted_curvature_over_original": 8.973880471616985,
+      "original_curvature_cosine": -0.3355406569733011,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.003753466305367307
+      }
+    },
+    "Query1": {
+      "original": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 6.277725857490802e-09
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.003874089708689047
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 5.602407060207258e-09
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 1.887264251852811e-08
+      },
+      "weighted_curvature_over_original": 2.2325243027254564,
+      "original_curvature_cosine": 0.6839116844434198,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.001426822680152487
+      }
+    },
+    "Query2": {
+      "original": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 6.937778641176126e-10
+      },
+      "curvature": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.00010296063638585458
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 6.937778641176126e-10
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 1.0273709655842356e-09
+      },
+      "weighted_curvature_over_original": 0.5368829942509667,
+      "original_curvature_cosine": 0.8423535801897084,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 1,
+        "zero": 0,
+        "norm": 0.00010072386169655911
+      }
+    },
+    "decoder": {
+      "original": {
+        "none": 0,
+        "tensors": 8,
+        "zero": 0,
+        "norm": 5.6158793806799474e-05
+      },
+      "curvature": {
+        "none": 8,
+        "tensors": 8,
+        "zero": 0,
+        "norm": 0.0
+      },
+      "reconstruction": {
+        "none": 0,
+        "tensors": 8,
+        "zero": 0,
+        "norm": 5.6158793806799474e-05
+      },
+      "combined": {
+        "none": 0,
+        "tensors": 8,
+        "zero": 0,
+        "norm": 5.6158793806799474e-05
+      },
+      "weighted_curvature_over_original": 0.0,
+      "original_curvature_cosine": null,
+      "fresh_optimizer_update": {
+        "none": 0,
+        "tensors": 8,
+        "zero": 0,
+        "norm": 0.36775857212455176
+      }
+    }
+  },
+  "actual_hard_prefixes_exact": [
+    true,
+    true,
+    true
+  ],
+  "formal_checkpoint_changed": false,
+  "optimizer_continuation": false,
+  "update_probe": {
+    "optimizer": "AdamW",
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "fresh_state": true
+  },
+  "limitations": "Single-rank final-weight diagnostics, not the initial global VJP budget; no claim of later norm safety or an extra formal training run."
+}

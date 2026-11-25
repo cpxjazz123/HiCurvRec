@@ -1,0 +1,29 @@
+{
+  "schema": "genrec.issue256.formal_launch/1",
+  "run_id": "issue256_r02_formal",
+  "arm": "TIGER_periodic_budget_prefix_rq",
+  "entry": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/src/execution_entry.py",
+  "result": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result",
+  "workspace": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/workspace.json",
+  "source_commit": "01fb29d4868f9c90590b2655b83ea50362823c13",
+  "local_main_equals_origin_main": true,
+  "dispatcher": "tools.issue256.r02.launch_formal_run",
+  "launch_log": {
+    "path": "results/research/issue256/rounds/r02/FORMAL_LAUNCH.log",
+    "sha256": "18c88223b03ab3bf930a1523effd0a511516bb415630c27630f0462e8de6afb3"
+  },
+  "trainer_receipt": {
+    "device": "cuda:0",
+    "all_items": 24587,
+    "train_items": 24556,
+    "world_size": 4,
+    "epochs": 3000,
+    "batch_size_per_rank": 1024,
+    "total_batch": 4096,
+    "lr": 0.001
+  },
+  "first_observation": "four ranks started, codebook KMeans initialisation in progress; no epoch result yet",
+  "formal_training_started": true,
+  "stage3_started": false,
+  "recommendation_test_read": false
+}

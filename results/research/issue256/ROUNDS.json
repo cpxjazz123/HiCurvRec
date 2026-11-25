@@ -51,7 +51,7 @@
       "parent_source_commit": "0cdfec9b024e568b5b08d96e777033844d66635e",
       "arm": "TIGER_periodic_budget_prefix_rq",
       "run_id": "issue256_r02_formal",
-      "status": "ADMITTED_READY_TO_DISPATCH",
+      "status": "COMPLETE_NEGATIVE_NOT_ADOPTED",
       "change": "refresh the same maximal global module-gradient norm budget at native50epoch block anchors1,51,...,2951",
       "hypothesis": "reduce measured later original/curvature norm drift without new objectives or independently tuned frequency",
       "contract_sha256": "f80ae1d7b07268cf53d189e10fb447bf483aef5da913f2fd0b1faf3230fc519b",
@@ -76,11 +76,51 @@
       ],
       "causal_limit": "Cadence is the principal mechanism change; numerical repairs mean R01/R02 is not single-factor causal isolation",
       "preworker_refusal": "rounds/r02/FORMAL_PREWORKER_REFUSAL.json",
-      "stage2": null,
-      "stage3": null,
-      "r2_archive": null,
-      "result": null,
-      "next_decision": "Push admitted source/evidence with equal main SHAs, then start the single preregistered run issue256_r02_formal; no reservation exists yet"
+      "stage2": {
+        "run_id": "issue256_r02_formal",
+        "arm": "TIGER_periodic_budget_prefix_rq",
+        "source_commit": "01fb29d4868f9c90590b2655b83ea50362823c13",
+        "result": "results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result",
+        "epochs": 3000,
+        "world_size": 4,
+        "global_batch": 4096,
+        "final_collision": 0.06491235205596457,
+        "sid_sha256": "e18fc0460eea2872f5d56e0c7e1e9b9f311ac77c2f886177e0485acae574133f",
+        "checkpoint_sha256": "e9ee3214e118682a824dfbc467e763cd9124c74112ee96a376d571712cd7b7e1",
+        "complete_receipt": "rounds/r02/FORMAL_STAGE2_COMPLETE.json",
+        "final_audit": "rounds/r02/FINAL_STAGE2.json",
+        "layer_metrics": "results/stage2_RQ-VAE/TIGER_periodic_budget_prefix_rq/stage2_metrics/e18fc0460eea2872f5d56e0c7e1e9b9f311ac77c2f886177e0485acae574133f.json"
+      },
+      "stage3": {
+        "variant": "TIGER_periodic_budget_prefix_rq",
+        "pid": 3790035,
+        "mode": "ddp",
+        "epochs": 150,
+        "dispatch": "rounds/r02/STAGE3_DISPATCH.json",
+        "completed_epochs": 150,
+        "test_recall@5": 0.035028464980239905,
+        "test_recall@10": 0.05266456588728913,
+        "test_ndcg@5": 0.023271685355454968,
+        "test_ndcg@10": 0.028952566888999238,
+        "n_eval": 57439,
+        "independent_reduction": "rounds/r02/STAGE3_RECONCILIATION.json",
+        "validation_recall@10": 0.0573129755044482
+      },
+      "r2_archive": {
+        "bucket": "r2:genrec/103/",
+        "files": 127,
+        "recall_keys": 23,
+        "ledger": "results/research/issue139/r2_ledger.json"
+      },
+      "result": {
+        "strict_target_met": false,
+        "test_recall@10": 0.05266456588728913,
+        "required": ">0.065",
+        "classification": "valid completed experiment; not adopted",
+        "round_verdict": "rounds/r02/ROUND_RESULT.json",
+        "check": "rounds/r02/CHECK_10.json"
+      },
+      "next_decision": "Preregister the next single-change candidate on the measured level-1 granularity lever (role-conditioned mixed-curvature level-1 assignment) and run it once under the frozen recipe"
     }
   ]
 }

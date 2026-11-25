@@ -1,0 +1,67 @@
+{
+  "schema": "genrec.issue256.sid_quality_vs_recall_interpretation/1",
+  "evidence": {
+    "path": "results/research/issue256/rounds/r02/analysis/sid_quality_vs_recall.json",
+    "sha256": "4b383fade7a129d4688409679917037c02d4909f8ed11c0ba221acf5be06eb9f",
+    "script": {
+      "path": "results/research/issue256/rounds/r02/analysis/sid_quality_vs_recall.py",
+      "sha256": "9280e88359489db5255229f48b38ff3bd2c335bea203e70e67db9a31bb8dd4b5"
+    },
+    "arms_paired": 12,
+    "skipped": [
+      {
+        "arm": "TIGER_struct_mixed_rq",
+        "stage3_run": "Nov-10-2026_02-00-48",
+        "reason": "no recoverable SID file for this arm",
+        "test_recall@10": 0.05790490781524748
+      },
+      {
+        "arm": "TIGER_mixed_rq_L",
+        "stage3_run": "Nov-09-2026_05-40-36",
+        "reason": "no recoverable SID file for this arm",
+        "test_recall@10": 0.05600724246592037
+      },
+      {
+        "arm": "TIGER_mixed_rq_A",
+        "stage3_run": "Nov-09-2026_06-53-54",
+        "reason": "no recoverable SID file for this arm",
+        "test_recall@10": 0.05592019359668518
+      },
+      {
+        "arm": "TIGER_mixed_rq_G",
+        "stage3_run": "Nov-09-2026_07-30-28",
+        "reason": "no recoverable SID file for this arm",
+        "test_recall@10": 0.055711276310520724
+      },
+      {
+        "arm": "TIGER_mixed_rq_E",
+        "stage3_run": "Nov-09-2026_06-17-05",
+        "reason": "no recoverable SID file for this arm",
+        "test_recall@10": 0.054196625985828445
+      }
+    ]
+  },
+  "bias_disclosure": "Exploratory correlation over final test values that earlier rounds already read; no selection, training or model replay happened here.",
+  "pearson_with_test_recall@10": {
+    "l1_positive_hit_rate": 0.838,
+    "l2_positive_hit_rate": 0.799,
+    "l3_positive_hit_rate": 0.816,
+    "l3_refinement_gain_bits": 0.871,
+    "distinct_l2_prefixes": -0.911,
+    "l3_collision": 0.84,
+    "l1_lift": 0.379
+  },
+  "observed_pattern": [
+    "The arms with the highest measured Recall are not the ones with the highest L1 lift: the #256 arms reach lift 8.5 but an absolute L1 prefix carry of only 0.064-0.067.",
+    "The best arm (TIGER_mixed_rq_F0, 0.057278/0.057226) carries 0.15993 of validation targets in the same L1 prefix with 4151 distinct L2 prefixes and 0.257 three-code collision.",
+    "The #256 lineage produces the finest SID (8840 distinct L2 prefixes, 0.0649 three-code collision, quantisation error 0.007673) i.e. an almost item-unique encoding, and that is exactly the configuration with the lowest Recall of the compared arms.",
+    "Therefore the binding constraint in this lineage is the granularity of the level-1 commitment, not the schedule of the curvature budget refresh."
+  ],
+  "r02_verdict": {
+    "test_recall@10": 0.05266456588728913,
+    "r01_test_recall@10": 0.05273420498267727,
+    "delta": -6.970309538814e-05,
+    "strict_target_met": false,
+    "conclusion": "Refreshing the maximal global module budget every 50 native epochs changed the final Recall by -0.00007, i.e. nothing measurable. The preregistered cadence hypothesis is falsified; the failure is located in the commitment granularity, not in the refresh schedule."
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "schema": "genrec.issue256.r02.round_result/1",
+  "round_id": "r02",
+  "run_id": "issue256_r02_formal",
+  "arm": "TIGER_periodic_budget_prefix_rq",
+  "source_commit": "01fb29d4868f9c90590b2655b83ea50362823c13",
+  "stage2": {
+    "epochs": 3000,
+    "world_size": 4,
+    "global_batch": 4096,
+    "seed": 42,
+    "wall_seconds": 2116.782,
+    "three_code_collision": 0.06491235205596457,
+    "quantisation_error": 0.00767327234871401,
+    "effective_rank": 5.052149614997407,
+    "sid_sha256": "e18fc0460eea2872f5d56e0c7e1e9b9f311ac77c2f886177e0485acae574133f",
+    "checkpoint_sha256": "e9ee3214e118682a824dfbc467e763cd9124c74112ee96a376d571712cd7b7e1",
+    "exact_reexport_from_final_checkpoint": true
+  },
+  "stage3": {
+    "epochs": 150,
+    "world_size": 4,
+    "global_train_batch": 16384,
+    "infer_batch_per_process": 1024,
+    "beam": 20,
+    "seed": 42,
+    "no_eval": true,
+    "skip_test": false,
+    "early_stop": false,
+    "test_recall@5": 0.035028464980239905,
+    "test_recall@10": 0.05266456588728913,
+    "test_ndcg@5": 0.023271685355454968,
+    "test_ndcg@10": 0.028952566888999238,
+    "n_eval": 57439,
+    "independent_reduction": "results/research/issue256/rounds/r02/STAGE3_RECONCILIATION.json",
+    "independent_reduction_agrees": true
+  },
+  "validation": {
+    "validation_recall@5": 0.03739619422343704,
+    "validation_recall@10": 0.0573129755044482,
+    "validation_ndcg@5": 0.02493176037233396,
+    "validation_ndcg@10": 0.03132422926289257,
+    "n_eval": 57439,
+    "used_for_checkpoint_selection": false
+  },
+  "comparison_with_r01": {
+    "test_recall@10": {
+      "r01": 0.05273420498267727,
+      "r02": 0.05266456588728913,
+      "delta": -6.970309538814e-05
+    },
+    "validation_recall@10": {
+      "r01": 0.057643761207541916,
+      "r02": 0.0573129755044482,
+      "delta": -0.00033078570309371
+    },
+    "verdict": "The preregistered cadence hypothesis is falsified on the validation split and on the final test: refreshing the maximal global module budget every 50 native epochs changed nothing measurable."
+  },
+  "strict_target": {
+    "threshold": "test_R@10 > 0.065",
+    "measured": 0.05266456588728913,
+    "met": false
+  },
+  "diagnosis": {
+    "evidence": "results/research/issue256/rounds/r02/analysis/SID_GRANULARITY_DIAGNOSIS.json",
+    "finding": "Across 14 arms paired by SID, final Recall tracks the granularity of the level-1 commitment (|r| 0.80-0.91 for absolute L1/L2/L3 prefix carry, refinement gain and distinct-prefix counts). This lineage produces an almost item-unique SID (8840 distinct L2 prefixes, 0.0649 three-code collision, quantisation error 0.0077), the finest encoding among the compared arms, and therefore the lowest absolute prefix carry (0.0643) and the lowest Recall of that group. The refresh cadence cannot repair a commitment granularity problem.",
+    "next_direction": "Coarsen the level-1 commitment with a behaviour-conditioned mixed-curvature assignment cost (role-aligned level-1 codes), keeping the Sinkhorn balanced assignment and the frozen recipe."
+  },
+  "r2_archive": {
+    "bucket": "r2:genrec/103/",
+    "entries": 127,
+    "recall_keys": 23,
+    "ledger": "results/research/issue139/r2_ledger.json"
+  },
+  "bias_disclosure": "The fixed final test was read once by this round; the same test has been read by earlier rounds, so it is an exploratory threshold, not an unbiased generalisation estimate. The validation split is the selection signal and agrees with the test in ranking R01 above R02."
+}

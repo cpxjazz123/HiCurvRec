@@ -1,0 +1,836 @@
+{
+  "schema": "genrec.issue256.geometry_contrasts/1",
+  "bias_disclosure": "Exploratory paired comparison of already-read final test values; no selection, training or model replay.",
+  "test_population": 57439,
+  "measured_arms": {
+    "TIGER_BEHAVIOR_R48": [
+      0.06311043019551175
+    ],
+    "TIGER_BEHAVIOR_SAMPLE_RQ-VAE__resample": [
+      0.06330193770782917
+    ],
+    "TIGER_BEHDIR-L4": [
+      0.048225073556294504
+    ],
+    "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL": [
+      0.05459705078431031
+    ],
+    "TIGER_BRad-RQ": [
+      0.030606382423092323,
+      0.04460384059611066
+    ],
+    "TIGER_CONCMID-GEO-SID": [
+      0.05165479900416094
+    ],
+    "TIGER_COOC_RANK_FRECHET": [
+      0.05000087048869235
+    ],
+    "TIGER_CURV-RESID-CONTRAST": [
+      0.054388133498145856
+    ],
+    "TIGER_CURVALLOC-LORENTZ-RQ": [
+      0.04188791587597277
+    ],
+    "TIGER_EQVOTE-HYP-RQ": [
+      0.0551889830951096
+    ],
+    "TIGER_GDELTA-SUCC-PULL-RQ": [
+      0.04087814899284458,
+      0.041017427183620885
+    ],
+    "TIGER_HGS-TREE": [
+      0.045683246574626996,
+      0.05125437420567907
+    ],
+    "TIGER_HORO-TRANSPLANT-L": [
+      0.05484078761816884
+    ],
+    "TIGER_HYP-CERT-LEAFREPAIR": [
+      0.054945246261251066
+    ],
+    "TIGER_M1_learned_kappa": [
+      0.056338028169014086
+    ],
+    "TIGER_M2_radial_manifold": [
+      0.057086648444436706
+    ],
+    "TIGER_M3_role_profiles": [
+      0.056355437942861124
+    ],
+    "TIGER_M4_post_sid_af3": [
+      0.056181340204390744
+    ],
+    "TIGER_RQ-VAE": [
+      0.04019916781281011,
+      0.0534828252580999,
+      0.05520639286895663,
+      0.05545012970281516,
+      0.05553717857205035
+    ],
+    "TIGER_RQ-VAE__canonical": [
+      0.05471891920123958
+    ],
+    "TIGER_TOLLCAP-SID": [
+      0.05106286669336165
+    ],
+    "TIGER_Uniform_KNN_RQ": [
+      0.05529344173819182
+    ],
+    "TIGER_Uniform_KNN_control": [
+      0.05576350563206184
+    ],
+    "TIGER_af3_curvature_drive_rq": [
+      0.05480596807047476
+    ],
+    "TIGER_af3_curvature_factor_mass_rq": [
+      0.05461446055815735
+    ],
+    "TIGER_af3_gate_mixed_rq": [
+      0.028865405038388553
+    ],
+    "TIGER_af3_graphgeo_rq": [
+      0.054579641010463274
+    ],
+    "TIGER_af3_structdistill_rq": [
+      0.0542662650812166
+    ],
+    "TIGER_af3_triplet": [
+      0.05508452445202737
+    ],
+    "TIGER_af3sign_capacity": [
+      0.05451000191507512
+    ],
+    "TIGER_baseline_recal_rq": [
+      0.053552464353488045
+    ],
+    "TIGER_behavior_edge_contrastive_rq": [
+      0.056250979299778896
+    ],
+    "TIGER_behavior_residual_geometry_transport__r8_control": [
+      0.06338898657706436,
+      0.06422465572172217
+    ],
+    "TIGER_behaviour-pairs-curved-rq": [
+      0.05645989658594335
+    ],
+    "TIGER_behaviour-pairs-levels-rq": [
+      0.055798325179755914
+    ],
+    "TIGER_behaviour_code_cohesion": [
+      0.054562231236616236
+    ],
+    "TIGER_bootstrap_code_stability__resample": [
+      0.06335416702937029
+    ],
+    "TIGER_branch-geodesic-rank": [
+      0.04967008478559864
+    ],
+    "TIGER_branch_shell": [
+      0.05585055450129703
+    ],
+    "TIGER_c106_directed_assignment_usage_balance__r8_control": [
+      0.06241403924163025
+    ],
+    "TIGER_c106_directed_codeword_margin_geometry__r8_control": [
+      0.06373718205400512
+    ],
+    "TIGER_c107_directed_assignment_prefix_information__r8_control": [
+      0.06375459182785216
+    ],
+    "TIGER_c107_directed_capacity_balanced_assignment_partition__r8_control": [
+      0.06088197914309093
+    ],
+    "TIGER_c107_directed_capacity_constrained_assignment_partition__r8_control": [
+      0.06072529117846759
+    ],
+    "TIGER_c107_directed_codebook_tangent_repartition__r8_control": [
+      0.061682828740054665
+    ],
+    "TIGER_c107_directed_codeword_tangent_repulsion__r8_control": [
+      0.06269259562318286
+    ],
+    "TIGER_c107_directed_separated_codeword_geometry__r8_control": [
+      0.06103866710771427
+    ],
+    "TIGER_c117_hyperbolic_item_semantic_id": [
+      0.05557199811974443
+    ],
+    "TIGER_c1_behaviour_conditioned_residual_target__r8_control": [
+      0.0610038475600202
+    ],
+    "TIGER_c1_policy_behavior_directed_soft_code_transition_kl__r8_control": [
+      0.06225735127700691
+    ],
+    "TIGER_chain_align_rq": [
+      0.05611170110900259
+    ],
+    "TIGER_cmr_rq": [
+      0.05412698689044029
+    ],
+    "TIGER_cogeo_region_argmax": [
+      0.03983356256202232
+    ],
+    "TIGER_community-balance-l1-rq": [
+      0.05433590417660475
+    ],
+    "TIGER_community-balance-repulse-rq": [
+      0.05315203955500618
+    ],
+    "TIGER_community-l1-rq": [
+      0.05262974633959505
+    ],
+    "TIGER_community-pairs-guarded-rq": [
+      0.04328069778373579
+    ],
+    "TIGER_community-repulse-l1-rq": [
+      0.05423144553352252
+    ],
+    "TIGER_community_graph_recon": [
+      0.05581573495360295
+    ],
+    "TIGER_cooccur_coherent_sid": [
+      0.05593760337053222
+    ],
+    "TIGER_cos_contrastive_rq": [
+      0.054562231236616236
+    ],
+    "TIGER_curriculum-behaviour-rq": [
+      0.05480596807047476
+    ],
+    "TIGER_curvature-embedding-rq": [
+      0.048973693831717124
+    ],
+    "TIGER_curvature-prefix-ranking": [
+      0.052333780184195405,
+      0.05282125385191246,
+      0.053256498198088406,
+      0.05360469367502916,
+      0.05395288915196991,
+      0.05405734779505214,
+      0.05409216734274622,
+      0.05417921621198141,
+      0.054405543271992894,
+      0.054475182367381046,
+      0.054492592141228084,
+      0.054666689879698464,
+      0.05551976879820331
+    ],
+    "TIGER_curvature-prefix-ranking-euclid": [
+      0.05398770869966399
+    ],
+    "TIGER_curvature-prefix-ranking-forman": [
+      0.05358728390118212
+    ],
+    "TIGER_curvature-prefix-ranking-nobehaviour": [
+      0.05247305837497171
+    ],
+    "TIGER_curvature-stratum-sinkhorn-v1": [
+      0.04312400981911245
+    ],
+    "TIGER_curve_contrastive_rq": [
+      0.05350023503194694
+    ],
+    "TIGER_degree_temp_rq": [
+      0.05249046814881875
+    ],
+    "TIGER_drq_D1": [
+      0.044377513536099165
+    ],
+    "TIGER_dul_rq": [
+      0.026010202127474364
+    ],
+    "TIGER_dul_s_rq": [
+      0.04265394592524243
+    ],
+    "TIGER_factorized_joint_codebook": [
+      0.0513588328487613
+    ],
+    "TIGER_g237_sem_rq": [
+      0.05278643430421839
+    ],
+    "TIGER_g4_closure_A": [
+      0.05551976879820331
+    ],
+    "TIGER_g4_closure_B": [
+      0.05416180643813437
+    ],
+    "TIGER_g4_closure_C": [
+      0.04086073921899754
+    ],
+    "TIGER_g4_closure_D": [
+      0.03823186336809485
+    ],
+    "TIGER_gnn_attention_sectional_rq": [
+      0.0492870697609638
+    ],
+    "TIGER_graphlet_codebook_global_rq": [
+      0.0463796375285085
+    ],
+    "TIGER_graphlet_codebook_rq": [
+      0.047093438256237054
+    ],
+    "TIGER_graphlet_role_E": [
+      0.05433590417660475
+    ],
+    "TIGER_graphlet_role_Q": [
+      0.04507390448998067
+    ],
+    "TIGER_graphlet_role_QR": [
+      0.054109577116593255
+    ],
+    "TIGER_graphlet_role_R": [
+      0.04817284423475339
+    ],
+    "TIGER_graphlet_role_T": [
+      0.043367746652970975
+    ],
+    "TIGER_hc3_rq": [
+      0.054022528247358065
+    ],
+    "TIGER_i234_A1": [
+      0.05301276136422988
+    ],
+    "TIGER_i234_A2": [
+      0.05301276136422988
+    ],
+    "TIGER_i234_A3": [
+      0.05240341927958356
+    ],
+    "TIGER_i234_A4": [
+      0.0519159456118665
+    ],
+    "TIGER_i234_A5": [
+      0.04308919027141837
+    ],
+    "TIGER_incoming_context_barycenter": [
+      0.058496840126046765
+    ],
+    "TIGER_interest_signature_hypball": [
+      0.05121955465798499
+    ],
+    "TIGER_kappa_sk_only_rq": [
+      0.055049704904333294
+    ],
+    "TIGER_l2k_rq": [
+      0.055972422918226294
+    ],
+    "TIGER_lkc_rq": [
+      0.05640766726440224
+    ],
+    "TIGER_mbr_rq": [
+      0.054109577116593255
+    ],
+    "TIGER_mixed_rq_A": [
+      0.05592019359668518
+    ],
+    "TIGER_mixed_rq_E": [
+      0.054196625985828445
+    ],
+    "TIGER_mixed_rq_F0": [
+      0.05722592663521301,
+      0.057278155956754125
+    ],
+    "TIGER_mixed_rq_G": [
+      0.055711276310520724
+    ],
+    "TIGER_mixed_rq_L": [
+      0.05600724246592037
+    ],
+    "TIGER_module_budget_prefix_rq": [
+      0.05273420498267727
+    ],
+    "TIGER_periodic_budget_prefix_rq": [
+      0.05266456588728913
+    ],
+    "TIGER_pmi-geomargin-l1-rq": [
+      0.056721043193648915
+    ],
+    "TIGER_poincare-frechet-successor-codebook": [
+      0.053169449328853216
+    ],
+    "TIGER_r48k1_rq": [
+      0.06465990006789812
+    ],
+    "TIGER_r48k2_rq": [
+      0.06476435871098034
+    ],
+    "TIGER_r48k2u_rq": [
+      0.06368495273246401
+    ],
+    "TIGER_rcs_rq": [
+      0.0557460958582148
+    ],
+    "TIGER_role_geom_global_rq": [
+      0.05522380264280367
+    ],
+    "TIGER_role_geom_rq": [
+      0.05538049060742701
+    ],
+    "TIGER_role_geom_shuffled_rq": [
+      0.0542662650812166
+    ],
+    "TIGER_sdh_rq": [
+      0.05598983269207333
+    ],
+    "TIGER_seed43_geometry__r8_control": [
+      0.0631800692908999,
+      0.0635456745416877
+    ],
+    "TIGER_sign_rq": [
+      0.056094291335155554
+    ],
+    "TIGER_snt_rq": [
+      0.05632061839516705
+    ],
+    "TIGER_struct_mixed_rq": [
+      0.05790490781524748
+    ],
+    "TIGER_struct_mixed_rq_ste_fix": [
+      0.05459705078431031
+    ],
+    "TIGER_successor-geodesic-coarse": [
+      0.054022528247358065
+    ],
+    "TIGER_successor-geodesic-coarse__v1_coarse_only": [
+      0.054858197392015876
+    ],
+    "TIGER_successor-geodesic-coarse__v2_tail_ordered": [
+      0.05529344173819182
+    ],
+    "TIGER_successor_entropy_curvature": [
+      0.05062762234718571
+    ],
+    "TIGER_successor_residual_barycenter": [
+      0.05435331395045179
+    ],
+    "TIGER_tangent_successor_residual": [
+      0.05424885530736956
+    ],
+    "TIGER_three_expert_attention_rq": [
+      0.046431866850049616
+    ],
+    "TIGER_transition_busemann_gate": [
+      0.0548233778443218
+    ],
+    "_reference_baseline_deterministic": [
+      0.05621615975208482
+    ],
+    "curvature_RQ-VAE": [
+      0.04394226918992322,
+      0.04657114504082592,
+      0.04806838559167116,
+      0.050906178728738316,
+      0.052507877922665785,
+      0.053273907971935444,
+      0.060081129546127196
+    ],
+    "curvature_RQ-VAE_repaired": [
+      0.0537613816396525
+    ],
+    "r4_08": [
+      0.06295374223088843
+    ],
+    "r8_control": [
+      0.06406796775709883
+    ],
+    "sidarm_A4_euclid_l2_64_nocone": [
+      0.053918069604275844
+    ],
+    "sidarm_A_l2_256_nocone": [
+      0.05828792283988231
+    ],
+    "sidarm_B_l2_64_nocone": [
+      0.05262974633959505
+    ],
+    "sidarm_CLP_poincare_coarse_l1": [
+      0.04832953219937673
+    ],
+    "sidarm_D_l2_64_cone": [
+      0.0458225247654033
+    ],
+    "sidarm_E43_euclid_l2_256_72k_s43": [
+      0.06042932502306795
+    ],
+    "sidarm_E44_euclid_l2_256_72k_s44": [
+      0.05867093786451714
+    ],
+    "sidarm_E72_euclid_l2_256_72k": [
+      0.059158411532234195
+    ],
+    "sidarm_L2AB_bucket_sinkhorn_s42": [
+      0.05313462978115914
+    ],
+    "sidarm_L2AG_global_sinkhorn_s42": [
+      0.051863716290325386
+    ],
+    "sidarm_ME_euclid_metriccone": [
+      0.03219067184317276
+    ],
+    "sidarm_MP_poincare_metriccone": [
+      0.04556137815769773
+    ],
+    "sidarm_R5D_poincare_cone_rejection_fixed": [
+      0.04725012622086039
+    ],
+    "sidarm_SE_euclid_smooth": [
+      0.0604989641184561
+    ],
+    "sidarm_SFE_euclid_smoothfair": [
+      0.059541426556869025
+    ],
+    "sidarm_SFP_poincare_smoothfair": [
+      0.058688347638364176
+    ],
+    "sidarm_SH_poincare_smooth": [
+      0.05950660700917495
+    ],
+    "tiger": [
+      0.05367433277041731,
+      0.054736328975086616
+    ],
+    "tiger_behavior": [
+      0.0619265655739132
+    ],
+    "tiger_fork_fork_ang_only": [
+      0.060847159595396855
+    ],
+    "tiger_fork_fork_euclid_group": [
+      0.0615609603231254
+    ],
+    "tiger_fork_fork_hyp_group": [
+      0.057173697313671897
+    ],
+    "tiger_fork_fork_more_sib": [
+      0.061874336252372084
+    ],
+    "tiger_fork_fork_radial_corr": [
+      0.061943975347760236
+    ],
+    "tiger_fork_hyper_l1_ang_s42": [
+      0.05703441912289559
+    ],
+    "tiger_fork_hyper_l1_angsel_s42": [
+      0.06136945281080799
+    ],
+    "tiger_fork_hyper_l1_br_euclid_s42": [
+      0.06250108811086544
+    ],
+    "tiger_fork_hyper_l1_br_s42": [
+      0.04068664148052717
+    ],
+    "tiger_fork_hyper_l1_s42": [
+      0.061404272358502064
+    ],
+    "tiger_fork_nce_euclid_group": [
+      0.05901913334145789
+    ],
+    "tiger_fork_nce_euclid_radius_control": [
+      0.05978516339072756
+    ],
+    "tiger_fork_nce_hyp_group": [
+      0.05882762582914048
+    ],
+    "tiger_fork_prefix_sib": [
+      0.06161318964466651
+    ],
+    "tiger_hyp_exp2_euclid_matched": [
+      0.061317223489266874
+    ],
+    "tiger_hyp_exp2_poincare_c1": [
+      0.0551889830951096
+    ],
+    "tiger_hyp_exp4_euclid_delta": [
+      0.060760110726161665
+    ],
+    "tiger_hyp_fix_carry_euclid_raw": [
+      0.053813610961193616
+    ],
+    "tiger_hyp_fix_det_euclid_ball": [
+      0.05760894165984784
+    ],
+    "tiger_hyp_fix_det_euclid_raw": [
+      0.05200299448110169
+    ],
+    "tiger_hyp_fix_det_poincare": [
+      0.046536325493131844
+    ],
+    "tiger_sample_CF_ALIGN": [
+      0.05517157332126256
+    ],
+    "tiger_sample_CF_ALIGN_DIV": [
+      0.054283674855063635
+    ],
+    "tiger_sample_CF_ALIGN_DIV_RANK": [
+      0.05424885530736956
+    ],
+    "tiger_sample_DIGER_FIX": [
+      0.06150873100158429
+    ],
+    "tiger_sample_MARGIN": [
+      0.05600724246592037
+    ],
+    "tiger_sample_MARGIN_RW001": [
+      0.061386862584655026
+    ],
+    "tiger_sample_MARGIN_RW005": [
+      0.060168178415362386
+    ],
+    "tiger_sample_MARGIN_RW02": [
+      0.05959365587841014
+    ],
+    "tiger_sample_MARGIN_RW05": [
+      0.05863611831682306
+    ],
+    "tiger_sample_STE_FIX": [
+      0.05921064085377531
+    ],
+    "tiger_sample_crowd_couser_w3": [
+      0.06352826476784067
+    ],
+    "tiger_sample_crowd_posattract_w3": [
+      0.06351085499399363,
+      0.06425947526941625
+    ],
+    "tiger_sample_resample": [
+      0.0636327234109229,
+      0.06373718205400512
+    ],
+    "tiger_sample_resample_fn_mask": [
+      0.06356308431553474
+    ],
+    "tiger_sample_resample_l1only": [
+      0.06283187381395916
+    ],
+    "tiger_sample_resample_proj_dir": [
+      0.05484078761816884
+    ],
+    "tiger_sample_resample_proj_sym": [
+      0.05452741168892216
+    ],
+    "tiger_sample_resample_s43": [
+      0.06302338132627658
+    ],
+    "tiger_sample_resample_s44": [
+      0.06237921969393618
+    ],
+    "unknown_variant": [
+      0.05522380264280367
+    ]
+  },
+  "repeat_runs": {
+    "TIGER_BRad-RQ": {
+      "values": [
+        0.04460384059611066,
+        0.030606382423092323
+      ],
+      "spread": 0.013997458173018337,
+      "same_sid": true
+    },
+    "TIGER_GDELTA-SUCC-PULL-RQ": {
+      "values": [
+        0.04087814899284458,
+        0.041017427183620885
+      ],
+      "spread": 0.0001392781907763041,
+      "same_sid": true
+    },
+    "TIGER_HGS-TREE": {
+      "values": [
+        0.045683246574626996,
+        0.05125437420567907
+      ],
+      "spread": 0.005571127631052074,
+      "same_sid": true
+    },
+    "TIGER_RQ-VAE": {
+      "values": [
+        0.04019916781281011,
+        0.05545012970281516,
+        0.0534828252580999,
+        0.05520639286895663,
+        0.05553717857205035
+      ],
+      "spread": 0.01533801075924024,
+      "same_sid": true
+    },
+    "TIGER_behavior_residual_geometry_transport__r8_control": {
+      "values": [
+        0.06422465572172217,
+        0.06338898657706436
+      ],
+      "spread": 0.0008356691446578107,
+      "same_sid": true
+    },
+    "TIGER_curvature-prefix-ranking": {
+      "values": [
+        0.05405734779505214,
+        0.052333780184195405,
+        0.05360469367502916,
+        0.05395288915196991,
+        0.054475182367381046,
+        0.053256498198088406,
+        0.05551976879820331,
+        0.054666689879698464,
+        0.054405543271992894,
+        0.05417921621198141,
+        0.05409216734274622,
+        0.054492592141228084,
+        0.05282125385191246
+      ],
+      "spread": 0.0031859886140079077,
+      "same_sid": true
+    },
+    "TIGER_mixed_rq_F0": {
+      "values": [
+        0.057278155956754125,
+        0.05722592663521301
+      ],
+      "spread": 5.222932154111404e-05,
+      "same_sid": true
+    },
+    "TIGER_seed43_geometry__r8_control": {
+      "values": [
+        0.0635456745416877,
+        0.0631800692908999
+      ],
+      "spread": 0.00036560525078779826,
+      "same_sid": true
+    },
+    "curvature_RQ-VAE": {
+      "values": [
+        0.04806838559167116,
+        0.050906178728738316,
+        0.052507877922665785,
+        0.053273907971935444,
+        0.060081129546127196,
+        0.04657114504082592,
+        0.04394226918992322
+      ],
+      "spread": 0.016138860356203974,
+      "same_sid": true
+    },
+    "tiger": {
+      "values": [
+        0.054736328975086616,
+        0.05367433277041731
+      ],
+      "spread": 0.0010619962046693049,
+      "same_sid": true
+    },
+    "tiger_sample_crowd_posattract_w3": {
+      "values": [
+        0.06425947526941625,
+        0.06351085499399363
+      ],
+      "spread": 0.0007486202754226207,
+      "same_sid": true
+    },
+    "tiger_sample_resample": {
+      "values": [
+        0.0636327234109229,
+        0.06373718205400512
+      ],
+      "spread": 0.00010445864308222808,
+      "same_sid": true
+    }
+  },
+  "noise_floor": {
+    "max_repeat_spread": 0.016138860356203974,
+    "median_repeat_spread": 0.0009488326746635578,
+    "min_repeat_spread": 5.222932154111404e-05,
+    "arms_with_repeats": 12
+  },
+  "contrasts": [
+    {
+      "name": "mixed curvature vs pure Euclidean (same capacity)",
+      "left": "TIGER_mixed_rq_F0",
+      "right": "TIGER_mixed_rq_E",
+      "left_values": [
+        0.05722592663521301,
+        0.057278155956754125
+      ],
+      "right_values": [
+        0.054196625985828445
+      ],
+      "delta": 0.0030554153101551226,
+      "rationale": "F0 assigns codes in the E16 x H16 mixed space; E is its pure E16 x E16 twin with the same capacity, seed and protocol.",
+      "exceeds_max_repeat_spread": false,
+      "exceeds_median_repeat_spread": true
+    },
+    {
+      "name": "per-role geometry vs shared global geometry",
+      "left": "TIGER_role_geom_rq",
+      "right": "TIGER_role_geom_global_rq",
+      "left_values": [
+        0.05538049060742701
+      ],
+      "right_values": [
+        0.05522380264280367
+      ],
+      "delta": 0.0001566879646233421,
+      "rationale": "Same mechanism with one global geometric bias instead of a per-role bias.",
+      "exceeds_max_repeat_spread": false,
+      "exceeds_median_repeat_spread": false
+    },
+    {
+      "name": "per-role geometry vs shuffled role assignment",
+      "left": "TIGER_role_geom_rq",
+      "right": "TIGER_role_geom_shuffled_rq",
+      "left_values": [
+        0.05538049060742701
+      ],
+      "right_values": [
+        0.0542662650812166
+      ],
+      "delta": 0.001114225526210412,
+      "rationale": "Same mechanism with the role-to-geometry correspondence permuted, i.e. the geometry no longer follows the graphlet role.",
+      "exceeds_max_repeat_spread": false,
+      "exceeds_median_repeat_spread": true
+    },
+    {
+      "name": "local per-prefix curvature weight vs global weight",
+      "left": "TIGER_mixed_rq_L",
+      "right": "TIGER_mixed_rq_G",
+      "left_values": [
+        0.05600724246592037
+      ],
+      "right_values": [
+        0.055711276310520724
+      ],
+      "delta": 0.0002959661553996462,
+      "rationale": "L sets the curvature weight per prefix; G sets one global weight.",
+      "exceeds_max_repeat_spread": false,
+      "exceeds_median_repeat_spread": false
+    },
+    {
+      "name": "periodic budget refresh vs single refresh (this lineage)",
+      "left": "TIGER_periodic_budget_prefix_rq",
+      "right": "TIGER_module_budget_prefix_rq",
+      "left_values": [
+        0.05266456588728913
+      ],
+      "right_values": [
+        0.05273420498267727
+      ],
+      "delta": -6.963909538814511e-05,
+      "rationale": "R02 refreshes the maximal global module budget every 50 native epochs; R01 refreshes it once.",
+      "exceeds_max_repeat_spread": false,
+      "exceeds_median_repeat_spread": false
+    },
+    {
+      "name": "periodic budget refresh vs best measured arm",
+      "left": "TIGER_periodic_budget_prefix_rq",
+      "right": "TIGER_struct_mixed_rq",
+      "left_values": [
+        0.05266456588728913
+      ],
+      "right_values": [
+        0.05790490781524748
+      ],
+      "delta": -0.005240341927958352,
+      "rationale": "Against the highest measured final Recall in this worktree.",
+      "exceeds_max_repeat_spread": false,
+      "exceeds_median_repeat_spread": false
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "observed_at": "2026-11-25T01:26:23.718846+00:00",
+  "milestone": "epoch 75",
+  "status": "running",
+  "progress": "76/150",
+  "variant": "TIGER_periodic_budget_prefix_rq",
+  "run_id": "issue256_r02_formal",
+  "pid": 3790035,
+  "torchrun_pid": 3830677,
+  "world_size": 4,
+  "global_train_batch": 16384,
+  "infer_batch_per_process": 1024,
+  "cuda_visible_devices": "0,1,2,3",
+  "mode": "ddp",
+  "protocol_ok": true,
+  "latest_train": {
+    "epoch": 76,
+    "loss": 1.9632001256942748,
+    "lr": 0.00198082285469938,
+    "epoch_train_time_s": 11.606,
+    "cumulative_time_s": 922.912,
+    "best_recall_at_10": -1.0
+  },
+  "ckpt_files": [
+    "HG_Rec_best.pth"
+  ],
+  "gpu_processes": 4,
+  "error_markers": [],
+  "metrics": "results/stage3_T5Train/TIGER_periodic_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_12-10-40/training_metrics.jsonl"
+}

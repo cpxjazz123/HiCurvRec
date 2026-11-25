@@ -1,0 +1,314 @@
+{
+  "schema": "genrec.issue256.sid_quality_vs_recall/1",
+  "bias_disclosure": "Exploratory correlation over already-read final test values; no selection, no training, no model replay.",
+  "records": [
+    {
+      "arm": "TIGER_mixed_rq_F0",
+      "stage3_run": "Nov-09-2026_08-07-21",
+      "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_mixed_rq_F0/item_sids.json",
+      "sid_sha256": "afa89a10b1b197a7b56da4ad322c6ddd96a3c26c04238af326d88747378bb848",
+      "test_recall@10": 0.057278155956754125,
+      "test_recall@5": 0.037814028795765946,
+      "test_ndcg@10": 0.031193096960238507,
+      "l1_positive_hit_rate": 0.15992618255888855,
+      "l1_negative_hit_probability": 0.030561554580736807,
+      "l1_lift": 5.232920404503615,
+      "l1_hard_er": 5.232920404503615,
+      "l2_positive_hit_rate": 0.02268493532269016,
+      "l3_positive_hit_rate": 0.003429725447866432,
+      "distinct_l2_prefixes": 4151,
+      "l3_collision": 0.2571684223370073,
+      "l3_refinement_gain_bits": 3.244652835906699,
+      "prefix_entropy_bits": [
+        5.4623267490647756,
+        10.64021302882166,
+        13.88486586472836
+      ]
+    },
+    {
+      "arm": "TIGER_mixed_rq_F0",
+      "stage3_run": "Nov-12-2026_17-01-43",
+      "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_mixed_rq_F0/item_sids.json",
+      "sid_sha256": "afa89a10b1b197a7b56da4ad322c6ddd96a3c26c04238af326d88747378bb848",
+      "test_recall@10": 0.05722592663521301,
+      "test_recall@5": 0.03870192726196487,
+      "test_ndcg@10": 0.031254079031055926,
+      "l1_positive_hit_rate": 0.15992618255888855,
+      "l1_negative_hit_probability": 0.030561554580736807,
+      "l1_lift": 5.232920404503615,
+      "l1_hard_er": 5.232920404503615,
+      "l2_positive_hit_rate": 0.02268493532269016,
+      "l3_positive_hit_rate": 0.003429725447866432,
+      "distinct_l2_prefixes": 4151,
+      "l3_collision": 0.2571684223370073,
+      "l3_refinement_gain_bits": 3.244652835906699,
+      "prefix_entropy_bits": [
+        5.4623267490647756,
+        10.64021302882166,
+        13.88486586472836
+      ]
+    },
+    {
+      "arm": "TIGER_role_geom_rq",
+      "stage3_run": "Nov-14-2026_00-39-48",
+      "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_role_geom_rq/item_sids.json",
+      "sid_sha256": "7260e4708ee06ba517632d7431bceb595c83e4077c57bc4e544c93b7f7beda61",
+      "test_recall@10": 0.05538049060742701,
+      "test_recall@5": 0.03791848743884817,
+      "test_ndcg@10": 0.030678454779796534,
+      "l1_positive_hit_rate": 0.19194275666359095,
+      "l1_negative_hit_probability": 0.04342152233708768,
+      "l1_lift": 4.420452032370284,
+      "l1_hard_er": 4.420452032370284,
+      "l2_positive_hit_rate": 0.024634829993558385,
+      "l3_positive_hit_rate": 0.002924842006302338,
+      "distinct_l2_prefixes": 3421,
+      "l3_collision": 0.2849880017895636,
+      "l3_refinement_gain_bits": 3.49810870294354,
+      "prefix_entropy_bits": [
+        5.001392769695219,
+        10.287545849586541,
+        13.785654552530081
+      ]
+    },
+    {
+      "arm": "TIGER_role_geom_global_rq",
+      "stage3_run": "Nov-14-2026_01-37-20",
+      "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_role_geom_global_rq/item_sids.json",
+      "sid_sha256": "6391cd9fba354fe9f6979c598af7e5cc7061bea98b1f88e2a8e6f1ccce5500b8",
+      "test_recall@10": 0.05522380264280367,
+      "test_recall@5": 0.03713504761573147,
+      "test_ndcg@10": 0.030160051922840356,
+      "l1_positive_hit_rate": 0.13362001427601455,
+      "l1_negative_hit_probability": 0.02178254911115469,
+      "l1_lift": 6.134268932169591,
+      "l1_hard_er": 6.134268932169591,
+      "l2_positive_hit_rate": 0.014920176186911332,
+      "l3_positive_hit_rate": 0.0020543533139504517,
+      "distinct_l2_prefixes": 4920,
+      "l3_collision": 0.21556106885752635,
+      "l3_refinement_gain_bits": 2.9030425740766788,
+      "prefix_entropy_bits": [
+        5.909902431334758,
+        11.116054761095212,
+        14.01909733517189
+      ]
+    },
+    {
+      "arm": "TIGER_graphlet_role_E",
+      "stage3_run": "Nov-20-2026_09-05-34",
+      "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_graphlet_role_E/item_sids.json",
+      "sid_sha256": "1143f6f832cbcb231a03c45f88181f6970b7ce115247f74ece3880ab262943a5",
+      "test_recall@10": 0.05433590417660475,
+      "test_recall@5": 0.0363167882449207,
+      "test_ndcg@10": 0.030077143694408552,
+      "l1_positive_hit_rate": 0.07167603892825432,
+      "l1_negative_hit_probability": 0.007761345075265085,
+      "l1_lift": 9.235002210722637,
+      "l1_hard_er": 9.235002210722637,
+      "l2_positive_hit_rate": 0.0069987290865091666,
+      "l3_positive_hit_rate": 0.0014101916816100558,
+      "distinct_l2_prefixes": 9152,
+      "l3_collision": 0.12213771505267013,
+      "l3_refinement_gain_bits": 1.8599704446831211,
+      "prefix_entropy_bits": [
+        7.422238899187298,
+        12.42524991115947,
+        14.285220355842592
+      ]
+    },
+    {
+      "arm": "TIGER_role_geom_shuffled_rq",
+      "stage3_run": "Nov-14-2026_02-56-37",
+      "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_role_geom_shuffled_rq/item_sids.json",
+      "sid_sha256": "b7ef894470feb61ff0ad7e8daf99b33fde6622589fa20259f12b6325b9a7a284",
+      "test_recall@10": 0.0542662650812166,
+      "test_recall@5": 0.03713504761573147,
+      "test_ndcg@10": 0.030052681842396355,
+      "l1_positive_hit_rate": 0.14653806647051654,
+      "l1_negative_hit_probability": 0.028241613622532358,
+      "l1_lift": 5.188728534746409,
+      "l1_hard_er": 5.188728534746409,
+      "l2_positive_hit_rate": 0.019202980553282612,
+      "l3_positive_hit_rate": 0.002611466077055659,
+      "distinct_l2_prefixes": 4386,
+      "l3_collision": 0.24122503762150727,
+      "l3_refinement_gain_bits": 3.1332270074861963,
+      "prefix_entropy_bits": [
+        5.6251469182419305,
+        10.802905429492824,
+        13.93613243697902
+      ]
+    },
+    {
+      "arm": "TIGER_graphlet_role_QR",
+      "stage3_run": "Nov-20-2026_09-52-07",
+      "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_graphlet_role_QR/item_sids.json",
+      "sid_sha256": "05d8bfdab885f30ee2baae44fe8a055a7152eaf109c1b16ded2c5ef22de30259",
+      "test_recall@10": 0.054109577116593255,
+      "test_recall@5": 0.0358119048033566,
+      "test_ndcg@10": 0.029531292538085768,
+      "l1_positive_hit_rate": 0.07115374571284319,
+      "l1_negative_hit_probability": 0.007511742014459497,
+      "l1_lift": 9.472336187248972,
+      "l1_hard_er": 9.472336187248972,
+      "l2_positive_hit_rate": 0.008095544838872542,
+      "l3_positive_hit_rate": 0.00153206009853932,
+      "distinct_l2_prefixes": 9307,
+      "l3_collision": 0.11270183430268033,
+      "l3_refinement_gain_bits": 1.850018567908224,
+      "prefix_entropy_bits": [
+        7.447412166275432,
+        12.463995999528883,
+        14.314014567437107
+      ]
+    },
+    {
+      "arm": "TIGER_module_budget_prefix_rq",
+      "stage3_run": "Nov-25-2026_06-36-15",
+      "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+      "sid_sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
+      "test_recall@10": 0.05273420498267727,
+      "test_recall@5": 0.034105746966346905,
+      "test_ndcg@10": 0.02852344807984429,
+      "l1_positive_hit_rate": 0.0667316631556956,
+      "l1_negative_hit_probability": 0.007835823722130155,
+      "l1_lift": 8.516228225914546,
+      "l1_hard_er": 8.516228225914546,
+      "l2_positive_hit_rate": 0.006110830620310242,
+      "l3_positive_hit_rate": 0.0006963909538815091,
+      "distinct_l2_prefixes": 8559,
+      "l3_collision": 0.06568511815186884,
+      "l3_refinement_gain_bits": 2.038433479685075,
+      "prefix_entropy_bits": [
+        7.433836844330941,
+        12.403899500776978,
+        14.442332980462053
+      ]
+    },
+    {
+      "arm": "TIGER_periodic_budget_prefix_rq",
+      "stage3_run": "Nov-25-2026_12-10-40",
+      "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result/item_sids.json",
+      "sid_sha256": "e18fc0460eea2872f5d56e0c7e1e9b9f311ac77c2f886177e0485acae574133f",
+      "test_recall@10": 0.05266456588728913,
+      "test_recall@5": 0.035028464980239905,
+      "test_ndcg@10": 0.028952566888999207,
+      "l1_positive_hit_rate": 0.0643291143648044,
+      "l1_negative_hit_probability": 0.007536524874416491,
+      "l1_lift": 8.53564679168992,
+      "l1_hard_er": 8.53564679168992,
+      "l2_positive_hit_rate": 0.00513588328487613,
+      "l3_positive_hit_rate": 0.0006267518584933582,
+      "distinct_l2_prefixes": 8840,
+      "l3_collision": 0.06491235205596457,
+      "l3_refinement_gain_bits": 2.0030256820370305,
+      "prefix_entropy_bits": [
+        7.44860022520769,
+        12.441440531563124,
+        14.444466213600155
+      ]
+    },
+    {
+      "arm": "TIGER_graphlet_role_R",
+      "stage3_run": "Nov-20-2026_10-35-20",
+      "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_graphlet_role_R/item_sids.json",
+      "sid_sha256": "cb0bb662cdd1d3bce7d6c2ddd18810ad8eb51bd91ae693344bc1ae0dddf8fe91",
+      "test_recall@10": 0.04817284423475339,
+      "test_recall@5": 0.03144205156775014,
+      "test_ndcg@10": 0.026171649902576578,
+      "l1_positive_hit_rate": 0.020230157210257838,
+      "l1_negative_hit_probability": 0.004402191420401638,
+      "l1_lift": 4.5954742259736,
+      "l1_hard_er": 4.5954742259736,
+      "l2_positive_hit_rate": 0.0008356691446578109,
+      "l3_positive_hit_rate": 6.963909538815091e-05,
+      "distinct_l2_prefixes": 15444,
+      "l3_collision": 0.01069670964330749,
+      "l3_refinement_gain_bits": 0.8828279640290422,
+      "prefix_entropy_bits": [
+        7.732726051070936,
+        13.68101827795581,
+        14.563846241984852
+      ]
+    },
+    {
+      "arm": "TIGER_graphlet_role_Q",
+      "stage3_run": "Nov-20-2026_02-51-49",
+      "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_graphlet_role_Q/item_sids.json",
+      "sid_sha256": "69e6c04729d8337091cb0bd82fb7b1052aa60e074d3bf249e58dcd00a6f82b96",
+      "test_recall@10": 0.04507390448998067,
+      "test_recall@5": 0.029370288479952645,
+      "test_ndcg@10": 0.02422834537664065,
+      "l1_positive_hit_rate": 0.015407649854628388,
+      "l1_negative_hit_probability": 0.004720148775720686,
+      "l1_lift": 3.2642297068858603,
+      "l1_hard_er": 3.2642297068858603,
+      "l2_positive_hit_rate": 0.0005919323107992827,
+      "l3_positive_hit_rate": 3.4819547694075456e-05,
+      "distinct_l2_prefixes": 14561,
+      "l3_collision": 0.01016797494610977,
+      "l3_refinement_gain_bits": 0.9895301610003067,
+      "prefix_entropy_bits": [
+        7.5932167671060835,
+        13.575380252987488,
+        14.564910413987795
+      ]
+    },
+    {
+      "arm": "TIGER_graphlet_role_T",
+      "stage3_run": "Nov-20-2026_11-18-22",
+      "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_graphlet_role_T/item_sids.json",
+      "sid_sha256": "5be85adad0458e7c61a7a0446f1cb5a9887eb47a9b4f0518947bb018f63ae28f",
+      "test_recall@10": 0.043367746652970975,
+      "test_recall@5": 0.028586848656835948,
+      "test_ndcg@10": 0.02336318013205431,
+      "l1_positive_hit_rate": 0.019864551959470046,
+      "l1_negative_hit_probability": 0.004545725363825409,
+      "l1_lift": 4.369941069812725,
+      "l1_hard_er": 4.369941069812725,
+      "l2_positive_hit_rate": 0.002036943540103414,
+      "l3_positive_hit_rate": 0.0005397029892581695,
+      "distinct_l2_prefixes": 14883,
+      "l3_collision": 0.0107780534428763,
+      "l3_refinement_gain_bits": 0.9376576641208167,
+      "prefix_entropy_bits": [
+        7.734180187201878,
+        13.625924608083432,
+        14.563582272204249
+      ]
+    }
+  ],
+  "skipped": [
+    {
+      "arm": "TIGER_struct_mixed_rq",
+      "stage3_run": "Nov-10-2026_02-00-48",
+      "reason": "no recoverable SID file for this arm",
+      "test_recall@10": 0.05790490781524748
+    },
+    {
+      "arm": "TIGER_mixed_rq_L",
+      "stage3_run": "Nov-09-2026_05-40-36",
+      "reason": "no recoverable SID file for this arm",
+      "test_recall@10": 0.05600724246592037
+    },
+    {
+      "arm": "TIGER_mixed_rq_A",
+      "stage3_run": "Nov-09-2026_06-53-54",
+      "reason": "no recoverable SID file for this arm",
+      "test_recall@10": 0.05592019359668518
+    },
+    {
+      "arm": "TIGER_mixed_rq_G",
+      "stage3_run": "Nov-09-2026_07-30-28",
+      "reason": "no recoverable SID file for this arm",
+      "test_recall@10": 0.055711276310520724
+    },
+    {
+      "arm": "TIGER_mixed_rq_E",
+      "stage3_run": "Nov-09-2026_06-17-05",
+      "reason": "no recoverable SID file for this arm",
+      "test_recall@10": 0.054196625985828445
+    }
+  ]
+}

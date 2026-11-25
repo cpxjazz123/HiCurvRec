@@ -60,11 +60,18 @@
     "inherited generated execution_entry.py removed from live source and preserved outside the tree; real freeze_run/load_run ownership regression green1case",
     "canonical full-role source identity now includes profiler dependencies for every role; exact before/after equality replaced subset matching, 3 red regressions added",
     "complete current-source re-admission: 145 candidate + 64 asset + 22 controller/framework cases, 18 module gradient/optimizer groups, anchors1/51 with 17 budget groups, 4 stale mutations caught, inclusive31-60 mean0.7015530683721105s, machine entry/behavior_graph PASS",
-    "dispatch binding probe exits0 over 125 exact-source files; CHECK_9 records 14PASS/0FAIL/3NOT_RUN"
+    "dispatch binding probe exits0 over 125 exact-source files; CHECK_9 records 14PASS/0FAIL/3NOT_RUN",
+    "R02 formal Stage2 completed all3000 epochs on four cards in2116.782s; final-epoch checkpoint; SID exported exactly from the final checkpoint; three-code collision0.06491235205596457; quantisation error0.007673; effective rank5.052",
+    "R02 Stage3 completed the frozen150-epoch four-card protocol (beam20, seed42, no early stop) over the complete57439-row test population",
+    "independent reduction of the persisted Stage3 predictions reproduces the final metrics exactly: test_R@10=0.05266456588728913, strict_target_met false",
+    "complete recommendation validation over57439 rows: validation_R@10=0.0573129755044482 (R01 0.057643761207541916), so the cadence change is falsified on validation and test alike",
+    "four required R2 artefacts archived at r2:genrec/103/ (127 files, 23 recall keys) with the ledger entry recorded",
+    "14-arm SID-paired diagnostic: final Recall tracks level-1 commitment granularity (|r| 0.80-0.91); this lineage commits an almost item-unique SID and lands at the bottom of that group",
+    "paired geometry contrasts with a measured protocol noise floor (median repeat spread0.000949): mixed curvature beats pure Euclidean by+0.003055, per-role bias beats the shuffled control by+0.001114 and the global bias by+0.000157"
   ],
   "not_run": [
-    "R02 sole complete formal Stage2/Stage3 run and final pairing/R2",
-    "strict final test_R@10>0.065 and issue256 closure"
+    "strict final test_R@10>0.065 for issue256 closure",
+    "one further candidate on the measured level-1 granularity lever"
   ],
   "running": [],
   "failed_rounds": [
@@ -75,13 +82,24 @@
       "required": ">0.065",
       "r2": "102",
       "same_mechanism_rerun": false
+    },
+    {
+      "round": "r02",
+      "classification": "valid completed experiment; not adopted",
+      "test_recall@10": 0.05266456588728913,
+      "validation_recall@10": 0.0573129755044482,
+      "required": ">0.065",
+      "r2": "103",
+      "same_mechanism_rerun": false,
+      "vs_r01_test": -6.970309538814e-05,
+      "falsified_hypothesis": "refreshing the maximal global module budget every 50 native epochs reduces later original/curvature norm drift and raises Recall"
     }
   ],
   "blocked_by": null,
   "next_commands": [
-    "push the admitted current source and evidence, confirm remote address and equal main SHAs",
-    "dispatch exactly issue256_r02_formal through tools.issue256.r02.launch_formal_run (four cards, port 50202, world_size 4, 3000 epochs)",
-    "observe the real Trainer smoke, full3000/150 epochs, exact SID export, final strict test and exact R2 pairing"
+    "push the completed R02 round evidence (negative result) with equal main SHAs",
+    "preregister the next single-change candidate: role-conditioned mixed-curvature level-1 assignment (contract, falsifiable prediction, admissions) before any training",
+    "then one frozen four-card Stage2 3000-epoch run and one frozen Stage3 150-epoch run, reconciled and archived"
   ],
-  "updated_at": "2026-11-25T00:17:09.593067+00:00"
+  "updated_at": "2026-11-25T02:01:03.088024+00:00"
 }

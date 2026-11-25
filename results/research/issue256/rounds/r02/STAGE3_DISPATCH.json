@@ -1,0 +1,44 @@
+{
+  "schema": "genrec.issue256.stage3_dispatch/1",
+  "run_id": "issue256_r02_formal",
+  "arm": "TIGER_periodic_budget_prefix_rq",
+  "variant": "TIGER_periodic_budget_prefix_rq",
+  "pid": 3790035,
+  "launched_at": 1795568693.9167788,
+  "mode": "ddp",
+  "gpu_visible": [
+    "0",
+    "1",
+    "2",
+    "3"
+  ],
+  "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 /fs04/ar57/wenyu/GeneRec/results/research/_mcp_runtime/run_stage3_param_TIGER_periodic_budget_prefix_rq.py",
+  "cwd": "/fs04/ar57/wenyu/GeneRec/stage3_T5Train",
+  "run_log": "results/stage3_T5Train/TIGER_periodic_budget_prefix_rq/logs/_stage3_run.log",
+  "native_log": "results/stage3_T5Train/TIGER_periodic_budget_prefix_rq/logs/_stage3_launcher.log",
+  "sid": "results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result/item_sids.json",
+  "sid_sha256": "e18fc0460eea2872f5d56e0c7e1e9b9f311ac77c2f886177e0485acae574133f",
+  "archive_binding_sha256": "4a91fc51e994a31e0194882a576668d27d458f12e76b7fe47b5735f8b2fd8b36",
+  "layer_record_sha256": "03f1180e0b5e95aaeaa7f7036d3416b3dc2e6c4bcf630f063cde13c33d9703b8",
+  "collision": 0.06491235205596457,
+  "collision_gate_waived": false,
+  "sid_quality": {
+    "allow": true,
+    "quant_error": 0.00767327234871401,
+    "effective_rank": 5.052149614997407,
+    "warnings": [
+      "quantisation error 0.008 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises"
+    ]
+  },
+  "protocol_checked": {
+    "NUM_EPOCHS": "150",
+    "NO_EVAL": "True",
+    "SKIP_TEST": "False",
+    "SEED": "42",
+    "BEAM_SIZE": "20",
+    "early_stop_present": false,
+    "mismatched": {}
+  },
+  "dispatched_by": "mcp stage3_start",
+  "recommendation_test_read": false
+}
