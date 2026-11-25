@@ -1,6 +1,6 @@
 ---
 name: complete-open-issue
-description: Use when the task is an open GitHub issue that must be finished end to end. Reads the issue, decides INFRA_MODE (FROZEN by default — only the research mechanism and its dedicated tests may change; BUILD only when the issue explicitly authorizes infrastructure work), freezes a machine-checkable acceptance checklist, reuses assets and the existing iteration Infra by hash, implements with TDD, and runs INCREMENTAL validation: every repeated operation must name what changed that invalidated the previous evidence; unchanged units reuse their fingerprinted receipts, only affected modules/tests/mutations/benchmarks rerun, and long commands must persist their log, command and exit code before they start. Trains when the issue needs it (frozen TIGER baseline reused, never retrained), reuses the existing analysis/replay tools to recompute headline metrics, records per-phase wall time against a 100-minute budget, and keeps working until `gh issue view` reports CLOSED — or, for a reproducible non-recoverable public-Infra fault that the issue did not authorize closing, reports evidence and leaves the issue OPEN. Research iterations must never become infrastructure development tasks.
+description: Use when the task is an open GitHub issue that must be finished end to end. Reads the issue, decides INFRA_MODE (FROZEN by default — only the research mechanism and its dedicated tests may change; BUILD only when the issue explicitly authorizes infrastructure work), freezes a machine-checkable acceptance checklist, reuses assets and the existing iteration Infra by hash, runs a mandatory root-cause diagnosis with competing hypotheses, DIAGNOSIS.md/HYPOTHESES.json and six pre-training questions before each mechanism design, implements with TDD, and runs INCREMENTAL validation: every repeated operation must name what changed that invalidated the previous evidence; unchanged units reuse their fingerprinted receipts, only affected modules/tests/mutations/benchmarks rerun, and long commands must persist their log, command and exit code before they start. Trains when the issue needs it (frozen TIGER baseline reused, never retrained), reuses the existing analysis/replay tools to recompute headline metrics, records per-phase wall time against a 100-minute budget, and keeps working until `gh issue view` reports CLOSED — or, for a reproducible non-recoverable public-Infra fault that the issue did not authorize closing, reports evidence and leaves the issue OPEN. Research iterations must never become infrastructure development tasks.
 ---
 
 # 按 open issue 完成任务的闭环
@@ -34,7 +34,7 @@ description: Use when the task is an open GitHub issue that must be finished end
 |---|---|
 | 候选 GNN、门控网络、量化器及 Loss | 允许 |
 | 候选机制专属测试 | 允许 |
-| 实验合同(`CONTRACT.md`)、`RUN_LOG.md`、日志、报告、`VERDICT.md` | 允许 |
+| 实验合同(`CONTRACT.md`)、`RUN_LOG.md`、`DIAGNOSIS.md`、`HYPOTHESES.json`、日志、报告、`VERDICT.md` | 允许 |
 | `tools/iteration/` | 禁止 |
 | 公共训练框架(`tools/research/stage2/`、`stage2_RQ-VAE/baseline/`、Stage3 训练入口) | 禁止 |
 | 公共评估器、复算器与归档器 | 禁止 |
@@ -53,11 +53,133 @@ description: Use when the task is an open GitHub issue that must be finished end
 发现未经授权的变化:停止推进,按 §1.1 记录,并按 §6.1 处理。
 运行期正常产物(日志、checkpoint、receipts、报告)不计入 Infra 变更。
 
-## 九步执行流程
+## 根因驱动迭代(每轮机制设计前强制)
+
+> **目的不是增加测试数量,而是保证每轮实验都积累有效的研究知识。**
+> 机制设计之前必须先回答"上一轮为什么失败",而不是直接换参数、换 Loss 或换监督层级。
 
 ```mermaid
 flowchart TD
-    A["读取 Issue 与历史实验"] --> B["确定本轮机制修改范围"]
+    A["上一轮实验失败"] --> B["识别失败现象"]
+    B --> C["提出候选根因"]
+    C --> D["利用已有产物验证根因"]
+    D --> E["确定新机制及因果依据"]
+    E --> F["验证机制是否解决根因"]
+    F --> G["正式训练与结果分析"]
+    G --> H["更新累计研究知识"]
+    H --> A
+```
+
+根因诊断优先复用已有 checkpoint、SID、梯度记录、`stage2_metrics`、Stage3 预测与
+`tools/iteration/analysis.py` / `replay.py` 等既有接口;**不允许为了诊断而默认重新进行完整训练**。
+低成本验证包括:冻结 checkpoint 的前向探测、SID 结构/碰撞分析、已有梯度记录的复核、
+小批量表征统计、对既有预测的重新归约。只有这些证据确实无法区分假设时,才允许按既有准入路径做
+必要的最小训练;必须在 `DIAGNOSIS.md` 写明为什么更低成本的手段不足。
+
+### 六项强制规则
+
+| 规则 | 强制要求 |
+|---|---|
+| 现象与根因分离 | 不允许直接把 Recall 下降、碰撞率过高、量化误差偏大等现象认定为根因;现象只是待解释的观测 |
+| 竞争性假设 | 至少提出两个可区分的解释(或一个主假设加一个显式 null/平凡解释),不能只验证 Agent 最初提出的解释 |
+| 根因证据 | 每个候选根因必须有支持或排除它的实际测量:命令、产物路径、数值/分布、sha256;没有测量只能标 `UNTESTED` |
+| 机制针对性 | 新机制必须逐条说明它作用于哪个根因、通过什么计算通路、为什么该通路会改变该根因;不能只写"加入某种几何/正则" |
+| 局部验证 | 正式训练前尽可能用低成本实验验证机制产生了预期作用:开关两侧的中间量、梯度、排序/分布变化;不要求证明 Recall 一定提高 |
+| 知识累积 | 每轮更新已证实、已排除、尚未验证的假设;下一轮不得重复已被证伪的机制,除非有新的证据或实质性机制变化 |
+
+**禁止**:仅因为上一轮效果不好就修改超参数、变换监督层级或更换 Loss。任何这类修改必须先有新的证据
+说明它作用于一个具体根因;否则视为无方向尝试,不得进入正式训练准入。
+
+### 强制研究记录(不开发新 Infra)
+
+每轮新增或更新以下文件,全部是普通 Markdown/JSON 证据,不新增工具、不新增服务:
+
+| 文件 | 必须记录的内容 |
+|---|---|
+| `DIAGNOSIS.md` | 失败现象、候选根因、竞争性解释、支持/排除证据、低成本验证结果、仍不确定的部分 |
+| `HYPOTHESES.json` | 历史假设及其当前状态、证据路径、来源轮次/Issue、重新打开原因 |
+| `CONTRACT.md` | 新机制、针对的根因、因果通路、可证伪预测、判定指标与方向 |
+| `VERDICT.md` | 根因是否解决、机制是否有效、推荐指标是否改善、哪些假设被证实/排除/仍不确定 |
+
+`HYPOTHESES.json` **必须跨轮次继承,不能每轮重新建立**。推荐结构:
+
+```json
+{
+  "schema": "genrec.hypotheses/1",
+  "issue": 259,
+  "inherited_from": "results/research/issue258/HYPOTHESES.json",
+  "hypotheses": [
+    {
+      "id": "H1",
+      "statement": "上一轮失败的原因是……",
+      "status": "SUPPORTED",
+      "evidence": ["results/research/issue259/diagnosis/H1_probe.json"],
+      "origin_issue": 258,
+      "opened_round": "r04",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    }
+  ]
+}
+```
+
+本轮文件放在 `results/research/<issue>/`。若该 Issue 使用 `rounds/<round>/`, `DIAGNOSIS.md` 与
+`VERDICT.md` 可随轮次放在 round 目录,但 `HYPOTHESES.json` 必须保留在 Issue 根并跨轮继承。
+
+状态只能取以下五种:
+
+| 状态 | 含义 |
+|---|---|
+| `UNTESTED` | 尚未验证,或没有可引用的测量 |
+| `SUPPORTED` | 现有证据支持,但尚未通过机制验证 |
+| `REFUTED` | 现有证据否定;再次探索必须给出新证据或实质性机制变化 |
+| `INCONCLUSIVE` | 证据不足以判断,必须写明缺什么测量 |
+| `RESOLVED` | 针对该问题的修改已通过验证,根因在该轮被解决 |
+
+继承规则:
+
+1. 同一 Issue 的后续轮次在原文件上更新,保留全部历史条目,禁止 reset。
+2. 新 Issue 继续既有研究方向时,复制最近的相关 `HYPOTHESES.json` 并填写 `inherited_from`;
+   只允许新增/更新状态,不得丢弃旧条目。
+3. 把 `REFUTED` 重新打开为 `SUPPORTED`/`UNTESTED` 时,必须在 `reopen_reason` 写明新证据或机制差异。
+4. 每条假设的 `evidence` 为空时只能标 `UNTESTED`;`SUPPORTED`/`REFUTED`/`RESOLVED` 必须有可复算证据。
+
+### 正式训练前准入六问
+
+在 Stage2 正式训练之前,Agent 必须逐条回答,答案写进 `DIAGNOSIS.md`(或同轮 `RUN_LOG.md`),
+缺任何一条即视为未完成根因准入:
+
+1. 本轮究竟要解决哪个具体问题?
+2. 有什么证据表明这是导致上一轮失败的原因?
+3. 为什么新的机制能够作用于这个原因?
+4. 与之前失败的机制相比,本轮存在什么实质性区别?
+5. 使用什么指标判断该问题是否得到解决?
+6. 如果本轮仍然失败,能够获得什么新的研究知识?
+
+不要求保证每轮 Recall 都会提高,也不要求在训练前证明只有一个根因;但必须保证本轮实验能够区分
+有意义的竞争性解释,而不是无方向地尝试。若六问的答案只能落到"再试一个 Loss/超参数",本轮不得启动训练。
+
+### 与现有流程的接口
+
+- 根因诊断必须在冻结 `CONTRACT.md` 之前完成;`CONTRACT.md` 增加"针对的根因 / 因果通路 /
+  可证伪预测 / 判定指标"四段。
+- 执行流程中"确定本轮机制修改范围"之前必须先完成本模块;未完成不得进入实现与验证。
+- 训练后的 `VERDICT.md` 必须回答:根因是否解决、机制是否有效、推荐指标是否改善、知识增量是什么;
+  只写 Recall 数字不算完成。
+- 本轮结束后更新 `HYPOTHESES.json`;下一轮选题必须引用其中仍 `SUPPORTED`/`UNTESTED` 的假设,
+  或说明为什么重开某个 `REFUTED` 假设。
+- 保持不变:单 Agent 执行、Infra 冻结(`FROZEN`)、复用冻结 TIGER 基线、增量验证与收据复用、
+  不做多种子实验、不为诊断新建 Infra。
+
+> **每轮迭代必须产生可验证的知识增量。不得重复探索已被证伪的机制,除非存在新的证据或实质性机制变化。
+> 评价一轮实验不仅看最终 Recall,还要判断它是否解决了已发现的问题、排除了错误假设,并缩小了下一轮的搜索范围。**
+
+## 执行流程(根因诊断前置)
+
+```mermaid
+flowchart TD
+    A["读取 Issue 与历史实验"] --> A2["根因诊断、竞争假设与准入六问"]
+    A2 --> B["确定本轮机制修改范围"]
     B --> C["分析代码依赖及验证影响范围"]
     C --> D["实现研究机制"]
     D --> E["执行增量验证"]
@@ -67,9 +189,12 @@ flowchart TD
     H --> I["完成 Issue 验收"]
 ```
 
+A2 未完成或六问缺答案时,不得进入 B;诊断记录与假设状态按上一节写入 `DIAGNOSIS.md` 与
+`HYPOTHESES.json`。
+
 禁止在每轮迭代中重新建设已有 Infra、重新训练 TIGER 基线或无条件重复执行所有历史测试。
 
-按上一小节的三个检查点执行 Infra 完整性检查(开始、训练派发前、归档/关闭前),相邻阶段共用结果。
+按 Infra 完整性检查的三个检查点执行(开始、训练派发前、归档/关闭前),相邻阶段共用结果。
 遇到 Infra 错误时,只允许用**已有接口**重新执行或恢复;不得临时编写新的框架工具,不得绕过准入、
 不得伪造结果。
 
@@ -216,25 +341,27 @@ flowchart TD
 
 ## 执行顺序
 
-1. 阅读 issue 与历史实验,冻结验收清单(§0;`RUN_LOG.md`),确定并记录 `INFRA_MODE`,
-   **写下本轮机制修改范围**。
-2. **先读 `/home/wlia0047/ar57/wenyu/GeneRec/assets`**:需要的 Infra 资产已存在就直接读取(按哈希引用)
+1. 阅读 issue 与历史实验,冻结验收清单(§0;`RUN_LOG.md`),确定并记录 `INFRA_MODE`。
+2. **完成根因诊断与竞争假设**(上一节):写 `DIAGNOSIS.md`、继承并更新 `HYPOTHESES.json`,
+   逐条回答正式训练准入六问。未完成不得确定机制范围,更不得启动训练。
+3. **先读 `/home/wlia0047/ar57/wenyu/GeneRec/assets`**:需要的 Infra 资产已存在就直接读取(按哈希引用)
    (§1.0)。`FROZEN` 下**禁止**新建或重建资产;确实缺失时记录为 Infra 故障(§1.1)。
-3. **若开始新 Stage2 机制,先归档全部旧机制,再复制冻结基线、开展新机制探索**(§1.0a);
-   之后冻结**数学与数据契约**(`CONTRACT.md`)。非新机制任务不搬动当前机制。
-4. **分析依赖闭包与验证影响范围**:用 `tools/iteration/depgraph.py` 生成本轮验证计划,
+4. **若开始新 Stage2 机制,先归档全部旧机制,再复制冻结基线、开展新机制探索**(§1.0a);
+   之后冻结**数学与数据契约**(`CONTRACT.md`,含针对的根因、因果通路、可证伪预测、判定指标)。
+   非新机制任务不搬动当前机制。
+5. **分析依赖闭包与验证影响范围**:用 `tools/iteration/depgraph.py` 生成本轮验证计划,
    标明实跑项与 `reused:<指纹>` 项;无法确定影响范围时扩大,不得无差别重跑全部。
-5. 先写**独立参考实现**与**确定性测试**(含手算期望值),再写正式代码(§2)。
-6. 实现生产代码,只跑受影响范围内的确定性测试与参考一致性测试。
-7. **故意引入典型错误**,只在受影响的模块/路径上验证测试的检测能力;不通过先补测试。
-8. 用真实数据**逐模块验证受影响的模块**及其梯度传播路径(§3)。
-9. 全部准入检查通过后才启动正式训练;性能基准按 §4 的增量规则执行。
-10. 训练结束后**重新审查源码、指标计算与实验结论**,用既有复算接口从原始产物重算头条指标(§5);
-    归档证据并关闭 issue(§6)。
+6. 先写**独立参考实现**与**确定性测试**(含手算期望值),再写正式代码(§2)。
+7. 实现生产代码,只跑受影响范围内的确定性测试与参考一致性测试。
+8. **故意引入典型错误**,只在受影响的模块/路径上验证测试的检测能力;不通过先补测试。
+9. 用真实数据**逐模块验证受影响的模块**及其梯度传播路径(§3)。
+10. 全部准入检查与低成本机制验证通过后才启动正式训练;性能基准按 §4 的增量规则执行。
+11. 训练结束后**重新审查源码、指标计算与实验结论**,用既有复算接口从原始产物重算头条指标(§5);
+    在 `VERDICT.md` 更新根因是否解决与知识增量,归档证据并关闭 issue(§6)。
 
-顺序不可交换:先查 `assets/` 再谈资产,先归档旧机制再复制基线与探索新机制,先定影响范围再验证,
-先参考实现后生产代码,先变异测试后正式训练,先结论复核后关闭。取消的是**重复建设与无理由重跑**,
-不是**顺序要求**或**验证强度**。
+顺序不可交换:先根因诊断再定机制,先查 `assets/` 再谈资产,先归档旧机制再复制基线与探索新机制,
+先定影响范围再验证,先参考实现后生产代码,先变异测试后正式训练,先结论复核后关闭。取消的是
+**重复建设与无理由重跑**,不是**顺序要求**或**验证强度**。
 
 ## 进度必须回写到 issue(不是只写本地)
 
@@ -248,10 +375,12 @@ flowchart TD
 |---|---|
 | 冻结验收清单后 | 清单条数、正文 sha256、`INFRA_MODE` 判定及授权原文(或"未授权→FROZEN")、**是否需要训练及依据** |
 | Infra 校验完成 / 出现 Infra 故障 | **`assets/` 复用了哪些资产(`path:sha256`)、哪些组件做了哈希基线**;缺什么、影响了哪一步、用哪个既有接口尝试过、是否可恢复。`FROZEN` 下不写"修复进度",写"故障与影响" |
+| 根因诊断完成 / 正式训练准入六问 | 现象、候选根因、竞争性解释、支持/排除证据、`SUPPORTED`/`REFUTED`/`UNTESTED` 计数、`DIAGNOSIS.md` 与 `HYPOTHESES.json` 路径 |
 | 每条 `C` 从 FAIL→PASS,或出现新的 FAIL | 编号、命令、关键输出、证据文件路径;复用项写 `reused:<指纹/收据>` |
 | 每轮检查结束(`CHECK_k`) | 本轮 PASS/FAIL/NOT_RUN 计数、复用项与实跑项、FAIL 的具体证据、下一轮要修什么 |
 | 训练启动 / 训练结束 | run 名、pid、epoch 范围、最终碰撞率与产物路径 |
 | §5 结论对账 | 逐条对照表、整体判定、`VERDICT.md` 路径 + commit sha |
+| 每轮知识更新 | 根因是否解决、机制是否有效、推荐指标变化、假设状态迁移、下一轮方向 |
 | §7 不可满足判定 | 互斥规模、计算脚本路径、为什么该主张在预算内不可满足 |
 | Infra 完整性前后对比 | 公共组件 `path:sha256` 基线、结束时的重算值、变更清单(应为空) |
 | 关闭 issue | 结果、证据路径、commit sha(就是 `gh issue close` 的 comment) |
@@ -430,7 +559,9 @@ cat  /home/wlia0047/ar57/wenyu/GeneRec/assets/manifest.json   # 若存在
 
 ## 4. 训练(**仅当 issue 要求时**)
 
-**先判定,再决定跑不跑。** 在 `RUN_LOG.md` 写下结论与依据(引 issue 原文的哪一段),再二选一:
+**先判定,再决定跑不跑。** 在 `RUN_LOG.md` 写下结论与依据(引 issue 原文的哪一段),再二选一。
+若判定需要 Stage2 训练,启动前还必须完成"根因驱动迭代"的准入六问并写入 `DIAGNOSIS.md`;
+六问缺答案,或答案只能落到"再换一个 Loss/超参数",不得训练。
 
 | issue 的形态 | 判定 | 做法 |
 |---|---|---|
