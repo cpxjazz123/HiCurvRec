@@ -93,8 +93,8 @@ result, not an implementation failure; the frozen definitions and the independen
 - Required tests executed: **yes** (`tests/`, 15 passed; command
   logs persisted).
 - Required training: **none by issue boundary**; no training was run.
-- Infra boundary: **FROZEN**; end snapshot comparison must be empty and is written
+- Infra boundary: **FROZEN**; end snapshot comparison is empty (`INFRA_DIFF.json`: `ok=true`) and is written
   to `INFRA_SNAPSHOT_END.json`.
 - Remaining executable tasks: none after the commit, push and close comment.
 
-Commit: pending until the evidence commit is created.
+Evidence commit: `dc7cce84d30bae4e8738f09aab946980395034f1`; the final docs commit is HEAD at close.

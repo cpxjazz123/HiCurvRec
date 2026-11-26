@@ -16,7 +16,7 @@
 | C5 ten-arm table/components | **PASS** | `SCORES.json`/`SCORES.csv`: ten rows, all C/G1/components/S/Recall; eight historical values reproduced from #262. |
 | C6 statistics and edge cases | **PASS** | `SCORES.json`: 8-arm Pearson 0.8569503, Spearman 1, Kendall 1; 10-arm Pearson 0.6904655, Spearman 0.7939394, Kendall 0.7333333; strict adjacency FAIL; 6 inversions; no tied recall or tied-S pairs; reference tests 15 passed. |
 | C7 persistence and reference | **PASS** | execution records under `logs/execution/`; `reference.py`, `tests/`; logs `verify_bundle.log`, `aggregate.log`, `reference_tests.log`. |
-| C8 no training/parameter/SID/infra change | **PASS** | endpoint checks: parameters_unchanged=true; no optimizer; SID/checkpoint hashes match; end snapshot diff to be recorded below. |
+| C8 no training/parameter/SID/infra change | **PASS** | endpoint checks: parameters_unchanged=true; no optimizer; SID/checkpoint hashes match; end snapshot diff empty (`INFRA_DIFF.json`: `ok=true`). |
 | C9 conclusion and delivery | **PASS** | `VERDICT.md` separates prediction continuation, scale comparability, gradient sensitivity and optimization benefit; commit/push/close after this check. |
 
 ## Key result
