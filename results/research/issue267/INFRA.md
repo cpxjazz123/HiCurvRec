@@ -28,3 +28,14 @@
   (`analysis/MUTATION_RESULTS.json`, `logs/mutation_check.log`).
 - Candidate suite: `pytest -q tests` → 139 passed; relative-specific suite 7 passed;
   actual calibration smoke: 378 valid pairs, alpha ~0.3076 at formal init.
+
+## End of run
+
+- `verify_infra.py` compares all 61 protected paths against `INFRA_SNAPSHOT_START.json`.
+  `INFRA_DIFF.json` → `status=PASS`, `changed=[]`, `missing=[]`; end snapshot
+  `INFRA_SNAPSHOT_END.json`.
+- R2 archive (CLAUDE.md §6b): `r2:genrec/110/` — 115 files, `recall.json` 23 keys,
+  four-part layout (`<arm>/stage2_source.tar.gz` incl. `archive_binding.json` and
+  `export_manifest.json`, `item_sids.json`, `rqvae_best.pth`, `recall.json`).
+  Ledger entry recorded in `results/research/issue139/r2_ledger.json`; no credential
+  written to any log or manifest.

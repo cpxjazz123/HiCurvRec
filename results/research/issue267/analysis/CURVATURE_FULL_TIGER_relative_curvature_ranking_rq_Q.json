@@ -1,0 +1,195 @@
+{
+  "schema": "genrec.issue267.curvature_full/1",
+  "issue": 267,
+  "space": "q",
+  "tag": "TIGER_relative_curvature_ranking_rq",
+  "identity": {
+    "q_file": "/fs04/ar57/wenyu/GeneRec/results/research/issue267/raw/q_TIGER_relative_curvature_ranking_rq.npz",
+    "tag": "TIGER_relative_curvature_ranking_rq",
+    "q_sha256": "a8f13a7c48319440ba91fd953383c0f31e1f6f1903808d4611bd09d6f46d0828",
+    "scale": 0.08433422446250916,
+    "scale_fitted_on_evaluation": false,
+    "sid3_sha256": "78fe443d7956cdaaa35cd324c6539e15724ecba51deaa69ecff2ca351aa37d65"
+  },
+  "coverage": {
+    "count": 28391948,
+    "excluded": 0,
+    "expected": 28391948,
+    "shards": 13
+  },
+  "metrics": {
+    "pearson": 0.021296579306016843,
+    "spearman": -0.033732968225743044,
+    "rmse": 2.610290624348175,
+    "mae": 2.2039547408341544,
+    "target_mean": -1.062324623465591,
+    "target_variance": 2.872967567152848,
+    "prediction_mean": 0.7061976833479379,
+    "prediction_variance": 0.8807311713324746,
+    "sign": {
+      "accuracy": 0.3436884992886011,
+      "negative": {
+        "support": 21170678,
+        "predicted": 5657516,
+        "tp": 4097146,
+        "fp": 1560370,
+        "fn": 17073532,
+        "precision": 0.7241952121743889,
+        "recall": 0.19352927667219727,
+        "f1": 0.3054358411155071
+      },
+      "zero": {
+        "support": 77,
+        "predicted": 7,
+        "tp": 0,
+        "fp": 7,
+        "fn": 77,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": null
+      },
+      "positive": {
+        "support": 7221193,
+        "predicted": 22734425,
+        "tp": 5660840,
+        "fp": 17073585,
+        "fn": 1560353,
+        "precision": 0.24899860014053576,
+        "recall": 0.7839203300618056,
+        "f1": 0.3779484703002956
+      },
+      "balanced_accuracy": 0.32581653557800094
+    },
+    "target_quantiles": {
+      "0": -7.6756977647010745,
+      "0.01": -3.9072984348821054,
+      "0.05": -3.445425197172163,
+      "0.25": -2.3606922479669814,
+      "0.5": -1.271791099668996,
+      "0.75": 0.027297617588165585,
+      "0.95": 2.021801315843243,
+      "0.99": 3.49728249765028,
+      "1": 9.017755710841405
+    },
+    "prediction_quantiles": {
+      "0": -12.960449270384169,
+      "0.01": -1.456334676769418,
+      "0.05": -0.6907845130104705,
+      "0.25": 0.1387054610548874,
+      "0.5": 0.6761768693546287,
+      "0.75": 1.2318265483565944,
+      "0.95": 2.1642625800003676,
+      "0.99": 3.4359339052737004,
+      "1": 16.77334015395282
+    }
+  },
+  "role_strata": {
+    "-1": {
+      "count": 2,
+      "mae": 5.868651371578527,
+      "rmse": 5.87438694664093,
+      "target_mean": 6.295078868865188,
+      "prediction_mean": 0.42642749728666063
+    },
+    "0": {
+      "count": 228487,
+      "mae": 1.5857350757519761,
+      "rmse": 1.9499095440819538,
+      "target_mean": 0.4854157554896861,
+      "prediction_mean": 0.7922491902787264
+    },
+    "1": {
+      "count": 1976309,
+      "mae": 1.5010894060088624,
+      "rmse": 1.912464375165526,
+      "target_mean": 0.9020814253773991,
+      "prediction_mean": 0.7214094012040513
+    },
+    "2": {
+      "count": 394595,
+      "mae": 2.1642170779427268,
+      "rmse": 2.6004042050788376,
+      "target_mean": 2.4790222129673807,
+      "prediction_mean": 0.8403929029191791
+    },
+    "3": {
+      "count": 24900259,
+      "mae": 2.288898850894297,
+      "rmse": 2.682817028002852,
+      "target_mean": -1.3650317413433515,
+      "prediction_mean": 0.7023896606010113
+    },
+    "4": {
+      "count": 12650,
+      "mae": 1.613727235348299,
+      "rmse": 2.0216121611814986,
+      "target_mean": 1.408685976285877,
+      "prediction_mean": 0.6082825503863087
+    },
+    "5": {
+      "count": 3403,
+      "mae": 2.319315308526989,
+      "rmse": 2.7601703674339237,
+      "target_mean": 2.571745363751222,
+      "prediction_mean": 0.7234144850393596
+    },
+    "6": {
+      "count": 874680,
+      "mae": 1.5593749224197064,
+      "rmse": 1.9620513548558427,
+      "target_mean": 1.0556393087607088,
+      "prediction_mean": 0.6979975966353857
+    },
+    "7": {
+      "count": 1563,
+      "mae": 3.3247082888853026,
+      "rmse": 3.7299420238389125,
+      "target_mean": 4.053184095878253,
+      "prediction_mean": 1.0237494958126503
+    }
+  },
+  "degree_strata": {
+    "0": {
+      "count": 76814,
+      "mae": 3.0360068882993816,
+      "rmse": 3.4732425849501354,
+      "target_mean": 3.6013440310475002,
+      "prediction_mean": 0.9130239003157025
+    },
+    "1": {
+      "count": 126717,
+      "mae": 2.5257019220997083,
+      "rmse": 2.953053259443593,
+      "target_mean": 2.9278681168564913,
+      "prediction_mean": 0.9229279567802557
+    },
+    "2": {
+      "count": 238143,
+      "mae": 2.1628840517217114,
+      "rmse": 2.578733863346915,
+      "target_mean": 2.415053278861972,
+      "prediction_mean": 0.8924542025628732
+    },
+    "3": {
+      "count": 704946,
+      "mae": 1.7528177866811048,
+      "rmse": 2.1523713625124317,
+      "target_mean": 1.6907110439050639,
+      "prediction_mean": 0.8108886293980349
+    },
+    "4": {
+      "count": 27245328,
+      "mae": 2.212144174162905,
+      "rmse": 2.6168315755884652,
+      "target_mean": -1.1956581250797902,
+      "prediction_mean": 0.700269778607777
+    }
+  },
+  "role_table": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/_archive/TIGER_topology_residual_l2_rq_issue263/role_table.json",
+  "degree_source": "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph_directed/edges.parquet",
+  "scope": "hard q/z; equal-weight three-expert prediction; full 28,391,948 targets",
+  "raw": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue267/raw/curvature_TIGER_relative_curvature_ranking_rq_q.npz",
+    "sha256": "7640d225468a78a9275b61ab15f74aa0f480e0c0edbbf6f22cda68bf299b4147"
+  }
+}

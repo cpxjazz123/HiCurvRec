@@ -1,0 +1,203 @@
+{
+  "schema": "genrec.issue267.full_comparison/1",
+  "parent": "109",
+  "new": "TIGER_relative_curvature_ranking_rq",
+  "spaces": {
+    "q": {
+      "parent": {
+        "pearson": -0.03310351270916506,
+        "spearman": -0.09341638089375447,
+        "rmse": 2.664983898987988,
+        "mae": 2.2459504278999165,
+        "target_mean": -1.062324623465591,
+        "target_variance": 2.872967567152848,
+        "prediction_mean": 0.736236050454048,
+        "prediction_variance": 0.8885683649042405,
+        "sign": {
+          "accuracy": 0.33234968590390485,
+          "negative": {
+            "support": 21170678,
+            "predicted": 5436807,
+            "tp": 3825823,
+            "fp": 1610984,
+            "fn": 17344855,
+            "precision": 0.703689316173997,
+            "recall": 0.18071329600308503,
+            "f1": 0.28757494366716735
+          },
+          "zero": {
+            "support": 77,
+            "predicted": 1,
+            "tp": 0,
+            "fp": 1,
+            "fn": 77,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": null
+          },
+          "positive": {
+            "support": 7221193,
+            "predicted": 22955140,
+            "tp": 5610232,
+            "fp": 17344908,
+            "fn": 1610961,
+            "precision": 0.2443998163374303,
+            "recall": 0.776912069792346,
+            "f1": 0.37182993705696443
+          },
+          "balanced_accuracy": 0.3192084552651437
+        }
+      },
+      "new": {
+        "pearson": 0.021296579306016843,
+        "spearman": -0.033732968225743044,
+        "rmse": 2.610290624348175,
+        "mae": 2.2039547408341544,
+        "target_mean": -1.062324623465591,
+        "target_variance": 2.872967567152848,
+        "prediction_mean": 0.7061976833479379,
+        "prediction_variance": 0.8807311713324746,
+        "sign": {
+          "accuracy": 0.3436884992886011,
+          "negative": {
+            "support": 21170678,
+            "predicted": 5657516,
+            "tp": 4097146,
+            "fp": 1560370,
+            "fn": 17073532,
+            "precision": 0.7241952121743889,
+            "recall": 0.19352927667219727,
+            "f1": 0.3054358411155071
+          },
+          "zero": {
+            "support": 77,
+            "predicted": 7,
+            "tp": 0,
+            "fp": 7,
+            "fn": 77,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": null
+          },
+          "positive": {
+            "support": 7221193,
+            "predicted": 22734425,
+            "tp": 5660840,
+            "fp": 17073585,
+            "fn": 1560353,
+            "precision": 0.24899860014053576,
+            "recall": 0.7839203300618056,
+            "f1": 0.3779484703002956
+          },
+          "balanced_accuracy": 0.32581653557800094
+        }
+      },
+      "delta": {
+        "pearson": 0.05440009201518191,
+        "spearman": 0.05968341266801142,
+        "rmse": -0.054693274639812994,
+        "mae": -0.041995687065762066,
+        "prediction_mean": -0.030038367106110186,
+        "prediction_variance": -0.007837193571765932
+      }
+    },
+    "z": {
+      "parent": {
+        "pearson": -0.028379409089556155,
+        "spearman": -0.0920836844619137,
+        "rmse": 2.670318257649251,
+        "mae": 2.248007770469104,
+        "target_mean": -1.062324623465591,
+        "target_variance": 2.872967567152848,
+        "prediction_mean": 0.7328050547403872,
+        "prediction_variance": 0.9417788194785949,
+        "sign": {
+          "accuracy": 0.332632195578831,
+          "negative": {
+            "support": 21170678,
+            "predicted": 5453081,
+            "tp": 3837970,
+            "fp": 1615111,
+            "fn": 17332708,
+            "precision": 0.7038167964128903,
+            "recall": 0.18128706128353564,
+            "f1": 0.28831165426339683
+          },
+          "zero": {
+            "support": 77,
+            "predicted": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 77,
+            "precision": null,
+            "recall": 0.0,
+            "f1": null
+          },
+          "positive": {
+            "support": 7221193,
+            "predicted": 22938867,
+            "tp": 5606106,
+            "fp": 17332761,
+            "fn": 1615087,
+            "precision": 0.24439332596505312,
+            "recall": 0.7763406960595015,
+            "f1": 0.3717569527381577
+          },
+          "balanced_accuracy": 0.31920925244767906
+        }
+      },
+      "new": {
+        "pearson": 0.023399132117729392,
+        "spearman": -0.035099920285798135,
+        "rmse": 2.6153575155995656,
+        "mae": 2.208515838241882,
+        "target_mean": -1.062324623465591,
+        "target_variance": 2.872967567152848,
+        "prediction_mean": 0.7065575696885206,
+        "prediction_variance": 0.9140186689279878,
+        "sign": {
+          "accuracy": 0.3414632204877242,
+          "negative": {
+            "support": 21170678,
+            "predicted": 5594679,
+            "tp": 4034136,
+            "fp": 1560543,
+            "fn": 17136542,
+            "precision": 0.7210665705753627,
+            "recall": 0.19055299031991324,
+            "f1": 0.30144458749420006
+          },
+          "zero": {
+            "support": 77,
+            "predicted": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 77,
+            "precision": null,
+            "recall": 0.0,
+            "f1": null
+          },
+          "positive": {
+            "support": 7221193,
+            "predicted": 22797269,
+            "tp": 5660670,
+            "fp": 17136599,
+            "fn": 1560523,
+            "precision": 0.24830474211625964,
+            "recall": 0.7838967882453772,
+            "f1": 0.3771459044104258
+          },
+          "balanced_accuracy": 0.32481659285509684
+        }
+      },
+      "delta": {
+        "pearson": 0.05177854120728555,
+        "spearman": 0.056983764176115566,
+        "rmse": -0.05496074204968515,
+        "mae": -0.039491932227222026,
+        "prediction_mean": -0.02624748505186658,
+        "prediction_variance": -0.0277601505506071
+      }
+    }
+  }
+}

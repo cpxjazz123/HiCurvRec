@@ -1,0 +1,87 @@
+{
+  "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_relative_curvature_ranking_rq/stage2_metrics/0b25f3b5e0a9e43d2f21c553cf3689467e1d6542cadab4bfc70484689dd0a454.json",
+  "sha256": "118ff26fa71376253ca7cc64e526a758a62bb96cba7a61f7ed08771d1e2af3f9",
+  "report": {
+    "schema": "genrec.issue252.layer_metrics/1",
+    "arm": "TIGER_relative_curvature_ranking_rq",
+    "run_id": "stage2_88816eeca29442c7b3284f4d4a68f610",
+    "sid": {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_88816eeca29442c7b3284f4d4a68f610/TIGER_relative_curvature_ranking_rq/result/item_sids.json",
+      "sha256": "0b25f3b5e0a9e43d2f21c553cf3689467e1d6542cadab4bfc70484689dd0a454"
+    },
+    "inputs": {
+      "train": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+        "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+      },
+      "valid": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+        "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+      }
+    },
+    "catalogue": {
+      "items": 24587,
+      "distinct_l2_prefixes": 10611,
+      "distinct_l3_triples": 23469,
+      "l3_collision": 0.04547118395900274,
+      "l3_refinement_gain_bits": 1.6853991238877164,
+      "prefix_entropy_bits": [
+        7.519389169981163,
+        12.802365729479714,
+        14.48776485336743
+      ],
+      "codebook_occupancy": [
+        256,
+        256,
+        256
+      ]
+    },
+    "validation": {
+      "scope": "recommendation valid last-history-to-target; exact legal uniform catalogue negatives",
+      "rows": 57439,
+      "effective_rows": 57439,
+      "excluded_empty_history": 0,
+      "excluded_empty_negative_population": 0,
+      "positive_hits_by_level": [
+        3504,
+        274,
+        23
+      ],
+      "expected_negative_mass_by_level": [
+        419.16005917302067,
+        11.89010075068097,
+        0.2647389292900237
+      ],
+      "positive_hit_rates_by_level": [
+        0.0610038475600202,
+        0.004770278034088337,
+        0.00040042479848186773
+      ],
+      "negative_hit_probabilities_by_level": [
+        0.007297481835913241,
+        0.0002070039650878492,
+        4.609044887446225e-06
+      ],
+      "l1_positive_hit_rate": 0.0610038475600202,
+      "l1_negative_hit_probability": 0.007297481835913241,
+      "l1_hard_er": 8.359575115322762,
+      "negative_sampling": false,
+      "conditional_g3": {
+        "status": "MISSING",
+        "reason": "legacy defining implementation removed; no surviving formula, not invented"
+      },
+      "conditional_log_enrichment_bits": 1.91457664703765,
+      "conditional_prefix_survival_difference": 0.06167611500454137
+    },
+    "output": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_relative_curvature_ranking_rq/stage2_metrics/0b25f3b5e0a9e43d2f21c553cf3689467e1d6542cadab4bfc70484689dd0a454.json",
+    "read_stage3_scores": false,
+    "evaluator": {
+      "path": "/fs04/ar57/wenyu/GeneRec/tools/issue252/layer_metrics.py",
+      "sha256": "b739ed1e8b7a3c745dec8d5de06c369464f6b8fb3c65a0eb52a221d33b688816"
+    },
+    "contract": {
+      "path": "results/research/issue252/LAYER_METRICS_CONTRACT.md",
+      "sha256": "b33c614dabd2e54b23a31d055061fea2bcf1a7a9c6c87a7eb443a34162b0960a"
+    }
+  }
+}
