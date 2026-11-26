@@ -1,0 +1,17 @@
+{
+  "schema": "genrec.issue265.module_checks/1",
+  "source_tree": "stage2_RQ-VAE/TIGER_euclid_local_curve_supervision_rq",
+  "checks": [
+    {"module": "euclidean_selection", "evidence": "tests/test_issue265.py::test_euclidean_selection_cost_has_no_gate_channel", "status": "PASS", "note": "weights do not enter selection cost"},
+    {"module": "hard_q", "evidence": "tests/test_mechanism.py::test_hard_q_exactly_decodes_three_ids", "status": "PASS"},
+    {"module": "local_center_geometry", "evidence": "tests/test_issue265.py::test_local_mixed_distance_uses_one_center_weight", "status": "PASS"},
+    {"module": "gate_structural_gradient", "evidence": "tests/test_mechanism.py::test_local_structural_gate_gradient_is_real", "status": "PASS", "note": "gate gradient exists through local curvature term only"},
+    {"module": "calibration_without_selection_gate", "evidence": "formal run start; calibrate_curvature_weight PASS; gate-only structural gradient excluded from original budget", "status": "PASS"},
+    {"module": "codebook_gradient", "evidence": "training_metrics.jsonl level_codebook_gradient_norm are nonzero (epoch logs)", "status": "PASS"},
+    {"module": "encoder_gradient", "evidence": "training loss/STE path; entry PASS; formal training loss finite", "status": "PASS"},
+    {"module": "gnn_online_calls", "evidence": "FrozenTokenAttention counters and no GNN in mechanism; entry/formal logs", "status": "PASS", "note": "no online GNN forward/backward/optimizer"}
+  ],
+  "formal_run": "stage2_4891fa8df3e843839de770e52e156892",
+  "stage2_final_collision": 0.04120063448163669,
+  "stage2_wall_s": 813.357
+}

@@ -72,7 +72,7 @@ def _repository_root() -> Path:
 REPO_ROOT = _repository_root()
 # Source-only frozen TIGER ancestor plus the explicitly inherited Issue255
 # mechanism patch; this version changes only the initial global module budget.
-ARM_NAME = "TIGER_frozen_topology_gnn_rq"
+ARM_NAME = "TIGER_euclid_local_curve_supervision_rq"
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"

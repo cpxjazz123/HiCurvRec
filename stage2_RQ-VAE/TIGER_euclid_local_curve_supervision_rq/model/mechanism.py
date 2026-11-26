@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from .model import RQVAE as OriginalRQVAE
-from .geometry import mixed_cost, fixed_squared
+from .geometry import euclidean_cost, mixed_cost, fixed_squared
 from .selection import select
 from .calibration import gradient_norm, mean_gradients, module_norms, norm_budget_weight
 from losses.commitment import commitment_loss
@@ -87,8 +87,9 @@ class RQVAE(OriginalRQVAE):
         return host
 
     def assignment_cost(self, residual, codewords, weights):
-        return mixed_cost(residual,codewords,weights,scale=self._tangent_scale_value,
-                          curvature_on=self.curvature_on)
+        # Issue #265: selection is Euclidean; the gate is deliberately absent.
+        del weights
+        return euclidean_cost(residual,codewords,scale=self._tangent_scale_value)
 
     def quantize(self, encoded, weights, *, balanced):
         residual=encoded
@@ -254,7 +255,13 @@ class RQVAE(OriginalRQVAE):
         return self._structural_sampler
 
     def sampled_curvature(self, embeddings, sample, *, weights=None):
-        """Fresh actual hard-q, using the declared finite auxiliary population."""
+        """Local mixed-curvature supervision on the actual final hard q.
+
+        The three experts use one center-level weight vector, obtained by the
+        pre-registered equal mean over the three layer gates. The same vector is
+        used for every reference of that center; it is a local proxy, not a
+        global Riemannian metric.
+        """
         host=np.asarray(sample['ids'],dtype=np.int64)
         ids=host_int64(host,embeddings.device)
         if weights is None:
@@ -264,21 +271,26 @@ class RQVAE(OriginalRQVAE):
         self.last_structural_q=q
         self.last_structural_ids=ids
         self.last_structural_tokens=self.last_tokens
+        centre=int(sample['centre'])
+        centre_local=int(np.flatnonzero(host == centre)[0])
+        centre_weights=weights[centre_local].mean(0)
+        self.last_structural_weights=centre_weights.detach()
         scale=self._tangent_scale_value
-        prefixes=self.last_prefixes
         target=torch.as_tensor(sample['target'],device=q.device,dtype=q.dtype)
-        values=[]
-        for level in range(prefixes.shape[0]):
-            level_scale=scale*float(self._level_scales[level])
-            predicted=sampled_values(prefixes[level],sample['triples'],sample['references'],
-                lambda x,y,s=level_scale: fixed_squared(x,y,scale=s),
-                paired_squared=lambda x,y,s=level_scale: fixed_squared(x[:,None,:],y[:,None,:],
-                                                                         scale=s).reshape(-1))
-            self.last_structural_prediction=predicted
-            values.append(F.huber_loss(predicted/self._target_scale_value,
-                                       target/self._target_scale_value,
-                                       reduction='mean',delta=1.))
-        return aggregate_layer_losses(values)
+        # Final hard q (forward hard, parent STE backward), not prefixes.
+        def local_squared(x,y):
+            return mixed_cost(x,y,centre_weights,scale=scale,curvature_on=True)
+        def local_paired(x,y):
+            return mixed_cost(x[:,None,:],y[:,None,:],centre_weights,scale=scale,
+                              curvature_on=True).reshape(-1)
+        predicted=sampled_values(q,sample['triples'],sample['references'],
+            local_squared,paired_squared=local_paired)
+        self.last_structural_prediction=predicted
+        value=F.huber_loss(predicted/self._target_scale_value,
+                           target/self._target_scale_value,reduction='mean',delta=1.)
+        # One final-q objective; the parent's aggregate function keeps the
+        # return shape for callers that expect the layer aggregate.
+        return aggregate_layer_losses([value])
 
     @torch.no_grad()
     def freeze_tangent_scale(self, catalogue_embeddings):
@@ -333,7 +345,11 @@ class RQVAE(OriginalRQVAE):
         original,reconstruction=self.compute_loss(embeddings,reconstructed,parts)
         parameters=tuple(p for name,p in self.named_parameters() if not name.startswith('decoder.'))
         encoder=tuple(self.encoder.parameters())
-        og=torch.autograd.grad(original,parameters,retain_graph=True)
+        # Euclidean selection removes the gate from the RQ-VAE graph. Keep the
+        # parent's original-gradient budget for the encoder/codebooks; the gate
+        # is budgeted only through the local curvature term.
+        og=torch.autograd.grad(original,parameters,retain_graph=True,allow_unused=True)
+        og=tuple(torch.zeros_like(p) if g is None else g for p,g in zip(parameters,og))
         rg=torch.autograd.grad(reconstruction,encoder,retain_graph=True)
         cg=torch.autograd.grad(curvature,parameters)
         for gradients in (og,rg,cg):
@@ -342,7 +358,10 @@ class RQVAE(OriginalRQVAE):
         structurals=dict(zip(map(id,parameters),cg))
         onorms=module_norms(self,originals)
         cnorms=module_norms(self,structurals)
-        budgets={name:(onorms[name],cnorms[name]) for name in onorms}
+        original_groups={'encoder'} | {name for name in onorms
+                                       if name.startswith('codebook')}
+        budgets={name:(onorms[name],cnorms[name]) for name in onorms
+                 if name in original_groups}
         weight=norm_budget_weight(budgets)
         self.curvature_weight.fill_(weight)
         weight=float(self.curvature_weight)

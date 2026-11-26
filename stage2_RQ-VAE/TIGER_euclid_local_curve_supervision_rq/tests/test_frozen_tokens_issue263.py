@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 ROOT = Path(__file__).resolve().parents[3]
-TREE = ROOT / "stage2_RQ-VAE/TIGER_frozen_topology_gnn_rq"
+TREE = ROOT / "stage2_RQ-VAE/TIGER_euclid_local_curve_supervision_rq"
 CACHE = ROOT / "results/stage2_RQ-VAE/TIGER_frozen_topology_gnn_rq/token_cache.npz"
 
 import sys

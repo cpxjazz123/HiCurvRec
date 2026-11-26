@@ -1,0 +1,24 @@
+{
+  "schema": "genrec.issue265.performance/1",
+  "stage2": {
+    "run_id": "stage2_4891fa8df3e843839de770e52e156892",
+    "epochs_observed": 3000,
+    "mean_epoch_time_s": 0.2493650335635369,
+    "first60_mean_epoch_time_s": 0.5341229774989188,
+    "max_peak_allocated_bytes": 476909568,
+    "wall_time_s": 813.357,
+    "final_collision": 0.04120063448163669,
+    "hard_ceiling_s": 0.8,
+    "reference_mean_s": 0.3196970850120609,
+    "note": "local curvature calculation and periodic work included; first-60 warmup is higher, full mean passes the reference target"
+  },
+  "stage3": {
+    "epochs": 150,
+    "mean_epoch_time_s": 11.84836,
+    "train_wall_s": 1777.254,
+    "beam_size": 20,
+    "seed": 42,
+    "test_evaluated": true,
+    "test_wall_note": "test evaluation follows the 150-epoch train stream"
+  }
+}
