@@ -34,3 +34,10 @@ Only read-only analysis of the eight completed R2 bundles and frozen assets. No 
 ## Timeline
 
 - 2026-11-26: issue frozen, INFRA_MODE FROZEN, analysis scope established.
+
+## Delivery
+
+- commit: `8af30c14a53ac7c19b1f87d044a5e1c3b28a23e2`
+- remote `origin/main`: same SHA after push.
+- issue tests: `python3.9 -m pytest results/research/issue261/tests -q` — 6 passed.
+- no Stage2/Stage3/TIGER training was launched; training count 0.
