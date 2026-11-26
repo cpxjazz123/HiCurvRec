@@ -1,0 +1,136 @@
+{
+  "schema": "genrec.hypotheses/1",
+  "issue": 261,
+  "inherited_from": "results/research/issue260/HYPOTHESES.json",
+  "hypotheses": [
+    {
+      "id": "H1",
+      "statement": "R05's three-level codebooks reproduce the encoder output almost exactly (quantisation error 0.0071, effective rank 4.33), so hard assignments are near item-unique and structural/curvature changes have little shared-prefix slack.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/research/issue258/FINAL_STAGE2.json",
+        "results/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/stage2_metrics/dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6.json",
+        "results/research/issue260/diagnosis/r05_probe.json"
+      ],
+      "origin_issue": 258,
+      "opened_round": "r05",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H2",
+      "statement": "The learned topology gates collapse toward one curvature expert (final gate entropy 0.58, level-3 mean weight 0.95 on one expert), and the topology tokens add little separable structure beyond degree, so the gate does not transmit local topology into the hard cost.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/logs/training_metrics.jsonl",
+        "results/research/issue260/diagnosis/r05_probe.json"
+      ],
+      "origin_issue": 258,
+      "opened_round": "r05",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H3",
+      "statement": "The frozen eight-role graphlet table is too coarse or too imbalanced for per-item geometry: roles 2 and 1 cover 65.7% of items, and the learned role mixtures may be near-uniform or dominated by one expert, so moving the role-conditioned mixture between levels cannot change hard L2 prefixes.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/role_table.json",
+        "results/research/issue260/diagnosis/r05_probe.json"
+      ],
+      "origin_issue": 258,
+      "opened_round": "r03",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H4",
+      "statement": "Null: the R05 test Recall@10 difference from the frozen baseline is ordinary Stage3 optimisation variance; no R05 SID property causally changes recommendation, so another mechanism must first improve an independently measured SID property.",
+      "status": "INCONCLUSIVE",
+      "evidence": [
+        "results/research/issue258/ROUND_RESULT.json"
+      ],
+      "origin_issue": 258,
+      "opened_round": "r05",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H5",
+      "statement": "The behaviour signal is concentrated at L1: R05's positive prefix hit rate falls from 0.060 at L1 to 0.0043 at L2 and 0.00047 at L3 (negative rates 0.0084 / 0.00025 / 6e-6), so deeper refinement is nearly behaviour-random and the L2/L3 partition is the recommendation bottleneck.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/stage2_metrics/dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6.json",
+        "results/research/issue260/diagnosis/r05_probe.json"
+      ],
+      "origin_issue": 258,
+      "opened_round": "r05",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H6",
+      "statement": "The assignment rule leaves the refinement unconstrained: only the last level uses Sinkhorn, earlier levels take floor-constrained nearest assignment, and 3 x 256 codes over 24,587 items yield 9,609 L2 prefixes with 2.56 items per prefix; capacity is spent on identity rather than shared structure.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/stage2_RQ-VAE/TIGER_role_conditioned_l2_rq/stage2_metrics/dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6.json",
+        "results/research/issue260/diagnosis/r05_probe.json"
+      ],
+      "origin_issue": 258,
+      "opened_round": "r05",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H7",
+      "statement": "Because cost-only switches move at most 1.7% of hard codes, the next legal lever is to let the frozen graphlet role partition the L2 candidate set inside the existing curvature cost; role then changes assignment, not just weights.",
+      "status": "UNTESTED",
+      "evidence": [
+        "results/research/issue260/diagnosis/r05_probe.json"
+      ],
+      "origin_issue": 260,
+      "opened_round": "r06",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H8",
+      "statement": "Adding the masked GNN token mean, projected by an identity-initialized linear map, to the level-2 assignment target changes the hard L2/L3 codes enough to coarsen L2 prefixes and increase behavior-pair prefix hits without changing L1.",
+      "status": "REFUTED",
+      "evidence": [
+        "results/research/issue260/token_ablation_r06b.json",
+        "results/research/issue260/RUN_LOG.md",
+        "results/stage3_T5Train/TIGER_topology_residual_l2_rq/logs/Amazon_2023_Instruments/Nov-26-2026_03-43-59/test_final.json"
+      ],
+      "origin_issue": 260,
+      "opened_round": "r06",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H9",
+      "statement": "The topology token offset must be expressed at the level-2 codebook resolution; the raw identity offset has norm 2.42 against a mean L2 codeword norm 0.046 and collapses the codebook before epoch 1400.",
+      "evidence": [
+        "results/research/issue260/diagnosis/token_scale_probe.json",
+        "results/research/issue260/RUN_LOG.md"
+      ],
+      "status": "RESOLVED",
+      "last_update": "2026-11-26"
+    },
+    {
+      "id": "H10",
+      "statement": "Across the eight completed R2 bundles, SID/geometry/GNN/gate metrics that are behavior- or curvature-aligned will correlate with Stage3 test recall; the analysis is exploratory and cannot establish causality from eight runs.",
+      "status": "INCONCLUSIVE",
+      "evidence": [
+        "results/research/issue261/CORRELATIONS.csv",
+        "results/research/issue261/REPORT.md",
+        "results/research/issue261/VERDICT.md"
+      ],
+      "origin_issue": 261,
+      "opened_round": "analysis",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    }
+  ],
+  "updated_at": "2026-11-26T05:30:00Z"
+}

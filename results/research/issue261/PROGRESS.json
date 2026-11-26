@@ -1,0 +1,29 @@
+{
+  "issue": 261,
+  "commit": "e8204745661c85074efaeb328971755d6869e2a6",
+  "state": "READY_TO_CLOSE",
+  "infra_mode": "FROZEN",
+  "done": [
+    "freeze-checklist",
+    "freeze-contract",
+    "inventory",
+    "full-eval",
+    "token-gate",
+    "metrics",
+    "correlations",
+    "report",
+    "verdict"
+  ],
+  "reused": [],
+  "not_run": [],
+  "failed": [],
+  "infra_faults": [],
+  "running": [],
+  "next_commands": [
+    "write METRIC_CONTRACT.md",
+    "inventory 100-107",
+    "run analysis"
+  ],
+  "blocked_by": null,
+  "updated_at": "2026-11-26T05:30:00Z"
+}
