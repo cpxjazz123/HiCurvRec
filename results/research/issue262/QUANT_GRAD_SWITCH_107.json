@@ -1,0 +1,243 @@
+{
+  "schema": "genrec.issue262.quant_grad_switch/1",
+  "arm": "TIGER_topology_residual_l2_rq",
+  "index": 107,
+  "identity": {
+    "final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_topology_residual_l2_rq/logs/Amazon_2023_Instruments/Nov-26-2026_03-43-59/test_final.json",
+    "final_sha256": "7f0b602fe98aef29b4a8da71598a8eae4b9438b9edbf4a401a86daa8800a7678",
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_127a3cca78dc49bf899ded006b2a11ca/TIGER_topology_residual_l2_rq/result/rqvae_best.pth",
+    "checkpoint_sha256": "ec5271f4d60e84c7b661896b7c114dbaa5c0f81125ffd4f87c7742955527a633",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_127a3cca78dc49bf899ded006b2a11ca/TIGER_topology_residual_l2_rq/result/item_sids.json",
+    "sid_sha256": "c5f0e739b11b3ee79237e22c2354f18b2dc6f18b8b78b03a3978d77bfec0691b",
+    "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_127a3cca78dc49bf899ded006b2a11ca/TIGER_topology_residual_l2_rq/src"
+  },
+  "quant": {
+    "representation": "hard q; first three SID columns",
+    "metric": "Euclidean distance in the actual 32-d codebook space",
+    "per_level": [
+      {
+        "level": 0,
+        "selected_not_nearest": 17,
+        "selected_top1_fraction": 0.9993085777036645,
+        "selected_rank_mean": 0.0007320941961199008,
+        "selected_rank_p90": 0.0,
+        "margin_top1_top2_mean": 0.012191527424994584,
+        "margin_top1_top2_median": 0.01041476866628763,
+        "selected_margin_mean": 0.012191088251865023,
+        "normalized_gap_mean": 0.7661960488096604,
+        "selected_distance_mean": 0.02339035962777337,
+        "residual_norm_mean": 0.02339035962777337,
+        "residual_norm_quantiles": {
+          "0": 0.0017225659293103501,
+          "0.01": 0.006415072848532938,
+          "0.05": 0.009098199671782594,
+          "0.25": 0.014971590959420786,
+          "0.5": 0.020302203424902805,
+          "0.75": 0.02760165044468236,
+          "0.95": 0.0480689919732561,
+          "0.99": 0.07407122813934768,
+          "1": 0.37897269845134945
+        },
+        "commitment_mse": 2.3951994963104685e-05,
+        "codebook_mse": 2.3951994963104685e-05,
+        "codebook_norm_mean": 0.1511000220498514
+      },
+      {
+        "level": 1,
+        "selected_not_nearest": 12847,
+        "selected_top1_fraction": 0.47748810346931303,
+        "selected_rank_mean": 2.58465855940131,
+        "selected_rank_p90": 8.0,
+        "margin_top1_top2_mean": 0.0021743144843211297,
+        "margin_top1_top2_median": 0.0013449566610422119,
+        "selected_margin_mean": 0.000833658537402156,
+        "normalized_gap_mean": 0.17864005497492347,
+        "selected_distance_mean": 0.014989673306141949,
+        "residual_norm_mean": 0.014989673306141949,
+        "residual_norm_quantiles": {
+          "0": 0.0024184161617016734,
+          "0.01": 0.005921686198196227,
+          "0.05": 0.007776394444920051,
+          "0.25": 0.010728517340378609,
+          "0.5": 0.013060926576975808,
+          "0.75": 0.016885957856743357,
+          "0.95": 0.028610839029177725,
+          "0.99": 0.038201949725664285,
+          "1": 0.25218724010945676
+        },
+        "commitment_mse": 9.292105400400301e-06,
+        "codebook_mse": 9.292105400400301e-06,
+        "codebook_norm_mean": 0.03927681154921677
+      },
+      {
+        "level": 2,
+        "selected_not_nearest": 0,
+        "selected_top1_fraction": 1.0,
+        "selected_rank_mean": 0.0,
+        "selected_rank_p90": 0.0,
+        "margin_top1_top2_mean": 0.0011184452367911555,
+        "margin_top1_top2_median": 0.0007397713110804645,
+        "selected_margin_mean": 0.0011184452367911555,
+        "normalized_gap_mean": 0.15117680891028115,
+        "selected_distance_mean": 0.008575095710966442,
+        "residual_norm_mean": 0.008575095710966442,
+        "residual_norm_quantiles": {
+          "0": 0.0016146082447383557,
+          "0.01": 0.003392363252479001,
+          "0.05": 0.00417255991584798,
+          "0.25": 0.0055393316963377355,
+          "0.5": 0.00700718353036845,
+          "0.75": 0.009807335313400143,
+          "0.95": 0.017693563294743003,
+          "0.99": 0.02485858465399166,
+          "1": 0.22695267934090224
+        },
+        "commitment_mse": 3.6583561352921656e-06,
+        "codebook_mse": 3.6583561352921656e-06,
+        "codebook_norm_mean": 0.013249071180044298
+      }
+    ],
+    "total_quant_error_mean": 0.008575095706813493,
+    "total_quant_error_quantiles": {
+      "0": 0.001614608974635382,
+      "0.01": 0.003392362471551419,
+      "0.05": 0.004172560788247661,
+      "0.25": 0.005539331658723954,
+      "0.5": 0.007007183795845116,
+      "0.75": 0.00980733537617648,
+      "0.95": 0.017693563708937612,
+      "0.99": 0.02485858474810357,
+      "1": 0.2269526807900383
+    },
+    "checkpoint_beta": 0.25,
+    "note": "native assignment uses the source's live mixed cost; this is the cross-level actual-code diagnostic",
+    "effective_rank_z": 5.049828105613663,
+    "effective_rank_q": 5.023096602847219,
+    "z_sha256": "4e2a9d410eced03729e2a5785088d55171cfe7d3c31806a05d00f0bb239aa235",
+    "q_sha256": "cde94115c5d174c322f7ddc3368385f6fdab365be336ee2ba6d97ed186c76f03"
+  },
+  "gradient": {
+    "fixed_batch": {
+      "rows": 4096,
+      "seed": 42,
+      "source": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+      "item_ids_sha256": "251dced08f5c42703e2ce66b3c56924e91d14200a15a3771f45c8d8c66f1c457"
+    },
+    "losses": {
+      "original": 0.00010047710384242237,
+      "reconstruction": 8.342474029632285e-05,
+      "curvature": 1.0912375450134277,
+      "combined": 0.00010106190165970474,
+      "curvature_weight": 5.35901790499338e-07
+    },
+    "quant_parts": [
+      {
+        "commitment": 2.39851615333464e-05,
+        "codebook": 2.39851615333464e-05
+      },
+      {
+        "commitment": 9.24590312934015e-06,
+        "codebook": 9.24590312934015e-06
+      },
+      {
+        "commitment": 7.694601663388312e-06,
+        "codebook": 7.694601663388312e-06
+      }
+    ],
+    "groups": {
+      "encoder": {
+        "original_norm": 0.00013970829705000024,
+        "curvature_norm": 11.071728612775875,
+        "combined_norm": 0.0001385807495154331,
+        "original_curvature_cosine": -0.21050341308441667
+      },
+      "decoder": {
+        "original_norm": 4.0267997388750785e-05,
+        "curvature_norm": 0.0,
+        "combined_norm": 4.0267997388750785e-05,
+        "original_curvature_cosine": null
+      },
+      "GNN": {
+        "original_norm": 2.834622602075142e-07,
+        "curvature_norm": 0.0333253653595936,
+        "combined_norm": 2.8050561009377885e-07,
+        "original_curvature_cosine": -0.19619465436584244
+      },
+      "gate": {
+        "original_norm": 9.614356208713556e-09,
+        "curvature_norm": 0.0034017267785545883,
+        "combined_norm": 8.17017422440049e-09,
+        "original_curvature_cosine": -0.8275132196620357
+      },
+      "codebook0": {
+        "original_norm": 6.586771450047026e-05,
+        "curvature_norm": 13.289426200724163,
+        "combined_norm": 6.616395472568158e-05,
+        "original_curvature_cosine": -0.012371848130245612
+      },
+      "codebook1": {
+        "original_norm": 7.685255832526128e-05,
+        "curvature_norm": 10.852669669666836,
+        "combined_norm": 7.683643004277038e-05,
+        "original_curvature_cosine": -0.04061109572111212
+      },
+      "codebook2": {
+        "original_norm": 4.965698388494281e-05,
+        "curvature_norm": 3.0697808674298823,
+        "combined_norm": 4.964488545120923e-05,
+        "original_curvature_cosine": -0.023917851697236085
+      }
+    },
+    "parameter_checksum_before": "86276e8de9de01b769c203021316a278ca3f73adea529fbcd72594389cabb47b",
+    "parameter_checksum_after": "86276e8de9de01b769c203021316a278ca3f73adea529fbcd72594389cabb47b",
+    "parameters_unchanged": true,
+    "optimizer_steps": 0,
+    "scope": "one fixed final-checkpoint forward/autograd; not historical trajectory"
+  },
+  "switch": {
+    "no_intervention": {
+      "shape": [
+        24587,
+        3
+      ],
+      "exact_sid_match": true,
+      "changed_fraction": 0.0
+    },
+    "behavior_off": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.5341440598690365,
+      "per_level_change": [
+        0.01683816651075772,
+        0.5338593565705454,
+        0.5231219750274535
+      ]
+    },
+    "curvature_off": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.016553463212266646,
+      "per_level_change": [
+        0.0006914222963354618,
+        0.016553463212266646,
+        0.016268759913775573
+      ]
+    },
+    "uniform_gate": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.016960182210111033,
+      "per_level_change": [
+        0.01683816651075772,
+        0.016594135112051083,
+        0.016756822711188838
+      ]
+    },
+    "euclidean_uniform": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.016553463212266646,
+      "per_level_change": [
+        0.0006914222963354618,
+        0.016553463212266646,
+        0.016268759913775573
+      ]
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema": "genrec.issue262.tests/1",
+  "command": "python3 -m pytest -q results/research/issue262/tests/test_shared_in.py results/research/issue262/tests/test_aggregate.py",
+  "exit_code": 0,
+  "passed": 8,
+  "failed": 0,
+  "tests": [
+    "directed Jaccard/common-in witness",
+    "directed two-hop",
+    "lexicographic prefix hit",
+    "degree bins and paired bootstrap",
+    "missing neighbour is not imputed as zero",
+    "known Pearson/Spearman/constant",
+    "missing values dropped, not zero-filled",
+    "leave-one-out and exclude-arm sensitivity shape"
+  ],
+  "scope": "issue-local deterministic tests; no training or public infrastructure"
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "genrec.issue262.no_training/1",
+  "issue": 262,
+  "scope": "analysis only",
+  "stage2_training_runs": 0,
+  "stage3_training_runs": 0,
+  "new_arms": 0,
+  "new_seeds": 0,
+  "optimizer_steps_run": 0,
+  "parameter_updates": 0,
+  "sid_rewrites": 0,
+  "checkpoint_writes": 0,
+  "evidence": [
+    "No stage2_start, stage3_start, torchrun or train_rqvae main invocation was executed.",
+    "quant_grad_switch uses autograd.grad only; it records optimizer_steps=0 and before/after state-dict checksums.",
+    "gpu_switch uses inference_mode only for a read-only export replay.",
+    "prepare_q reads torch checkpoints with torch.load and writes only issue-local q files."
+  ],
+  "note": "This file is a declaration of intent backed by the per-artifact evidence; it is not a substitute for the measured checksums."
+}

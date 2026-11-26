@@ -1,0 +1,20 @@
+{
+  "schema": "genrec.issue262.gpu_switch/1",
+  "arm": "TIGER_module_budget_prefix_rq",
+  "device": "NVIDIA L40S",
+  "result": {
+    "no_intervention": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.007402285760767885
+    },
+    "behavior_off": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.022328872981656974
+    },
+    "curvature_off": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.008297067556025542
+    }
+  },
+  "scope": "read-only single-GPU replay; no training, no optimizer, no SID write"
+}

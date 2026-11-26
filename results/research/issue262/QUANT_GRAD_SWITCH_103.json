@@ -1,0 +1,243 @@
+{
+  "schema": "genrec.issue262.quant_grad_switch/1",
+  "arm": "TIGER_periodic_budget_prefix_rq",
+  "index": 103,
+  "identity": {
+    "final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_periodic_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_12-10-40/test_final.json",
+    "final_sha256": "de509a5b09f785837db3eed90992c75e474c265c280ca9de6487490f47587c8e",
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result/rqvae_best.pth",
+    "checkpoint_sha256": "e9ee3214e118682a824dfbc467e763cd9124c74112ee96a376d571712cd7b7e1",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result/item_sids.json",
+    "sid_sha256": "e18fc0460eea2872f5d56e0c7e1e9b9f311ac77c2f886177e0485acae574133f",
+    "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/src"
+  },
+  "quant": {
+    "representation": "hard q; first three SID columns",
+    "metric": "Euclidean distance in the actual 32-d codebook space",
+    "per_level": [
+      {
+        "level": 0,
+        "selected_not_nearest": 14,
+        "selected_top1_fraction": 0.9994305934030179,
+        "selected_rank_mean": 0.0005694065969821451,
+        "selected_rank_p90": 0.0,
+        "margin_top1_top2_mean": 0.01223319319905985,
+        "margin_top1_top2_median": 0.010483131205558842,
+        "selected_margin_mean": 0.012233086746552288,
+        "normalized_gap_mean": 0.7927926386195563,
+        "selected_distance_mean": 0.02279227029727023,
+        "residual_norm_mean": 0.02279227029727023,
+        "residual_norm_quantiles": {
+          "0": 0.0017684626632120037,
+          "0.01": 0.006060118051592871,
+          "0.05": 0.008704387776444967,
+          "0.25": 0.0144203536018718,
+          "0.5": 0.019918661959835878,
+          "0.75": 0.027445311892455894,
+          "0.95": 0.04724925119267036,
+          "0.99": 0.0690695106314221,
+          "1": 0.2671676959681668
+        },
+        "commitment_mse": 2.1890277343505057e-05,
+        "codebook_mse": 2.1890277343505057e-05,
+        "codebook_norm_mean": 0.14471431732247064
+      },
+      {
+        "level": 1,
+        "selected_not_nearest": 20,
+        "selected_top1_fraction": 0.9991865620043112,
+        "selected_rank_mean": 0.025216577866352136,
+        "selected_rank_p90": 0.0,
+        "margin_top1_top2_mean": 0.002814030061159227,
+        "margin_top1_top2_median": 0.0020562519163537622,
+        "selected_margin_mean": 0.002803812713844975,
+        "normalized_gap_mean": 0.26380670523155125,
+        "selected_distance_mean": 0.013383519034558467,
+        "residual_norm_mean": 0.013383519034558467,
+        "residual_norm_quantiles": {
+          "0": 0.0020348715401541967,
+          "0.01": 0.004961762020970704,
+          "0.05": 0.0065120067335505145,
+          "0.25": 0.008958074597563445,
+          "0.5": 0.011304121890855954,
+          "0.75": 0.016083968343656666,
+          "0.95": 0.026298448525474295,
+          "0.99": 0.03303874695157462,
+          "1": 0.20749880780427787
+        },
+        "commitment_mse": 7.3027257025307956e-06,
+        "codebook_mse": 7.3027257025307956e-06,
+        "codebook_norm_mean": 0.048465377405368784
+      },
+      {
+        "level": 2,
+        "selected_not_nearest": 2,
+        "selected_top1_fraction": 0.9999186562004311,
+        "selected_rank_mean": 0.010412006344816366,
+        "selected_rank_p90": 0.0,
+        "margin_top1_top2_mean": 0.0010281429507695665,
+        "margin_top1_top2_median": 0.000695357879428077,
+        "selected_margin_mean": 0.0010256228945653494,
+        "normalized_gap_mean": 0.16394877208932737,
+        "selected_distance_mean": 0.007673272116581642,
+        "residual_norm_mean": 0.007673272116581642,
+        "residual_norm_quantiles": {
+          "0": 0.0014149652249798906,
+          "0.01": 0.002942472000466326,
+          "0.05": 0.0036432175627438322,
+          "0.25": 0.004813550690821089,
+          "0.5": 0.005948137685331349,
+          "0.75": 0.009141505825104338,
+          "0.95": 0.016520204740257196,
+          "0.99": 0.02190009772895673,
+          "1": 0.18660542037541858
+        },
+        "commitment_mse": 2.7567886932713152e-06,
+        "codebook_mse": 2.7567886932713152e-06,
+        "codebook_norm_mean": 0.013109718003652977
+      }
+    ],
+    "total_quant_error_mean": 0.007673272105166623,
+    "total_quant_error_quantiles": {
+      "0": 0.0014149657233136132,
+      "0.01": 0.0029424712566616766,
+      "0.05": 0.003643217404532412,
+      "0.25": 0.004813550356736952,
+      "0.5": 0.005948135531722495,
+      "0.75": 0.009141506527083863,
+      "0.95": 0.0165202037003639,
+      "0.99": 0.021900097620108614,
+      "1": 0.18660542171540034
+    },
+    "checkpoint_beta": 0.25,
+    "note": "native assignment uses the source's live mixed cost; this is the cross-level actual-code diagnostic",
+    "effective_rank_z": 5.052149611904182,
+    "effective_rank_q": 5.025295080622785,
+    "z_sha256": "cf297937756b338153526ae7743ee94835219c7cf38d43fe0ea6495319684ee9",
+    "q_sha256": "ffcaa06d8a78e47697537adaa7f880a0576983f2c2d1d09cf1d049263cd013a6"
+  },
+  "gradient": {
+    "fixed_batch": {
+      "rows": 4096,
+      "seed": 42,
+      "source": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+      "item_ids_sha256": "251dced08f5c42703e2ce66b3c56924e91d14200a15a3771f45c8d8c66f1c457"
+    },
+    "losses": {
+      "original": 9.889192006085068e-05,
+      "reconstruction": 8.292958227684721e-05,
+      "curvature": 1.7692334651947021,
+      "combined": 0.00010529241990298033,
+      "curvature_weight": 3.6176693356537726e-06
+    },
+    "quant_parts": [
+      {
+        "commitment": 2.2434451238950714e-05,
+        "codebook": 2.2434451238950714e-05
+      },
+      {
+        "commitment": 7.894978807598818e-06,
+        "codebook": 7.894978807598818e-06
+      },
+      {
+        "commitment": 7.980182999745011e-06,
+        "codebook": 7.980182999745011e-06
+      }
+    ],
+    "groups": {
+      "encoder": {
+        "original_norm": 0.00018428139549325645,
+        "curvature_norm": 25.989857076075783,
+        "combined_norm": 0.0002092194185272878,
+        "original_curvature_cosine": 0.02807421587872025
+      },
+      "decoder": {
+        "original_norm": 6.576000384183243e-05,
+        "curvature_norm": 0.0,
+        "combined_norm": 6.576000384183243e-05,
+        "original_curvature_cosine": null
+      },
+      "GNN": {
+        "original_norm": 4.141322095497277e-08,
+        "curvature_norm": 0.01928542857881279,
+        "combined_norm": 6.953953291848376e-08,
+        "original_curvature_cosine": -0.3022001738965421
+      },
+      "gate": {
+        "original_norm": 3.959205805680914e-08,
+        "curvature_norm": 0.01083141506849469,
+        "combined_norm": 4.2126909392696146e-08,
+        "original_curvature_cosine": -0.4280745942126247
+      },
+      "codebook0": {
+        "original_norm": 8.31311680657277e-05,
+        "curvature_norm": 20.140511086361993,
+        "combined_norm": 0.00011036600946019336,
+        "original_curvature_cosine": -0.0032156337809015117
+      },
+      "codebook1": {
+        "original_norm": 6.0613041104760557e-05,
+        "curvature_norm": 18.663518563276376,
+        "combined_norm": 9.05824325349279e-05,
+        "original_curvature_cosine": -0.0033599628489470053
+      },
+      "codebook2": {
+        "original_norm": 5.789349668346918e-05,
+        "curvature_norm": 17.143453204576424,
+        "combined_norm": 8.647227989239868e-05,
+        "original_curvature_cosine": 0.03890840523929127
+      }
+    },
+    "parameter_checksum_before": "7f0d5217c44110e455f6095b55929aaf01c5200279ad765c885723fbbe9f588c",
+    "parameter_checksum_after": "7f0d5217c44110e455f6095b55929aaf01c5200279ad765c885723fbbe9f588c",
+    "parameters_unchanged": true,
+    "optimizer_steps": 0,
+    "scope": "one fixed final-checkpoint forward/autograd; not historical trajectory"
+  },
+  "switch": {
+    "no_intervention": {
+      "shape": [
+        24587,
+        3
+      ],
+      "exact_sid_match": false,
+      "changed_fraction": 4.067189978443893e-05
+    },
+    "behavior_off": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.016268759913775573,
+      "per_level_change": [
+        0.015048602920242404,
+        0.016146744214422255,
+        0.016065400414853378
+      ]
+    },
+    "curvature_off": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.0010167974946109733,
+      "per_level_change": [
+        0.0005694065969821451,
+        0.0009761255948265344,
+        0.0010167974946109733
+      ]
+    },
+    "uniform_gate": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.016268759913775573,
+      "per_level_change": [
+        0.015048602920242404,
+        0.016146744214422255,
+        0.016065400414853378
+      ]
+    },
+    "euclidean_uniform": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.0010167974946109733,
+      "per_level_change": [
+        0.0005694065969821451,
+        0.0009761255948265344,
+        0.0010167974946109733
+      ]
+    }
+  }
+}

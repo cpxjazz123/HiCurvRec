@@ -1,0 +1,79 @@
+{
+  "validation": {
+    "261_claim": "No identity-bound validation final artifact exists",
+    "found": {
+      "102": "PASS",
+      "103": "PASS",
+      "104": "PASS",
+      "105": "PASS"
+    },
+    "remaining_na": [
+      "100",
+      "101",
+      "106",
+      "107"
+    ],
+    "status": "CORRECTED",
+    "scope": "R01-R04 recommendation_validation only; test was never used as validation"
+  },
+  "h1": {
+    "status": "PARTIALLY_SUPPORTED",
+    "raw_common_in_difference": {
+      "n": 57439,
+      "mean": 0.13379411201448493,
+      "low": 0.12998050105329131,
+      "high": 0.13781620501749683,
+      "draws": 2000
+    },
+    "relation_matched_difference": {
+      "n": 57439,
+      "mean": 0.10703528961158794,
+      "low": 0.10322124340604816,
+      "high": 0.11112745695433417,
+      "draws": 2000
+    },
+    "no_direct_reverse_two_hop_difference": {
+      "n": 30771,
+      "mean": 0.06106398882064281,
+      "low": 0.056513437977316304,
+      "high": 0.06535455461310974,
+      "draws": 2000
+    },
+    "degree_strata_positive": true,
+    "reason": "target common-in rate is higher than the matched negative in every degree stratum, but the target also carries direct/reverse/two-hop structure; the independent conditional effect is reported in the matrix and is not claimed as causal"
+  },
+  "h2": {
+    "status": "SUPPORTED",
+    "visible_feature_cross_arm_pearson": 0.9584480770975936,
+    "true_directed_feature_cross_arm_pearson": -0.8682396148946179,
+    "visible_feature_mean": 0.0041065943756106865,
+    "true_feature_mean": 0.20349477292969897,
+    "reason": "the #261 +0.958 uses a visible-graph feature whose mean is ~0.004 on pairs that truly share an in-neighbour (true mean ~0.203); replacing it with the directed label reverses the sign and does not support a pure topology effect"
+  },
+  "h3": {
+    "status": "SUPPORTED_AS_DESCRIPTIVE",
+    "curvature_after_controls": "see group/sensitivity tables; n=8 cannot identify architecture, capacity and training variance",
+    "reason": "new predicted/target metrics are descriptive; no causal direction is inferred"
+  },
+  "gpu_switch": {
+    "schema": "genrec.issue262.gpu_switch/1",
+    "arm": "TIGER_module_budget_prefix_rq",
+    "device": "NVIDIA L40S",
+    "result": {
+      "no_intervention": {
+        "exact_sid_match": false,
+        "changed_fraction": 0.007402285760767885
+      },
+      "behavior_off": {
+        "exact_sid_match": false,
+        "changed_fraction": 0.022328872981656974
+      },
+      "curvature_off": {
+        "exact_sid_match": false,
+        "changed_fraction": 0.008297067556025542
+      }
+    },
+    "scope": "read-only single-GPU replay; no training, no optimizer, no SID write"
+  },
+  "global_switch_note": "No-intervention CPU replay differs from the frozen exported SID by 0.74% on arm 102; GPU replay result is in GPU_SWITCH_102.json. All switch values are read-only interface interventions, not retrained effects."
+}

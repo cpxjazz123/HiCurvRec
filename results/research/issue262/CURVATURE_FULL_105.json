@@ -1,0 +1,193 @@
+{
+  "schema": "genrec.issue262.curvature_full/1",
+  "arm": "TIGER_role_conditioned_l3_rq",
+  "index": 105,
+  "identity": {
+    "final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/logs/Amazon_2023_Instruments/Nov-25-2026_19-53-02/test_final.json",
+    "final_sha256": "714d6f1a73ebf68d81e80683c99171782d6833f7abb5021d1e600be5bd9d79cf",
+    "sid_sha256": "26368f3e7690c6831b523eb82e0755aea58885336e0e23725ba5f7fb4ad80a18",
+    "stage2_checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/rqvae_best.pth",
+    "stage2_checkpoint_sha256": "5c6b1557f004a194010092f3d9cb7ff471940ee32a19dfd6c0feaf01b6c1a638",
+    "q_file": "/fs04/ar57/wenyu/GeneRec/results/research/issue262/_raw/q/105.npz",
+    "q_sha256": "9633065e856b154fbc6c81bd4e0ffb9cca8f3ff99092724889f28831a8e26d41",
+    "scale": 0.0843321830034256,
+    "scale_fitted_on_evaluation": false
+  },
+  "coverage": {
+    "count": 28391948,
+    "excluded": 0,
+    "expected": 28391948,
+    "shards": 13
+  },
+  "metrics": {
+    "pearson": 0.021210660598766695,
+    "spearman": -0.047263519250073,
+    "rmse": 2.2536746415363185,
+    "mae": 1.9058980999090336,
+    "sign": {
+      "accuracy": 0.3377282530948563,
+      "negative": {
+        "support": 21170678,
+        "predicted": 5506528,
+        "tp": 3937039,
+        "fp": 1569489,
+        "fn": 17233639,
+        "precision": 0.7149766604292215,
+        "recall": 0.18596659965259496,
+        "f1": 0.29516126988710883
+      },
+      "zero": {
+        "support": 77,
+        "predicted": 1,
+        "tp": 0,
+        "fp": 1,
+        "fn": 77,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": null
+      },
+      "positive": {
+        "support": 7221193,
+        "predicted": 22885419,
+        "tp": 5651724,
+        "fp": 17233695,
+        "fn": 1569469,
+        "precision": 0.24695741860789178,
+        "recall": 0.7826579347761512,
+        "f1": 0.37544736020114117
+      },
+      "balanced_accuracy": 0.32287484480958206
+    },
+    "target_quantiles": {
+      "0": -7.6756977647010745,
+      "0.01": -3.9072984348821054,
+      "0.05": -3.445425197172163,
+      "0.25": -2.3606922479669814,
+      "0.5": -1.271791099668996,
+      "0.75": 0.027297617588165585,
+      "0.95": 2.021801315843243,
+      "0.99": 3.49728249765028,
+      "1": 9.017755710841405
+    },
+    "prediction_quantiles": {
+      "0": -6.891906752384666,
+      "0.01": -0.9249060645007491,
+      "0.05": -0.37200445407387916,
+      "0.25": 0.0720959882076409,
+      "0.5": 0.3080150469816161,
+      "0.75": 0.5383571047523705,
+      "0.95": 1.2047755335200203,
+      "0.99": 1.940621312849876,
+      "1": 10.03353155746189
+    }
+  },
+  "role_strata": {
+    "-1": {
+      "count": 2,
+      "mae": 6.221727917609999,
+      "rmse": 6.2233084396633025,
+      "target_mean": 6.295078868865188,
+      "prediction_mean": 0.07335095125518812
+    },
+    "0": {
+      "count": 228487,
+      "mae": 1.4934200535553006,
+      "rmse": 1.8213272365742574,
+      "target_mean": 0.4854157554896861,
+      "prediction_mean": 0.525648348403019
+    },
+    "1": {
+      "count": 1976309,
+      "mae": 1.4115583735008461,
+      "rmse": 1.7617298324758743,
+      "target_mean": 0.9020814253773991,
+      "prediction_mean": 0.34107850648863397
+    },
+    "2": {
+      "count": 394595,
+      "mae": 2.335464053497646,
+      "rmse": 2.7198780458708236,
+      "target_mean": 2.4790222129673807,
+      "prediction_mean": 0.41448147436324134
+    },
+    "3": {
+      "count": 24900259,
+      "mae": 1.9568943138255774,
+      "rmse": 2.296326222468317,
+      "target_mean": -1.3650317413433515,
+      "prediction_mean": 0.3336938114455998
+    },
+    "4": {
+      "count": 12650,
+      "mae": 1.6491459401488355,
+      "rmse": 2.0463065450055824,
+      "target_mean": 1.408685976285877,
+      "prediction_mean": 0.2724482241834882
+    },
+    "5": {
+      "count": 3403,
+      "mae": 2.4523505883754972,
+      "rmse": 2.8599711989914054,
+      "target_mean": 2.571745363751222,
+      "prediction_mean": 0.4209009358729112
+    },
+    "6": {
+      "count": 874680,
+      "mae": 1.483491278829981,
+      "rmse": 1.8474942499841704,
+      "target_mean": 1.0556393087607088,
+      "prediction_mean": 0.3729559120320162
+    },
+    "7": {
+      "count": 1563,
+      "mae": 3.6595214794366275,
+      "rmse": 3.99289487589421,
+      "target_mean": 4.053184095878253,
+      "prediction_mean": 0.5280851848578926
+    }
+  },
+  "degree_strata": {
+    "0": {
+      "count": 76814,
+      "mae": 3.315724044150944,
+      "rmse": 3.686467067591628,
+      "target_mean": 3.6013440310475002,
+      "prediction_mean": 0.45073375388648246
+    },
+    "1": {
+      "count": 126717,
+      "mae": 2.7306966758411564,
+      "rmse": 3.0985333379048736,
+      "target_mean": 2.9278681168564913,
+      "prediction_mean": 0.47837711949302597
+    },
+    "2": {
+      "count": 238143,
+      "mae": 2.303508593292178,
+      "rmse": 2.660221187950664,
+      "target_mean": 2.415053278861972,
+      "prediction_mean": 0.46534570542762516
+    },
+    "3": {
+      "count": 704946,
+      "mae": 1.8119535579863952,
+      "rmse": 2.1525374928510574,
+      "target_mean": 1.6907110439050639,
+      "prediction_mean": 0.40668031366486546
+    },
+    "4": {
+      "count": 27245328,
+      "mae": 1.8970425376672042,
+      "rmse": 2.2423406812323297,
+      "target_mean": -1.1956581250797902,
+      "prediction_mean": 0.3342212926739947
+    }
+  },
+  "role_table": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_topology_residual_l2_rq/role_table.json",
+  "degree_source": "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph_directed/edges.parquet",
+  "scope": "hard exported SID; equal-weight three-expert prediction; structural curvature proxy",
+  "raw": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue262/_raw/curvature/105.npz",
+    "sha256": "e26560965841692181b16c42d2f42589d1b541f2eced526f0c01d7c164999afc"
+  }
+}

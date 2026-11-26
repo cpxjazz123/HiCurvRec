@@ -1,0 +1,58 @@
+{
+  "schema": "genrec.issue262.hypotheses/1",
+  "frozen_at": "2026-11-26T00:00:00Z",
+  "scope": "analysis only; no training, no optimizer update, no SID rewrite",
+  "definitions": {
+    "common_in": "P(u) intersect P(v) is non-empty on the directed train graph",
+    "common_out": "S(u) intersect S(v) is non-empty on the directed train graph",
+    "target_positive": "the validation row's target item for the anchor u",
+    "negative": "a degree-matched catalogue item not in the row's history, seen_history, anchor or target",
+    "level_1_shared_in_fidelity": "within-arm Spearman between hard-SID distance and directed J_in on a fixed pair population",
+    "level_2_cross_arm": "across the eight arms, Pearson/Spearman between a level-1 score and Stage3 test_R@10"
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "statement": "Shared-in neighbours are substitute next-purchase candidates: target items are more likely than degree-matched negatives to share an in-neighbour with the anchor, and the effect is not exhausted by popularity or degree.",
+      "supported_if": [
+        "target common-in rate exceeds the degree-matched negative rate with a positive paired difference",
+        "the direction survives within directed total-degree and popularity strata",
+        "a positive common-in effect remains after conditioning on SID prefix sharing"
+      ],
+      "falsified_if": [
+        "target and negative rates are indistinguishable or reversed",
+        "the apparent effect vanishes after degree/popularity matching",
+        "the effect is only a relabelling of shared prefixes"
+      ]
+    },
+    {
+      "id": "H2",
+      "statement": "The historical shared-in/test-R@10 association is substantially driven by semantic/prefix structure, degree or popularity; it is not a pure graph-topology effect.",
+      "supported_if": [
+        "the directed shared-in association with test_R@10 is weak or unstable once prefix/degree controls are reported",
+        "the eight-arm association depends on one architecture/capacity group or is not reproduced by the recomputed directed label"
+      ],
+      "falsified_if": [
+        "a stable directed shared-in association remains in the within-arm and cross-arm views after explicit controls",
+        "the association is reproduced with the correct directed pair label and is not driven by a single arm"
+      ]
+    },
+    {
+      "id": "H3",
+      "statement": "Curvature fidelity, reconstruction and quantisation are architecture/capacity proxies rather than independent causes of recommendation quality.",
+      "supported_if": [
+        "the eight-arm correlation is carried by the five-expert or role-conditioned group",
+        "the new predicted/target or per-level diagnostics do not preserve an independent association after leave-one-out and group inspection"
+      ],
+      "falsified_if": [
+        "a curvature/reconstruction diagnostic is stable across architectures and sensitivity variants and has a same-generation identity-bound interpretation"
+      ]
+    }
+  ],
+  "statistics": {
+    "n": 8,
+    "primary": ["Pearson", "Spearman", "Fisher 95% CI", "leave-one-out", "exclude-100", "exclude-107"],
+    "multiplicity": "descriptive only; no adjusted discovery claim",
+    "missing": "NA with attempted path; never 0 or imputed"
+  }
+}

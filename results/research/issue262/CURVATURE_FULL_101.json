@@ -1,0 +1,193 @@
+{
+  "schema": "genrec.issue262.curvature_full/1",
+  "arm": "TIGER_three_expert_attention_rq",
+  "index": 101,
+  "identity": {
+    "final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/Amazon_2023_Instruments/Nov-24-2026_21-16-28/test_final.json",
+    "final_sha256": "92cb7822e4ddaf11b8a31b3ecaeeb6e6ae6ad8300a4100a22b8125bdb1d586a4",
+    "sid_sha256": "24c17aee0818373fbb4c76d175170a6b207d6e09a29faa398b140acd84bae2e3",
+    "stage2_checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/rqvae_best.pth",
+    "stage2_checkpoint_sha256": "ecc37a67753bee1bf08c26692f05f87e1601a2970c2adfb707ea4e644e62e72d",
+    "q_file": "/fs04/ar57/wenyu/GeneRec/results/research/issue262/_raw/q/101.npz",
+    "q_sha256": "37aca5ee441b1a0f99479d4e822b4395bb9524d9c0410e520aadfd314e0f79dd",
+    "scale": 0.08433422446250916,
+    "scale_fitted_on_evaluation": false
+  },
+  "coverage": {
+    "count": 28391948,
+    "excluded": 0,
+    "expected": 28391948,
+    "shards": 13
+  },
+  "metrics": {
+    "pearson": 0.18857418749230126,
+    "spearman": 0.1677670371089075,
+    "rmse": 2.7600555869035706,
+    "mae": 2.3600796787734235,
+    "sign": {
+      "accuracy": 0.36265510911755683,
+      "negative": {
+        "support": 21170678,
+        "predicted": 4786764,
+        "tp": 3931021,
+        "fp": 855743,
+        "fn": 17239657,
+        "precision": 0.8212272424544014,
+        "recall": 0.18568233856279898,
+        "f1": 0.3028820020092889
+      },
+      "zero": {
+        "support": 77,
+        "predicted": 0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 77,
+        "precision": null,
+        "recall": 0.0,
+        "f1": null
+      },
+      "positive": {
+        "support": 7221193,
+        "predicted": 23605184,
+        "tp": 6365464,
+        "fp": 17239720,
+        "fn": 855729,
+        "precision": 0.2696638162193525,
+        "recall": 0.8814975586443957,
+        "f1": 0.41298813675054974
+      },
+      "balanced_accuracy": 0.3557266324023982
+    },
+    "target_quantiles": {
+      "0": -7.6756977647010745,
+      "0.01": -3.9072984348821054,
+      "0.05": -3.445425197172163,
+      "0.25": -2.3606922479669814,
+      "0.5": -1.271791099668996,
+      "0.75": 0.027297617588165585,
+      "0.95": 2.021801315843243,
+      "0.99": 3.49728249765028,
+      "1": 9.017755710841405
+    },
+    "prediction_quantiles": {
+      "0": -9.987437975292758,
+      "0.01": -1.5131138501891552,
+      "0.05": -0.7420185492506589,
+      "0.25": 0.30731241343097526,
+      "0.5": 1.0308741561941204,
+      "0.75": 1.7083198861566338,
+      "0.95": 2.665229684531805,
+      "0.99": 3.5223786735398943,
+      "1": 22.837418991388073
+    }
+  },
+  "role_strata": {
+    "-1": {
+      "count": 2,
+      "mae": 5.041030321640881,
+      "rmse": 5.202219890062739,
+      "target_mean": 6.295078868865188,
+      "prediction_mean": 1.2540485472243061
+    },
+    "0": {
+      "count": 228487,
+      "mae": 1.623270092099249,
+      "rmse": 2.0267393482016915,
+      "target_mean": 0.4854157554896861,
+      "prediction_mean": 1.2342706507341217
+    },
+    "1": {
+      "count": 1976309,
+      "mae": 1.5102524756118658,
+      "rmse": 1.9223459690306666,
+      "target_mean": 0.9020814253773991,
+      "prediction_mean": 1.2942821049269795
+    },
+    "2": {
+      "count": 394595,
+      "mae": 1.8003002520671025,
+      "rmse": 2.2389415435512423,
+      "target_mean": 2.4790222129673807,
+      "prediction_mean": 1.4396158652254747
+    },
+    "3": {
+      "count": 24900259,
+      "mae": 2.472685761871764,
+      "rmse": 2.852990007252567,
+      "target_mean": -1.3650317413433515,
+      "prediction_mean": 0.9649782247622204
+    },
+    "4": {
+      "count": 12650,
+      "mae": 1.4748431243676812,
+      "rmse": 1.8462853081422286,
+      "target_mean": 1.408685976285877,
+      "prediction_mean": 1.117467385596194
+    },
+    "5": {
+      "count": 3403,
+      "mae": 1.932059995824067,
+      "rmse": 2.394819880599636,
+      "target_mean": 2.571745363751222,
+      "prediction_mean": 1.4062613137831976
+    },
+    "6": {
+      "count": 874680,
+      "mae": 1.5331958894465327,
+      "rmse": 1.9456410269623445,
+      "target_mean": 1.0556393087607088,
+      "prediction_mean": 1.3338098921540804
+    },
+    "7": {
+      "count": 1563,
+      "mae": 2.8375174151211575,
+      "rmse": 3.256369309437194,
+      "target_mean": 4.053184095878253,
+      "prediction_mean": 1.5345773678119594
+    }
+  },
+  "degree_strata": {
+    "0": {
+      "count": 76814,
+      "mae": 2.523335569957359,
+      "rmse": 2.9862079411101674,
+      "target_mean": 3.6013440310475002,
+      "prediction_mean": 1.5230769217796476
+    },
+    "1": {
+      "count": 126717,
+      "mae": 2.0884127933658,
+      "rmse": 2.5330691437372614,
+      "target_mean": 2.9278681168564913,
+      "prediction_mean": 1.5394372053546617
+    },
+    "2": {
+      "count": 238143,
+      "mae": 1.7993076774682437,
+      "rmse": 2.2326980905697704,
+      "target_mean": 2.415053278861972,
+      "prediction_mean": 1.507522204764023
+    },
+    "3": {
+      "count": 704946,
+      "mae": 1.546141116224924,
+      "rmse": 1.9517199960758627,
+      "target_mean": 1.6907110439050639,
+      "prediction_mean": 1.4078239335106457
+    },
+    "4": {
+      "count": 27245328,
+      "mae": 2.3868443092199323,
+      "rmse": 2.7823355640488345,
+      "target_mean": -1.1956581250797902,
+      "prediction_mean": 0.9895515396829582
+    }
+  },
+  "role_table": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_topology_residual_l2_rq/role_table.json",
+  "degree_source": "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph_directed/edges.parquet",
+  "scope": "hard exported SID; equal-weight three-expert prediction; structural curvature proxy",
+  "raw": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue262/_raw/curvature/101.npz",
+    "sha256": "cdf3dcd320b61dafe5dc36b7f0727d2a95e7edfa6fc9415c96b9f07af454991f"
+  }
+}

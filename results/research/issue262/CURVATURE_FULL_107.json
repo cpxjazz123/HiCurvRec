@@ -1,0 +1,193 @@
+{
+  "schema": "genrec.issue262.curvature_full/1",
+  "arm": "TIGER_topology_residual_l2_rq",
+  "index": 107,
+  "identity": {
+    "final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_topology_residual_l2_rq/logs/Amazon_2023_Instruments/Nov-26-2026_03-43-59/test_final.json",
+    "final_sha256": "7f0b602fe98aef29b4a8da71598a8eae4b9438b9edbf4a401a86daa8800a7678",
+    "sid_sha256": "c5f0e739b11b3ee79237e22c2354f18b2dc6f18b8b78b03a3978d77bfec0691b",
+    "stage2_checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_127a3cca78dc49bf899ded006b2a11ca/TIGER_topology_residual_l2_rq/result/rqvae_best.pth",
+    "stage2_checkpoint_sha256": "ec5271f4d60e84c7b661896b7c114dbaa5c0f81125ffd4f87c7742955527a633",
+    "q_file": "/fs04/ar57/wenyu/GeneRec/results/research/issue262/_raw/q/107.npz",
+    "q_sha256": "cc889c4f1801b41fd7b28369c97deaaceb0bfc25d4e3a361220aa61dc5c33f12",
+    "scale": 0.0843321830034256,
+    "scale_fitted_on_evaluation": false
+  },
+  "coverage": {
+    "count": 28391948,
+    "excluded": 0,
+    "expected": 28391948,
+    "shards": 13
+  },
+  "metrics": {
+    "pearson": 0.03253363710175765,
+    "spearman": -0.050602849195218375,
+    "rmse": 2.249993461318095,
+    "mae": 1.900175464216836,
+    "sign": {
+      "accuracy": 0.3468254097957632,
+      "negative": {
+        "support": 21170678,
+        "predicted": 5705437,
+        "tp": 4165638,
+        "fp": 1539799,
+        "fn": 17005040,
+        "precision": 0.7301172548220233,
+        "recall": 0.1967645060776986,
+        "f1": 0.30998810653995196
+      },
+      "zero": {
+        "support": 77,
+        "predicted": 7,
+        "tp": 0,
+        "fp": 7,
+        "fn": 77,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": null
+      },
+      "positive": {
+        "support": 7221193,
+        "predicted": 22686504,
+        "tp": 5681411,
+        "fp": 17005093,
+        "fn": 1539782,
+        "precision": 0.25043131370086813,
+        "recall": 0.7867690283309143,
+        "f1": 0.3799296883340767
+      },
+      "balanced_accuracy": 0.32784451146953764
+    },
+    "target_quantiles": {
+      "0": -7.6756977647010745,
+      "0.01": -3.9072984348821054,
+      "0.05": -3.445425197172163,
+      "0.25": -2.3606922479669814,
+      "0.5": -1.271791099668996,
+      "0.75": 0.027297617588165585,
+      "0.95": 2.021801315843243,
+      "0.99": 3.49728249765028,
+      "1": 9.017755710841405
+    },
+    "prediction_quantiles": {
+      "0": -8.376946332057566,
+      "0.01": -0.9860851125981617,
+      "0.05": -0.38468486803825197,
+      "0.25": 0.06346061799680797,
+      "0.5": 0.31708739136857145,
+      "0.75": 0.5715686435361456,
+      "0.95": 1.0917130191844644,
+      "0.99": 1.9271013109326076,
+      "1": 19.734598599450567
+    }
+  },
+  "role_strata": {
+    "-1": {
+      "count": 2,
+      "mae": 6.110847894125915,
+      "rmse": 6.110848222793801,
+      "target_mean": 6.295078868865188,
+      "prediction_mean": 0.18423097473927252
+    },
+    "0": {
+      "count": 228487,
+      "mae": 1.490347805432942,
+      "rmse": 1.8189541056164178,
+      "target_mean": 0.4854157554896861,
+      "prediction_mean": 0.48907582139186995
+    },
+    "1": {
+      "count": 1976309,
+      "mae": 1.409957287998839,
+      "rmse": 1.764708846024279,
+      "target_mean": 0.9020814253773991,
+      "prediction_mean": 0.35641068428809863
+    },
+    "2": {
+      "count": 394595,
+      "mae": 2.322524477367011,
+      "rmse": 2.712610451095266,
+      "target_mean": 2.4790222129673807,
+      "prediction_mean": 0.4422877745432352
+    },
+    "3": {
+      "count": 24900259,
+      "mae": 1.950737503920154,
+      "rmse": 2.29201780390181,
+      "target_mean": -1.3650317413433515,
+      "prediction_mean": 0.3283377056326791
+    },
+    "4": {
+      "count": 12650,
+      "mae": 1.634490504495309,
+      "rmse": 2.03212986187801,
+      "target_mean": 1.408685976285877,
+      "prediction_mean": 0.27499169425342357
+    },
+    "5": {
+      "count": 3403,
+      "mae": 2.433495989145062,
+      "rmse": 2.8353625127198394,
+      "target_mean": 2.571745363751222,
+      "prediction_mean": 0.41915645012157726
+    },
+    "6": {
+      "count": 874680,
+      "mae": 1.4835684283661732,
+      "rmse": 1.853548987466856,
+      "target_mean": 1.0556393087607088,
+      "prediction_mean": 0.39057876587268753
+    },
+    "7": {
+      "count": 1563,
+      "mae": 3.6491445224123957,
+      "rmse": 3.9879130276052326,
+      "target_mean": 4.053184095878253,
+      "prediction_mean": 0.5364384713973276
+    }
+  },
+  "degree_strata": {
+    "0": {
+      "count": 76814,
+      "mae": 3.299950147826745,
+      "rmse": 3.678311608938445,
+      "target_mean": 3.6013440310475002,
+      "prediction_mean": 0.48574734888117876
+    },
+    "1": {
+      "count": 126717,
+      "mae": 2.7127794944327728,
+      "rmse": 3.0806433396376747,
+      "target_mean": 2.9278681168564913,
+      "prediction_mean": 0.5079714827880921
+    },
+    "2": {
+      "count": 238143,
+      "mae": 2.2926588655163527,
+      "rmse": 2.6537455281708273,
+      "target_mean": 2.415053278861972,
+      "prediction_mean": 0.49061066121076247
+    },
+    "3": {
+      "count": 704946,
+      "mae": 1.8050315107975428,
+      "rmse": 2.153000274278222,
+      "target_mean": 1.6907110439050639,
+      "prediction_mean": 0.42347400089578513
+    },
+    "4": {
+      "count": 27245328,
+      "mae": 1.8914808042482651,
+      "rmse": 2.238693347458878,
+      "target_mean": -1.1956581250797902,
+      "prediction_mean": 0.33020987078816433
+    }
+  },
+  "role_table": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_topology_residual_l2_rq/role_table.json",
+  "degree_source": "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph_directed/edges.parquet",
+  "scope": "hard exported SID; equal-weight three-expert prediction; structural curvature proxy",
+  "raw": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue262/_raw/curvature/107.npz",
+    "sha256": "d01031b6eff37673e39be0e2f2932135ae57ae197462a2d006495f1dc911fbb9"
+  }
+}

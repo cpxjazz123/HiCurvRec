@@ -1,0 +1,243 @@
+{
+  "schema": "genrec.issue262.quant_grad_switch/1",
+  "arm": "TIGER_role_conditioned_l1_rq",
+  "index": 104,
+  "identity": {
+    "final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l1_rq/logs/Amazon_2023_Instruments/Nov-25-2026_17-22-12/test_final.json",
+    "final_sha256": "0a287e074359fcb47fa85ac4408c072ec954e61db6a9a14824d66e87b21ae5f3",
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/rqvae_best.pth",
+    "checkpoint_sha256": "37e7198921824f6a7351cefcf91a80ca61d560a3d54ee816264c35d8089cb13d",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/item_sids.json",
+    "sid_sha256": "f6754f385fe7ea46e912442e624aa0b59d44cc9b422c6f721c69bf3ce7fa1862",
+    "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/src"
+  },
+  "quant": {
+    "representation": "hard q; first three SID columns",
+    "metric": "Euclidean distance in the actual 32-d codebook space",
+    "per_level": [
+      {
+        "level": 0,
+        "selected_not_nearest": 312,
+        "selected_top1_fraction": 0.9873103672672551,
+        "selected_rank_mean": 0.013543742628218164,
+        "selected_rank_p90": 0.0,
+        "margin_top1_top2_mean": 0.011030697352416113,
+        "margin_top1_top2_median": 0.009355600158239614,
+        "selected_margin_mean": 0.011019840148363888,
+        "normalized_gap_mean": 0.7892846415994926,
+        "selected_distance_mean": 0.020988858626583385,
+        "residual_norm_mean": 0.020988858626583385,
+        "residual_norm_quantiles": {
+          "0": 0.0017568147496628023,
+          "0.01": 0.005229656088371918,
+          "0.05": 0.007745992618186825,
+          "0.25": 0.013033700074593906,
+          "0.5": 0.018127836553043376,
+          "0.75": 0.025380333604853967,
+          "0.95": 0.04386868454991612,
+          "0.99": 0.06563023721055734,
+          "1": 0.2597305795354791
+        },
+        "commitment_mse": 1.8662496500301706e-05,
+        "codebook_mse": 1.8662496500301706e-05,
+        "codebook_norm_mean": 0.1287654435025088
+      },
+      {
+        "level": 1,
+        "selected_not_nearest": 15,
+        "selected_top1_fraction": 0.9993899215032335,
+        "selected_rank_mean": 0.021393419286614878,
+        "selected_rank_p90": 0.0,
+        "margin_top1_top2_mean": 0.0025402531120870485,
+        "margin_top1_top2_median": 0.001917527982188168,
+        "selected_margin_mean": 0.002531737849993256,
+        "normalized_gap_mean": 0.29022676365744,
+        "selected_distance_mean": 0.01124692503701593,
+        "residual_norm_mean": 0.01124692503701593,
+        "residual_norm_quantiles": {
+          "0": 0.001555744292964641,
+          "0.01": 0.004043855592861282,
+          "0.05": 0.005259248802520284,
+          "0.25": 0.007344101773842928,
+          "0.5": 0.009321393967734725,
+          "0.75": 0.013345547277828888,
+          "0.95": 0.023190462658456045,
+          "0.99": 0.02880826451037535,
+          "1": 0.20098738212489503
+        },
+        "commitment_mse": 5.172321681050347e-06,
+        "codebook_mse": 5.172321681050347e-06,
+        "codebook_norm_mean": 0.04711138253680749
+      },
+      {
+        "level": 2,
+        "selected_not_nearest": 2,
+        "selected_top1_fraction": 0.9999186562004311,
+        "selected_rank_mean": 0.010412006344816366,
+        "selected_rank_p90": 0.0,
+        "margin_top1_top2_mean": 0.0007532665684557796,
+        "margin_top1_top2_median": 0.0004933602336674291,
+        "selected_margin_mean": 0.0007496697429798046,
+        "normalized_gap_mean": 0.1411072179915717,
+        "selected_distance_mean": 0.006471414123169069,
+        "residual_norm_mean": 0.006471414123169069,
+        "residual_norm_quantiles": {
+          "0": 0.0014576098398677993,
+          "0.01": 0.0025187946136136074,
+          "0.05": 0.0030718431961327024,
+          "0.25": 0.00400003177049176,
+          "0.5": 0.004915636933063965,
+          "0.75": 0.007257575421230405,
+          "0.95": 0.015115289261979328,
+          "0.99": 0.019700165472688796,
+          "1": 0.1803117824894786
+        },
+        "commitment_mse": 1.9399595380205156e-06,
+        "codebook_mse": 1.9399595380205156e-06,
+        "codebook_norm_mean": 0.011457565662286544
+      }
+    ],
+    "total_quant_error_mean": 0.0064714141215103166,
+    "total_quant_error_quantiles": {
+      "0": 0.0014576103369581738,
+      "0.01": 0.0025187945248798384,
+      "0.05": 0.003071843016034524,
+      "0.25": 0.004000032262394893,
+      "0.5": 0.004915636836064783,
+      "0.75": 0.007257575353055533,
+      "0.95": 0.01511528929241507,
+      "0.99": 0.019700165046267655,
+      "1": 0.18031178428045963
+    },
+    "checkpoint_beta": 0.25,
+    "note": "native assignment uses the source's live mixed cost; this is the cross-level actual-code diagnostic",
+    "effective_rank_z": 4.423477515195264,
+    "effective_rank_q": 4.413333753706516,
+    "z_sha256": "d5d22dc3c6dccdc66c94a97693673fa621a6a4394d58ef8afba2945e7113545f",
+    "q_sha256": "615d33ac6e7bb3c9b192ea748123c2452c24aa64d0704eadaaa7b2873fcac2db"
+  },
+  "gradient": {
+    "fixed_batch": {
+      "rows": 4096,
+      "seed": 42,
+      "source": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+      "item_ids_sha256": "251dced08f5c42703e2ce66b3c56924e91d14200a15a3771f45c8d8c66f1c457"
+    },
+    "losses": {
+      "original": 0.00010529656719882041,
+      "reconstruction": 9.087318903766572e-05,
+      "curvature": 0.6462003588676453,
+      "combined": 0.0001062130686477758,
+      "curvature_weight": 1.418291503796354e-06
+    },
+    "quant_parts": [
+      {
+        "commitment": 1.9604571207310073e-05,
+        "codebook": 1.9604571207310073e-05
+      },
+      {
+        "commitment": 5.884417987545021e-06,
+        "codebook": 5.884417987545021e-06
+      },
+      {
+        "commitment": 9.127109478868078e-06,
+        "codebook": 9.127109478868078e-06
+      }
+    ],
+    "groups": {
+      "encoder": {
+        "original_norm": 0.00010531274701447198,
+        "curvature_norm": 13.755782716597313,
+        "combined_norm": 0.00011279490597162292,
+        "original_curvature_cosine": 0.30450595922834817
+      },
+      "decoder": {
+        "original_norm": 5.1337744763519695e-05,
+        "curvature_norm": 0.0,
+        "combined_norm": 5.1337744763519695e-05,
+        "original_curvature_cosine": null
+      },
+      "GNN": {
+        "original_norm": 2.7179803196311217e-08,
+        "curvature_norm": 0.001547806389122068,
+        "combined_norm": 2.8470124013644056e-08,
+        "original_curvature_cosine": 0.5613387277993436
+      },
+      "gate": {
+        "original_norm": 1.7802330326413942e-08,
+        "curvature_norm": 0.0011924165361920666,
+        "combined_norm": 1.9236603582258863e-08,
+        "original_curvature_cosine": 0.8347378600703944
+      },
+      "codebook0": {
+        "original_norm": 7.165598186200205e-05,
+        "curvature_norm": 21.821778420434185,
+        "combined_norm": 7.800606494540372e-05,
+        "original_curvature_cosine": -0.0016939462485610758
+      },
+      "codebook1": {
+        "original_norm": 3.972724351086786e-05,
+        "curvature_norm": 6.30959471883268,
+        "combined_norm": 4.066615862271317e-05,
+        "original_curvature_cosine": -0.00646849573939654
+      },
+      "codebook2": {
+        "original_norm": 6.60441819534142e-05,
+        "curvature_norm": 2.3199721951201844,
+        "combined_norm": 6.588457937076414e-05,
+        "original_curvature_cosine": -0.0733576160048066
+      }
+    },
+    "parameter_checksum_before": "607ba8b20671dfcec413bba7ce40633f665cdf474693f4d909afd6fda24d33b5",
+    "parameter_checksum_after": "607ba8b20671dfcec413bba7ce40633f665cdf474693f4d909afd6fda24d33b5",
+    "parameters_unchanged": true,
+    "optimizer_steps": 0,
+    "scope": "one fixed final-checkpoint forward/autograd; not historical trajectory"
+  },
+  "switch": {
+    "no_intervention": {
+      "shape": [
+        24587,
+        3
+      ],
+      "exact_sid_match": false,
+      "changed_fraction": 4.067189978443893e-05
+    },
+    "behavior_off": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.0005287346971977061,
+      "per_level_change": [
+        0.0,
+        0.0004880627974132672,
+        0.0005287346971977061
+      ]
+    },
+    "curvature_off": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.013096351730589336,
+      "per_level_change": [
+        0.012689632732744947,
+        0.013055679830804898,
+        0.013055679830804898
+      ]
+    },
+    "uniform_gate": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.0005287346971977061,
+      "per_level_change": [
+        0.0,
+        0.0004880627974132672,
+        0.0005287346971977061
+      ]
+    },
+    "euclidean_uniform": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.013096351730589336,
+      "per_level_change": [
+        0.012689632732744947,
+        0.013055679830804898,
+        0.013055679830804898
+      ]
+    }
+  }
+}

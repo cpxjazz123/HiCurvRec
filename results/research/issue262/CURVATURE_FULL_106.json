@@ -1,0 +1,193 @@
+{
+  "schema": "genrec.issue262.curvature_full/1",
+  "arm": "TIGER_role_conditioned_l2_rq",
+  "index": 106,
+  "identity": {
+    "final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l2_rq/logs/Amazon_2023_Instruments/Nov-25-2026_23-03-28/test_final.json",
+    "final_sha256": "ed2d61223dd58af4fd77166a6ecdd1ec2c4aa6129ef534c1d60be6866db97cb9",
+    "sid_sha256": "dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6",
+    "stage2_checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/rqvae_best.pth",
+    "stage2_checkpoint_sha256": "f93da1a7466d62f07c6482c64cf1a8efdd9dd1fa7ccdf7891be98d6d37bc7f26",
+    "q_file": "/fs04/ar57/wenyu/GeneRec/results/research/issue262/_raw/q/106.npz",
+    "q_sha256": "bf0964868580d8e5c221e4d43d4c8e71aac01036be849124a3942b8f2dee5611",
+    "scale": 0.0843321830034256,
+    "scale_fitted_on_evaluation": false
+  },
+  "coverage": {
+    "count": 28391948,
+    "excluded": 0,
+    "expected": 28391948,
+    "shards": 13
+  },
+  "metrics": {
+    "pearson": -0.005347707112632823,
+    "spearman": -0.08697939025217347,
+    "rmse": 2.2746158940271495,
+    "mae": 1.9245685933683048,
+    "sign": {
+      "accuracy": 0.3351373776818695,
+      "negative": {
+        "support": 21170678,
+        "predicted": 5778449,
+        "tp": 4036220,
+        "fp": 1742229,
+        "fn": 17134458,
+        "precision": 0.6984953921026213,
+        "recall": 0.1906514283576558,
+        "f1": 0.29954365497628177
+      },
+      "zero": {
+        "support": 77,
+        "predicted": 2,
+        "tp": 0,
+        "fp": 2,
+        "fn": 77,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": null
+      },
+      "positive": {
+        "support": 7221193,
+        "predicted": 22613497,
+        "tp": 5478983,
+        "fp": 17134514,
+        "fn": 1742210,
+        "precision": 0.24228817860413185,
+        "recall": 0.7587365411781682,
+        "f1": 0.36728942046992946
+      },
+      "balanced_accuracy": 0.31646265651194133
+    },
+    "target_quantiles": {
+      "0": -7.6756977647010745,
+      "0.01": -3.9072984348821054,
+      "0.05": -3.445425197172163,
+      "0.25": -2.3606922479669814,
+      "0.5": -1.271791099668996,
+      "0.75": 0.027297617588165585,
+      "0.95": 2.021801315843243,
+      "0.99": 3.49728249765028,
+      "1": 9.017755710841405
+    },
+    "prediction_quantiles": {
+      "0": -6.666567216434665,
+      "0.01": -0.9631114030355805,
+      "0.05": -0.39911225198867284,
+      "0.25": 0.06409134765302746,
+      "0.5": 0.3348099817555528,
+      "0.75": 0.5955526284021464,
+      "0.95": 1.164937223350217,
+      "0.99": 1.8418461065112162,
+      "1": 10.372122009857858
+    }
+  },
+  "role_strata": {
+    "-1": {
+      "count": 2,
+      "mae": 6.219393695283709,
+      "rmse": 6.221792221993497,
+      "target_mean": 6.295078868865188,
+      "prediction_mean": 0.07568517358147832
+    },
+    "0": {
+      "count": 228487,
+      "mae": 1.5454908853050158,
+      "rmse": 1.892983713861103,
+      "target_mean": 0.4854157554896861,
+      "prediction_mean": 0.5231785995579538
+    },
+    "1": {
+      "count": 1976309,
+      "mae": 1.424707527836772,
+      "rmse": 1.7788202240434918,
+      "target_mean": 0.9020814253773991,
+      "prediction_mean": 0.34185456044973783
+    },
+    "2": {
+      "count": 394595,
+      "mae": 2.3352707401097916,
+      "rmse": 2.7235166912664237,
+      "target_mean": 2.4790222129673807,
+      "prediction_mean": 0.42162992344213573
+    },
+    "3": {
+      "count": 24900259,
+      "mae": 1.9764809338192066,
+      "rmse": 2.3179347459526616,
+      "target_mean": -1.3650317413433515,
+      "prediction_mean": 0.3485627455362607
+    },
+    "4": {
+      "count": 12650,
+      "mae": 1.652367469901831,
+      "rmse": 2.049003856666303,
+      "target_mean": 1.408685976285877,
+      "prediction_mean": 0.2936465751162019
+    },
+    "5": {
+      "count": 3403,
+      "mae": 2.43709123010716,
+      "rmse": 2.8383598767396454,
+      "target_mean": 2.571745363751222,
+      "prediction_mean": 0.4385302108669291
+    },
+    "6": {
+      "count": 874680,
+      "mae": 1.4887029894431523,
+      "rmse": 1.8541758518638056,
+      "target_mean": 1.0556393087607088,
+      "prediction_mean": 0.35501828896953924
+    },
+    "7": {
+      "count": 1563,
+      "mae": 3.6751003878978543,
+      "rmse": 3.996636497565828,
+      "target_mean": 4.053184095878253,
+      "prediction_mean": 0.5097242340744986
+    }
+  },
+  "degree_strata": {
+    "0": {
+      "count": 76814,
+      "mae": 3.317729072193233,
+      "rmse": 3.6897932645062244,
+      "target_mean": 3.6013440310475002,
+      "prediction_mean": 0.45336953954304693
+    },
+    "1": {
+      "count": 126717,
+      "mae": 2.731416959385077,
+      "rmse": 3.10170123932924,
+      "target_mean": 2.9278681168564913,
+      "prediction_mean": 0.4809813348108348
+    },
+    "2": {
+      "count": 238143,
+      "mae": 2.309471590162843,
+      "rmse": 2.6698772287123003,
+      "target_mean": 2.415053278861972,
+      "prediction_mean": 0.4641964881447959
+    },
+    "3": {
+      "count": 704946,
+      "mae": 1.8185101974597133,
+      "rmse": 2.16190553818245,
+      "target_mean": 1.6907110439050639,
+      "prediction_mean": 0.40250710900800374
+    },
+    "4": {
+      "count": 27245328,
+      "mae": 1.9162680089223998,
+      "rmse": 2.2639024903092326,
+      "target_mean": -1.1956581250797902,
+      "prediction_mean": 0.3474831387201461
+    }
+  },
+  "role_table": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_topology_residual_l2_rq/role_table.json",
+  "degree_source": "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph_directed/edges.parquet",
+  "scope": "hard exported SID; equal-weight three-expert prediction; structural curvature proxy",
+  "raw": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue262/_raw/curvature/106.npz",
+    "sha256": "85969c11f2785f7fda8572ce932bd4f0cff1d4cb28ea8be0ac190f68e2cca978"
+  }
+}

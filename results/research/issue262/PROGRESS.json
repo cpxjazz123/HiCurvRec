@@ -1,0 +1,21 @@
+{
+  "issue": 262,
+  "commit": "",
+  "state": "MEASURING",
+  "infra_mode": "FROZEN",
+  "done": ["issue_read", "scope_frozen", "contract", "hypotheses", "initial_missing_ledger",
+           "identity_audit", "validation_correction", "true_strict_bank_audit",
+           "full_curvature_8", "quant_grad_switch_102"],
+  "reused": ["#261 Stage3 test and SID/geometry metric matrix where same population"],
+  "not_run": [],
+  "failed": [],
+  "infra_faults": [],
+  "running": ["7 parallel quant_grad_switch jobs", "shared_in relation-control recomputation", "GPU switch replay"],
+  "next_commands": [
+    "python3 results/research/issue262/aggregate.py",
+    "python3 results/research/issue262/finalize.py",
+    "python3 results/research/issue262/freeze.py  # end snapshot compare"
+  ],
+  "blocked_by": null,
+  "updated_at": "2026-11-26T12:10:00Z"
+}

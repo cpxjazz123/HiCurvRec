@@ -1,0 +1,243 @@
+{
+  "schema": "genrec.issue262.quant_grad_switch/1",
+  "arm": "TIGER_module_budget_prefix_rq",
+  "index": 102,
+  "identity": {
+    "final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/test_final.json",
+    "final_sha256": "195392578b47bc29bc967e61e3cc9561b74b1cfe9f243136720d2753141dab21",
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/rqvae_best.pth",
+    "checkpoint_sha256": "680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+    "sid_sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
+    "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src"
+  },
+  "quant": {
+    "representation": "hard q; first three SID columns",
+    "metric": "Euclidean distance in the actual 32-d codebook space",
+    "per_level": [
+      {
+        "level": 0,
+        "selected_not_nearest": 31,
+        "selected_top1_fraction": 0.9987391711066824,
+        "selected_rank_mean": 0.0012608288933176068,
+        "selected_rank_p90": 0.0,
+        "margin_top1_top2_mean": 0.01117104201032062,
+        "margin_top1_top2_median": 0.009472369869950875,
+        "selected_margin_mean": 0.011170889132396094,
+        "normalized_gap_mean": 0.7773357095429326,
+        "selected_distance_mean": 0.02119427679286147,
+        "residual_norm_mean": 0.02119427679286147,
+        "residual_norm_quantiles": {
+          "0": 0.0025588160550555693,
+          "0.01": 0.0057227441679819505,
+          "0.05": 0.008098884510188495,
+          "0.25": 0.013094777464121389,
+          "0.5": 0.018167476401489357,
+          "0.75": 0.025358295468129226,
+          "0.95": 0.04446121972829211,
+          "0.99": 0.0667260224876371,
+          "1": 0.2799542370342033
+        },
+        "commitment_mse": 1.9789432935150782e-05,
+        "codebook_mse": 1.9789432935150782e-05,
+        "codebook_norm_mean": 0.14588984496443652
+      },
+      {
+        "level": 1,
+        "selected_not_nearest": 58,
+        "selected_top1_fraction": 0.9976410298125026,
+        "selected_rank_mean": 0.015495993817871232,
+        "selected_rank_p90": 0.0,
+        "margin_top1_top2_mean": 0.002629037280152073,
+        "margin_top1_top2_median": 0.0018942311379060942,
+        "selected_margin_mean": 0.002623921600241954,
+        "normalized_gap_mean": 0.26285515492763617,
+        "selected_distance_mean": 0.012502226173424908,
+        "residual_norm_mean": 0.012502226173424908,
+        "residual_norm_quantiles": {
+          "0": 0.0016329348126924142,
+          "0.01": 0.004516594382138152,
+          "0.05": 0.005876463339657791,
+          "0.25": 0.008145059775399293,
+          "0.5": 0.010359945436549629,
+          "0.75": 0.015089572522363318,
+          "0.95": 0.024937651497087265,
+          "0.99": 0.0311473851148628,
+          "1": 0.22839384681450062
+        },
+        "commitment_mse": 6.8038224482507515e-06,
+        "codebook_mse": 6.8038224482507515e-06,
+        "codebook_norm_mean": 0.046457078458404515
+      },
+      {
+        "level": 2,
+        "selected_not_nearest": 124,
+        "selected_top1_fraction": 0.9949566844267296,
+        "selected_rank_mean": 0.015373978118517916,
+        "selected_rank_p90": 0.0,
+        "margin_top1_top2_mean": 0.0009929737919711417,
+        "margin_top1_top2_median": 0.0006878347143613045,
+        "selected_margin_mean": 0.000990367572013106,
+        "normalized_gap_mean": 0.17352574007298488,
+        "selected_distance_mean": 0.007227233238819595,
+        "residual_norm_mean": 0.007227233238819595,
+        "residual_norm_quantiles": {
+          "0": 0.001351533204329522,
+          "0.01": 0.002788735268613094,
+          "0.05": 0.003423839465872418,
+          "0.25": 0.004467300702858592,
+          "0.5": 0.005443217983666156,
+          "0.75": 0.008476288045506448,
+          "0.95": 0.015901011428906455,
+          "0.99": 0.020485593132079975,
+          "1": 0.20582124783558167
+        },
+        "commitment_mse": 2.7954574470419426e-06,
+        "codebook_mse": 2.7954574470419426e-06,
+        "codebook_norm_mean": 0.012548066214802022
+      }
+    ],
+    "total_quant_error_mean": 0.007227233243080488,
+    "total_quant_error_quantiles": {
+      "0": 0.0013515341537967906,
+      "0.01": 0.0027887345506821407,
+      "0.05": 0.0034238386025107364,
+      "0.25": 0.0044673009413700605,
+      "0.5": 0.005443219037319709,
+      "0.75": 0.00847628866110642,
+      "0.95": 0.015901011576709142,
+      "0.99": 0.02048559440385423,
+      "1": 0.2058212473549691
+    },
+    "checkpoint_beta": 0.25,
+    "note": "native assignment uses the source's live mixed cost; this is the cross-level actual-code diagnostic",
+    "effective_rank_z": 5.390244276983983,
+    "effective_rank_q": 5.358976634297958,
+    "z_sha256": "b39a1fda2f90c915b1a1399958b55ce4345290b0efe63eec67407d015d67bead",
+    "q_sha256": "c2267c2edc000dd6a090d850459fa47632252a01fb977953ba0e8449f1c1d358"
+  },
+  "gradient": {
+    "fixed_batch": {
+      "rows": 4096,
+      "seed": 42,
+      "source": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+      "item_ids_sha256": "251dced08f5c42703e2ce66b3c56924e91d14200a15a3771f45c8d8c66f1c457"
+    },
+    "losses": {
+      "original": 9.785489237401634e-05,
+      "reconstruction": 8.288359822472557e-05,
+      "curvature": 3.225719451904297,
+      "combined": 0.00010303354065399617,
+      "curvature_weight": 1.6054239040386165e-06
+    },
+    "quant_parts": [
+      {
+        "commitment": 2.0258974473108537e-05,
+        "codebook": 2.0258974473108537e-05
+      },
+      {
+        "commitment": 7.260929578478681e-06,
+        "codebook": 7.260929578478681e-06
+      },
+      {
+        "commitment": 8.411199814872816e-06,
+        "codebook": 8.411199814872816e-06
+      }
+    ],
+    "groups": {
+      "encoder": {
+        "original_norm": 0.00013760363190379842,
+        "curvature_norm": 17.28205963707293,
+        "combined_norm": 0.0001519646113709406,
+        "original_curvature_cosine": 0.44379942612964773
+      },
+      "decoder": {
+        "original_norm": 4.641509706524847e-05,
+        "curvature_norm": 0.0,
+        "combined_norm": 4.641509706524847e-05,
+        "original_curvature_cosine": null
+      },
+      "GNN": {
+        "original_norm": 2.4868493466070423e-08,
+        "curvature_norm": 0.008861175472043977,
+        "combined_norm": 2.9944880302029293e-08,
+        "original_curvature_cosine": 0.10722466970268545
+      },
+      "gate": {
+        "original_norm": 1.7401737466412202e-08,
+        "curvature_norm": 0.0039059994745275673,
+        "combined_norm": 1.8177757297603912e-08,
+        "original_curvature_cosine": -0.053699737455035396
+      },
+      "codebook0": {
+        "original_norm": 5.966602247873709e-05,
+        "curvature_norm": 32.588647951083324,
+        "combined_norm": 7.986270790845863e-05,
+        "original_curvature_cosine": 0.012939472731335333
+      },
+      "codebook1": {
+        "original_norm": 4.1389041314262375e-05,
+        "curvature_norm": 17.92880060136272,
+        "combined_norm": 5.007833186164162e-05,
+        "original_curvature_cosine": -0.014141550025709684
+      },
+      "codebook2": {
+        "original_norm": 9.026251938818166e-05,
+        "curvature_norm": 14.832262341851397,
+        "combined_norm": 9.39068157491897e-05,
+        "original_curvature_cosine": 0.024228870969477137
+      }
+    },
+    "parameter_checksum_before": "f8f6b11a65179ba2897b64dcc1dcb5be8aeeb783c3ca4dcd22a6d07f0fe62080",
+    "parameter_checksum_after": "f8f6b11a65179ba2897b64dcc1dcb5be8aeeb783c3ca4dcd22a6d07f0fe62080",
+    "parameters_unchanged": true,
+    "optimizer_steps": 0,
+    "scope": "one fixed final-checkpoint forward/autograd; not historical trajectory"
+  },
+  "switch": {
+    "no_intervention": {
+      "shape": [
+        24587,
+        3
+      ],
+      "exact_sid_match": false,
+      "changed_fraction": 0.007402285760767885
+    },
+    "behavior_off": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.022328872981656974,
+      "per_level_change": [
+        0.015211290519380161,
+        0.01708219790946435,
+        0.021962825883597024
+      ]
+    },
+    "curvature_off": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.008297067556025542,
+      "per_level_change": [
+        0.0012608288933176068,
+        0.0032944238825395535,
+        0.008256395656241103
+      ]
+    },
+    "uniform_gate": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.022328872981656974,
+      "per_level_change": [
+        0.015211290519380161,
+        0.01708219790946435,
+        0.021962825883597024
+      ]
+    },
+    "euclidean_uniform": {
+      "exact_sid_match": false,
+      "changed_fraction": 0.008297067556025542,
+      "per_level_change": [
+        0.0012608288933176068,
+        0.0032944238825395535,
+        0.008256395656241103
+      ]
+    }
+  }
+}

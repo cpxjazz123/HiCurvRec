@@ -1,0 +1,193 @@
+{
+  "schema": "genrec.issue262.curvature_full/1",
+  "arm": "TIGER_role_conditioned_l1_rq",
+  "index": 104,
+  "identity": {
+    "final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l1_rq/logs/Amazon_2023_Instruments/Nov-25-2026_17-22-12/test_final.json",
+    "final_sha256": "0a287e074359fcb47fa85ac4408c072ec954e61db6a9a14824d66e87b21ae5f3",
+    "sid_sha256": "f6754f385fe7ea46e912442e624aa0b59d44cc9b422c6f721c69bf3ce7fa1862",
+    "stage2_checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/rqvae_best.pth",
+    "stage2_checkpoint_sha256": "37e7198921824f6a7351cefcf91a80ca61d560a3d54ee816264c35d8089cb13d",
+    "q_file": "/fs04/ar57/wenyu/GeneRec/results/research/issue262/_raw/q/104.npz",
+    "q_sha256": "20ed24e9c0cfb8e0f6c0202a81d7c012e1c342afd8cffbf2ee2f121335efaab5",
+    "scale": 0.0843321830034256,
+    "scale_fitted_on_evaluation": false
+  },
+  "coverage": {
+    "count": 28391948,
+    "excluded": 0,
+    "expected": 28391948,
+    "shards": 13
+  },
+  "metrics": {
+    "pearson": -0.02991754159758181,
+    "spearman": -0.11702943535076643,
+    "rmse": 2.2998033872678536,
+    "mae": 1.938727068251472,
+    "sign": {
+      "accuracy": 0.34037093897185217,
+      "negative": {
+        "support": 21170678,
+        "predicted": 6093289,
+        "tp": 4267935,
+        "fp": 1825354,
+        "fn": 16902743,
+        "precision": 0.7004320655068224,
+        "recall": 0.2015965194879446,
+        "f1": 0.3130824652186529
+      },
+      "zero": {
+        "support": 77,
+        "predicted": 3,
+        "tp": 0,
+        "fp": 3,
+        "fn": 77,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": null
+      },
+      "positive": {
+        "support": 7221193,
+        "predicted": 22298656,
+        "tp": 5395859,
+        "fp": 16902797,
+        "fn": 1825334,
+        "precision": 0.24198135528885686,
+        "recall": 0.7472254238323225,
+        "f1": 0.36557497296141317
+      },
+      "balanced_accuracy": 0.3162739811067557
+    },
+    "target_quantiles": {
+      "0": -7.6756977647010745,
+      "0.01": -3.9072984348821054,
+      "0.05": -3.445425197172163,
+      "0.25": -2.3606922479669814,
+      "0.5": -1.271791099668996,
+      "0.75": 0.027297617588165585,
+      "0.95": 2.021801315843243,
+      "0.99": 3.49728249765028,
+      "1": 9.017755710841405
+    },
+    "prediction_quantiles": {
+      "0": -6.157663364622156,
+      "0.01": -0.9966768272517139,
+      "0.05": -0.4365350883716211,
+      "0.25": 0.051800531767151575,
+      "0.5": 0.3454077676319555,
+      "0.75": 0.6097502915368371,
+      "0.95": 1.2468407517591464,
+      "0.99": 2.3024784846025512,
+      "1": 11.238747817642851
+    }
+  },
+  "role_strata": {
+    "-1": {
+      "count": 2,
+      "mae": 6.130323813333476,
+      "rmse": 6.133466905159203,
+      "target_mean": 6.295078868865188,
+      "prediction_mean": 0.16475505553171138
+    },
+    "0": {
+      "count": 228487,
+      "mae": 1.5087858840657855,
+      "rmse": 1.8409767783609525,
+      "target_mean": 0.4854157554896861,
+      "prediction_mean": 0.45816299005583183
+    },
+    "1": {
+      "count": 1976309,
+      "mae": 1.4262720701721707,
+      "rmse": 1.7817512087366816,
+      "target_mean": 0.9020814253773991,
+      "prediction_mean": 0.33113039961386603
+    },
+    "2": {
+      "count": 394595,
+      "mae": 2.347540829735291,
+      "rmse": 2.7351633542165525,
+      "target_mean": 2.4790222129673807,
+      "prediction_mean": 0.40984312909361886
+    },
+    "3": {
+      "count": 24900259,
+      "mae": 1.9920801795298493,
+      "rmse": 2.3455222943114333,
+      "target_mean": -1.3650317413433515,
+      "prediction_mean": 0.3606789923447798
+    },
+    "4": {
+      "count": 12650,
+      "mae": 1.6588448987070452,
+      "rmse": 2.0599606486190187,
+      "target_mean": 1.408685976285877,
+      "prediction_mean": 0.29152899783416164
+    },
+    "5": {
+      "count": 3403,
+      "mae": 2.435361251307785,
+      "rmse": 2.851722137160762,
+      "target_mean": 2.571745363751222,
+      "prediction_mean": 0.45940809118008835
+    },
+    "6": {
+      "count": 874680,
+      "mae": 1.5046466211061962,
+      "rmse": 1.874255322848204,
+      "target_mean": 1.0556393087607088,
+      "prediction_mean": 0.3831952308103829
+    },
+    "7": {
+      "count": 1563,
+      "mae": 3.6705289142623783,
+      "rmse": 4.005937129307706,
+      "target_mean": 4.053184095878253,
+      "prediction_mean": 0.5137845226916546
+    }
+  },
+  "degree_strata": {
+    "0": {
+      "count": 76814,
+      "mae": 3.3282426216246783,
+      "rmse": 3.7032077205677694,
+      "target_mean": 3.6013440310475002,
+      "prediction_mean": 0.4462907220643252
+    },
+    "1": {
+      "count": 126717,
+      "mae": 2.737216812693457,
+      "rmse": 3.108696878202517,
+      "target_mean": 2.9278681168564913,
+      "prediction_mean": 0.4782533738881022
+    },
+    "2": {
+      "count": 238143,
+      "mae": 2.3130247800060744,
+      "rmse": 2.6736766890783574,
+      "target_mean": 2.415053278861972,
+      "prediction_mean": 0.45807581557088634
+    },
+    "3": {
+      "count": 704946,
+      "mae": 1.8225255831583507,
+      "rmse": 2.166840102631671,
+      "target_mean": 1.6907110439050639,
+      "prediction_mean": 0.4014365533218058
+    },
+    "4": {
+      "count": 27245328,
+      "mae": 1.9308307757009413,
+      "rmse": 2.2900021376085937,
+      "target_mean": -1.1956581250797902,
+      "prediction_mean": 0.35808295601360307
+    }
+  },
+  "role_table": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_topology_residual_l2_rq/role_table.json",
+  "degree_source": "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph_directed/edges.parquet",
+  "scope": "hard exported SID; equal-weight three-expert prediction; structural curvature proxy",
+  "raw": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue262/_raw/curvature/104.npz",
+    "sha256": "59a4751536974061fabfe812d516173b7ed41acf9ecf228188fd279d021b89f8"
+  }
+}

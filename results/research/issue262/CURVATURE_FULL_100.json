@@ -1,0 +1,193 @@
+{
+  "schema": "genrec.issue262.curvature_full/1",
+  "arm": "TIGER_gnn_attention_sectional_rq",
+  "index": 100,
+  "identity": {
+    "final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06/test_final.json",
+    "final_sha256": "6786fa854e2ec5a83cb690033200087ced511215c7240a7e6114e0f9c2e4b8c9",
+    "sid_sha256": "037766704565c5143ab721fd5ca5f61bbba3e800baa9dd561d3ae5601987cff2",
+    "stage2_checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/rqvae_best.pth",
+    "stage2_checkpoint_sha256": "0ca5cd32c307460cad7ecd72734538dff2ca3427f64286063ece8c290f8e28f0",
+    "q_file": "/fs04/ar57/wenyu/GeneRec/results/research/issue262/_raw/q/100.npz",
+    "q_sha256": "b17e94e661ae7dafbc75e797f0d89f8084a57f06eabc6239094dfaaa83221047",
+    "scale": 0.08433422446250916,
+    "scale_fitted_on_evaluation": false
+  },
+  "coverage": {
+    "count": 28391948,
+    "excluded": 0,
+    "expected": 28391948,
+    "shards": 13
+  },
+  "metrics": {
+    "pearson": 0.15390326656649891,
+    "spearman": 0.13181508599739683,
+    "rmse": 2.735676094889007,
+    "mae": 2.3444064420769584,
+    "sign": {
+      "accuracy": 0.34034712940443534,
+      "negative": {
+        "support": 21170678,
+        "predicted": 3959748,
+        "tp": 3200830,
+        "fp": 758918,
+        "fn": 17969848,
+        "precision": 0.8083418439759298,
+        "recall": 0.15119166235488538,
+        "f1": 0.2547374246660204
+      },
+      "zero": {
+        "support": 77,
+        "predicted": 1,
+        "tp": 0,
+        "fp": 1,
+        "fn": 77,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": null
+      },
+      "positive": {
+        "support": 7221193,
+        "predicted": 24432199,
+        "tp": 6462288,
+        "fp": 17969911,
+        "fn": 758905,
+        "precision": 0.26449882796059415,
+        "recall": 0.8949058694318238,
+        "f1": 0.4083156711925219
+      },
+      "balanced_accuracy": 0.34869917726223637
+    },
+    "target_quantiles": {
+      "0": -7.6756977647010745,
+      "0.01": -3.9072984348821054,
+      "0.05": -3.445425197172163,
+      "0.25": -2.3606922479669814,
+      "0.5": -1.271791099668996,
+      "0.75": 0.027297617588165585,
+      "0.95": 2.021801315843243,
+      "0.99": 3.49728249765028,
+      "1": 9.017755710841405
+    },
+    "prediction_quantiles": {
+      "0": -7.843981182327394,
+      "0.01": -1.2332051197843314,
+      "0.05": -0.5599832333693462,
+      "0.25": 0.38385689242197124,
+      "0.5": 1.0066294391950459,
+      "0.75": 1.607584421099502,
+      "0.95": 2.429159130229045,
+      "0.99": 3.1520552696913584,
+      "1": 13.453678508058184
+    }
+  },
+  "role_strata": {
+    "-1": {
+      "count": 2,
+      "mae": 5.532812015054384,
+      "rmse": 5.557748761603339,
+      "target_mean": 6.295078868865188,
+      "prediction_mean": 0.7622668538108028
+    },
+    "0": {
+      "count": 228487,
+      "mae": 1.6440957743931093,
+      "rmse": 2.0462962578839767,
+      "target_mean": 0.4854157554896861,
+      "prediction_mean": 1.2873428852672475
+    },
+    "1": {
+      "count": 1976309,
+      "mae": 1.4445352872154409,
+      "rmse": 1.8362748764333372,
+      "target_mean": 0.9020814253773991,
+      "prediction_mean": 1.1830029394104773
+    },
+    "2": {
+      "count": 394595,
+      "mae": 1.8273371168069723,
+      "rmse": 2.2439825138571043,
+      "target_mean": 2.4790222129673807,
+      "prediction_mean": 1.3262389348721844
+    },
+    "3": {
+      "count": 24900259,
+      "mae": 2.462692626839719,
+      "rmse": 2.83322055457451,
+      "target_mean": -1.3650317413433515,
+      "prediction_mean": 0.9622979006053187
+    },
+    "4": {
+      "count": 12650,
+      "mae": 1.476515828231518,
+      "rmse": 1.8606036762865148,
+      "target_mean": 1.408685976285877,
+      "prediction_mean": 1.197744410261204
+    },
+    "5": {
+      "count": 3403,
+      "mae": 1.9673668414073886,
+      "rmse": 2.409422552344594,
+      "target_mean": 2.571745363751222,
+      "prediction_mean": 1.2652928447568241
+    },
+    "6": {
+      "count": 874680,
+      "mae": 1.4394719906851359,
+      "rmse": 1.8261552126786804,
+      "target_mean": 1.0556393087607088,
+      "prediction_mean": 1.1466434040515052
+    },
+    "7": {
+      "count": 1563,
+      "mae": 2.9171835175185796,
+      "rmse": 3.3140213611044276,
+      "target_mean": 4.053184095878253,
+      "prediction_mean": 1.37608665726708
+    }
+  },
+  "degree_strata": {
+    "0": {
+      "count": 76814,
+      "mae": 2.617067931074761,
+      "rmse": 3.045775398232863,
+      "target_mean": 3.6013440310475002,
+      "prediction_mean": 1.3652518930419033
+    },
+    "1": {
+      "count": 126717,
+      "mae": 2.1419422880993415,
+      "rmse": 2.555620897940136,
+      "target_mean": 2.9278681168564913,
+      "prediction_mean": 1.3773548036422234
+    },
+    "2": {
+      "count": 238143,
+      "mae": 1.8333281498486378,
+      "rmse": 2.2343206325755323,
+      "target_mean": 2.415053278861972,
+      "prediction_mean": 1.3485467426274902
+    },
+    "3": {
+      "count": 704946,
+      "mae": 1.5241026582484747,
+      "rmse": 1.9051654257816575,
+      "target_mean": 1.6907110439050639,
+      "prediction_mean": 1.2635330068516901
+    },
+    "4": {
+      "count": 27245328,
+      "mae": 2.3702710974602406,
+      "rmse": 2.757681105019542,
+      "target_mean": -1.1956581250797902,
+      "prediction_mean": 0.9781565524987073
+    }
+  },
+  "role_table": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_topology_residual_l2_rq/role_table.json",
+  "degree_source": "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph_directed/edges.parquet",
+  "scope": "hard exported SID; equal-weight three-expert prediction; structural curvature proxy",
+  "raw": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue262/_raw/curvature/100.npz",
+    "sha256": "3a9b624fbd3794672b7e09e275e7253ec624926abfac58d2b6e7ba24bbc85cd9"
+  }
+}

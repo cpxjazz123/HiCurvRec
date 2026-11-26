@@ -1,0 +1,1924 @@
+{
+  "schema": "genrec.issue262.audit/1",
+  "arms": {
+    "100": {
+      "arm": "TIGER_gnn_attention_sectional_rq",
+      "run_id": "issue252_formal_r2",
+      "final": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_gnn_attention_sectional_rq/logs/Amazon_2023_Instruments/Nov-24-2026_15-34-06/test_final.json",
+        "exists": true,
+        "sha256": "6786fa854e2ec5a83cb690033200087ced511215c7240a7e6114e0f9c2e4b8c9",
+        "bytes": 4011
+      },
+      "checkpoint": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/rqvae_best.pth",
+        "exists": true,
+        "sha256": "0ca5cd32c307460cad7ecd72734538dff2ca3427f64286063ece8c290f8e28f0",
+        "bytes": 4672373
+      },
+      "sid": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/item_sids.json",
+        "exists": true,
+        "sha256": "037766704565c5143ab721fd5ca5f61bbba3e800baa9dd561d3ae5601987cff2",
+        "bytes": 1264278
+      },
+      "archive_binding": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/archive_binding.json",
+        "exists": true,
+        "sha256": "549e38cdadf44478e400f45f7de2e934da83383513a5ba46902825be71d3c7ed",
+        "bytes": 30922
+      },
+      "export_manifest": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/export_manifest.json",
+        "exists": true,
+        "sha256": "66b81d8d235189a4d25db9d883af3adeb955888f4d667e87c36af871e8223bf6",
+        "bytes": 955
+      },
+      "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/src",
+      "training": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue252_formal_r2/TIGER_gnn_attention_sectional_rq/result/logs/training_metrics.jsonl",
+        "events": 3000,
+        "complete": true
+      },
+      "stage3": {
+        "test_recall@10": 0.0492870697609638,
+        "n_eval": 57439,
+        "epochs": 150
+      },
+      "r2_source_tar_local": "NA: #261 retained only recall.json; no source tar present in _r2",
+      "validation": {
+        "status": "NA",
+        "reason": "no identity-bound recommendation-validation record for this arm"
+      },
+      "archive_binding_validation": {
+        "status": "FAIL",
+        "error": "ValueError('executed source/config hashes mismatch')"
+      },
+      "candidate_sources": {
+        "status": "PASS",
+        "files": 50
+      }
+    },
+    "101": {
+      "arm": "TIGER_three_expert_attention_rq",
+      "run_id": "stage2_787483d6ef9842d1a7c4593a61ae925c",
+      "final": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_three_expert_attention_rq/logs/Amazon_2023_Instruments/Nov-24-2026_21-16-28/test_final.json",
+        "exists": true,
+        "sha256": "92cb7822e4ddaf11b8a31b3ecaeeb6e6ae6ad8300a4100a22b8125bdb1d586a4",
+        "bytes": 4147
+      },
+      "checkpoint": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/rqvae_best.pth",
+        "exists": true,
+        "sha256": "ecc37a67753bee1bf08c26692f05f87e1601a2970c2adfb707ea4e644e62e72d",
+        "bytes": 4672437
+      },
+      "sid": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/item_sids.json",
+        "exists": true,
+        "sha256": "24c17aee0818373fbb4c76d175170a6b207d6e09a29faa398b140acd84bae2e3",
+        "bytes": 1258391
+      },
+      "archive_binding": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/archive_binding.json",
+        "exists": true,
+        "sha256": "e0aed038ed6e1d6bb11ba4b9b833dc32207896d9d6c2c1dab27098658524e046",
+        "bytes": 30906
+      },
+      "export_manifest": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/export_manifest.json",
+        "exists": true,
+        "sha256": "ed58ef9967d5a778d7c4509a9f45e81d83c39353b25c8011c2b43f90cc6fc355",
+        "bytes": 1016
+      },
+      "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/src",
+      "training": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_787483d6ef9842d1a7c4593a61ae925c/TIGER_three_expert_attention_rq/result/logs/training_metrics.jsonl",
+        "events": 3000,
+        "complete": true
+      },
+      "stage3": {
+        "test_recall@10": 0.046431866850049616,
+        "n_eval": 57439,
+        "epochs": 150
+      },
+      "r2_source_tar_local": "NA: #261 retained only recall.json; no source tar present in _r2",
+      "validation": {
+        "status": "NA",
+        "reason": "no identity-bound recommendation-validation record for this arm"
+      },
+      "archive_binding_validation": {
+        "status": "FAIL",
+        "error": "ValueError('executed source/config hashes mismatch')"
+      },
+      "candidate_sources": {
+        "status": "PASS",
+        "files": 49
+      }
+    },
+    "102": {
+      "arm": "TIGER_module_budget_prefix_rq",
+      "run_id": "issue256_r01_formal",
+      "final": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/test_final.json",
+        "exists": true,
+        "sha256": "195392578b47bc29bc967e61e3cc9561b74b1cfe9f243136720d2753141dab21",
+        "bytes": 3987
+      },
+      "checkpoint": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/rqvae_best.pth",
+        "exists": true,
+        "sha256": "680439b57bfdbec622a5a109b0d589ab21566f71236fc007eb19d59b6108fc0c",
+        "bytes": 4678645
+      },
+      "sid": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+        "exists": true,
+        "sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
+        "bytes": 1262686
+      },
+      "archive_binding": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/archive_binding.json",
+        "exists": true,
+        "sha256": "f26791dce14cbc6d2c3336abd354937861e2a20bb880c42efb77e909b968b4eb",
+        "bytes": 36847
+      },
+      "export_manifest": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/export_manifest.json",
+        "exists": true,
+        "sha256": "a90c264227101d5ef888f5f6306d95263fab18903313a5cd03b4e703a310b49d",
+        "bytes": 949
+      },
+      "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src",
+      "training": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/logs/training_metrics.jsonl",
+        "events": 3000,
+        "complete": true
+      },
+      "stage3": {
+        "test_recall@10": 0.05273420498267727,
+        "n_eval": 57439,
+        "epochs": 150
+      },
+      "r2_source_tar_local": "NA: #261 retained only recall.json; no source tar present in _r2",
+      "validation": {
+        "status": "PASS",
+        "record": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/VALIDATION.json",
+          "exists": true,
+          "sha256": "1245fb69ca0c958d85d63642c15666370f6e1df075d51f1d4dc8683b7a2e19ff",
+          "bytes": 5684
+        },
+        "schema": "genrec.issue256.recommendation_validation/1",
+        "top_status": "COMPLETE",
+        "training": false,
+        "test_access": false,
+        "used_for_checkpoint_selection": false,
+        "identity_checks": {
+          "test_final": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/test_final.json",
+              "sha256": "195392578b47bc29bc967e61e3cc9561b74b1cfe9f243136720d2753141dab21"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/test_final.json",
+              "exists": true,
+              "sha256": "195392578b47bc29bc967e61e3cc9561b74b1cfe9f243136720d2753141dab21",
+              "bytes": 3987
+            },
+            "status": "PASS"
+          },
+          "checkpoint": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_06-36-15/HG_Rec_best.pth",
+              "sha256": "d8540c837dedffd8291615bb6d7578308f74f6469e3182887685a08571082a96"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_06-36-15/HG_Rec_best.pth",
+              "exists": true,
+              "sha256": "d8540c837dedffd8291615bb6d7578308f74f6469e3182887685a08571082a96",
+              "bytes": 18281748
+            },
+            "status": "PASS"
+          },
+          "sid": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+              "sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+              "exists": true,
+              "sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
+              "bytes": 1262686
+            },
+            "status": "PASS"
+          },
+          "valid": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+              "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+              "exists": true,
+              "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9",
+              "bytes": 2317087
+            },
+            "status": "PASS"
+          }
+        },
+        "shards": [
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank0.json",
+            "exists": true,
+            "sha256": "b4360c0c7d7c891762297fa79f698b35ca49da79189f84a03e8281e7a891a759",
+            "bytes": 4944
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank1.json",
+            "exists": true,
+            "sha256": "f48d85c8383d3a98d67f45b954961f1dbbd5a589ba0cfc18e13ac0ca0570611f",
+            "bytes": 4945
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank2.json",
+            "exists": true,
+            "sha256": "7b4bce2553b4cc546c46b9ec35c60e939041d89b58d916746dff643d274c2665",
+            "bytes": 4945
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank3.json",
+            "exists": true,
+            "sha256": "15ef54b0b3e42207fa87c10c360d853c859f6caab0d6373b0be4bbc73497ee72",
+            "bytes": 4945
+          }
+        ],
+        "prediction_rows": [
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank0.jsonl",
+            "exists": true,
+            "sha256": "55094c832036acd60a9d2fe01220fc3443364bd0a9b24e59daa2eea6024db5f3",
+            "bytes": 14912286
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank1.jsonl",
+            "exists": true,
+            "sha256": "c7aa48be1e8fe0ff377e772b529dba708c92695940e3582fed66c8a8c8d23849",
+            "bytes": 14913537
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank2.jsonl",
+            "exists": true,
+            "sha256": "78b6c26baa1cae787341fd6b31acbca90b50751b4c41fd363f58585678391496",
+            "bytes": 14911783
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank3.jsonl",
+            "exists": true,
+            "sha256": "94666d26fd092eeb48697517eafdcf1330ab68403304fcd82763881cc65cd5dd",
+            "bytes": 14911312
+          }
+        ],
+        "row_counts": {
+          "rank0.jsonl": 14360,
+          "rank1.jsonl": 14360,
+          "rank2.jsonl": 14360,
+          "rank3.jsonl": 14359
+        },
+        "metrics": {
+          "validation_recall@5": {
+            "reported": 0.0381622242727067,
+            "recomputed": 0.0381622242727067,
+            "status": "PASS"
+          },
+          "validation_recall@10": {
+            "reported": 0.057643761207541916,
+            "recomputed": 0.057643761207541916,
+            "status": "PASS"
+          },
+          "validation_ndcg@5": {
+            "reported": 0.025688765803069922,
+            "recomputed": 0.025688765803070127,
+            "status": "PASS"
+          },
+          "validation_ndcg@10": {
+            "reported": 0.03194281550571229,
+            "recomputed": 0.03194281550571263,
+            "status": "PASS"
+          }
+        },
+        "reduced": {
+          "n_eval": 57439,
+          "test_recall@5": 0.0381622242727067,
+          "test_recall@10": 0.057643761207541916,
+          "test_ndcg@5": 0.025688765803070127,
+          "test_ndcg@10": 0.03194281550571263
+        },
+        "all_identity_checks_pass": true,
+        "all_metrics_pass": true
+      },
+      "archive_binding_validation": {
+        "status": "FAIL",
+        "error": "ValueError('executed source/config hashes mismatch')"
+      },
+      "candidate_sources": {
+        "status": "PASS",
+        "files": 64
+      }
+    },
+    "103": {
+      "arm": "TIGER_periodic_budget_prefix_rq",
+      "run_id": "issue256_r02_formal",
+      "final": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_periodic_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_12-10-40/test_final.json",
+        "exists": true,
+        "sha256": "de509a5b09f785837db3eed90992c75e474c265c280ca9de6487490f47587c8e",
+        "bytes": 4010
+      },
+      "checkpoint": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result/rqvae_best.pth",
+        "exists": true,
+        "sha256": "e9ee3214e118682a824dfbc467e763cd9124c74112ee96a376d571712cd7b7e1",
+        "bytes": 4679733
+      },
+      "sid": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result/item_sids.json",
+        "exists": true,
+        "sha256": "e18fc0460eea2872f5d56e0c7e1e9b9f311ac77c2f886177e0485acae574133f",
+        "bytes": 1262691
+      },
+      "archive_binding": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result/archive_binding.json",
+        "exists": true,
+        "sha256": "4a91fc51e994a31e0194882a576668d27d458f12e76b7fe47b5735f8b2fd8b36",
+        "bytes": 38949
+      },
+      "export_manifest": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result/export_manifest.json",
+        "exists": true,
+        "sha256": "b501c1074e2cebf877ee4722ba6c841e8c2efa7f1edd76d4f96d830c1c453c1d",
+        "bytes": 955
+      },
+      "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/src",
+      "training": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result/logs/training_metrics.jsonl",
+        "events": 3000,
+        "complete": true
+      },
+      "stage3": {
+        "test_recall@10": 0.05266456588728913,
+        "n_eval": 57439,
+        "epochs": 150
+      },
+      "r2_source_tar_local": "NA: #261 retained only recall.json; no source tar present in _r2",
+      "validation": {
+        "status": "PASS",
+        "record": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/VALIDATION.json",
+          "exists": true,
+          "sha256": "d9d2d94f4e2b4f0f4a9216424176e5a8729e04be962dd45719f3ca6818a2ffc5",
+          "bytes": 5700
+        },
+        "schema": "genrec.issue256.recommendation_validation/1",
+        "top_status": "COMPLETE",
+        "training": false,
+        "test_access": false,
+        "used_for_checkpoint_selection": false,
+        "identity_checks": {
+          "test_final": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_periodic_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_12-10-40/test_final.json",
+              "sha256": "de509a5b09f785837db3eed90992c75e474c265c280ca9de6487490f47587c8e"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_periodic_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_12-10-40/test_final.json",
+              "exists": true,
+              "sha256": "de509a5b09f785837db3eed90992c75e474c265c280ca9de6487490f47587c8e",
+              "bytes": 4010
+            },
+            "status": "PASS"
+          },
+          "checkpoint": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_periodic_budget_prefix_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_12-10-40/HG_Rec_best.pth",
+              "sha256": "a8c1fb4f5fd92545afb354e464ad848aeb77980432de5a882ce7617dccb495e9"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_periodic_budget_prefix_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_12-10-40/HG_Rec_best.pth",
+              "exists": true,
+              "sha256": "a8c1fb4f5fd92545afb354e464ad848aeb77980432de5a882ce7617dccb495e9",
+              "bytes": 18281748
+            },
+            "status": "PASS"
+          },
+          "sid": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result/item_sids.json",
+              "sha256": "e18fc0460eea2872f5d56e0c7e1e9b9f311ac77c2f886177e0485acae574133f"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result/item_sids.json",
+              "exists": true,
+              "sha256": "e18fc0460eea2872f5d56e0c7e1e9b9f311ac77c2f886177e0485acae574133f",
+              "bytes": 1262691
+            },
+            "status": "PASS"
+          },
+          "valid": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+              "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+              "exists": true,
+              "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9",
+              "bytes": 2317087
+            },
+            "status": "PASS"
+          }
+        },
+        "shards": [
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank0.json",
+            "exists": true,
+            "sha256": "f39be6c9241acfd4131b03a7aec7dc7b6d173e2ec78c86c1961926b33aff5a8d",
+            "bytes": 4963
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank1.json",
+            "exists": true,
+            "sha256": "92518267b4b301e5e4036651d9a0779f22fb666bd31d71ef756b9217d0644895",
+            "bytes": 4962
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank2.json",
+            "exists": true,
+            "sha256": "78ab55f5746340f5d35a2ca0c5f566dec60b494035909eec5adbc76e367f6775",
+            "bytes": 4963
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank3.json",
+            "exists": true,
+            "sha256": "b095e4e8b0491306182ecd5070bd87e632b62b60525f78af3243265ae3faf710",
+            "bytes": 4963
+          }
+        ],
+        "prediction_rows": [
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank0.jsonl",
+            "exists": true,
+            "sha256": "fc499b511a936fff05bb191f8f292ef8f5d8acd775a8f322446a5b5f0d3694f8",
+            "bytes": 14841636
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank1.jsonl",
+            "exists": true,
+            "sha256": "bb806aade74ea564acc55cf480468bbe5ac66aa1df3283db7dada3be34b5beab",
+            "bytes": 14842335
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank2.jsonl",
+            "exists": true,
+            "sha256": "525325dcfee1c6b9fe03f505fb265e838499e3e19ab323399b9ec3a5b7b2a4a6",
+            "bytes": 14839553
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank3.jsonl",
+            "exists": true,
+            "sha256": "28e2916e5744aff4847adb37e069883224acea7a7cd690519a5fb78811e64687",
+            "bytes": 14840455
+          }
+        ],
+        "row_counts": {
+          "rank0.jsonl": 14360,
+          "rank1.jsonl": 14360,
+          "rank2.jsonl": 14360,
+          "rank3.jsonl": 14359
+        },
+        "metrics": {
+          "validation_recall@5": {
+            "reported": 0.03739619422343704,
+            "recomputed": 0.03739619422343704,
+            "status": "PASS"
+          },
+          "validation_recall@10": {
+            "reported": 0.0573129755044482,
+            "recomputed": 0.0573129755044482,
+            "status": "PASS"
+          },
+          "validation_ndcg@5": {
+            "reported": 0.02493176037233396,
+            "recomputed": 0.024931760372334116,
+            "status": "PASS"
+          },
+          "validation_ndcg@10": {
+            "reported": 0.03132422926289257,
+            "recomputed": 0.031324229262892966,
+            "status": "PASS"
+          }
+        },
+        "reduced": {
+          "n_eval": 57439,
+          "test_recall@5": 0.03739619422343704,
+          "test_recall@10": 0.0573129755044482,
+          "test_ndcg@5": 0.024931760372334116,
+          "test_ndcg@10": 0.031324229262892966
+        },
+        "all_identity_checks_pass": true,
+        "all_metrics_pass": true
+      },
+      "archive_binding_validation": {
+        "status": "PASS"
+      },
+      "candidate_sources": {
+        "status": "PASS",
+        "files": 74
+      }
+    },
+    "104": {
+      "arm": "TIGER_role_conditioned_l1_rq",
+      "run_id": "issue256_r03_formal",
+      "final": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l1_rq/logs/Amazon_2023_Instruments/Nov-25-2026_17-22-12/test_final.json",
+        "exists": true,
+        "sha256": "0a287e074359fcb47fa85ac4408c072ec954e61db6a9a14824d66e87b21ae5f3",
+        "bytes": 3975
+      },
+      "checkpoint": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/rqvae_best.pth",
+        "exists": true,
+        "sha256": "37e7198921824f6a7351cefcf91a80ca61d560a3d54ee816264c35d8089cb13d",
+        "bytes": 4680117
+      },
+      "sid": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/item_sids.json",
+        "exists": true,
+        "sha256": "f6754f385fe7ea46e912442e624aa0b59d44cc9b422c6f721c69bf3ce7fa1862",
+        "bytes": 1261818
+      },
+      "archive_binding": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/archive_binding.json",
+        "exists": true,
+        "sha256": "6dd2d5dbd7ab641d5fb017935aacf3e27e8beedb9f1a58da0a3c795b16bee236",
+        "bytes": 39727
+      },
+      "export_manifest": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/export_manifest.json",
+        "exists": true,
+        "sha256": "384dbb7ba4e7c29b33dd088d509f6d07045a956e07e8043153c592390a2cedbe",
+        "bytes": 946
+      },
+      "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/src",
+      "training": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/logs/training_metrics.jsonl",
+        "events": 3000,
+        "complete": true
+      },
+      "stage3": {
+        "test_recall@10": 0.0490085133794112,
+        "n_eval": 57439,
+        "epochs": 150
+      },
+      "r2_source_tar_local": "NA: #261 retained only recall.json; no source tar present in _r2",
+      "validation": {
+        "status": "PASS",
+        "record": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/VALIDATION.json",
+          "exists": true,
+          "sha256": "cc6b54092f7492fd4660b6d3dceecd20d053f82b394139c82718a5bea5c0979d",
+          "bytes": 5679
+        },
+        "schema": "genrec.issue256.recommendation_validation/1",
+        "top_status": "COMPLETE",
+        "training": false,
+        "test_access": false,
+        "used_for_checkpoint_selection": false,
+        "identity_checks": {
+          "test_final": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l1_rq/logs/Amazon_2023_Instruments/Nov-25-2026_17-22-12/test_final.json",
+              "sha256": "0a287e074359fcb47fa85ac4408c072ec954e61db6a9a14824d66e87b21ae5f3"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l1_rq/logs/Amazon_2023_Instruments/Nov-25-2026_17-22-12/test_final.json",
+              "exists": true,
+              "sha256": "0a287e074359fcb47fa85ac4408c072ec954e61db6a9a14824d66e87b21ae5f3",
+              "bytes": 3975
+            },
+            "status": "PASS"
+          },
+          "checkpoint": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l1_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_17-22-12/HG_Rec_best.pth",
+              "sha256": "3e03c99aba658a678ca521743498c13362d1c35eab498ae3dbc399c15a13146d"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l1_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_17-22-12/HG_Rec_best.pth",
+              "exists": true,
+              "sha256": "3e03c99aba658a678ca521743498c13362d1c35eab498ae3dbc399c15a13146d",
+              "bytes": 18281236
+            },
+            "status": "PASS"
+          },
+          "sid": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/item_sids.json",
+              "sha256": "f6754f385fe7ea46e912442e624aa0b59d44cc9b422c6f721c69bf3ce7fa1862"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/item_sids.json",
+              "exists": true,
+              "sha256": "f6754f385fe7ea46e912442e624aa0b59d44cc9b422c6f721c69bf3ce7fa1862",
+              "bytes": 1261818
+            },
+            "status": "PASS"
+          },
+          "valid": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+              "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+              "exists": true,
+              "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9",
+              "bytes": 2317087
+            },
+            "status": "PASS"
+          }
+        },
+        "shards": [
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank0.json",
+            "exists": true,
+            "sha256": "74f1455babc2ac2a3e28fe71c2fa65c9081940abc11cb26b7112ab98ab02d58f",
+            "bytes": 4941
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank1.json",
+            "exists": true,
+            "sha256": "a620c16f70af7f20ae7cd207fe97a1e654e96c1d53cda8ebf9f2fb3eb1699dd2",
+            "bytes": 4943
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank2.json",
+            "exists": true,
+            "sha256": "afdc110913502bcc3d31b4f6decd21c8d2a3d7e32227c42862ba6bf37f2edffb",
+            "bytes": 4943
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank3.json",
+            "exists": true,
+            "sha256": "65cf425d685e988682ca0e895fef1e88970eaa2d4f7ff3507be06b8708d4158a",
+            "bytes": 4941
+          }
+        ],
+        "prediction_rows": [
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank0.jsonl",
+            "exists": true,
+            "sha256": "c9711b6a1cd34548c0e9c47cb9b2ed77a487814a8fb32fa268723273d417aa9d",
+            "bytes": 14845112
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank1.jsonl",
+            "exists": true,
+            "sha256": "47f0593d012da9fa4155dd473db93f352b4f51bef48a76bf3e3192d17ff0e06f",
+            "bytes": 14845802
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank2.jsonl",
+            "exists": true,
+            "sha256": "656063bf3a1f6029a3fa936ea5e195501b058950874477ccf786cb41dc97aac7",
+            "bytes": 14844821
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank3.jsonl",
+            "exists": true,
+            "sha256": "4ef3bcfba0360fe03b0b8965b0dd2726c3ea1a14a3c92209b3f50634c3d478e1",
+            "bytes": 14845566
+          }
+        ],
+        "row_counts": {
+          "rank0.jsonl": 14360,
+          "rank1.jsonl": 14360,
+          "rank2.jsonl": 14360,
+          "rank3.jsonl": 14359
+        },
+        "metrics": {
+          "validation_recall@5": {
+            "reported": 0.03589895367259179,
+            "recomputed": 0.03589895367259179,
+            "status": "PASS"
+          },
+          "validation_recall@10": {
+            "reported": 0.05430108462891067,
+            "recomputed": 0.05430108462891067,
+            "status": "PASS"
+          },
+          "validation_ndcg@5": {
+            "reported": 0.023720105902666,
+            "recomputed": 0.023720105902666128,
+            "status": "PASS"
+          },
+          "validation_ndcg@10": {
+            "reported": 0.029634270056650123,
+            "recomputed": 0.02963427005665038,
+            "status": "PASS"
+          }
+        },
+        "reduced": {
+          "n_eval": 57439,
+          "test_recall@5": 0.03589895367259179,
+          "test_recall@10": 0.05430108462891067,
+          "test_ndcg@5": 0.023720105902666128,
+          "test_ndcg@10": 0.02963427005665038
+        },
+        "all_identity_checks_pass": true,
+        "all_metrics_pass": true
+      },
+      "archive_binding_validation": {
+        "status": "PASS"
+      },
+      "candidate_sources": {
+        "status": "PASS",
+        "files": 78
+      }
+    },
+    "105": {
+      "arm": "TIGER_role_conditioned_l3_rq",
+      "run_id": "issue256_r04_formal",
+      "final": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/logs/Amazon_2023_Instruments/Nov-25-2026_19-53-02/test_final.json",
+        "exists": true,
+        "sha256": "714d6f1a73ebf68d81e80683c99171782d6833f7abb5021d1e600be5bd9d79cf",
+        "bytes": 3975
+      },
+      "checkpoint": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/rqvae_best.pth",
+        "exists": true,
+        "sha256": "5c6b1557f004a194010092f3d9cb7ff471940ee32a19dfd6c0feaf01b6c1a638",
+        "bytes": 4680117
+      },
+      "sid": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/item_sids.json",
+        "exists": true,
+        "sha256": "26368f3e7690c6831b523eb82e0755aea58885336e0e23725ba5f7fb4ad80a18",
+        "bytes": 1261911
+      },
+      "archive_binding": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/archive_binding.json",
+        "exists": true,
+        "sha256": "4a1e8a22a710544895d19cee5a162549223765160546728fd9cbf1bfa6ccf69d",
+        "bytes": 39727
+      },
+      "export_manifest": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/export_manifest.json",
+        "exists": true,
+        "sha256": "ebc490960412336d6026a438b13e875a539928cb7bc70fda059fa73c5ba6c3dd",
+        "bytes": 946
+      },
+      "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/src",
+      "training": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/logs/training_metrics.jsonl",
+        "events": 3000,
+        "complete": true
+      },
+      "stage3": {
+        "test_recall@10": 0.05151552081338463,
+        "n_eval": 57439,
+        "epochs": 150
+      },
+      "r2_source_tar_local": "NA: #261 retained only recall.json; no source tar present in _r2",
+      "validation": {
+        "status": "PASS",
+        "record": {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/VALIDATION.json",
+          "exists": true,
+          "sha256": "2931dff08b7591e03c6f5a738bce8c56ca811fb499cf2dd6c207fe55c2952bc0",
+          "bytes": 5680
+        },
+        "schema": "genrec.issue256.recommendation_validation/1",
+        "top_status": "COMPLETE",
+        "training": false,
+        "test_access": false,
+        "used_for_checkpoint_selection": false,
+        "identity_checks": {
+          "test_final": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/logs/Amazon_2023_Instruments/Nov-25-2026_19-53-02/test_final.json",
+              "sha256": "714d6f1a73ebf68d81e80683c99171782d6833f7abb5021d1e600be5bd9d79cf"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/logs/Amazon_2023_Instruments/Nov-25-2026_19-53-02/test_final.json",
+              "exists": true,
+              "sha256": "714d6f1a73ebf68d81e80683c99171782d6833f7abb5021d1e600be5bd9d79cf",
+              "bytes": 3975
+            },
+            "status": "PASS"
+          },
+          "checkpoint": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_19-53-02/HG_Rec_best.pth",
+              "sha256": "626c2db2b589a2297e01a5f1b3b31eb4c4d02450c078ea6d13eae3edb394cdf2"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_19-53-02/HG_Rec_best.pth",
+              "exists": true,
+              "sha256": "626c2db2b589a2297e01a5f1b3b31eb4c4d02450c078ea6d13eae3edb394cdf2",
+              "bytes": 18281748
+            },
+            "status": "PASS"
+          },
+          "sid": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/item_sids.json",
+              "sha256": "26368f3e7690c6831b523eb82e0755aea58885336e0e23725ba5f7fb4ad80a18"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/item_sids.json",
+              "exists": true,
+              "sha256": "26368f3e7690c6831b523eb82e0755aea58885336e0e23725ba5f7fb4ad80a18",
+              "bytes": 1261911
+            },
+            "status": "PASS"
+          },
+          "valid": {
+            "want": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+              "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+            },
+            "got": {
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+              "exists": true,
+              "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9",
+              "bytes": 2317087
+            },
+            "status": "PASS"
+          }
+        },
+        "shards": [
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank0.json",
+            "exists": true,
+            "sha256": "658333f110968b4faa1bb5a3d19d4179b9d4a2ed446686abb1d8cb18a0000577",
+            "bytes": 4941
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank1.json",
+            "exists": true,
+            "sha256": "60690051810ec5b4dc076a4805cd07c0218407112da1b3972a143102c907e7db",
+            "bytes": 4941
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank2.json",
+            "exists": true,
+            "sha256": "f1243b04d2001d613b96c883c123309c199153abefde56c658d3dec36cdf9b25",
+            "bytes": 4942
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank3.json",
+            "exists": true,
+            "sha256": "070927eda8d5d735d738df3d47a3db7e4c1897c995664ec74ecb373ab4763f56",
+            "bytes": 4940
+          }
+        ],
+        "prediction_rows": [
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank0.jsonl",
+            "exists": true,
+            "sha256": "595248d511442f06bb5c13c4e3f4682297fc1fc8002d9ca6add264d1f1ae39de",
+            "bytes": 14860664
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank1.jsonl",
+            "exists": true,
+            "sha256": "c35e335cea15ac8496cc738026d744876c81050bed15d1f6456dcc5688d1870a",
+            "bytes": 14860805
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank2.jsonl",
+            "exists": true,
+            "sha256": "17071acc81e9c9048e5afbc6946dc3b5071c33e53ad65965083eea6182b9394a",
+            "bytes": 14859567
+          },
+          {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank3.jsonl",
+            "exists": true,
+            "sha256": "030b27b46f24a96d5a03ff86c240e2bcd216cb6cd334227fc2940a209d79f4aa",
+            "bytes": 14857953
+          }
+        ],
+        "row_counts": {
+          "rank0.jsonl": 14360,
+          "rank1.jsonl": 14360,
+          "rank2.jsonl": 14360,
+          "rank3.jsonl": 14359
+        },
+        "metrics": {
+          "validation_recall@5": {
+            "reported": 0.0367346228172496,
+            "recomputed": 0.0367346228172496,
+            "status": "PASS"
+          },
+          "validation_recall@10": {
+            "reported": 0.05590278382283814,
+            "recomputed": 0.05590278382283814,
+            "status": "PASS"
+          },
+          "validation_ndcg@5": {
+            "reported": 0.02446722095244873,
+            "recomputed": 0.024467220952448916,
+            "status": "PASS"
+          },
+          "validation_ndcg@10": {
+            "reported": 0.030634974647999785,
+            "recomputed": 0.0306349746480001,
+            "status": "PASS"
+          }
+        },
+        "reduced": {
+          "n_eval": 57439,
+          "test_recall@5": 0.0367346228172496,
+          "test_recall@10": 0.05590278382283814,
+          "test_ndcg@5": 0.024467220952448916,
+          "test_ndcg@10": 0.0306349746480001
+        },
+        "all_identity_checks_pass": true,
+        "all_metrics_pass": true
+      },
+      "archive_binding_validation": {
+        "status": "PASS"
+      },
+      "candidate_sources": {
+        "status": "PASS",
+        "files": 78
+      }
+    },
+    "106": {
+      "arm": "TIGER_role_conditioned_l2_rq",
+      "run_id": "issue256_r05_formal",
+      "final": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l2_rq/logs/Amazon_2023_Instruments/Nov-25-2026_23-03-28/test_final.json",
+        "exists": true,
+        "sha256": "ed2d61223dd58af4fd77166a6ecdd1ec2c4aa6129ef534c1d60be6866db97cb9",
+        "bytes": 3976
+      },
+      "checkpoint": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/rqvae_best.pth",
+        "exists": true,
+        "sha256": "f93da1a7466d62f07c6482c64cf1a8efdd9dd1fa7ccdf7891be98d6d37bc7f26",
+        "bytes": 4680373
+      },
+      "sid": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/item_sids.json",
+        "exists": true,
+        "sha256": "dc206dba7fbdadc28bbdedb582c7c755e412d70bdfec930b380a2bd5ea9d5ba6",
+        "bytes": 1258826
+      },
+      "archive_binding": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/archive_binding.json",
+        "exists": true,
+        "sha256": "28055c2832260b2c2a13620e3dcd74cc3a6cbfa636652a194deb3295ffd540ae",
+        "bytes": 40133
+      },
+      "export_manifest": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/export_manifest.json",
+        "exists": true,
+        "sha256": "071d75459ee43b4dbbec72dc50a91d0035c8b01b43e6d009d077b85b35d147cb",
+        "bytes": 946
+      },
+      "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/src",
+      "training": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r05_formal/TIGER_role_conditioned_l2_rq/result/logs/training_metrics.jsonl",
+        "events": 3000,
+        "complete": true
+      },
+      "stage3": {
+        "test_recall@10": 0.05034906596563311,
+        "n_eval": 57439,
+        "epochs": 150
+      },
+      "r2_source_tar_local": "NA: #261 retained only recall.json; no source tar present in _r2",
+      "validation": {
+        "status": "NA",
+        "reason": "no identity-bound recommendation-validation record for this arm"
+      },
+      "archive_binding_validation": {
+        "status": "PASS"
+      },
+      "candidate_sources": {
+        "status": "PASS",
+        "files": 80
+      }
+    },
+    "107": {
+      "arm": "TIGER_topology_residual_l2_rq",
+      "run_id": "stage2_127a3cca78dc49bf899ded006b2a11ca",
+      "final": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_topology_residual_l2_rq/logs/Amazon_2023_Instruments/Nov-26-2026_03-43-59/test_final.json",
+        "exists": true,
+        "sha256": "7f0b602fe98aef29b4a8da71598a8eae4b9438b9edbf4a401a86daa8800a7678",
+        "bytes": 4127
+      },
+      "checkpoint": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_127a3cca78dc49bf899ded006b2a11ca/TIGER_topology_residual_l2_rq/result/rqvae_best.pth",
+        "exists": true,
+        "sha256": "ec5271f4d60e84c7b661896b7c114dbaa5c0f81125ffd4f87c7742955527a633",
+        "bytes": 4685429
+      },
+      "sid": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_127a3cca78dc49bf899ded006b2a11ca/TIGER_topology_residual_l2_rq/result/item_sids.json",
+        "exists": true,
+        "sha256": "c5f0e739b11b3ee79237e22c2354f18b2dc6f18b8b78b03a3978d77bfec0691b",
+        "bytes": 1259363
+      },
+      "archive_binding": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_127a3cca78dc49bf899ded006b2a11ca/TIGER_topology_residual_l2_rq/result/archive_binding.json",
+        "exists": true,
+        "sha256": "6ffb6be91080a31d63405fbbb7c6d400a0dd6baca1f079cb309eefde2ecfdd43",
+        "bytes": 40647
+      },
+      "export_manifest": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_127a3cca78dc49bf899ded006b2a11ca/TIGER_topology_residual_l2_rq/result/export_manifest.json",
+        "exists": true,
+        "sha256": "f4f472ac4fbef9143007f9243c738220e0e504b8c7c9a0ff2a004c7be0ab59b7",
+        "bytes": 1009
+      },
+      "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_127a3cca78dc49bf899ded006b2a11ca/TIGER_topology_residual_l2_rq/src",
+      "training": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_127a3cca78dc49bf899ded006b2a11ca/TIGER_topology_residual_l2_rq/result/logs/training_metrics.jsonl",
+        "events": 3000,
+        "complete": true
+      },
+      "stage3": {
+        "test_recall@10": 0.049600445690210486,
+        "n_eval": 57439,
+        "epochs": 150
+      },
+      "r2_source_tar_local": "NA: #261 retained only recall.json; no source tar present in _r2",
+      "validation": {
+        "status": "NA",
+        "reason": "no identity-bound recommendation-validation record for this arm"
+      },
+      "archive_binding_validation": {
+        "status": "PASS"
+      },
+      "candidate_sources": {
+        "status": "PASS",
+        "files": 82
+      }
+    }
+  },
+  "validation": {
+    "102": {
+      "status": "PASS",
+      "record": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/VALIDATION.json",
+        "exists": true,
+        "sha256": "1245fb69ca0c958d85d63642c15666370f6e1df075d51f1d4dc8683b7a2e19ff",
+        "bytes": 5684
+      },
+      "schema": "genrec.issue256.recommendation_validation/1",
+      "top_status": "COMPLETE",
+      "training": false,
+      "test_access": false,
+      "used_for_checkpoint_selection": false,
+      "identity_checks": {
+        "test_final": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/test_final.json",
+            "sha256": "195392578b47bc29bc967e61e3cc9561b74b1cfe9f243136720d2753141dab21"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_06-36-15/test_final.json",
+            "exists": true,
+            "sha256": "195392578b47bc29bc967e61e3cc9561b74b1cfe9f243136720d2753141dab21",
+            "bytes": 3987
+          },
+          "status": "PASS"
+        },
+        "checkpoint": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_06-36-15/HG_Rec_best.pth",
+            "sha256": "d8540c837dedffd8291615bb6d7578308f74f6469e3182887685a08571082a96"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_module_budget_prefix_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_06-36-15/HG_Rec_best.pth",
+            "exists": true,
+            "sha256": "d8540c837dedffd8291615bb6d7578308f74f6469e3182887685a08571082a96",
+            "bytes": 18281748
+          },
+          "status": "PASS"
+        },
+        "sid": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+            "sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/result/item_sids.json",
+            "exists": true,
+            "sha256": "201d2cc537dfdcc27060302489324d818356fd6327b88de89584943108a5758f",
+            "bytes": 1262686
+          },
+          "status": "PASS"
+        },
+        "valid": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+            "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+            "exists": true,
+            "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9",
+            "bytes": 2317087
+          },
+          "status": "PASS"
+        }
+      },
+      "shards": [
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank0.json",
+          "exists": true,
+          "sha256": "b4360c0c7d7c891762297fa79f698b35ca49da79189f84a03e8281e7a891a759",
+          "bytes": 4944
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank1.json",
+          "exists": true,
+          "sha256": "f48d85c8383d3a98d67f45b954961f1dbbd5a589ba0cfc18e13ac0ca0570611f",
+          "bytes": 4945
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank2.json",
+          "exists": true,
+          "sha256": "7b4bce2553b4cc546c46b9ec35c60e939041d89b58d916746dff643d274c2665",
+          "bytes": 4945
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank3.json",
+          "exists": true,
+          "sha256": "15ef54b0b3e42207fa87c10c360d853c859f6caab0d6373b0be4bbc73497ee72",
+          "bytes": 4945
+        }
+      ],
+      "prediction_rows": [
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank0.jsonl",
+          "exists": true,
+          "sha256": "55094c832036acd60a9d2fe01220fc3443364bd0a9b24e59daa2eea6024db5f3",
+          "bytes": 14912286
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank1.jsonl",
+          "exists": true,
+          "sha256": "c7aa48be1e8fe0ff377e772b529dba708c92695940e3582fed66c8a8c8d23849",
+          "bytes": 14913537
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank2.jsonl",
+          "exists": true,
+          "sha256": "78b6c26baa1cae787341fd6b31acbca90b50751b4c41fd363f58585678391496",
+          "bytes": 14911783
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r01/recommendation_validation/rank3.jsonl",
+          "exists": true,
+          "sha256": "94666d26fd092eeb48697517eafdcf1330ab68403304fcd82763881cc65cd5dd",
+          "bytes": 14911312
+        }
+      ],
+      "row_counts": {
+        "rank0.jsonl": 14360,
+        "rank1.jsonl": 14360,
+        "rank2.jsonl": 14360,
+        "rank3.jsonl": 14359
+      },
+      "metrics": {
+        "validation_recall@5": {
+          "reported": 0.0381622242727067,
+          "recomputed": 0.0381622242727067,
+          "status": "PASS"
+        },
+        "validation_recall@10": {
+          "reported": 0.057643761207541916,
+          "recomputed": 0.057643761207541916,
+          "status": "PASS"
+        },
+        "validation_ndcg@5": {
+          "reported": 0.025688765803069922,
+          "recomputed": 0.025688765803070127,
+          "status": "PASS"
+        },
+        "validation_ndcg@10": {
+          "reported": 0.03194281550571229,
+          "recomputed": 0.03194281550571263,
+          "status": "PASS"
+        }
+      },
+      "reduced": {
+        "n_eval": 57439,
+        "test_recall@5": 0.0381622242727067,
+        "test_recall@10": 0.057643761207541916,
+        "test_ndcg@5": 0.025688765803070127,
+        "test_ndcg@10": 0.03194281550571263
+      },
+      "all_identity_checks_pass": true,
+      "all_metrics_pass": true
+    },
+    "103": {
+      "status": "PASS",
+      "record": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/VALIDATION.json",
+        "exists": true,
+        "sha256": "d9d2d94f4e2b4f0f4a9216424176e5a8729e04be962dd45719f3ca6818a2ffc5",
+        "bytes": 5700
+      },
+      "schema": "genrec.issue256.recommendation_validation/1",
+      "top_status": "COMPLETE",
+      "training": false,
+      "test_access": false,
+      "used_for_checkpoint_selection": false,
+      "identity_checks": {
+        "test_final": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_periodic_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_12-10-40/test_final.json",
+            "sha256": "de509a5b09f785837db3eed90992c75e474c265c280ca9de6487490f47587c8e"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_periodic_budget_prefix_rq/logs/Amazon_2023_Instruments/Nov-25-2026_12-10-40/test_final.json",
+            "exists": true,
+            "sha256": "de509a5b09f785837db3eed90992c75e474c265c280ca9de6487490f47587c8e",
+            "bytes": 4010
+          },
+          "status": "PASS"
+        },
+        "checkpoint": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_periodic_budget_prefix_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_12-10-40/HG_Rec_best.pth",
+            "sha256": "a8c1fb4f5fd92545afb354e464ad848aeb77980432de5a882ce7617dccb495e9"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_periodic_budget_prefix_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_12-10-40/HG_Rec_best.pth",
+            "exists": true,
+            "sha256": "a8c1fb4f5fd92545afb354e464ad848aeb77980432de5a882ce7617dccb495e9",
+            "bytes": 18281748
+          },
+          "status": "PASS"
+        },
+        "sid": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result/item_sids.json",
+            "sha256": "e18fc0460eea2872f5d56e0c7e1e9b9f311ac77c2f886177e0485acae574133f"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r02_formal/TIGER_periodic_budget_prefix_rq/result/item_sids.json",
+            "exists": true,
+            "sha256": "e18fc0460eea2872f5d56e0c7e1e9b9f311ac77c2f886177e0485acae574133f",
+            "bytes": 1262691
+          },
+          "status": "PASS"
+        },
+        "valid": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+            "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+            "exists": true,
+            "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9",
+            "bytes": 2317087
+          },
+          "status": "PASS"
+        }
+      },
+      "shards": [
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank0.json",
+          "exists": true,
+          "sha256": "f39be6c9241acfd4131b03a7aec7dc7b6d173e2ec78c86c1961926b33aff5a8d",
+          "bytes": 4963
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank1.json",
+          "exists": true,
+          "sha256": "92518267b4b301e5e4036651d9a0779f22fb666bd31d71ef756b9217d0644895",
+          "bytes": 4962
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank2.json",
+          "exists": true,
+          "sha256": "78ab55f5746340f5d35a2ca0c5f566dec60b494035909eec5adbc76e367f6775",
+          "bytes": 4963
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank3.json",
+          "exists": true,
+          "sha256": "b095e4e8b0491306182ecd5070bd87e632b62b60525f78af3243265ae3faf710",
+          "bytes": 4963
+        }
+      ],
+      "prediction_rows": [
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank0.jsonl",
+          "exists": true,
+          "sha256": "fc499b511a936fff05bb191f8f292ef8f5d8acd775a8f322446a5b5f0d3694f8",
+          "bytes": 14841636
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank1.jsonl",
+          "exists": true,
+          "sha256": "bb806aade74ea564acc55cf480468bbe5ac66aa1df3283db7dada3be34b5beab",
+          "bytes": 14842335
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank2.jsonl",
+          "exists": true,
+          "sha256": "525325dcfee1c6b9fe03f505fb265e838499e3e19ab323399b9ec3a5b7b2a4a6",
+          "bytes": 14839553
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r02/recommendation_validation/rank3.jsonl",
+          "exists": true,
+          "sha256": "28e2916e5744aff4847adb37e069883224acea7a7cd690519a5fb78811e64687",
+          "bytes": 14840455
+        }
+      ],
+      "row_counts": {
+        "rank0.jsonl": 14360,
+        "rank1.jsonl": 14360,
+        "rank2.jsonl": 14360,
+        "rank3.jsonl": 14359
+      },
+      "metrics": {
+        "validation_recall@5": {
+          "reported": 0.03739619422343704,
+          "recomputed": 0.03739619422343704,
+          "status": "PASS"
+        },
+        "validation_recall@10": {
+          "reported": 0.0573129755044482,
+          "recomputed": 0.0573129755044482,
+          "status": "PASS"
+        },
+        "validation_ndcg@5": {
+          "reported": 0.02493176037233396,
+          "recomputed": 0.024931760372334116,
+          "status": "PASS"
+        },
+        "validation_ndcg@10": {
+          "reported": 0.03132422926289257,
+          "recomputed": 0.031324229262892966,
+          "status": "PASS"
+        }
+      },
+      "reduced": {
+        "n_eval": 57439,
+        "test_recall@5": 0.03739619422343704,
+        "test_recall@10": 0.0573129755044482,
+        "test_ndcg@5": 0.024931760372334116,
+        "test_ndcg@10": 0.031324229262892966
+      },
+      "all_identity_checks_pass": true,
+      "all_metrics_pass": true
+    },
+    "104": {
+      "status": "PASS",
+      "record": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/VALIDATION.json",
+        "exists": true,
+        "sha256": "cc6b54092f7492fd4660b6d3dceecd20d053f82b394139c82718a5bea5c0979d",
+        "bytes": 5679
+      },
+      "schema": "genrec.issue256.recommendation_validation/1",
+      "top_status": "COMPLETE",
+      "training": false,
+      "test_access": false,
+      "used_for_checkpoint_selection": false,
+      "identity_checks": {
+        "test_final": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l1_rq/logs/Amazon_2023_Instruments/Nov-25-2026_17-22-12/test_final.json",
+            "sha256": "0a287e074359fcb47fa85ac4408c072ec954e61db6a9a14824d66e87b21ae5f3"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l1_rq/logs/Amazon_2023_Instruments/Nov-25-2026_17-22-12/test_final.json",
+            "exists": true,
+            "sha256": "0a287e074359fcb47fa85ac4408c072ec954e61db6a9a14824d66e87b21ae5f3",
+            "bytes": 3975
+          },
+          "status": "PASS"
+        },
+        "checkpoint": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l1_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_17-22-12/HG_Rec_best.pth",
+            "sha256": "3e03c99aba658a678ca521743498c13362d1c35eab498ae3dbc399c15a13146d"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l1_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_17-22-12/HG_Rec_best.pth",
+            "exists": true,
+            "sha256": "3e03c99aba658a678ca521743498c13362d1c35eab498ae3dbc399c15a13146d",
+            "bytes": 18281236
+          },
+          "status": "PASS"
+        },
+        "sid": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/item_sids.json",
+            "sha256": "f6754f385fe7ea46e912442e624aa0b59d44cc9b422c6f721c69bf3ce7fa1862"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r03_formal/TIGER_role_conditioned_l1_rq/result/item_sids.json",
+            "exists": true,
+            "sha256": "f6754f385fe7ea46e912442e624aa0b59d44cc9b422c6f721c69bf3ce7fa1862",
+            "bytes": 1261818
+          },
+          "status": "PASS"
+        },
+        "valid": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+            "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+            "exists": true,
+            "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9",
+            "bytes": 2317087
+          },
+          "status": "PASS"
+        }
+      },
+      "shards": [
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank0.json",
+          "exists": true,
+          "sha256": "74f1455babc2ac2a3e28fe71c2fa65c9081940abc11cb26b7112ab98ab02d58f",
+          "bytes": 4941
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank1.json",
+          "exists": true,
+          "sha256": "a620c16f70af7f20ae7cd207fe97a1e654e96c1d53cda8ebf9f2fb3eb1699dd2",
+          "bytes": 4943
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank2.json",
+          "exists": true,
+          "sha256": "afdc110913502bcc3d31b4f6decd21c8d2a3d7e32227c42862ba6bf37f2edffb",
+          "bytes": 4943
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank3.json",
+          "exists": true,
+          "sha256": "65cf425d685e988682ca0e895fef1e88970eaa2d4f7ff3507be06b8708d4158a",
+          "bytes": 4941
+        }
+      ],
+      "prediction_rows": [
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank0.jsonl",
+          "exists": true,
+          "sha256": "c9711b6a1cd34548c0e9c47cb9b2ed77a487814a8fb32fa268723273d417aa9d",
+          "bytes": 14845112
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank1.jsonl",
+          "exists": true,
+          "sha256": "47f0593d012da9fa4155dd473db93f352b4f51bef48a76bf3e3192d17ff0e06f",
+          "bytes": 14845802
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank2.jsonl",
+          "exists": true,
+          "sha256": "656063bf3a1f6029a3fa936ea5e195501b058950874477ccf786cb41dc97aac7",
+          "bytes": 14844821
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r03/recommendation_validation/rank3.jsonl",
+          "exists": true,
+          "sha256": "4ef3bcfba0360fe03b0b8965b0dd2726c3ea1a14a3c92209b3f50634c3d478e1",
+          "bytes": 14845566
+        }
+      ],
+      "row_counts": {
+        "rank0.jsonl": 14360,
+        "rank1.jsonl": 14360,
+        "rank2.jsonl": 14360,
+        "rank3.jsonl": 14359
+      },
+      "metrics": {
+        "validation_recall@5": {
+          "reported": 0.03589895367259179,
+          "recomputed": 0.03589895367259179,
+          "status": "PASS"
+        },
+        "validation_recall@10": {
+          "reported": 0.05430108462891067,
+          "recomputed": 0.05430108462891067,
+          "status": "PASS"
+        },
+        "validation_ndcg@5": {
+          "reported": 0.023720105902666,
+          "recomputed": 0.023720105902666128,
+          "status": "PASS"
+        },
+        "validation_ndcg@10": {
+          "reported": 0.029634270056650123,
+          "recomputed": 0.02963427005665038,
+          "status": "PASS"
+        }
+      },
+      "reduced": {
+        "n_eval": 57439,
+        "test_recall@5": 0.03589895367259179,
+        "test_recall@10": 0.05430108462891067,
+        "test_ndcg@5": 0.023720105902666128,
+        "test_ndcg@10": 0.02963427005665038
+      },
+      "all_identity_checks_pass": true,
+      "all_metrics_pass": true
+    },
+    "105": {
+      "status": "PASS",
+      "record": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/VALIDATION.json",
+        "exists": true,
+        "sha256": "2931dff08b7591e03c6f5a738bce8c56ca811fb499cf2dd6c207fe55c2952bc0",
+        "bytes": 5680
+      },
+      "schema": "genrec.issue256.recommendation_validation/1",
+      "top_status": "COMPLETE",
+      "training": false,
+      "test_access": false,
+      "used_for_checkpoint_selection": false,
+      "identity_checks": {
+        "test_final": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/logs/Amazon_2023_Instruments/Nov-25-2026_19-53-02/test_final.json",
+            "sha256": "714d6f1a73ebf68d81e80683c99171782d6833f7abb5021d1e600be5bd9d79cf"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/logs/Amazon_2023_Instruments/Nov-25-2026_19-53-02/test_final.json",
+            "exists": true,
+            "sha256": "714d6f1a73ebf68d81e80683c99171782d6833f7abb5021d1e600be5bd9d79cf",
+            "bytes": 3975
+          },
+          "status": "PASS"
+        },
+        "checkpoint": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_19-53-02/HG_Rec_best.pth",
+            "sha256": "626c2db2b589a2297e01a5f1b3b31eb4c4d02450c078ea6d13eae3edb394cdf2"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_role_conditioned_l3_rq/ckpt/Amazon_2023_Instruments/Nov-25-2026_19-53-02/HG_Rec_best.pth",
+            "exists": true,
+            "sha256": "626c2db2b589a2297e01a5f1b3b31eb4c4d02450c078ea6d13eae3edb394cdf2",
+            "bytes": 18281748
+          },
+          "status": "PASS"
+        },
+        "sid": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/item_sids.json",
+            "sha256": "26368f3e7690c6831b523eb82e0755aea58885336e0e23725ba5f7fb4ad80a18"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/issue256_r04_formal/TIGER_role_conditioned_l3_rq/result/item_sids.json",
+            "exists": true,
+            "sha256": "26368f3e7690c6831b523eb82e0755aea58885336e0e23725ba5f7fb4ad80a18",
+            "bytes": 1261911
+          },
+          "status": "PASS"
+        },
+        "valid": {
+          "want": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+            "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+          },
+          "got": {
+            "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+            "exists": true,
+            "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9",
+            "bytes": 2317087
+          },
+          "status": "PASS"
+        }
+      },
+      "shards": [
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank0.json",
+          "exists": true,
+          "sha256": "658333f110968b4faa1bb5a3d19d4179b9d4a2ed446686abb1d8cb18a0000577",
+          "bytes": 4941
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank1.json",
+          "exists": true,
+          "sha256": "60690051810ec5b4dc076a4805cd07c0218407112da1b3972a143102c907e7db",
+          "bytes": 4941
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank2.json",
+          "exists": true,
+          "sha256": "f1243b04d2001d613b96c883c123309c199153abefde56c658d3dec36cdf9b25",
+          "bytes": 4942
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank3.json",
+          "exists": true,
+          "sha256": "070927eda8d5d735d738df3d47a3db7e4c1897c995664ec74ecb373ab4763f56",
+          "bytes": 4940
+        }
+      ],
+      "prediction_rows": [
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank0.jsonl",
+          "exists": true,
+          "sha256": "595248d511442f06bb5c13c4e3f4682297fc1fc8002d9ca6add264d1f1ae39de",
+          "bytes": 14860664
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank1.jsonl",
+          "exists": true,
+          "sha256": "c35e335cea15ac8496cc738026d744876c81050bed15d1f6456dcc5688d1870a",
+          "bytes": 14860805
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank2.jsonl",
+          "exists": true,
+          "sha256": "17071acc81e9c9048e5afbc6946dc3b5071c33e53ad65965083eea6182b9394a",
+          "bytes": 14859567
+        },
+        {
+          "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue256/rounds/r04/recommendation_validation/rank3.jsonl",
+          "exists": true,
+          "sha256": "030b27b46f24a96d5a03ff86c240e2bcd216cb6cd334227fc2940a209d79f4aa",
+          "bytes": 14857953
+        }
+      ],
+      "row_counts": {
+        "rank0.jsonl": 14360,
+        "rank1.jsonl": 14360,
+        "rank2.jsonl": 14360,
+        "rank3.jsonl": 14359
+      },
+      "metrics": {
+        "validation_recall@5": {
+          "reported": 0.0367346228172496,
+          "recomputed": 0.0367346228172496,
+          "status": "PASS"
+        },
+        "validation_recall@10": {
+          "reported": 0.05590278382283814,
+          "recomputed": 0.05590278382283814,
+          "status": "PASS"
+        },
+        "validation_ndcg@5": {
+          "reported": 0.02446722095244873,
+          "recomputed": 0.024467220952448916,
+          "status": "PASS"
+        },
+        "validation_ndcg@10": {
+          "reported": 0.030634974647999785,
+          "recomputed": 0.0306349746480001,
+          "status": "PASS"
+        }
+      },
+      "reduced": {
+        "n_eval": 57439,
+        "test_recall@5": 0.0367346228172496,
+        "test_recall@10": 0.05590278382283814,
+        "test_ndcg@5": 0.024467220952448916,
+        "test_ndcg@10": 0.0306349746480001
+      },
+      "all_identity_checks_pass": true,
+      "all_metrics_pass": true
+    }
+  },
+  "strict_banks": {
+    "struct_test_shared_in": {
+      "bank": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/strict_struct_test_shared_in.npz",
+        "exists": true,
+        "sha256": "ccb5e503da7eb255d9d73b391669657a0990923219658ac04ea1474defd625ab",
+        "bytes": 38035
+      },
+      "pairs": 2877,
+      "true_graph_relation": {
+        "witness_positive": 2877,
+        "witness_fraction": 1.0,
+        "no_direct_edge": 2877
+      },
+      "true_jaccard_in": {
+        "count": 2877,
+        "missing": 0,
+        "mean": 0.20349477292969897,
+        "median": 0.125,
+        "positive_fraction": 1.0
+      },
+      "true_jaccard_out": {
+        "count": 2873,
+        "missing": 4,
+        "mean": 0.0007877236966877907,
+        "median": 0.0,
+        "positive_fraction": 0.024364775495997214
+      },
+      "visible_jaccard_in": {
+        "count": 2876,
+        "missing": 1,
+        "mean": 0.0041065943756106865,
+        "median": 0.0,
+        "positive_fraction": 0.26321279554937416
+      },
+      "visible_jaccard_out": {
+        "count": 2876,
+        "missing": 1,
+        "mean": 0.004598675232618365,
+        "median": 0.0,
+        "positive_fraction": 0.26112656467315715
+      },
+      "feature_source_mismatch": "bank_features.compute used the visible graph; pairs came from the split graph"
+    },
+    "struct_test_shared_out": {
+      "bank": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/strict_struct_test_shared_out.npz",
+        "exists": true,
+        "sha256": "6ea0bda9b4feedd9c7403ee9336505bfb59d168c085fe3e50aa77504b7620b1e",
+        "bytes": 37068
+      },
+      "pairs": 2877,
+      "true_graph_relation": {
+        "witness_positive": 2877,
+        "witness_fraction": 1.0,
+        "no_direct_edge": 2877
+      },
+      "true_jaccard_in": {
+        "count": 2870,
+        "missing": 7,
+        "mean": 0.0009354266700841981,
+        "median": 0.0,
+        "positive_fraction": 0.021254355400696864
+      },
+      "true_jaccard_out": {
+        "count": 2877,
+        "missing": 0,
+        "mean": 0.21575644800113022,
+        "median": 0.125,
+        "positive_fraction": 1.0
+      },
+      "visible_jaccard_in": {
+        "count": 2877,
+        "missing": 0,
+        "mean": 0.003986986619150039,
+        "median": 0.0,
+        "positive_fraction": 0.2415710809871394
+      },
+      "visible_jaccard_out": {
+        "count": 2877,
+        "missing": 0,
+        "mean": 0.004097969763339059,
+        "median": 0.0,
+        "positive_fraction": 0.2429614181438999
+      },
+      "feature_source_mismatch": "bank_features.compute used the visible graph; pairs came from the split graph"
+    },
+    "struct_val_shared_in": {
+      "bank": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/strict_struct_val_shared_in.npz",
+        "exists": true,
+        "sha256": "66b2d85abf63a5674b2e8fd32fd18ea29072204bdc6793d167cecbaf6e8e8a87",
+        "bytes": 38201
+      },
+      "pairs": 2881,
+      "true_graph_relation": {
+        "witness_positive": 2881,
+        "witness_fraction": 1.0,
+        "no_direct_edge": 2881
+      },
+      "true_jaccard_in": {
+        "count": 2881,
+        "missing": 0,
+        "mean": 0.2044254258050154,
+        "median": 0.125,
+        "positive_fraction": 1.0
+      },
+      "true_jaccard_out": {
+        "count": 2875,
+        "missing": 6,
+        "mean": 0.0011921776123182777,
+        "median": 0.0,
+        "positive_fraction": 0.025043478260869566
+      },
+      "visible_jaccard_in": {
+        "count": 2881,
+        "missing": 0,
+        "mean": 0.004387746170636061,
+        "median": 0.0,
+        "positive_fraction": 0.27073932662270045
+      },
+      "visible_jaccard_out": {
+        "count": 2881,
+        "missing": 0,
+        "mean": 0.004449091564452485,
+        "median": 0.0,
+        "positive_fraction": 0.26275598750433876
+      },
+      "feature_source_mismatch": "bank_features.compute used the visible graph; pairs came from the split graph"
+    },
+    "struct_val_shared_out": {
+      "bank": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/infra246/assets/pairs/strict_struct_val_shared_out.npz",
+        "exists": true,
+        "sha256": "78b5fe7114b9d9fd3465c4b4656b9cad195f10c2560ad25485b3f11f72e6af96",
+        "bytes": 38108
+      },
+      "pairs": 2876,
+      "true_graph_relation": {
+        "witness_positive": 2876,
+        "witness_fraction": 1.0,
+        "no_direct_edge": 2876
+      },
+      "true_jaccard_in": {
+        "count": 2872,
+        "missing": 4,
+        "mean": 0.0008463027957392001,
+        "median": 0.0,
+        "positive_fraction": 0.02193593314763231
+      },
+      "true_jaccard_out": {
+        "count": 2876,
+        "missing": 0,
+        "mean": 0.19573068313775216,
+        "median": 0.125,
+        "positive_fraction": 1.0
+      },
+      "visible_jaccard_in": {
+        "count": 2876,
+        "missing": 0,
+        "mean": 0.003953523451451449,
+        "median": 0.0,
+        "positive_fraction": 0.2534770514603616
+      },
+      "visible_jaccard_out": {
+        "count": 2876,
+        "missing": 0,
+        "mean": 0.004453751184650242,
+        "median": 0.0,
+        "positive_fraction": 0.26738525730180807
+      },
+      "feature_source_mismatch": "bank_features.compute used the visible graph; pairs came from the split graph"
+    }
+  },
+  "claim_checks": {
+    "stage3_validation": {
+      "261_claim": "No identity-bound validation final artifact exists",
+      "found": {
+        "102": "PASS",
+        "103": "PASS",
+        "104": "PASS",
+        "105": "PASS"
+      },
+      "remaining_na": [
+        "100",
+        "101",
+        "106",
+        "107"
+      ],
+      "status": "CORRECTED",
+      "scope": "R01-R04 recommendation_validation only; test was never used as validation"
+    },
+    "shared_in_0958": {
+      "source": {
+        "predictor": "hard_q.strict_heldout.banks.strict_struct_test_shared_in.topology.jaccard_in.distance_spearman",
+        "target": "test_recall@10",
+        "n": 8,
+        "pearson": 0.9584480770975934,
+        "spearman": 0.9047619047619048,
+        "p": 0.00017381200118314142,
+        "ci_low": 0.7817905650214259,
+        "ci_high": 0.9926755024007321
+      },
+      "level": "cross-arm correlation of a within-arm distance/label Spearman",
+      "per_arm_predictor": "hard_q.strict_heldout.banks.strict_struct_test_shared_in.topology.jaccard_in.distance_spearman",
+      "per_arm_values": {
+        "TIGER_gnn_attention_sectional_rq": -0.05728148858013328,
+        "TIGER_module_budget_prefix_rq": -0.04317895690923051,
+        "TIGER_periodic_budget_prefix_rq": -0.039506377299078986,
+        "TIGER_role_conditioned_l1_rq": -0.058261025310830106,
+        "TIGER_role_conditioned_l2_rq": -0.054167878595805,
+        "TIGER_role_conditioned_l3_rq": -0.042925422568996945,
+        "TIGER_three_expert_attention_rq": -0.07505345674702207,
+        "TIGER_topology_residual_l2_rq": -0.049458373802811866
+      },
+      "interpretation": "not a shared-in fidelity value; the per-arm values are near zero and negative"
+    }
+  }
+}
