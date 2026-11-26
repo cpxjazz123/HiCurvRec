@@ -8,17 +8,17 @@ no change to public infrastructure or frozen assets.
 | item | result | evidence |
 |---|---|---|
 | #262 identity: 8 R2 bundles | **PASS** | `AUDIT.json` — one row per completed arm; candidate source/checkpoint/SID/final hashes |
-| #262 missing audit: Stage3 validation metrics | **FILLED for R01-R04; NA for 100/101/106/107** | `VALIDATION.csv; AUDIT.json` — identity-bound Stage3 validation shards independently reduced from rank*.jsonl |
+| #262 missing audit: Stage3 validation metrics | **FILLED for R01-R04; NA for 100/101/106/107** | `AUDIT.json` — identity-bound Stage3 validation shards independently reduced from rank*.jsonl |
 | #262 missing audit: full predicted-vs-target curvature Pearson/Spearman/RMSE | **FILLED** | `CURVATURE_FULL_*.json` — 28,391,948 valid frozen triples per arm; full coverage check |
 | #262 missing audit: role/degree-stratified curvature MAE | **FILLED** | `CURVATURE_FULL_*.json` — centre role table and directed total-degree quintiles |
 | #262 missing audit: per-level top1/top2 margin, residual, commitment/codebook | **FILLED** | `QUANT_GRAD_SWITCH_*.json` — actual checkpoint books and exported hard SID |
 | #262 missing audit: switch-off across all eight | **FILLED (CPU interface; exactness diagnostic reported)** | `QUANT_GRAD_SWITCH_*.json; GPU_SWITCH_102.json` — no-intervention, behavior-off, curvature-off, uniform gate, Euclidean+uniform; no retraining |
 | #262 missing audit: endpoint per-module gradients | **FILLED** | `QUANT_GRAD_SWITCH_*.json` — one common fixed batch; optimizer_steps=0; state-dict checksum unchanged |
-| #262 missing audit: historical per-module gradient trajectory | **NA** | `MISSING.csv` — training stream records aggregate and level gradients only; not fabricated |
+| #262 missing audit: historical per-module gradient trajectory | **NA** | `MISSING.json` — training stream records aggregate and level gradients only; not fabricated |
 | #262 missing audit: R2 source tar local copy | **NA** | `AUDIT.json` — #261 retained only recall.json; local source tree/candidate hashes checked instead |
 | H1: directed shared-in target vs degree-matched negative | **PARTIALLY_SUPPORTED** | `SHARED_IN.json` — raw paired difference and relation-matched/no-direct controls |
 | H2: visible vs true directed held-out shared-in feature | **SUPPORTED** | `SHARED_IN.json` — #261 +0.958 is a cross-arm correlation of the visible-graph feature; true directed label has a much larger mean and reverses sign |
-| H3: curvature/reconstruction as architecture/capacity proxy | **SUPPORTED_AS_DESCRIPTIVE** | `CORRELATIONS_262.csv` — n=8 descriptive; no causal direction |
+| H3: curvature/reconstruction as architecture/capacity proxy | **SUPPORTED_AS_DESCRIPTIVE** | `CORRELATIONS_262.json` — n=8 descriptive; no causal direction |
 | no training: Stage2/Stage3/optimizer updates | **PASS** | `TRAINING.json; QUANT_GRAD_SWITCH_*.json` — zero optimizer steps; parameter checksums unchanged; no launcher/training entry |
 | infra: public files and frozen assets | **PASS** | `INFRA_SNAPSHOT_START.json; INFRA_SNAPSHOT_END.json; INFRA_DIFF.json` — path:sha256 before/after |
 

@@ -94,12 +94,14 @@ Every arm has a fixed-batch endpoint forward/autograd result, per-level top1/top
 | `heldout_true_shared_in_spearman` | -0.8682 | -0.7143 | 8 |
 | `heldout_visible_shared_in_spearman` | 0.9584 | 0.9048 | 8 |
 
-Full predictor list, constants/NA, Fisher intervals, leave-one-out and exclude-100/107 sensitivity are in `CORRELATIONS_262.csv` and `SENSITIVITY_262.csv`. n=8 is exploratory; no causal or multiplicity-adjusted claim.
+Full predictor list, constants/NA, Fisher intervals, leave-one-out and exclude-100/107 sensitivity are in `CORRELATIONS_262.json` and `SENSITIVITY_262.json`. n=8 is exploratory; no causal or multiplicity-adjusted claim.
 
 ## Missing evidence
 
-Historical per-module gradient trajectories remain NA because the archived training stream records aggregate/level gradients only. R2 source tar is not present in the retained local R2 download; the local source tree and candidate hash are checked instead. See `MISSING.csv`.
+Historical per-module gradient trajectories remain NA because the archived training stream records aggregate/level gradients only. R2 source tar is not present in the retained local R2 download; the local source tree and candidate hash are checked instead. See `MISSING.json`.
 
 ## Artifacts
 
-`AUDIT.json`, `MATRIX.csv/json`, `CORRELATIONS_262.csv/json`, `SENSITIVITY_262.csv`, `SHARED_IN.json`, `CURVATURE_FULL_<idx>.json`, `QUANT_GRAD_SWITCH_<idx>.json`, `INFRA.md`, `INFRA_SNAPSHOT_START.json`, tests.
+`AUDIT.json`, `MATRIX.json`, `CORRELATIONS_262.json`, `SENSITIVITY_262.json`,
+`SHARED_IN.json`, `CURVATURE_FULL_<idx>.json`,
+`QUANT_GRAD_SWITCH_<idx>.json`, `INFRA.md`, `INFRA_SNAPSHOT_START.json`, tests.

@@ -1,0 +1,103 @@
+{
+  "schema": "genrec.issue262.missing/1",
+  "rows": [
+    {
+      "issue": "#262 identity",
+      "item": "8 R2 bundles",
+      "status": "PASS",
+      "evidence": "AUDIT.json",
+      "scope": "one row per completed arm; candidate source/checkpoint/SID/final hashes"
+    },
+    {
+      "issue": "#262 missing audit",
+      "item": "Stage3 validation metrics",
+      "status": "FILLED for R01-R04; NA for 100/101/106/107",
+      "evidence": "AUDIT.json",
+      "scope": "identity-bound Stage3 validation shards independently reduced from rank*.jsonl"
+    },
+    {
+      "issue": "#262 missing audit",
+      "item": "full predicted-vs-target curvature Pearson/Spearman/RMSE",
+      "status": "FILLED",
+      "evidence": "CURVATURE_FULL_*.json",
+      "scope": "28,391,948 valid frozen triples per arm; full coverage check"
+    },
+    {
+      "issue": "#262 missing audit",
+      "item": "role/degree-stratified curvature MAE",
+      "status": "FILLED",
+      "evidence": "CURVATURE_FULL_*.json",
+      "scope": "centre role table and directed total-degree quintiles"
+    },
+    {
+      "issue": "#262 missing audit",
+      "item": "per-level top1/top2 margin, residual, commitment/codebook",
+      "status": "FILLED",
+      "evidence": "QUANT_GRAD_SWITCH_*.json",
+      "scope": "actual checkpoint books and exported hard SID"
+    },
+    {
+      "issue": "#262 missing audit",
+      "item": "switch-off across all eight",
+      "status": "FILLED (CPU interface; exactness diagnostic reported)",
+      "evidence": "QUANT_GRAD_SWITCH_*.json; GPU_SWITCH_102.json",
+      "scope": "no-intervention, behavior-off, curvature-off, uniform gate, Euclidean+uniform; no retraining"
+    },
+    {
+      "issue": "#262 missing audit",
+      "item": "endpoint per-module gradients",
+      "status": "FILLED",
+      "evidence": "QUANT_GRAD_SWITCH_*.json",
+      "scope": "one common fixed batch; optimizer_steps=0; state-dict checksum unchanged"
+    },
+    {
+      "issue": "#262 missing audit",
+      "item": "historical per-module gradient trajectory",
+      "status": "NA",
+      "evidence": "MISSING.json",
+      "scope": "training stream records aggregate and level gradients only; not fabricated"
+    },
+    {
+      "issue": "#262 missing audit",
+      "item": "R2 source tar local copy",
+      "status": "NA",
+      "evidence": "AUDIT.json",
+      "scope": "#261 retained only recall.json; local source tree/candidate hashes checked instead"
+    },
+    {
+      "issue": "H1",
+      "item": "directed shared-in target vs degree-matched negative",
+      "status": "PARTIALLY_SUPPORTED",
+      "evidence": "SHARED_IN.json",
+      "scope": "raw paired difference and relation-matched/no-direct controls"
+    },
+    {
+      "issue": "H2",
+      "item": "visible vs true directed held-out shared-in feature",
+      "status": "SUPPORTED",
+      "evidence": "SHARED_IN.json",
+      "scope": "#261 +0.958 is a cross-arm correlation of the visible-graph feature; true directed label has a much larger mean and reverses sign"
+    },
+    {
+      "issue": "H3",
+      "item": "curvature/reconstruction as architecture/capacity proxy",
+      "status": "SUPPORTED_AS_DESCRIPTIVE",
+      "evidence": "CORRELATIONS_262.json",
+      "scope": "n=8 descriptive; no causal direction"
+    },
+    {
+      "issue": "no training",
+      "item": "Stage2/Stage3/optimizer updates",
+      "status": "PASS",
+      "evidence": "TRAINING.json; QUANT_GRAD_SWITCH_*.json",
+      "scope": "zero optimizer steps; parameter checksums unchanged; no launcher/training entry"
+    },
+    {
+      "issue": "infra",
+      "item": "public files and frozen assets",
+      "status": "PASS",
+      "evidence": "INFRA_SNAPSHOT_START.json; INFRA_SNAPSHOT_END.json; INFRA_DIFF.json",
+      "scope": "path:sha256 before/after"
+    }
+  ]
+}
