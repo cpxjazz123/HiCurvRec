@@ -1,0 +1,320 @@
+{
+  "schema": "genrec.issue266.endpoint/1",
+  "issue": 266,
+  "index": 109,
+  "arm": "TIGER_euclid_local_curve_supervision_rq",
+  "measurement": {
+    "scope": "one fixed final-checkpoint forward/autograd; read-only",
+    "C_name": "grad_loss_curvature",
+    "G1_name": "grad_curvature_codebook0",
+    "C": 1.5810964107513428,
+    "G1": 7.112086922093524,
+    "C_unweighted": true,
+    "G1_unweighted": true,
+    "curvature_weight": 9.311867870565038e-06,
+    "curvature_on": true,
+    "behavior_on": true,
+    "loss_definition": "fifth return of model(...) with catalogue_embeddings + structural_sample; not combined_loss",
+    "gradient_definition": "torch.autograd.grad(curvature, all requires_grad parameters, allow_unused=True); G1 over rq.vq_layers[0].parameters()",
+    "optimizer_steps": 0,
+    "parameters_unchanged": true,
+    "parameter_checksum_before": "3ebc9a950d57c72d2f772a484024dbbe1dd9c71581290afbae1214848a9c8d1b",
+    "parameter_checksum_after": "3ebc9a950d57c72d2f772a484024dbbe1dd9c71581290afbae1214848a9c8d1b"
+  },
+  "fixed_batch": {
+    "rows": 4096,
+    "seed": 42,
+    "source": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "item_ids_sha256": "251dced08f5c42703e2ce66b3c56924e91d14200a15a3771f45c8d8c66f1c457",
+    "expected_sha256": "251dced08f5c42703e2ce66b3c56924e91d14200a15a3771f45c8d8c66f1c457",
+    "match": true
+  },
+  "structural_sample": {
+    "centre": 15918,
+    "ids": {
+      "n": 256,
+      "sha256": "ecc62bebccc59d67bb5d2fef84ce890df13912abcb87534f38a6c6998ff703b0"
+    },
+    "triples_global": {
+      "shape": [
+        28,
+        3
+      ],
+      "sha256": "03e59ed029c1d8e092be138052c9c69bac924dfcba02ae2849a4511a10a86bbb"
+    },
+    "triples": {
+      "shape": [
+        28,
+        3
+      ],
+      "sha256": "62c1e6966a33037a37804cc9ca7d6ebbd50c9cfc2beb70c32b636bc7dbbf3e59"
+    },
+    "references_global": {
+      "n": 32,
+      "sha256": "6136c4411d510774767dc7bca9ccc24c50390f42740dfc7bacaeb960a39f728a"
+    },
+    "references": {
+      "n": 32,
+      "sha256": "899f9852b55ab35d5b2aefcd9323635cc767dfa49152a79d548b09d7d1bcbe52"
+    },
+    "target": {
+      "n": 28,
+      "sha256": "fca987667130d8ca7675a6f17f9f0f441ed1d64d435858f3f212a3729f606edd",
+      "dtype": "float64"
+    },
+    "row_ids": {
+      "n": 28,
+      "sha256": "39b06ad386f4ef9f33fa87365d4f8263e9849122567a914f2d214988423004e4"
+    },
+    "sampler_counts": {
+      "reference_population": 24471,
+      "centre_population": 24326,
+      "triple_population": 28,
+      "global_step": 0,
+      "rank": 0,
+      "world_size": 1
+    }
+  },
+  "losses": {
+    "original": 0.00010060697240987793,
+    "reconstruction": 8.375139441341162e-05,
+    "curvature": 1.5810964107513428,
+    "combined": 0.000115329930849839
+  },
+  "groups": {
+    "encoder": {
+      "parameters": 8,
+      "shapes": [
+        [
+          512,
+          768
+        ],
+        [
+          512
+        ],
+        [
+          256,
+          512
+        ],
+        [
+          256
+        ],
+        [
+          128,
+          256
+        ],
+        [
+          128
+        ],
+        [
+          32,
+          128
+        ],
+        [
+          32
+        ]
+      ],
+      "curvature_nonzero": 108802,
+      "curvature_none": 0,
+      "original_norm": 0.00010561807184559634,
+      "curvature_norm": 11.934013254065972,
+      "combined_norm": 0.00016361134910517064
+    },
+    "decoder": {
+      "parameters": 8,
+      "shapes": [
+        [
+          128,
+          32
+        ],
+        [
+          128
+        ],
+        [
+          256,
+          128
+        ],
+        [
+          256
+        ],
+        [
+          512,
+          256
+        ],
+        [
+          512
+        ],
+        [
+          768,
+          512
+        ],
+        [
+          768
+        ]
+      ],
+      "curvature_nonzero": 0,
+      "curvature_none": 0,
+      "original_norm": 3.3655009261969035e-05,
+      "curvature_norm": 0.0,
+      "combined_norm": 3.3655009261969035e-05
+    },
+    "GNN": {
+      "parameters": 9,
+      "shapes": [
+        [
+          3,
+          3,
+          32
+        ],
+        [
+          32,
+          32
+        ],
+        [
+          32
+        ],
+        [
+          32,
+          32
+        ],
+        [
+          32
+        ],
+        [
+          32,
+          32
+        ],
+        [
+          32
+        ],
+        [
+          1,
+          32
+        ],
+        [
+          1
+        ]
+      ],
+      "curvature_nonzero": 3480,
+      "curvature_none": 0,
+      "original_norm": 0.0,
+      "curvature_norm": 0.024910428476315163,
+      "combined_norm": 2.3196303718663675e-07
+    },
+    "gate": {
+      "parameters": 9,
+      "shapes": [
+        [
+          3,
+          3,
+          32
+        ],
+        [
+          32,
+          32
+        ],
+        [
+          32
+        ],
+        [
+          32,
+          32
+        ],
+        [
+          32
+        ],
+        [
+          32,
+          32
+        ],
+        [
+          32
+        ],
+        [
+          1,
+          32
+        ],
+        [
+          1
+        ]
+      ],
+      "curvature_nonzero": 3480,
+      "curvature_none": 0,
+      "original_norm": 0.0,
+      "curvature_norm": 0.024910428476315163,
+      "combined_norm": 2.3196303718663675e-07
+    },
+    "codebook0": {
+      "parameters": 1,
+      "shapes": [
+        [
+          256,
+          32
+        ]
+      ],
+      "curvature_nonzero": 8192,
+      "curvature_none": 0,
+      "original_norm": 3.630439002221689e-05,
+      "curvature_norm": 7.112086922093524,
+      "combined_norm": 7.550642053692122e-05
+    },
+    "codebook1": {
+      "parameters": 1,
+      "shapes": [
+        [
+          256,
+          32
+        ]
+      ],
+      "curvature_nonzero": 8192,
+      "curvature_none": 0,
+      "original_norm": 2.899597758000458e-05,
+      "curvature_norm": 9.575259170774409,
+      "combined_norm": 9.592462624608134e-05
+    },
+    "codebook2": {
+      "parameters": 1,
+      "shapes": [
+        [
+          256,
+          32
+        ]
+      ],
+      "curvature_nonzero": 8192,
+      "curvature_none": 0,
+      "original_norm": 5.124445206074104e-05,
+      "curvature_norm": 11.254847933560116,
+      "combined_norm": 0.00011723376194688672
+    }
+  },
+  "g1_parameters": {
+    "count": 1,
+    "shapes": [
+      [
+        256,
+        32
+      ]
+    ],
+    "none_count": 0
+  },
+  "identity": {
+    "final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_euclid_local_curve_supervision_rq/logs/Amazon_2023_Instruments/Nov-26-2026_15-19-00/test_final.json",
+    "final_sha256": "5f9b0b12fea764cd3dcebc0cea07d64f6f4a87b7c0947b243e5aafce3fbdb70f",
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_4891fa8df3e843839de770e52e156892/TIGER_euclid_local_curve_supervision_rq/result/rqvae_best.pth",
+    "checkpoint_sha256": "1f8bfecba0c74bb3cbf9da11fe6925983cbae012753100401a7168e246da7bef",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_4891fa8df3e843839de770e52e156892/TIGER_euclid_local_curve_supervision_rq/result/item_sids.json",
+    "sid_sha256": "8961e4a2062ee8925d9b4f78494fd5dbf1be091a627abd8e527b1353c5506313",
+    "binding": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_4891fa8df3e843839de770e52e156892/TIGER_euclid_local_curve_supervision_rq/result/archive_binding.json",
+    "binding_sha256": "df1d919f138cdb0b10e1f8be656a1a0d11a4705a189beecd3e3d83164d0c29e2",
+    "source_tree": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_4891fa8df3e843839de770e52e156892/TIGER_euclid_local_curve_supervision_rq/src",
+    "source_tree_sha256": "66c3e89aff26fbad8846cde294fa0ffb5b4213378e92b1af180eb0c967e6232d",
+    "recall": "/fs04/ar57/wenyu/GeneRec/results/research/issue266/_r2/109/recall.json",
+    "recall_sha256": "efb75b45c3afb8bb41f2290e578d6b8fd1c9adffc7fc9811230b781e8737feb2",
+    "recall_test_recall@10": 0.052594926791900976,
+    "recall_test_recall@5": 0.03408833719249987,
+    "recall_test_ndcg@10": 0.028250492045720124,
+    "n_eval": 57439,
+    "token_cache": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_frozen_topology_gnn_rq/token_cache.npz",
+    "token_cache_sha256": "4051b902934e72f0a06cd6bb657d67d7eec9c9a1c2304c10a31c848515492837"
+  }
+}

@@ -1,0 +1,590 @@
+{
+  "schema": "genrec.issue266.scores/1",
+  "issue": 266,
+  "score_formula": {
+    "S": "0.8*(C-loC)/(hiC-loC)+0.2*(G1-loG)/(hiG-loG)",
+    "loC": 0.38207152485847473,
+    "hiC": 3.225719451904297,
+    "loG": 1.6841177967230931,
+    "hiG": 32.588647951083324,
+    "weight_C": 0.8,
+    "weight_G": 0.2,
+    "clipped": false,
+    "refit": false
+  },
+  "rows": [
+    {
+      "index": 100,
+      "arm": "TIGER_gnn_attention_sectional_rq",
+      "recall": 0.0492870697609638,
+      "C": 1.2992827892303467,
+      "G1": 1.6841177967230931,
+      "c_component": 0.25803792534182934,
+      "g_component": 0.0,
+      "S": 0.25803792534182934,
+      "source": "results/research/issue262/MATRIX.json",
+      "endpoint": "results/research/issue262/QUANT_GRAD_SWITCH_100.json"
+    },
+    {
+      "index": 101,
+      "arm": "TIGER_three_expert_attention_rq",
+      "recall": 0.046431866850049616,
+      "C": 0.38207152485847473,
+      "G1": 9.739098398312,
+      "c_component": 0.0,
+      "g_component": 0.052128154424974836,
+      "S": 0.052128154424974836,
+      "source": "results/research/issue262/MATRIX.json",
+      "endpoint": "results/research/issue262/QUANT_GRAD_SWITCH_101.json"
+    },
+    {
+      "index": 102,
+      "arm": "TIGER_module_budget_prefix_rq",
+      "recall": 0.05273420498267727,
+      "C": 3.225719451904297,
+      "G1": 32.588647951083324,
+      "c_component": 0.7999999999999999,
+      "g_component": 0.2,
+      "S": 1.0,
+      "source": "results/research/issue262/MATRIX.json",
+      "endpoint": "results/research/issue262/QUANT_GRAD_SWITCH_102.json"
+    },
+    {
+      "index": 103,
+      "arm": "TIGER_periodic_budget_prefix_rq",
+      "recall": 0.05266456588728913,
+      "C": 1.7692334651947021,
+      "G1": 20.140511086361993,
+      "c_component": 0.3902485753297335,
+      "g_component": 0.11944134531380309,
+      "S": 0.5096899206435366,
+      "source": "results/research/issue262/MATRIX.json",
+      "endpoint": "results/research/issue262/QUANT_GRAD_SWITCH_103.json"
+    },
+    {
+      "index": 104,
+      "arm": "TIGER_role_conditioned_l1_rq",
+      "recall": 0.0490085133794112,
+      "C": 0.6462003588676453,
+      "G1": 21.821778420434185,
+      "c_component": 0.07430704244278674,
+      "g_component": 0.13032173938984754,
+      "S": 0.20462878183263428,
+      "source": "results/research/issue262/MATRIX.json",
+      "endpoint": "results/research/issue262/QUANT_GRAD_SWITCH_104.json"
+    },
+    {
+      "index": 105,
+      "arm": "TIGER_role_conditioned_l3_rq",
+      "recall": 0.05151552081338463,
+      "C": 1.8262606859207153,
+      "G1": 14.063595328730889,
+      "c_component": 0.40629197372195486,
+      "g_component": 0.080114322852834,
+      "S": 0.48640629657478884,
+      "source": "results/research/issue262/MATRIX.json",
+      "endpoint": "results/research/issue262/QUANT_GRAD_SWITCH_105.json"
+    },
+    {
+      "index": 106,
+      "arm": "TIGER_role_conditioned_l2_rq",
+      "recall": 0.05034906596563311,
+      "C": 0.8347048759460449,
+      "G1": 30.384460678370896,
+      "c_component": 0.127338788120032,
+      "g_component": 0.18573550698423127,
+      "S": 0.31307429510426327,
+      "source": "results/research/issue262/MATRIX.json",
+      "endpoint": "results/research/issue262/QUANT_GRAD_SWITCH_106.json"
+    },
+    {
+      "index": 107,
+      "arm": "TIGER_topology_residual_l2_rq",
+      "recall": 0.049600445690210486,
+      "C": 1.0912375450134277,
+      "G1": 13.289426200724163,
+      "c_component": 0.19950881075258392,
+      "g_component": 0.07510425394617243,
+      "S": 0.27461306469875635,
+      "source": "results/research/issue262/MATRIX.json",
+      "endpoint": "results/research/issue262/QUANT_GRAD_SWITCH_107.json"
+    },
+    {
+      "index": 108,
+      "arm": "TIGER_frozen_topology_gnn_rq",
+      "recall": 0.05189853583801946,
+      "C": 0.7775872945785522,
+      "G1": 12.757243390234594,
+      "c_component": 0.11126996867884884,
+      "g_component": 0.07166020993170949,
+      "S": 0.18293017861055832,
+      "source": "results/research/issue266/ENDPOINT_108.json",
+      "endpoint": "results/research/issue266/ENDPOINT_108.json",
+      "endpoint_sha256": "520471d494001ee88905f098f35fdbe686db1ccc2717064917b57dc9d1292990",
+      "checkpoint_sha256": "46ad65fb148665257e7beddd3ee1b075946eb685743437978422a7913437178e",
+      "sid_sha256": "a4d7241a12d4e8e52710414bb47baf5441cd63456d4774c1e820eb177eba5184",
+      "structural_sample": {
+        "centre": 15918,
+        "ids": {
+          "n": 256,
+          "sha256": "ecc62bebccc59d67bb5d2fef84ce890df13912abcb87534f38a6c6998ff703b0"
+        },
+        "triples_global": {
+          "shape": [
+            28,
+            3
+          ],
+          "sha256": "03e59ed029c1d8e092be138052c9c69bac924dfcba02ae2849a4511a10a86bbb"
+        },
+        "triples": {
+          "shape": [
+            28,
+            3
+          ],
+          "sha256": "62c1e6966a33037a37804cc9ca7d6ebbd50c9cfc2beb70c32b636bc7dbbf3e59"
+        },
+        "references_global": {
+          "n": 32,
+          "sha256": "6136c4411d510774767dc7bca9ccc24c50390f42740dfc7bacaeb960a39f728a"
+        },
+        "references": {
+          "n": 32,
+          "sha256": "899f9852b55ab35d5b2aefcd9323635cc767dfa49152a79d548b09d7d1bcbe52"
+        },
+        "target": {
+          "n": 28,
+          "sha256": "fca987667130d8ca7675a6f17f9f0f441ed1d64d435858f3f212a3729f606edd",
+          "dtype": "float64"
+        },
+        "row_ids": {
+          "n": 28,
+          "sha256": "39b06ad386f4ef9f33fa87365d4f8263e9849122567a914f2d214988423004e4"
+        },
+        "sampler_counts": {
+          "reference_population": 24471,
+          "centre_population": 24326,
+          "triple_population": 28,
+          "global_step": 0,
+          "rank": 0,
+          "world_size": 1
+        }
+      },
+      "fixed_batch": {
+        "rows": 4096,
+        "seed": 42,
+        "source": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+        "item_ids_sha256": "251dced08f5c42703e2ce66b3c56924e91d14200a15a3771f45c8d8c66f1c457",
+        "expected_sha256": "251dced08f5c42703e2ce66b3c56924e91d14200a15a3771f45c8d8c66f1c457",
+        "match": true
+      }
+    },
+    {
+      "index": 109,
+      "arm": "TIGER_euclid_local_curve_supervision_rq",
+      "recall": 0.052594926791900976,
+      "C": 1.5810964107513428,
+      "G1": 7.112086922093524,
+      "c_component": 0.33732020746703284,
+      "g_component": 0.03512733633715907,
+      "S": 0.3724475438041919,
+      "source": "results/research/issue266/ENDPOINT_109.json",
+      "endpoint": "results/research/issue266/ENDPOINT_109.json",
+      "endpoint_sha256": "5f9b0b12fea764cd3dcebc0cea07d64f6f4a87b7c0947b243e5aafce3fbdb70f",
+      "checkpoint_sha256": "1f8bfecba0c74bb3cbf9da11fe6925983cbae012753100401a7168e246da7bef",
+      "sid_sha256": "8961e4a2062ee8925d9b4f78494fd5dbf1be091a627abd8e527b1353c5506313",
+      "structural_sample": {
+        "centre": 15918,
+        "ids": {
+          "n": 256,
+          "sha256": "ecc62bebccc59d67bb5d2fef84ce890df13912abcb87534f38a6c6998ff703b0"
+        },
+        "triples_global": {
+          "shape": [
+            28,
+            3
+          ],
+          "sha256": "03e59ed029c1d8e092be138052c9c69bac924dfcba02ae2849a4511a10a86bbb"
+        },
+        "triples": {
+          "shape": [
+            28,
+            3
+          ],
+          "sha256": "62c1e6966a33037a37804cc9ca7d6ebbd50c9cfc2beb70c32b636bc7dbbf3e59"
+        },
+        "references_global": {
+          "n": 32,
+          "sha256": "6136c4411d510774767dc7bca9ccc24c50390f42740dfc7bacaeb960a39f728a"
+        },
+        "references": {
+          "n": 32,
+          "sha256": "899f9852b55ab35d5b2aefcd9323635cc767dfa49152a79d548b09d7d1bcbe52"
+        },
+        "target": {
+          "n": 28,
+          "sha256": "fca987667130d8ca7675a6f17f9f0f441ed1d64d435858f3f212a3729f606edd",
+          "dtype": "float64"
+        },
+        "row_ids": {
+          "n": 28,
+          "sha256": "39b06ad386f4ef9f33fa87365d4f8263e9849122567a914f2d214988423004e4"
+        },
+        "sampler_counts": {
+          "reference_population": 24471,
+          "centre_population": 24326,
+          "triple_population": 28,
+          "global_step": 0,
+          "rank": 0,
+          "world_size": 1
+        }
+      },
+      "fixed_batch": {
+        "rows": 4096,
+        "seed": 42,
+        "source": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+        "item_ids_sha256": "251dced08f5c42703e2ce66b3c56924e91d14200a15a3771f45c8d8c66f1c457",
+        "expected_sha256": "251dced08f5c42703e2ce66b3c56924e91d14200a15a3771f45c8d8c66f1c457",
+        "match": true
+      }
+    }
+  ],
+  "original_eight": {
+    "n": 8,
+    "order_by_recall": [
+      101,
+      104,
+      100,
+      107,
+      106,
+      105,
+      103,
+      102
+    ],
+    "pearson": 0.8569503102754842,
+    "spearman": 1.0,
+    "kendall_tau_b": 1.0,
+    "adjacent_monotonic": {
+      "order": [
+        101,
+        104,
+        100,
+        107,
+        106,
+        105,
+        103,
+        102
+      ],
+      "pairs": [
+        {
+          "left": 101,
+          "right": 104,
+          "left_recall": 0.046431866850049616,
+          "right_recall": 0.0490085133794112,
+          "left_S": 0.052128154424974836,
+          "right_S": 0.20462878183263428,
+          "strict": true,
+          "tie": false
+        },
+        {
+          "left": 104,
+          "right": 100,
+          "left_recall": 0.0490085133794112,
+          "right_recall": 0.0492870697609638,
+          "left_S": 0.20462878183263428,
+          "right_S": 0.25803792534182934,
+          "strict": true,
+          "tie": false
+        },
+        {
+          "left": 100,
+          "right": 107,
+          "left_recall": 0.0492870697609638,
+          "right_recall": 0.049600445690210486,
+          "left_S": 0.25803792534182934,
+          "right_S": 0.27461306469875635,
+          "strict": true,
+          "tie": false
+        },
+        {
+          "left": 107,
+          "right": 106,
+          "left_recall": 0.049600445690210486,
+          "right_recall": 0.05034906596563311,
+          "left_S": 0.27461306469875635,
+          "right_S": 0.31307429510426327,
+          "strict": true,
+          "tie": false
+        },
+        {
+          "left": 106,
+          "right": 105,
+          "left_recall": 0.05034906596563311,
+          "right_recall": 0.05151552081338463,
+          "left_S": 0.31307429510426327,
+          "right_S": 0.48640629657478884,
+          "strict": true,
+          "tie": false
+        },
+        {
+          "left": 105,
+          "right": 103,
+          "left_recall": 0.05151552081338463,
+          "right_recall": 0.05266456588728913,
+          "left_S": 0.48640629657478884,
+          "right_S": 0.5096899206435366,
+          "strict": true,
+          "tie": false
+        },
+        {
+          "left": 103,
+          "right": 102,
+          "left_recall": 0.05266456588728913,
+          "right_recall": 0.05273420498267727,
+          "left_S": 0.5096899206435366,
+          "right_S": 1.0,
+          "strict": true,
+          "tie": false
+        }
+      ],
+      "all_strict": true,
+      "violations": []
+    },
+    "inversions": {
+      "count": 0,
+      "pairs": [],
+      "violating_arms": [],
+      "tied_recall_pairs": [],
+      "tied_score_pairs": []
+    }
+  },
+  "extended_ten": {
+    "n": 10,
+    "order_by_recall": [
+      101,
+      104,
+      100,
+      107,
+      106,
+      105,
+      108,
+      109,
+      103,
+      102
+    ],
+    "pearson": 0.69046552155332,
+    "spearman": 0.793939393939394,
+    "kendall_tau_b": 0.7333333333333333,
+    "adjacent_monotonic": {
+      "order": [
+        101,
+        104,
+        100,
+        107,
+        106,
+        105,
+        108,
+        109,
+        103,
+        102
+      ],
+      "pairs": [
+        {
+          "left": 101,
+          "right": 104,
+          "left_recall": 0.046431866850049616,
+          "right_recall": 0.0490085133794112,
+          "left_S": 0.052128154424974836,
+          "right_S": 0.20462878183263428,
+          "strict": true,
+          "tie": false
+        },
+        {
+          "left": 104,
+          "right": 100,
+          "left_recall": 0.0490085133794112,
+          "right_recall": 0.0492870697609638,
+          "left_S": 0.20462878183263428,
+          "right_S": 0.25803792534182934,
+          "strict": true,
+          "tie": false
+        },
+        {
+          "left": 100,
+          "right": 107,
+          "left_recall": 0.0492870697609638,
+          "right_recall": 0.049600445690210486,
+          "left_S": 0.25803792534182934,
+          "right_S": 0.27461306469875635,
+          "strict": true,
+          "tie": false
+        },
+        {
+          "left": 107,
+          "right": 106,
+          "left_recall": 0.049600445690210486,
+          "right_recall": 0.05034906596563311,
+          "left_S": 0.27461306469875635,
+          "right_S": 0.31307429510426327,
+          "strict": true,
+          "tie": false
+        },
+        {
+          "left": 106,
+          "right": 105,
+          "left_recall": 0.05034906596563311,
+          "right_recall": 0.05151552081338463,
+          "left_S": 0.31307429510426327,
+          "right_S": 0.48640629657478884,
+          "strict": true,
+          "tie": false
+        },
+        {
+          "left": 105,
+          "right": 108,
+          "left_recall": 0.05151552081338463,
+          "right_recall": 0.05189853583801946,
+          "left_S": 0.48640629657478884,
+          "right_S": 0.18293017861055832,
+          "strict": false,
+          "tie": false
+        },
+        {
+          "left": 108,
+          "right": 109,
+          "left_recall": 0.05189853583801946,
+          "right_recall": 0.052594926791900976,
+          "left_S": 0.18293017861055832,
+          "right_S": 0.3724475438041919,
+          "strict": true,
+          "tie": false
+        },
+        {
+          "left": 109,
+          "right": 103,
+          "left_recall": 0.052594926791900976,
+          "right_recall": 0.05266456588728913,
+          "left_S": 0.3724475438041919,
+          "right_S": 0.5096899206435366,
+          "strict": true,
+          "tie": false
+        },
+        {
+          "left": 103,
+          "right": 102,
+          "left_recall": 0.05266456588728913,
+          "right_recall": 0.05273420498267727,
+          "left_S": 0.5096899206435366,
+          "right_S": 1.0,
+          "strict": true,
+          "tie": false
+        }
+      ],
+      "all_strict": false,
+      "violations": [
+        {
+          "left": 105,
+          "right": 108,
+          "left_recall": 0.05151552081338463,
+          "right_recall": 0.05189853583801946,
+          "left_S": 0.48640629657478884,
+          "right_S": 0.18293017861055832,
+          "strict": false,
+          "tie": false
+        }
+      ]
+    },
+    "inversions": {
+      "count": 6,
+      "pairs": [
+        {
+          "lower_recall": 104,
+          "higher_recall": 108,
+          "lower_S": 0.20462878183263428,
+          "higher_S": 0.18293017861055832
+        },
+        {
+          "lower_recall": 100,
+          "higher_recall": 108,
+          "lower_S": 0.25803792534182934,
+          "higher_S": 0.18293017861055832
+        },
+        {
+          "lower_recall": 107,
+          "higher_recall": 108,
+          "lower_S": 0.27461306469875635,
+          "higher_S": 0.18293017861055832
+        },
+        {
+          "lower_recall": 106,
+          "higher_recall": 108,
+          "lower_S": 0.31307429510426327,
+          "higher_S": 0.18293017861055832
+        },
+        {
+          "lower_recall": 105,
+          "higher_recall": 108,
+          "lower_S": 0.48640629657478884,
+          "higher_S": 0.18293017861055832
+        },
+        {
+          "lower_recall": 105,
+          "higher_recall": 109,
+          "lower_S": 0.48640629657478884,
+          "higher_S": 0.3724475438041919
+        }
+      ],
+      "violating_arms": [
+        100,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109
+      ],
+      "tied_recall_pairs": [],
+      "tied_score_pairs": []
+    }
+  },
+  "new_arms": {
+    "historical_interval": [
+      0.48640629657478884,
+      0.5096899206435366
+    ],
+    "historical_interval_arms": {
+      "lower": 105,
+      "upper": 103
+    },
+    "S_108": 0.18293017861055832,
+    "S_109": 0.3724475438041919,
+    "both_inside_interval": false,
+    "strict_108_lt_109": true,
+    "required_chain": false,
+    "positions_by_recall": {
+      "108": 7,
+      "109": 8
+    },
+    "S_outside_historical_range": {
+      "108": false,
+      "109": false
+    }
+  },
+  "full_recall_order": [
+    101,
+    104,
+    100,
+    107,
+    106,
+    105,
+    108,
+    109,
+    103,
+    102
+  ],
+  "all_rows_retained": true,
+  "notes": [
+    "Historical C/G1 are reused from issue262's MATRIX, not measured again.",
+    "The eight historical arms already had observed test recall; n=8 and n=10 are descriptive.",
+    "No arm is dropped and no score is clipped or refit."
+  ]
+}
