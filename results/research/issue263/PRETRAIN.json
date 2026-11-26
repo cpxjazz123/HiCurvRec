@@ -1,0 +1,267 @@
+{
+  "schema": "genrec.issue263.pretrain/1",
+  "arm": "TIGER_frozen_topology_gnn_rq",
+  "seed": 42,
+  "steps": 1500,
+  "batch": 256,
+  "device": "cuda:0",
+  "fit_items": 19669,
+  "eval_items": 4918,
+  "lambda": 1.2789273814647755,
+  "lambda_gradient_diagnostic": {
+    "role_grad": 0.19925728172913149,
+    "curve_grad": 0.15580030939748823,
+    "raw_ratio": 1.2789273814647755
+  },
+  "history": [
+    {
+      "step": 1,
+      "loss": 5.132327079772949,
+      "own": 5.559971332550049,
+      "dgdv": 2.073723554611206,
+      "curve": 1.028580665588379,
+      "own_n": 117,
+      "dgdv_n": 177,
+      "curve_n": 253
+    },
+    {
+      "step": 100,
+      "loss": 2.2078053951263428,
+      "own": 3.064185380935669,
+      "dgdv": 0.5048697590827942,
+      "curve": 0.330963134765625,
+      "own_n": 115,
+      "dgdv_n": 181,
+      "curve_n": 251
+    },
+    {
+      "step": 200,
+      "loss": 1.9971592426300049,
+      "own": 2.9556901454925537,
+      "dgdv": 0.41983121633529663,
+      "curve": 0.2419203370809555,
+      "own_n": 135,
+      "dgdv_n": 188,
+      "curve_n": 255
+    },
+    {
+      "step": 300,
+      "loss": 1.8933238983154297,
+      "own": 2.996903896331787,
+      "dgdv": 0.3619782030582428,
+      "curve": 0.1672360748052597,
+      "own_n": 137,
+      "dgdv_n": 184,
+      "curve_n": 255
+    },
+    {
+      "step": 400,
+      "loss": 1.8874925374984741,
+      "own": 2.9737026691436768,
+      "dgdv": 0.39156490564346313,
+      "curve": 0.16018016636371613,
+      "own_n": 144,
+      "dgdv_n": 184,
+      "curve_n": 255
+    },
+    {
+      "step": 500,
+      "loss": 1.7841148376464844,
+      "own": 2.7535789012908936,
+      "dgdv": 0.3766160011291504,
+      "curve": 0.17125087976455688,
+      "own_n": 121,
+      "dgdv_n": 180,
+      "curve_n": 253
+    },
+    {
+      "step": 600,
+      "loss": 1.773495078086853,
+      "own": 2.7755813598632812,
+      "dgdv": 0.32790863513946533,
+      "curve": 0.17338760197162628,
+      "own_n": 130,
+      "dgdv_n": 188,
+      "curve_n": 254
+    },
+    {
+      "step": 700,
+      "loss": 1.9622972011566162,
+      "own": 2.9995880126953125,
+      "dgdv": 0.40726423263549805,
+      "curve": 0.20241260528564453,
+      "own_n": 117,
+      "dgdv_n": 178,
+      "curve_n": 254
+    },
+    {
+      "step": 800,
+      "loss": 1.8916912078857422,
+      "own": 2.9696149826049805,
+      "dgdv": 0.4141364097595215,
+      "curve": 0.15623678267002106,
+      "own_n": 124,
+      "dgdv_n": 181,
+      "curve_n": 254
+    },
+    {
+      "step": 900,
+      "loss": 1.7681821584701538,
+      "own": 2.824049234390259,
+      "dgdv": 0.3531534969806671,
+      "curve": 0.14041517674922943,
+      "own_n": 136,
+      "dgdv_n": 179,
+      "curve_n": 254
+    },
+    {
+      "step": 1000,
+      "loss": 1.7939144372940063,
+      "own": 2.8093061447143555,
+      "dgdv": 0.3928877115249634,
+      "curve": 0.1507650762796402,
+      "own_n": 123,
+      "dgdv_n": 170,
+      "curve_n": 251
+    },
+    {
+      "step": 1100,
+      "loss": 1.8503673076629639,
+      "own": 2.860711097717285,
+      "dgdv": 0.41005969047546387,
+      "curve": 0.16809549927711487,
+      "own_n": 144,
+      "dgdv_n": 194,
+      "curve_n": 253
+    },
+    {
+      "step": 1200,
+      "loss": 1.8869569301605225,
+      "own": 2.887157678604126,
+      "dgdv": 0.47539544105529785,
+      "curve": 0.16082261502742767,
+      "own_n": 130,
+      "dgdv_n": 188,
+      "curve_n": 250
+    },
+    {
+      "step": 1300,
+      "loss": 1.8573708534240723,
+      "own": 2.9673683643341064,
+      "dgdv": 0.40088480710983276,
+      "curve": 0.13546060025691986,
+      "own_n": 124,
+      "dgdv_n": 177,
+      "curve_n": 255
+    },
+    {
+      "step": 1400,
+      "loss": 1.873008370399475,
+      "own": 2.902106523513794,
+      "dgdv": 0.46303820610046387,
+      "curve": 0.14890289306640625,
+      "own_n": 116,
+      "dgdv_n": 192,
+      "curve_n": 254
+    },
+    {
+      "step": 1500,
+      "loss": 1.8922505378723145,
+      "own": 2.9461276531219482,
+      "dgdv": 0.4498576521873474,
+      "curve": 0.15189123153686523,
+      "own_n": 115,
+      "dgdv_n": 175,
+      "curve_n": 253
+    }
+  ],
+  "metrics": {
+    "own": {
+      "n": 2459,
+      "ce": 3.373817205429077,
+      "kl": 2.8937682509422302,
+      "target_entropy": 0.4800489544868469,
+      "top1": 0.11061407076047174,
+      "majority_top1": 0.08540056933712892,
+      "minority_items": 2249,
+      "minority_top1": 0.12094264117385504,
+      "rank_corr": 0.27093250371310007
+    },
+    "dgdv": {
+      "n": 3507,
+      "ce": 1.7776150703430176,
+      "kl": 0.3885723352432251,
+      "target_entropy": 1.3890427350997925,
+      "top1": 0.34331337325349304,
+      "majority_top1": 0.2968349016253208,
+      "minority_items": 2466,
+      "minority_top1": 0.22343876723438766,
+      "rank_corr": 0.8229220788566534
+    },
+    "curve": {
+      "n": 4858,
+      "ce": 1.5138213634490967,
+      "kl": 0.1449953317642212,
+      "target_entropy": 1.3688260316848755,
+      "top1": 0.6280362289007823,
+      "majority_top1": 0.2764512144915603,
+      "minority_items": 3515,
+      "minority_top1": 0.52574679943101,
+      "rank_corr": 0.918336705155682
+    },
+    "degree_baseline": {
+      "own_ce": 3.990990131048065,
+      "dgdv_ce": 2.035024345563009,
+      "curve_ce": 1.6480575137532132
+    },
+    "eval_items": 4918
+  },
+  "token_effective_rank": {
+    "per_token": [
+      3.2426989378380084,
+      1.5262312827928333,
+      3.309462945161242,
+      3.59029234783066
+    ],
+    "mean": 2.917171378405686
+  },
+  "cache": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_frozen_topology_gnn_rq/token_cache.npz",
+    "sha256": "4051b902934e72f0a06cd6bb657d67d7eec9c9a1c2304c10a31c848515492837",
+    "tokens_shape": [
+      24587,
+      4,
+      32
+    ],
+    "mask_shape": [
+      24587,
+      4
+    ],
+    "valid_tokens": 98348,
+    "empty_items": 0
+  },
+  "checkpoint": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_frozen_topology_gnn_rq/pretrained_gnn.pth",
+    "sha256": "42440831b372d11ee80f77cc92718cd6f3ca0b4a961a25476956d37f04877e67"
+  },
+  "identity": {
+    "graph": "/fs04/ar57/wenyu/GeneRec/results/research/behavior_graph_directed/graph.npz",
+    "graph_sha256": "ef97a2bdc555259d402065026b00cf62bc1e91c3bc58a66da4d6f8f8df407fdd",
+    "own": "/fs04/ar57/wenyu/GeneRec/results/research/directed_graphlet_teacher/teacher/structure/v3/structure_targets_v3.npz",
+    "own_sha256": "7af2d16537329a0934a80a97afcadc39afc2676a359d009fcf2e182deb1a37d5",
+    "dgdv": "/fs04/ar57/wenyu/GeneRec/results/research/directed_graphlet_role/dgdv.npz",
+    "dgdv_sha256": "0f94e3089d1b637971e2c37afa974be482eafb60c32c4e726083588f36dfa6fc",
+    "curvature": "/fs04/ar57/wenyu/GeneRec/assets/v8_runtime_layout/targets.npy",
+    "curvature_sha256": "8c0ff9f8c25b98ed31802cdb62cf921df6d3cf8bbf35ee2d3de9817d6cd0807a",
+    "source": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_frozen_topology_gnn_rq",
+    "source_files": 65
+  },
+  "cache_reproducibility": {
+    "exact_reload": true,
+    "same_mask": true,
+    "max_abs_diff": 6.616115570068359e-06,
+    "tolerance": 0.0001,
+    "deterministic_reexport": true
+  },
+  "scope": "pretraining on TRAIN graph and TRAIN labels only; no validation/test data"
+}

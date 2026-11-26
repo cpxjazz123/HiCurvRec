@@ -1,0 +1,35 @@
+{
+  "schema": "genrec.issue263.performance/1",
+  "run_id": "stage2_ae668bc04dc44d52a8bed5f9408e8e74",
+  "purpose": "formal",
+  "epochs_observed": 3000,
+  "first_60": {
+    "mean_epoch_time_s": 0.3990317457045118,
+    "mean_step_time_s": null,
+    "mean_peak_allocated_bytes": 375213346.1333333,
+    "mean_gradient_norm_before_clip": 0.0004117512915399857
+  },
+  "window_31_60": {
+    "mean_epoch_time_s": 0.3731813310024639,
+    "median_epoch_time_s": 0.3582217749208212,
+    "p95_epoch_time_s": 0.44250908959656954,
+    "epoch_50_time_s": 0.502564593218267,
+    "hard_threshold_s": 0.8,
+    "target_band_s": [
+      0.4,
+      0.5
+    ]
+  },
+  "all_observed": {
+    "mean_epoch_time_s": 0.3196970850120609,
+    "max_peak_allocated_bytes": 607034880,
+    "final_epoch": 3000,
+    "final_collision_diagnostic": 0.06076381827795174,
+    "final_epoch_time_s": 0.3960322365164757
+  },
+  "batch": {
+    "batch_size_per_rank": 1024,
+    "global_batch": 4096
+  },
+  "comparison": "Candidate absolute cost only; no parent-throughput number was re-measured."
+}

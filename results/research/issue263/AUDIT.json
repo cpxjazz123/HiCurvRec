@@ -1,0 +1,31 @@
+{
+  "schema": "genrec.issue263.audit/1",
+  "issue": 263,
+  "infra_mode": "FROZEN",
+  "items": 24587,
+  "gnn_parent": {
+    "source": "results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src/model/structure.py",
+    "class": "SubgraphTokens",
+    "input": "six frozen node features; 2 directed message layers; 32-dim tokens",
+    "tokens": ["one_hop", "two_hop", "in_only", "out_only"],
+    "shape": [24587, 4, 32],
+    "parent_arm": "TIGER_module_budget_prefix_rq",
+    "parent_test_R@10": 0.05273420498267727
+  },
+  "graph": {
+    "path": "results/research/behavior_graph_directed/graph.npz",
+    "nodes": 24587,
+    "directed_edges": 323633,
+    "policy": "TRAIN sequences only; validation/test not read"
+  },
+  "labels": {
+    "own_orbit_376": {"path": "results/research/directed_graphlet_teacher/teacher/structure/v3/structure_targets_v3.npz", "coverage": 12266, "status": "masked; not imputed"},
+    "dgdv_30": {"path": "results/research/directed_graphlet_role/dgdv.npz", "nonzero_rows": 17389, "status": "masked; not imputed"},
+    "curvature_hist_12": {"path": "assets/v8_runtime_layout/targets.npy", "offsets": "assets/v8_runtime_layout/target_offsets.npy", "bins": 12, "status": "TRAIN targets only"}
+  },
+  "forbidden": ["validation test for pretraining", "test graph", "GNN online in Stage2", "new public infra", "TIGER retraining"],
+  "split": {"fit_fraction": 0.8, "seed": 42, "method": "permutation of item IDs; no label-based split"},
+  "candidate": "stage2_RQ-VAE/TIGER_frozen_topology_gnn_rq",
+  "old_top_level_archive": "stage2_RQ-VAE/_archive/TIGER_topology_residual_l2_rq_issue263",
+  "source_copy": "results/stage2_RQ-VAE/_runs/issue256_r01_formal/TIGER_module_budget_prefix_rq/src"
+}

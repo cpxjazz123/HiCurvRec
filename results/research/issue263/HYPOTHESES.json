@@ -1,0 +1,99 @@
+{
+  "schema": "genrec.hypotheses/1",
+  "issue": 263,
+  "inherited_from": "results/research/issue262/HYPOTHESES_RESULT.json",
+  "hypotheses": [
+    {
+      "id": "H262-1",
+      "statement": "The historical shared-in +0.958 is a visible-graph cross-arm artefact, not a true directed held-out shared-in fidelity measure.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/research/issue262/SHARED_IN.json"
+      ],
+      "origin_issue": 262,
+      "opened_round": "issue262",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H262-2",
+      "statement": "The raw target common-in association is positive but is not an independent topology effect after relation/prefix controls.",
+      "status": "INCONCLUSIVE",
+      "evidence": [
+        "results/research/issue262/SHARED_IN.json"
+      ],
+      "origin_issue": 262,
+      "opened_round": "issue262",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H262-3",
+      "statement": "Curvature/reconstruction quality is architecture/capacity-confounded and is not a causal recommendation driver at n=8.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/research/issue262/CORRELATIONS_262.json"
+      ],
+      "origin_issue": 262,
+      "opened_round": "issue262",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H1",
+      "statement": "End-to-end GNN/quantizer entanglement prevents the directed GNN from learning stable multi-role and curvature-distribution structure.",
+      "status": "INCONCLUSIVE",
+      "evidence": [
+        "results/research/issue263/VERDICT.md"
+      ],
+      "origin_issue": 263,
+      "opened_round": "issue263",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H2",
+      "statement": "Explicit own-orbit/DGDV and curvature-histogram supervision improves the tokens beyond degree/frequency-only baselines.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/research/issue263/PRETRAIN.json",
+        "results/research/issue263/VERDICT.md"
+      ],
+      "origin_issue": 263,
+      "opened_round": "issue263",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H3",
+      "statement": "Freezing the pretrained tokens reduces Stage2 online GNN cost without making the gate/SID unusable.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/research/issue263/PERFORMANCE.json",
+        "results/research/issue263/VERDICT.md"
+      ],
+      "origin_issue": 263,
+      "opened_round": "issue263",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "N1",
+      "statement": "The parent GNN already encodes sufficient topology; freezing it cannot improve downstream recommendation.",
+      "status": "INCONCLUSIVE",
+      "evidence": [
+        "results/research/issue263/VERDICT.md"
+      ],
+      "origin_issue": 263,
+      "opened_round": "issue263",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    }
+  ],
+  "decisions": {
+    "issue263": "COMPLETED_WITH_NEGATIVE_RECOMMENDATION_RESULT",
+    "test_R@10": 0.05189853583801946,
+    "target": 0.065,
+    "r2": "r2:genrec/108/"
+  }
+}
