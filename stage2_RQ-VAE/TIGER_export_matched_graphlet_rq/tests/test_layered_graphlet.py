@@ -218,7 +218,6 @@ def _trained_model():
     model.load_state_dict(torch.load(checkpoint, map_location="cpu")["state_dict"])
     return model.eval()
 
-
 def test_c39_c40_structure_step_reaches_encoder_and_codebooks():
     """Run on the FROZEN checkpoint: an untrained model has no structure at all, so every hinge
     sits at its ceiling and the gradient is exactly 0 -- the first 3000-epoch run proved that
