@@ -1,0 +1,65 @@
+{
+  "schema": "genrec.issue264.timeline/1",
+  "issue": 264,
+  "host": "same A100 host; CUDA_VISIBLE_DEVICES visible=0,1,2,3",
+  "before": {
+    "run": "#263 Stage3 TIGER_frozen_topology_gnn_rq",
+    "request_epoch": 1795660168.2182825,
+    "parent_start_local": "2026-11-26T13:29:28",
+    "torchrun_start_local": "2026-11-26T13:34:04",
+    "first_rank_local": "2026-11-26T13:34:09",
+    "first_train_start_epoch": 1795660471.3741412,
+    "first_epoch_end_epoch": 1795660500.8311086,
+    "parent_to_torchrun_s": 275.78,
+    "request_to_first_epoch_end_s": 332.613,
+    "old_parent_import_reproduction_warm_s": 5.413,
+    "cold_shared_fs_import_evidence": "#258 reports first-time transformers import ~6 min; #263 parent phase is 275.78 s",
+    "missing": "per-import subphase timestamps from the old parent are not available; no reconstruction is claimed",
+    "phase_breakdown": {
+      "request_to_parent_start_s": 0.0,
+      "parent_start_to_torchrun_s": 275.78,
+      "torchrun_to_first_rank_s": 5.0,
+      "first_rank_to_train_start_s": 22.0,
+      "train_start_to_first_epoch_train_end_s": 29.46,
+      "note": "torchrun/rank times from ps lstart; train_start epoch 1795660471.374; epoch1 end 1795660500.831"
+    }
+  },
+  "after_parent": {
+    "harness": "generated lightweight parent; trainer not imported",
+    "warm_repeats_s": [
+      2.72,
+      2.71,
+      2.76
+    ],
+    "warm_median_s": 2.72,
+    "cold_source_cache_prepare_s": 96.958,
+    "cold_source_parent_estimate_s": 99.7,
+    "warm_cache_prepare_s": 2.519,
+    "local_transformers_import_s": 2.592,
+    "source_transformers_import_first_s": 16.509,
+    "source_transformers_import_repeat_s": 2.499,
+    "cold_cache_note": "96.958 s was measured with a freshly evicted source package path; a second cache build with the source page cache warm took 5.38 s and is not labeled cold",
+    "full_rank_first_step": "pending a short isolated diagnostic after #263 releases the GPUs",
+    "worker_import": {
+      "source_first_s": 103.725,
+      "source_repeat_s": 5.449,
+      "local_cache_first_s": 5.386,
+      "local_cache_repeat_s": 5.094,
+      "source": "diagnostics/worker_source.log",
+      "local": "diagnostics/worker_local.log"
+    },
+    "parent_plus_rank_import_warm_s": 7.814,
+    "full_diagnostics_s": [
+      30.062911987304688,
+      29.331217288970947,
+      28.86921238899231
+    ],
+    "full_diagnostic_mean_s": 29.42111388842265
+  },
+  "acceptance": {
+    "parent_startup_reduction_warm": "2.72/275.78 = 99.0%",
+    "cold_cache_startup_reduction": "96.958+2.72 / 275.78 = 63.5% reduction (>= 50% target)",
+    "primary_request_to_first_step": "PASS: mean 29.421 s vs 332.613 s = 91.2% reduction; 3 warm diagnostics, all <=60 s; test_evaluated=false",
+    "cold_worker_import_reduction": "103.725 -> 5.386 = 94.8%"
+  }
+}

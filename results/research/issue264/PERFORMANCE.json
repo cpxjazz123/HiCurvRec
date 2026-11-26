@@ -1,0 +1,65 @@
+{
+  "schema": "genrec.issue264.performance/1",
+  "comparison": "same host, interpreter, SID, frozen config; #263 live run is the before",
+  "before": {
+    "request_epoch": 1795660168.2182825,
+    "parent_to_torchrun_s": 275.78,
+    "request_to_first_epoch_train_end_s": 332.613,
+    "old_parent_warm_import_s": 5.413,
+    "evidence": "stage3 state invocation and logs; issue258 independently reports ~6 min first transformers import"
+  },
+  "after_parent": {
+    "warm_repeats_s": [
+      2.72,
+      2.71,
+      2.76
+    ],
+    "warm_median_s": 2.72,
+    "cold_cache_prepare_s": 96.958,
+    "warm_cache_prepare_s": 2.519,
+    "parent_plus_local_rank_import_warm_s": 7.81,
+    "cold_cache_parent_plus_rank_import_s": 105.0,
+    "parent_reduction_warm": "99.0%",
+    "cold_cache_parent_reduction": "63.5%",
+    "warm_final_repeats_s": [
+      30.062911987304688,
+      29.331217288970947,
+      28.86921238899231
+    ],
+    "warm_final_mean_s": 29.42111388842265,
+    "warm_final_reduction": "91.15%"
+  },
+  "rank_import": {
+    "source_first_s": 103.725,
+    "source_repeat_s": 5.449,
+    "local_cache_first_s": 5.386,
+    "local_cache_repeat_s": 5.094,
+    "local_reduction": "94.8%"
+  },
+  "primary": {
+    "before_request_to_first_epoch_train_end_s": 332.613,
+    "after_request_to_first_train": [
+      30.062911987304688,
+      29.331217288970947,
+      28.86921238899231
+    ],
+    "status": "PASS: 3 warm diagnostics; all <= 60 s; >=50% reduction; test not evaluated",
+    "after_mean_s": 29.42111388842265,
+    "reduction": "91.15%",
+    "evidence": [
+      "DIAGNOSTIC_STARTUP_3.json",
+      "DIAGNOSTIC_STARTUP_4.json",
+      "DIAGNOSTIC_STARTUP_5.json"
+    ]
+  },
+  "cache_contents": "transformers, tokenizers, safetensors, huggingface_hub, sentencepiece, accelerate; no SID/split/sample/weight/state",
+  "correctness": "cache hash manifest, atomic publication, concurrent lock, corrupt/stale/missing tests; trainer source unchanged",
+  "cold_diagnostic": {
+    "request_to_first_train_s": 299.9189,
+    "parent_stage_s": 106.0,
+    "torchrun_to_rank_s": 59.0,
+    "rank_to_train_start_s": 118.0,
+    "first_epoch_train_s": 16.85,
+    "note": "diagnostic variant issue264_diag; killed after first train"
+  }
+}
