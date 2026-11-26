@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 OUT = ROOT / "results/research/issue267"
 ARM = "TIGER_relative_curvature_ranking_rq"
 RUNS = sorted((ROOT / "results/stage2_RQ-VAE/_runs").glob(f"*/{ARM}/result/rqvae_best.pth"),
