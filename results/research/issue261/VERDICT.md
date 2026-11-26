@@ -10,7 +10,7 @@
 | C4 | correlations and sensitivity | Pearson/Spearman, n, direction, CI/p, leave-one-out, exclude-107 and exclude-100 | `CORRELATIONS.csv/.json`, `SENSITIVITY.csv` | **PASS** |
 | C5 | mechanism chain + R06b counterexample | adjacent-stage associations reported; R06b code movement vs no recall gain analyzed with competing explanations; no causal overclaim | `REPORT.md` | **PASS** |
 | C6 | no drift/no training | `INFRA_SNAPSHOT_START/END` identical; no Stage2/Stage3/TIGER run; training count 0; candidate/source and R2 recall hashes checked | `INFRA_SNAPSHOT_*.json`, `PROGRESS.json`, `INVENTORY.json` | **PASS** (historical pre-existing public-infra drift for 100–102 is recorded, not introduced by this issue) |
-| C7 | reproducible delivery | issue scripts/tests, persisted execution logs, commit/push and remote SHA | `REPORT.md`, `tests/`, `checks/`; commit `8af30c14`, remote `main` equal | **PASS** |
+| C7 | reproducible delivery | issue scripts/tests, persisted execution logs, commit/push and remote SHA | `REPORT.md`, `tests/`, `checks/`; commit `1b6a4bdf`, remote `main` equal | **PASS** |
 
 ## Headline result
 
