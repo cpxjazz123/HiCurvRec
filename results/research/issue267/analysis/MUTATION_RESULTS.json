@@ -1,0 +1,30 @@
+{
+  "schema": "genrec.issue267.mutations/1",
+  "results": [
+    {
+      "mutation": "sign",
+      "assertion": "test_known_sign_and_hand_value: correct loss < wrong loss",
+      "caught": true
+    },
+    {
+      "mutation": "tie",
+      "assertion": "test_ties_are_excluded_not_averaged_in: valid=2, tied=1",
+      "caught": true
+    },
+    {
+      "mutation": "centre",
+      "assertion": "test_cross_centre_pairs_are_never_used: valid=0, loss=0",
+      "caught": true
+    },
+    {
+      "mutation": "diagonal",
+      "assertion": "test_upper_triangle_pair_count_28_rows: 378 not 406",
+      "caught": true
+    },
+    {
+      "mutation": "sum",
+      "assertion": "test_known_sign_and_hand_value: exact softplus(-2)",
+      "caught": true
+    }
+  ]
+}

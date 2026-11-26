@@ -1,0 +1,152 @@
+{
+  "schema": "genrec.hypotheses/1",
+  "issue": 267,
+  "inherited_from": "results/research/issue266/HYPOTHESES.json",
+  "hypotheses": [
+    {
+      "id": "H1",
+      "statement": "Shared-in neighbours are substitute next-purchase candidates: target items are more likely than degree-matched negatives to share an in-neighbour with the anchor, and the effect is not exhausted by popularity or degree.",
+      "status": "INCONCLUSIVE",
+      "evidence": [
+        "results/research/issue262/FINAL_SUMMARY.json"
+      ],
+      "origin_issue": 262,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H2",
+      "statement": "The historical shared-in/test-R@10 association is substantially driven by semantic/prefix structure, degree or popularity; it is not a pure graph-topology effect.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/research/issue262/HYPOTHESES_RESULT.json"
+      ],
+      "origin_issue": 262,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H3",
+      "statement": "Curvature fidelity, reconstruction and quantisation are architecture/capacity proxies rather than independent causes of recommendation quality.",
+      "status": "INCONCLUSIVE",
+      "evidence": [
+        "results/research/issue262/FINAL_SUMMARY.json"
+      ],
+      "origin_issue": 262,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H266-1",
+      "statement": "The frozen eight-arm C/G1 score remains strictly monotone with Recall@10 after appending the two held-out R2 arms 108 and 109.",
+      "status": "REFUTED",
+      "evidence": [
+        "results/research/issue266/SCORES.json",
+        "results/research/issue266/REPORT.md"
+      ],
+      "origin_issue": 266,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H266-2",
+      "statement": "The native curvature loss and L1 codebook gradient norm are on a common scale for #265 (109) and the historical arms, so the frozen score transfers without a mechanism-specific scale correction.",
+      "status": "REFUTED",
+      "evidence": [
+        "results/research/issue266/ENDPOINT_108.json",
+        "results/research/issue266/ENDPOINT_109.json",
+        "results/research/issue266/SCORES.json"
+      ],
+      "origin_issue": 266,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H266-3",
+      "statement": "A larger native curvature gradient norm implies a larger actual optimization benefit; the score measures optimization sensitivity rather than only a diagnostic gradient magnitude.",
+      "status": "INCONCLUSIVE",
+      "evidence": [
+        "results/research/issue266/ENDPOINT_108.json",
+        "results/research/issue266/ENDPOINT_109.json",
+        "results/research/issue266/REPORT.md"
+      ],
+      "origin_issue": 266,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H267-1",
+      "statement": "Pointwise curvature training leaves within-centre relative order underfit.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/research/issue267/analysis/CURVATURE_FULL_109_Q.json",
+        "results/research/issue267/analysis/CENTER_ORDER_109.json"
+      ],
+      "origin_issue": 267,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H267-2",
+      "statement": "The low overall association is dominated by centre/scale/target-definition offsets, not by hard quantization alone.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/research/issue267/analysis/CURVATURE_FULL_109_Q.json",
+        "results/research/issue267/analysis/CURVATURE_FULL_109_Z.json"
+      ],
+      "origin_issue": 267,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H267-3",
+      "statement": "The gate is the primary cause and gate intervention alone repairs ordering.",
+      "status": "INCONCLUSIVE",
+      "evidence": [
+        "results/research/issue267/analysis/GATE_PROBE.json"
+      ],
+      "origin_issue": 267,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H267-4",
+      "statement": "A same-centre differentiable relative ranking term improves within-centre curvature ordering and may transfer to recommendation.",
+      "status": "UNTESTED",
+      "evidence": [],
+      "origin_issue": 267,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H267-5",
+      "statement": "Improving relative curvature ordering necessarily improves Stage3 Recall@10.",
+      "status": "UNTESTED",
+      "evidence": [],
+      "origin_issue": 267,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    }
+  ],
+  "statistics": {
+    "n_original": 10,
+    "n_extended": 11,
+    "primary": [
+      "full q/z curvature order",
+      "within-centre Spearman",
+      "Stage3 R@10",
+      "frozen S prediction"
+    ]
+  }
+}
