@@ -1,0 +1,97 @@
+{
+  "results": [
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_inverted_order_is_penalised",
+        "test_insufficient_margin_is_zero",
+        "test_reference_consistency_on_random_inputs",
+        "test_the_gradient_reaches_the_codebooks_and_not_the_encoder",
+        "test_the_encoder_routing_keeps_the_hard_forward_and_adds_the_encoder_gradient"
+      ],
+      "mutation": "M1_sign_flip",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_inverted_order_is_penalised",
+        "test_insufficient_margin_is_zero",
+        "test_all_coincident_pairs_give_the_margin_but_no_gradient",
+        "test_reference_consistency_on_random_inputs"
+      ],
+      "mutation": "M2_margin_sign",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_reference_consistency_on_random_inputs"
+      ],
+      "mutation": "M3_wrong_reduction",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_reference_consistency_on_random_inputs",
+        "test_the_hard_q_is_the_plain_sum_of_the_three_codewords",
+        "test_the_gradient_reaches_the_codebooks_and_not_the_encoder",
+        "test_the_encoder_routing_keeps_the_hard_forward_and_adds_the_encoder_gradient"
+      ],
+      "mutation": "M4_single_level_hard_q",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_inverted_order_is_penalised",
+        "test_insufficient_margin_is_zero",
+        "test_the_diagnostics_match_the_hand_computation",
+        "test_reference_consistency_on_random_inputs",
+        "test_the_gradient_reaches_the_codebooks_and_not_the_encoder",
+        "test_the_encoder_routing_keeps_the_hard_forward_and_adds_the_encoder_gradient"
+      ],
+      "mutation": "M5_swapped_pairs",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_the_index_sampling_is_deterministic_and_uses_only_the_training_groups"
+      ],
+      "mutation": "M6_holdout_leak",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_the_gradient_reaches_the_codebooks_and_not_the_encoder",
+        "test_the_encoder_routing_keeps_the_hard_forward_and_adds_the_encoder_gradient"
+      ],
+      "mutation": "M7_detached_codebook",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_the_encoder_routing_keeps_the_hard_forward_and_adds_the_encoder_gradient"
+      ],
+      "mutation": "M8_no_encoder_identity",
+      "returncode": 1
+    }
+  ],
+  "schema": "genrec.issue274.mutations/1"
+}
