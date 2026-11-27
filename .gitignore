@@ -973,3 +973,77 @@ results/research/issue256/**/recommendation_validation/rank*.jsonl
 results/research/issue256/**/recommendation_validation/launcher/
 results/research/issue257/controlled_entry_four_card/run/rank_*.json
 results/research/issue257/short_candidate/
+
+# === 2026-11-24: issue #248 flattened copy of the graph infrastructure assets ===
+# The persisted assets live on the shared volume; only the manifest and the note are tracked.
+assets/**/*.npy
+assets/**/*.npz
+# Issue251: learned binary/source-archive evidence stays local; exact SID is text evidence.
+results/research/issue251/**/source_snapshot.tar.gz
+!results/research/issue251/runtime/item_sids.json
+!results/research/issue251/*.log
+!results/research/issue251/**/logs/
+!results/research/issue251/**/logs/controlled_validation.log
+# Full per-item distributions remain generated data; commit summaries, hashes and remeasurement code.
+results/research/issue251/**/HARD_SID_EVALUATION.json
+
+# Issue252: small red/green command transcripts are source-bound acceptance evidence.
+!results/research/issue252/*.log
+results/research/issue252/runtime_temp/
+results/research/issue252/**/HARD_SID_EVALUATION.json
+results/research/issue252/**/FINAL_EVALUATION.json
+results/research/issue252/**/source_snapshot.tar.gz
+results/research/issue252/OPTIMIZED_PROFILE_INTERMEDIATE.json
+results/research/issue252/compiler_cache/
+results/research/issue252/**/cache/
+results/research/issue252/**/torchelastic_*/
+results/research/issue252/**/launcher_*/
+# Full repeated 1024-item geometry selections stay on shared storage; commit their SHA index.
+results/research/issue252/geometry_validation/**/rank_*.json
+
+# Issue252: raw diagnostic generations stay on shared storage; admission,
+# compact summaries and SHA indexes are the committed reproducibility record.
+results/research/issue252/benchmark/
+results/research/issue252/validation/
+results/research/issue252/contract_tests/
+results/research/issue252/geometry_validation/
+results/research/issue252/sparse_validation/
+results/research/issue252/optimized_profile/
+results/research/issue252/steady_profile/
+results/research/issue252/profiling/
+results/research/issue252/profiling_baseline/
+results/research/issue252/source_generations/
+
+# Issue253: commit source-bound summaries and small transcripts, not runtime generations.
+!results/research/issue253/*.log
+results/research/issue253/benchmark/
+results/research/issue253/validation/
+results/research/issue253/steady_profile/
+results/research/issue253/kernel_validation/
+results/research/issue253/kernel_benchmark/
+results/research/issue253/contract_tests/
+results/research/issue253/compiler_cache/
+results/research/issue253/historical_archive/
+results/research/issue253/extraction/
+results/research/issue253/**/cache/
+results/research/issue253/*.tar.gz
+results/research/issue253/FINAL_EVALUATION.json
+results/research/issue253/BASELINE_PROFILE.json
+results/research/issue253/baseline_src_read/
+results/research/issue253/MODULE_CHECKS.json
+results/research/issue253/BASELINE_PROFILE_SUMMARY.json
+results/research/issue253/asset_audit.json
+
+# Issue256: retain raw runs locally; commit immutable hash-bound summaries.
+results/research/issue256/rounds/*/validation/
+results/research/issue256/rounds/*/benchmark/
+results/research/issue256/rounds/*/steady_profile/
+results/research/issue256/rounds/*/budget_regression/
+results/research/issue256/rounds/*/budget_regression_launcher*/
+results/research/issue256/rounds/*/pytest_*/
+results/research/issue256/**/PARENT_DIAGNOSTICS.json
+results/research/issue256/**/evaluation/*_items.jsonl
+results/research/issue256/**/evaluation/*_items.jsonl.partial
+results/research/issue256/**/evaluation/extractions/*/catalogue.partial
+results/research/issue256/**/recommendation_validation/rank*.jsonl
+results/research/issue256/**/recommendation_validation/launcher/
