@@ -1,0 +1,18 @@
+arm        MAE        Spearman    sign       L2    rank   J
+TIGER      7.309217 +0.015851 0.432453   7374  11.5 0.739635
+#271       1.893506 -0.005483 0.392646   6097 4.501 0.351361
+#269       1.997261 -0.070083 0.363704   6246  None 0.338336
+round1     2.343824 -0.098838 0.348062   6848  2.77 0.789000
+#265       2.245950 -0.071041 0.332350  10918  3.05 0.189476
+
+P1 J<= 0.338336: ['#269', '#265']
+P2 MAE<= 1.893506 and Spearman> 0.015851 and sign> 0.432453: []
+P3 L2>= 10918 and rank>= 8: []
+P4 recon<= 8.589e-05: ['round1', '#265']
+
+minimum MAE = 1.893506311 (#271) > 1.893506
+maximum Spearman = 0.015850898 (TIGER) < 0.015851
+maximum sign = 0.432453349 (TIGER)
+PROOF: P2 empty (target MAE below every arm; Spearman target above every arm);
+PROOF: P3 empty (the only L2>=10918 arm has rank 3.05; the only rank>=8 arm has L2 7374).
+PROOF: the P1/P4/P5 sets are non-empty but their intersection with P2/P3 is empty.

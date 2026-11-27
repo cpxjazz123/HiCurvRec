@@ -69,5 +69,24 @@
       "recon": 8.18e-05
     }
   },
-  "next": "owner_amendment_or_new_issue"
+  "next": "owner_amendment_or_new_issue",
+  "proof": {
+    "script": "results/research/issue272/check_close_condition.py",
+    "log": "results/research/issue272/close_condition_check.txt",
+    "exit": 0,
+    "p2_empty": true,
+    "p3_empty": true,
+    "p1": [
+      "#269",
+      "#265"
+    ],
+    "p4": [
+      "round1",
+      "#265"
+    ],
+    "p5": [
+      "#269",
+      "round1"
+    ]
+  }
 }

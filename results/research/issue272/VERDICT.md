@@ -156,3 +156,11 @@ values are bound to the frozen evaluator (`rows = 28,391,948`) and the stage2 me
 
 Issue #272 remains OPEN per skill §7; no Stage3 (the issue forbids it); no further λ/μ sweep on a
 known-empty target. The owner must amend P2/P3 or authorize the base change in a new issue.
+
+### Executable close-condition proof
+
+`results/research/issue272/check_close_condition.py` (exit 0, log
+`close_condition_check.txt`) asserts the P2/P3 emptiness from the frozen geometry and SID metrics:
+minimum MAE 1.893506311 > 1.893506; maximum Spearman 0.015850898 < 0.015851; the only L2>=10,918
+arm (#265) has rank 3.05; the only rank>=8 arm (TIGER) has L2 7,374. P1/P4/P5 are individually
+non-empty; the conjunction is empty. Issue #272 stays OPEN per skill §7.
