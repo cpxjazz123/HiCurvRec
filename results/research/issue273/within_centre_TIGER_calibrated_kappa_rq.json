@@ -1,0 +1,39 @@
+{
+  "arm": "TIGER_calibrated_kappa_rq",
+  "centres_with_pairs": 23819,
+  "checkpoint": "results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/rqvae_best.pth",
+  "checkpoint_sha256": "896e69b7bfc701a4fbd7413190cf8aadf0334b43d935ef3cbf66a73aae3c7410",
+  "difference_rmse": 2.0024533063041208,
+  "difference_rmse_by_sign": {
+    "negative": {
+      "centres": 12319,
+      "difference_rmse": 1.3346262004071199
+    },
+    "positive": {
+      "centres": 23815,
+      "difference_rmse": 1.6959338931669674
+    }
+  },
+  "mean_abs_error": 1.9972616321037506,
+  "ordering_agreement": 0.5513554042990889,
+  "pairs_per_centre": 64,
+  "rows": 28391948,
+  "runtime_s": 76.52637958526611,
+  "scale": 0.08433422446250916,
+  "schema": "genrec.issue273.within_centre/1",
+  "seed": 20261127,
+  "self_check": {
+    "mean_abs_error_delta": 2.0783174980998353e-07,
+    "reference": "results/research/issue271/assets/geometry/TIGER_calibrated_kappa_rq.json",
+    "sign_accuracy_delta": 0.0,
+    "spearman_delta": 0.0
+  },
+  "sid": "results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/item_sids.json",
+  "sid_sha256": "a89110b86168eb09621e5f9cfea6f6668253d6105e9f2a6647234b195efc725f",
+  "sign_accuracy": 0.36370396282777073,
+  "slope": 0.018087603394821856,
+  "spearman": -0.07008292549387518,
+  "variance_ratio": 0.4218254744736432,
+  "within_centre_spearman": 0.10645665601043144,
+  "within_centre_spearman_n": 56
+}

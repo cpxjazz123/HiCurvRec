@@ -619,11 +619,34 @@ def free_stage2_port(start: int = None, span: int = 200) -> int:
     raise RuntimeError("no free Stage 2 rendezvous port in [%d, %d)" % (base, base + span))
 
 
-def stage2_launch_decision(gpu_probe: dict) -> str | None:
-    """Refuse anything except the frozen four-rank Stage2 layout."""
-    if gpu_probe.get("mode") != "ddp" or int(gpu_probe.get("visible_count") or 0) < 4:
-        return "formal Stage2 requires four visible CUDA cards and the frozen ddp4 recipe"
-    return None
+def stage2_supports_single_gpu(entry: Path | None) -> bool:
+    """Whether this tree's trainer declares the single-card launch contract."""
+    if entry is None:
+        return False
+    try:
+        return bool(SINGLE_GPU_MARKER.search(entry.read_text(encoding="utf-8", errors="replace")))
+    except OSError:
+        return False
+
+
+def stage2_launch_decision(gpu_probe: dict, *, single_card_ok: bool = False) -> str | None:
+    """Refuse a layout the trainer cannot honour.
+
+    The frozen four-card recipe stays the default.  A one-card host is accepted
+    only when the trainer declares the single-card contract (the owner
+    authorised this regime); the trainer then keeps the Stage2 global batch at
+    4096 in one process.
+    """
+    mode = gpu_probe.get("mode")
+    visible = int(gpu_probe.get("visible_count") or 0)
+    if mode == "ddp" and visible >= 4:
+        return None
+    if mode == "single-gpu" and single_card_ok:
+        return None
+    if mode == "single-gpu":
+        return ("one visible CUDA card and the trainer does not declare the single-card "
+                "launch contract; add SINGLE_GPU_ENV or run on four cards")
+    return "formal Stage2 requires four visible CUDA cards and the frozen ddp4 recipe"
 
 
 def stage3_supports_single_gpu() -> bool:
@@ -1904,7 +1927,7 @@ def tool_stage2_start(source_dir: str, verification_id: str = "") -> dict:
             "refused": "no runnable Stage2 entrypoint in this tree",
             **context,
         }
-    refusal = stage2_launch_decision(gpu_probe)
+    refusal = stage2_launch_decision(gpu_probe, single_card_ok=stage2_supports_single_gpu(entry))
     if refusal is not None:
         return {"started": False, "refused": refusal, **context}
     cmd = [python, str(entry)]
@@ -2046,7 +2069,7 @@ def stage2_worker_main(tree_arg: str, spec: dict) -> int:
     state = {**pending, "tree": str(tree), "arm": spec.get("arm") or tree.name,
              "gpu_probe": gpu_probe}
     try:
-        refusal = stage2_launch_decision(gpu_probe)
+        refusal = stage2_launch_decision(gpu_probe, single_card_ok=stage2_supports_single_gpu(tree / "train_rqvae.py"))
         if refusal:
             raise ValueError(refusal)
         admitted = machine_admission(tree)
@@ -2590,30 +2613,6 @@ def record_sid_layers(sid: Path) -> dict:
                 "reason": "manual layer record belongs to another immutable run"}
     return {"passed": True, "report": str(target), "reused": True,
             "sha256": hashlib.sha256(target.read_bytes()).hexdigest()}
-
-
-def stage3_sid_quality(sid: Path, waive_collision: bool = False) -> dict:
-    """Run the two-number Stage 3 entry gate in the project interpreter.
-
-    The gate needs numpy and torch, which the MCP server (stdlib only) does not
-    have, so it runs as its own process; a failed or unparsable measurement is a
-    refusal, never a pass.
-    """
-    command = [PY2, "-m", "tools.research.stage2.sid_quality", str(sid)]
-    if waive_collision:
-        command.append("--waive-collision")
-        command,
-        cwd=str(REPO), capture_output=True, text=True, timeout=1800,
-    text = (done.stdout or "").strip()
-    try:
-        verdict = json.loads(text.splitlines()[-1]) if text else {}
-    except ValueError:
-        verdict = {}
-    if not isinstance(verdict, dict) or not verdict:
-        tail = (done.stderr or done.stdout or "").strip().splitlines()[-6:]
-        return {"allow": False,
-                "reason": "the SID quality measurement failed: " + " | ".join(tail)[:600]}
-    return verdict
 
 
 def stage3_sid_quality(sid: Path, waive_collision: bool = False) -> dict:

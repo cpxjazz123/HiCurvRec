@@ -1,0 +1,32 @@
+{
+  "argv": [
+    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+    "results/research/issue273/within_centre_metrics.py",
+    "--arm",
+    "TIGER_RQ-VAE",
+    "--sid",
+    "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+    "--checkpoint",
+    "results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth",
+    "--out",
+    "results/research/issue273/within_centre_TIGER_RQ-VAE.json",
+    "--reference",
+    "results/research/issue271/assets/geometry/TIGER_RQ-VAE.json"
+  ],
+  "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 results/research/issue273/within_centre_metrics.py --arm TIGER_RQ-VAE --sid results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json --checkpoint results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth --out results/research/issue273/within_centre_TIGER_RQ-VAE.json --reference results/research/issue271/assets/geometry/TIGER_RQ-VAE.json",
+  "cwd": "/fs04/ar57/wenyu/GeneRec",
+  "duration_s": 169.808,
+  "ended_at": "2026-11-27T12:01:24.647592+00:00",
+  "exit_code": 0,
+  "log": "/fs04/ar57/wenyu/GeneRec/results/research/issue273/executions/checks/issue273_within_centre_TIGER_RQ-VAE/20261127T115834831274Z_1280918_9f51baf3/run.log",
+  "note": "issue273 round-1 frozen baseline",
+  "schema": "genrec.pipeline.execution/1",
+  "started_at": "2026-11-27T11:58:34.833382+00:00",
+  "status": "PASS",
+  "unit_id": "issue273_within_centre_TIGER_RQ-VAE",
+  "versions": {
+    "interpreter": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+    "platform": "Linux-5.14.0-687.17.1.el9_8.x86_64-x86_64-with-glibc2.34",
+    "python": "3.9.25"
+  }
+}

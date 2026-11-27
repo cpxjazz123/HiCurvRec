@@ -203,9 +203,7 @@ def _banks():
 
 def _real_embeddings():
     import train_rqvae  # noqa: PLC0415
-
     return torch.from_numpy(np.load(train_rqvae.EMBEDDING_FILE)).float()
-
 def _trained_model():
     import train_rqvae  # noqa: PLC0415
     from model import RQVAE  # noqa: PLC0415

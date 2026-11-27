@@ -1,0 +1,32 @@
+{
+  "argv": [
+    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+    "results/research/issue273/within_centre_metrics.py",
+    "--arm",
+    "TIGER_calibrated_kappa_rq",
+    "--sid",
+    "results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/item_sids.json",
+    "--checkpoint",
+    "results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/rqvae_best.pth",
+    "--out",
+    "results/research/issue273/within_centre_TIGER_calibrated_kappa_rq.json",
+    "--reference",
+    "results/research/issue271/assets/geometry/TIGER_calibrated_kappa_rq.json"
+  ],
+  "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 results/research/issue273/within_centre_metrics.py --arm TIGER_calibrated_kappa_rq --sid results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/item_sids.json --checkpoint results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/rqvae_best.pth --out results/research/issue273/within_centre_TIGER_calibrated_kappa_rq.json --reference results/research/issue271/assets/geometry/TIGER_calibrated_kappa_rq.json",
+  "cwd": "/fs04/ar57/wenyu/GeneRec",
+  "duration_s": 80.222,
+  "ended_at": "2026-11-27T12:10:15.377470+00:00",
+  "exit_code": 0,
+  "log": "/fs04/ar57/wenyu/GeneRec/results/research/issue273/executions/checks/issue273_within_centre_TIGER_calibrated_kappa_rq/20261127T120855151375Z_1322320_8da39e0e/run.log",
+  "note": "issue273 round-1 frozen baseline",
+  "schema": "genrec.pipeline.execution/1",
+  "started_at": "2026-11-27T12:08:55.152505+00:00",
+  "status": "PASS",
+  "unit_id": "issue273_within_centre_TIGER_calibrated_kappa_rq",
+  "versions": {
+    "interpreter": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+    "platform": "Linux-5.14.0-687.17.1.el9_8.x86_64-x86_64-with-glibc2.34",
+    "python": "3.9.25"
+  }
+}

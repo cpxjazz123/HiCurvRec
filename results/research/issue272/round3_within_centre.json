@@ -1,0 +1,33 @@
+{
+  "arm": "TIGER_codebook_budget_j_rq",
+  "centres_with_pairs": 23819,
+  "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_0a2be6e306e145fe91b3d7be08a37c69/TIGER_codebook_budget_j_rq/result/rqvae_best.pth",
+  "checkpoint_sha256": "b2850403c6d455c97caa7d3122ad7bf75f4c3914f7405f08180328de8ee8d0eb",
+  "difference_rmse": 2.2862320845670596,
+  "difference_rmse_by_sign": {
+    "negative": {
+      "centres": 12319,
+      "difference_rmse": 1.9259015347385846
+    },
+    "positive": {
+      "centres": 23815,
+      "difference_rmse": 2.0368628705180596
+    }
+  },
+  "mean_abs_error": 2.4598642982644954,
+  "ordering_agreement": 0.564296097653134,
+  "pairs_per_centre": 64,
+  "rows": 28391948,
+  "runtime_s": 44.0466582775116,
+  "scale": 0.08433422446250916,
+  "schema": "genrec.issue273.within_centre/1",
+  "seed": 20261127,
+  "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_0a2be6e306e145fe91b3d7be08a37c69/TIGER_codebook_budget_j_rq/result/item_sids.json",
+  "sid_sha256": "eb7de2a6bc1aa75f35e0d1b971b25897fd3709402fff338e7b5bcebc5edf9c18",
+  "sign_accuracy": 0.4048759528581836,
+  "slope": 0.11095752621299244,
+  "spearman": 0.0797588525076114,
+  "variance_ratio": 1.3206874181655999,
+  "within_centre_spearman": 0.1420875454611926,
+  "within_centre_spearman_n": 56
+}

@@ -1,0 +1,213 @@
+{
+  "C10_one_hop_j": {
+    "pass": false,
+    "threshold": 0.798295,
+    "value": 1.9199137469910519
+  },
+  "C11_two_hop_j": {
+    "pass": false,
+    "threshold": 0.278106,
+    "value": 0.3315529163053087
+  },
+  "C12_l2_prefixes": {
+    "pass": false,
+    "threshold": 10918,
+    "value": 7463
+  },
+  "C13_effective_rank": {
+    "pass": false,
+    "threshold": 8,
+    "value": 2.2137536470623322
+  },
+  "C15_reconstruction": {
+    "pass": true,
+    "threshold": 8.589e-05,
+    "value": 7.708931661909446e-05
+  },
+  "C1_local_mae": {
+    "pass": false,
+    "threshold": 1.8935063111536612,
+    "value": 2.4598642982644954
+  },
+  "C2_spearman": {
+    "pass": true,
+    "threshold": 0.015850898303185326,
+    "value": 0.0797588525076114
+  },
+  "C3_sign": {
+    "pass": false,
+    "threshold": 0.4324533490974272,
+    "value": 0.4048759528581836
+  },
+  "C4_variance_ratio": {
+    "pass": true,
+    "threshold": 0.5,
+    "value": 1.3206874181655999
+  },
+  "C5_slope": {
+    "pass": true,
+    "threshold": 0.1,
+    "value": 0.11095752621299244
+  },
+  "C6_difference_rmse": {
+    "baseline": 2.0024533063041208,
+    "pass": false,
+    "value": 2.2862320845670596
+  },
+  "C7_within_centre_ordering": {
+    "baseline": 0.10645665601043144,
+    "pass": true,
+    "value": 0.1420875454611926
+  },
+  "C9_full_j": {
+    "pass": true,
+    "threshold": 0.338335882630658,
+    "value": 0.22007851285248525
+  },
+  "all_pass": false,
+  "arm": "TIGER_codebook_budget_j_rq",
+  "collision_recorded": 0.1336885345914508,
+  "executions": {
+    "sid_metrics": {
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 results/research/issue271/collect_metrics.py /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_0a2be6e306e145fe91b3d7be08a37c69/TIGER_codebook_budget_j_rq/result",
+      "duration_s": 8.848,
+      "exit_code": 0,
+      "log": "/fs04/ar57/wenyu/GeneRec/results/research/issue273/executions/checks/TIGER_codebook_budget_j_rq_sid_metrics/20261127T122323763043Z_1442332_c450f9fd/run.log",
+      "note": "frozen issue-271 SID collector",
+      "output": "/fs04/ar57/wenyu/GeneRec/results/research/issue273/executions/checks/TIGER_codebook_budget_j_rq_sid_metrics/20261127T122323763043Z_1442332_c450f9fd/run.log",
+      "output_sha256": "74abab3488700a58e26905d84e295481e02f6e23299d03e6fc5c08119d66e548"
+    },
+    "within_centre": {
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 results/research/issue273/within_centre_metrics.py --arm TIGER_codebook_budget_j_rq --sid /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_0a2be6e306e145fe91b3d7be08a37c69/TIGER_codebook_budget_j_rq/result/item_sids.json --checkpoint /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_0a2be6e306e145fe91b3d7be08a37c69/TIGER_codebook_budget_j_rq/result/rqvae_best.pth --out results/research/issue272/round3_within_centre.json",
+      "duration_s": 47.567,
+      "exit_code": 1,
+      "log": "/fs04/ar57/wenyu/GeneRec/results/research/issue273/executions/checks/TIGER_codebook_budget_j_rq_within_centre/20261127T122332655920Z_1442332_c4f7723c/run.log",
+      "note": "issue-273 within-centre metrics",
+      "output": "/fs04/ar57/wenyu/GeneRec/results/research/issue273/executions/checks/TIGER_codebook_budget_j_rq_within_centre/20261127T122332655920Z_1442332_c4f7723c/run.log",
+      "output_sha256": "654b74742514fa306b9d473431f99ce1450a76440c7f1285709f9faf363d9de5"
+    }
+  },
+  "full_j": {
+    "mean_j": 0.22007851285248525,
+    "pairs": 299402685,
+    "scale": 0.06828367045803868,
+    "strata": {
+      "1-1": {
+        "mean_j": 1.9199137469910519,
+        "pairs": 255232,
+        "share": 0.0008524706450110827,
+        "sum": 490023.4254720202
+      },
+      "2-2": {
+        "mean_j": 0.3315529163053087,
+        "pairs": 18271128,
+        "share": 0.061025264352589224,
+        "sum": 6057845.7725875825
+      },
+      "3-3": {
+        "mean_j": 0.1978479618469094,
+        "pairs": 173738270,
+        "share": 0.5802829390123873,
+        "sum": 34373762.614308044
+      },
+      "4-5": {
+        "mean_j": 0.23281967122690791,
+        "pairs": 106915629,
+        "share": 0.3570964268406611,
+        "sum": 24892061.59279806
+      },
+      "6-inf": {
+        "mean_j": 0.35249590279622167,
+        "pairs": 222426,
+        "share": 0.0007428991493513159,
+        "sum": 78404.2536753524
+      }
+    },
+    "sum": 65892097.658841096
+  },
+  "local_payload": {
+    "arm": "TIGER_codebook_budget_j_rq",
+    "centres_with_pairs": 23819,
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_0a2be6e306e145fe91b3d7be08a37c69/TIGER_codebook_budget_j_rq/result/rqvae_best.pth",
+    "checkpoint_sha256": "b2850403c6d455c97caa7d3122ad7bf75f4c3914f7405f08180328de8ee8d0eb",
+    "difference_rmse": 2.2862320845670596,
+    "difference_rmse_by_sign": {
+      "negative": {
+        "centres": 12319,
+        "difference_rmse": 1.9259015347385846
+      },
+      "positive": {
+        "centres": 23815,
+        "difference_rmse": 2.0368628705180596
+      }
+    },
+    "mean_abs_error": 2.4598642982644954,
+    "ordering_agreement": 0.564296097653134,
+    "pairs_per_centre": 64,
+    "rows": 28391948,
+    "runtime_s": 44.0466582775116,
+    "scale": 0.08433422446250916,
+    "schema": "genrec.issue273.within_centre/1",
+    "seed": 20261127,
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_0a2be6e306e145fe91b3d7be08a37c69/TIGER_codebook_budget_j_rq/result/item_sids.json",
+    "sid_sha256": "eb7de2a6bc1aa75f35e0d1b971b25897fd3709402fff338e7b5bcebc5edf9c18",
+    "sign_accuracy": 0.4048759528581836,
+    "slope": 0.11095752621299244,
+    "spearman": 0.0797588525076114,
+    "variance_ratio": 1.3206874181655999,
+    "within_centre_spearman": 0.1420875454611926,
+    "within_centre_spearman_n": 56
+  },
+  "mu_active_epochs": {
+    "epochs": 3000,
+    "fraction": 0.008666666666666666,
+    "value": 26
+  },
+  "schema": "genrec.issue273.pass_table/1",
+  "sid_metrics": {
+    "code_usage": [
+      256,
+      256,
+      256,
+      17
+    ],
+    "collision": 0.1336885345914508,
+    "items": 24587,
+    "l2_group_size_mean": 3.294519630175533,
+    "l2_per_l1": 29.15234375,
+    "l3_group_size_mean": 1.154319248826291,
+    "l3_refinement_gain_bits": 2.39695151612851,
+    "schema": "genrec.issue271.sid_metrics/1",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_0a2be6e306e145fe91b3d7be08a37c69/TIGER_codebook_budget_j_rq/result/item_sids.json",
+    "sid_quality": {
+      "allow": true,
+      "collision": 0.1336885345914508,
+      "effective_rank": 2.2137536470623322,
+      "limits": {
+        "collision": 0.4,
+        "effective_rank": 8.0,
+        "quant_error": [
+          0.035,
+          0.1
+        ]
+      },
+      "quant_error": 0.013035949767023772,
+      "reason": "collision 0.1337 < 0.40; measured quantisation error 0.013 (band 0.035-0.100) and effective rank 2.21 (limit 8.0); WARNING quantisation error 0.013 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises",
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_0a2be6e306e145fe91b3d7be08a37c69/TIGER_codebook_budget_j_rq/result/item_sids.json",
+      "warnings": [
+        "quantisation error 0.013 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises"
+      ]
+    },
+    "three_per_two": 2.8540801286345974,
+    "unique_one": 256,
+    "unique_three": 21300,
+    "unique_two": 7463,
+    "vs_k269": {
+      "candidate_groups_merging": 0,
+      "k269_groups_split": 2767,
+      "k269_sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/item_sids.json",
+      "l2_groups_candidate": 7463,
+      "l2_groups_k269": 6246
+    }
+  }
+}

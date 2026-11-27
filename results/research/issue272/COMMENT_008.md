@@ -1,0 +1,1 @@
+Owner-directed closure, superseded by #273. Preserve R1 full negative Stage2 and R2 interrupted collapse evidence; acceptance was not met, no Stage3. The finite tested-arm check does not establish infeasibility of the allowed mechanism. Next round targets within-centre curvature-difference preservation; no global distance training term, no Stage3. This closure is not a PASS.
