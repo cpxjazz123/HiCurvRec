@@ -1,0 +1,132 @@
+{
+  "C10_sid_identity": {
+    "checkpoint_sha256": "86dfde2cb3bb62ad79c89eec42e2d4f2bcfeb77a1aeccbd2474050601f5a856b",
+    "pass": true,
+    "rule": "the re-exported SID's sha256 must match the checkpoint's export",
+    "sid_sha256": "67b5a47cfdba442b08548c4b40b205727ba62375294d7a2be2493a0a5deb6033"
+  },
+  "C1_holdout_ranking_accuracy": {
+    "gap_pass": true,
+    "gap_threshold": 0.012159517966210842,
+    "macro_by_centre": 0.7640895061728394,
+    "macro_pass": true,
+    "macro_threshold": 0.5291975308641975,
+    "mean_distance_gap": 0.23540043830871582,
+    "pass": true,
+    "threshold": 0.5386049981350243,
+    "value": 0.80343155538978
+  },
+  "C2_holdout_margin_satisfaction": {
+    "macro_by_centre": 0.38628858024691354,
+    "macro_pass": true,
+    "macro_threshold": 0.07929012345679012,
+    "pass": true,
+    "threshold": 0.08149944050727341,
+    "value": 0.4641924654979485
+  },
+  "C3_l2_distinct_prefixes": {
+    "pass": false,
+    "threshold": 10918,
+    "value": 7911
+  },
+  "C4_effective_rank": {
+    "pass": true,
+    "threshold": 8,
+    "value": 11.199431906827526
+  },
+  "C5_sid_prefix_discrimination": {
+    "lcp_positive_greater_than_negative": {
+      "pass": false,
+      "threshold": 0.13688922044013427,
+      "value": 0.1174934725848564
+    },
+    "mean_lcp_difference": {
+      "pass": true,
+      "threshold": 0.11674748228273032,
+      "value": 0.11693397985826184
+    },
+    "positive_pair_shares_level1": {
+      "pass": false,
+      "threshold": 0.1411786646773592,
+      "value": 0.1195449459157031
+    }
+  },
+  "C6_behavioural_neighbourhood_fidelity": {
+    "pass": true,
+    "threshold": 0.07931794532210765,
+    "tiger_value": 0.08349257402327122,
+    "value": 0.08097285816257246
+  },
+  "C7_full_j": {
+    "pass": true,
+    "threshold": 0.338335882630658,
+    "value": 0.31516319288466693
+  },
+  "C8_one_hop_j": {
+    "pass": false,
+    "threshold": 0.83820975,
+    "value": 9.566601360819964
+  },
+  "C8_two_hop_j": {
+    "pass": false,
+    "threshold": 0.29201130000000003,
+    "value": 1.1575060174140377
+  },
+  "C9_reconstruction": {
+    "pass": true,
+    "threshold": 8.589273202233017e-05,
+    "value": 6.711058813380077e-05
+  },
+  "all_pass": false,
+  "arm": "TIGER_pairrank_cover_rq",
+  "diagnostics_not_criteria": {
+    "collision": 0.1543091877821613,
+    "curvature_mean_abs_error": 16.84574278150983,
+    "curvature_sign_accuracy": 0.26622386037055296,
+    "curvature_spearman": -0.46623285163990147,
+    "prediction_slope": -6.378979126802926,
+    "prediction_variance_ratio": 134.82906745381197,
+    "unique_three": 20793,
+    "within_centre_ordering": -0.15386791893105434
+  },
+  "epochs": 3000,
+  "executions": {
+    "layer_metrics": {
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 results/research/issue274/write_layer_metrics.py --sid /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_6fe2faf7fc204330b129dfa4900ae641/TIGER_pairrank_cover_rq/result/item_sids.json --arm TIGER_pairrank_cover_rq",
+      "duration_s": 4.856,
+      "exit_code": 0,
+      "log": "/fs04/ar57/wenyu/GeneRec/results/research/issue274/executions/checks/TIGER_pairrank_cover_rq_layer_metrics/20261127T160748465100Z_3236454_fad85541/run.log",
+      "note": "the frozen issue-252 layer metrics",
+      "output": "/fs04/ar57/wenyu/GeneRec/results/research/issue274/executions/checks/TIGER_pairrank_cover_rq_layer_metrics/20261127T160748465100Z_3236454_fad85541/run.log",
+      "output_sha256": "391e0f43b402cc65aef1415594018af2adc11a1e44863f9deaca501b8fe18236"
+    },
+    "ranking": {
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 results/research/issue274/measure_ranking.py --checkpoint /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_6fe2faf7fc204330b129dfa4900ae641/TIGER_pairrank_cover_rq/result/rqvae_best.pth --sid /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_6fe2faf7fc204330b129dfa4900ae641/TIGER_pairrank_cover_rq/result/item_sids.json --out results/research/issue274/round3_ranking.json --label TIGER_pairrank_cover_rq --reference /fs04/ar57/wenyu/GeneRec/results/research/issue274/baselines.json",
+      "duration_s": 3.482,
+      "exit_code": 0,
+      "log": "/fs04/ar57/wenyu/GeneRec/results/research/issue274/executions/checks/TIGER_pairrank_cover_rq_ranking/20261127T160735941165Z_3236454_81f2029d/run.log",
+      "note": "issue-274 hold-out ranking metrics",
+      "output": "/fs04/ar57/wenyu/GeneRec/results/research/issue274/executions/checks/TIGER_pairrank_cover_rq_ranking/20261127T160735941165Z_3236454_81f2029d/run.log",
+      "output_sha256": "2940efaca2e773d4563436f6552553e454c7c8291cb30d7ee657206a3b31c432"
+    },
+    "sid_metrics": {
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 results/research/issue271/collect_metrics.py /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_6fe2faf7fc204330b129dfa4900ae641/TIGER_pairrank_cover_rq/result",
+      "duration_s": 8.997,
+      "exit_code": 0,
+      "log": "/fs04/ar57/wenyu/GeneRec/results/research/issue274/executions/checks/TIGER_pairrank_cover_rq_sid_metrics/20261127T160739460765Z_3236454_ef8319bb/run.log",
+      "note": "the frozen issue-271 SID collector",
+      "output": "/fs04/ar57/wenyu/GeneRec/results/research/issue274/executions/checks/TIGER_pairrank_cover_rq_sid_metrics/20261127T160739460765Z_3236454_ef8319bb/run.log",
+      "output_sha256": "a95e4e396f775aed99fd48bb26eea9639e922b6760d6f2a06e088d5c1dc185e0"
+    },
+    "within_centre": {
+      "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 results/research/issue273/within_centre_metrics.py --arm TIGER_pairrank_cover_rq --sid /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_6fe2faf7fc204330b129dfa4900ae641/TIGER_pairrank_cover_rq/result/item_sids.json --checkpoint /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_6fe2faf7fc204330b129dfa4900ae641/TIGER_pairrank_cover_rq/result/rqvae_best.pth --out results/research/issue274/round3_within_centre.json",
+      "duration_s": 83.196,
+      "exit_code": 1,
+      "log": "/fs04/ar57/wenyu/GeneRec/results/research/issue274/executions/checks/TIGER_pairrank_cover_rq_within_centre/20261127T160753328132Z_3236454_2cb26038/run.log",
+      "note": "the curvature-fidelity diagnostics (not criteria)",
+      "output": "/fs04/ar57/wenyu/GeneRec/results/research/issue274/executions/checks/TIGER_pairrank_cover_rq_within_centre/20261127T160753328132Z_3236454_2cb26038/run.log",
+      "output_sha256": "13f915f9ced9b43762ac896277149c7c6fb568c1b680b1b6e00d94ff672987c0"
+    }
+  },
+  "schema": "genrec.issue274.pass_table/1"
+}

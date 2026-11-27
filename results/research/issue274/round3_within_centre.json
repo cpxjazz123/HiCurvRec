@@ -1,0 +1,33 @@
+{
+  "arm": "TIGER_pairrank_cover_rq",
+  "centres_with_pairs": 23819,
+  "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_6fe2faf7fc204330b129dfa4900ae641/TIGER_pairrank_cover_rq/result/rqvae_best.pth",
+  "checkpoint_sha256": "86dfde2cb3bb62ad79c89eec42e2d4f2bcfeb77a1aeccbd2474050601f5a856b",
+  "difference_rmse": 4.965980219360306,
+  "difference_rmse_by_sign": {
+    "negative": {
+      "centres": 12319,
+      "difference_rmse": 2.6191553494749815
+    },
+    "positive": {
+      "centres": 23815,
+      "difference_rmse": 4.994111453147181
+    }
+  },
+  "mean_abs_error": 16.84574278150983,
+  "ordering_agreement": 0.4841709874469961,
+  "pairs_per_centre": 64,
+  "rows": 28391948,
+  "runtime_s": 79.69845509529114,
+  "scale": 0.08433422446250916,
+  "schema": "genrec.issue273.within_centre/1",
+  "seed": 20261127,
+  "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_6fe2faf7fc204330b129dfa4900ae641/TIGER_pairrank_cover_rq/result/item_sids.json",
+  "sid_sha256": "67b5a47cfdba442b08548c4b40b205727ba62375294d7a2be2493a0a5deb6033",
+  "sign_accuracy": 0.26622386037055296,
+  "slope": -6.378979126802926,
+  "spearman": -0.46623285163990147,
+  "variance_ratio": 134.82906745381197,
+  "within_centre_spearman": -0.15386791893105434,
+  "within_centre_spearman_n": 56
+}

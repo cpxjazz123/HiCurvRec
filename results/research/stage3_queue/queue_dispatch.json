@@ -1,0 +1,251 @@
+{
+ "schema": "genrec.stage3_queue.dispatch/1",
+ "created": "2026-11-28",
+ "note": "Stage2-completed SIDs with no Stage3 result; collision<0.4; checkpoint beside the SID. Dispatch serially via stage3_start (singleton).",
+ "running": "TIGER_samecentre_delta_rq (already dispatched)",
+ "order": [
+  {
+   "arm": "TIGER_prefix_curvature_gate_rq",
+   "sid": "results/stage2_RQ-VAE/_runs/issue255_formal/TIGER_prefix_curvature_gate_rq/result/item_sids.json",
+   "collision": 0.1635,
+   "items": 24587,
+   "kind": "run",
+   "manifest": "verified",
+   "sid_sha256": "a42080954a25202ddfc344c96e817301c64d46089fc6184564a4b240a66c1571",
+   "gate": "refused: checkpoint imported repository source hashes mismatch (checkpoint predates current framework sources) -> Stage2 re-run required"
+  },
+  {
+   "arm": "TIGER_global_j_rq",
+   "sid": "results/stage2_RQ-VAE/_runs/stage2_cc9a31a9325b439f98c8b1779aaa32aa/TIGER_global_j_rq/result/item_sids.json",
+   "collision": 0.1518,
+   "items": 24587,
+   "kind": "run",
+   "manifest": "verified",
+   "sid_sha256": "e83ae666668a3e57721e16298fd654a0e2691d14caf0200334ab64c12ef49802",
+   "gate": "DISPATCHED 2026-11-28 pid 3314125 (collision 0.1518; quality warnings quant 0.009<0.035 band, rank 4.5<8)"
+  },
+  {
+   "arm": "TIGER_graphlet_align_rq",
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_align_rq/item_sids.json",
+   "collision": 0.1591,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "verified",
+   "sid_sha256": "6966de3adf44cd29a6b96a0947c2e61fca4ab4639863c22b896e98d5378a7a9c",
+   "gate": "dispatchable (manifest verified; binding exists or static)"
+  },
+  {
+   "arm": "TIGER_curvloss_rq",
+   "sid": "results/stage2_RQ-VAE/TIGER_curvloss_rq/item_sids.json",
+   "collision": 0.1425,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "verified",
+   "sid_sha256": "918b61412bbb877ddc905a7d2722f698a65cdf6fc9ca769026b0982a289ab60e",
+   "gate": "dispatchable (manifest verified; binding exists or static)"
+  },
+  {
+   "arm": "TIGER_sinkhorn_all_levels_rq",
+   "sid": "results/stage2_RQ-VAE/TIGER_sinkhorn_all_levels_rq/item_sids.json",
+   "collision": 0.1105,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "verified",
+   "sid_sha256": "77212dcd5b6a897aab30b463052c65f6bd113c030f04f53d364cbf39896cebac",
+   "gate": "dispatchable (manifest verified; binding exists or static)"
+  },
+  {
+   "arm": "TIGER_pairrank_cover_rq",
+   "sid": "results/stage2_RQ-VAE/_runs/stage2_6fe2faf7fc204330b129dfa4900ae641/TIGER_pairrank_cover_rq/result/item_sids.json",
+   "collision": 0.154309,
+   "items": 24587,
+   "kind": "run",
+   "manifest": "needs-export-repair",
+   "gate": "round-3 candidate, checkpoint carries run identity; the gate re-exports the SID from the checkpoint"
+  },
+  {
+   "arm": "TIGER_drq_D0",
+   "sid": "results/stage2_RQ-VAE/TIGER_drq_D0/item_sids.json",
+   "collision": 0.1623,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "6ff4be87b987c87ff95cf5417dd81d3f159fd4a9880f49c1cc5191ea487b5596"
+  },
+  {
+   "arm": "TIGER_graphlet_capacity_rq",
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_capacity_rq/item_sids.json",
+   "collision": 0.1603,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "26b3e0904cef258ed7ef71c45cd49f5e88824bc20ab81720c68918b7f927a33c"
+  },
+  {
+   "arm": "TIGER_drq_D4",
+   "sid": "results/stage2_RQ-VAE/TIGER_drq_D4/item_sids.json",
+   "collision": 0.1598,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "21e9e4a7e5bfe9c899a893165a889722a195317c90efab5d63d44dd72cea94e9"
+  },
+  {
+   "arm": "TIGER_codebook_budget_j_rq",
+   "sid": "results/stage2_RQ-VAE/_runs/stage2_0a2be6e306e145fe91b3d7be08a37c69/TIGER_codebook_budget_j_rq/result/item_sids.json",
+   "collision": 0.1337,
+   "items": 24587,
+   "kind": "run",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "eb7de2a6bc1aa75f35e0d1b971b25897fd3709402fff338e7b5bcebc5edf9c18"
+  },
+  {
+   "arm": "TIGER_sid_graphlet_rq",
+   "sid": "results/stage2_RQ-VAE/TIGER_sid_graphlet_rq/item_sids.json",
+   "collision": 0.1321,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "d0436c7686325fd10df551f31e527951c46b5b00e450729817d1fb890b246abd"
+  },
+  {
+   "arm": "TIGER_p4_topoq_A",
+   "sid": "results/stage2_RQ-VAE/TIGER_p4_topoq_A/item_sids.json",
+   "collision": 0.1304,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "02deeedd2e4699342af6b679f2ab5551c3e911500864a089af269d60ff09672d"
+  },
+  {
+   "arm": "TIGER_trq_A",
+   "sid": "results/stage2_RQ-VAE/TIGER_trq_A/item_sids.json",
+   "collision": 0.1285,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "ff407ef3486d415fb52ae15b0d7361b4a6ae2a66ab5d86f7e4e067f61603ffd7"
+  },
+  {
+   "arm": "TIGER_active_j_rq",
+   "sid": "results/stage2_RQ-VAE/_runs/stage2_4dffd8b4528440b3aca334b380749f01/TIGER_active_j_rq/result/item_sids.json",
+   "collision": 0.1198,
+   "items": 24587,
+   "kind": "run",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "dfa4f784c2948597c5c43ac061a6c41e11c48f37233240df3a6185723a082fc6"
+  },
+  {
+   "arm": "TIGER_export_matched_graphlet_rq",
+   "sid": "results/stage2_RQ-VAE/TIGER_export_matched_graphlet_rq/item_sids.json",
+   "collision": 0.1018,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "5d7dc92a9f3952c4a5e31a5fa69cffb50a4ccf100b822efd25232dcce2962843"
+  },
+  {
+   "arm": "TIGER_drq_U",
+   "sid": "results/stage2_RQ-VAE/TIGER_drq_U/item_sids.json",
+   "collision": 0.063,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "c334368fe45cc4af9888bcfe429da3a3730a6afc4307efd58ef865193d2bf285"
+  },
+  {
+   "arm": "TIGER_graphlet_prefix_shuffled_rq",
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_prefix_shuffled_rq/item_sids.json",
+   "collision": 0.0559,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "95032e31963fefb96a16788e7fcf8952def25ec10efc8d3c8fed0bb1c17a6b46"
+  },
+  {
+   "arm": "TIGER_graphlet_wide_l1_rq",
+   "sid": "results/stage2_RQ-VAE/TIGER_graphlet_wide_l1_rq/item_sids.json",
+   "collision": 0.0543,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "0f2880febc9e5f229a6671cad49289f37a827355ca812776d78a0b6b9256cbda"
+  },
+  {
+   "arm": "TIGER_drq_S",
+   "sid": "results/stage2_RQ-VAE/TIGER_drq_S/item_sids.json",
+   "collision": 0.0385,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "ea4916c55c5ded1192e26b8ea3bd58a6dd9ef5c4bd68c2a4b4ccd928f92bb5f7"
+  },
+  {
+   "arm": "TIGER_drq_D2",
+   "sid": "results/stage2_RQ-VAE/TIGER_drq_D2/item_sids.json",
+   "collision": 0.0242,
+   "items": 24587,
+   "kind": "static",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "5c38293042ac329bc74a0dd6c376cc76f84076f39c421377c8117ae41f419afe"
+  },
+  {
+   "arm": "TIGER_pairrank_rq",
+   "sid": "results/stage2_RQ-VAE/_runs/stage2_debbfe6a8e714c12aea4dbc7d2c236e7/TIGER_pairrank_rq/result/item_sids.json",
+   "collision": 0.1549,
+   "items": 24587,
+   "kind": "run",
+   "manifest": "verified",
+   "sid_sha256": "39e2c3eda9b723a6e1ea73ea1521e73be754b4d4252bbf51a805ddc78dacf51a",
+   "gate": "refused: checkpoint missing executed run identity -> Stage2 re-run required"
+  },
+  {
+   "arm": "TIGER_pairrank_enc_rq",
+   "sid": "results/stage2_RQ-VAE/_runs/stage2_818150011991495cbeebd225909b1f91/TIGER_pairrank_enc_rq/result/item_sids.json",
+   "collision": 0.1573,
+   "items": 24587,
+   "kind": "run",
+   "manifest": "needs-export-repair",
+   "sid_sha256": "b9c3e8de929722aaef9604b747143028c55db3f5dcc9879525231b40a828f59d",
+   "gate": "refused: checkpoint missing executed run identity -> Stage2 re-run required"
+  }
+ ],
+ "audit_2026_11_28": {
+  "dispatchable_verified": [
+   "TIGER_prefix_curvature_gate_rq",
+   "TIGER_global_j_rq",
+   "TIGER_graphlet_align_rq",
+   "TIGER_curvloss_rq",
+   "TIGER_sinkhorn_all_levels_rq"
+  ],
+  "refused_needs_stage2_rerun": [
+   "TIGER_pairrank_rq",
+   "TIGER_pairrank_enc_rq"
+  ],
+  "repair_candidates": [
+   "TIGER_drq_D0",
+   "TIGER_graphlet_capacity_rq",
+   "TIGER_drq_D4",
+   "TIGER_codebook_budget_j_rq",
+   "TIGER_sid_graphlet_rq",
+   "TIGER_p4_topoq_A",
+   "TIGER_trq_A",
+   "TIGER_active_j_rq",
+   "TIGER_export_matched_graphlet_rq",
+   "TIGER_drq_U",
+   "TIGER_graphlet_prefix_shuffled_rq",
+   "TIGER_graphlet_wide_l1_rq",
+   "TIGER_drq_S",
+   "TIGER_drq_D2"
+  ]
+ },
+ "results": {
+  "TIGER_samecentre_delta_rq": {
+   "test_recall@10": 0.04657114504082592,
+   "test_recall@5": 0.030432284684621946,
+   "test_ndcg@10": 0.025415564077936974,
+   "test_final": "results/stage3_T5Train/TIGER_samecentre_delta_rq/logs/Amazon_2023_Instruments/Nov-28-2026_01-31-26/test_final.json",
+   "verdict": "below the 0.065 acceptance bar"
+  }
+ }
+}

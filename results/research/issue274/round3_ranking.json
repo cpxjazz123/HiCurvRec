@@ -1,0 +1,50 @@
+{
+  "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_6fe2faf7fc204330b129dfa4900ae641/TIGER_pairrank_cover_rq/result/rqvae_best.pth",
+  "frozen_margin": 0.2529585361480713,
+  "holdout_pairs": {
+    "groups": 5362,
+    "macro_accuracy_by_centre": 0.7640895061728394,
+    "macro_margin_rate_by_centre": 0.38628858024691354,
+    "margin": 0.2529585361480713,
+    "margin_satisfaction_rate": 0.4641924654979485,
+    "mean_distance_gap": 0.23540043830871582,
+    "mean_negative_distance": 0.4514646530151367,
+    "mean_positive_distance": 0.2160642296075821,
+    "median_distance_gap": 0.1942642629146576,
+    "ranking_accuracy": 0.80343155538978
+  },
+  "holdout_prefix_discrimination": {
+    "lcp_positive_equals_negative": 0.8621782916822082,
+    "lcp_positive_greater_than_negative": 0.1174934725848564,
+    "mean_lcp_difference": 0.11693397985826184,
+    "mean_lcp_negative": 0.024058187243565832,
+    "mean_lcp_positive": 0.1409921671018277,
+    "negative_pair_shares_level1": 0.02256620663931369,
+    "positive_pair_shares_level1": 0.1195449459157031
+  },
+  "label": "TIGER_pairrank_cover_rq",
+  "margin_source": "inherited from the frozen reference",
+  "schema": "genrec.issue274.baselines/1",
+  "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_6fe2faf7fc204330b129dfa4900ae641/TIGER_pairrank_cover_rq/result/item_sids.json",
+  "training_pairs": {
+    "groups": 21221,
+    "macro_accuracy_by_centre": 0.7858772133302403,
+    "macro_margin_rate_by_centre": 0.3910306966674399,
+    "margin": 0.2529585361480713,
+    "margin_satisfaction_rate": 0.4697705103435276,
+    "mean_distance_gap": 0.24280230700969696,
+    "mean_negative_distance": 0.4557017683982849,
+    "mean_positive_distance": 0.21289943158626556,
+    "median_distance_gap": 0.20685623586177826,
+    "ranking_accuracy": 0.8206964799019839
+  },
+  "training_prefix_discrimination": {
+    "lcp_positive_equals_negative": 0.8547665048772443,
+    "lcp_positive_greater_than_negative": 0.1274209509448188,
+    "mean_lcp_difference": 0.13156778662645494,
+    "mean_lcp_negative": 0.0237971820366618,
+    "mean_lcp_positive": 0.15536496866311672,
+    "negative_pair_shares_level1": 0.02181801046133547,
+    "positive_pair_shares_level1": 0.13100230903350454
+  }
+}

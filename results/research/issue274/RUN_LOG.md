@@ -152,3 +152,27 @@ during the next dispatch.
   before Stage3 can consume them.
 - The round-2 (encoder channel) is training; at epoch 2460 the training-pair accuracy is 0.80 and
   the margin satisfaction 0.45 at a reconstruction of 6.86e-05.
+
+## The round-3 candidate (the queue position)
+
+`TIGER_pairrank_cover_rq` — the round-2 tree plus the identity save, the ARM_NAME
+`TIGER_pairrank_cover_rq`, the pair index `pairs_index_cover1.npz` (38,871 groups: 31,095 train,
+7,776 hold-out). 19 tests pass. The dispatch waits for the Stage3 of `TIGER_samecentre_delta_rq`
+(the single GPU is occupied by the #273 run; the round-3 Stage2 then takes the same recipe:
+3000 epochs, the same gradient budget, the same margin).
+
+The stage3 queue audit: of the 12 queue entries with collision < 0.4, five are the real (non
+`_conformance`) exports — `TIGER_samecentre_delta_rq` (0.1417, running), `TIGER_codebook_budget_j_rq`
+(0.1337), `TIGER_active_j_rq` (0.1198), `TIGER_global_j_rq` (0.1518), `TIGER_prefix_curvature_gate_rq`
+(0.1635) — and the last four carry no `export_manifest`, so the frozen export gate refuses them; they
+need the same identity repair and one Stage2 re-run before their Stage3 can start.
+
+### The round-3 run (interim)
+
+`stage2_6fe2faf7fc204330b129dfa4900ae641`. The smoke PASSED: the entry check ran one epoch and
+exported the identifier (levels 256/256/256, collision 0.055843; the behaviour-graph check is
+NOT_APPLICABLE). The 3000-epoch run is at epoch ~728/3000 (the A100-80G host, the shared GPU beside
+the #273 Stage3). The collision trajectory: 0.0714 (epoch 50) -> 0.0924 (150) -> 0.1018 (200) ->
+0.1113 (250) -> 0.1287 (500) — the same monotone rise as rounds 1-2, so the SID-capacity ceiling is
+not a sampling artifact. The pair metrics at the start of training: the ranking accuracy 0.615, the
+margin satisfaction 0.027, the gap 0.029, the pair weight 7.5e-06.

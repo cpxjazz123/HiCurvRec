@@ -142,3 +142,41 @@ supervision; the C8's 0.838 / 0.292 are the #269's values plus 5 %, and the #269
 forbids. The three probes and the two full runs bound this mechanism's frontier: the L2 stays at
 about 7,920-7,930 in every configuration (the probe's transient 9,058 at a 100-step fine-tune does
 not survive a full training), and the 1-hop J is traded against the ranking accuracy.
+
+## Round 3 (the sampling / matching-coverage channel)
+
+Run `stage2_6fe2faf7fc204330b129dfa4900ae641`, the dense 1-closed/1-open index (38,871 groups
+against 26,583). Full table: `results/research/issue274/round3_pass_table.json`.
+
+| criterion | round 1 | round 2 | round 3 | threshold | verdict |
+|---|---|---|---|---|---|
+| C1 the hold-out ranking accuracy | 0.6279 | 0.8064 | **0.8034** | > 0.5386 | PASS |
+| C2 the fixed-margin satisfaction | 0.0048 | 0.4685 | **0.4642** | > 0.0815 | PASS |
+| C3 the L2 distinct prefixes | 7,929 | 7,923 | 7,911 | >= 10,918 | FAIL |
+| C4 the effective rank | 15.61 | 12.35 | 11.20 | >= 8 | PASS |
+| C5 the prefix discrimination | 2/3 fail | 2/3 fail | 2/3 fail (0.1175 / 0.1169 / 0.1195) | — | FAIL |
+| C6 the behavioural neighbourhood fidelity | 0.08197 | 0.07925 | **0.08097** | >= 0.07932 | PASS |
+| C7 the full J | 0.2261 | 0.3037 | 0.3152 | <= 0.3383 | PASS |
+| C8 the 1-hop / 2-hop J | 2.806 / 0.443 | 9.657 / 1.098 | 9.567 / 1.158 | <= 0.838 / <= 0.292 | FAIL |
+| C9 the reconstruction | 6.70e-05 | 6.70e-05 | 6.71e-05 | <= 8.589e-05 | PASS |
+| C10 the SID identity | pass | pass | pass | — | PASS |
+
+`all_pass = false`: seven pass, three fail (C3, C5, C8).
+
+### The cross-round structure
+
+Three structurally different levers now agree:
+
+* **C3 is terminal at ~7,910-7,930** — the codebook channel, the encoder channel and the
+  matching-coverage channel all end at the same L2 count and the same collision band
+  (0.071 at epoch 50 -> 0.136 at 750 -> **0.1543** final, against round 2's 0.1573). The
+  collision rises monotonically with training in every configuration; the capacity ceiling is not a
+  sampling artifact. The threshold 10,918 belongs to the #265 Euclidean local-curvature supervision.
+* **C1/C2/C4/C7/C9 pass in every encoder-channel round** (0.803-0.806 accuracy, 0.464-0.468
+  margin, J 0.304-0.315 on a 0.338 budget): the curvature-selected ranking itself is a solved,
+  reproducible signal.
+* **C8 fails in the encoder-channel rounds** (9.57/1.16 vs the codebook-only round's 2.81/0.44 and
+  the TIGER's 15.16/2.67) and its threshold belongs to the #269 pointwise-curvature supervision:
+  the pair-ranking channel trades the graph-distance strata for the ranking accuracy.
+* **C5 fails 2/3 in every round** (the mechanism's SID prefix structure sits slightly below the
+  frozen TIGER values); **C6 recovered** in round 3 to 0.08097 above the 0.079318 floor.
