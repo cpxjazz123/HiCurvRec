@@ -32,7 +32,7 @@ tree `stage2_RQ-VAE/TIGER_calibrated_kappa_rq/`, Stage2 run
 `b6fc4901…`, `item_sids.json` `a89110b8…`, `rqvae_best.pth` `896e69b7…`, `recall.json`
 `78e68902…`, `archive_binding.json` `4e51a695…`; ledger updated (`results/research/issue139/r2_ledger.json`).
 
-**Commit:** `80466a12` (mechanism + Stage2 evidence) and the verdict commit below.
+**Commits:** `80466a12` (mechanism + Stage2 evidence) and `024a709012` (Stage3 result, R2, verdict).
 
 **Closure:** every acceptance item C1–C15 has a current PASS; no unrun item is reported as a
 pass; public infra hashes are unchanged (`INFRA_SNAPSHOT_END.json`).

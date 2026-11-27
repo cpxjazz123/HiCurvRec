@@ -1,6 +1,6 @@
 {
   "issue": 269,
-  "state": "WORKING",
+  "state": "COMPLETED",
   "infra_mode": "FROZEN",
   "done": [
     "C1",
@@ -13,7 +13,11 @@
     "C8",
     "C9",
     "C10",
-    "C11"
+    "C11",
+    "C12",
+    "C13",
+    "C14",
+    "C15"
   ],
   "gate": {
     "scale": 0.06828367045803868,
@@ -25,22 +29,22 @@
     "spearman": 0.946566,
     "passed": true
   },
-  "running": [
-    {
-      "name": "stage3",
-      "pid": 2061046,
-      "variant": "TIGER_calibrated_kappa_rq",
-      "run": "results/stage3_T5Train/TIGER_calibrated_kappa_rq/logs/Amazon_2023_Instruments/Nov-27-2026_13-52-55",
-      "mode": "single-card",
-      "epochs": 150
-    }
-  ],
+  "running": [],
   "next_commands": [
     "stage3_status",
     "python3 -c \"from tools.iteration.replay import replay; ...\"",
     "python3 results/research/issue139/upload_stage3.py TIGER_calibrated_kappa_rq"
   ],
   "blocked_by": null,
-  "updated_at": "2026-11-27T03:25:00Z",
-  "commit": "80466a128319e7630a3376eb7ef631dd50b2d328"
+  "updated_at": "2026-11-27T15:30:00Z",
+  "commit": "80466a128319e7630a3376eb7ef631dd50b2d328",
+  "closed": true,
+  "final_commit": "024a7090127cf44bcb9dec2b9b9d5280c607007b",
+  "r2": "r2:genrec/111/",
+  "stage3": {
+    "test_recall@10": 0.045230592454604014,
+    "test_recall@5": 0.030049269659987117,
+    "test_ndcg@10": 0.024823080494763405,
+    "replay": "PASS"
+  }
 }
