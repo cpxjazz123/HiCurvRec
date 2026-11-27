@@ -200,7 +200,6 @@ def _banks():
 
     return train_rqvae.GRAPHLET_BANKS
 
-
 def _real_embeddings():
     import train_rqvae  # noqa: PLC0415
     return torch.from_numpy(np.load(train_rqvae.EMBEDDING_FILE)).float()

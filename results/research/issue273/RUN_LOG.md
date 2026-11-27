@@ -84,7 +84,8 @@ Sinkhorn, reconstruction/commitment/codebook, SID protocol, seed, batch, epochs)
   `stage2_RQ-VAE/_archive/TIGER_codebook_budget_j_rq`; the owner closed #272 as a **negative
   result** (comment 8) and the round-3 table is recorded in `results/research/issue272/VERDICT.md`
   and issue comment 9. The #273 tree was then created at
-  `stage2_RQ-VAE/TIGER_samecentre_delta_rq` from the #269 immutable source snapshot
+  `stage2_RQ-VAE/TIGER_samecentre_delta_rq` (archived after the run to
+  `stage2_RQ-VAE/_archive/TIGER_samecentre_delta_rq`) from the #269 immutable source snapshot
   (`results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/src`).
 - Implementation (one primary mechanism, the same-centre difference protection):
   - `model/delta.py` — `same_centre_difference_loss(predicted, target, centre_population)`:
@@ -115,6 +116,33 @@ Sinkhorn, reconstruction/commitment/codebook, SID protocol, seed, batch, epochs)
   `triple_population`). Full candidate suite: **137 passed**
   (`results/research/issue273/checks/candidate_tests.log`).
 - Formal run dispatched: `stage2_98834b02a3e542a7a48492034ccf76e4`, the real entry
-  `stage2_RQ-VAE/TIGER_samecentre_delta_rq/train_rqvae.py`, the single visible GPU (the frozen
+  `stage2_RQ-VAE/TIGER_samecentre_delta_rq/train_rqvae.py` (now
+  `stage2_RQ-VAE/_archive/TIGER_samecentre_delta_rq/train_rqvae.py`), the single visible GPU (the frozen
   recipe's single-card branch), the worker PID 1524537, the logs under
-  `results/stage2_RQ-VAE/TIGER_samecentre_delta_rq/logs/`.
+  `results/stage2_RQ-VAE/_runs/stage2_3d8bc9a4ef5340e690b25efa20ad2c8d/TIGER_samecentre_delta_rq/result/logs/`.
+
+### Round 1 result and closure (2026-11-28)
+
+- The first dispatch was refused by the smoke: the delta calibration ran under `torch.no_grad()`, so
+  the loss had no graph. Fixed, covered by a regression test, and re-dispatched as
+  `stage2_3d8bc9a4ef5340e690b25efa20ad2c8d` (the smoke passed: one epoch, the identifier exported,
+  collision 0.048278).
+- The run completed the **full 3000-epoch budget** (1303.7 s, 0.45 s per epoch). The exported
+  artefacts: `item_sids.json` (sha256 `f34bde311958f92b6ab1736bbfdfde8aea212e409dc95c8a8f45942d850b405b`)
+  and `rqvae_best.pth` (sha256 `a7f17036fdee521a680b927b59db36e1a39cc38fe65f5844cc430562347b9e29`).
+- The owner stopped the frozen evaluation before it produced the table. The two criteria that were
+  measured both fail (C12 L2 5,966 < 10,918; C15 recon 9.792938e-05 > 8.589e-05) and eleven are
+  NOT_RUN; nothing is estimated. Verdict: `results/research/issue273/VERDICT.md`; the
+  machine-readable record: `results/research/issue273/round1_sid_structure.json`; the conclusion
+  comment: `results/research/issue273/COMMENT_FINAL.md`.
+- The tree is archived to `stage2_RQ-VAE/_archive/TIGER_samecentre_delta_rq`; the top level of
+  `stage2_RQ-VAE/` holds no active arm.
+- The CLAUDE.md §63 layered metric record is marked **missing** (the dispatched run wrote no
+  `archive_binding.json` next to the SID); `results/research/issue273/write_layer_metrics.py` is the
+  wrapper for the next run that carries one.
+- The infra end snapshot equals the start snapshot (added 0, removed 0, modified 0).
+- The issue is closed by the owner's instruction as an **incomplete negative result**; Stage3 was
+  forbidden in every outcome and was not run.
+- The next round can settle the one open question with the frozen artefacts that are still in
+  place: the #273 run's own `within_centre_metrics.py` output against the #269 baseline
+  (`difference_rmse` 2.002453, `within_centre_spearman` 0.106457).

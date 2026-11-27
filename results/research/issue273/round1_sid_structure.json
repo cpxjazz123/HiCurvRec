@@ -1,0 +1,48 @@
+{
+  "arm": "TIGER_samecentre_delta_rq",
+  "checkpoint_sha256": "a7f17036fdee521a680b927b59db36e1a39cc38fe65f5844cc430562347b9e29",
+  "delta_calibration": {
+    "calibration_batch_items": 4096,
+    "delta_gradient": 1.4570049575711006,
+    "delta_weight": 5.95565495586925e-07,
+    "pointwise_delta_cosine": 0.10479179657622159,
+    "pointwise_gradient": 6.295116619718816e-05,
+    "rho": 0.02,
+    "weighted_share": 0.013784365438287918
+  },
+  "epochs": 3000,
+  "final_epoch": {
+    "collision": 0.14190425834790743,
+    "cumulative_time_s": 1303.7188651561737,
+    "curvature_estimate": 1.242605447769165,
+    "delta_loss": 0.7367435693740845,
+    "delta_scale": 1.0,
+    "delta_weight": 5.95565495586925e-07,
+    "epoch": 3000,
+    "epoch_time_s": 0.45455828215926886,
+    "loss": 0.00013754854444414377,
+    "recon": 9.792938362807035e-05
+  },
+  "full_token_collision": 0.0,
+  "items": 24587,
+  "l3_collision": 0.14190425834790743,
+  "level2_distinct_prefixes": 5966,
+  "level3_distinct_triples": 21098,
+  "not_run": [
+    "C1_local_mae",
+    "C2_spearman",
+    "C3_sign",
+    "C4_variance_ratio",
+    "C5_slope",
+    "C6_difference_rmse",
+    "C7_within_centre_ordering",
+    "C9_full_j",
+    "C10_one_hop_j",
+    "C11_two_hop_j",
+    "C13_effective_rank"
+  ],
+  "run_id": "stage2_3d8bc9a4ef5340e690b25efa20ad2c8d",
+  "schema": "genrec.issue273.round1_partial/1",
+  "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_3d8bc9a4ef5340e690b25efa20ad2c8d/TIGER_samecentre_delta_rq/result/item_sids.json",
+  "sid_sha256": "f34bde311958f92b6ab1736bbfdfde8aea212e409dc95c8a8f45942d850b405b"
+}

@@ -1,0 +1,47 @@
+{
+  "issue": 273,
+  "commit": "2efa84b5",
+  "state": "CLOSED",
+  "infra_mode": "FROZEN",
+  "round": "round-1",
+  "arm": "TIGER_samecentre_delta_rq",
+  "done": [
+    "issue read; C-list frozen in RUN_LOG/CONTRACT",
+    "diagnosis of the #269/#271/#272 local-curvature degradation",
+    "candidate tree created from the #269 immutable source snapshot and archived after the run",
+    "mechanism: model/delta.py, the frozen delta_weight, the per-module gradient-budget calibration, the 200-step ramp",
+    "dedicated tests (15) and the inherited suite (138 passed)",
+    "regression test for the no_grad calibration failure found by the first smoke",
+    "formal run stage2_3d8bc9a4ef5340e690b25efa20ad2c8d: the full 3000-epoch budget completed",
+    "the measured criteria recomputed from the exported SID and the final training record",
+    "the infra END snapshot (equal to the START), the tree archived, the verdict and the conclusion comment written"
+  ],
+  "reused": [
+    "#269 immutable src snapshot stage2_bba78cf7c160467da1c8ae7de9b6e26f",
+    "the frozen kappa_t cache of TIGER_calibrated_kappa_rq",
+    "the frozen #271 evaluator and the #273 within-centre metrics script"
+  ],
+  "not_run": [
+    "C1-C11 and C13: the owner stopped the frozen evaluation before it produced the table",
+    "the CLAUDE.md 63 layered metric record: the dispatched run wrote no archive_binding.json next to the SID (marked missing, not filled with zeros)"
+  ],
+  "failed": [
+    "first dispatch stage2_98834b02a3e542a7a48492034ccf76e4: the smoke refused the real entry (the delta calibration ran under torch.no_grad(), so the loss had no graph); fixed and covered by a regression test",
+    "the first full candidate suite: 7 failures (2 inherited contract fixtures, 4 wrong expectations in the new delta tests, 1 dictionary passed to the gradient-norm helper); all fixed, 138 passed"
+  ],
+  "infra_faults": [],
+  "running": [],
+  "next_commands": [
+    "the next round: run within_centre_metrics.py on the archived run's SID and checkpoint and compare with the #269 baseline (C6/C7)"
+  ],
+  "blocked_by": null,
+  "issue_state": "CLOSED",
+  "measured": {
+    "C12_l2_prefixes": 5966,
+    "C15_reconstruction": 9.792938362807035e-05,
+    "collision_l3": 0.14190425834790743,
+    "level3_distinct_triples": 21098
+  },
+  "verdict": "acceptance not met; incomplete negative result, closed by the owner's instruction",
+  "updated_at": "2026-11-28T00:05:00Z"
+}
