@@ -1,0 +1,58 @@
+{
+  "catalogue": {
+    "codebook_occupancy": [
+      256,
+      256,
+      256
+    ],
+    "distinct_l2_prefixes": 6848,
+    "distinct_l3_triples": 21642,
+    "items": 24587,
+    "l3_collision": 0.1197787448651727,
+    "l3_refinement_gain_bits": 2.661746926637953,
+    "prefix_entropy_bits": [
+      6.988627691215934,
+      11.64572356358106,
+      14.307470490219012
+    ]
+  },
+  "schema": "genrec.issue272.candidate_layer_metrics/1",
+  "sid": "results/stage2_RQ-VAE/_runs/stage2_4dffd8b4528440b3aca334b380749f01/TIGER_active_j_rq/result/item_sids.json",
+  "validation": {
+    "conditional_g3": {
+      "reason": "legacy defining implementation removed; no surviving formula, not invented",
+      "status": "MISSING"
+    },
+    "conditional_log_enrichment_bits": 1.2942186978527148,
+    "conditional_prefix_survival_difference": 0.03893231335386295,
+    "effective_rows": 57439,
+    "excluded_empty_history": 0,
+    "excluded_empty_negative_population": 0,
+    "expected_negative_mass_by_level": [
+      692.4202221989805,
+      41.04684842083632,
+      1.1002500356643912
+    ],
+    "l1_hard_er": 5.872156632120364,
+    "l1_negative_hit_probability": 0.012054879475599863,
+    "l1_positive_hit_rate": 0.0707881404620554,
+    "negative_hit_probabilities_by_level": [
+      0.012054879475599863,
+      0.000714616348140398,
+      1.9155104296112242e-05
+    ],
+    "negative_sampling": false,
+    "positive_hit_rates_by_level": [
+      0.0707881404620554,
+      0.008739706471212938,
+      0.000574522536952245
+    ],
+    "positive_hits_by_level": [
+      4066,
+      502,
+      33
+    ],
+    "rows": 57439,
+    "scope": "recommendation valid last-history-to-target; exact legal uniform catalogue negatives"
+  }
+}

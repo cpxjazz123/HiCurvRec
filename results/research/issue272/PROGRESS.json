@@ -1,0 +1,37 @@
+{
+  "issue": 272,
+  "state": "INFEASIBILITY_REPORTED",
+  "infra_mode": "FROZEN",
+  "commit": "a02cd0df",
+  "done": [
+    "C1",
+    "C2.1 mean J",
+    "C2.3 collision record",
+    "C3 probe",
+    "C4 diagnosis",
+    "C5 round-1 run",
+    "C6 persistence",
+    "C7 no Stage3"
+  ],
+  "reused": [],
+  "not_run": [
+    "Stage3 (forbidden by issue)"
+  ],
+  "failed": [
+    "1-hop J 1.2448 > 0.7983",
+    "local MAE 2.3438 > 1.8935",
+    "Spearman -0.0988 <= 0.01585",
+    "sign 0.3481 <= 0.43245",
+    "slope -0.0361 < 0.1",
+    "L2 6848 < 10918",
+    "rank 2.774 < 8",
+    "recon 9.13e-5 > 8.59e-5"
+  ],
+  "infra_faults": [],
+  "running": [],
+  "next_commands": [
+    "owner decision on minimal alternative A/B/C"
+  ],
+  "blocked_by": null,
+  "updated_at": "2026-11-27T09:15:00Z"
+}

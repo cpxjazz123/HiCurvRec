@@ -1,0 +1,150 @@
+{
+  "arms": {
+    "TIGER_RQ-VAE": {
+      "L3_gain_bits": 2.2034272882936428,
+      "code_usage": [
+        249,
+        256,
+        256,
+        24
+      ],
+      "collision": 0.16927644690283483,
+      "items": 24587,
+      "l3_group_size_mean": 1.2037698898408813,
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+      "sid_quality": {
+        "allow": true,
+        "collision": 0.16927644690283483,
+        "effective_rank": 11.479457952745369,
+        "limits": {
+          "collision": 0.4,
+          "effective_rank": 8.0,
+          "quant_error": [
+            0.035,
+            0.1
+          ]
+        },
+        "quant_error": 0.25089986881787185,
+        "reason": "collision 0.1693 < 0.40; measured quantisation error 0.251 (band 0.035-0.100) and effective rank 11.48 (limit 8.0); WARNING quantisation error 0.251 is above 0.100: the vectors are pressed together | effective rank 11.48 is above 8.0: the encoder carries the input through unorganised and three codes may not cover it",
+        "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+        "warnings": [
+          "quantisation error 0.251 is above 0.100: the vectors are pressed together",
+          "effective rank 11.48 is above 8.0: the encoder carries the input through unorganised and three codes may not cover it"
+        ]
+      },
+      "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+      "unique_L1": 249,
+      "unique_L2": 7374,
+      "unique_L3": 20425
+    },
+    "TIGER_calibrated_kappa_rq": {
+      "L3_gain_bits": 2.84947981134237,
+      "code_usage": [
+        256,
+        256,
+        256,
+        16
+      ],
+      "collision": 0.15630211087159884,
+      "items": 24587,
+      "l3_group_size_mean": 1.185258387967605,
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/item_sids.json",
+      "sid_quality": {
+        "allow": true,
+        "collision": 0.15630211087159884,
+        "effective_rank": 4.33486140356211,
+        "limits": {
+          "collision": 0.4,
+          "effective_rank": 8.0,
+          "quant_error": [
+            0.035,
+            0.1
+          ]
+        },
+        "quant_error": 0.008746623852617371,
+        "reason": "collision 0.1563 < 0.40; measured quantisation error 0.009 (band 0.035-0.100) and effective rank 4.33 (limit 8.0); WARNING quantisation error 0.009 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises",
+        "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/item_sids.json",
+        "warnings": [
+          "quantisation error 0.009 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises"
+        ]
+      },
+      "sid_sha256": "a89110b86168eb09621e5f9cfea6f6668253d6105e9f2a6647234b195efc725f",
+      "unique_L1": 256,
+      "unique_L2": 6246,
+      "unique_L3": 20744
+    },
+    "TIGER_euclid_local_curve_supervision_rq": {
+      "L3_gain_bits": 1.61141038901909,
+      "code_usage": [
+        256,
+        256,
+        256,
+        7
+      ],
+      "collision": 0.041241306381421095,
+      "items": 24587,
+      "l3_group_size_mean": 1.0430153141305731,
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_4891fa8df3e843839de770e52e156892/TIGER_euclid_local_curve_supervision_rq/result/item_sids.json",
+      "sid_quality": {
+        "allow": true,
+        "collision": 0.041241306381421095,
+        "effective_rank": 3.0490785459962013,
+        "limits": {
+          "collision": 0.4,
+          "effective_rank": 8.0,
+          "quant_error": [
+            0.035,
+            0.1
+          ]
+        },
+        "quant_error": 0.005998087113350963,
+        "reason": "collision 0.0412 < 0.40; measured quantisation error 0.006 (band 0.035-0.100) and effective rank 3.05 (limit 8.0); WARNING quantisation error 0.006 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises",
+        "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_4891fa8df3e843839de770e52e156892/TIGER_euclid_local_curve_supervision_rq/result/item_sids.json",
+        "warnings": [
+          "quantisation error 0.006 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises"
+        ]
+      },
+      "sid_sha256": "8961e4a2062ee8925d9b4f78494fd5dbf1be091a627abd8e527b1353c5506313",
+      "unique_L1": 256,
+      "unique_L2": 10918,
+      "unique_L3": 23573
+    },
+    "TIGER_global_j_rq": {
+      "L3_gain_bits": 2.88440195937142,
+      "code_usage": [
+        256,
+        256,
+        256,
+        19
+      ],
+      "collision": 0.15178752999552614,
+      "items": 24587,
+      "l3_group_size_mean": 1.1789498921122032,
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_cc9a31a9325b439f98c8b1779aaa32aa/TIGER_global_j_rq/result/item_sids.json",
+      "sid_quality": {
+        "allow": true,
+        "collision": 0.15178752999552614,
+        "effective_rank": 4.501237452781301,
+        "limits": {
+          "collision": 0.4,
+          "effective_rank": 8.0,
+          "quant_error": [
+            0.035,
+            0.1
+          ]
+        },
+        "quant_error": 0.009386948298134266,
+        "reason": "collision 0.1518 < 0.40; measured quantisation error 0.009 (band 0.035-0.100) and effective rank 4.50 (limit 8.0); WARNING quantisation error 0.009 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises",
+        "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_cc9a31a9325b439f98c8b1779aaa32aa/TIGER_global_j_rq/result/item_sids.json",
+        "warnings": [
+          "quantisation error 0.009 is below 0.035: the codebook reproduces the item vectors instead of learning a structure that generalises"
+        ]
+      },
+      "sid_sha256": "e83ae666668a3e57721e16298fd654a0e2691d14caf0200334ab64c12ef49802",
+      "unique_L1": 256,
+      "unique_L2": 6096,
+      "unique_L3": 20855
+    }
+  },
+  "schema": "genrec.issue272.sid_inventory/1"
+}
