@@ -1,0 +1,87 @@
+{
+  "schema": "genrec.hypotheses/1",
+  "issue": 273,
+  "inherited_from": "results/research/issue272/HYPOTHESES.json",
+  "hypotheses": [
+    {
+      "id": "H272-1",
+      "statement": "Tightening the global J bound to the #269 level activates mu and restores the SID capacity and local ranking.",
+      "status": "REFUTED",
+      "evidence": ["results/research/issue272/VERDICT.md"],
+      "origin_issue": 272,
+      "opened_round": "round-1",
+      "last_update": "2026-11-27",
+      "reopen_reason": null
+    },
+    {
+      "id": "H272-2",
+      "statement": "The inherited lambda local curvature term improves the local A.1 without degrading the SID.",
+      "status": "REFUTED",
+      "evidence": ["results/research/issue271/assets/geometry/TIGER_active_j_rq.json"],
+      "origin_issue": 272,
+      "opened_round": "round-1",
+      "last_update": "2026-11-27",
+      "reopen_reason": null
+    },
+    {
+      "id": "H272-3",
+      "statement": "The local MAE gain is a scale shrink that the non-degeneracy check excludes.",
+      "status": "SUPPORTED",
+      "evidence": ["results/research/issue272/CONTRACT.md"],
+      "origin_issue": 272,
+      "opened_round": "round-1",
+      "last_update": "2026-11-27",
+      "reopen_reason": null
+    },
+    {
+      "id": "H272-4",
+      "statement": "The L2>=10918 and rank>=8 conjunction is unreachable in the tested kappa_t lambda family (X_tested only; not an X_allowed proof).",
+      "status": "SUPPORTED",
+      "evidence": ["results/research/issue272/check_close_condition.py"],
+      "origin_issue": 272,
+      "opened_round": "round-1",
+      "last_update": "2026-11-27",
+      "reopen_reason": null
+    },
+    {
+      "id": "H272-5",
+      "statement": "Balancing the local weight at 10% of the global gradient scales the local term without destroying the assignment.",
+      "status": "REFUTED",
+      "evidence": ["results/research/issue272/COMMENT_004.md"],
+      "origin_issue": 272,
+      "opened_round": "round-2",
+      "last_update": "2026-11-27",
+      "reopen_reason": null
+    },
+    {
+      "id": "H272-6",
+      "statement": "The assignment capacity collapses above a local-weight threshold.",
+      "status": "SUPPORTED",
+      "evidence": ["results/research/issue272/COMMENT_004.md"],
+      "origin_issue": 272,
+      "opened_round": "round-2",
+      "last_update": "2026-11-27",
+      "reopen_reason": null
+    },
+    {
+      "id": "H272-7",
+      "statement": "The local and global codebook-side gradients are the channel that compresses L2/rank and degrades the SID ordering; scaling that channel by beta=0.01 restores rank/L2 and the ordering.",
+      "status": "UNTESTED",
+      "evidence": ["results/research/issue272/CONTRACT_R3.md", "results/research/issue272/checks/round3_budget_tests.log"],
+      "origin_issue": 272,
+      "opened_round": "round-3",
+      "last_update": "2026-11-27",
+      "reopen_reason": null
+    },
+    {
+      "id": "H273-1",
+      "statement": "The pointwise curvature loss compresses the within-centre curvature differences (it is blind to a common offset); adding a same-centre difference protection L_delta restores the differences (C6/C7), and with it the Spearman/sign/variance/slope (C2-C5), without costing SID capacity (C12/C13) or reconstruction (C15).",
+      "status": "UNTESTED",
+      "evidence": ["results/research/issue273/DIAGNOSIS.md", "results/research/issue273/CONTRACT.md"],
+      "origin_issue": 273,
+      "opened_round": "round-1",
+      "last_update": "2026-11-27",
+      "reopen_reason": null
+    }
+  ]
+}
