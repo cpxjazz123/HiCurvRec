@@ -206,7 +206,6 @@ def _real_embeddings():
 
     return torch.from_numpy(np.load(train_rqvae.EMBEDDING_FILE)).float()
 
-
 def _trained_model():
     import train_rqvae  # noqa: PLC0415
     from model import RQVAE  # noqa: PLC0415

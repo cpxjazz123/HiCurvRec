@@ -1,0 +1,51 @@
+{
+  "assets_require_grad": [],
+  "batch_items": 4096,
+  "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/rqvae_best.pth",
+  "codebooks_global": 0.03504997864365578,
+  "codebooks_local": 0.0006696311174891889,
+  "decoder_global": 0.0,
+  "encoder_global": 0.08315733075141907,
+  "encoder_local": 0.00015640071069356054,
+  "global_gradient_norm": 0.09024213254451752,
+  "global_j": 0.320086807012558,
+  "hard_q_gradient": true,
+  "j_max": 0.7819405198097229,
+  "lambda": 5.883564881514758e-06,
+  "local_global_cosine": 0.1211942732334137,
+  "local_gradient_norm": 0.0006876532570458949,
+  "missing_keys": [
+    "global_mu",
+    "global_j_max"
+  ],
+  "mu": 0.10000000149011612,
+  "mu_zero_constraint_term": -0.0,
+  "pair_table": {
+    "centres": 2048,
+    "coverage": {
+      "1": 2048,
+      "2": 2048,
+      "3": 2048,
+      "4": 2048,
+      "5": 2048,
+      "6": 1896,
+      "7": 119,
+      "8": 1
+    },
+    "duplicate_fraction": 0.0,
+    "kappa_cache": "results/stage2_RQ-VAE/TIGER_calibrated_kappa_rq/kappa_cache_s0p068284",
+    "kappa_scale": 0.06828367045803868,
+    "note": "centre-uniform ordered pairs; weight is the layer count, so the weighted mean estimates the ordered-pair mean; the graph is undirected.",
+    "ordered_pairs_estimate": 50114560.0,
+    "pairs": 12256,
+    "ruler_factor": 1.0,
+    "sample_fraction": 0.08290304897345041,
+    "schema": "genrec.issue271.global_pairs/1",
+    "seed": 271,
+    "source_graph": "assets/train/visible_undirected.npz",
+    "source_graph_sha256": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818",
+    "unique_pairs": 12256,
+    "weight_sum": 50114560.0
+  },
+  "schema": "genrec.issue271.module_checks/1"
+}

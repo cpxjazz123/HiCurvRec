@@ -56,3 +56,36 @@ inheriting the frozen κ_t / A.1 local objective) plus its own tests, and issue-
 `stage2_RQ-VAE/TIGER_calibrated_kappa_rq` is the only active mechanism level entry; it is archived to
 `stage2_RQ-VAE/_archive/TIGER_calibrated_kappa_rq` before the new candidate is copied. The baseline and
 `_archive` stay in place.
+
+## Threshold calibration (before training)
+
+- fixed pair table: 2,048 centres, 16,469 pairs, 0 duplicate pairs; coverage recorded in
+  `geometry/global_pairs.json`.
+- full J on the frozen TIGER checkpoint: **0.739634552674212** (1-hop 15.158, 2-hop 2.675,
+  3-hop 0.792, 4-5 0.291, >=6 0.175).
+- sample estimate 0.764825, bootstrap SE 0.021153, |sample-full| 0.025190
+  -> epsilon = 2*SE = **0.04230598283915425**, J_max = **0.7819405355133663**.
+- the same ruler on #269: full J **0.338336** (1-hop 0.760, 2-hop 0.265, 3-hop 0.311,
+  4-5 0.394, >=6 0.561). The issue's "J 0.183 -> 0.326" is the #270 three-expert ruler, not this
+  Euclidean common ruler: under this ruler #269 is far below TIGER. Recorded as a ruler-dependence
+  finding, not used to change J_max.
+- real-batch module check (`MODULE_CHECKS.json`): lambda 5.88e-6; local gradient 6.88e-4,
+  global gradient 0.0902, cosine 0.121; encoder/codebook gradients nonzero from both terms,
+  decoder zero, hard-q gradient present, mu=0 makes the constraint term exactly 0.
+
+## Stage2 result (formal)
+
+- run `stage2_cc9a31a9325b439f98c8b1779aaa32aa`, world_size 1, 3000 epochs, seed 42, batch 4096,
+  wall 1909 s (final J included), single-card disclosed.
+- full-graph J **0.351359** vs J_max 0.781941 -> **P1 PASS**; strata: 1-hop 0.642, 2-hop 0.260,
+  3-hop 0.323, 4-5 0.412, >=6 0.580. (TIGER 0.739635; #269 0.338336 on the same ruler.)
+- mu stayed **0** for all epochs (the constraint was never violated; the safety bound is non-binding);
+  the final step-estimate J was 0.3354, the exact full J 0.3514.
+- collision 0.152113 < 0.40; SID unique 3-code 20,847; L2 groups 6,097 (vs #269 6,246; no #269-style
+  compression); L2/L1 23.82; L3/L2 3.42; L3 refinement gain 2.883 bits; all three codebooks use 256/256;
+  quant error 0.00939 (below the 0.035 diagnostic band, warning only); effective rank 4.50.
+- independent common-ruler local A.1 (frozen #270 evaluator, SCALE 0.084334): MAE **1.8935** vs TIGER
+  **7.3092** (P2 error PASS); but Spearman **-0.00548** vs TIGER 0.01585 and sign accuracy 0.3926 vs
+  0.4325 are worse. The error reduction does not carry the rank/sign quality; reported as a mixed result.
+- Stage3 started 18:05 with the SID; export gate allow (collision 0.1518, checkpoint reproduces SID,
+  174 items rewritten), layer record missing is a warning (manual §63 record to be written).

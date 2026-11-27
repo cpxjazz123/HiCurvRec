@@ -2602,6 +2602,30 @@ def stage3_sid_quality(sid: Path, waive_collision: bool = False) -> dict:
     command = [PY2, "-m", "tools.research.stage2.sid_quality", str(sid)]
     if waive_collision:
         command.append("--waive-collision")
+        command,
+        cwd=str(REPO), capture_output=True, text=True, timeout=1800,
+    text = (done.stdout or "").strip()
+    try:
+        verdict = json.loads(text.splitlines()[-1]) if text else {}
+    except ValueError:
+        verdict = {}
+    if not isinstance(verdict, dict) or not verdict:
+        tail = (done.stderr or done.stdout or "").strip().splitlines()[-6:]
+        return {"allow": False,
+                "reason": "the SID quality measurement failed: " + " | ".join(tail)[:600]}
+    return verdict
+
+
+def stage3_sid_quality(sid: Path, waive_collision: bool = False) -> dict:
+    """Run the two-number Stage 3 entry gate in the project interpreter.
+
+    The gate needs numpy and torch, which the MCP server (stdlib only) does not
+    have, so it runs as its own process; a failed or unparsable measurement is a
+    refusal, never a pass.
+    """
+    command = [PY2, "-m", "tools.research.stage2.sid_quality", str(sid)]
+    if waive_collision:
+        command.append("--waive-collision")
     done = subprocess.run(
         command,
         cwd=str(REPO), capture_output=True, text=True, timeout=1800,

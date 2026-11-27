@@ -1,0 +1,34 @@
+{
+  "issue": 271,
+  "state": "STAGE3_RUNNING",
+  "infra_mode": "FROZEN",
+  "commit": "18d3a5c4",
+  "done": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "stage2"
+  ],
+  "reused": [],
+  "not_run": [],
+  "failed": [],
+  "infra_faults": [],
+  "running": [
+    {
+      "name": "stage3",
+      "arm": "TIGER_global_j_rq"
+    }
+  ],
+  "next_commands": [
+    "stage3_status",
+    "read test_final.json",
+    "upload_stage3.py"
+  ],
+  "blocked_by": null,
+  "updated_at": "2026-11-27T07:10:00Z"
+}
