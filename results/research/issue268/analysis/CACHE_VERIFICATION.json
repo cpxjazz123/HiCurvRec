@@ -1,0 +1,55 @@
+{
+  "dtype": "float32",
+  "hashes_match_manifest": true,
+  "max_off_grid_on_100k_uniform_rows": 1.4305114759416426e-08,
+  "recompute_j_fit_max_abs_error": 3.896202377395852e-08,
+  "recompute_j_zero_max_abs_error": 5.4650595104899224e-08,
+  "recompute_rows": 1000,
+  "rows": 28391948,
+  "runtime_s": 3.851276397705078,
+  "schema": "genrec.issue268.cache_verification/1",
+  "stratification": {
+    "bc_adjacent": {
+      "at_floor_fraction": 1.0,
+      "kappa_mean": -0.125,
+      "kappa_std": 0.0,
+      "rows": 33
+    },
+    "bc_two_hop": {
+      "at_floor_fraction": 0.9968976215098242,
+      "kappa_mean": -0.12445708375805536,
+      "kappa_std": 0.01138041875190032,
+      "rows": 967
+    },
+    "degree_11_30": {
+      "at_floor_fraction": 1.0,
+      "kappa_mean": -0.125,
+      "kappa_std": 0.0,
+      "rows": 51
+    },
+    "degree_gt_30": {
+      "at_floor_fraction": 0.9968051118210862,
+      "kappa_mean": -0.12444089456234242,
+      "kappa_std": 0.011548456596176603,
+      "rows": 939
+    },
+    "degree_le_10": {
+      "at_floor_fraction": 1.0,
+      "kappa_mean": -0.125,
+      "kappa_std": 0.0,
+      "rows": 10
+    },
+    "target_negative": {
+      "at_floor_fraction": 0.9972714870395635,
+      "kappa_mean": -0.12466575715584124,
+      "kappa_std": 0.008011171608881425,
+      "rows": 733
+    },
+    "target_nonnegative": {
+      "at_floor_fraction": 0.9962546816479401,
+      "kappa_mean": -0.12395131085695846,
+      "kappa_std": 0.017103602321821995,
+      "rows": 267
+    }
+  }
+}

@@ -1,0 +1,233 @@
+{
+  "schema": "genrec.hypotheses/1",
+  "issue": 268,
+  "inherited_from": "results/research/issue267/HYPOTHESES.json",
+  "hypotheses": [
+    {
+      "id": "H1",
+      "statement": "Shared-in neighbours are substitute next-purchase candidates: target items are more likely than degree-matched negatives to share an in-neighbour with the anchor, and the effect is not exhausted by popularity or degree.",
+      "status": "INCONCLUSIVE",
+      "evidence": [
+        "results/research/issue262/FINAL_SUMMARY.json"
+      ],
+      "origin_issue": 262,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H2",
+      "statement": "The historical shared-in/test-R@10 association is substantially driven by semantic/prefix structure, degree or popularity; it is not a pure graph-topology effect.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/research/issue262/HYPOTHESES_RESULT.json"
+      ],
+      "origin_issue": 262,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H3",
+      "statement": "Curvature fidelity, reconstruction and quantisation are architecture/capacity proxies rather than independent causes of recommendation quality.",
+      "status": "INCONCLUSIVE",
+      "evidence": [
+        "results/research/issue262/FINAL_SUMMARY.json"
+      ],
+      "origin_issue": 262,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H266-1",
+      "statement": "The frozen eight-arm C/G1 score remains strictly monotone with Recall@10 after appending the two held-out R2 arms 108 and 109.",
+      "status": "REFUTED",
+      "evidence": [
+        "results/research/issue266/SCORES.json",
+        "results/research/issue266/REPORT.md"
+      ],
+      "origin_issue": 266,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H266-2",
+      "statement": "The native curvature loss and L1 codebook gradient norm are on a common scale for #265 (109) and the historical arms, so the frozen score transfers without a mechanism-specific scale correction.",
+      "status": "REFUTED",
+      "evidence": [
+        "results/research/issue266/ENDPOINT_108.json",
+        "results/research/issue266/ENDPOINT_109.json",
+        "results/research/issue266/SCORES.json"
+      ],
+      "origin_issue": 266,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H266-3",
+      "statement": "A larger native curvature gradient norm implies a larger actual optimization benefit; the score measures optimization sensitivity rather than only a diagnostic gradient magnitude.",
+      "status": "INCONCLUSIVE",
+      "evidence": [
+        "results/research/issue266/ENDPOINT_108.json",
+        "results/research/issue266/ENDPOINT_109.json",
+        "results/research/issue266/REPORT.md"
+      ],
+      "origin_issue": 266,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H267-1",
+      "statement": "Pointwise curvature training leaves within-centre relative order underfit.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/research/issue267/analysis/CURVATURE_FULL_109_Q.json",
+        "results/research/issue267/analysis/CENTER_ORDER_109.json"
+      ],
+      "origin_issue": 267,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H267-2",
+      "statement": "The low overall association is dominated by centre/scale/target-definition offsets, not by hard quantization alone.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/research/issue267/analysis/CURVATURE_FULL_109_Q.json",
+        "results/research/issue267/analysis/CURVATURE_FULL_109_Z.json"
+      ],
+      "origin_issue": 267,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H267-3",
+      "statement": "The gate is the primary cause and gate intervention alone repairs ordering.",
+      "status": "INCONCLUSIVE",
+      "evidence": [
+        "results/research/issue267/analysis/GATE_PROBE.json"
+      ],
+      "origin_issue": 267,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H267-4",
+      "statement": "A same-centre differentiable relative ranking term improves within-centre curvature ordering (q Pearson +0.0213 vs -0.0331, within-centre median 0.0912 vs 0.0870), but not full-table association or variance.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/research/issue267/analysis/FULL_COMPARISON_109_NEW.json"
+      ],
+      "origin_issue": 267,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H267-5",
+      "statement": "Improving within-centre relative curvature ordering improves Stage3 Recall. Refuted by #267: R@10 0.050784 vs parent 0.052595 with the ordering improvement present.",
+      "status": "REFUTED",
+      "evidence": [
+        "results/research/issue267/REPORT.md",
+        "results/stage3_T5Train/TIGER_relative_curvature_ranking_rq/logs/Amazon_2023_Instruments/Nov-26-2026_17-58-19/test_final.json"
+      ],
+      "origin_issue": 267,
+      "opened_round": "r01",
+      "last_update": "2026-11-26",
+      "reopen_reason": null
+    },
+    {
+      "id": "H268-1",
+      "statement": "With Euclidean residual selection the gate cannot change hard q or the SID; it only rescales the curvature objective. Confirmed by the selection code path in #265 and #267.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "stage2_RQ-VAE/_archive/TIGER_euclid_local_curve_supervision_rq_issue267_parent/model/mechanism.py",
+        "results/research/issue265/CONTRACT.md"
+      ],
+      "origin_issue": 268,
+      "opened_round": "r01",
+      "last_update": "2026-11-27",
+      "reopen_reason": null
+    },
+    {
+      "id": "H268-2",
+      "statement": "At the frozen graph-unit scale a per-triple curvature reduces the graph-distance distortion J versus kappa=0 (median 9.3% over 28,391,948 rows), but the fitted value sits at the coordinate-box boundary for 99.74% of rows.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/research/issue268/analysis/probe_J_edge.json",
+        "results/stage2_RQ-VAE/TIGER_fixed_triplet_kappa_rq/kappa_cache/manifest.json"
+      ],
+      "origin_issue": 268,
+      "opened_round": "r01",
+      "last_update": "2026-11-27",
+      "reopen_reason": null
+    },
+    {
+      "id": "H268-3",
+      "statement": "The per-triple curvature is not identifiable: on an independent reference subset it beats one global curvature for only 0.18% of rows, and the full-reference audit gives identical distortion for per-triple and global curvature. A single global Euclidean scale (J=0.1746) beats the whole per-triple family (J=0.2537).",
+      "status": "REFUTED",
+      "evidence": [
+        "results/research/issue268/analysis/TRANSFER_VALIDATION.json",
+        "results/research/issue268/analysis/SCALE_CONTROL.json"
+      ],
+      "origin_issue": 268,
+      "opened_round": "r01",
+      "last_update": "2026-11-27",
+      "reopen_reason": null
+    },
+    {
+      "id": "H268-4",
+      "statement": "Was not tested: the geometry gate refuted per-triple curvature before any Stage2 run, so no SID exists for this mechanism.",
+      "status": "UNTESTED",
+      "evidence": [
+        "results/research/issue268/DIAGNOSIS.md"
+      ],
+      "origin_issue": 268,
+      "opened_round": "r01",
+      "last_update": "2026-11-27",
+      "reopen_reason": null
+    },
+    {
+      "id": "H268-5",
+      "statement": "No Stage3 result exists for #268; #267 already showed that a local geometry improvement can lose R@10, so this link remains untested and must not be assumed.",
+      "status": "UNTESTED",
+      "evidence": [
+        "results/research/issue267/VERDICT.md"
+      ],
+      "origin_issue": 268,
+      "opened_round": "r01",
+      "last_update": "2026-11-27",
+      "reopen_reason": null
+    },
+    {
+      "id": "H268-6",
+      "statement": "The fitted kappa_t is flat or boundary-dominated: 99.74% at the domain floor, std 0.0108, and even at the best global scale the per-triple gain is 1.4% median with a 10.5% boundary fraction.",
+      "status": "SUPPORTED",
+      "evidence": [
+        "results/research/issue268/analysis/TRANSFER_VALIDATION.json",
+        "results/research/issue268/analysis/probe_J_scale_0p068284.json"
+      ],
+      "origin_issue": 268,
+      "opened_round": "r01",
+      "last_update": "2026-11-27",
+      "reopen_reason": null
+    }
+  ],
+  "statistics": {
+    "n_original": 10,
+    "n_extended": 11,
+    "primary": [
+      "full q/z curvature order",
+      "within-centre Spearman",
+      "Stage3 R@10",
+      "frozen S prediction"
+    ]
+  }
+}
