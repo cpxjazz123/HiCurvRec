@@ -164,3 +164,52 @@ known-empty target. The owner must amend P2/P3 or authorize the base change in a
 minimum MAE 1.893506311 > 1.893506; maximum Spearman 0.015850898 < 0.015851; the only L2>=10,918
 arm (#265) has rank 3.05; the only rank>=8 arm (TIGER) has L2 7,374. P1/P4/P5 are individually
 non-empty; the conjunction is empty. Issue #272 stays OPEN per skill §7.
+
+## 2026-11-27 round 3 (codebook gradient budget) — final table and owner-directed closure
+
+The owner directed the closure of this issue on 2026-11-27 ("直接结束272"); the closure comment
+(issue comment 8) records that the acceptance was **not** met, that no Stage3 was run, and that the
+next round targets the within-centre curvature-difference preservation (now Issue #273). The round-3
+run finished after that comment was posted; its final table is recorded here so the negative result
+is preserved with its numbers.
+
+Run `stage2_0a2be6e306e145fe91b3d7be08a37c69` (`TIGER_codebook_budget_j_rq`), 3000 epochs, seed 42,
+the frozen recipe with the single visible GPU. PASS table:
+`results/research/issue272/round3_pass_table.json`; the common-ruler J comes from the candidate's own
+`model/global_constraint.py`; the local and within-centre statistics come from
+`results/research/issue273/within_centre_metrics.py`, whose self-check reproduces the frozen #271
+evaluator (Spearman delta 0, sign delta 0, MAE delta 4.4e-7 from the frozen float16 storage).
+
+| criterion | value | threshold | verdict |
+|---|---|---|---|
+| C1 local MAE | 2.459864 | <= 1.893506 | FAIL |
+| C2 Spearman | 0.079759 | > 0.015851 | PASS |
+| C3 sign | 0.404876 | > 0.432453 | FAIL |
+| C4 variance ratio | 1.320687 | >= 0.5 | PASS |
+| C5 slope | 0.110958 | >= 0.1 | PASS |
+| C6 difference RMSE | 2.286232 | < 2.002453 (#269) | FAIL |
+| C7 within-centre ordering | 0.142088 | > 0.106457 (#269) | PASS |
+| C9 full common-ruler J | 0.220079 | <= 0.338336 | PASS |
+| C10 1-hop J | 1.919914 | <= 0.798295 | FAIL |
+| C11 2-hop J | 0.331553 | <= 0.278106 | FAIL |
+| C12 L2 distinct prefixes | 7,463 | >= 10,918 | FAIL |
+| C13 effective rank | 2.213754 | >= 8 | FAIL |
+| C15 reconstruction | 7.7089e-5 | <= 8.589e-5 | PASS |
+| collision (recorded only) | 0.133689 | -- | recorded |
+| mu active | 26/3000 = 0.87% | material fraction | FAIL (marginal) |
+
+What the round adds to the knowledge: the codebook-side gradient budget **recovers the ordering and
+the dispersion** — the Spearman 0.079759 (the TIGER's 0.015851, the #269's -0.0701), the variance
+ratio 1.320687 (the #269's 0.42, the TIGER's 28.7), the slope 0.110958 (the #269's 0.019), the
+within-centre ordering 0.142088 (the #269's 0.106457) — and it **lowers the global J** to 0.220079.
+What it does **not** recover is the signed difference (C6 2.286232 vs the #269's 2.002453), the local
+MAE (2.459864 vs the #271's 1.893506), the sign rate (0.404876 vs the TIGER's 0.432453), the
+one-hop / two-hop relations (1.919914 / 0.331553) or the SID capacity (L2 7,463, rank 2.213754).
+
+The transfer to Issue #273 is therefore sharp: **the ordering can be restored without the signed
+differences**, so the missing statistic is the signed within-centre difference, not the ordering
+objective. #273 adds exactly that term (`L_delta`, the same-centre difference protection) and keeps
+the codebook budget untouched.
+
+Infra snapshot: `results/research/issue272/INFRA_SNAPSHOT_END.json` equals
+`INFRA_SNAPSHOT_START.json` on the recorded path list (added 0, removed 0, modified 0).
