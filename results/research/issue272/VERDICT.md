@@ -140,3 +140,19 @@ kappa_t/lambda setting remains that could produce it.
 Issue #272 remains **OPEN**: the fixed-objective L2 >= 10,918 and RQ rank >= 8 conjunction has no
 executable setting, while the real experimental goal (stable locality under the four gates) needs an
 objective / capacity intervention that the Issue and the skill's transfer rule retain with the user.
+
+## 2026-11-27 close-condition infeasibility (P2/P3)
+
+The issue's close condition (one full Stage2 candidate passing P1-P5) is not satisfiable under the
+frozen mechanism. The arm matrix and the two empty conjunctions are in `COMMENT_005.md`; the key
+values are bound to the frozen evaluator (`rows = 28,391,948`) and the stage2 metrics:
+
+- P2: the MAE target 1.893506 is the #271's value, which fails its own non-degeneracy
+  (var_ratio 0.335, slope 0.041); the Spearman target >0.015851 is above the TIGER's
+  0.015850898; the sign target >0.432453 is met only by the TIGER; all local arms are below.
+- P3: L2 ≥10,918 only at the Euclidean-local #265 (rank 3.05); rank 11.5 only at the λ=0
+  TIGER (L2 7,374); the κ_t base's L2 maximum is 7,374; no arm has both.
+- P1/P4/P5 are individually passable (#269 P1/P5, round-1 P4/P5); the conjunction is empty.
+
+Issue #272 remains OPEN per skill §7; no Stage3 (the issue forbids it); no further λ/μ sweep on a
+known-empty target. The owner must amend P2/P3 or authorize the base change in a new issue.

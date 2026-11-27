@@ -1,7 +1,73 @@
-{"stage": "INFEASIBILITY_REPORTED_R2", "issue": 272,
- "round2": {"arm": "TIGER_balanced_j_rq", "run": "stage2_70feb0bb3b174adb8e046df6df09aed3",
-            "status": "stopped_diverged", "stopped_epoch": 556, "collision": 0.9832,
-            "j": 1.598, "mu": 1.054, "recon": 2.01e-4, "lambda_after": 0.001724},
- "frontier": {"tiger_L2": 7374, "tiger_rank": 11.5, "round1_L2": 6848, "round1_rank": 2.77,
-              "L2_target": 10918, "rank_target": 8, "conjunction_observed": false},
- "issue_state": "OPEN", "note": "no further kappa_t/lambda setting; objective/capacity decision retained by user"}
+{
+  "stage": "INFEASIBILITY_P2_P3_OPEN",
+  "issue": 272,
+  "round2": {
+    "arm": "TIGER_balanced_j_rq",
+    "run": "stage2_70feb0bb3b174adb8e046df6df09aed3",
+    "status": "stopped_diverged",
+    "stopped_epoch": 556,
+    "collision": 0.9832,
+    "j": 1.598,
+    "mu": 1.054,
+    "recon": 0.000201,
+    "lambda_after": 0.001724
+  },
+  "frontier": {
+    "tiger_L2": 7374,
+    "tiger_rank": 11.5,
+    "round1_L2": 6848,
+    "round1_rank": 2.77,
+    "L2_target": 10918,
+    "rank_target": 8,
+    "conjunction_observed": false
+  },
+  "issue_state": "OPEN",
+  "note": "no further kappa_t/lambda setting; objective/capacity decision retained by user",
+  "close_condition": "UNSATISFIED",
+  "p2_empty": true,
+  "p3_empty": true,
+  "arms": {
+    "TIGER": {
+      "mae": 7.309217,
+      "spearman": 0.015850898,
+      "sign": 0.432453349,
+      "L2": 7374,
+      "rank": 11.5,
+      "J": 0.739635
+    },
+    "#271_TIGER_global_j_rq": {
+      "mae": 1.893506,
+      "spearman": -0.005483,
+      "sign": 0.392646,
+      "L2": 6097,
+      "rank": 4.501,
+      "J": 0.351361
+    },
+    "#269_TIGER_calibrated_kappa_rq": {
+      "mae": 1.997261,
+      "spearman": -0.070083,
+      "sign": 0.363704,
+      "L2": 6246,
+      "J": 0.338336
+    },
+    "round1_TIGER_active_j_rq": {
+      "mae": 2.343824,
+      "spearman": -0.098838,
+      "sign": 0.348062,
+      "L2": 6848,
+      "rank": 2.77,
+      "J": 0.789,
+      "recon": 8.57e-05
+    },
+    "#265_euclid": {
+      "mae": 2.24595,
+      "spearman": -0.071041,
+      "sign": 0.33235,
+      "L2": 10918,
+      "rank": 3.05,
+      "J": 0.189476,
+      "recon": 8.18e-05
+    }
+  },
+  "next": "owner_amendment_or_new_issue"
+}
