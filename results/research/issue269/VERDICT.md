@@ -12,7 +12,7 @@ reference set: it beats one global curvature by **4.84 %** mean held-out J (cent
 28,391,948-row cache is no longer boundary-dominated (17.7 % boundary, 2.5 % ties, κ mean
 `0.0288`, positive `60.7 %`). The calibrated candidate trained 3000 epochs (single card,
 owner-authorised) and passed the SID gate with catalogue 3-code collision **0.1563**
-(< 0.40). Stage3 result: **PENDING**.
+(< 0.40). Stage3 result: `test_R@10` **0.045230592455** (see §4).
 
 ## 1. Does scale calibration explain the #268 degradation?
 
@@ -57,9 +57,18 @@ geometric model (`H269-3`).
 
 ## 4. Does recommendation improve?
 
-`test_R@10` = **PENDING** (Stage3 single-card run `TIGER_calibrated_kappa_rq`, 150 epochs,
-seed 42, beam 20). Comparison points: frozen TIGER `0.05520639286895663`, #265 parent
-`0.052594926791900976`, target `> 0.065`.
+`test_R@10` = **0.045230592455**, `R@5` = 0.030049269660, `NDCG@10` = 0.024823080495, n_eval = 57439. Frozen TIGER `0.05520639286895663` (delta -0.009976); #265 parent `0.052594926791900976` (delta -0.007364); target `>0.065` NOT MET. Independent replay status `PASS`.
+
+The five historical `TIGER_RQ-VAE` Stage3 runs span `0.040199`–`0.055537` R@10 (canonical
+latest `0.055206`); this arm at `0.045231` lies inside that historical range but below its own
+parent and below the canonical baseline. The result is a negative recommendation outcome, not
+a tuning signal: the continuous geometry improved while the discrete SID got more compressed
+(L2 prefixes `6,246` vs the parent's `10,918`) and the Stage3 loss was lower, yet R@10 fell.
+
+Single-card comparison caveat: the run used the single-card branch (global train batch
+4096 against the four-card 16384), so it is not numerically comparable to four-card arms;
+it is the only layout this host exposes. Existing test access risk: the frozen Stage3 test was
+already read by earlier arms; this arm is one more read and was not tuned on it.
 
 ## Acceptance table
 
@@ -75,15 +84,27 @@ seed 42, beam 20). Comparison points: frozen TIGER `0.05520639286895663`, #265 p
 | C8 | κ=0 degeneration if the gate fails; one candidate only | Gate passed -> per-triple arm only; no κ=0 arm trained | PASS |
 | C9 | Point-value objective, fixed κ/S* on every distance, L=L_RQVAE+λL_curv, hard-q supervision, frozen scale/κ/targets | candidate wiring `w=q/(2S*)`; `STAGE2_REPORT.json` curvature calibration; scale regression test | PASS |
 | C10 | κ=0 limit, signs, boundaries, coincident, reference agreement, index, frozen-scale test, gradient route, SID export | 121 candidate tests pass; probe 60 epochs at batch 4096; smoke entry PASS; `NOT_APPLICABLE` behavior graph | PASS |
-| C11 | 3000 epoch, seed42, fixed batch; reconstruction/quantisation/collision/rank/usage/prefix/ER/graphlet/own and fixed metrics/time | `STAGE2_REPORT.json`, layer record, `OWN_KAPPA.json`, `CURVATURE_FULL_*`, `LOCAL_STRUCTURE.json` | PASS |
-| C12 | One Stage3 150 epoch; freeze candidate, final test once; independent Recall/NDCG; compare TIGER/parent/0.065; disclose single-card and test-reuse risk | Stage3 run + `replay.py` | PENDING |
-| C13 | Answer the four questions | this file | PENDING (Q4) |
-| C14 | DIAGNOSIS/HYPOTHESES/CONTRACT, manifests, logs, code/tests, reports, R2 four-piece, VERDICT, push | this directory + `results/stage2_RQ-VAE/TIGER_calibrated_kappa_rq/` + R2 | PENDING |
-| C15 | Negative results honest; no unrun item as PASS; no end-to-end claim before legal Stage2/Stage3; 0.065 is a target | this file | PENDING |
+| C11 | 3000 epoch, seed42, fixed batch; reconstruction/quantisation/collision/rank/usage/prefix/ER/graphlet/own and fixed metrics/time | `STAGE2_REPORT.json`, `STAGE2_METRICS.md`, layer record, `OWN_KAPPA.json`, `CURVATURE_FULL_*`, `LOCAL_STRUCTURE.json` | PASS |
+| C12 | One Stage3 150 epoch; freeze candidate, final test once; independent Recall/NDCG; compare TIGER/parent/0.065; disclose single-card and test-reuse risk | `analysis/STAGE3_RECALL.json`, `analysis/REPLAY.json` | PASS |
+| C13 | Answer the four questions | this file | PASS |
+| C14 | DIAGNOSIS/HYPOTHESES/CONTRACT, manifests, logs, code/tests, reports, R2 four-piece, VERDICT, push | this directory + `results/stage2_RQ-VAE/TIGER_calibrated_kappa_rq/`; R2 `r2:genrec/111/` (112 files: source, SID `a89110b8…`, checkpoint `896e69b7…`, recall `78e68902…`, binding `4e51a695…`); commits `80466a12` + final | PASS |
+| C15 | Negative results honest; no unrun item as PASS; no end-to-end claim before legal Stage2/Stage3; 0.065 is a target | this file; `STAGE3_RECALL.json`; no unrun item marked PASS | PASS |
 
 ## Closure checks (skill §6.4)
 
-PENDING.
+1. **All production code implemented?** Yes: the calibrated candidate tree is committed and
+   was the tree actually trained and exported (run snapshot `…/src`, checkpoint `896e69b7…`).
+2. **All necessary tests executed?** Yes: 121 candidate tests PASS, mutation suite (5/5
+   caught), module/gradient checks on a real batch, 60-epoch single-card probe at batch 4096,
+   MCP smoke entry PASS. Receipts under `receipts/checks/` with exit codes.
+3. **All required training completed?** Yes: Stage2 3000 epochs (1213.8 s, single card) and
+   Stage3 150 epochs (4870.9 s, single card), final checkpoint, `test_final.json`,
+   independent replay PASS.
+4. **Infra boundary respected?** Yes: `INFRA_SNAPSHOT.json` vs `INFRA_SNAPSHOT_END.json`
+   recomputed with identical hashes for all 61 public component files; no `assets/`,
+   `tools/`, launcher, admission or evaluator change.
+5. **Any executable task left?** No: every acceptance item has a current PASS; the negative
+   recommendation result is recorded, not deferred.
 
 ## Knowledge increment
 
@@ -94,3 +115,12 @@ PENDING.
   the two must be reported separately, not conflated.
 - The single-card NaN/floor stall was a numerical bug (`inf` in an unselected `torch.where`
   branch and `sqrt'(0)`), not a batch-size or framework fault.
+- **Recommendation did not improve**: R@10 `0.045231` vs the #265 parent `0.052595` and the
+  canonical TIGER `0.055206`. Calibrated local curvature is identifiable offline and improves
+  the A.1 ranking, but the resulting discrete SID is more compressed (6,246 vs 10,918 L2
+  prefixes, lower training loss) and loses recommendation. Continuous geometry gain is not a
+  proxy for SID/recall success; this closes the "fixed local curvature" hypothesis family for
+  this representation and quantizer.
+- The Stage3 baseline itself varies across reruns (`0.0402`–`0.0555`), so a five-thousandth
+  R@10 difference is not interpretable without a same-layout rerun; the `-0.0074` vs the
+  parent is larger than that band and is treated as a real loss.

@@ -1,0 +1,203 @@
+{
+  "analysis": {
+    "identity": {
+      "archive_binding": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/archive_binding.json",
+        "recorded_sha256": "4e51a6954c2abbbf03fc0c897709b2e3d953f476dc979b51e114653e6ed96082",
+        "sha256": "4e51a6954c2abbbf03fc0c897709b2e3d953f476dc979b51e114653e6ed96082"
+      },
+      "arm": "TIGER_calibrated_kappa_rq",
+      "kind": "stage3_final",
+      "metrics": {
+        "n_eval": 57439,
+        "test_ndcg@10": 0.024823080494763405,
+        "test_ndcg@5": 0.019941932012394338,
+        "test_recall@10": 0.045230592454604014,
+        "test_recall@5": 0.030049269659987117
+      },
+      "predictions": [
+        "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_calibrated_kappa_rq/logs/Amazon_2023_Instruments/Nov-27-2026_13-52-55/predictions/rank0.jsonl"
+      ],
+      "schema": "genrec.pipeline.identity/1",
+      "sid": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/item_sids.json",
+        "recorded_sha256": "a89110b86168eb09621e5f9cfea6f6668253d6105e9f2a6647234b195efc725f",
+        "sha256": "a89110b86168eb09621e5f9cfea6f6668253d6105e9f2a6647234b195efc725f"
+      },
+      "stage2_checkpoint": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/rqvae_best.pth",
+        "recorded_sha256": "896e69b7bfc701a4fbd7413190cf8aadf0334b43d935ef3cbf66a73aae3c7410",
+        "sha256": "896e69b7bfc701a4fbd7413190cf8aadf0334b43d935ef3cbf66a73aae3c7410"
+      },
+      "stage2_export_manifest": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/export_manifest.json",
+        "recorded_sha256": "2e700e85cc8006cc0e21bb249376ab8e98d0b03eda2675596c484b3c811a29d9",
+        "sha256": "2e700e85cc8006cc0e21bb249376ab8e98d0b03eda2675596c484b3c811a29d9"
+      },
+      "stage2_run_id": "stage2_bba78cf7c160467da1c8ae7de9b6e26f",
+      "stage3_run_id": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_calibrated_kappa_rq/logs/Amazon_2023_Instruments/Nov-27-2026_13-52-55",
+      "test_final": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_calibrated_kappa_rq/logs/Amazon_2023_Instruments/Nov-27-2026_13-52-55/test_final.json",
+        "sha256": "8bfa5eea280f2ce79b6526de74df738956723291547e2d0b65559c848026358b"
+      }
+    },
+    "layer_record": {
+      "catalogue": {
+        "codebook_occupancy": [
+          256,
+          256,
+          256
+        ],
+        "distinct_l2_prefixes": 6246,
+        "distinct_l3_triples": 20744,
+        "items": 24587,
+        "l3_collision": 0.15630211087159884,
+        "l3_refinement_gain_bits": 2.849479811342368,
+        "prefix_entropy_bits": [
+          6.770340533990138,
+          11.357044466726952,
+          14.20652427806932
+        ]
+      },
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_calibrated_kappa_rq/stage2_metrics/a89110b86168eb09621e5f9cfea6f6668253d6105e9f2a6647234b195efc725f.json",
+      "validation": {
+        "conditional_g3": {
+          "reason": "legacy defining implementation removed; no surviving formula, not invented",
+          "status": "MISSING"
+        },
+        "conditional_log_enrichment_bits": 1.6368279261336667,
+        "l1_hard_er": 5.721810709718532,
+        "l1_negative_hit_probability": 0.014611062521078702,
+        "l1_positive_hit_rate": 0.08360173401347516,
+        "rows": 57439
+      }
+    },
+    "role_conditioning": null,
+    "saved_validation": {
+      "reason": "no_artifact",
+      "status": "NOT_AVAILABLE"
+    },
+    "schema": "genrec.pipeline.analysis/1",
+    "sid_chain": {
+      "H_L1": 6.770340533990135,
+      "H_L2_given_L1": 4.586703932738423,
+      "H_L3_given_L1L2": 2.8494798113461464,
+      "H_triple": 14.206524278074705,
+      "collision": 0.15630211087159884,
+      "distinct_L1": 256,
+      "distinct_L2": 6246,
+      "distinct_triples": 20744,
+      "items": 24587,
+      "items_per_L2": 3.9364393211655457,
+      "items_per_triple": 1.185258387967605
+    },
+    "stage3": {
+      "n_eval": 57439,
+      "test_ndcg@10": 0.024823080494763405,
+      "test_ndcg@5": 0.019941932012394338,
+      "test_recall@10": 0.045230592454604014,
+      "test_recall@5": 0.030049269659987117
+    }
+  },
+  "checks": [
+    {
+      "actual": 20744,
+      "check": "sid_chain:distinct_l3_triples",
+      "expected": 20744,
+      "status": "PASS",
+      "tolerance": 0
+    },
+    {
+      "actual": 6246,
+      "check": "sid_chain:distinct_l2_prefixes",
+      "expected": 6246,
+      "status": "PASS",
+      "tolerance": 0
+    },
+    {
+      "actual": 0.15630211087159884,
+      "check": "sid_chain:l3_collision",
+      "expected": 0.15630211087159884,
+      "status": "PASS",
+      "tolerance": 1e-10
+    },
+    {
+      "actual": 2.8494798113461464,
+      "check": "sid_chain:l3_refinement_gain_bits",
+      "expected": 2.849479811342368,
+      "status": "PASS",
+      "tolerance": 1e-10
+    },
+    {
+      "actual": 0.030049269659987117,
+      "check": "independent_reduction:test_recall@5",
+      "expected": 0.030049269659987117,
+      "status": "PASS",
+      "tolerance": 1e-10
+    },
+    {
+      "actual": 0.045230592454604014,
+      "check": "independent_reduction:test_recall@10",
+      "expected": 0.045230592454604014,
+      "status": "PASS",
+      "tolerance": 1e-10
+    },
+    {
+      "actual": 0.019941932012394338,
+      "check": "independent_reduction:test_ndcg@5",
+      "expected": 0.019941932012394338,
+      "status": "PASS",
+      "tolerance": 1e-10
+    },
+    {
+      "actual": 0.024823080494763405,
+      "check": "independent_reduction:test_ndcg@10",
+      "expected": 0.024823080494763405,
+      "status": "PASS",
+      "tolerance": 1e-10
+    },
+    {
+      "check": "artefact:test_final",
+      "current": "8bfa5eea280f2ce79b6526de74df738956723291547e2d0b65559c848026358b",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_calibrated_kappa_rq/logs/Amazon_2023_Instruments/Nov-27-2026_13-52-55/test_final.json",
+      "recorded": "8bfa5eea280f2ce79b6526de74df738956723291547e2d0b65559c848026358b",
+      "status": "PASS"
+    },
+    {
+      "check": "artefact:sid",
+      "current": "a89110b86168eb09621e5f9cfea6f6668253d6105e9f2a6647234b195efc725f",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/item_sids.json",
+      "recorded": "a89110b86168eb09621e5f9cfea6f6668253d6105e9f2a6647234b195efc725f",
+      "status": "PASS"
+    },
+    {
+      "check": "artefact:stage2_checkpoint",
+      "current": "896e69b7bfc701a4fbd7413190cf8aadf0334b43d935ef3cbf66a73aae3c7410",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/rqvae_best.pth",
+      "recorded": "896e69b7bfc701a4fbd7413190cf8aadf0334b43d935ef3cbf66a73aae3c7410",
+      "status": "PASS"
+    },
+    {
+      "check": "artefact:stage2_export_manifest",
+      "current": "2e700e85cc8006cc0e21bb249376ab8e98d0b03eda2675596c484b3c811a29d9",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/export_manifest.json",
+      "recorded": "2e700e85cc8006cc0e21bb249376ab8e98d0b03eda2675596c484b3c811a29d9",
+      "status": "PASS"
+    },
+    {
+      "check": "artefact:archive_binding",
+      "current": "4e51a6954c2abbbf03fc0c897709b2e3d953f476dc979b51e114653e6ed96082",
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_bba78cf7c160467da1c8ae7de9b6e26f/TIGER_calibrated_kappa_rq/result/archive_binding.json",
+      "recorded": "4e51a6954c2abbbf03fc0c897709b2e3d953f476dc979b51e114653e6ed96082",
+      "status": "PASS"
+    }
+  ],
+  "failed": [],
+  "run": {
+    "arm": "TIGER_calibrated_kappa_rq",
+    "stage2_run_id": "stage2_bba78cf7c160467da1c8ae7de9b6e26f",
+    "stage3_run_id": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_calibrated_kappa_rq/logs/Amazon_2023_Instruments/Nov-27-2026_13-52-55"
+  },
+  "schema": "genrec.pipeline.replay/1",
+  "status": "PASS"
+}

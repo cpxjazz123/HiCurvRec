@@ -1,0 +1,53 @@
+{
+  "above_target_0p065": false,
+  "baselines": {
+    "TIGER_RQ-VAE": {
+      "run": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_10-57-48/test_final.json",
+      "test_ndcg@10": 0.030231052461588626,
+      "test_ndcg@5": 0.024280979953835647,
+      "test_recall@10": 0.05520639286895663,
+      "test_recall@5": 0.03678685213879072
+    },
+    "TIGER_euclid_local_curve_supervision_rq": {
+      "run": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_euclid_local_curve_supervision_rq/logs/Amazon_2023_Instruments/Nov-26-2026_15-19-00/test_final.json",
+      "test_ndcg@10": 0.028250492045720124,
+      "test_ndcg@5": 0.022306324541159665,
+      "test_recall@10": 0.052594926791900976,
+      "test_recall@5": 0.03408833719249987
+    }
+  },
+  "current": {
+    "n_eval": 57439,
+    "test_ndcg@10": 0.024823080494763405,
+    "test_ndcg@5": 0.019941932012394338,
+    "test_recall@10": 0.045230592454604014,
+    "test_recall@5": 0.030049269659987117
+  },
+  "delta_vs_parent": -0.007364334337296961,
+  "delta_vs_tiger": -0.009975800414352615,
+  "final": "results/stage3_T5Train/TIGER_calibrated_kappa_rq/logs/Amazon_2023_Instruments/Nov-27-2026_13-52-55/test_final.json",
+  "replay_failed": [],
+  "schema": "genrec.issue269.stage3_recall/1",
+  "tiger_all_runs": [
+    {
+      "run": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-01-2026_10-15-01/test_final.json",
+      "test_recall@10": 0.04019916781281011
+    },
+    {
+      "run": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-12-2026_21-04-04/test_final.json",
+      "test_recall@10": 0.05545012970281516
+    },
+    {
+      "run": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_10-18-36/test_final.json",
+      "test_recall@10": 0.0534828252580999
+    },
+    {
+      "run": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Nov-23-2026_10-57-48/test_final.json",
+      "test_recall@10": 0.05520639286895663
+    },
+    {
+      "run": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Oct-26-2026_06-26-20/test_final.json",
+      "test_recall@10": 0.05553717857205035
+    }
+  ]
+}

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -22,12 +23,21 @@ def main() -> None:
         final = run / "test_final.json"
     data = json.loads(final.read_text())
     baselines = {}
+    tiger_all = []
     for arm in ("TIGER_RQ-VAE", "TIGER_euclid_local_curve_supervision_rq"):
-        path = sorted((ROOT / "results/stage3_T5Train" / arm).glob("**/test_final.json"))
-        if path and path[0].is_file():
-            block = json.loads(path[0].read_text())
-            baselines[arm] = {key: block.get(key) for key in
-                              ("test_recall@5", "test_recall@10", "test_ndcg@5", "test_ndcg@10")}
+        paths = sorted((ROOT / "results/stage3_T5Train" / arm).glob("**/test_final.json"))
+        if not paths:
+            continue
+        # The canonical frozen baseline is the latest run of the arm; every
+        # historical TIGER run is also recorded so the range is visible.
+        reference = max(paths, key=lambda p: datetime.strptime(p.parent.name, "%b-%d-%Y_%H-%M-%S"))
+        block = json.loads(reference.read_text())
+        baselines[arm] = {key: block.get(key) for key in
+                          ("test_recall@5", "test_recall@10", "test_ndcg@5", "test_ndcg@10")}
+        baselines[arm]["run"] = str(reference)
+        if arm == "TIGER_RQ-VAE":
+            tiger_all = [{"run": str(path), "test_recall@10": json.loads(path.read_text()).get("test_recall@10")}
+                         for path in paths]
     summary = {
         "schema": "genrec.issue269.stage3_recall/1",
         "final": str(final),
@@ -41,6 +51,7 @@ def main() -> None:
                            - baselines.get("TIGER_RQ-VAE", {})
                            .get("test_recall@10", float("nan"))),
         "above_target_0p065": bool((data.get("test_recall@10") or 0) > 0.065),
+        "tiger_all_runs": tiger_all,
         "replay_failed": result.get("failed", []),
     }
     (ROOT / "results/research/issue269/analysis/STAGE3_RECALL.json").write_text(

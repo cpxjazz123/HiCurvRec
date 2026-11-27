@@ -237,12 +237,16 @@
     {
       "id": "H269-2",
       "statement": "Frozen calibrated per-triple curvature supervision on the hard q improves the exported SID and Stage3 test_R@10 relative to frozen TIGER and the #265 parent.",
-      "status": "UNTESTED",
-      "evidence": [],
+      "status": "REFUTED",
+      "evidence": [
+        "results/research/issue269/analysis/STAGE3_RECALL.json",
+        "results/research/issue269/analysis/REPLAY.json"
+      ],
       "origin_issue": 269,
       "opened_round": "r01",
       "last_update": "2026-11-27",
-      "reopen_reason": null
+      "reopen_reason": null,
+      "note": "Stage3 R@10 0.045230592454604014 vs the #265 parent 0.052594926791900976 and canonical TIGER 0.05520639286895663; the SID was more compressed (6,246 vs 10,918 L2 prefixes)."
     },
     {
       "id": "H269-3",

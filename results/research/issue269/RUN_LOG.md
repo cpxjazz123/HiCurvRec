@@ -68,3 +68,13 @@ Recall/NDCG@5/10".
 - 2026-11-27: candidate scale/cache change; NaN and floor stall from #268 fixed
   (`project` produced inf in the unselected `where` branch; coincident `sqrt`
   gradient fixed with `_SafeSqrt`). 60-epoch single-card probe at batch 4096 passes.
+
+## Execution record
+
+- Mechanism + Stage2 commit `80466a12` pushed; `origin/main` matches.
+- Stage2 run `stage2_bba78cf7c160467da1c8ae7de9b6e26f`; Stage3 run started
+  `2026-11-27 13:52:55` (local), single card, 150 epochs, mean 26.3 s/epoch.
+- `commit_guard.py` needed `--max-paths 1500 --max-lines 90000` because the worktree already
+  carried 1,173 unrelated changed paths (issue264 exports, archived arms, old smoke artifacts);
+  the committed selection is the 190 #269 paths only (docs, candidate tree, receipts, the
+  #267 tree deletion).
