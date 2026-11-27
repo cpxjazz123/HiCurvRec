@@ -1,0 +1,42 @@
+{
+  "issue": 268,
+  "state": "COMPLETED",
+  "infra_mode": "FROZEN",
+  "done": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C17",
+    "C18",
+    "C19"
+  ],
+  "not_applicable": [
+    "C9",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "partial": [
+    "C14",
+    "C16"
+  ],
+  "reused": [
+    "#265 final checkpoint and source snapshot",
+    "#267 hypotheses",
+    "assets/*"
+  ],
+  "failed": [],
+  "infra_faults": [],
+  "gate": "STOP_BEFORE_TRAINING: per-triple kappa boundary-dominated; global scale explains the gain",
+  "blocked_by": null,
+  "training_runs": [],
+  "commit": "babc90ee7dbe8a5f8f8e4773c6d82d3e76aa4b0d",
+  "updated_at": "2026-11-27T01:20:00Z"
+}
