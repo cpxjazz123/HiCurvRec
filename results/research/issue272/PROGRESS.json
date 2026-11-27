@@ -1,37 +1,7 @@
-{
-  "issue": 272,
-  "state": "INFEASIBILITY_REPORTED",
-  "infra_mode": "FROZEN",
-  "commit": "a02cd0df",
-  "done": [
-    "C1",
-    "C2.1 mean J",
-    "C2.3 collision record",
-    "C3 probe",
-    "C4 diagnosis",
-    "C5 round-1 run",
-    "C6 persistence",
-    "C7 no Stage3"
-  ],
-  "reused": [],
-  "not_run": [
-    "Stage3 (forbidden by issue)"
-  ],
-  "failed": [
-    "1-hop J 1.2448 > 0.7983",
-    "local MAE 2.3438 > 1.8935",
-    "Spearman -0.0988 <= 0.01585",
-    "sign 0.3481 <= 0.43245",
-    "slope -0.0361 < 0.1",
-    "L2 6848 < 10918",
-    "rank 2.774 < 8",
-    "recon 9.13e-5 > 8.59e-5"
-  ],
-  "infra_faults": [],
-  "running": [],
-  "next_commands": [
-    "owner decision on minimal alternative A/B/C"
-  ],
-  "blocked_by": null,
-  "updated_at": "2026-11-27T09:15:00Z"
-}
+{"stage": "INFEASIBILITY_REPORTED_R2", "issue": 272,
+ "round2": {"arm": "TIGER_balanced_j_rq", "run": "stage2_70feb0bb3b174adb8e046df6df09aed3",
+            "status": "stopped_diverged", "stopped_epoch": 556, "collision": 0.9832,
+            "j": 1.598, "mu": 1.054, "recon": 2.01e-4, "lambda_after": 0.001724},
+ "frontier": {"tiger_L2": 7374, "tiger_rank": 11.5, "round1_L2": 6848, "round1_rank": 2.77,
+              "L2_target": 10918, "rank_target": 8, "conjunction_observed": false},
+ "issue_state": "OPEN", "note": "no further kappa_t/lambda setting; objective/capacity decision retained by user"}

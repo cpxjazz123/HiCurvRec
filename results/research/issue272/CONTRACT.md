@@ -77,3 +77,24 @@ change per round, after the first round's failing criterion is identified.
 A candidate is PASS only if P1-P5 all hold with the frozen thresholds, the legal non-collision admission
 passes, and the full SID/geometry artifacts are persisted. A failed criterion is a result, not a reason
 to relax a threshold. The issue forbids Stage3; none is run.
+
+## 7. Round-2 addendum (frozen before the round-2 run)
+
+**Round-1 root cause (measured).** At the round-1 calibration point the local A.1 gradient norm was
+`6.827e-5` while the active constraint gradient at `mu=0.1` was `0.1485` (ratio 4.6e-4); the inherited
+#269 lambda matched the original-loss gradient, not the global one. The local term was effectively
+absent once the bound was active, so its MAE/rank/sign degraded.
+
+**Round-2 primary change (one).** Keep the mechanism, the bound (0.320) and every other constant; after
+the inherited calibration, measure the real local and global gradients on the calibration batch (local
+sample + fixed pair sample, hard q) and re-scale lambda so the local gradient is
+`LOCAL_GLOBAL_FRACTION = 0.1` of the global gradient at `mu_probe = 0.1`:
+
+`lambda = lambda0 * fraction * ||grad global|| / ||grad local||`
+
+`lambda0` is the inherited 5.8836e-6; the balance is frozen once and logged. No sweep.
+
+**Expected/falsifiable.** P2 (local MAE/Spearman/sign) improves relative to round 1 (1.894/ -0.0055 /
+0.3926 at best from #271; round 1 was 2.344/ -0.0988/0.3481); P1 and P3/P4 must remain within the frozen
+thresholds. If P2 improves but P1/P3/P4 fail, the local/global/SID trade-off is confirmed at a second
+point; if P2 does not improve, the fixed evaluation ruler (not the gradient budget) is the cause.

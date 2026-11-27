@@ -43,3 +43,16 @@
   #269 1.997 / -0.070083 / 0.363704; #271 1.894 / -0.005483 / 0.392646.
 - The leftover #271 Stage3 was stopped on explicit user instruction at epoch 150 before its final test; it is
   not used for #272 and produced no test_final. The GPU is free for the #272 Stage2.
+
+## Round 2 (started 2026-11-27)
+
+- Root cause from round 1: the local A.1 gradient at calibration was 6.827e-5 while the active global
+  gradient at mu=0.1 was 0.148463 (ratio 4.6e-4); the inherited lambda matched the original-loss gradient,
+  so the local term was swamped and its MAE/rank/sign degraded under the active bound.
+- Primary change (one): after the inherited calibration, measure the real local and global gradients on
+  the calibration batch (local sample + fixed pair sample) and re-scale lambda so the local gradient is
+  0.1 of the global one at mu_probe=0.1: lambda = lambda0 * 0.1 * G / C. No sweep; the balance is frozen.
+- Bound and every other constant unchanged (J_MAX=0.320; acceptance 0.338336); candidate
+  `TIGER_balanced_j_rq`; run `stage2_70feb0bb3b174adb8e046df6df09aed3`.
+- Expected: local MAE/Spearman/sign improve vs round 1; P1/P3/P4 must stay within the frozen thresholds.
+- Tests: 18 passed (balance known answer, global constraint/mutation, kappa cache).

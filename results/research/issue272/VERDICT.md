@@ -102,3 +102,41 @@ No threshold was relaxed, no Stage3 was started, and no recall was produced.
 5. Executable tasks remain: **not within the frozen mechanism**; the contract is infeasible as specified.
    The issue is **not** closed as COMPLETED; per the skill it remains OPEN for the owner's decision on
    the minimal alternative.
+
+## 2026-11-27 round 2: the local/global gradient balance is destructive
+
+The round-2 candidate `TIGER_balanced_j_rq` calibrated the local curvature weight at 10% of the active
+global gradient at `mu=0.1` on the calibration batch: `lambda_after = 0.001724` from `lambda_before =
+5.884e-6` (293x). The one-epoch smoke passed; the formal run was **stopped at epoch 556** because the
+candidate diverged instead of trading off:
+
+| metric | epoch 550 (last eval) | bound |
+|---|---|---|
+| L3 collision (recorded) | 0.9832 | -- |
+| global J (epoch 556) | 1.598 | mean <= 0.32 |
+| mu (sensitivity price) | 1.054 | bound active |
+| reconstruction MSE | 2.010e-4 | <= 8.59e-5 |
+| local A.1 MAE | not evaluated (run diverged) | <= 2.0622 |
+
+The local term at that weight does not merely trade reconstruction for locality: it destroys the RQ-VAE
+assignment (collision ~0.98 versus 0.1203 in round 1 and 0.0656 for TIGER) and drives the global J above
+its start. The direction is refuted at this intervention point.
+
+The observed family is now:
+
+| objective | lambda | L2 distinct | RQ rank | collision | A.1 MAE | Spearman | sign |
+|---|---|---|---|---|---|---|---|
+| TIGER (frozen baseline) | 0 | 7,374 | 11.5 | 0.0656 | 7.31 | 0.0159 | 0.4315 |
+| round-1 calibrated | 5.9e-6 | 6,848 | 2.77 | 0.1203 | 2.34 | -0.0989 | 0.3483 |
+| round-2 balanced (diverged) | 1.7e-3 | collapsed | collapsed | 0.983 | n/a | n/a | n/a |
+| #265 Euclidean l2 0.001 (excluded) | -- | 10,918 | 3.05 | 0.157 | 2.72 | 0.0322 | 0.5227 |
+
+L2 >= 10,918 with RQ rank >= 8 has never been observed together. The L2 ceiling of the kappa_t/lambda
+family is 7,374 (lambda=0); increasing lambda lowers L2 and, past a threshold, collapses the assignment.
+The #265 L2 record comes from the excluded Euclidean objective, not from an implementable kappa_t/lambda
+setting. The #272 conjunction remains empirically infeasible under the fixed L2 objective, and no further
+kappa_t/lambda setting remains that could produce it.
+
+Issue #272 remains **OPEN**: the fixed-objective L2 >= 10,918 and RQ rank >= 8 conjunction has no
+executable setting, while the real experimental goal (stable locality under the four gates) needs an
+objective / capacity intervention that the Issue and the skill's transfer rule retain with the user.
