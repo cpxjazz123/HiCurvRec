@@ -210,7 +210,6 @@ def _real_embeddings():
 def _trained_model():
     import train_rqvae  # noqa: PLC0415
     from model import RQVAE  # noqa: PLC0415
-
     checkpoint = train_rqvae.REPO_ROOT / "results" / "stage2_RQ-VAE" / "TIGER_RQ-VAE" / "rqvae_best.pth"
     if not checkpoint.is_file():
         pytest.skip("the frozen checkpoint is not reachable")
