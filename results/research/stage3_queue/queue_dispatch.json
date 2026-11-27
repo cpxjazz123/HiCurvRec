@@ -32,7 +32,7 @@
    "kind": "static",
    "manifest": "verified",
    "sid_sha256": "6966de3adf44cd29a6b96a0947c2e61fca4ab4639863c22b896e98d5378a7a9c",
-   "gate": "dispatchable (manifest verified; binding exists or static)"
+   "gate": "pre-validated 2026-11-28 03:15: export gate VERIFIED (collision 0.1591 < 0.4; quality warnings quant 0.056, rank 9.43>8); layer record MISSING (\u00a763 script deleted per \u00a794); refused only by the live singleton -> dispatch after TIGER_global_j_rq"
   },
   {
    "arm": "TIGER_curvloss_rq",
@@ -60,8 +60,8 @@
    "collision": 0.154309,
    "items": 24587,
    "kind": "run",
-   "manifest": "needs-export-repair",
-   "gate": "round-3 candidate, checkpoint carries run identity; the gate re-exports the SID from the checkpoint"
+   "manifest": "verified",
+   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
   },
   {
    "arm": "TIGER_drq_D0",
@@ -69,8 +69,9 @@
    "collision": 0.1623,
    "items": 24587,
    "kind": "static",
-   "manifest": "needs-export-repair",
-   "sid_sha256": "6ff4be87b987c87ff95cf5417dd81d3f159fd4a9880f49c1cc5191ea487b5596"
+   "manifest": "verified",
+   "sid_sha256": "6ff4be87b987c87ff95cf5417dd81d3f159fd4a9880f49c1cc5191ea487b5596",
+   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
   },
   {
    "arm": "TIGER_graphlet_capacity_rq",
@@ -78,8 +79,9 @@
    "collision": 0.1603,
    "items": 24587,
    "kind": "static",
-   "manifest": "needs-export-repair",
-   "sid_sha256": "26b3e0904cef258ed7ef71c45cd49f5e88824bc20ab81720c68918b7f927a33c"
+   "manifest": "verified",
+   "sid_sha256": "26b3e0904cef258ed7ef71c45cd49f5e88824bc20ab81720c68918b7f927a33c",
+   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
   },
   {
    "arm": "TIGER_drq_D4",
@@ -87,8 +89,9 @@
    "collision": 0.1598,
    "items": 24587,
    "kind": "static",
-   "manifest": "needs-export-repair",
-   "sid_sha256": "21e9e4a7e5bfe9c899a893165a889722a195317c90efab5d63d44dd72cea94e9"
+   "manifest": "verified",
+   "sid_sha256": "21e9e4a7e5bfe9c899a893165a889722a195317c90efab5d63d44dd72cea94e9",
+   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
   },
   {
    "arm": "TIGER_codebook_budget_j_rq",
@@ -96,8 +99,9 @@
    "collision": 0.1337,
    "items": 24587,
    "kind": "run",
-   "manifest": "needs-export-repair",
-   "sid_sha256": "eb7de2a6bc1aa75f35e0d1b971b25897fd3709402fff338e7b5bcebc5edf9c18"
+   "manifest": "verified",
+   "sid_sha256": "eb7de2a6bc1aa75f35e0d1b971b25897fd3709402fff338e7b5bcebc5edf9c18",
+   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
   },
   {
    "arm": "TIGER_sid_graphlet_rq",
@@ -105,8 +109,9 @@
    "collision": 0.1321,
    "items": 24587,
    "kind": "static",
-   "manifest": "needs-export-repair",
-   "sid_sha256": "d0436c7686325fd10df551f31e527951c46b5b00e450729817d1fb890b246abd"
+   "manifest": "verified",
+   "sid_sha256": "d0436c7686325fd10df551f31e527951c46b5b00e450729817d1fb890b246abd",
+   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
   },
   {
    "arm": "TIGER_p4_topoq_A",
@@ -114,8 +119,9 @@
    "collision": 0.1304,
    "items": 24587,
    "kind": "static",
-   "manifest": "needs-export-repair",
-   "sid_sha256": "02deeedd2e4699342af6b679f2ab5551c3e911500864a089af269d60ff09672d"
+   "manifest": "verified",
+   "sid_sha256": "02deeedd2e4699342af6b679f2ab5551c3e911500864a089af269d60ff09672d",
+   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
   },
   {
    "arm": "TIGER_trq_A",
@@ -123,8 +129,9 @@
    "collision": 0.1285,
    "items": 24587,
    "kind": "static",
-   "manifest": "needs-export-repair",
-   "sid_sha256": "ff407ef3486d415fb52ae15b0d7361b4a6ae2a66ab5d86f7e4e067f61603ffd7"
+   "manifest": "verified",
+   "sid_sha256": "ff407ef3486d415fb52ae15b0d7361b4a6ae2a66ab5d86f7e4e067f61603ffd7",
+   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
   },
   {
    "arm": "TIGER_active_j_rq",
@@ -132,8 +139,9 @@
    "collision": 0.1198,
    "items": 24587,
    "kind": "run",
-   "manifest": "needs-export-repair",
-   "sid_sha256": "dfa4f784c2948597c5c43ac061a6c41e11c48f37233240df3a6185723a082fc6"
+   "manifest": "verified",
+   "sid_sha256": "dfa4f784c2948597c5c43ac061a6c41e11c48f37233240df3a6185723a082fc6",
+   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
   },
   {
    "arm": "TIGER_export_matched_graphlet_rq",
@@ -141,8 +149,9 @@
    "collision": 0.1018,
    "items": 24587,
    "kind": "static",
-   "manifest": "needs-export-repair",
-   "sid_sha256": "5d7dc92a9f3952c4a5e31a5fa69cffb50a4ccf100b822efd25232dcce2962843"
+   "manifest": "verified",
+   "sid_sha256": "5d7dc92a9f3952c4a5e31a5fa69cffb50a4ccf100b822efd25232dcce2962843",
+   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
   },
   {
    "arm": "TIGER_drq_U",
@@ -150,8 +159,9 @@
    "collision": 0.063,
    "items": 24587,
    "kind": "static",
-   "manifest": "needs-export-repair",
-   "sid_sha256": "c334368fe45cc4af9888bcfe429da3a3730a6afc4307efd58ef865193d2bf285"
+   "manifest": "refused-by-export-check",
+   "sid_sha256": "c334368fe45cc4af9888bcfe429da3a3730a6afc4307efd58ef865193d2bf285",
+   "gate": "export repair REFUSED: c/stage2_RQ-VAE/_archive/TIGER_drq_U/train_rqvae.py\", line 47, in <module>     import teacher ModuleNotFoundError: No module named 'teacher'"
   },
   {
    "arm": "TIGER_graphlet_prefix_shuffled_rq",
@@ -159,8 +169,9 @@
    "collision": 0.0559,
    "items": 24587,
    "kind": "static",
-   "manifest": "needs-export-repair",
-   "sid_sha256": "95032e31963fefb96a16788e7fcf8952def25ec10efc8d3c8fed0bb1c17a6b46"
+   "manifest": "verified",
+   "sid_sha256": "95032e31963fefb96a16788e7fcf8952def25ec10efc8d3c8fed0bb1c17a6b46",
+   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
   },
   {
    "arm": "TIGER_graphlet_wide_l1_rq",
@@ -168,8 +179,9 @@
    "collision": 0.0543,
    "items": 24587,
    "kind": "static",
-   "manifest": "needs-export-repair",
-   "sid_sha256": "0f2880febc9e5f229a6671cad49289f37a827355ca812776d78a0b6b9256cbda"
+   "manifest": "verified",
+   "sid_sha256": "0f2880febc9e5f229a6671cad49289f37a827355ca812776d78a0b6b9256cbda",
+   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
   },
   {
    "arm": "TIGER_drq_S",
@@ -177,8 +189,9 @@
    "collision": 0.0385,
    "items": 24587,
    "kind": "static",
-   "manifest": "needs-export-repair",
-   "sid_sha256": "ea4916c55c5ded1192e26b8ea3bd58a6dd9ef5c4bd68c2a4b4ccd928f92bb5f7"
+   "manifest": "refused-by-export-check",
+   "sid_sha256": "ea4916c55c5ded1192e26b8ea3bd58a6dd9ef5c4bd68c2a4b4ccd928f92bb5f7",
+   "gate": "export repair REFUSED: c/stage2_RQ-VAE/_archive/TIGER_drq_S/train_rqvae.py\", line 47, in <module>     import teacher ModuleNotFoundError: No module named 'teacher'"
   },
   {
    "arm": "TIGER_drq_D2",
@@ -186,8 +199,9 @@
    "collision": 0.0242,
    "items": 24587,
    "kind": "static",
-   "manifest": "needs-export-repair",
-   "sid_sha256": "5c38293042ac329bc74a0dd6c376cc76f84076f39c421377c8117ae41f419afe"
+   "manifest": "verified",
+   "sid_sha256": "5c38293042ac329bc74a0dd6c376cc76f84076f39c421377c8117ae41f419afe",
+   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
   },
   {
    "arm": "TIGER_pairrank_rq",
@@ -205,9 +219,9 @@
    "collision": 0.1573,
    "items": 24587,
    "kind": "run",
-   "manifest": "needs-export-repair",
+   "manifest": "verified",
    "sid_sha256": "b9c3e8de929722aaef9604b747143028c55db3f5dcc9879525231b40a828f59d",
-   "gate": "refused: checkpoint missing executed run identity -> Stage2 re-run required"
+   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
   }
  ],
  "audit_2026_11_28": {
@@ -246,6 +260,28 @@
    "test_ndcg@10": 0.025415564077936974,
    "test_final": "results/stage3_T5Train/TIGER_samecentre_delta_rq/logs/Amazon_2023_Instruments/Nov-28-2026_01-31-26/test_final.json",
    "verdict": "below the 0.065 acceptance bar"
+  }
+ },
+ "sweep_2026_11_28": {
+  "verified": [
+   "TIGER_pairrank_cover_rq",
+   "TIGER_drq_D0",
+   "TIGER_graphlet_capacity_rq",
+   "TIGER_drq_D4",
+   "TIGER_codebook_budget_j_rq",
+   "TIGER_sid_graphlet_rq",
+   "TIGER_p4_topoq_A",
+   "TIGER_trq_A",
+   "TIGER_active_j_rq",
+   "TIGER_export_matched_graphlet_rq",
+   "TIGER_graphlet_prefix_shuffled_rq",
+   "TIGER_graphlet_wide_l1_rq",
+   "TIGER_drq_D2",
+   "TIGER_pairrank_enc_rq"
+  ],
+  "refused": {
+   "TIGER_drq_U": "hive/TIGER_drq_U/train_rqvae.py\", line 47, in <module>\n    import teacher\nModuleNotFoundError: No module named 'teacher'",
+   "TIGER_drq_S": "hive/TIGER_drq_S/train_rqvae.py\", line 47, in <module>\n    import teacher\nModuleNotFoundError: No module named 'teacher'"
   }
  }
 }

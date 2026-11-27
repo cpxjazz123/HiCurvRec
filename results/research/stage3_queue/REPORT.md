@@ -53,3 +53,34 @@ reason above; the round-1 tree is repaired and its tests pass (17), the round-2 
 after its run finishes, and each then needs a re-run. The re-runs reproduce the same recipes
 (everything else unchanged), after which the export check, the archive binding and the Stage3 gate
 run normally.
+
+## The dispatch campaign (2026-11-28, owner instruction)
+
+Every Stage2-completed SID without a Stage3 result was re-inventoried, gate-audited, and queued
+(`queue_dispatch.json`). The export gate's own repair (`tools.research.stage2.export_check
+--rewrite`, exactly as `stage3_export_gate` runs it) was executed for the 16 repair arms:
+**14 VERIFIED** (the SID rewritten to the checkpoint's table, 66-526 items per arm), 2 refused
+(`drq_U`, `drq_S` — their archived trees import a missing `teacher` module).
+
+Dispatch order (Stage3 is a global singleton; one arm per card, ~80-90 min each):
+
+1. `TIGER_global_j_rq` — RUNNING (`stage3_...` state, collision 0.1518).
+2. `TIGER_graphlet_align_rq` (pre-validated VERIFIED, collision 0.1591).
+3. `TIGER_curvloss_rq`, `TIGER_sinkhorn_all_levels_rq` (verified static arms).
+4. `TIGER_pairrank_cover_rq` (round-3 candidate; checkpoint carries run identity).
+5. `TIGER_codebook_budget_j_rq`, `TIGER_active_j_rq` (run-layout; binding checked at dispatch).
+6. static arms: `drq_D0`, `graphlet_capacity_rq`, `drq_D4`, `sid_graphlet_rq`, `p4_topoq_A`,
+   `trq_A`, `export_matched_graphlet_rq`, `graphlet_prefix_shuffled_rq`, `graphlet_wide_l1_rq`,
+   `drq_D2`.
+7. `TIGER_pairrank_enc_rq` — manifest verified, but its checkpoint may lack the run identity; the
+   archive binding decides at dispatch.
+
+Refused and why: `prefix_curvature_gate_rq` (checkpoint framework-source hashes predate the repo),
+`pairrank_rq` (no run identity), `drq_U`/`drq_S` (missing `teacher` module), and the collision-gate
+trio `g237_struct_rq` 0.966 / `kappa_cost_rq` 0.825 / `i234_A6` 0.412 (the last is waivable only by
+the owner, `waive_collision`).
+
+Resume: for each remaining arm call `stage3_start` with its SID path once the previous run's
+`test_final.json` exists and no `run_stage3_*` process is live; record the result in
+`queue_dispatch.json` (`results` key). The `TIGER_samecentre_delta_rq` result (test_R@10 0.0466) is
+already recorded.
