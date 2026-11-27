@@ -1,0 +1,47 @@
+{
+  "boundary_fraction_a": 0.154296875,
+  "boundary_fraction_b": 0.27734375,
+  "edge_scale": 0.1058943657241384,
+  "gate": {
+    "bootstrap_lower_above_zero": true,
+    "mean_improvement_at_least_1pct": true,
+    "passed": true,
+    "spearman_at_least_half": true
+  },
+  "global_kappa_a": 0.045,
+  "graph_sha256": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818",
+  "grid_max": 1.0,
+  "grid_min": -0.05,
+  "grid_points": 211,
+  "improvement_bootstrap_ci95": [
+    0.04190471481189798,
+    0.0554160186263592
+  ],
+  "improvement_bootstrap_mean": 0.04868340154700324,
+  "improvement_mean_heldout": 0.0483709132525781,
+  "improvement_median_heldout": 0.025736607847806597,
+  "max_coord_norm": 4.360480406776883,
+  "mean_j_global_a": 0.18218361026083585,
+  "mean_j_global_b": 0.18259664924698882,
+  "mean_j_shape_free_scale_b": 0.1485793541430386,
+  "mean_j_triple_a": 0.17271795747001306,
+  "mean_j_triple_b": 0.17321634274412645,
+  "mean_j_triple_insample_b": 0.17152415927921538,
+  "mean_j_zero_a": 0.18565732078059227,
+  "mean_j_zero_b": 0.18166426408788539,
+  "reference_sets": {
+    "A": 256,
+    "B": 256
+  },
+  "reference_spearman": 0.9465664659526728,
+  "rows": 2048,
+  "rows_scale_check": 20000,
+  "runtime_s": 21.611543655395508,
+  "scale": 0.06828367045803868,
+  "scale_relative_error": 2.8564194518616865e-07,
+  "scale_reproduced": 0.06828365095335823,
+  "schema": "genrec.issue269.gate/1",
+  "targets_sha256": "8c0ff9f8c25b98ed31802cdb62cf921df6d3cf8bbf35ee2d3de9817d6cd0807a",
+  "z_ref_sha256": "a2643a9bc09bbedffe4c249fea7d07d54153c9c8fd6aa5e476fe4f7b63ae4a66",
+  "zero_vs_global_b": -0.005132463249086591
+}
