@@ -56,3 +56,21 @@
   `TIGER_balanced_j_rq`; run `stage2_70feb0bb3b174adb8e046df6df09aed3`.
 - Expected: local MAE/Spearman/sign improve vs round 1; P1/P3/P4 must stay within the frozen thresholds.
 - Tests: 18 passed (balance known answer, global constraint/mutation, kappa cache).
+
+## Round 3 (2026-11-27): codebook-side gradient budget
+
+- Owner 2026-11-27: the skill's highest-priority iteration contract (commit 08fa70ee) — experiment
+  failure does not stop; `X_tested` is not an `X_allowed` proof. This round continues the iteration.
+- Archive (CLAUDE.md §1.0a): `git mv stage2_RQ-VAE/TIGER_balanced_j_rq _archive/TIGER_balanced_j_rq`;
+  the new tree from the round-1 immutable src snapshot (`stage2_4dffd8b4.../src`), ARM_NAME changed.
+- Root cause R1: the local/global codebook-side gradients; R2 null (encoder-side), R3 shrink, R4 base.
+  Evidence: round 2's 10% codebook share collapse; round 1's ~0.05% kappa_t family; the local-weight
+  trend; the #265/TIGER frontier.
+- Change: codebook-side gradient budget `beta=0.01` on the local+constraint; encoder/reconstruction
+  full; no objective/architecture/selection/Sinkhorn/reconstruction change (issue §3
+  "梯度预算及冲突处理").
+- Tests: `tests/test_codebook_budget.py` + `tests/test_codebook_budget_mutations.py`; 12 passed, the
+  reference test failed on a test-side graph-retention bug, fixed and re-run (1 passed); logs
+  `results/research/issue272/checks/round3_budget_tests*.log`; mutations M1–M6 in `MUTATIONS.md`.
+- Plan: the smoke, then the 3000-epoch run, then the independent local evaluator + the common-ruler J
+  + the SID + the recon + the mu; the P1–P5 PASS table; Stage3 is forbidden (issue §4).

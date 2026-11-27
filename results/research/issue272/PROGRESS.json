@@ -1,92 +1,35 @@
 {
-  "stage": "INFEASIBILITY_P2_P3_OPEN",
   "issue": 272,
-  "round2": {
-    "arm": "TIGER_balanced_j_rq",
-    "run": "stage2_70feb0bb3b174adb8e046df6df09aed3",
-    "status": "stopped_diverged",
-    "stopped_epoch": 556,
-    "collision": 0.9832,
-    "j": 1.598,
-    "mu": 1.054,
-    "recon": 0.000201,
-    "lambda_after": 0.001724
-  },
-  "frontier": {
-    "tiger_L2": 7374,
-    "tiger_rank": 11.5,
-    "round1_L2": 6848,
-    "round1_rank": 2.77,
-    "L2_target": 10918,
-    "rank_target": 8,
-    "conjunction_observed": false
-  },
+  "commit": "08fa70ee",
+  "state": "WORKING",
+  "infra_mode": "FROZEN",
+  "round": "round-3",
+  "arm": "TIGER_codebook_budget_j_rq",
+  "done": [
+    "H272-1..H272-6 knowledge",
+    "round-3 contract/diagnosis/hypotheses",
+    "round-3 source + codebook budget + tests",
+    "round-2 archived"
+  ],
+  "reused": [
+    "round-1 immutable src snapshot stage2_4dffd8b4528440b3aca334b380749f01"
+  ],
+  "not_run": [
+    "smoke",
+    "3000-epoch run",
+    "P1-P5 evaluation"
+  ],
+  "failed": [],
+  "infra_faults": [],
+  "running": [],
+  "next_commands": [
+    "stage2_start TIGER_codebook_budget_j_rq",
+    "stage2_status",
+    "evaluate P1-P5"
+  ],
+  "blocked_by": null,
+  "owner_skill_change": "08fa70ee (owner 2026-11-27 iteration contract)",
   "issue_state": "OPEN",
-  "note": "no further kappa_t/lambda setting; objective/capacity decision retained by user",
-  "close_condition": "UNSATISFIED",
-  "p2_empty": true,
-  "p3_empty": true,
-  "arms": {
-    "TIGER": {
-      "mae": 7.309217,
-      "spearman": 0.015850898,
-      "sign": 0.432453349,
-      "L2": 7374,
-      "rank": 11.5,
-      "J": 0.739635
-    },
-    "#271_TIGER_global_j_rq": {
-      "mae": 1.893506,
-      "spearman": -0.005483,
-      "sign": 0.392646,
-      "L2": 6097,
-      "rank": 4.501,
-      "J": 0.351361
-    },
-    "#269_TIGER_calibrated_kappa_rq": {
-      "mae": 1.997261,
-      "spearman": -0.070083,
-      "sign": 0.363704,
-      "L2": 6246,
-      "J": 0.338336
-    },
-    "round1_TIGER_active_j_rq": {
-      "mae": 2.343824,
-      "spearman": -0.098838,
-      "sign": 0.348062,
-      "L2": 6848,
-      "rank": 2.77,
-      "J": 0.789,
-      "recon": 8.57e-05
-    },
-    "#265_euclid": {
-      "mae": 2.24595,
-      "spearman": -0.071041,
-      "sign": 0.33235,
-      "L2": 10918,
-      "rank": 3.05,
-      "J": 0.189476,
-      "recon": 8.18e-05
-    }
-  },
-  "next": "owner_amendment_or_new_issue",
-  "proof": {
-    "script": "results/research/issue272/check_close_condition.py",
-    "log": "results/research/issue272/close_condition_check.txt",
-    "exit": 0,
-    "p2_empty": true,
-    "p3_empty": true,
-    "p1": [
-      "#269",
-      "#265"
-    ],
-    "p4": [
-      "round1",
-      "#265"
-    ],
-    "p5": [
-      "#269",
-      "round1"
-    ]
-  }
+  "round3_tests": "12 passed + reference test fixed and re-run (1 passed); logs results/research/issue272/checks/round3_budget_tests*.log",
+  "updated_at": "2026-11-27T22:00:00Z"
 }

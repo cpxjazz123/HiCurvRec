@@ -1,0 +1,35 @@
+{
+  "evidence": "results/research/issue269/analysis/STAGE2_REPORT.json curvature_calibration event (real training batch 4096, actual loss, before the first optimizer step)",
+  "fixed_q": "test_the_coordinate_scale_is_applied_to_the_hard_q and test_local_curvature_gradient_is_real use the same frozen cache; a scale change moves pred by the documented 1/S^2 factor and cannot be absorbed by an optimizer (scale has no gradient)",
+  "gradient_route": {
+    "encoder": "tests/test_mechanism.py::test_local_curvature_gradient_is_real (gradients finite and nonzero via the hard-q path)",
+    "kappa_table": "KappaTable is a host numpy buffer; no optimizer entry, no gradient (test_curvature_carries_no_gradient)",
+    "scale": "manifest value read as a Python float; test_the_coordinate_scale_is_applied_to_the_hard_q proves pred(S/2)/pred(S)=4"
+  },
+  "lambda": 5.883564881514758e-06,
+  "modules": {
+    "codebook0": {
+      "curvature_gradient": 2.3239361534310983,
+      "original_gradient": 1.937409660957925e-05,
+      "weighted_ratio": 0.7057376359137831
+    },
+    "codebook1": {
+      "curvature_gradient": 3.539382396035239,
+      "original_gradient": 2.0824186678432643e-05,
+      "weighted_ratio": 0.9999999658633414
+    },
+    "codebook2": {
+      "curvature_gradient": 7.63128691201687,
+      "original_gradient": 9.907388669323585e-05,
+      "weighted_ratio": 0.45318875815710874
+    },
+    "encoder": {
+      "curvature_gradient": 6.189976310741848,
+      "original_gradient": 0.00010243558036829367,
+      "weighted_ratio": 0.35553200468381035
+    }
+  },
+  "schema": "genrec.issue269.module_checks/1",
+  "tangent_scale": 0.0825626328587532,
+  "target_scale": 2.000375270843506
+}
