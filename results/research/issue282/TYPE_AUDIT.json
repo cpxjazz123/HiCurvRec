@@ -1,0 +1,47 @@
+{
+ "schema": "genrec.issue282.type_audit/1",
+ "n_rows": 57439,
+ "unseen_share": 0.9241282055746096,
+ "level_distribution": {
+  "0": 251129,
+  "1": 32181,
+  "2": 3885
+ },
+ "types": {
+  "chain": {
+   "n_sids": 253,
+   "mean_P": 0.16985220156909484,
+   "mean_N": 0.07081412676719713,
+   "mean_ER": 9.989462204315354,
+   "mean_support_rows": 22524.0
+  },
+  "revchain": {
+   "n_sids": 253,
+   "mean_P": 0.169276299935596,
+   "mean_N": 0.07075570481194637,
+   "mean_ER": 9.89012844210153,
+   "mean_support_rows": 23045.0
+  },
+  "merge": {
+   "n_sids": 253,
+   "mean_P": 0.1688425741530911,
+   "mean_N": 0.0708187872953389,
+   "mean_ER": 9.791875325750436,
+   "mean_support_rows": 22130.0
+  },
+  "fork": {
+   "n_sids": 253,
+   "mean_P": 0.16777499227027357,
+   "mean_N": 0.07077740230683703,
+   "mean_ER": 9.614525997704458,
+   "mean_support_rows": 23164.0
+  }
+ },
+ "row_level": {
+  "chain_positive_rows": 22524,
+  "merge_positive_rows": 22130,
+  "fork_positive_rows": 23164,
+  "revchain_positive_rows": 23045,
+  "closed_seen_rows": 4358
+ }
+}
