@@ -1,0 +1,335 @@
+{
+ "schema": "genrec.issue280.model_comparison/1",
+ "n_rows": 129,
+ "n_strict": 120,
+ "n_high_strict": 6,
+ "n_high_full": 13,
+ "candidates": {
+  "A_control": {
+   "features": [
+    "6 sand"
+   ],
+   "alphas": [
+    1.0,
+    0.1,
+    0.01,
+    0.1,
+    0.01
+   ],
+   "oof": {
+    "mae": 0.002971939445864855,
+    "rmse": 0.004682138840237189,
+    "spearman": 0.6666088991472278,
+    "kendall": 0.5028177442867808
+   },
+   "confusion_0.06": {
+    "positives": 13,
+    "tp": 13,
+    "fp": 0,
+    "fn": 0,
+    "tn": 116
+   },
+   "strict": {
+    "mae": 0.00309624813945826,
+    "rmse": 0.004834028561307758,
+    "spearman": 0.6132848107618967,
+    "kendall": 0.4575713894297896
+   },
+   "strict_confusion": {
+    "positives": 6,
+    "tp": 6,
+    "fp": 0,
+    "fn": 0,
+    "tn": 114
+   }
+  },
+  "D1_dec_auc": {
+   "features": [
+    "l1_pos_hit",
+    "l1_neg_hit",
+    "l1_hard_er",
+    "l2_distinct",
+    "l3_collision",
+    "l3_refine_bits",
+    "dec_auc_unseen"
+   ],
+   "alphas": [
+    10.0,
+    1.0,
+    0.01,
+    1.0,
+    1.0
+   ],
+   "oof": {
+    "mae": 0.0029189638245914295,
+    "rmse": 0.004657959357437186,
+    "spearman": 0.6361970676006528,
+    "kendall": 0.49433443695969603
+   },
+   "confusion_0.06": {
+    "positives": 13,
+    "tp": 12,
+    "fp": 0,
+    "fn": 1,
+    "tn": 116
+   },
+   "strict": {
+    "mae": 0.003046666139581907,
+    "rmse": 0.00481018548463908,
+    "spearman": 0.5717361373453707,
+    "kendall": 0.4446781067873575
+   },
+   "strict_confusion": {
+    "positives": 6,
+    "tp": 5,
+    "fp": 0,
+    "fn": 1,
+    "tn": 114
+   }
+  },
+  "D2_dec_margin": {
+   "features": [
+    "l1_pos_hit",
+    "l1_neg_hit",
+    "l1_hard_er",
+    "l2_distinct",
+    "l3_collision",
+    "l3_refine_bits",
+    "dec_margin_degmatched"
+   ],
+   "alphas": [
+    10.0,
+    1.0,
+    0.1,
+    1.0,
+    1.0
+   ],
+   "oof": {
+    "mae": 0.0028337229709824267,
+    "rmse": 0.004582455058762709,
+    "spearman": 0.6439789186140411,
+    "kendall": 0.5049991661708882
+   },
+   "confusion_0.06": {
+    "positives": 13,
+    "tp": 13,
+    "fp": 0,
+    "fn": 0,
+    "tn": 116
+   },
+   "strict": {
+    "mae": 0.0029497998147120182,
+    "rmse": 0.004729962922707702,
+    "spearman": 0.5814834943265816,
+    "kendall": 0.4572911006766932
+   },
+   "strict_confusion": {
+    "positives": 6,
+    "tp": 6,
+    "fp": 0,
+    "fn": 0,
+    "tn": 114
+   }
+  },
+  "D3_both": {
+   "features": [
+    "l1_pos_hit",
+    "l1_neg_hit",
+    "l1_hard_er",
+    "l2_distinct",
+    "l3_collision",
+    "l3_refine_bits",
+    "dec_auc_unseen",
+    "dec_margin_degmatched"
+   ],
+   "alphas": [
+    1.0,
+    0.01,
+    1.0,
+    10.0,
+    1.0
+   ],
+   "oof": {
+    "mae": 0.0028128156753663824,
+    "rmse": 0.004668244209353584,
+    "spearman": 0.6129074186625956,
+    "kendall": 0.48706303067933765
+   },
+   "confusion_0.06": {
+    "positives": 13,
+    "tp": 13,
+    "fp": 1,
+    "fn": 0,
+    "tn": 115
+   },
+   "strict": {
+    "mae": 0.0029338225927007643,
+    "rmse": 0.004823054498643662,
+    "spearman": 0.5454595964558718,
+    "kendall": 0.43935262047852686
+   },
+   "strict_confusion": {
+    "positives": 6,
+    "tp": 6,
+    "fp": 1,
+    "fn": 0,
+    "tn": 113
+   }
+  },
+  "G279_sharing": {
+   "features": [
+    "l1_pos_hit",
+    "l1_neg_hit",
+    "l1_hard_er",
+    "l2_distinct",
+    "l3_collision",
+    "l3_refine_bits",
+    "er_unseen_2hop",
+    "dp_unseen_degmatch"
+   ],
+   "alphas": [
+    10.0,
+    1.0,
+    0.01,
+    0.01,
+    0.01
+   ],
+   "oof": {
+    "mae": 0.0028662608053970115,
+    "rmse": 0.0042779635500447225,
+    "spearman": 0.7113713137048427,
+    "kendall": 0.5435376194567876
+   },
+   "confusion_0.06": {
+    "positives": 13,
+    "tp": 13,
+    "fp": 1,
+    "fn": 0,
+    "tn": 115
+   },
+   "strict": {
+    "mae": 0.002952510963040126,
+    "rmse": 0.004398842421052825,
+    "spearman": 0.6695187612263535,
+    "kendall": 0.5080233649871324
+   },
+   "strict_confusion": {
+    "positives": 6,
+    "tp": 6,
+    "fp": 1,
+    "fn": 0,
+    "tn": 113
+   }
+  },
+  "fold_mean": {
+   "oof": {
+    "mae": 0.004669325707233339,
+    "rmse": 0.006629351690974495,
+    "spearman": NaN,
+    "kendall": NaN
+   },
+   "confusion_0.06": {
+    "positives": 13,
+    "tp": 0,
+    "fp": 0,
+    "fn": 13,
+    "tn": 116
+   },
+   "strict": {
+    "mae": 0.00436610513751501,
+    "rmse": 0.006369919106916673,
+    "spearman": NaN,
+    "kendall": NaN
+   },
+   "strict_confusion": {
+    "positives": 6,
+    "tp": 0,
+    "fp": 0,
+    "fn": 6,
+    "tn": 114
+   }
+  },
+  "fold_median": {
+   "oof": {
+    "mae": 0.00442176058237101,
+    "rmse": 0.00679838295897362,
+    "spearman": NaN,
+    "kendall": NaN
+   },
+   "confusion_0.06": {
+    "positives": 13,
+    "tp": 0,
+    "fp": 0,
+    "fn": 13,
+    "tn": 116
+   },
+   "strict": {
+    "mae": 0.004212964229547039,
+    "rmse": 0.006694356007763292,
+    "spearman": NaN,
+    "kendall": NaN
+   },
+   "strict_confusion": {
+    "positives": 6,
+    "tp": 0,
+    "fp": 0,
+    "fn": 6,
+    "tn": 114
+   }
+  }
+ },
+ "bootstrap_vs_A": {
+  "D1_dec_auc": {
+   "mae_diff_A_minus_candidate": 5.297562127342531e-05,
+   "ci95": [
+    -0.00012540300271374853,
+    0.00021910524167596818
+   ],
+   "passes_ci": false
+  },
+  "D2_dec_margin": {
+   "mae_diff_A_minus_candidate": 0.00013821647488242812,
+   "ci95": [
+    -6.185243035262741e-05,
+    0.0003476194996357058
+   ],
+   "passes_ci": false
+  },
+  "D3_both": {
+   "mae_diff_A_minus_candidate": 0.00015912377049847248,
+   "ci95": [
+    -9.781352959584051e-05,
+    0.00043061739979702616
+   ],
+   "passes_ci": false
+  },
+  "G279_sharing": {
+   "mae_diff_A_minus_candidate": 0.00010567864046784337,
+   "ci95": [
+    -0.00010151772578524118,
+    0.000337189866257939
+   ],
+   "passes_ci": false
+  }
+ },
+ "residual_analysis": {
+  "spearman_resid_vs_dec_auc_unseen": 0.11509391771019681,
+  "spearman_resid_vs_dec_margin_degmatched": 0.15008944543828268,
+  "spearman_resid_vs_er279": -0.08450916815742399,
+  "spearman_resid_vs_dp279": 0.14563953488372094
+ },
+ "residual_by_label_stratum": {
+  "A_control": {
+   "low": -0.0033540089939647437,
+   "high": 0.001670265029824612,
+   "low_mae": 0.00561819023507438,
+   "high_mae": 0.0020635303625009933
+  },
+  "D3_both": {
+   "low": -0.0035029716725887942,
+   "high": 0.001608117523360974,
+   "low_mae": 0.00525255905798454,
+   "high_mae": 0.0018838219891229968
+  }
+ }
+}
