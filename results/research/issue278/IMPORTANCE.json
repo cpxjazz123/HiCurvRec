@@ -1,0 +1,46 @@
+{
+ "schema": "genrec.issue278.importance/1",
+ "training_rows": 396958,
+ "edges_total": 2698387.0,
+ "distinct_edges": 323633,
+ "q33": 3.0,
+ "q66": 7.0,
+ "weights": {
+  "w_freq": {
+   "min": 0.0,
+   "max": 5.723585101952381,
+   "mean": 0.16847434303044334,
+   "p50": 0.0,
+   "p99": 3.6109179126442243,
+   "nonzero_rows": 4358,
+   "zero_rows": 53081
+  },
+  "w_lift": {
+   "p01": 0.01208596816007053,
+   "p50": 0.6965267972251211,
+   "p99": 27.62939366403954
+  }
+ },
+ "strata_counts_rows": {
+  "unseen": 53081,
+  "low": 1386,
+  "mid": 886,
+  "high": 2086
+ },
+ "coverage": {
+  "table_rows": 253,
+  "with_sid_file": 253,
+  "without_sid_file": 0,
+  "without_sid_sha256_examples": []
+ },
+ "inputs": {
+  "train": {
+   "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+   "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+  },
+  "valid": {
+   "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+   "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+  }
+ }
+}
