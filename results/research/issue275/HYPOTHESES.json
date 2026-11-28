@@ -1,0 +1,25 @@
+{
+ "schema": "genrec.hypotheses/1",
+ "issue": 275,
+ "inherited_from": null,
+ "hypotheses": [
+  {"id": "H1", "statement": "L1 behavioural fidelity (l1_pos_hit / l1_hard_er) is the strongest single predictor of Stage3 Recall@10.",
+   "status": "SUPPORTED", "evidence": ["results/research/issue275/ANALYSIS_RESULTS.json", "results/research/issue275/JOINT_TABLE.json"],
+   "origin_issue": 275, "opened_round": "r1", "last_update": "2026-11-28", "reopen_reason": null},
+  {"id": "H2", "statement": "Capacity (l2_distinct, l3_collision, l3_refine_bits) adds beyond fidelity.",
+   "status": "INCONCLUSIVE", "evidence": ["results/research/issue275/ANALYSIS_RESULTS.json"],
+   "origin_issue": 275, "opened_round": "r1", "last_update": "2026-11-28",
+   "reopen_reason": "descriptive rho: l3_collision +0.483, l2_distinct -0.391; the ridge control uses them but no fold-level ablation isolates their increment"},
+  {"id": "H3", "statement": "Vector distortion (quant_error, effective_rank) adds beyond SID features.",
+   "status": "REFUTED", "evidence": ["results/research/issue275/ANALYSIS_RESULTS.json#Q_VEC"],
+   "origin_issue": 275, "opened_round": "r1", "last_update": "2026-11-28",
+   "reopen_reason": "PySR vs median outer MAE diff +0.000562, CI [-0.00086, +0.00103] covers zero; no increment"},
+  {"id": "H4", "statement": "Curvature/distance geometry adds beyond SID features.",
+   "status": "UNTESTED", "evidence": [], "origin_issue": 275, "opened_round": "r1", "last_update": "2026-11-28",
+   "reopen_reason": "only 3 SIDs match the #271 geometry assets by sha256; unidentifiable, no verdict drawn"},
+  {"id": "N", "statement": "No feature set beats the fold mean/median out of fold; fits are family confounding.",
+   "status": "REFUTED", "evidence": ["results/research/issue275/ANALYSIS_RESULTS.json#Q_SID"],
+   "origin_issue": 275, "opened_round": "r1", "last_update": "2026-11-28",
+   "reopen_reason": "ridge outer MAE 0.00250 / rho 0.60 vs mean 0.00400 / -0.40: a linear SID combination does beat the null"}
+ ]
+}
