@@ -61,6 +61,8 @@ def _repository_root() -> Path:
 
 
 REPO_ROOT = _repository_root()
+import sys as _sys
+_sys.path.insert(0, str(REPO_ROOT))
 # The arm name is this tree's promoted name; a candidate copy changes only this line.
 ARM_NAME = "TIGER_pairrank_enc_rq"
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
@@ -564,9 +566,12 @@ def main() -> None:
         torch.save(
             {
                 "state_dict": final_state,
+                "run_id": globals().get("RUN_ID") or f"{ARM_NAME}_{time.time_ns()}",
+                "source_tree": str(Path(__file__).resolve().parent),
                 "epoch": EPOCHS,
                 "collision": final_collision,
                 "selection": "final_epoch",
+                "provenance": raw_module.provenance(),
             },
             CHECKPOINT,
         )

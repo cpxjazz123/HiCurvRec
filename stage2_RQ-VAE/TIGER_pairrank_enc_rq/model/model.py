@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import torch
@@ -35,6 +36,24 @@ class RQVAE(nn.Module):
         quantized, quant_parts, unused_codes, tokens = self.rq(encoded)
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_parts, int(unused_codes), tokens
+
+    def provenance(self, *, expected=None):
+        """Bind the checkpoint to the executed source tree and the immutable assets."""
+        from tools.issue252.archive_audit import imported_repo_sources
+        from .provenance import binding
+        tree = Path(__file__).resolve().parent.parent
+        root = tree
+        for parent in tree.parents:
+            if (parent / 'stage2_RQ-VAE').is_dir() and (parent / 'tools/research/stage2/contract.py').is_file():
+                root = parent
+                break
+        result = binding(root, tree)
+        result['infrastructure_sources'] = imported_repo_sources(tree, root)
+        if expected is not None:
+            if result != expected:
+                raise ValueError('source/assets/config changed during execution')
+            return expected
+        return result
 
     @torch.no_grad()
     def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
