@@ -1,0 +1,77 @@
+{
+ "schema": "genrec.issue276.layer_features/1",
+ "sid": {
+  "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43/item_sids.json",
+  "sha256": "5ed70aadbe517fac32b6cef0d1565fb4f1daa98db99f8dcd6d6a2a28bdb8b92d"
+ },
+ "mapping_sha256": "9117b89fd2f80baa43f3e2b6eda38c1e5f1f8e16bafca63a0e8e8dd7eff3d0fc",
+ "format_normalized_from": null,
+ "catalogue": {
+  "items": 24587,
+  "distinct_l2_prefixes": 15851,
+  "distinct_l3_triples": 23625,
+  "l3_collision": 0.03912636759263022,
+  "l3_refinement_gain_bits": 0.8522667702198472,
+  "prefix_entropy_bits": [
+   7.78662913246021,
+   13.645055302777191,
+   14.497322072997038
+  ],
+  "codebook_occupancy": [
+   237,
+   256,
+   256
+  ]
+ },
+ "validation": {
+  "scope": "recommendation valid last-history-to-target; exact legal uniform catalogue negatives",
+  "rows": 57439,
+  "effective_rows": 57439,
+  "excluded_empty_history": 0,
+  "excluded_empty_negative_population": 0,
+  "positive_hits_by_level": [
+   5498,
+   408,
+   59
+  ],
+  "expected_negative_mass_by_level": [
+   255.62391609759385,
+   3.5422373897794732,
+   0.22755026887957944
+  ],
+  "positive_hit_rates_by_level": [
+   0.09571893661101342,
+   0.007103187729591393,
+   0.0010271766569752258
+  ],
+  "negative_hit_probabilities_by_level": [
+   0.004450354569153256,
+   6.166955186858186e-05,
+   3.961598720026105e-06
+  ],
+  "l1_positive_hit_rate": 0.09571893661101342,
+  "l1_negative_hit_probability": 0.004450354569153256,
+  "l1_hard_er": 21.50815965866408,
+  "negative_sampling": false,
+  "conditional_g3": {
+   "status": "MISSING",
+   "reason": "legacy defining implementation removed; no surviving formula, not invented"
+  },
+  "conditional_log_enrichment_bits": 1.1706214115262612,
+  "conditional_prefix_survival_difference": 0.08036870729160628
+ },
+ "evaluator": {
+  "path": "/fs04/ar57/wenyu/GeneRec/tools/issue252/layer_metrics.py",
+  "sha256": "b739ed1e8b7a3c745dec8d5de06c369464f6b8fb3c65a0eb52a221d33b688816"
+ },
+ "inputs": {
+  "valid": {
+   "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/valid.parquet",
+   "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+  },
+  "train": {
+   "path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+   "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+  }
+ }
+}

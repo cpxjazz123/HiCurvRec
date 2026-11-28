@@ -1,0 +1,26 @@
+{
+ "issue": 276,
+ "commit": "c9e7a582",
+ "state": "WORKING",
+ "infra_mode": "FROZEN",
+ "done": ["C1-recovery-first-pass", "C1-git-recovery", "C2-aggregation-rule", "C3-feature-evaluator",
+          "C4-vector-forward-corrected", "C5-geometry-inputs", "C6-table+manifest", "C6-274-audit",
+          "C7-folds-frozen-v1", "RUN_LOG", "DIAGNOSIS", "HYPOTHESES", "ANALYSIS_CONTRACT", "INFRA_SNAPSHOT_START"],
+ "reused": ["tools/issue252/layer_metrics.py", "tools/issue252/final_evaluation.load_sid",
+            "results/research/issue275/features/layer (54 SIDs)", "results/research/issue271/assets/geometry (3 SIDs)",
+            "results/research/issue275/.venv (PySR 0.19.4)"],
+ "not_run": ["C7-folds-final", "C8-analysis", "C9-pysr-folds", "C10-report-verdict-commit"],
+ "failed": [],
+ "infra_faults": [],
+ "running": [{"name": "features_all", "pid": null, "log": "results/research/issue276/logs/features_all"},
+             {"name": "r2_stage3_pairrank_enc", "pid": 1062963,
+              "log": "results/stage3_T5Train/TIGER_pairrank_enc_rq/"}],
+ "next_commands": [
+  "python3.10 results/research/issue276/features276.py",
+  "python3.10 results/research/issue276/build_table276.py",
+  "results/research/issue275/.venv/bin/python results/research/issue276/folds.py",
+  "results/research/issue275/.venv/bin/python results/research/issue276/run_analysis276.py",
+  "python3.10 results/research/issue276/audit276.py"],
+ "blocked_by": null,
+ "updated_at": "2026-11-28T02:35:00Z"
+}

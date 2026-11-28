@@ -81,12 +81,18 @@ def main():
         out['prior_l1pos'] = Xte[:,i]*coef[0] + coef[1]
         # PySR
         from pysr import PySRRegressor
+        import os
         (P/'pysr').mkdir(exist_ok=True)
-        model = PySRRegressor(output_directory=str(P/'pysr'), niterations=100, populations=8, binary_operators=['+','-','*','/'],
+        model = PySRRegressor(niterations=100, populations=8, binary_operators=['+','-','*','/'],
                               unary_operators=['square'], maxsize=10, maxdepth=4,
                               timeout_in_seconds=60, random_state=SEED, deterministic=True, procs=0,
                               multithreading=False, model_selection='best', progress=False, verbosity=0)
-        model.fit(Xtr, ytr, variable_names=feats)
+        old_cwd = os.getcwd()
+        os.chdir(P/'pysr')
+        try:
+            model.fit(Xtr, ytr, variable_names=feats)
+        finally:
+            os.chdir(old_cwd)
         out['pysr'] = model.predict(Xte)
         expr = model.sympy()
         out['pysr_expr'] = str(expr)

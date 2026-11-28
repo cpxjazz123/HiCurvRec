@@ -993,3 +993,8 @@ results/stage2_RQ-VAE/TIGER_global_j_rq/issue271_sid_metrics.json
 # issue275 PySR binary artifacts
 results/research/issue275/pysr/*.pkl
 results/research/issue275/pysr/*.bkup
+
+# issue276: recovered SID payloads are re-extractable from recovery/git_sids.json (commit:path+sha)
+results/research/issue276/recovered_sids/*/item_sids.json
+results/research/issue276/pysr/*.pkl
+results/research/issue276/pysr/*.bkup

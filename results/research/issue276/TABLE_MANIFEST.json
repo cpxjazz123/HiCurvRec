@@ -1,0 +1,31 @@
+{
+ "schema": "genrec.issue276.table_manifest/1",
+ "n_sid_rows": 253,
+ "n_with_label": 129,
+ "n_high_recall": 13,
+ "n_label_primary": 128,
+ "n_label_secondary": 1,
+ "n_high_recall_primary": 12,
+ "n_with_vector": 74,
+ "n_with_vector_stored": 74,
+ "n_with_vector_arm": 74,
+ "n_with_geometry": 3,
+ "n_groups": 253,
+ "collision_check_true": 73,
+ "collision_check_false": 1,
+ "label_source_counts": {
+  "inventory_unit": 62,
+  "git_bind": 198,
+  "vector_stats_all": 74,
+  "metrics_corrected": 74
+ },
+ "inputs": {
+  "features_275": "results/research/issue275/features/layer/",
+  "features_276": "results/research/issue276/features/layer/",
+  "inventory": "results/research/issue275/RUN_INVENTORY.json",
+  "git_recovery": "results/research/issue276/recovery/git_sids.json",
+  "vector_stats_all": "results/research/sid_utilization/vector_stats_all.json",
+  "metrics_corrected": "results/research/sid_utilization/metrics_corrected.json",
+  "geometry": "results/research/issue271/assets/geometry/"
+ }
+}

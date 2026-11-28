@@ -1,0 +1,272 @@
+{
+ "schema": "genrec.issue276.extras/1",
+ "note": "post-analysis descriptive; not pre-registered",
+ "results": {
+  "Q_SID": {
+   "threshold_0.06": {
+    "mean": {
+     "positives": 13,
+     "tp": 0,
+     "fp": 0,
+     "fn": 13,
+     "precision": 0.0,
+     "recall": 0.0
+    },
+    "median": {
+     "positives": 13,
+     "tp": 0,
+     "fp": 0,
+     "fn": 13,
+     "precision": 0.0,
+     "recall": 0.0
+    },
+    "best_single": {
+     "positives": 13,
+     "tp": 2,
+     "fp": 3,
+     "fn": 11,
+     "precision": 0.4,
+     "recall": 0.15384615384615385
+    },
+    "ridge": {
+     "positives": 13,
+     "tp": 12,
+     "fp": 0,
+     "fn": 1,
+     "precision": 1.0,
+     "recall": 0.9230769230769231
+    },
+    "ridge6_275": {
+     "positives": 13,
+     "tp": 13,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0
+    },
+    "prior_l1pos": {
+     "positives": 13,
+     "tp": 0,
+     "fp": 3,
+     "fn": 13,
+     "precision": 0.0,
+     "recall": 0.0
+    },
+    "pysr": {
+     "positives": 13,
+     "tp": 4,
+     "fp": 0,
+     "fn": 9,
+     "precision": 1.0,
+     "recall": 0.3076923076923077
+    }
+   },
+   "largest_residuals_ridge6": [
+    {
+     "group": "03f83ef69e80",
+     "arms": [
+      "TIGER_BRad-RQ",
+      "TIGER_BRad-RQ"
+     ],
+     "y": 0.03527220181409844,
+     "pred": 0.053120111970494883,
+     "abs_err": 0.017847910156396446
+    },
+    {
+     "group": "f73ff85a811f",
+     "arms": [
+      "TIGER_cogeo_region_argmax",
+      "TIGER_cogeo_region_argmax"
+     ],
+     "y": 0.03983356256202232,
+     "pred": 0.05712543794991708,
+     "abs_err": 0.017291875387894756
+    },
+    {
+     "group": "89e5503a5e4f",
+     "arms": [
+      "TIGER_GDELTA-SUCC-PULL-RQ",
+      "TIGER_GDELTA-SUCC-PULL-RQ"
+     ],
+     "y": 0.04092457505643668,
+     "pred": 0.05803789678185313,
+     "abs_err": 0.01711332172541645
+    },
+    {
+     "group": "495a636b1a5a",
+     "arms": [
+      "TIGER_dul_rq",
+      "TIGER_dul_rq"
+     ],
+     "y": 0.026010202127474364,
+     "pred": 0.04203818833708632,
+     "abs_err": 0.016027986209611957
+    },
+    {
+     "group": "378a1d986e30",
+     "arms": [
+      "TIGER_curvature-stratum-sinkhorn-v1",
+      "TIGER_curvature-stratum-sinkhorn-v1"
+     ],
+     "y": 0.04312400981911245,
+     "pred": 0.05671746855140801,
+     "abs_err": 0.01359345873229556
+    }
+   ]
+  },
+  "Q_VEC": {
+   "threshold_0.06": {
+    "mean": {
+     "positives": 12,
+     "tp": 0,
+     "fp": 0,
+     "fn": 12,
+     "precision": 0.0,
+     "recall": 0.0
+    },
+    "median": {
+     "positives": 12,
+     "tp": 0,
+     "fp": 0,
+     "fn": 12,
+     "precision": 0.0,
+     "recall": 0.0
+    },
+    "best_single": {
+     "positives": 12,
+     "tp": 10,
+     "fp": 0,
+     "fn": 2,
+     "precision": 1.0,
+     "recall": 0.8333333333333334
+    },
+    "ridge": {
+     "positives": 12,
+     "tp": 10,
+     "fp": 0,
+     "fn": 2,
+     "precision": 1.0,
+     "recall": 0.8333333333333334
+    },
+    "ridge6_275": {
+     "positives": 12,
+     "tp": 12,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0
+    },
+    "prior_l1pos": {
+     "positives": 12,
+     "tp": 0,
+     "fp": 2,
+     "fn": 12,
+     "precision": 0.0,
+     "recall": 0.0
+    },
+    "pysr": {
+     "positives": 12,
+     "tp": 2,
+     "fp": 0,
+     "fn": 10,
+     "precision": 1.0,
+     "recall": 0.16666666666666666
+    }
+   },
+   "largest_residuals_ridge6": [
+    {
+     "group": "89e5503a5e4f",
+     "arms": [
+      "TIGER_GDELTA-SUCC-PULL-RQ",
+      "TIGER_GDELTA-SUCC-PULL-RQ"
+     ],
+     "y": 0.04092457505643668,
+     "pred": 0.05919173745309458,
+     "abs_err": 0.018267162396657897
+    },
+    {
+     "group": "03f83ef69e80",
+     "arms": [
+      "TIGER_BRad-RQ",
+      "TIGER_BRad-RQ"
+     ],
+     "y": 0.03527220181409844,
+     "pred": 0.05298927631712745,
+     "abs_err": 0.017717074503029014
+    },
+    {
+     "group": "f73ff85a811f",
+     "arms": [
+      "TIGER_cogeo_region_argmax",
+      "TIGER_cogeo_region_argmax"
+     ],
+     "y": 0.03983356256202232,
+     "pred": 0.05740307660143116,
+     "abs_err": 0.01756951403940884
+    },
+    {
+     "group": "495a636b1a5a",
+     "arms": [
+      "TIGER_dul_rq",
+      "TIGER_dul_rq"
+     ],
+     "y": 0.026010202127474364,
+     "pred": 0.04235436176512899,
+     "abs_err": 0.016344159637654624
+    },
+    {
+     "group": "378a1d986e30",
+     "arms": [
+      "TIGER_curvature-stratum-sinkhorn-v1",
+      "TIGER_curvature-stratum-sinkhorn-v1"
+     ],
+     "y": 0.04312400981911245,
+     "pred": 0.05670743171714268,
+     "abs_err": 0.013583421898030232
+    }
+   ]
+  },
+  "pr_z_bins": [
+   {
+    "band": "0.0-4.0",
+    "n": 13,
+    "recall_mean": 0.046275178885426274
+   },
+   {
+    "band": "4.0-6.0",
+    "n": 3,
+    "recall_mean": 0.05485239413406687
+   },
+   {
+    "band": "6.0-8.0",
+    "n": 21,
+    "recall_mean": 0.05953960267579934
+   },
+   {
+    "band": "8.0-12.0",
+    "n": 8,
+    "recall_mean": 0.05483052828715183
+   },
+   {
+    "band": "12.0-1000000000.0",
+    "n": 29,
+    "recall_mean": 0.052913105417381326
+   }
+  ],
+  "pr_z_spearman": -0.031159291514583364,
+  "recon_mse_spearman": -0.0867130493909391,
+  "recon_mse_spearman_high": 0.2867132867132868,
+  "n_recon": 73,
+  "n_recon_high": 12,
+  "ridge_3feat": {
+   "mae": 0.0035071701177228215,
+   "spearman": 0.4727390634480231,
+   "n": 129
+  },
+  "ridge_6feat": {
+   "mae": 0.0032212334775377012,
+   "spearman": 0.5122940108943083,
+   "n": 129
+  }
+ }
+}
