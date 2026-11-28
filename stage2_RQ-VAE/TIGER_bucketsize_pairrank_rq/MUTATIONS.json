@@ -1,0 +1,96 @@
+{
+  "results": [
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_insufficient_margin_is_zero",
+        "test_the_gradient_reaches_the_representation_and_pushes_the_negative_away",
+        "test_the_weighted_reduction_is_hand_computable"
+      ],
+      "mutation": "M1_sign_flip",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_the_weighted_reduction_is_hand_computable"
+      ],
+      "mutation": "M2_margin_sign",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_the_weighted_reduction_is_hand_computable",
+        "test_the_weighted_reduction_normalises_by_the_weight_sum"
+      ],
+      "mutation": "M3_wrong_reduction",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_insufficient_margin_is_zero",
+        "test_the_gradient_reaches_the_representation_and_pushes_the_negative_away",
+        "test_the_diagnostics_report_the_ranking_state",
+        "test_the_weighted_reduction_is_hand_computable"
+      ],
+      "mutation": "M4_swapped_pairs",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_the_gradient_reaches_the_representation_and_pushes_the_negative_away"
+      ],
+      "mutation": "M5_detached_representation",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_the_index_sampling_is_deterministic_and_uses_only_the_training_groups"
+      ],
+      "mutation": "M6_holdout_leak",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_the_mining_excludes_the_direct_neighbours"
+      ],
+      "mutation": "M7_mining_keeps_the_neighbours",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_the_margin_must_be_positive_and_is_frozen"
+      ],
+      "mutation": "M8_no_margin_validation",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_the_weighted_reduction_is_hand_computable",
+        "test_the_weights_must_match_the_groups"
+      ],
+      "mutation": "M9_weight_ignored",
+      "returncode": 1
+    }
+  ],
+  "schema": "genrec.issue287.round7.mutations/1"
+}

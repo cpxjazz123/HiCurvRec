@@ -10,7 +10,7 @@ from pathlib import Path
 
 P = Path('results/research/issue287')
 ROUNDS = {'round1': 'R1', 'round2': 'R2', 'round3': 'R3',
-          'round4': 'R4', 'round5': 'R5', 'round6': 'R6'}
+          'round4': 'R4', 'round5': 'R5', 'round6': 'R6', 'round7': 'R7'}
 THRESHOLD = (0.08097285816257246, 0.008752316503966327, 0.1511367795989751)
 REF = {'R2': (0.0783613920855168, 0.008752316503966327, 0.1511367795989751),
        'R3': (0.08097285816257246, 0.00901661164455637, 0.1543498596819457)}
@@ -68,7 +68,7 @@ def main() -> None:
         text = text.replace('{{' + short + 'N_PASS}}', 'PASS' if rec.get('passes_N') else 'FAIL')
         text = text.replace('{{' + short + 'C_PASS}}', 'PASS' if rec.get('passes_C') else 'FAIL')
         text = text.replace('{{' + short + 'ALL}}', 'yes' if rec.get('passes_all') else 'no')
-        if tag in ('round4', 'round5', 'round6'):
+        if tag in ('round4', 'round5', 'round6', 'round7'):
             text = text.replace('{{' + short + '}}', run_block(tag, rec))
     report.write_text(text)
     print('report filled', {k: (v['P'], v['N'], v['C'], v.get('passes_all')) for k, v in rounds.items()})

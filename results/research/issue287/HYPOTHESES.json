@@ -940,12 +940,16 @@
    "last_update": "2026-11-28",
    "reopen_reason": null,
    "verdict_reason": "the non-adjacent positive moved the trade-off in the predicted direction (N 0.010144 -> 0.009581 against round 2, i.e. the anchor's L1 bucket no longer drags in a direct group, and C 0.158376 -> 0.157888) but it cost P (0.085064 -> 0.082453) and stayed on the curve: P 0.08245269 (pass), N 0.00958146 (fail), C 0.15788831 (fail) - 1 of 3 thresholds",
-   "pre_registration": {"index": "results/research/issue287/pairs_same_anchor_r5.npz",
-                         "index_sha256": "66ff5dacd0637dad14acb1f038d8599957e8ff0d8ecf748cee16db05d4a74828",
-                         "margin": 0.002109222114086151,
-                         "margin_rule": "median(d_negative - d_positive) on the frozen TIGER L1 codebook over the frozen index, computed before the run",
-                         "budget": 0.02, "groups": 256, "ramp_steps": 200,
-                         "falsifier": "the exported checkpoint's SID fails any of the three thresholds"}
+   "pre_registration": {
+    "index": "results/research/issue287/pairs_same_anchor_r5.npz",
+    "index_sha256": "66ff5dacd0637dad14acb1f038d8599957e8ff0d8ecf748cee16db05d4a74828",
+    "margin": 0.002109222114086151,
+    "margin_rule": "median(d_negative - d_positive) on the frozen TIGER L1 codebook over the frozen index, computed before the run",
+    "budget": 0.02,
+    "groups": 256,
+    "ramp_steps": 200,
+    "falsifier": "the exported checkpoint's SID fails any of the three thresholds"
+   }
   },
   {
    "id": "H67",
@@ -959,15 +963,44 @@
    "last_update": "2026-11-28",
    "reopen_reason": null,
    "verdict_reason": "the hard-negative construction raised P the most of the whole family (0.088198, above every earlier round and both reference arms) and the measured path confirms its premise (the ranking accuracy 0.262, i.e. the mined false positives were closer than the behavioural positives; the margin satisfaction 0.0098; the pair gradient reached the encoder at lambda 3.864e-05; the mined pool fell from 267.6 to 219.7 items at epoch 500), but N rose with P (0.010533) and C stayed high (0.158864) - 1 of 3 thresholds.  Separating the mined items does not lower N because the partition re-equilibrates: the Sinkhorn balance keeps the bucket sizes, so removing one false positive moves another item into the bucket.  N is a property of the assignment structure, not of the individual pairs",
-   "pre_registration": {"index": "results/research/issue287/pairs_hardneg.npz",
-                         "index_sha256": "09cbfa9aaf1f321a8655ce48baa220157bdb37e073fcf88a1087e5edbc0a7306",
-                         "margin": 0.04035949200819747,
-                         "margin_rule": "|median(d_negative - d_positive)| on the frozen TIGER checkpoint's item representation over the frozen hard-negative index, computed before the run",
-                         "distance_space": "the encoder bottleneck",
-                         "negative_refresh_epochs": 500,
-                         "budget": 0.02, "groups": 256, "ramp_steps": 200,
-                         "owner_authorization": "the owner proposed the hard-negative construction (CONTRACT.md addendum A)",
-                         "falsifier": "the exported checkpoint's SID fails any of the three thresholds"}
+   "pre_registration": {
+    "index": "results/research/issue287/pairs_hardneg.npz",
+    "index_sha256": "09cbfa9aaf1f321a8655ce48baa220157bdb37e073fcf88a1087e5edbc0a7306",
+    "margin": 0.04035949200819747,
+    "margin_rule": "|median(d_negative - d_positive)| on the frozen TIGER checkpoint's item representation over the frozen hard-negative index, computed before the run",
+    "distance_space": "the encoder bottleneck",
+    "negative_refresh_epochs": 500,
+    "budget": 0.02,
+    "groups": 256,
+    "ramp_steps": 200,
+    "owner_authorization": "the owner proposed the hard-negative construction (CONTRACT.md addendum A)",
+    "falsifier": "the exported checkpoint's SID fails any of the three thresholds"
+   }
+  },
+  {
+   "id": "H68",
+   "statement": "N is dominated by the large L1 buckets and the Sinkhorn balance keeps the bucket sizes: weighting every mined false positive by the size of the bucket it would leave makes the separation target the imbalance, so the exported N falls below 0.008752316503966327 while P stays above 0.08097285816257246 and C below 0.1511367795989751.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue287/results/round7.json"
+   ],
+   "origin_issue": 287,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "pre_registration": {
+    "index": "results/research/issue287/pairs_bucketsize.npz",
+    "index_sha256": "4a8d82d52e3a003f3c3983b07feff575ddb1df89b51717e6f9348a4710d25f59",
+    "margin": 0.04035949200819747,
+    "weight": "the anchor's L1 bucket size (the frozen TIGER export: mean 270.16, median 232, max 718; refreshed with the negatives every 500 epochs)",
+    "distance_space": "the encoder bottleneck",
+    "budget": 0.02,
+    "groups": 256,
+    "ramp_steps": 200,
+    "owner_authorization": "the owner replied '\u7ee7\u7eed' to the round-6 verdict and its pre-registered next change",
+    "falsifier": "the exported checkpoint's SID fails any of the three thresholds"
+   },
+   "verdict_reason": "the bucket-size weighting did even the buckets out (the largest bucket 718 -> 460 at epoch 1000, the mean 270.2 -> 222.6) and improved on round 6 on both N (0.010533 -> 0.009970, -5.3%) and C (0.158864 -> 0.153821, -3.2%) at a 2.6% P cost, but N stayed 13.9% above the 0.008752 ceiling and C 1.8% above its ceiling - 1 of 3 thresholds; the Sinkhorn balanced assignment keeps the residual imbalance"
   }
  ]
 }

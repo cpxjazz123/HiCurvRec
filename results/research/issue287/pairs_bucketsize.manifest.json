@@ -1,0 +1,23 @@
+{
+ "schema": "genrec.issue287.bucketsize/1",
+ "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue287/pairs_bucketsize.npz",
+ "sha256": "4a8d82d52e3a003f3c3983b07feff575ddb1df89b51717e6f9348a4710d25f59",
+ "rules": {
+  "positive": "round 2's frozen curvature-screened positive",
+  "negative": "round 6's mined false positive (an item sharing the anchor's L1 code with no observed relation), refreshed from the current partition every 500 epochs",
+  "weight": "the size of the anchor's L1 code bucket in the frozen TIGER export; refreshed with the negatives from the current partition",
+  "curvature_role": "offline selection of the positive only"
+ },
+ "counts": {
+  "groups": 40835,
+  "anchors": 15998,
+  "bucket_size_mean": 270.16,
+  "bucket_size_median": 232.0,
+  "bucket_size_max": 718,
+  "bucket_size_min": 1
+ },
+ "inputs": {
+  "base_index_sha256": "09cbfa9aaf1f321a8655ce48baa220157bdb37e073fcf88a1087e5edbc0a7306",
+  "tiger_sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059"
+ }
+}

@@ -1,0 +1,22 @@
+{
+ "schema": "genrec.issue287.margin_r7/1",
+ "rule": "margin = |median(d_negative - d_positive)| over the frozen TIGER checkpoint's item representation and the frozen bucket-size hard-negative index (computed once, before any candidate training); the magnitude is used because the mined false positives are already closer than the behavioural positives, so the median gap is negative",
+ "margin": 0.04035949200819747,
+ "distance_space": "the encoder bottleneck (the item representation)",
+ "d_positive_mean": 0.136185,
+ "d_positive_median": 0.117554,
+ "d_negative_mean": 0.087888,
+ "d_negative_median": 0.07135,
+ "gap_median": -0.040359,
+ "gap_q25": -0.072654,
+ "gap_q75": -0.010297,
+ "share_positive_closer": 0.176172,
+ "pairs": 40835,
+ "missing_encoder_keys": [],
+ "unexpected_keys": [],
+ "inputs": {
+  "index_sha256": "4a8d82d52e3a003f3c3983b07feff575ddb1df89b51717e6f9348a4710d25f59",
+  "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+  "checkpoint_sha256": "af8efc29a8bcbbe5394cc5e358acf7b14c0e78ae99d8a8b9e5faf03fdddd97a8"
+ }
+}

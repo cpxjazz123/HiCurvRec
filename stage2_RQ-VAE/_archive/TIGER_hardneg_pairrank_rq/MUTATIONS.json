@@ -1,0 +1,84 @@
+{
+  "results": [
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_reference_consistency_on_random_inputs",
+        "test_only_the_supervised_level_carries_the_pair_gradient"
+      ],
+      "mutation": "M1_sign_flip",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_reference_consistency_on_random_inputs"
+      ],
+      "mutation": "M2_margin_sign",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_reference_consistency_on_random_inputs"
+      ],
+      "mutation": "M3_wrong_reduction",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_the_supervised_vector_is_the_selected_l1_codeword"
+      ],
+      "mutation": "M4_wrong_level",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_reference_consistency_on_random_inputs",
+        "test_only_the_supervised_level_carries_the_pair_gradient"
+      ],
+      "mutation": "M5_swapped_pairs",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_the_index_sampling_is_deterministic_and_uses_only_the_training_groups"
+      ],
+      "mutation": "M6_holdout_leak",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_only_the_supervised_level_carries_the_pair_gradient"
+      ],
+      "mutation": "M7_detached_codebook",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_the_supervised_vector_is_the_selected_l1_codeword",
+        "test_only_the_supervised_level_carries_the_pair_gradient"
+      ],
+      "mutation": "M8_soft_assignment",
+      "returncode": 1
+    }
+  ],
+  "schema": "genrec.issue287.round2.mutations/1"
+}

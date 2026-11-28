@@ -309,6 +309,47 @@ Diagnostics: Hard ER 8.3739, L2 prefixes 7721, L3 refinement 2.1200 bits.
 **Round verdict: **1 of 3 thresholds pass.****
 
 
+## Round 7 — the bucket-size-weighted separation (`TIGER_bucketsize_pairrank_rq`)
+
+**The pre-registered next change of round 6** (VERDICT.md, authorized by the owner's "继续"). The
+mechanism is round 6's - the curvature-screened positive, the mined false positive, the item
+representation, the frozen margin - with **one change in the reduction**: every group is weighted by
+the size of the anchor's L1 bucket, so the separation spends its budget where N's mass is.
+
+*Why the weights:* `N = sum_k n_k^2 / N^2` is dominated by the **large** buckets, and round 6 measured
+that separating individual false positives re-equilibrates instead of shrinking the distribution (the
+Sinkhorn balance keeps the bucket sizes, so an item pushed out of a bucket is replaced by another).
+Weighting the separation by the bucket size makes the term target the imbalance itself.
+
+The frozen inputs: the initial bucket sizes come from the frozen TIGER export (`build_pairs287_r7.py`,
+manifest `pairs_bucketsize.manifest.json`): mean **270.16**, median 232, max **718** over the 40,835
+groups - the TIGER partition really is that uneven. During training the trainer re-mines both the
+negatives and the bucket sizes from the current partition every 500 epochs with the same rule. The
+margin keeps the frozen rule (|median gap| on the frozen TIGER over the same pairs): the recomputation
+on the round-7 index is recorded in `MARGIN_287_R7.json` and gives the same value, as expected (the
+pairs are unchanged; only the reduction is weighted). Everything else is round 6's frozen
+configuration (the 2 % encoder budget, 256 groups, the 200-step ramp, seed 42, global batch 4096,
+3000 epochs).
+
+Tests: 20 deterministic known-answer tests (the previous 18 plus the hand-computed weighted reduction,
+the weight-sum normalisation, the weight validation, the mining's bucket reporting and the bucket
+refresh) plus **9 mutations, all caught by a named assertion** (`MUTATIONS.json`).
+
+### The formal run
+
+3000 epochs, 718.399 s wall time, 0.2395 s/epoch mean (single card), final training collision 0.1538211249847481. The checkpoint-bound export (`item_sids.json`, sha `edc67ed321ead759…`) evaluated with the frozen evaluator:
+
+| metric | round 7 | round 1 | R2 | R3 | threshold | verdict |
+|---|---|---|---|---|---|---|
+| P | **0.08593464370897821** | 0.08353209491808701 | 0.0783613920855168 | 0.08097285816257246 | > 0.08097285816257246 | **PASS** |
+| N | **0.009969683904863316** | 0.009391703948852751 | 0.008752316503966327 | 0.00901661164455637 | < 0.008752316503966327 | **FAIL** |
+| C | **0.1538211249847481** | 0.15093342010005284 | 0.1511367795989751 | 0.1543498596819457 | < 0.1511367795989751 | **FAIL** |
+
+Diagnostics: Hard ER 8.6196, L2 prefixes 7944, L3 refinement 2.0513 bits.
+
+**Round verdict: **1 of 3 thresholds pass.****
+
+
 ## C3 — the round-by-round PASS table (one candidate, one checkpoint export)
 
 | round | arm | the single main change | P | N | C | P ↑ | N ↓ | C ↓ | all three |
@@ -319,6 +360,7 @@ Diagnostics: Hard ER 8.3739, L2 prefixes 7721, L3 refinement 2.1200 bits.
 | 4 | `TIGER_l1margin_pairrank_rq` | round 1 + the **margin on the L1 scale** | 0.0862480196382249 | 0.010293984868672328 | 0.16415178752999549 | PASS | FAIL | FAIL | no |
 | 5 | `TIGER_sameanchor_r5_pairrank_rq` | the **non-adjacent behavioural positive** | 0.08245268893957068 | 0.009581459175042285 | 0.1578883149631919 | PASS | FAIL | FAIL | no |
 | 6 | `TIGER_hardneg_pairrank_rq` | the **hard-negative construction** in the item representation | 0.08819791430909313 | 0.010532514090149122 | 0.15886444055801852 | PASS | FAIL | FAIL | no |
+| 7 | `TIGER_bucketsize_pairrank_rq` | the **bucket-size-weighted separation** | 0.08593464370897821 | 0.009969683904863316 | 0.1538211249847481 | PASS | FAIL | FAIL | no |
 
 Reference rows (frozen, re-verified in this round): R2 `9f6bf673…` = 0.0783613920855168 /
 0.008752316503966327 / 0.1511367795989751; R3 `9d9f3d68…` = 0.08097285816257246 / 0.00901661164455637 /
@@ -356,6 +398,7 @@ statistics), so their differences carry no sampling error; the effect sizes agai
 * round 4: ΔP = +0.00789 (+10.1 %), ΔN = +0.00154 (+17.6 %), ΔC = +0.01302 (+8.6 %)
 * round 5: ΔP = +0.00409 (+5.2 %), ΔN = +0.00083 (+9.5 %), ΔC = +0.00675 (+4.5 %)
 * round 6: ΔP = +0.00984 (+12.6 %), ΔN = +0.00178 (+20.3 %), ΔC = +0.00773 (+5.1 %)
+* round 7: ΔP = +0.00757 (+9.7 %), ΔN = +0.00122 (+13.9 %), ΔC = +0.00268 (+1.8 %)
 
 The **independent sample** that is still missing is not a triplet count but the number of
 **independent Stage3 labels**: whether a finer L1 partition with a higher positive sharing translates

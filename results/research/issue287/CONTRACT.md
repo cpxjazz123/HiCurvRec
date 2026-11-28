@@ -140,3 +140,30 @@ rounds. The frozen value: **0.04035949200819747** (`MARGIN_287_R6.json`).
 the L1 assignments must move during training, and the exported checkpoint's SID must satisfy
 P > 0.08097285816257246, N < 0.008752316503966327 and C < 0.1511367795989751 **simultaneously**.
 Any of these failing refutes the hypothesis and is recorded as such.
+
+---
+
+# ADDENDUM B — round 7 (owner-authorized by "继续", frozen before the round-7 run)
+
+The owner replied "继续" to the round-6 verdict and its pre-registered next change, so round 7 runs
+the **bucket-size-weighted separation** exactly as pre-registered there:
+
+* the mechanism is round 6's - the curvature-screened positive, the mined false positive, the item
+  representation, the frozen margin - with **one change in the reduction**:
+  `L = sum_g w_g * relu(d_pos - d_neg + m) / sum_g w_g`, where `w_g` is the size of the anchor's L1
+  bucket (the frozen TIGER export gives mean 270.16, median 232, max 718 over the 40,835 groups;
+  the trainer refreshes both the negatives and the bucket sizes from the current partition every
+  `HARDNEG_REFRESH_EPOCHS = 500` epochs with the same frozen rule);
+* the measured rationale: `N = sum_k n_k^2 / N^2` is dominated by the large buckets, and round 6
+  measured that separating individual false positives re-equilibrates instead of shrinking the
+  distribution (the Sinkhorn balance keeps the bucket sizes), so the term must target the imbalance;
+* the margin keeps the frozen rule (`|median gap|` on the frozen TIGER over the same pairs): the
+  recomputation on the round-7 index (`MARGIN_287_R7.json`) gives 0.04035949200819747, identical to
+  round 6, because the pairs are unchanged and only the reduction is weighted;
+* unchanged: the cross-sectional curvature only selects the positive offline, the loss is the same
+  distance ranking (no auxiliary loss), the **Sinkhorn balanced assignment** is untouched, and the
+  whole Stage2 protocol is the frozen one.
+
+**Falsifiable prediction (round 7):** the exported checkpoint's SID must satisfy
+N < 0.008752316503966327 with P > 0.08097285816257246 and C < 0.1511367795989751 simultaneously; any
+failure refutes the hypothesis and is recorded as such.

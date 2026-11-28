@@ -143,6 +143,48 @@
     "conditional_prefix_survival_difference": 0.130649152286749,
     "conditional_log_enrichment_bits": 1.5636836077874252
    }
+  },
+  {
+   "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_36996d68eced46faa7951bb4346e3e7e/TIGER_bucketsize_pairrank_rq/result/item_sids.json",
+   "sid_sha256": "edc67ed321ead759e4c987e1496a139c12ca01a95fa756966d468a2e303abc1a",
+   "P": 0.08593464370897821,
+   "N": 0.009969683904863316,
+   "C": 0.1538211249847481,
+   "hard_er": 8.619595618980297,
+   "passes_P": true,
+   "passes_N": false,
+   "passes_C": false,
+   "passes_all": false,
+   "stretch_P": false,
+   "stretch_C_band": false,
+   "diagnostics": {
+    "distinct_l2_prefixes": 7944,
+    "distinct_l3_triples": 20805,
+    "l3_refinement_gain_bits": 2.0512802954057676,
+    "prefix_entropy_bits": [
+     7.135219683337201,
+     12.13749573835804,
+     14.188776033763808
+    ],
+    "codebook_occupancy": [
+     256,
+     256,
+     256
+    ],
+    "effective_rows": 57439,
+    "positive_hit_rates_by_level": [
+     0.08593464370897821,
+     0.008287052351189959,
+     0.0022632706001149043
+    ],
+    "negative_hit_probabilities_by_level": [
+     0.009969683904863316,
+     0.00038377558063222767,
+     2.8796777726219356e-05
+    ],
+    "conditional_prefix_survival_difference": 0.19807378240319895,
+    "conditional_log_enrichment_bits": 1.863833673985567
+   }
   }
  ]
 }
