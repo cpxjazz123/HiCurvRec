@@ -38,3 +38,5 @@ Evidence: `results/research/issue283/{CONTRACT,DIAGNOSIS,REPORT,VERDICT}.md`,
 `JOIN_SUMMARY.json`, `JOIN_TABLE.part1/2.json.gz` (sha256 in `STATS_MANIFEST.json`),
 `MATCHED.json`, `MODEL_COMPARISON.json`, `PERM_CHECK.json`, `VALIDATION_*.json.gz`,
 `ROWS_MANIFEST.json`, `tests/test_joint283.py`. Infra drift: 0 (start vs close snapshot).
+
+Commit: 801048ca8153fd765e38b045a4c0578cb6343a0c (main).
