@@ -61,7 +61,7 @@
    "items": 24587,
    "kind": "run",
    "manifest": "verified",
-   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
+   "gate": "manifest verified + archive binding created 2026-11-28"
   },
   {
    "arm": "TIGER_drq_D0",
@@ -101,7 +101,7 @@
    "kind": "run",
    "manifest": "verified",
    "sid_sha256": "eb7de2a6bc1aa75f35e0d1b971b25897fd3709402fff338e7b5bcebc5edf9c18",
-   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
+   "gate": "manifest verified + archive binding created 2026-11-28"
   },
   {
    "arm": "TIGER_sid_graphlet_rq",
@@ -141,7 +141,7 @@
    "kind": "run",
    "manifest": "verified",
    "sid_sha256": "dfa4f784c2948597c5c43ac061a6c41e11c48f37233240df3a6185723a082fc6",
-   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
+   "gate": "REFUSED at archive binding: checkpoint repository config hash mismatch: results/research/issue272/CONTRACT.md (config changed since the run) -> Stage2 re-run required"
   },
   {
    "arm": "TIGER_export_matched_graphlet_rq",
@@ -221,7 +221,7 @@
    "kind": "run",
    "manifest": "verified",
    "sid_sha256": "b9c3e8de929722aaef9604b747143028c55db3f5dcc9879525231b40a828f59d",
-   "gate": "export repair VERIFIED (checkpoint re-export: 1 items rewritten)"
+   "gate": "REFUSED at archive binding: checkpoint is missing executed run identity -> Stage2 re-run required"
   }
  ],
  "audit_2026_11_28": {
@@ -260,6 +260,41 @@
    "test_ndcg@10": 0.025415564077936974,
    "test_final": "results/stage3_T5Train/TIGER_samecentre_delta_rq/logs/Amazon_2023_Instruments/Nov-28-2026_01-31-26/test_final.json",
    "verdict": "below the 0.065 acceptance bar"
+  },
+  "TIGER_global_j_rq": {
+   "test_recall@10": 0.042933,
+   "test_recall@5": 0.027647,
+   "test_final": "results/stage3_T5Train/TIGER_global_j_rq/logs/Amazon_2023_Instruments/Nov-28-2026_03-16-44/test_final.json",
+   "verdict": "below the 0.065 acceptance bar"
+  },
+  "TIGER_graphlet_align_rq": {
+   "test_recall@10": 0.039868,
+   "test_recall@5": 0.025749,
+   "test_final": "results/stage3_T5Train/TIGER_graphlet_align_rq/logs/Amazon_2023_Instruments/Nov-28-2026_04-46-08/test_final.json",
+   "verdict": "below the 0.065 acceptance bar"
+  },
+  "TIGER_curvloss_rq": {
+   "test_recall@10": 0.040669,
+   "test_recall@5": 0.026202,
+   "test_final": "results/stage3_T5Train/TIGER_curvloss_rq/logs/Amazon_2023_Instruments/Nov-28-2026_06-14-10/test_final.json",
+   "verdict": "below the 0.065 acceptance bar"
+  },
+  "TIGER_sinkhorn_all_levels_rq": {
+   "test_recall@10": 0.053552,
+   "test_recall@5": 0.035377,
+   "test_final": "results/stage3_T5Train/TIGER_sinkhorn_all_levels_rq/logs/Amazon_2023_Instruments/Nov-28-2026_07-43-05/test_final.json",
+   "verdict": "below the 0.065 acceptance bar (best of the queue so far)"
+  },
+  "TIGER_pairrank_cover_rq": {
+   "test_recall@10": 0.050593,
+   "test_recall@5": 0.033096,
+   "test_final": "results/stage3_T5Train/TIGER_pairrank_cover_rq/logs/Amazon_2023_Instruments/Nov-28-2026_09-11-46/test_final.json",
+   "verdict": "below the 0.065 acceptance bar (second best)"
+  },
+  "TIGER_drq_D0": {
+   "status": "stopped_by_owner",
+   "detail": "owner requested the running Stage3 be ended; process group 797746 terminated 12:09:18 (re-dispatch of the 12:04 run; the 10:39 run had died at epoch 124)",
+   "run_dir": "results/stage3_T5Train/TIGER_drq_D0/logs/Amazon_2023_Instruments/Nov-28-2026_10-39-23"
   }
  },
  "sweep_2026_11_28": {
@@ -283,5 +318,63 @@
    "TIGER_drq_U": "hive/TIGER_drq_U/train_rqvae.py\", line 47, in <module>\n    import teacher\nModuleNotFoundError: No module named 'teacher'",
    "TIGER_drq_S": "hive/TIGER_drq_S/train_rqvae.py\", line 47, in <module>\n    import teacher\nModuleNotFoundError: No module named 'teacher'"
   }
- }
+ },
+ "binding_audit_2026_11_28": {
+  "created": [
+   "TIGER_pairrank_cover_rq",
+   "TIGER_codebook_budget_j_rq"
+  ],
+  "refused": {
+   "TIGER_active_j_rq": "config hash mismatch (issue272/CONTRACT.md)",
+   "TIGER_pairrank_enc_rq": "missing run identity"
+  },
+  "dispatchable_total": 16
+ },
+ "driver_state_2026_11_28": {
+  "current": "TIGER_curvloss_rq",
+  "current_run_dir": "results/stage3_T5Train/TIGER_curvloss_rq/logs/Amazon_2023_Instruments/Nov-28-2026_06-14-10",
+  "note": "stage3_start answered \"a stage3 process is already live\" while the harness it spawned was live; the arm runs anyway",
+  "remaining_in_order": [
+   "TIGER_sinkhorn_all_levels_rq",
+   "TIGER_pairrank_cover_rq",
+   "TIGER_drq_D0",
+   "TIGER_graphlet_capacity_rq",
+   "TIGER_drq_D4",
+   "TIGER_codebook_budget_j_rq",
+   "TIGER_sid_graphlet_rq",
+   "TIGER_p4_topoq_A",
+   "TIGER_trq_A",
+   "TIGER_export_matched_graphlet_rq",
+   "TIGER_graphlet_prefix_shuffled_rq",
+   "TIGER_graphlet_wide_l1_rq",
+   "TIGER_drq_D2"
+  ],
+  "skip_refused": [
+   "TIGER_prefix_curvature_gate_rq",
+   "TIGER_active_j_rq",
+   "TIGER_drq_U",
+   "TIGER_drq_S",
+   "TIGER_pairrank_rq",
+   "TIGER_pairrank_enc_rq"
+  ],
+  "curvloss_progress": "epoch 68/150 at 06:45 UTC+11, run dir logs/Amazon_2023_Instruments/Nov-28-2026_06-14-10; training ends ~07:20, beam-20 test then writes test_final.json",
+  "resume": "poll until results/stage3_T5Train/TIGER_curvloss_rq/logs/Amazon_2023_Instruments/Nov-28-2026_06-14-10/test_final.json exists and pgrep -f run_stage3_param is empty, record results.TIGER_curvloss_rq from it, then dispatch remaining_in_order one arm at a time via stage3_start"
+ },
+ "sid_hash_recheck_2026_11_28": {
+  "note": "order[].sid_sha256 is stale for every export-repaired arm: the checkpoint re-export rewrote the SID file after those hashes were recorded. Values below are the sha256 of the file on disk at 2026-11-28 12:06 UTC+11. stage3_start re-derives its own hash; use these for any hash-keyed bookkeeping.",
+  "hashes_on_disk": {
+   "TIGER_drq_D0": "dd21a1d9e78b57ee2804fe938cde151136fd8411133931dfca435da29080923e",
+   "TIGER_graphlet_capacity_rq": "2e568d9bc74b24166c5f3d59a32d39bfd50818541876d57c5f3c0ae0a32c1dec",
+   "TIGER_drq_D4": "3ab2f595e38dccc33c4c6900daa909b279ed3061d7665aaf7ebf9476a64d01ee",
+   "TIGER_codebook_budget_j_rq": "61f898498c190c08d58451187b7dc7d31cf1cf2393e9956e35f331f559e712b0",
+   "TIGER_sid_graphlet_rq": "5fa9a30c57414d60ecc0511d3b9c5fba7026d428d2943113debe74441cb17c95",
+   "TIGER_p4_topoq_A": "60a85bbc7392b47eb4b7af0bf808ae33cbcfc6f5705db80236bcf285bf96bcde",
+   "TIGER_trq_A": "b9b03d3ce691eaeeb83c32a7f3d8af3b8b4a2de8303b8e1ed59283149db0d642",
+   "TIGER_export_matched_graphlet_rq": "e99ada1eae0ba6ad3877b21cd4768d3d1d557f530dd4f32b5176cf2b07babfd8",
+   "TIGER_graphlet_prefix_shuffled_rq": "50a3e1b5289248f7aa164ad242dad88390266b55cafd990a83a3909583fa27f2",
+   "TIGER_graphlet_wide_l1_rq": "0b25a94554b6099dfbc5358451c2e2c3bf4a34686928a4b862a3dea8ea0c52c7",
+   "TIGER_drq_D2": "d9fdce29d8f9da9c3e4036441265ffb1f3cc2c092cee773a6278af911303a74a"
+  }
+ },
+ "queue_state_2026_11_28_1209": "HALTED by owner; no Stage3 running; remaining arms not dispatched"
 }

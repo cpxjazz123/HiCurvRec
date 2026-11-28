@@ -84,3 +84,27 @@ Resume: for each remaining arm call `stage3_start` with its SID path once the pr
 `test_final.json` exists and no `run_stage3_*` process is live; record the result in
 `queue_dispatch.json` (`results` key). The `TIGER_samecentre_delta_rq` result (test_R@10 0.0466) is
 already recorded.
+
+## Dispatch log (machine-driven, one arm at a time)
+
+| # | arm | outcome | test_R@10 | test_final |
+|---|---|---|---|---|
+| 1 | TIGER_global_j_rq | finished (150 epochs) | 0.042933 | `results/stage3_T5Train/TIGER_global_j_rq/logs/Amazon_2023_Instruments/Nov-28-2026_03-16-44/test_final.json` |
+| 2 | TIGER_graphlet_align_rq | finished (150 epochs) | 0.039868 | `results/stage3_T5Train/TIGER_graphlet_align_rq/logs/Amazon_2023_Instruments/Nov-28-2026_04-46-08/test_final.json` |
+| 3 | TIGER_curvloss_rq | finished (150 epochs) | 0.040669 | `results/stage3_T5Train/TIGER_curvloss_rq/logs/Amazon_2023_Instruments/Nov-28-2026_06-14-10/test_final.json` |
+| 4 | TIGER_sinkhorn_all_levels_rq | finished (150 epochs) | 0.053552 | `results/stage3_T5Train/TIGER_sinkhorn_all_levels_rq/logs/Amazon_2023_Instruments/Nov-28-2026_07-43-05/test_final.json` |
+| 5 | TIGER_pairrank_cover_rq | finished (150 epochs) | 0.050593 | `results/stage3_T5Train/TIGER_pairrank_cover_rq/logs/Amazon_2023_Instruments/Nov-28-2026_09-11-46/test_final.json` |
+| 6 | TIGER_drq_D0 | exited_incomplete 11:35 at epoch 124/150 (run dir `Nov-28-2026_10-39-23`; launcher log stops mid-epoch, no traceback, no `test_final.json`) | n/a | `results/stage3_T5Train/TIGER_drq_D0/logs/Amazon_2023_Instruments/Nov-28-2026_10-39-23/` |
+
+Queue ownership returned to the coordinator at 12:00 (single owner from here): this driver made no
+`stage3_start` call and no process-control call after 10:35, and stops dispatching. Arm order from
+`TIGER_drq_D0` onward is being driven by the coordinator; rows 7+ are appended there.
+
+## 2026-11-28 12:09 — queue halted by owner
+
+The owner asked to end the running Stage3. Process group 797746 (the re-dispatched `TIGER_drq_D0`,
+started 12:04:02 after its first run died at epoch 124) was terminated with SIGTERM at 12:09:18; no
+`run_stage3_*` process remains and the GPU is idle (0 MiB). `queue_dispatch.json` records
+`TIGER_drq_D0: stopped_by_owner`. No further arms were dispatched; the 10 remaining arms
+(graphlet_capacity_rq, drq_D4, codebook_budget_j_rq, sid_graphlet_rq, p4_topoq_A, trq_A,
+export_matched_graphlet_rq, graphlet_prefix_shuffled_rq, graphlet_wide_l1_rq, drq_D2) stay queued.
