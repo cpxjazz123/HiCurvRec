@@ -108,3 +108,21 @@ started 12:04:02 after its first run died at epoch 124) was terminated with SIGT
 `TIGER_drq_D0: stopped_by_owner`. No further arms were dispatched; the 10 remaining arms
 (graphlet_capacity_rq, drq_D4, codebook_budget_j_rq, sid_graphlet_rq, p4_topoq_A, trq_A,
 export_matched_graphlet_rq, graphlet_prefix_shuffled_rq, graphlet_wide_l1_rq, drq_D2) stay queued.
+
+## 2026-11-28 13:10 — R2 archive status of this batch (§6b)
+
+Archived from this batch (uploader verified the four entries, then the uploaded bytes):
+
+| number | arm | recall@10 |
+|---|---|---|
+| `r2:genrec/112` | TIGER_global_j_rq | 0.042933 |
+| `r2:genrec/113` | TIGER_pairrank_cover_rq | 0.050593 |
+
+Fail-closed, **not** archived: `TIGER_graphlet_align_rq`, `TIGER_curvloss_rq`,
+`TIGER_sinkhorn_all_levels_rq`. Their `test_final.json` has no `archive_binding`
+input provenance (they were exported before the checkpoint-bound binding existed), and
+`upload_stage3.py` refuses to guess one (§58: the rule is fail-closed; do not bypass by
+calling internals). Backfilling would require a binding whose receipt cannot be derived
+from those old exports; the three recalls stay in this report and in the Stage3 logs but
+are absent from the R2 ledger. `TIGER_prefix_curvature_gate_rq` never finished (no
+`test_final.json`), so it is not archivable yet either.
