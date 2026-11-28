@@ -1,0 +1,24 @@
+{
+ "schema": "genrec.issue277.prospective_outcome/1",
+ "frozen_predictions_sha256": "4486b64dc4e491e424fe3b820fa290caa0fcd29751bd9ea63cb33ba8cac4f495",
+ "frozen_commit": "03c8e1df",
+ "frozen_commit_time": "2026-11-28T14:03:16+11:00",
+ "checked_utc": "2026-11-28T03:21:17.653173+00:00",
+ "rows": [
+  {
+   "arm": "TIGER_pairrank_enc_rq",
+   "test_final": "results/stage3_T5Train/TIGER_pairrank_enc_rq/logs/Amazon_2023_Instruments/Nov-28-2026_13-00-13/test_final.json",
+   "test_final_sha256": "4997ea89533476472e38aff19bcc4c2dd8e35c2c4af08d9f712fa1fca0c494e9",
+   "test_final_mtime_utc": "2026-11-28T03:20:50+00:00",
+   "sid_sha256": "9f6bf6731e88f5ec3e83bdf54b99784a5eafbf9412efe5e63f3b46b12cecaf97",
+   "recall@10": 0.0479465171747419,
+   "label_after_freeze": true,
+   "status": "matched",
+   "predicted_recall@10": 0.0531902589289211,
+   "predicted_above_0.06": false,
+   "actual_above_0.06": false,
+   "abs_error": 0.0052437417541791945,
+   "signed_error": 0.0052437417541791945
+  }
+ ]
+}

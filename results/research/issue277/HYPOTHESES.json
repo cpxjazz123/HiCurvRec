@@ -152,14 +152,16 @@
   {
    "id": "H11",
    "statement": "The frozen predictor's prospective prediction for TIGER_pairrank_enc_rq (0.05319) is below the 0.06 threshold once its Stage3 label lands.",
-   "status": "UNTESTED",
+   "status": "SUPPORTED",
    "evidence": [
-    "results/research/issue277/PROSPECTIVE.json"
+    "results/research/issue277/PROSPECTIVE.json",
+    "results/research/issue277/PROSPECTIVE_OUTCOME.json"
    ],
    "origin_issue": 277,
    "opened_round": "r1",
    "last_update": "2026-11-28",
-   "reopen_reason": null
+   "reopen_reason": null,
+   "verdict_reason": "frozen prediction 0.05319 (below 0.06) vs actual 0.047947 (below 0.06): threshold call correct; signed error +0.00524 lies inside the empirical interval [predictor+q05, predictor+q95] = [0.041126, 0.057908]; label mtime 2026-11-28T03:20:50Z is after the freeze commit 03:03:16Z"
   }
  ]
 }

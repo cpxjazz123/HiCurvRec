@@ -126,3 +126,16 @@ calling internals). Backfilling would require a binding whose receipt cannot be 
 from those old exports; the three recalls stay in this report and in the Stage3 logs but
 are absent from the R2 ledger. `TIGER_prefix_curvature_gate_rq` never finished (no
 `test_final.json`), so it is not archivable yet either.
+
+## 2026-11-28 14:20 — `TIGER_pairrank_enc_rq` finished
+
+| item | value |
+|---|---|
+| run | `logs/Amazon_2023_Instruments/Nov-28-2026_13-00-13/test_final.json` |
+| test_recall@10 | **0.047947** (`test_ndcg@10` 0.026375, n_eval 57439) |
+| SID | `9f6bf673…` (`_runs/stage2_58090127…/result/item_sids.json`) |
+| R2 | `r2:genrec/114` (68 files, uploaded and verified) |
+| #277 prospective | frozen prediction 0.05319 (commit `03c8e1df`, 14:03:16 +1100) vs actual 0.047947 — threshold call correct (<0.06), signed error +0.00524 inside the empirical interval [0.041126, 0.057908]; label mtime 03:20:50Z is after the freeze |
+| verdict | below the 0.065 target |
+
+Next in the queue: `TIGER_codebook_budget_j_rq` (SID with binding, collision 0.1337).

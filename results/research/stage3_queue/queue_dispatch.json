@@ -2,7 +2,7 @@
  "schema": "genrec.stage3_queue.dispatch/1",
  "created": "2026-11-28",
  "note": "Stage2-completed SIDs with no Stage3 result; collision<0.4; checkpoint beside the SID. Dispatch serially via stage3_start (singleton).",
- "running": "TIGER_samecentre_delta_rq (already dispatched)",
+ "running": null,
  "order": [
   {
    "arm": "TIGER_prefix_curvature_gate_rq",
@@ -295,6 +295,15 @@
    "status": "stopped_by_owner",
    "detail": "owner requested the running Stage3 be ended; process group 797746 terminated 12:09:18 (re-dispatch of the 12:04 run; the 10:39 run had died at epoch 124)",
    "run_dir": "results/stage3_T5Train/TIGER_drq_D0/logs/Amazon_2023_Instruments/Nov-28-2026_10-39-23"
+  },
+  "TIGER_pairrank_enc_rq": {
+   "test_recall@10": 0.0479465171747419,
+   "test_recall@5": 0.031738017723149776,
+   "test_ndcg@10": 0.026374804070847222,
+   "test_final": "results/stage3_T5Train/TIGER_pairrank_enc_rq/logs/Amazon_2023_Instruments/Nov-28-2026_13-00-13/test_final.json",
+   "r2": "r2:genrec/114",
+   "verdict": "below_threshold",
+   "note": "prospective #277 prediction 0.05319 (frozen 03c8e1df at 14:03:16+1100) vs actual 0.047947; threshold call correct, signed error +0.00524"
   }
  },
  "sweep_2026_11_28": {
@@ -376,5 +385,12 @@
    "TIGER_drq_D2": "d9fdce29d8f9da9c3e4036441265ffb1f3cc2c092cee773a6278af911303a74a"
   }
  },
- "queue_state_2026_11_28_1209": "HALTED by owner; no Stage3 running; remaining arms not dispatched"
+ "queue_state_2026_11_28_1209": "HALTED by owner; no Stage3 running; remaining arms not dispatched",
+ "queue_state_2026_11_28_1420": {
+  "finished": "TIGER_pairrank_enc_rq",
+  "recall@10": 0.0479465171747419,
+  "r2": "r2:genrec/114",
+  "next": "TIGER_codebook_budget_j_rq",
+  "note": "r2 arm finished 150 epochs 13:00-14:20; archived; prospective check recorded in results/research/issue277/PROSPECTIVE_OUTCOME.json"
+ }
 }
