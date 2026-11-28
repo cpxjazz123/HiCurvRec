@@ -1,0 +1,673 @@
+{
+ "schema": "genrec.hypotheses/1",
+ "issue": 284,
+ "inherited_from": "results/research/issue283/HYPOTHESES.json",
+ "hypotheses": [
+  {
+   "id": "H1",
+   "statement": "L1 behavioural fidelity (l1_pos_hit / l1_hard_er) is the strongest single predictor of Stage3 Recall@10.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue276/ANALYSIS_276.json",
+    "results/research/issue276/EXTRAS.json"
+   ],
+   "origin_issue": 275,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "SID-group OOF (n=129): prior l1_pos_hit rho -0.283, train-selected best single rho -0.149; the single-feature ranking from #275 does not generalise across SID groups"
+  },
+  {
+   "id": "H2",
+   "statement": "Capacity (l2_distinct, l3_collision, l3_refine_bits) adds beyond fidelity.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue276/EXTRAS.json"
+   ],
+   "origin_issue": 275,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": "descriptive rho l3_collision +0.483 / l2_distinct -0.391; no fold-level ablation",
+   "verdict_reason": "identical frozen folds: fidelity-only ridge 0.003507/0.473 vs six-feature 0.003221/0.512 (exploratory alpha=10)"
+  },
+  {
+   "id": "H3",
+   "statement": "Vector distortion (quant_error, effective_rank) adds beyond SID features.",
+   "status": "INCONCLUSIVE",
+   "evidence": [
+    "results/research/issue276/ANALYSIS_276.json"
+   ],
+   "origin_issue": 275,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": "CI covered zero on the family-LOFO design; issue #276 reopens it under SID-group CV because the grouping unit changed (new evidence path: results/research/issue276/) and the Q_VEC band lacked positives",
+   "verdict_reason": "Q_VEC (n=73): ridge13 rho 0.699 vs ridge6 0.552 but MAE 0.005696 vs 0.003423; PySR increment CI [-0.00031,+0.00169] covers zero; ranking up, calibration down"
+  },
+  {
+   "id": "H4",
+   "statement": "Curvature/distance geometry adds beyond SID features.",
+   "status": "UNTESTED",
+   "evidence": [
+    "results/research/issue276/TABLE_MANIFEST.json"
+   ],
+   "origin_issue": 275,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": "only 3 sha-matched geometry SIDs",
+   "verdict_reason": "geometry queue n=3 (sha-matched #271 assets); unidentifiable"
+  },
+  {
+   "id": "N",
+   "statement": "No feature set beats the fold mean/median out of fold; fits are family confounding.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue276/ANALYSIS_276.json"
+   ],
+   "origin_issue": 275,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "ridge6 MAE 0.003059 vs fold median 0.004424 (31% lower), rho 0.616"
+  },
+  {
+   "id": "H5",
+   "statement": "#275's negative is an artifact of family-LOFO with degenerate controls and zero positives; SID-identity grouping changes the ordering of ridge vs PySR.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue276/ANALYSIS_276.json"
+   ],
+   "origin_issue": 276,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "under SID grouping with 13 positives PySR is still significantly worse than ridge6 (CI [+0.00049,+0.00154]); the #275 PySR-vs-linear ordering is not a family-grouping artifact"
+  },
+  {
+   "id": "H6",
+   "statement": "The recon-vs-recall relation (rho -0.858) survives protocol slicing and holds inside the high-recall band.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue276/vector_forward.json",
+    "results/research/issue276/EXTRAS.json"
+   ],
+   "origin_issue": 276,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "unified decoder MSE (bias-included forward, n=73) rho -0.087; high band +0.287 (n=12); #275 used final-epoch batch loss and a bias-less forward on n=23"
+  },
+  {
+   "id": "H7",
+   "statement": "High-recall historical SIDs (recall > 0.06) are recoverable and bindable to their Stage3 records by content evidence.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue276/recovery/AUDIT.json"
+   ],
+   "origin_issue": 276,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "12/12 named high-recall arms content-bound (6 L1 ledger, 6 L2 collision); 91 records >0.06, 26 with a bound arm"
+  },
+  {
+   "id": "H8",
+   "statement": "Effective rank has a moderate window (non-monotone relation to recall) that a linear model cannot capture.",
+   "status": "INCONCLUSIVE",
+   "evidence": [
+    "results/research/issue276/EXTRAS.json"
+   ],
+   "origin_issue": 276,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "PR(z) bins: 0.0463/<4, 0.0549/4-6, 0.0595/6-8, 0.0548/8-12, 0.0529/>=12; overall rho -0.031 -> window shape without a monotone relation"
+  },
+  {
+   "id": "H9",
+   "statement": "The 13/13 >0.06 identification survives an independent recomputation from the Ridge6 predictions and a strict identity split.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue277/AUDIT_277.json",
+    "results/research/issue277/COEFFICIENTS.json"
+   ],
+   "origin_issue": 277,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "recomputed 13/13 tp 0 fp; strict core 6/6 tp 0 fp; 7 positives rest on weak identity"
+  },
+  {
+   "id": "H10",
+   "statement": "The inner-fold StandardScaler leak inflates the #276 ridge result.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue277/AUDIT_277.json"
+   ],
+   "origin_issue": 277,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "corrected scaler-inside-inner-fold OOF 0.002972/0.667 vs leaky 0.003031/0.623; no inflation"
+  },
+  {
+   "id": "H11",
+   "statement": "The frozen predictor's prospective prediction for TIGER_pairrank_enc_rq (0.05319) is below the 0.06 threshold once its Stage3 label lands.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue277/PROSPECTIVE.json",
+    "results/research/issue277/PROSPECTIVE_OUTCOME.json"
+   ],
+   "origin_issue": 277,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "frozen prediction 0.05319 (below 0.06) vs actual 0.047947 (below 0.06): threshold call correct; signed error +0.00524 lies inside the empirical interval [predictor+q05, predictor+q95] = [0.041126, 0.057908]; label mtime 2026-11-28T03:20:50Z is after the freeze commit 03:03:16Z"
+  },
+  {
+   "id": "H12",
+   "statement": "Importance-weighted L1 fidelity explains OOF residual variance beyond the six #277 features (weight-blind fidelity is the R1 cause).",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue278/MODEL_COMPARISON.json",
+    "results/research/issue278/WEIGHTED_TABLE.json",
+    "results/research/issue278/DEGREE_DIAGNOSTIC.json"
+   ],
+   "origin_issue": 278,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "OOF residual correlations with ER_w/-uniform/-lift/\u0394ER are -0.049/-0.064/-0.076/-0.065; ER_w is collinear with ER_uniform (0.87) and group popularity (0.917)"
+  },
+  {
+   "id": "H13",
+   "statement": "A weighted or increment model reduces OOF MAE vs the refit Ridge6 on the common queue with a SID-group paired CI excluding zero.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue278/MODEL_COMPARISON.json",
+    "results/research/issue278/WEIGHTED_TABLE.json",
+    "results/research/issue278/DEGREE_DIAGNOSTIC.json"
+   ],
+   "origin_issue": 278,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "best candidate E: \u0394MAE +0.000203, CI [-0.000016,+0.000452] covers 0 and adds 1 FP; D/F null; B worse"
+  },
+  {
+   "id": "H14",
+   "statement": "The #274 R2 over-prediction is single-case noise, not a systematic weight-blindness failure.",
+   "status": "INCONCLUSIVE",
+   "evidence": [
+    "results/research/issue278/MODEL_COMPARISON.json",
+    "results/research/issue278/WEIGHTED_TABLE.json",
+    "results/research/issue278/DEGREE_DIAGNOSTIC.json"
+   ],
+   "origin_issue": 278,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "one prospective label (R2); its weighted ER (22.9) is higher than uniform (8.95), so weighting would worsen the over-prediction; the model-level null is the stronger evidence"
+  },
+  {
+   "id": "H15",
+   "statement": "The residual is better explained by popularity/degree than by transition-importance weighting.",
+   "status": "INCONCLUSIVE",
+   "evidence": [
+    "results/research/issue278/MODEL_COMPARISON.json",
+    "results/research/issue278/WEIGHTED_TABLE.json",
+    "results/research/issue278/DEGREE_DIAGNOSTIC.json"
+   ],
+   "origin_issue": 278,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "group popularity residual rho -0.124 vs ER -0.049, but popularity and ER_w are rank-collinear at 0.917; not separable in this queue"
+  },
+  {
+   "id": "H16",
+   "statement": "Higher-order topology (2-hop paths, common successors/predecessors) carries real association strength for unseen validation transitions beyond degree/popularity.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue279/RELATION_LEVEL.json",
+    "results/research/issue279/MODEL_COMPARISON.json",
+    "results/research/issue279/CURVATURE_DIAG.json"
+   ],
+   "origin_issue": 279,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "unseen-transition AUC: two_hop 0.624, two_hop_norm 0.623, common_succ 0.624, common_pred 0.631 (anchor-clustered CIs exclude 0.5); direct edge 0.499"
+  },
+  {
+   "id": "H17",
+   "statement": "The SID retains higher-order relations weakly enough that weighted fidelity does not improve Recall prediction (H3 of the issue).",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue279/RELATION_LEVEL.json",
+    "results/research/issue279/MODEL_COMPARISON.json",
+    "results/research/issue279/CURVATURE_DIAG.json"
+   ],
+   "origin_issue": 279,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "C1/C2/C3 lower OOF MAE by 7.4e-5..1.06e-4 but every SID-group CI covers 0 and each adds one FP; the six metrics absorb the usable information"
+  },
+  {
+   "id": "H18",
+   "statement": "Any higher-order signal is a degree/popularity proxy and vanishes under degree matching.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue279/RELATION_LEVEL.json",
+    "results/research/issue279/MODEL_COMPARISON.json",
+    "results/research/issue279/CURVATURE_DIAG.json"
+   ],
+   "origin_issue": 279,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "degree-matched AUC 0.660 (two_hop) / 0.667 (common_pred) is higher than the raw AUC, so the signal is not a degree/popularity proxy"
+  },
+  {
+   "id": "H19",
+   "statement": "Curvature adds independent discrimination beyond 2-hop/common-neighbour counts.",
+   "status": "INCONCLUSIVE",
+   "evidence": [
+    "results/research/issue279/RELATION_LEVEL.json",
+    "results/research/issue279/MODEL_COMPARISON.json",
+    "results/research/issue279/CURVATURE_DIAG.json"
+   ],
+   "origin_issue": 279,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "curvature asset coverage 12.9% positives / 2.65% negatives, 100 pairs with both sides; AUC 0.707 on 100 pairs is not identifiable"
+  },
+  {
+   "id": "H20",
+   "statement": "Directional SID-code transitions decode unseen directed edges better than prefix sharing/chance.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue280/DECODER.json",
+    "results/research/issue280/LOGISTIC_DIAG.json",
+    "results/research/issue280/MODEL_COMPARISON.json"
+   ],
+   "origin_issue": 280,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "count decoder: calibration AUC 0.4992, validation mean AUC 0.4931, direction accuracy 0.4867"
+  },
+  {
+   "id": "H21",
+   "statement": "Any decoder signal is prefix sharing or popularity in disguise.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue280/DECODER.json",
+    "results/research/issue280/LOGISTIC_DIAG.json",
+    "results/research/issue280/MODEL_COMPARISON.json"
+   ],
+   "origin_issue": 280,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "target-only control AUC 0.933-0.986 matches the full pair models -> the supervised signal is target identity/popularity leakage"
+  },
+  {
+   "id": "H22",
+   "statement": "Higher-order structure (2-hop/common-neighbour) is partly decodable from the SID.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue280/DECODER.json",
+    "results/research/issue280/LOGISTIC_DIAG.json",
+    "results/research/issue280/MODEL_COMPARISON.json"
+   ],
+   "origin_issue": 280,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "the SID decoder is at chance while the graph higher-order scores discriminate at AUC 0.62-0.63; the codes do not carry the structure"
+  },
+  {
+   "id": "H23",
+   "statement": "The SID decoder metric adds a Recall increment beyond the six metrics.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue280/DECODER.json",
+    "results/research/issue280/LOGISTIC_DIAG.json",
+    "results/research/issue280/MODEL_COMPARISON.json"
+   ],
+   "origin_issue": 280,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "D1/D2/D3 MAE improvements 5.3e-5..1.6e-4 with CIs covering 0, +1 FP, and Spearman degrades to 0.636/0.644/0.613"
+  },
+  {
+   "id": "H24",
+   "statement": "The six metrics have nonlinear (moderate-range) response beyond the monotone linear form.",
+   "status": "INCONCLUSIVE",
+   "evidence": [
+    "results/research/issue281/MODELS281.json",
+    "results/research/issue281/EXTRAS281.json",
+    "results/research/issue281/CURVES281.json"
+   ],
+   "origin_issue": 281,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "additive quadratics cut the low-tercile over-prediction from -0.00356 to -0.00122 and raise rho to 0.704, but the MAE gain is +5.5e-5 with CI [-4.5e-4,+4.4e-4]"
+  },
+  {
+   "id": "H25",
+   "statement": "The L1 positive-sharing benefit depends on the negative sharing rate and L2/L3 discrimination (interaction).",
+   "status": "INCONCLUSIVE",
+   "evidence": [
+    "results/research/issue281/MODELS281.json",
+    "results/research/issue281/EXTRAS281.json",
+    "results/research/issue281/CURVES281.json"
+   ],
+   "origin_issue": 281,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "interaction model C is the closest on MAE (+1.14e-4, CI [-3.8e-5,+2.86e-4]) but rho equals A (0.667) and the coefficients are fold-unstable"
+  },
+  {
+   "id": "H26",
+   "statement": "Piecewise structure reduces the high/low recall calibration bias.",
+   "status": "INCONCLUSIVE",
+   "evidence": [
+    "results/research/issue281/MODELS281.json",
+    "results/research/issue281/EXTRAS281.json",
+    "results/research/issue281/CURVES281.json"
+   ],
+   "origin_issue": 281,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "hinges lower the low-tercile bias only to -0.00310 and raise q90 residuals to 0.00835; no stable knot across folds"
+  },
+  {
+   "id": "H27",
+   "statement": "Any nonlinear/complex model only overfits the 129 SIDs and does not survive the paired CI.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue281/MODELS281.json",
+    "results/research/issue281/EXTRAS281.json",
+    "results/research/issue281/CURVES281.json"
+   ],
+   "origin_issue": 281,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "the pre-registered inner-selected main candidate is worse than A (Delta -2.7e-5, CI [-4.9e-4,+3.5e-4])"
+  },
+  {
+   "id": "H28",
+   "statement": "With overall L1 fidelity close, the type of retained relation (chain/merge/fork/closed) correlates with Recall.",
+   "status": "INCONCLUSIVE",
+   "evidence": [
+    "results/research/issue282/TYPE_TABLE.json",
+    "results/research/issue282/TYPE_AUDIT.json",
+    "results/research/issue282/MODEL_COMPARISON.json"
+   ],
+   "origin_issue": 282,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "type-conditioned ER differs ~4% at the mean; similar-overall pairs (477) show rho -0.198 (merge-chain) and -0.154 (fork-chain) vs recall, weak, negative, non-independent"
+  },
+  {
+   "id": "H29",
+   "statement": "No type-specific information beyond the overall L1 rate (null).",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue282/TYPE_TABLE.json",
+    "results/research/issue282/TYPE_AUDIT.json",
+    "results/research/issue282/MODEL_COMPARISON.json"
+   ],
+   "origin_issue": 282,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "no type-specific information survives: model CIs cover 0 and the residual associations are +0.076/+0.056"
+  },
+  {
+   "id": "H30",
+   "statement": "Type contrasts add a Recall prediction increment beyond the six metrics.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue282/TYPE_TABLE.json",
+    "results/research/issue282/TYPE_AUDIT.json",
+    "results/research/issue282/MODEL_COMPARISON.json"
+   ],
+   "origin_issue": 282,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "D1/D2/D3 MAE diffs -9.6e-6/+6.8e-6/-1.2e-5 with CIs covering 0; rho degrades to 0.659/0.663"
+  },
+  {
+   "id": "H31",
+   "statement": "Coverage/collinearity prevents identifying any type-specific effect.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue282/TYPE_TABLE.json",
+    "results/research/issue282/TYPE_AUDIT.json",
+    "results/research/issue282/MODEL_COMPARISON.json"
+   ],
+   "origin_issue": 282,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "type-matched negatives are 1.35% of draws (level 2) and the type ERs are nearly collinear with the overall rates"
+  },
+  {
+   "id": "H32",
+   "statement": "ALL (triple prefix intersection) is the only degree of freedom of the joint partition beyond the three pairwise marginals and is measurable per structure/level.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue283/JOIN_SUMMARY.json",
+    "results/research/issue283/MATCHED.json",
+    "results/research/issue283/MODEL_COMPARISON.json",
+    "results/research/issue283/tests/test_joint283.py"
+   ],
+   "origin_issue": 283,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "JOIN_SUMMARY/TABLES + tests: ALL is the unique non-marginal dof; chain k=1 ALL 0.063 vs uniform null 0.045; transitions/LCP invariants hold"
+  },
+  {
+   "id": "H33",
+   "statement": "With pairwise marginals matched, ALL differences across SIDs associate with Stage3 recall (joint assignment matters).",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue284/MODEL_284.json",
+    "results/research/issue284/MATCHED_284.json",
+    "results/research/issue284/CHAIN_ANALYSIS.json"
+   ],
+   "origin_issue": 283,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "the stricter primary matched set (marginals + six + L2/collision/L3/occupancy/entropy) gives all1 0.122 [-0.239,0.451]; the #283 marginal-matched 0.191 did not survive"
+  },
+  {
+   "id": "H34",
+   "statement": "A pre-frozen ALL / role-contrast joint feature adds OOF MAE increment beyond the six #277 features in the paired SID-cluster bootstrap.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue283/JOIN_SUMMARY.json",
+    "results/research/issue283/MATCHED.json",
+    "results/research/issue283/MODEL_COMPARISON.json",
+    "results/research/issue283/tests/test_joint283.py"
+   ],
+   "origin_issue": 283,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "MODEL_COMPARISON.json: selected CI [-1.57e-4,+4.57e-4]; fixed all1_chain [-1.06e-4,+6.35e-4]; no joint feature passes"
+  },
+  {
+   "id": "H35",
+   "statement": "ALL lift versus the permutation/degree-stratified null is concentrated in high-recall SIDs and strong identities.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue283/JOIN_SUMMARY.json",
+    "results/research/issue283/MATCHED.json",
+    "results/research/issue283/MODEL_COMPARISON.json",
+    "results/research/issue283/tests/test_joint283.py"
+   ],
+   "origin_issue": 283,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "MATCHED.json recall_groups: all1_chain_lift 0.0221 high vs 0.0135 low (rho 0.465); all3 0.510"
+  },
+  {
+   "id": "H36",
+   "statement": "Joint triplet patterns are redundant with the pairwise marginals or support-limited, so no predictive increment survives (null outcome; #277 retained).",
+   "status": "INCONCLUSIVE",
+   "evidence": [
+    "results/research/issue283/JOIN_SUMMARY.json",
+    "results/research/issue283/MATCHED.json",
+    "results/research/issue283/MODEL_COMPARISON.json",
+    "results/research/issue283/tests/test_joint283.py"
+   ],
+   "origin_issue": 283,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "redundancy refuted (ALL above null, not marginal-determined) and support ample; the predictive null is a resolution limit at 129 SIDs"
+  },
+  {
+   "id": "H37",
+   "statement": "The validation-context joint ALL rate re-measures the #277 l1_pos_hit rather than adding an independent signal.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue283/VALIDATION_COMPOSITION.json"
+   ],
+   "origin_issue": 283,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null
+  },
+  {
+   "id": "H38",
+   "statement": "Chain ALL remains associated with recall after matching the three chain marginals plus the six metrics and the L2/collision/L3/occupancy controls.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue284/MODEL_284.json",
+    "results/research/issue284/MATCHED_284.json",
+    "results/research/issue284/CHAIN_ANALYSIS.json"
+   ],
+   "origin_issue": 284,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "primary 100 pairs: all1 0.122 [-0.239,0.451], ALL_norm 0.149 [-0.186,0.462]"
+  },
+  {
+   "id": "H39",
+   "statement": "The chain-ALL association is conditional on subsequent L2/L3 refinement: more refinement after an L1-ALL triple changes the recall relation (the over-merging hypothesis).",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue284/MODEL_284.json",
+    "results/research/issue284/MATCHED_284.json",
+    "results/research/issue284/CHAIN_ANALYSIS.json"
+   ],
+   "origin_issue": 284,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "cond_refine vs recall 0.001 [-0.202,0.205]; p3_split -0.028; matched sign negative n.s."
+  },
+  {
+   "id": "H40",
+   "statement": "The chain-ALL association is driven by a small set of high-recall or weak-identity SIDs.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue284/MODEL_284.json",
+    "results/research/issue284/MATCHED_284.json",
+    "results/research/issue284/CHAIN_ANALYSIS.json"
+   ],
+   "origin_issue": 284,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "LOO ranges 0.032-0.246 (primary) / 0.123-0.295 (secondary); strong-only 0.067/0.169"
+  },
+  {
+   "id": "H41",
+   "statement": "Chain ALL is structurally special: it exceeds the fork/merge/revchain ALL association with recall beyond the shared co-grouping level.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue284/MODEL_284.json",
+    "results/research/issue284/MATCHED_284.json",
+    "results/research/issue284/CHAIN_ANALYSIS.json"
+   ],
+   "origin_issue": 284,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "chain 0.395 ~ fork 0.388 / merge 0.401 / revchain 0.399"
+  },
+  {
+   "id": "H42",
+   "statement": "A pre-registered chain-ALL (or conditional-refinement) candidate passes the paired SID-cluster CI gate and the secondary criteria.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue284/MODEL_284.json",
+    "results/research/issue284/MATCHED_284.json",
+    "results/research/issue284/CHAIN_ANALYSIS.json"
+   ],
+   "origin_issue": 284,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "B/D/selected CIs cover 0; C significantly negative; passes=false"
+  },
+  {
+   "id": "H43",
+   "statement": "At the observed effect size 129 SIDs are underpowered; a specific number of additional independent labels would be required.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue284/MODEL_284.json",
+    "results/research/issue284/MATCHED_284.json",
+    "results/research/issue284/CHAIN_ANALYSIS.json"
+   ],
+   "origin_issue": 284,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "mean 2.73e-4 vs MDE 4.64e-4 at 129; 374 (cluster 353) SIDs for 80% power"
+  },
+  {
+   "id": "H44",
+   "statement": "Raw chain ALL is a collinearity proxy of l1_pos_hit (rho 0.984) and the full-cohort fit flips its coefficient sign.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue284/CHAIN_ANALYSIS.json",
+    "results/research/issue284/PROSPECTIVE_284.json"
+   ],
+   "origin_issue": 284,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null
+  },
+  {
+   "id": "H45",
+   "statement": "The ALL-recall ranking is a conditional low-L1-collision-regime rule, not a universal relation.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue284/CHAIN_ANALYSIS.json"
+   ],
+   "origin_issue": 284,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null
+  }
+ ]
+}
