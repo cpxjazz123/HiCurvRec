@@ -1,0 +1,43 @@
+{
+ "round": "R01",
+ "run_dir": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_8b87d02e2dba46338495e26cf9917cc4/TIGER_sameanchor_finalq_rq",
+ "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/_runs/stage2_8b87d02e2dba46338495e26cf9917cc4/TIGER_sameanchor_finalq_rq/result/item_sids.json",
+ "sid_sha256": "59c5567e0eef910742ef05887892989075b214b1f74fb869bfc5fc8a7d8f48b8",
+ "P": 0.08194780549800658,
+ "N": 0.009817290481916674,
+ "C": 0.16207752064098913,
+ "passes_P": true,
+ "passes_N": false,
+ "passes_C": false,
+ "passes_all": false,
+ "hard_er": 8.347293547945169,
+ "diagnostics": {
+  "distinct_l2_prefixes": 7821,
+  "distinct_l3_triples": 20602,
+  "l3_refinement_gain_bits": 2.0689000305171312,
+  "positive_hit_rates_by_level": [
+   0.08194780549800658,
+   0.009366458329706296,
+   0.0020543533139504517
+  ],
+  "negative_hit_probabilities_by_level": [
+   0.009817290481916674,
+   0.0003957480172128595,
+   2.7989945305296635e-05
+  ]
+ },
+ "diagnosis": {
+  "l1_bucket_size_mean": 231.853,
+  "l1_bucket_size_median": 216.0,
+  "l1_bucket_size_max": 548,
+  "in_bucket_purity": 0.34958,
+  "in_bucket_pairs": 1054258,
+  "related_unshared_fraction": 0.95458,
+  "related_pairs": 1442306
+ },
+ "thresholds": {
+  "P_gt": 0.08097285816257246,
+  "N_lt": 0.008752316503966327,
+  "C_lt": 0.1511367795989751
+ }
+}

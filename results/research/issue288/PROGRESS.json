@@ -1,0 +1,26 @@
+{
+ "issue": 288,
+ "state": "WORKING",
+ "infra_mode": "FROZEN",
+ "done": ["C1", "C5", "C14", "R01", "diagnosis"],
+ "reused": ["issue277_evaluator:frozen", "tiger_checkpoint:frozen", "issue287:same_anchor_index",
+            "issue274:pair_index", "issue274:margin"],
+ "not_run": ["R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10"],
+ "failed": [],
+ "infra_faults": [],
+ "running": [{"name": "R02_train", "arm": "TIGER_l1_budget10_rq",
+              "dispatch": "stage2_24fdc6005dfb48b0a6fb750f9e280091",
+              "log": "results/stage2_RQ-VAE/_runs/stage2_24fdc6005dfb48b0a6fb750f9e280091/TIGER_l1_budget10_rq/result/logs/train_migrated.log"}],
+ "next_commands": [
+   "python3.10 results/research/issue288/finish_round.py R02 TIGER_l1_budget10_rq",
+   "record R02, comment the issue, design R03"
+ ],
+ "rounds": {
+   "R01": {"arm": "TIGER_sameanchor_finalq_rq", "dispatch": "stage2_8b87d02e2dba46338495e26cf9917cc4",
+           "P": 0.08194780549800658, "N": 0.009817290481916674, "C": 0.16207752064098913,
+           "passes": ["P"], "purity": 0.34958, "fn": 0.95458,
+           "record": "results/research/issue288/results/R01.json"}
+ },
+ "blocked_by": null,
+ "updated_at": "2026-11-28T23:55:00Z"
+}

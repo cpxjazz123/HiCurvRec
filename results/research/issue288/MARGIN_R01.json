@@ -1,0 +1,20 @@
+{
+ "schema": "genrec.issue288.margin_r01/1",
+ "rule": "margin = median(d_negative - d_positive) over the frozen TIGER final hard q and the frozen same-anchor index (computed once, before the R01 run)",
+ "supervised_representation": "the final hard q = sum of the three levels' hard codewords",
+ "margin": 0.00470653947787214,
+ "d_positive_mean": 0.286759,
+ "d_positive_median": 0.261417,
+ "d_negative_mean": 0.295203,
+ "d_negative_median": 0.273814,
+ "gap_median": 0.004707,
+ "gap_q25": -0.0635,
+ "gap_q75": 0.07888,
+ "share_positive_closer": 0.521244,
+ "pairs": 40835,
+ "inputs": {
+  "index_sha256": "3e2cad7ff9c177fd76ff55b7280f81e0131ab0cde09ca04b6c8ec31c98cbff44",
+  "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+  "checkpoint_sha256": "af8efc29a8bcbbe5394cc5e358acf7b14c0e78ae99d8a8b9e5faf03fdddd97a8"
+ }
+}

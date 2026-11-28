@@ -1,0 +1,103 @@
+{
+  "results": [
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_inverted_order_is_penalised",
+        "test_insufficient_margin_is_zero",
+        "test_reference_consistency_on_random_inputs",
+        "test_the_gradient_reaches_the_l1_codebook_only",
+        "test_only_the_supervised_level_carries_the_pair_gradient"
+      ],
+      "mutation": "M1_sign_flip",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_inverted_order_is_penalised",
+        "test_insufficient_margin_is_zero",
+        "test_all_coincident_pairs_give_the_margin_but_no_gradient",
+        "test_reference_consistency_on_random_inputs",
+        "test_swapping_the_pairs_inverts_the_loss"
+      ],
+      "mutation": "M2_margin_sign",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_reference_consistency_on_random_inputs"
+      ],
+      "mutation": "M3_wrong_reduction",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_reference_consistency_on_random_inputs",
+        "test_the_supervised_vector_is_the_selected_l1_codeword",
+        "test_the_l1_embedding_is_the_hard_selected_codeword"
+      ],
+      "mutation": "M4_wrong_level",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_hand_computed_hinge_mean",
+        "test_inverted_order_is_penalised",
+        "test_insufficient_margin_is_zero",
+        "test_the_diagnostics_match_the_hand_computation",
+        "test_reference_consistency_on_random_inputs",
+        "test_the_gradient_reaches_the_l1_codebook_only",
+        "test_only_the_supervised_level_carries_the_pair_gradient",
+        "test_swapping_the_pairs_inverts_the_loss"
+      ],
+      "mutation": "M5_swapped_pairs",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_the_index_sampling_is_deterministic_and_uses_only_the_training_groups"
+      ],
+      "mutation": "M6_holdout_leak",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_the_gradient_reaches_the_l1_codebook_only",
+        "test_only_the_supervised_level_carries_the_pair_gradient"
+      ],
+      "mutation": "M7_detached_codebook",
+      "returncode": 1
+    },
+    {
+      "caught": true,
+      "errors": [],
+      "failed_tests": [
+        "test_reference_consistency_on_random_inputs",
+        "test_the_supervised_vector_is_the_selected_l1_codeword",
+        "test_the_gradient_reaches_the_l1_codebook_only",
+        "test_the_l1_embedding_is_the_hard_selected_codeword",
+        "test_only_the_supervised_level_carries_the_pair_gradient",
+        "test_swapping_the_pairs_inverts_the_loss"
+      ],
+      "mutation": "M8_soft_assignment",
+      "returncode": 1
+    }
+  ],
+  "schema": "genrec.issue287.mutations/1"
+}
