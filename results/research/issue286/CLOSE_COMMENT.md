@@ -26,3 +26,5 @@ difference is negative → no n recovers it; MDE at 129 = 8.3e−5.
 R6 α=0.01, expert coefficients/scalers, domain, hashes) with 122 pending predictions side by side with
 #277/#284/#285; the 2 time-postordered labels (0.04795/0.04847) are diagnostic only. #277/#284/#285
 files unchanged; no Stage3; infra drift 0.
+
+Commit: cfe141b6910bda8d27f86a470869bf2e5f82b5cb (main); issue CLOSED.
