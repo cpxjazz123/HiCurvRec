@@ -1,0 +1,148 @@
+{
+ "schema": "genrec.issue287.eval/1",
+ "thresholds": {
+  "P_gt": 0.08097285816257246,
+  "N_lt": 0.008752316503966327,
+  "C_lt": 0.1511367795989751
+ },
+ "stretch": {
+  "P_ge": 0.09253295,
+  "C_band": [
+   0.0303,
+   0.0871
+  ]
+ },
+ "valid_sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9",
+ "evaluator": {
+  "path": "/fs04/ar57/wenyu/GeneRec/tools/issue252/layer_metrics.py",
+  "sha256": "b739ed1e8b7a3c745dec8d5de06c369464f6b8fb3c65a0eb52a221d33b688816"
+ },
+ "rows": [
+  {
+   "sid_path": "results/stage2_RQ-VAE/_runs/stage2_d859278421c34aae85b97747a5b66d3c/TIGER_l1margin_pairrank_rq/result/item_sids.json",
+   "sid_sha256": "9829661e8301a193c5657eecc305aa1be6274479902bb4fcc2ab21aa3d0a92ba",
+   "P": 0.0862480196382249,
+   "N": 0.010293984868672328,
+   "C": 0.16415178752999549,
+   "hard_er": 8.378487120250526,
+   "passes_P": true,
+   "passes_N": false,
+   "passes_C": false,
+   "passes_all": false,
+   "stretch_P": false,
+   "stretch_C_band": false,
+   "diagnostics": {
+    "distinct_l2_prefixes": 7923,
+    "distinct_l3_triples": 20551,
+    "l3_refinement_gain_bits": 2.0806849311922964,
+    "prefix_entropy_bits": [
+     7.113887152355037,
+     12.07725072005527,
+     14.157935651247566
+    ],
+    "codebook_occupancy": [
+     256,
+     256,
+     256
+    ],
+    "effective_rows": 57439,
+    "positive_hit_rates_by_level": [
+     0.0862480196382249,
+     0.00941868765124741,
+     0.002176221730879716
+    ],
+    "negative_hit_probabilities_by_level": [
+     0.010293984868672328,
+     0.00044373412423361205,
+     2.8205213028243932e-05
+    ],
+    "conditional_prefix_survival_difference": 0.1674902869272184,
+    "conditional_log_enrichment_bits": 1.861961266538796
+   }
+  },
+  {
+   "sid_path": "results/stage2_RQ-VAE/_runs/stage2_70a5a9cc3d754cd48d45e08de055e6d1/TIGER_sameanchor_r5_pairrank_rq/result/item_sids.json",
+   "sid_sha256": "b10e4774ff490c834484fefb1c21242536c3896b6ff8fa50555f58a08ee63b18",
+   "P": 0.08245268893957068,
+   "N": 0.009581459175042285,
+   "C": 0.1578883149631919,
+   "hard_er": 8.605441763436497,
+   "passes_P": true,
+   "passes_N": false,
+   "passes_C": false,
+   "passes_all": false,
+   "stretch_P": false,
+   "stretch_C_band": false,
+   "diagnostics": {
+    "distinct_l2_prefixes": 7894,
+    "distinct_l3_triples": 20705,
+    "l3_refinement_gain_bits": 2.0811846702333465,
+    "prefix_entropy_bits": [
+     7.140599336501075,
+     12.095302747194921,
+     14.176487417428268
+    ],
+    "codebook_occupancy": [
+     256,
+     256,
+     256
+    ],
+    "effective_rows": 57439,
+    "positive_hit_rates_by_level": [
+     0.08245268893957068,
+     0.008913804209683317,
+     0.0020543533139504517
+    ],
+    "negative_hit_probabilities_by_level": [
+     0.009581459175042285,
+     0.0003845538090550954,
+     2.7152784106763768e-05
+    ],
+    "conditional_prefix_survival_difference": 0.1598602071448867,
+    "conditional_log_enrichment_bits": 1.7066564948880076
+   }
+  },
+  {
+   "sid_path": "results/stage2_RQ-VAE/_runs/stage2_1443d8ab0b8e43c9850fd4952e0811b7/TIGER_hardneg_pairrank_rq/result/item_sids.json",
+   "sid_sha256": "f1ee046ef8ca609078e35f9062723a1dec673882f6489aa7ff8bf1206d94e897",
+   "P": 0.08819791430909313,
+   "N": 0.010532514090149122,
+   "C": 0.15886444055801852,
+   "hard_er": 8.373871001186991,
+   "passes_P": true,
+   "passes_N": false,
+   "passes_C": false,
+   "passes_all": false,
+   "stretch_P": false,
+   "stretch_C_band": false,
+   "diagnostics": {
+    "distinct_l2_prefixes": 7721,
+    "distinct_l3_triples": 20681,
+    "l3_refinement_gain_bits": 2.119956316480774,
+    "prefix_entropy_bits": [
+     7.0705946646907645,
+     12.057434697829617,
+     14.177391014310391
+    ],
+    "codebook_occupancy": [
+     256,
+     256,
+     256
+    ],
+    "effective_rows": 57439,
+    "positive_hit_rates_by_level": [
+     0.08819791430909313,
+     0.009523146294329637,
+     0.0018802555754800746
+    ],
+    "negative_hit_probabilities_by_level": [
+     0.010532514090149122,
+     0.00039116512274490025,
+     2.6126478979162116e-05
+    ],
+    "conditional_prefix_survival_difference": 0.130649152286749,
+    "conditional_log_enrichment_bits": 1.5636836077874252
+   }
+  }
+ ]
+}

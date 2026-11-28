@@ -1,0 +1,25 @@
+{
+ "schema": "genrec.issue287.hardneg/1",
+ "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue287/pairs_hardneg.npz",
+ "sha256": "09cbfa9aaf1f321a8655ce48baa220157bdb37e073fcf88a1087e5edbc0a7306",
+ "rules": {
+  "positive": "round 2's frozen curvature-screened positive (the anchor's direct partner)",
+  "negative": "an item that already shares the anchor L1 code in the frozen TIGER export and has no observed training-graph relation with the anchor; a seeded uniform pick over the candidates sorted by item id",
+  "negative_refresh": "the trainer re-mines the same rule from the current assignment every HARDNEG_REFRESH_EPOCHS epochs (the rule is frozen; only the partition it reads changes)",
+  "curvature_role": "offline selection of the positive inside the comparability group only; the curvature never enters the loss, the margin or a weight",
+  "false_negative_note": "the negative is a measured false positive in the frozen export, not a proof of behavioural irrelevance"
+ },
+ "counts": {
+  "groups": 40835,
+  "anchors": 15998,
+  "train_groups": 32666,
+  "holdout_groups": 8169,
+  "mean_false_positive_pool": 267.62,
+  "median_false_positive_pool": 231.0,
+  "items_touched": 22822
+ },
+ "inputs": {
+  "base_index_sha256": "3e2cad7ff9c177fd76ff55b7280f81e0131ab0cde09ca04b6c8ec31c98cbff44",
+  "tiger_sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059"
+ }
+}

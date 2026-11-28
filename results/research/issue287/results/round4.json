@@ -1,0 +1,60 @@
+{
+ "round": "round4",
+ "run_dir": "results/stage2_RQ-VAE/_runs/stage2_d859278421c34aae85b97747a5b66d3c/TIGER_l1margin_pairrank_rq",
+ "sid_path": "results/stage2_RQ-VAE/_runs/stage2_d859278421c34aae85b97747a5b66d3c/TIGER_l1margin_pairrank_rq/result/item_sids.json",
+ "sid_sha256": "9829661e8301a193c5657eecc305aa1be6274479902bb4fcc2ab21aa3d0a92ba",
+ "P": 0.0862480196382249,
+ "N": 0.010293984868672328,
+ "C": 0.16415178752999549,
+ "passes_P": true,
+ "passes_N": false,
+ "passes_C": false,
+ "passes_all": false,
+ "hard_er": 8.378487120250526,
+ "diagnostics": {
+  "distinct_l2_prefixes": 7923,
+  "distinct_l3_triples": 20551,
+  "l3_refinement_gain_bits": 2.0806849311922964,
+  "prefix_entropy_bits": [
+   7.113887152355037,
+   12.07725072005527,
+   14.157935651247566
+  ],
+  "codebook_occupancy": [
+   256,
+   256,
+   256
+  ],
+  "effective_rows": 57439,
+  "positive_hit_rates_by_level": [
+   0.0862480196382249,
+   0.00941868765124741,
+   0.002176221730879716
+  ],
+  "negative_hit_probabilities_by_level": [
+   0.010293984868672328,
+   0.00044373412423361205,
+   2.8205213028243932e-05
+  ],
+  "conditional_prefix_survival_difference": 0.1674902869272184,
+  "conditional_log_enrichment_bits": 1.861961266538796
+ },
+ "training": {
+  "n_epochs_recorded": 3000,
+  "final_collision": 0.16431447512913333,
+  "epoch_time_s_mean": 0.2882,
+  "total_wall_time_s": 864.509,
+  "events": [
+   "train_start",
+   "pair_calibration",
+   "l1_probe",
+   "train_end"
+  ],
+  "metrics_sha256": "7ee0115969a229037dce61f1e15ffd08dd00a9f478b59e3e33ab8a4dc18648c9"
+ },
+ "thresholds": {
+  "P_gt": 0.08097285816257246,
+  "N_lt": 0.008752316503966327,
+  "C_lt": 0.1511367795989751
+ }
+}

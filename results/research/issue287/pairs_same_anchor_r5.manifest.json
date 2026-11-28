@@ -1,0 +1,22 @@
+{
+ "schema": "genrec.issue287.same_anchor_r5/1",
+ "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue287/pairs_same_anchor_r5.npz",
+ "sha256": "66ff5dacd0637dad14acb1f038d8599957e8ff0d8ecf748cee16db05d4a74828",
+ "rules": {
+  "positive": "a distance-two item that shares a neighbour with the anchor (behavioural co-occurrence) and is not adjacent to it",
+  "negative": "a distance-two item whose centre differs from the positive's centre",
+  "comparability_group": "the anchor, the unordered multiset of the two centre-edge direction flags and the anchor's degree decile",
+  "curvature_role": "offline selection inside the group only; never in the loss, the margin or a weight",
+  "holdout": "anchor % 5 == 0",
+  "false_negative_note": "an unobserved pair is a relative-association label, not a proof of irrelevance"
+ },
+ "counts": {
+  "rows_scanned": 28391948,
+  "groups": 73116,
+  "groups_kept": 70354,
+  "anchors": 24299,
+  "train_groups": 56302,
+  "holdout_groups": 14052,
+  "items_touched": 24413
+ }
+}

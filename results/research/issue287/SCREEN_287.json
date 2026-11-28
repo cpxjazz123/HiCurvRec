@@ -1,0 +1,56 @@
+{
+ "schema": "genrec.issue287.screen/1",
+ "index": {
+  "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue274/pairs_index.npz",
+  "groups": 26583,
+  "centres": 10782,
+  "holdout_groups": 5362,
+  "train_groups": 21221,
+  "items_touched": 11978
+ },
+ "sample_shards": [
+  "shard_000.npz",
+  "shard_001.npz",
+  "shard_002.npz"
+ ],
+ "selected_profile": {
+  "selected_positive": {
+   "pairs": 26583,
+   "edge_share": 1.0,
+   "degree_sum_mean": 306.4739,
+   "common_neighbours_mean": 6.732987,
+   "common_neighbours_median": 3.0,
+   "curvature_median": 0.689091
+  },
+  "selected_negative": {
+   "pairs": 26583,
+   "edge_share": 0.0,
+   "degree_sum_mean": 1012.0029,
+   "common_neighbours_mean": 46.865252,
+   "common_neighbours_median": 37.0,
+   "curvature_median": 3.794961
+  }
+ },
+ "class_profile": {
+  "closed": {
+   "rows": 124706,
+   "curvature_median": 1.139267,
+   "curvature_q25": -0.105983,
+   "curvature_q75": 2.162212,
+   "degree_sum_mean": 767.0832,
+   "spearman_curvature_vs_degree_sum": 0.4802,
+   "spearman_curvature_vs_reciprocal": 0.2525,
+   "spearman_curvature_vs_common_neighbours": 0.4851
+  },
+  "open": {
+   "rows": 2689521,
+   "curvature_median": -0.308549,
+   "curvature_q25": -1.668465,
+   "curvature_q75": 1.046586,
+   "degree_sum_mean": 223.6685,
+   "spearman_curvature_vs_degree_sum": 0.4921,
+   "spearman_curvature_vs_common_neighbours": 0.4781
+  }
+ },
+ "interpretation": "the curvature is comparable only inside a structure class; its within-class correlation with the degree sum, the common-neighbour count and the reciprocal flag says whether the screen adds information beyond the closed/open label, the direct edge, the common neighbours and the degrees"
+}

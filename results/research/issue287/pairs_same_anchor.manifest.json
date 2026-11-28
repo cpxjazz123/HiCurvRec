@@ -1,0 +1,29 @@
+{
+ "schema": "genrec.issue287.same_anchor_pairs/1",
+ "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue287/pairs_same_anchor.npz",
+ "sha256": "3e2cad7ff9c177fd76ff55b7280f81e0131ab0cde09ca04b6c8ec31c98cbff44",
+ "rules": {
+  "positive": "the anchor's direct neighbour: the closed triangle (bc_dist_sq == 1) outer pair",
+  "negative": "the anchor's distance-two co-neighbour: the open wedge (bc_dist_sq == 4) outer pair",
+  "comparability_group": "the anchor, the unordered multiset of the two centre-edge direction flags and the anchor's degree decile",
+  "curvature_role": "offline selection inside the group only; it never enters the loss, the margin or a weight",
+  "tie_rule": "a group whose extremum curvature is tied is dropped",
+  "holdout": "anchor % 5 == 0",
+  "false_negative_note": "an unobserved pair is not an irrelevant pair; the negative label is a relative-association label, not a proof of irrelevance"
+ },
+ "counts": {
+  "rows_scanned": 28391948,
+  "groups_positive": 40835,
+  "groups_negative": 73116,
+  "groups_common": 40835,
+  "anchors": 15998,
+  "train_groups": 32666,
+  "holdout_groups": 8169,
+  "items_touched": 16616
+ },
+ "inputs": {
+  "visible_forward": "ac7155d1424a6a346da9b8ed6e9413b81d43223a377308af0c8ba35b6b773029",
+  "visible_reverse": "5fb26e2b1b5b056674b350c556df458493d56b0f450367dd4d9b7329a39896b6",
+  "visible_undirected": "097a719a9f00292477a1434c776de1ff37fb60adb7a1adc9c517a98bc7147818"
+ }
+}

@@ -1,0 +1,16 @@
+{
+ "schema": "genrec.issue287.margin274_l1/1",
+ "rule": "margin = median(d_negative - d_positive) over the frozen TIGER L1 codebook and the frozen #274 pair index (computed once, before any candidate training)",
+ "margin": 0.022925138473510742,
+ "d_positive_mean": 0.218586,
+ "d_negative_mean": 0.249041,
+ "gap_median": 0.022925,
+ "gap_q25": -0.081992,
+ "gap_q75": 0.159898,
+ "share_positive_closer": 0.559794,
+ "pairs": 26583,
+ "inputs": {
+  "index": "results/research/issue274/pairs_index.npz",
+  "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059"
+ }
+}
