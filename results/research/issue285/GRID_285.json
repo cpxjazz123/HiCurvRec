@@ -1,0 +1,655 @@
+{
+ "schema": "genrec.issue285.grid/1",
+ "min_support": 10,
+ "cells": {
+  "LL": {
+   "n": 34,
+   "clusters": 33,
+   "strong": 27,
+   "high": 11,
+   "high_strong": 4,
+   "support_ok": true,
+   "recall": {
+    "mean": 0.05305,
+    "min": 0.02601,
+    "max": 0.06466,
+    "range": 0.03865
+   },
+   "P": {
+    "spearman": 0.951,
+    "kendall": 0.8457,
+    "slope": 0.9124,
+    "ci95": [
+     0.8611847533577114,
+     0.986996823195345
+    ],
+    "reversals": {
+     "inversions": 43,
+     "comparable": 560,
+     "rate": 0.07678571428571429
+    }
+   },
+   "ER": {
+    "spearman": 0.9558,
+    "kendall": 0.8421,
+    "slope": 0.9124,
+    "ci95": [
+     0.8652630745377858,
+     0.9841125007951883
+    ],
+    "reversals": {
+     "inversions": 44,
+     "comparable": 560,
+     "rate": 0.07857142857142857
+    }
+   },
+   "ALL": {
+    "spearman": 0.926,
+    "kendall": 0.7814,
+    "slope": 0.8583,
+    "ci95": [
+     0.8177813131265909,
+     0.970349705242473
+    ],
+    "reversals": {
+     "inversions": 61,
+     "comparable": 560,
+     "rate": 0.10892857142857143
+    }
+   },
+   "ALL_fork": {
+    "spearman": 0.9263,
+    "kendall": 0.785,
+    "slope": 0.8535,
+    "ci95": [
+     0.8177283574543529,
+     0.9705375992850356
+    ],
+    "reversals": {
+     "inversions": 60,
+     "comparable": 560,
+     "rate": 0.10714285714285714
+    }
+   },
+   "ALL_merge": {
+    "spearman": 0.926,
+    "kendall": 0.7814,
+    "slope": 0.856,
+    "ci95": [
+     0.8172272014597111,
+     0.9703883632008502
+    ],
+    "reversals": {
+     "inversions": 61,
+     "comparable": 560,
+     "rate": 0.10892857142857143
+    }
+   }
+  },
+  "LN": {
+   "n": 10,
+   "clusters": 10,
+   "strong": 10,
+   "high": 0,
+   "high_strong": 0,
+   "support_ok": true,
+   "recall": {
+    "mean": 0.0501,
+    "min": 0.02887,
+    "max": 0.05552,
+    "range": 0.02665
+   },
+   "P": {
+    "spearman": 0.4802,
+    "kendall": 0.4045,
+    "slope": 0.8682,
+    "ci95": [
+     -0.4604142692750287,
+     1.0
+    ],
+    "reversals": {
+     "inversions": 13,
+     "comparable": 44,
+     "rate": 0.29545454545454547
+    }
+   },
+   "ER": {
+    "spearman": 0.693,
+    "kendall": 0.4944,
+    "slope": 0.9007,
+    "ci95": [
+     0.006910299640854067,
+     0.9643083003952568
+    ],
+    "reversals": {
+     "inversions": 11,
+     "comparable": 44,
+     "rate": 0.25
+    }
+   },
+   "ALL": {
+    "spearman": 0.3647,
+    "kendall": 0.2697,
+    "slope": 0.737,
+    "ci95": [
+     -0.6778802885159732,
+     0.9685873728427048
+    ],
+    "reversals": {
+     "inversions": 16,
+     "comparable": 44,
+     "rate": 0.36363636363636365
+    }
+   },
+   "ALL_fork": {
+    "spearman": 0.3647,
+    "kendall": 0.2697,
+    "slope": 0.7361,
+    "ci95": [
+     -0.6778802885159732,
+     0.9685873728427048
+    ],
+    "reversals": {
+     "inversions": 16,
+     "comparable": 44,
+     "rate": 0.36363636363636365
+    }
+   },
+   "ALL_merge": {
+    "spearman": 0.3647,
+    "kendall": 0.2697,
+    "slope": 0.7309,
+    "ci95": [
+     -0.6778802885159732,
+     0.9685873728427048
+    ],
+    "reversals": {
+     "inversions": 16,
+     "comparable": 44,
+     "rate": 0.36363636363636365
+    }
+   }
+  },
+  "LC": {
+   "n": 7,
+   "clusters": 7,
+   "strong": 5,
+   "high": 2,
+   "high_strong": 2,
+   "support_ok": false,
+   "recall": {
+    "mean": 0.05496,
+    "min": 0.04265,
+    "max": 0.06476,
+    "range": 0.02211
+   },
+   "P": {
+    "spearman": 0.5357,
+    "kendall": 0.4286,
+    "slope": 0.7053,
+    "ci95": [
+     -0.5000000000000001,
+     1.0
+    ],
+    "reversals": {
+     "inversions": 6,
+     "comparable": 21,
+     "rate": 0.2857142857142857
+    }
+   },
+   "ER": {
+    "spearman": 0.9286,
+    "kendall": 0.8095,
+    "slope": 0.8923,
+    "ci95": [
+     0.5384615384615385,
+     1.0
+    ],
+    "reversals": {
+     "inversions": 2,
+     "comparable": 21,
+     "rate": 0.09523809523809523
+    }
+   },
+   "ALL": {
+    "spearman": 0.4286,
+    "kendall": 0.4286,
+    "slope": 0.3792,
+    "ci95": [
+     -0.6197387518142236,
+     1.0
+    ],
+    "reversals": {
+     "inversions": 6,
+     "comparable": 21,
+     "rate": 0.2857142857142857
+    }
+   },
+   "ALL_fork": {
+    "spearman": 0.4286,
+    "kendall": 0.4286,
+    "slope": 0.413,
+    "ci95": [
+     -0.6197387518142236,
+     1.0
+    ],
+    "reversals": {
+     "inversions": 6,
+     "comparable": 21,
+     "rate": 0.2857142857142857
+    }
+   },
+   "ALL_merge": {
+    "spearman": 0.4286,
+    "kendall": 0.4286,
+    "slope": 0.3372,
+    "ci95": [
+     -0.6197387518142236,
+     1.0
+    ],
+    "reversals": {
+     "inversions": 6,
+     "comparable": 21,
+     "rate": 0.2857142857142857
+    }
+   }
+  },
+  "HH": {
+   "n": 39,
+   "clusters": 39,
+   "strong": 39,
+   "high": 0,
+   "high_strong": 0,
+   "support_ok": true,
+   "recall": {
+    "mean": 0.05266,
+    "min": 0.03527,
+    "max": 0.0585,
+    "range": 0.02322
+   },
+   "P": {
+    "spearman": 0.2397,
+    "kendall": 0.2107,
+    "slope": -0.2436,
+    "ci95": [
+     -0.127803303450885,
+     0.602228787137921
+    ],
+    "reversals": {
+     "inversions": 292,
+     "comparable": 740,
+     "rate": 0.3945945945945946
+    }
+   },
+   "ER": {
+    "spearman": 0.1282,
+    "kendall": 0.0486,
+    "slope": 0.2937,
+    "ci95": [
+     -0.25991791946797677,
+     0.4481885337617607
+    ],
+    "reversals": {
+     "inversions": 352,
+     "comparable": 740,
+     "rate": 0.4756756756756757
+    }
+   },
+   "ALL": {
+    "spearman": 0.0822,
+    "kendall": 0.1026,
+    "slope": -0.3839,
+    "ci95": [
+     -0.285304512560606,
+     0.46470748293138686
+    ],
+    "reversals": {
+     "inversions": 332,
+     "comparable": 740,
+     "rate": 0.4486486486486487
+    }
+   },
+   "ALL_fork": {
+    "spearman": 0.0684,
+    "kendall": 0.0918,
+    "slope": -0.3864,
+    "ci95": [
+     -0.29940654415944457,
+     0.4500887114712214
+    ],
+    "reversals": {
+     "inversions": 336,
+     "comparable": 740,
+     "rate": 0.4540540540540541
+    }
+   },
+   "ALL_merge": {
+    "spearman": 0.0846,
+    "kendall": 0.1026,
+    "slope": -0.3839,
+    "ci95": [
+     -0.28120949361209086,
+     0.4636251903524995
+    ],
+    "reversals": {
+     "inversions": 332,
+     "comparable": 740,
+     "rate": 0.4486486486486487
+    }
+   }
+  },
+  "other": {
+   "n": 39,
+   "clusters": 39,
+   "strong": 39,
+   "high": 0,
+   "high_strong": 0,
+   "support_ok": true,
+   "recall": {
+    "mean": 0.05255,
+    "min": 0.03987,
+    "max": 0.05632,
+    "range": 0.01645
+   },
+   "P": {
+    "spearman": 0.4344,
+    "kendall": 0.2782,
+    "slope": 0.3022,
+    "ci95": [
+     0.11093706638281806,
+     0.6750960652332217
+    ],
+    "reversals": {
+     "inversions": 267,
+     "comparable": 740,
+     "rate": 0.3608108108108108
+    }
+   },
+   "ER": {
+    "spearman": 0.3079,
+    "kendall": 0.2161,
+    "slope": 0.3052,
+    "ci95": [
+     -0.05726874070553974,
+     0.6173153769577451
+    ],
+    "reversals": {
+     "inversions": 290,
+     "comparable": 740,
+     "rate": 0.3918918918918919
+    }
+   },
+   "ALL": {
+    "spearman": 0.2857,
+    "kendall": 0.1891,
+    "slope": 0.1355,
+    "ci95": [
+     -0.05250968328122341,
+     0.5773674958398263
+    ],
+    "reversals": {
+     "inversions": 300,
+     "comparable": 740,
+     "rate": 0.40540540540540543
+    }
+   },
+   "ALL_fork": {
+    "spearman": 0.2731,
+    "kendall": 0.1783,
+    "slope": 0.1298,
+    "ci95": [
+     -0.06054937506227152,
+     0.5718652995976019
+    ],
+    "reversals": {
+     "inversions": 304,
+     "comparable": 740,
+     "rate": 0.41081081081081083
+    }
+   },
+   "ALL_merge": {
+    "spearman": 0.339,
+    "kendall": 0.2134,
+    "slope": 0.1418,
+    "ci95": [
+     -0.007750578228037857,
+     0.6148848968353203
+    ],
+    "reversals": {
+     "inversions": 291,
+     "comparable": 740,
+     "rate": 0.3932432432432432
+    }
+   }
+  }
+ },
+ "interaction": {
+  "P": {
+   "rho_LL": 0.951,
+   "rho_HH": 0.2397,
+   "delta": 0.7113,
+   "delta_ci95": [
+    0.33408471650186955,
+    1.0745444876782098
+   ],
+   "supported": true
+  },
+  "ER": {
+   "rho_LL": 0.9558,
+   "rho_HH": 0.1282,
+   "delta": 0.8275,
+   "delta_ci95": [
+    0.48295479349953657,
+    1.2136497597233566
+   ],
+   "supported": true
+  },
+  "ALL": {
+   "rho_LL": 0.926,
+   "rho_HH": 0.0822,
+   "delta": 0.8438,
+   "delta_ci95": [
+    0.42902859487899037,
+    1.2096905228521473
+   ],
+   "supported": true
+  },
+  "ALL_fork": {
+   "rho_LL": 0.9263,
+   "rho_HH": 0.0684,
+   "delta": 0.8578,
+   "delta_ci95": [
+    0.44444398597086043,
+    1.2199736141810713
+   ],
+   "supported": true
+  },
+  "ALL_merge": {
+   "rho_LL": 0.926,
+   "rho_HH": 0.0846,
+   "delta": 0.8413,
+   "delta_ci95": [
+    0.43093947870828414,
+    1.207386706236665
+   ],
+   "supported": true
+  },
+  "note": "supported requires the delta-rho cluster-bootstrap CI to exclude 0 and both cells >= min_support; one-significant-one-not is not an interaction"
+ },
+ "monotonicity": {
+  "LL": {
+   "P": {
+    "inversions": 43,
+    "comparable": 560,
+    "rate": 0.07678571428571429
+   },
+   "ER": {
+    "inversions": 44,
+    "comparable": 560,
+    "rate": 0.07857142857142857
+   },
+   "ALL": {
+    "inversions": 61,
+    "comparable": 560,
+    "rate": 0.10892857142857143
+   }
+  },
+  "HH": {
+   "P": {
+    "inversions": 292,
+    "comparable": 740,
+    "rate": 0.3945945945945946
+   },
+   "ER": {
+    "inversions": 352,
+    "comparable": 740,
+    "rate": 0.4756756756756757
+   },
+   "ALL": {
+    "inversions": 332,
+    "comparable": 740,
+    "rate": 0.4486486486486487
+   }
+  }
+ },
+ "counterexamples": {
+  "P": [
+   {
+    "i": 11,
+    "j": 81,
+    "d_feature": 0.030032,
+    "d_recall": -0.000139
+   },
+   {
+    "i": 28,
+    "j": 81,
+    "d_feature": 0.028378,
+    "d_recall": -0.000139
+   },
+   {
+    "i": 23,
+    "j": 81,
+    "d_feature": 0.025558,
+    "d_recall": -0.000418
+   },
+   {
+    "i": 81,
+    "j": 96,
+    "d_feature": -0.023468,
+    "d_recall": 0.003552
+   },
+   {
+    "i": 81,
+    "j": 113,
+    "d_feature": -0.023155,
+    "d_recall": 0.000487
+   }
+  ],
+  "ALL": [
+   {
+    "i": 11,
+    "j": 81,
+    "d_feature": 0.002154,
+    "d_recall": -0.000139
+   },
+   {
+    "i": 28,
+    "j": 81,
+    "d_feature": 0.00209,
+    "d_recall": -0.000139
+   },
+   {
+    "i": 81,
+    "j": 96,
+    "d_feature": -0.00158,
+    "d_recall": 0.003552
+   },
+   {
+    "i": 27,
+    "j": 81,
+    "d_feature": 0.001576,
+    "d_recall": -0.001637
+   },
+   {
+    "i": 81,
+    "j": 106,
+    "d_feature": -0.001545,
+    "d_recall": 0.002803
+   }
+  ]
+ },
+ "discrimination": {
+  "N": {
+   "auc_high_recall": 0.0975,
+   "ci95": [
+    0.0348,
+    0.1761
+   ],
+   "note": "AUC of the raw axis for recalling >0.06 (not a predictor fit)"
+  },
+  "C": {
+   "auc_high_recall": 0.0962,
+   "ci95": [
+    0.0452,
+    0.1559
+   ],
+   "note": "AUC of the raw axis for recalling >0.06 (not a predictor fit)"
+  }
+ },
+ "partial": {
+  "LL": {
+   "P": {
+    "rho": 0.9618029029793734,
+    "ci95": [
+     0.7503337569127799,
+     0.980161093238814
+    ]
+   },
+   "ALL": {
+    "rho": 0.9251336898395722,
+    "ci95": [
+     0.659678608849843,
+     0.9593057496778212
+    ]
+   }
+  }
+ },
+ "robustness": {
+  "LL_strong_only": {
+   "n": 27,
+   "high": 4,
+   "P_spearman": 0.9296,
+   "ALL_spearman": 0.8899
+  },
+  "LL_without_high_tail": {
+   "n": 23,
+   "P_spearman": 0.8861,
+   "ALL_spearman": 0.8258
+  },
+  "LL_leave_one_out": {
+   "P": {
+    "min": 0.9464,
+    "max": 0.9725
+   },
+   "ALL": {
+    "min": 0.919,
+    "max": 0.9494
+   }
+  }
+ },
+ "range_restriction": {
+  "common_interval": [
+   0.03527,
+   0.0585
+  ],
+  "LL_n": 34,
+  "LL_truncated_n": 22,
+  "LL_truncated_high": 0,
+  "LL_truncated_P_spearman": 0.8777,
+  "LL_truncated_ALL_spearman": 0.8145,
+  "LL_recall_sd": 0.009,
+  "HH_recall_sd": 0.00559,
+  "LL_full_P_spearman": 0.951,
+  "note": "truncation to the recall interval shared by LL and HH; the remainder is the non-range component"
+ }
+}

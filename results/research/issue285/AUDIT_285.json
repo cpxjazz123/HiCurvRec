@@ -1,0 +1,222 @@
+{
+ "schema": "genrec.issue285.audit/1",
+ "p284_files": {
+  "REPORT.md": {
+   "sha256": "5bd714051a39d36744dfd0ff66e069756f031fbe857d39c4b77bdfceafa7676c",
+   "exists": true
+  },
+  "VERDICT.md": {
+   "sha256": "8ed195b20533e160835bf2965105979361b724d81cb0dd24a4a69e49cb1b6f62",
+   "exists": true
+  },
+  "MODEL_284.json": {
+   "sha256": "2801f6dd52978b28d85df5672eb31915f1f37503a801d7334795ef187e347fce",
+   "exists": true
+  },
+  "CHAIN_ANALYSIS.json": {
+   "sha256": "973558cf5ddf603d7c335002903bec6f92b0ee0ebce7b18d79ab6c8b44741561",
+   "exists": true
+  },
+  "CHAIN_TABLE.json": {
+   "sha256": "566f00ce1995c30a7453ffd92ec46ffb9dc53d5d634e1a932aa62fc183dc025c",
+   "exists": true
+  },
+  "MATCHED_284.json": {
+   "sha256": "938219b51dbfb2b4db2b4aaf5b1c04eff33a560f3d060bfac84fc14f52299451",
+   "exists": true
+  },
+  "PROSPECTIVE_284.json": {
+   "sha256": "21ca1d71a39a75361f071c9ff725663686f883d288afdf35a8156669826f86f0",
+   "exists": true
+  },
+  "AUDIT_284.json": {
+   "sha256": "5f9089a6f198318bb6cc653ddf334d12cfc95fbe7c5108f192598230f38469fc",
+   "exists": true
+  }
+ },
+ "p284_commit": "b106d01e61a73d903aad7e58f77e63a42afaa745",
+ "p277_predictor": {
+  "sha256": "ec339f4aff604edcb6b78757ea3f62f3d43decd92d2aba599a73b994f1843cec"
+ },
+ "p283_join_summary": {
+  "sha256": "52ab637a7f64832529575f70836ad7db15d3900c63ba3cf49bc2515163f5d228"
+ },
+ "labels": {
+  "n": 129,
+  "n_strong": 120,
+  "n_weak": 9,
+  "n_high": 13,
+  "n_high_strong": 6,
+  "n_units": 127,
+  "fold_sizes": {
+   "0": 27,
+   "1": 27,
+   "2": 26,
+   "3": 25,
+   "4": 24
+  }
+ },
+ "identity_ER": {
+  "max_abs_ER_minus_P_over_N": 0.0,
+  "median_ER": 6.670527553713077
+ },
+ "spearman": {
+  "N-C": 0.8636,
+  "N-P": 0.8008,
+  "N-ALL": 0.852,
+  "N-y": 0.059,
+  "C-P": 0.7385,
+  "C-ALL": 0.7633,
+  "C-y": 0.0928,
+  "P-ALL": 0.9835,
+  "P-y": 0.4608,
+  "ALL-y": 0.3952
+ },
+ "same_source": {
+  "eigvals_NCP": [
+   0.0475,
+   0.2877,
+   2.6648
+  ],
+  "pc1_share": 0.8883
+ },
+ "gates": {
+  "edges_N": {
+   "0": [
+    0.008907,
+    0.020175
+   ],
+   "1": [
+    0.009148,
+    0.020175
+   ],
+   "2": [
+    0.009017,
+    0.019645
+   ],
+   "3": [
+    0.009174,
+    0.02107
+   ],
+   "4": [
+    0.008517,
+    0.018985
+   ]
+  },
+  "edges_C": {
+   "0": [
+    0.107414,
+    0.206207
+   ],
+   "1": [
+    0.121107,
+    0.212321
+   ],
+   "2": [
+    0.112702,
+    0.211901
+   ],
+   "3": [
+    0.123602,
+    0.214761
+   ],
+   "4": [
+    0.110709,
+    0.214544
+   ]
+  },
+  "counts": {
+   "LL": 34,
+   "LN": 10,
+   "LC": 7,
+   "HH": 39,
+   "HN": 0,
+   "HC": 0,
+   "mid": 0
+  }
+ },
+ "overlap": {
+  "lowN": 44,
+  "lowC": 41,
+  "intersection": 34,
+  "jaccard": 0.6667,
+  "lowN_given_lowC": 0.8293,
+  "lowC_given_lowN": 0.7727
+ },
+ "cells": {
+  "LL": {
+   "n": 34,
+   "strong": 27,
+   "high": 11,
+   "recall_mean": 0.05305,
+   "recall_min": 0.02601,
+   "recall_max": 0.06466
+  },
+  "LN": {
+   "n": 10,
+   "strong": 10,
+   "high": 0,
+   "recall_mean": 0.0501,
+   "recall_min": 0.02887,
+   "recall_max": 0.05552
+  },
+  "LC": {
+   "n": 7,
+   "strong": 5,
+   "high": 2,
+   "recall_mean": 0.05496,
+   "recall_min": 0.04265,
+   "recall_max": 0.06476
+  },
+  "HH": {
+   "n": 39,
+   "strong": 39,
+   "high": 0,
+   "recall_mean": 0.05266,
+   "recall_min": 0.03527,
+   "recall_max": 0.0585
+  },
+  "other": {
+   "n": 39,
+   "strong": 39,
+   "high": 0,
+   "recall_mean": 0.05255,
+   "recall_min": 0.03987,
+   "recall_max": 0.05632
+  }
+ },
+ "global_crosscheck": {
+  "edges_N": [
+   0.008907,
+   0.020175
+  ],
+  "edges_C": [
+   0.116932,
+   0.212321
+  ],
+  "lowN_n": 43,
+  "lowC_n": 43,
+  "rho_lowN": 0.907,
+  "rho_lowC": 0.846
+ },
+ "time_postordered_sensitivity": [
+  {
+   "sid_prefix": "9f6bf673",
+   "recall": 0.0479465171747419,
+   "N": 0.008752316503966327,
+   "C": 0.1511367795989751,
+   "P": 0.0783613920855168,
+   "global_lowN": true,
+   "global_lowC": false
+  },
+  {
+   "sid_prefix": "61f898498c19",
+   "recall": 0.04846881039015303,
+   "N": 0.008888674718500559,
+   "C": 0.13381055029080413,
+   "P": 0.06081234004770278,
+   "global_lowN": true,
+   "global_lowC": false
+  }
+ ]
+}
