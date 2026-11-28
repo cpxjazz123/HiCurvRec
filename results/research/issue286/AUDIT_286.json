@@ -1,0 +1,114 @@
+{
+ "schema": "genrec.issue286.audit/1",
+ "p285_files": {
+  "REPORT.md": "2eb9a744151feebe829ba3e823a0324e4a9f37a8fcf1464710944ed245dad8b7",
+  "VERDICT.md": "9e87926a14cdaa4178401a28c83919cf032b1bbf0f57dc61f6cdb89d7267d25e",
+  "GRID_285.json": "b84c61a5f9460eeec0caf1120e5b2bdb4fb3464220b6209819c56702bb05dc5c",
+  "MODEL_285.json": "39201d37e5935168cfbc8b39e6f17662d4205fee4c1a6f2030bcdf50d0fe4989",
+  "AUDIT_285.json": "1312947122089210c40cbf6e407925bf15f99bc8a735fea43c9484282bc14e73"
+ },
+ "p277_files": {
+  "PREDICTOR.json": "ec339f4aff604edcb6b78757ea3f62f3d43decd92d2aba599a73b994f1843cec",
+  "AUDIT_277.json": "94e470ea0c12d72930c9221c352f571f809ed571d889ea782b577581310aa7bd",
+  "REPORT.md": "9ccb6cc970c21097056583ea21712cf435e817ed8724c5d1397ecd588265b126",
+  "VERDICT.md": "78adfcb468eb051070ed3a2de475feb1e54e9f36c3194a7b7690909a3b70f645",
+  "PROSPECTIVE_OUTCOME.json": "3d007c76d29bbcd9ca5152f0c4f835ab1a4fd5883c382949f5548418d660b035",
+  "COEFFICIENTS.json": "78ad12278efc9445f1aae482f78474ec89c640019f858e61e9b353fda4b29db7",
+  "FEATURE_CONTRACT.md": "bf1bece8a64f930604518af9aae6a9a770b3d222a9d4f88663059b929e2f6c77"
+ },
+ "commits": {
+  "p285": "a433172f2774c5d633f3798b2151f01683ad7ec2",
+  "p277": "d1cb5cbc8bf1cee998ce8e7ca7fb0e8afdf16b0d"
+ },
+ "labels": {
+  "n": 129,
+  "n_strong": 120,
+  "n_weak": 9,
+  "n_high": 13,
+  "n_high_strong": 6,
+  "n_units": 127,
+  "fold_sizes": {
+   "0": 27,
+   "1": 27,
+   "2": 26,
+   "3": 25,
+   "4": 24
+  },
+  "label_min": 0.02601,
+  "label_max": 0.064764,
+  "n_above_0_065": 0
+ },
+ "baseline_reproduction": {
+  "mae": 0.002971939445864855,
+  "spearman": 0.6666088991472278,
+  "confusion": {
+   "positives": 13,
+   "tp": 13,
+   "fp": 0,
+   "fn": 0,
+   "tn": 116
+  },
+  "expected": {
+   "mae": 0.002971939445864855,
+   "spearman": 0.6666088991472278,
+   "tp": 13,
+   "fp": 0,
+   "fn": 0
+  }
+ },
+ "p285_cells": {
+  "LL_n": 34,
+  "LL_high": 11,
+  "LL_high_strong": 4,
+  "LL_P_spearman": 0.951,
+  "grid_LL_P_spearman": 0.951,
+  "grid_LL_P_reversals": {
+   "inversions": 43,
+   "comparable": 560,
+   "rate": 0.07678571428571429
+  },
+  "grid_note": "the 7.7% reversal rate and the 0.951 LL correlation must match"
+ },
+ "p277_predictor": {
+  "target": "Stage3 test recall@10 (protocol-majority per SID)",
+  "formula": "r_hat = intercept_raw + sum_i coef_raw_units[i] * x_i (equivalently intercept_std + sum_i coef_standardised[i] * (x_i - mean_i) / scale_i)",
+  "alpha": 0.01,
+  "domain_feature_ranges": {
+   "l1_pos_hit": {
+    "min": 0.008548198958895524,
+    "max": 0.9998259022615297
+   },
+   "l1_neg_hit": {
+    "min": 0.003920826470874831,
+    "max": 0.9997328460061273
+   },
+   "l1_hard_er": {
+    "min": 1.000093081122396,
+    "max": 23.926679582841775
+   },
+   "l2_distinct": {
+    "min": 13.0,
+    "max": 16686.0
+   },
+   "l3_collision": {
+    "min": 0.009842599747834191,
+    "max": 0.9977223736120714
+   },
+   "l3_refine_bits": {
+    "min": 0.3329135537325163,
+    "max": 6.631260132626008
+   }
+  },
+  "residual_interval_from_verdict": "MAE 95% CI [0.002376, 0.003620]; FP=0 in 2000 bootstrap resamples",
+  "label_range": "0.0260-0.0648 (0.065 NOT_EVALUABLE)",
+  "note": "the domain is the observed feature range of the 129-row training cohort"
+ },
+ "time_postordered": [
+  {
+   "sid_sha256": "9f6bf6731e88",
+   "recall": 0.0479465171747419,
+   "pred277": 0.0531902589289211,
+   "status": "matched"
+  }
+ ]
+}
