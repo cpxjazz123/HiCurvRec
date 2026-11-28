@@ -40,3 +40,5 @@ predictions for the 122 label-pending SIDs + 9 recovered unlabelled exports are 
 `PROSPECTIVE_284.json`; the #277 predictor and its 124-row prospective file are unchanged.
 Replacement requires the historical CI gate **and** a future separately-authorized independent-label
 validation. No Stage3 was started. Infra drift: 0.
+
+Commit: b106d01e61a73d903aad7e58f77e63a42afaa745 (main); issue CLOSED.
