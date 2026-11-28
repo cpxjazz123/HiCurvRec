@@ -1,0 +1,120 @@
+{
+ "schema": "genrec.issue277.predictor/1",
+ "commit_reference": "f62fd6caa6f6d1e7690e591bfd06a9308f3ebaf9",
+ "target": "Stage3 test recall@10 (protocol-majority per SID)",
+ "features": [
+  "l1_pos_hit",
+  "l1_neg_hit",
+  "l1_hard_er",
+  "l2_distinct",
+  "l3_collision",
+  "l3_refine_bits"
+ ],
+ "feature_definitions": "results/research/issue277/FEATURE_CONTRACT.md",
+ "fit_procedure": {
+  "standardise": "StandardScaler on the frozen 129-SID development queue",
+  "alpha_grid": [
+   0.01,
+   0.1,
+   1.0,
+   10.0
+  ],
+  "alpha_selection": "inner SID-group CV with the scaler fitted inside each inner training fold",
+  "alpha": 0.01,
+  "ridge_intercept_standardised": 0.05265525175468059
+ },
+ "scaler": {
+  "mean": [
+   0.14215890103029424,
+   0.050835231599126396,
+   7.286164020883136,
+   7337.899224806201,
+   0.20949338892456879,
+   2.4489296756745644
+  ],
+  "scale": [
+   0.15830438516204007,
+   0.14171090972145847,
+   4.973303923904661,
+   4192.260234475584,
+   0.19471398345942406,
+   1.1617029270231738
+  ]
+ },
+ "coef_standardised": [
+  0.008754453834943417,
+  -0.006473339216639172,
+  0.005238821111380706,
+  -0.00315639133970799,
+  -0.003420078482792755,
+  0.00012038497026162127
+ ],
+ "coef_raw_units": [
+  0.055301398163938253,
+  -0.04567989316674996,
+  0.001053388490134257,
+  -7.529092096313596e-07,
+  -0.017564626957084755,
+  0.00010362801664802883
+ ],
+ "intercept_raw_units": 0.04839131980492112,
+ "formula": "r_hat = intercept_raw + sum_i coef_raw_units[i] * x_i (equivalently intercept_std + sum_i coef_standardised[i] * (x_i - mean_i) / scale_i)",
+ "training": {
+  "n_sids": 129,
+  "label_sha256": "f7bc682d2fe2a17c566b187b082bafd5c93be7185f28e03ed7818b3a783d80c7",
+  "features_sha256": "e68e9e2023f564acb8459c84757c0c2a45f389cbbeac8ad858ce933c366adf71",
+  "table_sha256": "4c927914ace831044c26d2fa53b625ae86cafeac64059ebedd98ec4983b19993",
+  "folds_sha256": "1a8fb81dea9eef9d0e9fad35aeceb57f6aadcdd45b03640d7f6ef613ad5dab93"
+ },
+ "fit_quality_full_data": {
+  "n": 129,
+  "mae": 0.002526752663530696,
+  "spearman": 0.7415036247408794
+ },
+ "oof_reference": {
+  "note": "OOF metrics are the honest generalisation numbers; the full-data fit above is in-sample and NOT a performance estimate",
+  "oof_ridge6_corrected": {
+   "mae": 0.002971939445864855,
+   "rmse": 0.004682138840237189,
+   "spearman": 0.6666088991472278,
+   "kendall": 0.5028177442867808,
+   "reversals": 0.24845398326664242
+  }
+ },
+ "uncertainty": {
+  "oof_residual_quantiles": {
+   "q05": -0.012064429134933467,
+   "q50": 0.0009629797521099603,
+   "q95": 0.004718234026251075,
+   "abs_q90": 0.007433660756235127
+  },
+  "note": "empirical OOF residual interval; finite-sample, no coverage guarantee"
+ },
+ "domain": {
+  "l1_pos_hit": {
+   "min": 0.008548198958895524,
+   "max": 0.9998259022615297
+  },
+  "l1_neg_hit": {
+   "min": 0.003920826470874831,
+   "max": 0.9997328460061273
+  },
+  "l1_hard_er": {
+   "min": 1.000093081122396,
+   "max": 23.926679582841775
+  },
+  "l2_distinct": {
+   "min": 13.0,
+   "max": 16686.0
+  },
+  "l3_collision": {
+   "min": 0.009842599747834191,
+   "max": 0.9977223736120714
+  },
+  "l3_refine_bits": {
+   "min": 0.3329135537325163,
+   "max": 6.631260132626008
+  }
+ },
+ "created_utc": "2026-11-28T03:02:18.128965+00:00"
+}
