@@ -1,0 +1,165 @@
+{
+ "schema": "genrec.hypotheses/1",
+ "issue": 277,
+ "inherited_from": "results/research/issue276/HYPOTHESES.json",
+ "hypotheses": [
+  {
+   "id": "H1",
+   "statement": "L1 behavioural fidelity (l1_pos_hit / l1_hard_er) is the strongest single predictor of Stage3 Recall@10.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue276/ANALYSIS_276.json",
+    "results/research/issue276/EXTRAS.json"
+   ],
+   "origin_issue": 275,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "SID-group OOF (n=129): prior l1_pos_hit rho -0.283, train-selected best single rho -0.149; the single-feature ranking from #275 does not generalise across SID groups"
+  },
+  {
+   "id": "H2",
+   "statement": "Capacity (l2_distinct, l3_collision, l3_refine_bits) adds beyond fidelity.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue276/EXTRAS.json"
+   ],
+   "origin_issue": 275,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": "descriptive rho l3_collision +0.483 / l2_distinct -0.391; no fold-level ablation",
+   "verdict_reason": "identical frozen folds: fidelity-only ridge 0.003507/0.473 vs six-feature 0.003221/0.512 (exploratory alpha=10)"
+  },
+  {
+   "id": "H3",
+   "statement": "Vector distortion (quant_error, effective_rank) adds beyond SID features.",
+   "status": "INCONCLUSIVE",
+   "evidence": [
+    "results/research/issue276/ANALYSIS_276.json"
+   ],
+   "origin_issue": 275,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": "CI covered zero on the family-LOFO design; issue #276 reopens it under SID-group CV because the grouping unit changed (new evidence path: results/research/issue276/) and the Q_VEC band lacked positives",
+   "verdict_reason": "Q_VEC (n=73): ridge13 rho 0.699 vs ridge6 0.552 but MAE 0.005696 vs 0.003423; PySR increment CI [-0.00031,+0.00169] covers zero; ranking up, calibration down"
+  },
+  {
+   "id": "H4",
+   "statement": "Curvature/distance geometry adds beyond SID features.",
+   "status": "UNTESTED",
+   "evidence": [
+    "results/research/issue276/TABLE_MANIFEST.json"
+   ],
+   "origin_issue": 275,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": "only 3 sha-matched geometry SIDs",
+   "verdict_reason": "geometry queue n=3 (sha-matched #271 assets); unidentifiable"
+  },
+  {
+   "id": "N",
+   "statement": "No feature set beats the fold mean/median out of fold; fits are family confounding.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue276/ANALYSIS_276.json"
+   ],
+   "origin_issue": 275,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "ridge6 MAE 0.003059 vs fold median 0.004424 (31% lower), rho 0.616"
+  },
+  {
+   "id": "H5",
+   "statement": "#275's negative is an artifact of family-LOFO with degenerate controls and zero positives; SID-identity grouping changes the ordering of ridge vs PySR.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue276/ANALYSIS_276.json"
+   ],
+   "origin_issue": 276,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "under SID grouping with 13 positives PySR is still significantly worse than ridge6 (CI [+0.00049,+0.00154]); the #275 PySR-vs-linear ordering is not a family-grouping artifact"
+  },
+  {
+   "id": "H6",
+   "statement": "The recon-vs-recall relation (rho -0.858) survives protocol slicing and holds inside the high-recall band.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue276/vector_forward.json",
+    "results/research/issue276/EXTRAS.json"
+   ],
+   "origin_issue": 276,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "unified decoder MSE (bias-included forward, n=73) rho -0.087; high band +0.287 (n=12); #275 used final-epoch batch loss and a bias-less forward on n=23"
+  },
+  {
+   "id": "H7",
+   "statement": "High-recall historical SIDs (recall > 0.06) are recoverable and bindable to their Stage3 records by content evidence.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue276/recovery/AUDIT.json"
+   ],
+   "origin_issue": 276,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "12/12 named high-recall arms content-bound (6 L1 ledger, 6 L2 collision); 91 records >0.06, 26 with a bound arm"
+  },
+  {
+   "id": "H8",
+   "statement": "Effective rank has a moderate window (non-monotone relation to recall) that a linear model cannot capture.",
+   "status": "INCONCLUSIVE",
+   "evidence": [
+    "results/research/issue276/EXTRAS.json"
+   ],
+   "origin_issue": 276,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "PR(z) bins: 0.0463/<4, 0.0549/4-6, 0.0595/6-8, 0.0548/8-12, 0.0529/>=12; overall rho -0.031 -> window shape without a monotone relation"
+  },
+  {
+   "id": "H9",
+   "statement": "The 13/13 >0.06 identification survives an independent recomputation from the Ridge6 predictions and a strict identity split.",
+   "status": "SUPPORTED",
+   "evidence": [
+    "results/research/issue277/AUDIT_277.json",
+    "results/research/issue277/COEFFICIENTS.json"
+   ],
+   "origin_issue": 277,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "recomputed 13/13 tp 0 fp; strict core 6/6 tp 0 fp; 7 positives rest on weak identity"
+  },
+  {
+   "id": "H10",
+   "statement": "The inner-fold StandardScaler leak inflates the #276 ridge result.",
+   "status": "REFUTED",
+   "evidence": [
+    "results/research/issue277/AUDIT_277.json"
+   ],
+   "origin_issue": 277,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null,
+   "verdict_reason": "corrected scaler-inside-inner-fold OOF 0.002972/0.667 vs leaky 0.003031/0.623; no inflation"
+  },
+  {
+   "id": "H11",
+   "statement": "The frozen predictor's prospective prediction for TIGER_pairrank_enc_rq (0.05319) is below the 0.06 threshold once its Stage3 label lands.",
+   "status": "UNTESTED",
+   "evidence": [
+    "results/research/issue277/PROSPECTIVE.json"
+   ],
+   "origin_issue": 277,
+   "opened_round": "r1",
+   "last_update": "2026-11-28",
+   "reopen_reason": null
+  }
+ ]
+}

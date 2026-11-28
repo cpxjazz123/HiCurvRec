@@ -1,0 +1,46 @@
+{
+ "schema": "genrec.issue277.leak_reference/1",
+ "fold_counts": {
+  "0": 27,
+  "1": 27,
+  "2": 26,
+  "3": 25,
+  "4": 24
+ },
+ "duplicate_groups": 0,
+ "n_groups_with_mapping": 75,
+ "mappings_spanning_folds": 0,
+ "cross_fold_mapping_examples": [],
+ "tiger_rows": [
+  {
+   "sid_sha256": "025ad8bd5809ce6296047514a80a4fedd012f3145d184eb4babd51c76c140059",
+   "label": 0.05197513884294643,
+   "strength": "primary",
+   "sources": [
+    "inventory_unit"
+   ]
+  },
+  {
+   "sid_sha256": "53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85",
+   "label": 0.05471891920123958,
+   "strength": "primary",
+   "sources": [
+    "inventory_unit",
+    "git_bind/TIGER_RQ-VAE",
+    "git_bind/TIGER_RQ-VAE"
+   ]
+  },
+  {
+   "sid_sha256": "4f0337434261721dbde0ca7829dbfa53fc75312ed9217c876db22b4157c6baf0",
+   "label": null,
+   "strength": null,
+   "sources": [
+    "git_bind/TIGER_RQ-VAE",
+    "git_bind/TIGER_RQ-VAE",
+    "git_bind/TIGER_RQ-VAE",
+    "git_bind/TIGER_RQ-VAE"
+   ]
+  }
+ ],
+ "note": "global code permutation leaves every one of the six features unchanged; content-identical SIDs are one group by construction; a mapping-hash split can only occur when two exports share the first three codes but differ in content hash, which the table treats as separate groups"
+}
