@@ -304,6 +304,15 @@
    "r2": "r2:genrec/114",
    "verdict": "below_threshold",
    "note": "prospective #277 prediction 0.05319 (frozen 03c8e1df at 14:03:16+1100) vs actual 0.047947; threshold call correct, signed error +0.00524"
+  },
+  "TIGER_codebook_budget_j_rq": {
+   "test_recall@10": 0.04846881039015303,
+   "test_recall@5": 0.032033983878549416,
+   "test_ndcg@10": 0.026471600099240856,
+   "test_final": "results/stage3_T5Train/TIGER_codebook_budget_j_rq/logs/Amazon_2023_Instruments/Nov-28-2026_14-29-03/test_final.json",
+   "sid_sha256": "61f898498c190c08d58451187b7dc7d31cf1cf2393e9956e35f331f559e712b0",
+   "verdict": "below_threshold",
+   "note": "gate: collision 0.1338, quant_error 0.013 (warning only), effective_rank 2.21"
   }
  },
  "sweep_2026_11_28": {
@@ -392,5 +401,11 @@
   "r2": "r2:genrec/114",
   "next": "TIGER_codebook_budget_j_rq",
   "note": "r2 arm finished 150 epochs 13:00-14:20; archived; prospective check recorded in results/research/issue277/PROSPECTIVE_OUTCOME.json"
+ },
+ "queue_state_2026_11_28_1550": {
+  "finished": "TIGER_codebook_budget_j_rq",
+  "recall@10": 0.04846881039015303,
+  "next": "TIGER_prefix_curvature_gate_rq",
+  "note": "SID 61f8984\u2026; runtime 14:29-15:50; remaining eligible arms are exhausted after this one"
  }
 }

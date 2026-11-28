@@ -139,3 +139,46 @@ are absent from the R2 ledger. `TIGER_prefix_curvature_gate_rq` never finished (
 | verdict | below the 0.065 target |
 
 Next in the queue: `TIGER_codebook_budget_j_rq` (SID with binding, collision 0.1337).
+
+## 2026-11-28 15:50 — `TIGER_codebook_budget_j_rq` finished
+
+| item | value |
+|---|---|
+| run | `logs/Amazon_2023_Instruments/Nov-28-2026_14-29-03/test_final.json` |
+| test_recall@10 | **0.048469** (`test_ndcg@10` 0.026472, SID `61f8984…`) |
+| gate | collision 0.1338 < 0.40; quant_error 0.013 warning; effective_rank 2.21 |
+| verdict | below the 0.065 target |
+
+Next: `TIGER_prefix_curvature_gate_rq` (the last arm with a checkpoint-bound SID in the eligible list).
+
+## 2026-11-28 15:52 — next arm refused (fail-closed) and the queue is exhausted
+
+`TIGER_prefix_curvature_gate_rq` (the last arm in the eligible list with a checkpoint-bound SID) was
+refused by the export gate:
+
+```
+export gate: archive binding: executed source/config hashes mismatch
+```
+
+Diagnosis (`archive_binding.json`): all 56 `candidate_sources` still match the stored src tree and all
+17 `repository_configs` match, but **5 infrastructure sources changed** since the binding was made:
+
+| file | stored | current |
+|---|---|---|
+| `tools/issue253/static_features.py` | `bd38db54df…` | `8e35754f42…` |
+| `tools/research/stage2/anticollapse/floor.py` | `984bba1330…` | `0e0f2fbef7…` |
+| `tools/research/stage2/anticollapse/patch_tree.py` | `bffbc2b3a5…` | `75abaa019f…` |
+| `tools/research/stage2/contract.py` | `bf82fd3197…` | `e2e7fe8237…` |
+| `tools/research/stage2/launcher.py` | `61d32bd6d1…` | `73afff80f9…` |
+
+These are the pre-existing worktree modifications from earlier sessions (mtimes 2026-11-25/27). The
+binding is fail-closed by design (CLAUDE.md §58): the arm cannot be dispatched without regenerating its
+evidence, which requires the original framework state and is out of this route's scope. No gate was
+bypassed. **Remaining arms:** all other queued arms either lack a checkpoint-bound SID (legacy
+`_conformance` smoke copies, collision ~0.05) or have no binding at all (`TIGER_active_j_rq`); they
+would be refused on the same rule. The campaign's eligible Stage3 arms are therefore exhausted.
+
+Batch summary (this campaign): finished and archived `r2:genrec/112..115` = `global_j` (0.042933),
+`pairrank_cover` (0.050593), `pairrank_enc` (0.047947), `codebook_budget_j` (0.048469); finished but
+unarchivable (no `archive_binding`) = `graphlet_align` (0.039868), `curvloss` (0.040669),
+`sinkhorn_all_levels` (0.053552); refused = `prefix_curvature_gate` (infra hash drift).
