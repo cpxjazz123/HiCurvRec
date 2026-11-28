@@ -153,3 +153,5 @@ future separately-authorized independent-label validation.
    −9.1 % MAE but needs ≈374 independent SIDs (3× the current 129) for 80 % power. The correct
    boundary is "underpowered at 129 labels", not "impossible" — the tested set is not the allowed
    space, and no infeasibility claim is made.
+
+Conditional response figure (generated from `CHAIN_ANALYSIS.json` bands): `CONDITIONAL_RESPONSE.svg`.
