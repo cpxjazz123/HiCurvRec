@@ -30,3 +30,5 @@ cell has MDE 2.2e−4 — not validatable at this n.
 coefficients and 122 pending predictions side by side with #277/#284; marked exploratory and redundant
 with #284. #277, the 124-row prospective file and the #284 candidate are unchanged. No Stage3.
 Infra drift 0.
+
+Commit: a433172f2774c5d633f3798b2151f01683ad7ec2 (main); issue CLOSED.
